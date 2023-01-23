@@ -100,6 +100,50 @@ class CByte(object):
             0x97: self.FRMRcByte
         }
 
+    def enc_cbyte(self):    # Just if not standard Packets (pac_types)
+        # if self.hex not in self.pac_types.keys():
+        ret = ''.zfill(8)
+        if self.pf:
+            ret = ret[:3] + '1' + ret[4:]
+        # I Block
+        if self.flag == 'I':
+            ret = bin(max(min(self.nr, 7), 0))[2:].zfill(3) + ret[3:]           # N(R)
+            ret = ret[:4] + bin(max(min(self.ns, 7), 0))[2:].zfill(3) + '0'     # N(S)
+        # S Block
+        elif self.flag in ['RR', 'RNR', 'REJ', 'SREJ']:
+            ret = ret[:-2] + '01'
+            ret = bin(max(min(self.nr, 7), 0))[2:].zfill(3) + ret[3:]
+            if self.flag == 'RR':
+                ret = ret[:4] + '00' + ret[-2:]
+            elif self.flag == 'RNR':
+                ret = ret[:4] + '01' + ret[-2:]
+            elif self.flag == 'REJ':
+                ret = ret[:4] + '10' + ret[-2:]
+            elif self.flag == 'SREJ':
+                ret = ret[:4] + '11' + ret[-2:]
+        # U Block   should have static hex ( self.pac_types ) but for special reasons.
+        elif self.flag in ['SABM', 'DISC', 'DM', 'UA', 'FRMR', 'UI', 'TEST', 'XID']:
+            ret = ret[:-2] + '11'
+            if self.flag == 'SABM':
+                ret = '001' + ret[3] + '11' + ret[-2:]
+            elif self.flag == 'DISC':
+                ret = '010' + ret[3] + '00' + ret[-2:]
+            elif self.flag == 'DM':
+                ret = '000' + ret[3] + '11' + ret[-2:]
+            elif self.flag == 'UA':
+                ret = '011' + ret[3] + '00' + ret[-2:]
+            elif self.flag == 'UI':
+                ret = '000' + ret[3] + '00' + ret[-2:]
+            elif self.flag == 'FRMR':  # TODO Not completely implemented yet
+                ret = '100' + ret[3] + '01' + ret[-2:]
+            elif self.flag == 'TEST':  # TODO Not completely implemented yet
+                ret = '111' + ret[3] + '00' + ret[-2:]
+                self.info = True
+            elif self.flag == 'XID':  # TODO Not implemented yet
+                ret = '101' + ret[3] + '11' + ret[-2:]
+                self.info = True
+        self.hex = hex(int(ret, 2))
+
     def dec_cbyte(self, in_byte):
         if int(in_byte) in self.pac_types.keys():
             print("Predefined Pac Type.. {}".format(in_byte))
@@ -173,6 +217,51 @@ class CByte(object):
                 else:
                     logger.error('C-Byte Error U Frame ! > ' + str(bi) + ' ' + str(in_byte))
 
+    def IcByte(self):
+        self.ctl_str = 'I+'
+        self.type = 'I'
+        self.flag = 'I'
+        # self.pf = False
+        self.cmd = True
+        self.pid = True
+        self.info = True
+
+    def RRcByte(self):
+        self.ctl_str = 'RR'
+        self.type = 'S'
+        self.flag = 'RR'
+        # self.pf = False
+        # self.cmd = True
+        self.pid = False
+        self.info = False
+
+    def RNRcByte(self):
+        self.ctl_str = 'RNR'
+        self.type = 'S'
+        self.flag = 'RNR'
+        # self.pf = False
+        # self.cmd = True
+        self.pid = False
+        self.info = False
+
+    def REJcByte(self):
+        self.ctl_str = 'REJ'
+        self.type = 'S'
+        self.flag = 'REJ'
+        # self.pf = False
+        # self.cmd = True
+        self.pid = False
+        self.info = False
+
+    def SREJcByte(self):    # EAX.25 ??
+        self.ctl_str = 'SREJ'
+        self.type = 'S'
+        self.flag = 'SREJ'
+        # self.pf = False
+        # self.cmd = True
+        self.pid = False
+        self.info = False
+
     def SABMcByte(self):
         self.ctl_str = 'SABM+'
         self.hex = hex(0x3f)
@@ -228,7 +317,7 @@ class CByte(object):
         self.hex = hex(0x97)
         self.type = 'U'
         self.flag = 'FRMR'
-        self.pf = True
+        # self.pf = True
         self.cmd = False
         self.pid = False
         self.info = True
@@ -255,6 +344,7 @@ class PIDByte(object):
             0xCB: self.appletalk_arp,
             0xFF: self.esc,
         }
+        self.text()     # Standard PID Text 0xf0
 
     def decode(self, in_byte: b''):
         if int(in_byte) in self.pac_types.keys():
@@ -335,7 +425,6 @@ class AX25Frame(object):
         self.to_call = Call()
         self.via_calls = []
         self.ctl_byte = CByte()
-
         self.pid_byte = PIDByte()
         self.data = b''
         self.data_len = 0
@@ -388,7 +477,7 @@ class AX25Frame(object):
         else:
             # self.via_calls = [Call()]
             self.via_calls[-1].s_bit = True
-        # Encode all Headers
+        # Encode Address Fields
         self.to_call.enc_call()
         self.from_call.enc_call()
         self.hexstr += self.to_call.hex_str
@@ -398,6 +487,7 @@ class AX25Frame(object):
             station.enc_call()
             self.hexstr += station.hex_str
         # C Byte
+        self.ctl_byte.enc_cbyte()
         self.hexstr += str(self.ctl_byte.hex)[2:].encode()
         # PID
         if self.ctl_byte.pid:
@@ -405,4 +495,5 @@ class AX25Frame(object):
         self.hexstr = bytes.fromhex(self.hexstr.decode())
         # Data
         if self.ctl_byte.info:
+            self.data_len = len(self.data)
             self.hexstr += self.data
