@@ -13,14 +13,25 @@ def bl2str(inp):
         return '-'
 
 
+def format_hex(inp=''):
+    fl = hex(int(inp, 2))[2:]
+    if len(fl) == 1:
+        return '0' + fl
+    return fl
+
+
+def bytearray2hexstr(inp):
+    return ''.join('{:02x}'.format(x) for x in inp)
+
+
 class Call(object):
     call = ''
-    hex_str: b''
+    hex_str = b''
     """Address > CRRSSID1    Digi > HRRSSID1"""
-    s_bit: bool  # Stop Bit      Bit 8
-    c_bit: bool  # C bzw H Bit   Bit 1
-    ssid: int    # SSID          Bit 4 - 7
-    r_bits: bin  # Bit 2 - 3 not used. Free to use for any application .?..
+    s_bit = False   # Stop Bit      Bit 8
+    c_bit = False   # C bzw H Bit   Bit 1
+    ssid = 0        # SSID          Bit 4 - 7
+    r_bits = '11'   # Bit 2 - 3 not used. Free to use for any application .?..
 
     def dec_call(self, inp: b''):
         self.call = ''
@@ -32,6 +43,28 @@ class Call(object):
         self.c_bit = bool(int(bi[0], 2))  # C bzw H Bit   Bit 1
         self.ssid = int(bi[3:7], 2)  # SSID          Bit 4 - 7
         self.r_bits = bi[1:3]  # Bit 2 - 3 not used. Free to use for any application .?..
+
+    def enc_call(self):
+        """
+        out_str += encode_address_char(dest)
+        out_str += encode_ssid(dest_ssid, dest_c)
+        out_str += encode_address_char(call)
+        """
+        out = ''
+        # Address
+        ascii_str = "{:<6}".format(self.call)
+        t = bytearray(ascii_str.encode('ASCII'))
+        for i in t:
+            out += hex(i << 1)[2:]
+        # SSID and BITs
+        ssid_in = bin(self.ssid << 1)[2:].zfill(8)
+        if self.c_bit:
+            ssid_in = '1' + ssid_in[1:]  # Set C or H Bit. H Bit if msg was geDigit
+        if self.s_bit:
+            ssid_in = ssid_in[:-1] + '1'  # Set Stop Bit on last DIGI
+        ssid_in = ssid_in[:1] + self.r_bits + ssid_in[3:]  # Set R R Bits True.
+        out += format_hex(ssid_in)
+        self.hex_str = out.encode()
 
 
 class CByte(object):
@@ -75,6 +108,7 @@ class CByte(object):
             print("Not predefined Pac Type..")
             # self.ctl_byte.dec_cbyte(self.hexstr[index])
             self.hex = hex(int(in_byte))
+            print(self.hex)
             bi = bin(int(in_byte))[2:].zfill(8)
             pf = bool(int(bi[3], 2))  # P/F
             self.pf = pf
@@ -299,7 +333,7 @@ class AX25Frame(object):
         self.hexstr = b''           # Dekiss
         self.from_call = Call()
         self.to_call = Call()
-        self.via_call = []
+        self.via_calls = []
         self.ctl_byte = CByte()
 
         self.pid_byte = PIDByte()
@@ -308,19 +342,20 @@ class AX25Frame(object):
 
     def decode(self, hexstr: b''):
         self.kiss = hexstr[:2]
-        self.hexstr = hexstr[2:-1]                      # Dekiss
+        self.hexstr = hexstr[2:-1]
         self.to_call.dec_call(self.hexstr[:7])
         self.from_call.dec_call(self.hexstr[7:14])
         n = 2
-        if not self.to_call.s_bit:
+        if not self.from_call.s_bit:
             while True:
                 tmp = Call()
                 tmp.dec_call(self.hexstr[7 * n: 7 + 7 * n])
-                self.via_call.append(tmp)
+                self.via_calls.append(tmp)
+                n += 1
                 if tmp.s_bit:
                     break
-                n += 1
-        index = (7 * n) + 7
+
+        index = 7 * n
         # Dec C-Byte
         self.ctl_byte.dec_cbyte(self.hexstr[index])
         # Get Command Bits
@@ -333,5 +368,41 @@ class AX25Frame(object):
             index += 1
             self.pid_byte.decode(self.hexstr[index])
             # self.pid_byte.pac_types[self.hexstr[index]]()
+        if self.ctl_byte.info:
+            index += 1
+            self.data = self.hexstr[index:]
+            self.data_len = len(self.data)
 
-
+    def encode(self):
+        self.hexstr = b''
+        # Set Command/Report Bits
+        if self.ctl_byte.cmd:
+            self.to_call.c_bit = True
+            self.from_call.c_bit = False
+        else:
+            self.to_call.c_bit = False
+            self.from_call.c_bit = True
+        # Set Stop Bit
+        if not self.via_calls:
+            self.from_call.s_bit = True
+        else:
+            # self.via_calls = [Call()]
+            self.via_calls[-1].s_bit = True
+        # Encode all Headers
+        self.to_call.enc_call()
+        self.from_call.enc_call()
+        self.hexstr += self.to_call.hex_str
+        self.hexstr += self.from_call.hex_str
+        # Via Stations
+        for station in self.via_calls:
+            station.enc_call()
+            self.hexstr += station.hex_str
+        # C Byte
+        self.hexstr += str(self.ctl_byte.hex)[2:].encode()
+        # PID
+        if self.ctl_byte.pid:
+            self.hexstr += str(hex(self.pid_byte.hex))[2:].encode()
+        self.hexstr = bytes.fromhex(self.hexstr.decode())
+        # Data
+        if self.ctl_byte.info:
+            self.hexstr += self.data
