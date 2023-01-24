@@ -45,18 +45,15 @@ class DevDirewolf(object):
                     logger.error('DW.decoding: {}'.format(e))
                 ############################
                 # Monitor
-                if e is None:
+                if e is None and ax25frame.validate():
                     self.monitor.frame_inp(ax25frame, 'DW')
-                # decode_inp = ax.decode_ax25_frame(b)
                 # if dekiss_inp:
                 # self.handle_rx(dekiss_inp)
                 ############################
-                # Monitor TODO Better Monitor
-                # logger.info(dekiss_inp[1])
                 ############################
                 # MH List and Statistics
                 #mh.mh_inp(dekiss_inp, self.port_id)
-                self.timer_T0 = 0
+                # self.timer_T0 = 0
             else:
                 break
             #############################################

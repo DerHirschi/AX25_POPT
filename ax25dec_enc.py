@@ -74,6 +74,22 @@ class Call(object):
         out += format_hex(ssid_in)
         self.hex_str = out.encode()
 
+    def validate(self):
+        """
+        TODO: better Call Check
+        :return: bool
+        """
+        if len(self.call) < 2:
+            logger.error('Call validator: Call length')
+            return False
+        if not self.call.isascii():
+            logger.error('Call validator: Call.isascii()')
+            return False
+        if self.ssid > 15 or self.ssid < 0:
+            logger.error('Call validator: SSID')
+            return False
+        return True
+
 
 class CByte(object):
     """
@@ -224,6 +240,13 @@ class CByte(object):
                     self.flag = 'XID'
                 else:
                     logger.error('C-Byte Error Decoding U Frame ! Unknown C-Byte> ' + str(bi) + ' ' + str(in_byte))
+                    raise IndexError
+
+    def validate(self):
+        if self.hex == 0xff:
+            logger.error('C_Byte validator')
+            return False
+        return True
 
     def IcByte(self):
         self.type = 'I'
@@ -362,6 +385,12 @@ class PIDByte(object):
             bi = bin(in_byte)[2:].zfill(8)
             if bi[2:5] in ['01', '10']:
                 self.ax25_l3(hex(int(in_byte)))
+
+    def validate(self):
+        if self.hex == 0x00:
+            logger.error('PID_Byte validator')
+            return False
+        return True
 
     def text(self):
         self.hex = 0xF0
@@ -507,3 +536,28 @@ class AX25Frame(object):
         if self.ctl_byte.info:
             self.data_len = len(self.data)
             self.hexstr += self.data
+
+    def validate(self):
+        """
+        :return: bool
+        """
+        if len(self.hexstr) < 15:
+            logger.error('Validate Error: Pac length')
+            return False
+        if not self.from_call.validate():
+            logger.error('Validate Error: From Call')
+            return False
+        if not self.to_call.validate():
+            logger.error('Validate Error: TO Call')
+            return False
+        ca: Call
+        for ca in self.via_calls:
+            if not ca.validate():
+                return False
+        if not self.ctl_byte.validate():
+            logger.error('Validate Error: C_Byte')
+            return False
+        if not self.pid_byte.validate():
+            logger.error('Validate Error: PID_Byte')
+            return False
+        return True
