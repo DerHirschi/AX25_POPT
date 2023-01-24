@@ -1,3 +1,7 @@
+"""
+    Layer 2 ??
+    AX.25 Packet enc-/decoding
+"""
 import logging
 # Enable logging
 logging.basicConfig(
@@ -20,23 +24,27 @@ def format_hex(inp=''):
     return fl
 
 
+"""
 def bytearray2hexstr(inp):
     return ''.join('{:02x}'.format(x) for x in inp)
+"""
 
 
 class Call(object):
-    call = ''
-    hex_str = b''
-    """Address > CRRSSID1    Digi > HRRSSID1"""
-    s_bit = False   # Stop Bit      Bit 8
-    c_bit = False   # C bzw H Bit   Bit 1
-    ssid = 0        # SSID          Bit 4 - 7
-    r_bits = '11'   # Bit 2 - 3 not used. Free to use for any application .?..
+    def __init__(self):
+        self.call = ''
+        self.hex_str = b''
+        """Address > CRRSSID1    Digi > HRRSSID1"""
+        self.s_bit = False   # Stop Bit      Bit 8
+        self.c_bit = False   # C bzw H Bit   Bit 1
+        self.ssid = 0        # SSID          Bit 4 - 7
+        self.r_bits = '11'   # Bit 2 - 3 not used. Free to use for any application .?..
 
     def dec_call(self, inp: b''):
         self.call = ''
         for c in inp[:-1]:
             self.call += chr(int(c) >> 1)
+        self.call = self.call.replace(' ', '')
         """Address > CRRSSID1    Digi > HRRSSID1"""
         bi = bin(int(hex(inp[-1])[2:], 16))[2:].zfill(8)
         self.s_bit = bool(int(bi[7], 2))  # Stop Bit      Bit 8
@@ -81,7 +89,7 @@ class CByte(object):
     hex = 0x00         # Input as Hex
     """
     def __init__(self):
-        self.ctl_str = ''            # Monitor Out
+        self.mon_str = ''            # Monitor Out
         self.type = ''               # Control Field Type ( U, I, S )
         self.flag = ''               # Control Field Flag ( RR, REJ, SABM ... )
         self.pf = False              # P/F Bit
@@ -159,7 +167,7 @@ class CByte(object):
             if bi[-1] == '0':  # I-Block   Informationsübertragung
                 nr = int(bi[:3], 2)
                 ns = int(bi[4:7], 2)
-                self.ctl_str = 'I' + str(nr) + str(ns) + bl2str(pf)
+                self.mon_str = 'I' + str(nr) + str(ns) + bl2str(pf)
                 self.type, self.flag = 'I', 'I'
                 self.nr, self.ns = nr, ns
                 self.pid, self.info = True, True
@@ -168,16 +176,16 @@ class CByte(object):
                 self.type = 'S'
                 ss_bits = bi[4:6]
                 if ss_bits == '00':  # Empfangsbereit RR
-                    self.ctl_str = 'RR' + str(self.nr) + bl2str(pf)  # P/F Bit add +/-
+                    self.mon_str = 'RR' + str(self.nr) + bl2str(pf)  # P/F Bit add +/-
                     self.flag = 'RR'
                 elif ss_bits == '01':  # Nicht empfangsbereit RNRR
-                    self.ctl_str = 'RNRR' + bl2str(pf)  # P/F Bit add +/-
+                    self.mon_str = 'RNRR' + bl2str(pf)  # P/F Bit add +/-
                     self.flag = 'RNRR'
                 elif ss_bits == '10':  # Wiederholungsaufforderung REJ
-                    self.ctl_str = 'REJ' + str(self.nr) + bl2str(pf)  # P/F Bit add +/-
+                    self.mon_str = 'REJ' + str(self.nr) + bl2str(pf)  # P/F Bit add +/-
                     self.flag = 'REJ'
                 else:  # ss_bits == '11':                                  # Selective Reject SREJ
-                    self.ctl_str = 'SREJ' + str(self.nr) + bl2str(pf)  # P/F Bit add +/-
+                    self.mon_str = 'SREJ' + str(self.nr) + bl2str(pf)  # P/F Bit add +/-
                     self.flag = 'SREJ'
 
             elif bi[-2:] == '11':  # U-Block
@@ -185,85 +193,84 @@ class CByte(object):
                 mmm = bi[0:3]
                 mm = bi[4:6]
                 if mmm == '001' and mm == '11':
-                    self.ctl_str = "SABM" + bl2str(pf)  # Verbindungsanforderung
+                    self.mon_str = "SABM" + bl2str(pf)  # Verbindungsanforderung
                     self.flag = 'SABM'
                 elif mmm == '011' and mm == '11':
-                    self.ctl_str = "SABME" + bl2str(pf)  # Verbindungsanforderung EAX25 (Modulo 128 C Field)
+                    self.mon_str = "SABME" + bl2str(pf)  # Verbindungsanforderung EAX25 (Modulo 128 C Field)
                     self.flag = 'SABME'
                 elif mmm == '010' and mm == '00':
-                    self.ctl_str = "DISC" + bl2str(pf)  # Verbindungsabbruch
+                    self.mon_str = "DISC" + bl2str(pf)  # Verbindungsabbruch
                     self.flag = 'DISC'
                 elif mmm == '000' and mm == '11':
-                    self.ctl_str = "DM" + bl2str(pf)  # Verbindungsrückweisung
+                    self.mon_str = "DM" + bl2str(pf)  # Verbindungsrückweisung
                     self.flag = 'DM'
                 elif mmm == '011' and mm == '00':
-                    self.ctl_str = "UA" + bl2str(pf)  # Unnummerierte Bestätigung
+                    self.mon_str = "UA" + bl2str(pf)  # Unnummerierte Bestätigung
                     self.flag = 'UA'
                 elif mmm == '100' and mm == '01':
-                    self.ctl_str = "FRMR" + bl2str(pf)  # Rückweisung eines Blocks
+                    self.mon_str = "FRMR" + bl2str(pf)  # Rückweisung eines Blocks
                     self.flag = 'FRMR'
                     self.info = True
                 elif mmm == '000' and mm == '00':
-                    self.ctl_str = "UI" + bl2str(pf)  # Unnummerierte Information UI
+                    self.mon_str = "UI" + bl2str(pf)  # Unnummerierte Information UI
                     self.flag = 'UI'
                     self.pid, self.info = True, True
                 elif mmm == '111' and mm == '00':
-                    self.ctl_str = 'TEST' + bl2str(pf)  # TEST Frame
+                    self.mon_str = 'TEST' + bl2str(pf)  # TEST Frame
                     self.flag = 'TEST'
                     self.info = True
                 elif mmm == '101' and mm == '11':
-                    self.ctl_str = 'XID' + bl2str(pf)  # XID Frame
+                    self.mon_str = 'XID' + bl2str(pf)  # XID Frame
                     self.flag = 'XID'
                 else:
-                    logger.error('C-Byte Error U Frame ! > ' + str(bi) + ' ' + str(in_byte))
+                    logger.error('C-Byte Error Decoding U Frame ! Unknown C-Byte> ' + str(bi) + ' ' + str(in_byte))
 
     def IcByte(self):
-        self.ctl_str = 'I+'
         self.type = 'I'
         self.flag = 'I'
         # self.pf = False
         self.cmd = True
         self.pid = True
         self.info = True
+        self.mon_str = self.flag + str(self.nr) + str(self.ns) + bl2str(self.pf)
 
     def RRcByte(self):
-        self.ctl_str = 'RR'
         self.type = 'S'
         self.flag = 'RR'
         # self.pf = False
         # self.cmd = True
         self.pid = False
         self.info = False
+        self.mon_str = self.flag + str(self.nr) + bl2str(self.pf)
 
     def RNRcByte(self):
-        self.ctl_str = 'RNR'
         self.type = 'S'
         self.flag = 'RNR'
         # self.pf = False
         # self.cmd = True
         self.pid = False
         self.info = False
+        self.mon_str = self.flag + bl2str(self.pf)
 
     def REJcByte(self):
-        self.ctl_str = 'REJ'
         self.type = 'S'
         self.flag = 'REJ'
         # self.pf = False
         # self.cmd = True
         self.pid = False
         self.info = False
+        self.mon_str = self.flag + str(self.nr) + bl2str(self.pf)
 
     def SREJcByte(self):    # EAX.25 ??
-        self.ctl_str = 'SREJ'
         self.type = 'S'
         self.flag = 'SREJ'
         # self.pf = False
         # self.cmd = True
         self.pid = False
         self.info = False
+        self.mon_str = self.flag + str(self.nr) + bl2str(self.pf)
 
     def SABMcByte(self):
-        self.ctl_str = 'SABM+'
         self.hex = hex(0x3f)
         self.type = 'U'
         self.flag = 'SABM'
@@ -271,9 +278,9 @@ class CByte(object):
         self.cmd = True
         self.pid = False
         self.info = False
+        self.mon_str = self.flag + bl2str(self.pf)
 
     def DISCcByte(self):
-        self.ctl_str = 'DISC+'
         self.hex = hex(0x53)
         self.type = 'U'
         self.flag = 'DISC'
@@ -281,9 +288,9 @@ class CByte(object):
         self.cmd = True
         self.pid = False
         self.info = False
+        self.mon_str = self.flag + bl2str(self.pf)
 
     def DMcByte(self):
-        self.ctl_str = 'DM+'
         self.hex = hex(0x1f)
         self.type = 'U'
         self.flag = 'DM'
@@ -291,9 +298,9 @@ class CByte(object):
         self.cmd = False
         self.pid = False
         self.info = False
+        self.mon_str = self.flag + bl2str(self.pf)
 
     def UAcByte(self):
-        self.ctl_str = 'UA+'
         self.hex = hex(0x73)
         self.type = 'U'
         self.flag = 'UA'
@@ -301,9 +308,9 @@ class CByte(object):
         self.cmd = False
         self.pid = False
         self.info = False
+        self.mon_str = self.flag + bl2str(self.pf)
 
     def UIcByte(self):   # !! UI+ ???
-        self.ctl_str = 'UI+'
         self.hex = hex(0x13)
         self.type = 'U'
         self.flag = 'UI'
@@ -311,9 +318,9 @@ class CByte(object):
         self.cmd = False
         self.pid = True
         self.info = True
+        self.mon_str = self.flag + bl2str(self.pf)
 
     def FRMRcByte(self):
-        self.ctl_str = 'FRMR+'
         self.hex = hex(0x97)
         self.type = 'U'
         self.flag = 'FRMR'
@@ -321,6 +328,7 @@ class CByte(object):
         self.cmd = False
         self.pid = False
         self.info = True
+        self.mon_str = self.flag + bl2str(self.pf)
 
 
 class PIDByte(object):
@@ -429,38 +437,40 @@ class AX25Frame(object):
         self.data = b''
         self.data_len = 0
 
-    def decode(self, hexstr: b''):
-        self.kiss = hexstr[:2]
-        self.hexstr = hexstr[2:-1]
-        self.to_call.dec_call(self.hexstr[:7])
-        self.from_call.dec_call(self.hexstr[7:14])
-        n = 2
-        if not self.from_call.s_bit:
-            while True:
-                tmp = Call()
-                tmp.dec_call(self.hexstr[7 * n: 7 + 7 * n])
-                self.via_calls.append(tmp)
-                n += 1
-                if tmp.s_bit:
-                    break
+    def decode(self, hexstr=b''):
+        if not self.hexstr:
+            self.kiss = hexstr[:2]
+            self.hexstr = hexstr[2:-1]
+        if self.hexstr:
+            self.to_call.dec_call(self.hexstr[:7])
+            self.from_call.dec_call(self.hexstr[7:14])
+            n = 2
+            if not self.from_call.s_bit:
+                while True:
+                    tmp = Call()
+                    tmp.dec_call(self.hexstr[7 * n: 7 + 7 * n])
+                    self.via_calls.append(tmp)
+                    n += 1
+                    if tmp.s_bit:
+                        break
 
-        index = 7 * n
-        # Dec C-Byte
-        self.ctl_byte.dec_cbyte(self.hexstr[index])
-        # Get Command Bits
-        if self.to_call.c_bit and not self.from_call.c_bit:
-            self.ctl_byte.cmd = True
-        elif not self.to_call.c_bit and self.from_call.c_bit:
-            self.ctl_byte.cmd = False
-        # Get PID if available
-        if self.ctl_byte.pid:
-            index += 1
-            self.pid_byte.decode(self.hexstr[index])
-            # self.pid_byte.pac_types[self.hexstr[index]]()
-        if self.ctl_byte.info:
-            index += 1
-            self.data = self.hexstr[index:]
-            self.data_len = len(self.data)
+            index = 7 * n
+            # Dec C-Byte
+            self.ctl_byte.dec_cbyte(self.hexstr[index])
+            # Get Command Bits
+            if self.to_call.c_bit and not self.from_call.c_bit:
+                self.ctl_byte.cmd = True
+            elif not self.to_call.c_bit and self.from_call.c_bit:
+                self.ctl_byte.cmd = False
+            # Get PID if available
+            if self.ctl_byte.pid:
+                index += 1
+                self.pid_byte.decode(self.hexstr[index])
+                # self.pid_byte.pac_types[self.hexstr[index]]()
+            if self.ctl_byte.info:
+                index += 1
+                self.data = self.hexstr[index:]
+                self.data_len = len(self.data)
 
     def encode(self):
         self.hexstr = b''
