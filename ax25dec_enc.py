@@ -17,6 +17,25 @@ def bl2str(inp):
         return '-'
 
 
+def get_call_str(call, ssid=0):
+    if ssid:
+        return call + '-' + str(ssid)
+    else:
+        return call
+
+
+def reverse_uid(inp=''):
+    inp = inp.split(':')
+    addr, via, ret = inp[:2], inp[2:], ''
+    addr.reverse()
+    via.reverse()
+    for el in addr:
+        ret += el + ':'
+    for el in via:
+        ret += el + ':'
+    return ret[:-1]
+
+
 def format_hex(inp=''):
     fl = hex(int(inp, 2))[2:]
     if len(fl) == 1:
@@ -33,6 +52,7 @@ def bytearray2hexstr(inp):
 class Call(object):
     def __init__(self):
         self.call = ''
+        self.call_str = ''
         self.hex_str = b''
         """Address > CRRSSID1    Digi > HRRSSID1"""
         self.s_bit = False   # Stop Bit      Bit 8
@@ -44,13 +64,14 @@ class Call(object):
         self.call = ''
         for c in inp[:-1]:
             self.call += chr(int(c) >> 1)
-        self.call = self.call.replace(' ', '')
+        self.call = self.call.replace(' ', '').upper()
         """Address > CRRSSID1    Digi > HRRSSID1"""
         bi = bin(int(hex(inp[-1])[2:], 16))[2:].zfill(8)
         self.s_bit = bool(int(bi[7], 2))  # Stop Bit      Bit 8
         self.c_bit = bool(int(bi[0], 2))  # C bzw H Bit   Bit 1
         self.ssid = int(bi[3:7], 2)  # SSID          Bit 4 - 7
         self.r_bits = bi[1:3]  # Bit 2 - 3 not used. Free to use for any application .?..
+        self.call_str = get_call_str(self.call, self.ssid)
 
     def enc_call(self):
         """
@@ -60,7 +81,7 @@ class Call(object):
         """
         out = ''
         # Address
-        ascii_str = "{:<6}".format(self.call)
+        ascii_str = "{:<6}".format(self.call.upper())
         t = bytearray(ascii_str.encode('ASCII'))
         for i in t:
             out += hex(i << 1)[2:]
@@ -465,6 +486,20 @@ class AX25Frame(object):
         self.pid_byte = PIDByte()
         self.data = b''
         self.data_len = 0
+        self.addr_uid = ''      # Unique ID/Address String
+
+    def build_uid(self, dec=True):
+        self.addr_uid = '{}:{}'.format(
+            self.from_call.call_str,
+            self.to_call.call_str
+        )
+        ca: Call
+        for ca in self.via_calls:
+            self.addr_uid += ':{}'.format(
+                ca.call_str
+            )
+        if not dec:
+            self.addr_uid = reverse_uid(self.addr_uid)
 
     def decode(self, hexstr=b''):
         if not self.hexstr:
@@ -500,6 +535,8 @@ class AX25Frame(object):
                 index += 1
                 self.data = self.hexstr[index:]
                 self.data_len = len(self.data)
+            # Build address UID
+            self.build_uid(dec=True)
 
     def encode(self):
         self.hexstr = b''
@@ -536,6 +573,8 @@ class AX25Frame(object):
         if self.ctl_byte.info:
             self.data_len = len(self.data)
             self.hexstr += self.data
+        # Build address UID
+        self.build_uid(dec=False)
 
     def validate(self):
         """

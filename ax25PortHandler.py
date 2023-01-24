@@ -1,5 +1,6 @@
 import socket
 from ax25dec_enc import AX25Frame
+from ax25Statistics import MH
 import monitor
 
 import logging
@@ -8,6 +9,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
 )
 logger = logging.getLogger(__name__)
+MYHEARD = MH()
 
 
 class DevDirewolf(object):
@@ -27,7 +29,7 @@ class DevDirewolf(object):
             logger.error('Error. Cant connect to Direwolf {}'.format(self.address))
             logger.error('{}'.format(e))
 
-    def run_loop(self):
+    def run_once(self):
         while True:
             try:
                 buf = self.dw_sock.recv(333)
@@ -43,16 +45,19 @@ class DevDirewolf(object):
                     ax25frame.decode(buf)
                 except IndexError as e:
                     logger.error('DW.decoding: {}'.format(e))
-                ############################
-                # Monitor
+
                 if e is None and ax25frame.validate():
+                    ############################
+                    # Monitor
                     self.monitor.frame_inp(ax25frame, 'DW')
+                    # MH List and Statistics
+                    MYHEARD.mh_inp(ax25frame,'DW')
+                    # mh.mh_inp(dekiss_inp, self.port_id)
                 # if dekiss_inp:
                 # self.handle_rx(dekiss_inp)
                 ############################
                 ############################
-                # MH List and Statistics
-                #mh.mh_inp(dekiss_inp, self.port_id)
+
                 # self.timer_T0 = 0
             else:
                 break

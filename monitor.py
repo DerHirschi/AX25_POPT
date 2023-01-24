@@ -54,10 +54,12 @@ class Monitor(object):
         if axframe.data:
             data = axframe.data.decode('UTF-8', 'ignore')
             data = data.replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
-            while len(data) > 100:
-                out_str += data[:100] + '\n'
-                data = data[100:]
-            out_str += data + '\n'
+            data = data.split('\n')
+            for da in data:
+                while len(da) > 100:
+                    out_str += da[:100] + '\n'
+                    da = da[100:]
+                out_str += da + '\n'
 
         logger.info(out_str)
         self.out_buf.append(out_str)

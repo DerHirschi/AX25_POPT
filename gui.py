@@ -1,7 +1,7 @@
 import tkinter as tk
-from tkinter import scrolledtext
+from tkinter import scrolledtext, Label
 import threading
-from ax25PortHandler import DevDirewolf
+from ax25PortHandler import DevDirewolf, MYHEARD
 
 LOOP_DELAY = 200        # ms
 TEXT_SIZE = 12
@@ -10,7 +10,7 @@ TEXT_SIZE = 12
 class TkMainWin:
     def __init__(self):
         self.axtest_port = DevDirewolf()
-        self.axtest_port.run_loop()
+        self.axtest_port.run_once()
         self.mon_th = threading.Thread(target=self.monitor_th)
         self.win = tk.Tk()
         self.win.title("Py AX.25")
@@ -31,6 +31,11 @@ class TkMainWin:
         # frame.grid(column=0, row=0, columnspan=3, rowspan=2)
         self.mon_txt.grid(row=2, column=1, columnspan=2, sticky="nsew")
 
+        self.test_lable = Label(self.win, text="TEST", font=("Arial", 28))
+        self.test_lable.grid(row=0, column=2)
+
+        #self.test_lable.pack()
+
         self.win.after(LOOP_DELAY, self.tasker)
         self.win.mainloop()
 
@@ -44,9 +49,10 @@ class TkMainWin:
         self.win.after(LOOP_DELAY, self.tasker)
 
     def monitor_th(self):
-        self.axtest_port.run_loop()
+        self.axtest_port.run_once()
         for el in self.axtest_port.monitor.out_buf:
             self.mon_txt.insert(1.0, el)
+            self.test_lable.config(text=el[7:14])
         self.axtest_port.monitor.out_buf = []
 
 
@@ -55,4 +61,6 @@ if __name__ == '__main__':
     try:
         TkMainWin()
     except KeyboardInterrupt:
-        print("Ende")
+        pass
+    print("Ende")
+    MYHEARD.save_mh_data()
