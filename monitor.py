@@ -46,9 +46,12 @@ class Monitor(object):
         else:
             out_str += ' rpt'
         out_str += ' ({}) {}'.format(ax25_frame.ctl_byte.hex, ax25_frame.ctl_byte.mon_str)
-        out_str += ' pid={}({})'.format(hex(ax25_frame.pid_byte.hex), ax25_frame.pid_byte.flag)
+        if int(ax25_frame.pid_byte.hex):
+            out_str += ' pid={}({})'.format(hex(ax25_frame.pid_byte.hex), ax25_frame.pid_byte.flag)
         if ax25_frame.data_len:
             out_str += ' len {}\n'.format(ax25_frame.data_len)
+        else:
+            out_str += '\n'
         # now = datetime.now()  # current date and time
         # out_str += ' {}'.format(now.strftime('%d/%m/%Y %H:%M:%S'))
         # out_str += ' {}\n'.format(now.strftime('%H:%M:%S'))
@@ -61,6 +64,5 @@ class Monitor(object):
                     out_str += da[:100] + '\n'
                     da = da[100:]
                 out_str += da + '\n'
-
         logger.info(out_str)
         self.out_buf.append(out_str)

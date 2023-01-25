@@ -25,13 +25,21 @@ class DevDirewolf(object):
         # TODO: Set CFG from outer
         self.stat_cfg = MD5TESTstationCFG
         self.my_stations = self.stat_cfg.parm_StationCalls
+        # AX25 Parm
+        # self.parm_MaxFrame = self.stat_cfg.parm_MaxFrame
+        # self.MaxFrame = 0
         # CONFIG ENDE
         #############
-        self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        #############
+        # VARS
+        # self.tx_buff_data: [b''] = []     # Abhängig von Max Frame
+        # self.tx_buff_ctl: [b''] = []      # PRIO, nicht von Max Frame abhängig
+        #############
         self.monitor = MONITOR
         self.connections = {
             # 'addrss_str_id': AX25Conn
         }
+        self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         try:
             self.dw_sock.connect(self.address)
             self.dw_sock.settimeout(sock_timeout)
@@ -41,6 +49,10 @@ class DevDirewolf(object):
             raise e
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
+        # Monitor
+        self.monitor.frame_inp(ax25_frame, 'DW')
+        # MH List and Statistics
+        MYHEARD.mh_inp(ax25_frame, 'DW')
         if ax25_frame.addr_uid in self.connections.keys():
             # Connection already established
             conn: AX25Conn = self.connections[ax25_frame.addr_uid]
@@ -51,6 +63,41 @@ class DevDirewolf(object):
                 cfg = self.stat_cfg()
                 self.connections[ax25_frame.addr_uid] = AX25Conn(ax25_frame, cfg)
 
+    def tx_pac_handler(self):
+        """
+        self.fetch_tx_buffer()
+        frame: b''
+        for frame in self.tx_buff_ctl:
+            out = (bytes.fromhex('c000') + frame + bytes.fromhex('c0'))
+            self.dw_sock.sendall(out)
+        for frame in self.tx_buff_data:
+            out = (bytes.fromhex('c000') + frame + bytes.fromhex('c0'))
+            self.dw_sock.sendall(out)
+        """
+        for k in self.connections.keys():
+            conn: AX25Conn = self.connections[k]
+            el: AX25Frame
+            for el in conn.tx_buf:
+                out = (bytes.fromhex('c000') + el.hexstr + bytes.fromhex('c0'))
+                self.dw_sock.sendall(out)
+                # Monitor
+                self.monitor.frame_inp(el, 'DW')
+            self.connections[k].tx_buf = []
+    """   
+    def fetch_tx_buffer(self):
+        for k in self.connections.keys():
+            conn: AX25Conn = self.connections[k]
+            el: AX25Frame
+            for el in conn.tx_buf:
+                # if len(self.tx_buff_data) < self.stat_cfg.port_parm_MaxPac:
+                if el.ctl_byte.flag in ['I', 'UI']:
+                    if el.hexstr not in self.tx_buff_data:
+                        self.tx_buff_data.append(el.hexstr)
+                else:
+                    if el.hexstr not in self.tx_buff_ctl:
+                        self.tx_buff_ctl.append(el.hexstr)
+            self.connections[k].tx_buf = []
+    """
     def del_connections(self):
         del_k = []
         for k in self.connections.keys():
@@ -92,15 +139,13 @@ class DevDirewolf(object):
                     # ######### RX #############
                     # Handling
                     self.rx_pac_handler(ax25frame)
-                    # Monitor
-                    self.monitor.frame_inp(ax25frame, 'DW')
-                    # MH List and Statistics
-                    MYHEARD.mh_inp(ax25frame,'DW')
+                    ############################
+
                 # self.timer_T0 = 0
             else:
-                ############################
                 # ######### TX #############
-
+                # Handling
+                self.tx_pac_handler()
                 ############################
 
                 ############################

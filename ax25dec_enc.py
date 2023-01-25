@@ -43,14 +43,8 @@ def format_hex(inp=''):
     return fl
 
 
-"""
-def bytearray2hexstr(inp):
-    return ''.join('{:02x}'.format(x) for x in inp)
-"""
-
-
 class EncodingERROR(Exception):
-    pass
+    logger.error('AX25 Packet Encoding Error !')
 
 
 class DecodingERROR(Exception):
@@ -403,7 +397,7 @@ class PIDByte(object):
             0xCB: self.appletalk_arp,
             0xFF: self.esc,
         }
-        self.text()     # Standard PID Text 0xf0
+        # self.text()     # Standard PID Text 0xf0
 
     def decode(self, in_byte: b''):
         if int(in_byte) in self.pac_types.keys():
@@ -508,6 +502,19 @@ class AX25Frame(object):
         if not dec:
             self.addr_uid = reverse_uid(self.addr_uid)
 
+    def set_stop_bit(self):
+        if not self.via_calls:
+            self.to_call.s_bit = False
+            self.from_call.s_bit = True
+        else:
+            self.to_call.s_bit = False
+            self.from_call.s_bit = False
+            el: Call
+            for el in self.via_calls:
+                el.s_bit = False
+                el.c_bit = False
+            self.via_calls[-1].s_bit = True
+
     def decode(self, hexstr=b''):
         if not self.hexstr:
             self.kiss = hexstr[:2]
@@ -574,11 +581,7 @@ class AX25Frame(object):
             self.to_call.c_bit = False
             self.from_call.c_bit = True
         # Set Stop Bit
-        if not self.via_calls:
-            self.from_call.s_bit = True
-        else:
-            # self.via_calls = [Call()]
-            self.via_calls[-1].s_bit = True
+        self.set_stop_bit()
         # Encode Address Fields
         self.to_call.enc_call()
         self.from_call.enc_call()
@@ -622,7 +625,8 @@ class AX25Frame(object):
         if not self.ctl_byte.validate():
             logger.error('Validate Error: C_Byte')
             return False
-        if not self.pid_byte.validate():
-            logger.error('Validate Error: PID_Byte')
-            return False
+        if self.ctl_byte.pid:
+            if not self.pid_byte.validate():
+                logger.error('Validate Error: PID_Byte')
+                return False
         return True

@@ -22,10 +22,7 @@ class AX25Conn(object):
         else:
             ax25_frame.encode()                                 # Make sure outgoing Packet is encoded
             self.address_str_id = reverse_uid(ax25_frame.addr_uid)  # Unique ID for Connection
-        self.my_call = ax25_frame.to_call
-        self.to_call = ax25_frame.from_call
-        self.via_calls = ax25_frame.via_calls
-        # self.rx_buf: [AX25Frame] = []
+        self.rx_buf = ax25_frame
         self.tx_buf: [AX25Frame] = []
         """ Port Variablen"""
         self.vs = 0
@@ -35,9 +32,10 @@ class AX25Conn(object):
         self.t3 = 0
         self.n2 = 1
         self.zustand_tab = {
-            self.S1Frei.index: self.S1Frei
+            S1Frei.index: S1Frei,
+            S5InfoReady.index: S5InfoReady
         }
-        self.zustand_exec = self.zustand_tab[1]()
+        self.zustand_exec = self.zustand_tab[1](self)
         """ Port Parameter """
         self.parm_PacLen = cfg.parm_PacLen      # Max Pac len
         self.parm_MaxFrame = cfg.parm_MaxFrame  # Max (I) Frames
@@ -57,36 +55,92 @@ class AX25Conn(object):
             self.handle_tx(ax25_frame)
 
     def handle_rx(self, ax25_frame: AX25Frame):
+        self.rx_buf = ax25_frame
         self.zustand_exec.rx(ax25_frame=ax25_frame)
 
     def handle_tx(self, ax25_frame: AX25Frame):
         self.zustand_exec.tx(ax25_frame=ax25_frame)
 
-    class DefaultStat(object):
-        flag = 'FREI'
-        index = 0
+    def build_tx_frame(self):
+        frame = AX25Frame()
+        frame.to_call = self.rx_buf.from_call
+        frame.from_call = self.rx_buf.to_call
+        frame.via_calls = self.rx_buf.via_calls
+        if frame.via_calls:
+            frame.via_calls.reverse()
+        frame.set_stop_bit()
+        frame.ctl_byte.pf = self.rx_buf.ctl_byte.pf
+        return frame
 
-        def rx(self, ax25_frame: AX25Frame):
-            pass
+    def send_UA(self):
+        pac = self.build_tx_frame()
+        pac.ctl_byte.UAcByte()
+        pac.encode()
+        self.tx_buf.append(pac)
 
-        def tx(self, ax25_frame: AX25Frame):
-            pass
+    def send_DM(self):
+        pac = self.build_tx_frame()
+        pac.ctl_byte.DMcByte()
+        pac.encode()
+        self.tx_buf.append(pac)
 
-    class S1Frei(DefaultStat):
-        """
-        I mit |I ohne |RR mit |RR ohne|REJ mit|REJ ohne|RNR mit | RNR ohne| SABM    | DISC
-        DM            | DM    |       | DM    |        | DM     |         | UA,S5 3)| DM 4)
-        """
-        flag = 'FREI'
-        index = 1
 
-        def rx(self, ax25_frame: AX25Frame):
-            flag = ax25_frame.ctl_byte.flag
-            if flag == 'SABM':
-                # Send UA
+class DefaultStat(object):
+    index = 0
 
-                print('UA')
-            elif ax25_frame.ctl_byte.pf and flag in ['RR', 'REJ', 'SREJ', 'RNR']:
-                # Send DM and Del me
-                print('DM')
+    def __init__(self, ax25_conn: AX25Conn):
+        self.ax25conn = ax25_conn
+        self.flag = {
+            0: '',
+            1: 'FREI',
+            5: 'Info.-Übertrag.',
+        }[self.index]
+
+    def change_state(self, zustand_id=1):
+        self.ax25conn.zustand_exec = self.ax25conn.zustand_tab[zustand_id](self.ax25conn)
+
+    def rx(self, ax25_frame: AX25Frame):
+        pass
+
+    def tx(self, ax25_frame: AX25Frame):
+        pass
+
+    def crone(self):
+        pass
+
+
+class S1Frei(DefaultStat):
+    """
+    I mit |I ohne |RR mit |RR ohne|REJ mit|REJ ohne|RNR mit | RNR ohne| SABM    | DISC
+    DM            | DM    |       | DM    |        | DM     |         | UA,S5 3)| DM 4)
+    """
+    index = 1
+
+    def rx(self, ax25_frame: AX25Frame):
+        flag = ax25_frame.ctl_byte.flag
+        if flag == 'SABM':
+            self.ax25conn.send_UA()
+            self.change_state(5)
+            print('UA')
+        elif ax25_frame.ctl_byte.pf and flag in ['RR', 'REJ', 'SREJ', 'RNR']:
+            self.ax25conn.send_DM()
+            print('DM')
+
+
+class S5InfoReady(DefaultStat):
+    """
+    I mit |I ohne |RR mit |RR ohne|REJ mit|REJ ohne|RNR mit | RNR ohne| SABM    | DISC
+    RR    | I/RR 1)| RR   | I/- 2)| RR    | I      | RR,S9  | S9      | UA      | UA,S1
+    """
+    index = 5
+
+    def rx(self, ax25_frame: AX25Frame):
+        flag = ax25_frame.ctl_byte.flag
+        if flag == 'SABM':
+            self.ax25conn.send_UA()
+            print('UA')
+        elif flag == 'DISC':
+            self.ax25conn.send_UA()
+            self.change_state(1)
+            print('DISC')
 

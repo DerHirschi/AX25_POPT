@@ -10,6 +10,7 @@ class DefaultStationConfig(object):
     parm_T3 = 180000  # T3 (Inactive Link Timer)
     parm_N2 = 20  # Max Try   Default 20
     parm_baud = 1200  # Baud for calculating Timer
+    # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
 
 
 class MD5TESTstationCFG(DefaultStationConfig):
