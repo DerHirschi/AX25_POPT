@@ -5,7 +5,7 @@
 import logging
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
 )
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,14 @@ def format_hex(inp=''):
 def bytearray2hexstr(inp):
     return ''.join('{:02x}'.format(x) for x in inp)
 """
+
+
+class EncodingERROR(Exception):
+    pass
+
+
+class DecodingERROR(Exception):
+    logger.error('AX25 Packet decoding Error !')
 
 
 class Call(object):
@@ -100,7 +108,7 @@ class Call(object):
         TODO: better Call Check
         :return: bool
         """
-        if len(self.call) < 2:
+        if len(self.call) < 2 or len(self.call) > 6:
             logger.error('Call validator: Call length')
             return False
         if not self.call.isascii():
@@ -191,13 +199,12 @@ class CByte(object):
 
     def dec_cbyte(self, in_byte):
         if int(in_byte) in self.pac_types.keys():
-            print("Predefined Pac Type.. {}".format(in_byte))
+            # print("Predefined Pac Type.. {}".format(in_byte))
             self.pac_types[int(in_byte)]()
         else:
-            print("Not predefined Pac Type..")
-            # self.ctl_byte.dec_cbyte(self.hexstr[index])
+            # print("Not predefined Pac Type..")
             self.hex = hex(int(in_byte))
-            print(self.hex)
+            # print(self.hex)
             bi = bin(int(in_byte))[2:].zfill(8)
             pf = bool(int(bi[3], 2))  # P/F
             self.pf = pf
@@ -505,14 +512,23 @@ class AX25Frame(object):
         if not self.hexstr:
             self.kiss = hexstr[:2]
             self.hexstr = hexstr[2:-1]
-        if self.hexstr:
-            self.to_call.dec_call(self.hexstr[:7])
-            self.from_call.dec_call(self.hexstr[7:14])
+        if self.hexstr and len(self.hexstr) > 14:
+            try:
+                self.to_call.dec_call(self.hexstr[:7])
+            except IndexError:
+                raise DecodingERROR
+            try:
+                self.from_call.dec_call(self.hexstr[7:14])
+            except IndexError:
+                raise DecodingERROR
             n = 2
             if not self.from_call.s_bit:
                 while True:
                     tmp = Call()
-                    tmp.dec_call(self.hexstr[7 * n: 7 + 7 * n])
+                    try:
+                        tmp.dec_call(self.hexstr[7 * n: 7 + 7 * n])
+                    except IndexError:
+                        raise DecodingERROR
                     self.via_calls.append(tmp)
                     n += 1
                     if tmp.s_bit:
@@ -520,7 +536,10 @@ class AX25Frame(object):
 
             index = 7 * n
             # Dec C-Byte
-            self.ctl_byte.dec_cbyte(self.hexstr[index])
+            try:
+                self.ctl_byte.dec_cbyte(self.hexstr[index])
+            except IndexError:
+                raise DecodingERROR
             # Get Command Bits
             if self.to_call.c_bit and not self.from_call.c_bit:
                 self.ctl_byte.cmd = True
@@ -529,7 +548,10 @@ class AX25Frame(object):
             # Get PID if available
             if self.ctl_byte.pid:
                 index += 1
-                self.pid_byte.decode(self.hexstr[index])
+                try:
+                    self.pid_byte.decode(self.hexstr[index])
+                except IndexError:
+                    raise DecodingERROR
                 # self.pid_byte.pac_types[self.hexstr[index]]()
             if self.ctl_byte.info:
                 index += 1
@@ -537,6 +559,10 @@ class AX25Frame(object):
                 self.data_len = len(self.data)
             # Build address UID
             self.build_uid(dec=True)
+            if not self.validate():
+                raise DecodingERROR
+        else:
+            raise DecodingERROR
 
     def encode(self):
         self.hexstr = b''

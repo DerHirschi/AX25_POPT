@@ -4,7 +4,7 @@ from datetime import datetime
 import logging
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
 )
 logger = logging.getLogger(__name__)
 
@@ -25,34 +25,35 @@ class Monitor(object):
     def __init__(self):
         self.out_buf = []
 
-    def frame_inp(self, axframe: AX25Frame, port_name='DW'):
-        from_call = get_call_str(axframe.from_call.call, axframe.from_call.ssid)
-        to_call = get_call_str(axframe.to_call.call, axframe.to_call.ssid)
+    def frame_inp(self, ax25_frame: AX25Frame, port_name='DW'):
+        from_call = get_call_str(ax25_frame.from_call.call, ax25_frame.from_call.ssid)
+        to_call = get_call_str(ax25_frame.to_call.call, ax25_frame.to_call.ssid)
         via_calls = []
-        for stat in axframe.via_calls:
+        for stat in ax25_frame.via_calls:
             # stat: Call
             call_str = get_call_str(stat.call, stat.ssid)
             if stat.c_bit:
                 call_str += '*'
             via_calls.append(call_str)
-        out_str = '{}-{}: {} to {}'.format(port_name, hex(axframe.kiss[-1]), from_call, to_call)
+
+        out_str = '{} {}: {} to {}'.format(port_name, datetime.now().strftime('%H:%M:%S'), from_call, to_call)
         if via_calls:
             out_str += ' via'
             for st in via_calls:
                 out_str += ' {}'.format(st)
-        if axframe.ctl_byte.cmd:
+        if ax25_frame.ctl_byte.cmd:
             out_str += ' cmd'
         else:
             out_str += ' rpt'
-        out_str += ' ({}) {}'.format(axframe.ctl_byte.hex, axframe.ctl_byte.mon_str)
-        out_str += ' pid={}({})'.format(hex(axframe.pid_byte.hex), axframe.pid_byte.flag)
-        if axframe.data_len:
-            out_str += ' len {}'.format(axframe.data_len)
-        now = datetime.now()  # current date and time
+        out_str += ' ({}) {}'.format(ax25_frame.ctl_byte.hex, ax25_frame.ctl_byte.mon_str)
+        out_str += ' pid={}({})'.format(hex(ax25_frame.pid_byte.hex), ax25_frame.pid_byte.flag)
+        if ax25_frame.data_len:
+            out_str += ' len {}\n'.format(ax25_frame.data_len)
+        # now = datetime.now()  # current date and time
         # out_str += ' {}'.format(now.strftime('%d/%m/%Y %H:%M:%S'))
-        out_str += ' {}\n'.format(now.strftime('%H:%M:%S'))
-        if axframe.data:
-            data = axframe.data.decode('UTF-8', 'ignore')
+        # out_str += ' {}\n'.format(now.strftime('%H:%M:%S'))
+        if ax25_frame.data:
+            data = ax25_frame.data.decode('UTF-8', 'ignore')
             data = data.replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
             data = data.split('\n')
             for da in data:

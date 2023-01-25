@@ -1,65 +1,111 @@
 import socket
-from ax25dec_enc import AX25Frame
+from ax25dec_enc import AX25Frame, DecodingERROR, EncodingERROR
 from ax25Statistics import MH
+from ax25PacHandler import AX25Conn
+from config_station import MD5TESTstationCFG
+
 import monitor
 
 import logging
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
 )
 logger = logging.getLogger(__name__)
 MYHEARD = MH()
+MONITOR = monitor.Monitor()
 
 
 class DevDirewolf(object):
     def __init__(self):
-        self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        ############
+        # CONFIG
         self.address = ('192.168.178.152', 8001)
-        self.monitor = monitor.Monitor()
+        sock_timeout = 1.0
+        # TODO: Set CFG from outer
+        self.stat_cfg = MD5TESTstationCFG
+        self.my_stations = self.stat_cfg.parm_StationCalls
+        # CONFIG ENDE
+        #############
+        self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        self.monitor = MONITOR
         self.connections = {
-            # 'addrss_str_id': ConnObj
+            # 'addrss_str_id': AX25Conn
         }
         try:
             self.dw_sock.connect(self.address)
-            self.dw_sock.settimeout(1.0)
-            print(self.dw_sock.gettimeout())
+            self.dw_sock.settimeout(sock_timeout)
         except (OSError, ConnectionRefusedError, ConnectionError) as e:
-            pass
             logger.error('Error. Cant connect to Direwolf {}'.format(self.address))
             logger.error('{}'.format(e))
+            raise e
+
+    def rx_pac_handler(self, ax25_frame: AX25Frame):
+        if ax25_frame.addr_uid in self.connections.keys():
+            # Connection already established
+            conn: AX25Conn = self.connections[ax25_frame.addr_uid]
+            conn.handle_rx(ax25_frame=ax25_frame)
+        else:   # Check MYStation Calls with SSID or Check incoming call without SSID
+            if ax25_frame.to_call.call_str in self.my_stations \
+              or ax25_frame.to_call.call in self.my_stations:
+                cfg = self.stat_cfg()
+                self.connections[ax25_frame.addr_uid] = AX25Conn(ax25_frame, cfg)
+
+    def del_connections(self):
+        del_k = []
+        for k in self.connections.keys():
+            conn: AX25Conn = self.connections[k]
+            # S1 Frei
+            if conn.zustand_exec.index == 1:
+                # And empty Buffer
+                # if not conn.rx_buf and not conn.tx_buf:
+                if not conn.tx_buf:
+                    del_k.append(k)
+        for el in del_k:
+            del self.connections[el]
 
     def run_once(self):
         while True:
+            buf = b''
             try:
                 buf = self.dw_sock.recv(333)
+                """
+                while b:
+                    buf += b
+                    b = self.dw_sock.recv(333)
+                """
                 logger.debug('Inp Buf> {}'.format(buf))
             except socket.timeout:
-                break
+                pass
 
             if buf:  # RX ############
                 # TODO self.set_t0()
-                e = None
                 ax25frame = AX25Frame()
+                e = None
                 try:
+                    # Decoding
                     ax25frame.decode(buf)
-                except IndexError as e:
+                except DecodingERROR as e:
                     logger.error('DW.decoding: {}'.format(e))
-
+                    break
                 if e is None and ax25frame.validate():
-                    ############################
+                    # ######### RX #############
+                    # Handling
+                    self.rx_pac_handler(ax25frame)
                     # Monitor
                     self.monitor.frame_inp(ax25frame, 'DW')
                     # MH List and Statistics
                     MYHEARD.mh_inp(ax25frame,'DW')
-                    # mh.mh_inp(dekiss_inp, self.port_id)
-                # if dekiss_inp:
-                # self.handle_rx(dekiss_inp)
-                ############################
-                ############################
-
                 # self.timer_T0 = 0
             else:
+                ############################
+                # ######### TX #############
+
+                ############################
+
+                ############################
+                # Cleanup
+                self.del_connections()
                 break
             #############################################
             # Crone

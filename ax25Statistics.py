@@ -43,20 +43,20 @@ class MH(object):
         }
         """
 
-    def mh_inp(self, rx_pac: AX25Frame, port_id, axip_add=None):
+    def mh_inp(self, ax25_frame: AX25Frame, port_id, axip_add=None):
         ########################
         # Call Stat
-        call_str = rx_pac.from_call.call_str
+        call_str = ax25_frame.from_call.call_str
 
         if call_str not in self.calls.keys():
             ent = MyHeard()
             ent.own_call = call_str
-            ent.to_calls = [rx_pac.to_call.call_str]
+            ent.to_calls = [ax25_frame.to_call.call_str]
             ent.port = port_id
-            ent.byte_n = rx_pac.data_len
-            ent.h_byte_n = len(rx_pac.hexstr) - rx_pac.data_len
+            ent.byte_n = ax25_frame.data_len
+            ent.h_byte_n = len(ax25_frame.hexstr) - ax25_frame.data_len
             ent.axip_add = axip_add
-            if rx_pac.ctl_byte.flag == 'REJ':
+            if ax25_frame.ctl_byte.flag == 'REJ':
                 ent.rej_n = 1
             self.calls[call_str] = ent
         else:
@@ -64,13 +64,13 @@ class MH(object):
             ent = self.calls[call_str]
             ent.pac_n += 1
             ent.port = port_id
-            ent.byte_n += rx_pac.data_len
+            ent.byte_n += ax25_frame.data_len
             ent.last_seen = get_time_str()
-            to_c_str = rx_pac.to_call.call_str
+            to_c_str = ax25_frame.to_call.call_str
             if to_c_str not in ent.to_calls:
                 ent.to_calls.append(to_c_str)
-            ent.h_byte_n += len(rx_pac.hexstr) - rx_pac.data_len
-            if rx_pac.ctl_byte.flag == 'REJ':
+            ent.h_byte_n += len(ax25_frame.hexstr) - ax25_frame.data_len
+            if ax25_frame.ctl_byte.flag == 'REJ':
                 ent.rej_n += 1
             self.calls[call_str] = ent
 
