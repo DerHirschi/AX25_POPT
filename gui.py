@@ -40,13 +40,13 @@ class TkMainWin:
         self.win.rowconfigure(1, minsize=300, weight=1)
         self.out_txt.grid(row=1, column=1, sticky="nsew")
         # Monitor
-        self.mon_txt = scrolledtext.ScrolledText(self.win, background='black', foreground='green', font=("Arial", TEXT_SIZE))
+        self.mon_txt = scrolledtext.ScrolledText(self.win, background='black', foreground='green', font=("TkFixedFont", TEXT_SIZE))
         self.win.rowconfigure(2, minsize=300, weight=1)
         # frame.grid(column=0, row=0, columnspan=3, rowspan=2)
         self.mon_txt.grid(row=2, column=1, columnspan=2, sticky="nsew")
         #######################
         # SeitenLabel ( TEST )
-        self.test_lable = Label(self.win, text="TEST", font=("Arial", 28))
+        self.test_lable = Label(self.win, text="", font=("Arial", 22))
         self.test_lable.grid(row=0, column=2)
 
         #######################
@@ -65,8 +65,13 @@ class TkMainWin:
         self.axtest_port.run_once()
         for el in self.axtest_port.monitor.out_buf:
             self.mon_txt.insert(1.0, el)
-            self.test_lable.config(text=el[13:20])  # TEST LABEL
+        if list(self.axtest_port.connections.keys()):
+            self.test_lable.config(text=str(list(self.axtest_port.connections.keys())[0]).split(':')[0])  # TEST LABEL
+        else:
+            self.test_lable.config(text='')  # TEST LABEL
+
         self.axtest_port.monitor.out_buf = []
+
 
     def MH_win(self):
         if self.mhwin is None:

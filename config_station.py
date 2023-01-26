@@ -1,5 +1,7 @@
 
 class DefaultStationConfig(object):
+    ##########################
+    # Parameter for Connection
     parm_StationCalls: [''] = []
     parm_isDigi = False
     parm_PacLen = 250  # Max Pac len
@@ -11,7 +13,14 @@ class DefaultStationConfig(object):
     parm_N2 = 20  # Max Try   Default 20
     parm_baud = 1200  # Baud for calculating Timer
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
+    ##########################
+    # Parameter for CLI
+    parm_cli_ctext = ''
 
 
 class MD5TESTstationCFG(DefaultStationConfig):
     parm_StationCalls = ['MD5TES', 'MD6TES']
+    ##########################
+    # Parameter for CLI
+    parm_cli_ctext = '-= TEST C-TEXT =-'
+

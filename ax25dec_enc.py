@@ -5,7 +5,7 @@
 import logging
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
@@ -36,11 +36,19 @@ def reverse_uid(inp=''):
     return ret[:-1]
 
 
-def format_hex(inp=''):
+def format_hex2bin(inp=''):
     fl = hex(int(inp, 2))[2:]
     if len(fl) == 1:
         return '0' + fl
     return fl
+
+
+def format_hexstr(inp):
+    print(type(inp))
+    if type(inp) == int:
+        return '{:02x}'.format(inp)
+    elif type(inp) == str:
+        return '{:02x}'.format(int(inp, 16))
 
 
 class EncodingERROR(Exception):
@@ -94,7 +102,7 @@ class Call(object):
         if self.s_bit:
             ssid_in = ssid_in[:-1] + '1'  # Set Stop Bit on last DIGI
         ssid_in = ssid_in[:1] + self.r_bits + ssid_in[3:]  # Set R R Bits True.
-        out += format_hex(ssid_in)
+        out += format_hex2bin(ssid_in)
         self.hex_str = out.encode()
 
     def validate(self):
@@ -377,6 +385,7 @@ class CByte(object):
 
 
 class PIDByte(object):
+
     def __init__(self):
         self.hex = 0x00
         self.flag = ''
@@ -403,14 +412,17 @@ class PIDByte(object):
         if int(in_byte) in self.pac_types.keys():
             self.pac_types[int(in_byte)]()
         else:
-            in_byte = int(in_byte, 16)
+            print("in_pid_bate: {}".format(hex(in_byte)))
+            print("in_pid_bate: {}".format(type(in_byte)))
+            #in_byte = int(in_byte, 16)
+
             bi = bin(in_byte)[2:].zfill(8)
             if bi[2:5] in ['01', '10']:
                 self.ax25_l3(hex(int(in_byte)))
 
     def validate(self):
         if self.hex == 0x00:
-            logger.error('PID_Byte validator')
+            logger.error('PID_Byte validator : {}'.format(self.hex))
             return False
         return True
 
@@ -482,12 +494,13 @@ class AX25Frame(object):
         self.hexstr = b''           # Dekiss
         self.from_call = Call()
         self.to_call = Call()
-        self.via_calls = []
+        self.via_calls: [Call] = []
+        self.is_digipeated = True   # Is running through all Digi's ?
         self.ctl_byte = CByte()
         self.pid_byte = PIDByte()
         self.data = b''
         self.data_len = 0
-        self.addr_uid = ''      # Unique ID/Address String
+        self.addr_uid = ''          # Unique ID/Address String
 
     def build_uid(self, dec=True):
         self.addr_uid = '{}:{}'.format(
@@ -512,8 +525,21 @@ class AX25Frame(object):
             el: Call
             for el in self.via_calls:
                 el.s_bit = False
-                el.c_bit = False
+                # el.c_bit = False
             self.via_calls[-1].s_bit = True
+
+    def set_check_h_bits(self, dec=True):
+        """ Check if Packet runs through all Digi's """
+        ca: Call
+        if dec:
+            for ca in self.via_calls:
+                if not ca.c_bit:
+                    self.is_digipeated = False
+                    break
+        else:
+            # TODO TESTING !!
+            for ca in self.via_calls:
+                ca.c_bit = False
 
     def decode(self, hexstr=b''):
         if not self.hexstr:
@@ -556,6 +582,7 @@ class AX25Frame(object):
             if self.ctl_byte.pid:
                 index += 1
                 try:
+                    print(">>> {}".format(hex(self.hexstr[index])))
                     self.pid_byte.decode(self.hexstr[index])
                 except IndexError:
                     raise DecodingERROR
@@ -564,6 +591,8 @@ class AX25Frame(object):
                 index += 1
                 self.data = self.hexstr[index:]
                 self.data_len = len(self.data)
+            # Check if all Digi s have repeated packet
+            self.set_check_h_bits(dec=True)
             # Build address UID
             self.build_uid(dec=True)
             if not self.validate():
@@ -588,16 +617,40 @@ class AX25Frame(object):
         self.hexstr += self.to_call.hex_str
         self.hexstr += self.from_call.hex_str
         # Via Stations
+        # Set all H-Bits to 0
+        self.set_check_h_bits(dec=False)
         for station in self.via_calls:
             station.enc_call()
             self.hexstr += station.hex_str
         # C Byte
         self.ctl_byte.enc_cbyte()
-        self.hexstr += str(self.ctl_byte.hex)[2:].encode()
+        self.hexstr += format_hexstr(self.ctl_byte.hex).encode()
         # PID
         if self.ctl_byte.pid:
-            self.hexstr += str(hex(self.pid_byte.hex))[2:].encode()
-        self.hexstr = bytes.fromhex(self.hexstr.decode())
+            self.hexstr += format_hexstr(self.pid_byte.hex).encode()
+
+        try:
+            self.hexstr = bytes.fromhex(self.hexstr.decode())
+        except ValueError:
+            print("VALUE ERROR !!!!")
+            print("V: {}".format(self.hexstr))
+            print("from_call")
+            for k in vars(self.from_call).keys():
+                print("{} > {}".format(k, vars(self.from_call)[k]))
+            print("")
+            print("to_call")
+            for k in vars(self.to_call).keys():
+                print("{} > {}".format(k, vars(self.to_call)[k]))
+            print("")
+            print("pid_byte")
+            for k in vars(self.pid_byte).keys():
+                print("{} > {}".format(k, vars(self.pid_byte)[k]))
+            print("")
+            print("ctl_byte")
+            for k in vars(self.ctl_byte).keys():
+                print("{} > {}".format(k, vars(self.ctl_byte)[k]))
+            raise ValueError
+
         # Data
         if self.ctl_byte.info:
             self.data_len = len(self.data)

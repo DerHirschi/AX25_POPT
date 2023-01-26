@@ -1,5 +1,5 @@
 import socket
-from ax25dec_enc import AX25Frame, DecodingERROR, EncodingERROR
+from ax25dec_enc import AX25Frame, DecodingERROR, EncodingERROR, reverse_uid
 from ax25Statistics import MH
 from ax25PacHandler import AX25Conn
 from config_station import MD5TESTstationCFG
@@ -53,15 +53,15 @@ class DevDirewolf(object):
         self.monitor.frame_inp(ax25_frame, 'DW')
         # MH List and Statistics
         MYHEARD.mh_inp(ax25_frame, 'DW')
-        if ax25_frame.addr_uid in self.connections.keys():
+        if reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
             # Connection already established
-            conn: AX25Conn = self.connections[ax25_frame.addr_uid]
+            conn: AX25Conn = self.connections[reverse_uid(ax25_frame.addr_uid)]
             conn.handle_rx(ax25_frame=ax25_frame)
         else:   # Check MYStation Calls with SSID or Check incoming call without SSID
             if ax25_frame.to_call.call_str in self.my_stations \
               or ax25_frame.to_call.call in self.my_stations:
                 cfg = self.stat_cfg()
-                self.connections[ax25_frame.addr_uid] = AX25Conn(ax25_frame, cfg)
+                self.connections[reverse_uid(ax25_frame.addr_uid)] = AX25Conn(ax25_frame, cfg)
 
     def tx_pac_handler(self):
         """
@@ -77,12 +77,19 @@ class DevDirewolf(object):
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
             el: AX25Frame
-            for el in conn.tx_buf:
+            for el in conn.tx_buf_2send:
                 out = (bytes.fromhex('c000') + el.hexstr + bytes.fromhex('c0'))
                 self.dw_sock.sendall(out)
                 # Monitor
                 self.monitor.frame_inp(el, 'DW')
-            self.connections[k].tx_buf = []
+            self.connections[k].tx_buf_2send = []
+
+    def cron_pac_handler(self):
+        """ Ecexute Cronjob on all Connections"""
+        for k in self.connections.keys():
+            conn: AX25Conn = self.connections[k]
+            conn.exec_cron()
+
     """   
     def fetch_tx_buffer(self):
         for k in self.connections.keys():
@@ -102,11 +109,10 @@ class DevDirewolf(object):
         del_k = []
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
-            # S1 Frei
-            if conn.zustand_exec.index == 1:
-                # And empty Buffer
-                # if not conn.rx_buf and not conn.tx_buf:
-                if not conn.tx_buf:
+            # S0 ENDE
+            if conn.zustand_exec.stat_index == 0:
+                # And empty Buffer ?? S0 should be enough
+                if not conn.tx_buf_2send:
                     del_k.append(k)
         for el in del_k:
             del self.connections[el]
@@ -143,6 +149,9 @@ class DevDirewolf(object):
 
                 # self.timer_T0 = 0
             else:
+                #############################################
+                # Crone
+                self.cron_pac_handler()
                 # ######### TX #############
                 # Handling
                 self.tx_pac_handler()
@@ -152,10 +161,6 @@ class DevDirewolf(object):
                 # Cleanup
                 self.del_connections()
                 break
-            #############################################
-            # Crone
-            # self.cron_main()
-            # self.handle_tx()  # TX #############################################################
             """
             if self.tx_buffer:
                 # monitor.debug_out(self.ax_conn)
