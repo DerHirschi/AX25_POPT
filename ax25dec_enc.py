@@ -5,7 +5,7 @@
 import logging
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
 )
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,6 @@ def format_hex2bin(inp=''):
 
 
 def format_hexstr(inp):
-    print(type(inp))
     if type(inp) == int:
         return '{:02x}'.format(inp)
     elif type(inp) == str:
@@ -582,11 +581,9 @@ class AX25Frame(object):
             if self.ctl_byte.pid:
                 index += 1
                 try:
-                    print(">>> {}".format(hex(self.hexstr[index])))
                     self.pid_byte.decode(self.hexstr[index])
                 except IndexError:
                     raise DecodingERROR
-                # self.pid_byte.pac_types[self.hexstr[index]]()
             if self.ctl_byte.info:
                 index += 1
                 self.data = self.hexstr[index:]
