@@ -21,7 +21,7 @@ class DevDirewolf(object):
         ############
         # CONFIG
         self.address = ('192.168.178.152', 8001)
-        sock_timeout = 1.0
+        sock_timeout = 0.5
         # TODO: Set CFG from outer
         self.stat_cfg = MD5TESTstationCFG
         self.my_stations = self.stat_cfg.parm_StationCalls

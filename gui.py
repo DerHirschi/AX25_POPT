@@ -32,11 +32,11 @@ class TkMainWin:
         ##############
         # Textfenster
         # Vorschreibfenster
-        self.inp_txt = tk.Text(self.win, background='black', foreground='yellow', font=("Arial", TEXT_SIZE))
+        self.inp_txt = tk.Text(self.win, background='black', foreground='yellow', font=("TkFixedFont", TEXT_SIZE))
         self.win.rowconfigure(0, minsize=150, weight=1)
         self.inp_txt.grid(row=0, column=1, sticky="nsew")
         # Ausgabe
-        self.out_txt = tk.Text(self.win, background='black', foreground='red', font=("Arial", TEXT_SIZE))
+        self.out_txt = tk.Text(self.win, background='black', foreground='red', font=("TkFixedFont", TEXT_SIZE))
         self.win.rowconfigure(1, minsize=300, weight=1)
         self.out_txt.grid(row=1, column=1, sticky="nsew")
         # Monitor
@@ -63,6 +63,13 @@ class TkMainWin:
 
     def monitor_th(self):
         self.axtest_port.run_once()
+        if list(self.axtest_port.connections.keys()):
+            k = list(self.axtest_port.connections.keys())[0]
+            conn = self.axtest_port.connections[k]
+            out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
+            conn.rx_buf_rawData = b''
+            self.out_txt.insert(1.0, out)
+
         for el in self.axtest_port.monitor.out_buf:
             self.mon_txt.insert(1.0, el)
         if list(self.axtest_port.connections.keys()):
