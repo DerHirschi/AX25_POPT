@@ -5,7 +5,8 @@ import threading
 import logging
 from ax25.ax25PortHandler import DevDirewolf, MYHEARD, AX25Conn
 from ax25.ax25dec_enc import Call
-from guiMH import MHWin
+from gui.guiMH import MHWin
+from gui.guiDebug import DEBUGwin
 
 
 LOOP_DELAY = 10        # ms
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class TkMainWin:
     def __init__(self):
-        self.axtest_port = DevDirewolf()
+        self.axtest_port = DevDirewolf()    # TODO
         self.axtest_port.run_once()
         self.ax25_ports_th = threading.Thread(target=self.ax25ports_th)
         self.ax25_ports_th.start()
@@ -155,28 +156,17 @@ class TkMainWin:
     def MH_win(self):
         """MH WIN"""
         MHWin(MYHEARD)
-
-
     # MH WIN ENDE
     ##############
 
     ##############
     # DEBUG WIN
-    def DEBUG_win(self):
-        self.debug_win = tk.Tk()
-        self.debug_win.title("DEBUGGING")
-        self.debug_win.geometry("1200x800")
-        self.debug_win.protocol("WM_DELETE_WINDOW", self.destroy_DEBUG_win)
-        self.debug_win.columnconfigure(0, minsize=500, weight=2)
-        self.debug_win.columnconfigure(1, minsize=200, weight=1)
-        self.debug_win.rowconfigure(0, minsize=300, weight=1)
-        self.debug_win.rowconfigure(1, minsize=150, weight=1)
+    def DEBUG_win(self, ):
+        DEBUGwin(self.axtest_port.connections)
 
-    def destroy_DEBUG_win(self):
-        self.debug_win.destroy()
-        self.debug_win = None
     # DEBUG WIN ENDE
     ##############
+
 
 if __name__ == '__main__':
     try:

@@ -16,10 +16,10 @@ class MHWin:
         self.win = tk.Tk()
         self.win.title("MHEARD")
         self.win.geometry("820x600")
-        self.win.protocol("WM_DELETE_WINDOW", self.__del__)
+        self.win.protocol("WM_DELETE_WINDOW", self.close)
         self.menubar = Menu(self.win)
         self.win.config(menu=self.menubar)
-        self.menubar.add_command(label="Quit", command=self.__del__)
+        self.menubar.add_command(label="Quit", command=self.close)
         tk.Label(self.win, text="Zeit").grid(row=1, column=0)
         tk.Label(self.win, text="Call").grid(row=1, column=1)
         tk.Label(self.win, text="Packets").grid(row=1, column=2)
@@ -51,4 +51,10 @@ class MHWin:
             ind += 1
 
     def __del__(self):
+        if self.win is not None:
+            self.win.destroy()
+            self.win = None
+
+    def close(self):
         self.win.destroy()
+        self.win = None
