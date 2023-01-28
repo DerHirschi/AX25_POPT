@@ -22,6 +22,10 @@ def count_modulo(inp: int):
 
 class AX25Conn(object):
     def __init__(self, ax25_frame: AX25Frame, cfg: DefaultStationConfig, rx=True):
+        ###############
+        # DEBUG
+        self.debugvar_len_out_buf = 0
+        ###############
         self.rx = rx
         self.ax25_out_frame = AX25Frame()  # Predefined AX25 Frame for Output
         if rx:
@@ -86,6 +90,9 @@ class AX25Conn(object):
             self.handle_rx(ax25_frame)
         else:
             self.handle_tx(ax25_frame)
+
+    def __del__(self):
+        del self.zustand_exec
 
     def handle_rx(self, ax25_frame: AX25Frame):
         if ax25_frame.is_digipeated:
@@ -275,9 +282,14 @@ class DefaultStat(object):
         pass
 
     def cron(self):
-        # Global Cron
-        self.state_cron()
+        """Global Cron"""
+        self.state_cron()       # State Crone
+        ###########
+        # DEBUGGING
+        self.ax25conn.debugvar_len_out_buf = len(self.ax25conn.tx_buf_2send)
+        ###########
         # TODO Connection Timeout
+
 
 
 class S1Frei(DefaultStat):
@@ -292,7 +304,6 @@ class S1Frei(DefaultStat):
         if flag == 'SABM':
             # Handle Incoming Connection
             self.ax25conn.send_UA()
-
             # Process CLI ( C-Text and so on )
             self.ax25conn.exec_cli()
             self.change_state(5)
@@ -316,44 +327,65 @@ class S5Ready(DefaultStat):
     def rx(self, ax25_frame: AX25Frame):
         self.ax25conn.set_T1(stop=True)
         flag = ax25_frame.ctl_byte.flag
+        c_byte = ax25_frame.ctl_byte
+        cmd = c_byte.cmd
+        pf = c_byte.pf
+        ns = c_byte.ns
+        nr = c_byte.nr
         if flag == 'SABM':
             self.ax25conn.send_UA()
-            if self.stat_index == 6:    # REJ_state
-                self.change_state(5)
         elif flag == 'DISC':
             self.ax25conn.send_UA()
             self.change_state(0)
         elif flag == 'RR':
-            c_byte = ax25_frame.ctl_byte
-            cmd = c_byte.cmd
-            pf = c_byte.pf
-            self.ax25conn.del_unACK_buf()
-            print("RR {}".format(self.ax25conn.tx_buf_unACK.keys()))
-            if cmd:
-                self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
-                print("CMD {}!!".format(self.ax25conn.tx_buf_unACK.keys()))
+            if self.ax25conn.vs == nr:
+                self.ax25conn.del_unACK_buf()
+                print("RR {}".format(self.ax25conn.tx_buf_unACK.keys()))
+                if cmd:
+                    self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
+                    print("CMD {}!!".format(self.ax25conn.tx_buf_unACK.keys()))
+            else:
+                # TODO FRMR
+                print(" !!!! FRMR RR !!!! ")
+                print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, nr))
+                print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
+                pass
 
         elif flag == 'I':
-            if self.stat_index == 6:    # REJ_state
-                self.change_state(5)
-            c_byte = ax25_frame.ctl_byte
-            pf = c_byte.pf
+
             self.ax25conn.rx_buf_rawData += ax25_frame.data
-            if c_byte.ns == self.ax25conn.vr:
-                self.ax25conn.vr = count_modulo(int(self.ax25conn.vr))
-                self.ax25conn.vs = c_byte.nr
-                self.ax25conn.del_unACK_buf()
-                if c_byte.cmd:
-                    self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
-                elif not self.ax25conn.tx_buf_unACK:
-                    self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
+            if nr != self.ax25conn.vs:
+                # TODO FRMR S3
+                print(" !!!! FRMR I !!!! ")
+                print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, nr))
+                print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
+                pass
             else:
-                # REJ
-                print(" !!!!!!!!!!!! ")
-                print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, c_byte.nr))
-                print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, c_byte.ns))
-                self.ax25conn.send_REJ(pf_bit=False, cmd_bit=False)
-                self.change_state(6)
+                if ns == self.ax25conn.vr:
+                    self.ax25conn.vr = count_modulo(int(ns))
+                    # self.ax25conn.vs = nr
+                    self.ax25conn.del_unACK_buf()
+                    if cmd:
+                        self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
+                    elif not self.ax25conn.tx_buf_unACK:
+                        self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
+                    if self.stat_index == 6:    # return from REJ_state
+                        self.change_state(5)
+                else:
+                    if self.stat_index in [5, 9]:
+                        # REJ
+                        print(" !!!!! REJ !!!! ")
+                        print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, nr))
+                        print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
+                        self.ax25conn.send_REJ(pf_bit=False, cmd_bit=False)
+                        if self.stat_index == 5:
+                            self.change_state(6)    # go into REF_state
+                        elif self.stat_index == 9:
+                            self.change_state(15)   # go into "REJ ausgesandt u. Gegenstelle nicht bereit"
+                    elif self.stat_index in [10, 14]:
+                        # TODO RNR
+
+                        pass
 
     def tx(self, ax25_frame: AX25Frame):
         if time.time() > self.ax25conn.t1:
@@ -393,6 +425,7 @@ class S5Ready(DefaultStat):
 
 
 class S6sendREJ(S5Ready):
+    """Copy of S5Ready"""
     stat_index = 6  # REJ ausgesandt
 
     def tx(self, ax25_frame: AX25Frame):
@@ -416,17 +449,23 @@ class S7WaitForFinal(DefaultStat):
     stat_index = 7  # Warten auf Final
 
     def rx(self, ax25_frame: AX25Frame):
-        self.ax25conn.set_T1(stop=True)
         flag = ax25_frame.ctl_byte.flag
         if flag == 'RR':
+
             c_byte = ax25_frame.ctl_byte
             pf = c_byte.pf
             nr = c_byte.nr
-            if pf:
-                self.ax25conn.vs = nr
+            if self.ax25conn.vs == nr:
                 self.ax25conn.del_unACK_buf()
-                self.ax25conn.n2 = 0
-                self.change_state(5)
+                if pf:
+                    self.ax25conn.set_T1(stop=True)
+                    self.ax25conn.n2 = 0
+                    self.change_state(5)
+            else:
+                # TODO FRMR
+                print(" !!!!! FRMR RR - S7!!!! ")
+                print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, nr))
+                pass
 
     def state_cron(self):
         # T1 Abgelaufen
