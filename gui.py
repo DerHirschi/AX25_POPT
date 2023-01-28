@@ -4,7 +4,7 @@ import threading
 from ax25PortHandler import DevDirewolf, MYHEARD
 from ax25Statistics import MyHeard
 
-LOOP_DELAY = 200        # ms
+LOOP_DELAY = 10        # ms
 TEXT_SIZE = 12
 
 

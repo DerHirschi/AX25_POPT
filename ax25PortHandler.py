@@ -1,4 +1,6 @@
 import socket
+import time
+
 from ax25dec_enc import AX25Frame, DecodingERROR, EncodingERROR, reverse_uid
 from ax25Statistics import MH
 from ax25PacHandler import AX25Conn
@@ -47,6 +49,9 @@ class DevDirewolf(object):
             logger.error('Error. Cant connect to Direwolf {}'.format(self.address))
             logger.error('{}'.format(e))
             raise e
+
+    def __del__(self):
+        self.dw_sock.close()
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         # Monitor
@@ -119,7 +124,6 @@ class DevDirewolf(object):
 
     def run_once(self):
         while True:
-            buf = b''
             try:
                 buf = self.dw_sock.recv(333)
                 """
@@ -129,7 +133,7 @@ class DevDirewolf(object):
                 """
                 logger.debug('Inp Buf> {}'.format(buf))
             except socket.timeout:
-                pass
+                break
 
             if buf:  # RX ############
                 # TODO self.set_t0()
@@ -146,36 +150,19 @@ class DevDirewolf(object):
                     # Handling
                     self.rx_pac_handler(ax25frame)
                     ############################
-
                 # self.timer_T0 = 0
             else:
-                #############################################
-                # Crone
-                self.cron_pac_handler()
-                # ######### TX #############
-                # Handling
-                self.tx_pac_handler()
-                ############################
-
-                ############################
-                # Cleanup
-                self.del_connections()
                 break
-            """
-            if self.tx_buffer:
-                # monitor.debug_out(self.ax_conn)
-                n = 0
-                while self.tx_buffer and n < self.parm_MaxBufferTX:
-                    enc = ax.encode_ax25_frame(self.tx_buffer[0][0])
-                    mon = ax.decode_ax25_frame(bytes.fromhex(enc))
-                    enc = bytes.fromhex('c000' + enc + 'c0')
-                    self.dw_sock.sendall(enc)
-                    ############################
-                    # Monitor TODO Better Monitor
-                    monitor.monitor(mon[1], self.port_id)
-                    monitor.debug_out("Out> " + str(mon))
-                    self.tx_buffer = self.tx_buffer[1:]
-                    n += 1
-            """
 
-        # self.dw_sock.close()
+        #############################################
+        # Crone
+        self.cron_pac_handler()
+        # ######### TX #############
+        # TX
+        self.tx_pac_handler()
+        ############################
+
+        ############################
+        # Cleanup
+        self.del_connections()
+

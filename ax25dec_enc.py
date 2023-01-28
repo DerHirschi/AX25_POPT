@@ -269,7 +269,7 @@ class CByte(object):
                     self.flag = 'XID'
                 else:
                     logger.error('C-Byte Error Decoding U Frame ! Unknown C-Byte> ' + str(bi) + ' ' + str(in_byte))
-                    raise IndexError
+                    raise DecodingERROR
 
     def validate(self):
         if self.hex == 0xff:
@@ -570,7 +570,7 @@ class AX25Frame(object):
             # Dec C-Byte
             try:
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
-            except IndexError:
+            except DecodingERROR:
                 raise DecodingERROR
             # Get Command Bits
             if self.to_call.c_bit and not self.from_call.c_bit:
