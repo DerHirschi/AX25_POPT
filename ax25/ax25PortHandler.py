@@ -9,9 +9,11 @@ import ax25.ax25monitor as ax25monitor
 
 import logging
 # Enable logging
+"""
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
 )
+"""
 logger = logging.getLogger(__name__)
 MYHEARD = MH()
 MONITOR = ax25monitor.Monitor()
@@ -57,15 +59,20 @@ class DevDirewolf(object):
         self.monitor.frame_inp(ax25_frame, 'DW')
         # MH List and Statistics
         MYHEARD.mh_inp(ax25_frame, 'DW')
-        if reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
-            # Connection already established
-            conn: AX25Conn = self.connections[reverse_uid(ax25_frame.addr_uid)]
-            conn.handle_rx(ax25_frame=ax25_frame)
-        else:   # Check MYStation Calls with SSID or Check incoming call without SSID
-            if ax25_frame.to_call.call_str in self.my_stations \
-              or ax25_frame.to_call.call in self.my_stations:
-                cfg = self.stat_cfg()
-                self.connections[reverse_uid(ax25_frame.addr_uid)] = AX25Conn(ax25_frame, cfg)
+        if ax25_frame.is_digipeated:
+            if reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
+                # Connection already established
+                conn: AX25Conn = self.connections[reverse_uid(ax25_frame.addr_uid)]
+                conn.handle_rx(ax25_frame=ax25_frame)
+            else:   # Check MYStation Calls with SSID or Check incoming call without SSID
+                if ax25_frame.to_call.call_str in self.my_stations \
+                  or ax25_frame.to_call.call in self.my_stations:
+                    cfg = self.stat_cfg()
+                    conn = AX25Conn(ax25_frame, cfg)
+                    print("State INIT: {}".format(conn.zustand_exec.stat_index))
+                    conn.handle_rx(ax25_frame=ax25_frame)
+                    self.connections[reverse_uid(ax25_frame.addr_uid)] = conn
+                    print("State after RX: {}".format(conn.zustand_exec.stat_index))
 
     def tx_pac_handler(self):
         """
@@ -83,10 +90,13 @@ class DevDirewolf(object):
             el: AX25Frame
             for el in conn.tx_buf_2send:
                 out = (bytes.fromhex('c000') + el.hexstr + bytes.fromhex('c0'))
-                self.dw_sock.sendall(out)
+                self.dw_sock.sendall(out)   # TODO try:
+                print("OUT: {}".format(out))
                 # Monitor
                 self.monitor.frame_inp(el, 'DW')
             self.connections[k].tx_buf_2send = []
+
+        self.del_connections()
 
     def cron_pac_handler(self):
         """ Ecexute Cronjob on all Connections"""
@@ -147,7 +157,9 @@ class DevDirewolf(object):
                 if e is None and ax25frame.validate():
                     # ######### RX #############
                     # Handling
+                    logger.debug("STARTE RX")
                     self.rx_pac_handler(ax25frame)
+                    logger.debug("ENDE RX")
                     ############################
                 # self.timer_T0 = 0
             else:
@@ -155,13 +167,18 @@ class DevDirewolf(object):
 
         #############################################
         # Crone
+        logger.debug("STARTE CRON")
         self.cron_pac_handler()
+        logger.debug("STARTE CRON")
         # ######### TX #############
         # TX
+        logger.debug("STARTE TX")
         self.tx_pac_handler()
+        logger.debug("STARTE TX")
+
         ############################
 
         ############################
         # Cleanup
-        self.del_connections()
+        # self.del_connections()
 

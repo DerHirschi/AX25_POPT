@@ -8,11 +8,12 @@ from config_station import DefaultStationConfig
 from cli.cli import *
 
 import logging
-
+"""
 # Enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
+"""
 logger = logging.getLogger(__name__)
 
 
@@ -29,10 +30,10 @@ class AX25Conn(object):
         self.rx = rx
         self.ax25_out_frame = AX25Frame()  # Predefined AX25 Frame for Output
         if rx:
-            self.ax25_out_frame.addr_uid = reverse_uid(ax25_frame.addr_uid)  # Unique ID for Connection
+            self.ax25_out_frame.addr_uid = str(reverse_uid(ax25_frame.addr_uid))  # Unique ID for Connection
             self.ax25_out_frame.to_call = ax25_frame.from_call
             self.ax25_out_frame.from_call = ax25_frame.to_call
-            self.ax25_out_frame.via_calls = ax25_frame.via_calls
+            self.ax25_out_frame.via_calls = list(ax25_frame.via_calls)
             self.ax25_out_frame.ctl_byte.pf = ax25_frame.ctl_byte.pf
             if self.ax25_out_frame.via_calls:
                 self.ax25_out_frame.via_calls.reverse()
@@ -68,7 +69,6 @@ class AX25Conn(object):
             S6sendREJ.stat_index: S6sendREJ,
             S7WaitForFinal.stat_index: S7WaitForFinal,
         }
-        self.zustand_exec = self.zustand_tab[1](self)
         """ Port Parameter """
         self.parm_PacLen = cfg.parm_PacLen  # Max Pac len
         self.parm_MaxFrame = cfg.parm_MaxFrame  # Max (I) Frames
@@ -85,20 +85,22 @@ class AX25Conn(object):
         self.calc_T2 = self.parm_T2 / (self.parm_baud / 100)
         # Initial-Round-Trip-Time (Auto Parm) (bei DAMA wird T2*2 genommen)/NO DAMA YET
         self.calc_IRTT = (self.parm_T2 + self.parm_TXD) * 2
-
         if self.rx:
-            self.handle_rx(ax25_frame)
+            init_zust = S1Frei(self)
+            # self.handle_rx(ax25_frame)
         else:
+            init_zust = S1Frei(self)    # Dummy
+            # self.zustand_exec = S2Aufbau(self)
             self.handle_tx(ax25_frame)
+        self.zustand_exec = init_zust
 
     def __del__(self):
         del self.zustand_exec
 
     def handle_rx(self, ax25_frame: AX25Frame):
-        if ax25_frame.is_digipeated:
-            self.rx_buf_last_frame = ax25_frame
-            self.zustand_exec.rx(ax25_frame=ax25_frame)
-            self.set_T3()
+        self.rx_buf_last_frame = ax25_frame
+        self.zustand_exec.rx(ax25_frame=ax25_frame)
+        self.set_T3()
 
     def handle_tx(self, ax25_frame: AX25Frame):
         self.zustand_exec.tx(ax25_frame=ax25_frame)
@@ -291,7 +293,6 @@ class DefaultStat(object):
         # TODO Connection Timeout
 
 
-
 class S1Frei(DefaultStat):
     """
     I mit |I ohne |RR mit |RR ohne|REJ mit|REJ ohne|RNR mit | RNR ohne| SABM    | DISC
@@ -304,9 +305,9 @@ class S1Frei(DefaultStat):
         if flag == 'SABM':
             # Handle Incoming Connection
             self.ax25conn.send_UA()
+            self.change_state(5)
             # Process CLI ( C-Text and so on )
             self.ax25conn.exec_cli()
-            self.change_state(5)
         elif ax25_frame.ctl_byte.pf and flag in ['I', 'RR', 'REJ', 'SREJ', 'RNR', 'DISC', 'FRMR']:
             self.ax25conn.send_DM()
             self.change_state(0)
@@ -332,6 +333,7 @@ class S5Ready(DefaultStat):
         pf = c_byte.pf
         ns = c_byte.ns
         nr = c_byte.nr
+        # TESTING: self.ax25conn.send_DM()
         if flag == 'SABM':
             self.ax25conn.send_UA()
         elif flag == 'DISC':

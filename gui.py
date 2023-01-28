@@ -2,12 +2,19 @@ import time
 import tkinter as tk
 from tkinter import scrolledtext, Label, Menu
 import threading
+import logging
 from ax25.ax25PortHandler import DevDirewolf, MYHEARD, AX25Conn
 from ax25.ax25dec_enc import Call
-from ax25.ax25Statistics import MyHeard
+from guiMH import MHWin
+
 
 LOOP_DELAY = 10        # ms
 TEXT_SIZE = 12
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
+)
+logger = logging.getLogger(__name__)
 
 
 class TkMainWin:
@@ -15,8 +22,9 @@ class TkMainWin:
         self.axtest_port = DevDirewolf()
         self.axtest_port.run_once()
         self.ax25_ports_th = threading.Thread(target=self.ax25ports_th)
+        self.ax25_ports_th.start()
         self.win = tk.Tk()
-        self.mh_win = None          # TODO .. Class
+        # self.mh_win: MHWin
         self.debug_win = None       # TODO .. Class
         self.win.title("Py AX.25")
         self.win.geometry("1400x600")
@@ -31,6 +39,7 @@ class TkMainWin:
         self.MenuVerb.add_command(label="Quit", command=self.win.quit)
         self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb)
         # Menü 2 "MH"
+        # self.menubar.add_command(label="MH", command=self.MH_win)
         self.menubar.add_command(label="MH", command=self.MH_win)
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar)
@@ -145,75 +154,9 @@ class TkMainWin:
     # MH WIN
     def MH_win(self):
         """MH WIN"""
-        if self.mh_win is None:
-            self.mh_win = tk.Tk()
-            self.mh_win.title("MHEARD")
-            self.mh_win.geometry("820x600")
-            self.mh_win.protocol("WM_DELETE_WINDOW", self.destroy_MH_win)
+        MHWin(MYHEARD)
 
-            #self.mhwin.grid_rowconfigure(0, weight=1)
-            #self.mhwin.columnconfigure(0, weight=1)
-            """
-            frame_main = tk.Frame(self.mhwin, bg="gray", height=30)
-            frame_main.config(width=800, height=25)
-            frame_main.grid(sticky='nw')
-            # Create a frame for the canvas with non-zero row&column weights
-            frame_canvas = tk.Frame(frame_main, height=22)
-            #frame_canvas.grid(row=0, column=0,  sticky='nw')
-            frame_canvas.grid_rowconfigure(0, weight=1)
-            frame_canvas.grid_columnconfigure(0, weight=1)
-            # Set grid_propagate to False to allow 5-by-5 buttons resizing later
-            frame_canvas.grid_propagate(False)
 
-            # Add a canvas in that frame
-            canvas = tk.Canvas(frame_main, bg="yellow", height=20)
-            canvas.grid(row=0, column=5, sticky="nw")
-
-            # Link a scrollbar to the canvas
-            vsb = tk.Scrollbar(frame_main, orient="vertical", command=canvas.yview)
-            vsb.grid(row=0, column=0, sticky='ns')
-            canvas.configure(yscrollcommand=vsb.set)
-            # Set the canvas scrolling region
-            canvas.config(scrollregion=canvas.bbox("all"))
-            # scrollbar = Scrollbar(self.mhwin)
-            # scrollbar.pack(side=RIGHT, fill=Y)
-            # frame_canvas.config(width=800, height=25)
-            """
-
-            menubar = Menu(self.mh_win)
-            self.mh_win.config(menu=menubar)
-            menubar.add_command(label="Quit", command=self.destroy_MH_win)
-
-            tk.Label(self.mh_win, text="Zeit").grid(row=1, column=0)
-            tk.Label(self.mh_win, text="Call").grid(row=1, column=1)
-            tk.Label(self.mh_win, text="Packets").grid(row=1, column=2)
-            tk.Label(self.mh_win, text="REJ s").grid(row=1, column=3)
-            tk.Label(self.mh_win, text="Route").grid(row=1, column=4)
-            ind = 2
-            for k in MYHEARD.calls:
-                ent: MyHeard
-                ent = MYHEARD.calls[k]
-
-                a1 = tk.Entry(self.mh_win)
-                b1 = tk.Entry(self.mh_win)
-                c1 = tk.Entry(self.mh_win, width=5)
-                d1 = tk.Entry(self.mh_win, width=5)
-                e1 = tk.Entry(self.mh_win)
-                a1.grid(row=ind, column=0)
-                b1.grid(row=ind, column=1)
-                c1.grid(row=ind, column=2)
-                d1.grid(row=ind, column=3)
-                e1.grid(row=ind, column=4)
-                a1.insert(0, ent.last_seen)
-                b1.insert(0, ent.own_call)
-                c1.insert(0, ent.pac_n)
-                d1.insert(0, ent.rej_n)
-                ind += 1
-            # self.mhwin.mainloop()
-
-    def destroy_MH_win(self):
-        self.mh_win.destroy()
-        self.mh_win = None
     # MH WIN ENDE
     ##############
 
