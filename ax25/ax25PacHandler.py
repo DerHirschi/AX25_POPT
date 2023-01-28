@@ -5,7 +5,7 @@
 import time
 from ax25.ax25dec_enc import AX25Frame, reverse_uid
 from config_station import DefaultStationConfig
-from cli import *
+from cli.cli import *
 
 import logging
 
