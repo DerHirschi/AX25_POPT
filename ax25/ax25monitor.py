@@ -1,4 +1,4 @@
-from ax25dec_enc import AX25Frame
+from ax25.ax25dec_enc import AX25Frame
 from datetime import datetime
 
 import logging

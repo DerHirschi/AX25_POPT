@@ -1,12 +1,11 @@
 import socket
-import time
 
-from ax25dec_enc import AX25Frame, DecodingERROR, EncodingERROR, reverse_uid
-from ax25Statistics import MH
-from ax25PacHandler import AX25Conn
+from ax25.ax25dec_enc import AX25Frame, DecodingERROR, reverse_uid
+from ax25.ax25Statistics import MH
+from ax25.ax25PacHandler import AX25Conn
 from config_station import MD5TESTstationCFG
 
-import monitor
+import ax25.ax25monitor as ax25monitor
 
 import logging
 # Enable logging
@@ -15,7 +14,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 MYHEARD = MH()
-MONITOR = monitor.Monitor()
+MONITOR = ax25monitor.Monitor()
 
 
 class DevDirewolf(object):

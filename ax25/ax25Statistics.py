@@ -1,4 +1,4 @@
-from ax25dec_enc import get_call_str, AX25Frame
+from ax25.ax25dec_enc import get_call_str, AX25Frame
 from datetime import datetime
 import os
 import pickle

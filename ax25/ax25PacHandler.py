@@ -3,7 +3,7 @@
     AX.25 Packet Handlink
 """
 import time
-from ax25dec_enc import AX25Frame, reverse_uid
+from ax25.ax25dec_enc import AX25Frame, reverse_uid
 from config_station import DefaultStationConfig
 from cli import *
 

@@ -1,10 +1,10 @@
 import time
 import tkinter as tk
-from tkinter import scrolledtext, Label, Menu, Scrollbar, RIGHT, Y
+from tkinter import scrolledtext, Label, Menu
 import threading
-from ax25PortHandler import DevDirewolf, MYHEARD, AX25Conn
-from ax25dec_enc import Call
-from ax25Statistics import MyHeard
+from ax25.ax25PortHandler import DevDirewolf, MYHEARD, AX25Conn
+from ax25.ax25dec_enc import Call
+from ax25.ax25Statistics import MyHeard
 
 LOOP_DELAY = 10        # ms
 TEXT_SIZE = 12
