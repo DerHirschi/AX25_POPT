@@ -100,7 +100,7 @@ class DevDirewolf(object):
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
             # S0 ENDE
-            if conn.zustand_exec.stat_index == 0:
+            if not conn.zustand_ind:
                 # And empty Buffer ?? S0 should be enough
                 if not conn.tx_buf_2send:
                     del_k.append(k)
