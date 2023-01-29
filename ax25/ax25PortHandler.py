@@ -3,7 +3,7 @@ import socket
 from ax25.ax25dec_enc import AX25Frame, DecodingERROR
 from ax25.ax25Statistics import MH
 from ax25.ax25PacHandler import AX25Conn
-from config_station import MD5TESTstationCFG
+from config_station import MD5TESTstationCFG, DefaultStationConfig
 
 import ax25.ax25monitor as ax25monitor
 
@@ -35,9 +35,8 @@ class DevDirewolf(object):
         self.loop_is_running = False
         #############
         self.monitor = MONITOR
-        self.connections = {
-            # 'addrss_str_id': AX25Conn
-        }
+        self.connections: {str: AX25Conn} = {}
+        # AX25Conn(AX25Frame(), self.stat_cfg)      # Just do onetime Init
         self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         try:
             self.dw_sock.connect(self.address)

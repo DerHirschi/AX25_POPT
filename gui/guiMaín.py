@@ -36,15 +36,17 @@ class TkMainWin:
         self.new_conn_win = None
         self.win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.win.geometry("1400x850")
-        style = ttk.Style()
-        style.configure("BW.TLabel", foreground="black", background="white")
+        # style = ttk.Style()
+        # style.configure("BW.TLabel", foreground="black", background="white")
         self.win.columnconfigure(1, minsize=500, weight=2)
         self.win.columnconfigure(2, minsize=200, weight=1)
         self.win.rowconfigure(0, minsize=150, weight=1)
         self.win.rowconfigure(1, minsize=400, weight=1)
         self.win.rowconfigure(2, minsize=30, weight=1)
         self.win.rowconfigure(3, minsize=250, weight=1)
-
+        ##############
+        # KEY BINDS
+        self.win.bind('<Return>', self.snd_text)
 
         ##############
         # Menüleiste
@@ -67,11 +69,17 @@ class TkMainWin:
         ##############
         # Textfenster
         # Vorschreibfenster
-        self.inp_txt = scrolledtext.ScrolledText(self.win, background='black', foreground='yellow', font=("TkFixedFont", TEXT_SIZE))
-        self.inp_txt.bind('<Return>', self.snd_text)
+        self.inp_txt = scrolledtext.ScrolledText(self.win,
+                                                 background='black',
+                                                 foreground='yellow',
+                                                 font=("TkFixedFont", TEXT_SIZE))
         self.inp_txt.grid(row=0, column=1, sticky="nsew")
         # Ausgabe
-        self.out_txt = scrolledtext.ScrolledText(self.win, background='black', foreground='red', font=("TkFixedFont", TEXT_SIZE), relief="raised")
+        self.out_txt = scrolledtext.ScrolledText(self.win, background='black',
+                                                 foreground='red',
+                                                 font=("TkFixedFont", TEXT_SIZE),
+                                                 relief="raised")
+        # self.out_txt.configure(state="disabled")
         self.out_txt.grid(row=1, column=1, sticky="nsew")
         ##############
         # CH Buttons
@@ -110,7 +118,7 @@ class TkMainWin:
         ##############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.win, background='black', foreground='green', font=("TkFixedFont", TEXT_SIZE))
-        # frame.grid(column=0, row=0, columnspan=3, rowspan=2)
+        # self.mon_txt.configure(state="disabled")
         self.mon_txt.grid(row=3, column=1, columnspan=2, sticky="nsew")
         #######################
         #######################
@@ -153,18 +161,22 @@ class TkMainWin:
     def __del__(self):
         self.axtest_port.loop_is_running = False
         print(self.axtest_port.loop_is_running)
-        while self.ax25_ports_th.is_alive():
-            time.sleep(0.5)
+        #.lock.release()
+        self.ax25_ports_th.join()
+
         # del self.axtest_port
 
     def tasker(self):       # MAINLOOP
         # logger.debug(self.axtest_port.connections.keys())
-        """
         if not self.ax25_ports_th.is_alive():
+            self.ax25_ports_th.join()
             self.ax25_ports_th = threading.Thread(target=self.ax25ports_th)
             self.ax25_ports_th.start()
-        """
+        self.mon_txt.configure(state="normal")
+        self.out_txt.configure(state="normal")
         self.update_mon()
+        self.mon_txt.configure(state="disabled")
+        self.out_txt.configure(state="disabled")
         self.update_status_win()
         if self.debug_win is not None:
             self.debug_win: DEBUGwin
@@ -202,18 +214,24 @@ class TkMainWin:
             if conn.rx_buf_rawData:
                 out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
                 conn.rx_buf_rawData = b''
+                # self.out_txt.configure(state="disabled")
                 self.out_txt.insert('end', out)
+                # self.out_txt.configure(state="normal")
                 # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
                 if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 20:
                     self.out_txt.see("end")
         # UPDATE MONITOR
-        for el in self.axtest_port.monitor.out_buf:
-            self.mon_txt.insert('end', el)
+        if self.axtest_port.monitor.out_buf:
+            # self.mon_txt.configure(state="disabled")
 
-            if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 20:
-                self.mon_txt.see("end")
+            for el in self.axtest_port.monitor.out_buf:
+                self.mon_txt.insert('end', el)
+                # Autoscroll if Scrollbar near end
+                if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 20:
+                    self.mon_txt.see("end")
+            self.mon_txt.configure(state="normal")
 
-        self.axtest_port.monitor.out_buf = []
+        # self.axtest_port.monitor.out_buf = []
 
     # - Main Win & Debug Win
     def update_status_win(self, window=None):
@@ -229,7 +247,7 @@ class TkMainWin:
             for via in station.ax25_out_frame.via_calls:
                 via: Call
                 via_calls += via.call_str + ' '
-            status = station.zustand_exec.flag
+            status = station.zustand_tab[station.zustand_ind][1]
             uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
             t1 = max(0, int(station.t1 - time.time()))
@@ -276,8 +294,8 @@ class TkMainWin:
     #################
     def ax25ports_th(self):
         """Proces AX.25 Shit"""
-        # self.axtest_port.run_once()
-        self.axtest_port.run_loop()
+        self.axtest_port.run_once()
+        # self.axtest_port.run_loop()
 
     ##############
     # New Connection WIN
@@ -326,7 +344,7 @@ class TkMainWin:
     def disco_conn(self):
         station = self.get_conn(CONN_IND)
         if station:
-            station.zustand_exec.change_state(4)
+            station.change_state(4)
     # DISCO
     # ##############
 
@@ -338,7 +356,7 @@ class TkMainWin:
         print(tmp_txt)
         station = self.get_conn(CONN_IND)
         if station:
-            station.tx_buf_rawData += (tmp_txt + '\n').encode()
+            station.tx_buf_rawData += (tmp_txt + '\r').encode()
 
     # SEND TEXT OUT
     ###################
