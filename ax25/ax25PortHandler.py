@@ -1,6 +1,6 @@
 import socket
 
-from ax25.ax25dec_enc import AX25Frame, DecodingERROR, reverse_uid
+from ax25.ax25dec_enc import AX25Frame, DecodingERROR
 from ax25.ax25Statistics import MH
 from ax25.ax25PacHandler import AX25Conn
 from config_station import MD5TESTstationCFG
@@ -28,15 +28,11 @@ class DevDirewolf(object):
         # TODO: Set CFG from outer
         self.stat_cfg = MD5TESTstationCFG
         self.my_stations = self.stat_cfg.parm_StationCalls
-        # AX25 Parm
-        # self.parm_MaxFrame = self.stat_cfg.parm_MaxFrame
-        # self.MaxFrame = 0
         # CONFIG ENDE
         #############
         #############
         # VARS
-        # self.tx_buff_data: [b''] = []     # Abhängig von Max Frame
-        # self.tx_buff_ctl: [b''] = []      # PRIO, nicht von Max Frame abhängig
+        self.loop_is_running = False
         #############
         self.monitor = MONITOR
         self.connections = {
@@ -60,38 +56,26 @@ class DevDirewolf(object):
         # MH List and Statistics
         MYHEARD.mh_inp(ax25_frame, 'DW')
         if ax25_frame.is_digipeated:
-            if reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
+            # print(self.connections.keys())
+            if ax25_frame.addr_uid in self.connections.keys():
                 # Connection already established
-                conn: AX25Conn = self.connections[reverse_uid(ax25_frame.addr_uid)]
+                conn: AX25Conn = self.connections[ax25_frame.addr_uid]
                 conn.handle_rx(ax25_frame=ax25_frame)
             else:   # Check MYStation Calls with SSID or Check incoming call without SSID
                 if ax25_frame.to_call.call_str in self.my_stations \
                   or ax25_frame.to_call.call in self.my_stations:
                     cfg = self.stat_cfg()
                     conn = AX25Conn(ax25_frame, cfg)
-                    print("State INIT: {}".format(conn.zustand_exec.stat_index))
                     conn.handle_rx(ax25_frame=ax25_frame)
-                    self.connections[reverse_uid(ax25_frame.addr_uid)] = conn
-                    print("State after RX: {}".format(conn.zustand_exec.stat_index))
+                    self.connections[ax25_frame.addr_uid] = conn
 
     def tx_pac_handler(self):
-        """
-        self.fetch_tx_buffer()
-        frame: b''
-        for frame in self.tx_buff_ctl:
-            out = (bytes.fromhex('c000') + frame + bytes.fromhex('c0'))
-            self.dw_sock.sendall(out)
-        for frame in self.tx_buff_data:
-            out = (bytes.fromhex('c000') + frame + bytes.fromhex('c0'))
-            self.dw_sock.sendall(out)
-        """
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
             el: AX25Frame
             for el in conn.tx_buf_2send:
                 out = (bytes.fromhex('c000') + el.hexstr + bytes.fromhex('c0'))
                 self.dw_sock.sendall(out)   # TODO try:
-                print("OUT: {}".format(out))
                 # Monitor
                 self.monitor.frame_inp(el, 'DW')
             self.connections[k].tx_buf_2send = []
@@ -104,21 +88,14 @@ class DevDirewolf(object):
             conn: AX25Conn = self.connections[k]
             conn.exec_cron()
 
-    """   
-    def fetch_tx_buffer(self):
-        for k in self.connections.keys():
-            conn: AX25Conn = self.connections[k]
-            el: AX25Frame
-            for el in conn.tx_buf:
-                # if len(self.tx_buff_data) < self.stat_cfg.port_parm_MaxPac:
-                if el.ctl_byte.flag in ['I', 'UI']:
-                    if el.hexstr not in self.tx_buff_data:
-                        self.tx_buff_data.append(el.hexstr)
-                else:
-                    if el.hexstr not in self.tx_buff_ctl:
-                        self.tx_buff_ctl.append(el.hexstr)
-            self.connections[k].tx_buf = []
-    """
+    def new_connection(self, ax25_frame: AX25Frame):
+        cfg = self.stat_cfg()
+        ax25_frame = ax25_frame
+        # ax25_frame.addr_uid = reverse_uid(ax25_frame.addr_uid)
+        conn = AX25Conn(ax25_frame, cfg, rx=False)
+        self.connections[ax25_frame.addr_uid] = conn
+        # self.tx_pac_handler()
+
     def del_connections(self):
         del_k = []
         for k in self.connections.keys():
@@ -130,6 +107,12 @@ class DevDirewolf(object):
                     del_k.append(k)
         for el in del_k:
             del self.connections[el]
+
+    def run_loop(self):
+        if not self.loop_is_running:
+            self.loop_is_running = True
+            while self.loop_is_running:
+                self.run_once()
 
     def run_once(self):
         while True:

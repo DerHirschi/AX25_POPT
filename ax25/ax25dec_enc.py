@@ -90,6 +90,7 @@ class Call(object):
         out_str += encode_ssid(dest_ssid, dest_c)
         out_str += encode_address_char(call)
         """
+        self.call_str = get_call_str(self.call, self.ssid)
         out = ''
         # Address
         ascii_str = "{:<6}".format(self.call.upper())

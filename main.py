@@ -3,8 +3,9 @@ from gui.guiMaín import TkMainWin
 
 if __name__ == '__main__':
     try:
-        TkMainWin()
+        main = TkMainWin()
     except KeyboardInterrupt:
         pass
+    del main
     print("Ende")
     # MYHEARD.save_mh_data()
