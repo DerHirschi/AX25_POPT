@@ -573,7 +573,7 @@ class AX25Frame(object):
             # Dec C-Byte
             try:
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
-            except DecodingERROR:
+            except (DecodingERROR, IndexError):
                 raise DecodingERROR
             # Get Command Bits
             if self.to_call.c_bit and not self.from_call.c_bit:

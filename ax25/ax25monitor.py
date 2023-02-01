@@ -68,3 +68,4 @@ class Monitor(object):
                 out_str += da + '\n'
         logger.info(out_str)
         self.out_buf.append(out_str)
+        return out_str

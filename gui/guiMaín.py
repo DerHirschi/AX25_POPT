@@ -1,24 +1,33 @@
+import random
 import time
 import tkinter as tk
-from tkinter import ttk
 from tkinter.ttk import *
 from tkinter import scrolledtext, Label, Menu
-import threading
 import logging
-from ax25.ax25PortHandler import DevDirewolf, MYHEARD, AX25Conn, AX25Frame
-from ax25.ax25dec_enc import Call
+from ax25.ax25PortHandler import DevDirewolf, AX25Conn, AX25Frame, Call
 from gui.guiMH import MHWin
 from gui.guiDebug import DEBUGwin
 
 
-LOOP_DELAY = 10        # ms
-TEXT_SIZE = 12
+LOOP_DELAY = 50        # ms
+TEXT_SIZE = 16
+FONT = "Courier"
 VER = '0.1a'
 
 CONN_IND = 0
 
+TEST_TIME_RNG = (0, 60)
+TEST_DATA_RNG = (2, 1000)
+TEST_OUT0 = b''
+TEST_OUT1 = b''
+TEST_RUN = False
+TEST_FAIL_cnt = 0
+TEST_cnt_0 = 0
+TEST_cnt_1 = 0
+next_run = time.time()
+
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
@@ -26,9 +35,10 @@ logger = logging.getLogger(__name__)
 class TkMainWin:
     def __init__(self):
         self.axtest_port = DevDirewolf()    # TODO Port Management
-        self.axtest_port.run_once()
-        self.ax25_ports_th = threading.Thread(target=self.ax25ports_th)
-        self.ax25_ports_th.start()
+        #self.axtest_port.run_once()
+        self.axtest_port.start()
+        # self.ax25_ports_th = None
+        # self.ax25_ports_th.start()
         self.win = tk.Tk()
         # self.style = ttk.Style()
         # self.mh_win: MHWin
@@ -72,13 +82,12 @@ class TkMainWin:
         self.inp_txt = scrolledtext.ScrolledText(self.win,
                                                  background='black',
                                                  foreground='yellow',
-                                                 font=("TkFixedFont", TEXT_SIZE))
+                                                 font=(FONT, TEXT_SIZE))
         self.inp_txt.grid(row=0, column=1, sticky="nsew")
         # Ausgabe
         self.out_txt = scrolledtext.ScrolledText(self.win, background='black',
                                                  foreground='red',
-                                                 font=("TkFixedFont", TEXT_SIZE),
-                                                 relief="raised")
+                                                 font=(FONT, TEXT_SIZE))
         # self.out_txt.configure(state="disabled")
         self.out_txt.grid(row=1, column=1, sticky="nsew")
         ##############
@@ -95,7 +104,7 @@ class TkMainWin:
         self.ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
         self.ch_btn_frame.grid(row=2, column=1, sticky="nsew")
-        self.ch_button1 = tk.Button(self.ch_btn_frame, text=" 1 ", bg="green")
+        self.ch_button1 = tk.Button(self.ch_btn_frame, text=" 1 ", bg="red")
         self.ch_button2 = tk.Button(self.ch_btn_frame, text=" 2 ", bg="red")
         self.ch_button3 = tk.Button(self.ch_btn_frame, text=" 3 ", bg="red")
         self.ch_button4 = tk.Button(self.ch_btn_frame, text=" 4 ", bg="red")
@@ -117,7 +126,9 @@ class TkMainWin:
         self.ch_button10.grid(row=1, column=10, sticky="nsew")
         ##############
         # Monitor
-        self.mon_txt = scrolledtext.ScrolledText(self.win, background='black', foreground='green', font=("TkFixedFont", TEXT_SIZE))
+        self.mon_txt = scrolledtext.ScrolledText(self.win, background='black',
+                                                 foreground='green',
+                                                 font=(FONT, TEXT_SIZE))
         # self.mon_txt.configure(state="disabled")
         self.mon_txt.grid(row=3, column=1, columnspan=2, sticky="nsew")
         #######################
@@ -145,7 +156,7 @@ class TkMainWin:
         self.disco_btn.grid(row=0, column=1, sticky="nsew")
         self.test_btn = tk.Button(self.side_btn_frame, text="TestCon", bg="yellow", command=self.start_new_conn)
         self.test_btn.grid(row=1, column=0, sticky="nsew")
-        self.test_btn1 = tk.Button(self.side_btn_frame, text="Test2", bg="red")
+        self.test_btn1 = tk.Button(self.side_btn_frame, text="TestData", bg="yellow", command=self.run_test)
         self.test_btn1.grid(row=1, column=1, sticky="nsew")
 
         self.test_lable = Label(self.side_frame, text="", font=("Arial", 15))
@@ -162,21 +173,49 @@ class TkMainWin:
         self.axtest_port.loop_is_running = False
         print(self.axtest_port.loop_is_running)
         #.lock.release()
-        self.ax25_ports_th.join()
+        # self.ax25_ports_th.join()
 
         # del self.axtest_port
 
+    def port_btn_conn_status(self):
+        con_btn_dict = {
+            1: self.ch_button1,
+            2: self.ch_button2,
+            3: self.ch_button3,
+            4: self.ch_button4,
+            5: self.ch_button5,
+            6: self.ch_button6,
+            7: self.ch_button7,
+            8: self.ch_button8,
+            9: self.ch_button9,
+            10: self.ch_button10,
+        }
+        if self.axtest_port.connections.keys():
+            for i in list(con_btn_dict.keys()):
+                if i <= len(self.axtest_port.connections.keys()):
+                    con_btn_dict[i].configure(bg='green')
+                else:
+                    con_btn_dict[i].configure(bg='red')
+
+        else:
+            for i in list(con_btn_dict.keys()):
+                con_btn_dict[i].configure(bg='red')
+
     def tasker(self):       # MAINLOOP
         # logger.debug(self.axtest_port.connections.keys())
-        if not self.ax25_ports_th.is_alive():
-            self.ax25_ports_th.join()
-            self.ax25_ports_th = threading.Thread(target=self.ax25ports_th)
-            self.ax25_ports_th.start()
-        self.mon_txt.configure(state="normal")
-        self.out_txt.configure(state="normal")
+        """
+        if not self.axtest_port.is_alive():
+            self.axtest_port.join()
+            # self.ax25_ports_th.
+            # self.ax25_ports_th = threading.Thread(target=self.ax25ports_th)
+            self.axtest_port.start()
+        """
+        #self.ax25ports_th()
+        #self.mon_txt.configure(state="normal")
+        #self.out_txt.configure(state="normal")
         self.update_mon()
-        self.mon_txt.configure(state="disabled")
-        self.out_txt.configure(state="disabled")
+        #self.mon_txt.configure(state="disabled")
+        #self.out_txt.configure(state="disabled")
         self.update_status_win()
         if self.debug_win is not None:
             self.debug_win: DEBUGwin
@@ -185,6 +224,12 @@ class TkMainWin:
             else:
                 # self.debug_win.close()
                 self.debug_win = None
+        # DEBUGGING ###
+        self.tx_rx_check_rand_data()    # TEST Funktion !!!
+        ###############
+        # Set CH Buttons
+        self.port_btn_conn_status()
+        # Loop back
         self.win.after(LOOP_DELAY, self.tasker)
 
     ##########################
@@ -199,6 +244,99 @@ class TkMainWin:
     # no WIN FNC
     ##########################
 
+    ##############
+    # TEST FNC
+    def run_test(self):
+        global TEST_RUN, TEST_OUT0, TEST_OUT1, next_run
+        if TEST_RUN:
+            TEST_RUN = False
+            self.test_btn1.configure(bg='yellow', text="TestData")
+        else:
+            TEST_OUT0 = b''
+            TEST_OUT1 = b''
+            next_run = time.time()
+            TEST_RUN = True
+            self.test_btn1.configure(bg='green', text="Läuft")
+
+    def tx_rx_check_rand_data(self):
+        global next_run, TEST_OUT0, TEST_OUT1, TEST_RUN, TEST_FAIL_cnt, TEST_cnt_0, TEST_cnt_1
+        if len(list(self.axtest_port.connections.keys())) > 1 and TEST_RUN:
+            # Snd Data ..
+            if time.time() > next_run:
+                next_run = random.randrange(TEST_TIME_RNG[0], TEST_TIME_RNG[1]) + time.time()
+                rand_data = ''.join('{}'.format(x) for x in range(random.randrange(TEST_DATA_RNG[0], TEST_DATA_RNG[1])))
+                rand_data = rand_data.encode()
+                ran_stat = random.randrange(2)
+                if ran_stat:
+                    con: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[1]]
+                    if not con.tx_buf_rawData:
+                        TEST_OUT1 += rand_data
+                        con.tx_buf_rawData += rand_data
+                else:
+                    con: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[0]]
+                    if not con.tx_buf_rawData:
+                        TEST_OUT0 += rand_data
+                        con.tx_buf_rawData += rand_data
+            # CHeck
+            conn0: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[0]]
+            if conn0.rx_buf_rawData_2:
+                inp0 = bytes(conn0.rx_buf_rawData_2)
+                conn0.rx_buf_rawData_2 = b''  # TODO !!!! Could lost some Packets cause Threading
+                try:
+                    ind0 = TEST_OUT1.index(inp0)
+                    if ind0 != 0:
+                        logger.error("!!!!!!! TEST ERROR STAT 1 to 0 ... ABFOLGE !!!!\n ind0: {}\n".format(ind0))
+                        raise IndexError
+                except ValueError:
+                    TEST_cnt_1 -= 1
+                except IndexError:
+                    logger.error("!!!!!!! TEST ERROR STAT 1 to 0")
+                    # TEST_RUN = False
+                    TEST_FAIL_cnt += 1
+                    TEST_cnt_1 -= 1
+                    if TEST_FAIL_cnt > 10:
+                        TEST_RUN = False
+                    self.test_btn1.configure(bg='red', text="FAIL!!")
+                TEST_OUT1 = TEST_OUT1[len(inp0):]
+                TEST_cnt_1 += 1
+
+            conn1: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[1]]
+            if conn1.rx_buf_rawData_2:
+                inp1 = bytes(conn1.rx_buf_rawData_2)
+                conn1.rx_buf_rawData_2 = b''  # TODO !!!! Could lost some Packets cause Threading
+                try:
+                    ind1 = TEST_OUT0.index(inp1)
+                    if ind1 != 0:
+                        logger.error("!!!!!!! TEST ERROR STAT 0 to 1 ... ABFOLGE !!!!\n ind1: {}\n".format(ind1))
+                        raise IndexError
+                except ValueError:
+                    TEST_cnt_0 -= 1
+                except IndexError:
+                    logger.error("!!!!!!! TEST ERROR STAT 0 to 1")
+                    # TEST_RUN = False
+                    TEST_FAIL_cnt += 1
+                    TEST_cnt_0 -= 1
+                    if TEST_FAIL_cnt > 10:
+                        TEST_RUN = False
+                    self.test_btn1.configure(bg='red', text="FAIL!!")
+                TEST_OUT0 = TEST_OUT0[len(inp1):]
+                TEST_cnt_0 += 1
+
+
+    def start_new_conn(self):
+        ax_frame = AX25Frame()
+        ax_frame.from_call.call = 'MD5TES'
+        ax_frame.to_call.call = 'CB0SAW'
+        via1 = Call()
+        via1.call = 'DNX527'
+        ax_frame.via_calls = [via1]
+        ax_frame.ctl_byte.SABMcByte()
+
+        # ax_frame.encode()
+        self.axtest_port.new_connection(ax25_frame=ax_frame)
+        self.test_btn.configure(bg='green')
+    # TEST fnc ENDE
+    #############
     #################
     # Main Win
     # - Main Win & Debug Win
@@ -214,22 +352,30 @@ class TkMainWin:
             if conn.rx_buf_rawData:
                 out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
                 conn.rx_buf_rawData = b''
-                # self.out_txt.configure(state="disabled")
+                self.out_txt.configure(state="normal")
                 self.out_txt.insert('end', out)
-                # self.out_txt.configure(state="normal")
+                self.out_txt.configure(state="disabled")
                 # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
                 if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 20:
                     self.out_txt.see("end")
         # UPDATE MONITOR
         if self.axtest_port.monitor.out_buf:
-            # self.mon_txt.configure(state="disabled")
-
+            self.mon_txt.configure(state="normal")
+            el: str
             for el in self.axtest_port.monitor.out_buf:
-                self.mon_txt.insert('end', el)
+                temp = el.split(': ')
+                temp = temp[1].split(' to')
+                if temp[0] in self.axtest_port.stat_cfg.parm_StationCalls:
+                    # self.mon_txt.configure(foreground='yellow')
+                    self.mon_txt.tag_configure("red", foreground="red")
+
+                    # apply the tag "red"
+                    self.mon_txt.tag_add("red", tk.END)
+                self.mon_txt.insert("end", el)
                 # Autoscroll if Scrollbar near end
                 if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 20:
                     self.mon_txt.see("end")
-            self.mon_txt.configure(state="normal")
+            self.mon_txt.configure(state="disabled")
 
         # self.axtest_port.monitor.out_buf = []
 
@@ -272,7 +418,10 @@ class TkMainWin:
                    'noACK: {}\n' \
                    'old2Send: {}\n' \
                    '2Send: {}\n' \
-                   'SendRaw: {}'.format(
+                   'SendRaw: {}\n' \
+                   'TEST_OUT0: {}\n' \
+                   'TEST_OUT1: {}\n' \
+                   'Fail: {} - OK0: {} - OK1: {}'.format(
                     dest_call,
                     via_calls,
                     status,
@@ -283,7 +432,12 @@ class TkMainWin:
                     noACK_buf,
                     send_buf_len,
                     len_tx2snd_buf,
-                    len_txraw_buf
+                    len_txraw_buf,
+                    len(TEST_OUT0),
+                    len(TEST_OUT1),
+                    TEST_FAIL_cnt,
+                    TEST_cnt_0,
+                    TEST_cnt_1
                                     )
         if window is None:
             self.test_lable.config(text=text)  # Debug LABEL
@@ -294,8 +448,9 @@ class TkMainWin:
     #################
     def ax25ports_th(self):
         """Proces AX.25 Shit"""
-        self.axtest_port.run_once()
-        # self.axtest_port.run_loop()
+        # self.axtest_port.run_once()
+        #self.axtest_port.run_loop()
+        pass
 
     ##############
     # New Connection WIN
@@ -324,27 +479,16 @@ class TkMainWin:
         self.new_conn_win.destroy()
         self.new_conn_win = None
 
-    def start_new_conn(self):
-        ax_frame = AX25Frame()
-        ax_frame.from_call.call = 'MD5TES'
-        ax_frame.to_call.call = 'CB0SAW'
-        via1 = Call()
-        via1.call = 'DX0SAW'
-        ax_frame.via_calls = [via1]
-        ax_frame.ctl_byte.SABMcByte()
-
-        # ax_frame.encode()
-        self.axtest_port.new_connection(ax25_frame=ax_frame)
-
     # New Connection WIN
     # ##############
 
     # ##############
     # DISCO
     def disco_conn(self):
-        station = self.get_conn(CONN_IND)
+        station: AX25Conn = self.get_conn(CONN_IND)
         if station:
             station.change_state(4)
+            station.zustand_exec.tx(None)
     # DISCO
     # ##############
 
@@ -364,7 +508,7 @@ class TkMainWin:
     # MH WIN
     def MH_win(self):
         """MH WIN"""
-        MHWin(MYHEARD)
+        MHWin(self.axtest_port.MYHEARD)
     # MH WIN ENDE
     ##############
 
@@ -387,4 +531,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     print("Ende")
-    MYHEARD.save_mh_data()
+    # MYHEARD.save_mh_data()

@@ -43,6 +43,9 @@ class MH(object):
         }
         """
 
+    def __del__(self):
+        self.save_mh_data()
+
     def mh_inp(self, ax25_frame: AX25Frame, port_id, axip_add=None):
         ########################
         # Call Stat

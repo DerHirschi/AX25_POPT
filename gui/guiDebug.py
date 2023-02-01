@@ -8,6 +8,7 @@ LOOP_DELAY = 10
 
 class DEBUGwin:
     def __init__(self, conn: {str: AX25Conn}):
+        super(DEBUGwin, self).__init__()
         self.CONN_IND = 0
         self.is_running = True
         self.connections = conn
@@ -15,10 +16,10 @@ class DEBUGwin:
         self.win.title("DEBUGGING")
         self.win.geometry("800x800")
         self.win.protocol("WM_DELETE_WINDOW", self.close)
-        self.win.columnconfigure(0, minsize=300, weight=2)
-        self.win.columnconfigure(1, minsize=200, weight=1)
+        self.win.columnconfigure(0, minsize=300, weight=1)
+        # self.win.columnconfigure(1, minsize=200, weight=1)
         self.win.rowconfigure(0, minsize=200, weight=1)
-        self.win.rowconfigure(1, minsize=200, weight=1)
+        # self.win.rowconfigure(1, minsize=200, weight=1)
 
         self.stat_frm = Label(self.win, text="", font=("Arial", 15))
         self.stat_frm.grid(row=0, column=0)
@@ -50,39 +51,52 @@ class DEBUGwin:
         Debug WIN
         """
         text = ''
-        if list(self.connections.keys()):
+        if len(list(self.connections.keys())) > 1:
             station: AX25Conn
-            station = self.connections[list(self.connections.keys())[self.CONN_IND]]
+            station = self.connections[list(self.connections.keys())[1]]
             dest_call = station.ax25_out_frame.to_call.call_str
             via_calls = ''
             for via in station.ax25_out_frame.via_calls:
                 via: Call
                 via_calls += via.call_str + ' '
             status = station.zustand_tab[station.zustand_ind][1]
+            uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
             t1 = max(0, int(station.t1 - time.time()))
             t2 = max(0, int(station.t2 - time.time()))
             t3 = max(0, int(station.t3 - time.time()))
-            ns, vs = station.vr, station.vs
+            vr, vs = station.vr, station.vs
+            nr, ns = station.rx_buf_last_frame.ctl_byte.nr, station.rx_buf_last_frame.ctl_byte.ns
             noACK_buf = str(list(station.tx_buf_unACK.keys()))[1:-1]
             if station.debugvar_len_out_buf:
                 station.debugvar_len_out_buf = 0
             send_buf_len = int(station.debugvar_len_out_buf)
+            len_tx2snd_buf = len(station.tx_buf_2send)
+            len_txraw_buf = len(station.tx_buf_rawData)
 
             text = '{}\n' \
                    '{}\n' \
                    '{}\n' \
-                   'NS: {} - VS: {} - N2: {}\n' \
+                   '{}\n' \
+                   'VR: {} - VS: {} - N2: {}\n' \
+                   'NR: {} - NS: {}\n' \
                    'T1: {}\nT2: {}\nT3 {}\n' \
                    'noACK: {}\n' \
-                   'Send: {}'.format(
+                   'old2Send: {}\n' \
+                   '2Send: {}\n' \
+                   'SendRaw: {}\n'.format(
                     dest_call,
                     via_calls,
                     status,
-                    ns, vs, n2,
+                    uid,
+                    vr, vs, n2,
+                    nr, ns,
                     t1, t2, t3,
                     noACK_buf,
-                    send_buf_len)
+                    send_buf_len,
+                    len_tx2snd_buf,
+                    len_txraw_buf
+                                         )
 
         self.stat_frm.config(text=text)  # Debug LABEL
 
