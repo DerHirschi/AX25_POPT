@@ -1,5 +1,7 @@
 import socket
 import threading
+import time
+
 from ax25.ax25dec_enc import AX25Frame, Call, DecodingERROR
 from ax25.ax25Statistics import MH
 from ax25.ax25PacHandler import AX25Conn
@@ -27,6 +29,8 @@ class DevDirewolf(threading.Thread):
         # TODO: Set CFG from outer
         self.stat_cfg = MD5TESTstationCFG
         self.my_stations = self.stat_cfg.parm_StationCalls
+        self.parm_T0 = self.stat_cfg.parm_T0
+        self.T0 = time.time()
         # CONFIG ENDE
         #############
         #############
@@ -49,7 +53,11 @@ class DevDirewolf(threading.Thread):
     def __del__(self):
         self.dw_sock.close()
 
+    def set_T0(self):
+        self.T0 = time.time() + self.parm_T0 / 1000
+
     def rx_pac_handler(self, ax25_frame: AX25Frame):
+        self.set_T0()
         # Monitor
         self.monitor.frame_inp(ax25_frame, 'DW')
         # MH List and Statistics
@@ -58,24 +66,33 @@ class DevDirewolf(threading.Thread):
             # print(self.connections.keys())
             if ax25_frame.addr_uid in self.connections.keys():
                 # Connection already established
+                self.connections[ax25_frame.addr_uid].set_T2()      # TODO Extra Receive Timer T0
                 self.connections[ax25_frame.addr_uid].handle_rx(ax25_frame=ax25_frame)
             else:   # Check MYStation Calls with SSID or Check incoming call without SSID
                 if ax25_frame.to_call.call_str in self.my_stations:
                     cfg = self.stat_cfg()
                     self.connections[ax25_frame.addr_uid] = AX25Conn(ax25_frame, cfg)
+                    self.connections[ax25_frame.addr_uid].set_T2()  # TODO Extra Receive Timer T0
                     self.connections[ax25_frame.addr_uid].handle_rx(ax25_frame=ax25_frame)
 
     def tx_pac_handler(self):
         for k in self.connections.keys():
-            snd_buf = list(self.connections[k].tx_buf_2send)
-            # self.connections[k].tx_buf_2send = []
-            el: AX25Frame
-            for el in snd_buf:
-                out = (bytes.fromhex('c000') + el.hexstr + bytes.fromhex('c0'))
-                self.dw_sock.sendall(out)   # TODO try:
-                self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
-                # Monitor
-                self.monitor.frame_inp(el, 'DW')
+            conn: AX25Conn = self.connections[k]
+            if time.time() > conn.t2:
+                snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
+                conn.tx_buf_ctl = []
+                conn.REJ_is_set = False
+                # self.connections[k].tx_buf_2send = []
+                el: AX25Frame
+                for el in snd_buf:
+                    el.encode()
+                    out = (bytes.fromhex('c000') + el.hexstr + bytes.fromhex('c0'))
+                    ti = time.time()
+                    self.dw_sock.sendall(out)   # TODO try:
+                    print("Send : {}".format(time.time() - ti))
+                    self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
+                    # Monitor
+                    self.monitor.frame_inp(el, 'DW')
 
         self.del_connections()
 
@@ -112,7 +129,9 @@ class DevDirewolf(threading.Thread):
     def run_once(self):
         while True:
             try:
+                ti = time.time()
                 buf = self.dw_sock.recv(333)
+                print("Recv : {}".format(time.time() - ti))
                 """
                 while b:
                     buf += b
@@ -142,17 +161,17 @@ class DevDirewolf(threading.Thread):
                 # self.timer_T0 = 0
             else:
                 break
-
-        #############################################
-        # Crone
-        logger.debug("STARTE CRON")
-        self.cron_pac_handler()
-        logger.debug("STARTE CRON")
-        # ######### TX #############
-        # TX
-        logger.debug("STARTE TX")
-        self.tx_pac_handler()
-        logger.debug("STARTE TX")
+        if time.time() > self.T0:
+            #############################################
+            # Crone
+            logger.debug("STARTE CRON")
+            self.cron_pac_handler()
+            logger.debug("STARTE CRON")
+            # ######### TX #############
+            # TX
+            logger.debug("STARTE TX")
+            self.tx_pac_handler()
+            logger.debug("STARTE TX")
 
         ############################
 

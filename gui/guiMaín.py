@@ -488,6 +488,7 @@ class TkMainWin:
         station: AX25Conn = self.get_conn(CONN_IND)
         if station:
             station.change_state(4)
+            station.set_new_state()
             station.zustand_exec.tx(None)
     # DISCO
     # ##############
