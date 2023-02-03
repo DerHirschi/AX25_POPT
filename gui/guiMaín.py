@@ -269,14 +269,19 @@ class TkMainWin:
                 ran_stat = random.randrange(2)
                 if ran_stat:
                     con: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[1]]
+
                     if not con.tx_buf_rawData:
                         TEST_OUT1 += rand_data
                         con.tx_buf_rawData += rand_data
+
                 else:
+
                     con: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[0]]
+                    """
                     if not con.tx_buf_rawData:
                         TEST_OUT0 += rand_data
                         con.tx_buf_rawData += rand_data
+                    """
             # CHeck
             conn0: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[0]]
             if conn0.rx_buf_rawData_2:
@@ -326,7 +331,7 @@ class TkMainWin:
     def start_new_conn(self):
         ax_frame = AX25Frame()
         ax_frame.from_call.call = 'MD5TES'
-        ax_frame.to_call.call = 'CB0SAW'
+        ax_frame.to_call.call = 'MD6TES'
         via1 = Call()
         via1.call = 'DNX527'
         ax_frame.via_calls = [via1]
@@ -356,7 +361,7 @@ class TkMainWin:
                 self.out_txt.insert('end', out)
                 self.out_txt.configure(state="disabled")
                 # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
-                if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 20:
+                if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 25:
                     self.out_txt.see("end")
         # UPDATE MONITOR
         if self.axtest_port.monitor.out_buf:
@@ -373,7 +378,7 @@ class TkMainWin:
                     self.mon_txt.tag_add("red", tk.END)
                 self.mon_txt.insert("end", el)
                 # Autoscroll if Scrollbar near end
-                if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 20:
+                if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 25:
                     self.mon_txt.see("end")
             self.mon_txt.configure(state="disabled")
 
@@ -393,7 +398,7 @@ class TkMainWin:
             for via in station.ax25_out_frame.via_calls:
                 via: Call
                 via_calls += via.call_str + ' '
-            status = station.zustand_tab[station.zustand_ind][1]
+            status = station.zustand_tab[station.zustand_exec.stat_index][1]
             uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
             t1 = max(0, int(station.t1 - time.time()))
@@ -487,8 +492,8 @@ class TkMainWin:
     def disco_conn(self):
         station: AX25Conn = self.get_conn(CONN_IND)
         if station:
-            station.change_state(4)
-            station.set_new_state()
+            station.zustand_exec.change_state(4)
+            # station.set_new_state()
             station.zustand_exec.tx(None)
     # DISCO
     # ##############

@@ -59,7 +59,7 @@ class DEBUGwin:
             for via in station.ax25_out_frame.via_calls:
                 via: Call
                 via_calls += via.call_str + ' '
-            status = station.zustand_tab[station.zustand_ind][1]
+            status = station.zustand_tab[station.zustand_exec.stat_index][1]
             uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
             t1 = max(0, int(station.t1 - time.time()))

@@ -46,21 +46,19 @@ class AX25Conn(object):
             self.ax25_out_frame.via_calls = ax25_frame.via_calls
             ax25_frame.encode()  # Set Stop-Bits and H-Bits while encoding
             if self.ax25_out_frame.addr_uid != ax25_frame.addr_uid:
-                logger.warning('Connection UID is different after encoding Packet !!')
                 self.ax25_out_frame.addr_uid = ax25_frame.addr_uid  # Unique ID for Connection
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
-        self.Final_is_set: bool = False
         """ IO Buffer Packet For Handling """
-        self.tx_buf_ctl: [AX25Frame] = []  # Buffer for CTL ( S ) Frame to send on next Cycle
-        self.tx_buf_2send: [AX25Frame] = []  # Buffer for Sending. Will be processed in ax25PortHandler
-        self.tx_buf_unACK: {int: AX25Frame} = {}  # Buffer for UNACK I-Frames
-        self.rx_buf_last_frame = ax25_frame  # Buffers for last Frame !?!
+        self.tx_buf_ctl: [AX25Frame] = []           # Buffer for CTL ( S ) Frame to send on next Cycle
+        self.tx_buf_2send: [AX25Frame] = []         # Buffer for Sending. Will be processed in ax25PortHandler
+        self.tx_buf_unACK: {int: AX25Frame} = {}    # Buffer for UNACK I-Frames
+        self.rx_buf_last_frame = ax25_frame         # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
-        self.tx_buf_rawData: b'' = b''  # Buffer for TX RAW Data that will be packed into a Frame
-        self.rx_buf_rawData: b'' = b''  # Received Data for GUI
-        self.rx_buf_monitor: [str] = []  # Received Data Monitor String
-        self.rx_buf_rawData_2: b'' = b''  # Received Data TEST Script
+        self.tx_buf_rawData: b'' = b''          # Buffer for TX RAW Data that will be packed into a Frame
+        self.rx_buf_rawData: b'' = b''          # Received Data for GUI
+        self.rx_buf_monitor: [str] = []         # Received Data Monitor String
+        self.rx_buf_rawData_2: b'' = b''        # Received Data TEST Script
         """ Port Variablen"""
         self.vs = 0  # Sendefolgenummer     / N(S) = V(R)  TX
         self.vr = 0  # Empfangsfolgezählers / N(S) = V(R)  TX
@@ -80,19 +78,13 @@ class AX25Conn(object):
             6: (S6sendREJ, 'REJ'),
             7: (S7WaitForFinal, 'FINAL'),
         }
-        if rx:
-            self.zustand_ind = 1
-        else:
-            self.zustand_ind = 2
-        self.zustand_exec = self.zustand_tab[self.zustand_ind][0](self)
         """ Port Config Parameter """
         self.parm_PacLen = cfg.parm_PacLen  # Max Pac len
         self.parm_MaxFrame = cfg.parm_MaxFrame  # Max (I) Frames
-        self.parm_TXD = cfg.parm_TXD  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
-        self.parm_T0 = cfg.parm_T0  # T0
-        self.parm_T2 = cfg.parm_T2  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
-        self.parm_T3 = cfg.parm_T3  # T3 (Inactive Link Timer)
-        self.parm_N2 = cfg.parm_N2  # Max Try   Default 20
+        self.parm_TXD = cfg.parm_TXD    # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        self.parm_T2 = cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self.parm_T3 = cfg.parm_T3      # T3 (Inactive Link Timer)
+        self.parm_N2 = cfg.parm_N2      # Max Try   Default 20
         self.parm_baud = cfg.parm_baud  # Baud for calculating Timer
         """ Init CLI """
         self.cli = DefaultCLI()
@@ -100,16 +92,11 @@ class AX25Conn(object):
         self.parm_T2 = float(self.parm_T2 / self.parm_baud)  # TODO Berechnen nach Paktegröße
         # Initial-Round-Trip-Time (Auto Parm) (bei DAMA wird T2*2 genommen)/NO DAMA YET
         self.calc_IRTT = (self.parm_T2 + self.parm_TXD) * 2
-        """
-        if self.rx:
+        if rx:
             self.zustand_exec = S1Frei(self)
-            # self.handle_rx(ax25_frame)
         else:
             self.zustand_exec = S2Aufbau(self)
             self.set_T3()
-            # self.zustand_exec = S2Aufbau(self)
-            # self.handle_tx(ax25_frame)
-        """
 
     def __del__(self):
         del self.ax25_out_frame
@@ -119,35 +106,39 @@ class AX25Conn(object):
     ####################
     # Zustand EXECs
     def handle_rx(self, ax25_frame: AX25Frame):
-        self.set_new_state()
+        # self.set_new_state()
         self.rx_buf_last_frame = ax25_frame
         self.zustand_exec.rx(ax25_frame=ax25_frame)
         self.set_T3()
 
     def handle_tx(self, ax25_frame: AX25Frame):
-        self.set_new_state()
+        # self.set_new_state()
         self.zustand_exec.tx(ax25_frame=ax25_frame)
         # self.set_T3()
 
     def exec_cron(self):
         """ DefaultStat.cron() """
-        self.set_new_state()
+        # self.set_new_state()
         self.zustand_exec.cron()
 
     # Zustand EXECs ENDE
     #######################
     # Zustand Handling
+    """
     def change_state(self, zustand=1):
         # del self.zustand_exec
-        self.zustand_ind = zustand
+        # self.zustand_ind = zustand
         # logger.error("ZUSTAND CHANGE - State: {}".format(zustand))
         # DONE: TESTING: TODO !!!! Init zustand_exec after del zustand_exec !!! Risk of Bug
-        # self.zustand_exec = self.zustand_tab[zustand](self)
-
+        self.zustand_exec = self.zustand_tab[zustand][0](self)
+    """
+    """
     def set_new_state(self):
+        pass
         # I guess this is Bullshit.
         # Should prevent running multiple Instances (Start new Instance when old is still running)
-        self.zustand_exec = self.zustand_tab[self.zustand_ind][0](self)
+        # self.zustand_exec = self.zustand_tab[self.zustand_ind][0](self)
+    """
 
     # Zustand Handling ENDE
     #######################
@@ -367,7 +358,8 @@ class DefaultStat(object):
         self.ax25conn.zustand_exec = new_z
         """
         # logger.error("ZUSTAND CHANGE - State: {}".format(zustand_id))
-        self.ax25conn.change_state(zustand=zustand_id)
+        #self.ax25conn.change_state(zustand=zustand_id)
+        self.ax25conn.zustand_exec = self.ax25conn.zustand_tab[zustand_id][0](self.ax25conn)
 
     def rx(self, ax25_frame: AX25Frame):
         pass

@@ -2,10 +2,10 @@ import socket
 import threading
 import time
 
-from ax25.ax25dec_enc import AX25Frame, Call, DecodingERROR
+from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call
 from ax25.ax25Statistics import MH
 from ax25.ax25PacHandler import AX25Conn
-from config_station import MD5TESTstationCFG, DefaultStationConfig
+from config_station import MD5TESTstationCFG
 
 import ax25.ax25monitor as ax25monitor
 
@@ -29,8 +29,10 @@ class DevDirewolf(threading.Thread):
         # TODO: Set CFG from outer
         self.stat_cfg = MD5TESTstationCFG
         self.my_stations = self.stat_cfg.parm_StationCalls
-        self.parm_T0 = self.stat_cfg.parm_T0
-        self.T0 = time.time()
+        self.is_stupid_digi = self.stat_cfg.parm_is_StupidDigi
+        self.is_digi = self.stat_cfg.parm_isDigi
+        self.parm_TXD = self.stat_cfg.parm_TXD
+        self.TXD = time.time()
         # CONFIG ENDE
         #############
         #############
@@ -53,11 +55,11 @@ class DevDirewolf(threading.Thread):
     def __del__(self):
         self.dw_sock.close()
 
-    def set_T0(self):
-        self.T0 = time.time() + self.parm_T0 / 1000
+    def set_TXD(self):
+        self.TXD = time.time() + self.parm_TXD / 1000
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
-        self.set_T0()
+        self.set_TXD()
         # Monitor
         self.monitor.frame_inp(ax25_frame, 'DW')
         # MH List and Statistics
@@ -87,9 +89,7 @@ class DevDirewolf(threading.Thread):
                 for el in snd_buf:
                     el.encode()
                     out = (bytes.fromhex('c000') + el.hexstr + bytes.fromhex('c0'))
-                    ti = time.time()
                     self.dw_sock.sendall(out)   # TODO try:
-                    print("Send : {}".format(time.time() - ti))
                     self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
                     # Monitor
                     self.monitor.frame_inp(el, 'DW')
@@ -114,7 +114,7 @@ class DevDirewolf(threading.Thread):
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
             # S0 ENDE
-            if not conn.zustand_ind:
+            if not conn.zustand_exec.stat_index:
                 # And empty Buffer ?? S0 should be enough
                 del_k.append(k)
         for el in del_k:
@@ -129,9 +129,8 @@ class DevDirewolf(threading.Thread):
     def run_once(self):
         while True:
             try:
-                ti = time.time()
-                buf = self.dw_sock.recv(333)
-                print("Recv : {}".format(time.time() - ti))
+                #buf = self.dw_sock.recv(333)
+                buf = self.dw_sock.recv(400)
                 """
                 while b:
                     buf += b
@@ -161,7 +160,7 @@ class DevDirewolf(threading.Thread):
                 # self.timer_T0 = 0
             else:
                 break
-        if time.time() > self.T0:
+        if time.time() > self.TXD:
             #############################################
             # Crone
             logger.debug("STARTE CRON")

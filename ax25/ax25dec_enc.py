@@ -112,7 +112,7 @@ class Call(object):
         TODO: better Call Check
         :return: bool
         """
-        if len(self.call) < 2 or len(self.call) > 6:
+        if len(self.call) < 2 or len(self.call) > 6:    # Calls like CQ or ID
             logger.error('Call validator: Call length')
             return False
         if not self.call.isascii():
@@ -121,6 +121,11 @@ class Call(object):
         if self.ssid > 15 or self.ssid < 0:
             logger.error('Call validator: SSID')
             return False
+        for c in self.call:
+            if c.isupper() or c.isdigit():
+                pass
+            else:
+                return False
         return True
 
 
@@ -527,11 +532,13 @@ class AX25Frame(object):
             el: Call
             for el in self.via_calls:
                 el.s_bit = False
-                # el.c_bit = False
             self.via_calls[-1].s_bit = True
 
     def set_check_h_bits(self, dec=True):
-        """ Check if Packet runs through all Digi's """
+        """
+        Dec: Check if Packet runs through all Digi's
+        Enc: Set all ViaCalls C-Bits to 0
+        """
         ca: Call
         if dec:
             for ca in self.via_calls:
@@ -539,7 +546,6 @@ class AX25Frame(object):
                     self.is_digipeated = False
                     break
         else:
-            # TODO TESTING !!
             for ca in self.via_calls:
                 ca.c_bit = False
 
@@ -632,23 +638,23 @@ class AX25Frame(object):
         try:
             self.hexstr = bytes.fromhex(self.hexstr.decode())
         except ValueError:
-            print("VALUE ERROR !!!!")
-            print("V: {}".format(self.hexstr))
-            print("from_call")
+            logger.error("VALUE ERROR !!!!")
+            logger.error("V: {}".format(self.hexstr))
+            logger.error("from_call")
             for k in vars(self.from_call).keys():
-                print("{} > {}".format(k, vars(self.from_call)[k]))
-            print("")
-            print("to_call")
+                logger.error("{} > {}".format(k, vars(self.from_call)[k]))
+            logger.error("")
+            logger.error("to_call")
             for k in vars(self.to_call).keys():
-                print("{} > {}".format(k, vars(self.to_call)[k]))
-            print("")
-            print("pid_byte")
+                logger.error("{} > {}".format(k, vars(self.to_call)[k]))
+            logger.error("")
+            logger.error("pid_byte")
             for k in vars(self.pid_byte).keys():
-                print("{} > {}".format(k, vars(self.pid_byte)[k]))
-            print("")
-            print("ctl_byte")
+                logger.error("{} > {}".format(k, vars(self.pid_byte)[k]))
+            logger.error("")
+            logger.error("ctl_byte")
             for k in vars(self.ctl_byte).keys():
-                print("{} > {}".format(k, vars(self.ctl_byte)[k]))
+                logger.error("{} > {}".format(k, vars(self.ctl_byte)[k]))
             raise ValueError
 
         # Data
