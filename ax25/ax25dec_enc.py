@@ -606,7 +606,7 @@ class AX25Frame(object):
         else:
             raise DecodingERROR
 
-    def encode(self):
+    def encode(self, digi=False):
         self.hexstr = b''
         # Set Command/Report Bits
         if self.ctl_byte.cmd:
@@ -624,7 +624,8 @@ class AX25Frame(object):
         self.hexstr += self.from_call.hex_str
         # Via Stations
         # Set all H-Bits to 0
-        self.set_check_h_bits(dec=False)
+        if not digi:
+            self.set_check_h_bits(dec=False)
         for station in self.via_calls:
             station.enc_call()
             self.hexstr += station.hex_str
@@ -689,3 +690,20 @@ class AX25Frame(object):
                 logger.error('Validate Error: PID_Byte')
                 return False
         return True
+
+    def is_for_digi(self, call: str, h_bit=False):
+        """
+        Check if Call is in Via Calls and is digipeated from previous Stations
+        :param h_bit: bool: Set H-Bit of call and encode Packet for digipeating
+        :param call: str: Call we're looking for
+        :return: bool:
+        """
+        ca: Call
+        for ca in self.via_calls:
+            """ C-Bit = H-Bit in Digi Address Space """
+            if not ca.c_bit and ca.call_str == call:
+                if h_bit:
+                    ca.c_bit = True
+                    self.encode(digi=True)
+                return True
+        return False

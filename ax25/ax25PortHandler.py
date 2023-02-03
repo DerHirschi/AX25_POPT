@@ -28,11 +28,13 @@ class DevDirewolf(threading.Thread):
         sock_timeout = 0.5
         # TODO: Set CFG from outer
         self.stat_cfg = MD5TESTstationCFG
+        self.portname = self.stat_cfg.parm_PortName
         self.my_stations = self.stat_cfg.parm_StationCalls
         self.is_stupid_digi = self.stat_cfg.parm_is_StupidDigi
         self.is_digi = self.stat_cfg.parm_isDigi
         self.parm_TXD = self.stat_cfg.parm_TXD
         self.TXD = time.time()
+        self.digi_buf: [AX25Frame] = []
         # CONFIG ENDE
         #############
         #############
@@ -61,10 +63,18 @@ class DevDirewolf(threading.Thread):
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         self.set_TXD()
         # Monitor
-        self.monitor.frame_inp(ax25_frame, 'DW')
+        self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
-        self.MYHEARD.mh_inp(ax25_frame, 'DW')
-        if ax25_frame.is_digipeated:
+        self.MYHEARD.mh_inp(ax25_frame, self.portname)
+        for_digi = False
+        if self.is_stupid_digi:
+            for my_call in self.my_stations:
+                if ax25_frame.is_for_digi(call=my_call, h_bit=True):
+                    self.digi_buf.append(ax25_frame)
+                    print("DIGI ....")
+                    for_digi = True
+
+        if ax25_frame.is_digipeated and not for_digi:
             # print(self.connections.keys())
             if ax25_frame.addr_uid in self.connections.keys():
                 # Connection already established
@@ -92,8 +102,16 @@ class DevDirewolf(threading.Thread):
                     self.dw_sock.sendall(out)   # TODO try:
                     self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
                     # Monitor
-                    self.monitor.frame_inp(el, 'DW')
-
+                    self.monitor.frame_inp(el, self.portname)
+        # DIGI
+        fr: AX25Frame
+        for fr in self.digi_buf:
+            out = (bytes.fromhex('c000') + fr.hexstr + bytes.fromhex('c0'))
+            self.dw_sock.sendall(out)  # TODO try:
+            print("DIGI TX --")
+            # Monitor
+            self.monitor.frame_inp(fr, self.portname)
+        self.digi_buf = []
         self.del_connections()
 
     def cron_pac_handler(self):
@@ -129,7 +147,7 @@ class DevDirewolf(threading.Thread):
     def run_once(self):
         while True:
             try:
-                #buf = self.dw_sock.recv(333)
+                # buf = self.dw_sock.recv(333)
                 buf = self.dw_sock.recv(400)
                 """
                 while b:
@@ -141,21 +159,18 @@ class DevDirewolf(threading.Thread):
                 break
 
             if buf:  # RX ############
-                # TODO self.set_t0()
                 ax25frame = AX25Frame()
                 e = None
                 try:
                     # Decoding
                     ax25frame.decode(buf)
                 except DecodingERROR as e:
-                    logger.error('DW.decoding: {}'.format(e))
+                    logger.error('{}}.decoding: {}'.format(self.portname, e))
                     break
                 if e is None and ax25frame.validate():
                     # ######### RX #############
                     # Handling
-                    logger.debug("STARTE RX")
                     self.rx_pac_handler(ax25frame)
-                    logger.debug("ENDE RX")
                     ############################
                 # self.timer_T0 = 0
             else:
@@ -163,14 +178,10 @@ class DevDirewolf(threading.Thread):
         if time.time() > self.TXD:
             #############################################
             # Crone
-            logger.debug("STARTE CRON")
             self.cron_pac_handler()
-            logger.debug("STARTE CRON")
             # ######### TX #############
             # TX
-            logger.debug("STARTE TX")
             self.tx_pac_handler()
-            logger.debug("STARTE TX")
 
         ############################
 

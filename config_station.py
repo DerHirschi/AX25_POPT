@@ -3,6 +3,7 @@ class DefaultStationConfig(object):
     ##########################
     # Parameter for Connection
     """ Port Parameter """
+    parm_PortName: '' = ''
     parm_StationCalls: [''] = []
     parm_isDigi = False
     parm_is_StupidDigi = False
@@ -22,7 +23,10 @@ class DefaultStationConfig(object):
 
 
 class MD5TESTstationCFG(DefaultStationConfig):
+    parm_PortName = 'DW'
     parm_StationCalls = ['MD5TES', 'MD6TES']
+    parm_isDigi = True
+    parm_is_StupidDigi = True
     ##########################
     # Parameter for CLI
     parm_cli_ctext = '-= TEST C-TEXT =-'
