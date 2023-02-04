@@ -346,24 +346,24 @@ class DefaultStat(object):
         # DIGI / LINK Connection / Node Funktion
         if self.digi_conn is not None:
             # Handle Connection End
+            if self.digi_conn.zustand_exec.stat_index in [0, 1, 4]:
+                if self.stat_index not in [0, 1, 4]:
+                    self.change_state(4)
             if self.stat_index in [0, 1, 4]:
                 if self.digi_conn.zustand_exec.stat_index not in [0, 1, 4]:
                     self.digi_conn.zustand_exec.change_state(4)
-            elif self.digi_conn.zustand_exec.stat_index in [0, 1, 4]:
-                self.change_state(4)
             else:
                 # Handle RX/TX Buffer Sharing
                 self.digi_conn: AX25Conn
-                # print("CRONE DIGI rx {}".format(self.ax25conn.rx_buf_rawData))
-                # print("CRONE DIGI digi {}".format(self.digi_conn.rx_buf_rawData))
-
                 if self.ax25conn.rx_buf_rawData:
                     self.digi_conn.tx_buf_rawData += bytes(self.ax25conn.rx_buf_rawData)
                     self.ax25conn.rx_buf_rawData = b''
                 if self.digi_conn.rx_buf_rawData:
                     self.ax25conn.tx_buf_rawData += bytes(self.digi_conn.rx_buf_rawData)
                     self.digi_conn.rx_buf_rawData = b''
-
+        # CLEANUP
+        if self.ax25conn.n2 == 100:
+            self.change_state(0)
         ###########
         # DEBUGGING
         self.ax25conn.debugvar_len_out_buf = len(self.ax25conn.tx_buf_2send)
@@ -461,12 +461,14 @@ class S4Abbau(DefaultStat):
             self.ax25conn.set_T1()  # Prevent sending another Packet
             self.change_state(0)
         elif flag in ['SABM'] or \
-                flag in ['RR', 'REJ', 'I', 'RNR'] and ax25_frame.ctl_byte.pf:
+                (flag in ['RR', 'REJ', 'I', 'RNR'] and ax25_frame.ctl_byte.pf):
             self.ax25conn.send_DM()
-            self.change_state(0)
+            self.ax25conn.n2 = 100
+            self.change_state(1)
         elif flag == 'DISC':
             self.ax25conn.send_UA()
-            self.change_state(0)
+            self.ax25conn.n2 = 100
+            self.change_state(1)
 
     def state_cron(self):
         if time.time() > self.ax25conn.t1:
@@ -478,7 +480,7 @@ class S4Abbau(DefaultStat):
             else:
                 if self.digi_conn is None:
                     self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
-                    self.ax25conn.ax25_out_frame.to_call.call_str).encode()
+                        self.ax25conn.ax25_out_frame.to_call.call_str).encode()
                 # self.ax25conn.send_DISC()
                 self.change_state(0)
 
@@ -508,7 +510,8 @@ class S5Ready(DefaultStat):
             self.ax25conn.send_UA()
         elif flag == 'DISC':
             self.ax25conn.send_UA()
-            self.change_state(0)
+            self.ax25conn.n2 = 100
+            self.change_state(1)
         elif flag == 'RR':
             if ((nr - 1) % 8) in self.ax25conn.tx_buf_unACK.keys():
                 self.ax25conn.del_unACK_buf()

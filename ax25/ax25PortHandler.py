@@ -61,14 +61,13 @@ class DevDirewolf(threading.Thread):
         self.TXD = time.time() + self.parm_TXD / 1000
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
-        """ Crapy Code :-( TODO Cleanup """
+        """ Not Happy with that Part . . :-( TODO Cleanup """
         # Monitor
         self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
         self.MYHEARD.mh_inp(ax25_frame, self.portname)
         # Existing Connections
         uid = str(ax25_frame.addr_uid)
-        print("KEY:{} - {} -{}".format(ax25_frame.addr_uid, uid, self.connections.keys()))
         if uid in self.connections.keys():
             # Connection already established
             if ax25_frame.is_digipeated:
@@ -83,17 +82,6 @@ class DevDirewolf(threading.Thread):
                             self.connections[uid].set_T2()
                             print("KEY:{} - {} -{}".format(ax25_frame.addr_uid, uid, self.connections.keys()))
                             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
-        # DIGI / LINK Connection
-        elif reverse_uid(uid) in self.connections.keys():
-            print("ELSE REV")
-            uid = reverse_uid(uid)
-            my_digi_call = self.connections[uid].my_digi_call
-            if my_digi_call:
-                if ax25_frame.digi_check_and_encode(call=my_digi_call, h_bit_enc=False):
-                    if uid in self.connections.keys():
-                        self.connections[uid].set_T2()
-                        print("KEY:{} - {} -{}".format(ax25_frame.addr_uid, uid, self.connections.keys()))
-                        self.connections[uid].handle_rx(ax25_frame=ax25_frame)
 
         # New Incoming Connection Request
         elif ax25_frame.to_call.call_str in self.my_stations\
@@ -102,6 +90,16 @@ class DevDirewolf(threading.Thread):
             self.connections[str(ax25_frame.addr_uid)] = AX25Conn(ax25_frame, cfg)
             self.connections[ax25_frame.addr_uid].set_T2()
             self.connections[ax25_frame.addr_uid].handle_rx(ax25_frame=ax25_frame)
+        # DIGI / LINK Connection
+        elif reverse_uid(uid) in self.connections.keys():
+            uid = reverse_uid(uid)
+            my_digi_call = self.connections[uid].my_digi_call
+            if my_digi_call:
+                if ax25_frame.digi_check_and_encode(call=my_digi_call, h_bit_enc=False):
+                    if uid in self.connections.keys():
+                        self.connections[uid].set_T2()
+                        self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+
         # DIGI
         elif self.is_stupid_digi or self.is_smart_digi:
             for my_call in self.my_stations:

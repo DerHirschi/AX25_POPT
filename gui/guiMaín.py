@@ -330,8 +330,8 @@ class TkMainWin:
 
     def start_new_conn(self):
         ax_frame = AX25Frame()
-        ax_frame.from_call.call = 'MD5TES'
-        ax_frame.to_call.call = 'MD6TES'
+        ax_frame.from_call.call = 'MD6TES'
+        ax_frame.to_call.call = 'MD5TES'
         via1 = Call()
         via1.call = 'DNX527'
         ax_frame.via_calls = [via1]
