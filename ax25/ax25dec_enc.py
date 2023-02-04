@@ -691,19 +691,33 @@ class AX25Frame(object):
                 return False
         return True
 
-    def is_for_digi(self, call: str, h_bit=False):
+    #############
+    # DIGI Stuff
+    def digi_check_and_encode(self, call: str, h_bit_enc=False):
         """
         Check if Call is in Via Calls and is digipeated from previous Stations
-        :param h_bit: bool: Set H-Bit of call and encode Packet for digipeating
+        :param h_bit_enc: bool: Set H-Bit of call and encode Packet for digipeating
         :param call: str: Call we're looking for
         :return: bool:
         """
         ca: Call
         for ca in self.via_calls:
             """ C-Bit = H-Bit in Digi Address Space """
+            # print("via {} - {} - {}".format(ca.call_str, call, ca.c_bit))
             if not ca.c_bit and ca.call_str == call:
-                if h_bit:
+                if h_bit_enc:
                     ca.c_bit = True
-                    self.encode(digi=True)
+                self.encode(digi=True)
                 return True
         return False
+
+    def short_via_calls(self, call: str):
+        el: Call
+        ind = 0
+        for el in self.via_calls:
+            if call in el.call_str:
+                break
+            else:
+                ind += 1
+        self.via_calls = self.via_calls[ind:]
+

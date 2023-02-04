@@ -5,9 +5,9 @@ class DefaultStationConfig(object):
     """ Port Parameter """
     parm_PortName: '' = ''
     parm_StationCalls: [''] = []
-    parm_isDigi = False
-    parm_is_StupidDigi = False
-    parm_TXD = 1000  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+    parm_isSmartDigi = False
+    parm_is_StupidDigi = False  # Just if parm_isDigi is set to False
+    parm_TXD = 1200  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
     """ Connection Parameter """
     parm_PacLen = 170  # Max Pac len
     parm_MaxFrame = 5  # Max (I) Frames
@@ -25,8 +25,8 @@ class DefaultStationConfig(object):
 class MD5TESTstationCFG(DefaultStationConfig):
     parm_PortName = 'DW'
     parm_StationCalls = ['MD5TES', 'MD6TES']
-    parm_isDigi = True
-    parm_is_StupidDigi = True
+    parm_isSmartDigi = True    # Bullshit Idea
+    parm_is_StupidDigi = False
     ##########################
     # Parameter for CLI
     parm_cli_ctext = '-= TEST C-TEXT =-'

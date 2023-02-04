@@ -353,13 +353,15 @@ class TkMainWin:
         # UPDATE INPUT WIN
         if list(self.axtest_port.connections.keys()):
             k = list(self.axtest_port.connections.keys())[CONN_IND]
+            conn: AX25Conn
             conn = self.axtest_port.connections[k]
             if conn.rx_buf_rawData:
-                out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
-                conn.rx_buf_rawData = b''
-                self.out_txt.configure(state="normal")
-                self.out_txt.insert('end', out)
-                self.out_txt.configure(state="disabled")
+                if not conn.my_digi_call:
+                    out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
+                    conn.rx_buf_rawData = b''
+                    self.out_txt.configure(state="normal")
+                    self.out_txt.insert('end', out)
+                    self.out_txt.configure(state="disabled")
                 # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
                 if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 25:
                     self.out_txt.see("end")
