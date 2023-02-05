@@ -4,7 +4,7 @@ import threading
 import time
 
 from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid
-from ax25.ax25Statistics import MH
+# from gui.guiMaín_old import MYHEARD
 from ax25.ax25PacHandler import AX25Conn
 from config_station import MD5TESTstationCFG
 
@@ -22,19 +22,19 @@ logger = logging.getLogger(__name__)
 
 
 class DevDirewolf(threading.Thread):
-    def __init__(self):
+    def __init__(self, station_cfg):
         super(DevDirewolf, self).__init__()
         ############
         # CONFIG
         self.address = ('192.168.178.152', 8001)
         sock_timeout = 0.5
         # TODO: Set CFG from outer
-        self.stat_cfg = MD5TESTstationCFG
-        self.portname = self.stat_cfg.parm_PortName
-        self.my_stations = self.stat_cfg.parm_StationCalls
-        self.is_stupid_digi = self.stat_cfg.parm_is_StupidDigi
-        self.is_smart_digi = self.stat_cfg.parm_isSmartDigi
-        self.parm_TXD = self.stat_cfg.parm_TXD
+        self.station_cfg = station_cfg
+        self.portname = self.station_cfg.parm_PortName
+        self.my_stations = self.station_cfg.parm_StationCalls
+        self.is_stupid_digi = self.station_cfg.parm_is_StupidDigi
+        self.is_smart_digi = self.station_cfg.parm_isSmartDigi
+        self.parm_TXD = self.station_cfg.parm_TXD
         self.TXD = time.time()
         self.digi_buf: [AX25Frame] = []
         # CONFIG ENDE
@@ -44,9 +44,8 @@ class DevDirewolf(threading.Thread):
         self.loop_is_running = False
         #############
         self.monitor = ax25monitor.Monitor()
-        self.MYHEARD = MH()
+        self.MYHEARD = self.station_cfg.parm_mh
         self.connections: {str: AX25Conn} = {}
-        # AX25Conn(AX25Frame(), self.stat_cfg)      # Just do onetime Init
         self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         try:
             self.dw_sock.connect(self.address)
@@ -88,7 +87,7 @@ class DevDirewolf(threading.Thread):
         # New Incoming Connection Request
         elif ax25_frame.to_call.call_str in self.my_stations \
                 and ax25_frame.is_digipeated:
-            cfg = self.stat_cfg()
+            cfg = self.station_cfg()
             self.connections[uid] = AX25Conn(ax25_frame, cfg)
             self.connections[uid].set_T2()
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
@@ -119,7 +118,7 @@ class DevDirewolf(threading.Thread):
                         if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=False):
                             print("NEW DIGI CONN")
                             # "Smart" DIGI
-                            cfg = self.stat_cfg()
+                            cfg = self.station_cfg()
                             # Incoming REQ
                             conn_in = AX25Conn(ax25_frame, cfg)
                             conn_in.my_digi_call = str(my_call)
@@ -203,7 +202,7 @@ class DevDirewolf(threading.Thread):
             conn.exec_cron()
 
     def new_connection(self, ax25_frame: AX25Frame):
-        cfg = self.stat_cfg()
+        cfg = self.station_cfg()
         # ax25_frame.addr_uid = reverse_uid(ax25_frame.addr_uid)
         conn = AX25Conn(ax25_frame, cfg, rx=False)
         self.connections[ax25_frame.addr_uid] = conn

@@ -1,4 +1,6 @@
+import ax25.ax25Statistics
 from cli.cli import *
+
 
 class DefaultStationConfig(object):
     ##########################
@@ -22,6 +24,7 @@ class DefaultStationConfig(object):
     # Parameter for CLI
     parm_cli = DefaultCLI
     parm_cli_ctext = ''
+    parm_mh = ax25.ax25Statistics.MH()
 
 
 class MD5TESTstationCFG(DefaultStationConfig):

@@ -1,5 +1,6 @@
 from ax25.ax25dec_enc import get_call_str, AX25Frame
 from datetime import datetime
+import time
 import os
 import pickle
 
@@ -44,7 +45,11 @@ class MH(object):
         """
 
     def __del__(self):
-        self.save_mh_data()
+        try:
+            self.save_mh_data()
+        except NameError:
+
+            pass
 
     def mh_inp(self, ax25_frame: AX25Frame, port_id, axip_add=None):
         ########################
@@ -92,9 +97,7 @@ class MH(object):
         out = out['axip_add']
         return out
 
-    """
     def mh_out_cli(self):
-
         out = ''
         out += '\r                       < MH - List >\r\r'
         c = 0
@@ -102,13 +105,15 @@ class MH(object):
         tb = 0
         rj = 0
         for call in list(self.calls.keys()):
-            out += 'P:{:2}>{:5} S {:9} {:3}'.format(self.calls[call]['port'],
-                                                round(time.time() - self.calls[call]['last_seen'][0]),
+
+            out += 'P:{:2}>{:5} S {:9} {:3}'.format(self.calls[call].port,
+                                                self.calls[call].last_seen,
                                                 call,
                                                 '')
-            tp += self.calls[call]['pac_n']
-            tb += self.calls[call]['byte_n']
-            rj += self.calls[call]['rej_n']
+
+            tp += self.calls[call].pac_n
+            tb += self.calls[call].byte_n
+            rj += self.calls[call].rej_n
             c += 1
             if c == 3:
                 c = 0
@@ -120,7 +125,7 @@ class MH(object):
         out += '\r'
 
         return out
-    """
+
     def save_mh_data(self):
         try:
             with open(mh_data_file, 'wb') as outp:
@@ -131,4 +136,7 @@ class MH(object):
                 pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
 
 
-
+if __name__ == '__main__':
+    mh_data_file = '../data/mh_data.pkl'
+    mh = MH()
+    print(mh.mh_out_cli())

@@ -117,7 +117,6 @@ class Call(object):
 
     def validate(self):
         """
-        TODO: better Call Check
         :return: bool
         """
         if len(self.call) < 2 or len(self.call) > 6:    # Calls like CQ or ID

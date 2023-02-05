@@ -7,6 +7,8 @@ import logging
 from ax25.ax25PortHandler import DevDirewolf, AX25Conn, AX25Frame, Call
 from gui.guiMH import MHWin
 from gui.guiDebug import DEBUGwin
+from ax25.ax25Statistics import *
+from config_station import MD5TESTstationCFG
 
 
 LOOP_DELAY = 50        # ms
@@ -33,7 +35,8 @@ logger = logging.getLogger(__name__)
 
 class TkMainWin:
     def __init__(self):
-        self.axtest_port = DevDirewolf()    # TODO Port Management
+        self.axtest_port = DevDirewolf(MD5TESTstationCFG)    # TODO Port Management
+        self.mh = MD5TESTstationCFG.parm_mh
         self.axtest_port.start()
         self.win = tk.Tk()
         self.debug_win = None
@@ -397,7 +400,7 @@ class TkMainWin:
             for el in self.axtest_port.monitor.out_buf:
                 temp = el.split(': ')
                 temp = temp[1].split(' to')
-                if temp[0] in self.axtest_port.stat_cfg.parm_StationCalls:
+                if temp[0] in self.axtest_port.station_cfg.parm_StationCalls:
                     # self.mon_txt.configure(foreground='yellow')
                     self.mon_txt.tag_configure("red", foreground="red")
 
