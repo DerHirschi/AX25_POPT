@@ -1,4 +1,4 @@
-from gui.guiMaín import TkMainWin
+from gui.guiMaín_old import TkMainWin
 # from ax25.ax25PortHandler import MYHEARD
 
 if __name__ == '__main__':

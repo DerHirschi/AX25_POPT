@@ -1,3 +1,4 @@
+import copy
 import socket
 import threading
 import time
@@ -10,6 +11,7 @@ from config_station import MD5TESTstationCFG
 import ax25.ax25monitor as ax25monitor
 
 import logging
+
 # Enable logging
 """
 logging.basicConfig(
@@ -84,12 +86,12 @@ class DevDirewolf(threading.Thread):
                             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
 
         # New Incoming Connection Request
-        elif ax25_frame.to_call.call_str in self.my_stations\
+        elif ax25_frame.to_call.call_str in self.my_stations \
                 and ax25_frame.is_digipeated:
             cfg = self.stat_cfg()
-            self.connections[str(ax25_frame.addr_uid)] = AX25Conn(ax25_frame, cfg)
-            self.connections[ax25_frame.addr_uid].set_T2()
-            self.connections[ax25_frame.addr_uid].handle_rx(ax25_frame=ax25_frame)
+            self.connections[uid] = AX25Conn(ax25_frame, cfg)
+            self.connections[uid].set_T2()
+            self.connections[uid].handle_rx(ax25_frame=ax25_frame)
         # DIGI / LINK Connection
         elif reverse_uid(uid) in self.connections.keys():
             uid = reverse_uid(uid)
@@ -103,11 +105,12 @@ class DevDirewolf(threading.Thread):
         # DIGI
         elif self.is_stupid_digi or self.is_smart_digi:
             for my_call in self.my_stations:
+                # Simple "Stupid" DIGI
                 if self.is_stupid_digi:
-                    # Simple "Stupid" DIGI
                     if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
                         self.digi_buf.append(ax25_frame)
                 else:
+                    # DIGI UI Frames
                     if ax25_frame.ctl_byte.flag == 'UI':
                         if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
                             self.digi_buf.append(ax25_frame)
@@ -119,26 +122,45 @@ class DevDirewolf(threading.Thread):
                             cfg = self.stat_cfg()
                             # Incoming REQ
                             conn_in = AX25Conn(ax25_frame, cfg)
-                            conn_in.my_digi_call = my_call
+                            conn_in.my_digi_call = str(my_call)
                             conn_in.set_T2()
                             conn_in.handle_rx(ax25_frame=ax25_frame)
-                            self.connections[str(ax25_frame.addr_uid)] = conn_in
-                            if conn_in.zustand_exec.stat_index == 5:    # Accept ( Incoming SABM )
+                            self.connections[uid] = conn_in
+                            if conn_in.zustand_exec.stat_index == 5:  # Accept ( Incoming SABM )
                                 # Init Outgoing Connection
-                                ax25_frame.short_via_calls(call=my_call)
-                                ax25_frame.encode()
-                                conn_out = AX25Conn(ax25_frame, cfg, rx=False)
-                                conn_out_uid = conn_out.ax25_out_frame.addr_uid
-                                conn_out.my_digi_call = my_call
-                                conn_out.DIGI_Connection = conn_in
-                                conn_in.DIGI_Connection = conn_out
-                                conn_in.tx_buf_rawData = conn_out.rx_buf_rawData
-                                conn_out.tx_buf_rawData = conn_in.rx_buf_rawData
-                                conn_out.zustand_exec.__init__(conn_out)
-                                conn_in.zustand_exec.__init__(conn_in)  # Reinit
-                                self.connections[str(conn_out_uid)] = conn_out
+                                print("CONN IN UID: {}".format(uid))
+                                print("CONN IN MyCall: {}".format(conn_in.my_digi_call))
+                                copy_ax25frame = copy.copy(ax25_frame)
+                                copy_ax25frame.short_via_calls(call=my_call)
+                                copy_ax25frame.encode()
 
-
+                                while copy_ax25frame.addr_uid in self.connections.keys() or \
+                                        reverse_uid(copy_ax25frame.addr_uid) in self.connections.keys():
+                                    print("Same UID in Connections.. Try change SSID {}".format(copy_ax25frame.addr_uid))
+                                    my_call = copy_ax25frame.increment_viacall_ssid(call=my_call)
+                                    if my_call:
+                                        copy_ax25frame.short_via_calls(call=my_call)
+                                        print("New MyCall {}".format(my_call))
+                                        copy_ax25frame.digi_check_and_encode(call=my_call, h_bit_enc=True)
+                                        print("New UID  {}".format(copy_ax25frame.addr_uid))
+                                        # copy_ax25frame.short_via_calls(call=my_call)
+                                        # copy_ax25frame.encode(digi=True)
+                                    else:
+                                        conn_in.zustand_exec.change_state(4)
+                                        break
+                                if conn_in.zustand_exec.stat_index == 5:
+                                    conn_out = AX25Conn(copy_ax25frame, cfg, rx=False)
+                                    conn_out_uid = conn_out.ax25_out_frame.addr_uid
+                                    conn_out.my_digi_call = str(my_call)
+                                    print("CONN OUT UID: {}".format(conn_out_uid))
+                                    print("CONN OUT MyCall: {}".format(conn_out.my_digi_call))
+                                    conn_out.DIGI_Connection = conn_in
+                                    conn_in.DIGI_Connection = conn_out
+                                    conn_in.tx_buf_rawData = conn_out.rx_buf_rawData
+                                    conn_out.tx_buf_rawData = conn_in.rx_buf_rawData
+                                    conn_out.zustand_exec.__init__(conn_out)
+                                    conn_in.zustand_exec.__init__(conn_in)  # Reinit
+                                    self.connections[str(conn_out_uid)] = conn_out
 
     def tx_pac_handler(self):
         for k in self.connections.keys():
@@ -152,17 +174,18 @@ class DevDirewolf(threading.Thread):
                 el: AX25Frame
                 for el in snd_buf:
                     if conn.my_digi_call:
-                        # print(conn.my_digi_call)
+                        print("Send DIGI CALL: " + conn.my_digi_call)
+                        el.set_check_h_bits(dec=False)
                         el.digi_check_and_encode(call=conn.my_digi_call, h_bit_enc=True)
-                        el.encode(digi=True)    # Why encoding again ?? But it works.
+                        el.encode(digi=True)  # Why encoding again ?? But it works.
                     else:
                         el.encode()
 
                     out = (bytes.fromhex('c000') + bytes(el.hexstr) + bytes.fromhex('c0'))
-                    self.dw_sock.sendall(out)   # TODO try:
+                    self.dw_sock.sendall(out)  # TODO try:
                     # self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
                     # Monitor
-                    self.monitor.frame_inp(el, self.portname)
+                    self.monitor.frame_inp(el, 'DW-TX')
         # DIGI
         fr: AX25Frame
         for fr in self.digi_buf:
@@ -241,4 +264,3 @@ class DevDirewolf(threading.Thread):
         ############################
         # Cleanup
         # self.del_connections()
-

@@ -85,7 +85,15 @@ class AX25Conn(object):
             7: (S7WaitForFinal, 'FINAL'),
         }
         """ Init CLI """
-        self.cli = DefaultCLI()
+        self.cli = cfg.parm_cli()
+        # Overwrite cli.py Parameter from config_station.px
+        if hasattr(cfg, 'parm_cli_ctext'):
+            self.cli.c_text = str(cfg.parm_cli_ctext)
+        if hasattr(cfg, 'parm_cli_bye_text'):
+            self.cli.bye_text = str(cfg.parm_cli_bye_text)
+        if hasattr(cfg, 'parm_cli_prompt'):
+            self.cli.prompt = str(cfg.parm_cli_prompt)
+
         """ DIGI / Link to other Connection for Auto processing """
         self.DIGI_Connection: AX25Conn
         self.my_digi_call = ''
@@ -556,7 +564,7 @@ class S5Ready(DefaultStat):
             print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
 
             if ns == self.ax25conn.vr:  # !!!! Korrekt
-                # Proces correct I-Frame
+                # Process correct I-Frame
                 self.ax25conn.n2 = 0
                 self.ax25conn.vr = count_modulo(int(self.ax25conn.vr))
                 self.ax25conn.rx_buf_rawData += ax25_frame.data

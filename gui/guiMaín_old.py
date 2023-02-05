@@ -11,10 +11,9 @@ from gui.guiDebug import DEBUGwin
 
 LOOP_DELAY = 50        # ms
 TEXT_SIZE = 16
+TEXT_SIZE_STATUS = 11
 FONT = "Courier"
 VER = '0.1a'
-
-CONN_IND = 0
 
 TEST_TIME_RNG = (0, 60)
 TEST_DATA_RNG = (2, 1000)
@@ -35,25 +34,20 @@ logger = logging.getLogger(__name__)
 class TkMainWin:
     def __init__(self):
         self.axtest_port = DevDirewolf()    # TODO Port Management
-        #self.axtest_port.run_once()
         self.axtest_port.start()
-        # self.ax25_ports_th = None
-        # self.ax25_ports_th.start()
         self.win = tk.Tk()
-        # self.style = ttk.Style()
-        # self.mh_win: MHWin
         self.debug_win = None
         self.new_conn_win = None
+        self.conn_ind = 0
         self.win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.win.geometry("1400x850")
-        # style = ttk.Style()
-        # style.configure("BW.TLabel", foreground="black", background="white")
-        self.win.columnconfigure(1, minsize=500, weight=2)
+        self.win.columnconfigure(1, minsize=500, weight=1)
         self.win.columnconfigure(2, minsize=200, weight=1)
         self.win.rowconfigure(0, minsize=150, weight=1)
-        self.win.rowconfigure(1, minsize=400, weight=1)
-        self.win.rowconfigure(2, minsize=30, weight=1)
-        self.win.rowconfigure(3, minsize=250, weight=1)
+        self.win.rowconfigure(1, minsize=20, weight=1)
+        self.win.rowconfigure(2, minsize=400, weight=1)
+        self.win.rowconfigure(3, minsize=30, weight=1)
+        self.win.rowconfigure(4, minsize=250, weight=1)
         ##############
         # KEY BINDS
         self.win.bind('<Return>', self.snd_text)
@@ -78,20 +72,51 @@ class TkMainWin:
         self.menubar.add_command(label="Debug", command=self.DEBUG_win)
         ##############
         # Textfenster
+        ###################
         # Vorschreibfenster
         self.inp_txt = scrolledtext.ScrolledText(self.win,
                                                  background='black',
                                                  foreground='yellow',
                                                  font=(FONT, TEXT_SIZE))
         self.inp_txt.grid(row=0, column=1, sticky="nsew")
+        #################
+        # Staus Bar
+        self.status_frame = tk.Frame(self.win, width=500, height=20)
+        self.status_frame.grid(row=1, column=1, sticky="nsew")
+        self.status_frame.columnconfigure(1, minsize=70, weight=1)  # Name
+        self.status_frame.columnconfigure(2, minsize=50, weight=1)  # Status
+        self.status_frame.columnconfigure(3, minsize=70, weight=1)  # unACK
+        self.status_frame.columnconfigure(4, minsize=70, weight=1)  # VS VR
+        self.status_frame.columnconfigure(5, minsize=50, weight=1)  # N2
+        self.status_frame.columnconfigure(6, minsize=70, weight=1)  # T1
+        self.status_frame.columnconfigure(7, minsize=70, weight=1)  # T3
+
+        self.status_name = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+        self.status_name.grid(row=1, column=1, sticky="nsew")
+        self.status_status = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+        self.status_status.grid(row=1, column=2, sticky="nsew")
+        self.status_unack = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+        self.status_unack.grid(row=1, column=3, sticky="nsew")
+        self.status_vs = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+        self.status_vs.grid(row=1, column=4, sticky="nsew")
+        self.status_n2 = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+        self.status_n2.grid(row=1, column=5, sticky="nsew")
+        self.status_t1 = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+        self.status_t1.grid(row=1, column=6, sticky="nsew")
+        self.status_t3 = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+        self.status_t3.grid(row=1, column=7, sticky="nsew")
+
+
+        ############
         # Ausgabe
         self.out_txt = scrolledtext.ScrolledText(self.win, background='black',
                                                  foreground='red',
                                                  font=(FONT, TEXT_SIZE))
         # self.out_txt.configure(state="disabled")
-        self.out_txt.grid(row=1, column=1, sticky="nsew")
+        self.out_txt.grid(row=2, column=1, sticky="nsew")
         ##############
         # CH Buttons
+
         self.ch_btn_frame = tk.Frame(self.win, width=500, height=30)
         self.ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
@@ -103,17 +128,17 @@ class TkMainWin:
         self.ch_btn_frame.columnconfigure(8, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
-        self.ch_btn_frame.grid(row=2, column=1, sticky="nsew")
-        self.ch_button1 = tk.Button(self.ch_btn_frame, text=" 1 ", bg="red")
-        self.ch_button2 = tk.Button(self.ch_btn_frame, text=" 2 ", bg="red")
-        self.ch_button3 = tk.Button(self.ch_btn_frame, text=" 3 ", bg="red")
-        self.ch_button4 = tk.Button(self.ch_btn_frame, text=" 4 ", bg="red")
-        self.ch_button5 = tk.Button(self.ch_btn_frame, text=" 5 ", bg="red")
-        self.ch_button6 = tk.Button(self.ch_btn_frame, text=" 6 ", bg="red")
-        self.ch_button7 = tk.Button(self.ch_btn_frame, text=" 7 ", bg="red")
-        self.ch_button8 = tk.Button(self.ch_btn_frame, text=" 8 ", bg="red")
-        self.ch_button9 = tk.Button(self.ch_btn_frame, text=" 9 ", bg="red")
-        self.ch_button10 = tk.Button(self.ch_btn_frame, text=" 10 ", bg="red")
+        self.ch_btn_frame.grid(row=3, column=1, sticky="nsew")
+        self.ch_button1 = tk.Button(self.ch_btn_frame, text=" 1 ", bg="red", command=lambda: self.ch_btn_clk(0))
+        self.ch_button2 = tk.Button(self.ch_btn_frame, text=" 2 ", bg="red", command=lambda: self.ch_btn_clk(1))
+        self.ch_button3 = tk.Button(self.ch_btn_frame, text=" 3 ", bg="red", command=lambda: self.ch_btn_clk(2))
+        self.ch_button4 = tk.Button(self.ch_btn_frame, text=" 4 ", bg="red", command=lambda: self.ch_btn_clk(3))
+        self.ch_button5 = tk.Button(self.ch_btn_frame, text=" 5 ", bg="red", command=lambda: self.ch_btn_clk(4))
+        self.ch_button6 = tk.Button(self.ch_btn_frame, text=" 6 ", bg="red", command=lambda: self.ch_btn_clk(5))
+        self.ch_button7 = tk.Button(self.ch_btn_frame, text=" 7 ", bg="red", command=lambda: self.ch_btn_clk(6))
+        self.ch_button8 = tk.Button(self.ch_btn_frame, text=" 8 ", bg="red", command=lambda: self.ch_btn_clk(7))
+        self.ch_button9 = tk.Button(self.ch_btn_frame, text=" 9 ", bg="red", command=lambda: self.ch_btn_clk(8))
+        self.ch_button10 = tk.Button(self.ch_btn_frame, text=" 10 ", bg="red", command=lambda: self.ch_btn_clk(9))
         self.ch_button1.grid(row=1, column=1, sticky="nsew")
         self.ch_button2.grid(row=1, column=2, sticky="nsew")
         self.ch_button3.grid(row=1, column=3, sticky="nsew")
@@ -130,25 +155,25 @@ class TkMainWin:
                                                  foreground='green',
                                                  font=(FONT, TEXT_SIZE))
         # self.mon_txt.configure(state="disabled")
-        self.mon_txt.grid(row=3, column=1, columnspan=2, sticky="nsew")
+        self.mon_txt.grid(row=4, column=1, columnspan=2, sticky="nsew")
         #######################
         #######################
         # SeitenLabel ( TEST )
         self.side_frame = tk.Frame(self.win, width=500, height=30)
-        self.side_frame.rowconfigure(0, minsize=100, weight=1)
-        self.side_frame.rowconfigure(1, minsize=400, weight=1)
-        self.side_frame.grid(row=0, column=2, rowspan=2, sticky="nsew")
+        self.side_frame.rowconfigure(0, minsize=60, weight=1)
+        self.side_frame.rowconfigure(1, minsize=440, weight=1)
+        self.side_frame.grid(row=0, column=2, rowspan=4, sticky="nsew")
         # Seiten Buttons Frame
         self.side_btn_frame = tk.Frame(self.side_frame, width=500, height=30)
-        self.side_btn_frame.rowconfigure(0, minsize=100, weight=1)
-        self.side_btn_frame.rowconfigure(1, minsize=400, weight=1)
+        self.side_btn_frame.rowconfigure(0, minsize=60, weight=1)
+        self.side_btn_frame.rowconfigure(1, minsize=440, weight=1)
         self.side_btn_frame.columnconfigure(0, minsize=100, weight=1)
         self.side_btn_frame.columnconfigure(1, minsize=100, weight=1)
         self.side_btn_frame.columnconfigure(2, minsize=100, weight=1)
         self.side_btn_frame.columnconfigure(3, minsize=100, weight=1)
         self.side_btn_frame.grid(row=0, column=0, sticky="nsew")
-        self.side_btn_frame.rowconfigure(0, minsize=50, weight=1)
-        self.side_btn_frame.rowconfigure(1, minsize=50, weight=1)
+        self.side_btn_frame.rowconfigure(0, minsize=30, weight=1)
+        self.side_btn_frame.rowconfigure(1, minsize=30, weight=1)
         # New Conncetion
         self.conn_btn = tk.Button(self.side_btn_frame, text="New Conn", bg="green", command=self.open_new_conn_win)
         self.conn_btn.grid(row=0, column=0, sticky="nsew")
@@ -201,28 +226,22 @@ class TkMainWin:
             for i in list(con_btn_dict.keys()):
                 con_btn_dict[i].configure(bg='red')
 
+    def ch_btn_clk(self, ind: int):
+        if self.axtest_port.connections.keys():
+            if ind in range(len(list(self.axtest_port.connections.keys()))):
+                self.conn_ind = ind
+
     def tasker(self):       # MAINLOOP
         # logger.debug(self.axtest_port.connections.keys())
-        """
-        if not self.axtest_port.is_alive():
-            self.axtest_port.join()
-            # self.ax25_ports_th.
-            # self.ax25_ports_th = threading.Thread(target=self.ax25ports_th)
-            self.axtest_port.start()
-        """
-        #self.ax25ports_th()
-        #self.mon_txt.configure(state="normal")
-        #self.out_txt.configure(state="normal")
+
         self.update_mon()
-        #self.mon_txt.configure(state="disabled")
-        #self.out_txt.configure(state="disabled")
+
         self.update_status_win()
         if self.debug_win is not None:
             self.debug_win: DEBUGwin
             if self.debug_win.is_running:
                 self.debug_win.tasker()
             else:
-                # self.debug_win.close()
                 self.debug_win = None
         # DEBUGGING ###
         self.tx_rx_check_rand_data()    # TEST Funktion !!!
@@ -277,11 +296,9 @@ class TkMainWin:
                 else:
 
                     con: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[0]]
-                    """
                     if not con.tx_buf_rawData:
                         TEST_OUT0 += rand_data
                         con.tx_buf_rawData += rand_data
-                    """
             # CHeck
             conn0: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[0]]
             if conn0.rx_buf_rawData_2:
@@ -327,11 +344,10 @@ class TkMainWin:
                 TEST_OUT0 = TEST_OUT0[len(inp1):]
                 TEST_cnt_0 += 1
 
-
     def start_new_conn(self):
         ax_frame = AX25Frame()
         ax_frame.from_call.call = 'MD6TES'
-        ax_frame.to_call.call = 'MD5TES'
+        ax_frame.to_call.call = 'CB0SAW'
         via1 = Call()
         via1.call = 'DNX527'
         ax_frame.via_calls = [via1]
@@ -345,6 +361,7 @@ class TkMainWin:
     #################
     # Main Win
     # - Main Win & Debug Win
+
     def update_mon(self):   # MON & INPUT WIN
         """
         Main Win
@@ -352,7 +369,15 @@ class TkMainWin:
         """
         # UPDATE INPUT WIN
         if list(self.axtest_port.connections.keys()):
-            k = list(self.axtest_port.connections.keys())[CONN_IND]
+            k = None
+            while k is None:
+                try:
+                    k = list(self.axtest_port.connections.keys())[self.conn_ind]
+                except IndexError:
+                    if self.conn_ind > 0:
+                        self.conn_ind -= 1
+                    else:
+                        raise IndexError
             conn: AX25Conn
             conn = self.axtest_port.connections[k]
             if conn.rx_buf_rawData:
@@ -393,7 +418,7 @@ class TkMainWin:
         Debug WIN
         """
         text = ''
-        station = self.get_conn(CONN_IND)
+        station = self.get_conn(self.conn_ind)
         if station:
             dest_call = station.ax25_out_frame.to_call.call_str
             via_calls = ''
@@ -414,7 +439,34 @@ class TkMainWin:
             send_buf_len = int(station.debugvar_len_out_buf)
             len_tx2snd_buf = len(station.tx_buf_2send)
             len_txraw_buf = len(station.tx_buf_rawData)
-
+            digi_call = station.my_digi_call
+            self.status_name.configure(text=dest_call)
+            status_bg = {
+                'ENDE': 'red',
+                'FREI': 'orange',
+                'AUFBAU': 'CadetBlue1',
+                'ABBAU': 'OrangeRed',
+                'BEREIT': 'green',
+                'REJ': 'yellow',
+                'FINAL': 'LightYellow',
+            }[status]
+            self.status_status.configure(text=status, bg=status_bg)
+            if len(station.tx_buf_unACK.keys()):
+                self.status_unack.configure(bg='yellow')
+            else:
+                self.status_unack.configure(bg='green')
+            self.status_unack.configure(text='unACK: {}'.format(len(station.tx_buf_unACK.keys())))
+            self.status_vs.configure(text='VS/VR: {}/{}'.format(vs, vr))
+            if n2 > 4:
+                self.status_n2.configure(bg='yellow')
+            elif n2 > 10:
+                self.status_n2.configure(bg='orange')
+            else:
+                self.status_n2.configure(bg='grey80')
+            self.status_n2.configure(text='N2: {}'.format(n2))
+            self.status_t1.configure(text='T1: {}'.format(t1))
+            self.status_t3.configure(text='T3: {}'.format(t3))
+            """
             text = '{}\n' \
                    '{}\n' \
                    '{}\n' \
@@ -446,6 +498,43 @@ class TkMainWin:
                     TEST_cnt_0,
                     TEST_cnt_1
                                     )
+            """
+
+            text = '{}\n' \
+                   '{}\n' \
+                   '{}\n' \
+                   '{}\n' \
+                   'VR: {} - VS: {} - N2: {}\n' \
+                   'NR: {} - NS: {}\n' \
+                   'T1: {}\nT2: {}\nT3 {}\n' \
+                   'noACK: {}\n' \
+                   'old2Send: {}\n' \
+                   '2Send: {}\n' \
+                   'SendRaw: {}\n' \
+                   'MyDigiCall: {}\n'\
+                .format(
+                dest_call,
+                via_calls,
+                status,
+                uid,
+                vr, vs, n2,
+                nr, ns,
+                t1, t2, t3,
+                noACK_buf,
+                send_buf_len,
+                len_tx2snd_buf,
+                len_txraw_buf,
+                digi_call
+            )
+
+        else:
+            self.status_name.configure(text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+            self.status_status.configure(text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+            self.status_unack.configure(text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+            self.status_vs.configure(text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+            self.status_n2.configure(text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+            self.status_t1.configure(text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
+            self.status_t3.configure(text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
         if window is None:
             self.test_lable.config(text=text)  # Debug LABEL
         else:
@@ -492,7 +581,7 @@ class TkMainWin:
     # ##############
     # DISCO
     def disco_conn(self):
-        station: AX25Conn = self.get_conn(CONN_IND)
+        station: AX25Conn = self.get_conn(self.conn_ind)
         if station:
             station.zustand_exec.change_state(4)
             # station.set_new_state()
@@ -506,7 +595,7 @@ class TkMainWin:
         print(event)
         tmp_txt = self.inp_txt.get('@0,0', tk.END)  # TODO
         print(tmp_txt)
-        station = self.get_conn(CONN_IND)
+        station = self.get_conn(self.conn_ind)
         if station:
             station.tx_buf_rawData += (tmp_txt + '\r').encode()
 

@@ -19,9 +19,17 @@ def bl2str(inp):
         return '-'
 
 
-def get_call_str(call, ssid=0):
+def get_call_str(call: str, ssid=0):
     if ssid:
         return call + '-' + str(ssid)
+    else:
+        return call
+
+
+def get_call_wo_ssid(call: str):
+    ind = call.find('-')
+    if ind != -1:
+        return call[:ind]
     else:
         return call
 
@@ -700,24 +708,48 @@ class AX25Frame(object):
         :param call: str: Call we're looking for
         :return: bool:
         """
+        if h_bit_enc:
+            self.set_check_h_bits(dec=False)
         ca: Call
         for ca in self.via_calls:
             """ C-Bit = H-Bit in Digi Address Space """
-            # print("via {} - {} - {}".format(ca.call_str, call, ca.c_bit))
+            if (not ca.c_bit and not ca.call_str == call) and h_bit_enc:
+                ca.c_bit = True
             if not ca.c_bit and ca.call_str == call:
                 if h_bit_enc:
                     ca.c_bit = True
-                self.encode(digi=True)
+                    self.encode(digi=True)
                 return True
         return False
 
     def short_via_calls(self, call: str):
         el: Call
         ind = 0
+        search_ind = 0
         for el in self.via_calls:
             if call in el.call_str:
-                break
+                search_ind = int(ind)
+                ind += 1
             else:
                 ind += 1
-        self.via_calls = self.via_calls[ind:]
+        if search_ind:
+            self.via_calls = self.via_calls[search_ind:]
 
+    def increment_viacall_ssid(self, call: str):
+        el: Call
+        ind = 0
+        self.via_calls.reverse()
+        for el in self.via_calls:
+            if get_call_wo_ssid(call) in el.call_str:
+                if el.ssid < 15:
+                    el.ssid += 1
+                    self.via_calls.reverse()
+                    self.encode()
+                    return el.call_str
+                else:
+                    self.via_calls.reverse()
+                    return False
+            else:
+                ind += 1
+        self.via_calls.reverse()
+        return False
