@@ -34,14 +34,17 @@ logger = logging.getLogger(__name__)
 
 
 class TkMainWin:
-    def __init__(self):
-        self.axtest_port = DevDirewolf(MD5TESTstationCFG)    # TODO Port Management
-        self.mh = MD5TESTstationCFG.parm_mh
+    def __init__(self, cfg=MD5TESTstationCFG):
+        self.axtest_port = DevDirewolf(cfg)     # TODO Port Management
+        self.mh = cfg.parm_mh
+        self.own_call = cfg.parm_StationCalls   # TODO Select Ports for Calls
         self.axtest_port.start()
         self.win = tk.Tk()
         self.debug_win = None
         self.new_conn_win = None
         self.conn_ind = 0
+        self.vorschreib_txt_ind = 1.0
+
         self.win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.win.geometry("1400x850")
         self.win.columnconfigure(1, minsize=500, weight=1)
@@ -80,7 +83,8 @@ class TkMainWin:
         self.inp_txt = scrolledtext.ScrolledText(self.win,
                                                  background='black',
                                                  foreground='yellow',
-                                                 font=(FONT, TEXT_SIZE))
+                                                 font=(FONT, TEXT_SIZE),
+                                                 insertbackground='white')
         self.inp_txt.grid(row=0, column=1, sticky="nsew")
         #################
         # Staus Bar
@@ -200,6 +204,8 @@ class TkMainWin:
     def __del__(self):
         self.axtest_port.loop_is_running = False
         print(self.axtest_port.loop_is_running)
+        self.mh.save_mh_data()
+        # del self.mh
         #.lock.release()
         # self.ax25_ports_th.join()
 
@@ -388,7 +394,11 @@ class TkMainWin:
                     out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
                     conn.rx_buf_rawData = b''
                     self.out_txt.configure(state="normal")
+                    ind = self.out_txt.index(tk.INSERT)
                     self.out_txt.insert('end', out)
+                    ind2 = self.out_txt.index(tk.INSERT)
+                    print(ind)
+                    print(ind2)
                     self.out_txt.configure(state="disabled")
                 # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
                 if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 25:
@@ -560,19 +570,49 @@ class TkMainWin:
             self.new_conn_win.title("New Connection")
             self.new_conn_win.geometry("700x300")
             self.new_conn_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
-            self.new_conn_win.columnconfigure(0, minsize=200, weight=2)
+            self.new_conn_win.columnconfigure(0, minsize=50, weight=2)
             self.new_conn_win.columnconfigure(1, minsize=200, weight=1)
-            self.new_conn_win.columnconfigure(3, minsize=300, weight=1)
-            self.new_conn_win.rowconfigure(0, minsize=100, weight=1)
-            self.new_conn_win.rowconfigure(1, minsize=100, weight=1)
-            self.new_conn_win.rowconfigure(2, minsize=50, weight=1)
-            self.new_conn_win.rowconfigure(3, minsize=50, weight=1)
+            self.new_conn_win.columnconfigure(2, minsize=200, weight=1)
+            self.new_conn_win.columnconfigure(3, minsize=50, weight=1)
+            self.new_conn_win.rowconfigure(0, minsize=30, weight=1)
+            self.new_conn_win.rowconfigure(1, minsize=30,  weight=1)
+            self.new_conn_win.rowconfigure(2, minsize=30, weight=1)
+            self.new_conn_win.rowconfigure(3, minsize=30, weight=1)
+            self.new_conn_win.rowconfigure(4, minsize=90, weight=1)
+            self.new_conn_win.rowconfigure(5, minsize=90, weight=1)
 
-            call_txt_inp = tk.Text(self.win, background='black', foreground='yellow', font=("TkFixedFont", TEXT_SIZE))
-            call_txt_inp.grid(row=0, column=1, sticky="nsew")
+            call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12))
+            call_txt_inp.grid(row=1, column=2,columnspan=1, sticky="nsew")
 
-            conn_btn = tk.Button(self.new_conn_win, text="Los", bg="green", command=self.open_new_conn_win)
-            conn_btn.grid(row=3, column=0, sticky="nsew")
+            conn_btn = tk.Button(self.new_conn_win,
+                                 text="Los", bg="green",
+                                 command=lambda: self.process_new_conn_win(call_txt_inp))
+            conn_btn.grid(row=5, column=1, sticky="nsew")
+
+    def process_new_conn_win(self, call_txt: tk.Text):
+        txt_win = call_txt
+        call = txt_win.get('@0,0', tk.END)
+        call = call.split('\r')[0]
+        call = call.split('\n')[0]
+        call = call.replace(' ', '')
+        print(str(call))
+        print(len(call))
+        for i in call:
+            print(i.encode())
+        if len(call) <= 6:
+
+            call = call.upper()
+            ax_frame = AX25Frame()
+            ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
+            ax_frame.to_call.call = call
+            # via1 = Call()
+            # via1.call = 'DNX527'
+            ax_frame.via_calls = []
+            ax_frame.ctl_byte.SABMcByte()
+            self.axtest_port.new_connection(ax25_frame=ax_frame)
+            self.destroy_new_conn_win()
+
+
 
     def destroy_new_conn_win(self):
         self.new_conn_win.destroy()
@@ -594,13 +634,31 @@ class TkMainWin:
 
     ###################
     # SEND TEXT OUT
-    def snd_text(self, event):
-        print(event)
-        tmp_txt = self.inp_txt.get('@0,0', tk.END)  # TODO
+    def snd_text(self, event: tk.Event):
+
+        # tmp_txt = self.inp_txt.get('@0,0', tk.END)  # TODO
+        ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
+        tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))  # TODO
+        # tmp_txt = self.inp_txt.get('@0' + ',' + '0', str(event.x) + ',' + str(event.y))  # TODO
         print(tmp_txt)
+        self.vorschreib_txt_ind = self.inp_txt.index(tk.INSERT)
+
         station = self.get_conn(self.conn_ind)
+        print(self.vorschreib_txt_ind)
+        tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
+        for i in tmp_txt:
+            print(i.encode())
         if station:
+            self.out_txt.configure(state="normal")
             station.tx_buf_rawData += (tmp_txt + '\r').encode()
+            ind = self.out_txt.index(tk.INSERT)
+            self.out_txt.insert('end', tmp_txt + '\n')
+            ind2 = self.out_txt.index(tk.INSERT)
+            self.out_txt.tag_add("input", ind, ind2)
+            self.out_txt.configure(state="disabled")
+
+            # configuring a tag called start
+            self.out_txt.tag_config("input", foreground="yellow")
 
     # SEND TEXT OUT
     ###################

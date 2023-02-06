@@ -51,6 +51,9 @@ class DefaultCLI(object):
             str(self.my_call).replace('\r', ''),
             str(self.prompt).replace('\r', ''))
 
+    def change_cli_state(self, state: int):
+        self.state_index = state
+
     def is_prefix(self):
         if self.prefix:
             if self.input[:len(self.prefix)] == self.prefix.encode(self.encoding[0], self.encoding[1]):
@@ -86,6 +89,8 @@ class DefaultCLI(object):
         else:
             if self.input in self.cmd_exec.keys():
                 ret = self.cmd_exec[self.input][0]()
+                if self.crone_state_index != 100:   # Not Quit
+                    ret += self.prompt
             else:
                 ret = 'Dieses Kommando ist dem System nicht bekannt\r'
                 ret += self.prompt
@@ -149,7 +154,7 @@ class NodeCLI(DefaultCLI):
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-2>'
-    prefix = ''
+    prefix = '//'
     # Extra CMDs for this CLI
 
     def init(self):

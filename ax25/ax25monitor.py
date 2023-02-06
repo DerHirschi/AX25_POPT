@@ -65,7 +65,9 @@ class Monitor(object):
                 while len(da) > 100:
                     out_str += da[:100] + '\n'
                     da = da[100:]
-                out_str += da + '\n'
+                if da:
+                    if da[-1] != '\n' or da[-1] != '\r':
+                        out_str += da + '\n'
         logger.info(out_str)
         self.out_buf.append(out_str)
         return out_str

@@ -9,7 +9,7 @@ mh_data_file = 'data/mh_data.pkl'
 
 def get_time_str():
     now = datetime.now()
-    return now.strftime('%d/%m/%Y %H:%M:%S')
+    return now.strftime('%d/%m/%y %H:%M:%S')
 
 
 class MyHeard(object):
@@ -45,11 +45,7 @@ class MH(object):
         """
 
     def __del__(self):
-        try:
-            self.save_mh_data()
-        except NameError:
-
-            pass
+        pass
 
     def mh_inp(self, ax25_frame: AX25Frame, port_id, axip_add=None):
         ########################
@@ -106,7 +102,7 @@ class MH(object):
         rj = 0
         for call in list(self.calls.keys()):
 
-            out += 'P:{:2}>{:5} S {:9} {:3}'.format(self.calls[call].port,
+            out += 'P:{:2}>{:5} {:9} {:3}'.format(self.calls[call].port,
                                                 self.calls[call].last_seen,
                                                 call,
                                                 '')
@@ -115,7 +111,7 @@ class MH(object):
             tb += self.calls[call].byte_n
             rj += self.calls[call].rej_n
             c += 1
-            if c == 3:
+            if c == 2:  # Breite
                 c = 0
                 out += '\r'
         out += '\r'

@@ -205,6 +205,7 @@ class DevDirewolf(threading.Thread):
         cfg = self.station_cfg()
         # ax25_frame.addr_uid = reverse_uid(ax25_frame.addr_uid)
         conn = AX25Conn(ax25_frame, cfg, rx=False)
+        conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn
         # self.tx_pac_handler()
 
