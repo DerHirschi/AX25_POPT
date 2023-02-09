@@ -1,7 +1,7 @@
 import time
 import tkinter as tk
 from tkinter import scrolledtext, Label, Menu
-from ax25.ax25PortHandler import AX25Conn
+from ax25.ax25Port import AX25Conn
 from ax25.ax25dec_enc import Call
 LOOP_DELAY = 10
 

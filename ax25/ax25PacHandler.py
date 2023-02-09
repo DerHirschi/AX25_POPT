@@ -4,7 +4,7 @@
 """
 import time
 from ax25.ax25dec_enc import AX25Frame, reverse_uid
-from config_station import DefaultStationConfig
+from config_station import DefaultPortConfig
 # from cli.cli import *
 
 import logging
@@ -23,7 +23,7 @@ def count_modulo(inp: int):
 
 
 class AX25Conn(object):
-    def __init__(self, ax25_frame: AX25Frame, cfg: DefaultStationConfig, rx=True):
+    def __init__(self, ax25_frame: AX25Frame, cfg: DefaultPortConfig, rx=True):
         ###############
         # DEBUG
         self.debugvar_len_out_buf = 0
@@ -85,7 +85,7 @@ class AX25Conn(object):
             7: (S7WaitForFinal, 'FINAL'),
         }
         """ MH for CLI """
-        self.mh = cfg.parm_mh
+        # self.mh = cfg.parm_mh
         """ Init CLI """
         self.cli = cfg.parm_cli(self)
         # Overwrite cli.py Parameter from config_station.px
@@ -335,7 +335,7 @@ class DefaultStat(object):
                     self.ax25conn.tx_buf_rawData += bytes(self.digi_conn.rx_buf_rawData)
                     self.digi_conn.rx_buf_rawData = b''
         # CLEANUP
-        if self.ax25conn.n2 == 100:
+        if self.ax25conn.n2 == 100 and not self.ax25conn.tx_buf_2send:
             self.change_state(0)
         ###########
         # DEBUGGING
@@ -366,7 +366,7 @@ class S1Frei(DefaultStat):  # INIT RX
             self.ax25conn.send_DM()
             self.ax25conn.set_T1()
             self.ax25conn.n2 = 100
-            self.change_state(1)
+            # self.change_state(1)
 
 
 class S2Aufbau(DefaultStat):    # INIT TX

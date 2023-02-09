@@ -4,18 +4,18 @@ import tkinter as tk
 from tkinter.ttk import *
 from tkinter import scrolledtext, Label, Menu
 import logging
-from ax25.ax25PortHandler import DevDirewolf, AX25Conn, AX25Frame, Call
+
+import main
+from ax25.ax25Port import KissTCP, AX25Conn, AX25Frame, Call
 from gui.guiMH import MHWin
 from gui.guiDebug import DEBUGwin
 from ax25.ax25Statistics import *
-from config_station import MD5TESTstationCFG
-
+from config_station import Port0
 
 LOOP_DELAY = 50        # ms
 TEXT_SIZE = 16
 TEXT_SIZE_STATUS = 11
 FONT = "Courier"
-VER = '0.1a'
 
 TEST_TIME_RNG = (0, 60)
 TEST_DATA_RNG = (2, 1000)
@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 class TkMainWin:
-    def __init__(self, cfg=MD5TESTstationCFG):
-        self.axtest_port = DevDirewolf(cfg)     # TODO Port Management
+    def __init__(self, cfg=Port0):
+        self.axtest_port = KissTCP(cfg)     # TODO Port Management
         self.mh = cfg.parm_mh
         self.own_call = cfg.parm_StationCalls   # TODO Select Ports for Calls
         self.axtest_port.start()
@@ -45,7 +45,7 @@ class TkMainWin:
         self.conn_ind = 0
         self.vorschreib_txt_ind = 1.0
 
-        self.win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
+        self.win.title("P.ython o.ther P.acket T.erminal {}".format(main.VER))
         self.win.geometry("1400x850")
         self.win.columnconfigure(1, minsize=500, weight=1)
         self.win.columnconfigure(2, minsize=200, weight=1)
@@ -640,14 +640,14 @@ class TkMainWin:
         ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
         tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))  # TODO
         # tmp_txt = self.inp_txt.get('@0' + ',' + '0', str(event.x) + ',' + str(event.y))  # TODO
-        print(tmp_txt)
         self.vorschreib_txt_ind = self.inp_txt.index(tk.INSERT)
 
         station = self.get_conn(self.conn_ind)
-        print(self.vorschreib_txt_ind)
         tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
+        """
         for i in tmp_txt:
             print(i.encode())
+        """
         if station:
             self.out_txt.configure(state="normal")
             station.tx_buf_rawData += (tmp_txt + '\r').encode()

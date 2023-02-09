@@ -4,9 +4,7 @@ import threading
 import time
 
 from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid
-# from gui.guiMaín_old import MYHEARD
 from ax25.ax25PacHandler import AX25Conn
-from config_station import MD5TESTstationCFG
 
 import ax25.ax25monitor as ax25monitor
 
@@ -21,15 +19,22 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class DevDirewolf(threading.Thread):
+class AX25DeviceERROR(Exception):
+    logger.error('AX25DeviceERROR Error !')
+
+
+class AX25DeviceFAIL(Exception):
+    logger.error('AX25DeviceFAIL while try Sending Data !')
+
+
+class AX25Port(threading.Thread):
     def __init__(self, station_cfg):
-        super(DevDirewolf, self).__init__()
+        super(AX25Port, self).__init__()
         ############
         # CONFIG
-        self.address = ('192.168.178.152', 8001)
         sock_timeout = 0.5
-        # TODO: Set CFG from outer
         self.station_cfg = station_cfg
+        self.port_param = self.station_cfg.parm_PortParm
         self.portname = self.station_cfg.parm_PortName
         self.my_stations = self.station_cfg.parm_StationCalls
         self.is_stupid_digi = self.station_cfg.parm_is_StupidDigi
@@ -46,6 +51,11 @@ class DevDirewolf(threading.Thread):
         self.monitor = ax25monitor.Monitor()
         self.MYHEARD = self.station_cfg.parm_mh
         self.connections: {str: AX25Conn} = {}
+        try:
+            self.init()
+        except AX25DeviceFAIL as e:
+            raise e
+        """
         self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         try:
             self.dw_sock.connect(self.address)
@@ -54,9 +64,19 @@ class DevDirewolf(threading.Thread):
             logger.error('Error. Cant connect to Direwolf {}'.format(self.address))
             logger.error('{}'.format(e))
             raise e
+        """
+
+    def init(self):
+        pass
 
     def __del__(self):
-        self.dw_sock.close()
+        pass
+
+    def rx(self):
+        return b''
+
+    def tx(self, frame: AX25Frame):
+        pass
 
     def set_TXD(self):
         self.TXD = time.time() + self.parm_TXD / 1000
@@ -180,16 +200,21 @@ class DevDirewolf(threading.Thread):
                     else:
                         el.encode()
 
-                    out = (bytes.fromhex('c000') + bytes(el.hexstr) + bytes.fromhex('c0'))
-                    self.dw_sock.sendall(out)  # TODO try:
+                    try:
+                        self.tx(frame=el)
+                    except AX25DeviceFAIL as e:
+                        raise e
+
                     # self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
                     # Monitor
                     self.monitor.frame_inp(el, 'DW-TX')
         # DIGI
         fr: AX25Frame
         for fr in self.digi_buf:
-            out = (bytes.fromhex('c000') + fr.hexstr + bytes.fromhex('c0'))
-            self.dw_sock.sendall(out)  # TODO try:
+            try:
+                self.tx(frame=fr)
+            except AX25DeviceFAIL as e:
+                raise e
             # Monitor
             self.monitor.frame_inp(fr, self.portname)
         self.digi_buf = []
@@ -229,10 +254,11 @@ class DevDirewolf(threading.Thread):
     def run_once(self):
         while True:
             try:
-                # buf = self.dw_sock.recv(333)
-                buf = self.dw_sock.recv(400)
+                ##############################################
+                buf = self.rx()
+                ##############################################
                 logger.debug('Inp Buf> {}'.format(buf))
-            except socket.timeout:
+            except AX25DeviceERROR:
                 break
 
             if buf:  # RX ############
@@ -264,3 +290,41 @@ class DevDirewolf(threading.Thread):
         ############################
         # Cleanup
         # self.del_connections()
+
+
+class KissTCP(AX25Port):
+
+    def init(self):
+        sock_timeout = 0.5
+        self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        try:
+            self.dw_sock.connect(self.port_param)
+            self.dw_sock.settimeout(sock_timeout)
+        except (OSError, ConnectionRefusedError, ConnectionError) as e:
+            logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
+            logger.error('{}'.format(e))
+            raise AX25DeviceFAIL
+
+    def __del__(self):
+        self.dw_sock.close()
+
+    def rx(self):
+        try:
+            return self.dw_sock.recv(400)
+        except socket.timeout:
+            raise AX25DeviceERROR
+
+    def tx(self, frame: AX25Frame):
+        ############################################
+        out = (bytes.fromhex('c000') + frame.hexstr + bytes.fromhex('c0'))
+        try:
+            self.dw_sock.sendall(out)  # TODO try:  and try reinit
+        except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
+            logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
+            logger.error('{}'.format(e))
+            try:
+                self.init()
+            except AX25DeviceFAIL:
+                logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                raise AX25DeviceFAIL
+        ############################################
