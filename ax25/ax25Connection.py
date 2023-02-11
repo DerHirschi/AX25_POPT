@@ -3,6 +3,7 @@
     AX.25 Packet Handlink
 """
 import time
+
 from ax25.ax25dec_enc import AX25Frame, reverse_uid
 from config_station import DefaultPortConfig
 # from cli.cli import *
@@ -29,6 +30,8 @@ class AX25Conn(object):
         self.debugvar_len_out_buf = 0
         ###############
         self.ax25_out_frame = AX25Frame()  # Predefined AX25 Frame for Output
+
+        # self.ax25_port_handler = main.ax25port_handler
         """ Config new Connection"""
         if rx:
             self.ax25_out_frame.addr_uid = str(reverse_uid(ax25_frame.addr_uid))  # Unique ID for Connection
@@ -67,6 +70,7 @@ class AX25Conn(object):
         self.t3 = 0  # Connection Hold
         self.n2 = 0  # Fail Counter / No Response Counter
         """ Port Config Parameter """
+        self.cfg = cfg
         self.parm_PacLen = cfg.parm_PacLen  # Max Pac len
         self.parm_MaxFrame = cfg.parm_MaxFrame  # Max (I) Frames
         self.parm_TXD = cfg.parm_TXD    # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation

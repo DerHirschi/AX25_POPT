@@ -1,4 +1,3 @@
-import ax25.ax25Statistics
 from cli.cli import *
 
 
@@ -26,7 +25,11 @@ class DefaultPortConfig(object):
     # Parameter for CLI
     parm_cli = DefaultCLI
     parm_cli_ctext = ''
-    parm_mh = ax25.ax25Statistics.MH()
+    ##########################
+    # Global Objs
+    glb_mh = None
+    glb_port_handler = None
+    glb_gui = None
 
 
 class Port0(DefaultPortConfig):
@@ -57,8 +60,10 @@ class Port0(DefaultPortConfig):
 
 class Port1(DefaultPortConfig):
     parm_PortName = '01'
-    parm_PortTyp = ''
-    parm_PortParm = '/tmp/tty1'
+    # parm_PortTyp = ''
+    # parm_PortParm = '/tmp/tty1'
+    parm_PortTyp = 'KISSTCP'
+    parm_PortParm = ('192.168.178.150', 8001)
     parm_StationCalls = ['MD5TES', 'MD6TES-2']
     parm_isSmartDigi = True
     parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False

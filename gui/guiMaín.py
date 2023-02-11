@@ -1,16 +1,14 @@
 import random
-import time
 import tkinter as tk
 from tkinter.ttk import *
 from tkinter import scrolledtext, Label, Menu
 import logging
 
-import main
+from main import VER
 from ax25.ax25Port import KissTCP, AX25Conn, AX25Frame, Call
 from gui.guiMH import MHWin
 from gui.guiDebug import DEBUGwin
 from ax25.ax25Statistics import *
-from config_station import Port0
 
 LOOP_DELAY = 50        # ms
 TEXT_SIZE = 16
@@ -34,24 +32,23 @@ logger = logging.getLogger(__name__)
 
 
 class TkMainWin:
-    def __init__(self, ports):
-        print(ports)
-        print(type(ports))
-        self.ax25_ports = ports[0]
+    def __init__(self, port_handler):
+        self.ax25_port_handler = port_handler
+        self.ax25_ports = self.ax25_port_handler.ax25_ports[0]
         self.axtest_port = self.ax25_ports[0]    # TODO Port Management
         cfg = self.ax25_ports[1]
+        self.ax25_port_handler.set_gui(self)
 
-        # self.axtest_port = KissTCP(cfg)     # TODO Port Management
-        self.mh = cfg.parm_mh
+        self.mh = cfg.glb_mh
         self.own_call = cfg.parm_StationCalls   # TODO Select Ports for Calls
-        self.axtest_port.start()
+        # self.axtest_port.start()
         self.win = tk.Tk()
+
         self.debug_win = None
         self.new_conn_win = None
         self.conn_ind = 0
-        self.vorschreib_txt_ind = 1.0
 
-        self.win.title("P.ython o.ther P.acket T.erminal {}".format(main.VER))
+        self.win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.win.geometry("1400x850")
         self.win.columnconfigure(1, minsize=500, weight=1)
         self.win.columnconfigure(2, minsize=200, weight=1)
@@ -216,6 +213,14 @@ class TkMainWin:
 
         # del self.axtest_port
 
+    """
+    def run(self):
+        #######################
+        # LOOP
+        self.win.after(LOOP_DELAY, self.tasker)
+        self.win.mainloop()
+
+    """
     def port_btn_conn_status(self):
         con_btn_dict = {
             1: self.ch_button1,
@@ -399,16 +404,13 @@ class TkMainWin:
                     out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
                     conn.rx_buf_rawData = b''
                     self.out_txt.configure(state="normal")
-                    ind = self.out_txt.index(tk.INSERT)
                     self.out_txt.insert('end', out)
-                    ind2 = self.out_txt.index(tk.INSERT)
-                    print(ind)
-                    print(ind2)
                     self.out_txt.configure(state="disabled")
                 # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
                 if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 25:
                     self.out_txt.see("end")
         # UPDATE MONITOR
+        """
         if self.axtest_port.monitor.out_buf:
             self.mon_txt.configure(state="normal")
             el: str
@@ -426,7 +428,7 @@ class TkMainWin:
                 if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 25:
                     self.mon_txt.see("end")
             self.mon_txt.configure(state="disabled")
-
+        """
         # self.axtest_port.monitor.out_buf = []
 
     # - Main Win & Debug Win
@@ -560,11 +562,24 @@ class TkMainWin:
 
     # Main Win ENDE
     #################
-    def ax25ports_th(self):
-        """Proces AX.25 Shit"""
+    def update_monitor(self, var: str):
+        """ Just a Tester """
         # self.axtest_port.run_once()
         #self.axtest_port.run_loop()
-        pass
+        """
+        for i in range(10):
+            print("TEST")
+        """
+        print(var)
+        self.mon_txt.configure(state="normal")
+        self.mon_txt.insert("end", var)
+        # Autoscroll if Scrollbar near end
+
+        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 30:
+            self.mon_txt.see(tk.END)
+        self.mon_txt.configure(state="disabled")
+
+
 
     ##############
     # New Connection WIN
@@ -608,7 +623,8 @@ class TkMainWin:
 
             call = call.upper()
             ax_frame = AX25Frame()
-            ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
+            ax_frame.from_call.call = self.axtest_port.my_stations[0]  # TODO select outgoing call
+            # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
             ax_frame.to_call.call = call
             # via1 = Call()
             # via1.call = 'DNX527'
@@ -645,7 +661,7 @@ class TkMainWin:
         ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
         tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))  # TODO
         # tmp_txt = self.inp_txt.get('@0' + ',' + '0', str(event.x) + ',' + str(event.y))  # TODO
-        self.vorschreib_txt_ind = self.inp_txt.index(tk.INSERT)
+        # self.vorschreib_txt_ind = self.inp_txt.index(tk.INSERT)
 
         station = self.get_conn(self.conn_ind)
         tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')

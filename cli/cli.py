@@ -1,4 +1,5 @@
 # import ax25.ax25Statistics
+import ax25.ax25Connection
 import config_station
 import main
 
@@ -10,13 +11,13 @@ class DefaultCLI(object):
     prefix = '//'
 
     def __init__(self, connection):
-        # self.connection: AX25Conn
-        self.connection = connection
+        self.connection: ax25.ax25Connection.AX25Conn = connection
+        # self.connection = connection
         self.my_call = connection.ax25_out_frame.from_call.call
         self.my_call_str = connection.ax25_out_frame.from_call.call_str
         self.to_call = connection.ax25_out_frame.to_call.call
         self.to_call_str = connection.ax25_out_frame.to_call.call_str
-        self.mh_list = config_station.DefaultPortConfig.parm_mh
+        self.mh_list = connection.cfg.glb_mh
         self.state_index = 0
         self.crone_state_index = 0
         self.input = b''

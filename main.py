@@ -1,18 +1,30 @@
-from gui.guiMaín_old import *
-from ax25.ax25InitPorts import AX25PortInit
+from gui.guiMaín import *
+from ax25.ax25InitPorts import AX25PortHandler
+import threading
 # from ax25.ax25PortHandler import MYHEARD
 
 VER = '0.1a'
-
 if __name__ == '__main__':
-    ax25ports_init = AX25PortInit()
-    ax25ports = ax25ports_init.ax25_ports
-    print(ax25ports)
+    #################
+    # Init AX25 Stuff
+    # !!! Dummy Var for Init AX25PortHandler > AX25PortHandler.parm_port_handler = self
+    ax25port_handler = AX25PortHandler
+    ax25port_handler = AX25PortHandler()
+    #############
+    # INIT GUI
+    # if setting_gui:
     try:
-        main = TkMainWin(ax25ports)
+        # main_win = TkMainWin(ax25port_handler)
+        main_win = TkMainWin(ax25port_handler)
+        # ax25port_handler.set_gui(main_win)
+        # main_win(ax25port_handler)
     except KeyboardInterrupt:
         pass
-    del main
-    del ax25ports_init
+
+    ################
+    # On Close Window
+    # del main_win
+    ax25port_handler.close_all_ports()
+    del ax25port_handler
     print("Ende")
     # MYHEARD.save_mh_data()

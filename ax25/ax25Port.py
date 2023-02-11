@@ -3,8 +3,10 @@ import socket
 import threading
 import time
 
+import ax25.ax25Statistics
+import ax25.ax25InitPorts
 from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid
-from ax25.ax25PacHandler import AX25Conn
+from ax25.ax25Connection import AX25Conn
 
 import ax25.ax25monitor as ax25monitor
 
@@ -31,6 +33,10 @@ class AX25Port(threading.Thread):
     def __init__(self, station_cfg):
         super(AX25Port, self).__init__()
         print("PORT INIT")
+        """ self.ax25_port_handler will be set in AX25PortInit """
+        self.ax25_ports: {int: AX25Port}
+        self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
+        # self.mh_list: ax25.ax25Statistics.MH
         ############
         # CONFIG
         self.device = None
@@ -50,7 +56,7 @@ class AX25Port(threading.Thread):
         self.loop_is_running = False
         #############
         self.monitor = ax25monitor.Monitor()
-        self.MYHEARD = self.station_cfg.parm_mh
+        self.MYHEARD = self.station_cfg.glb_mh
         self.connections: {str: AX25Conn} = {}
         try:
             self.init()
@@ -84,8 +90,10 @@ class AX25Port(threading.Thread):
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         """ Not Happy with that Part . . :-( TODO Cleanup """
+        cfg = self.station_cfg()
         # Monitor
-        self.monitor.frame_inp(ax25_frame, self.portname)
+        cfg.glb_gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname))
+        # self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
         self.MYHEARD.mh_inp(ax25_frame, self.portname)
         # Existing Connections
@@ -108,7 +116,11 @@ class AX25Port(threading.Thread):
         # New Incoming Connection Request
         elif ax25_frame.to_call.call_str in self.my_stations \
                 and ax25_frame.is_digipeated:
-            cfg = self.station_cfg()
+            # self.station_cfg.glb_gui.open_new_conn_win()
+            # cfg = self.station_cfg()
+            # cfg.glb_gui.open_new_conn_win()
+
+            # cfg.glb_gui.start_new_conn()
             self.connections[uid] = AX25Conn(ax25_frame, cfg)
             self.connections[uid].set_T2()
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
@@ -207,7 +219,10 @@ class AX25Port(threading.Thread):
                         raise e
                     # self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
                     # Monitor
-                    self.monitor.frame_inp(el, 'DW-TX')
+                    # self.monitor.frame_inp(el, 'DW-TX')
+                    cfg = self.station_cfg()
+                    # Monitor
+                    cfg.glb_gui.update_monitor(self.monitor.frame_inp(el, self.portname))
         # DIGI
         fr: AX25Frame
         for fr in self.digi_buf:
@@ -216,7 +231,10 @@ class AX25Port(threading.Thread):
             except AX25DeviceFAIL as e:
                 raise e
             # Monitor
-            self.monitor.frame_inp(fr, self.portname)
+            # self.monitor.frame_inp(fr, self.portname)
+            cfg = self.station_cfg()
+            # Monitor
+            cfg.glb_gui.update_monitor(self.monitor.frame_inp(fr, self.portname))
         self.digi_buf = []
         self.del_connections()
 
@@ -250,10 +268,10 @@ class AX25Port(threading.Thread):
             self.loop_is_running = True
             while self.loop_is_running:
                 self.run_once()
-                time.sleep(0.05)
+                time.sleep(0.1)
 
     def run_once(self):
-        while True:
+        while self.loop_is_running:
             try:
                 ##############################################
                 buf = self.rx()
@@ -309,7 +327,11 @@ class KissTCP(AX25Port):
 
     def __del__(self):
         self.loop_is_running = False
-        self.device.close()
+        if self.device is not None:
+            try:
+                self.device.close()
+            except (OSError, ConnectionRefusedError, ConnectionError):
+                pass
 
     def rx(self):
         try:
