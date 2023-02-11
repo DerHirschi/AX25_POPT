@@ -57,7 +57,7 @@ class Port0(DefaultPortConfig):
 
 class Port1(DefaultPortConfig):
     parm_PortName = '01'
-    parm_PortTyp = 'KISS'
+    parm_PortTyp = ''
     parm_PortParm = '/tmp/tty1'
     parm_StationCalls = ['MD5TES', 'MD6TES-2']
     parm_isSmartDigi = True

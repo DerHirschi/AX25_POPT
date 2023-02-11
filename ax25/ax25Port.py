@@ -30,9 +30,10 @@ class AX25DeviceFAIL(Exception):
 class AX25Port(threading.Thread):
     def __init__(self, station_cfg):
         super(AX25Port, self).__init__()
+        print("PORT INIT")
         ############
         # CONFIG
-        sock_timeout = 0.5
+        self.device = None
         self.station_cfg = station_cfg
         self.port_param = self.station_cfg.parm_PortParm
         self.portname = self.station_cfg.parm_PortName
@@ -70,7 +71,7 @@ class AX25Port(threading.Thread):
         pass
 
     def __del__(self):
-        pass
+        self.loop_is_running = False
 
     def rx(self):
         return b''
@@ -145,6 +146,7 @@ class AX25Port(threading.Thread):
                             conn_in.set_T2()
                             conn_in.handle_rx(ax25_frame=ax25_frame)
                             self.connections[uid] = conn_in
+                            # TODO Irgendwo hier ist ein Käfer ... Glaube ich ..
                             if conn_in.zustand_exec.stat_index == 5:  # Accept ( Incoming SABM )
                                 # Init Outgoing Connection
                                 print("CONN IN UID: {}".format(uid))
@@ -189,7 +191,6 @@ class AX25Port(threading.Thread):
                 conn.tx_buf_ctl = []
                 conn.tx_buf_2send = []
                 conn.REJ_is_set = False
-                # self.connections[k].tx_buf_2send = []
                 el: AX25Frame
                 for el in snd_buf:
                     if conn.my_digi_call:
@@ -204,7 +205,6 @@ class AX25Port(threading.Thread):
                         self.tx(frame=el)
                     except AX25DeviceFAIL as e:
                         raise e
-
                     # self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
                     # Monitor
                     self.monitor.frame_inp(el, 'DW-TX')
@@ -250,6 +250,7 @@ class AX25Port(threading.Thread):
             self.loop_is_running = True
             while self.loop_is_running:
                 self.run_once()
+                time.sleep(0.05)
 
     def run_once(self):
         while True:
@@ -295,22 +296,24 @@ class AX25Port(threading.Thread):
 class KissTCP(AX25Port):
 
     def init(self):
+        print("KISS TCP INIT")
         sock_timeout = 0.5
-        self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         try:
-            self.dw_sock.connect(self.port_param)
-            self.dw_sock.settimeout(sock_timeout)
+            self.device.connect(self.port_param)
+            self.device.settimeout(sock_timeout)
         except (OSError, ConnectionRefusedError, ConnectionError) as e:
             logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
             logger.error('{}'.format(e))
             raise AX25DeviceFAIL
 
     def __del__(self):
-        self.dw_sock.close()
+        self.loop_is_running = False
+        self.device.close()
 
     def rx(self):
         try:
-            return self.dw_sock.recv(400)
+            return self.device.recv(400)
         except socket.timeout:
             raise AX25DeviceERROR
 
@@ -318,7 +321,7 @@ class KissTCP(AX25Port):
         ############################################
         out = (bytes.fromhex('c000') + frame.hexstr + bytes.fromhex('c0'))
         try:
-            self.dw_sock.sendall(out)  # TODO try:  and try reinit
+            self.device.sendall(out)
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
             logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
             logger.error('{}'.format(e))
@@ -328,3 +331,51 @@ class KissTCP(AX25Port):
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
         ############################################
+
+
+class KISSSerial(AX25Port):
+
+    def init(self):
+        """
+        sock_timeout = 0.5
+        self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        try:
+            self.device.connect(self.port_param)
+            self.device.settimeout(sock_timeout)
+        except (OSError, ConnectionRefusedError, ConnectionError) as e:
+            logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
+            logger.error('{}'.format(e))
+            raise AX25DeviceFAIL
+        """
+        pass
+
+    def __del__(self):
+        # self.device.close()
+        self.loop_is_running = False
+
+    def rx(self):
+        """
+        try:
+            return self.device.recv(400)
+        except socket.timeout:
+            raise AX25DeviceERROR
+        """
+        pass
+
+    def tx(self, frame: AX25Frame):
+        """
+        ############################################
+        out = (bytes.fromhex('c000') + frame.hexstr + bytes.fromhex('c0'))
+        try:
+            self.device.sendall(out)
+        except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
+            logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
+            logger.error('{}'.format(e))
+            try:
+                self.init()
+            except AX25DeviceFAIL:
+                logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                raise AX25DeviceFAIL
+        ############################################
+        """
+        pass

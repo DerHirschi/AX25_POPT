@@ -34,8 +34,14 @@ logger = logging.getLogger(__name__)
 
 
 class TkMainWin:
-    def __init__(self, cfg=Port0):
-        self.axtest_port = KissTCP(cfg)     # TODO Port Management
+    def __init__(self, ports):
+        print(ports)
+        print(type(ports))
+        self.ax25_ports = ports[0]
+        self.axtest_port = self.ax25_ports[0]    # TODO Port Management
+        cfg = self.ax25_ports[1]
+
+        # self.axtest_port = KissTCP(cfg)     # TODO Port Management
         self.mh = cfg.parm_mh
         self.own_call = cfg.parm_StationCalls   # TODO Select Ports for Calls
         self.axtest_port.start()
@@ -202,9 +208,8 @@ class TkMainWin:
         self.win.mainloop()
 
     def __del__(self):
-        self.axtest_port.loop_is_running = False
-        print(self.axtest_port.loop_is_running)
-        self.mh.save_mh_data()
+        pass
+        # self.mh.save_mh_data()
         # del self.mh
         #.lock.release()
         # self.ax25_ports_th.join()
@@ -682,7 +687,7 @@ class TkMainWin:
     # DEBUG WIN ENDE
     ##############
 
-
+"""
 if __name__ == '__main__':
     try:
         TkMainWin()
@@ -690,3 +695,4 @@ if __name__ == '__main__':
         pass
     print("Ende")
     # MYHEARD.save_mh_data()
+"""
