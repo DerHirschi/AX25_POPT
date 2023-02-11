@@ -10,7 +10,8 @@ class AX25PortHandler(object):
         }
         self.ax25_ports: {int: AX25Port} = {}
         self.mh_list = ax25.ax25Statistics.MH()
-
+        #######################################################
+        # Init Ports/Devices with Config and running as Thread
         c = 0
         port_cfg: DefaultPortConfig
         for port_cfg in [Port0,
@@ -41,6 +42,9 @@ class AX25PortHandler(object):
                 # Gather all Ports in dict: ax25_ports
                 self.ax25_ports[c] = temp
             c += 1
+        ###########################
+        # VArs for gathering Stuff
+        self.all_connections: {int: AX25Conn} = {}
 
     def __del__(self):
         self.close_all_ports()
@@ -57,3 +61,41 @@ class AX25PortHandler(object):
     def set_gui(self, gui):
         for k in self.ax25_ports.keys():
             self.ax25_ports[k][1].glb_gui = gui
+
+    def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
+        keys = list(self.all_connections.keys())
+        print("INSERT PRT HANDLER {}".format(keys))
+        if keys:
+            tr = False
+            for el in self.all_connections:
+                if new_conn == el:
+                    tr = True
+            if not tr:
+                while True:
+                    if ind in keys:
+                        ind += 1
+                    else:
+                        self.all_connections[ind] = new_conn
+                        break
+        else:
+            self.all_connections[ind] = new_conn
+        print(self.all_connections)
+
+    def cleanup_conn2all_conn_var(self):
+        temp = []
+        for k in list(self.all_connections.keys()):
+            conn: AX25Conn = self.all_connections[k]
+            if conn.zustand_exec.stat_index in [0]:
+                temp.append(k)
+        for k in temp:
+            del self.all_connections[k]
+
+    def del_conn2all_conn_var(self, conn: AX25Conn):
+        temp = []
+        for k in list(self.all_connections.keys()):
+            temp_conn: AX25Conn = self.all_connections[k]
+            if temp_conn == conn:
+                temp.append(k)
+        for k in temp:
+            del self.all_connections[k]
+

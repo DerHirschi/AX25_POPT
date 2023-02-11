@@ -14,10 +14,7 @@ if __name__ == '__main__':
     # INIT GUI
     # if setting_gui:
     try:
-        # main_win = TkMainWin(ax25port_handler)
         main_win = TkMainWin(ax25port_handler)
-        # ax25port_handler.set_gui(main_win)
-        # main_win(ax25port_handler)
     except KeyboardInterrupt:
         pass
 

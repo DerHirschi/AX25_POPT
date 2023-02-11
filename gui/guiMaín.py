@@ -4,7 +4,7 @@ from tkinter.ttk import *
 from tkinter import scrolledtext, Label, Menu
 import logging
 
-from main import VER
+from main import VER, AX25PortHandler
 from ax25.ax25Port import KissTCP, AX25Conn, AX25Frame, Call
 from gui.guiMH import MHWin
 from gui.guiDebug import DEBUGwin
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 class TkMainWin:
     def __init__(self, port_handler):
-        self.ax25_port_handler = port_handler
+        self.ax25_port_handler: AX25PortHandler = port_handler
         self.ax25_ports = self.ax25_port_handler.ax25_ports[0]
         self.axtest_port = self.ax25_ports[0]    # TODO Port Management
         cfg = self.ax25_ports[1]
@@ -46,7 +46,7 @@ class TkMainWin:
 
         self.debug_win = None
         self.new_conn_win = None
-        self.conn_ind = 0
+        self.channel_index = 1
 
         self.win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.win.geometry("1400x850")
@@ -139,16 +139,16 @@ class TkMainWin:
         self.ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
         self.ch_btn_frame.grid(row=3, column=1, sticky="nsew")
-        self.ch_button1 = tk.Button(self.ch_btn_frame, text=" 1 ", bg="red", command=lambda: self.ch_btn_clk(0))
-        self.ch_button2 = tk.Button(self.ch_btn_frame, text=" 2 ", bg="red", command=lambda: self.ch_btn_clk(1))
-        self.ch_button3 = tk.Button(self.ch_btn_frame, text=" 3 ", bg="red", command=lambda: self.ch_btn_clk(2))
-        self.ch_button4 = tk.Button(self.ch_btn_frame, text=" 4 ", bg="red", command=lambda: self.ch_btn_clk(3))
-        self.ch_button5 = tk.Button(self.ch_btn_frame, text=" 5 ", bg="red", command=lambda: self.ch_btn_clk(4))
-        self.ch_button6 = tk.Button(self.ch_btn_frame, text=" 6 ", bg="red", command=lambda: self.ch_btn_clk(5))
-        self.ch_button7 = tk.Button(self.ch_btn_frame, text=" 7 ", bg="red", command=lambda: self.ch_btn_clk(6))
-        self.ch_button8 = tk.Button(self.ch_btn_frame, text=" 8 ", bg="red", command=lambda: self.ch_btn_clk(7))
-        self.ch_button9 = tk.Button(self.ch_btn_frame, text=" 9 ", bg="red", command=lambda: self.ch_btn_clk(8))
-        self.ch_button10 = tk.Button(self.ch_btn_frame, text=" 10 ", bg="red", command=lambda: self.ch_btn_clk(9))
+        self.ch_button1 = tk.Button(self.ch_btn_frame, text=" 1 ", bg="red", command=lambda: self.ch_btn_clk(1))
+        self.ch_button2 = tk.Button(self.ch_btn_frame, text=" 2 ", bg="red", command=lambda: self.ch_btn_clk(2))
+        self.ch_button3 = tk.Button(self.ch_btn_frame, text=" 3 ", bg="red", command=lambda: self.ch_btn_clk(3))
+        self.ch_button4 = tk.Button(self.ch_btn_frame, text=" 4 ", bg="red", command=lambda: self.ch_btn_clk(4))
+        self.ch_button5 = tk.Button(self.ch_btn_frame, text=" 5 ", bg="red", command=lambda: self.ch_btn_clk(5))
+        self.ch_button6 = tk.Button(self.ch_btn_frame, text=" 6 ", bg="red", command=lambda: self.ch_btn_clk(6))
+        self.ch_button7 = tk.Button(self.ch_btn_frame, text=" 7 ", bg="red", command=lambda: self.ch_btn_clk(7))
+        self.ch_button8 = tk.Button(self.ch_btn_frame, text=" 8 ", bg="red", command=lambda: self.ch_btn_clk(8))
+        self.ch_button9 = tk.Button(self.ch_btn_frame, text=" 9 ", bg="red", command=lambda: self.ch_btn_clk(9))
+        self.ch_button10 = tk.Button(self.ch_btn_frame, text=" 10 ", bg="red", command=lambda: self.ch_btn_clk(10))
         self.ch_button1.grid(row=1, column=1, sticky="nsew")
         self.ch_button2.grid(row=1, column=2, sticky="nsew")
         self.ch_button3.grid(row=1, column=3, sticky="nsew")
@@ -159,6 +159,18 @@ class TkMainWin:
         self.ch_button8.grid(row=1, column=8, sticky="nsew")
         self.ch_button9.grid(row=1, column=9, sticky="nsew")
         self.ch_button10.grid(row=1, column=10, sticky="nsew")
+        self.con_btn_dict = {
+            1: self.ch_button1,
+            2: self.ch_button2,
+            3: self.ch_button3,
+            4: self.ch_button4,
+            5: self.ch_button5,
+            6: self.ch_button6,
+            7: self.ch_button7,
+            8: self.ch_button8,
+            9: self.ch_button9,
+            10: self.ch_button10,
+        }
         ##############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.win, background='black',
@@ -222,33 +234,35 @@ class TkMainWin:
 
     """
     def port_btn_conn_status(self):
-        con_btn_dict = {
-            1: self.ch_button1,
-            2: self.ch_button2,
-            3: self.ch_button3,
-            4: self.ch_button4,
-            5: self.ch_button5,
-            6: self.ch_button6,
-            7: self.ch_button7,
-            8: self.ch_button8,
-            9: self.ch_button9,
-            10: self.ch_button10,
-        }
-        if self.axtest_port.connections.keys():
-            for i in list(con_btn_dict.keys()):
-                if i <= len(self.axtest_port.connections.keys()):
-                    con_btn_dict[i].configure(bg='green')
+
+        if self.ax25_port_handler.all_connections.keys():
+            for i in list(self.con_btn_dict.keys()):
+                if i in self.ax25_port_handler.all_connections.keys():
+                    if i == self.channel_index:
+                        self.con_btn_dict[i].configure(bg='green2')
+                    else:
+                        self.con_btn_dict[i].configure(bg='green4')
                 else:
-                    con_btn_dict[i].configure(bg='red')
+                    if i == self.channel_index:
+                        self.con_btn_dict[i].configure(bg='red2')
+                    else:
+                        self.con_btn_dict[i].configure(bg='red4')
 
         else:
-            for i in list(con_btn_dict.keys()):
-                con_btn_dict[i].configure(bg='red')
+            for i in list(self.con_btn_dict.keys()):
+                if i == self.channel_index:
+                    self.con_btn_dict[i].configure(bg='red2')
+                else:
+                    self.con_btn_dict[i].configure(bg='red4')
 
     def ch_btn_clk(self, ind: int):
+        self.channel_index = ind
+
+        """
         if self.axtest_port.connections.keys():
             if ind in range(len(list(self.axtest_port.connections.keys()))):
                 self.conn_ind = ind
+        """
 
     def tasker(self):       # MAINLOOP
         # logger.debug(self.axtest_port.connections.keys())
@@ -273,10 +287,9 @@ class TkMainWin:
     ##########################
     # no WIN FNC
     def get_conn(self, con_ind: int):
-        if list(self.axtest_port.connections.keys()):
-            station: AX25Conn
-            station = self.axtest_port.connections[list(self.axtest_port.connections.keys())[con_ind]]
-            return station
+        if con_ind in self.ax25_port_handler.all_connections.keys():
+            ret: AX25Conn = self.ax25_port_handler.all_connections[con_ind]
+            return ret
         return False
 
     # no WIN FNC
@@ -387,28 +400,23 @@ class TkMainWin:
         # Debug WIN
         """
         # UPDATE INPUT WIN
-        if list(self.axtest_port.connections.keys()):
-            k = None
-            while k is None:
-                try:
-                    k = list(self.axtest_port.connections.keys())[self.conn_ind]
-                except IndexError:
-                    if self.conn_ind > 0:
-                        self.conn_ind -= 1
-                    else:
-                        raise IndexError
-            conn: AX25Conn
-            conn = self.axtest_port.connections[k]
-            if conn.rx_buf_rawData:
-                if not conn.my_digi_call:
-                    out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
-                    conn.rx_buf_rawData = b''
-                    self.out_txt.configure(state="normal")
-                    self.out_txt.insert('end', out)
-                    self.out_txt.configure(state="disabled")
-                # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
-                if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 25:
-                    self.out_txt.see("end")
+        if list(self.ax25_port_handler.all_connections.keys()):
+            if self.channel_index in self.ax25_port_handler.all_connections.keys():
+                conn: AX25Conn
+                conn = self.get_conn(self.channel_index)
+                if conn.rx_buf_rawData:
+                    if not conn.my_digi_call:
+                        out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
+                        conn.rx_buf_rawData = b''
+                        tr = False
+                        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
+                            tr = True
+                        self.out_txt.configure(state="normal")
+                        self.out_txt.insert('end', out)
+                        self.out_txt.configure(state="disabled")
+                        # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
+                        if tr:
+                            self.out_txt.see("end")
         # UPDATE MONITOR
         """
         if self.axtest_port.monitor.out_buf:
@@ -438,7 +446,7 @@ class TkMainWin:
         Debug WIN
         """
         text = ''
-        station = self.get_conn(self.conn_ind)
+        station = self.get_conn(self.channel_index)
         if station:
             dest_call = station.ax25_out_frame.to_call.call_str
             via_calls = ''
@@ -524,7 +532,7 @@ class TkMainWin:
                    '{}\n' \
                    '{}\n' \
                    '{}\n' \
-                   'VR: {} - VS: {} - N2: {}\n' \
+                   'RES: {} - END: {} - @0,0: {}\n' \
                    'NR: {} - NS: {}\n' \
                    'T1: {}\nT2: {}\nT3 {}\n' \
                    'noACK: {}\n' \
@@ -535,9 +543,11 @@ class TkMainWin:
                 .format(
                 dest_call,
                 via_calls,
-                status,
+                list(self.ax25_port_handler.all_connections.keys()),
                 uid,
-                vr, vs, n2,
+                float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")),
+                float(self.mon_txt.index(tk.END)),
+                float(self.mon_txt.index("@0,0")),
                 nr, ns,
                 t1, t2, t3,
                 noACK_buf,
@@ -570,14 +580,15 @@ class TkMainWin:
         for i in range(10):
             print("TEST")
         """
-        print(var)
+        # print(var)
+        tr = False
+        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
+            tr = True
         self.mon_txt.configure(state="normal")
-        self.mon_txt.insert("end", var)
-        # Autoscroll if Scrollbar near end
-
-        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 30:
-            self.mon_txt.see(tk.END)
+        self.mon_txt.insert(tk.END, var)
         self.mon_txt.configure(state="disabled")
+        if tr:
+            self.mon_txt.see(tk.END)
 
 
 
@@ -630,7 +641,8 @@ class TkMainWin:
             # via1.call = 'DNX527'
             ax_frame.via_calls = []
             ax_frame.ctl_byte.SABMcByte()
-            self.axtest_port.new_connection(ax25_frame=ax_frame)
+            conn: AX25Conn = self.axtest_port.new_connection(ax25_frame=ax_frame)    # TODO
+            self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.channel_index)
             self.destroy_new_conn_win()
 
 
@@ -645,7 +657,7 @@ class TkMainWin:
     # ##############
     # DISCO
     def disco_conn(self):
-        station: AX25Conn = self.get_conn(self.conn_ind)
+        station: AX25Conn = self.get_conn(self.channel_index)
         if station:
             station.zustand_exec.change_state(4)
             # station.set_new_state()
@@ -663,7 +675,7 @@ class TkMainWin:
         # tmp_txt = self.inp_txt.get('@0' + ',' + '0', str(event.x) + ',' + str(event.y))  # TODO
         # self.vorschreib_txt_ind = self.inp_txt.index(tk.INSERT)
 
-        station = self.get_conn(self.conn_ind)
+        station = self.get_conn(self.channel_index)
         tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
         """
         for i in tmp_txt:

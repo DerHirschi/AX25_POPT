@@ -251,6 +251,7 @@ class AX25Port(threading.Thread):
         conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn
         # self.tx_pac_handler()
+        return conn
 
     def del_connections(self):
         del_k = []
