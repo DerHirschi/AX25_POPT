@@ -33,6 +33,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class ChVars:
+    output_win = ''
+    input_win = ''
+    new_data_tr = False
+    rx_beep_tr = False
+
+
 class TkMainWin:
     def __init__(self, port_handler):
         ###############################
@@ -51,10 +58,12 @@ class TkMainWin:
 
         #######################
         # Window Text Buffers
-        self.win_buf: {int: [str, str, bool, bool]} = {}
+        # self.win_buf: {int: [str, str, bool, bool]} = {}
+        self.win_buf: {int: ChVars} = {}
         #  {CH: [Input, Output, NewData, OneTimeAlarm]}
         for i in range(9):
-            self.win_buf[i + 1] = ['', '', False, False]
+            # self.win_buf[i + 1] = ['', '', False, False]
+            self.win_buf[i + 1] = ChVars()
         ###############################################
         #####################
         # GUI VARS
@@ -274,7 +283,7 @@ class TkMainWin:
                         if i == self.channel_index:
                             self.con_btn_dict[i].configure(bg='green2')
                         else:
-                            if self.win_buf[i][2]:
+                            if self.win_buf[i].new_data_tr:
                                 ch_alarm = True
                                 self.ch_btn_alarm(self.con_btn_dict[i])
                             else:
@@ -299,16 +308,16 @@ class TkMainWin:
         self.ch_alarm = ch_alarm
 
     def ch_btn_clk(self, ind: int):
-        self.win_buf[self.channel_index][0] = self.inp_txt.get('1.0', tk.END)
+        self.win_buf[self.channel_index].input_win = self.inp_txt.get('1.0', tk.END)
         self.channel_index = ind
-        self.win_buf[self.channel_index][2] = False
-        self.win_buf[self.channel_index][3] = False
+        self.win_buf[self.channel_index].new_data_tr = False
+        self.win_buf[self.channel_index].rx_beep_tr = False
         self.out_txt.configure(state="normal")
         self.out_txt.delete('1.0', tk.END)
-        self.out_txt.insert(tk.END, self.win_buf[ind][1])
+        self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
         self.out_txt.configure(state="disabled")
         self.inp_txt.delete('1.0', tk.END)
-        self.inp_txt.insert(tk.END, self.win_buf[ind][0])
+        self.inp_txt.insert(tk.END, self.win_buf[ind].input_win)
         # self.inp_txt.configure(state="disabled")
         self.out_txt.see(tk.END)
         self.inp_txt.see(tk.END)
@@ -413,8 +422,8 @@ class TkMainWin:
         tr = self.rx_beep_option.get()
         if tr:
             for k in self.win_buf.keys():
-                if self.win_buf[k][3]:
-                    self.win_buf[k][3] = False
+                if self.win_buf[k].rx_beep_tr:
+                    self.win_buf[k].rx_beep_tr = False
                     snd = threading.Thread(target=playsound, args=('data/sound/bell_o.wav', ))  # TODO File in CFG
                     snd.start()
 
@@ -548,7 +557,7 @@ class TkMainWin:
                             .replace('\n\r', '\n')
                         conn.rx_buf_rawData = b''
                         # Write RX Date to Window/Channel Buffer
-                        self.win_buf[k][1] += out
+                        self.win_buf[k].output_win += out
                         if self.channel_index == k:
                             tr = False
                             if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
@@ -563,8 +572,8 @@ class TkMainWin:
                             if tr:
                                 self.out_txt.see("end")
                         else:
-                            self.win_buf[k][2] = True
-                        self.win_buf[k][3] = True
+                            self.win_buf[k].new_data_tr = True
+                        self.win_buf[k].rx_beep_tr = True
                         self.ch_btn_status_update()
         # UPDATE MONITOR
         """
