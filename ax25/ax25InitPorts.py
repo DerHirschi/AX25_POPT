@@ -1,4 +1,5 @@
 import ax25.ax25Port
+import cli.ClientDB
 from ax25.ax25Port import *
 from config_station import *
 
@@ -10,6 +11,8 @@ class AX25PortHandler(object):
         }
         self.ax25_ports: {int: AX25Port} = {}
         self.mh_list = ax25.ax25Statistics.MH()
+        self.client_db = cli.ClientDB.ClientDB()
+        self.gui = None
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         c = 0
@@ -59,6 +62,9 @@ class AX25PortHandler(object):
             del self.mh_list
 
     def set_gui(self, gui):
+        """ PreInit: Set GUI Var """
+        if self.gui is None:
+            self.gui = gui
         for k in self.ax25_ports.keys():
             self.ax25_ports[k][1].glb_gui = gui
 

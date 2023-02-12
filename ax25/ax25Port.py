@@ -39,7 +39,7 @@ class AX25Port(threading.Thread):
         # self.mh_list: ax25.ax25Statistics.MH
         ############
         # CONFIG
-        self.device = None
+        # self.device = None
         self.station_cfg = station_cfg
         self.port_param = self.station_cfg.parm_PortParm
         self.portname = self.station_cfg.parm_PortName
@@ -57,6 +57,8 @@ class AX25Port(threading.Thread):
         #############
         self.monitor = ax25monitor.Monitor()
         self.MYHEARD = self.station_cfg.glb_mh
+        self.port_hndl = self.station_cfg.glb_port_handler
+        # self.gui = self.station_cfg.glb_gui
         self.connections: {str: AX25Conn} = {}
         try:
             self.init()

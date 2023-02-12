@@ -69,7 +69,7 @@ class ClientDB:
             print("ERROR SAVE ClientDB: " + str(e))
 
 
-class AXIPClients(object):
+class AXIPClientDB(object):
     def __init__(self, port):
         self.port = port
         self.clients = {

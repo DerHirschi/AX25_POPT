@@ -1,6 +1,5 @@
 import random
 import threading
-import time
 import tkinter as tk
 from tkinter.ttk import *
 from tkinter import scrolledtext, Label, Menu
