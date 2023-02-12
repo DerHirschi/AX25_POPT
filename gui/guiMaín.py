@@ -757,19 +757,35 @@ class TkMainWin:
             self.new_conn_win.title("New Connection")
             self.new_conn_win.geometry("600x220")
             self.new_conn_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
-            self.new_conn_win.columnconfigure(0, minsize=50, weight=2)
-            self.new_conn_win.columnconfigure(1, minsize=150, weight=1)
-            self.new_conn_win.columnconfigure(2, minsize=150, weight=1)
-            self.new_conn_win.columnconfigure(3, minsize=50, weight=1)
-            self.new_conn_win.rowconfigure(0, minsize=30, weight=1)
+            self.new_conn_win.columnconfigure(0, minsize=20, weight=2)
+            self.new_conn_win.columnconfigure(1, minsize=100, weight=1)
+            self.new_conn_win.columnconfigure(2, minsize=50, weight=1)
+            self.new_conn_win.columnconfigure(3, minsize=120, weight=1)
+            self.new_conn_win.columnconfigure(4, minsize=20, weight=1)
+            self.new_conn_win.rowconfigure(0, minsize=30, weight=1, )
             self.new_conn_win.rowconfigure(1, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(2, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(3, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(4, minsize=50, weight=1)
             self.new_conn_win.rowconfigure(5, minsize=50, weight=1)
+            options = [
+                "Port-0",
+                "Port-0",
+                "Port-1",
+                "Port-2"
+            ]
 
+            # datatype of menu text
+            clicked = tk.StringVar()
+
+            # initial menu text
+            clicked.set("Port-0")
+
+            # Create Dropdown menu
+            drop = OptionMenu(self.new_conn_win, clicked, *options)
+            drop.grid(row=1, column=1, columnspan=1, sticky="nsew")
             call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12))
-            call_txt_inp.grid(row=1, column=2, columnspan=1, sticky="nsew")
+            call_txt_inp.grid(row=1, column=3, columnspan=1, sticky="nsew")
 
             conn_btn = tk.Button(self.new_conn_win,
                                  text="Los", bg="green",
@@ -843,7 +859,7 @@ class TkMainWin:
             self.out_txt.insert(tk.END, tmp_txt)
             self.out_txt.configure(state="disabled")
             # Insert in Buffer for Channel switching
-            self.win_buf[self.channel_index][1] += tmp_txt
+            self.win_buf[self.channel_index].output_win += tmp_txt
 
             ind2 = self.out_txt.index(tk.INSERT)
             self.out_txt.tag_add("input", ind, ind2)
