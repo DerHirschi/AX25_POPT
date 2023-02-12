@@ -160,16 +160,18 @@ class DefaultCLI(object):
         return ret
 
     def cli_exec(self, inp=b''):
-        self.input = inp
-        ret = self.state_exec[self.state_index]()
-        if ret:
-            if type(ret) == str:
-                ret = ret.encode(self.encoding[0], self.encoding[1])
-            self.connection.tx_buf_rawData += ret
+        if not self.connection.is_link:
+            self.input = inp
+            ret = self.state_exec[self.state_index]()
+            if ret:
+                if type(ret) == str:
+                    ret = ret.encode(self.encoding[0], self.encoding[1])
+                self.connection.tx_buf_rawData += ret
 
     def cli_cron(self):
         """ Global Crone Tasks """
-        self.cli_state_crone()
+        if not self.connection.is_link:
+            self.cli_state_crone()
 
     def cli_state_crone(self):
         """ State Crone Tasks """

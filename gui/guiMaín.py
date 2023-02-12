@@ -33,15 +33,27 @@ logger = logging.getLogger(__name__)
 
 class TkMainWin:
     def __init__(self, port_handler):
+        ###############################
+        # AX25 PortHandler and stuff
         self.ax25_port_handler: AX25PortHandler = port_handler
-        self.ax25_ports = self.ax25_port_handler.ax25_ports[0]
-        self.axtest_port = self.ax25_ports[0]    # TODO Port Management
+        # Default Port 0
+        self.ax25_port_index = 0
+        self.ax25_ports = self.ax25_port_handler.ax25_ports[self.ax25_port_index]
         cfg = self.ax25_ports[1]
-        self.ax25_port_handler.set_gui(self)
-
+        # Globals
         self.mh = cfg.glb_mh
+        # TODO
         self.own_call = cfg.parm_StationCalls   # TODO Select Ports for Calls
-        # self.axtest_port.start()
+        # TESTING DEBUGGING
+        self.axtest_port = self.ax25_ports[0]    # TODO Port Management
+
+        #######################
+        # Window Text Buffers
+        self.win_buf = {}
+        for i in range(9):
+            self.win_buf[i + 1] = ['', '']
+        ###############################################
+        # TKINTER
         self.win = tk.Tk()
 
         self.debug_win = None
@@ -115,7 +127,6 @@ class TkMainWin:
         self.status_t1.grid(row=1, column=6, sticky="nsew")
         self.status_t3 = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
         self.status_t3.grid(row=1, column=7, sticky="nsew")
-
 
         ############
         # Ausgabe
@@ -211,6 +222,8 @@ class TkMainWin:
         #self.test_lable1 = Label(self.side_frame, text="1\n2\n3\n4\n5\n6\n7\n8\n", font=("Arial", 15))
         #self.test_lable1.grid(row=1, column=0)
 
+        self.ax25_port_handler.set_gui(self)
+        self.ch_btn_status()
         #######################
         # LOOP
         self.win.after(LOOP_DELAY, self.tasker)
@@ -233,15 +246,21 @@ class TkMainWin:
         self.win.mainloop()
 
     """
-    def port_btn_conn_status(self):
-
+    def ch_btn_status(self):
+        # TODO Again !!
         if self.ax25_port_handler.all_connections.keys():
             for i in list(self.con_btn_dict.keys()):
                 if i in self.ax25_port_handler.all_connections.keys():
-                    if i == self.channel_index:
-                        self.con_btn_dict[i].configure(bg='green2')
+                    if not self.ax25_port_handler.all_connections[i].is_link:
+                        if i == self.channel_index:
+                            self.con_btn_dict[i].configure(bg='green2')
+                        else:
+                            self.con_btn_dict[i].configure(bg='green4')
                     else:
-                        self.con_btn_dict[i].configure(bg='green4')
+                        if i == self.channel_index:
+                            self.con_btn_dict[i].configure(bg='red2')
+                        else:
+                            self.con_btn_dict[i].configure(bg='red4')
                 else:
                     if i == self.channel_index:
                         self.con_btn_dict[i].configure(bg='red2')
@@ -256,13 +275,18 @@ class TkMainWin:
                     self.con_btn_dict[i].configure(bg='red4')
 
     def ch_btn_clk(self, ind: int):
+        self.win_buf[self.channel_index][0] = self.inp_txt.get('1.0', tk.END)
         self.channel_index = ind
-
-        """
-        if self.axtest_port.connections.keys():
-            if ind in range(len(list(self.axtest_port.connections.keys()))):
-                self.conn_ind = ind
-        """
+        self.out_txt.configure(state="normal")
+        self.out_txt.delete('1.0', tk.END)
+        self.out_txt.insert(tk.END, self.win_buf[ind][1])
+        self.out_txt.configure(state="disabled")
+        self.inp_txt.delete('1.0', tk.END)
+        self.inp_txt.insert(tk.END, self.win_buf[ind][0])
+        # self.inp_txt.configure(state="disabled")
+        self.out_txt.see(tk.END)
+        self.inp_txt.see(tk.END)
+        self.ch_btn_status()
 
     def tasker(self):       # MAINLOOP
         # logger.debug(self.axtest_port.connections.keys())
@@ -277,10 +301,10 @@ class TkMainWin:
             else:
                 self.debug_win = None
         # DEBUGGING ###
-        self.tx_rx_check_rand_data()    # TEST Funktion !!!
+        # self.tx_rx_check_rand_data()    # TEST Funktion !!!
         ###############
         # Set CH Buttons
-        self.port_btn_conn_status()
+        # self.port_btn_conn_status()
         # Loop back
         self.win.after(LOOP_DELAY, self.tasker)
 
@@ -386,8 +410,8 @@ class TkMainWin:
         ax_frame.ctl_byte.SABMcByte()
 
         # ax_frame.encode()
-        self.axtest_port.new_connection(ax25_frame=ax_frame)
-        self.test_btn.configure(bg='green')
+        if self.axtest_port.new_connection(ax25_frame=ax_frame):
+            self.test_btn.configure(bg='green')
     # TEST fnc ENDE
     #############
     #################
@@ -400,23 +424,33 @@ class TkMainWin:
         # Debug WIN
         """
         # UPDATE INPUT WIN
-        if list(self.ax25_port_handler.all_connections.keys()):
-            if self.channel_index in self.ax25_port_handler.all_connections.keys():
+        if self.ax25_port_handler.all_connections.keys():
+            for k in self.ax25_port_handler.all_connections.keys():
+                # if self.channel_index == k:
                 conn: AX25Conn
-                conn = self.get_conn(self.channel_index)
+                conn = self.get_conn(k)
                 if conn.rx_buf_rawData:
                     if not conn.my_digi_call:
-                        out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')).replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
+                        out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore'))\
+                            .replace('\r', '\n')\
+                            .replace('\r\n', '\n')\
+                            .replace('\n\r', '\n')
                         conn.rx_buf_rawData = b''
-                        tr = False
-                        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
-                            tr = True
-                        self.out_txt.configure(state="normal")
-                        self.out_txt.insert('end', out)
-                        self.out_txt.configure(state="disabled")
-                        # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
-                        if tr:
-                            self.out_txt.see("end")
+                        # Write RX Date to Window/Channel Buffer
+                        self.win_buf[k][1] += out
+                        if self.channel_index == k:
+                            tr = False
+                            if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
+                                tr = True
+                            # Save Incoming Data in Window Buffer fo Channel Switching
+                            # self.win_buf[self.channel_index][1] += out
+                            # Insert Data in Textbox
+                            self.out_txt.configure(state="normal")
+                            self.out_txt.insert('end', out)
+                            self.out_txt.configure(state="disabled")
+                            # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
+                            if tr:
+                                self.out_txt.see("end")
         # UPDATE MONITOR
         """
         if self.axtest_port.monitor.out_buf:
@@ -573,14 +607,7 @@ class TkMainWin:
     # Main Win ENDE
     #################
     def update_monitor(self, var: str):
-        """ Just a Tester """
-        # self.axtest_port.run_once()
-        #self.axtest_port.run_loop()
-        """
-        for i in range(10):
-            print("TEST")
-        """
-        # print(var)
+        """ Called from AX25Conn """
         tr = False
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
             tr = True
@@ -590,27 +617,25 @@ class TkMainWin:
         if tr:
             self.mon_txt.see(tk.END)
 
-
-
-    ##############
+    ##########################
     # New Connection WIN
     def open_new_conn_win(self):
         # TODO
         if self.new_conn_win is None:
             self.new_conn_win = tk.Tk()
             self.new_conn_win.title("New Connection")
-            self.new_conn_win.geometry("700x300")
+            self.new_conn_win.geometry("600x220")
             self.new_conn_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
             self.new_conn_win.columnconfigure(0, minsize=50, weight=2)
-            self.new_conn_win.columnconfigure(1, minsize=200, weight=1)
-            self.new_conn_win.columnconfigure(2, minsize=200, weight=1)
+            self.new_conn_win.columnconfigure(1, minsize=150, weight=1)
+            self.new_conn_win.columnconfigure(2, minsize=150, weight=1)
             self.new_conn_win.columnconfigure(3, minsize=50, weight=1)
             self.new_conn_win.rowconfigure(0, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(1, minsize=30,  weight=1)
             self.new_conn_win.rowconfigure(2, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(3, minsize=30, weight=1)
-            self.new_conn_win.rowconfigure(4, minsize=90, weight=1)
-            self.new_conn_win.rowconfigure(5, minsize=90, weight=1)
+            self.new_conn_win.rowconfigure(4, minsize=50, weight=1)
+            self.new_conn_win.rowconfigure(5, minsize=50, weight=1)
 
             call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12))
             call_txt_inp.grid(row=1, column=2,columnspan=1, sticky="nsew")
@@ -641,18 +666,20 @@ class TkMainWin:
             # via1.call = 'DNX527'
             ax_frame.via_calls = []
             ax_frame.ctl_byte.SABMcByte()
-            conn: AX25Conn = self.axtest_port.new_connection(ax25_frame=ax_frame)    # TODO
-            self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.channel_index)
+            conn = self.axtest_port.new_connection(ax25_frame=ax_frame)
+            if conn:
+                conn: AX25Conn
+                self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.channel_index)
+            else:
+                self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
             self.destroy_new_conn_win()
-
-
+            self.ch_btn_status()
 
     def destroy_new_conn_win(self):
         self.new_conn_win.destroy()
         self.new_conn_win = None
-
-    # New Connection WIN
-    # ##############
+    # New Connection WIN ENDE
+    ##########################
 
     # ##############
     # DISCO
@@ -662,34 +689,31 @@ class TkMainWin:
             station.zustand_exec.change_state(4)
             # station.set_new_state()
             station.zustand_exec.tx(None)
-    # DISCO
+    # DISCO ENDE
     # ##############
 
     ###################
     # SEND TEXT OUT
     def snd_text(self, event: tk.Event):
-
-        # tmp_txt = self.inp_txt.get('@0,0', tk.END)  # TODO
-        ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
-        tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))  # TODO
-        # tmp_txt = self.inp_txt.get('@0' + ',' + '0', str(event.x) + ',' + str(event.y))  # TODO
-        # self.vorschreib_txt_ind = self.inp_txt.index(tk.INSERT)
-
         station = self.get_conn(self.channel_index)
-        tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
-        """
-        for i in tmp_txt:
-            print(i.encode())
-        """
+
         if station:
-            self.out_txt.configure(state="normal")
+            ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
+            tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
+            tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
+            # Send it to Connection/Station TX Buffer
             station.tx_buf_rawData += (tmp_txt + '\r').encode()
             ind = self.out_txt.index(tk.INSERT)
-            self.out_txt.insert('end', tmp_txt + '\n')
+            tmp_txt += '\n'
+            # Insert in OutScreen Window
+            self.out_txt.configure(state="normal")
+            self.out_txt.insert(tk.END, tmp_txt)
+            self.out_txt.configure(state="disabled")
+            # Insert in Buffer for Channel switching
+            self.win_buf[self.channel_index][1] += tmp_txt
+
             ind2 = self.out_txt.index(tk.INSERT)
             self.out_txt.tag_add("input", ind, ind2)
-            self.out_txt.configure(state="disabled")
-
             # configuring a tag called start
             self.out_txt.tag_config("input", foreground="yellow")
 

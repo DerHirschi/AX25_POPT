@@ -155,6 +155,7 @@ class AX25Port(threading.Thread):
                             # Incoming REQ
                             conn_in = AX25Conn(ax25_frame, cfg)
                             conn_in.my_digi_call = str(my_call)
+                            conn_in.is_link = True
                             conn_in.set_T2()
                             conn_in.handle_rx(ax25_frame=ax25_frame)
                             self.connections[uid] = conn_in
@@ -187,12 +188,15 @@ class AX25Port(threading.Thread):
                                     conn_out.my_digi_call = str(my_call)
                                     print("CONN OUT UID: {}".format(conn_out_uid))
                                     print("CONN OUT MyCall: {}".format(conn_out.my_digi_call))
-                                    conn_out.DIGI_Connection = conn_in
-                                    conn_in.DIGI_Connection = conn_out
+                                    # Link Connections together
+                                    conn_out.link_connection(conn_in)
+                                    conn_in.link_connection(conn_out)
                                     conn_in.tx_buf_rawData = conn_out.rx_buf_rawData
                                     conn_out.tx_buf_rawData = conn_in.rx_buf_rawData
+
                                     conn_out.zustand_exec.__init__(conn_out)
                                     conn_in.zustand_exec.__init__(conn_in)  # Reinit
+                                    conn_in.gui.ch_btn_status()
                                     self.connections[str(conn_out_uid)] = conn_out
 
     def tx_pac_handler(self):
@@ -239,14 +243,27 @@ class AX25Port(threading.Thread):
         self.del_connections()
 
     def cron_pac_handler(self):
-        """ Ecexute Cronjob on all Connections"""
+        """ Execute Cronjob on all Connections"""
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
             conn.exec_cron()
 
     def new_connection(self, ax25_frame: AX25Frame):
+        """ New Outgoing Connection """
         cfg = self.station_cfg()
+        ax25_frame.encode()
+        print("Same UID ?? --  {}".format(ax25_frame.addr_uid))
+        print("Same UID connections?? --  {}".format(self.connections.keys()))
+
         # ax25_frame.addr_uid = reverse_uid(ax25_frame.addr_uid)
+        while ax25_frame.addr_uid in self.connections.keys() or\
+                reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
+            print("Same UID !! {}".format(ax25_frame.addr_uid))
+            ax25_frame.from_call.ssid += 1
+            if ax25_frame.from_call.ssid > 15:
+                return False
+            ax25_frame.encode()
+
         conn = AX25Conn(ax25_frame, cfg, rx=False)
         conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn

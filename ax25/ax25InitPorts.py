@@ -63,23 +63,33 @@ class AX25PortHandler(object):
             self.ax25_ports[k][1].glb_gui = gui
 
     def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
-        keys = list(self.all_connections.keys())
-        print("INSERT PRT HANDLER {}".format(keys))
-        if keys:
-            tr = False
-            for el in self.all_connections:
-                if new_conn == el:
-                    tr = True
-            if not tr:
-                while True:
-                    if ind in keys:
-                        ind += 1
-                    else:
-                        self.all_connections[ind] = new_conn
-                        break
-        else:
-            self.all_connections[ind] = new_conn
-        print(self.all_connections)
+        if not new_conn.is_link and not new_conn.my_digi_call:
+            keys = list(self.all_connections.keys())
+            print("INSERT PRT HANDLER {}".format(keys))
+
+            if keys:
+                tr = False
+                # Check if Connection is already in all_conn...
+                for k in self.all_connections.keys():
+                    if new_conn == self.all_connections[k]:
+                        tr = True
+                        if new_conn.ch_index != k:
+                            logger.warning("Channel Index != Real Index !!!")
+                            new_conn.ch_index = k
+                if not tr:
+                    while True:
+                        if ind in keys:
+                            ind += 1
+                        else:
+                            new_conn.ch_index = ind
+                            self.all_connections[ind] = new_conn
+                            break
+            else:
+                new_conn.ch_index = ind
+                self.all_connections[ind] = new_conn
+            if new_conn.is_gui:
+                new_conn.gui.ch_btn_status()
+            print(self.all_connections)
 
     def cleanup_conn2all_conn_var(self):
         temp = []
@@ -88,6 +98,8 @@ class AX25PortHandler(object):
             if conn.zustand_exec.stat_index in [0]:
                 temp.append(k)
         for k in temp:
+            conn: AX25Conn = self.all_connections[k]
+            conn.ch_index = 0
             del self.all_connections[k]
 
     def del_conn2all_conn_var(self, conn: AX25Conn):
@@ -97,5 +109,8 @@ class AX25PortHandler(object):
             if temp_conn == conn:
                 temp.append(k)
         for k in temp:
+            conn: AX25Conn = self.all_connections[k]
+            conn.ch_index = 0
             del self.all_connections[k]
-
+        if conn.is_gui:
+            conn.gui.ch_btn_status()
