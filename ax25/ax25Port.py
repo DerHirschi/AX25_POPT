@@ -196,7 +196,7 @@ class AX25Port(threading.Thread):
 
                                     conn_out.zustand_exec.__init__(conn_out)
                                     conn_in.zustand_exec.__init__(conn_in)  # Reinit
-                                    conn_in.gui.ch_btn_status()
+                                    conn_in.gui.ch_btn_status_update()
                                     self.connections[str(conn_out_uid)] = conn_out
 
     def tx_pac_handler(self):
@@ -226,7 +226,7 @@ class AX25Port(threading.Thread):
                     # self.monitor.frame_inp(el, 'DW-TX')
                     cfg = self.station_cfg()
                     # Monitor
-                    cfg.glb_gui.update_monitor(self.monitor.frame_inp(el, self.portname))
+                    cfg.glb_gui.update_monitor(self.monitor.frame_inp(el, self.portname), tx=True)
         # DIGI
         fr: AX25Frame
         for fr in self.digi_buf:
@@ -238,7 +238,7 @@ class AX25Port(threading.Thread):
             # self.monitor.frame_inp(fr, self.portname)
             cfg = self.station_cfg()
             # Monitor
-            cfg.glb_gui.update_monitor(self.monitor.frame_inp(fr, self.portname))
+            cfg.glb_gui.update_monitor(self.monitor.frame_inp(fr, self.portname), tx=True)
         self.digi_buf = []
         self.del_connections()
 

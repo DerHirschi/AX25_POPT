@@ -63,7 +63,7 @@ class AX25PortHandler(object):
             self.ax25_ports[k][1].glb_gui = gui
 
     def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
-        if not new_conn.is_link and not new_conn.my_digi_call:
+        if not new_conn.is_link or not new_conn.my_digi_call:
             keys = list(self.all_connections.keys())
             print("INSERT PRT HANDLER {}".format(keys))
 
@@ -88,7 +88,7 @@ class AX25PortHandler(object):
                 new_conn.ch_index = ind
                 self.all_connections[ind] = new_conn
             if new_conn.is_gui:
-                new_conn.gui.ch_btn_status()
+                new_conn.gui.ch_btn_status_update()
             print(self.all_connections)
 
     def cleanup_conn2all_conn_var(self):
@@ -113,4 +113,4 @@ class AX25PortHandler(object):
             conn.ch_index = 0
             del self.all_connections[k]
         if conn.is_gui:
-            conn.gui.ch_btn_status()
+            conn.gui.ch_btn_status_update()

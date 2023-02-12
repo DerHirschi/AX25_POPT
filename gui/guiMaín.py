@@ -1,8 +1,11 @@
 import random
+import threading
+import time
 import tkinter as tk
 from tkinter.ttk import *
 from tkinter import scrolledtext, Label, Menu
 import logging
+from playsound import playsound
 
 from main import VER, AX25PortHandler
 from ax25.ax25Port import KissTCP, AX25Conn, AX25Frame, Call
@@ -10,8 +13,8 @@ from gui.guiMH import MHWin
 from gui.guiDebug import DEBUGwin
 from ax25.ax25Statistics import *
 
-LOOP_DELAY = 50        # ms
-TEXT_SIZE = 16
+LOOP_DELAY = 50  # ms
+TEXT_SIZE = 15
 TEXT_SIZE_STATUS = 11
 FONT = "Courier"
 
@@ -26,7 +29,7 @@ TEST_cnt_1 = 0
 next_run = time.time()
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
 )
 logger = logging.getLogger(__name__)
 
@@ -43,16 +46,25 @@ class TkMainWin:
         # Globals
         self.mh = cfg.glb_mh
         # TODO
-        self.own_call = cfg.parm_StationCalls   # TODO Select Ports for Calls
+        self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
         # TESTING DEBUGGING
-        self.axtest_port = self.ax25_ports[0]    # TODO Port Management
+        self.axtest_port = self.ax25_ports[0]  # TODO Port Management
 
         #######################
         # Window Text Buffers
-        self.win_buf = {}
+        self.win_buf: {int: [str, str, bool, bool]} = {}
+        #  {CH: [Input, Output, NewData, OneTimeAlarm]}
         for i in range(9):
-            self.win_buf[i + 1] = ['', '']
+            self.win_buf[i + 1] = ['', '', False, False]
         ###############################################
+        #####################
+        # GUI VARS
+        self.ch_alarm = False
+        self.ch_alarm_sound_one_time = False
+        self.ch_btn_blink_timer = time.time()
+        ####################
+        # GUI PARAM
+        self.btn_parm_blink_time = 0.4
         # TKINTER
         self.win = tk.Tk()
 
@@ -62,8 +74,8 @@ class TkMainWin:
 
         self.win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.win.geometry("1400x850")
-        self.win.columnconfigure(1, minsize=500, weight=1)
-        self.win.columnconfigure(2, minsize=200, weight=1)
+        self.win.columnconfigure(1, minsize=550, weight=1)
+        self.win.columnconfigure(2, minsize=150, weight=1)
         self.win.rowconfigure(0, minsize=150, weight=1)
         self.win.rowconfigure(1, minsize=20, weight=1)
         self.win.rowconfigure(2, minsize=400, weight=1)
@@ -103,15 +115,17 @@ class TkMainWin:
         self.inp_txt.grid(row=0, column=1, sticky="nsew")
         #################
         # Staus Bar
-        self.status_frame = tk.Frame(self.win, width=500, height=20)
+        self.status_frame = tk.Frame(self.win, width=550, height=20)
         self.status_frame.grid(row=1, column=1, sticky="nsew")
-        self.status_frame.columnconfigure(1, minsize=70, weight=1)  # Name
-        self.status_frame.columnconfigure(2, minsize=50, weight=1)  # Status
-        self.status_frame.columnconfigure(3, minsize=70, weight=1)  # unACK
-        self.status_frame.columnconfigure(4, minsize=70, weight=1)  # VS VR
-        self.status_frame.columnconfigure(5, minsize=50, weight=1)  # N2
-        self.status_frame.columnconfigure(6, minsize=70, weight=1)  # T1
-        self.status_frame.columnconfigure(7, minsize=70, weight=1)  # T3
+        self.status_frame.columnconfigure(1, minsize=70, weight=2)  # Name
+        self.status_frame.columnconfigure(2, minsize=50, weight=2)  # Status
+        self.status_frame.columnconfigure(3, minsize=70, weight=2)  # unACK
+        self.status_frame.columnconfigure(4, minsize=70, weight=2)  # VS VR
+        self.status_frame.columnconfigure(5, minsize=50, weight=2)  # N2
+        self.status_frame.columnconfigure(6, minsize=70, weight=2)  # T1
+        self.status_frame.columnconfigure(7, minsize=70, weight=2)  # T3
+        self.status_frame.columnconfigure(8, minsize=50, weight=1)  # RX Beep
+
 
         self.status_name = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
         self.status_name.grid(row=1, column=1, sticky="nsew")
@@ -127,6 +141,9 @@ class TkMainWin:
         self.status_t1.grid(row=1, column=6, sticky="nsew")
         self.status_t3 = Label(self.status_frame, text="", font=("Arial", TEXT_SIZE_STATUS), bg='grey80')
         self.status_t3.grid(row=1, column=7, sticky="nsew")
+        self.rx_beep_option = tk.IntVar()
+        Checkbutton(self.status_frame, text="RX-BEEP", variable=self.rx_beep_option).grid(row=1, column=8,
+                                                                                          sticky="nsew")
 
         ############
         # Ausgabe
@@ -219,11 +236,11 @@ class TkMainWin:
 
         self.test_lable = Label(self.side_frame, text="", font=("Arial", 15))
         self.test_lable.grid(row=1, column=0)
-        #self.test_lable1 = Label(self.side_frame, text="1\n2\n3\n4\n5\n6\n7\n8\n", font=("Arial", 15))
-        #self.test_lable1.grid(row=1, column=0)
+        # self.test_lable1 = Label(self.side_frame, text="1\n2\n3\n4\n5\n6\n7\n8\n", font=("Arial", 15))
+        # self.test_lable1.grid(row=1, column=0)
 
         self.ax25_port_handler.set_gui(self)
-        self.ch_btn_status()
+        self.ch_btn_status_update()
         #######################
         # LOOP
         self.win.after(LOOP_DELAY, self.tasker)
@@ -233,7 +250,7 @@ class TkMainWin:
         pass
         # self.mh.save_mh_data()
         # del self.mh
-        #.lock.release()
+        # .lock.release()
         # self.ax25_ports_th.join()
 
         # del self.axtest_port
@@ -246,16 +263,23 @@ class TkMainWin:
         self.win.mainloop()
 
     """
-    def ch_btn_status(self):
+
+    def ch_btn_status_update(self):
         # TODO Again !!
+        ch_alarm = False
         if self.ax25_port_handler.all_connections.keys():
             for i in list(self.con_btn_dict.keys()):
                 if i in self.ax25_port_handler.all_connections.keys():
-                    if not self.ax25_port_handler.all_connections[i].is_link:
+                    if not self.ax25_port_handler.all_connections[i].is_link or \
+                            not self.ax25_port_handler.all_connections[i].my_digi_call:
                         if i == self.channel_index:
                             self.con_btn_dict[i].configure(bg='green2')
                         else:
-                            self.con_btn_dict[i].configure(bg='green4')
+                            if self.win_buf[i][2]:
+                                ch_alarm = True
+                                self.ch_btn_alarm(self.con_btn_dict[i])
+                            else:
+                                self.con_btn_dict[i].configure(bg='green4')
                     else:
                         if i == self.channel_index:
                             self.con_btn_dict[i].configure(bg='red2')
@@ -273,10 +297,13 @@ class TkMainWin:
                     self.con_btn_dict[i].configure(bg='red2')
                 else:
                     self.con_btn_dict[i].configure(bg='red4')
+        self.ch_alarm = ch_alarm
 
     def ch_btn_clk(self, ind: int):
         self.win_buf[self.channel_index][0] = self.inp_txt.get('1.0', tk.END)
         self.channel_index = ind
+        self.win_buf[self.channel_index][2] = False
+        self.win_buf[self.channel_index][3] = False
         self.out_txt.configure(state="normal")
         self.out_txt.delete('1.0', tk.END)
         self.out_txt.insert(tk.END, self.win_buf[ind][1])
@@ -286,12 +313,85 @@ class TkMainWin:
         # self.inp_txt.configure(state="disabled")
         self.out_txt.see(tk.END)
         self.inp_txt.see(tk.END)
-        self.ch_btn_status()
+        self.ch_btn_status_update()
 
-    def tasker(self):       # MAINLOOP
+    def ch_btn_alarm(self, btn: tk.Button):
+        if self.ch_btn_blink_timer < time.time():
+            COLORS = ['gainsboro', 'old lace',
+                      'linen', 'papaya whip', 'blanched almond', 'bisque', 'peach puff',
+                      'lemon chiffon', 'mint cream', 'azure', 'alice blue', 'lavender',
+                      'lavender blush', 'misty rose', 'dark slate gray', 'dim gray', 'slate gray',
+                      'light slate gray', 'gray', 'light gray', 'midnight blue', 'navy', 'cornflower blue',
+                      'dark slate blue',
+                      'slate blue', 'medium slate blue', 'light slate blue', 'medium blue', 'royal blue', 'blue',
+                      'dodger blue', 'deep sky blue', 'sky blue', 'light sky blue', 'steel blue', 'light steel blue',
+                      'light blue', 'powder blue', 'pale turquoise', 'dark turquoise', 'medium turquoise', 'turquoise',
+                      'cyan', 'light cyan', 'cadet blue', 'medium aquamarine', 'aquamarine', 'dark green',
+                      'dark olive green',
+                      'dark sea green', 'sea green', 'medium sea green', 'light sea green', 'pale green', 'spring green',
+                      'lawn green', 'medium spring green', 'green yellow', 'lime green', 'yellow green',
+                      'forest green', 'olive drab', 'dark khaki', 'khaki', 'pale goldenrod', 'light goldenrod yellow',
+                      'light yellow', 'yellow', 'gold', 'light goldenrod', 'goldenrod', 'dark goldenrod', 'rosy brown',
+                      'indian red', 'saddle brown', 'sandy brown',
+                      'dark salmon', 'salmon', 'light salmon', 'orange', 'dark orange',
+                      'coral', 'light coral', 'tomato', 'orange red', 'red', 'hot pink', 'deep pink', 'pink', 'light pink',
+                      'pale violet red', 'maroon', 'medium violet red', 'violet red',
+                      'medium orchid', 'dark orchid', 'dark violet', 'blue violet', 'purple', 'medium purple',
+                      'thistle',
+                      'AntiqueWhite3', 'AntiqueWhite4', 'bisque2', 'bisque3', 'bisque4', 'PeachPuff2',
+                      'PeachPuff3', 'PeachPuff4',
+                      'LemonChiffon2', 'LemonChiffon3', 'LemonChiffon4', 'cornsilk2', 'cornsilk3',
+                      'cornsilk4', 'ivory2', 'ivory3', 'ivory4', 'honeydew2', 'honeydew3', 'honeydew4',
+                      'LavenderBlush2', 'LavenderBlush3', 'LavenderBlush4', 'MistyRose2', 'MistyRose3',
+                      'MistyRose4', 'azure2', 'azure3', 'azure4', 'SlateBlue1', 'SlateBlue2', 'SlateBlue3',
+                      'SlateBlue4', 'RoyalBlue1', 'RoyalBlue2', 'RoyalBlue3', 'RoyalBlue4', 'blue2', 'blue4',
+                      'DodgerBlue2', 'DodgerBlue3', 'DodgerBlue4', 'SteelBlue1', 'SteelBlue2',
+                      'SteelBlue3', 'SteelBlue4', 'DeepSkyBlue2', 'DeepSkyBlue3', 'DeepSkyBlue4',
+                      'SkyBlue1', 'SkyBlue2', 'SkyBlue3', 'SkyBlue4', 'LightSkyBlue1', 'LightSkyBlue2',
+                      'LightSkyBlue3', 'LightSkyBlue4', 'Slategray1', 'Slategray2', 'Slategray3',
+                      'Slategray4', 'LightSteelBlue1', 'LightSteelBlue2', 'LightSteelBlue3',
+                      'LightSteelBlue4', 'LightBlue1', 'LightBlue2', 'LightBlue3', 'LightBlue4',
+                      'LightCyan2', 'LightCyan3', 'LightCyan4', 'PaleTurquoise1', 'PaleTurquoise2',
+                      'PaleTurquoise3', 'PaleTurquoise4', 'CadetBlue1', 'CadetBlue2', 'CadetBlue3',
+                      'CadetBlue4', 'turquoise1', 'turquoise2', 'turquoise3', 'turquoise4', 'cyan2', 'cyan3',
+                      'cyan4', 'DarkSlategray1', 'DarkSlategray2', 'DarkSlategray3', 'DarkSlategray4',
+                      'aquamarine2', 'aquamarine4', 'DarkSeaGreen1', 'DarkSeaGreen2', 'DarkSeaGreen3',
+                      'DarkSeaGreen4', 'SeaGreen1', 'SeaGreen2', 'SeaGreen3', 'PaleGreen1', 'PaleGreen2',
+                      'PaleGreen3', 'PaleGreen4', 'SpringGreen2', 'SpringGreen3', 'SpringGreen4',
+                      'green2', 'green3', 'green4', 'chartreuse2', 'chartreuse3', 'chartreuse4',
+                      'OliveDrab1', 'OliveDrab2', 'OliveDrab4', 'DarkOliveGreen1', 'DarkOliveGreen2',
+                      'DarkOliveGreen3', 'DarkOliveGreen4', 'khaki1', 'khaki2', 'khaki3', 'khaki4',
+                      'LightGoldenrod1', 'LightGoldenrod2', 'LightGoldenrod3', 'LightGoldenrod4',
+                      'LightYellow2', 'LightYellow3', 'LightYellow4', 'yellow2', 'yellow3', 'yellow4',
+                      'gold2', 'gold3', 'gold4', 'goldenrod1', 'goldenrod2', 'goldenrod3', 'goldenrod4',
+                      'DarkGoldenrod1', 'DarkGoldenrod2', 'DarkGoldenrod3', 'DarkGoldenrod4',
+                      'RosyBrown1', 'RosyBrown2', 'RosyBrown3', 'RosyBrown4', 'IndianRed1', 'IndianRed2',
+                      'IndianRed3', 'IndianRed4', 'sienna1', 'sienna2', 'sienna3', 'sienna4', 'burlywood1',
+                      'burlywood2', 'burlywood3', 'burlywood4', 'wheat1', 'wheat2', 'wheat3', 'wheat4', 'tan1',
+                      'tan2', 'tan4', 'chocolate1', 'chocolate2', 'chocolate3', 'firebrick1', 'firebrick2',
+                      'firebrick3', 'firebrick4', 'brown1', 'brown2', 'brown3', 'brown4', 'salmon1', 'salmon2',
+                      'salmon3', 'salmon4', 'LightSalmon2', 'LightSalmon3', 'LightSalmon4', 'orange2',
+                      'orange3', 'orange4', 'DarkOrange1', 'DarkOrange2', 'DarkOrange3', 'DarkOrange4',
+                      'coral1', 'coral2', 'coral3', 'coral4', 'tomato2', 'tomato3', 'tomato4', 'OrangeRed2',
+                      'OrangeRed3', 'OrangeRed4', 'red2', 'red3', 'red4', 'DeepPink2', 'DeepPink3', 'DeepPink4',
+                      'HotPink1', 'HotPink2', 'HotPink3', 'HotPink4', 'pink1', 'pink2', 'pink3', 'pink4',
+                      'LightPink1', 'LightPink2', 'LightPink3', 'LightPink4', 'PaleVioletRed1',
+                      'PaleVioletRed2', 'PaleVioletRed3', 'PaleVioletRed4', 'maroon1', 'maroon2',
+                      'maroon3', 'maroon4', 'VioletRed1', 'VioletRed2', 'VioletRed3', 'VioletRed4',
+                      'magenta2', 'magenta3', 'magenta4', 'orchid1', 'orchid2', 'orchid3', 'orchid4', 'plum1',
+                      'plum2', 'plum3', 'plum4', 'MediumOrchid1', 'MediumOrchid2', 'MediumOrchid3',
+                      'MediumOrchid4', 'DarkOrchid1', 'DarkOrchid2', 'DarkOrchid3', 'DarkOrchid4',
+                      'purple1', 'purple2', 'purple3', 'purple4', 'MediumPurple1', 'MediumPurple2',
+                      'MediumPurple3', 'MediumPurple4', 'thistle1', 'thistle2', 'thistle3', 'thistle4',
+                      ]
+            clr = random.choice(COLORS)
+            btn.configure(bg=clr)
+            self.ch_btn_blink_timer = time.time() + self.btn_parm_blink_time
+
+    def tasker(self):  # MAINLOOP
         # logger.debug(self.axtest_port.connections.keys())
 
-        self.update_mon()
+        self.update_mon()   # TODO trigger von AX25CONN
 
         self.update_status_win()
         if self.debug_win is not None:
@@ -304,9 +404,20 @@ class TkMainWin:
         # self.tx_rx_check_rand_data()    # TEST Funktion !!!
         ###############
         # Set CH Buttons
-        # self.port_btn_conn_status()
+        if self.ch_alarm:
+            self.ch_btn_status_update()
+        self.rx_beep()
         # Loop back
         self.win.after(LOOP_DELAY, self.tasker)
+
+    def rx_beep(self):
+        tr = self.rx_beep_option.get()
+        if tr:
+            for k in self.win_buf.keys():
+                if self.win_buf[k][3]:
+                    self.win_buf[k][3] = False
+                    snd = threading.Thread(target=playsound, args=('data/sound/bell_o.wav', ))  # TODO File in CFG
+                    snd.start()
 
     ##########################
     # no WIN FNC
@@ -412,13 +523,14 @@ class TkMainWin:
         # ax_frame.encode()
         if self.axtest_port.new_connection(ax25_frame=ax_frame):
             self.test_btn.configure(bg='green')
+
     # TEST fnc ENDE
     #############
     #################
     # Main Win
     # - Main Win & Debug Win
 
-    def update_mon(self):   # MON & INPUT WIN
+    def update_mon(self):  # MON & INPUT WIN
         """
         Main Win
         # Debug WIN
@@ -431,9 +543,9 @@ class TkMainWin:
                 conn = self.get_conn(k)
                 if conn.rx_buf_rawData:
                     if not conn.my_digi_call:
-                        out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore'))\
-                            .replace('\r', '\n')\
-                            .replace('\r\n', '\n')\
+                        out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')) \
+                            .replace('\r', '\n') \
+                            .replace('\r\n', '\n') \
                             .replace('\n\r', '\n')
                         conn.rx_buf_rawData = b''
                         # Write RX Date to Window/Channel Buffer
@@ -451,6 +563,10 @@ class TkMainWin:
                             # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
                             if tr:
                                 self.out_txt.see("end")
+                        else:
+                            self.win_buf[k][2] = True
+                        self.win_buf[k][3] = True
+                        self.ch_btn_status_update()
         # UPDATE MONITOR
         """
         if self.axtest_port.monitor.out_buf:
@@ -573,7 +689,7 @@ class TkMainWin:
                    'old2Send: {}\n' \
                    '2Send: {}\n' \
                    'SendRaw: {}\n' \
-                   'MyDigiCall: {}\n'\
+                   'MyDigiCall: {}\n' \
                 .format(
                 dest_call,
                 via_calls,
@@ -606,8 +722,10 @@ class TkMainWin:
 
     # Main Win ENDE
     #################
-    def update_monitor(self, var: str):
+    def update_monitor(self, var: str, tx=False):
         """ Called from AX25Conn """
+        ind = self.mon_txt.index(tk.INSERT)
+
         tr = False
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
             tr = True
@@ -616,6 +734,11 @@ class TkMainWin:
         self.mon_txt.configure(state="disabled")
         if tr:
             self.mon_txt.see(tk.END)
+        if tx:
+            ind2 = self.mon_txt.index(tk.INSERT)
+            self.mon_txt.tag_add("tx", ind, ind2)
+            # configuring a tag called start
+            self.mon_txt.tag_config("tx", foreground="medium violet red")
 
     ##########################
     # New Connection WIN
@@ -631,14 +754,14 @@ class TkMainWin:
             self.new_conn_win.columnconfigure(2, minsize=150, weight=1)
             self.new_conn_win.columnconfigure(3, minsize=50, weight=1)
             self.new_conn_win.rowconfigure(0, minsize=30, weight=1)
-            self.new_conn_win.rowconfigure(1, minsize=30,  weight=1)
+            self.new_conn_win.rowconfigure(1, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(2, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(3, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(4, minsize=50, weight=1)
             self.new_conn_win.rowconfigure(5, minsize=50, weight=1)
 
             call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12))
-            call_txt_inp.grid(row=1, column=2,columnspan=1, sticky="nsew")
+            call_txt_inp.grid(row=1, column=2, columnspan=1, sticky="nsew")
 
             conn_btn = tk.Button(self.new_conn_win,
                                  text="Los", bg="green",
@@ -673,11 +796,12 @@ class TkMainWin:
             else:
                 self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
             self.destroy_new_conn_win()
-            self.ch_btn_status()
+            self.ch_btn_status_update()
 
     def destroy_new_conn_win(self):
         self.new_conn_win.destroy()
         self.new_conn_win = None
+
     # New Connection WIN ENDE
     ##########################
 
@@ -689,6 +813,7 @@ class TkMainWin:
             station.zustand_exec.change_state(4)
             # station.set_new_state()
             station.zustand_exec.tx(None)
+
     # DISCO ENDE
     # ##############
 
@@ -724,6 +849,7 @@ class TkMainWin:
     def MH_win(self):
         """MH WIN"""
         MHWin(self.axtest_port.MYHEARD)
+
     # MH WIN ENDE
     ##############
 
@@ -738,6 +864,7 @@ class TkMainWin:
 
     # DEBUG WIN ENDE
     ##############
+
 
 """
 if __name__ == '__main__':
