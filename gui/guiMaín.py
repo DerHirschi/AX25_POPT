@@ -17,15 +17,6 @@ TEXT_SIZE = 15
 TEXT_SIZE_STATUS = 11
 FONT = "Courier"
 
-TEST_TIME_RNG = (0, 60)
-TEST_DATA_RNG = (2, 1000)
-TEST_OUT0 = b''
-TEST_OUT1 = b''
-TEST_RUN = False
-TEST_FAIL_cnt = 0
-TEST_cnt_0 = 0
-TEST_cnt_1 = 0
-next_run = time.time()
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
@@ -54,7 +45,7 @@ class TkMainWin:
         # TODO
         self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
         # TESTING DEBUGGING
-        self.axtest_port = self.ax25_ports[0]  # TODO Port Management
+        # self.axtest_port = self.ax25_ports[0]  # TODO Port Management
 
         #######################
         # Window Text Buffers
@@ -239,7 +230,7 @@ class TkMainWin:
         self.disco_btn.grid(row=0, column=1, sticky="nsew")
         self.test_btn = tk.Button(self.side_btn_frame, text="TestCon", bg="yellow", command=self.start_new_conn)
         self.test_btn.grid(row=1, column=0, sticky="nsew")
-        self.test_btn1 = tk.Button(self.side_btn_frame, text="TestData", bg="yellow", command=self.run_test)
+        self.test_btn1 = tk.Button(self.side_btn_frame, text="DUMMY", bg="yellow")
         self.test_btn1.grid(row=1, column=1, sticky="nsew")
 
         self.test_lable = Label(self.side_frame, text="", font=("Arial", 15))
@@ -438,87 +429,6 @@ class TkMainWin:
     # no WIN FNC
     ##########################
 
-    ##############
-    # TEST FNC
-    def run_test(self):
-        global TEST_RUN, TEST_OUT0, TEST_OUT1, next_run
-        if TEST_RUN:
-            TEST_RUN = False
-            self.test_btn1.configure(bg='yellow', text="TestData")
-        else:
-            TEST_OUT0 = b''
-            TEST_OUT1 = b''
-            next_run = time.time()
-            TEST_RUN = True
-            self.test_btn1.configure(bg='green', text="Läuft")
-
-    def tx_rx_check_rand_data(self):
-        global next_run, TEST_OUT0, TEST_OUT1, TEST_RUN, TEST_FAIL_cnt, TEST_cnt_0, TEST_cnt_1
-        if len(list(self.axtest_port.connections.keys())) > 1 and TEST_RUN:
-            # Snd Data ..
-            if time.time() > next_run:
-                next_run = random.randrange(TEST_TIME_RNG[0], TEST_TIME_RNG[1]) + time.time()
-                rand_data = ''.join('{}'.format(x) for x in range(random.randrange(TEST_DATA_RNG[0], TEST_DATA_RNG[1])))
-                rand_data = rand_data.encode()
-                ran_stat = random.randrange(2)
-                if ran_stat:
-                    con: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[1]]
-
-                    if not con.tx_buf_rawData:
-                        TEST_OUT1 += rand_data
-                        con.tx_buf_rawData += rand_data
-
-                else:
-
-                    con: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[0]]
-                    if not con.tx_buf_rawData:
-                        TEST_OUT0 += rand_data
-                        con.tx_buf_rawData += rand_data
-            # CHeck
-            conn0: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[0]]
-            if conn0.rx_buf_rawData_2:
-                inp0 = bytes(conn0.rx_buf_rawData_2)
-                conn0.rx_buf_rawData_2 = b''  # TODO !!!! Could lost some Packets cause Threading
-                try:
-                    ind0 = TEST_OUT1.index(inp0)
-                    if ind0 != 0:
-                        logger.error("!!!!!!! TEST ERROR STAT 1 to 0 ... ABFOLGE !!!!\n ind0: {}\n".format(ind0))
-                        raise IndexError
-                except ValueError:
-                    TEST_cnt_1 -= 1
-                except IndexError:
-                    logger.error("!!!!!!! TEST ERROR STAT 1 to 0")
-                    # TEST_RUN = False
-                    TEST_FAIL_cnt += 1
-                    TEST_cnt_1 -= 1
-                    if TEST_FAIL_cnt > 10:
-                        TEST_RUN = False
-                    self.test_btn1.configure(bg='red', text="FAIL!!")
-                TEST_OUT1 = TEST_OUT1[len(inp0):]
-                TEST_cnt_1 += 1
-
-            conn1: AX25Conn = self.axtest_port.connections[list(self.axtest_port.connections.keys())[1]]
-            if conn1.rx_buf_rawData_2:
-                inp1 = bytes(conn1.rx_buf_rawData_2)
-                conn1.rx_buf_rawData_2 = b''  # TODO !!!! Could lost some Packets cause Threading
-                try:
-                    ind1 = TEST_OUT0.index(inp1)
-                    if ind1 != 0:
-                        logger.error("!!!!!!! TEST ERROR STAT 0 to 1 ... ABFOLGE !!!!\n ind1: {}\n".format(ind1))
-                        raise IndexError
-                except ValueError:
-                    TEST_cnt_0 -= 1
-                except IndexError:
-                    logger.error("!!!!!!! TEST ERROR STAT 0 to 1")
-                    # TEST_RUN = False
-                    TEST_FAIL_cnt += 1
-                    TEST_cnt_0 -= 1
-                    if TEST_FAIL_cnt > 10:
-                        TEST_RUN = False
-                    self.test_btn1.configure(bg='red', text="FAIL!!")
-                TEST_OUT0 = TEST_OUT0[len(inp1):]
-                TEST_cnt_0 += 1
-
     def start_new_conn(self):
         ax_frame = AX25Frame()
         ax_frame.from_call.call = 'MD6TES'
@@ -529,7 +439,7 @@ class TkMainWin:
         ax_frame.ctl_byte.SABMcByte()
 
         # ax_frame.encode()
-        if self.axtest_port.new_connection(ax25_frame=ax_frame):
+        if self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].new_connection(ax25_frame=ax_frame):
             self.test_btn.configure(bg='green')
 
     # TEST fnc ENDE
@@ -762,37 +672,37 @@ class TkMainWin:
             self.new_conn_win.columnconfigure(2, minsize=50, weight=1)
             self.new_conn_win.columnconfigure(3, minsize=120, weight=1)
             self.new_conn_win.columnconfigure(4, minsize=20, weight=1)
-            self.new_conn_win.rowconfigure(0, minsize=30, weight=1, )
+            self.new_conn_win.rowconfigure(0, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(1, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(2, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(3, minsize=30, weight=1)
             self.new_conn_win.rowconfigure(4, minsize=50, weight=1)
             self.new_conn_win.rowconfigure(5, minsize=50, weight=1)
             options = [
-                "Port-0",
+                "",
                 "Port-0",
                 "Port-1",
                 "Port-2"
             ]
 
             # datatype of menu text
-            clicked = tk.StringVar()
+            port = tk.StringVar()
 
             # initial menu text
-            clicked.set("Port-0")
+            port.set("Port-0")
 
             # Create Dropdown menu
-            drop = OptionMenu(self.new_conn_win, clicked, *options)
+            drop = OptionMenu(self.new_conn_win, port, *options)
             drop.grid(row=1, column=1, columnspan=1, sticky="nsew")
             call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12))
             call_txt_inp.grid(row=1, column=3, columnspan=1, sticky="nsew")
 
             conn_btn = tk.Button(self.new_conn_win,
                                  text="Los", bg="green",
-                                 command=lambda: self.process_new_conn_win(call_txt_inp))
+                                 command=lambda: self.process_new_conn_win(call_txt_inp, port))
             conn_btn.grid(row=5, column=1, sticky="nsew")
 
-    def process_new_conn_win(self, call_txt: tk.Text):
+    def process_new_conn_win(self, call_txt: tk.Text, port: tk.StringVar):
         txt_win = call_txt
         call = txt_win.get('@0,0', tk.END)
         call = call.split('\r')[0]
@@ -800,20 +710,26 @@ class TkMainWin:
         call = call.replace(' ', '')
         print(str(call))
         print(len(call))
-        for i in call:
-            print(i.encode())
+        port = port.get()
+        if port:
+            self.ax25_port_index = int(port.replace('Port-', ''))
+        else:
+            self.ax25_port_index = 0
+        print(str(port))
+        print(str(self.ax25_port_index))
+
         if len(call) <= 6:
 
             call = call.upper()
             ax_frame = AX25Frame()
-            ax_frame.from_call.call = self.axtest_port.my_stations[0]  # TODO select outgoing call
+            ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].my_stations[0]  # TODO select outgoing call
             # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
             ax_frame.to_call.call = call
             # via1 = Call()
             # via1.call = 'DNX527'
             ax_frame.via_calls = []
             ax_frame.ctl_byte.SABMcByte()
-            conn = self.axtest_port.new_connection(ax25_frame=ax_frame)
+            conn = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].new_connection(ax25_frame=ax_frame)
             if conn:
                 conn: AX25Conn
                 self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.channel_index)
@@ -872,7 +788,7 @@ class TkMainWin:
     # MH WIN
     def MH_win(self):
         """MH WIN"""
-        MHWin(self.axtest_port.MYHEARD)
+        MHWin(self.mh)
 
     # MH WIN ENDE
     ##############
@@ -881,10 +797,10 @@ class TkMainWin:
     # DEBUG WIN
     def DEBUG_win(self):
         if self.debug_win is None:
-            self.debug_win = DEBUGwin(self.axtest_port.connections)
+            self.debug_win = DEBUGwin(self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].connections)
         else:
             if not self.debug_win.is_running:
-                self.debug_win = DEBUGwin(self.axtest_port.connections)
+                self.debug_win = DEBUGwin(self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].connections)
 
     # DEBUG WIN ENDE
     ##############

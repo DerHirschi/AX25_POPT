@@ -9,7 +9,7 @@ class AX25PortHandler(object):
         ax25types = {
             'KISSTCP': KissTCP
         }
-        self.ax25_ports: {int: AX25Port} = {}
+        self.ax25_ports: {int: (AX25Port, DefaultPortConfig)} = {}
         self.mh_list = ax25.ax25Statistics.MH()
         self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
