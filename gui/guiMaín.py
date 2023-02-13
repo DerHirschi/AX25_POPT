@@ -750,9 +750,15 @@ class TkMainWin:
     def disco_conn(self):
         station: AX25Conn = self.get_conn(self.channel_index)
         if station:
-            station.zustand_exec.change_state(4)
-            # station.set_new_state()
-            station.zustand_exec.tx(None)
+            if station.zustand_exec.stat_index:
+                tr = False
+                if station.zustand_exec.stat_index in [2, 4]:
+                    tr = True
+                station.zustand_exec.change_state(4)
+                # station.set_new_state()
+                station.zustand_exec.tx(None)
+                if tr:
+                    station.n2 = 100
 
     # DISCO ENDE
     # ##############

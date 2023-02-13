@@ -381,6 +381,7 @@ class DefaultStat(object):
         # CLEANUP
         if self.ax25conn.n2 == 100 and not self.ax25conn.tx_buf_2send:
             self.change_state(0)
+            self.ax25conn.prt_hndl.del_conn2all_conn_var(self.ax25conn)
         ###########
         # DEBUGGING
         self.ax25conn.debugvar_len_out_buf = len(self.ax25conn.tx_buf_2send)

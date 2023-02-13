@@ -242,3 +242,12 @@ class UserCLI(DefaultCLI):
 
     def s2(self):
         return self.bye_text
+
+
+class NoneCLI(DefaultCLI):
+    """ ? To Disable CLI / Remote ? """
+    def exec_cmd(self):
+        pass
+
+    def cli_cron(self):
+        pass
