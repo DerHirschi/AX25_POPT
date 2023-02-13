@@ -297,7 +297,7 @@ class TkMainWin:
             conn_btn.grid(row=5, column=1, sticky="nsew")
             ##############
             # KEY BINDS
-            #self.new_conn_win.bind('<Return>', )
+            self.new_conn_win.bind('<Return>', lambda event: self.process_new_conn_win(call_txt_inp, port))
 
     def process_new_conn_win(self, call_txt: tk.Text, port: tk.StringVar):
         txt_win = call_txt
