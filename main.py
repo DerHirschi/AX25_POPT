@@ -1,4 +1,4 @@
-from gui.guiMaín import *
+from gui.guiMainNew import *
 from ax25.ax25InitPorts import AX25PortHandler
 import threading
 # from ax25.ax25PortHandler import MYHEARD
