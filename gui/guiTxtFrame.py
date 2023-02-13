@@ -41,7 +41,7 @@ class TxTframe:
                                                     font=(FONT, TEXT_SIZE),
                                                     insertbackground=TXT_INP_CURSOR_CLR,
                                                     height=100, bd=0)
-        self.in_txt_win.insert(tk.END, "Inp")
+        # self.in_txt_win.insert(tk.END, "Inp")
         self.in_txt_win.grid(row=0, column=0, columnspan=10, sticky="nsew")
         ##############
         # Status Frame
@@ -74,7 +74,7 @@ class TxTframe:
                                                      font=(FONT, TEXT_SIZE),
                                                      height=100, bd=0, borderwidth=1)
 
-        self.out_txt_win.insert(tk.END, "OUT")
+        # self.out_txt_win.insert(tk.END, "OUT")
         # self.out_txt.pack(side=tk.TOP)
 
 
@@ -87,7 +87,7 @@ class TxTframe:
                                                  foreground=TXT_MON_CLR,
                                                  font=(FONT, TEXT_SIZE),
                                                  height=100, bd=0, borderwidth=1)
-        self.mon_txt.insert(tk.END, "MON")
+        # self.mon_txt.insert(tk.END, "MON")
         self.mon_txt.pack(side=tk.BOTTOM)
         # paned window
 

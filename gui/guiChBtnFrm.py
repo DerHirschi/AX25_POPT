@@ -7,6 +7,7 @@ class ChBtnFrm:
     def __init__(self, main_win):
         self.main_frame = main_win.main_win
         self.main_class = main_win
+        self.ch_btn_blink_timer = time.time()
         self.ch_btn_frame = tk.Frame(self.main_frame, width=500, height=30)
         self.ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
@@ -85,7 +86,7 @@ class ChBtnFrm:
                     self.con_btn_dict[i].configure(bg='red2')
                 else:
                     self.con_btn_dict[i].configure(bg='red4')
-        self.ch_alarm = ch_alarm
+        self.main_class.ch_alarm = ch_alarm
 
     def ch_btn_clk(self, ind: int):
         self.main_class.win_buf[self.main_class.channel_index].input_win = self.main_class.inp_txt.get('1.0', tk.END)
@@ -104,7 +105,7 @@ class ChBtnFrm:
         self.ch_btn_status_update()
 
     def ch_btn_alarm(self, btn: tk.Button):
-        if self.main_class.ch_btn_blink_timer < time.time():
+        if self.ch_btn_blink_timer < time.time():
             COLORS = ['gainsboro', 'old lace',
                       'linen', 'papaya whip', 'blanched almond', 'bisque', 'peach puff',
                       'lemon chiffon', 'mint cream', 'azure', 'alice blue', 'lavender',
@@ -174,6 +175,6 @@ class ChBtnFrm:
                       ]
             clr = random.choice(COLORS)
             btn.configure(bg=clr)
-            self.main_class.ch_btn_blink_timer = time.time() + self.main_class.btn_parm_blink_time
+            self.ch_btn_blink_timer = time.time() + self.main_class.btn_parm_blink_time
 
 

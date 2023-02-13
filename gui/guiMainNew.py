@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, Menu
+from tkinter import ttk, Menu, OptionMenu
 import logging
 import threading
 import time
@@ -7,7 +7,7 @@ from playsound import playsound
 
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
-from main import VER, AX25PortHandler
+from main import VER, AX25PortHandler, AX25Conn, AX25Frame
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
@@ -27,8 +27,7 @@ TXT_MON_TX_CLR = 'medium violet red'
 
 
 def pl_sound(snd_file: str):
-    snd = threading.Thread(target=playsound, args=(snd_file,))
-    snd.start()
+    threading.Thread(target=playsound, args=(snd_file,)).start()
 
 
 class ChVars:
@@ -62,28 +61,30 @@ class TkMainWin:
         # GUI VARS
         self.ch_alarm = False
         self.ch_alarm_sound_one_time = False
-        self.ch_btn_blink_timer = time.time()
         self.channel_index = 1
         ####################
         # GUI PARAM
         self.btn_parm_blink_time = 0.4
-
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
         self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
+        ##############
+        # KEY BINDS
+        self.main_win.bind('<Return>', self.snd_text)
         # self.style = ttk.Style()
         # self.style.theme_use('classic')
         self.main_win.columnconfigure(0, minsize=500, weight=3)
         self.main_win.columnconfigure(1, minsize=200, weight=2)
         self.main_win.rowconfigure(0, minsize=3, weight=1)     # Boarder
-        self.main_win.rowconfigure(1, minsize=40, weight=0)
+        self.main_win.rowconfigure(1, minsize=40, weight=1)
         self.main_win.rowconfigure(2, minsize=200, weight=2)
         self.main_win.rowconfigure(3, minsize=25, weight=1)    # CH BTN
         self.main_win.rowconfigure(4, minsize=3, weight=1)    # Boarder
 
         ############################
+
         ############################
         ############################
         ##############
@@ -114,9 +115,32 @@ class TkMainWin:
         # Channel Buttons
         self.ch_btn = ChBtnFrm(self)
         self.ch_btn.ch_btn_frame.grid(row=3, column=0, columnspan=1, sticky="nsew")
+        ############################
 
+        self.btn_frame = tk.Frame(self.main_win, width=500, height=30)
+        self.btn_frame.grid(row=1, column=0, columnspan=1, sticky="nsew")
+        self.btn_frame.rowconfigure(0, minsize=15, weight=1)
+        self.btn_frame.rowconfigure(1, minsize=15, weight=1)
+
+        self.btn_frame.columnconfigure(0, minsize=10, weight=0)
+        self.btn_frame.columnconfigure(1, minsize=10, weight=0)
+        self.btn_frame.columnconfigure(2, minsize=10, weight=0)
+        self.btn_frame.columnconfigure(3, minsize=10, weight=0)
+
+        self.btn_frame.columnconfigure(4, minsize=500, weight=1)
+
+        self.conn_btn = tk.Button(self.btn_frame, text="New Conn", bg="green", command=self.open_new_conn_win)
+        self.conn_btn.grid(row=0, column=0, sticky="nsew")
+        self.disco_btn = tk.Button(self.btn_frame, text="Disconnect", bg="red", command=self.disco_conn)
+        self.disco_btn.grid(row=0, column=1, sticky="nsew")
+        self.test_btn = tk.Button(self.btn_frame, text="DUMMY", bg="yellow")
+        self.test_btn.grid(row=1, column=0, sticky="nsew")
+        self.test_btn1 = tk.Button(self.btn_frame, text="DUMMY", bg="yellow")
+        self.test_btn1.grid(row=1, column=1, sticky="nsew")
+
+        ############################
         # self.debug_win = None
-        # self.new_conn_win = None
+        self.new_conn_win = None
 
         # self.txt_win.init(self.main_win)
         # self.txt_win.grid(row=1, column=0, sticky="nsew")
@@ -228,3 +252,137 @@ class TkMainWin:
             # configuring a tag called start
             self.mon_txt.tag_config("tx", foreground="medium violet red")
 
+    ##########################
+    # New Connection WIN
+    def open_new_conn_win(self):
+        # TODO
+        if self.new_conn_win is None:
+            self.new_conn_win = tk.Tk()
+            self.new_conn_win.title("New Connection")
+            self.new_conn_win.geometry("600x220")
+            self.new_conn_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
+            self.new_conn_win.columnconfigure(0, minsize=20, weight=2)
+            self.new_conn_win.columnconfigure(1, minsize=100, weight=1)
+            self.new_conn_win.columnconfigure(2, minsize=50, weight=1)
+            self.new_conn_win.columnconfigure(3, minsize=120, weight=1)
+            self.new_conn_win.columnconfigure(4, minsize=20, weight=1)
+            self.new_conn_win.rowconfigure(0, minsize=30, weight=1)
+            self.new_conn_win.rowconfigure(1, minsize=30, weight=1)
+            self.new_conn_win.rowconfigure(2, minsize=30, weight=1)
+            self.new_conn_win.rowconfigure(3, minsize=30, weight=1)
+            self.new_conn_win.rowconfigure(4, minsize=50, weight=1)
+            self.new_conn_win.rowconfigure(5, minsize=50, weight=1)
+            options = [
+                "",
+                "Port-0",
+                "Port-1",
+                "Port-2"
+            ]
+
+            # datatype of menu text
+            port = tk.StringVar()
+
+            # initial menu text
+            port.set("Port-0")
+
+            # Create Dropdown menu
+            drop = OptionMenu(self.new_conn_win, port, *options)
+            drop.grid(row=1, column=1, columnspan=1, sticky="nsew")
+            call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12))
+            call_txt_inp.grid(row=1, column=3, columnspan=1, sticky="nsew")
+
+            conn_btn = tk.Button(self.new_conn_win,
+                                 text="Los", bg="green",
+                                 command=lambda: self.process_new_conn_win(call_txt_inp, port))
+            conn_btn.grid(row=5, column=1, sticky="nsew")
+            ##############
+            # KEY BINDS
+            #self.new_conn_win.bind('<Return>', )
+
+    def process_new_conn_win(self, call_txt: tk.Text, port: tk.StringVar):
+        txt_win = call_txt
+        call = txt_win.get('@0,0', tk.END)
+        call = call.split('\r')[0]
+        call = call.split('\n')[0]
+        call = call.replace(' ', '')
+        print(str(call))
+        print(len(call))
+        port = port.get()
+        if port:
+            self.ax25_port_index = int(port.replace('Port-', ''))
+        else:
+            self.ax25_port_index = 0
+        print(str(port))
+        print(str(self.ax25_port_index))
+
+        if len(call) <= 6:
+
+            call = call.upper()
+            ax_frame = AX25Frame()
+            ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].my_stations[0]  # TODO select outgoing call
+            # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
+            ax_frame.to_call.call = call
+            # via1 = Call()
+            # via1.call = 'DNX527'
+            ax_frame.via_calls = []
+            ax_frame.ctl_byte.SABMcByte()
+            conn = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].new_connection(ax25_frame=ax_frame)
+            if conn:
+                conn: AX25Conn
+                self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.channel_index)
+            else:
+                self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
+            self.destroy_new_conn_win()
+            self.ch_btn_status_update()
+
+    def destroy_new_conn_win(self):
+        self.new_conn_win.destroy()
+        self.new_conn_win = None
+
+    # New Connection WIN ENDE
+    ##########################
+
+    # ##############
+    # DISCO
+    def disco_conn(self):
+        station: AX25Conn = self.get_conn(self.channel_index)
+        if station:
+            if station.zustand_exec.stat_index:
+                tr = False
+                if station.zustand_exec.stat_index in [2, 4]:
+                    tr = True
+                station.zustand_exec.change_state(4)
+                # station.set_new_state()
+                station.zustand_exec.tx(None)
+                if tr:
+                    station.n2 = 100
+
+    # DISCO ENDE
+    # ##############
+    ###################
+    # SEND TEXT OUT
+    def snd_text(self, event: tk.Event):
+        station: AX25Conn = self.get_conn(self.channel_index)
+
+        if station:
+            ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
+            tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
+            tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
+            # Send it to Connection/Station TX Buffer
+            station.tx_buf_rawData += (tmp_txt + '\r').encode()
+            ind = self.out_txt.index(tk.INSERT)
+            tmp_txt += '\n'
+            # Insert in OutScreen Window
+            self.out_txt.configure(state="normal")
+            self.out_txt.insert(tk.END, tmp_txt)
+            self.out_txt.configure(state="disabled")
+            # Insert in Buffer for Channel switching
+            self.win_buf[self.channel_index].output_win += tmp_txt
+
+            ind2 = self.out_txt.index(tk.INSERT)
+            self.out_txt.tag_add("input", ind, ind2)
+            # configuring a tag called start
+            self.out_txt.tag_config("input", foreground="yellow")
+
+    # SEND TEXT OUT
+    ###################
