@@ -4,7 +4,7 @@ from ax25.ax25InitPorts import AX25Conn, AX25Frame
 import threading
 # from ax25.ax25PortHandler import MYHEARD
 
-VER = '1.1a'
+VER = '1.2a'
 if __name__ == '__main__':
     #################
     # Init AX25 Stuff
