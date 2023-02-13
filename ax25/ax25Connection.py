@@ -567,11 +567,11 @@ class S5Ready(DefaultStat):
                 self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
         elif flag == 'REJ':
             self.ax25conn.n2 = 0
-            print(" !!!!! RX REJ !!!! ")
-            print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, nr))
-            print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
+            # print(" !!!!! RX REJ !!!! ")
+            # print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, nr))
+            # print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
             if ((nr - 1) % 8) in self.ax25conn.tx_buf_unACK.keys():
-                print(" !!!!! DEL unACK !!!! ")
+                # print(" !!!!! DEL unACK !!!! ")
                 self.ax25conn.del_unACK_buf()
             if self.stat_index == 7 and pf:
                 self.ax25conn.set_T1(stop=True)
@@ -587,9 +587,6 @@ class S5Ready(DefaultStat):
             if ((nr - 1) % 8) in self.ax25conn.tx_buf_unACK.keys():
                 self.ax25conn.del_unACK_buf()
                 self.ax25conn.n2 = 0
-            print(" !!!! I !!!! ")
-            print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, nr))
-            print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
 
             if ns == self.ax25conn.vr:  # !!!! Korrekt
                 # Process correct I-Frame
@@ -617,10 +614,11 @@ class S5Ready(DefaultStat):
             else:  # !!!! Korrekt
                 if self.stat_index in [5, 9]:
                     # REJ
+                    """
                     print(" !!!!! TX REJ !!!! ")
                     print("ownVR: {}     recNR: {}".format(self.ax25conn.vr, nr))
                     print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
-
+                    """
                     if self.stat_index == 5:
 
                         if ns + 1 == self.ax25conn.vr:  # When Packet already is received

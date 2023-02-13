@@ -71,7 +71,7 @@ class AX25PortHandler(object):
     def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
         if not new_conn.is_link or not new_conn.my_digi_call:
             keys = list(self.all_connections.keys())
-            print("INSERT PRT HANDLER {}".format(keys))
+            # print("INSERT PRT HANDLER {}".format(keys))
 
             if keys:
                 tr = False
@@ -95,7 +95,6 @@ class AX25PortHandler(object):
                 self.all_connections[ind] = new_conn
             if new_conn.is_gui:
                 new_conn.gui.ch_btn_status_update()
-            print(self.all_connections)
 
     def cleanup_conn2all_conn_var(self):
         temp = []
