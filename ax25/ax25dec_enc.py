@@ -53,6 +53,14 @@ def format_hex2bin(inp=''):
     return fl
 
 
+def call_obj_fm_call_str(call_str: str):
+    ind = call_str.find('-')
+    if ind != -1:
+        return call_str[:ind].upper(), int(call_str[ind + 1:])
+    else:
+        return call_str.upper(), 0
+
+
 def format_hexstr(inp):
     if type(inp) == int:
         return '{:02x}'.format(inp)
@@ -98,7 +106,12 @@ class Call(object):
         out_str += encode_ssid(dest_ssid, dest_c)
         out_str += encode_address_char(call)
         """
-        self.call_str = get_call_str(self.call, self.ssid)
+        if not self.call_str:
+            self.call_str = get_call_str(self.call, self.ssid)
+        elif not self.call and self.call_str:
+            tmp = call_obj_fm_call_str(self.call_str)
+            self.call = tmp[0]
+            self.ssid = tmp[1]
         out = ''
         # Address
         ascii_str = "{:<6}".format(self.call.upper())

@@ -7,7 +7,7 @@ from playsound import playsound
 
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
-from main import VER, AX25PortHandler, AX25Conn, AX25Frame
+from main import VER, AX25PortHandler, AX25Conn, AX25Frame, Call
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
@@ -119,24 +119,20 @@ class TkMainWin:
 
         self.btn_frame = tk.Frame(self.main_win, width=500, height=30)
         self.btn_frame.grid(row=1, column=0, columnspan=1, sticky="nsew")
-        self.btn_frame.rowconfigure(0, minsize=15, weight=1)
-        self.btn_frame.rowconfigure(1, minsize=15, weight=1)
+        self.btn_frame.rowconfigure(0, minsize=10, weight=1)
 
-        self.btn_frame.columnconfigure(0, minsize=10, weight=0)
-        self.btn_frame.columnconfigure(1, minsize=10, weight=0)
-        self.btn_frame.columnconfigure(2, minsize=10, weight=0)
-        self.btn_frame.columnconfigure(3, minsize=10, weight=0)
+        self.btn_frame.columnconfigure(0, minsize=5, weight=0)
+        self.btn_frame.columnconfigure(1, minsize=5, weight=0)
+        self.btn_frame.columnconfigure(2, minsize=5, weight=0)
+        self.btn_frame.columnconfigure(3, minsize=5, weight=0)
 
         self.btn_frame.columnconfigure(4, minsize=500, weight=1)
 
-        self.conn_btn = tk.Button(self.btn_frame, text="New Conn", bg="green", command=self.open_new_conn_win)
+        self.conn_btn = tk.Button(self.btn_frame, text="New Conn", bg="green", height=5, width=5, command=self.open_new_conn_win)
         self.conn_btn.grid(row=0, column=0, sticky="nsew")
-        self.disco_btn = tk.Button(self.btn_frame, text="Disconnect", bg="red", command=self.disco_conn)
+        self.disco_btn = tk.Button(self.btn_frame, text="Disconnect", bg="red", height=5, width=5, command=self.disco_conn)
         self.disco_btn.grid(row=0, column=1, sticky="nsew")
-        self.test_btn = tk.Button(self.btn_frame, text="DUMMY", bg="yellow")
-        self.test_btn.grid(row=1, column=0, sticky="nsew")
-        self.test_btn1 = tk.Button(self.btn_frame, text="DUMMY", bg="yellow")
-        self.test_btn1.grid(row=1, column=1, sticky="nsew")
+
 
         ############################
         # self.debug_win = None
@@ -301,9 +297,14 @@ class TkMainWin:
 
     def process_new_conn_win(self, call_txt: tk.Text, port: tk.StringVar):
         txt_win = call_txt
-        call = txt_win.get('@0,0', tk.END)
+        call = txt_win.get('0.0', tk.END)
         call = call.split('\r')[0]
         call = call.split('\n')[0]
+        call = call.split(' ')
+        via = []
+        if len(call) > 1:
+            via = call[1:]
+        call = call[0]
         call = call.replace(' ', '')
         print(str(call))
         print(len(call))
@@ -315,7 +316,7 @@ class TkMainWin:
         print(str(port))
         print(str(self.ax25_port_index))
 
-        if len(call) <= 6:
+        if 6 >= len(call) > 1:
 
             call = call.upper()
             ax_frame = AX25Frame()
@@ -325,6 +326,12 @@ class TkMainWin:
             # via1 = Call()
             # via1.call = 'DNX527'
             ax_frame.via_calls = []
+            for c in via:
+                print(c)
+                new_c = Call()
+                new_c.call_str = c.upper()
+                ax_frame.via_calls.append(new_c)
+
             ax_frame.ctl_byte.SABMcByte()
             conn = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].new_connection(ax25_frame=ax_frame)
             if conn:

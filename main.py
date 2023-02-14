@@ -1,6 +1,6 @@
 from gui.guiMainNew import *
 from ax25.ax25InitPorts import AX25PortHandler
-from ax25.ax25InitPorts import AX25Conn, AX25Frame
+from ax25.ax25InitPorts import AX25Conn, AX25Frame, Call
 import threading
 # from ax25.ax25PortHandler import MYHEARD
 
