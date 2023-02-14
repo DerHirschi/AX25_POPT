@@ -2,6 +2,8 @@ import tkinter as tk
 import time
 import random
 
+STAT_BAR_CLR = 'grey60'
+
 
 class ChBtnFrm:
     def __init__(self, main_win):
@@ -105,8 +107,21 @@ class ChBtnFrm:
         # self.main_class: gui.guiMainNew.TkMainWin
         if self.main_class.get_ch_param().rx_beep_opt:
             self.main_class.txt_win.rx_beep_box.select()
+            self.main_class.txt_win.rx_beep_box: tk.Checkbutton
+            self.main_class.txt_win.rx_beep_box.configure(bg='green')
         else:
             self.main_class.txt_win.rx_beep_box.deselect()
+            self.main_class.txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR)
+
+        if self.main_class.get_ch_param().timestamp_opt:
+            self.main_class.txt_win.ts_box_box.select()
+            self.main_class.txt_win.ts_box_box: tk.Checkbutton
+            self.main_class.txt_win.ts_box_box.configure(bg='green')
+        else:
+            self.main_class.txt_win.ts_box_box.deselect()
+            self.main_class.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
+
+
         self.ch_btn_status_update()
 
     def ch_btn_alarm(self, btn: tk.Button):

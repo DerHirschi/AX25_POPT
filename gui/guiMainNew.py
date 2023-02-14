@@ -24,6 +24,7 @@ TXT_INP_CLR = 'yellow'
 TXT_INP_CURSOR_CLR = 'white'
 TXT_MON_CLR = 'green'
 TXT_MON_TX_CLR = 'medium violet red'
+STAT_BAR_CLR = 'grey60'
 
 
 def pl_sound(snd_file: str):
@@ -36,6 +37,7 @@ class ChVars:
     new_data_tr = False
     rx_beep_tr = False
     rx_beep_opt = None
+    timestamp_opt = None
 
 
 class TkMainWin:
@@ -206,8 +208,21 @@ class TkMainWin:
         # Set CH Buttons
         if self.ch_alarm:
             self.ch_btn_status_update()
-        self.get_ch_param().rx_beep_opt = self.txt_win.rx_beep_var.get()
+        rx_beep_check = self.txt_win.rx_beep_var.get()
+        if rx_beep_check:
+            self.txt_win.rx_beep_box.configure(bg='green', activebackground='green')
+        else:
+            self.txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+        self.get_ch_param().rx_beep_opt = rx_beep_check
         self.rx_beep()
+
+        ts_check = self.txt_win.ts_box_var.get()
+        if ts_check:
+            self.txt_win.ts_box_box.configure(bg='green', activebackground='green')
+        else:
+            self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+        self.get_ch_param().timestamp_opt = ts_check
+
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 

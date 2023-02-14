@@ -30,13 +30,14 @@ class TxTframe:
         self.status_frame.pack(side=tk.BOTTOM, expand=0)
 
         self.status_frame.columnconfigure(1, minsize=70, weight=2)  # Name
-        self.status_frame.columnconfigure(2, minsize=50, weight=2)  # Status
-        self.status_frame.columnconfigure(3, minsize=70, weight=2)  # unACK
-        self.status_frame.columnconfigure(4, minsize=70, weight=2)  # VS VR
-        self.status_frame.columnconfigure(5, minsize=50, weight=2)  # N2
-        self.status_frame.columnconfigure(6, minsize=70, weight=2)  # T1
-        self.status_frame.columnconfigure(7, minsize=70, weight=2)  # T3
+        self.status_frame.columnconfigure(2, minsize=50, weight=3)  # Status
+        self.status_frame.columnconfigure(3, minsize=70, weight=4)  # unACK
+        self.status_frame.columnconfigure(4, minsize=70, weight=4)  # VS VR
+        self.status_frame.columnconfigure(5, minsize=50, weight=5)  # N2
+        self.status_frame.columnconfigure(6, minsize=70, weight=5)  # T1
+        self.status_frame.columnconfigure(7, minsize=70, weight=5)  # T3
         self.status_frame.columnconfigure(8, minsize=50, weight=1)  # RX Beep
+        self.status_frame.columnconfigure(9, minsize=20, weight=1)  # TimeStamp
         self.status_frame.rowconfigure(0, weight=1)  # Stat
         self.status_frame.rowconfigure(1, minsize=20, weight=0)  # Out
 
@@ -89,16 +90,31 @@ class TxTframe:
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
         self.status_t3.grid(row=1, column=7, sticky="nsew")
+        # Checkbox RX-BEEP
         self.rx_beep_var = tk.IntVar()
         self.rx_beep_box = Checkbutton(self.status_frame,
                                        text="RX-BEEP",
                                        bg=STAT_BAR_CLR,
+                                       activebackground=STAT_BAR_CLR,
                                        borderwidth=0,
                                        onvalue=1, offvalue=0,
                                        foreground=STAT_BAR_TXT_CLR,
                                        variable=self.rx_beep_var
                                        )
         self.rx_beep_box.grid(row=1, column=8, sticky="nsew")
+        # Checkbox RX-BEEP
+        self.ts_box_var = tk.IntVar()
+        self.ts_box_box = Checkbutton(self.status_frame,
+                                      text="T-S",
+                                      bg=STAT_BAR_CLR,
+                                      borderwidth=0,
+                                      activebackground = STAT_BAR_CLR,
+                                      onvalue=1, offvalue=0,
+                                      foreground=STAT_BAR_TXT_CLR,
+                                      variable=self.ts_box_var
+                                      )
+        self.ts_box_box.grid(row=1, column=9, sticky="nsew")
+
         ####################
         # Vorschreibfenster
         self.out_txt_win = scrolledtext.ScrolledText(self.pw, background=TXT_BACKGROUND_CLR,
@@ -138,7 +154,6 @@ class TxTframe:
         Main Win
         Debug WIN
         """
-        text = ''
         station = self.main_class.get_conn(self.main_class.channel_index)
         if station:
             dest_call = station.ax25_out_frame.to_call.call_str
