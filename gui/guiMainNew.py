@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, Menu, OptionMenu
+from tkinter import ttk, Menu, OptionMenu, Checkbutton
 import logging
 import threading
 import time
@@ -35,6 +35,7 @@ class ChVars:
     input_win = ''
     new_data_tr = False
     rx_beep_tr = False
+    rx_beep_opt = None
 
 
 class TkMainWin:
@@ -73,10 +74,12 @@ class TkMainWin:
         ##############
         # KEY BINDS
         self.main_win.bind('<Return>', self.snd_text)
-        # self.style = ttk.Style()
-        # self.style.theme_use('classic')
-        self.main_win.columnconfigure(0, minsize=500, weight=3)
-        self.main_win.columnconfigure(1, minsize=200, weight=2)
+        ##########################
+        self.style = ttk.Style()
+        self.style.theme_use('classic')
+        # self.style.theme_use('clam')
+        self.main_win.columnconfigure(0, minsize=500, weight=1)
+        self.main_win.columnconfigure(1, minsize=2, weight=10)
         self.main_win.rowconfigure(0, minsize=3, weight=1)     # Boarder
         self.main_win.rowconfigure(1, minsize=40, weight=1)
         self.main_win.rowconfigure(2, minsize=200, weight=2)
@@ -116,7 +119,7 @@ class TkMainWin:
         self.ch_btn = ChBtnFrm(self)
         self.ch_btn.ch_btn_frame.grid(row=3, column=0, columnspan=1, sticky="nsew")
         ############################
-
+        # Conn BTN upper Side
         self.btn_frame = tk.Frame(self.main_win, width=500, height=30)
         self.btn_frame.grid(row=1, column=0, columnspan=1, sticky="nsew")
         self.btn_frame.rowconfigure(0, minsize=10, weight=1)
@@ -132,8 +135,38 @@ class TkMainWin:
         self.conn_btn.grid(row=0, column=0, sticky="nsew")
         self.disco_btn = tk.Button(self.btn_frame, text="Disconnect", bg="red", height=5, width=5, command=self.disco_conn)
         self.disco_btn.grid(row=0, column=1, sticky="nsew")
+        #########################
+        # Check Boxes Right Side
+        self.side_btn_frame_top = tk.Frame(self.main_win, width=200, height=300)
+        self.side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
+        self.side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)    # CONN BTN
+        self.side_btn_frame_top.rowconfigure(1, minsize=10, weight=0)    #
+        self.side_btn_frame_top.rowconfigure(2, minsize=40, weight=0)    # Checkboxes
 
+        self.side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
+        self.side_btn_frame_top.columnconfigure(1, minsize=30, weight=0)
+        self.side_btn_frame_top.columnconfigure(2, minsize=10, weight=0)
+        self.side_btn_frame_top.columnconfigure(3, minsize=30, weight=0)
+        self.side_btn_frame_top.columnconfigure(4, minsize=130, weight=2)
+        self.mh_btn = tk.Button(self.side_btn_frame_top,
+                                text="MH",
+                                bg="yellow", width=10)
+        self.mh_btn.grid(row=0, column=1, sticky="nsew")
+        self.btn2 = tk.Button(self.side_btn_frame_top,
+                              text="Dummy",
+                              bg="yellow", width=10)
+        self.btn2.grid(row=0, column=3, sticky="nsew")
 
+        self.side_chkbox_frame = tk.Frame(self.side_btn_frame_top, width=200, height=300)
+        self.side_chkbox_frame.grid(row=2, column=0, columnspan=5, sticky="nsew")
+        self.side_chkbox_frame.columnconfigure(0, minsize=70, weight=0)
+        self.time_stamp_tr = tk.IntVar()
+
+        Checkbutton(self.side_chkbox_frame,
+                    text="Time-Stamp",
+                    borderwidth=0,
+                    variable=self.time_stamp_tr,
+                    ).grid(row=0, column=0, sticky="nsew")
         ############################
         # self.debug_win = None
         self.new_conn_win = None
@@ -147,6 +180,9 @@ class TkMainWin:
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
         self.main_win.mainloop()
+
+    def get_ch_param(self):
+        return self.win_buf[self.channel_index]
 
     def ch_btn_status_update(self):
         self.ch_btn.ch_btn_status_update()
@@ -170,17 +206,21 @@ class TkMainWin:
         # Set CH Buttons
         if self.ch_alarm:
             self.ch_btn_status_update()
+        self.get_ch_param().rx_beep_opt = self.txt_win.rx_beep_var.get()
         self.rx_beep()
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 
     def rx_beep(self):
-        tr = self.txt_win.rx_beep_option.get()
-        if tr:
-            for k in self.win_buf.keys():
-                if self.win_buf[k].rx_beep_tr:
-                    self.win_buf[k].rx_beep_tr = False
-                    pl_sound('data/sound/bell_o.wav')
+        for k in self.win_buf.keys():
+            temp: ChVars = self.win_buf[k]
+            tr = temp.rx_beep_opt
+            if tr is not None:
+                tr = temp.rx_beep_opt
+                if tr:
+                    if temp.rx_beep_tr:
+                        temp.rx_beep_tr = False
+                        pl_sound('data/sound/bell_o.wav')
 
     ##########################
     # no WIN FNC
@@ -327,7 +367,6 @@ class TkMainWin:
             # via1.call = 'DNX527'
             ax_frame.via_calls = []
             for c in via:
-                print(c)
                 new_c = Call()
                 new_c.call_str = c.upper()
                 ax_frame.via_calls.append(new_c)

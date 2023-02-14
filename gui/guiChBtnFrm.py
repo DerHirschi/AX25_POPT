@@ -89,10 +89,10 @@ class ChBtnFrm:
         self.main_class.ch_alarm = ch_alarm
 
     def ch_btn_clk(self, ind: int):
-        self.main_class.win_buf[self.main_class.channel_index].input_win = self.main_class.inp_txt.get('1.0', tk.END)
+        self.main_class.get_ch_param().input_win = self.main_class.inp_txt.get('1.0', tk.END)
         self.main_class.channel_index = ind
-        self.main_class.win_buf[self.main_class.channel_index].new_data_tr = False
-        self.main_class.win_buf[self.main_class.channel_index].rx_beep_tr = False
+        self.main_class.get_ch_param().new_data_tr = False
+        self.main_class.get_ch_param().rx_beep_tr = False
         self.main_class.out_txt.configure(state="normal")
         self.main_class.out_txt.delete('1.0', tk.END)
         self.main_class.out_txt.insert(tk.END, self.main_class.win_buf[ind].output_win)
@@ -102,6 +102,11 @@ class ChBtnFrm:
         # self.inp_txt.configure(state="disabled")
         self.main_class.out_txt.see(tk.END)
         self.main_class.inp_txt.see(tk.END)
+        # self.main_class: gui.guiMainNew.TkMainWin
+        if self.main_class.get_ch_param().rx_beep_opt:
+            self.main_class.txt_win.rx_beep_box.select()
+        else:
+            self.main_class.txt_win.rx_beep_box.deselect()
         self.ch_btn_status_update()
 
     def ch_btn_alarm(self, btn: tk.Button):
