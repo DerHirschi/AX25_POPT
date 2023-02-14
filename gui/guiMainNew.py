@@ -57,7 +57,7 @@ class TkMainWin:
         #######################
         # Window Text Buffers
         self.win_buf: {int: ChVars} = {}
-        for i in range(9):
+        for i in range(10):
             self.win_buf[i + 1] = ChVars()
         #####################
         #####################
@@ -67,7 +67,7 @@ class TkMainWin:
         self.channel_index = 1
         ####################
         # GUI PARAM
-        self.btn_parm_blink_time = 0.4
+        self.btn_parm_blink_time = 0.3
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()

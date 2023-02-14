@@ -63,6 +63,7 @@ class ChBtnFrm:
                 if i in self.main_class.ax25_port_handler.all_connections.keys():
                     if not self.main_class.ax25_port_handler.all_connections[i].is_link or \
                             not self.main_class.ax25_port_handler.all_connections[i].my_digi_call:
+                        self.con_btn_dict[i].configure(text=self.main_class.ax25_port_handler.all_connections[i].ax25_out_frame.to_call.call_str)
                         if i == self.main_class.channel_index:
                             self.con_btn_dict[i].configure(bg='green2')
                         else:
@@ -72,22 +73,34 @@ class ChBtnFrm:
                             else:
                                 self.con_btn_dict[i].configure(bg='green4')
                     else:
+                        self.con_btn_dict[i].configure(text=str(i))
+                        if not self.main_class.win_buf[i].new_data_tr:
+                            if i == self.main_class.channel_index:
+                                self.con_btn_dict[i].configure(bg='red2')
+                            else:
+                                self.con_btn_dict[i].configure(bg='red4')
+                        else:
+                            self.con_btn_dict[i].configure(bg='yellow')
+                else:
+                    self.con_btn_dict[i].configure(text=str(i))
+                    if not self.main_class.win_buf[i].new_data_tr:
                         if i == self.main_class.channel_index:
                             self.con_btn_dict[i].configure(bg='red2')
                         else:
                             self.con_btn_dict[i].configure(bg='red4')
-                else:
+                    else:
+                        self.con_btn_dict[i].configure(bg='yellow')
+        else:
+            for i in list(self.con_btn_dict.keys()):
+                self.con_btn_dict[i].configure(text=str(i))
+                if not self.main_class.win_buf[i].new_data_tr:
                     if i == self.main_class.channel_index:
                         self.con_btn_dict[i].configure(bg='red2')
                     else:
                         self.con_btn_dict[i].configure(bg='red4')
-
-        else:
-            for i in list(self.con_btn_dict.keys()):
-                if i == self.main_class.channel_index:
-                    self.con_btn_dict[i].configure(bg='red2')
                 else:
-                    self.con_btn_dict[i].configure(bg='red4')
+                    self.con_btn_dict[i].configure(bg='yellow')
+
         self.main_class.ch_alarm = ch_alarm
 
     def ch_btn_clk(self, ind: int):
@@ -120,7 +133,6 @@ class ChBtnFrm:
         else:
             self.main_class.txt_win.ts_box_box.deselect()
             self.main_class.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
-
 
         self.ch_btn_status_update()
 
