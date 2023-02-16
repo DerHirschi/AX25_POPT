@@ -74,6 +74,7 @@ class TkMainWin:
         self.main_win = tk.Tk()
         self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
+        # self.main_win.withdraw()
         ##############
         # KEY BINDS
         self.main_win.bind('<Return>', self.snd_text)
@@ -193,20 +194,19 @@ class TkMainWin:
                                row = 0,
                                padx = 30,
                                pady = 30)
-        self.tab2_mh.columnconfigure(0, minsize=80, weight=10)
+        self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
         self.tab2_mh.columnconfigure(1, minsize=80, weight=7)
         self.tab2_mh.columnconfigure(2, minsize=50, weight=8)
         self.tab2_mh.columnconfigure(3, minsize=50, weight=8)
         self.tab2_mh.columnconfigure(4, minsize=50, weight=9)
-        tk.Label(self.tab2_mh, text="Zeit", width=60).grid(row=0, column=0)
+        tk.Label(self.tab2_mh, text="Zeit", width=85).grid(row=0, column=0)
         tk.Label(self.tab2_mh, text="Call", width=80).grid(row=0, column=1)
         tk.Label(self.tab2_mh, text="PACK", width=50).grid(row=0, column=2)
         tk.Label(self.tab2_mh, text="REJ", width=50).grid(row=0, column=3)
         tk.Label(self.tab2_mh, text="Route", width=50).grid(row=0, column=4)
         self.side_mh: {int: [tk.Entry, tk.Entry, tk.Entry, tk.Entry, tk.Entry]} = {}
         for row in range(10):
-            a = tk.Entry(self.tab2_mh, width=80)
-            a.insert(0, 'test')
+            a = tk.Entry(self.tab2_mh, width=85)
             b = tk.Entry(self.tab2_mh, width=80)
             c = tk.Entry(self.tab2_mh, width=20)
             d = tk.Entry(self.tab2_mh, width=20)
@@ -227,6 +227,13 @@ class TkMainWin:
 
         self.ax25_port_handler.set_gui(self)
         self.ch_btn_status_update()
+        """
+        self.main_win.withdraw()
+        self.main_win.update()
+        time.sleep(3)
+        self.main_win.deiconify()
+        """
+        # self.main_win.deiconify()
         #######################
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
@@ -360,7 +367,7 @@ class TkMainWin:
         c = 1
         for el in mh_ent:
             self.side_mh[c][0].delete(0, tk.END)
-            self.side_mh[c][0].insert(0, el.last_seen)
+            self.side_mh[c][0].insert(0, el.last_seen.split(' ')[1])
             # self.side_mh[c][0].configure(bg='black')
             self.side_mh[c][1].delete(0, tk.END)
             self.side_mh[c][1].insert(0, el.own_call)
