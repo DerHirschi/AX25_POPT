@@ -7,6 +7,7 @@ from playsound import playsound
 
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
+from gui.guiMH import MHWin
 from main import VER, AX25PortHandler, AX25Conn, AX25Frame, Call
 
 logging.basicConfig(
@@ -81,9 +82,9 @@ class TkMainWin:
         self.style.theme_use('classic')
         # self.style.theme_use('clam')
         self.main_win.columnconfigure(0, minsize=500, weight=1)
-        self.main_win.columnconfigure(1, minsize=2, weight=10)
+        self.main_win.columnconfigure(1, minsize=2, weight=5)
         self.main_win.rowconfigure(0, minsize=3, weight=1)     # Boarder
-        self.main_win.rowconfigure(1, minsize=40, weight=1)
+        self.main_win.rowconfigure(1, minsize=40, weight=1)     # BTN SIDE
         self.main_win.rowconfigure(2, minsize=200, weight=2)
         self.main_win.rowconfigure(3, minsize=25, weight=1)    # CH BTN
         self.main_win.rowconfigure(4, minsize=3, weight=1)    # Boarder
@@ -139,26 +140,27 @@ class TkMainWin:
         self.disco_btn.grid(row=0, column=1, sticky="nsew")
         #########################
         # Check Boxes Right Side
-        self.side_btn_frame_top = tk.Frame(self.main_win, width=200, height=300)
+        self.side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
         self.side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
         self.side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)    # CONN BTN
-        self.side_btn_frame_top.rowconfigure(1, minsize=10, weight=0)    #
-        self.side_btn_frame_top.rowconfigure(2, minsize=40, weight=0)    # Checkboxes
+        self.side_btn_frame_top.rowconfigure(1, minsize=200, weight=0)    #
+        self.side_btn_frame_top.rowconfigure(2, minsize=300, weight=1)    # Reiter Frame
 
         self.side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
         self.side_btn_frame_top.columnconfigure(1, minsize=30, weight=0)
         self.side_btn_frame_top.columnconfigure(2, minsize=10, weight=0)
         self.side_btn_frame_top.columnconfigure(3, minsize=30, weight=0)
-        self.side_btn_frame_top.columnconfigure(4, minsize=130, weight=2)
+        self.side_btn_frame_top.columnconfigure(4, minsize=10, weight=1)
+        self.side_btn_frame_top.columnconfigure(6, minsize=10, weight=10)
         self.mh_btn = tk.Button(self.side_btn_frame_top,
                                 text="MH",
-                                bg="yellow", width=10)
+                                bg="yellow", width=10, command=self.MH_win)
         self.mh_btn.grid(row=0, column=1, sticky="nsew")
         self.btn2 = tk.Button(self.side_btn_frame_top,
                               text="Dummy",
                               bg="yellow", width=10)
         self.btn2.grid(row=0, column=3, sticky="nsew")
-
+        """
         self.side_chkbox_frame = tk.Frame(self.side_btn_frame_top, width=200, height=300)
         self.side_chkbox_frame.grid(row=2, column=0, columnspan=5, sticky="nsew")
         self.side_chkbox_frame.columnconfigure(0, minsize=70, weight=0)
@@ -169,6 +171,53 @@ class TkMainWin:
                     borderwidth=0,
                     variable=self.time_stamp_tr,
                     ).grid(row=0, column=0, sticky="nsew")
+        """
+        self.tab_side_frame = tk.Frame(self.side_btn_frame_top, width=300, height=400)
+        self.tab_side_frame.grid(row=2, column=0, columnspan=6, sticky="nsew")
+        self.tabControl = ttk.Notebook(self.tab_side_frame, height=300, width=500)
+        #self.tabControl.grid(row=3, column=0, columnspan=5, sticky="nsew")
+
+        tab1 = ttk.Frame(self.tabControl)
+        self.tab2_mh = ttk.Frame(self.tabControl)
+        tab3 = ttk.Frame(self.tabControl)
+        tab4 = ttk.Frame(self.tabControl)
+
+        self.tabControl.add(tab1, text='Station')
+        self.tabControl.add(self.tab2_mh, text='MH')
+        self.tabControl.add(tab3, text='Ports')
+        self.tabControl.add(tab4, text='Settings')
+        self.tabControl.pack(expand=0, fill="both")
+        self.tabControl.select(self.tab2_mh)
+        ttk.Label(tab1,
+                  text="TEST").grid(column = 0,
+                               row = 0,
+                               padx = 30,
+                               pady = 30)
+        self.tab2_mh.columnconfigure(0, minsize=80, weight=10)
+        self.tab2_mh.columnconfigure(1, minsize=80, weight=7)
+        self.tab2_mh.columnconfigure(2, minsize=50, weight=8)
+        self.tab2_mh.columnconfigure(3, minsize=50, weight=8)
+        self.tab2_mh.columnconfigure(4, minsize=50, weight=9)
+        tk.Label(self.tab2_mh, text="Zeit", width=60).grid(row=0, column=0)
+        tk.Label(self.tab2_mh, text="Call", width=80).grid(row=0, column=1)
+        tk.Label(self.tab2_mh, text="PACK", width=50).grid(row=0, column=2)
+        tk.Label(self.tab2_mh, text="REJ", width=50).grid(row=0, column=3)
+        tk.Label(self.tab2_mh, text="Route", width=50).grid(row=0, column=4)
+        self.side_mh: {int: [tk.Entry, tk.Entry, tk.Entry, tk.Entry, tk.Entry]} = {}
+        for row in range(10):
+            a = tk.Entry(self.tab2_mh, width=80)
+            a.insert(0, 'test')
+            b = tk.Entry(self.tab2_mh, width=80)
+            c = tk.Entry(self.tab2_mh, width=20)
+            d = tk.Entry(self.tab2_mh, width=20)
+            e = tk.Entry(self.tab2_mh, width=100)
+            a.grid(row=row + 1, column=0)
+            b.grid(row=row + 1, column=1)
+            c.grid(row=row + 1, column=2)
+            d.grid(row=row + 1, column=3)
+            e.grid(row=row + 1, column=4)
+            self.side_mh[row + 1] = [a, b, c, d, e]
+        self.update_side_mh()
         ############################
         # self.debug_win = None
         self.new_conn_win = None
@@ -223,6 +272,8 @@ class TkMainWin:
             self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_param().timestamp_opt = ts_check
 
+        # print(float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")))
+        self.update_side_mh()
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 
@@ -269,7 +320,7 @@ class TkMainWin:
                         self.win_buf[k].output_win += out
                         if self.channel_index == k:
                             tr = False
-                            if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
+                            if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
                                 tr = True
                             # Save Incoming Data in Window Buffer fo Channel Switching
                             # self.win_buf[self.channel_index][1] += out
@@ -290,7 +341,7 @@ class TkMainWin:
         ind = self.mon_txt.index(tk.INSERT)
 
         tr = False
-        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 13:
+        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
             tr = True
         self.mon_txt.configure(state="normal")
         self.mon_txt.insert(tk.END, var)
@@ -302,6 +353,22 @@ class TkMainWin:
             self.mon_txt.tag_add("tx", ind, ind2)
             # configuring a tag called start
             self.mon_txt.tag_config("tx", foreground="medium violet red")
+        # self.update_side_mh()
+
+    def update_side_mh(self):
+        mh_ent = self.mh.output_sort_entr(9)
+        c = 1
+        for el in mh_ent:
+            self.side_mh[c][0].delete(0, tk.END)
+            self.side_mh[c][0].insert(0, el.last_seen)
+            # self.side_mh[c][0].configure(bg='black')
+            self.side_mh[c][1].delete(0, tk.END)
+            self.side_mh[c][1].insert(0, el.own_call)
+            self.side_mh[c][2].delete(0, tk.END)
+            self.side_mh[c][2].insert(0, el.pac_n)
+            self.side_mh[c][3].delete(0, tk.END)
+            self.side_mh[c][3].insert(0, el.rej_n)
+            c += 1
 
     ##########################
     # New Connection WIN
@@ -447,3 +514,9 @@ class TkMainWin:
 
     # SEND TEXT OUT
     ###################
+    # MH WIN
+    def MH_win(self):
+        """MH WIN"""
+        MHWin(self.mh)
+
+    # MH WIN ENDE

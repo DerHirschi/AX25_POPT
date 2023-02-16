@@ -25,7 +25,7 @@ class TxTframe:
         self.main_class = main_win
         ###################
         # Output Win
-        self.status_frame = tk.Frame(self.pw, width=550, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
+        self.status_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
         # self.status_frame.grid(row=1, column=1, sticky="nsew")
         self.status_frame.pack(side=tk.BOTTOM, expand=0)
 

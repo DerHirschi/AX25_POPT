@@ -29,7 +29,7 @@ class MyHeard(object):
 
 class MH(object):
     def __init__(self):
-        self.calls = {}
+        self.calls: {str: MyHeard} = {}
         try:
             with open(mh_data_file, 'rb') as inp:
                 self.calls = pickle.load(inp)
@@ -80,6 +80,27 @@ class MH(object):
 
     def mh_get_data_fm_call(self, call_str):
         return self.calls[call_str]
+
+    def output_sort_entr(self, n: int):
+        temp = {}
+        self.calls: {str: MyHeard}
+        for k in self.calls.keys():
+            flag: MyHeard = self.calls[k]
+            temp[flag.last_seen] = self.calls[k]
+
+        temp_k = list(temp.keys())
+        temp_k.sort()
+        temp_k.reverse()
+        temp_ret = []
+        c = 0
+        for k in temp_k:
+
+            temp_ret.append(temp[k])
+            c += 1
+            if c > n:
+                break
+
+        return temp_ret
 
     """
     def mh_get_last_port_obj(self, call_str):
