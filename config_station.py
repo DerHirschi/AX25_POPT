@@ -6,7 +6,7 @@ class DefaultPortConfig(object):
     # Parameter for Connection
     """ Port Parameter """
     parm_PortName: '' = ''
-    parm_PortTyp: '' = ''
+    parm_PortTyp: '' = ''   # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIPCL' AXIP UDP
     parm_PortParm = ''
     parm_StationCalls: [''] = []
     parm_isSmartDigi = False
@@ -33,7 +33,7 @@ class DefaultPortConfig(object):
 
 
 class Port0(DefaultPortConfig):
-    parm_PortName = 'DW'
+    parm_PortName = '00'
     parm_PortTyp = 'KISSTCP'
     parm_PortParm = ('192.168.178.152', 8001)
     parm_StationCalls = ['MD5TES', 'MD6TES-1']
@@ -115,7 +115,31 @@ class Port2(DefaultPortConfig):
 
 
 class Port3(DefaultPortConfig):
-    pass
+    parm_PortName = '03'
+    # parm_PortTyp = ''
+    # parm_PortParm = '/tmp/tty1'
+    parm_PortTyp = 'KISSSER'
+    parm_PortParm = ('/dev/pts/9', 9600)
+    parm_StationCalls = ['MD8TES', 'MD8TES-2']
+    parm_isSmartDigi = False
+    parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False
+    parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+    """ Connection Parameter """
+    parm_PacLen = 170  # Max Pac len
+    parm_MaxFrame = 5  # Max (I) Frames
+    parm_T1 = 1800  # T1 (Response Delay Timer) activated if data come in to prev resp to early
+    parm_T2 = 3000  # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
+    parm_T3 = 180  # T3 sek (Inactive Link Timer) Default:180 Sek
+    parm_N2 = 20  # Max Try   Default 20
+    parm_baud = 1200  # Baud for calculating Timer
+    # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
+    ##########################
+    # Parameter for CLI
+    parm_cli = UserCLI
+    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
+    parm_cli_ctext = '-= TEST C-TEXT MD5TES Port3 =-\r\r'
+    parm_cli_bye_text = '73 ...\r'
+    parm_cli_prompt = '\rTEST-STATION---Port3>'
 
 
 class Port4(DefaultPortConfig):

@@ -8,6 +8,7 @@ class AX25PortHandler(object):
     def __init__(self):
         ax25types = {
             'KISSTCP': KissTCP,
+            'KISSSER': KISSSerial,
             'AXIPCL': AXIPClient,
         }
         self.ax25_ports: {int: (AX25Port, DefaultPortConfig)} = {}
@@ -37,14 +38,20 @@ class AX25PortHandler(object):
                 port_cfg.glb_port_handler = self
                 #########################
                 # Init Port/Device
-                temp = (ax25types[port_cfg.parm_PortTyp](port_cfg), port_cfg)
-                temp[0]: ax25.ax25Port.AX25Port
-                ##########################
-                # Start Port/Device Thread
-                temp[0].start()
-                ######################################
-                # Gather all Ports in dict: ax25_ports
-                self.ax25_ports[c] = temp
+                try:
+                    temp = (ax25types[port_cfg.parm_PortTyp](port_cfg), port_cfg)
+                except AX25DeviceFAIL as e:
+                    temp = False
+                    logger.error('Could not initialise Port {}'.format(port_cfg.parm_PortName))
+                    logger.error('{}'.format(e))
+                if temp:
+                    temp[0]: ax25.ax25Port.AX25Port
+                    ##########################
+                    # Start Port/Device Thread
+                    temp[0].start()
+                    ######################################
+                    # Gather all Ports in dict: ax25_ports
+                    self.ax25_ports[c] = temp
             c += 1
         ###########################
         # VArs for gathering Stuff

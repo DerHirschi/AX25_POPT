@@ -1,5 +1,6 @@
 import copy
 import socket
+import serial
 import threading
 import time
 import crcmod
@@ -8,13 +9,10 @@ import ax25.ax25Statistics
 import ax25.ax25InitPorts
 from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid, bytearray2hexstr
 from ax25.ax25Connection import AX25Conn
-
 import ax25.ax25monitor as ax25monitor
-
 import logging
 
 logger = logging.getLogger(__name__)
-
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
 
@@ -350,6 +348,7 @@ class KissTCP(AX25Port):
         try:
             recv_buff = self.device.recv(400)
         except socket.timeout:
+            # self.device.close()
             raise AX25DeviceERROR
         if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
             return recv_buff[2:-1]
@@ -374,49 +373,59 @@ class KissTCP(AX25Port):
 class KISSSerial(AX25Port):
 
     def init(self):
-        """
-        sock_timeout = 0.5
-        self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        print("KISS Serial INIT")
         try:
-            self.device.connect(self.port_param)
-            self.device.settimeout(sock_timeout)
-        except (OSError, ConnectionRefusedError, ConnectionError) as e:
-            logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
+            self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.5)
+        except (FileNotFoundError, serial.serialutil.SerialException) as e:
+            logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
             logger.error('{}'.format(e))
             raise AX25DeviceFAIL
-        """
-        pass
 
     def __del__(self):
-        # self.device.close()
         self.loop_is_running = False
+        if self.device is not None:
+            try:
+                self.device.close()
+            except (FileNotFoundError, serial.serialutil.SerialException):
+                pass
 
     def rx(self):
-        """
-        try:
-            return self.device.recv(400)
-        except socket.timeout:
-            raise AX25DeviceERROR
-        """
-        pass
+        recv_buff = b''
+        while True:
+            try:
+                recv_buff += self.device.read()
+            except serial.SerialException:
+                # There is no new data from serial port
+                return b''
+            except TypeError as e:
+                # Disconnect of USB->UART occured
+                logger.error('Serial Device Error {}'.format(e))
+                # self.device.close()
+                try:
+                    self.init()
+                except AX25DeviceFAIL:
+                    logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                    raise AX25DeviceFAIL
+            else:
+                if recv_buff:
+                    # print(recv_buff)
+                    if len(recv_buff) > 14:  # ? Min Pack Len 17
+                        if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
+                            return recv_buff[2:-1]
+                else:
+                    return b''
 
     def tx(self, frame: AX25Frame):
-        """
-        ############################################
-        out = (bytes.fromhex('c000') + frame.hexstr + bytes.fromhex('c0'))
         try:
-            self.device.sendall(out)
-        except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
-            logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
+            self.device.write(bytes.fromhex('c000') + frame.hexstr + bytes.fromhex('c0'))
+        except (FileNotFoundError, serial.serialutil.SerialException) as e:
+            logger.error('Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
             logger.error('{}'.format(e))
             try:
                 self.init()
             except AX25DeviceFAIL:
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
-        ############################################
-        """
-        pass
 
 
 class AXIPClient(AX25Port):
@@ -428,8 +437,12 @@ class AXIPClient(AX25Port):
         self.device.settimeout(sock_timeout)
 
     def __del__(self):
-        self.device.close()
         self.loop_is_running = False
+        if self.device is not None:
+            try:
+                self.device.close()
+            except socket.error:
+                pass
 
     def rx(self):
         try:

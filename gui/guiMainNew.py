@@ -385,42 +385,44 @@ class TkMainWin:
         if self.new_conn_win is None:
             self.new_conn_win = tk.Tk()
             self.new_conn_win.title("New Connection")
-            self.new_conn_win.geometry("600x220")
+            self.new_conn_win.geometry("600x185")
             self.new_conn_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
-            self.new_conn_win.columnconfigure(0, minsize=20, weight=2)
+            self.new_conn_win.resizable(False,False)
+            self.new_conn_win.columnconfigure(0, minsize=20, weight=1)
             self.new_conn_win.columnconfigure(1, minsize=100, weight=1)
-            self.new_conn_win.columnconfigure(2, minsize=50, weight=1)
+            self.new_conn_win.columnconfigure(2, minsize=50, weight=5)
             self.new_conn_win.columnconfigure(3, minsize=120, weight=1)
             self.new_conn_win.columnconfigure(4, minsize=20, weight=1)
-            self.new_conn_win.rowconfigure(0, minsize=30, weight=1)
-            self.new_conn_win.rowconfigure(1, minsize=30, weight=1)
-            self.new_conn_win.rowconfigure(2, minsize=30, weight=1)
-            self.new_conn_win.rowconfigure(3, minsize=30, weight=1)
-            self.new_conn_win.rowconfigure(4, minsize=50, weight=1)
-            self.new_conn_win.rowconfigure(5, minsize=50, weight=1)
+            self.new_conn_win.rowconfigure(0, minsize=38, weight=3)
+            self.new_conn_win.rowconfigure(1, minsize=5, weight=5)
+            self.new_conn_win.rowconfigure(2, minsize=35, weight=3)
+            self.new_conn_win.rowconfigure(3, minsize=5, weight=1)
+            self.new_conn_win.rowconfigure(4, minsize=40, weight=3)
+            self.new_conn_win.rowconfigure(5, minsize=40, weight=1)
             options = [
-                "",
                 "Port-0",
                 "Port-1",
-                "Port-2"
+                "Port-2",
+                "Port-3",
             ]
 
             # datatype of menu text
             port = tk.StringVar()
-
-            # initial menu text
             port.set("Port-0")
 
             # Create Dropdown menu
             drop = OptionMenu(self.new_conn_win, port, *options)
+            drop.configure(bg='grey80', foreground='black', width=50, height=5, direction='above')
+
             drop.grid(row=1, column=1, columnspan=1, sticky="nsew")
-            call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12))
+            call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12),
+                                   height=5)
             call_txt_inp.grid(row=1, column=3, columnspan=1, sticky="nsew")
 
             conn_btn = tk.Button(self.new_conn_win,
                                  text="Los", bg="green",
                                  command=lambda: self.process_new_conn_win(call_txt_inp, port))
-            conn_btn.grid(row=5, column=1, sticky="nsew")
+            conn_btn.grid(row=4, column=1, sticky="nsew")
             ##############
             # KEY BINDS
             self.new_conn_win.bind('<Return>', lambda event: self.process_new_conn_win(call_txt_inp, port))
@@ -445,14 +447,16 @@ class TkMainWin:
             self.ax25_port_index = 0
         print(str(port))
         print(str(self.ax25_port_index))
+        call = call.split('-')
+        if 6 >= len(call[0]) > 1:
 
-        if 6 >= len(call) > 1:
-
-            call = call.upper()
             ax_frame = AX25Frame()
             ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].my_stations[0]  # TODO select outgoing call
             # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
-            ax_frame.to_call.call = call
+            ax_frame.to_call.call = call[0].upper()
+            if len(call) > 1:
+                if call[1].isdigit():
+                    ax_frame.to_call.ssid = int(call[1])
             # via1 = Call()
             # via1.call = 'DNX527'
             ax_frame.via_calls = []
