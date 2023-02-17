@@ -400,9 +400,11 @@ class S1Frei(DefaultStat):  # INIT RX
             self.ax25conn.send_UA()
             self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(ax25_frame.to_call.call_str).encode()
             self.ax25conn.n2 = 0
+            self.change_state(5)
             if self.ax25conn.is_prt_hndl:
                 self.ax25conn.prt_hndl.insert_conn2all_conn_var(new_conn=self.ax25conn)
-            self.change_state(5)
+            if self.ax25conn.is_gui:
+                self.ax25conn.gui.new_conn_snd()
             # Process CLI ( C-Text and so on )
             self.ax25conn.exec_cli()
         elif ax25_frame.ctl_byte.pf and flag in ['I', 'RR', 'REJ', 'SREJ', 'RNR', 'DISC', 'FRMR']:
@@ -444,6 +446,8 @@ class S2Aufbau(DefaultStat):    # INIT TX
             self.ax25conn.tx_buf_rawData = b''  # Clean Send Buffer.
             self.ax25conn.n2 = 0
             self.change_state(5)
+            if self.ax25conn.is_gui:
+                self.ax25conn.gui.new_conn_snd()
             """
             if flag == 'SABM':
                 self.ax25conn.exec_cli()

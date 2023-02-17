@@ -127,6 +127,8 @@ class AX25PortHandler(object):
         for k in temp:
             conn: AX25Conn = self.all_connections[k]
             conn.ch_index = 0
+            if self.gui is not None:
+                self.gui.disco_snd()
             del self.all_connections[k]
         if conn.is_gui:
             conn.gui.ch_btn_status_update()

@@ -237,6 +237,14 @@ class TkMainWin:
         self.main_win.after(LOOP_DELAY, self.tasker)
         self.main_win.mainloop()
 
+    ##########################
+    # no WIN FNC
+    def get_conn(self, con_ind: int):
+        if con_ind in self.ax25_port_handler.all_connections.keys():
+            ret = self.ax25_port_handler.all_connections[con_ind]
+            return ret
+        return False
+
     def get_ch_param(self):
         return self.win_buf[self.channel_index]
 
@@ -255,13 +263,61 @@ class TkMainWin:
         self.main_win.bind('<F9>', lambda event: self.ch_btn.ch_btn_clk(9))
         self.main_win.bind('<F10>', lambda event: self.ch_btn.ch_btn_clk(10))
         self.main_win.bind('<Return>', self.snd_text)
-        self.main_win.bind('<Enter>', self.snd_text)
+        # self.main_win.bind('<KP_Enter>', self.snd_text)
         self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
         self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
         self.main_win.bind('<Control-plus>', lambda event: self.increase_textsize())
         self.main_win.bind('<Control-minus>', lambda event: self.decrease_textsize())
 
         self.main_win.bind('<Key>', lambda event: self.any_key(event))
+
+    def any_key(self, event: tk.Event):
+        if event.keycode == 104:  # Numpad Enter
+            self.snd_text(event)
+            self.inp_txt.insert(tk.END, '\n')
+        """
+        if event.keycode == 86:     # Num +
+            self.increase_textsize()
+        elif event.keycode == 82:   # Num -
+            self.decrease_textsize()
+        """
+        print(event)
+        if self.inp_txt.focus_get() != self.inp_txt:
+            self.inp_txt.focus_set()
+            self.inp_txt.insert(tk.END, event.char)
+
+    def increase_textsize(self):
+        self.text_size += 1
+        self.inp_txt.configure(font=(FONT, self.text_size))
+        self.out_txt.configure(font=(FONT, self.text_size))
+        self.mon_txt.configure(font=(FONT, self.text_size))
+
+    def decrease_textsize(self):
+        self.text_size -= 1
+        self.inp_txt.configure(font=(FONT, self.text_size))
+        self.out_txt.configure(font=(FONT, self.text_size))
+        self.mon_txt.configure(font=(FONT, self.text_size))
+
+    def rx_beep(self):
+        for k in self.win_buf.keys():
+            temp: ChVars = self.win_buf[k]
+            if temp.rx_beep_cooldown < time.time():
+                temp.rx_beep_cooldown = time.time() + self.parm_rx_beep_cooldown
+                tr = temp.rx_beep_opt
+                if tr is not None:
+                    tr = temp.rx_beep_opt
+                    if tr:
+                        if temp.rx_beep_tr:
+                            temp.rx_beep_tr = False
+                            pl_sound('data/sound/rx_beep.wav')
+
+    def new_conn_snd(self):
+        pl_sound('data/sound/conn_alarm.wav')
+
+    def disco_snd(self):
+        pl_sound('data/sound/disco_alarm.wav')
+    # no WIN FNC
+    ##########################
 
     def tasker(self):  # MAINLOOP
 
@@ -300,56 +356,6 @@ class TkMainWin:
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 
-    def any_key(self, event: tk.Event):
-        """
-        if event.keycode == 86:     # Num +
-            self.increase_textsize()
-        elif event.keycode == 82:   # Num -
-            self.decrease_textsize()
-        """
-
-        if self.inp_txt.focus_get() != self.inp_txt:
-            self.inp_txt.focus_set()
-            self.inp_txt.insert(tk.END, event.char)
-
-        print(event)
-
-    def increase_textsize(self):
-        self.text_size += 1
-        self.inp_txt.configure(font=(FONT, self.text_size))
-        self.out_txt.configure(font=(FONT, self.text_size))
-        self.mon_txt.configure(font=(FONT, self.text_size))
-
-    def decrease_textsize(self):
-        self.text_size -= 1
-        self.inp_txt.configure(font=(FONT, self.text_size))
-        self.out_txt.configure(font=(FONT, self.text_size))
-        self.mon_txt.configure(font=(FONT, self.text_size))
-
-    def rx_beep(self):
-
-        for k in self.win_buf.keys():
-            temp: ChVars = self.win_buf[k]
-            if temp.rx_beep_cooldown < time.time():
-                temp.rx_beep_cooldown = time.time() + self.parm_rx_beep_cooldown
-                tr = temp.rx_beep_opt
-                if tr is not None:
-                    tr = temp.rx_beep_opt
-                    if tr:
-                        if temp.rx_beep_tr:
-                            temp.rx_beep_tr = False
-                            pl_sound('data/sound/rx_beep.wav')
-
-    ##########################
-    # no WIN FNC
-    def get_conn(self, con_ind: int):
-        if con_ind in self.ax25_port_handler.all_connections.keys():
-            ret = self.ax25_port_handler.all_connections[con_ind]
-            return ret
-        return False
-
-    # no WIN FNC
-    ##########################
     def update_mon(self):  # MON & INPUT WIN
         """
         Main Win
@@ -471,6 +477,7 @@ class TkMainWin:
             ##############
             # KEY BINDS
             self.new_conn_win.bind('<Return>', lambda event: self.process_new_conn_win(call_txt_inp, port))
+            self.new_conn_win.bind('<KP_Enter>', lambda event: self.process_new_conn_win(call_txt_inp, port))
             self.new_conn_win.bind('<Escape>', lambda event: self.destroy_new_conn_win())
 
     def process_new_conn_win(self, call_txt: tk.Text, port: tk.StringVar):

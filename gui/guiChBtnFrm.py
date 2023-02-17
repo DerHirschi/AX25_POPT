@@ -114,6 +114,7 @@ class ChBtnFrm:
         self.main_class.out_txt.insert(tk.END, self.main_class.win_buf[ind].output_win)
         self.main_class.out_txt.configure(state="disabled")
         self.main_class.inp_txt.delete('1.0', tk.END)
+        #self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
         self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win[:-1])
         self.main_class.out_txt.see(tk.END)
         self.main_class.inp_txt.see(tk.END)
