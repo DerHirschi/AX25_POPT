@@ -165,6 +165,9 @@ class AX25Conn(object):
         """ DefaultStat.cron() """
         self.cli.cli_cron()
         self.zustand_exec.cron()
+        print("{} - {} - {}".format(self.ax25_out_frame.addr_uid,
+                                    self.zustand_exec.stat_index,
+                                    self.n2))
     # Zustand EXECs ENDE
     #######################
 
@@ -393,6 +396,7 @@ class S1Frei(DefaultStat):  # INIT RX
 
     def rx(self, ax25_frame: AX25Frame):
         flag = ax25_frame.ctl_byte.flag
+
         if flag == 'SABM':
             # Handle Incoming Connection
             self.ax25conn.send_UA()
@@ -407,10 +411,15 @@ class S1Frei(DefaultStat):  # INIT RX
             self.ax25conn.send_DM()
             self.ax25conn.set_T1(stop=True)
             self.ax25conn.set_T2(stop=True)
-            self.ax25conn.n2 = 100
+            # self.ax25conn.n2 = 100
             self.change_state(0)
+            """
             if self.ax25conn.is_prt_hndl:
                 self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
+            """
+        else:
+            # self.ax25conn.n2 = 100
+            self.change_state(0)
 
 
 class S2Aufbau(DefaultStat):    # INIT TX
@@ -444,6 +453,7 @@ class S2Aufbau(DefaultStat):    # INIT TX
         elif flag in ['DM', 'DISC']:
             if self.digi_conn is None:
                 self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(ax25_frame.to_call.call_str).encode()
+            self.ax25conn.n2 = 100
             self.change_state(0)
             if self.ax25conn.is_prt_hndl:
                 self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)

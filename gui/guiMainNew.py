@@ -79,8 +79,8 @@ class TkMainWin:
         ##############
         # KEY BINDS
         self.main_win.bind('<Return>', self.snd_text)
-        self.main_win.bind('<Control-c>', lambda event: self.open_new_conn_win())
-        self.main_win.bind('<Control-d>', lambda event: self.disco_conn())
+        self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
+        self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
         ##########################
         self.style = ttk.Style()
         self.style.theme_use('classic')

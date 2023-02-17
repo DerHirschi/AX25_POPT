@@ -16,6 +16,7 @@ Packages Required:
 - tkinter
 - playsound
 - crcmod
+- pyserial
 
 Supported AX.25 connection options:
 - KISS via TCP (e.g. Direwolf)
@@ -23,8 +24,8 @@ Supported AX.25 connection options:
 - AXIP via UDP (AXIP Client)
 
 Keybindings:
-- CTRL + C > New Connection
-- CTRL + D > Disconnect
+- ALT + C > New Connection
+- ALT + D > Disconnect
 - F1 - F10 > Channel 1 - 10
 
 Issues / TODO (AX25 Protocol):
