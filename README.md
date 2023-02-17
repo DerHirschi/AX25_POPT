@@ -27,6 +27,9 @@ Keybindings:
 - ALT + C > New Connection
 - ALT + D > Disconnect
 - F1 - F10 > Channel 1 - 10
+- CTRL + plus > increase Text size
+- CTRL + minus > decrease Text size
+
 
 Issues / TODO (AX25 Protocol):
 - FRMR Frame decoding not implemented yet

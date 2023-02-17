@@ -1,6 +1,7 @@
 import tkinter as tk
 import time
 import random
+from tkinter import scrolledtext
 
 STAT_BAR_CLR = 'grey60'
 
@@ -113,10 +114,10 @@ class ChBtnFrm:
         self.main_class.out_txt.insert(tk.END, self.main_class.win_buf[ind].output_win)
         self.main_class.out_txt.configure(state="disabled")
         self.main_class.inp_txt.delete('1.0', tk.END)
-        self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
-        # self.inp_txt.configure(state="disabled")
+        self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win[:-1])
         self.main_class.out_txt.see(tk.END)
         self.main_class.inp_txt.see(tk.END)
+
         # self.main_class: gui.guiMainNew.TkMainWin
         if self.main_class.get_ch_param().rx_beep_opt:
             self.main_class.txt_win.rx_beep_box.select()
@@ -207,6 +208,6 @@ class ChBtnFrm:
                       ]
             clr = random.choice(COLORS)
             btn.configure(bg=clr)
-            self.ch_btn_blink_timer = time.time() + self.main_class.btn_parm_blink_time
+            self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
 
 

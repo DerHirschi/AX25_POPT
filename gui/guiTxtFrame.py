@@ -4,8 +4,8 @@ from tkinter import ttk, scrolledtext, Label, Checkbutton
 
 # from gui.guiMainNew import TkMainWin
 
-LOOP_DELAY = 50  # ms
-TEXT_SIZE = 15
+#LOOP_DELAY = 50  # ms
+#TEXT_SIZE = 15
 FONT = "Courier"
 TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
@@ -23,8 +23,9 @@ class TxTframe:
 
         self.pw = ttk.PanedWindow(orient=tk.VERTICAL)
         self.main_class = main_win
+        self.text_size = main_win.text_size
         ###################
-        # Output Win
+        # Input Win
         self.status_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
         # self.status_frame.grid(row=1, column=1, sticky="nsew")
         self.status_frame.pack(side=tk.BOTTOM, expand=0)
@@ -44,7 +45,7 @@ class TxTframe:
         self.in_txt_win = scrolledtext.ScrolledText(self.status_frame,
                                                     background=TXT_BACKGROUND_CLR,
                                                     foreground=TXT_INP_CLR,
-                                                    font=(FONT, TEXT_SIZE),
+                                                    font=(FONT, self.text_size),
                                                     insertbackground=TXT_INP_CURSOR_CLR,
                                                     height=100, bd=0)
         # self.in_txt_win.insert(tk.END, "Inp")
@@ -116,11 +117,11 @@ class TxTframe:
         self.ts_box_box.grid(row=1, column=9, sticky="nsew")
 
         ####################
-        # Vorschreibfenster
+        # Output
         self.out_txt_win = scrolledtext.ScrolledText(self.pw, background=TXT_BACKGROUND_CLR,
                                                      foreground=TXT_OUT_CLR,
-                                                     font=(FONT, TEXT_SIZE),
-                                                     height=100, bd=0, borderwidth=0)
+                                                     font=(FONT, self.text_size),
+                                                     height=100, bd=0, borderwidth=0, state="disabled")
 
         # self.out_txt_win.insert(tk.END, "OUT")
         # self.out_txt.pack(side=tk.TOP)
@@ -132,8 +133,8 @@ class TxTframe:
         self.mon_txt = scrolledtext.ScrolledText(self.pw,
                                                  background=TXT_BACKGROUND_CLR,
                                                  foreground=TXT_MON_CLR,
-                                                 font=(FONT, TEXT_SIZE),
-                                                 height=100, bd=0, borderwidth=0)
+                                                 font=(FONT, self.text_size),
+                                                 height=100, bd=0, borderwidth=0, state="disabled")
         # self.mon_txt.insert(tk.END, "MON")
         self.mon_txt.pack(side=tk.BOTTOM)
         # paned window

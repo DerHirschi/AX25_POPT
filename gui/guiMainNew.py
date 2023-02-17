@@ -39,6 +39,7 @@ class ChVars:
     input_win = ''
     new_data_tr = False
     rx_beep_tr = False
+    rx_beep_cooldown = time.time()
     rx_beep_opt = None
     timestamp_opt = None
 
@@ -69,18 +70,15 @@ class TkMainWin:
         self.channel_index = 1
         ####################
         # GUI PARAM
-        self.btn_parm_blink_time = 0.3
+        self.parm_btn_blink_time = 0.3
+        self.parm_rx_beep_cooldown = 0.5
+        ###############
+        self.text_size = int(TEXT_SIZE)
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
         self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
-        # self.main_win.withdraw()
-        ##############
-        # KEY BINDS
-        self.main_win.bind('<Return>', self.snd_text)
-        self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
-        self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
         ##########################
         self.style = ttk.Style()
         self.style.theme_use('classic')
@@ -125,19 +123,6 @@ class TkMainWin:
         self.mon_txt = self.txt_win.mon_txt
         # Channel Buttons
         self.ch_btn = ChBtnFrm(self)
-        ##############
-        # KEY BINDS
-        self.main_win.bind('<F1>', lambda event: self.ch_btn.ch_btn_clk(1))
-        self.main_win.bind('<F2>', lambda event: self.ch_btn.ch_btn_clk(2))
-        self.main_win.bind('<F3>', lambda event: self.ch_btn.ch_btn_clk(3))
-        self.main_win.bind('<F4>', lambda event: self.ch_btn.ch_btn_clk(4))
-        self.main_win.bind('<F5>', lambda event: self.ch_btn.ch_btn_clk(5))
-        self.main_win.bind('<F6>', lambda event: self.ch_btn.ch_btn_clk(6))
-        self.main_win.bind('<F7>', lambda event: self.ch_btn.ch_btn_clk(7))
-        self.main_win.bind('<F8>', lambda event: self.ch_btn.ch_btn_clk(8))
-        self.main_win.bind('<F9>', lambda event: self.ch_btn.ch_btn_clk(9))
-        self.main_win.bind('<F10>', lambda event: self.ch_btn.ch_btn_clk(10))
-
         self.ch_btn.ch_btn_frame.grid(row=3, column=0, columnspan=1, sticky="nsew")
         ############################
         # Conn BTN upper Side
@@ -237,21 +222,16 @@ class TkMainWin:
             self.side_mh[row + 1] = [a, b, c, d, e]
         self.update_side_mh()
         ############################
-        # self.debug_win = None
+        # Windows
         self.new_conn_win = None
-
-        # self.txt_win.init(self.main_win)
-        # self.txt_win.grid(row=1, column=0, sticky="nsew")
-
+        ###########################
+        # Init
+        # set GUI Var
         self.ax25_port_handler.set_gui(self)
+        # set Ch Btn Color
         self.ch_btn_status_update()
-        """
-        self.main_win.withdraw()
-        self.main_win.update()
-        time.sleep(3)
-        self.main_win.deiconify()
-        """
-        # self.main_win.deiconify()
+        # set KEY BINDS
+        self.set_keybinds()
         #######################
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
@@ -262,6 +242,26 @@ class TkMainWin:
 
     def ch_btn_status_update(self):
         self.ch_btn.ch_btn_status_update()
+
+    def set_keybinds(self):
+        self.main_win.bind('<F1>', lambda event: self.ch_btn.ch_btn_clk(1))
+        self.main_win.bind('<F2>', lambda event: self.ch_btn.ch_btn_clk(2))
+        self.main_win.bind('<F3>', lambda event: self.ch_btn.ch_btn_clk(3))
+        self.main_win.bind('<F4>', lambda event: self.ch_btn.ch_btn_clk(4))
+        self.main_win.bind('<F5>', lambda event: self.ch_btn.ch_btn_clk(5))
+        self.main_win.bind('<F6>', lambda event: self.ch_btn.ch_btn_clk(6))
+        self.main_win.bind('<F7>', lambda event: self.ch_btn.ch_btn_clk(7))
+        self.main_win.bind('<F8>', lambda event: self.ch_btn.ch_btn_clk(8))
+        self.main_win.bind('<F9>', lambda event: self.ch_btn.ch_btn_clk(9))
+        self.main_win.bind('<F10>', lambda event: self.ch_btn.ch_btn_clk(10))
+        self.main_win.bind('<Return>', self.snd_text)
+        self.main_win.bind('<Enter>', self.snd_text)
+        self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
+        self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
+        self.main_win.bind('<Control-plus>', lambda event: self.increase_textsize())
+        self.main_win.bind('<Control-minus>', lambda event: self.decrease_textsize())
+
+        self.main_win.bind('<Key>', lambda event: self.any_key(event))
 
     def tasker(self):  # MAINLOOP
 
@@ -300,16 +300,45 @@ class TkMainWin:
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 
-    def rx_beep(self):      # TODO ... New Trigger after some seconds
+    def any_key(self, event: tk.Event):
+        """
+        if event.keycode == 86:     # Num +
+            self.increase_textsize()
+        elif event.keycode == 82:   # Num -
+            self.decrease_textsize()
+        """
+
+        if self.inp_txt.focus_get() != self.inp_txt:
+            self.inp_txt.focus_set()
+            self.inp_txt.insert(tk.END, event.char)
+
+        print(event)
+
+    def increase_textsize(self):
+        self.text_size += 1
+        self.inp_txt.configure(font=(FONT, self.text_size))
+        self.out_txt.configure(font=(FONT, self.text_size))
+        self.mon_txt.configure(font=(FONT, self.text_size))
+
+    def decrease_textsize(self):
+        self.text_size -= 1
+        self.inp_txt.configure(font=(FONT, self.text_size))
+        self.out_txt.configure(font=(FONT, self.text_size))
+        self.mon_txt.configure(font=(FONT, self.text_size))
+
+    def rx_beep(self):
+
         for k in self.win_buf.keys():
             temp: ChVars = self.win_buf[k]
-            tr = temp.rx_beep_opt
-            if tr is not None:
+            if temp.rx_beep_cooldown < time.time():
+                temp.rx_beep_cooldown = time.time() + self.parm_rx_beep_cooldown
                 tr = temp.rx_beep_opt
-                if tr:
-                    if temp.rx_beep_tr:
-                        temp.rx_beep_tr = False
-                        pl_sound('data/sound/rx_beep.wav')
+                if tr is not None:
+                    tr = temp.rx_beep_opt
+                    if tr:
+                        if temp.rx_beep_tr:
+                            temp.rx_beep_tr = False
+                            pl_sound('data/sound/rx_beep.wav')
 
     ##########################
     # no WIN FNC
@@ -442,6 +471,7 @@ class TkMainWin:
             ##############
             # KEY BINDS
             self.new_conn_win.bind('<Return>', lambda event: self.process_new_conn_win(call_txt_inp, port))
+            self.new_conn_win.bind('<Escape>', lambda event: self.destroy_new_conn_win())
 
     def process_new_conn_win(self, call_txt: tk.Text, port: tk.StringVar):
         txt_win = call_txt
