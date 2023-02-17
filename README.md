@@ -1,5 +1,5 @@
-# AX25_POPT P.ython o.ther P.acket T.erminal
-### AX25 Terminal
+# P.ython o.ther P.acket T.erminal
+### AX25 Terminal (AX25_POPT)
 
     $$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|
     $$  __$$\ $$  __$$\    $$  __$$\|__$$ __|
@@ -26,3 +26,7 @@ Keybindings:
 - CTRL + C > New Connection
 - CTRL + D > Disconnect
 - F1 - F10 > Channel 1 - 10
+
+Issues / TODO (AX25 Protocol):
+- FRMR Frame decoding not implemented yet
+- RNR State not implemented yet
