@@ -405,9 +405,10 @@ class S1Frei(DefaultStat):  # INIT RX
             self.ax25conn.exec_cli()
         elif ax25_frame.ctl_byte.pf and flag in ['I', 'RR', 'REJ', 'SREJ', 'RNR', 'DISC', 'FRMR']:
             self.ax25conn.send_DM()
-            self.ax25conn.set_T1()
+            self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T2(stop=True)
             self.ax25conn.n2 = 100
-            # self.change_state(1)
+            self.change_state(0)
             if self.ax25conn.is_prt_hndl:
                 self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
 

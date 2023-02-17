@@ -21,6 +21,7 @@ class DefaultPortConfig(object):
     parm_T3 = 120       # T3 sek (Inactive Link Timer) Default:180 Sek
     parm_N2 = 20        # Max Try   Default 20
     parm_baud = 1200    # Baud for calculating Timer
+    parm_full_duplex = False    # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
@@ -54,6 +55,7 @@ class Port0(DefaultPortConfig):
     parm_T3 = 120       # T3 sek (Inactive Link Timer) Default:180 Sek
     parm_N2 = 20        # Max Try   Default 20
     parm_baud = 1200    # Baud for calculating Timer
+    parm_full_duplex = False    # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
@@ -84,6 +86,7 @@ class Port1(DefaultPortConfig):
     parm_T3 = 180       # T3 sek (Inactive Link Timer) Default:180 Sek
     parm_N2 = 20        # Max Try   Default 20
     parm_baud = 1200    # Baud for calculating Timer
+    parm_full_duplex = False  # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
@@ -114,6 +117,7 @@ class Port2(DefaultPortConfig):
     parm_T3 = 180   # T3 sek (Inactive Link Timer) Default:180 Sek
     parm_N2 = 20  # Max Try   Default 20
     parm_baud = 119200  # Baud for calculating Timer
+    parm_full_duplex = True  # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
@@ -144,6 +148,7 @@ class Port3(DefaultPortConfig):
     parm_T3 = 180  # T3 sek (Inactive Link Timer) Default:180 Sek
     parm_N2 = 20  # Max Try   Default 20
     parm_baud = 1200  # Baud for calculating Timer
+    parm_full_duplex = False  # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI

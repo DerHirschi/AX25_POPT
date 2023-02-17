@@ -233,7 +233,6 @@ class AX25Port(threading.Thread):
             # Monitor
             cfg.glb_gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
         self.digi_buf = []
-        self.del_connections()
 
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
@@ -252,7 +251,9 @@ class AX25Port(threading.Thread):
         while ax25_frame.addr_uid in self.connections.keys() or\
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
             print("Same UID !! {}".format(ax25_frame.addr_uid))
+            ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
+            ax25_frame.from_call.enc_call()
             if ax25_frame.from_call.ssid > 15:
                 return False
             ax25_frame.encode()
@@ -305,6 +306,9 @@ class AX25Port(threading.Thread):
                     # ######### RX #############
                     # Handling
                     self.rx_pac_handler(ax25frame)
+                    # Pseudo Full Duplex for AXIP.
+                    if self.station_cfg.parm_full_duplex:
+                        break
             else:
                 break
         if time.time() > self.TXD:
@@ -316,10 +320,9 @@ class AX25Port(threading.Thread):
             self.tx_pac_handler()
 
         ############################
-
         ############################
         # Cleanup
-        # self.del_connections()
+        self.del_connections()
 
 
 class KissTCP(AX25Port):
