@@ -1,10 +1,10 @@
 from gui.guiMainNew import *
 from ax25.ax25InitPorts import AX25PortHandler
-from ax25.ax25InitPorts import AX25Conn, AX25Frame, Call
+from ax25.ax25InitPorts import AX25Frame, Call, DefaultPortConfig
 import threading
 # from ax25.ax25PortHandler import MYHEARD
 
-VER = '1.2a'
+VER = '2.0a'
 if __name__ == '__main__':
     #################
     # Init AX25 Stuff

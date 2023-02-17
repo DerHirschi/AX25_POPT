@@ -1,14 +1,16 @@
+import time
 import tkinter as tk
-from tkinter import ttk, Menu, OptionMenu, Checkbutton
+from tkinter import ttk, Menu, OptionMenu
 import logging
 import threading
-import time
 from playsound import playsound
 
+# import config_station
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
 from gui.guiMH import MHWin
-from main import VER, AX25PortHandler, AX25Conn, AX25Frame, Call
+from main import VER, AX25PortHandler, AX25Frame, Call
+from ax25.ax25Connection import AX25Conn
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
@@ -49,10 +51,9 @@ class TkMainWin:
         # Default Port 0
         self.ax25_port_index = 0
         self.ax25_ports = self.ax25_port_handler.ax25_ports[self.ax25_port_index]
-        cfg = self.ax25_ports[1]
+        cfg = self.ax25_ports[1]    # TODO
         # Globals
         self.mh = cfg.glb_mh
-        # TODO
         self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
 
         #######################
@@ -78,6 +79,8 @@ class TkMainWin:
         ##############
         # KEY BINDS
         self.main_win.bind('<Return>', self.snd_text)
+        self.main_win.bind('<Control-c>', lambda event: self.open_new_conn_win())
+        self.main_win.bind('<Control-d>', lambda event: self.disco_conn())
         ##########################
         self.style = ttk.Style()
         self.style.theme_use('classic')
@@ -100,16 +103,17 @@ class TkMainWin:
         self.main_win.config(menu=self.menubar)
         # Menü 1 "Verbindungen"
         self.MenuVerb = Menu(self.menubar)
-        self.MenuVerb.add_command(label="Neu")
+        self.MenuVerb.add_command(label="Neu", command=self.open_new_conn_win)
+        self.MenuVerb.add_command(label="Disconnect", command=self.disco_conn)
         self.MenuVerb.add_command(label="Quit", command=self.main_win.quit)
         self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb)
         # Menü 2 "MH"
-        self.menubar.add_command(label="MH")
+        self.menubar.add_command(label="MH", command=self.MH_win)
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar)
         self.menubar.add_cascade(label="Tools", menu=self.MenuTools)
         # Menü 4 "Debug"
-        self.menubar.add_command(label="Debug")
+        # self.menubar.add_command(label="Debug")
         ############################
         ############################
         ############################
@@ -121,6 +125,19 @@ class TkMainWin:
         self.mon_txt = self.txt_win.mon_txt
         # Channel Buttons
         self.ch_btn = ChBtnFrm(self)
+        ##############
+        # KEY BINDS
+        self.main_win.bind('<F1>', lambda event: self.ch_btn.ch_btn_clk(1))
+        self.main_win.bind('<F2>', lambda event: self.ch_btn.ch_btn_clk(2))
+        self.main_win.bind('<F3>', lambda event: self.ch_btn.ch_btn_clk(3))
+        self.main_win.bind('<F4>', lambda event: self.ch_btn.ch_btn_clk(4))
+        self.main_win.bind('<F5>', lambda event: self.ch_btn.ch_btn_clk(5))
+        self.main_win.bind('<F6>', lambda event: self.ch_btn.ch_btn_clk(6))
+        self.main_win.bind('<F7>', lambda event: self.ch_btn.ch_btn_clk(7))
+        self.main_win.bind('<F8>', lambda event: self.ch_btn.ch_btn_clk(8))
+        self.main_win.bind('<F9>', lambda event: self.ch_btn.ch_btn_clk(9))
+        self.main_win.bind('<F10>', lambda event: self.ch_btn.ch_btn_clk(10))
+
         self.ch_btn.ch_btn_frame.grid(row=3, column=0, columnspan=1, sticky="nsew")
         ############################
         # Conn BTN upper Side
@@ -259,8 +276,6 @@ class TkMainWin:
             else:
                 self.debug_win = None
         """
-        # DEBUGGING ###
-        # self.tx_rx_check_rand_data()    # TEST Funktion !!!
         ###############
         # Set CH Buttons
         if self.ch_alarm:
@@ -285,7 +300,7 @@ class TkMainWin:
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 
-    def rx_beep(self):
+    def rx_beep(self):      # TODO ... New Trigger after some seconds
         for k in self.win_buf.keys():
             temp: ChVars = self.win_buf[k]
             tr = temp.rx_beep_opt
@@ -330,13 +345,9 @@ class TkMainWin:
                             tr = False
                             if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
                                 tr = True
-                            # Save Incoming Data in Window Buffer fo Channel Switching
-                            # self.win_buf[self.channel_index][1] += out
-                            # Insert Data in Textbox
                             self.out_txt.configure(state="normal")
                             self.out_txt.insert('end', out)
                             self.out_txt.configure(state="disabled")
-                            # print("ST: {} - END: {} - DIF: {}".format(self.mon_txt.index("@0,0"),  self.mon_txt.index(tk.END), float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0"))))
                             if tr:
                                 self.out_txt.see("end")
                         else:
@@ -344,7 +355,7 @@ class TkMainWin:
                         self.win_buf[k].rx_beep_tr = True
                         self.ch_btn_status_update()
 
-    def update_monitor(self, var: str, tx=False):
+    def update_monitor(self, var: str, conf, tx=False):
         """ Called from AX25Conn """
         ind = self.mon_txt.index(tk.INSERT)
         tr = False
@@ -355,9 +366,14 @@ class TkMainWin:
         self.mon_txt.configure(state="disabled")
         if tx:
             ind2 = self.mon_txt.index(tk.INSERT)
-            self.mon_txt.tag_add("tx", ind, ind2)
-            # configuring a tag called start
-            self.mon_txt.tag_config("tx", foreground="medium violet red")
+            self.mon_txt.tag_add("tx{}".format(conf.parm_PortNr), ind, ind2)
+            self.mon_txt.tag_config("tx{}".format(conf.parm_PortNr), foreground=conf.parm_mon_clr_tx)
+
+        else:
+            ind2 = self.mon_txt.index(tk.INSERT)
+            self.mon_txt.tag_add("rx{}".format(conf.parm_PortNr), ind, ind2)
+            self.mon_txt.tag_config("rx{}".format(conf.parm_PortNr), foreground=conf.parm_mon_clr_rx)
+
         if tr:
             self.mon_txt.see(tk.END)
         # self.update_side_mh()
@@ -368,7 +384,6 @@ class TkMainWin:
         for el in mh_ent:
             self.side_mh[c][0].delete(0, tk.END)
             self.side_mh[c][0].insert(0, el.last_seen.split(' ')[1])
-            # self.side_mh[c][0].configure(bg='black')
             self.side_mh[c][1].delete(0, tk.END)
             self.side_mh[c][1].insert(0, el.own_call)
             # self.side_mh[c][1].configure(text=el.own_call)
@@ -423,6 +438,7 @@ class TkMainWin:
                                  text="Los", bg="green",
                                  command=lambda: self.process_new_conn_win(call_txt_inp, port))
             conn_btn.grid(row=4, column=1, sticky="nsew")
+            call_txt_inp.focus_set()
             ##############
             # KEY BINDS
             self.new_conn_win.bind('<Return>', lambda event: self.process_new_conn_win(call_txt_inp, port))
@@ -468,7 +484,7 @@ class TkMainWin:
             ax_frame.ctl_byte.SABMcByte()
             conn = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].new_connection(ax25_frame=ax_frame)
             if conn:
-                conn: AX25Conn
+                # conn: AX25Conn
                 self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.channel_index)
             else:
                 self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')

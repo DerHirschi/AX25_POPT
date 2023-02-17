@@ -7,16 +7,10 @@ import time
 import ax25.ax25InitPorts
 from ax25.ax25dec_enc import AX25Frame, reverse_uid
 from config_station import DefaultPortConfig
-# from cli.cli import *
 
 import logging
 
-"""
-# Enable logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-"""
+
 logger = logging.getLogger(__name__)
 
 

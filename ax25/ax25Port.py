@@ -6,9 +6,8 @@ import time
 import crcmod
 
 import ax25.ax25Statistics
-import ax25.ax25InitPorts
+from ax25.ax25InitPorts import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid, bytearray2hexstr
-from ax25.ax25Connection import AX25Conn
 import ax25.ax25monitor as ax25monitor
 import logging
 
@@ -90,7 +89,8 @@ class AX25Port(threading.Thread):
         """ Not Happy with that Part . . :-( TODO Cleanup """
         cfg = self.station_cfg()
         # Monitor
-        cfg.glb_gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname))
+        cfg.glb_gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=cfg,
+                                   tx=False)
         # self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
         self.MYHEARD.mh_inp(ax25_frame, self.portname)
@@ -219,7 +219,7 @@ class AX25Port(threading.Thread):
                     # self.monitor.frame_inp(el, 'DW-TX')
                     cfg = self.station_cfg()
                     # Monitor
-                    cfg.glb_gui.update_monitor(self.monitor.frame_inp(el, self.portname), tx=True)
+                    cfg.glb_gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
         # DIGI
         fr: AX25Frame
         for fr in self.digi_buf:
@@ -231,7 +231,7 @@ class AX25Port(threading.Thread):
             # self.monitor.frame_inp(fr, self.portname)
             cfg = self.station_cfg()
             # Monitor
-            cfg.glb_gui.update_monitor(self.monitor.frame_inp(fr, self.portname), tx=True)
+            cfg.glb_gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
         self.digi_buf = []
         self.del_connections()
 
@@ -447,7 +447,6 @@ class AXIPClient(AX25Port):
     def rx(self):
         try:
             recv_buff = self.device.recv(400)
-            print(recv_buff)
         except socket.error:
             raise AX25DeviceERROR
         ###################################

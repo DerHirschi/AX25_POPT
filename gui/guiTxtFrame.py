@@ -156,7 +156,7 @@ class TxTframe:
         """
         station = self.main_class.get_conn(self.main_class.channel_index)
         if station:
-            dest_call = station.ax25_out_frame.to_call.call_str
+            from_call = station.ax25_out_frame.from_call.call_str
             via_calls = ''
             for via in station.ax25_out_frame.via_calls:
                 # via: Call
@@ -176,7 +176,7 @@ class TxTframe:
             # len_tx2snd_buf = len(station.tx_buf_2send)
             # len_txraw_buf = len(station.tx_buf_rawData)
             # digi_call = station.my_digi_call
-            self.status_name.configure(text=dest_call)
+            self.status_name.configure(text=from_call)
             status_bg = {
                 'ENDE': 'red',
                 'FREI': 'orange',

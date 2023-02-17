@@ -5,6 +5,7 @@ class DefaultPortConfig(object):
     ##########################
     # Parameter for Connection
     """ Port Parameter """
+    parm_PortNr: int = -1
     parm_PortName: '' = ''
     parm_PortTyp: '' = ''   # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIPCL' AXIP UDP
     parm_PortParm = ''
@@ -25,6 +26,11 @@ class DefaultPortConfig(object):
     # Parameter for CLI
     parm_cli = DefaultCLI
     parm_cli_ctext = ''
+    #####################
+    # Monitor Text Color
+    parm_mon_clr_tx = "medium violet red"
+    parm_mon_clr_rx = "green"
+
     ##########################
     # Global Objs
     glb_mh = None
@@ -33,7 +39,7 @@ class DefaultPortConfig(object):
 
 
 class Port0(DefaultPortConfig):
-    parm_PortName = '00'
+    parm_PortName = 'DW'
     parm_PortTyp = 'KISSTCP'
     parm_PortParm = ('192.168.178.152', 8001)
     parm_StationCalls = ['MD5TES', 'MD6TES-1']
@@ -56,12 +62,14 @@ class Port0(DefaultPortConfig):
     parm_cli_ctext = '-= TEST C-TEXT MD5TES -Port0 =-\r\r'
     parm_cli_bye_text = '73 ...\r'
     parm_cli_prompt = '\rTEST-STATION---Port0>'
+    #####################
+    # Monitor Text Color
+    parm_mon_clr_tx = "medium violet red"
+    parm_mon_clr_rx = "green"
 
 
 class Port1(DefaultPortConfig):
-    parm_PortName = '01'
-    # parm_PortTyp = ''
-    # parm_PortParm = '/tmp/tty1'
+    parm_PortName = 'DW2'
     parm_PortTyp = 'KISSTCP'
     parm_PortParm = ('192.168.178.150', 8001)
     parm_StationCalls = ['MD5TES', 'MD6TES-2']
@@ -84,12 +92,14 @@ class Port1(DefaultPortConfig):
     parm_cli_ctext = '-= TEST C-TEXT MD5TES Port1 =-\r\r'
     parm_cli_bye_text = '73 ...\r'
     parm_cli_prompt = '\rTEST-STATION---Port1>'
+    #####################
+    # Monitor Text Color
+    parm_mon_clr_tx = "red2"
+    parm_mon_clr_rx = "green2"
 
 
 class Port2(DefaultPortConfig):
-    parm_PortName = '02'
-    # parm_PortTyp = ''
-    # parm_PortParm = '/tmp/tty1'
+    parm_PortName = 'AXIP'
     parm_PortTyp = 'AXIPCL'
     parm_PortParm = ('192.168.178.160', 8093)
     parm_StationCalls = ['MD7TES', 'MD7TES-2']
@@ -112,12 +122,14 @@ class Port2(DefaultPortConfig):
     parm_cli_ctext = '-= TEST C-TEXT MD5TES Port2 =-\r\r'
     parm_cli_bye_text = '73 ...\r'
     parm_cli_prompt = '\rTEST-STATION---Port2>'
+    #####################
+    # Monitor Text Color
+    parm_mon_clr_tx = "orange2"
+    parm_mon_clr_rx = "PaleGreen3"
 
 
 class Port3(DefaultPortConfig):
-    parm_PortName = '03'
-    # parm_PortTyp = ''
-    # parm_PortParm = '/tmp/tty1'
+    parm_PortName = 'SER'
     parm_PortTyp = 'KISSSER'
     parm_PortParm = ('/dev/pts/9', 9600)
     parm_StationCalls = ['MD8TES', 'MD8TES-2']
@@ -140,6 +152,10 @@ class Port3(DefaultPortConfig):
     parm_cli_ctext = '-= TEST C-TEXT MD5TES Port3 =-\r\r'
     parm_cli_bye_text = '73 ...\r'
     parm_cli_prompt = '\rTEST-STATION---Port3>'
+    #####################
+    # Monitor Text Color
+    parm_mon_clr_tx = "gold2"
+    parm_mon_clr_rx = "SkyBlue4"
 
 
 class Port4(DefaultPortConfig):

@@ -1,7 +1,8 @@
-import ax25.ax25Port
 import cli.ClientDB
+from ax25.ax25Connection import AX25Conn
 from ax25.ax25Port import *
 from config_station import *
+
 
 
 class AX25PortHandler(object):
@@ -32,6 +33,7 @@ class AX25PortHandler(object):
                          Port10
                          ]:
             if port_cfg.parm_PortTyp:
+                port_cfg.parm_PortNr = c
                 #########################
                 # Set GLOBALS
                 port_cfg.glb_mh = self.mh_list
@@ -42,10 +44,10 @@ class AX25PortHandler(object):
                     temp = (ax25types[port_cfg.parm_PortTyp](port_cfg), port_cfg)
                 except AX25DeviceFAIL as e:
                     temp = False
-                    logger.error('Could not initialise Port {}'.format(port_cfg.parm_PortName))
+                    logger.error('Could not initialise Port {}'.format(port_cfg.parm_PortNr))
                     logger.error('{}'.format(e))
                 if temp:
-                    temp[0]: ax25.ax25Port.AX25Port
+                    temp[0]: AX25Port
                     ##########################
                     # Start Port/Device Thread
                     temp[0].start()
