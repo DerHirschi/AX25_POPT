@@ -53,6 +53,8 @@ class AX25Port(threading.Thread):
         self.MYHEARD = self.station_cfg.glb_mh
         self.port_hndl = self.station_cfg.glb_port_handler
         # self.gui = self.station_cfg.glb_gui
+        self.gui = None
+        self.is_gui = False
         self.connections: {str: AX25Conn} = {}
         self.device = None
         try:
@@ -69,6 +71,11 @@ class AX25Port(threading.Thread):
             logger.error('{}'.format(e))
             raise e
         """
+    def set_gui(self, gui):
+        if self.gui is None:
+            self.gui = gui
+            self.is_gui = True
+
 
     def init(self):
         pass
@@ -89,8 +96,9 @@ class AX25Port(threading.Thread):
         """ Not Happy with that Part . . :-( TODO Cleanup """
         cfg = self.station_cfg()
         # Monitor
-        cfg.glb_gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=cfg,
-                                   tx=False)
+        if self.is_gui:
+            self.gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=cfg,
+                                       tx=False)
         # self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
         self.MYHEARD.mh_inp(ax25_frame, self.portname)
@@ -189,7 +197,8 @@ class AX25Port(threading.Thread):
 
                                     conn_out.zustand_exec.__init__(conn_out)
                                     conn_in.zustand_exec.__init__(conn_in)  # Reinit
-                                    conn_in.gui.ch_btn_status_update()
+                                    if self.is_gui:
+                                        self.gui.ch_btn_status_update()
                                     self.connections[str(conn_out_uid)] = conn_out
 
     def tx_pac_handler(self):
@@ -219,7 +228,8 @@ class AX25Port(threading.Thread):
                     # self.monitor.frame_inp(el, 'DW-TX')
                     cfg = self.station_cfg()
                     # Monitor
-                    cfg.glb_gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
+                    if self.is_gui:
+                        self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
         # DIGI
         fr: AX25Frame
         for fr in self.digi_buf:
@@ -231,7 +241,8 @@ class AX25Port(threading.Thread):
             # self.monitor.frame_inp(fr, self.portname)
             cfg = self.station_cfg()
             # Monitor
-            cfg.glb_gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
+            if self.is_gui:
+                self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
         self.digi_buf = []
 
     def cron_pac_handler(self):
@@ -244,8 +255,8 @@ class AX25Port(threading.Thread):
         """ New Outgoing Connection """
         cfg = self.station_cfg()
         ax25_frame.encode()
-        print("Same UID ?? --  {}".format(ax25_frame.addr_uid))
-        print("Same UID connections?? --  {}".format(self.connections.keys()))
+        # print("Same UID ?? --  {}".format(ax25_frame.addr_uid))
+        # print("Same UID connections?? --  {}".format(self.connections.keys()))
 
         # ax25_frame.addr_uid = reverse_uid(ax25_frame.addr_uid)
         while ax25_frame.addr_uid in self.connections.keys() or\

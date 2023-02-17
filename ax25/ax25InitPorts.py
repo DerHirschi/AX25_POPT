@@ -4,7 +4,6 @@ from ax25.ax25Port import *
 from config_station import *
 
 
-
 class AX25PortHandler(object):
     def __init__(self):
         ax25types = {
@@ -78,6 +77,7 @@ class AX25PortHandler(object):
             self.gui = gui
         for k in self.ax25_ports.keys():
             self.ax25_ports[k][1].glb_gui = gui
+            self.ax25_ports[k][0].set_gui(gui)
 
     def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
         if not new_conn.is_link or not new_conn.my_digi_call:

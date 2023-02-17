@@ -165,9 +165,7 @@ class AX25Conn(object):
         """ DefaultStat.cron() """
         self.cli.cli_cron()
         self.zustand_exec.cron()
-        print("{} - {} - {}".format(self.ax25_out_frame.addr_uid,
-                                    self.zustand_exec.stat_index,
-                                    self.n2))
+
     # Zustand EXECs ENDE
     #######################
 
@@ -400,7 +398,7 @@ class S1Frei(DefaultStat):  # INIT RX
         if flag == 'SABM':
             # Handle Incoming Connection
             self.ax25conn.send_UA()
-            self.ax25conn.rx_buf_rawData = '** Connect from {}\n'.format(ax25_frame.to_call.call_str).encode()
+            self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(ax25_frame.to_call.call_str).encode()
             self.ax25conn.n2 = 0
             if self.ax25conn.is_prt_hndl:
                 self.ax25conn.prt_hndl.insert_conn2all_conn_var(new_conn=self.ax25conn)
