@@ -415,7 +415,7 @@ class TkMainWin:
             for k in self.win_buf.keys():
                 if self.win_buf[k].rx_beep_tr:
                     self.win_buf[k].rx_beep_tr = False
-                    snd = threading.Thread(target=playsound, args=('data/sound/bell_o.wav', ))  # TODO File in CFG
+                    snd = threading.Thread(target=playsound, args=('data/sound/rx_beep.wav', ))  # TODO File in CFG
                     snd.start()
 
     ##########################

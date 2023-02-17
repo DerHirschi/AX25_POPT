@@ -195,19 +195,20 @@ class TkMainWin:
                                padx = 30,
                                pady = 30)
         self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
-        self.tab2_mh.columnconfigure(1, minsize=80, weight=7)
+        self.tab2_mh.columnconfigure(1, minsize=100, weight=9)
         self.tab2_mh.columnconfigure(2, minsize=50, weight=8)
         self.tab2_mh.columnconfigure(3, minsize=50, weight=8)
         self.tab2_mh.columnconfigure(4, minsize=50, weight=9)
         tk.Label(self.tab2_mh, text="Zeit", width=85).grid(row=0, column=0)
-        tk.Label(self.tab2_mh, text="Call", width=80).grid(row=0, column=1)
+        tk.Label(self.tab2_mh, text="Call", width=100).grid(row=0, column=1)
         tk.Label(self.tab2_mh, text="PACK", width=50).grid(row=0, column=2)
         tk.Label(self.tab2_mh, text="REJ", width=50).grid(row=0, column=3)
         tk.Label(self.tab2_mh, text="Route", width=50).grid(row=0, column=4)
         self.side_mh: {int: [tk.Entry, tk.Entry, tk.Entry, tk.Entry, tk.Entry]} = {}
-        for row in range(10):
+        for row in range(9):
             a = tk.Entry(self.tab2_mh, width=85)
             b = tk.Entry(self.tab2_mh, width=80)
+            # b = tk.Button(self.tab2_mh, width=100)
             c = tk.Entry(self.tab2_mh, width=20)
             d = tk.Entry(self.tab2_mh, width=20)
             e = tk.Entry(self.tab2_mh, width=100)
@@ -293,7 +294,7 @@ class TkMainWin:
                 if tr:
                     if temp.rx_beep_tr:
                         temp.rx_beep_tr = False
-                        pl_sound('data/sound/bell_o.wav')
+                        pl_sound('data/sound/rx_beep.wav')
 
     ##########################
     # no WIN FNC
@@ -346,24 +347,23 @@ class TkMainWin:
     def update_monitor(self, var: str, tx=False):
         """ Called from AX25Conn """
         ind = self.mon_txt.index(tk.INSERT)
-
         tr = False
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
             tr = True
         self.mon_txt.configure(state="normal")
         self.mon_txt.insert(tk.END, var)
         self.mon_txt.configure(state="disabled")
-        if tr:
-            self.mon_txt.see(tk.END)
         if tx:
             ind2 = self.mon_txt.index(tk.INSERT)
             self.mon_txt.tag_add("tx", ind, ind2)
             # configuring a tag called start
             self.mon_txt.tag_config("tx", foreground="medium violet red")
+        if tr:
+            self.mon_txt.see(tk.END)
         # self.update_side_mh()
 
     def update_side_mh(self):
-        mh_ent = self.mh.output_sort_entr(9)
+        mh_ent = self.mh.output_sort_entr(8)
         c = 1
         for el in mh_ent:
             self.side_mh[c][0].delete(0, tk.END)
@@ -371,6 +371,7 @@ class TkMainWin:
             # self.side_mh[c][0].configure(bg='black')
             self.side_mh[c][1].delete(0, tk.END)
             self.side_mh[c][1].insert(0, el.own_call)
+            # self.side_mh[c][1].configure(text=el.own_call)
             self.side_mh[c][2].delete(0, tk.END)
             self.side_mh[c][2].insert(0, el.pac_n)
             self.side_mh[c][3].delete(0, tk.END)

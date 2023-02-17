@@ -53,6 +53,10 @@ def format_hex2bin(inp=''):
     return fl
 
 
+def bytearray2hexstr(inp):
+    return ''.join('{:02x}'.format(x) for x in inp)
+
+
 def call_obj_fm_call_str(call_str: str):
     ind = call_str.find('-')
     if ind != -1:
@@ -517,7 +521,7 @@ class PIDByte(object):
 
 class AX25Frame(object):
     def __init__(self):
-        self.kiss = b''
+        # self.kiss = b''
         self.hexstr = b''           # Dekiss
         self.from_call = Call()
         self.to_call = Call()
@@ -571,8 +575,9 @@ class AX25Frame(object):
 
     def decode(self, hexstr=b''):
         if not self.hexstr:
-            self.kiss = hexstr[:2]
-            self.hexstr = hexstr[2:-1]
+            # self.kiss = hexstr[:2]
+            # self.hexstr = hexstr[2:-1]
+            self.hexstr = hexstr
         if self.hexstr and len(self.hexstr) > 14:
             try:
                 self.to_call.dec_call(self.hexstr[:7])

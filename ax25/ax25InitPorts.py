@@ -7,7 +7,8 @@ from config_station import *
 class AX25PortHandler(object):
     def __init__(self):
         ax25types = {
-            'KISSTCP': KissTCP
+            'KISSTCP': KissTCP,
+            'AXIPCL': AXIPClient,
         }
         self.ax25_ports: {int: (AX25Port, DefaultPortConfig)} = {}
         self.mh_list = ax25.ax25Statistics.MH()
@@ -56,6 +57,7 @@ class AX25PortHandler(object):
         for k in self.ax25_ports.keys():
             self.ax25_ports[k][0].loop_is_running = False
             ax25dev = self.ax25_ports[k][0]
+            # ax25dev.device.close()
             del ax25dev
         if hasattr(self, 'mh_list'):
             self.mh_list.save_mh_data()

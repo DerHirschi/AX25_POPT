@@ -2,23 +2,20 @@ import copy
 import socket
 import threading
 import time
+import crcmod
 
 import ax25.ax25Statistics
 import ax25.ax25InitPorts
-from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid
+from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid, bytearray2hexstr
 from ax25.ax25Connection import AX25Conn
 
 import ax25.ax25monitor as ax25monitor
 
 import logging
 
-# Enable logging
-"""
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
-)
-"""
 logger = logging.getLogger(__name__)
+
+crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
 
 class AX25DeviceERROR(Exception):
@@ -60,6 +57,7 @@ class AX25Port(threading.Thread):
         self.port_hndl = self.station_cfg.glb_port_handler
         # self.gui = self.station_cfg.glb_gui
         self.connections: {str: AX25Conn} = {}
+        self.device = None
         try:
             self.init()
         except AX25DeviceFAIL as e:
@@ -106,7 +104,6 @@ class AX25Port(threading.Thread):
                 self.connections[uid].set_T2()
                 self.connections[uid].handle_rx(ax25_frame=ax25_frame)
             else:
-                print("ELSE")
                 my_digi_call = self.connections[uid].my_digi_call
                 if my_digi_call:
                     if ax25_frame.digi_check_and_encode(call=my_digi_call, h_bit_enc=False):
@@ -118,11 +115,7 @@ class AX25Port(threading.Thread):
         # New Incoming Connection Request
         elif ax25_frame.to_call.call_str in self.my_stations \
                 and ax25_frame.is_digipeated:
-            # self.station_cfg.glb_gui.open_new_conn_win()
-            # cfg = self.station_cfg()
-            # cfg.glb_gui.open_new_conn_win()
 
-            # cfg.glb_gui.start_new_conn()
             self.connections[uid] = AX25Conn(ax25_frame, cfg)
             self.connections[uid].set_T2()
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
@@ -355,9 +348,12 @@ class KissTCP(AX25Port):
 
     def rx(self):
         try:
-            return self.device.recv(400)
+            recv_buff = self.device.recv(400)
         except socket.timeout:
             raise AX25DeviceERROR
+        if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
+            return recv_buff[2:-1]
+        return b''
 
     def tx(self, frame: AX25Frame):
         ############################################
@@ -421,3 +417,50 @@ class KISSSerial(AX25Port):
         ############################################
         """
         pass
+
+
+class AXIPClient(AX25Port):
+
+    def init(self):
+        print("AXIP Client INIT")
+        sock_timeout = 0.5
+        self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.device.settimeout(sock_timeout)
+
+    def __del__(self):
+        self.device.close()
+        self.loop_is_running = False
+
+    def rx(self):
+        try:
+            recv_buff = self.device.recv(400)
+            print(recv_buff)
+        except socket.error:
+            raise AX25DeviceERROR
+        ###################################
+        # CRC
+        crc = recv_buff[-2:]
+        crc = int(bytearray2hexstr(crc[::-1]), 16)
+        pack = recv_buff[:-2]
+        calc_crc = crc_x25(pack)
+        ###################################
+        if calc_crc == crc:
+            return pack
+        return b''
+
+    def tx(self, frame: AX25Frame):
+        ###################################
+        # CRC
+        calc_crc = crc_x25(frame.hexstr)
+        calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
+        ###################################
+        try:
+            self.device.sendto(frame.hexstr + calc_crc, self.port_param)
+        except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
+            logger.error('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(self.port_param))
+            logger.error('{}'.format(e))
+            try:
+                self.init()
+            except AX25DeviceFAIL:
+                logger.error('Error. Reinit AXIP Failed !! {}'.format(self.port_param))
+                raise AX25DeviceFAIL
