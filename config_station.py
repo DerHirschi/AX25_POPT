@@ -25,7 +25,7 @@ class DefaultPortConfig(object):
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
-    parm_cli = DefaultCLI
+    parm_cli: {str: DefaultCLI}
     parm_cli_ctext = ''
     #####################
     # Monitor Text Color
@@ -44,8 +44,8 @@ class Port0(DefaultPortConfig):
     parm_PortTyp = 'KISSTCP'
     parm_PortParm = ('192.168.178.152', 8001)
     parm_StationCalls = ['MD5TES', 'MD6TES-1']
-    parm_isSmartDigi = True
-    parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False
+    parm_isSmartDigi = False
+    parm_is_StupidDigi = True  # Just if parm_isSmartDigi is set to False
     parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
     """ Connection Parameter """
     parm_PacLen = 170   # Max Pac len
@@ -59,7 +59,10 @@ class Port0(DefaultPortConfig):
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
-    parm_cli = UserCLI
+    parm_cli = {
+        'MD5TES': UserCLI,
+        'MD6TES-1': NodeCLI
+    }
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     parm_cli_ctext = '-= TEST C-TEXT MD5TES -Port0 =-\r\r'
     parm_cli_bye_text = '73 ...\r'
@@ -90,7 +93,10 @@ class Port1(DefaultPortConfig):
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
-    parm_cli = UserCLI
+    parm_cli = {
+        'MD5TES': UserCLI,
+        'MD6TES-2': NodeCLI
+    }
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     parm_cli_ctext = '-= TEST C-TEXT MD5TES Port1 =-\r\r'
     parm_cli_bye_text = '73 ...\r'
@@ -105,7 +111,7 @@ class Port2(DefaultPortConfig):
     parm_PortName = 'AXIP'
     parm_PortTyp = 'AXIPCL'
     parm_PortParm = ('192.168.178.160', 8093)
-    parm_StationCalls = ['MD7TES', 'MD7TES-2']
+    parm_StationCalls = ['MD7TES', 'MD6TES-2']
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False
     parm_TXD = 1  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
@@ -121,7 +127,10 @@ class Port2(DefaultPortConfig):
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
-    parm_cli = UserCLI
+    parm_cli = {
+        'MD7TES': UserCLI,
+        'MD6TES-2': NodeCLI
+    }
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     parm_cli_ctext = '-= TEST C-TEXT MD5TES Port2 =-\r\r'
     parm_cli_bye_text = '73 ...\r'
@@ -136,7 +145,7 @@ class Port3(DefaultPortConfig):
     parm_PortName = 'SER'
     parm_PortTyp = 'KISSSER'
     parm_PortParm = ('/dev/pts/9', 9600)
-    parm_StationCalls = ['MD8TES', 'MD8TES-2']
+    parm_StationCalls = ['MD8TES', 'MD7TES-2']
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False
     parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
@@ -152,7 +161,10 @@ class Port3(DefaultPortConfig):
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     ##########################
     # Parameter for CLI
-    parm_cli = UserCLI
+    parm_cli = {
+        'MD8TES': UserCLI,
+        'MD7TES-7': NodeCLI
+    }
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     parm_cli_ctext = '-= TEST C-TEXT MD5TES Port3 =-\r\r'
     parm_cli_bye_text = '73 ...\r'

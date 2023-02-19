@@ -6,7 +6,7 @@ import time
 
 import ax25.ax25InitPorts
 from ax25.ax25dec_enc import AX25Frame, reverse_uid
-from config_station import DefaultPortConfig
+from config_station import DefaultPortConfig, NoneCLI
 
 import logging
 
@@ -63,6 +63,7 @@ class AX25Conn(object):
             ax25_frame.encode()  # Set Stop-Bits and H-Bits while encoding
             if self.ax25_out_frame.addr_uid != ax25_frame.addr_uid:
                 self.ax25_out_frame.addr_uid = ax25_frame.addr_uid  # Unique ID for Connection
+        self.my_call_obj = self.ax25_out_frame.from_call
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
         """ IO Buffer Packet For Handling """
@@ -104,7 +105,14 @@ class AX25Conn(object):
         """ MH for CLI """
         # self.mh = cfg.parm_mh
         """ Init CLI """
-        self.cli = cfg.parm_cli(self)
+        if self.my_call_obj.call in cfg.parm_cli.keys():
+            self.cli = cfg.parm_cli[self.my_call_obj.call](self)
+        else:
+            if self.my_call_obj.call_str in cfg.parm_cli.keys():
+                self.cli = cfg.parm_cli[self.my_call_obj.call_str](self)
+            else:
+                self.cli = NoneCLI(self)
+
         # Overwrite cli.py Parameter from config_station.px
         if hasattr(cfg, 'parm_cli_ctext'):
             self.cli.c_text = str(cfg.parm_cli_ctext)
@@ -206,7 +214,7 @@ class AX25Conn(object):
                 if i == nr:
                     break
                 del self.tx_buf_unACK[i]
-                print("DELunACK - DEL!!: {}".format(i))
+                # print("DELunACK - DEL!!: {}".format(i))
 
     def resend_unACK_buf(self, max_pac=None):  # TODO Testing
         if max_pac is None:
@@ -214,8 +222,8 @@ class AX25Conn(object):
         index_list = list(self.tx_buf_unACK.keys())
         for i in range(min(max_pac, len(index_list))):
             pac: AX25Frame = self.tx_buf_unACK[index_list[i]]
-            print("VR - PAC: {}".format(pac.ctl_byte.nr))
-            print("VR - VR Station: {}".format(self.vr))
+            # print("VR - PAC: {}".format(pac.ctl_byte.nr))
+            # print("VR - VR Station: {}".format(self.vr))
             pac.ctl_byte.nr = self.vr
             self.tx_buf_2send.append(pac)
 

@@ -270,22 +270,6 @@ class TkMainWin:
     ##########################
 
     def tasker(self):  # MAINLOOP
-
-        self.update_mon()   # TODO trigger von AX25CONN
-
-        self.txt_win.update_status_win()
-        """
-        if self.debug_win is not None:
-            self.debug_win: DEBUGwin
-            if self.debug_win.is_running:
-                self.debug_win.tasker()
-            else:
-                self.debug_win = None
-        """
-        ###############
-        # Set CH Buttons
-        if self.ch_alarm:
-            self.ch_btn_status_update()
         rx_beep_check = self.txt_win.rx_beep_var.get()
         if rx_beep_check:
             self.txt_win.rx_beep_box.configure(bg='green', activebackground='green')
@@ -298,7 +282,12 @@ class TkMainWin:
         else:
             self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_param().timestamp_opt = ts_check
-
+        # Prio TASKS ########
+        self.update_mon()  # TODO trigger von AX25CONN
+        self.txt_win.update_status_win()
+        if self.ch_alarm:
+            self.ch_btn_status_update()
+        # Non Prio ###########
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
             self.change_conn_btn()
@@ -427,15 +416,14 @@ class TkMainWin:
             via = call[1:]
         call = call[0]
         call = call.replace(' ', '')
-        print(str(call))
-        print(len(call))
+
         port = port.get()
         if port:
             self.ax25_port_index = int(port.replace('Port-', ''))
         else:
             self.ax25_port_index = 0
-        print(str(port))
-        print(str(self.ax25_port_index))
+        # print(str(port))
+        # print(str(self.ax25_port_index))
         call = call.split('-')
         if 6 >= len(call[0]) > 1:
 

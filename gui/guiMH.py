@@ -4,10 +4,6 @@ from tkinter import scrolledtext, Label, Menu
 from ax25.ax25Statistics import MyHeard
 
 logger = logging.getLogger(__name__)
-"""
-LOOP_DELAY = 10        # ms
-TEXT_SIZE = 12
-"""
 
 
 class MHWin:
