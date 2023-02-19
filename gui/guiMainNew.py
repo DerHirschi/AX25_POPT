@@ -9,6 +9,7 @@ from playsound import playsound
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
 from gui.guiMH import MHWin
+from gui.guiSideFrame import SideTabbedFrame
 from main import VER, AX25PortHandler, AX25Frame, Call
 from ax25.ax25Connection import AX25Conn
 
@@ -28,10 +29,6 @@ TXT_INP_CURSOR_CLR = 'white'
 TXT_MON_CLR = 'green'
 TXT_MON_TX_CLR = 'medium violet red'
 STAT_BAR_CLR = 'grey60'
-
-
-def pl_sound(snd_file: str):
-    threading.Thread(target=playsound, args=(snd_file,)).start()
 
 
 class ChVars:
@@ -71,7 +68,7 @@ class TkMainWin:
         ####################
         # GUI PARAM
         self.parm_btn_blink_time = 0.3
-        self.parm_rx_beep_cooldown = 0.5
+        self.parm_rx_beep_cooldown = 1.5
         ###############
         self.text_size = int(TEXT_SIZE)
         ######################################
@@ -163,64 +160,9 @@ class TkMainWin:
                               text="Dummy",
                               bg="yellow", width=10)
         self.btn2.grid(row=0, column=3, sticky="nsew")
-        """
-        self.side_chkbox_frame = tk.Frame(self.side_btn_frame_top, width=200, height=300)
-        self.side_chkbox_frame.grid(row=2, column=0, columnspan=5, sticky="nsew")
-        self.side_chkbox_frame.columnconfigure(0, minsize=70, weight=0)
-        self.time_stamp_tr = tk.IntVar()
 
-        Checkbutton(self.side_chkbox_frame,
-                    text="Time-Stamp",
-                    borderwidth=0,
-                    variable=self.time_stamp_tr,
-                    ).grid(row=0, column=0, sticky="nsew")
-        """
-        self.tab_side_frame = tk.Frame(self.side_btn_frame_top, width=300, height=400)
-        self.tab_side_frame.grid(row=2, column=0, columnspan=6, sticky="nsew")
-        self.tabControl = ttk.Notebook(self.tab_side_frame, height=300, width=500)
-        #self.tabControl.grid(row=3, column=0, columnspan=5, sticky="nsew")
-
-        tab1 = ttk.Frame(self.tabControl)
-        self.tab2_mh = ttk.Frame(self.tabControl)
-        tab3 = ttk.Frame(self.tabControl)
-        tab4 = ttk.Frame(self.tabControl)
-
-        self.tabControl.add(tab1, text='Station')
-        self.tabControl.add(self.tab2_mh, text='MH')
-        self.tabControl.add(tab3, text='Ports')
-        self.tabControl.add(tab4, text='Settings')
-        self.tabControl.pack(expand=0, fill="both")
-        self.tabControl.select(self.tab2_mh)
-        ttk.Label(tab1,
-                  text="TEST").grid(column = 0,
-                               row = 0,
-                               padx = 30,
-                               pady = 30)
-        self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
-        self.tab2_mh.columnconfigure(1, minsize=100, weight=9)
-        self.tab2_mh.columnconfigure(2, minsize=50, weight=8)
-        self.tab2_mh.columnconfigure(3, minsize=50, weight=8)
-        self.tab2_mh.columnconfigure(4, minsize=50, weight=9)
-        tk.Label(self.tab2_mh, text="Zeit", width=85).grid(row=0, column=0)
-        tk.Label(self.tab2_mh, text="Call", width=100).grid(row=0, column=1)
-        tk.Label(self.tab2_mh, text="PACK", width=50).grid(row=0, column=2)
-        tk.Label(self.tab2_mh, text="REJ", width=50).grid(row=0, column=3)
-        tk.Label(self.tab2_mh, text="Route", width=50).grid(row=0, column=4)
-        self.side_mh: {int: [tk.Entry, tk.Entry, tk.Entry, tk.Entry, tk.Entry]} = {}
-        for row in range(9):
-            a = tk.Entry(self.tab2_mh, width=85)
-            b = tk.Entry(self.tab2_mh, width=80)
-            # b = tk.Button(self.tab2_mh, width=100)
-            c = tk.Entry(self.tab2_mh, width=20)
-            d = tk.Entry(self.tab2_mh, width=20)
-            e = tk.Entry(self.tab2_mh, width=100)
-            a.grid(row=row + 1, column=0)
-            b.grid(row=row + 1, column=1)
-            c.grid(row=row + 1, column=2)
-            d.grid(row=row + 1, column=3)
-            e.grid(row=row + 1, column=4)
-            self.side_mh[row + 1] = [a, b, c, d, e]
-        self.update_side_mh()
+        self.tabbed_sideFrame = SideTabbedFrame(self)
+        self.setting_sound = self.tabbed_sideFrame.sound_on
         ############################
         # Windows
         self.new_conn_win = None
@@ -281,7 +223,7 @@ class TkMainWin:
         elif event.keycode == 82:   # Num -
             self.decrease_textsize()
         """
-        print(event)
+        # print(event)
         if self.inp_txt.focus_get() != self.inp_txt:
             self.inp_txt.focus_set()
             self.inp_txt.insert(tk.END, event.char)
@@ -298,6 +240,10 @@ class TkMainWin:
         self.out_txt.configure(font=(FONT, self.text_size))
         self.mon_txt.configure(font=(FONT, self.text_size))
 
+    def pl_sound(self, snd_file: str):
+        if self.setting_sound.get():
+            threading.Thread(target=playsound, args=(snd_file,)).start()
+
     def rx_beep(self):
         for k in self.win_buf.keys():
             temp: ChVars = self.win_buf[k]
@@ -309,13 +255,13 @@ class TkMainWin:
                     if tr:
                         if temp.rx_beep_tr:
                             temp.rx_beep_tr = False
-                            pl_sound('data/sound/rx_beep.wav')
+                            self.pl_sound('data/sound/rx_beep.wav')
 
     def new_conn_snd(self):
-        pl_sound('data/sound/conn_alarm.wav')
+        self.pl_sound('data/sound/conn_alarm.wav')
 
     def disco_snd(self):
-        pl_sound('data/sound/disco_alarm.wav')
+        self.pl_sound('data/sound/disco_alarm.wav')
     # no WIN FNC
     ##########################
 
@@ -352,7 +298,7 @@ class TkMainWin:
         self.get_ch_param().timestamp_opt = ts_check
 
         # print(float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")))
-        self.update_side_mh()
+        self.tabbed_sideFrame.update_side_mh()
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 
@@ -412,21 +358,6 @@ class TkMainWin:
         if tr:
             self.mon_txt.see(tk.END)
         # self.update_side_mh()
-
-    def update_side_mh(self):
-        mh_ent = self.mh.output_sort_entr(8)
-        c = 1
-        for el in mh_ent:
-            self.side_mh[c][0].delete(0, tk.END)
-            self.side_mh[c][0].insert(0, el.last_seen.split(' ')[1])
-            self.side_mh[c][1].delete(0, tk.END)
-            self.side_mh[c][1].insert(0, el.own_call)
-            # self.side_mh[c][1].configure(text=el.own_call)
-            self.side_mh[c][2].delete(0, tk.END)
-            self.side_mh[c][2].insert(0, el.pac_n)
-            self.side_mh[c][3].delete(0, tk.END)
-            self.side_mh[c][3].insert(0, el.rej_n)
-            c += 1
 
     ##########################
     # New Connection WIN
