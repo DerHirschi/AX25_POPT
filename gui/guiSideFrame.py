@@ -12,7 +12,7 @@ class SideTabbedFrame:
         self.style = self.main_win.style
         self.side_btn_frame_top = self.main_win.side_btn_frame_top
         self.tab_side_frame = tk.Frame(self.side_btn_frame_top, width=300, height=400)
-        self.tab_side_frame.grid(row=2, column=0, columnspan=6, sticky="nsew")
+        self.tab_side_frame.grid(row=4, column=0, columnspan=6, pady=10, sticky="nsew")
         self.tabControl = ttk.Notebook(self.tab_side_frame, height=300, width=500)
         # self.tabControl.grid(row=3, column=0, columnspan=5, sticky="nsew")
 
@@ -60,16 +60,6 @@ class SideTabbedFrame:
         self.update_side_mh()
 
         # Settings ##########################
-        """
-        self.tab4_settings.columnconfigure(0, minsize=85, weight=10)
-        self.tab4_settings.columnconfigure(1, minsize=100, weight=9)
-        self.tab4_settings.columnconfigure(2, minsize=50, weight=8)
-        self.tab4_settings.columnconfigure(3, minsize=50, weight=8)
-        self.tab4_settings.columnconfigure(4, minsize=50, weight=9)
-        """
-        # self.side_chkbox_frame = tk.Frame(self.side_btn_frame_top, width=200, height=300)
-        # self.side_chkbox_frame.grid(row=2, column=0, columnspan=5, sticky="nsew")
-        # self.side_chkbox_frame.columnconfigure(0, minsize=70, weight=0)
         self.sound_on = tk.IntVar()
         Checkbutton(self.tab4_settings,
                     text="Sound",

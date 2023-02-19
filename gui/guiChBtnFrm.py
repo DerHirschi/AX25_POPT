@@ -137,6 +137,7 @@ class ChBtnFrm:
             self.main_class.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
 
         self.ch_btn_status_update()
+        self.main_class.change_conn_btn()
 
     def ch_btn_alarm(self, btn: tk.Button):
         if self.ch_btn_blink_timer < time.time():

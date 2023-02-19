@@ -65,10 +65,12 @@ class TkMainWin:
         self.ch_alarm = False
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
+        self.non_prio_task_timer = time.time()
         ####################
         # GUI PARAM
         self.parm_btn_blink_time = 0.3
         self.parm_rx_beep_cooldown = 1.5
+        self.parm_non_prio_task_timer = 0.5
         ###############
         self.text_size = int(TEXT_SIZE)
         ######################################
@@ -83,10 +85,10 @@ class TkMainWin:
         self.main_win.columnconfigure(0, minsize=500, weight=1)
         self.main_win.columnconfigure(1, minsize=2, weight=5)
         self.main_win.rowconfigure(0, minsize=3, weight=1)     # Boarder
-        self.main_win.rowconfigure(1, minsize=40, weight=1)     # BTN SIDE
-        self.main_win.rowconfigure(2, minsize=200, weight=2)
-        self.main_win.rowconfigure(3, minsize=25, weight=1)    # CH BTN
-        self.main_win.rowconfigure(4, minsize=3, weight=1)    # Boarder
+        #self.main_win.rowconfigure(1, minsize=0, weight=1)     # BTN SIDE
+        self.main_win.rowconfigure(1, minsize=200, weight=2)
+        self.main_win.rowconfigure(2, minsize=25, weight=1)    # CH BTN
+        self.main_win.rowconfigure(3, minsize=3, weight=1)    # Boarder
 
         ############################
 
@@ -111,7 +113,6 @@ class TkMainWin:
         # self.menubar.add_command(label="Debug")
         ############################
         ############################
-        ############################
 
         # Input Output TXT Frames and Status Bar
         self.txt_win = TxTframe(self)
@@ -120,46 +121,38 @@ class TkMainWin:
         self.mon_txt = self.txt_win.mon_txt
         # Channel Buttons
         self.ch_btn = ChBtnFrm(self)
-        self.ch_btn.ch_btn_frame.grid(row=3, column=0, columnspan=1, sticky="nsew")
-        ############################
-        # Conn BTN upper Side
-        self.btn_frame = tk.Frame(self.main_win, width=500, height=30)
-        self.btn_frame.grid(row=1, column=0, columnspan=1, sticky="nsew")
-        self.btn_frame.rowconfigure(0, minsize=10, weight=1)
-
-        self.btn_frame.columnconfigure(0, minsize=5, weight=0)
-        self.btn_frame.columnconfigure(1, minsize=5, weight=0)
-        self.btn_frame.columnconfigure(2, minsize=5, weight=0)
-        self.btn_frame.columnconfigure(3, minsize=5, weight=0)
-
-        self.btn_frame.columnconfigure(4, minsize=500, weight=1)
-
-        self.conn_btn = tk.Button(self.btn_frame, text="New Conn", bg="green", height=5, width=5, command=self.open_new_conn_win)
-        self.conn_btn.grid(row=0, column=0, sticky="nsew")
-        self.disco_btn = tk.Button(self.btn_frame, text="Disconnect", bg="red", height=5, width=5, command=self.disco_conn)
-        self.disco_btn.grid(row=0, column=1, sticky="nsew")
+        self.ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
         #########################
-        # Check Boxes Right Side
+        # BTN and Tabbed Frame right side
         self.side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
         self.side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
         self.side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)    # CONN BTN
-        self.side_btn_frame_top.rowconfigure(1, minsize=200, weight=0)    #
-        self.side_btn_frame_top.rowconfigure(2, minsize=300, weight=1)    # Reiter Frame
+        self.side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)    # BTN row 2
+        self.side_btn_frame_top.rowconfigure(2, minsize=50, weight=0)    # Dummy
+        self.side_btn_frame_top.rowconfigure(3, minsize=50, weight=2)    # Dummy
+        self.side_btn_frame_top.rowconfigure(4, minsize=300, weight=10)    # Reiter Frame
 
         self.side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
-        self.side_btn_frame_top.columnconfigure(1, minsize=30, weight=0)
-        self.side_btn_frame_top.columnconfigure(2, minsize=10, weight=0)
-        self.side_btn_frame_top.columnconfigure(3, minsize=30, weight=0)
-        self.side_btn_frame_top.columnconfigure(4, minsize=10, weight=1)
+        self.side_btn_frame_top.columnconfigure(1, minsize=100, weight=2)
+        self.side_btn_frame_top.columnconfigure(2, minsize=100, weight=2)
+        self.side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
+        self.side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
         self.side_btn_frame_top.columnconfigure(6, minsize=10, weight=10)
+        self.conn_btn = tk.Button(self.side_btn_frame_top,
+                                  text="New Conn",
+                                  bg="green",
+                                  width=8,
+                                  command=self.open_new_conn_win)
+        self.conn_btn.place(x=5, y=10)
         self.mh_btn = tk.Button(self.side_btn_frame_top,
                                 text="MH",
-                                bg="yellow", width=10, command=self.MH_win)
-        self.mh_btn.grid(row=0, column=1, sticky="nsew")
+                                bg="yellow", width=8, command=self.MH_win)
+
+        self.mh_btn.place(x=5, y=45)
         self.btn2 = tk.Button(self.side_btn_frame_top,
                               text="Dummy",
-                              bg="yellow", width=10)
-        self.btn2.grid(row=0, column=3, sticky="nsew")
+                              bg="yellow", width=8)
+        self.btn2.place(x=110, y=45)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         self.setting_sound = self.tabbed_sideFrame.sound_on
@@ -240,6 +233,15 @@ class TkMainWin:
         self.out_txt.configure(font=(FONT, self.text_size))
         self.mon_txt.configure(font=(FONT, self.text_size))
 
+    def change_conn_btn(self):
+        conn = self.get_conn(self.channel_index)
+        if conn:
+            self.conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
+        else:
+            self.conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
+
+    ###############
+    # Sound
     def pl_sound(self, snd_file: str):
         if self.setting_sound.get():
             threading.Thread(target=playsound, args=(snd_file,)).start()
@@ -262,6 +264,8 @@ class TkMainWin:
 
     def disco_snd(self):
         self.pl_sound('data/sound/disco_alarm.wav')
+    # Sound Ende
+    #################
     # no WIN FNC
     ##########################
 
@@ -288,8 +292,6 @@ class TkMainWin:
         else:
             self.txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_param().rx_beep_opt = rx_beep_check
-        self.rx_beep()
-
         ts_check = self.txt_win.ts_box_var.get()
         if ts_check:
             self.txt_win.ts_box_box.configure(bg='green', activebackground='green')
@@ -297,8 +299,11 @@ class TkMainWin:
             self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_param().timestamp_opt = ts_check
 
-        # print(float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")))
-        self.tabbed_sideFrame.update_side_mh()
+        if time.time() > self.non_prio_task_timer:
+            self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
+            self.change_conn_btn()
+            self.tabbed_sideFrame.update_side_mh()
+            self.rx_beep()
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 
@@ -458,6 +463,7 @@ class TkMainWin:
                 self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
             self.destroy_new_conn_win()
             self.ch_btn_status_update()
+            self.change_conn_btn()
 
     def destroy_new_conn_win(self):
         self.new_conn_win.destroy()

@@ -148,7 +148,7 @@ class TxTframe:
 
         # place the panedwindow on the root window
         self.pw.pack(fill=tk.BOTH, expand=False)
-        self.pw.grid(row=2, column=0, sticky="nsew")
+        self.pw.grid(row=1, column=0, sticky="nsew")
 
     def update_status_win(self):
         """
