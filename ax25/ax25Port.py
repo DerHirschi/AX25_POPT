@@ -78,14 +78,14 @@ class AX25Port(threading.Thread):
         self.beacons_dict: {int: Beacon} = {}
         ##############
         # Beacon TEST
-
+        """
         test_beacon_fr = AX25Frame()
         test_beacon_fr.from_call.call = 'MD7TES'
         test_beacon_fr.to_call.call = 'TEST'
         test_beacon_fr.data = b'=== TEST Beacon ==='
         test_beacon = Beacon(test_beacon_fr, 2, 0)
         self.beacons_dict[0] = test_beacon
-
+        """
         # AXIP VARs
         self.own_ipAddr = ''
         # self.to_call_ip_addr = ('', 0)
