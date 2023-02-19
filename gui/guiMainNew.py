@@ -64,6 +64,7 @@ class TkMainWin:
         self.ch_alarm = False
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
+        self.mon_mode = False
         self.non_prio_task_timer = time.time()
         ####################
         # GUI PARAM
@@ -87,7 +88,7 @@ class TkMainWin:
         #self.main_win.rowconfigure(1, minsize=0, weight=1)     # BTN SIDE
         self.main_win.rowconfigure(1, minsize=200, weight=2)
         self.main_win.rowconfigure(2, minsize=25, weight=1)    # CH BTN
-        self.main_win.rowconfigure(3, minsize=3, weight=1)    # Boarder
+        self.main_win.rowconfigure(3, minsize=3, weight=0)    # Boarder
 
         ############################
 
@@ -148,10 +149,10 @@ class TkMainWin:
                                 bg="yellow", width=8, command=self.MH_win)
 
         self.mh_btn.place(x=5, y=45)
-        self.btn2 = tk.Button(self.side_btn_frame_top,
-                              text="Dummy",
-                              bg="yellow", width=8)
-        self.btn2.place(x=110, y=45)
+        self.mon_btn = tk.Button(self.side_btn_frame_top,
+                              text="Monitor",
+                              bg="yellow", width=8, command=self.txt_win.switch_mon_mode)
+        self.mon_btn.place(x=110, y=45)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         self.setting_sound = self.tabbed_sideFrame.sound_on

@@ -37,7 +37,7 @@ class MHWin:
             c1 = tk.Entry(self.win, width=5)
             d1 = tk.Entry(self.win, width=5)
             e1 = tk.Entry(self.win, width=25)
-            f1 = tk.Entry(self.win, width=18)
+            f1 = tk.Entry(self.win, width=20)
             a1.grid(row=ind, column=0, padx=10)
             b1.grid(row=ind, column=1)
             c1.grid(row=ind, column=2)

@@ -189,16 +189,31 @@ class NewConnWin:
             ax_frame.to_call.ssid = call_obj.ssid
             ax_frame.via_calls = call_obj.via
             if self.ax25_port_handler.ax25_ports[self.port_index][0].port_typ == 'AXIP':
+                mh_ent = self.mh.mh_get_last_ip(call_obj.call_str)
+                # Just if u switch after enter in call
                 axip_ip = self.ax_ip_ip[1].get('0.0', tk.END)[:-1]
                 axip_port = self.ax_ip_port[1].get('0.0', tk.END)[:-1]
                 check_ip = axip_ip.split('.')
+                if not axip_ip:
+                    if mh_ent[1]:
+                        ip = mh_ent[0]
+                        prt = str(mh_ent[1])
+                        self.ax_ip_ip[1].delete('1.0', tk.END)
+                        self.ax_ip_ip[1].insert(tk.END, ip)
+                        self.ax_ip_port[1].delete('1.0', tk.END)
+                        self.ax_ip_port[1].insert(tk.END, prt)
+                        axip_port = prt
+                        axip_ip = ip
+                        check_ip = axip_ip.split('.')
+                else:
+                    check_ip = axip_ip.split('.')
                 tr = True
                 for el in check_ip:
                     if not el.isdigit():
                         tr = False
                 if len(check_ip) == 4 and axip_port.isdigit() and tr:
                     ax_frame.axip_add = axip_ip, int(axip_port)
-                    print('CHECK')
+                    # print('CHECK')
 
             # TODO Error or Not Processing if no IP
             ax_frame.ctl_byte.SABMcByte()

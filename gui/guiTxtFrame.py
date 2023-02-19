@@ -24,6 +24,10 @@ class TxTframe:
         self.pw = ttk.PanedWindow(orient=tk.VERTICAL)
         self.main_class = main_win
         self.text_size = main_win.text_size
+        self.mon_txt_height = 0
+        self.out_txt_height = 0
+        self.inp_txt_height = 0
+        # self.mon_btn: tk.Button = main_win.mon_btn
         ###################
         # Input Win
         self.status_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
@@ -212,3 +216,54 @@ class TxTframe:
             self.status_n2.configure(text="", bg=STAT_BAR_CLR)
             self.status_t1.configure(text="", bg=STAT_BAR_CLR)
             self.status_t3.configure(text="", bg=STAT_BAR_CLR)
+
+    def switch_mon_mode(self):
+        # TODO Save Stretched Positions
+        if self.main_class.mon_mode:
+            self.main_class.mon_mode = False
+            self.main_class.mon_btn.configure(bg='yellow')
+            self.pw.remove(self.status_frame)
+            self.pw.remove(self.mon_txt)
+            self.pw.configure(height=800)
+
+            self.pw.add(self.status_frame, weight=1)
+            self.pw.add(self.out_txt_win, weight=1)
+            self.pw.add(self.mon_txt, weight=1)
+
+            #self.status_frame.configure(height=self.inp_txt_height)
+            """
+            self.status_frame.configure(height=self.inp_txt_height)
+            self.out_txt_win.configure(height=self.out_txt_height)
+            self.mon_txt.configure(height=self.mon_txt_height)
+            """
+            self.status_frame.configure(height=10)
+            self.out_txt_win.configure(height=10)
+            self.mon_txt.configure(height=10)
+            """
+            self.mon_txt.update()
+            self.out_txt_win.update()
+            self.status_frame.update()
+            """
+            self.main_class.ch_btn_status_update()
+
+            #self.mon_txt.configure(height=self.mon_txt_height)
+        else:
+            self.main_class.mon_mode = True
+            self.main_class.mon_btn.configure(bg='green')
+
+            self.mon_txt_height = self.mon_txt.cget('height')
+            self.out_txt_height = self.out_txt_win.cget('height')
+            self.inp_txt_height = self.status_frame.cget('height')
+            # pw_height = self.pw.cget('height')
+            self.pw.remove(self.out_txt_win)
+            self.pw.configure(height=800)
+            self.status_frame.configure(height=1)
+            self.main_class.ch_btn_status_update()
+            # self.mon_txt.configure(height=500)
+
+            """
+            self.mon_txt.update()
+            self.out_txt_win.update()
+            self.status_frame.update()
+            self.pw.update()
+            """
