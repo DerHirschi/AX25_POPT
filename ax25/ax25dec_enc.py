@@ -527,6 +527,7 @@ class AX25Frame(object):
         self.data = b''
         self.data_len = 0
         self.addr_uid = ''          # Unique ID/Address String
+        self.axip_add = '', 0       # For AXIP Handling
 
     def build_uid(self, dec=True):
         self.addr_uid = '{}:{}'.format(

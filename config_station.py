@@ -109,8 +109,8 @@ class Port1(DefaultPortConfig):
 
 class Port2(DefaultPortConfig):
     parm_PortName = 'AXIP'
-    parm_PortTyp = 'AXIPCL'
-    parm_PortParm = ('192.168.178.160', 8093)
+    parm_PortTyp = 'AXIP'
+    parm_PortParm = ('0.0.0.0', 8093)      # outgoing IP when want not using standard PC IP  , Port
     parm_StationCalls = ['MD7TES', 'MD6TES-2']
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False

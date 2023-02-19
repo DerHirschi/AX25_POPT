@@ -15,7 +15,7 @@ class MyHeard(object):
     def __init__(self):
         self.own_call = ''
         self.to_calls = ["""call_str"""]
-        # TODO Routen/VIA
+        self.route = ''
         self.port = ''
         self.first_seen = get_time_str()
         self.last_seen = get_time_str()
@@ -46,7 +46,7 @@ class MH(object):
     def __del__(self):
         pass
 
-    def mh_inp(self, ax25_frame: AX25Frame, port_id, axip_add=None):
+    def mh_inp(self, ax25_frame: AX25Frame, port_id):
         ########################
         # Call Stat
         call_str = ax25_frame.from_call.call_str
@@ -55,10 +55,18 @@ class MH(object):
             ent = MyHeard()
             ent.own_call = call_str
             ent.to_calls = [ax25_frame.to_call.call_str]
+            if ax25_frame.via_calls:
+                for call in ax25_frame.via_calls:
+                    ent.route += call.call_str
+                    if call.call_str != ax25_frame.via_calls[-1].call_str:
+                        ent.route += '>'
+            else:
+                ent.route = []
             ent.port = port_id
             ent.byte_n = ax25_frame.data_len
             ent.h_byte_n = len(ax25_frame.hexstr) - ax25_frame.data_len
-            ent.axip_add = axip_add
+            if ax25_frame.axip_add[0]:
+                ent.axip_add = ax25_frame.axip_add
             if ax25_frame.ctl_byte.flag == 'REJ':
                 ent.rej_n = 1
             self.calls[call_str] = ent
@@ -108,10 +116,11 @@ class MH(object):
         return config.ax_ports[p_id]
     """
 
-    def mh_get_last_ip(self, call_str):
-        out = self.mh_get_data_fm_call(call_str)
-        out = out['axip_add']
-        return out
+    def mh_get_last_ip(self, call_str: str):
+        if call_str:
+            if call_str in self.calls.keys():
+                return self.calls[call_str].axip_add
+        return '', 0
 
     def mh_out_cli(self):
         out = ''

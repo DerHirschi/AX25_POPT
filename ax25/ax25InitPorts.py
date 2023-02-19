@@ -9,7 +9,7 @@ class AX25PortHandler(object):
         ax25types = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
-            'AXIPCL': AXIPClient,
+            'AXIP': AXIP,
         }
         self.ax25_ports: {int: (AX25Port, DefaultPortConfig)} = {}
         self.mh_list = ax25.ax25Statistics.MH()
@@ -60,6 +60,9 @@ class AX25PortHandler(object):
 
     def __del__(self):
         self.close_all_ports()
+
+    def get_port_by_index(self, index: int):
+        return self.ax25_ports[index][0]
 
     def close_all_ports(self):
         for k in self.ax25_ports.keys():

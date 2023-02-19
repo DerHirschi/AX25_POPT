@@ -45,7 +45,9 @@ class AX25Conn(object):
             self.is_gui = True
         # AX25 Frame for Connection Initialisation.
         self.ax25_out_frame = AX25Frame()   # Predefined AX25 Frame for Output
-        """ Config new Connection"""
+        """ Config new Connection Address """
+        self.ax25_out_frame.axip_add = ax25_frame.axip_add
+        self.axip_add = self.ax25_out_frame.axip_add
         if rx:
             self.ax25_out_frame.addr_uid = str(reverse_uid(ax25_frame.addr_uid))  # Unique ID for Connection
             self.ax25_out_frame.to_call = ax25_frame.from_call
@@ -64,6 +66,8 @@ class AX25Conn(object):
             if self.ax25_out_frame.addr_uid != ax25_frame.addr_uid:
                 self.ax25_out_frame.addr_uid = ax25_frame.addr_uid  # Unique ID for Connection
         self.my_call_obj = self.ax25_out_frame.from_call
+        print('self.axip_add')
+        print(self.axip_add)
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
         """ IO Buffer Packet For Handling """
@@ -243,6 +247,7 @@ class AX25Conn(object):
         pac.to_call = self.ax25_out_frame.to_call
         pac.via_calls = self.ax25_out_frame.via_calls
         pac.addr_uid = self.ax25_out_frame.addr_uid
+        pac.axip_add = self.ax25_out_frame.axip_add
         self.ax25_out_frame = pac
 
     def build_I_fm_raw_buf(self):
@@ -402,7 +407,6 @@ class S1Frei(DefaultStat):  # INIT RX
 
     def rx(self, ax25_frame: AX25Frame):
         flag = ax25_frame.ctl_byte.flag
-
         if flag == 'SABM':
             # Handle Incoming Connection
             self.ax25conn.send_UA()
@@ -413,20 +417,13 @@ class S1Frei(DefaultStat):  # INIT RX
                 self.ax25conn.prt_hndl.insert_conn2all_conn_var(new_conn=self.ax25conn)
             if self.ax25conn.is_gui:
                 self.ax25conn.gui.new_conn_snd()
-            # Process CLI ( C-Text and so on )
-            self.ax25conn.exec_cli()
+            self.ax25conn.exec_cli()  # Process CLI ( C-Text and so on )
         elif ax25_frame.ctl_byte.pf and flag in ['I', 'RR', 'REJ', 'SREJ', 'RNR', 'DISC', 'FRMR']:
             self.ax25conn.send_DM()
             self.ax25conn.set_T1(stop=True)
             self.ax25conn.set_T2(stop=True)
-            # self.ax25conn.n2 = 100
-            self.change_state(0)
-            """
-            if self.ax25conn.is_prt_hndl:
-                self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
-            """
+            self.ax25conn.n2 = 100
         else:
-            # self.ax25conn.n2 = 100
             self.change_state(0)
 
 

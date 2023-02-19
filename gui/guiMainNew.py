@@ -9,6 +9,7 @@ from playsound import playsound
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
 from gui.guiMH import MHWin
+from gui.guiNewConnWin import NewConnWin
 from gui.guiSideFrame import SideTabbedFrame
 from main import VER, AX25PortHandler, AX25Frame, Call
 from ax25.ax25Connection import AX25Conn
@@ -47,13 +48,11 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler: AX25PortHandler = port_handler
         # Default Port 0
-        self.ax25_port_index = 0
-        self.ax25_ports = self.ax25_port_handler.ax25_ports[self.ax25_port_index]
-        cfg = self.ax25_ports[1]    # TODO
+        ax25_ports = self.ax25_port_handler.ax25_ports[0]
+        cfg = ax25_ports[1]
         # Globals
         self.mh = cfg.glb_mh
         self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
-
         #######################
         # Window Text Buffers
         self.win_buf: {int: ChVars} = {}
@@ -356,107 +355,8 @@ class TkMainWin:
     ##########################
     # New Connection WIN
     def open_new_conn_win(self):
-        # TODO
         if self.new_conn_win is None:
-            self.new_conn_win = tk.Tk()
-            self.new_conn_win.title("New Connection")
-            self.new_conn_win.geometry("600x185")
-            self.new_conn_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
-            self.new_conn_win.resizable(False,False)
-            self.new_conn_win.columnconfigure(0, minsize=20, weight=1)
-            self.new_conn_win.columnconfigure(1, minsize=100, weight=1)
-            self.new_conn_win.columnconfigure(2, minsize=50, weight=5)
-            self.new_conn_win.columnconfigure(3, minsize=120, weight=1)
-            self.new_conn_win.columnconfigure(4, minsize=20, weight=1)
-            self.new_conn_win.rowconfigure(0, minsize=38, weight=3)
-            self.new_conn_win.rowconfigure(1, minsize=5, weight=5)
-            self.new_conn_win.rowconfigure(2, minsize=35, weight=3)
-            self.new_conn_win.rowconfigure(3, minsize=5, weight=1)
-            self.new_conn_win.rowconfigure(4, minsize=40, weight=3)
-            self.new_conn_win.rowconfigure(5, minsize=40, weight=1)
-            options = [
-                "Port-0",
-                "Port-1",
-                "Port-2",
-                "Port-3",
-            ]
-
-            # datatype of menu text
-            port = tk.StringVar()
-            port.set("Port-0")
-
-            # Create Dropdown menu
-            drop = OptionMenu(self.new_conn_win, port, *options)
-            drop.configure(bg='grey80', foreground='black', width=50, height=5, direction='above')
-
-            drop.grid(row=1, column=1, columnspan=1, sticky="nsew")
-            call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black', font=("TkFixedFont", 12),
-                                   height=5)
-            call_txt_inp.grid(row=1, column=3, columnspan=1, sticky="nsew")
-
-            conn_btn = tk.Button(self.new_conn_win,
-                                 text="Los", bg="green",
-                                 command=lambda: self.process_new_conn_win(call_txt_inp, port))
-            conn_btn.grid(row=4, column=1, sticky="nsew")
-            call_txt_inp.focus_set()
-            ##############
-            # KEY BINDS
-            self.new_conn_win.bind('<Return>', lambda event: self.process_new_conn_win(call_txt_inp, port))
-            self.new_conn_win.bind('<KP_Enter>', lambda event: self.process_new_conn_win(call_txt_inp, port))
-            self.new_conn_win.bind('<Escape>', lambda event: self.destroy_new_conn_win())
-
-    def process_new_conn_win(self, call_txt: tk.Text, port: tk.StringVar):
-        txt_win = call_txt
-        call = txt_win.get('0.0', tk.END)
-        call = call.split('\r')[0]
-        call = call.split('\n')[0]
-        call = call.split(' ')
-        via = []
-        if len(call) > 1:
-            via = call[1:]
-        call = call[0]
-        call = call.replace(' ', '')
-
-        port = port.get()
-        if port:
-            self.ax25_port_index = int(port.replace('Port-', ''))
-        else:
-            self.ax25_port_index = 0
-        # print(str(port))
-        # print(str(self.ax25_port_index))
-        call = call.split('-')
-        if 6 >= len(call[0]) > 1:
-
-            ax_frame = AX25Frame()
-            ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].my_stations[0]  # TODO select outgoing call
-            # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
-            ax_frame.to_call.call = call[0].upper()
-            if len(call) > 1:
-                if call[1].isdigit():
-                    ax_frame.to_call.ssid = int(call[1])
-            # via1 = Call()
-            # via1.call = 'DNX527'
-            ax_frame.via_calls = []
-            for c in via:
-                new_c = Call()
-                new_c.call_str = c.upper()
-                ax_frame.via_calls.append(new_c)
-
-            ax_frame.ctl_byte.SABMcByte()
-            conn = self.ax25_port_handler.ax25_ports[self.ax25_port_index][0].new_connection(ax25_frame=ax_frame)
-            if conn:
-                # conn: AX25Conn
-                self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.channel_index)
-            else:
-                self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
-            self.destroy_new_conn_win()
-            self.ch_btn_status_update()
-            self.change_conn_btn()
-
-    def destroy_new_conn_win(self):
-        self.new_conn_win.destroy()
-        self.new_conn_win = None
-
+            self.new_conn_win = NewConnWin(self)
     # New Connection WIN ENDE
     ##########################
 

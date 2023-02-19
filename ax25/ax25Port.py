@@ -23,6 +23,11 @@ class AX25DeviceFAIL(Exception):
     logger.error('AX25DeviceFAIL while try Sending Data !')
 
 
+class RxBuf:
+    axip_add = '', 0
+    raw_data = b''
+
+
 class AX25Port(threading.Thread):
     def __init__(self, station_cfg):
         super(AX25Port, self).__init__()
@@ -37,6 +42,7 @@ class AX25Port(threading.Thread):
         self.station_cfg = station_cfg
         self.port_param = self.station_cfg.parm_PortParm
         self.portname = self.station_cfg.parm_PortName
+        self.port_typ = self.station_cfg.parm_PortTyp
         self.my_stations = self.station_cfg.parm_StationCalls
         self.is_stupid_digi = self.station_cfg.parm_is_StupidDigi
         self.is_smart_digi = self.station_cfg.parm_isSmartDigi
@@ -48,34 +54,25 @@ class AX25Port(threading.Thread):
         #############
         # VARS
         self.loop_is_running = False
-        #############
         self.monitor = ax25monitor.Monitor()
-        self.MYHEARD = self.station_cfg.glb_mh
+        self.mh = self.station_cfg.glb_mh
         self.port_hndl = self.station_cfg.glb_port_handler
-        # self.gui = self.station_cfg.glb_gui
         self.gui = None
         self.is_gui = False
         self.connections: {str: AX25Conn} = {}
         self.device = None
+        # AXIP VARs
+        self.own_ipAddr = ''
+        # self.to_call_ip_addr = ('', 0)
         try:
             self.init()
         except AX25DeviceFAIL as e:
             raise e
-        """
-        self.dw_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
-        try:
-            self.dw_sock.connect(self.address)
-            self.dw_sock.settimeout(sock_timeout)
-        except (OSError, ConnectionRefusedError, ConnectionError) as e:
-            logger.error('Error. Cant connect to Direwolf {}'.format(self.address))
-            logger.error('{}'.format(e))
-            raise e
-        """
+
     def set_gui(self, gui):
         if self.gui is None:
             self.gui = gui
             self.is_gui = True
-
 
     def init(self):
         pass
@@ -84,7 +81,7 @@ class AX25Port(threading.Thread):
         self.loop_is_running = False
 
     def rx(self):
-        return b''
+        return RxBuf()
 
     def tx(self, frame: AX25Frame):
         pass
@@ -101,7 +98,7 @@ class AX25Port(threading.Thread):
                                        tx=False)
         # self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
-        self.MYHEARD.mh_inp(ax25_frame, self.portname)
+        self.mh.mh_inp(ax25_frame, self.portname)
         # Existing Connections
         uid = str(ax25_frame.addr_uid)
         if uid in self.connections.keys():
@@ -257,7 +254,6 @@ class AX25Port(threading.Thread):
         ax25_frame.encode()
         # print("Same UID ?? --  {}".format(ax25_frame.addr_uid))
         # print("Same UID connections?? --  {}".format(self.connections.keys()))
-
         # ax25_frame.addr_uid = reverse_uid(ax25_frame.addr_uid)
         while ax25_frame.addr_uid in self.connections.keys() or\
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
@@ -268,7 +264,6 @@ class AX25Port(threading.Thread):
             if ax25_frame.from_call.ssid > 15:
                 return False
             ax25_frame.encode()
-
         conn = AX25Conn(ax25_frame, cfg, rx=False)
         conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn
@@ -297,19 +292,20 @@ class AX25Port(threading.Thread):
         while self.loop_is_running:
             try:
                 ##############################################
-                buf = self.rx()
+                buf: RxBuf = self.rx()
                 ##############################################
                 logger.debug('Inp Buf> {}'.format(buf))
             except AX25DeviceERROR:
                 break
 
-            if buf:  # RX ############
+            if buf.raw_data:  # RX ############
                 self.set_TXD()
                 ax25frame = AX25Frame()
+                ax25frame.axip_add = buf.axip_add
                 e = None
                 try:
                     # Decoding
-                    ax25frame.decode(buf)
+                    ax25frame.decode(buf.raw_data)
                 except DecodingERROR as e:
                     logger.error('{}.decoding: {}'.format(self.portname, e))
                     break
@@ -340,6 +336,7 @@ class KissTCP(AX25Port):
 
     def init(self):
         print("KISS TCP INIT")
+        logger.info("KISS TCP INIT")
         sock_timeout = 0.5
         self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         try:
@@ -364,9 +361,10 @@ class KissTCP(AX25Port):
         except socket.timeout:
             # self.device.close()
             raise AX25DeviceERROR
+        ret = RxBuf()
         if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
-            return recv_buff[2:-1]
-        return b''
+            ret.raw_data = recv_buff[2:-1]
+        return ret
 
     def tx(self, frame: AX25Frame):
         ############################################
@@ -388,6 +386,7 @@ class KISSSerial(AX25Port):
 
     def init(self):
         print("KISS Serial INIT")
+        logger.info("KISS Serial INIT")
         try:
             self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.5)
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
@@ -421,13 +420,13 @@ class KISSSerial(AX25Port):
                     logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                     raise AX25DeviceFAIL
             else:
+                ret = RxBuf()
                 if recv_buff:
                     # print(recv_buff)
                     if len(recv_buff) > 14:  # ? Min Pack Len 17
                         if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
-                            return recv_buff[2:-1]
-                else:
-                    return b''
+                            ret.raw_data = recv_buff[2:-1]
+                return ret
 
     def tx(self, frame: AX25Frame):
         try:
@@ -442,13 +441,20 @@ class KISSSerial(AX25Port):
                 raise AX25DeviceFAIL
 
 
-class AXIPClient(AX25Port):
+class AXIP(AX25Port):
 
     def init(self):
         print("AXIP Client INIT")
+        logger.info("AXIP Client INIT")
+        if not self.port_param[0]:
+            hostname = socket.gethostname()
+            self.port_param = socket.gethostbyname(hostname), self.port_param[1]
+        self.own_ipAddr = self.port_param[0]
+        print(self.own_ipAddr)
         sock_timeout = 0.5
         self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.device.settimeout(sock_timeout)
+        self.device.bind(self.port_param)
 
     def __del__(self):
         self.loop_is_running = False
@@ -460,19 +466,22 @@ class AXIPClient(AX25Port):
 
     def rx(self):
         try:
-            recv_buff = self.device.recv(400)
+            udp_recv = self.device.recvfrom(400)
         except socket.error:
             raise AX25DeviceERROR
+        recv_buff = udp_recv[0]
+        to_call_ip_addr = udp_recv[1]
         ###################################
         # CRC
         crc = recv_buff[-2:]
         crc = int(bytearray2hexstr(crc[::-1]), 16)
         pack = recv_buff[:-2]
         calc_crc = crc_x25(pack)
-        ###################################
+        ret = RxBuf()
+        ret.axip_add = to_call_ip_addr
         if calc_crc == crc:
-            return pack
-        return b''
+            ret.raw_data = pack
+        return ret
 
     def tx(self, frame: AX25Frame):
         ###################################
@@ -481,9 +490,9 @@ class AXIPClient(AX25Port):
         calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
         ###################################
         try:
-            self.device.sendto(frame.hexstr + calc_crc, self.port_param)
+            self.device.sendto(frame.hexstr + calc_crc, frame.axip_add)
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
-            logger.error('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(self.port_param))
+            logger.error('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
             logger.error('{}'.format(e))
             try:
                 self.init()

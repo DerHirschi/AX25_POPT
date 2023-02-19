@@ -93,4 +93,6 @@ class SideTabbedFrame:
             self.side_mh[c][2].insert(0, el.pac_n)
             self.side_mh[c][3].delete(0, tk.END)
             self.side_mh[c][3].insert(0, el.rej_n)
+            self.side_mh[c][4].delete(0, tk.END)
+            self.side_mh[c][4].insert(0, el.route)
             c += 1
