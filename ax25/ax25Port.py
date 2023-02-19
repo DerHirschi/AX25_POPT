@@ -3,6 +3,7 @@ import socket
 import serial
 import threading
 import time
+from datetime import datetime
 import crcmod
 
 import ax25.ax25Statistics
@@ -28,17 +29,30 @@ class RxBuf:
     raw_data = b''
 
 
+class Beacon:
+    def __init__(self, ax25_frame: AX25Frame, repeat_time: int, move_time: int, aprs: bool = False):
+        self.ax_frame = ax25_frame
+        self.repeat_time = repeat_time
+        self.move_time = move_time
+        self.cooldown = time.time()
+        self.next_run = int(datetime.now().strftime("%M")) + move_time
+        self.is_enabled = True
+        self.ax_frame.ctl_byte.UIcByte()
+        if aprs:
+            self.ax_frame.ctl_byte.cmd = False
+        else:
+            self.ax_frame.ctl_byte.cmd = True
+        self.ax_frame.encode()
+
+
 class AX25Port(threading.Thread):
     def __init__(self, station_cfg):
         super(AX25Port, self).__init__()
-        print("PORT INIT")
         """ self.ax25_port_handler will be set in AX25PortInit """
         self.ax25_ports: {int: AX25Port}
         self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
-        # self.mh_list: ax25.ax25Statistics.MH
         ############
         # CONFIG
-        # self.device = None
         self.station_cfg = station_cfg
         self.port_param = self.station_cfg.parm_PortParm
         self.portname = self.station_cfg.parm_PortName
@@ -61,6 +75,17 @@ class AX25Port(threading.Thread):
         self.is_gui = False
         self.connections: {str: AX25Conn} = {}
         self.device = None
+        self.beacons_dict: {int: Beacon} = {}
+        ##############
+        # Beacon TEST
+
+        test_beacon_fr = AX25Frame()
+        test_beacon_fr.from_call.call = 'MD7TES'
+        test_beacon_fr.to_call.call = 'TEST'
+        test_beacon_fr.data = b'=== TEST Beacon ==='
+        test_beacon = Beacon(test_beacon_fr, 2, 0)
+        self.beacons_dict[0] = test_beacon
+
         # AXIP VARs
         self.own_ipAddr = ''
         # self.to_call_ip_addr = ('', 0)
@@ -199,6 +224,7 @@ class AX25Port(threading.Thread):
                                     self.connections[str(conn_out_uid)] = conn_out
 
     def tx_pac_handler(self):
+        tr = False
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
             if time.time() > conn.t2:
@@ -218,35 +244,58 @@ class AX25Port(threading.Thread):
 
                     try:
                         self.tx(frame=el)
+                        tr = True
                     except AX25DeviceFAIL as e:
                         raise e
-                    # self.connections[k].tx_buf_2send = self.connections[k].tx_buf_2send[1:]
-                    # Monitor
-                    # self.monitor.frame_inp(el, 'DW-TX')
                     cfg = self.station_cfg()
                     # Monitor
                     if self.is_gui:
                         self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
+            else:
+                tr = True
         # DIGI
         fr: AX25Frame
         for fr in self.digi_buf:
             try:
                 self.tx(frame=fr)
+                tr = True
             except AX25DeviceFAIL as e:
                 raise e
             # Monitor
-            # self.monitor.frame_inp(fr, self.portname)
             cfg = self.station_cfg()
             # Monitor
             if self.is_gui:
                 self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
         self.digi_buf = []
+        return tr
 
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
             conn.exec_cron()
+
+    def cron_port_handler(self):
+        """ Execute Port related Cronjob like Beacon sending"""
+        self.send_beacons()
+
+    def send_beacons(self):
+        # TODO to all AXIP Clients
+        for k in self.beacons_dict:
+            beacon: Beacon = self.beacons_dict[k]
+            if time.time() > beacon.cooldown:
+                now = datetime.now()
+                now_min = int(now.strftime("%M"))
+                if now_min == beacon.next_run + beacon.move_time:
+                    beacon.next_run = beacon.repeat_time + now_min
+                    if beacon.next_run > 59:
+                        beacon.next_run -= 60
+                    beacon.cooldown = time.time() + 60
+                    self.tx(beacon.ax_frame)
+                    # Monitor
+                    cfg = self.station_cfg()
+                    if self.is_gui:
+                        self.gui.update_monitor(self.monitor.frame_inp(beacon.ax_frame, self.portname), conf=cfg, tx=True)
 
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
@@ -285,10 +334,10 @@ class AX25Port(threading.Thread):
         if not self.loop_is_running:
             self.loop_is_running = True
             while self.loop_is_running:
-                self.run_once()
+                self.tasks()
                 time.sleep(0.1)
 
-    def run_once(self):
+    def tasks(self):
         while self.loop_is_running:
             try:
                 ##############################################
@@ -324,7 +373,9 @@ class AX25Port(threading.Thread):
             self.cron_pac_handler()
             # ######### TX #############
             # TX
-            self.tx_pac_handler()
+            block_tx = self.tx_pac_handler()
+            if not block_tx:
+                self.cron_port_handler()
 
         ############################
         ############################
