@@ -180,7 +180,7 @@ class TkMainWin:
         self.set_keybinds()
         ####
         # TEST
-        self.open_settings_win()
+        # self.open_settings_win()
         #######################
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
