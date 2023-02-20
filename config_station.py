@@ -26,7 +26,7 @@ class MD5TES(DefaultStation):
     stat_parm_Call = 'MD5TES'
     ##########################
     # Parameter for CLI
-    stat_parm_cli = NodeCLI
+    stat_parm_cli = UserCLI
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     stat_parm_cli_ctext = '-= TEST C-TEXT MD5TES -Port0 =-\r\r'
     stat_parm_cli_bye_text = '73 ...\r'
@@ -161,7 +161,7 @@ class Port1(DefaultPortConfig):
 
 
 class Port2(DefaultPortConfig):
-    parm_Stations = [MD6TES]
+    parm_Stations = [MD5TES, MD6TES]
     parm_PortName = 'AXIP'
     parm_PortTyp = 'AXIP'
     parm_PortParm = ('0.0.0.0', 8093)      # outgoing IP when want not using standard PC IP  , Port

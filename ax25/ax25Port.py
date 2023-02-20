@@ -519,7 +519,7 @@ class AXIP(AX25Port):
 
     def rx(self):
         try:
-            udp_recv = self.device.recvfrom(3000)
+            udp_recv = self.device.recvfrom(800)
         except socket.error:
             raise AX25DeviceERROR
         recv_buff = udp_recv[0]

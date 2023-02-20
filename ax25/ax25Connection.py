@@ -109,14 +109,15 @@ class AX25Conn(object):
         }
         """ MH for CLI """
         # self.mh = cfg.parm_mh
-        self.cli = NoneCLI(self)
+        # self.cli = NoneCLI(self)
         """ Station Individual Parameter """
         if self.my_call_obj.call_str in cfg.parm_StationCalls:
             self.parm_PacLen = cfg.parm_stat_PacLen[self.my_call_obj.call_str]      # Max Pac len
             self.parm_MaxFrame = cfg.parm_stat_MaxFrame[self.my_call_obj.call_str]  # Max Pac
             """ Init CLI """
             self.cli = cfg.parm_cli[self.my_call_obj.call_str](self)
-
+        else:
+            self.cli = NoneCLI(self)
         """ DIGI / Link to other Connection for Auto processing """
         self.DIGI_Connection: AX25Conn
         self.is_link = False
@@ -129,6 +130,7 @@ class AX25Conn(object):
             self.zustand_exec = S1Frei(self)
         else:
             self.zustand_exec = S2Aufbau(self)
+            self.cli.change_cli_state(1)
             # self.prt_hndl.insert_conn2all_conn_var(new_conn=self)
             self.set_T3()
 
