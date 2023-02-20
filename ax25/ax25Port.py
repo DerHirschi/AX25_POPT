@@ -53,7 +53,7 @@ class AX25Port(threading.Thread):
         self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
         ############
         # CONFIG
-        self.station_cfg = station_cfg()
+        self.station_cfg = station_cfg
         self.port_param = self.station_cfg.parm_PortParm
         self.portname = self.station_cfg.parm_PortName
         self.port_typ = self.station_cfg.parm_PortTyp

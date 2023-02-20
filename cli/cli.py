@@ -5,6 +5,7 @@ import main
 
 
 class DefaultCLI(object):
+    cli_name = ''  # DON'T CHANGE !
     c_text = '-= Test C-TEXT =-\r\r'
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION>'
@@ -207,6 +208,7 @@ class DefaultCLI(object):
 
 
 class NodeCLI(DefaultCLI):
+    cli_name = 'NODE'  # DON'T CHANGE !
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-NODE-CLI>'
@@ -226,6 +228,7 @@ class NodeCLI(DefaultCLI):
 
 
 class UserCLI(DefaultCLI):
+    cli_name = 'USER'   # DON'T CHANGE !
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-User-CLI>'
@@ -246,6 +249,8 @@ class UserCLI(DefaultCLI):
 
 class NoneCLI(DefaultCLI):
     """ ? To Disable CLI / Remote ? """
+    cli_name = 'NO-CLI'   # DON'T CHANGE !
+
     def exec_cmd(self):
         pass
 

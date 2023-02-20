@@ -1,4 +1,4 @@
-from cli.cli import *
+from cli.cli import DefaultCLI, UserCLI, NodeCLI, NoneCLI
 
 
 class DefaultStation(object):
@@ -26,7 +26,7 @@ class MD5TES(DefaultStation):
     stat_parm_Call = 'MD5TES'
     ##########################
     # Parameter for CLI
-    stat_parm_cli = UserCLI
+    stat_parm_cli = NodeCLI
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     stat_parm_cli_ctext = '-= TEST C-TEXT MD5TES -Port0 =-\r\r'
     stat_parm_cli_bye_text = '73 ...\r'
@@ -52,13 +52,13 @@ class MD6TES(DefaultStation):
 
 
 class DefaultPortConfig(object):
-    parm_Stations: [DefaultStation]
-    parm_StationCalls: [str] = []
+    parm_Stations: [DefaultStation] = []
     """ Port Parameter """
     parm_PortNr: int = -1
     parm_PortName: '' = ''
     parm_PortTyp: '' = ''   # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIPCL' AXIP UDP
     parm_PortParm = ''
+    # TODO DIGI is Station related
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isDigi is set to False
     parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
@@ -86,6 +86,7 @@ class DefaultPortConfig(object):
     glb_gui = None
 
     def __init__(self):
+        self.parm_StationCalls: [str] = []
         stat: DefaultStation
         for stat in self.parm_Stations:
             if stat.stat_parm_Call:
@@ -136,7 +137,7 @@ class Port0(DefaultPortConfig):
 
 
 class Port1(DefaultPortConfig):
-    parm_Stations = [MD5TES, MD6TES]
+    parm_Stations = [MD6TES]
     parm_PortName = 'DW2'
     parm_PortTyp = 'KISSTCP'
     parm_PortParm = ('192.168.178.150', 8001)
@@ -160,7 +161,7 @@ class Port1(DefaultPortConfig):
 
 
 class Port2(DefaultPortConfig):
-    parm_Stations = [MD5TES, MD6TES]
+    parm_Stations = [MD6TES]
     parm_PortName = 'AXIP'
     parm_PortTyp = 'AXIP'
     parm_PortParm = ('0.0.0.0', 8093)      # outgoing IP when want not using standard PC IP  , Port
@@ -184,7 +185,7 @@ class Port2(DefaultPortConfig):
 
 
 class Port3(DefaultPortConfig):
-    parm_Stations = [MD5TES, MD6TES]
+    parm_Stations = [MD6TES]
     parm_PortName = 'SER'
     parm_PortTyp = 'KISSSER'
     parm_PortParm = ('/dev/pts/9', 9600)

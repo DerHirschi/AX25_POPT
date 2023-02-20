@@ -11,13 +11,13 @@ from gui.guiChBtnFrm import ChBtnFrm
 from gui.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
 from gui.guiSideFrame import SideTabbedFrame
-from main import VER, AX25PortHandler, AX25Frame, Call
-from ax25.ax25Connection import AX25Conn
+from gui.guiStationSettings import StationSettingsWin
+from main import VER, AX25PortHandler, AX25Frame, Call, AX25Conn
 
 if 'linux' in sys.platform:
     from playsound import playsound
 elif 'win' in sys.platform:
-    from winsound import PlaySound, SND_FILENAME,SND_NOWAIT
+    from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
 
 
 logging.basicConfig(
@@ -102,19 +102,23 @@ class TkMainWin:
         ############################
         ##############
         # Menüleiste
-        self.menubar = Menu(self.main_win)
+        self.menubar = Menu(self.main_win, tearoff=False)
         self.main_win.config(menu=self.menubar)
         # Menü 1 "Verbindungen"
-        self.MenuVerb = Menu(self.menubar)
+        self.MenuVerb = Menu(self.menubar, tearoff=False)
         self.MenuVerb.add_command(label="Neu", command=self.open_new_conn_win)
         self.MenuVerb.add_command(label="Disconnect", command=self.disco_conn)
         self.MenuVerb.add_command(label="Quit", command=self.main_win.quit)
-        self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb)
+        self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb, underline=0)
         # Menü 2 "MH"
-        self.menubar.add_command(label="MH", command=self.MH_win)
+        self.menubar.add_command(label="MH", command=self.MH_win, underline=0)
         # Menü 3 "Tools"
-        self.MenuTools = Menu(self.menubar)
-        self.menubar.add_cascade(label="Tools", menu=self.MenuTools)
+        self.MenuTools = Menu(self.menubar, tearoff=False)
+        self.menubar.add_cascade(label="Tools", menu=self.MenuTools, underline=0)
+        # Menü 4 Einstellungen
+        self.MenuSettings = Menu(self.menubar, tearoff=False)
+        self.MenuSettings.add_command(label="Station", command=self.open_settings_win, underline=0)
+        self.menubar.add_cascade(label="Einstellungen", menu=self.MenuSettings, underline=0)
         # Menü 4 "Debug"
         # self.menubar.add_command(label="Debug")
         ############################
@@ -165,6 +169,7 @@ class TkMainWin:
         ############################
         # Windows
         self.new_conn_win = None
+        self.settings_win = None
         ###########################
         # Init
         # set GUI Var
@@ -173,6 +178,9 @@ class TkMainWin:
         self.ch_btn_status_update()
         # set KEY BINDS
         self.set_keybinds()
+        ####
+        # TEST
+        self.open_settings_win()
         #######################
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
@@ -367,9 +375,12 @@ class TkMainWin:
     def open_new_conn_win(self):
         if self.new_conn_win is None:
             self.new_conn_win = NewConnWin(self)
-    # New Connection WIN ENDE
-    ##########################
 
+    ##########################
+    # Settings WIN
+    def open_settings_win(self):
+        if self.settings_win is None:
+            self.settings_win = StationSettingsWin(self)
     # ##############
     # DISCO
     def disco_conn(self):

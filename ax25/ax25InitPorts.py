@@ -6,7 +6,7 @@ from config_station import *
 
 class AX25PortHandler(object):
     def __init__(self):
-        ax25types = {
+        self.ax25types = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
             'AXIP': AXIP,
@@ -19,17 +19,17 @@ class AX25PortHandler(object):
         # Init Ports/Devices with Config and running as Thread
         c = 0
         port_cfg: DefaultPortConfig
-        for port_cfg in [Port0,
-                         Port1,
-                         Port2,
-                         Port3,
-                         Port4,
-                         Port5,
-                         Port6,
-                         Port7,
-                         Port8,
-                         Port9,
-                         Port10
+        for port_cfg in [Port0(),
+                         Port1(),
+                         Port2(),
+                         Port3(),
+                         Port4(),
+                         Port5(),
+                         Port6(),
+                         Port7(),
+                         Port8(),
+                         Port9(),
+                         Port10()
                          ]:
             if port_cfg.parm_PortTyp:
                 port_cfg.parm_PortNr = c
@@ -40,7 +40,7 @@ class AX25PortHandler(object):
                 #########################
                 # Init Port/Device
                 try:
-                    temp = (ax25types[port_cfg.parm_PortTyp](port_cfg), port_cfg)
+                    temp = (self.ax25types[port_cfg.parm_PortTyp](port_cfg), port_cfg)
                 except AX25DeviceFAIL as e:
                     temp = False
                     logger.error('Could not initialise Port {}'.format(port_cfg.parm_PortNr))
