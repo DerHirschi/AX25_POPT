@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk, Menu, OptionMenu
 import logging
 import threading
-from playsound import playsound
+import sys
 
 # import config_station
 from gui.guiTxtFrame import TxTframe
@@ -13,6 +13,12 @@ from gui.guiNewConnWin import NewConnWin
 from gui.guiSideFrame import SideTabbedFrame
 from main import VER, AX25PortHandler, AX25Frame, Call
 from ax25.ax25Connection import AX25Conn
+
+if 'linux' in sys.platform:
+    from playsound import playsound
+elif 'win' in sys.platform:
+    from winsound import PlaySound, SND_FILENAME,SND_NOWAIT
+
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
@@ -244,7 +250,10 @@ class TkMainWin:
     # Sound
     def pl_sound(self, snd_file: str):
         if self.setting_sound.get():
-            threading.Thread(target=playsound, args=(snd_file,)).start()
+            if 'linux' in sys.platform:
+                threading.Thread(target=playsound, args=(snd_file,)).start()
+            elif 'win' in sys.platform:
+                threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
 
     def rx_beep(self):
         for k in self.win_buf.keys():
