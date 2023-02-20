@@ -1,21 +1,67 @@
 from cli.cli import *
 
 
-class DefaultPortConfig(object):
+class DefaultStation(object):
+    # parm_StationCalls: [''] = []
+    stat_parm_Call: ''
     ##########################
-    # Parameter for Connection
+    # Parameter for CLI
+    stat_parm_cli: DefaultCLI = DefaultCLI
+    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
+    stat_parm_cli_ctext: ''
+    stat_parm_cli_bye_text: ''
+    stat_parm_cli_prompt: ''
+    # Optional Parameter. Overrides Port Parameter
+    stat_parm_PacLen: int       # Max Pac len
+    stat_parm_MaxFrame: int     # Max (I) Frames
+
+
+class MD5TES(DefaultStation):
+    stat_parm_Call = 'MD5TES'
+    ##########################
+    # Parameter for CLI
+    stat_parm_cli = UserCLI
+    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
+    stat_parm_cli_ctext = '-= TEST C-TEXT MD5TES -Port0 =-\r\r'
+    stat_parm_cli_bye_text = '73 ...\r'
+    stat_parm_cli_prompt = '\rTEST-STATION---Port0>'
+    # Optional Parameter. Overrides Port Parameter
+    stat_parm_PacLen: int = 180   # Max Pac len
+    stat_parm_MaxFrame: int = 3   # Max (I) Frames
+
+
+class MD6TES(DefaultStation):
+    stat_parm_Call = 'MD6TES-2'
+    ##########################
+    # Parameter for CLI
+    stat_parm_cli = UserCLI
+
+    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
+    stat_parm_cli_ctext = '-= TEST C-TEXT MD5TES -Port0 =-\r\r'
+    stat_parm_cli_bye_text = '73 ...\r'
+    stat_parm_cli_prompt = '\rTEST-STATION---Port0>'
+    # Optional Parameter. Overrides Port Parameter
+    stat_parm_PacLen: int = 180   # Max Pac len
+    stat_parm_MaxFrame: int = 3   # Max (I) Frames
+
+
+class DefaultPortConfig(object):
+    parm_Stations: [DefaultStation]
+    parm_StationCalls: [str] = []
     """ Port Parameter """
     parm_PortNr: int = -1
     parm_PortName: '' = ''
     parm_PortTyp: '' = ''   # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIPCL' AXIP UDP
     parm_PortParm = ''
-    parm_StationCalls: [''] = []
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isDigi is set to False
     parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
     """ Connection Parameter """
     parm_PacLen = 170   # Max Pac len
     parm_MaxFrame = 5   # Max (I) Frames
+    parm_stat_PacLen: {str: int} = {}
+    parm_stat_MaxFrame: {str: int} = {}
+    ####################################
     parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
     parm_T2 = 3000      # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
     parm_T3 = 120       # T3 sek (Inactive Link Timer) Default:180 Sek
@@ -23,27 +69,47 @@ class DefaultPortConfig(object):
     parm_baud = 1200    # Baud for calculating Timer
     parm_full_duplex = False    # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
-    ##########################
-    # Parameter for CLI
-    parm_cli: {str: DefaultCLI}
-    parm_cli_ctext = ''
-    #####################
+    parm_cli: {str: DefaultCLI} = {}
     # Monitor Text Color
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
-
     ##########################
     # Global Objs
     glb_mh = None
     glb_port_handler = None
     glb_gui = None
 
+    def __init__(self):
+        stat: DefaultStation
+        for stat in self.parm_Stations:
+            if stat.stat_parm_Call:
+                # Override with optional Station Config Param
+                if hasattr(stat, 'stat_parm_cli_ctext'):
+                    stat.stat_parm_cli.c_text = stat.stat_parm_cli_ctext
+                if hasattr(stat, 'stat_parm_cli_bye_text'):
+                    stat.stat_parm_cli.bye_text = stat.stat_parm_cli_bye_text
+                if hasattr(stat, 'stat_parm_cli_prompt'):
+                    stat.stat_parm_cli.prompt = stat.stat_parm_cli_prompt
+                ##############################################################
+                # Optional Parameter for Stations
+                if hasattr(stat, 'stat_parm_PacLen'):
+                    self.parm_stat_PacLen[stat.stat_parm_Call] = stat.stat_parm_PacLen
+                else:
+                    self.parm_stat_PacLen[stat.stat_parm_Call] = self.parm_PacLen
+                if hasattr(stat, 'stat_parm_MaxFrame'):
+                    self.parm_stat_MaxFrame[stat.stat_parm_Call] = stat.stat_parm_MaxFrame
+                else:
+                    self.parm_stat_MaxFrame[stat.stat_parm_Call] = self.parm_MaxFrame
+
+                self.parm_StationCalls.append(stat.stat_parm_Call)
+                self.parm_cli[stat.stat_parm_Call]: DefaultCLI = stat.stat_parm_cli
+
 
 class Port0(DefaultPortConfig):
+    parm_Stations = [MD5TES, MD6TES]
     parm_PortName = 'DW'
     parm_PortTyp = 'KISSTCP'
     parm_PortParm = ('192.168.178.152', 8001)
-    parm_StationCalls = ['MD5TES', 'MD6TES-1']
     parm_isSmartDigi = False
     parm_is_StupidDigi = True  # Just if parm_isSmartDigi is set to False
     parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
@@ -57,16 +123,6 @@ class Port0(DefaultPortConfig):
     parm_baud = 1200    # Baud for calculating Timer
     parm_full_duplex = False    # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
-    ##########################
-    # Parameter for CLI
-    parm_cli = {
-        'MD5TES': UserCLI,
-        'MD6TES-1': NodeCLI
-    }
-    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
-    parm_cli_ctext = '-= TEST C-TEXT MD5TES -Port0 =-\r\r'
-    parm_cli_bye_text = '73 ...\r'
-    parm_cli_prompt = '\rTEST-STATION---Port0>'
     #####################
     # Monitor Text Color
     parm_mon_clr_tx = "medium violet red"
@@ -74,10 +130,10 @@ class Port0(DefaultPortConfig):
 
 
 class Port1(DefaultPortConfig):
+    parm_Stations = [MD5TES, MD6TES]
     parm_PortName = 'DW2'
     parm_PortTyp = 'KISSTCP'
     parm_PortParm = ('192.168.178.150', 8001)
-    parm_StationCalls = ['MD5TES', 'MD6TES-2']
     parm_isSmartDigi = True
     parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False
     parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
@@ -91,16 +147,6 @@ class Port1(DefaultPortConfig):
     parm_baud = 1200    # Baud for calculating Timer
     parm_full_duplex = False  # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
-    ##########################
-    # Parameter for CLI
-    parm_cli = {
-        'MD5TES': UserCLI,
-        'MD6TES-2': NodeCLI
-    }
-    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
-    parm_cli_ctext = '-= TEST C-TEXT MD5TES Port1 =-\r\r'
-    parm_cli_bye_text = '73 ...\r'
-    parm_cli_prompt = '\rTEST-STATION---Port1>'
     #####################
     # Monitor Text Color
     parm_mon_clr_tx = "red2"
@@ -108,10 +154,10 @@ class Port1(DefaultPortConfig):
 
 
 class Port2(DefaultPortConfig):
+    parm_Stations = [MD5TES, MD6TES]
     parm_PortName = 'AXIP'
     parm_PortTyp = 'AXIP'
     parm_PortParm = ('0.0.0.0', 8093)      # outgoing IP when want not using standard PC IP  , Port
-    parm_StationCalls = ['MD7TES', 'MD6TES-2']
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False
     parm_TXD = 1  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
@@ -125,16 +171,6 @@ class Port2(DefaultPortConfig):
     parm_baud = 119200  # Baud for calculating Timer
     parm_full_duplex = True  # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
-    ##########################
-    # Parameter for CLI
-    parm_cli = {
-        'MD7TES': UserCLI,
-        'MD6TES-2': NodeCLI
-    }
-    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
-    parm_cli_ctext = '-= TEST C-TEXT MD5TES Port2 =-\r\r'
-    parm_cli_bye_text = '73 ...\r'
-    parm_cli_prompt = '\rTEST-STATION---Port2>'
     #####################
     # Monitor Text Color
     parm_mon_clr_tx = "orange2"
@@ -142,10 +178,10 @@ class Port2(DefaultPortConfig):
 
 
 class Port3(DefaultPortConfig):
+    parm_Stations = [MD5TES, MD6TES]
     parm_PortName = 'SER'
     parm_PortTyp = 'KISSSER'
     parm_PortParm = ('/dev/pts/9', 9600)
-    parm_StationCalls = ['MD8TES', 'MD7TES-2']
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isSmartDigi is set to False
     parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
@@ -159,16 +195,6 @@ class Port3(DefaultPortConfig):
     parm_baud = 1200  # Baud for calculating Timer
     parm_full_duplex = False  # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
-    ##########################
-    # Parameter for CLI
-    parm_cli = {
-        'MD8TES': UserCLI,
-        'MD7TES-7': NodeCLI
-    }
-    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
-    parm_cli_ctext = '-= TEST C-TEXT MD5TES Port3 =-\r\r'
-    parm_cli_bye_text = '73 ...\r'
-    parm_cli_prompt = '\rTEST-STATION---Port3>'
     #####################
     # Monitor Text Color
     parm_mon_clr_tx = "gold2"

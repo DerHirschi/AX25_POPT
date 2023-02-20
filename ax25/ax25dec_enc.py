@@ -601,6 +601,9 @@ class AX25Frame(object):
             try:
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
             except (DecodingERROR, IndexError):
+                logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
+                logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
+                logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
                 raise DecodingERROR
             # Get Command Bits
             if self.to_call.c_bit and not self.from_call.c_bit:

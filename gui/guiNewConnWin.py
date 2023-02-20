@@ -182,8 +182,7 @@ class NewConnWin:
         call_obj = ProcCallInput(call)
         if call_obj.call:
             ax_frame = AX25Frame()
-            ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.port_index][0].my_stations[
-                0]  # TODO select outgoing call
+            ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.port_index][0].my_stations[0]  # TODO select outgoing call
             # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
             ax_frame.to_call.call = call_obj.call
             ax_frame.to_call.ssid = call_obj.ssid

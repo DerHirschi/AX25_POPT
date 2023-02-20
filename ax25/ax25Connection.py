@@ -66,6 +66,7 @@ class AX25Conn(object):
             if self.ax25_out_frame.addr_uid != ax25_frame.addr_uid:
                 self.ax25_out_frame.addr_uid = ax25_frame.addr_uid  # Unique ID for Connection
         self.my_call_obj = self.ax25_out_frame.from_call
+        self.my_call_str = self.my_call_obj.call
         print('self.axip_add')
         print(self.axip_add)
         """ S-Packet / CTL Vars"""
@@ -108,22 +109,13 @@ class AX25Conn(object):
         }
         """ MH for CLI """
         # self.mh = cfg.parm_mh
-        """ Init CLI """
-        if self.my_call_obj.call in cfg.parm_cli.keys():
-            self.cli = cfg.parm_cli[self.my_call_obj.call](self)
-        else:
-            if self.my_call_obj.call_str in cfg.parm_cli.keys():
-                self.cli = cfg.parm_cli[self.my_call_obj.call_str](self)
-            else:
-                self.cli = NoneCLI(self)
-
-        # Overwrite cli.py Parameter from config_station.px
-        if hasattr(cfg, 'parm_cli_ctext'):
-            self.cli.c_text = str(cfg.parm_cli_ctext)
-        if hasattr(cfg, 'parm_cli_bye_text'):
-            self.cli.bye_text = str(cfg.parm_cli_bye_text)
-        if hasattr(cfg, 'parm_cli_prompt'):
-            self.cli.prompt = str(cfg.parm_cli_prompt)
+        self.cli = NoneCLI(self)
+        """ Station Individual Parameter """
+        if self.my_call_obj.call_str in cfg.parm_StationCalls:
+            self.parm_PacLen = cfg.parm_stat_PacLen[self.my_call_obj.call_str]      # Max Pac len
+            self.parm_MaxFrame = cfg.parm_stat_MaxFrame[self.my_call_obj.call_str]  # Max Pac
+            """ Init CLI """
+            self.cli = cfg.parm_cli[self.my_call_obj.call_str](self)
 
         """ DIGI / Link to other Connection for Auto processing """
         self.DIGI_Connection: AX25Conn
@@ -139,10 +131,6 @@ class AX25Conn(object):
             self.zustand_exec = S2Aufbau(self)
             # self.prt_hndl.insert_conn2all_conn_var(new_conn=self)
             self.set_T3()
-        """
-        if self.is_gui:
-            self.gui.ch_btn_status()
-        """
 
     def __del__(self):
         """

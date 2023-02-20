@@ -53,7 +53,7 @@ class AX25Port(threading.Thread):
         self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
         ############
         # CONFIG
-        self.station_cfg = station_cfg
+        self.station_cfg = station_cfg()
         self.port_param = self.station_cfg.parm_PortParm
         self.portname = self.station_cfg.parm_PortName
         self.port_typ = self.station_cfg.parm_PortTyp
@@ -116,7 +116,7 @@ class AX25Port(threading.Thread):
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         """ Not Happy with that Part . . :-( TODO Cleanup """
-        cfg = self.station_cfg()
+        cfg = self.station_cfg
         # Monitor
         if self.is_gui:
             self.gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=cfg,
@@ -174,7 +174,7 @@ class AX25Port(threading.Thread):
                         if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=False):
                             print("NEW DIGI CONN")
                             # "Smart" DIGI
-                            cfg = self.station_cfg()
+                            cfg = self.station_cfg
                             # Incoming REQ
                             conn_in = AX25Conn(ax25_frame, cfg)
                             conn_in.my_digi_call = str(my_call)
@@ -247,7 +247,7 @@ class AX25Port(threading.Thread):
                         tr = True
                     except AX25DeviceFAIL as e:
                         raise e
-                    cfg = self.station_cfg()
+                    cfg = self.station_cfg
                     # Monitor
                     if self.is_gui:
                         self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
@@ -262,7 +262,7 @@ class AX25Port(threading.Thread):
             except AX25DeviceFAIL as e:
                 raise e
             # Monitor
-            cfg = self.station_cfg()
+            cfg = self.station_cfg
             # Monitor
             if self.is_gui:
                 self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
@@ -293,13 +293,13 @@ class AX25Port(threading.Thread):
                     beacon.cooldown = time.time() + 60
                     self.tx(beacon.ax_frame)
                     # Monitor
-                    cfg = self.station_cfg()
+                    cfg = self.station_cfg
                     if self.is_gui:
                         self.gui.update_monitor(self.monitor.frame_inp(beacon.ax_frame, self.portname), conf=cfg, tx=True)
 
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
-        cfg = self.station_cfg()
+        cfg = self.station_cfg
         ax25_frame.encode()
         # print("Same UID ?? --  {}".format(ax25_frame.addr_uid))
         # print("Same UID connections?? --  {}".format(self.connections.keys()))
@@ -355,8 +355,8 @@ class AX25Port(threading.Thread):
                 try:
                     # Decoding
                     ax25frame.decode(buf.raw_data)
-                except DecodingERROR as e:
-                    logger.error('{}.decoding: {}'.format(self.portname, e))
+                except DecodingERROR:
+                    logger.error('Port:{} Decoding'.format(self.portname))
                     break
                 if e is None and ax25frame.validate():
                     # ######### RX #############
