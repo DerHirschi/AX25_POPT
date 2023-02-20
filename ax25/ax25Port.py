@@ -356,7 +356,9 @@ class AX25Port(threading.Thread):
                     # Decoding
                     ax25frame.decode(buf.raw_data)
                 except DecodingERROR:
-                    logger.error('Port:{} Decoding'.format(self.portname))
+                    logger.error('Port:{} decoding: '.format(self.portname))
+                    logger.error('{}: org {}'.format(self.portname, buf.raw_data))
+                    logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
                     break
                 if e is None and ax25frame.validate():
                     # ######### RX #############
@@ -408,7 +410,7 @@ class KissTCP(AX25Port):
 
     def rx(self):
         try:
-            recv_buff = self.device.recv(400)
+            recv_buff = self.device.recv(3000)
         except socket.timeout:
             # self.device.close()
             raise AX25DeviceERROR
@@ -517,7 +519,7 @@ class AXIP(AX25Port):
 
     def rx(self):
         try:
-            udp_recv = self.device.recvfrom(400)
+            udp_recv = self.device.recvfrom(3000)
         except socket.error:
             raise AX25DeviceERROR
         recv_buff = udp_recv[0]

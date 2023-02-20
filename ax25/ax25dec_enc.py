@@ -295,7 +295,7 @@ class CByte(object):
                     self.mon_str = 'XID' + bl2str(pf)  # XID Frame
                     self.flag = 'XID'
                 else:
-                    logger.error('C-Byte Error Decoding U Frame ! Unknown C-Byte> ' + str(bi) + ' ' + str(in_byte))
+                    logger.error('C-Byte Error Decoding U Frame ! Unknown C-Byte> ' + str(bi) + ' ' + hex(in_byte))
                     raise DecodingERROR
 
     def validate(self):
@@ -769,3 +769,10 @@ class AX25Frame(object):
                 ind += 1
         self.via_calls.reverse()
         return False
+
+
+if __name__ == '__main__':
+    msg = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
+    # print(bytearray2hexstr(msg))
+    fr = AX25Frame()
+    fr.decode(msg)

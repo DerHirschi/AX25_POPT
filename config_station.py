@@ -3,14 +3,20 @@ from cli.cli import *
 
 class DefaultStation(object):
     # parm_StationCalls: [''] = []
-    stat_parm_Call: ''
+    stat_parm_Call: str
+    ##########################
+    # Not Implemented Yet
+    stat_parm_Name: str = ''
+    stat_parm_QTH: str = ''
+    stat_parm_LOC: str = ''
+    stat_parm_TYP: str = ''
     ##########################
     # Parameter for CLI
     stat_parm_cli: DefaultCLI = DefaultCLI
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
-    stat_parm_cli_ctext: ''
-    stat_parm_cli_bye_text: ''
-    stat_parm_cli_prompt: ''
+    stat_parm_cli_ctext: str
+    stat_parm_cli_bye_text: str
+    stat_parm_cli_prompt: str
     # Optional Parameter. Overrides Port Parameter
     stat_parm_PacLen: int       # Max Pac len
     stat_parm_MaxFrame: int     # Max (I) Frames
@@ -26,7 +32,7 @@ class MD5TES(DefaultStation):
     stat_parm_cli_bye_text = '73 ...\r'
     stat_parm_cli_prompt = '\rTEST-STATION---Port0>'
     # Optional Parameter. Overrides Port Parameter
-    stat_parm_PacLen: int = 180   # Max Pac len
+    stat_parm_PacLen: int = 120   # Max Pac len
     stat_parm_MaxFrame: int = 3   # Max (I) Frames
 
 
