@@ -1,3 +1,5 @@
+import sys
+
 from ax25.ax25dec_enc import get_call_str, AX25Frame
 from datetime import datetime
 import os
@@ -33,7 +35,8 @@ class MH(object):
             with open(mh_data_file, 'rb') as inp:
                 self.calls = pickle.load(inp)
         except FileNotFoundError:
-            os.system('touch {}'.format(mh_data_file))
+            if 'linux' in sys.platform:
+                os.system('touch {}'.format(mh_data_file))
         except EOFError:
             pass
 

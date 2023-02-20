@@ -1,3 +1,4 @@
+import sys
 import time
 import os
 import pickle
@@ -45,7 +46,8 @@ class ClientDB:
             for ke in self.db.keys():
                 print(ke)
         except FileNotFoundError:
-            os.system('touch {}'.format(client_db))
+            if 'linux' in sys.platform:
+                os.system('touch {}'.format(client_db))
             default_client = Client('ALL')
             default_client.is_new = False
             default_client.name = 'Beacon'
