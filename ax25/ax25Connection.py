@@ -4,7 +4,6 @@
 """
 import time
 
-import ax25.ax25InitPorts
 from ax25.ax25dec_enc import AX25Frame, reverse_uid
 from config_station import DefaultPortConfig, NoneCLI
 
@@ -19,7 +18,7 @@ def count_modulo(inp: int):
 
 
 class AX25Conn(object):
-    def __init__(self, ax25_frame: AX25Frame, cfg: DefaultPortConfig, rx=True):
+    def __init__(self, ax25_frame: AX25Frame, cfg: DefaultPortConfig, port, rx=True):
         ###############
         # DEBUG
         self.debugvar_len_out_buf = 0
@@ -27,17 +26,20 @@ class AX25Conn(object):
         ############
         # GLOBALS
         # glb_mh = None
-        self.prt_hndl: ax25.ax25InitPorts.AX25PortHandler
+        self.own_port = port
+        self.prt_hndl = self.own_port.port_handler
+        """
         if cfg.glb_port_handler is None:
             logger.error("No Port Handler found !!!")
             # TODO Maybe Settings to choose run with Porthandler or not
             self.is_prt_hndl = False
             raise ConnectionError
         else:
+            
             self.prt_hndl = cfg.glb_port_handler
             self.is_prt_hndl = True
+        """
         self.ch_index: int = 0
-        self.gui = cfg.glb_gui
         self.gui = self.prt_hndl.gui
         if self.gui is None:
             self.is_gui = False
@@ -410,8 +412,8 @@ class S1Frei(DefaultStat):  # INIT RX
             self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(ax25_frame.to_call.call_str).encode()
             self.ax25conn.n2 = 0
             self.change_state(5)
-            if self.ax25conn.is_prt_hndl:
-                self.ax25conn.prt_hndl.insert_conn2all_conn_var(new_conn=self.ax25conn)
+            # if self.ax25conn.is_prt_hndl:
+            self.ax25conn.prt_hndl.insert_conn2all_conn_var(new_conn=self.ax25conn)
             if self.ax25conn.is_gui:
                 self.ax25conn.gui.new_conn_snd()
             self.ax25conn.exec_cli()  # Process CLI ( C-Text and so on )
@@ -436,8 +438,8 @@ class S2Aufbau(DefaultStat):    # INIT TX
             self.ax25conn.send_SABM()
             self.ax25conn.set_T1()
             self.ax25conn.set_T3()
-            if self.ax25conn.is_prt_hndl:
-                self.ax25conn.prt_hndl.insert_conn2all_conn_var(new_conn=self.ax25conn)
+            # if self.ax25conn.is_prt_hndl:
+            self.ax25conn.prt_hndl.insert_conn2all_conn_var(new_conn=self.ax25conn)
 
     def rx(self, ax25_frame: AX25Frame):
         flag = ax25_frame.ctl_byte.flag
@@ -459,8 +461,8 @@ class S2Aufbau(DefaultStat):    # INIT TX
                 self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(ax25_frame.to_call.call_str).encode()
             self.ax25conn.n2 = 100
             self.change_state(0)
-            if self.ax25conn.is_prt_hndl:
-                self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
+            # if self.ax25conn.is_prt_hndl:
+            self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
 
     def state_cron(self):
         if time.time() > self.ax25conn.t1:
@@ -480,8 +482,8 @@ class S2Aufbau(DefaultStat):    # INIT TX
                 self.ax25conn.send_DISC()
                 self.ax25conn.n2 = 100
                 self.change_state(1)
-                if self.ax25conn.is_prt_hndl:
-                    self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
+                # if self.ax25conn.is_prt_hndl:
+                self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
 
 
 class S4Abbau(DefaultStat):
@@ -503,21 +505,21 @@ class S4Abbau(DefaultStat):
                 self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(ax25_frame.to_call.call_str).encode()
             self.ax25conn.set_T1()  # Prevent sending another Packet
             self.change_state(0)
-            if self.ax25conn.is_prt_hndl:
-                self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
+            # if self.ax25conn.is_prt_hndl:
+            self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
         elif flag in ['SABM'] or \
                 (flag in ['RR', 'REJ', 'I', 'RNR'] and ax25_frame.ctl_byte.pf):
             self.ax25conn.send_DM()
             self.ax25conn.n2 = 100
             self.change_state(1)
-            if self.ax25conn.is_prt_hndl:
-                self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
+            # if self.ax25conn.is_prt_hndl:
+            self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
         elif flag == 'DISC':
             self.ax25conn.send_UA()
             self.ax25conn.n2 = 100
             self.change_state(1)
-            if self.ax25conn.is_prt_hndl:
-                self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
+            # if self.ax25conn.is_prt_hndl:
+            self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
 
     def state_cron(self):
         if time.time() > self.ax25conn.t1:
@@ -532,8 +534,8 @@ class S4Abbau(DefaultStat):
                         self.ax25conn.ax25_out_frame.to_call.call_str).encode()
                 # self.ax25conn.send_DISC()
                 self.change_state(0)
-                if self.ax25conn.is_prt_hndl:
-                    self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
+                # if self.ax25conn.is_prt_hndl:
+                self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
 
 
 class S5Ready(DefaultStat):
@@ -556,8 +558,8 @@ class S5Ready(DefaultStat):
             self.ax25conn.send_UA()
             self.ax25conn.n2 = 100
             self.change_state(1)
-            if self.ax25conn.is_prt_hndl:
-                self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
+            # if self.ax25conn.is_prt_hndl:
+            self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
         elif flag == 'RR':
             if ((nr - 1) % 8) in self.ax25conn.tx_buf_unACK.keys():
                 self.ax25conn.del_unACK_buf()

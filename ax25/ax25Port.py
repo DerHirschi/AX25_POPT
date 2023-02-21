@@ -6,7 +6,6 @@ import time
 from datetime import datetime
 import crcmod
 
-import ax25.ax25Statistics
 import main
 from ax25.ax25InitPorts import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid, bytearray2hexstr
@@ -47,14 +46,15 @@ class Beacon:
 
 
 class AX25Port(threading.Thread):
-    def __init__(self, station_cfg):
+    def __init__(self, station_cfg, port_handler):
         super(AX25Port, self).__init__()
         """ self.ax25_port_handler will be set in AX25PortInit """
         self.ax25_ports: {int: AX25Port}
-        self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
+        # self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
         ############
         # CONFIG
         self.port_cfg = station_cfg
+        self.port_handler = port_handler
         self.port_param = self.port_cfg.parm_PortParm
         self.portname = self.port_cfg.parm_PortName
         self.port_typ = self.port_cfg.parm_PortTyp
@@ -71,7 +71,7 @@ class AX25Port(threading.Thread):
         self.loop_is_running = False
         self.monitor = ax25monitor.Monitor()
         # self.mh = self.port_cfg.glb_mh
-        self.port_hndl = self.port_cfg.glb_port_handler
+        # self.port_hndl = self.port_cfg.glb_port_handler
         self.gui = None
         self.is_gui = False
         self.connections: {str: AX25Conn} = {}
@@ -146,7 +146,7 @@ class AX25Port(threading.Thread):
         elif ax25_frame.to_call.call_str in self.my_stations \
                 and ax25_frame.is_digipeated:
 
-            self.connections[uid] = AX25Conn(ax25_frame, cfg)
+            self.connections[uid] = AX25Conn(ax25_frame, cfg, port=self)
             self.connections[uid].set_T2()
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
         # DIGI / LINK Connection
@@ -178,7 +178,7 @@ class AX25Port(threading.Thread):
                             # "Smart" DIGI
                             cfg = self.port_cfg
                             # Incoming REQ
-                            conn_in = AX25Conn(ax25_frame, cfg)
+                            conn_in = AX25Conn(ax25_frame, cfg, self)
                             conn_in.my_digi_call = str(my_call)
                             conn_in.is_link = True
                             conn_in.set_T2()
@@ -208,7 +208,7 @@ class AX25Port(threading.Thread):
                                         conn_in.zustand_exec.change_state(4)
                                         break
                                 if conn_in.zustand_exec.stat_index == 5:
-                                    conn_out = AX25Conn(copy_ax25frame, cfg, rx=False)
+                                    conn_out = AX25Conn(copy_ax25frame, cfg, port=self, rx=False)
                                     conn_out_uid = conn_out.ax25_out_frame.addr_uid
                                     conn_out.my_digi_call = str(my_call)
                                     print("CONN OUT UID: {}".format(conn_out_uid))
@@ -315,7 +315,7 @@ class AX25Port(threading.Thread):
             if ax25_frame.from_call.ssid > 15:
                 return False
             ax25_frame.encode()
-        conn = AX25Conn(ax25_frame, cfg, rx=False)
+        conn = AX25Conn(ax25_frame, cfg, rx=False, port=self)
         conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn
         # self.tx_pac_handler()

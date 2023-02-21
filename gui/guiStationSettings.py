@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk as ttk
 from config_station import DefaultStation, DefaultPortConfig
-# from main import AX25Port
 from cli.cli import *
 
 

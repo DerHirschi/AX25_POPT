@@ -90,8 +90,8 @@ class DefaultPortConfig(object):
     parm_mon_clr_rx = "green"
     ##########################
     # Global Objs
-    glb_mh = None
-    glb_port_handler = None
+    # glb_mh = None
+    # glb_port_handler = None
     glb_gui = None
 
     def __init__(self, loaded_stat: {str: DefaultStation}):
@@ -174,12 +174,12 @@ class DefaultPortConfig(object):
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """
         if self.parm_PortNr != -1:
-            mh = self.glb_mh
+            # mh = self.glb_mh
             gui = self.glb_gui
-            port_handler = self.glb_port_handler
-            self.glb_mh = None
+            # port_handler = self.glb_port_handler
+            # self.glb_mh = None
             self.glb_gui = None
-            self.glb_port_handler = None
+            # self.glb_port_handler = None
             #############
             # Station CFG
             stations = self.parm_Stations
@@ -212,9 +212,9 @@ class DefaultPortConfig(object):
             f.close()
 
 
-            self.glb_mh = mh
+            # self.glb_mh = mh
             self.glb_gui = gui
-            self.glb_port_handler = port_handler
+            # self.glb_port_handler = port_handler
 
 
 class Port0(DefaultPortConfig):

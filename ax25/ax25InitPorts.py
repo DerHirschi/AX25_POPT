@@ -42,11 +42,11 @@ class AX25PortHandler(object):
                 #########################
                 # Set GLOBALS
                 # cfg.glb_mh = self.mh_list
-                cfg.glb_port_handler = self
+                # cfg.glb_port_handler = self
                 #########################
                 # Init Port/Device
                 try:
-                    temp = self.ax25types[cfg.parm_PortTyp](cfg)
+                    temp = self.ax25types[cfg.parm_PortTyp](cfg, self)
                 except AX25DeviceFAIL as e:
                     logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
                     logger.error('{}'.format(e))
