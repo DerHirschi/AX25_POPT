@@ -1,14 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
-
-# from main import TkMainWin
+import main
 
 
 class SideTabbedFrame:
-    def __init__(self, main):
-        self.main_win = main
-        self.mh = self.main_win.mh
+    def __init__(self, main_cl):
+        self.main_win = main_cl
+        self.mh = main.GLB_MH_list
         self.style = self.main_win.style
         self.side_btn_frame_top = self.main_win.side_btn_frame_top
         self.tab_side_frame = tk.Frame(self.side_btn_frame_top, width=300, height=400)

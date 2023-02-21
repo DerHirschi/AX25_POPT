@@ -116,17 +116,10 @@ class AX25Conn(object):
             self.parm_PacLen = cfg.parm_stat_PacLen[self.my_call_obj.call_str]      # Max Pac len
             self.parm_MaxFrame = cfg.parm_stat_MaxFrame[self.my_call_obj.call_str]  # Max Pac
             """ Init CLI """
-            self.cli = cfg.parm_cli[self.my_call_obj.call_str](self)
             for stat in cfg.parm_Stations:
                 if self.my_call_obj.call_str in stat.stat_parm_Call:
-                    # Override with optional Station Config Param
-                    if hasattr(stat, 'stat_parm_cli_ctext'):
-                        print("Set c text \n" + stat.stat_parm_cli_ctext)
-                        stat.stat_parm_cli.c_text = stat.stat_parm_cli_ctext
-                    if hasattr(stat, 'stat_parm_cli_bye_text'):
-                        stat.stat_parm_cli.bye_text = stat.stat_parm_cli_bye_text
-                    if hasattr(stat, 'stat_parm_cli_prompt'):
-                        stat.stat_parm_cli.prompt = stat.stat_parm_cli_prompt
+                    self.cli = cfg.parm_cli[self.my_call_obj.call_str](self, stat)
+                    break
 
             # print(cfg.parm_Stations)
             # print(cfg.parm_cli[self.my_call_obj.call_str].c_text)

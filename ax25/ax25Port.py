@@ -7,6 +7,7 @@ from datetime import datetime
 import crcmod
 
 import ax25.ax25Statistics
+import main
 from ax25.ax25InitPorts import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid, bytearray2hexstr
 import ax25.ax25monitor as ax25monitor
@@ -69,7 +70,7 @@ class AX25Port(threading.Thread):
         # VARS
         self.loop_is_running = False
         self.monitor = ax25monitor.Monitor()
-        self.mh = self.port_cfg.glb_mh
+        # self.mh = self.port_cfg.glb_mh
         self.port_hndl = self.port_cfg.glb_port_handler
         self.gui = None
         self.is_gui = False
@@ -123,7 +124,8 @@ class AX25Port(threading.Thread):
                                        tx=False)
         # self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
-        self.mh.mh_inp(ax25_frame, self.portname)
+        # self.mh.mh_inp(ax25_frame, self.portname)
+        main.GLB_MH_list.mh_inp(ax25_frame, self.portname)
         # Existing Connections
         uid = str(ax25_frame.addr_uid)
         if uid in self.connections.keys():

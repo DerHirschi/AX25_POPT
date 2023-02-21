@@ -11,14 +11,21 @@ class DefaultCLI(object):
     prompt = 'TEST-STATION>'
     prefix = '//'
 
-    def __init__(self, connection):
+    def __init__(self, connection, stat_cfg):
+        # Override with optional Station Config Param
+        if hasattr(stat_cfg, 'stat_parm_cli_ctext'):
+            self.c_text = stat_cfg.stat_parm_cli_ctext
+        if hasattr(stat_cfg, 'stat_parm_cli_bye_text'):
+            self.bye_text = stat_cfg.stat_parm_cli_bye_text
+        if hasattr(stat_cfg, 'connection'):
+            self.prompt = stat_cfg.stat_parm_cli_prompt
         self.connection: ax25.ax25Connection.AX25Conn = connection
         # self.connection = connection
         self.my_call = connection.ax25_out_frame.from_call.call
         self.my_call_str = connection.ax25_out_frame.from_call.call_str
         self.to_call = connection.ax25_out_frame.to_call.call
         self.to_call_str = connection.ax25_out_frame.to_call.call_str
-        self.mh_list = connection.cfg.glb_mh
+        self.mh_list = main.GLB_MH_list
         self.state_index = 0
         self.crone_state_index = 0
         self.input = b''

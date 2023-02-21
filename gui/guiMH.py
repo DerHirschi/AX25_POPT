@@ -2,13 +2,14 @@ import logging
 import tkinter as tk
 from tkinter import scrolledtext, Label, Menu
 from ax25.ax25Statistics import MyHeard
+import main
 
 logger = logging.getLogger(__name__)
 
 
 class MHWin:
-    def __init__(self, mh):
-        self.mh = mh
+    def __init__(self):
+        self.mh = main.GLB_MH_list
         self.win = tk.Tk()
         self.win.title("MHEARD")
         self.win.geometry("1250x700")

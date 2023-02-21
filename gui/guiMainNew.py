@@ -12,7 +12,7 @@ from gui.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
 from gui.guiSideFrame import SideTabbedFrame
 from gui.guiStationSettings import StationSettingsWin
-from main import VER, AX25PortHandler, AX25Frame, Call, AX25Conn
+from main import VER, GLB_MH_list
 
 if 'linux' in sys.platform:
     from playsound import playsound
@@ -49,15 +49,15 @@ class ChVars:
 
 
 class TkMainWin:
-    def __init__(self, port_handler: AX25PortHandler):
+    def __init__(self, glb_ax25port_handler):
         ###############################
         # AX25 PortHandler and stuff
-        self.ax25_port_handler: AX25PortHandler = port_handler
+        self.ax25_port_handler = glb_ax25port_handler
         # Default Port 0
         ax25_ports = self.ax25_port_handler.ax25_ports
         # Globals
         cfg = ax25_ports[0].port_cfg    # TODO Select Ports for Calls
-        self.mh = cfg.glb_mh
+        # self.mh = cfg.glb_mh
         self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
         #######################
         # Window Text Buffers
@@ -384,7 +384,7 @@ class TkMainWin:
     # ##############
     # DISCO
     def disco_conn(self):
-        station: AX25Conn = self.get_conn(self.channel_index)
+        station = self.get_conn(self.channel_index)
         if station:
             if station.zustand_exec.stat_index:
                 tr = False
@@ -401,7 +401,7 @@ class TkMainWin:
     ###################
     # SEND TEXT OUT
     def snd_text(self, event: tk.Event):
-        station: AX25Conn = self.get_conn(self.channel_index)
+        station = self.get_conn(self.channel_index)
 
         if station:
             ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
@@ -428,6 +428,6 @@ class TkMainWin:
     # MH WIN
     def MH_win(self):
         """MH WIN"""
-        MHWin(self.mh)
+        MHWin()
 
     # MH WIN ENDE

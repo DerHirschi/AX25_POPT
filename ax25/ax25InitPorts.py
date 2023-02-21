@@ -1,4 +1,3 @@
-import cli.ClientDB
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25Port import *
 from config_station import *
@@ -12,8 +11,8 @@ class AX25PortHandler(object):
             'AXIP': AXIP,
         }
         self.ax25_ports: {int: AX25Port} = {}
-        self.mh_list = ax25.ax25Statistics.MH()
-        self.client_db = cli.ClientDB.ClientDB()
+        # self.mh_list = ax25.ax25Statistics.MH()
+        # self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
         #######################################################
         # Init Ports/Devices with Config and running as Thread
@@ -42,7 +41,7 @@ class AX25PortHandler(object):
                         stations[st.stat_parm_Call] = st
                 #########################
                 # Set GLOBALS
-                cfg.glb_mh = self.mh_list
+                # cfg.glb_mh = self.mh_list
                 cfg.glb_port_handler = self
                 #########################
                 # Init Port/Device
@@ -71,9 +70,11 @@ class AX25PortHandler(object):
         return self.ax25_ports[index]
 
     def close_all_ports(self):
+        """
         if hasattr(self, 'mh_list'):
             self.mh_list.save_mh_data()
             del self.mh_list
+        """
         for k in self.ax25_ports.keys():
             # cfg = self.ax25_ports[k][1]
             # cfg.save_to_pickl()

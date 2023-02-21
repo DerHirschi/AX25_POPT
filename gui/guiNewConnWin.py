@@ -1,6 +1,8 @@
 import tkinter as tk
-from tkinter import OptionMenu
-from main import AX25PortHandler, AX25Frame, Call, AX25Port
+
+import ax25.ax25dec_enc
+# from main import AX25PortHandler, AX25Frame, Call, AX25Port
+import main
 
 
 class ProcCallInput:
@@ -8,7 +10,7 @@ class ProcCallInput:
         self.ssid = 0
         self.call = ''
         self.call_str = ''
-        self.via: [Call] = []
+        self.via: [ax25.ax25dec_enc.Call] = []
         call_inp = call_inp.split('\r')[0]
         call_inp = call_inp.split('\n')[0]
         call = call_inp.split(' ')
@@ -27,7 +29,7 @@ class ProcCallInput:
                         self.call_str += ('-' + call[1])
                         self.ssid = int(call[1])
         for c in via:
-            new_c = Call()
+            new_c = ax25.ax25dec_enc.Call()
             new_c.call_str = c.upper()
             self.via.append(new_c)
 
@@ -38,7 +40,7 @@ class NewConnWin:
         self.style = self.main.style
         self.ax25_port_handler = self.main.ax25_port_handler
         self.out_txt = self.main.out_txt
-        self.mh = self.main.mh
+        self.mh = main.GLB_MH_list
         self.new_conn_win = tk.Tk()
         self.new_conn_win.title("New Connection")
         self.new_conn_win.geometry("700x285")
@@ -181,7 +183,7 @@ class NewConnWin:
 
         call_obj = ProcCallInput(call)
         if call_obj.call:
-            ax_frame = AX25Frame()
+            ax_frame = ax25.ax25dec_enc.AX25Frame()
             ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.port_index].my_stations[0]  # TODO select outgoing call
             # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
             ax_frame.to_call.call = call_obj.call
