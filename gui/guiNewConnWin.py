@@ -60,7 +60,7 @@ class NewConnWin:
         self.port_btn: {int: tk.Button} = {}
         for port in self.ax25_port_handler.ax25_ports.keys():
             tmp = tk.Button(self.new_conn_win,
-                            text=self.ax25_port_handler.ax25_ports[port][0].portname,
+                            text=self.ax25_port_handler.ax25_ports[port].portname,
                             bg="red",
                             width=5,
                             height=1,
@@ -182,12 +182,12 @@ class NewConnWin:
         call_obj = ProcCallInput(call)
         if call_obj.call:
             ax_frame = AX25Frame()
-            ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.port_index][0].my_stations[0]  # TODO select outgoing call
+            ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.port_index].my_stations[0]  # TODO select outgoing call
             # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
             ax_frame.to_call.call = call_obj.call
             ax_frame.to_call.ssid = call_obj.ssid
             ax_frame.via_calls = call_obj.via
-            if self.ax25_port_handler.ax25_ports[self.port_index][0].port_typ == 'AXIP':
+            if self.ax25_port_handler.ax25_ports[self.port_index].port_typ == 'AXIP':
                 mh_ent = self.mh.mh_get_last_ip(call_obj.call_str)
                 # Just if u switch after enter in call
                 axip_ip = self.ax_ip_ip[1].get('0.0', tk.END)[:-1]
@@ -216,7 +216,7 @@ class NewConnWin:
 
             # TODO Error or Not Processing if no IP
             ax_frame.ctl_byte.SABMcByte()
-            conn = self.ax25_port_handler.ax25_ports[self.port_index][0].new_connection(ax25_frame=ax_frame)
+            conn = self.ax25_port_handler.ax25_ports[self.port_index].new_connection(ax25_frame=ax_frame)
             if conn:
                 # conn: AX25Conn
                 self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.main.channel_index)

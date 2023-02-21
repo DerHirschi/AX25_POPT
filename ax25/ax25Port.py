@@ -53,14 +53,14 @@ class AX25Port(threading.Thread):
         self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
         ############
         # CONFIG
-        self.station_cfg = station_cfg
-        self.port_param = self.station_cfg.parm_PortParm
-        self.portname = self.station_cfg.parm_PortName
-        self.port_typ = self.station_cfg.parm_PortTyp
-        self.my_stations = self.station_cfg.parm_StationCalls
-        self.is_stupid_digi = self.station_cfg.parm_is_StupidDigi
-        self.is_smart_digi = self.station_cfg.parm_isSmartDigi
-        self.parm_TXD = self.station_cfg.parm_TXD
+        self.port_cfg = station_cfg
+        self.port_param = self.port_cfg.parm_PortParm
+        self.portname = self.port_cfg.parm_PortName
+        self.port_typ = self.port_cfg.parm_PortTyp
+        self.my_stations = self.port_cfg.parm_StationCalls
+        self.is_stupid_digi = self.port_cfg.parm_is_StupidDigi
+        self.is_smart_digi = self.port_cfg.parm_isSmartDigi
+        self.parm_TXD = self.port_cfg.parm_TXD
         self.TXD = time.time()
         self.digi_buf: [AX25Frame] = []
         # CONFIG ENDE
@@ -69,8 +69,8 @@ class AX25Port(threading.Thread):
         # VARS
         self.loop_is_running = False
         self.monitor = ax25monitor.Monitor()
-        self.mh = self.station_cfg.glb_mh
-        self.port_hndl = self.station_cfg.glb_port_handler
+        self.mh = self.port_cfg.glb_mh
+        self.port_hndl = self.port_cfg.glb_port_handler
         self.gui = None
         self.is_gui = False
         self.connections: {str: AX25Conn} = {}
@@ -116,7 +116,7 @@ class AX25Port(threading.Thread):
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         """ Not Happy with that Part . . :-( TODO Cleanup """
-        cfg = self.station_cfg
+        cfg = self.port_cfg
         # Monitor
         if self.is_gui:
             self.gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=cfg,
@@ -174,7 +174,7 @@ class AX25Port(threading.Thread):
                         if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=False):
                             print("NEW DIGI CONN")
                             # "Smart" DIGI
-                            cfg = self.station_cfg
+                            cfg = self.port_cfg
                             # Incoming REQ
                             conn_in = AX25Conn(ax25_frame, cfg)
                             conn_in.my_digi_call = str(my_call)
@@ -247,7 +247,7 @@ class AX25Port(threading.Thread):
                         tr = True
                     except AX25DeviceFAIL as e:
                         raise e
-                    cfg = self.station_cfg
+                    cfg = self.port_cfg
                     # Monitor
                     if self.is_gui:
                         self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
@@ -262,7 +262,7 @@ class AX25Port(threading.Thread):
             except AX25DeviceFAIL as e:
                 raise e
             # Monitor
-            cfg = self.station_cfg
+            cfg = self.port_cfg
             # Monitor
             if self.is_gui:
                 self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
@@ -293,13 +293,13 @@ class AX25Port(threading.Thread):
                     beacon.cooldown = time.time() + 60
                     self.tx(beacon.ax_frame)
                     # Monitor
-                    cfg = self.station_cfg
+                    cfg = self.port_cfg
                     if self.is_gui:
                         self.gui.update_monitor(self.monitor.frame_inp(beacon.ax_frame, self.portname), conf=cfg, tx=True)
 
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
-        cfg = self.station_cfg
+        cfg = self.port_cfg
         ax25_frame.encode()
         # print("Same UID ?? --  {}".format(ax25_frame.addr_uid))
         # print("Same UID connections?? --  {}".format(self.connections.keys()))
@@ -365,7 +365,7 @@ class AX25Port(threading.Thread):
                     # Handling
                     self.rx_pac_handler(ax25frame)
                     # Pseudo Full Duplex for AXIP.
-                    if self.station_cfg.parm_full_duplex:
+                    if self.port_cfg.parm_full_duplex:
                         break
             else:
                 break

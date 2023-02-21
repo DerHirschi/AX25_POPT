@@ -54,9 +54,9 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler: AX25PortHandler = port_handler
         # Default Port 0
-        ax25_ports = self.ax25_port_handler.ax25_ports[0]
-        cfg = ax25_ports[1]
+        ax25_ports = self.ax25_port_handler.ax25_ports
         # Globals
+        cfg = ax25_ports[0].port_cfg    # TODO Select Ports for Calls
         self.mh = cfg.glb_mh
         self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
         #######################

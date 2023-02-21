@@ -53,7 +53,8 @@ class StatSetTab:
             self.ports_sett: {int: DefaultPortConfig}
             var = tk.IntVar()
             dev_check = tk.Checkbutton(self.tab, text=self.ports_sett[k].parm_PortName, variable=var)
-            for el in self.ports_sett[k].parm_StationCalls:
+            tmp_port = self.ports_sett[k]
+            for el in tmp_port.parm_StationCalls:
                 if el in self.station_setting.stat_parm_Call:
                     #  if station_setting.stat_parm_Call in ports[k].parm_StationCalls:
                     var.set(1)
@@ -142,7 +143,8 @@ class StatSetTab:
             dev_check = self.port_set_var[k][1]
             dev_check.deselect()
             dev_check.configure(text=self.ports_sett[k].parm_PortName)
-            for el in self.ports_sett[k].parm_StationCalls:
+            tmp_ports = self.ports_sett[k]
+            for el in tmp_ports.parm_StationCalls:
                 if el in self.station_setting.stat_parm_Call:
                     var.set(1)
                     dev_check.select()
@@ -188,7 +190,6 @@ class StatSetTab:
         # Ports
         for k in self.ports_sett.keys():
             var = self.port_set_var[k][0].get()
-            print("Port {}".format(var))
             if var:
                 self.ports_sett[k].parm_Stations.append(self.station_setting)
 
@@ -204,8 +205,9 @@ class StationSettingsWin:
         # self.all_ports: {int: AX25Port} = {}
         self.all_stat_settings: [DefaultStation] = []
         for k in list(self.all_ax25_ports.keys()):
-            self.all_port_settings[k] = self.all_ax25_ports[k][1]
-            for stat_sett in self.all_ax25_ports[k][1].parm_Stations:
+            self.all_port_settings[k] = self.all_ax25_ports[k].port_cfg
+            # print(dir(self.all_port_settings[k]))
+            for stat_sett in self.all_ax25_ports[k].port_cfg.parm_Stations:
                 stat_sett: DefaultStation
                 if stat_sett not in self.all_stat_settings:
                     self.all_stat_settings.append(stat_sett)
@@ -286,14 +288,41 @@ class StationSettingsWin:
         # self.tabControl.pack(expand=0, fill="both")
 
     def set_all_vars_to_cfg(self):
+        """
+        for k in self.all_port_settings.keys():
+            all_att = dir(self.all_port_settings[k])
+            for att in all_att:
+                #print("sett {} - {}".format(att, self.all_port_settings[k].__dict__.get(att)))
+                print("sett {} - {}".format(att, getattr(self.all_port_settings[k], att)))
+
+        for k in self.all_ax25_ports.keys():
+            all_att = dir(self.all_ax25_ports[k][0].port_cfg)
+            for att in all_att:
+               #  print("port {} - {}".format(att, self.all_ax25_ports[k][0].port_cfg.__dict__.get(att)))
+                print("port {} - {}".format(att, getattr(self.all_ax25_ports[k][0].port_cfg, att)))
+        """
         # Del new_parm_Stations from all ports
         for k in self.all_port_settings.keys():
             self.all_port_settings[k].parm_Stations = []
         for el in self.tab_list:
             el.set_vars_to_cfg()
+        for k in self.all_port_settings.keys():
+            self.all_port_settings[k].save_to_pickl()
         """    
         for k in self.all_port_settings.keys():
             old_cfg = self.all_port_settings[k]
+        """
+        """
+        print("---------------------------------------------")
+        for k in self.all_port_settings.keys():
+            all_att = dir(self.all_port_settings[k])
+            for att in all_att:
+                print("sett {} - {}".format(att, self.all_port_settings[k].__dict__.get(att)))
+
+        for k in self.all_ax25_ports.keys():
+            all_att = dir(self.all_ax25_ports[k][0].port_cfg)
+            for att in all_att:
+                print("sett {} - {}".format(att, self.all_ax25_ports[k][0].port_cfg.__dict__.get(att)))
         """
 
     def destroy_new_conn_win(self):

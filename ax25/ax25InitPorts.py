@@ -18,38 +18,44 @@ class AX25PortHandler(object):
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         c = 0
-        port_cfg: DefaultPortConfig
-        for port_cfg in [Port0(),
-                         Port1(),
-                         Port2(),
-                         Port3(),
-                         Port4(),
-                         Port5(),
-                         Port6(),
-                         Port7(),
-                         Port8(),
-                         Port9(),
-                         Port10()
+        # port_cfg: DefaultPortConfig
+        stations = {}
+        for port_cfg in [Port0,
+                         Port1,
+                         Port2,
+                         Port3,
+                         Port4,
+                         Port5,
+                         Port6,
+                         Port7,
+                         Port8,
+                         Port9,
+                         Port10
                          ]:
             if port_cfg.parm_PortTyp:
                 port_cfg.parm_PortNr = c
+                ##########
+                # Init CFG
+                cfg = port_cfg(stations)
+                for st in cfg.parm_Stations:
+                    if st.stat_parm_Call not in stations.keys():
+                        stations[st.stat_parm_Call] = st
                 #########################
                 # Set GLOBALS
-                port_cfg.glb_mh = self.mh_list
-                port_cfg.glb_port_handler = self
+                cfg.glb_mh = self.mh_list
+                cfg.glb_port_handler = self
                 #########################
                 # Init Port/Device
                 try:
-                    temp = (self.ax25types[port_cfg.parm_PortTyp](port_cfg), port_cfg)
+                    temp = self.ax25types[cfg.parm_PortTyp](cfg)
                 except AX25DeviceFAIL as e:
-                    temp = False
-                    logger.error('Could not initialise Port {}'.format(port_cfg.parm_PortNr))
+                    logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
                     logger.error('{}'.format(e))
-                if temp:
-                    temp[0]: AX25Port
+                else:
+                    temp: AX25Port
                     ##########################
                     # Start Port/Device Thread
-                    temp[0].start()
+                    temp.start()
                     ######################################
                     # Gather all Ports in dict: ax25_ports
                     self.ax25_ports[c] = temp
@@ -62,25 +68,26 @@ class AX25PortHandler(object):
         self.close_all_ports()
 
     def get_port_by_index(self, index: int):
-        return self.ax25_ports[index][0]
+        return self.ax25_ports[index]
 
     def close_all_ports(self):
-        for k in self.ax25_ports.keys():
-            self.ax25_ports[k][0].loop_is_running = False
-            ax25dev = self.ax25_ports[k][0]
-            # ax25dev.device.close()
-            del ax25dev
         if hasattr(self, 'mh_list'):
             self.mh_list.save_mh_data()
             del self.mh_list
+        for k in self.ax25_ports.keys():
+            # cfg = self.ax25_ports[k][1]
+            # cfg.save_to_pickl()
+            self.ax25_ports[k].loop_is_running = False
+            self.ax25_ports[k].join()
+
 
     def set_gui(self, gui):
         """ PreInit: Set GUI Var """
         if self.gui is None:
             self.gui = gui
         for k in self.ax25_ports.keys():
-            self.ax25_ports[k][1].glb_gui = gui
-            self.ax25_ports[k][0].set_gui(gui)
+            # self.ax25_ports[k][1].glb_gui = gui
+            self.ax25_ports[k].set_gui(gui)
 
     def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
         if not new_conn.is_link or not new_conn.my_digi_call:
