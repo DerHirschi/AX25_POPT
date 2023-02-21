@@ -174,10 +174,16 @@ class StatSetTab:
         cli_key = self.cli_select_var.get()
         self.station_setting.stat_parm_cli = self.cli_opt[cli_key]
         # MaxPac
-        self.station_setting.stat_parm_MaxFrame = int(self.max_pac_select_var.get())
+        var_maxpac = int(self.max_pac_select_var.get())
+        self.station_setting.stat_parm_MaxFrame = var_maxpac
         # PacLen
         var_paclen = int(self.pac_len.get())    # TODO try: to/or/and Filter input
         self.station_setting.stat_parm_PacLen = var_paclen
+        for k in self.ports_sett.keys():
+            if call in self.ports_sett[k].parm_StationCalls:
+                self.ports_sett[k].parm_stat_PacLen[call] = var_paclen
+                self.ports_sett[k].parm_stat_MaxFrame[call] = var_maxpac
+
         # DIGI
         self.station_setting.stat_parm_is_StupidDigi = bool(self.digi_set_var.get())
         # Smart DIGI
@@ -287,20 +293,6 @@ class StationSettingsWin:
         # self.tabControl.pack(expand=0, fill="both")
 
     def set_all_vars_to_cfg(self):
-        """
-        for k in self.all_port_settings.keys():
-            all_att = dir(self.all_port_settings[k])
-            for att in all_att:
-                #print("sett {} - {}".format(att, self.all_port_settings[k].__dict__.get(att)))
-                print("sett {} - {}".format(att, getattr(self.all_port_settings[k], att)))
-
-        for k in self.all_ax25_ports.keys():
-            all_att = dir(self.all_ax25_ports[k][0].port_cfg)
-            for att in all_att:
-               #  print("port {} - {}".format(att, self.all_ax25_ports[k][0].port_cfg.__dict__.get(att)))
-                print("port {} - {}".format(att, getattr(self.all_ax25_ports[k][0].port_cfg, att)))
-        """
-        # Del new_parm_Stations from all ports
         for k in self.all_port_settings.keys():
             self.all_port_settings[k].parm_Stations = []
         for el in self.tab_list:

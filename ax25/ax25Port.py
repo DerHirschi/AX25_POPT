@@ -7,8 +7,9 @@ from datetime import datetime
 import crcmod
 
 import main
-from ax25.ax25InitPorts import AX25Conn
-from ax25.ax25dec_enc import AX25Frame, DecodingERROR, Call, reverse_uid, bytearray2hexstr
+# from ax25.ax25InitPorts import AX25Conn
+from ax25.ax25Connection import AX25Conn
+from ax25.ax25dec_enc import AX25Frame, DecodingERROR, reverse_uid, bytearray2hexstr
 import ax25.ax25monitor as ax25monitor
 import logging
 

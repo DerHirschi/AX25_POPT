@@ -23,7 +23,8 @@ if __name__ == '__main__':
     ################
     # On Close Window
     # del main_win
-    GLB_AX25port_handler.close_all_ports()
+    if GLB_AX25port_handler.is_running:
+        GLB_AX25port_handler.close_all_ports()
     GLB_MH_list.save_mh_data()
     GLB_CLIENT_db.save_data()
 

@@ -1,10 +1,10 @@
-from ax25.ax25Connection import AX25Conn
 from ax25.ax25Port import *
 from config_station import *
 
 
 class AX25PortHandler(object):
     def __init__(self):
+        self.is_running = True
         self.ax25types = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
@@ -61,7 +61,8 @@ class AX25PortHandler(object):
             c += 1
         ###########################
         # VArs for gathering Stuff
-        self.all_connections: {int: AX25Conn} = {}
+        # self.all_connections: {int: AX25Conn} = {}
+        self.all_connections = {}
 
     def __del__(self):
         self.close_all_ports()
@@ -75,11 +76,13 @@ class AX25PortHandler(object):
             self.mh_list.save_mh_data()
             del self.mh_list
         """
-        for k in self.ax25_ports.keys():
-            # cfg = self.ax25_ports[k][1]
-            # cfg.save_to_pickl()
-            self.ax25_ports[k].loop_is_running = False
-            self.ax25_ports[k].join()
+        if self.is_running:
+            for k in self.ax25_ports.keys():
+                # cfg = self.ax25_ports[k][1]
+                # cfg.save_to_pickl()
+                self.ax25_ports[k].loop_is_running = False
+                self.ax25_ports[k].join()
+        self.is_running = False
 
     def set_gui(self, gui):
         """ PreInit: Set GUI Var """
@@ -89,7 +92,8 @@ class AX25PortHandler(object):
                 # self.ax25_ports[k][1].glb_gui = gui
                 self.ax25_ports[k].set_gui(gui)
 
-    def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
+    # def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
+    def insert_conn2all_conn_var(self, new_conn, ind: int = 1):
         if not new_conn.is_link or not new_conn.my_digi_call:
             keys = list(self.all_connections.keys())
             # print("INSERT PRT HANDLER {}".format(keys))
@@ -120,22 +124,27 @@ class AX25PortHandler(object):
     def cleanup_conn2all_conn_var(self):
         temp = []
         for k in list(self.all_connections.keys()):
-            conn: AX25Conn = self.all_connections[k]
+            # conn: AX25Conn = self.all_connections[k]
+            conn = self.all_connections[k]
             if conn.zustand_exec.stat_index in [0]:
                 temp.append(k)
         for k in temp:
-            conn: AX25Conn = self.all_connections[k]
+            # conn: AX25Conn = self.all_connections[k]
+            conn = self.all_connections[k]
             conn.ch_index = 0
             del self.all_connections[k]
 
-    def del_conn2all_conn_var(self, conn: AX25Conn):
+    # def del_conn2all_conn_var(self, conn: AX25Conn):
+    def del_conn2all_conn_var(self, conn):
         temp = []
         for k in list(self.all_connections.keys()):
-            temp_conn: AX25Conn = self.all_connections[k]
+            # temp_conn: AX25Conn = self.all_connections[k]
+            temp_conn = self.all_connections[k]
             if temp_conn == conn:
                 temp.append(k)
         for k in temp:
-            conn: AX25Conn = self.all_connections[k]
+            # conn: AX25Conn = self.all_connections[k]
+            conn = self.all_connections[k]
             conn.ch_index = 0
             if self.gui is not None:
                 self.gui.disco_snd()

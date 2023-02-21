@@ -12,7 +12,7 @@ from gui.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
 from gui.guiSideFrame import SideTabbedFrame
 from gui.guiStationSettings import StationSettingsWin
-from main import VER, GLB_MH_list
+from main import VER
 
 if 'linux' in sys.platform:
     from playsound import playsound
@@ -185,6 +185,9 @@ class TkMainWin:
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
         self.main_win.mainloop()
+
+    def __del__(self):
+        self.ax25_port_handler.close_all_ports()
 
     ##########################
     # no WIN FNC

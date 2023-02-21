@@ -93,13 +93,13 @@ class AX25Conn(object):
         self.n2 = 0  # Fail Counter / No Response Counter
         """ Port Config Parameter """
         self.cfg = cfg
-        self.parm_PacLen = cfg.parm_PacLen  # Max Pac len
-        self.parm_MaxFrame = cfg.parm_MaxFrame  # Max (I) Frames
-        self.parm_TXD = cfg.parm_TXD    # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
-        self.parm_T2 = cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
-        self.parm_T3 = cfg.parm_T3      # T3 (Inactive Link Timer)
-        self.parm_N2 = cfg.parm_N2      # Max Try   Default 20
-        self.parm_baud = cfg.parm_baud  # Baud for calculating Timer
+        self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
+        self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
+        self.parm_TXD = self.cfg.parm_TXD    # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        self.parm_T2 = self.cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self.parm_T3 = self.cfg.parm_T3      # T3 (Inactive Link Timer)
+        self.parm_N2 = self.cfg.parm_N2      # Max Try   Default 20
+        self.parm_baud = self.cfg.parm_baud  # Baud for calculating Timer
         """ Zustandstabelle / Statechart """
         self.zustand_tab = {
             0: (DefaultStat, 'ENDE'),
@@ -114,19 +114,16 @@ class AX25Conn(object):
         # self.mh = cfg.parm_mh
         # self.cli = NoneCLI(self)
         """ Station Individual Parameter """
-        if self.my_call_obj.call_str in cfg.parm_StationCalls:
-            self.parm_PacLen = cfg.parm_stat_PacLen[self.my_call_obj.call_str]      # Max Pac len
-            self.parm_MaxFrame = cfg.parm_stat_MaxFrame[self.my_call_obj.call_str]  # Max Pac
+        if self.my_call_obj.call_str in self.cfg.parm_StationCalls:
+            self.parm_PacLen = self.cfg.parm_stat_PacLen[self.my_call_obj.call_str]      # Max Pac len
+            self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[self.my_call_obj.call_str]  # Max Pac
             """ Init CLI """
-            for stat in cfg.parm_Stations:
+            for stat in self.cfg.parm_Stations:
                 if self.my_call_obj.call_str in stat.stat_parm_Call:
-                    self.cli = cfg.parm_cli[self.my_call_obj.call_str](self, stat)
+                    self.cli = self.cfg.parm_cli[self.my_call_obj.call_str](self, stat)
                     break
-
-            # print(cfg.parm_Stations)
-            # print(cfg.parm_cli[self.my_call_obj.call_str].c_text)
         else:
-            self.cli = NoneCLI(self)
+            raise ConnectionError
         """ DIGI / Link to other Connection for Auto processing """
         self.DIGI_Connection: AX25Conn
         self.is_link = False
