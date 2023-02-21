@@ -38,7 +38,8 @@ class AX25Conn(object):
             self.is_prt_hndl = True
         self.ch_index: int = 0
         self.gui = cfg.glb_gui
-        if cfg.glb_gui is None:
+        self.gui = self.prt_hndl.gui
+        if self.gui is None:
             self.is_gui = False
         else:
             self.ch_index = self.gui.channel_index

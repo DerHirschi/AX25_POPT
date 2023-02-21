@@ -11,7 +11,7 @@ class AX25PortHandler(object):
             'KISSSER': KISSSerial,
             'AXIP': AXIP,
         }
-        self.ax25_ports: {int: (AX25Port, DefaultPortConfig)} = {}
+        self.ax25_ports: {int: AX25Port} = {}
         self.mh_list = ax25.ax25Statistics.MH()
         self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
@@ -80,14 +80,13 @@ class AX25PortHandler(object):
             self.ax25_ports[k].loop_is_running = False
             self.ax25_ports[k].join()
 
-
     def set_gui(self, gui):
         """ PreInit: Set GUI Var """
         if self.gui is None:
             self.gui = gui
-        for k in self.ax25_ports.keys():
-            # self.ax25_ports[k][1].glb_gui = gui
-            self.ax25_ports[k].set_gui(gui)
+            for k in self.ax25_ports.keys():
+                # self.ax25_ports[k][1].glb_gui = gui
+                self.ax25_ports[k].set_gui(gui)
 
     def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
         if not new_conn.is_link or not new_conn.my_digi_call:

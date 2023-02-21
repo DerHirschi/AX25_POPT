@@ -112,7 +112,7 @@ class DefaultPortConfig(object):
         # Port
         if not no_file:
             for att in list(port_cfg.keys()):
-                print("Load Port Param {} >  {} - {}".format(port_cfg['parm_PortName'] , att, port_cfg[att]))
+                # print("Load Port Param {} >  {} - {}".format(port_cfg['parm_PortName'] , att, port_cfg[att]))
                 setattr(self, att, port_cfg[att])
 
             if self.station_save_files:
@@ -132,7 +132,7 @@ class DefaultPortConfig(object):
                         if station_cfg['stat_parm_Call'] not in loaded_stat.keys():
                             new_stat_cfg = DefaultStation()
                             for att in list(station_cfg.keys()):
-                                print("Load Station Param {} > {} - {}".format(station_cfg['stat_parm_Call'], att, station_cfg[att]))
+                                # print("Load Station Param {} > {} - {}".format(station_cfg['stat_parm_Call'], att, station_cfg[att]))
                                 # print(station_cfg)
                                 setattr(new_stat_cfg, att, station_cfg[att])
                         else:
@@ -192,7 +192,7 @@ class DefaultPortConfig(object):
                     if '__' not in att:
                         # print(" {} - {}".format(att, getattr(self, att)))
                         save_station[att] = getattr(stat, att)
-                        print("Save Station Param {} > {} - {}".format(stat.stat_parm_Call, att, save_station[att]))
+                        # print("Save Station Param {} > {} - {}".format(stat.stat_parm_Call, att, save_station[att]))
                     f = open(file, 'wb')
                     pickle.dump(save_station, f, 2)
                     f.close()

@@ -95,9 +95,9 @@ class AX25Port(threading.Thread):
             raise e
 
     def set_gui(self, gui):
-        if self.gui is None:
-            self.gui = gui
-            self.is_gui = True
+        # if self.gui is None:
+        self.gui = gui
+        self.is_gui = True
 
     def init(self):
         pass
