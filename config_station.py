@@ -11,6 +11,8 @@ class DefaultStation(object):
     stat_parm_LOC: str = ''
     stat_parm_TYP: str = ''
     ##########################
+    stat_parm_isSmartDigi = False
+    stat_parm_is_StupidDigi = False
     # Parameter for CLI
     stat_parm_cli: DefaultCLI = DefaultCLI
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py

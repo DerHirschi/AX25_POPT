@@ -1,7 +1,7 @@
 from gui.guiMainNew import *
 from ax25.ax25InitPorts import *
 
-VER = '2.22a'
+VER = '2.31a'
 if __name__ == '__main__':
     #################
     # Init AX25 Stuff

@@ -31,6 +31,11 @@ Keybindings:
 - CTRL + minus > decrease Text size
 
 
-Issues / TODO (AX25 Protocol):
+Knowing Issues / TODO (AX25 Protocol):
 - FRMR Frame decoding not implemented yet
 - RNR State not implemented yet
+- Issues with "Smart-Digi" / Managed DIGI Mode Connection UID
+- ! Getting Decoding ERROR on some Frames. ( repeated on same Frame so received Frame seems OK)
+  - Examples captured from LOG:
+  b"\x14\x92\x98\x867\xbc\x0e\x9f&\xdb\xdd\x99\x17\x06']\x16\xady\x07 \xf1\xee\xa8"
+  '1492988637bc0e9f26dbdd991706275d16ad790720f1eea8'
