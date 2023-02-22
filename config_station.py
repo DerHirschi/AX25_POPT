@@ -7,10 +7,12 @@ from cli.cli import DefaultCLI, UserCLI, NodeCLI, NoneCLI
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'usertxt/'
-CFG_txt_save = {
+CFG_txt_save = {    # TODO: Don't load this shit as vars. Read it direct!
                 'stat_parm_cli_ctext': 'ctx',
                 'stat_parm_cli_bye_text': 'btx',
                 'stat_parm_cli_itext': 'itx',
+                'stat_parm_cli_longitext': 'litx',
+                'stat_parm_cli_akttext': 'atx',
                }
 
 
@@ -53,7 +55,7 @@ class DefaultStation(object):
     stat_parm_Name: str = ''
     stat_parm_QTH: str = ''
     stat_parm_LOC: str = ''
-    stat_parm_TYP: str = ''
+    # stat_parm_TYP: str = ''
     ##########################
     stat_parm_isSmartDigi = False
     stat_parm_is_StupidDigi = False
@@ -62,6 +64,8 @@ class DefaultStation(object):
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     stat_parm_cli_ctext: str
     stat_parm_cli_itext: str = ''
+    stat_parm_cli_longitext: str = ''
+    stat_parm_cli_akttext: str = ''
     stat_parm_cli_bye_text: str
     stat_parm_cli_prompt: str
     # Optional Parameter. Overrides Port Parameter

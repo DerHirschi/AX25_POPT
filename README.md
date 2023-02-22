@@ -33,7 +33,9 @@ Keybindings:
 File ext in Station Profile Folder (data/usertxt/<USER CALL>):
 - *.ctx > C-Text
 - *.btx > Bye-Text
+- *.atx > News-Text
 - *.itx > Info-Text
+- *.litx > Long Info-Text
 - *.popt > Programm Data Files (Don't change !) 
 
 

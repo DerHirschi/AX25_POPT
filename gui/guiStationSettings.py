@@ -103,6 +103,15 @@ class StatSetTab:
         self.smart_digi = tk.Checkbutton(self.tab, text='Managed-DIGI', width=10, variable=self.smart_digi_set_var)
         self.smart_digi.place(x=digi_x, y=height - digi_y)
 
+        ###############################
+        # Right Side ( Name, QTH, LOC )
+        self.tab.rowconfigure(0, minsize=5, weight=0)
+        self.tab.columnconfigure(0, minsize=550, weight=0)
+        self.tab.columnconfigure(1, weight=1)
+        r_side_frame = tk.Frame(self.tab, width=435, height=135)
+        r_side_frame.configure(bg='grey80')
+        r_side_frame.grid(column=1, row=1)
+
         ###########################
         # Tabs for C-Text an so on
         # Root Tab
@@ -153,10 +162,40 @@ class StatSetTab:
         # self.bye_text_ent.place(x=5, y=15)
         self.info_text_ent.grid(row=1, column=1)
         self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
+        # Info Text
+        tab_loinfotext = ttk.Frame(textTab)
+        tab_loinfotext.rowconfigure(0, minsize=2, weight=0)
+        tab_loinfotext.rowconfigure(1, minsize=100, weight=1)
+        tab_loinfotext.rowconfigure(2, minsize=2, weight=0)
+        tab_loinfotext.columnconfigure(0, minsize=2, weight=0)
+        tab_loinfotext.columnconfigure(1, minsize=900, weight=1)
+        tab_loinfotext.columnconfigure(2, minsize=2, weight=0)
+        # self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        self.long_info_text_ent = tk.scrolledtext.ScrolledText(tab_loinfotext, font=("Courier", 12))
+        self.long_info_text_ent.configure(width=80, height=11)
+        # self.bye_text_ent.place(x=5, y=15)
+        self.long_info_text_ent.grid(row=1, column=1)
+        self.long_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_longitext)
+        # Status Text
+        tab_akttext = ttk.Frame(textTab)
+        tab_akttext.rowconfigure(0, minsize=2, weight=0)
+        tab_akttext.rowconfigure(1, minsize=100, weight=1)
+        tab_akttext.rowconfigure(2, minsize=2, weight=0)
+        tab_akttext.columnconfigure(0, minsize=2, weight=0)
+        tab_akttext.columnconfigure(1, minsize=900, weight=1)
+        tab_akttext.columnconfigure(2, minsize=2, weight=0)
+        # self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        self.akt_info_text_ent = tk.scrolledtext.ScrolledText(tab_akttext, font=("Courier", 12))
+        self.akt_info_text_ent.configure(width=80, height=11)
+        # self.bye_text_ent.place(x=5, y=15)
+        self.akt_info_text_ent.grid(row=1, column=1)
+        self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
 
         textTab.add(tab_ctext, text='C Text')
         textTab.add(tab_byetext, text='Quit Text')
         textTab.add(tab_infotext, text='Info Text')
+        textTab.add(tab_loinfotext, text='Long-Info Text')
+        textTab.add(tab_akttext, text='News Text')
 
         self.update_vars_fm_cfg()
 
@@ -200,6 +239,12 @@ class StatSetTab:
         # Info Text
         self.info_text_ent.delete('1.0', tk.END)
         self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
+        # Long Info Text
+        self.long_info_text_ent.delete('1.0', tk.END)
+        self.long_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_longitext)
+        # News Text
+        self.akt_info_text_ent.delete('1.0', tk.END)
+        self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
 
     def set_vars_to_cfg(self):
         # CALL
@@ -227,8 +272,13 @@ class StatSetTab:
         self.station_setting.stat_parm_cli_ctext = self.c_text_ent.get('1.0', tk.END)
         # Bye Text
         self.station_setting.stat_parm_cli_bye_text = self.bye_text_ent.get('1.0', tk.END)
-        # Bye Text
+        # Info Text
         self.station_setting.stat_parm_cli_itext = self.info_text_ent.get('1.0', tk.END)
+        # Long Info Text
+        self.station_setting.stat_parm_cli_longitext = self.long_info_text_ent.get('1.0', tk.END)
+        # News Text
+        self.station_setting.stat_parm_cli_akttext = self.akt_info_text_ent.get('1.0', tk.END)
+
         # Ports
         for k in self.ports_sett.keys():
             var = self.port_set_var[k][0].get()
