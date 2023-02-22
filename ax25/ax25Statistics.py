@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import pickle
 
-mh_data_file = 'data/mh_data.pkl'
+mh_data_file = 'data/mh_data.popt'
 
 
 def get_time_str():

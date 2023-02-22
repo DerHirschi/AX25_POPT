@@ -3,8 +3,8 @@ import time
 import os
 import pickle
 
-axip_clientList = 'data/axip_clientList.pkl'
-client_db = 'data/clientDB.pkl'
+axip_clientList = 'data/axip_clientList.popt'
+client_db = 'data/clientDB.popt'
 
 
 def get_ssid(inp):

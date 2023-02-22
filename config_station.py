@@ -5,7 +5,44 @@ import time
 
 from cli.cli import DefaultCLI, UserCLI, NodeCLI, NoneCLI
 
-cfg_data_path = 'data/'
+CFG_data_path = 'data/'
+CFG_usertxt_path = 'usertxt/'
+CFG_txt_save = {
+                'stat_parm_cli_ctext': 'ctx',
+                'stat_parm_cli_bye_text': 'btx',
+                'stat_parm_cli_itext': 'itx',
+               }
+
+
+def exist_userpath(usercall: str):
+    if not os.path.exists(CFG_data_path + CFG_usertxt_path + usercall):
+        os.makedirs(CFG_data_path + CFG_usertxt_path + usercall)
+
+
+def save_to_file(filename: str, data):
+    try:
+        with open(CFG_data_path + filename, 'wb') as f:
+            pickle.dump(data, f, 2)
+    except FileNotFoundError:
+        if 'linux' in sys.platform:
+            os.system('touch {}'.format(CFG_data_path + filename))
+            time.sleep(1)
+            with open(CFG_data_path + filename, 'wb') as f:
+                pickle.dump(data, f, 2)
+    except EOFError:
+        pass
+
+
+def load_fm_file(filename: str):
+    try:
+        with open(CFG_data_path + filename, 'rb') as inp:
+            return pickle.load(inp)
+    except FileNotFoundError:
+        if 'linux' in sys.platform:
+            os.system('touch {}'.format(CFG_data_path + filename))
+        return ''
+    except EOFError:
+        return ''
 
 
 class DefaultStation(object):
@@ -24,6 +61,7 @@ class DefaultStation(object):
     stat_parm_cli: DefaultCLI = DefaultCLI
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     stat_parm_cli_ctext: str
+    stat_parm_cli_itext: str
     stat_parm_cli_bye_text: str
     stat_parm_cli_prompt: str
     # Optional Parameter. Overrides Port Parameter
@@ -96,7 +134,7 @@ class DefaultPortConfig(object):
 
     def __init__(self, loaded_stat: {str: DefaultStation}):
         self.station_save_files = []
-        file = cfg_data_path + 'port{}.pkl'.format(self.parm_PortNr)
+        file = CFG_data_path + 'port{}.popt'.format(self.parm_PortNr)
         no_file = True
         try:
             with open(file, 'rb') as inp:
@@ -121,26 +159,31 @@ class DefaultPortConfig(object):
                 # Stations
                 for file in self.station_save_files:
                     try:
-                        with open(file, 'rb') as inp:
+                        with open(CFG_data_path + file, 'rb') as inp:
                             station_cfg = pickle.load(inp)
                     except FileNotFoundError:
                         if 'linux' in sys.platform:
-                            os.system('touch {}'.format(file))
+                            os.system('touch {}'.format(CFG_data_path + file))
                     except EOFError:
                         pass
                     else:
                         if station_cfg['stat_parm_Call'] not in loaded_stat.keys():
                             new_stat_cfg = DefaultStation()
                             for att in list(station_cfg.keys()):
-                                # print("Load Station Param {} > {} - {}".format(station_cfg['stat_parm_Call'], att, station_cfg[att]))
-                                # print(station_cfg)
                                 setattr(new_stat_cfg, att, station_cfg[att])
+                            for var_att in CFG_txt_save.keys():
+                                file_ext = CFG_txt_save[var_att]
+                                f_n = CFG_usertxt_path + '{0}/{0}.{1}'.format(
+                                                            station_cfg['stat_parm_Call'],
+                                                            file_ext)
+                                txt = load_fm_file(f_n)
+                                setattr(new_stat_cfg, var_att, txt)
+
                         else:
                             new_stat_cfg = loaded_stat[station_cfg['stat_parm_Call']]
 
                         self.parm_Stations.append(new_stat_cfg)
 
-                # self.__dict__.update(port_cfg)
                 print("Load from File..")
 
         self.parm_StationCalls: [str] = []
@@ -174,28 +217,28 @@ class DefaultPortConfig(object):
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """
         if self.parm_PortNr != -1:
-            # mh = self.glb_mh
             gui = self.glb_gui
-            # port_handler = self.glb_port_handler
-            # self.glb_mh = None
             self.glb_gui = None
-            # self.glb_port_handler = None
             #############
             # Station CFG
             stations = self.parm_Stations
             save_file_names = []
             for stat in stations:
-                file = cfg_data_path + 'stat{}.pkl'.format(stat.stat_parm_Call)
+                file = '{1}{0}/stat{0}.popt'.format(stat.stat_parm_Call, CFG_usertxt_path)
+                exist_userpath(stat.stat_parm_Call)
                 save_file_names.append(file)
                 save_station = {}
                 for att in dir(stat):
                     if '__' not in att:
-                        # print(" {} - {}".format(att, getattr(self, att)))
-                        save_station[att] = getattr(stat, att)
-                        # print("Save Station Param {} > {} - {}".format(stat.stat_parm_Call, att, save_station[att]))
-                    f = open(file, 'wb')
-                    pickle.dump(save_station, f, 2)
-                    f.close()
+                        if att in CFG_txt_save.keys():
+                            f_n = CFG_usertxt_path + \
+                                  '{0}/{0}.{1}'.format(stat.stat_parm_Call, CFG_txt_save[att])
+                            save_to_file(f_n, getattr(stat, att))
+                        else:
+                            save_station[att] = getattr(stat, att)
+                        print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
+                save_to_file(file, save_station)
+
             self.station_save_files = save_file_names
             ############
             # Port CFG
@@ -206,15 +249,10 @@ class DefaultPortConfig(object):
                     # print(" {} - {}".format(att, getattr(self, att)))
                     save_ports[att] = getattr(self, att)
                     print("Save Port Param {} > {} - {}".format(self.parm_PortNr , att, save_ports[att]))
-            file = cfg_data_path + 'port{}.pkl'.format(self.parm_PortNr)
-            f = open(file, 'wb')
-            pickle.dump(save_ports, f, 2)
-            f.close()
+            file = 'port{}.popt'.format(self.parm_PortNr)
+            save_to_file(file, save_ports)
 
-
-            # self.glb_mh = mh
             self.glb_gui = gui
-            # self.glb_port_handler = port_handler
 
 
 class Port0(DefaultPortConfig):
