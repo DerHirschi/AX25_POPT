@@ -61,7 +61,7 @@ class DefaultStation(object):
     stat_parm_cli: DefaultCLI = DefaultCLI
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     stat_parm_cli_ctext: str
-    stat_parm_cli_itext: str
+    stat_parm_cli_itext: str = ''
     stat_parm_cli_bye_text: str
     stat_parm_cli_prompt: str
     # Optional Parameter. Overrides Port Parameter

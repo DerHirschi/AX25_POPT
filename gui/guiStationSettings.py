@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk as ttk
+from tkinter import scrolledtext
 from config_station import DefaultStation, DefaultPortConfig
 from cli.cli import *
 
@@ -112,35 +113,50 @@ class StatSetTab:
         textTab.place(x=digi_x, y=height - digi_y)
         # C-Text
         tab_ctext = ttk.Frame(textTab)
-        tab_ctext.rowconfigure(0, minsize=5, weight=0)
+        tab_ctext.rowconfigure(0, minsize=2, weight=0)
         tab_ctext.rowconfigure(1, minsize=100, weight=1)
-        tab_ctext.rowconfigure(2, minsize=5, weight=0)
-        tab_ctext.columnconfigure(0, minsize=5, weight=0)
-        tab_ctext.columnconfigure(0, minsize=5, weight=0)
-        tab_ctext.columnconfigure(1, minsize=800, weight=1)
-        tab_ctext.columnconfigure(2, minsize=5, weight=0)
-        self.c_text_ent = tk.Text(tab_ctext, bg='white', font=("Courier", 12))
+        tab_ctext.rowconfigure(2, minsize=2, weight=0)
+        tab_ctext.columnconfigure(0, minsize=2, weight=0)
+        tab_ctext.columnconfigure(1, minsize=900, weight=1)
+        tab_ctext.columnconfigure(2, minsize=2, weight=0)
+        # self.c_text_ent = tk.Text(tab_ctext, bg='white', font=("Courier", 12))
+        self.c_text_ent = tk.Text(tab_ctext, font=("Courier", 12))
         self.c_text_ent.configure(width=80, height=11)
         # self.c_text_ent.place(x=5, y=15)
         self.c_text_ent.grid(row=1, column=1)
         self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)
         # Bye Text
         tab_byetext = ttk.Frame(textTab)
-        tab_byetext.rowconfigure(0, minsize=5, weight=0)
+        tab_byetext.rowconfigure(0, minsize=2, weight=0)
         tab_byetext.rowconfigure(1, minsize=100, weight=1)
-        tab_byetext.rowconfigure(2, minsize=5, weight=0)
-        tab_byetext.columnconfigure(0, minsize=5, weight=0)
-        tab_byetext.columnconfigure(0, minsize=5, weight=0)
-        tab_byetext.columnconfigure(1, minsize=800, weight=1)
-        tab_byetext.columnconfigure(2, minsize=5, weight=0)
-        self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        tab_byetext.rowconfigure(2, minsize=2, weight=0)
+        tab_byetext.columnconfigure(0, minsize=2, weight=0)
+        tab_byetext.columnconfigure(1, minsize=900, weight=1)
+        tab_byetext.columnconfigure(2, minsize=2, weight=0)
+        # self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        self.bye_text_ent = tk.Text(tab_byetext, font=("Courier", 12))
         self.bye_text_ent.configure(width=80, height=11)
         # self.bye_text_ent.place(x=5, y=15)
         self.bye_text_ent.grid(row=1, column=1)
         self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
+        # Info Text
+        tab_infotext = ttk.Frame(textTab)
+        tab_infotext.rowconfigure(0, minsize=2, weight=0)
+        tab_infotext.rowconfigure(1, minsize=100, weight=1)
+        tab_infotext.rowconfigure(2, minsize=2, weight=0)
+        tab_infotext.columnconfigure(0, minsize=2, weight=0)
+        tab_infotext.columnconfigure(1, minsize=900, weight=1)
+        tab_infotext.columnconfigure(2, minsize=2, weight=0)
+        # self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        self.info_text_ent = tk.scrolledtext.ScrolledText(tab_infotext, font=("Courier", 12))
+        self.info_text_ent.configure(width=80, height=11)
+        # self.bye_text_ent.place(x=5, y=15)
+        self.info_text_ent.grid(row=1, column=1)
+        self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
 
         textTab.add(tab_ctext, text='C Text')
         textTab.add(tab_byetext, text='Quit Text')
+        textTab.add(tab_infotext, text='Info Text')
 
         self.update_vars_fm_cfg()
 
@@ -181,6 +197,9 @@ class StatSetTab:
         # Bye Text
         self.bye_text_ent.delete('1.0', tk.END)
         self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
+        # Info Text
+        self.info_text_ent.delete('1.0', tk.END)
+        self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
 
     def set_vars_to_cfg(self):
         # CALL
@@ -208,6 +227,8 @@ class StatSetTab:
         self.station_setting.stat_parm_cli_ctext = self.c_text_ent.get('1.0', tk.END)
         # Bye Text
         self.station_setting.stat_parm_cli_bye_text = self.bye_text_ent.get('1.0', tk.END)
+        # Bye Text
+        self.station_setting.stat_parm_cli_itext = self.info_text_ent.get('1.0', tk.END)
         # Ports
         for k in self.ports_sett.keys():
             var = self.port_set_var[k][0].get()

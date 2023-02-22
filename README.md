@@ -30,6 +30,12 @@ Keybindings:
 - CTRL + plus > increase Text size
 - CTRL + minus > decrease Text size
 
+File ext in Station Profile Folder (data/usertxt/<USER CALL>):
+- *.ctx > C-Text
+- *.btx > Bye-Text
+- *.itx > Info-Text
+- *.popt > Programm Data Files (Don't change !) 
+
 
 Knowing Issues / TODO (AX25 Protocol):
 - FRMR Frame decoding not implemented yet
