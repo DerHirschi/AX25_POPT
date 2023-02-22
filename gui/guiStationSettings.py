@@ -112,15 +112,31 @@ class StatSetTab:
         textTab.place(x=digi_x, y=height - digi_y)
         # C-Text
         tab_ctext = ttk.Frame(textTab)
+        tab_ctext.rowconfigure(0, minsize=5, weight=0)
+        tab_ctext.rowconfigure(1, minsize=100, weight=1)
+        tab_ctext.rowconfigure(2, minsize=5, weight=0)
+        tab_ctext.columnconfigure(0, minsize=5, weight=0)
+        tab_ctext.columnconfigure(0, minsize=5, weight=0)
+        tab_ctext.columnconfigure(1, minsize=800, weight=1)
+        tab_ctext.columnconfigure(2, minsize=5, weight=0)
         self.c_text_ent = tk.Text(tab_ctext, bg='white', font=("Courier", 12))
         self.c_text_ent.configure(width=80, height=11)
-        self.c_text_ent.place(x=5, y=15)
+        # self.c_text_ent.place(x=5, y=15)
+        self.c_text_ent.grid(row=1, column=1)
         self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)
         # Bye Text
         tab_byetext = ttk.Frame(textTab)
+        tab_byetext.rowconfigure(0, minsize=5, weight=0)
+        tab_byetext.rowconfigure(1, minsize=100, weight=1)
+        tab_byetext.rowconfigure(2, minsize=5, weight=0)
+        tab_byetext.columnconfigure(0, minsize=5, weight=0)
+        tab_byetext.columnconfigure(0, minsize=5, weight=0)
+        tab_byetext.columnconfigure(1, minsize=800, weight=1)
+        tab_byetext.columnconfigure(2, minsize=5, weight=0)
         self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
         self.bye_text_ent.configure(width=80, height=11)
-        self.bye_text_ent.place(x=5, y=15)
+        # self.bye_text_ent.place(x=5, y=15)
+        self.bye_text_ent.grid(row=1, column=1)
         self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
 
         textTab.add(tab_ctext, text='C Text')
@@ -197,9 +213,6 @@ class StatSetTab:
             var = self.port_set_var[k][0].get()
             if var:
                 self.ports_sett[k].parm_Stations.append(self.station_setting)
-
-        # TODO ReInit / Save / Load / bla
-
 
 
 class StationSettingsWin:
