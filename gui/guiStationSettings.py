@@ -100,7 +100,7 @@ class StatSetTab:
         digi_x = 390
         digi_y = 500
         self.smart_digi_set_var = tk.IntVar()
-        self.smart_digi = tk.Checkbutton(self.tab, text='Managed-DIGI', width=10, variable=self.smart_digi_set_var)
+        self.smart_digi = tk.Checkbutton(self.tab, text='Managed-DIGI', width=12, variable=self.smart_digi_set_var)
         self.smart_digi.place(x=digi_x, y=height - digi_y)
 
         ###############################
@@ -108,12 +108,40 @@ class StatSetTab:
         self.tab.rowconfigure(0, minsize=5, weight=0)
         self.tab.columnconfigure(0, minsize=550, weight=0)
         self.tab.columnconfigure(1, weight=1)
-        r_side_frame = tk.Frame(self.tab, width=435, height=135)
+        f_height = 135
+        r_side_frame = tk.Frame(self.tab, width=435, height=f_height)
         r_side_frame.configure(bg='grey80')
         r_side_frame.grid(column=1, row=1)
+        #################
+        # Name
+        name_x = 10
+        name_y = 120
+        name_label = tk.Label(r_side_frame, text='Name:')
+        name_label.place(x=name_x, y=f_height - name_y)
+        self.name = tk.Entry(r_side_frame, width=15)
+        self.name.place(x=name_x + 75, y=f_height - name_y)
+        self.name.insert(tk.END, str(self.station_setting.stat_parm_Name))
+        #################
+        # QTH
+        qth_x = 10
+        qth_y = 90
+        qth_label = tk.Label(r_side_frame, text='QTH:')
+        qth_label.place(x=qth_x, y=f_height - qth_y)
+        self.qth = tk.Entry(r_side_frame, width=30)
+        self.qth.place(x=qth_x + 75, y=f_height - qth_y)
+        self.qth.insert(tk.END, str(self.station_setting.stat_parm_QTH))
+        #################
+        # LOC
+        loc_x = 10
+        loc_y = 60
+        loc_label = tk.Label(r_side_frame, text='LOC:')
+        loc_label.place(x=loc_x, y=f_height - loc_y)
+        self.loc = tk.Entry(r_side_frame, width=6)
+        self.loc.place(x=loc_x + 75, y=f_height - loc_y)
+        self.loc.insert(tk.END, str(self.station_setting.stat_parm_LOC))
 
-        ###########################
-        # Tabs for C-Text an so on
+        ############################
+        # Tabs for C-Text and so on
         # Root Tab
         digi_x = 20
         digi_y = 460
@@ -245,6 +273,15 @@ class StatSetTab:
         # News Text
         self.akt_info_text_ent.delete('1.0', tk.END)
         self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
+        # Name
+        self.name.delete(0, tk.END)
+        self.name.insert(tk.END, self.station_setting.stat_parm_Name)
+        # QTH
+        self.qth.delete(0, tk.END)
+        self.qth.insert(tk.END, self.station_setting.stat_parm_QTH)
+        # LOC
+        self.loc.delete(0, tk.END)
+        self.loc.insert(tk.END, self.station_setting.stat_parm_LOC)
 
     def set_vars_to_cfg(self):
         # CALL
@@ -278,6 +315,12 @@ class StatSetTab:
         self.station_setting.stat_parm_cli_longitext = self.long_info_text_ent.get('1.0', tk.END)
         # News Text
         self.station_setting.stat_parm_cli_akttext = self.akt_info_text_ent.get('1.0', tk.END)
+        # Name
+        self.station_setting.stat_parm_Name = self.name.get()
+        # QTH
+        self.station_setting.stat_parm_QTH = self.qth.get()
+        # LOC   TODO: Filter
+        self.station_setting.stat_parm_LOC = self.loc.get()
 
         # Ports
         for k in self.ports_sett.keys():
