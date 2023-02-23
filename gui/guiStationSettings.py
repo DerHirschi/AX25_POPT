@@ -349,20 +349,20 @@ class StationSettingsWin:
         self.win_width = 1059
         self.style = main_cl.style
         self.settings_win = tk.Tk()
-        self.settings_win.title("Einstellungen")
+        self.settings_win.title("Station-Einstellungen")
         self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
-        self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
+        self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.settings_win.resizable(False, False)
         self.settings_win.attributes("-topmost", True)
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self.settings_win,
-                             text="Ok",
-                             # font=("TkFixedFont", 15),
-                             # bg="green",
-                             height=1,
-                             width=6,
-                             command=self.destroy_new_conn_win)
+                          text="Ok",
+                          # font=("TkFixedFont", 15),
+                          # bg="green",
+                          height=1,
+                          width=6,
+                          command=self.destroy_win)
 
         save_bt = tk.Button(self.settings_win,
                             text="Speichern",
@@ -370,7 +370,7 @@ class StationSettingsWin:
                             # bg="green",
                             height=1,
                             width=7,
-                            command=self.set_all_vars_to_cfg)
+                            command=self.save_btn_cmd)
 
         cancel_bt = tk.Button(self.settings_win,
                               text="Abbrechen",
@@ -378,7 +378,7 @@ class StationSettingsWin:
                               # bg="green",
                               height=1,
                               width=8,
-                              command=self.destroy_new_conn_win)
+                              command=self.destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
         save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
@@ -390,14 +390,14 @@ class StationSettingsWin:
                               # bg="green",
                               height=1,
                               width=10,
-                              command=self.destroy_new_conn_win)
+                              command=self.destroy_win)
         del_st_bt = tk.Button(self.settings_win,
                               text="Löschen",
                               # font=("TkFixedFont", 15),
                               bg="red3",
                               height=1,
                               width=10,
-                              command=self.destroy_new_conn_win)
+                              command=self.destroy_win)
 
         new_st_bt.place(x=20, y=self.win_height - 590)
         del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
@@ -424,6 +424,8 @@ class StationSettingsWin:
             self.all_port_settings[k].parm_Stations = []
         for el in self.tab_list:
             el.set_vars_to_cfg()
+
+    def save_cfg_to_file(self):
         for k in self.all_port_settings.keys():
             self.all_port_settings[k].save_to_pickl()
         """    
@@ -443,7 +445,15 @@ class StationSettingsWin:
                 print("sett {} - {}".format(att, self.all_ax25_ports[k][0].port_cfg.__dict__.get(att)))
         """
 
-    def destroy_new_conn_win(self):
+    def save_btn_cmd(self):
+        self.set_all_vars_to_cfg()
+        self.save_cfg_to_file()
+
+    def ok_btn_cmd(self):
+        self.set_all_vars_to_cfg()
+        self.destroy_win()
+
+    def destroy_win(self):
         self.settings_win.destroy()
         self.main_class.settings_win = None
 

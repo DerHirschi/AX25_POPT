@@ -107,8 +107,8 @@ class DefaultPortConfig(object):
     """ Port Parameter """
     parm_PortNr: int = -1
     parm_PortName: '' = ''
-    parm_PortTyp: '' = ''   # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIPCL' AXIP UDP
-    parm_PortParm = ''
+    parm_PortTyp: '' = ''   # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIP' AXIP UDP
+    parm_PortParm: (str, int) = ('', 0)
     # TODO DIGI is Station related
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isDigi is set to False
@@ -187,6 +187,8 @@ class DefaultPortConfig(object):
                             new_stat_cfg = loaded_stat[station_cfg['stat_parm_Call']]
 
                         self.parm_Stations.append(new_stat_cfg)
+                if self.parm_PortTyp == 'AXIP':
+                    self.parm_full_duplex = True
 
                 print("Load from File..")
 

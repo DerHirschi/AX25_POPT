@@ -39,7 +39,7 @@ class Beacon:
 
 
 class AX25Port(threading.Thread):
-    def __init__(self, station_cfg, port_handler):
+    def __init__(self, port_cfg, port_handler):
         super(AX25Port, self).__init__()
 
         """ self.ax25_port_handler will be set in AX25PortInit """
@@ -47,7 +47,7 @@ class AX25Port(threading.Thread):
         # self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
         ############
         # CONFIG
-        self.port_cfg = station_cfg
+        self.port_cfg = port_cfg
         self.port_handler = port_handler
         self.mh = port_handler.mh
         self.port_cfg.mh = self.mh

@@ -12,6 +12,7 @@ from gui.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
 from gui.guiSideFrame import SideTabbedFrame
 from gui.guiStationSettings import StationSettingsWin
+from gui.guiPortSettings import PortSettingsWin
 from main import VER
 
 if 'linux' in sys.platform:
@@ -119,6 +120,7 @@ class TkMainWin:
         # Menü 4 Einstellungen
         self.MenuSettings = Menu(self.menubar, tearoff=False)
         self.MenuSettings.add_command(label="Station", command=self.open_settings_win, underline=0)
+        self.MenuSettings.add_command(label="Port", command=self.open_port_settings_win, underline=0)
         self.menubar.add_cascade(label="Einstellungen", menu=self.MenuSettings, underline=0)
         # Menü 4 "Debug"
         # self.menubar.add_command(label="Debug")
@@ -171,6 +173,7 @@ class TkMainWin:
         # Windows
         self.new_conn_win = None
         self.settings_win = None
+        self.port_settings_win = None
         ###########################
         # Init
         # set GUI Var
@@ -181,7 +184,7 @@ class TkMainWin:
         self.set_keybinds()
         ####
         # TEST
-        # self.open_settings_win()
+        self.open_port_settings_win()
         #######################
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
@@ -381,10 +384,16 @@ class TkMainWin:
             self.new_conn_win = NewConnWin(self)
 
     ##########################
-    # Settings WIN
+    # Stat Settings WIN
     def open_settings_win(self):
         if self.settings_win is None:
             self.settings_win = StationSettingsWin(self)
+
+    ##########################
+    # Port Settings WIN
+    def open_port_settings_win(self):
+        if self.settings_win is None:
+            self.settings_win = PortSettingsWin(self)
     # ##############
     # DISCO
     def disco_conn(self):
