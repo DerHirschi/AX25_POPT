@@ -30,6 +30,7 @@ class MyHeard(object):
 
 class MH(object):
     def __init__(self):
+        print("MH Init")
         self.calls: {str: MyHeard} = {}
         try:
             with open(mh_data_file, 'rb') as inp:
@@ -157,6 +158,7 @@ class MH(object):
     def save_mh_data(self):
         try:
             with open(mh_data_file, 'wb') as outp:
+                print(self.calls.keys())
                 pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
             os.system('touch {}'.format(mh_data_file))
@@ -164,7 +166,3 @@ class MH(object):
                 pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
 
 
-if __name__ == '__main__':
-    mh_data_file = '../data/mh_data.pkl'
-    mh = MH()
-    print(mh.mh_out_cli())

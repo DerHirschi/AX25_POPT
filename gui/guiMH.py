@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 class MHWin:
-    def __init__(self):
-        self.mh = main.GLB_MH_list
+    def __init__(self, glb_mh):
+        self.mh = glb_mh
         self.win = tk.Tk()
         self.win.title("MHEARD")
         self.win.geometry("1250x700")

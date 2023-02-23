@@ -49,7 +49,7 @@ def load_fm_file(filename: str):
 
 class DefaultStation(object):
     # parm_StationCalls: [''] = []
-    stat_parm_Call: str
+    stat_parm_Call: str     # TODO ???? not Predefined ??
     ##########################
     # Not Implemented Yet
     stat_parm_Name: str = ''
@@ -240,7 +240,7 @@ class DefaultPortConfig(object):
                             save_to_file(f_n, getattr(stat, att))
                         else:
                             save_station[att] = getattr(stat, att)
-                        print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
+                        # print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
                 save_to_file(file, save_station)
 
             self.station_save_files = save_file_names

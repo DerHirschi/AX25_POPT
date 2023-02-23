@@ -1,4 +1,5 @@
-# import ax25.ax25Statistics
+import pickle
+
 import ax25.ax25Connection
 import config_station
 import main
@@ -17,15 +18,17 @@ class DefaultCLI(object):
             self.c_text = stat_cfg.stat_parm_cli_ctext
         if hasattr(stat_cfg, 'stat_parm_cli_bye_text'):
             self.bye_text = stat_cfg.stat_parm_cli_bye_text
-        if hasattr(stat_cfg, 'connection'):
+        if hasattr(stat_cfg, 'stat_parm_cli_prompt'):
             self.prompt = stat_cfg.stat_parm_cli_prompt
+        self.stat_cfg_index_call = stat_cfg.stat_parm_Call
+        self.stat_cfg = stat_cfg
         self.connection: ax25.ax25Connection.AX25Conn = connection
         # self.connection = connection
         self.my_call = connection.ax25_out_frame.from_call.call
         self.my_call_str = connection.ax25_out_frame.from_call.call_str
         self.to_call = connection.ax25_out_frame.to_call.call
         self.to_call_str = connection.ax25_out_frame.to_call.call_str
-        self.mh_list = main.GLB_MH_list
+        self.mh_list = connection.mh
         self.state_index = 0
         self.crone_state_index = 0
         self.input = b''
@@ -39,10 +42,16 @@ class DefaultCLI(object):
         # Standard Commands ( GLOBAL )
         self.cmd_exec = {
             'Q': (self.cmd_q, 'Quit'),
-            'C': (self.cmd_connect, 'Connect'),
+            'C': (self.cmd_connect, 'Connect ! funktioniert noch nicht !'),
             'MH': (self.cmd_mh, 'MYHeard Liste'),
+            'I': (self.cmd_i, 'Info'),
+            'LI': (self.cmd_li, 'Lange Info'),
+            'NE': (self.cmd_news, 'NEWS'),
+            'NEWS': (self.cmd_news, 'NEWS'),
             'V': (self.cmd_ver, 'Version'),
+            'VER': (self.cmd_ver, 'Version'),
             'H': (self.cmd_help, 'Hilfe'),
+            '?': (self.cmd_help, 'Hilfe'),
         }
         self.state_exec = {
             0: self.s0,  # C-Text
@@ -108,6 +117,18 @@ class DefaultCLI(object):
             .replace('\n', '')
         return False
 
+    def load_fm_file(self, filename: str):
+        try:
+            with open(config_station.CFG_data_path +
+                      config_station.CFG_usertxt_path +
+                      self.stat_cfg_index_call + '/' +
+                      filename, 'rb') as inp:
+                return pickle.load(inp)
+        except FileNotFoundError:
+            return ''
+        except EOFError:
+            return ''
+
     def exec_cmd(self):
         if self.is_prefix():
             if self.cmd in self.cmd_exec.keys():
@@ -159,6 +180,27 @@ class DefaultCLI(object):
                 '\__|yton   \______/ther\__|acket   \__|erminal\r\r'\
                 'Version: {}\r\r\r'.format(main.VER)
         return ret
+
+    def cmd_i(self):
+        ret = self.load_fm_file(self.stat_cfg_index_call + '.itx')
+        if ret:
+            return ret
+        else:
+            return self.stat_cfg.stat_parm_cli_itext
+
+    def cmd_li(self):
+        ret = self.load_fm_file(self.stat_cfg_index_call + '.litx')
+        if ret:
+            return ret
+        else:
+            return self.stat_cfg.stat_parm_cli_longitext
+
+    def cmd_news(self):
+        ret = self.load_fm_file(self.stat_cfg_index_call + '.atx')
+        if ret:
+            return ret
+        else:
+            return self.stat_cfg.stat_parm_cli_akttext
 
     def cmd_help(self):
         ret = '\r   < Hilfe >\r'

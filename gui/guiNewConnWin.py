@@ -40,7 +40,7 @@ class NewConnWin:
         self.style = self.main.style
         self.ax25_port_handler = self.main.ax25_port_handler
         self.out_txt = self.main.out_txt
-        self.mh = main.GLB_MH_list
+        self.mh = main_win.mh
         self.new_conn_win = tk.Tk()
         self.new_conn_win.title("New Connection")
         self.new_conn_win.geometry("700x285")

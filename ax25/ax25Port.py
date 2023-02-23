@@ -7,22 +7,14 @@ from datetime import datetime
 import crcmod
 
 import main
-# from ax25.ax25InitPorts import AX25Conn
 from ax25.ax25Connection import AX25Conn
-from ax25.ax25dec_enc import AX25Frame, DecodingERROR, reverse_uid, bytearray2hexstr
+from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr
+from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 import ax25.ax25monitor as ax25monitor
-import logging
+# import logging
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
-
-
-class AX25DeviceERROR(Exception):
-    logger.error('AX25DeviceERROR Error !')
-
-
-class AX25DeviceFAIL(Exception):
-    logger.error('AX25DeviceFAIL while try Sending Data !')
 
 
 class RxBuf:
@@ -49,6 +41,7 @@ class Beacon:
 class AX25Port(threading.Thread):
     def __init__(self, station_cfg, port_handler):
         super(AX25Port, self).__init__()
+
         """ self.ax25_port_handler will be set in AX25PortInit """
         self.ax25_ports: {int: AX25Port}
         # self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
@@ -56,6 +49,9 @@ class AX25Port(threading.Thread):
         # CONFIG
         self.port_cfg = station_cfg
         self.port_handler = port_handler
+        self.mh = port_handler.mh
+        self.port_cfg.mh = self.mh
+
         self.port_param = self.port_cfg.parm_PortParm
         self.portname = self.port_cfg.parm_PortName
         self.port_typ = self.port_cfg.parm_PortTyp
@@ -71,7 +67,6 @@ class AX25Port(threading.Thread):
         # VARS
         self.loop_is_running = False
         self.monitor = ax25monitor.Monitor()
-        # self.mh = self.port_cfg.glb_mh
         # self.port_hndl = self.port_cfg.glb_port_handler
         self.gui = None
         self.is_gui = False
@@ -126,7 +121,7 @@ class AX25Port(threading.Thread):
         # self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
         # self.mh.mh_inp(ax25_frame, self.portname)
-        main.GLB_MH_list.mh_inp(ax25_frame, self.portname)
+        self.mh.mh_inp(ax25_frame, self.portname)
         # Existing Connections
         uid = str(ax25_frame.addr_uid)
         if uid in self.connections.keys():
@@ -250,6 +245,8 @@ class AX25Port(threading.Thread):
                         tr = True
                     except AX25DeviceFAIL as e:
                         raise e
+                    except AX25EncodingERROR:
+                        pass
                     cfg = self.port_cfg
                     # Monitor
                     if self.is_gui:
@@ -264,6 +261,8 @@ class AX25Port(threading.Thread):
                 tr = True
             except AX25DeviceFAIL as e:
                 raise e
+            except AX25EncodingERROR:
+                logger.error('Encoding Error: ! MSG to short !')
             # Monitor
             cfg = self.port_cfg
             # Monitor
@@ -358,7 +357,7 @@ class AX25Port(threading.Thread):
                 try:
                     # Decoding
                     ax25frame.decode(buf.raw_data)
-                except DecodingERROR:
+                except AX25DecodingERROR:
                     logger.error('Port:{} decoding: '.format(self.portname))
                     logger.error('{}: org {}'.format(self.portname, buf.raw_data))
                     logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
@@ -424,7 +423,16 @@ class KissTCP(AX25Port):
 
     def tx(self, frame: AX25Frame):
         ############################################
+        # !!!!!!! BUG ?????????
         out = (bytes.fromhex('c000') + frame.hexstr + bytes.fromhex('c0'))
+        if len(out) < 15:
+            logger.error('Error Port {0} - Packet < 15 - \nout: {1}\nframe.hexstr: {2}'.format(
+                self.port_param,
+                out,
+                frame.hexstr))
+            raise AX25EncodingERROR(frame)
+        # Just Log it and let it through. DW is block this
+        #######################################
         try:
             self.device.sendall(out)
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:

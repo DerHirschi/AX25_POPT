@@ -7,7 +7,7 @@ import main
 class SideTabbedFrame:
     def __init__(self, main_cl):
         self.main_win = main_cl
-        self.mh = main.GLB_MH_list
+        self.mh = main_cl.mh
         self.style = self.main_win.style
         self.side_btn_frame_top = self.main_win.side_btn_frame_top
         self.tab_side_frame = tk.Frame(self.side_btn_frame_top, width=300, height=400)

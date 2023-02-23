@@ -2,9 +2,8 @@
     Layer 2 ??
     AX.25 Packet enc-/decoding
 """
-import logging
 
-logger = logging.getLogger(__name__)
+from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 
 
 def bl2str(inp):
@@ -65,14 +64,6 @@ def format_hexstr(inp):
         return '{:02x}'.format(inp)
     elif type(inp) == str:
         return '{:02x}'.format(int(inp, 16))
-
-
-class EncodingERROR(Exception):
-    logger.error('AX25 Packet Encoding Error !')
-
-
-class DecodingERROR(Exception):
-    logger.error('AX25 Packet decoding Error !')
 
 
 class Call(object):
@@ -296,7 +287,7 @@ class CByte(object):
                     self.flag = 'XID'
                 else:
                     logger.error('C-Byte Error Decoding U Frame ! Unknown C-Byte> ' + str(bi) + ' ' + hex(in_byte))
-                    raise DecodingERROR
+                    raise AX25DecodingERROR
 
     def validate(self):
         if self.hex == 0xff:
@@ -578,11 +569,11 @@ class AX25Frame(object):
             try:
                 self.to_call.dec_call(self.hexstr[:7])
             except IndexError:
-                raise DecodingERROR
+                raise AX25DecodingERROR(self)
             try:
                 self.from_call.dec_call(self.hexstr[7:14])
             except IndexError:
-                raise DecodingERROR
+                raise AX25DecodingERROR(self)
             n = 2
             if not self.from_call.s_bit:
                 while True:
@@ -590,7 +581,7 @@ class AX25Frame(object):
                     try:
                         tmp.dec_call(self.hexstr[7 * n: 7 + 7 * n])
                     except IndexError:
-                        raise DecodingERROR
+                        raise AX25DecodingERROR(self)
                     self.via_calls.append(tmp)
                     n += 1
                     if tmp.s_bit:
@@ -600,11 +591,11 @@ class AX25Frame(object):
             # Dec C-Byte
             try:
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
-            except (DecodingERROR, IndexError):
+            except (AX25DecodingERROR, IndexError):
                 logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
                 logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
                 logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
-                raise DecodingERROR
+                raise AX25DecodingERROR(self)
             # Get Command Bits
             if self.to_call.c_bit and not self.from_call.c_bit:
                 self.ctl_byte.cmd = True
@@ -616,7 +607,7 @@ class AX25Frame(object):
                 try:
                     self.pid_byte.decode(self.hexstr[index])
                 except IndexError:
-                    raise DecodingERROR
+                    raise AX25DecodingERROR(self)
             if self.ctl_byte.info:
                 index += 1
                 self.data = self.hexstr[index:]
@@ -626,9 +617,9 @@ class AX25Frame(object):
             # Build address UID
             self.build_uid(dec=True)
             if not self.validate():
-                raise DecodingERROR
+                raise AX25DecodingERROR(self)
         else:
-            raise DecodingERROR
+            raise AX25DecodingERROR(self)
 
     def encode(self, digi=False):
         self.hexstr = b''
@@ -680,7 +671,7 @@ class AX25Frame(object):
             logger.error("ctl_byte")
             for k in vars(self.ctl_byte).keys():
                 logger.error("{} > {}".format(k, vars(self.ctl_byte)[k]))
-            raise ValueError
+            raise AX25EncodingERROR(self)
 
         # Data
         if self.ctl_byte.info:
@@ -695,23 +686,29 @@ class AX25Frame(object):
         """
         if len(self.hexstr) < 15:
             logger.error('Validate Error: Pac length')
+            AX25EncodingERROR(self)
             return False
         if not self.from_call.validate():
             logger.error('Validate Error: From Call')
+            AX25EncodingERROR(self)
             return False
         if not self.to_call.validate():
             logger.error('Validate Error: TO Call')
+            AX25EncodingERROR(self)
             return False
         ca: Call
         for ca in self.via_calls:
             if not ca.validate():
+                AX25EncodingERROR(self)
                 return False
         if not self.ctl_byte.validate():
             logger.error('Validate Error: C_Byte')
+            AX25EncodingERROR(self)
             return False
         if self.ctl_byte.pid:
             if not self.pid_byte.validate():
                 logger.error('Validate Error: PID_Byte')
+                AX25EncodingERROR(self)
                 return False
         return True
 

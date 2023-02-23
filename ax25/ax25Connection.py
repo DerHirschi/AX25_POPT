@@ -4,13 +4,13 @@
 """
 import time
 
-from ax25.ax25dec_enc import AX25Frame, reverse_uid
-from config_station import DefaultPortConfig, NoneCLI
+from ax25.ax25dec_enc import AX25Frame, reverse_uid, logger
 
+"""
 import logging
 
-
 logger = logging.getLogger(__name__)
+"""
 
 
 def count_modulo(inp: int):
@@ -18,14 +18,14 @@ def count_modulo(inp: int):
 
 
 class AX25Conn(object):
-    def __init__(self, ax25_frame: AX25Frame, cfg: DefaultPortConfig, port, rx=True):
+    def __init__(self, ax25_frame: AX25Frame, cfg, port, rx=True):
         ###############
         # DEBUG
         self.debugvar_len_out_buf = 0
         ###############
         ############
         # GLOBALS
-        # glb_mh = None
+        self.mh = cfg.mh
         self.own_port = port
         self.prt_hndl = self.own_port.port_handler
         """

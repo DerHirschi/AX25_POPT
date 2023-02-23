@@ -1,17 +1,17 @@
 import cli.ClientDB
+import ax25.ax25Statistics
 import gui.guiMainNew
 import ax25.ax25InitPorts
-import ax25.ax25Statistics
-
 VER = '2.32a'
 
-GLB_MH_list = ax25.ax25Statistics.MH()
-GLB_CLIENT_db = cli.ClientDB.ClientDB()
-
 if __name__ == '__main__':
+    GLB_MH_list = ax25.ax25Statistics.MH()
+    GLB_CLIENT_db = cli.ClientDB.ClientDB()
+
     #################
     # Init AX25 Stuff
-    GLB_AX25port_handler = ax25.ax25InitPorts.AX25PortHandler()
+    GLB_AX25port_handler = ax25.ax25InitPorts.AX25PortHandler(GLB_MH_list)
+
     #############
     # INIT GUI
     # TODO: if setting_gui:

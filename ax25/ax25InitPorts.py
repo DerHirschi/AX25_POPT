@@ -3,8 +3,9 @@ from config_station import *
 
 
 class AX25PortHandler(object):
-    def __init__(self):
+    def __init__(self, glb_MH):
         self.is_running = True
+        self.mh = glb_MH
         self.ax25types = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,

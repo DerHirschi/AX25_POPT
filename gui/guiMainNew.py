@@ -53,6 +53,7 @@ class TkMainWin:
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
+        self.mh = glb_ax25port_handler.mh
         # Default Port 0
         ax25_ports = self.ax25_port_handler.ax25_ports
         # Globals
@@ -431,6 +432,6 @@ class TkMainWin:
     # MH WIN
     def MH_win(self):
         """MH WIN"""
-        MHWin()
+        MHWin(self.mh)
 
     # MH WIN ENDE
