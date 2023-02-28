@@ -16,6 +16,31 @@ CFG_txt_save = {    # TODO: Don't load this shit as vars. Read it direct!
                }
 
 
+def get_stat_cfg():
+    stat_cfg_path = CFG_data_path + CFG_usertxt_path
+    stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
+    ret: {str: DefaultStation} = {}
+    if len(stat_cfg) > 1:
+        stat_cfg = stat_cfg[1:]
+        for folder in stat_cfg:
+            call = folder.split('/')[-1]  # TODO WIN \ ???
+            # print(folder + '/stat' + call + '.popt')
+            temp = {}
+            try:
+                with open(folder + '/stat' + call + '.popt', 'rb') as inp:
+                    temp = pickle.load(inp)
+            except FileNotFoundError or EOFError:
+                pass
+            if temp:
+                stat = DefaultStation()
+                for att in list(temp.keys()):
+                    setattr(stat, att, temp[att])
+                ret[call] = stat
+
+
+    return ret
+
+
 def exist_userpath(usercall: str):
     if not os.path.exists(CFG_data_path + CFG_usertxt_path + usercall):
         os.makedirs(CFG_data_path + CFG_usertxt_path + usercall)

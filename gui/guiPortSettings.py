@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk as ttk
 from gui.vars import ALL_COLOURS
-from config_station import DefaultStation, DefaultPortConfig
+from config_station import DefaultStation, DefaultPortConfig, get_stat_cfg
 
 
 class PortSetTab:
@@ -136,10 +136,6 @@ class PortSetTab:
         self.pac_len.place(x=pac_len_x + 80, y=height - pac_len)
         pac_len_help.place(x=pac_len_x + 80 + 70, y=height - pac_len)
 
-        # Monitor Text Color
-        # parm_mon_clr_tx = "medium violet red"
-        # parm_mon_clr_rx = "green"
-
         #########################
         # Port Default Max Pac
         max_pac_x = 20
@@ -193,9 +189,32 @@ class PortSetTab:
         rx_sel_label.place(x=rx_sel_x, y=rx_sel_y)
         rx_sel.place(x=rx_sel_x + 55, y=rx_sel_y)
 
-
         #####################################
-        # TODO Stationen zu Port zuweisen ..
+        #################
+        # Station CFGs
+        self.stat_check_vars = {}
+        self.all_stat_cfgs = get_stat_cfg()
+        x_f = 0
+        y_f = 1
+
+        for k in self.all_stat_cfgs.keys():
+            stat = self.all_stat_cfgs[k]
+            cfg_x = 20 + x_f
+            cfg_y = 290 - (35 * y_f)    # Yeah X * 0
+            cfg_set_var = tk.IntVar()
+            cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=cfg_set_var, anchor='w')
+            if k in self.port_setting.parm_StationCalls:
+                cfg_set_var.set(1)
+                cfg.select()
+            cfg.place(x=cfg_x, y=height - cfg_y)
+            if y_f == 3:
+                y_f = 1
+                x_f += 150
+            else:
+                y_f += 1
+
+            self.stat_check_vars[k] = cfg_set_var
+
         self.update_port_parameter()
 
     def win_tasker(self):
@@ -271,6 +290,34 @@ class PortSetTab:
             if self.port_setting.parm_PortParm[1]:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
 
+    def set_vars_to_cfg(self):
+        # Port TYpe
+        self.port_setting.parm_PortTyp = self.port_select_var.get()
+        # Port Parameter
+        tmp_param = (self.param1_ent.get(), int(self.param2_ent.get()))
+        self.port_setting.parm_PortParm = tmp_param
+        # Pseudo TXD
+        self.port_setting.parm_TXD = int(self.ptxd.get())
+        # Baud
+        self.port_setting.parm_baud = int(self.calc_baud.get())
+        # T 1
+        self.port_setting.parm_T1 = int(self.t1.get())
+        # T 2
+        self.port_setting.parm_T2 = int(self.t2.get())
+        # T 3
+        self.port_setting.parm_T3 = int(self.t3.get())
+        # N 2
+        self.port_setting.parm_N2 = int(self.n2.get())
+        # Port Default Packet Length
+        self.port_setting.parm_PacLen = int(self.pac_len.get())
+        # Port Default Max Pac
+        self.port_setting.parm_MaxFrame = int(self.max_pac_var.get())
+        # Monitor COLOR Selector SIDE Frame
+        # TX
+        self.port_setting.parm_mon_clr_tx = self.tx_col_select_var.get()
+        # RX
+        self.port_setting.parm_mon_clr_rx = self.rx_col_select_var.get()
+
 
 class PortSettingsWin:
     def __init__(self, main_cl):
@@ -302,7 +349,7 @@ class PortSettingsWin:
                             # bg="green",
                             height=1,
                             width=7,
-                            command=self.destroy_win)
+                            command=self.save_btn_cmd)
 
         cancel_bt = tk.Button(self.settings_win,
                               text="Abbrechen",
@@ -347,10 +394,12 @@ class PortSettingsWin:
             port_lable_text = 'Port {}'.format(k)
             self.tabControl.add(tab.tab, text=port_lable_text)
 
-
     def destroy_win(self):
             self.settings_win.destroy()
             self.main_class.settings_win = None
 
+    def save_btn_cmd(self):
+        for port_set in self.tab_list:
+            port_set.set_vars_to_cfg()
 
 
