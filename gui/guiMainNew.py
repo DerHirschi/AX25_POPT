@@ -173,7 +173,6 @@ class TkMainWin:
         # Windows
         self.new_conn_win = None
         self.settings_win = None
-        self.port_settings_win = None
         ###########################
         # Init
         # set GUI Var
@@ -184,7 +183,7 @@ class TkMainWin:
         self.set_keybinds()
         ####
         # TEST
-        self.open_port_settings_win()
+        # self.open_port_settings_win()
         #######################
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
@@ -294,6 +293,8 @@ class TkMainWin:
     ##########################
 
     def tasker(self):  # MAINLOOP
+        ########################################
+        # Check Boxes ( RX-BEEP and TimeStamp )
         rx_beep_check = self.txt_win.rx_beep_var.get()
         if rx_beep_check:
             self.txt_win.rx_beep_box.configure(bg='green', activebackground='green')
@@ -306,11 +307,17 @@ class TkMainWin:
         else:
             self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_param().timestamp_opt = ts_check
+        #############################################
+        # Settings Win ( Port,- Station settings )
+        if self.settings_win is not None:
+            self.settings_win.tasker()
+        #####################
         # Prio TASKS ########
         self.update_mon()  # TODO trigger von AX25CONN
         self.txt_win.update_status_win()
         if self.ch_alarm:
             self.ch_btn_status_update()
+        ######################
         # Non Prio ###########
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer

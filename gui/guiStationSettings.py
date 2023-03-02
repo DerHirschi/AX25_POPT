@@ -457,3 +457,6 @@ class StationSettingsWin:
         self.settings_win.destroy()
         self.main_class.settings_win = None
 
+    def tasker(self):
+        pass
+

@@ -35,7 +35,7 @@ class PortSetTab:
         self.port_select_var = tk.StringVar(self.tab)
 
         opt = port_types
-        self.port_select_var.set(self.port_setting.parm_PortTyp)      # default value
+        self.port_select_var.set(self.port_setting.parm_PortTyp)  # default value
         port_men = tk.OptionMenu(self.tab, self.port_select_var, *opt)
         port_men.configure(width=10, height=1)
         port_men.place(x=port_x + 55, y=height - port_y - 5)
@@ -174,7 +174,7 @@ class PortSetTab:
         self.tx_col_select_var = tk.StringVar(self.tab)
         self.tx_col_select_var.set(self.port_setting.parm_mon_clr_tx)  # default value
         tx_sel = tk.ttk.Combobox(mon_col_frame, textvariable=self.tx_col_select_var, values=ALL_COLOURS)
-        #tx_sel.configure(width=18, height=20, bg=bg_cl)
+        # tx_sel.configure(width=18, height=20, bg=bg_cl)
         tx_sel_label.place(x=tx_sel_x, y=tx_sel_y)
         tx_sel.place(x=tx_sel_x + 55, y=tx_sel_y)
         #################
@@ -200,7 +200,7 @@ class PortSetTab:
         for k in self.all_stat_cfgs.keys():
             stat = self.all_stat_cfgs[k]
             cfg_x = 20 + x_f
-            cfg_y = 290 - (35 * y_f)    # Yeah X * 0
+            cfg_y = 290 - (35 * y_f)  # Yeah X * 0
             cfg_set_var = tk.IntVar()
             cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=cfg_set_var, anchor='w')
             if k in self.port_setting.parm_StationCalls:
@@ -218,17 +218,16 @@ class PortSetTab:
         self.update_port_parameter()
 
     def win_tasker(self):
-        # TODO: Add to Mainloop (ROOT Frame/Win)
         self.update_port_parameter()
 
     def update_port_parameter(self):
-        # TODO trigger from loop to update when new port typ is set
         height = self.height
         param_sel_x = 20
         param_sel_y = 535
         param_next_line = 0
         typ = self.port_select_var.get()
         if typ == 'KISSTCP':
+            self.ptxd.configure(state="normal")
             self.calc_baud.configure(state="normal")
             self.calc_baud.delete(0, tk.END)
             self.calc_baud.insert(tk.END, self.port_setting.parm_baud)
@@ -246,10 +245,34 @@ class PortSetTab:
                 self.param1_ent.insert(tk.END, self.port_setting.parm_PortParm[0])
             if self.port_setting.parm_PortParm[1]:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
+
+            self.t1.configure(state="normal")
+            self.t1.delete(0, tk.END)
+            self.t1.insert(tk.END, self.port_setting.parm_T1)
+            self.t2.configure(state="normal")
+            self.t2.delete(0, tk.END)
+            self.t2.insert(tk.END, self.port_setting.parm_T2)
+
         elif typ == 'AXIP':
+            self.ptxd.configure(state="normal")
+            self.ptxd.delete(0, tk.END)
+            self.ptxd.insert(tk.END, '1')
+            self.ptxd.configure(state="disabled")
+
             self.calc_baud.configure(state="normal")
             self.calc_baud.delete(0, tk.END)
-            self.calc_baud.insert(tk.END, self.port_setting.parm_baud)
+            self.calc_baud.insert(tk.END, '119200')
+            self.calc_baud.configure(state="disabled")
+
+            self.t1.configure(state="normal")
+            self.t1.delete(0, tk.END)
+            self.t1.insert(tk.END, '1')
+            self.t1.configure(state="disabled")
+            self.t2.configure(state="normal")
+            self.t2.delete(0, tk.END)
+            self.t2.insert(tk.END, '1')
+            self.t2.configure(state="disabled")
+
             self.param1_label.configure(text='Adresse:')
             self.param1_ent.configure(width=28)
             self.param2_label.configure(text='Port:')
@@ -269,6 +292,7 @@ class PortSetTab:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
 
         elif typ == 'KISSSER':
+            self.ptxd.configure(state="normal")
             self.calc_baud.configure(state="normal")
             self.calc_baud.delete(0, tk.END)
             self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
@@ -289,10 +313,17 @@ class PortSetTab:
                 self.param1_ent.insert(tk.END, self.port_setting.parm_PortParm[0])
             if self.port_setting.parm_PortParm[1]:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
+            self.t1.configure(state="normal")
+            self.t1.delete(0, tk.END)
+            self.t1.insert(tk.END, self.port_setting.parm_T1)
+            self.t2.configure(state="normal")
+            self.t2.delete(0, tk.END)
+            self.t2.insert(tk.END, self.port_setting.parm_T2)
 
     def set_vars_to_cfg(self):
         # Port TYpe
         self.port_setting.parm_PortTyp = self.port_select_var.get()
+
         # Port Parameter
         tmp_param = (self.param1_ent.get(), int(self.param2_ent.get()))
         self.port_setting.parm_PortParm = tmp_param
@@ -317,6 +348,15 @@ class PortSetTab:
         self.port_setting.parm_mon_clr_tx = self.tx_col_select_var.get()
         # RX
         self.port_setting.parm_mon_clr_rx = self.rx_col_select_var.get()
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            self.port_setting.parm_full_duplex = True
+        else:
+            self.port_setting.parm_full_duplex = False
+        # TODO Station Settings to Port
+        # parm_stat_PacLen: {str: int} = {}
+        # parm_stat_MaxFrame: {str: int} = {}
+        # parm_cli: {str: DefaultCLI} = {}
+        # parm_StationCalls
 
 
 class PortSettingsWin:
@@ -364,12 +404,12 @@ class PortSettingsWin:
         ####################################
         # New Station, Del Station Buttons
         new_port_bt = tk.Button(self.settings_win,
-                                  text="Neuer Port",
-                                  # font=("TkFixedFont", 15),
-                                  # bg="green",
-                                  height=1,
-                                  width=10,
-                                  command=self.destroy_win)
+                                text="Neuer Port",
+                                # font=("TkFixedFont", 15),
+                                # bg="green",
+                                height=1,
+                                width=10,
+                                command=self.destroy_win)
         del_st_bt = tk.Button(self.settings_win,
                               text="Löschen",
                               # font=("TkFixedFont", 15),
@@ -395,11 +435,15 @@ class PortSettingsWin:
             self.tabControl.add(tab.tab, text=port_lable_text)
 
     def destroy_win(self):
-            self.settings_win.destroy()
-            self.main_class.settings_win = None
+        self.settings_win.destroy()
+        self.main_class.settings_win = None
 
     def save_btn_cmd(self):
         for port_set in self.tab_list:
             port_set.set_vars_to_cfg()
+        for k in self.all_ax25_ports.keys():
+            self.all_ax25_ports[k].port_cfg.save_to_pickl()
 
-
+    def tasker(self):
+        for tab in self.tab_list:
+            tab.win_tasker()

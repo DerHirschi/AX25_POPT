@@ -141,8 +141,11 @@ class DefaultPortConfig(object):
     """ Connection Parameter """
     parm_PacLen = 170   # Max Pac len
     parm_MaxFrame = 5   # Max (I) Frames
+    # Station related Parameter
     parm_stat_PacLen: {str: int} = {}
     parm_stat_MaxFrame: {str: int} = {}
+    parm_cli: {str: DefaultCLI} = {}
+    parm_StationCalls: [str]    # def in __init__
     ####################################
     parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
     parm_T2 = 3000      # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
@@ -151,7 +154,6 @@ class DefaultPortConfig(object):
     parm_baud = 1200    # Baud for calculating Timer
     parm_full_duplex = False    # Pseudo Full duplex Mode (Just for AXIP)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
-    parm_cli: {str: DefaultCLI} = {}
     # Monitor Text Color
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
