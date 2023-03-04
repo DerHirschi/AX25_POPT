@@ -289,7 +289,9 @@ class StatSetTab:
 
     def set_vars_to_cfg(self):
         # CALL
-        call = self.call.get()
+        call = self.call.get().upper()
+        self.call.delete(0, tk.END)
+        self.call.insert(tk.END, call)
         self.station_setting.stat_parm_Call = call
         # CLI
         cli_key = self.cli_select_var.get()
@@ -435,11 +437,16 @@ class StationSettingsWin:
         for k in self.all_port_settings.keys():
             self.all_port_settings[k].parm_Stations = []
         """
+        dbl_calls = []
         for el in self.tab_list:
-            el.set_vars_to_cfg()
-            call = el.call.get()
-            self.tabControl.tab(self.tab_list.index(el), text=call)
-
+            call = el.call.get().upper()
+            if call not in dbl_calls:
+                el.set_vars_to_cfg()
+                self.tabControl.tab(self.tab_list.index(el), text=call)
+                dbl_calls.append(call)
+            else:
+                el.call.delete(0, tk.END)
+                el.call.insert(tk.END, DefaultStation.stat_parm_Call)
 
     def save_cfg_to_file(self):
         for conf in self.tab_list:
