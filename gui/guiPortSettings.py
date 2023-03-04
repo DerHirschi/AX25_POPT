@@ -198,27 +198,34 @@ class PortSetTab:
         y_f = 1
 
         for k in self.all_stat_cfgs.keys():
-            stat = self.all_stat_cfgs[k]
+            # stat = self.all_stat_cfgs[k]
             cfg_x = 20 + x_f
             cfg_y = 290 - (35 * y_f)  # Yeah X * 0
-            cfg_set_var = tk.IntVar()
-            cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=cfg_set_var, anchor='w')
+            var = tk.IntVar()
+
+            cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=var, anchor='w', state='normal')
+
             if k in self.port_setting.parm_StationCalls:
-                cfg_set_var.set(1)
+                var.set(1)
                 cfg.select()
+            # cfg.var = var
+            self.stat_check_vars[k] = var
             cfg.place(x=cfg_x, y=height - cfg_y)
+            cfg.var = var
             if y_f == 3:
                 y_f = 1
                 x_f += 150
             else:
                 y_f += 1
 
-            self.stat_check_vars[k] = cfg_set_var
-
         self.update_port_parameter()
 
     def win_tasker(self):
         self.update_port_parameter()
+        for k in self.stat_check_vars.keys():
+
+            # self.stat_check_vars[k][1].getvar()
+            print("{} {} {} {}".format(self.port_setting.parm_PortNr, k, self.stat_check_vars[k].get(), self.stat_check_vars[k].trace_info()))
 
     def update_port_parameter(self):
         height = self.height
@@ -357,6 +364,27 @@ class PortSetTab:
         # parm_stat_MaxFrame: {str: int} = {}
         # parm_cli: {str: DefaultCLI} = {}
         # parm_StationCalls
+        # self.stat_check_vars
+        # self.all_stat_cfgs
+        self.port_setting.parm_stat_PacLen = {}
+        self.port_setting.parm_stat_MaxFrame = {}
+        self.port_setting.parm_cli = {}
+        self.port_setting.parm_StationCalls = []
+        self.port_setting.parm_Stations = []
+
+        for k in self.stat_check_vars.keys():
+            if k in self.all_stat_cfgs.keys() and \
+                    self.stat_check_vars[k].get():
+                print("{} {} {} {}".format(k, self.port_setting.parm_PortNr, self.stat_check_vars[k].get(), self.stat_check_vars[k]))
+                var = self.stat_check_vars[k]
+                print(var.get())
+                stat = self.all_stat_cfgs[k]
+                self.port_setting.parm_stat_PacLen[k] = stat.stat_parm_PacLen
+                self.port_setting.parm_stat_MaxFrame[k] = stat.stat_parm_MaxFrame
+                self.port_setting.parm_cli[k] = stat.stat_parm_cli
+                self.port_setting.parm_StationCalls.append(k)
+                self.port_setting.parm_Stations.append(stat)
+                # station_save_files
 
 
 class PortSettingsWin:
@@ -367,7 +395,8 @@ class PortSettingsWin:
         self.win_height = 600
         self.win_width = 1059
         self.style = main_cl.style
-        self.settings_win = tk.Tk()
+        self.settings_win = tk.Toplevel()
+        # self.settings_win
         self.settings_win.title("Port-Einstellungen")
         self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)

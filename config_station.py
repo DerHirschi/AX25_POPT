@@ -37,7 +37,6 @@ def get_stat_cfg():
                     setattr(stat, att, temp[att])
                 ret[call] = stat
 
-
     return ret
 
 

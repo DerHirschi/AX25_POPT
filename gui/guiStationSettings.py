@@ -43,6 +43,7 @@ class StatSetTab:
 
         #######################
         # Device Port Selector
+        """
         dev_sel_x = 1040
         dev_sel_y = 535
         dev_label = tk.Label(self.tab, text='Geräte-Port:')
@@ -63,7 +64,7 @@ class StatSetTab:
             f = 72
             dev_check.place(x=width - (dev_sel_x - 35 - ((k + 1) * f)), y=height - dev_sel_y)
             self.port_set_var[k] = (var, dev_check)
-
+        """
         #################
         # MaxPac
         max_pac_x = 20
@@ -234,6 +235,7 @@ class StatSetTab:
         # CLI
         self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)
         # Ports
+        """
         for k in self.ports_sett.keys():
             self.ports_sett: {int: DefaultPortConfig}
             var = self.port_set_var[k][0]
@@ -246,6 +248,7 @@ class StatSetTab:
                 if el in self.station_setting.stat_parm_Call:
                     var.set(1)
                     dev_check.select()
+        """
         # MaxPac
         self.max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
         self.max_pac.update()
@@ -294,8 +297,9 @@ class StatSetTab:
         var_maxpac = int(self.max_pac_select_var.get())
         self.station_setting.stat_parm_MaxFrame = var_maxpac
         # PacLen
-        var_paclen = int(self.pac_len.get())    # TODO try: to/or/and Filter input
+        var_paclen = int(self.pac_len.get())
         self.station_setting.stat_parm_PacLen = var_paclen
+
         for k in self.ports_sett.keys():
             if call in self.ports_sett[k].parm_StationCalls:
                 self.ports_sett[k].parm_stat_PacLen[call] = var_paclen
@@ -323,10 +327,12 @@ class StatSetTab:
         self.station_setting.stat_parm_LOC = self.loc.get()
 
         # Ports
+        """
         for k in self.ports_sett.keys():
             var = self.port_set_var[k][0].get()
             if var:
                 self.ports_sett[k].parm_Stations.append(self.station_setting)
+        """
 
 
 class StationSettingsWin:
