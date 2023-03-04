@@ -36,7 +36,7 @@ class PortSetTab:
 
         opt = port_types
         self.port_select_var.set(self.port_setting.parm_PortTyp)  # default value
-        port_men = tk.OptionMenu(self.tab, self.port_select_var, *opt)
+        port_men = tk.OptionMenu(self.tab, self.port_select_var, *opt, command=self.update_port_parameter)
         port_men.configure(width=10, height=1)
         port_men.place(x=port_x + 55, y=height - port_y - 5)
         #######################
@@ -83,6 +83,132 @@ class PortSetTab:
             self.calc_baud.configure(state="normal")
         calc_baud_label.place(x=calc_baud_x, y=height - calc_baud_y)
         self.calc_baud.place(x=calc_baud_x + 80, y=height - calc_baud_y)
+        # TODO DUMMY for TXD, PERS, TAIL ( KISS )
+        # TODO TXD
+        kiss_txd_x = 220
+        kiss_txd_y = 465
+        kiss_txd_label = tk.Label(self.tab, text='TXD:')
+        self.kiss_txd = tk.Entry(self.tab, width=5)
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            # ins = self.port_setting.parm_PortParm[1]
+            self.kiss_txd.insert(tk.END, '0')
+            self.kiss_txd.configure(state="disabled")
+        else:
+            # ins = self.port_setting.parm_baud
+            self.kiss_txd.insert(tk.END, '0')
+            self.kiss_txd.configure(state="disabled")   # TODO state='normal
+        kiss_txd_label.place(x=kiss_txd_x, y=height - kiss_txd_y)
+        self.kiss_txd.place(x=kiss_txd_x + 50, y=height - kiss_txd_y)
+        # TODO PERS
+        kiss_pers_x = 360
+        kiss_pers_y = 465
+        kiss_pers_label = tk.Label(self.tab, text='PERS:')
+        self.kiss_pers = tk.Entry(self.tab, width=4)
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            # ins = self.port_setting.parm_PortParm[1]
+            self.kiss_pers.insert(tk.END, '0')
+            self.kiss_pers.configure(state="disabled")
+        else:
+            # ins = self.port_setting.parm_baud
+            self.kiss_pers.insert(tk.END, '0')
+            self.kiss_pers.configure(state="disabled")  # TODO state='normal
+        kiss_pers_label.place(x=kiss_pers_x, y=height - kiss_pers_y)
+        self.kiss_pers.place(x=kiss_pers_x + 60, y=height - kiss_pers_y)
+        # TODO TAIL
+        kiss_tail_x = 490
+        kiss_tail_y = 465
+        kiss_tail_label = tk.Label(self.tab, text='TAIL:')
+        self.kiss_tail = tk.Entry(self.tab, width=4)
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            # ins = self.port_setting.parm_PortParm[1]
+            self.kiss_tail.insert(tk.END, '0')
+            self.kiss_tail.configure(state="disabled")
+        else:
+            # ins = self.port_setting.parm_baud
+            self.kiss_tail.insert(tk.END, '0')
+            self.kiss_tail.configure(state="disabled")  # TODO state='normal
+        kiss_tail_label.place(x=kiss_tail_x, y=height - kiss_tail_y)
+        self.kiss_tail.place(x=kiss_tail_x + 50, y=height - kiss_tail_y)
+        ########################
+        # TODO AXIP related options ( Multicast, LinkTest, TestCall, Intervall, Max-Fail-counter )
+        # TODO Multicast
+        axip_multicast_x = 800
+        axip_multicast_y = 535
+        self.axip_multicast_var = tk.IntVar(self.tab)
+        # self.axip_multicast_var.set(0)
+        self.axip_multicast_dd = tk.Checkbutton(self.tab, text='AXIP-Multicast', variable=self.axip_multicast_var)
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            # ins = self.port_setting.parm_PortParm[1]
+            # self.kiss_tail.insert(tk.END, '0')
+            self.axip_multicast_dd.configure(state="disabled")   # TODO state='normal
+        else:
+            # ins = self.port_setting.parm_baud
+            # self.kiss_tail.insert(tk.END, '0')
+            self.axip_multicast_dd.configure(state="disabled")
+        # kiss_tail_label.place(x=kiss_tail_x, y=height - kiss_tail_y)
+        self.axip_multicast_dd.place(x=axip_multicast_x + 20, y=height - axip_multicast_y)
+        # TODO LinkTester
+        axip_linktest_x = 650
+        axip_linktest_y = 465
+        self.axip_linktest_var = tk.IntVar(self.tab)
+        # self.axip_multicast_var.set(0)
+        self.axip_linktest_dd = tk.Checkbutton(self.tab, text='Linktest', variable=self.axip_multicast_var)
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            # ins = self.port_setting.parm_PortParm[1]
+            # self.kiss_tail.insert(tk.END, '0')
+            self.axip_linktest_dd.configure(state="disabled")   # TODO state='normal
+        else:
+            # ins = self.port_setting.parm_baud
+            # self.kiss_tail.insert(tk.END, '0')
+            self.axip_linktest_dd.configure(state="disabled")
+        # kiss_tail_label.place(x=kiss_tail_x, y=height - kiss_tail_y)
+        self.axip_linktest_dd.place(x=axip_linktest_x + 50, y=height - axip_linktest_y)
+        # TODO linktest Call
+        test_call_x = 820
+        test_call_y = 395
+        test_call_label = tk.Label(self.tab, text='CALL:')
+        self.test_call = tk.Entry(self.tab, width=10)
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            # ins = self.port_setting.parm_PortParm[1]
+            self.test_call.insert(tk.END, 'NOCALL')
+            self.test_call.configure(state="disabled")  # TODO state='normal
+        else:
+            # ins = self.port_setting.parm_baud
+            self.test_call.insert(tk.END, '')
+            self.test_call.configure(state="disabled")
+        test_call_label.place(x=test_call_x, y=height - test_call_y)
+        self.test_call.place(x=test_call_x + 60, y=height - test_call_y)
+        # TODO linktest Intevall
+        test_inter_x = 820
+        test_inter_y = 430
+        test_inter_label = tk.Label(self.tab, text='Intervall:')
+        self.test_inter = tk.Entry(self.tab, width=4)
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            # ins = self.port_setting.parm_PortParm[1]
+            self.test_inter.insert(tk.END, '30')
+            self.test_inter.configure(state="disabled")  # TODO state='normal
+        else:
+            # ins = self.port_setting.parm_baud
+            self.test_inter.insert(tk.END, '')
+            self.test_inter.configure(state="disabled")
+        test_inter_label.place(x=test_inter_x, y=height - test_inter_y)
+        self.test_inter.place(x=test_inter_x + 95, y=height - test_inter_y)
+        # TODO linktest Fail Count
+        test_fail_x = 820
+        test_fail_y = 465  # 395
+        test_fail_label = tk.Label(self.tab, text='Versuche:')
+        self.test_fail = tk.Entry(self.tab, width=4)
+        if self.port_setting.parm_PortTyp == 'AXIP':
+            # ins = self.port_setting.parm_PortParm[1]
+            self.test_fail.insert(tk.END, '20')
+            self.test_fail.configure(state="disabled")  # TODO state='normal
+        else:
+            # ins = self.port_setting.parm_baud
+            self.test_fail.insert(tk.END, '')
+            self.test_fail.configure(state="disabled")
+        test_fail_label.place(x=test_fail_x, y=height - test_fail_y)
+        self.test_fail.place(x=test_fail_x + 95, y=height - test_fail_y)
+
         # T1
         t1_x = 20
         t1_y = 430
@@ -111,7 +237,7 @@ class PortSetTab:
         n2_x = 380
         n2_y = 430
         n2_label = tk.Label(self.tab, text='N2:')
-        self.n2 = tk.Entry(self.tab, width=5)
+        self.n2 = tk.Entry(self.tab, width=4)
         self.n2.insert(tk.END, self.port_setting.parm_N2)
         n2_label.place(x=n2_x, y=height - n2_y)
         self.n2.place(x=n2_x + 40, y=height - n2_y)
@@ -221,15 +347,27 @@ class PortSetTab:
         self.update_port_parameter()
 
     def win_tasker(self):
-        self.update_port_parameter()
+        # self.update_port_parameter()
+        pass
 
-    def update_port_parameter(self):
+    def update_port_parameter(self, dummy=None):
         height = self.height
         param_sel_x = 20
         param_sel_y = 535
         param_next_line = 0
         typ = self.port_select_var.get()
         if typ == 'KISSTCP':
+            """
+            TODO
+            self.kiss_txd.configure(state="normal")
+            self.kiss_pers.configure(state="normal")
+            self.kiss_tail.configure(state="normal")
+            """
+            self.test_call.configure(state="disabled")
+            self.test_inter.configure(state="disabled")
+            self.test_fail.configure(state="disabled")
+            self.axip_linktest_dd.configure(state="disabled")
+            self.axip_multicast_dd.configure(state="disabled")
             self.ptxd.configure(state="normal")
             self.calc_baud.configure(state="normal")
             self.calc_baud.delete(0, tk.END)
@@ -257,6 +395,17 @@ class PortSetTab:
             self.t2.insert(tk.END, self.port_setting.parm_T2)
 
         elif typ == 'AXIP':
+            self.axip_linktest_dd.configure(state="disabled")   # TODO state='normal
+            self.axip_multicast_dd.configure(state="disabled")  # TODO state='normal
+            """
+            TODO
+            self.test_call.configure(state="normal")
+            self.test_inter.configure(state="normal")
+            self.test_fail.configure(state="normal")
+            """
+            self.kiss_txd.configure(state="disabled")
+            self.kiss_pers.configure(state="disabled")
+            self.kiss_tail.configure(state="disabled")
             self.ptxd.configure(state="normal")
             self.ptxd.delete(0, tk.END)
             self.ptxd.insert(tk.END, '1')
@@ -295,6 +444,17 @@ class PortSetTab:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
 
         elif typ == 'KISSSER':
+            self.axip_linktest_dd.configure(state="disabled")
+            self.axip_multicast_dd.configure(state="disabled")
+            self.test_call.configure(state="disabled")
+            self.test_inter.configure(state="disabled")
+            self.test_fail.configure(state="disabled")
+            """
+            TODO
+            self.kiss_txd.configure(state="normal")
+            self.kiss_pers.configure(state="normal")
+            self.kiss_tail.configure(state="normal")
+            """
             self.ptxd.configure(state="normal")
             self.calc_baud.configure(state="normal")
             self.calc_baud.delete(0, tk.END)
