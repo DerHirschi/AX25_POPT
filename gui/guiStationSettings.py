@@ -488,10 +488,10 @@ class StationSettingsWin:
                                                        "Alle Einstellungen sowie Texte gehen verloren !")
 
         print(msg)
-        self.settings_win.attributes("-topmost", True)
 
         if msg:
             WarningMsg('lösche Station', 'Ok. Laufwerk C wird formatiert.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
                                                   'Mach weiter so. Das hast du gut gemacht.')
+        self.settings_win.attributes("-topmost", True)
