@@ -1,11 +1,11 @@
 import tkinter as tk
 from tkinter import ttk as ttk
 from gui.vars import ALL_COLOURS
-from config_station import DefaultStation, DefaultPortConfig, get_stat_cfg
+from config_station import DefaultPort, DefaultStation, PortConfigInit, get_stat_cfg
 
 
 class PortSetTab:
-    def __init__(self, main_stt_win, setting: DefaultPortConfig, tabclt: ttk.Notebook):
+    def __init__(self, main_stt_win, setting: DefaultPort, tabclt: ttk.Notebook):
         self.tab_clt = tabclt
         # self.ports_sett: {int: DefaultPortConfig} = main_stt_win.all_port_settings
         self.height = main_stt_win.win_height
@@ -484,6 +484,8 @@ class PortSetTab:
             self.t2.insert(tk.END, self.port_setting.parm_T2)
 
     def set_vars_to_cfg(self):
+        # Port Name
+        self.port_setting.parm_PortName = self.prt_name.get()
         # Port TYpe
         self.port_setting.parm_PortTyp = self.port_select_var.get()
         # Port Parameter
@@ -565,7 +567,7 @@ class PortSettingsWin:
                           # bg="green",
                           height=1,
                           width=6,
-                          command=self.destroy_win)
+                          command=self.ok_btn_cmd)
 
         save_bt = tk.Button(self.settings_win,
                             text="Speichern",
@@ -593,14 +595,14 @@ class PortSettingsWin:
                                 # bg="green",
                                 height=1,
                                 width=10,
-                                command=self.destroy_win)
+                                command=self.new_port_btn_cmd)
         del_st_bt = tk.Button(self.settings_win,
                               text="Löschen",
                               # font=("TkFixedFont", 15),
                               bg="red3",
                               height=1,
                               width=10,
-                              command=self.destroy_win)
+                              command=self.del_port_btn_cmd)
         new_port_bt.place(x=20, y=self.win_height - 590)
         del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
 
@@ -612,11 +614,24 @@ class PortSettingsWin:
         # Tab Frames ( Port Settings )
         for k in self.all_ax25_ports.keys():
             # port.port_cfg: DefaultPortConfig
-            tmp: DefaultPortConfig = self.all_ax25_ports[k].port_cfg
+            tmp: DefaultPort = self.all_ax25_ports[k].port_cfg
             tab = PortSetTab(self, tmp, self.tabControl)
             self.tab_list.append(tab)
             port_lable_text = 'Port {}'.format(k)
             self.tabControl.add(tab.tab, text=port_lable_text)
+
+    def new_port_btn_cmd(self):
+        # port.port_cfg: DefaultPortConfig
+        prtcfg = DefaultPort()
+        prtcfg.parm_PortNr = len(self.tab_list)
+        tab = PortSetTab(self, prtcfg, self.tabControl)
+        port_lable_text = 'Port {}'.format(len(self.tab_list))
+        self.tabControl.add(tab.tab, text=port_lable_text)
+        self.tabControl.select(len(self.tab_list))
+        self.tab_list.append(tab)
+
+    def del_port_btn_cmd(self):
+        pass
 
     def destroy_win(self):
         self.settings_win.destroy()
@@ -625,9 +640,19 @@ class PortSettingsWin:
     def save_btn_cmd(self):
         for port_set in self.tab_list:
             port_set.set_vars_to_cfg()
+            port_set.port_setting.save_to_pickl()
+        """    
         for k in self.all_ax25_ports.keys():
             self.all_ax25_ports[k].port_cfg.save_to_pickl()
+        """
+
+    def ok_btn_cmd(self):
+        self.save_btn_cmd()
+        self.destroy_win()
 
     def tasker(self):
+        pass
+        """
         for tab in self.tab_list:
             tab.win_tasker()
+        """

@@ -135,7 +135,85 @@ class MD6TES(DefaultStation):
     stat_parm_MaxFrame: int = 3   # Max (I) Frames
 
 
-class DefaultPortConfig(object):
+class DefaultPort(object):
+    parm_Stations: [DefaultStation] = []
+    station_save_files: [str] = []
+    """ Port Parameter """
+    parm_PortNr: int = -1
+    parm_PortName: '' = ''
+    parm_PortTyp: '' = ''   # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIP' AXIP UDP
+    parm_PortParm: (str, int) = ('', 0)
+    # TODO DIGI is Station related
+    parm_isSmartDigi = False
+    parm_is_StupidDigi = False  # Just if parm_isDigi is set to False
+    parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+    """ Connection Parameter """
+    parm_PacLen = 170   # Max Pac len
+    parm_MaxFrame = 5   # Max (I) Frames
+    # Station related Parameter
+    parm_stat_PacLen: {str: int} = {}
+    parm_stat_MaxFrame: {str: int} = {}
+    parm_cli: {str: DefaultCLI} = {}
+    parm_StationCalls: [str] = []  # def in __init__
+    ####################################
+    parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
+    parm_T2 = 3000      # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
+    parm_T3 = 120       # T3 sek (Inactive Link Timer) Default:180 Sek
+    parm_N2 = 20        # Max Try   Default 20
+    parm_baud = 1200    # Baud for calculating Timer
+    parm_full_duplex = False    # Pseudo Full duplex Mode (Just for AXIP)
+    # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
+    # Monitor Text Color
+    parm_mon_clr_tx = "medium violet red"
+    parm_mon_clr_rx = "green"
+    ##########################
+    # Global Objs
+    # glb_mh = None
+    # glb_port_handler = None
+    glb_gui = None
+
+    def save_to_pickl(self):
+        """ Such a BULLSHIT !! """
+        if self.parm_PortNr != -1:
+            gui = self.glb_gui
+            self.glb_gui = None
+            #############
+            # Station CFG
+            stations = self.parm_Stations
+            save_file_names = []
+            for stat in stations:
+                if stat.stat_parm_Call != DefaultStation.stat_parm_Call:
+                    file = '{1}{0}/stat{0}.popt'.format(stat.stat_parm_Call, CFG_usertxt_path)
+                    exist_userpath(stat.stat_parm_Call)
+                    save_file_names.append(file)
+                    save_station = {}
+                    for att in dir(stat):
+                        if '__' not in att:
+                            if att in CFG_txt_save.keys():
+                                f_n = CFG_usertxt_path + \
+                                      '{0}/{0}.{1}'.format(stat.stat_parm_Call, CFG_txt_save[att])
+                                save_to_file(f_n, getattr(stat, att))
+                            else:
+                                save_station[att] = getattr(stat, att)
+                            # print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
+                    save_to_file(file, save_station)
+            self.station_save_files = save_file_names
+            ############
+            # Port CFG
+            save_ports = {}
+            for att in dir(self):
+                dont_save_this = ['save_to_pickl']
+                if '__' not in att and att not in dont_save_this:
+                    # print(" {} - {}".format(att, getattr(self, att)))
+                    save_ports[att] = getattr(self, att)
+                    print("Save Port Param {} > {} - {}".format(self.parm_PortNr , att, save_ports[att]))
+            file = 'port{}.popt'.format(self.parm_PortNr)
+            save_to_file(file, save_ports)
+
+            self.glb_gui = gui
+
+
+class PortConfigInit(object):
     parm_Stations: [DefaultStation] = []
     """ Port Parameter """
     parm_PortNr: int = -1
@@ -300,7 +378,7 @@ class DefaultPortConfig(object):
             self.glb_gui = gui
 
 
-class Port0(DefaultPortConfig):
+class Port0(PortConfigInit):
     parm_Stations = [MD5TES, MD6TES]
     parm_PortName = 'DW'
     parm_PortTyp = 'KISSTCP'
@@ -324,7 +402,7 @@ class Port0(DefaultPortConfig):
     parm_mon_clr_rx = "green"
 
 
-class Port1(DefaultPortConfig):
+class Port1(PortConfigInit):
     parm_Stations = [MD6TES]
     parm_PortName = 'DW2'
     parm_PortTyp = 'KISSTCP'
@@ -348,7 +426,7 @@ class Port1(DefaultPortConfig):
     parm_mon_clr_rx = "green2"
 
 
-class Port2(DefaultPortConfig):
+class Port2(PortConfigInit):
     parm_Stations = [MD5TES, MD6TES]
     parm_PortName = 'AXIP'
     parm_PortTyp = 'AXIP'
@@ -372,7 +450,7 @@ class Port2(DefaultPortConfig):
     parm_mon_clr_rx = "PaleGreen3"
 
 
-class Port3(DefaultPortConfig):
+class Port3(PortConfigInit):
     parm_Stations = [MD6TES]
     parm_PortName = 'SER'
     parm_PortTyp = 'KISSSER'
@@ -396,31 +474,31 @@ class Port3(DefaultPortConfig):
     parm_mon_clr_rx = "SkyBlue4"
 
 
-class Port4(DefaultPortConfig):
+class Port4(PortConfigInit):
     pass
 
 
-class Port5(DefaultPortConfig):
+class Port5(PortConfigInit):
     pass
 
 
-class Port6(DefaultPortConfig):
+class Port6(PortConfigInit):
     pass
 
 
-class Port7(DefaultPortConfig):
+class Port7(PortConfigInit):
     pass
 
 
-class Port8(DefaultPortConfig):
+class Port8(PortConfigInit):
     pass
 
 
-class Port9(DefaultPortConfig):
+class Port9(PortConfigInit):
     pass
 
 
-class Port10(DefaultPortConfig):
+class Port10(PortConfigInit):
     pass
 
 

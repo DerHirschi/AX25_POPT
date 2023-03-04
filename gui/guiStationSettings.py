@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk as ttk
 from tkinter import scrolledtext
-from config_station import DefaultStation, DefaultPortConfig, save_station_to_file, del_user_data, get_stat_cfg
+from config_station import DefaultStation, PortConfigInit, save_station_to_file, del_user_data, get_stat_cfg
 from cli.cli import *
 from gui.guiMsgBoxes import *
 
@@ -9,7 +9,7 @@ from gui.guiMsgBoxes import *
 class StatSetTab:
     def __init__(self, main_stt_win, setting: DefaultStation, tabclt: ttk.Notebook):
         self.tab_clt = tabclt
-        self.ports_sett: {int: DefaultPortConfig} = main_stt_win.all_port_settings
+        self.ports_sett: {int: PortConfigInit} = main_stt_win.all_port_settings
         height = main_stt_win.win_height
         width = main_stt_win.win_width
         self.station_setting = setting
@@ -42,30 +42,6 @@ class StatSetTab:
         cli.configure(width=8, height=1)
         cli.place(x=cli_x + 55, y=height - cli_y - 5)
 
-        #######################
-        # Device Port Selector
-        """
-        dev_sel_x = 1040
-        dev_sel_y = 535
-        dev_label = tk.Label(self.tab, text='Geräte-Port:')
-        dev_label.place(x=20, y=height - dev_sel_y)
-        self.port_set_var: {int: (tk.IntVar, tk.Checkbutton)} = {}
-
-        for k in self.ports_sett.keys():
-            self.ports_sett: {int: DefaultPortConfig}
-            var = tk.IntVar()
-            dev_check = tk.Checkbutton(self.tab, text=self.ports_sett[k].parm_PortName, variable=var)
-            tmp_port = self.ports_sett[k]
-            for el in tmp_port.parm_StationCalls:
-                if el in self.station_setting.stat_parm_Call:
-                    #  if station_setting.stat_parm_Call in ports[k].parm_StationCalls:
-                    var.set(1)
-                    dev_check.select()
-
-            f = 72
-            dev_check.place(x=width - (dev_sel_x - 35 - ((k + 1) * f)), y=height - dev_sel_y)
-            self.port_set_var[k] = (var, dev_check)
-        """
         #################
         # MaxPac
         max_pac_x = 20
@@ -329,32 +305,15 @@ class StatSetTab:
         # LOC   TODO: Filter
         self.station_setting.stat_parm_LOC = self.loc.get()
 
-        # Ports
-        """
-        for k in self.ports_sett.keys():
-            var = self.port_set_var[k][0].get()
-            if var:
-                self.ports_sett[k].parm_Stations.append(self.station_setting)
-        """
-
 
 class StationSettingsWin:
     def __init__(self, main_cl):
         self.main_class = main_cl
         self.all_ax25_ports = main_cl.ax25_port_handler.ax25_ports
-        self.all_port_settings: {int: DefaultPortConfig} = {}
+        self.all_port_settings: {int: PortConfigInit} = {}
         # self.all_ports: {int: AX25Port} = {}
         self.all_stat_settings: {str: DefaultStation} = get_stat_cfg()
-        """
-        self.all_stat_settings: [DefaultStation] = []
-        for k in list(self.all_ax25_ports.keys()):
-            self.all_port_settings[k] = self.all_ax25_ports[k].port_cfg
-            # print(dir(self.all_port_settings[k]))
-            for stat_sett in self.all_ax25_ports[k].port_cfg.parm_Stations:
-                stat_sett: DefaultStation
-                if stat_sett not in self.all_stat_settings:
-                    self.all_stat_settings.append(stat_sett)
-        """
+
         self.all_dev_types = list(main_cl.ax25_port_handler.ax25types.keys())
 
         self.win_height = 600
@@ -375,7 +334,7 @@ class StationSettingsWin:
                           # bg="green",
                           height=1,
                           width=6,
-                          command=self.destroy_win)
+                          command=self.ok_btn_cmd)
 
         save_bt = tk.Button(self.settings_win,
                             text="Speichern",
@@ -430,8 +389,6 @@ class StationSettingsWin:
             self.tab_list.append(tab)
             self.tabControl.add(tab.own_tab, text=k)
 
-        # self.tabControl.pack(expand=0, fill="both")
-
     def set_all_vars_to_cfg(self):
         """
         for k in self.all_port_settings.keys():
@@ -479,6 +436,7 @@ class StationSettingsWin:
 
     def ok_btn_cmd(self):
         self.set_all_vars_to_cfg()
+        self.save_cfg_to_file()
         self.destroy_win()
 
     def new_stat_btn_cmd(self):
