@@ -23,20 +23,19 @@ def get_stat_cfg():
     if len(stat_cfg) > 1:
         stat_cfg = stat_cfg[1:]
         for folder in stat_cfg:
-            call = folder.split('/')[-1]  # TODO WIN \ ???
+            call = folder.split('/')[-1]
             # print(folder + '/stat' + call + '.popt')
             temp = {}
             try:
                 with open(folder + '/stat' + call + '.popt', 'rb') as inp:
                     temp = pickle.load(inp)
-            except FileNotFoundError or EOFError:
+            except (FileNotFoundError, EOFError):
                 pass
             if temp:
                 stat = DefaultStation()
                 for att in list(temp.keys()):
                     setattr(stat, att, temp[att])
                 ret[call] = stat
-
     return ret
 
 
@@ -46,6 +45,18 @@ def exist_userpath(usercall: str):
         os.makedirs(CFG_data_path + CFG_usertxt_path + usercall)
         return False
     return True
+
+
+def del_user_data(usercall: str):
+    # CFG_data_path + CFG_usertxt_path
+    user_dir = '{0}{1}{2}'.format(CFG_data_path, CFG_usertxt_path, usercall)
+    if os.path.exists(user_dir):
+        files = [x[2] for x in os.walk(user_dir)][0]
+        for f in files:
+            f_dest = '{0}{1}{2}/{3}'.format(CFG_data_path, CFG_usertxt_path, usercall, f)
+            if os.path.exists(f_dest):
+                os.remove(f_dest)
+        os.rmdir(user_dir)
 
 
 def save_to_file(filename: str, data):
@@ -64,11 +75,9 @@ def load_fm_file(filename: str):
         with open(CFG_data_path + filename, 'rb') as inp:
             return pickle.load(inp)
     except FileNotFoundError:
-
         return ''
     except EOFError:
         return ''
-
 
 
 class DefaultStation(object):
@@ -172,8 +181,11 @@ class DefaultPortConfig(object):
                 no_file = False
 
         except FileNotFoundError:
+            """
             if 'linux' in sys.platform:
                 os.system('touch {}'.format(file))
+            """
+            pass
         except EOFError:
             pass
         ##########

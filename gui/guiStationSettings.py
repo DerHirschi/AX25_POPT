@@ -1,10 +1,7 @@
-import time
 import tkinter as tk
 from tkinter import ttk as ttk
-from tkinter import font
-from tkinter import scrolledtext, messagebox
-import sys
-from config_station import DefaultStation, DefaultPortConfig, save_station_to_file
+from tkinter import scrolledtext
+from config_station import DefaultStation, DefaultPortConfig, save_station_to_file, del_user_data, get_stat_cfg
 from cli.cli import *
 from gui.guiMsgBoxes import *
 
@@ -17,23 +14,23 @@ class StatSetTab:
         width = main_stt_win.win_width
         self.station_setting = setting
         self.style = main_stt_win.style
-        self.tab = ttk.Frame(self.tab_clt)
+        self.own_tab = ttk.Frame(self.tab_clt)
         #################
         # Call
         call_x = 20
         call_y = 570
-        call_label = tk.Label(self.tab, text='Call:')
+        call_label = tk.Label(self.own_tab, text='Call:')
         call_label.place(x=call_x, y=height - call_y)
-        self.call = tk.Entry(self.tab, width=10)
+        self.call = tk.Entry(self.own_tab, width=10)
         self.call.place(x=call_x + 55, y=height - call_y)
         self.call.insert(tk.END, self.station_setting.stat_parm_Call)
         #################
         # CLI
         cli_x = 280
         cli_y = 570
-        cli_label = tk.Label(self.tab, text='CLI:')
+        cli_label = tk.Label(self.own_tab, text='CLI:')
         cli_label.place(x=cli_x, y=height - cli_y)
-        self.cli_select_var = tk.StringVar(self.tab)
+        self.cli_select_var = tk.StringVar(self.own_tab)
         self.cli_opt = {
             UserCLI.cli_name: UserCLI,
             NodeCLI.cli_name: NodeCLI,
@@ -41,7 +38,7 @@ class StatSetTab:
         }
         opt = list(self.cli_opt.keys())
         self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)  # default value
-        cli = tk.OptionMenu(self.tab, self.cli_select_var, *opt)
+        cli = tk.OptionMenu(self.own_tab, self.cli_select_var, *opt)
         cli.configure(width=8, height=1)
         cli.place(x=cli_x + 55, y=height - cli_y - 5)
 
@@ -73,12 +70,12 @@ class StatSetTab:
         # MaxPac
         max_pac_x = 20
         max_pac_y = 500
-        max_pac_label = tk.Label(self.tab, text='Max-Pac:')
+        max_pac_label = tk.Label(self.own_tab, text='Max-Pac:')
         max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
-        self.max_pac_select_var = tk.StringVar(self.tab)
+        self.max_pac_select_var = tk.StringVar(self.own_tab)
         opt = range(1, 8)
         self.max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
-        self.max_pac = tk.OptionMenu(self.tab, self.max_pac_select_var, *opt)
+        self.max_pac = tk.OptionMenu(self.own_tab, self.max_pac_select_var, *opt)
         self.max_pac.configure(width=4, height=1)
         self.max_pac.place(x=max_pac_x + 78, y=height - max_pac_y - 5)
 
@@ -86,9 +83,9 @@ class StatSetTab:
         # PacLen
         pac_len_x = 180
         pac_len_y = 500
-        pac_len_label = tk.Label(self.tab, text='Pac-Len:')
+        pac_len_label = tk.Label(self.own_tab, text='Pac-Len:')
         pac_len_label.place(x=pac_len_x, y=height - pac_len_y)
-        self.pac_len = tk.Entry(self.tab, width=3)
+        self.pac_len = tk.Entry(self.own_tab, width=3)
         self.pac_len.place(x=pac_len_x + 75, y=height - pac_len_y)
         self.pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
 
@@ -97,7 +94,7 @@ class StatSetTab:
         digi_x = 305
         digi_y = 500
         self.digi_set_var = tk.IntVar()
-        self.digi = tk.Checkbutton(self.tab, text='DIGI', width=4, variable=self.digi_set_var)
+        self.digi = tk.Checkbutton(self.own_tab, text='DIGI', width=4, variable=self.digi_set_var)
         self.digi.place(x=digi_x, y=height - digi_y)
 
         ##################
@@ -105,16 +102,16 @@ class StatSetTab:
         digi_x = 390
         digi_y = 500
         self.smart_digi_set_var = tk.IntVar()
-        self.smart_digi = tk.Checkbutton(self.tab, text='Managed-DIGI', width=12, variable=self.smart_digi_set_var)
+        self.smart_digi = tk.Checkbutton(self.own_tab, text='Managed-DIGI', width=12, variable=self.smart_digi_set_var)
         self.smart_digi.place(x=digi_x, y=height - digi_y)
 
         ###############################
         # Right Side ( Name, QTH, LOC )
-        self.tab.rowconfigure(0, minsize=5, weight=0)
-        self.tab.columnconfigure(0, minsize=550, weight=0)
-        self.tab.columnconfigure(1, weight=1)
+        self.own_tab.rowconfigure(0, minsize=5, weight=0)
+        self.own_tab.columnconfigure(0, minsize=550, weight=0)
+        self.own_tab.columnconfigure(1, weight=1)
         f_height = 135
-        r_side_frame = tk.Frame(self.tab, width=435, height=f_height)
+        r_side_frame = tk.Frame(self.own_tab, width=435, height=f_height)
         r_side_frame.configure(bg='grey80')
         r_side_frame.grid(column=1, row=1)
         #################
@@ -151,7 +148,7 @@ class StatSetTab:
         digi_x = 20
         digi_y = 460
         # Root Tab
-        textTab = ttk.Notebook(self.tab, height=height - 330, width=width - (digi_x * 4))
+        textTab = ttk.Notebook(self.own_tab, height=height - 330, width=width - (digi_x * 4))
         textTab.place(x=digi_x, y=height - digi_y)
         # C-Text
         tab_ctext = ttk.Frame(textTab)
@@ -345,6 +342,8 @@ class StationSettingsWin:
         self.all_ax25_ports = main_cl.ax25_port_handler.ax25_ports
         self.all_port_settings: {int: DefaultPortConfig} = {}
         # self.all_ports: {int: AX25Port} = {}
+        self.all_stat_settings: {str: DefaultStation} = get_stat_cfg()
+        """
         self.all_stat_settings: [DefaultStation] = []
         for k in list(self.all_ax25_ports.keys()):
             self.all_port_settings[k] = self.all_ax25_ports[k].port_cfg
@@ -353,6 +352,7 @@ class StationSettingsWin:
                 stat_sett: DefaultStation
                 if stat_sett not in self.all_stat_settings:
                     self.all_stat_settings.append(stat_sett)
+        """
         self.all_dev_types = list(main_cl.ax25_port_handler.ax25types.keys())
 
         self.win_height = 600
@@ -408,7 +408,7 @@ class StationSettingsWin:
                               bg="red3",
                               height=1,
                               width=10,
-                              command=self.del_station)
+                              command=self.del_station_btn)
 
         new_st_bt.place(x=20, y=self.win_height - 590)
         del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
@@ -422,19 +422,24 @@ class StationSettingsWin:
         # self.tab_index = 0
         self.tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
-        for sett in self.all_stat_settings:
-            sett: DefaultStation
+        for k in self.all_stat_settings.keys():
+            sett: DefaultStation = self.all_stat_settings[k]
             tab = StatSetTab(self, sett, self.tabControl)
             self.tab_list.append(tab)
-            self.tabControl.add(tab.tab, text=sett.stat_parm_Call)
+            self.tabControl.add(tab.own_tab, text=k)
 
         # self.tabControl.pack(expand=0, fill="both")
 
     def set_all_vars_to_cfg(self):
+        """
         for k in self.all_port_settings.keys():
             self.all_port_settings[k].parm_Stations = []
+        """
         for el in self.tab_list:
             el.set_vars_to_cfg()
+            call = el.call.get()
+            self.tabControl.tab(self.tab_list.index(el), text=call)
+
 
     def save_cfg_to_file(self):
         for conf in self.tab_list:
@@ -472,8 +477,10 @@ class StationSettingsWin:
     def new_stat_btn_cmd(self):
         sett = DefaultStation()
         tab = StatSetTab(self, sett, self.tabControl)
+        self.tabControl.add(tab.own_tab, text=sett.stat_parm_Call)
+        self.tabControl.select(len(self.tab_list))
         self.tab_list.append(tab)
-        self.tabControl.add(tab.tab, text=sett.stat_parm_Call)
+        # print(self.tabControl.index('current'))
 
     def destroy_win(self):
         self.settings_win.destroy()
@@ -482,16 +489,23 @@ class StationSettingsWin:
     def tasker(self):
         pass
 
-    def del_station(self):
+    def del_station_btn(self):
         self.settings_win.attributes("-topmost", False)
         msg = AskMsg(titel='lösche Station', message="Willst du diese Station wirklich löschen? \n"
-                                                       "Alle Einstellungen sowie Texte gehen verloren !")
-
-        print(msg)
-
+                                                     "Alle Einstellungen sowie Texte gehen verloren !")
+        self.settings_win.lift()
         if msg:
-            WarningMsg('lösche Station', 'Ok. Laufwerk C wird formatiert.')
+            ind = self.tabControl.index('current')
+
+            tab: StatSetTab = self.tab_list[ind]
+            call = tab.call.get()
+            del_user_data(call)
+            del self.tab_list[ind]
+            self.tabControl.forget(ind)
+
+            WarningMsg('Station gelöscht', 'Ok. Laufwerk C wird formatiert.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
-                                                  'Mach weiter so. Das hast du gut gemacht.')
-        self.settings_win.attributes("-topmost", True)
+                                   'Mach weiter so. Das hast du gut gemacht.')
+        self.settings_win.lift()
+        # self.settings_win.attributes("-topmost", True)
