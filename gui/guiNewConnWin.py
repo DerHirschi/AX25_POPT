@@ -1,6 +1,7 @@
 import tkinter as tk
 
 import ax25.ax25dec_enc
+from config_station import get_stat_cfg
 # from main import AX25PortHandler, AX25Frame, Call, AX25Port
 import main
 
@@ -94,6 +95,17 @@ class NewConnWin:
         self.call_txt_inp.place(x=80, y=40)
         self.ax_ip_ip = None
         self.ax_ip_port = None
+        ############
+        # Own Call
+        self.own_call_var = tk.StringVar(self.new_conn_win)
+        # self.own_call_opt = {}
+        # self.own_call_opt = get_stat_cfg()
+        opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
+        if opt:
+            self.own_call_var.set(opt[0])
+        self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
+        ############
+        # BTN
         conn_btn = tk.Button(self.new_conn_win,
                              text="Los",
                              font=("TkFixedFont", 15),
@@ -103,6 +115,7 @@ class NewConnWin:
                              command=self.process_new_conn_win)
         conn_btn.place(x=10, y=220)
         self.call_txt_inp.focus_set()
+        self.set_port_index(self.port_index)
         ##############
         # KEY BINDS
         self.new_conn_win.bind('<Return>', lambda event: self.process_new_conn_win())
@@ -160,12 +173,27 @@ class NewConnWin:
                 self.ax_ip_port[1].delete('1.0', tk.END)
                 self.ax_ip_port[1].insert(tk.END, prt)
             self.call_txt_inp.focus_set()
+            self.own_call_dd_men.destroy()
+            opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
+            self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
+            self.own_call_dd_men.place(x=80, y=120)
+            self.own_call_dd_men.configure()
+            if opt:
+                self.own_call_var.set(opt[0])
+
         else:
             if self.ax_ip_ip is not None:
                 self.ax_ip_ip[0].destroy()
                 self.ax_ip_ip[1].destroy()
                 self.ax_ip_port[0].destroy()
                 self.ax_ip_port[1].destroy()
+            self.own_call_dd_men.destroy()
+            opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
+            self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
+            self.own_call_dd_men.place(x=80, y=80)
+            self.own_call_dd_men.configure()
+            if opt:
+                self.own_call_var.set(opt[0])
 
         self.set_port_btn()
 
@@ -184,8 +212,8 @@ class NewConnWin:
         call_obj = ProcCallInput(call)
         if call_obj.call:
             ax_frame = ax25.ax25dec_enc.AX25Frame()
-            ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.port_index].my_stations[0]  # TODO select outgoing call
-            # ax_frame.from_call.call = self.own_call[0]  # TODO select outgoing call
+            # ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.port_index].my_stations[0]  # TODO select outgoing call
+            ax_frame.from_call.call = self.own_call_var.get()
             ax_frame.to_call.call = call_obj.call
             ax_frame.to_call.ssid = call_obj.ssid
             ax_frame.via_calls = call_obj.via

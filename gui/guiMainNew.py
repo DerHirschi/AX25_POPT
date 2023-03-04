@@ -309,10 +309,8 @@ class TkMainWin:
         self.get_ch_param().timestamp_opt = ts_check
         #############################################
         # Settings Win ( Port,- Station settings )
-        """
         if self.settings_win is not None:
             self.settings_win.tasker()
-        """
         #####################
         # Prio TASKS ########
         self.update_mon()  # TODO trigger von AX25CONN
@@ -332,7 +330,6 @@ class TkMainWin:
     def update_mon(self):  # MON & INPUT WIN
         """
         Main Win
-        # Debug WIN
         """
         # UPDATE INPUT WIN
         if self.ax25_port_handler.all_connections.keys():

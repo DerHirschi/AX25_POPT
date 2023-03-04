@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk as ttk
 from tkinter import scrolledtext
-from config_station import DefaultStation, DefaultPortConfig
+from config_station import DefaultStation, DefaultPortConfig, save_station_to_file
 from cli.cli import *
 
 
@@ -396,7 +396,7 @@ class StationSettingsWin:
                               # bg="green",
                               height=1,
                               width=10,
-                              command=self.destroy_win)
+                              command=self.new_stat_btn_cmd)
         del_st_bt = tk.Button(self.settings_win,
                               text="Löschen",
                               # font=("TkFixedFont", 15),
@@ -432,8 +432,13 @@ class StationSettingsWin:
             el.set_vars_to_cfg()
 
     def save_cfg_to_file(self):
+        for conf in self.tab_list:
+            stat_conf = conf.station_setting
+            save_station_to_file(stat_conf)
+        """
         for k in self.all_port_settings.keys():
             self.all_port_settings[k].save_to_pickl()
+        """
         """    
         for k in self.all_port_settings.keys():
             old_cfg = self.all_port_settings[k]
@@ -458,6 +463,12 @@ class StationSettingsWin:
     def ok_btn_cmd(self):
         self.set_all_vars_to_cfg()
         self.destroy_win()
+
+    def new_stat_btn_cmd(self):
+        sett = DefaultStation()
+        tab = StatSetTab(self, sett, self.tabControl)
+        self.tab_list.append(tab)
+        self.tabControl.add(tab.tab, text=sett.stat_parm_Call)
 
     def destroy_win(self):
         self.settings_win.destroy()

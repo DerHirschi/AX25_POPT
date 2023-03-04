@@ -591,7 +591,8 @@ class AX25Frame(object):
             # Dec C-Byte
             try:
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
-            except (AX25DecodingERROR, IndexError):
+            except (AX25DecodingERROR, IndexError) as e:
+                logger.error('Decoding Error !! {}'.format(e))
                 logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
                 logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
                 logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))

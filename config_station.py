@@ -6,7 +6,7 @@ import time
 from cli.cli import DefaultCLI, UserCLI, NodeCLI, NoneCLI
 
 CFG_data_path = 'data/'
-CFG_usertxt_path = 'usertxt/'
+CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {    # TODO: Don't load this shit as vars. Read it direct!
                 'stat_parm_cli_ctext': 'ctx',
                 'stat_parm_cli_bye_text': 'btx',
@@ -42,7 +42,10 @@ def get_stat_cfg():
 
 def exist_userpath(usercall: str):
     if not os.path.exists(CFG_data_path + CFG_usertxt_path + usercall):
+        print(CFG_data_path + CFG_usertxt_path + usercall)
         os.makedirs(CFG_data_path + CFG_usertxt_path + usercall)
+        return False
+    return True
 
 
 def save_to_file(filename: str, data):
@@ -50,11 +53,8 @@ def save_to_file(filename: str, data):
         with open(CFG_data_path + filename, 'wb') as f:
             pickle.dump(data, f, 2)
     except FileNotFoundError:
-        if 'linux' in sys.platform:
-            os.system('touch {}'.format(CFG_data_path + filename))
-            time.sleep(1)
-            with open(CFG_data_path + filename, 'wb') as f:
-                pickle.dump(data, f, 2)
+        with open(CFG_data_path + filename, 'xb') as f:
+            pickle.dump(data, f, 2)
     except EOFError:
         pass
 
@@ -64,16 +64,16 @@ def load_fm_file(filename: str):
         with open(CFG_data_path + filename, 'rb') as inp:
             return pickle.load(inp)
     except FileNotFoundError:
-        if 'linux' in sys.platform:
-            os.system('touch {}'.format(CFG_data_path + filename))
+
         return ''
     except EOFError:
         return ''
 
 
+
 class DefaultStation(object):
     # parm_StationCalls: [''] = []
-    stat_parm_Call: str     # TODO ???? not Predefined ??
+    stat_parm_Call: str = 'NOCALL'
     ##########################
     # Not Implemented Yet
     stat_parm_Name: str = ''
@@ -84,17 +84,17 @@ class DefaultStation(object):
     stat_parm_isSmartDigi = False
     stat_parm_is_StupidDigi = False
     # Parameter for CLI
-    stat_parm_cli: DefaultCLI = DefaultCLI
+    stat_parm_cli: DefaultCLI = NoneCLI
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
-    stat_parm_cli_ctext: str
+    stat_parm_cli_ctext: str = ''
     stat_parm_cli_itext: str = ''
     stat_parm_cli_longitext: str = ''
     stat_parm_cli_akttext: str = ''
-    stat_parm_cli_bye_text: str
-    stat_parm_cli_prompt: str
+    stat_parm_cli_bye_text: str = ''
+    stat_parm_cli_prompt: str = ''
     # Optional Parameter. Overrides Port Parameter
-    stat_parm_PacLen: int       # Max Pac len
-    stat_parm_MaxFrame: int     # Max (I) Frames
+    stat_parm_PacLen: int = 0      # Max Pac len
+    stat_parm_MaxFrame: int = 0    # Max (I) Frames
 
 
 class MD5TES(DefaultStation):
@@ -221,18 +221,18 @@ class DefaultPortConfig(object):
         self.parm_StationCalls: [str] = []
         stat: DefaultStation
         for stat in self.parm_Stations:
-            if stat.stat_parm_Call:
+            if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
 
                 ##############################################################
                 # Optional Parameter for Stations
+                self.parm_stat_PacLen[stat.stat_parm_Call] = self.parm_PacLen
                 if hasattr(stat, 'stat_parm_PacLen'):
-                    self.parm_stat_PacLen[stat.stat_parm_Call] = stat.stat_parm_PacLen
-                else:
-                    self.parm_stat_PacLen[stat.stat_parm_Call] = self.parm_PacLen
+                    if stat.stat_parm_PacLen:
+                        self.parm_stat_PacLen[stat.stat_parm_Call] = stat.stat_parm_PacLen
+                self.parm_stat_MaxFrame[stat.stat_parm_Call] = self.parm_MaxFrame
                 if hasattr(stat, 'stat_parm_MaxFrame'):
-                    self.parm_stat_MaxFrame[stat.stat_parm_Call] = stat.stat_parm_MaxFrame
-                else:
-                    self.parm_stat_MaxFrame[stat.stat_parm_Call] = self.parm_MaxFrame
+                    if stat.stat_parm_MaxFrame:
+                        self.parm_stat_MaxFrame[stat.stat_parm_Call] = stat.stat_parm_MaxFrame
 
                 self.parm_StationCalls.append(stat.stat_parm_Call)
                 self.parm_cli[stat.stat_parm_Call]: DefaultCLI = stat.stat_parm_cli
@@ -256,20 +256,21 @@ class DefaultPortConfig(object):
             stations = self.parm_Stations
             save_file_names = []
             for stat in stations:
-                file = '{1}{0}/stat{0}.popt'.format(stat.stat_parm_Call, CFG_usertxt_path)
-                exist_userpath(stat.stat_parm_Call)
-                save_file_names.append(file)
-                save_station = {}
-                for att in dir(stat):
-                    if '__' not in att:
-                        if att in CFG_txt_save.keys():
-                            f_n = CFG_usertxt_path + \
-                                  '{0}/{0}.{1}'.format(stat.stat_parm_Call, CFG_txt_save[att])
-                            save_to_file(f_n, getattr(stat, att))
-                        else:
-                            save_station[att] = getattr(stat, att)
-                        # print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
-                save_to_file(file, save_station)
+                if stat.stat_parm_Call != DefaultStation.stat_parm_Call:
+                    file = '{1}{0}/stat{0}.popt'.format(stat.stat_parm_Call, CFG_usertxt_path)
+                    exist_userpath(stat.stat_parm_Call)
+                    save_file_names.append(file)
+                    save_station = {}
+                    for att in dir(stat):
+                        if '__' not in att:
+                            if att in CFG_txt_save.keys():
+                                f_n = CFG_usertxt_path + \
+                                      '{0}/{0}.{1}'.format(stat.stat_parm_Call, CFG_txt_save[att])
+                                save_to_file(f_n, getattr(stat, att))
+                            else:
+                                save_station[att] = getattr(stat, att)
+                            # print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
+                    save_to_file(file, save_station)
 
             self.station_save_files = save_file_names
             ############
@@ -409,3 +410,23 @@ class Port9(DefaultPortConfig):
 
 class Port10(DefaultPortConfig):
     pass
+
+
+def save_station_to_file(conf: DefaultStation):
+
+    if conf.stat_parm_Call != DefaultStation.stat_parm_Call:
+        exist_userpath(conf.stat_parm_Call)
+        file = '{1}{0}/stat{0}.popt'.format(conf.stat_parm_Call, CFG_usertxt_path)
+        save_station = {}
+        for att in dir(conf):
+            if '__' not in att:
+                if att in CFG_txt_save.keys():
+                    f_n = CFG_usertxt_path + \
+                          '{0}/{0}.{1}'.format(conf.stat_parm_Call, CFG_txt_save[att])
+                    save_to_file(f_n, getattr(conf, att))
+                else:
+                    save_station[att] = getattr(conf, att)
+                # print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
+        save_to_file(file, save_station)
+
+

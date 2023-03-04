@@ -201,7 +201,7 @@ class PortSetTab:
             # stat = self.all_stat_cfgs[k]
             cfg_x = 20 + x_f
             cfg_y = 290 - (35 * y_f)  # Yeah X * 0
-            var = tk.IntVar()
+            var = tk.IntVar(self.tab)
 
             cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=var, anchor='w', state='normal')
 
@@ -222,10 +222,6 @@ class PortSetTab:
 
     def win_tasker(self):
         self.update_port_parameter()
-        for k in self.stat_check_vars.keys():
-
-            # self.stat_check_vars[k][1].getvar()
-            print("{} {} {} {}".format(self.port_setting.parm_PortNr, k, self.stat_check_vars[k].get(), self.stat_check_vars[k].trace_info()))
 
     def update_port_parameter(self):
         height = self.height
@@ -330,7 +326,6 @@ class PortSetTab:
     def set_vars_to_cfg(self):
         # Port TYpe
         self.port_setting.parm_PortTyp = self.port_select_var.get()
-
         # Port Parameter
         tmp_param = (self.param1_ent.get(), int(self.param2_ent.get()))
         self.port_setting.parm_PortParm = tmp_param

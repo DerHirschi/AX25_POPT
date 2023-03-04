@@ -15,11 +15,13 @@ class AX25EncodingERROR(Exception):
             logger.error('___________From Call_________________')
             for att in dir(frame.from_call):
                 if '__' not in att:
-                    logger.error("From Call: {} > {}".format(att, getattr(frame, att)))
+                    if hasattr(frame, att):
+                        logger.error("From Call: {} > {}".format(att, getattr(frame, att)))
             logger.error('____________TO Call________________')
             for att in dir(frame.to_call):
                 if '__' not in att:
-                    logger.error("TO Call: {} > {}".format(att, getattr(frame, att)))
+                    if hasattr(frame, att):
+                        logger.error("TO Call: {} > {}".format(att, getattr(frame, att)))
 
             logger.error('____________VIA Call s________________')
             ind = 0
@@ -27,18 +29,21 @@ class AX25EncodingERROR(Exception):
                 logger.error('____________VIA Call {}________________'.format(ind))
                 for att in dir(call_obj):
                     if '__' not in att:
-                        logger.error("VIA Call{}: {} > {}".format(ind, att, getattr(frame, att)))
+                        if hasattr(frame, att):
+                            logger.error("VIA Call{}: {} > {}".format(ind, att, getattr(frame, att)))
                 ind += 1
             logger.error('____________Ctl-Byte________________')
             for att in dir(frame.ctl_byte):
                 if '__' not in att:
-                    logger.error("Ctl: {} > {}".format(att, getattr(frame, att)))
+                    if hasattr(frame, att):
+                        logger.error("Ctl: {} > {}".format(att, getattr(frame, att)))
             logger.error('____________Pid-Byte________________')
             for att in dir(frame.pid_byte):
                 if '__' not in att:
-                    logger.error("Pid: {} > {}".format(att, getattr(frame, att)))
+                    if hasattr(frame, att):
+                        logger.error("Pid: {} > {}".format(att, getattr(frame, att)))
             logger.error('____________Data________________')
-            for att in dir(frame.data):
+            if hasattr(frame, 'data'):
                 logger.error("DATA: {}".format(frame.data))
 
 
@@ -52,11 +57,13 @@ class AX25DecodingERROR(Exception):
             logger.error('___________From Call_________________')
             for att in dir(frame.from_call):
                 if '__' not in att:
-                    logger.error("From Call: {} > {}".format(att, getattr(frame, att)))
+                    if hasattr(frame, att):
+                        logger.error("From Call: {} > {}".format(att, getattr(frame, att)))
             logger.error('____________TO Call________________')
             for att in dir(frame.to_call):
                 if '__' not in att:
-                    logger.error("TO Call: {} > {}".format(att, getattr(frame, att)))
+                    if hasattr(frame, att):
+                        logger.error("TO Call: {} > {}".format(att, getattr(frame, att)))
 
             logger.error('____________VIA Call s________________')
             ind = 0
@@ -64,19 +71,22 @@ class AX25DecodingERROR(Exception):
                 logger.error('____________VIA Call {}________________'.format(ind))
                 for att in dir(call_obj):
                     if '__' not in att:
-                        logger.error("VIA Call{}: {} > {}".format(ind, att, getattr(frame, att)))
+                        if hasattr(frame, att):
+                            logger.error("VIA Call{}: {} > {}".format(ind, att, getattr(frame, att)))
                 ind += 1
             logger.error('____________Ctl-Byte________________')
             for att in dir(frame.ctl_byte):
                 if '__' not in att:
-                    logger.error("Ctl: {} > {}".format(att, getattr(frame, att)))
+                    if hasattr(frame, att):
+                        logger.error("Ctl: {} > {}".format(att, getattr(frame, att)))
             logger.error('____________Pid-Byte________________')
             for att in dir(frame.pid_byte):
                 if '__' not in att:
-                    logger.error("Pid: {} > {}".format(att, getattr(frame, att)))
+                    if hasattr(frame, att):
+                        logger.error("Pid: {} > {}".format(att, getattr(frame, att)))
             logger.error('____________Data________________')
-            for att in dir(frame.data):
-                    logger.error("DATA: {}".format(frame.data))
+            if hasattr(frame, 'data'):
+                logger.error("DATA: {}".format(frame.data))
 
 
 class AX25DeviceERROR(Exception):
