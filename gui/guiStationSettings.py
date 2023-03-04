@@ -1,12 +1,16 @@
+import time
 import tkinter as tk
 from tkinter import ttk as ttk
-from tkinter import scrolledtext
+from tkinter import font
+from tkinter import scrolledtext, messagebox
+import sys
 from config_station import DefaultStation, DefaultPortConfig, save_station_to_file
 from cli.cli import *
+from gui.guiMsgBoxes import *
 
 
 class StatSetTab:
-    def __init__(self, main_stt_win, setting: DefaultStation, tabclt:  ttk.Notebook):
+    def __init__(self, main_stt_win, setting: DefaultStation, tabclt: ttk.Notebook):
         self.tab_clt = tabclt
         self.ports_sett: {int: DefaultPortConfig} = main_stt_win.all_port_settings
         height = main_stt_win.win_height
@@ -36,7 +40,7 @@ class StatSetTab:
             NoneCLI.cli_name: NoneCLI,
         }
         opt = list(self.cli_opt.keys())
-        self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)      # default value
+        self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)  # default value
         cli = tk.OptionMenu(self.tab, self.cli_select_var, *opt)
         cli.configure(width=8, height=1)
         cli.place(x=cli_x + 55, y=height - cli_y - 5)
@@ -73,7 +77,7 @@ class StatSetTab:
         max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
         self.max_pac_select_var = tk.StringVar(self.tab)
         opt = range(1, 8)
-        self. max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
+        self.max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
         self.max_pac = tk.OptionMenu(self.tab, self.max_pac_select_var, *opt)
         self.max_pac.configure(width=4, height=1)
         self.max_pac.place(x=max_pac_x + 78, y=height - max_pac_y - 5)
@@ -256,7 +260,7 @@ class StatSetTab:
         self.pac_len.delete(0, tk.END)
         self.pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
         # DIGI
-        self.digi_set_var.set(1)        # TODO
+        self.digi_set_var.set(1)  # TODO
         self.digi.select()
         # Smart DIGI
         self.smart_digi_set_var.set(1)  # TODO
@@ -355,6 +359,7 @@ class StationSettingsWin:
         self.win_width = 1059
         self.style = main_cl.style
         self.settings_win = tk.Tk()
+        # self.settings_win.option_add('*Dialog.msg.font', 'Helvetica 8')
         self.settings_win.title("Station-Einstellungen")
         self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
@@ -403,7 +408,7 @@ class StationSettingsWin:
                               bg="red3",
                               height=1,
                               width=10,
-                              command=self.destroy_win)
+                              command=self.del_station)
 
         new_st_bt.place(x=20, y=self.win_height - 590)
         del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
@@ -477,3 +482,16 @@ class StationSettingsWin:
     def tasker(self):
         pass
 
+    def del_station(self):
+        self.settings_win.attributes("-topmost", False)
+        msg = AskMsg(titel='lösche Station', message="Willst du diese Station wirklich löschen? \n"
+                                                       "Alle Einstellungen sowie Texte gehen verloren !")
+
+        print(msg)
+        self.settings_win.attributes("-topmost", True)
+
+        if msg:
+            WarningMsg('lösche Station', 'Ok. Laufwerk C wird formatiert.')
+        else:
+            InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
+                                                  'Mach weiter so. Das hast du gut gemacht.')

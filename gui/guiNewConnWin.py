@@ -1,9 +1,5 @@
 import tkinter as tk
-
 import ax25.ax25dec_enc
-from config_station import get_stat_cfg
-# from main import AX25PortHandler, AX25Frame, Call, AX25Port
-import main
 
 
 class ProcCallInput:
@@ -98,8 +94,6 @@ class NewConnWin:
         ############
         # Own Call
         self.own_call_var = tk.StringVar(self.new_conn_win)
-        # self.own_call_opt = {}
-        # self.own_call_opt = get_stat_cfg()
         opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
         if opt:
             self.own_call_var.set(opt[0])
@@ -212,7 +206,6 @@ class NewConnWin:
         call_obj = ProcCallInput(call)
         if call_obj.call:
             ax_frame = ax25.ax25dec_enc.AX25Frame()
-            # ax_frame.from_call.call = self.ax25_port_handler.ax25_ports[self.port_index].my_stations[0]  # TODO select outgoing call
             ax_frame.from_call.call = self.own_call_var.get()
             ax_frame.to_call.call = call_obj.call
             ax_frame.to_call.ssid = call_obj.ssid

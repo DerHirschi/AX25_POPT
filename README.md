@@ -47,5 +47,6 @@ Knowing Issues / TODO (AX25 Protocol):
   - Examples captured from LOG:
   b"\x14\x92\x98\x867\xbc\x0e\x9f&\xdb\xdd\x99\x17\x06']\x16\xady\x07 \xf1\xee\xa8"
   '1492988637bc0e9f26dbdd991706275d16ad790720f1eea8'
+  - BUG while encoding with own Call with SSID
 
 TODO: !! Lot of Testing and Debugging !!
