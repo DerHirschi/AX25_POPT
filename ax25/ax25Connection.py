@@ -4,7 +4,9 @@
 """
 import time
 
-from ax25.ax25dec_enc import AX25Frame, reverse_uid, logger
+import cli.cli
+import config_station
+from ax25.ax25dec_enc import AX25Frame, reverse_uid
 
 """
 import logging
@@ -19,26 +21,9 @@ def count_modulo(inp: int):
 
 class AX25Conn(object):
     def __init__(self, ax25_frame: AX25Frame, cfg, port, rx=True):
-        ###############
-        # DEBUG
-        self.debugvar_len_out_buf = 0
-        ###############
-        ############
-        # GLOBALS
         self.mh = cfg.mh
         self.own_port = port
         self.prt_hndl = self.own_port.port_handler
-        """
-        if cfg.glb_port_handler is None:
-            logger.error("No Port Handler found !!!")
-            # TODO Maybe Settings to choose run with Porthandler or not
-            self.is_prt_hndl = False
-            raise ConnectionError
-        else:
-            
-            self.prt_hndl = cfg.glb_port_handler
-            self.is_prt_hndl = True
-        """
         self.ch_index: int = 0
         self.gui = self.prt_hndl.gui
         if self.gui is None:
@@ -46,6 +31,10 @@ class AX25Conn(object):
         else:
             self.ch_index = self.gui.channel_index
             self.is_gui = True
+        """ DIGI / Link to other Connection for Auto processing """
+        self.DIGI_Connection: AX25Conn
+        self.is_link = False
+        self.my_digi_call = ''
         # AX25 Frame for Connection Initialisation.
         self.ax25_out_frame = AX25Frame()   # Predefined AX25 Frame for Output
         """ Config new Connection Address """
@@ -70,8 +59,16 @@ class AX25Conn(object):
                 self.ax25_out_frame.addr_uid = ax25_frame.addr_uid  # Unique ID for Connection
         self.my_call_obj = self.ax25_out_frame.from_call
         self.my_call_str = self.my_call_obj.call
-        print('self.axip_add')
-        print(self.axip_add)
+        self.stat_cfg = config_station.DefaultStation()
+        if self.my_call_str in self.prt_hndl.ax25_stations.keys():
+            self.stat_cfg = self.prt_hndl.ax25_stations[self.my_call_str]
+        else:
+            for call in list(self.prt_hndl.ax25_stations.keys()):
+                if self.my_call_obj.call in call:
+                    if self.my_call_obj.call in self.prt_hndl.ax25_stations.keys():
+                        self.stat_cfg = self.prt_hndl.ax25_stations[self.my_call_obj.call]
+                        break
+
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
         """ IO Buffer Packet For Handling """
@@ -93,8 +90,8 @@ class AX25Conn(object):
         self.n2 = 0  # Fail Counter / No Response Counter
         """ Port Config Parameter """
         self.cfg = cfg
-        self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
-        self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
+        self.parm_PacLen = self.cfg.parm_PacLen         # Max Pac len
+        self.parm_MaxFrame = self.cfg.parm_MaxFrame     # Max (I) Frames
         self.parm_TXD = self.cfg.parm_TXD    # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
         self.parm_T2 = self.cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
         self.parm_T3 = self.cfg.parm_T3      # T3 (Inactive Link Timer)
@@ -114,20 +111,25 @@ class AX25Conn(object):
         # self.mh = cfg.parm_mh
         # self.cli = NoneCLI(self)
         """ Station Individual Parameter """
-        if self.my_call_obj.call_str in self.cfg.parm_StationCalls:
-            self.parm_PacLen = self.cfg.parm_stat_PacLen[self.my_call_obj.call_str]      # Max Pac len
-            self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[self.my_call_obj.call_str]  # Max Pac
+        stat_call = self.stat_cfg.stat_parm_Call
+
+        if stat_call != config_station.DefaultStation.stat_parm_Call:
+            if self.cfg.parm_stat_PacLen[stat_call]:    # If 0 then default port param
+                self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]      # Max Pac len
+            if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
+                self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
             """ Init CLI """
+            self.cli = self.cfg.parm_cli[stat_call](self, self.prt_hndl.ax25_stations[stat_call])
+            """
             for stat in self.cfg.parm_Stations:
                 if self.my_call_obj.call_str in stat.stat_parm_Call:
                     self.cli = self.cfg.parm_cli[self.my_call_obj.call_str](self, stat)
                     break
+            """
         else:
-            raise ConnectionError
-        """ DIGI / Link to other Connection for Auto processing """
-        self.DIGI_Connection: AX25Conn
-        self.is_link = False
-        self.my_digi_call = ''
+            # raise ConnectionError
+            self.cli = cli.cli.NoneCLI(self)
+
         """ Timer Calculation """
         self.parm_T2 = float(self.parm_T2 / self.parm_baud)  # TODO Berechnen nach Paktegröße
         # Initial-Round-Trip-Time (Auto Parm) (bei DAMA wird T2*2 genommen)/NO DAMA YET
@@ -136,7 +138,7 @@ class AX25Conn(object):
             self.zustand_exec = S1Frei(self)
         else:
             self.zustand_exec = S2Aufbau(self)
-            self.cli.change_cli_state(1)
+            self.cli.change_cli_state(state=1)
             # self.prt_hndl.insert_conn2all_conn_var(new_conn=self)
             self.set_T3()
 
@@ -386,9 +388,7 @@ class DefaultStat(object):
         if self.ax25conn.n2 == 100 and not self.ax25conn.tx_buf_2send:
             self.change_state(0)
             self.ax25conn.prt_hndl.del_conn2all_conn_var(self.ax25conn)
-        ###########
-        # DEBUGGING
-        self.ax25conn.debugvar_len_out_buf = len(self.ax25conn.tx_buf_2send)
+
         ###########
         # TODO Connection Timeout
         self.state_cron()  # State Cronex

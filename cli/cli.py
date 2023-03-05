@@ -12,19 +12,24 @@ class DefaultCLI(object):
     prompt = 'TEST-STATION>'
     prefix = '//'
 
-    def __init__(self, connection, stat_cfg):
-        # Override with optional Station Config Param
-        if hasattr(stat_cfg, 'stat_parm_cli_ctext'):
-            if stat_cfg.stat_parm_cli_ctext:
-                self.c_text = stat_cfg.stat_parm_cli_ctext
-        if hasattr(stat_cfg, 'stat_parm_cli_bye_text'):
-            if stat_cfg.stat_parm_cli_bye_text:
-                self.bye_text = stat_cfg.stat_parm_cli_bye_text
-        if hasattr(stat_cfg, 'stat_parm_cli_prompt'):
-            if stat_cfg.stat_parm_cli_prompt:
-                self.prompt = stat_cfg.stat_parm_cli_prompt
-        self.stat_cfg_index_call = stat_cfg.stat_parm_Call
-        self.stat_cfg = stat_cfg
+    def __init__(self, connection, stat_cfg=None):
+        if stat_cfg is not None:
+            # Override with optional Station Config Param
+            if hasattr(stat_cfg, 'stat_parm_cli_ctext'):
+                if stat_cfg.stat_parm_cli_ctext:
+                    self.c_text = stat_cfg.stat_parm_cli_ctext
+            if hasattr(stat_cfg, 'stat_parm_cli_bye_text'):
+                if stat_cfg.stat_parm_cli_bye_text:
+                    self.bye_text = stat_cfg.stat_parm_cli_bye_text
+            if hasattr(stat_cfg, 'stat_parm_cli_prompt'):
+                if stat_cfg.stat_parm_cli_prompt:
+                    self.prompt = stat_cfg.stat_parm_cli_prompt
+            self.stat_cfg_index_call = stat_cfg.stat_parm_Call
+            self.stat_cfg = stat_cfg
+        else:
+            self.stat_cfg = config_station.DefaultStation()
+            self.stat_cfg_index_call = self.stat_cfg.stat_parm_Call
+
         self.connection: ax25.ax25Connection.AX25Conn = connection
         # self.connection = connection
         self.my_call = connection.ax25_out_frame.from_call.call

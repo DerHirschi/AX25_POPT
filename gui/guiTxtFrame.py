@@ -175,8 +175,7 @@ class TxTframe:
             vr, vs = station.vr, station.vs
             # nr, ns = station.rx_buf_last_frame.ctl_byte.nr, station.rx_buf_last_frame.ctl_byte.ns
             # noACK_buf = str(list(station.tx_buf_unACK.keys()))[1:-1]
-            if station.debugvar_len_out_buf:
-                station.debugvar_len_out_buf = 0
+
             # send_buf_len = int(station.debugvar_len_out_buf)
             # len_tx2snd_buf = len(station.tx_buf_2send)
             # len_txraw_buf = len(station.tx_buf_rawData)

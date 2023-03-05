@@ -195,14 +195,32 @@ class TkMainWin:
         self.ax25_port_handler.close_all_ports()
 
     def monitor_start_msg(self):
+        ban = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
+              '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
+              '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
+              '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
+              '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
+              '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
+              '$$ |       $$$$$$  |   $$ |        $$ |\r' \
+              '\__|yton   \______/ther\__|acket   \__|erminal\r' \
+              'Version: {}\r'.format(VER)
+        tmp = ban.split('\r')
+        for el in tmp:
+            self.msg_to_monitor(el)
         self.msg_to_monitor('Python Other Packet Terminal ' + VER)
         for stat in self.ax25_port_handler.ax25_stations.keys():
-            self.msg_to_monitor('Stationsdaten {} erfolgreich geladen.'.format(stat))
+            self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in self.ax25_port_handler.ax25_ports.keys():
-            self.msg_to_monitor('Port {} - {} - {} erfolgreich initialisiert.'
+            self.msg_to_monitor('Info: Port {}: {} - {} erfolgreich initialisiert.'
                                 .format(port_k,
-                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortName.ljust(4),
-                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortTyp))
+                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortName,
+                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortTyp,
+                                        ))
+            self.msg_to_monitor('Info: Port {}: Parameter: {} | {}'
+                                .format(port_k,
+                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortParm[0],
+                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortParm[1]
+                                        ))
 
     ##########################
     # no WIN FNC
