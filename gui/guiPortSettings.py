@@ -647,9 +647,11 @@ class PortSettingsWin:
             self.tabControl.forget(ind)
 
             WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
+            self.main_class.msg_to_monitor('Info: Port erfolgreich gelöscht.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
                                    'Das hast du gut gemacht, mach weiter so. ')
+            self.main_class.msg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
         self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)
 

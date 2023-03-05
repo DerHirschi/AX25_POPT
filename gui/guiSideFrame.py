@@ -15,22 +15,44 @@ class SideTabbedFrame:
         self.tabControl = ttk.Notebook(self.tab_side_frame, height=300, width=500)
         # self.tabControl.grid(row=3, column=0, columnspan=5, sticky="nsew")
 
-        tab1 = ttk.Frame(self.tabControl)
+        tab1_connection = ttk.Frame(self.tabControl)
         self.tab2_mh = ttk.Frame(self.tabControl)
         tab3 = ttk.Frame(self.tabControl)
         self.tab4_settings = ttk.Frame(self.tabControl)
 
-        self.tabControl.add(tab1, text='Station')
+        self.tabControl.add(tab1_connection, text='Station')
         self.tabControl.add(self.tab2_mh, text='MH')
         self.tabControl.add(tab3, text='Ports')
         self.tabControl.add(self.tab4_settings, text='Settings')
         self.tabControl.pack(expand=0, fill="both")
         self.tabControl.select(self.tab2_mh)
-        ttk.Label(tab1,
-                  text="TEST").grid(column=0,
-                                    row=0,
-                                    padx=30,
-                                    pady=30)
+        parm_y = 20
+        m_f_label = tk.Label(tab1_connection, text='Max Pac:')
+        self.max_frame_var = tk.StringVar()
+        self.max_frame_var.set('1')
+        self.max_frame = tk.Spinbox(tab1_connection,
+                                    from_=1,
+                                    to=7,
+                                    increment=1,
+                                    width=2,
+                                    textvariable=self.max_frame_var,
+                                    command=self.set_max_frame,
+                                    state='disabled')
+        m_f_label.place(x=10, y=parm_y)
+        self.max_frame.place(x=10 + 80, y=parm_y)
+        parm_y = 55
+        p_l_label = tk.Label(tab1_connection, text='Pac Len:')
+        self.pac_len_var = tk.IntVar()
+        self.pac_len_var.set(128)
+        self.pac_len = tk.ttk.Combobox(tab1_connection,
+                                       width=4,
+                                       textvariable=self.pac_len_var,
+                                       values=list(range(1, 257)),
+                                       state='disabled')
+        self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
+        p_l_label.place(x=10, y=parm_y)
+        self.pac_len.place(x=10 + 80, y=parm_y)
+
         # MH ##########################
         self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
         self.tab2_mh.columnconfigure(1, minsize=100, weight=9)
@@ -79,6 +101,9 @@ class SideTabbedFrame:
                            )
         """
 
+    def tester(self, event):
+        print("TEST")
+
     def update_side_mh(self):
         mh_ent = self.mh.output_sort_entr(8)
         c = 1
@@ -95,3 +120,24 @@ class SideTabbedFrame:
             self.side_mh[c][4].delete(0, tk.END)
             self.side_mh[c][4].insert(0, el.route)
             c += 1
+
+    def update_stat_settings(self):
+        conn = self.main_win.get_conn()
+        if conn:
+            self.max_frame.configure(state='normal')
+            self.pac_len.configure(state='normal')
+            self.max_frame_var.set(str(conn.parm_MaxFrame))
+            self.pac_len_var.set(conn.parm_PacLen)
+        else:
+            self.max_frame.configure(state='disabled')
+            self.pac_len.configure(state='disabled')
+
+    def set_max_frame(self):
+        conn = self.main_win.get_conn()
+        if conn:
+            conn.parm_MaxFrame = int(self.max_frame_var.get())
+
+    def set_pac_len(self, event):
+        conn = self.main_win.get_conn()
+        if conn:
+            conn.parm_PacLen = min(max(self.pac_len_var.get(), 1), 256)

@@ -460,8 +460,10 @@ class StationSettingsWin:
             self.tabControl.forget(ind)
 
             WarningMsg('Station gelöscht', 'Laufwerk C: wurde erfolgreich formatiert.')
+            self.main_class.msg_to_monitor('Hinweis: Station erfolgreich gelöscht.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
                                    'Mach weiter so. Das hast du gut gemacht.')
+            self.main_class.msg_to_monitor('Hinweis: Knack!! Abgebrochen..')
         self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)

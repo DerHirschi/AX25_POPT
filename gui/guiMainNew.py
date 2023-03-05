@@ -57,7 +57,7 @@ class TkMainWin:
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = glb_ax25port_handler.mh
         # Default Port 0
-        ax25_ports = self.ax25_port_handler.ax25_ports
+        # ax25_ports = self.ax25_port_handler.ax25_ports
         # Globals
         # cfg = ax25_ports[0].port_cfg    # TODO Select Ports for Calls
         # self.mh = cfg.glb_mh
@@ -224,7 +224,9 @@ class TkMainWin:
 
     ##########################
     # no WIN FNC
-    def get_conn(self, con_ind: int):
+    def get_conn(self, con_ind: int = 0):
+        if not con_ind:
+            con_ind = self.channel_index
         if con_ind in self.ax25_port_handler.all_connections.keys():
             ret = self.ax25_port_handler.all_connections[con_ind]
             return ret
@@ -321,6 +323,10 @@ class TkMainWin:
     #################
     # no WIN FNC
     ##########################
+
+    def on_channel_status_change(self):
+        """Triggerd when Connection Status has change"""
+        self.tabbed_sideFrame.update_stat_settings()
 
     def tasker(self):  # MAINLOOP
         ########################################
