@@ -209,9 +209,10 @@ class PortConfigInit(DefaultPort):
                     self.parm_Stations.append(new_stat_cfg)
                 if self.parm_PortTyp == 'AXIP':
                     self.parm_full_duplex = True
+                """
                 else:
                     self.parm_full_duplex = False   # Maybe sometimes i ll implement it for HF
-
+                """
                 print("Load from File..")
 
             # self.parm_StationCalls: [str] = []

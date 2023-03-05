@@ -661,6 +661,8 @@ class PortSettingsWin:
         for port_set in self.tab_list:
             port_set.set_vars_to_cfg()
             port_set.port_setting.save_to_pickl()
+        self.main_class.ax25_port_handler.reinit_all_ports()
+
         """    
         for k in self.all_ax25_ports.keys():
             self.all_ax25_ports[k].port_cfg.save_to_pickl()

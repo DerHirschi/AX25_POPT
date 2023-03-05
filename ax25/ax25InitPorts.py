@@ -1,3 +1,5 @@
+import time
+
 from ax25.ax25Port import *
 from config_station import *
 
@@ -22,6 +24,8 @@ class AX25PortHandler(object):
         # Init Ports/Devices with Config and running as Thread
         self.ax25_stations = get_all_stat_cfg()
         for port_id in range(20):   # Max Ports
+            self.init_port(port_id=port_id)
+            """
             ##########
             # Init CFG
             cfg = PortConfigInit(loaded_stat=self.ax25_stations, port_id=port_id)
@@ -41,6 +45,7 @@ class AX25PortHandler(object):
                     ######################################
                     # Gather all Ports in dict: ax25_ports
                     self.ax25_ports[port_id] = temp
+            """
 
     def __del__(self):
         self.close_all_ports()
@@ -59,6 +64,46 @@ class AX25PortHandler(object):
                 self.ax25_ports[k].loop_is_running = False
                 self.ax25_ports[k].join()
         self.is_running = False
+
+    def reinit_all_ports(self):
+        for port_id in list(self.ax25_ports.keys()):
+            self.reinit_port(port_id)
+
+    def reinit_port(self, port_id: int):
+        if port_id in self.ax25_ports.keys():
+            port = self.ax25_ports[port_id]
+            port.close()
+            port.join()
+            del self.ax25_ports[port_id]
+            del port
+            time.sleep(1)   # Cooldown for Device
+            self.init_port(port_id=port_id)
+
+    def init_port(self, port_id: int):
+        if port_id in self.ax25_ports.keys():
+            logger.error('Could not initialise Port {}. Port already in use'.format(port_id))
+        else:
+            ##########
+            # Init CFG
+            cfg = PortConfigInit(loaded_stat=self.ax25_stations, port_id=port_id)
+            if cfg.parm_PortTyp:
+                #########################
+                # Init Port/Device
+                try:
+                    temp = self.ax25types[cfg.parm_PortTyp](cfg, self)
+                except AX25DeviceFAIL as e:
+                    logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
+                    logger.error('{}'.format(e))
+                else:
+                    temp: AX25Port
+                    ##########################
+                    # Start Port/Device Thread
+                    temp.start()
+                    ######################################
+                    # Gather all Ports in dict: ax25_ports
+                    if self.gui is not None:
+                        temp.set_gui(self.gui)
+                    self.ax25_ports[port_id] = temp
 
     def set_gui(self, gui):
         """ PreInit: Set GUI Var """

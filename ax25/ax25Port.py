@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 import crcmod
 
-import main
+# mport main
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
@@ -100,6 +100,15 @@ class AX25Port(threading.Thread):
         pass
 
     def __del__(self):
+        self.close()
+        # self.loop_is_running = False
+
+    def close(self):
+        for conn in self.connections:
+            # Try to send a Disc
+            conn.zustand_exec.change_state(4)
+            conn.zustand_exec.tx(None)
+        time.sleep(1)
         self.loop_is_running = False
 
     def rx(self):
