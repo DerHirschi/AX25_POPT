@@ -468,7 +468,7 @@ class StationSettingsWin:
             del self.tab_list[ind]
             self.tabControl.forget(ind)
 
-            WarningMsg('Station gelöscht', 'Ok. Laufwerk C wird formatiert.')
+            WarningMsg('Station gelöscht', 'Laufwerk C: wurde erfolgreich formatiert.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
                                    'Mach weiter so. Das hast du gut gemacht.')

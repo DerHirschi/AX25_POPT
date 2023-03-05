@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import ttk as ttk
 from gui.vars import ALL_COLOURS
-from config_station import DefaultPort, DefaultStation, PortConfigInit, get_stat_cfg
+from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
+from config_station import DefaultPort, DefaultStation, PortConfigInit, get_stat_cfg, del_port_data
 
 
 class PortSetTab:
@@ -96,7 +97,7 @@ class PortSetTab:
         else:
             # ins = self.port_setting.parm_baud
             self.kiss_txd.insert(tk.END, '0')
-            self.kiss_txd.configure(state="disabled")   # TODO state='normal
+            self.kiss_txd.configure(state="disabled")  # TODO state='normal
         kiss_txd_label.place(x=kiss_txd_x, y=height - kiss_txd_y)
         self.kiss_txd.place(x=kiss_txd_x + 50, y=height - kiss_txd_y)
         # TODO PERS
@@ -140,7 +141,7 @@ class PortSetTab:
         if self.port_setting.parm_PortTyp == 'AXIP':
             # ins = self.port_setting.parm_PortParm[1]
             # self.kiss_tail.insert(tk.END, '0')
-            self.axip_multicast_dd.configure(state="disabled")   # TODO state='normal
+            self.axip_multicast_dd.configure(state="disabled")  # TODO state='normal
         else:
             # ins = self.port_setting.parm_baud
             # self.kiss_tail.insert(tk.END, '0')
@@ -156,7 +157,7 @@ class PortSetTab:
         if self.port_setting.parm_PortTyp == 'AXIP':
             # ins = self.port_setting.parm_PortParm[1]
             # self.kiss_tail.insert(tk.END, '0')
-            self.axip_linktest_dd.configure(state="disabled")   # TODO state='normal
+            self.axip_linktest_dd.configure(state="disabled")  # TODO state='normal
         else:
             # ins = self.port_setting.parm_baud
             # self.kiss_tail.insert(tk.END, '0')
@@ -395,7 +396,7 @@ class PortSetTab:
             self.t2.insert(tk.END, self.port_setting.parm_T2)
 
         elif typ == 'AXIP':
-            self.axip_linktest_dd.configure(state="disabled")   # TODO state='normal
+            self.axip_linktest_dd.configure(state="disabled")  # TODO state='normal
             self.axip_multicast_dd.configure(state="disabled")  # TODO state='normal
             """
             TODO
@@ -532,7 +533,8 @@ class PortSetTab:
         for k in self.stat_check_vars.keys():
             if k in self.all_stat_cfgs.keys() and \
                     self.stat_check_vars[k].get():
-                print("{} {} {} {}".format(k, self.port_setting.parm_PortNr, self.stat_check_vars[k].get(), self.stat_check_vars[k]))
+                print("{} {} {} {}".format(k, self.port_setting.parm_PortNr, self.stat_check_vars[k].get(),
+                                           self.stat_check_vars[k]))
                 var = self.stat_check_vars[k]
                 print(var.get())
                 stat = self.all_stat_cfgs[k]
@@ -631,7 +633,25 @@ class PortSettingsWin:
         self.tab_list.append(tab)
 
     def del_port_btn_cmd(self):
-        pass
+        self.settings_win.attributes("-topmost", False)
+        msg = AskMsg(titel='lösche Port', message="Willst du diesen Port wirklich löschen? \n"
+                                                  "Alle Einstellungen gehen verloren !")
+        self.settings_win.lift()
+        if msg:
+            ind = self.tabControl.index('current')
+
+            tab: PortSetTab = self.tab_list[ind]
+            port_id = tab.port_setting.parm_PortNr
+            del_port_data(port_id)
+            del self.tab_list[ind]
+            self.tabControl.forget(ind)
+
+            WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
+        else:
+            InfoMsg('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
+                                   'Das hast du gut gemacht, mach weiter so. ')
+        self.settings_win.lift()
+        # self.settings_win.attributes("-topmost", True)
 
     def destroy_win(self):
         self.settings_win.destroy()

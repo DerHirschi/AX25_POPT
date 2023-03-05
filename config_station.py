@@ -59,6 +59,12 @@ def del_user_data(usercall: str):
         os.rmdir(user_dir)
 
 
+def del_port_data(port_id):
+    port_file = '{0}port{1}.popt'.format(CFG_data_path, port_id)
+    if os.path.exists(port_file):
+        os.remove(port_file)
+
+
 def save_to_file(filename: str, data):
     try:
         with open(CFG_data_path + filename, 'wb') as f:
