@@ -44,6 +44,7 @@ class ErrorMsg(tk.Toplevel):
             self.grab_set()  # Prevents other Tkinter windows from being used
             self.init()
         else:
+            self.grab_set()
             self.win_msg()
 
     def win_msg(self):

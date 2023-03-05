@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk as ttk
 from tkinter import scrolledtext
-from config_station import DefaultStation, PortConfigInit, save_station_to_file, del_user_data, get_stat_cfg
+from config_station import DefaultStation, PortConfigInit, save_station_to_file, del_user_data, get_all_stat_cfg
 from cli.cli import *
 from gui.guiMsgBoxes import *
 
@@ -312,14 +312,15 @@ class StationSettingsWin:
         self.all_ax25_ports = main_cl.ax25_port_handler.ax25_ports
         self.all_port_settings: {int: PortConfigInit} = {}
         # self.all_ports: {int: AX25Port} = {}
-        self.all_stat_settings: {str: DefaultStation} = get_stat_cfg()
+        self.all_stat_settings: {str: DefaultStation} = get_all_stat_cfg()
 
         self.all_dev_types = list(main_cl.ax25_port_handler.ax25types.keys())
 
         self.win_height = 600
         self.win_width = 1059
         self.style = main_cl.style
-        self.settings_win = tk.Tk()
+        # self.settings_win = tk.Tk()
+        self.settings_win = tk.Toplevel()
         # self.settings_win.option_add('*Dialog.msg.font', 'Helvetica 8')
         self.settings_win.title("Station-Einstellungen")
         self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
@@ -458,7 +459,7 @@ class StationSettingsWin:
         self.settings_win.attributes("-topmost", False)
         msg = AskMsg(titel='lösche Station', message="Willst du diese Station wirklich löschen? \n"
                                                      "Alle Einstellungen sowie Texte gehen verloren !")
-        self.settings_win.lift()
+        # self.settings_win.lift()
         if msg:
             ind = self.tabControl.index('current')
 

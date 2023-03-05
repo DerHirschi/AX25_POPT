@@ -5,45 +5,27 @@ from config_station import *
 class AX25PortHandler(object):
     def __init__(self, glb_MH):
         self.is_running = True
-        self.mh = glb_MH
         self.ax25types = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
             'AXIP': AXIP,
         }
+        ###########################
+        # VArs for gathering Stuff
+        # self.all_connections: {int: AX25Conn} = {}
+        self.all_connections = {}
         self.ax25_ports: {int: AX25Port} = {}
-        # self.mh_list = ax25.ax25Statistics.MH()
+        self.mh = glb_MH
         # self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
         #######################################################
         # Init Ports/Devices with Config and running as Thread
-        c = 0
-        # port_cfg: DefaultPortConfig
-        stations = {}
-        for port_cfg in [Port0,
-                         Port1,
-                         Port2,
-                         Port3,
-                         Port4,
-                         Port5,
-                         Port6,
-                         Port7,
-                         Port8,
-                         Port9,
-                         Port10
-                         ]:
-            if port_cfg.parm_PortTyp:
-                port_cfg.parm_PortNr = c
-                ##########
-                # Init CFG
-                cfg = port_cfg(stations)
-                for st in cfg.parm_Stations:
-                    if st.stat_parm_Call not in stations.keys():
-                        stations[st.stat_parm_Call] = st
-                #########################
-                # Set GLOBALS
-                # cfg.glb_mh = self.mh_list
-                # cfg.glb_port_handler = self
+        self.ax25_stations = get_all_stat_cfg()
+        for port_id in range(20):   # Max Ports
+            ##########
+            # Init CFG
+            cfg = PortConfigInit(loaded_stat=self.ax25_stations, port_id=port_id)
+            if cfg.parm_PortTyp:
                 #########################
                 # Init Port/Device
                 try:
@@ -58,12 +40,7 @@ class AX25PortHandler(object):
                     temp.start()
                     ######################################
                     # Gather all Ports in dict: ax25_ports
-                    self.ax25_ports[c] = temp
-            c += 1
-        ###########################
-        # VArs for gathering Stuff
-        # self.all_connections: {int: AX25Conn} = {}
-        self.all_connections = {}
+                    self.ax25_ports[port_id] = temp
 
     def __del__(self):
         self.close_all_ports()
@@ -79,8 +56,6 @@ class AX25PortHandler(object):
         """
         if self.is_running:
             for k in self.ax25_ports.keys():
-                # cfg = self.ax25_ports[k][1]
-                # cfg.save_to_pickl()
                 self.ax25_ports[k].loop_is_running = False
                 self.ax25_ports[k].join()
         self.is_running = False

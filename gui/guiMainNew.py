@@ -58,9 +58,9 @@ class TkMainWin:
         # Default Port 0
         ax25_ports = self.ax25_port_handler.ax25_ports
         # Globals
-        cfg = ax25_ports[0].port_cfg    # TODO Select Ports for Calls
+        # cfg = ax25_ports[0].port_cfg    # TODO Select Ports for Calls
         # self.mh = cfg.glb_mh
-        self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
+        # self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
         #######################
         # Window Text Buffers
         self.win_buf: {int: ChVars} = {}

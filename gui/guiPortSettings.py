@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk as ttk
 from gui.vars import ALL_COLOURS
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
-from config_station import DefaultPort, DefaultStation, PortConfigInit, get_stat_cfg, del_port_data
+from config_station import DefaultPort, get_all_stat_cfg, del_port_data
 
 
 class PortSetTab:
@@ -320,7 +320,7 @@ class PortSetTab:
         #################
         # Station CFGs
         self.stat_check_vars = {}
-        self.all_stat_cfgs = get_stat_cfg()
+        self.all_stat_cfgs = get_all_stat_cfg()
         x_f = 0
         y_f = 1
 
@@ -636,7 +636,7 @@ class PortSettingsWin:
         self.settings_win.attributes("-topmost", False)
         msg = AskMsg(titel='lösche Port', message="Willst du diesen Port wirklich löschen? \n"
                                                   "Alle Einstellungen gehen verloren !")
-        self.settings_win.lift()
+        # self.settings_win.lift()
         if msg:
             ind = self.tabControl.index('current')
 
