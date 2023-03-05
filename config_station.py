@@ -14,6 +14,8 @@ CFG_txt_save = {
                 'stat_parm_cli_akttext': 'atx',
                }
 
+CFG_clr_sys_msg = 'red'
+
 
 def init_dir_struct():
     if not os.path.exists(CFG_data_path):
@@ -182,6 +184,12 @@ class DefaultPort(object):
 
 class PortConfigInit(DefaultPort):
     def __init__(self, loaded_stat: {str: DefaultStation}, port_id: int):
+        """
+        # ReInit rest of this shit
+        for att in dir(self):
+            if '__' not in att:
+                setattr(self, att, getattr(self, att))
+        """
         self.parm_PortNr = port_id
         self.parm_Stations: [DefaultStation] = []
         self.station_save_files = []

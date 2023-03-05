@@ -669,7 +669,9 @@ class PortSettingsWin:
         """
 
     def ok_btn_cmd(self):
-        self.save_btn_cmd()
+        for port_set in self.tab_list:
+            port_set.set_vars_to_cfg()
+            port_set.port_setting.save_to_pickl()
         self.destroy_win()
 
     def tasker(self):

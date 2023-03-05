@@ -5,7 +5,6 @@ import ax25.ax25InitPorts
 VER = '2.40a'
 
 if __name__ == '__main__':
-    ax25.ax25InitPorts.init_dir_struct()
     GLB_MH_list = ax25.ax25Statistics.MH()
     GLB_CLIENT_db = cli.ClientDB.ClientDB()
 

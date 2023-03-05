@@ -18,7 +18,7 @@ def get_call_str(call, ssid=0):
         return call
 
 
-class Monitor(object):
+class Monitor(object):  # TODO: Static
     """
     CB24: fm DX0SAW to APDW17 ctl UI pid=F0(Text) len 100 20:24:38
     CB24: fm DX0SAW to MD2SAW via DNX527 CB0SAW ctl I00^ pid=F0(Text) len 86 01:44:27

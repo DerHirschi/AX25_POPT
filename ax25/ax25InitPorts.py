@@ -1,11 +1,11 @@
-import time
-
+import config_station
 from ax25.ax25Port import *
 from config_station import *
 
 
 class AX25PortHandler(object):
     def __init__(self, glb_MH):
+        config_station.init_dir_struct()
         self.is_running = True
         self.ax25types = {
             'KISSTCP': KissTCP,
@@ -22,8 +22,8 @@ class AX25PortHandler(object):
         self.gui = None
         #######################################################
         # Init Ports/Devices with Config and running as Thread
-        self.ax25_stations = get_all_stat_cfg()
-        for port_id in range(20):   # Max Ports
+        self.ax25_stations = config_station.get_all_stat_cfg()
+        for port_id in range(20):  # Max Ports
             self.init_port(port_id=port_id)
             """
             ##########
@@ -65,27 +65,33 @@ class AX25PortHandler(object):
                 self.ax25_ports[k].join()
         self.is_running = False
 
+    def close_port(self, port_id: int):
+        port = self.ax25_ports[port_id]
+        port.close()
+        port.join()
+        del self.ax25_ports[port_id]
+        del port
+        self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
+
     def reinit_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
             self.reinit_port(port_id)
 
     def reinit_port(self, port_id: int):
         if port_id in self.ax25_ports.keys():
-            port = self.ax25_ports[port_id]
-            port.close()
-            port.join()
-            del self.ax25_ports[port_id]
-            del port
-            time.sleep(1)   # Cooldown for Device
+            self.close_port(port_id=port_id)
+            time.sleep(1)  # Cooldown for Device
             self.init_port(port_id=port_id)
 
     def init_port(self, port_id: int):
         if port_id in self.ax25_ports.keys():
             logger.error('Could not initialise Port {}. Port already in use'.format(port_id))
+            self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.'
+                               .format(port_id))
         else:
             ##########
             # Init CFG
-            cfg = PortConfigInit(loaded_stat=self.ax25_stations, port_id=port_id)
+            cfg = config_station.PortConfigInit(loaded_stat=self.ax25_stations, port_id=port_id)
             if cfg.parm_PortTyp:
                 #########################
                 # Init Port/Device
@@ -94,6 +100,7 @@ class AX25PortHandler(object):
                 except AX25DeviceFAIL as e:
                     logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
                     logger.error('{}'.format(e))
+                    self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
                 else:
                     temp: AX25Port
                     ##########################
@@ -104,6 +111,7 @@ class AX25PortHandler(object):
                     if self.gui is not None:
                         temp.set_gui(self.gui)
                     self.ax25_ports[port_id] = temp
+                    self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
 
     def set_gui(self, gui):
         """ PreInit: Set GUI Var """
@@ -112,6 +120,10 @@ class AX25PortHandler(object):
             for k in self.ax25_ports.keys():
                 # self.ax25_ports[k][1].glb_gui = gui
                 self.ax25_ports[k].set_gui(gui)
+
+    def sysmsg_to_gui(self, msg: str = ''):
+        if self.gui is not None:
+            self.gui.msg_to_monitor(msg)
 
     # def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
     def insert_conn2all_conn_var(self, new_conn, ind: int = 1):

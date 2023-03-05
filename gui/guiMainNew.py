@@ -1,11 +1,12 @@
+import datetime
 import time
 import tkinter as tk
-from tkinter import ttk, Menu, OptionMenu
+from tkinter import ttk, Menu
 import logging
 import threading
 import sys
 
-# import config_station
+import config_station
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
 from gui.guiMH import MHWin
@@ -186,11 +187,22 @@ class TkMainWin:
         # self.open_port_settings_win()
         #######################
         # LOOP
+        self.monitor_start_msg()
         self.main_win.after(LOOP_DELAY, self.tasker)
         self.main_win.mainloop()
 
     def __del__(self):
         self.ax25_port_handler.close_all_ports()
+
+    def monitor_start_msg(self):
+        self.msg_to_monitor('Python Other Packet Terminal ' + VER)
+        for stat in self.ax25_port_handler.ax25_stations.keys():
+            self.msg_to_monitor('Stationsdaten {} erfolgreich geladen.'.format(stat))
+        for port_k in self.ax25_port_handler.ax25_ports.keys():
+            self.msg_to_monitor('Port {} - {} - {} erfolgreich initialisiert.'
+                                .format(port_k,
+                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortName.ljust(4),
+                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortTyp))
 
     ##########################
     # no WIN FNC
@@ -329,7 +341,7 @@ class TkMainWin:
 
     def update_mon(self):  # MON & INPUT WIN
         """
-        Main Win
+        UPDATE INPUT WIN
         """
         # UPDATE INPUT WIN
         if self.ax25_port_handler.all_connections.keys():
@@ -381,6 +393,22 @@ class TkMainWin:
 
         if tr:
             self.mon_txt.see(tk.END)
+        # self.update_side_mh()
+
+    def msg_to_monitor(self, var: str):
+        """ Called from AX25Conn """
+        ind = self.mon_txt.index(tk.INSERT)
+
+        self.mon_txt.configure(state="normal")
+        ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
+        self.mon_txt.insert(tk.END, ins)
+        self.mon_txt.configure(state="disabled")
+
+        ind2 = self.mon_txt.index(tk.INSERT)
+        self.mon_txt.tag_add("sys-msg", ind, ind2)
+        self.mon_txt.tag_config("sys-msg", foreground=config_station.CFG_clr_sys_msg)
+
+        self.mon_txt.see(tk.END)
         # self.update_side_mh()
 
     ##########################
