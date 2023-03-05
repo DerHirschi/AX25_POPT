@@ -60,13 +60,13 @@ class AX25Conn(object):
         self.my_call_obj = self.ax25_out_frame.from_call
         self.my_call_str = self.my_call_obj.call
         self.stat_cfg = config_station.DefaultStation()
-        if self.my_call_str in self.prt_hndl.ax25_stations.keys():
-            self.stat_cfg = self.prt_hndl.ax25_stations[self.my_call_str]
+        if self.my_call_str in self.prt_hndl.ax25_stations_settings.keys():
+            self.stat_cfg = self.prt_hndl.ax25_stations_settings[self.my_call_str]
         else:
-            for call in list(self.prt_hndl.ax25_stations.keys()):
+            for call in list(self.prt_hndl.ax25_stations_settings.keys()):
                 if self.my_call_obj.call in call:
-                    if self.my_call_obj.call in self.prt_hndl.ax25_stations.keys():
-                        self.stat_cfg = self.prt_hndl.ax25_stations[self.my_call_obj.call]
+                    if self.my_call_obj.call in self.prt_hndl.ax25_stations_settings.keys():
+                        self.stat_cfg = self.prt_hndl.ax25_stations_settings[self.my_call_obj.call]
                         break
 
         """ S-Packet / CTL Vars"""
@@ -119,7 +119,7 @@ class AX25Conn(object):
             if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
                 self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
             """ Init CLI """
-            self.cli = self.cfg.parm_cli[stat_call](self, self.prt_hndl.ax25_stations[stat_call])
+            self.cli = self.cfg.parm_cli[stat_call](self, self.prt_hndl.ax25_stations_settings[stat_call])
             """
             for stat in self.cfg.parm_Stations:
                 if self.my_call_obj.call_str in stat.stat_parm_Call:

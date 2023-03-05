@@ -208,7 +208,7 @@ class TkMainWin:
         for el in tmp:
             self.msg_to_monitor(el)
         self.msg_to_monitor('Python Other Packet Terminal ' + VER)
-        for stat in self.ax25_port_handler.ax25_stations.keys():
+        for stat in self.ax25_port_handler.ax25_stations_settings.keys():
             self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in self.ax25_port_handler.ax25_ports.keys():
             self.msg_to_monitor('Info: Port {}: {} - {} erfolgreich initialisiert.'

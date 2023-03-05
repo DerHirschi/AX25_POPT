@@ -16,36 +16,16 @@ class AX25PortHandler(object):
         # VArs for gathering Stuff
         # self.all_connections: {int: AX25Conn} = {}
         self.all_connections = {}
-        self.ax25_ports: {int: AX25Port} = {}
         self.mh = glb_MH
         # self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
+        self.ax25_stations_settings: {int: DefaultStation} = config_station.get_all_stat_cfg()
+        self.ax25_port_settings: {int: DefaultPort} = {}
+        self.ax25_ports: {int: AX25Port} = {}
         #######################################################
         # Init Ports/Devices with Config and running as Thread
-        self.ax25_stations = config_station.get_all_stat_cfg()
         for port_id in range(20):  # Max Ports
             self.init_port(port_id=port_id)
-            """
-            ##########
-            # Init CFG
-            cfg = PortConfigInit(loaded_stat=self.ax25_stations, port_id=port_id)
-            if cfg.parm_PortTyp:
-                #########################
-                # Init Port/Device
-                try:
-                    temp = self.ax25types[cfg.parm_PortTyp](cfg, self)
-                except AX25DeviceFAIL as e:
-                    logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
-                    logger.error('{}'.format(e))
-                else:
-                    temp: AX25Port
-                    ##########################
-                    # Start Port/Device Thread
-                    temp.start()
-                    ######################################
-                    # Gather all Ports in dict: ax25_ports
-                    self.ax25_ports[port_id] = temp
-            """
 
     def __del__(self):
         self.close_all_ports()
@@ -69,7 +49,10 @@ class AX25PortHandler(object):
         port = self.ax25_ports[port_id]
         port.close()
         port.join()
-        del self.ax25_ports[port_id]
+        if port_id in self.ax25_ports.keys():
+            del self.ax25_ports[port_id]
+        if port_id in self.ax25_port_settings.keys():
+            del self.ax25_port_settings[port_id]
         del port
         self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
 
@@ -91,7 +74,7 @@ class AX25PortHandler(object):
         else:
             ##########
             # Init CFG
-            cfg = config_station.PortConfigInit(loaded_stat=self.ax25_stations, port_id=port_id)
+            cfg = config_station.PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
             if cfg.parm_PortTyp:
                 #########################
                 # Init Port/Device
@@ -111,6 +94,7 @@ class AX25PortHandler(object):
                     if self.gui is not None:
                         temp.set_gui(self.gui)
                     self.ax25_ports[port_id] = temp
+                    self.ax25_port_settings[port_id] = temp.port_cfg
                     self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
 
     def set_gui(self, gui):

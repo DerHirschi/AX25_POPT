@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk as ttk
 from tkinter import scrolledtext
-from config_station import DefaultStation, PortConfigInit, save_station_to_file, del_user_data, get_all_stat_cfg
+from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data, get_all_stat_cfg
 from cli.cli import *
 from gui.guiMsgBoxes import *
 
@@ -9,7 +9,7 @@ from gui.guiMsgBoxes import *
 class StatSetTab:
     def __init__(self, main_stt_win, setting: DefaultStation, tabclt: ttk.Notebook):
         self.tab_clt = tabclt
-        self.ports_sett: {int: PortConfigInit} = main_stt_win.all_port_settings
+        self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
         height = main_stt_win.win_height
         width = main_stt_win.win_width
         self.station_setting = setting
@@ -280,6 +280,11 @@ class StatSetTab:
         self.station_setting.stat_parm_PacLen = var_paclen
 
         for k in self.ports_sett.keys():
+            """
+            print(self.ports_sett[k])
+            for att in dir(self.ports_sett[k]):
+                print(att)
+            """
             if call in self.ports_sett[k].parm_StationCalls:
                 self.ports_sett[k].parm_stat_PacLen[call] = var_paclen
                 self.ports_sett[k].parm_stat_MaxFrame[call] = var_maxpac
@@ -309,10 +314,10 @@ class StatSetTab:
 class StationSettingsWin:
     def __init__(self, main_cl):
         self.main_class = main_cl
-        self.all_ax25_ports = main_cl.ax25_port_handler.ax25_ports
-        self.all_port_settings: {int: PortConfigInit} = {}
+        self.ax25_porthandler = main_cl.ax25_port_handler
+        # self.all_port_settings: {int: PortConfigInit} = {}
         # self.all_ports: {int: AX25Port} = {}
-        self.all_stat_settings: {str: DefaultStation} = get_all_stat_cfg()
+        self.all_stat_settings: {str: DefaultStation} = main_cl.ax25_port_handler.ax25_stations_settings
 
         self.all_dev_types = list(main_cl.ax25_port_handler.ax25types.keys())
 
@@ -409,27 +414,11 @@ class StationSettingsWin:
     def save_cfg_to_file(self):
         for conf in self.tab_list:
             stat_conf = conf.station_setting
-            save_station_to_file(stat_conf)
-        """
-        for k in self.all_port_settings.keys():
-            self.all_port_settings[k].save_to_pickl()
-        """
-        """    
-        for k in self.all_port_settings.keys():
-            old_cfg = self.all_port_settings[k]
-        """
-        """
-        print("---------------------------------------------")
-        for k in self.all_port_settings.keys():
-            all_att = dir(self.all_port_settings[k])
-            for att in all_att:
-                print("sett {} - {}".format(att, self.all_port_settings[k].__dict__.get(att)))
-
-        for k in self.all_ax25_ports.keys():
-            all_att = dir(self.all_ax25_ports[k][0].port_cfg)
-            for att in all_att:
-                print("sett {} - {}".format(att, self.all_ax25_ports[k][0].port_cfg.__dict__.get(att)))
-        """
+            if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
+                self.all_stat_settings[stat_conf.stat_parm_Call] = stat_conf
+                save_station_to_file(stat_conf)
+        self.main_class.msg_to_monitor('Info: Station Einstellungen erfolgreich gespeichert.')
+        self.main_class.msg_to_monitor('Lob: Das hast du gut gemacht !!')
 
     def save_btn_cmd(self):
         self.set_all_vars_to_cfg()
@@ -438,6 +427,7 @@ class StationSettingsWin:
     def ok_btn_cmd(self):
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
+        self.main_class.msg_to_monitor('Hinweis: Der OK Button funktioniert noch !!')
         self.destroy_win()
 
     def new_stat_btn_cmd(self):

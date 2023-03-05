@@ -661,6 +661,9 @@ class PortSettingsWin:
         for port_set in self.tab_list:
             port_set.set_vars_to_cfg()
             port_set.port_setting.save_to_pickl()
+        self.main_class.msg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
+        # self.main_class.msg_to_monitor('Lob: Gute Entscheidung!')
+        self.main_class.msg_to_monitor('Lob: Du bist stets bemüht..')
         self.main_class.ax25_port_handler.reinit_all_ports()
 
         """    
@@ -672,6 +675,7 @@ class PortSettingsWin:
         for port_set in self.tab_list:
             port_set.set_vars_to_cfg()
             port_set.port_setting.save_to_pickl()
+        self.main_class.msg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
         self.destroy_win()
 
     def tasker(self):
