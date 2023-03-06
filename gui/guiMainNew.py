@@ -14,6 +14,7 @@ from gui.guiNewConnWin import NewConnWin
 from gui.guiSideFrame import SideTabbedFrame
 from gui.guiStationSettings import StationSettingsWin
 from gui.guiPortSettings import PortSettingsWin
+from gui.guiBeaconSettings import BeaconSettings
 from main import VER
 
 if 'linux' in sys.platform:
@@ -56,12 +57,6 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = glb_ax25port_handler.mh
-        # Default Port 0
-        # ax25_ports = self.ax25_port_handler.ax25_ports
-        # Globals
-        # cfg = ax25_ports[0].port_cfg    # TODO Select Ports for Calls
-        # self.mh = cfg.glb_mh
-        # self.own_call = cfg.parm_StationCalls  # TODO Select Ports for Calls
         #######################
         # Window Text Buffers
         self.win_buf: {int: ChVars} = {}
@@ -122,6 +117,7 @@ class TkMainWin:
         self.MenuSettings = Menu(self.menubar, tearoff=False)
         self.MenuSettings.add_command(label="Station", command=self.open_settings_win, underline=0)
         self.MenuSettings.add_command(label="Port", command=self.open_port_settings_win, underline=0)
+        self.MenuSettings.add_command(label="Baken", command=self.open_beacon_settings_win, underline=0)
         self.menubar.add_cascade(label="Einstellungen", menu=self.MenuSettings, underline=0)
         # Menü 4 "Debug"
         # self.menubar.add_command(label="Debug")
@@ -452,6 +448,13 @@ class TkMainWin:
     def open_port_settings_win(self):
         if self.settings_win is None:
             self.settings_win = PortSettingsWin(self)
+
+    ##########################
+    # Beacon Settings WIN
+    def open_beacon_settings_win(self):
+        if self.settings_win is None:
+            self.settings_win = BeaconSettings(self)
+
     # ##############
     # DISCO
     def disco_conn(self):

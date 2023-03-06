@@ -19,7 +19,8 @@ class AX25PortHandler(object):
         self.mh = glb_MH
         # self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
-        self.ax25_stations_settings: {int: DefaultStation} = config_station.get_all_stat_cfg()
+        self.beacons: {int: [Beacon]} = {}
+        self.ax25_stations_settings: {str: DefaultStation} = config_station.get_all_stat_cfg()
         self.ax25_port_settings: {int: DefaultPort} = {}
         self.ax25_ports: {int: AX25Port} = {}
         #######################################################
@@ -53,6 +54,8 @@ class AX25PortHandler(object):
             del self.ax25_ports[port_id]
         if port_id in self.ax25_port_settings.keys():
             del self.ax25_port_settings[port_id]
+        if port_id in self.beacons.keys():
+            del self.beacons[port_id]
         del port
         self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
 
@@ -95,6 +98,7 @@ class AX25PortHandler(object):
                         temp.set_gui(self.gui)
                     self.ax25_ports[port_id] = temp
                     self.ax25_port_settings[port_id] = temp.port_cfg
+                    self.beacons[port_id] = temp.beacons_list
                     self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
 
     def set_gui(self, gui):

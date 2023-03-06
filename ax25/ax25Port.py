@@ -23,7 +23,8 @@ class RxBuf:
 
 
 class Beacon:
-    def __init__(self, ax25_frame: AX25Frame, repeat_time: int, move_time: int, aprs: bool = False):
+    def __init__(self, ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs: bool = False):
+        self.port_id = port_id
         self.ax_frame = ax25_frame
         self.repeat_time = repeat_time
         self.move_time = move_time
@@ -31,11 +32,14 @@ class Beacon:
         self.next_run = int(datetime.now().strftime("%M")) + move_time
         self.is_enabled = True
         self.ax_frame.ctl_byte.UIcByte()
-        if aprs:
-            self.ax_frame.ctl_byte.cmd = False
-        else:
-            self.ax_frame.ctl_byte.cmd = True
+        self.ax_frame.pid_byte.text()
+        self.aprs = aprs
+
+        self.ax_frame.ctl_byte.cmd = self.aprs
+
         self.ax_frame.encode()
+        self.from_call = ax25_frame.from_call.call_str
+        self.to_call = ax25_frame.to_call.call_str
 
 
 class AX25Port(threading.Thread):
@@ -72,17 +76,15 @@ class AX25Port(threading.Thread):
         self.is_gui = False
         self.connections: {str: AX25Conn} = {}
         self.device = None
-        self.beacons_dict: {int: Beacon} = {}
+        self.beacons_list: [Beacon] = []
         ##############
         # Beacon TEST
-        """
         test_beacon_fr = AX25Frame()
         test_beacon_fr.from_call.call = 'MD7TES'
         test_beacon_fr.to_call.call = 'TEST'
         test_beacon_fr.data = b'=== TEST Beacon ==='
-        test_beacon = Beacon(test_beacon_fr, 2, 0)
-        self.beacons_dict[0] = test_beacon
-        """
+        test_beacon = Beacon(test_beacon_fr, self.port_cfg.parm_PortNr, 2, 0)
+        self.beacons_list.append(test_beacon)
         # AXIP VARs
         self.own_ipAddr = ''
         # self.to_call_ip_addr = ('', 0)
@@ -292,8 +294,7 @@ class AX25Port(threading.Thread):
 
     def send_beacons(self):
         # TODO to all AXIP Clients
-        for k in self.beacons_dict:
-            beacon: Beacon = self.beacons_dict[k]
+        for beacon in self.beacons_list:
             if time.time() > beacon.cooldown:
                 now = datetime.now()
                 now_min = int(now.strftime("%M"))
