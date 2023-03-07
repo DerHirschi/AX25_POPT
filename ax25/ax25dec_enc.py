@@ -51,7 +51,13 @@ def bytearray2hexstr(inp):
     return ''.join('{:02x}'.format(x) for x in inp)
 
 
-def call_obj_fm_call_str(call_str: str):
+def call_tuple_fm_call_str(call_str: str):
+    """
+    Separates Call from SSID
+    :param call_str:
+    :return: tuple(str: call, int: ssid)
+    """
+    call_str = call_str.replace('\r', '').replace('\n', '')
     ind = call_str.find('-')
     if ind != -1:
         return call_str[:ind].upper(), int(call_str[ind + 1:])
@@ -96,12 +102,17 @@ class Call(object):
         out_str += encode_ssid(dest_ssid, dest_c)
         out_str += encode_address_char(call)
         """
-        if not self.call_str:
+        if self.call:
             self.call_str = get_call_str(self.call, self.ssid)
-        elif not self.call and self.call_str:
-            tmp = call_obj_fm_call_str(self.call_str)
+        elif self.call_str:
+            tmp = call_tuple_fm_call_str(self.call_str)
             self.call = tmp[0]
             self.ssid = tmp[1]
+        else:
+            logger.error('AX25EncodingERROR: No Call set !')
+            logger.error('AX25EncodingERROR: Call: {}'.format(self.call) )
+            logger.error('AX25EncodingERROR: Call_str: {}'.format(self.call_str) )
+            raise AX25EncodingERROR()
         out = ''
         # Address
         ascii_str = "{:<6}".format(self.call.upper())
@@ -634,8 +645,15 @@ class AX25Frame(object):
         # Set Stop Bit
         self.set_stop_bit()
         # Encode Address Fields
-        self.to_call.enc_call()
-        self.from_call.enc_call()
+        try:
+            self.to_call.enc_call()
+        except AX25EncodingERROR:
+            raise AX25EncodingERROR()
+        try:
+            self.from_call.enc_call()
+        except AX25EncodingERROR:
+            raise AX25EncodingERROR()
+
         self.hexstr += self.to_call.hex_str
         self.hexstr += self.from_call.hex_str
         # Via Stations
@@ -643,7 +661,10 @@ class AX25Frame(object):
         if not digi:
             self.set_check_h_bits(dec=False)
         for station in self.via_calls:
-            station.enc_call()
+            try:
+                station.enc_call()
+            except AX25EncodingERROR:
+                raise AX25EncodingERROR()
             self.hexstr += station.hex_str
         # C Byte
         self.ctl_byte.enc_cbyte()
@@ -767,6 +788,24 @@ class AX25Frame(object):
                 ind += 1
         self.via_calls.reverse()
         return False
+
+
+def via_calls_fm_str(inp_str: str):
+    ret: [Call] = []
+    calls = inp_str.replace('\r', '').replace('\n', '')
+    tmp = calls.split(' ')
+    for call in tmp:
+        call = call.replace(' ', '')
+        if call:
+            call_obj = Call()
+            call_obj.call_str = calls
+            try:
+                call_obj.enc_call()
+            except AX25EncodingERROR:
+                return False
+            else:
+                ret.append(call_obj)
+    return ret
 
 
 if __name__ == '__main__':

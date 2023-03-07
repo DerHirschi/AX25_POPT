@@ -3,6 +3,7 @@ import os
 
 
 from cli.cli import DefaultCLI, NoneCLI
+from ax25.ax25Port import Beacon
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -125,6 +126,7 @@ class DefaultStation(object):
     # Optional Parameter. Overrides Port Parameter
     stat_parm_PacLen: int = 0      # Max Pac len
     stat_parm_MaxFrame: int = 0    # Max (I) Frames
+    # stat_param_beacons: {int: [Beacon]} = {}
 
 
 class DefaultPort(object):
@@ -153,11 +155,16 @@ class DefaultPort(object):
     parm_T3 = 120       # T3 sek (Inactive Link Timer) Default:180 Sek
     parm_N2 = 20        # Max Try   Default 20
     parm_baud = 1200    # Baud for calculating Timer
-    parm_full_duplex = False    # Pseudo Full duplex Mode (Just for AXIP)
+    parm_full_duplex = False            # Pseudo Full duplex Mode (Just for AXIP)
+    parm_axip_Multicast = False     # AXIP Multicast
+    parm_Multicast_anti_spam = 2    # AXIP Multicast Anti Spam Timer.. ( Detects loops and duplicated msgs)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     # Monitor Text Color
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
+    ##################################
+    # Port Parameter for Save to file
+    parm_beacons = {}
     ##########################
     # Globals
     glb_gui = None
@@ -165,17 +172,17 @@ class DefaultPort(object):
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """
         if self.parm_PortNr != -1:
+            dont_save_this = ['save_to_pickl', 'mh', 'glb_gui']
             gui = self.glb_gui
             self.glb_gui = None
             ############
             # Port CFG
             save_ports = {}
             for att in dir(self):
-                dont_save_this = ['save_to_pickl']
                 if '__' not in att and att not in dont_save_this:
                     # print(" {} - {}".format(att, getattr(self, att)))
                     save_ports[att] = getattr(self, att)
-                    print("Save Port Param {} > {} - {}".format(self.parm_PortNr , att, save_ports[att]))
+                    print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)
 
@@ -184,12 +191,10 @@ class DefaultPort(object):
 
 class PortConfigInit(DefaultPort):
     def __init__(self, loaded_stat: {str: DefaultStation}, port_id: int):
-        """
         # ReInit rest of this shit
         for att in dir(self):
             if '__' not in att:
                 setattr(self, att, getattr(self, att))
-        """
         self.parm_PortNr = port_id
         self.parm_Stations: [DefaultStation] = []
         self.station_save_files = []
@@ -204,9 +209,12 @@ class PortConfigInit(DefaultPort):
         ##########
         # Port
         if is_file:
-            for att in list(port_cfg.keys()):
-                # print("Load Port Param {} >  {} - {}".format(port_cfg['parm_PortName'] , att, port_cfg[att]))
-                setattr(self, att, port_cfg[att])
+            # for att in list(port_cfg.keys()):
+            for att in dir(self):
+                if att in port_cfg.keys():
+                    # print("Load Port Param {} >  {} - {}".format(port_cfg['parm_PortName'] , att, port_cfg[att]))
+                    setattr(self, att, port_cfg[att])
+
 
             if self.parm_StationCalls:
                 self.parm_Stations = []
@@ -229,17 +237,6 @@ class PortConfigInit(DefaultPort):
 
                     ##############################################################
                     # Optional Parameter for Stations
-                    """
-                    # BULLSHIT
-                    self.parm_stat_PacLen[stat.stat_parm_Call] = self.parm_PacLen
-                    if hasattr(stat, 'stat_parm_PacLen'):
-                        if stat.stat_parm_PacLen:
-                            self.parm_stat_PacLen[stat.stat_parm_Call] = stat.stat_parm_PacLen
-                    self.parm_stat_MaxFrame[stat.stat_parm_Call] = self.parm_MaxFrame
-                    if hasattr(stat, 'stat_parm_MaxFrame'):
-                        if stat.stat_parm_MaxFrame:
-                            self.parm_stat_MaxFrame[stat.stat_parm_Call] = stat.stat_parm_MaxFrame
-                    """
                     # self.parm_StationCalls.append(stat.stat_parm_Call)
 
     def __del__(self):

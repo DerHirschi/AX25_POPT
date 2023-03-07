@@ -21,9 +21,10 @@ def count_modulo(inp: int):
 
 class AX25Conn(object):
     def __init__(self, ax25_frame: AX25Frame, cfg, port, rx=True):
-        self.mh = cfg.mh
         self.own_port = port
         self.prt_hndl = self.own_port.port_handler
+        self.mh = self.prt_hndl.mh
+
         self.ch_index: int = 0
         self.gui = self.prt_hndl.gui
         if self.gui is None:

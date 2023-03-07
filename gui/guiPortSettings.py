@@ -136,17 +136,20 @@ class PortSetTab:
         axip_multicast_x = 800
         axip_multicast_y = 535
         self.axip_multicast_var = tk.IntVar(self.tab)
-        # self.axip_multicast_var.set(0)
         self.axip_multicast_dd = tk.Checkbutton(self.tab, text='AXIP-Multicast', variable=self.axip_multicast_var)
+        self.axip_multicast_dd.var = self.axip_multicast_var
         if self.port_setting.parm_PortTyp == 'AXIP':
-            # ins = self.port_setting.parm_PortParm[1]
-            # self.kiss_tail.insert(tk.END, '0')
-            self.axip_multicast_dd.configure(state="disabled")  # TODO state='normal
+            self.axip_multicast_dd.configure(state="normal")
+            if self.port_setting.parm_axip_Multicast:
+                self.axip_multicast_var.set(1)
+                self.axip_multicast_dd.select()
+            else:
+                self.axip_multicast_var.set(0)
+                self.axip_multicast_dd.deselect()
         else:
-            # ins = self.port_setting.parm_baud
-            # self.kiss_tail.insert(tk.END, '0')
+            self.axip_multicast_var.set(0)
+            self.axip_multicast_dd.deselect()
             self.axip_multicast_dd.configure(state="disabled")
-        # kiss_tail_label.place(x=kiss_tail_x, y=height - kiss_tail_y)
         self.axip_multicast_dd.place(x=axip_multicast_x + 20, y=height - axip_multicast_y)
         # TODO LinkTester
         axip_linktest_x = 650
@@ -396,8 +399,8 @@ class PortSetTab:
             self.t2.insert(tk.END, self.port_setting.parm_T2)
 
         elif typ == 'AXIP':
+            self.axip_multicast_dd.configure(state="normal")
             self.axip_linktest_dd.configure(state="disabled")  # TODO state='normal
-            self.axip_multicast_dd.configure(state="disabled")  # TODO state='normal
             """
             TODO
             self.test_call.configure(state="normal")
@@ -517,13 +520,8 @@ class PortSetTab:
             self.port_setting.parm_full_duplex = True
         else:
             self.port_setting.parm_full_duplex = False
-        # TODO Station Settings to Port
-        # parm_stat_PacLen: {str: int} = {}
-        # parm_stat_MaxFrame: {str: int} = {}
-        # parm_cli: {str: DefaultCLI} = {}
-        # parm_StationCalls
-        # self.stat_check_vars
-        # self.all_stat_cfgs
+        self.port_setting.parm_axip_Multicast = bool(self.axip_multicast_var.get())
+
         self.port_setting.parm_stat_PacLen = {}
         self.port_setting.parm_stat_MaxFrame = {}
         self.port_setting.parm_cli = {}
@@ -533,10 +531,12 @@ class PortSetTab:
         for k in self.stat_check_vars.keys():
             if k in self.all_stat_cfgs.keys() and \
                     self.stat_check_vars[k].get():
+                """
                 print("{} {} {} {}".format(k, self.port_setting.parm_PortNr, self.stat_check_vars[k].get(),
                                            self.stat_check_vars[k]))
-                var = self.stat_check_vars[k]
-                print(var.get())
+                """
+                # var = self.stat_check_vars[k]
+                # print(var.get())
                 stat = self.all_stat_cfgs[k]
                 self.port_setting.parm_stat_PacLen[k] = stat.stat_parm_PacLen
                 self.port_setting.parm_stat_MaxFrame[k] = stat.stat_parm_MaxFrame

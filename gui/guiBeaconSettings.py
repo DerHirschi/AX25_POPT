@@ -34,9 +34,22 @@ class BeaconTab:
         call_y = 20
         call_label = tk.Label(self.own_tab, text='An:')
         call_label.place(x=call_x, y=call_y)
-        self.call = tk.Entry(self.own_tab, width=48)
+        self.call = tk.Entry(self.own_tab, width=9)
         self.call.place(x=call_x + 35, y=call_y)
         self.call.insert(tk.END, beacon.to_call)
+        #################
+        # VIA
+        call_x = 370
+        call_y = 20
+        call_label = tk.Label(self.own_tab, text='VIA:')
+        call_label.place(x=call_x, y=call_y)
+        self.via = tk.Entry(self.own_tab, width=35)
+        self.via.place(x=call_x + 40, y=call_y)
+        via_ins = ''
+        for call in beacon.via_calls:
+            via_ins += '{} '.format(call.call_str)
+
+        self.via.insert(tk.END, via_ins)
         #################
         #################
         # APRS Checkbox
@@ -95,7 +108,7 @@ class BeaconTab:
         self.active_check = tk.Checkbutton(self.own_tab,
                                            text='Aktiviert',
                                            variable=self.active_check_var,
-                                           state='normal')
+                                           command=self.cmd_be_enabled)
         self.active_check.var = self.active_check_var
         self.active_check.place(x=call_x + 55, y=call_y)
         if self.beacon.is_enabled:
@@ -113,6 +126,9 @@ class BeaconTab:
         self.b_text_ent.place(x=call_x, y=call_y)
         self.b_text_ent.insert(tk.END, self.beacon.ax_frame.data.decode('UTF-8', 'ignore'))
 
+    def cmd_be_enabled(self):
+        self.beacon.is_enabled = bool(self.active_check_var.get())
+
 
 class BeaconSettings(tk.Toplevel):
     def __init__(self, main_win):
@@ -129,7 +145,7 @@ class BeaconSettings(tk.Toplevel):
         ###############
         # VARS
         self.port_handler = main_win.ax25_port_handler
-        self.all_beacons: {int: [Beacon]} = self.port_handler.beacons
+        self.all_beacons: {int: {str: [Beacon]}} = self.port_handler.beacons
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
@@ -183,30 +199,33 @@ class BeaconSettings(tk.Toplevel):
         self.tabControl.place(x=20, y=self.win_height - 550)
         self.tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
-        for k in self.all_beacons.keys():
-            for beacon in self.all_beacons[k]:
-                beacon: Beacon
-                label_txt = '{} {}'.format(k, beacon.ax_frame.from_call.call_str)
-                tab = BeaconTab(self, self.tabControl, beacon)
-                self.tabControl.add(tab.own_tab, text=label_txt)
-                self.tab_list.append(tab)
+        for port_id in self.all_beacons.keys():
+            for stat_call in self.all_beacons[port_id]:
+                for beacon in self.all_beacons[port_id][stat_call]:
+                    beacon: Beacon
+                    label_txt = '{} {}'.format(port_id, beacon.ax_frame.from_call.call_str)
+                    tab = BeaconTab(self, self.tabControl, beacon)
+                    # tab.port_select_var.set(str(port_id))
+                    # tab.from_select_var.set(stat_call)
+                    self.tabControl.add(tab.own_tab, text=label_txt)
+                    self.tab_list.append(tab)
+
+    def set_vars(self):
+        for tab in self.tab_list:
+            tab.beacon.set_from_call(tab.from_select_var.get())
 
     def save_btn_cmd(self):
         pass
 
     def ok_btn_cmd(self):
-        self.main_cl.msg_to_monitor('Hinweis: Der OK Button funktioniert noch !!')
+        self.main_cl.msg_to_monitor('Hinweis: Dieser OK Button funktioniert ebenfalls.')
+        self.main_cl.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.destroy_win()
 
     def new_beacon_btn_cmd(self):
         # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs: bool = False
-        ax_frame = AX25Frame()
-        ax_frame.from_call.call = 'NOCALL'
-        ax_frame.to_call.call = 'NOCALL'
-        beacon = Beacon(ax_frame, 0, 99, 0)
-        beacon.is_enabled = False
-        beacon.aprs = False
-        label_txt = '{} {}'.format(0, 'NOCALL')
+        beacon = Beacon()
+        label_txt = '{} {}'.format(beacon.port_id, beacon.from_call)
         tab = BeaconTab(self, self.tabControl, beacon)
         self.tabControl.add(tab.own_tab, text=label_txt)
         self.tab_list.append(tab)

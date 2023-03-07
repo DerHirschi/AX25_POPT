@@ -56,7 +56,7 @@ class TkMainWin:
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
-        self.mh = glb_ax25port_handler.mh
+        self.mh = self.ax25_port_handler.mh
         #######################
         # Window Text Buffers
         self.win_buf: {int: ChVars} = {}
@@ -504,4 +504,3 @@ class TkMainWin:
         """MH WIN"""
         MHWin(self.mh)
 
-    # MH WIN ENDE

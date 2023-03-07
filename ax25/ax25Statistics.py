@@ -19,6 +19,7 @@ class MyHeard(object):
         self.to_calls = ["""call_str"""]
         self.route = ''
         self.port = ''
+        self.port_id = 0    # Not used yet
         self.first_seen = get_time_str()
         self.last_seen = get_time_str()
         self.pac_n = 1                      # N Packets
@@ -26,6 +27,7 @@ class MyHeard(object):
         self.h_byte_n = 0                   # N Header Bytes
         self.rej_n = 0                      # N REJ
         self.axip_add = '', 0               # IP, Port
+        self.axip_fail = 0                  # Fail Counter
 
 
 class MH(object):
@@ -40,6 +42,11 @@ class MH(object):
                 os.system('touch {}'.format(mh_data_file))
         except EOFError:
             pass
+
+        for call in list(self.calls.keys()):
+            for att in dir(MyHeard):
+                if not hasattr(self.calls[call], att):
+                    setattr(self.calls[call], att, getattr(MyHeard, att))
 
         """
         self.connections = {
@@ -58,7 +65,7 @@ class MH(object):
         if call_str not in self.calls.keys():
             ent = MyHeard()
             ent.own_call = call_str
-            ent.to_calls = [ax25_frame.to_call.call_str]
+            ent.to_calls.append(ax25_frame.to_call.call_str)
             if ax25_frame.via_calls:
                 for call in ax25_frame.via_calls:
                     ent.route += call.call_str
@@ -125,6 +132,21 @@ class MH(object):
             if call_str in self.calls.keys():
                 return self.calls[call_str].axip_add
         return '', 0
+
+    def mh_get_ip_fm_all(self):
+        ret: [(str, (str, int))] = []
+        for stat_call in self.calls.keys():
+            station: MyHeard = self.calls[stat_call]
+            if station.axip_add and station.axip_fail < 20:     # TODO Set axip_failed as Conf Parameter
+                ent = stat_call, station.axip_add
+                ret.append(ent)
+        return ret
+
+    def mh_ip_failed(self, call: str):
+        self.calls[call].axip_fail += 1
+
+    def mh_set_ip(self, call: str, axip: (str, int)):
+        self.calls[call].axip_add = axip
 
     def mh_out_cli(self):
         out = ''
