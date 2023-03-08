@@ -1,3 +1,5 @@
+import time
+
 import config_station
 from ax25.ax25Port import *
 from config_station import *
@@ -49,6 +51,9 @@ class AX25PortHandler(object):
     def close_port(self, port_id: int):
         port = self.ax25_ports[port_id]
         port.close()
+        while not port.ende:
+            time.sleep(0.5)
+            print("Warte auf Port " + str(port_id))
         port.join()
         if port_id in self.ax25_ports.keys():
             del self.ax25_ports[port_id]
@@ -57,7 +62,6 @@ class AX25PortHandler(object):
         if port_id in self.beacons.keys():
             del self.beacons[port_id]
         del port
-        time.sleep(1)
         self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
 
     def reinit_all_ports(self):
@@ -90,16 +94,19 @@ class AX25PortHandler(object):
                     self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
                 else:
                     temp: AX25Port
+                    self.beacons[port_id] = temp.port_cfg.parm_beacons
+                    temp.start()
                     ##########################
                     # Start Port/Device Thread
-                    temp.start()
                     ######################################
                     # Gather all Ports in dict: ax25_ports
                     if self.gui is not None:
                         temp.set_gui(self.gui)
                     self.ax25_ports[port_id] = temp
                     self.ax25_port_settings[port_id] = temp.port_cfg
-                    self.beacons[port_id] = temp.beacons
+                    #print(temp.beacons)
+                    #temp.beacons = {}
+
                     self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
 
     def set_gui(self, gui):

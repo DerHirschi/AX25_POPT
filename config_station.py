@@ -158,7 +158,7 @@ class DefaultPort(object):
     parm_full_duplex = False            # Pseudo Full duplex Mode (Just for AXIP)
     parm_axip_Multicast = False     # AXIP Multicast
     parm_axip_fail = 30             # AXIP Max Connection Fail
-    parm_Multicast_anti_spam = 2    # AXIP Multicast Anti Spam Timer.. ( Detects loops and duplicated msgs)
+    parm_Multicast_anti_spam = 2    # AXIP Multicast Anti Spam Timer. ( Detects loops and duplicated msgs)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     # Monitor Text Color
     parm_mon_clr_tx = "medium violet red"
@@ -169,18 +169,19 @@ class DefaultPort(object):
     ##########################
     # Globals
     glb_gui = None
+    dont_save_this = ['dont_save_this', 'save_to_pickl', 'mh', 'glb_gui']
 
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """
         if self.parm_PortNr != -1:
-            dont_save_this = ['save_to_pickl', 'mh', 'glb_gui']
+
             gui = self.glb_gui
             self.glb_gui = None
             ############
             # Port CFG
             save_ports = {}
             for att in dir(self):
-                if '__' not in att and att not in dont_save_this:
+                if '__' not in att and att not in self.dont_save_this:
                     # print(" {} - {}".format(att, getattr(self, att)))
                     save_ports[att] = getattr(self, att)
                     print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
@@ -194,7 +195,7 @@ class PortConfigInit(DefaultPort):
     def __init__(self, loaded_stat: {str: DefaultStation}, port_id: int):
         # ReInit rest of this shit
         for att in dir(self):
-            if '__' not in att:
+            if '__' not in att and att not in self.dont_save_this:
                 setattr(self, att, getattr(self, att))
         self.parm_PortNr = port_id
         self.parm_Stations: [DefaultStation] = []
@@ -215,7 +216,6 @@ class PortConfigInit(DefaultPort):
                 if att in port_cfg.keys():
                     # print("Load Port Param {} >  {} - {}".format(port_cfg['parm_PortName'] , att, port_cfg[att]))
                     setattr(self, att, port_cfg[att])
-
 
             if self.parm_StationCalls:
                 self.parm_Stations = []
@@ -239,6 +239,7 @@ class PortConfigInit(DefaultPort):
                     ##############################################################
                     # Optional Parameter for Stations
                     # self.parm_StationCalls.append(stat.stat_parm_Call)
+        # self.parm_beacons = {}
 
     def __del__(self):
         # self.save_to_pickl()

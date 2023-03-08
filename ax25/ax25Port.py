@@ -32,9 +32,12 @@ class Beacon:
         self.ax_frame.to_call.call_str = 'NOCALL'
         self.from_call = self.ax_frame.from_call.call_str
         self.to_call = self.ax_frame.to_call.call_str
-        self.via_calls = self.ax_frame.via_calls
-        self.text = ''
+        self.via_calls = ''
+        for call in self.ax_frame.via_calls:
+            self.via_calls += '{} '.format(call.call_str)
+        self.text = self.ax_frame.data.decode('utf-8', 'ignore')
         self.port_id = 0
+        self.beacon_id = 0
         self.repeat_time: float = 30.0  # Min
         self.move_time: int = 0  # Sec
         self.cooldown = time.time()
@@ -45,21 +48,25 @@ class Beacon:
         # self.ax_frame.encode()
 
     def set_from_call(self, call: str):
-        self.ax_frame.from_call.call = ''
-        self.ax_frame.from_call.ssid = 0
-        self.ax_frame.from_call.call_str = call
+        self.from_call = call
 
     def set_to_call(self, call: str):
-        self.ax_frame.to_call.call = ''
-        self.ax_frame.to_call.ssid = 0
-        self.ax_frame.to_call.call_str = call
+        self.to_call = call
 
     def set_via_calls(self, calls: str):
         vias = via_calls_fm_str(calls)
         if vias:
             self.ax_frame.via_calls = vias
+            self.via_calls = calls
 
     def encode(self):
+        self.ax_frame.ctl_byte.cmd = self.aprs
+        self.ax_frame.to_call.call = ''
+        self.ax_frame.to_call.ssid = 0
+        self.ax_frame.to_call.call_str = self.to_call
+        self.ax_frame.from_call.call = ''
+        self.ax_frame.from_call.ssid = 0
+        self.ax_frame.from_call.call_str = self.from_call
         self.ax_frame.data = self.text.encode('UTF-8', 'ignore')
         try:
             self.ax_frame.encode()
@@ -69,14 +76,17 @@ class Beacon:
         return True
 
     def crone(self):
+        """
+        for att in dir(self):
+            print("{} > {}".format(att, getattr(self, att)))
+        """
         if self.is_enabled:
             if time.time() > self.cooldown:
                 now = datetime.now()
                 now_min = int(now.strftime("%M"))
-                if now_min == self.next_run + self.move_time:
+                nr = (self.next_run + self.move_time) % 60
+                if now_min >= nr:   # !!!!!!!!!!!!
                     self.next_run = self.repeat_time + now_min
-                    if self.next_run > 59:
-                        self.next_run -= 60
                     self.cooldown = time.time() + 60
                     return True
         return False
@@ -86,6 +96,7 @@ class AX25Port(threading.Thread):
     def __init__(self, port_cfg, port_handler):
         super(AX25Port, self).__init__()
 
+        self.ende = False
         """ self.ax25_port_handler will be set in AX25PortInit """
         self.ax25_ports: {int: AX25Port}
         # self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
@@ -94,6 +105,7 @@ class AX25Port(threading.Thread):
         self.port_cfg = port_cfg
         self.port_handler = port_handler
         self.mh = port_handler.mh
+        self.beacons = self.port_handler.beacons
         # self.port_cfg.mh = self.mh  # ?????
 
         self.port_param = self.port_cfg.parm_PortParm
@@ -117,7 +129,6 @@ class AX25Port(threading.Thread):
         self.is_gui = False
         self.connections: {str: AX25Conn} = {}
         self.device = None
-        self.beacons: {str: [Beacon]} = self.port_cfg.parm_beacons
         ##############
         # Beacon TEST
         """
@@ -348,16 +359,19 @@ class AX25Port(threading.Thread):
         self.send_beacons()
 
     def send_beacons(self):
-        for k in self.beacons.keys():
-            beacon_list = self.beacons[k]
+        # print(self.beacons)
+        # print(self.beacons[self.port_id].keys())
+        for k in self.beacons[self.port_id].keys():
+            beacon_list = self.beacons[self.port_id][k]
             beacon: Beacon
             for beacon in beacon_list:
                 send_it = beacon.crone()
+                if send_it:
+                    print(send_it)
+                ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
+                beacon.ax_frame.axip_add = ip_fm_mh
                 if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
-                    ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
-                    if ip_fm_mh[0]:
-                        beacon.ax_frame.axip_add = ip_fm_mh
-                    else:
+                    if ip_fm_mh == ('', 0):
                         send_it = False
                 if send_it:
                     if beacon.encode():
@@ -412,6 +426,7 @@ class AX25Port(threading.Thread):
             while self.loop_is_running:
                 self.tasks()
                 time.sleep(0.1)
+        self.ende = True
 
     def tasks(self):
         while self.loop_is_running:
@@ -609,50 +624,59 @@ class AXIP(AX25Port):
     def rx(self):
         try:
             udp_recv = self.device.recvfrom(800)
-        except socket.error:
-            raise AX25DeviceERROR
-        recv_buff = udp_recv[0]
-        to_call_ip_addr = udp_recv[1]
-        ###################################
-        # CRC
-        crc = recv_buff[-2:]
-        crc = int(bytearray2hexstr(crc[::-1]), 16)
-        pack = recv_buff[:-2]
-        calc_crc = crc_x25(pack)
-        ret = RxBuf()
-        ret.axip_add = to_call_ip_addr
-        if calc_crc == crc:
-            ret.raw_data = pack
-        """
-        if self.port_cfg.parm_axip_Multicast:
-            ax25frame = AX25Frame()
-            ax25frame.axip_add = to_call_ip_addr
-            try:
-                # Decoding
-                ax25frame.decode(pack)
-            except AX25DecodingERROR:
-                logger.error('Port:{} decoding: '.format(self.portname))
-            else:
-                self.tx_multicast(frame=ax25frame)
-        """
-        return ret
+        #except socket.error:
+            #raise AX25DeviceERROR
+        except OSError:
+            return RxBuf()
+        else:
+            recv_buff = udp_recv[0]
+            to_call_ip_addr = udp_recv[1]
+            ###################################
+            # CRC
+            crc = recv_buff[-2:]
+            crc = int(bytearray2hexstr(crc[::-1]), 16)
+            pack = recv_buff[:-2]
+            calc_crc = crc_x25(pack)
+            ret = RxBuf()
+            ret.axip_add = to_call_ip_addr
+            if calc_crc == crc:
+                ret.raw_data = pack
+            """
+            if self.port_cfg.parm_axip_Multicast:
+                ax25frame = AX25Frame()
+                ax25frame.axip_add = to_call_ip_addr
+                try:
+                    # Decoding
+                    ax25frame.decode(pack)
+                except AX25DecodingERROR:
+                    logger.error('Port:{} decoding: '.format(self.portname))
+                else:
+                    self.tx_multicast(frame=ax25frame)
+            """
+            return ret
 
     def tx(self, frame: AX25Frame, no_multicast=False):
-        ###################################
-        # CRC
-        calc_crc = crc_x25(frame.hexstr)
-        calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
-        ###################################
-        try:
-            self.device.sendto(frame.hexstr + calc_crc, frame.axip_add)
-        except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
-            logger.error('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
-            logger.error('{}'.format(e))
+        print('_____________________________')
+        print(frame.axip_add)
+        print('_____________________________')
+        if frame.axip_add != ('', 0):
+            ###################################
+            # CRC
+            calc_crc = crc_x25(frame.hexstr)
+            calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
+            ###################################
             try:
-                self.init()
-            except AX25DeviceFAIL:
-                logger.error('Error. Reinit AXIP Failed !! {}'.format(self.port_param))
-                raise AX25DeviceFAIL
+                self.device.sendto(frame.hexstr + calc_crc, frame.axip_add)
+            except (ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
+                logger.error('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
+                logger.error('{}'.format(e))
+                try:
+                    self.init()
+                except AX25DeviceFAIL:
+                    logger.error('Error. Reinit AXIP Failed !! {}'.format(self.port_param))
+                    raise AX25DeviceFAIL
+            except OSError:
+                pass
         if self.port_cfg.parm_axip_Multicast and not no_multicast:
             self.tx_multicast(frame=frame)
 
