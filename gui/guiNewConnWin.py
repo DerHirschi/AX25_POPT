@@ -157,7 +157,7 @@ class NewConnWin:
             call_str = self.call_txt_inp.get('0.0', tk.END)
             call_obj = ProcCallInput(call_str)
 
-            mh_ent = self.mh.mh_get_last_ip(call_obj.call_str)
+            mh_ent = self.mh.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
             # Just if u switch after enter in call
             if mh_ent[1]:
                 ip = mh_ent[0]
@@ -210,8 +210,9 @@ class NewConnWin:
             ax_frame.to_call.call = call_obj.call
             ax_frame.to_call.ssid = call_obj.ssid
             ax_frame.via_calls = call_obj.via
-            if self.ax25_port_handler.ax25_ports[self.port_index].port_typ == 'AXIP':
-                mh_ent = self.mh.mh_get_last_ip(call_obj.call_str)
+            port = self.ax25_port_handler.get_port_by_index(self.port_index)
+            if port.port_typ == 'AXIP':
+                mh_ent = self.mh.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
                 # Just if u switch after enter in call
                 axip_ip = self.ax_ip_ip[1].get('0.0', tk.END)[:-1]
                 axip_port = self.ax_ip_port[1].get('0.0', tk.END)[:-1]

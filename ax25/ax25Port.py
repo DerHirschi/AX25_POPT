@@ -69,7 +69,6 @@ class Beacon:
         return True
 
     def crone(self):
-        # TODO to all AXIP Clients
         if self.is_enabled:
             if time.time() > self.cooldown:
                 now = datetime.now()
@@ -151,17 +150,28 @@ class AX25Port(threading.Thread):
         # self.loop_is_running = False
 
     def close(self):
-        for conn in self.connections:
+        """
+        for k in self.connections.keys():
+            conn: AX25Conn = self.connections[k]
             # Try to send a Disc
             conn.zustand_exec.change_state(4)
             conn.zustand_exec.tx(None)
         time.sleep(1)
+        """
         self.loop_is_running = False
+        """
+        if self.device is not None:
+            self.device.close()
+            self.device = None
+        """
 
     def rx(self):
         return RxBuf()
 
     def tx(self, frame: AX25Frame):
+        pass
+
+    def tx_multicast(self, frame: AX25Frame):
         pass
 
     def set_TXD(self):
@@ -343,6 +353,12 @@ class AX25Port(threading.Thread):
             beacon: Beacon
             for beacon in beacon_list:
                 send_it = beacon.crone()
+                if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
+                    ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
+                    if ip_fm_mh[0]:
+                        beacon.ax_frame.axip_add = ip_fm_mh
+                    else:
+                        send_it = False
                 if send_it:
                     if beacon.encode():
                         self.tx(beacon.ax_frame)
@@ -357,9 +373,6 @@ class AX25Port(threading.Thread):
         """ New Outgoing Connection """
         cfg = self.port_cfg
         ax25_frame.encode()
-        # print("Same UID ?? --  {}".format(ax25_frame.addr_uid))
-        # print("Same UID connections?? --  {}".format(self.connections.keys()))
-        # ax25_frame.addr_uid = reverse_uid(ax25_frame.addr_uid)
         while ax25_frame.addr_uid in self.connections.keys() or \
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
             print("Same UID !! {}".format(ax25_frame.addr_uid))
@@ -428,8 +441,11 @@ class AX25Port(threading.Thread):
                     # Handling
                     self.rx_pac_handler(ax25frame)
                     # Pseudo Full Duplex for AXIP.
+                    if self.port_cfg.parm_axip_Multicast:
+                        self.tx_multicast(frame=ax25frame)
                     if self.port_cfg.parm_full_duplex:
                         break
+
             else:
                 break
         if time.time() > self.TXD:
@@ -584,7 +600,9 @@ class AXIP(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
+                self.device.settimeout(0)
                 self.device.close()
+                # time.sleep(1)
             except socket.error:
                 pass
 
@@ -605,6 +623,18 @@ class AXIP(AX25Port):
         ret.axip_add = to_call_ip_addr
         if calc_crc == crc:
             ret.raw_data = pack
+        """
+        if self.port_cfg.parm_axip_Multicast:
+            ax25frame = AX25Frame()
+            ax25frame.axip_add = to_call_ip_addr
+            try:
+                # Decoding
+                ax25frame.decode(pack)
+            except AX25DecodingERROR:
+                logger.error('Port:{} decoding: '.format(self.portname))
+            else:
+                self.tx_multicast(frame=ax25frame)
+        """
         return ret
 
     def tx(self, frame: AX25Frame, no_multicast=False):
@@ -630,7 +660,7 @@ class AXIP(AX25Port):
         sendet = [frame.to_call.call_str]
         # self.axip_anti_spam[frame.hexstr] = [frame.axip_add], time.time()
         self.clean_anti_spam()
-        all_axip_stat = self.mh.mh_get_ip_fm_all()
+        all_axip_stat = self.mh.mh_get_ip_fm_all(self.port_cfg.parm_axip_fail)
         send_it = True
         for station in all_axip_stat:
             if frame.hexstr in self.axip_anti_spam.keys():

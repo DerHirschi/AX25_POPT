@@ -157,6 +157,7 @@ class DefaultPort(object):
     parm_baud = 1200    # Baud for calculating Timer
     parm_full_duplex = False            # Pseudo Full duplex Mode (Just for AXIP)
     parm_axip_Multicast = False     # AXIP Multicast
+    parm_axip_fail = 30             # AXIP Max Connection Fail
     parm_Multicast_anti_spam = 2    # AXIP Multicast Anti Spam Timer.. ( Detects loops and duplicated msgs)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     # Monitor Text Color

@@ -127,17 +127,18 @@ class MH(object):
         return config.ax_ports[p_id]
     """
 
-    def mh_get_last_ip(self, call_str: str):
+    def mh_get_last_ip(self, call_str: str, param_fail=20):
         if call_str:
             if call_str in self.calls.keys():
-                return self.calls[call_str].axip_add
+                if self.calls[call_str].axip_fail < param_fail:
+                    return self.calls[call_str].axip_add
         return '', 0
 
-    def mh_get_ip_fm_all(self):
+    def mh_get_ip_fm_all(self, param_fail=20):
         ret: [(str, (str, int))] = []
         for stat_call in self.calls.keys():
             station: MyHeard = self.calls[stat_call]
-            if station.axip_add and station.axip_fail < 20:     # TODO Set axip_failed as Conf Parameter
+            if station.axip_add and station.axip_fail < param_fail:
                 ent = stat_call, station.axip_add
                 ret.append(ent)
         return ret

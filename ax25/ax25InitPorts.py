@@ -57,6 +57,7 @@ class AX25PortHandler(object):
         if port_id in self.beacons.keys():
             del self.beacons[port_id]
         del port
+        time.sleep(1)
         self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
 
     def reinit_all_ports(self):

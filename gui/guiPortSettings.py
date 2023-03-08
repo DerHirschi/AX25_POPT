@@ -132,11 +132,13 @@ class PortSetTab:
         self.kiss_tail.place(x=kiss_tail_x + 50, y=height - kiss_tail_y)
         ########################
         # TODO AXIP related options ( Multicast, LinkTest, TestCall, Intervall, Max-Fail-counter )
-        # TODO Multicast
         axip_multicast_x = 800
         axip_multicast_y = 535
         self.axip_multicast_var = tk.IntVar(self.tab)
-        self.axip_multicast_dd = tk.Checkbutton(self.tab, text='AXIP-Multicast', variable=self.axip_multicast_var)
+        self.axip_multicast_dd = tk.Checkbutton(self.tab,
+                                                text='AXIP-Multicast',
+                                                variable=self.axip_multicast_var,
+                                                command=self.update_port_parameter)
         self.axip_multicast_dd.var = self.axip_multicast_var
         if self.port_setting.parm_PortTyp == 'AXIP':
             self.axip_multicast_dd.configure(state="normal")
@@ -197,18 +199,14 @@ class PortSetTab:
             self.test_inter.configure(state="disabled")
         test_inter_label.place(x=test_inter_x, y=height - test_inter_y)
         self.test_inter.place(x=test_inter_x + 95, y=height - test_inter_y)
-        # TODO linktest Fail Count
         test_fail_x = 820
         test_fail_y = 465  # 395
         test_fail_label = tk.Label(self.tab, text='Versuche:')
         self.test_fail = tk.Entry(self.tab, width=4)
-        if self.port_setting.parm_PortTyp == 'AXIP':
-            # ins = self.port_setting.parm_PortParm[1]
-            self.test_fail.insert(tk.END, '20')
-            self.test_fail.configure(state="disabled")  # TODO state='normal
+        self.test_fail.insert(tk.END, str(self.port_setting.parm_axip_fail))
+        if self.port_setting.parm_PortTyp == 'AXIP' and not self.axip_multicast_var.get():
+            self.test_fail.configure(state="normal")
         else:
-            # ins = self.port_setting.parm_baud
-            self.test_fail.insert(tk.END, '')
             self.test_fail.configure(state="disabled")
         test_fail_label.place(x=test_fail_x, y=height - test_fail_y)
         self.test_fail.place(x=test_fail_x + 95, y=height - test_fail_y)
@@ -405,8 +403,11 @@ class PortSetTab:
             TODO
             self.test_call.configure(state="normal")
             self.test_inter.configure(state="normal")
-            self.test_fail.configure(state="normal")
             """
+            if self.axip_multicast_var.get():
+                self.test_fail.configure(state="normal")
+            else:
+                self.test_fail.configure(state="disabled")
             self.kiss_txd.configure(state="disabled")
             self.kiss_pers.configure(state="disabled")
             self.kiss_tail.configure(state="disabled")
@@ -521,6 +522,7 @@ class PortSetTab:
         else:
             self.port_setting.parm_full_duplex = False
         self.port_setting.parm_axip_Multicast = bool(self.axip_multicast_var.get())
+        self.port_setting.parm_axip_fail = int(self.test_fail.get())
 
         self.port_setting.parm_stat_PacLen = {}
         self.port_setting.parm_stat_MaxFrame = {}
