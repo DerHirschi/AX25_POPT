@@ -76,8 +76,10 @@ class BeaconTab:
         self.port_select_var = tk.StringVar(self.own_tab)
 
         self.port_opt = self.port_handler.ax25_ports
-        opt = list(self.port_opt.keys())
         self.port_select_var.set(str(self.beacon.port_id))  # default value
+        opt = list(self.port_opt.keys())
+        if not opt:
+            opt = ['NOPORT']
 
         port = tk.OptionMenu(self.own_tab, self.port_select_var, *opt)
         port.configure(width=8, height=1)
