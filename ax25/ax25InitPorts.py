@@ -1,5 +1,3 @@
-import time
-
 import config_station
 from ax25.ax25Port import *
 from config_station import *
@@ -33,6 +31,8 @@ class AX25PortHandler(object):
     def __del__(self):
         self.close_all_ports()
 
+    ######################
+    # Connection Handling
     def get_port_by_index(self, index: int):
         return self.ax25_ports[index]
 
@@ -116,11 +116,14 @@ class AX25PortHandler(object):
                         temp.set_gui(self.gui)
                     self.ax25_ports[port_id] = temp
                     self.ax25_port_settings[port_id] = temp.port_cfg
-                    #print(temp.beacons)
-                    #temp.beacons = {}
-
                     self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
 
+    def save_all_port_cfgs(self):
+        for port_id in self.ax25_ports.keys():
+            self.ax25_ports[port_id].port_cfg.save_to_pickl()
+
+    ######################
+    # GUI Handling
     def set_gui(self, gui):
         """ PreInit: Set GUI Var """
         if self.gui is None:
@@ -133,7 +136,8 @@ class AX25PortHandler(object):
         if self.gui is not None and self.is_running:
             self.gui.msg_to_monitor(msg)
 
-    # def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
+    ######################
+    # Connection Handling
     def insert_conn2all_conn_var(self, new_conn, ind: int = 1):
         if not new_conn.is_link or not new_conn.my_digi_call:
             keys = list(self.all_connections.keys())
@@ -175,7 +179,6 @@ class AX25PortHandler(object):
             conn.ch_index = 0
             del self.all_connections[k]
 
-    # def del_conn2all_conn_var(self, conn: AX25Conn):
     def del_conn2all_conn_var(self, conn):
         temp = []
         for k in list(self.all_connections.keys()):

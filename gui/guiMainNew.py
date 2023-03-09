@@ -15,7 +15,7 @@ from gui.guiSideFrame import SideTabbedFrame
 from gui.guiStationSettings import StationSettingsWin
 from gui.guiPortSettings import PortSettingsWin
 from gui.guiBeaconSettings import BeaconSettings
-from main import VER
+from config_station import VER
 
 if 'linux' in sys.platform:
     from playsound import playsound

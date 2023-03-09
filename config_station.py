@@ -1,9 +1,9 @@
 import pickle
 import os
-
-
 from cli.cli import DefaultCLI, NoneCLI
-from ax25.ax25Port import Beacon
+# from ax25.ax25Beacon import Beacon
+
+VER = '2.63a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -262,5 +262,4 @@ def save_station_to_file(conf: DefaultStation):
                     save_station[att] = getattr(conf, att)
                 # print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
         save_to_file(file, save_station)
-
 

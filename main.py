@@ -2,7 +2,6 @@ import cli.ClientDB
 import ax25.ax25Statistics
 import gui.guiMainNew
 import ax25.ax25InitPorts
-VER = '2.61a'
 
 if __name__ == '__main__':
     GLB_MH_list = ax25.ax25Statistics.MH()

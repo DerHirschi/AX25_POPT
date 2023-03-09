@@ -186,7 +186,7 @@ class DefaultCLI(object):
                 '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
                 '$$ |       $$$$$$  |   $$ |        $$ |\r' \
                 '\__|yton   \______/ther\__|acket   \__|erminal\r\r'\
-                'Version: {}\r\r\r'.format(main.VER)
+                'Version: {}\r\r\r'.format(config_station.VER)
         return ret
 
     def cmd_i(self):

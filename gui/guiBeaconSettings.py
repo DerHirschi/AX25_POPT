@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk as ttk
-from ax25.ax25Port import Beacon, AX25Frame
+# from ax25.ax25Port import AX25Frame
+from ax25.ax25Beacon import Beacon
 
 
 class BeaconTab:
@@ -133,12 +134,14 @@ class BeaconTab:
         call_label.place(x=call_x, y=call_y)
         self.be_txt_filename_var = tk.StringVar(self.own_tab)
         self.be_txt_filename = tk.Entry(self.own_tab, textvariable=self.be_txt_filename_var, width=50)
+        self.be_txt_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
+        self.b_text_bg_color = self.b_text_ent.cget('background')
         if self.beacon.text_filename:
             self.be_txt_filename_var.set(self.beacon.text_filename)
             self.b_text_ent.configure(state='disabled', background='grey80')
         self.be_txt_filename.place(x=call_x + 140, y=call_y)
         be_txt_openfile_btn = tk.Button(self.own_tab, text='Datei', command=self.select_files)
-        be_txt_openfile_btn.place(x=call_x + 700, y=call_y)
+        be_txt_openfile_btn.place(x=call_x + 710, y=call_y - 2)
 
     def cmd_be_enabled(self):
         self.beacon.is_enabled = bool(self.active_check_var.get())
@@ -147,6 +150,26 @@ class BeaconTab:
         self.beacon.set_from_call(self.from_select_var.get())
         label_txt = '{} {}'.format(self.port_select_var.get(), self.from_select_var.get())
         self.root.tabControl.tab(self.root.tab_list.index(self), text=label_txt)
+
+    def on_key_press_filename_ent(self, event):
+        print(event)
+        filenames = self.be_txt_filename_var.get()
+        if filenames:
+            self.beacon.text_filename = filenames
+
+            if self.beacon.set_text_fm_file():
+                self.b_text_ent.configure(state='normal', background='grey80')
+                self.b_text_ent.delete('1.0', tk.END)
+                self.b_text_ent.insert(tk.END, self.beacon.text)
+                self.b_text_ent.configure(state='disabled', background='grey80')
+            else:
+                self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
+                # self.be_txt_filename_var.set('')
+                self.beacon.text_filename = ''
+        else:
+            # self.be_txt_filename_var.set('')
+            self.beacon.text_filename = ''
+            self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
 
     def select_files(self):
         self.root.attributes("-topmost", False)
@@ -161,14 +184,22 @@ class BeaconTab:
             initialdir='data/',
             filetypes=filetypes)
 
-        self.be_txt_filename_var.set(filenames[0])
-        self.beacon.text_filename = filenames[0]
-        if self.beacon.set_text_fm_file():
-            self.b_text_ent.delete('1.0', tk.END)
-            self.b_text_ent.insert(tk.END, self.beacon.text)
-            self.b_text_ent.configure(state='disabled', background='grey80')
+        if filenames:
+            self.be_txt_filename_var.set(filenames[0])
+            self.beacon.text_filename = filenames[0]
+            if self.beacon.set_text_fm_file():
+                self.b_text_ent.configure(state='normal', background='grey80')
+                self.b_text_ent.delete('1.0', tk.END)
+                self.b_text_ent.insert(tk.END, self.beacon.text)
+                self.b_text_ent.configure(state='disabled', background='grey80')
+            else:
+                self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
+                self.be_txt_filename_var.set('')
+                self.beacon.text_filename = ''
         else:
-            self.b_text_ent.configure(state='normal', background='withe')
+            self.be_txt_filename_var.set('')
+            self.beacon.text_filename = ''
+            self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
 
 
 class BeaconSettings(tk.Toplevel):
@@ -287,6 +318,7 @@ class BeaconSettings(tk.Toplevel):
 
     def save_btn_cmd(self):
         self.set_vars()
+        self.main_cl.ax25_port_handler.save_all_port_cfgs()
         self.main_cl.msg_to_monitor('Hinweis: Baken Settings wurden gespeichert..')
         self.main_cl.msg_to_monitor('Lob: Das hast du sehr gut gemacht !!.')
 
