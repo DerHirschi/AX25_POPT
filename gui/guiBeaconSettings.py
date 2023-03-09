@@ -15,8 +15,8 @@ class BeaconTab:
         # self.own_tab = tk.Toplevel()
         self.port_handler = root.port_handler
         self.beacon = beacon
-        height = root.win_height
-        width = root.win_width
+        # height = root.win_height
+        # width = root.win_width
         #################
         # Von
         call_x = 10
@@ -74,14 +74,13 @@ class BeaconTab:
         call_label = tk.Label(self.own_tab, text='Port:')
         call_label.place(x=call_x, y=call_y)
         self.port_select_var = tk.StringVar(self.own_tab)
-
         self.port_opt = self.port_handler.ax25_ports
         self.port_select_var.set(str(self.beacon.port_id))  # default value
         opt = list(self.port_opt.keys())
         if not opt:
             opt = ['0']
 
-        port = tk.OptionMenu(self.own_tab, self.port_select_var, *opt)
+        port = tk.OptionMenu(self.own_tab, self.port_select_var, *opt, command=self.root.change_port)
         port.configure(width=8, height=1)
         port.place(x=call_x + 55, y=call_y - 5)
         #################
@@ -126,24 +125,24 @@ class BeaconTab:
         minutes_sel_lable = tk.Label(self.own_tab, text='Minuten:')
         minutes_sel_lable.place(x=call_x, y=call_y)
         self.minutes_sel = []
+        tr = False
         for minute in range(12):
             text = minute * 5
-            minutes_sel_var = tk.IntVar(self.own_tab)
+            minutes_sel_var = tk.BooleanVar(self.own_tab)
             minutes_sel = tk.Checkbutton(self.own_tab,
-                                           text=str(text),
-                                           variable=minutes_sel_var)
-                                           # command=self.cmd_be_enabled)
+                                         text=str(text),
+                                         variable=minutes_sel_var,
+                                         command=self.check_hour_minutes_cmd)
             minutes_sel.var = minutes_sel_var
             minutes_sel.place(x=call_x + 75 + (55 * minute), y=call_y)
             self.minutes_sel.append((minutes_sel_var, minutes_sel))
+            if self.beacon.minutes[minute]:
+                minutes_sel_var.set(True)
+                minutes_sel.select()
+                tr = True
 
-        """
-        if self.beacon.is_enabled:
-            self.active_check_var.set(1)
-            self.active_check.select()
-        """
         #################
-        # Minutes Selector
+        # Std Selector
         call_x = 10
         call_y = 122
         std_sel_lable = tk.Label(self.own_tab, text='Stunden:')
@@ -151,10 +150,11 @@ class BeaconTab:
         self.std_sel = []
         for std in range(24):
             text = std
-            sel_var = tk.IntVar(self.own_tab)
+            sel_var = tk.BooleanVar(self.own_tab)
             sel = tk.Checkbutton(self.own_tab,
-                                         text=str(text),
-                                         variable=sel_var)
+                                 text=str(text),
+                                 variable=sel_var,
+                                 command=self.check_hour_minutes_cmd)
             # command=self.cmd_be_enabled)
             sel.var = sel_var
             if std > 11:
@@ -164,12 +164,15 @@ class BeaconTab:
                 sel.place(x=call_x + 75 + (55 * std), y=call_y)
 
             self.std_sel.append((sel_var, sel))
+            if self.beacon.hours[std]:
+                sel_var.set(True)
+                sel.select()
+                tr = True
+        #########################
+        # Disable Intervall Ent
+        if tr:
+            self.interv.configure(state='disabled')
 
-        """
-        if self.beacon.is_enabled:
-            self.active_check_var.set(1)
-            self.active_check.select()
-        """
         #################
         # Tag Selector
         call_x = 10
@@ -177,22 +180,21 @@ class BeaconTab:
         tag_sel_lable = tk.Label(self.own_tab, text='Tag:')
         tag_sel_lable.place(x=call_x, y=call_y)
         self.tag_sel = []
-        for tag in range(7):
-            text = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][tag]
-            sel_var = tk.IntVar(self.own_tab)
+        for tag in list(self.beacon.week_days.keys()):
+            ind = list(self.beacon.week_days.keys()).index(tag)
+            sel_var = tk.BooleanVar(self.own_tab)
             sel = tk.Checkbutton(self.own_tab,
-                                 text=str(text),
-                                 variable=sel_var)
+                                 text=tag,
+                                 variable=sel_var,
+                                 command=self.check_day_cmd)
+
             # command=self.cmd_be_enabled)
             sel.var = sel_var
-            sel.place(x=call_x + 75 + (65 * tag), y=call_y)
+            sel.place(x=call_x + 75 + (65 * ind), y=call_y)
             self.tag_sel.append((sel_var, sel))
-
-        """
-        if self.beacon.is_enabled:
-            self.active_check_var.set(1)
-            self.active_check.select()
-        """
+            if self.beacon.week_days[tag]:
+                sel_var.set(True)
+                sel.select()
         #################
         # Monat Selector
         call_x = 10
@@ -202,20 +204,18 @@ class BeaconTab:
         self.monat_sel = []
         for monat in range(12):
             # text = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][tag]
-            sel_var = tk.IntVar(self.own_tab)
+            sel_var = tk.BooleanVar(self.own_tab)
             sel = tk.Checkbutton(self.own_tab,
                                  text=str(monat + 1),
-                                 variable=sel_var)
+                                 variable=sel_var,
+                                 command=self.check_month_cmd)
             # command=self.cmd_be_enabled)
             sel.var = sel_var
             sel.place(x=call_x + 75 + (55 * monat), y=call_y)
             self.monat_sel.append((sel_var, sel))
-
-        """
-        if self.beacon.is_enabled:
-            self.active_check_var.set(1)
-            self.active_check.select()
-        """
+            if self.beacon.month[monat]:
+                sel_var.set(True)
+                sel.select()
 
         #################
         # Beacon Text
@@ -253,6 +253,7 @@ class BeaconTab:
         self.beacon.set_from_call(self.from_select_var.get())
         label_txt = '{} {}'.format(self.port_select_var.get(), self.from_select_var.get())
         self.root.tabControl.tab(self.root.tab_list.index(self), text=label_txt)
+        self.root.change_port(None)
 
     def on_key_press_filename_ent(self, event):
         # print(event)
@@ -303,6 +304,42 @@ class BeaconTab:
             self.be_txt_filename_var.set('')
             self.beacon.text_filename = ''
             self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
+
+    def check_day_cmd(self):
+        # self.tag_sel.append((sel_var, sel))
+        for selector in self.tag_sel:
+            var = selector[0].get()
+            tag = selector[1].cget('text')
+            self.beacon.week_days[tag] = var
+
+    def check_month_cmd(self):
+        # self.tag_sel.append((sel_var, sel))
+        for k in list(self.beacon.month.keys()):
+            selector = self.monat_sel[k]
+            var = selector[0].get()
+            self.beacon.month[k] = var
+
+    def check_hour_minutes_cmd(self):
+        # self.tag_sel.append((sel_var, sel))
+        tr = False
+        for k in list(self.beacon.hours.keys()):
+            selector = self.std_sel[k]
+            var = selector[0].get()
+            self.beacon.hours[k] = var
+            if var:
+                tr = True
+        for k in list(self.beacon.minutes.keys()):
+            selector = self.minutes_sel[k]
+            var = selector[0].get()
+            self.beacon.minutes[k] = var
+            if var:
+                tr = True
+        if tr:
+            self.interv.configure(state='disabled')
+        else:
+            self.interv.configure(state='normal')
+        print(self.beacon.hours)
+        print(self.beacon.minutes)
 
 
 class BeaconSettings(tk.Toplevel):
@@ -413,14 +450,24 @@ class BeaconSettings(tk.Toplevel):
                             self.port_handler.beacons[port_id][stat_call].append(tab.beacon)
                     else:
                         self.port_handler.beacons[port_id][stat_call] = [tab.beacon]
-                        print('2')
-                        print(self.port_handler.beacons)
+
                 else:
                     self.port_handler.beacons[port_id] = {stat_call: [tab.beacon]}
-                    print('3')
-                    print(self.port_handler.beacons)
+
+    def re_init_beacons(self):
+        for tab in self.tab_list:
+            tab.beacon.re_init()
 
     def save_btn_cmd(self):
+        """
+        for tab in self.tab_list:
+            beacon = tab.beacon
+            for k in list(self.port_handler.beacons.keys()):
+                for kk in list(self.port_handler.beacons[k].keys()):
+                    if beacon in list(self.port_handler.beacons[k][kk]):
+                        self.port_handler.beacons[k][kk].remove(beacon)
+                        break
+        """
         self.set_vars()
         self.main_cl.ax25_port_handler.save_all_port_cfgs()
         self.main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
@@ -428,6 +475,7 @@ class BeaconSettings(tk.Toplevel):
 
     def ok_btn_cmd(self):
         self.set_vars()
+        self.re_init_beacons()
         self.main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
         self.main_cl.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.destroy_win()
@@ -452,6 +500,17 @@ class BeaconSettings(tk.Toplevel):
                     break
         del self.tab_list[ind]
         self.tabControl.forget(ind)
+
+    def change_port(self, event):
+        ind = self.tabControl.index('current')
+        tab: BeaconTab = self.tab_list[ind]
+        beacon = tab.beacon
+        for k in list(self.port_handler.beacons.keys()):
+            for kk in list(self.port_handler.beacons[k].keys()):
+                if beacon in list(self.port_handler.beacons[k][kk]):
+                    self.port_handler.beacons[k][kk].remove(beacon)
+                    break
+        self.set_vars()
 
     def destroy_win(self):
         self.destroy()

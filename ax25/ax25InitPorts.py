@@ -106,6 +106,10 @@ class AX25PortHandler(object):
                     self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
                 else:
                     temp: AX25Port
+                    for stat in temp.port_cfg.parm_beacons.keys():
+                        be_list = temp.port_cfg.parm_beacons[stat]
+                        for beacon in be_list:
+                            beacon.re_init()
                     self.beacons[port_id] = temp.port_cfg.parm_beacons
                     temp.start()
                     ##########################

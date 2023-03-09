@@ -12,7 +12,7 @@ class Beacon:
         self.aprs = False
         self.is_enabled = False
         self.port_id = 0
-        self.beacon_id = 0
+        # self.beacon_id = 0
         self.cooldown = time.time()
         self.next_run = time.time()
         self.from_call = 'NOCALL'
@@ -28,7 +28,23 @@ class Beacon:
         # Time Vars
         self.repeat_time: float = 30.0  # Min
         self.move_time: int = 0  # Sec
+        self.minutes: {int: bool} = {}
+        self.hours: {int: bool} = {}
+        self.week_days: {str: bool} = {}
+        self.month: {int: bool} = {}
+        for minutes in range(12):   # all 5 Minutes
+            self.minutes[minutes] = False
+        for hours in range(24):
+            self.hours[hours] = False
+        for week_days in ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO']:
+            self.week_days[week_days] = False
+        for month in range(12):
+            self.month[month] = False
+
         #################
+    def re_init(self):
+        self.cooldown = time.time()
+        self.next_run = time.time()
 
     def set_text_fm_file(self):
         if self.text_filename:

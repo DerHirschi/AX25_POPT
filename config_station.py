@@ -1,9 +1,11 @@
 import pickle
 import os
+import time
+
 from cli.cli import DefaultCLI, NoneCLI
 # from ax25.ax25Beacon import Beacon
 
-VER = '2.63a'
+VER = '2.64.1a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -173,6 +175,16 @@ class DefaultPort(object):
 
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """
+        """
+        print(time.time())
+        for k in self.parm_beacons.keys():
+            be_list = self.parm_beacons[k]
+            for be in be_list:
+                print('----------- Bake {} --------------'.format(be.to_call))
+                for att in dir(be):
+                    print('{} > {}'.format(att, getattr(be, att)))
+        print('----------- Bake Ende --------------')
+        """
         if self.parm_PortNr != -1:
 
             gui = self.glb_gui
@@ -185,6 +197,7 @@ class DefaultPort(object):
                     # print(" {} - {}".format(att, getattr(self, att)))
                     save_ports[att] = getattr(self, att)
                     print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
+
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)
 
@@ -239,6 +252,8 @@ class PortConfigInit(DefaultPort):
                     ##############################################################
                     # Optional Parameter for Stations
                     # self.parm_StationCalls.append(stat.stat_parm_Call)
+        ##########################
+        # Debug .. Del Beacons
         # self.parm_beacons = {}
 
     def __del__(self):

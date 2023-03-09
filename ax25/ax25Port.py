@@ -295,27 +295,32 @@ class AX25Port(threading.Thread):
     def send_beacons(self):
         # print(self.beacons)
         # print(self.beacons[self.port_id].keys())
-        for k in self.beacons[self.port_id].keys():
-            beacon_list = self.beacons[self.port_id][k]
-            beacon: Beacon
-            for beacon in beacon_list:
-                send_it = beacon.crone()
-                if send_it:
-                    print(send_it)
-                ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
-                beacon.ax_frame.axip_add = ip_fm_mh
-                if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
-                    if ip_fm_mh == ('', 0):
-                        send_it = False
-                if send_it:
-                    if beacon.encode():
-                        self.tx(beacon.ax_frame)
-                        # Monitor
-                        cfg = self.port_cfg
-                        if self.is_gui:
-                            self.gui.update_monitor(self.monitor.frame_inp(beacon.ax_frame, self.portname),
-                                                    conf=cfg,
-                                                    tx=True)
+        tr = True
+        if self.gui is not None:
+            if not self.gui.setting_bake.get():
+                tr = False
+        if tr:
+            for k in self.beacons[self.port_id].keys():
+                beacon_list = self.beacons[self.port_id][k]
+                beacon: Beacon
+                for beacon in beacon_list:
+                    send_it = beacon.crone()
+                    if send_it:
+                        print(send_it)
+                    ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
+                    beacon.ax_frame.axip_add = ip_fm_mh
+                    if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
+                        if ip_fm_mh == ('', 0):
+                            send_it = False
+                    if send_it:
+                        if beacon.encode():
+                            self.tx(beacon.ax_frame)
+                            # Monitor
+                            cfg = self.port_cfg
+                            if self.is_gui:
+                                self.gui.update_monitor(self.monitor.frame_inp(beacon.ax_frame, self.portname),
+                                                        conf=cfg,
+                                                        tx=True)
 
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """

@@ -81,6 +81,7 @@ class SideTabbedFrame:
         self.update_side_mh()
 
         # Settings ##########################
+        # Global Sound
         self.sound_on = tk.IntVar()
         Checkbutton(self.tab4_settings,
                     text="Sound",
@@ -91,6 +92,16 @@ class SideTabbedFrame:
                            pady=0
                            )
         self.sound_on.set(1)
+        # Global Sound
+        self.bake_on = tk.BooleanVar()
+        Checkbutton(self.tab4_settings,
+                    text="Baken",
+                    variable=self.bake_on,
+                    ).grid(column=0,
+                           row=1,
+
+                           )
+        self.bake_on.set(True)
         """
         self.sound_on = tk.IntVar()
         Checkbutton(self.tab4_settings,
