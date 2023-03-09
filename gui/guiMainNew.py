@@ -82,6 +82,7 @@ class TkMainWin:
         self.main_win = tk.Tk()
         self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
+        self.main_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         ##########################
         self.style = ttk.Style()
         self.style.theme_use('classic')
@@ -106,7 +107,7 @@ class TkMainWin:
         self.MenuVerb = Menu(self.menubar, tearoff=False)
         self.MenuVerb.add_command(label="Neu", command=self.open_new_conn_win)
         self.MenuVerb.add_command(label="Disconnect", command=self.disco_conn)
-        self.MenuVerb.add_command(label="Quit", command=self.main_win.quit)
+        self.MenuVerb.add_command(label="Quit", command=self.destroy_win)
         self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb, underline=0)
         # Menü 2 "MH"
         self.menubar.add_command(label="MH", command=self.MH_win, underline=0)
@@ -188,7 +189,16 @@ class TkMainWin:
         self.main_win.mainloop()
 
     def __del__(self):
-        self.ax25_port_handler.close_all_ports()
+        # self.disco_all()
+        # self.ax25_port_handler.close_all()
+        pass
+
+    def destroy_win(self):
+        self.disco_all()    # TODO ... Wait until are connections are gone
+        #time.sleep(2)
+        self.ax25_port_handler.close_all()
+        self.main_win.quit()
+        # self.main_class.settings_win = None
 
     def monitor_start_msg(self):
         ban = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
@@ -398,19 +408,34 @@ class TkMainWin:
         tr = False
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
             tr = True
-        self.mon_txt.configure(state="normal")
-        self.mon_txt.insert(tk.END, var)
-        self.mon_txt.configure(state="disabled")
         if tx:
-            ind2 = self.mon_txt.index(tk.INSERT)
-            self.mon_txt.tag_add("tx{}".format(conf.parm_PortNr), ind, ind2)
-            self.mon_txt.tag_config("tx{}".format(conf.parm_PortNr), foreground=conf.parm_mon_clr_tx)
+            tag = "tx{}".format(conf.parm_PortNr)
+            color = conf.parm_mon_clr_tx
 
         else:
+            tag = "rx{}".format(conf.parm_PortNr)
+            color = conf.parm_mon_clr_rx
+        self.mon_txt.configure(state="normal")
+        if tag in self.mon_txt.tag_names(None):
+            self.mon_txt.insert(tk.END, var, tag)
+        else:
+            self.mon_txt.insert(tk.END, var)
             ind2 = self.mon_txt.index(tk.INSERT)
-            self.mon_txt.tag_add("rx{}".format(conf.parm_PortNr), ind, ind2)
-            self.mon_txt.tag_config("rx{}".format(conf.parm_PortNr), foreground=conf.parm_mon_clr_rx)
+            self.mon_txt.tag_add(tag, ind, ind2)
+            self.mon_txt.tag_config(tag, foreground=color)
+        """
+        print("----MON-----")
+        for event in self.mon_txt.bind_all():
+            print(event)
+        print("--MAIN-------")
+        for event in self.main_win.bind_all():
+            print(event)
+        """
+        # self.mon_txt.bindtags(self.mon_txt.tag_names(None))     # TODO Scrollbar is not scrollable after this
 
+        self.mon_txt.update()
+        self.mon_txt.configure(state="disabled")
+        # self.mon_txt.vbar.s
         if tr:
             self.mon_txt.see(tk.END)
         # self.update_side_mh()
@@ -470,6 +495,19 @@ class TkMainWin:
                 if tr:
                     station.n2 = 100
 
+    def disco_all(self):
+        for ch_id in range(1,11):
+            station = self.get_conn(ch_id)
+            if station:
+                if station.zustand_exec.stat_index:
+                    tr = False
+                    if station.zustand_exec.stat_index in [2, 4]:
+                        tr = True
+                    station.zustand_exec.change_state(4)
+                    # station.set_new_state()
+                    station.zustand_exec.tx(None)
+                    if tr:
+                        station.n2 = 100
     # DISCO ENDE
     # ##############
     ###################

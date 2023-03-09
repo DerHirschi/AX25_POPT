@@ -36,16 +36,27 @@ class Beacon:
         for call in self.ax_frame.via_calls:
             self.via_calls += '{} '.format(call.call_str)
         self.text = self.ax_frame.data.decode('utf-8', 'ignore')
+        self.text_filename = ''
         self.port_id = 0
         self.beacon_id = 0
         self.repeat_time: float = 30.0  # Min
         self.move_time: int = 0  # Sec
         self.cooldown = time.time()
-        self.next_run = int(datetime.now().strftime("%M")) + self.move_time
+        self.next_run = time.time()
         self.aprs = False
         self.is_enabled = False
         self.ax_frame.ctl_byte.cmd = self.aprs
         # self.ax_frame.encode()
+
+    def set_text_fm_file(self):
+        if self.text_filename:
+            try:
+                with open(self.text_filename, 'rb') as f:
+                    self.text = f.read().decode('utf-8', 'ignore')
+                    print(self.text)
+                    return True
+            except (FileNotFoundError, EOFError):
+                return False
 
     def set_from_call(self, call: str):
         self.from_call = call
@@ -83,10 +94,10 @@ class Beacon:
         if self.is_enabled:
             if time.time() > self.cooldown:
                 now = datetime.now()
-                now_min = int(now.strftime("%M"))
-                nr = (self.next_run + self.move_time) % 60
-                if now_min >= nr:   # !!!!!!!!!!!!
-                    self.next_run = self.repeat_time + now_min
+                # now_min = int(now.strftime("%M"))
+                nr = self.next_run + self.move_time
+                if time.time() >= nr:   # !!!!!!!!!!!!
+                    self.next_run = (self.repeat_time * 60) + time.time()
                     self.cooldown = time.time() + 60
                     return True
         return False
@@ -151,7 +162,10 @@ class AX25Port(threading.Thread):
     def set_gui(self, gui):
         # if self.gui is None:
         self.gui = gui
-        self.is_gui = True
+        if self.gui is None:
+            self.is_gui = False
+        else:
+            self.is_gui = True
 
     def init(self):
         pass
@@ -326,7 +340,7 @@ class AX25Port(threading.Thread):
 
                     cfg = self.port_cfg
                     # Monitor
-                    if self.is_gui:
+                    if self.gui is not None:
                         self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
             else:
                 tr = True
@@ -438,7 +452,7 @@ class AX25Port(threading.Thread):
             except AX25DeviceERROR:
                 break
 
-            if buf.raw_data:  # RX ############
+            if buf.raw_data and self.loop_is_running:  # RX ############
                 self.set_TXD()
                 ax25frame = AX25Frame()
                 ax25frame.axip_add = buf.axip_add
@@ -463,7 +477,7 @@ class AX25Port(threading.Thread):
 
             else:
                 break
-        if time.time() > self.TXD:
+        if time.time() > self.TXD and self.loop_is_running:
             #############################################
             # Crone
             self.cron_pac_handler()
@@ -497,6 +511,7 @@ class KissTCP(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
+                self.device.settimeout(0)
                 self.device.close()
             except (OSError, ConnectionRefusedError, ConnectionError):
                 pass
@@ -609,7 +624,17 @@ class AXIP(AX25Port):
         sock_timeout = 0.5
         self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.device.settimeout(sock_timeout)
-        self.device.bind(self.port_param)
+        try:
+            self.device.bind(self.port_param)
+        except OSError:
+            self.device.close()
+            self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+            self.device.settimeout(sock_timeout)
+            try:
+                self.device.bind(self.port_param)
+            except OSError:
+                self.device.close()
+                raise AX25DeviceFAIL
 
     def __del__(self):
         self.loop_is_running = False
@@ -617,7 +642,8 @@ class AXIP(AX25Port):
             try:
                 self.device.settimeout(0)
                 self.device.close()
-                # time.sleep(1)
+                self.device.recv(999)
+                time.sleep(0.5)
             except socket.error:
                 pass
 
@@ -656,9 +682,9 @@ class AXIP(AX25Port):
             return ret
 
     def tx(self, frame: AX25Frame, no_multicast=False):
-        print('_____________________________')
-        print(frame.axip_add)
-        print('_____________________________')
+        # print('_____________________________')
+        # print(frame.axip_add)
+        # print('_____________________________')
         if frame.axip_add != ('', 0):
             ###################################
             # CRC

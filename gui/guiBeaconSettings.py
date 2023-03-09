@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import filedialog as fd
 from tkinter import ttk as ttk
 from ax25.ax25Port import Beacon, AX25Frame
 
@@ -123,6 +124,22 @@ class BeaconTab:
         self.b_text_ent.place(x=call_x, y=call_y)
         self.b_text_ent.insert(tk.END, self.beacon.text)
 
+        #################
+        # Aus Datei
+        call_x = 10
+        call_y = self.root.win_height - 180
+        # call_y = 100
+        call_label = tk.Label(self.own_tab, text='Text aus Datei:')
+        call_label.place(x=call_x, y=call_y)
+        self.be_txt_filename_var = tk.StringVar(self.own_tab)
+        self.be_txt_filename = tk.Entry(self.own_tab, textvariable=self.be_txt_filename_var, width=50)
+        if self.beacon.text_filename:
+            self.be_txt_filename_var.set(self.beacon.text_filename)
+            self.b_text_ent.configure(state='disabled', background='grey80')
+        self.be_txt_filename.place(x=call_x + 140, y=call_y)
+        be_txt_openfile_btn = tk.Button(self.own_tab, text='Datei', command=self.select_files)
+        be_txt_openfile_btn.place(x=call_x + 700, y=call_y)
+
     def cmd_be_enabled(self):
         self.beacon.is_enabled = bool(self.active_check_var.get())
 
@@ -130,6 +147,28 @@ class BeaconTab:
         self.beacon.set_from_call(self.from_select_var.get())
         label_txt = '{} {}'.format(self.port_select_var.get(), self.from_select_var.get())
         self.root.tabControl.tab(self.root.tab_list.index(self), text=label_txt)
+
+    def select_files(self):
+        self.root.attributes("-topmost", False)
+        # self.root.lower
+        filetypes = (
+            ('text files', '*.txt'),
+            ('All files', '*.*')
+        )
+
+        filenames = fd.askopenfilenames(
+            title='Open files',
+            initialdir='data/',
+            filetypes=filetypes)
+
+        self.be_txt_filename_var.set(filenames[0])
+        self.beacon.text_filename = filenames[0]
+        if self.beacon.set_text_fm_file():
+            self.b_text_ent.delete('1.0', tk.END)
+            self.b_text_ent.insert(tk.END, self.beacon.text)
+            self.b_text_ent.configure(state='disabled', background='grey80')
+        else:
+            self.b_text_ent.configure(state='normal', background='withe')
 
 
 class BeaconSettings(tk.Toplevel):
@@ -143,7 +182,8 @@ class BeaconSettings(tk.Toplevel):
         self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
-        self.attributes("-topmost", True)
+        self.lift()
+        # self.attributes("-topmost", True)
         ###############
         # VARS
         self.port_handler = main_win.ax25_port_handler
@@ -232,12 +272,10 @@ class BeaconSettings(tk.Toplevel):
                 self.tabControl.tab(self.tab_list.index(tab), text=label_txt)
                 if port_id in self.port_handler.beacons.keys():
                     if stat_call in self.port_handler.beacons[port_id].keys():
+                        """ Should never get to this condition """
                         tmp: [] = self.port_handler.beacons[port_id][stat_call]
                         if tab.beacon not in tmp:
                             self.port_handler.beacons[port_id][stat_call].append(tab.beacon)
-                            # self.port_handler.beacons[port_id][stat_call] = tmp
-                            print('1')
-                            print(self.port_handler.beacons)
                     else:
                         self.port_handler.beacons[port_id][stat_call] = [tab.beacon]
                         print('2')
@@ -264,6 +302,7 @@ class BeaconSettings(tk.Toplevel):
         label_txt = '{} {}'.format(beacon.port_id, beacon.from_call)
         tab = BeaconTab(self, self.tabControl, beacon)
         self.tabControl.add(tab.own_tab, text=label_txt)
+        self.tabControl.select(len(self.tab_list))
         self.tab_list.append(tab)
 
     def del_beacon_btn_cmd(self):

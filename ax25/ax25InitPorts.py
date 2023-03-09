@@ -36,6 +36,11 @@ class AX25PortHandler(object):
     def get_port_by_index(self, index: int):
         return self.ax25_ports[index]
 
+    def close_all(self):
+        self.gui = None
+        self.set_gui(None)
+        self.close_all_ports()
+
     def close_all_ports(self):
         """
         if hasattr(self, 'mh_list'):
@@ -43,17 +48,24 @@ class AX25PortHandler(object):
             del self.mh_list
         """
         if self.is_running:
-            for k in self.ax25_ports.keys():
-                self.ax25_ports[k].loop_is_running = False
-                self.ax25_ports[k].join()
-        self.is_running = False
+            self.is_running = False
+
+            for k in list(self.ax25_ports.keys()):
+                self.close_port(k)
+                # self.ax25_ports[k].loop_is_running = False
+                # self.ax25_ports[k].join()
 
     def close_port(self, port_id: int):
         port = self.ax25_ports[port_id]
         port.close()
+        c = 0
         while not port.ende:
             time.sleep(0.5)
             print("Warte auf Port " + str(port_id))
+            c += 1
+            if c == 10:
+                break
+
         port.join()
         if port_id in self.ax25_ports.keys():
             del self.ax25_ports[port_id]
@@ -118,7 +130,7 @@ class AX25PortHandler(object):
                 self.ax25_ports[k].set_gui(gui)
 
     def sysmsg_to_gui(self, msg: str = ''):
-        if self.gui is not None:
+        if self.gui is not None and self.is_running:
             self.gui.msg_to_monitor(msg)
 
     # def insert_conn2all_conn_var(self, new_conn: AX25Conn, ind: int = 1):
