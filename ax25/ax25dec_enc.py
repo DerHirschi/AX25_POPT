@@ -136,9 +136,11 @@ class Call(object):
         if len(self.call) < 2 or len(self.call) > 6:    # Calls like CQ or ID
             logger.error('Call validator: Call length')
             return False
+        """
         if not self.call.isascii():
             logger.error('Call validator: Call.isascii()')
             return False
+        """
         if self.ssid > 15 or self.ssid < 0:
             logger.error('Call validator: SSID')
             return False
