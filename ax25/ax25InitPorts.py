@@ -66,7 +66,7 @@ class AX25PortHandler(object):
             if c == 10:
                 break
 
-        port.join()
+        # port.join()
         if port_id in self.ax25_ports.keys():
             del self.ax25_ports[port_id]
         if port_id in self.ax25_port_settings.keys():

@@ -7,6 +7,7 @@ from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
 class Beacon:
     def __init__(self):
+        # TODO Load and SAVE to/fm file
         self.text_filename = ''
         self.text = ''
         self.aprs = False
@@ -32,7 +33,7 @@ class Beacon:
         self.hours: {int: bool} = {}
         self.week_days: {str: bool} = {}
         self.month: {int: bool} = {}
-        for minutes in range(12):   # all 5 Minutes
+        for minutes in range(12):  # all 5 Minutes
             self.minutes[minutes] = False
         for hours in range(24):
             self.hours[hours] = False
@@ -42,9 +43,10 @@ class Beacon:
             self.month[month] = False
 
         #################
+
     def re_init(self):
-        self.cooldown = time.time()
-        self.next_run = time.time()
+        self.cooldown = time.time() + 60
+        self.next_run = time.time() + self.repeat_time
 
     def set_text_fm_file(self):
         if self.text_filename:
@@ -87,6 +89,41 @@ class Beacon:
             return True
         return False
 
+    def is_week_day_enabled(self):
+        for k in self.week_days.keys():
+            if self.week_days[k]:
+                return True
+        return False
+
+    def is_month_enabled(self):
+        for k in self.month.keys():
+            if self.month[k]:
+                return True
+        return False
+
+    def is_hour_enabled(self):
+        for k in self.hours.keys():
+            if self.hours[k]:
+                return True
+        return False
+
+    def is_minutes_enabled(self):
+        for k in self.minutes.keys():
+            if self.minutes[k]:
+                return True
+        return False
+
+    def is_hour(self):
+        return self.hours[datetime.now().hour]
+
+    """
+    TODO
+    def is_minute(self):
+        minute = datetime.now().minute
+        return self.minutes[datetime.now().minute]
+
+    """
+
     def crone(self):
         """
         for att in dir(self):
@@ -95,9 +132,50 @@ class Beacon:
         if self.is_enabled:
             if time.time() > self.cooldown:
                 now = datetime.now()
-                # now_min = int(now.strftime("%M"))
+                month = now.month
+                hour = now.hour
+                minutes = now.minute
+                week_day = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now.weekday()]
+                send_it = False
+
+                if not self.is_hour_enabled() \
+                        and not self.is_month_enabled() \
+                        and not self.is_week_day_enabled():
+                    send_it = True
+                elif self.is_month_enabled():
+                    if self.is_week_day_enabled():
+                        if self.month[month] \
+                                and self.week_days[week_day] \
+                                and not self.is_hour_enabled():
+                            send_it = True
+                        elif self.month[month] \
+                                and not self.is_hour_enabled():
+                            send_it = True
+                        elif self.is_hour() \
+                                and self.month[month] \
+                                and self.week_days[week_day]:
+                            send_it = True
+                    elif self.is_hour() \
+                            and self.month[month]:
+                        send_it = True
+                elif self.is_week_day_enabled():
+                    if self.week_days[week_day]:
+                        if self.is_hour_enabled():
+                            if self.is_hour():
+                                send_it = True
+                        else:
+                            send_it = True
+                elif self.is_hour_enabled():
+                    if self.is_hour():
+                        send_it = True
+
+                """
+                if self.is_hour_enabled():
+                    if self.is_hour():
+                        send_it = True
+                """
                 nr = self.next_run + self.move_time
-                if time.time() >= nr:   # !!!!!!!!!!!!
+                if time.time() >= nr and send_it:  # !!!!!!!!!!!!
                     self.next_run = (self.repeat_time * 60) + time.time()
                     self.cooldown = time.time() + 60
                     return True

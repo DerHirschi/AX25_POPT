@@ -133,6 +133,7 @@ class BeaconTab:
                                          text=str(text),
                                          variable=minutes_sel_var,
                                          command=self.check_hour_minutes_cmd)
+            minutes_sel.configure(state='disabled') # TODO
             minutes_sel.var = minutes_sel_var
             minutes_sel.place(x=call_x + 75 + (55 * minute), y=call_y)
             self.minutes_sel.append((minutes_sel_var, minutes_sel))
@@ -140,6 +141,10 @@ class BeaconTab:
                 minutes_sel_var.set(True)
                 minutes_sel.select()
                 tr = True
+        #########################
+        # Disable Intervall Ent
+        if tr:
+            self.interv.configure(state='disabled')
 
         #################
         # Std Selector
@@ -150,28 +155,24 @@ class BeaconTab:
         self.std_sel = []
         for std in range(24):
             text = std
-            sel_var = tk.BooleanVar(self.own_tab)
-            sel = tk.Checkbutton(self.own_tab,
-                                 text=str(text),
-                                 variable=sel_var,
-                                 command=self.check_hour_minutes_cmd)
+            std_var = tk.BooleanVar(self.own_tab)
+            std_sel = tk.Checkbutton(self.own_tab,
+                                     text=str(text),
+                                     variable=std_var,
+                                     command=self.check_hour_minutes_cmd)
             # command=self.cmd_be_enabled)
-            sel.var = sel_var
+            std_sel.var = std_var
+            if self.beacon.hours[std]:
+                std_var.set(True)
+                std_sel.select()
+                # tr = True
             if std > 11:
                 std = std - 12
-                sel.place(x=call_x + 75 + (55 * std), y=call_y + 21)
+                std_sel.place(x=call_x + 75 + (55 * std), y=call_y + 21)
             else:
-                sel.place(x=call_x + 75 + (55 * std), y=call_y)
+                std_sel.place(x=call_x + 75 + (55 * std), y=call_y)
+            self.std_sel.append((std_var, std_sel))
 
-            self.std_sel.append((sel_var, sel))
-            if self.beacon.hours[std]:
-                sel_var.set(True)
-                sel.select()
-                tr = True
-        #########################
-        # Disable Intervall Ent
-        if tr:
-            self.interv.configure(state='disabled')
 
         #################
         # Tag Selector
@@ -326,8 +327,10 @@ class BeaconTab:
             selector = self.std_sel[k]
             var = selector[0].get()
             self.beacon.hours[k] = var
+            """
             if var:
                 tr = True
+            """
         for k in list(self.beacon.minutes.keys()):
             selector = self.minutes_sel[k]
             var = selector[0].get()
