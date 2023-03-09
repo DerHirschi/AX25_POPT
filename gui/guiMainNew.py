@@ -182,6 +182,7 @@ class TkMainWin:
         ####
         # TEST
         # self.open_port_settings_win()
+        # print(self.mon_txt.vbar.bindtags(None))
         #######################
         # LOOP
         self.monitor_start_msg()
@@ -432,8 +433,9 @@ class TkMainWin:
             print(event)
         """
         # self.mon_txt.bindtags(self.mon_txt.tag_names(None))     # TODO Scrollbar is not scrollable after this
-
-        self.mon_txt.update()
+        #yscrollcommand = vbar.set
+        #self.mon_txt.configure(yscrollcommand=self.mon_txt.vbar.set())
+        # self.mon_txt.update()
         self.mon_txt.configure(state="disabled")
         # self.mon_txt.vbar.s
         if tr:
@@ -478,7 +480,9 @@ class TkMainWin:
     # Beacon Settings WIN
     def open_beacon_settings_win(self):
         if self.settings_win is None:
-            self.settings_win = BeaconSettings(self)
+            # self.main_win.after(800, lambda: BeaconSettings(self))
+            # self.settings_win = self.main_win.after(300, lambda: BeaconSettings(self))
+            BeaconSettings(self)
 
     # ##############
     # DISCO

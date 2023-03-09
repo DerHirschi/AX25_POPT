@@ -144,7 +144,7 @@ class TxTframe:
         # self.mon_txt.insert(tk.END, "MON")
         self.mon_txt.pack(side=tk.BOTTOM)
         # print(self.mon_txt.vbar.bind_all())
-        print(self.mon_txt.vbar.bindtags(None))
+        # print(self.mon_txt.vbar.bindtags(None))
         #print(self.mon_txt.vbar.event_info())
         #print(self.mon_txt.event_info())
         # paned window

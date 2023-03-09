@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk as ttk
+from tkinter import scrolledtext
 # from ax25.ax25Port import AX25Frame
 from ax25.ax25Beacon import Beacon
 
@@ -115,13 +116,111 @@ class BeaconTab:
             self.active_check.select()
         #################
         #################
+        # Minutes Selector
+        call_x = 10
+        call_y = 90
+        minutes_sel_lable = tk.Label(self.own_tab, text='Minuten:')
+        minutes_sel_lable.place(x=call_x, y=call_y)
+        self.minutes_sel = []
+        for minute in range(12):
+            text = minute * 5
+            minutes_sel_var = tk.IntVar(self.own_tab)
+            minutes_sel = tk.Checkbutton(self.own_tab,
+                                           text=str(text),
+                                           variable=minutes_sel_var)
+                                           # command=self.cmd_be_enabled)
+            minutes_sel.var = minutes_sel_var
+            minutes_sel.place(x=call_x + 75 + (55 * minute), y=call_y)
+            self.minutes_sel.append((minutes_sel_var, minutes_sel))
+
+        """
+        if self.beacon.is_enabled:
+            self.active_check_var.set(1)
+            self.active_check.select()
+        """
+        #################
+        # Minutes Selector
+        call_x = 10
+        call_y = 122
+        std_sel_lable = tk.Label(self.own_tab, text='Stunden:')
+        std_sel_lable.place(x=call_x, y=call_y)
+        self.std_sel = []
+        for std in range(24):
+            text = std
+            sel_var = tk.IntVar(self.own_tab)
+            sel = tk.Checkbutton(self.own_tab,
+                                         text=str(text),
+                                         variable=sel_var)
+            # command=self.cmd_be_enabled)
+            sel.var = sel_var
+            if std > 11:
+                std = std - 12
+                sel.place(x=call_x + 75 + (55 * std), y=call_y + 21)
+            else:
+                sel.place(x=call_x + 75 + (55 * std), y=call_y)
+
+            self.std_sel.append((sel_var, sel))
+
+        """
+        if self.beacon.is_enabled:
+            self.active_check_var.set(1)
+            self.active_check.select()
+        """
+        #################
+        # Tag Selector
+        call_x = 10
+        call_y = 173
+        tag_sel_lable = tk.Label(self.own_tab, text='Tag:')
+        tag_sel_lable.place(x=call_x, y=call_y)
+        self.tag_sel = []
+        for tag in range(7):
+            text = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][tag]
+            sel_var = tk.IntVar(self.own_tab)
+            sel = tk.Checkbutton(self.own_tab,
+                                 text=str(text),
+                                 variable=sel_var)
+            # command=self.cmd_be_enabled)
+            sel.var = sel_var
+            sel.place(x=call_x + 75 + (65 * tag), y=call_y)
+            self.tag_sel.append((sel_var, sel))
+
+        """
+        if self.beacon.is_enabled:
+            self.active_check_var.set(1)
+            self.active_check.select()
+        """
+        #################
+        # Monat Selector
+        call_x = 10
+        call_y = 205
+        tag_sel_lable = tk.Label(self.own_tab, text='Monat:')
+        tag_sel_lable.place(x=call_x, y=call_y)
+        self.monat_sel = []
+        for monat in range(12):
+            # text = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][tag]
+            sel_var = tk.IntVar(self.own_tab)
+            sel = tk.Checkbutton(self.own_tab,
+                                 text=str(monat + 1),
+                                 variable=sel_var)
+            # command=self.cmd_be_enabled)
+            sel.var = sel_var
+            sel.place(x=call_x + 75 + (55 * monat), y=call_y)
+            self.monat_sel.append((sel_var, sel))
+
+        """
+        if self.beacon.is_enabled:
+            self.active_check_var.set(1)
+            self.active_check.select()
+        """
+
+        #################
         # Beacon Text
         call_x = 10
-        call_y = 145
+        call_y = 235
         # call_y = 100
-        self.b_text_ent = tk.Text(self.own_tab, font=("Courier", 12))
+        self.b_text_ent = tk.scrolledtext.ScrolledText(self.own_tab, font=("Courier", 12))
         # self.b_text_ent.configure(width=83, height=15)
-        self.b_text_ent.configure(width=83, height=12)
+        self.b_text_ent.configure(width=82, height=8)
         self.b_text_ent.place(x=call_x, y=call_y)
         self.b_text_ent.insert(tk.END, self.beacon.text)
 
@@ -152,7 +251,7 @@ class BeaconTab:
         self.root.tabControl.tab(self.root.tab_list.index(self), text=label_txt)
 
     def on_key_press_filename_ent(self, event):
-        print(event)
+        # print(event)
         filenames = self.be_txt_filename_var.get()
         if filenames:
             self.beacon.text_filename = filenames
@@ -206,6 +305,7 @@ class BeaconSettings(tk.Toplevel):
     def __init__(self, main_win):
         tk.Toplevel.__init__(self)
         self.main_cl = main_win
+        main_win.settings_win = self
         self.win_height = 600
         self.win_width = 1060
         self.style = main_win.style
@@ -276,7 +376,7 @@ class BeaconSettings(tk.Toplevel):
             for stat_call in self.port_handler.beacons[port_id]:
                 for beacon in self.port_handler.beacons[port_id][stat_call]:
                     beacon: Beacon
-                    label_txt = '{} {}'.format(port_id, beacon.from_call)
+                    label_txt = '{} {} {}'.format(len(self.tab_list), beacon.from_call, port_id)
                     tab = BeaconTab(self, self.tabControl, beacon)
                     # tab.port_select_var.set(str(port_id))
                     # tab.from_select_var.set(stat_call)
@@ -319,19 +419,19 @@ class BeaconSettings(tk.Toplevel):
     def save_btn_cmd(self):
         self.set_vars()
         self.main_cl.ax25_port_handler.save_all_port_cfgs()
-        self.main_cl.msg_to_monitor('Hinweis: Baken Settings wurden gespeichert..')
-        self.main_cl.msg_to_monitor('Lob: Das hast du sehr gut gemacht !!.')
+        self.main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
+        self.main_cl.msg_to_monitor('Lob: Gute Entscheidung!')
 
     def ok_btn_cmd(self):
         self.set_vars()
-        self.main_cl.msg_to_monitor('Hinweis: Baken Settings wurden gespeichert..')
+        self.main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
         self.main_cl.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.destroy_win()
 
     def new_beacon_btn_cmd(self):
         # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs: bool = False
         beacon = Beacon()
-        label_txt = '{} {}'.format(beacon.port_id, beacon.from_call)
+        label_txt = '{} {} {}'.format(len(self.tab_list), beacon.from_call, beacon.port_id)
         tab = BeaconTab(self, self.tabControl, beacon)
         self.tabControl.add(tab.own_tab, text=label_txt)
         self.tabControl.select(len(self.tab_list))

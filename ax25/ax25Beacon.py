@@ -7,28 +7,28 @@ from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
 class Beacon:
     def __init__(self):
+        self.text_filename = ''
+        self.text = ''
+        self.aprs = False
+        self.is_enabled = False
+        self.port_id = 0
+        self.beacon_id = 0
+        self.cooldown = time.time()
+        self.next_run = time.time()
+        self.from_call = 'NOCALL'
+        self.to_call = 'NOCALL'
+        self.via_calls = ''
         self.ax_frame = AX25Frame()
         self.ax_frame.ctl_byte.UIcByte()
         self.ax_frame.pid_byte.text()
-        self.ax_frame.from_call.call_str = 'NOCALL'
-        self.ax_frame.to_call.call_str = 'NOCALL'
-        self.from_call = self.ax_frame.from_call.call_str
-        self.to_call = self.ax_frame.to_call.call_str
-        self.via_calls = ''
-        for call in self.ax_frame.via_calls:
-            self.via_calls += '{} '.format(call.call_str)
-        self.text = self.ax_frame.data.decode('utf-8', 'ignore')
-        self.text_filename = ''
-        self.port_id = 0
-        self.beacon_id = 0
+        self.ax_frame.from_call.call_str = self.from_call
+        self.ax_frame.to_call.call_str = self.to_call
+        self.ax_frame.ctl_byte.cmd = self.aprs
+        #################
+        # Time Vars
         self.repeat_time: float = 30.0  # Min
         self.move_time: int = 0  # Sec
-        self.cooldown = time.time()
-        self.next_run = time.time()
-        self.aprs = False
-        self.is_enabled = False
-        self.ax_frame.ctl_byte.cmd = self.aprs
-        # self.ax_frame.encode()
+        #################
 
     def set_text_fm_file(self):
         if self.text_filename:
