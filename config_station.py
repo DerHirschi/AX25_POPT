@@ -1,10 +1,8 @@
 import pickle
 import os
-
 from cli.cli import DefaultCLI, NoneCLI
-# from ax25.ax25Beacon import Beacon
 
-VER = '2.65.0a'
+VER = '2.65.1a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -67,7 +65,6 @@ def exist_userpath(usercall: str):
 
 
 def del_user_data(usercall: str):
-    # CFG_data_path + CFG_usertxt_path
     user_dir = '{0}{1}{2}'.format(CFG_data_path, CFG_usertxt_path, usercall)
     if os.path.exists(user_dir):
         files = [x[2] for x in os.walk(user_dir)][0]

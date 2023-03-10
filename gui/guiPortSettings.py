@@ -27,6 +27,13 @@ class PortSetTab:
         self.prt_name = tk.Entry(self.tab, width=5)
         self.prt_name.place(x=name_x + 420, y=height - name_y)
         self.prt_name.insert(tk.END, self.port_setting.parm_PortName)
+        ######################
+        # Not initialised Info
+        if not self.port_handler.ax25_ports[self.port_setting.parm_PortNr].device_is_running:
+            _x = 520
+            _y = 570
+            _label = tk.Label(self.tab, text='!! Port ist nicht Initialisiert !!', fg='red')
+            _label.place(x=_x, y=height - _y)
         #################
         # Port Typ
         port_x = 800
@@ -622,7 +629,11 @@ class PortSettingsWin:
             tab = PortSetTab(self, tmp, self.tabControl)
             self.tab_list.append(tab)
             port_lable_text = 'Port {}'.format(k)
+            if not self.all_ax25_ports[k].device_is_running:
+                port_lable_text += ' (!)'
             self.tabControl.add(tab.tab, text=port_lable_text)
+
+
 
     def new_port_btn_cmd(self):
         # port.port_cfg: DefaultPortConfig

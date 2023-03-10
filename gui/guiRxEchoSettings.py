@@ -3,6 +3,11 @@ import math
 from ax25.ax25Port import AX25Port
 
 
+class RxEchoVars(object):
+    rx_ports: {int: [str]} = {}
+    tx_ports: {int: [str]} = {}
+
+
 class RxEchoSettings(tk.Toplevel):
     def __init__(self, main_win):
         tk.Toplevel.__init__(self)
@@ -59,7 +64,7 @@ class RxEchoSettings(tk.Toplevel):
         _x = 30
         for k in self.ports.keys():
             port: AX25Port = self.ports[k]
-            _var_dict = {}
+            var_dict = {}
             text = 'Port {}: {}'.format(port.port_id, port.port_cfg.parm_PortName)
             # Left
             _y = 60 + (280 * int(k % 2))
@@ -72,41 +77,41 @@ class RxEchoSettings(tk.Toplevel):
             _yy = _y + 20
             for kk in self.ports.keys():
                 if kk != k:
-                    tmp_port: AX25Port = self.ports[kk]
-                    _rx_text = 'Port {} RX'.format(tmp_port.port_id)
-                    _rx_check_var = tk.BooleanVar(self)
-                    _rx_check = tk.Checkbutton(self,
+                    # tmp_port: AX25Port = self.ports[kk]
+                    _rx_text = 'Port {} RX'.format(kk)
+                    rx_check_var = tk.BooleanVar(self)
+                    rx_check = tk.Checkbutton(self,
                                                text=_rx_text,
-                                               variable=_rx_check_var)
-                    _rx_check.var = _rx_check_var
-                    _rx_call_ent = tk.Entry(self, width=9)
-                    _rx_check.place(x=_x + 5, y=_yy)
-                    _rx_call_ent.place(x=_x + 125, y=_yy)
+                                               variable=rx_check_var)
+                    rx_check.var = rx_check_var
+                    rx_call_ent = tk.Entry(self, width=9)
+                    rx_check.place(x=_x + 5, y=_yy)
+                    rx_call_ent.place(x=_x + 125, y=_yy)
 
-                    _tx_text = 'Port {} TX'.format(tmp_port.port_id)
-                    _tx_check_var = tk.BooleanVar(self)
-                    _tx_check = tk.Checkbutton(self,
+                    _tx_text = 'Port {} TX'.format(kk)
+                    tx_check_var = tk.BooleanVar(self)
+                    tx_check = tk.Checkbutton(self,
                                                text=_tx_text,
-                                               variable=_tx_check_var)
-                    _tx_check.var = _tx_check_var
-                    _tx_call_ent = tk.Entry(self, width=9)
-                    _tx_check.place(x=_x + 5, y=_yy + 20)
-                    _tx_call_ent.place(x=_x + 125, y=_yy + 20)
+                                               variable=tx_check_var)
+                    tx_check.var = tx_check_var
+                    tx_call_ent = tk.Entry(self, width=9)
+                    tx_check.place(x=_x + 5, y=_yy + 20)
+                    tx_call_ent.place(x=_x + 125, y=_yy + 20)
 
                     _yy += 40
-                    _var_dict[int(kk)] = [_rx_check_var,
-                                          _tx_check_var,
-                                          _rx_check,
-                                          _tx_check,
-                                          _rx_call_ent,
-                                          _tx_call_ent]
-                    self.off_color = _tx_check.cget('background'), _tx_check.cget('activebackground')
-                    _rx_check.configure(command=self.check_cmd)
-                    _tx_check.configure(command=self.check_cmd)
+                    var_dict[kk] = [rx_check_var,
+                                          tx_check_var,
+                                          rx_check,
+                                          tx_check,
+                                          rx_call_ent,
+                                          tx_call_ent]
+                    self.off_color = tx_check.cget('background'), tx_check.cget('activebackground')
+                    rx_check.configure(command=self.check_cmd)
+                    tx_check.configure(command=self.check_cmd)
 
-            self.check_vars[int(k)] = _var_dict
+            self.check_vars[k] = var_dict
 
-        print(self.check_vars)
+        #print(self.check_vars)
 
     def save_btn_cmd(self):
 
@@ -130,17 +135,54 @@ class RxEchoSettings(tk.Toplevel):
         pass
 
     def check_cmd(self):
+        """
+        _rx_check_var,
+        _tx_check_var,
+        _rx_check,
+        _tx_check,
+        _rx_call_ent,
+        _tx_call_ent
+        """
         self.check_vars: {int: {int: [tk.BooleanVar, tk.BooleanVar]}}
         for k in self.check_vars.keys():
-            port = self.check_vars[k]
-            for kk in port.keys():
-                var_list = port[kk]
+            port_k = self.check_vars[k]
+            print('< '.format(port_k.keys()))
+            for kk in port_k.keys():
+                var_list = port_k[kk]
+                # RX
                 if var_list[0].get():
                     var_list[2].configure(background='green1', activebackground='green4')
+                    var = var_list[4].get()
+                    calls = []
+                    if var:
+                        calls = var.split(' ')
+
+                    self.port_handler.rx_echo[k].rx_ports[kk] = calls
                 else:
                     var_list[2].configure(background=self.off_color[0], activebackground=self.off_color[1])
-
+                    if kk in list(self.port_handler.rx_echo[k].rx_ports.keys()):
+                        del self.port_handler.rx_echo[k].rx_ports[kk]
+                # TX
                 if var_list[1].get():
                     var_list[3].configure(background='green1', activebackground='green4')
+                    var = var_list[5].get()
+                    calls = []
+                    if var:
+                        calls = var.split(' ')
+
+                    self.port_handler.rx_echo[k].tx_ports[kk] = calls
+                    print(self.port_handler.rx_echo[k].tx_ports)
+                    print(self.port_handler)
                 else:
                     var_list[3].configure(background=self.off_color[0], activebackground=self.off_color[1])
+                    if kk in list(self.port_handler.rx_echo[k].tx_ports.keys()):
+                        del self.port_handler.rx_echo[k].tx_ports[kk]
+        #print(self.port_handler.rx_echo)
+        print('> {}'.format(self.port_handler.rx_echo[0].tx_ports))
+        for k in self.port_handler.rx_echo.keys():
+            print('Port ' + str(k))
+            for att in dir(self.port_handler.rx_echo[k]):
+                if '__' not in att:
+                    print('{} > {}'.format(att, getattr(self.port_handler.rx_echo[k], att)))
+            print()
+

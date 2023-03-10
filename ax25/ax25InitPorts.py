@@ -1,6 +1,7 @@
 import config_station
 from ax25.ax25Port import *
 from config_station import *
+from gui.guiRxEchoSettings import RxEchoVars
 
 
 class AX25PortHandler(object):
@@ -19,6 +20,7 @@ class AX25PortHandler(object):
         self.mh = glb_MH
         # self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
+        self.rx_echo: {int:  RxEchoVars} = {}
         self.beacons: {int: {str: [Beacon]}} = {}
         self.ax25_stations_settings: {str: DefaultStation} = config_station.get_all_stat_cfg()
         self.ax25_port_settings: {int: DefaultPort} = {}
@@ -98,29 +100,32 @@ class AX25PortHandler(object):
             if cfg.parm_PortTyp:
                 #########################
                 # Init Port/Device
-                try:
-                    temp = self.ax25types[cfg.parm_PortTyp](cfg, self)
-                except AX25DeviceFAIL as e:
+                # try:
+                temp = self.ax25types[cfg.parm_PortTyp](cfg, self)
+                # except AX25DeviceFAIL as e:
+                if not temp.device_is_running:
                     logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
-                    logger.error('{}'.format(e))
                     self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
-                else:
-                    temp: AX25Port
-                    for stat in temp.port_cfg.parm_beacons.keys():
-                        be_list = temp.port_cfg.parm_beacons[stat]
-                        for beacon in be_list:
-                            beacon.re_init()
-                    self.beacons[port_id] = temp.port_cfg.parm_beacons
-                    temp.start()
-                    ##########################
-                    # Start Port/Device Thread
-                    ######################################
-                    # Gather all Ports in dict: ax25_ports
-                    if self.gui is not None:
-                        temp.set_gui(self.gui)
-                    self.ax25_ports[port_id] = temp
-                    self.ax25_port_settings[port_id] = temp.port_cfg
-                    self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
+
+                temp: AX25Port
+                ##########
+                # Beacons
+                for stat in temp.port_cfg.parm_beacons.keys():
+                    be_list = temp.port_cfg.parm_beacons[stat]
+                    for beacon in be_list:
+                        beacon.re_init()
+                self.beacons[port_id] = temp.port_cfg.parm_beacons
+                self.rx_echo[port_id] = RxEchoVars()
+                temp.start()
+                ##########################
+                # Start Port/Device Thread
+                ######################################
+                # Gather all Ports in dict: ax25_ports
+                if self.gui is not None:
+                    temp.set_gui(self.gui)
+                self.ax25_ports[port_id] = temp
+                self.ax25_port_settings[port_id] = temp.port_cfg
+                self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
 
     def save_all_port_cfgs(self):
         for port_id in self.ax25_ports.keys():

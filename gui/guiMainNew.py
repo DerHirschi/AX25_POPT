@@ -221,10 +221,14 @@ class TkMainWin:
         for stat in self.ax25_port_handler.ax25_stations_settings.keys():
             self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in self.ax25_port_handler.ax25_ports.keys():
-            self.msg_to_monitor('Info: Port {}: {} - {} erfolgreich initialisiert.'
+            msg = 'konnte nicht initialisiert werden!'
+            if self.ax25_port_handler.ax25_ports[port_k].device_is_running:
+                msg = 'erfolgreich initialisiert.'
+            self.msg_to_monitor('Info: Port {}: {} - {} {}'
                                 .format(port_k,
                                         self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortName,
                                         self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortTyp,
+                                        msg
                                         ))
             self.msg_to_monitor('Info: Port {}: Parameter: {} | {}'
                                 .format(port_k,
