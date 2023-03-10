@@ -184,7 +184,7 @@ class TkMainWin:
         self.set_keybinds()
         ####
         # TEST
-        self.open_rx_echo_settings_win()
+        #self.open_rx_echo_settings_win()
         # print(self.mon_txt.vbar.bindtags(None))
         #######################
         # LOOP
