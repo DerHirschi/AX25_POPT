@@ -8,6 +8,7 @@ class AX25PortHandler(object):
     def __init__(self, glb_MH):
         config_station.init_dir_struct()
         self.is_running = True
+        self.max_ports = 20
         self.ax25types = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
@@ -27,7 +28,7 @@ class AX25PortHandler(object):
         self.ax25_ports: {int: AX25Port} = {}
         #######################################################
         # Init Ports/Devices with Config and running as Thread
-        for port_id in range(20):  # Max Ports
+        for port_id in range(self.max_ports):  # Max Ports
             self.init_port(port_id=port_id)
 
     def __del__(self):
@@ -80,7 +81,10 @@ class AX25PortHandler(object):
 
     def reinit_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
-            self.reinit_port(port_id)
+            self.close_port(port_id=port_id)
+        time.sleep(1)  # Cooldown for Device
+        for port_id in range(self.max_ports):  # Max Ports
+            self.init_port(port_id=port_id)
 
     def reinit_port(self, port_id: int):
         if port_id in self.ax25_ports.keys():

@@ -29,7 +29,13 @@ class PortSetTab:
         self.prt_name.insert(tk.END, self.port_setting.parm_PortName)
         ######################
         # Not initialised Info
-        if not self.port_handler.ax25_ports[self.port_setting.parm_PortNr].device_is_running:
+        if self.port_setting.parm_PortNr in self.port_handler.ax25_ports.keys():
+            if not self.port_handler.ax25_ports[self.port_setting.parm_PortNr].device_is_running:
+                _x = 520
+                _y = 570
+                _label = tk.Label(self.tab, text='!! Port ist nicht Initialisiert !!', fg='red')
+                _label.place(x=_x, y=height - _y)
+        else:
             _x = 520
             _y = 570
             _label = tk.Label(self.tab, text='!! Port ist nicht Initialisiert !!', fg='red')
@@ -621,29 +627,31 @@ class PortSettingsWin:
         self.tabControl = ttk.Notebook(self.settings_win, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
         # Tab Vars
-        self.tab_list: [ttk.Frame] = []
+        self.tab_list: {int: ttk.Frame} = {}
         # Tab Frames ( Port Settings )
         for k in self.all_ax25_ports.keys():
             # port.port_cfg: DefaultPortConfig
             tmp: DefaultPort = self.all_ax25_ports[k].port_cfg
             tab = PortSetTab(self, tmp, self.tabControl)
-            self.tab_list.append(tab)
+            self.tab_list[k] = tab
             port_lable_text = 'Port {}'.format(k)
             if not self.all_ax25_ports[k].device_is_running:
                 port_lable_text += ' (!)'
             self.tabControl.add(tab.tab, text=port_lable_text)
 
-
-
     def new_port_btn_cmd(self):
         # port.port_cfg: DefaultPortConfig
         prtcfg = DefaultPort()
-        prtcfg.parm_PortNr = len(self.tab_list)
+        prt_id = 0
+        while prt_id in self.tab_list.keys():
+            prt_id += 1
+        prtcfg.parm_PortNr = prt_id
+
         tab = PortSetTab(self, prtcfg, self.tabControl)
-        port_lable_text = 'Port {}'.format(len(self.tab_list))
+        port_lable_text = 'Port {}'.format(prt_id)
         self.tabControl.add(tab.tab, text=port_lable_text)
-        self.tabControl.select(len(self.tab_list))
-        self.tab_list.append(tab)
+        self.tabControl.select(prt_id)
+        self.tab_list[prt_id] = tab
 
     def del_port_btn_cmd(self):
         self.settings_win.attributes("-topmost", False)
@@ -651,13 +659,23 @@ class PortSettingsWin:
                                                   "Alle Einstellungen gehen verloren !")
         # self.settings_win.lift()
         if msg:
-            ind = self.tabControl.index('current')
+            tab_ind = self.tabControl.index('current')
+            ind = self.tabControl.tab('current')
+            # tab = self.tabControl.tabs()[tab_ind]
+            print(ind)
+            ind = ind['text']
+            ind = int(ind.replace('Port ', '')[0])
 
             tab: PortSetTab = self.tab_list[ind]
-            port_id = tab.port_setting.parm_PortNr
-            del_port_data(port_id)
+            # port_id = tab.port_setting.parm_PortNr
+            del_port_data(ind)
+            self.main_class.ax25_port_handler.ax25_ports[ind].close()
+            del self.main_class.ax25_port_handler.ax25_ports[ind]
+            del self.main_class.ax25_port_handler.ax25_port_settings[ind]
+            del self.main_class.ax25_port_handler.beacons[ind]
+            del self.main_class.ax25_port_handler.rx_echo[ind]
             del self.tab_list[ind]
-            self.tabControl.forget(ind)
+            self.tabControl.forget(tab_ind)
 
             WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
             self.main_class.msg_to_monitor('Info: Port erfolgreich gelöscht.')
@@ -673,13 +691,17 @@ class PortSettingsWin:
         self.main_class.settings_win = None
 
     def save_btn_cmd(self):
-        for port_set in self.tab_list:
-            port_set.set_vars_to_cfg()
-            port_set.port_setting.save_to_pickl()
+        self.main_class.msg_to_monitor('Info: Port Einstellungen werden gespeichert.')
+        for port_id in self.tab_list.keys():
+            self.tab_list[port_id].set_vars_to_cfg()
+            self.tab_list[port_id].port_setting.save_to_pickl()
         self.main_class.msg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
         # self.main_class.msg_to_monitor('Lob: Gute Entscheidung!')
-        self.main_class.msg_to_monitor('Lob: Du bist stets bemüht..')
+        self.main_class.msg_to_monitor('Info: Ports werden neu Initialisiert.')
         self.main_class.ax25_port_handler.reinit_all_ports()
+        self.main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
+        self.main_class.msg_to_monitor('Lob: Du bist stets bemüht..')
+
 
         """    
         for k in self.all_ax25_ports.keys():
@@ -687,9 +709,9 @@ class PortSettingsWin:
         """
 
     def ok_btn_cmd(self):
-        for port_set in self.tab_list:
-            port_set.set_vars_to_cfg()
-            port_set.port_setting.save_to_pickl()
+        for port_id in self.tab_list.keys():
+            self.tab_list[port_id].set_vars_to_cfg()
+            self.tab_list[port_id].port_setting.save_to_pickl()
         self.main_class.msg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
         self.destroy_win()
 
