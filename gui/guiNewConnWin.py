@@ -94,9 +94,13 @@ class NewConnWin:
         ############
         # Own Call
         self.own_call_var = tk.StringVar(self.new_conn_win)
-        opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
-        if opt:
+        opt = ['NOCALL']
+        if self.port_index in self.ax25_port_handler.ax25_ports.keys():
+            opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
+            if not opt:
+                opt = ['NOCALL']
             self.own_call_var.set(opt[0])
+
         self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
         ############
         # BTN
