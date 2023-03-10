@@ -181,7 +181,7 @@ class MH(object):
     def save_mh_data(self):
         try:
             with open(mh_data_file, 'wb') as outp:
-                print(self.calls.keys())
+                # print(self.calls.keys())
                 pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
             os.system('touch {}'.format(mh_data_file))

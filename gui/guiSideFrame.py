@@ -86,22 +86,24 @@ class SideTabbedFrame:
         Checkbutton(self.tab4_settings,
                     text="Sound",
                     variable=self.sound_on,
-                    ).grid(column=0,
-                           row=0,
-                           padx=5,
-                           pady=0
-                           )
+                    ).place(x=10, y=10)
         self.sound_on.set(1)
         # Global Sound
         self.bake_on = tk.BooleanVar()
         Checkbutton(self.tab4_settings,
                     text="Baken",
                     variable=self.bake_on,
-                    ).grid(column=0,
-                           row=1,
-
-                           )
+                    ).place(x=10, y=35)
         self.bake_on.set(True)
+        # RX ECHO
+        self.rx_echo_on = tk.BooleanVar()
+        Checkbutton(self.tab4_settings,
+                    text="RX-Echo",
+                    variable=self.rx_echo_on,
+                    state='disabled'    # TODO 
+                    ).place(x=10, y=60)
+
+        self.bake_on.set(False)
         """
         self.sound_on = tk.IntVar()
         Checkbutton(self.tab4_settings,

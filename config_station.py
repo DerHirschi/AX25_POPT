@@ -4,7 +4,7 @@ import os
 from cli.cli import DefaultCLI, NoneCLI
 # from ax25.ax25Beacon import Beacon
 
-VER = '2.64.2a'
+VER = '2.65.0a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'

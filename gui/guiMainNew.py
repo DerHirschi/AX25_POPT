@@ -15,6 +15,7 @@ from gui.guiSideFrame import SideTabbedFrame
 from gui.guiStationSettings import StationSettingsWin
 from gui.guiPortSettings import PortSettingsWin
 from gui.guiBeaconSettings import BeaconSettings
+from gui.guiRxEchoSettings import RxEchoSettings
 from config_station import VER
 
 if 'linux' in sys.platform:
@@ -119,6 +120,7 @@ class TkMainWin:
         self.MenuSettings.add_command(label="Station", command=self.open_settings_win, underline=0)
         self.MenuSettings.add_command(label="Port", command=self.open_port_settings_win, underline=0)
         self.MenuSettings.add_command(label="Baken", command=self.open_beacon_settings_win, underline=0)
+        self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
         self.menubar.add_cascade(label="Einstellungen", menu=self.MenuSettings, underline=0)
         # Menü 4 "Debug"
         # self.menubar.add_command(label="Debug")
@@ -182,7 +184,7 @@ class TkMainWin:
         self.set_keybinds()
         ####
         # TEST
-        # self.open_port_settings_win()
+        self.open_rx_echo_settings_win()
         # print(self.mon_txt.vbar.bindtags(None))
         #######################
         # LOOP
@@ -481,9 +483,13 @@ class TkMainWin:
     # Beacon Settings WIN
     def open_beacon_settings_win(self):
         if self.settings_win is None:
-            # self.main_win.after(800, lambda: BeaconSettings(self))
-            # self.settings_win = self.main_win.after(300, lambda: BeaconSettings(self))
             BeaconSettings(self)
+
+    ##########################
+    # Beacon Settings WIN
+    def open_rx_echo_settings_win(self):
+        if self.settings_win is None:
+            RxEchoSettings(self)
 
     # ##############
     # DISCO
