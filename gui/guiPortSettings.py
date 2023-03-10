@@ -662,7 +662,7 @@ class PortSettingsWin:
             tab_ind = self.tabControl.index('current')
             ind = self.tabControl.tab('current')
             # tab = self.tabControl.tabs()[tab_ind]
-            print(ind)
+            # print(ind)
             ind = ind['text']
             ind = int(ind.replace('Port ', '')[0])
 

@@ -64,6 +64,7 @@ class AX25PortHandler(object):
         c = 0
         while not port.ende:
             time.sleep(0.5)
+            # self.sysmsg_to_gui("Hinweis: Warte auf Port " + str(port_id))
             print("Warte auf Port " + str(port_id))
             c += 1
             if c == 10:
@@ -119,7 +120,6 @@ class AX25PortHandler(object):
                     for beacon in be_list:
                         beacon.re_init()
                 self.beacons[port_id] = temp.port_cfg.parm_beacons
-                self.rx_echo[port_id] = RxEchoVars()
                 temp.start()
                 ##########################
                 # Start Port/Device Thread
@@ -129,6 +129,7 @@ class AX25PortHandler(object):
                     temp.set_gui(self.gui)
                 self.ax25_ports[port_id] = temp
                 self.ax25_port_settings[port_id] = temp.port_cfg
+                self.rx_echo[port_id] = RxEchoVars()
                 self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
 
     def save_all_port_cfgs(self):
