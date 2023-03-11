@@ -1,4 +1,5 @@
 import tkinter as tk
+import threading
 from tkinter import ttk as ttk
 from gui.vars import ALL_COLOURS
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
@@ -666,14 +667,17 @@ class PortSettingsWin:
             ind = ind['text']
             ind = int(ind.replace('Port ', '')[0])
 
-            tab: PortSetTab = self.tab_list[ind]
+            # tab: PortSetTab = self.tab_list[ind]
             # port_id = tab.port_setting.parm_PortNr
             del_port_data(ind)
+            self.main_class.ax25_port_handler.close_port(ind)
+            """
             self.main_class.ax25_port_handler.ax25_ports[ind].close()
             del self.main_class.ax25_port_handler.ax25_ports[ind]
             del self.main_class.ax25_port_handler.ax25_port_settings[ind]
             del self.main_class.ax25_port_handler.beacons[ind]
             del self.main_class.ax25_port_handler.rx_echo[ind]
+            """
             del self.tab_list[ind]
             self.tabControl.forget(tab_ind)
 
@@ -698,8 +702,9 @@ class PortSettingsWin:
         self.main_class.msg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
         # self.main_class.msg_to_monitor('Lob: Gute Entscheidung!')
         self.main_class.msg_to_monitor('Info: Ports werden neu Initialisiert.')
-        self.main_class.ax25_port_handler.reinit_all_ports()
-        self.main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
+        threading.Thread(target=self.main_class.ax25_port_handler.reinit_all_ports).start()
+        # self.main_class.ax25_port_handler.reinit_all_ports()
+        # self.main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
         self.main_class.msg_to_monitor('Lob: Du bist stets bemüht..')
 
 

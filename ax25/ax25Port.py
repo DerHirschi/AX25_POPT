@@ -29,6 +29,7 @@ class AX25Port(threading.Thread):
 
         self.ende = False
         self.device_is_running = False
+        self.loop_is_running = True
         """ self.ax25_port_handler will be set in AX25PortInit """
         self.ax25_ports: {int: AX25Port}
         # self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
@@ -54,7 +55,6 @@ class AX25Port(threading.Thread):
         #############
         #############
         # VARS
-        self.loop_is_running = False
         self.monitor = ax25monitor.Monitor()
         # self.port_hndl = self.port_cfg.glb_port_handler
         self.gui = None
@@ -95,6 +95,9 @@ class AX25Port(threading.Thread):
         self.close()
         # self.loop_is_running = False
 
+    def close_device(self):
+        pass
+
     def close(self):
         """
         for k in self.connections.keys():
@@ -104,7 +107,11 @@ class AX25Port(threading.Thread):
             conn.zustand_exec.tx(None)
         time.sleep(1)
         """
-        self.loop_is_running = False
+        # self.loop_is_running = False
+        self.close_device()
+        # if self.device is not None:
+            # self.device.close()
+
         """
         if self.device is not None:
             self.device.close()
@@ -361,11 +368,10 @@ class AX25Port(threading.Thread):
             del self.connections[el]
 
     def run(self):
-        if not self.loop_is_running:
-            self.loop_is_running = True
-            while self.loop_is_running and self.device_is_running:
-                self.tasks()
-                time.sleep(0.1)
+
+        while self.loop_is_running and self.device_is_running:
+            self.tasks()
+            time.sleep(0.1)
         self.ende = True
 
     def tasks(self):
@@ -421,21 +427,25 @@ class AX25Port(threading.Thread):
 class KissTCP(AX25Port):
 
     def init(self):
-        print("KISS TCP INIT")
-        logger.info("KISS TCP INIT")
-        sock_timeout = 5
-        self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
-        try:
-            self.device.settimeout(sock_timeout)
-            self.device.connect(self.port_param)
-            self.device_is_running = True
-        except (OSError, ConnectionRefusedError, ConnectionError) as e:
-            logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
-            logger.error('{}'.format(e))
-            self.device.close()
-            # raise AX25DeviceFAIL
+        if self.loop_is_running:
+            print("KISS TCP INIT")
+            logger.info("KISS TCP INIT")
+            sock_timeout = 0.5
+            self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+            try:
+                self.device.settimeout(sock_timeout)
+                self.device.connect(self.port_param)
+                self.device_is_running = True
+            except (OSError, ConnectionRefusedError, ConnectionError) as e:
+                logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
+                logger.error('{}'.format(e))
+                self.device.close()
+                # raise AX25DeviceFAIL
 
     def __del__(self):
+        self.close_device()
+
+    def close_device(self):
         self.loop_is_running = False
         if self.device is not None:
             try:
@@ -450,6 +460,8 @@ class KissTCP(AX25Port):
             recv_buff = self.device.recv(3000)
         except socket.timeout:
             # self.device.close()
+            raise AX25DeviceERROR
+        except OSError:
             raise AX25DeviceERROR
         ret = RxBuf()
         if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
@@ -484,18 +496,22 @@ class KissTCP(AX25Port):
 class KISSSerial(AX25Port):
 
     def init(self):
-        print("KISS Serial INIT")
-        logger.info("KISS Serial INIT")
-        try:
-            self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.5)
-            self.device_is_running = True
-        except (FileNotFoundError, serial.serialutil.SerialException) as e:
-            logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
-            logger.error('{}'.format(e))
-            self.device.close()
-            # raise AX25DeviceFAIL
+        if self.loop_is_running:
+            print("KISS Serial INIT")
+            logger.info("KISS Serial INIT")
+            try:
+                self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.5)
+                self.device_is_running = True
+            except (FileNotFoundError, serial.serialutil.SerialException) as e:
+                logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
+                logger.error('{}'.format(e))
+                self.device.close()
+                # raise AX25DeviceFAIL
 
     def __del__(self):
+        self.close_device()
+
+    def close_device(self):
         self.loop_is_running = False
         if self.device is not None:
             try:
@@ -505,7 +521,7 @@ class KISSSerial(AX25Port):
 
     def rx(self):
         recv_buff = b''
-        while True:
+        while self.loop_is_running:
             try:
                 recv_buff += self.device.read()
             except serial.SerialException:
@@ -545,35 +561,39 @@ class KISSSerial(AX25Port):
 class AXIP(AX25Port):
 
     def init(self):
-        print("AXIP Client INIT")
-        logger.info("AXIP Client INIT")
-        if not self.port_param[0]:
-            hostname = socket.gethostname()
-            self.port_param = socket.gethostbyname(hostname), self.port_param[1]
-        self.own_ipAddr = self.port_param[0]
-        print(self.own_ipAddr)
-        sock_timeout = 2
-        self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.device.settimeout(sock_timeout)
-        try:
-            self.device.bind(self.port_param)
-            self.device_is_running = True
-        except OSError as e:
-            logger.error('{}'.format(e))
-            self.device.close()
+        if self.loop_is_running:
+            print("AXIP Client INIT")
+            logger.info("AXIP Client INIT")
+            if not self.port_param[0]:
+                hostname = socket.gethostname()
+                self.port_param = socket.gethostbyname(hostname), self.port_param[1]
+            self.own_ipAddr = self.port_param[0]
+            print(self.own_ipAddr)
+            sock_timeout = 0.2
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             self.device.settimeout(sock_timeout)
-            self.device_is_running = False
             try:
                 self.device.bind(self.port_param)
                 self.device_is_running = True
             except OSError as e:
                 logger.error('{}'.format(e))
                 self.device.close()
+                self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+                self.device.settimeout(sock_timeout)
                 self.device_is_running = False
-                #raise AX25DeviceFAIL
+                try:
+                    self.device.bind(self.port_param)
+                    self.device_is_running = True
+                except OSError as e:
+                    logger.error('{}'.format(e))
+                    self.device.close()
+                    self.device_is_running = False
+                    #raise AX25DeviceFAIL
 
     def __del__(self):
+        self.close_device()
+
+    def close_device(self):
         self.loop_is_running = False
         if self.device is not None:
             try:

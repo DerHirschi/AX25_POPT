@@ -77,6 +77,8 @@ class AX25PortHandler(object):
             del self.ax25_port_settings[port_id]
         if port_id in self.beacons.keys():
             del self.beacons[port_id]
+        if port_id in self.rx_echo.keys():
+            del self.rx_echo[port_id]
         del port
         self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
 
@@ -105,14 +107,10 @@ class AX25PortHandler(object):
             if cfg.parm_PortTyp:
                 #########################
                 # Init Port/Device
-                # try:
-                temp = self.ax25types[cfg.parm_PortTyp](cfg, self)
-                # except AX25DeviceFAIL as e:
+                temp: AX25Port = self.ax25types[cfg.parm_PortTyp](cfg, self)
                 if not temp.device_is_running:
                     logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
                     self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
-
-                temp: AX25Port
                 ##########
                 # Beacons
                 for stat in temp.port_cfg.parm_beacons.keys():
