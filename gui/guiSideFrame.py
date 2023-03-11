@@ -100,7 +100,6 @@ class SideTabbedFrame:
         Checkbutton(self.tab4_settings,
                     text="RX-Echo",
                     variable=self.rx_echo_on,
-                    state='disabled'    # TODO 
                     ).place(x=10, y=60)
 
         self.bake_on.set(False)

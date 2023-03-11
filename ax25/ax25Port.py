@@ -313,7 +313,9 @@ class AX25Port(threading.Thread):
         return tr
 
     def rx_echo(self, ax25_frame: AX25Frame):
-        self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
+        if self.is_gui:
+            if self.gui.setting_rx_echo.get():
+                self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""

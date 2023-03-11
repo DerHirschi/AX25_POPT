@@ -202,7 +202,7 @@ class RxEchoSettings(tk.Toplevel):
                     self.port_handler.rx_echo[kk].rx_ports[k] = calls
 
                     self.check_vars[kk][k][4].delete(0, tk.END)
-                    self.check_vars[kk][k][4].insert(tk.END,var)
+                    self.check_vars[kk][k][4].insert(tk.END, var)
                     self.check_vars[k][kk][5].delete(0, tk.END)
                     self.check_vars[k][kk][5].insert(tk.END, var)
                 else:

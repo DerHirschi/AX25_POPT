@@ -171,6 +171,7 @@ class TkMainWin:
         self.tabbed_sideFrame = SideTabbedFrame(self)
         self.setting_sound = self.tabbed_sideFrame.sound_on
         self.setting_bake = self.tabbed_sideFrame.bake_on
+        self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
         ############################
         # Windows
         self.new_conn_win = None
