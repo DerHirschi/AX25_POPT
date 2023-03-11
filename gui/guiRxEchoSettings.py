@@ -119,11 +119,10 @@ class RxEchoSettings(tk.Toplevel):
                     tx_check.configure(command=self.check_cmd)
 
             self.check_vars[k] = var_dict
-
+        self.update_settings()
         #print(self.check_vars)
 
     def save_btn_cmd(self):
-
         # self.set_vars()
         self.main_cl.ax25_port_handler.save_all_port_cfgs()
         self.main_cl.msg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
@@ -225,3 +224,47 @@ class RxEchoSettings(tk.Toplevel):
                     #print(self.port_handler.rx_echo[k])
             print()
         """
+
+    def update_settings(self):
+
+        for k in self.port_handler.rx_echo.keys():
+
+            for kk in list(self.check_vars[k].keys()):
+                tr_k_kk = False
+                tr_kk_k = False
+                # RX
+                if k in self.port_handler.rx_echo[kk].tx_ports.keys():
+                    self.check_vars[kk][k][5].delete(0, tk.END)
+
+                    call_list_kk_k = self.port_handler.rx_echo[kk].tx_ports[k]
+                    call_st = ''
+                    for el in call_list_kk_k:
+                        call_st += el + ' '
+                    self.check_vars[kk][k][5].insert(tk.END, call_st)
+                    self.check_vars[kk][k][1].set(True)
+                    tr_kk_k = True
+                else:
+                    self.check_vars[kk][k][1].set(False)
+
+                if kk in self.port_handler.rx_echo[k].rx_ports.keys():
+                    self.check_vars[k][kk][4].delete(0, tk.END)
+
+                    call_list_k_kk = self.port_handler.rx_echo[k].rx_ports[kk]
+                    call_st = ''
+                    for el in call_list_k_kk:
+                        call_st += el + ' '
+                    self.check_vars[k][kk][4].insert(tk.END, call_st)
+                    self.check_vars[k][kk][0].set(True)
+                    tr_k_kk = True
+                else:
+                    self.check_vars[k][kk][0].set(False)
+
+                if tr_kk_k and tr_k_kk:
+                    self.check_vars[k][kk][2].configure(background='green1', activebackground='green4')
+                    self.check_vars[kk][k][3].configure(background='green1', activebackground='green4')
+                else:
+                    self.check_vars[k][kk][2].configure(background=self.off_color[0],
+                                                        activebackground=self.off_color[1])
+                    self.check_vars[kk][k][3].configure(background=self.off_color[0],
+                                                        activebackground=self.off_color[1])
+
