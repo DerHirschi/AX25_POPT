@@ -46,6 +46,7 @@ class DefaultCLI(object):
         self.crone_state_index = 0
         self.input = b''
         self.cmd = b''
+        self.parameter: [bytes] = []
         self.encoding = 'UTF-8', 'ignore'
         # Crone
         self.cron_state_exec = {
@@ -54,17 +55,18 @@ class DefaultCLI(object):
         }
         # Standard Commands ( GLOBAL )
         self.cmd_exec = {
-            'Q': (self.cmd_q, 'Quit'),
-            'C': (self.cmd_connect, 'Connect ! funktioniert noch nicht !'),
-            'MH': (self.cmd_mh, 'MYHeard Liste'),
-            'I': (self.cmd_i, 'Info'),
-            'LI': (self.cmd_li, 'Lange Info'),
-            'NE': (self.cmd_news, 'NEWS'),
-            'NEWS': (self.cmd_news, 'NEWS'),
-            'V': (self.cmd_ver, 'Version'),
-            'VER': (self.cmd_ver, 'Version'),
-            'H': (self.cmd_help, 'Hilfe'),
-            '?': (self.cmd_help, 'Hilfe'),
+            b'Q': (self.cmd_q, 'Quit'),
+            b'C': (self.cmd_connect, 'Connect ! funktioniert noch nicht !'),
+            b'MH': (self.cmd_mh, 'MYHeard Liste'),
+            b'I': (self.cmd_i, 'Info'),
+            b'LI': (self.cmd_li, 'Lange Info'),
+            b'NE': (self.cmd_news, 'NEWS'),
+            b'NEWS': (self.cmd_news, 'NEWS'),
+            b'E': (self.cmd_echo, 'Echo'),
+            b'V': (self.cmd_ver, 'Version'),
+            b'VER': (self.cmd_ver, 'Version'),
+            b'H': (self.cmd_help, 'Hilfe'),
+            b'?': (self.cmd_help, 'Hilfe'),
         }
         self.state_exec = {
             0: self.s0,  # C-Text
@@ -107,43 +109,59 @@ class DefaultCLI(object):
     def change_cli_state(self, state: int):
         self.state_index = state
 
+    """
+    def get_parameter(self):
+        param = self.input
+        self.parameter = self.input
+    """
+
     def is_prefix(self):
         if self.prefix:
+            print(self.input)
+            while self.input[:1] in [b'\r', b'\n']:
+                self.input = self.input[1:]
+                if not self.input:
+                    return False
+
             if self.input[:len(self.prefix)] == self.prefix.encode(self.encoding[0], self.encoding[1]):
-                self.cmd = self.input[len(self.prefix):]
-                self.cmd = self.cmd.split(b' ')
-                if len(self.cmd) > 1:
-                    self.input = self.cmd[1:]
-                    print("is_prefix INP: {}".format(self.input))
+                # print(self.input)
+                cmd = self.input[len(self.prefix):]
+                cmd = cmd.split(b' ')
+                if len(cmd) > 1:
+                    self.input = cmd[1:]
+                    self.parameter = cmd[1:]
+                    print("input INP: {}".format(self.input))
+                    print("parameter INP: {}".format(self.parameter))
                 else:
                     self.input = b''
-                self.cmd = self.cmd[0]
-                self.cmd = self.cmd \
-                    .decode(self.encoding[0], self.encoding[1]) \
+
+                cmd = cmd[0]
+                self.cmd = cmd  \
                     .upper() \
-                    .replace(' ', '') \
-                    .replace('\r', '') \
-                    .replace('\n', '')
+                    .replace(b' ', b'') \
+                    .replace(b'\r', b'') \
+                    .replace(b'\n', b'')
                 # self.input = self.input[len(self.prefix):]
                 return True
             else:
                 # Message is for User ( Text , Chat )
                 return False
         # CMD Input for No User Terminals ( Node ... )
-        self.cmd = self.input
-        self.cmd = self.cmd.split(b' ')
-        if len(self.cmd) > 1:
-            self.input = self.cmd[1:]
-            print("is_prefix INP: {}".format(self.input))
+        cmd = self.input
+        cmd = cmd.split(b' ')
+        if len(cmd) > 1:
+            self.input = cmd[1:]
+            self.parameter = cmd[1:]
+            print("input INP: {}".format(self.input))
+            print("parameter INP: {}".format(self.parameter))
         else:
             self.input = b''
-        self.cmd = self.cmd[0]
-        self.cmd = self.cmd \
-            .decode(self.encoding[0], self.encoding[1]) \
+        cmd = cmd[0]
+        self.cmd = cmd \
             .upper() \
-            .replace(' ', '') \
-            .replace('\r', '') \
-            .replace('\n', '')
+            .replace(b' ', b'') \
+            .replace(b'\r', b'') \
+            .replace(b'\n', b'')
         return False
 
     def load_fm_file(self, filename: str):
@@ -160,6 +178,7 @@ class DefaultCLI(object):
 
     def exec_cmd(self):
         if self.is_prefix():
+            # self.get_parameter()
             if self.cmd in self.cmd_exec.keys():
                 print("INP: {}".format(self.input))
                 ret = self.cmd_exec[self.cmd][0]()
@@ -188,8 +207,14 @@ class DefaultCLI(object):
             self.connection.tx_buf_rawData += ret
         """
 
-    def cmd_connect(self):
+    def cmd_connect(self):  # DUMMY
         pass
+
+    def cmd_echo(self):  # Quit
+        ret = ''
+        for el in self.parameter:
+            ret += el.decode(self.encoding[0], self.encoding[1]) + ' '
+        return ret[:-1]
 
     def cmd_q(self):  # Quit
         # self.connection: AX25Conn
@@ -238,7 +263,7 @@ class DefaultCLI(object):
     def cmd_help(self):
         ret = '\r   < Hilfe >\r'
         for k in self.cmd_exec.keys():
-            ret += '\r {:3} > {}'.format(k, self.cmd_exec[k][1])
+            ret += '\r {}{:3} > {}'.format(self.prefix, k.decode('utf-8'), self.cmd_exec[k][1])
         ret += '\r\r\r'
         return ret
 
