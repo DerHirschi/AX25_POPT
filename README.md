@@ -18,6 +18,19 @@ Packages Required:
 - crcmod
 - pyserial
 
+Install all dependencies:
+  ``` sh
+  $ pip install tkinter
+  $ pip install playsound
+  $ pip install crcmod
+  $ pip install pyserial
+  ```
+
+Run:
+  ``` sh
+  $ python3 main.py
+  ```
+
 Supported AX.25 connection options:
 - KISS via TCP (e.g. Direwolf)
 - KISS via Serail (e.g. Linux AX.25 Device (kissattach). Not tested on TNCs or Modems yet)

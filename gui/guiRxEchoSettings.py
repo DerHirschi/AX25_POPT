@@ -4,9 +4,16 @@ from ax25.ax25Port import AX25Port
 
 
 class RxEchoVars(object):
-    def __init__(self):
+    def __init__(self, port_id: int):
+        self.port_id = port_id
         self.rx_ports: {int: [str]} = {}
         self.tx_ports: {int: [str]} = {}
+        self.tx_buff: [] = []
+    """
+    def buff_input(self, ax_frame, port_id: int):
+        if port_id != self.port_id:
+            self.tx_buff.append(ax_frame)
+    """
 
 
 class RxEchoSettings(tk.Toplevel):
@@ -164,13 +171,11 @@ class RxEchoSettings(tk.Toplevel):
 
                     self.port_handler.rx_echo[k].rx_ports[kk] = list(calls)
                     self.port_handler.rx_echo[kk].tx_ports[k] = list(calls)
-                    call_str = ''
-                    for el in calls:
-                        call_str += (el + ' ')
+
                     self.check_vars[kk][k][5].delete(0, tk.END)
-                    self.check_vars[kk][k][5].insert(tk.END, call_str)
+                    self.check_vars[kk][k][5].insert(tk.END, var)
                     self.check_vars[k][kk][4].delete(0, tk.END)
-                    self.check_vars[k][kk][4].insert(tk.END, call_str)
+                    self.check_vars[k][kk][4].insert(tk.END, var)
                 else:
                     self.check_vars[k][kk][2].configure(background=self.off_color[0], activebackground=self.off_color[1])
                     self.check_vars[kk][k][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
@@ -196,13 +201,11 @@ class RxEchoSettings(tk.Toplevel):
                         calls = var.split(' ')
                     self.port_handler.rx_echo[k].tx_ports[kk] = calls
                     self.port_handler.rx_echo[kk].rx_ports[k] = calls
-                    call_str = ''
-                    for el in calls:
-                        call_str += (el + ' ')
+
                     self.check_vars[kk][k][4].delete(0, tk.END)
-                    self.check_vars[kk][k][4].insert(tk.END,call_str)
+                    self.check_vars[kk][k][4].insert(tk.END,var)
                     self.check_vars[k][kk][5].delete(0, tk.END)
-                    self.check_vars[k][kk][5].insert(tk.END, call_str)
+                    self.check_vars[k][kk][5].insert(tk.END, var)
                 else:
                     self.check_vars[k][kk][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
                     self.check_vars[kk][k][2].configure(background=self.off_color[0], activebackground=self.off_color[1])

@@ -110,7 +110,7 @@ class AX25Port(threading.Thread):
         # self.loop_is_running = False
         self.close_device()
         # if self.device is not None:
-            # self.device.close()
+        # self.device.close()
 
         """
         if self.device is not None:
@@ -132,15 +132,15 @@ class AX25Port(threading.Thread):
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         """ Not Happy with that Part . . :-( TODO Cleanup """
-        cfg = self.port_cfg
+        # cfg = self.port_cfg
         # Monitor
         if self.is_gui:
-            self.gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=cfg,
+            self.gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=self.port_cfg,
                                     tx=False)
-        # self.monitor.frame_inp(ax25_frame, self.portname)
         # MH List and Statistics
-        # self.mh.mh_inp(ax25_frame, self.portname)
         self.mh.mh_inp(ax25_frame, self.portname)
+        # RX-ECHO
+        self.rx_echo(ax25_frame=ax25_frame)
         # Existing Connections
         uid = str(ax25_frame.addr_uid)
         if uid in self.connections.keys():
@@ -161,7 +161,7 @@ class AX25Port(threading.Thread):
         elif ax25_frame.to_call.call_str in self.my_stations \
                 and ax25_frame.is_digipeated:
 
-            self.connections[uid] = AX25Conn(ax25_frame, cfg, port=self)
+            self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
             self.connections[uid].set_T2()
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
         # DIGI / LINK Connection
@@ -191,9 +191,8 @@ class AX25Port(threading.Thread):
                         if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=False):
                             print("NEW DIGI CONN")
                             # "Smart" DIGI
-                            cfg = self.port_cfg
                             # Incoming REQ
-                            conn_in = AX25Conn(ax25_frame, cfg, self)
+                            conn_in = AX25Conn(ax25_frame, self.port_cfg, self)
                             conn_in.my_digi_call = str(my_call)
                             conn_in.is_link = True
                             conn_in.set_T2()
@@ -224,7 +223,7 @@ class AX25Port(threading.Thread):
                                         conn_in.zustand_exec.change_state(4)
                                         break
                                 if conn_in.zustand_exec.stat_index == 5:
-                                    conn_out = AX25Conn(copy_ax25frame, cfg, port=self, rx=False)
+                                    conn_out = AX25Conn(copy_ax25frame, self.port_cfg, port=self, rx=False)
                                     conn_out_uid = conn_out.ax25_out_frame.addr_uid
                                     conn_out.my_digi_call = str(my_call)
                                     print("CONN OUT UID: {}".format(conn_out_uid))
@@ -289,6 +288,32 @@ class AX25Port(threading.Thread):
                 self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
         self.digi_buf = []
         return tr
+
+    def rx_echo_pac_handler(self):
+        tr = False
+        # RX-Echo
+        fr: AX25Frame
+        for fr in self.port_handler.rx_echo[self.port_id].tx_buff:
+            try:
+                self.tx(frame=fr)
+                tr = True
+            except AX25DeviceFAIL as e:
+                raise e
+            except AX25EncodingERROR:
+                logger.error('Encoding Error: ! MSG to short !')
+            # Monitor
+            cfg = self.port_cfg
+            # Monitor
+            if self.is_gui:
+                self.gui.update_monitor(
+                    self.monitor.frame_inp(fr, self.portname),
+                    conf=self.port_cfg,
+                    tx=True)
+        self.port_handler.rx_echo[self.port_id].tx_buff = []
+        return tr
+
+    def rx_echo(self, ax25_frame: AX25Frame):
+        self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
@@ -415,8 +440,9 @@ class AX25Port(threading.Thread):
             self.cron_pac_handler()
             # ######### TX #############
             # TX
-            if not self.tx_pac_handler():  # Prio
-                self.cron_port_handler()  # Non Prio / Beacons
+            if not self.tx_pac_handler():           # Prio
+                if not self.cron_port_handler():    # Non Prio / Beacons
+                    self.rx_echo_pac_handler()      # Non non Prio / RX-ECHO
 
         ############################
         ############################
@@ -588,7 +614,7 @@ class AXIP(AX25Port):
                     logger.error('{}'.format(e))
                     self.device.close()
                     self.device_is_running = False
-                    #raise AX25DeviceFAIL
+                    # raise AX25DeviceFAIL
 
     def __del__(self):
         self.close_device()
@@ -607,8 +633,8 @@ class AXIP(AX25Port):
     def rx(self):
         try:
             udp_recv = self.device.recvfrom(800)
-        #except socket.error:
-            #raise AX25DeviceERROR
+        # except socket.error:
+        # raise AX25DeviceERROR
         except OSError:
             return RxBuf()
         else:

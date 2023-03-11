@@ -127,7 +127,7 @@ class AX25PortHandler(object):
                     temp.set_gui(self.gui)
                 self.ax25_ports[port_id] = temp
                 self.ax25_port_settings[port_id] = temp.port_cfg
-                self.rx_echo[port_id] = RxEchoVars()
+                self.rx_echo[port_id] = RxEchoVars(port_id)
                 self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
 
     def save_all_port_cfgs(self):
@@ -208,3 +208,22 @@ class AX25PortHandler(object):
             del self.all_connections[k]
         if conn.is_gui:
             conn.gui.ch_btn_status_update()
+
+    ######################
+    # RX-ECHO Handling
+    def rx_echo_input(self, ax_frame: AX25Frame, port_id):
+        from_call = ax_frame.from_call.call_str
+        for k in self.rx_echo.keys():
+            rx_echo_var: RxEchoVars = self.rx_echo[k]
+            if port_id != rx_echo_var.port_id:
+                for port in list(rx_echo_var.rx_ports):
+                    if rx_echo_var.rx_ports[port]:
+                        if from_call in rx_echo_var.rx_ports[port]:
+                            if k in self.rx_echo[port].tx_ports.keys():
+                                rx_echo_var.tx_buff.append(ax_frame)
+                    else:
+                        if k in self.rx_echo[port].tx_ports.keys():
+                            rx_echo_var.tx_buff.append(ax_frame)
+
+            # self.rx_echo[k].buff_input(ax_frame=ax_frame, port_id=k)
+
