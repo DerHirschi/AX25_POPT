@@ -707,7 +707,6 @@ class PortSettingsWin:
         # self.main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
         self.main_class.msg_to_monitor('Lob: Du bist stets bemüht..')
 
-
         """    
         for k in self.all_ax25_ports.keys():
             self.all_ax25_ports[k].port_cfg.save_to_pickl()

@@ -158,24 +158,25 @@ class AX25PortHandler(object):
             if keys:
                 tr = False
                 # Check if Connection is already in all_conn...
-                for k in self.all_connections.keys():
+                for k in list(self.all_connections.keys()):
                     if new_conn == self.all_connections[k]:
                         tr = True
                         if new_conn.ch_index != k:
                             logger.warning("Channel Index != Real Index !!!")
-                            new_conn.ch_index = k
+                            new_conn.ch_index = int(k)
                 if not tr:
                     while True:
                         if ind in keys:
                             ind += 1
                         else:
-                            new_conn.ch_index = ind
+                            new_conn.ch_index = int(ind)
                             self.all_connections[ind] = new_conn
                             break
             else:
-                new_conn.ch_index = ind
+                new_conn.ch_index = int(ind)
                 self.all_connections[ind] = new_conn
             if new_conn.is_gui:
+                # new_conn.setChVar()
                 new_conn.gui.ch_btn_status_update()
 
     def cleanup_conn2all_conn_var(self):

@@ -25,13 +25,15 @@ class AX25Conn(object):
         self.prt_hndl = self.own_port.port_handler
         self.mh = self.prt_hndl.mh
 
-        self.ch_index: int = 0
+        self.ch_index: int = 0  # Set in insert_conn2all_conn_var()
         self.gui = self.prt_hndl.gui
+        self.ChVars = None
         if self.gui is None:
             self.is_gui = False
         else:
-            self.ch_index = self.gui.channel_index
+            # self.ch_index = int(self.gui.channel_index)
             self.is_gui = True
+
         """ DIGI / Link to other Connection for Auto processing """
         self.DIGI_Connection: AX25Conn
         self.is_link = False
@@ -79,6 +81,7 @@ class AX25Conn(object):
         self.rx_buf_last_frame = ax25_frame         # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
         self.tx_buf_rawData: b'' = b''          # Buffer for TX RAW Data that will be packed into a Frame
+        self.tx_buf_guiData: b'' = b''          # Buffer for TX Echo in GUI
         self.rx_buf_rawData: b'' = b''          # Received Data for GUI
         self.rx_buf_monitor: [str] = []         # Received Data Monitor String
         self.rx_buf_rawData_2: b'' = b''        # Received Data TEST Script
@@ -161,6 +164,12 @@ class AX25Conn(object):
         del self.cli
         del self.zustand_exec
 
+    """
+    def setChVar(self):
+        if self.ch_index:
+            if self.is_gui:
+                self.ChVars = self.gui.win_buf[int(self.ch_index)]
+    """
     ####################
     # Zustand EXECs
     def handle_rx(self, ax25_frame: AX25Frame):
@@ -174,6 +183,7 @@ class AX25Conn(object):
 
     def exec_cron(self):
         """ DefaultStat.cron() """
+        # print(self.ch_index)
         self.cli.cli_cron()
         self.zustand_exec.cron()
 
@@ -270,6 +280,9 @@ class AX25Conn(object):
             # PAYLOAD !!
             pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
             self.ax25_out_frame.data = self.tx_buf_rawData[:pac_len]
+            self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]
+            # if self.ChVars is not None:
+            #     self.ChVars.output_win += self.tx_buf_rawData[:pac_len].decode('utf-8', 'ignore')
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
             self.tx_buf_2send.append(self.ax25_out_frame)

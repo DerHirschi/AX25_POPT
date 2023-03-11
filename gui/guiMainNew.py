@@ -42,14 +42,15 @@ TXT_MON_TX_CLR = 'medium violet red'
 STAT_BAR_CLR = 'grey60'
 
 
-class ChVars:
-    output_win = ''
-    input_win = ''
-    new_data_tr = False
-    rx_beep_tr = False
-    rx_beep_cooldown = time.time()
-    rx_beep_opt = None
-    timestamp_opt = None
+class ChVars(object):
+    def __init__(self):
+        self.output_win = ''
+        self.input_win = ''
+        self.new_data_tr = False
+        self.rx_beep_tr = False
+        self.rx_beep_cooldown = time.time()
+        self.rx_beep_opt = None
+        self.timestamp_opt = None
 
 
 class TkMainWin:
@@ -376,7 +377,28 @@ class TkMainWin:
             self.rx_beep()
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
-
+    """
+    def cli_echo(self, data: str, channel_index: int):
+        print(type(data))
+        print(data + ' <GUI> ' + str(channel_index))
+        # CLI Echo . Called from CLI
+        # Write RX Date to Window/Channel Buffer
+        if channel_index and self.get_conn(channel_index):
+            self.win_buf[channel_index].output_win += data
+            if self.channel_index == channel_index:
+                tr = False
+                if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
+                    tr = True
+                self.out_txt.configure(state="normal")
+                self.out_txt.insert('end', data)
+                self.out_txt.configure(state="disabled")
+                if tr:
+                    self.out_txt.see("end")
+            else:
+                self.win_buf[channel_index].new_data_tr = True
+            self.win_buf[channel_index].rx_beep_tr = True
+            self.ch_btn_status_update()
+    """
     def update_mon(self):  # MON & INPUT WIN
         """
         UPDATE INPUT WIN
@@ -387,8 +409,15 @@ class TkMainWin:
                 # if self.channel_index == k:
                 # conn: AX25Conn
                 conn = self.get_conn(k)
-                if conn.rx_buf_rawData:
+                if conn.rx_buf_rawData or conn.tx_buf_guiData:
                     if not conn.my_digi_call:
+                        inp = str(conn.tx_buf_guiData.decode('UTF-8', 'ignore')) \
+                            .replace('\r', '\n') \
+                            .replace('\r\n', '\n') \
+                            .replace('\n\r', '\n')
+                        conn.tx_buf_guiData = b''
+                        # Write RX Date to Window/Channel Buffer
+                        self.win_buf[k].output_win += inp
                         out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')) \
                             .replace('\r', '\n') \
                             .replace('\r\n', '\n') \
@@ -396,12 +425,24 @@ class TkMainWin:
                         conn.rx_buf_rawData = b''
                         # Write RX Date to Window/Channel Buffer
                         self.win_buf[k].output_win += out
+
                         if self.channel_index == k:
                             tr = False
-                            if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
+                            if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
                                 tr = True
                             self.out_txt.configure(state="normal")
+
+                            ind = self.out_txt.index(tk.INSERT)
+                            self.out_txt.insert('end', inp)
+                            ind2 = self.out_txt.index(tk.INSERT)
+                            self.out_txt.tag_add("input", ind, ind2)
+
+                            # configuring a tag called start
+                            ind = self.out_txt.index(tk.INSERT)
                             self.out_txt.insert('end', out)
+                            ind2 = self.out_txt.index(tk.INSERT)
+                            self.out_txt.tag_add("output", ind, ind2)
+
                             self.out_txt.configure(state="disabled")
                             if tr:
                                 self.out_txt.see("end")
@@ -536,9 +577,11 @@ class TkMainWin:
             tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
             # Send it to Connection/Station TX Buffer
             station.tx_buf_rawData += (tmp_txt + '\r').encode()
+            """
             ind = self.out_txt.index(tk.INSERT)
             tmp_txt += '\n'
             # Insert in OutScreen Window
+            
             self.out_txt.configure(state="normal")
             self.out_txt.insert(tk.END, tmp_txt)
             self.out_txt.configure(state="disabled")
@@ -547,8 +590,9 @@ class TkMainWin:
 
             ind2 = self.out_txt.index(tk.INSERT)
             self.out_txt.tag_add("input", ind, ind2)
+            """
             # configuring a tag called start
-            self.out_txt.tag_config("input", foreground="yellow")
+
 
     # SEND TEXT OUT
     ###################

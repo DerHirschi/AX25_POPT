@@ -31,6 +31,11 @@ class DefaultCLI(object):
             self.stat_cfg_index_call = self.stat_cfg.stat_parm_Call
 
         self.connection: ax25.ax25Connection.AX25Conn = connection
+        # self.channel_index = self.connection.ch_index
+        if self.connection.gui is None:
+            self.gui = False
+        else:
+            self.gui = self.connection.gui
         # self.connection = connection
         self.my_call = connection.ax25_out_frame.from_call.call
         self.my_call_str = connection.ax25_out_frame.from_call.call_str
@@ -82,6 +87,22 @@ class DefaultCLI(object):
         self.prompt = '\r{}<>{}'.format(
             str(self.my_call).replace('\r', ''),
             str(self.prompt).replace('\r', ''))
+
+    def send_output(self, ret):
+        if ret:
+            if type(ret) == str:
+                # gui_out = str(ret)
+                ret = ret.encode(self.encoding[0], self.encoding[1])
+            # self.send_2_gui(ret)
+            self.connection.tx_buf_rawData += ret
+    """
+    def send_2_gui(self, data):  
+        if data:
+            if type(data) != str:
+                data = data.decode(self.encoding[0], self.encoding[1])
+            # print(data + ' <CLI> ' + str(self.connection.ch_index))
+            self.gui.cli_echo(data, self.connection.ch_index)
+    """
 
     def change_cli_state(self, state: int):
         self.state_index = state
@@ -159,17 +180,21 @@ class DefaultCLI(object):
             else:
                 ret = 'Dieses Kommando ist dem System nicht bekannt\r'
                 ret += self.prompt
+        self.send_output(ret)
+        """
         if ret:
             if type(ret) == str:
                 ret = ret.encode(self.encoding[0], self.encoding[1])
             self.connection.tx_buf_rawData += ret
+        """
 
     def cmd_connect(self):
         pass
 
     def cmd_q(self):  # Quit
         # self.connection: AX25Conn
-        self.connection.tx_buf_rawData += self.bye_text.encode(self.encoding[0], self.encoding[1])
+        # self.connection.tx_buf_rawData += self.bye_text.encode(self.encoding[0], self.encoding[1])
+        self.send_output(self.bye_text)
         self.crone_state_index = 100  # Quit State
         return ''
 
@@ -219,12 +244,16 @@ class DefaultCLI(object):
 
     def cli_exec(self, inp=b''):
         if not self.connection.is_link:
+            # self.send_2_gui(inp)
             self.input = inp
-            ret = self.state_exec[self.state_index]()
+            _ret = self.state_exec[self.state_index]()
+            self.send_output(_ret)
+            """
             if ret:
                 if type(ret) == str:
                     ret = ret.encode(self.encoding[0], self.encoding[1])
                 self.connection.tx_buf_rawData += ret
+           """
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -234,10 +263,15 @@ class DefaultCLI(object):
     def cli_state_crone(self):
         """ State Crone Tasks """
         ret = self.cron_state_exec[self.crone_state_index]()
+        self.send_output(ret)
+        # self.send_output('TEST')
+        # self.send_output(b'TEST bytes')
+        """
         if ret:
             if type(ret) == str:
                 ret = ret.encode(self.encoding[0], self.encoding[1])
             self.connection.tx_buf_rawData += ret
+        """
 
     def s0(self):  # C-Text
         self.build_prompt()
