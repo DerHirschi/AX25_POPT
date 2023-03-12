@@ -6,6 +6,19 @@
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 
 
+def find_bit_stuffing(inp):
+    fck_bit = ''.join(f'{bin(int(val, 16))}'[2:] for val in inp.hex(' ', 1).split())
+    if '111111' in fck_bit:
+        print("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
+        print(fck_bit)
+        print("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
+        logger.debug("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
+        logger.debug(fck_bit)
+        logger.debug("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
+        return True
+    return False
+
+
 def bl2str(inp):
     if inp:
         return '+'
@@ -230,7 +243,7 @@ class CByte(object):
         self.hex = hex(int(ret, 2))
 
     def dec_cbyte(self, in_byte):
-        logger.error('C-Byte Decoding C-Byte> ' + str(bin(int(in_byte))[2:].zfill(8)) + ' ' + hex(in_byte))
+        logger.debug('C-Byte Decoding C-Byte> ' + str(bin(int(in_byte))[2:].zfill(8)) + ' ' + hex(in_byte))
 
         if int(in_byte) in self.pac_types.keys():
             # print("Predefined Pac Type.. {}".format(in_byte))
@@ -576,11 +589,17 @@ class AX25Frame(object):
                 ca.c_bit = False
 
     def decode(self, hexstr=b''):
+        """
         if not self.hexstr:
             # self.kiss = hexstr[:2]
             # self.hexstr = hexstr[2:-1]
             self.hexstr = hexstr
+        """
+        if hexstr:
+            self.hexstr = hexstr
+        # find_bit_stuffing(self.hexstr)
         if self.hexstr and len(self.hexstr) > 14:
+
             try:
                 self.to_call.dec_call(self.hexstr[:7])
                 # print("ToCall > {}".format(self.hexstr[:7]))
@@ -854,6 +873,7 @@ if __name__ == '__main__':
     #fr.decode(fck_ms2)
     #AX25Frame().decode(fck_msg)
     #AX25Frame().decode(msg)
+    AX25Frame().decode(fck_ms2)
 
     # print([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()])
     print("fck_msg: {}".format([f'0x{val}' for val in fck_msg.hex(' ', 1).split()]))
@@ -869,8 +889,14 @@ if __name__ == '__main__':
     # print(len(bytearray2hexstr(msg).encode()))
     # print(bytearray2hexstr(msg))
 
-    print("fck_ms233: {}".format([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()]))
+    #print("fck_ms233: {}".format([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()]))
     fck_bit_str = ''.join(f'{bin(int(val, 16))}'[2:] for val in fck_ms2.hex(' ', 1).split())
+    #print('---------------------')
+    #print(fck_bit_str)
+
+
+
+    # find_bit_stuffing(fck_ms2)
 
     # https://stackoverflow.com/questions/43787031/python-byte-array-to-bit-array
     def access_bit(data, num):
@@ -924,7 +950,7 @@ if __name__ == '__main__':
     best = bytes.fromhex(hex_str)
     print(best)
     """
-    AX25Frame().decode(fck_ms2)
+    #AX25Frame().decode(fck_ms2)
 
     # li = [f'b{val}' for val in un_fck_bit_str.split()]
     #un_fck_bit_str += '0'

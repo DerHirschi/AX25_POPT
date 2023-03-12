@@ -25,13 +25,12 @@ class AX25EncodingERROR(Exception):
 
             logger.error('____________VIA Call s________________')
             ind = 0
-            for via in frame.via_calls:
-                for call_obj in via:
-                    logger.error('____________VIA Call {}________________'.format(ind))
-                    for att in dir(call_obj):
-                        if '__' not in att:
-                            if hasattr(call_obj, att):
-                                logger.error("VIA Call{}: {} > {}".format(ind, att, getattr(call_obj, att)))
+            for call_obj in frame.via_calls:
+                logger.error('____________VIA Call {}________________'.format(ind))
+                for att in dir(call_obj):
+                    if '__' not in att:
+                        if hasattr(call_obj, att):
+                            logger.error("VIA Call{}: {} > {}".format(ind, att, getattr(call_obj, att)))
                 ind += 1
             logger.error('____________Ctl-Byte________________')
             for att in dir(frame.ctl_byte):
@@ -68,13 +67,12 @@ class AX25DecodingERROR(Exception):
 
             logger.error('____________VIA Call s________________')
             ind = 0
-            for via in frame.via_calls:
-                for call_obj in via:
-                    logger.error('____________VIA Call {}________________'.format(ind))
-                    for att in dir(call_obj):
-                        if '__' not in att:
-                            if hasattr(call_obj, att):
-                                logger.error("VIA Call{}: {} > {}".format(ind, att, getattr(call_obj, att)))
+            for call_obj in frame.via_calls:
+                logger.error('____________VIA Call {}________________'.format(ind))
+                for att in dir(call_obj):
+                    if '__' not in att:
+                        if hasattr(call_obj, att):
+                            logger.error("VIA Call{}: {} > {}".format(ind, att, getattr(call_obj, att)))
                 ind += 1
             logger.error('____________Ctl-Byte________________')
             for att in dir(frame.ctl_byte):
