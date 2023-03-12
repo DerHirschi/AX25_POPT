@@ -230,6 +230,8 @@ class CByte(object):
         self.hex = hex(int(ret, 2))
 
     def dec_cbyte(self, in_byte):
+        logger.error('C-Byte Decoding C-Byte> ' + str(bin(int(in_byte))[2:].zfill(8)) + ' ' + hex(in_byte))
+
         if int(in_byte) in self.pac_types.keys():
             # print("Predefined Pac Type.. {}".format(in_byte))
             self.pac_types[int(in_byte)]()
@@ -619,12 +621,13 @@ class AX25Frame(object):
                 logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
                 logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
                 # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
-                logger.error('Decoding Error !! increment index !! QUICK FIX !! TODO: GET THIS BUG')
-                index += 1
+                logger.error('Decoding Error !! increment index !! QUICK FIX Doesnt Work!! TODO: GET THIS BUG')
+                #index += 1
                 try:
-                    # index += 1
+                    index += 1
                     self.ctl_byte.dec_cbyte(self.hexstr[index])
                     # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
+                    raise AX25DecodingERROR(self)
                 except (AX25DecodingERROR, IndexError) as e:
                     # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
                     logger.error('Decoding Error !! {}'.format(e))
@@ -839,26 +842,108 @@ if __name__ == '__main__':
     # Error Msg                                       ctl pid       < Wrong
     # Error Msg                                           ctl pid   < Right
     fck_msg = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
+    # fm DNX527 to MD5TES ctl I60^ pid=F0(Text) len 17
+    # fck_ms2 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0<<< 73 >>>\n\n\n\n\n\n\n'
     # Working Msg
-    msg = b'\x9a\x88j\xa8\x8a\xa6`\x88\x9c\xb0jdn\xe1s'
-    fr = AX25Frame()
-    fr.decode(msg)
-    AX25Frame().decode(fck_msg)
-    AX25Frame().decode(msg)
+    ms1 = b'\x9a\x88j\xa8\x8a\xa6`\x88\x9c\xb0jdn\xe1s'
+    # fm DNX527 to MD5TES ctl I60^ pid=F0(Text) len 17
+    fck_ms2 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0<<< 73 >>>\n\n\n\n\n\n\n'
+    # DNX527 to MD5TES cmd (0xac) I56- pid=0xf0(Text (NO L3)) len 150
+    ms2     = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xac\xf0D5TES-15    \rP:DW>11/03/23 12:16:17 DBO527-1     P:TEST>12/03/23 08:32:46 MD2SAW       \rP:TEST>12/03/23 08:31:09 CB0SAW-14    \r\rTotal Packets Rec.: 24'
+    #fr = AX25Frame()
+    #fr.decode(fck_ms2)
+    #AX25Frame().decode(fck_msg)
+    #AX25Frame().decode(msg)
 
-    """
-    print(msg)
-    print(bytearray2hexstr(msg))
-    print(bytes.fromhex(bytearray2hexstr(msg)))
-    print(msg)
+    # print([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()])
+    print("fck_msg: {}".format([f'0x{val}' for val in fck_msg.hex(' ', 1).split()]))
+    print("fck_ms2: {}".format([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()]))
+    print("ms2    : {}".format([f'0x{val}' for val in ms2.hex(' ', 1).split()]))
+    print(fck_msg)
+    print(bytearray2hexstr(fck_msg))
+    print(fck_msg.hex())
+    print(bytes.fromhex(bytearray2hexstr(fck_msg)))
+    print(fck_msg)
     #print(msg.iterbytes())
-    print([bytes([i]) for i in msg])
+    print([bytes([i]) for i in fck_msg])
     # print(len(bytearray2hexstr(msg).encode()))
     # print(bytearray2hexstr(msg))
+
+    print("fck_ms233: {}".format([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()]))
+    fck_bit_str = ''.join(f'{bin(int(val, 16))}'[2:] for val in fck_ms2.hex(' ', 1).split())
+
+    # https://stackoverflow.com/questions/43787031/python-byte-array-to-bit-array
+    def access_bit(data, num):
+        base = int(num // 8)
+        shift = int(num % 8)
+        return (data[base] >> shift) & 0x1
+
+
+    fck_bit = [access_bit(fck_ms2, i) for i in range(len(fck_ms2) * 8)]
+
+    un_fck_bit_str = []
+    c = 0
+    for b in fck_bit:
+
+        if c == 5:
+            c = 0
+            if b:
+                print("ERROR !! NO Bit Stuffing !! ")
+            else:
+                print("Bit Stuffing !! ")
+        else:
+            un_fck_bit_str.append(b)
+        if b:
+            c += 1
+        else:
+            c = 0
+
+    print(fck_bit)
+    print(un_fck_bit_str)
+
+
+    def getbytes(bits):     # https://stackoverflow.com/questions/28370991/converting-bits-to-bytes-in-python
+        done = False
+        while not done:
+            byte = 0
+            for _ in range(0, 8):
+                try:
+                    bit = next(bits)
+                except StopIteration:
+                    bit = 0
+                    done = True
+                byte = (byte << 1) | bit
+            yield byte
+    # print(getbytes(iter(un_fck_bit_str)))
+    hex_str = ''
+    for b in getbytes(iter(un_fck_bit_str)):
+        # print(bytes.fromhex(hex(b)[2:]))
+        hex_str += hex(b)[2:]
+    """
+    print(hex_str)
+    best = bytes.fromhex(hex_str)
+    print(best)
+    """
+    AX25Frame().decode(fck_ms2)
+
+    # li = [f'b{val}' for val in un_fck_bit_str.split()]
+    #un_fck_bit_str += '0'
+    #li = [un_fck_bit_str[i:i + 8] for i in range(0, len(un_fck_bit_str), 8)]
+    #print(li)
+    #hexst = ''
+    #for el in li:
+        #hexst += hex(int(el, 2))[2:]
+
+    #print(hexst)
+    #print(hexst[52])
+    #best = bytes.fromhex(hexst)
+    #print(best)
+    #AX25Frame().decode(best)
+    """
     st = ''
     c = 0
     tmp = ''
-    for i in bytearray2hexstr(msg):
+    for i in bytearray2hexstr(ms2):
         tmp += i
         if len(tmp) == 2:
             print("Index: {}".format(c))
