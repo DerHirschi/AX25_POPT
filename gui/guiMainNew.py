@@ -200,8 +200,6 @@ class TkMainWin:
         pass
 
     def destroy_win(self):
-        self.disco_all()    # TODO ... Wait until are connections are gone
-        #time.sleep(2)
         self.ax25_port_handler.close_all()
         self.main_win.quit()
         # self.main_class.settings_win = None

@@ -458,7 +458,7 @@ class KissTCP(AX25Port):
         if self.loop_is_running:
             print("KISS TCP INIT")
             logger.info("KISS TCP INIT")
-            sock_timeout = 0.5
+            sock_timeout = 0.3
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
             try:
                 self.device.settimeout(sock_timeout)
@@ -467,10 +467,12 @@ class KissTCP(AX25Port):
             except (OSError, ConnectionRefusedError, ConnectionError) as e:
                 logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
                 logger.error('{}'.format(e))
+                # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 # raise AX25DeviceFAIL
 
     def __del__(self):
+        # self.device.shutdown(socket.SHUT_RDWR)
         self.close_device()
 
     def close_device(self):
@@ -478,6 +480,7 @@ class KissTCP(AX25Port):
         if self.device is not None:
             try:
                 self.device.settimeout(0)
+                self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 self.device.recv(999)
             except (OSError, ConnectionRefusedError, ConnectionError):
@@ -485,7 +488,7 @@ class KissTCP(AX25Port):
 
     def rx(self):
         try:
-            recv_buff = self.device.recv(3000)
+            recv_buff = self.device.recv(999)
         except socket.timeout:
             # self.device.close()
             raise AX25DeviceERROR
@@ -605,6 +608,7 @@ class AXIP(AX25Port):
                 self.device_is_running = True
             except OSError as e:
                 logger.error('{}'.format(e))
+                # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
                 self.device.settimeout(sock_timeout)
@@ -614,18 +618,20 @@ class AXIP(AX25Port):
                     self.device_is_running = True
                 except OSError as e:
                     logger.error('{}'.format(e))
+                    # self.device.shutdown(socket.SHUT_RDWR)
                     self.device.close()
                     self.device_is_running = False
                     # raise AX25DeviceFAIL
 
     def __del__(self):
+        # self.device.shutdown(socket.SHUT_RDWR)
         self.close_device()
 
     def close_device(self):
         self.loop_is_running = False
         if self.device is not None:
             try:
-                self.device.settimeout(0)
+                self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 self.device.recv(999)
                 time.sleep(0.5)

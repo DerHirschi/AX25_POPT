@@ -40,6 +40,10 @@ class AX25PortHandler(object):
         return self.ax25_ports[index]
 
     def close_all(self):
+        for k in list(self.all_connections.keys()):
+            del self.all_connections[k]
+        if self.gui is not None:
+            self.gui.ch_btn_status_update()
         self.gui = None
         self.set_gui(None)
         self.close_all_ports()
@@ -60,12 +64,14 @@ class AX25PortHandler(object):
 
     def close_port(self, port_id: int):
         port = self.ax25_ports[port_id]
+        port.connections = {}
         port.close()
         c = 0
         while not port.ende:
             time.sleep(0.5)
             # self.sysmsg_to_gui("Hinweis: Warte auf Port " + str(port_id))
             print("Warte auf Port " + str(port_id))
+            port.close()
             c += 1
             if c == 10:
                 break
@@ -175,9 +181,8 @@ class AX25PortHandler(object):
             else:
                 new_conn.ch_index = int(ind)
                 self.all_connections[ind] = new_conn
-            if new_conn.is_gui:
-                # new_conn.setChVar()
-                new_conn.gui.ch_btn_status_update()
+            if self.gui is not None:
+                self.gui.ch_btn_status_update()
 
     def cleanup_conn2all_conn_var(self):
         temp = []
@@ -206,8 +211,8 @@ class AX25PortHandler(object):
             if self.gui is not None:
                 self.gui.disco_snd()
             del self.all_connections[k]
-        if conn.is_gui:
-            conn.gui.ch_btn_status_update()
+        if self.gui is not None:
+            self.gui.ch_btn_status_update()
 
     ######################
     # RX-ECHO Handling
