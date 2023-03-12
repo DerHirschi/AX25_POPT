@@ -265,6 +265,7 @@ class AX25Port(threading.Thread):
                     except AX25DeviceFAIL as e:
                         raise e
 
+
                     cfg = self.port_cfg
                     # Monitor
                     if self.gui is not None:
@@ -279,8 +280,7 @@ class AX25Port(threading.Thread):
                 tr = True
             except AX25DeviceFAIL as e:
                 raise e
-            except AX25EncodingERROR:
-                logger.error('Encoding Error: ! MSG to short !')
+
             # Monitor
             cfg = self.port_cfg
             # Monitor
@@ -504,24 +504,26 @@ class KissTCP(AX25Port):
         ############################################
         # !!!!!!! BUG ?????????
         out = (bytes.fromhex('c000') + frame.hexstr + bytes.fromhex('c0'))
-        if len(out) < 15:
+        if len(frame.hexstr) < 15:
+            logger.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             logger.error('Error Port {0} - Packet < 15 - \nout: {1}\nframe.hexstr: {2}'.format(
                 self.port_param,
                 out,
                 frame.hexstr))
-            raise AX25EncodingERROR(frame)
+            AX25EncodingERROR(frame)
         # Just Log it and let it through. DW is block this
         #######################################
-        try:
-            self.device.sendall(out)
-        except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
-            logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
-            logger.error('{}'.format(e))
+        else:
             try:
-                self.init()
-            except AX25DeviceFAIL:
-                logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
-                raise AX25DeviceFAIL
+                self.device.sendall(out)
+            except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
+                logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
+                logger.error('{}'.format(e))
+                try:
+                    self.init()
+                except AX25DeviceFAIL:
+                    logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                    raise AX25DeviceFAIL
         ############################################
 
 
@@ -563,7 +565,7 @@ class KISSSerial(AX25Port):
                 return RxBuf()
             except TypeError as e:
                 # Disconnect of USB->UART occured
-                logger.error('Serial Device Error {}'.format(e))
+                logger.warning('Serial Device Error {}'.format(e))
                 # self.device.close()
                 try:
                     self.init()
@@ -585,8 +587,8 @@ class KISSSerial(AX25Port):
         try:
             self.device.write(bytes.fromhex('c000') + frame.hexstr + bytes.fromhex('c0'))
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
-            logger.error('Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
-            logger.error('{}'.format(e))
+            logger.warning('Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
+            logger.warning('{}'.format(e))
             try:
                 self.init()
             except AX25DeviceFAIL:
@@ -604,7 +606,7 @@ class AXIP(AX25Port):
                 hostname = socket.gethostname()
                 self.port_param = socket.gethostbyname(hostname), self.port_param[1]
             self.own_ipAddr = self.port_param[0]
-            print(self.own_ipAddr)
+            logger.info('AXIP bind on IP: {}'.format(self.own_ipAddr))
             sock_timeout = 0.2
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             self.device.settimeout(sock_timeout)
@@ -612,7 +614,7 @@ class AXIP(AX25Port):
                 self.device.bind(self.port_param)
                 self.device_is_running = True
             except OSError as e:
-                logger.error('{}'.format(e))
+                logger.warning('AXIP {}'.format(e))
                 # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -622,7 +624,7 @@ class AXIP(AX25Port):
                     self.device.bind(self.port_param)
                     self.device_is_running = True
                 except OSError as e:
-                    logger.error('{}'.format(e))
+                    logger.error('AXIP 2 {}'.format(e))
                     # self.device.shutdown(socket.SHUT_RDWR)
                     self.device.close()
                     self.device_is_running = False
@@ -690,8 +692,8 @@ class AXIP(AX25Port):
             try:
                 self.device.sendto(frame.hexstr + calc_crc, frame.axip_add)
             except (ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
-                logger.error('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
-                logger.error('{}'.format(e))
+                logger.warning('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
+                logger.warning('{}'.format(e))
                 try:
                     self.init()
                 except AX25DeviceFAIL:

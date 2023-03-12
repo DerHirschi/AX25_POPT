@@ -25,7 +25,9 @@ elif 'win' in sys.platform:
 
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    filename='debug.log',
+    level=logging.DEBUG
 )
 logger = logging.getLogger(__name__)
 
