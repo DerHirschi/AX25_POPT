@@ -581,13 +581,13 @@ class AX25Frame(object):
         if self.hexstr and len(self.hexstr) > 14:
             try:
                 self.to_call.dec_call(self.hexstr[:7])
-                print("ToCall > {}".format(self.hexstr[:7]))
+                # print("ToCall > {}".format(self.hexstr[:7]))
             except IndexError:
                 print("Index ERROR To Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             try:
                 self.from_call.dec_call(self.hexstr[7:14])
-                print("FromCall > {}".format(self.hexstr[7:14]))
+                # print("FromCall > {}".format(self.hexstr[7:14]))
             except IndexError:
                 print("Index ERROR From Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
@@ -597,7 +597,7 @@ class AX25Frame(object):
                     tmp = Call()
                     try:
                         tmp.dec_call(self.hexstr[7 * n: 14 * n])
-                        print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
+                        # print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
                     except IndexError:
                         print("Index ERROR Via Call!!!!!!!!!!")
                         raise AX25DecodingERROR(self)
