@@ -6,6 +6,7 @@ from gui.guiRxEchoSettings import RxEchoVars
 
 class AX25PortHandler(object):
     def __init__(self, glb_MH):
+        logger.info("Starte PoPT ...")
         config_station.init_dir_struct()
         self.is_running = True
         self.max_ports = 20
@@ -33,6 +34,7 @@ class AX25PortHandler(object):
 
     def __del__(self):
         self.close_all_ports()
+        logger.info("Ende PoPT Ver.: {}".format(VER))
 
     ######################
     # Connection Handling
@@ -54,6 +56,7 @@ class AX25PortHandler(object):
             self.mh_list.save_mh_data()
             del self.mh_list
         """
+        logger.info('Info: Versuche alle Ports zu schließen.')
         if self.is_running:
             self.is_running = False
 
@@ -63,6 +66,7 @@ class AX25PortHandler(object):
                 # self.ax25_ports[k].join()
 
     def close_port(self, port_id: int):
+        logger.info('Info: Versuche Port {} zu schließen.'.format(port_id))
         port = self.ax25_ports[port_id]
         port.connections = {}
         port.close()
@@ -71,6 +75,7 @@ class AX25PortHandler(object):
             time.sleep(0.5)
             # self.sysmsg_to_gui("Hinweis: Warte auf Port " + str(port_id))
             print("Warte auf Port " + str(port_id))
+            logger.debug("Warte auf Port " + str(port_id))
             port.close()
             c += 1
             if c == 10:
@@ -87,8 +92,10 @@ class AX25PortHandler(object):
             del self.rx_echo[port_id]
         del port
         self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
+        logger.info('Info: Port {} erfolgreich geschlossen.'.format(port_id))
 
     def reinit_all_ports(self):
+        logger.info("Reinit all Ports")
         for port_id in list(self.ax25_ports.keys()):
             self.close_port(port_id=port_id)
         time.sleep(1)  # Cooldown for Device
@@ -102,6 +109,7 @@ class AX25PortHandler(object):
             self.init_port(port_id=port_id)
 
     def init_port(self, port_id: int):
+        logger.info("Initialisiere Port: {}".format(port_id))
         if port_id in self.ax25_ports.keys():
             logger.error('Could not initialise Port {}. Port already in use'.format(port_id))
             self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.'
@@ -135,6 +143,7 @@ class AX25PortHandler(object):
                 self.ax25_port_settings[port_id] = temp.port_cfg
                 self.rx_echo[port_id] = RxEchoVars(port_id)
                 self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
+                logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
 
     def save_all_port_cfgs(self):
         for port_id in self.ax25_ports.keys():

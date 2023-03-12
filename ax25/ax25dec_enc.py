@@ -442,8 +442,8 @@ class PIDByte(object):
         if int(in_byte) in self.pac_types.keys():
             self.pac_types[int(in_byte)]()
         else:
-            print("in_pid_bate: {}".format(hex(in_byte)))
-            print("in_pid_bate: {}".format(type(in_byte)))
+            logger.debug("decode in_pid_bate hex: {}".format(hex(in_byte)))
+            logger.debug("decode in_pid_bate byte: {}".format(type(in_byte)))
             #in_byte = int(in_byte, 16)
 
             bi = bin(in_byte)[2:].zfill(8)
@@ -814,5 +814,7 @@ def via_calls_fm_str(inp_str: str):
 if __name__ == '__main__':
     msg = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
     # print(bytearray2hexstr(msg))
-    fr = AX25Frame()
-    fr.decode(msg)
+    # fr = AX25Frame()
+    # fr.decode(msg)
+    print(format_hexstr(msg.decode('utf-8', 'ignore')))
+    print(bytearray2hexstr(msg.decode('utf-8', 'ignore')))

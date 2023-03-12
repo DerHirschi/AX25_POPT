@@ -363,7 +363,7 @@ class AX25Port(threading.Thread):
         ax25_frame.encode()
         while ax25_frame.addr_uid in self.connections.keys() or \
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
-            print("Same UID !! {}".format(ax25_frame.addr_uid))
+            logger.debug("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
             try:
@@ -407,12 +407,12 @@ class AX25Port(threading.Thread):
                 ##############################################
                 buf: RxBuf = self.rx()
                 ##############################################
-                logger.debug('Inp Buf> {}'.format(buf))
             except AX25DeviceERROR:
                 break
             if buf is None:
                 buf = RxBuf()
             if buf.raw_data and self.loop_is_running:  # RX ############
+                logger.debug('Inp RAW Buf - Port {} > {}'.format(self.port_id, buf.raw_data))
                 self.set_TXD()
                 ax25frame = AX25Frame()
                 ax25frame.axip_add = buf.axip_add
@@ -425,6 +425,7 @@ class AX25Port(threading.Thread):
                     logger.error('{}: org {}'.format(self.portname, buf.raw_data))
                     logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
                     break
+                # logger.debug('Inp fromhexstr fnc() - Port {} > {}'.format(self.port_id, ax25frame.hexstr))
                 if e is None and ax25frame.validate():
                     # ######### RX #############
                     # Handling
