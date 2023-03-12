@@ -70,7 +70,12 @@ class StatSetTab:
         digi_x = 305
         digi_y = 500
         self.digi_set_var = tk.IntVar()
-        self.digi = tk.Checkbutton(self.own_tab, text='DIGI', width=4, variable=self.digi_set_var)
+        self.digi = tk.Checkbutton(self.own_tab,
+                                   text='DIGI',
+                                   width=4,
+                                   variable=self.digi_set_var,
+                                   state='disabled'     # TODO
+                                   )
         self.digi.place(x=digi_x, y=height - digi_y)
 
         ##################
@@ -78,7 +83,12 @@ class StatSetTab:
         digi_x = 390
         digi_y = 500
         self.smart_digi_set_var = tk.IntVar()
-        self.smart_digi = tk.Checkbutton(self.own_tab, text='Managed-DIGI', width=12, variable=self.smart_digi_set_var)
+        self.smart_digi = tk.Checkbutton(self.own_tab,
+                                         text='Managed-DIGI',
+                                         width=12,
+                                         variable=self.smart_digi_set_var,
+                                         state='disabled'   # TODO
+                                         )
         self.smart_digi.place(x=digi_x, y=height - digi_y)
 
         ###############################
@@ -233,11 +243,11 @@ class StatSetTab:
         self.pac_len.delete(0, tk.END)
         self.pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
         # DIGI
-        self.digi_set_var.set(1)  # TODO
-        self.digi.select()
+        # self.digi_set_var.set(1)  # TODO
+        # self.digi.select()
         # Smart DIGI
-        self.smart_digi_set_var.set(1)  # TODO
-        self.smart_digi.select()
+        # self.smart_digi_set_var.set(1)  # TODO
+        # self.smart_digi.select()
         # C-Text
         self.c_text_ent.delete('1.0', tk.END)
         self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)

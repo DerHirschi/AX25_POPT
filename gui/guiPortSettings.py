@@ -513,6 +513,8 @@ class PortSetTab:
         # Pseudo TXD
         self.port_setting.parm_TXD = int(self.ptxd.get())
         # Baud
+        if self.port_setting.parm_PortTyp == 'KISSSER':
+            self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
         self.port_setting.parm_baud = int(self.calc_baud.get())
         # T 1
         self.port_setting.parm_T1 = int(self.t1.get())
@@ -535,6 +537,7 @@ class PortSetTab:
             self.port_setting.parm_full_duplex = True
         else:
             self.port_setting.parm_full_duplex = False
+
         self.port_setting.parm_axip_Multicast = bool(self.axip_multicast_var.get())
         self.port_setting.parm_axip_fail = int(self.test_fail.get())
 

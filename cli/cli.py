@@ -117,7 +117,7 @@ class DefaultCLI(object):
 
     def is_prefix(self):
         if self.prefix:
-            print(self.input)
+            # print(self.input)
             while self.input[:1] in [b'\r', b'\n']:
                 self.input = self.input[1:]
                 if not self.input:
@@ -130,8 +130,8 @@ class DefaultCLI(object):
                 if len(cmd) > 1:
                     self.input = cmd[1:]
                     self.parameter = cmd[1:]
-                    print("input INP: {}".format(self.input))
-                    print("parameter INP: {}".format(self.parameter))
+                    # print("input INP: {}".format(self.input))
+                    # print("parameter INP: {}".format(self.parameter))
                 else:
                     self.input = b''
 
@@ -152,8 +152,8 @@ class DefaultCLI(object):
         if len(cmd) > 1:
             self.input = cmd[1:]
             self.parameter = cmd[1:]
-            print("input INP: {}".format(self.input))
-            print("parameter INP: {}".format(self.parameter))
+            # print("input INP: {}".format(self.input))
+            # print("parameter INP: {}".format(self.parameter))
         else:
             self.input = b''
         cmd = cmd[0]
@@ -180,7 +180,7 @@ class DefaultCLI(object):
         if self.is_prefix():
             # self.get_parameter()
             if self.cmd in self.cmd_exec.keys():
-                print("INP: {}".format(self.input))
+                # print("INP: {}".format(self.input))
                 ret = self.cmd_exec[self.cmd][0]()
                 self.cmd = b''
             else:
@@ -191,7 +191,7 @@ class DefaultCLI(object):
         # CMD Input for No User Terminals ( Node ... )
         else:
             if self.cmd in self.cmd_exec.keys():
-                print("INP: {}".format(self.input))
+                # print("INP: {}".format(self.input))
                 ret = self.cmd_exec[self.cmd][0]()
                 self.cmd = b''
                 if self.crone_state_index != 100:  # Not Quit

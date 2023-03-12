@@ -410,7 +410,8 @@ class AX25Port(threading.Thread):
                 logger.debug('Inp Buf> {}'.format(buf))
             except AX25DeviceERROR:
                 break
-
+            if buf is None:
+                buf = RxBuf()
             if buf.raw_data and self.loop_is_running:  # RX ############
                 self.set_TXD()
                 ax25frame = AX25Frame()
@@ -458,7 +459,7 @@ class KissTCP(AX25Port):
         if self.loop_is_running:
             print("KISS TCP INIT")
             logger.info("KISS TCP INIT")
-            sock_timeout = 0.3
+            sock_timeout = 0.2
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
             try:
                 self.device.settimeout(sock_timeout)
@@ -531,7 +532,7 @@ class KISSSerial(AX25Port):
             print("KISS Serial INIT")
             logger.info("KISS Serial INIT")
             try:
-                self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.5)
+                self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.2)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
                 logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
@@ -547,17 +548,19 @@ class KISSSerial(AX25Port):
         if self.device is not None:
             try:
                 self.device.close()
+                self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):
                 pass
 
     def rx(self):
         recv_buff = b''
-        while self.loop_is_running:
+        while self.loop_is_running and self.device_is_running:
+            # print('RX LOOP')
             try:
                 recv_buff += self.device.read()
-            except serial.SerialException:
+            except serial.SerialException as e:
                 # There is no new data from serial port
-                return b''
+                return RxBuf()
             except TypeError as e:
                 # Disconnect of USB->UART occured
                 logger.error('Serial Device Error {}'.format(e))
@@ -574,7 +577,9 @@ class KISSSerial(AX25Port):
                     if len(recv_buff) > 14:  # ? Min Pack Len 17
                         if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
                             ret.raw_data = recv_buff[2:-1]
-                return ret
+                            return ret
+                else:
+                    return ret
 
     def tx(self, frame: AX25Frame):
         try:
