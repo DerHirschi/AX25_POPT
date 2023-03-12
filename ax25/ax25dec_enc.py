@@ -611,14 +611,29 @@ class AX25Frame(object):
             try:
                 # index += 1
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
-                print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
+                # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
             except (AX25DecodingERROR, IndexError) as e:
-                print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
+                # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
                 logger.error('Decoding Error !! {}'.format(e))
                 logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
                 logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
                 logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
-                raise AX25DecodingERROR(self)
+                # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
+                logger.error('Decoding Error !! increment index !! QUICK FIX !! TODO: GET THIS BUG')
+                index += 1
+                try:
+                    # index += 1
+                    self.ctl_byte.dec_cbyte(self.hexstr[index])
+                    # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
+                except (AX25DecodingERROR, IndexError) as e:
+                    # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
+                    logger.error('Decoding Error !! {}'.format(e))
+                    logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
+                    logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
+                    logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
+                    logger.error('Decoding Error !! increment index !! QUICK FIX !! TODO: GET THIS BUG')
+                    raise AX25DecodingERROR(self)
+
             # Get Command Bits
             if self.to_call.c_bit and not self.from_call.c_bit:
                 self.ctl_byte.cmd = True
@@ -821,19 +836,53 @@ def via_calls_fm_str(inp_str: str):
 
 
 if __name__ == '__main__':
-    #                                                     ctl  pid
-    msg = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
-    #msg = b'\x9a\x88j\xa8\x8a\xa6`\x88\x9c\xb0jdn\xe1s'
+    # Error Msg                                       ctl pid       < Wrong
+    # Error Msg                                           ctl pid   < Right
+    fck_msg = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
+    # Working Msg
+    msg = b'\x9a\x88j\xa8\x8a\xa6`\x88\x9c\xb0jdn\xe1s'
+    fr = AX25Frame()
+    fr.decode(msg)
+    AX25Frame().decode(fck_msg)
+    AX25Frame().decode(msg)
+
     """
-    print(len(msg))
-    print(len(bytearray2hexstr(msg)))
-    print(len(bytearray2hexstr(msg).encode()))
+    print(msg)
+    print(bytearray2hexstr(msg))
+    print(bytes.fromhex(bytearray2hexstr(msg)))
+    print(msg)
+    #print(msg.iterbytes())
+    print([bytes([i]) for i in msg])
+    # print(len(bytearray2hexstr(msg).encode()))
     # print(bytearray2hexstr(msg))
     st = ''
-    for by in msg:
+    c = 0
+    tmp = ''
+    for i in bytearray2hexstr(msg):
+        tmp += i
+        if len(tmp) == 2:
+            print("Index: {}".format(c))
+            print(tmp)
+            print(bytes.fromhex(tmp))
+            print("---------------")
+
+            c += 1
+            tmp = ''
+    """
+    """
+    for by in range(int(len(bytearray2hexstr(msg)) / 2)):
+        print("Index: {}".format(c))
+        print(bytearray2hexstr(msg)[by: by + 2])
+        print(bytes.fromhex(bytearray2hexstr(msg)[by: by + 2]))
         #print(by)
+        #print(msg[c])
+        #print(msg[c - 1:c])
+        print("---------------")
         st += format_hexstr(by)
-    print(len(st))
+        c += 1
+    """
+    # print(len(st))
+    """
     stt = ''
     for by in st:
         # print(by)
@@ -841,9 +890,9 @@ if __name__ == '__main__':
     print(stt)
     print(len(stt))
     """
-    fr = AX25Frame()
+    #fr = AX25Frame()
     # fr.decode(msg)
-    fr.decode(bytearray2hexstr(msg).encode())
+    #fr.decode(bytearray2hexstr(msg).encode())
     # st = ''
     #print(format_hexstr(msg.decode('utf-8', 'ignore')))
     """
