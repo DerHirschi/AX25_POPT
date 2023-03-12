@@ -540,7 +540,7 @@ class KISSSerial(AX25Port):
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
                 logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
                 logger.error('{}'.format(e))
-                self.device.close()
+                # self.device.close()
                 # raise AX25DeviceFAIL
 
     def __del__(self):

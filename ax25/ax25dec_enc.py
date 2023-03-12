@@ -581,19 +581,25 @@ class AX25Frame(object):
         if self.hexstr and len(self.hexstr) > 14:
             try:
                 self.to_call.dec_call(self.hexstr[:7])
+                print("ToCall > {}".format(self.hexstr[:7]))
             except IndexError:
+                print("Index ERROR To Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             try:
                 self.from_call.dec_call(self.hexstr[7:14])
+                print("FromCall > {}".format(self.hexstr[7:14]))
             except IndexError:
+                print("Index ERROR From Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             n = 2
             if not self.from_call.s_bit:
                 while True:
                     tmp = Call()
                     try:
-                        tmp.dec_call(self.hexstr[7 * n: 7 + 7 * n])
+                        tmp.dec_call(self.hexstr[7 * n: 14 * n])
+                        print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
                     except IndexError:
+                        print("Index ERROR Via Call!!!!!!!!!!")
                         raise AX25DecodingERROR(self)
                     self.via_calls.append(tmp)
                     n += 1
@@ -603,8 +609,11 @@ class AX25Frame(object):
             index = 7 * n
             # Dec C-Byte
             try:
+                # index += 1
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
+                print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
             except (AX25DecodingERROR, IndexError) as e:
+                print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
                 logger.error('Decoding Error !! {}'.format(e))
                 logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
                 logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
@@ -812,9 +821,34 @@ def via_calls_fm_str(inp_str: str):
 
 
 if __name__ == '__main__':
+    #                                                     ctl  pid
     msg = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
+    #msg = b'\x9a\x88j\xa8\x8a\xa6`\x88\x9c\xb0jdn\xe1s'
+    """
+    print(len(msg))
+    print(len(bytearray2hexstr(msg)))
+    print(len(bytearray2hexstr(msg).encode()))
     # print(bytearray2hexstr(msg))
-    # fr = AX25Frame()
+    st = ''
+    for by in msg:
+        #print(by)
+        st += format_hexstr(by)
+    print(len(st))
+    stt = ''
+    for by in st:
+        # print(by)
+        stt += format_hex2bin(by)
+    print(stt)
+    print(len(stt))
+    """
+    fr = AX25Frame()
     # fr.decode(msg)
-    print(format_hexstr(msg.decode('utf-8', 'ignore')))
-    print(bytearray2hexstr(msg.decode('utf-8', 'ignore')))
+    fr.decode(bytearray2hexstr(msg).encode())
+    # st = ''
+    #print(format_hexstr(msg.decode('utf-8', 'ignore')))
+    """
+    for el in msg.decode('utf-8', 'ignore'):
+        st += format_hexstr(el)
+    print(st)
+    """
+    # print(bytearray2hexstr(msg.decode('utf-8', 'ignore')))
