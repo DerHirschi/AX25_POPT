@@ -21,6 +21,7 @@ crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 class RxBuf:
     axip_add = '', 0
     raw_data = b''
+    kiss = b''
 
 
 class AX25Port(threading.Thread):
@@ -497,7 +498,9 @@ class KissTCP(AX25Port):
         except OSError:
             raise AX25DeviceERROR
         ret = RxBuf()
-        if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
+        if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
+            # ret.raw_data = recv_buff[2:-1]
+            ret.kiss = recv_buff[1:2]
             ret.raw_data = recv_buff[2:-1]
         return ret
 
@@ -577,10 +580,11 @@ class KISSSerial(AX25Port):
                 ret = RxBuf()
                 if recv_buff:
                     # print(recv_buff)
-                    if len(recv_buff) > 17:  # ? Min Pack Len 17
-                        if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
-                            ret.raw_data = recv_buff[2:-1]
-                            return ret
+                    if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
+                        # ret.raw_data = recv_buff[2:-1]
+                        ret.kiss = recv_buff[1:2]
+                        ret.raw_data = recv_buff[2:-1]
+                        return ret
                 else:
                     return ret
 
@@ -666,18 +670,7 @@ class AXIP(AX25Port):
             ret.axip_add = to_call_ip_addr
             if calc_crc == crc:
                 ret.raw_data = pack
-            """
-            if self.port_cfg.parm_axip_Multicast:
-                ax25frame = AX25Frame()
-                ax25frame.axip_add = to_call_ip_addr
-                try:
-                    # Decoding
-                    ax25frame.decode(pack)
-                except AX25DecodingERROR:
-                    logger.error('Port:{} decoding: '.format(self.portname))
-                else:
-                    self.tx_multicast(frame=ax25frame)
-            """
+                ret.kiss = b''
             return ret
 
     def tx(self, frame: AX25Frame, no_multicast=False):

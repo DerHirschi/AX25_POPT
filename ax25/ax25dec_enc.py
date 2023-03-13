@@ -6,6 +6,16 @@
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 
 
+def de_arschloch_kiss_frame(inp: b''):
+    """ *$§'%R&/$§§$*"&/=ß!?!$%%§"(§ !!!!!!!! """
+    return inp.replace( b'\xdb\xdc', b'\xc0')
+
+
+def arschloch_kiss_frame(inp: b''):
+    """ *$§'%R&/$§§$*"&/=ß!?!$%%§"(§ !!!!!!!! """
+    return inp.replace(b'\xc0', b'\xdb\xdc')
+
+
 def find_bits(inp):
     fck_bit = ''.join(f'{bin(int(val, 16))}'[1:] for val in inp.hex(' ', 1).split())
     such = '00001100'
@@ -58,6 +68,7 @@ def where_the_fucking_dbd_is_coming_from_why__just_why__fck_dump_fix(inp: b'', h
         tmp = tmp.replace(b'\xdb\xdc', b'\xc0')
         print('____________________________________________')
         print('!%$§&/§4#+*"&/)(§"%!%§"$&§$&"$§"& !!!!!!!!!')
+        print('! KISS u fck A Hole !!!!!!!!!')
         print('! DBD Detected !!!!!!!!! {}'.format(inp))
         print('! tmp {}'.format(tmp))
         print(tmp + inp[index:])
@@ -303,7 +314,7 @@ class CByte(object):
         else:
             # print("Not predefined Pac Type..")
             self.hex = hex(int(in_byte))
-            print(self.hex)
+            # print(self.hex)
             bi = bin(int(in_byte))[2:]
             bi = bi.zfill(8)
             pf = bool(int(bi[3], 2))  # P/F
@@ -588,7 +599,7 @@ class PIDByte(object):
 
 class AX25Frame(object):
     def __init__(self):
-        # self.kiss = b''
+        self.kiss = b''
         self.hexstr = b''           # Dekiss
         self.from_call = Call()
         self.to_call = Call()
@@ -650,8 +661,10 @@ class AX25Frame(object):
         """
         if hexstr:
             self.hexstr = hexstr
-        find_bits(self.hexstr)
-        detect_bit_stuffing(self.hexstr)
+        #find_bits(self.hexstr)
+        #detect_bit_stuffing(self.hexstr)
+        self.hexstr = de_arschloch_kiss_frame(self.hexstr)
+        # print(self.hexstr)
         if self.hexstr and len(self.hexstr) > 14:
 
             try:
@@ -695,7 +708,7 @@ class AX25Frame(object):
                 print(dbug_var)
                 """
                 # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
-                self.hexstr = where_the_fucking_dbd_is_coming_from_why__just_why__fck_dump_fix(self.hexstr, index)
+                #self.hexstr = where_the_fucking_dbd_is_coming_from_why__just_why__fck_dump_fix(self.hexstr, index)
                 # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
             except (AX25DecodingERROR, IndexError) as e:
@@ -803,6 +816,8 @@ class AX25Frame(object):
             raise AX25EncodingERROR
         # Build address UID
         self.build_uid(dec=False)
+        # Replace Kiss Flags with Kiss ESC ( C0 > DB DC )
+        self.hexstr = arschloch_kiss_frame(self.hexstr)
 
     def validate(self):
         """
@@ -906,11 +921,12 @@ def via_calls_fm_str(inp_str: str):
                 ret.append(call_obj)
     return ret
 
-
+"""
 if __name__ == '__main__':
     # Error Msg                                       ctl pid       < Wrong
     # Error Msg                                           ctl pid   < Right
-    fck_msg = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
+    fck_msg = b'\x00\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
+    ttt = b'\x00\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xc0\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
     # fm DNX527 to MD5TES ctl I60^ pid=F0(Text) len 17
     # fck_ms2 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0<<< 73 >>>\n\n\n\n\n\n\n'
     # Working Msg
@@ -921,157 +937,6 @@ if __name__ == '__main__':
     ms2     = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xac\xf0D5TES-15    \rP:DW>11/03/23 12:16:17 DBO527-1     P:TEST>12/03/23 08:32:46 MD2SAW       \rP:TEST>12/03/23 08:31:09 CB0SAW-14    \r\rTotal Packets Rec.: 24'
     # DNX527 to MD5TES ctl I60^ pid=F0(Text) len 150 18:27:28
     fck_ms3 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0  |\r|        QTH: Stadt Salzwedel (SAA)            |\r++++++++++++++++++++++++++++++++++++++++++++++++\r|                                              |'
-    print(fck_ms2.hex())
-    #fr = AX25Frame()
-    #fr.decode(fck_ms2)
-    #AX25Frame().decode(fck_msg)
-    #AX25Frame().decode(msg)
-    """
-    fck_ms2 = fck_ms2.hex()
-    fck_ms2 = fck_ms2.replace('dbd', '0')
-    fck_ms2 = bytearray.fromhex(fck_ms2)
-    """
-    # fck_ms2 = fck_ms2.replace(b'\xdb\xdc', b'\x0c')
-    AX25Frame().decode(fck_ms2)
-    # find_bits(fck_ms3)
-    # print(fck_msg[50:])
 
-    """
-    # print([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()])
-    print("fck_msg: {}".format([f'0x{val}' for val in fck_msg.hex(' ', 1).split()]))
-    print("fck_ms2: {}".format([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()]))
-    print("ms2    : {}".format([f'0x{val}' for val in ms2.hex(' ', 1).split()]))
-    print(fck_msg)
-    print(bytearray2hexstr(fck_msg))
-    print(fck_msg.hex())
-    print(bytes.fromhex(bytearray2hexstr(fck_msg)))
-    print(fck_msg)
-    #print(msg.iterbytes())
-    print([bytes([i]) for i in fck_msg])
-    # print(len(bytearray2hexstr(msg).encode()))
-    # print(bytearray2hexstr(msg))
-
-    #print("fck_ms233: {}".format([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()]))
-    fck_bit_str = ''.join(f'{bin(int(val, 16))}'[2:] for val in fck_ms2.hex(' ', 1).split())
-    #print('---------------------')
-    #print(fck_bit_str)
-
-
-
-    # find_bit_stuffing(fck_ms2)
-
-    # https://stackoverflow.com/questions/43787031/python-byte-array-to-bit-array
-    def access_bit(data, num):
-        base = int(num // 8)
-        shift = int(num % 8)
-        return (data[base] >> shift) & 0x1
-
-
-    fck_bit = [access_bit(fck_ms2, i) for i in range(len(fck_ms2) * 8)]
-
-    un_fck_bit_str = []
-    c = 0
-    for b in fck_bit:
-
-        if c == 5:
-            c = 0
-            if b:
-                print("ERROR !! NO Bit Stuffing !! ")
-            else:
-                print("Bit Stuffing !! ")
-        else:
-            un_fck_bit_str.append(b)
-        if b:
-            c += 1
-        else:
-            c = 0
-
-    print(fck_bit)
-    print(un_fck_bit_str)
-
-
-    def getbytes(bits):     # https://stackoverflow.com/questions/28370991/converting-bits-to-bytes-in-python
-        done = False
-        while not done:
-            byte = 0
-            for _ in range(0, 8):
-                try:
-                    bit = next(bits)
-                except StopIteration:
-                    bit = 0
-                    done = True
-                byte = (byte << 1) | bit
-            yield byte
-    # print(getbytes(iter(un_fck_bit_str)))
-    hex_str = ''
-    for b in getbytes(iter(un_fck_bit_str)):
-        # print(bytes.fromhex(hex(b)[2:]))
-        hex_str += hex(b)[2:]
-    """
-    """
-    print(hex_str)
-    best = bytes.fromhex(hex_str)
-    print(best)
-    """
-    #AX25Frame().decode(fck_ms2)
-
-    # li = [f'b{val}' for val in un_fck_bit_str.split()]
-    #un_fck_bit_str += '0'
-    #li = [un_fck_bit_str[i:i + 8] for i in range(0, len(un_fck_bit_str), 8)]
-    #print(li)
-    #hexst = ''
-    #for el in li:
-        #hexst += hex(int(el, 2))[2:]
-
-    #print(hexst)
-    #print(hexst[52])
-    #best = bytes.fromhex(hexst)
-    #print(best)
-    #AX25Frame().decode(best)
-    """
-    st = ''
-    c = 0
-    tmp = ''
-    for i in bytearray2hexstr(ms2):
-        tmp += i
-        if len(tmp) == 2:
-            print("Index: {}".format(c))
-            print(tmp)
-            print(bytes.fromhex(tmp))
-            print("---------------")
-
-            c += 1
-            tmp = ''
-    """
-    """
-    for by in range(int(len(bytearray2hexstr(msg)) / 2)):
-        print("Index: {}".format(c))
-        print(bytearray2hexstr(msg)[by: by + 2])
-        print(bytes.fromhex(bytearray2hexstr(msg)[by: by + 2]))
-        #print(by)
-        #print(msg[c])
-        #print(msg[c - 1:c])
-        print("---------------")
-        st += format_hexstr(by)
-        c += 1
-    """
-    # print(len(st))
-    """
-    stt = ''
-    for by in st:
-        # print(by)
-        stt += format_hex2bin(by)
-    print(stt)
-    print(len(stt))
-    """
-    #fr = AX25Frame()
-    # fr.decode(msg)
-    #fr.decode(bytearray2hexstr(msg).encode())
-    # st = ''
-    #print(format_hexstr(msg.decode('utf-8', 'ignore')))
-    """
-    for el in msg.decode('utf-8', 'ignore'):
-        st += format_hexstr(el)
-    print(st)
-    """
-    # print(bytearray2hexstr(msg.decode('utf-8', 'ignore')))
+    AX25Frame().decode(fck_msg)
+"""
