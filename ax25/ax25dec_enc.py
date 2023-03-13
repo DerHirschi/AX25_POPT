@@ -6,17 +6,69 @@
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 
 
-def find_bit_stuffing(inp):
-    fck_bit = ''.join(f'{bin(int(val, 16))}'[2:] for val in inp.hex(' ', 1).split())
-    if '111111' in fck_bit:
-        print("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
+def find_bits(inp):
+    fck_bit = ''.join(f'{bin(int(val, 16))}'[1:] for val in inp.hex(' ', 1).split())
+    such = '00001100'
+    if '00001100' in fck_bit:
+
+        print("!!!!!!!! FCK !!!!!")
+        i = fck_bit.index(such)
         print(fck_bit)
-        print("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
-        logger.debug("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
-        logger.debug(fck_bit)
-        logger.debug("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
+        print(i)
+        print('{}\n{}\n{}'.format(fck_bit[:i], fck_bit[i:i+8], fck_bit[i+8:]))
+        print('{}\n> {}\n<{}'.format(len(fck_bit[:i]) / 8, fck_bit[i:i+8], len(fck_bit[i+8:]) / 8))
+        print("!!!!!!!! FCK !!!!!")
+
+        fck_bit_str = [f'{bin(int(val, 16))}'[2:].zfill(8) for val in inp.hex(' ', 1).split()]
+        print(fck_bit_str)
+
+        print( [f'{bin(int(val, 16))}'[2:] for val in inp.hex(' ', 1).split()])
+        if such in fck_bit_str:
+            index = fck_bit_str.index(such)
+            print(index)
+        else:
+            print('NÖÖÖÖÖÖ')
+        # print(fck_bit_str[index])
+
+        # logger.debug("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
+        # logger.debug(fck_bit)
+        # logger.debug("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
         return True
     return False
+
+
+def detect_bit_stuffing(inp: b''):
+    tmp_hex = inp.hex()
+    if '7e' in tmp_hex:
+        logger.debug('Bit Stuffing: 7E detected in {}'.format(inp))
+        logger.debug('Bit Stuffing: 7E detected in {}'.format(tmp_hex))
+        print('Bit Stuffing: 7E detected in {}'.format(inp))
+        print('Bit Stuffing: 7E detected in {}'.format(tmp_hex))
+        return True
+    return False
+
+
+def where_the_fucking_dbd_is_coming_from_why__just_why__fck_dump_fix(inp: b'', header_index: int):
+    """ C0 is Kiss Flag .. Maybe Kiss is replacing c0 by dbd ? """
+    index = header_index + 2
+    target = b'\xdb\xdc'
+    if target in inp[:index]:
+        tmp = inp[:index]
+        # tmp = tmp.replace(b'\xdb\xdc', b'\x0c')
+        tmp = tmp.replace(b'\xdb\xdc', b'\xc0')
+        print('____________________________________________')
+        print('!%$§&/§4#+*"&/)(§"%!%§"$&§$&"$§"& !!!!!!!!!')
+        print('! DBD Detected !!!!!!!!! {}'.format(inp))
+        print('! tmp {}'.format(tmp))
+        print(tmp + inp[index:])
+        print('____________________________________________')
+        logger.debug('____________________________________________')
+        logger.debug('!%$§&/§4#+*"&/)(§"%!%§"$&§$&"$§"& !!!!!!!!!')
+        logger.debug('! DBD Detected !!!!!!!!! {}'.format(inp))
+        logger.debug(tmp + inp[index:])
+        logger.debug('____________________________________________')
+        return tmp + inp[index:]
+    return inp
 
 
 def bl2str(inp):
@@ -251,8 +303,9 @@ class CByte(object):
         else:
             # print("Not predefined Pac Type..")
             self.hex = hex(int(in_byte))
-            # print(self.hex)
-            bi = bin(int(in_byte))[2:].zfill(8)
+            print(self.hex)
+            bi = bin(int(in_byte))[2:]
+            bi = bi.zfill(8)
             pf = bool(int(bi[3], 2))  # P/F
             self.pf = pf
             if bi[-1] == '0':  # I-Block   Informationsübertragung
@@ -597,7 +650,8 @@ class AX25Frame(object):
         """
         if hexstr:
             self.hexstr = hexstr
-        # find_bit_stuffing(self.hexstr)
+        find_bits(self.hexstr)
+        detect_bit_stuffing(self.hexstr)
         if self.hexstr and len(self.hexstr) > 14:
 
             try:
@@ -631,30 +685,26 @@ class AX25Frame(object):
             # Dec C-Byte
             try:
                 # index += 1
+                """
+                dbug_var = self.hexstr[index - 1:index + 1]
+                print('-----------')
+                print(dbug_var)
+                dbug_var = dbug_var.hex()
+                print(dbug_var)
+                dbug_var = bin(int(dbug_var, 16))
+                print(dbug_var)
+                """
+                # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
+                self.hexstr = where_the_fucking_dbd_is_coming_from_why__just_why__fck_dump_fix(self.hexstr, index)
+                # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
                 self.ctl_byte.dec_cbyte(self.hexstr[index])
-                # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
             except (AX25DecodingERROR, IndexError) as e:
-                # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
                 logger.error('Decoding Error !! {}'.format(e))
                 logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
                 logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
                 logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
                 # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
-                logger.error('Decoding Error !! increment index !! QUICK FIX Doesnt Work!! TODO: GET THIS BUG')
-                #index += 1
-                try:
-                    index += 1
-                    self.ctl_byte.dec_cbyte(self.hexstr[index])
-                    # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
-                    raise AX25DecodingERROR(self)
-                except (AX25DecodingERROR, IndexError) as e:
-                    # print("ctl Byte index: {} > {} \n+1: {}".format(index, self.hexstr[index: index + 1], self.hexstr[index + 1]))
-                    logger.error('Decoding Error !! {}'.format(e))
-                    logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
-                    logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
-                    logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
-                    logger.error('Decoding Error !! increment index !! QUICK FIX !! TODO: GET THIS BUG')
-                    raise AX25DecodingERROR(self)
+                raise AX25DecodingERROR(self)
 
             # Get Command Bits
             if self.to_call.c_bit and not self.from_call.c_bit:
@@ -869,12 +919,24 @@ if __name__ == '__main__':
     fck_ms2 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0<<< 73 >>>\n\n\n\n\n\n\n'
     # DNX527 to MD5TES cmd (0xac) I56- pid=0xf0(Text (NO L3)) len 150
     ms2     = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xac\xf0D5TES-15    \rP:DW>11/03/23 12:16:17 DBO527-1     P:TEST>12/03/23 08:32:46 MD2SAW       \rP:TEST>12/03/23 08:31:09 CB0SAW-14    \r\rTotal Packets Rec.: 24'
+    # DNX527 to MD5TES ctl I60^ pid=F0(Text) len 150 18:27:28
+    fck_ms3 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0  |\r|        QTH: Stadt Salzwedel (SAA)            |\r++++++++++++++++++++++++++++++++++++++++++++++++\r|                                              |'
+    print(fck_ms2.hex())
     #fr = AX25Frame()
     #fr.decode(fck_ms2)
     #AX25Frame().decode(fck_msg)
     #AX25Frame().decode(msg)
+    """
+    fck_ms2 = fck_ms2.hex()
+    fck_ms2 = fck_ms2.replace('dbd', '0')
+    fck_ms2 = bytearray.fromhex(fck_ms2)
+    """
+    # fck_ms2 = fck_ms2.replace(b'\xdb\xdc', b'\x0c')
     AX25Frame().decode(fck_ms2)
+    # find_bits(fck_ms3)
+    # print(fck_msg[50:])
 
+    """
     # print([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()])
     print("fck_msg: {}".format([f'0x{val}' for val in fck_msg.hex(' ', 1).split()]))
     print("fck_ms2: {}".format([f'0x{val}' for val in fck_ms2.hex(' ', 1).split()]))
@@ -945,6 +1007,7 @@ if __name__ == '__main__':
     for b in getbytes(iter(un_fck_bit_str)):
         # print(bytes.fromhex(hex(b)[2:]))
         hex_str += hex(b)[2:]
+    """
     """
     print(hex_str)
     best = bytes.fromhex(hex_str)

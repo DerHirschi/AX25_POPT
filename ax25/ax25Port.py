@@ -577,7 +577,7 @@ class KISSSerial(AX25Port):
                 ret = RxBuf()
                 if recv_buff:
                     # print(recv_buff)
-                    if len(recv_buff) > 14:  # ? Min Pack Len 17
+                    if len(recv_buff) > 17:  # ? Min Pack Len 17
                         if recv_buff[:2] == b'\xc0\x00' and recv_buff[-1:] == b'\xc0':
                             ret.raw_data = recv_buff[2:-1]
                             return ret
