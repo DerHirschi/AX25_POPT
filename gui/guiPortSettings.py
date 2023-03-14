@@ -276,7 +276,19 @@ class PortSetTab:
         self.n2.insert(tk.END, self.port_setting.parm_N2)
         n2_label.place(x=n2_x, y=height - n2_y)
         self.n2.place(x=n2_x + 40, y=height - n2_y)
-
+        # Kiss duplex
+        _x = 520
+        _y = 430
+        self.kiss_duplex_var = tk.IntVar(self.tab)
+        self.kiss_duplex_ent = tk.Checkbutton(self.tab, text='Full-Duplex', variable=self.kiss_duplex_var)
+        self.kiss_duplex_var.set( self.port_setting.parm_kiss_F_Duplex)
+        self.kiss_duplex_ent.place(x=_x , y=height - _y)
+        if self.port_setting.parm_kiss_is_on:
+            self.kiss_duplex_var.set(self.port_setting.parm_kiss_F_Duplex)
+        else:
+            self.kiss_duplex_var.set(0)
+            self.kiss_duplex_ent.deselect()
+            self.kiss_duplex_ent.configure(state='disabled')
         #######################
         # LAbel
         stdp_x = 20
@@ -397,7 +409,7 @@ class PortSetTab:
             self.kiss_pers.configure(state="normal")
             self.kiss_tail.configure(state="normal")
             self.kiss_slot.configure(state="normal")
-
+            self.kiss_duplex_ent.configure(state='normal')
 
             self.test_call.configure(state="disabled")
             self.test_inter.configure(state="disabled")
@@ -446,6 +458,7 @@ class PortSetTab:
             self.kiss_pers.configure(state="disabled")
             self.kiss_tail.configure(state="disabled")
             self.kiss_slot.configure(state="disabled")
+            self.kiss_duplex_ent.configure(state='disabled')
 
             self.ptxd.configure(state="normal")
             self.ptxd.delete(0, tk.END)
@@ -495,7 +508,7 @@ class PortSetTab:
             self.kiss_pers.configure(state="normal")
             self.kiss_tail.configure(state="normal")
             self.kiss_slot.configure(state="normal")
-
+            self.kiss_duplex_ent.configure(state='normal')
 
             self.ptxd.configure(state="normal")
             self.calc_baud.configure(state="normal")
@@ -545,6 +558,7 @@ class PortSetTab:
             self.port_setting.parm_kiss_Pers = int(self.kiss_pers.get())
             self.port_setting.parm_kiss_Slot = int(self.kiss_slot.get())
             self.port_setting.parm_kiss_Tail = int(self.kiss_tail.get())
+            self.port_setting.parm_kiss_F_Duplex = self.kiss_duplex_var.get()
         # Baud
         # if self.port_setting.parm_PortTyp == 'KISSSER':
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
