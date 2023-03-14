@@ -663,7 +663,8 @@ class AX25Frame(object):
             self.hexstr = hexstr
         #find_bits(self.hexstr)
         #detect_bit_stuffing(self.hexstr)
-        self.hexstr = de_arschloch_kiss_frame(self.hexstr)
+        # if self.kiss:
+            # self.hexstr = de_arschloch_kiss_frame(self.hexstr)
         # print(self.hexstr)
         if self.hexstr and len(self.hexstr) > 14:
 
@@ -817,7 +818,7 @@ class AX25Frame(object):
         # Build address UID
         self.build_uid(dec=False)
         # Replace Kiss Flags with Kiss ESC ( C0 > DB DC )
-        self.hexstr = arschloch_kiss_frame(self.hexstr)
+        # self.hexstr = arschloch_kiss_frame(self.hexstr)
 
     def validate(self):
         """
