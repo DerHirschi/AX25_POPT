@@ -7,6 +7,7 @@ import crcmod
 
 from ax25.ax25Beacon import Beacon
 # mport main
+from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, de_arschloch_kiss_frame, arschloch_kiss_frame
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
@@ -40,7 +41,7 @@ class AX25Port(threading.Thread):
         self.port_handler = port_handler
         self.mh = port_handler.mh
         self.beacons = self.port_handler.beacons
-        self.kiss = b''
+        self.kiss = Kiss(self.port_cfg)
         # self.port_cfg.mh = self.mh  # ?????
 
         self.port_param = self.port_cfg.parm_PortParm
@@ -96,6 +97,9 @@ class AX25Port(threading.Thread):
     def __del__(self):
         self.close()
         # self.loop_is_running = False
+
+    def set_kiss_parm(self):
+        pass
 
     def close_device(self):
         pass
@@ -465,7 +469,7 @@ class KissTCP(AX25Port):
             print("KISS TCP INIT")
             logger.info("KISS TCP INIT")
             sock_timeout = 0.2
-            self.kiss = b'\x00'     # TODO  KISS
+            # self.kiss = b'\x00'
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
             try:
                 self.device.settimeout(sock_timeout)
@@ -477,6 +481,10 @@ class KissTCP(AX25Port):
                 # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 # raise AX25DeviceFAIL
+            else:
+                if self.kiss.is_enabled:
+                    self.device.sendall(self.kiss.device_kiss_start())
+                    self.set_kiss_parm()
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)
@@ -486,12 +494,19 @@ class KissTCP(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
+                if self.kiss.is_enabled:
+                    self.device.sendall(self.kiss.device_kiss_end())
+
                 self.device.settimeout(0)
+                # self.device.recv(999)   # ???
                 self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
-                self.device.recv(999)
             except (OSError, ConnectionRefusedError, ConnectionError):
                 pass
+
+    def set_kiss_parm(self):
+        if self.kiss.is_enabled:
+            self.device.sendall(self.kiss.set_all_parameter())
 
     def rx(self):
         try:
@@ -502,19 +517,29 @@ class KissTCP(AX25Port):
         except OSError:
             raise AX25DeviceERROR
         ret = RxBuf()
-        if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
-            # ret.raw_data = recv_buff[2:-1]
-            ret.kiss = recv_buff[1:2]
-            ret.raw_data = de_arschloch_kiss_frame(recv_buff[2:-1])
-            self.kiss = ret.kiss
+
+        if recv_buff:
+            # print(recv_buff)
+            de_kiss_fr = self.kiss.de_kiss(recv_buff)
+            # if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
+            if de_kiss_fr:
+                # ret.raw_data = recv_buff[2:-1]
+                # ret.kiss = recv_buff[1:2]
+                # ret.raw_data = recv_buff[2:-1]
+                # ret.raw_data = de_arschloch_kiss_frame(recv_buff[2:-1])
+                # self.kiss = ret.kiss
+                ret.raw_data = de_kiss_fr
+                # return ret
         return ret
 
     def tx(self, frame: AX25Frame):
+        """
         if self.kiss:
             frame.hexstr = self.kiss + arschloch_kiss_frame(frame.hexstr)
         out = (bytes.fromhex('c0') + frame.hexstr + bytes.fromhex('c0'))
+        """
         try:
-            self.device.sendall(out)
+            self.device.sendall(self.kiss.kiss(frame.hexstr))
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
             logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
             logger.error('{}'.format(e))
@@ -532,7 +557,7 @@ class KISSSerial(AX25Port):
         if self.loop_is_running:
             print("KISS Serial INIT")
             logger.info("KISS Serial INIT")
-            self.kiss = b'\x00'  # TODO  KISS
+            # self.kiss = b'\x00'
             try:
                 self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.2)
                 self.device_is_running = True
@@ -541,6 +566,10 @@ class KISSSerial(AX25Port):
                 logger.error('{}'.format(e))
                 # self.device.close()
                 # raise AX25DeviceFAIL
+            else:
+                if self.kiss.is_enabled:
+                    self.device.write(self.kiss.device_kiss_start())
+                    self.set_kiss_parm()
 
     def __del__(self):
         self.close_device()
@@ -549,10 +578,16 @@ class KISSSerial(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
+                if self.kiss.is_enabled:
+                    self.device.write(self.kiss.device_kiss_end())
                 self.device.close()
                 self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):
                 pass
+
+    def set_kiss_parm(self):
+        if self.kiss.is_enabled:
+            self.device.write(self.kiss.set_all_parameter())
 
     def rx(self):
         recv_buff = b''
@@ -575,22 +610,22 @@ class KISSSerial(AX25Port):
             else:
                 ret = RxBuf()
                 if recv_buff:
-                    # print(recv_buff)
-                    if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
+                    de_kiss_fr = self.kiss.de_kiss(recv_buff)
+                    # if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
+                    if de_kiss_fr:
                         # ret.raw_data = recv_buff[2:-1]
-                        ret.kiss = recv_buff[1:2]
+                        #ret.kiss = recv_buff[1:2]
                         # ret.raw_data = recv_buff[2:-1]
-                        ret.raw_data = de_arschloch_kiss_frame(recv_buff[2:-1])
-                        self.kiss = ret.kiss
+                        #ret.raw_data = de_arschloch_kiss_frame(recv_buff[2:-1])
+                        # self.kiss = ret.kiss
+                        ret.raw_data = de_kiss_fr
                         return ret
-                else:
-                    return ret
+                return ret
 
     def tx(self, frame: AX25Frame):
-        if self.kiss:
-            frame.hexstr = self.kiss + arschloch_kiss_frame(frame.hexstr)
+        # frame.hexstr = self.kiss.kiss(frame.hexstr)
         try:
-            self.device.write(bytes.fromhex('c0') + frame.hexstr + bytes.fromhex('c0'))
+            self.device.write(self.kiss.kiss(frame.hexstr))
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
             logger.warning('Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
             logger.warning('{}'.format(e))

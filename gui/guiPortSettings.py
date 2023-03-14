@@ -98,50 +98,51 @@ class PortSetTab:
             self.calc_baud.configure(state="normal")
         calc_baud_label.place(x=calc_baud_x, y=height - calc_baud_y)
         self.calc_baud.place(x=calc_baud_x + 80, y=height - calc_baud_y)
-        # TODO DUMMY for TXD, PERS, TAIL ( KISS )
-        # TODO TXD
+        # TODO KISS Slot, F DUPLEX
+        # KISS TXD
         kiss_txd_x = 220
         kiss_txd_y = 465
         kiss_txd_label = tk.Label(self.tab, text='TXD:')
         self.kiss_txd = tk.Entry(self.tab, width=5)
-        if self.port_setting.parm_PortTyp == 'AXIP':
+        if self.port_setting.parm_kiss_is_on:
             # ins = self.port_setting.parm_PortParm[1]
-            self.kiss_txd.insert(tk.END, '0')
-            self.kiss_txd.configure(state="disabled")
+            self.kiss_txd.insert(tk.END, str(self.port_setting.parm_kiss_TXD))
+            self.kiss_txd.configure(state="normal")
         else:
             # ins = self.port_setting.parm_baud
             self.kiss_txd.insert(tk.END, '0')
-            self.kiss_txd.configure(state="disabled")  # TODO state='normal
+            self.kiss_txd.configure(state="disabled")
         kiss_txd_label.place(x=kiss_txd_x, y=height - kiss_txd_y)
         self.kiss_txd.place(x=kiss_txd_x + 50, y=height - kiss_txd_y)
-        # TODO PERS
+        # KISS PERS
         kiss_pers_x = 360
         kiss_pers_y = 465
         kiss_pers_label = tk.Label(self.tab, text='PERS:')
         self.kiss_pers = tk.Entry(self.tab, width=4)
-        if self.port_setting.parm_PortTyp == 'AXIP':
+        if self.port_setting.parm_kiss_is_on:
             # ins = self.port_setting.parm_PortParm[1]
-            self.kiss_pers.insert(tk.END, '0')
-            self.kiss_pers.configure(state="disabled")
+            self.kiss_pers.insert(tk.END, str(self.port_setting.parm_kiss_Pers))
+            self.kiss_pers.configure(state="normal")
         else:
             # ins = self.port_setting.parm_baud
             self.kiss_pers.insert(tk.END, '0')
-            self.kiss_pers.configure(state="disabled")  # TODO state='normal
+            self.kiss_pers.configure(state="disabled")
         kiss_pers_label.place(x=kiss_pers_x, y=height - kiss_pers_y)
         self.kiss_pers.place(x=kiss_pers_x + 60, y=height - kiss_pers_y)
-        # TODO TAIL
+        # KISS TAIL
         kiss_tail_x = 490
         kiss_tail_y = 465
         kiss_tail_label = tk.Label(self.tab, text='TAIL:')
         self.kiss_tail = tk.Entry(self.tab, width=4)
-        if self.port_setting.parm_PortTyp == 'AXIP':
+        # if self.port_setting.parm_PortTyp == 'AXIP':
+        if self.port_setting.parm_kiss_is_on:
             # ins = self.port_setting.parm_PortParm[1]
-            self.kiss_tail.insert(tk.END, '0')
-            self.kiss_tail.configure(state="disabled")
+            self.kiss_tail.insert(tk.END, str(self.port_setting.parm_kiss_Tail))
+            self.kiss_tail.configure(state="normal")
         else:
             # ins = self.port_setting.parm_baud
             self.kiss_tail.insert(tk.END, '0')
-            self.kiss_tail.configure(state="disabled")  # TODO state='normal
+            self.kiss_tail.configure(state="disabled")
         kiss_tail_label.place(x=kiss_tail_x, y=height - kiss_tail_y)
         self.kiss_tail.place(x=kiss_tail_x + 50, y=height - kiss_tail_y)
         ########################
@@ -373,12 +374,13 @@ class PortSetTab:
         param_next_line = 0
         typ = self.port_select_var.get()
         if typ == 'KISSTCP':
-            """
-            TODO
+
+
             self.kiss_txd.configure(state="normal")
             self.kiss_pers.configure(state="normal")
             self.kiss_tail.configure(state="normal")
-            """
+
+
             self.test_call.configure(state="disabled")
             self.test_inter.configure(state="disabled")
             self.test_fail.configure(state="disabled")
@@ -425,6 +427,7 @@ class PortSetTab:
             self.kiss_txd.configure(state="disabled")
             self.kiss_pers.configure(state="disabled")
             self.kiss_tail.configure(state="disabled")
+
             self.ptxd.configure(state="normal")
             self.ptxd.delete(0, tk.END)
             self.ptxd.insert(tk.END, '1')
@@ -468,17 +471,19 @@ class PortSetTab:
             self.test_call.configure(state="disabled")
             self.test_inter.configure(state="disabled")
             self.test_fail.configure(state="disabled")
-            """
-            TODO
+
+
             self.kiss_txd.configure(state="normal")
             self.kiss_pers.configure(state="normal")
             self.kiss_tail.configure(state="normal")
-            """
+
+
             self.ptxd.configure(state="normal")
             self.calc_baud.configure(state="normal")
             self.calc_baud.delete(0, tk.END)
-            self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
-            self.calc_baud.configure(state="disabled")
+            # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
+            self.calc_baud.insert(tk.END, self.port_setting.parm_baud)
+            # self.calc_baud.configure(state="normal")
 
             self.param1_label.configure(text='Port:')
             self.param1_ent.configure(width=15)
@@ -513,8 +518,8 @@ class PortSetTab:
         # Pseudo TXD
         self.port_setting.parm_TXD = int(self.ptxd.get())
         # Baud
-        if self.port_setting.parm_PortTyp == 'KISSSER':
-            self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
+        # if self.port_setting.parm_PortTyp == 'KISSSER':
+            # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
         self.port_setting.parm_baud = int(self.calc_baud.get())
         # T 1
         self.port_setting.parm_T1 = int(self.t1.get())

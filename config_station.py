@@ -2,7 +2,7 @@ import pickle
 import os
 from cli.cli import DefaultCLI, NoneCLI
 
-VER = '2.67.2a'
+VER = '2.67.2.1a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -138,7 +138,14 @@ class DefaultPort(object):
     # TODO DIGI is Station related
     parm_isSmartDigi = False
     parm_is_StupidDigi = False  # Just if parm_isDigi is set to False
-    parm_TXD = 1400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+    parm_TXD = 1400             # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+    """ Kiss Parameter """
+    parm_kiss_is_on = True
+    parm_kiss_TXD = 40
+    parm_kiss_Pers = 63
+    parm_kiss_Slot = 20
+    parm_kiss_Tail = 30
+    parm_kiss_F_Duplex = 0
     """ Connection Parameter """
     parm_PacLen = 170   # Max Pac len
     parm_MaxFrame = 5   # Max (I) Frames
