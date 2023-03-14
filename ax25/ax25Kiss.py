@@ -20,7 +20,8 @@ class Kiss(object):
         # CFG Flags
         self.DATA_FRAME = b'\x00'
         self.RETURN = b'\xFF'
-        self.START = b'$0'
+        # self.START = b'$0'
+        self.START = bytes.fromhex('1B404B')
         # ESC & END Flags
         self.FEND = b'\xC0'
         self.FESC = b'\xDB'
@@ -104,5 +105,6 @@ class Kiss(object):
         return b''.join([self.FEND, self.RETURN, self.FEND])
 
     def device_kiss_start(self):
-        return b''.join([self.FEND, self.DATA_FRAME, self.START, self.FEND])
+        # return b''.join([self.FEND, self.DATA_FRAME, self.START, self.FEND])
+        return b''.join([self.START])
 
