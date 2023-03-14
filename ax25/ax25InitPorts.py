@@ -108,6 +108,12 @@ class AX25PortHandler(object):
             time.sleep(1)  # Cooldown for Device
             self.init_port(port_id=port_id)
 
+    def set_kiss_param_all_ports(self):
+        for port_id in list(self.ax25_ports.keys()):
+            if self.ax25_ports[port_id].kiss.is_enabled:
+                self.ax25_ports[port_id].set_kiss_parm()
+                self.sysmsg_to_gui('Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..'.format(port_id))
+
     def init_port(self, port_id: int):
         logger.info("Initialisiere Port: {}".format(port_id))
         if port_id in self.ax25_ports.keys():
