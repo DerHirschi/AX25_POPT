@@ -56,9 +56,5 @@ Knowing Issues / TODO (AX25 Protocol):
 - FRMR Frame decoding not implemented yet
 - RNR State not implemented yet
 - Issues with "Smart-Digi" / Managed DIGI Mode Connection UID
-- ! Getting Decoding ERROR on some Frames.
-  - Examples captured from LOG:
-  b'\x86\xa2@@@@`\x88\x84\x9ejdn\xe0\x88\x9c\xb0jdn\xe3\x13\xf0< Mailbox Stadt Salzwedel (Mittwoch 15.03.2023 - 07:45 Uhr) >'
-
 
 TODO: !! Lot of Testing and Debugging !!

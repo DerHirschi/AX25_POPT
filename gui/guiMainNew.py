@@ -16,6 +16,7 @@ from gui.guiStationSettings import StationSettingsWin
 from gui.guiPortSettings import PortSettingsWin
 from gui.guiBeaconSettings import BeaconSettings
 from gui.guiRxEchoSettings import RxEchoSettings
+from gui.guiAbout import About
 from config_station import VER
 
 if 'linux' in sys.platform:
@@ -129,7 +130,7 @@ class TkMainWin:
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
         # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
-        # self.MenuHelp.add_command(label="Über", command=lambda: False, underline=0)
+        self.MenuHelp.add_command(label="Über", command=self.open_about_win, underline=0)
         self.menubar.add_cascade(label="Hilfe", menu=self.MenuHelp, underline=0)
 
         # Menü 4 "Debug"
@@ -372,7 +373,7 @@ class TkMainWin:
             self.settings_win.tasker()
         #####################
         # Prio TASKS ########
-        self.update_mon()  # TODO trigger von AX25CONN
+        self.update_mon()  # TODO ?? maybe trigger von AX25CONN
         self.txt_win.update_status_win()
         if self.ch_alarm:
             self.ch_btn_status_update()
@@ -385,28 +386,7 @@ class TkMainWin:
             self.rx_beep()
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
-    """
-    def cli_echo(self, data: str, channel_index: int):
-        print(type(data))
-        print(data + ' <GUI> ' + str(channel_index))
-        # CLI Echo . Called from CLI
-        # Write RX Date to Window/Channel Buffer
-        if channel_index and self.get_conn(channel_index):
-            self.win_buf[channel_index].output_win += data
-            if self.channel_index == channel_index:
-                tr = False
-                if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
-                    tr = True
-                self.out_txt.configure(state="normal")
-                self.out_txt.insert('end', data)
-                self.out_txt.configure(state="disabled")
-                if tr:
-                    self.out_txt.see("end")
-            else:
-                self.win_buf[channel_index].new_data_tr = True
-            self.win_buf[channel_index].rx_beep_tr = True
-            self.ch_btn_status_update()
-    """
+
     def update_mon(self):  # MON & INPUT WIN
         """
         UPDATE INPUT WIN
@@ -543,6 +523,12 @@ class TkMainWin:
     def open_rx_echo_settings_win(self):
         if self.settings_win is None:
             RxEchoSettings(self)
+
+    ##########################
+    # About WIN
+    def open_about_win(self):
+        if self.settings_win is None:
+            About(self)
 
     # ##############
     # DISCO
