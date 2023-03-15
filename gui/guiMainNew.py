@@ -177,6 +177,10 @@ class TkMainWin:
                               text="Monitor",
                               bg="yellow", width=8, command=self.txt_win.switch_mon_mode)
         self.mon_btn.place(x=110, y=45)
+        _btn = tk.Button(self.side_btn_frame_top,
+                                 text="Kaffèmaschine",
+                                 bg="HotPink2", width=12, command=lambda: self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !'))
+        _btn.place(x=110, y=10)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         self.setting_sound = self.tabbed_sideFrame.sound_on
