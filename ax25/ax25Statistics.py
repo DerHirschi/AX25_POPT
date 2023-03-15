@@ -75,7 +75,7 @@ class MH(object):
                 ent.route = []
             ent.port = port_id
             ent.byte_n = ax25_frame.data_len
-            ent.h_byte_n = len(ax25_frame.hexstr) - ax25_frame.data_len
+            ent.h_byte_n = len(ax25_frame.bytes) - ax25_frame.data_len
             if ax25_frame.axip_add[0]:
                 ent.axip_add = ax25_frame.axip_add
             if ax25_frame.ctl_byte.flag == 'REJ':
@@ -91,7 +91,7 @@ class MH(object):
             to_c_str = ax25_frame.to_call.call_str
             if to_c_str not in ent.to_calls:
                 ent.to_calls.append(to_c_str)
-            ent.h_byte_n += len(ax25_frame.hexstr) - ax25_frame.data_len
+            ent.h_byte_n += len(ax25_frame.bytes) - ax25_frame.data_len
             if ax25_frame.ctl_byte.flag == 'REJ':
                 ent.rej_n += 1
             self.calls[call_str] = ent

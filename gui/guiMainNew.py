@@ -26,8 +26,8 @@ elif 'win' in sys.platform:
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    filename='debug.log',
-    level=logging.DEBUG
+    filename='error.log',
+    level=logging.ERROR
 )
 logger = logging.getLogger(__name__)
 
@@ -117,14 +117,21 @@ class TkMainWin:
         self.menubar.add_command(label="MH", command=self.MH_win, underline=0)
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar, tearoff=False)
+        self.MenuTools.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
         self.menubar.add_cascade(label="Tools", menu=self.MenuTools, underline=0)
+
         # Menü 4 Einstellungen
         self.MenuSettings = Menu(self.menubar, tearoff=False)
         self.MenuSettings.add_command(label="Station", command=self.open_settings_win, underline=0)
         self.MenuSettings.add_command(label="Port", command=self.open_port_settings_win, underline=0)
         self.MenuSettings.add_command(label="Baken", command=self.open_beacon_settings_win, underline=0)
-        self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
         self.menubar.add_cascade(label="Einstellungen", menu=self.MenuSettings, underline=0)
+        # Menü 5 Hilfe
+        self.MenuHelp = Menu(self.menubar, tearoff=False)
+        # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
+        # self.MenuHelp.add_command(label="Über", command=lambda: False, underline=0)
+        self.menubar.add_cascade(label="Hilfe", menu=self.MenuHelp, underline=0)
+
         # Menü 4 "Debug"
         # self.menubar.add_command(label="Debug")
         ############################

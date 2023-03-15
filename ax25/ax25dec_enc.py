@@ -599,8 +599,8 @@ class PIDByte(object):
 
 class AX25Frame(object):
     def __init__(self):
-        self.kiss = b''
-        self.hexstr = b''           # Dekiss
+        # self.kiss = b''
+        self.bytes = b''           # Dekiss
         self.from_call = Call()
         self.to_call = Call()
         self.via_calls: [Call] = []
@@ -660,22 +660,17 @@ class AX25Frame(object):
             self.hexstr = hexstr
         """
         if hexstr:
-            self.hexstr = hexstr
-        #find_bits(self.hexstr)
-        #detect_bit_stuffing(self.hexstr)
-        # if self.kiss:
-            # self.hexstr = de_arschloch_kiss_frame(self.hexstr)
-        # print(self.hexstr)
-        if self.hexstr and len(self.hexstr) > 14:
+            self.bytes = hexstr
+        if self.bytes and len(self.bytes) > 14:
 
             try:
-                self.to_call.dec_call(self.hexstr[:7])
+                self.to_call.dec_call(self.bytes[:7])
                 # print("ToCall > {}".format(self.hexstr[:7]))
             except IndexError:
                 print("Index ERROR To Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             try:
-                self.from_call.dec_call(self.hexstr[7:14])
+                self.from_call.dec_call(self.bytes[7:14])
                 # print("FromCall > {}".format(self.hexstr[7:14]))
             except IndexError:
                 print("Index ERROR From Call!!!!!!!!!!")
@@ -685,7 +680,7 @@ class AX25Frame(object):
                 while True:
                     tmp = Call()
                     try:
-                        tmp.dec_call(self.hexstr[7 * n: 14 * n])
+                        tmp.dec_call(self.bytes[7 * n: 7 + 7 * n])
                         # print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
                     except IndexError:
                         print("Index ERROR Via Call!!!!!!!!!!")
@@ -698,26 +693,12 @@ class AX25Frame(object):
             index = 7 * n
             # Dec C-Byte
             try:
-                # index += 1
-                """
-                dbug_var = self.hexstr[index - 1:index + 1]
-                print('-----------')
-                print(dbug_var)
-                dbug_var = dbug_var.hex()
-                print(dbug_var)
-                dbug_var = bin(int(dbug_var, 16))
-                print(dbug_var)
-                """
-                # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
-                #self.hexstr = where_the_fucking_dbd_is_coming_from_why__just_why__fck_dump_fix(self.hexstr, index)
-                # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
-                self.ctl_byte.dec_cbyte(self.hexstr[index])
+                self.ctl_byte.dec_cbyte(self.bytes[index])
             except (AX25DecodingERROR, IndexError) as e:
                 logger.error('Decoding Error !! {}'.format(e))
-                logger.error('Decoding Error !! MSG: {}'.format(self.hexstr))
+                logger.error('Decoding Error !! MSG: {}'.format(self.bytes))
                 logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
                 logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
-                # QUICK FIX !!!!! TODO GET THIS FUCKING BUG !!!
                 raise AX25DecodingERROR(self)
 
             # Get Command Bits
@@ -729,12 +710,12 @@ class AX25Frame(object):
             if self.ctl_byte.pid:
                 index += 1
                 try:
-                    self.pid_byte.decode(self.hexstr[index])
+                    self.pid_byte.decode(self.bytes[index])
                 except IndexError:
                     raise AX25DecodingERROR(self)
             if self.ctl_byte.info:
                 index += 1
-                self.data = self.hexstr[index:]
+                self.data = self.bytes[index:]
                 self.data_len = len(self.data)
             # Check if all Digi s have repeated packet
             self.set_check_h_bits(dec=True)
@@ -746,7 +727,7 @@ class AX25Frame(object):
             raise AX25DecodingERROR(self)
 
     def encode(self, digi=False):
-        self.hexstr = b''
+        self.bytes = b''
         # Set Command/Report Bits
         if self.ctl_byte.cmd:
             self.to_call.c_bit = True
@@ -766,8 +747,8 @@ class AX25Frame(object):
         except AX25EncodingERROR:
             raise AX25EncodingERROR()
 
-        self.hexstr += self.to_call.hex_str
-        self.hexstr += self.from_call.hex_str
+        self.bytes += self.to_call.hex_str
+        self.bytes += self.from_call.hex_str
         # Via Stations
         # Set all H-Bits to 0
         if not digi:
@@ -777,20 +758,20 @@ class AX25Frame(object):
                 station.enc_call()
             except AX25EncodingERROR:
                 raise AX25EncodingERROR()
-            self.hexstr += station.hex_str
+            self.bytes += station.hex_str
         # C Byte
         self.ctl_byte.enc_cbyte()
-        self.hexstr += format_hexstr(self.ctl_byte.hex).encode()
+        self.bytes += format_hexstr(self.ctl_byte.hex).encode()
         # PID
         if self.ctl_byte.pid:
-            self.hexstr += format_hexstr(self.pid_byte.hex).encode()
+            self.bytes += format_hexstr(self.pid_byte.hex).encode()
 
         try:
             # !!!!!!! Käfer !!!! ????
-            self.hexstr = bytes.fromhex(self.hexstr.decode())
+            self.bytes = bytes.fromhex(self.bytes.decode())
         except ValueError:
             logger.error("Encoding bytes.fromhex VALUE ERROR !!!!")
-            logger.error("V: {}".format(self.hexstr))
+            logger.error("V: {}".format(self.bytes))
             logger.error("from_call")
             for k in vars(self.from_call).keys():
                 logger.error("{} > {}".format(k, vars(self.from_call)[k]))
@@ -811,7 +792,7 @@ class AX25Frame(object):
         # Data
         if self.ctl_byte.info:
             self.data_len = len(self.data)
-            self.hexstr += self.data    # !!!!!! Käfer !!!! ???
+            self.bytes += self.data    # !!!!!! Käfer !!!! ???
         if not self.validate():
             logger.error('Encoding Error Validator')
             raise AX25EncodingERROR
@@ -825,7 +806,7 @@ class AX25Frame(object):
         :return: bool
         """
         ret = True
-        if len(self.hexstr) < 15:
+        if len(self.bytes) < 15:
             logger.error('Validate Error: Pac length')
             ret = False
         if not self.from_call.validate():

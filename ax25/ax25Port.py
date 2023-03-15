@@ -423,7 +423,7 @@ class AX25Port(threading.Thread):
                 self.set_TXD()
                 ax25frame = AX25Frame()
                 ax25frame.axip_add = buf.axip_add
-                ax25frame.kiss = buf.kiss
+                # ax25frame.kiss = buf.kiss
                 e = None
                 try:
                     # Decoding
@@ -539,7 +539,7 @@ class KissTCP(AX25Port):
         out = (bytes.fromhex('c0') + frame.hexstr + bytes.fromhex('c0'))
         """
         try:
-            self.device.sendall(self.kiss.kiss(frame.hexstr))
+            self.device.sendall(self.kiss.kiss(frame.bytes))
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
             logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
             logger.error('{}'.format(e))
@@ -625,7 +625,7 @@ class KISSSerial(AX25Port):
     def tx(self, frame: AX25Frame):
         # frame.hexstr = self.kiss.kiss(frame.hexstr)
         try:
-            self.device.write(self.kiss.kiss(frame.hexstr))
+            self.device.write(self.kiss.kiss(frame.bytes))
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
             logger.warning('Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
             logger.warning('{}'.format(e))
@@ -715,11 +715,11 @@ class AXIP(AX25Port):
         if frame.axip_add != ('', 0):
             ###################################
             # CRC
-            calc_crc = crc_x25(frame.hexstr)
+            calc_crc = crc_x25(frame.bytes)
             calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
             ###################################
             try:
-                self.device.sendto(frame.hexstr + calc_crc, frame.axip_add)
+                self.device.sendto(frame.bytes + calc_crc, frame.axip_add)
             except (ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
                 logger.warning('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
                 logger.warning('{}'.format(e))
@@ -740,16 +740,16 @@ class AXIP(AX25Port):
         all_axip_stat = self.mh.mh_get_ip_fm_all(self.port_cfg.parm_axip_fail)
         send_it = True
         for station in all_axip_stat:
-            if frame.hexstr in self.axip_anti_spam.keys():
-                if frame.axip_add in self.axip_anti_spam[frame.hexstr][0]:
-                    if self.axip_anti_spam[frame.hexstr][1] > time.time():
+            if frame.bytes in self.axip_anti_spam.keys():
+                if frame.axip_add in self.axip_anti_spam[frame.bytes][0]:
+                    if self.axip_anti_spam[frame.bytes][1] > time.time():
                         send_it = False
                 else:
-                    tmp: [] = self.axip_anti_spam[frame.hexstr][0]
+                    tmp: [] = self.axip_anti_spam[frame.bytes][0]
                     tmp.append(frame.axip_add)
-                    self.axip_anti_spam[frame.hexstr] = tmp, time.time() + self.port_cfg.parm_Multicast_anti_spam
+                    self.axip_anti_spam[frame.bytes] = tmp, time.time() + self.port_cfg.parm_Multicast_anti_spam
             else:
-                self.axip_anti_spam[frame.hexstr] = [
+                self.axip_anti_spam[frame.bytes] = [
                     frame.axip_add], time.time() + self.port_cfg.parm_Multicast_anti_spam
 
             if station[0] not in sendet and send_it:
