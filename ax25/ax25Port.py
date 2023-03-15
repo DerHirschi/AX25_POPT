@@ -137,7 +137,7 @@ class AX25Port(threading.Thread):
         self.TXD = time.time() + self.parm_TXD / 1000
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
-        """ Not Happy with that Part . . :-( TODO Cleanup """
+        """ Not Happy with that Part . . :-( TODO Cleanup or AGAIN !! """
         # cfg = self.port_cfg
         # Monitor
         if self.is_gui:
@@ -271,7 +271,6 @@ class AX25Port(threading.Thread):
                         tr = True
                     except AX25DeviceFAIL as e:
                         raise e
-
 
                     cfg = self.port_cfg
                     # Monitor
@@ -569,6 +568,7 @@ class KISSSerial(AX25Port):
             else:
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_start())
+                    # self.device.write(b'\xc0\x10\x0c\xc0')
                     self.set_kiss_parm()
 
     def __del__(self):

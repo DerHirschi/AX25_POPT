@@ -5,23 +5,24 @@ class Kiss(object):
     """
     Idea from:
     https://github.com/ampledata/kiss
+
+    TODO: MultiKiss ( Direwolf Channels )
+    CH0 Data: \xc0\x00 <AX25-Frame> \x0c\xc0'
+    CH1 Data: \xc0\x10 <AX25-Frame> \x0c\xc0'
+    CH2 Data: \xc0\x20 <AX25-Frame> \x0c\xc0'
+    ...
+
     """
     def __init__(self, port_cfg):
         self.is_enabled = True
         self.port_cfg = port_cfg
         self.is_enabled = self.port_cfg.parm_kiss_is_on
-        """
-        self.txd = self.port_cfg.parm_kiss_TXD
-        self.pers = self.port_cfg.parm_kiss_Pers
-        self.slot = self.port_cfg.parm_kiss_Slot
-        self.tail = self.port_cfg.parm_kiss_Tail
-        self.f_duplex = self.port_cfg.parm_kiss_F_Duplex
-        """
+
         # CFG Flags
-        self.DATA_FRAME = b'\x00'
+        self.DATA_FRAME = b'\x00'   # Channel 0
         self.RETURN = b'\xFF'
         # self.START = b'$0'
-        self.START = bytes.fromhex('1B404B')
+        self.START = bytes.fromhex('1B404B')    # TNC2 KISS MODE
         # ESC & END Flags
         self.FEND = b'\xC0'
         self.FESC = b'\xDB'
@@ -31,6 +32,7 @@ class Kiss(object):
         self.KISS_OFF = b''.join([self.FEND, self.RETURN, self.FEND, self.FEND])
         # self.txd_frame = lambda: self.TX_DELAY + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:])
         self.txd_frame = lambda: b'\xC0\x01' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:]) + b'\xC0'
+        # self.txd_frame_ch1 = lambda: b'\xC0\x11' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:]) + b'\xC0'
         self.pers_frame = lambda: b'\xC0\x02' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Pers)[2:]) + b'\xC0'
         self.slot_frame = lambda: b'\xC0\x03' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Slot)[2:]) + b'\xC0'
         self.tail_frame = lambda: b'\xC0\x04' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Tail)[2:]) + b'\xC0'

@@ -65,7 +65,7 @@ class ChBtnFrm:
                 if i in self.main_class.ax25_port_handler.all_connections.keys() and not self.main_class.mon_mode:
                     if not self.main_class.ax25_port_handler.all_connections[i].is_link or \
                             not self.main_class.ax25_port_handler.all_connections[i].my_digi_call:
-                        self.con_btn_dict[i].configure(text=self.main_class.ax25_port_handler.all_connections[i].ax25_out_frame.to_call.call_str)
+                        self.con_btn_dict[i].configure(text=self.main_class.ax25_port_handler.all_connections[i].to_call_str)
                         if i == self.main_class.channel_index:
                             self.con_btn_dict[i].configure(bg='green2')
                         else:

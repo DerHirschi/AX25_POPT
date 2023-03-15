@@ -62,6 +62,9 @@ class AX25Conn(object):
                 self.ax25_out_frame.addr_uid = ax25_frame.addr_uid  # Unique ID for Connection
         self.my_call_obj = self.ax25_out_frame.from_call
         self.my_call_str = self.my_call_obj.call
+        self.my_call_alias = ''
+        self.to_call_str = str(self.ax25_out_frame.to_call.call_str)
+        self.to_call_alias = ''
         self.stat_cfg = config_station.DefaultStation()
         if self.my_call_str in self.prt_hndl.ax25_stations_settings.keys():
             self.stat_cfg = self.prt_hndl.ax25_stations_settings[self.my_call_str]
@@ -84,7 +87,7 @@ class AX25Conn(object):
         self.tx_buf_guiData: b'' = b''          # Buffer for TX Echo in GUI
         self.rx_buf_rawData: b'' = b''          # Received Data for GUI
         self.rx_buf_monitor: [str] = []         # Received Data Monitor String
-        self.rx_buf_rawData_2: b'' = b''        # Received Data TEST Script
+        # self.rx_buf_rawData_2: b'' = b''        # Received Data TEST Script
         """ Port Variablen"""
         self.vs = 0  # Sendefolgenummer     / N(S) = V(R)  TX
         self.vr = 0  # Empfangsfolgezählers / N(S) = V(R)  TX
@@ -407,6 +410,9 @@ class DefaultStat(object):
         # TODO Connection Timeout
         self.state_cron()  # State Cronex
 
+    def set_dest_call_fm_data_inp(self, ax25_fr_data: b''):
+        pass
+
 
 class S1Frei(DefaultStat):  # INIT RX
     """
@@ -609,7 +615,6 @@ class S5Ready(DefaultStat):
             if ((nr - 1) % 8) in self.ax25conn.tx_buf_unACK.keys():
                 self.ax25conn.del_unACK_buf()
                 self.ax25conn.n2 = 0
-
             if ns == self.ax25conn.vr:  # !!!! Korrekt
                 # Process correct I-Frame
                 self.ax25conn.n2 = 0
@@ -617,8 +622,10 @@ class S5Ready(DefaultStat):
                 self.ax25conn.rx_buf_rawData += ax25_frame.data
                 # CLI
                 self.ax25conn.exec_cli(ax25_frame.data)
+                # Station ( RE/DISC/Connect ) Sting Detection
+                self.set_dest_call_fm_data_inp(ax25_frame.data)
                 # Debug Data Buffer
-                self.ax25conn.rx_buf_rawData_2 += ax25_frame.data
+                # self.ax25conn.rx_buf_rawData_2 += ax25_frame.data
                 if self.stat_index == 7 and pf:
                     self.ax25conn.set_T1(stop=True)
                     self.ax25conn.send_RR(pf_bit=False, cmd_bit=False)
@@ -702,6 +709,24 @@ class S5Ready(DefaultStat):
             self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
             self.ax25conn.set_T1()
             self.change_state(7)  # S7 Warten auf Final
+
+    def set_dest_call_fm_data_inp(self, ax25_fr_data: b''):
+        det = [
+            b'*** Connected to ',
+            b'*** Reconnected to '
+        ]
+        for _det_str in det:
+            if _det_str in ax25_fr_data:
+                _index = ax25_fr_data.index(_det_str) + len(_det_str)
+                _tmp_call = ax25_fr_data[_index:]
+                _tmp_call = _tmp_call.split(b'\r')[0].split(b'\n')[0]
+                if b':' in _tmp_call:
+                    _tmp_call = _tmp_call.split(b':')
+                    self.ax25conn.to_call_str = _tmp_call[1].decode('UTF-8', 'ignore')
+                    self.ax25conn.to_call_alias = _tmp_call[0].decode('UTF-8', 'ignore')
+                else:
+                    self.ax25conn.to_call_str = _tmp_call.decode('UTF-8', 'ignore')
+                    self.ax25conn.to_call_alias = ''
 
 
 class S6sendREJ(S5Ready):
