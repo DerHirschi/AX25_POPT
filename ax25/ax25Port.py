@@ -49,7 +49,8 @@ class AX25Port(threading.Thread):
         self.port_typ = self.port_cfg.parm_PortTyp
         self.port_id = self.port_cfg.parm_PortNr
         self.my_stations = self.port_cfg.parm_StationCalls
-        self.is_stupid_digi = self.port_cfg.parm_is_StupidDigi
+        # self.is_stupid_digi = self.port_cfg.parm_is_StupidDigi
+        self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
         self.is_smart_digi = self.port_cfg.parm_isSmartDigi
         self.parm_TXD = self.port_cfg.parm_TXD
         self.TXD = time.time()
@@ -181,10 +182,10 @@ class AX25Port(threading.Thread):
                         self.connections[uid].handle_rx(ax25_frame=ax25_frame)
 
         # DIGI
-        elif self.is_stupid_digi or self.is_smart_digi:
+        elif self.stupid_digi_calls or self.is_smart_digi:
             for my_call in self.my_stations:
                 # Simple "Stupid" DIGI
-                if self.is_stupid_digi:
+                if my_call in self.stupid_digi_calls:
                     if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
                         self.digi_buf.append(ax25_frame)
                 else:

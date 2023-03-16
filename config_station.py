@@ -2,7 +2,7 @@ import pickle
 import os
 from cli.cli import DefaultCLI, NoneCLI
 
-VER = '2.67.4.1a'
+VER = '2.67.5.0a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -137,7 +137,7 @@ class DefaultPort(object):
     parm_PortParm: (str, int) = ('', 0)
     # TODO DIGI is Station related
     parm_isSmartDigi = False
-    parm_is_StupidDigi = False  # Just if parm_isDigi is set to False
+    parm_StupidDigi_calls = []     # Just if parm_isDigi is set to False
     parm_TXD = 1400             # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
     """ Kiss Parameter """
     parm_kiss_is_on = True
@@ -240,6 +240,9 @@ class PortConfigInit(DefaultPort):
                 for call in self.parm_StationCalls:
                     new_stat_cfg = loaded_stat[call]
                     self.parm_Stations.append(new_stat_cfg)
+                    # Stupid Digi
+                    if new_stat_cfg.stat_parm_is_StupidDigi:
+                        self.parm_StupidDigi_calls.append(call)
                 if self.parm_PortTyp == 'AXIP':
                     self.parm_full_duplex = True
                 else:

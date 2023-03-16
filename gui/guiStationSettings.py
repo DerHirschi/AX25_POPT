@@ -66,15 +66,14 @@ class StatSetTab:
         self.pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
 
         #################
-        # DIGI TODO
+        # DIGI
         digi_x = 305
         digi_y = 500
-        self.digi_set_var = tk.IntVar()
+        self.digi_set_var = tk.BooleanVar()
         self.digi = tk.Checkbutton(self.own_tab,
                                    text='DIGI',
                                    width=4,
                                    variable=self.digi_set_var,
-                                   state='disabled'     # TODO
                                    )
         self.digi.place(x=digi_x, y=height - digi_y)
 

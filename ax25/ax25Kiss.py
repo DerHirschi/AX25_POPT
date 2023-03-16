@@ -31,11 +31,11 @@ class Kiss(object):
         # KISS_ON = 'KISS $0B'
         self.KISS_OFF = b''.join([self.FEND, self.RETURN, self.FEND, self.FEND])
         # self.txd_frame = lambda: self.TX_DELAY + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:])
-        self.txd_frame = lambda: b'\xC0\x01' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:]) + b'\xC0'
+        self.txd_frame = lambda: b'\xC0\x01' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:].zfill(2)) + b'\xC0'
         # self.txd_frame_ch1 = lambda: b'\xC0\x11' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:]) + b'\xC0'
-        self.pers_frame = lambda: b'\xC0\x02' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Pers)[2:]) + b'\xC0'
-        self.slot_frame = lambda: b'\xC0\x03' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Slot)[2:]) + b'\xC0'
-        self.tail_frame = lambda: b'\xC0\x04' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Tail)[2:]) + b'\xC0'
+        self.pers_frame = lambda: b'\xC0\x02' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Pers)[2:].zfill(2)) + b'\xC0'
+        self.slot_frame = lambda: b'\xC0\x03' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Slot)[2:].zfill(2)) + b'\xC0'
+        self.tail_frame = lambda: b'\xC0\x04' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Tail)[2:].zfill(2)) + b'\xC0'
         self.duplex_frame = lambda: b'\xC0\x05' + bytes.fromhex(str(self.port_cfg.parm_kiss_F_Duplex).zfill(2)) + b'\xC0'
         # self.hw_frame = lambda: b'\x06' + bytes.fromhex(hex(20)[2:]) + b'\xC0'
         self.kiss_data_frame = lambda inp: self.FEND + self.DATA_FRAME + inp + self.FEND
