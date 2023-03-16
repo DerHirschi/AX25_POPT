@@ -98,7 +98,7 @@ class PortSetTab:
             self.calc_baud.configure(state="normal")
         calc_baud_label.place(x=calc_baud_x, y=height - calc_baud_y)
         self.calc_baud.place(x=calc_baud_x + 80, y=height - calc_baud_y)
-        # TODO KISS Slot, F DUPLEX
+
         # KISS TXD
         kiss_txd_x = 210
         kiss_txd_y = 465
@@ -244,16 +244,18 @@ class PortSetTab:
         test_fail_label.place(x=test_fail_x, y=height - test_fail_y)
         self.test_fail.place(x=test_fail_x + 95, y=height - test_fail_y)
 
-        # T1
-        t1_x = 20
-        t1_y = 430
-        t1_label = tk.Label(self.tab, text='T1:')
-        self.t1 = tk.Entry(self.tab, width=5, state='disabled')     # TODO
-        self.t1.insert(tk.END, self.port_setting.parm_T1)
-        t1_label.place(x=t1_x, y=height - t1_y)
-        self.t1.place(x=t1_x + 40, y=height - t1_y)
+        # T2 auto
+        _x = 120
+        _y = 430
+        # t1_label = tk.Label(self.tab, text='T1:')
+        self.t2_auto_var = tk.BooleanVar(self.tab)
+        self.t2_auto = tk.Checkbutton(self.tab, text='T2Auto', variable=self.t2_auto_var, command=self.t2_auto_check)
+        self.default_bg_clr = self.t2_auto.cget('bg')
+        # self.t1.insert(tk.END, self.port_setting.parm_T1)
+        # t1_label.place(x=t1_x, y=height - t1_y)
+        self.t2_auto.place(x=_x , y=height - _y)
         # T2
-        t2_x = 140
+        t2_x = 20
         t2_y = 430
         t2_label = tk.Label(self.tab, text='T2:')
         self.t2 = tk.Entry(self.tab, width=5)
@@ -261,7 +263,7 @@ class PortSetTab:
         t2_label.place(x=t2_x, y=height - t2_y)
         self.t2.place(x=t2_x + 40, y=height - t2_y)
         # T3
-        t3_x = 260
+        t3_x = 230
         t3_y = 430
         t3_label = tk.Label(self.tab, text='T3:')
         self.t3 = tk.Entry(self.tab, width=5)
@@ -269,7 +271,7 @@ class PortSetTab:
         t3_label.place(x=t3_x, y=height - t3_y)
         self.t3.place(x=t3_x + 40, y=height - t3_y)
         # N2
-        n2_x = 380
+        n2_x = 350
         n2_y = 430
         n2_label = tk.Label(self.tab, text='N2:')
         self.n2 = tk.Entry(self.tab, width=4)
@@ -434,10 +436,11 @@ class PortSetTab:
                 self.param1_ent.insert(tk.END, self.port_setting.parm_PortParm[0])
             if self.port_setting.parm_PortParm[1]:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
-
-            self.t1.configure(state="disabled") # TODO
+            """
+            self.t1.configure(state="normal")
             self.t1.delete(0, tk.END)
             self.t1.insert(tk.END, self.port_setting.parm_T1)
+            """
             self.t2.configure(state="normal")
             self.t2.delete(0, tk.END)
             self.t2.insert(tk.END, self.port_setting.parm_T2)
@@ -469,12 +472,14 @@ class PortSetTab:
             self.calc_baud.delete(0, tk.END)
             self.calc_baud.insert(tk.END, '119200')
             self.calc_baud.configure(state="disabled")
-
-            self.t1.configure(state="disabled")
+            """
+            self.t1.configure(state="normal")
             self.t1.delete(0, tk.END)
             self.t1.insert(tk.END, '1')
             self.t1.configure(state="disabled")
+            """
             self.t2.configure(state="normal")
+
             self.t2.delete(0, tk.END)
             self.t2.insert(tk.END, '1')
             self.t2.configure(state="disabled")
@@ -532,9 +537,11 @@ class PortSetTab:
                 self.param1_ent.insert(tk.END, self.port_setting.parm_PortParm[0])
             if self.port_setting.parm_PortParm[1]:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
-            self.t1.configure(state="disabled")
+            """
+            self.t1.configure(state="normal")
             self.t1.delete(0, tk.END)
             self.t1.insert(tk.END, self.port_setting.parm_T1)
+            """
             self.t2.configure(state="normal")
             self.t2.delete(0, tk.END)
             self.t2.insert(tk.END, self.port_setting.parm_T2)
@@ -611,6 +618,13 @@ class PortSetTab:
                 self.port_setting.parm_Stations.append(stat)
                 # station_save_files
 
+    def t2_auto_check(self):
+        if self.t2_auto_var.get():
+            self.t2_auto.configure(bg='green')
+            self.t2.configure(state='disabled')
+        else:
+            self.t2_auto.configure(bg=self.default_bg_clr)
+            self.t2.configure(state='normal')
 
 class PortSettingsWin:
     def __init__(self, main_cl):
