@@ -248,7 +248,7 @@ class PortSetTab:
         t1_x = 20
         t1_y = 430
         t1_label = tk.Label(self.tab, text='T1:')
-        self.t1 = tk.Entry(self.tab, width=5)
+        self.t1 = tk.Entry(self.tab, width=5, state='disabled')     # TODO
         self.t1.insert(tk.END, self.port_setting.parm_T1)
         t1_label.place(x=t1_x, y=height - t1_y)
         self.t1.place(x=t1_x + 40, y=height - t1_y)
@@ -435,7 +435,7 @@ class PortSetTab:
             if self.port_setting.parm_PortParm[1]:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
 
-            self.t1.configure(state="normal")
+            self.t1.configure(state="disabled") # TODO
             self.t1.delete(0, tk.END)
             self.t1.insert(tk.END, self.port_setting.parm_T1)
             self.t2.configure(state="normal")
@@ -470,7 +470,7 @@ class PortSetTab:
             self.calc_baud.insert(tk.END, '119200')
             self.calc_baud.configure(state="disabled")
 
-            self.t1.configure(state="normal")
+            self.t1.configure(state="disabled")
             self.t1.delete(0, tk.END)
             self.t1.insert(tk.END, '1')
             self.t1.configure(state="disabled")
@@ -532,7 +532,7 @@ class PortSetTab:
                 self.param1_ent.insert(tk.END, self.port_setting.parm_PortParm[0])
             if self.port_setting.parm_PortParm[1]:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
-            self.t1.configure(state="normal")
+            self.t1.configure(state="disabled")
             self.t1.delete(0, tk.END)
             self.t1.insert(tk.END, self.port_setting.parm_T1)
             self.t2.configure(state="normal")
@@ -564,7 +564,7 @@ class PortSetTab:
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
         self.port_setting.parm_baud = int(self.calc_baud.get())
         # T 1
-        self.port_setting.parm_T1 = int(self.t1.get())
+        # self.port_setting.parm_T1 = int(self.t1.get())
         # T 2
         self.port_setting.parm_T2 = int(self.t2.get())
         # T 3

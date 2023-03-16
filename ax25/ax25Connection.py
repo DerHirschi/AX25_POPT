@@ -100,10 +100,39 @@ class AX25Conn(object):
         self.parm_PacLen = self.cfg.parm_PacLen         # Max Pac len
         self.parm_MaxFrame = self.cfg.parm_MaxFrame     # Max (I) Frames
         self.parm_TXD = self.cfg.parm_TXD    # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
-        self.parm_T2 = self.cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self.parm_Kiss_TXD = 0
+        self.parm_Kiss_Tail = 0
+        if self.own_port.kiss.is_enabled:
+            self.parm_Kiss_TXD = self.own_port.port_cfg.parm_kiss_TXD
+            self.parm_Kiss_Tail = self.own_port.port_cfg.parm_kiss_Tail
+        # self.parm_T2 = self.cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
         self.parm_T3 = self.cfg.parm_T3      # T3 (Inactive Link Timer)
         self.parm_N2 = self.cfg.parm_N2      # Max Try   Default 20
         self.parm_baud = self.cfg.parm_baud  # Baud for calculating Timer
+        """ Timer Calculation """
+        # self.parm_T2 = float(self.parm_T2 / self.parm_baud)  # TODO Berechnen nach Paketgröße
+        # Initial-Round-Trip-Time (Auto Parm) (bei DAMA wird T2*2 genommen)/NO DAMA YET
+        # self.calc_IRTT = (self.parm_T2 + (self.parm_TXD / 10)) * 2
+        print('parm_PacLen: {}'.format(self.parm_PacLen))
+        # print('old init_t2: {}'.format(self.parm_T2))
+
+        init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
+        self.parm_T2 = init_t2 / 1000
+        print('old calc_IRTT: {}'.format( (self.parm_T2 + (self.parm_TXD)) * 2))
+        print('init_t2: {}'.format(init_t2))
+        """
+        self.calc_IRTT = (self.parm_T2 +
+                          (self.parm_TXD / 10) +
+                          self.parm_Kiss_TXD +
+                          self.parm_Kiss_Tail
+                          ) * 2
+        """
+        self.calc_IRTT = (init_t2 +
+                          self.parm_TXD +
+                          (self.parm_Kiss_TXD * 10) +
+                          (self.parm_Kiss_Tail * 10)
+                          ) * 2
+        print('calc_IRTT: {}'.format(self.calc_IRTT))
         """ Zustandstabelle / Statechart """
         self.zustand_tab = {
             0: (DefaultStat, 'ENDE'),
@@ -137,10 +166,6 @@ class AX25Conn(object):
             # raise ConnectionError
             self.cli = cli.cli.NoneCLI(self)
 
-        """ Timer Calculation """
-        self.parm_T2 = float(self.parm_T2 / self.parm_baud)  # TODO Berechnen nach Paktegröße
-        # Initial-Round-Trip-Time (Auto Parm) (bei DAMA wird T2*2 genommen)/NO DAMA YET
-        self.calc_IRTT = (self.parm_T2 + self.parm_TXD / 10) * 2
         if rx:
             self.zustand_exec = S1Frei(self)
         else:
@@ -207,9 +232,11 @@ class AX25Conn(object):
             if self.ax25_out_frame.via_calls:
                 srtt = int((len(self.ax25_out_frame.via_calls) * 2 + 1) * srtt)
             if n2 > 3:
-                self.t1 = float(((srtt * (n2 + 4)) / 100) + time.time())
+                self.t1 = float(((srtt * (n2 + 4)) / 1000) + time.time())
             else:
-                self.t1 = float(((srtt * 3) / 100) + time.time())
+                self.t1 = float(((srtt * 3) / 1000) + time.time())
+
+        print('t1 > {}'.format(self.t1 - time.time()))
 
     def set_T2(self, stop=False):
         if stop:
