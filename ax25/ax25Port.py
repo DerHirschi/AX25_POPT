@@ -483,7 +483,8 @@ class KissTCP(AX25Port):
                 # raise AX25DeviceFAIL
             else:
                 if self.kiss.is_enabled:
-                    self.device.sendall(self.kiss.device_kiss_start())
+                    self.device.sendall(self.kiss.device_kiss_start_1())
+                    self.device.sendall(self.kiss.device_kiss_start_2())
                     self.set_kiss_parm()
 
     def __del__(self):
@@ -533,6 +534,8 @@ class KissTCP(AX25Port):
                 ret.raw_data = de_kiss_fr
                 # return ret
                 return ret
+        else:
+            return ret
 
     def tx(self, frame: AX25Frame):
         """
@@ -570,7 +573,8 @@ class KISSSerial(AX25Port):
                 # raise AX25DeviceFAIL
             else:
                 if self.kiss.is_enabled:
-                    self.device.write(self.kiss.device_kiss_start())
+                    self.device.write(self.kiss.device_kiss_start_1())
+                    self.device.write(self.kiss.device_kiss_start_2())
                     # self.device.write(b'\xc0\x10\x0c\xc0')
                     self.set_kiss_parm()
 
@@ -628,7 +632,8 @@ class KISSSerial(AX25Port):
                         # self.kiss = ret.kiss
                         ret.raw_data = de_kiss_fr
                         return ret
-                # return ret
+                else:
+                    return ret
 
     def tx(self, frame: AX25Frame):
         # frame.hexstr = self.kiss.kiss(frame.hexstr)

@@ -23,7 +23,7 @@ class Kiss(object):
         self.RETURN = b'\xFF'
         # self.START = b'$0'
         self.START_TNC2 = bytes.fromhex('1B404B')    # TNC2 KISS MODE
-        self.START_TNC_DEFAULT = b'KISS ON'    # TNC2 KISS MODE
+        self.START_TNC_DEFAULT = bytes.fromhex('5E406B')   # TNC2 KISS MODE
         # ESC & END Flags
         self.FEND = b'\xC0'
         self.FESC = b'\xDB'
@@ -107,8 +107,14 @@ class Kiss(object):
     def device_kiss_end(self):
         return b''.join([self.FEND, self.RETURN, self.FEND])
 
-    def device_kiss_start(self):
+    def device_kiss_start_1(self):
         # return b''.join([self.FEND, self.DATA_FRAME, self.START, self.FEND])
         # return b''.join([self.START_TNC_DEFAULT, self.START_TNC2])
         return b''.join([self.START_TNC2])
+
+    def device_kiss_start_2(self):
+        # return b''.join([self.FEND, self.DATA_FRAME, self.START, self.FEND])
+        # return b''.join([self.START_TNC_DEFAULT, self.START_TNC2])
+        # return b''.join([self.START_TNC2])
+        return b''.join([self.START_TNC_DEFAULT])
 
