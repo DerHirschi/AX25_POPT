@@ -19,6 +19,56 @@ def count_modulo(inp: int):
     return (inp + 1) % 8
 
 
+class RTT(object):
+    def __init__(self, i_rtt: float, pac_len: int):
+        self.rtt_dict: {int: float} = {}
+        self.rtt_best = 999.0
+        self.rtt_worst = 0.0
+        self.rtt_average = 0.0
+        self.rtt_last = 0.0
+        self.rtt_single_timer = 0.0
+        for i in range(8):
+            self.rtt_dict[i] = {
+                'timer': 0.0,
+                'paclen': pac_len,
+                'rtt': i_rtt
+            }
+
+    def set_rtt_timer(self, vs: int, paclen: int):
+        self.rtt_dict[vs]['timer'] = time.time()
+        self.rtt_dict[vs]['paclen'] = paclen
+        print('set {}'.format(self.rtt_dict))
+
+    def set_rtt_single_timer(self):
+        self.rtt_single_timer = time.time()
+
+    def get_rtt_single_timer(self):
+        timer = time.time() - self.rtt_single_timer
+
+    def rtt_rx(self, vs: int):
+        print('RX {}' .format(self.rtt_dict))
+        timer = float(self.rtt_dict[vs]['timer'])
+        if timer:
+            self.rtt_dict[vs]['rtt'] = time.time() - timer
+        self.rtt_last = float(self.rtt_dict[vs]['rtt'])
+        self.calc_rtt_vars()
+        print('RX rtt_last {}'.format(self.rtt_last))
+        print('RX rtt_best {}'.format(self.rtt_best))
+        print('RX rtt_worst {}'.format(self.rtt_worst))
+        print('RX rtt_average {}'.format(self.rtt_average))
+        return self.rtt_last
+
+    def calc_rtt_vars(self):
+        self.rtt_best = min(self.rtt_last, self.rtt_best)
+        self.rtt_worst = max(self.rtt_last, self.rtt_worst)
+        tmp = []
+        for vs in self.rtt_dict.keys():
+            if self.rtt_dict[vs]['rtt']:
+                tmp.append(self.rtt_dict[vs]['rtt'])
+        if tmp:
+            self.rtt_average = sum(tmp) / len(tmp)
+
+
 class AX25Conn(object):
     def __init__(self, ax25_frame: AX25Frame, cfg, port, rx=True):
         self.own_port = port
@@ -39,7 +89,7 @@ class AX25Conn(object):
         self.is_link = False
         self.my_digi_call = ''
         # AX25 Frame for Connection Initialisation.
-        self.ax25_out_frame = AX25Frame()   # Predefined AX25 Frame for Output
+        self.ax25_out_frame = AX25Frame()  # Predefined AX25 Frame for Output
         """ Config new Connection Address """
         self.ax25_out_frame.axip_add = ax25_frame.axip_add
         self.axip_add = self.ax25_out_frame.axip_add
@@ -78,15 +128,15 @@ class AX25Conn(object):
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
         """ IO Buffer Packet For Handling """
-        self.tx_buf_ctl: [AX25Frame] = []           # Buffer for CTL ( S ) Frame to send on next Cycle
-        self.tx_buf_2send: [AX25Frame] = []         # Buffer for Sending. Will be processed in ax25PortHandler
-        self.tx_buf_unACK: {int: AX25Frame} = {}    # Buffer for UNACK I-Frames
-        self.rx_buf_last_frame = ax25_frame         # Buffers for last Frame !?!
+        self.tx_buf_ctl: [AX25Frame] = []  # Buffer for CTL ( S ) Frame to send on next Cycle
+        self.tx_buf_2send: [AX25Frame] = []  # Buffer for Sending. Will be processed in ax25PortHandler
+        self.tx_buf_unACK: {int: AX25Frame} = {}  # Buffer for UNACK I-Frames
+        self.rx_buf_last_frame = ax25_frame  # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
-        self.tx_buf_rawData: b'' = b''          # Buffer for TX RAW Data that will be packed into a Frame
-        self.tx_buf_guiData: b'' = b''          # Buffer for TX Echo in GUI
-        self.rx_buf_rawData: b'' = b''          # Received Data for GUI
-        self.rx_buf_monitor: [str] = []         # Received Data Monitor String
+        self.tx_buf_rawData: b'' = b''  # Buffer for TX RAW Data that will be packed into a Frame
+        self.tx_buf_guiData: b'' = b''  # Buffer for TX Echo in GUI
+        self.rx_buf_rawData: b'' = b''  # Received Data for GUI
+        self.rx_buf_monitor: [str] = []  # Received Data Monitor String
         # self.rx_buf_rawData_2: b'' = b''        # Received Data TEST Script
         """ Port Variablen"""
         self.vs = 0  # Sendefolgenummer     / N(S) = V(R)  TX
@@ -97,17 +147,17 @@ class AX25Conn(object):
         self.n2 = 0  # Fail Counter / No Response Counter
         """ Port Config Parameter """
         self.cfg = cfg
-        self.parm_PacLen = self.cfg.parm_PacLen         # Max Pac len
-        self.parm_MaxFrame = self.cfg.parm_MaxFrame     # Max (I) Frames
-        self.parm_TXD = self.cfg.parm_TXD    # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
+        self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
+        self.parm_TXD = self.cfg.parm_TXD  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
         self.parm_Kiss_TXD = 0
         self.parm_Kiss_Tail = 0
         if self.own_port.kiss.is_enabled:
             self.parm_Kiss_TXD = self.own_port.port_cfg.parm_kiss_TXD
             self.parm_Kiss_Tail = self.own_port.port_cfg.parm_kiss_Tail
-        self.parm_T2 = self.cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
-        self.parm_T3 = self.cfg.parm_T3      # T3 (Inactive Link Timer)
-        self.parm_N2 = self.cfg.parm_N2      # Max Try   Default 20
+        self.parm_T2 = self.cfg.parm_T2  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self.parm_T3 = self.cfg.parm_T3  # T3 (Inactive Link Timer)
+        self.parm_N2 = self.cfg.parm_N2  # Max Try   Default 20
         self.parm_baud = self.cfg.parm_baud  # Baud for calculating Timer
         """ Timer Calculation """
         # self.parm_T2 = float(self.parm_T2 / self.parm_baud)  # TODO Berechnen nach Paketgröße
@@ -117,23 +167,25 @@ class AX25Conn(object):
         # print('old init_t2: {}'.format(self.parm_T2))
         if self.own_port.port_cfg.parm_T2_auto:
             init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
-            self.parm_T2 = init_t2 / 1000
-            print('old calc_IRTT: {}'.format( (self.parm_T2 + (self.parm_TXD)) * 2))
+            self.parm_T2 = float(init_t2 / 1000)
+            print('old calc_IRTT: {}'.format((self.parm_T2 + (self.parm_TXD)) * 2))
             print('init_t2: {}'.format(init_t2))
-            self.calc_IRTT = (init_t2 +
-                              self.parm_TXD +
-                              (self.parm_Kiss_TXD * 10) +
-                              (self.parm_Kiss_Tail * 10)
-                              ) * 2
+            self.IRTT = (init_t2 +
+                         self.parm_TXD +
+                         (self.parm_Kiss_TXD * 10) +
+                         (self.parm_Kiss_Tail * 10)
+                         ) * 2
         else:
-            self.parm_T2 = float(self.parm_T2 / self.parm_baud)
-            self.calc_IRTT = ((self.parm_T2 * 1000) +
-                              self.parm_TXD +
-                              (self.parm_Kiss_TXD * 10) +
-                              (self.parm_Kiss_Tail * 10)
-                              ) * 2
-        print('calc_IRTT: {}'.format(self.calc_IRTT))
-        self.RTT = int(self.calc_IRTT)
+            self.parm_T2 = self.parm_T2 / 1000
+            self.IRTT = ((self.parm_T2 * 1000) +
+                         self.parm_TXD +
+                         (self.parm_Kiss_TXD * 10) +
+                         (self.parm_Kiss_Tail * 10)
+                         ) * 2
+        print('calc_IRTT: {}'.format(self.IRTT))
+        self.RTT = 0
+        self.calc_rtt()
+        self.RTT_Timer = RTT(float(self.RTT), int(self.parm_PacLen))
         """ Zustandstabelle / Statechart """
         self.zustand_tab = {
             0: (DefaultStat, 'ENDE'),
@@ -151,8 +203,8 @@ class AX25Conn(object):
         stat_call = self.stat_cfg.stat_parm_Call
 
         if stat_call != config_station.DefaultStation.stat_parm_Call:
-            if self.cfg.parm_stat_PacLen[stat_call]:    # If 0 then default port param
-                self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]      # Max Pac len
+            if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
+                self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
             if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
                 self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
             """ Init CLI """
@@ -199,6 +251,7 @@ class AX25Conn(object):
             if self.is_gui:
                 self.ChVars = self.gui.win_buf[int(self.ch_index)]
     """
+
     ####################
     # Zustand EXECs
     def handle_rx(self, ax25_frame: AX25Frame):
@@ -223,13 +276,17 @@ class AX25Conn(object):
         self.DIGI_Connection: AX25Conn = conn
         self.is_link = True
 
+    def calc_rtt(self):
+        # TODO
+        self.RTT = int((len(self.ax25_out_frame.via_calls) * 2 + 1) * self.IRTT)
+
     def set_T1(self, stop=False):
         if stop:
             self.n2 = 0
             self.t1 = 0
         else:
             n2 = int(self.n2)
-            srtt = float(self.calc_IRTT)
+            srtt = float(self.IRTT)
             if self.ax25_out_frame.via_calls:
                 srtt = int((len(self.ax25_out_frame.via_calls) * 2 + 1) * srtt)
             if n2 > 3:
@@ -258,6 +315,8 @@ class AX25Conn(object):
                 if i == nr:
                     break
                 del self.tx_buf_unACK[i]
+                # RTT
+                self.RTT_Timer.rtt_rx(i)
                 # print("DELunACK - DEL!!: {}".format(i))
 
     def resend_unACK_buf(self, max_pac=None):  # TODO Testing
@@ -317,9 +376,12 @@ class AX25Conn(object):
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
             self.tx_buf_2send.append(self.ax25_out_frame)
+            # RTT
+            self.RTT_Timer.set_rtt_timer(int(self.vs), int(pac_len))
             # !!! COUNT VS !!!
             self.vs = count_modulo(int(self.vs))  # Increment VS Modulo 8
             self.set_T1()  # Re/Set T1
+
 
     def send_UA(self):
         self.init_new_ax25frame()
@@ -471,7 +533,7 @@ class S1Frei(DefaultStat):  # INIT RX
             self.change_state(0)
 
 
-class S2Aufbau(DefaultStat):    # INIT TX
+class S2Aufbau(DefaultStat):  # INIT TX
     stat_index = 2  # AUFBAU Verbindung Aufbau
 
     def tx(self, ax25_frame: AX25Frame = None):
@@ -547,7 +609,8 @@ class S4Abbau(DefaultStat):
         flag = ax25_frame.ctl_byte.flag
         if flag in ['UA', 'DM']:
             if self.digi_conn is None:
-                self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(ax25_frame.to_call.call_str).encode()
+                self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
+                    ax25_frame.to_call.call_str).encode()
             self.ax25conn.set_T1()  # Prevent sending another Packet
             self.change_state(0)
             # if self.ax25conn.is_prt_hndl:

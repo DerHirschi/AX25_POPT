@@ -532,7 +532,7 @@ class KissTCP(AX25Port):
                 # self.kiss = ret.kiss
                 ret.raw_data = de_kiss_fr
                 # return ret
-        return ret
+                return ret
 
     def tx(self, frame: AX25Frame):
         """
@@ -561,7 +561,7 @@ class KISSSerial(AX25Port):
             logger.info("KISS Serial INIT")
             # self.kiss = b'\x00'
             try:
-                self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.2)
+                self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=2)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
                 logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
@@ -617,10 +617,10 @@ class KISSSerial(AX25Port):
             else:
                 ret = RxBuf()
                 if recv_buff:
-                    logger.error('DEBUG RX-Serial recv_buff Final:\n {}'.format(recv_buff))
+                    # logger.error('DEBUG RX-Serial recv_buff Final:\n {}'.format(recv_buff))
                     de_kiss_fr = self.kiss.de_kiss(recv_buff)
                     # if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
-                    if de_kiss_fr:
+                    if de_kiss_fr:  # TODO !!!! flush buffer ?
                         # ret.raw_data = recv_buff[2:-1]
                         #ret.kiss = recv_buff[1:2]
                         # ret.raw_data = recv_buff[2:-1]
@@ -628,7 +628,7 @@ class KISSSerial(AX25Port):
                         # self.kiss = ret.kiss
                         ret.raw_data = de_kiss_fr
                         return ret
-                return ret
+                # return ret
 
     def tx(self, frame: AX25Frame):
         # frame.hexstr = self.kiss.kiss(frame.hexstr)

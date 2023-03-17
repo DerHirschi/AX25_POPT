@@ -40,10 +40,11 @@ class TxTframe:
         self.status_frame.columnconfigure(4, minsize=70, weight=4)  # VS VR
         self.status_frame.columnconfigure(5, minsize=50, weight=5)  # N2
         self.status_frame.columnconfigure(6, minsize=70, weight=5)  # T1
-        self.status_frame.columnconfigure(7, minsize=70, weight=5)  # T2
-        self.status_frame.columnconfigure(8, minsize=70, weight=5)  # T3
-        self.status_frame.columnconfigure(9, minsize=50, weight=1)  # RX Beep
-        self.status_frame.columnconfigure(10, minsize=20, weight=1)  # TimeStamp
+        self.status_frame.columnconfigure(7, minsize=70, weight=5)  # T1
+        self.status_frame.columnconfigure(8, minsize=70, weight=5)  # T2
+        self.status_frame.columnconfigure(9, minsize=70, weight=5)  # T3
+        self.status_frame.columnconfigure(10, minsize=50, weight=1)  # RX Beep
+        self.status_frame.columnconfigure(11, minsize=20, weight=1)  # TimeStamp
         self.status_frame.rowconfigure(0, weight=1)  # Stat
         self.status_frame.rowconfigure(1, minsize=20, weight=0)  # Out
 
@@ -54,7 +55,7 @@ class TxTframe:
                                                     insertbackground=TXT_INP_CURSOR_CLR,
                                                     height=100, bd=0)
         # self.in_txt_win.insert(tk.END, "Inp")
-        self.in_txt_win.grid(row=0, column=0, columnspan=11, sticky="nsew")
+        self.in_txt_win.grid(row=0, column=0, columnspan=12, sticky="nsew")
         ##############
         # Status Frame
         self.status_name = Label(self.status_frame, text="", font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
@@ -84,24 +85,31 @@ class TxTframe:
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
-        self.status_n2.grid(row=1, column=6, sticky="nsew")
+        self.status_n2.grid(row=1, column=7, sticky="nsew")
 
         self.status_t1 = Label(self.status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
-        self.status_t1.grid(row=1, column=7, sticky="nsew")
-        # RTT
+        self.status_t1.grid(row=1, column=8, sticky="nsew")
+        # PARM T2
         self.status_t2 = Label(self.status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
         self.status_t2.grid(row=1, column=5, sticky="nsew")
+        # RTT
+        self.status_rtt = Label(self.status_frame, text="",
+                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                               bg=STAT_BAR_CLR,
+                               foreground=STAT_BAR_TXT_CLR)
+        self.status_rtt.grid(row=1, column=6, sticky="nsew")
+
         self.status_t3 = Label(self.status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
-        self.status_t3.grid(row=1, column=8, sticky="nsew")
+        self.status_t3.grid(row=1, column=9, sticky="nsew")
         # Checkbox RX-BEEP
         self.rx_beep_var = tk.IntVar()
         self.rx_beep_box = Checkbutton(self.status_frame,
@@ -113,7 +121,7 @@ class TxTframe:
                                        foreground=STAT_BAR_TXT_CLR,
                                        variable=self.rx_beep_var
                                        )
-        self.rx_beep_box.grid(row=1, column=9, sticky="nsew")
+        self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
         # Checkbox RX-BEEP
         self.ts_box_var = tk.IntVar()
         self.ts_box_box = Checkbutton(self.status_frame,
@@ -125,7 +133,7 @@ class TxTframe:
                                       foreground=STAT_BAR_TXT_CLR,
                                       variable=self.ts_box_var
                                       )
-        self.ts_box_box.grid(row=1, column=10, sticky="nsew")
+        self.ts_box_box.grid(row=1, column=11, sticky="nsew")
 
         ####################
         # Output
@@ -191,9 +199,15 @@ class TxTframe:
             vr, vs = station.vr, station.vs
             # nr, ns = station.rx_buf_last_frame.ctl_byte.nr, station.rx_buf_last_frame.ctl_byte.ns
             # noACK_buf = str(list(station.tx_buf_unACK.keys()))[1:-1]
-            rtt = station.RTT
+            parm_T2 = int(station.parm_T2 * 1000)
+            rtt = station.RTT_Timer.rtt_last
+            rtt_avg = station.RTT_Timer.rtt_average
+            if station.own_port.port_cfg.parm_T2_auto:
+                rtt_auto = 'A'
+            else:
+                rtt_auto = ''
 
-            # send_buf_len = int(station.debugvar_len_out_buf)
+                # send_buf_len = int(station.debugvar_len_out_buf)
             # len_tx2snd_buf = len(station.tx_buf_2send)
             # len_txraw_buf = len(station.tx_buf_rawData)
             # digi_call = station.my_digi_call
@@ -222,7 +236,8 @@ class TxTframe:
                 self.status_n2.configure(bg=STAT_BAR_CLR)
             self.status_n2.configure(text='N2: {}'.format(n2))
             self.status_t1.configure(text='T1: {}'.format(t1))
-            self.status_t2.configure(text='RTT: {}'.format(rtt))
+            self.status_t2.configure(text='T2: {}{}'.format(parm_T2, rtt_auto))
+            self.status_rtt.configure(text='RTT: {:.1f}/{:.1f}'.format(rtt, rtt_avg / 1000))
             self.status_t3.configure(text='T3: {}'.format(t3))
 
         else:
@@ -234,6 +249,7 @@ class TxTframe:
             self.status_t1.configure(text="", bg=STAT_BAR_CLR)
             self.status_t2.configure(text="", bg=STAT_BAR_CLR)
             self.status_t3.configure(text="", bg=STAT_BAR_CLR)
+            self.status_rtt.configure(text="", bg=STAT_BAR_CLR)
 
     def switch_mon_mode(self):
         # TODO Save Stretched Positions
