@@ -354,7 +354,7 @@ class TkMainWin:
 
     def on_channel_status_change(self):
         """Triggerd when Connection Status has change"""
-        self.tabbed_sideFrame.update_stat_settings()
+        self.tabbed_sideFrame.on_ch_btn_stat_change()
 
     def tasker(self):  # MAINLOOP
         ########################################
@@ -386,7 +386,8 @@ class TkMainWin:
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
             self.change_conn_btn()
-            self.tabbed_sideFrame.update_side_mh()
+            # self.tabbed_sideFrame.update_side_mh()
+            self.tabbed_sideFrame.tasker()
             self.rx_beep()
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)

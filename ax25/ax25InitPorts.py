@@ -22,6 +22,7 @@ class AX25PortHandler(object):
         self.mh = glb_MH
         # self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
+        # self.ch_echo: {int:  [AX25Conn]} = {}
         self.rx_echo: {int:  RxEchoVars} = {}
         self.beacons: {int: {str: [Beacon]}} = {}
         self.ax25_stations_settings: {str: DefaultStation} = config_station.get_all_stat_cfg()

@@ -37,7 +37,7 @@ class RTT(object):
     def set_rtt_timer(self, vs: int, paclen: int):
         self.rtt_dict[vs]['timer'] = time.time()
         self.rtt_dict[vs]['paclen'] = paclen
-        print('set {}'.format(self.rtt_dict))
+        # print('set {}'.format(self.rtt_dict))
 
     def set_rtt_single_timer(self):
         self.rtt_single_timer = time.time()
@@ -46,16 +46,16 @@ class RTT(object):
         timer = time.time() - self.rtt_single_timer
 
     def rtt_rx(self, vs: int):
-        print('RX {}' .format(self.rtt_dict))
+        # print('RX {}' .format(self.rtt_dict))
         timer = float(self.rtt_dict[vs]['timer'])
         if timer:
             self.rtt_dict[vs]['rtt'] = time.time() - timer
         self.rtt_last = float(self.rtt_dict[vs]['rtt'])
         self.calc_rtt_vars()
-        print('RX rtt_last {}'.format(self.rtt_last))
-        print('RX rtt_best {}'.format(self.rtt_best))
-        print('RX rtt_worst {}'.format(self.rtt_worst))
-        print('RX rtt_average {}'.format(self.rtt_average))
+        # print('RX rtt_last {}'.format(self.rtt_last))
+        # print('RX rtt_best {}'.format(self.rtt_best))
+        # print('RX rtt_worst {}'.format(self.rtt_worst))
+        # print('RX rtt_average {}'.format(self.rtt_average))
         return self.rtt_last
 
     def calc_rtt_vars(self):
@@ -71,11 +71,14 @@ class RTT(object):
 
 class AX25Conn(object):
     def __init__(self, ax25_frame: AX25Frame, cfg, port, rx=True):
+        """ AX25 Connection class """
+        """ Global Stuff """
         self.own_port = port
         self.prt_hndl = self.own_port.port_handler
         self.mh = self.prt_hndl.mh
-
+        """ GUI Stuff"""
         self.ch_index: int = 0  # Set in insert_conn2all_conn_var()
+        self.ch_echo: [AX25Conn] = []
         self.gui = self.prt_hndl.gui
         self.ChVars = None
         if self.gui is None:
@@ -85,12 +88,13 @@ class AX25Conn(object):
             self.is_gui = True
 
         """ DIGI / Link to other Connection for Auto processing """
+        # TODO
         self.DIGI_Connection: AX25Conn
         self.is_link = False
         self.my_digi_call = ''
+        """ Config new Connection Address """
         # AX25 Frame for Connection Initialisation.
         self.ax25_out_frame = AX25Frame()  # Predefined AX25 Frame for Output
-        """ Config new Connection Address """
         self.ax25_out_frame.axip_add = ax25_frame.axip_add
         self.axip_add = self.ax25_out_frame.axip_add
         if rx:
@@ -160,16 +164,16 @@ class AX25Conn(object):
         self.parm_N2 = self.cfg.parm_N2  # Max Try   Default 20
         self.parm_baud = self.cfg.parm_baud  # Baud for calculating Timer
         """ Timer Calculation """
-        # self.parm_T2 = float(self.parm_T2 / self.parm_baud)  # TODO Berechnen nach Paketgröße
+        # self.parm_T2 = float(self.parm_T2 / self.parm_baud)
         # Initial-Round-Trip-Time (Auto Parm) (bei DAMA wird T2*2 genommen)/NO DAMA YET
         # self.calc_IRTT = (self.parm_T2 + (self.parm_TXD / 10)) * 2
-        print('parm_PacLen: {}'.format(self.parm_PacLen))
+        # print('parm_PacLen: {}'.format(self.parm_PacLen))
         # print('old init_t2: {}'.format(self.parm_T2))
         if self.own_port.port_cfg.parm_T2_auto:
             init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
             self.parm_T2 = float(init_t2 / 1000)
-            print('old calc_IRTT: {}'.format((self.parm_T2 + (self.parm_TXD)) * 2))
-            print('init_t2: {}'.format(init_t2))
+            # print('old calc_IRTT: {}'.format((self.parm_T2 + (self.parm_TXD)) * 2))
+            # print('init_t2: {}'.format(init_t2))
             self.IRTT = (init_t2 +
                          self.parm_TXD +
                          (self.parm_Kiss_TXD * 10) +
@@ -182,7 +186,7 @@ class AX25Conn(object):
                          (self.parm_Kiss_TXD * 10) +
                          (self.parm_Kiss_Tail * 10)
                          ) * 2
-        print('calc_IRTT: {}'.format(self.IRTT))
+        # print('calc_IRTT: {}'.format(self.IRTT))
         self.RTT = 0
         self.calc_rtt()
         self.RTT_Timer = RTT(float(self.RTT), int(self.parm_PacLen))
@@ -275,7 +279,40 @@ class AX25Conn(object):
     def link_connection(self, conn):
         self.DIGI_Connection: AX25Conn = conn
         self.is_link = True
+    ###############################################
+    # Channel ECHO
+    def ch_echo_add(self, ax25_connection):
+        if ax25_connection not in self.ch_echo:
+            self.ch_echo.append(ax25_connection)
 
+    def ch_echo_del(self, ax25_connection):
+        if ax25_connection in self.ch_echo:
+            self.ch_echo.remove(ax25_connection)
+
+    def ch_echo_frm_tx(self, inp: b''):
+        if inp:
+            tag = '<CH-ECHO> CH: '
+            if tag.encode('UTF-8', 'ignore') not in inp:
+                echo_str = '{}{} - {}>\r'.format(tag, self.ch_index, self.my_call_str)
+                inp = echo_str.encode('UTF-8', 'ignore') + inp
+                for conn in self.ch_echo:
+                    if conn.ch_index != self.ch_index:
+                        conn.tx_buf_rawData += inp
+
+    def ch_echo_frm_rx(self, inp: b''):
+        if inp:
+            tag = '<CH-ECHO> CH: '
+            if tag.encode('UTF-8', 'ignore') not in inp:
+                echo_str = '{}{} - {}>\r'.format(tag, self.ch_index, self.to_call_str)
+                inp = echo_str.encode('UTF-8', 'ignore') + inp
+                for conn in self.ch_echo:
+                    if conn.ch_index != self.ch_index:
+                        conn.tx_buf_rawData += inp
+
+
+    ###############################################
+    ###############################################
+    # Timer usw
     def calc_rtt(self):
         # TODO
         self.RTT = int((len(self.ax25_out_frame.via_calls) * 2 + 1) * self.IRTT)
@@ -294,7 +331,7 @@ class AX25Conn(object):
             else:
                 self.t1 = float(((srtt * 3) / 1000) + time.time())
 
-        print('t1 > {}'.format(self.t1 - time.time()))
+        # print('t1 > {}'.format(self.t1 - time.time()))
 
     def set_T2(self, stop=False):
         if stop:
@@ -370,7 +407,8 @@ class AX25Conn(object):
             # PAYLOAD !!
             pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
             self.ax25_out_frame.data = self.tx_buf_rawData[:pac_len]
-            self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]
+            self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]    # GUI Echo
+            self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])      # CH ECHO
             # if self.ChVars is not None:
             #     self.ChVars.output_win += self.tx_buf_rawData[:pac_len].decode('utf-8', 'ignore')
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
@@ -381,7 +419,6 @@ class AX25Conn(object):
             # !!! COUNT VS !!!
             self.vs = count_modulo(int(self.vs))  # Increment VS Modulo 8
             self.set_T1()  # Re/Set T1
-
 
     def send_UA(self):
         self.init_new_ax25frame()
@@ -711,6 +748,7 @@ class S5Ready(DefaultStat):
                 self.ax25conn.n2 = 0
                 self.ax25conn.vr = count_modulo(int(self.ax25conn.vr))
                 self.ax25conn.rx_buf_rawData += ax25_frame.data
+                self.ax25conn.ch_echo_frm_rx(ax25_frame.data)
                 # CLI
                 self.ax25conn.exec_cli(ax25_frame.data)
                 # Station ( RE/DISC/Connect ) Sting Detection
