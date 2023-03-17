@@ -31,7 +31,7 @@ class RTT(object):
             self.rtt_dict[i] = {
                 'timer': 0.0,
                 'paclen': pac_len,
-                'rtt': i_rtt
+                'rtt': i_rtt / 1000
             }
 
     def set_rtt_timer(self, vs: int, paclen: int):

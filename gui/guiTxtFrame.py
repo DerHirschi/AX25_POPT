@@ -237,7 +237,7 @@ class TxTframe:
             self.status_n2.configure(text='N2: {}'.format(n2))
             self.status_t1.configure(text='T1: {}'.format(t1))
             self.status_t2.configure(text='T2: {}{}'.format(parm_T2, rtt_auto))
-            self.status_rtt.configure(text='RTT: {:.1f}/{:.1f}'.format(rtt, rtt_avg / 1000))
+            self.status_rtt.configure(text='RTT: {:.1f}/{:.1f}'.format(rtt, rtt_avg))
             self.status_t3.configure(text='T3: {}'.format(t3))
 
         else:
