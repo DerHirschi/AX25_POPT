@@ -105,7 +105,7 @@ class AX25Conn(object):
         if self.own_port.kiss.is_enabled:
             self.parm_Kiss_TXD = self.own_port.port_cfg.parm_kiss_TXD
             self.parm_Kiss_Tail = self.own_port.port_cfg.parm_kiss_Tail
-        # self.parm_T2 = self.cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self.parm_T2 = self.cfg.parm_T2      # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
         self.parm_T3 = self.cfg.parm_T3      # T3 (Inactive Link Timer)
         self.parm_N2 = self.cfg.parm_N2      # Max Try   Default 20
         self.parm_baud = self.cfg.parm_baud  # Baud for calculating Timer
@@ -115,24 +115,25 @@ class AX25Conn(object):
         # self.calc_IRTT = (self.parm_T2 + (self.parm_TXD / 10)) * 2
         print('parm_PacLen: {}'.format(self.parm_PacLen))
         # print('old init_t2: {}'.format(self.parm_T2))
-
-        init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
-        self.parm_T2 = init_t2 / 1000
-        print('old calc_IRTT: {}'.format( (self.parm_T2 + (self.parm_TXD)) * 2))
-        print('init_t2: {}'.format(init_t2))
-        """
-        self.calc_IRTT = (self.parm_T2 +
-                          (self.parm_TXD / 10) +
-                          self.parm_Kiss_TXD +
-                          self.parm_Kiss_Tail
-                          ) * 2
-        """
-        self.calc_IRTT = (init_t2 +
-                          self.parm_TXD +
-                          (self.parm_Kiss_TXD * 10) +
-                          (self.parm_Kiss_Tail * 10)
-                          ) * 2
+        if self.own_port.port_cfg.parm_T2_auto:
+            init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
+            self.parm_T2 = init_t2 / 1000
+            print('old calc_IRTT: {}'.format( (self.parm_T2 + (self.parm_TXD)) * 2))
+            print('init_t2: {}'.format(init_t2))
+            self.calc_IRTT = (init_t2 +
+                              self.parm_TXD +
+                              (self.parm_Kiss_TXD * 10) +
+                              (self.parm_Kiss_Tail * 10)
+                              ) * 2
+        else:
+            self.parm_T2 = float(self.parm_T2 / self.parm_baud)
+            self.calc_IRTT = ((self.parm_T2 * 1000) +
+                              self.parm_TXD +
+                              (self.parm_Kiss_TXD * 10) +
+                              (self.parm_Kiss_Tail * 10)
+                              ) * 2
         print('calc_IRTT: {}'.format(self.calc_IRTT))
+        self.RTT = int(self.calc_IRTT)
         """ Zustandstabelle / Statechart """
         self.zustand_tab = {
             0: (DefaultStat, 'ENDE'),

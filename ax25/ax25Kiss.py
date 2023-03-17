@@ -109,5 +109,6 @@ class Kiss(object):
 
     def device_kiss_start(self):
         # return b''.join([self.FEND, self.DATA_FRAME, self.START, self.FEND])
-        return b''.join([self.START_TNC_DEFAULT, self.START_TNC2])
+        # return b''.join([self.START_TNC_DEFAULT, self.START_TNC2])
+        return b''.join([self.START_TNC2])
 

@@ -250,6 +250,7 @@ class PortSetTab:
         # t1_label = tk.Label(self.tab, text='T1:')
         self.t2_auto_var = tk.BooleanVar(self.tab)
         self.t2_auto = tk.Checkbutton(self.tab, text='T2Auto', variable=self.t2_auto_var, command=self.t2_auto_check)
+        self.t2_auto.var = self.t2_auto_var
         self.default_bg_clr = self.t2_auto.cget('bg')
         # self.t1.insert(tk.END, self.port_setting.parm_T1)
         # t1_label.place(x=t1_x, y=height - t1_y)
@@ -546,6 +547,15 @@ class PortSetTab:
             self.t2.delete(0, tk.END)
             self.t2.insert(tk.END, self.port_setting.parm_T2)
 
+        if self.port_setting.parm_T2_auto:
+            self.t2_auto_var.set(True)
+            self.t2_auto.select()
+        else:
+            self.t2_auto_var.set(False)
+            self.t2_auto.deselect()
+        self.t2_auto_check()
+        # print(self.port_setting.parm_T2_auto)
+
     def set_vars_to_cfg(self):
         # Port Name
         self.port_setting.parm_PortName = self.prt_name.get()
@@ -570,8 +580,8 @@ class PortSetTab:
         # if self.port_setting.parm_PortTyp == 'KISSSER':
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
         self.port_setting.parm_baud = int(self.calc_baud.get())
-        # T 1
-        # self.port_setting.parm_T1 = int(self.t1.get())
+        # T 2 auto
+        self.port_setting.parm_T2_auto = bool(self.t2_auto_var.get())
         # T 2
         self.port_setting.parm_T2 = int(self.t2.get())
         # T 3

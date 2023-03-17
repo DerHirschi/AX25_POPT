@@ -494,9 +494,11 @@ class KissTCP(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
+                # Deactivate KISS Mode on TNC
+                """
                 if self.kiss.is_enabled:
                     self.device.sendall(self.kiss.device_kiss_end())
-
+                """
                 self.device.settimeout(0)
                 # self.device.recv(999)   # ???
                 self.device.shutdown(socket.SHUT_RDWR)
@@ -579,8 +581,11 @@ class KISSSerial(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
+                # Deactivate KISS Mode on TNC
+                """
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_end())
+                """
                 self.device.close()
                 self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):
@@ -596,6 +601,7 @@ class KISSSerial(AX25Port):
             # print('RX LOOP')
             try:
                 recv_buff += self.device.read()
+                # logger.error('DEBUG RX-Serial recv_buff : {}'.format(recv_buff))
             except serial.SerialException as e:
                 # There is no new data from serial port
                 return RxBuf()
@@ -611,6 +617,7 @@ class KISSSerial(AX25Port):
             else:
                 ret = RxBuf()
                 if recv_buff:
+                    logger.error('DEBUG RX-Serial recv_buff Final:\n {}'.format(recv_buff))
                     de_kiss_fr = self.kiss.de_kiss(recv_buff)
                     # if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
                     if de_kiss_fr:

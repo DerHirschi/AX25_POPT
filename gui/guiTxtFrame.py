@@ -84,18 +84,19 @@ class TxTframe:
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
-        self.status_n2.grid(row=1, column=5, sticky="nsew")
+        self.status_n2.grid(row=1, column=6, sticky="nsew")
 
         self.status_t1 = Label(self.status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
-        self.status_t1.grid(row=1, column=6, sticky="nsew")
+        self.status_t1.grid(row=1, column=7, sticky="nsew")
+        # RTT
         self.status_t2 = Label(self.status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
-        self.status_t2.grid(row=1, column=7, sticky="nsew")
+        self.status_t2.grid(row=1, column=5, sticky="nsew")
         self.status_t3 = Label(self.status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
@@ -185,11 +186,12 @@ class TxTframe:
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
             t1 = max(0, int(station.t1 - time.time()))
-            t2 = max(0, int(station.t2 - time.time()))
+            #t2 = max(0, int(station.t2 - time.time()))
             t3 = max(0, int(station.t3 - time.time()))
             vr, vs = station.vr, station.vs
             # nr, ns = station.rx_buf_last_frame.ctl_byte.nr, station.rx_buf_last_frame.ctl_byte.ns
             # noACK_buf = str(list(station.tx_buf_unACK.keys()))[1:-1]
+            rtt = station.RTT
 
             # send_buf_len = int(station.debugvar_len_out_buf)
             # len_tx2snd_buf = len(station.tx_buf_2send)
@@ -220,7 +222,7 @@ class TxTframe:
                 self.status_n2.configure(bg=STAT_BAR_CLR)
             self.status_n2.configure(text='N2: {}'.format(n2))
             self.status_t1.configure(text='T1: {}'.format(t1))
-            self.status_t2.configure(text='T2: {}'.format(t2))
+            self.status_t2.configure(text='RTT: {}'.format(rtt))
             self.status_t3.configure(text='T3: {}'.format(t3))
 
         else:

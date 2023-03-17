@@ -2,7 +2,7 @@ import pickle
 import os
 from cli.cli import DefaultCLI, NoneCLI
 
-VER = '2.67.5.11a'
+VER = '2.67.5.12a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -157,6 +157,7 @@ class DefaultPort(object):
     ####################################
     # parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
     parm_T2 = 3000      # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
+    parm_T2_auto = True
     parm_T3 = 120       # T3 sek (Inactive Link Timer) Default:180 Sek
     parm_N2 = 20        # Max Try   Default 20
     parm_baud = 1200    # Baud for calculating Timer
