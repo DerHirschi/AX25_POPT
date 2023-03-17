@@ -561,7 +561,7 @@ class KISSSerial(AX25Port):
             logger.info("KISS Serial INIT")
             # self.kiss = b'\x00'
             try:
-                self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=2)
+                self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.2)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
                 logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
