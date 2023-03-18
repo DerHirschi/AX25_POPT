@@ -53,7 +53,7 @@ class TxTframe:
                                                     foreground=TXT_INP_CLR,
                                                     font=(FONT, self.text_size),
                                                     insertbackground=TXT_INP_CURSOR_CLR,
-                                                    height=100, bd=0)
+                                                    height=100, bd=0,)
         # self.in_txt_win.insert(tk.END, "Inp")
         self.in_txt_win.grid(row=0, column=0, columnspan=12, sticky="nsew")
         ##############

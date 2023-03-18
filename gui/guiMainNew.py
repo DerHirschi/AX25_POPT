@@ -138,8 +138,12 @@ class TkMainWin:
         ############################
         ############################
 
+        # self.pw = ttk.PanedWindow(orient=tk.HORIZONTAL)
+
+
         # Input Output TXT Frames and Status Bar
         self.txt_win = TxTframe(self)
+        # self.pw.add(self.txt_win.pw)
         self.out_txt = self.txt_win.out_txt_win
         self.inp_txt = self.txt_win.in_txt_win
         self.mon_txt = self.txt_win.mon_txt
@@ -149,6 +153,8 @@ class TkMainWin:
         #########################
         # BTN and Tabbed Frame right side
         self.side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
+        # self.side_btn_frame_top = tk.Frame(self.pw, width=200, height=540)
+        # self.pw.add(self.txt_win.pw)
         self.side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
         self.side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)    # CONN BTN
         self.side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)    # BTN row 2
@@ -183,6 +189,7 @@ class TkMainWin:
         _btn.place(x=5, y=80)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
+        # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
         self.setting_sound = self.tabbed_sideFrame.sound_on
         self.setting_bake = self.tabbed_sideFrame.bake_on
         self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
@@ -283,6 +290,8 @@ class TkMainWin:
         self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
         self.main_win.bind('<Control-plus>', lambda event: self.increase_textsize())
         self.main_win.bind('<Control-minus>', lambda event: self.decrease_textsize())
+        self.main_win.bind('<Control-Right>', lambda event: self.text_win_bigger())
+        self.main_win.bind('<Control-Left>', lambda event: self.text_win_smaller())
 
         self.main_win.bind('<Key>', lambda event: self.any_key(event))
 
@@ -303,15 +312,30 @@ class TkMainWin:
 
     def increase_textsize(self):
         self.text_size += 1
-        self.inp_txt.configure(font=(FONT, self.text_size))
-        self.out_txt.configure(font=(FONT, self.text_size))
-        self.mon_txt.configure(font=(FONT, self.text_size))
+        width = self.inp_txt.cget('width')
+        self.inp_txt.configure(font=(FONT, self.text_size), width=width + 1)
+        self.out_txt.configure(font=(FONT, self.text_size), width=width + 1)
+        self.mon_txt.configure(font=(FONT, self.text_size), width=width + 1)
 
     def decrease_textsize(self):
         self.text_size -= 1
-        self.inp_txt.configure(font=(FONT, self.text_size))
-        self.out_txt.configure(font=(FONT, self.text_size))
-        self.mon_txt.configure(font=(FONT, self.text_size))
+        width = self.inp_txt.cget('width')
+        self.inp_txt.configure(font=(FONT, self.text_size), width=width - 1)
+        self.out_txt.configure(font=(FONT, self.text_size), width=width - 1)
+        self.mon_txt.configure(font=(FONT, self.text_size), width=width - 1)
+
+    def text_win_bigger(self):
+        self.text_size -= 1
+        width = self.inp_txt.cget('width')
+        self.inp_txt.configure( width=width + 1)
+        self.out_txt.configure( width=width + 1)
+        self.mon_txt.configure( width=width + 1)
+
+    def text_win_smaller(self):
+        width = self.inp_txt.cget('width')
+        self.inp_txt.configure( width=width - 1)
+        self.out_txt.configure( width=width - 1)
+        self.mon_txt.configure( width=width - 1)
 
     def change_conn_btn(self):
         conn = self.get_conn(self.channel_index)

@@ -73,13 +73,13 @@ class AX25PortHandler(object):
         port.close()
         c = 0
         while not port.ende:
-            time.sleep(0.5)
+            time.sleep(0.3)
             # self.sysmsg_to_gui("Hinweis: Warte auf Port " + str(port_id))
             print("Warte auf Port " + str(port_id))
             logger.debug("Warte auf Port " + str(port_id))
             port.close()
             c += 1
-            if c == 10:
+            if c == 3:
                 break
 
         # port.join()

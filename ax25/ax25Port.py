@@ -692,9 +692,10 @@ class AXIP(AX25Port):
         if self.device is not None:
             try:
                 self.device.shutdown(socket.SHUT_RDWR)
+                self.device.detach()
                 self.device.close()
-                self.device.recv(999)
-                time.sleep(0.5)
+                # self.device.recv(999)
+                # time.sleep(0.5)
             except socket.error:
                 pass
 
