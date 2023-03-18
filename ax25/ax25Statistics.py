@@ -36,6 +36,9 @@ class PortStatHourStruc(object):
     def __init__(self):
         self.n_packets_hr = {}
         self.I_packets_hr = {}
+        self.SABM_packets_hr = {}
+        self.DM_packets_hr = {}
+        self.DISC_packets_hr = {}
         self.REJ_packets_hr = {}
         self.UI_packets_hr = {}
         self.ALL_data_hr = {}
@@ -44,6 +47,9 @@ class PortStatHourStruc(object):
         for minute in range(60):
             self.n_packets_hr[minute] = 0
             self.I_packets_hr[minute] = 0
+            self.SABM_packets_hr[minute] = 0
+            self.DM_packets_hr[minute] = 0
+            self.DISC_packets_hr[minute] = 0
             self.REJ_packets_hr[minute] = 0
             self.UI_packets_hr[minute] = 0
             self.ALL_data_hr[minute] = 0
@@ -85,6 +91,12 @@ class PortStatDB(object):
         elif ax_frame.ctl_byte.flag == 'UI':
             ent.UI_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'REJ':
+            ent.REJ_packets_hr[minute] += 1
+        elif ax_frame.ctl_byte.flag == 'SABM':
+            ent.REJ_packets_hr[minute] += 1
+        elif ax_frame.ctl_byte.flag == 'DM':
+            ent.REJ_packets_hr[minute] += 1
+        elif ax_frame.ctl_byte.flag == 'DISC':
             ent.REJ_packets_hr[minute] += 1
         ent.ALL_data_hr[minute] += len(ax_frame.bytes)
         ent.DATA_data_hr[minute] += ax_frame.data_len
@@ -145,7 +157,7 @@ class MH(object):
     def __init__(self):
         print("MH Init")
         self.calls: {str: MyHeard} = {}
-        self.port_statistik_DB = PortStatDB()   # TODO separate to CH ID
+        self.port_statistik_DB: {int: PortStatDB} = {}
         try:
             with open(mh_data_file, 'rb') as inp:
                 self.calls = pickle.load(inp)
@@ -161,7 +173,6 @@ class MH(object):
             pass
         except EOFError:
             pass
-
 
         for call in list(self.calls.keys()):
             for att in dir(MyHeard):
@@ -181,7 +192,10 @@ class MH(object):
         ########################
         # Call Stat
         call_str = ax25_frame.from_call.call_str
-        self.port_statistik_DB.input(ax_frame=ax25_frame)
+        if port_id not in list(self.port_statistik_DB.keys()):
+            self.port_statistik_DB[port_id] = PortStatDB()
+
+        self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)
         if call_str not in self.calls.keys():
             ent = MyHeard()
             ent.own_call = call_str
