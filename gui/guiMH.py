@@ -1,8 +1,8 @@
 import logging
 import tkinter as tk
-from tkinter import scrolledtext, Label, Menu
+from tkinter import Menu
 from ax25.ax25Statistics import MyHeard
-import main
+# import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +18,14 @@ class MHWin:
         self.menubar = Menu(self.win)
         self.win.config(menu=self.menubar)
         self.menubar.add_command(label="Quit", command=self.close)
+        self.menubar.add_command(label="Port-Statistik", command=glb_mh.port_statistik_DB.plot_test_graph)
         tk.Label(self.win, text="Zeit").grid(row=1, column=0, padx=10)
         tk.Label(self.win, text="Call").grid(row=1, column=1)
         tk.Label(self.win, text="Packets").grid(row=1, column=2)
         tk.Label(self.win, text="REJ s").grid(row=1, column=3)
         tk.Label(self.win, text="Route").grid(row=1, column=4)
         tk.Label(self.win, text="AXIP").grid(row=1, column=5)
+
         self.update_mh()
 
     def update_mh(self):

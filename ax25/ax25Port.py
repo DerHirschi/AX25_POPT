@@ -145,7 +145,7 @@ class AX25Port(threading.Thread):
             self.gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=self.port_cfg,
                                     tx=False)
         # MH List and Statistics
-        self.mh.mh_inp(ax25_frame, self.portname)
+        self.mh.mh_inp(ax25_frame, self.portname, self.port_id)
         # RX-ECHO
         self.rx_echo(ax25_frame=ax25_frame)
         # Existing Connections

@@ -1,11 +1,13 @@
-import sys
 
-from ax25.ax25dec_enc import get_call_str, AX25Frame
+import matplotlib.pyplot as plt
+
+from ax25.ax25dec_enc import AX25Frame
 from datetime import datetime
-import os
+
 import pickle
 
 mh_data_file = 'data/mh_data.popt'
+port_stat_data_file = 'data/port_stat.popt'
 
 
 def get_time_str():
@@ -30,18 +32,136 @@ class MyHeard(object):
         self.axip_fail = 0                  # Fail Counter
 
 
+class PortStatHourStruc(object):
+    def __init__(self):
+        self.n_packets_hr = {}
+        self.I_packets_hr = {}
+        self.REJ_packets_hr = {}
+        self.UI_packets_hr = {}
+        self.ALL_data_hr = {}
+        self.DATA_data_hr = {}
+
+        for minute in range(60):
+            self.n_packets_hr[minute] = 0
+            self.I_packets_hr[minute] = 0
+            self.REJ_packets_hr[minute] = 0
+            self.UI_packets_hr[minute] = 0
+            self.ALL_data_hr[minute] = 0
+            self.DATA_data_hr[minute] = 0
+
+
+class PortStatDB(object):
+    def __init__(self):
+        #                   DATE   HOUR
+        self.stat_DB_days: {'str': {int: PortStatHourStruc}} = {}
+
+    def init_day_dic(self):
+        ret = {}
+        for hour in range(24):
+            ret[hour] = PortStatHourStruc()
+
+        return ret
+
+    def input(self, ax_frame: AX25Frame):
+        # now = datetime.now().strftime('%d/%m/%y %H:%M:%S')
+        now = datetime.now()
+        date_str = now.strftime('%d/%m/%y')
+        hour = now.hour
+        minute = now.minute
+        if date_str not in list(self.stat_DB_days.keys()):
+            self.stat_DB_days[date_str] = self.init_day_dic()
+            """
+            if hour in list(self.stat_DB_days[date_str].keys()):
+                ent = self.stat_DB_days[date_str][hour]
+            else:
+                ent = PortStatHourStruc()
+                self.stat_DB_days[date_str][hour] = ent
+            """
+
+        ent: PortStatHourStruc = self.stat_DB_days[date_str][hour]
+        ent.n_packets_hr[minute] += 1
+        if ax_frame.ctl_byte.flag == 'I':
+            ent.I_packets_hr[minute] += 1
+        elif ax_frame.ctl_byte.flag == 'UI':
+            ent.UI_packets_hr[minute] += 1
+        elif ax_frame.ctl_byte.flag == 'REJ':
+            ent.REJ_packets_hr[minute] += 1
+        ent.ALL_data_hr[minute] += len(ax_frame.bytes)
+        ent.DATA_data_hr[minute] += ax_frame.data_len
+
+    def plot_test_graph(self, hour: int = 0):
+        now = datetime.now()
+        date_str = now.strftime('%d/%m/%y')
+        hour = now.hour
+        _tmp_n_packets = []
+        _tmp_I_packets = []
+        _tmp_REJ_packets = []
+        _tmp_UI_packets = []
+        _tmp_ALL_data = []
+        _tmp_DATA_data = []
+        if date_str in list(self.stat_DB_days.keys()):
+            for minute in range(60):
+                _tmp_n_packets.append(self.stat_DB_days[date_str][hour].n_packets_hr[minute])
+                _tmp_I_packets.append(self.stat_DB_days[date_str][hour].I_packets_hr[minute])
+                _tmp_REJ_packets.append(self.stat_DB_days[date_str][hour].REJ_packets_hr[minute])
+                _tmp_UI_packets.append(self.stat_DB_days[date_str][hour].UI_packets_hr[minute])
+                _tmp_ALL_data.append(self.stat_DB_days[date_str][hour].ALL_data_hr[minute])
+                _tmp_DATA_data.append(self.stat_DB_days[date_str][hour].DATA_data_hr[minute])
+
+        """
+        for minute in range(60):
+           
+            _tmp_n_packets.append(random.randrange(0, 30))
+            _tmp_I_packets.append(random.randrange(0, 8))
+            _tmp_REJ_packets.append(random.randrange(0, 10))
+            _tmp_UI_packets.append(random.randrange(0, 10))
+            _tmp_ALL_data.append(random.randrange(100, 1500))
+            _tmp_DATA_data.append(random.randrange(100, 800))
+        print(_tmp_n_packets)
+        print(_tmp_I_packets)
+        print(_tmp_REJ_packets)
+        print(_tmp_UI_packets)
+        print(_tmp_ALL_data)
+        print(_tmp_DATA_data)
+        k = PortStatHourStruc()
+        ke = list(k.DATA_data_hr.keys())
+        """
+        ke = list(range(60))
+        # len(ke)
+        if _tmp_n_packets:
+            plt.plot(ke, _tmp_n_packets, 'g--',
+                     ke, _tmp_I_packets, 'y-',
+                     ke, _tmp_UI_packets, 'o-',
+                     ke, _tmp_REJ_packets, 'r--',
+                     )
+            #plt.plot(_tmp_n_packets, _tmp_I_packets, _tmp_REJ_packets, _tmp_UI_packets, _tmp_ALL_data, 'ro')
+            plt.axis([0, 59, 0, 50])
+            plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', ])
+            plt.suptitle('Port Statistik')
+            plt.show()
+
+
 class MH(object):
     def __init__(self):
         print("MH Init")
         self.calls: {str: MyHeard} = {}
+        self.port_statistik_DB = PortStatDB()   # TODO separate to CH ID
         try:
             with open(mh_data_file, 'rb') as inp:
                 self.calls = pickle.load(inp)
         except FileNotFoundError:
-            if 'linux' in sys.platform:
-                os.system('touch {}'.format(mh_data_file))
+            pass
         except EOFError:
             pass
+
+        try:
+            with open(port_stat_data_file, 'rb') as inp:
+                self.port_statistik_DB = pickle.load(inp)
+        except FileNotFoundError:
+            pass
+        except EOFError:
+            pass
+
 
         for call in list(self.calls.keys()):
             for att in dir(MyHeard):
@@ -57,11 +177,11 @@ class MH(object):
     def __del__(self):
         pass
 
-    def mh_inp(self, ax25_frame: AX25Frame, port_id):
+    def mh_inp(self, ax25_frame: AX25Frame, port_name, port_id):
         ########################
         # Call Stat
         call_str = ax25_frame.from_call.call_str
-
+        self.port_statistik_DB.input(ax_frame=ax25_frame)
         if call_str not in self.calls.keys():
             ent = MyHeard()
             ent.own_call = call_str
@@ -73,7 +193,8 @@ class MH(object):
                         ent.route += '>'
             else:
                 ent.route = []
-            ent.port = port_id
+            ent.port = port_name
+            ent.port_id = port_id
             ent.byte_n = ax25_frame.data_len
             ent.h_byte_n = len(ax25_frame.bytes) - ax25_frame.data_len
             if ax25_frame.axip_add[0]:
@@ -85,7 +206,8 @@ class MH(object):
             ent: MyHeard
             ent = self.calls[call_str]
             ent.pac_n += 1
-            ent.port = port_id
+            ent.port = port_name
+            ent.port_id = port_id
             ent.byte_n += ax25_frame.data_len
             ent.last_seen = get_time_str()
             to_c_str = ax25_frame.to_call.call_str
@@ -184,8 +306,18 @@ class MH(object):
                 # print(self.calls.keys())
                 pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
-            os.system('touch {}'.format(mh_data_file))
-            with open(mh_data_file, 'wb') as outp:
+            with open(mh_data_file, 'xb') as outp:
                 pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
 
+        try:
+            with open(port_stat_data_file, 'wb') as outp:
+                # print(self.calls.keys())
+                pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
+        except FileNotFoundError:
+            with open(port_stat_data_file, 'xb') as outp:
+                pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
 
+
+if __name__ == '__main__':
+    stat = PortStatDB()
+    stat.plot_test_graph()

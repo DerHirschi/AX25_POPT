@@ -142,7 +142,7 @@ class SideTabbedFrame:
                                          offvalue=0,
                                          command=self.chk_ch_echo
                                          )
-                chk_bt.place(x=10, y=10 + (30 * (ch_id - 1)))
+                chk_bt.place(x=10, y=10 + (28 * (ch_id - 1)))
                 # _chk_bt.configure(state='disabled')
                 tmp = chk_bt_var, chk_bt
                 self.ch_echo_vars[ch_id] = tmp
