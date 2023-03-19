@@ -21,6 +21,7 @@ from gui.guiPortSettings import PortSettingsWin
 from gui.guiBeaconSettings import BeaconSettings
 from gui.guiRxEchoSettings import RxEchoSettings
 from gui.guiAbout import About
+from gui.guiHelpKeybinds import KeyBindsHelp
 from config_station import VER
 
 if 'linux' in sys.platform:
@@ -136,6 +137,7 @@ class TkMainWin:
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
         # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
+        self.MenuHelp.add_command(label="Tastaturbelegung", command=self.open_keybind_help_win, underline=0)
         self.MenuHelp.add_command(label="Über", command=self.open_about_win, underline=0)
         self.menubar.add_cascade(label="Hilfe", menu=self.MenuHelp, underline=0)
 
@@ -606,6 +608,12 @@ class TkMainWin:
     def open_about_win(self):
         if self.settings_win is None:
             About(self)
+
+    ##########################
+    # Keybinds Help WIN
+    def open_keybind_help_win(self):
+        if self.settings_win is None:
+            KeyBindsHelp(self)
 
     # ##############
     # DISCO
