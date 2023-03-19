@@ -277,6 +277,7 @@ class AX25Port(threading.Thread):
                     # Monitor
                     if self.gui is not None:
                         self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
+                    self.mh.bw_mon_inp(el, self.port_id)
             else:
                 tr = True
         # DIGI
@@ -691,6 +692,7 @@ class AXIP(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
+                self.device.settimeout(0)
                 self.device.shutdown(socket.SHUT_RDWR)
                 self.device.detach()
                 self.device.close()

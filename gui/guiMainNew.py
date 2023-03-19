@@ -5,6 +5,10 @@ from tkinter import ttk, Menu
 import logging
 import threading
 import sys
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
+import matplotlib.pyplot as plt
 
 import config_station
 from gui.guiTxtFrame import TxTframe
@@ -75,11 +79,13 @@ class TkMainWin:
         self.channel_index = 1
         self.mon_mode = False
         self.non_prio_task_timer = time.time()
+        self.non_non_prio_task_timer = time.time()
         ####################
         # GUI PARAM
         self.parm_btn_blink_time = 0.3
         self.parm_rx_beep_cooldown = 1.5
         self.parm_non_prio_task_timer = 0.5
+        self.parm_non_non_prio_task_timer = 1
         ###############
         self.text_size = int(TEXT_SIZE)
         ######################################
@@ -193,6 +199,42 @@ class TkMainWin:
         self.setting_sound = self.tabbed_sideFrame.sound_on
         self.setting_bake = self.tabbed_sideFrame.bake_on
         self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
+        ############################
+        # Canvas Plot ( TEST )
+        # plt.ion()
+        #fig, ax = Figure(figsize=(5, 4), dpi=100)
+        self.bw_fig = plt.figure(figsize=(8, 4.5), dpi=80)
+        self.ax = self.bw_fig.add_subplot(111)
+        self.ax.axis([0, 59, 0, 100])
+        self.bw_fig.set_facecolor('xkcd:light grey')
+        self.ax.set_facecolor('xkcd:silver')
+        self.bw_plot_lines = {}
+        # line1, = ax.plot(list(range(60)), [1]*60)
+
+        # plt.title("BW", fontsize=12)
+        plt.xlabel("Minuten")
+        # plt.xticks(list(range(10)))
+        plt.xlim(0, 10)
+
+        plt.ylabel("Auslastung in %")
+        #fig = plt.figure()
+        """
+        fig.add_subplot(111).plot(list(range(60)), [0]*60)
+        plt.subplots(figsize=(10, 8))
+        """
+        canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
+        canvas.draw()
+        canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        #fig.clear()
+        # ax.plot(list(range(60)), [10] * 60)
+        # line1.set_ydata([10] * 60)
+
+
+        """
+        toolbar = NavigationToolbar2Tk(canvas, self.side_btn_frame_top)
+        toolbar.update()
+        toolbar.grid(row=6, column=0, columnspan=7, sticky="nsew")
+        """
         ############################
         # Windows
         self.new_conn_win = None
@@ -413,6 +455,12 @@ class TkMainWin:
             # self.tabbed_sideFrame.update_side_mh()
             self.tabbed_sideFrame.tasker()
             self.rx_beep()
+            ######################
+            # Non Non Prio ###########
+            if time.time() > self.non_non_prio_task_timer:
+                self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
+                self.update_bw_mon()
+
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
 
@@ -624,3 +672,32 @@ class TkMainWin:
         """MH WIN"""
         MHWin(self.mh)
 
+    ###################
+    # BW Plot
+    def update_bw_mon(self):
+        for port_id in list(self.ax25_port_handler.ax25_ports.keys()):
+            if port_id not in self.mh.port_statistik_DB.keys():
+                data = [0]*360
+            else:
+                data = self.mh.port_statistik_DB[port_id].get_bandwidth(
+                    self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_baud
+                )
+
+            if port_id not in self.bw_plot_lines:
+                # print(data)
+                label = 'Port {}'.format(port_id)
+                x_scale = []
+                for i in list(range(360)):
+                    x_scale.append(i/10)
+                # x_scale = list(range(360))
+                self.bw_plot_lines[port_id], = self.ax.plot(x_scale, data, label=label)
+                plt.legend()
+            else:
+                self.bw_plot_lines[port_id].set_ydata(data)
+
+        for port_id in list(self.bw_plot_lines.keys()):
+            if port_id not in list(self.ax25_port_handler.ax25_ports.keys()):
+                self.bw_plot_lines[port_id].clf()
+                plt.legend()
+        self.bw_fig.canvas.draw()
+        self.bw_fig.canvas.flush_events()

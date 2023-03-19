@@ -60,6 +60,13 @@ class PortStatDB(object):
     def __init__(self):
         #                   DATE   HOUR
         self.stat_DB_days: {'str': {int: PortStatHourStruc}} = {}
+        self.bandwidth = {}
+        for m in range(60):
+            for s in range(6):
+                ts_str = '{}:{}'.format(str(m).zfill(2), s)
+                self.bandwidth[ts_str] = 0
+
+        self.now_min = datetime.now().strftime('%M:%S')[:-1]
 
     def init_day_dic(self):
         ret = {}
@@ -70,6 +77,7 @@ class PortStatDB(object):
 
     def input(self, ax_frame: AX25Frame):
         # now = datetime.now().strftime('%d/%m/%y %H:%M:%S')
+        self.input_bw_calc(ax_frame=ax_frame)
         now = datetime.now()
         date_str = now.strftime('%d/%m/%y')
         hour = now.hour
@@ -100,6 +108,18 @@ class PortStatDB(object):
             ent.REJ_packets_hr[minute] += 1
         ent.ALL_data_hr[minute] += len(ax_frame.bytes)
         ent.DATA_data_hr[minute] += ax_frame.data_len
+
+    def input_bw_calc(self, ax_frame: AX25Frame = None):
+        if ax_frame is not None:
+            if self.now_min == datetime.now().strftime('%M:%S')[:-1]:
+                self.bandwidth[self.now_min] += len(ax_frame.bytes)
+            else:
+                self.now_min = datetime.now().strftime('%M:%S')[:-1]
+                self.bandwidth[self.now_min] = len(ax_frame.bytes)
+        else:
+            if self.now_min != datetime.now().strftime('%M:%S')[:-1]:
+                self.now_min = datetime.now().strftime('%M:%S')[:-1]
+                self.bandwidth[self.now_min] = 0
 
     def plot_test_graph(self, hour: int = 0):
         now = datetime.now()
@@ -152,6 +172,22 @@ class PortStatDB(object):
             plt.suptitle('Port Statistik')
             plt.show()
 
+    def get_bandwidth(self, baud=1200):
+        self.input_bw_calc()
+        ret = []
+        now = datetime.now().strftime('%M:%S')[:-1]
+        minutes = list(self.bandwidth.keys())
+        minutes.reverse()
+        ind = minutes.index(now)
+        new_key_list = minutes[ind:] + minutes[:ind]
+        for k in new_key_list:
+            byt = int(self.bandwidth[k])
+            f = (((byt * 8) / 10) * 100) / baud
+            ret.append(f)
+        #print(ret)
+        #print(len(ret))
+        return ret
+
 
 class MH(object):
     def __init__(self):
@@ -188,11 +224,17 @@ class MH(object):
     def __del__(self):
         pass
 
+    def bw_mon_inp(self, ax25_frame: AX25Frame, port_id):
+        if port_id not in self.port_statistik_DB.keys():
+            self.port_statistik_DB[port_id] = PortStatDB()
+
+        self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)
+
     def mh_inp(self, ax25_frame: AX25Frame, port_name, port_id):
         ########################
         # Call Stat
         call_str = ax25_frame.from_call.call_str
-        if port_id not in list(self.port_statistik_DB.keys()):
+        if port_id not in self.port_statistik_DB.keys():
             self.port_statistik_DB[port_id] = PortStatDB()
 
         self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)

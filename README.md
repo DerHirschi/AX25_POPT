@@ -17,6 +17,7 @@ Packages Required:
 - playsound
 - crcmod
 - pyserial
+- matplotlib
 
 Install all dependencies:
   ``` sh
@@ -24,6 +25,7 @@ Install all dependencies:
   $ pip install playsound
   $ pip install crcmod
   $ pip install pyserial
+  $ pip install matplotlib
   ```
 
 Run:
