@@ -693,7 +693,7 @@ class TkMainWin:
 
             if port_id not in self.bw_plot_lines:
                 # print(data)
-                label = 'Port {}'.format(port_id)
+                label = '{}'.format(self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_PortName)
                 x_scale = []
                 for i in list(range(360)):
                     x_scale.append(i/10)
@@ -702,10 +702,11 @@ class TkMainWin:
                 plt.legend()
             else:
                 self.bw_plot_lines[port_id].set_ydata(data)
-
+        """
         for port_id in list(self.bw_plot_lines.keys()):
             if port_id not in list(self.ax25_port_handler.ax25_ports.keys()):
                 self.bw_plot_lines[port_id].clf()
                 plt.legend()
+        """
         self.bw_fig.canvas.draw()
         self.bw_fig.canvas.flush_events()

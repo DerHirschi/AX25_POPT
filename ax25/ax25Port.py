@@ -140,14 +140,7 @@ class AX25Port(threading.Thread):
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         """ Not Happy with that Part . . :-( TODO Cleanup or AGAIN !! """
         # cfg = self.port_cfg
-        # Monitor
-        if self.is_gui:
-            self.gui.update_monitor(self.monitor.frame_inp(ax25_frame, self.portname), conf=self.port_cfg,
-                                    tx=False)
-        # MH List and Statistics
-        self.mh.mh_inp(ax25_frame, self.portname, self.port_id)
-        # RX-ECHO
-        self.rx_echo(ax25_frame=ax25_frame)
+
         # Existing Connections
         uid = str(ax25_frame.addr_uid)
         if uid in self.connections.keys():
@@ -277,7 +270,7 @@ class AX25Port(threading.Thread):
                     # Monitor
                     if self.gui is not None:
                         self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
-                    self.mh.bw_mon_inp(el, self.port_id)
+                    # self.mh.bw_mon_inp(el, self.port_id)
             else:
                 tr = True
         # DIGI
@@ -437,11 +430,22 @@ class AX25Port(threading.Thread):
                 # logger.debug('Inp fromhexstr fnc() - Port {} > {}'.format(self.port_id, ax25frame.hexstr))
                 if e is None and ax25frame.validate():
                     # ######### RX #############
+                    # MH List and Statistics
+                    self.mh.mh_inp(ax25frame, self.portname, self.port_id)
                     # Handling
                     self.rx_pac_handler(ax25frame)
+                    # RX-ECHO
+                    self.rx_echo(ax25_frame=ax25frame)
+                    # Monitor
+                    if self.is_gui:
+                        self.gui.update_monitor(
+                            self.monitor.frame_inp(ax25frame, self.portname),
+                            conf=self.port_cfg,
+                            tx=False)
+
                     # Pseudo Full Duplex for AXIP.
                     if self.port_cfg.parm_axip_Multicast:
-                        self.tx_multicast(frame=ax25frame)
+                        self.tx_multicast(frame=ax25frame)  # TODO BUGGY
                     if self.port_cfg.parm_full_duplex:
                         break
 
@@ -453,9 +457,9 @@ class AX25Port(threading.Thread):
             self.cron_pac_handler()
             # ######### TX #############
             # TX
-            if not self.tx_pac_handler():           # Prio
-                if not self.cron_port_handler():    # Non Prio / Beacons
-                    self.rx_echo_pac_handler()      # Non non Prio / RX-ECHO
+            if not self.tx_pac_handler():  # Prio
+                if not self.cron_port_handler():  # Non Prio / Beacons
+                    self.rx_echo_pac_handler()  # Non non Prio / RX-ECHO
 
         ############################
         ############################
@@ -554,6 +558,8 @@ class KissTCP(AX25Port):
             except AX25DeviceFAIL:
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
+        else:
+            self.mh.bw_mon_inp(frame, self.port_id)
         ############################################
 
 
@@ -627,9 +633,9 @@ class KISSSerial(AX25Port):
                     # if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
                     if de_kiss_fr:  # TODO !!!! flush buffer ?
                         # ret.raw_data = recv_buff[2:-1]
-                        #ret.kiss = recv_buff[1:2]
+                        # ret.kiss = recv_buff[1:2]
                         # ret.raw_data = recv_buff[2:-1]
-                        #ret.raw_data = de_arschloch_kiss_frame(recv_buff[2:-1])
+                        # ret.raw_data = de_arschloch_kiss_frame(recv_buff[2:-1])
                         # self.kiss = ret.kiss
                         ret.raw_data = de_kiss_fr
                         return ret
@@ -641,13 +647,16 @@ class KISSSerial(AX25Port):
         try:
             self.device.write(self.kiss.kiss(frame.bytes))
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
-            logger.warning('Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
+            logger.warning(
+                'Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
             logger.warning('{}'.format(e))
             try:
                 self.init()
             except AX25DeviceFAIL:
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
+        else:
+            self.mh.bw_mon_inp(frame, self.port_id)
 
 
 class AXIP(AX25Port):
@@ -746,6 +755,8 @@ class AXIP(AX25Port):
                     raise AX25DeviceFAIL
             except OSError:
                 pass
+            else:
+                self.mh.bw_mon_inp(frame, self.port_id)
         if self.port_cfg.parm_axip_Multicast and not no_multicast:
             self.tx_multicast(frame=frame)
 

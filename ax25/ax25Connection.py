@@ -780,8 +780,11 @@ class S5Ready(DefaultStat):
                     if self.stat_index == 5:
 
                         if ns + 1 == self.ax25conn.vr:  # When Packet already is received
+                            self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
+                            """
                             self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
                             self.change_state(7)  # go into FINAL_state
+                            """
                         else:
 
                             self.ax25conn.send_REJ(pf_bit=pf, cmd_bit=False)
