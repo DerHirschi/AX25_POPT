@@ -1,3 +1,10 @@
+![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![Raspberry Pi](https://img.shields.io/badge/-RaspberryPi-C51A4A?style=for-the-badge&logo=Raspberry-Pi)
+
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
 # P.ython o.ther P.acket T.erminal
 ### AX25 Terminal (AX25_POPT)
 
@@ -11,6 +18,12 @@
     \__|yton   \______/ther\__|acket   \__|erminal
 
 under development...
+
+Tested on Python Version:
+
+[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
+
+[![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
 
 Packages Required:
 - tkinter
@@ -62,3 +75,4 @@ Knowing Issues / TODO (AX25 Protocol):
 - Issues with "Smart-Digi" / Managed DIGI Mode Connection UID
 
 TODO: !! Lot of Testing and Debugging !!
+
