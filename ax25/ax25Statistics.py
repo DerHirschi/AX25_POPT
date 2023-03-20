@@ -253,7 +253,7 @@ class PortStatDB(object):
 
 
             fig = plt.figure(figsize=(5, 4), dpi=100)
-
+            plt.style.use('dark_background')
             fig.add_subplot(111).plot(
                 x_scale, _tmp_n_packets,
                 x_scale, _tmp_I_packets,
@@ -285,7 +285,7 @@ class PortStatDB(object):
 
 
             fig = plt.figure(figsize=(5, 4), dpi=100)
-
+            plt.style.use('dark_background')
             fig.add_subplot(111).plot(
                 x_scale, _tmp_ALL_data,
                 x_scale, _tmp_DATA_data, 'r--'

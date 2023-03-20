@@ -303,7 +303,7 @@ class AX25Port(threading.Thread):
             except AX25EncodingERROR:
                 logger.error('Encoding Error: ! MSG to short !')
             # Monitor
-            cfg = self.port_cfg
+
             # Monitor
             if self.is_gui:
                 self.gui.update_monitor(

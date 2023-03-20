@@ -206,11 +206,17 @@ class TkMainWin:
         # plt.ion()
         #fig, ax = Figure(figsize=(5, 4), dpi=100)
         self.bw_fig = plt.figure(figsize=(8, 4.5), dpi=80)
+        plt.style.use('dark_background')
+
         self.ax = self.bw_fig.add_subplot(111)
         self.ax.axis([0, 59, 0, 100])
 
         self.bw_fig.set_facecolor('xkcd:light grey')
-        self.ax.set_facecolor('xkcd:silver')
+        #self.ax.set_facecolor('xkcd:silver')
+        self.ax.xaxis.label.set_color('black')
+        self.ax.yaxis.label.set_color('black')
+        self.ax.tick_params(axis='x', colors='black')
+        self.ax.tick_params(axis='y', colors='black')
         self.bw_plot_lines = {}
         # line1, = ax.plot(list(range(60)), [1]*60)
 
