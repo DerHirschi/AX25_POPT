@@ -240,13 +240,18 @@ class PortStatDB(object):
             x_scale = []
             if range_day:
                 for i in list(range(1440)):
-                    x_scale.append(i / 60)
+                    x_scale.append((i / 60))
             else:
                 x_scale = ke
+            # print(x_scale)
             root = tk.Tk()
             root.wm_title("Port Statistik")
             root.geometry("800x600")
             # root.protocol("WM_DELETE_WINDOW", root.destroy())
+            plot1 = tk.Frame(root)
+            plot2 = tk.Frame(root)
+
+
             fig = plt.figure(figsize=(5, 4), dpi=100)
 
             fig.add_subplot(111).plot(
@@ -255,24 +260,64 @@ class PortStatDB(object):
                 x_scale, _tmp_UI_packets,
                 x_scale, _tmp_REJ_packets,
             )
+
             # fig.axis([0, 59, 0, 50])
             """
             if not range_day:
                 plt.axis([0, 59, 0, 100])
             else:
             """
-
-            plt.axis([0, len(_tmp_n_packets), 0, 100])
+            if range_day:
+                plt.axis([0, 24, 0, 100])
+            else:
+                plt.axis([0, 59, 0, 100])
             # plt.axis([0, 59, 0, 50])
             plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', ])
             #ax.suptitle('Port Statistik')
-            canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
+
+            canvas = FigureCanvasTkAgg(fig, master=plot1)  # A tk.DrawingArea.
             canvas.draw()
             canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-            toolbar = NavigationToolbar2Tk(canvas, root)
+            toolbar = NavigationToolbar2Tk(canvas, plot1)
             toolbar.update()
             canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+
+            fig = plt.figure(figsize=(5, 4), dpi=100)
+
+            fig.add_subplot(111).plot(
+                x_scale, _tmp_ALL_data,
+                x_scale, _tmp_DATA_data, 'r--'
+
+            )
+            # y_max = max(_tmp_ALL_data)
+            # fig.axis([0, 59, 0, 50])
+            """
+            if not range_day:
+                plt.axis([0, 59, 0, 100])
+            else:
+            """
+            if range_day:
+                plt.axis([0, 24, 0, max(_tmp_ALL_data)])
+            else:
+                plt.axis([0, 59, 0, max(_tmp_ALL_data)])
+            # plt.axis([0, 59, 0, 50])
+            plt.legend(['Daten gesamt', 'Nutzdaten'])
+            # ax.suptitle('Port Statistik')
+            canvas = FigureCanvasTkAgg(fig, master=plot2)  # A tk.DrawingArea.
+            canvas.draw()
+            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+            toolbar = NavigationToolbar2Tk(canvas, plot2)
+            toolbar.update()
+            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+
+
+            plot1.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
+            plot2.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
+
             frame = tk.Frame(root)
             prt_sel_var = tk.IntVar()
             prt_sel_var.set(0)
@@ -286,6 +331,7 @@ class PortStatDB(object):
                                         state='disabled',
                                         # command=self.set_max_frame,
                                         )
+            prt_sel.configure(state='disabled')
             frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=0)
             lable.grid(row=0, column=0)
             prt_sel.grid(row=0, column=1)
