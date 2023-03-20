@@ -734,7 +734,7 @@ class S5Ready(DefaultStat):
             if pf or cmd:
                 if self.stat_index in [8, 10, 11, 13, 14, 16]:
                     self.ax25conn.send_RNR(pf_bit=pf, cmd_bit=False)
-                if self.stat_index not in [1, 2, 3, 4]:
+                if self.stat_index not in [1, 2, 3, 4, 7]:
                     self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
                 self.ax25conn.n2 = 0
                 self.ax25conn.set_T1(stop=True)
