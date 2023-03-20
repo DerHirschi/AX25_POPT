@@ -41,6 +41,7 @@ class PortStatHourStruc(object):
         self.DM_packets_hr = {}
         self.DISC_packets_hr = {}
         self.REJ_packets_hr = {}
+        self.RR_packets_hr = {}
         self.UI_packets_hr = {}
         self.ALL_data_hr = {}
         self.DATA_data_hr = {}
@@ -52,6 +53,7 @@ class PortStatHourStruc(object):
             self.DM_packets_hr[minute] = 0
             self.DISC_packets_hr[minute] = 0
             self.REJ_packets_hr[minute] = 0
+            self.RR_packets_hr[minute] = 0
             self.UI_packets_hr[minute] = 0
             self.ALL_data_hr[minute] = 0
             self.DATA_data_hr[minute] = 0
@@ -60,7 +62,9 @@ class PortStatHourStruc(object):
 class PortStatDB(object):
     def __init__(self):
         #                   DATE   HOUR
+        # TODO Init fm File and Save
         self.stat_DB_days: {'str': {int: PortStatHourStruc}} = {}
+
         self.bandwidth = {}
         for m in range(60):
             for s in range(6):
@@ -93,22 +97,23 @@ class PortStatDB(object):
                 self.stat_DB_days[date_str][hour] = ent
             """
 
-        ent: PortStatHourStruc = self.stat_DB_days[date_str][hour]
-        ent.n_packets_hr[minute] += 1
+        self.stat_DB_days[date_str][hour].n_packets_hr[minute] += 1
         if ax_frame.ctl_byte.flag == 'I':
-            ent.I_packets_hr[minute] += 1
+            self.stat_DB_days[date_str][hour].I_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'UI':
-            ent.UI_packets_hr[minute] += 1
+            self.stat_DB_days[date_str][hour].UI_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'REJ':
-            ent.REJ_packets_hr[minute] += 1
+            self.stat_DB_days[date_str][hour].REJ_packets_hr[minute] += 1
+        elif ax_frame.ctl_byte.flag == 'RR':
+            self.stat_DB_days[date_str][hour].RR_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'SABM':
-            ent.REJ_packets_hr[minute] += 1
+            self.stat_DB_days[date_str][hour].SABM_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'DM':
-            ent.REJ_packets_hr[minute] += 1
+            self.stat_DB_days[date_str][hour].DM_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'DISC':
-            ent.REJ_packets_hr[minute] += 1
-        ent.ALL_data_hr[minute] += len(ax_frame.bytes)
-        ent.DATA_data_hr[minute] += ax_frame.data_len
+            self.stat_DB_days[date_str][hour].DISC_packets_hr[minute] += 1
+        self.stat_DB_days[date_str][hour].ALL_data_hr[minute] += len(ax_frame.bytes)
+        self.stat_DB_days[date_str][hour].DATA_data_hr[minute] += ax_frame.data_len
 
     def input_bw_calc(self, ax_frame: AX25Frame = None):
         if ax_frame is not None:
@@ -136,7 +141,9 @@ class PortStatDB(object):
         _tmp_n_packets = []
         _tmp_I_packets = []
         _tmp_REJ_packets = []
+        _tmp_RR_packets = []
         _tmp_UI_packets = []
+        _tmp_SABM_packets = []
         _tmp_ALL_data = []
         _tmp_DATA_data = []
         if date_str in list(self.stat_DB_days.keys()):
@@ -159,7 +166,9 @@ class PortStatDB(object):
                     _tmp_n_packets.append(self.stat_DB_days[date_str][now_hour].n_packets_hr[minute])
                     _tmp_I_packets.append(self.stat_DB_days[date_str][now_hour].I_packets_hr[minute])
                     _tmp_REJ_packets.append(self.stat_DB_days[date_str][now_hour].REJ_packets_hr[minute])
+                    _tmp_RR_packets.append(self.stat_DB_days[date_str][now_hour].RR_packets_hr[minute])
                     _tmp_UI_packets.append(self.stat_DB_days[date_str][now_hour].UI_packets_hr[minute])
+                    _tmp_SABM_packets.append(self.stat_DB_days[date_str][now_hour].SABM_packets_hr[minute])
                     _tmp_ALL_data.append(self.stat_DB_days[date_str][now_hour].ALL_data_hr[minute])
                     _tmp_DATA_data.append(self.stat_DB_days[date_str][now_hour].DATA_data_hr[minute])
 
@@ -169,77 +178,82 @@ class PortStatDB(object):
                         _tmp_n_packets.append(self.stat_DB_days[las_day][last_hour].n_packets_hr[minu])
                         _tmp_I_packets.append(self.stat_DB_days[las_day][last_hour].I_packets_hr[minu])
                         _tmp_REJ_packets.append(self.stat_DB_days[las_day][last_hour].REJ_packets_hr[minu])
+                        _tmp_RR_packets.append(self.stat_DB_days[las_day][last_hour].RR_packets_hr[minu])
                         _tmp_UI_packets.append(self.stat_DB_days[las_day][last_hour].UI_packets_hr[minu])
+                        _tmp_SABM_packets.append(self.stat_DB_days[las_day][last_hour].SABM_packets_hr[minu])
                         _tmp_ALL_data.append(self.stat_DB_days[las_day][last_hour].ALL_data_hr[minu])
                         _tmp_DATA_data.append(self.stat_DB_days[las_day][last_hour].DATA_data_hr[minu])
                     else:
                         _tmp_n_packets.append(0)
                         _tmp_I_packets.append(0)
                         _tmp_REJ_packets.append(0)
+                        _tmp_RR_packets.append(0)
                         _tmp_UI_packets.append(0)
+                        _tmp_SABM_packets.append(0)
                         _tmp_ALL_data.append(0)
                         _tmp_DATA_data.append(0)
             else:
                 day_hours = list(range(0, now_hour + 1))
                 last_hours = list(range(now_hour + 1, 24))
+                min_list = list(range(60))
                 day_hours.reverse()
                 last_hours.reverse()
+                min_list.reverse()
                 # print('<<>>>>  {}  {}'.format(last_hours , day_hours))
-
+                dt_now = datetime.now()
                 for h in day_hours:
                     if h in self.stat_DB_days[date_str].keys():
-                        for minu in range(60):
-                            _tmp_n_packets.append(self.stat_DB_days[date_str][h].n_packets_hr[minu])
-                            _tmp_I_packets.append(self.stat_DB_days[date_str][h].I_packets_hr[minu])
-                            _tmp_REJ_packets.append(self.stat_DB_days[date_str][h].REJ_packets_hr[minu])
-                            _tmp_UI_packets.append(self.stat_DB_days[date_str][h].UI_packets_hr[minu])
-                            _tmp_ALL_data.append(self.stat_DB_days[date_str][h].ALL_data_hr[minu])
-                            _tmp_DATA_data.append(self.stat_DB_days[date_str][h].DATA_data_hr[minu])
+                        for minu in min_list:
+                            if h == dt_now.hour and minu <= dt_now.minute:
+                                _tmp_n_packets.append(self.stat_DB_days[date_str][h].n_packets_hr[minu])
+                                _tmp_I_packets.append(self.stat_DB_days[date_str][h].I_packets_hr[minu])
+                                _tmp_REJ_packets.append(self.stat_DB_days[date_str][h].REJ_packets_hr[minu])
+                                _tmp_RR_packets.append(self.stat_DB_days[date_str][h].RR_packets_hr[minu])
+                                _tmp_UI_packets.append(self.stat_DB_days[date_str][h].UI_packets_hr[minu])
+                                _tmp_SABM_packets.append(self.stat_DB_days[date_str][h].SABM_packets_hr[minu])
+                                _tmp_ALL_data.append(self.stat_DB_days[date_str][h].ALL_data_hr[minu])
+                                _tmp_DATA_data.append(self.stat_DB_days[date_str][h].DATA_data_hr[minu])
+                            # if h == dt_now.hour and minu < dt_now.minute:
+                            #     break
                 for h in last_hours:
                     if las_day:
                         if h in self.stat_DB_days[las_day].keys():
-                            for minu in range(60):
+                            for minu in min_list:
                                 _tmp_n_packets.append(self.stat_DB_days[las_day][h].n_packets_hr[minu])
                                 _tmp_I_packets.append(self.stat_DB_days[las_day][h].I_packets_hr[minu])
                                 _tmp_REJ_packets.append(self.stat_DB_days[las_day][h].REJ_packets_hr[minu])
+                                _tmp_RR_packets.append(self.stat_DB_days[las_day][h].RR_packets_hr[minu])
                                 _tmp_UI_packets.append(self.stat_DB_days[las_day][h].UI_packets_hr[minu])
+                                _tmp_SABM_packets.append(self.stat_DB_days[las_day][h].SABM_packets_hr[minu])
                                 _tmp_ALL_data.append(self.stat_DB_days[las_day][h].ALL_data_hr[minu])
                                 _tmp_DATA_data.append(self.stat_DB_days[las_day][h].DATA_data_hr[minu])
                         else:
-                            for minu in range(60):
+                            for minu in min_list:
                                 _tmp_n_packets.append(0)
                                 _tmp_I_packets.append(0)
                                 _tmp_REJ_packets.append(0)
+                                _tmp_RR_packets.append(0)
                                 _tmp_UI_packets.append(0)
+                                _tmp_SABM_packets.append(0)
                                 _tmp_ALL_data.append(0)
                                 _tmp_DATA_data.append(0)
                     else:
-                        for minu in range(60):
+                        for minu in min_list:
                             _tmp_n_packets.append(0)
                             _tmp_I_packets.append(0)
                             _tmp_REJ_packets.append(0)
+                            _tmp_RR_packets.append(0)
                             _tmp_UI_packets.append(0)
+                            _tmp_SABM_packets.append(0)
                             _tmp_ALL_data.append(0)
                             _tmp_DATA_data.append(0)
 
         ke = list(range(len(_tmp_n_packets)))
         # len(ke)
         if _tmp_n_packets:
-            """
-            plt.plot(ke, _tmp_n_packets, 'g--',
-                     ke, _tmp_I_packets, 'y-',
-                     ke, _tmp_UI_packets, 'o-',
-                     ke, _tmp_REJ_packets, 'r--',
-                     )
-            #plt.plot(_tmp_n_packets, _tmp_I_packets, _tmp_REJ_packets, _tmp_UI_packets, _tmp_ALL_data, 'ro')
-            plt.axis([0, 59, 0, 50])
-            plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', ])
-            plt.suptitle('Port Statistik')
-            plt.show()
-            """
             x_scale = []
             if range_day:
-                for i in list(range(1440)):
+                for i in list(range(len(_tmp_n_packets))):
                     x_scale.append((i / 60))
             else:
                 x_scale = ke
@@ -250,7 +264,25 @@ class PortStatDB(object):
             # root.protocol("WM_DELETE_WINDOW", root.destroy())
             plot1 = tk.Frame(root)
             plot2 = tk.Frame(root)
-
+            """
+            _tmp_n_packets.reverse()
+            _tmp_I_packets.reverse()
+            _tmp_REJ_packets.reverse()
+            _tmp_RR_packets.reverse()
+            _tmp_UI_packets.reverse()
+            _tmp_SABM_packets.reverse()
+            _tmp_ALL_data.reverse()
+            _tmp_DATA_data.reverse()
+            """
+            print('------------------------')
+            print(_tmp_n_packets)
+            print(_tmp_I_packets)
+            print(_tmp_REJ_packets)
+            print(_tmp_RR_packets)
+            print(_tmp_UI_packets)
+            print(_tmp_SABM_packets)
+            print(_tmp_ALL_data)
+            print(_tmp_DATA_data)
 
             fig = plt.figure(figsize=(5, 4), dpi=100)
             plt.style.use('dark_background')
@@ -259,6 +291,8 @@ class PortStatDB(object):
                 x_scale, _tmp_I_packets,
                 x_scale, _tmp_UI_packets,
                 x_scale, _tmp_REJ_packets,
+                x_scale, _tmp_RR_packets,
+                x_scale, _tmp_SABM_packets,
             )
 
             # fig.axis([0, 59, 0, 50])
@@ -272,7 +306,7 @@ class PortStatDB(object):
             else:
                 plt.axis([0, 59, 0, 100])
             # plt.axis([0, 59, 0, 50])
-            plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', ])
+            plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', 'RR-Frames', 'SABM-Frames', ])
             #ax.suptitle('Port Statistik')
 
             canvas = FigureCanvasTkAgg(fig, master=plot1)  # A tk.DrawingArea.
