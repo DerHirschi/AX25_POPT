@@ -1,6 +1,7 @@
-
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import matplotlib.pyplot as plt
-
+import tkinter as tk
 from ax25.ax25dec_enc import AX25Frame
 from datetime import datetime
 
@@ -121,10 +122,17 @@ class PortStatDB(object):
                 self.now_min = datetime.now().strftime('%M:%S')[:-1]
                 self.bandwidth[self.now_min] = 0
 
-    def plot_test_graph(self, hour: int = 0):
+    def plot_test_graph(self, now_hour: int = -1, day=True):
+        range_day = day
         now = datetime.now()
         date_str = now.strftime('%d/%m/%y')
-        hour = now.hour
+        if now_hour == -1:
+            now_hour = now.hour
+        last_hour = now.hour - 1
+        now_minute = list(range(0, now.minute))
+        last_hr_minute = list(range(60 - (60 - now.minute), 60))
+        # print('now_minute  {}'.format(now_minute))
+        # print('last_hr_minute  {}'.format(last_hr_minute))
         _tmp_n_packets = []
         _tmp_I_packets = []
         _tmp_REJ_packets = []
@@ -132,35 +140,92 @@ class PortStatDB(object):
         _tmp_ALL_data = []
         _tmp_DATA_data = []
         if date_str in list(self.stat_DB_days.keys()):
-            for minute in range(60):
-                _tmp_n_packets.append(self.stat_DB_days[date_str][hour].n_packets_hr[minute])
-                _tmp_I_packets.append(self.stat_DB_days[date_str][hour].I_packets_hr[minute])
-                _tmp_REJ_packets.append(self.stat_DB_days[date_str][hour].REJ_packets_hr[minute])
-                _tmp_UI_packets.append(self.stat_DB_days[date_str][hour].UI_packets_hr[minute])
-                _tmp_ALL_data.append(self.stat_DB_days[date_str][hour].ALL_data_hr[minute])
-                _tmp_DATA_data.append(self.stat_DB_days[date_str][hour].DATA_data_hr[minute])
 
-        """
-        for minute in range(60):
-           
-            _tmp_n_packets.append(random.randrange(0, 30))
-            _tmp_I_packets.append(random.randrange(0, 8))
-            _tmp_REJ_packets.append(random.randrange(0, 10))
-            _tmp_UI_packets.append(random.randrange(0, 10))
-            _tmp_ALL_data.append(random.randrange(100, 1500))
-            _tmp_DATA_data.append(random.randrange(100, 800))
-        print(_tmp_n_packets)
-        print(_tmp_I_packets)
-        print(_tmp_REJ_packets)
-        print(_tmp_UI_packets)
-        print(_tmp_ALL_data)
-        print(_tmp_DATA_data)
-        k = PortStatHourStruc()
-        ke = list(k.DATA_data_hr.keys())
-        """
-        ke = list(range(60))
+            if now_hour == 0 or range_day:
+                last_hour = 23
+                ind = list(self.stat_DB_days.keys()).index(date_str) - 1
+                if ind >= 0:
+                    las_day = list(self.stat_DB_days.keys())[ind]
+                else:
+                    las_day = ''
+                    # las_day = date_str
+            else:
+                las_day = date_str
+            if not range_day:
+                now_minute.reverse()
+                last_hr_minute.reverse()
+                # print('<<>>>>  {}'.format(now_minute + last_hr_minute))
+                for minute in now_minute:
+                    _tmp_n_packets.append(self.stat_DB_days[date_str][now_hour].n_packets_hr[minute])
+                    _tmp_I_packets.append(self.stat_DB_days[date_str][now_hour].I_packets_hr[minute])
+                    _tmp_REJ_packets.append(self.stat_DB_days[date_str][now_hour].REJ_packets_hr[minute])
+                    _tmp_UI_packets.append(self.stat_DB_days[date_str][now_hour].UI_packets_hr[minute])
+                    _tmp_ALL_data.append(self.stat_DB_days[date_str][now_hour].ALL_data_hr[minute])
+                    _tmp_DATA_data.append(self.stat_DB_days[date_str][now_hour].DATA_data_hr[minute])
+
+                for minu in last_hr_minute:
+                    if las_day:
+
+                        _tmp_n_packets.append(self.stat_DB_days[las_day][last_hour].n_packets_hr[minu])
+                        _tmp_I_packets.append(self.stat_DB_days[las_day][last_hour].I_packets_hr[minu])
+                        _tmp_REJ_packets.append(self.stat_DB_days[las_day][last_hour].REJ_packets_hr[minu])
+                        _tmp_UI_packets.append(self.stat_DB_days[las_day][last_hour].UI_packets_hr[minu])
+                        _tmp_ALL_data.append(self.stat_DB_days[las_day][last_hour].ALL_data_hr[minu])
+                        _tmp_DATA_data.append(self.stat_DB_days[las_day][last_hour].DATA_data_hr[minu])
+                    else:
+                        _tmp_n_packets.append(0)
+                        _tmp_I_packets.append(0)
+                        _tmp_REJ_packets.append(0)
+                        _tmp_UI_packets.append(0)
+                        _tmp_ALL_data.append(0)
+                        _tmp_DATA_data.append(0)
+            else:
+                day_hours = list(range(0, now_hour + 1))
+                last_hours = list(range(now_hour + 1, 24))
+                day_hours.reverse()
+                last_hours.reverse()
+                # print('<<>>>>  {}  {}'.format(last_hours , day_hours))
+
+                for h in day_hours:
+                    if h in self.stat_DB_days[date_str].keys():
+                        for minu in range(60):
+                            _tmp_n_packets.append(self.stat_DB_days[date_str][h].n_packets_hr[minu])
+                            _tmp_I_packets.append(self.stat_DB_days[date_str][h].I_packets_hr[minu])
+                            _tmp_REJ_packets.append(self.stat_DB_days[date_str][h].REJ_packets_hr[minu])
+                            _tmp_UI_packets.append(self.stat_DB_days[date_str][h].UI_packets_hr[minu])
+                            _tmp_ALL_data.append(self.stat_DB_days[date_str][h].ALL_data_hr[minu])
+                            _tmp_DATA_data.append(self.stat_DB_days[date_str][h].DATA_data_hr[minu])
+                for h in last_hours:
+                    if las_day:
+                        if h in self.stat_DB_days[las_day].keys():
+                            for minu in range(60):
+                                _tmp_n_packets.append(self.stat_DB_days[las_day][h].n_packets_hr[minu])
+                                _tmp_I_packets.append(self.stat_DB_days[las_day][h].I_packets_hr[minu])
+                                _tmp_REJ_packets.append(self.stat_DB_days[las_day][h].REJ_packets_hr[minu])
+                                _tmp_UI_packets.append(self.stat_DB_days[las_day][h].UI_packets_hr[minu])
+                                _tmp_ALL_data.append(self.stat_DB_days[las_day][h].ALL_data_hr[minu])
+                                _tmp_DATA_data.append(self.stat_DB_days[las_day][h].DATA_data_hr[minu])
+                        else:
+                            for minu in range(60):
+                                _tmp_n_packets.append(0)
+                                _tmp_I_packets.append(0)
+                                _tmp_REJ_packets.append(0)
+                                _tmp_UI_packets.append(0)
+                                _tmp_ALL_data.append(0)
+                                _tmp_DATA_data.append(0)
+                    else:
+                        for minu in range(60):
+                            _tmp_n_packets.append(0)
+                            _tmp_I_packets.append(0)
+                            _tmp_REJ_packets.append(0)
+                            _tmp_UI_packets.append(0)
+                            _tmp_ALL_data.append(0)
+                            _tmp_DATA_data.append(0)
+
+        ke = list(range(len(_tmp_n_packets)))
         # len(ke)
         if _tmp_n_packets:
+            """
             plt.plot(ke, _tmp_n_packets, 'g--',
                      ke, _tmp_I_packets, 'y-',
                      ke, _tmp_UI_packets, 'o-',
@@ -171,6 +236,59 @@ class PortStatDB(object):
             plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', ])
             plt.suptitle('Port Statistik')
             plt.show()
+            """
+            x_scale = []
+            if range_day:
+                for i in list(range(1440)):
+                    x_scale.append(i / 60)
+            else:
+                x_scale = ke
+            root = tk.Tk()
+            root.wm_title("Port Statistik")
+            root.geometry("800x600")
+            # root.protocol("WM_DELETE_WINDOW", root.destroy())
+            fig = plt.figure(figsize=(5, 4), dpi=100)
+
+            fig.add_subplot(111).plot(
+                x_scale, _tmp_n_packets,
+                x_scale, _tmp_I_packets,
+                x_scale, _tmp_UI_packets,
+                x_scale, _tmp_REJ_packets,
+            )
+            # fig.axis([0, 59, 0, 50])
+            """
+            if not range_day:
+                plt.axis([0, 59, 0, 100])
+            else:
+            """
+
+            plt.axis([0, len(_tmp_n_packets), 0, 100])
+            # plt.axis([0, 59, 0, 50])
+            plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', ])
+            #ax.suptitle('Port Statistik')
+            canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
+            canvas.draw()
+            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+            toolbar = NavigationToolbar2Tk(canvas, root)
+            toolbar.update()
+            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+            frame = tk.Frame(root)
+            prt_sel_var = tk.IntVar()
+            prt_sel_var.set(0)
+            lable = tk.Label(frame, text='Port: ')
+            prt_sel = tk.Spinbox(frame,
+                                         from_=0,
+                                         to=7,
+                                        increment=1,
+                                        width=2,
+                                        textvariable=prt_sel_var,
+                                        state='disabled',
+                                        # command=self.set_max_frame,
+                                        )
+            frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=0)
+            lable.grid(row=0, column=0)
+            prt_sel.grid(row=0, column=1)
 
     def get_bandwidth(self, baud=1200):
         self.input_bw_calc()

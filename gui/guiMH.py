@@ -15,6 +15,7 @@ class MHWin:
         self.win.geometry("1250x700")
         self.win.protocol("WM_DELETE_WINDOW", self.close)
         self.win.attributes("-topmost", True)
+        self.win.attributes("-topmost", False)
         self.menubar = Menu(self.win)
         self.win.config(menu=self.menubar)
         self.menubar.add_command(label="Quit", command=self.close)

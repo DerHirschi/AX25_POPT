@@ -5,9 +5,9 @@ from tkinter import ttk, Menu
 import logging
 import threading
 import sys
-from matplotlib.figure import Figure
+# from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
+    FigureCanvasTkAgg)
 import matplotlib.pyplot as plt
 
 import config_station
@@ -208,6 +208,7 @@ class TkMainWin:
         self.bw_fig = plt.figure(figsize=(8, 4.5), dpi=80)
         self.ax = self.bw_fig.add_subplot(111)
         self.ax.axis([0, 59, 0, 100])
+
         self.bw_fig.set_facecolor('xkcd:light grey')
         self.ax.set_facecolor('xkcd:silver')
         self.bw_plot_lines = {}

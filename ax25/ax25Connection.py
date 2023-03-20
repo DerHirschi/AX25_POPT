@@ -778,17 +778,15 @@ class S5Ready(DefaultStat):
                     print("ownVS: {}     recNS: {}".format(self.ax25conn.vs, ns))
                     """
                     if self.stat_index == 5:
-
+                        """
                         if ns + 1 == self.ax25conn.vr:  # When Packet already is received
-                            self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
-                            """
+                            #self.ax25conn.send_RR(pf_bit=pf, cmd_bit=False)
                             self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
                             self.change_state(7)  # go into FINAL_state
-                            """
                         else:
-
-                            self.ax25conn.send_REJ(pf_bit=pf, cmd_bit=False)
-                            self.change_state(6)  # go into REF_state
+                        """
+                        self.ax25conn.send_REJ(pf_bit=pf, cmd_bit=False)
+                        self.change_state(6)  # go into REJ_state
                         self.ax25conn.set_T1()
                     elif self.stat_index == 9:
                         self.change_state(15)  # go into "REJ ausgesandt u. Gegenstelle nicht bereit."
