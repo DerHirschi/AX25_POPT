@@ -399,14 +399,20 @@ class MH(object):
             pass
         except EOFError:
             pass
-
+        port_stat_DB = []
         try:
             with open(port_stat_data_file, 'rb') as inp:
-                self.port_statistik_DB = pickle.load(inp)
+                port_stat_DB = pickle.load(inp)
         except FileNotFoundError:
             pass
         except EOFError:
             pass
+
+        port_id = 0
+        for el in port_stat_DB:
+            self.port_statistik_DB[port_id] = PortStatDB()
+            self.port_statistik_DB[port_id].stat_DB_days = el
+            port_id += 1
 
         for call in list(self.calls.keys()):
             for att in dir(MyHeard):
@@ -563,6 +569,17 @@ class MH(object):
             with open(mh_data_file, 'xb') as outp:
                 pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
 
+        port_stat_DB = []
+        for port_id in self.port_statistik_DB.keys():
+            port_stat_DB.append(self.port_statistik_DB[port_id].stat_DB_days)
+        try:
+            with open(port_stat_data_file, 'wb') as outp:
+                # print(self.calls.keys())
+                pickle.dump(port_stat_DB, outp, pickle.HIGHEST_PROTOCOL)
+        except FileNotFoundError:
+            with open(port_stat_data_file, 'xb') as outp:
+                pickle.dump(port_stat_DB, outp, pickle.HIGHEST_PROTOCOL)
+        """    
         try:
             with open(port_stat_data_file, 'wb') as outp:
                 # print(self.calls.keys())
@@ -570,7 +587,7 @@ class MH(object):
         except FileNotFoundError:
             with open(port_stat_data_file, 'xb') as outp:
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
-
+        """
 
 if __name__ == '__main__':
     stat = PortStatDB()
