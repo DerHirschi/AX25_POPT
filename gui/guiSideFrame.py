@@ -46,7 +46,7 @@ class SideTabbedFrame:
         self.max_frame.place(x=10 + 80, y=parm_y)
         parm_y = 55
         p_l_label = tk.Label(tab1_connection, text='Pac Len:')
-        self.pac_len_var = tk.IntVar()
+        self.pac_len_var = tk.IntVar(tab1_connection)
         self.pac_len_var.set(128)
         self.pac_len = tk.ttk.Combobox(tab1_connection,
                                        width=4,
@@ -56,7 +56,15 @@ class SideTabbedFrame:
         self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         p_l_label.place(x=10, y=parm_y)
         self.pac_len.place(x=10 + 80, y=parm_y)
+        # RNR Checkbutton
+        parm_y = 90
+        self.rnr_var = tk.BooleanVar(tab1_connection)
 
+        self.rnr = tk.Checkbutton(tab1_connection,
+                                  text='RNR',
+                                  variable=self.rnr_var,
+                                  command=self.chk_rnr)
+        self.rnr.place(x=10 , y=parm_y)
         # MH ##########################
         self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
         self.tab2_mh.columnconfigure(1, minsize=100, weight=9)
@@ -197,6 +205,14 @@ class SideTabbedFrame:
     def tester(self, event):
         print("TEST")
 
+    def chk_rnr(self):
+        conn = self.main_win.get_conn()
+        if conn:
+            if self.rnr_var.get():
+                conn.set_RNR()
+            else:
+                conn.unset_RNR()
+
     def tasker(self):
         self.update_side_mh()
         self.update_ch_echo()
@@ -223,11 +239,15 @@ class SideTabbedFrame:
         if conn:
             self.max_frame.configure(state='normal')
             self.pac_len.configure(state='normal')
+            self.rnr.configure(state='normal')
             self.max_frame_var.set(str(conn.parm_MaxFrame))
             self.pac_len_var.set(conn.parm_PacLen)
         else:
             self.max_frame.configure(state='disabled')
             self.pac_len.configure(state='disabled')
+            self.rnr_var.set(False)
+            self.rnr.deselect()
+            self.rnr.configure(state='disabled')
 
         self.update_ch_echo()
 

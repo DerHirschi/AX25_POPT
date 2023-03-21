@@ -294,23 +294,24 @@ class AX25Port(threading.Thread):
         tr = False
         # RX-Echo
         fr: AX25Frame
-        for fr in self.port_handler.rx_echo[self.port_id].tx_buff:
-            try:
-                self.tx(frame=fr)
-                tr = True
-            except AX25DeviceFAIL as e:
-                raise e
-            except AX25EncodingERROR:
-                logger.error('Encoding Error: ! MSG to short !')
-            # Monitor
+        if self.port_id in self.port_handler.rx_echo.keys():
+            for fr in self.port_handler.rx_echo[self.port_id].tx_buff:
+                try:
+                    self.tx(frame=fr)
+                    tr = True
+                except AX25DeviceFAIL as e:
+                    raise e
+                except AX25EncodingERROR:
+                    logger.error('Encoding Error: ! MSG to short !')
+                # Monitor
 
-            # Monitor
-            if self.is_gui:
-                self.gui.update_monitor(
-                    self.monitor.frame_inp(fr, self.portname),
-                    conf=self.port_cfg,
-                    tx=True)
-        self.port_handler.rx_echo[self.port_id].tx_buff = []
+                # Monitor
+                if self.is_gui:
+                    self.gui.update_monitor(
+                        self.monitor.frame_inp(fr, self.portname),
+                        conf=self.port_cfg,
+                        tx=True)
+            self.port_handler.rx_echo[self.port_id].tx_buff = []
         return tr
 
     def rx_echo(self, ax25_frame: AX25Frame):

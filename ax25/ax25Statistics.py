@@ -369,6 +369,7 @@ class PortStatDB(object):
             frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=0)
             lable.grid(row=0, column=0)
             prt_sel.grid(row=0, column=1)
+            # root.protocol("WM_DELETE_WINDOW", root.destroy())
 
     def get_bandwidth(self, baud=1200):
         self.input_bw_calc()

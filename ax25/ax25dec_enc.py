@@ -333,9 +333,9 @@ class CByte(object):
                 if ss_bits == '00':  # Empfangsbereit RR
                     self.mon_str = 'RR' + str(self.nr) + bl2str(pf)  # P/F Bit add +/-
                     self.flag = 'RR'
-                elif ss_bits == '01':  # Nicht empfangsbereit RNRR
-                    self.mon_str = 'RNRR' + bl2str(pf)  # P/F Bit add +/-
-                    self.flag = 'RNRR'
+                elif ss_bits == '01':  # Nicht empfangsbereit RNR
+                    self.mon_str = 'RNR' + bl2str(pf)  # P/F Bit add +/-
+                    self.flag = 'RNR'
                 elif ss_bits == '10':  # Wiederholungsaufforderung REJ
                     self.mon_str = 'REJ' + str(self.nr) + bl2str(pf)  # P/F Bit add +/-
                     self.flag = 'REJ'
@@ -598,6 +598,7 @@ class PIDByte(object):
 
 
 class AX25Frame(object):
+
     def __init__(self):
         # self.kiss = b''
         self.bytes = b''           # Dekiss

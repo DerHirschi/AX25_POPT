@@ -184,17 +184,26 @@ class TkMainWin:
         self.conn_btn.place(x=5, y=10)
         self.mh_btn = tk.Button(self.side_btn_frame_top,
                                 text="MH",
-                                bg="yellow", width=8, command=self.MH_win)
+                                # bg="yellow",
+                                width=8,
+                                command=self.MH_win)
 
         self.mh_btn.place(x=5, y=45)
         self.mon_btn = tk.Button(self.side_btn_frame_top,
                               text="Monitor",
                               bg="yellow", width=8, command=self.txt_win.switch_mon_mode)
         self.mon_btn.place(x=110, y=45)
+
+        _btn = tk.Button(self.side_btn_frame_top,
+                         text="Port-Stat",
+                         width=8,
+                         command=lambda: self.mh.port_statistik_DB[0].plot_test_graph())
+        _btn.place(x=5, y=80)
+
         _btn = tk.Button(self.side_btn_frame_top,
                                  text="Kaffèmaschine",
                                  bg="HotPink2", width=12, command=lambda: self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !'))
-        _btn.place(x=5, y=80)
+        _btn.place(x=5, y=115)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)

@@ -213,13 +213,23 @@ class TxTframe:
             # digi_call = station.my_digi_call
             self.status_name.configure(text=from_call)
             status_bg = {
-                'ENDE': 'red',
-                'FREI': 'orange',
-                'AUFBAU': 'CadetBlue1',
-                'ABBAU': 'OrangeRed',
-                'BEREIT': 'green',
-                'REJ': 'yellow',
-                'FINAL': 'LightYellow',
+                'ENDE': 'red',              # 0
+                'FREI': 'orange',           # 1
+                'AUFBAU': 'CadetBlue1',     # 2
+                'FRMR': 'red',              # 3
+                'ABBAU': 'OrangeRed',       # 4
+                'BEREIT': 'green',          # 5
+                'REJ': 'yellow',            # 6
+                'FINAL': 'LightYellow',     # 7
+                'RNR': 'PeachPuff4',        # 8
+                'DEST-RNR': 'PeachPuff2',   # 9
+                'BOTH-RNR': 'PeachPuff3',   # 10
+                'RNR-F': 'LightYellow',     # 11
+                'DEST-RNR-F': 'LightYellow',     # 12
+                'BOTH-RNR-F': 'LightYellow',     # 13
+                'RNR-REJ': 'light sky blue',              # 14
+                'DEST-RNR-REJ': 'sky blue',    # 15
+                'BOTH-RNR-REJ': 'deep sky blue',    # 16
             }[status]
             self.status_status.configure(text=status, bg=status_bg)
             if len(station.tx_buf_unACK.keys()):
