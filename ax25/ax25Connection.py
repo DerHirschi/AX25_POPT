@@ -292,9 +292,9 @@ class AX25Conn(object):
 
     def ch_echo_frm_tx(self, inp: b''):
         if inp:
-            tag = '<CH-ECHO> CH: '
+            tag = '\r<CH-ECHO> CH: '
             if tag.encode('UTF-8', 'ignore') not in inp:
-                echo_str = '{}{} - {}>\r'.format(tag, self.ch_index, self.my_call_str)
+                echo_str = '\r{}{} - {}>\r'.format(tag, self.ch_index, self.my_call_str)
                 inp = echo_str.encode('UTF-8', 'ignore') + inp
                 for conn in self.ch_echo:
                     if conn.ch_index != self.ch_index:
@@ -302,9 +302,9 @@ class AX25Conn(object):
 
     def ch_echo_frm_rx(self, inp: b''):
         if inp:
-            tag = '<CH-ECHO> CH: '
+            tag = '\r<CH-ECHO> CH: '
             if tag.encode('UTF-8', 'ignore') not in inp:
-                echo_str = '{}{} - {}>\r'.format(tag, self.ch_index, self.to_call_str)
+                echo_str = '\r{}{} - {}>\r'.format(tag, self.ch_index, self.to_call_str)
                 inp = echo_str.encode('UTF-8', 'ignore') + inp
                 for conn in self.ch_echo:
                     if conn.ch_index != self.ch_index:
@@ -798,6 +798,7 @@ class S5Ready(DefaultStat):
                     self.ax25conn.set_T1(stop=True)
                 if self.stat_index == 6:  # return from REJ_state
                     self.change_state(5)
+                    self.ax25conn.set_T1(stop=True)
 
             else:  # !!!! Korrekt
                 if self.stat_index in [5, 9]:

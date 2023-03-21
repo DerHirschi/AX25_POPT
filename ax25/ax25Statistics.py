@@ -204,7 +204,7 @@ class PortStatDB(object):
                 for h in day_hours:
                     if h in self.stat_DB_days[date_str].keys():
                         for minu in min_list:
-                            if h == dt_now.hour and minu <= dt_now.minute:
+                            if (h == dt_now.hour and minu <= dt_now.minute) or h != dt_now.hour:
                                 _tmp_n_packets.append(self.stat_DB_days[date_str][h].n_packets_hr[minu])
                                 _tmp_I_packets.append(self.stat_DB_days[date_str][h].I_packets_hr[minu])
                                 _tmp_REJ_packets.append(self.stat_DB_days[date_str][h].REJ_packets_hr[minu])
