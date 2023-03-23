@@ -427,16 +427,19 @@ class StationSettingsWin:
                 self.all_stat_settings[stat_conf.stat_parm_Call] = stat_conf
                 save_station_to_file(stat_conf)
         self.main_class.msg_to_monitor('Info: Station Einstellungen erfolgreich gespeichert.')
-        self.main_class.msg_to_monitor('Lob: Das hast du gut gemacht !!')
 
     def save_btn_cmd(self):
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
+        self.main_class.msg_to_monitor('Lob: Das hast du sehr gut gemacht !!')
+
 
     def ok_btn_cmd(self):
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
         self.main_class.msg_to_monitor('Hinweis: Der OK Button funktioniert noch !!')
+        self.main_class.msg_to_monitor('Lob: Das hast du gut gemacht !!')
+
         self.destroy_win()
 
     def new_stat_btn_cmd(self):

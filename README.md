@@ -31,6 +31,7 @@ Packages Required:
 - crcmod
 - pyserial
 - matplotlib
+- gtts
 
 Install all dependencies:
   ``` sh
@@ -39,6 +40,7 @@ Install all dependencies:
   $ pip install crcmod
   $ pip install pyserial
   $ pip install matplotlib
+  $ pip install gtts
   ```
 
 Run:

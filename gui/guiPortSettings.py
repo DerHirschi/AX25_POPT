@@ -636,6 +636,7 @@ class PortSetTab:
             self.t2_auto.configure(bg=self.default_bg_clr)
             self.t2.configure(state='normal')
 
+
 class PortSettingsWin:
     def __init__(self, main_cl):
         self.main_class = main_cl
@@ -791,6 +792,7 @@ class PortSettingsWin:
             self.tab_list[port_id].set_vars_to_cfg()
             self.tab_list[port_id].port_setting.save_to_pickl()
         self.ax25_handler.set_kiss_param_all_ports()
+        self.main_class.msg_to_monitor('Lob: Das war richtig. Mach weiter so.')
         self.main_class.msg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
         self.destroy_win()
 

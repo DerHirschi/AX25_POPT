@@ -5,6 +5,7 @@ from tkinter import ttk, Menu
 import logging
 import threading
 import sys
+from gtts import gTTS
 # from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg)
@@ -202,12 +203,13 @@ class TkMainWin:
 
         _btn = tk.Button(self.side_btn_frame_top,
                                  text="Kaffèmaschine",
-                                 bg="HotPink2", width=12, command=lambda: self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !'))
+                                 bg="HotPink2", width=12, command=self.kaffee)
         _btn.place(x=5, y=115)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
-        self.setting_sound = self.tabbed_sideFrame.sound_on
+        self.setting_sprech = self.tabbed_sideFrame.sound_on
+        self.setting_sound = self.tabbed_sideFrame.sprech_on
         self.setting_bake = self.tabbed_sideFrame.bake_on
         self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
         ############################
@@ -281,11 +283,13 @@ class TkMainWin:
         pass
 
     def destroy_win(self):
+        self.sprech('Hau rein.')
         self.ax25_port_handler.close_all()
         self.main_win.quit()
         # self.main_class.settings_win = None
 
     def monitor_start_msg(self):
+        self.sprech('Willkommen du alte Pfeife.')
         ban = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
               '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
@@ -406,6 +410,15 @@ class TkMainWin:
 
     ###############
     # Sound
+    def sprech(self, text: str):
+        if self.setting_sound.get():
+            language = 'de'
+            tts = gTTS(text=text,
+                       lang=language,
+                       slow=False)
+            tts.save('data/sound/speech.tmp')
+            self.pl_sound('data/sound/speech.tmp')
+
     def pl_sound(self, snd_file: str):
         if self.setting_sound.get():
             if 'linux' in sys.platform:
@@ -587,6 +600,10 @@ class TkMainWin:
         self.mon_txt.tag_config("sys-msg", foreground=config_station.CFG_clr_sys_msg)
 
         self.mon_txt.see(tk.END)
+        if 'Lob: ' in var:
+            var = var.split('Lob: ')
+            if len(var) > 1:
+                self.sprech(var[1])
         # self.update_side_mh()
 
     ##########################
@@ -726,3 +743,7 @@ class TkMainWin:
         """
         self.bw_fig.canvas.draw()
         self.bw_fig.canvas.flush_events()
+
+    def kaffee(self):
+        self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
+        self.sprech('Gluck gluck gluck gluck')

@@ -124,18 +124,25 @@ class SideTabbedFrame:
 
         # Settings ##########################
         # Global Sound
-        self.sound_on = tk.IntVar()
+        self.sound_on = tk.BooleanVar()
         Checkbutton(self.tab4_settings,
                     text="Sound",
                     variable=self.sound_on,
                     ).place(x=10, y=10)
-        self.sound_on.set(1)
-        # Global Sound
+        self.sound_on.set(True)
+        # Global Sprech
+        self.sprech_on = tk.BooleanVar()
+        Checkbutton(self.tab4_settings,
+                    text="Sprachausgabe",
+                    variable=self.sprech_on,
+                    ).place(x=10, y=35)
+        self.sprech_on.set(True)
+        # Global Bake
         self.bake_on = tk.BooleanVar()
         Checkbutton(self.tab4_settings,
                     text="Baken",
                     variable=self.bake_on,
-                    ).place(x=10, y=35)
+                    ).place(x=10, y=60)
         self.bake_on.set(True)
         # RX ECHO
         self.rx_echo_on = tk.BooleanVar()
@@ -143,7 +150,7 @@ class SideTabbedFrame:
                                text="RX-Echo",
                                variable=self.rx_echo_on,
                                )
-        _chk_btn.place(x=10, y=60)
+        _chk_btn.place(x=10, y=85)
 
         self.bake_on.set(False)
         """

@@ -738,6 +738,9 @@ class DefaultStat(object):
                 else:
                     self.ax25conn.to_call_str = _tmp_call.decode('UTF-8', 'ignore')
                     self.ax25conn.to_call_alias = ''
+                if self.ax25conn.is_gui:
+                    speech = ''.join(self.ax25conn.to_call_str)
+                    self.ax25conn.gui.sprech(speech)
 
     def reject(self):
         """ !!!! TESTING """
@@ -793,7 +796,11 @@ class S1Frei(DefaultStat):  # INIT RX
     def rx_SABM(self):
         # Handle Incoming Connection
         self.ax25conn.send_UA()
-        self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(self.frame.to_call.call_str).encode()
+        if self.digi_conn is None:
+            self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(self.frame.to_call.call_str).encode()
+            if self.ax25conn.is_gui:
+                speech = ''.join(self.ax25conn.to_call_str)
+                self.ax25conn.gui.sprech(speech)
         self.ax25conn.n2 = 0
         self.ax25conn.set_T3()
         self.change_state(5)
@@ -907,6 +914,9 @@ class S2Aufbau(DefaultStat):  # INIT TX
         # self.rtt_timer.rtt_single_rx()
         if self.digi_conn is None:
             self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.frame.to_call.call_str).encode()
+            if self.ax25conn.is_gui:
+                speech = ''.join(self.ax25conn.to_call_str)
+                self.ax25conn.gui.sprech(speech)
         self.ax25conn.tx_buf_2send = []  # Clean Send Buffer.
         self.ax25conn.tx_buf_rawData = b''  # Clean Send Buffer.
         self.ax25conn.n2 = 0
@@ -1569,7 +1579,6 @@ class S7WaitForFinal(DefaultStat):
         self.change_state(2)
 
 
-# TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # class S8SelfNotReady(S5Ready):  # TODO TX /  / Testing
 class S8SelfNotReady(DefaultStat):  # TODO TX /  / Testing
     stat_index = 8  # nicht bereit

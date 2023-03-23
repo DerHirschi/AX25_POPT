@@ -1,7 +1,7 @@
 import tkinter as tk
 import time
 import random
-from tkinter import scrolledtext
+# from tkinter import scrolledtext
 
 STAT_BAR_CLR = 'grey60'
 
@@ -103,6 +103,8 @@ class ChBtnFrm:
                 else:
                     self.con_btn_dict[i].configure(bg='yellow')
 
+        if self.ch_btn_blink_timer < time.time():
+            self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
         self.main_class.ch_alarm = ch_alarm
 
     def ch_btn_clk(self, ind: int):
@@ -211,6 +213,6 @@ class ChBtnFrm:
                       ]
             clr = random.choice(COLORS)
             btn.configure(bg=clr)
-            self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
+            # self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
 
 

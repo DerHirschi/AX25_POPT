@@ -474,7 +474,7 @@ class BeaconSettings(tk.Toplevel):
         self.set_vars()
         self.main_cl.ax25_port_handler.save_all_port_cfgs()
         self.main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
-        self.main_cl.msg_to_monitor('Lob: Gute Entscheidung!')
+        self.main_cl.msg_to_monitor('Lob: Gute Entscheidung! Bake bake Kuchen.')
 
     def ok_btn_cmd(self):
         self.set_vars()
