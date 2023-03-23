@@ -336,9 +336,9 @@ class PortStatDB(object):
             else:
             """
             if range_day:
-                plt.axis([0, 24, 0, max(_tmp_n_packets)])
+                plt.axis([0, 24, 0, max(_tmp_ALL_data)])
             else:
-                plt.axis([0, 59, 0, max(_tmp_n_packets)])
+                plt.axis([0, 59, 0, max(_tmp_ALL_data)])
             # plt.axis([0, 59, 0, 50])
             plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', 'RR-Frames', 'RNR-Frames', 'SABM-Frames', ])
             #ax.suptitle('Port Statistik')
