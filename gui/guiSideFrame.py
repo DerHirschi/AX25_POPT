@@ -239,9 +239,14 @@ class SideTabbedFrame:
         if conn:
             self.max_frame.configure(state='normal')
             self.pac_len.configure(state='normal')
-            self.rnr.configure(state='normal')
             self.max_frame_var.set(str(conn.parm_MaxFrame))
             self.pac_len_var.set(conn.parm_PacLen)
+            self.rnr_var.set(conn.is_RNR)
+            self.rnr.configure(state='normal')
+            if conn.is_RNR:
+                self.rnr.select()
+            else:
+                self.rnr.deselect()
         else:
             self.max_frame.configure(state='disabled')
             self.pac_len.configure(state='disabled')

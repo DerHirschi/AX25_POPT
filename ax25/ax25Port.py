@@ -380,7 +380,7 @@ class AX25Port(threading.Thread):
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
         conn = AX25Conn(ax25_frame, cfg, rx=False, port=self)
-        conn.cli.change_cli_state(1)
+        # conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn
         # self.tx_pac_handler()
         return conn
