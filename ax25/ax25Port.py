@@ -514,7 +514,7 @@ class KissTCP(AX25Port):
                 pass
 
     def set_kiss_parm(self):
-        if self.kiss.is_enabled:
+        if self.kiss.is_enabled and self.device is not None:
             self.device.sendall(self.kiss.set_all_parameter())
 
     def rx(self):
@@ -604,7 +604,7 @@ class KISSSerial(AX25Port):
                 pass
 
     def set_kiss_parm(self):
-        if self.kiss.is_enabled:
+        if self.kiss.is_enabled and self.device is not None:
             self.device.write(self.kiss.set_all_parameter())
 
     def rx(self):

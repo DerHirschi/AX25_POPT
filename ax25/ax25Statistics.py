@@ -42,6 +42,7 @@ class PortStatHourStruc(object):
         self.DISC_packets_hr = {}
         self.REJ_packets_hr = {}
         self.RR_packets_hr = {}
+        self.RNR_packets_hr = {}
         self.UI_packets_hr = {}
         self.ALL_data_hr = {}
         self.DATA_data_hr = {}
@@ -54,6 +55,7 @@ class PortStatHourStruc(object):
             self.DISC_packets_hr[minute] = 0
             self.REJ_packets_hr[minute] = 0
             self.RR_packets_hr[minute] = 0
+            self.RNR_packets_hr[minute] = 0
             self.UI_packets_hr[minute] = 0
             self.ALL_data_hr[minute] = 0
             self.DATA_data_hr[minute] = 0
@@ -106,6 +108,8 @@ class PortStatDB(object):
             self.stat_DB_days[date_str][hour].REJ_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'RR':
             self.stat_DB_days[date_str][hour].RR_packets_hr[minute] += 1
+        elif ax_frame.ctl_byte.flag == 'RNR':
+            self.stat_DB_days[date_str][hour].RNR_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'SABM':
             self.stat_DB_days[date_str][hour].SABM_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'DM':
@@ -142,6 +146,7 @@ class PortStatDB(object):
         _tmp_I_packets = []
         _tmp_REJ_packets = []
         _tmp_RR_packets = []
+        _tmp_RNR_packets = []
         _tmp_UI_packets = []
         _tmp_SABM_packets = []
         _tmp_ALL_data = []
@@ -167,6 +172,7 @@ class PortStatDB(object):
                     _tmp_I_packets.append(self.stat_DB_days[date_str][now_hour].I_packets_hr[minute])
                     _tmp_REJ_packets.append(self.stat_DB_days[date_str][now_hour].REJ_packets_hr[minute])
                     _tmp_RR_packets.append(self.stat_DB_days[date_str][now_hour].RR_packets_hr[minute])
+                    _tmp_RNR_packets.append(self.stat_DB_days[date_str][now_hour].RNR_packets_hr[minute])
                     _tmp_UI_packets.append(self.stat_DB_days[date_str][now_hour].UI_packets_hr[minute])
                     _tmp_SABM_packets.append(self.stat_DB_days[date_str][now_hour].SABM_packets_hr[minute])
                     _tmp_ALL_data.append(self.stat_DB_days[date_str][now_hour].ALL_data_hr[minute])
@@ -179,6 +185,7 @@ class PortStatDB(object):
                         _tmp_I_packets.append(self.stat_DB_days[las_day][last_hour].I_packets_hr[minu])
                         _tmp_REJ_packets.append(self.stat_DB_days[las_day][last_hour].REJ_packets_hr[minu])
                         _tmp_RR_packets.append(self.stat_DB_days[las_day][last_hour].RR_packets_hr[minu])
+                        _tmp_RNR_packets.append(self.stat_DB_days[las_day][last_hour].RNR_packets_hr[minu])
                         _tmp_UI_packets.append(self.stat_DB_days[las_day][last_hour].UI_packets_hr[minu])
                         _tmp_SABM_packets.append(self.stat_DB_days[las_day][last_hour].SABM_packets_hr[minu])
                         _tmp_ALL_data.append(self.stat_DB_days[las_day][last_hour].ALL_data_hr[minu])
@@ -188,6 +195,7 @@ class PortStatDB(object):
                         _tmp_I_packets.append(0)
                         _tmp_REJ_packets.append(0)
                         _tmp_RR_packets.append(0)
+                        _tmp_RNR_packets.append(0)
                         _tmp_UI_packets.append(0)
                         _tmp_SABM_packets.append(0)
                         _tmp_ALL_data.append(0)
@@ -209,6 +217,7 @@ class PortStatDB(object):
                                 _tmp_I_packets.append(self.stat_DB_days[date_str][h].I_packets_hr[minu])
                                 _tmp_REJ_packets.append(self.stat_DB_days[date_str][h].REJ_packets_hr[minu])
                                 _tmp_RR_packets.append(self.stat_DB_days[date_str][h].RR_packets_hr[minu])
+                                _tmp_RNR_packets.append(self.stat_DB_days[date_str][h].RNR_packets_hr[minu])
                                 _tmp_UI_packets.append(self.stat_DB_days[date_str][h].UI_packets_hr[minu])
                                 _tmp_SABM_packets.append(self.stat_DB_days[date_str][h].SABM_packets_hr[minu])
                                 _tmp_ALL_data.append(self.stat_DB_days[date_str][h].ALL_data_hr[minu])
@@ -223,6 +232,7 @@ class PortStatDB(object):
                                 _tmp_I_packets.append(self.stat_DB_days[las_day][h].I_packets_hr[minu])
                                 _tmp_REJ_packets.append(self.stat_DB_days[las_day][h].REJ_packets_hr[minu])
                                 _tmp_RR_packets.append(self.stat_DB_days[las_day][h].RR_packets_hr[minu])
+                                _tmp_RNR_packets.append(self.stat_DB_days[las_day][h].RNR_packets_hr[minu])
                                 _tmp_UI_packets.append(self.stat_DB_days[las_day][h].UI_packets_hr[minu])
                                 _tmp_SABM_packets.append(self.stat_DB_days[las_day][h].SABM_packets_hr[minu])
                                 _tmp_ALL_data.append(self.stat_DB_days[las_day][h].ALL_data_hr[minu])
@@ -233,6 +243,7 @@ class PortStatDB(object):
                                 _tmp_I_packets.append(0)
                                 _tmp_REJ_packets.append(0)
                                 _tmp_RR_packets.append(0)
+                                _tmp_RNR_packets.append(0)
                                 _tmp_UI_packets.append(0)
                                 _tmp_SABM_packets.append(0)
                                 _tmp_ALL_data.append(0)
@@ -243,6 +254,7 @@ class PortStatDB(object):
                             _tmp_I_packets.append(0)
                             _tmp_REJ_packets.append(0)
                             _tmp_RR_packets.append(0)
+                            _tmp_RNR_packets.append(0)
                             _tmp_UI_packets.append(0)
                             _tmp_SABM_packets.append(0)
                             _tmp_ALL_data.append(0)
@@ -274,6 +286,7 @@ class PortStatDB(object):
             _tmp_ALL_data.reverse()
             _tmp_DATA_data.reverse()
             """
+            """
             print('------------------------')
             print(_tmp_n_packets)
             print(_tmp_I_packets)
@@ -283,6 +296,7 @@ class PortStatDB(object):
             print(_tmp_SABM_packets)
             print(_tmp_ALL_data)
             print(_tmp_DATA_data)
+            """
 
             fig = plt.figure(figsize=(5, 4), dpi=100)
             plt.style.use('dark_background')
@@ -292,6 +306,7 @@ class PortStatDB(object):
                 x_scale, _tmp_UI_packets,
                 x_scale, _tmp_REJ_packets,
                 x_scale, _tmp_RR_packets,
+                x_scale, _tmp_RNR_packets,
                 x_scale, _tmp_SABM_packets,
             )
 

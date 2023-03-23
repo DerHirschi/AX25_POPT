@@ -2,7 +2,7 @@ import pickle
 import os
 from cli.cli import DefaultCLI, NoneCLI
 
-VER = '2.67.9.1.1a'
+VER = '2.67.9.1.2a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -138,7 +138,7 @@ class DefaultPort(object):
     # TODO DIGI is Station related
     parm_isSmartDigi = False
     parm_StupidDigi_calls = []     # Just if parm_isDigi is set to False
-    parm_TXD = 1400             # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+    parm_TXD = 400             # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
     """ Kiss Parameter """
     parm_kiss_is_on = True
     parm_kiss_TXD = 35
@@ -148,7 +148,7 @@ class DefaultPort(object):
     parm_kiss_F_Duplex = 0
     """ Connection Parameter """
     parm_PacLen = 170   # Max Pac len
-    parm_MaxFrame = 5   # Max (I) Frames
+    parm_MaxFrame = 3   # Max (I) Frames
     # Station related Parameter
     parm_stat_PacLen: {str: int} = {}
     parm_stat_MaxFrame: {str: int} = {}
@@ -156,7 +156,7 @@ class DefaultPort(object):
     parm_StationCalls: [str] = []  # def in __init__
     ####################################
     # parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
-    parm_T2 = 3000      # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
+    parm_T2 = 1700      # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
     parm_T2_auto = True
     parm_T3 = 120       # T3 sek (Inactive Link Timer) Default:180 Sek
     parm_N2 = 20        # Max Try   Default 20
