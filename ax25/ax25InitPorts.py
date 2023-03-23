@@ -40,7 +40,9 @@ class AX25PortHandler(object):
     ######################
     # Connection Handling
     def get_port_by_index(self, index: int):
-        return self.ax25_ports[index]
+        if index in self.ax25_ports.keys():
+            return self.ax25_ports[index]
+        return False
 
     def close_all(self):
         for k in list(self.all_connections.keys()):

@@ -283,7 +283,7 @@ class TkMainWin:
         pass
 
     def destroy_win(self):
-        self.sprech('Hau rein.')
+        # self.sprech('Hau rein.')
         self.ax25_port_handler.close_all()
         self.main_win.quit()
         # self.main_class.settings_win = None
@@ -416,8 +416,8 @@ class TkMainWin:
             tts = gTTS(text=text,
                        lang=language,
                        slow=False)
-            tts.save('data/sound/speech.tmp')
-            self.pl_sound('data/sound/speech.tmp')
+            tts.save('data/speech.mp3')
+            self.pl_sound('data/speech.mp3')
 
     def pl_sound(self, snd_file: str):
         if self.setting_sound.get():

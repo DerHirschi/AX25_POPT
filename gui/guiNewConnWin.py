@@ -215,44 +215,45 @@ class NewConnWin:
             ax_frame.to_call.ssid = call_obj.ssid
             ax_frame.via_calls = call_obj.via
             port = self.ax25_port_handler.get_port_by_index(self.port_index)
-            if port.port_typ == 'AXIP':
-                mh_ent = self.mh.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
-                # Just if u switch after enter in call
-                axip_ip = self.ax_ip_ip[1].get('0.0', tk.END)[:-1]
-                axip_port = self.ax_ip_port[1].get('0.0', tk.END)[:-1]
-                check_ip = axip_ip.split('.')
-                if not axip_ip:
-                    if mh_ent[1]:
-                        ip = mh_ent[0]
-                        prt = str(mh_ent[1])
-                        self.ax_ip_ip[1].delete('1.0', tk.END)
-                        self.ax_ip_ip[1].insert(tk.END, ip)
-                        self.ax_ip_port[1].delete('1.0', tk.END)
-                        self.ax_ip_port[1].insert(tk.END, prt)
-                        axip_port = prt
-                        axip_ip = ip
-                        check_ip = axip_ip.split('.')
-                else:
+            if port:
+                if port.port_typ == 'AXIP':
+                    mh_ent = self.mh.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
+                    # Just if u switch after enter in call
+                    axip_ip = self.ax_ip_ip[1].get('0.0', tk.END)[:-1]
+                    axip_port = self.ax_ip_port[1].get('0.0', tk.END)[:-1]
                     check_ip = axip_ip.split('.')
-                tr = True
-                for el in check_ip:
-                    if not el.isdigit():
-                        tr = False
-                if len(check_ip) == 4 and axip_port.isdigit() and tr:
-                    ax_frame.axip_add = axip_ip, int(axip_port)
-                    # print('CHECK')
+                    if not axip_ip:
+                        if mh_ent[1]:
+                            ip = mh_ent[0]
+                            prt = str(mh_ent[1])
+                            self.ax_ip_ip[1].delete('1.0', tk.END)
+                            self.ax_ip_ip[1].insert(tk.END, ip)
+                            self.ax_ip_port[1].delete('1.0', tk.END)
+                            self.ax_ip_port[1].insert(tk.END, prt)
+                            axip_port = prt
+                            axip_ip = ip
+                            check_ip = axip_ip.split('.')
+                    else:
+                        check_ip = axip_ip.split('.')
+                    tr = True
+                    for el in check_ip:
+                        if not el.isdigit():
+                            tr = False
+                    if len(check_ip) == 4 and axip_port.isdigit() and tr:
+                        ax_frame.axip_add = axip_ip, int(axip_port)
+                        # print('CHECK')
 
-            # TODO Error or Not Processing if no IP
-            ax_frame.ctl_byte.SABMcByte()
-            conn = self.ax25_port_handler.ax25_ports[self.port_index].new_connection(ax25_frame=ax_frame)
-            if conn:
-                # conn: AX25Conn
-                self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.main.channel_index)
-            else:
-                self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
-            self.destroy_new_conn_win()
-            self.main.ch_btn_status_update()
-            self.main.change_conn_btn()
+                # TODO Error or Not Processing if no IP
+                ax_frame.ctl_byte.SABMcByte()
+                conn = self.ax25_port_handler.ax25_ports[self.port_index].new_connection(ax25_frame=ax_frame)
+                if conn:
+                    # conn: AX25Conn
+                    self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.main.channel_index)
+                else:
+                    self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
+                self.destroy_new_conn_win()
+                self.main.ch_btn_status_update()
+                self.main.change_conn_btn()
 
     def destroy_new_conn_win(self):
         self.new_conn_win.destroy()
