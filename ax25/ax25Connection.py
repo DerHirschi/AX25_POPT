@@ -412,7 +412,8 @@ class AX25Conn(object):
                          (self.parm_Kiss_Tail * 10)
                          ) * 2
             # self.parm_T2 = (float(self.IRTT / 1000) / 2)
-            self.parm_T2 = float(init_t2 * 1.1) / 1000
+                                        # TXD    TAIL
+            self.parm_T2 = float(init_t2 + 400 + 150) / 1000
         else:
             self.parm_T2 = int(self.cfg.parm_T2) / 1000
             self.IRTT = ((self.parm_T2 * 1000) +

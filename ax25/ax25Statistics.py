@@ -100,6 +100,7 @@ class PortStatDB(object):
             """
 
         self.stat_DB_days[date_str][hour].n_packets_hr[minute] += 1
+        """
         if ax_frame.ctl_byte.flag == 'I':
             self.stat_DB_days[date_str][hour].I_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'UI':
@@ -116,6 +117,23 @@ class PortStatDB(object):
             self.stat_DB_days[date_str][hour].DM_packets_hr[minute] += 1
         elif ax_frame.ctl_byte.flag == 'DISC':
             self.stat_DB_days[date_str][hour].DISC_packets_hr[minute] += 1
+        """
+        if ax_frame.ctl_byte.flag == 'I':
+            self.stat_DB_days[date_str][hour].I_packets_hr[minute] += len(ax_frame.bytes)
+        elif ax_frame.ctl_byte.flag == 'UI':
+            self.stat_DB_days[date_str][hour].UI_packets_hr[minute] += len(ax_frame.bytes)
+        elif ax_frame.ctl_byte.flag == 'REJ':
+            self.stat_DB_days[date_str][hour].REJ_packets_hr[minute] += len(ax_frame.bytes)
+        elif ax_frame.ctl_byte.flag == 'RR':
+            self.stat_DB_days[date_str][hour].RR_packets_hr[minute] += len(ax_frame.bytes)
+        elif ax_frame.ctl_byte.flag == 'RNR':
+            self.stat_DB_days[date_str][hour].RNR_packets_hr[minute] += len(ax_frame.bytes)
+        elif ax_frame.ctl_byte.flag == 'SABM':
+            self.stat_DB_days[date_str][hour].SABM_packets_hr[minute] += len(ax_frame.bytes)
+        elif ax_frame.ctl_byte.flag == 'DM':
+            self.stat_DB_days[date_str][hour].DM_packets_hr[minute] += len(ax_frame.bytes)
+        elif ax_frame.ctl_byte.flag == 'DISC':
+            self.stat_DB_days[date_str][hour].DISC_packets_hr[minute] += len(ax_frame.bytes)
         self.stat_DB_days[date_str][hour].ALL_data_hr[minute] += len(ax_frame.bytes)
         self.stat_DB_days[date_str][hour].DATA_data_hr[minute] += ax_frame.data_len
 
@@ -301,7 +319,8 @@ class PortStatDB(object):
             fig = plt.figure(figsize=(5, 4), dpi=100)
             plt.style.use('dark_background')
             fig.add_subplot(111).plot(
-                x_scale, _tmp_n_packets,
+                # x_scale, _tmp_n_packets,
+                x_scale, _tmp_ALL_data,
                 x_scale, _tmp_I_packets,
                 x_scale, _tmp_UI_packets,
                 x_scale, _tmp_REJ_packets,
@@ -317,11 +336,11 @@ class PortStatDB(object):
             else:
             """
             if range_day:
-                plt.axis([0, 24, 0, 100])
+                plt.axis([0, 24, 0, max(_tmp_n_packets)])
             else:
-                plt.axis([0, 59, 0, 100])
+                plt.axis([0, 59, 0, max(_tmp_n_packets)])
             # plt.axis([0, 59, 0, 50])
-            plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', 'RR-Frames', 'SABM-Frames', ])
+            plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', 'RR-Frames', 'RNR-Frames', 'SABM-Frames', ])
             #ax.suptitle('Port Statistik')
 
             canvas = FigureCanvasTkAgg(fig, master=plot1)  # A tk.DrawingArea.

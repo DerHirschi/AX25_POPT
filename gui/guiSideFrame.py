@@ -56,15 +56,45 @@ class SideTabbedFrame:
         self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         p_l_label.place(x=10, y=parm_y)
         self.pac_len.place(x=10 + 80, y=parm_y)
-        # RNR Checkbutton
+        # t2 Auto Checkbutton
         parm_y = 90
+        _label = tk.Label(tab1_connection, text='T2:')
+        self.t2_var = tk.StringVar(tab1_connection)
+        self.t2_var.set(str(1700))
+        val_list = []
+
+        for i in range(10, 60):
+            # 500 - 3000
+            val_list.append(str(i * 50))
+
+        self.t2 = tk.ttk.Combobox(tab1_connection,
+                                  width=4,
+                                  textvariable=self.t2_var,
+                                  values=val_list,
+                                  state='disabled')
+        self.t2.bind("<<ComboboxSelected>>", self.set_t2)
+        _label.place(x=10, y=parm_y)
+        self.t2.place(x=50, y=parm_y)
+
+        self.t2_auto_var = tk.BooleanVar(tab1_connection)
+        self.t2_auto = tk.Checkbutton(tab1_connection,
+                                      text='T2-Auto',
+                                      variable=self.t2_auto_var,
+                                      state='disabled',
+                                      command=self.chk_t2auto
+                                      )
+        self.t2_auto.place(x=10, y=parm_y + 35)
+
+        # RNR Checkbutton
+        parm_y = 160
         self.rnr_var = tk.BooleanVar(tab1_connection)
 
         self.rnr = tk.Checkbutton(tab1_connection,
                                   text='RNR',
                                   variable=self.rnr_var,
                                   command=self.chk_rnr)
-        self.rnr.place(x=10 , y=parm_y)
+        self.rnr.place(x=10, y=parm_y)
+
         # MH ##########################
         self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
         self.tab2_mh.columnconfigure(1, minsize=100, weight=9)
@@ -110,9 +140,9 @@ class SideTabbedFrame:
         # RX ECHO
         self.rx_echo_on = tk.BooleanVar()
         _chk_btn = Checkbutton(self.tab4_settings,
-                    text="RX-Echo",
-                    variable=self.rx_echo_on,
-                    )
+                               text="RX-Echo",
+                               variable=self.rx_echo_on,
+                               )
         _chk_btn.place(x=10, y=60)
 
         self.bake_on.set(False)
@@ -144,12 +174,12 @@ class SideTabbedFrame:
             if ch_id not in self.ch_echo_vars.keys():
                 chk_bt_var = tk.IntVar()
                 chk_bt = tk.Checkbutton(_tab,
-                                         text=conn.to_call_str,
-                                         variable=chk_bt_var,
-                                         onvalue=int(ch_id),
-                                         offvalue=0,
-                                         command=self.chk_ch_echo
-                                         )
+                                        text=conn.to_call_str,
+                                        variable=chk_bt_var,
+                                        onvalue=int(ch_id),
+                                        offvalue=0,
+                                        command=self.chk_ch_echo
+                                        )
                 chk_bt.place(x=10, y=10 + (28 * (ch_id - 1)))
                 # _chk_bt.configure(state='disabled')
                 tmp = chk_bt_var, chk_bt
@@ -168,7 +198,6 @@ class SideTabbedFrame:
                 else:
                     self.ch_echo_vars[ch_id][1].configure(bg=self.chk_btn_default_clr)
                     self.ch_echo_vars[akt_ch_id][1].configure(bg=self.chk_btn_default_clr)
-
 
         # self.sound_on.set(1)
 
@@ -201,7 +230,6 @@ class SideTabbedFrame:
                 self.ch_echo_vars[self.main_win.channel_index][1].configure(bg=self.chk_btn_default_clr)
         """
 
-
     def tester(self, event):
         print("TEST")
 
@@ -212,6 +240,25 @@ class SideTabbedFrame:
                 conn.set_RNR()
             else:
                 conn.unset_RNR()
+
+    def chk_t2auto(self):
+        conn = self.main_win.get_conn()
+        if conn:
+            if self.t2_auto_var.get():
+                conn.own_port.port_cfg.parm_T2_auto = True
+                conn.calc_irtt()
+                self.t2_var.set(str(conn.parm_T2 * 1000))
+                self.t2.configure(state='disabled')
+            else:
+                conn.own_port.port_cfg.parm_T2_auto = False
+                self.t2.configure(state='normal')
+            conn.calc_irtt()
+
+    def set_t2(self, event):
+        conn = self.main_win.get_conn()
+        if conn:
+            conn.cfg.parm_T2 = min(max(int(self.t2_var.get()), 500), 3000)
+            conn.calc_irtt()
 
     def tasker(self):
         self.update_side_mh()
@@ -247,12 +294,27 @@ class SideTabbedFrame:
                 self.rnr.select()
             else:
                 self.rnr.deselect()
+            self.t2_auto.configure(state='normal')
+            if conn.own_port.port_cfg.parm_T2_auto:
+                self.t2_auto_var.set(True)
+                self.t2_auto.select()
+                self.t2_var.set(str(conn.parm_T2 * 1000))
+                self.t2.configure(state='disabled')
+            else:
+                self.t2_auto_var.set(False)
+                self.t2_auto.deselect()
+                self.t2.configure(state='normal')
+                self.t2_var.set(str(conn.parm_T2 * 1000))
         else:
             self.max_frame.configure(state='disabled')
             self.pac_len.configure(state='disabled')
             self.rnr_var.set(False)
             self.rnr.deselect()
             self.rnr.configure(state='disabled')
+            self.t2_auto_var.set(False)
+            self.t2_auto.deselect()
+            self.t2_auto.configure(state='disabled')
+            self.t2.configure(state='disabled')
 
         self.update_ch_echo()
 
@@ -261,7 +323,10 @@ class SideTabbedFrame:
         if conn:
             conn.parm_MaxFrame = int(self.max_frame_var.get())
 
+
     def set_pac_len(self, event):
         conn = self.main_win.get_conn()
         if conn:
             conn.parm_PacLen = min(max(self.pac_len_var.get(), 1), 256)
+            conn.calc_irtt()
+            self.t2_var.set(str(conn.parm_T2 * 1000))
