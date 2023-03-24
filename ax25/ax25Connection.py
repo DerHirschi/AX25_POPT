@@ -1394,7 +1394,7 @@ class S5Ready(DefaultStat):
         if time.time() > self.ax25conn.t2:
             # Nach 5 Versuchen
             if self.ax25conn.n2:
-                if self.ax25conn.n2 > 5:
+                if self.ax25conn.n2 > 4:
                     # BULLSHIT ?
                     self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
                     self.ax25conn.set_T1()
@@ -1417,6 +1417,7 @@ class S5Ready(DefaultStat):
 
     def t3_fail(self):
         self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
+        self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
         self.change_state(7)  # S7 Warten auf Final
         # self.rtt_timer.set_rtt_single_timer()
@@ -1633,12 +1634,37 @@ class S8SelfNotReady(DefaultStat):  # TODO TX /  / Testing
         """
 
     def t1_fail(self):
+        if time.time() > self.ax25conn.t2:
+            # Nach 5 Versuchen
+            if self.ax25conn.n2:
+                if self.ax25conn.n2 > 4:
+                    # BULLSHIT ?
+                    self.ax25conn.send_RNR(pf_bit=True, cmd_bit=True)
+                    self.ax25conn.set_T1()
+                    self.change_state(11)  # S7 Warten auf Final
+                    # self.rtt_timer.set_rtt_single_timer()
+                else:
+                    if self.ax25conn.tx_buf_unACK:
+                        self.ax25conn.resend_unACK_buf(1)
+                        self.ax25conn.n2 += 1
+                        self.ax25conn.set_T1()
+            else:
+                if self.ax25conn.tx_buf_unACK:
+                    self.ax25conn.resend_unACK_buf()
+                    self.ax25conn.n2 += 1
+                    self.ax25conn.set_T1()
+
+                if self.ax25conn.tx_buf_rawData and not self.ax25conn.tx_buf_unACK:
+                    self.ax25conn.build_I_fm_raw_buf()
+                    self.ax25conn.set_T1()
+        """
         if self.ax25conn.t1:
             self.ax25conn.send_RNR(pf_bit=True, cmd_bit=True)
             self.ax25conn.n2 += 1
             self.ax25conn.set_T1()
             self.change_state(11)  # S7 Warten auf Final
             # self.rtt_timer.set_rtt_single_timer()
+        """
 
     def t3_fail(self):
         self.ax25conn.send_RNR(pf_bit=True, cmd_bit=True)
