@@ -516,7 +516,8 @@ class MH(object):
     def mh_get_data_fm_call(self, call_str):
         return self.calls[call_str]
 
-    def output_sort_entr(self, n: int):
+    def output_sort_entr(self, n: int = 0):
+        """ For MH in Side Panel """
         temp = {}
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
@@ -532,10 +533,53 @@ class MH(object):
 
             temp_ret.append(temp[k])
             c += 1
-            if c > n:
+            if c > n and n:
                 break
 
         return temp_ret
+
+    def output_sort_mh_entr(self, flag_str: str, reverse: bool):
+
+        temp = {}
+        self.calls: {str: MyHeard}
+        for k in self.calls.keys():
+            flag: MyHeard = self.calls[k]
+            key = ''
+            # TODO Just a Dict for flags
+            if flag_str == 'last':
+                key = flag.last_seen
+            elif flag_str == 'first':
+                key = flag.first_seen
+            elif flag_str == 'port':
+                key = flag.port_id
+            elif flag_str == 'call':
+                key = flag.own_call
+            elif flag_str == 'pack':
+                key = flag.pac_n
+            elif flag_str == 'rej':
+                key = flag.rej_n
+            elif flag_str == 'route':
+                key = str(flag.route)
+            elif flag_str == 'axip':
+                key = str(flag.axip_add)
+            elif flag_str == 'axipfail':
+                key = flag.axip_fail
+            while key in temp.keys():
+                key += ' #'
+
+            temp[key] = self.calls[k]
+
+
+        temp_k = list(temp.keys())
+        temp_k.sort()
+        if not reverse:
+            temp_k.reverse()
+        temp_ret = {}
+        for k in temp_k:
+            temp_ret[k] = temp[k]
+        return temp_ret
+
+
 
     """
     def mh_get_last_port_obj(self, call_str):

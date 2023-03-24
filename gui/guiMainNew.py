@@ -263,6 +263,7 @@ class TkMainWin:
         # Windows
         self.new_conn_win = None
         self.settings_win = None
+        self.mh_window = None
         ###########################
         # Init
         # set GUI Var
@@ -831,7 +832,8 @@ class TkMainWin:
     # MH WIN
     def MH_win(self):
         """MH WIN"""
-        MHWin(self.mh)
+        if self.mh_window is None:
+            self.mh_window = MHWin(self)
 
     ###################
     # BW Plot
