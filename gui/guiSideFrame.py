@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
@@ -132,11 +133,17 @@ class SideTabbedFrame:
         self.sound_on.set(True)
         # Global Sprech
         self.sprech_on = tk.BooleanVar()
-        Checkbutton(self.tab4_settings,
+        sprech_btn = Checkbutton(self.tab4_settings,
                     text="Sprachausgabe",
                     variable=self.sprech_on,
-                    ).place(x=10, y=35)
-        self.sprech_on.set(True)
+                    )
+        sprech_btn.place(x=10, y=35)
+        if 'linux' in sys.platform:
+            self.sprech_on.set(True)
+        else:
+            self.sprech_on.set(False)
+            sprech_btn.configure(state='disabled')
+
         # Global Bake
         self.bake_on = tk.BooleanVar()
         Checkbutton(self.tab4_settings,

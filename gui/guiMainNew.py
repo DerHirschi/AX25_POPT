@@ -411,13 +411,14 @@ class TkMainWin:
     ###############
     # Sound
     def sprech(self, text: str):
-        if self.setting_sound.get():
-            language = 'de'
-            tts = gTTS(text=text,
-                       lang=language,
-                       slow=False)
-            tts.save('data/speech.mp3')
-            self.pl_sound('data/speech.mp3')
+        if 'linux' in sys.platform:
+            if self.setting_sprech.get():
+                language = 'de'
+                tts = gTTS(text=text,
+                           lang=language,
+                           slow=False)
+                tts.save('data/speech.mp3')
+                self.pl_sound('data/speech.mp3')
 
     def pl_sound(self, snd_file: str):
         if self.setting_sound.get():
