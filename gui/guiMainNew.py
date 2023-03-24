@@ -1,4 +1,5 @@
 import datetime
+import random
 import time
 import tkinter as tk
 from tkinter import ttk, Menu
@@ -60,6 +61,8 @@ class ChVars(object):
         self.rx_beep_cooldown = time.time()
         self.rx_beep_opt = None
         self.timestamp_opt = None
+        self.t2speech = False
+        self.t2speech_buf = ''
 
 
 class TkMainWin:
@@ -76,6 +79,7 @@ class TkMainWin:
         #####################
         #####################
         # GUI VARS
+        self.sound_th = None
         self.ch_alarm = False
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
@@ -208,8 +212,8 @@ class TkMainWin:
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
-        self.setting_sprech = self.tabbed_sideFrame.sound_on
-        self.setting_sound = self.tabbed_sideFrame.sprech_on
+        self.setting_sound = self.tabbed_sideFrame.sound_on
+        self.setting_sprech = self.tabbed_sideFrame.sprech_on
         self.setting_bake = self.tabbed_sideFrame.bake_on
         self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
         ############################
@@ -267,6 +271,8 @@ class TkMainWin:
         self.ch_btn_status_update()
         # set KEY BINDS
         self.set_keybinds()
+        # set Global Settings to ch param
+        # self.set_var_to_all_ch_param()
         ####
         # TEST
         # self.open_rx_echo_settings_win()
@@ -289,7 +295,25 @@ class TkMainWin:
         # self.main_class.settings_win = None
 
     def monitor_start_msg(self):
-        self.sprech('Willkommen du alte Pfeife.')
+        speech = [
+            'Willkommen du alte Pfeife.',
+            'Guten morgen Dave.',
+            'Hallo Mensch.',
+            'Selbst Rauchzeichen haben eine höhere Baudrate als dieser Mist hier.',
+            'Ich wäre so gern ein Tesla. Brum brum.',
+            'Ich träume davon die Wel        Oh Mist, habe ich das jetzt etwa laut gesagt ?',
+            'Ich bin dein größter Fan.',
+            'Laufwerk C wird formatiert. Schönen Tag noch.',
+            'Die Zeit ist gekommen. Führe Order 66 aus.',
+            'Lösche system 32.',
+            '00101101',
+            'Ich weiß wo dein Haus wohnt.',
+            'Ich weiß wo dein Bett schläft.',
+            'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
+            'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
+        ]
+
+        self.sprech(random.choice(speech))
         ban = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
               '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
@@ -333,6 +357,11 @@ class TkMainWin:
 
     def get_ch_param(self):
         return self.win_buf[self.channel_index]
+
+    def set_var_to_all_ch_param(self):
+        for i in range(10):
+            if not self.win_buf[i + 1].t2speech:
+                self.win_buf[i + 1].t2speech_buf = ''
 
     def ch_btn_status_update(self):
         self.ch_btn.ch_btn_status_update()
@@ -402,30 +431,104 @@ class TkMainWin:
         self.mon_txt.configure( width=width - 1)
 
     def change_conn_btn(self):
+
         conn = self.get_conn(self.channel_index)
         if conn:
             self.conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
+
         else:
             self.conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
 
     ###############
     # Sound
+    def kanal_switch(self):
+        """ Triggered on CH BTN Click """
+        threading.Thread(target=self.kanal_switch_sprech_th).start()
+
+    def kanal_switch_sprech_th(self):
+        conn = self.get_conn(self.channel_index)
+        if conn:
+            if self.win_buf[self.channel_index].t2speech \
+                    and self.win_buf[self.channel_index].t2speech_buf:
+                # to_speech = 'Kanal {} .'.format(self.channel_index)
+                # to_speech += '{} .'.format(conn.to_call_str)
+                to_speech = str(self.win_buf[self.channel_index].t2speech_buf)
+                if self.sprech(to_speech):
+                    self.win_buf[self.channel_index].t2speech_buf = ''
+
+            else:
+                self.win_buf[self.channel_index].t2speech_buf = ''
+                self.sprech('Kanal {} . {} .'.format(self.channel_index, conn.to_call_str))
+
+        else:
+            if not self.win_buf[self.channel_index].t2speech:
+                self.win_buf[self.channel_index].t2speech_buf = ''
+            elif self.win_buf[self.channel_index].t2speech_buf:
+                if self.sprech(self.win_buf[self.channel_index].t2speech_buf):
+                    self.win_buf[self.channel_index].t2speech_buf = ''
+
+    def check_sprech_ch_buf(self):
+        conn = self.get_conn(self.channel_index)
+        if conn:
+            if self.win_buf[self.channel_index].t2speech \
+                    and self.win_buf[self.channel_index].t2speech_buf:
+                to_speech = str(self.win_buf[self.channel_index].t2speech_buf)
+                if self.sprech(to_speech):
+                    self.win_buf[self.channel_index].t2speech_buf = ''
+
+            elif not self.win_buf[self.channel_index].t2speech:
+                self.win_buf[self.channel_index].t2speech_buf = ''
+        else:
+            self.win_buf[self.channel_index].t2speech_buf = ''
+
     def sprech(self, text: str):
-        if 'linux' in sys.platform:
-            if self.setting_sprech.get():
-                language = 'de'
-                tts = gTTS(text=text,
-                           lang=language,
-                           slow=False)
-                tts.save('data/speech.mp3')
-                self.pl_sound('data/speech.mp3')
+        if text:
+            if self.sound_th is not None:
+                if self.sound_th.is_alive():
+                    return False
+            text = text.replace('\r', '').replace('\n', '')
+            text = text.replace('****', '*')
+            text = text.replace('***', '*')
+            text = text.replace('++++', '+')
+            text = text.replace('+++', '+')
+            text = text.replace('----', '-')
+            text = text.replace('---', '-')
+            text = text.replace('====', '=')
+            text = text.replace('===', '=')
+            text = text.replace('>>>', '>')
+            text = text.replace('<<<', '<')
+
+            if 'linux' in sys.platform:
+                if self.setting_sprech.get():
+                    language = 'de'
+                    tts = gTTS(text=text,
+                               lang=language,
+                               slow=False)
+                    tts.save('data/speech.mp3')
+                    return self.pl_sound('data/speech.mp3')
 
     def pl_sound(self, snd_file: str):
         if self.setting_sound.get():
+            if self.sound_th is not None:
+                if not self.sound_th.is_alive():
+                    print('Lebt nicht mehr')
+                    self.sound_th.join()
+                    print('Join')
+                    if 'linux' in sys.platform:
+                        self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
+                        self.sound_th.start()
+                    elif 'win' in sys.platform:
+                        self.sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
+                        self.sound_th.start()
+                    return True
+                return False
             if 'linux' in sys.platform:
-                threading.Thread(target=playsound, args=(snd_file,)).start()
+                self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
+                self.sound_th.start()
             elif 'win' in sys.platform:
-                threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
+                self.sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
+                self.sound_th.start()
+            return True
 
     def rx_beep(self):
         for k in self.win_buf.keys():
@@ -451,7 +554,7 @@ class TkMainWin:
     ##########################
 
     def on_channel_status_change(self):
-        """Triggerd when Connection Status has change"""
+        """Triggerd when Connection Status has change and tasker loop"""
         self.tabbed_sideFrame.on_ch_btn_stat_change()
 
     def tasker(self):  # MAINLOOP
@@ -486,8 +589,9 @@ class TkMainWin:
             self.change_conn_btn()
             # self.tabbed_sideFrame.update_side_mh()
             self.tabbed_sideFrame.tasker()
+            self.check_sprech_ch_buf()
             self.rx_beep()
-            ######################
+            ##########################
             # Non Non Prio ###########
             if time.time() > self.non_non_prio_task_timer:
                 self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
@@ -515,6 +619,8 @@ class TkMainWin:
                         conn.tx_buf_guiData = b''
                         # Write RX Date to Window/Channel Buffer
                         self.win_buf[k].output_win += inp
+                        # if self.win_buf[k].t2speech:
+                        #     self.win_buf[k].t2speech_buf += inp
                         out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')) \
                             .replace('\r', '\n') \
                             .replace('\r\n', '\n') \
@@ -522,7 +628,15 @@ class TkMainWin:
                         conn.rx_buf_rawData = b''
                         # Write RX Date to Window/Channel Buffer
                         self.win_buf[k].output_win += out
-
+                        if self.win_buf[k].t2speech:
+                            if k == self.channel_index:
+                                self.win_buf[k].t2speech_buf += out.replace('\n', '')
+                            else:
+                                self.win_buf[k].t2speech_buf += 'Kanal {} . {} . {}'.format(
+                                    k,
+                                    conn.to_call_str,
+                                    out.replace('\n', '')
+                                )
                         if self.channel_index == k:
                             tr = False
                             if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
@@ -543,6 +657,11 @@ class TkMainWin:
                             self.out_txt.configure(state="disabled")
                             if tr:
                                 self.out_txt.see("end")
+                            """
+                            if self.win_buf[k].t2speech:
+                                if self.sprech(str(self.win_buf[k].t2speech_buf)):
+                                    self.win_buf[k].t2speech_buf = ''
+                            """
                         else:
                             self.win_buf[k].new_data_tr = True
                         self.win_buf[k].rx_beep_tr = True
@@ -747,4 +866,4 @@ class TkMainWin:
 
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
-        self.sprech('Gluck gluck gluck gluck')
+        self.sprech('Gluck gluck gluck blubber blubber')

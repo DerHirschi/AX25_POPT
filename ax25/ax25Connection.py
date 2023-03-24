@@ -397,8 +397,8 @@ class AX25Conn(object):
         if auto:
             self.RTT_Timer.calc_rtt_vars()
             # self.parm_T2 = float(self.RTT_Timer.rtt_average) / 2
-            print('parm_T2 rtt: {}'.format(self.parm_T2))
-            print('IRTT: {} rtt'.format(self.RTT_Timer.rtt_average * 1000))
+            # print('parm_T2 rtt: {}'.format(self.parm_T2))
+            # print('IRTT: {} rtt'.format(self.RTT_Timer.rtt_average * 1000))
             return self.RTT_Timer.rtt_average * 1000
         else:
             return self.IRTT
@@ -421,8 +421,8 @@ class AX25Conn(object):
                          (self.parm_Kiss_TXD * 10) +
                          (self.parm_Kiss_Tail * 10)
                          ) * 2
-        print('parm_T2: {}'.format(self.parm_T2))
-        print('IRTT: {}'.format(self.IRTT))
+        # print('parm_T2: {}'.format(self.parm_T2))
+        # print('IRTT: {}'.format(self.IRTT))
 
     def set_T1(self, stop=False):
         if stop:
@@ -913,7 +913,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
     def accept(self):
         # self.rtt_timer.rtt_single_rx()
         if self.digi_conn is None:
-            self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.frame.to_call.call_str).encode()
+            self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode()
             if self.ax25conn.is_gui:
                 speech = ''.join(self.ax25conn.to_call_str)
                 self.ax25conn.gui.sprech(speech)
@@ -926,7 +926,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
 
     def reject(self):
         if self.digi_conn is None:
-            self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.frame.to_call.call_str).encode()
+            self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode()
         self.ax25conn.n2 = 100
         self.change_state(0)
         # if self.ax25conn.is_prt_hndl:
@@ -936,7 +936,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         flag = ax25_frame.ctl_byte.flag
         if flag in ['UA', 'SABM']:
             if self.digi_conn is None:
-                self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(ax25_frame.to_call.call_str).encode()
+                self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode()
             self.ax25conn.tx_buf_2send = []  # Clean Send Buffer.
             self.ax25conn.tx_buf_rawData = b''  # Clean Send Buffer.
             self.ax25conn.n2 = 0
@@ -949,7 +949,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
             """
         elif flag in ['DM', 'DISC']:
             if self.digi_conn is None:
-                self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(ax25_frame.to_call.call_str).encode()
+                self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode()
             self.ax25conn.n2 = 100
             self.change_state(0)
             # if self.ax25conn.is_prt_hndl:
@@ -1075,7 +1075,7 @@ class S4Abbau(DefaultStat):
     def end_conn(self):
         if self.digi_conn is None:
             self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
-                self.frame.to_call.call_str).encode()
+                self.ax25conn.to_call_str).encode()
         self.ax25conn.set_T1()  # Prevent sending another Packet
         self.change_state(0)
         # if self.ax25conn.is_prt_hndl:
@@ -1086,7 +1086,7 @@ class S4Abbau(DefaultStat):
         if flag in ['UA', 'DM']:
             if self.digi_conn is None:
                 self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
-                    ax25_frame.to_call.call_str).encode()
+                    self.ax25conn.to_call_str).encode()
             self.ax25conn.set_T1()  # Prevent sending another Packet
             self.change_state(0)
             # if self.ax25conn.is_prt_hndl:
@@ -1133,7 +1133,7 @@ class S4Abbau(DefaultStat):
     def n2_fail(self):
         if self.digi_conn is None:
             self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
-                self.ax25conn.ax25_out_frame.to_call.call_str).encode()
+                self.ax25conn.to_call_str).encode()
         # self.ax25conn.send_DISC()
         self.change_state(0)
         # if self.ax25conn.is_prt_hndl:

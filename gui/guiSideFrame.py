@@ -2,7 +2,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
-import main
+# import main
 
 
 class SideTabbedFrame:
@@ -18,24 +18,26 @@ class SideTabbedFrame:
         self.tabControl = ttk.Notebook(self.tab_side_frame, height=300, width=500)
         # self.tabControl.grid(row=3, column=0, columnspan=5, sticky="nsew")
 
-        tab1_connection = ttk.Frame(self.tabControl)
+        tab1_kanal = ttk.Frame(self.tabControl)
         self.tab2_mh = ttk.Frame(self.tabControl)
         tab3 = ttk.Frame(self.tabControl)
         self.tab4_settings = ttk.Frame(self.tabControl)
         self.tab5_ch_links = ttk.Frame(self.tabControl)
 
-        self.tabControl.add(tab1_connection, text='Station')
+        self.tabControl.add(tab1_kanal, text='Kanal')
         self.tabControl.add(self.tab2_mh, text='MH')
         self.tabControl.add(tab3, text='Ports')
-        self.tabControl.add(self.tab4_settings, text='Settings')
+        self.tabControl.add(self.tab4_settings, text='Global')
         self.tabControl.add(self.tab5_ch_links, text='CH-Echo')
         self.tabControl.pack(expand=0, fill="both")
         self.tabControl.select(self.tab2_mh)
+        ################################################
+        # Kanal
         parm_y = 20
-        m_f_label = tk.Label(tab1_connection, text='Max Pac:')
+        m_f_label = tk.Label(tab1_kanal, text='Max Pac:')
         self.max_frame_var = tk.StringVar()
         self.max_frame_var.set('1')
-        self.max_frame = tk.Spinbox(tab1_connection,
+        self.max_frame = tk.Spinbox(tab1_kanal,
                                     from_=1,
                                     to=7,
                                     increment=1,
@@ -46,10 +48,10 @@ class SideTabbedFrame:
         m_f_label.place(x=10, y=parm_y)
         self.max_frame.place(x=10 + 80, y=parm_y)
         parm_y = 55
-        p_l_label = tk.Label(tab1_connection, text='Pac Len:')
-        self.pac_len_var = tk.IntVar(tab1_connection)
+        p_l_label = tk.Label(tab1_kanal, text='Pac Len:')
+        self.pac_len_var = tk.IntVar(tab1_kanal)
         self.pac_len_var.set(128)
-        self.pac_len = tk.ttk.Combobox(tab1_connection,
+        self.pac_len = tk.ttk.Combobox(tab1_kanal,
                                        width=4,
                                        textvariable=self.pac_len_var,
                                        values=list(range(1, 257)),
@@ -59,8 +61,8 @@ class SideTabbedFrame:
         self.pac_len.place(x=10 + 80, y=parm_y)
         # t2 Auto Checkbutton
         parm_y = 90
-        _label = tk.Label(tab1_connection, text='T2:')
-        self.t2_var = tk.StringVar(tab1_connection)
+        _label = tk.Label(tab1_kanal, text='T2:')
+        self.t2_var = tk.StringVar(tab1_kanal)
         self.t2_var.set(str(1700))
         val_list = []
 
@@ -68,7 +70,7 @@ class SideTabbedFrame:
             # 500 - 3000
             val_list.append(str(i * 50))
 
-        self.t2 = tk.ttk.Combobox(tab1_connection,
+        self.t2 = tk.ttk.Combobox(tab1_kanal,
                                   width=4,
                                   textvariable=self.t2_var,
                                   values=val_list,
@@ -77,8 +79,8 @@ class SideTabbedFrame:
         _label.place(x=10, y=parm_y)
         self.t2.place(x=50, y=parm_y)
 
-        self.t2_auto_var = tk.BooleanVar(tab1_connection)
-        self.t2_auto = tk.Checkbutton(tab1_connection,
+        self.t2_auto_var = tk.BooleanVar(tab1_kanal)
+        self.t2_auto = tk.Checkbutton(tab1_kanal,
                                       text='T2-Auto',
                                       variable=self.t2_auto_var,
                                       state='disabled',
@@ -87,14 +89,15 @@ class SideTabbedFrame:
         self.t2_auto.place(x=10, y=parm_y + 35)
 
         # RNR Checkbutton
-        parm_y = 160
-        self.rnr_var = tk.BooleanVar(tab1_connection)
+        parm_y = 150
+        self.rnr_var = tk.BooleanVar(tab1_kanal)
 
-        self.rnr = tk.Checkbutton(tab1_connection,
+        self.rnr = tk.Checkbutton(tab1_kanal,
                                   text='RNR',
                                   variable=self.rnr_var,
                                   command=self.chk_rnr)
         self.rnr.place(x=10, y=parm_y)
+
 
         # MH ##########################
         self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
@@ -136,6 +139,7 @@ class SideTabbedFrame:
         sprech_btn = Checkbutton(self.tab4_settings,
                     text="Sprachausgabe",
                     variable=self.sprech_on,
+                                 command=self.chk_sprech_on
                     )
         sprech_btn.place(x=10, y=35)
         if 'linux' in sys.platform:
@@ -143,6 +147,17 @@ class SideTabbedFrame:
         else:
             self.sprech_on.set(False)
             sprech_btn.configure(state='disabled')
+
+        # Sprech
+        parm_y = 175
+        self.t2speech_var = tk.BooleanVar(tab1_kanal)
+
+        self.t2speech = tk.Checkbutton(tab1_kanal,
+                                  text='Sprachausgabe',
+                                  variable=self.t2speech_var,
+                                  command=self.chk_t2speech)
+        self.t2speech.place(x=10, y=parm_y)
+        self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
 
         # Global Bake
         self.bake_on = tk.BooleanVar()
@@ -268,6 +283,13 @@ class SideTabbedFrame:
                 self.t2.configure(state='normal')
             conn.calc_irtt()
 
+    def chk_sprech_on(self):
+        if self.sprech_on.get():
+            self.t2speech.configure(state='normal')
+        else:
+            self.t2speech.configure(state='disabled')
+        self.main_win.set_var_to_all_ch_param()
+
     def set_t2(self, event):
         conn = self.main_win.get_conn()
         if conn:
@@ -319,6 +341,7 @@ class SideTabbedFrame:
                 self.t2_auto.deselect()
                 self.t2.configure(state='normal')
                 self.t2_var.set(str(conn.parm_T2 * 1000))
+
         else:
             self.max_frame.configure(state='disabled')
             self.pac_len.configure(state='disabled')
@@ -330,6 +353,7 @@ class SideTabbedFrame:
             self.t2_auto.configure(state='disabled')
             self.t2.configure(state='disabled')
 
+        self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
         self.update_ch_echo()
 
     def set_max_frame(self):
@@ -337,10 +361,12 @@ class SideTabbedFrame:
         if conn:
             conn.parm_MaxFrame = int(self.max_frame_var.get())
 
-
     def set_pac_len(self, event):
         conn = self.main_win.get_conn()
         if conn:
             conn.parm_PacLen = min(max(self.pac_len_var.get(), 1), 256)
             conn.calc_irtt()
             self.t2_var.set(str(conn.parm_T2 * 1000))
+
+    def chk_t2speech(self):
+        self.main_win.get_ch_param().t2speech = bool(self.t2speech_var.get())
