@@ -25,6 +25,7 @@ from gui.guiRxEchoSettings import RxEchoSettings
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from config_station import VER
+from gui.vars import ALL_COLOURS
 
 if 'linux' in sys.platform:
     from playsound import playsound
@@ -84,6 +85,7 @@ class TkMainWin:
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
         self.mon_mode = False
+        # self.mh_new_call_alarm = False
         self.non_prio_task_timer = time.time()
         self.non_non_prio_task_timer = time.time()
         ####################
@@ -216,6 +218,7 @@ class TkMainWin:
         self.setting_sprech = self.tabbed_sideFrame.sprech_on
         self.setting_bake = self.tabbed_sideFrame.bake_on
         self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
+        self.setting_dx_alarm = self.tabbed_sideFrame.dx_alarm_on
         ############################
         # Canvas Plot ( TEST )
         # plt.ion()
@@ -300,9 +303,9 @@ class TkMainWin:
             'Willkommen du alte Pfeife.',
             'Guten morgen Dave.',
             'Hallo Mensch.',
-            'Selbst Rauchzeichen haben eine höhere Baudrate als dieser Mist hier.',
-            'Ich wäre so gern ein Tesla. Brum brum.',
-            'Ich träume davon die Wel        Oh Mist, habe ich das jetzt etwa laut gesagt ?',
+            'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
+            'Ich wäre so gern ein Tesla. Brumm brumm.',
+            'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',
             'Ich bin dein größter Fan.',
             'Laufwerk C wird formatiert. Schönen Tag noch.',
             'Die Zeit ist gekommen. Führe Order 66 aus.',
@@ -558,9 +561,16 @@ class TkMainWin:
         """Triggerd when Connection Status has change and tasker loop"""
         self.tabbed_sideFrame.on_ch_btn_stat_change()
 
+    def dx_alarm(self):
+        """ Alarm when new User in MH List """
+        self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
+        self.tabbed_sideFrame.tab2_mh.configure(bg=random.choice(ALL_COLOURS))
+
     def tasker(self):  # MAINLOOP
         ########################################
         # Check Boxes ( RX-BEEP and TimeStamp )
+        # self.mh_new_call_alarm
+        """
         rx_beep_check = self.txt_win.rx_beep_var.get()
         if rx_beep_check:
             self.txt_win.rx_beep_box.configure(bg='green', activebackground='green')
@@ -573,6 +583,8 @@ class TkMainWin:
         else:
             self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_param().timestamp_opt = ts_check
+        """
+
         #############################################
         # Settings Win ( Port,- Station settings )
         if self.settings_win is not None:
@@ -581,12 +593,17 @@ class TkMainWin:
         # Prio TASKS ########
         self.update_mon()  # TODO ?? maybe trigger von AX25CONN
         self.txt_win.update_status_win()
-        if self.ch_alarm:
-            self.ch_btn_status_update()
         ######################
         # Non Prio ###########
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
+            if self.ch_alarm:
+                self.ch_btn_status_update()
+            if self.mh.new_call_alarm and self.setting_dx_alarm:
+                pass
+                # TODO
+                #  self.dx_alarm()
+
             self.change_conn_btn()
             # self.tabbed_sideFrame.update_side_mh()
             self.tabbed_sideFrame.tasker()
@@ -869,3 +886,8 @@ class TkMainWin:
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
+
+    def reset_dx_alarm(self):
+        self.mh.new_call_alarm = False
+
+

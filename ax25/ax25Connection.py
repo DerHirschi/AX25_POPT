@@ -739,7 +739,7 @@ class DefaultStat(object):
                     self.ax25conn.to_call_str = _tmp_call.decode('UTF-8', 'ignore')
                     self.ax25conn.to_call_alias = ''
                 if self.ax25conn.is_gui:
-                    speech = ''.join(self.ax25conn.to_call_str)
+                    speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
                     self.ax25conn.gui.sprech(speech)
 
     def reject(self):
@@ -799,7 +799,7 @@ class S1Frei(DefaultStat):  # INIT RX
         if self.digi_conn is None:
             self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(self.frame.to_call.call_str).encode()
             if self.ax25conn.is_gui:
-                speech = ''.join(self.ax25conn.to_call_str)
+                speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
                 self.ax25conn.gui.sprech(speech)
         self.ax25conn.n2 = 0
         self.ax25conn.set_T3()
@@ -915,7 +915,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         if self.digi_conn is None:
             self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode()
             if self.ax25conn.is_gui:
-                speech = ''.join(self.ax25conn.to_call_str)
+                speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
                 self.ax25conn.gui.sprech(speech)
         self.ax25conn.tx_buf_2send = []  # Clean Send Buffer.
         self.ax25conn.tx_buf_rawData = b''  # Clean Send Buffer.

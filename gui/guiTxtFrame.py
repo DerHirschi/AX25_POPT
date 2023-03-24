@@ -119,7 +119,8 @@ class TxTframe:
                                        borderwidth=0,
                                        onvalue=1, offvalue=0,
                                        foreground=STAT_BAR_TXT_CLR,
-                                       variable=self.rx_beep_var
+                                       variable=self.rx_beep_var,
+                                       command=self.chk_rx_beep
                                        )
         self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
         # Checkbox RX-BEEP
@@ -131,7 +132,8 @@ class TxTframe:
                                       activebackground = STAT_BAR_CLR,
                                       onvalue=1, offvalue=0,
                                       foreground=STAT_BAR_TXT_CLR,
-                                      variable=self.ts_box_var
+                                      variable=self.ts_box_var,
+                                      command=self.chk_timestamp
                                       )
         self.ts_box_box.grid(row=1, column=11, sticky="nsew")
 
@@ -311,3 +313,19 @@ class TxTframe:
             self.status_frame.update()
             self.pw.update()
             """
+
+    def chk_rx_beep(self):
+        rx_beep_check = self.rx_beep_var.get()
+        if rx_beep_check:
+            self.rx_beep_box.configure(bg='green', activebackground='green')
+        else:
+            self.rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+        self.main_class.get_ch_param().rx_beep_opt = rx_beep_check
+
+    def chk_timestamp(self):
+        ts_check = self.ts_box_var.get()
+        if ts_check:
+            self.ts_box_box.configure(bg='green', activebackground='green')
+        else:
+            self.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+        self.main_class.get_ch_param().timestamp_opt = ts_check

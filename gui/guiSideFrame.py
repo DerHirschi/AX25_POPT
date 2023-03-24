@@ -2,6 +2,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
+
 # import main
 
 
@@ -19,7 +20,9 @@ class SideTabbedFrame:
         # self.tabControl.grid(row=3, column=0, columnspan=5, sticky="nsew")
 
         tab1_kanal = ttk.Frame(self.tabControl)
-        self.tab2_mh = ttk.Frame(self.tabControl)
+        self.tab2_mh = tk.Frame(self.tabControl)
+        self.tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
+        self.tab2_mh_def_bg_clr = self.tab2_mh.cget('bg')
         tab3 = ttk.Frame(self.tabControl)
         self.tab4_settings = ttk.Frame(self.tabControl)
         self.tab5_ch_links = ttk.Frame(self.tabControl)
@@ -98,7 +101,6 @@ class SideTabbedFrame:
                                   command=self.chk_rnr)
         self.rnr.place(x=10, y=parm_y)
 
-
         # MH ##########################
         self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
         self.tab2_mh.columnconfigure(1, minsize=100, weight=9)
@@ -118,6 +120,12 @@ class SideTabbedFrame:
             c = tk.Entry(self.tab2_mh, width=20)
             d = tk.Entry(self.tab2_mh, width=20)
             e = tk.Entry(self.tab2_mh, width=100)
+            a.bind("<Button-1>", self.reset_dx_alarm)
+            b.bind("<Button-1>", self.reset_dx_alarm)
+            c.bind("<Button-1>", self.reset_dx_alarm)
+            d.bind("<Button-1>", self.reset_dx_alarm)
+            e.bind("<Button-1>", self.reset_dx_alarm)
+
             a.grid(row=row + 1, column=0)
             b.grid(row=row + 1, column=1)
             c.grid(row=row + 1, column=2)
@@ -137,10 +145,10 @@ class SideTabbedFrame:
         # Global Sprech
         self.sprech_on = tk.BooleanVar()
         sprech_btn = Checkbutton(self.tab4_settings,
-                    text="Sprachausgabe",
-                    variable=self.sprech_on,
+                                 text="Sprachausgabe",
+                                 variable=self.sprech_on,
                                  command=self.chk_sprech_on
-                    )
+                                 )
         sprech_btn.place(x=10, y=35)
         if 'linux' in sys.platform:
             self.sprech_on.set(True)
@@ -153,9 +161,9 @@ class SideTabbedFrame:
         self.t2speech_var = tk.BooleanVar(tab1_kanal)
 
         self.t2speech = tk.Checkbutton(tab1_kanal,
-                                  text='Sprachausgabe',
-                                  variable=self.t2speech_var,
-                                  command=self.chk_t2speech)
+                                       text='Sprachausgabe',
+                                       variable=self.t2speech_var,
+                                       command=self.chk_t2speech)
         self.t2speech.place(x=10, y=parm_y)
         self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
 
@@ -165,16 +173,31 @@ class SideTabbedFrame:
                     text="Baken",
                     variable=self.bake_on,
                     ).place(x=10, y=60)
-        self.bake_on.set(True)
+        # self.bake_on.set(True)
+        # DX Alarm  > dx_alarm_on
+        self.dx_alarm_on = tk.BooleanVar()
+        _chk_btn = Checkbutton(self.tab4_settings,
+                               text="DX-Alarm",
+                               variable=self.dx_alarm_on,
+                               command=self.chk_dx_alarm,
+                               state='disabled' # TODO
+                               )
+        _chk_btn.place(x=10, y=85)
+        """
+        self.dx_alarm_reset_btn = tk.Button(self.tab4_settings,
+                                            text="Reset",
+                                            command=lambda: self.reset_dx_alarm()
+                                            )
+        self.dx_alarm_reset_btn.place(x=150, y=85)
+        """
         # RX ECHO
         self.rx_echo_on = tk.BooleanVar()
         _chk_btn = Checkbutton(self.tab4_settings,
                                text="RX-Echo",
                                variable=self.rx_echo_on,
                                )
-        _chk_btn.place(x=10, y=85)
+        _chk_btn.place(x=10, y=115)
 
-        self.bake_on.set(False)
         """
         self.sound_on = tk.IntVar()
         Checkbutton(self.tab4_settings,
@@ -189,6 +212,10 @@ class SideTabbedFrame:
         self.chk_btn_default_clr = _chk_btn.cget('bg')
         self.ch_echo_vars = {}
         self.update_ch_echo()
+
+    def reset_dx_alarm(self, event=None):
+        self.main_win.reset_dx_alarm()
+        self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
 
     def update_ch_echo(self):
         _tab = self.tab5_ch_links
@@ -258,6 +285,9 @@ class SideTabbedFrame:
                 # self.ch_echo_vars[self.main_win.channel_index][0].set(False)
                 self.ch_echo_vars[self.main_win.channel_index][1].configure(bg=self.chk_btn_default_clr)
         """
+
+    def chk_dx_alarm(self):
+        self.main_win.setting_dx_alarm = self.dx_alarm_on.get()
 
     def tester(self, event):
         print("TEST")

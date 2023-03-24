@@ -433,6 +433,7 @@ class AX25Port(threading.Thread):
                     # ######### RX #############
                     # MH List and Statistics
                     self.mh.mh_inp(ax25frame, self.portname, self.port_id)
+
                     # Handling
                     self.rx_pac_handler(ax25frame)
                     # RX-ECHO
@@ -489,8 +490,9 @@ class KissTCP(AX25Port):
                 # raise AX25DeviceFAIL
             else:
                 if self.kiss.is_enabled:
-                    self.device.sendall(self.kiss.device_kiss_start_1())
-                    self.device.sendall(self.kiss.device_kiss_start_2())
+                    # self.device.sendall(self.kiss.device_kiss_start_1())
+                    self.device.sendall(self.kiss.device_jhost())
+                    # self.device.sendall(self.kiss.device_kiss_start_1())
                     self.set_kiss_parm()
 
     def __del__(self):
@@ -581,8 +583,9 @@ class KISSSerial(AX25Port):
                 # raise AX25DeviceFAIL
             else:
                 if self.kiss.is_enabled:
-                    self.device.write(self.kiss.device_kiss_start_1())
-                    self.device.write(self.kiss.device_kiss_start_2())
+                    # self.device.write(self.kiss.device_kiss_start_1())
+                    self.device.write(self.kiss.device_jhost())
+                    # self.device.write(self.kiss.device_kiss_start_1())
                     # self.device.write(b'\xc0\x10\x0c\xc0')
                     self.set_kiss_parm()
 

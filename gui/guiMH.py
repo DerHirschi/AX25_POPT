@@ -18,6 +18,7 @@ class MHWin(tk.Toplevel):
         self.rev_ent = False
         # self.mh_win = tk.Tk()
         self.title("MHEARD")
+        self.style = self.root_win.style
         self.geometry("1250x700")
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.attributes("-topmost", True)
@@ -78,7 +79,7 @@ class MHWin(tk.Toplevel):
         self.update_tree()
 
     def init_tree_data(self):
-        self.format_tree_ent(self.mh.calls)
+        self.sort_entry('last')
 
     def update_tree(self):
         for i in self.tree.get_children():

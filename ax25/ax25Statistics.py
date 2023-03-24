@@ -454,6 +454,7 @@ class MH(object):
                 if not hasattr(self.calls[call], att):
                     setattr(self.calls[call], att, getattr(MyHeard, att))
 
+        self.new_call_alarm = False
         """
         self.connections = {
             # conn_id: bla TODO Reverse id 
@@ -478,6 +479,7 @@ class MH(object):
 
         self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)
         if call_str not in self.calls.keys():
+            self.new_call_alarm = True
             ent = MyHeard()
             ent.own_call = call_str
             ent.to_calls.append(ax25_frame.to_call.call_str)
@@ -544,31 +546,22 @@ class MH(object):
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
-            key = ''
-            # TODO Just a Dict for flags
-            if flag_str == 'last':
-                key = flag.last_seen
-            elif flag_str == 'first':
-                key = flag.first_seen
-            elif flag_str == 'port':
-                key = flag.port_id
-            elif flag_str == 'call':
-                key = flag.own_call
-            elif flag_str == 'pack':
-                key = flag.pac_n
-            elif flag_str == 'rej':
-                key = flag.rej_n
-            elif flag_str == 'route':
-                key = str(flag.route)
-            elif flag_str == 'axip':
-                key = str(flag.axip_add)
-            elif flag_str == 'axipfail':
-                key = flag.axip_fail
+            key: str = {
+                'last': flag.last_seen,
+                'first': flag.first_seen,
+                'port': str(flag.port_id),
+                'call': flag.own_call,
+                'pack': str(flag.pac_n),
+                'rej': str(flag.rej_n),
+                'route': str(flag.route),
+                'axip': str(flag.axip_add),
+                'axipfail': str(flag.axip_fail),
+            }[flag_str]
+
             while key in temp.keys():
-                key += ' #'
+                key += '1'
 
             temp[key] = self.calls[k]
-
 
         temp_k = list(temp.keys())
         temp_k.sort()
@@ -578,15 +571,6 @@ class MH(object):
         for k in temp_k:
             temp_ret[k] = temp[k]
         return temp_ret
-
-
-
-    """
-    def mh_get_last_port_obj(self, call_str):
-        p_id = self.mh_get_data_fm_call(call_str)
-        p_id = p_id['port']
-        return config.ax_ports[p_id]
-    """
 
     def mh_get_last_ip(self, call_str: str, param_fail=20):
         if call_str:
