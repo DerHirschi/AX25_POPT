@@ -66,15 +66,6 @@ class AX25Port(threading.Thread):
         self.connections: {str: AX25Conn} = {}
         self.device = None
         ##############
-        # Beacon TEST
-        """
-        test_beacon_fr = AX25Frame()
-        test_beacon_fr.from_call.call = 'MD7TES'
-        test_beacon_fr.to_call.call = 'TEST'
-        test_beacon_fr.data = b'=== TEST Beacon ==='
-        test_beacon = Beacon(test_beacon_fr, self.port_cfg.parm_PortNr, 2, 0)
-        self.beacons_list.append(test_beacon)
-        """
         # AXIP VARs
         self.own_ipAddr = ''
         self.axip_anti_spam = {}
@@ -176,76 +167,80 @@ class AX25Port(threading.Thread):
                         self.connections[uid].handle_rx(ax25_frame=ax25_frame)
 
         # DIGI
-        elif self.stupid_digi_calls:
+        else:
+            self.simple_digi(ax25_frame=ax25_frame)
+        # TODO Schrott
+        # TODO Schrott
+        """
+        else:
+            # DIGI UI Frames
+            if ax25_frame.ctl_byte.flag == 'UI':
+                if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
+                    self.digi_buf.append(ax25_frame)
+            else:
+                # TODO Schrott
+                # New "Smart" Digi / Link Request
+                if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=False):
+                    print("NEW DIGI CONN")
+                    # "Smart" DIGI
+                    # Incoming REQ
+                    conn_in = AX25Conn(ax25_frame, self.port_cfg, self)
+                    conn_in.my_digi_call = str(my_call)
+                    conn_in.is_link = True
+                    conn_in.set_T2()
+                    conn_in.handle_rx(ax25_frame=ax25_frame)
+                    self.connections[uid] = conn_in
+                    # TODO Irgendwo hier ist ein Käfer ... Glaube ich ..
+                    if conn_in.zustand_exec.stat_index == 5:  # Accept ( Incoming SABM )
+                        # Init Outgoing Connection
+                        print("CONN IN UID: {}".format(uid))
+                        print("CONN IN MyCall: {}".format(conn_in.my_digi_call))
+                        copy_ax25frame = copy.copy(ax25_frame)
+                        copy_ax25frame.short_via_calls(call=my_call)
+                        copy_ax25frame.encode()
+
+                        while copy_ax25frame.addr_uid in self.connections.keys() or \
+                                reverse_uid(copy_ax25frame.addr_uid) in self.connections.keys():
+                            print(
+                                "Same UID in Connections.. Try change SSID {}".format(copy_ax25frame.addr_uid))
+                            my_call = copy_ax25frame.increment_viacall_ssid(call=my_call)
+                            if my_call:
+                                copy_ax25frame.short_via_calls(call=my_call)
+                                print("New MyCall {}".format(my_call))
+                                copy_ax25frame.digi_check_and_encode(call=my_call, h_bit_enc=True)
+                                print("New UID  {}".format(copy_ax25frame.addr_uid))
+                                # copy_ax25frame.short_via_calls(call=my_call)
+                                # copy_ax25frame.encode(digi=True)
+                            else:
+                                conn_in.zustand_exec.change_state(4)
+                                break
+                        if conn_in.zustand_exec.stat_index == 5:
+                            conn_out = AX25Conn(copy_ax25frame, self.port_cfg, port=self, rx=False)
+                            conn_out_uid = conn_out.ax25_out_frame.addr_uid
+                            conn_out.my_digi_call = str(my_call)
+                            print("CONN OUT UID: {}".format(conn_out_uid))
+                            print("CONN OUT MyCall: {}".format(conn_out.my_digi_call))
+                            # Link Connections together
+                            conn_out.link_connection(conn_in)
+                            conn_in.link_connection(conn_out)
+                            conn_in.tx_buf_rawData = conn_out.rx_buf_rawData
+                            conn_out.tx_buf_rawData = conn_in.rx_buf_rawData
+
+                            conn_out.zustand_exec.__init__(conn_out)
+                            conn_in.zustand_exec.__init__(conn_in)  # Reinit
+                            if self.is_gui:
+                                self.gui.ch_btn_status_update()
+                            self.connections[str(conn_out_uid)] = conn_out
+            """
+
+    def simple_digi(self, ax25_frame: AX25Frame):
+        if not ax25_frame.is_digipeated and self.stupid_digi_calls:
+
             for my_call in self.my_stations:
                 # Simple "Stupid" DIGI
                 if my_call in self.stupid_digi_calls:
                     if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
                         self.digi_buf.append(ax25_frame)
-
-                # TODO Schrott
-                # TODO Schrott
-                """
-                else:
-                    # DIGI UI Frames
-                    if ax25_frame.ctl_byte.flag == 'UI':
-                        if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
-                            self.digi_buf.append(ax25_frame)
-                    else:
-                        # TODO Schrott
-                        # New "Smart" Digi / Link Request
-                        if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=False):
-                            print("NEW DIGI CONN")
-                            # "Smart" DIGI
-                            # Incoming REQ
-                            conn_in = AX25Conn(ax25_frame, self.port_cfg, self)
-                            conn_in.my_digi_call = str(my_call)
-                            conn_in.is_link = True
-                            conn_in.set_T2()
-                            conn_in.handle_rx(ax25_frame=ax25_frame)
-                            self.connections[uid] = conn_in
-                            # TODO Irgendwo hier ist ein Käfer ... Glaube ich ..
-                            if conn_in.zustand_exec.stat_index == 5:  # Accept ( Incoming SABM )
-                                # Init Outgoing Connection
-                                print("CONN IN UID: {}".format(uid))
-                                print("CONN IN MyCall: {}".format(conn_in.my_digi_call))
-                                copy_ax25frame = copy.copy(ax25_frame)
-                                copy_ax25frame.short_via_calls(call=my_call)
-                                copy_ax25frame.encode()
-
-                                while copy_ax25frame.addr_uid in self.connections.keys() or \
-                                        reverse_uid(copy_ax25frame.addr_uid) in self.connections.keys():
-                                    print(
-                                        "Same UID in Connections.. Try change SSID {}".format(copy_ax25frame.addr_uid))
-                                    my_call = copy_ax25frame.increment_viacall_ssid(call=my_call)
-                                    if my_call:
-                                        copy_ax25frame.short_via_calls(call=my_call)
-                                        print("New MyCall {}".format(my_call))
-                                        copy_ax25frame.digi_check_and_encode(call=my_call, h_bit_enc=True)
-                                        print("New UID  {}".format(copy_ax25frame.addr_uid))
-                                        # copy_ax25frame.short_via_calls(call=my_call)
-                                        # copy_ax25frame.encode(digi=True)
-                                    else:
-                                        conn_in.zustand_exec.change_state(4)
-                                        break
-                                if conn_in.zustand_exec.stat_index == 5:
-                                    conn_out = AX25Conn(copy_ax25frame, self.port_cfg, port=self, rx=False)
-                                    conn_out_uid = conn_out.ax25_out_frame.addr_uid
-                                    conn_out.my_digi_call = str(my_call)
-                                    print("CONN OUT UID: {}".format(conn_out_uid))
-                                    print("CONN OUT MyCall: {}".format(conn_out.my_digi_call))
-                                    # Link Connections together
-                                    conn_out.link_connection(conn_in)
-                                    conn_in.link_connection(conn_out)
-                                    conn_in.tx_buf_rawData = conn_out.rx_buf_rawData
-                                    conn_out.tx_buf_rawData = conn_in.rx_buf_rawData
-
-                                    conn_out.zustand_exec.__init__(conn_out)
-                                    conn_in.zustand_exec.__init__(conn_in)  # Reinit
-                                    if self.is_gui:
-                                        self.gui.ch_btn_status_update()
-                                    self.connections[str(conn_out_uid)] = conn_out
-                    """
 
     def tx_pac_handler(self):
         tr = False
@@ -402,7 +397,6 @@ class AX25Port(threading.Thread):
             del self.connections[el]
 
     def run(self):
-
         while self.loop_is_running and self.device_is_running:
             self.tasks()
             time.sleep(0.1)
