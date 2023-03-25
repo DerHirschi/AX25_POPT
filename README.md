@@ -35,7 +35,7 @@ Packages Required:
 
 Install all dependencies:
   ``` sh
-  $ pip install tkinter
+  $ pip install tk
   $ pip install playsound
   $ pip install crcmod
   $ pip install pyserial
@@ -73,7 +73,6 @@ File ext in Station Profile Folder (data/usertxt/<USER CALL>):
 
 Knowing Issues / TODO (AX25 Protocol):
 - FRMR Frame decoding not implemented yet
-- RNR State not implemented yet
 - Issues with "Smart-Digi" / Managed DIGI Mode Connection UID
 
 TODO: !! Lot of Testing and Debugging !!

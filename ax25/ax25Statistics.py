@@ -454,6 +454,8 @@ class MH(object):
                 if not hasattr(self.calls[call], att):
                     setattr(self.calls[call], att, getattr(MyHeard, att))
 
+        if not self.port_statistik_DB:  # Übergangsweise
+            self.port_statistik_DB[0] = PortStatDB()
         self.new_call_alarm = False
         """
         self.connections = {

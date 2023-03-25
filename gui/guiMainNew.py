@@ -196,6 +196,7 @@ class TkMainWin:
                                 command=self.MH_win)
 
         self.mh_btn.place(x=5, y=45)
+        self.mh_btn_def_clr = self.mh_btn.cget('bg')
         self.mon_btn = tk.Button(self.side_btn_frame_top,
                               text="Monitor",
                               bg="yellow", width=8, command=self.txt_win.switch_mon_mode)
@@ -563,28 +564,14 @@ class TkMainWin:
 
     def dx_alarm(self):
         """ Alarm when new User in MH List """
-        self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
-        self.tabbed_sideFrame.tab2_mh.configure(bg=random.choice(ALL_COLOURS))
+        # self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
+        self.mh_btn.configure(bg=random.choice(ALL_COLOURS))
+
+    def reset_dx_alarm(self):
+        self.mh.new_call_alarm = False
+        self.mh_btn.configure(bg=self.mh_btn_def_clr)
 
     def tasker(self):  # MAINLOOP
-        ########################################
-        # Check Boxes ( RX-BEEP and TimeStamp )
-        # self.mh_new_call_alarm
-        """
-        rx_beep_check = self.txt_win.rx_beep_var.get()
-        if rx_beep_check:
-            self.txt_win.rx_beep_box.configure(bg='green', activebackground='green')
-        else:
-            self.txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
-        self.get_ch_param().rx_beep_opt = rx_beep_check
-        ts_check = self.txt_win.ts_box_var.get()
-        if ts_check:
-            self.txt_win.ts_box_box.configure(bg='green', activebackground='green')
-        else:
-            self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
-        self.get_ch_param().timestamp_opt = ts_check
-        """
-
         #############################################
         # Settings Win ( Port,- Station settings )
         if self.settings_win is not None:
@@ -600,9 +587,7 @@ class TkMainWin:
             if self.ch_alarm:
                 self.ch_btn_status_update()
             if self.mh.new_call_alarm and self.setting_dx_alarm:
-                pass
-                # TODO
-                #  self.dx_alarm()
+                self.dx_alarm()
 
             self.change_conn_btn()
             # self.tabbed_sideFrame.update_side_mh()
@@ -849,6 +834,7 @@ class TkMainWin:
     # MH WIN
     def MH_win(self):
         """MH WIN"""
+        self.reset_dx_alarm()
         if self.mh_window is None:
             self.mh_window = MHWin(self)
 
@@ -887,7 +873,6 @@ class TkMainWin:
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
 
-    def reset_dx_alarm(self):
-        self.mh.new_call_alarm = False
+
 
 

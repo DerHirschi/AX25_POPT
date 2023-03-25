@@ -21,7 +21,7 @@ class SideTabbedFrame:
 
         tab1_kanal = ttk.Frame(self.tabControl)
         self.tab2_mh = tk.Frame(self.tabControl)
-        self.tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
+        # self.tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
         self.tab2_mh_def_bg_clr = self.tab2_mh.cget('bg')
         tab3 = ttk.Frame(self.tabControl)
         self.tab4_settings = ttk.Frame(self.tabControl)
@@ -120,12 +120,13 @@ class SideTabbedFrame:
             c = tk.Entry(self.tab2_mh, width=20)
             d = tk.Entry(self.tab2_mh, width=20)
             e = tk.Entry(self.tab2_mh, width=100)
+            """
             a.bind("<Button-1>", self.reset_dx_alarm)
             b.bind("<Button-1>", self.reset_dx_alarm)
             c.bind("<Button-1>", self.reset_dx_alarm)
             d.bind("<Button-1>", self.reset_dx_alarm)
             e.bind("<Button-1>", self.reset_dx_alarm)
-
+            """
             a.grid(row=row + 1, column=0)
             b.grid(row=row + 1, column=1)
             c.grid(row=row + 1, column=2)
@@ -180,7 +181,7 @@ class SideTabbedFrame:
                                text="DX-Alarm",
                                variable=self.dx_alarm_on,
                                command=self.chk_dx_alarm,
-                               state='disabled' # TODO
+                               # state='disabled'
                                )
         _chk_btn.place(x=10, y=85)
         """
@@ -215,7 +216,7 @@ class SideTabbedFrame:
 
     def reset_dx_alarm(self, event=None):
         self.main_win.reset_dx_alarm()
-        self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
+        # self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
 
     def update_ch_echo(self):
         _tab = self.tab5_ch_links
