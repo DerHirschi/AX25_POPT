@@ -135,17 +135,17 @@ class AX25Port(threading.Thread):
         pass
 
     def set_TXD(self):
+        """ Internal TXD. Not Kiss TXD """
         self.TXD = time.time() + self.parm_TXD / 1000
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         """ Not Happy with that Part . . :-( TODO Cleanup or AGAIN !! """
-        # cfg = self.port_cfg
 
         # Existing Connections
         uid = str(ax25_frame.addr_uid)
         if uid in self.connections.keys():
             # Connection already established
-            if ax25_frame.is_digipeated:
+            if ax25_frame.is_digipeated:    # Running through all DIGIs
                 self.connections[uid].set_T2()
                 self.connections[uid].handle_rx(ax25_frame=ax25_frame)
             else:
@@ -166,6 +166,7 @@ class AX25Port(threading.Thread):
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
         # DIGI / LINK Connection
         elif reverse_uid(uid) in self.connections.keys():
+            # TODO ###############################
             uid = reverse_uid(uid)
             my_digi_call = self.connections[uid].my_digi_call
             if my_digi_call:
@@ -175,18 +176,23 @@ class AX25Port(threading.Thread):
                         self.connections[uid].handle_rx(ax25_frame=ax25_frame)
 
         # DIGI
-        elif self.stupid_digi_calls or self.is_smart_digi:
+        elif self.stupid_digi_calls:
             for my_call in self.my_stations:
                 # Simple "Stupid" DIGI
                 if my_call in self.stupid_digi_calls:
                     if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
                         self.digi_buf.append(ax25_frame)
+
+                # TODO Schrott
+                # TODO Schrott
+                """
                 else:
                     # DIGI UI Frames
                     if ax25_frame.ctl_byte.flag == 'UI':
                         if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
                             self.digi_buf.append(ax25_frame)
                     else:
+                        # TODO Schrott
                         # New "Smart" Digi / Link Request
                         if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=False):
                             print("NEW DIGI CONN")
@@ -239,6 +245,7 @@ class AX25Port(threading.Thread):
                                     if self.is_gui:
                                         self.gui.ch_btn_status_update()
                                     self.connections[str(conn_out_uid)] = conn_out
+                    """
 
     def tx_pac_handler(self):
         tr = False
@@ -266,10 +273,9 @@ class AX25Port(threading.Thread):
                     except AX25DeviceFAIL as e:
                         raise e
 
-                    cfg = self.port_cfg
                     # Monitor
                     if self.gui is not None:
-                        self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=cfg, tx=True)
+                        self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=self.port_cfg, tx=True)
                     # self.mh.bw_mon_inp(el, self.port_id)
             else:
                 tr = True
@@ -281,12 +287,9 @@ class AX25Port(threading.Thread):
                 tr = True
             except AX25DeviceFAIL as e:
                 raise e
-
-            # Monitor
-            cfg = self.port_cfg
             # Monitor
             if self.is_gui:
-                self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=cfg, tx=True)
+                self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=self.port_cfg, tx=True)
         self.digi_buf = []
         return tr
 
@@ -342,8 +345,10 @@ class AX25Port(threading.Thread):
                 beacon: Beacon
                 for beacon in beacon_list:
                     send_it = beacon.crone()
+                    """
                     if send_it:
                         print(send_it)
+                    """
                     ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
                     beacon.ax_frame.axip_add = ip_fm_mh
                     if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
@@ -433,7 +438,6 @@ class AX25Port(threading.Thread):
                     # ######### RX #############
                     # MH List and Statistics
                     self.mh.mh_inp(ax25frame, self.portname, self.port_id)
-
                     # Handling
                     self.rx_pac_handler(ax25frame)
                     # RX-ECHO
@@ -450,7 +454,6 @@ class AX25Port(threading.Thread):
                         self.tx_multicast(frame=ax25frame)  # TODO BUGGY
                     if self.port_cfg.parm_full_duplex:
                         break
-
             else:
                 break
         if time.time() > self.TXD and self.loop_is_running:
@@ -462,7 +465,6 @@ class AX25Port(threading.Thread):
             if not self.tx_pac_handler():  # Prio
                 if not self.cron_port_handler():  # Non Prio / Beacons
                     self.rx_echo_pac_handler()  # Non non Prio / RX-ECHO
-
         ############################
         ############################
         # Cleanup

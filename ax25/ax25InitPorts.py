@@ -37,6 +37,18 @@ class AX25PortHandler(object):
         self.close_all_ports()
         logger.info("Ende PoPT Ver.: {}".format(VER))
 
+    #####################
+    # Setting/Parameter Updates
+    def update_digi_setting(self):
+        for port_kk in self.ax25_ports.keys():
+            port: AX25Port = self.ax25_ports[port_kk]
+            new_digi_calls = []
+            for stat_key in port.my_stations:
+                if self.ax25_stations_settings[stat_key].stat_parm_is_StupidDigi:
+                    new_digi_calls.append(stat_key)
+            self.ax25_ports[port_kk].port_cfg.parm_StupidDigi_calls = new_digi_calls
+            self.ax25_ports[port_kk].stupid_digi_calls = new_digi_calls     # Same Object !!
+
     ######################
     # Connection Handling
     def get_port_by_index(self, index: int):

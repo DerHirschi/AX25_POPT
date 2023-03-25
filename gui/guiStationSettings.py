@@ -76,7 +76,7 @@ class StatSetTab:
                                    variable=self.digi_set_var,
                                    )
         self.digi.place(x=digi_x, y=height - digi_y)
-
+        self.digi_set_var.set(self.station_setting.stat_parm_is_StupidDigi)
         ##################
         # Smart DIGI TODO
         digi_x = 390
@@ -242,7 +242,7 @@ class StatSetTab:
         self.pac_len.delete(0, tk.END)
         self.pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
         # DIGI
-        # self.digi_set_var.set(1)  # TODO
+        self.digi_set_var.set(self.station_setting.stat_parm_is_StupidDigi)
         # self.digi.select()
         # Smart DIGI
         # self.smart_digi_set_var.set(1)  # TODO
@@ -419,6 +419,8 @@ class StationSettingsWin:
             else:
                 el.call.delete(0, tk.END)
                 el.call.insert(tk.END, DefaultStation.stat_parm_Call)
+
+        self.main_class.ax25_port_handler.update_digi_setting()
 
     def save_cfg_to_file(self):
         for conf in self.tab_list:

@@ -85,7 +85,6 @@ class TkMainWin:
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
         self.mon_mode = False
-        # self.mh_new_call_alarm = False
         self.non_prio_task_timer = time.time()
         self.non_non_prio_task_timer = time.time()
         ####################
@@ -109,13 +108,11 @@ class TkMainWin:
         self.main_win.columnconfigure(0, minsize=500, weight=1)
         self.main_win.columnconfigure(1, minsize=2, weight=5)
         self.main_win.rowconfigure(0, minsize=3, weight=1)     # Boarder
-        #self.main_win.rowconfigure(1, minsize=0, weight=1)     # BTN SIDE
+        # self.main_win.rowconfigure(1, minsize=0, weight=1)     # BTN SIDE
         self.main_win.rowconfigure(1, minsize=200, weight=2)
         self.main_win.rowconfigure(2, minsize=25, weight=1)    # CH BTN
         self.main_win.rowconfigure(3, minsize=3, weight=0)    # Boarder
-
         ############################
-
         ############################
         ############################
         ##############
@@ -152,13 +149,8 @@ class TkMainWin:
         # self.menubar.add_command(label="Debug")
         ############################
         ############################
-
-        # self.pw = ttk.PanedWindow(orient=tk.HORIZONTAL)
-
-
         # Input Output TXT Frames and Status Bar
         self.txt_win = TxTframe(self)
-        # self.pw.add(self.txt_win.pw)
         self.out_txt = self.txt_win.out_txt_win
         self.inp_txt = self.txt_win.in_txt_win
         self.mon_txt = self.txt_win.mon_txt
@@ -223,46 +215,24 @@ class TkMainWin:
         ############################
         # Canvas Plot ( TEST )
         # plt.ion()
-        #fig, ax = Figure(figsize=(5, 4), dpi=100)
         self.bw_fig = plt.figure(figsize=(8, 4.5), dpi=80)
         plt.style.use('dark_background')
-
         self.ax = self.bw_fig.add_subplot(111)
         self.ax.axis([0, 59, 0, 100])
-
         self.bw_fig.set_facecolor('xkcd:light grey')
-        #self.ax.set_facecolor('xkcd:silver')
+        # self.ax.set_facecolor('xkcd:silver')
         self.ax.xaxis.label.set_color('black')
         self.ax.yaxis.label.set_color('black')
         self.ax.tick_params(axis='x', colors='black')
         self.ax.tick_params(axis='y', colors='black')
         self.bw_plot_lines = {}
-        # line1, = ax.plot(list(range(60)), [1]*60)
-
-        # plt.title("BW", fontsize=12)
         plt.xlabel("Minuten")
-        # plt.xticks(list(range(10)))
         plt.xlim(0, 10)
-
         plt.ylabel("Auslastung in %")
-        #fig = plt.figure()
-        """
-        fig.add_subplot(111).plot(list(range(60)), [0]*60)
-        plt.subplots(figsize=(10, 8))
-        """
         canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
         canvas.draw()
         canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
-        #fig.clear()
-        # ax.plot(list(range(60)), [10] * 60)
-        # line1.set_ydata([10] * 60)
 
-
-        """
-        toolbar = NavigationToolbar2Tk(canvas, self.side_btn_frame_top)
-        toolbar.update()
-        toolbar.grid(row=6, column=0, columnspan=7, sticky="nsew")
-        """
         ############################
         # Windows
         self.new_conn_win = None
@@ -276,15 +246,17 @@ class TkMainWin:
         self.ch_btn_status_update()
         # set KEY BINDS
         self.set_keybinds()
+        #
+        self.monitor_start_msg()
+        ########################
         # set Global Settings to ch param
         # self.set_var_to_all_ch_param()
-        ####
+        #######################
         # TEST
         # self.open_rx_echo_settings_win()
-        # print(self.mon_txt.vbar.bindtags(None))
+        #######################
         #######################
         # LOOP
-        self.monitor_start_msg()
         self.main_win.after(LOOP_DELAY, self.tasker)
         self.main_win.mainloop()
 
@@ -301,6 +273,9 @@ class TkMainWin:
 
     def monitor_start_msg(self):
         speech = [
+            'Hello, my name is annalena baerbock. '
+            'My english is not so good but it dosnt matter, like my german voters. Ha Ha.',
+
             'Willkommen du alte Pfeife.',
             'Guten morgen Dave.',
             'Hallo Mensch.',
@@ -325,7 +300,7 @@ class TkMainWin:
               '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
               '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
               '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
-              '$$ |       $$$$$$  |   $$ |        $$ |\r' \
+              '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r' \
               'Version: {}\r'.format(VER)
         tmp = ban.split('\r')

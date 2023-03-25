@@ -512,13 +512,17 @@ class MH(object):
             to_c_str = ax25_frame.to_call.call_str
             if to_c_str not in ent.to_calls:
                 ent.to_calls.append(to_c_str)
+            if ax25_frame.axip_add[0]:
+                ent.axip_add = ax25_frame.axip_add
             ent.h_byte_n += len(ax25_frame.bytes) - ax25_frame.data_len
             if ax25_frame.ctl_byte.flag == 'REJ':
                 ent.rej_n += 1
             self.calls[call_str] = ent
 
     def mh_get_data_fm_call(self, call_str):
-        return self.calls[call_str]
+        if call_str in self.calls.keys():
+            return self.calls[call_str]
+        return False
 
     def output_sort_entr(self, n: int = 0):
         """ For MH in Side Panel """
@@ -527,23 +531,19 @@ class MH(object):
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
             temp[flag.last_seen] = self.calls[k]
-
         temp_k = list(temp.keys())
         temp_k.sort()
         temp_k.reverse()
         temp_ret = []
         c = 0
         for k in temp_k:
-
             temp_ret.append(temp[k])
             c += 1
             if c > n and n:
                 break
-
         return temp_ret
 
     def output_sort_mh_entr(self, flag_str: str, reverse: bool):
-
         temp = {}
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
@@ -559,10 +559,8 @@ class MH(object):
                 'axip': str(flag.axip_add),
                 'axipfail': str(flag.axip_fail),
             }[flag_str]
-
             while key in temp.keys():
                 key += '1'
-
             temp[key] = self.calls[k]
 
         temp_k = list(temp.keys())
@@ -653,6 +651,7 @@ class MH(object):
             with open(port_stat_data_file, 'xb') as outp:
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
         """
+
 
 if __name__ == '__main__':
     stat = PortStatDB()

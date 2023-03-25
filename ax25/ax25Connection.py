@@ -104,12 +104,10 @@ class AX25Conn(object):
         if self.gui is None:
             self.is_gui = False
         else:
-            # self.ch_index = int(self.gui.channel_index)
             self.is_gui = True
-
         """ DIGI / Link to other Connection for Auto processing """
         # TODO
-        self.DIGI_Connection: AX25Conn
+        self.DIGI_Connection = None
         self.is_link = False
         self.my_digi_call = ''
         """ Config new Connection Address """
