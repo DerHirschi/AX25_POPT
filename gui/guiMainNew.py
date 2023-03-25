@@ -477,7 +477,6 @@ class TkMainWin:
             else:
                 self.sprech('Kanal {} .'.format(self.channel_index))
 
-
     def check_sprech_ch_buf(self):
         conn = self.get_conn(self.channel_index)
         if conn:
@@ -518,28 +517,35 @@ class TkMainWin:
                     tts.save('data/speech.mp3')
                     return self.pl_sound('data/speech.mp3')
 
-    def pl_sound(self, snd_file: str, wait=False):
+    def pl_sound(self, snd_file: str, wait=True):
         if self.setting_sound.get():
-            if self.sound_th is not None:
-                if not self.sound_th.is_alive():
-                    # print('Lebt nicht mehr')
-                    self.sound_th.join()
-                    # print('Join')
-                    if 'linux' in sys.platform:
-                        self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
-                        self.sound_th.start()
-                    elif 'win' in sys.platform:
-                        self.sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
-                        self.sound_th.start()
-                    return True
-                return False
-            if 'linux' in sys.platform:
-                self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
-                self.sound_th.start()
-            elif 'win' in sys.platform:
-                self.sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
-                self.sound_th.start()
-            return True
+            if wait:
+                if self.sound_th is not None:
+                    if not self.sound_th.is_alive():
+                        # print('Lebt nicht mehr')
+                        self.sound_th.join()
+                        # print('Join')
+                        if 'linux' in sys.platform:
+                            self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
+                            self.sound_th.start()
+                        elif 'win' in sys.platform:
+                            self.sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
+                            self.sound_th.start()
+                        return True
+                    return False
+                if 'linux' in sys.platform:
+                    self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
+                    self.sound_th.start()
+                elif 'win' in sys.platform:
+                    self.sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
+                    self.sound_th.start()
+                return True
+            else:
+                if 'linux' in sys.platform:
+                    threading.Thread(target=playsound, args=(snd_file, False)).start()
+                elif 'win' in sys.platform:
+                    threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
+                return True
 
     def rx_beep(self):
         for k in self.win_buf.keys():
@@ -552,7 +558,7 @@ class TkMainWin:
                     if tr:
                         if temp.rx_beep_tr:
                             temp.rx_beep_tr = False
-                            self.pl_sound('data/sound/rx_beep.wav')
+                            self.pl_sound('data/sound/rx_beep.wav', False)
 
     def new_conn_snd(self):
         self.pl_sound('data/sound/conn_alarm.wav')
