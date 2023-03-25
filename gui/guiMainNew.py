@@ -468,9 +468,15 @@ class TkMainWin:
         else:
             if not self.win_buf[self.channel_index].t2speech:
                 self.win_buf[self.channel_index].t2speech_buf = ''
+                self.sprech('Kanal {} .'.format(self.channel_index))
             elif self.win_buf[self.channel_index].t2speech_buf:
                 if self.sprech(self.win_buf[self.channel_index].t2speech_buf):
                     self.win_buf[self.channel_index].t2speech_buf = ''
+                else:
+                    self.sprech('Kanal {} .'.format(self.channel_index))
+            else:
+                self.sprech('Kanal {} .'.format(self.channel_index))
+
 
     def check_sprech_ch_buf(self):
         conn = self.get_conn(self.channel_index)
@@ -512,13 +518,13 @@ class TkMainWin:
                     tts.save('data/speech.mp3')
                     return self.pl_sound('data/speech.mp3')
 
-    def pl_sound(self, snd_file: str):
+    def pl_sound(self, snd_file: str, wait=False):
         if self.setting_sound.get():
             if self.sound_th is not None:
                 if not self.sound_th.is_alive():
-                    print('Lebt nicht mehr')
+                    # print('Lebt nicht mehr')
                     self.sound_th.join()
-                    print('Join')
+                    # print('Join')
                     if 'linux' in sys.platform:
                         self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
                         self.sound_th.start()

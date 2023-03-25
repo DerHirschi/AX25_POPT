@@ -48,6 +48,16 @@ Run:
   $ python3 main.py
   ```
 
+Please be sure to use Python Version <= 3.8 ( Just testet with 3.6 & 3.8 )
+Example:
+  ``` sh
+  $ python3.8 main.py
+  ```
+Example:
+  ``` sh
+  $ python3.6 main.py
+  ```
+
 Supported AX.25 connection options:
 - KISS via TCP (e.g. Direwolf)
 - KISS via Serail (e.g. Linux AX.25 Device (kissattach). Not tested on TNCs or Modems yet)
