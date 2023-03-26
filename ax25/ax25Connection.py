@@ -105,11 +105,6 @@ class AX25Conn(object):
             self.is_gui = False
         else:
             self.is_gui = True
-        """ DIGI / Link to other Connection for Auto processing """
-        # TODO
-        self.DIGI_Connection = None
-        self.is_link = False
-        self.my_digi_call = ''
         """ Config new Connection Address """
         # AX25 Frame for Connection Initialisation.
         self.ax25_out_frame = AX25Frame()  # Predefined AX25 Frame for Output
@@ -147,8 +142,6 @@ class AX25Conn(object):
                         self.stat_cfg = self.prt_hndl.ax25_stations_settings[self.my_call_obj.call]
                         break
 
-        """ S-Packet / CTL Vars"""
-        self.REJ_is_set: bool = False
         """ IO Buffer Packet For Handling """
         self.tx_buf_ctl: [AX25Frame] = []  # Buffer for CTL ( S ) Frame to send on next Cycle
         self.tx_buf_2send: [AX25Frame] = []  # Buffer for Sending. Will be processed in ax25PortHandler
@@ -182,41 +175,11 @@ class AX25Conn(object):
         self.parm_N2 = self.cfg.parm_N2  # Max Try   Default 20
         self.parm_baud = self.cfg.parm_baud  # Baud for calculating Timer
         """ Timer Calculation """
-        # self.parm_T2 = float(self.parm_T2 / self.parm_baud)
-        # Initial-Round-Trip-Time (Auto Parm) (bei DAMA wird T2*2 genommen)/NO DAMA YET
-        # self.calc_IRTT = (self.parm_T2 + (self.parm_TXD / 10)) * 2
-        # print('parm_PacLen: {}'.format(self.parm_PacLen))
-        # print('old init_t2: {}'.format(self.parm_T2))
-        """
-        if self.own_port.port_cfg.parm_T2_auto:
-            init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
-            self.parm_T2 = float(init_t2 / 1000)
-            # print('old calc_IRTT: {}'.format((self.parm_T2 + (self.parm_TXD)) * 2))
-            # print('init_t2: {}'.format(init_t2))
-            self.IRTT = (init_t2 +
-                         self.parm_TXD +
-                         (self.parm_Kiss_TXD * 10) +
-                         (self.parm_Kiss_Tail * 10)
-                         ) * 2
-        else:
-            self.parm_T2 = self.parm_T2 / 1000
-            self.IRTT = ((self.parm_T2 * 1000) +
-                         self.parm_TXD +
-                         (self.parm_Kiss_TXD * 10) +
-                         (self.parm_Kiss_Tail * 10)
-                         ) * 2
-        """
         # print('calc_IRTT: {}'.format(self.IRTT))
         self.IRTT = 0
         self.RTT = 0
         self.calc_irtt()
         self.RTT_Timer = RTT(self)
-        """
-        if self.own_port.port_cfg.parm_T2_auto:
-            self.parm_T2 = float(self.IRTT / 1000)
-        else:
-            self.parm_T2 = self.parm_T2 / 1000
-        """
         """ Zustandstabelle / Statechart """
         self.zustand_tab = {
             0: (DefaultStat, 'ENDE'),
@@ -237,13 +200,18 @@ class AX25Conn(object):
             15: (S15sendREJdestNotReady, 'DEST-RNR-REJ'),
             16: (S16sendREJbothNotReady, 'BOTH-RNR-REJ'),
         }
-        self.is_RNR = False
+        """ S-Packet / CTL Vars"""
+        self.REJ_is_set: bool = False
+        self.is_RNR: bool = False
+        """ DIGI / Link to other Connection for Auto processing """
+        # TODO
+        self.LINK_Connection = None
+        self.is_link = False
         """ MH for CLI """
         # self.mh = cfg.parm_mh
         # self.cli = NoneCLI(self)
         """ Station Individual Parameter """
         stat_call = self.stat_cfg.stat_parm_Call
-
         if stat_call != config_station.DefaultStation.stat_parm_Call:
             if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
                 self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
@@ -352,9 +320,12 @@ class AX25Conn(object):
     # Zustand EXECs ENDE
     #######################
 
+    #######################
+    # LINKS Linked Connections
     def link_connection(self, conn):
-        self.DIGI_Connection: AX25Conn = conn
-        self.is_link = True
+        if conn is not None:
+            self.LINK_Connection: AX25Conn = conn
+            self.is_link = True
 
     ###############################################
     # Channel ECHO
@@ -591,7 +562,7 @@ class DefaultStat(object):
         self.ax25conn = ax25_conn
         #  self.rtt_timer = self.ax25conn.RTT_Timer
         if hasattr(self.ax25conn, 'DIGI_Connection'):
-            self.digi_conn: AX25Conn = self.ax25conn.DIGI_Connection
+            self.digi_conn: AX25Conn = self.ax25conn.LINK_Connection
         else:
             self.digi_conn = None
         self.frame = None

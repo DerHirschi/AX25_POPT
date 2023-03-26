@@ -490,6 +490,7 @@ class TkMainWin:
                     return self.pl_sound('data/speech.mp3')
 
     def pl_sound(self, snd_file: str, wait=True):
+        # TODO .. Again !!! ... Don't like this mess
         if self.setting_sound.get():
             if wait:
                 if self.sound_th is not None:
@@ -533,10 +534,10 @@ class TkMainWin:
                             self.pl_sound('data/sound/rx_beep.wav', False)
 
     def new_conn_snd(self):
-        self.pl_sound('data/sound/conn_alarm.wav')
+        self.pl_sound('data/sound/conn_alarm.wav', False)
 
     def disco_snd(self):
-        self.pl_sound('data/sound/disco_alarm.wav')
+        self.pl_sound('data/sound/disco_alarm.wav', False)
     # Sound Ende
     #################
     # no WIN FNC
@@ -598,61 +599,61 @@ class TkMainWin:
                 # conn: AX25Conn
                 conn = self.get_conn(k)
                 if conn.rx_buf_rawData or conn.tx_buf_guiData:
-                    if not conn.my_digi_call:
-                        inp = str(conn.tx_buf_guiData.decode('UTF-8', 'ignore')) \
-                            .replace('\r', '\n') \
-                            .replace('\r\n', '\n') \
-                            .replace('\n\r', '\n')
-                        conn.tx_buf_guiData = b''
-                        # Write RX Date to Window/Channel Buffer
-                        self.win_buf[k].output_win += inp
-                        # if self.win_buf[k].t2speech:
-                        #     self.win_buf[k].t2speech_buf += inp
-                        out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')) \
-                            .replace('\r', '\n') \
-                            .replace('\r\n', '\n') \
-                            .replace('\n\r', '\n')
-                        conn.rx_buf_rawData = b''
-                        # Write RX Date to Window/Channel Buffer
-                        self.win_buf[k].output_win += out
-                        if self.win_buf[k].t2speech:
-                            if k == self.channel_index:
-                                self.win_buf[k].t2speech_buf += out.replace('\n', '')
-                            else:
-                                self.win_buf[k].t2speech_buf += 'Kanal {} . {} . {}'.format(
-                                    k,
-                                    conn.to_call_str,
-                                    out.replace('\n', '')
-                                )
-                        if self.channel_index == k:
-                            tr = False
-                            if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
-                                tr = True
-                            self.out_txt.configure(state="normal")
-
-                            ind = self.out_txt.index(tk.INSERT)
-                            self.out_txt.insert('end', inp)
-                            ind2 = self.out_txt.index(tk.INSERT)
-                            self.out_txt.tag_add("input", ind, ind2)
-
-                            # configuring a tag called start
-                            ind = self.out_txt.index(tk.INSERT)
-                            self.out_txt.insert('end', out)
-                            ind2 = self.out_txt.index(tk.INSERT)
-                            self.out_txt.tag_add("output", ind, ind2)
-
-                            self.out_txt.configure(state="disabled")
-                            if tr:
-                                self.out_txt.see("end")
-                            """
-                            if self.win_buf[k].t2speech:
-                                if self.sprech(str(self.win_buf[k].t2speech_buf)):
-                                    self.win_buf[k].t2speech_buf = ''
-                            """
+                    # if not conn.my_digi_call:
+                    inp = str(conn.tx_buf_guiData.decode('UTF-8', 'ignore')) \
+                        .replace('\r', '\n') \
+                        .replace('\r\n', '\n') \
+                        .replace('\n\r', '\n')
+                    conn.tx_buf_guiData = b''
+                    # Write RX Date to Window/Channel Buffer
+                    self.win_buf[k].output_win += inp
+                    # if self.win_buf[k].t2speech:
+                    #     self.win_buf[k].t2speech_buf += inp
+                    out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')) \
+                        .replace('\r', '\n') \
+                        .replace('\r\n', '\n') \
+                        .replace('\n\r', '\n')
+                    conn.rx_buf_rawData = b''
+                    # Write RX Date to Window/Channel Buffer
+                    self.win_buf[k].output_win += out
+                    if self.win_buf[k].t2speech:
+                        if k == self.channel_index:
+                            self.win_buf[k].t2speech_buf += out.replace('\n', '')
                         else:
-                            self.win_buf[k].new_data_tr = True
-                        self.win_buf[k].rx_beep_tr = True
-                        self.ch_btn_status_update()
+                            self.win_buf[k].t2speech_buf += 'Kanal {} . {} . {}'.format(
+                                k,
+                                conn.to_call_str,
+                                out.replace('\n', '')
+                            )
+                    if self.channel_index == k:
+                        tr = False
+                        if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
+                            tr = True
+                        self.out_txt.configure(state="normal")
+
+                        ind = self.out_txt.index(tk.INSERT)
+                        self.out_txt.insert('end', inp)
+                        ind2 = self.out_txt.index(tk.INSERT)
+                        self.out_txt.tag_add("input", ind, ind2)
+
+                        # configuring a tag called start
+                        ind = self.out_txt.index(tk.INSERT)
+                        self.out_txt.insert('end', out)
+                        ind2 = self.out_txt.index(tk.INSERT)
+                        self.out_txt.tag_add("output", ind, ind2)
+
+                        self.out_txt.configure(state="disabled")
+                        if tr:
+                            self.out_txt.see("end")
+                        """
+                        if self.win_buf[k].t2speech:
+                            if self.sprech(str(self.win_buf[k].t2speech_buf)):
+                                self.win_buf[k].t2speech_buf = ''
+                        """
+                    else:
+                        self.win_buf[k].new_data_tr = True
+                    self.win_buf[k].rx_beep_tr = True
+                    self.ch_btn_status_update()
 
     def update_monitor(self, var: str, conf, tx=False):
         """ Called from AX25Conn """
@@ -856,6 +857,13 @@ class TkMainWin:
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
+        self.ax25_port_handler.new_outgoing_connection(
+            dest_call='DNX527',
+            own_call='MD4TES',
+            # via_calls=['DX0SAW'],
+            # exclusive=True
+            channel=12
+        )
 
 
 

@@ -20,12 +20,13 @@ class MyHeard(object):
     def __init__(self):
         self.own_call = ''
         self.to_calls = ["""call_str"""]
-        self.route = ''
+        self.route = []
+        self.all_routes = []
         self.port = ''
         self.port_id = 0    # Not used yet
         self.first_seen = get_time_str()
         self.last_seen = get_time_str()
-        self.pac_n = 1                      # N Packets
+        self.pac_n = 0                      # N Packets
         self.byte_n = 0                     # N Bytes
         self.h_byte_n = 0                   # N Header Bytes
         self.rej_n = 0                      # N REJ
@@ -474,50 +475,45 @@ class MH(object):
 
     def mh_inp(self, ax25_frame: AX25Frame, port_name, port_id):
         ########################
-        # Call Stat
-        call_str = ax25_frame.from_call.call_str
+        # Port Stat
         if port_id not in self.port_statistik_DB.keys():
             self.port_statistik_DB[port_id] = PortStatDB()
-
         self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)
+        ########################
+        # MH Entry
+        call_str = ax25_frame.from_call.call_str
         if call_str not in self.calls.keys():
             self.new_call_alarm = True
             ent = MyHeard()
-            ent.own_call = call_str
-            ent.to_calls.append(ax25_frame.to_call.call_str)
-            if ax25_frame.via_calls:
-                for call in ax25_frame.via_calls:
-                    ent.route += call.call_str
-                    if call.call_str != ax25_frame.via_calls[-1].call_str:
-                        ent.route += '>'
-            else:
-                ent.route = []
-            ent.port = port_name
-            ent.port_id = port_id
-            ent.byte_n = ax25_frame.data_len
-            ent.h_byte_n = len(ax25_frame.bytes) - ax25_frame.data_len
-            if ax25_frame.axip_add[0]:
-                ent.axip_add = ax25_frame.axip_add
-            if ax25_frame.ctl_byte.flag == 'REJ':
-                ent.rej_n = 1
-            self.calls[call_str] = ent
+            ent.first_seen = get_time_str()
         else:
-            ent: MyHeard
             ent = self.calls[call_str]
-            ent.pac_n += 1
-            ent.port = port_name
-            ent.port_id = port_id
-            ent.byte_n += ax25_frame.data_len
-            ent.last_seen = get_time_str()
-            to_c_str = ax25_frame.to_call.call_str
-            if to_c_str not in ent.to_calls:
-                ent.to_calls.append(to_c_str)
-            if ax25_frame.axip_add[0]:
-                ent.axip_add = ax25_frame.axip_add
-            ent.h_byte_n += len(ax25_frame.bytes) - ax25_frame.data_len
-            if ax25_frame.ctl_byte.flag == 'REJ':
-                ent.rej_n += 1
-            self.calls[call_str] = ent
+        ent.last_seen = get_time_str()
+        ent.own_call = call_str
+        ent.pac_n += 1
+        ent.port = port_name
+        ent.port_id = port_id
+        ent.byte_n += ax25_frame.data_len
+        ent.h_byte_n += len(ax25_frame.bytes) - ax25_frame.data_len
+        if ax25_frame.ctl_byte.flag == 'REJ':
+            ent.rej_n += 1
+        # TO Calls
+        to_c_str = ax25_frame.to_call.call_str
+        if to_c_str not in ent.to_calls:
+            ent.to_calls.append(to_c_str)
+        # Routes
+        ent.route = []      # Last Route
+        if ax25_frame.via_calls:
+            for call in ax25_frame.via_calls:
+                ent.route.append(call.call_str)
+
+        if ent.route not in ent.all_routes:
+            ent.all_routes.append(list(ent.route))
+        # Update AXIP Address
+        if ax25_frame.axip_add[0]:
+            ent.axip_add = ax25_frame.axip_add
+
+        self.calls[call_str] = ent
 
     def mh_get_data_fm_call(self, call_str):
         if call_str in self.calls.keys():

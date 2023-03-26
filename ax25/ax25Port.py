@@ -9,7 +9,7 @@ from ax25.ax25Beacon import Beacon
 # mport main
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
-from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, de_arschloch_kiss_frame, arschloch_kiss_frame
+from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, via_calls_fm_str
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 import ax25.ax25monitor as ax25monitor
 
@@ -169,14 +169,7 @@ class AX25Port(threading.Thread):
                 el: AX25Frame
                 for el in snd_buf:
                     # el.kiss = self.kiss
-                    if conn.my_digi_call:
-                        print("Send DIGI CALL: " + conn.my_digi_call)
-                        el.set_check_h_bits(dec=False)
-                        el.digi_check_and_encode(call=conn.my_digi_call, h_bit_enc=True)
-                        el.encode(digi=True)  # Why encoding again ?? But it works.
-                    else:
-                        el.encode()
-
+                    el.encode()
                     try:
                         self.tx(frame=el)
                         tr = True
@@ -274,9 +267,25 @@ class AX25Port(threading.Thread):
                                                         conf=cfg,
                                                         tx=True)
 
+    def build_new_connection(self,
+                             own_call: str,
+                             dest_call: str,
+                             via_calls: [str],
+                             axip_add: (str, int) = ('', 0),
+                             ):
+
+        if own_call not in self.my_stations:
+            return False
+        ax_frame = AX25Frame()
+        ax_frame.from_call.call_str = own_call
+        ax_frame.to_call.call_str = dest_call
+        ax_frame.via_calls = list(via_calls_fm_str(' '.join(via_calls)))
+        ax_frame.axip_add = axip_add
+        return self.new_connection(ax25_frame=ax_frame)
+
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
-        cfg = self.port_cfg
+        ax25_frame.ctl_byte.SABMcByte()
         ax25_frame.encode()
         while ax25_frame.addr_uid in self.connections.keys() or \
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
@@ -294,10 +303,9 @@ class AX25Port(threading.Thread):
             except AX25EncodingERROR:
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
-        conn = AX25Conn(ax25_frame, cfg, rx=False, port=self)
+        conn = AX25Conn(ax25_frame, self.port_cfg, rx=False, port=self)
         # conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn
-        # self.tx_pac_handler()
         return conn
 
     def del_connections(self):

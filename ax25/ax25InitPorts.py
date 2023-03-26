@@ -50,7 +50,7 @@ class AX25PortHandler(object):
             self.ax25_ports[port_kk].stupid_digi_calls = new_digi_calls     # Same Object !!
 
     ######################
-    # Connection Handling
+    # Port Handling
     def get_port_by_index(self, index: int):
         if index in self.ax25_ports.keys():
             return self.ax25_ports[index]
@@ -187,10 +187,8 @@ class AX25PortHandler(object):
     ######################
     # Connection Handling
     def insert_conn2all_conn_var(self, new_conn, ind: int = 1):
-        if not new_conn.is_link or not new_conn.my_digi_call:
+        if not new_conn.is_link:
             keys = list(self.all_connections.keys())
-            # print("INSERT PRT HANDLER {}".format(keys))
-
             if keys:
                 tr = False
                 # Check if Connection is already in all_conn...
@@ -243,6 +241,48 @@ class AX25PortHandler(object):
             del self.all_connections[k]
         if self.gui is not None:
             self.gui.ch_btn_status_update()
+
+    def new_outgoing_connection(self,
+                                dest_call: str,
+                                own_call: str,
+                                via_calls=None,     # Required for now. TODO Auto lookup in MH
+                                port_id=-1,         # -1 Auto lookup in MH list
+                                axip_add=('', 0),   # AXIP Adress
+                                exclusive=False,    # True = no lookup in MH list
+                                link_conn=None,     # Linked Connection AX25Conn
+                                channel=1           # Channel/Connection Index = Channel-ID
+                                ):
+        """ Handels New Outgoing Connections for CLI and LINKS """
+        # Incoming Parameter Check
+        if via_calls is None:
+            via_calls = []
+        if not dest_call or not own_call:
+            return False, 'Error: Invalid Call'
+        mh_entry = self.mh.mh_get_data_fm_call(dest_call)
+        if not exclusive:
+            if mh_entry:
+                port_id = int(mh_entry.port_id)
+                via_calls = min(list(mh_entry.all_routes), key=len)
+                if not axip_add[0]:
+                    axip_add = tuple(mh_entry.axip_add)
+        else:
+            if port_id == -1 and mh_entry:
+                port_id = int(mh_entry.port_id)
+        if port_id not in self.ax25_ports.keys():
+            return False, 'Error: Invalid Port'
+        if self.ax25_ports[port_id].port_typ == 'AXIP':
+            if not mh_entry.axip_add[0]:
+                return False, 'Error: No AXIP Address'
+
+        connection = self.ax25_ports[port_id].build_new_connection(own_call=own_call,
+                                                                   dest_call=dest_call,
+                                                                   via_calls=via_calls,
+                                                                   axip_add=axip_add)
+        if connection:
+            self.insert_conn2all_conn_var(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
+            connection.link_connection(link_conn)
+            return True, ''
+        return False, 'Error: Can not connect'
 
     ######################
     # RX-ECHO Handling

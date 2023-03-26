@@ -99,8 +99,6 @@ class MHWin(tk.Toplevel):
     def format_tree_ent(self, mh_list):
         self.tree_data = []
         for k in mh_list:
-            #print(k)
-            #print(mh_list)
             ent: MyHeard
             ent = mh_list[k]
             if ent.axip_add[1]:
@@ -117,7 +115,7 @@ class MHWin(tk.Toplevel):
                 f'{ent.own_call}',
                 f'{ent.pac_n}',
                 f'{ent.rej_n}',
-                f'{route}',
+                ' '.join(route),
                 f'{axip_str}',
                 f'{ent.axip_fail}',
             ))

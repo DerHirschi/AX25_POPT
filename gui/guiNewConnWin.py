@@ -207,8 +207,9 @@ class NewConnWin:
         txt_win = self.call_txt_inp
         call = txt_win.get('0.0', tk.END)
 
-        call_obj = ProcCallInput(call)
+        call_obj = ProcCallInput(call)  # TODO .. Just Static Function
         if call_obj.call:
+
             ax_frame = ax25.ax25dec_enc.AX25Frame()
             ax_frame.from_call.call = self.own_call_var.get()
             ax_frame.to_call.call = call_obj.call
@@ -244,7 +245,7 @@ class NewConnWin:
                         # print('CHECK')
 
                 # TODO Error or Not Processing if no IP
-                ax_frame.ctl_byte.SABMcByte()
+                # ax_frame.ctl_byte.SABMcByte()
                 conn = self.ax25_port_handler.ax25_ports[self.port_index].new_connection(ax25_frame=ax_frame)
                 if conn:
                     # conn: AX25Conn
