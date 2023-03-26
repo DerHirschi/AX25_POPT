@@ -1085,23 +1085,19 @@ class S5Ready(DefaultStat):
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
-
+        if self.delUNACK():
+            self.ax25conn.set_T1(stop=True)
         if self.pf or self.cmd:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1(stop=True)
             self.ax25conn.set_T2(stop=True)
-
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
 
     def rx_REJ(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
         if self.pf:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
+            self.ax25conn.set_T1(stop=True)
         else:
             # Maybe all ? or Automode ?
             self.ax25conn.resend_unACK_buf(1)
@@ -1204,15 +1200,11 @@ class S6sendREJ(DefaultStat):
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
+        self.delUNACK()
         if self.pf or self.cmd:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            self.ax25conn.set_T1(stop=True)  # !! TODO !! Check
-
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T1()
+            self.ax25conn.set_T2(stop=True)
 
     def rx_RNR(self):
         self.delUNACK()
@@ -1267,18 +1259,18 @@ class S7WaitForFinal(DefaultStat):
         self.ax25conn.set_T1()
         if self.pf:
             # self.rtt_timer.rtt_single_rx()
+            self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T2(stop=True)
             self.change_state(5)
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK:
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+        self.delUNACK()
+
         if self.pf:
             # self.rtt_timer.rtt_single_rx()
             self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T2(stop=True)
             self.change_state(5)
 
     def rx_RNR(self):
@@ -1318,14 +1310,11 @@ class S8SelfNotReady(DefaultStat):
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
+        self.delUNACK()
         if self.pf or self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
-            self.ax25conn.set_T1(stop=True)  # !! TODO !! Check
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T2(stop=True)
+            self.ax25conn.set_T1(stop=True)
 
     def rx_REJ(self):
         self.ax25conn.n2 = 0
@@ -1398,14 +1387,11 @@ class S9DestNotReady(DefaultStat):
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
+        self.delUNACK()
         if self.pf or self.cmd:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            self.ax25conn.set_T1(stop=True)  # !! TODO !! Check
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+        self.ax25conn.set_T1(stop=True)
+
         self.change_state(5)
 
     def rx_REJ(self):
@@ -1450,14 +1436,11 @@ class S10BothNotReady(DefaultStat):  # TODO  Testing
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
+        self.delUNACK()
         if self.pf or self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
-            # self.ax25conn.set_T1(stop=True)  # !! TODO !! Check
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T1(stop=True)
+
         self.change_state(8)
 
     def rx_REJ(self):
@@ -1503,11 +1486,8 @@ class S11SelfNotReadyFinal(DefaultStat):  # TODO / / Testing
     def rx_RR(self):
         self.ax25conn.n2 = 0
         # if self.pf or self.cmd:
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+        self.delUNACK()
+
         if self.cmd:
             self.ax25conn.send_RNR(pf_bit=True, cmd_bit=False)
             self.ax25conn.set_T1()  # !! TODO !! Check
@@ -1569,12 +1549,10 @@ class S12DestNotReadyFinal(DefaultStat):  # TODO  /  / Testing
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK:
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+        self.delUNACK()
+
         if self.pf or self.cmd:
+            self.ax25conn.set_T1(stop=True)
             self.change_state(5)
         else:
             self.change_state(7)
@@ -1622,14 +1600,11 @@ class S13BothNotReadyFinal(DefaultStat):  # TODO  /  / Testing
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
+        self.delUNACK()
         if self.pf or self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
-            self.ax25conn.set_T1(stop=True)  # !! TODO !! Check
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T1(stop=True)
+
         self.change_state(11)
 
     def rx_REJ(self):
@@ -1673,14 +1648,10 @@ class S14sendREJselfNotReady(DefaultStat):  # TODO  /  / Testing
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
+        self.delUNACK()
         if self.pf or self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
-            self.ax25conn.set_T1(stop=True)  # !! TODO !! Check
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T1(stop=True)
 
     def rx_REJ(self):
         self.ax25conn.n2 = 0
@@ -1728,14 +1699,11 @@ class S15sendREJdestNotReady(DefaultStat):  # TODO  /  / Testing
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
+        self.delUNACK()
         if self.pf or self.cmd:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            self.ax25conn.set_T1(stop=True)  # !! TODO !! Check
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T1(stop=True)
+
         self.change_state(6)
 
     def rx_REJ(self):
@@ -1783,14 +1751,11 @@ class S16sendREJbothNotReady(DefaultStat):  # TODO  / / Testing
 
     def rx_RR(self):
         self.ax25conn.n2 = 0
+        self.delUNACK()
         if self.pf or self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
-            self.ax25conn.set_T1(stop=True)  # !! TODO !! Check
-        if self.delUNACK():
-            if self.ax25conn.tx_buf_unACK and not (self.pf or self.cmd):
-                self.ax25conn.set_T2()
-            else:
-                self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T1(stop=True)
+
         self.change_state(14)
 
     def rx_REJ(self):

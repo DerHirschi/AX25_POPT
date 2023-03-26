@@ -130,42 +130,41 @@ class AX25Port(threading.Thread):
         self.TXD = time.time() + self.parm_TXD / 1000
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
-        """ Not Happy with that Part . . :-( TODO Cleanup or AGAIN !! """
-
-        # Existing Connections
-        uid = str(ax25_frame.addr_uid)
-        if uid in self.connections.keys():
-            # Connection already established
-            if ax25_frame.is_digipeated:    # Running through all DIGIs
-                self.connections[uid].set_T2()
+        """  """
+        if ax25_frame.is_digipeated:  # Running through all DIGIs
+            # Existing Connections
+            uid = str(ax25_frame.addr_uid)
+            if uid in self.connections.keys():
+                # Connection already established
+                # self.connections[uid].set_T2()
                 self.connections[uid].handle_rx(ax25_frame=ax25_frame)
-            else:
+                """
+                else:
+                    my_digi_call = self.connections[uid].my_digi_call
+                    if my_digi_call:
+                        if ax25_frame.digi_check_and_encode(call=my_digi_call, h_bit_enc=False):
+                            if uid in self.connections.keys():
+                                self.connections[uid].set_T2()
+                                print("KEY:{} - {} -{}".format(ax25_frame.addr_uid, uid, self.connections.keys()))
+                                self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+                """
+            # New Incoming Connection Request
+            elif ax25_frame.to_call.call_str in self.my_stations:
+                self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
+                # self.connections[uid].set_T2()
+                self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+                """
+            # DIGI / LINK Connection
+            elif reverse_uid(uid) in self.connections.keys():
+                # TODO ###############################
+                uid = reverse_uid(uid)
                 my_digi_call = self.connections[uid].my_digi_call
                 if my_digi_call:
                     if ax25_frame.digi_check_and_encode(call=my_digi_call, h_bit_enc=False):
                         if uid in self.connections.keys():
                             self.connections[uid].set_T2()
-                            print("KEY:{} - {} -{}".format(ax25_frame.addr_uid, uid, self.connections.keys()))
                             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
-
-        # New Incoming Connection Request
-        elif ax25_frame.to_call.call_str in self.my_stations \
-                and ax25_frame.is_digipeated:
-
-            self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
-            self.connections[uid].set_T2()
-            self.connections[uid].handle_rx(ax25_frame=ax25_frame)
-        # DIGI / LINK Connection
-        elif reverse_uid(uid) in self.connections.keys():
-            # TODO ###############################
-            uid = reverse_uid(uid)
-            my_digi_call = self.connections[uid].my_digi_call
-            if my_digi_call:
-                if ax25_frame.digi_check_and_encode(call=my_digi_call, h_bit_enc=False):
-                    if uid in self.connections.keys():
-                        self.connections[uid].set_T2()
-                        self.connections[uid].handle_rx(ax25_frame=ax25_frame)
-
+            """
         # DIGI
         else:
             self.simple_digi(ax25_frame=ax25_frame)
@@ -234,13 +233,13 @@ class AX25Port(threading.Thread):
             """
 
     def simple_digi(self, ax25_frame: AX25Frame):
-        if not ax25_frame.is_digipeated and self.stupid_digi_calls:
-
+        if self.stupid_digi_calls:
             for my_call in self.my_stations:
                 # Simple "Stupid" DIGI
                 if my_call in self.stupid_digi_calls:
                     if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
                         self.digi_buf.append(ax25_frame)
+                    # print(f'{ax25_frame.addr_uid}  dp: {ax25_frame.is_digipeated}')
 
     def tx_pac_handler(self):
         tr = False
@@ -432,16 +431,16 @@ class AX25Port(threading.Thread):
                     # ######### RX #############
                     # MH List and Statistics
                     self.mh.mh_inp(ax25frame, self.portname, self.port_id)
-                    # Handling
-                    self.rx_pac_handler(ax25frame)
-                    # RX-ECHO
-                    self.rx_echo(ax25_frame=ax25frame)
                     # Monitor
                     if self.is_gui:
                         self.gui.update_monitor(
                             self.monitor.frame_inp(ax25frame, self.portname),
                             conf=self.port_cfg,
                             tx=False)
+                    # Handling
+                    self.rx_pac_handler(ax25frame)
+                    # RX-ECHO
+                    self.rx_echo(ax25_frame=ax25frame)
 
                     # Pseudo Full Duplex for AXIP.
                     if self.port_cfg.parm_axip_Multicast:

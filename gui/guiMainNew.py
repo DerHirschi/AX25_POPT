@@ -273,9 +273,6 @@ class TkMainWin:
 
     def monitor_start_msg(self):
         speech = [
-            'Hello, my name is annalena baerbock. '
-            'My english is not so good but it dosnt matter, like my german voters. Ha Ha.',
-
             'Willkommen du alte Pfeife.',
             'Guten morgen Dave.',
             'Hallo Mensch.',
