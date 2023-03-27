@@ -171,7 +171,8 @@ class PortSetTab:
         self.axip_multicast_dd = tk.Checkbutton(self.tab,
                                                 text='AXIP-Multicast',
                                                 variable=self.axip_multicast_var,
-                                                command=self.update_port_parameter)
+                                                command=self.update_port_parameter,
+                                                state='disabled')
         self.axip_multicast_dd.var = self.axip_multicast_var
         if self.port_setting.parm_PortTyp == 'AXIP':
             self.axip_multicast_dd.configure(state="normal")

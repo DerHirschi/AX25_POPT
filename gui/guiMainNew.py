@@ -227,7 +227,7 @@ class TkMainWin:
         self.ax.tick_params(axis='y', colors='black')
         self.bw_plot_lines = {}
         plt.xlabel("Minuten")
-        plt.xlim(0, 10)
+        plt.xlim(0, 10)     # TODO As Option
         plt.ylabel("Auslastung in %")
         canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
         canvas.draw()
@@ -276,6 +276,7 @@ class TkMainWin:
             'Willkommen du alte Pfeife.',
             'Guten morgen Dave.',
             'Hallo Mensch.',
+            'ja jo ji je yeh joi öj jäö ülü lü',
             'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
             'Ich wäre so gern ein Tesla. Brumm brumm.',
             'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',

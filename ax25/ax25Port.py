@@ -9,7 +9,7 @@ from ax25.ax25Beacon import Beacon
 # mport main
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
-from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, via_calls_fm_str
+from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, via_calls_fm_str, get_call_str, call_tuple_fm_call_str
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 import ax25.ax25monitor as ax25monitor
 
@@ -133,13 +133,21 @@ class AX25Port(threading.Thread):
         """  """
         if ax25_frame.is_digipeated:  # Running through all DIGIs
             if ax25_frame.to_call.call_str in self.my_stations:
-                self.rx_connections(ax25_frame=ax25_frame)
-        # DIGI
-        else:
-            if ax25_frame.to_call.call_str in self.stupid_digi_calls:
-                self.rx_simple_digi(ax25_frame=ax25_frame)
+                self.rx_conn_handler(ax25_frame=ax25_frame)
+        elif not self.rx_link_handler:  # Link Connection Handler
+            # Simple DIGI
+            self.rx_simple_digi_handler(ax25_frame=ax25_frame)
 
-    def rx_connections(self, ax25_frame: AX25Frame):
+    def rx_link_handler(self, ax25_frame: AX25Frame):
+        if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
+            conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
+            link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
+            if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
+                conn.handle_rx(ax25_frame=ax25_frame)
+                return True
+        return False
+
+    def rx_conn_handler(self, ax25_frame: AX25Frame):
         uid = str(ax25_frame.addr_uid)
         # New Incoming Connection
         if uid not in self.connections.keys() \
@@ -148,13 +156,10 @@ class AX25Port(threading.Thread):
         if uid in self.connections.keys():
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
 
-    def rx_simple_digi(self, ax25_frame: AX25Frame):
-        if self.stupid_digi_calls:
-            for my_call in self.my_stations:
-                # Simple "Stupid" DIGI
-                if my_call in self.stupid_digi_calls:
-                    if ax25_frame.digi_check_and_encode(call=my_call, h_bit_enc=True):
-                        self.digi_buf.append(ax25_frame)
+    def rx_simple_digi_handler(self, ax25_frame: AX25Frame):
+        if ax25_frame.to_call.call_str in self.stupid_digi_calls:
+            if ax25_frame.digi_check_and_encode(call=ax25_frame.to_call.call_str, h_bit_enc=True):
+                self.digi_buf.append(ax25_frame)
                     # print(f'{ax25_frame.addr_uid}  dp: {ax25_frame.is_digipeated}')
 
     def tx_pac_handler(self):
@@ -168,6 +173,8 @@ class AX25Port(threading.Thread):
                 conn.REJ_is_set = False
                 el: AX25Frame
                 for el in snd_buf:
+                    if conn.is_link_remote:
+                        el.digi_call = conn.my_call_str
                     # el.kiss = self.kiss
                     el.encode()
                     try:
@@ -272,16 +279,36 @@ class AX25Port(threading.Thread):
                              dest_call: str,
                              via_calls: [str],
                              axip_add: (str, int) = ('', 0),
+                             link_conn=None,
                              ):
 
-        if own_call not in self.my_stations:
+        if link_conn is None:
+            link_conn = False
+        if own_call not in self.my_stations and not link_conn:
+            print(f'build_new_connection own_call: {own_call}')
+            print(f'build_new_connection self.my_stations: {self.my_stations}')
             return False
+        if link_conn and not via_calls:
+            return False
+
         ax_frame = AX25Frame()
         ax_frame.from_call.call_str = own_call
         ax_frame.to_call.call_str = dest_call
         ax_frame.via_calls = list(via_calls_fm_str(' '.join(via_calls)))
         ax_frame.axip_add = axip_add
-        return self.new_connection(ax25_frame=ax_frame)
+
+        conn = self.new_connection(ax25_frame=ax_frame)
+        if not conn:
+            return False
+        if link_conn:
+            conn.is_link_remote = True
+            if conn.link_connection(link_conn):
+                if link_conn.link_connection(conn):
+                    print(f'link_conn: {link_conn.LINK_Connection}')
+                    print(f'conn: {conn.LINK_Connection}')
+                    return conn
+            return False
+        return conn
 
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """

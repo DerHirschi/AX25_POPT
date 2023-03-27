@@ -341,7 +341,7 @@ class PortStatDB(object):
             else:
                 plt.axis([0, 59, 0, max(_tmp_ALL_data)])
             # plt.axis([0, 59, 0, 50])
-            plt.legend(['Pakete', 'I-Frames', 'UI-Frames', 'REJ-Frames', 'RR-Frames', 'RNR-Frames', 'SABM-Frames', ])
+            plt.legend(['Bytes', 'I-Frames', 'UI-Frames', 'REJ-Frames', 'RR-Frames', 'RNR-Frames', 'SABM-Frames', ])
             #ax.suptitle('Port Statistik')
 
             canvas = FigureCanvasTkAgg(fig, master=plot1)  # A tk.DrawingArea.

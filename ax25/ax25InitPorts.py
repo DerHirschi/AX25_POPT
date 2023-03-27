@@ -18,15 +18,16 @@ class AX25PortHandler(object):
         ###########################
         # VArs for gathering Stuff
         # self.all_connections: {int: AX25Conn} = {}
-        self.all_connections = {}
         self.mh = glb_MH
         # self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
+        self.all_connections = {}       # {int: AX25Conn} Channel Index
+        self.link_connections = {}      # {str: AX25Conn} UID Index
         self.rx_echo: {int:  RxEchoVars} = {}
         self.beacons: {int: {str: [Beacon]}} = {}
         self.ax25_stations_settings: {str: DefaultStation} = config_station.get_all_stat_cfg()
-        self.ax25_port_settings: {int: DefaultPort} = {}
+        self.ax25_port_settings: {int: DefaultPort} = {}    # Port settings are in Port .. TODO Cleanup
         self.ax25_ports: {int: AX25Port} = {}
         #######################################################
         # Init Ports/Devices with Config and running as Thread
@@ -242,7 +243,11 @@ class AX25PortHandler(object):
         if self.gui is not None:
             self.gui.ch_btn_status_update()
 
-    def new_outgoing_connection(self,
+    def del_link(self, uid: str):
+        if uid in self.link_connections.keys():
+            del self.link_connections[uid]
+
+    def new_outgoing_connection(self,               # NICE ..
                                 dest_call: str,
                                 own_call: str,
                                 via_calls=None,     # Required for now. TODO Auto lookup in MH
@@ -256,32 +261,44 @@ class AX25PortHandler(object):
         # Incoming Parameter Check
         if via_calls is None:
             via_calls = []
+        if link_conn and not via_calls:
+            return False, 'Error: Link No Via Call'
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
         mh_entry = self.mh.mh_get_data_fm_call(dest_call)
         if not exclusive:
             if mh_entry:
                 port_id = int(mh_entry.port_id)
-                via_calls = min(list(mh_entry.all_routes), key=len)
-                if not axip_add[0]:
-                    axip_add = tuple(mh_entry.axip_add)
-        else:
-            if port_id == -1 and mh_entry:
-                port_id = int(mh_entry.port_id)
+                via_calls += min(list(mh_entry.all_routes), key=len)
+                axip_add = tuple(mh_entry.axip_add)
+
+        if not axip_add[0] and mh_entry:
+            axip_add = tuple(mh_entry.axip_add)
+        if port_id == -1 and mh_entry:
+            port_id = int(mh_entry.port_id)
         if port_id not in self.ax25_ports.keys():
             return False, 'Error: Invalid Port'
         if self.ax25_ports[port_id].port_typ == 'AXIP':
             if not mh_entry.axip_add[0]:
                 return False, 'Error: No AXIP Address'
+        if link_conn and not via_calls:
+            return False, 'Error: Link No Via Call'
 
         connection = self.ax25_ports[port_id].build_new_connection(own_call=own_call,
                                                                    dest_call=dest_call,
                                                                    via_calls=via_calls,
-                                                                   axip_add=axip_add)
+                                                                   axip_add=axip_add,
+                                                                   link_conn=link_conn)
+        print('------------- InitPorts ---------------')
+        print(f'conn: {connection}')
+        print(f'dest_call: {dest_call}')
+        print(f'own_call: {own_call}')
+        print(f'via_calls: {via_calls}')
+        print(f'link_conn: {link_conn}')
         if connection:
             self.insert_conn2all_conn_var(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
-            connection.link_connection(link_conn)
-            return True, ''
+            # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
+            return True, f'*** Link Setup to {dest_call}\r'
         return False, 'Error: Can not connect'
 
     ######################

@@ -2,7 +2,7 @@ import pickle
 
 import ax25.ax25Connection
 import config_station
-import main
+from ax25.ax25dec_enc import validate_call
 
 
 class DefaultCLI(object):
@@ -31,6 +31,8 @@ class DefaultCLI(object):
             self.stat_cfg_index_call = self.stat_cfg.stat_parm_Call
 
         self.connection: ax25.ax25Connection.AX25Conn = connection
+        self.port_handler = self.connection.own_port.port_handler
+        self.own_port = self.connection.own_port
         # self.channel_index = self.connection.ch_index
         if self.connection.gui is None:
             self.gui = False
@@ -56,7 +58,7 @@ class DefaultCLI(object):
         # Standard Commands ( GLOBAL )
         self.cmd_exec = {
             b'Q': (self.cmd_q, 'Quit'),
-            b'C': (self.cmd_connect, 'Connect ! funktioniert noch nicht !'),
+            # b'C': (self.cmd_connect, 'Connect ! funktioniert noch nicht !'),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
             b'I': (self.cmd_i, 'Info'),
             b'LI': (self.cmd_li, 'Lange Info'),
@@ -97,6 +99,7 @@ class DefaultCLI(object):
                 ret = ret.encode(self.encoding[0], self.encoding[1])
             # self.send_2_gui(ret)
             self.connection.tx_buf_rawData += ret
+
     """
     def send_2_gui(self, data):  
         if data:
@@ -125,6 +128,7 @@ class DefaultCLI(object):
 
             if self.input[:len(self.prefix)] == self.prefix.encode(self.encoding[0], self.encoding[1]):
                 # print(self.input)
+                self.parameter = []
                 cmd = self.input[len(self.prefix):]
                 cmd = cmd.split(b' ')
                 if len(cmd) > 1:
@@ -136,7 +140,7 @@ class DefaultCLI(object):
                     self.input = b''
 
                 cmd = cmd[0]
-                self.cmd = cmd  \
+                self.cmd = cmd \
                     .upper() \
                     .replace(b' ', b'') \
                     .replace(b'\r', b'') \
@@ -207,8 +211,55 @@ class DefaultCLI(object):
             self.connection.tx_buf_rawData += ret
         """
 
+    def decode_param(self):
+        tmp = []
+        for el in self.parameter:
+            tmp.append(el.decode('ASCII', 'ignore').replace('\r', '').replace('\n', ''))
+        self.parameter = list(tmp)
+
     def cmd_connect(self):  # DUMMY
-        pass
+        print(f'cmd_connect() param: {self.parameter}')
+        self.decode_param()
+        print(f'cmd_connect() param.decode: {self.parameter}')
+
+        if not self.parameter:
+            ret = 'Bitte Call eingeben..\r'
+            return ret
+
+        dest_call = validate_call(self.parameter[0])
+        if not dest_call:
+            ret = 'Ungültiger Ziel Call..\r'
+            return ret
+
+        # port_id = self.own_port.port_id
+        port_id = -1
+        vias = [self.connection.my_call_str]
+        if len(self.parameter) > 1:
+            if self.parameter[-1].isdigit():
+                port_id = int(self.parameter[-1])
+                if port_id not in self.port_handler.ax25_ports.keys():
+                    ret = 'Ungültiger Port..\r'
+                    return ret
+            for call in self.parameter[1:]:
+                tmp_call = validate_call(call)
+                if tmp_call:
+                    vias.append(tmp_call)
+                else:
+                    break
+
+        # self.connection.my_call_str
+        print(f'cmd_connect own_call: {self.connection.to_call_str}')
+        print(f'cmd_connect dest_call: {dest_call}')
+        print(f'cmd_connect vias: {vias}')
+        print(f'cmd_connect port_id: {port_id}')
+        return self.port_handler.new_outgoing_connection(
+            own_call=self.connection.to_call_str,
+            dest_call=dest_call,
+            via_calls=vias,
+            port_id=port_id,
+            link_conn=self.connection,
+            # link_call=str(self.connection.my_call_str)
+        )[1]
 
     def cmd_echo(self):  # Quit
         ret = ''
@@ -229,14 +280,14 @@ class DefaultCLI(object):
 
     def cmd_ver(self):
         ret = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
-                '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
-                '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
-                '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
-                '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
-                '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
-                '$$ |       $$$$$$  |   $$ |        $$ |\r' \
-                '\__|yton   \______/ther\__|acket   \__|erminal\r\r'\
-                'Version: {}\r\r\r'.format(config_station.VER)
+              '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
+              '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
+              '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
+              '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
+              '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
+              '$$ |       $$$$$$  |   $$ |        $$ |\r' \
+              '\__|yton   \______/ther\__|acket   \__|erminal\r\r' \
+              'Version: {}\r\r\r'.format(config_station.VER)
         return ret
 
     def cmd_i(self):
@@ -344,7 +395,7 @@ class NodeCLI(DefaultCLI):
 
 
 class UserCLI(DefaultCLI):
-    cli_name = 'USER'   # DON'T CHANGE !
+    cli_name = 'USER'  # DON'T CHANGE !
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-User-CLI>'
@@ -365,7 +416,7 @@ class UserCLI(DefaultCLI):
 
 class NoneCLI(DefaultCLI):
     """ ? To Disable CLI / Remote ? """
-    cli_name = 'NO-CLI'   # DON'T CHANGE !
+    cli_name = 'NO-CLI'  # DON'T CHANGE !
 
     def exec_cmd(self):
         pass

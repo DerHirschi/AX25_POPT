@@ -303,15 +303,15 @@ class StatSetTab:
         # Smart DIGI
         self.station_setting.stat_parm_isSmartDigi = bool(self.smart_digi_set_var.get())
         # C-Text
-        self.station_setting.stat_parm_cli_ctext = self.c_text_ent.get('1.0', tk.END)
+        self.station_setting.stat_parm_cli_ctext = self.c_text_ent.get('1.0', tk.END)[:-1]
         # Bye Text
-        self.station_setting.stat_parm_cli_bye_text = self.bye_text_ent.get('1.0', tk.END)
+        self.station_setting.stat_parm_cli_bye_text = self.bye_text_ent.get('1.0', tk.END)[:-1]
         # Info Text
-        self.station_setting.stat_parm_cli_itext = self.info_text_ent.get('1.0', tk.END)
+        self.station_setting.stat_parm_cli_itext = self.info_text_ent.get('1.0', tk.END)[:-1]
         # Long Info Text
-        self.station_setting.stat_parm_cli_longitext = self.long_info_text_ent.get('1.0', tk.END)
+        self.station_setting.stat_parm_cli_longitext = self.long_info_text_ent.get('1.0', tk.END)[:-1]
         # News Text
-        self.station_setting.stat_parm_cli_akttext = self.akt_info_text_ent.get('1.0', tk.END)
+        self.station_setting.stat_parm_cli_akttext = self.akt_info_text_ent.get('1.0', tk.END)[:-1]
         # Name
         self.station_setting.stat_parm_Name = self.name.get()
         # QTH

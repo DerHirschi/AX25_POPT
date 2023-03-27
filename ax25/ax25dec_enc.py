@@ -6,17 +6,8 @@
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 
 
-def de_arschloch_kiss_frame(inp: b''):
-    """ *$§'%R&/$§§$*"&/=ß!?!$%%§"(§ !!!!!!!! """
-    return inp.replace( b'\xdb\xdc', b'\xc0')
-
-
-def arschloch_kiss_frame(inp: b''):
-    """ *$§'%R&/$§§$*"&/=ß!?!$%%§"(§ !!!!!!!! """
-    return inp.replace(b'\xc0', b'\xdb\xdc')
-
-
 def find_bits(inp):
+    """ Debugging """
     fck_bit = ''.join(f'{bin(int(val, 16))}'[1:] for val in inp.hex(' ', 1).split())
     such = '00001100'
     if '00001100' in fck_bit:
@@ -48,6 +39,7 @@ def find_bits(inp):
 
 
 def detect_bit_stuffing(inp: b''):
+    """ Debugging """
     tmp_hex = inp.hex()
     if '7e' in tmp_hex:
         logger.debug('Bit Stuffing: 7E detected in {}'.format(inp))
@@ -133,7 +125,7 @@ def call_tuple_fm_call_str(call_str: str):
     :param call_str:
     :return: tuple(str: call, int: ssid)
     """
-    call_str = call_str.replace('\r', '').replace('\n', '')
+    call_str = call_str.replace('\r', '').replace('\n', '').replace(' ', '')
     ind = call_str.find('-')
     if ind != -1:
         return call_str[:ind].upper(), int(call_str[ind + 1:])
@@ -606,6 +598,7 @@ class AX25Frame(object):
         self.to_call = Call()
         self.via_calls: [Call] = []
         self.is_digipeated = True   # Is running through all Digi's ?
+        self.digi_call = ''         # Own DIGI Call to set C-BIT
         self.ctl_byte = CByte()
         self.pid_byte = PIDByte()
         self.data = b''
@@ -652,6 +645,25 @@ class AX25Frame(object):
         else:
             for ca in self.via_calls:
                 ca.c_bit = False
+
+    def digi_set_h_bits(self):
+        if self.digi_call:
+            print(f'encoding self.digi_call: {self.digi_call}')
+            print(f'encoding ctl_byte: {self.ctl_byte.flag}')
+            print(f'encoding from_call: {self.from_call.call_str}')
+            print(f'encoding to_call: {self.to_call.call_str}')
+            ca: Call
+            tr = True
+            #tmp = []
+            for ca in self.via_calls:
+                ca.c_bit = bool(tr)
+                if ca.call_str == self.digi_call:
+                    tr = False
+                #tmp.append(ca)
+
+            for ca in self.via_calls:
+                print(f'Call: {ca.call_str}   Bit: {ca.c_bit}')
+            #self.via_calls = list(tmp)
 
     def decode(self, hexstr=b''):
         """
@@ -728,6 +740,8 @@ class AX25Frame(object):
             raise AX25DecodingERROR(self)
 
     def encode(self, digi=False):
+        # print(f'encode >>>>>> {self.digi_call}')
+
         self.bytes = b''
         # Set Command/Report Bits
         if self.ctl_byte.cmd:
@@ -753,6 +767,7 @@ class AX25Frame(object):
         # Via Stations
         # Set all H-Bits to 0
         if not digi:
+            # TODO Crap
             self.set_check_h_bits(dec=False)
         for station in self.via_calls:
             try:
@@ -760,6 +775,7 @@ class AX25Frame(object):
             except AX25EncodingERROR:
                 raise AX25EncodingERROR()
             self.bytes += station.hex_str
+        self.digi_set_h_bits()
         # C Byte
         self.ctl_byte.enc_cbyte()
         self.bytes += format_hexstr(self.ctl_byte.hex).encode()
@@ -793,7 +809,7 @@ class AX25Frame(object):
         # Data
         if self.ctl_byte.info:
             self.data_len = len(self.data)
-            self.bytes += self.data    # !!!!!! Käfer !!!! ???
+            self.bytes += self.data
         if not self.validate():
             logger.error('Encoding Error Validator')
             raise AX25EncodingERROR
@@ -907,6 +923,18 @@ def via_calls_fm_str(inp_str: str):
                 ret.append(call_obj)
     return ret
 
+
+def validate_call(call_str: str):
+    call_str = call_str.replace(' ', '').replace('\r', '').replace('\n', '')
+    call_str = call_str.upper()
+    call_tuple = call_tuple_fm_call_str(call_str)
+    if 6 < len(call_tuple[0]) < 3:
+        if not all(c.isnumeric() or c.isalpha() for c in call_tuple[0]):
+            return False
+    if 0 > call_tuple[1] > 15:
+        return False
+    return call_str
+
 """
 if __name__ == '__main__':
     # Error Msg                                       ctl pid       < Wrong
@@ -926,3 +954,5 @@ if __name__ == '__main__':
 
     AX25Frame().decode(fck_msg)
 """
+
+
