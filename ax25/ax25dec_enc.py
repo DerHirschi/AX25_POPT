@@ -648,30 +648,20 @@ class AX25Frame(object):
 
     def digi_set_h_bits(self):
         if self.digi_call:
+            """
             print(f'encoding self.digi_call: {self.digi_call}')
             print(f'encoding ctl_byte: {self.ctl_byte.flag}')
             print(f'encoding from_call: {self.from_call.call_str}')
             print(f'encoding to_call: {self.to_call.call_str}')
+            """
             ca: Call
             tr = True
-            #tmp = []
             for ca in self.via_calls:
                 ca.c_bit = bool(tr)
                 if ca.call_str == self.digi_call:
                     tr = False
-                #tmp.append(ca)
-
-            for ca in self.via_calls:
-                print(f'Call: {ca.call_str}   Bit: {ca.c_bit}')
-            #self.via_calls = list(tmp)
 
     def decode(self, hexstr=b''):
-        """
-        if not self.hexstr:
-            # self.kiss = hexstr[:2]
-            # self.hexstr = hexstr[2:-1]
-            self.hexstr = hexstr
-        """
         if hexstr:
             self.bytes = hexstr
         if self.bytes and len(self.bytes) > 14:

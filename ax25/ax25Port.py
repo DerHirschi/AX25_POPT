@@ -188,33 +188,21 @@ class AX25Port(threading.Thread):
                 el: AX25Frame
                 for el in snd_buf:
                     if el.digi_call and conn.is_link:
-                        # el.digi_call = conn.my_call_str
+                        # TODO Just check for digi_call while encoding
                         el.digi_check_and_encode(call=el.digi_call, h_bit_enc=True)
-                        """
-                        print('------------- TX nach encoding ----------------')
-                        print(f'UID: {el.addr_uid} HEX: {el.bytes.hex()}')
-                        print(f'fmcall: {el.from_call.call_str}  Bit: {el.from_call.s_bit}')
-                        print(f'tocall: {el.to_call.call_str}  Bit: {el.to_call.s_bit}')
-                        for ell in el.via_calls:
-                            print(f'viacall: {ell.call_str}  Bit-C: {ell.c_bit}')
-                            print(f'viacall: {ell.call_str}  Bit-S: {ell.s_bit}')
-                        """
-                    # el.kiss = self.kiss
                     else:
                         el.encode()
-
                     try:
                         self.tx(frame=el)
                         tr = True
                     except AX25DeviceFAIL as e:
                         raise e
-
                     # Monitor
                     if self.gui is not None:
                         self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=self.port_cfg, tx=True)
-                    # self.mh.bw_mon_inp(el, self.port_id)
             else:
                 tr = True
+
         # DIGI
         if not tr:
             fr: AX25Frame

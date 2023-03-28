@@ -38,6 +38,13 @@ class RTT(object):
         # self.rtt_single_list = [float(self.rtt_average)]*4
         self.rtt_single_list = []
 
+    def get_RTT_avrg(self):
+        self.calc_rtt_vars()
+        if self.rtt_best == 999:
+            return self.rtt_average
+        else:
+            return (self.rtt_average + self.rtt_best) / 2
+
     def set_rtt_timer(self, vs: int, paclen: int):
         self.rtt_dict[vs]['timer'] = time.time()
         self.rtt_dict[vs]['paclen'] = paclen
@@ -232,7 +239,6 @@ class AX25Conn(object):
         else:
             # raise ConnectionError
             self.cli = cli.cli.NoneCLI(self)
-
         if rx:
             self.zustand_exec = S1Frei(self)
         else:
@@ -400,14 +406,14 @@ class AX25Conn(object):
     ###############################################
     # Timer usw
     def get_rtt(self):
-        auto = True     # TODO
+        auto = False     # TODO
         self.calc_irtt()
         if auto:
-            self.RTT_Timer.calc_rtt_vars()
+            # self.RTT_Timer.calc_rtt_vars()
             # self.parm_T2 = float(self.RTT_Timer.rtt_average) / 2
             # print('parm_T2 rtt: {}'.format(self.parm_T2))
             # print('IRTT: {} rtt'.format(self.RTT_Timer.rtt_average * 1000))
-            return self.RTT_Timer.rtt_average * 1000
+            return self.RTT_Timer.get_RTT_avrg() * 1000
         else:
             return self.IRTT
 
@@ -503,7 +509,7 @@ class AX25Conn(object):
         pac.via_calls = list(self.ax25_out_frame.via_calls)
         pac.addr_uid = str(self.ax25_out_frame.addr_uid)
         pac.axip_add = tuple(self.ax25_out_frame.axip_add)
-        pac.digi_call = str(self.ax25_out_frame.digi_call)
+        pac.digi_call = str(self.ax25_out_frame.digi_call)  # Link Call
         self.ax25_out_frame = pac
 
     def build_I_fm_raw_buf(self):
