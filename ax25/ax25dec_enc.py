@@ -648,12 +648,6 @@ class AX25Frame(object):
 
     def digi_set_h_bits(self):
         if self.digi_call:
-            """
-            print(f'encoding self.digi_call: {self.digi_call}')
-            print(f'encoding ctl_byte: {self.ctl_byte.flag}')
-            print(f'encoding from_call: {self.from_call.call_str}')
-            print(f'encoding to_call: {self.to_call.call_str}')
-            """
             ca: Call
             tr = True
             for ca in self.via_calls:

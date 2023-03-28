@@ -289,12 +289,14 @@ class AX25PortHandler(object):
                                                                    via_calls=via_calls,
                                                                    axip_add=axip_add,
                                                                    link_conn=link_conn)
+
         print('------------- InitPorts ---------------')
         print(f'conn: {connection}')
         print(f'dest_call: {dest_call}')
         print(f'own_call: {own_call}')
         print(f'via_calls: {via_calls}')
         print(f'link_conn: {link_conn}')
+
         if connection:
             self.insert_conn2all_conn_var(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!

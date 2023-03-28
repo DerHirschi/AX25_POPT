@@ -858,6 +858,7 @@ class TkMainWin:
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
+        """
         self.ax25_port_handler.new_outgoing_connection(
             dest_call='DNX527',
             own_call='MD4TES',
@@ -865,7 +866,16 @@ class TkMainWin:
             # exclusive=True
             channel=12
         )
-
+        """
+        if self.ax25_port_handler.link_connections.keys():
+            print('-----------------------------------------------------')
+            print(f'link_connections K : {self.ax25_port_handler.link_connections.keys()}')
+            for k in self.ax25_port_handler.link_connections.keys():
+                print(f'###############{self.ax25_port_handler.link_connections[k][0].uid}###########')
+                print(f'link_connections  uid: {self.ax25_port_handler.link_connections[k][0].uid}')
+                print(f'link_connections  is_link: {self.ax25_port_handler.link_connections[k][0].is_link}')
+                print(f'link_connections  is_link_remote: {self.ax25_port_handler.link_connections[k][0].is_link_remote}')
+                print(f'link_connections  LINK_Connection: {self.ax25_port_handler.link_connections[k][0].LINK_Connection}')
 
 
 

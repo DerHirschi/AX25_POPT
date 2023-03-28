@@ -62,26 +62,27 @@ class ChBtnFrm:
         ch_alarm = False
         if self.main_class.ax25_port_handler.all_connections.keys() and not self.main_class.mon_mode:
             for i in list(self.con_btn_dict.keys()):
-                if i in self.main_class.ax25_port_handler.all_connections.keys() and not self.main_class.mon_mode:
-                    if not self.main_class.ax25_port_handler.all_connections[i].is_link:
-                        self.con_btn_dict[i].configure(text=self.main_class.ax25_port_handler.all_connections[i].to_call_str)
-                        if i == self.main_class.channel_index:
-                            self.con_btn_dict[i].configure(bg='green2')
+                if i in self.main_class.ax25_port_handler.all_connections.keys():
+                    btn_txt = self.main_class.ax25_port_handler.all_connections[i].to_call_str
+                    is_link = self.main_class.ax25_port_handler.all_connections[i].is_link
+                    if is_link:
+                        btn_txt = 'L>' + btn_txt
+                    self.con_btn_dict[i].configure(text=btn_txt)
+                    if i == self.main_class.channel_index:
+                        if is_link:
+                            self.con_btn_dict[i].configure(bg='SteelBlue2')
                         else:
-                            if self.main_class.win_buf[i].new_data_tr:
+                            self.con_btn_dict[i].configure(bg='green2')
+                    else:
+                        if self.main_class.win_buf[i].new_data_tr:
+                            if not is_link:
                                 ch_alarm = True
                                 self.ch_btn_alarm(self.con_btn_dict[i])
+                        else:
+                            if is_link:
+                                self.con_btn_dict[i].configure(bg='SteelBlue4')
                             else:
                                 self.con_btn_dict[i].configure(bg='green4')
-                    else:
-                        self.con_btn_dict[i].configure(text=str(i))
-                        if not self.main_class.win_buf[i].new_data_tr:
-                            if i == self.main_class.channel_index:
-                                self.con_btn_dict[i].configure(bg='red2')
-                            else:
-                                self.con_btn_dict[i].configure(bg='red4')
-                        else:
-                            self.con_btn_dict[i].configure(bg='yellow')
                 else:
                     self.con_btn_dict[i].configure(text=str(i))
                     if not self.main_class.win_buf[i].new_data_tr:

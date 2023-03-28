@@ -145,10 +145,11 @@ class AX25Port(threading.Thread):
                 self.rx_conn_handler(ax25_frame=ax25_frame)
 
     def rx_link_handler(self, ax25_frame: AX25Frame):
-        print("LINK")
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
+            print("LINK")
             conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
             link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
+            # link_call = conn.ax25_out_frame.digi_call
             if link_call:
                 if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
                     conn.handle_rx(ax25_frame=ax25_frame)
@@ -167,11 +168,10 @@ class AX25Port(threading.Thread):
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
 
     def rx_simple_digi_handler(self, ax25_frame: AX25Frame):
-        print("DIGI-1")
         for call in ax25_frame.via_calls:
             if call.call_str in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                    print("DIGI-2")
+                    print("DIGI")
                     self.digi_buf.append(ax25_frame)
                     break
                     # print(f'{ax25_frame.addr_uid}  dp: {ax25_frame.is_digipeated}')
