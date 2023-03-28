@@ -58,7 +58,7 @@ class DefaultCLI(object):
         # Standard Commands ( GLOBAL )
         self.cmd_exec = {
             b'Q': (self.cmd_q, 'Quit'),
-            # b'C': (self.cmd_connect, 'Connect ! funktioniert noch nicht !'),
+            b'C': (self.cmd_connect, 'Connect ! funktioniert noch nicht !'),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
             b'I': (self.cmd_i, 'Info'),
             b'LI': (self.cmd_li, 'Lange Info'),

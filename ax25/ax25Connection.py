@@ -215,10 +215,12 @@ class AX25Conn(object):
         """ Station Individual Parameter """
         stat_call = self.stat_cfg.stat_parm_Call
         if stat_call != config_station.DefaultStation.stat_parm_Call:
-            if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-            if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
+            if stat_call in self.cfg.parm_stat_PacLen.keys():
+                if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
+                    self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
+            if stat_call in self.cfg.parm_stat_MaxFrame.keys():
+                if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
+                    self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
             """ Init CLI """
             self.cli = self.cfg.parm_cli[stat_call](self, self.port_handler.ax25_stations_settings[stat_call])
             """
@@ -252,7 +254,7 @@ class AX25Conn(object):
             self.gui.ch_btn_status()
         """
         del self.ax25_out_frame
-        del self.cli
+        #del self.cli
         del self.zustand_exec
 
     """
@@ -330,8 +332,16 @@ class AX25Conn(object):
             conn.zustand_exec.tx(None)
             return False
         if self.is_link_remote:
+            print(f'link_connection rmote self.my_call_str: {self.my_call_str}')
             self.my_call_str = str(conn.my_call_str)
-        self.port_handler.link_connections[str(conn.uid)] = conn, self.my_call_str
+            self.ax25_out_frame.digi_call = str(conn.my_call_str)
+            print(f'link_connection rmote self.my_call_str <: {self.my_call_str}')
+            print(f'link_connection rmote self.to_call_str <: {self.to_call_str}')
+            self.port_handler.link_connections[str(conn.uid)] = conn, ''
+        else:
+            self.port_handler.link_connections[str(conn.uid)] = conn, self.my_call_str
+
+        print(f'link_connection link_connections K : {self.port_handler.link_connections.keys()}')
         self.LINK_Connection = conn
         self.is_link = True
 
@@ -349,6 +359,7 @@ class AX25Conn(object):
 
     def del_link(self):
         """ Called in State.link_cleanup() """
+        print("LINK CLEANUP")
         self.port_handler.del_link(self.uid)
         self.LINK_Connection = None
         self.is_link = False
@@ -489,10 +500,10 @@ class AX25Conn(object):
         pac = AX25Frame()
         pac.from_call = self.ax25_out_frame.from_call
         pac.to_call = self.ax25_out_frame.to_call
-        pac.via_calls = self.ax25_out_frame.via_calls
-        pac.addr_uid = self.ax25_out_frame.addr_uid
-        pac.axip_add = self.ax25_out_frame.axip_add
-        pac.digi_call = self.ax25_out_frame.digi_call
+        pac.via_calls = list(self.ax25_out_frame.via_calls)
+        pac.addr_uid = str(self.ax25_out_frame.addr_uid)
+        pac.axip_add = tuple(self.ax25_out_frame.axip_add)
+        pac.digi_call = str(self.ax25_out_frame.digi_call)
         self.ax25_out_frame = pac
 
     def build_I_fm_raw_buf(self):

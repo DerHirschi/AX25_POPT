@@ -131,20 +131,30 @@ class AX25Port(threading.Thread):
 
     def rx_pac_handler(self, ax25_frame: AX25Frame):
         """  """
-        if ax25_frame.is_digipeated:  # Running through all DIGIs
+        # print('------------- RX nach decoding ----------------')
+        # print(f'UID: {ax25_frame.addr_uid} HEX: {ax25_frame.bytes.hex()}')
+        if not ax25_frame.is_digipeated and ax25_frame.via_calls:
+            # print("Not DIGI and VIA")
+            if not self.rx_link_handler(ax25_frame=ax25_frame):  # Link Connection Handler
+                # Simple DIGI
+                # print('RX hndl simple DIGI')
+                self.rx_simple_digi_handler(ax25_frame=ax25_frame)
+
+        elif ax25_frame.is_digipeated:  # Running through all DIGIs
             if ax25_frame.to_call.call_str in self.my_stations:
                 self.rx_conn_handler(ax25_frame=ax25_frame)
-        elif not self.rx_link_handler:  # Link Connection Handler
-            # Simple DIGI
-            self.rx_simple_digi_handler(ax25_frame=ax25_frame)
 
     def rx_link_handler(self, ax25_frame: AX25Frame):
+        print("LINK")
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
             conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
             link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
-            if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
-                conn.handle_rx(ax25_frame=ax25_frame)
-                return True
+            if link_call:
+                if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
+                    conn.handle_rx(ax25_frame=ax25_frame)
+                    return True
+            conn.handle_rx(ax25_frame=ax25_frame)
+            return True
         return False
 
     def rx_conn_handler(self, ax25_frame: AX25Frame):
@@ -157,9 +167,13 @@ class AX25Port(threading.Thread):
             self.connections[uid].handle_rx(ax25_frame=ax25_frame)
 
     def rx_simple_digi_handler(self, ax25_frame: AX25Frame):
-        if ax25_frame.to_call.call_str in self.stupid_digi_calls:
-            if ax25_frame.digi_check_and_encode(call=ax25_frame.to_call.call_str, h_bit_enc=True):
-                self.digi_buf.append(ax25_frame)
+        print("DIGI-1")
+        for call in ax25_frame.via_calls:
+            if call.call_str in self.stupid_digi_calls:
+                if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                    print("DIGI-2")
+                    self.digi_buf.append(ax25_frame)
+                    break
                     # print(f'{ax25_frame.addr_uid}  dp: {ax25_frame.is_digipeated}')
 
     def tx_pac_handler(self):
@@ -173,10 +187,22 @@ class AX25Port(threading.Thread):
                 conn.REJ_is_set = False
                 el: AX25Frame
                 for el in snd_buf:
-                    if conn.is_link_remote:
-                        el.digi_call = conn.my_call_str
+                    if el.digi_call and conn.is_link:
+                        # el.digi_call = conn.my_call_str
+                        el.digi_check_and_encode(call=el.digi_call, h_bit_enc=True)
+                        """
+                        print('------------- TX nach encoding ----------------')
+                        print(f'UID: {el.addr_uid} HEX: {el.bytes.hex()}')
+                        print(f'fmcall: {el.from_call.call_str}  Bit: {el.from_call.s_bit}')
+                        print(f'tocall: {el.to_call.call_str}  Bit: {el.to_call.s_bit}')
+                        for ell in el.via_calls:
+                            print(f'viacall: {ell.call_str}  Bit-C: {ell.c_bit}')
+                            print(f'viacall: {ell.call_str}  Bit-S: {ell.s_bit}')
+                        """
                     # el.kiss = self.kiss
-                    el.encode()
+                    else:
+                        el.encode()
+
                     try:
                         self.tx(frame=el)
                         tr = True
@@ -190,17 +216,18 @@ class AX25Port(threading.Thread):
             else:
                 tr = True
         # DIGI
-        fr: AX25Frame
-        for fr in self.digi_buf:
-            try:
-                self.tx(frame=fr)
-                tr = True
-            except AX25DeviceFAIL as e:
-                raise e
-            # Monitor
-            if self.is_gui:
-                self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=self.port_cfg, tx=True)
-        self.digi_buf = []
+        if not tr:
+            fr: AX25Frame
+            for fr in self.digi_buf:
+                try:
+                    self.tx(frame=fr)
+                    tr = True
+                except AX25DeviceFAIL as e:
+                    raise e
+                # Monitor
+                if self.is_gui:
+                    self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=self.port_cfg, tx=True)
+            self.digi_buf = []
         return tr
 
     def rx_echo_pac_handler(self):
@@ -285,8 +312,8 @@ class AX25Port(threading.Thread):
         if link_conn is None:
             link_conn = False
         if own_call not in self.my_stations and not link_conn:
-            print(f'build_new_connection own_call: {own_call}')
-            print(f'build_new_connection self.my_stations: {self.my_stations}')
+            # print(f'build_new_connection own_call: {own_call}')
+            # print(f'build_new_connection self.my_stations: {self.my_stations}')
             return False
         if link_conn and not via_calls:
             return False
@@ -304,8 +331,8 @@ class AX25Port(threading.Thread):
             conn.is_link_remote = True
             if conn.link_connection(link_conn):
                 if link_conn.link_connection(conn):
-                    print(f'link_conn: {link_conn.LINK_Connection}')
-                    print(f'conn: {conn.LINK_Connection}')
+                    # print(f'link_conn: {link_conn.LINK_Connection}')
+                    # print(f'conn: {conn.LINK_Connection}')
                     return conn
             return False
         return conn
@@ -499,6 +526,7 @@ class KissTCP(AX25Port):
         """
         try:
             self.device.sendall(self.kiss.kiss(frame.bytes))
+            # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
             logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
             logger.error('{}'.format(e))
