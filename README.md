@@ -89,3 +89,4 @@ TODO: !! Lot of Testing and Debugging !!
 
 [further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
 
+[Telegram Group](https://t.me/poptsupport)
