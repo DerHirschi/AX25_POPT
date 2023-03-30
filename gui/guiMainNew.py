@@ -876,6 +876,8 @@ class TkMainWin:
                 print(f'link_connections  is_link: {self.ax25_port_handler.link_connections[k][0].is_link}')
                 print(f'link_connections  is_link_remote: {self.ax25_port_handler.link_connections[k][0].is_link_remote}')
                 print(f'link_connections  LINK_Connection: {self.ax25_port_handler.link_connections[k][0].LINK_Connection}')
+                print(f'link_connections  state: {self.ax25_port_handler.link_connections[k][0].zustand_exec.stat_index}')
+                print(f'link_connections  all_Conn: {self.ax25_port_handler.all_connections.keys()}')
 
 
 

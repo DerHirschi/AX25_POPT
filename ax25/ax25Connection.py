@@ -366,10 +366,12 @@ class AX25Conn(object):
             if self.LINK_Connection.zustand_exec.stat_index == 1:
                 self.LINK_Connection.n2 = 100
                 self.LINK_Connection.zustand_exec.change_state(0)
-            if self.is_gui:
-                self.ax25_out_frame.digi_call = self.my_call_str
-            self.LINK_Connection.zustand_exec.change_state(4)
-            self.LINK_Connection.zustand_exec.tx(None)
+            else:
+                if self.is_link_remote:
+                    self.LINK_Connection.zustand_exec.change_state(4)
+                    self.LINK_Connection.zustand_exec.tx(None)
+                else:
+                    self.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.to_call_str).encode()
 
     def del_link(self):
         """ Called in State.link_cleanup() """
@@ -380,8 +382,8 @@ class AX25Conn(object):
             self.port_handler.del_link(self.uid)
             self.LINK_Connection = None
             self.is_link = False
-            self.ax25_out_frame.digi_call = ''
-            self.is_link_remote = False
+            # self.ax25_out_frame.digi_call = ''
+            # self.is_link_remote = False
 
     ###############################################
     # Channel ECHO
@@ -737,7 +739,8 @@ class DefaultStat(object):
         # DIGI / LINK Connection / Node Funktion
         self.link_crone()
         # CLEANUP
-        if self.ax25conn.n2 == 100 and not self.ax25conn.tx_buf_2send:
+        # if self.ax25conn.n2 == 100 and not self.ax25conn.tx_buf_2send:
+        if self.ax25conn.n2 == 100 or self.stat_index == 0:
             self.cleanup()
         ###########
         # TODO Connection Timeout
@@ -751,8 +754,8 @@ class DefaultStat(object):
         self.state_cron()  # State Cronex
 
     def cleanup(self):
-        self.link_cleanup()
         self.change_state(0)
+        self.link_cleanup()
         self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
 
     def t1_fail(self):
@@ -1293,6 +1296,8 @@ class S7WaitForFinal(DefaultStat):
         self.delUNACK()
         if self.pf:
             # self.rtt_timer.rtt_single_rx()
+            self.ax25conn.set_T1(stop=True)
+            self.ax25conn.set_T2(stop=True)
             self.change_state(9)
         else:
             self.change_state(12)
@@ -1304,7 +1309,7 @@ class S7WaitForFinal(DefaultStat):
         self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
         self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
-        self.change_state(7)  # S7 Warten auf Final
+        # self.change_state(7)  # S7 Warten auf Final
 
     def t3_fail(self):
         pass
@@ -1424,10 +1429,13 @@ class S9DestNotReady(DefaultStat):
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
 
     def t1_fail(self):
+        pass
+        """
         self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
         self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
         self.change_state(12)  # S7 Warten auf Final
+        """
 
     def t3_fail(self):
         self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
@@ -1439,7 +1447,7 @@ class S9DestNotReady(DefaultStat):
         pass
 
 
-class S10BothNotReady(DefaultStat):  # TODO  Testing
+class S10BothNotReady(DefaultStat):
     stat_index = 10  # Beide Seiten nicht bereit
 
     def rx_SABM(self):
@@ -1473,10 +1481,13 @@ class S10BothNotReady(DefaultStat):  # TODO  Testing
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
 
     def t1_fail(self):
+        pass
+        """
         self.ax25conn.send_RNR(pf_bit=True, cmd_bit=True)
         self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
         self.change_state(13)  # S7 Warten auf Final
+        """
 
     def t3_fail(self):
         self.ax25conn.send_RNR(pf_bit=True, cmd_bit=True)
@@ -1488,7 +1499,7 @@ class S10BothNotReady(DefaultStat):  # TODO  Testing
         pass
 
 
-class S11SelfNotReadyFinal(DefaultStat):  # TODO / / Testing
+class S11SelfNotReadyFinal(DefaultStat):
     stat_index = 11  # Selber nicht bereit und auf Final warten
 
     def rx_SABM(self):
@@ -1506,7 +1517,7 @@ class S11SelfNotReadyFinal(DefaultStat):  # TODO / / Testing
 
         if self.cmd:
             self.ax25conn.send_RNR(pf_bit=True, cmd_bit=False)
-            self.ax25conn.set_T1()  # !! TODO !! Check
+            self.ax25conn.set_T1()
         elif self.pf:
             self.ax25conn.set_T1(stop=True)
             self.change_state(8)
@@ -1552,7 +1563,7 @@ class S11SelfNotReadyFinal(DefaultStat):  # TODO / / Testing
         self.change_state(2)
 
 
-class S12DestNotReadyFinal(DefaultStat):  # TODO  /  / Testing
+class S12DestNotReadyFinal(DefaultStat):
     stat_index = 12  # Gegenstelle nicht bereit und auf Final warten
 
     def rx_SABM(self):
@@ -1603,7 +1614,7 @@ class S12DestNotReadyFinal(DefaultStat):  # TODO  /  / Testing
         self.change_state(2)
 
 
-class S13BothNotReadyFinal(DefaultStat):  # TODO  /  / Testing
+class S13BothNotReadyFinal(DefaultStat):
     stat_index = 13  # Beide Seiten nicht bereit und auf Final warten
 
     def rx_SABM(self):

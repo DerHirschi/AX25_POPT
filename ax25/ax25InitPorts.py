@@ -188,31 +188,32 @@ class AX25PortHandler(object):
     ######################
     # Connection Handling
     def insert_conn2all_conn_var(self, new_conn, ind: int = 1):
-        if not new_conn.is_link:
-            keys = list(self.all_connections.keys())
-            if keys:
-                tr = False
-                # Check if Connection is already in all_conn...
-                for k in list(self.all_connections.keys()):
-                    if new_conn == self.all_connections[k]:
-                        tr = True
-                        if new_conn.ch_index != k:
-                            logger.warning("Channel Index != Real Index !!!")
-                            new_conn.ch_index = int(k)
-                if not tr:
-                    while True:
-                        if ind in keys:
-                            ind += 1
-                        else:
-                            new_conn.ch_index = int(ind)
-                            self.all_connections[ind] = new_conn
-                            break
-            else:
-                new_conn.ch_index = int(ind)
-                self.all_connections[ind] = new_conn
-            if self.gui is not None:
-                self.gui.ch_btn_status_update()
+        # if not new_conn.is_link:
+        keys = list(self.all_connections.keys())
+        if keys:
+            tr = False
+            # Check if Connection is already in all_conn...
+            for k in list(self.all_connections.keys()):
+                if new_conn == self.all_connections[k]:
+                    tr = True
+                    if new_conn.ch_index != k:
+                        logger.warning("Channel Index != Real Index !!!")
+                        new_conn.ch_index = int(k)
+            if not tr:
+                while True:
+                    if ind in keys:
+                        ind += 1
+                    else:
+                        new_conn.ch_index = int(ind)
+                        self.all_connections[ind] = new_conn
+                        break
+        else:
+            new_conn.ch_index = int(ind)
+            self.all_connections[ind] = new_conn
+        if self.gui is not None:
+            self.gui.ch_btn_status_update()
 
+    """
     def cleanup_conn2all_conn_var(self):
         temp = []
         for k in list(self.all_connections.keys()):
@@ -225,14 +226,24 @@ class AX25PortHandler(object):
             conn = self.all_connections[k]
             conn.ch_index = 0
             del self.all_connections[k]
+    """
 
     def del_conn2all_conn_var(self, conn):
-        temp = []
         for k in list(self.all_connections.keys()):
             # temp_conn: AX25Conn = self.all_connections[k]
-            temp_conn = self.all_connections[k]
-            if temp_conn == conn:
-                temp.append(k)
+            if self.all_connections[k] == conn:
+                self.all_connections[k].ch_index = 0
+                if self.gui is not None:
+                    self.gui.disco_snd()
+                self.del_link(conn.uid)
+                del self.all_connections[k]
+        """
+        for k in list(self.link_connections.keys()):
+            if self.link_connections[k] == conn:
+                del self.link_connections[k]
+        """
+                #temp.append(k)
+        """        
         for k in temp:
             # conn: AX25Conn = self.all_connections[k]
             conn = self.all_connections[k]
@@ -240,6 +251,7 @@ class AX25PortHandler(object):
             if self.gui is not None:
                 self.gui.disco_snd()
             del self.all_connections[k]
+        """
         if self.gui is not None:
             self.gui.ch_btn_status_update()
 
