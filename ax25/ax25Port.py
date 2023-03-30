@@ -139,10 +139,8 @@ class AX25Port(threading.Thread):
                 # Simple DIGI
                 # print('RX hndl simple DIGI')
                 self.rx_simple_digi_handler(ax25_frame=ax25_frame)
-
-        elif ax25_frame.is_digipeated:  # Running through all DIGIs
-            if ax25_frame.to_call.call_str in self.my_stations:
-                self.rx_conn_handler(ax25_frame=ax25_frame)
+        else:
+            self.rx_conn_handler(ax25_frame=ax25_frame)
 
     def rx_link_handler(self, ax25_frame: AX25Frame):
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
@@ -159,13 +157,14 @@ class AX25Port(threading.Thread):
         return False
 
     def rx_conn_handler(self, ax25_frame: AX25Frame):
-        uid = str(ax25_frame.addr_uid)
-        # New Incoming Connection
-        if uid not in self.connections.keys() \
-                and ax25_frame.to_call.call_str in self.my_stations:
-            self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
-        if uid in self.connections.keys():
-            self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+        if ax25_frame.is_digipeated:
+            uid = str(ax25_frame.addr_uid)
+            if uid in self.connections.keys():
+                self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+            else:
+                # New Incoming Connection
+                if ax25_frame.to_call.call_str in self.my_stations:
+                    self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
 
     def rx_simple_digi_handler(self, ax25_frame: AX25Frame):
         for call in ax25_frame.via_calls:
@@ -575,17 +574,13 @@ class KISSSerial(AX25Port):
     def rx(self):
         recv_buff = b''
         while self.loop_is_running and self.device_is_running:
-            # print('RX LOOP')
             try:
                 recv_buff += self.device.read()
-                # logger.error('DEBUG RX-Serial recv_buff : {}'.format(recv_buff))
             except serial.SerialException as e:
                 # There is no new data from serial port
                 return RxBuf()
             except TypeError as e:
-                # Disconnect of USB->UART occured
                 logger.warning('Serial Device Error {}'.format(e))
-                # self.device.close()
                 try:
                     self.init()
                 except AX25DeviceFAIL:
@@ -594,22 +589,14 @@ class KISSSerial(AX25Port):
             else:
                 ret = RxBuf()
                 if recv_buff:
-                    # logger.error('DEBUG RX-Serial recv_buff Final:\n {}'.format(recv_buff))
                     de_kiss_fr = self.kiss.de_kiss(recv_buff)
-                    # if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
                     if de_kiss_fr:  # TODO !!!! flush buffer ?
-                        # ret.raw_data = recv_buff[2:-1]
-                        # ret.kiss = recv_buff[1:2]
-                        # ret.raw_data = recv_buff[2:-1]
-                        # ret.raw_data = de_arschloch_kiss_frame(recv_buff[2:-1])
-                        # self.kiss = ret.kiss
                         ret.raw_data = de_kiss_fr
                         return ret
                 else:
                     return ret
 
     def tx(self, frame: AX25Frame):
-        # frame.hexstr = self.kiss.kiss(frame.hexstr)
         try:
             self.device.write(self.kiss.kiss(frame.bytes))
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
