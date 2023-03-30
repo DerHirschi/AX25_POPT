@@ -931,9 +931,11 @@ class S1Frei(DefaultStat):  # INIT RX
 
     def t1_fail(self):
         print(f"S1 t1 FAIL: {self.ax25conn.uid}")
-        if self.ax25conn.n2:
+        if self.ax25conn.n2 > 3:
             print("S1 t1 FAIL > N2")
             self.change_state(0)
+        self.ax25conn.n2 += 1
+        self.ax25conn.set_T1()
 
     def t3_fail(self):
         print("S1 t3 FAIL")
@@ -1109,6 +1111,7 @@ class S4Abbau(DefaultStat):
         # if self.digi_conn is None:
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
+        self.ax25conn.n2 = 100
         self.S1_end_connection()
         # if self.ax25conn.is_prt_hndl:
         # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
