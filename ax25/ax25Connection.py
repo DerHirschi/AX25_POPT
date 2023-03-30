@@ -229,19 +229,24 @@ class AX25Conn(object):
                 if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
                     self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
             """ Init CLI """
+            """
             if stat_call in self.cfg.parm_cli.keys():
                 self.cli = self.cfg.parm_cli[stat_call](self, self.port_handler.ax25_stations_settings[stat_call])
             else:
                 self.cli = cli.cli.NoneCLI(self)
+            """
             """
             for stat in self.cfg.parm_Stations:
                 if self.my_call_obj.call_str in stat.stat_parm_Call:
                     self.cli = self.cfg.parm_cli[self.my_call_obj.call_str](self, stat)
                     break
             """
-        else:
+        # else:
             # raise ConnectionError
-            self.cli = cli.cli.NoneCLI(self)
+            # self.cli = cli.cli.NoneCLI(self)
+        """ Init CLI """
+        self.cli = cli.cli.NoneCLI(self)
+        self.init_cli()
         if rx:
             self.zustand_exec = S1Frei(self)
         else:
@@ -272,6 +277,14 @@ class AX25Conn(object):
             if self.is_gui:
                 self.ChVars = self.gui.win_buf[int(self.ch_index)]
     """
+    ##################
+    # CLI INIT
+    def init_cli(self):
+        if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
+            self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self, self.port_handler.ax25_stations_settings[self.stat_cfg.stat_parm_Call])
+
+        else:
+            self.cli = cli.cli.NoneCLI(self)
 
     ####################
     # Zustand EXECs
@@ -367,11 +380,15 @@ class AX25Conn(object):
                 self.LINK_Connection.n2 = 100
                 self.LINK_Connection.zustand_exec.change_state(0)
             else:
-                if self.is_link_remote:
+                if not self.is_link_remote:
+                    print(f'LINK DISCO : {self.uid}')
                     self.LINK_Connection.zustand_exec.change_state(4)
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
-                    self.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.to_call_str).encode()
+                    self.LINK_Connection.tx_buf_rawData += '\n*** Reconnected to {}\n'.format(self.my_call_str).encode()
+                    self.LINK_Connection.del_link()
+                    self.LINK_Connection.init_cli()
+                    self.LINK_Connection.cli.change_cli_state(state=1)
 
     def del_link(self):
         """ Called in State.link_cleanup() """

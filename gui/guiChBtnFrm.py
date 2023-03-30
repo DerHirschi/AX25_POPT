@@ -79,6 +79,7 @@ class ChBtnFrm:
                                 ch_alarm = True
                                 self.ch_btn_alarm(self.con_btn_dict[i])
                             else:
+                                self.con_btn_dict[i].configure(bg='SteelBlue4')
                                 ch_alarm = False
                         else:
                             if is_link:
