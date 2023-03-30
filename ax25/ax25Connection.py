@@ -788,7 +788,7 @@ class DefaultStat(object):
 
     def S1_end_connection(self):
         print("S1_end_connection")
-        self.ax25conn.n2 += 1
+        self.ax25conn.n2 = 1
         self.ax25conn.set_T1()
         # self.ax25conn.set_T2(stop=True)
         self.change_state(1)
