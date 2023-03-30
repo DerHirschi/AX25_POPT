@@ -248,7 +248,7 @@ class AX25Port(threading.Thread):
 
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
-        for k in self.connections.keys():
+        for k in list(self.connections.keys()):
             conn: AX25Conn = self.connections[k]
             conn.exec_cron()
 
@@ -349,16 +349,14 @@ class AX25Port(threading.Thread):
         self.connections[ax25_frame.addr_uid] = conn
         return conn
 
-    def del_connections(self):
-        del_k = []
-        for k in self.connections.keys():
-            conn: AX25Conn = self.connections[k]
-            # S0 ENDE
-            if not conn.zustand_exec.stat_index:
+    def del_connections(self, conn: AX25Conn):
+        print('Port DEL CONN')
+        for k in list(self.connections.keys()):
+            if conn == self.connections[k]:
+                # S0 ENDE
+                # if not conn.zustand_exec.stat_index:
                 # And empty Buffer ?? S0 should be enough
-                del_k.append(k)
-        for el in del_k:
-            del self.connections[el]
+                del self.connections[k]
 
     def run(self):
         while self.loop_is_running and self.device_is_running:
@@ -426,7 +424,7 @@ class AX25Port(threading.Thread):
         ############################
         ############################
         # Cleanup
-        self.del_connections()
+        # self.del_connections()
 
 
 class KissTCP(AX25Port):

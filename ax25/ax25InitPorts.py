@@ -237,6 +237,12 @@ class AX25PortHandler(object):
                     self.gui.disco_snd()
                 self.del_link(conn.uid)
                 del self.all_connections[k]
+                print('InitPorts Conn Cleanup !!')
+        """
+        for k in list(self.ax25_ports.keys()):
+            self.ax25_ports[k].del_connections()
+        """
+
         """
         for k in list(self.link_connections.keys()):
             if self.link_connections[k] == conn:

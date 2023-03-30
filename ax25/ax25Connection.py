@@ -248,6 +248,8 @@ class AX25Conn(object):
         self.cli = cli.cli.NoneCLI(self)
         self.init_cli()
         if rx:
+            self.set_T1()
+            self.set_T3()
             self.zustand_exec = S1Frei(self)
         else:
             self.zustand_exec = S2Aufbau(self)
@@ -377,7 +379,8 @@ class AX25Conn(object):
     def link_disco(self):
         if self.is_link and self.LINK_Connection is not None:
             if self.LINK_Connection.zustand_exec.stat_index == 1:
-                self.LINK_Connection.n2 = 100
+                # self.LINK_Connection.n2 = 100
+                self.LINK_Connection.set_T1(stop=True)
                 self.LINK_Connection.zustand_exec.change_state(0)
             else:
                 if not self.is_link_remote:
@@ -686,16 +689,18 @@ class DefaultStat(object):
             self.ax25conn.send_UA()
         elif not self.pf:
             self.ax25conn.send_UA()
-        self.ax25conn.n2 = 100
-        self.change_state(1)
-        self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
+        # self.ax25conn.n2 = 100
+        self.S1_end_connection()
+        # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
     def rx_UA(self):
         self.ax25conn.send_SABM()
+        self.ax25conn.set_T1()
         self.change_state(2)
 
     def rx_DM(self):
         self.ax25conn.send_SABM()
+        self.ax25conn.set_T1()
         self.change_state(2)
 
     def rx_RR(self):
@@ -714,7 +719,8 @@ class DefaultStat(object):
 
     def rx_FRMR(self):
         self.ax25conn.send_SABM()
-        self.change_state(2)
+        self.ax25conn.set_T1()
+        self.change_state(4)
 
     def tx(self, ax25_frame: AX25Frame):
         pass
@@ -752,12 +758,10 @@ class DefaultStat(object):
 
     def cron(self):
         """Global Cron"""
-        ########################################
-        # DIGI / LINK Connection / Node Funktion
-        self.link_crone()
         # CLEANUP
         # if self.ax25conn.n2 == 100 and not self.ax25conn.tx_buf_2send:
-        if self.ax25conn.n2 == 100 or self.stat_index == 0:
+        # if self.ax25conn.n2 == 100 or self.stat_index == 0:
+        if self.stat_index == 0:
             self.cleanup()
         ###########
         # TODO Connection Timeout
@@ -769,20 +773,36 @@ class DefaultStat(object):
             if time.time() > self.ax25conn.t3:
                 self.t3_fail()
         self.state_cron()  # State Cronex
+        ########################################
+        # DIGI / LINK Connection / Node Funktion
+        self.link_crone()
 
     def cleanup(self):
-        self.change_state(0)
+        print('STATE 0 Cleanup')
+        # self.change_state(0)
+        # self.link_cleanup()
+        self.link_cleanup()
+        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
+        self.ax25conn.own_port.del_connections(conn=self.ax25conn)
+        # self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
+
+    def S1_end_connection(self):
+        print("S1_end_connection")
+        self.ax25conn.n2 += 1
+        self.ax25conn.set_T1()
+        # self.ax25conn.set_T2(stop=True)
+        self.change_state(1)
         self.link_cleanup()
         self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
 
     def t1_fail(self):
-        pass
+        self.cleanup()
 
     def t3_fail(self):
-        pass
+        self.cleanup()
 
     def n2_fail(self):
-        pass
+        self.cleanup()
 
     def set_dest_call_fm_data_inp(self, ax25_fr_data: b''):
         det = [
@@ -808,11 +828,7 @@ class DefaultStat(object):
     def reject(self):
         """ !!!! TESTING """
         self.ax25conn.send_DM()
-        self.ax25conn.set_T1(stop=True)
-        self.ax25conn.set_T2(stop=True)
-        self.ax25conn.n2 = 100
-        self.change_state(1)
-        self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
+        self.S1_end_connection()
 
     def prozess_I_frame(self):
         self.ax25conn.set_T2()
@@ -842,13 +858,6 @@ class DefaultStat(object):
             self.ax25conn.del_unACK_buf()
             return True
         return False
-    """
-    def end_conn(self):
-        self.ax25conn.send_UA()
-        self.ax25conn.n2 = 100
-        self.change_state(1)
-        self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
-    """
 
 
 class S1Frei(DefaultStat):  # INIT RX
@@ -859,22 +868,20 @@ class S1Frei(DefaultStat):  # INIT RX
     stat_index = 1  # FREI
 
     def rx_SABM(self):
-        # Handle Incoming Connection
         self.ax25conn.send_UA()
+        self.change_state(5)
+        self.ax25conn.n2 = 0
+        self.ax25conn.set_T1(stop=True)
+        self.ax25conn.set_T3()
+        self.ax25conn.exec_cli()  # Process CLI ( C-Text and so on )
+        self.ax25conn.port_handler.insert_conn2all_conn_var(new_conn=self.ax25conn)
+        # Handle Incoming Connection
         if self.ax25conn.LINK_Connection is None:
             self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(self.frame.to_call.call_str).encode()
             if self.ax25conn.is_gui:
+                self.ax25conn.gui.new_conn_snd()
                 speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
                 self.ax25conn.gui.sprech(speech)
-        self.ax25conn.n2 = 0
-        self.ax25conn.set_T3()
-        self.change_state(5)
-
-        # if self.ax25conn.is_prt_hndl:
-        self.ax25conn.port_handler.insert_conn2all_conn_var(new_conn=self.ax25conn)
-        if self.ax25conn.is_gui:
-            self.ax25conn.gui.new_conn_snd()
-        self.ax25conn.exec_cli()  # Process CLI ( C-Text and so on )
 
     def rx_DISC(self):
         self.reject()
@@ -884,37 +891,53 @@ class S1Frei(DefaultStat):  # INIT RX
         """
 
     def rx_UA(self):
-        self.change_state(0)
+        # self.change_state(0)
+        self.ax25conn.set_T1()
 
     def rx_DM(self):
-        self.change_state(0)
+        # self.change_state(0)
+        self.ax25conn.set_T1()
 
     def rx_RR(self):
         if self.pf:
             self.reject()
-        else:
-            self.change_state(0)
+        self.ax25conn.set_T1()
+        # else:
+        #     self.change_state(0)
 
     def rx_RNR(self):
         if self.pf:
             self.reject()
-        else:
-            self.change_state(0)
+        self.ax25conn.set_T1()
+        # else:
+        #     self.change_state(0)
 
     def rx_REJ(self):
         if self.pf:
             self.reject()
-        else:
-            self.change_state(0)
+        self.ax25conn.set_T1()
+        # else:
+        #     self.change_state(0)
 
     def rx_I(self):
         if self.pf:
             self.reject()
-        else:
-            self.change_state(0)
+        self.ax25conn.set_T1()
+        # else:
+        #     self.change_state(0)
 
     def rx_FRMR(self):
         self.change_state(4)
+
+    def t1_fail(self):
+        print(f"S1 t1 FAIL: {self.ax25conn.uid}")
+        if self.ax25conn.n2:
+            print("S1 t1 FAIL > N2")
+            self.change_state(0)
+
+    def t3_fail(self):
+        print("S1 t3 FAIL")
+        self.change_state(0)
 
 
 class S2Aufbau(DefaultStat):  # INIT TX
@@ -977,10 +1000,11 @@ class S2Aufbau(DefaultStat):  # INIT TX
     def reject(self):
         # if self.digi_conn is None:
         self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode()
-        self.ax25conn.n2 = 100
-        self.change_state(0)
+        # self.ax25conn.n2 = 100
+        # self.change_state(0)
+        self.S1_end_connection()
         # if self.ax25conn.is_prt_hndl:
-        self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
+        # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
     def state_cron(self):
         pass
@@ -996,15 +1020,18 @@ class S2Aufbau(DefaultStat):  # INIT TX
         self.ax25conn.set_T1()
         # self.rtt_timer.set_rtt_single_timer()   # It's  OK for Init
 
+    def t3_fail(self):
+        pass
+
     def n2_fail(self):
         # if self.digi_conn is None:
         self.ax25conn.rx_buf_rawData = '\n*** Failed connect to {}\n'.format(
             self.ax25conn.ax25_out_frame.to_call.call_str).encode()
         self.ax25conn.send_DISC()
-        self.ax25conn.n2 = 100
-        self.change_state(1)
+        # self.ax25conn.n2 = 100
+        self.S1_end_connection()
         # if self.ax25conn.is_prt_hndl:
-        self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
+        # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
 
 class S3sendFRMR(DefaultStat):
@@ -1037,8 +1064,8 @@ class S3sendFRMR(DefaultStat):
         # Send FRMR
 
     def n2_fail(self):
-        self.ax25conn.send_SABM()
-        self.change_state(2)
+        # self.ax25conn.send_SABM()
+        self.S1_end_connection()
 
 
 class S4Abbau(DefaultStat):
@@ -1082,10 +1109,9 @@ class S4Abbau(DefaultStat):
         # if self.digi_conn is None:
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
-        self.ax25conn.set_T1()  # Prevent sending another Packet
-        self.change_state(0)
+        self.S1_end_connection()
         # if self.ax25conn.is_prt_hndl:
-        self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
+        # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
     def state_cron(self):
         pass
@@ -1096,14 +1122,16 @@ class S4Abbau(DefaultStat):
         self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
 
+    def t3_fail(self):
+        pass
+
     def n2_fail(self):
         # if self.digi_conn is None:
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
-        # self.ax25conn.send_DISC()
-        self.change_state(0)
+        self.S1_end_connection()
         # if self.ax25conn.is_prt_hndl:
-        self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
+        # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
 
 class S5Ready(DefaultStat):

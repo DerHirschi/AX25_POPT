@@ -766,25 +766,30 @@ class TkMainWin:
                 tr = False
                 if station.zustand_exec.stat_index in [2, 4]:
                     tr = True
-                station.zustand_exec.change_state(4)
+                station.set_T1()
+                if tr:
+                    station.zustand_exec.S1_end_connection()
+                else:
+                    station.zustand_exec.change_state(4)
                 # station.set_new_state()
                 station.zustand_exec.tx(None)
-                if tr:
-                    station.n2 = 100
 
     def disco_all(self):
-        for ch_id in range(1,11):
+        for ch_id in range(1, 11):
             station = self.get_conn(ch_id)
             if station:
                 if station.zustand_exec.stat_index:
                     tr = False
                     if station.zustand_exec.stat_index in [2, 4]:
                         tr = True
-                    station.zustand_exec.change_state(4)
+                    station.set_T1()
+                    if tr:
+                        station.zustand_exec.change_state(1)
+                    else:
+                        station.zustand_exec.change_state(4)
                     # station.set_new_state()
                     station.zustand_exec.tx(None)
-                    if tr:
-                        station.n2 = 100
+
     # DISCO ENDE
     # ##############
     ###################
