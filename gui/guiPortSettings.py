@@ -472,7 +472,7 @@ class PortSetTab:
 
             self.calc_baud.configure(state="normal")
             self.calc_baud.delete(0, tk.END)
-            self.calc_baud.insert(tk.END, '119200')
+            self.calc_baud.insert(tk.END, '115200')
             self.calc_baud.configure(state="disabled")
             """
             self.t1.configure(state="normal")

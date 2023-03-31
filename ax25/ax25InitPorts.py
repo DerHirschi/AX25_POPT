@@ -286,7 +286,7 @@ class AX25PortHandler(object):
         mh_entry = self.mh.mh_get_data_fm_call(dest_call)
         if not exclusive:
             if mh_entry:
-                port_id = int(mh_entry.port_id)
+                # port_id = int(mh_entry.port_id)
                 via_calls += min(list(mh_entry.all_routes), key=len)
                 axip_add = tuple(mh_entry.axip_add)
 

@@ -8,12 +8,6 @@ import cli.cli
 import config_station
 from ax25.ax25dec_enc import AX25Frame, reverse_uid
 
-"""
-import logging
-
-logger = logging.getLogger(__name__)
-"""
-
 
 def count_modulo(inp: int):
     return (inp + 1) % 8
@@ -216,9 +210,6 @@ class AX25Conn(object):
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
         self.is_RNR: bool = False
-        """ MH for CLI """
-        # self.mh = cfg.parm_mh
-        # self.cli = NoneCLI(self)
         """ Station Individual Parameter """
         stat_call = self.stat_cfg.stat_parm_Call
         if stat_call != config_station.DefaultStation.stat_parm_Call:
@@ -228,22 +219,6 @@ class AX25Conn(object):
             if stat_call in self.cfg.parm_stat_MaxFrame.keys():
                 if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
                     self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
-            """ Init CLI """
-            """
-            if stat_call in self.cfg.parm_cli.keys():
-                self.cli = self.cfg.parm_cli[stat_call](self, self.port_handler.ax25_stations_settings[stat_call])
-            else:
-                self.cli = cli.cli.NoneCLI(self)
-            """
-            """
-            for stat in self.cfg.parm_Stations:
-                if self.my_call_obj.call_str in stat.stat_parm_Call:
-                    self.cli = self.cfg.parm_cli[self.my_call_obj.call_str](self, stat)
-                    break
-            """
-        # else:
-            # raise ConnectionError
-            # self.cli = cli.cli.NoneCLI(self)
         """ Init CLI """
         self.cli = cli.cli.NoneCLI(self)
         self.init_cli()
@@ -256,29 +231,10 @@ class AX25Conn(object):
             self.cli.change_cli_state(state=1)
 
     def __del__(self):
-        """
-        if hasattr(self, 'DIGI_Connection'):
-            self.DIGI_Connection: AX25Conn
-            self.DIGI_Connection.zustand_exec.change_state(4)
-        """
-        """
-        if self.is_prt_hndl:
-            self.prt_hndl.del_conn2all_conn_var(conn=self)
-        """
-        """
-        if self.is_gui:
-            self.gui.ch_btn_status()
-        """
         del self.ax25_out_frame
         #del self.cli
         del self.zustand_exec
 
-    """
-    def setChVar(self):
-        if self.ch_index:
-            if self.is_gui:
-                self.ChVars = self.gui.win_buf[int(self.ch_index)]
-    """
     ##################
     # CLI INIT
     def init_cli(self):
@@ -360,16 +316,12 @@ class AX25Conn(object):
             conn.zustand_exec.tx(None)
             return False
         if self.is_link_remote:
-            print(f'link_connection rmote self.my_call_str: {self.my_call_str}')
             self.my_call_str = str(conn.my_call_str)
             self.ax25_out_frame.digi_call = str(conn.my_call_str)
-            print(f'link_connection rmote self.my_call_str <: {self.my_call_str}')
-            print(f'link_connection rmote self.to_call_str <: {self.to_call_str}')
             self.port_handler.link_connections[str(conn.uid)] = conn, ''
         else:
             self.port_handler.link_connections[str(conn.uid)] = conn, self.my_call_str
 
-        print(f'link_connection link_connections K : {self.port_handler.link_connections.keys()}')
         self.LINK_Connection = conn
         self.is_link = True
         self.cli = cli.cli.NoneCLI(self)    # Disable CLI
@@ -641,11 +593,6 @@ class DefaultStat(object):
 
     def __init__(self, ax25_conn: AX25Conn):
         self.ax25conn = ax25_conn
-        #  self.rtt_timer = self.ax25conn.RTT_Timer
-        # if hasattr(self.ax25conn, 'DIGI_Connection'):
-        #self.link_conn: AX25Conn = self.ax25conn.LINK_Connection
-        #self.link_rx_buff = self.ax25conn.LINK_rx_buff
-        #self.is_link = self.ax25conn.is_link
         self.frame = None
         # Incoming Frame
         self.nr = 0
@@ -694,14 +641,16 @@ class DefaultStat(object):
         # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
     def rx_UA(self):
-        self.ax25conn.send_SABM()
-        self.ax25conn.set_T1()
-        self.change_state(2)
+        if self.stat_index:
+            self.ax25conn.send_SABM()
+            self.ax25conn.set_T1()
+            self.change_state(2)
 
     def rx_DM(self):
-        self.ax25conn.send_SABM()
-        self.ax25conn.set_T1()
-        self.change_state(2)
+        if self.stat_index:
+            self.ax25conn.send_SABM()
+            self.ax25conn.set_T1()
+            self.change_state(2)
 
     def rx_RR(self):
         pass
@@ -718,9 +667,10 @@ class DefaultStat(object):
             self.prozess_I_frame()
 
     def rx_FRMR(self):
-        self.ax25conn.send_SABM()
-        self.ax25conn.set_T1()
-        self.change_state(4)
+        if self.stat_index:
+            self.ax25conn.send_DISC()
+            self.ax25conn.set_T1()
+            self.change_state(4)
 
     def tx(self, ax25_frame: AX25Frame):
         pass
@@ -731,13 +681,6 @@ class DefaultStat(object):
             self.ax25conn.LINK_rx_buff = b''
             self.ax25conn.tx_buf_rawData += bytes(self.ax25conn.LINK_Connection.LINK_rx_buff)
             self.ax25conn.LINK_Connection.LINK_rx_buff = b''
-        """
-        if self.is_link and self.link_conn is not None:
-            self.link_conn.tx_buf_rawData += bytes(self.link_rx_buff)
-            self.link_rx_buff = b''
-            self.ax25conn.tx_buf_rawData += bytes(self.link_conn.LINK_rx_buff)
-            self.link_conn.LINK_rx_buff = b''
-        """
 
     def link_cleanup(self):
         self.ax25conn.link_disco()
@@ -931,11 +874,11 @@ class S1Frei(DefaultStat):  # INIT RX
 
     def t1_fail(self):
         print(f"S1 t1 FAIL: {self.ax25conn.uid}")
+        self.ax25conn.n2 += 1
+        self.ax25conn.set_T1()
         if self.ax25conn.n2 > 3:
             print("S1 t1 FAIL > N2")
             self.change_state(0)
-        self.ax25conn.n2 += 1
-        self.ax25conn.set_T1()
 
     def t3_fail(self):
         print("S1 t3 FAIL")
@@ -1111,8 +1054,8 @@ class S4Abbau(DefaultStat):
         # if self.digi_conn is None:
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
-        self.ax25conn.n2 = 100
         self.S1_end_connection()
+        self.ax25conn.n2 = 100
         # if self.ax25conn.is_prt_hndl:
         # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 

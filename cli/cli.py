@@ -3,6 +3,7 @@ import pickle
 import ax25.ax25Connection
 import config_station
 from ax25.ax25dec_enc import validate_call
+from ax25.ax25Error import AX25EncodingERROR
 
 
 class DefaultCLI(object):
@@ -240,8 +241,16 @@ class DefaultCLI(object):
                 if port_id not in self.port_handler.ax25_ports.keys():
                     ret = 'Ungültiger Port..\r'
                     return ret
-            for call in self.parameter[1:]:
-                tmp_call = validate_call(call)
+            if self != -1:
+                parm = self.parameter[1:-1]
+            else:
+                parm = self.parameter[1:]
+
+            for call in parm:
+                try:
+                    tmp_call = validate_call(call)
+                except AX25EncodingERROR:
+                    break
                 if tmp_call:
                     vias.append(tmp_call)
                 else:
