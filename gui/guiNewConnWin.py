@@ -123,77 +123,78 @@ class NewConnWin:
     def set_port_index(self, index: int):
         self.port_index = index
         port = self.ax25_port_handler.get_port_by_index(index)
-        if port.port_typ == 'AXIP':
-            self.ax_ip_ip = \
-                (
-                    tk.Label(self.new_conn_win,
-                             text='IP:',
-                             foreground='black',
-                             font=("TkFixedFont", 12),
-                             height=1,
-                             width=5),
-                    tk.Text(self.new_conn_win,
-                            background='grey80',
-                            foreground='black',
-                            font=("TkFixedFont", 12),
-                            height=1,
-                            width=15),
-                )
-            self.ax_ip_ip[0].place(x=2, y=80)
-            self.ax_ip_ip[1].place(x=80, y=80)
-            self.ax_ip_port = \
-                (
-                    tk.Label(self.new_conn_win,
-                             text='Port:',
-                             foreground='black',
-                             font=("TkFixedFont", 12),
-                             height=1,
-                             width=5),
-                    tk.Text(self.new_conn_win,
-                            background='grey80',
-                            foreground='black',
-                            font=("TkFixedFont", 12),
-                            height=1,
-                            width=6)
-                )
-            self.ax_ip_port[0].place(x=300, y=80)
-            self.ax_ip_port[1].place(x=380, y=80)
-            call_str = self.call_txt_inp.get('0.0', tk.END)
-            call_obj = ProcCallInput(call_str)
+        if port:
+            if port.port_typ == 'AXIP':
+                self.ax_ip_ip = \
+                    (
+                        tk.Label(self.new_conn_win,
+                                 text='IP:',
+                                 foreground='black',
+                                 font=("TkFixedFont", 12),
+                                 height=1,
+                                 width=5),
+                        tk.Text(self.new_conn_win,
+                                background='grey80',
+                                foreground='black',
+                                font=("TkFixedFont", 12),
+                                height=1,
+                                width=15),
+                    )
+                self.ax_ip_ip[0].place(x=2, y=80)
+                self.ax_ip_ip[1].place(x=80, y=80)
+                self.ax_ip_port = \
+                    (
+                        tk.Label(self.new_conn_win,
+                                 text='Port:',
+                                 foreground='black',
+                                 font=("TkFixedFont", 12),
+                                 height=1,
+                                 width=5),
+                        tk.Text(self.new_conn_win,
+                                background='grey80',
+                                foreground='black',
+                                font=("TkFixedFont", 12),
+                                height=1,
+                                width=6)
+                    )
+                self.ax_ip_port[0].place(x=300, y=80)
+                self.ax_ip_port[1].place(x=380, y=80)
+                call_str = self.call_txt_inp.get('0.0', tk.END)
+                call_obj = ProcCallInput(call_str)
 
-            mh_ent = self.mh.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
-            # Just if u switch after enter in call
-            if mh_ent[1]:
-                ip = mh_ent[0]
-                prt = str(mh_ent[1])
-                self.ax_ip_ip[1].delete('1.0', tk.END)
-                self.ax_ip_ip[1].insert(tk.END, ip)
-                self.ax_ip_port[1].delete('1.0', tk.END)
-                self.ax_ip_port[1].insert(tk.END, prt)
-            self.call_txt_inp.focus_set()
-            self.own_call_dd_men.destroy()
-            opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
-            self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
-            self.own_call_dd_men.place(x=80, y=120)
-            self.own_call_dd_men.configure()
-            if opt:
-                self.own_call_var.set(opt[0])
+                mh_ent = self.mh.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
+                # Just if u switch after enter in call
+                if mh_ent[1]:
+                    ip = mh_ent[0]
+                    prt = str(mh_ent[1])
+                    self.ax_ip_ip[1].delete('1.0', tk.END)
+                    self.ax_ip_ip[1].insert(tk.END, ip)
+                    self.ax_ip_port[1].delete('1.0', tk.END)
+                    self.ax_ip_port[1].insert(tk.END, prt)
+                self.call_txt_inp.focus_set()
+                self.own_call_dd_men.destroy()
+                opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
+                self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
+                self.own_call_dd_men.place(x=80, y=120)
+                self.own_call_dd_men.configure()
+                if opt:
+                    self.own_call_var.set(opt[0])
 
-        else:
-            if self.ax_ip_ip is not None:
-                self.ax_ip_ip[0].destroy()
-                self.ax_ip_ip[1].destroy()
-                self.ax_ip_port[0].destroy()
-                self.ax_ip_port[1].destroy()
-            self.own_call_dd_men.destroy()
-            opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
-            self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
-            self.own_call_dd_men.place(x=80, y=80)
-            self.own_call_dd_men.configure()
-            if opt:
-                self.own_call_var.set(opt[0])
+            else:
+                if self.ax_ip_ip is not None:
+                    self.ax_ip_ip[0].destroy()
+                    self.ax_ip_ip[1].destroy()
+                    self.ax_ip_port[0].destroy()
+                    self.ax_ip_port[1].destroy()
+                self.own_call_dd_men.destroy()
+                opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
+                self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
+                self.own_call_dd_men.place(x=80, y=80)
+                self.own_call_dd_men.configure()
+                if opt:
+                    self.own_call_var.set(opt[0])
 
-        self.set_port_btn()
+            self.set_port_btn()
 
     def set_port_btn(self):
         for k in self.port_btn.keys():

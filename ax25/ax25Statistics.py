@@ -505,7 +505,8 @@ class MH(object):
         ent.route = []      # Last Route
         if ax25_frame.via_calls:
             for call in ax25_frame.via_calls:
-                ent.route.append(call.call_str)
+                if call.c_bit:
+                    ent.route.append(call.call_str)
 
         if ent.route not in ent.all_routes:
             ent.all_routes.append(list(ent.route))

@@ -66,14 +66,26 @@ class MHWin(tk.Toplevel):
         # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
         # tree.column(1, stretch=True)
 
-        """
-        tree.bind('<<TreeviewSelect>>', item_selected)
-        tree.bind('<<TreeviewSelect>>', item_selected)
-
-        """
         self.tree_data = []
         self.init_tree_data()
         self.update_mh()
+        self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
+
+    def entry_selected(self, event):
+        for selected_item in  self.tree.selection():
+            item = self.tree.item(selected_item)
+            record = item['values']
+            # show a message
+            call = record[3]
+            vias = record[6]
+            port = record[2]
+            port = int(port.split(' ')[0])
+            if vias:
+                call = f'{call} {vias}'
+            self.root_win.open_new_conn_win()
+            self.root_win.new_conn_win.call_txt_inp.insert(tk.END, call)
+            self.root_win.new_conn_win.set_port_index(port)
+            self.close()
 
     def update_mh(self):
         self.update_tree()

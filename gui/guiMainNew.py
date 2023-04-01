@@ -448,9 +448,9 @@ class TkMainWin:
 
     def text_win_bigger(self):
         width = self.inp_txt.cget('width')
-        self.inp_txt.configure( width=width)
-        self.out_txt.configure( width=width)
-        self.mon_txt.configure( width=width)
+        self.inp_txt.configure( width=width + 1)
+        self.out_txt.configure( width=width + 1)
+        self.mon_txt.configure( width=width + 1)
 
     def text_win_smaller(self):
         width = self.inp_txt.cget('width')
