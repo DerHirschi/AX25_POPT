@@ -57,6 +57,7 @@ class ChVars(object):
     def __init__(self):
         self.output_win = ''
         self.input_win = ''
+        self.input_win_index = ''
         self.new_data_tr = False
         self.rx_beep_tr = False
         self.rx_beep_cooldown = time.time()
@@ -72,11 +73,6 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
-        #######################
-        # Window Text Buffers
-        self.win_buf: {int: ChVars} = {}
-        for i in range(10):
-            self.win_buf[i + 1] = ChVars()
         #####################
         #####################
         # GUI VARS
@@ -155,6 +151,12 @@ class TkMainWin:
         self.out_txt = self.txt_win.out_txt_win
         self.inp_txt = self.txt_win.in_txt_win
         self.mon_txt = self.txt_win.mon_txt
+        #######################
+        # Window Text Buffers
+        self.win_buf: {int: ChVars} = {}
+        for i in range(10):
+            self.win_buf[i + 1] = ChVars()
+            self.win_buf[i + 1].input_win_index = str(self.inp_txt.index(tk.INSERT))
         # Channel Buttons
         self.ch_btn = ChBtnFrm(self)
         self.ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
@@ -244,6 +246,7 @@ class TkMainWin:
         # set Ch Btn Color
         self.ch_btn_status_update()
         # set KEY BINDS
+        self.set_binds()
         self.set_keybinds()
         #
         self.monitor_start_msg()
@@ -348,9 +351,12 @@ class TkMainWin:
             self.out_txt.delete('sel.first', 'sel.last')
 
     def clipboard_past(self):
+        pass
+        """
         clp_brd = self.main_win.clipboard_get()
         if clp_brd:
             self.inp_txt.insert(tk.END, clp_brd)
+        """
 
     def select_all(self):
         self.inp_txt.tag_add(tk.SEL, "1.0", tk.END)
@@ -378,6 +384,9 @@ class TkMainWin:
     def ch_btn_status_update(self):
         self.ch_btn.ch_btn_status_update()
 
+    def set_binds(self):
+        self.inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
+
     def set_keybinds(self):
         self.main_win.bind('<F1>', lambda event: self.ch_btn.ch_btn_clk(1))
         self.main_win.bind('<F2>', lambda event: self.ch_btn.ch_btn_clk(2))
@@ -390,6 +399,7 @@ class TkMainWin:
         self.main_win.bind('<F9>', lambda event: self.ch_btn.ch_btn_clk(9))
         self.main_win.bind('<F10>', lambda event: self.ch_btn.ch_btn_clk(10))
         self.main_win.bind('<Return>', self.snd_text)
+        self.main_win.bind('<Shift-KeyPress-Return>', self.shift_return)
         # self.main_win.bind('<KP_Enter>', self.snd_text)
         self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
         self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
@@ -407,7 +417,7 @@ class TkMainWin:
     def any_key(self, event: tk.Event):
         if event.keycode == 104:  # Numpad Enter
             self.snd_text(event)
-            self.inp_txt.insert(tk.END, '\n')
+            self.inp_txt.insert(tk.INSERT, '\n')
         """
         if event.keycode == 86:     # Num +
             self.increase_textsize()
@@ -417,7 +427,11 @@ class TkMainWin:
         # print(event)
         if self.inp_txt.focus_get() != self.inp_txt:
             self.inp_txt.focus_set()
-            self.inp_txt.insert(tk.END, event.char)
+            self.inp_txt.insert(tk.INSERT, event.char)
+        # self.on_click_inp_txt()
+
+        print(f'INSERT  {self.inp_txt.index(tk.INSERT)}')
+        print(f'END  {self.inp_txt.index(tk.END)}')
 
     def increase_textsize(self):
         self.text_size += 1
@@ -684,11 +698,7 @@ class TkMainWin:
                         self.out_txt.configure(state="disabled")
                         if tr:
                             self.out_txt.see("end")
-                        """
-                        if self.win_buf[k].t2speech:
-                            if self.sprech(str(self.win_buf[k].t2speech_buf)):
-                                self.win_buf[k].t2speech_buf = ''
-                        """
+
                     else:
                         self.win_buf[k].new_data_tr = True
                     self.win_buf[k].rx_beep_tr = True
@@ -715,14 +725,7 @@ class TkMainWin:
             ind2 = self.mon_txt.index(tk.INSERT)
             self.mon_txt.tag_add(tag, ind, ind2)
             self.mon_txt.tag_config(tag, foreground=color)
-        """
-        print("----MON-----")
-        for event in self.mon_txt.bind_all():
-            print(event)
-        print("--MAIN-------")
-        for event in self.main_win.bind_all():
-            print(event)
-        """
+
         # self.mon_txt.bindtags(self.mon_txt.tag_names(None))     # TODO Scrollbar is not scrollable after this
         #yscrollcommand = vbar.set
         #self.mon_txt.configure(yscrollcommand=self.mon_txt.vbar.set())
@@ -825,12 +828,43 @@ class TkMainWin:
     # SEND TEXT OUT
     def snd_text(self, event: tk.Event):
         station = self.get_conn(self.channel_index)
+        ind = str(self.win_buf[self.channel_index].input_win_index)
+        if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
+            ind = str(self.inp_txt.index(tk.INSERT))
+        ind = str(int(float(ind))) + '.0'
         if station:
-            ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
             tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
-            tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
+            print(tmp_txt.encode())
+            tmp_txt = tmp_txt.replace('\n', '\r')
             # Send it to Connection/Station TX Buffer
-            station.tx_buf_rawData += (tmp_txt + '\r').encode()
+            station.tx_buf_rawData += tmp_txt.encode()
+        self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
+        self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
+        if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
+            self.inp_txt.delete(tk.END, tk.END)
+        # self.inp_txt.tag_remove('send', str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0' , self.inp_txt.index(tk.INSERT))
+
+        # print(f'self.win_buf[self.channel_index].input_win_index: {self.win_buf[self.channel_index].input_win_index}') # self.on_click_inp_txt()
+        # print(f'self.inp_txt.index(tk.END): {self.inp_txt.index(tk.END)}')
+        # self.on_click_inp_txt()
+        # self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
+
+    def on_click_inp_txt(self, event=None):
+        ind = self.win_buf[self.channel_index].input_win_index
+        # if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
+        # print(f'ind: {ind}')
+        # if ind != str(int(float(ind))) + '.0':
+        self.inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
+        self.inp_txt.tag_remove('send', str(float(self.inp_txt.index(tk.INSERT)) - 0.1), self.inp_txt.index(tk.INSERT))
+        ind2 = str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0'
+        # print(f'ind2: {ind2}')
+
+        self.inp_txt.tag_remove('send', ind2, self.inp_txt.index(tk.INSERT))
+        self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
+
+    def shift_return(self, event=None):
+        pass
+        # self.inp_txt.insert(tk.INSERT, '\n')
 
     # SEND TEXT OUT
     ###################
@@ -884,6 +918,7 @@ class TkMainWin:
             channel=12
         )
         """
+        """
         if self.ax25_port_handler.link_connections.keys():
             print('-----------------------------------------------------')
             print(f'link_connections K : {self.ax25_port_handler.link_connections.keys()}')
@@ -895,6 +930,6 @@ class TkMainWin:
                 print(f'link_connections  LINK_Connection: {self.ax25_port_handler.link_connections[k][0].LINK_Connection}')
                 print(f'link_connections  state: {self.ax25_port_handler.link_connections[k][0].zustand_exec.stat_index}')
                 print(f'link_connections  all_Conn: {self.ax25_port_handler.all_connections.keys()}')
-
+        """
 
 
