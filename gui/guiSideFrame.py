@@ -102,54 +102,39 @@ class SideTabbedFrame:
         self.rnr.place(x=10, y=parm_y)
 
         # MH ##########################
-        self.tab2_mh.columnconfigure(0, minsize=85, weight=10)
-        self.tab2_mh.columnconfigure(1, minsize=100, weight=9)
-        self.tab2_mh.columnconfigure(2, minsize=50, weight=8)
-        self.tab2_mh.columnconfigure(3, minsize=50, weight=8)
-        self.tab2_mh.columnconfigure(4, minsize=50, weight=9)
-        tk.Label(self.tab2_mh, text="Zeit", width=85).grid(row=0, column=0)
-        tk.Label(self.tab2_mh, text="Call", width=100).grid(row=0, column=1)
-        tk.Label(self.tab2_mh, text="PACK", width=50).grid(row=0, column=2)
-        tk.Label(self.tab2_mh, text="REJ", width=50).grid(row=0, column=3)
-        tk.Label(self.tab2_mh, text="Route", width=50).grid(row=0, column=4)
-        self.side_mh: {int: [tk.Entry, tk.Entry, tk.Entry, tk.Entry, tk.Entry]} = {}
-        for row in range(9):
-            a = tk.Entry(self.tab2_mh, width=85,
-                         disabledbackground='ghost white',
-                         disabledforeground='black',
-                         state='disabled')
-            b = tk.Entry(self.tab2_mh, width=80,
-                         disabledbackground='ghost white',
-                         disabledforeground='black',
-                         state='disabled')
-            # b = tk.Button(self.tab2_mh, width=100)
-            c = tk.Entry(self.tab2_mh, width=20,
-                         disabledbackground='ghost white',
-                         disabledforeground='black',
-                         state='disabled')
-            d = tk.Entry(self.tab2_mh, width=20,
-                         disabledbackground='ghost white',
-                         disabledforeground='black',
-                         state='disabled')
-            e = tk.Entry(self.tab2_mh, width=100,
-                         disabledbackground='ghost white',
-                         disabledforeground='black',
-                         state='disabled')
-            """
-            a.bind("<Button-1>", self.reset_dx_alarm)
-            b.bind("<Button-1>", self.reset_dx_alarm)
-            c.bind("<Button-1>", self.reset_dx_alarm)
-            d.bind("<Button-1>", self.reset_dx_alarm)
-            e.bind("<Button-1>", self.reset_dx_alarm)
-            """
-            a.grid(row=row + 1, column=0)
-            b.grid(row=row + 1, column=1)
-            c.grid(row=row + 1, column=2)
-            d.grid(row=row + 1, column=3)
-            e.grid(row=row + 1, column=4)
-            self.side_mh[row + 1] = [a, b, c, d, e]
+
+        # TREE
+        self.tab2_mh.columnconfigure(0, minsize=300, weight=1)
+
+        columns = (
+            'mh_last_seen',
+            'mh_call',
+            'mh_port',
+            'mh_nPackets',
+            'mh_route',
+        )
+
+        self.tree = ttk.Treeview(self.tab2_mh, columns=columns, show='headings')
+        self.tree.grid(row=0, column=0, sticky='nsew')
+
+        self.tree.heading('mh_last_seen', text='Zeit')
+        self.tree.heading('mh_call', text='Call')
+        self.tree.heading('mh_port', text='Port')
+        self.tree.heading('mh_nPackets', text='PACK')
+        self.tree.heading('mh_route', text='Route')
+        self.tree.column("mh_last_seen", anchor=tk.CENTER, stretch=tk.NO, width=90)
+        self.tree.column("mh_call", stretch=tk.NO, width=100)
+        self.tree.column("mh_port", anchor=tk.CENTER, stretch=tk.NO, width=80)
+        self.tree.column("mh_nPackets", anchor=tk.CENTER, stretch=tk.NO, width=60)
+        self.tree.column("mh_route",  stretch=tk.YES, width=180)
+        # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
+        # tree.column(1, stretch=True)
+
+        self.tree_data = []
         self.last_mh_ent = []
+        # self.init_tree_data()
         self.update_side_mh()
+        self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
 
         # Settings ##########################
         # Global Sound
@@ -350,6 +335,7 @@ class SideTabbedFrame:
         elif self.tabControl.index(self.tabControl.select()) == 4:
             self.update_ch_echo()
 
+    """
     def open_new_conn_win(self, event, call: str):
         print(event)
         mh_ent = self.main_win.mh.mh_get_data_fm_call(call)
@@ -362,11 +348,51 @@ class SideTabbedFrame:
                 self.main_win.open_new_conn_win()
                 self.main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
                 self.main_win.new_conn_win.set_port_index(port)
+    """
+
+    def entry_selected(self, event):
+        for selected_item in self.tree.selection():
+            item = self.tree.item(selected_item)
+            record = item['values']
+            # show a message
+            call = record[1]
+            vias = record[4]
+            port = record[2]
+            port = int(port.split(' ')[0])
+            if vias:
+                call = f'{call} {vias}'
+            self.main_win.open_new_conn_win()
+            self.main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
+            self.main_win.new_conn_win.set_port_index(port)
+
+    def format_tree_ent(self):
+        self.tree_data = []
+        for k in self.last_mh_ent:
+            # ent: MyHeard
+            ent = k
+            route = ent.route
+
+            self.tree_data.append((
+                f"{ent.last_seen.split(' ')[1]}",
+                f'{ent.own_call}',
+                f'{ent.port_id} {ent.port}',
+                f'{ent.pac_n}',
+                ' '.join(route),
+            ))
+
+    def update_tree(self):
+        for i in self.tree.get_children():
+            self.tree.delete(i)
+        for ret_ent in self.tree_data:
+            self.tree.insert('', tk.END, values=ret_ent)
 
     def update_side_mh(self):
         mh_ent = self.mh.output_sort_entr(8)
         if mh_ent != self.last_mh_ent:
             self.last_mh_ent = list(self.mh.output_sort_entr(8))
+            self.format_tree_ent()
+            self.update_tree()
+            """
             c = 1
             for el in mh_ent:
                 self.side_mh[c][0].configure(state='normal')
@@ -398,6 +424,7 @@ class SideTabbedFrame:
                 self.side_mh[c][3].configure(state='disabled')
                 self.side_mh[c][4].configure(state='disabled')
                 c += 1
+            """
 
     def on_ch_btn_stat_change(self):
         conn = self.main_win.get_conn()
