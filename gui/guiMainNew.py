@@ -87,6 +87,7 @@ class TkMainWin:
         self.mon_mode = False
         self.non_prio_task_timer = time.time()
         self.non_non_prio_task_timer = time.time()
+        # self.clipboard = ''
         ####################
         # GUI PARAM
         self.parm_btn_blink_time = 0.3
@@ -325,6 +326,38 @@ class TkMainWin:
                                         ))
 
     ##########################
+    # Clipboard Stuff
+    def copy_select(self):
+        if self.out_txt.tag_ranges("sel"):
+            self.main_win.clipboard_clear()
+            self.main_win.clipboard_append(self.out_txt.selection_get())
+            self.out_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        elif self.inp_txt.tag_ranges("sel"):
+            self.main_win.clipboard_clear()
+            self.main_win.clipboard_append(self.inp_txt.selection_get())
+            self.inp_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        elif self.mon_txt.tag_ranges("sel"):
+            self.main_win.clipboard_clear()
+            self.main_win.clipboard_append(self.mon_txt.selection_get())
+            self.mon_txt.tag_remove(tk.SEL, "1.0", tk.END)
+
+    def cut_select(self):
+        if self.out_txt.tag_ranges("sel"):
+            self.main_win.clipboard_clear()
+            self.main_win.clipboard_append(self.out_txt.selection_get())
+            self.out_txt.delete('sel.first', 'sel.last')
+
+    def clipboard_past(self):
+        clp_brd = self.main_win.clipboard_get()
+        if clp_brd:
+            self.inp_txt.insert(tk.END, clp_brd)
+
+    def select_all(self):
+        self.inp_txt.tag_add(tk.SEL, "1.0", tk.END)
+        self.inp_txt.mark_set(tk.INSERT, "1.0")
+        self.inp_txt.see(tk.INSERT)
+
+    ##########################
     # no WIN FNC
     def get_conn(self, con_ind: int = 0):
         if not con_ind:
@@ -360,6 +393,10 @@ class TkMainWin:
         # self.main_win.bind('<KP_Enter>', self.snd_text)
         self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
         self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
+        self.main_win.bind('<Control-c>', lambda event: self.copy_select())
+        self.main_win.bind('<Control-x>', lambda event: self.cut_select())
+        self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
+        self.main_win.bind('<Control-a>', lambda event: self.select_all())
         self.main_win.bind('<Control-plus>', lambda event: self.increase_textsize())
         self.main_win.bind('<Control-minus>', lambda event: self.decrease_textsize())
         self.main_win.bind('<Control-Right>', lambda event: self.text_win_bigger())
