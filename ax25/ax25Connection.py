@@ -351,9 +351,10 @@ class AX25Conn(object):
             print("LINK CLEANUP")
             print(f'LINK CLEANUP link_connections K : {self.port_handler.link_connections.keys()}')
 
-            self.port_handler.del_link(self.uid)
+            # self.port_handler.del_link(self.uid)
             self.LINK_Connection = None
             self.is_link = False
+
             # self.ax25_out_frame.digi_call = ''
             # self.is_link_remote = False
 
@@ -361,7 +362,7 @@ class AX25Conn(object):
     # DISCO
     def conn_disco(self):
         if self.zustand_exec.stat_index:
-            self.set_T1()
+            self.set_T1(stop=True)
             self.zustand_exec.tx(None)
             if self.zustand_exec.stat_index in [2, 4]:
                 self.zustand_exec.S1_end_connection()
@@ -432,6 +433,7 @@ class AX25Conn(object):
                          (self.parm_Kiss_Tail * 10)
                          ) * 2
         # print('parm_T2: {}'.format(self.parm_T2))
+        self.IRTT = max(self.IRTT, 300)     # TODO seems not right!!!!!!!!!!!!!!!!!!!!
         # print('IRTT: {}'.format(self.IRTT))
 
     def set_T1(self, stop=False):
@@ -455,12 +457,16 @@ class AX25Conn(object):
         """
 
     def set_T2(self, stop=False, link_remote=False):
-        if stop:
+        if self.cfg.parm_full_duplex:
             self.t2 = 0
         else:
-            self.t2 = float(self.parm_T2 + time.time())
-            if self.is_link and not link_remote:
-                self.LINK_Connection.set_T2(link_remote=True)
+            if stop:
+                self.t2 = 0
+            else:
+                self.t2 = float(self.parm_T2 + time.time())
+                if self.is_link and not link_remote:
+                    if self.own_port == self.LINK_Connection.own_port:
+                        self.LINK_Connection.set_T2(link_remote=True)
 
     def set_T3(self, stop=False):
         if stop:
@@ -738,6 +744,7 @@ class DefaultStat(object):
         self.link_cleanup()
         self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
         self.ax25conn.own_port.del_connections(conn=self.ax25conn)
+
         # self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
 
     def S1_end_connection(self):
@@ -845,38 +852,35 @@ class S1Frei(DefaultStat):  # INIT RX
         """
 
     def rx_UA(self):
-        # self.change_state(0)
-        self.ax25conn.set_T1()
+        self.change_state(0)
+        self.ax25conn.set_T1(stop=True)
 
     def rx_DM(self):
-        # self.change_state(0)
-        self.ax25conn.set_T1()
+        self.change_state(0)
+        self.ax25conn.set_T1(stop=True)
+        # self.ax25conn.set_T1()
 
     def rx_RR(self):
-        if self.pf:
-            self.reject()
-        self.ax25conn.set_T1()
+        self.change_state(0)
+        self.ax25conn.set_T1(stop=True)
         # else:
         #     self.change_state(0)
 
     def rx_RNR(self):
-        if self.pf:
-            self.reject()
-        self.ax25conn.set_T1()
+        self.change_state(0)
+        self.ax25conn.set_T1(stop=True)
         # else:
         #     self.change_state(0)
 
     def rx_REJ(self):
-        if self.pf:
-            self.reject()
-        self.ax25conn.set_T1()
+        self.change_state(0)
+        self.ax25conn.set_T1(stop=True)
         # else:
         #     self.change_state(0)
 
     def rx_I(self):
-        if self.pf:
-            self.reject()
-        self.ax25conn.set_T1()
+        self.change_state(0)
+        self.ax25conn.set_T1(stop=True)
         # else:
         #     self.change_state(0)
 
@@ -884,15 +888,24 @@ class S1Frei(DefaultStat):  # INIT RX
         self.change_state(4)
 
     def t1_fail(self):
-        print(f"S1 t1 FAIL: {self.ax25conn.uid}")
+        # print(f"S1 t1 FAIL: {self.ax25conn.uid}")
+        # print(f's1 t1 FAIL link_connections K : {self.ax25conn.port_handler.link_connections.keys()}')
+
         self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
-        if self.ax25conn.n2 > 3:
-            print("S1 t1 FAIL > N2")
+        """
+        if self.ax25conn.is_link_remote:
+            parm_n2 = self.ax25conn.parm_N2
+        else:
+            parm_n2 = 3
+        """
+        parm_n2 = 3
+        if self.ax25conn.n2 > parm_n2:
+            # print("S1 t1 FAIL > N2")
             self.change_state(0)
 
     def t3_fail(self):
-        print("S1 t3 FAIL")
+        # print("S1 t3 FAIL")
         self.change_state(0)
 
 
@@ -1034,7 +1047,7 @@ class S4Abbau(DefaultStat):
         self.ax25conn.tx_buf_unACK = {}
         self.ax25conn.send_DISC()
         self.ax25conn.set_T1()
-        # self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)  # TODO if Hard DISCO
+        # self.ax25conn.prt_hndl.del_conn2all_conn_var(conn=self.ax25conn)
 
     def rx_UA(self):
         self.end_conn()
@@ -1046,20 +1059,32 @@ class S4Abbau(DefaultStat):
         self.reject()
 
     def rx_RR(self):
+        pass
+        """
         if self.pf:
             self.reject()
+        """
 
     def rx_REJ(self):
+        pass
+        """
         if self.pf:
             self.reject()
+        """
 
     def rx_I(self):
+        pass
+        """
         if self.pf:
             self.reject()
+        """
 
     def rx_RNR(self):
+        pass
+        """
         if self.pf:
             self.reject()
+         """
 
     def end_conn(self):
         # if self.digi_conn is None:

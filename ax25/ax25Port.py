@@ -348,6 +348,7 @@ class AX25Port(threading.Thread):
                 # S0 ENDE
                 # if not conn.zustand_exec.stat_index:
                 # And empty Buffer ?? S0 should be enough
+                self.port_handler.del_link(conn.uid)
                 del self.connections[k]
 
     def run(self):
@@ -614,7 +615,7 @@ class AXIP(AX25Port):
                 self.port_param = socket.gethostbyname(hostname), self.port_param[1]
             self.own_ipAddr = self.port_param[0]
             logger.info('AXIP bind on IP: {}'.format(self.own_ipAddr))
-            sock_timeout = 0.2
+            sock_timeout = 0.01
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             self.device.settimeout(sock_timeout)
             try:
@@ -657,6 +658,7 @@ class AXIP(AX25Port):
     def rx(self):
         try:
             udp_recv = self.device.recvfrom(800)
+            # self.device.settimeout(0.1)
         # except socket.error:
         # raise AX25DeviceERROR
         except OSError:
@@ -689,6 +691,7 @@ class AXIP(AX25Port):
             ###################################
             try:
                 self.device.sendto(frame.bytes + calc_crc, frame.axip_add)
+                # self.device.settimeout(0.1)
             except (ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
                 logger.warning('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
                 logger.warning('{}'.format(e))

@@ -235,29 +235,10 @@ class AX25PortHandler(object):
                 self.all_connections[k].ch_index = 0
                 if self.gui is not None:
                     self.gui.disco_snd()
-                self.del_link(conn.uid)
+                # self.del_link(conn.uid)
                 del self.all_connections[k]
                 print('InitPorts Conn Cleanup !!')
-        """
-        for k in list(self.ax25_ports.keys()):
-            self.ax25_ports[k].del_connections()
-        """
 
-        """
-        for k in list(self.link_connections.keys()):
-            if self.link_connections[k] == conn:
-                del self.link_connections[k]
-        """
-                #temp.append(k)
-        """        
-        for k in temp:
-            # conn: AX25Conn = self.all_connections[k]
-            conn = self.all_connections[k]
-            conn.ch_index = 0
-            if self.gui is not None:
-                self.gui.disco_snd()
-            del self.all_connections[k]
-        """
         if self.gui is not None:
             self.gui.ch_btn_status_update()
 
