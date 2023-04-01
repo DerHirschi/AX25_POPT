@@ -552,7 +552,7 @@ class MH(object):
                 'call': flag.own_call,
                 'pack': str(flag.pac_n),
                 'rej': str(flag.rej_n),
-                'route': str(flag.route),
+                'route': str(max(flag.all_routes)),
                 'axip': str(flag.axip_add),
                 'axipfail': str(flag.axip_fail),
             }[flag_str]

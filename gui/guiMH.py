@@ -72,7 +72,7 @@ class MHWin(tk.Toplevel):
         self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
 
     def entry_selected(self, event):
-        for selected_item in  self.tree.selection():
+        for selected_item in self.tree.selection():
             item = self.tree.item(selected_item)
             record = item['values']
             # show a message
@@ -118,8 +118,9 @@ class MHWin(tk.Toplevel):
             else:
                 axip_str = ''
             route = ''
-            if ent.route:
-                route = ent.route
+            if ent.all_routes:
+                route = min(ent.all_routes)
+
             self.tree_data.append((
                 f'{ent.last_seen}',
                 f'{ent.first_seen}',

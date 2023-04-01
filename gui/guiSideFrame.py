@@ -224,6 +224,7 @@ class SideTabbedFrame:
         self.chk_btn_default_clr = _chk_btn.cget('bg')
         self.ch_echo_vars = {}
         self.update_ch_echo()
+        #self.tabControl.s
 
     def reset_dx_alarm(self, event=None):
         self.main_win.reset_dx_alarm()
@@ -339,8 +340,22 @@ class SideTabbedFrame:
             conn.calc_irtt()
 
     def tasker(self):
-        self.update_side_mh()
-        self.update_ch_echo()
+        if self.tabControl.index(self.tabControl.select()) == 1:
+            self.update_side_mh()
+        elif self.tabControl.index(self.tabControl.select()) == 4:
+            self.update_ch_echo()
+
+    def open_new_conn_win(self, call: str):
+        mh_ent = self.main_win.mh.mh_get_data_fm_call(call)
+        print(call)
+        if mh_ent:
+            port = mh_ent.port_id
+            vias = min(mh_ent.all_routes)
+            if vias:
+                call = f"{call} {' '.join(vias)}"
+                self.main_win.open_new_conn_win()
+                self.main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
+                self.main_win.new_conn_win.set_port_index(port)
 
     def update_side_mh(self):
         mh_ent = self.mh.output_sort_entr(8)
@@ -353,6 +368,13 @@ class SideTabbedFrame:
                 self.side_mh[c][2].configure(state='normal')
                 self.side_mh[c][3].configure(state='normal')
                 self.side_mh[c][4].configure(state='normal')
+                """
+                self.side_mh[c][0].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
+                self.side_mh[c][1].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
+                self.side_mh[c][2].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
+                self.side_mh[c][3].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
+                self.side_mh[c][4].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
+                """
                 self.side_mh[c][0].delete(0, tk.END)
                 self.side_mh[c][0].insert(0, el.last_seen.split(' ')[1])
                 self.side_mh[c][1].delete(0, tk.END)
