@@ -114,12 +114,22 @@ class SideTabbedFrame:
         tk.Label(self.tab2_mh, text="Route", width=50).grid(row=0, column=4)
         self.side_mh: {int: [tk.Entry, tk.Entry, tk.Entry, tk.Entry, tk.Entry]} = {}
         for row in range(9):
-            a = tk.Entry(self.tab2_mh, width=85)
-            b = tk.Entry(self.tab2_mh, width=80)
+            a = tk.Entry(self.tab2_mh, width=85,
+                         disabledbackground='ghost white',
+                         disabledforeground='black')
+            b = tk.Entry(self.tab2_mh, width=80,
+                         disabledbackground='ghost white',
+                         disabledforeground='black')
             # b = tk.Button(self.tab2_mh, width=100)
-            c = tk.Entry(self.tab2_mh, width=20)
-            d = tk.Entry(self.tab2_mh, width=20)
-            e = tk.Entry(self.tab2_mh, width=100)
+            c = tk.Entry(self.tab2_mh, width=20,
+                         disabledbackground='ghost white',
+                         disabledforeground='black')
+            d = tk.Entry(self.tab2_mh, width=20,
+                         disabledbackground='ghost white',
+                         disabledforeground='black')
+            e = tk.Entry(self.tab2_mh, width=100,
+                         disabledbackground='ghost white',
+                         disabledforeground='black')
             """
             a.bind("<Button-1>", self.reset_dx_alarm)
             b.bind("<Button-1>", self.reset_dx_alarm)
@@ -133,6 +143,7 @@ class SideTabbedFrame:
             d.grid(row=row + 1, column=3)
             e.grid(row=row + 1, column=4)
             self.side_mh[row + 1] = [a, b, c, d, e]
+        self.last_mh_ent = []
         self.update_side_mh()
 
         # Settings ##########################
@@ -333,20 +344,32 @@ class SideTabbedFrame:
 
     def update_side_mh(self):
         mh_ent = self.mh.output_sort_entr(8)
-        c = 1
-        for el in mh_ent:
-            self.side_mh[c][0].delete(0, tk.END)
-            self.side_mh[c][0].insert(0, el.last_seen.split(' ')[1])
-            self.side_mh[c][1].delete(0, tk.END)
-            self.side_mh[c][1].insert(0, el.own_call)
-            # self.side_mh[c][1].configure(text=el.own_call)
-            self.side_mh[c][2].delete(0, tk.END)
-            self.side_mh[c][2].insert(0, el.pac_n)
-            self.side_mh[c][3].delete(0, tk.END)
-            self.side_mh[c][3].insert(0, el.rej_n)
-            self.side_mh[c][4].delete(0, tk.END)
-            self.side_mh[c][4].insert(0, el.route)
-            c += 1
+        if mh_ent != self.last_mh_ent:
+            self.last_mh_ent = list(self.mh.output_sort_entr(8))
+            c = 1
+            for el in mh_ent:
+                self.side_mh[c][0].configure(state='normal')
+                self.side_mh[c][1].configure(state='normal')
+                self.side_mh[c][2].configure(state='normal')
+                self.side_mh[c][3].configure(state='normal')
+                self.side_mh[c][4].configure(state='normal')
+                self.side_mh[c][0].delete(0, tk.END)
+                self.side_mh[c][0].insert(0, el.last_seen.split(' ')[1])
+                self.side_mh[c][1].delete(0, tk.END)
+                self.side_mh[c][1].insert(0, el.own_call)
+                # self.side_mh[c][1].configure(text=el.own_call)
+                self.side_mh[c][2].delete(0, tk.END)
+                self.side_mh[c][2].insert(0, el.pac_n)
+                self.side_mh[c][3].delete(0, tk.END)
+                self.side_mh[c][3].insert(0, el.rej_n)
+                self.side_mh[c][4].delete(0, tk.END)
+                self.side_mh[c][4].insert(0, el.route)
+                self.side_mh[c][0].configure(state='disabled')
+                self.side_mh[c][1].configure(state='disabled')
+                self.side_mh[c][2].configure(state='disabled')
+                self.side_mh[c][3].configure(state='disabled')
+                self.side_mh[c][4].configure(state='disabled')
+                c += 1
 
     def on_ch_btn_stat_change(self):
         conn = self.main_win.get_conn()

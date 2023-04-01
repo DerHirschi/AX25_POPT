@@ -627,7 +627,6 @@ class TkMainWin:
 
             self.change_conn_btn()
             # self.tabbed_sideFrame.update_side_mh()
-            self.tabbed_sideFrame.tasker()
             self.check_sprech_ch_buf()
             self.rx_beep()
             ##########################
@@ -635,6 +634,7 @@ class TkMainWin:
             if time.time() > self.non_non_prio_task_timer:
                 self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
                 self.update_bw_mon()
+                self.tabbed_sideFrame.tasker()
 
         # Loop back
         self.main_win.after(LOOP_DELAY, self.tasker)
