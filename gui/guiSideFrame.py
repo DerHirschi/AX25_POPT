@@ -116,20 +116,25 @@ class SideTabbedFrame:
         for row in range(9):
             a = tk.Entry(self.tab2_mh, width=85,
                          disabledbackground='ghost white',
-                         disabledforeground='black')
+                         disabledforeground='black',
+                         state='disabled')
             b = tk.Entry(self.tab2_mh, width=80,
                          disabledbackground='ghost white',
-                         disabledforeground='black')
+                         disabledforeground='black',
+                         state='disabled')
             # b = tk.Button(self.tab2_mh, width=100)
             c = tk.Entry(self.tab2_mh, width=20,
                          disabledbackground='ghost white',
-                         disabledforeground='black')
+                         disabledforeground='black',
+                         state='disabled')
             d = tk.Entry(self.tab2_mh, width=20,
                          disabledbackground='ghost white',
-                         disabledforeground='black')
+                         disabledforeground='black',
+                         state='disabled')
             e = tk.Entry(self.tab2_mh, width=100,
                          disabledbackground='ghost white',
-                         disabledforeground='black')
+                         disabledforeground='black',
+                         state='disabled')
             """
             a.bind("<Button-1>", self.reset_dx_alarm)
             b.bind("<Button-1>", self.reset_dx_alarm)
@@ -345,7 +350,8 @@ class SideTabbedFrame:
         elif self.tabControl.index(self.tabControl.select()) == 4:
             self.update_ch_echo()
 
-    def open_new_conn_win(self, call: str):
+    def open_new_conn_win(self, event, call: str):
+        print(event)
         mh_ent = self.main_win.mh.mh_get_data_fm_call(call)
         print(call)
         if mh_ent:
@@ -368,13 +374,13 @@ class SideTabbedFrame:
                 self.side_mh[c][2].configure(state='normal')
                 self.side_mh[c][3].configure(state='normal')
                 self.side_mh[c][4].configure(state='normal')
-                """
-                self.side_mh[c][0].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
-                self.side_mh[c][1].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
-                self.side_mh[c][2].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
-                self.side_mh[c][3].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
-                self.side_mh[c][4].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(str(el.own_call)))
-                """
+
+                self.side_mh[c][0].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event, str(el.own_call)))
+                self.side_mh[c][1].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event,str(el.own_call)))
+                self.side_mh[c][2].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event,str(el.own_call)))
+                self.side_mh[c][3].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event,str(el.own_call)))
+                self.side_mh[c][4].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event,str(el.own_call)))
+
                 self.side_mh[c][0].delete(0, tk.END)
                 self.side_mh[c][0].insert(0, el.last_seen.split(' ')[1])
                 self.side_mh[c][1].delete(0, tk.END)
