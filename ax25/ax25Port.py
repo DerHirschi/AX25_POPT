@@ -62,7 +62,7 @@ class AX25Port(threading.Thread):
         self.monitor = ax25monitor.Monitor()
         # self.port_hndl = self.port_cfg.glb_port_handler
         self.gui = None
-        self.is_gui = False
+        # self.is_gui = False
         self.connections: {str: AX25Conn} = {}
         self.device = None
         ##############
@@ -74,14 +74,6 @@ class AX25Port(threading.Thread):
             self.init()
         except AX25DeviceFAIL as e:
             raise e
-
-    def set_gui(self, gui):
-        # if self.gui is None:
-        self.gui = gui
-        if self.gui is None:
-            self.is_gui = False
-        else:
-            self.is_gui = True
 
     def init(self):
         pass
@@ -212,7 +204,7 @@ class AX25Port(threading.Thread):
                 except AX25DeviceFAIL as e:
                     raise e
                 # Monitor
-                if self.is_gui:
+                if self.gui is not None:
                     self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=self.port_cfg, tx=True)
             self.digi_buf = []
         return tr
@@ -233,7 +225,7 @@ class AX25Port(threading.Thread):
                 # Monitor
 
                 # Monitor
-                if self.is_gui:
+                if self.gui is not None:
                     self.gui.update_monitor(
                         self.monitor.frame_inp(fr, self.portname),
                         conf=self.port_cfg,
@@ -242,7 +234,7 @@ class AX25Port(threading.Thread):
         return tr
 
     def rx_echo(self, ax25_frame: AX25Frame):
-        if self.is_gui:
+        if self.gui is not None:
             if self.gui.setting_rx_echo.get():
                 self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
@@ -283,7 +275,7 @@ class AX25Port(threading.Thread):
                             self.tx(beacon.ax_frame)
                             # Monitor
                             cfg = self.port_cfg
-                            if self.is_gui:
+                            if self.gui is not None:
                                 self.gui.update_monitor(self.monitor.frame_inp(beacon.ax_frame, self.portname),
                                                         conf=cfg,
                                                         tx=True)
@@ -395,7 +387,7 @@ class AX25Port(threading.Thread):
                     # MH List and Statistics
                     self.mh.mh_inp(ax25frame, self.portname, self.port_id)
                     # Monitor
-                    if self.is_gui:
+                    if self.gui is not None:
                         self.gui.update_monitor(
                             self.monitor.frame_inp(ax25frame, self.portname),
                             conf=self.port_cfg,
@@ -403,16 +395,17 @@ class AX25Port(threading.Thread):
                     # Handling
                     self.rx_pac_handler(ax25frame)
                     # RX-ECHO
-                    self.rx_echo(ax25_frame=ax25frame)
+                    self.rx_echo(ax25_frame=ax25frame)      # TODO BUGGY
 
                     # Pseudo Full Duplex for AXIP.
                     if self.port_cfg.parm_axip_Multicast:
                         self.tx_multicast(frame=ax25frame)  # TODO BUGGY
-                    if self.port_cfg.parm_full_duplex:
-                        break
+                if self.port_cfg.parm_full_duplex:
+                    break
             else:
                 break
-        if time.time() > self.TXD and self.loop_is_running:
+        if (time.time() > self.TXD and self.loop_is_running) \
+                or (self.port_cfg.parm_full_duplex and self.loop_is_running):
             #############################################
             # Crone
             self.cron_pac_handler()

@@ -240,8 +240,6 @@ class TkMainWin:
         self.mh_window = None
         ###########################
         # Init
-        # set GUI Var
-        self.ax25_port_handler.set_gui(self)
         # set Ch Btn Color
         self.ch_btn_status_update()
         # set KEY BINDS
@@ -255,6 +253,9 @@ class TkMainWin:
         # TEST
         # self.open_rx_echo_settings_win()
         #######################
+        # set GUI Var
+        self.ax25_port_handler.gui = self
+        self.ax25_port_handler.set_gui()
         #######################
         # LOOP
         self.main_win.after(LOOP_DELAY, self.tasker)
@@ -760,20 +761,11 @@ class TkMainWin:
     # ##############
     # DISCO
     def disco_conn(self):
-        station = self.get_conn(self.channel_index)
-        if station:
-            if station.zustand_exec.stat_index:
-                tr = False
-                if station.zustand_exec.stat_index in [2, 4]:
-                    tr = True
-                station.set_T1()
-                if tr:
-                    station.zustand_exec.S1_end_connection()
-                else:
-                    station.zustand_exec.change_state(4)
-                # station.set_new_state()
-                station.zustand_exec.tx(None)
+        conn = self.get_conn(self.channel_index)
+        if conn:
+            conn.conn_disco()
 
+    """
     def disco_all(self):
         for ch_id in range(1, 11):
             station = self.get_conn(ch_id)
@@ -789,36 +781,19 @@ class TkMainWin:
                         station.zustand_exec.change_state(4)
                     # station.set_new_state()
                     station.zustand_exec.tx(None)
-
+    """
     # DISCO ENDE
     # ##############
     ###################
     # SEND TEXT OUT
     def snd_text(self, event: tk.Event):
         station = self.get_conn(self.channel_index)
-
         if station:
             ind = str(float(self.inp_txt.index(tk.INSERT)) - 1)
             tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
             tmp_txt = tmp_txt.replace('\n', '').replace('\r', '')
             # Send it to Connection/Station TX Buffer
             station.tx_buf_rawData += (tmp_txt + '\r').encode()
-            """
-            ind = self.out_txt.index(tk.INSERT)
-            tmp_txt += '\n'
-            # Insert in OutScreen Window
-            
-            self.out_txt.configure(state="normal")
-            self.out_txt.insert(tk.END, tmp_txt)
-            self.out_txt.configure(state="disabled")
-            # Insert in Buffer for Channel switching
-            self.win_buf[self.channel_index].output_win += tmp_txt
-
-            ind2 = self.out_txt.index(tk.INSERT)
-            self.out_txt.tag_add("input", ind, ind2)
-            """
-            # configuring a tag called start
-
 
     # SEND TEXT OUT
     ###################

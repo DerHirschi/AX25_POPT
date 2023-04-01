@@ -63,7 +63,7 @@ class AX25PortHandler(object):
         if self.gui is not None:
             self.gui.ch_btn_status_update()
         self.gui = None
-        self.set_gui(None)
+        self.set_gui()
         self.close_all_ports()
 
     def close_all_ports(self):
@@ -124,6 +124,8 @@ class AX25PortHandler(object):
             time.sleep(1)  # Cooldown for Device
             self.init_port(port_id=port_id)
 
+            self.set_gui()
+
     def set_kiss_param_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
             if self.ax25_ports[port_id].kiss.is_enabled:
@@ -159,8 +161,8 @@ class AX25PortHandler(object):
                 # Start Port/Device Thread
                 ######################################
                 # Gather all Ports in dict: ax25_ports
-                if self.gui is not None:
-                    temp.set_gui(self.gui)
+                # if self.gui is not None:
+                temp.gui = self.gui
                 self.ax25_ports[port_id] = temp
                 self.ax25_port_settings[port_id] = temp.port_cfg
                 self.rx_echo[port_id] = RxEchoVars(port_id)
@@ -173,13 +175,11 @@ class AX25PortHandler(object):
 
     ######################
     # GUI Handling
-    def set_gui(self, gui):
+    def set_gui(self):
         """ PreInit: Set GUI Var """
-        if self.gui is None:
-            self.gui = gui
-            for k in self.ax25_ports.keys():
-                # self.ax25_ports[k][1].glb_gui = gui
-                self.ax25_ports[k].set_gui(gui)
+        for k in self.ax25_ports.keys():
+            self.ax25_ports[k].gui = self.gui
+            # self.ax25_ports[k].set_gui_tr()
 
     def sysmsg_to_gui(self, msg: str = ''):
         if self.gui is not None and self.is_running:

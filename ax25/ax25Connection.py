@@ -357,6 +357,17 @@ class AX25Conn(object):
             # self.ax25_out_frame.digi_call = ''
             # self.is_link_remote = False
 
+    # ##############
+    # DISCO
+    def conn_disco(self):
+        if self.zustand_exec.stat_index:
+            self.set_T1()
+            self.zustand_exec.tx(None)
+            if self.zustand_exec.stat_index in [2, 4]:
+                self.zustand_exec.S1_end_connection()
+            else:
+                self.zustand_exec.change_state(4)
+
     ###############################################
     # Channel ECHO
     def ch_echo_add(self, ax25_connection):
