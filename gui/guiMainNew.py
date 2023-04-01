@@ -430,11 +430,9 @@ class TkMainWin:
             self.inp_txt.insert(tk.INSERT, event.char)
         # self.on_click_inp_txt()
 
-        print(f'INSERT  {self.inp_txt.index(tk.INSERT)}')
-        print(f'END  {self.inp_txt.index(tk.END)}')
-
     def increase_textsize(self):
         self.text_size += 1
+        self.text_size = max(self.text_size, 3)
         width = self.inp_txt.cget('width')
         self.inp_txt.configure(font=(FONT, self.text_size), width=width + 1)
         self.out_txt.configure(font=(FONT, self.text_size), width=width + 1)
@@ -442,23 +440,23 @@ class TkMainWin:
 
     def decrease_textsize(self):
         self.text_size -= 1
+        self.text_size = max(self.text_size, 3)
         width = self.inp_txt.cget('width')
         self.inp_txt.configure(font=(FONT, self.text_size), width=width - 1)
         self.out_txt.configure(font=(FONT, self.text_size), width=width - 1)
         self.mon_txt.configure(font=(FONT, self.text_size), width=width - 1)
 
     def text_win_bigger(self):
-        self.text_size -= 1
         width = self.inp_txt.cget('width')
-        self.inp_txt.configure( width=width + 1)
-        self.out_txt.configure( width=width + 1)
-        self.mon_txt.configure( width=width + 1)
+        self.inp_txt.configure( width=width)
+        self.out_txt.configure( width=width)
+        self.mon_txt.configure( width=width)
 
     def text_win_smaller(self):
         width = self.inp_txt.cget('width')
-        self.inp_txt.configure( width=width - 1)
-        self.out_txt.configure( width=width - 1)
-        self.mon_txt.configure( width=width - 1)
+        self.inp_txt.configure( width=max(width - 1, 56))
+        self.out_txt.configure( width=max(width - 1, 56))
+        self.mon_txt.configure( width=max(width - 1, 56))
 
     def change_conn_btn(self):
 
