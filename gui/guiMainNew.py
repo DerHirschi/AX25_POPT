@@ -396,7 +396,12 @@ class TkMainWin:
         self.main_win.bind('<F9>', lambda event: self.ch_btn.ch_btn_clk(9))
         self.main_win.bind('<F10>', lambda event: self.ch_btn.ch_btn_clk(10))
         self.main_win.bind('<Return>', self.snd_text)
+        self.main_win.bind('<KeyRelease-Return>', self.release_return)
         self.main_win.bind('<Shift-KeyPress-Return>', self.shift_return)
+        self.main_win.bind('<KeyRelease-Left>', self.arrow_keys)
+        self.main_win.bind('<KeyRelease-Right>', self.arrow_keys)
+        self.main_win.bind('<KeyRelease-Up>', self.arrow_keys)
+        self.main_win.bind('<KeyRelease-Down>', self.arrow_keys)
         # self.main_win.bind('<KP_Enter>', self.snd_text)
         self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
         self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
@@ -849,7 +854,9 @@ class TkMainWin:
         # print(f'ind: {ind}')
         # if ind != str(int(float(ind))) + '.0':
         self.inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
-        self.inp_txt.tag_remove('send', str(float(self.inp_txt.index(tk.INSERT)) - 0.1), self.inp_txt.index(tk.INSERT))
+        # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
+        self.inp_txt.tag_remove('send', str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0', self.inp_txt.index(tk.INSERT))
+        # self.inp_txt.tag_remove('send', tk.line.column, self.inp_txt.index(tk.INSERT))
         ind2 = str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0'
         # print(f'ind2: {ind2}')
 
@@ -859,6 +866,14 @@ class TkMainWin:
     def shift_return(self, event=None):
         pass
         # self.inp_txt.insert(tk.INSERT, '\n')
+
+    def release_return(self, event=None):
+        self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
+
+    def arrow_keys(self, event=None):
+        # TODO
+        # pass
+        self.on_click_inp_txt()
 
     # SEND TEXT OUT
     ###################
