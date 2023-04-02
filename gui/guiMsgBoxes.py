@@ -1,6 +1,14 @@
 import tkinter as tk
-from tkinter import messagebox, font
+from tkinter import messagebox, font, filedialog
 import sys
+
+
+def open_file_dialog():
+    name = filedialog.askopenfilename()
+    if name:
+        with open(name, 'rb') as output:
+            return output.read()
+    return b''
 
 
 class ErrorMsg(tk.Toplevel):

@@ -1,4 +1,3 @@
-import tkinter as tk
 from tkinter import ttk as ttk
 from tkinter import scrolledtext
 from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data

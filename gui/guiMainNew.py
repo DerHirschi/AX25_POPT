@@ -25,6 +25,7 @@ from gui.guiRxEchoSettings import RxEchoSettings
 from gui.guiLinkholderSettings import LinkHolderSettings
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
+from gui.guiMsgBoxes import open_file_dialog
 from config_station import VER
 from gui.vars import ALL_COLOURS
 
@@ -56,7 +57,7 @@ class ChVars(object):
     def __init__(self):
         self.output_win = ''
         self.input_win = ''
-        self.input_win_index = ''
+        self.input_win_index = '1.0'
         self.new_data_tr = False
         self.rx_beep_tr = False
         self.rx_beep_cooldown = time.time()
@@ -123,12 +124,17 @@ class TkMainWin:
         self.MenuVerb.add_command(label="Disconnect", command=self.disco_conn)
         self.MenuVerb.add_command(label="Quit", command=self.destroy_win)
         self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb, underline=0)
-        # Menü 2 "MH"
-        self.menubar.add_command(label="MH", command=self.MH_win, underline=0)
+        # Menü 2 "Bearbeiten"
+        self.MenuEdit = Menu(self.menubar, tearoff=False)
+        self.MenuEdit.add_command(label="Aus Datei einfügen", command=self.insert_fm_file, underline=1)
+        self.MenuEdit.add_command(label="QSO/Vorschreibfenster löschen", command=self.clear_channel_data, underline=0)
+        self.menubar.add_cascade(label="Bearbeiten", menu=self.MenuEdit, underline=0)
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar, tearoff=False)
+        self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
         self.MenuTools.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
         self.MenuTools.add_command(label="Linkhalter", command=self.open_linkholder_settings_win, underline=0)
+        # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         self.menubar.add_cascade(label="Tools", menu=self.MenuTools, underline=0)
 
         # Menü 4 Einstellungen
@@ -388,9 +394,14 @@ class TkMainWin:
         self.win_buf[self.channel_index].output_win = ''
         self.win_buf[self.channel_index].input_win = ''
         self.win_buf[self.channel_index].t2speech_buf = ''
-        self.win_buf[self.channel_index].input_win_index = ''
+        self.win_buf[self.channel_index].input_win_index = '1.0'
         self.win_buf[self.channel_index].new_data_tr = False
         self.win_buf[self.channel_index].rx_beep_tr = False
+
+    def insert_fm_file(self):
+        data = open_file_dialog()
+        if data:
+            self.inp_txt.insert(tk.INSERT, data.decode('UTF-8', 'ignore'))
 
     def ch_btn_status_update(self):
         self.ch_btn.ch_btn_status_update()
