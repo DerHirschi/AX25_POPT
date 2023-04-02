@@ -22,6 +22,7 @@ from gui.guiStationSettings import StationSettingsWin
 from gui.guiPortSettings import PortSettingsWin
 from gui.guiBeaconSettings import BeaconSettings
 from gui.guiRxEchoSettings import RxEchoSettings
+from gui.guiLinkholderSettings import LinkHolderSettings
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from config_station import VER
@@ -127,6 +128,7 @@ class TkMainWin:
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar, tearoff=False)
         self.MenuTools.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
+        self.MenuTools.add_command(label="Linkhalter", command=self.open_linkholder_settings_win, underline=0)
         self.menubar.add_cascade(label="Tools", menu=self.MenuTools, underline=0)
 
         # Menü 4 Einstellungen
@@ -378,6 +380,18 @@ class TkMainWin:
             if not self.win_buf[i + 1].t2speech:
                 self.win_buf[i + 1].t2speech_buf = ''
 
+    def clear_channel_data(self):
+        self.out_txt.configure(state='normal')
+        self.out_txt.delete('1.0', tk.END)
+        self.out_txt.configure(state='disabled')
+        self.inp_txt.delete('1.0', tk.END)
+        self.win_buf[self.channel_index].output_win = ''
+        self.win_buf[self.channel_index].input_win = ''
+        self.win_buf[self.channel_index].t2speech_buf = ''
+        self.win_buf[self.channel_index].input_win_index = ''
+        self.win_buf[self.channel_index].new_data_tr = False
+        self.win_buf[self.channel_index].rx_beep_tr = False
+
     def ch_btn_status_update(self):
         self.ch_btn.ch_btn_status_update()
 
@@ -528,6 +542,10 @@ class TkMainWin:
             text = text.replace('+++', '+')
             text = text.replace('----', '-')
             text = text.replace('---', '-')
+            text = text.replace('____', '_')
+            text = text.replace('___', '_')
+            text = text.replace('####', '#')
+            text = text.replace('###', '#')
             text = text.replace('====', '=')
             text = text.replace('===', '=')
             text = text.replace('>>>', '>')
@@ -791,6 +809,12 @@ class TkMainWin:
             RxEchoSettings(self)
 
     ##########################
+    # Beacon Settings WIN
+    def open_linkholder_settings_win(self):
+        if self.settings_win is None:
+            LinkHolderSettings(self)
+
+    ##########################
     # About WIN
     def open_about_win(self):
         if self.settings_win is None:
@@ -833,9 +857,12 @@ class TkMainWin:
     def snd_text(self, event: tk.Event):
         station = self.get_conn(self.channel_index)
         ind = str(self.win_buf[self.channel_index].input_win_index)
-        if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
-            ind = str(self.inp_txt.index(tk.INSERT))
-        ind = str(int(float(ind))) + '.0'
+        if ind:
+            if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
+                ind = str(self.inp_txt.index(tk.INSERT))
+            ind = str(int(float(ind))) + '.0'
+        else:
+            ind = '1.0'
         if station:
             tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
             print(tmp_txt.encode())
@@ -849,10 +876,10 @@ class TkMainWin:
 
     def on_click_inp_txt(self, event=None):
         ind = self.win_buf[self.channel_index].input_win_index
-
-        self.inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
-        # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
-        self.inp_txt.tag_remove('send', str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0', self.inp_txt.index(tk.INSERT))
+        if ind:
+            self.inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
+            # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
+            self.inp_txt.tag_remove('send', str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0', self.inp_txt.index(tk.INSERT))
         # self.inp_txt.tag_remove('send', tk.line.column, self.inp_txt.index(tk.INSERT))
         ind2 = str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0'
         # print(f'ind2: {ind2}')

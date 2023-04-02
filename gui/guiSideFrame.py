@@ -16,7 +16,7 @@ class SideTabbedFrame:
         self.side_btn_frame_top = self.main_win.side_btn_frame_top
         self.tab_side_frame = tk.Frame(
             self.side_btn_frame_top,
-            #width=300,
+            # width=300,
             height=400
         )
         self.tab_side_frame.grid(row=4, column=0, columnspan=6, pady=10, sticky="nsew")
@@ -124,21 +124,22 @@ class SideTabbedFrame:
         parm_y = 175
         self.link_holder_var = tk.BooleanVar(tab1_kanal)
         self.link_holder = tk.Checkbutton(tab1_kanal,
-                                  text='Linkhalter',
-                                  variable=self.link_holder_var,
-                                  command=self.chk_link_holder
+                                          text='Linkhalter',
+                                          variable=self.link_holder_var,
+                                          command=self.chk_link_holder
                                           )
         self.link_holder.place(x=10, y=parm_y)
 
         clear_ch_data_btn = tk.Button(tab1_kanal,
-                                      text='Säubern'
-
+                                      text='Säubern',
+                                      command=self.main_win.clear_channel_data
                                       )
         clear_ch_data_btn.place(x=140, y=135)
 
         link_holder_settings_btn = tk.Button(tab1_kanal,
-                                      text='Linkhalter'
-                                      )
+                                             text='Linkhalter',
+                                             command=self.main_win.open_linkholder_settings_win
+                                             )
         link_holder_settings_btn.place(x=140, y=165)
 
         ################################
@@ -166,7 +167,7 @@ class SideTabbedFrame:
         self.tree.column("mh_call", stretch=tk.NO, width=100)
         self.tree.column("mh_port", anchor=tk.CENTER, stretch=tk.NO, width=80)
         self.tree.column("mh_nPackets", anchor=tk.CENTER, stretch=tk.NO, width=60)
-        self.tree.column("mh_route",  stretch=tk.YES, width=180)
+        self.tree.column("mh_route", stretch=tk.YES, width=180)
 
         self.tree_data = []
         self.last_mh_ent = []
@@ -194,7 +195,6 @@ class SideTabbedFrame:
         else:
             self.sprech_on.set(False)
             sprech_btn.configure(state='disabled')
-
 
         # Global Bake
         self.bake_on = tk.BooleanVar()
