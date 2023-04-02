@@ -177,7 +177,7 @@ class TkMainWin:
         self.side_btn_frame_top.columnconfigure(2, minsize=100, weight=2)
         self.side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
         self.side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
-        self.side_btn_frame_top.columnconfigure(6, minsize=10, weight=10)
+        self.side_btn_frame_top.columnconfigure(6, minsize=10, weight=1)
         self.conn_btn = tk.Button(self.side_btn_frame_top,
                                   text="New Conn",
                                   bg="green",

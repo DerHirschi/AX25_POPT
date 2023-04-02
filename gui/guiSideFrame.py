@@ -14,12 +14,20 @@ class SideTabbedFrame:
         self.ch_index = self.main_win.channel_index
         self.all_connections = self.main_win.ax25_port_handler.all_connections
         self.side_btn_frame_top = self.main_win.side_btn_frame_top
-        self.tab_side_frame = tk.Frame(self.side_btn_frame_top, width=300, height=400)
+        self.tab_side_frame = tk.Frame(
+            self.side_btn_frame_top,
+            #width=300,
+            height=400
+        )
         self.tab_side_frame.grid(row=4, column=0, columnspan=6, pady=10, sticky="nsew")
-        self.tabControl = ttk.Notebook(self.tab_side_frame, height=300, width=500)
-        # self.tabControl.grid(row=3, column=0, columnspan=5, sticky="nsew")
+        self.tabControl = ttk.Notebook(
+            self.tab_side_frame,
+            height=300,
+            # width=500
+        )
 
         tab1_kanal = ttk.Frame(self.tabControl)
+        self.tab1_1_RTT = ttk.Frame(self.tabControl)
         self.tab2_mh = tk.Frame(self.tabControl)
         # self.tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
         self.tab2_mh_def_bg_clr = self.tab2_mh.cget('bg')
@@ -28,6 +36,7 @@ class SideTabbedFrame:
         self.tab5_ch_links = ttk.Frame(self.tabControl)
 
         self.tabControl.add(tab1_kanal, text='Kanal')
+        self.tabControl.add(self.tab1_1_RTT, text='RTT')
         self.tabControl.add(self.tab2_mh, text='MH')
         self.tabControl.add(tab3, text='Ports')
         self.tabControl.add(self.tab4_settings, text='Global')
@@ -127,12 +136,9 @@ class SideTabbedFrame:
         self.tree.column("mh_port", anchor=tk.CENTER, stretch=tk.NO, width=80)
         self.tree.column("mh_nPackets", anchor=tk.CENTER, stretch=tk.NO, width=60)
         self.tree.column("mh_route",  stretch=tk.YES, width=180)
-        # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
-        # tree.column(1, stretch=True)
 
         self.tree_data = []
         self.last_mh_ent = []
-        # self.init_tree_data()
         self.update_side_mh()
         self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
 
@@ -185,13 +191,7 @@ class SideTabbedFrame:
                                # state='disabled'
                                )
         _chk_btn.place(x=10, y=85)
-        """
-        self.dx_alarm_reset_btn = tk.Button(self.tab4_settings,
-                                            text="Reset",
-                                            command=lambda: self.reset_dx_alarm()
-                                            )
-        self.dx_alarm_reset_btn.place(x=150, y=85)
-        """
+
         # RX ECHO
         self.rx_echo_on = tk.BooleanVar()
         _chk_btn = Checkbutton(self.tab4_settings,
@@ -200,27 +200,41 @@ class SideTabbedFrame:
                                )
         _chk_btn.place(x=10, y=115)
 
-        """
-        self.sound_on = tk.IntVar()
-        Checkbutton(self.tab4_settings,
-                    text="Test   ",
-                    variable=self.sound_on,
-                    ).grid(column=0,
-                           row=1
-                           )
-        """
         ############
         # CH ECHO
         self.chk_btn_default_clr = _chk_btn.cget('bg')
         self.ch_echo_vars = {}
+        #################
+        # RTT Frame
+        self.rtt_best = tk.Label(self.tab1_1_RTT, text='')
+        self.rtt_worst = tk.Label(self.tab1_1_RTT, text='')
+        self.rtt_avg = tk.Label(self.tab1_1_RTT, text='')
+        self.rtt_last = tk.Label(self.tab1_1_RTT, text='')
+        font = self.rtt_best.cget('font')[0]
+        self.rtt_best.configure(font=(font, 15))
+        self.rtt_worst.configure(font=(font, 15))
+        self.rtt_avg.configure(font=(font, 15))
+        self.rtt_last.configure(font=(font, 15))
+        self.rtt_best.place(x=10, y=10)
+        self.rtt_worst.place(x=10, y=45)
+        self.rtt_avg.place(x=10, y=80)
+        self.rtt_last.place(x=10, y=115)
+        ##################
+        # Tasker
+        self.tasker_dict = {
+            1: self.update_rtt,
+            2: self.update_side_mh,
+            5: self.update_ch_echo,
+        }
+
         self.update_ch_echo()
-        #self.tabControl.s
 
     def reset_dx_alarm(self, event=None):
         self.main_win.reset_dx_alarm()
         # self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
 
     def update_ch_echo(self):
+        # TODO AGAIN !!
         _tab = self.tab5_ch_links
         akt_ch_id = self.main_win.channel_index
         _var = tk.BooleanVar(_tab)
@@ -327,10 +341,9 @@ class SideTabbedFrame:
             conn.calc_irtt()
 
     def tasker(self):
-        if self.tabControl.index(self.tabControl.select()) == 1:
-            self.update_side_mh()
-        elif self.tabControl.index(self.tabControl.select()) == 4:
-            self.update_ch_echo()
+        ind = self.tabControl.index(self.tabControl.select())
+        if ind in self.tasker_dict.keys():
+            self.tasker_dict[ind]()
 
     def entry_selected(self, event):
         for selected_item in self.tree.selection():
@@ -361,6 +374,25 @@ class SideTabbedFrame:
                 f'{ent.pac_n}',
                 ' '.join(route),
             ))
+
+    def update_rtt(self):
+        best = ''
+        worst = ''
+        avg = ''
+        last = ''
+        station = self.main_win.get_conn(self.main_win.channel_index)
+        if station:
+            if station.RTT_Timer.rtt_best == 999.0:
+                best = "Best: -1"
+            else:
+                best = "Best: {:.1f}".format(station.RTT_Timer.rtt_best)
+            worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
+            avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
+            last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
+        self.rtt_best.configure(text=best)
+        self.rtt_worst.configure(text=worst)
+        self.rtt_avg.configure(text=avg)
+        self.rtt_last.configure(text=last)
 
     def update_tree(self):
         for i in self.tree.get_children():
