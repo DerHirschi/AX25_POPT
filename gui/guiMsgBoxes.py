@@ -11,6 +11,17 @@ def open_file_dialog():
     return b''
 
 
+def save_file_dialog(data):
+    try:
+        f = filedialog.asksaveasfile(mode='w', defaultextension=".txt")
+    except PermissionError:
+        return False
+    if f is None:
+        return
+    f.write(data)
+    f.close()
+
+
 class ErrorMsg(tk.Toplevel):
     def __init__(self, titel, message):
         self.msg = message

@@ -25,7 +25,7 @@ from gui.guiRxEchoSettings import RxEchoSettings
 from gui.guiLinkholderSettings import LinkHolderSettings
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
-from gui.guiMsgBoxes import open_file_dialog
+from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from config_station import VER
 from gui.vars import ALL_COLOURS
 
@@ -126,7 +126,8 @@ class TkMainWin:
         self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb, underline=0)
         # Menü 2 "Bearbeiten"
         self.MenuEdit = Menu(self.menubar, tearoff=False)
-        self.MenuEdit.add_command(label="Aus Datei einfügen", command=self.insert_fm_file, underline=1)
+        self.MenuEdit.add_command(label="Aus Datei einfügen", command=self.insert_fm_file, underline=0)
+        self.MenuEdit.add_command(label="In Datei speichern", command=self.save_to_file, underline=1)
         self.MenuEdit.add_command(label="QSO/Vorschreibfenster löschen", command=self.clear_channel_data, underline=0)
         self.menubar.add_cascade(label="Bearbeiten", menu=self.MenuEdit, underline=0)
         # Menü 3 "Tools"
@@ -402,6 +403,10 @@ class TkMainWin:
         data = open_file_dialog()
         if data:
             self.inp_txt.insert(tk.INSERT, data.decode('UTF-8', 'ignore'))
+
+    def save_to_file(self):
+        data = self.out_txt.get('1.0', tk.END)
+        save_file_dialog(data)
 
     def ch_btn_status_update(self):
         self.ch_btn.ch_btn_status_update()

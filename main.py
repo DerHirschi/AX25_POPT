@@ -1,6 +1,6 @@
 import cli.ClientDB
 import ax25.ax25Statistics
-import gui.guiMainNew
+import gui.guiMain
 import ax25.ax25InitPorts
 
 if __name__ == '__main__':
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     # INIT GUI
     # TODO: if setting_gui (running without GUI option):
     try:
-        main_win = gui.guiMainNew.TkMainWin(GLB_AX25port_handler)
+        main_win = gui.guiMain.TkMainWin(GLB_AX25port_handler)
     except KeyboardInterrupt:
         GLB_AX25port_handler.close_all_ports()
 
