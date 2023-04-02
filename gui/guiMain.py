@@ -126,6 +126,8 @@ class TkMainWin:
         self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb, underline=0)
         # Menü 2 "Bearbeiten"
         self.MenuEdit = Menu(self.menubar, tearoff=False)
+        self.MenuEdit.add_command(label="Kopieren", command=self.copy_select, underline=0)
+        self.MenuEdit.add_command(label="Einfügen", command=self.clipboard_past, underline=1)
         self.MenuEdit.add_command(label="Aus Datei einfügen", command=self.insert_fm_file, underline=0)
         self.MenuEdit.add_command(label="In Datei speichern", command=self.save_to_file, underline=1)
         self.MenuEdit.add_command(label="QSO/Vorschreibfenster löschen", command=self.clear_channel_data, underline=0)
@@ -133,6 +135,7 @@ class TkMainWin:
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar, tearoff=False)
         self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
+        self.MenuTools.add_command(label="Statistik", command=lambda: self.mh.port_statistik_DB[0].plot_test_graph(), underline=1)
         self.MenuTools.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
         self.MenuTools.add_command(label="Linkhalter", command=self.open_linkholder_settings_win, underline=0)
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
@@ -357,12 +360,9 @@ class TkMainWin:
             self.out_txt.delete('sel.first', 'sel.last')
 
     def clipboard_past(self):
-        pass
-        """
         clp_brd = self.main_win.clipboard_get()
         if clp_brd:
             self.inp_txt.insert(tk.END, clp_brd)
-        """
 
     def select_all(self):
         self.inp_txt.tag_add(tk.SEL, "1.0", tk.END)
@@ -437,7 +437,7 @@ class TkMainWin:
         self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
         self.main_win.bind('<Control-c>', lambda event: self.copy_select())
         self.main_win.bind('<Control-x>', lambda event: self.cut_select())
-        self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
+        # self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
         self.main_win.bind('<Control-a>', lambda event: self.select_all())
         self.main_win.bind('<Control-plus>', lambda event: self.increase_textsize())
         self.main_win.bind('<Control-minus>', lambda event: self.decrease_textsize())
