@@ -109,9 +109,40 @@ class SideTabbedFrame:
                                   variable=self.rnr_var,
                                   command=self.chk_rnr)
         self.rnr.place(x=10, y=parm_y)
+        # Sprech
+        parm_y = 200
+        self.t2speech_var = tk.BooleanVar(tab1_kanal)
 
+        self.t2speech = tk.Checkbutton(tab1_kanal,
+                                       text='Sprachausgabe',
+                                       variable=self.t2speech_var,
+                                       command=self.chk_t2speech)
+        self.t2speech.place(x=10, y=parm_y)
+        self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
+
+        # Link Holder
+        parm_y = 175
+        self.link_holder_var = tk.BooleanVar(tab1_kanal)
+        self.link_holder = tk.Checkbutton(tab1_kanal,
+                                  text='Linkhalter',
+                                  variable=self.link_holder_var,
+                                  command=self.chk_link_holder
+                                          )
+        self.link_holder.place(x=10, y=parm_y)
+
+        clear_ch_data_btn = tk.Button(tab1_kanal,
+                                      text='Säubern'
+
+                                      )
+        clear_ch_data_btn.place(x=140, y=135)
+
+        link_holder_settings_btn = tk.Button(tab1_kanal,
+                                      text='Linkhalter'
+                                      )
+        link_holder_settings_btn.place(x=140, y=165)
+
+        ################################
         # MH ##########################
-
         # TREE
         self.tab2_mh.columnconfigure(0, minsize=300, weight=1)
 
@@ -164,16 +195,6 @@ class SideTabbedFrame:
             self.sprech_on.set(False)
             sprech_btn.configure(state='disabled')
 
-        # Sprech
-        parm_y = 175
-        self.t2speech_var = tk.BooleanVar(tab1_kanal)
-
-        self.t2speech = tk.Checkbutton(tab1_kanal,
-                                       text='Sprachausgabe',
-                                       variable=self.t2speech_var,
-                                       command=self.chk_t2speech)
-        self.t2speech.place(x=10, y=parm_y)
-        self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
 
         # Global Bake
         self.bake_on = tk.BooleanVar()
@@ -314,6 +335,15 @@ class SideTabbedFrame:
             else:
                 conn.unset_RNR()
 
+    def chk_link_holder(self):
+        conn = self.main_win.get_conn()
+        if conn:
+            if self.link_holder_var.get():
+                conn.link_holder_on = True
+                conn.link_holder_timer = 0
+            else:
+                conn.link_holder_on = False
+
     def chk_t2auto(self):
         conn = self.main_win.get_conn()
         if conn:
@@ -416,6 +446,7 @@ class SideTabbedFrame:
             self.pac_len_var.set(conn.parm_PacLen)
             self.rnr_var.set(conn.is_RNR)
             self.rnr.configure(state='normal')
+            self.link_holder.configure(state='normal')
             if conn.is_RNR:
                 self.rnr.select()
             else:
@@ -442,6 +473,8 @@ class SideTabbedFrame:
             self.t2_auto.deselect()
             self.t2_auto.configure(state='disabled')
             self.t2.configure(state='disabled')
+            self.link_holder_var.set(False)
+            self.link_holder.configure(state='disabled')
 
         self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
         self.update_ch_echo()

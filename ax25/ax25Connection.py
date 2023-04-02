@@ -210,6 +210,11 @@ class AX25Conn(object):
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
         self.is_RNR: bool = False
+        """ Link Holder / Not related to Link Connection Stuff """
+        self.link_holder_on: bool = False
+        self.link_holder_interval: int = 30     # Minutes
+        self.link_holder_timer = time.time()
+        self.link_holder_text: str = '\r'
         """ Station Individual Parameter """
         stat_call = self.stat_cfg.stat_parm_Call
         if stat_call != config_station.DefaultStation.stat_parm_Call:
@@ -261,6 +266,13 @@ class AX25Conn(object):
         # print(self.ch_index)
         self.cli.cli_cron()
         self.zustand_exec.cron()
+        self.link_holder_cron()
+
+    def link_holder_cron(self):
+        if self.link_holder_on:
+            if self.link_holder_timer < time.time():
+                self.link_holder_timer = time.time() + (self.link_holder_interval * 60)
+                self.tx_buf_rawData += self.link_holder_text.encode('UTF-8', 'ignore')
 
     def set_RNR(self, link_remote=False):
         self.send_RNR()
