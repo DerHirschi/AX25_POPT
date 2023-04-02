@@ -48,7 +48,9 @@ class DefaultCLI(object):
         self.state_index = 0
         self.crone_state_index = 0
         self.input = b''
+        self.raw_input = b''
         self.cmd = b''
+        self.last_line = b''
         self.parameter: [bytes] = []
         self.encoding = 'UTF-8', 'ignore'
         # Crone
@@ -71,6 +73,16 @@ class DefaultCLI(object):
             b'H': (self.cmd_help, 'Hilfe'),
             b'?': (self.cmd_help, 'Hilfe'),
         }
+
+        self.str_cmd_exec = {
+            b'#REQUESTNAME:+++#': self.str_cmd_req_name,
+            b'#REQUESTNAME:++-#': self.str_cmd_req_name,
+            b'#REQUESTNAME:+--#': self.str_cmd_req_name,
+            b'#REQUESTNAME:+-+#': self.str_cmd_req_name,
+            b'#REQUESTNAME:--+#': self.str_cmd_req_name,
+            b'#REQUESTNAME:-++#': self.str_cmd_req_name,
+        }
+
         self.state_exec = {
             0: self.s0,  # C-Text
             1: self.s1,  # Cmd Handler
@@ -256,11 +268,6 @@ class DefaultCLI(object):
                 else:
                     break
 
-        # self.connection.my_call_str
-        print(f'cmd_connect own_call: {self.connection.to_call_str}')
-        print(f'cmd_connect dest_call: {dest_call}')
-        print(f'cmd_connect vias: {vias}')
-        print(f'cmd_connect port_id: {port_id}')
         return self.port_handler.new_outgoing_connection(
             own_call=self.connection.to_call_str,
             dest_call=dest_call,
@@ -320,10 +327,37 @@ class DefaultCLI(object):
         else:
             return self.stat_cfg.stat_parm_cli_akttext
 
+    def str_cmd_req_name(self):
+        print("REQ NAME")
+        name = self.connection.stat_cfg.stat_parm_Name
+        qth = self.connection.stat_cfg.stat_parm_QTH
+        loc = self.connection.stat_cfg.stat_parm_LOC
+        if name:
+            name = f'#NAM# {name}\r'
+        if qth:
+            qth = f'#QTH# {qth}\r'
+        if loc:
+            loc = f'#LOC# {loc}\r'
+
+        tmp = self.cmd.split(b':')[1]
+        tmp = tmp[:-1]
+        cmd_dict = {
+            b'+++': name + qth + loc,
+            b'++-': name + qth,
+            b'+--': name,
+            b'+-+': name + loc,
+            b'--+': loc,
+            b'-++': qth + loc,
+        }
+        if tmp in cmd_dict.keys():
+            return cmd_dict[tmp]
+        return ''
+
     def cmd_help(self):
         ret = '\r   < Hilfe >\r'
         for k in self.cmd_exec.keys():
-            ret += '\r {}{:3} > {}'.format(self.prefix, k.decode('utf-8'), self.cmd_exec[k][1])
+            if self.cmd_exec[1]:
+                ret += '\r {}{:3} > {}'.format(self.prefix, k.decode('utf-8'), self.cmd_exec[k][1])
         ret += '\r\r\r'
         return ret
 
@@ -331,8 +365,12 @@ class DefaultCLI(object):
         if not self.connection.is_link:
             # self.send_2_gui(inp)
             self.input = inp
+            self.raw_input = bytes(inp)
             _ret = self.state_exec[self.state_index]()
-            self.send_output(_ret)
+            if _ret:
+                self.send_output(_ret)
+
+
             """
             if ret:
                 if type(ret) == str:
@@ -368,6 +406,18 @@ class DefaultCLI(object):
 
     def s1(self):
         self.exec_cmd()
+        ########################
+        # Check String Commands
+        inp_lines = self.last_line + self.raw_input
+        inp_lines = inp_lines.split(b'\r')
+        for li in inp_lines:
+            if li in self.str_cmd_exec.keys():
+                self.cmd = li
+                _ret = self.str_cmd_exec[li]()
+                self.cmd = b''
+                self.send_output(_ret)
+        self.last_line = inp_lines[-1]
+        self.raw_input = b''
         return ''
 
     def cron_s0(self):
