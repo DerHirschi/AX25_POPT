@@ -609,37 +609,42 @@ class TkMainWin:
         self.mh.new_call_alarm = False
         self.mh_btn.configure(bg=self.mh_btn_def_clr)
 
+    #################################
+    # TASKER
     def tasker(self):  # MAINLOOP
-        #############################################
+        self.tasker_prio()
+        self.tasker_low_prio()
+        self.tasker_low_low_prio()
+        self.main_win.after(self.loop_delay, self.tasker)
+
+    def tasker_prio(self):
+        """ Prio Tasks """
+        self.update_mon()  # TODO ?? maybe trigger von AX25CONN
+        self.txt_win.update_status_win()
         # Settings Win ( Port,- Station settings )
         if self.settings_win is not None:
             self.settings_win.tasker()
-        #####################
-        # Prio TASKS ########
-        self.update_mon()  # TODO ?? maybe trigger von AX25CONN
-        self.txt_win.update_status_win()
-        ######################
-        # Non Prio ###########
+
+    def tasker_low_prio(self):
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
-            if self.ch_alarm:
-                self.ch_btn_status_update()
             self.change_conn_btn()
             # self.tabbed_sideFrame.update_side_mh()
             self.check_sprech_ch_buf()
             self.rx_beep()
-            ##########################
-            # Non Non Prio ###########
-            if time.time() > self.non_non_prio_task_timer:
-                self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
-                self.update_bw_mon()
-                self.tabbed_sideFrame.tasker()
-                if self.mh.new_call_alarm and self.setting_dx_alarm:
-                    self.dx_alarm()
+            if self.ch_alarm:
+                self.ch_btn_status_update()
 
-        # Loop back
-        self.main_win.after(self.loop_delay, self.tasker)
+    def tasker_low_low_prio(self):
+        if time.time() > self.non_non_prio_task_timer:
+            self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
+            self.update_bw_mon()
+            self.tabbed_sideFrame.tasker()
+            if self.mh.new_call_alarm and self.setting_dx_alarm:
+                self.dx_alarm()
 
+    #################################
+    # TASKS
     def update_mon(self):  # MON & INPUT WIN
         """
         UPDATE INPUT WIN
@@ -841,18 +846,10 @@ class TkMainWin:
         self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
             self.inp_txt.delete(tk.END, tk.END)
-        # self.inp_txt.tag_remove('send', str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0' , self.inp_txt.index(tk.INSERT))
-
-        # print(f'self.win_buf[self.channel_index].input_win_index: {self.win_buf[self.channel_index].input_win_index}') # self.on_click_inp_txt()
-        # print(f'self.inp_txt.index(tk.END): {self.inp_txt.index(tk.END)}')
-        # self.on_click_inp_txt()
-        # self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
 
     def on_click_inp_txt(self, event=None):
         ind = self.win_buf[self.channel_index].input_win_index
-        # if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
-        # print(f'ind: {ind}')
-        # if ind != str(int(float(ind))) + '.0':
+
         self.inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
         # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
         self.inp_txt.tag_remove('send', str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0', self.inp_txt.index(tk.INSERT))
@@ -871,8 +868,6 @@ class TkMainWin:
         self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
 
     def arrow_keys(self, event=None):
-        # TODO
-        # pass
         self.on_click_inp_txt()
 
     # SEND TEXT OUT

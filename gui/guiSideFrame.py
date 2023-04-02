@@ -292,9 +292,6 @@ class SideTabbedFrame:
     def chk_dx_alarm(self):
         self.main_win.setting_dx_alarm = self.dx_alarm_on.get()
 
-    def tester(self, event):
-        print("TEST")
-
     def chk_rnr(self):
         conn = self.main_win.get_conn()
         if conn:
@@ -334,21 +331,6 @@ class SideTabbedFrame:
             self.update_side_mh()
         elif self.tabControl.index(self.tabControl.select()) == 4:
             self.update_ch_echo()
-
-    """
-    def open_new_conn_win(self, event, call: str):
-        print(event)
-        mh_ent = self.main_win.mh.mh_get_data_fm_call(call)
-        print(call)
-        if mh_ent:
-            port = mh_ent.port_id
-            vias = min(mh_ent.all_routes)
-            if vias:
-                call = f"{call} {' '.join(vias)}"
-                self.main_win.open_new_conn_win()
-                self.main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
-                self.main_win.new_conn_win.set_port_index(port)
-    """
 
     def entry_selected(self, event):
         for selected_item in self.tree.selection():
@@ -392,39 +374,6 @@ class SideTabbedFrame:
             self.last_mh_ent = list(self.mh.output_sort_entr(8))
             self.format_tree_ent()
             self.update_tree()
-            """
-            c = 1
-            for el in mh_ent:
-                self.side_mh[c][0].configure(state='normal')
-                self.side_mh[c][1].configure(state='normal')
-                self.side_mh[c][2].configure(state='normal')
-                self.side_mh[c][3].configure(state='normal')
-                self.side_mh[c][4].configure(state='normal')
-
-                self.side_mh[c][0].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event, str(el.own_call)))
-                self.side_mh[c][1].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event,str(el.own_call)))
-                self.side_mh[c][2].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event,str(el.own_call)))
-                self.side_mh[c][3].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event,str(el.own_call)))
-                self.side_mh[c][4].bind('<Double-Button-1>', lambda event: self.open_new_conn_win(event,str(el.own_call)))
-
-                self.side_mh[c][0].delete(0, tk.END)
-                self.side_mh[c][0].insert(0, el.last_seen.split(' ')[1])
-                self.side_mh[c][1].delete(0, tk.END)
-                self.side_mh[c][1].insert(0, el.own_call)
-                # self.side_mh[c][1].configure(text=el.own_call)
-                self.side_mh[c][2].delete(0, tk.END)
-                self.side_mh[c][2].insert(0, el.pac_n)
-                self.side_mh[c][3].delete(0, tk.END)
-                self.side_mh[c][3].insert(0, el.rej_n)
-                self.side_mh[c][4].delete(0, tk.END)
-                self.side_mh[c][4].insert(0, el.route)
-                self.side_mh[c][0].configure(state='disabled')
-                self.side_mh[c][1].configure(state='disabled')
-                self.side_mh[c][2].configure(state='disabled')
-                self.side_mh[c][3].configure(state='disabled')
-                self.side_mh[c][4].configure(state='disabled')
-                c += 1
-            """
 
     def on_ch_btn_stat_change(self):
         conn = self.main_win.get_conn()
