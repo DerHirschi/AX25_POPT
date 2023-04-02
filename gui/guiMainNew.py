@@ -40,8 +40,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-LOOP_DELAY = 50  # ms
-TEXT_SIZE = 15
 TEXT_SIZE_STATUS = 11
 FONT = "Courier"
 TXT_BACKGROUND_CLR = 'black'
@@ -81,17 +79,19 @@ class TkMainWin:
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
         self.mon_mode = False
-        self.non_prio_task_timer = time.time()
-        self.non_non_prio_task_timer = time.time()
-        # self.clipboard = ''
+        self.connect_history = {}
         ####################
         # GUI PARAM
         self.parm_btn_blink_time = 0.3
         self.parm_rx_beep_cooldown = 1.5
-        self.parm_non_prio_task_timer = 0.5
-        self.parm_non_non_prio_task_timer = 1
+        # Tasker Timings
+        self.loop_delay = 50                    # ms
+        self.parm_non_prio_task_timer = 0.5     # s
+        self.parm_non_non_prio_task_timer = 1   # s
+        self.non_prio_task_timer = time.time()
+        self.non_non_prio_task_timer = time.time()
         ###############
-        self.text_size = int(TEXT_SIZE)
+        self.text_size = 15
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
@@ -250,9 +250,6 @@ class TkMainWin:
         self.set_keybinds()
         #
         self.monitor_start_msg()
-        ########################
-        # set Global Settings to ch param
-        # self.set_var_to_all_ch_param()
         #######################
         # TEST
         # self.open_rx_echo_settings_win()
@@ -262,7 +259,7 @@ class TkMainWin:
         self.ax25_port_handler.set_gui()
         #######################
         # LOOP
-        self.main_win.after(LOOP_DELAY, self.tasker)
+        self.main_win.after(self.loop_delay, self.tasker)
         self.main_win.mainloop()
 
     def __del__(self):
@@ -622,9 +619,6 @@ class TkMainWin:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
             if self.ch_alarm:
                 self.ch_btn_status_update()
-            if self.mh.new_call_alarm and self.setting_dx_alarm:
-                self.dx_alarm()
-
             self.change_conn_btn()
             # self.tabbed_sideFrame.update_side_mh()
             self.check_sprech_ch_buf()
@@ -635,9 +629,11 @@ class TkMainWin:
                 self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
                 self.update_bw_mon()
                 self.tabbed_sideFrame.tasker()
+                if self.mh.new_call_alarm and self.setting_dx_alarm:
+                    self.dx_alarm()
 
         # Loop back
-        self.main_win.after(LOOP_DELAY, self.tasker)
+        self.main_win.after(self.loop_delay, self.tasker)
 
     def update_mon(self):  # MON & INPUT WIN
         """

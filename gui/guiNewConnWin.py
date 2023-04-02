@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import ax25.ax25dec_enc
 
 
@@ -31,6 +32,19 @@ class ProcCallInput:
             self.via.append(new_c)
 
 
+class ConnHistory(object):
+    def __init__(self,
+                 own_call: str,
+                 dest_call: str,
+                 add_str: str,
+                 port_id: int,
+                 ):
+        self.own_call = str(own_call)
+        self.dest_call = str(dest_call)
+        self.address_str = str(add_str)
+        self.port_id = int(port_id)
+
+
 class NewConnWin:
     def __init__(self, main_win):
         self.main = main_win
@@ -38,6 +52,7 @@ class NewConnWin:
         self.ax25_port_handler = self.main.ax25_port_handler
         self.out_txt = self.main.out_txt
         self.mh = self.ax25_port_handler.mh
+        self.conn_hist: {str: ConnHistory} = self.main.connect_history
         self.new_conn_win = tk.Tk()
         self.new_conn_win.title("New Connection")
         self.new_conn_win.geometry("700x285")
@@ -70,10 +85,6 @@ class NewConnWin:
             else:
                 tmp.place(x=10, y=1)
             self.port_btn[port] = tmp
-        """
-        for k in self.port_btn.keys():
-            self.port_btn[k].configure(command=lambda: self.set_port_index(int(k)))
-        """
 
         self.set_port_btn()
 
@@ -84,10 +95,21 @@ class NewConnWin:
                               height=1,
                               width=5)
         call_label.place(x=2, y=40)
+        """
         self.call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black',
                                     font=("TkFixedFont", 12),
                                     height=1,
                                     width=45)
+        """
+        vals = list(self.conn_hist.keys())
+        vals.reverse()
+        self.call_txt_inp = tk.ttk.Combobox(self.new_conn_win,
+                                            font=("TkFixedFont", 12),
+                                            # height=1,
+                                            values=vals,
+                                            width=45
+                                            )
+        self.call_txt_inp.bind("<<ComboboxSelected>>", self.set_conn_hist)
         self.call_txt_inp.place(x=80, y=40)
         self.ax_ip_ip = None
         self.ax_ip_port = None
@@ -159,7 +181,7 @@ class NewConnWin:
                     )
                 self.ax_ip_port[0].place(x=300, y=80)
                 self.ax_ip_port[1].place(x=380, y=80)
-                call_str = self.call_txt_inp.get('0.0', tk.END)
+                call_str = self.call_txt_inp.get()
                 call_obj = ProcCallInput(call_str)
 
                 mh_ent = self.mh.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
@@ -206,9 +228,10 @@ class NewConnWin:
 
     def process_new_conn_win(self):
         txt_win = self.call_txt_inp
-        call = txt_win.get('0.0', tk.END)
+        # call = txt_win.get('0.0', tk.END)
+        call = txt_win.get()
 
-        call_obj = ProcCallInput(call)  # TODO .. Just Static Function
+        call_obj = ProcCallInput(call)
         if call_obj.call:
 
             ax_frame = ax25.ax25dec_enc.AX25Frame()
@@ -253,9 +276,27 @@ class NewConnWin:
                     self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.main.channel_index)
                 else:
                     self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
-                self.destroy_new_conn_win()
+                if call.upper() in self.conn_hist.keys():
+                    del self.conn_hist[call.upper()]
+                self.conn_hist[call.upper()] = ConnHistory(
+                    own_call=ax_frame.from_call.call,
+                    dest_call=call_obj.call_str,
+                    add_str=call,
+                    port_id=self.port_index,
+                )
                 self.main.ch_btn_status_update()
                 self.main.change_conn_btn()
+                self.destroy_new_conn_win()
+
+    def set_conn_hist(self, event):
+        # call = txt_win.get('0.0', tk.END)
+        ent_key = self.call_txt_inp.get()
+        if ent_key in self.conn_hist:
+            ent: ConnHistory = self.conn_hist[ent_key]
+            self.set_port_index(ent.port_id)
+
+    def insert_conn_hist(self):
+        pass
 
     def destroy_new_conn_win(self):
         self.new_conn_win.destroy()
