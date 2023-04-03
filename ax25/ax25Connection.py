@@ -7,6 +7,7 @@ import time
 import cli.cli
 import config_station
 from ax25.ax25dec_enc import AX25Frame, reverse_uid
+from ax25.ax25FileTransfer import FileTX
 
 
 def count_modulo(inp: int):
@@ -160,6 +161,9 @@ class AX25Conn(object):
         self.is_link = False
         self.is_link_remote = False
         # self.rx_buf_rawData_2: b'' = b''        # Received Data TEST Script
+        """ File Transfer Stuff """
+        self.ft_tx_queue: [FileTX] = []
+        self.ft_tx_activ = None
         """ Port Variablen"""
         self.vs = 0  # Sendefolgenummer     / N(S) = V(R)  TX
         self.vr = 0  # Empfangsfolgezählers / N(S) = V(R)  TX
@@ -261,12 +265,59 @@ class AX25Conn(object):
     def handle_tx(self, ax25_frame: AX25Frame):
         self.zustand_exec.tx(ax25_frame=ax25_frame)
 
+    def send_data(self, data, file_trans=False):
+        if self.ft_tx_activ is not None and not file_trans:
+            return False
+        if data:
+            if type(data) == bytes:
+                self.link_holder_reset()
+                self.tx_buf_rawData += data
+                return True
+        return False
+
     def exec_cron(self):
         """ DefaultStat.cron() """
         # print(self.ch_index)
-        self.cli.cli_cron()
+        if not self.ft_cron():
+            self.cli.cli_cron()
+            self.link_holder_cron()
         self.zustand_exec.cron()
-        self.link_holder_cron()
+
+    def ft_cron(self):
+        if self.ft_tx_activ is not None:
+            self.ft_tx_activ: FileTX
+            if not self.ft_tx_activ.data_out:
+                self.ft_tx_queue.remove(self.ft_tx_activ)
+                self.ft_tx_activ = None
+                if self.ft_tx_queue:
+                    self.ft_tx_activ = self.ft_tx_queue[0]
+                else:
+                    return False
+            if self.ft_tx_activ.last_tx < time.time():
+                self.ft_tx_activ.reset_timer()
+                tmp_len = self.parm_PacLen * self.parm_MaxFrame
+                if len(self.ft_tx_activ.data_out) < tmp_len:
+                    tmp = self.ft_tx_activ.data_out
+                    tmp_len = len(tmp)
+                else:
+                    tmp = self.ft_tx_activ.data_out[:tmp_len]
+                self.send_data(tmp, file_trans=True)
+                self.ft_tx_activ.data_out = self.ft_tx_activ.data_out[tmp_len:]
+            return True
+        else:
+            if self.ft_tx_queue:
+                self.ft_tx_activ = self.ft_tx_queue[0]
+                return True
+        return False
+
+    def ft_reset_timer(self, conn_uid: str):
+        if conn_uid != self.uid:
+            if self.ft_tx_activ is not None:
+                self.ft_tx_activ.reset_timer()
+
+    def link_holder_reset(self):
+        if self.link_holder_on:
+            self.link_holder_timer = time.time() + (self.link_holder_interval * 60)
 
     def link_holder_cron(self):
         if self.link_holder_on:
@@ -291,8 +342,10 @@ class AX25Conn(object):
             self.zustand_exec.change_state(13)
         elif self.zustand_exec.stat_index == 15:
             self.zustand_exec.change_state(16)
+        """
         if self.LINK_Connection is not None and not link_remote:
             self.LINK_Connection.set_RNR(link_remote=True)
+        """
 
     def unset_RNR(self, link_remote=False):
         self.is_RNR = False
@@ -311,8 +364,10 @@ class AX25Conn(object):
             self.zustand_exec.change_state(6)
         elif self.zustand_exec.stat_index == 16:
             self.zustand_exec.change_state(15)
+        """
         if self.LINK_Connection is not None and not link_remote:
             self.LINK_Connection.unset_RNR(link_remote=True)
+        """
 
     # Zustand EXECs ENDE
     #######################

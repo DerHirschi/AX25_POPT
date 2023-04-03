@@ -26,6 +26,7 @@ from gui.guiLinkholderSettings import LinkHolderSettings
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
+from gui.guiFileTX import FileSend
 from config_station import VER
 from gui.vars import ALL_COLOURS
 
@@ -122,22 +123,28 @@ class TkMainWin:
         self.MenuVerb = Menu(self.menubar, tearoff=False)
         self.MenuVerb.add_command(label="Neu", command=self.open_new_conn_win)
         self.MenuVerb.add_command(label="Disconnect", command=self.disco_conn)
+        self.MenuVerb.add_separator()
         self.MenuVerb.add_command(label="Quit", command=self.destroy_win)
         self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb, underline=0)
         # Menü 2 "Bearbeiten"
         self.MenuEdit = Menu(self.menubar, tearoff=False)
         self.MenuEdit.add_command(label="Kopieren", command=self.copy_select, underline=0)
         self.MenuEdit.add_command(label="Einfügen", command=self.clipboard_past, underline=1)
+        self.MenuEdit.add_separator()
         self.MenuEdit.add_command(label="Aus Datei einfügen", command=self.insert_fm_file, underline=0)
         self.MenuEdit.add_command(label="In Datei speichern", command=self.save_to_file, underline=1)
+        self.MenuEdit.add_separator()
         self.MenuEdit.add_command(label="QSO/Vorschreibfenster löschen", command=self.clear_channel_data, underline=0)
         self.menubar.add_cascade(label="Bearbeiten", menu=self.MenuEdit, underline=0)
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar, tearoff=False)
         self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
         self.MenuTools.add_command(label="Statistik", command=lambda: self.mh.port_statistik_DB[0].plot_test_graph(), underline=1)
+        self.MenuTools.add_separator()
         self.MenuTools.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
         self.MenuTools.add_command(label="Linkhalter", command=self.open_linkholder_settings_win, underline=0)
+        self.MenuTools.add_separator()
+        self.MenuTools.add_command(label="Datei senden", command=self.open_file_send, underline=0)
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         self.menubar.add_cascade(label="Tools", menu=self.MenuTools, underline=0)
 
@@ -151,6 +158,7 @@ class TkMainWin:
         self.MenuHelp = Menu(self.menubar, tearoff=False)
         # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
         self.MenuHelp.add_command(label="Tastaturbelegung", command=self.open_keybind_help_win, underline=0)
+        self.MenuHelp.add_separator()
         self.MenuHelp.add_command(label="Über", command=self.open_about_win, underline=0)
         self.menubar.add_cascade(label="Hilfe", menu=self.MenuHelp, underline=0)
 
@@ -837,6 +845,12 @@ class TkMainWin:
             About(self)
 
     ##########################
+    # About WIN
+    def open_file_send(self):
+        if self.settings_win is None:
+            FileSend(self)
+
+    ##########################
     # Keybinds Help WIN
     def open_keybind_help_win(self):
         if self.settings_win is None:
@@ -884,7 +898,8 @@ class TkMainWin:
             print(tmp_txt.encode())
             tmp_txt = tmp_txt.replace('\n', '\r')
             # Send it to Connection/Station TX Buffer
-            station.tx_buf_rawData += tmp_txt.encode()
+            # station.tx_buf_rawData += tmp_txt.encode()
+            station.send_data(tmp_txt.encode())
         self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
         self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:

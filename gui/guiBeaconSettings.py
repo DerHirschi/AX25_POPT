@@ -341,8 +341,6 @@ class BeaconTab:
             self.interv.configure(state='disabled')
         else:
             self.interv.configure(state='normal')
-        print(self.beacon.hours)
-        print(self.beacon.minutes)
 
 
 class BeaconSettings(tk.Toplevel):

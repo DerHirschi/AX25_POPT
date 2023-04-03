@@ -125,6 +125,7 @@ class AX25Port(threading.Thread):
         """  """
         # print('------------- RX nach decoding ----------------')
         # print(f'UID: {ax25_frame.addr_uid} HEX: {ax25_frame.bytes.hex()}')
+        self.reset_ft_wait_timer(ax25_frame)
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
             # print("Not DIGI and VIA")
             if not self.rx_link_handler(ax25_frame=ax25_frame):  # Link Connection Handler
@@ -350,6 +351,13 @@ class AX25Port(threading.Thread):
                 # And empty Buffer ?? S0 should be enough
                 self.port_handler.del_link(conn.uid)
                 del self.connections[k]
+
+    def reset_ft_wait_timer(self, ax25_frame: AX25Frame):
+        # if ax25_frame.ctl_byte.flag != 'I' or not ax25_frame.ctl_byte.cmd:
+        # if ax25_frame.ctl_byte.cmd:
+        if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
+            for k in self.connections.keys():
+                self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
 
     def run(self):
         while self.loop_is_running and self.device_is_running:
