@@ -6,74 +6,6 @@
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 
 
-def find_bits(inp):
-    """ Debugging """
-    fck_bit = ''.join(f'{bin(int(val, 16))}'[1:] for val in inp.hex(' ', 1).split())
-    such = '00001100'
-    if '00001100' in fck_bit:
-
-        print("!!!!!!!! FCK !!!!!")
-        i = fck_bit.index(such)
-        print(fck_bit)
-        print(i)
-        print('{}\n{}\n{}'.format(fck_bit[:i], fck_bit[i:i+8], fck_bit[i+8:]))
-        print('{}\n> {}\n<{}'.format(len(fck_bit[:i]) / 8, fck_bit[i:i+8], len(fck_bit[i+8:]) / 8))
-        print("!!!!!!!! FCK !!!!!")
-
-        fck_bit_str = [f'{bin(int(val, 16))}'[2:].zfill(8) for val in inp.hex(' ', 1).split()]
-        print(fck_bit_str)
-
-        print( [f'{bin(int(val, 16))}'[2:] for val in inp.hex(' ', 1).split()])
-        if such in fck_bit_str:
-            index = fck_bit_str.index(such)
-            print(index)
-        else:
-            print('NÖÖÖÖÖÖ')
-        # print(fck_bit_str[index])
-
-        # logger.debug("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
-        # logger.debug(fck_bit)
-        # logger.debug("!!!!!!!! NO BIT STUFFING NEEDED !!!!!! Found 6 * 1 Bits !!!!!")
-        return True
-    return False
-
-
-def detect_bit_stuffing(inp: b''):
-    """ Debugging """
-    tmp_hex = inp.hex()
-    if '7e' in tmp_hex:
-        logger.debug('Bit Stuffing: 7E detected in {}'.format(inp))
-        logger.debug('Bit Stuffing: 7E detected in {}'.format(tmp_hex))
-        print('Bit Stuffing: 7E detected in {}'.format(inp))
-        print('Bit Stuffing: 7E detected in {}'.format(tmp_hex))
-        return True
-    return False
-
-
-def where_the_fucking_dbd_is_coming_from_why__just_why__fck_dump_fix(inp: b'', header_index: int):
-    """ C0 is Kiss Flag .. Maybe Kiss is replacing c0 by dbd ? """
-    index = header_index + 2
-    target = b'\xdb\xdc'
-    if target in inp[:index]:
-        tmp = inp[:index]
-        # tmp = tmp.replace(b'\xdb\xdc', b'\x0c')
-        tmp = tmp.replace(b'\xdb\xdc', b'\xc0')
-        print('____________________________________________')
-        print('!%$§&/§4#+*"&/)(§"%!%§"$&§$&"$§"& !!!!!!!!!')
-        print('! KISS u fck A Hole !!!!!!!!!')
-        print('! DBD Detected !!!!!!!!! {}'.format(inp))
-        print('! tmp {}'.format(tmp))
-        print(tmp + inp[index:])
-        print('____________________________________________')
-        logger.debug('____________________________________________')
-        logger.debug('!%$§&/§4#+*"&/)(§"%!%§"$&§$&"$§"& !!!!!!!!!')
-        logger.debug('! DBD Detected !!!!!!!!! {}'.format(inp))
-        logger.debug(tmp + inp[index:])
-        logger.debug('____________________________________________')
-        return tmp + inp[index:]
-    return inp
-
-
 def bl2str(inp):
     if inp:
         return '+'
@@ -919,24 +851,5 @@ def validate_call(call_str: str):
         return False
     return call_str
 
-"""
-if __name__ == '__main__':
-    # Error Msg                                       ctl pid       < Wrong
-    # Error Msg                                           ctl pid   < Right
-    fck_msg = b'\x00\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
-    ttt = b'\x00\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xc0\xf073 ...\r\r\r*** Reconnected to DNX527\r\r<WinSTOP 1.05> MD5TES de DNX527>\r'
-    # fm DNX527 to MD5TES ctl I60^ pid=F0(Text) len 17
-    # fck_ms2 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0<<< 73 >>>\n\n\n\n\n\n\n'
-    # Working Msg
-    ms1 = b'\x9a\x88j\xa8\x8a\xa6`\x88\x9c\xb0jdn\xe1s'
-    # fm DNX527 to MD5TES ctl I60^ pid=F0(Text) len 17
-    fck_ms2 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0<<< 73 >>>\n\n\n\n\n\n\n'
-    # DNX527 to MD5TES cmd (0xac) I56- pid=0xf0(Text (NO L3)) len 150
-    ms2     = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xac\xf0D5TES-15    \rP:DW>11/03/23 12:16:17 DBO527-1     P:TEST>12/03/23 08:32:46 MD2SAW       \rP:TEST>12/03/23 08:31:09 CB0SAW-14    \r\rTotal Packets Rec.: 24'
-    # DNX527 to MD5TES ctl I60^ pid=F0(Text) len 150 18:27:28
-    fck_ms3 = b'\x9a\x88j\xa8\x8a\xa6\xe0\x88\x9c\xb0jdna\xdb\xdc\xf0  |\r|        QTH: Stadt Salzwedel (SAA)            |\r++++++++++++++++++++++++++++++++++++++++++++++++\r|                                              |'
-
-    AX25Frame().decode(fck_msg)
-"""
 
 

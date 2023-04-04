@@ -139,7 +139,7 @@ class TkMainWin:
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar, tearoff=False)
         self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
-        self.MenuTools.add_command(label="Statistik", command=lambda: self.mh.port_statistik_DB[0].plot_test_graph(), underline=1)
+        self.MenuTools.add_command(label="Statistik", command=self.open_port_stat_win, underline=1)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
         self.MenuTools.add_command(label="Linkhalter", command=self.open_linkholder_settings_win, underline=0)
@@ -220,7 +220,7 @@ class TkMainWin:
         _btn = tk.Button(self.side_btn_frame_top,
                          text="Port-Stat",
                          width=8,
-                         command=lambda: self.mh.port_statistik_DB[0].plot_test_graph())
+                         command=self.open_port_stat_win)
         _btn.place(x=5, y=80)
 
         _btn = tk.Button(self.side_btn_frame_top,
@@ -855,6 +855,13 @@ class TkMainWin:
     def open_keybind_help_win(self):
         if self.settings_win is None:
             KeyBindsHelp(self)
+
+    ##########################
+    # Keybinds Help WIN
+    def open_port_stat_win(self):
+        #TODO
+        if 0 in self.mh.port_statistik_DB.keys():
+            self.mh.port_statistik_DB[0].plot_test_graph()
 
     # ##############
     # DISCO

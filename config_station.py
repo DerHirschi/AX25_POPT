@@ -2,7 +2,7 @@ import pickle
 import os
 from cli.cli import DefaultCLI, NoneCLI
 
-VER = '2.72.0a'
+VER = '2.72.1a'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
