@@ -1693,7 +1693,8 @@ class S12DestNotReadyFinal(DefaultStat):
         # self.change_state(10)
         self.delUNACK()
         if self.pf:
-            self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
+            self.change_state(9)
+            #self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
 
     def t1_fail(self):
         self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
