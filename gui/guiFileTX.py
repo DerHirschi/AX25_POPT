@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog as fd
 from ax25.ax25FileTransfer import FileTX
+from string_tab import STR_TABLE
 
 
 class FileSend(tk.Toplevel):
@@ -11,7 +12,7 @@ class FileSend(tk.Toplevel):
         self.win_height = 600
         self.win_width = 900
         self.style = main_win.style
-        self.title("Datei senden")
+        self.title(STR_TABLE['send_file'][self.root.language])
         self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
@@ -23,13 +24,13 @@ class FileSend(tk.Toplevel):
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
-                          text="Ok",
+                          text=STR_TABLE['OK'][self.root.language],
                           height=1,
                           width=6,
                           command=self.ok_btn_cmd)
 
         cancel_bt = tk.Button(self,
-                              text="Abbrechen",
+                              text=STR_TABLE['cancel'][self.root.language],
                               height=1,
                               width=8,
                               command=self.chancel_btn_cmd)
@@ -41,11 +42,11 @@ class FileSend(tk.Toplevel):
         _x = 20
         _y = 20
         # call_y = 100
-        _label = tk.Label(self, text='Datei:')
+        _label = tk.Label(self, text=STR_TABLE['file_2'][self.root.language])
         self.filename_var = tk.StringVar(self)
         self.filename = tk.Entry(self, textvariable=self.filename_var, width=50)
         # self.filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
-        openfile_btn = tk.Button(self, text='Datei', command=self.select_files)
+        openfile_btn = tk.Button(self, text=STR_TABLE['file_1'][self.root.language], command=self.select_files)
 
         _label.place(x=_x, y=_y)
         self.filename.place(x=_x + 70, y=_y)
@@ -55,11 +56,11 @@ class FileSend(tk.Toplevel):
         # Protokoll
         _x = 20
         _y = 80
-        _label = tk.Label(self, text='Protokoll:')
+        _label = tk.Label(self, text=STR_TABLE['protocol'][self.root.language])
         self.protocol_var = tk.StringVar(self)
         opt = [
             'Text',
-            'AutoBin',
+            # 'AutoBin',
         ]
         self.protocol_var.set(opt[0])
         prot = tk.OptionMenu(self, self.protocol_var, *opt, command=self.change_settings)
@@ -72,7 +73,7 @@ class FileSend(tk.Toplevel):
         #
         _x = 340
         _y = 80
-        _label = tk.Label(self, text='Senden wenn Band frei für (sek.):')
+        _label = tk.Label(self, text=STR_TABLE['send_if_free'][self.root.language])
         self.wait_tx_var = tk.IntVar(self)
         self.wait_tx_var.set(0)
         wait_tx = tk.Spinbox(self,
@@ -90,7 +91,7 @@ class FileSend(tk.Toplevel):
         #
         _x = 20
         _y = 120
-        self.file_size = tk.Label(self, text='102415 B')
+        self.file_size = tk.Label(self, text='')
         self.file_size.place(x=_x, y=_y)
 
     def select_files(self):
@@ -124,7 +125,7 @@ class FileSend(tk.Toplevel):
             if not self.FileOBJ.e:
                 size = len(self.FileOBJ.data)
                 size = size / 1024
-                text = f'Größe: {size} kb'
+                text = f"{STR_TABLE['size'][self.root.language]} {size} kb"
                 self.file_size.configure(text=text)
             else:
                 self.file_size.configure(text='')

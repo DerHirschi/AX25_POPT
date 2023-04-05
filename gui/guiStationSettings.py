@@ -3,6 +3,7 @@ from tkinter import scrolledtext
 from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data
 from cli.cli import *
 from gui.guiMsgBoxes import *
+from string_tab import STR_TABLE
 
 
 class StatSetTab:
@@ -14,11 +15,12 @@ class StatSetTab:
         self.station_setting = setting
         self.style = main_stt_win.style
         self.own_tab = ttk.Frame(self.tab_clt)
+        self.lang = main_stt_win.lang
         #################
         # Call
         call_x = 20
         call_y = 570
-        call_label = tk.Label(self.own_tab, text='Call:')
+        call_label = tk.Label(self.own_tab, text=f'{STR_TABLE["call"][self.lang]}:')
         call_label.place(x=call_x, y=height - call_y)
         self.call = tk.Entry(self.own_tab, width=10)
         self.call.place(x=call_x + 55, y=height - call_y)
@@ -102,7 +104,7 @@ class StatSetTab:
         # Name
         name_x = 10
         name_y = 120
-        name_label = tk.Label(r_side_frame, text='Name:')
+        name_label = tk.Label(r_side_frame, text=f'{STR_TABLE["name"][self.lang]}:')
         name_label.place(x=name_x, y=f_height - name_y)
         self.name = tk.Entry(r_side_frame, width=15)
         self.name.place(x=name_x + 75, y=f_height - name_y)
@@ -205,11 +207,11 @@ class StatSetTab:
         self.akt_info_text_ent.grid(row=1, column=1)
         self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
 
-        textTab.add(tab_ctext, text='C Text')
-        textTab.add(tab_byetext, text='Quit Text')
-        textTab.add(tab_infotext, text='Info Text')
-        textTab.add(tab_loinfotext, text='Long-Info Text')
-        textTab.add(tab_akttext, text='News Text')
+        textTab.add(tab_ctext, text=STR_TABLE['c_text'][self.lang])
+        textTab.add(tab_byetext, text=STR_TABLE['q_text'][self.lang])
+        textTab.add(tab_infotext, text=STR_TABLE['i_text'][self.lang])
+        textTab.add(tab_loinfotext, text=STR_TABLE['li_text'][self.lang])
+        textTab.add(tab_akttext, text=STR_TABLE['news_text'][self.lang])
 
         self.update_vars_fm_cfg()
 
@@ -322,6 +324,7 @@ class StatSetTab:
 class StationSettingsWin:
     def __init__(self, main_cl):
         self.main_class = main_cl
+        self.lang = self.main_class.language
         self.ax25_porthandler = main_cl.ax25_port_handler
         # self.all_port_settings: {int: PortConfigInit} = {}
         # self.all_ports: {int: AX25Port} = {}
@@ -335,7 +338,7 @@ class StationSettingsWin:
         # self.settings_win = tk.Tk()
         self.settings_win = tk.Toplevel()
         # self.settings_win.option_add('*Dialog.msg.font', 'Helvetica 8')
-        self.settings_win.title("Station-Einstellungen")
+        self.settings_win.title(STR_TABLE['stat_settings'][self.lang])
         self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.settings_win.resizable(False, False)
@@ -343,7 +346,7 @@ class StationSettingsWin:
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self.settings_win,
-                          text="Ok",
+                          text=STR_TABLE['OK'][self.lang],
                           # font=("TkFixedFont", 15),
                           # bg="green",
                           height=1,
@@ -351,7 +354,7 @@ class StationSettingsWin:
                           command=self.ok_btn_cmd)
 
         save_bt = tk.Button(self.settings_win,
-                            text="Speichern",
+                            text=STR_TABLE['save'][self.lang],
                             # font=("TkFixedFont", 15),
                             # bg="green",
                             height=1,
@@ -359,7 +362,7 @@ class StationSettingsWin:
                             command=self.save_btn_cmd)
 
         cancel_bt = tk.Button(self.settings_win,
-                              text="Abbrechen",
+                              text=STR_TABLE['cancel'][self.lang],
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               height=1,
@@ -371,14 +374,14 @@ class StationSettingsWin:
         ####################################
         # New Station, Del Station Buttons
         new_st_bt = tk.Button(self.settings_win,
-                              text="Neue Station",
+                              text=STR_TABLE['new_stat'][self.lang],
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               height=1,
                               width=10,
                               command=self.new_stat_btn_cmd)
         del_st_bt = tk.Button(self.settings_win,
-                              text="Löschen",
+                              text=STR_TABLE['delete'][self.lang],
                               # font=("TkFixedFont", 15),
                               bg="red3",
                               height=1,
@@ -427,19 +430,19 @@ class StationSettingsWin:
             if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
                 self.all_stat_settings[stat_conf.stat_parm_Call] = stat_conf
                 save_station_to_file(stat_conf)
-        self.main_class.msg_to_monitor('Info: Station Einstellungen erfolgreich gespeichert.')
+        self.main_class.msg_to_monitor(STR_TABLE['suc_save'][self.lang])
 
     def save_btn_cmd(self):
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
-        self.main_class.msg_to_monitor('Lob: Das hast du sehr gut gemacht !!')
+        self.main_class.msg_to_monitor(STR_TABLE['lob1'][self.lang])
 
 
     def ok_btn_cmd(self):
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
-        self.main_class.msg_to_monitor('Hinweis: Der OK Button funktioniert noch !!')
-        self.main_class.msg_to_monitor('Lob: Das hast du gut gemacht !!')
+        self.main_class.msg_to_monitor(STR_TABLE['hin1 '][self.lang])
+        self.main_class.msg_to_monitor(STR_TABLE['lob2'][self.lang])
 
         self.destroy_win()
 

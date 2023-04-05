@@ -29,6 +29,7 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
 from config_station import VER
 from gui.vars import ALL_COLOURS
+from string_tab import STR_TABLE
 
 if 'linux' in sys.platform:
     from playsound import playsound
@@ -70,6 +71,7 @@ class ChVars(object):
 
 class TkMainWin:
     def __init__(self, glb_ax25port_handler):
+        self.language = 0
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
@@ -121,46 +123,46 @@ class TkMainWin:
         self.main_win.config(menu=self.menubar)
         # Menü 1 "Verbindungen"
         self.MenuVerb = Menu(self.menubar, tearoff=False)
-        self.MenuVerb.add_command(label="Neu", command=self.open_new_conn_win)
-        self.MenuVerb.add_command(label="Disconnect", command=self.disco_conn)
+        self.MenuVerb.add_command(label=STR_TABLE['new'][self.language], command=self.open_new_conn_win)
+        self.MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self.disco_conn)
         self.MenuVerb.add_separator()
-        self.MenuVerb.add_command(label="Quit", command=self.destroy_win)
-        self.menubar.add_cascade(label="Verbindungen", menu=self.MenuVerb, underline=0)
+        self.MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self.destroy_win)
+        self.menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=self.MenuVerb, underline=0)
         # Menü 2 "Bearbeiten"
         self.MenuEdit = Menu(self.menubar, tearoff=False)
-        self.MenuEdit.add_command(label="Kopieren", command=self.copy_select, underline=0)
-        self.MenuEdit.add_command(label="Einfügen", command=self.clipboard_past, underline=1)
+        self.MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self.copy_select, underline=0)
+        self.MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self.clipboard_past, underline=1)
         self.MenuEdit.add_separator()
-        self.MenuEdit.add_command(label="Aus Datei einfügen", command=self.insert_fm_file, underline=0)
-        self.MenuEdit.add_command(label="In Datei speichern", command=self.save_to_file, underline=1)
+        self.MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language], command=self.insert_fm_file, underline=0)
+        self.MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language], command=self.save_to_file, underline=1)
         self.MenuEdit.add_separator()
-        self.MenuEdit.add_command(label="QSO/Vorschreibfenster löschen", command=self.clear_channel_data, underline=0)
-        self.menubar.add_cascade(label="Bearbeiten", menu=self.MenuEdit, underline=0)
+        self.MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_data, underline=0)
+        self.menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=self.MenuEdit, underline=0)
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar, tearoff=False)
         self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
-        self.MenuTools.add_command(label="Statistik", command=self.open_port_stat_win, underline=1)
+        self.MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win, underline=1)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
-        self.MenuTools.add_command(label="Linkhalter", command=self.open_linkholder_settings_win, underline=0)
+        self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language], command=self.open_linkholder_settings_win, underline=0)
         self.MenuTools.add_separator()
-        self.MenuTools.add_command(label="Datei senden", command=self.open_file_send, underline=0)
+        self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send, underline=0)
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
-        self.menubar.add_cascade(label="Tools", menu=self.MenuTools, underline=0)
+        self.menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=self.MenuTools, underline=0)
 
         # Menü 4 Einstellungen
         self.MenuSettings = Menu(self.menubar, tearoff=False)
-        self.MenuSettings.add_command(label="Station", command=self.open_settings_win, underline=0)
-        self.MenuSettings.add_command(label="Port", command=self.open_port_settings_win, underline=0)
-        self.MenuSettings.add_command(label="Baken", command=self.open_beacon_settings_win, underline=0)
-        self.menubar.add_cascade(label="Einstellungen", menu=self.MenuSettings, underline=0)
+        self.MenuSettings.add_command(label=STR_TABLE['station'][self.language], command=self.open_settings_win, underline=0)
+        self.MenuSettings.add_command(label=STR_TABLE['port'][self.language], command=self.open_port_settings_win, underline=0)
+        self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], command=self.open_beacon_settings_win, underline=0)
+        self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
         # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
-        self.MenuHelp.add_command(label="Tastaturbelegung", command=self.open_keybind_help_win, underline=0)
+        self.MenuHelp.add_command(label=STR_TABLE['keybind'][self.language], command=self.open_keybind_help_win, underline=0)
         self.MenuHelp.add_separator()
-        self.MenuHelp.add_command(label="Über", command=self.open_about_win, underline=0)
-        self.menubar.add_cascade(label="Hilfe", menu=self.MenuHelp, underline=0)
+        self.MenuHelp.add_command(label=STR_TABLE['about'][self.language], command=self.open_about_win, underline=0)
+        self.menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=self.MenuHelp, underline=0)
 
         # Menü 4 "Debug"
         # self.menubar.add_command(label="Debug")
@@ -249,9 +251,9 @@ class TkMainWin:
         self.ax.tick_params(axis='x', colors='black')
         self.ax.tick_params(axis='y', colors='black')
         self.bw_plot_lines = {}
-        plt.xlabel("Minuten")
+        plt.xlabel(STR_TABLE['minutes'][self.language])
         plt.xlim(0, 10)     # TODO As Option
-        plt.ylabel("Auslastung in %")
+        plt.ylabel(STR_TABLE['occup'][self.language])
         canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
         canvas.draw()
         canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
