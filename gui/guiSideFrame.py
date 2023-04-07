@@ -279,6 +279,7 @@ class SideTabbedFrame:
         _y = 105
         tk.Label(self.tab6_monitor, text=f"{STR_TABLE['port'][self.lang]}:").place(x=_x, y=_y)
         self.mon_port_var = tk.StringVar(self.tab6_monitor)
+        self.mon_port_var.set('0')
         _vals = ['0']
         if self.main_win.ax25_port_handler.ax25_ports.keys():
             _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
@@ -322,6 +323,7 @@ class SideTabbedFrame:
             5: self.update_ch_echo,
         }
 
+        self.chk_mon_port()
         self.update_ch_echo()
 
     def reset_dx_alarm(self, event=None):
