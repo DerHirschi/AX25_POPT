@@ -56,4 +56,7 @@ STR_TABLE = {
     'text_fm_file': ('Text aus Datei', 'Text from File'),
     'beacon_settings': ('Baken-Einstellungen', 'Beacon-Settings'),
     'new_beacon': ('Neue Bake', 'New Beacon'),
+    'last_packet': ('letztes Paket', 'Last Seen'),
+    'multicast_warning': ('Vorsicht bei Nodenanbindungen wie TNN. Verlinkungen mehrerer Noden via Multicast kann zu Problemen führen!', 'Be careful with node connections like TNN. Linking multiple nodes via multicast can lead to problems!'),
+
 }

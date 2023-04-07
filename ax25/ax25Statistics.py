@@ -1,4 +1,3 @@
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import matplotlib.pyplot as plt
 import tkinter as tk
@@ -585,8 +584,10 @@ class MH(object):
                 ret.append(ent)
         return ret
 
-    def mh_ip_failed(self, call: str):
-        self.calls[call].axip_fail += 1
+    def mh_ip_failed(self, axip: str):
+        for k in self.calls.keys:
+            if self.calls[k].axip_add == axip:
+                self.calls[k].axip_fail += 1
 
     def mh_set_ip(self, call: str, axip: (str, int)):
         self.calls[call].axip_add = axip

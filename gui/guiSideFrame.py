@@ -40,7 +40,7 @@ class SideTabbedFrame:
         self.tabControl.add(self.tab2_mh, text='MH')
         self.tabControl.add(tab3, text='Ports')
         self.tabControl.add(self.tab4_settings, text='Global')
-        self.tabControl.add(self.tab5_ch_links, text='CH-Echo')
+        # self.tabControl.add(self.tab5_ch_links, text='CH-Echo') # TODO 
         self.tabControl.pack(expand=0, fill="both")
         self.tabControl.select(self.tab2_mh)
         ################################################
@@ -63,10 +63,13 @@ class SideTabbedFrame:
         p_l_label = tk.Label(tab1_kanal, text='Pac Len:')
         self.pac_len_var = tk.IntVar(tab1_kanal)
         self.pac_len_var.set(128)
+        vals = []
+        for i in range(255):
+            vals.append(str(i + 1))
         self.pac_len = tk.ttk.Combobox(tab1_kanal,
                                        width=4,
                                        textvariable=self.pac_len_var,
-                                       values=list(range(1, 257)),
+                                       values=vals,
                                        state='disabled')
         self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         p_l_label.place(x=10, y=parm_y)

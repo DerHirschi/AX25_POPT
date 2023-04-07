@@ -13,6 +13,7 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import config_station
+from gui.guiMulticastSettings import MulticastSettings
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
 from gui.guiMH import MHWin
@@ -155,6 +156,7 @@ class TkMainWin:
         self.MenuSettings.add_command(label=STR_TABLE['station'][self.language], command=self.open_settings_win, underline=0)
         self.MenuSettings.add_command(label=STR_TABLE['port'][self.language], command=self.open_port_settings_win, underline=0)
         self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], command=self.open_beacon_settings_win, underline=0)
+        self.MenuSettings.add_command(label='Multicast', command=self.open_multicast_settings_win, underline=0)
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
@@ -839,6 +841,12 @@ class TkMainWin:
     def open_linkholder_settings_win(self):
         if self.settings_win is None:
             LinkHolderSettings(self)
+
+    ##########################
+    # Beacon Settings WIN
+    def open_multicast_settings_win(self):
+        if self.settings_win is None:
+            MulticastSettings(self)
 
     ##########################
     # About WIN

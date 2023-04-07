@@ -1,4 +1,3 @@
-import copy
 import socket
 import serial
 import threading
@@ -9,7 +8,7 @@ from ax25.ax25Beacon import Beacon
 # mport main
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
-from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, via_calls_fm_str, get_call_str, call_tuple_fm_call_str
+from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, via_calls_fm_str
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 import ax25.ax25monitor as ax25monitor
 
@@ -68,7 +67,7 @@ class AX25Port(threading.Thread):
         ##############
         # AXIP VARs
         self.own_ipAddr = ''
-        self.axip_anti_spam = {}
+        # self.axip_anti_spam = {}
         # self.to_call_ip_addr = ('', 0)
         try:
             self.init()
@@ -490,27 +489,14 @@ class KissTCP(AX25Port):
         ret = RxBuf()
 
         if recv_buff:
-            # print(recv_buff)
             de_kiss_fr = self.kiss.de_kiss(recv_buff)
-            # if recv_buff[:1] == b'\xc0' and recv_buff[-1:] == b'\xc0' and len(recv_buff) > 14:
             if de_kiss_fr:
-                # ret.raw_data = recv_buff[2:-1]
-                # ret.kiss = recv_buff[1:2]
-                # ret.raw_data = recv_buff[2:-1]
-                # ret.raw_data = de_arschloch_kiss_frame(recv_buff[2:-1])
-                # self.kiss = ret.kiss
                 ret.raw_data = de_kiss_fr
-                # return ret
                 return ret
         else:
             return ret
 
     def tx(self, frame: AX25Frame):
-        """
-        if self.kiss:
-            frame.hexstr = self.kiss + arschloch_kiss_frame(frame.hexstr)
-        out = (bytes.fromhex('c0') + frame.hexstr + bytes.fromhex('c0'))
-        """
         try:
             self.device.sendall(self.kiss.kiss(frame.bytes))
             # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
@@ -688,9 +674,6 @@ class AXIP(AX25Port):
             return ret
 
     def tx(self, frame: AX25Frame, no_multicast=False):
-        # print('_____________________________')
-        # print(frame.axip_add)
-        # print('_____________________________')
         if frame.axip_add != ('', 0):
             ###################################
             # CRC
@@ -716,37 +699,21 @@ class AXIP(AX25Port):
             self.tx_multicast(frame=frame)
 
     def tx_multicast(self, frame: AX25Frame):
-        sendet = [frame.to_call.call_str]
-        # self.axip_anti_spam[frame.hexstr] = [frame.axip_add], time.time()
-        self.clean_anti_spam()
-        all_axip_stat = self.mh.mh_get_ip_fm_all(self.port_cfg.parm_axip_fail)
-        send_it = True
-        for station in all_axip_stat:
-            if frame.bytes in self.axip_anti_spam.keys():
-                if frame.axip_add in self.axip_anti_spam[frame.bytes][0]:
-                    if self.axip_anti_spam[frame.bytes][1] > time.time():
-                        send_it = False
-                else:
-                    tmp: [] = self.axip_anti_spam[frame.bytes][0]
-                    tmp.append(frame.axip_add)
-                    self.axip_anti_spam[frame.bytes] = tmp, time.time() + self.port_cfg.parm_Multicast_anti_spam
-            else:
-                self.axip_anti_spam[frame.bytes] = [
-                    frame.axip_add], time.time() + self.port_cfg.parm_Multicast_anti_spam
-
-            if station[0] not in sendet and send_it:
-                sendet.append(station[0])
-                frame.axip_add = station[1]
+        for axip_add in self.port_handler.multicast_ip_s:
+            if axip_add != frame.axip_add:
+                frame.axip_add = axip_add
                 try:
                     self.tx(frame, no_multicast=True)
                 except (ConnectionRefusedError, ConnectionError, socket.timeout):
-                    self.mh.mh_ip_failed(station[0])
+                    self.mh.mh_ip_failed(axip_add)
                 except (OSError, socket.error) as e:
                     logger.error(
                         'Error. Cant send Packet to AXIP Device MULTICAST {}'.format(frame.axip_add))
                     logger.error('{}'.format(e))
 
+    """
     def clean_anti_spam(self):
         for k in list(self.axip_anti_spam.keys()):
             if self.axip_anti_spam[k][1] < time.time():
                 del self.axip_anti_spam[k]
+    """

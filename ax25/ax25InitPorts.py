@@ -22,6 +22,7 @@ class AX25PortHandler(object):
         # self.client_db = cli.ClientDB.ClientDB()
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
+        self.multicast_ip_s = []       # [axip-addresses('ip', port)]
         self.all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.rx_echo: {int:  RxEchoVars} = {}
@@ -319,4 +320,5 @@ class AX25PortHandler(object):
                             rx_echo_var.tx_buff.append(ax_frame)
 
             # self.rx_echo[k].buff_input(ax_frame=ax_frame, port_id=k)
+
 

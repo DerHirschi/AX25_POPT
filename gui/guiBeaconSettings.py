@@ -69,12 +69,12 @@ class BeaconTab:
             self.aprs_check_var.set(1)
         self.aprs_check.place(x=call_x + 55, y=call_y)
         #################
-        # Pool
+        # Poll
         call_x = 750
         call_y = 55
         self.pool_check_var = tk.IntVar(self.own_tab)
         self.pool_check = tk.Checkbutton(self.own_tab,
-                                         text='Pool',
+                                         text='Poll',
                                          variable=self.pool_check_var)
         self.pool_check.var = self.pool_check_var
         if self.beacon.pool:
