@@ -57,50 +57,39 @@ class ChBtnFrm:
         }
 
     def ch_btn_status_update(self):
-        # TODO Again !!
         self.main_class.on_channel_status_change()
         ch_alarm = False
-        if self.main_class.ax25_port_handler.all_connections.keys() and not self.main_class.mon_mode:
-            for i in list(self.con_btn_dict.keys()):
-                if i in self.main_class.ax25_port_handler.all_connections.keys():
-                    btn_txt = self.main_class.ax25_port_handler.all_connections[i].to_call_str
-                    is_link = self.main_class.ax25_port_handler.all_connections[i].is_link
+        # if self.main_class.ax25_port_handler.all_connections.keys():
+        for i in list(self.con_btn_dict.keys()):
+            if i in self.main_class.ax25_port_handler.all_connections.keys():
+                btn_txt = self.main_class.ax25_port_handler.all_connections[i].to_call_str
+                is_link = self.main_class.ax25_port_handler.all_connections[i].is_link
+                if is_link:
+                    btn_txt = 'L>' + btn_txt
+                self.con_btn_dict[i].configure(text=btn_txt)
+                if i == self.main_class.channel_index:
                     if is_link:
-                        btn_txt = 'L>' + btn_txt
-                    self.con_btn_dict[i].configure(text=btn_txt)
-                    if i == self.main_class.channel_index:
-                        if is_link:
-                            self.con_btn_dict[i].configure(bg='SteelBlue2')
-                        else:
-                            self.con_btn_dict[i].configure(bg='green2')
+                        self.con_btn_dict[i].configure(bg='SteelBlue2')
                     else:
-                        if self.main_class.win_buf[i].new_data_tr:
-                            if not is_link:
-                                ch_alarm = True
-                                self.ch_btn_alarm(self.con_btn_dict[i])
-                            else:
-                                self.con_btn_dict[i].configure(bg='SteelBlue4')
-                                ch_alarm = False
-                        else:
-                            if is_link:
-                                ch_alarm = False
-                                self.con_btn_dict[i].configure(bg='SteelBlue4')
-                            else:
-                                self.con_btn_dict[i].configure(bg='green4')
+                        self.con_btn_dict[i].configure(bg='green2')
                 else:
-                    self.con_btn_dict[i].configure(text=str(i))
-                    if not self.main_class.win_buf[i].new_data_tr:
-                        if i == self.main_class.channel_index and not self.main_class.mon_mode:
-                            self.con_btn_dict[i].configure(bg='red2')
+                    if self.main_class.win_buf[i].new_data_tr:
+                        if not is_link:
+                            ch_alarm = True
+                            self.ch_btn_alarm(self.con_btn_dict[i])
                         else:
-                            self.con_btn_dict[i].configure(bg='red4')
+                            self.con_btn_dict[i].configure(bg='SteelBlue4')
+                            ch_alarm = False
                     else:
-                        self.con_btn_dict[i].configure(bg='yellow')
-        else:
-            for i in list(self.con_btn_dict.keys()):
+                        if is_link:
+                            ch_alarm = False
+                            self.con_btn_dict[i].configure(bg='SteelBlue4')
+                        else:
+                            self.con_btn_dict[i].configure(bg='green4')
+            else:
                 self.con_btn_dict[i].configure(text=str(i))
                 if not self.main_class.win_buf[i].new_data_tr:
-                    if i == self.main_class.channel_index and not self.main_class.mon_mode:
+                    if i == self.main_class.channel_index:
                         self.con_btn_dict[i].configure(bg='red2')
                     else:
                         self.con_btn_dict[i].configure(bg='red4')
@@ -114,20 +103,21 @@ class ChBtnFrm:
     def ch_btn_clk(self, ind: int):
         self.main_class.get_ch_param().input_win = self.main_class.inp_txt.get('1.0', tk.END)
         self.main_class.channel_index = ind
+        # if ind:
         self.main_class.get_ch_param().new_data_tr = False
         self.main_class.get_ch_param().rx_beep_tr = False
+
         self.main_class.out_txt.configure(state="normal")
         self.main_class.out_txt.delete('1.0', tk.END)
         self.main_class.out_txt.insert(tk.END, self.main_class.win_buf[ind].output_win)
         self.main_class.out_txt.configure(state="disabled")
+        self.main_class.out_txt.see(tk.END)
         self.main_class.inp_txt.delete('1.0', tk.END)
         #self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
         self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win[:-1])
-        self.main_class.out_txt.see(tk.END)
         self.main_class.inp_txt.see(tk.END)
-
         # self.main_class: gui.guiMainNew.TkMainWin
-        if self.main_class.get_ch_param().rx_beep_opt:
+        if self.main_class.get_ch_param().rx_beep_opt and ind:
             self.main_class.txt_win.rx_beep_box.select()
             self.main_class.txt_win.rx_beep_box: tk.Checkbutton
             self.main_class.txt_win.rx_beep_box.configure(bg='green')
@@ -135,7 +125,7 @@ class ChBtnFrm:
             self.main_class.txt_win.rx_beep_box.deselect()
             self.main_class.txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR)
 
-        if self.main_class.get_ch_param().timestamp_opt:
+        if self.main_class.get_ch_param().timestamp_opt and ind:
             self.main_class.txt_win.ts_box_box.select()
             self.main_class.txt_win.ts_box_box: tk.Checkbutton
             self.main_class.txt_win.ts_box_box.configure(bg='green')

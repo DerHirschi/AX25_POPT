@@ -268,17 +268,12 @@ class TxTframe:
     def switch_mon_mode(self):
         # TODO Save Stretched Positions
         if self.main_class.mon_mode:
-            self.main_class.mon_mode = False
-            self.main_class.mon_btn.configure(bg='yellow')
             self.pw.remove(self.status_frame)
             self.pw.remove(self.mon_txt)
             self.pw.configure(height=800)
-
             self.pw.add(self.status_frame, weight=1)
             self.pw.add(self.out_txt_win, weight=1)
             self.pw.add(self.mon_txt, weight=1)
-
-            #self.status_frame.configure(height=self.inp_txt_height)
             """
             self.status_frame.configure(height=self.inp_txt_height)
             self.out_txt_win.configure(height=self.out_txt_height)
@@ -287,18 +282,7 @@ class TxTframe:
             self.status_frame.configure(height=10)
             self.out_txt_win.configure(height=10)
             self.mon_txt.configure(height=10)
-            """
-            self.mon_txt.update()
-            self.out_txt_win.update()
-            self.status_frame.update()
-            """
-            self.main_class.ch_btn_status_update()
-
-            #self.mon_txt.configure(height=self.mon_txt_height)
         else:
-            self.main_class.mon_mode = True
-            self.main_class.mon_btn.configure(bg='green')
-
             self.mon_txt_height = self.mon_txt.cget('height')
             self.out_txt_height = self.out_txt_win.cget('height')
             self.inp_txt_height = self.status_frame.cget('height')
@@ -306,15 +290,7 @@ class TxTframe:
             self.pw.remove(self.out_txt_win)
             self.pw.configure(height=800)
             self.status_frame.configure(height=1)
-            self.main_class.ch_btn_status_update()
             # self.mon_txt.configure(height=500)
-
-            """
-            self.mon_txt.update()
-            self.out_txt_win.update()
-            self.status_frame.update()
-            self.pw.update()
-            """
 
     def chk_rx_beep(self):
         rx_beep_check = self.rx_beep_var.get()

@@ -1,6 +1,7 @@
 import sys
 import tkinter as tk
 from tkinter import ttk, Checkbutton
+from string_tab import STR_TABLE
 
 
 # import main
@@ -9,6 +10,7 @@ from tkinter import ttk, Checkbutton
 class SideTabbedFrame:
     def __init__(self, main_cl):
         self.main_win = main_cl
+        self.lang = self.main_win.language
         self.mh = main_cl.mh
         self.style = self.main_win.style
         self.ch_index = self.main_win.channel_index
@@ -27,20 +29,22 @@ class SideTabbedFrame:
         )
 
         tab1_kanal = ttk.Frame(self.tabControl)
-        self.tab1_1_RTT = ttk.Frame(self.tabControl)
+        # self.tab1_1_RTT = ttk.Frame(self.tabControl)
         self.tab2_mh = tk.Frame(self.tabControl)
         # self.tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
         self.tab2_mh_def_bg_clr = self.tab2_mh.cget('bg')
-        tab3 = ttk.Frame(self.tabControl)
         self.tab4_settings = ttk.Frame(self.tabControl)
-        self.tab5_ch_links = ttk.Frame(self.tabControl)
+        self.tab5_ch_links = ttk.Frame(self.tabControl)  # TODO
+        self.tab6_monitor = ttk.Frame(self.tabControl)
 
         self.tabControl.add(tab1_kanal, text='Kanal')
-        self.tabControl.add(self.tab1_1_RTT, text='RTT')
         self.tabControl.add(self.tab2_mh, text='MH')
-        self.tabControl.add(tab3, text='Ports')
+        # tab3 = ttk.Frame(self.tabControl)                         # TODO
+        # self.tabControl.add(tab3, text='Ports')                   # TODO
         self.tabControl.add(self.tab4_settings, text='Global')
-        # self.tabControl.add(self.tab5_ch_links, text='CH-Echo') # TODO 
+        self.tabControl.add(self.tab6_monitor, text='Monitor')
+
+        # self.tabControl.add(self.tab5_ch_links, text='CH-Echo')   # TODO
         self.tabControl.pack(expand=0, fill="both")
         self.tabControl.select(self.tab2_mh)
         ################################################
@@ -144,7 +148,20 @@ class SideTabbedFrame:
                                              command=self.main_win.open_linkholder_settings_win
                                              )
         link_holder_settings_btn.place(x=140, y=165)
-
+        # RTT
+        self.rtt_best = tk.Label(tab1_kanal, text='')
+        self.rtt_worst = tk.Label(tab1_kanal, text='')
+        self.rtt_avg = tk.Label(tab1_kanal, text='')
+        self.rtt_last = tk.Label(tab1_kanal, text='')
+        # font = self.rtt_best.cget('font')[0]
+        # self.rtt_best.configure(font=(font, 12))
+        # self.rtt_worst.configure(font=(font, 12))
+        # self.rtt_avg.configure(font=(font, 12))
+        # self.rtt_last.configure(font=(font, 12))
+        self.rtt_best.place(x=170, y=10)
+        self.rtt_worst.place(x=170, y=35)
+        self.rtt_avg.place(x=170, y=60)
+        self.rtt_last.place(x=170, y=85)
         ################################
         # MH ##########################
         # TREE
@@ -229,24 +246,78 @@ class SideTabbedFrame:
         self.chk_btn_default_clr = _chk_btn.cget('bg')
         self.ch_echo_vars = {}
         #################
-        # RTT Frame
-        self.rtt_best = tk.Label(self.tab1_1_RTT, text='')
-        self.rtt_worst = tk.Label(self.tab1_1_RTT, text='')
-        self.rtt_avg = tk.Label(self.tab1_1_RTT, text='')
-        self.rtt_last = tk.Label(self.tab1_1_RTT, text='')
-        font = self.rtt_best.cget('font')[0]
-        self.rtt_best.configure(font=(font, 15))
-        self.rtt_worst.configure(font=(font, 15))
-        self.rtt_avg.configure(font=(font, 15))
-        self.rtt_last.configure(font=(font, 15))
-        self.rtt_best.place(x=10, y=10)
-        self.rtt_worst.place(x=10, y=45)
-        self.rtt_avg.place(x=10, y=80)
-        self.rtt_last.place(x=10, y=115)
+        #################
+        # Monitor Frame
+        # Address
+        _x = 10
+        _y = 10
+        self.to_add_var = tk.StringVar(self.tab6_monitor)
+        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['to'][self.lang]}:").place(x=_x, y=_y)
+        self.to_add_ent = tk.Entry(self.tab6_monitor, textvariable=self.to_add_var)
+        self.to_add_ent.place(x=_x + 35, y=_y)
+
+        # CMD/RPT
+        _x = 10
+        _y = 45
+        self.cmd_var = tk.BooleanVar(self.tab6_monitor)
+        self.cmd_ent = tk.Checkbutton(self.tab6_monitor,
+                                      variable=self.cmd_var,
+                                      text='CMD/RPT')
+        self.cmd_ent.place(x=_x, y=_y)
+
+        # Poll
+        _x = 10
+        _y = 70
+        self.poll_var = tk.BooleanVar(self.tab6_monitor)
+        self.poll_ent = tk.Checkbutton(self.tab6_monitor,
+                                       variable=self.poll_var,
+                                       text='Poll')
+        self.poll_ent.place(x=_x, y=_y)
+
+        # Port
+        _x = 40
+        _y = 105
+        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['port'][self.lang]}:").place(x=_x, y=_y)
+        self.mon_port_var = tk.StringVar(self.tab6_monitor)
+        _vals = ['0']
+        if self.main_win.ax25_port_handler.ax25_ports.keys():
+            _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
+        self.mon_port_ent = tk.ttk.Combobox(self.tab6_monitor,
+                                            width=4,
+                                            textvariable=self.mon_port_var,
+                                            values=_vals,
+                                            )
+        self.mon_port_ent.place(x=_x + 50, y=_y)
+        self.mon_port_ent.bind("<<ComboboxSelected>>", self.chk_mon_port)
+        # Calls
+        _x = 40
+        _y = 140
+        self.mon_call_var = tk.StringVar(self.tab6_monitor)
+        _vals = []
+        # if self.main_win.ax25_port_handler.ax25_ports.keys():
+        #     _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
+        self.mon_call_ent = tk.ttk.Combobox(self.tab6_monitor,
+                                            width=9,
+                                            textvariable=self.mon_call_var,
+                                            values=_vals,
+                                            )
+        self.mon_call_ent.place(x=_x, y=_y)
+
+        # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
+        # RX-Filter
+        """
+        _x = 10
+        _y = 105
+        self.rx_filter_var = tk.StringVar(self.tab6_monitor)
+        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['filter'][self.lang]}:").place(x=_x, y=_y)
+        self.rx_filter_ent = tk.Entry(self.tab6_monitor, textvariable=self.rx_filter_var)
+        self.rx_filter_ent.place(x=_x + 50, y=_y)
+        """
+
         ##################
         # Tasker
         self.tasker_dict = {
-            1: self.update_rtt,
+            0: self.update_rtt,
             2: self.update_side_mh,
             5: self.update_ch_echo,
         }
@@ -366,6 +437,20 @@ class SideTabbedFrame:
         else:
             self.t2speech.configure(state='disabled')
         self.main_win.set_var_to_all_ch_param()
+
+    def chk_mon_port(self, event=None):
+        vals = []
+        port_id = int(self.mon_port_var.get())
+        if port_id in self.main_win.ax25_port_handler.ax25_ports.keys():
+            vals = self.main_win.ax25_port_handler.ax25_ports[port_id].my_stations
+        if vals:
+            self.mon_call_var.set(vals[0])
+        self.mon_call_ent.configure(values=vals)
+
+    def update_mon_port_id(self):
+        if self.main_win.ax25_port_handler.ax25_ports.keys():
+            _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
+            self.mon_call_ent.configure(values=_vals)
 
     def set_t2(self, event):
         conn = self.main_win.get_conn()

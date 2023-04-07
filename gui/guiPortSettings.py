@@ -795,6 +795,7 @@ class PortSettingsWin:
         self.ax25_handler.set_kiss_param_all_ports()
         self.main_class.msg_to_monitor('Lob: Das war richtig. Mach weiter so.')
         self.main_class.msg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
+        self.main_class.tabbed_sideFrame.update_mon_port_id()
         self.destroy_win()
 
     def tasker(self):

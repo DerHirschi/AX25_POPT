@@ -25,6 +25,7 @@ STR_TABLE = {
     'tools': ('Tools', 'Tools'),
     'station': ('Station', 'Station'),
     'port': ('Port', 'Port'),
+    'channel': ('Kanal', 'Channel'),
     'beacon': ('Baken', 'Beacons'),
     'settings': ('Einstellungen', 'Settings'),
     'keybind': ('Tastaturbelegung', 'Keyboard layout'),
