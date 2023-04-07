@@ -11,6 +11,7 @@ class Beacon:
         self.text_filename = ''
         self.text = ''
         self.aprs = False
+        self.pool = False
         self.is_enabled = False
         self.port_id = 0
         # self.beacon_id = 0
@@ -25,6 +26,7 @@ class Beacon:
         self.ax_frame.from_call.call_str = self.from_call
         self.ax_frame.to_call.call_str = self.to_call
         self.ax_frame.ctl_byte.cmd = self.aprs
+        self.ax_frame.ctl_byte.pf = self.pool
         #################
         # Time Vars
         self.repeat_time: float = 30.0  # Min
@@ -74,6 +76,7 @@ class Beacon:
         self.set_text_fm_file()
         if self.text:
             self.ax_frame.ctl_byte.cmd = self.aprs
+            self.ax_frame.ctl_byte.pf = self.pool
             self.ax_frame.to_call.call = ''
             self.ax_frame.to_call.ssid = 0
             self.ax_frame.to_call.call_str = self.to_call

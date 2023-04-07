@@ -441,7 +441,7 @@ class StationSettingsWin:
     def ok_btn_cmd(self):
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
-        self.main_class.msg_to_monitor(STR_TABLE['hin1 '][self.lang])
+        self.main_class.msg_to_monitor(STR_TABLE['hin1'][self.lang])
         self.main_class.msg_to_monitor(STR_TABLE['lob2'][self.lang])
 
         self.destroy_win()

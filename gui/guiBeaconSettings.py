@@ -4,12 +4,14 @@ from tkinter import ttk as ttk
 from tkinter import scrolledtext
 # from ax25.ax25Port import AX25Frame
 from ax25.ax25Beacon import Beacon
+from string_tab import STR_TABLE
 
 
 class BeaconTab:
     def __init__(self, root, tabclt: ttk.Notebook, beacon: Beacon):
         self.tab_clt = tabclt
         self.root = root
+        self.lang = self.root.lang
         self.style = root.style
         self.own_tab = ttk.Frame(self.tab_clt)
         # self.own_tab = tk.Toplevel()
@@ -21,7 +23,7 @@ class BeaconTab:
         # Von
         call_x = 10
         call_y = 20
-        call_label = tk.Label(self.own_tab, text='Von:')
+        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['from'][self.lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.from_select_var = tk.StringVar(self.own_tab)
         self.from_opt = dict(self.port_handler.ax25_stations_settings)
@@ -38,7 +40,7 @@ class BeaconTab:
         # An
         call_x = 220
         call_y = 20
-        call_label = tk.Label(self.own_tab, text='An:')
+        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['to'][self.lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.call = tk.Entry(self.own_tab, width=9)
         self.call.place(x=call_x + 35, y=call_y)
@@ -54,12 +56,12 @@ class BeaconTab:
         self.via.insert(tk.END, beacon.via_calls)
         #################
         #################
-        # APRS Checkbox
+        # CTL or RPT
         call_x = 750
         call_y = 20
         self.aprs_check_var = tk.IntVar(self.own_tab)
         self.aprs_check = tk.Checkbutton(self.own_tab,
-                                         text='APRS (UI cmd/rpt)',
+                                         text='CTL/RPT',
                                          variable=self.aprs_check_var)
         self.aprs_check.var = self.aprs_check_var
         if self.beacon.aprs:
@@ -67,11 +69,24 @@ class BeaconTab:
             self.aprs_check_var.set(1)
         self.aprs_check.place(x=call_x + 55, y=call_y)
         #################
+        # Pool
+        call_x = 750
+        call_y = 55
+        self.pool_check_var = tk.IntVar(self.own_tab)
+        self.pool_check = tk.Checkbutton(self.own_tab,
+                                         text='Pool',
+                                         variable=self.pool_check_var)
+        self.pool_check.var = self.pool_check_var
+        if self.beacon.pool:
+            self.pool_check.select()
+            self.pool_check_var.set(1)
+        self.pool_check.place(x=call_x + 55, y=call_y)
+        #################
         #################
         # Port
         call_x = 10
         call_y = 55
-        call_label = tk.Label(self.own_tab, text='Port:')
+        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['port'][self.lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.port_select_var = tk.StringVar(self.own_tab)
         self.port_opt = self.port_handler.ax25_ports
@@ -88,7 +103,7 @@ class BeaconTab:
         # Intervall
         call_x = 220
         call_y = 55
-        call_label = tk.Label(self.own_tab, text='Intervall (min):')
+        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['intervall'][self.lang]} (min):")
         call_label.place(x=call_x, y=call_y)
         self.interv = tk.Entry(self.own_tab, width=4)
         self.interv.place(x=call_x + 135, y=call_y)
@@ -97,7 +112,7 @@ class BeaconTab:
         # Versatz
         call_x = 420
         call_y = 55
-        move_label = tk.Label(self.own_tab, text='Versatz (sek):')
+        move_label = tk.Label(self.own_tab, text=f"{STR_TABLE['versatz'][self.lang]} (sek):")
         move_label.place(x=call_x, y=call_y)
         self.move = tk.Entry(self.own_tab, width=5)
         self.move.place(x=call_x + 135, y=call_y)
@@ -106,10 +121,10 @@ class BeaconTab:
         #################
         # Active Checkbox
         call_x = 750
-        call_y = 55
+        call_y = 90
         self.active_check_var = tk.IntVar(self.own_tab)
         self.active_check = tk.Checkbutton(self.own_tab,
-                                           text='Aktiviert',
+                                           text=STR_TABLE['active'][self.lang],
                                            variable=self.active_check_var,
                                            command=self.cmd_be_enabled)
         self.active_check.var = self.active_check_var
@@ -122,7 +137,7 @@ class BeaconTab:
         # Minutes Selector
         call_x = 10
         call_y = 90
-        minutes_sel_lable = tk.Label(self.own_tab, text='Minuten:')
+        minutes_sel_lable = tk.Label(self.own_tab, text=f"{STR_TABLE['minutes'][self.lang]}:")
         minutes_sel_lable.place(x=call_x, y=call_y)
         self.minutes_sel = []
         tr = False
@@ -150,7 +165,7 @@ class BeaconTab:
         # Std Selector
         call_x = 10
         call_y = 122
-        std_sel_lable = tk.Label(self.own_tab, text='Stunden:')
+        std_sel_lable = tk.Label(self.own_tab, text=f"{STR_TABLE['hours'][self.lang]}:")
         std_sel_lable.place(x=call_x, y=call_y)
         self.std_sel = []
         for std in range(24):
@@ -178,7 +193,7 @@ class BeaconTab:
         # Tag Selector
         call_x = 10
         call_y = 173
-        tag_sel_lable = tk.Label(self.own_tab, text='Tag:')
+        tag_sel_lable = tk.Label(self.own_tab, text=f"{STR_TABLE['day'][self.lang]}:")
         tag_sel_lable.place(x=call_x, y=call_y)
         self.tag_sel = []
         for tag in list(self.beacon.week_days.keys()):
@@ -200,7 +215,7 @@ class BeaconTab:
         # Monat Selector
         call_x = 10
         call_y = 205
-        tag_sel_lable = tk.Label(self.own_tab, text='Monat:')
+        tag_sel_lable = tk.Label(self.own_tab, text=f"{STR_TABLE['month'][self.lang]}:")
         tag_sel_lable.place(x=call_x, y=call_y)
         self.monat_sel = []
         for monat in range(12):
@@ -234,7 +249,7 @@ class BeaconTab:
         call_x = 10
         call_y = self.root.win_height - 180
         # call_y = 100
-        call_label = tk.Label(self.own_tab, text='Text aus Datei:')
+        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['text_fm_file'][self.lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.be_txt_filename_var = tk.StringVar(self.own_tab)
         self.be_txt_filename = tk.Entry(self.own_tab, textvariable=self.be_txt_filename_var, width=50)
@@ -347,11 +362,12 @@ class BeaconSettings(tk.Toplevel):
     def __init__(self, main_win):
         tk.Toplevel.__init__(self)
         self.main_cl = main_win
+        self.lang = self.main_cl.language
         main_win.settings_win = self
         self.win_height = 600
         self.win_width = 1060
         self.style = main_win.style
-        self.title("Baken-Einstellungen")
+        self.title(STR_TABLE['beacon_settings'][self.lang])
         self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
@@ -364,7 +380,7 @@ class BeaconSettings(tk.Toplevel):
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
-                          text="Ok",
+                          text=STR_TABLE['OK'][self.lang],
                           # font=("TkFixedFont", 15),
                           # bg="green",
                           height=1,
@@ -372,7 +388,7 @@ class BeaconSettings(tk.Toplevel):
                           command=self.ok_btn_cmd)
 
         save_bt = tk.Button(self,
-                            text="Speichern",
+                            text=STR_TABLE['save'][self.lang],
                             # font=("TkFixedFont", 15),
                             # bg="green",
                             height=1,
@@ -380,7 +396,7 @@ class BeaconSettings(tk.Toplevel):
                             command=self.save_btn_cmd)
 
         cancel_bt = tk.Button(self,
-                              text="Abbrechen",
+                              text=STR_TABLE['cancel'][self.lang],
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               height=1,
@@ -392,14 +408,14 @@ class BeaconSettings(tk.Toplevel):
         ####################################
         # New Station, Del Station Buttons
         new_bt = tk.Button(self,
-                           text="Neue Bake",
+                           text=STR_TABLE['new_beacon'][self.lang],
                            # font=("TkFixedFont", 15),
                            # bg="green",
                            height=1,
                            width=10,
                            command=self.new_beacon_btn_cmd)
         del_bt = tk.Button(self,
-                           text="Löschen",
+                           text=STR_TABLE['delete'][self.lang],
                            # font=("TkFixedFont", 15),
                            bg="red3",
                            height=1,
@@ -434,11 +450,12 @@ class BeaconSettings(tk.Toplevel):
                     tab.beacon.to_call != 'NOCALL':
                 tab.beacon.set_via_calls(tab.via.get())
                 tab.beacon.aprs = bool(tab.aprs_check_var.get())
+                tab.beacon.pool = bool(tab.pool_check_var.get())
                 tab.beacon.is_enabled = bool(tab.active_check_var.get())
                 tab.beacon.port_id = int(tab.port_select_var.get())
                 tab.beacon.repeat_time = float(tab.interv.get())
                 tab.beacon.move_time = int(tab.move.get())
-                tab.beacon.text = tab.b_text_ent.get('1.0', tk.END)
+                tab.beacon.text = tab.b_text_ent.get('1.0', tk.END)[:-1]
                 port_id = tab.beacon.port_id
                 stat_call = tab.beacon.from_call
                 label_txt = '{} {}'.format(port_id, stat_call)
