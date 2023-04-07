@@ -947,12 +947,14 @@ class TkMainWin:
             cmd = bool(self.tabbed_sideFrame.cmd_var.get())
             text = tmp_txt.encode()
             if add and own_call and text:
-                port.send_UI_frame(
-                    own_call=own_call,
-                    add_str=add,
-                    text=text,
-                    cmd_poll=(cmd, poll)
-                )
+                text_list = [text[i:i + 256] for i in range(0, len(text), 256)]
+                for el in text_list:
+                    port.send_UI_frame(
+                        own_call=own_call,
+                        add_str=add,
+                        text=el,
+                        cmd_poll=(cmd, poll)
+                    )
                 self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
         self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
