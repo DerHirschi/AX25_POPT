@@ -380,12 +380,11 @@ class AX25Port(threading.Thread):
         tmp = add_str.split(' ')
         dest_call = tmp[0].replace(' ', '')
         frame = AX25Frame()
-        """
-        TODO !!!!!!
+
         if len(tmp) > 1:
             vias = tmp[1:]
-            frame.via_calls
-        """
+            frame.via_calls = list(via_calls_fm_str(' '.join(vias)))
+
         frame.ctl_byte.UIcByte()
         frame.ctl_byte.cmd, frame.ctl_byte.pf = cmd_poll
         frame.pid_byte.text()
