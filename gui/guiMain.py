@@ -136,8 +136,10 @@ class TkMainWin:
         self.MenuEdit.add_separator()
         self.MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language], command=self.insert_fm_file, underline=0)
         self.MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language], command=self.save_to_file, underline=1)
+        self.MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self.save_monitor_to_file, underline=1)
         self.MenuEdit.add_separator()
         self.MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_data, underline=0)
+        self.MenuEdit.add_command(label=STR_TABLE['clean_mon_win'][self.language], command=self.clear_monitor_data, underline=0)
         self.menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=self.MenuEdit, underline=0)
         # Menü 3 "Tools"
         self.MenuTools = Menu(self.menubar, tearoff=False)
@@ -411,6 +413,11 @@ class TkMainWin:
         self.win_buf[self.channel_index].new_data_tr = False
         self.win_buf[self.channel_index].rx_beep_tr = False
 
+    def clear_monitor_data(self):
+        self.mon_txt.configure(state='normal')
+        self.mon_txt.delete('1.0', tk.END)
+        self.mon_txt.configure(state='disabled')
+
     def insert_fm_file(self):
         data = open_file_dialog()
         if data:
@@ -418,6 +425,10 @@ class TkMainWin:
 
     def save_to_file(self):
         data = self.out_txt.get('1.0', tk.END)
+        save_file_dialog(data)
+
+    def save_monitor_to_file(self):
+        data = self.mon_txt.get('1.0', tk.END)
         save_file_dialog(data)
 
     def ch_btn_status_update(self):
