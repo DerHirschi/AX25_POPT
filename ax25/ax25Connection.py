@@ -1723,26 +1723,31 @@ class S13BothNotReadyFinal(DefaultStat):
     def rx_RR(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
-        if self.pf or self.cmd:
+        if self.pf:
+            self.change_state(8)
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1(stop=True)
-
-        self.change_state(11)
+        else:
+            self.change_state(11)
 
     def rx_REJ(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
         if self.pf:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
+            self.change_state(8)
         else:
             self.ax25conn.resend_unACK_buf(1)
             self.ax25conn.set_T1()
-        self.change_state(11)
+            self.change_state(11)
 
     def rx_RNR(self):
         self.delUNACK()
         if self.pf:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
+        else:
+            self.change_state(11)
+
 
     def t1_fail(self):
         self.ax25conn.send_RNR(pf_bit=True, cmd_bit=True)
