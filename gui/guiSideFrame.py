@@ -346,8 +346,8 @@ class SideTabbedFrame:
         # Tasker
         self.tasker_dict = {
             0: self.update_rtt,
-            2: self.update_side_mh,
-            5: self.update_ch_echo,
+            1: self.update_side_mh,
+            # 5: self.update_ch_echo,
         }
 
         self.chk_mon_port()
@@ -548,9 +548,9 @@ class SideTabbedFrame:
             self.tree.insert('', tk.END, values=ret_ent)
 
     def update_side_mh(self):
-        mh_ent = self.mh.output_sort_entr(8)
+        mh_ent = list(self.mh.output_sort_entr(8))
         if mh_ent != self.last_mh_ent:
-            self.last_mh_ent = list(self.mh.output_sort_entr(8))
+            self.last_mh_ent = mh_ent
             self.format_tree_ent()
             self.update_tree()
 

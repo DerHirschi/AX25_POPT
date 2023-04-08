@@ -11,8 +11,7 @@ port_stat_data_file = 'data/port_stat.popt'
 
 
 def get_time_str():
-    now = datetime.now()
-    return now.strftime('%d/%m/%y %H:%M:%S')
+    return datetime.now().strftime('%d/%m/%y %H:%M:%S')
 
 
 class MyHeard(object):
