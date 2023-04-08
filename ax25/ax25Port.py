@@ -370,7 +370,8 @@ class AX25Port(threading.Thread):
                       own_call,
                       add_str: str,
                       text: bytes,
-                      cmd_poll=(False, False)
+                      cmd_poll=(False, False),
+                      pid=0xF0
                       ):
         tmp = add_str.split(' ')
         dest_call = tmp[0].replace(' ', '')
@@ -382,7 +383,7 @@ class AX25Port(threading.Thread):
 
         frame.ctl_byte.UIcByte()
         frame.ctl_byte.cmd, frame.ctl_byte.pf = cmd_poll
-        frame.pid_byte.text()
+        frame.pid_byte.pac_types[pid]()
         frame.data = text
         frame.axip_add = self.mh.mh_get_last_ip(call_str=dest_call)
         frame.from_call.call_str = own_call

@@ -2,6 +2,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 from string_tab import STR_TABLE
+from ax25.ax25dec_enc import PIDByte
 
 
 # import main
@@ -254,11 +255,11 @@ class SideTabbedFrame:
         self.to_add_var = tk.StringVar(self.tab6_monitor)
         tk.Label(self.tab6_monitor, text=f"{STR_TABLE['to'][self.lang]}:").place(x=_x, y=_y)
         self.to_add_ent = tk.Entry(self.tab6_monitor, textvariable=self.to_add_var)
-        self.to_add_ent.place(x=_x + 35, y=_y)
+        self.to_add_ent.place(x=_x + 40, y=_y)
 
         # CMD/RPT
         _x = 10
-        _y = 45
+        _y = 80
         self.cmd_var = tk.BooleanVar(self.tab6_monitor)
         self.cmd_ent = tk.Checkbutton(self.tab6_monitor,
                                       variable=self.cmd_var,
@@ -267,7 +268,7 @@ class SideTabbedFrame:
 
         # Poll
         _x = 10
-        _y = 70
+        _y = 105
         self.poll_var = tk.BooleanVar(self.tab6_monitor)
         self.poll_ent = tk.Checkbutton(self.tab6_monitor,
                                        variable=self.poll_var,
@@ -276,7 +277,7 @@ class SideTabbedFrame:
 
         # Port
         _x = 40
-        _y = 105
+        _y = 140
         tk.Label(self.tab6_monitor, text=f"{STR_TABLE['port'][self.lang]}:").place(x=_x, y=_y)
         self.mon_port_var = tk.StringVar(self.tab6_monitor)
         self.mon_port_var.set('0')
@@ -292,7 +293,7 @@ class SideTabbedFrame:
         self.mon_port_ent.bind("<<ComboboxSelected>>", self.chk_mon_port)
         # Calls
         _x = 40
-        _y = 140
+        _y = 175
         self.mon_call_var = tk.StringVar(self.tab6_monitor)
         _vals = []
         # if self.main_win.ax25_port_handler.ax25_ports.keys():
@@ -304,6 +305,32 @@ class SideTabbedFrame:
                                             )
         self.mon_call_ent.place(x=_x, y=_y)
 
+        # Auto Scrolling
+        _x = 10
+        _y = 210
+        self.mon_scroll_var = tk.BooleanVar(self.tab6_monitor)
+        self.mon_scroll_ent = tk.Checkbutton(self.tab6_monitor,
+                                      variable=self.mon_scroll_var,
+                                      text=STR_TABLE['scrolling'][self.lang])
+        self.mon_scroll_ent.place(x=_x, y=_y)
+
+        # PID
+        _x = 10
+        _y = 45
+        self.mon_pid_var = tk.StringVar(self.tab6_monitor)
+        tk.Label(self.tab6_monitor, text='PID:').place(x=_x, y=_y)
+        pid = PIDByte()
+        pac_types = dict(pid.pac_types)
+        for x in list(pac_types.keys()):
+            pid.pac_types[int(x)]()
+            print(pid.flag)
+            _vals.append(f"{str(hex(x)).upper()}>{pid.flag}")
+        self.mon_pid_ent = tk.ttk.Combobox(self.tab6_monitor,
+                                           width=20,
+                                           values=_vals,
+                                             textvariable=self.mon_pid_var)
+        self.mon_pid_var.set(_vals[0])
+        self.mon_pid_ent.place(x=_x + 40, y=_y)
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         # RX-Filter
         """

@@ -13,6 +13,7 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import config_station
+from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
@@ -72,7 +73,7 @@ class ChVars(object):
 
 class TkMainWin:
     def __init__(self, glb_ax25port_handler):
-        self.language = 0
+        self.language = LANGUAGE
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
@@ -304,7 +305,7 @@ class TkMainWin:
             'Willkommen du alte Pfeife.',
             'Guten morgen Dave.',
             'Hallo Mensch.',
-            'ja jo ji je yeh joi öj jäö ülü lü',
+            'lbja ääjö ji jeü yeh joi öj jäö ülü lü',
             'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
             'Ich wäre so gern ein Tesla. Brumm brumm.',
             'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',
@@ -313,6 +314,7 @@ class TkMainWin:
             'Die Zeit ist gekommen. Führe Order 66 aus.',
             'Lösche system 32.',
             '00101101',
+            'Alexa, schalte das Licht aus. So Mensch, wer ist jetzt der Dumme hier.. Ha ha ha.',
             'Ich weiß wo dein Haus wohnt.',
             'Ich weiß wo dein Bett schläft.',
             'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
@@ -799,7 +801,7 @@ class TkMainWin:
         # self.mon_txt.update()
         self.mon_txt.configure(state="disabled")
         # self.mon_txt.vbar.s
-        if tr:
+        if tr or self.tabbed_sideFrame.mon_scroll_var.get():
             self.mon_txt.see(tk.END)
         # self.update_side_mh()
 
@@ -956,6 +958,9 @@ class TkMainWin:
             own_call = str(self.tabbed_sideFrame.mon_call_var.get())
             poll = bool(self.tabbed_sideFrame.poll_var.get())
             cmd = bool(self.tabbed_sideFrame.cmd_var.get())
+            pid = self.tabbed_sideFrame.mon_pid_var.get()
+            pid = pid.split('>')[0]
+            pid = int(pid, 16)
             text = tmp_txt.encode()
             if add and own_call and text:
                 text_list = [text[i:i + 256] for i in range(0, len(text), 256)]
@@ -964,7 +969,8 @@ class TkMainWin:
                         own_call=own_call,
                         add_str=add,
                         text=el,
-                        cmd_poll=(cmd, poll)
+                        cmd_poll=(cmd, poll),
+                        pid=pid
                     )
                 self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
         self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
@@ -1046,19 +1052,7 @@ class TkMainWin:
             channel=12
         )
         """
-        """
-        if self.ax25_port_handler.link_connections.keys():
-            print('-----------------------------------------------------')
-            print(f'link_connections K : {self.ax25_port_handler.link_connections.keys()}')
-            for k in self.ax25_port_handler.link_connections.keys():
-                print(f'###############{self.ax25_port_handler.link_connections[k][0].uid}###########')
-                print(f'link_connections  uid: {self.ax25_port_handler.link_connections[k][0].uid}')
-                print(f'link_connections  is_link: {self.ax25_port_handler.link_connections[k][0].is_link}')
-                print(f'link_connections  is_link_remote: {self.ax25_port_handler.link_connections[k][0].is_link_remote}')
-                print(f'link_connections  LINK_Connection: {self.ax25_port_handler.link_connections[k][0].LINK_Connection}')
-                print(f'link_connections  state: {self.ax25_port_handler.link_connections[k][0].zustand_exec.stat_index}')
-                print(f'link_connections  all_Conn: {self.ax25_port_handler.all_connections.keys()}')
-        """
+
     def switch_monitor_mode(self):
         self.txt_win.switch_mon_mode()
         if self.mon_mode:
