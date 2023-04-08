@@ -17,7 +17,7 @@ STR_TABLE = {
     'copy': ('Kopieren', 'Copy'),
     'past': ('Einfügen', 'Past'),
     'past_f_file': ('Aus Datei einfügen', 'Past from File'),
-    'save_to_file': ('In Datei speichern', 'Save to File'),
+    'save_to_file': ('QSO in Datei speichern', 'Save QSO to File'),
     'save_mon_to_file': ('Monitor in Datei speichern', 'Save Monitor to File'),
     'clean_qso_win': ('QSO/Vorschreibfenster löschen', 'Clear QSO/Prescription window'),
     'clean_mon_win': ('Monitor löschen', 'Clear Monitor'),

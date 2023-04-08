@@ -220,7 +220,7 @@ class TkMainWin:
         self.mh_btn_def_clr = self.mh_btn.cget('bg')
         self.mon_btn = tk.Button(self.side_btn_frame_top,
                               text="Monitor",
-                              bg="yellow", width=8, command=self.switch_monitor_mode)
+                              bg="yellow", width=8, command=lambda: self.switch_channel(0))
         self.mon_btn.place(x=110, y=45)
 
         _btn = tk.Button(self.side_btn_frame_top,
@@ -438,16 +438,16 @@ class TkMainWin:
         self.inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
 
     def set_keybinds(self):
-        self.main_win.bind('<F1>', lambda event: self.ch_btn.ch_btn_clk(1))
-        self.main_win.bind('<F2>', lambda event: self.ch_btn.ch_btn_clk(2))
-        self.main_win.bind('<F3>', lambda event: self.ch_btn.ch_btn_clk(3))
-        self.main_win.bind('<F4>', lambda event: self.ch_btn.ch_btn_clk(4))
-        self.main_win.bind('<F5>', lambda event: self.ch_btn.ch_btn_clk(5))
-        self.main_win.bind('<F6>', lambda event: self.ch_btn.ch_btn_clk(6))
-        self.main_win.bind('<F7>', lambda event: self.ch_btn.ch_btn_clk(7))
-        self.main_win.bind('<F8>', lambda event: self.ch_btn.ch_btn_clk(8))
-        self.main_win.bind('<F9>', lambda event: self.ch_btn.ch_btn_clk(9))
-        self.main_win.bind('<F10>', lambda event: self.ch_btn.ch_btn_clk(10))
+        self.main_win.bind('<F1>', lambda event: self.switch_channel(1))
+        self.main_win.bind('<F2>', lambda event: self.switch_channel(2))
+        self.main_win.bind('<F3>', lambda event: self.switch_channel(3))
+        self.main_win.bind('<F4>', lambda event: self.switch_channel(4))
+        self.main_win.bind('<F5>', lambda event: self.switch_channel(5))
+        self.main_win.bind('<F6>', lambda event: self.switch_channel(6))
+        self.main_win.bind('<F7>', lambda event: self.switch_channel(7))
+        self.main_win.bind('<F8>', lambda event: self.switch_channel(8))
+        self.main_win.bind('<F9>', lambda event: self.switch_channel(9))
+        self.main_win.bind('<F10>', lambda event: self.switch_channel(10))
         self.main_win.bind('<Return>', self.snd_text)
         self.main_win.bind('<KeyRelease-Return>', self.release_return)
         self.main_win.bind('<Shift-KeyPress-Return>', self.shift_return)
@@ -1073,3 +1073,12 @@ class TkMainWin:
 
         self.ch_btn_status_update()
 
+    def switch_channel(self, ch_ind: int = 0):
+        if not ch_ind:
+            self.switch_monitor_mode()
+        else:
+            if self.mon_mode:
+                self.mon_mode = int(ch_ind)
+                self.switch_monitor_mode()
+            else:
+                self.ch_btn.ch_btn_clk(ch_ind)

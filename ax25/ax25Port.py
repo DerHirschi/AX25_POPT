@@ -12,9 +12,6 @@ from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, via_calls
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 import ax25.ax25monitor as ax25monitor
 
-# import logging
-
-# logger = logging.getLogger(__name__)
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
 
@@ -53,7 +50,7 @@ class AX25Port(threading.Thread):
         # self.is_stupid_digi = self.port_cfg.parm_is_StupidDigi
         self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
         self.is_smart_digi = self.port_cfg.parm_isSmartDigi
-        self.parm_digi_TXD = 1200   # TODO add to Settings GUI
+        self.parm_digi_TXD = 2000   # TODO add to Settings GUI
         self.digi_TXD = time.time()
         self.digi_buf: [AX25Frame] = []
         self.UI_buf: [AX25Frame] = []
@@ -62,9 +59,7 @@ class AX25Port(threading.Thread):
         #############
         # VARS
         self.monitor = ax25monitor.Monitor()
-        # self.port_hndl = self.port_cfg.glb_port_handler
         self.gui = None
-        # self.is_gui = False
         self.connections: {str: AX25Conn} = {}
         self.device = None
         ##############
