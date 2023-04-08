@@ -740,29 +740,23 @@ class PortSettingsWin:
                                                   "Alle Einstellungen gehen verloren !")
         # self.settings_win.lift()
         if msg:
-            tab_ind = self.tabControl.index('current')
-            ind = self.tabControl.tab('current')
-            # tab = self.tabControl.tabs()[tab_ind]
-            # print(ind)
-            ind = ind['text']
-            ind = int(ind.replace('Port ', '')[0])
+            try:
+                # TODO Again ! Such a mess
+                tab_ind = self.tabControl.index('current')
+                ind = self.tabControl.tab('current')
+            except tk.TclError:
+                pass
+            else:
+                ind = ind['text']
+                ind = int(ind.replace('Port ', '')[0])
 
-            # tab: PortSetTab = self.tab_list[ind]
-            # port_id = tab.port_setting.parm_PortNr
-            del_port_data(ind)
-            self.main_class.ax25_port_handler.close_port(ind)
-            """
-            self.main_class.ax25_port_handler.ax25_ports[ind].close()
-            del self.main_class.ax25_port_handler.ax25_ports[ind]
-            del self.main_class.ax25_port_handler.ax25_port_settings[ind]
-            del self.main_class.ax25_port_handler.beacons[ind]
-            del self.main_class.ax25_port_handler.rx_echo[ind]
-            """
-            del self.tab_list[ind]
-            self.tabControl.forget(tab_ind)
+                del_port_data(ind)
+                self.main_class.ax25_port_handler.close_port(ind)
+                del self.tab_list[ind]
+                self.tabControl.forget(tab_ind)
 
-            WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
-            self.main_class.msg_to_monitor('Info: Port erfolgreich gelöscht.')
+                WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
+                self.main_class.msg_to_monitor('Info: Port erfolgreich gelöscht.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
                                    'Das hast du gut gemacht, mach weiter so. ')

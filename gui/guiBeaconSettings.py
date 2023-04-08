@@ -512,16 +512,20 @@ class BeaconSettings(tk.Toplevel):
         self.tab_list.append(tab)
 
     def del_beacon_btn_cmd(self):
-        ind = self.tabControl.index('current')
-        tab: BeaconTab = self.tab_list[ind]
-        beacon = tab.beacon
-        for k in list(self.port_handler.beacons.keys()):
-            for kk in list(self.port_handler.beacons[k].keys()):
-                if beacon in list(self.port_handler.beacons[k][kk]):
-                    self.port_handler.beacons[k][kk].remove(beacon)
-                    break
-        del self.tab_list[ind]
-        self.tabControl.forget(ind)
+        try:
+            ind = self.tabControl.index('current')
+        except tk.TclError:
+            pass
+        else:
+            tab: BeaconTab = self.tab_list[ind]
+            beacon = tab.beacon
+            for k in list(self.port_handler.beacons.keys()):
+                for kk in list(self.port_handler.beacons[k].keys()):
+                    if beacon in list(self.port_handler.beacons[k][kk]):
+                        self.port_handler.beacons[k][kk].remove(beacon)
+                        break
+            del self.tab_list[ind]
+            self.tabControl.forget(ind)
 
     def change_port(self, event):
         ind = self.tabControl.index('current')

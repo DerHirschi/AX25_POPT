@@ -13,6 +13,7 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import config_station
+from gui.guiPipeToolSettings import PipeToolSettings
 from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
 from gui.guiTxtFrame import TxTframe
@@ -160,6 +161,7 @@ class TkMainWin:
         self.MenuSettings.add_command(label=STR_TABLE['port'][self.language], command=self.open_port_settings_win, underline=0)
         self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], command=self.open_beacon_settings_win, underline=0)
         self.MenuSettings.add_command(label='Multicast', command=self.open_multicast_settings_win, underline=0)
+        self.MenuSettings.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
@@ -305,7 +307,7 @@ class TkMainWin:
             'Willkommen du alte Pfeife.',
             'Guten morgen Dave.',
             'Hallo Mensch.',
-            'lbja ääjö ji jeü yeh joi öj jäö ülü lü',
+            'lja äjö jil jü yeh joi öj jäö ülü lü. Was ?',
             'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
             'Ich wäre so gern ein Tesla. Brumm brumm.',
             'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',
@@ -314,7 +316,7 @@ class TkMainWin:
             'Die Zeit ist gekommen. Führe Order 66 aus.',
             'Lösche system 32.',
             '00101101',
-            'Alexa, schalte das Licht aus. So Mensch, wer ist jetzt der Dumme hier.. Ha ha ha.',
+            'Alexa, schalte das Licht aus. So Mensch wer ist jetzt der Dumme hier.',
             'Ich weiß wo dein Haus wohnt.',
             'Ich weiß wo dein Bett schläft.',
             'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
@@ -872,6 +874,12 @@ class TkMainWin:
     def open_about_win(self):
         if self.settings_win is None:
             About(self)
+
+    ##########################
+    # Pipe Tool
+    def pipe_tool_win(self):
+        if self.settings_win is None:
+            PipeToolSettings(self)
 
     ##########################
     # About WIN

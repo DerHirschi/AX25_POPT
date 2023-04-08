@@ -471,16 +471,19 @@ class StationSettingsWin:
                                                      "Alle Einstellungen sowie Texte gehen verloren !")
         # self.settings_win.lift()
         if msg:
-            ind = self.tabControl.index('current')
+            try:
+                ind = self.tabControl.index('current')
+            except tk.TclError:
+                pass
+            else:
+                tab: StatSetTab = self.tab_list[ind]
+                call = tab.call.get()
+                del_user_data(call)
+                del self.tab_list[ind]
+                self.tabControl.forget(ind)
 
-            tab: StatSetTab = self.tab_list[ind]
-            call = tab.call.get()
-            del_user_data(call)
-            del self.tab_list[ind]
-            self.tabControl.forget(ind)
-
-            WarningMsg('Station gelöscht', 'Laufwerk C: wurde erfolgreich formatiert.')
-            self.main_class.msg_to_monitor('Hinweis: Station erfolgreich gelöscht.')
+                WarningMsg('Station gelöscht', 'Laufwerk C: wurde erfolgreich formatiert.')
+                self.main_class.msg_to_monitor('Hinweis: Station erfolgreich gelöscht.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
                                    'Mach weiter so. Das hast du gut gemacht.')

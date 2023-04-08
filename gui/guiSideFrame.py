@@ -321,9 +321,9 @@ class SideTabbedFrame:
         tk.Label(self.tab6_monitor, text='PID:').place(x=_x, y=_y)
         pid = PIDByte()
         pac_types = dict(pid.pac_types)
+        _vals = []
         for x in list(pac_types.keys()):
             pid.pac_types[int(x)]()
-            print(pid.flag)
             _vals.append(f"{str(hex(x)).upper()}>{pid.flag}")
         self.mon_pid_ent = tk.ttk.Combobox(self.tab6_monitor,
                                            width=20,
