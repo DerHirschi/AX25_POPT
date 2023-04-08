@@ -888,7 +888,7 @@ class TkMainWin:
     def open_port_stat_win(self):
         #TODO
         if 0 in self.mh.port_statistik_DB.keys():
-            self.mh.port_statistik_DB[0].plot_test_graph()
+            self.mh.port_statistik_DB[0].plot_test_graph(self)
 
     # ##############
     # DISCO

@@ -18,7 +18,11 @@ class MulticastSettings(tk.Toplevel):
         # self.mh_win = tk.Tk()
         self.title("Multicast")
         self.style = self.root_win.style
-        self.geometry("1250x700")
+        # self.geometry("1250x700")
+        self.geometry(f"800x"
+                      f"400+"
+                      f"{self.root_win.main_win.winfo_x()}+"
+                      f"{self.root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)

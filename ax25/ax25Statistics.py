@@ -149,7 +149,7 @@ class PortStatDB(object):
                 self.now_min = datetime.now().strftime('%M:%S')[:-1]
                 self.bandwidth[self.now_min] = 0
 
-    def plot_test_graph(self, now_hour: int = -1, day=True):
+    def plot_test_graph(self, root_win, now_hour: int = -1, day=True):
         range_day = day
         now = datetime.now()
         date_str = now.strftime('%d/%m/%y')
@@ -291,6 +291,10 @@ class PortStatDB(object):
             root = tk.Tk()
             root.wm_title("Port Statistik")
             root.geometry("800x600")
+            root.geometry(f"800x"
+                          f"600+"
+                          f"{root_win.main_win.winfo_x()}+"
+                          f"{root_win.main_win.winfo_y()}")
             # root.protocol("WM_DELETE_WINDOW", root.destroy())
             plot1 = tk.Frame(root)
             plot2 = tk.Frame(root)
@@ -650,7 +654,3 @@ class MH(object):
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
         """
 
-
-if __name__ == '__main__':
-    stat = PortStatDB()
-    stat.plot_test_graph()

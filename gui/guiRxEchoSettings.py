@@ -30,7 +30,11 @@ class RxEchoSettings(tk.Toplevel):
         self.win_width = 280 * max(math.ceil(n_ports / 2), 2)
         self.style = main_win.style
         self.title("RX-Echo Einstellungen")
-        self.geometry("{}x{}".format(self.win_width, self.win_height))
+        # self.geometry("{}x{}".format(self.win_width, self.win_height))
+        self.geometry(f"{self.win_width}x"
+                      f"{self.win_height}+"
+                      f"{self.main_cl.main_win.winfo_x()}+"
+                      f"{self.main_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(True, True)
         self.off_color = ''

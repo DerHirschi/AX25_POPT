@@ -340,6 +340,10 @@ class StationSettingsWin:
         # self.settings_win.option_add('*Dialog.msg.font', 'Helvetica 8')
         self.settings_win.title(STR_TABLE['stat_settings'][self.lang])
         self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
+        self.settings_win.geometry(f"{self.win_width}x"
+                      f"{self.win_height}+"
+                      f"{self.main_class.main_win.winfo_x()}+"
+                      f"{self.main_class.main_win.winfo_y()}")
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.settings_win.resizable(False, False)
         self.settings_win.attributes("-topmost", True)

@@ -10,7 +10,11 @@ class KeyBindsHelp(tk.Toplevel):
         self.win_height = 220
         self.win_width = 600
         self.title("Tastaturbelegung")
-        self.geometry("{}x{}".format(self.win_width, self.win_height))
+        # self.geometry("{}x{}".format(self.win_width, self.win_height))
+        self.geometry(f"{self.win_width}x"
+                      f"{self.win_height}+"
+                      f"{self.main_cl.main_win.winfo_x()}+"
+                      f"{self.main_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
         ##########################

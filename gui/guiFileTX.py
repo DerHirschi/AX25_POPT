@@ -13,7 +13,11 @@ class FileSend(tk.Toplevel):
         self.win_width = 900
         self.style = main_win.style
         self.title(STR_TABLE['send_file'][self.root.language])
-        self.geometry("{}x{}".format(self.win_width, self.win_height))
+        # self.geometry("{}x{}".format(self.win_width, self.win_height))
+        self.geometry(f"{self.win_width}x"
+                      f"{self.win_height}+"
+                      f"{self.root.main_win.winfo_x()}+"
+                      f"{self.root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
         self.lift()

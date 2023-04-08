@@ -55,7 +55,8 @@ class NewConnWin:
         self.conn_hist: {str: ConnHistory} = self.main.connect_history
         self.new_conn_win = tk.Tk()
         self.new_conn_win.title("New Connection")
-        self.new_conn_win.geometry("700x285")
+        self.new_conn_win.geometry(f"700x285+{self.main.main_win.winfo_x()}+{self.main.main_win.winfo_y()}")
+        # self.new_conn_win.geometry("700x285")
         self.new_conn_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
         self.new_conn_win.resizable(False, False)
         self.new_conn_win.attributes("-topmost", True)

@@ -20,13 +20,17 @@ class MHWin(tk.Toplevel):
         self.title("MHEARD")
         self.style = self.root_win.style
         self.geometry("1250x700")
+        self.geometry(f"1250x"
+                      f"700+"
+                      f"{self.root_win.main_win.winfo_x()}+"
+                      f"{self.root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
         self.menubar = Menu(self)
         self.config(menu=self.menubar)
         self.menubar.add_command(label="Quit", command=self.close)
-        self.menubar.add_command(label="Port-Statistik", command=lambda: self.mh.port_statistik_DB[0].plot_test_graph())
+        self.menubar.add_command(label="Port-Statistik", command=lambda: self.mh.port_statistik_DB[0].plot_test_graph(self))
         # ############################### Columns ############################
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=0, minsize=50)

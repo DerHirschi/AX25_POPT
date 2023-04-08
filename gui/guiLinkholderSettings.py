@@ -12,6 +12,10 @@ class LinkHolderSettings(tk.Toplevel):
         self.style = self.root_win.style
         self.title("Link Halter")
         self.geometry("{}x{}".format(self.win_width, self.win_height))
+        self.geometry(f"{self.win_width}x"
+                      f"{self.win_height}+"
+                      f"{self.root_win.main_win.winfo_x()}+"
+                      f"{self.root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(True, True)
         self.lift()
