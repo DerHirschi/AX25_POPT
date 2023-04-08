@@ -35,11 +35,13 @@ Packages Required:
 
 Install all dependencies:
   ``` sh
-  $ pip install tk
+  $ pip uninstall matplotlib
+  $ apt install python3-matplotlib
+  $ pip uninstall tk
+  $ apt install python3-tk
   $ pip install playsound
   $ pip install crcmod
   $ pip install pyserial
-  $ pip install matplotlib
   $ pip install gtts
   ```
 
