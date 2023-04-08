@@ -1,23 +1,37 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog as fd
 
 from ax25.ax25dec_enc import PIDByte
+from ax25.ax25UI_Pipe import AX25Pipe
 from string_tab import STR_TABLE
 
 
 class AX25PipeTab:
-    def __init__(self, root_win, tabclt: ttk.Notebook):
-        self.tab_clt = tabclt
+    def __init__(self, root_win, pipe=None):
         self.root_win = root_win
+        self.tab_clt = root_win.tabControl
         self.lang = root_win.lang
         self.style = root_win.style
         self.own_tab = ttk.Frame(self.tab_clt)
+        if pipe is None:
+            self.pipe = AX25Pipe(
+                port_id=0,
+                own_call='',
+                address_str='NOCALL',
+                cmd_pf=(False, False),
+                pid=0xf0
+            )
+        else:
+            self.pipe = pipe
         #########################################################
         # Address
         _x = 10
         _y = 10
         self.to_add_var = tk.StringVar(self.own_tab)
         tk.Label(self.own_tab, text=f"{STR_TABLE['to'][self.lang]}:").place(x=_x, y=_y)
+        if self.pipe.add_str:
+            self.to_add_var.set(self.pipe.add_str)
         self.to_add_ent = tk.Entry(self.own_tab, textvariable=self.to_add_var)
         self.to_add_ent.place(x=_x + 40, y=_y)
 
@@ -25,6 +39,7 @@ class AX25PipeTab:
         _x = 10
         _y = 80
         self.cmd_var = tk.BooleanVar(self.own_tab)
+        self.cmd_var.set(self.pipe.ax25_frame.ctl_byte.cmd)
         self.cmd_ent = tk.Checkbutton(self.own_tab,
                                       variable=self.cmd_var,
                                       text='CMD/RPT')
@@ -34,6 +49,7 @@ class AX25PipeTab:
         _x = 10
         _y = 105
         self.poll_var = tk.BooleanVar(self.own_tab)
+        self.poll_var.set(self.pipe.ax25_frame.ctl_byte.pf)
         self.poll_ent = tk.Checkbutton(self.own_tab,
                                        variable=self.poll_var,
                                        text='Poll')
@@ -44,7 +60,7 @@ class AX25PipeTab:
         _y = 140
         tk.Label(self.own_tab, text=f"{STR_TABLE['port'][self.lang]}:").place(x=_x, y=_y)
         self.port_var = tk.StringVar(self.own_tab)
-        self.port_var.set('0')
+        self.port_var.set(self.pipe.port_id)
         _vals = ['0']
         if self.root_win.root.ax25_port_handler.ax25_ports.keys():
             _vals = [str(x) for x in list(self.root_win.root.ax25_port_handler.ax25_ports.keys())]
@@ -59,6 +75,7 @@ class AX25PipeTab:
         _x = 40
         _y = 175
         self.call_var = tk.StringVar(self.own_tab)
+
         _vals = []
         # if self.main_win.ax25_port_handler.ax25_ports.keys():
         #     _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
@@ -66,7 +83,10 @@ class AX25PipeTab:
         if port_id in self.root_win.root.ax25_port_handler.ax25_ports.keys():
             _vals = self.root_win.root.ax25_port_handler.ax25_ports[port_id].my_stations
         if _vals:
-            self.call_var.set(_vals[0])
+            if self.pipe.ax25_frame.from_call.call_str:
+                self.call_var.set(self.pipe.ax25_frame.from_call.call_str)
+            else:
+                self.call_var.set(_vals[0])
         self.call_ent = tk.ttk.Combobox(self.own_tab,
                                         width=9,
                                         textvariable=self.call_var,
@@ -89,14 +109,15 @@ class AX25PipeTab:
                                        width=20,
                                        values=_vals,
                                        textvariable=self.pid_var)
-        self.pid_var.set(_vals[0])
+        pid = f"{str(hex(self.pipe.ax25_frame.pid_byte.hex))}>{self.pipe.ax25_frame.pid_byte.flag}"
+        self.pid_var.set(pid)
         self.pid_ent.place(x=_x + 40, y=_y)
         # Loop Timer
         _x = 10
         _y = self.root_win.win_height - 255 - 80    # iam lazy
         tk.Label(self.own_tab, text='TX-File Check Timer (sek/sec):').place(x=_x, y=_y)
         self.loop_timer_var = tk.StringVar(self.own_tab)
-        self.loop_timer_var.set('10')
+        self.loop_timer_var.set(self.pipe.parm_tx_file_check_timer)
         self.loop_timer = tk.Spinbox(self.own_tab,
                                      from_=1,
                                      to=60,
@@ -114,12 +135,13 @@ class AX25PipeTab:
         _y = self.root_win.win_height - 220 - 80    # iam lazy
         tk.Label(self.own_tab, text=f"{STR_TABLE['tx_file'][self.lang]}:").place(x=_x, y=_y)
         self.tx_filename_var = tk.StringVar(self.own_tab)
+        self.tx_filename_var.set(self.pipe.tx_filename)
         self.tx_filename = tk.Entry(self.own_tab, textvariable=self.tx_filename_var, width=50)
         # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         self.tx_filename.place(x=_x + 140, y=_y)
         tk.Button(self.own_tab,
                   text=f"{STR_TABLE['file_1'][self.lang]}",
-                  # command=self.select_files
+                  command=lambda: self.select_files(tx=True)
                   ).place(x=_x + 710, y=_y - 2)
         #################
         # RX FILE
@@ -127,13 +149,33 @@ class AX25PipeTab:
         _y = self.root_win.win_height - 180 - 80    # iam lazy
         tk.Label(self.own_tab, text=f"{STR_TABLE['rx_file'][self.lang]}:").place(x=_x, y=_y)
         self.rx_filename_var = tk.StringVar(self.own_tab)
+        self.rx_filename_var.set(self.pipe.rx_filename)
         self.rx_filename = tk.Entry(self.own_tab, textvariable=self.rx_filename_var, width=50)
         # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         self.rx_filename.place(x=_x + 140, y=_y)
         tk.Button(self.own_tab,
                   text=f"{STR_TABLE['file_1'][self.lang]}",
-                  # command=self.select_files
+                  command=lambda: self.select_files(tx=False)
                   ).place(x=_x + 710, y=_y - 2)
+
+    def select_files(self, tx=True):
+        self.root_win.attributes("-topmost", False)
+        # self.root.lower
+        filetypes = (
+            ('text files', '*.txt'),
+            ('All files', '*.*')
+        )
+
+        filenames = fd.askopenfilenames(
+            title='Open files',
+            initialdir='data/',
+            filetypes=filetypes)
+
+        if filenames:
+            if tx:
+                self.tx_filename_var.set(filenames[0])
+            else:
+                self.rx_filename_var.set(filenames[0])
 
 
 class PipeToolSettings(tk.Toplevel):
@@ -195,12 +237,42 @@ class PipeToolSettings(tk.Toplevel):
         self.tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
         self.tab_list: [ttk.Frame] = []
+        self.all_pipes = self.root.ax25_port_handler.get_all_pipes()
+        for pipe in self.all_pipes:
+            label_txt = f"{len(self.tab_list)}"
+            tab = AX25PipeTab(self, pipe)
+            self.tabControl.add(tab.own_tab, text=label_txt)
+            self.tabControl.select(len(self.tab_list))
+            self.tab_list.append(tab)
+
+
+    def set_vars(self):
+        for tab in self.tab_list:
+            pipe: AX25Pipe = tab.pipe
+            pipe.ax25_frame.from_call.call_str = tab.call_var.get()
+            pipe.set_dest_add(tab.to_add_var.get())
+            pipe.port_id = int(tab.port_var.get())
+            pipe.ax25_frame.ctl_byte.UIcByte()  # TODO if Prot
+            pid = int(tab.pid_var.get().split('>')[0], 16)
+            pipe.ax25_frame.pid_byte.pac_types[pid]()
+            pipe.ax25_frame.ctl_byte.pf = tab.poll_var.get()
+            pipe.ax25_frame.ctl_byte.cmd = tab.cmd_var.get()
+            pipe.parm_tx_file_check_timer = int(tab.loop_timer_var.get())
+            pipe.tx_filename = tab.tx_filename_var.get()
+            pipe.rx_filename = tab.rx_filename_var.get()
+            pipe.change_settings()
+            if pipe.port_id in self.root.ax25_port_handler.ax25_ports.keys():
+                self.root.ax25_port_handler.ax25_ports[pipe.port_id].pipes[pipe.uid] = pipe
+                # if pipe.uid in port.pipes:
+
 
     def save_btn_cmd(self):
+        self.set_vars()
         self.root.msg_to_monitor('Info: Pipe-Tool Settings wurden gespeichert..')
         self.root.msg_to_monitor('Lob: Gute Entscheidung!')
 
     def ok_btn_cmd(self):
+        self.set_vars()
         self.root.msg_to_monitor('Info: Pipe-Tool Settings wurden gespeichert..')
         self.root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.destroy_win()
@@ -214,7 +286,7 @@ class PipeToolSettings(tk.Toplevel):
 
     def new_pipe_btn_cmd(self):
         label_txt = f"{len(self.tab_list)}"
-        tab = AX25PipeTab(self, self.tabControl)
+        tab = AX25PipeTab(self)
         self.tabControl.add(tab.own_tab, text=label_txt)
         self.tabControl.select(len(self.tab_list))
         self.tab_list.append(tab)

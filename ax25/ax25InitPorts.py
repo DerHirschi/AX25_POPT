@@ -321,4 +321,11 @@ class AX25PortHandler(object):
 
             # self.rx_echo[k].buff_input(ax_frame=ax_frame, port_id=k)
 
-
+    ######################
+    # Pipe-Tool
+    def get_all_pipes(self):
+        ret = []
+        for port_id in self.ax25_ports.keys():
+            for pipe_uid in self.ax25_ports[port_id].pipes.keys():
+                ret.append(self.ax25_ports[port_id].pipes[pipe_uid])
+        return ret

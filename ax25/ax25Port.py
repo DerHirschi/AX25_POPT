@@ -8,6 +8,7 @@ from ax25.ax25Beacon import Beacon
 # mport main
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
+from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, via_calls_fm_str
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 import ax25.ax25monitor as ax25monitor
@@ -24,13 +25,11 @@ class RxBuf:
 class AX25Port(threading.Thread):
     def __init__(self, port_cfg, port_handler):
         super(AX25Port, self).__init__()
-
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = True
         """ self.ax25_port_handler will be set in AX25PortInit """
-        self.ax25_ports: {int: AX25Port}
-        # self.ax25_ports_handler: ax25.ax25InitPorts.AX25PortHandler
+        # self.ax25_ports: {int: AX25Port}    # TODO Check if needed
         ############
         # CONFIG
         self.port_cfg = port_cfg
@@ -38,7 +37,6 @@ class AX25Port(threading.Thread):
         self.mh = port_handler.mh
         self.beacons = self.port_handler.beacons
         self.kiss = Kiss(self.port_cfg)
-        # self.port_cfg.mh = self.mh  # ?????
         self.port_param = self.port_cfg.parm_PortParm
         self.portname = self.port_cfg.parm_PortName
         self.port_typ = self.port_cfg.parm_PortTyp
@@ -47,7 +45,6 @@ class AX25Port(threading.Thread):
         self.parm_TXD = self.port_cfg.parm_TXD
         self.TXD = time.time()
         """ DIGI """
-        # self.is_stupid_digi = self.port_cfg.parm_is_StupidDigi
         self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
         self.is_smart_digi = self.port_cfg.parm_isSmartDigi
         self.parm_digi_TXD = 2000   # TODO add to Settings GUI
@@ -61,6 +58,7 @@ class AX25Port(threading.Thread):
         self.monitor = ax25monitor.Monitor()
         self.gui = None
         self.connections: {str: AX25Conn} = {}
+        self.pipes: {str: AX25Pipe} = {}
         self.device = None
         ##############
         # AXIP VARs
@@ -124,7 +122,8 @@ class AX25Port(threading.Thread):
                 # Simple DIGI
                 self.rx_simple_digi_handler(ax25_frame=ax25_frame)
         else:
-            self.rx_conn_handler(ax25_frame=ax25_frame)
+            if not self.rx_conn_handler(ax25_frame=ax25_frame):
+                self.rx_pipe_handler(ax25_frame=ax25_frame)
 
     def rx_link_handler(self, ax25_frame: AX25Frame):
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
@@ -138,15 +137,25 @@ class AX25Port(threading.Thread):
             return True
         return False
 
+    def rx_pipe_handler(self, ax25_frame: AX25Frame):
+        if ax25_frame.is_digipeated:
+            uid = str(ax25_frame.addr_uid)
+            if uid in self.pipes.keys():
+                self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
+                return True
+
     def rx_conn_handler(self, ax25_frame: AX25Frame):
         if ax25_frame.is_digipeated:
             uid = str(ax25_frame.addr_uid)
             if uid in self.connections.keys():
                 self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+                return True
             else:
                 # New Incoming Connection
                 if ax25_frame.to_call.call_str in self.my_stations:
                     self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
+                    return True
+        return False
 
     def rx_simple_digi_handler(self, ax25_frame: AX25Frame):
         for call in ax25_frame.via_calls:
@@ -158,6 +167,24 @@ class AX25Port(threading.Thread):
                     break
 
     def tx_pac_handler(self):
+        # All Connections
+        if self.tx_connection_buf():
+            return True
+        # Pipe-Tool
+        if self.tx_pipe_buf():
+            return True
+        # UI Frame Buffer Like Beacons
+        if self.tx_UI_buf():
+            return True
+        # DIGI
+        if self.tx_digi_buf():
+            return True
+        # RX-Echo
+        if self.tx_rxecho_pac_handler():
+            return True
+        return False
+
+    def tx_connection_buf(self):
         tr = False
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
@@ -183,13 +210,24 @@ class AX25Port(threading.Thread):
                         self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=self.port_cfg, tx=True)
             else:
                 tr = True
+        return tr
 
-        # UI Frame Buffer Like Beacons
-        if not tr:
-            tr = self.tx_UI_buf()
-        # DIGI
-        if not tr:
-            tr = self.tx_digi_buf()
+    def tx_pipe_buf(self):
+        pipe: AX25Pipe
+        tr = False
+        for uid in self.pipes.keys():
+            pipe = self.pipes[uid]
+            # pipe.tx_crone()
+            for frame in pipe.tx_frame_buf:
+                try:
+                    self.tx(frame=frame)
+                    tr = True
+                except AX25DeviceFAIL as e:
+                    raise e
+                # Monitor
+                if self.gui is not None:
+                    self.gui.update_monitor(self.monitor.frame_inp(frame, self.portname), conf=self.port_cfg, tx=True)
+            pipe.tx_frame_buf = []
         return tr
 
     def tx_UI_buf(self):
@@ -223,7 +261,7 @@ class AX25Port(threading.Thread):
             self.digi_buf = []
         return tr
 
-    def rx_echo_pac_handler(self):
+    def tx_rxecho_pac_handler(self):
         tr = False
         # RX-Echo
         fr: AX25Frame
@@ -250,19 +288,23 @@ class AX25Port(threading.Thread):
             if self.gui.setting_rx_echo.get():
                 self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
+    def cron_port_handler(self):
+        """ Execute Port related Cronjob like Beacon sending"""
+        self.cron_pac_handler()
+        self.cron_pipes()
+        self.cron_send_beacons()
+
+    def cron_pipes(self):
+        for uid in self.pipes.keys():
+            self.pipes[uid].crone_exec()
+
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
         for k in list(self.connections.keys()):
             conn: AX25Conn = self.connections[k]
             conn.exec_cron()
 
-    def cron_port_handler(self):
-        """ Execute Port related Cronjob like Beacon sending"""
-        self.send_beacons()
-
-    def send_beacons(self):
-        # print(self.beacons)
-        # print(self.beacons[self.port_id].keys())
+    def cron_send_beacons(self):
         tr = True
         if self.gui is not None:
             if not self.gui.setting_bake.get():
@@ -273,10 +315,6 @@ class AX25Port(threading.Thread):
                 beacon: Beacon
                 for beacon in beacon_list:
                     send_it = beacon.crone()
-                    """
-                    if send_it:
-                        print(send_it)
-                    """
                     ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
                     beacon.ax_frame.axip_add = ip_fm_mh
                     if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
@@ -285,15 +323,30 @@ class AX25Port(threading.Thread):
                     if send_it:
                         if beacon.encode():
                             self.UI_buf.append(beacon.ax_frame)
-                            # self.tx(beacon.ax_frame)
-                            # Monitor
-                            """
-                            cfg = self.port_cfg
-                            if self.gui is not None:
-                                self.gui.update_monitor(self.monitor.frame_inp(beacon.ax_frame, self.portname),
-                                                        conf=cfg,
-                                                        tx=True)
-                            """
+
+    def build_new_pipe(self,
+                       own_call,
+                       add_str,
+                       cmd_pf=(False, False),
+                       pid=0xf0
+                       ):
+        pipe = AX25Pipe(
+            port_id=self.port_id,
+            own_call=own_call,
+            address_str=add_str,
+            cmd_pf=cmd_pf,
+            pid=pid
+        )
+        if pipe.uid not in self.pipes.keys():
+            self.pipes[str(pipe.uid)] = pipe
+            return True
+        return False
+
+    def del_pipe(self, pipe:AX25Pipe):
+        if pipe.uid in self.pipes.keys():
+            del self.pipes[pipe.uid]
+            return True
+        return False
 
     def build_new_connection(self,
                              own_call: str,
@@ -306,12 +359,9 @@ class AX25Port(threading.Thread):
         if link_conn is None:
             link_conn = False
         if own_call not in self.my_stations and not link_conn:
-            # print(f'build_new_connection own_call: {own_call}')
-            # print(f'build_new_connection self.my_stations: {self.my_stations}')
             return False
         if link_conn and not via_calls:
             return False
-
         ax_frame = AX25Frame()
         ax_frame.from_call.call_str = own_call
         ax_frame.to_call.call_str = dest_call
@@ -394,10 +444,7 @@ class AX25Port(threading.Thread):
         frame.encode()
         self.UI_buf.append(frame)
 
-
     def reset_ft_wait_timer(self, ax25_frame: AX25Frame):
-        # if ax25_frame.ctl_byte.flag != 'I' or not ax25_frame.ctl_byte.cmd:
-        # if ax25_frame.ctl_byte.cmd:
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
             for k in self.connections.keys():
                 self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
@@ -460,12 +507,9 @@ class AX25Port(threading.Thread):
                 or (self.port_cfg.parm_full_duplex and self.loop_is_running):
             #############################################
             # Crone
-            self.cron_pac_handler()
+            self.cron_port_handler()    # TODO Crone With and without TXD
             # ######### TX #############
-            # TX
-            if not self.tx_pac_handler():  # Prio
-                if not self.cron_port_handler():  # Non Prio / Beacons
-                    self.rx_echo_pac_handler()  # Non non Prio / RX-ECHO
+            self.tx_pac_handler()
         ############################
         ############################
         # Cleanup
