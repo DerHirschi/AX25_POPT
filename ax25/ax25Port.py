@@ -118,12 +118,23 @@ class AX25Port(threading.Thread):
         """  """
         self.reset_ft_wait_timer(ax25_frame)
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
-            if not self.rx_link_handler(ax25_frame=ax25_frame):  # Link Connection Handler
+            if self.rx_link_handler(ax25_frame=ax25_frame):
+                # Link Connection Handler
+                return True
+            if self.rx_simple_digi_handler(ax25_frame=ax25_frame):
                 # Simple DIGI
-                self.rx_simple_digi_handler(ax25_frame=ax25_frame)
-        else:
-            if not self.rx_conn_handler(ax25_frame=ax25_frame):
-                self.rx_pipe_handler(ax25_frame=ax25_frame)
+                return True
+        elif ax25_frame.is_digipeated:
+            if self.rx_conn_handler(ax25_frame=ax25_frame):
+                # Connections
+                return True
+            if self.rx_pipe_handler(ax25_frame=ax25_frame):
+                # Pipe
+                return True
+            if self.rx_new_conn_handler(ax25_frame=ax25_frame):
+                # New Connections
+                return True
+        return False
 
     def rx_link_handler(self, ax25_frame: AX25Frame):
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
@@ -138,33 +149,41 @@ class AX25Port(threading.Thread):
         return False
 
     def rx_pipe_handler(self, ax25_frame: AX25Frame):
-        if ax25_frame.is_digipeated:
-            uid = str(ax25_frame.addr_uid)
-            if uid in self.pipes.keys():
-                self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
-                return True
+        uid = str(ax25_frame.addr_uid)
+        print(f'pipe-uid: {uid} > all_keys: {list(self.pipes.keys())}')
+        if uid in self.pipes.keys():
+            print('pipe-RX !!!!!!!!!!!!')
+            self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
+            return True
+        return False
 
     def rx_conn_handler(self, ax25_frame: AX25Frame):
-        if ax25_frame.is_digipeated:
+        if ax25_frame.ctl_byte.flag == 'UI':
+            return False
+        uid = str(ax25_frame.addr_uid)
+        if uid in self.connections.keys():
+            self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+            return True
+        return False
+
+    def rx_new_conn_handler(self, ax25_frame: AX25Frame):
+        if ax25_frame.ctl_byte.flag == 'UI':
+            return False
+        # New Incoming Connection
+        if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
-            if uid in self.connections.keys():
-                self.connections[uid].handle_rx(ax25_frame=ax25_frame)
-                return True
-            else:
-                # New Incoming Connection
-                if ax25_frame.to_call.call_str in self.my_stations:
-                    self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
-                    return True
+            self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
+            return True
         return False
 
     def rx_simple_digi_handler(self, ax25_frame: AX25Frame):
         for call in ax25_frame.via_calls:
             if call.call_str in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-
                     self.digi_buf.append(ax25_frame)
                     self.set_digi_TXD()
-                    break
+                    return True
+        return False
 
     def tx_pac_handler(self):
         # All Connections
@@ -494,11 +513,10 @@ class AX25Port(threading.Thread):
                     # Handling
                     self.rx_pac_handler(ax25frame)
                     # RX-ECHO
-                    self.rx_echo(ax25_frame=ax25frame)      # TODO BUGGY
-
+                    self.rx_echo(ax25_frame=ax25frame)
                     # Pseudo Full Duplex for AXIP.
                     if self.port_cfg.parm_axip_Multicast:
-                        self.tx_multicast(frame=ax25frame)  # TODO BUGGY
+                        self.tx_multicast(frame=ax25frame)
                 if self.port_cfg.parm_full_duplex:
                     break
             else:

@@ -245,12 +245,11 @@ class PipeToolSettings(tk.Toplevel):
             self.tabControl.select(len(self.tab_list))
             self.tab_list.append(tab)
 
-
     def set_vars(self):
         for tab in self.tab_list:
             pipe: AX25Pipe = tab.pipe
-            pipe.ax25_frame.from_call.call_str = tab.call_var.get()
-            pipe.set_dest_add(tab.to_add_var.get())
+            pipe.ax25_frame.from_call.call_str = tab.call_var.get().upper()
+            pipe.set_dest_add(tab.to_add_var.get().upper())
             pipe.port_id = int(tab.port_var.get())
             pipe.ax25_frame.ctl_byte.UIcByte()  # TODO if Prot
             pid = int(tab.pid_var.get().split('>')[0], 16)

@@ -820,17 +820,17 @@ class AX25Frame(object):
 
 
 def via_calls_fm_str(inp_str: str):
-    print(f'via_calls_fm_str: inp: {inp_str} ')
+    # print(f'via_calls_fm_str: inp: {inp_str} ')
     ret: [Call] = []
     inp_str = inp_str.replace('\r', '').replace('\n', '')
     tmp = inp_str.split(' ')
-    print(f'via_calls_fm_str: tmp: {tmp} ')
+    # print(f'via_calls_fm_str: tmp: {tmp} ')
 
     for call in tmp:
         call = call.replace(' ', '')
         if call:
             call_obj = Call()
-            call_obj.call_str = call
+            call_obj.call_str = call.upper()
             try:
                 call_obj.enc_call()
             except AX25EncodingERROR:

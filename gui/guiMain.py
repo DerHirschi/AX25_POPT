@@ -148,7 +148,6 @@ class TkMainWin:
         self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
         self.MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win, underline=1)
         self.MenuTools.add_separator()
-        self.MenuTools.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
         self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language], command=self.open_linkholder_settings_win, underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send, underline=0)
@@ -160,8 +159,12 @@ class TkMainWin:
         self.MenuSettings.add_command(label=STR_TABLE['station'][self.language], command=self.open_settings_win, underline=0)
         self.MenuSettings.add_command(label=STR_TABLE['port'][self.language], command=self.open_port_settings_win, underline=0)
         self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], command=self.open_beacon_settings_win, underline=0)
+        self.MenuSettings.add_separator()
         self.MenuSettings.add_command(label='Multicast', command=self.open_multicast_settings_win, underline=0)
+        self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
+        self.MenuSettings.add_separator()
         self.MenuSettings.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
+
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)

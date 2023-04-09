@@ -709,9 +709,13 @@ class DefaultStat(object):
             'REJ': self.rx_REJ,
             'I': self.rx_I,
             'FRMR': self.rx_FRMR,
+            'UI': self.rx_UI,
         }[self.frame.ctl_byte.flag]()
 
     def rx_SABM(self):
+        pass
+
+    def rx_UI(self):
         pass
 
     def rx_DISC(self):

@@ -79,6 +79,8 @@ class AX25Pipe(object):
 
     def change_settings(self):
         self.ax25_frame.encode()
+        self.uid = self.ax25_frame.addr_uid
+        print(f"Change_sett UID: {self.uid}")
 
     def check_parm_max_pac_timer(self):
         if self.parm_max_pac_timer < time.time():
@@ -91,8 +93,8 @@ class AX25Pipe(object):
         self.uid = ax_frame.addr_uid
         self.connection = connection
 
-    def handle_rx(self, ax_frame: AX25Frame):
-        self.rx_data += ax_frame.data
+    def handle_rx(self, ax25_frame: AX25Frame):
+        self.rx_data += ax25_frame.data
         return self.save_rx_buff_to_file()
 
     def load_tx_buff_fm_file(self):
