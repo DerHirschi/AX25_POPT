@@ -33,10 +33,11 @@ from gui.guiFileTX import FileSend
 from config_station import VER
 from gui.vars import ALL_COLOURS
 from string_tab import STR_TABLE
+from fnc.os_fnc import is_linux, is_windows
 
-if 'linux' in sys.platform:
+if is_linux():
     from playsound import playsound
-elif 'win' in sys.platform:
+elif is_windows():
     from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
 
 
@@ -310,7 +311,7 @@ class TkMainWin:
             'Willkommen du alte Pfeife.',
             'Guten morgen Dave.',
             'Hallo Mensch.',
-            'lja äjö jil jü yeh joi öj jäö ülü lü. Was ?',
+            'ja jö jil jü yeh joi öj jäö ülü lü.',
             'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
             'Ich wäre so gern ein Tesla. Brumm brumm.',
             'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',
@@ -601,11 +602,17 @@ class TkMainWin:
             text = text.replace('>>>', '>')
             text = text.replace('<<<', '<')
 
-            if 'linux' in sys.platform:
+            if is_linux():
                 if self.setting_sprech.get():
                     language = {
                         0: 'de',
                         1: 'en',
+                        2: 'nl',
+                        3: 'fr',
+                        4: 'fi',
+                        5: 'pl',
+                        6: 'pt',
+                        7: 'zh',
                     }[self.language]
                     tts = gTTS(text=text,
                                lang=language,
@@ -622,7 +629,7 @@ class TkMainWin:
                         # print('Lebt nicht mehr')
                         self.sound_th.join()
                         # print('Join')
-                        if 'linux' in sys.platform:
+                        if is_linux():
                             self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
                             self.sound_th.start()
                         elif 'win' in sys.platform:
@@ -630,17 +637,17 @@ class TkMainWin:
                             self.sound_th.start()
                         return True
                     return False
-                if 'linux' in sys.platform:
+                if is_linux():
                     self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
                     self.sound_th.start()
-                elif 'win' in sys.platform:
+                elif is_windows():
                     self.sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
                     self.sound_th.start()
                 return True
             else:
-                if 'linux' in sys.platform:
+                if is_linux():
                     threading.Thread(target=playsound, args=(snd_file, False)).start()
-                elif 'win' in sys.platform:
+                elif is_windows():
                     threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
                 return True
 

@@ -424,14 +424,13 @@ class AX25Port(threading.Thread):
         return conn
 
     def del_connections(self, conn: AX25Conn):
-        print('Port DEL CONN')
-        for k in list(self.connections.keys()):
-            if conn == self.connections[k]:
+        for uid in list(self.connections.keys()):
+            if conn == self.connections[uid]:
                 # S0 ENDE
-                # if not conn.zustand_exec.stat_index:
-                # And empty Buffer ?? S0 should be enough
                 self.port_handler.del_link(conn.uid)
-                del self.connections[k]
+                if uid in self.pipes:
+                    del self.pipes[uid]
+                del self.connections[uid]
 
     def send_UI_frame(self,
                       own_call,

@@ -4,11 +4,12 @@ from tkinter import filedialog as fd
 
 from ax25.ax25dec_enc import PIDByte
 from ax25.ax25UI_Pipe import AX25Pipe
+from ax25.ax25Connection import AX25Conn
 from string_tab import STR_TABLE
 
 
 class AX25PipeTab:
-    def __init__(self, root_win, pipe=None):
+    def __init__(self, root_win, pipe=None, connection=None):
         self.root_win = root_win
         self.tab_clt = root_win.tabControl
         self.lang = root_win.lang
@@ -22,6 +23,7 @@ class AX25PipeTab:
                 cmd_pf=(False, False),
                 pid=0xf0
             )
+            self.pipe.connection = connection
         else:
             self.pipe = pipe
         #########################################################
@@ -200,6 +202,8 @@ class AX25PipeTab:
                   command=lambda: self.select_files(tx=False)
                   ).place(x=_x + 710, y=_y - 2)
 
+        self.is_unProt()
+
     def select_files(self, tx=True):
         self.root_win.attributes("-topmost", False)
         # self.root.lower
@@ -234,6 +238,30 @@ class AX25PipeTab:
                 self.call_var.set('')
 
         self.call_ent.config(values=_vals)
+
+    def is_unProt(self):
+        unProt = False
+        if self.pipe.connection is None:
+            unProt = True
+
+        if not unProt:
+
+            self.to_add_ent.config(state='disabled')
+            self.call_ent.config(state='disabled')
+            self.pid_ent.config(state='disabled')
+            self.cmd_ent.config(state='disabled')
+            self.poll_ent.config(state='disabled')
+            self.port_ent.config(state='disabled')
+            self.max_pac_ent.config(state='disabled')
+            self.pac_len_ent.config(state='disabled')
+        else:
+            self.to_add_ent.config(state='normal')
+            self.call_ent.config(state='normal')
+            self.pid_ent.config(state='normal')
+            self.cmd_ent.config(state='normal')
+            self.poll_ent.config(state='normal')
+            self.max_pac_ent.config(state='normal')
+            self.pac_len_ent.config(state='normal')
 
 
 class PipeToolSettings(tk.Toplevel):
@@ -286,6 +314,12 @@ class PipeToolSettings(tk.Toplevel):
                   command=self.new_pipe_btn_cmd). \
             place(x=20, y=self.win_height - 590)
         tk.Button(self,
+                  text=STR_TABLE['new_pipe_fm_connection'][self.lang],
+                  height=1,
+                  width=17,
+                  command=self.new_pipe_on_conn). \
+            place(x=220, y=self.win_height - 590)
+        tk.Button(self,
                   text=STR_TABLE['delete'][self.lang],
                   bg="red3",
                   height=1,
@@ -299,7 +333,7 @@ class PipeToolSettings(tk.Toplevel):
         self.all_pipes = self.root.ax25_port_handler.get_all_pipes()
         for pipe in self.all_pipes:
             label_txt = f"{len(self.tab_list)}"
-            tab = AX25PipeTab(self, pipe)
+            tab = AX25PipeTab(self, pipe=pipe)
             self.tabControl.add(tab.own_tab, text=label_txt)
             self.tabControl.select(len(self.tab_list))
             self.tab_list.append(tab)
@@ -310,17 +344,19 @@ class PipeToolSettings(tk.Toplevel):
             pipe.ax25_frame.from_call.call_str = tab.call_var.get().upper()
             pipe.set_dest_add(tab.to_add_var.get().upper())
             pipe.port_id = int(tab.port_var.get())
-            pipe.ax25_frame.ctl_byte.UIcByte()  # TODO if Prot
             pid = int(tab.pid_var.get().split('>')[0], 16)
-            pipe.ax25_frame.pid_byte.pac_types[pid]()
-            pipe.ax25_frame.ctl_byte.pf = tab.poll_var.get()
-            pipe.ax25_frame.ctl_byte.cmd = tab.cmd_var.get()
+            if pipe.connection is None:
+                pipe.ax25_frame.ctl_byte.UIcByte()
+                pipe.ax25_frame.pid_byte.pac_types[pid]()
+                pipe.parm_max_pac = int(tab.max_pac_var.get())
+                pipe.parm_pac_len = int(tab.pac_len_var.get())
+                pipe.ax25_frame.ctl_byte.pf = tab.poll_var.get()
+                pipe.ax25_frame.ctl_byte.cmd = tab.cmd_var.get()
+            pipe.parm_max_pac_timer = int(tab.max_pac_delay_var.get())
             pipe.parm_tx_file_check_timer = int(tab.loop_timer_var.get())
             pipe.tx_filename = tab.tx_filename_var.get()
             pipe.rx_filename = tab.rx_filename_var.get()
-            pipe.parm_max_pac_timer = int(tab.max_pac_delay_var.get())
-            pipe.parm_max_pac = int(tab.max_pac_var.get())
-            pipe.parm_pac_len = int(tab.pac_len_var.get())
+
             pipe.change_settings()
             if pipe.port_id in self.root.ax25_port_handler.ax25_ports.keys():
                 self.root.ax25_port_handler.ax25_ports[pipe.port_id].pipes[pipe.uid] = pipe
@@ -353,6 +389,21 @@ class PipeToolSettings(tk.Toplevel):
         self.tabControl.select(len(self.tab_list))
         self.tab_list.append(tab)
 
+    def new_pipe_on_conn(self):
+        conn: AX25Conn = self.root.get_conn()
+        if conn:
+            new_pipe = AX25Pipe(
+                port_id=conn.own_port.port_id,
+            )
+            new_pipe.connection = conn
+            new_pipe.change_settings()
+            conn.pipe = new_pipe
+            label_txt = f"{len(self.tab_list)}"
+            tab = AX25PipeTab(self, pipe=new_pipe)
+            self.tabControl.add(tab.own_tab, text=label_txt)
+            self.tabControl.select(len(self.tab_list))
+            self.tab_list.append(tab)
+
     def del_btn_cmd(self):
         try:
             ind = self.tabControl.index('current')
@@ -360,11 +411,12 @@ class PipeToolSettings(tk.Toplevel):
             pass
         else:
             pipe: AX25Pipe = self.tab_list[ind].pipe
+            if pipe.connection is not None:
+                pipe.connection.pipe = None
             port_id = pipe.port_id
             uid = pipe.uid
             if port_id in self.root.ax25_port_handler.ax25_ports.keys():
                 if uid in self.root.ax25_port_handler.ax25_ports[port_id].pipes.keys():
                     del self.root.ax25_port_handler.ax25_ports[port_id].pipes[uid]
-                    print('DEL PIPE !!!!!')
             del self.tab_list[ind]
             self.tabControl.forget(ind)

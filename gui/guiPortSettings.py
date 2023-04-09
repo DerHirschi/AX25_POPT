@@ -4,6 +4,7 @@ from tkinter import ttk as ttk
 from gui.vars import ALL_COLOURS
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
 from config_station import DefaultPort, get_all_stat_cfg, del_port_data
+from fnc.os_fnc import is_linux
 
 
 class PortSetTab:
@@ -523,9 +524,10 @@ class PortSetTab:
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
             self.calc_baud.insert(tk.END, self.port_setting.parm_baud)
             # self.calc_baud.configure(state="normal")
+            self.param1_ent.configure(width=15)
 
             self.param1_label.configure(text='Port:')
-            self.param1_ent.configure(width=15)
+
             self.param2_label.configure(text='Baud:')
             self.param2_ent.configure(width=7)
             self.param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
@@ -537,8 +539,14 @@ class PortSetTab:
             self.param2_ent.delete(0, tk.END)
             if self.port_setting.parm_PortParm[0]:
                 self.param1_ent.insert(tk.END, self.port_setting.parm_PortParm[0])
+            else:
+                if is_linux():
+                    self.param1_ent.insert(tk.END, '/dev/ttyS1')
+                else:
+                    self.param1_ent.insert(tk.END, 'com1')
             if self.port_setting.parm_PortParm[1]:
                 self.param2_ent.insert(tk.END, self.port_setting.parm_PortParm[1])
+
             """
             self.t1.configure(state="normal")
             self.t1.delete(0, tk.END)

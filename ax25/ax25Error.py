@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class AX25EncodingERROR(Exception):
-    logger.error('AX25 Packet Encoding Error !')
+    # logger.error('AX25 Packet Encoding Error !')
 
     def __init__(self, frame=None):
         if frame is not None:
@@ -48,7 +48,7 @@ class AX25EncodingERROR(Exception):
 
 
 class AX25DecodingERROR(Exception):
-    logger.error('AX25 Packet Decoding Error !')
+    # logger.error('AX25 Packet Decoding Error !')
 
     def __init__(self, frame=None):
         if frame is not None:
