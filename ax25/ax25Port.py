@@ -52,20 +52,19 @@ class AX25Port(threading.Thread):
         self.digi_TXD = time.time()
         self.digi_buf: [AX25Frame] = []
         self.UI_buf: [AX25Frame] = []
+        self.connections: {str: AX25Conn} = {}
+        self.pipes: {str: AX25Pipe} = {}
         # CONFIG ENDE
         #############
         #############
         # VARS
         self.monitor = ax25monitor.Monitor()
         self.gui = None
-        self.connections: {str: AX25Conn} = {}
-        self.pipes: {str: AX25Pipe} = {}
         self.device = None
         ##############
         # AXIP VARs
         self.own_ipAddr = ''
         # self.axip_anti_spam = {}
-        # self.to_call_ip_addr = ('', 0)
         try:
             self.init()
         except AX25DeviceFAIL as e:

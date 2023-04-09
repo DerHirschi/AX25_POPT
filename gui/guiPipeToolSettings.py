@@ -229,11 +229,6 @@ class AX25PipeTab:
             if port_id in self.root_win.root.ax25_port_handler.ax25_ports.keys():
                 _vals = self.root_win.root.ax25_port_handler.ax25_ports[port_id].my_stations
             if _vals:
-                """
-                if self.pipe.ax25_frame.from_call.call_str:
-                    self.call_var.set(self.pipe.ax25_frame.from_call.call_str)
-                else:
-                """
                 self.call_var.set(_vals[0])
             else:
                 self.call_var.set('')
@@ -364,5 +359,12 @@ class PipeToolSettings(tk.Toplevel):
         except tk.TclError:
             pass
         else:
+            pipe: AX25Pipe = self.tab_list[ind].pipe
+            port_id = pipe.port_id
+            uid = pipe.uid
+            if port_id in self.root.ax25_port_handler.ax25_ports.keys():
+                if uid in self.root.ax25_port_handler.ax25_ports[port_id].pipes.keys():
+                    del self.root.ax25_port_handler.ax25_ports[port_id].pipes[uid]
+                    print('DEL PIPE !!!!!')
             del self.tab_list[ind]
             self.tabControl.forget(ind)
