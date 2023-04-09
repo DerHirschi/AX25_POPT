@@ -32,7 +32,9 @@ class AX25PipeTab:
         tk.Label(self.own_tab, text=f"{STR_TABLE['to'][self.lang]}:").place(x=_x, y=_y)
         if self.pipe.add_str:
             self.to_add_var.set(self.pipe.add_str)
-        self.to_add_ent = tk.Entry(self.own_tab, textvariable=self.to_add_var)
+        self.to_add_ent = tk.Entry(self.own_tab,
+                                   textvariable=self.to_add_var,
+                                   width=50)
         self.to_add_ent.place(x=_x + 40, y=_y)
 
         # CMD/RPT
@@ -70,15 +72,51 @@ class AX25PipeTab:
                                         values=_vals,
                                         )
         self.port_ent.place(x=_x + 50, y=_y)
-        # self.mon_port_ent.bind("<<ComboboxSelected>>", self.chk_mon_port)
+        # Max Pac
+        _x = 240
+        _y = 140
+        tk.Label(self.own_tab, text="Max Pac:").place(x=_x, y=_y)
+        self.max_pac_var = tk.StringVar(self.own_tab)
+        self.max_pac_var.set(self.pipe.parm_max_pac)
+        _vals = [str(x) for x in range(1, 8)]
+        self.max_pac_ent = tk.ttk.Spinbox(self.own_tab,
+                                          width=2,
+                                          textvariable=self.max_pac_var,
+                                          values=_vals,
+                                          )
+        self.max_pac_ent.place(x=_x + 160, y=_y)
+        # Pac len
+        _x = 490
+        _y = 140
+        tk.Label(self.own_tab, text="Pac-len:").place(x=_x, y=_y)
+        self.pac_len_var = tk.StringVar(self.own_tab)
+        self.pac_len_var.set(self.pipe.parm_pac_len)
+        _vals = [str(x) for x in range(1, 257)]
+        self.pac_len_ent = tk.ttk.Spinbox(self.own_tab,
+                                          width=3,
+                                          textvariable=self.pac_len_var,
+                                          values=_vals,
+                                          )
+        self.pac_len_ent.place(x=_x + 75, y=_y)
+        # Max Pac Delay
+        _x = 240
+        _y = 175
+        tk.Label(self.own_tab, text="Max Pac Delay (s):").place(x=_x, y=_y)
+        self.max_pac_delay_var = tk.StringVar(self.own_tab)
+        self.max_pac_delay_var.set(self.pipe.parm_max_pac_timer)
+        _vals = [str(x * 10) for x in range(1, 37)]
+        self.max_pac_delay = tk.ttk.Spinbox(self.own_tab,
+                                            width=3,
+                                            textvariable=self.max_pac_delay_var,
+                                            values=_vals,
+                                            )
+        self.max_pac_delay.place(x=_x + 160, y=_y)
         # Calls
         _x = 40
         _y = 175
         self.call_var = tk.StringVar(self.own_tab)
 
         _vals = []
-        # if self.main_win.ax25_port_handler.ax25_ports.keys():
-        #     _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
         port_id = int(self.port_var.get())
         if port_id in self.root_win.root.ax25_port_handler.ax25_ports.keys():
             _vals = self.root_win.root.ax25_port_handler.ax25_ports[port_id].my_stations
@@ -106,7 +144,7 @@ class AX25PipeTab:
             pid.pac_types[int(x)]()
             _vals.append(f"{str(hex(x)).upper()}>{pid.flag}")
         self.pid_ent = tk.ttk.Combobox(self.own_tab,
-                                       width=20,
+                                       width=30,
                                        values=_vals,
                                        textvariable=self.pid_var)
         pid = f"{str(hex(self.pipe.ax25_frame.pid_byte.hex))}>{self.pipe.ax25_frame.pid_byte.flag}"
@@ -114,15 +152,15 @@ class AX25PipeTab:
         self.pid_ent.place(x=_x + 40, y=_y)
         # Loop Timer
         _x = 10
-        _y = self.root_win.win_height - 255 - 80    # iam lazy
+        _y = self.root_win.win_height - 255 - 80  # iam lazy
         tk.Label(self.own_tab, text='TX-File Check Timer (sek/sec):').place(x=_x, y=_y)
         self.loop_timer_var = tk.StringVar(self.own_tab)
         self.loop_timer_var.set(self.pipe.parm_tx_file_check_timer)
         self.loop_timer = tk.Spinbox(self.own_tab,
-                                     from_=1,
-                                     to=60,
-                                     increment=1,
-                                     width=2,
+                                     from_=5,
+                                     to=360,
+                                     increment=5,
+                                     width=3,
                                      textvariable=self.loop_timer_var,
                                      # command=self.set_max_frame,
                                      # state='disabled'
@@ -132,7 +170,7 @@ class AX25PipeTab:
         #################
         # TX FILE
         _x = 10
-        _y = self.root_win.win_height - 220 - 80    # iam lazy
+        _y = self.root_win.win_height - 220 - 80  # iam lazy
         tk.Label(self.own_tab, text=f"{STR_TABLE['tx_file'][self.lang]}:").place(x=_x, y=_y)
         self.tx_filename_var = tk.StringVar(self.own_tab)
         self.tx_filename_var.set(self.pipe.tx_filename)
@@ -146,7 +184,7 @@ class AX25PipeTab:
         #################
         # RX FILE
         _x = 10
-        _y = self.root_win.win_height - 180 - 80    # iam lazy
+        _y = self.root_win.win_height - 180 - 80  # iam lazy
         tk.Label(self.own_tab, text=f"{STR_TABLE['rx_file'][self.lang]}:").place(x=_x, y=_y)
         self.rx_filename_var = tk.StringVar(self.own_tab)
         self.rx_filename_var.set(self.pipe.rx_filename)
@@ -203,12 +241,13 @@ class PipeToolSettings(tk.Toplevel):
                           height=1,
                           width=6,
                           command=self.ok_btn_cmd)
-
+        """
         save_bt = tk.Button(self,
                             text=STR_TABLE['save'][self.lang],
                             height=1,
                             width=7,
                             command=self.save_btn_cmd)
+        """
 
         cancel_bt = tk.Button(self,
                               text=STR_TABLE['cancel'][self.lang],
@@ -216,7 +255,7 @@ class PipeToolSettings(tk.Toplevel):
                               width=8,
                               command=self.destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
-        save_bt.place(x=110, y=self.win_height - 50)
+        # save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
         ####################################
         # New Station, Del Station Buttons
@@ -259,16 +298,20 @@ class PipeToolSettings(tk.Toplevel):
             pipe.parm_tx_file_check_timer = int(tab.loop_timer_var.get())
             pipe.tx_filename = tab.tx_filename_var.get()
             pipe.rx_filename = tab.rx_filename_var.get()
+            pipe.parm_max_pac_timer = int(tab.max_pac_delay_var.get())
+            pipe.parm_max_pac = int(tab.max_pac_var.get())
+            pipe.parm_pac_len = int(tab.pac_len_var.get())
             pipe.change_settings()
             if pipe.port_id in self.root.ax25_port_handler.ax25_ports.keys():
                 self.root.ax25_port_handler.ax25_ports[pipe.port_id].pipes[pipe.uid] = pipe
                 # if pipe.uid in port.pipes:
 
-
+    """
     def save_btn_cmd(self):
         self.set_vars()
         self.root.msg_to_monitor('Info: Pipe-Tool Settings wurden gespeichert..')
         self.root.msg_to_monitor('Lob: Gute Entscheidung!')
+    """
 
     def ok_btn_cmd(self):
         self.set_vars()

@@ -9,7 +9,8 @@ from ax25.ax25Beacon import Beacon
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25UI_Pipe import AX25Pipe
-from ax25.ax25dec_enc import AX25Frame, reverse_uid, bytearray2hexstr, via_calls_fm_str
+from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
+from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 import ax25.ax25monitor as ax25monitor
 
@@ -150,9 +151,8 @@ class AX25Port(threading.Thread):
 
     def rx_pipe_handler(self, ax25_frame: AX25Frame):
         uid = str(ax25_frame.addr_uid)
-        print(f'pipe-uid: {uid} > all_keys: {list(self.pipes.keys())}')
+        # print(f'pipe-uid: {uid} > all_keys: {list(self.pipes.keys())}')
         if uid in self.pipes.keys():
-            print('pipe-RX !!!!!!!!!!!!')
             self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
             return True
         return False

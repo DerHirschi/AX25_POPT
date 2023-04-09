@@ -6,7 +6,8 @@ import time
 
 import cli.cli
 import config_station
-from ax25.ax25dec_enc import AX25Frame, reverse_uid
+from ax25.ax25dec_enc import AX25Frame
+from fnc.ax25_fnc import reverse_uid
 from ax25.ax25FileTransfer import FileTX
 
 
@@ -828,7 +829,8 @@ class DefaultStat(object):
         self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
 
     def t1_fail(self):
-        self.cleanup()
+        pass
+        # self.cleanup()
 
     def t3_fail(self):
         self.cleanup()

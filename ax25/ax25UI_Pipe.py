@@ -1,5 +1,6 @@
 import time
 from fnc.file_fnc import check_file
+from fnc.ax25_fnc import reverse_uid
 
 from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
@@ -44,8 +45,9 @@ class AX25Pipe(object):
 
     def crone_exec(self):
         # self.save_rx_buff_to_file()
-        self.tx_file_crone()
-        self.tx_crone()
+        if self.tx_filename or self.rx_filename:
+            self.tx_file_crone()
+            self.tx_crone()
 
     def tx_file_crone(self):
         if self.tx_file_check_timer < time.time():
@@ -80,10 +82,10 @@ class AX25Pipe(object):
     def change_settings(self):
         self.ax25_frame.encode()
         self.uid = self.ax25_frame.addr_uid
-        print(f"Change_sett UID: {self.uid}")
+        self.add_str = ' '.join(reverse_uid(self.uid).split(':')[1:])
 
     def check_parm_max_pac_timer(self):
-        if self.parm_max_pac_timer < time.time():
+        if self.max_pac_timer < time.time():
             self.set_parm_max_pac_timer()
             return True
         return False
@@ -98,38 +100,42 @@ class AX25Pipe(object):
         return self.save_rx_buff_to_file()
 
     def load_tx_buff_fm_file(self):
-        if check_file:
-            try:
-                with open(self.tx_filename, 'rb') as f:
-                    self.tx_data += f.read()
-            except PermissionError:
+        if self.tx_filename:
+            if check_file:
+                try:
+                    with open(self.tx_filename, 'rb') as f:
+                        self.tx_data += f.read()
+                except PermissionError:
+                    self.e_count += 1
+                    return False
+                else:
+                    try:
+                        with open(self.tx_filename, 'wb') as f:
+                            pass
+                    except PermissionError:
+                        self.e_count += 1
+                        return False
+                self.e_count = 0
+                return True
+            else:
                 self.e_count += 1
                 return False
-            else:
-                try:
-                    with open(self.tx_filename, 'wb') as f:
-                        pass
-                except PermissionError:
-                    self.e_count += 1
-                    return False
-            self.e_count = 0
-            return True
-        else:
-            self.e_count += 1
-            return False
+        return True
 
     def save_rx_buff_to_file(self):
-        if self.rx_data:
-            if check_file(self.rx_filename):
-                try:
-                    with open(self.rx_filename, 'ab') as f:
-                        f.write(self.rx_data)
-                        self.rx_data = b''
-                        self.e_count = 0
-                        return True
-                except PermissionError:
-                    self.e_count += 1
-                    return False
-            self.e_count += 1
-            return False
+        if self.rx_filename:
+            if self.rx_data:
+                if check_file(self.rx_filename):
+                    try:
+                        with open(self.rx_filename, 'ab') as f:
+                            f.write(self.rx_data)
+                            self.rx_data = b''
+                            self.e_count = 0
+                            return True
+                    except PermissionError:
+                        self.e_count += 1
+                        return False
+                self.e_count += 1
+                return False
         return True
+

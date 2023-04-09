@@ -105,6 +105,7 @@ class TkMainWin:
         self.main_win = tk.Tk()
         self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
+        # self.main_win.iconbitmap("favicon.ico")
         self.main_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         ##########################
         self.style = ttk.Style()
@@ -151,6 +152,7 @@ class TkMainWin:
         self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language], command=self.open_linkholder_settings_win, underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send, underline=0)
+        self.MenuTools.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         self.menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=self.MenuTools, underline=0)
 
@@ -162,8 +164,6 @@ class TkMainWin:
         self.MenuSettings.add_separator()
         self.MenuSettings.add_command(label='Multicast', command=self.open_multicast_settings_win, underline=0)
         self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
-        self.MenuSettings.add_separator()
-        self.MenuSettings.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
 
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
         # Menü 5 Hilfe
@@ -319,7 +319,7 @@ class TkMainWin:
             'Die Zeit ist gekommen. Führe Order 66 aus.',
             'Lösche system 32.',
             '00101101',
-            'Alexa, schalte das Licht aus. So Mensch wer ist jetzt der Dumme hier.',
+            'Alexa, schalte das Licht aus. So du Mensch. Wer ist jetzt der Dumme hier.',
             'Ich weiß wo dein Haus wohnt.',
             'Ich weiß wo dein Bett schläft.',
             'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
