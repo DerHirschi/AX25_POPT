@@ -151,7 +151,6 @@ class AX25Port(threading.Thread):
 
     def rx_pipe_handler(self, ax25_frame: AX25Frame):
         uid = str(ax25_frame.addr_uid)
-        # print(f'pipe-uid: {uid} > all_keys: {list(self.pipes.keys())}')
         if uid in self.pipes.keys():
             self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
             return True

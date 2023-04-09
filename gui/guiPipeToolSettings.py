@@ -71,6 +71,8 @@ class AX25PipeTab:
                                         textvariable=self.port_var,
                                         values=_vals,
                                         )
+        self.port_ent.bind("<KeyRelease>", self.chk_port_id)
+        self.port_ent.bind("<<ComboboxSelected>>", self.chk_port_id)
         self.port_ent.place(x=_x + 50, y=_y)
         # Max Pac
         _x = 240
@@ -115,7 +117,7 @@ class AX25PipeTab:
         _x = 40
         _y = 175
         self.call_var = tk.StringVar(self.own_tab)
-
+        """
         _vals = []
         port_id = int(self.port_var.get())
         if port_id in self.root_win.root.ax25_port_handler.ax25_ports.keys():
@@ -125,12 +127,14 @@ class AX25PipeTab:
                 self.call_var.set(self.pipe.ax25_frame.from_call.call_str)
             else:
                 self.call_var.set(_vals[0])
+        """
         self.call_ent = tk.ttk.Combobox(self.own_tab,
                                         width=9,
                                         textvariable=self.call_var,
-                                        values=_vals,
+                                        # values=_vals,
                                         )
         self.call_ent.place(x=_x, y=_y)
+        self.chk_port_id()
 
         # PID
         _x = 10
@@ -214,6 +218,27 @@ class AX25PipeTab:
                 self.tx_filename_var.set(filenames[0])
             else:
                 self.rx_filename_var.set(filenames[0])
+
+    def chk_port_id(self, event=None):
+        _vals = []
+        port_id = self.port_var.get()
+        print(port_id)
+
+        if port_id:
+            port_id = int(port_id)
+            if port_id in self.root_win.root.ax25_port_handler.ax25_ports.keys():
+                _vals = self.root_win.root.ax25_port_handler.ax25_ports[port_id].my_stations
+            if _vals:
+                """
+                if self.pipe.ax25_frame.from_call.call_str:
+                    self.call_var.set(self.pipe.ax25_frame.from_call.call_str)
+                else:
+                """
+                self.call_var.set(_vals[0])
+            else:
+                self.call_var.set('')
+
+        self.call_ent.config(values=_vals)
 
 
 class PipeToolSettings(tk.Toplevel):
