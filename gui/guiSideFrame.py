@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, Checkbutton
 from string_tab import STR_TABLE
 from ax25.ax25dec_enc import PIDByte
+from fnc.os_fnc import is_linux
 
 
 # import main
@@ -154,15 +155,18 @@ class SideTabbedFrame:
         self.rtt_worst = tk.Label(tab1_kanal, text='')
         self.rtt_avg = tk.Label(tab1_kanal, text='')
         self.rtt_last = tk.Label(tab1_kanal, text='')
-        # font = self.rtt_best.cget('font')[0]
-        # self.rtt_best.configure(font=(font, 12))
-        # self.rtt_worst.configure(font=(font, 12))
-        # self.rtt_avg.configure(font=(font, 12))
-        # self.rtt_last.configure(font=(font, 12))
+
         self.rtt_best.place(x=170, y=10)
         self.rtt_worst.place(x=170, y=35)
         self.rtt_avg.place(x=170, y=60)
         self.rtt_last.place(x=170, y=85)
+        # Status /Pipe/Link/File-RX/File-TX
+        self.status_label = tk.Label(tab1_kanal, fg='red')
+        font = self.status_label.cget('font')
+        self.status_label.configure(font=(font[0], 12))
+        self.status_label.place(x=40, y=228)
+
+
         ################################
         # MH ##########################
         # TREE
@@ -211,7 +215,7 @@ class SideTabbedFrame:
                                  command=self.chk_sprech_on
                                  )
         sprech_btn.place(x=10, y=35)
-        if 'linux' in sys.platform:
+        if is_linux():
             self.sprech_on.set(True)
         else:
             self.sprech_on.set(False)
@@ -527,6 +531,7 @@ class SideTabbedFrame:
         worst = ''
         avg = ''
         last = ''
+        status_text = ''
         station = self.main_win.get_conn(self.main_win.channel_index)
         if station:
             if station.RTT_Timer.rtt_best == 999.0:
@@ -536,6 +541,14 @@ class SideTabbedFrame:
             worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
             avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
             last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
+            if station.is_link:
+                status_text = 'Link'
+            elif station.pipe is not None:
+                status_text = 'Pipe'
+            elif station.ft_tx_activ is not None:
+                status_text = 'Sending File'
+
+        self.status_label.configure(text=status_text)
         self.rtt_best.configure(text=best)
         self.rtt_worst.configure(text=worst)
         self.rtt_avg.configure(text=avg)

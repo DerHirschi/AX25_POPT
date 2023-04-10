@@ -6,7 +6,8 @@
 4: 'fi'
 5: 'pl'
 6: 'pt'
-7: 'zh'     # Not really ;-)
+7: 'it'
+8: 'zh'     # Not really ;-)
 """
 
 STR_TABLE = {

@@ -345,6 +345,10 @@ class PipeToolSettings(tk.Toplevel):
             pipe.set_dest_add(tab.to_add_var.get().upper())
             pipe.port_id = int(tab.port_var.get())
             pid = int(tab.pid_var.get().split('>')[0], 16)
+            pipe.parm_max_pac_timer = int(tab.max_pac_delay_var.get())
+            pipe.parm_tx_file_check_timer = int(tab.loop_timer_var.get())
+            pipe.tx_filename = tab.tx_filename_var.get()
+            pipe.rx_filename = tab.rx_filename_var.get()
             if pipe.connection is None:
                 pipe.ax25_frame.ctl_byte.UIcByte()
                 pipe.ax25_frame.pid_byte.pac_types[pid]()
@@ -352,12 +356,9 @@ class PipeToolSettings(tk.Toplevel):
                 pipe.parm_pac_len = int(tab.pac_len_var.get())
                 pipe.ax25_frame.ctl_byte.pf = tab.poll_var.get()
                 pipe.ax25_frame.ctl_byte.cmd = tab.cmd_var.get()
-            pipe.parm_max_pac_timer = int(tab.max_pac_delay_var.get())
-            pipe.parm_tx_file_check_timer = int(tab.loop_timer_var.get())
-            pipe.tx_filename = tab.tx_filename_var.get()
-            pipe.rx_filename = tab.rx_filename_var.get()
-
             pipe.change_settings()
+            if pipe.connection is not None:
+                pipe.connection.pipe = pipe
             if pipe.port_id in self.root.ax25_port_handler.ax25_ports.keys():
                 self.root.ax25_port_handler.ax25_ports[pipe.port_id].pipes[pipe.uid] = pipe
                 # if pipe.uid in port.pipes:
@@ -397,7 +398,7 @@ class PipeToolSettings(tk.Toplevel):
             )
             new_pipe.connection = conn
             new_pipe.change_settings()
-            conn.pipe = new_pipe
+            # conn.pipe = new_pipe
             label_txt = f"{len(self.tab_list)}"
             tab = AX25PipeTab(self, pipe=new_pipe)
             self.tabControl.add(tab.own_tab, text=label_txt)
