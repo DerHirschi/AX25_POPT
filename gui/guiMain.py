@@ -44,7 +44,7 @@ elif is_windows():
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     filename='error.log',
-    level=logging.ERROR
+    level=logging.WARNING
 )
 logger = logging.getLogger(__name__)
 
@@ -326,8 +326,10 @@ class TkMainWin:
             'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
             'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
         ]
-
+        tmp_lang = int(self.language)
+        self.language = random.choice([0,1,2,3,4,5,6,7,8])
         self.sprech(random.choice(speech))
+        self.language = int(tmp_lang)
         ban = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
               '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
@@ -612,7 +614,8 @@ class TkMainWin:
                         4: 'fi',
                         5: 'pl',
                         6: 'pt',
-                        7: 'zh',
+                        7: 'it',
+                        8: 'zh',
                     }[self.language]
                     tts = gTTS(text=text,
                                lang=language,

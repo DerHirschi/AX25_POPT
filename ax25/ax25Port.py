@@ -392,8 +392,6 @@ class AX25Port(threading.Thread):
             conn.is_link_remote = True
             if conn.link_connection(link_conn):
                 if link_conn.link_connection(conn):
-                    # print(f'link_conn: {link_conn.LINK_Connection}')
-                    # print(f'conn: {conn.LINK_Connection}')
                     return conn
             return False
         return conn
@@ -629,13 +627,10 @@ class KISSSerial(AX25Port):
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
                 logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
                 logger.error('{}'.format(e))
-                # self.device.close()
-                # raise AX25DeviceFAIL
             else:
                 if self.kiss.is_enabled:
-                    # self.device.write(self.kiss.device_kiss_start_1())
-                    self.device.write(self.kiss.device_jhost())
-                    # self.device.write(self.kiss.device_kiss_start_1())
+                    self.device.write(self.kiss.device_kiss_start_1())
+                    # self.device.write(self.kiss.device_jhost())
                     # self.device.write(b'\xc0\x10\x0c\xc0')
                     self.set_kiss_parm()
 
@@ -665,6 +660,7 @@ class KISSSerial(AX25Port):
         while self.loop_is_running and self.device_is_running:
             try:
                 recv_buff += self.device.read()
+
             except serial.SerialException as e:
                 # There is no new data from serial port
                 return RxBuf()
@@ -678,6 +674,7 @@ class KISSSerial(AX25Port):
             else:
                 ret = RxBuf()
                 if recv_buff:
+                    print(f"Ser RX buf: {recv_buff}")
                     de_kiss_fr = self.kiss.de_kiss(recv_buff)
                     if de_kiss_fr:  # TODO !!!! flush buffer ?
                         ret.raw_data = de_kiss_fr

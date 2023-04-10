@@ -85,9 +85,7 @@ File ext in Station Profile Folder (data/usertxt/<USER CALL>):
 
 Knowing Issues / TODO (AX25 Protocol):
 - FRMR Frame decoding not implemented yet
-- Issues with "Smart-Digi" / Managed DIGI Mode Connection UID
 
-TODO: !! Lot of Testing and Debugging !!
 
 [further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
 
