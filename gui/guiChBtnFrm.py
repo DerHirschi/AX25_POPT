@@ -64,26 +64,40 @@ class ChBtnFrm:
             if i in self.main_class.ax25_port_handler.all_connections.keys():
                 btn_txt = self.main_class.ax25_port_handler.all_connections[i].to_call_str
                 is_link = self.main_class.ax25_port_handler.all_connections[i].is_link
+                is_pipe = self.main_class.ax25_port_handler.all_connections[i].pipe
+                if is_pipe is None:
+                    is_pipe = False
                 if is_link:
                     btn_txt = 'L>' + btn_txt
+                elif is_pipe:
+                    btn_txt = 'P>' + btn_txt
+
                 self.con_btn_dict[i].configure(text=btn_txt)
                 if i == self.main_class.channel_index:
                     if is_link:
                         self.con_btn_dict[i].configure(bg='SteelBlue2')
+                    elif is_pipe:
+                        self.con_btn_dict[i].configure(bg='cyan2')
                     else:
                         self.con_btn_dict[i].configure(bg='green2')
                 else:
                     if self.main_class.win_buf[i].new_data_tr:
-                        if not is_link:
-                            ch_alarm = True
-                            self.ch_btn_alarm(self.con_btn_dict[i])
-                        else:
+                        if is_link:
                             self.con_btn_dict[i].configure(bg='SteelBlue4')
                             ch_alarm = False
+                        elif is_pipe:
+                            self.con_btn_dict[i].configure(bg='cyan4')
+                            ch_alarm = False
+                        else:
+                            ch_alarm = True
+                            self.ch_btn_alarm(self.con_btn_dict[i])
                     else:
                         if is_link:
                             ch_alarm = False
                             self.con_btn_dict[i].configure(bg='SteelBlue4')
+                        elif is_pipe:
+                            self.con_btn_dict[i].configure(bg='cyan4')
+                            ch_alarm = False
                         else:
                             self.con_btn_dict[i].configure(bg='green4')
             else:

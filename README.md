@@ -82,6 +82,8 @@ File ext in Station Profile Folder (data/usertxt/<USER CALL>):
 - *.litx > Long Info-Text
 - *.popt > Programm Data Files (Don't change !) 
 
+Choosing Language (Quick Fix):
+main.py line 6
 
 Knowing Issues / TODO (AX25 Protocol):
 - FRMR Frame decoding not implemented yet

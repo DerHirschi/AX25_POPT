@@ -189,11 +189,13 @@ class AX25Conn(object):
         self.parm_T3 = self.cfg.parm_T3  # T3 (Inactive Link Timer)
         self.parm_N2 = self.cfg.parm_N2  # Max Try   Default 20
         self.parm_baud = self.cfg.parm_baud  # Baud for calculating Timer
-        """ Timer Calculation """
+        """ Timer Calculation & other Data for Statistics"""
         self.IRTT = 0
         self.RTT = 0
         self.calc_irtt()
         self.RTT_Timer = RTT(self)
+        self.tx_byte_count = 0
+        self.rx_byte_count = 0
         """ Zustandstabelle / Statechart """
         self.zustand_tab = {
             0: (DefaultStat, 'ENDE'),
@@ -286,6 +288,8 @@ class AX25Conn(object):
         self.exec_cli(data)
         # Station ( RE/DISC/Connect ) Sting Detection
         self.set_dest_call_fm_data_inp(data)
+        # Statistic
+        self.rx_byte_count += len(data)
 
     def set_dest_call_fm_data_inp(self, ax25_fr_data: b''):
         det = [
@@ -307,6 +311,8 @@ class AX25Conn(object):
                 if self.is_gui:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
                     self.gui.sprech(speech)
+                self.tx_byte_count = 0
+                self.rx_byte_count = 0
 
     def exec_cron(self):
         """ DefaultStat.cron() """
@@ -661,6 +667,8 @@ class AX25Conn(object):
             # !!! COUNT VS !!!
             self.vs = count_modulo(int(self.vs))  # Increment VS Modulo 8
             self.set_T1()  # Re/Set T1
+            # Statistics
+            self.tx_byte_count += int(pac_len)
 
     def send_UA(self):
         self.init_new_ax25frame()

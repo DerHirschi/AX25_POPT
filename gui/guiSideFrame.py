@@ -1,6 +1,8 @@
 import sys
 import tkinter as tk
 from tkinter import ttk, Checkbutton
+
+from fnc.math_fnc import get_kb_str_fm_bytes
 from string_tab import STR_TABLE
 from ax25.ax25dec_enc import PIDByte
 from fnc.os_fnc import is_linux
@@ -165,6 +167,39 @@ class SideTabbedFrame:
         font = self.status_label.cget('font')
         self.status_label.configure(font=(font[0], 12))
         self.status_label.place(x=40, y=228)
+        ##########################################
+        # Kanal Rechts / Status / FT
+        ttk.Separator(tab1_kanal, orient='vertical').place(x=280, rely=0.05, relheight=0.9, relwidth=0.6)
+        ##########################################
+        # Progress bar
+        # progress = tk.ttk.Progressbar(tab1_kanal, orient=tk.HORIZONTAL, length=150, mode='determinate')
+        # progress.place(x=300, y=30)
+        # progress['value'] = 60
+        # TX Buffer
+        _x = 290
+        _y = 20
+        self.tx_buff_var = tk.StringVar(tab1_kanal)
+        self.tx_buff_lable = tk.Label(tab1_kanal, textvariable=self.tx_buff_var)
+        self.tx_buff_var.set('TX-Buffer: 124544.5 kb')
+        self.tx_buff_lable.place(x=_x, y=_y)
+        # TX Gesamt
+        _x = 290
+        _y = 45
+        self.tx_count_var = tk.StringVar(tab1_kanal)
+        self.tx_count_lable = tk.Label(tab1_kanal, textvariable=self.tx_count_var)
+        self.tx_count_var.set('TX: 124544.5 kb')
+        self.tx_count_lable.place(x=_x, y=_y)
+        # RX Gesamt
+        _x = 290
+        _y = 70
+        self.rx_count_var = tk.StringVar(tab1_kanal)
+        self.rx_count_lable = tk.Label(tab1_kanal, textvariable=self.rx_count_var)
+        self.rx_count_var.set('RX: 124544.5 kb')
+        self.rx_count_lable.place(x=_x, y=_y)
+        ######################
+        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=110, relheight=0.6, relwidth=0.9)
+        #####################
+
 
 
         ################################
@@ -532,6 +567,9 @@ class SideTabbedFrame:
         avg = ''
         last = ''
         status_text = ''
+        tx_buff = 'TX-Buffer: --- kb'
+        tx_count = 'TX: --- kb'
+        rx_count = 'RX: --- kb'
         station = self.main_win.get_conn(self.main_win.channel_index)
         if station:
             if station.RTT_Timer.rtt_best == 999.0:
@@ -541,6 +579,9 @@ class SideTabbedFrame:
             worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
             avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
             last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
+            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
+            tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
+            rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
             if station.is_link:
                 status_text = 'Link'
             elif station.pipe is not None:
@@ -553,6 +594,9 @@ class SideTabbedFrame:
         self.rtt_worst.configure(text=worst)
         self.rtt_avg.configure(text=avg)
         self.rtt_last.configure(text=last)
+        self.tx_buff_var.set(tx_buff)
+        self.tx_count_var.set(tx_count)
+        self.rx_count_var.set(rx_count)
 
     def update_tree(self):
         for i in self.tree.get_children():
@@ -577,6 +621,8 @@ class SideTabbedFrame:
             self.rnr_var.set(conn.is_RNR)
             self.rnr.configure(state='normal')
             self.link_holder.configure(state='normal')
+            self.tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
+
             if conn.is_RNR:
                 self.rnr.select()
             else:
@@ -605,6 +651,9 @@ class SideTabbedFrame:
             self.t2.configure(state='disabled')
             self.link_holder_var.set(False)
             self.link_holder.configure(state='disabled')
+            self.tx_buff_var.set('TX-Buffer: --- kb')
+            self.tx_count_var.set('TX: --- kb')
+            self.rx_count_var.set('RX: --- kb')
 
         self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
         self.update_ch_echo()

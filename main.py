@@ -2,11 +2,13 @@ import cli.ClientDB
 import ax25.ax25Statistics
 import gui.guiMain
 import ax25.ax25InitPorts
+
+LANGUAGE = 0    # QUICK FIX
 """
 0 = German
 1 = English
+2 = Dutch
 """
-LANGUAGE = 0    # QUICK FIX
 
 if __name__ == '__main__':
     GLB_MH_list = ax25.ax25Statistics.MH()

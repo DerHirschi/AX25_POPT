@@ -372,6 +372,7 @@ class PipeToolSettings(tk.Toplevel):
 
     def ok_btn_cmd(self):
         self.set_vars()
+        self.root.ch_btn_status_update()
         self.root.msg_to_monitor('Info: Pipe-Tool Settings wurden gespeichert..')
         self.root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.destroy_win()
@@ -421,3 +422,4 @@ class PipeToolSettings(tk.Toplevel):
                     del self.root.ax25_port_handler.ax25_ports[port_id].pipes[uid]
             del self.tab_list[ind]
             self.tabControl.forget(ind)
+            self.root.ch_btn_status_update()
