@@ -44,7 +44,7 @@ elif is_windows():
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     filename='error.log',
-    level=logging.ERROR
+    level=logging.WARNING
 )
 logger = logging.getLogger(__name__)
 
