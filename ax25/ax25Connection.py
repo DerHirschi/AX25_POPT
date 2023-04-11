@@ -235,14 +235,27 @@ class AX25Conn(object):
                     self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
         """ Init CLI """
         self.cli = cli.cli.NoneCLI(self)
-        self.init_cli()
+        if self.stat_cfg.stat_parm_pipe is None:
+            self.init_cli()
+            if not rx:
+                self.cli.change_cli_state(state=1)
+        else:
+            """ Init Pipe """
+            self.pipe = self.stat_cfg.stat_parm_pipe(
+                port_id=self.own_port.port_id,
+                own_call=self.my_call_str,
+                address_str='NOCALL',
+            )
+            self.pipe.connection = self
+            self.pipe.change_settings()
+        """ Init State Tab """
         if rx:
             self.set_T1()
             self.set_T3()
             self.zustand_exec = S1Frei(self)
         else:
             self.zustand_exec = S2Aufbau(self)
-            self.cli.change_cli_state(state=1)
+            # self.cli.change_cli_state(state=1)
 
     def __del__(self):
         del self.ax25_out_frame

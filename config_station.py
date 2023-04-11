@@ -2,7 +2,7 @@ import pickle
 import os
 from cli.cli import DefaultCLI, NoneCLI
 
-VER = '2.75.1dev'
+VER = '2.75.2dev'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -25,6 +25,7 @@ def init_dir_struct():
 
 
 def get_all_stat_cfg():
+    """ TODO Again !! Bullshit """
     stat_cfg_path = CFG_data_path + CFG_usertxt_path
     stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
     ret: {str: DefaultStation} = {}
@@ -114,6 +115,7 @@ class DefaultStation(object):
     stat_parm_is_StupidDigi = False
     # Parameter for CLI
     stat_parm_cli: DefaultCLI = NoneCLI
+    stat_parm_pipe = None
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     stat_parm_cli_ctext: str = ''
     stat_parm_cli_itext: str = ''
@@ -175,7 +177,12 @@ class DefaultPort(object):
     ##########################
     # Globals
     glb_gui = None
-    dont_save_this = ['dont_save_this', 'save_to_pickl', 'mh', 'glb_gui']
+    dont_save_this = ['dont_save_this',
+                      'save_to_pickl',
+                      'mh',
+                      'glb_gui',
+                      'parm_Stations',      # !!!!!!!!! TODO  CHECK
+                      ]
 
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """
@@ -240,6 +247,12 @@ class PortConfigInit(DefaultPort):
                 # Stations
                 for call in self.parm_StationCalls:
                     new_stat_cfg = loaded_stat[call]
+                    """ Check for New Vars to hold cfg_files compatible """
+                    """ TODO: Need to find a better way.. The whole cfg Save is Bullshit """
+                    """ Just need to save Parameter, not the whole class """
+                    if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
+                        new_stat_cfg.stat_parm_pipe = None
+                    """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
                     self.parm_Stations.append(new_stat_cfg)
                     # Stupid Digi
                     if new_stat_cfg.stat_parm_is_StupidDigi:

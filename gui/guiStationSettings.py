@@ -2,6 +2,7 @@ from tkinter import ttk as ttk
 from tkinter import scrolledtext
 from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data
 from cli.cli import *
+from ax25.ax25UI_Pipe import AX25Pipe
 from gui.guiMsgBoxes import *
 from string_tab import STR_TABLE
 
@@ -36,9 +37,13 @@ class StatSetTab:
             UserCLI.cli_name: UserCLI,
             NodeCLI.cli_name: NodeCLI,
             NoneCLI.cli_name: NoneCLI,
+            'Pipe': AX25Pipe
         }
         opt = list(self.cli_opt.keys())
-        self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)  # default value
+        if self.station_setting.stat_parm_pipe is None:
+            self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)  # default value
+        else:
+            self.cli_select_var.set('Pipe')  # default value
         cli = tk.OptionMenu(self.own_tab, self.cli_select_var, *opt)
         cli.configure(width=8, height=1)
         cli.place(x=cli_x + 55, y=height - cli_y - 5)
@@ -281,7 +286,12 @@ class StatSetTab:
         self.station_setting.stat_parm_Call = call
         # CLI
         cli_key = self.cli_select_var.get()
-        self.station_setting.stat_parm_cli = self.cli_opt[cli_key]
+        if cli_key not in ['Pipe']:
+            self.station_setting.stat_parm_cli = self.cli_opt[cli_key]
+        else:
+            self.station_setting.stat_parm_cli = NoneCLI
+            self.station_setting.stat_parm_pipe = self.cli_opt[cli_key]
+
         # MaxPac
         var_maxpac = int(self.max_pac_select_var.get())
         self.station_setting.stat_parm_MaxFrame = var_maxpac

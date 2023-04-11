@@ -7,9 +7,9 @@ from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
 class AX25Pipe(object):
     def __init__(self,
-                 port_id: int,
-                 own_call: str = '',
-                 address_str: str = '',
+                 port_id: int = -1,
+                 own_call: str = 'NOCALL',
+                 address_str: str = 'NOCALL',
                  cmd_pf: tuple = (False, False),
                  pid: hex = 0xf0
                  ):
