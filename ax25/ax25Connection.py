@@ -264,6 +264,7 @@ class AX25Conn(object):
         self.set_T3()
 
     def handle_tx(self, ax25_frame: AX25Frame):
+        """ Not used... TX is handled by cron """
         self.zustand_exec.tx(ax25_frame=ax25_frame)
 
     def send_data(self, data, file_trans=False):
@@ -293,8 +294,8 @@ class AX25Conn(object):
 
     def set_dest_call_fm_data_inp(self, ax25_fr_data: b''):
         det = [
-            b'*** Connected to ',
-            b'*** Reconnected to '
+            b'*** Connected to',
+            b'*** Reconnected to'
         ]
         for _det_str in det:
             if _det_str in ax25_fr_data:
@@ -313,6 +314,7 @@ class AX25Conn(object):
                     self.gui.sprech(speech)
                 self.tx_byte_count = 0
                 self.rx_byte_count = 0
+                break   # Maybe it's better to look at thw whole string ?
 
     def exec_cron(self):
         """ DefaultStat.cron() """
@@ -332,6 +334,11 @@ class AX25Conn(object):
     def pipe_rx(self, raw_data: b''):
         if self.pipe is not None:
             self.pipe.handle_rx_rawdata(raw_data)
+
+    def set_pipe(self, pipe):
+        self.pipe = pipe
+        self.parm_PacLen = int(self.pipe.parm_pac_len)
+        self.parm_MaxFrame = int(self.pipe.parm_max_pac)
 
     def ft_cron(self):
         if self.ft_tx_activ is not None:
@@ -483,7 +490,7 @@ class AX25Conn(object):
                 self.zustand_exec.change_state(4)
 
     ###############################################
-    # Channel ECHO
+    # Channel ECHO  # TODO Again !
     def ch_echo_add(self, ax25_connection):
         if ax25_connection not in self.ch_echo:
             self.ch_echo.append(ax25_connection)
@@ -645,6 +652,7 @@ class AX25Conn(object):
         :param pf_bit: bool
         True if RX a REJ Packet
         """
+        # A bit of Mess TODO Try to Cleanup
         if self.tx_buf_rawData:  # Double Check, just in case
             self.init_new_ax25frame()
             self.ax25_out_frame.ctl_byte.pf = bool(pf_bit)  # Poll/Final Bit / True if REJ is received

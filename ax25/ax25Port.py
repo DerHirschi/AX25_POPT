@@ -674,7 +674,6 @@ class KISSSerial(AX25Port):
             else:
                 ret = RxBuf()
                 if recv_buff:
-                    print(f"Ser RX buf: {recv_buff}")
                     de_kiss_fr = self.kiss.de_kiss(recv_buff)
                     if de_kiss_fr:  # TODO !!!! flush buffer ?
                         ret.raw_data = de_kiss_fr

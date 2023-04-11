@@ -252,16 +252,16 @@ class AX25PipeTab:
             self.cmd_ent.config(state='disabled')
             self.poll_ent.config(state='disabled')
             self.port_ent.config(state='disabled')
-            self.max_pac_ent.config(state='disabled')
-            self.pac_len_ent.config(state='disabled')
+            # self.max_pac_ent.config(state='disabled')
+            # self.pac_len_ent.config(state='disabled')
         else:
             self.to_add_ent.config(state='normal')
             self.call_ent.config(state='normal')
             self.pid_ent.config(state='normal')
             self.cmd_ent.config(state='normal')
             self.poll_ent.config(state='normal')
-            self.max_pac_ent.config(state='normal')
-            self.pac_len_ent.config(state='normal')
+            # self.max_pac_ent.config(state='normal')
+            # self.pac_len_ent.config(state='normal')
 
 
 class PipeToolSettings(tk.Toplevel):
@@ -349,16 +349,17 @@ class PipeToolSettings(tk.Toplevel):
             pipe.parm_tx_file_check_timer = int(tab.loop_timer_var.get())
             pipe.tx_filename = tab.tx_filename_var.get()
             pipe.rx_filename = tab.rx_filename_var.get()
+            pipe.parm_max_pac = int(tab.max_pac_var.get())
+            pipe.parm_pac_len = int(tab.pac_len_var.get())
             if pipe.connection is None:
                 pipe.ax25_frame.ctl_byte.UIcByte()
                 pipe.ax25_frame.pid_byte.pac_types[pid]()
-                pipe.parm_max_pac = int(tab.max_pac_var.get())
-                pipe.parm_pac_len = int(tab.pac_len_var.get())
                 pipe.ax25_frame.ctl_byte.pf = tab.poll_var.get()
                 pipe.ax25_frame.ctl_byte.cmd = tab.cmd_var.get()
             pipe.change_settings()
             if pipe.connection is not None:
-                pipe.connection.pipe = pipe
+                # pipe.connection.pipe = pipe
+                pipe.connection.set_pipe(pipe)
             if pipe.port_id in self.root.ax25_port_handler.ax25_ports.keys():
                 self.root.ax25_port_handler.ax25_ports[pipe.port_id].pipes[pipe.uid] = pipe
                 # if pipe.uid in port.pipes:
