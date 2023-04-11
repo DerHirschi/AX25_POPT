@@ -85,6 +85,15 @@ File ext in Station Profile Folder (data/usertxt/<USER CALL>):
 Choosing Language (Quick Fix):
 main.py line 6
 
+Choosing Language (Quick Fix):
+
+main.py line 9
+
+0 = German
+1 = English
+2 = Dutch   (I think it's Dutch ;-) )
+
+
 Knowing Issues / TODO (AX25 Protocol):
 - FRMR Frame decoding not implemented yet
 
