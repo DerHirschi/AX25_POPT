@@ -1,4 +1,5 @@
 from tkinter import ttk as ttk
+from tkinter import filedialog as fd
 from tkinter import scrolledtext
 from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data
 from cli.cli import *
@@ -13,6 +14,7 @@ class StatSetTab:
         self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
         height = main_stt_win.win_height
         width = main_stt_win.win_width
+        self.main_cl = main_stt_win
         self.station_setting = setting
         self.style = main_stt_win.style
         self.own_tab = ttk.Frame(self.tab_clt)
@@ -37,13 +39,10 @@ class StatSetTab:
             UserCLI.cli_name: UserCLI,
             NodeCLI.cli_name: NodeCLI,
             NoneCLI.cli_name: NoneCLI,
-            'Pipe': AX25Pipe
+            'PIPE': AX25Pipe
         }
         opt = list(self.cli_opt.keys())
-        if self.station_setting.stat_parm_pipe is None:
-            self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)  # default value
-        else:
-            self.cli_select_var.set('Pipe')  # default value
+
         cli = tk.OptionMenu(self.own_tab, self.cli_select_var, *opt)
         cli.configure(width=8, height=1)
         cli.place(x=cli_x + 55, y=height - cli_y - 5)
@@ -139,10 +138,10 @@ class StatSetTab:
         digi_x = 20
         digi_y = 460
         # Root Tab
-        textTab = ttk.Notebook(self.own_tab, height=height - 330, width=width - (digi_x * 4))
-        textTab.place(x=digi_x, y=height - digi_y)
+        self.textTab = ttk.Notebook(self.own_tab, height=height - 330, width=width - (digi_x * 4))
+        self.textTab.place(x=digi_x, y=height - digi_y)
         # C-Text
-        tab_ctext = ttk.Frame(textTab)
+        tab_ctext = ttk.Frame(self.textTab)
         tab_ctext.rowconfigure(0, minsize=2, weight=0)
         tab_ctext.rowconfigure(1, minsize=100, weight=1)
         tab_ctext.rowconfigure(2, minsize=2, weight=0)
@@ -156,7 +155,7 @@ class StatSetTab:
         self.c_text_ent.grid(row=1, column=1)
         self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)
         # Bye Text
-        tab_byetext = ttk.Frame(textTab)
+        tab_byetext = ttk.Frame(self.textTab)
         tab_byetext.rowconfigure(0, minsize=2, weight=0)
         tab_byetext.rowconfigure(1, minsize=100, weight=1)
         tab_byetext.rowconfigure(2, minsize=2, weight=0)
@@ -170,7 +169,7 @@ class StatSetTab:
         self.bye_text_ent.grid(row=1, column=1)
         self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
         # Info Text
-        tab_infotext = ttk.Frame(textTab)
+        tab_infotext = ttk.Frame(self.textTab)
         tab_infotext.rowconfigure(0, minsize=2, weight=0)
         tab_infotext.rowconfigure(1, minsize=100, weight=1)
         tab_infotext.rowconfigure(2, minsize=2, weight=0)
@@ -184,7 +183,7 @@ class StatSetTab:
         self.info_text_ent.grid(row=1, column=1)
         self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
         # Info Text
-        tab_loinfotext = ttk.Frame(textTab)
+        tab_loinfotext = ttk.Frame(self.textTab)
         tab_loinfotext.rowconfigure(0, minsize=2, weight=0)
         tab_loinfotext.rowconfigure(1, minsize=100, weight=1)
         tab_loinfotext.rowconfigure(2, minsize=2, weight=0)
@@ -198,7 +197,7 @@ class StatSetTab:
         self.long_info_text_ent.grid(row=1, column=1)
         self.long_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_longitext)
         # Status Text
-        tab_akttext = ttk.Frame(textTab)
+        tab_akttext = ttk.Frame(self.textTab)
         tab_akttext.rowconfigure(0, minsize=2, weight=0)
         tab_akttext.rowconfigure(1, minsize=100, weight=1)
         tab_akttext.rowconfigure(2, minsize=2, weight=0)
@@ -212,13 +211,82 @@ class StatSetTab:
         self.akt_info_text_ent.grid(row=1, column=1)
         self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
 
-        textTab.add(tab_ctext, text=STR_TABLE['c_text'][self.lang])
-        textTab.add(tab_byetext, text=STR_TABLE['q_text'][self.lang])
-        textTab.add(tab_infotext, text=STR_TABLE['i_text'][self.lang])
-        textTab.add(tab_loinfotext, text=STR_TABLE['li_text'][self.lang])
-        textTab.add(tab_akttext, text=STR_TABLE['news_text'][self.lang])
+        # Pipe
+        tab_pipe = ttk.Frame(self.textTab)
+        # TX-File Check Timer
+        _x = 10
+        _y = 10
+
+        tk.Label(tab_pipe, text='TX-File Check Timer (sek/sec):').place(x=_x, y=_y)
+        self.loop_timer_var = tk.StringVar(tab_pipe)
+        # self.loop_timer_var.set(self.pipe.parm_tx_file_check_timer)
+        self.loop_timer = tk.Spinbox(tab_pipe,
+                                     from_=5,
+                                     to=360,
+                                     increment=5,
+                                     width=3,
+                                     textvariable=self.loop_timer_var,
+                                     # command=self.set_max_frame,
+                                     # state='disabled'
+                                     )
+        self.loop_timer.place(x=_x + 270, y=_y)
+        #################
+        # TX FILE
+        _x = 10
+        _y = 60
+        tk.Label(tab_pipe, text=f"{STR_TABLE['tx_file'][self.lang]}:").place(x=_x, y=_y)
+        self.tx_filename_var = tk.StringVar(tab_pipe)
+        # self.tx_filename_var.set(self.pipe.tx_filename)
+        self.tx_filename = tk.Entry(tab_pipe, textvariable=self.tx_filename_var, width=50)
+        # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
+        self.tx_filename.place(x=_x + 140, y=_y)
+        tk.Button(tab_pipe,
+                  text=f"{STR_TABLE['file_1'][self.lang]}",
+                  command=lambda: self.select_files(tx=True)
+                  ).place(x=_x + 710, y=_y - 2)
+        #################
+        # RX FILE
+        _x = 10
+        _y = 100
+        tk.Label(tab_pipe, text=f"{STR_TABLE['rx_file'][self.lang]}:").place(x=_x, y=_y)
+        self.rx_filename_var = tk.StringVar(tab_pipe)
+        # self.rx_filename_var.set(self.pipe.rx_filename)
+        self.rx_filename = tk.Entry(tab_pipe, textvariable=self.rx_filename_var, width=50)
+        # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
+        self.rx_filename.place(x=_x + 140, y=_y)
+        tk.Button(tab_pipe,
+                  text=f"{STR_TABLE['file_1'][self.lang]}",
+                  command=lambda: self.select_files(tx=False)
+                  ).place(x=_x + 710, y=_y - 2)
+
+
+        self.textTab.add(tab_ctext, text=STR_TABLE['c_text'][self.lang])
+        self.textTab.add(tab_byetext, text=STR_TABLE['q_text'][self.lang])
+        self.textTab.add(tab_infotext, text=STR_TABLE['i_text'][self.lang])
+        self.textTab.add(tab_loinfotext, text=STR_TABLE['li_text'][self.lang])
+        self.textTab.add(tab_akttext, text=STR_TABLE['news_text'][self.lang])
+        self.textTab.add(tab_pipe, text='Pipe')
 
         self.update_vars_fm_cfg()
+
+    def select_files(self, tx=True):
+        # self.main_cl.attributes("-topmost", False)
+        # self.root.lower
+        filetypes = (
+            ('text files', '*.txt'),
+            ('All files', '*.*')
+        )
+
+        filenames = fd.askopenfilenames(
+            title='Open files',
+            initialdir='data/',
+            filetypes=filetypes)
+
+        if filenames:
+            if tx:
+                self.tx_filename_var.set(filenames[0])
+            else:
+                self.rx_filename_var.set(filenames[0])
 
     def update_vars_fm_cfg(self):
         # CALL
@@ -277,6 +345,20 @@ class StatSetTab:
         # LOC
         self.loc.delete(0, tk.END)
         self.loc.insert(tk.END, self.station_setting.stat_parm_LOC)
+        if self.station_setting.stat_parm_pipe is None:
+            self.loop_timer.configure(state='disabled')
+            self.tx_filename.configure(state='disabled')
+            self.rx_filename.configure(state='disabled')
+            self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)
+        else:
+            self.cli_select_var.set('PIPE')  # default value
+            self.c_text_ent.configure(state='disabled')
+            self.bye_text_ent.configure(state='disabled')
+            self.info_text_ent.configure(state='disabled')
+            self.long_info_text_ent.configure(state='disabled')
+            self.akt_info_text_ent.configure(state='disabled')
+            self.textTab.select(5)
+
 
     def set_vars_to_cfg(self):
         # CALL
@@ -286,10 +368,13 @@ class StatSetTab:
         self.station_setting.stat_parm_Call = call
         # CLI
         cli_key = self.cli_select_var.get()
-        if cli_key not in ['Pipe']:
+        if cli_key not in ['PIPE']:
             self.station_setting.stat_parm_cli = self.cli_opt[cli_key]
         else:
             self.station_setting.stat_parm_cli = NoneCLI
+            new_pipe = self.cli_opt[cli_key]
+            new_pipe.tx_filename = self.tx_filename_var.get()
+            new_pipe.rx_filename = self.rx_filename_var.get()
             self.station_setting.stat_parm_pipe = self.cli_opt[cli_key]
 
         # MaxPac

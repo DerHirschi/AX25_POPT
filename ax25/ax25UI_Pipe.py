@@ -6,6 +6,9 @@ from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
 
 class AX25Pipe(object):
+    tx_filename = ''
+    rx_filename = ''
+
     def __init__(self,
                  port_id: int = -1,
                  own_call: str = 'NOCALL',
@@ -35,8 +38,10 @@ class AX25Pipe(object):
         self.max_pac_timer = time.time()
         self.tx_file_check_timer = time.time()
         self.parm_tx_file_check_timer = 10
-        self.tx_filename = ''
-        self.rx_filename = ''
+        setattr(self, 'tx_filename', self.tx_filename)
+        setattr(self, 'rx_filename', self.rx_filename)
+        # self.tx_filename = setattr(self,)   self.tx_filename
+        # self.rx_filename = self.rx_filename
         self.e_count = 0
         """ Buffers buffers buffers. We have Ram, so we need more buffer. """
         self.tx_data = b''

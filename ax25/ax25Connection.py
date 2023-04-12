@@ -350,8 +350,10 @@ class AX25Conn(object):
 
     def set_pipe(self, pipe):
         self.pipe = pipe
-        self.parm_PacLen = int(self.pipe.parm_pac_len)
-        self.parm_MaxFrame = int(self.pipe.parm_max_pac)
+        if self.pipe.parm_pac_len:
+            self.parm_PacLen = int(self.pipe.parm_pac_len)
+        if self.pipe.parm_max_pac:
+            self.parm_MaxFrame = int(self.pipe.parm_max_pac)
 
     def ft_cron(self):
         if self.ft_tx_activ is not None:
