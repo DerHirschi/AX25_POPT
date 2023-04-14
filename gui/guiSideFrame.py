@@ -241,7 +241,7 @@ class SideTabbedFrame:
                     text="Sound",
                     variable=self.sound_on,
                     ).place(x=10, y=10)
-        self.sound_on.set(True)
+        # self.sound_on.set(True)
         # Global Sprech
         self.sprech_on = tk.BooleanVar()
         sprech_btn = Checkbutton(self.tab4_settings,
