@@ -6,6 +6,8 @@ from tkinter import ttk, Menu
 import logging
 import threading
 import sys
+
+import gtts
 from gtts import gTTS
 # from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
@@ -621,10 +623,13 @@ class TkMainWin:
                         7: 'it',
                         8: 'zh',
                     }[self.language]
-                    tts = gTTS(text=text,
-                               lang=language,
-                               slow=False)
-                    tts.save('data/speech.mp3')
+                    try:
+                        tts = gTTS(text=text,
+                                   lang=language,
+                                   slow=False)
+                        tts.save('data/speech.mp3')
+                    except gtts.gTTSError:
+                        return False
                     return self.pl_sound('data/speech.mp3')
 
     def pl_sound(self, snd_file: str, wait=True):
