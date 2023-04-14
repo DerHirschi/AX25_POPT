@@ -43,7 +43,7 @@ class StatSetTab:
         }
         opt = list(self.cli_opt.keys())
 
-        cli = tk.OptionMenu(self.own_tab, self.cli_select_var, *opt)
+        cli = tk.OptionMenu(self.own_tab, self.cli_select_var, *opt, command=self.chk_CLI)
         cli.configure(width=8, height=1)
         cli.place(x=cli_x + 55, y=height - cli_y - 5)
 
@@ -268,6 +268,36 @@ class StatSetTab:
         self.textTab.add(tab_pipe, text='Pipe')
 
         self.update_vars_fm_cfg()
+
+    def chk_CLI(self, event=None):
+        if self.cli_select_var.get() != 'PIPE':
+            self.loop_timer.configure(state='disabled')
+            self.tx_filename.configure(state='disabled')
+            self.rx_filename.configure(state='disabled')
+            # self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)
+            self.c_text_ent.configure(state='normal')
+            self.bye_text_ent.configure(state='normal')
+            self.info_text_ent.configure(state='normal')
+            self.long_info_text_ent.configure(state='normal')
+            self.akt_info_text_ent.configure(state='normal')
+            self.textTab.select(0)
+        else:
+            # self.cli_select_var.set('PIPE')  # default value
+            self.c_text_ent.configure(state='disabled')
+            self.bye_text_ent.configure(state='disabled')
+            self.info_text_ent.configure(state='disabled')
+            self.long_info_text_ent.configure(state='disabled')
+            self.akt_info_text_ent.configure(state='disabled')
+
+            self.loop_timer.configure(state='normal')
+            self.tx_filename.configure(state='normal')
+            self.rx_filename.configure(state='normal')
+
+            #pipe = self.station_setting.stat_parm_pipe
+            #self.tx_filename_var.set(pipe.tx_filename)
+            #self.rx_filename_var.set(pipe.rx_filename)
+            #self.loop_timer_var.set(str(pipe.parm_tx_file_check_timer))
+            self.textTab.select(5)
 
     def select_files(self, tx=True):
         # self.main_cl.attributes("-topmost", False)

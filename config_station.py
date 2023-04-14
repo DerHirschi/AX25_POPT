@@ -3,7 +3,7 @@ import os
 from cli.cli import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 
-VER = '2.75.4dev'
+VER = '2.75.5dev'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -256,17 +256,18 @@ class PortConfigInit(DefaultPort):
                 ############
                 # Stations
                 for call in self.parm_StationCalls:
-                    new_stat_cfg = loaded_stat[call]
-                    """ Check for New Vars to hold cfg_files compatible """
-                    """ TODO: Need to find a better way.. The whole cfg Save is Bullshit """
-                    """ Just need to save Parameter, not the whole class """
-                    if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
-                        new_stat_cfg.stat_parm_pipe = None
-                    """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
-                    self.parm_Stations.append(new_stat_cfg)
-                    # Stupid Digi
-                    if new_stat_cfg.stat_parm_is_StupidDigi:
-                        self.parm_StupidDigi_calls.append(call)
+                    if call in loaded_stat.keys():
+                        new_stat_cfg = loaded_stat[call]
+                        """ Check for New Vars to hold cfg_files compatible """
+                        """ TODO: Need to find a better way.. The whole cfg Save is Bullshit """
+                        """ Just need to save Parameter, not the whole class """
+                        if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
+                            new_stat_cfg.stat_parm_pipe = None
+                        """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
+                        self.parm_Stations.append(new_stat_cfg)
+                        # Stupid Digi
+                        if new_stat_cfg.stat_parm_is_StupidDigi:
+                            self.parm_StupidDigi_calls.append(call)
                 if self.parm_PortTyp == 'AXIP':
                     self.parm_full_duplex = True
                 else:
