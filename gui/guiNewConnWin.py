@@ -236,7 +236,7 @@ class NewConnWin:
         if call_obj.call:
 
             ax_frame = ax25.ax25dec_enc.AX25Frame()
-            ax_frame.from_call.call = self.own_call_var.get()
+            ax_frame.from_call.call_str = self.own_call_var.get()
             ax_frame.to_call.call = call_obj.call
             ax_frame.to_call.ssid = call_obj.ssid
             ax_frame.via_calls = call_obj.via
