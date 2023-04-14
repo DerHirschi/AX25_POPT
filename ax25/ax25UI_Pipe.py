@@ -108,6 +108,9 @@ class AX25Pipe(object):
         self.ax25_frame.encode()
         self.uid = self.ax25_frame.addr_uid
         self.add_str = ' '.join(reverse_uid(self.uid).split(':')[1:])
+
+        self.rx_data += self.ax25_frame.to_call.call_str.encode() + b' ' + self.uid.encode() + b'\r'  # Maybe optional
+        self.save_rx_buff_to_file()
         return True
 
     def check_parm_max_pac_timer(self):

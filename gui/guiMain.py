@@ -217,6 +217,7 @@ class TkMainWin:
                                   width=8,
                                   command=self.open_new_conn_win)
         self.conn_btn.place(x=5, y=10)
+
         self.mh_btn = tk.Button(self.side_btn_frame_top,
                                 text="MH",
                                 # bg="yellow",
@@ -224,22 +225,25 @@ class TkMainWin:
                                 command=self.MH_win)
 
         self.mh_btn.place(x=5, y=45)
+        # self.mh_btn.place(x=110, y=10)
         self.mh_btn_def_clr = self.mh_btn.cget('bg')
         self.mon_btn = tk.Button(self.side_btn_frame_top,
                               text="Monitor",
                               bg="yellow", width=8, command=lambda: self.switch_channel(0))
-        self.mon_btn.place(x=110, y=45)
+        # self.mon_btn.place(x=110, y=45)
+        self.mon_btn.place(x=110, y=10)
 
         _btn = tk.Button(self.side_btn_frame_top,
                          text="Port-Stat",
                          width=8,
                          command=self.open_port_stat_win)
-        _btn.place(x=5, y=80)
+        # _btn.place(x=5, y=80)
+        _btn.place(x=110, y=45)
 
         _btn = tk.Button(self.side_btn_frame_top,
                                  text="Kaffèmaschine",
                                  bg="HotPink2", width=12, command=self.kaffee)
-        _btn.place(x=5, y=115)
+        _btn.place(x=5, y=80)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
