@@ -629,6 +629,8 @@ class TkMainWin:
                                    slow=False)
                         tts.save('data/speech.mp3')
                     except gtts.gTTSError:
+                        self.setting_sprech = False
+                        self.tabbed_sideFrame.sprech_on.set(False)
                         return False
                     return self.pl_sound('data/speech.mp3')
 
