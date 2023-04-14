@@ -357,8 +357,12 @@ class StatSetTab:
             self.info_text_ent.configure(state='disabled')
             self.long_info_text_ent.configure(state='disabled')
             self.akt_info_text_ent.configure(state='disabled')
-            self.textTab.select(5)
 
+            pipe = self.station_setting.stat_parm_pipe
+            self.tx_filename_var.set(pipe.tx_filename)
+            self.rx_filename_var.set(pipe.rx_filename)
+            self.loop_timer_var.set(str(pipe.parm_tx_file_check_timer))
+            self.textTab.select(5)
 
     def set_vars_to_cfg(self):
         # CALL
@@ -375,6 +379,7 @@ class StatSetTab:
             new_pipe = self.cli_opt[cli_key]
             new_pipe.tx_filename = self.tx_filename_var.get()
             new_pipe.rx_filename = self.rx_filename_var.get()
+            new_pipe.parm_tx_file_check_timer = int(self.loop_timer_var.get())
             self.station_setting.stat_parm_pipe = self.cli_opt[cli_key]
 
         # MaxPac

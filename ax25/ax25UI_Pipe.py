@@ -8,6 +8,7 @@ from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 class AX25Pipe(object):
     tx_filename = ''
     rx_filename = ''
+    parm_tx_file_check_timer = 10
 
     def __init__(self,
                  port_id: int = -1,
@@ -37,9 +38,10 @@ class AX25Pipe(object):
         self.parm_max_pac_timer = 30
         self.max_pac_timer = time.time()
         self.tx_file_check_timer = time.time()
-        self.parm_tx_file_check_timer = 10
-        setattr(self, 'tx_filename', self.tx_filename)
-        setattr(self, 'rx_filename', self.rx_filename)
+        # self.parm_tx_file_check_timer = 10
+        #setattr(self, 'tx_filename', self.tx_filename)
+        #setattr(self, 'rx_filename', self.rx_filename)
+        #setattr(self, 'parm_tx_file_check_timer', self.parm_tx_file_check_timer)
         # self.tx_filename = setattr(self,)   self.tx_filename
         # self.rx_filename = self.rx_filename
         self.e_count = 0

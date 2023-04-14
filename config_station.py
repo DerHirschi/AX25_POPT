@@ -1,8 +1,9 @@
 import pickle
 import os
 from cli.cli import DefaultCLI, NoneCLI
+from ax25.ax25UI_Pipe import AX25Pipe
 
-VER = '2.75.3dev'
+VER = '2.75.4dev'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -44,6 +45,11 @@ def get_all_stat_cfg():
                 stat = DefaultStation()
                 for att in list(temp.keys()):
                     setattr(stat, att, temp[att])
+                if stat.stat_parm_pipe is not None:
+                    stat.stat_parm_pipe = AX25Pipe
+                    stat.stat_parm_pipe.tx_filename = stat.stat_parm_pipe_tx
+                    stat.stat_parm_pipe.rx_filename = stat.stat_parm_pipe_rx
+                    stat.stat_parm_pipe.parm_tx_file_check_timer = stat.stat_parm_pipe_loop_timer
                 ################################
                 # Gather Text Files (C-Text ...)
                 for att in CFG_txt_save.keys():
@@ -53,6 +59,7 @@ def get_all_stat_cfg():
                     val = load_fm_file(f_n)
                     if val:
                         setattr(stat, att, val)
+
                 ret[call] = stat
     return ret
 
@@ -116,6 +123,9 @@ class DefaultStation(object):
     # Parameter for CLI
     stat_parm_cli: DefaultCLI = NoneCLI
     stat_parm_pipe = None
+    stat_parm_pipe_tx = ''
+    stat_parm_pipe_rx = ''
+    stat_parm_pipe_loop_timer = 10
     # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
     stat_parm_cli_ctext: str = ''
     stat_parm_cli_itext: str = ''
@@ -295,6 +305,12 @@ def save_station_to_file(conf: DefaultStation):
                     save_to_file(f_n, getattr(conf, att))
                 else:
                     save_station[att] = getattr(conf, att)
-                # print("Save Stat Param {} > {} - {}".format(stat.stat_parm_Call, att, getattr(stat, att)))
+        if conf.stat_parm_pipe is not None:
+            # save_station.stat_parm_pipe = True
+            save_station['stat_parm_pipe_tx'] = conf.stat_parm_pipe.tx_filename
+            save_station['stat_parm_pipe_rx'] = conf.stat_parm_pipe.rx_filename
+            save_station['stat_parm_pipe_loop_timer'] = conf.stat_parm_pipe.parm_tx_file_check_timer
+            save_station['stat_parm_pipe'] = True
+
         save_to_file(file, save_station)
 
