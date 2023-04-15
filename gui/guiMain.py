@@ -46,7 +46,7 @@ elif is_windows():
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     filename='error.log',
-    level=logging.WARNING
+    level=logging.DEBUG
 )
 logger = logging.getLogger(__name__)
 
@@ -800,6 +800,17 @@ class TkMainWin:
 
     def update_monitor(self, var: str, conf, tx=False):
         """ Called from AX25Conn """
+        """ 
+        Fix for:
+        _tkinter.TclError: character U+1f449 is above the range (U+0000-U+FFFF) allowed by Tcl
+        Source: https://itecnote.com/tecnote/python-tkinter-tclerror-character-u1f449-is-above-the-range-u0000-uffff-allowed-by-tcl/
+        """
+        char_list = [var[j] for j in range(len(var)) if ord(var[j]) in range(65536)]
+        var = ''
+        for j in char_list:
+            var = var + j
+        """ END FIX """
+
         ind = self.mon_txt.index(tk.INSERT)
         tr = False
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
