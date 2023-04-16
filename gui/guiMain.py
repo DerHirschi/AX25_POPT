@@ -15,6 +15,7 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import config_station
+from fnc.str_fnc import tk_filter_bad_chars
 from gui.guiPipeToolSettings import PipeToolSettings
 from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
@@ -765,23 +766,15 @@ class TkMainWin:
                     .replace('\r\n', '\n') \
                     .replace('\n\r', '\n')
                 conn.rx_buf_rawData = b''
-                """ 
-                Fix for:
-                _tkinter.TclError: character U+1f449 is above the range (U+0000-U+FFFF) allowed by Tcl
-                Source: https://itecnote.com/tecnote/python-tkinter-tclerror-character-u1f449-is-above-the-range-u0000-uffff-allowed-by-tcl/
-                """
-                char_list = [out[j] for j in range(len(out)) if ord(out[j]) in range(65536)]
-                out = ''
-                for j in char_list:
-                    out = out + j
-                """ END FIX """
+                out = tk_filter_bad_chars(out)
                 # Write RX Date to Window/Channel Buffer
                 self.win_buf[k].output_win += out
                 if self.win_buf[k].t2speech:
                     if k == self.channel_index:
                         self.win_buf[k].t2speech_buf += out.replace('\n', '')
                     else:
-                        self.win_buf[k].t2speech_buf += 'Kanal {} . {} . {}'.format(
+                        self.win_buf[k].t2speech_buf += '{} {} . {} . {}'.format(
+                            STR_TABLE['channel'][self.language],
                             k,
                             conn.to_call_str,
                             out.replace('\n', '')
@@ -814,17 +807,7 @@ class TkMainWin:
 
     def update_monitor(self, var: str, conf, tx=False):
         """ Called from AX25Conn """
-        """ 
-        Fix for:
-        _tkinter.TclError: character U+1f449 is above the range (U+0000-U+FFFF) allowed by Tcl
-        Source: https://itecnote.com/tecnote/python-tkinter-tclerror-character-u1f449-is-above-the-range-u0000-uffff-allowed-by-tcl/
-        """
-        char_list = [var[j] for j in range(len(var)) if ord(var[j]) in range(65536)]
-        var = ''
-        for j in char_list:
-            var = var + j
-        """ END FIX """
-
+        var = tk_filter_bad_chars(var)
         ind = self.mon_txt.index(tk.INSERT)
         tr = False
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
