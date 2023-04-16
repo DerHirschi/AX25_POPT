@@ -42,11 +42,15 @@ if is_linux():
 elif is_windows():
     from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
 
+if "dev" in VER:
+    log_level = logging.DEBUG
+else:
+    log_level = logging.WARNING
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     filename='error.log',
-    level=logging.DEBUG
+    level=log_level
 )
 logger = logging.getLogger(__name__)
 
@@ -761,6 +765,16 @@ class TkMainWin:
                     .replace('\r\n', '\n') \
                     .replace('\n\r', '\n')
                 conn.rx_buf_rawData = b''
+                """ 
+                Fix for:
+                _tkinter.TclError: character U+1f449 is above the range (U+0000-U+FFFF) allowed by Tcl
+                Source: https://itecnote.com/tecnote/python-tkinter-tclerror-character-u1f449-is-above-the-range-u0000-uffff-allowed-by-tcl/
+                """
+                char_list = [out[j] for j in range(len(out)) if ord(out[j]) in range(65536)]
+                out = ''
+                for j in char_list:
+                    out = out + j
+                """ END FIX """
                 # Write RX Date to Window/Channel Buffer
                 self.win_buf[k].output_win += out
                 if self.win_buf[k].t2speech:
