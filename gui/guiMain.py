@@ -3,13 +3,11 @@ import random
 import time
 import tkinter as tk
 from tkinter import ttk, Menu
-import logging
 import threading
 import sys
 
 import gtts
 from gtts import gTTS
-# from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg)
 import matplotlib.pyplot as plt
@@ -33,7 +31,6 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from config_station import VER
 from gui.vars import ALL_COLOURS
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows
@@ -43,17 +40,6 @@ if is_linux():
 elif is_windows():
     from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
 
-if "dev" in VER:
-    log_level = logging.DEBUG
-else:
-    log_level = logging.WARNING
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    filename='error.log',
-    level=log_level
-)
-logger = logging.getLogger(__name__)
 
 TEXT_SIZE_STATUS = 11
 FONT = "Courier"
@@ -111,7 +97,7 @@ class TkMainWin:
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
-        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
+        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(config_station.VER))
         self.main_win.geometry("1400x850")
         # self.main_win.iconbitmap("favicon.ico")
         self.main_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
@@ -312,10 +298,7 @@ class TkMainWin:
         pass
 
     def destroy_win(self):
-        # self.sprech('Hau rein.')
         self.ax25_port_handler.close_all()
-        self.main_win.quit()
-        # self.main_class.settings_win = None
 
     def monitor_start_msg(self):
         speech = [
@@ -349,11 +332,11 @@ class TkMainWin:
               '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
               '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r' \
-              'Version: {}\r'.format(VER)
+              'Version: {}\r'.format(config_station.VER)
         tmp = ban.split('\r')
         for el in tmp:
             self.msg_to_monitor(el)
-        self.msg_to_monitor('Python Other Packet Terminal ' + VER)
+        self.msg_to_monitor('Python Other Packet Terminal ' + config_station.VER)
         for stat in self.ax25_port_handler.ax25_stations_settings.keys():
             self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in self.ax25_port_handler.ax25_ports.keys():
@@ -418,7 +401,7 @@ class TkMainWin:
         return self.win_buf[self.channel_index]
 
     def set_var_to_all_ch_param(self):
-        for i in range(10):
+        for i in range(10): # TODO MAx CH
             if not self.win_buf[i + 1].t2speech:
                 self.win_buf[i + 1].t2speech_buf = ''
 
@@ -836,7 +819,6 @@ class TkMainWin:
         # self.mon_txt.vbar.s
         if tr or self.tabbed_sideFrame.mon_scroll_var.get():
             self.mon_txt.see(tk.END)
-        # self.update_side_mh()
 
     def msg_to_monitor(self, var: str):
         """ Called from AX25Conn """

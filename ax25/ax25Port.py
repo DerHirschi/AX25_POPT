@@ -28,7 +28,7 @@ class AX25Port(threading.Thread):
         super(AX25Port, self).__init__()
         self.ende = False
         self.device_is_running = False
-        self.loop_is_running = True
+        self.loop_is_running = port_handler.is_running
         """ self.ax25_port_handler will be set in AX25PortInit """
         # self.ax25_ports: {int: AX25Port}    # TODO Check if needed
         ############
@@ -467,6 +467,8 @@ class AX25Port(threading.Thread):
         while self.loop_is_running and self.device_is_running:
             self.tasks()
             time.sleep(0.1)
+        self.close()
+        print("Port END")
         self.ende = True
 
     def tasks(self):

@@ -1,44 +1,67 @@
 import sys
-import time
+import datetime
 import os
 import pickle
+from fnc.ax25_fnc import call_tuple_fm_call_str
 
-axip_clientList = 'data/axip_clientList.popt'
-client_db = 'data/clientDB.popt'
+# axip_clientList = 'data/axip_userList.popt'
+client_db = 'data/UserDB.popt'
 
-
+"""
 def get_ssid(inp):
     if inp.find('-') != -1:
-        return [inp[:inp.find('-')].upper(), int(inp[inp.find('-') + 1:].upper())]
+        return inp[:inp.find('-')].upper(), int(inp[inp.find('-') + 1:].upper())
     else:
-        return [inp, 0]
+        return inp, 0
+"""
 
 
 class Client(object):
     def __init__(self, call):
         self.call_str = call
-        self.call = get_ssid(call)[0]
-        self.ssid = get_ssid(call)[1]
+        tmp_call = call_tuple_fm_call_str(call)
+        self.call = tmp_call[0]
+        self.ssid = tmp_call[1]
+        self.typ = ''
+
         self.name = ''
+        self.land = ''
+        self.zip = ''
         self.qth = ''
         self.loc = ''
+        self.language = ''
+        self.prmail = ''
+        self.email = ''
+        self.http = ''
+        self.info = ''
+
+        self.node = []
+        self.bbs = []
+        self.other = []
+
+        self.via_NODE_HF = ''
+        self.via_NODE_AXIP = ''
         self.axip_addr = ()
-        self.last_axip_addr = ()
+        self.qrg1 = ''  # 27.235FM-1200-AD/AI/FX
+        self.qrg2 = ''
+        self.qrg3 = ''
+        self.qrg4 = ''
+        self.qrg5 = ''
+        self.software = ''
+
+        self.last_edit_by = ''
+        self.last_edit = datetime.datetime.now()
         self.is_new = True
-        self.copy_fm = ''
-        self.last_seen = time.time()
 
         self.pac_len = 0
         self.max_pac = 0
-        ########
-        # self.filter
-        # self.mode
-        # self.aprs_mode
-        # self.language
+        self.info_text = ''
+        self.routes = []
 
 
-class ClientDB:
+class UserDB:
     def __init__(self):
+        print("User-DB INIT")
         self.db = {}
         try:
             with open(client_db, 'rb') as inp:
@@ -51,6 +74,7 @@ class ClientDB:
             default_client = Client('ALL')
             default_client.is_new = False
             default_client.name = 'Beacon'
+            default_client.typ = 'Beacon'
             self.db = {
                 'ALL': default_client
             }
@@ -64,13 +88,14 @@ class ClientDB:
         return self.db[call]
 
     def save_data(self):
+        print('Save Client DB')
         try:
             with open(client_db, 'wb') as outp:
                 pickle.dump(self.db, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError as e:
             print("ERROR SAVE ClientDB: " + str(e))
 
-
+"""
 class AXIPClientDB(object):
     def __init__(self, port):
         self.port = port
@@ -108,3 +133,4 @@ class AXIPClientDB(object):
         except FileNotFoundError as e:
             print("ERROR SAVE AXIPClients: " + str(e))
 
+"""

@@ -1,11 +1,13 @@
 import config_station
 from ax25.ax25Port import *
+from UserDB.UserDB import UserDB
+from ax25.ax25Statistics import MH
 from config_station import *
 from gui.guiRxEchoSettings import RxEchoVars
 
 
 class AX25PortHandler(object):
-    def __init__(self, glb_MH):
+    def __init__(self):
         logger.info("Starte PoPT ...")
         config_station.init_dir_struct()
         self.is_running = True
@@ -17,12 +19,11 @@ class AX25PortHandler(object):
         }
         ###########################
         # VArs for gathering Stuff
-        # self.all_connections: {int: AX25Conn} = {}
-        self.mh = glb_MH
-        # self.client_db = cli.ClientDB.ClientDB()
+        self.mh = MH()
+        self.client_db = UserDB()
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
-        self.multicast_ip_s = []       # [axip-addresses('ip', port)]
+        self.multicast_ip_s = []        # [axip-addresses('ip', port)]
         self.all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.rx_echo: {int:  RxEchoVars} = {}
@@ -37,7 +38,7 @@ class AX25PortHandler(object):
 
     def __del__(self):
         self.close_all_ports()
-        logger.info("Ende PoPT Ver.: {}".format(VER))
+        # logger.info("Ende PoPT Ver.: {}".format(VER))
 
     #####################
     # Setting/Parameter Updates
@@ -59,13 +60,26 @@ class AX25PortHandler(object):
         return False
 
     def close_all(self):
+        print("close ALL")
+        # self.is_running = False
         for k in list(self.all_connections.keys()):
             del self.all_connections[k]
-        if self.gui is not None:
-            self.gui.ch_btn_status_update()
-        self.gui = None
-        self.set_gui()
+
+            # self.gui = None
+            # self.set_gui()
         self.close_all_ports()
+
+        if self.gui is not None:
+            tmp = self.gui
+            self.gui = None
+            self.set_gui()
+            # self.gui.ch_btn_status_update()
+            # self.gui.main_win.quit()
+            # tmp.main_win.destroy()
+            tmp.main_win.quit()
+            tmp.main_win.destroy()
+        self.mh.save_mh_data()
+        self.client_db.save_data()
 
     def close_all_ports(self):
         """
@@ -73,7 +87,7 @@ class AX25PortHandler(object):
             self.mh_list.save_mh_data()
             del self.mh_list
         """
-        logger.info('Info: Versuche alle Ports zu schließen.')
+        # logger.info('Info: Versuche alle Ports zu schließen.')
         if self.is_running:
             self.is_running = False
 

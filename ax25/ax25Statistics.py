@@ -625,6 +625,7 @@ class MH(object):
         return out
 
     def save_mh_data(self):
+        print('Save MH')
         try:
             with open(mh_data_file, 'wb') as outp:
                 # print(self.calls.keys())
