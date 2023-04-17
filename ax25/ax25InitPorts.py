@@ -60,22 +60,13 @@ class AX25PortHandler(object):
         return False
 
     def close_all(self):
-        print("close ALL")
-        # self.is_running = False
         for k in list(self.all_connections.keys()):
             del self.all_connections[k]
-
-            # self.gui = None
-            # self.set_gui()
         self.close_all_ports()
-
         if self.gui is not None:
             tmp = self.gui
             self.gui = None
             self.set_gui()
-            # self.gui.ch_btn_status_update()
-            # self.gui.main_win.quit()
-            # tmp.main_win.destroy()
             tmp.main_win.quit()
             tmp.main_win.destroy()
         self.mh.save_mh_data()
