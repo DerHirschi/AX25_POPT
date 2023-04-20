@@ -1,9 +1,14 @@
 import pickle
+import logging
 
 import ax25.ax25Connection
 import config_station
-from ax25.ax25dec_enc import validate_call
+from string_tab import STR_TABLE
+from fnc.ax25_fnc import validate_call
 from ax25.ax25Error import AX25EncodingERROR
+from UserDB.UserDB import Client
+
+logger = logging.getLogger(__name__)
 
 
 class DefaultCLI(object):
@@ -13,7 +18,8 @@ class DefaultCLI(object):
     prompt = 'TEST-STATION>'
     prefix = '//'
 
-    def __init__(self, connection, stat_cfg=None):
+    def __init__(self, connection):
+        stat_cfg = connection.stat_cfg
         if stat_cfg is not None:
             # Override with optional Station Config Param
             if hasattr(stat_cfg, 'stat_parm_cli_ctext'):
@@ -32,7 +38,7 @@ class DefaultCLI(object):
             self.stat_cfg_index_call = self.stat_cfg.stat_parm_Call
 
         self.connection: ax25.ax25Connection.AX25Conn = connection
-        self.port_handler = self.connection.own_port.port_handler
+        self.port_handler = self.connection.port_handler
         self.own_port = self.connection.own_port
         # self.channel_index = self.connection.ch_index
         if self.connection.gui is None:
@@ -40,11 +46,13 @@ class DefaultCLI(object):
         else:
             self.gui = self.connection.gui
         # self.connection = connection
-        self.my_call = connection.ax25_out_frame.from_call.call
-        self.my_call_str = connection.ax25_out_frame.from_call.call_str
-        self.to_call = connection.ax25_out_frame.to_call.call
-        self.to_call_str = connection.ax25_out_frame.to_call.call_str
-        self.mh_list = connection.mh
+        # self.my_call = self.connection.ax25_out_frame.from_call.call
+        self.my_call_str = self.connection.my_call_str
+        # self.to_call = self.connection.ax25_out_frame.to_call.call
+        self.to_call_str = self.connection.to_call_str
+        self.mh_list = self.connection.mh
+        self.user_db = self.connection.user_db
+        self.user_db_ent: Client = self.user_db.db[self.to_call_str]
         self.state_index = 0
         self.crone_state_index = 0
         self.input = b''
@@ -61,7 +69,7 @@ class DefaultCLI(object):
         # Standard Commands ( GLOBAL )
         self.cmd_exec = {
             b'Q': (self.cmd_q, 'Quit'),
-            b'C': (self.cmd_connect, 'Connect ! funktioniert noch nicht !'),
+            b'C': (self.cmd_connect, 'Connect'),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
             b'I': (self.cmd_i, 'Info'),
             b'LI': (self.cmd_li, 'Lange Info'),
@@ -71,6 +79,8 @@ class DefaultCLI(object):
             b'V': (self.cmd_ver, 'Version'),
             b'VER': (self.cmd_ver, 'Version'),
             b'H': (self.cmd_help, 'Hilfe'),
+            b'N': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
+            b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
             b'?': (self.cmd_help, 'Hilfe'),
         }
 
@@ -90,19 +100,21 @@ class DefaultCLI(object):
         self.cmd_exec_ext = {}
         self.cron_state_exec_ext = {}
         self.state_exec_ext = {}
-        self.init()
+        # self.init()
         self.cron_state_exec.update(self.cron_state_exec_ext)
         self.cmd_exec.update(self.cmd_exec_ext)
         self.state_exec.update(self.state_exec_ext)
 
+    """
     def init(self):
         self.cmd_exec_ext = {}
         self.cron_state_exec_ext = {}
         self.state_exec_ext = {}
+    """
 
     def build_prompt(self):
         self.prompt = '\r{}<>{}'.format(
-            str(self.my_call).replace('\r', ''),
+            str(self.my_call_str).replace('\r', ''),
             str(self.prompt).replace('\r', ''))
 
     def send_output(self, ret):
@@ -201,7 +213,7 @@ class DefaultCLI(object):
                 ret = self.cmd_exec[self.cmd][0]()
                 self.cmd = b''
             else:
-                ret = 'Dieses Kommando ist dem System nicht bekannt\r'
+                ret = '# Dieses Kommando ist dem System nicht bekannt\r'
         # Message is for User ( Text , Chat )
         elif self.prefix:
             ret = ''
@@ -214,7 +226,7 @@ class DefaultCLI(object):
                 if self.crone_state_index != 100:  # Not Quit
                     ret += self.prompt
             else:
-                ret = 'Dieses Kommando ist dem System nicht bekannt\r'
+                ret = '# Dieses Kommando ist dem System nicht bekannt\r'
                 ret += self.prompt
         self.send_output(ret)
         """
@@ -327,8 +339,50 @@ class DefaultCLI(object):
         else:
             return self.stat_cfg.stat_parm_cli_akttext
 
+    def cmd_user_db_detail(self):
+
+        call_str = self.parameter[0].decode(self.encoding[0], self.encoding[1])
+        call_str = validate_call(call_str)
+
+        if call_str:
+            if call_str in self.user_db.db.keys():
+                header = "\n" \
+                         f"| USER-DB: {call_str}\n" \
+                         "|-------------------\n"
+                ent = self.user_db.db[call_str]
+                ent_ret = ""
+                for att in dir(ent):
+                    if '__' not in att and \
+                            att not in [
+                                'call_str',
+                                'is_new',
+                            ]:
+                        if getattr(ent, att):
+                            ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\n"
+
+                ent_ret += "|-------------------\n\n"
+                return header + ent_ret
+
+        return "\n" \
+               f"{STR_TABLE['cli_no_user_db_ent'][self.connection.cli_language]}" \
+               "\n"
+
+    def cmd_set_name(self):
+        if self.user_db_ent:
+            self.user_db_ent.Name = self.parameter[0]\
+                .decode(self.encoding[0], self.encoding[1]).\
+                replace(' ', '').\
+                replace('\n', '').\
+                replace('\r', '')
+            return "\n" \
+                   f"{STR_TABLE['cli_name_set'][self.connection.cli_language]}: {self.user_db_ent.Name}" \
+                   "\n"
+
+        logger.error("User-DB Error. cmd_set_name NO ENTRY FOUND !")
+        return "\n# USER-DB Error !\n"
+
     def str_cmd_req_name(self):
-        print("REQ NAME")
+        # print("REQ NAME")
         name = self.connection.stat_cfg.stat_parm_Name
         qth = self.connection.stat_cfg.stat_parm_QTH
         loc = self.connection.stat_cfg.stat_parm_LOC
@@ -356,7 +410,7 @@ class DefaultCLI(object):
     def cmd_help(self):
         ret = '\r   < Hilfe >\r'
         for k in self.cmd_exec.keys():
-            if self.cmd_exec[1]:
+            if self.cmd_exec[k][1]:
                 ret += '\r {}{:3} > {}'.format(self.prefix, k.decode('utf-8'), self.cmd_exec[k][1])
         ret += '\r\r\r'
         return ret
@@ -369,7 +423,6 @@ class DefaultCLI(object):
             _ret = self.state_exec[self.state_index]()
             if _ret:
                 self.send_output(_ret)
-
 
             """
             if ret:
@@ -387,14 +440,6 @@ class DefaultCLI(object):
         """ State Crone Tasks """
         ret = self.cron_state_exec[self.crone_state_index]()
         self.send_output(ret)
-        # self.send_output('TEST')
-        # self.send_output(b'TEST bytes')
-        """
-        if ret:
-            if type(ret) == str:
-                ret = ret.encode(self.encoding[0], self.encoding[1])
-            self.connection.tx_buf_rawData += ret
-        """
 
     def s0(self):  # C-Text
         self.build_prompt()
@@ -411,8 +456,11 @@ class DefaultCLI(object):
         inp_lines = self.last_line + self.raw_input
         inp_lines = inp_lines.split(b'\r')
         for li in inp_lines:
+            # for k in list(self.str_cmd_exec.keys()):
+            # if li in k:
             if li in self.str_cmd_exec.keys():
                 self.cmd = li
+                # self.parameter
                 _ret = self.str_cmd_exec[li]()
                 self.cmd = b''
                 self.send_output(_ret)

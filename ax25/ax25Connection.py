@@ -9,7 +9,6 @@ import config_station
 from ax25.ax25dec_enc import AX25Frame
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25FileTransfer import FileTX
-from ax25.ax25UI_Pipe import AX25Pipe
 
 
 def count_modulo(inp: int):
@@ -233,7 +232,12 @@ class AX25Conn(object):
             if stat_call in self.cfg.parm_stat_MaxFrame.keys():
                 if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
                     self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
+        """ User DB Entry """
+        self.user_db = self.port_handler.user_db
+        self.user_db_ent = False
+        self.set_user_db_ent()
         """ Init CLI """
+        self.cli_language = 0
         self.cli = cli.cli.NoneCLI(self)
         if self.stat_cfg.stat_parm_pipe is None:
             self.init_cli()
@@ -265,9 +269,11 @@ class AX25Conn(object):
     # CLI INIT
     def init_cli(self):
         if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
-            self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self, self.port_handler.ax25_stations_settings[self.stat_cfg.stat_parm_Call])
+            self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
+        """
         else:
             self.cli = cli.cli.NoneCLI(self)
+        """
 
     ####################
     # Zustand EXECs
@@ -327,7 +333,18 @@ class AX25Conn(object):
                     self.gui.sprech(speech)
                 self.tx_byte_count = 0
                 self.rx_byte_count = 0
+                self.set_user_db_ent()
                 break   # Maybe it's better to look at thw whole string ?
+
+    def set_user_db_ent(self):
+        self.user_db_ent = self.user_db.get_entry(self.to_call_str)
+        if self.user_db_ent:
+            if self.user_db_ent.Language == -1:
+                if self.gui is None:
+                    self.user_db_ent.Language = 0
+                else:
+                    self.user_db_ent.Language = int(self.gui.language)
+                    self.cli_language = int(self.gui.language)
 
     def exec_cron(self):
         """ DefaultStat.cron() """

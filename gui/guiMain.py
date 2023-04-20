@@ -401,7 +401,7 @@ class TkMainWin:
         return self.win_buf[self.channel_index]
 
     def set_var_to_all_ch_param(self):
-        for i in range(10): # TODO MAx CH
+        for i in range(10):     # TODO Max Channels
             if not self.win_buf[i + 1].t2speech:
                 self.win_buf[i + 1].t2speech_buf = ''
 

@@ -20,7 +20,7 @@ class AX25PortHandler(object):
         ###########################
         # VArs for gathering Stuff
         self.mh = MH()
-        self.client_db = UserDB()
+        self.user_db = UserDB()
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
@@ -33,7 +33,7 @@ class AX25PortHandler(object):
         self.ax25_ports: {int: AX25Port} = {}
         #######################################################
         # Init Ports/Devices with Config and running as Thread
-        for port_id in range(self.max_ports):  # Max Ports
+        for port_id in range(self.max_ports):       # Max Ports
             self.init_port(port_id=port_id)
 
     def __del__(self):
@@ -70,27 +70,17 @@ class AX25PortHandler(object):
             tmp.main_win.quit()
             tmp.main_win.destroy()
         self.mh.save_mh_data()
-        self.client_db.save_data()
+        self.user_db.save_data()
 
     def close_all_ports(self):
-        """
-        if hasattr(self, 'mh_list'):
-            self.mh_list.save_mh_data()
-            del self.mh_list
-        """
-        # logger.info('Info: Versuche alle Ports zu schließen.')
         if self.is_running:
             self.is_running = False
-
             for k in list(self.ax25_ports.keys()):
                 self.close_port(k)
-                # self.ax25_ports[k].loop_is_running = False
-                # self.ax25_ports[k].join()
 
     def close_port(self, port_id: int):
         logger.info('Info: Versuche Port {} zu schließen.'.format(port_id))
         port = self.ax25_ports[port_id]
-        port.connections = {}
         port.close()
         c = 0
         while not port.ende:
@@ -103,7 +93,6 @@ class AX25PortHandler(object):
             if c == 3:
                 break
 
-        # port.join()
         if port_id in self.ax25_ports.keys():
             del self.ax25_ports[port_id]
         if port_id in self.ax25_port_settings.keys():
@@ -124,12 +113,11 @@ class AX25PortHandler(object):
         for port_id in range(self.max_ports):  # Max Ports
             self.init_port(port_id=port_id)
 
-    def reinit_port(self, port_id: int):
+    def reinit_port(self, port_id: int):    # Not used !!!!
         if port_id in self.ax25_ports.keys():
             self.close_port(port_id=port_id)
             time.sleep(1)  # Cooldown for Device
             self.init_port(port_id=port_id)
-
             self.set_gui()
 
     def set_kiss_param_all_ports(self):
@@ -162,12 +150,11 @@ class AX25PortHandler(object):
                     for beacon in be_list:
                         beacon.re_init()
                 self.beacons[port_id] = temp.port_cfg.parm_beacons
-                temp.start()
                 ##########################
                 # Start Port/Device Thread
+                temp.start()
                 ######################################
                 # Gather all Ports in dict: ax25_ports
-                # if self.gui is not None:
                 temp.gui = self.gui
                 self.ax25_ports[port_id] = temp
                 self.ax25_port_settings[port_id] = temp.port_cfg
@@ -185,7 +172,6 @@ class AX25PortHandler(object):
         """ PreInit: Set GUI Var """
         for k in self.ax25_ports.keys():
             self.ax25_ports[k].gui = self.gui
-            # self.ax25_ports[k].set_gui_tr()
 
     def sysmsg_to_gui(self, msg: str = ''):
         if self.gui is not None and self.is_running:
@@ -255,7 +241,7 @@ class AX25PortHandler(object):
     def new_outgoing_connection(self,               # NICE ..
                                 dest_call: str,
                                 own_call: str,
-                                via_calls=None,     # Required for now. TODO Auto lookup in MH
+                                via_calls=None,     # Auto lookup in MH if not exclusive Mode
                                 port_id=-1,         # -1 Auto lookup in MH list
                                 axip_add=('', 0),   # AXIP Adress
                                 exclusive=False,    # True = no lookup in MH list
@@ -294,13 +280,14 @@ class AX25PortHandler(object):
                                                                    via_calls=via_calls,
                                                                    axip_add=axip_add,
                                                                    link_conn=link_conn)
-
+        """
         print('------------- InitPorts ---------------')
         print(f'conn: {connection}')
         print(f'dest_call: {dest_call}')
         print(f'own_call: {own_call}')
         print(f'via_calls: {via_calls}')
         print(f'link_conn: {link_conn}')
+        """
 
         if connection:
             self.insert_conn2all_conn_var(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
@@ -323,8 +310,6 @@ class AX25PortHandler(object):
                     else:
                         if k in self.rx_echo[port].tx_ports.keys():
                             rx_echo_var.tx_buff.append(ax_frame)
-
-            # self.rx_echo[k].buff_input(ax_frame=ax_frame, port_id=k)
 
     ######################
     # Pipe-Tool

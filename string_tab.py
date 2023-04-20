@@ -45,9 +45,9 @@ STR_TABLE = {
     'keybind': ('Tastaturbelegung', 'Keyboard layout', 'Lekker toetsenbordindeling'),
     'about': ('Über', 'About', 'Lekker'),
     'help': ('Hilfe', 'Help', 'Lekker Hulp'),
-    'minutes': ('Minuten', 'Minutes', 'Minuut'),
-    'hours': ('Stunden', 'Hours', 'Uur'),
-    'day': ('Tag', 'Day', 'Dag'),
+    'minutes': ('Minuten', 'Minutes', 'Lekker Minuut'),
+    'hours': ('Stunden', 'Hours', 'Lekker Uur'),
+    'day': ('Tag', 'Day', 'Lekker Dag'),
     'month': ('Monat', 'Month', 'Maand'),
     'occup': ('Auslastung in %', 'Occupancy in %', 'Lekker in %'),
     'call': ('Call', 'Call', 'Lekker Call'),
@@ -59,7 +59,8 @@ STR_TABLE = {
     'news_text': ('News Text', 'News Text', 'Lekker News-Text'),
     'stat_settings': ('Station-Einstellungen', 'Station-Settings', 'Lekker Station-Settings'),
     'new_stat': ('Neue Station', 'New Station', 'Lekker nieuw station'),
-    'suc_save': ('Info: Station Einstellungen erfolgreich gespeichert.', 'Info: Station settings saved successfully.', 'alles Lekker'),
+    'suc_save': ('Info: Station Einstellungen erfolgreich gespeichert.', 'Info: Station settings saved successfully.',
+                 'alles Lekker'),
     'lob1': ('Lob: Das hast du sehr gut gemacht !!', 'Praise: You did very well!!', 'Lekker '),
     'lob2': ('Lob: Das hast du gut gemacht !!', 'Praise: You did well!!', 'Lekker '),
     'hin1': ('Hinweis: Der OK Button funktioniert noch !!', 'Note: The OK button still works !!', 'Lekker '),
@@ -78,6 +79,29 @@ STR_TABLE = {
     'new_beacon': ('Neue Bake', 'New Beacon', 'Lekker Nieuw baken'),
     'last_packet': ('letztes Paket', 'Last Seen', 'Lekker'),
     'scrolling': ('Auto Scrollen', 'Auto scrolling', 'Lekker Auto scrolling'),
-    'multicast_warning': ('Vorsicht bei Nodenanbindungen wie TNN. Verlinkungen mehrerer Noden via Multicast kann zu Problemen führen!', 'Be careful with node connections like TNN. Linking multiple nodes via multicast can lead to problems!', 'Lekker probleem !'),
+    'multicast_warning': (
+        'Vorsicht bei Nodenanbindungen wie TNN. Verlinkungen mehrerer Noden via Multicast kann zu Problemen führen!',
+        'Be careful with node connections like TNN. Linking multiple nodes via multicast can lead to problems!',
+        'Lekker probleem !'
+    ),
 
+    # CLI
+    'cmd_help_user_db': ('Call DB Abfrage',
+                         'Get Call DB entry',
+                         'Ontvang Lekker Call DB-invoer',
+                         ),
+    'cmd_help_set_name': ('Namen eintragen',
+                          'Enter Name',
+                          'Leeker naam ingevuld',
+                          ),
+
+    'cli_no_user_db_ent': ('# Eintag nicht in Benutzer Datenbank vorhanden!',
+                           '# Entry not in user database!',
+                           '# Invoer niet in Lekker gebruikersdatabase!',
+                           ),
+
+    'cli_name_set': ('# Name eingetragen',
+                     '# Username is set',
+                     '# Lekker Naam eingetragen',
+                     ),
 }

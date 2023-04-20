@@ -468,7 +468,6 @@ class AX25Port(threading.Thread):
             self.tasks()
             time.sleep(0.1)
         self.close()
-        print("Port END")
         self.ende = True
 
     def tasks(self):
