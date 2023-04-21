@@ -34,7 +34,10 @@ def call_tuple_fm_call_str(call_str: str):
     call_str = call_str.replace('\r', '').replace('\n', '').replace(' ', '')
     ind = call_str.find('-')
     if ind != -1:
-        return call_str[:ind].upper(), int(call_str[ind + 1:])
+        if call_str[ind + 1:].isdigit():
+            return call_str[:ind].upper(), int(call_str[ind + 1:])
+        else:
+            return call_str.upper(), 0
     else:
         return call_str.upper(), 0
 

@@ -41,6 +41,7 @@ class Client(object):
         self.NODE = []
         self.BBS = []
         self.Other = []
+        self.Sysop_Call = ''
 
         self.via_NODE_HF = ''
         self.via_NODE_AXIP = ''

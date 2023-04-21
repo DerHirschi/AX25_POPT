@@ -275,6 +275,12 @@ class AX25Conn(object):
             self.cli = cli.cli.NoneCLI(self)
         """
 
+    def reinit_cli(self):
+        if self.stat_cfg.stat_parm_pipe is None:
+            if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
+                self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
+                self.cli.change_cli_state(state=1)
+
     ####################
     # Zustand EXECs
     def handle_rx(self, ax25_frame: AX25Frame):
@@ -323,10 +329,10 @@ class AX25Conn(object):
                 _tmp_call = _tmp_call.split(b'\r')[0].split(b'\n')[0]
                 if b':' in _tmp_call:
                     _tmp_call = _tmp_call.split(b':')
-                    self.to_call_str = _tmp_call[1].decode('UTF-8', 'ignore')
-                    self.to_call_alias = _tmp_call[0].decode('UTF-8', 'ignore')
+                    self.to_call_str = _tmp_call[1].decode('UTF-8', 'ignore').replace(' ', '')
+                    self.to_call_alias = _tmp_call[0].decode('UTF-8', 'ignore').replace(' ', '')
                 else:
-                    self.to_call_str = _tmp_call.decode('UTF-8', 'ignore')
+                    self.to_call_str = _tmp_call.decode('UTF-8', 'ignore').replace(' ', '')
                     self.to_call_alias = ''
                 if self.is_gui:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
@@ -334,6 +340,7 @@ class AX25Conn(object):
                 self.tx_byte_count = 0
                 self.rx_byte_count = 0
                 self.set_user_db_ent()
+                self.reinit_cli()
                 break   # Maybe it's better to look at thw whole string ?
 
     def set_user_db_ent(self):

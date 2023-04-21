@@ -80,6 +80,12 @@ class DefaultCLI(object):
             b'VER': (self.cmd_ver, 'Version'),
             b'H': (self.cmd_help, 'Hilfe'),
             b'N': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
+            b'QTH': (self.cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
+            b'LOC': (self.cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
+            b'ZIP': (self.cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self.connection.cli_language]),
+            b'PRMAIL': (self.cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self.connection.cli_language]),
+            b'EMAIL': (self.cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self.connection.cli_language]),
+            b'HTTP': (self.cmd_set_http, STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
             b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
             b'?': (self.cmd_help, 'Hilfe'),
         }
@@ -374,12 +380,97 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
-            return "\n" \
+            return "\r" \
                    f"{STR_TABLE['cli_name_set'][self.connection.cli_language]}: {self.user_db_ent.Name}" \
-                   "\n"
+                   "\r"
 
         logger.error("User-DB Error. cmd_set_name NO ENTRY FOUND !")
-        return "\n# USER-DB Error !\n"
+        return "\r# USER-DB Error !\r"
+
+    def cmd_set_qth(self):
+        if self.user_db_ent:
+            self.user_db_ent.QTH = self.parameter[0]\
+                .decode(self.encoding[0], self.encoding[1]).\
+                replace(' ', '').\
+                replace('\n', '').\
+                replace('\r', '')
+            return "\r" \
+                   f"{STR_TABLE['cli_qth_set'][self.connection.cli_language]}: {self.user_db_ent.QTH}" \
+                   "\r"
+
+        logger.error("User-DB Error. cli_qth_set NO ENTRY FOUND !")
+        return "\r# USER-DB Error !\r"
+
+    def cmd_set_loc(self):
+        if self.user_db_ent:
+            self.user_db_ent.LOC = self.parameter[0]\
+                .decode(self.encoding[0], self.encoding[1]).\
+                replace(' ', '').\
+                replace('\n', '').\
+                replace('\r', '')
+            return "\r" \
+                   f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC}" \
+                   "\r"
+
+        logger.error("User-DB Error. cmd_set_loc NO ENTRY FOUND !")
+        return "\r# USER-DB Error !\r"
+
+    def cmd_set_zip(self):
+        if self.user_db_ent:
+            self.user_db_ent.ZIP = self.parameter[0]\
+                .decode(self.encoding[0], self.encoding[1]).\
+                replace(' ', '').\
+                replace('\n', '').\
+                replace('\r', '')
+            return "\r" \
+                   f"{STR_TABLE['cli_zip_set'][self.connection.cli_language]}: {self.user_db_ent.ZIP}" \
+                   "\r"
+
+        logger.error("User-DB Error. cmd_set_zip NO ENTRY FOUND !")
+        return "\r# USER-DB Error !\r"
+
+    def cmd_set_pr_mail(self):
+        if self.user_db_ent:
+            self.user_db_ent.PRmail = self.parameter[0]\
+                .decode(self.encoding[0], self.encoding[1]).\
+                replace(' ', '').\
+                replace('\n', '').\
+                replace('\r', '')
+            return "\r" \
+                   f"{STR_TABLE['cli_prmail_set'][self.connection.cli_language]}: {self.user_db_ent.PRmail}" \
+                   "\r"
+
+        logger.error("User-DB Error. cmd_set_pr_mail NO ENTRY FOUND !")
+        return "\r# USER-DB Error !\r"
+
+    def cmd_set_e_mail(self):
+        if self.user_db_ent:
+            self.user_db_ent.Email = self.parameter[0]\
+                .decode(self.encoding[0], self.encoding[1]).\
+                replace(' ', '').\
+                replace('\n', '').\
+                replace('\r', '')
+            return "\r" \
+                   f"{STR_TABLE['cli_email_set'][self.connection.cli_language]}: {self.user_db_ent.Email}" \
+                   "\r"
+
+        logger.error("User-DB Error. cmd_set_e_mail NO ENTRY FOUND !")
+        return "\r# USER-DB Error !\r"
+
+    def cmd_set_http(self):
+        if self.user_db_ent:
+            self.user_db_ent.HTTP = self.parameter[0]\
+                .decode(self.encoding[0], self.encoding[1]).\
+                replace(' ', '').\
+                replace('\n', '').\
+                replace('\r', '')
+            return "\r" \
+                   f"{STR_TABLE['cli_http_set'][self.connection.cli_language]}: {self.user_db_ent.HTTP}" \
+                   "\r"
+
+        logger.error("User-DB Error. cmd_set_http NO ENTRY FOUND !")
+        return "\r# USER-DB Error !\r"
+
 
     def str_cmd_req_name(self):
         # print("REQ NAME")
@@ -408,10 +499,10 @@ class DefaultCLI(object):
         return ''
 
     def cmd_help(self):
-        ret = '\r   < Hilfe >\r'
+        ret = '\r   < Hilfe >\r\r'
         for k in self.cmd_exec.keys():
             if self.cmd_exec[k][1]:
-                ret += '\r {}{:3} > {}'.format(self.prefix, k.decode('utf-8'), self.cmd_exec[k][1])
+                ret += '\r {}{:5} = {}'.format(self.prefix, k.decode('utf-8'), self.cmd_exec[k][1])
         ret += '\r\r\r'
         return ret
 

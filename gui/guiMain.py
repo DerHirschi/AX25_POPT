@@ -27,6 +27,7 @@ from gui.guiPortSettings import PortSettingsWin
 from gui.guiBeaconSettings import BeaconSettings
 from gui.guiRxEchoSettings import RxEchoSettings
 from gui.guiLinkholderSettings import LinkHolderSettings
+from gui.guiUserDB import UserDB
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
@@ -147,6 +148,8 @@ class TkMainWin:
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send, underline=0)
         self.MenuTools.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
+        self.MenuTools.add_separator()
+        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win, underline=0)
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         self.menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=self.MenuTools, underline=0)
 
@@ -236,7 +239,28 @@ class TkMainWin:
         _btn = tk.Button(self.side_btn_frame_top,
                                  text="Kaffèmaschine",
                                  bg="HotPink2", width=12, command=self.kaffee)
-        _btn.place(x=5, y=80)
+        _btn.place(x=215, y=10)
+        ###############################################
+        # Stations Info ( Name, QTH ... )
+
+        self.stat_info_name_var = tk.StringVar(self.side_btn_frame_top)
+        stat_info_name = tk.Label(self.side_btn_frame_top,
+                                       textvariable=self.stat_info_name_var,
+                                       font=(FONT, 12, 'bold')
+                                       )
+        stat_info_name.place(x=10, y=90)
+        self.stat_info_qth_var = tk.StringVar(self.side_btn_frame_top)
+        stat_info_qth = tk.Label(self.side_btn_frame_top,
+                                       textvariable=self.stat_info_qth_var,
+                                       font=(FONT, 12, 'bold')
+                                       )
+        stat_info_qth.place(x=10, y=115)
+        self.stat_info_loc_var = tk.StringVar(self.side_btn_frame_top)
+        stat_info_loc = tk.Label(self.side_btn_frame_top,
+                                      textvariable=self.stat_info_loc_var,
+                                      font=(FONT, 12, 'bold')
+                                      )
+        stat_info_loc.place(x=10, y=140)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
@@ -677,8 +701,25 @@ class TkMainWin:
     ##########################
 
     def on_channel_status_change(self):
-        """Triggerd when Connection Status has change and tasker loop"""
+        """Triggerd when Connection Status has changed"""
         self.tabbed_sideFrame.on_ch_btn_stat_change()
+        self.update_station_info()
+
+    def update_station_info(self):
+        name = ''
+        qth = ''
+        loc = ''
+        conn = self.get_conn()
+        if conn:
+            db_ent = conn.user_db_ent
+            if db_ent:
+                name = db_ent.Name
+                qth = db_ent.QTH
+                loc = db_ent.LOC
+
+        self.stat_info_name_var.set(name)
+        self.stat_info_qth_var.set(qth)
+        self.stat_info_loc_var.set(loc)
 
     def dx_alarm(self):
         """ Alarm when new User in MH List """
@@ -881,6 +922,12 @@ class TkMainWin:
     def open_multicast_settings_win(self):
         if self.settings_win is None:
             MulticastSettings(self)
+
+    ##########################
+    # Beacon Settings WIN
+    def open_user_db_win(self):
+        if self.settings_win is None:
+            UserDB(self)
 
     ##########################
     # About WIN
