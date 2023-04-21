@@ -52,7 +52,7 @@ class DefaultCLI(object):
         self.to_call_str = self.connection.to_call_str
         self.mh_list = self.connection.mh
         self.user_db = self.connection.user_db
-        self.user_db_ent: Client = self.user_db.db[self.to_call_str]
+        self.user_db_ent: Client = self.connection.user_db_ent
         self.state_index = 0
         self.crone_state_index = 0
         self.input = b''
@@ -557,6 +557,7 @@ class DefaultCLI(object):
         ########################
         # Check String Commands
         inp_lines = self.last_line + self.raw_input
+        inp_lines = inp_lines.replace(b'\n', b'\r')
         inp_lines = inp_lines.split(b'\r')
         for li in inp_lines:
             # for k in list(self.str_cmd_exec.keys()):
