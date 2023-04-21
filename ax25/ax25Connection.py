@@ -792,7 +792,7 @@ class DefaultStat(object):
         self.ax25conn.zustand_exec = self.ax25conn.zustand_tab[zustand_id][0](self.ax25conn)
         if self.ax25conn.port_handler.gui is not None:
             # if self.ax25conn.is_gui:
-            self.ax25conn.gui.ch_btn_status_update()
+            self.ax25conn.port_handler.gui.ch_btn_status_update()
 
     def state_rx_handle(self, ax25_frame: AX25Frame):
         self.frame = ax25_frame

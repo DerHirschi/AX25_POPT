@@ -16,7 +16,7 @@ class DefaultCLI(object):
     c_text = '-= Test C-TEXT =-\r\r'
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION>'
-    prefix = '//'
+    prefix = b'//'
 
     def __init__(self, connection):
         stat_cfg = connection.stat_cfg
@@ -152,12 +152,21 @@ class DefaultCLI(object):
     def is_prefix(self):
         if self.prefix:
             # print(self.input)
+            self.input = self.input.replace(b'\n', b'\r')
+            self.input = self.input.split(b'\r')[0]
+            """
             while self.input[:1] in [b'\r', b'\n']:
                 self.input = self.input[1:]
                 if not self.input:
                     return False
-
-            if self.input[:len(self.prefix)] == self.prefix.encode(self.encoding[0], self.encoding[1]):
+            """
+            # print(self.input)
+            """
+            if type(self.prefix) == str:    # Fix for old CFG Files
+                self.prefix = self.prefix.encode('UTF-8', 'ignore')
+            """
+            # print(self.prefix)
+            if self.input[:len(self.prefix)] == self.prefix:
                 # print(self.input)
                 self.parameter = []
                 cmd = self.input[len(self.prefix):]
@@ -182,6 +191,7 @@ class DefaultCLI(object):
                 # Message is for User ( Text , Chat )
                 return False
         # CMD Input for No User Terminals ( Node ... )
+        self.parameter = []
         cmd = self.input
         cmd = cmd.split(b' ')
         if len(cmd) > 1:
@@ -194,7 +204,6 @@ class DefaultCLI(object):
         cmd = cmd[0]
         self.cmd = cmd \
             .upper() \
-            .replace(b' ', b'') \
             .replace(b'\r', b'') \
             .replace(b'\n', b'')
         return False
@@ -502,14 +511,14 @@ class DefaultCLI(object):
         ret = '\r   < Hilfe >\r\r'
         for k in self.cmd_exec.keys():
             if self.cmd_exec[k][1]:
-                ret += '\r {}{:5} = {}'.format(self.prefix, k.decode('utf-8'), self.cmd_exec[k][1])
+                ret += '\r {}{:5} = {}'.format(self.prefix.decode('UTF-8', 'ignore'), k.decode('utf-8'), self.cmd_exec[k][1])
         ret += '\r\r\r'
         return ret
 
     def cli_exec(self, inp=b''):
         if not self.connection.is_link:
             # self.send_2_gui(inp)
-            self.input = inp
+            # self.input = inp
             self.raw_input = bytes(inp)
             _ret = self.state_exec[self.state_index]()
             if _ret:
@@ -541,6 +550,9 @@ class DefaultCLI(object):
             return self.c_text + self.prompt
 
     def s1(self):
+        if type(self.prefix) == str:  # Fix for old CFG Files
+            self.prefix = self.prefix.encode('UTF-8', 'ignore')
+        self.input = self.last_line + self.raw_input
         self.exec_cmd()
         ########################
         # Check String Commands
@@ -577,7 +589,7 @@ class NodeCLI(DefaultCLI):
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-NODE-CLI>'
-    prefix = ''
+    prefix = b''
 
     # Extra CMDs for this CLI
 
@@ -597,7 +609,7 @@ class UserCLI(DefaultCLI):
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-User-CLI>'
-    prefix = '//'
+    prefix = b'//'
 
     # Extra CMDs for this CLI
 
