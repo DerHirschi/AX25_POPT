@@ -42,6 +42,7 @@ STR_TABLE = {
     'channel': ('Kanal', 'Channel', 'Lekker Kanaal'),
     'beacon': ('Baken', 'Beacons', 'Lekker Bakken'),
     'settings': ('Einstellungen', 'Settings', 'Lekker'),
+    'main_page': ('Hauptseite', 'Main Page', 'Lekker'),
     'keybind': ('Tastaturbelegung', 'Keyboard layout', 'Lekker toetsenbordindeling'),
     'about': ('Über', 'About', 'Lekker'),
     'help': ('Hilfe', 'Help', 'Lekker Hulp'),
