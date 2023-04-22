@@ -1,7 +1,7 @@
-import cli.ClientDB
-import ax25.ax25Statistics
 import gui.guiMain
 import ax25.ax25InitPorts
+import logging
+from config_station import VER
 
 LANGUAGE = 0    # QUICK FIX
 """
@@ -10,31 +10,27 @@ LANGUAGE = 0    # QUICK FIX
 2 = Dutch
 """
 
-if __name__ == '__main__':
-    GLB_MH_list = ax25.ax25Statistics.MH()
-    GLB_CLIENT_db = cli.ClientDB.ClientDB()
+if "dev" in VER:
+    log_level = logging.DEBUG
+else:
+    log_level = logging.WARNING
 
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    filename='error.log',
+    level=log_level
+)
+logger = logging.getLogger(__name__)
+
+if __name__ == '__main__':
     #################
     # Init AX25 Stuff
-    GLB_AX25port_handler = ax25.ax25InitPorts.AX25PortHandler(GLB_MH_list)
-
+    GLB_AX25port_handler = ax25.ax25InitPorts.AX25PortHandler()
     #############
     # INIT GUI
     # TODO: if setting_gui (running without GUI option):
-    try:
-        main_win = gui.guiMain.TkMainWin(GLB_AX25port_handler)
-    except KeyboardInterrupt:
-        GLB_AX25port_handler.close_all_ports()
-
-    ################
-    # On Close Window
-    # del main_win
+    main_win = gui.guiMain.TkMainWin(GLB_AX25port_handler)
     if GLB_AX25port_handler.is_running:
-        print("Close all Ports")
-        GLB_AX25port_handler.close_all_ports()
-    print("Save MH")
-    GLB_MH_list.save_mh_data()
-    print("Client DB")
-    GLB_CLIENT_db.save_data()
+        GLB_AX25port_handler.close_all()
 
     print("Ende")

@@ -3,18 +3,17 @@ import random
 import time
 import tkinter as tk
 from tkinter import ttk, Menu
-import logging
 import threading
 import sys
 
 import gtts
 from gtts import gTTS
-# from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg)
 import matplotlib.pyplot as plt
 
 import config_station
+from fnc.str_fnc import tk_filter_bad_chars
 from gui.guiPipeToolSettings import PipeToolSettings
 from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
@@ -28,11 +27,11 @@ from gui.guiPortSettings import PortSettingsWin
 from gui.guiBeaconSettings import BeaconSettings
 from gui.guiRxEchoSettings import RxEchoSettings
 from gui.guiLinkholderSettings import LinkHolderSettings
+from gui.guiUserDB import UserDB
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from config_station import VER
 from gui.vars import ALL_COLOURS
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows
@@ -42,13 +41,6 @@ if is_linux():
 elif is_windows():
     from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
 
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    filename='error.log',
-    level=logging.WARNING
-)
-logger = logging.getLogger(__name__)
 
 TEXT_SIZE_STATUS = 11
 FONT = "Courier"
@@ -106,7 +98,7 @@ class TkMainWin:
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
-        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
+        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(config_station.VER))
         self.main_win.geometry("1400x850")
         # self.main_win.iconbitmap("favicon.ico")
         self.main_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
@@ -156,6 +148,8 @@ class TkMainWin:
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send, underline=0)
         self.MenuTools.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
+        self.MenuTools.add_separator()
+        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win, underline=0)
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         self.menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=self.MenuTools, underline=0)
 
@@ -245,7 +239,28 @@ class TkMainWin:
         _btn = tk.Button(self.side_btn_frame_top,
                                  text="Kaffèmaschine",
                                  bg="HotPink2", width=12, command=self.kaffee)
-        _btn.place(x=5, y=80)
+        _btn.place(x=215, y=10)
+        ###############################################
+        # Stations Info ( Name, QTH ... )
+
+        self.stat_info_name_var = tk.StringVar(self.side_btn_frame_top)
+        stat_info_name = tk.Label(self.side_btn_frame_top,
+                                       textvariable=self.stat_info_name_var,
+                                       font=(FONT, 12, 'bold')
+                                       )
+        stat_info_name.place(x=10, y=90)
+        self.stat_info_qth_var = tk.StringVar(self.side_btn_frame_top)
+        stat_info_qth = tk.Label(self.side_btn_frame_top,
+                                       textvariable=self.stat_info_qth_var,
+                                       font=(FONT, 12, 'bold')
+                                       )
+        stat_info_qth.place(x=10, y=115)
+        self.stat_info_loc_var = tk.StringVar(self.side_btn_frame_top)
+        stat_info_loc = tk.Label(self.side_btn_frame_top,
+                                      textvariable=self.stat_info_loc_var,
+                                      font=(FONT, 12, 'bold')
+                                      )
+        stat_info_loc.place(x=10, y=140)
 
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
@@ -307,10 +322,7 @@ class TkMainWin:
         pass
 
     def destroy_win(self):
-        # self.sprech('Hau rein.')
         self.ax25_port_handler.close_all()
-        self.main_win.quit()
-        # self.main_class.settings_win = None
 
     def monitor_start_msg(self):
         speech = [
@@ -344,11 +356,11 @@ class TkMainWin:
               '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
               '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r' \
-              'Version: {}\r'.format(VER)
+              'Version: {}\r'.format(config_station.VER)
         tmp = ban.split('\r')
         for el in tmp:
             self.msg_to_monitor(el)
-        self.msg_to_monitor('Python Other Packet Terminal ' + VER)
+        self.msg_to_monitor('Python Other Packet Terminal ' + config_station.VER)
         for stat in self.ax25_port_handler.ax25_stations_settings.keys():
             self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in self.ax25_port_handler.ax25_ports.keys():
@@ -413,7 +425,7 @@ class TkMainWin:
         return self.win_buf[self.channel_index]
 
     def set_var_to_all_ch_param(self):
-        for i in range(10):
+        for i in range(10):     # TODO Max Channels
             if not self.win_buf[i + 1].t2speech:
                 self.win_buf[i + 1].t2speech_buf = ''
 
@@ -689,8 +701,25 @@ class TkMainWin:
     ##########################
 
     def on_channel_status_change(self):
-        """Triggerd when Connection Status has change and tasker loop"""
+        """Triggerd when Connection Status has changed"""
         self.tabbed_sideFrame.on_ch_btn_stat_change()
+        self.update_station_info()
+
+    def update_station_info(self):
+        name = ''
+        qth = ''
+        loc = ''
+        conn = self.get_conn()
+        if conn:
+            db_ent = conn.user_db_ent
+            if db_ent:
+                name = db_ent.Name
+                qth = db_ent.QTH
+                loc = db_ent.LOC
+
+        self.stat_info_name_var.set(name)
+        self.stat_info_qth_var.set(qth)
+        self.stat_info_loc_var.set(loc)
 
     def dx_alarm(self):
         """ Alarm when new User in MH List """
@@ -761,13 +790,15 @@ class TkMainWin:
                     .replace('\r\n', '\n') \
                     .replace('\n\r', '\n')
                 conn.rx_buf_rawData = b''
+                out = tk_filter_bad_chars(out)
                 # Write RX Date to Window/Channel Buffer
                 self.win_buf[k].output_win += out
                 if self.win_buf[k].t2speech:
                     if k == self.channel_index:
                         self.win_buf[k].t2speech_buf += out.replace('\n', '')
                     else:
-                        self.win_buf[k].t2speech_buf += 'Kanal {} . {} . {}'.format(
+                        self.win_buf[k].t2speech_buf += '{} {} . {} . {}'.format(
+                            STR_TABLE['channel'][self.language],
                             k,
                             conn.to_call_str,
                             out.replace('\n', '')
@@ -800,6 +831,7 @@ class TkMainWin:
 
     def update_monitor(self, var: str, conf, tx=False):
         """ Called from AX25Conn """
+        var = tk_filter_bad_chars(var)
         ind = self.mon_txt.index(tk.INSERT)
         tr = False
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
@@ -828,7 +860,6 @@ class TkMainWin:
         # self.mon_txt.vbar.s
         if tr or self.tabbed_sideFrame.mon_scroll_var.get():
             self.mon_txt.see(tk.END)
-        # self.update_side_mh()
 
     def msg_to_monitor(self, var: str):
         """ Called from AX25Conn """
@@ -891,6 +922,12 @@ class TkMainWin:
     def open_multicast_settings_win(self):
         if self.settings_win is None:
             MulticastSettings(self)
+
+    ##########################
+    # Beacon Settings WIN
+    def open_user_db_win(self):
+        if self.settings_win is None:
+            UserDB(self)
 
     ##########################
     # About WIN

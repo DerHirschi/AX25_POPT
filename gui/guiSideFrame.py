@@ -2,7 +2,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
-from fnc.math_fnc import get_kb_str_fm_bytes
+from fnc.str_fnc import get_kb_str_fm_bytes
 from string_tab import STR_TABLE
 from ax25.ax25dec_enc import PIDByte
 from fnc.os_fnc import is_linux
