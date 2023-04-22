@@ -53,13 +53,12 @@ class Client(object):
         self.QRG5 = ''
         self.Software = ''
 
-        self.last_edit_by = ''
         self.last_edit = datetime.datetime.now()
         self.is_new = True
 
         self.pac_len = 0
         self.max_pac = 0
-        self.info_text = ''
+        self.CText = ''
         self.routes = []
 
 

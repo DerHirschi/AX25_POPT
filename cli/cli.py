@@ -1,3 +1,4 @@
+import datetime
 import pickle
 import logging
 
@@ -53,6 +54,9 @@ class DefaultCLI(object):
         self.mh_list = self.connection.mh
         self.user_db = self.connection.user_db
         self.user_db_ent: Client = self.connection.user_db_ent
+        if self.user_db_ent.CText:
+            self.c_text = str(self.user_db_ent.CText)
+
         self.state_index = 0
         self.crone_state_index = 0
         self.input = b''
@@ -389,6 +393,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
+            self.user_db_ent.last_edit = datetime.datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_name_set'][self.connection.cli_language]}: {self.user_db_ent.Name}" \
                    "\r"
@@ -403,6 +408,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
+            self.user_db_ent.last_edit = datetime.datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_qth_set'][self.connection.cli_language]}: {self.user_db_ent.QTH}" \
                    "\r"
@@ -417,6 +423,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
+            self.user_db_ent.last_edit = datetime.datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC}" \
                    "\r"
@@ -431,6 +438,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
+            self.user_db_ent.last_edit = datetime.datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_zip_set'][self.connection.cli_language]}: {self.user_db_ent.ZIP}" \
                    "\r"
@@ -445,6 +453,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
+            self.user_db_ent.last_edit = datetime.datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_prmail_set'][self.connection.cli_language]}: {self.user_db_ent.PRmail}" \
                    "\r"
@@ -459,6 +468,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
+            self.user_db_ent.last_edit = datetime.datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_email_set'][self.connection.cli_language]}: {self.user_db_ent.Email}" \
                    "\r"
@@ -473,6 +483,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
+            self.user_db_ent.last_edit = datetime.datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_http_set'][self.connection.cli_language]}: {self.user_db_ent.HTTP}" \
                    "\r"
@@ -508,10 +519,10 @@ class DefaultCLI(object):
         return ''
 
     def cmd_help(self):
-        ret = '\r   < Hilfe >\r\r'
+        ret = f"\r   < {STR_TABLE['help'][self.connection.cli_language]} >\r\r"
         for k in self.cmd_exec.keys():
             if self.cmd_exec[k][1]:
-                ret += '\r {}{:5} = {}'.format(self.prefix.decode('UTF-8', 'ignore'), k.decode('utf-8'), self.cmd_exec[k][1])
+                ret += '\r {}{:6} = {}'.format(self.prefix.decode('UTF-8', 'ignore'), k.decode('utf-8'), self.cmd_exec[k][1])
         ret += '\r\r\r'
         return ret
 

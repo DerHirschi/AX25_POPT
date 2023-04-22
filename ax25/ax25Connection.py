@@ -220,7 +220,7 @@ class AX25Conn(object):
         self.is_RNR: bool = False
         """ Link Holder / Not related to Link Connection Stuff """
         self.link_holder_on: bool = False
-        self.link_holder_interval: int = 30     # Minutes
+        self.link_holder_interval: int = 30  # Minutes
         self.link_holder_timer = time.time()
         self.link_holder_text: str = '\r'
         """ Station Individual Parameter """
@@ -341,7 +341,7 @@ class AX25Conn(object):
                 self.rx_byte_count = 0
                 self.set_user_db_ent()
                 self.reinit_cli()
-                break   # Maybe it's better to look at thw whole string ?
+                break  # Maybe it's better to look at thw whole string ?
 
     def set_user_db_ent(self):
         self.user_db_ent = self.user_db.get_entry(self.to_call_str)
@@ -352,6 +352,10 @@ class AX25Conn(object):
                 else:
                     self.user_db_ent.Language = int(self.gui.language)
                     self.cli_language = int(self.gui.language)
+            if int(self.user_db_ent.pac_len):
+                self.parm_PacLen = int(self.user_db_ent.pac_len)
+            if int(self.user_db_ent.max_pac):
+                self.parm_MaxFrame = int(self.user_db_ent.max_pac)
 
     def exec_cron(self):
         """ DefaultStat.cron() """
@@ -487,7 +491,7 @@ class AX25Conn(object):
 
         self.LINK_Connection = conn
         self.is_link = True
-        self.cli = cli.cli.NoneCLI(self)    # Disable CLI
+        self.cli = cli.cli.NoneCLI(self)  # Disable CLI
 
         return True
 
@@ -562,7 +566,7 @@ class AX25Conn(object):
     ###############################################
     # Timer usw
     def get_rtt(self):
-        auto = False     # TODO
+        auto = False  # TODO
         self.calc_irtt()
         if auto:
             return self.RTT_Timer.get_RTT_avrg() * 1000
@@ -578,7 +582,7 @@ class AX25Conn(object):
                          (self.parm_Kiss_Tail * 10)
                          ) * 2
             # self.parm_T2 = (float(self.IRTT / 1000) / 2)
-                                        # TXD    TAIL
+            # TXD    TAIL
             self.parm_T2 = float(init_t2 + 400 + 150) / 1000
         else:
             self.parm_T2 = int(self.cfg.parm_T2) / 1000
@@ -588,7 +592,7 @@ class AX25Conn(object):
                          (self.parm_Kiss_Tail * 10)
                          ) * 2
         # print('parm_T2: {}'.format(self.parm_T2))
-        self.IRTT = max(self.IRTT, 300)     # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+        self.IRTT = max(self.IRTT, 300)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
         # print('IRTT: {}'.format(self.IRTT))
 
     def set_T1(self, stop=False):
@@ -905,8 +909,8 @@ class DefaultStat(object):
     def cleanup(self):
         # print('STATE 0 Cleanup')
         self.link_cleanup()
-        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)     # TODO Move up to AX25Conn
-        self.ax25conn.own_port.del_connections(conn=self.ax25conn)          # TODO Move up to AX25Conn
+        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)  # TODO Move up to AX25Conn
+        self.ax25conn.own_port.del_connections(conn=self.ax25conn)  # TODO Move up to AX25Conn
 
     def S1_end_connection(self):
         # print("S1_end_connection")
@@ -914,7 +918,7 @@ class DefaultStat(object):
         self.ax25conn.set_T1()
         self.change_state(1)
         self.link_cleanup()
-        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)     # TODO Move up to AX25Conn
+        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)  # TODO Move up to AX25Conn
 
     def t1_fail(self):
         pass
@@ -1056,6 +1060,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
             # if self.ax25conn.is_prt_hndl:
             self.ax25conn.port_handler.insert_conn2all_conn_var(new_conn=self.ax25conn)
         """
+
     def rx_SABM(self):
         self.accept()
 
@@ -1667,7 +1672,7 @@ class S11SelfNotReadyFinal(DefaultStat):
         self.delUNACK()
         if self.pf:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
-            self.change_state(8)            # ???
+            self.change_state(8)  # ???
             # self.rtt_timer.rtt_single_rx()  # ???
         else:
             self.ax25conn.resend_unACK_buf(1)
@@ -1739,7 +1744,7 @@ class S12DestNotReadyFinal(DefaultStat):
         self.delUNACK()
         if self.pf:
             self.change_state(9)
-            #self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
+            # self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
 
     def t1_fail(self):
         self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
@@ -1792,7 +1797,6 @@ class S13BothNotReadyFinal(DefaultStat):
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
         else:
             self.change_state(11)
-
 
     def t1_fail(self):
         self.ax25conn.send_RNR(pf_bit=True, cmd_bit=True)

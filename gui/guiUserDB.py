@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from datetime import datetime
 from string_tab import STR_TABLE
 
 
@@ -76,7 +77,6 @@ class UserDB(tk.Toplevel):
         self.tree = ttk.Treeview(self, columns=columns, show='tree', height=20)
 
         self.tree.grid(row=1, column=1, sticky='nw')
-        # add a scrollbar
         scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=1, column=2, sticky='wns')
@@ -89,7 +89,10 @@ class UserDB(tk.Toplevel):
             self.tree.insert('', tk.END, values=ret_ent)
         if ents:
             self.db_ent = self.user_db.get_entry(ents[0])
-
+        ##################################
+        # Selected Call Label
+        self.call_labbel_var = tk.StringVar(self)
+        tk.Label(self, textvariable=self.call_labbel_var, font=("Courier", 14, 'bold')).place(x=int(self.win_width / 2), y=10)
         ##################################
         # tabs
         self.tabControl = ttk.Notebook(self, height=self.win_height - 150, width=self.win_width - 220)
@@ -218,6 +221,11 @@ class UserDB(tk.Toplevel):
         self.lang_var.set('DEUTSCH')
         self.lang_ent = tk.OptionMenu(tab1, self.lang_var, *lang_opt)
         self.lang_ent.place(x=_x + 80, y=_y - 2)
+        # Last Edit
+        self.last_edit_var = tk.StringVar(self)
+        tk.Label(tab1, text='Last Edit: ').place(x=440, y=400)
+        tk.Label(tab1, textvariable=self.last_edit_var).place(x=540, y=400)
+
         #######################
         # TAB2
         # C-TEXT
@@ -271,6 +279,7 @@ class UserDB(tk.Toplevel):
 
     def set_var_to_ent(self):
         if self.db_ent:
+            self.call_labbel_var.set(self.db_ent.call_str)
             self.name_var.set(self.db_ent.Name)
             self.qth_var.set(self.db_ent.QTH)
             self.loc_var.set(self.db_ent.LOC)
@@ -280,9 +289,20 @@ class UserDB(tk.Toplevel):
             self.zip_var.set(self.db_ent.ZIP)
             self.land_var.set(self.db_ent.Land)
             self.typ_var.set(self.db_ent.TYP)
+            self.pac_len_var.set(str(self.db_ent.pac_len))
+            self.max_pac_var.set(str(self.db_ent.max_pac))
+            self.last_edit_var.set(
+                f"{self.db_ent.last_edit.date()} - "
+                f"{self.db_ent.last_edit.time().hour}:"
+                f"{self.db_ent.last_edit.time().minute}"
+
+            )
 
             self.info_ent.delete(0.0, tk.END)
             self.info_ent.insert(tk.INSERT, self.db_ent.Info)
+
+            self.ctext_ent.delete(0.0, tk.END)
+            self.ctext_ent.insert(tk.INSERT, self.db_ent.CText)
 
     def save_btn_cmd(self):
         if self.db_ent:
@@ -295,8 +315,14 @@ class UserDB(tk.Toplevel):
             self.db_ent.ZIP = self.zip_var.get()
             self.db_ent.Land = self.land_var.get()
             self.db_ent.TYP = self.typ_var.get()
+            self.db_ent.pac_len = int(self.pac_len_var.get())
+            self.db_ent.max_pac = int(self.max_pac_var.get())
+            self.db_ent.CText = self.ctext_ent.get(0.0, tk.END)[:-1]
             self.db_ent.Info = self.info_ent.get(0.0, tk.END)[:-1]
+            self.db_ent.last_edit = datetime.now()
+
         self.user_db.save_data()
+        self.root.update_station_info()
 
     def ok_btn_cmd(self):
         self.root.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
