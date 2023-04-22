@@ -224,6 +224,7 @@ class AX25Conn(object):
         self.link_holder_timer = time.time()
         self.link_holder_text: str = '\r'
         """ Station Individual Parameter """
+        """
         stat_call = self.stat_cfg.stat_parm_Call
         if stat_call != config_station.DefaultStation.stat_parm_Call:
             if stat_call in self.cfg.parm_stat_PacLen.keys():
@@ -232,10 +233,12 @@ class AX25Conn(object):
             if stat_call in self.cfg.parm_stat_MaxFrame.keys():
                 if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
                     self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
+        """
         """ User DB Entry """
         self.user_db = self.port_handler.user_db
         self.user_db_ent = False
         self.set_user_db_ent()
+        self.set_packet_param()
         """ Init CLI """
         self.cli_language = 0
         self.cli = cli.cli.NoneCLI(self)
@@ -340,7 +343,10 @@ class AX25Conn(object):
                 self.tx_byte_count = 0
                 self.rx_byte_count = 0
                 self.set_user_db_ent()
+                self.set_packet_param()
                 self.reinit_cli()
+                if self.gui is not None:
+                    self.gui.on_channel_status_change()
                 break  # Maybe it's better to look at thw whole string ?
 
     def set_user_db_ent(self):
@@ -352,10 +358,43 @@ class AX25Conn(object):
                 else:
                     self.user_db_ent.Language = int(self.gui.language)
                     self.cli_language = int(self.gui.language)
+            """
             if int(self.user_db_ent.pac_len):
                 self.parm_PacLen = int(self.user_db_ent.pac_len)
             if int(self.user_db_ent.max_pac):
                 self.parm_MaxFrame = int(self.user_db_ent.max_pac)
+            """
+
+    def set_packet_param(self):
+        self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
+        self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
+        self.user_db_ent = self.user_db.get_entry(self.to_call_str)
+        stat_call = self.stat_cfg.stat_parm_Call
+
+        if self.user_db_ent:
+            if int(self.user_db_ent.pac_len):
+                self.parm_PacLen = int(self.user_db_ent.pac_len)
+            elif stat_call != config_station.DefaultStation.stat_parm_Call:
+                if stat_call in self.cfg.parm_stat_PacLen.keys():
+                    if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
+                        self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
+
+            if int(self.user_db_ent.max_pac):
+                self.parm_MaxFrame = int(self.user_db_ent.max_pac)
+            elif stat_call != config_station.DefaultStation.stat_parm_Call:
+                if stat_call in self.cfg.parm_stat_MaxFrame.keys():
+                    if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
+                        self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
+
+        else:
+            stat_call = self.stat_cfg.stat_parm_Call
+            if stat_call != config_station.DefaultStation.stat_parm_Call:
+                if stat_call in self.cfg.parm_stat_PacLen.keys():
+                    if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
+                        self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
+                if stat_call in self.cfg.parm_stat_MaxFrame.keys():
+                    if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
+                        self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
 
     def exec_cron(self):
         """ DefaultStat.cron() """

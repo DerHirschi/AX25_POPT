@@ -544,7 +544,6 @@ class TkMainWin:
         self.mon_txt.configure( width=max(width - 1, 56))
 
     def change_conn_btn(self):
-
         conn = self.get_conn(self.channel_index)
         if conn:
             self.conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
