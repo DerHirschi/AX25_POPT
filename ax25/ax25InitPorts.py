@@ -292,7 +292,11 @@ class AX25PortHandler(object):
         if connection:
             self.insert_conn2all_conn_var(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
-            return True, f'*** Link Setup to {dest_call}\r'
+            user_db_ent = self.user_db.get_entry(dest_call, add_new=False)
+            if user_db_ent:
+                if user_db_ent.Name:
+                    return True, f'*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r'
+            return True, f'*** Link Setup to {dest_call} > Port {port_id}\r'
         return False, 'Error: Can not connect'
 
     ######################

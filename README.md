@@ -69,6 +69,7 @@ Keybindings:
 - ALT + C > New Connection
 - ALT + D > Disconnect
 - F1 - F10 > Channel 1 - 10
+- F12 > Monitor Mode
 - CTRL + plus > increase Text size
 - CTRL + minus > decrease Text size
 - CTRL + Left > decrease Text Window

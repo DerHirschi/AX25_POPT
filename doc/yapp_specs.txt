@@ -1,0 +1,272 @@
+
+
+YAPP(tm) protocol for Packet Radio binary file transfer
+
+(c) 1986, Jeff Jacobsen - WA7MBL
+
+Revision 1.1   06/23/86
+
+----------------------------------------------------------
+
+YAPP PACKET TYPES
+
+Size of packet data ranges from 2-258 bytes.
+len = length of following bytes (not including len)
+
+RR Rcv_Rdy      ACK  01
+
+RF Rcv_File     ACK  02
+
+AF Ack_EOF      ACK  03   [1.1]
+
+AT Ack_EOT      ACK  04   [1.1]
+
+SI Send_Init    ENQ  01
+
+HD Send_Hdr     SOH  len  (Filename)  NUL  (File Size in ASCII)  NUL  (Opt)
+
+DT Send_Data    STX  len  (Data)    {if len=0 then data length = 256}
+
+EF Send_EOF     ETX  01
+
+ET Send_EOT     EOT  01
+
+NR Not_Rdy      NAK  len  (Optional Reason in ASCII)
+
+RE Resume       NAK  len  R  NULL  (File size in ASCII)  NULL
+
+CN Cancel       CAN  len  (Optional Reason in ASCII)
+
+CA Can_Ack      ACK  05
+
+{Following are for use in Server mode}
+
+RI Rcv_Init     ENQ   02   len   (Filespec requested - wildcard allowed)
+
+TX Text         DLE   len  (ASCII text for display)  {to send text from server}
+
+{Unimplement - Reserved for Server Commands}
+
+UU Comands      ENQ   03
+                ENQ   04
+                ENQ   05
+                ...     
+                ENQ   FF     
+
+STATE TABLES for SEND
+
+State         Send Pkt        Upon                  Next State
+
+S (Send)      SI              RR                    SH
+                              RF                    SD
+                              NR                    Start/Done
+                              First few timeouts    S
+                              RI                    S
+                              Other/Timeout         Abort
+
+SH (Hdr)      HD              RF                    SD
+                              NR                    Start/Done
+IF (RESUME)                   RE                    Move file position then SD
+                              Other/Timeout         Abort
+
+SD (Data)     DT              (Not EOF)             SD
+                              (EOF)                 SE
+
+SE (EOF)      EF              AF (More files)       SH
+                              AF (No More Files)    ST
+                              Other/Timeout         Abort
+
+ST (EOT)      ET              AT                    Start/Done
+                              Other/Timeout         Start/Done
+
+STATE TABLES for RECEIVE
+
+State      On    If           Do          Send Pkt       Next State
+  
+
+R (Rec)    SI (ready)                       RR              RH
+           SI (opt)*       open file        RF              RD
+           SI (not ready)                   NR              Start/Done
+           NR                                               Start/Done
+           Other/Timeout                                    Abort
+
+(opt)*  If header info not desired it is ok to
+        open file and indiate ready for file
+
+RH (Hdr)   HD               open file       RF              RD
+           HD (no room)                     NR              Start/Done
+
+IF (RESUME)
+           HD Already       open file for   RE              RD
+              have file!    append at -256
+                            byte from EOF
+
+ELSE       HD Already have file!!           NR              Start/Done
+
+           SI                                               RH
+           ET                               AT              Start/Done
+           Other/Timeout                                    Abort
+
+RD (Data)  DT              store data                       RD
+           EF              close file       AF              RH
+           Other/Timeout                                    Abort
+
+OTHER STATE
+
+Any State          On CN         Send CA                   Start/Done
+except CW
+
+CW (Can_Wait)      On CA                                   Start/Done
+                   On CN         Send CA                   CW
+                   Timeout       Display Err Msg           Start/Done
+
+Abort                            Send CN                   CW
+
+--------
+Starting States
+
+For 2 users not using Remote Server
+
+    Sender goes to State S, Receiver to State R after manually
+    exchanging file names.  Since File Name is known, Recevier
+    may optionally send RF from state R and bypass file header.
+    Sender should give Receiver ample time to get into Receive
+    State.
+
+For Remote Server Mode
+
+  USER (Start)                                       Next State
+
+  User wishing to Send                               S
+  User wishing to Receive          Send RI           R
+  Other Server Request             Send COMMAND      Start
+
+  SERVER (Start)
+
+  Gets SI                                            R
+  Gets RI             (file fnd)                     S
+                      (no file)    Send NR           Start
+
+  Gets COMMAND                    (Do Command)       Start
+
+---------------------------------------------------------
+All states except Send Data should timeout if nothing is heard
+for a period of time Tc (Crash timer).  Send Data isn't expecting
+any input and if it should receive some it must be a Cancel, or
+a TX (text) packet, otherwise Abort.
+
+--------
+Revision 1.1 - Added AF & AT to acknowledge End of File and
+End of Transfer.  This allows an automated sender to know that
+a file was received successfully.  It also helps get past a
+problem in the TNC-2 code by requiring the sender to wait for the
+Ack-EOT before switching from transparent mode back to converse
+mode.
+
+RESUME
+--------------
+
+The new state introduced from FC1EBN in TPK are explained and is inserted in
+state table for recieve and send a file.
+Note that it's valid only if RESUME is true. This will implie or not
+the cancellation of file in case of transfer abort.
+This metode is ok for resume a file transfert but it have some limit if
+the two station hasn't the same RESUME state ON or OFF or not!
+
+1st example:
+A is a sender with RESUME OFF and B is receiver with RESUME ON.
+A initiate transfer with B and at certain time this will abort.
+In this case B (RESUME ON) don't erase the file and retry to download from A.
+Now the transfer always abort because B that already have a part of file
+request the resume that A interpret as Abort.
+
+2nd example:
+A is a sender and B is receiver both with resume ON.
+Today B download PINCO.ZIP (1st version, 10KByte) from A.
+Tomorrow in A there is the same filename but with lenght changed due a
+new version of program (PINCO.ZIP 2nd version, 11Kbyte).
+If B never delete the previous version of PINCO.ZIP from download directory
+the last 1000 byte of new file are append to the 10000 of the old one make
+simply caos!!
+This because Yapp never check if it is the same file (eg comparing filedate
+and time).
+
+YappC extension introduced in F6FBB BBS 5.14
+--------------------------------------------
+
+When a user request a resume of a previuos file transfer, every Yapp frame
+long pklen byte is followed from a simple checksum byte.
+
+So during a resume a Yapp Send_Data frame is:
+
+STX len (Data) chksum
+
+If len = 0 then data lenght = 256, note that len not include chksum byte and
+this is the checksum of Data byte.
+
+21/5/92
+
+Extensions to the Yapp protocol used in TPK v 1.65a and FBB v 5.14
+------------------------------------------------------------------
+
+HEADER extension:
+-----------------
+
+The header now carry the DATE and TIME of the file being transmitted.
+
+[SOH] [Len] [Filename] [NUL] [File Size] [NUL] [Date] [Time] [NUL]
+
+Date and Time are the values reported by DOS, coded in 4 hexadecimal
+characters and sent in ASCII.
+
+Receiver has the choice to use extended Yapp with checksum or normal Yapp.
+
+- Normal Yapp reply is RF as before and the receiver can keep the
+  date and time information .
+
+- Extended Yapp reply is : RT  Receive_TPK
+            and is coded : [ACK] [ACK]
+
+If receiver reply is RT the protocol used will be what i have called YappC
+for Yapp with checksum. When sender get this packet he MUST use YappC.
+
+Data Packets extension:
+-----------------------
+
+If receiver reply is RT the protocol used will be YappC. The checksum allow
+detection of packets corrupted along the link, particularly on the RS232
+lines where there is no error control or correction (or very poor !)....
+
+Data packets : [STX] [Len] [Datas] [Checksum]
+
+Checksum is the sum of all datas bytes on 8 bits like Xmodem.
+If checksum is bad receiver must send a Cancel and go in the CW state.
+
+Transfer Resuming:
+------------------
+
+A new field has been added to the resume reply to tell sender if receiver
+can use YappC or not.
+
+- Resume reply for Yapp: (as used before by TPK and FBB)
+
+    [NAK] [Len] [R] [NUL] [Received Length] [NUL]
+            I    I                I
+            I    I                +-- in ASCII as in the header
+            I    +-- as Resume !
+            I
+            +------- len of the following bytes
+
+- Resume reply for YappC:
+
+    [NAK] [Len] [R] [NUL] [Received Length] [NUL] [C] [NUL]
+                                                   I
+                Tell sender i can go in YappC -----+
+
+    When sender get this packet he must use YappC.
+
+Any comments or suggestions : FC1EBN @ F6ABJ.FRPA.FRA.EU
+
+73's Gerard FC1EBN
+
+
