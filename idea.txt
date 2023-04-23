@@ -1,0 +1,19 @@
+Ideas/TODO's :
+
+- Autoscrolling überarbeiten.
+- ESC Befehle
+- Individuelle Farben ( QSO/Vorschreib Fenster )
+- Infos / Ctext usw. in ClientDB speichern
+- Logbuch
+- Telnet Port
+- MultiKISS
+- ?Pipe-TOOL: GPIOs ansteuerbar / auslesbar ..? oder besser
+- Remote-GPIO Tool (Idee von Lars)
+- Zeitgesteuerte connects und Kommando senden ( MH Liste abfragen o.Ä. )
+- AutoBin
+- Yapp
+- Torrent ähnliches Filesharing via UI Frames
+- Daten Komprimierung
+- Daten Verschlüsselung ( AES )
+- ordentliches Noden System bzw CLI überarbeiten
+- DX-Alarm überarbeiten

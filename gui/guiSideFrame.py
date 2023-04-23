@@ -130,6 +130,17 @@ class SideTabbedFrame:
                                        command=self.chk_t2speech)
         self.t2speech.place(x=10, y=parm_y)
         self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
+        # Autoscroll
+        parm_y = 225
+        self.autoscroll_var = tk.BooleanVar(tab1_kanal)
+
+        self.autoscroll = tk.Checkbutton(tab1_kanal,
+                                         text='Autoscroll',
+                                         variable=self.autoscroll_var,
+                                         command=self.chk_autoscroll
+                                         )
+        self.autoscroll.place(x=10, y=parm_y)
+        self.autoscroll_var.set(self.main_win.get_ch_param().autoscroll)
 
         # Link Holder
         parm_y = 175
@@ -162,11 +173,7 @@ class SideTabbedFrame:
         self.rtt_worst.place(x=170, y=35)
         self.rtt_avg.place(x=170, y=60)
         self.rtt_last.place(x=170, y=85)
-        # Status /Pipe/Link/File-RX/File-TX
-        self.status_label = tk.Label(tab1_kanal, fg='red')
-        font = self.status_label.cget('font')
-        self.status_label.configure(font=(font[0], 12))
-        self.status_label.place(x=40, y=228)
+
         ##########################################
         # Kanal Rechts / Status / FT
         ttk.Separator(tab1_kanal, orient='vertical').place(x=280, rely=0.05, relheight=0.9, relwidth=0.6)
@@ -180,27 +187,32 @@ class SideTabbedFrame:
         _y = 20
         self.tx_buff_var = tk.StringVar(tab1_kanal)
         self.tx_buff_lable = tk.Label(tab1_kanal, textvariable=self.tx_buff_var)
-        self.tx_buff_var.set('TX-Buffer: 124544.5 kb')
+        self.tx_buff_var.set('')
         self.tx_buff_lable.place(x=_x, y=_y)
         # TX Gesamt
         _x = 290
         _y = 45
         self.tx_count_var = tk.StringVar(tab1_kanal)
         self.tx_count_lable = tk.Label(tab1_kanal, textvariable=self.tx_count_var)
-        self.tx_count_var.set('TX: 124544.5 kb')
+        self.tx_count_var.set('')
         self.tx_count_lable.place(x=_x, y=_y)
         # RX Gesamt
         _x = 290
         _y = 70
         self.rx_count_var = tk.StringVar(tab1_kanal)
         self.rx_count_lable = tk.Label(tab1_kanal, textvariable=self.rx_count_var)
-        self.rx_count_var.set('RX: 124544.5 kb')
+        self.rx_count_var.set('')
         self.rx_count_lable.place(x=_x, y=_y)
+
         ######################
         ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=110, relheight=0.6, relwidth=0.9)
         #####################
-
-
+        # Status /Pipe/Link/File-RX/File-TX
+        self.status_label_var = tk.StringVar(tab1_kanal)
+        self.status_label = tk.Label(tab1_kanal, fg='red', textvariable=self.status_label_var)
+        font = self.status_label.cget('font')
+        self.status_label.configure(font=(font[0], 12))
+        self.status_label.place(x=290, y=120)
 
         ################################
         # MH ##########################
@@ -349,8 +361,8 @@ class SideTabbedFrame:
         _y = 210
         self.mon_scroll_var = tk.BooleanVar(self.tab6_monitor)
         self.mon_scroll_ent = tk.Checkbutton(self.tab6_monitor,
-                                      variable=self.mon_scroll_var,
-                                      text=STR_TABLE['scrolling'][self.lang])
+                                             variable=self.mon_scroll_var,
+                                             text=STR_TABLE['scrolling'][self.lang])
         self.mon_scroll_ent.place(x=_x, y=_y)
 
         # PID
@@ -367,7 +379,7 @@ class SideTabbedFrame:
         self.mon_pid_ent = tk.ttk.Combobox(self.tab6_monitor,
                                            width=20,
                                            values=_vals,
-                                             textvariable=self.mon_pid_var)
+                                           textvariable=self.mon_pid_var)
         self.mon_pid_var.set(_vals[0])
         self.mon_pid_ent.place(x=_x + 40, y=_y)
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
@@ -588,8 +600,7 @@ class SideTabbedFrame:
                 status_text = 'Pipe'
             elif station.ft_tx_activ is not None:
                 status_text = 'Sending File'
-
-        self.status_label.configure(text=status_text)
+        self.status_label_var.set(status_text)
         self.rtt_best.configure(text=best)
         self.rtt_worst.configure(text=worst)
         self.rtt_avg.configure(text=avg)
@@ -621,6 +632,11 @@ class SideTabbedFrame:
             self.rnr_var.set(conn.is_RNR)
             self.rnr.configure(state='normal')
             self.link_holder.configure(state='normal')
+            if conn.link_holder_on:
+                self.link_holder_var.set(True)
+            else:
+                self.link_holder_var.set(False)
+
             self.tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
 
             if conn.is_RNR:
@@ -672,3 +688,8 @@ class SideTabbedFrame:
 
     def chk_t2speech(self):
         self.main_win.get_ch_param().t2speech = bool(self.t2speech_var.get())
+
+    def chk_autoscroll(self):
+        self.main_win.get_ch_param().autoscroll = bool(self.autoscroll_var.get())
+        if bool(self.autoscroll_var.get()):
+            self.main_win.see_end_qso_win()

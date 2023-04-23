@@ -85,14 +85,17 @@ class UserDB:
         except EOFError:
             pass
 
-    def get_entry(self, call_str):
+    def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
         if call_str:
             call_tup = call_tuple_fm_call_str(call_str)
             if call_str not in self.db.keys():
                 if call_tup[0] not in self.db.keys():
                     print('# User DB: New User added > ' + call_str)
-                    self.db[call_str] = Client(call_str)
+                    if add_new:
+                        self.db[call_str] = Client(call_str)
+                    else:
+                        return False
                 else:
                     return self.db[call_tup[0]]
             return self.db[call_str]

@@ -323,9 +323,10 @@ class UserDB(tk.Toplevel):
 
         self.user_db.save_data()
         self.root.update_station_info()
+        self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
 
     def ok_btn_cmd(self):
-        self.root.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
+
         self.root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.destroy_win()
 

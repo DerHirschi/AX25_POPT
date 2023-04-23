@@ -4,7 +4,7 @@ from cli.cli import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 
 
-VER = '2.77.10'
+VER = '2.78.1'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
