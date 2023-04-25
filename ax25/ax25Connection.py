@@ -249,6 +249,7 @@ class AX25Conn(object):
             self.set_T1()
             self.set_T3()
             self.zustand_exec = S1Frei(self)
+            self.handle_rx(ax25_frame)
         else:
             self.zustand_exec = S2Aufbau(self)
             # self.cli.change_cli_state(state=1)

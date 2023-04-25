@@ -56,6 +56,7 @@ STR_TABLE = {
     'qso_win_color': ('QSO Fenster Farben', 'QSO Win Color', 'Lekker QSO Win Color'),
     'text_color': ('Text Farben', 'Text Color', 'Lekker Text Color'),
     'bg_color': ('Hintergrund Farben', 'Backgrund Color', 'Lekker BG Color'),
+    'mon_color': ('Monitor Farben', 'Monitor Colors', 'Lekker Monitor Colors'),
     'c_text': ('C Text', 'C Text', 'Lekker C-Text'),
     'q_text': ('Quit Text', 'Quit Text', 'Lekker Quit-Text'),
     'i_text': ('Info Text', 'Info Text', 'Lekker Info-Text'),

@@ -295,6 +295,7 @@ class StatSetTab:
         self.update_vars_fm_cfg()
 
     def choose_color(self, fg_bg: bool):
+        self.main_cl.settings_win.attributes("-topmost", False)
         if fg_bg:
             col = askcolor(title=STR_TABLE['text_color'][self.lang])
             if col is not None:
@@ -307,6 +308,7 @@ class StatSetTab:
                 if col:
                     self.station_setting.stat_parm_qso_col_bg = col[1]
                     self.color_example_text.configure(bg=col[1])
+        self.main_cl.settings_win.attributes("-topmost", True)
 
     def chk_CLI(self, event=None):
         if self.cli_select_var.get() != 'PIPE':
@@ -516,7 +518,6 @@ class StationSettingsWin:
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.settings_win.resizable(False, False)
         self.settings_win.attributes("-topmost", True)
-        self.settings_win.attributes("-topmost", False)
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self.settings_win,
@@ -610,7 +611,6 @@ class StationSettingsWin:
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
         self.main_class.msg_to_monitor(STR_TABLE['lob1'][self.lang])
-
 
     def ok_btn_cmd(self):
         self.set_all_vars_to_cfg()

@@ -886,6 +886,7 @@ class TkMainWin:
         var = tk_filter_bad_chars(var)
         ind = self.mon_txt.index(tk.INSERT)
         tr = False
+        color_bg = conf.parm_mon_clr_bg
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
             tr = True
         if tx:
@@ -902,7 +903,7 @@ class TkMainWin:
             self.mon_txt.insert(tk.END, var)
             ind2 = self.mon_txt.index(tk.INSERT)
             self.mon_txt.tag_add(tag, ind, ind2)
-            self.mon_txt.tag_config(tag, foreground=color)
+            self.mon_txt.tag_config(tag, foreground=color, background=color_bg)
 
         # self.mon_txt.bindtags(self.mon_txt.tag_names(None))     # TODO Scrollbar is not scrollable after this
         # yscrollcommand = vbar.set
