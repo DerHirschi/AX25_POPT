@@ -503,7 +503,7 @@ class DefaultCLI(object):
                 .replace(']','') \
                 .replace(',','') \
                 .replace("'", "")
-            ret += f"{port_id} {name}   {stations}\r"
+            ret += f" {port_id} {name}   {stations}\r"
         ret += '\r'
         return ret
 

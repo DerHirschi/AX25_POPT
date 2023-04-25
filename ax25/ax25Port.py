@@ -171,6 +171,7 @@ class AX25Port(threading.Thread):
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
             self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
+            self.connections[uid].handle_rx(ax25_frame=ax25_frame)
             return True
         return False
 

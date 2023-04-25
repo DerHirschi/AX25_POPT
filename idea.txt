@@ -1,8 +1,7 @@
 Ideas/TODO's :
 
-- Autoscrolling überarbeiten.
 - ESC Befehle
-- Individuelle Farben (QSO/Vorschreib Fenster)
+- Individuelle Farben (Vorschreib Fenster)
 - Infos / Ctext usw. in User-DB speichern
 - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 - Logbuch
@@ -13,11 +12,13 @@ Ideas/TODO's :
 - Zeitgesteuerte connects und Kommando senden ( MH Liste abfragen o.Ä. )
 - AutoBin
 - Yapp
+- Optionale zusätzliche Monitorausgabe als Hex
 - Torrent ähnliches Filesharing via UI Frames
 - Daten Komprimierung
 - Daten Verschlüsselung ( AES )
 - ordentliches Noden System bzw CLI überarbeiten
 - DX-Alarm überarbeiten
+- Autoscrolling überarbeiten.
 - Optional nur als Konsolen Anwendung ohne GUI. (Ist bereits dafür vorbereitet)
 
 Evtl. später mal.

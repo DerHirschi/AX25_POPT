@@ -620,7 +620,10 @@ class TkMainWin:
             if self.win_buf[self.channel_index].t2speech \
                     and self.win_buf[self.channel_index].t2speech_buf:
                 to_speech = str(self.win_buf[self.channel_index].t2speech_buf)
-                if self.sprech(to_speech):
+                if self.setting_sprech.get() and self.setting_sound.get():
+                    if self.sprech(to_speech):
+                        self.win_buf[self.channel_index].t2speech_buf = ''
+                else:
                     self.win_buf[self.channel_index].t2speech_buf = ''
 
             elif not self.win_buf[self.channel_index].t2speech:
@@ -629,48 +632,50 @@ class TkMainWin:
             self.win_buf[self.channel_index].t2speech_buf = ''
 
     def sprech(self, text: str):
-        if text:
-            if self.sound_th is not None:
-                if self.sound_th.is_alive():
-                    return False
-            text = text.replace('\r', '').replace('\n', '')
-            text = text.replace('****', '*')
-            text = text.replace('***', '*')
-            text = text.replace('++++', '+')
-            text = text.replace('+++', '+')
-            text = text.replace('----', '-')
-            text = text.replace('---', '-')
-            text = text.replace('____', '_')
-            text = text.replace('___', '_')
-            text = text.replace('####', '#')
-            text = text.replace('###', '#')
-            text = text.replace('====', '=')
-            text = text.replace('===', '=')
-            text = text.replace('>>>', '>')
-            text = text.replace('<<<', '<')
-
-            if is_linux():
-                if self.setting_sprech.get():
-                    language = {
-                        0: 'de',
-                        1: 'en',
-                        2: 'nl',
-                        3: 'fr',
-                        4: 'fi',
-                        5: 'pl',
-                        6: 'pt',
-                        7: 'it',
-                        8: 'zh',
-                    }[self.language]
-                    try:
-                        tts = gTTS(text=text,
-                                   lang=language,
-                                   slow=False)
-                        tts.save('data/speech.mp3')
-                    except gtts.gTTSError:
-                        self.setting_sprech.set(False)
+        if self.setting_sprech.get() and self.setting_sound.get():
+            if text:
+                if self.sound_th is not None:
+                    if self.sound_th.is_alive():
                         return False
-                    return self.pl_sound('data/speech.mp3')
+                text = text.replace('\r', '').replace('\n', '')
+                text = text.replace('****', '*')
+                text = text.replace('***', '*')
+                text = text.replace('++++', '+')
+                text = text.replace('+++', '+')
+                text = text.replace('----', '-')
+                text = text.replace('---', '-')
+                text = text.replace('____', '_')
+                text = text.replace('___', '_')
+                text = text.replace('####', '#')
+                text = text.replace('###', '#')
+                text = text.replace('====', '=')
+                text = text.replace('===', '=')
+                text = text.replace('>>>', '>')
+                text = text.replace('<<<', '<')
+
+                if is_linux():
+                    if self.setting_sprech.get():
+                        language = {
+                            0: 'de',
+                            1: 'en',
+                            2: 'nl',
+                            3: 'fr',
+                            4: 'fi',
+                            5: 'pl',
+                            6: 'pt',
+                            7: 'it',
+                            8: 'zh',
+                        }[self.language]
+                        try:
+                            tts = gTTS(text=text,
+                                       lang=language,
+                                       slow=False)
+                            tts.save('data/speech.mp3')
+                        except gtts.gTTSError:
+                            self.setting_sprech.set(False)
+                            return False
+                        return self.pl_sound('data/speech.mp3')
+        return False
 
     def pl_sound(self, snd_file: str, wait=True):
         # TODO .. Again !!! ... Don't like this mess
