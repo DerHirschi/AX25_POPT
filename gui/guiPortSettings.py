@@ -453,20 +453,20 @@ class PortSetTab:
         # self.main_cl.settings_win.lower()
         # self.main_cl.settings_win.lift()
         if fg_bg == 'TX':
-            col = askcolor(title='TX')
-            if col is not None:
+            col = askcolor(self.port_setting.parm_mon_clr_tx, title='TX')
+            if col[1] is not None:
                 if col:
                     self.port_setting.parm_mon_clr_tx = col[1]
                     self.color_example_text_tx.configure(fg=col[1])
         elif fg_bg == 'RX':
-            col = askcolor(title='RX')
-            if col is not None:
+            col = askcolor(self.port_setting.parm_mon_clr_rx, title='RX')
+            if col[1] is not None:
                 if col:
                     self.port_setting.parm_mon_clr_rx = col[1]
-                    self.color_example_text_rx.configure(bg=col[1])
+                    self.color_example_text_rx.configure(fg=col[1])
         elif fg_bg == 'BG':
-            col = askcolor(title=STR_TABLE['bg_color'][self.lang])
-            if col is not None:
+            col = askcolor(self.port_setting.parm_mon_clr_bg, title=STR_TABLE['bg_color'][self.lang])
+            if col[1] is not None:
                 if col:
                     self.port_setting.parm_mon_clr_bg = col[1]
                     self.color_example_text_tx.configure(bg=col[1])

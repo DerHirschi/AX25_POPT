@@ -297,14 +297,17 @@ class StatSetTab:
     def choose_color(self, fg_bg: bool):
         self.main_cl.settings_win.attributes("-topmost", False)
         if fg_bg:
-            col = askcolor(title=STR_TABLE['text_color'][self.lang])
-            if col is not None:
+            col = askcolor(self.station_setting.stat_parm_qso_col_text,
+                           title=STR_TABLE['text_color'][self.lang])
+            if col[1] is not None:
+                print(col)
                 if col:
                     self.station_setting.stat_parm_qso_col_text = col[1]
                     self.color_example_text.configure(fg=col[1])
         else:
-            col = askcolor(title=STR_TABLE['bg_color'][self.lang])
-            if col is not None:
+            col = askcolor(self.station_setting.stat_parm_qso_col_bg,
+                           title=STR_TABLE['bg_color'][self.lang])
+            if col[1] is not None:
                 if col:
                     self.station_setting.stat_parm_qso_col_bg = col[1]
                     self.color_example_text.configure(bg=col[1])
