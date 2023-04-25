@@ -54,7 +54,7 @@ class Client(object):
         self.Software = ''
 
         self.last_edit = datetime.datetime.now()
-        self.is_new = True
+        self.Connects = 0
 
         self.pac_len = 0
         self.max_pac = 0
@@ -97,9 +97,18 @@ class UserDB:
                     else:
                         return False
                 else:
+                    self.entry_var_upgrade(call_tup[0])
                     return self.db[call_tup[0]]
+            self.entry_var_upgrade(call_str)
             return self.db[call_str]
         return False
+
+    def entry_var_upgrade(self, ent_key):
+        if ent_key in self.db.keys():
+            compare = Client('ALL')
+            for new_att in dir(compare):
+                if not hasattr(self.db[ent_key], new_att):
+                    setattr(self.db[ent_key], new_att, getattr(compare, new_att))
 
     def save_data(self):
         print('Save Client DB')

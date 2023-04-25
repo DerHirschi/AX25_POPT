@@ -161,4 +161,8 @@ STR_TABLE = {
                      '# HTTP is set',
                      '# Lekker HTTP ingevoerd',
                      ),
+
+    'port_overview': ('Port Übersicht',
+                      'Port Overview',
+                      'Lekker Ports')
 }

@@ -351,6 +351,7 @@ class AX25Conn(object):
     def set_user_db_ent(self):
         self.user_db_ent = self.user_db.get_entry(self.to_call_str)
         if self.user_db_ent:
+            self.user_db_ent.Connects += 1  # TODO Count just when connected
             if self.user_db_ent.Language == -1:
                 if self.gui is None:
                     self.user_db_ent.Language = 0

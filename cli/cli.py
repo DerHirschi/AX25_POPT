@@ -74,6 +74,7 @@ class DefaultCLI(object):
         self.cmd_exec = {
             b'Q': (self.cmd_q, 'Quit'),
             b'C': (self.cmd_connect, 'Connect'),
+            b'P': (self.cmd_port, 'Ports'),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
             b'I': (self.cmd_i, 'Info'),
             b'LI': (self.cmd_li, 'Lange Info'),
@@ -491,6 +492,28 @@ class DefaultCLI(object):
         logger.error("User-DB Error. cmd_set_http NO ENTRY FOUND !")
         return "\r# USER-DB Error !\r"
 
+    def cmd_port(self):
+        ret = f"\r   < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
+        ret += "-#-Name--------Stations---------\r"
+        for port_id in self.port_handler.ax25_ports.keys():
+            port = self.port_handler.ax25_ports[port_id]
+            name = str(port.portname).ljust(7)
+            stations = str(port.my_stations)\
+                .replace('[','') \
+                .replace(']','') \
+                .replace(',','') \
+                .replace("'", "")
+            ret += f"{port_id} {name}   {stations}\r"
+        ret += '\r'
+        return ret
+
+    def cmd_help(self):
+        ret = f"\r   < {STR_TABLE['help'][self.connection.cli_language]} >\r\r"
+        for k in self.cmd_exec.keys():
+            if self.cmd_exec[k][1]:
+                ret += '\r {}{:6} = {}'.format(self.prefix.decode('UTF-8', 'ignore'), k.decode('utf-8'), self.cmd_exec[k][1])
+        ret += '\r\r\r'
+        return ret
 
     def str_cmd_req_name(self):
         # print("REQ NAME")
@@ -517,14 +540,6 @@ class DefaultCLI(object):
         if tmp in cmd_dict.keys():
             return cmd_dict[tmp]
         return ''
-
-    def cmd_help(self):
-        ret = f"\r   < {STR_TABLE['help'][self.connection.cli_language]} >\r\r"
-        for k in self.cmd_exec.keys():
-            if self.cmd_exec[k][1]:
-                ret += '\r {}{:6} = {}'.format(self.prefix.decode('UTF-8', 'ignore'), k.decode('utf-8'), self.cmd_exec[k][1])
-        ret += '\r\r\r'
-        return ret
 
     def cli_exec(self, inp=b''):
         if not self.connection.is_link:

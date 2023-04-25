@@ -2,8 +2,9 @@ Ideas/TODO's :
 
 - Autoscrolling überarbeiten.
 - ESC Befehle
-- Individuelle Farben ( QSO/Vorschreib Fenster )
-- Infos / Ctext usw. in ClientDB speichern
+- Individuelle Farben (QSO/Vorschreib Fenster)
+- Infos / Ctext usw. in User-DB speichern
+- User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 - Logbuch
 - Telnet Port
 - MultiKISS
@@ -17,3 +18,8 @@ Ideas/TODO's :
 - Daten Verschlüsselung ( AES )
 - ordentliches Noden System bzw CLI überarbeiten
 - DX-Alarm überarbeiten
+
+Evtl. später mal.
+
+- Web-GUI
+- Persönlichen Telegram Bot als UI
