@@ -1,6 +1,7 @@
 from tkinter import ttk as ttk
 from tkinter import filedialog as fd
 from tkinter import scrolledtext
+from tkinter.colorchooser import askcolor
 from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data
 from cli.cli import *
 from ax25.ax25UI_Pipe import AX25Pipe
@@ -259,6 +260,29 @@ class StatSetTab:
                   command=lambda: self.select_files(tx=False)
                   ).place(x=_x + 710, y=_y - 2)
 
+        # Individual Colors for QSO Window
+        tab_colors = ttk.Frame(self.textTab)
+        bg = self.station_setting.stat_parm_qso_col_bg
+        fg = self.station_setting.stat_parm_qso_col_text
+        self.color_example_text = tk.Text(tab_colors,
+                                          height=6,
+                                          width=50,
+                                          font=('Courier', 11),
+                                          fg=fg,
+                                          bg=bg)
+        self.color_example_text.place(x=200, y=10)
+        self.color_example_text.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
+        # FG
+        tk.Button(tab_colors,
+                  text='Text',
+                  command= lambda : self.choose_color(True)
+                  ).place(x=20, y=20)
+
+        # BG
+        tk.Button(tab_colors,
+                  text='BG',
+                  command= lambda : self.choose_color(False)
+                  ).place(x=20, y=120)
 
         self.textTab.add(tab_ctext, text=STR_TABLE['c_text'][self.lang])
         self.textTab.add(tab_byetext, text=STR_TABLE['q_text'][self.lang])
@@ -266,8 +290,23 @@ class StatSetTab:
         self.textTab.add(tab_loinfotext, text=STR_TABLE['li_text'][self.lang])
         self.textTab.add(tab_akttext, text=STR_TABLE['news_text'][self.lang])
         self.textTab.add(tab_pipe, text='Pipe')
+        self.textTab.add(tab_colors, text=STR_TABLE['qso_win_color'][self.lang])
 
         self.update_vars_fm_cfg()
+
+    def choose_color(self, fg_bg: bool):
+        if fg_bg:
+            col = askcolor(title=STR_TABLE['text_color'][self.lang])
+            if col is not None:
+                if col:
+                    self.station_setting.stat_parm_qso_col_text = col[1]
+                    self.color_example_text.configure(fg=col[1])
+        else:
+            col = askcolor(title=STR_TABLE['bg_color'][self.lang])
+            if col is not None:
+                if col:
+                    self.station_setting.stat_parm_qso_col_bg = col[1]
+                    self.color_example_text.configure(bg=col[1])
 
     def chk_CLI(self, event=None):
         if self.cli_select_var.get() != 'PIPE':

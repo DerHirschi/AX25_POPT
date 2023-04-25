@@ -18,6 +18,7 @@ Ideas/TODO's :
 - Daten Verschlüsselung ( AES )
 - ordentliches Noden System bzw CLI überarbeiten
 - DX-Alarm überarbeiten
+- Optional nur als Konsolen Anwendung ohne GUI. (Ist bereits dafür vorbereitet)
 
 Evtl. später mal.
 

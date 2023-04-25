@@ -481,9 +481,6 @@ class TkMainWin:
         data = self.mon_txt.get('1.0', tk.END)
         save_file_dialog(data)
 
-    def ch_btn_status_update(self):
-        self.ch_btn.ch_btn_status_update()
-
     def set_binds(self):
         self.inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
 
@@ -847,7 +844,14 @@ class TkMainWin:
                     tr = False
                     if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
                         tr = True
-                    self.out_txt.configure(state="normal")
+                    bg = conn.stat_cfg.stat_parm_qso_col_bg
+                    fg = conn.stat_cfg.stat_parm_qso_col_text
+                    # self.out_txt_win.tag_config("input", foreground="yellow")
+                    self.out_txt.configure(state="normal", fg=fg, bg=bg)
+                    self.out_txt.tag_config("output",
+                                            foreground=fg,
+                                            background=bg)
+
 
                     ind = self.out_txt.index(tk.INSERT)
                     self.out_txt.insert('end', inp)
@@ -1171,12 +1175,12 @@ class TkMainWin:
         self.txt_win.switch_mon_mode()
         if self.mon_mode:
             # self.channel_index = int(self.mon_mode)
-            self.ch_btn.ch_btn_clk(int(self.mon_mode))
+            self.ch_btn_clk(int(self.mon_mode))
             self.mon_mode = 0
             self.mon_btn.configure(bg='yellow')
         else:
             self.mon_mode = int(self.channel_index)
-            self.ch_btn.ch_btn_clk(0)
+            self.ch_btn_clk(0)
             self.mon_btn.configure(bg='green')
 
         self.ch_btn_status_update()
@@ -1189,4 +1193,49 @@ class TkMainWin:
                 self.mon_mode = int(ch_ind)
                 self.switch_monitor_mode()
             else:
-                self.ch_btn.ch_btn_clk(ch_ind)
+                self.ch_btn_clk(ch_ind)
+
+    def ch_btn_status_update(self):
+        self.ch_btn.ch_btn_status_update()
+
+    def ch_btn_clk(self, ind: int):
+        self.get_ch_param().input_win = self.inp_txt.get('1.0', tk.END)
+        self.channel_index = ind
+        # if ind:
+        self.get_ch_param().new_data_tr = False
+        self.get_ch_param().rx_beep_tr = False
+
+        conn = self.get_conn()
+        if conn:
+            bg = conn.stat_cfg.stat_parm_qso_col_bg
+            fg = conn.stat_cfg.stat_parm_qso_col_text
+            self.out_txt.configure(state="normal", fg=fg, bg=bg)
+        else:
+            self.out_txt.configure(state="normal")
+
+        self.out_txt.delete('1.0', tk.END)
+        self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
+        self.out_txt.configure(state="disabled")
+        self.out_txt.see(tk.END)
+        self.inp_txt.delete('1.0', tk.END)
+        # self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
+        self.inp_txt.insert(tk.END, self.win_buf[ind].input_win[:-1])
+        self.inp_txt.see(tk.END)
+        # self.main_class: gui.guiMainNew.TkMainWin
+        if self.get_ch_param().rx_beep_opt and ind:
+            self.txt_win.rx_beep_box.select()
+            self.txt_win.rx_beep_box.configure(bg='green')
+        else:
+            self.txt_win.rx_beep_box.deselect()
+            self.txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR)
+
+        if self.get_ch_param().timestamp_opt and ind:
+            self.txt_win.ts_box_box.select()
+            self.txt_win.ts_box_box.configure(bg='green')
+        else:
+            self.txt_win.ts_box_box.deselect()
+            self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
+
+        self.ch_btn.ch_btn_status_update()
+        # self.main_class.change_conn_btn()
+        self.kanal_switch()     # Sprech

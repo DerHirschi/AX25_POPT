@@ -222,21 +222,11 @@ class AX25Conn(object):
         self.link_holder_interval: int = 30  # Minutes
         self.link_holder_timer = time.time()
         self.link_holder_text: str = '\r'
-        """ Station Individual Parameter """
-        """
-        stat_call = self.stat_cfg.stat_parm_Call
-        if stat_call != config_station.DefaultStation.stat_parm_Call:
-            if stat_call in self.cfg.parm_stat_PacLen.keys():
-                if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                    self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-            if stat_call in self.cfg.parm_stat_MaxFrame.keys():
-                if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                    self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
-        """
         """ User DB Entry """
         self.user_db = self.port_handler.user_db
         self.user_db_ent = False
         self.set_user_db_ent()
+        """ Station Individual Parameter """
         self.set_packet_param()
         """ Init CLI """
         self.cli_language = 0

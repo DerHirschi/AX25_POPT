@@ -4,7 +4,7 @@ from cli.cli import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 
 
-VER = '2.79.0dev'
+VER = '2.79.1dev'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -138,7 +138,8 @@ class DefaultStation(object):
     stat_parm_PacLen: int = 0      # Max Pac len
     stat_parm_MaxFrame: int = 0    # Max (I) Frames
     # stat_param_beacons: {int: [Beacon]} = {}
-
+    stat_parm_qso_col_text = 'red'
+    stat_parm_qso_col_bg = 'black'
 
 class DefaultPort(object):
     parm_Stations: [DefaultStation] = []

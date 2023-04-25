@@ -3,7 +3,7 @@ import time
 import random
 # from tkinter import scrolledtext
 
-STAT_BAR_CLR = 'grey60'
+# STAT_BAR_CLR = 'grey60'
 
 
 class ChBtnFrm:
@@ -114,7 +114,8 @@ class ChBtnFrm:
             self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
         self.main_class.ch_alarm = ch_alarm
 
-    def ch_btn_clk(self, ind: int):
+    """
+    def ch_btn_clk(self, ind: int):     # TODO Move to guiMain
         self.main_class.get_ch_param().input_win = self.main_class.inp_txt.get('1.0', tk.END)
         self.main_class.channel_index = ind
         # if ind:
@@ -150,7 +151,7 @@ class ChBtnFrm:
         self.ch_btn_status_update()
         # self.main_class.change_conn_btn()
         self.main_class.kanal_switch()
-
+    """
     def ch_btn_alarm(self, btn: tk.Button):
         if self.ch_btn_blink_timer < time.time():
             COLORS = ['gainsboro', 'old lace',

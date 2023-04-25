@@ -494,7 +494,7 @@ class DefaultCLI(object):
 
     def cmd_port(self):
         ret = f"\r   < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
-        ret += "-#-Name--------Stations---------\r"
+        ret += "-#-Name------Stations---------\r"
         for port_id in self.port_handler.ax25_ports.keys():
             port = self.port_handler.ax25_ports[port_id]
             name = str(port.portname).ljust(7)
