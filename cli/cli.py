@@ -16,7 +16,7 @@ class DefaultCLI(object):
     cli_name = ''  # DON'T CHANGE !
     c_text = '-= Test C-TEXT =-\r\r'
     bye_text = '73 ...\r'
-    prompt = 'TEST-STATION>'
+    prompt = ''
     prefix = b'//'
 
     def __init__(self, connection):
@@ -67,7 +67,7 @@ class DefaultCLI(object):
         self.encoding = 'UTF-8', 'ignore'
         # Crone
         self.cron_state_exec = {
-            0: self.cron_s0,
+            0: self.cron_s0,        # No CMDs / Doing nothing
             100: self.cron_s_quit  # QUIT
         }
         # Standard Commands ( GLOBAL )
@@ -107,6 +107,7 @@ class DefaultCLI(object):
         self.state_exec = {
             0: self.s0,  # C-Text
             1: self.s1,  # Cmd Handler
+            2: self.s2,  # Nothing / no remote
         }
         self.cmd_exec_ext = {}
         self.cron_state_exec_ext = {}
@@ -243,7 +244,10 @@ class DefaultCLI(object):
                 # print("INP: {}".format(self.input))
                 ret = self.cmd_exec[self.cmd][0]()
                 self.cmd = b''
-                if self.crone_state_index != 100:  # Not Quit
+                if self.crone_state_index != 100 and self.state_index != 2:  # Not Quit
+                    print(ret)
+                    if ret is None:
+                        ret = ''
                     ret += self.prompt
             else:
                 ret = '# Dieses Kommando ist dem System nicht bekannt\r'
@@ -255,6 +259,8 @@ class DefaultCLI(object):
                 ret = ret.encode(self.encoding[0], self.encoding[1])
             self.connection.tx_buf_rawData += ret
         """
+    def send_prompt(self):
+        self.send_output(self.prompt)
 
     def decode_param(self):
         tmp = []
@@ -263,9 +269,9 @@ class DefaultCLI(object):
         self.parameter = list(tmp)
 
     def cmd_connect(self):  # DUMMY
-        print(f'cmd_connect() param: {self.parameter}')
+        # print(f'cmd_connect() param: {self.parameter}')
         self.decode_param()
-        print(f'cmd_connect() param.decode: {self.parameter}')
+        # print(f'cmd_connect() param.decode: {self.parameter}')
 
         if not self.parameter:
             ret = 'Bitte Call eingeben..\r'
@@ -300,14 +306,17 @@ class DefaultCLI(object):
                 else:
                     break
 
-        return self.port_handler.new_outgoing_connection(
+        conn = self.port_handler.new_outgoing_connection(
             own_call=self.connection.to_call_str,
             dest_call=dest_call,
             via_calls=vias,
             port_id=port_id,
             link_conn=self.connection,
             # link_call=str(self.connection.my_call_str)
-        )[1]
+        )
+        if conn[0]:
+            self.state_index = 2
+            return conn[1]
 
     def cmd_echo(self):  # Quit
         ret = ''
@@ -568,7 +577,7 @@ class DefaultCLI(object):
         self.send_output(ret)
 
     def s0(self):  # C-Text
-        self.build_prompt()
+        # self.build_prompt()
         self.state_index = 1
         if self.prefix:
             return self.c_text
@@ -598,6 +607,9 @@ class DefaultCLI(object):
         self.raw_input = b''
         return ''
 
+    def s2(self):
+        return ""
+
     def cron_s0(self):
         """ Dummy for doing nothing """
         return ''
@@ -615,7 +627,7 @@ class NodeCLI(DefaultCLI):
     cli_name = 'NODE'  # DON'T CHANGE !
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
-    prompt = 'TEST-STATION-NODE-CLI>'
+    prompt = 'PoPT-NODE>'
     prefix = b''
 
     # Extra CMDs for this CLI

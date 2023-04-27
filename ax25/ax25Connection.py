@@ -263,6 +263,7 @@ class AX25Conn(object):
     def init_cli(self):
         if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
             self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
+            self.cli.build_prompt()
         """
         else:
             self.cli = cli.cli.NoneCLI(self)
@@ -541,13 +542,15 @@ class AX25Conn(object):
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
+                    self.LINK_Connection.cli.send_prompt()
+                    # self.LINK_Connection.cli.build_prompt()
 
     def del_link(self):
         """ Called in State.link_cleanup() """
         if self.LINK_Connection is not None:
             # print("LINK CLEANUP")
             # print(f'LINK CLEANUP link_connections K : {self.port_handler.link_connections.keys()}')
-
+            self.port_handler.del_link(self.uid)
             self.LINK_Connection = None
             self.is_link = False
 

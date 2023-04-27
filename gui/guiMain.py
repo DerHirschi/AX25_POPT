@@ -667,6 +667,7 @@ class TkMainWin:
                             8: 'zh',
                         }[self.language]
                         try:
+                            print("GTTS")
                             tts = gTTS(text=text,
                                        lang=language,
                                        slow=False)
@@ -902,14 +903,19 @@ class TkMainWin:
         else:
             self.mon_txt.insert(tk.END, var)
             ind2 = self.mon_txt.index(tk.INSERT)
+            self.mon_txt.tag_config(tag, foreground=color,
+                                    background=color_bg,
+                                    selectbackground=self.mon_txt.cget('selectbackground'),
+                                    selectforeground=self.mon_txt.cget('selectforeground'),
+                                    )
             self.mon_txt.tag_add(tag, ind, ind2)
-            self.mon_txt.tag_config(tag, foreground=color, background=color_bg)
+
 
         # self.mon_txt.bindtags(self.mon_txt.tag_names(None))     # TODO Scrollbar is not scrollable after this
         # yscrollcommand = vbar.set
         # self.mon_txt.configure(yscrollcommand=self.mon_txt.vbar.set())
         # self.mon_txt.update()
-        self.mon_txt.configure(state="disabled")
+        self.mon_txt.configure(state="disabled", exportselection=1)
         # self.mon_txt.vbar.s
         if tr or self.tabbed_sideFrame.mon_scroll_var.get():
             self.mon_txt.see(tk.END)
