@@ -12,6 +12,8 @@ Ideas/TODO's :
 - Zeitgesteuerte connects und Kommando senden ( MH Liste abfragen o.Ä. )
 - AutoBin
 - Yapp
+- APRS de/encoding
+- APRS Digi / I-Gate Funktion
 - Optionale zusätzliche Monitorausgabe als Hex
 - Torrent ähnliches Filesharing via UI Frames
 - Daten Komprimierung
