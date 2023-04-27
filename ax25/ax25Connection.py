@@ -538,6 +538,7 @@ class AX25Conn(object):
                     self.LINK_Connection.zustand_exec.change_state(4)
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
+                    self.port_handler.del_link(self.LINK_Connection.uid)
                     self.LINK_Connection.tx_buf_rawData += '\n*** Reconnected to {}\n'.format(self.my_call_str).encode()
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
@@ -553,6 +554,11 @@ class AX25Conn(object):
             self.port_handler.del_link(self.uid)
             self.LINK_Connection = None
             self.is_link = False
+
+    def link_cleanup(self):
+        self.link_disco()
+        self.del_link()
+        self.port_handler.del_link(self.uid)
 
     # ##############
     # DISCO
@@ -907,11 +913,6 @@ class DefaultStat(object):
             self.ax25conn.tx_buf_rawData += bytes(self.ax25conn.LINK_Connection.LINK_rx_buff)
             self.ax25conn.LINK_Connection.LINK_rx_buff = b''
 
-    def link_cleanup(self):
-        # TODO Move up to AX25Conn
-        self.ax25conn.link_disco()
-        self.ax25conn.del_link()
-
     def send_to_link(self, inp: b''):
         # TODO Move up to AX25Conn
         if inp:
@@ -941,7 +942,7 @@ class DefaultStat(object):
 
     def cleanup(self):
         # print('STATE 0 Cleanup')
-        self.link_cleanup()
+        self.ax25conn.link_cleanup()
         self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)  # TODO Move up to AX25Conn
         self.ax25conn.own_port.del_connections(conn=self.ax25conn)  # TODO Move up to AX25Conn
 
@@ -950,8 +951,8 @@ class DefaultStat(object):
         self.ax25conn.n2 = 1
         self.ax25conn.set_T1()
         self.change_state(1)
-        self.link_cleanup()
-        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)  # TODO Move up to AX25Conn
+        self.ax25conn.link_cleanup()
+        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
 
     def t1_fail(self):
         pass
@@ -1078,21 +1079,6 @@ class S2Aufbau(DefaultStat):  # INIT TX
     def tx(self, ax25_frame: AX25Frame = None):
         """ NOT USED... CLEANUP !!!"""
         pass
-        """
-        print("TX S2 !!!!!!!!!!!!!!!!")
-        ax25_frame = self.ax25conn.ax25_out_frame
-        # self.rtt_timer.set_rtt_single_timer()
-
-        if time.time() > self.ax25conn.t1 \
-                and time.time() > self.ax25conn.t3:
-            if self.ax25conn.LINK_Connection is None:
-                self.ax25conn.rx_buf_rawData = '\n*** Try connect to {}\n'.format(ax25_frame.to_call.call_str).encode()
-            self.ax25conn.send_SABM()
-            self.ax25conn.set_T1()
-            # self.ax25conn.set_T3()
-            # if self.ax25conn.is_prt_hndl:
-            self.ax25conn.port_handler.insert_conn2all_conn_var(new_conn=self.ax25conn)
-        """
 
     def rx_SABM(self):
         self.accept()
@@ -1113,6 +1099,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def accept(self):
+        # TODO Move up to Conn
         # print("S2 - ACCEPT")
         if self.ax25conn.LINK_Connection is None:
             self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode()
@@ -1129,6 +1116,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
             self.ax25conn.gui.new_conn_snd()
 
     def reject(self):
+        # TODO Move up to Conn
         self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode()
         self.S1_end_connection()
 
@@ -1136,6 +1124,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def t1_fail(self):
+        # TODO ??? Move up to Conn ???
         if not self.ax25conn.n2:
             if self.ax25conn.LINK_Connection is None:
                 to_qso_win = f'\n*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str} > ' \
@@ -1272,12 +1261,9 @@ class S4Abbau(DefaultStat):
         pass
 
     def n2_fail(self):
-        # if self.digi_conn is None:
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
         self.S1_end_connection()
-        # if self.ax25conn.is_prt_hndl:
-        # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
 
 class S5Ready(DefaultStat):
@@ -1500,7 +1486,6 @@ class S7WaitForFinal(DefaultStat):
         self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
         self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
-        # self.change_state(7)  # S7 Warten auf Final
 
     def t3_fail(self):
         pass

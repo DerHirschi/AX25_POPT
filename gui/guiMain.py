@@ -675,7 +675,7 @@ class TkMainWin:
                         except gtts.gTTSError:
                             self.setting_sprech.set(False)
                             return False
-                        return self.pl_sound('data/speech.mp3')
+                        return self.pl_sound('data//speech.mp3')
         return False
 
     def pl_sound(self, snd_file: str, wait=True):
@@ -722,13 +722,13 @@ class TkMainWin:
                         if tr:
                             if temp.rx_beep_tr:
                                 temp.rx_beep_tr = False
-                                self.pl_sound('data/sound/rx_beep.wav', False)
+                                self.pl_sound('data//sound//rx_beep.wav', False)
 
     def new_conn_snd(self):
-        self.pl_sound('data/sound/conn_alarm.wav', False)
+        self.pl_sound('data//sound//conn_alarm.wav', False)
 
     def disco_snd(self):
-        self.pl_sound('data/sound/disco_alarm.wav', False)
+        self.pl_sound('data//sound//disco_alarm.wav', False)
 
     # Sound Ende
     #################
