@@ -34,7 +34,7 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
 from gui.vars import ALL_COLOURS
 from string_tab import STR_TABLE
-from fnc.os_fnc import is_linux, is_windows
+from fnc.os_fnc import is_linux, is_windows, get_own_dir
 
 if is_linux():
     from playsound import playsound
@@ -74,6 +74,8 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
+        self.root_dir = get_own_dir()
+        self.root_dir = self.root_dir.replace('/', '//')
         #####################
         #####################
         # GUI VARS
@@ -675,7 +677,7 @@ class TkMainWin:
                         except gtts.gTTSError:
                             self.setting_sprech.set(False)
                             return False
-                        return self.pl_sound('data//speech.mp3')
+                        return self.pl_sound(self.root_dir + '//data//speech.mp3')
         return False
 
     def pl_sound(self, snd_file: str, wait=True):
@@ -722,13 +724,13 @@ class TkMainWin:
                         if tr:
                             if temp.rx_beep_tr:
                                 temp.rx_beep_tr = False
-                                self.pl_sound('data//sound//rx_beep.wav', False)
+                                self.pl_sound(self.root_dir + '//data//sound//rx_beep.wav', False)
 
     def new_conn_snd(self):
-        self.pl_sound('data//sound//conn_alarm.wav', False)
+        self.pl_sound(self.root_dir + '//data//sound//conn_alarm.wav', False)
 
     def disco_snd(self):
-        self.pl_sound('data//sound//disco_alarm.wav', False)
+        self.pl_sound(self.root_dir + '//data//sound//disco_alarm.wav', False)
 
     # Sound Ende
     #################
