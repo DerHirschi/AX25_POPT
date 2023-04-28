@@ -8,6 +8,7 @@ import sys
 
 import gtts
 from gtts import gTTS
+
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg)
 import matplotlib.pyplot as plt
@@ -90,7 +91,7 @@ class TkMainWin:
         self.parm_btn_blink_time = 0.3
         self.parm_rx_beep_cooldown = 1.5
         # Tasker Timings
-        self.loop_delay = 50  # ms
+        self.loop_delay = 60  # ms
         self.parm_non_prio_task_timer = 0.5  # s
         self.parm_non_non_prio_task_timer = 1  # s
         self.non_prio_task_timer = time.time()
@@ -707,7 +708,7 @@ class TkMainWin:
                 return True
             else:
                 if is_linux():
-                    threading.Thread(target=playsound, args=(snd_file, False)).start()
+                    threading.Thread(target=playsound, args=(snd_file, True)).start()
                 elif is_windows():
                     threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
                 return True

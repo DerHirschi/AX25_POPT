@@ -467,7 +467,7 @@ class AX25Port(threading.Thread):
     def run(self):
         while self.loop_is_running and self.device_is_running:
             self.tasks()
-            time.sleep(0.1)
+            time.sleep(0.15)
         self.close()
         self.ende = True
 
