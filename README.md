@@ -36,13 +36,18 @@ Packages Required:
 Install all dependencies:
   ``` sh
   $ pip uninstall matplotlib
-  $ apt install python3-matplotlib
+  $ sudo apt install python3-matplotlib
   $ pip uninstall tk
-  $ apt install python3-tk
+  $ sudo apt install python3-tk
   $ pip install playsound
   $ pip install crcmod
   $ pip install pyserial
   $ pip install gtts
+  ```
+
+If problems with playsound on Debian OS:
+  ``` sh
+  $ sudo apt install python3-gst-1.0
   ```
 
 Run:
@@ -50,15 +55,6 @@ Run:
   $ python3 main.py
   ```
 
-Please be sure to use Python Version <= 3.8 ( Just testet with 3.6 & 3.8 )
-Example:
-  ``` sh
-  $ python3.8 main.py
-  ```
-Example:
-  ``` sh
-  $ python3.6 main.py
-  ```
 
 Supported AX.25 connection options:
 - KISS via TCP (e.g. Direwolf)

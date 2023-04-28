@@ -1,15 +1,18 @@
 import tkinter as tk
 import threading
 from tkinter import ttk as ttk
-from gui.vars import ALL_COLOURS
+from tkinter.colorchooser import askcolor
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
 from config_station import DefaultPort, get_all_stat_cfg, del_port_data
 from fnc.os_fnc import is_linux
+from string_tab import STR_TABLE
 
 
 class PortSetTab:
     def __init__(self, main_stt_win, setting: DefaultPort, tabclt: ttk.Notebook):
         self.tab_clt = tabclt
+        self.main_cl = main_stt_win
+        self.lang = main_stt_win.lang
         # self.ports_sett: {int: DefaultPortConfig} = main_stt_win.all_port_settings
         self.height = main_stt_win.win_height
         height = self.height
@@ -342,12 +345,40 @@ class PortSetTab:
         # Label
         mon_col_la_x = 160
         mon_col_la_y = 15
-        mon_col_label = tk.Label(mon_col_frame, text='Monitor Farben', bg=bg_cl)
+        mon_col_label = tk.Label(mon_col_frame, text=STR_TABLE['mon_color'][self.lang], bg=bg_cl)
         mon_col_label.place(x=mon_col_la_x, y=mon_col_la_y)
+        #################
+        # preview win TX
+        # bg = self.station_setting.stat_parm_qso_col_bg
+        # fg = self.station_setting.stat_parm_qso_col_text
+        self.color_example_text_tx = tk.Text(mon_col_frame,
+                                          height=3,
+                                          width=28,
+                                          font=('Courier', 11),
+                                          fg=self.port_setting.parm_mon_clr_tx,
+                                          bg=self.port_setting.parm_mon_clr_bg
+                                          )
+        self.color_example_text_tx.place(x=100, y=10)
+        self.color_example_text_tx.insert(tk.END, 'TX> Test TEXT. 1234. 73...')
+        # preview win RX
+        self.color_example_text_rx = tk.Text(mon_col_frame,
+                                             height=3,
+                                             width=28,
+                                             font=('Courier', 11),
+                                             fg=self.port_setting.parm_mon_clr_rx,
+                                             bg=self.port_setting.parm_mon_clr_bg
+                                             )
+        self.color_example_text_rx.place(x=100, y=100)
+        self.color_example_text_rx.insert(tk.END, 'RX> Test TEXT. 1234. 73...')
         #################
         # TX
         tx_sel_x = 20
-        tx_sel_y = 50
+        tx_sel_y = 20
+        tk.Button(mon_col_frame,
+                  text='TX',
+                  command=lambda: self.choose_color('TX')
+                  ).place(x=tx_sel_x, y=tx_sel_y)
+        """
         tx_sel_label = tk.Label(mon_col_frame, text='TX:', bg=bg_cl)
         self.tx_col_select_var = tk.StringVar(self.tab)
         self.tx_col_select_var.set(self.port_setting.parm_mon_clr_tx)  # default value
@@ -355,10 +386,24 @@ class PortSetTab:
         # tx_sel.configure(width=18, height=20, bg=bg_cl)
         tx_sel_label.place(x=tx_sel_x, y=tx_sel_y)
         tx_sel.place(x=tx_sel_x + 55, y=tx_sel_y)
+        """
         #################
         # RX
         rx_sel_x = 20
-        rx_sel_y = 85
+        rx_sel_y = 70
+        tk.Button(mon_col_frame,
+                  text='RX',
+                  command=lambda: self.choose_color('RX')
+                  ).place(x=rx_sel_x, y=rx_sel_y)
+        #################
+        # BG
+        bg_sel_x = 20
+        bg_sel_y = 120
+        tk.Button(mon_col_frame,
+                  text='BG',
+                  command=lambda: self.choose_color('BG')
+                  ).place(x=bg_sel_x, y=bg_sel_y)
+        """
         rx_sel_label = tk.Label(mon_col_frame, text='RX:', bg=bg_cl)
         self.rx_col_select_var = tk.StringVar(self.tab)
         self.rx_col_select_var.set(self.port_setting.parm_mon_clr_rx)  # default value
@@ -366,6 +411,7 @@ class PortSetTab:
         # tx_sel.configure(width=18, height=20, bg=bg_cl)
         rx_sel_label.place(x=rx_sel_x, y=rx_sel_y)
         rx_sel.place(x=rx_sel_x + 55, y=rx_sel_y)
+        """
 
         #####################################
         #################
@@ -401,6 +447,32 @@ class PortSetTab:
     def win_tasker(self):
         # self.update_port_parameter()
         pass
+
+    def choose_color(self, fg_bg: str):
+        self.main_cl.settings_win.attributes("-topmost", False)
+        # self.main_cl.settings_win.lower()
+        # self.main_cl.settings_win.lift()
+        if fg_bg == 'TX':
+            col = askcolor(self.port_setting.parm_mon_clr_tx, title='TX')
+            if col[1] is not None:
+                if col:
+                    self.port_setting.parm_mon_clr_tx = col[1]
+                    self.color_example_text_tx.configure(fg=col[1])
+        elif fg_bg == 'RX':
+            col = askcolor(self.port_setting.parm_mon_clr_rx, title='RX')
+            if col[1] is not None:
+                if col:
+                    self.port_setting.parm_mon_clr_rx = col[1]
+                    self.color_example_text_rx.configure(fg=col[1])
+        elif fg_bg == 'BG':
+            col = askcolor(self.port_setting.parm_mon_clr_bg, title=STR_TABLE['bg_color'][self.lang])
+            if col[1] is not None:
+                if col:
+                    self.port_setting.parm_mon_clr_bg = col[1]
+                    self.color_example_text_tx.configure(bg=col[1])
+                    self.color_example_text_rx.configure(bg=col[1])
+
+        self.main_cl.settings_win.attributes("-topmost", True)
 
     def update_port_parameter(self, dummy=None):
         height = self.height
@@ -603,9 +675,9 @@ class PortSetTab:
         self.port_setting.parm_MaxFrame = int(self.max_pac_var.get())
         # Monitor COLOR Selector SIDE Frame
         # TX
-        self.port_setting.parm_mon_clr_tx = self.tx_col_select_var.get()
+        # self.port_setting.parm_mon_clr_tx = self.tx_col_select_var.get()
         # RX
-        self.port_setting.parm_mon_clr_rx = self.rx_col_select_var.get()
+        # self.port_setting.parm_mon_clr_rx = self.rx_col_select_var.get()
         if self.port_setting.parm_PortTyp == 'AXIP':
             self.port_setting.parm_full_duplex = True
         else:
@@ -665,6 +737,8 @@ class PortSettingsWin:
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.settings_win.resizable(False, False)
         self.settings_win.attributes("-topmost", True)
+
+        self.lang = self.main_class.language
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self.settings_win,

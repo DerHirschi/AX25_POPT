@@ -171,6 +171,7 @@ class AX25Port(threading.Thread):
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
             self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
+            # self.connections[uid].handle_rx(ax25_frame=ax25_frame)
             return True
         return False
 
@@ -466,7 +467,7 @@ class AX25Port(threading.Thread):
     def run(self):
         while self.loop_is_running and self.device_is_running:
             self.tasks()
-            time.sleep(0.1)
+            time.sleep(0.15)
         self.close()
         self.ende = True
 

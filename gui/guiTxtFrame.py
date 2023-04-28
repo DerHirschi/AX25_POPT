@@ -147,7 +147,7 @@ class TxTframe:
                                                      height=100, bd=0, borderwidth=0, state="disabled")
 
         self.out_txt_win.tag_config("input", foreground="yellow")
-        self.out_txt_win.tag_config("output", foreground="red")
+        #self.out_txt_win.tag_config("output", foreground="red")
         # self.out_txt_win.bind(self.out_txt_win.tag(None))
         # self.out_txt_win.insert(tk.END, "OUT")
         # self.out_txt.pack(side=tk.TOP)

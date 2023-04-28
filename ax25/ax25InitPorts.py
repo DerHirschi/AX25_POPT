@@ -295,8 +295,8 @@ class AX25PortHandler(object):
             user_db_ent = self.user_db.get_entry(dest_call, add_new=False)
             if user_db_ent:
                 if user_db_ent.Name:
-                    return True, f'*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r'
-            return True, f'*** Link Setup to {dest_call} > Port {port_id}\r'
+                    return True, f'\r*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r'
+            return True, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
         return False, 'Error: Can not connect'
 
     ######################

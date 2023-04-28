@@ -222,21 +222,11 @@ class AX25Conn(object):
         self.link_holder_interval: int = 30  # Minutes
         self.link_holder_timer = time.time()
         self.link_holder_text: str = '\r'
-        """ Station Individual Parameter """
-        """
-        stat_call = self.stat_cfg.stat_parm_Call
-        if stat_call != config_station.DefaultStation.stat_parm_Call:
-            if stat_call in self.cfg.parm_stat_PacLen.keys():
-                if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                    self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-            if stat_call in self.cfg.parm_stat_MaxFrame.keys():
-                if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                    self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
-        """
         """ User DB Entry """
         self.user_db = self.port_handler.user_db
         self.user_db_ent = False
         self.set_user_db_ent()
+        """ Station Individual Parameter """
         self.set_packet_param()
         """ Init CLI """
         self.cli_language = 0
@@ -259,6 +249,7 @@ class AX25Conn(object):
             self.set_T1()
             self.set_T3()
             self.zustand_exec = S1Frei(self)
+            self.handle_rx(ax25_frame)
         else:
             self.zustand_exec = S2Aufbau(self)
             # self.cli.change_cli_state(state=1)
@@ -272,6 +263,7 @@ class AX25Conn(object):
     def init_cli(self):
         if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
             self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
+            self.cli.build_prompt()
         """
         else:
             self.cli = cli.cli.NoneCLI(self)
@@ -351,6 +343,7 @@ class AX25Conn(object):
     def set_user_db_ent(self):
         self.user_db_ent = self.user_db.get_entry(self.to_call_str)
         if self.user_db_ent:
+            self.user_db_ent.Connects += 1  # TODO Count just when connected
             if self.user_db_ent.Language == -1:
                 if self.gui is None:
                     self.user_db_ent.Language = 0
@@ -545,19 +538,27 @@ class AX25Conn(object):
                     self.LINK_Connection.zustand_exec.change_state(4)
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
+                    self.port_handler.del_link(self.LINK_Connection.uid)
                     self.LINK_Connection.tx_buf_rawData += '\n*** Reconnected to {}\n'.format(self.my_call_str).encode()
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
+                    self.LINK_Connection.cli.send_prompt()
+                    # self.LINK_Connection.cli.build_prompt()
 
     def del_link(self):
         """ Called in State.link_cleanup() """
         if self.LINK_Connection is not None:
             # print("LINK CLEANUP")
             # print(f'LINK CLEANUP link_connections K : {self.port_handler.link_connections.keys()}')
-
+            self.port_handler.del_link(self.uid)
             self.LINK_Connection = None
             self.is_link = False
+
+    def link_cleanup(self):
+        self.link_disco()
+        self.del_link()
+        self.port_handler.del_link(self.uid)
 
     # ##############
     # DISCO
@@ -912,11 +913,6 @@ class DefaultStat(object):
             self.ax25conn.tx_buf_rawData += bytes(self.ax25conn.LINK_Connection.LINK_rx_buff)
             self.ax25conn.LINK_Connection.LINK_rx_buff = b''
 
-    def link_cleanup(self):
-        # TODO Move up to AX25Conn
-        self.ax25conn.link_disco()
-        self.ax25conn.del_link()
-
     def send_to_link(self, inp: b''):
         # TODO Move up to AX25Conn
         if inp:
@@ -946,7 +942,7 @@ class DefaultStat(object):
 
     def cleanup(self):
         # print('STATE 0 Cleanup')
-        self.link_cleanup()
+        self.ax25conn.link_cleanup()
         self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)  # TODO Move up to AX25Conn
         self.ax25conn.own_port.del_connections(conn=self.ax25conn)  # TODO Move up to AX25Conn
 
@@ -955,8 +951,8 @@ class DefaultStat(object):
         self.ax25conn.n2 = 1
         self.ax25conn.set_T1()
         self.change_state(1)
-        self.link_cleanup()
-        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)  # TODO Move up to AX25Conn
+        self.ax25conn.link_cleanup()
+        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
 
     def t1_fail(self):
         pass
@@ -1083,21 +1079,6 @@ class S2Aufbau(DefaultStat):  # INIT TX
     def tx(self, ax25_frame: AX25Frame = None):
         """ NOT USED... CLEANUP !!!"""
         pass
-        """
-        print("TX S2 !!!!!!!!!!!!!!!!")
-        ax25_frame = self.ax25conn.ax25_out_frame
-        # self.rtt_timer.set_rtt_single_timer()
-
-        if time.time() > self.ax25conn.t1 \
-                and time.time() > self.ax25conn.t3:
-            if self.ax25conn.LINK_Connection is None:
-                self.ax25conn.rx_buf_rawData = '\n*** Try connect to {}\n'.format(ax25_frame.to_call.call_str).encode()
-            self.ax25conn.send_SABM()
-            self.ax25conn.set_T1()
-            # self.ax25conn.set_T3()
-            # if self.ax25conn.is_prt_hndl:
-            self.ax25conn.port_handler.insert_conn2all_conn_var(new_conn=self.ax25conn)
-        """
 
     def rx_SABM(self):
         self.accept()
@@ -1118,6 +1099,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def accept(self):
+        # TODO Move up to Conn
         # print("S2 - ACCEPT")
         if self.ax25conn.LINK_Connection is None:
             self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode()
@@ -1134,6 +1116,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
             self.ax25conn.gui.new_conn_snd()
 
     def reject(self):
+        # TODO Move up to Conn
         self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode()
         self.S1_end_connection()
 
@@ -1141,6 +1124,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def t1_fail(self):
+        # TODO ??? Move up to Conn ???
         if not self.ax25conn.n2:
             if self.ax25conn.LINK_Connection is None:
                 to_qso_win = f'\n*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str} > ' \
@@ -1277,12 +1261,9 @@ class S4Abbau(DefaultStat):
         pass
 
     def n2_fail(self):
-        # if self.digi_conn is None:
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
         self.S1_end_connection()
-        # if self.ax25conn.is_prt_hndl:
-        # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
 
 class S5Ready(DefaultStat):
@@ -1505,7 +1486,6 @@ class S7WaitForFinal(DefaultStat):
         self.ax25conn.send_RR(pf_bit=True, cmd_bit=True)
         self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
-        # self.change_state(7)  # S7 Warten auf Final
 
     def t3_fail(self):
         pass

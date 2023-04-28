@@ -8,6 +8,7 @@ import sys
 
 import gtts
 from gtts import gTTS
+
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg)
 import matplotlib.pyplot as plt
@@ -34,7 +35,7 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
 from gui.vars import ALL_COLOURS
 from string_tab import STR_TABLE
-from fnc.os_fnc import is_linux, is_windows
+from fnc.os_fnc import is_linux, is_windows, get_own_dir
 
 if is_linux():
     from playsound import playsound
@@ -74,6 +75,8 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
+        self.root_dir = get_own_dir()
+        self.root_dir = self.root_dir.replace('/', '//')
         #####################
         #####################
         # GUI VARS
@@ -88,7 +91,7 @@ class TkMainWin:
         self.parm_btn_blink_time = 0.3
         self.parm_rx_beep_cooldown = 1.5
         # Tasker Timings
-        self.loop_delay = 50  # ms
+        self.loop_delay = 60  # ms
         self.parm_non_prio_task_timer = 0.5  # s
         self.parm_non_non_prio_task_timer = 1  # s
         self.non_prio_task_timer = time.time()
@@ -481,9 +484,6 @@ class TkMainWin:
         data = self.mon_txt.get('1.0', tk.END)
         save_file_dialog(data)
 
-    def ch_btn_status_update(self):
-        self.ch_btn.ch_btn_status_update()
-
     def set_binds(self):
         self.inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
 
@@ -623,7 +623,10 @@ class TkMainWin:
             if self.win_buf[self.channel_index].t2speech \
                     and self.win_buf[self.channel_index].t2speech_buf:
                 to_speech = str(self.win_buf[self.channel_index].t2speech_buf)
-                if self.sprech(to_speech):
+                if self.setting_sprech.get() and self.setting_sound.get():
+                    if self.sprech(to_speech):
+                        self.win_buf[self.channel_index].t2speech_buf = ''
+                else:
                     self.win_buf[self.channel_index].t2speech_buf = ''
 
             elif not self.win_buf[self.channel_index].t2speech:
@@ -632,48 +635,51 @@ class TkMainWin:
             self.win_buf[self.channel_index].t2speech_buf = ''
 
     def sprech(self, text: str):
-        if text:
-            if self.sound_th is not None:
-                if self.sound_th.is_alive():
-                    return False
-            text = text.replace('\r', '').replace('\n', '')
-            text = text.replace('****', '*')
-            text = text.replace('***', '*')
-            text = text.replace('++++', '+')
-            text = text.replace('+++', '+')
-            text = text.replace('----', '-')
-            text = text.replace('---', '-')
-            text = text.replace('____', '_')
-            text = text.replace('___', '_')
-            text = text.replace('####', '#')
-            text = text.replace('###', '#')
-            text = text.replace('====', '=')
-            text = text.replace('===', '=')
-            text = text.replace('>>>', '>')
-            text = text.replace('<<<', '<')
-
-            if is_linux():
-                if self.setting_sprech.get():
-                    language = {
-                        0: 'de',
-                        1: 'en',
-                        2: 'nl',
-                        3: 'fr',
-                        4: 'fi',
-                        5: 'pl',
-                        6: 'pt',
-                        7: 'it',
-                        8: 'zh',
-                    }[self.language]
-                    try:
-                        tts = gTTS(text=text,
-                                   lang=language,
-                                   slow=False)
-                        tts.save('data/speech.mp3')
-                    except gtts.gTTSError:
-                        self.setting_sprech.set(False)
+        if self.setting_sprech.get() and self.setting_sound.get():
+            if text:
+                if self.sound_th is not None:
+                    if self.sound_th.is_alive():
                         return False
-                    return self.pl_sound('data/speech.mp3')
+                text = text.replace('\r', '').replace('\n', '')
+                text = text.replace('****', '*')
+                text = text.replace('***', '*')
+                text = text.replace('++++', '+')
+                text = text.replace('+++', '+')
+                text = text.replace('----', '-')
+                text = text.replace('---', '-')
+                text = text.replace('____', '_')
+                text = text.replace('___', '_')
+                text = text.replace('####', '#')
+                text = text.replace('###', '#')
+                text = text.replace('====', '=')
+                text = text.replace('===', '=')
+                text = text.replace('>>>', '>')
+                text = text.replace('<<<', '<')
+
+                if is_linux():
+                    if self.setting_sprech.get():
+                        language = {
+                            0: 'de',
+                            1: 'en',
+                            2: 'nl',
+                            3: 'fr',
+                            4: 'fi',
+                            5: 'pl',
+                            6: 'pt',
+                            7: 'it',
+                            8: 'zh',
+                        }[self.language]
+                        try:
+                            print("GTTS")
+                            tts = gTTS(text=text,
+                                       lang=language,
+                                       slow=False)
+                            tts.save('data/speech.mp3')
+                        except gtts.gTTSError:
+                            self.setting_sprech.set(False)
+                            return False
+                        return self.pl_sound(self.root_dir + '//data//speech.mp3')
+        return False
 
     def pl_sound(self, snd_file: str, wait=True):
         # TODO .. Again !!! ... Don't like this mess
@@ -702,7 +708,7 @@ class TkMainWin:
                 return True
             else:
                 if is_linux():
-                    threading.Thread(target=playsound, args=(snd_file, False)).start()
+                    threading.Thread(target=playsound, args=(snd_file, True)).start()
                 elif is_windows():
                     threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
                 return True
@@ -719,13 +725,13 @@ class TkMainWin:
                         if tr:
                             if temp.rx_beep_tr:
                                 temp.rx_beep_tr = False
-                                self.pl_sound('data/sound/rx_beep.wav', False)
+                                self.pl_sound(self.root_dir + '//data//sound//rx_beep.wav', False)
 
     def new_conn_snd(self):
-        self.pl_sound('data/sound/conn_alarm.wav', False)
+        self.pl_sound(self.root_dir + '//data//sound//conn_alarm.wav', False)
 
     def disco_snd(self):
-        self.pl_sound('data/sound/disco_alarm.wav', False)
+        self.pl_sound(self.root_dir + '//data//sound//disco_alarm.wav', False)
 
     # Sound Ende
     #################
@@ -847,7 +853,14 @@ class TkMainWin:
                     tr = False
                     if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
                         tr = True
-                    self.out_txt.configure(state="normal")
+                    bg = conn.stat_cfg.stat_parm_qso_col_bg
+                    fg = conn.stat_cfg.stat_parm_qso_col_text
+                    # self.out_txt_win.tag_config("input", foreground="yellow")
+                    self.out_txt.configure(state="normal", fg=fg, bg=bg)
+                    self.out_txt.tag_config("output",
+                                            foreground=fg,
+                                            background=bg)
+
 
                     ind = self.out_txt.index(tk.INSERT)
                     self.out_txt.insert('end', inp)
@@ -877,6 +890,7 @@ class TkMainWin:
         var = tk_filter_bad_chars(var)
         ind = self.mon_txt.index(tk.INSERT)
         tr = False
+        color_bg = conf.parm_mon_clr_bg
         if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
             tr = True
         if tx:
@@ -892,14 +906,19 @@ class TkMainWin:
         else:
             self.mon_txt.insert(tk.END, var)
             ind2 = self.mon_txt.index(tk.INSERT)
+            self.mon_txt.tag_config(tag, foreground=color,
+                                    background=color_bg,
+                                    selectbackground=self.mon_txt.cget('selectbackground'),
+                                    selectforeground=self.mon_txt.cget('selectforeground'),
+                                    )
             self.mon_txt.tag_add(tag, ind, ind2)
-            self.mon_txt.tag_config(tag, foreground=color)
+
 
         # self.mon_txt.bindtags(self.mon_txt.tag_names(None))     # TODO Scrollbar is not scrollable after this
         # yscrollcommand = vbar.set
         # self.mon_txt.configure(yscrollcommand=self.mon_txt.vbar.set())
         # self.mon_txt.update()
-        self.mon_txt.configure(state="disabled")
+        self.mon_txt.configure(state="disabled", exportselection=1)
         # self.mon_txt.vbar.s
         if tr or self.tabbed_sideFrame.mon_scroll_var.get():
             self.mon_txt.see(tk.END)
@@ -1171,12 +1190,12 @@ class TkMainWin:
         self.txt_win.switch_mon_mode()
         if self.mon_mode:
             # self.channel_index = int(self.mon_mode)
-            self.ch_btn.ch_btn_clk(int(self.mon_mode))
+            self.ch_btn_clk(int(self.mon_mode))
             self.mon_mode = 0
             self.mon_btn.configure(bg='yellow')
         else:
             self.mon_mode = int(self.channel_index)
-            self.ch_btn.ch_btn_clk(0)
+            self.ch_btn_clk(0)
             self.mon_btn.configure(bg='green')
 
         self.ch_btn_status_update()
@@ -1189,4 +1208,49 @@ class TkMainWin:
                 self.mon_mode = int(ch_ind)
                 self.switch_monitor_mode()
             else:
-                self.ch_btn.ch_btn_clk(ch_ind)
+                self.ch_btn_clk(ch_ind)
+
+    def ch_btn_status_update(self):
+        self.ch_btn.ch_btn_status_update()
+
+    def ch_btn_clk(self, ind: int):
+        self.get_ch_param().input_win = self.inp_txt.get('1.0', tk.END)
+        self.channel_index = ind
+        # if ind:
+        self.get_ch_param().new_data_tr = False
+        self.get_ch_param().rx_beep_tr = False
+
+        conn = self.get_conn()
+        if conn:
+            bg = conn.stat_cfg.stat_parm_qso_col_bg
+            fg = conn.stat_cfg.stat_parm_qso_col_text
+            self.out_txt.configure(state="normal", fg=fg, bg=bg)
+        else:
+            self.out_txt.configure(state="normal")
+
+        self.out_txt.delete('1.0', tk.END)
+        self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
+        self.out_txt.configure(state="disabled")
+        self.out_txt.see(tk.END)
+        self.inp_txt.delete('1.0', tk.END)
+        # self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
+        self.inp_txt.insert(tk.END, self.win_buf[ind].input_win[:-1])
+        self.inp_txt.see(tk.END)
+        # self.main_class: gui.guiMainNew.TkMainWin
+        if self.get_ch_param().rx_beep_opt and ind:
+            self.txt_win.rx_beep_box.select()
+            self.txt_win.rx_beep_box.configure(bg='green')
+        else:
+            self.txt_win.rx_beep_box.deselect()
+            self.txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR)
+
+        if self.get_ch_param().timestamp_opt and ind:
+            self.txt_win.ts_box_box.select()
+            self.txt_win.ts_box_box.configure(bg='green')
+        else:
+            self.txt_win.ts_box_box.deselect()
+            self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
+
+        self.ch_btn.ch_btn_status_update()
+        # self.main_class.change_conn_btn()
+        self.kanal_switch()     # Sprech

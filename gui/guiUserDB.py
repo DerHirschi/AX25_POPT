@@ -203,7 +203,7 @@ class UserDB(tk.Toplevel):
                                 )
         self.info_ent.place(x=_x + 80, y=_y)
 
-        # CLI LANGUAGE
+        # CLI LANGUAGE   # TODO
         _x = 10
         _y = 400
         tk.Label(tab1, text='Sprache: ').place(x=_x, y=_y)
@@ -220,11 +220,16 @@ class UserDB(tk.Toplevel):
         ]
         self.lang_var.set('DEUTSCH')
         self.lang_ent = tk.OptionMenu(tab1, self.lang_var, *lang_opt)
+        self.lang_ent.configure(state='disabled')   # TODO
         self.lang_ent.place(x=_x + 80, y=_y - 2)
         # Last Edit
         self.last_edit_var = tk.StringVar(self)
-        tk.Label(tab1, text='Last Edit: ').place(x=440, y=400)
-        tk.Label(tab1, textvariable=self.last_edit_var).place(x=540, y=400)
+        tk.Label(tab1, text='Last Edit: ').place(x=440, y=417)
+        tk.Label(tab1, textvariable=self.last_edit_var).place(x=540, y=417)
+        # Connection Counter
+        self.conn_count_var = tk.StringVar(self)
+        tk.Label(tab1, text='Connections: ').place(x=440, y=393)
+        tk.Label(tab1, textvariable=self.conn_count_var).place(x=570, y=393)
 
         #######################
         # TAB2
@@ -297,6 +302,7 @@ class UserDB(tk.Toplevel):
                 f"{self.db_ent.last_edit.time().minute}"
 
             )
+            self.conn_count_var.set(str(self.db_ent.Connects))
 
             self.info_ent.delete(0.0, tk.END)
             self.info_ent.insert(tk.INSERT, self.db_ent.Info)

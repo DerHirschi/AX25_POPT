@@ -1,4 +1,5 @@
 import sys
+import os
 
 
 def is_linux():
@@ -7,3 +8,7 @@ def is_linux():
 
 def is_windows():
     return 'win' in sys.platform
+
+
+def get_own_dir():
+    return os.getcwd()

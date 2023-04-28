@@ -4,7 +4,7 @@ from cli.cli import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 
 
-VER = '2.78.1'
+VER = '2.79.8'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -138,6 +138,8 @@ class DefaultStation(object):
     stat_parm_PacLen: int = 0      # Max Pac len
     stat_parm_MaxFrame: int = 0    # Max (I) Frames
     # stat_param_beacons: {int: [Beacon]} = {}
+    stat_parm_qso_col_text = 'red'
+    stat_parm_qso_col_bg = 'black'
 
 
 class DefaultPort(object):
@@ -182,6 +184,7 @@ class DefaultPort(object):
     # Monitor Text Color
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
+    parm_mon_clr_bg = "black"
     ##################################
     # Port Parameter for Save to file
     parm_beacons = {}
@@ -192,7 +195,7 @@ class DefaultPort(object):
                       'save_to_pickl',
                       'mh',
                       'glb_gui',
-                      'parm_Stations',      # !!!!!!!!! TODO  CHECK
+                      'parm_Stations',
                       ]
 
     def save_to_pickl(self):
@@ -264,6 +267,8 @@ class PortConfigInit(DefaultPort):
                         """ Just need to save Parameter, not the whole class """
                         if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
                             new_stat_cfg.stat_parm_pipe = None
+                        if not hasattr(new_stat_cfg, 'parm_mon_clr_bg'):
+                            new_stat_cfg.parm_mon_clr_bg = 'black'
                         """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
                         self.parm_Stations.append(new_stat_cfg)
                         # Stupid Digi
