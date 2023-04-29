@@ -217,7 +217,7 @@ class AX25Port(threading.Thread):
                         # TODO Just check for digi_call while encoding
                         el.digi_check_and_encode(call=el.digi_call, h_bit_enc=True)
                     else:
-                        el.encode()
+                        el.encode_ax25frame()
                     try:
                         self.tx(frame=el)
                         tr = True
@@ -400,7 +400,7 @@ class AX25Port(threading.Thread):
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
         ax25_frame.ctl_byte.SABMcByte()
-        ax25_frame.encode()     # TODO Not using full encoding to get UID
+        ax25_frame.encode_ax25frame()     # TODO Not using full encoding to get UID
         """
         while ax25_frame.addr_uid in self.connections.keys() or \
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
@@ -426,7 +426,7 @@ class AX25Port(threading.Thread):
             if ax25_frame.from_call.ssid > 15:
                 return False
             try:
-                ax25_frame.encode()     # TODO Not using full encoding to get UID
+                ax25_frame.encode_ax25frame()     # TODO Not using full encoding to get UID
             except AX25EncodingERROR:
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
@@ -467,7 +467,7 @@ class AX25Port(threading.Thread):
         frame.axip_add = self.mh.mh_get_last_ip(call_str=dest_call)
         frame.from_call.call_str = own_call
         frame.to_call.call_str = dest_call
-        frame.encode()
+        frame.encode_ax25frame()
         self.UI_buf.append(frame)
 
     def reset_ft_wait_timer(self, ax25_frame: AX25Frame):

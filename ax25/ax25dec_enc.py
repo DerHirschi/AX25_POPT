@@ -616,7 +616,7 @@ class AX25Frame(object):
         else:
             raise AX25DecodingERROR(self)
 
-    def encode(self, digi=False):
+    def encode_ax25frame(self, digi=False):
         # print(f'encode >>>>>> {self.digi_call}')
 
         self.bytes = b''
@@ -743,7 +743,7 @@ class AX25Frame(object):
             if not ca.c_bit and ca.call_str == call:
                 if h_bit_enc:
                     ca.c_bit = True
-                    self.encode(digi=True)
+                    self.encode_ax25frame(digi=True)
                 return True
         return False
 
@@ -769,7 +769,7 @@ class AX25Frame(object):
                 if el.ssid < 15:
                     el.ssid += 1
                     self.via_calls.reverse()
-                    self.encode()
+                    self.encode_ax25frame()
                     return el.call_str
                 else:
                     self.via_calls.reverse()

@@ -127,7 +127,7 @@ class AX25Conn(object):
             self.ax25_out_frame.to_call = ax25_frame.to_call
             self.ax25_out_frame.from_call = ax25_frame.from_call
             self.ax25_out_frame.via_calls = ax25_frame.via_calls
-            ax25_frame.encode()  # Set Stop-Bits and H-Bits while encoding
+            ax25_frame.encode_ax25frame()  # Set Stop-Bits and H-Bits while encoding
             if self.ax25_out_frame.addr_uid != ax25_frame.addr_uid:
                 self.ax25_out_frame.addr_uid = ax25_frame.addr_uid  # Unique ID for Connection
         self.my_call_obj = self.ax25_out_frame.from_call
@@ -783,7 +783,7 @@ class AX25Conn(object):
     def send_UA(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.UAcByte()
-        self.ax25_out_frame.encode()
+        self.ax25_out_frame.encode_ax25frame()
         # self.tx_buf_2send.append(self.ax25_out_frame)
         self.tx_buf_ctl.append(self.ax25_out_frame)
         self.set_T3()
@@ -791,19 +791,19 @@ class AX25Conn(object):
     def send_DM(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.DMcByte()
-        self.ax25_out_frame.encode()
+        self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_ctl.append(self.ax25_out_frame)
 
     def send_DISC(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.DISCcByte()
-        self.ax25_out_frame.encode()
+        self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
     def send_SABM(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.SABMcByte()
-        self.ax25_out_frame.encode()
+        self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
     def send_RR(self, pf_bit=False, cmd_bit=False):
