@@ -68,6 +68,6 @@ class Monitor(object):  # TODO: Static
                 if da:
                     if da[-1] != '\n' or da[-1] != '\r':
                         out_str += da + '\n'
-        logger.debug(out_str)
+        # logger.debug(out_str)
         self.out_buf.append(out_str)
         return out_str

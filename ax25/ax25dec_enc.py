@@ -743,7 +743,7 @@ class AX25Frame(object):
             if not ca.c_bit and ca.call_str == call:
                 if h_bit_enc:
                     ca.c_bit = True
-                    self.encode_ax25frame(digi=True)
+                    self.encode_ax25frame(digi=True)    # TODO !!! Double encoding ??
                 return True
         return False
 
@@ -759,8 +759,9 @@ class AX25Frame(object):
                 ind += 1
         if search_ind:
             self.via_calls = self.via_calls[search_ind:]
-
+    """
     def increment_viacall_ssid(self, call: str):
+        # TODO Cleanup ?? Not in Use 
         el: Call
         ind = 0
         self.via_calls.reverse()
@@ -778,7 +779,7 @@ class AX25Frame(object):
                 ind += 1
         self.via_calls.reverse()
         return False
-
+    """
 
 def via_calls_fm_str(inp_str: str):
     # print(f'via_calls_fm_str: inp: {inp_str} ')

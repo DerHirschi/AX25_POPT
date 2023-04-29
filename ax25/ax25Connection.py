@@ -549,7 +549,7 @@ class AX25Conn(object):
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
                     self.port_handler.del_link(self.LINK_Connection.uid)
-                    self.LINK_Connection.tx_buf_rawData += '\n*** Reconnected to {}\n'.format(self.my_call_str).encode()
+                    self.LINK_Connection.tx_buf_rawData += '\r*** Reconnected to {}\r'.format(self.my_call_str).encode()
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
@@ -571,7 +571,7 @@ class AX25Conn(object):
         self.port_handler.del_link(self.uid)
 
     def link_cleanup(self):
-        self.link_disco()
+        # self.link_disco()
         self.del_link()
         # self.port_handler.del_link(self.uid)
 
@@ -783,7 +783,7 @@ class AX25Conn(object):
     def send_UA(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.UAcByte()
-        self.ax25_out_frame.encode_ax25frame()
+        # self.ax25_out_frame.encode_ax25frame()
         # self.tx_buf_2send.append(self.ax25_out_frame)
         self.tx_buf_ctl.append(self.ax25_out_frame)
         self.set_T3()
@@ -791,19 +791,19 @@ class AX25Conn(object):
     def send_DM(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.DMcByte()
-        self.ax25_out_frame.encode_ax25frame()
+        # self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_ctl.append(self.ax25_out_frame)
 
     def send_DISC(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.DISCcByte()
-        self.ax25_out_frame.encode_ax25frame()
+        # self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
     def send_SABM(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.SABMcByte()
-        self.ax25_out_frame.encode_ax25frame()
+        # self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
     def send_RR(self, pf_bit=False, cmd_bit=False):

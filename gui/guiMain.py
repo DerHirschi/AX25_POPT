@@ -36,6 +36,7 @@ from gui.guiFileTX import FileSend
 from gui.vars import ALL_COLOURS
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
+from fnc.gui_fnc import get_all_tags, set_all_tags
 
 if is_linux():
     from playsound import playsound
@@ -56,8 +57,11 @@ STAT_BAR_CLR = 'grey60'
 class ChVars(object):
     def __init__(self):
         self.output_win = ''
+        self.output_win_tags = {}
         self.input_win = ''
+        self.input_win_tags = {}
         self.input_win_index = '1.0'
+        self.input_win_cursor_index = tk.INSERT
         self.new_data_tr = False
         self.rx_beep_tr = False
         self.rx_beep_cooldown = time.time()
@@ -807,6 +811,7 @@ class TkMainWin:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
             self.update_bw_mon()
             self.tabbed_sideFrame.tasker()
+            # print(f"{self.ax25_port_handler.link_connections.keys()}")
             if self.mh.new_call_alarm and self.setting_dx_alarm:
                 self.dx_alarm()
 
@@ -1228,8 +1233,12 @@ class TkMainWin:
 
     def ch_btn_clk(self, ind: int):
         self.get_ch_param().input_win = self.inp_txt.get('1.0', tk.END)
+        # self.get_ch_param().input_win_tags = self.inp_txt.tag_ranges('send')
+        self.get_ch_param().input_win_tags = get_all_tags(self.inp_txt)
+        self.get_ch_param().output_win_tags = get_all_tags(self.out_txt)
+        self.get_ch_param().input_win_cursor_index = self.inp_txt.index(tk.INSERT)
+
         self.channel_index = ind
-        # if ind:
         self.get_ch_param().new_data_tr = False
         self.get_ch_param().rx_beep_tr = False
 
@@ -1245,10 +1254,15 @@ class TkMainWin:
         self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
         self.out_txt.configure(state="disabled")
         self.out_txt.see(tk.END)
+        # print(f"{self.inp_txt.tag_ranges('send')}")
+
         self.inp_txt.delete('1.0', tk.END)
         # self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
         self.inp_txt.insert(tk.END, self.win_buf[ind].input_win[:-1])
-        self.inp_txt.see(tk.END)
+        set_all_tags(self.inp_txt, self.get_ch_param().input_win_tags)
+        set_all_tags(self.out_txt, self.get_ch_param().output_win_tags)
+        self.inp_txt.mark_set("insert", self.get_ch_param().input_win_cursor_index)
+
         # self.main_class: gui.guiMainNew.TkMainWin
         if self.get_ch_param().rx_beep_opt and ind:
             self.txt_win.rx_beep_box.select()
