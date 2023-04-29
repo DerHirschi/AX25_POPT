@@ -111,32 +111,17 @@ class UserDB:
                     setattr(self.db[ent_key], new_att, getattr(compare, new_att))
 
     def save_data(self):
-        print('Save Client DB')
+        # print('Save Client DB')
         logger.info('Save Client DB')
         try:
             with open(client_db, 'wb') as outp:
                 pickle.dump(self.db, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError as e:
-            print("ERROR SAVE ClientDB: " + str(e))
+            # print("ERROR SAVE ClientDB: " + str(e))
             logger.error("ERROR SAVE ClientDB: " + str(e))
 
 """
 class AXIPClientDB(object):
-    def __init__(self, port):
-        self.port = port
-        self.clients = {
-            # 'call_str': {
-            #       'addr': (),
-            #       'lastsee': 0.0,
-            # }
-        }
-        try:
-            with open(axip_clientList, 'rb') as inp:
-                self.clients = pickle.load(inp)
-        except FileNotFoundError:
-            os.system('touch {}'.format(axip_clientList))
-        except EOFError:
-            pass
 
     def cli_cmd_out(self):
         out = ''
@@ -150,12 +135,5 @@ class AXIPClientDB(object):
             )
         out += '\r'
         return out
-
-    def save_data(self):
-        try:
-            with open(axip_clientList, 'wb') as outp:
-                pickle.dump(self.clients, outp, pickle.HIGHEST_PROTOCOL)
-        except FileNotFoundError as e:
-            print("ERROR SAVE AXIPClients: " + str(e))
 
 """

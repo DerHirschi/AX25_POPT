@@ -48,7 +48,7 @@ class AX25Port(threading.Thread):
         """ DIGI """
         self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
         self.is_smart_digi = self.port_cfg.parm_isSmartDigi
-        self.parm_digi_TXD = 2000   # TODO add to Settings GUI
+        self.parm_digi_TXD = 2000  # TODO add to Settings GUI
         self.digi_TXD = time.time()
         self.digi_buf: [AX25Frame] = []
         self.UI_buf: [AX25Frame] = []
@@ -360,7 +360,7 @@ class AX25Port(threading.Thread):
             return True
         return False
 
-    def del_pipe(self, pipe:AX25Pipe):
+    def del_pipe(self, pipe: AX25Pipe):
         if pipe.uid in self.pipes.keys():
             del self.pipes[pipe.uid]
             return True
@@ -400,22 +400,22 @@ class AX25Port(threading.Thread):
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
         ax25_frame.ctl_byte.SABMcByte()
-        ax25_frame.encode_ax25frame()     # TODO Not using full encoding to get UID
+        ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
         """
         while ax25_frame.addr_uid in self.connections.keys() or \
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
         """
         while True:
-            if ax25_frame.addr_uid not in self.connections.keys():
+            if ax25_frame.addr_uid not in self.connections.keys() and \
+                    reverse_uid(ax25_frame.addr_uid) not in self.connections.keys():
                 break
-            else:
+            if ax25_frame.addr_uid in self.connections.keys():
                 if self.connections[ax25_frame.addr_uid].zustand_exec.stat_index in [0, 1]:
                     break
-            if reverse_uid(ax25_frame.addr_uid) not in self.connections.keys():
-                break
-            else:
+            if reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
                 if self.connections[reverse_uid(ax25_frame.addr_uid)].zustand_exec.stat_index in [0, 1]:
                     break
+
             logger.debug("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
@@ -426,7 +426,7 @@ class AX25Port(threading.Thread):
             if ax25_frame.from_call.ssid > 15:
                 return False
             try:
-                ax25_frame.encode_ax25frame()     # TODO Not using full encoding to get UID
+                ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
             except AX25EncodingERROR:
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
@@ -534,7 +534,7 @@ class AX25Port(threading.Thread):
                 or (self.port_cfg.parm_full_duplex and self.loop_is_running):
             #############################################
             # Crone
-            self.cron_port_handler()    # TODO Crone With and without TXD
+            self.cron_port_handler()  # TODO Crone With and without TXD
             # ######### TX #############
             self.tx_pac_handler()
         ############################

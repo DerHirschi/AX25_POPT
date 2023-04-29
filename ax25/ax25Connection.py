@@ -275,6 +275,13 @@ class AX25Conn(object):
                 self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
                 self.cli.change_cli_state(state=1)
 
+    def update_gui_qso_buff(self):
+        pass
+        """
+        if self.gui is not None:
+            self.gui.update_qso_buff(self)
+        """
+
     ####################
     # Zustand EXECs
     def handle_rx(self, ax25_frame: AX25Frame):
@@ -310,6 +317,8 @@ class AX25Conn(object):
         self.set_dest_call_fm_data_inp(data)
         # Statistic
         self.rx_byte_count += len(data)
+        # Update GUI
+        # self.update_gui_qso_buff()
 
     def set_dest_call_fm_data_inp(self, ax25_fr_data: b''):
         det = [
@@ -767,8 +776,6 @@ class AX25Conn(object):
             self.ax25_out_frame.data = self.tx_buf_rawData[:pac_len]
             self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]  # GUI Echo
             self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])  # CH ECHO
-            # if self.ChVars is not None:
-            #     self.ChVars.output_win += self.tx_buf_rawData[:pac_len].decode('utf-8', 'ignore')
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
             self.tx_buf_2send.append(self.ax25_out_frame)
@@ -779,31 +786,27 @@ class AX25Conn(object):
             self.set_T1()  # Re/Set T1
             # Statistics
             self.tx_byte_count += int(pac_len)
+            # self.update_gui_qso_buff()
 
     def send_UA(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.UAcByte()
-        # self.ax25_out_frame.encode_ax25frame()
-        # self.tx_buf_2send.append(self.ax25_out_frame)
         self.tx_buf_ctl.append(self.ax25_out_frame)
         self.set_T3()
 
     def send_DM(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.DMcByte()
-        # self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_ctl.append(self.ax25_out_frame)
 
     def send_DISC(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.DISCcByte()
-        # self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
     def send_SABM(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.SABMcByte()
-        # self.ax25_out_frame.encode_ax25frame()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
     def send_RR(self, pf_bit=False, cmd_bit=False):
@@ -933,6 +936,7 @@ class DefaultStat(object):
 
     def cron(self):
         """Global Cron"""
+        # TODO Move up
         if self.stat_index == 0:
             self.cleanup()
         ###########
@@ -951,6 +955,7 @@ class DefaultStat(object):
         self.ax25conn.conn_cleanup()
 
     def S1_end_connection(self):
+        # TODO Move up
         # print("S1_end_connection")
         self.ax25conn.n2 = 1
         self.ax25conn.set_T1()
@@ -971,11 +976,11 @@ class DefaultStat(object):
         self.cleanup()
 
     def reject(self):
-        """ !!!! TESTING """
         self.ax25conn.send_DM()
         self.S1_end_connection()
 
     def prozess_I_frame(self):
+        # TODO Move up
         self.ax25conn.set_T2()
         self.ax25conn.set_T1(stop=True)
         self.ax25conn.n2 = 0
@@ -988,6 +993,7 @@ class DefaultStat(object):
             return False
 
     def delUNACK(self):
+        # TODO Move up
         if ((self.nr - 1) % 8) in self.ax25conn.tx_buf_unACK.keys():
             self.ax25conn.del_unACK_buf()
             return True
@@ -1105,7 +1111,6 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def accept(self):
-        # TODO Move up to Conn
         # print("S2 - ACCEPT")
         if self.ax25conn.LINK_Connection is None:
             self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode()
@@ -1122,7 +1127,6 @@ class S2Aufbau(DefaultStat):  # INIT TX
             self.ax25conn.gui.new_conn_snd()
 
     def reject(self):
-        # TODO Move up to Conn
         self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode()
         self.S1_end_connection()
 
@@ -1334,6 +1338,7 @@ class S5Ready(DefaultStat):
         pass
 
     def t1_fail(self):
+        # TODO Move up
         if time.time() > self.ax25conn.t2:
             # Nach 5 Versuchen
             if self.ax25conn.n2:
