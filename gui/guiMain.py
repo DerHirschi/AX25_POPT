@@ -805,8 +805,6 @@ class TkMainWin:
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
-            print(self.inp_txt.index(tk.INSERT))
-            # print(self.inp_txt.tag_ranges('send'))
             self.update_bw_mon()
             self.tabbed_sideFrame.tasker()
             if self.mh.new_call_alarm and self.setting_dx_alarm:

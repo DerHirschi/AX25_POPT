@@ -548,7 +548,7 @@ class AX25Frame(object):
                 if ca.call_str == self.digi_call:
                     tr = False
 
-    def decode(self, hexstr=b''):
+    def decode_ax25frame(self, hexstr=b''):
         if hexstr:
             self.bytes = hexstr
         if self.bytes and len(self.bytes) > 14:

@@ -400,9 +400,22 @@ class AX25Port(threading.Thread):
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
         ax25_frame.ctl_byte.SABMcByte()
-        ax25_frame.encode()
+        ax25_frame.encode()     # TODO Not using full encoding to get UID
+        """
         while ax25_frame.addr_uid in self.connections.keys() or \
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
+        """
+        while True:
+            if ax25_frame.addr_uid not in self.connections.keys():
+                break
+            else:
+                if self.connections[ax25_frame.addr_uid].zustand_exec.stat_index in [0, 1]:
+                    break
+            if reverse_uid(ax25_frame.addr_uid) not in self.connections.keys():
+                break
+            else:
+                if self.connections[reverse_uid(ax25_frame.addr_uid)].zustand_exec.stat_index in [0, 1]:
+                    break
             logger.debug("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
@@ -413,7 +426,7 @@ class AX25Port(threading.Thread):
             if ax25_frame.from_call.ssid > 15:
                 return False
             try:
-                ax25_frame.encode()
+                ax25_frame.encode()     # TODO Not using full encoding to get UID
             except AX25EncodingERROR:
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
@@ -488,7 +501,7 @@ class AX25Port(threading.Thread):
                 e = None
                 try:
                     # Decoding
-                    ax25frame.decode(buf.raw_data)
+                    ax25frame.decode_ax25frame(buf.raw_data)
                 except AX25DecodingERROR:
                     logger.error('Port:{} decoding: '.format(self.portname))
                     logger.error('{}: org {}'.format(self.portname, buf.raw_data))

@@ -396,6 +396,9 @@ class AX25Conn(object):
                 self.cli.cli_cron()
                 self.link_holder_cron()
         self.zustand_exec.cron()
+        ########################################
+        # DIGI / LINK Connection / Node Funktion
+        self.link_crone()
 
     def pipe_crone(self):
         if self.pipe is None:
@@ -505,6 +508,13 @@ class AX25Conn(object):
 
     #######################
     # LINKS Linked Connections
+    def link_crone(self):
+        if self.is_link and self.LINK_Connection is not None:
+            self.LINK_Connection.tx_buf_rawData += bytes(self.LINK_rx_buff)
+            self.LINK_rx_buff = b''
+            self.tx_buf_rawData += bytes(self.LINK_Connection.LINK_rx_buff)
+            self.LINK_Connection.LINK_rx_buff = b''
+
     def link_connection(self, conn):
         conn: AX25Conn
         if conn is None:
@@ -545,6 +555,11 @@ class AX25Conn(object):
                     self.LINK_Connection.cli.change_cli_state(state=1)
                     self.LINK_Connection.cli.send_prompt()
                     # self.LINK_Connection.cli.build_prompt()
+
+    def link_send_to(self, inp: b''):
+        if inp:
+            if self.is_link:
+                self.LINK_Connection.tx_buf_rawData += inp
 
     def del_link(self):
         """ Called in State.link_cleanup() """
@@ -910,19 +925,8 @@ class DefaultStat(object):
     def tx(self, ax25_frame: AX25Frame):
         pass
 
-    def link_crone(self):
-        # TODO Move up to AX25Conn
-        if self.ax25conn.is_link and self.ax25conn.LINK_Connection is not None:
-            self.ax25conn.LINK_Connection.tx_buf_rawData += bytes(self.ax25conn.LINK_rx_buff)
-            self.ax25conn.LINK_rx_buff = b''
-            self.ax25conn.tx_buf_rawData += bytes(self.ax25conn.LINK_Connection.LINK_rx_buff)
-            self.ax25conn.LINK_Connection.LINK_rx_buff = b''
-
     def send_to_link(self, inp: b''):
-        # TODO Move up to AX25Conn
-        if inp:
-            if self.ax25conn.is_link:
-                self.ax25conn.LINK_Connection.tx_buf_rawData += inp
+        self.ax25conn.link_send_to(inp)
 
     def state_cron(self):
         pass
@@ -941,9 +945,6 @@ class DefaultStat(object):
             if time.time() > self.ax25conn.t3:
                 self.t3_fail()
         self.state_cron()  # State Cronex
-        ########################################
-        # DIGI / LINK Connection / Node Funktion
-        self.link_crone()
 
     def cleanup(self):
         # print('STATE 0 Cleanup')
