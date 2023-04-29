@@ -89,6 +89,7 @@ class TkMainWin:
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
         self.mon_mode = 0
+        self.mon_buff = []
         self.connect_history = {}
         ####################
         # GUI PARAM
@@ -784,7 +785,8 @@ class TkMainWin:
 
     def tasker_prio(self):
         """ Prio Tasks """
-        self.update_qso_win() # TODO
+        self.monitor_task()
+        self.update_qso_win()
         self.txt_win.update_status_win()
         if self.settings_win is not None:
             # Settings Win ( Port,- Station settings )
@@ -811,8 +813,7 @@ class TkMainWin:
 
     #################################
     # TASKS
-    def update_qso_win(self):  # MON & INPUT WIN
-        #UPDATE INPUT WIN
+    def update_qso_win(self):  # INPUT WIN
         # UPDATE INPUT WIN
         for k in self.ax25_port_handler.all_connections.keys():
             # conn: AX25Conn
@@ -872,7 +873,7 @@ class TkMainWin:
                     self.out_txt.insert('end', out)
                     ind2 = self.out_txt.index(tk.INSERT)
                     self.out_txt.tag_add(tag_name_out, ind, ind2)
-                    self.out_txt.configure(state="disabled")
+                    self.out_txt.configure(state="disabled", exportselection=1)
                     if tr or self.get_ch_param().autoscroll:
                         self.see_end_qso_win()
 
@@ -889,118 +890,54 @@ class TkMainWin:
                 self.win_buf[k].rx_beep_tr = True
                 self.ch_btn_status_update()
 
-    def update_qso_buff(self, conn):
-        k = conn.ch_index
-        if conn.rx_buf_rawData or conn.tx_buf_guiData:
-            bg = conn.stat_cfg.stat_parm_qso_col_bg
-            fg = conn.stat_cfg.stat_parm_qso_col_text
-            tag_name_out = 'OUT-' + conn.my_call_str
-            # if not conn.my_digi_call:
-            inp = str(conn.tx_buf_guiData.decode('UTF-8', 'ignore')) \
-                .replace('\r', '\n') \
-                .replace('\r\n', '\n') \
-                .replace('\n\r', '\n')
-            conn.tx_buf_guiData = b''
-            # Write RX Date to Window/Channel Buffer
-            self.win_buf[k].output_win += inp
-            # if self.win_buf[k].t2speech:
-            #     self.win_buf[k].t2speech_buf += inp
-            out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')) \
-                .replace('\r', '\n') \
-                .replace('\r\n', '\n') \
-                .replace('\n\r', '\n')
-            conn.rx_buf_rawData = b''
-            out = tk_filter_bad_chars(out)
-            # Write RX Date to Window/Channel Buffer
-            self.win_buf[k].output_win += out
-            if self.win_buf[k].t2speech:
-                if k == self.channel_index:
-                    self.win_buf[k].t2speech_buf += out.replace('\n', '')
-                else:
-                    self.win_buf[k].t2speech_buf += '{} {} . {} . {}'.format(
-                        STR_TABLE['channel'][self.language],
-                        k,
-                        conn.to_call_str,
-                        out.replace('\n', '')
-                    )
-            if self.channel_index == k:
-                tr = False
-                if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
+    def update_monitor(self, mon_str: str, conf, tx=False):
+        """ Called from AX25Conn """
+        self.mon_buff.append((
+            str(mon_str),
+            conf,
+            bool(tx)
+        ))
+
+    def monitor_task(self):
+        if self.mon_buff:
+            tmp_buff = list(self.mon_buff)
+            self.mon_buff = []
+            tr = False
+            self.mon_txt.configure(state="normal")
+            for el in tmp_buff:
+                var = el[0]
+                conf = el[1]
+                tx = el[2]
+
+                var = tk_filter_bad_chars(var)
+                ind = self.mon_txt.index(tk.INSERT)
+                color_bg = conf.parm_mon_clr_bg
+                if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
                     tr = True
-
-                # self.out_txt_win.tag_config("input", foreground="yellow")
-                # self.out_txt.configure(state="normal", fg=fg, bg=bg)
-                self.out_txt.configure(state="normal")
-                self.out_txt.tag_config(tag_name_out,
-                                        foreground=fg,
-                                        background=bg)
-
-                ind = self.out_txt.index(tk.INSERT)
-                self.out_txt.insert('end', inp)
-                ind2 = self.out_txt.index(tk.INSERT)
-                self.out_txt.tag_add("input", ind, ind2)
-
-                # configuring a tag called start
-                ind = self.out_txt.index(tk.INSERT)
-                self.out_txt.insert('end', out)
-                ind2 = self.out_txt.index(tk.INSERT)
-                self.out_txt.tag_add(tag_name_out, ind, ind2)
-                self.out_txt.configure(state="disabled")
-                if tr or self.get_ch_param().autoscroll:
-                    self.see_end_qso_win()
-
-            else:
-                if tag_name_out not in self.win_buf[k].output_win_tags.keys():
-                    self.win_buf[k].output_win_tags[tag_name_out] = ()
-                old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
-                if old_tags:
-                    old_tags = old_tags[:-1] + [tk.INSERT]
+                if tx:
+                    tag = "tx{}".format(conf.parm_PortNr)
+                    color = conf.parm_mon_clr_tx
                 else:
-                    old_tags = ['1.0', tk.INSERT]
-                self.win_buf[k].output_win_tags[tag_name_out] = old_tags
-                self.win_buf[k].new_data_tr = True
-            self.win_buf[k].rx_beep_tr = True
-            self.ch_btn_status_update()
+                    tag = "rx{}".format(conf.parm_PortNr)
+                    color = conf.parm_mon_clr_rx
+
+                if tag in self.mon_txt.tag_names(None):
+                    self.mon_txt.insert(tk.END, var, tag)
+                else:
+                    self.mon_txt.insert(tk.END, var)
+                    ind2 = self.mon_txt.index(tk.INSERT)
+                    self.mon_txt.tag_config(tag, foreground=color,
+                                            background=color_bg,
+                                            selectbackground=self.mon_txt.cget('selectbackground'),
+                                            selectforeground=self.mon_txt.cget('selectforeground'),
+                                            )
+                    self.mon_txt.tag_add(tag, ind, ind2)
+            self.mon_txt.configure(state="disabled", exportselection=1)
+            if tr or self.tabbed_sideFrame.mon_scroll_var.get():
+                self.mon_txt.see(tk.END)
+
     def see_end_qso_win(self):
         self.out_txt.see("end")
-
-    def update_monitor(self, var: str, conf, tx=False):
-        """ Called from AX25Conn """
-        var = tk_filter_bad_chars(var)
-        ind = self.mon_txt.index(tk.INSERT)
-        tr = False
-        color_bg = conf.parm_mon_clr_bg
-        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
-            tr = True
-        if tx:
-            tag = "tx{}".format(conf.parm_PortNr)
-            color = conf.parm_mon_clr_tx
-
-        else:
-            tag = "rx{}".format(conf.parm_PortNr)
-            color = conf.parm_mon_clr_rx
-        self.mon_txt.configure(state="normal")
-        if tag in self.mon_txt.tag_names(None):
-            self.mon_txt.insert(tk.END, var, tag)
-        else:
-            self.mon_txt.insert(tk.END, var)
-            ind2 = self.mon_txt.index(tk.INSERT)
-            self.mon_txt.tag_config(tag, foreground=color,
-                                    background=color_bg,
-                                    selectbackground=self.mon_txt.cget('selectbackground'),
-                                    selectforeground=self.mon_txt.cget('selectforeground'),
-                                    )
-            self.mon_txt.tag_add(tag, ind, ind2)
-
-
-        # self.mon_txt.bindtags(self.mon_txt.tag_names(None))     # TODO Scrollbar is not scrollable after this
-        # yscrollcommand = vbar.set
-        # self.mon_txt.configure(yscrollcommand=self.mon_txt.vbar.set())
-        # self.mon_txt.update()
-        self.mon_txt.configure(state="disabled", exportselection=1)
-        # self.mon_txt.vbar.s
-        if tr or self.tabbed_sideFrame.mon_scroll_var.get():
-            self.mon_txt.see(tk.END)
 
     def msg_to_monitor(self, var: str):
         """ Called from AX25Conn """
