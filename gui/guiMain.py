@@ -786,7 +786,7 @@ class TkMainWin:
 
     def tasker_prio(self):
         """ Prio Tasks """
-        self.update_mon()  # TODO ?? maybe trigger von AX25CONN
+        self.update_qso_win()  # TODO ?? maybe trigger von AX25CONN
         self.txt_win.update_status_win()
         if self.settings_win is not None:
             # Settings Win ( Port,- Station settings )
@@ -805,6 +805,8 @@ class TkMainWin:
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
+            print(self.inp_txt.index(tk.INSERT))
+            # print(self.inp_txt.tag_ranges('send'))
             self.update_bw_mon()
             self.tabbed_sideFrame.tasker()
             if self.mh.new_call_alarm and self.setting_dx_alarm:
@@ -812,7 +814,7 @@ class TkMainWin:
 
     #################################
     # TASKS
-    def update_mon(self):  # MON & INPUT WIN
+    def update_qso_win(self):  # MON & INPUT WIN
         """
         UPDATE INPUT WIN
         """
@@ -856,7 +858,8 @@ class TkMainWin:
                     bg = conn.stat_cfg.stat_parm_qso_col_bg
                     fg = conn.stat_cfg.stat_parm_qso_col_text
                     # self.out_txt_win.tag_config("input", foreground="yellow")
-                    self.out_txt.configure(state="normal", fg=fg, bg=bg)
+                    # self.out_txt.configure(state="normal", fg=fg, bg=bg)
+                    self.out_txt.configure(state="normal")
                     self.out_txt.tag_config("output",
                                             foreground=fg,
                                             background=bg)
@@ -1062,13 +1065,19 @@ class TkMainWin:
                     ind = str(int(float(ind))) + '.0'
                 else:
                     ind = '1.0'
+
                 tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
                 tmp_txt = tmp_txt.replace('\n', '\r')
                 station.send_data(tmp_txt.encode())
+
+                self.inp_txt.tag_remove('send', ind, str(self.inp_txt.index(tk.INSERT)))
                 self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
+
                 self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
-                if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
-                    self.inp_txt.delete(tk.END, tk.END)
+
+                if '.0' in self.inp_txt.index(tk.INSERT):
+                    self.inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
+
         else:
             self.send_to_monitor()
 
@@ -1103,7 +1112,7 @@ class TkMainWin:
                         cmd_poll=(cmd, poll),
                         pid=pid
                     )
-                self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
+                # self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
         self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
             self.inp_txt.delete(tk.END, tk.END)
@@ -1127,8 +1136,13 @@ class TkMainWin:
         # self.inp_txt.insert(tk.INSERT, '\n')
 
     def release_return(self, event=None):
+        pass
+        # self.inp_txt.tag_remove('send', 'current linestart+1c', 'current linestart+2c')
+
+        """
         self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)),
                                 self.inp_txt.index(tk.INSERT))
+        """
 
     def arrow_keys(self, event=None):
         self.on_click_inp_txt()
@@ -1201,6 +1215,7 @@ class TkMainWin:
         self.ch_btn_status_update()
 
     def switch_channel(self, ch_ind: int = 0):
+        # Channel 0 = Monitor
         if not ch_ind:
             self.switch_monitor_mode()
         else:
