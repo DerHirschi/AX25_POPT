@@ -35,7 +35,7 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
 from gui.vars import ALL_COLOURS
 from string_tab import STR_TABLE
-from fnc.os_fnc import is_linux, is_windows, get_own_dir
+from fnc.os_fnc import is_linux, is_windows, get_root_dir
 
 if is_linux():
     from playsound import playsound
@@ -75,7 +75,7 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
-        self.root_dir = get_own_dir()
+        self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
         #####################
         #####################

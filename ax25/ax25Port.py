@@ -185,19 +185,19 @@ class AX25Port(threading.Thread):
         return False
 
     def tx_pac_handler(self):
-        # All Connections
+        """All Connections"""
         if self.tx_connection_buf():
             return True
-        # Pipe-Tool
+        """Pipe-Tool"""
         if self.tx_pipe_buf():
             return True
-        # UI Frame Buffer Like Beacons
+        """UI Frame Buffer Like Beacons"""
         if self.tx_UI_buf():
             return True
-        # DIGI
+        """DIGI"""
         if self.tx_digi_buf():
             return True
-        # RX-Echo
+        """RX-Echo"""
         if self.tx_rxecho_pac_handler():
             return True
         return False
@@ -423,13 +423,11 @@ class AX25Port(threading.Thread):
         return conn
 
     def del_connections(self, conn: AX25Conn):
-        for uid in list(self.connections.keys()):
-            if conn == self.connections[uid]:
-                # S0 ENDE
-                self.port_handler.del_link(conn.uid)
-                if uid in self.pipes:
-                    del self.pipes[uid]
-                del self.connections[uid]
+        self.port_handler.del_link(conn.uid)
+        if conn.uid in self.pipes.keys():
+            del self.pipes[conn.uid]
+        if conn.uid in self.connections.keys():
+            del self.connections[conn.uid]
 
     def send_UI_frame(self,
                       own_call,
@@ -467,7 +465,7 @@ class AX25Port(threading.Thread):
     def run(self):
         while self.loop_is_running and self.device_is_running:
             self.tasks()
-            time.sleep(0.15)
+            # time.sleep(0.05)
         self.close()
         self.ende = True
 
@@ -517,6 +515,7 @@ class AX25Port(threading.Thread):
                 if self.port_cfg.parm_full_duplex:
                     break
             else:
+                time.sleep(0.1)
                 break
         if (time.time() > self.TXD and self.loop_is_running) \
                 or (self.port_cfg.parm_full_duplex and self.loop_is_running):

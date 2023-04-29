@@ -229,7 +229,7 @@ class AX25PortHandler(object):
                     self.gui.disco_snd()
                 # self.del_link(conn.uid)
                 del self.all_connections[k]
-                print('InitPorts Conn Cleanup !!')
+                # print('InitPorts Conn Cleanup !!')
 
         if self.gui is not None:
             self.gui.ch_btn_status_update()
@@ -297,7 +297,7 @@ class AX25PortHandler(object):
                 if user_db_ent.Name:
                     return True, f'\r*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r'
             return True, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
-        return False, 'Error: Can not connect'
+        return False, '\r*** Busy'
 
     ######################
     # RX-ECHO Handling

@@ -551,14 +551,14 @@ class AX25Conn(object):
         if self.LINK_Connection is not None:
             # print("LINK CLEANUP")
             # print(f'LINK CLEANUP link_connections K : {self.port_handler.link_connections.keys()}')
-            self.port_handler.del_link(self.uid)
             self.LINK_Connection = None
             self.is_link = False
+        self.port_handler.del_link(self.uid)
 
     def link_cleanup(self):
         self.link_disco()
         self.del_link()
-        self.port_handler.del_link(self.uid)
+        # self.port_handler.del_link(self.uid)
 
     # ##############
     # DISCO
@@ -570,6 +570,11 @@ class AX25Conn(object):
                 self.zustand_exec.S1_end_connection()
             else:
                 self.zustand_exec.change_state(4)
+
+    def conn_cleanup(self):
+        self.link_cleanup()
+        self.port_handler.del_conn2all_conn_var(self)   # Doppelt ..
+        self.own_port.del_connections(conn=self)
 
     ###############################################
     # Channel ECHO  # TODO Again !
@@ -942,16 +947,16 @@ class DefaultStat(object):
 
     def cleanup(self):
         # print('STATE 0 Cleanup')
-        self.ax25conn.link_cleanup()
-        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)  # TODO Move up to AX25Conn
-        self.ax25conn.own_port.del_connections(conn=self.ax25conn)  # TODO Move up to AX25Conn
+        self.ax25conn.conn_cleanup()
 
     def S1_end_connection(self):
         # print("S1_end_connection")
         self.ax25conn.n2 = 1
         self.ax25conn.set_T1()
         self.change_state(1)
-        self.ax25conn.link_cleanup()
+        """ !!!!!!!!! """
+        # self.ax25conn.link_cleanup()
+        self.ax25conn.link_disco()
         self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
 
     def t1_fail(self):
