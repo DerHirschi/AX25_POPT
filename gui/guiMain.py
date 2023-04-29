@@ -463,12 +463,8 @@ class TkMainWin:
         self.out_txt.delete('1.0', tk.END)
         self.out_txt.configure(state='disabled')
         self.inp_txt.delete('1.0', tk.END)
-        self.win_buf[self.channel_index].output_win = ''
-        self.win_buf[self.channel_index].input_win = ''
-        self.win_buf[self.channel_index].t2speech_buf = ''
-        self.win_buf[self.channel_index].input_win_index = '1.0'
-        self.win_buf[self.channel_index].new_data_tr = False
-        self.win_buf[self.channel_index].rx_beep_tr = False
+        del self.win_buf[self.channel_index]
+        self.win_buf[self.channel_index] = ChVars()
 
     def clear_monitor_data(self):
         self.mon_txt.configure(state='normal')
@@ -579,10 +575,8 @@ class TkMainWin:
         self.mon_txt.configure(width=max(width - 1, 56))
 
     def change_conn_btn(self):
-        conn = self.get_conn(self.channel_index)
-        if conn:
+        if self.get_conn(self.channel_index):
             self.conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
-
         else:
             self.conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
 
@@ -826,6 +820,9 @@ class TkMainWin:
             # conn: AX25Conn
             conn = self.get_conn(k)
             if conn.rx_buf_rawData or conn.tx_buf_guiData:
+                bg = conn.stat_cfg.stat_parm_qso_col_bg
+                fg = conn.stat_cfg.stat_parm_qso_col_text
+                tag_name_out = 'OUT-' + conn.my_call_str
                 # if not conn.my_digi_call:
                 inp = str(conn.tx_buf_guiData.decode('UTF-8', 'ignore')) \
                     .replace('\r', '\n') \
@@ -858,12 +855,11 @@ class TkMainWin:
                     tr = False
                     if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
                         tr = True
-                    bg = conn.stat_cfg.stat_parm_qso_col_bg
-                    fg = conn.stat_cfg.stat_parm_qso_col_text
+
                     # self.out_txt_win.tag_config("input", foreground="yellow")
                     # self.out_txt.configure(state="normal", fg=fg, bg=bg)
                     self.out_txt.configure(state="normal")
-                    self.out_txt.tag_config("output",
+                    self.out_txt.tag_config(tag_name_out,
                                             foreground=fg,
                                             background=bg)
 
@@ -877,13 +873,20 @@ class TkMainWin:
                     ind = self.out_txt.index(tk.INSERT)
                     self.out_txt.insert('end', out)
                     ind2 = self.out_txt.index(tk.INSERT)
-                    self.out_txt.tag_add("output", ind, ind2)
-
+                    self.out_txt.tag_add(tag_name_out, ind, ind2)
                     self.out_txt.configure(state="disabled")
                     if tr or self.get_ch_param().autoscroll:
                         self.see_end_qso_win()
 
                 else:
+                    if tag_name_out not in self.win_buf[k].output_win_tags.keys():
+                        self.win_buf[k].output_win_tags[tag_name_out] = ()
+                    old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
+                    if old_tags:
+                        old_tags = old_tags[:-1] + [tk.INSERT]
+                    else:
+                        old_tags = ['1.0', tk.INSERT]
+                    self.win_buf[k].output_win_tags[tag_name_out] = old_tags
                     self.win_buf[k].new_data_tr = True
                 self.win_buf[k].rx_beep_tr = True
                 self.ch_btn_status_update()
@@ -1241,14 +1244,15 @@ class TkMainWin:
         self.channel_index = ind
         self.get_ch_param().new_data_tr = False
         self.get_ch_param().rx_beep_tr = False
-
+        """
         conn = self.get_conn()
         if conn:
             bg = conn.stat_cfg.stat_parm_qso_col_bg
             fg = conn.stat_cfg.stat_parm_qso_col_text
             self.out_txt.configure(state="normal", fg=fg, bg=bg)
         else:
-            self.out_txt.configure(state="normal")
+        """
+        self.out_txt.configure(state="normal")
 
         self.out_txt.delete('1.0', tk.END)
         self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
