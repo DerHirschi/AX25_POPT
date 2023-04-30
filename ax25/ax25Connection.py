@@ -1317,7 +1317,7 @@ class S5Ready(DefaultStat):
 
     def rx_I(self):
         if not self.prozess_I_frame():
-            self.ax25conn.send_REJ(pf_bit=True, cmd_bit=True)
+            self.ax25conn.send_REJ(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1()
             self.change_state(6)  # go into REJ_state
         else:

@@ -96,7 +96,7 @@ class TkMainWin:
         self.parm_btn_blink_time = 0.3
         self.parm_rx_beep_cooldown = 1.5
         # Tasker Timings
-        self.loop_delay = 60  # ms
+        self.loop_delay = 80  # ms
         self.parm_non_prio_task_timer = 0.5  # s
         self.parm_non_non_prio_task_timer = 1  # s
         self.non_prio_task_timer = time.time()
@@ -288,7 +288,7 @@ class TkMainWin:
             self.side_btn_frame_top,
             textvariable=self.status_info_var,
             fg='red')
-        font = self.status_label.cget('font')
+        # font = self.status_label.cget('font')
         self.status_label.configure(font=(FONT, 14, 'bold'))
         self.status_label.place(x=10, y=163)
 
