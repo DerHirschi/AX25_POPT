@@ -56,6 +56,9 @@ class DefaultCLI(object):
         self.user_db_ent: Client = self.connection.user_db_ent
         if self.user_db_ent.CText:
             self.c_text = str(self.user_db_ent.CText)
+        self.c_text = self.c_text.replace('\n', '\r')
+        self.bye_text = self.bye_text.replace('\n', '\r')
+        self.prompt = self.prompt.replace('\n', '\r')
 
         self.state_index = 0
         self.crone_state_index = 0
@@ -385,9 +388,9 @@ class DefaultCLI(object):
 
             if call_str:
                 if call_str in self.user_db.db.keys():
-                    header = "\n" \
-                             f"| USER-DB: {call_str}\n" \
-                             "|-------------------\n"
+                    header = "\r" \
+                             f"| USER-DB: {call_str}\r" \
+                             "|-------------------\r"
                     ent = self.user_db.db[call_str]
                     ent_ret = ""
                     for att in dir(ent):
@@ -397,14 +400,14 @@ class DefaultCLI(object):
                                     'is_new',
                                 ]:
                             if getattr(ent, att):
-                                ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\n"
+                                ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\r"
 
-                    ent_ret += "|-------------------\n\n"
+                    ent_ret += "|-------------------\r\r"
                     return header + ent_ret
 
-            return "\n" \
+            return "\r" \
                    f"{STR_TABLE['cli_no_user_db_ent'][self.connection.cli_language]}" \
-                   "\n"
+                   "\r"
 
     def cmd_set_name(self):
         if self.user_db_ent:
@@ -567,6 +570,7 @@ class DefaultCLI(object):
             self.raw_input = bytes(inp)
             _ret = self.state_exec[self.state_index]()
             if _ret:
+                _ret = _ret.replace('\n', '\r')
                 self.send_output(_ret)
 
             """
