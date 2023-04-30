@@ -493,7 +493,7 @@ class AX25Port(threading.Thread):
             if buf is None:
                 buf = RxBuf()
             if buf.raw_data and self.loop_is_running:  # RX ############
-                logger.debug('Inp RAW Buf - Port {} > {}'.format(self.port_id, buf.raw_data))
+                # logger.debug('Inp RAW Buf - Port {} > {}'.format(self.port_id, buf.raw_data))
                 self.set_TXD()
                 ax25frame = AX25Frame()
                 ax25frame.axip_add = buf.axip_add

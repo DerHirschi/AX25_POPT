@@ -191,8 +191,6 @@ class CByte(object):
         self.hex = hex(int(ret, 2))
 
     def dec_cbyte(self, in_byte):
-        logger.debug('C-Byte Decoding C-Byte> ' + str(bin(int(in_byte))[2:].zfill(8)) + ' ' + hex(in_byte))
-
         if int(in_byte) in self.pac_types.keys():
             # print("Predefined Pac Type.. {}".format(in_byte))
             self.pac_types[int(in_byte)]()

@@ -370,32 +370,41 @@ class DefaultCLI(object):
             return self.stat_cfg.stat_parm_cli_akttext
 
     def cmd_user_db_detail(self):
+        if not self.parameter:
+            header = "\n" \
+                     "| USER-DB\r" \
+                     "|-------------------\r"
+            ent_ret = ""
+            for call in self.user_db.db.keys():
+                ent_ret += f"| {call}\r"
+            ent_ret += "|-------------------\r\r"
+            return header + ent_ret
+        else:
+            call_str = self.parameter[0].decode(self.encoding[0], self.encoding[1])
+            call_str = validate_call(call_str)
 
-        call_str = self.parameter[0].decode(self.encoding[0], self.encoding[1])
-        call_str = validate_call(call_str)
+            if call_str:
+                if call_str in self.user_db.db.keys():
+                    header = "\n" \
+                             f"| USER-DB: {call_str}\n" \
+                             "|-------------------\n"
+                    ent = self.user_db.db[call_str]
+                    ent_ret = ""
+                    for att in dir(ent):
+                        if '__' not in att and \
+                                att not in [
+                                    'call_str',
+                                    'is_new',
+                                ]:
+                            if getattr(ent, att):
+                                ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\n"
 
-        if call_str:
-            if call_str in self.user_db.db.keys():
-                header = "\n" \
-                         f"| USER-DB: {call_str}\n" \
-                         "|-------------------\n"
-                ent = self.user_db.db[call_str]
-                ent_ret = ""
-                for att in dir(ent):
-                    if '__' not in att and \
-                            att not in [
-                                'call_str',
-                                'is_new',
-                            ]:
-                        if getattr(ent, att):
-                            ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\n"
+                    ent_ret += "|-------------------\n\n"
+                    return header + ent_ret
 
-                ent_ret += "|-------------------\n\n"
-                return header + ent_ret
-
-        return "\n" \
-               f"{STR_TABLE['cli_no_user_db_ent'][self.connection.cli_language]}" \
-               "\n"
+            return "\n" \
+                   f"{STR_TABLE['cli_no_user_db_ent'][self.connection.cli_language]}" \
+                   "\n"
 
     def cmd_set_name(self):
         if self.user_db_ent:
