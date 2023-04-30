@@ -58,7 +58,7 @@ class DefaultCLI(object):
             self.c_text = str(self.user_db_ent.CText)
         self.c_text = self.c_text.replace('\n', '\r')
         self.bye_text = self.bye_text.replace('\n', '\r')
-        self.prompt = self.prompt.replace('\n', '\r')
+        self.prompt = self.prompt.replace('\n', '').replace('\r', '')
 
         self.state_index = 0
         self.crone_state_index = 0
@@ -126,9 +126,7 @@ class DefaultCLI(object):
     """
 
     def build_prompt(self):
-        self.prompt = '\r{}<>{}'.format(
-            str(self.my_call_str).replace('\r', ''),
-            str(self.prompt).replace('\r', ''))
+        self.prompt = f"\r<{self.prompt}>{self.my_call_str}>"
 
     def send_output(self, ret):
         if ret:

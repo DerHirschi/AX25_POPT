@@ -285,8 +285,9 @@ class AX25Conn(object):
         self.rx_buf_rawData = f'\n*** Disconnected from {self.to_call_str}\n'.encode()
         """ !!!!!!!!! """
         c = 0
-        while c < 3:
-            time.sleep(0.3)
+        while c < 5 and self.rx_buf_rawData:
+            # TODO Not Happy
+            time.sleep(0.1)
             c += 1
         # self.ax25conn.link_cleanup()
         self.port_handler.del_conn2all_conn_var(self)
