@@ -858,9 +858,13 @@ class TkMainWin:
                     # self.out_txt_win.tag_config("input", foreground="yellow")
                     # self.out_txt.configure(state="normal", fg=fg, bg=bg)
                     self.out_txt.configure(state="normal")
+                    # self.out_txt.tag_remove(tk.SEL, "1.0", tk.END)
                     self.out_txt.tag_config(tag_name_out,
                                             foreground=fg,
-                                            background=bg)
+                                            background=bg,
+                                            selectbackground=fg,
+                                            selectforeground=bg
+                                            )
 
 
                     ind = self.out_txt.index(tk.INSERT)
@@ -873,7 +877,9 @@ class TkMainWin:
                     self.out_txt.insert('end', out)
                     ind2 = self.out_txt.index(tk.INSERT)
                     self.out_txt.tag_add(tag_name_out, ind, ind2)
-                    self.out_txt.configure(state="disabled", exportselection=1)
+                    self.out_txt.configure(state="disabled",
+                                           exportselection=1
+                                           )
                     if tr or self.get_ch_param().autoscroll:
                         self.see_end_qso_win()
 

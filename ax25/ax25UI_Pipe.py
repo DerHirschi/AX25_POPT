@@ -133,14 +133,14 @@ class AX25Pipe(object):
                 try:
                     with open(self.tx_filename, 'rb') as f:
                         self.tx_data += f.read()
-                except PermissionError:
+                except (PermissionError, FileNotFoundError):
                     self.e_count += 1
                     return False
                 else:
                     try:
                         with open(self.tx_filename, 'wb') as f:
                             pass
-                    except PermissionError:
+                    except (PermissionError, FileNotFoundError):
                         self.e_count += 1
                         return False
                 self.e_count = 0
@@ -160,7 +160,7 @@ class AX25Pipe(object):
                             self.rx_data = b''
                             self.e_count = 0
                             return True
-                    except PermissionError:
+                    except (PermissionError, FileNotFoundError):
                         self.e_count += 1
                         return False
                 self.e_count += 1
