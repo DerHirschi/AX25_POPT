@@ -282,7 +282,10 @@ class AX25Conn(object):
         self.vr = 0
         self.vs = 0
         self.init_cli()
+        self.rx_buf_rawData = f'\n*** Disconnected from {self.to_call_str}\n'.encode()
         """ !!!!!!!!! """
+        while self.rx_buf_rawData:
+            time.sleep(0.3)
         # self.ax25conn.link_cleanup()
         self.port_handler.del_conn2all_conn_var(self)
 
@@ -447,7 +450,10 @@ class AX25Conn(object):
                     self.ft_tx_activ = self.ft_tx_queue[0]
                 else:
                     return False
-            if self.ft_tx_activ.last_tx < time.time():
+            if not self.ft_tx_activ.param_wait:
+                self.send_data(bytes(self.ft_tx_activ.data_out), file_trans=True)
+                self.ft_tx_activ.data_out = b''
+            elif self.ft_tx_activ.last_tx < time.time():
                 self.ft_tx_activ.reset_timer()
                 tmp_len = self.parm_PacLen * self.parm_MaxFrame
                 if len(self.ft_tx_activ.data_out) < tmp_len:
@@ -1255,8 +1261,10 @@ class S4Abbau(DefaultStat):
 
     def end_conn(self):
         # if self.digi_conn is None:
+        """
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
+        """
         self.S1_end_connection()
         self.ax25conn.n2 = 100
         # if self.ax25conn.is_prt_hndl:
@@ -1275,8 +1283,10 @@ class S4Abbau(DefaultStat):
         pass
 
     def n2_fail(self):
+        """
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
+        """
         self.S1_end_connection()
 
 
