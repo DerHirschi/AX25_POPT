@@ -85,7 +85,7 @@ class Beacon:
             self.ax_frame.from_call.call_str = self.from_call
             self.ax_frame.data = self.text.encode('UTF-8', 'ignore')
             try:
-                self.ax_frame.encode()
+                self.ax_frame.encode_ax25frame()
             except AX25EncodingERROR:
                 logger.error("AX25EncodingERROR: Beacon")
                 return False

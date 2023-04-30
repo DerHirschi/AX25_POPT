@@ -114,44 +114,6 @@ class ChBtnFrm:
             self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
         self.main_class.ch_alarm = ch_alarm
 
-    """
-    def ch_btn_clk(self, ind: int):     # TODO Move to guiMain
-        self.main_class.get_ch_param().input_win = self.main_class.inp_txt.get('1.0', tk.END)
-        self.main_class.channel_index = ind
-        # if ind:
-        self.main_class.get_ch_param().new_data_tr = False
-        self.main_class.get_ch_param().rx_beep_tr = False
-
-        self.main_class.out_txt.configure(state="normal")
-        self.main_class.out_txt.delete('1.0', tk.END)
-        self.main_class.out_txt.insert(tk.END, self.main_class.win_buf[ind].output_win)
-        self.main_class.out_txt.configure(state="disabled")
-        self.main_class.out_txt.see(tk.END)
-        self.main_class.inp_txt.delete('1.0', tk.END)
-        #self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
-        self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win[:-1])
-        self.main_class.inp_txt.see(tk.END)
-        # self.main_class: gui.guiMainNew.TkMainWin
-        if self.main_class.get_ch_param().rx_beep_opt and ind:
-            self.main_class.txt_win.rx_beep_box.select()
-            self.main_class.txt_win.rx_beep_box: tk.Checkbutton
-            self.main_class.txt_win.rx_beep_box.configure(bg='green')
-        else:
-            self.main_class.txt_win.rx_beep_box.deselect()
-            self.main_class.txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR)
-
-        if self.main_class.get_ch_param().timestamp_opt and ind:
-            self.main_class.txt_win.ts_box_box.select()
-            self.main_class.txt_win.ts_box_box: tk.Checkbutton
-            self.main_class.txt_win.ts_box_box.configure(bg='green')
-        else:
-            self.main_class.txt_win.ts_box_box.deselect()
-            self.main_class.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
-
-        self.ch_btn_status_update()
-        # self.main_class.change_conn_btn()
-        self.main_class.kanal_switch()
-    """
     def ch_btn_alarm(self, btn: tk.Button):
         if self.ch_btn_blink_timer < time.time():
             COLORS = ['gainsboro', 'old lace',

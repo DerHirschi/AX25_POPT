@@ -35,7 +35,8 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
 from gui.vars import ALL_COLOURS
 from string_tab import STR_TABLE
-from fnc.os_fnc import is_linux, is_windows, get_own_dir
+from fnc.os_fnc import is_linux, is_windows, get_root_dir
+from fnc.gui_fnc import get_all_tags, set_all_tags
 
 if is_linux():
     from playsound import playsound
@@ -56,8 +57,11 @@ STAT_BAR_CLR = 'grey60'
 class ChVars(object):
     def __init__(self):
         self.output_win = ''
+        self.output_win_tags = {}
         self.input_win = ''
+        self.input_win_tags = {}
         self.input_win_index = '1.0'
+        self.input_win_cursor_index = tk.INSERT
         self.new_data_tr = False
         self.rx_beep_tr = False
         self.rx_beep_cooldown = time.time()
@@ -75,7 +79,7 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
-        self.root_dir = get_own_dir()
+        self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
         #####################
         #####################
@@ -85,13 +89,14 @@ class TkMainWin:
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
         self.mon_mode = 0
+        self.mon_buff = []
         self.connect_history = {}
         ####################
         # GUI PARAM
         self.parm_btn_blink_time = 0.3
         self.parm_rx_beep_cooldown = 1.5
         # Tasker Timings
-        self.loop_delay = 60  # ms
+        self.loop_delay = 80  # ms
         self.parm_non_prio_task_timer = 0.5  # s
         self.parm_non_non_prio_task_timer = 1  # s
         self.non_prio_task_timer = time.time()
@@ -283,7 +288,7 @@ class TkMainWin:
             self.side_btn_frame_top,
             textvariable=self.status_info_var,
             fg='red')
-        font = self.status_label.cget('font')
+        # font = self.status_label.cget('font')
         self.status_label.configure(font=(FONT, 14, 'bold'))
         self.status_label.place(x=10, y=163)
 
@@ -459,12 +464,8 @@ class TkMainWin:
         self.out_txt.delete('1.0', tk.END)
         self.out_txt.configure(state='disabled')
         self.inp_txt.delete('1.0', tk.END)
-        self.win_buf[self.channel_index].output_win = ''
-        self.win_buf[self.channel_index].input_win = ''
-        self.win_buf[self.channel_index].t2speech_buf = ''
-        self.win_buf[self.channel_index].input_win_index = '1.0'
-        self.win_buf[self.channel_index].new_data_tr = False
-        self.win_buf[self.channel_index].rx_beep_tr = False
+        del self.win_buf[self.channel_index]
+        self.win_buf[self.channel_index] = ChVars()
 
     def clear_monitor_data(self):
         self.mon_txt.configure(state='normal')
@@ -575,10 +576,8 @@ class TkMainWin:
         self.mon_txt.configure(width=max(width - 1, 56))
 
     def change_conn_btn(self):
-        conn = self.get_conn(self.channel_index)
-        if conn:
+        if self.get_conn(self.channel_index):
             self.conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
-
         else:
             self.conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
 
@@ -786,7 +785,8 @@ class TkMainWin:
 
     def tasker_prio(self):
         """ Prio Tasks """
-        self.update_mon()  # TODO ?? maybe trigger von AX25CONN
+        self.monitor_task()
+        self.update_qso_win()
         self.txt_win.update_status_win()
         if self.settings_win is not None:
             # Settings Win ( Port,- Station settings )
@@ -807,20 +807,21 @@ class TkMainWin:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
             self.update_bw_mon()
             self.tabbed_sideFrame.tasker()
+            # print(f"{self.ax25_port_handler.link_connections.keys()}")
             if self.mh.new_call_alarm and self.setting_dx_alarm:
                 self.dx_alarm()
 
     #################################
     # TASKS
-    def update_mon(self):  # MON & INPUT WIN
-        """
-        UPDATE INPUT WIN
-        """
+    def update_qso_win(self):  # INPUT WIN
         # UPDATE INPUT WIN
         for k in self.ax25_port_handler.all_connections.keys():
             # conn: AX25Conn
             conn = self.get_conn(k)
             if conn.rx_buf_rawData or conn.tx_buf_guiData:
+                bg = conn.stat_cfg.stat_parm_qso_col_bg
+                fg = conn.stat_cfg.stat_parm_qso_col_text
+                tag_name_out = 'OUT-' + conn.my_call_str
                 # if not conn.my_digi_call:
                 inp = str(conn.tx_buf_guiData.decode('UTF-8', 'ignore')) \
                     .replace('\r', '\n') \
@@ -853,13 +854,17 @@ class TkMainWin:
                     tr = False
                     if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
                         tr = True
-                    bg = conn.stat_cfg.stat_parm_qso_col_bg
-                    fg = conn.stat_cfg.stat_parm_qso_col_text
+
                     # self.out_txt_win.tag_config("input", foreground="yellow")
-                    self.out_txt.configure(state="normal", fg=fg, bg=bg)
-                    self.out_txt.tag_config("output",
+                    # self.out_txt.configure(state="normal", fg=fg, bg=bg)
+                    self.out_txt.configure(state="normal")
+                    # self.out_txt.tag_remove(tk.SEL, "1.0", tk.END)
+                    self.out_txt.tag_config(tag_name_out,
                                             foreground=fg,
-                                            background=bg)
+                                            background=bg,
+                                            selectbackground=fg,
+                                            selectforeground=bg
+                                            )
 
 
                     ind = self.out_txt.index(tk.INSERT)
@@ -871,57 +876,74 @@ class TkMainWin:
                     ind = self.out_txt.index(tk.INSERT)
                     self.out_txt.insert('end', out)
                     ind2 = self.out_txt.index(tk.INSERT)
-                    self.out_txt.tag_add("output", ind, ind2)
-
-                    self.out_txt.configure(state="disabled")
+                    self.out_txt.tag_add(tag_name_out, ind, ind2)
+                    self.out_txt.configure(state="disabled",
+                                           exportselection=1
+                                           )
                     if tr or self.get_ch_param().autoscroll:
                         self.see_end_qso_win()
 
                 else:
+                    if tag_name_out not in self.win_buf[k].output_win_tags.keys():
+                        self.win_buf[k].output_win_tags[tag_name_out] = ()
+                    old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
+                    if old_tags:
+                        old_tags = old_tags[:-1] + [tk.INSERT]
+                    else:
+                        old_tags = ['1.0', tk.INSERT]
+                    self.win_buf[k].output_win_tags[tag_name_out] = old_tags
                     self.win_buf[k].new_data_tr = True
                 self.win_buf[k].rx_beep_tr = True
                 self.ch_btn_status_update()
 
+    def update_monitor(self, mon_str: str, conf, tx=False):
+        """ Called from AX25Conn """
+        self.mon_buff.append((
+            str(mon_str),
+            conf,
+            bool(tx)
+        ))
+
+    def monitor_task(self):
+        if self.mon_buff:
+            tmp_buff = list(self.mon_buff)
+            self.mon_buff = []
+            tr = False
+            self.mon_txt.configure(state="normal")
+            for el in tmp_buff:
+                var = el[0]
+                conf = el[1]
+                tx = el[2]
+
+                var = tk_filter_bad_chars(var)
+                ind = self.mon_txt.index(tk.INSERT)
+                color_bg = conf.parm_mon_clr_bg
+                if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
+                    tr = True
+                if tx:
+                    tag = "tx{}".format(conf.parm_PortNr)
+                    color = conf.parm_mon_clr_tx
+                else:
+                    tag = "rx{}".format(conf.parm_PortNr)
+                    color = conf.parm_mon_clr_rx
+
+                if tag in self.mon_txt.tag_names(None):
+                    self.mon_txt.insert(tk.END, var, tag)
+                else:
+                    self.mon_txt.insert(tk.END, var)
+                    ind2 = self.mon_txt.index(tk.INSERT)
+                    self.mon_txt.tag_config(tag, foreground=color,
+                                            background=color_bg,
+                                            selectbackground=self.mon_txt.cget('selectbackground'),
+                                            selectforeground=self.mon_txt.cget('selectforeground'),
+                                            )
+                    self.mon_txt.tag_add(tag, ind, ind2)
+            self.mon_txt.configure(state="disabled", exportselection=1)
+            if tr or self.tabbed_sideFrame.mon_scroll_var.get():
+                self.mon_txt.see(tk.END)
+
     def see_end_qso_win(self):
         self.out_txt.see("end")
-
-    def update_monitor(self, var: str, conf, tx=False):
-        """ Called from AX25Conn """
-        var = tk_filter_bad_chars(var)
-        ind = self.mon_txt.index(tk.INSERT)
-        tr = False
-        color_bg = conf.parm_mon_clr_bg
-        if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
-            tr = True
-        if tx:
-            tag = "tx{}".format(conf.parm_PortNr)
-            color = conf.parm_mon_clr_tx
-
-        else:
-            tag = "rx{}".format(conf.parm_PortNr)
-            color = conf.parm_mon_clr_rx
-        self.mon_txt.configure(state="normal")
-        if tag in self.mon_txt.tag_names(None):
-            self.mon_txt.insert(tk.END, var, tag)
-        else:
-            self.mon_txt.insert(tk.END, var)
-            ind2 = self.mon_txt.index(tk.INSERT)
-            self.mon_txt.tag_config(tag, foreground=color,
-                                    background=color_bg,
-                                    selectbackground=self.mon_txt.cget('selectbackground'),
-                                    selectforeground=self.mon_txt.cget('selectforeground'),
-                                    )
-            self.mon_txt.tag_add(tag, ind, ind2)
-
-
-        # self.mon_txt.bindtags(self.mon_txt.tag_names(None))     # TODO Scrollbar is not scrollable after this
-        # yscrollcommand = vbar.set
-        # self.mon_txt.configure(yscrollcommand=self.mon_txt.vbar.set())
-        # self.mon_txt.update()
-        self.mon_txt.configure(state="disabled", exportselection=1)
-        # self.mon_txt.vbar.s
-        if tr or self.tabbed_sideFrame.mon_scroll_var.get():
-            self.mon_txt.see(tk.END)
 
     def msg_to_monitor(self, var: str):
         """ Called from AX25Conn """
@@ -1062,13 +1084,19 @@ class TkMainWin:
                     ind = str(int(float(ind))) + '.0'
                 else:
                     ind = '1.0'
+
                 tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
                 tmp_txt = tmp_txt.replace('\n', '\r')
                 station.send_data(tmp_txt.encode())
+
+                self.inp_txt.tag_remove('send', ind, str(self.inp_txt.index(tk.INSERT)))
                 self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
+
                 self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
-                if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
-                    self.inp_txt.delete(tk.END, tk.END)
+
+                if '.0' in self.inp_txt.index(tk.INSERT):
+                    self.inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
+
         else:
             self.send_to_monitor()
 
@@ -1103,7 +1131,7 @@ class TkMainWin:
                         cmd_poll=(cmd, poll),
                         pid=pid
                     )
-                self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
+                # self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
         self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
             self.inp_txt.delete(tk.END, tk.END)
@@ -1127,8 +1155,13 @@ class TkMainWin:
         # self.inp_txt.insert(tk.INSERT, '\n')
 
     def release_return(self, event=None):
+        pass
+        # self.inp_txt.tag_remove('send', 'current linestart+1c', 'current linestart+2c')
+
+        """
         self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)),
                                 self.inp_txt.index(tk.INSERT))
+        """
 
     def arrow_keys(self, event=None):
         self.on_click_inp_txt()
@@ -1201,6 +1234,7 @@ class TkMainWin:
         self.ch_btn_status_update()
 
     def switch_channel(self, ch_ind: int = 0):
+        # Channel 0 = Monitor
         if not ch_ind:
             self.switch_monitor_mode()
         else:
@@ -1215,27 +1249,37 @@ class TkMainWin:
 
     def ch_btn_clk(self, ind: int):
         self.get_ch_param().input_win = self.inp_txt.get('1.0', tk.END)
+        # self.get_ch_param().input_win_tags = self.inp_txt.tag_ranges('send')
+        self.get_ch_param().input_win_tags = get_all_tags(self.inp_txt)
+        self.get_ch_param().output_win_tags = get_all_tags(self.out_txt)
+        self.get_ch_param().input_win_cursor_index = self.inp_txt.index(tk.INSERT)
+
         self.channel_index = ind
-        # if ind:
         self.get_ch_param().new_data_tr = False
         self.get_ch_param().rx_beep_tr = False
-
+        """
         conn = self.get_conn()
         if conn:
             bg = conn.stat_cfg.stat_parm_qso_col_bg
             fg = conn.stat_cfg.stat_parm_qso_col_text
             self.out_txt.configure(state="normal", fg=fg, bg=bg)
         else:
-            self.out_txt.configure(state="normal")
+        """
+        self.out_txt.configure(state="normal")
 
         self.out_txt.delete('1.0', tk.END)
         self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
         self.out_txt.configure(state="disabled")
         self.out_txt.see(tk.END)
+        # print(f"{self.inp_txt.tag_ranges('send')}")
+
         self.inp_txt.delete('1.0', tk.END)
         # self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
         self.inp_txt.insert(tk.END, self.win_buf[ind].input_win[:-1])
-        self.inp_txt.see(tk.END)
+        set_all_tags(self.inp_txt, self.get_ch_param().input_win_tags)
+        set_all_tags(self.out_txt, self.get_ch_param().output_win_tags)
+        self.inp_txt.mark_set("insert", self.get_ch_param().input_win_cursor_index)
+
         # self.main_class: gui.guiMainNew.TkMainWin
         if self.get_ch_param().rx_beep_opt and ind:
             self.txt_win.rx_beep_box.select()

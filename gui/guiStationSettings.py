@@ -300,7 +300,7 @@ class StatSetTab:
             col = askcolor(self.station_setting.stat_parm_qso_col_text,
                            title=STR_TABLE['text_color'][self.lang])
             if col[1] is not None:
-                print(col)
+                # print(col)
                 if col:
                     self.station_setting.stat_parm_qso_col_text = col[1]
                     self.color_example_text.configure(fg=col[1])

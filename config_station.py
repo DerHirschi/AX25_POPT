@@ -4,7 +4,7 @@ from cli.cli import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 
 
-VER = '2.79.8'
+VER = '2.80.15'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -67,7 +67,7 @@ def get_all_stat_cfg():
 
 def exist_userpath(usercall: str):
     if not os.path.exists(CFG_data_path + CFG_usertxt_path + usercall):
-        print(CFG_data_path + CFG_usertxt_path + usercall)
+        # print(CFG_data_path + CFG_usertxt_path + usercall)
         os.makedirs(CFG_data_path + CFG_usertxt_path + usercall)
         return False
     return True
@@ -221,7 +221,7 @@ class DefaultPort(object):
                 if '__' not in att and att not in self.dont_save_this:
                     # print(" {} - {}".format(att, getattr(self, att)))
                     save_ports[att] = getattr(self, att)
-                    print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
+                    # print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
 
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)
@@ -278,7 +278,7 @@ class PortConfigInit(DefaultPort):
                     self.parm_full_duplex = True
                 else:
                     self.parm_full_duplex = False   # Maybe sometimes i ll implement it for HF
-                print("Load from File..")
+                # print("Load from File..")
 
             # self.parm_StationCalls: [str] = []
             stat: DefaultStation

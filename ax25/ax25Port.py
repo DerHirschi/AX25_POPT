@@ -48,7 +48,7 @@ class AX25Port(threading.Thread):
         """ DIGI """
         self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
         self.is_smart_digi = self.port_cfg.parm_isSmartDigi
-        self.parm_digi_TXD = 2000   # TODO add to Settings GUI
+        self.parm_digi_TXD = 2000  # TODO add to Settings GUI
         self.digi_TXD = time.time()
         self.digi_buf: [AX25Frame] = []
         self.UI_buf: [AX25Frame] = []
@@ -185,19 +185,19 @@ class AX25Port(threading.Thread):
         return False
 
     def tx_pac_handler(self):
-        # All Connections
+        """All Connections"""
         if self.tx_connection_buf():
             return True
-        # Pipe-Tool
+        """Pipe-Tool"""
         if self.tx_pipe_buf():
             return True
-        # UI Frame Buffer Like Beacons
+        """UI Frame Buffer Like Beacons"""
         if self.tx_UI_buf():
             return True
-        # DIGI
+        """DIGI"""
         if self.tx_digi_buf():
             return True
-        # RX-Echo
+        """RX-Echo"""
         if self.tx_rxecho_pac_handler():
             return True
         return False
@@ -217,7 +217,7 @@ class AX25Port(threading.Thread):
                         # TODO Just check for digi_call while encoding
                         el.digi_check_and_encode(call=el.digi_call, h_bit_enc=True)
                     else:
-                        el.encode()
+                        el.encode_ax25frame()
                     try:
                         self.tx(frame=el)
                         tr = True
@@ -360,7 +360,7 @@ class AX25Port(threading.Thread):
             return True
         return False
 
-    def del_pipe(self, pipe:AX25Pipe):
+    def del_pipe(self, pipe: AX25Pipe):
         if pipe.uid in self.pipes.keys():
             del self.pipes[pipe.uid]
             return True
@@ -400,9 +400,22 @@ class AX25Port(threading.Thread):
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
         ax25_frame.ctl_byte.SABMcByte()
-        ax25_frame.encode()
+        ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
+        """
         while ax25_frame.addr_uid in self.connections.keys() or \
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
+        """
+        while True:
+            if ax25_frame.addr_uid not in self.connections.keys() and \
+                    reverse_uid(ax25_frame.addr_uid) not in self.connections.keys():
+                break
+            if ax25_frame.addr_uid in self.connections.keys():
+                if self.connections[ax25_frame.addr_uid].zustand_exec.stat_index in [0, 1]:
+                    break
+            if reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
+                if self.connections[reverse_uid(ax25_frame.addr_uid)].zustand_exec.stat_index in [0, 1]:
+                    break
+
             logger.debug("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
@@ -413,7 +426,7 @@ class AX25Port(threading.Thread):
             if ax25_frame.from_call.ssid > 15:
                 return False
             try:
-                ax25_frame.encode()
+                ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
             except AX25EncodingERROR:
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
@@ -423,13 +436,11 @@ class AX25Port(threading.Thread):
         return conn
 
     def del_connections(self, conn: AX25Conn):
-        for uid in list(self.connections.keys()):
-            if conn == self.connections[uid]:
-                # S0 ENDE
-                self.port_handler.del_link(conn.uid)
-                if uid in self.pipes:
-                    del self.pipes[uid]
-                del self.connections[uid]
+        self.port_handler.del_link(conn.uid)
+        if conn.uid in self.pipes.keys():
+            del self.pipes[conn.uid]
+        if conn.uid in self.connections.keys():
+            del self.connections[conn.uid]
 
     def send_UI_frame(self,
                       own_call,
@@ -456,7 +467,7 @@ class AX25Port(threading.Thread):
         frame.axip_add = self.mh.mh_get_last_ip(call_str=dest_call)
         frame.from_call.call_str = own_call
         frame.to_call.call_str = dest_call
-        frame.encode()
+        frame.encode_ax25frame()
         self.UI_buf.append(frame)
 
     def reset_ft_wait_timer(self, ax25_frame: AX25Frame):
@@ -467,7 +478,7 @@ class AX25Port(threading.Thread):
     def run(self):
         while self.loop_is_running and self.device_is_running:
             self.tasks()
-            time.sleep(0.15)
+            # time.sleep(0.05)
         self.close()
         self.ende = True
 
@@ -482,7 +493,7 @@ class AX25Port(threading.Thread):
             if buf is None:
                 buf = RxBuf()
             if buf.raw_data and self.loop_is_running:  # RX ############
-                logger.debug('Inp RAW Buf - Port {} > {}'.format(self.port_id, buf.raw_data))
+                # logger.debug('Inp RAW Buf - Port {} > {}'.format(self.port_id, buf.raw_data))
                 self.set_TXD()
                 ax25frame = AX25Frame()
                 ax25frame.axip_add = buf.axip_add
@@ -490,7 +501,7 @@ class AX25Port(threading.Thread):
                 e = None
                 try:
                     # Decoding
-                    ax25frame.decode(buf.raw_data)
+                    ax25frame.decode_ax25frame(buf.raw_data)
                 except AX25DecodingERROR:
                     logger.error('Port:{} decoding: '.format(self.portname))
                     logger.error('{}: org {}'.format(self.portname, buf.raw_data))
@@ -517,12 +528,13 @@ class AX25Port(threading.Thread):
                 if self.port_cfg.parm_full_duplex:
                     break
             else:
+                time.sleep(0.1)
                 break
         if (time.time() > self.TXD and self.loop_is_running) \
                 or (self.port_cfg.parm_full_duplex and self.loop_is_running):
             #############################################
             # Crone
-            self.cron_port_handler()    # TODO Crone With and without TXD
+            self.cron_port_handler()  # TODO Crone With and without TXD
             # ######### TX #############
             self.tx_pac_handler()
         ############################
@@ -742,6 +754,7 @@ class AXIP(AX25Port):
         if self.device is not None:
             try:
                 self.device.settimeout(0)
+                self.device.recv(9999999)
                 self.device.shutdown(socket.SHUT_RDWR)
                 self.device.detach()
                 self.device.close()

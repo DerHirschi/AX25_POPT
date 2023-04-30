@@ -81,7 +81,7 @@ class AX25Pipe(object):
                 new_frame.ctl_byte = self.ax25_frame.ctl_byte
                 new_frame.data = self.tx_data[:min(len(self.tx_data), self.parm_pac_len)]
                 self.tx_data = self.tx_data[min(len(self.tx_data), self.parm_pac_len):]
-                new_frame.encode()
+                new_frame.encode_ax25frame()
                 self.tx_frame_buf.append(new_frame)
 
     def tx_Proto(self):
@@ -105,7 +105,7 @@ class AX25Pipe(object):
             return False
         if not self.ax25_frame.to_call.call_str:
             return False
-        self.ax25_frame.encode()
+        self.ax25_frame.encode_ax25frame()
         self.uid = self.ax25_frame.addr_uid
         self.add_str = ' '.join(reverse_uid(self.uid).split(':')[1:])
 
@@ -133,14 +133,14 @@ class AX25Pipe(object):
                 try:
                     with open(self.tx_filename, 'rb') as f:
                         self.tx_data += f.read()
-                except PermissionError:
+                except (PermissionError, FileNotFoundError):
                     self.e_count += 1
                     return False
                 else:
                     try:
                         with open(self.tx_filename, 'wb') as f:
                             pass
-                    except PermissionError:
+                    except (PermissionError, FileNotFoundError):
                         self.e_count += 1
                         return False
                 self.e_count = 0
@@ -160,7 +160,7 @@ class AX25Pipe(object):
                             self.rx_data = b''
                             self.e_count = 0
                             return True
-                    except PermissionError:
+                    except (PermissionError, FileNotFoundError):
                         self.e_count += 1
                         return False
                 self.e_count += 1

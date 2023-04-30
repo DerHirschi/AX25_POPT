@@ -191,8 +191,6 @@ class CByte(object):
         self.hex = hex(int(ret, 2))
 
     def dec_cbyte(self, in_byte):
-        logger.debug('C-Byte Decoding C-Byte> ' + str(bin(int(in_byte))[2:].zfill(8)) + ' ' + hex(in_byte))
-
         if int(in_byte) in self.pac_types.keys():
             # print("Predefined Pac Type.. {}".format(in_byte))
             self.pac_types[int(in_byte)]()
@@ -548,7 +546,7 @@ class AX25Frame(object):
                 if ca.call_str == self.digi_call:
                     tr = False
 
-    def decode(self, hexstr=b''):
+    def decode_ax25frame(self, hexstr=b''):
         if hexstr:
             self.bytes = hexstr
         if self.bytes and len(self.bytes) > 14:
@@ -616,7 +614,7 @@ class AX25Frame(object):
         else:
             raise AX25DecodingERROR(self)
 
-    def encode(self, digi=False):
+    def encode_ax25frame(self, digi=False):
         # print(f'encode >>>>>> {self.digi_call}')
 
         self.bytes = b''
@@ -743,7 +741,7 @@ class AX25Frame(object):
             if not ca.c_bit and ca.call_str == call:
                 if h_bit_enc:
                     ca.c_bit = True
-                    self.encode(digi=True)
+                    self.encode_ax25frame(digi=True)    # TODO !!! Double encoding ??
                 return True
         return False
 
@@ -759,8 +757,9 @@ class AX25Frame(object):
                 ind += 1
         if search_ind:
             self.via_calls = self.via_calls[search_ind:]
-
+    """
     def increment_viacall_ssid(self, call: str):
+        # TODO Cleanup ?? Not in Use 
         el: Call
         ind = 0
         self.via_calls.reverse()
@@ -769,7 +768,7 @@ class AX25Frame(object):
                 if el.ssid < 15:
                     el.ssid += 1
                     self.via_calls.reverse()
-                    self.encode()
+                    self.encode_ax25frame()
                     return el.call_str
                 else:
                     self.via_calls.reverse()
@@ -778,7 +777,7 @@ class AX25Frame(object):
                 ind += 1
         self.via_calls.reverse()
         return False
-
+    """
 
 def via_calls_fm_str(inp_str: str):
     # print(f'via_calls_fm_str: inp: {inp_str} ')

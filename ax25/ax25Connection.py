@@ -127,7 +127,7 @@ class AX25Conn(object):
             self.ax25_out_frame.to_call = ax25_frame.to_call
             self.ax25_out_frame.from_call = ax25_frame.from_call
             self.ax25_out_frame.via_calls = ax25_frame.via_calls
-            ax25_frame.encode()  # Set Stop-Bits and H-Bits while encoding
+            ax25_frame.encode_ax25frame()  # Set Stop-Bits and H-Bits while encoding
             if self.ax25_out_frame.addr_uid != ax25_frame.addr_uid:
                 self.ax25_out_frame.addr_uid = ax25_frame.addr_uid  # Unique ID for Connection
         self.my_call_obj = self.ax25_out_frame.from_call
@@ -275,6 +275,30 @@ class AX25Conn(object):
                 self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
                 self.cli.change_cli_state(state=1)
 
+    def end_connection(self):
+        self.link_disco()
+        self.n2 = 1
+        self.set_T1()
+        self.vr = 0
+        self.vs = 0
+        self.init_cli()
+        self.rx_buf_rawData = f'\n*** Disconnected from {self.to_call_str}\n'.encode()
+        """ !!!!!!!!! """
+        c = 0
+        while c < 5 and self.rx_buf_rawData:
+            # TODO Not Happy
+            time.sleep(0.1)
+            c += 1
+        # self.ax25conn.link_cleanup()
+        self.port_handler.del_conn2all_conn_var(self)
+
+    def update_gui_qso_buff(self):
+        pass
+        """
+        if self.gui is not None:
+            self.gui.update_qso_buff(self)
+        """
+
     ####################
     # Zustand EXECs
     def handle_rx(self, ax25_frame: AX25Frame):
@@ -310,6 +334,8 @@ class AX25Conn(object):
         self.set_dest_call_fm_data_inp(data)
         # Statistic
         self.rx_byte_count += len(data)
+        # Update GUI
+        # self.update_gui_qso_buff()
 
     def set_dest_call_fm_data_inp(self, ax25_fr_data: b''):
         det = [
@@ -396,6 +422,9 @@ class AX25Conn(object):
                 self.cli.cli_cron()
                 self.link_holder_cron()
         self.zustand_exec.cron()
+        ########################################
+        # DIGI / LINK Connection / Node Funktion
+        self.link_crone()
 
     def pipe_crone(self):
         if self.pipe is None:
@@ -424,7 +453,10 @@ class AX25Conn(object):
                     self.ft_tx_activ = self.ft_tx_queue[0]
                 else:
                     return False
-            if self.ft_tx_activ.last_tx < time.time():
+            if not self.ft_tx_activ.param_wait:
+                self.send_data(bytes(self.ft_tx_activ.data_out), file_trans=True)
+                self.ft_tx_activ.data_out = b''
+            elif self.ft_tx_activ.last_tx < time.time():
                 self.ft_tx_activ.reset_timer()
                 tmp_len = self.parm_PacLen * self.parm_MaxFrame
                 if len(self.ft_tx_activ.data_out) < tmp_len:
@@ -505,6 +537,13 @@ class AX25Conn(object):
 
     #######################
     # LINKS Linked Connections
+    def link_crone(self):
+        if self.is_link and self.LINK_Connection is not None:
+            self.LINK_Connection.tx_buf_rawData += bytes(self.LINK_rx_buff)
+            self.LINK_rx_buff = b''
+            self.tx_buf_rawData += bytes(self.LINK_Connection.LINK_rx_buff)
+            self.LINK_Connection.LINK_rx_buff = b''
+
     def link_connection(self, conn):
         conn: AX25Conn
         if conn is None:
@@ -539,26 +578,31 @@ class AX25Conn(object):
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
                     self.port_handler.del_link(self.LINK_Connection.uid)
-                    self.LINK_Connection.tx_buf_rawData += '\n*** Reconnected to {}\n'.format(self.my_call_str).encode()
+                    self.LINK_Connection.tx_buf_rawData += '\r*** Reconnected to {}\r'.format(self.my_call_str).encode()
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
                     self.LINK_Connection.cli.send_prompt()
                     # self.LINK_Connection.cli.build_prompt()
 
+    def link_send_to(self, inp: b''):
+        if inp:
+            if self.is_link:
+                self.LINK_Connection.tx_buf_rawData += inp
+
     def del_link(self):
         """ Called in State.link_cleanup() """
         if self.LINK_Connection is not None:
             # print("LINK CLEANUP")
             # print(f'LINK CLEANUP link_connections K : {self.port_handler.link_connections.keys()}')
-            self.port_handler.del_link(self.uid)
             self.LINK_Connection = None
             self.is_link = False
+        self.port_handler.del_link(self.uid)
 
     def link_cleanup(self):
-        self.link_disco()
+        # self.link_disco()
         self.del_link()
-        self.port_handler.del_link(self.uid)
+        # self.port_handler.del_link(self.uid)
 
     # ##############
     # DISCO
@@ -570,6 +614,11 @@ class AX25Conn(object):
                 self.zustand_exec.S1_end_connection()
             else:
                 self.zustand_exec.change_state(4)
+
+    def conn_cleanup(self):
+        self.link_cleanup()
+        self.port_handler.del_conn2all_conn_var(self)   # Doppelt ..
+        self.own_port.del_connections(conn=self)
 
     ###############################################
     # Channel ECHO  # TODO Again !
@@ -747,8 +796,6 @@ class AX25Conn(object):
             self.ax25_out_frame.data = self.tx_buf_rawData[:pac_len]
             self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]  # GUI Echo
             self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])  # CH ECHO
-            # if self.ChVars is not None:
-            #     self.ChVars.output_win += self.tx_buf_rawData[:pac_len].decode('utf-8', 'ignore')
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
             self.tx_buf_2send.append(self.ax25_out_frame)
@@ -759,31 +806,27 @@ class AX25Conn(object):
             self.set_T1()  # Re/Set T1
             # Statistics
             self.tx_byte_count += int(pac_len)
+            # self.update_gui_qso_buff()
 
     def send_UA(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.UAcByte()
-        self.ax25_out_frame.encode()
-        # self.tx_buf_2send.append(self.ax25_out_frame)
         self.tx_buf_ctl.append(self.ax25_out_frame)
         self.set_T3()
 
     def send_DM(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.DMcByte()
-        self.ax25_out_frame.encode()
         self.tx_buf_ctl.append(self.ax25_out_frame)
 
     def send_DISC(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.DISCcByte()
-        self.ax25_out_frame.encode()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
     def send_SABM(self):
         self.init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.SABMcByte()
-        self.ax25_out_frame.encode()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
     def send_RR(self, pf_bit=False, cmd_bit=False):
@@ -857,7 +900,7 @@ class DefaultStat(object):
         }[self.frame.ctl_byte.flag]()
 
     def rx_SABM(self):
-        pass
+        self.cleanup()
 
     def rx_UI(self):
         pass
@@ -905,25 +948,15 @@ class DefaultStat(object):
     def tx(self, ax25_frame: AX25Frame):
         pass
 
-    def link_crone(self):
-        # TODO Move up to AX25Conn
-        if self.ax25conn.is_link and self.ax25conn.LINK_Connection is not None:
-            self.ax25conn.LINK_Connection.tx_buf_rawData += bytes(self.ax25conn.LINK_rx_buff)
-            self.ax25conn.LINK_rx_buff = b''
-            self.ax25conn.tx_buf_rawData += bytes(self.ax25conn.LINK_Connection.LINK_rx_buff)
-            self.ax25conn.LINK_Connection.LINK_rx_buff = b''
-
     def send_to_link(self, inp: b''):
-        # TODO Move up to AX25Conn
-        if inp:
-            if self.ax25conn.is_link:
-                self.ax25conn.LINK_Connection.tx_buf_rawData += inp
+        self.ax25conn.link_send_to(inp)
 
     def state_cron(self):
         pass
 
     def cron(self):
         """Global Cron"""
+        # TODO Move up
         if self.stat_index == 0:
             self.cleanup()
         ###########
@@ -936,23 +969,14 @@ class DefaultStat(object):
             if time.time() > self.ax25conn.t3:
                 self.t3_fail()
         self.state_cron()  # State Cronex
-        ########################################
-        # DIGI / LINK Connection / Node Funktion
-        self.link_crone()
 
     def cleanup(self):
         # print('STATE 0 Cleanup')
-        self.ax25conn.link_cleanup()
-        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)  # TODO Move up to AX25Conn
-        self.ax25conn.own_port.del_connections(conn=self.ax25conn)  # TODO Move up to AX25Conn
+        self.ax25conn.conn_cleanup()
 
     def S1_end_connection(self):
-        # print("S1_end_connection")
-        self.ax25conn.n2 = 1
-        self.ax25conn.set_T1()
         self.change_state(1)
-        self.ax25conn.link_cleanup()
-        self.ax25conn.port_handler.del_conn2all_conn_var(self.ax25conn)
+        self.ax25conn.end_connection()
 
     def t1_fail(self):
         pass
@@ -965,11 +989,11 @@ class DefaultStat(object):
         self.cleanup()
 
     def reject(self):
-        """ !!!! TESTING """
         self.ax25conn.send_DM()
         self.S1_end_connection()
 
     def prozess_I_frame(self):
+        # TODO Move up
         self.ax25conn.set_T2()
         self.ax25conn.set_T1(stop=True)
         self.ax25conn.n2 = 0
@@ -982,6 +1006,7 @@ class DefaultStat(object):
             return False
 
     def delUNACK(self):
+        # TODO Move up
         if ((self.nr - 1) % 8) in self.ax25conn.tx_buf_unACK.keys():
             self.ax25conn.del_unACK_buf()
             return True
@@ -1099,7 +1124,6 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def accept(self):
-        # TODO Move up to Conn
         # print("S2 - ACCEPT")
         if self.ax25conn.LINK_Connection is None:
             self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode()
@@ -1116,7 +1140,6 @@ class S2Aufbau(DefaultStat):  # INIT TX
             self.ax25conn.gui.new_conn_snd()
 
     def reject(self):
-        # TODO Move up to Conn
         self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode()
         self.S1_end_connection()
 
@@ -1241,8 +1264,10 @@ class S4Abbau(DefaultStat):
 
     def end_conn(self):
         # if self.digi_conn is None:
+        """
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
+        """
         self.S1_end_connection()
         self.ax25conn.n2 = 100
         # if self.ax25conn.is_prt_hndl:
@@ -1261,8 +1286,10 @@ class S4Abbau(DefaultStat):
         pass
 
     def n2_fail(self):
+        """
         self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
             self.ax25conn.to_call_str).encode()
+        """
         self.S1_end_connection()
 
 
@@ -1283,7 +1310,8 @@ class S5Ready(DefaultStat):
         self.ax25conn.n2 = 0
         if self.delUNACK():
             self.ax25conn.set_T1(stop=True)
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1(stop=True)
             self.ax25conn.set_T2(stop=True)
@@ -1328,6 +1356,7 @@ class S5Ready(DefaultStat):
         pass
 
     def t1_fail(self):
+        # TODO Move up
         if time.time() > self.ax25conn.t2:
             # Nach 5 Versuchen
             if self.ax25conn.n2:
@@ -1397,7 +1426,8 @@ class S6sendREJ(DefaultStat):
     def rx_RR(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1()
             self.ax25conn.set_T2(stop=True)
@@ -1508,7 +1538,8 @@ class S8SelfNotReady(DefaultStat):
     def rx_RR(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T2(stop=True)
             self.ax25conn.set_T1(stop=True)
@@ -1585,7 +1616,8 @@ class S9DestNotReady(DefaultStat):
     def rx_RR(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
         self.ax25conn.set_T1(stop=True)
 
@@ -1637,7 +1669,8 @@ class S10BothNotReady(DefaultStat):
     def rx_RR(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1(stop=True)
 
@@ -1754,7 +1787,8 @@ class S12DestNotReadyFinal(DefaultStat):
         self.ax25conn.n2 = 0
         self.delUNACK()
 
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.set_T1(stop=True)
             self.change_state(5)
         else:
@@ -1857,7 +1891,8 @@ class S14sendREJselfNotReady(DefaultStat):  # TODO  /  / Testing
     def rx_RR(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1(stop=True)
 
@@ -1908,7 +1943,8 @@ class S15sendREJdestNotReady(DefaultStat):  # TODO  /  / Testing
     def rx_RR(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1(stop=True)
 
@@ -1960,7 +1996,8 @@ class S16sendREJbothNotReady(DefaultStat):  # TODO  / / Testing
     def rx_RR(self):
         self.ax25conn.n2 = 0
         self.delUNACK()
-        if self.pf or self.cmd:
+        # if self.pf or self.cmd:
+        if self.cmd:
             self.ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1(stop=True)
 

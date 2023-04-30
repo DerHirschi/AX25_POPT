@@ -147,10 +147,6 @@ class TxTframe:
                                                      height=100, bd=0, borderwidth=0, state="disabled")
 
         self.out_txt_win.tag_config("input", foreground="yellow")
-        #self.out_txt_win.tag_config("output", foreground="red")
-        # self.out_txt_win.bind(self.out_txt_win.tag(None))
-        # self.out_txt_win.insert(tk.END, "OUT")
-        # self.out_txt.pack(side=tk.TOP)
 
         self.status_frame.pack(side=tk.BOTTOM)
 
@@ -161,14 +157,9 @@ class TxTframe:
                                                  foreground=TXT_MON_CLR,
                                                  font=(FONT, self.text_size),
                                                  height=100, bd=0, borderwidth=0, state="disabled")
-        #self.mon_txt.unbind_all('<Button>')
-        #self.mon_txt.unbind_all('<ButtonRelease>')
-        # self.mon_txt.insert(tk.END, "MON")
+
         self.mon_txt.pack(side=tk.BOTTOM)
-        # print(self.mon_txt.vbar.bind_all())
-        # print(self.mon_txt.vbar.bindtags(None))
-        #print(self.mon_txt.vbar.event_info())
-        #print(self.mon_txt.event_info())
+
         # paned window
 
         self.pw.add(self.status_frame, weight=1)
