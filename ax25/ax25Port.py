@@ -440,11 +440,16 @@ class AX25Port(threading.Thread):
         return conn
 
     def del_connections(self, conn: AX25Conn):
+        print(f"del_connections: {conn.uid}\n"
+              f"state: {conn.zustand_exec.stat_index}\n"
+              f"conn.keys: {self.connections.keys()}\n")
         self.port_handler.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
         if conn.uid in self.connections.keys():
             del self.connections[conn.uid]
+        if reverse_uid(conn.uid) in self.connections.keys():
+            del self.connections[reverse_uid(conn.uid)]
 
     def send_UI_frame(self,
                       own_call,

@@ -225,12 +225,10 @@ class AX25PortHandler(object):
             # temp_conn: AX25Conn = self.all_connections[k]
             if self.all_connections[k] == conn:
                 if self.gui is not None:
-                    self.gui.send_to_qso(data=f'\n*** Disconnected from {conn.to_call_str}\n', ch_index=int(conn.ch_index))
+                    self.gui.send_to_qso(data=f'\n*** Disconnected from {str(conn.to_call_str)}\n', ch_index=int(conn.ch_index))
                     self.gui.disco_snd()
                 self.all_connections[k].ch_index = 0
-                # self.del_link(conn.uid)
                 del self.all_connections[k]
-                # print('InitPorts Conn Cleanup !!')
 
         if self.gui is not None:
             self.gui.ch_btn_status_update()
