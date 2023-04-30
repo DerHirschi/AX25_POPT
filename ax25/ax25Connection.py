@@ -880,7 +880,7 @@ class DefaultStat(object):
         }[self.frame.ctl_byte.flag]()
 
     def rx_SABM(self):
-        pass
+        self.cleanup()
 
     def rx_UI(self):
         pass
@@ -960,6 +960,9 @@ class DefaultStat(object):
         self.ax25conn.n2 = 1
         self.ax25conn.set_T1()
         self.change_state(1)
+        self.ax25conn.vr = 0
+        self.ax25conn.vs = 0
+        self.ax25conn.init_cli()
         """ !!!!!!!!! """
         # self.ax25conn.link_cleanup()
         self.ax25conn.link_disco()
