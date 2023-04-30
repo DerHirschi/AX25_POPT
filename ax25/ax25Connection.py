@@ -282,15 +282,24 @@ class AX25Conn(object):
         self.vr = 0
         self.vs = 0
         self.init_cli()
-        self.rx_buf_rawData = f'\n*** Disconnected from {self.to_call_str}\n'.encode()
+        # self.rx_buf_rawData = f'\n*** Disconnected from {self.to_call_str}\n'.encode()
+        # self.send_to_qso_win(f'\n*** Disconnected from {self.to_call_str}\n')
         """ !!!!!!!!! """
+        """
         c = 0
         while c < 5 and self.rx_buf_rawData:
             # TODO Not Happy
             time.sleep(0.1)
             c += 1
+        """
         # self.ax25conn.link_cleanup()
         self.port_handler.del_conn2all_conn_var(self)
+
+    """
+    def send_to_qso_win(self, data: str):
+        if self.gui is not None:
+            self.gui.send_to_qso(data=data, conn=self)
+    """
 
     def update_gui_qso_buff(self):
         pass

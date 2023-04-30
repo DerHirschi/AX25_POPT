@@ -319,8 +319,7 @@ class AX25Port(threading.Thread):
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
         for k in list(self.connections.keys()):
-            conn: AX25Conn = self.connections[k]
-            conn.exec_cron()
+            self.connections[k].exec_cron()
 
     def cron_send_beacons(self):
         tr = True

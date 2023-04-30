@@ -226,7 +226,9 @@ class AX25PortHandler(object):
             if self.all_connections[k] == conn:
                 self.all_connections[k].ch_index = 0
                 if self.gui is not None:
+                    # self.gui.send_to_qso(data=f'\n*** Disconnected from {conn.to_call_str}\n', conn=conn)
                     self.gui.disco_snd()
+
                 # self.del_link(conn.uid)
                 del self.all_connections[k]
                 # print('InitPorts Conn Cleanup !!')

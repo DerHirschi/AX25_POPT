@@ -547,6 +547,9 @@ class TkMainWin:
         """
         # self.on_click_inp_txt()
 
+    def arrow_keys(self, event=None):
+        self.on_click_inp_txt()
+
     def increase_textsize(self):
         self.text_size += 1
         self.text_size = max(self.text_size, 3)
@@ -963,7 +966,6 @@ class TkMainWin:
             var = var.split('Lob: ')
             if len(var) > 1:
                 self.sprech(var[1])
-        # self.update_side_mh()
 
     ##########################
     # New Connection WIN
@@ -1136,6 +1138,50 @@ class TkMainWin:
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
             self.inp_txt.delete(tk.END, tk.END)
 
+    def send_to_qso(self, data, conn):
+        data = data.replace('\r', '\n')
+        data = tk_filter_bad_chars(data)
+        k = conn.ch_index
+        bg = conn.stat_cfg.stat_parm_qso_col_bg
+        fg = conn.stat_cfg.stat_parm_qso_col_text
+        tag_name_out = 'OUT-' + conn.my_call_str
+        self.win_buf[k].output_win += data
+        if self.channel_index == k:
+            tr = False
+            if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
+                tr = True
+
+            self.out_txt.configure(state="normal")
+            self.out_txt.tag_config(tag_name_out,
+                                    foreground=fg,
+                                    background=bg,
+                                    selectbackground=fg,
+                                    selectforeground=bg
+                                    )
+
+            # configuring a tag called start
+            ind = self.out_txt.index(tk.INSERT)
+            self.out_txt.insert('end', data)
+            ind2 = self.out_txt.index(tk.INSERT)
+            self.out_txt.tag_add(tag_name_out, ind, ind2)
+            self.out_txt.configure(state="disabled",
+                                   exportselection=1
+                                   )
+            if tr or self.get_ch_param().autoscroll:
+                self.see_end_qso_win()
+
+        else:
+            if tag_name_out not in self.win_buf[k].output_win_tags.keys():
+                self.win_buf[k].output_win_tags[tag_name_out] = ()
+            old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
+            if old_tags:
+                old_tags = old_tags[:-1] + [tk.INSERT]
+            else:
+                old_tags = ['1.0', tk.INSERT]
+            self.win_buf[k].output_win_tags[tag_name_out] = old_tags
+            self.win_buf[k].new_data_tr = True
+        self.win_buf[k].rx_beep_tr = True
+        self.ch_btn_status_update()
     def on_click_inp_txt(self, event=None):
         ind = self.win_buf[self.channel_index].input_win_index
         if ind:
@@ -1162,9 +1208,6 @@ class TkMainWin:
         self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)),
                                 self.inp_txt.index(tk.INSERT))
         """
-
-    def arrow_keys(self, event=None):
-        self.on_click_inp_txt()
 
     # SEND TEXT OUT
     ###################
