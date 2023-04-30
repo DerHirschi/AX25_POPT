@@ -434,6 +434,8 @@ class AX25Conn(object):
         ########################################
         # DIGI / LINK Connection / Node Funktion
         self.link_crone()
+        if self.zustand_exec.stat_index == 0:
+            self.conn_cleanup()
 
     def pipe_crone(self):
         if self.pipe is None:
@@ -966,8 +968,6 @@ class DefaultStat(object):
     def cron(self):
         """Global Cron"""
         # TODO Move up
-        if self.stat_index == 0:
-            self.cleanup()
         ###########
         # TODO Connection Timeout
         if self.ax25conn.n2 > self.ax25conn.parm_N2:
@@ -978,6 +978,10 @@ class DefaultStat(object):
             if time.time() > self.ax25conn.t3:
                 self.t3_fail()
         self.state_cron()  # State Cronex
+        """
+        if self.stat_index == 0:
+            self.cleanup()
+        """
 
     def cleanup(self):
         # print('STATE 0 Cleanup')

@@ -319,7 +319,12 @@ class AX25Port(threading.Thread):
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
         for k in list(self.connections.keys()):
-            self.connections[k].exec_cron()
+            if k in self.connections.keys():
+                try:    # TODO Not happy. When no more Errors delete this shit.
+                    self.connections[k].exec_cron()
+                except KeyError:
+                    logger.error(f"KeyError cron_pac_handler(): {k}")
+                    print(f"KeyError cron_pac_handler(): {k}")
 
     def cron_send_beacons(self):
         tr = True

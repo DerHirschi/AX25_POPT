@@ -70,6 +70,9 @@ class ChVars(object):
         self.t2speech = False
         self.t2speech_buf = ''
         self.autoscroll = True
+        self.qso_tag_name = ''
+        self.qso_tag_fg = ''
+        self.qso_tag_bg = ''
 
 
 class TkMainWin:
@@ -451,8 +454,11 @@ class TkMainWin:
             return ret
         return False
 
-    def get_ch_param(self):
-        return self.win_buf[self.channel_index]
+    def get_ch_param(self, ch_index=0):
+        if ch_index:
+            return self.win_buf[ch_index]
+        else:
+            return self.win_buf[self.channel_index]
 
     def set_var_to_all_ch_param(self):
         for i in range(10):  # TODO Max Channels
@@ -822,9 +828,6 @@ class TkMainWin:
             # conn: AX25Conn
             conn = self.get_conn(k)
             if conn.rx_buf_rawData or conn.tx_buf_guiData:
-                bg = conn.stat_cfg.stat_parm_qso_col_bg
-                fg = conn.stat_cfg.stat_parm_qso_col_text
-                tag_name_out = 'OUT-' + conn.my_call_str
                 # if not conn.my_digi_call:
                 inp = str(conn.tx_buf_guiData.decode('UTF-8', 'ignore')) \
                     .replace('\r', '\n') \
@@ -854,21 +857,35 @@ class TkMainWin:
                             out.replace('\n', '')
                         )
                 if self.channel_index == k:
+                    if not self.get_ch_param(ch_index=k).qso_tag_fg:
+                        fg = conn.stat_cfg.stat_parm_qso_col_text
+                        self.get_ch_param(ch_index=k).qso_tag_fg = fg
+                    else:
+                        fg = self.get_ch_param(ch_index=k).qso_tag_fg
+
+                    if not self.get_ch_param(ch_index=k).qso_tag_bg:
+                        bg = conn.stat_cfg.stat_parm_qso_col_bg
+                        self.get_ch_param(ch_index=k).qso_tag_bg = bg
+                    else:
+                        bg = self.get_ch_param(ch_index=k).qso_tag_bg
+
+                    if not self.get_ch_param(ch_index=k).qso_tag_name:
+                        tag_name_out = 'OUT-' + str(conn.my_call_str)
+                        self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
+                    else:
+                        tag_name_out = self.get_ch_param(ch_index=k).qso_tag_name
                     tr = False
                     if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
                         tr = True
 
-                    # self.out_txt_win.tag_config("input", foreground="yellow")
-                    # self.out_txt.configure(state="normal", fg=fg, bg=bg)
                     self.out_txt.configure(state="normal")
-                    # self.out_txt.tag_remove(tk.SEL, "1.0", tk.END)
+
                     self.out_txt.tag_config(tag_name_out,
                                             foreground=fg,
                                             background=bg,
                                             selectbackground=fg,
                                             selectforeground=bg
                                             )
-
 
                     ind = self.out_txt.index(tk.INSERT)
                     self.out_txt.insert('end', inp)
@@ -885,8 +902,11 @@ class TkMainWin:
                                            )
                     if tr or self.get_ch_param().autoscroll:
                         self.see_end_qso_win()
-
                 else:
+                    tag_name_out = 'OUT-' + str(conn.my_call_str)
+                    self.get_ch_param(ch_index=k).qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
+                    self.get_ch_param(ch_index=k).qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
+                    self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
                     if tag_name_out not in self.win_buf[k].output_win_tags.keys():
                         self.win_buf[k].output_win_tags[tag_name_out] = ()
                     old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
@@ -1138,13 +1158,13 @@ class TkMainWin:
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
             self.inp_txt.delete(tk.END, tk.END)
 
-    def send_to_qso(self, data, conn):
+    def send_to_qso(self, data, ch_index):
         data = data.replace('\r', '\n')
         data = tk_filter_bad_chars(data)
-        k = conn.ch_index
-        bg = conn.stat_cfg.stat_parm_qso_col_bg
-        fg = conn.stat_cfg.stat_parm_qso_col_text
-        tag_name_out = 'OUT-' + conn.my_call_str
+        k = ch_index
+        bg = self.get_ch_param(ch_index).qso_tag_bg
+        fg = self.get_ch_param(ch_index).qso_tag_fg
+        tag_name_out = self.get_ch_param(ch_index).qso_tag_name
         self.win_buf[k].output_win += data
         if self.channel_index == k:
             tr = False
