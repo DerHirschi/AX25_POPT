@@ -48,7 +48,7 @@ class AX25Port(threading.Thread):
         """ DIGI """
         self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
         self.is_smart_digi = self.port_cfg.parm_isSmartDigi
-        self.parm_digi_TXD = 2000  # TODO add to Settings GUI
+        self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
         self.digi_TXD = time.time()
         self.digi_buf: [AX25Frame] = []
         self.UI_buf: [AX25Frame] = []
@@ -114,8 +114,8 @@ class AX25Port(threading.Thread):
         """ Internal TXD. Not Kiss TXD """
         self.digi_TXD = time.time() + self.parm_digi_TXD / 1000
 
-    def rx_pac_handler(self, ax25_frame: AX25Frame):
-        """  """
+    def rx_handler(self, ax25_frame: AX25Frame):
+        """ Main RX-Handler """
         self.reset_ft_wait_timer(ax25_frame)
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
             if self.rx_link_handler(ax25_frame=ax25_frame):
@@ -180,11 +180,12 @@ class AX25Port(threading.Thread):
             if call.call_str in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
                     self.digi_buf.append(ax25_frame)
-                    self.set_digi_TXD()
+                    # self.set_digi_TXD()
                     return True
         return False
 
-    def tx_pac_handler(self):
+    def tx_handler(self):
+        """ Main TX-Handler """
         """All Connections"""
         if self.tx_connection_buf():
             return True
@@ -198,7 +199,7 @@ class AX25Port(threading.Thread):
         if self.tx_digi_buf():
             return True
         """RX-Echo"""
-        if self.tx_rxecho_pac_handler():
+        if self.tx_rxecho_buf():
             return True
         return False
 
@@ -279,7 +280,7 @@ class AX25Port(threading.Thread):
             self.digi_buf = []
         return tr
 
-    def tx_rxecho_pac_handler(self):
+    def tx_rxecho_buf(self):
         tr = False
         # RX-Echo
         fr: AX25Frame
@@ -440,7 +441,7 @@ class AX25Port(threading.Thread):
         return conn
 
     def del_connections(self, conn: AX25Conn):
-        print(f"del_connections: {conn.uid}\n"
+        logger.debug(f"del_connections: {conn.uid}\n"
               f"state: {conn.zustand_exec.stat_index}\n"
               f"conn.keys: {self.connections.keys()}\n")
         self.port_handler.del_link(conn.uid)
@@ -502,12 +503,14 @@ class AX25Port(threading.Thread):
                 buf: RxBuf = self.rx()
                 ##############################################
             except AX25DeviceERROR:
+                time.sleep(0.1)
                 break
             if buf is None:
                 buf = RxBuf()
             if buf.raw_data and self.loop_is_running:  # RX ############
                 # logger.debug('Inp RAW Buf - Port {} > {}'.format(self.port_id, buf.raw_data))
                 self.set_TXD()
+                self.set_digi_TXD()
                 ax25frame = AX25Frame()
                 ax25frame.axip_add = buf.axip_add
                 # ax25frame.kiss = buf.kiss
@@ -532,10 +535,10 @@ class AX25Port(threading.Thread):
                             conf=self.port_cfg,
                             tx=False)
                     # Handling
-                    self.rx_pac_handler(ax25frame)
+                    self.rx_handler(ax25frame)
                     # RX-ECHO
                     self.rx_echo(ax25_frame=ax25frame)
-                    # Pseudo Full Duplex for AXIP.
+                    # AXIP-Multicast
                     if self.port_cfg.parm_axip_Multicast:
                         self.tx_multicast(frame=ax25frame)
                 if self.port_cfg.parm_full_duplex:
@@ -547,13 +550,9 @@ class AX25Port(threading.Thread):
                 or (self.port_cfg.parm_full_duplex and self.loop_is_running):
             #############################################
             # Crone
-            self.cron_port_handler()  # TODO Crone With and without TXD
+            self.cron_port_handler()
             # ######### TX #############
-            self.tx_pac_handler()
-        ############################
-        ############################
-        # Cleanup
-        # self.del_connections()
+            self.tx_handler()
 
 
 class KissTCP(AX25Port):
@@ -596,7 +595,7 @@ class KissTCP(AX25Port):
                     self.device.sendall(self.kiss.device_kiss_end())
                 """
                 self.device.settimeout(0)
-                # self.device.recv(999)   # ???
+                self.device.recv(9999999)
                 self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
             except (OSError, ConnectionRefusedError, ConnectionError):
@@ -673,6 +672,7 @@ class KISSSerial(AX25Port):
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_end())
                 """
+                self.device.flush()
                 self.device.close()
                 self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):

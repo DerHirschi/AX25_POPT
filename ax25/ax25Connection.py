@@ -466,8 +466,8 @@ class AX25Conn(object):
         return False
 
     def ft_reset_timer(self, conn_uid: str):
-        if conn_uid != self.uid:
-            if self.ft_tx_activ is not None:
+        if self.ft_tx_activ is not None:
+            if conn_uid != self.uid and reverse_uid(conn_uid) != self.uid:
                 self.ft_tx_activ.reset_timer()
 
     def link_holder_reset(self):

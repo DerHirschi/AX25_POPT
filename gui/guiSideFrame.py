@@ -1,4 +1,3 @@
-import sys
 import tkinter
 import tkinter as tk
 from tkinter import ttk, Checkbutton
@@ -7,9 +6,7 @@ from fnc.str_fnc import get_kb_str_fm_bytes
 from string_tab import STR_TABLE
 from ax25.ax25dec_enc import PIDByte
 from fnc.os_fnc import is_linux
-
-
-# import main
+from ax25.ax25Statistics import conv_time_DE_str
 
 
 class SideTabbedFrame:
@@ -571,7 +568,7 @@ class SideTabbedFrame:
             route = ent.route
 
             self.tree_data.append((
-                f"{ent.last_seen.split(' ')[1]}",
+                f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
                 f'{ent.own_call}',
                 f'{ent.port_id} {ent.port}',
                 f'{ent.pac_n}',

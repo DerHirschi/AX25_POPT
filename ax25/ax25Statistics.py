@@ -14,6 +14,14 @@ def get_time_str():
     return datetime.now().strftime('%d/%m/%y %H:%M:%S')
 
 
+def conv_time_US_str(dateti: datetime.now()):
+    return dateti.strftime('%m/%d/%y %H:%M:%S')
+
+
+def conv_time_DE_str(dateti: datetime.now()):
+    return dateti.strftime('%d/%m/%y %H:%M:%S')
+
+
 class MyHeard(object):
     def __init__(self):
         self.own_call = ''
@@ -22,8 +30,8 @@ class MyHeard(object):
         self.all_routes = []
         self.port = ''
         self.port_id = 0    # Not used yet
-        self.first_seen = get_time_str()
-        self.last_seen = get_time_str()
+        self.first_seen = datetime.now()
+        self.last_seen = datetime.now()
         self.pac_n = 0                      # N Packets
         self.byte_n = 0                     # N Bytes
         self.h_byte_n = 0                   # N Header Bytes
@@ -487,10 +495,10 @@ class MH(object):
         if call_str not in self.calls.keys():
             self.new_call_alarm = True
             ent = MyHeard()
-            ent.first_seen = get_time_str()
+            ent.first_seen = datetime.now()
         else:
             ent = self.calls[call_str]
-        ent.last_seen = get_time_str()
+        ent.last_seen = datetime.now()
         ent.own_call = call_str
         ent.pac_n += 1
         ent.port = port_name
@@ -529,7 +537,8 @@ class MH(object):
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
-            temp[flag.last_seen] = self.calls[k]
+            time_str = conv_time_US_str(flag.last_seen)
+            temp[time_str] = self.calls[k]
         temp_k = list(temp.keys())
         temp_k.sort()
         temp_k.reverse()
@@ -548,8 +557,8 @@ class MH(object):
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
             key: str = {
-                'last': flag.last_seen,
-                'first': flag.first_seen,
+                'last': conv_time_US_str(flag.last_seen),
+                'first': conv_time_US_str(flag.first_seen),
                 'port': str(flag.port_id),
                 'call': flag.own_call,
                 'pack': str(flag.pac_n),
@@ -605,7 +614,7 @@ class MH(object):
         for call in list(self.calls.keys()):
 
             out += 'P:{:2}>{:5} {:9} {:3}'.format(self.calls[call].port,
-                                                self.calls[call].last_seen,
+                                                conv_time_DE_str(self.calls[call].last_seen),
                                                 call,
                                                 '')
 
