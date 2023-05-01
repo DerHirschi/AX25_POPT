@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
-from ax25.ax25Statistics import MyHeard, conv_time_DE_str
+from ax25.ax25Statistics import MyHeard
+from fnc.str_fnc import conv_time_DE_str
 from string_tab import STR_TABLE
 # import matplotlib.pyplot as plt
 

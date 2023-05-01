@@ -168,5 +168,14 @@ STR_TABLE = {
 
     'port_overview': ('Port Übersicht',
                       'Port Overview',
-                      'Lekker Ports')
+                      'Lekker Ports'),
+
+    'time_connected': ('Connect Dauer',
+                      'Connect duration',
+                      'Lekker verbindingsduur'),
+
+    'cmd_not_known': ('Dieses Kommando ist dem System nicht bekannt !',
+                      'The system does not know this command !',
+                      'Het systeem kent deze lekker opdracht niet !'),
+
 }

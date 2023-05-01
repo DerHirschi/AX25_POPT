@@ -2,7 +2,9 @@ import logging
 import tkinter as tk
 from tkinter import Menu
 from tkinter import ttk
-from ax25.ax25Statistics import MyHeard, conv_time_DE_str
+from ax25.ax25Statistics import MyHeard
+from fnc.str_fnc import conv_time_DE_str
+
 # import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)

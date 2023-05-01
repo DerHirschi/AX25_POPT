@@ -6,20 +6,14 @@ from datetime import datetime
 
 import pickle
 
+from fnc.str_fnc import conv_time_US_str, conv_time_DE_str
+
 mh_data_file = 'data/mh_data.popt'
 port_stat_data_file = 'data/port_stat.popt'
 
 
 def get_time_str():
     return datetime.now().strftime('%d/%m/%y %H:%M:%S')
-
-
-def conv_time_US_str(dateti: datetime.now()):
-    return dateti.strftime('%m/%d/%y %H:%M:%S')
-
-
-def conv_time_DE_str(dateti: datetime.now()):
-    return dateti.strftime('%d/%m/%y %H:%M:%S')
 
 
 class MyHeard(object):
@@ -614,8 +608,8 @@ class MH(object):
         for call in list(self.calls.keys()):
 
             out += 'P:{:2}>{:5} {:9} {:3}'.format(self.calls[call].port,
-                                                conv_time_DE_str(self.calls[call].last_seen),
-                                                call,
+                                                  conv_time_DE_str(self.calls[call].last_seen),
+                                                  call,
                                                 '')
 
             tp += self.calls[call].pac_n

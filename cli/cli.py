@@ -1,9 +1,10 @@
-import datetime
+from datetime import datetime
 import pickle
 import logging
 
 import ax25.ax25Connection
 import config_station
+from fnc.str_fnc import get_time_delta
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from ax25.ax25Error import AX25EncodingERROR
@@ -59,6 +60,8 @@ class DefaultCLI(object):
         self.c_text = self.c_text.replace('\n', '\r')
         self.bye_text = self.bye_text.replace('\n', '\r')
         self.prompt = self.prompt.replace('\n', '').replace('\r', '')
+
+        self.time_start = datetime.now()
 
         self.state_index = 0
         self.crone_state_index = 0
@@ -133,6 +136,7 @@ class DefaultCLI(object):
             if type(ret) == str:
                 # gui_out = str(ret)
                 ret = ret.encode(self.encoding[0], self.encoding[1])
+                ret = ret.replace(b'\n', b'\r')
             # self.send_2_gui(ret)
             self.connection.tx_buf_rawData += ret
 
@@ -232,7 +236,7 @@ class DefaultCLI(object):
             if self.cmd == cmd[:len(self.cmd)]:
                 treffer.append(cmd)
         if not treffer:
-            return '\r # Dieses Kommando ist dem System nicht bekannt\r'
+            return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
         """
         if len(treffer) > 1:
             ret = '\r # Ungenaue Eingabe, mehrere Kommandos erkannt:\r'
@@ -330,7 +334,10 @@ class DefaultCLI(object):
     def cmd_q(self):  # Quit
         # self.connection: AX25Conn
         # self.connection.tx_buf_rawData += self.bye_text.encode(self.encoding[0], self.encoding[1])
-        self.send_output(self.bye_text)
+        conn_dauer = get_time_delta(self.time_start)
+        ret = f"\r # {STR_TABLE['time_connected'][self.connection.cli_language]}: {conn_dauer}\r\r"
+        ret += self.bye_text + '\r'
+        self.send_output(ret)
         self.crone_state_index = 100  # Quit State
         return ''
 
@@ -415,7 +422,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
-            self.user_db_ent.last_edit = datetime.datetime.now()
+            self.user_db_ent.last_edit = datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_name_set'][self.connection.cli_language]}: {self.user_db_ent.Name}" \
                    "\r"
@@ -430,7 +437,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
-            self.user_db_ent.last_edit = datetime.datetime.now()
+            self.user_db_ent.last_edit = datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_qth_set'][self.connection.cli_language]}: {self.user_db_ent.QTH}" \
                    "\r"
@@ -445,7 +452,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
-            self.user_db_ent.last_edit = datetime.datetime.now()
+            self.user_db_ent.last_edit = datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC}" \
                    "\r"
@@ -460,7 +467,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
-            self.user_db_ent.last_edit = datetime.datetime.now()
+            self.user_db_ent.last_edit = datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_zip_set'][self.connection.cli_language]}: {self.user_db_ent.ZIP}" \
                    "\r"
@@ -475,7 +482,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
-            self.user_db_ent.last_edit = datetime.datetime.now()
+            self.user_db_ent.last_edit = datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_prmail_set'][self.connection.cli_language]}: {self.user_db_ent.PRmail}" \
                    "\r"
@@ -490,7 +497,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
-            self.user_db_ent.last_edit = datetime.datetime.now()
+            self.user_db_ent.last_edit = datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_email_set'][self.connection.cli_language]}: {self.user_db_ent.Email}" \
                    "\r"
@@ -505,7 +512,7 @@ class DefaultCLI(object):
                 replace(' ', '').\
                 replace('\n', '').\
                 replace('\r', '')
-            self.user_db_ent.last_edit = datetime.datetime.now()
+            self.user_db_ent.last_edit = datetime.now()
             return "\r" \
                    f"{STR_TABLE['cli_http_set'][self.connection.cli_language]}: {self.user_db_ent.HTTP}" \
                    "\r"

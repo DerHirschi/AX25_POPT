@@ -3,6 +3,7 @@
     AX.25 PROT Packet Handling
 """
 import time
+from datetime import datetime
 
 import cli.cli
 import config_station
@@ -194,6 +195,8 @@ class AX25Conn(object):
         self.RTT_Timer = RTT(self)
         self.tx_byte_count = 0
         self.rx_byte_count = 0
+        """ Connection Start Time """
+        self.time_start = datetime.now()
         """ Zustandstabelle / Statechart """
         self.zustand_tab = {
             0: (DefaultStat, 'ENDE'),
@@ -231,6 +234,7 @@ class AX25Conn(object):
         """ Init CLI """
         self.cli_language = 0
         self.cli = cli.cli.NoneCLI(self)
+        self.cli_type = ''
         if self.stat_cfg.stat_parm_pipe is None:
             self.init_cli()
             if not rx:
@@ -263,6 +267,7 @@ class AX25Conn(object):
     def init_cli(self):
         if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
             self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
+            self.cli_type = self.cli.cli_name
             self.cli.build_prompt()
         """
         else:
@@ -271,9 +276,8 @@ class AX25Conn(object):
 
     def reinit_cli(self):
         if self.stat_cfg.stat_parm_pipe is None:
-            if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
-                self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
-                self.cli.change_cli_state(state=1)
+            self.init_cli()
+            self.cli.change_cli_state(state=1)
 
 
     """
