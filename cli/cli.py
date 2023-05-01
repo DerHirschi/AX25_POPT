@@ -257,7 +257,7 @@ class DefaultCLI(object):
             if self.crone_state_index != 100 and self.state_index != 2:  # Not Quit
                 if ret is None:
                     ret = ''
-            ret += self.prompt
+                ret += self.prompt
 
         self.send_output(ret)
 

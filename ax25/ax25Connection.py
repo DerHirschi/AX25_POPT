@@ -617,7 +617,7 @@ class AX25Conn(object):
     def end_connection(self):
         print(f"end_connection: {self.uid}")
         self.link_disco()
-        self.n2 = 1
+        #self.n2 = 1
         self.set_T1()
         self.vr = 0
         self.vs = 0

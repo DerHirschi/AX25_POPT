@@ -476,8 +476,12 @@ class AX25Port(threading.Thread):
         frame.axip_add = self.mh.mh_get_last_ip(call_str=dest_call)
         frame.from_call.call_str = own_call
         frame.to_call.call_str = dest_call
-        frame.encode_ax25frame()
-        self.UI_buf.append(frame)
+        try:
+            frame.encode_ax25frame()
+        except AX25EncodingERROR:
+            pass
+        else:
+            self.UI_buf.append(frame)
 
     def reset_ft_wait_timer(self, ax25_frame: AX25Frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
