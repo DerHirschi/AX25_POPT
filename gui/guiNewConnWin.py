@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import ax25.ax25dec_enc
+from fnc.socket_fnc import get_ip_by_hostname, check_ip_add_format
 
 
 class ProcCallInput:
@@ -245,9 +246,9 @@ class NewConnWin:
                 if port.port_typ == 'AXIP':
                     mh_ent = self.mh.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
                     # Just if u switch after enter in call
-                    axip_ip = self.ax_ip_ip[1].get('0.0', tk.END)[:-1]
+                    axip_ip_inp = self.ax_ip_ip[1].get('0.0', tk.END)[:-1]
                     axip_port = self.ax_ip_port[1].get('0.0', tk.END)[:-1]
-                    check_ip = axip_ip.split('.')
+                    axip_ip = get_ip_by_hostname(axip_ip_inp)
                     if not axip_ip:
                         if mh_ent[1]:
                             ip = mh_ent[0]
@@ -258,15 +259,18 @@ class NewConnWin:
                             self.ax_ip_port[1].insert(tk.END, prt)
                             axip_port = prt
                             axip_ip = ip
-                            check_ip = axip_ip.split('.')
-                    else:
-                        check_ip = axip_ip.split('.')
+                            axip_ip = get_ip_by_hostname(axip_ip)
+
+                    """
+                    check_ip = check_ip.split('.')
                     tr = True
                     for el in check_ip:
                         if not el.isdigit():
                             tr = False
-                    if len(check_ip) == 4 and axip_port.isdigit() and tr:
+                    """
+                    if axip_port.isdigit() and check_ip_add_format(axip_ip):
                         ax_frame.axip_add = axip_ip, int(axip_port)
+                        self.mh.mh_inp_axip_add(call_obj.call_str, (axip_ip_inp, axip_port))
                         # print('CHECK')
 
                 # TODO Error or Not Processing if no IP

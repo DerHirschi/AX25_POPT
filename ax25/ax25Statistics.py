@@ -6,6 +6,7 @@ from datetime import datetime
 
 import pickle
 
+from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_DE_str
 
 mh_data_file = 'data/mh_data.popt'
@@ -477,6 +478,10 @@ class MH(object):
 
         self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)
 
+    def mh_inp_axip_add(self, ent:'', axip_add: tuple):
+        if ent in self.calls.keys():
+            self.calls[ent].axip_add = axip_add
+
     def mh_inp(self, ax25_frame: AX25Frame, port_name, port_id):
         ########################
         # Port Stat
@@ -516,7 +521,10 @@ class MH(object):
             ent.all_routes.append(list(ent.route))
         # Update AXIP Address
         if ax25_frame.axip_add[0]:
-            ent.axip_add = ax25_frame.axip_add
+            if ent.axip_add[0]:
+                if check_ip_add_format(ent.axip_add[0]):
+                    if check_ip_add_format(ax25_frame.axip_add[0]):
+                        ent.axip_add = ax25_frame.axip_add
 
         self.calls[call_str] = ent
 

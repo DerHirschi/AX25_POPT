@@ -141,7 +141,7 @@ class MHWin(tk.Toplevel):
 
     def __del__(self):
         self.root_win.mh_window = None
-        self.destroy()
+        # self.destroy()
 
     def close(self):
         self.root_win.mh_window = None

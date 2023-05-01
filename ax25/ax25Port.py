@@ -13,6 +13,7 @@ from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 import ax25.ax25monitor as ax25monitor
+from fnc.socket_fnc import get_ip_by_hostname
 
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
@@ -566,6 +567,7 @@ class KissTCP(AX25Port):
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
             try:
                 self.device.settimeout(sock_timeout)
+                # ?? TODO DNS support ??
                 self.device.connect(self.port_param)
                 self.device_is_running = True
             except (OSError, ConnectionRefusedError, ConnectionError) as e:
@@ -802,6 +804,9 @@ class AXIP(AX25Port):
 
     def tx(self, frame: AX25Frame, no_multicast=False):
         if frame.axip_add != ('', 0):
+            axip_add = get_ip_by_hostname(frame.axip_add[0])
+            if axip_add:
+                frame.axip_add = (axip_add, frame.axip_add[1])
             ###################################
             # CRC
             calc_crc = crc_x25(frame.bytes)
