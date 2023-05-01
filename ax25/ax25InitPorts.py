@@ -8,7 +8,7 @@ from gui.guiRxEchoSettings import RxEchoVars
 
 class AX25PortHandler(object):
     def __init__(self):
-        logger.info("Starte PoPT ...")
+        logger.info("Port Init.")
         config_station.init_dir_struct()
         self.is_running = True
         self.max_ports = 20
@@ -33,6 +33,7 @@ class AX25PortHandler(object):
         self.ax25_ports: {int: AX25Port} = {}
         #######################################################
         # Init Ports/Devices with Config and running as Thread
+        logger.info(f"Port Init Max-Ports: {self.max_ports}")
         for port_id in range(self.max_ports):       # Max Ports
             self.init_port(port_id=port_id)
 
@@ -224,12 +225,11 @@ class AX25PortHandler(object):
         for k in list(self.all_connections.keys()):
             # temp_conn: AX25Conn = self.all_connections[k]
             if self.all_connections[k] == conn:
-                self.all_connections[k].ch_index = 0
                 if self.gui is not None:
+                    self.gui.send_to_qso(data=f'\n*** Disconnected from {str(conn.to_call_str)}\n', ch_index=int(conn.ch_index))
                     self.gui.disco_snd()
-                # self.del_link(conn.uid)
+                self.all_connections[k].ch_index = 0
                 del self.all_connections[k]
-                # print('InitPorts Conn Cleanup !!')
 
         if self.gui is not None:
             self.gui.ch_btn_status_update()

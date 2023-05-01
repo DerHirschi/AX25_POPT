@@ -275,22 +275,12 @@ class AX25Conn(object):
                 self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
                 self.cli.change_cli_state(state=1)
 
-    def end_connection(self):
-        self.link_disco()
-        self.n2 = 1
-        self.set_T1()
-        self.vr = 0
-        self.vs = 0
-        self.init_cli()
-        self.rx_buf_rawData = f'\n*** Disconnected from {self.to_call_str}\n'.encode()
-        """ !!!!!!!!! """
-        c = 0
-        while c < 5 and self.rx_buf_rawData:
-            # TODO Not Happy
-            time.sleep(0.1)
-            c += 1
-        # self.ax25conn.link_cleanup()
-        self.port_handler.del_conn2all_conn_var(self)
+
+    """
+    def send_to_qso_win(self, data: str):
+        if self.gui is not None:
+            self.gui.send_to_qso(data=data, conn=self)
+    """
 
     def update_gui_qso_buff(self):
         pass
@@ -425,6 +415,8 @@ class AX25Conn(object):
         ########################################
         # DIGI / LINK Connection / Node Funktion
         self.link_crone()
+        if self.zustand_exec.stat_index == 0:
+            self.conn_cleanup()
 
     def pipe_crone(self):
         if self.pipe is None:
@@ -616,9 +608,33 @@ class AX25Conn(object):
                 self.zustand_exec.change_state(4)
 
     def conn_cleanup(self):
+        print(f"conn_cleanup: {self.uid}\n"
+              f"state: {self.zustand_exec.stat_index}\n")
         self.link_cleanup()
         self.port_handler.del_conn2all_conn_var(self)   # Doppelt ..
         self.own_port.del_connections(conn=self)
+
+    def end_connection(self):
+        print(f"end_connection: {self.uid}")
+        self.link_disco()
+        #self.n2 = 1
+        self.set_T1()
+        self.vr = 0
+        self.vs = 0
+        self.init_cli()
+        # self.zustand_exec.change_state(0)
+        # self.rx_buf_rawData = f'\n*** Disconnected from {self.to_call_str}\n'.encode()
+        # self.send_to_qso_win(f'\n*** Disconnected from {self.to_call_str}\n')
+        """ !!!!!!!!! """
+        """
+        c = 0
+        while c < 5 and self.rx_buf_rawData:
+            # TODO Not Happy
+            time.sleep(0.1)
+            c += 1
+        """
+        # self.ax25conn.link_cleanup()
+        self.port_handler.del_conn2all_conn_var(self)
 
     ###############################################
     # Channel ECHO  # TODO Again !
@@ -957,10 +973,9 @@ class DefaultStat(object):
     def cron(self):
         """Global Cron"""
         # TODO Move up
-        if self.stat_index == 0:
-            self.cleanup()
         ###########
         # TODO Connection Timeout
+        # if self.stat_index:
         if self.ax25conn.n2 > self.ax25conn.parm_N2:
             self.n2_fail()
         else:
@@ -969,6 +984,10 @@ class DefaultStat(object):
             if time.time() > self.ax25conn.t3:
                 self.t3_fail()
         self.state_cron()  # State Cronex
+        """
+        if self.stat_index == 0:
+            self.cleanup()
+        """
 
     def cleanup(self):
         # print('STATE 0 Cleanup')

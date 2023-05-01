@@ -1,4 +1,5 @@
 import sys
+import tkinter
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
@@ -539,9 +540,13 @@ class SideTabbedFrame:
             conn.calc_irtt()
 
     def tasker(self):
-        ind = self.tabControl.index(self.tabControl.select())
-        if ind in self.tasker_dict.keys():
-            self.tasker_dict[ind]()
+        try:    # TODO Need correct prozedur to end the whole shit
+            ind = self.tabControl.index(self.tabControl.select())
+        except tkinter.TclError:
+            pass
+        else:
+            if ind in self.tasker_dict.keys():
+                self.tasker_dict[ind]()
 
     def entry_selected(self, event):
         for selected_item in self.tree.selection():

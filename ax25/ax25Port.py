@@ -319,8 +319,12 @@ class AX25Port(threading.Thread):
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
         for k in list(self.connections.keys()):
-            conn: AX25Conn = self.connections[k]
-            conn.exec_cron()
+            if k in self.connections.keys():
+                try:    # TODO Not happy. When no more Errors delete this shit.
+                    self.connections[k].exec_cron()
+                except KeyError:
+                    logger.error(f"KeyError cron_pac_handler(): {k}")
+                    print(f"KeyError cron_pac_handler(): {k}")
 
     def cron_send_beacons(self):
         tr = True
@@ -436,11 +440,16 @@ class AX25Port(threading.Thread):
         return conn
 
     def del_connections(self, conn: AX25Conn):
+        print(f"del_connections: {conn.uid}\n"
+              f"state: {conn.zustand_exec.stat_index}\n"
+              f"conn.keys: {self.connections.keys()}\n")
         self.port_handler.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
         if conn.uid in self.connections.keys():
             del self.connections[conn.uid]
+        if reverse_uid(conn.uid) in self.connections.keys():
+            del self.connections[reverse_uid(conn.uid)]
 
     def send_UI_frame(self,
                       own_call,
@@ -467,8 +476,12 @@ class AX25Port(threading.Thread):
         frame.axip_add = self.mh.mh_get_last_ip(call_str=dest_call)
         frame.from_call.call_str = own_call
         frame.to_call.call_str = dest_call
-        frame.encode_ax25frame()
-        self.UI_buf.append(frame)
+        try:
+            frame.encode_ax25frame()
+        except AX25EncodingERROR:
+            pass
+        else:
+            self.UI_buf.append(frame)
 
     def reset_ft_wait_timer(self, ax25_frame: AX25Frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
