@@ -829,20 +829,22 @@ class TkMainWin:
             conn = self.get_conn(k)
             if conn.rx_buf_rawData or conn.tx_buf_guiData:
                 # if not conn.my_digi_call:
-                inp = str(conn.tx_buf_guiData.decode('UTF-8', 'ignore')) \
+                inp = bytes(conn.tx_buf_guiData)
+                conn.tx_buf_guiData = b''
+                inp = inp.decode('UTF-8', 'ignore') \
                     .replace('\r', '\n') \
                     .replace('\r\n', '\n') \
                     .replace('\n\r', '\n')
-                conn.tx_buf_guiData = b''
                 # Write RX Date to Window/Channel Buffer
                 self.win_buf[k].output_win += inp
                 # if self.win_buf[k].t2speech:
                 #     self.win_buf[k].t2speech_buf += inp
-                out = str(conn.rx_buf_rawData.decode('UTF-8', 'ignore')) \
+                out = bytes(conn.rx_buf_rawData)
+                conn.rx_buf_rawData = b''
+                out = out.decode('UTF-8', 'ignore') \
                     .replace('\r', '\n') \
                     .replace('\r\n', '\n') \
                     .replace('\n\r', '\n')
-                conn.rx_buf_rawData = b''
                 out = tk_filter_bad_chars(out)
                 # Write RX Date to Window/Channel Buffer
                 self.win_buf[k].output_win += out
@@ -857,25 +859,15 @@ class TkMainWin:
                             out.replace('\n', '')
                         )
                 if self.channel_index == k:
-                    if not self.get_ch_param(ch_index=k).qso_tag_fg:
-                        fg = conn.stat_cfg.stat_parm_qso_col_text
-                        self.get_ch_param(ch_index=k).qso_tag_fg = fg
-                    else:
-                        fg = self.get_ch_param(ch_index=k).qso_tag_fg
+                    fg = conn.stat_cfg.stat_parm_qso_col_text
+                    bg = conn.stat_cfg.stat_parm_qso_col_bg
+                    tag_name_out = 'OUT-' + str(conn.my_call_str)
+                    self.get_ch_param(ch_index=k).qso_tag_fg = fg
+                    self.get_ch_param(ch_index=k).qso_tag_bg = bg
+                    self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
 
-                    if not self.get_ch_param(ch_index=k).qso_tag_bg:
-                        bg = conn.stat_cfg.stat_parm_qso_col_bg
-                        self.get_ch_param(ch_index=k).qso_tag_bg = bg
-                    else:
-                        bg = self.get_ch_param(ch_index=k).qso_tag_bg
-
-                    if not self.get_ch_param(ch_index=k).qso_tag_name:
-                        tag_name_out = 'OUT-' + str(conn.my_call_str)
-                        self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
-                    else:
-                        tag_name_out = self.get_ch_param(ch_index=k).qso_tag_name
                     tr = False
-                    if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
+                    if float(self.out_txt.index(tk.END)) - float(self.out_txt.index(tk.INSERT)) < 15:
                         tr = True
 
                     self.out_txt.configure(state="normal")
@@ -887,15 +879,15 @@ class TkMainWin:
                                             selectforeground=bg
                                             )
 
-                    ind = self.out_txt.index(tk.INSERT)
+                    ind = self.out_txt.index('end-1c')
                     self.out_txt.insert('end', inp)
-                    ind2 = self.out_txt.index(tk.INSERT)
+                    ind2 = self.out_txt.index('end-1c')
                     self.out_txt.tag_add("input", ind, ind2)
 
                     # configuring a tag called start
-                    ind = self.out_txt.index(tk.INSERT)
+                    ind = self.out_txt.index('end-1c')
                     self.out_txt.insert('end', out)
-                    ind2 = self.out_txt.index(tk.INSERT)
+                    ind2 = self.out_txt.index('end-1c')
                     self.out_txt.tag_add(tag_name_out, ind, ind2)
                     self.out_txt.configure(state="disabled",
                                            exportselection=1
@@ -939,9 +931,9 @@ class TkMainWin:
                 tx = el[2]
 
                 var = tk_filter_bad_chars(var)
-                ind = self.mon_txt.index(tk.INSERT)
+                ind = self.mon_txt.index('end-1c')
                 color_bg = conf.parm_mon_clr_bg
-                if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index("@0,0")) < 22:
+                if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index(tk.INSERT)) < 15:
                     tr = True
                 if tx:
                     tag = "tx{}".format(conf.parm_PortNr)
@@ -954,7 +946,7 @@ class TkMainWin:
                     self.mon_txt.insert(tk.END, var, tag)
                 else:
                     self.mon_txt.insert(tk.END, var)
-                    ind2 = self.mon_txt.index(tk.INSERT)
+                    ind2 = self.mon_txt.index('end-1c')
                     self.mon_txt.tag_config(tag, foreground=color,
                                             background=color_bg,
                                             selectbackground=self.mon_txt.cget('selectbackground'),
