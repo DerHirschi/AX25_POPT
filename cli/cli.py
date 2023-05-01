@@ -55,8 +55,12 @@ class DefaultCLI(object):
         self.mh_list = self.connection.mh
         self.user_db = self.connection.user_db
         self.user_db_ent: Client = self.connection.user_db_ent
-        if self.user_db_ent.CText:
-            self.c_text = str(self.user_db_ent.CText)
+        self.encoding = 'UTF-8', 'ignore'
+        if self.user_db_ent:
+            self.encoding = self.user_db_ent.Encoding, 'ignore'
+            if self.user_db_ent.CText:
+                self.c_text = str(self.user_db_ent.CText)
+
         self.c_text = self.c_text.replace('\n', '\r')
         self.bye_text = self.bye_text.replace('\n', '\r')
         self.prompt = self.prompt.replace('\n', '').replace('\r', '')
@@ -70,7 +74,6 @@ class DefaultCLI(object):
         self.cmd = b''
         self.last_line = b''
         self.parameter: [bytes] = []
-        self.encoding = 'UTF-8', 'ignore'
         # Crone
         self.cron_state_exec = {
             0: self.cron_s0,        # No CMDs / Doing nothing
@@ -134,6 +137,7 @@ class DefaultCLI(object):
     def send_output(self, ret):
         if ret:
             if type(ret) == str:
+                print(f"USER: {self.user_db_ent.call_str}\nENC: {self.encoding[0]}")
                 # gui_out = str(ret)
                 ret = ret.encode(self.encoding[0], self.encoding[1])
                 ret = ret.replace(b'\n', b'\r')
@@ -271,7 +275,7 @@ class DefaultCLI(object):
     def decode_param(self):
         tmp = []
         for el in self.parameter:
-            tmp.append(el.decode('ASCII', 'ignore').replace('\r', '').replace('\n', ''))
+            tmp.append(el.decode(self.encoding[0], 'ignore').replace('\r', '').replace('\n', ''))
         self.parameter = list(tmp)
 
     def cmd_connect(self):  # DUMMY
@@ -401,10 +405,7 @@ class DefaultCLI(object):
                     ent_ret = ""
                     for att in dir(ent):
                         if '__' not in att and \
-                                att not in [
-                                    'call_str',
-                                    'is_new',
-                                ]:
+                                att not in self.user_db.not_public_vars:
                             if getattr(ent, att):
                                 ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\r"
 
@@ -625,7 +626,7 @@ class DefaultCLI(object):
 
     def s1(self):
         if type(self.prefix) == str:  # Fix for old CFG Files
-            self.prefix = self.prefix.encode('UTF-8', 'ignore')
+            self.prefix = self.prefix.encode(self.encoding[0], self.encoding[1])
         self.input = self.last_line + self.raw_input
         self.exec_cmd()
         ########################

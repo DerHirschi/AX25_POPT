@@ -64,6 +64,7 @@ STR_TABLE = {
     'news_text': ('News Text', 'News Text', 'Lekker News-Text'),
     'stat_settings': ('Station-Einstellungen', 'Station-Settings', 'Lekker Station-Settings'),
     'new_stat': ('Neue Station', 'New Station', 'Lekker nieuw station'),
+    'txt_decoding': ('Umlautumwandlung', 'Text decoding', 'Lekker Text decoding'),
     'suc_save': ('Info: Station Einstellungen erfolgreich gespeichert.', 'Info: Station settings saved successfully.',
                  'alles Lekker'),
     'lob1': ('Lob: Das hast du sehr gut gemacht !!', 'Praise: You did very well!!', 'Lekker '),

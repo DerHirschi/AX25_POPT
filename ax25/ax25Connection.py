@@ -225,6 +225,8 @@ class AX25Conn(object):
         self.link_holder_interval: int = 30  # Minutes
         self.link_holder_timer = time.time()
         self.link_holder_text: str = '\r'
+        """ Encoding """
+        self.encoding = 'UTF-8'
         """ User DB Entry """
         self.user_db = self.port_handler.user_db
         self.user_db_ent = False
@@ -364,6 +366,7 @@ class AX25Conn(object):
         self.user_db_ent = self.user_db.get_entry(self.to_call_str)
         if self.user_db_ent:
             self.user_db_ent.Connects += 1  # TODO Count just when connected
+            self.encoding = self.user_db_ent.Encoding
             if self.user_db_ent.Language == -1:
                 if self.gui is None:
                     self.user_db_ent.Language = 0
@@ -482,7 +485,7 @@ class AX25Conn(object):
         if self.link_holder_on:
             if self.link_holder_timer < time.time():
                 self.link_holder_timer = time.time() + (self.link_holder_interval * 60)
-                self.tx_buf_rawData += self.link_holder_text.encode('UTF-8', 'ignore')
+                self.tx_buf_rawData += self.link_holder_text.encode(self.encoding, 'ignore')
 
     def set_RNR(self, link_remote=False):
         self.send_RNR()
@@ -574,7 +577,7 @@ class AX25Conn(object):
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
                     self.port_handler.del_link(self.LINK_Connection.uid)
-                    self.LINK_Connection.tx_buf_rawData += '\r*** Reconnected to {}\r'.format(self.my_call_str).encode()
+                    self.LINK_Connection.tx_buf_rawData += '\r*** Reconnected to {}\r'.format(self.my_call_str).encode('ASCII', 'ignore')
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
@@ -653,9 +656,9 @@ class AX25Conn(object):
     def ch_echo_frm_tx(self, inp: b''):
         if inp:
             tag = '\r<CH-ECHO> CH: '
-            if tag.encode('UTF-8', 'ignore') not in inp:
+            if tag.encode(self.encoding, 'ignore') not in inp:
                 echo_str = '\r{}{} - {}>\r'.format(tag, self.ch_index, self.my_call_str)
-                inp = echo_str.encode('UTF-8', 'ignore') + inp
+                inp = echo_str.encode(self.encoding, 'ignore') + inp
                 for conn in self.ch_echo:
                     if conn.ch_index != self.ch_index:
                         conn.tx_buf_rawData += inp
@@ -663,9 +666,9 @@ class AX25Conn(object):
     def ch_echo_frm_rx(self, inp: b''):
         if inp:
             tag = '\r<CH-ECHO> CH: '
-            if tag.encode('UTF-8', 'ignore') not in inp:
+            if tag.encode(self.encoding, 'ignore') not in inp:
                 echo_str = '\r{}{} - {}>\r'.format(tag, self.ch_index, self.to_call_str)
-                inp = echo_str.encode('UTF-8', 'ignore') + inp
+                inp = echo_str.encode(self.encoding, 'ignore') + inp
                 for conn in self.ch_echo:
                     if conn.ch_index != self.ch_index:
                         conn.tx_buf_rawData += inp
@@ -1053,9 +1056,9 @@ class S1Frei(DefaultStat):  # INIT RX
         self.ax25conn.port_handler.insert_conn2all_conn_var(new_conn=self.ax25conn)
         # Handle Incoming Connection
         if self.ax25conn.LINK_Connection is None:
-            self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(self.ax25conn.to_call_str).encode()
+            self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
             if self.ax25conn.is_gui:
-                self.ax25conn.gui.new_conn_snd()
+                self.ax25conn.gui.new_conn_sound()
                 speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
                 self.ax25conn.gui.sprech(speech)
 
@@ -1149,9 +1152,9 @@ class S2Aufbau(DefaultStat):  # INIT TX
     def accept(self):
         # print("S2 - ACCEPT")
         if self.ax25conn.LINK_Connection is None:
-            self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode()
+            self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
         else:
-            self.send_to_link('\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode())
+            self.send_to_link('\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore'))
         if self.ax25conn.is_gui:
             speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
             self.ax25conn.gui.sprech(speech)
@@ -1160,10 +1163,10 @@ class S2Aufbau(DefaultStat):  # INIT TX
         self.ax25conn.n2 = 0
         self.change_state(5)
         if self.ax25conn.is_gui:
-            self.ax25conn.gui.new_conn_snd()
+            self.ax25conn.gui.new_conn_sound()
 
     def reject(self):
-        self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode()
+        self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
         self.S1_end_connection()
 
     def state_cron(self):
@@ -1181,7 +1184,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
                         to_qso_win = f'\n*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str} - ' \
                                      f'({user_db_ent.Name}) > Port {self.ax25conn.own_port.port_id}\n'
 
-                self.ax25conn.rx_buf_rawData = to_qso_win.encode()
+                self.ax25conn.rx_buf_rawData = to_qso_win.encode('UTF-8', 'ignore')
         self.ax25conn.send_SABM()
         self.ax25conn.n2 += 1
         self.ax25conn.set_T1()
@@ -1198,7 +1201,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
                 to_qso_win = f'\n*** Failed connect to {self.ax25conn.ax25_out_frame.to_call.call_str} - ' \
                              f'({user_db_ent.Name}) > Port {self.ax25conn.own_port.port_id}\n'
 
-        self.ax25conn.rx_buf_rawData = to_qso_win.encode()
+        self.ax25conn.rx_buf_rawData = to_qso_win.encode('UTF-8', 'ignore')
         self.ax25conn.send_DISC()
         self.S1_end_connection()
 

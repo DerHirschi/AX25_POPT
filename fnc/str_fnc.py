@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from constant import ENCODINGS
+
 
 def get_kb_str_fm_bytes(len_: int):
     return f"{len_/1024:.2f} kb"
@@ -18,6 +20,10 @@ def tk_filter_bad_chars(inp: str):
     return inp
 
 
+def conv_time_for_sorting(dateti: datetime.now()):
+    return dateti.strftime('%y/%m/%d %H:%M:%S')
+
+
 def conv_time_US_str(dateti: datetime.now()):
     return dateti.strftime('%m/%d/%y %H:%M:%S')
 
@@ -29,3 +35,14 @@ def conv_time_DE_str(dateti: datetime.now()):
 def get_time_delta(dateti: datetime.now()):
     return str(datetime.now() - dateti).split('.')[0]
 
+
+def try_decode(data: b'', ignore=False):
+    for cd in ENCODINGS:
+        try:
+            ret = data.decode(cd)
+            return ret
+        except UnicodeDecodeError:
+            pass
+    if ignore:
+        return data.decode('UTF-8', 'ignore')
+    return f'<BIN> {len(data)}'

@@ -60,12 +60,22 @@ class Client(object):
         self.max_pac = 0
         self.CText = ''
         self.routes = []
+        self.Encoding = 'UTF-8'
 
 
 class UserDB:
     def __init__(self):
         print("User-DB INIT")
         logger.info("User-DB INIT")
+        self.not_public_vars = [
+            'not_public_vars',
+            'call_str',
+            'is_new',
+            'pac_len',
+            'max_pac',
+            'CText',
+            'routes',
+        ]
         self.db = {}
         try:
             with open(client_db, 'rb') as inp:
@@ -78,7 +88,7 @@ class UserDB:
             default_client = Client('ALL')
             default_client.is_new = False
             default_client.name = 'Beacon'
-            default_client.typ = 'Beacon'
+            default_client.typ = 'BEACON'
             self.db = {
                 'ALL': default_client
             }
@@ -92,6 +102,7 @@ class UserDB:
             if call_str not in self.db.keys():
                 if call_tup[0] not in self.db.keys():
                     print('# User DB: New User added > ' + call_str)
+                    logger.info('User DB: New User added > ' + call_str)
                     if add_new:
                         self.db[call_str] = Client(call_str)
                     else:
@@ -107,11 +118,13 @@ class UserDB:
         if ent_key in self.db.keys():
             compare = Client('ALL')
             for new_att in dir(compare):
+                # print(new_att)
                 if not hasattr(self.db[ent_key], new_att):
                     setattr(self.db[ent_key], new_att, getattr(compare, new_att))
+                # print(getattr(self.db[ent_key], new_att))
 
     def save_data(self):
-        # print('Save Client DB')
+        print('Save Client DB')
         logger.info('Save Client DB')
         try:
             with open(client_db, 'wb') as outp:

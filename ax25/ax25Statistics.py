@@ -6,7 +6,7 @@ from datetime import datetime
 
 import pickle
 
-from fnc.str_fnc import conv_time_US_str, conv_time_DE_str
+from fnc.str_fnc import conv_time_for_sorting, conv_time_DE_str
 
 mh_data_file = 'data/mh_data.popt'
 port_stat_data_file = 'data/port_stat.popt'
@@ -531,7 +531,7 @@ class MH(object):
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
-            time_str = conv_time_US_str(flag.last_seen)
+            time_str = conv_time_for_sorting(flag.last_seen)
             temp[time_str] = self.calls[k]
         temp_k = list(temp.keys())
         temp_k.sort()
@@ -551,8 +551,8 @@ class MH(object):
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
             key: str = {
-                'last': conv_time_US_str(flag.last_seen),
-                'first': conv_time_US_str(flag.first_seen),
+                'last': conv_time_for_sorting(flag.last_seen),
+                'first': conv_time_for_sorting(flag.first_seen),
                 'port': str(flag.port_id),
                 'call': flag.own_call,
                 'pack': str(flag.pac_n),
