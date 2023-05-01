@@ -58,7 +58,10 @@ class Monitor(object):  # TODO: Static
         # out_str += ' {}'.format(now.strftime('%d/%m/%Y %H:%M:%S'))
         # out_str += ' {}\n'.format(now.strftime('%H:%M:%S'))
         if ax25_frame.data:
-            data = ax25_frame.data.decode('UTF-8', 'ignore')
+            try:
+                data = ax25_frame.data.decode('UTF-8')
+            except UnicodeDecodeError:
+                data = f'<BIN> {len(ax25_frame.data)}'
             data = data.replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
             data = data.split('\n')
             for da in data:
