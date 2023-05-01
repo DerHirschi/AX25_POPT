@@ -4,7 +4,7 @@ import logging
 
 import ax25.ax25Connection
 import config_station
-from fnc.str_fnc import get_time_delta
+from fnc.str_fnc import get_time_delta, find_decoding
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from ax25.ax25Error import AX25EncodingERROR
@@ -82,6 +82,7 @@ class DefaultCLI(object):
         # Standard Commands ( GLOBAL )
         self.commands = {
             b'QUIT': (self.cmd_q, 'Quit'),
+            b'BYE': (self.cmd_q, ''),
             b'CONNECT': (self.cmd_connect, 'Connect'),
             b'PORT': (self.cmd_port, 'Ports'),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
@@ -100,6 +101,7 @@ class DefaultCLI(object):
             b'EMAIL': (self.cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self.connection.cli_language]),
             b'WEB': (self.cmd_set_http, STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
             b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
+            b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
         }
 
         self.str_cmd_exec = {
@@ -571,6 +573,18 @@ class DefaultCLI(object):
                                                self.commands[k][1])
         ret += '\r\r'
         return ret
+
+    def cmd_umlaut(self):
+        print(self.parameter)
+        if not self.parameter:
+            return f"\r{STR_TABLE['cli_text_encoding_no_param'][self.connection.cli_language]}: {self.encoding[0]}\r"
+        res = find_decoding(self.parameter[0].replace(b'\r', b''))
+        if not res:
+            return f"\r{STR_TABLE['cli_text_encoding_error_not_found'][self.connection.cli_language]}\r"
+        self.encoding = res, self.encoding[1]
+        if self.user_db_ent:
+            self.user_db_ent.Encoding = str(res)
+        return f"\r{STR_TABLE['cli_text_encoding_set'][self.connection.cli_language]} {res}\r"
 
     def str_cmd_req_name(self):
         # print("REQ NAME")

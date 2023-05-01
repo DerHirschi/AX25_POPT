@@ -166,17 +166,33 @@ STR_TABLE = {
                      ' # HTTP is set',
                      ' # Lekker HTTP ingevoerd',
                      ),
+    'cli_text_encoding_no_param': (' # Bitte ein ä senden. Bsp.: UM ä.\r # Derzeitige Einstellung:',
+                     ' # Please send an ä. Example: UM ä.\r # Current setting:',
+                     ' # Stuur een Lekker ä. Dus UM ä.\r # Huidige lekker instelling:',
+                     ),
+    'cli_text_encoding_error_not_found': (' # Umlaute wurden nicht erkannt !',
+                     " # Couldn't detect right text encoding",
+                     ' # Kan de juiste lekker tekstcodering niet detecteren',
+                     ),
+    'cli_text_encoding_set': (' # Umlaute/Text de/enkodierung erkannt und gesetzt auf:',
+                     " # Text de/encoding detected and set to:",
+                     ' # Lekker Tekstde/codering gedetecteerd en ingesteld op:',
+                     ),
 
     'port_overview': ('Port Übersicht',
                       'Port Overview',
                       'Lekker Ports'),
 
     'time_connected': ('Connect Dauer',
-                      'Connect duration',
-                      'Lekker verbindingsduur'),
+                       'Connect duration',
+                       'Lekker verbindingsduur'),
 
     'cmd_not_known': ('Dieses Kommando ist dem System nicht bekannt !',
                       'The system does not know this command !',
                       'Het systeem kent deze lekker opdracht niet !'),
+
+    'auto_text_encoding': ('Automatisch Umlaut Erkennung. Ä als Parameter. > UM ä',
+                           'Automatic detection of text encoding. Ä as a parameter. > UM ä',
+                           'Automatische detectie van lekker tekstcodering. Ä als parameter. > UM ä'),
 
 }

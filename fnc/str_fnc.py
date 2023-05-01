@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import logging
 from constant import ENCODINGS
 
 
@@ -46,3 +46,19 @@ def try_decode(data: b'', ignore=False):
     if ignore:
         return data.decode('UTF-8', 'ignore')
     return f'<BIN> {len(data)}'
+
+
+def find_decoding(inp: b''):
+    res = []
+    for enc in ENCODINGS:
+        try:
+            probe = inp.decode(enc)
+            if probe in ['ä', 'Ä']:
+                res.append(enc)
+        except UnicodeDecodeError:
+            pass
+    if not res:
+        return False
+    if len(res) > 1:
+        logging.warning(f"find_decoding() more then 1 Result: {res} inp: {inp}")
+    return res[0]
