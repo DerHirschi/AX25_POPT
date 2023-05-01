@@ -353,23 +353,23 @@ class DefaultCLI(object):
     def cmd_i(self):
         ret = self.load_fm_file(self.stat_cfg_index_call + '.itx')
         if ret:
-            return ret
+            return ret.replace('\n', '\r')
         else:
-            return self.stat_cfg.stat_parm_cli_itext
+            return self.stat_cfg.stat_parm_cli_itext.replace('\n', '\r')
 
     def cmd_li(self):
         ret = self.load_fm_file(self.stat_cfg_index_call + '.litx')
         if ret:
-            return ret
+            return ret.replace('\n', '\r')
         else:
-            return self.stat_cfg.stat_parm_cli_longitext
+            return self.stat_cfg.stat_parm_cli_longitext.replace('\n', '\r')
 
     def cmd_news(self):
         ret = self.load_fm_file(self.stat_cfg_index_call + '.atx')
         if ret:
-            return ret
+            return ret.replace('\n', '\r')
         else:
-            return self.stat_cfg.stat_parm_cli_akttext
+            return self.stat_cfg.stat_parm_cli_akttext.replace('\n', '\r')
 
     def cmd_user_db_detail(self):
         if not self.parameter:
