@@ -525,6 +525,8 @@ class MH(object):
                 if check_ip_add_format(ent.axip_add[0]):
                     if check_ip_add_format(ax25_frame.axip_add[0]):
                         ent.axip_add = ax25_frame.axip_add
+            else:
+                ent.axip_add = ax25_frame.axip_add
 
         self.calls[call_str] = ent
 
