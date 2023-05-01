@@ -920,9 +920,9 @@ class TkMainWin:
                         self.win_buf[k].output_win_tags[tag_name_out] = ()
                     old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
                     if old_tags:
-                        old_tags = old_tags[:-1] + [tk.INSERT]
+                        old_tags = old_tags + ['end-1c']
                     else:
-                        old_tags = ['1.0', tk.INSERT]
+                        old_tags = ['1.0', 'end-1c']
                     self.win_buf[k].output_win_tags[tag_name_out] = old_tags
                     self.win_buf[k].new_data_tr = True
                 self.win_buf[k].rx_beep_tr = True
