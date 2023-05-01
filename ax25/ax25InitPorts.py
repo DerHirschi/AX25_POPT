@@ -8,7 +8,7 @@ from gui.guiRxEchoSettings import RxEchoVars
 
 class AX25PortHandler(object):
     def __init__(self):
-        logger.info("Starte PoPT ...")
+        logger.info("Port Init.")
         config_station.init_dir_struct()
         self.is_running = True
         self.max_ports = 20
@@ -33,6 +33,7 @@ class AX25PortHandler(object):
         self.ax25_ports: {int: AX25Port} = {}
         #######################################################
         # Init Ports/Devices with Config and running as Thread
+        logger.info(f"Port Init Max-Ports: {self.max_ports}")
         for port_id in range(self.max_ports):       # Max Ports
             self.init_port(port_id=port_id)
 
