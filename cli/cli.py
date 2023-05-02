@@ -427,6 +427,10 @@ class DefaultCLI(object):
                    "\r"
 
     def cmd_set_name(self):
+        if not self.parameter:
+            if self.user_db_ent:
+                return f" #\r Eingetragener Name: {self.user_db_ent.Name}\r"
+            return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.Name = self.parameter[0]\
                 .decode(self.encoding[0], self.encoding[1]).\
@@ -442,6 +446,10 @@ class DefaultCLI(object):
         return "\r # USER-DB Error !\r"
 
     def cmd_set_qth(self):
+        if not self.parameter:
+            if self.user_db_ent:
+                return f"\r # Eingetragener QTH: {self.user_db_ent.QTH}\r"
+            return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.QTH = self.parameter[0]\
                 .decode(self.encoding[0], self.encoding[1]).\
@@ -457,6 +465,10 @@ class DefaultCLI(object):
         return "\r # USER-DB Error !\r"
 
     def cmd_set_loc(self):
+        if not self.parameter:
+            if self.user_db_ent:
+                return f"\r # Eingetragener Locator: {self.user_db_ent.LOC}\r"
+            return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.LOC = self.parameter[0]\
                 .decode(self.encoding[0], self.encoding[1]).\
@@ -472,6 +484,10 @@ class DefaultCLI(object):
         return "\r # USER-DB Error !\r"
 
     def cmd_set_zip(self):
+        if not self.parameter:
+            if self.user_db_ent:
+                return f"\r # Eingetragene Postleitzahl: {self.user_db_ent.ZIP}\r"
+            return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.ZIP = self.parameter[0]\
                 .decode(self.encoding[0], self.encoding[1]).\
@@ -487,6 +503,10 @@ class DefaultCLI(object):
         return "\r # USER-DB Error !\r"
 
     def cmd_set_pr_mail(self):
+        if not self.parameter:
+            if self.user_db_ent:
+                return f"\r # Eingetragene PR-Mail Adresse: {self.user_db_ent.PRmail}\r"
+            return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.PRmail = self.parameter[0]\
                 .decode(self.encoding[0], self.encoding[1]).\
@@ -502,6 +522,10 @@ class DefaultCLI(object):
         return "\r # USER-DB Error !\r"
 
     def cmd_set_e_mail(self):
+        if not self.parameter:
+            if self.user_db_ent:
+                return f"\r # Eingetragene E-Mail Adresse: {self.user_db_ent.Email}\r"
+            return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.Email = self.parameter[0]\
                 .decode(self.encoding[0], self.encoding[1]).\
@@ -517,6 +541,10 @@ class DefaultCLI(object):
         return "\r # USER-DB Error !\r"
 
     def cmd_set_http(self):
+        if not self.parameter:
+            if self.user_db_ent:
+                return f"\r # Eingetragene Web Adresse: {self.user_db_ent.HTTP}\r"
+            return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.HTTP = self.parameter[0]\
                 .decode(self.encoding[0], self.encoding[1]).\
@@ -532,17 +560,30 @@ class DefaultCLI(object):
         return "\r # USER-DB Error !\r"
 
     def cmd_port(self):
-        ret = f"\r   < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
-        ret += "-#-Name------Stations---------\r"
+        ret = f"\r      < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
+        ret += "-#--Name----PortTyp--Stations--Typ------Digi-\r"
         for port_id in self.port_handler.ax25_ports.keys():
             port = self.port_handler.ax25_ports[port_id]
             name = str(port.portname).ljust(7)
-            stations = str(port.my_stations)\
-                .replace('[','') \
-                .replace(']','') \
-                .replace(',','') \
-                .replace("'", "")
-            ret += f" {port_id} {name}   {stations}\r"
+            typ = port.port_typ.ljust(7)
+            stations = port.my_stations
+            if not stations:
+                stations = ['']
+            digi = ''
+
+            if stations[0] in port.stupid_digi_calls and stations[0]:
+                digi = '(DIGI)'
+            if stations[0] in port.port_cfg.parm_cli.keys():
+                digi = f"{port.port_cfg.parm_cli[stations[0]].cli_name.ljust(7)} " + digi
+
+            ret += f" {str(port_id).ljust(2)} {name} {typ}  {stations[0].ljust(9)} {digi}\r"
+            for stat in stations[1:]:
+                digi = ''
+                if stat in port.stupid_digi_calls:
+                    digi = '(DIGI)'
+                if stat in port.port_cfg.parm_cli.keys():
+                    digi = f"{port.port_cfg.parm_cli[stat].cli_name.ljust(7)} " + digi
+                ret += f"                     {stat.ljust(9)} {digi}\r"
         ret += '\r'
         return ret
 
