@@ -191,8 +191,8 @@ STR_TABLE = {
                       'The system does not know this command !',
                       'Het systeem kent deze lekker opdracht niet !'),
 
-    'auto_text_encoding': ('Automatisch Umlaut Erkennung. Ä als Parameter. > UM ä',
-                           'Automatic detection of text encoding. Ä as a parameter. > UM ä',
-                           'Automatische detectie van lekker tekstcodering. Ä als parameter. > UM ä'),
+    'auto_text_encoding': ('Automatisch Umlaut Erkennung. ä als Parameter. > UM ä',
+                           'Automatic detection of text encoding. ä as a parameter. > UM ä',
+                           'Automatische detectie van lekker tekstcodering. ä als parameter. > UM ä'),
 
 }
