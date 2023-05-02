@@ -1,4 +1,4 @@
-ALL_COLOURS = ['snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white', 'old lace',
+ALL_COLOURS = ('snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white', 'old lace',
                'linen', 'antique white', 'papaya whip', 'blanched almond', 'bisque', 'peach puff',
                'navajo white', 'lemon chiffon', 'mint cream', 'azure', 'alice blue', 'lavender',
                'lavender blush', 'misty rose', 'dark slate gray', 'dim gray', 'slate gray',
@@ -73,4 +73,10 @@ ALL_COLOURS = ['snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white'
                'grey66', 'grey67', 'grey68', 'grey69', 'grey70', 'grey71', 'grey72', 'grey73', 'grey74',
                'grey75', 'grey76', 'grey77', 'grey78', 'grey79', 'grey80', 'grey81', 'grey82', 'grey83',
                'grey84', 'grey85', 'grey86', 'grey87', 'grey88', 'grey89', 'grey90', 'grey91', 'grey92',
-               'grey93', 'grey94', 'grey95', 'grey97', 'grey98', 'grey99']
+               'grey93', 'grey94', 'grey95', 'grey97', 'grey98', 'grey99')
+ENCODINGS = (
+    'UTF-8',
+    'CP437',
+    'ASCII',
+    'LATIN_1',
+)

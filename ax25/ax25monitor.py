@@ -2,6 +2,9 @@ from ax25.ax25dec_enc import AX25Frame
 from datetime import datetime
 
 import logging
+
+from fnc.str_fnc import try_decode
+
 # Enable logging
 """
 logging.basicConfig(
@@ -58,13 +61,19 @@ class Monitor(object):  # TODO: Static
         # out_str += ' {}'.format(now.strftime('%d/%m/%Y %H:%M:%S'))
         # out_str += ' {}\n'.format(now.strftime('%H:%M:%S'))
         if ax25_frame.data:
-            data = ax25_frame.data.decode('UTF-8', 'ignore')
-            data = data.replace('\r', '\n').replace('\r\n', '\n').replace('\n\r', '\n')
+            """
+            try:
+                data = ax25_frame.data.decode('UTF-8', errors='surrogatepass')
+            except UnicodeDecodeError:
+                data = f'<BIN> {len(ax25_frame.data)}'
+            """
+            data = try_decode(ax25_frame.data)
+            data = data.replace('\r\n', '\n').replace('\n\r', '\n').replace('\r', '\n')
             data = data.split('\n')
             for da in data:
-                while len(da) > 100:
-                    out_str += da[:100] + '\n'
-                    da = da[100:]
+                while len(da) > 80:
+                    out_str += da[:80] + '\n'
+                    da = da[80:]
                 if da:
                     if da[-1] != '\n' or da[-1] != '\r':
                         out_str += da + '\n'

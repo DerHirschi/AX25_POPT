@@ -6,6 +6,9 @@ from datetime import datetime
 
 import pickle
 
+from fnc.socket_fnc import check_ip_add_format
+from fnc.str_fnc import conv_time_for_sorting, conv_time_DE_str
+
 mh_data_file = 'data/mh_data.popt'
 port_stat_data_file = 'data/port_stat.popt'
 
@@ -22,8 +25,8 @@ class MyHeard(object):
         self.all_routes = []
         self.port = ''
         self.port_id = 0    # Not used yet
-        self.first_seen = get_time_str()
-        self.last_seen = get_time_str()
+        self.first_seen = datetime.now()
+        self.last_seen = datetime.now()
         self.pac_n = 0                      # N Packets
         self.byte_n = 0                     # N Bytes
         self.h_byte_n = 0                   # N Header Bytes
@@ -475,6 +478,10 @@ class MH(object):
 
         self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)
 
+    def mh_inp_axip_add(self, ent:'', axip_add: tuple):
+        if ent in self.calls.keys():
+            self.calls[ent].axip_add = axip_add
+
     def mh_inp(self, ax25_frame: AX25Frame, port_name, port_id):
         ########################
         # Port Stat
@@ -487,10 +494,10 @@ class MH(object):
         if call_str not in self.calls.keys():
             self.new_call_alarm = True
             ent = MyHeard()
-            ent.first_seen = get_time_str()
+            ent.first_seen = datetime.now()
         else:
             ent = self.calls[call_str]
-        ent.last_seen = get_time_str()
+        ent.last_seen = datetime.now()
         ent.own_call = call_str
         ent.pac_n += 1
         ent.port = port_name
@@ -514,7 +521,12 @@ class MH(object):
             ent.all_routes.append(list(ent.route))
         # Update AXIP Address
         if ax25_frame.axip_add[0]:
-            ent.axip_add = ax25_frame.axip_add
+            if ent.axip_add[0]:
+                if check_ip_add_format(ent.axip_add[0]):
+                    if check_ip_add_format(ax25_frame.axip_add[0]):
+                        ent.axip_add = ax25_frame.axip_add
+            else:
+                ent.axip_add = ax25_frame.axip_add
 
         self.calls[call_str] = ent
 
@@ -529,7 +541,8 @@ class MH(object):
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
-            temp[flag.last_seen] = self.calls[k]
+            time_str = conv_time_for_sorting(flag.last_seen)
+            temp[time_str] = self.calls[k]
         temp_k = list(temp.keys())
         temp_k.sort()
         temp_k.reverse()
@@ -548,8 +561,8 @@ class MH(object):
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
             key: str = {
-                'last': flag.last_seen,
-                'first': flag.first_seen,
+                'last': conv_time_for_sorting(flag.last_seen),
+                'first': conv_time_for_sorting(flag.first_seen),
                 'port': str(flag.port_id),
                 'call': flag.own_call,
                 'pack': str(flag.pac_n),
@@ -605,8 +618,8 @@ class MH(object):
         for call in list(self.calls.keys()):
 
             out += 'P:{:2}>{:5} {:9} {:3}'.format(self.calls[call].port,
-                                                self.calls[call].last_seen,
-                                                call,
+                                                  conv_time_DE_str(self.calls[call].last_seen),
+                                                  call,
                                                 '')
 
             tp += self.calls[call].pac_n

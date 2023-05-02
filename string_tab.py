@@ -64,6 +64,7 @@ STR_TABLE = {
     'news_text': ('News Text', 'News Text', 'Lekker News-Text'),
     'stat_settings': ('Station-Einstellungen', 'Station-Settings', 'Lekker Station-Settings'),
     'new_stat': ('Neue Station', 'New Station', 'Lekker nieuw station'),
+    'txt_decoding': ('Umlautumwandlung', 'Text decoding', 'Lekker Text decoding'),
     'suc_save': ('Info: Station Einstellungen erfolgreich gespeichert.', 'Info: Station settings saved successfully.',
                  'alles Lekker'),
     'lob1': ('Lob: Das hast du sehr gut gemacht !!', 'Praise: You did very well!!', 'Lekker '),
@@ -165,8 +166,33 @@ STR_TABLE = {
                      ' # HTTP is set',
                      ' # Lekker HTTP ingevoerd',
                      ),
+    'cli_text_encoding_no_param': (' # Bitte ein ä senden. Bsp.: UM ä.\r # Derzeitige Einstellung:',
+                     ' # Please send an ä. Example: UM ä.\r # Current setting:',
+                     ' # Stuur een Lekker ä. Dus UM ä.\r # Huidige lekker instelling:',
+                     ),
+    'cli_text_encoding_error_not_found': (' # Umlaute wurden nicht erkannt !',
+                     " # Couldn't detect right text encoding",
+                     ' # Kan de juiste lekker tekstcodering niet detecteren',
+                     ),
+    'cli_text_encoding_set': (' # Umlaute/Text de/enkodierung erkannt und gesetzt auf:',
+                     " # Text de/encoding detected and set to:",
+                     ' # Lekker Tekstde/codering gedetecteerd en ingesteld op:',
+                     ),
 
     'port_overview': ('Port Übersicht',
                       'Port Overview',
-                      'Lekker Ports')
+                      'Lekker Ports'),
+
+    'time_connected': ('Connect Dauer',
+                       'Connect duration',
+                       'Lekker verbindingsduur'),
+
+    'cmd_not_known': ('Dieses Kommando ist dem System nicht bekannt !',
+                      'The system does not know this command !',
+                      'Het systeem kent deze lekker opdracht niet !'),
+
+    'auto_text_encoding': ('Automatisch Umlaut Erkennung. ä als Parameter. > UM ä',
+                           'Automatic detection of text encoding. ä as a parameter. > UM ä',
+                           'Automatische detectie van lekker tekstcodering. ä als parameter. > UM ä'),
+
 }

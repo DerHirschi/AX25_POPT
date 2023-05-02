@@ -1,15 +1,11 @@
-import sys
 import tkinter
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
-from fnc.str_fnc import get_kb_str_fm_bytes
+from fnc.str_fnc import get_kb_str_fm_bytes, conv_time_DE_str, get_time_delta
 from string_tab import STR_TABLE
 from ax25.ax25dec_enc import PIDByte
 from fnc.os_fnc import is_linux
-
-
-# import main
 
 
 class SideTabbedFrame:
@@ -183,30 +179,37 @@ class SideTabbedFrame:
         # progress = tk.ttk.Progressbar(tab1_kanal, orient=tk.HORIZONTAL, length=150, mode='determinate')
         # progress.place(x=300, y=30)
         # progress['value'] = 60
-        # TX Buffer
+        # Conn Dauer
         _x = 290
         _y = 20
+        self.conn_durration_var = tk.StringVar(tab1_kanal)
+        tk.Label(tab1_kanal, textvariable=self.conn_durration_var).place(x=_x, y=_y)
+        self.conn_durration_var.set('--:--:--')
+        #### conn_durration_var
+        # TX Buffer
+        _x = 290
+        _y = 45
         self.tx_buff_var = tk.StringVar(tab1_kanal)
         self.tx_buff_lable = tk.Label(tab1_kanal, textvariable=self.tx_buff_var)
         self.tx_buff_var.set('')
         self.tx_buff_lable.place(x=_x, y=_y)
         # TX Gesamt
         _x = 290
-        _y = 45
+        _y = 70
         self.tx_count_var = tk.StringVar(tab1_kanal)
         self.tx_count_lable = tk.Label(tab1_kanal, textvariable=self.tx_count_var)
         self.tx_count_var.set('')
         self.tx_count_lable.place(x=_x, y=_y)
         # RX Gesamt
         _x = 290
-        _y = 70
+        _y = 95
         self.rx_count_var = tk.StringVar(tab1_kanal)
         self.rx_count_lable = tk.Label(tab1_kanal, textvariable=self.rx_count_var)
         self.rx_count_var.set('')
         self.rx_count_lable.place(x=_x, y=_y)
 
         ######################
-        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=110, relheight=0.6, relwidth=0.9)
+        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=135, relheight=0.6, relwidth=0.9)
         #####################
         # Status /Pipe/Link/File-RX/File-TX
         self.status_label_var = tk.StringVar(tab1_kanal)
@@ -571,7 +574,7 @@ class SideTabbedFrame:
             route = ent.route
 
             self.tree_data.append((
-                f"{ent.last_seen.split(' ')[1]}",
+                f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
                 f'{ent.own_call}',
                 f'{ent.port_id} {ent.port}',
                 f'{ent.pac_n}',
@@ -584,6 +587,7 @@ class SideTabbedFrame:
         avg = ''
         last = ''
         status_text = ''
+        duration = f"{STR_TABLE['time_connected'][self.lang]}: --:--:--"
         tx_buff = 'TX-Buffer: --- kb'
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
@@ -596,6 +600,7 @@ class SideTabbedFrame:
             worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
             avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
             last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
+            duration = f"{STR_TABLE['time_connected'][self.lang]}: {get_time_delta(station.time_start)}"
             tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
             tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
             rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
@@ -610,6 +615,7 @@ class SideTabbedFrame:
         self.rtt_worst.configure(text=worst)
         self.rtt_avg.configure(text=avg)
         self.rtt_last.configure(text=last)
+        self.conn_durration_var.set(duration)
         self.tx_buff_var.set(tx_buff)
         self.tx_count_var.set(tx_count)
         self.rx_count_var.set(rx_count)

@@ -1,4 +1,5 @@
 import datetime
+import logging
 import random
 import time
 import tkinter as tk
@@ -14,7 +15,7 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import config_station
-from fnc.str_fnc import tk_filter_bad_chars
+from fnc.str_fnc import tk_filter_bad_chars, try_decode
 from gui.guiPipeToolSettings import PipeToolSettings
 from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
@@ -33,7 +34,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from gui.vars import ALL_COLOURS
+from constant import ALL_COLOURS
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -355,7 +356,20 @@ class TkMainWin:
         pass
 
     def destroy_win(self):
+        logging.info('Closing GUI.')
+
+        if self.settings_win is not None:
+            self.settings_win.destroy()
+        if self.mh_window is not None:
+            self.mh_window.destroy()
+        logging.info('Closing GUI: Closing Ports.')
         self.ax25_port_handler.close_all()
+        # logging.info('Closing GUI: Destroying Loop.')
+        # self.main_win.destroy()
+
+        # logging.info('Closing GUI: Destroying GUI.')
+        # self.destroy_win()
+        logging.info('Closing GUI: Done.')
 
     def monitor_start_msg(self):
         speech = [
@@ -481,7 +495,8 @@ class TkMainWin:
     def insert_fm_file(self):
         data = open_file_dialog()
         if data:
-            self.inp_txt.insert(tk.INSERT, data.decode('UTF-8', 'ignore'))
+            # TODO Maybe Channel Decoding ?  ?
+            self.inp_txt.insert(tk.INSERT, try_decode(data, ignore=True))
 
     def save_to_file(self):
         data = self.out_txt.get('1.0', tk.END)
@@ -523,6 +538,7 @@ class TkMainWin:
         self.main_win.bind('<KeyRelease-Down>', self.arrow_keys)
         # self.main_win.bind('<KP_Enter>', self.snd_text)
         self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
+        self.main_win.bind('<Escape>', lambda event: self.open_new_conn_win())
         self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
         self.main_win.bind('<Control-c>', lambda event: self.copy_select())
         self.main_win.bind('<Control-x>', lambda event: self.cut_select())
@@ -686,10 +702,10 @@ class TkMainWin:
                         except gtts.gTTSError:
                             self.setting_sprech.set(False)
                             return False
-                        return self.pl_sound(self.root_dir + '//data//speech.mp3')
+                        return self.sound_play(self.root_dir + '//data//speech.mp3')
         return False
 
-    def pl_sound(self, snd_file: str, wait=True):
+    def sound_play(self, snd_file: str, wait=True):
         # TODO .. Again !!! ... Don't like this mess
         if self.setting_sound.get():
             if wait:
@@ -721,7 +737,7 @@ class TkMainWin:
                     threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
                 return True
 
-    def rx_beep(self):
+    def rx_beep_sound(self):
         for k in self.win_buf.keys():
             if k:
                 temp: ChVars = self.win_buf[k]
@@ -733,13 +749,13 @@ class TkMainWin:
                         if tr:
                             if temp.rx_beep_tr:
                                 temp.rx_beep_tr = False
-                                self.pl_sound(self.root_dir + '//data//sound//rx_beep.wav', False)
+                                self.sound_play(self.root_dir + '//data//sound//rx_beep.wav', False)
 
-    def new_conn_snd(self):
-        self.pl_sound(self.root_dir + '//data//sound//conn_alarm.wav', False)
+    def new_conn_sound(self):
+        self.sound_play(self.root_dir + '//data//sound//conn_alarm.wav', False)
 
-    def disco_snd(self):
-        self.pl_sound(self.root_dir + '//data//sound//disco_alarm.wav', False)
+    def disco_sound(self):
+        self.sound_play(self.root_dir + '//data//sound//disco_alarm.wav', False)
 
     # Sound Ende
     #################
@@ -807,7 +823,7 @@ class TkMainWin:
             self.change_conn_btn()
             # self.tabbed_sideFrame.update_side_mh()
             self.check_sprech_ch_buf()
-            self.rx_beep()
+            self.rx_beep_sound()
             if self.ch_alarm:
                 self.ch_btn_status_update()
 
@@ -828,23 +844,24 @@ class TkMainWin:
             # conn: AX25Conn
             conn = self.get_conn(k)
             if conn.rx_buf_rawData or conn.tx_buf_guiData:
+                txt_enc = 'UTF-8'
+                if conn.user_db_ent:
+                    txt_enc = conn.user_db_ent.Encoding
                 # if not conn.my_digi_call:
                 inp = bytes(conn.tx_buf_guiData)
                 conn.tx_buf_guiData = b''
-                inp = inp.decode('UTF-8', 'ignore') \
-                    .replace('\r', '\n') \
-                    .replace('\r\n', '\n') \
-                    .replace('\n\r', '\n')
+                inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
                 # Write RX Date to Window/Channel Buffer
                 self.win_buf[k].output_win += inp
                 # if self.win_buf[k].t2speech:
                 #     self.win_buf[k].t2speech_buf += inp
                 out = bytes(conn.rx_buf_rawData)
                 conn.rx_buf_rawData = b''
-                out = out.decode('UTF-8', 'ignore') \
-                    .replace('\r', '\n') \
-                    .replace('\r\n', '\n') \
-                    .replace('\n\r', '\n')
+                # out = try_decode(out)
+                out = out.decode(txt_enc, 'ignore')
+                out = out.replace('\r\n', '\n') \
+                    .replace('\n\r', '\n')\
+                    .replace('\r', '\n')
                 out = tk_filter_bad_chars(out)
                 # Write RX Date to Window/Channel Buffer
                 self.win_buf[k].output_win += out
@@ -903,9 +920,9 @@ class TkMainWin:
                         self.win_buf[k].output_win_tags[tag_name_out] = ()
                     old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
                     if old_tags:
-                        old_tags = old_tags[:-1] + [tk.INSERT]
+                        old_tags = old_tags + ['end-1c']
                     else:
-                        old_tags = ['1.0', tk.INSERT]
+                        old_tags = ['1.0', 'end-1c']
                     self.win_buf[k].output_win_tags[tag_name_out] = old_tags
                     self.win_buf[k].new_data_tr = True
                 self.win_buf[k].rx_beep_tr = True
@@ -1098,10 +1115,12 @@ class TkMainWin:
                     ind = str(int(float(ind))) + '.0'
                 else:
                     ind = '1.0'
-
+                txt_enc = 'UTF-8'
+                if station.user_db_ent:
+                    txt_enc = station.user_db_ent.Encoding
                 tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
                 tmp_txt = tmp_txt.replace('\n', '\r')
-                station.send_data(tmp_txt.encode())
+                station.send_data(tmp_txt.encode(txt_enc, 'ignore'))
 
                 self.inp_txt.tag_remove('send', ind, str(self.inp_txt.index(tk.INSERT)))
                 self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))

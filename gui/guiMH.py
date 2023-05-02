@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import Menu
 from tkinter import ttk
 from ax25.ax25Statistics import MyHeard
+from fnc.str_fnc import conv_time_DE_str
+
 # import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
@@ -126,8 +128,8 @@ class MHWin(tk.Toplevel):
                 route = min(ent.all_routes)
 
             self.tree_data.append((
-                f'{ent.last_seen}',
-                f'{ent.first_seen}',
+                f'{conv_time_DE_str(ent.last_seen)}',
+                f'{conv_time_DE_str(ent.first_seen)}',
                 f'{ent.port_id} {ent.port}',
                 f'{ent.own_call}',
                 f'{ent.pac_n}',
@@ -139,7 +141,7 @@ class MHWin(tk.Toplevel):
 
     def __del__(self):
         self.root_win.mh_window = None
-        self.destroy()
+        # self.destroy()
 
     def close(self):
         self.root_win.mh_window = None

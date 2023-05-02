@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
+
+from constant import ENCODINGS
 from string_tab import STR_TABLE
 
 
@@ -113,7 +115,7 @@ class UserDB(tk.Toplevel):
                                  textvariable=self.name_var,
                                  width=22)
         self.name_ent.place(x=_x + 80, y=_y)
-        # Name
+        # Typ
         _x = 375
         _y = 20
         tk.Label(tab1, text='Typ: ').place(x=_x, y=_y)
@@ -122,7 +124,15 @@ class UserDB(tk.Toplevel):
             'SYSOP',
             'NODE',
             'BBS',
+            'DIGI',
             'CONVERS',
+            'BEACON',
+            'WX',
+            'TELEMETRIE',
+            'APRS-DIGI',
+            'APRS-IGATE',
+            'APRS-TELEMETRIE',
+            'APRS-WX',
             'OTHER',
         ]
         self.typ_var.set('SYSOP')
@@ -164,6 +174,15 @@ class UserDB(tk.Toplevel):
                                  textvariable=self.land_var,
                                  width=8)
         self.land_ent.place(x=_x + 80, y=_y)
+        # Ecoding
+        _x = 455
+        _y = 110
+        tk.Label(tab1, text=f"{STR_TABLE['txt_decoding'][self.lang]}: ").place(x=_x, y=_y)
+        self.encoding_var = tk.StringVar(self)
+        opt = list(ENCODINGS)
+        self.encoding_var.set('UTF-8')
+        self.encoding_ent = tk.OptionMenu(tab1, self.encoding_var, *opt)
+        self.encoding_ent.place(x=_x + 185, y=_y - 2)
 
         # PR-MAIL
         _x = 10
@@ -192,6 +211,7 @@ class UserDB(tk.Toplevel):
                                  textvariable=self.http_var,
                                  width=32)
         self.http_ent.place(x=_x + 80, y=_y)
+
         # Stat Infos / Bemerkungen
         _x = 10
         _y = 200
@@ -291,6 +311,7 @@ class UserDB(tk.Toplevel):
             self.prmail_var.set(self.db_ent.PRmail)
             self.email_var.set(self.db_ent.Email)
             self.http_var.set(self.db_ent.HTTP)
+            self.encoding_var.set(self.db_ent.Encoding)
             self.zip_var.set(self.db_ent.ZIP)
             self.land_var.set(self.db_ent.Land)
             self.typ_var.set(self.db_ent.TYP)
@@ -318,6 +339,7 @@ class UserDB(tk.Toplevel):
             self.db_ent.PRmail = self.prmail_var.get()
             self.db_ent.Email = self.email_var.get()
             self.db_ent.HTTP = self.http_var.get()
+            self.db_ent.Encoding = self.encoding_var.get()
             self.db_ent.ZIP = self.zip_var.get()
             self.db_ent.Land = self.land_var.get()
             self.db_ent.TYP = self.typ_var.get()

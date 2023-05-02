@@ -62,6 +62,7 @@ Supported AX.25 connection options:
 - AXIP via UDP (AXIP Client)
 
 Keybindings:
+- ESC > New Connection
 - ALT + C > New Connection
 - ALT + D > Disconnect
 - F1 - F10 > Channel 1 - 10

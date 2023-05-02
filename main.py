@@ -39,5 +39,5 @@ if __name__ == '__main__':
         GLB_AX25port_handler.close_all()
         logger.info(f"Closing Ports done.")
 
-    logger.info(f"PoPT_{VER} end.")
+    logger.info(f"PoPT_{VER} ENDE.")
     print('ENDE')
