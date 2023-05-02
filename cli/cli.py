@@ -134,12 +134,16 @@ class DefaultCLI(object):
     """
 
     def build_prompt(self):
+        pass
         self.prompt = f"\r<{self.prompt}>{self.my_call_str}>"
+        # self.prompt = self.prompt
+
+    def get_ts_prompt(self):
+        return f"\r{self.my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
 
     def send_output(self, ret):
         if ret:
             if type(ret) == str:
-                print(f"USER: {self.user_db_ent.call_str}\nENC: {self.encoding[0]}")
                 # gui_out = str(ret)
                 ret = ret.encode(self.encoding[0], self.encoding[1])
                 ret = ret.replace(b'\n', b'\r')
@@ -236,23 +240,27 @@ class DefaultCLI(object):
             return ''
 
     def find_cmd(self):
-        cmds = list(self.commands.keys())
-        treffer = []
-        for cmd in cmds:
-            if self.cmd == cmd[:len(self.cmd)]:
-                treffer.append(cmd)
-        if not treffer:
-            return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
-        """
-        if len(treffer) > 1:
-            ret = '\r # Ungenaue Eingabe, mehrere Kommandos erkannt:\r'
-            ret += ' #\r'
-            for cmd_str in treffer:
-                ret += f" # {cmd_str.decode('UTF-8')}\r"
-            return ret
-        """
-        self.cmd = b''
-        return self.commands[treffer[0]][0]()
+        if self.cmd:
+            cmds = list(self.commands.keys())
+            treffer = []
+            for cmd in cmds:
+                if self.cmd == cmd[:len(self.cmd)]:
+                    treffer.append(cmd)
+            if not treffer:
+                return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
+            # print(treffer)
+            """
+            if len(treffer) > 1:
+                ret = '\r # Ungenaue Eingabe, mehrere Kommandos erkannt:\r'
+                ret += ' #\r'
+                for cmd_str in treffer:
+                    ret += f" # {cmd_str.decode('UTF-8')}\r"
+                return ret
+            """
+            self.cmd = b''
+            return self.commands[treffer[0]][0]()
+
+        return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
 
     def exec_cmd(self):
         # TODO Cleanup
@@ -267,12 +275,12 @@ class DefaultCLI(object):
             if self.crone_state_index != 100 and self.state_index != 2:  # Not Quit
                 if ret is None:
                     ret = ''
-                ret += self.prompt
+                ret += self.get_ts_prompt()
 
         self.send_output(ret)
 
     def send_prompt(self):
-        self.send_output(self.prompt)
+        self.send_output(self.get_ts_prompt())
 
     def decode_param(self):
         tmp = []
@@ -636,7 +644,7 @@ class DefaultCLI(object):
         if self.prefix:
             return self.c_text
         else:
-            return self.c_text + self.prompt
+            return self.c_text + self.get_ts_prompt()
 
     def s1(self):
         if type(self.prefix) == str:  # Fix for old CFG Files
