@@ -194,5 +194,9 @@ STR_TABLE = {
     'auto_text_encoding': ('Automatisch Umlaut Erkennung. ä als Parameter. > UM ä',
                            'Automatic detection of text encoding. ä as a parameter. > UM ä',
                            'Automatische detectie van lekker tekstcodering. ä als parameter. > UM ä'),
+    'cmd_help_lcstatus': ('Verbundene Terminalkanäle anzeigen (ausführliche Version)',
+                           'Show connected terminal channels (detailed version)',
+                           'Toon lekker aangesloten terminalkanalen (gedetailleerde versie)'),
+
 
 }

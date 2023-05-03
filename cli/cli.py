@@ -88,6 +88,7 @@ class DefaultCLI(object):
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
             b'INFO': (self.cmd_i, 'Info'),
             b'LINFO': (self.cmd_li, 'Lange Info'),
+            b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
             b'NEWS': (self.cmd_news, 'NEWS'),
             b'ECHO': (self.cmd_echo, 'Echo'),
             b'VERSION': (self.cmd_ver, 'Version'),
@@ -559,7 +560,7 @@ class DefaultCLI(object):
         logger.error("User-DB Error. cmd_set_http NO ENTRY FOUND !")
         return "\r # USER-DB Error !\r"
 
-    def cmd_port(self):
+    def cmd_port(self):     # TODO Pipe
         ret = f"\r      < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
         ret += "-#--Name----PortTyp--Stations--Typ------Digi-\r"
         for port_id in self.port_handler.ax25_ports.keys():
@@ -585,6 +586,16 @@ class DefaultCLI(object):
                     digi = f"{port.port_cfg.parm_cli[stat].cli_name.ljust(7)} " + digi
                 ret += f"                     {stat.ljust(9)} {digi}\r"
         ret += '\r'
+        return ret
+
+    def cmd_lcstatus(self):
+        """ Long Connect-Status """
+        # ret = f"\r      < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
+        ret = '\r'
+        ret += "  Ch  Port  MyCall    Call      Locator  Entfernung  letzte Akt.  Connect\r"
+        ret += "                      Name                         Ort\r"
+        ret += "------------------------------------------------------------------------------\r"
+
         return ret
 
     def cmd_help(self):
