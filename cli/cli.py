@@ -592,9 +592,27 @@ class DefaultCLI(object):
         """ Long Connect-Status """
         # ret = f"\r      < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
         ret = '\r'
-        ret += "  Ch  Port  MyCall    Call      Locator  Entfernung  letzte Akt.  Connect\r"
+        ret += "  Ch  Port  MyCall    Call      Locator              letzte Akt.  Connect\r"
         ret += "                      Name                         Ort\r"
         ret += "------------------------------------------------------------------------------\r"
+        all_conn = self.port_handler.all_connections
+        for k in all_conn.keys():
+            ch = k
+            conn = all_conn[k]
+            time_start = conn.time_start    # TODO DateSTR
+            port_id = conn.own_port.port_id
+            my_call = conn.my_call_str
+            to_call = conn.to_call_str
+            db_ent = conn.user_db_ent
+            name = ''
+            loc = ''
+            qth = ''
+            if db_ent:
+                name = db_ent.Name
+                loc = db_ent.LOC
+                qth = db_ent.QTH
+            ret += f"   {ch}   {port_id}    {my_call.ljust(9)} {to_call.ljust(9)} {loc}                            {time_start.strftime('%H:%M:%S')}\r"
+            ret += f"                      {name.ljust(13)}                {qth}\r"
 
         return ret
 
