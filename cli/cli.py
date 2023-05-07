@@ -73,7 +73,7 @@ class DefaultCLI(object):
         self.raw_input = b''
         self.cmd = b''
         self.last_line = b''
-        self.parameter: [bytes] = []
+        self.parameter = []
         # Crone
         self.cron_state_exec = {
             0: self.cron_s0,        # No CMDs / Doing nothing
@@ -106,12 +106,7 @@ class DefaultCLI(object):
         }
 
         self.str_cmd_exec = {
-            b'#REQUESTNAME:+++#': self.str_cmd_req_name,
-            b'#REQUESTNAME:++-#': self.str_cmd_req_name,
-            b'#REQUESTNAME:+--#': self.str_cmd_req_name,
-            b'#REQUESTNAME:+-+#': self.str_cmd_req_name,
-            b'#REQUESTNAME:--+#': self.str_cmd_req_name,
-            b'#REQUESTNAME:-++#': self.str_cmd_req_name,
+            b'#REQUESTNAME:': self.str_cmd_req_name,
         }
 
         self.state_exec = {
@@ -126,6 +121,8 @@ class DefaultCLI(object):
         self.cron_state_exec.update(self.cron_state_exec_ext)
         self.commands.update(self.cmd_exec_ext)
         self.state_exec.update(self.state_exec_ext)
+        if type(self.prefix) == str:  # Fix for old CFG Files
+            self.prefix = self.prefix.encode(self.encoding[0], self.encoding[1])
 
     """
     def init(self):
@@ -163,39 +160,33 @@ class DefaultCLI(object):
     def change_cli_state(self, state: int):
         self.state_index = state
 
-    """
-    def get_parameter(self):
-        param = self.input
-        self.parameter = self.input
-    """
-
     def is_prefix(self):
+        # TODO Cleanup !!!!
+        print(self.input)
         if self.prefix:
-            # print(self.input)
             self.input = self.input.replace(b'\n', b'\r')
-            self.input = self.input.split(b'\r')[0]
-            """
-            while self.input[:1] in [b'\r', b'\n']:
-                self.input = self.input[1:]
-                if not self.input:
-                    return False
-            """
-            # print(self.input)
-            """
-            if type(self.prefix) == str:    # Fix for old CFG Files
-                self.prefix = self.prefix.encode('UTF-8', 'ignore')
-            """
-            # print(self.prefix)
+            # self.input = self.input.split(b'\r')[0]
+            self.input = self.input.split(b'\r')
+            print(self.input)
+            while self.input:
+                if self.input[0]:
+                    break
+                else:
+                    self.input = self.input[1:]
+            if not self.input:
+                return False
+            self.input = self.input[0]
+
             if self.input[:len(self.prefix)] == self.prefix:
-                # print(self.input)
+                print(self.input)
                 self.parameter = []
                 cmd = self.input[len(self.prefix):]
                 cmd = cmd.split(b' ')
                 if len(cmd) > 1:
                     self.input = cmd[1:]
                     self.parameter = cmd[1:]
-                    # print("input INP: {}".format(self.input))
-                    # print("parameter INP: {}".format(self.parameter))
+                    print("input INP: {}".format(self.input))
+                    print("parameter INP: {}".format(self.parameter))
                 else:
                     self.input = b''
 
@@ -249,36 +240,45 @@ class DefaultCLI(object):
                     treffer.append(cmd)
             if not treffer:
                 return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
-            # print(treffer)
-            """
-            if len(treffer) > 1:
-                ret = '\r # Ungenaue Eingabe, mehrere Kommandos erkannt:\r'
-                ret += ' #\r'
-                for cmd_str in treffer:
-                    ret += f" # {cmd_str.decode('UTF-8')}\r"
-                return ret
-            """
             self.cmd = b''
-            return self.commands[treffer[0]][0]()
+            ret = self.commands[treffer[0]][0]()
+            if ret is None:
+                return ''
+            return ret
 
         return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
 
     def exec_cmd(self):
-        # TODO Cleanup
         if self.is_prefix():
-            ret = self.find_cmd()
+            return self.find_cmd()
         # Message is for User ( Text , Chat )
-        elif self.prefix:
-            ret = ''
+        if self.prefix:
+            return ''
         # CMD Input for No User Terminals ( Node ... )
-        else:
-            ret = self.find_cmd()
-            if self.crone_state_index != 100 and self.state_index != 2:  # Not Quit
-                if ret is None:
-                    ret = ''
-                ret += self.get_ts_prompt()
+        ret = self.find_cmd()
+        if self.crone_state_index != 100 and self.state_index != 2:  # Not Quit
+            ret += self.get_ts_prompt()
+        return ret
+        # self.send_output(ret)
 
-        self.send_output(ret)
+    def exec_str_cmd(self):
+        inp_lines = self.last_line + self.raw_input
+        inp_lines = inp_lines.replace(b'\n', b'\r')
+        inp_lines = inp_lines.split(b'\r')
+        _ret = ''
+        for li in inp_lines:
+            for str_cmd in list(self.str_cmd_exec.keys()):
+                if str_cmd in li:
+                    self.cmd = str_cmd
+                    self.parameter = [li[len(str_cmd):]]
+                    print(f"str_cmd cmd: {str_cmd}")
+                    print(f"str_cmd par: {self.parameter}")
+                    _ret = self.str_cmd_exec[str_cmd]()
+                    self.cmd = b''
+                    self.send_output(_ret)
+        self.last_line = inp_lines[-1]
+        return _ret
+        # self.raw_input = b''
 
     def send_prompt(self):
         self.send_output(self.get_ts_prompt())
@@ -342,9 +342,11 @@ class DefaultCLI(object):
 
     def cmd_echo(self):  # Quit
         ret = ''
+        print(f"Echo Param: {self.parameter}")
         for el in self.parameter:
             ret += el.decode(self.encoding[0], self.encoding[1]) + ' '
-        return ret[:-1]
+        print(f"Echo ret: {ret}")
+        return ret[:-1] + '\r'
 
     def cmd_q(self):  # Quit
         # self.connection: AX25Conn
@@ -430,7 +432,7 @@ class DefaultCLI(object):
     def cmd_set_name(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f" #\r Eingetragener Name: {self.user_db_ent.Name}\r"
+                return f" #\r Name: {self.user_db_ent.Name}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.Name = self.parameter[0]\
@@ -449,7 +451,7 @@ class DefaultCLI(object):
     def cmd_set_qth(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragener QTH: {self.user_db_ent.QTH}\r"
+                return f"\r # QTH: {self.user_db_ent.QTH}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.QTH = self.parameter[0]\
@@ -468,7 +470,7 @@ class DefaultCLI(object):
     def cmd_set_loc(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragener Locator: {self.user_db_ent.LOC}\r"
+                return f"\r # Locator: {self.user_db_ent.LOC}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.LOC = self.parameter[0]\
@@ -487,7 +489,7 @@ class DefaultCLI(object):
     def cmd_set_zip(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragene Postleitzahl: {self.user_db_ent.ZIP}\r"
+                return f"\r # ZIP: {self.user_db_ent.ZIP}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.ZIP = self.parameter[0]\
@@ -506,7 +508,7 @@ class DefaultCLI(object):
     def cmd_set_pr_mail(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragene PR-Mail Adresse: {self.user_db_ent.PRmail}\r"
+                return f"\r # PR-Mail: {self.user_db_ent.PRmail}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.PRmail = self.parameter[0]\
@@ -525,7 +527,7 @@ class DefaultCLI(object):
     def cmd_set_e_mail(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragene E-Mail Adresse: {self.user_db_ent.Email}\r"
+                return f"\r # E-Mail: {self.user_db_ent.Email}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.Email = self.parameter[0]\
@@ -544,7 +546,7 @@ class DefaultCLI(object):
     def cmd_set_http(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragene Web Adresse: {self.user_db_ent.HTTP}\r"
+                return f"\r # WEB: {self.user_db_ent.HTTP}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
             self.user_db_ent.HTTP = self.parameter[0]\
@@ -675,7 +677,6 @@ class DefaultCLI(object):
         return f"\r{STR_TABLE['cli_text_encoding_set'][self.connection.cli_language]} {res}\r"
 
     def str_cmd_req_name(self):
-        # print("REQ NAME")
         name = self.connection.stat_cfg.stat_parm_Name
         qth = self.connection.stat_cfg.stat_parm_QTH
         loc = self.connection.stat_cfg.stat_parm_LOC
@@ -685,16 +686,14 @@ class DefaultCLI(object):
             qth = f'#QTH# {qth}\r'
         if loc:
             loc = f'#LOC# {loc}\r'
-
-        tmp = self.cmd.split(b':')[1]
-        tmp = tmp[:-1]
+        tmp = self.parameter[0]
         cmd_dict = {
-            b'+++': name + qth + loc,
-            b'++-': name + qth,
-            b'+--': name,
-            b'+-+': name + loc,
-            b'--+': loc,
-            b'-++': qth + loc,
+            b'+++#': name + qth + loc,
+            b'++-#': name + qth,
+            b'+--#': name,
+            b'+-+#': name + loc,
+            b'--+#': loc,
+            b'-++#': qth + loc,
         }
         if tmp in cmd_dict.keys():
             return cmd_dict[tmp]
@@ -704,9 +703,7 @@ class DefaultCLI(object):
         if not self.connection.is_link:
             self.raw_input = bytes(inp)
             _ret = self.state_exec[self.state_index]()
-            if _ret:
-                _ret = _ret.replace('\n', '\r')
-                self.send_output(_ret)
+            self.send_output(_ret)
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -727,26 +724,11 @@ class DefaultCLI(object):
             return self.c_text + self.get_ts_prompt()
 
     def s1(self):
-        if type(self.prefix) == str:  # Fix for old CFG Files
-            self.prefix = self.prefix.encode(self.encoding[0], self.encoding[1])
-        self.input = self.last_line + self.raw_input
-        self.exec_cmd()
         ########################
         # Check String Commands
-        inp_lines = self.last_line + self.raw_input
-        inp_lines = inp_lines.replace(b'\n', b'\r')
-        inp_lines = inp_lines.split(b'\r')
-        for li in inp_lines:
-            # for k in list(self.str_cmd_exec.keys()):
-            # if li in k:
-            if li in self.str_cmd_exec.keys():
-                self.cmd = li
-                # self.parameter
-                _ret = self.str_cmd_exec[li]()
-                self.cmd = b''
-                self.send_output(_ret)
-        self.last_line = inp_lines[-1]
-        self.raw_input = b''
+        if not self.exec_str_cmd():
+            self.input = self.raw_input
+            self.send_output(self.exec_cmd())
         return ''
 
     def s2(self):
