@@ -5,7 +5,7 @@
 import time
 from datetime import datetime
 
-import cli.cli
+import cli.cliMain
 import config_station
 from ax25.ax25dec_enc import AX25Frame
 from fnc.ax25_fnc import reverse_uid
@@ -235,7 +235,7 @@ class AX25Conn(object):
         self.set_packet_param()
         """ Init CLI """
         self.cli_language = 0
-        self.cli = cli.cli.NoneCLI(self)
+        self.cli = cli.cliMain.NoneCLI(self)
         self.cli_type = ''
         if self.stat_cfg.stat_parm_pipe is None:
             self.init_cli()
@@ -268,6 +268,7 @@ class AX25Conn(object):
     # CLI INIT
     def init_cli(self):
         if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
+            del self.cli
             self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
             self.cli_type = self.cli.cli_name
             self.cli.build_prompt()
@@ -288,12 +289,6 @@ class AX25Conn(object):
             self.gui.send_to_qso(data=data, conn=self)
     """
 
-    def update_gui_qso_buff(self):
-        pass
-        """
-        if self.gui is not None:
-            self.gui.update_qso_buff(self)
-        """
 
     ####################
     # Zustand EXECs
@@ -318,30 +313,29 @@ class AX25Conn(object):
 
     def recv_data(self, data: b'', file_trans=False):
         self.vr = count_modulo(int(self.vr))
+        # Statistic
+        self.rx_byte_count += len(data)
         self.rx_buf_rawData += data
         if self.is_link:
             self.LINK_rx_buff += data
         # self.ch_echo_frm_rx(data)   # TODO
         # Pipe-Tool
-        self.pipe_rx(data)
-        # CLI
-        self.exec_cli(data)
+        if self.pipe_rx(data):
+            return
         # Station ( RE/DISC/Connect ) Sting Detection
         self.set_dest_call_fm_data_inp(data)
-        # Statistic
-        self.rx_byte_count += len(data)
-        # Update GUI
-        # self.update_gui_qso_buff()
+        # CLI
+        self.exec_cli(data)
 
-    def set_dest_call_fm_data_inp(self, ax25_fr_data: b''):
+    def set_dest_call_fm_data_inp(self, raw_data: b''):
         det = [
             b'*** Connected to',
             b'*** Reconnected to'
         ]
         for _det_str in det:
-            if _det_str in ax25_fr_data:
-                _index = ax25_fr_data.index(_det_str) + len(_det_str)
-                _tmp_call = ax25_fr_data[_index:]
+            if _det_str in raw_data:
+                _index = raw_data.index(_det_str) + len(_det_str)
+                _tmp_call = raw_data[_index:]
                 _tmp_call = _tmp_call.split(b'\r')[0].split(b'\n')[0]
                 if b':' in _tmp_call:
                     _tmp_call = _tmp_call.split(b':')
@@ -360,7 +354,10 @@ class AX25Conn(object):
                 self.reinit_cli()
                 if self.gui is not None:
                     self.gui.on_channel_status_change()
-                break  # Maybe it's better to look at thw whole string ?
+                # self.cli.s1
+                # Maybe it's better to look at the whole string (include last frame)?
+                return True
+        return False
 
     def set_user_db_ent(self):
         self.user_db_ent = self.user_db.get_entry(self.to_call_str)
@@ -434,6 +431,8 @@ class AX25Conn(object):
     def pipe_rx(self, raw_data: b''):
         if self.pipe is not None:
             self.pipe.handle_rx_rawdata(raw_data)
+            return True
+        return False
 
     def set_pipe(self, pipe):
         self.pipe = pipe
@@ -560,7 +559,7 @@ class AX25Conn(object):
 
         self.LINK_Connection = conn
         self.is_link = True
-        self.cli = cli.cli.NoneCLI(self)  # Disable CLI
+        self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
 
         return True
 
@@ -592,7 +591,6 @@ class AX25Conn(object):
     def del_link(self):
         """ Called in State.link_cleanup() """
         if self.LINK_Connection is not None:
-            # print("LINK CLEANUP")
             # print(f'LINK CLEANUP link_connections K : {self.port_handler.link_connections.keys()}')
             self.LINK_Connection = None
             self.is_link = False
@@ -615,14 +613,14 @@ class AX25Conn(object):
                 self.zustand_exec.change_state(4)
 
     def conn_cleanup(self):
-        print(f"conn_cleanup: {self.uid}\n"
-              f"state: {self.zustand_exec.stat_index}\n")
+        # print(f"conn_cleanup: {self.uid}\n"
+        #       f"state: {self.zustand_exec.stat_index}\n")
         self.link_cleanup()
         self.port_handler.del_conn2all_conn_var(self)   # Doppelt ..
         self.own_port.del_connections(conn=self)
 
     def end_connection(self):
-        print(f"end_connection: {self.uid}")
+        # print(f"end_connection: {self.uid}")
         self.link_disco()
         #self.n2 = 1
         self.set_T1()
@@ -829,7 +827,6 @@ class AX25Conn(object):
             self.set_T1()  # Re/Set T1
             # Statistics
             self.tx_byte_count += int(pac_len)
-            # self.update_gui_qso_buff()
 
     def send_UA(self):
         self.init_new_ax25frame()

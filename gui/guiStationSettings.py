@@ -3,7 +3,7 @@ from tkinter import filedialog as fd
 from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data
-from cli.cli import *
+from cli.cliMain import *
 from ax25.ax25UI_Pipe import AX25Pipe
 from gui.guiMsgBoxes import *
 from string_tab import STR_TABLE

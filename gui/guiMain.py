@@ -265,37 +265,6 @@ class TkMainWin:
                          text="Kaffèmaschine",
                          bg="HotPink2", width=12, command=self.kaffee)
         _btn.place(x=215, y=10)
-        ###############################################
-        # Stations Info ( Name, QTH ... )
-        """
-        self.stat_info_name_var = tk.StringVar(self.side_btn_frame_top)
-        stat_info_name = tk.Label(self.side_btn_frame_top,
-                                  textvariable=self.stat_info_name_var,
-                                  font=(FONT, 12, 'bold')
-                                  )
-        stat_info_name.place(x=10, y=90)
-        self.stat_info_qth_var = tk.StringVar(self.side_btn_frame_top)
-        stat_info_qth = tk.Label(self.side_btn_frame_top,
-                                 textvariable=self.stat_info_qth_var,
-                                 font=(FONT, 12, 'bold')
-                                 )
-        stat_info_qth.place(x=10, y=115)
-        self.stat_info_loc_var = tk.StringVar(self.side_btn_frame_top)
-        stat_info_loc = tk.Label(self.side_btn_frame_top,
-                                 textvariable=self.stat_info_loc_var,
-                                 font=(FONT, 12, 'bold')
-                                 )
-        stat_info_loc.place(x=10, y=140)
-        # Status /Pipe/Link/File-RX/File-TX
-        self.status_info_var = tk.StringVar(self.side_btn_frame_top)
-        self.status_label = tk.Label(
-            self.side_btn_frame_top,
-            textvariable=self.status_info_var,
-            fg='red')
-        # font = self.status_label.cget('font')
-        self.status_label.configure(font=(FONT, 14, 'bold'))
-        self.status_label.place(x=10, y=163)
-        """
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
         self.setting_sound = self.tabbed_sideFrame.sound_on

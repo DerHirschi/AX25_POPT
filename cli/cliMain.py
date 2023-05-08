@@ -4,6 +4,7 @@ import logging
 
 import ax25.ax25Connection
 import config_station
+from cli.cliStationIdent import get_station_id_obj
 from fnc.str_fnc import get_time_delta, find_decoding
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
@@ -14,13 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 class DefaultCLI(object):
-    cli_name = ''  # DON'T CHANGE !
+    cli_name = ''  # DON'T CHANGE!
     c_text = '-= Test C-TEXT =-\r\r'
     bye_text = '73 ...\r'
     prompt = ''
     prefix = b'//'
 
     def __init__(self, connection):
+        print("CLI-INIT")
         stat_cfg = connection.stat_cfg
         if stat_cfg is not None:
             # Override with optional Station Config Param
@@ -47,25 +49,27 @@ class DefaultCLI(object):
             self.gui = False
         else:
             self.gui = self.connection.gui
-        # self.connection = connection
-        # self.my_call = self.connection.ax25_out_frame.from_call.call
         self.my_call_str = self.connection.my_call_str
-        # self.to_call = self.connection.ax25_out_frame.to_call.call
         self.to_call_str = self.connection.to_call_str
         self.mh_list = self.connection.mh
         self.user_db = self.connection.user_db
         self.user_db_ent: Client = self.connection.user_db_ent
         self.encoding = 'UTF-8', 'ignore'
+        self.stat_identifier_str = ''
         if self.user_db_ent:
             self.encoding = self.user_db_ent.Encoding, 'ignore'
+            self.stat_identifier_str = self.user_db_ent.Software
             if self.user_db_ent.CText:
                 self.c_text = str(self.user_db_ent.CText)
+
+        self.stat_identifier = get_station_id_obj(self.stat_identifier_str)
 
         self.c_text = self.c_text.replace('\n', '\r')
         self.bye_text = self.bye_text.replace('\n', '\r')
         self.prompt = self.prompt.replace('\n', '').replace('\r', '')
 
         self.time_start = datetime.now()
+
 
         self.state_index = 0
         self.crone_state_index = 0
@@ -77,7 +81,7 @@ class DefaultCLI(object):
         # Crone
         self.cron_state_exec = {
             0: self.cron_s0,        # No CMDs / Doing nothing
-            100: self.cron_s_quit  # QUIT
+            100: self.cron_s_quit   # QUIT
         }
         # Standard Commands ( GLOBAL )
         self.commands = {
@@ -162,12 +166,12 @@ class DefaultCLI(object):
 
     def is_prefix(self):
         # TODO Cleanup !!!!
-        print(self.input)
+        # print(self.input)
         if self.prefix:
             self.input = self.input.replace(b'\n', b'\r')
             # self.input = self.input.split(b'\r')[0]
             self.input = self.input.split(b'\r')
-            print(self.input)
+            # print(self.input)
             while self.input:
                 if self.input[0]:
                     break
@@ -178,15 +182,15 @@ class DefaultCLI(object):
             self.input = self.input[0]
 
             if self.input[:len(self.prefix)] == self.prefix:
-                print(self.input)
+                # print(self.input)
                 self.parameter = []
                 cmd = self.input[len(self.prefix):]
                 cmd = cmd.split(b' ')
                 if len(cmd) > 1:
                     self.input = cmd[1:]
                     self.parameter = cmd[1:]
-                    print("input INP: {}".format(self.input))
-                    print("parameter INP: {}".format(self.parameter))
+                    # print("input INP: {}".format(self.input))
+                    # print("parameter INP: {}".format(self.parameter))
                 else:
                     self.input = b''
 
@@ -231,6 +235,23 @@ class DefaultCLI(object):
         except EOFError:
             return ''
 
+    def find_stat_identifier(self):
+        if self.stat_identifier is None:
+            inp_lines = self.last_line + self.raw_input
+            inp_lines = inp_lines.replace(b'\n', b'\r')
+            inp_lines = inp_lines.decode(self.encoding[0], 'ignore')
+            inp_lines = inp_lines.split('\r')
+            print(f"find_id line inp_lines: {inp_lines}")
+            for li in inp_lines:
+                print(f"find_id line: {li}")
+                self.stat_identifier = get_station_id_obj(li)
+                if self.stat_identifier is not None:
+                    print(self.stat_identifier.software)
+                    print(self.stat_identifier.version)
+                    print(self.stat_identifier.flags)
+                    print(self.stat_identifier.typ)
+                    return
+
     def find_cmd(self):
         if self.cmd:
             cmds = list(self.commands.keys())
@@ -271,8 +292,8 @@ class DefaultCLI(object):
                 if str_cmd in li:
                     self.cmd = str_cmd
                     self.parameter = [li[len(str_cmd):]]
-                    print(f"str_cmd cmd: {str_cmd}")
-                    print(f"str_cmd par: {self.parameter}")
+                    #print(f"str_cmd cmd: {str_cmd}")
+                    #print(f"str_cmd par: {self.parameter}")
                     _ret = self.str_cmd_exec[str_cmd]()
                     self.cmd = b''
                     self.send_output(_ret)
@@ -289,7 +310,7 @@ class DefaultCLI(object):
             tmp.append(el.decode(self.encoding[0], 'ignore').replace('\r', '').replace('\n', ''))
         self.parameter = list(tmp)
 
-    def cmd_connect(self):  # DUMMY
+    def cmd_connect(self):
         # print(f'cmd_connect() param: {self.parameter}')
         self.decode_param()
         # print(f'cmd_connect() param.decode: {self.parameter}')
@@ -342,10 +363,10 @@ class DefaultCLI(object):
 
     def cmd_echo(self):  # Quit
         ret = ''
-        print(f"Echo Param: {self.parameter}")
+        # print(f"Echo Param: {self.parameter}")
         for el in self.parameter:
             ret += el.decode(self.encoding[0], self.encoding[1]) + ' '
-        print(f"Echo ret: {ret}")
+        # print(f"Echo ret: {ret}")
         return ret[:-1] + '\r'
 
     def cmd_q(self):  # Quit
@@ -665,7 +686,7 @@ class DefaultCLI(object):
         return ret
 
     def cmd_umlaut(self):
-        print(self.parameter)
+        # print(self.parameter)
         if not self.parameter:
             return f"\r{STR_TABLE['cli_text_encoding_no_param'][self.connection.cli_language]}: {self.encoding[0]}\r"
         res = find_decoding(self.parameter[0].replace(b'\r', b''))
@@ -716,7 +737,6 @@ class DefaultCLI(object):
         self.send_output(ret)
 
     def s0(self):  # C-Text
-        # self.build_prompt()
         self.state_index = 1
         if self.prefix:
             return self.c_text
@@ -724,6 +744,11 @@ class DefaultCLI(object):
             return self.c_text + self.get_ts_prompt()
 
     def s1(self):
+        self.find_stat_identifier()
+        if self.stat_identifier is None:
+            self.stat_identifier = False
+        print(f"\n\ns1 id: {self.stat_identifier}\n"
+              f"s1 inp: {self.raw_input}\n\n")
         ########################
         # Check String Commands
         if not self.exec_str_cmd():

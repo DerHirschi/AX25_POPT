@@ -310,7 +310,7 @@ class TxTframe:
                 pass
             self.pw.configure(height=800)
             self.pw.add(self.status_frame, weight=1)
-            self.pw.add(self.out_txt_win, weight=1)
+            self.pw.add(self.out_frame, weight=1)
             self.pw.add(self.mon_txt, weight=1)
             """
             self.status_frame.configure(height=self.inp_txt_height)
@@ -325,7 +325,7 @@ class TxTframe:
             self.out_txt_height = self.out_txt_win.cget('height')
             self.inp_txt_height = self.status_frame.cget('height')
             # pw_height = self.pw.cget('height')
-            self.pw.remove(self.out_txt_win)
+            self.pw.remove(self.out_frame)
             self.pw.configure(height=800)
             self.status_frame.configure(height=1)
             # self.mon_txt.configure(height=500)

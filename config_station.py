@@ -1,10 +1,10 @@
 import pickle
 import os
-from cli.cli import DefaultCLI, NoneCLI
+from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 
 
-VER = '2.83.4dev'
+VER = '2.83.5dev'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -127,7 +127,7 @@ class DefaultStation(object):
     stat_parm_pipe_tx = ''
     stat_parm_pipe_rx = ''
     stat_parm_pipe_loop_timer = 10
-    # Optional Parameter. Can be deleted if not needed. Param will be get from cli.py
+    # Optional Parameter. Can be deleted if not needed. Param will be get from cliMain.py
     stat_parm_cli_ctext: str = ''
     stat_parm_cli_itext: str = ''
     stat_parm_cli_longitext: str = ''
