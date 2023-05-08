@@ -154,8 +154,10 @@ class FileSend(tk.Toplevel):
         self.destroy_win()
 
     def ok_btn_cmd(self):
+        self.change_settings()
         if self.FileOBJ is not None:
             if not self.FileOBJ.e:
+                # self.FileOBJ.reset_timer()
                 conn = self.root.get_conn()
                 if conn:
                     if self.FileOBJ not in conn.ft_tx_queue:

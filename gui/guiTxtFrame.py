@@ -138,18 +138,63 @@ class TxTframe:
                                       command=self.chk_timestamp
                                       )
         self.ts_box_box.grid(row=1, column=11, sticky="nsew")
+        self.status_frame.pack(side=tk.BOTTOM)
 
         ####################
         # Output
-        self.out_txt_win = scrolledtext.ScrolledText(self.pw, background=TXT_BACKGROUND_CLR,
+        self.out_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
+        self.out_frame.pack(side=tk.BOTTOM, expand=0)
+        self.out_frame.rowconfigure(1, minsize=25, weight=0)
+        self.out_frame.rowconfigure(0, weight=1)
+        self.out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
+        self.out_frame.columnconfigure(1, minsize=70, weight=2)  # Name
+        self.out_frame.columnconfigure(2, minsize=50, weight=3)  # QTH
+        self.out_frame.columnconfigure(3, minsize=70, weight=4)  # LOC
+        self.out_frame.columnconfigure(4, minsize=70, weight=4)  # Typ
+        self.out_frame.columnconfigure(5, minsize=50, weight=5)  # Status (PIPE/FT)
+        self.out_txt_win = scrolledtext.ScrolledText(self.out_frame, background=TXT_BACKGROUND_CLR,
                                                      foreground=TXT_OUT_CLR,
                                                      font=(FONT, self.text_size),
                                                      height=100, bd=0, borderwidth=0, state="disabled")
-
         self.out_txt_win.tag_config("input", foreground="yellow")
+        self.out_txt_win.grid(row=0, column=0, columnspan=6, sticky="nsew")
+        # Stat INFO (Name,QTH usw)
+        self.stat_info_name_var = tk.StringVar(self.out_frame)
+        self.stat_info_qth_var = tk.StringVar(self.out_frame)
+        self.stat_info_loc_var = tk.StringVar(self.out_frame)
+        self.stat_info_typ_var = tk.StringVar(self.out_frame)
+        self.stat_info_status_var = tk.StringVar(self.out_frame)
 
-        self.status_frame.pack(side=tk.BOTTOM)
-
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_name_var,
+                 bg=STAT_BAR_CLR,
+                 fg=STAT_BAR_TXT_CLR,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1, 'bold')
+                 ).grid(row=1, column=1, sticky='w')
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_qth_var,
+                 bg=STAT_BAR_CLR,
+                 fg=STAT_BAR_TXT_CLR,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
+                 ).grid(row=1, column=2, sticky='w')
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_loc_var,
+                 bg=STAT_BAR_CLR,
+                 fg=STAT_BAR_TXT_CLR,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
+                 ).grid(row=1, column=3, sticky='w')
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_typ_var,
+                 bg=STAT_BAR_CLR,
+                 fg=STAT_BAR_TXT_CLR,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
+                 ).grid(row=1, column=4, sticky='w')
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_status_var,
+                 bg=STAT_BAR_CLR,
+                 fg="red3",
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1, 'bold')
+                 ).grid(row=1, column=5, sticky='w')
         #############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.pw,
@@ -158,15 +203,14 @@ class TxTframe:
                                                  font=(FONT, self.text_size),
                                                  height=100, bd=0, borderwidth=0, state="disabled")
 
-        self.mon_txt.pack(side=tk.BOTTOM)
+        # self.mon_txt.pack(side=tk.BOTTOM)
 
         # paned window
 
         self.pw.add(self.status_frame, weight=1)
         # self.pw.paneconfig(self.status_frame, height=40)
-        self.pw.add(self.out_txt_win, weight=1)
+        self.pw.add(self.out_frame, weight=1)
 
-        # self.pw.add(self.out_txt, weight=2)
         self.pw.add(self.mon_txt, weight=1)
 
         # place the panedwindow on the root window
@@ -259,8 +303,11 @@ class TxTframe:
     def switch_mon_mode(self):
         # TODO Save Stretched Positions
         if self.main_class.mon_mode:
-            self.pw.remove(self.status_frame)
-            self.pw.remove(self.mon_txt)
+            try:
+                self.pw.remove(self.status_frame)
+                self.pw.remove(self.mon_txt)
+            except tk.TclError:
+                pass
             self.pw.configure(height=800)
             self.pw.add(self.status_frame, weight=1)
             self.pw.add(self.out_txt_win, weight=1)

@@ -267,7 +267,7 @@ class TkMainWin:
         _btn.place(x=215, y=10)
         ###############################################
         # Stations Info ( Name, QTH ... )
-
+        """
         self.stat_info_name_var = tk.StringVar(self.side_btn_frame_top)
         stat_info_name = tk.Label(self.side_btn_frame_top,
                                   textvariable=self.stat_info_name_var,
@@ -295,7 +295,7 @@ class TkMainWin:
         # font = self.status_label.cget('font')
         self.status_label.configure(font=(FONT, 14, 'bold'))
         self.status_label.place(x=10, y=163)
-
+        """
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
         self.setting_sound = self.tabbed_sideFrame.sound_on
@@ -772,6 +772,7 @@ class TkMainWin:
         qth = ''
         loc = ''
         status = ''
+        typ = ''
         conn = self.get_conn()
         if conn:
             db_ent = conn.user_db_ent
@@ -779,17 +780,19 @@ class TkMainWin:
                 name = db_ent.Name
                 qth = db_ent.QTH
                 loc = db_ent.LOC
+                typ = db_ent.TYP
             if conn.is_link:
-                status = 'Link'
+                status = 'LINK'
             elif conn.pipe is not None:
-                status = 'Pipe'
+                status = 'PIPE'
             elif conn.ft_tx_activ is not None:
-                status = 'Sending File'
+                status = 'SENDING FILE'
 
-        self.status_info_var.set(status)
-        self.stat_info_name_var.set(name)
-        self.stat_info_qth_var.set(qth)
-        self.stat_info_loc_var.set(loc)
+        self.txt_win.stat_info_status_var.set(status)
+        self.txt_win.stat_info_name_var.set(name)
+        self.txt_win.stat_info_qth_var.set(qth)
+        self.txt_win.stat_info_loc_var.set(loc)
+        self.txt_win.stat_info_typ_var.set(typ)
 
     def dx_alarm(self):
         """ Alarm when new User in MH List """
@@ -1353,6 +1356,7 @@ class TkMainWin:
         set_all_tags(self.inp_txt, self.get_ch_param().input_win_tags)
         set_all_tags(self.out_txt, self.get_ch_param().output_win_tags)
         self.inp_txt.mark_set("insert", self.get_ch_param().input_win_cursor_index)
+        self.inp_txt.see(tk.END)
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if self.get_ch_param().rx_beep_opt and ind:
