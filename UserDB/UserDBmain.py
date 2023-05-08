@@ -119,6 +119,13 @@ class UserDB:
             return self.db[call_str]
         return False
 
+    def get_keys_by_typ(self, typ='SYSOP'):
+        ret = []
+        for k in list(self.db.keys()):
+            if self.db[k].TYP == typ:
+                ret.append(k)
+        return ret
+
     def entry_var_upgrade(self, ent_key):
         if ent_key in self.db.keys():
             compare = Client('ALL')
@@ -127,6 +134,32 @@ class UserDB:
                 if not hasattr(self.db[ent_key], new_att):
                     setattr(self.db[ent_key], new_att, getattr(compare, new_att))
                 # print(getattr(self.db[ent_key], new_att))
+
+    def update_var_fm_dbentry(self, fm_key: str, to_key: str):
+        if fm_key not in self.db.keys():
+            return False
+        if to_key not in self.db.keys():
+            return False
+        new_obj = Client(to_key)
+        for att in list(dir(new_obj)):
+            if '__' not in att:
+                if not getattr(self.db[to_key], att) and att not in [
+                    'software_str',
+                    'routes',
+                    'Alias',
+                    'TYP',
+                    'NODE',
+                    'BBS',
+                    'Other',
+                    'Sysop_Call',
+                    'Connects',
+                    'CText',
+                    'last_edit',
+                ]:
+                    setattr(new_obj, att, getattr(self.db[fm_key], att))
+                else:
+                    setattr(new_obj, att, getattr(self.db[to_key], att))
+        self.db[to_key] = new_obj
 
     def save_data(self):
         print('Save Client DB')
@@ -137,6 +170,7 @@ class UserDB:
         except FileNotFoundError as e:
             # print("ERROR SAVE ClientDB: " + str(e))
             logger.error("ERROR SAVE ClientDB: " + str(e))
+
 
 """
 class AXIPClientDB(object):

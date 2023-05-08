@@ -2,8 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 
-from constant import ENCODINGS
+from constant import ENCODINGS, STATION_TYPS
 from string_tab import STR_TABLE
+from gui.guiMsgBoxes import AskMsg
 
 
 class UserDB(tk.Toplevel):
@@ -89,8 +90,8 @@ class UserDB(tk.Toplevel):
         ents = sorted(list(self.user_db.db.keys()))
         for ret_ent in ents:
             self.tree.insert('', tk.END, values=ret_ent)
-        if ents:
-            self.db_ent = self.user_db.get_entry(ents[0])
+        # if ents:
+        #     self.db_ent = self.user_db.get_entry(ents[0])
         ##################################
         # Selected Call Label
         self.call_labbel_var = tk.StringVar(self)
@@ -120,26 +121,27 @@ class UserDB(tk.Toplevel):
         _y = 20
         tk.Label(tab1, text='Typ: ').place(x=_x, y=_y)
         self.typ_var = tk.StringVar(self)
-        opt = [
-            'SYSOP',
-            'NODE',
-            'BBS',
-            'SYS-BBS',
-            'DIGI',
-            'CONVERS',
-            'BEACON',
-            'WX',
-            'TELEMETRIE',
-            'APRS-DIGI',
-            'APRS-IGATE',
-            'APRS-TELEMETRIE',
-            'APRS-WX',
-            'GATEWAY',
-            'OTHER',
-        ]
+        opt = STATION_TYPS
         self.typ_var.set('SYSOP')
         self.typ_ent = tk.OptionMenu(tab1, self.typ_var, *opt)
         self.typ_ent.place(x=_x + 80, y=_y - 2)
+        # SYSOP
+        _x = 625
+        _y = 20
+        tk.Label(tab1, text='Sysop: ').place(x=_x, y=_y)
+        self.sysop_var = tk.StringVar(self)
+        opt = sorted(self.user_db.get_keys_by_typ(typ='SYSOP'))
+        if not opt:
+            opt = ['']
+        self.sysop_var.set('SYSOP')
+        self.sysop_ent = tk.OptionMenu(tab1,
+                                       self.sysop_var,
+                                       *opt,
+                                       # command=lambda event: self.on_select_sysop(event)
+                                       )
+        # self.sysop_ent.bind()
+        self.sysop_ent.place(x=_x + 100, y=_y - 2)
+
         # QTH
         _x = 10
         _y = 50
@@ -315,6 +317,16 @@ class UserDB(tk.Toplevel):
             self.db_ent = conn.user_db_ent
             self.set_var_to_ent()
 
+    def on_select_sysop(self, event=None):
+
+        if self.db_ent:
+            msg = AskMsg(titel=f'Einträge ergänzen?', message=f"Einträge vom Sysop ergänzen ?")
+            # self.settings_win.lift()
+            if msg:
+                sysop_key = self.sysop_var.get()
+                if sysop_key in self.user_db.db.keys():
+                    self.user_db.update_var_fm_dbentry(fm_key=sysop_key, to_key=self.db_ent.call_str)
+
     def set_var_to_ent(self):
         if self.db_ent:
             self.call_labbel_var.set(self.db_ent.call_str)
@@ -329,13 +341,14 @@ class UserDB(tk.Toplevel):
             self.zip_var.set(self.db_ent.ZIP)
             self.land_var.set(self.db_ent.Land)
             self.typ_var.set(self.db_ent.TYP)
+
+
             self.pac_len_var.set(str(self.db_ent.pac_len))
             self.max_pac_var.set(str(self.db_ent.max_pac))
             self.last_edit_var.set(
                 f"{self.db_ent.last_edit.date()} - "
                 f"{self.db_ent.last_edit.time().hour}:"
                 f"{self.db_ent.last_edit.time().minute}"
-
             )
             self.conn_count_var.set(str(self.db_ent.Connects))
 
@@ -344,6 +357,26 @@ class UserDB(tk.Toplevel):
 
             self.ctext_ent.delete(0.0, tk.END)
             self.ctext_ent.insert(tk.INSERT, self.db_ent.CText)
+            self.update_sysop_opt()
+
+    def sysop_opt_remove(self):
+        self.sysop_var.set('')  # remove default selection only, not the full list
+        self.sysop_ent['menu'].delete(0, 'end')  # remove full list
+
+    def update_sysop_opt(self):
+        self.sysop_opt_remove()  # remove all options
+
+        if self.db_ent.TYP == 'SYSOP':
+            self.sysop_ent.configure(state='disabled')
+            self.sysop_var.set('')
+        else:
+            self.sysop_ent.configure(state='normal')
+            self.sysop_var.set(self.db_ent.Sysop_Call)
+            print(f"Sysop_ca: {self.db_ent.Sysop_Call}")
+            self.sysop_ent.setvar(self.db_ent.Sysop_Call)
+
+            for opt in sorted(self.user_db.get_keys_by_typ(typ='SYSOP')):
+                self.sysop_ent['menu'].add_command(label=opt, command=tk._setit(self.sysop_var, opt))
 
     def save_btn_cmd(self):
         if self.db_ent:
@@ -356,14 +389,23 @@ class UserDB(tk.Toplevel):
             self.db_ent.Encoding = self.encoding_var.get()
             self.db_ent.ZIP = self.zip_var.get()
             self.db_ent.Land = self.land_var.get()
-            self.db_ent.TYP = self.typ_var.get()
+
             self.db_ent.pac_len = int(self.pac_len_var.get())
             self.db_ent.max_pac = int(self.max_pac_var.get())
             self.db_ent.CText = self.ctext_ent.get(0.0, tk.END)[:-1]
             self.db_ent.Info = self.info_ent.get(0.0, tk.END)[:-1]
             self.db_ent.last_edit = datetime.now()
+            self.db_ent.TYP = self.typ_var.get()
+            if self.db_ent.TYP == 'SYSOP':
+                self.db_ent.Sysop_Call = ''
+            else:
+                tmp = self.sysop_var.get()
+                if tmp != self.db_ent.Sysop_Call:
+                    self.db_ent.Sysop_Call = tmp
+                    self.on_select_sysop()
 
         self.user_db.save_data()
+        self.select_entry()
         self.root.update_station_info()
         self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
 
@@ -373,14 +415,18 @@ class UserDB(tk.Toplevel):
         self.destroy_win()
 
     def del_btn_cmd(self):
-        del self.user_db.db[self.db_ent.call_str]
-        ents = sorted(list(self.user_db.db.keys()))
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-        for ret_ent in ents:
-            self.tree.insert('', tk.END, values=ret_ent)
-        if ents:
-            self.db_ent = self.user_db.get_entry(ents[0])
+        if self.db_ent:
+            msg = AskMsg(titel=f'lösche {self.db_ent.call_str} !', message=f"{self.db_ent.call_str} löschen ?")
+            # self.settings_win.lift()
+            if msg:
+                del self.user_db.db[self.db_ent.call_str]
+                ents = sorted(list(self.user_db.db.keys()))
+                for i in self.tree.get_children():
+                    self.tree.delete(i)
+                for ret_ent in ents:
+                    self.tree.insert('', tk.END, values=ret_ent)
+                if ents:
+                    self.db_ent = self.user_db.get_entry(ents[0])
 
     def destroy_win(self):
         self.destroy()

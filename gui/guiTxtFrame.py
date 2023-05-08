@@ -144,7 +144,7 @@ class TxTframe:
         # Output
         self.out_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
         self.out_frame.pack(side=tk.BOTTOM, expand=0)
-        self.out_frame.rowconfigure(1, minsize=25, weight=0)
+        self.out_frame.rowconfigure(1, minsize=20, weight=0)
         self.out_frame.rowconfigure(0, weight=1)
         self.out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
         self.out_frame.columnconfigure(1, minsize=80, weight=2)  # Name
@@ -174,7 +174,7 @@ class TxTframe:
                  textvariable=self.stat_info_name_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1, 'bold')
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , 'bold')
                  )
         name_label.grid(row=1, column=1, )
         name_label.bind('<Button-1>', self.main_class.open_user_db_win)
@@ -182,40 +182,40 @@ class TxTframe:
                  textvariable=self.stat_info_qth_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
                  ).grid(row=1, column=2, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_loc_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
                  ).grid(row=1, column=3, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_typ_var,
                  width=10,
                  bg='#0ed8c3',
                  fg=STAT_BAR_TXT_CLR,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1),
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS ),
                  ).grid(row=1, column=4, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_sw_var,
                  width=20,
                  bg="#ffd444",
                  # fg="red3",
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
                  ).grid(row=1, column=5, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_status_var,
                  bg=STAT_BAR_CLR,
                  fg="red3",
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1, 'bold')
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , 'bold')
                  ).grid(row=1, column=6, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_encoding_var,
                  width=8,
                  bg="steel blue",
                  # fg="red3",
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1, )
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , )
                  ).grid(row=1, column=7, sticky='e')
         #############
         # Monitor

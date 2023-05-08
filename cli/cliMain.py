@@ -20,6 +20,7 @@ class DefaultCLI(object):
     bye_text = '73 ...\r'
     prompt = ''
     prefix = b'//'
+    # sw_id = 'PoPT'
 
     def __init__(self, connection):
         print("CLI-INIT")
@@ -88,15 +89,13 @@ class DefaultCLI(object):
             b'BYE': (self.cmd_q, ''),
             b'CONNECT': (self.cmd_connect, 'Connect'),
             b'PORT': (self.cmd_port, 'Ports'),
-            b'MH': (self.cmd_mh, 'MYHeard Liste'),
-            b'INFO': (self.cmd_i, 'Info'),
-            b'LINFO': (self.cmd_li, 'Lange Info'),
             b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
-            b'NEWS': (self.cmd_news, 'NEWS'),
+            b'MH': (self.cmd_mh, 'MYHeard Liste'),
             b'ECHO': (self.cmd_echo, 'Echo'),
             b'VERSION': (self.cmd_ver, 'Version'),
             b'HELP': (self.cmd_help, STR_TABLE['help'][self.connection.cli_language]),
             b'?': (self.cmd_help, ''),
+
             b'NAME': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
             b'QTH': (self.cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
             b'LOC': (self.cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
@@ -106,6 +105,9 @@ class DefaultCLI(object):
             b'WEB': (self.cmd_set_http, STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
             b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
             b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
+            b'INFO': (self.cmd_i, 'Info'),
+            b'LINFO': (self.cmd_li, 'Lange Info'),
+            b'NEWS': (self.cmd_news, 'NEWS'),
         }
 
         self.str_cmd_exec = {
@@ -241,7 +243,24 @@ class DefaultCLI(object):
             if not self.user_db_ent.TYP:
                 self.user_db_ent.TYP = str(self.stat_identifier.typ)
 
+    def software_identifier(self):
+        res = self.find_stat_identifier()
+
+        if self.stat_identifier is None:
+            if self.last_line:
+                self.stat_identifier = False
+        elif res and self.stat_identifier:
+            if self.stat_identifier.knows_me is not None:
+                if not self.stat_identifier.knows_me:
+                    self.send_name_cmd_back()
+
+    def send_name_cmd_back(self):
+        name = self.connection.stat_cfg.stat_parm_Name
+        if name:
+            self.send_output(f'\r//N {name}\r')
+
     def find_stat_identifier(self):
+
         # print(f"find_stat_identifier self.stat_identifier: {self.stat_identifier}")
         if self.stat_identifier is None:
             inp_lines = self.last_line + self.raw_input
@@ -252,22 +271,23 @@ class DefaultCLI(object):
             for li in inp_lines:
                 temp_stat_identifier = get_station_id_obj(li)
                 if temp_stat_identifier is not None:
-                    """
-                    if self.stat_identifier is None:
-                        self.stat_identifier = temp_stat_identifier
-                        self.set_user_db_software_id()
-                        return
-                    """
-                    """
-                    if hasattr(self.stat_identifier, 'id_str'):
-                        if self.stat_identifier.id_str != temp_stat_identifier.id_str:
-                            self.stat_identifier = temp_stat_identifier
-                            self.set_user_db_software_id()
-                            return
-                    """
                     self.stat_identifier = temp_stat_identifier
                     self.set_user_db_software_id()
-                    return
+                    return True
+        elif not self.last_line and self.stat_identifier:
+            inp_lines = self.raw_input
+            inp_lines = inp_lines.replace(b'\n', b'\r')
+            inp_lines = inp_lines.decode(self.encoding[0], 'ignore')
+            inp_lines = inp_lines.split('\r')
+            # print(f"find_stat_identifier inp_lines: {inp_lines}")
+            for li in inp_lines:
+                temp_stat_identifier = get_station_id_obj(li)
+                if temp_stat_identifier is not None:
+                    if self.stat_identifier.id_str != temp_stat_identifier.id_str:
+                        self.stat_identifier = temp_stat_identifier
+                        self.set_user_db_software_id()
+                        return True
+        return False
 
     def find_cmd(self):
         if self.cmd:
@@ -761,14 +781,7 @@ class DefaultCLI(object):
             return self.c_text + self.get_ts_prompt()
 
     def s1(self):
-        self.find_stat_identifier()
-        if self.stat_identifier is None:
-            if self.last_line:
-                self.stat_identifier = False
-        """    
-        print(f"\n\ns1 id: {self.stat_identifier}\n"
-              f"s1 inp: {self.raw_input}\n\n")
-        """
+        self.software_identifier()
         ########################
         # Check String Commands
         if not self.exec_str_cmd():
