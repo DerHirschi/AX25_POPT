@@ -278,6 +278,7 @@ class AX25Conn(object):
         """
 
     def reinit_cli(self):
+        print("CLI RE-INIT")
         if self.stat_cfg.stat_parm_pipe is None:
             self.init_cli()
             self.cli.change_cli_state(state=1)
@@ -323,9 +324,10 @@ class AX25Conn(object):
         if self.pipe_rx(data):
             return
         # Station ( RE/DISC/Connect ) Sting Detection
-        self.set_dest_call_fm_data_inp(data)
+        res = self.set_dest_call_fm_data_inp(data)
         # CLI
-        self.exec_cli(data)
+        if res:
+            self.exec_cli(res)
 
     def set_dest_call_fm_data_inp(self, raw_data: b''):
         det = [
@@ -336,13 +338,15 @@ class AX25Conn(object):
             if _det_str in raw_data:
                 _index = raw_data.index(_det_str) + len(_det_str)
                 _tmp_call = raw_data[_index:]
-                _tmp_call = _tmp_call.split(b'\r')[0].split(b'\n')[0]
-                if b':' in _tmp_call:
-                    _tmp_call = _tmp_call.split(b':')
+
+                _tmp_call = _tmp_call.split(b'\r')
+                _cut_str = _tmp_call[1:]
+                if b':' in _tmp_call[0]:
+                    _tmp_call = _tmp_call[0].split(b':')
                     self.to_call_str = _tmp_call[1].decode('UTF-8', 'ignore').replace(' ', '')
                     self.to_call_alias = _tmp_call[0].decode('UTF-8', 'ignore').replace(' ', '')
                 else:
-                    self.to_call_str = _tmp_call.decode('UTF-8', 'ignore').replace(' ', '')
+                    self.to_call_str = _tmp_call[0].decode('UTF-8', 'ignore').replace(' ', '')
                     self.to_call_alias = ''
                 if self.is_gui:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
@@ -356,8 +360,12 @@ class AX25Conn(object):
                     self.gui.on_channel_status_change()
                 # self.cli.s1
                 # Maybe it's better to look at the whole string (include last frame)?
-                return True
-        return False
+                # _cut_str.remove(b'')
+                for el in _cut_str:
+                    if el != b'':
+                        return b'\r'.join(_cut_str)
+                return b''
+        return raw_data
 
     def set_user_db_ent(self):
         self.user_db_ent = self.user_db.get_entry(self.to_call_str)

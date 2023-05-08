@@ -1,10 +1,12 @@
 import pickle
 import os
+import logging
 from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 
+logger = logging.getLogger(__name__)
 
-VER = '2.83.7dev'
+VER = '2.83.8dev'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
@@ -42,6 +44,10 @@ def get_all_stat_cfg():
                     temp = pickle.load(inp)
             except (FileNotFoundError, EOFError):
                 pass
+            except ImportError:
+                logger.error(f"Station CFG: Falsche Version der CFG Datei. Bitte {folder + '/stat' + call + '.popt'} löschen und PoPT neu starten!")
+                raise
+
             if temp:
                 stat = DefaultStation()
                 for att in list(temp.keys()):
@@ -107,7 +113,10 @@ def load_fm_file(filename: str):
             return pickle.load(inp)
     except (FileNotFoundError, EOFError):
         return ''
-
+    except ImportError:
+        logger.error(
+            f"CFG: Falsche Version der CFG Datei. Bitte {CFG_data_path + filename} löschen und PoPT neu starten!")
+        raise
 
 class DefaultStation(object):
     # parm_StationCalls: [''] = []
@@ -246,6 +255,11 @@ class PortConfigInit(DefaultPort):
                 is_file = True
         except (FileNotFoundError, EOFError):
             pass
+        except ImportError:
+            logger.error(
+                f"Port CFG: Falsche Version der CFG Datei. Bitte {file} löschen und PoPT neu starten!")
+            raise
+
         ##########
         # Port
         if is_file:

@@ -124,6 +124,7 @@ class UserDB(tk.Toplevel):
             'SYSOP',
             'NODE',
             'BBS',
+            'SYS-BBS',
             'DIGI',
             'CONVERS',
             'BEACON',
@@ -133,6 +134,7 @@ class UserDB(tk.Toplevel):
             'APRS-IGATE',
             'APRS-TELEMETRIE',
             'APRS-WX',
+            'GATEWAY',
             'OTHER',
         ]
         self.typ_var.set('SYSOP')
@@ -297,7 +299,7 @@ class UserDB(tk.Toplevel):
                                       )
         self.pac_len_ent.place(x=_x + 85, y=_y - 2)
 
-        self.set_var_to_ent()
+        self.select_entry_fm_ch_id()
 
     def select_entry(self, event=None):
         for selected_item in self.tree.selection():
@@ -306,6 +308,12 @@ class UserDB(tk.Toplevel):
             self.db_ent = self.user_db.get_entry(record)
             self.set_var_to_ent()
             break
+
+    def select_entry_fm_ch_id(self):
+        conn = self.root.get_conn()
+        if conn:
+            self.db_ent = conn.user_db_ent
+            self.set_var_to_ent()
 
     def set_var_to_ent(self):
         if self.db_ent:

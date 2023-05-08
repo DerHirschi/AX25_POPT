@@ -96,6 +96,9 @@ class UserDB:
             }
         except EOFError:
             pass
+        except ImportError:
+            logger.error(f"User DB: Falsche Version der DB Datei. Bitte {client_db} löschen und PoPT neu starten!")
+            raise
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)

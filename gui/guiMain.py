@@ -737,29 +737,34 @@ class TkMainWin:
         self.update_station_info()
 
     def update_station_info(self):
-        name = ''
-        qth = ''
-        loc = ''
+        name = '-------'
+        qth = '-------'
+        loc = '------'
         status = ''
-        typ = ''
-        sw = ''
+        typ = '-----'
+        sw = '---------'
         enc = ''
         conn = self.get_conn()
         if conn:
             db_ent = conn.user_db_ent
             if db_ent:
-                name = db_ent.Name
-                qth = db_ent.QTH
-                loc = db_ent.LOC
-                typ = db_ent.TYP
-                sw = db_ent.Software
+                if db_ent.Name:
+                    name = db_ent.Name
+                if db_ent.QTH:
+                    qth = db_ent.QTH
+                if db_ent.LOC:
+                    loc = db_ent.LOC
+                if db_ent.TYP:
+                    typ = db_ent.TYP
+                if db_ent.Software:
+                    sw = db_ent.Software
                 enc = db_ent.Encoding
             if conn.is_link:
                 status = 'LINK'
             elif conn.pipe is not None:
                 status = 'PIPE'
             elif conn.ft_tx_activ is not None:
-                status = 'SENDING FILE'
+                status = 'TX FILE'
 
         self.txt_win.stat_info_status_var.set(status)
         self.txt_win.stat_info_name_var.set(name)
@@ -1018,7 +1023,7 @@ class TkMainWin:
 
     ##########################
     # Beacon Settings WIN
-    def open_user_db_win(self):
+    def open_user_db_win(self, event=None):
         if self.settings_win is None:
             UserDB(self)
 

@@ -170,12 +170,14 @@ class TxTframe:
         self.stat_info_encoding_var = tk.StringVar(self.out_frame)
         self.stat_info_status_var = tk.StringVar(self.out_frame)
 
-        tk.Label(self.out_frame,
+        name_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_name_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1, 'bold')
-                 ).grid(row=1, column=1, sticky='w')
+                 )
+        name_label.grid(row=1, column=1, )
+        name_label.bind('<Button-1>', self.main_class.open_user_db_win)
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_qth_var,
                  bg=STAT_BAR_CLR,
@@ -193,7 +195,7 @@ class TxTframe:
                  width=10,
                  bg='#0ed8c3',
                  fg=STAT_BAR_TXT_CLR,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1),
                  ).grid(row=1, column=4, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_sw_var,
