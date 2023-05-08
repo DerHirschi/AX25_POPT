@@ -253,11 +253,14 @@ class DefaultCLI(object):
                     self.stat_identifier = temp_stat_identifier
                     self.set_user_db_software_id()
                     return
-                else:
+                if self.stat_identifier:
                     if self.stat_identifier.id_str != temp_stat_identifier.id_str:
                         self.stat_identifier = temp_stat_identifier
                         self.set_user_db_software_id()
                         return
+                self.stat_identifier = temp_stat_identifier
+                self.set_user_db_software_id()
+                return
 
     def find_cmd(self):
         if self.cmd:
@@ -754,8 +757,8 @@ class DefaultCLI(object):
         self.find_stat_identifier()
         if self.stat_identifier is None:
             self.stat_identifier = False
-        print(f"\n\ns1 id: {self.stat_identifier}\n"
-              f"s1 inp: {self.raw_input}\n\n")
+        # print(f"\n\ns1 id: {self.stat_identifier}\n"
+        #       f"s1 inp: {self.raw_input}\n\n")
         ########################
         # Check String Commands
         if not self.exec_str_cmd():
