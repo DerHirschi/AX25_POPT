@@ -5,31 +5,30 @@ def get_station_id_obj(inp_line: str):
         return None
     if inp_line.startswith('{') and inp_line.endswith('}'):
         """ ? NODE ? ?? and SYSOP Stations ??"""
-        val = validate_id_str(inp_line)
-        if val:
-            return NODEid(val)
+        if validate_id_str(inp_line):
+            return NODEid(inp_line)
         return None
     if inp_line.startswith('[') and inp_line.endswith(']'):
         """ ? BBS ?"""
-        val = validate_id_str(inp_line)
-        if val:
-            return BBSid(val)
+        if validate_id_str(inp_line):
+            return BBSid(inp_line)
         return None
 
 
 def validate_id_str(inp: str):
-    ret = inp[1:-1].split('-')
-    if len(ret) == 3:
-        return ret
-    return []
+    if len(inp.split('-')) == 3:
+        return True
+    return False
 
 
 class DefaultID(object):
-    def __init__(self, inp: []):
+    def __init__(self, inp: str):
         setattr(self, 'typ', getattr(self, 'typ'))
-        self.software = inp[0]
-        self.version = inp[1]
-        self.flags = inp[2]
+        temp = inp[1:-1].split('-')
+        self.software = temp[0]
+        self.version = temp[1]
+        self.flags = temp[2]
+        self.id_str = str(inp)
 
 
 class NODEid(DefaultID):

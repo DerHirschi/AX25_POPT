@@ -9,7 +9,7 @@ from fnc.str_fnc import get_time_delta, find_decoding
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from ax25.ax25Error import AX25EncodingERROR
-from UserDB.UserDB import Client
+from UserDB.UserDBmain import Client
 
 logger = logging.getLogger(__name__)
 
@@ -235,22 +235,29 @@ class DefaultCLI(object):
         except EOFError:
             return ''
 
+    def set_user_db_software_id(self):
+        if self.user_db_ent:
+            self.user_db_ent.software_str = str(self.stat_identifier.id_str)
+            self.user_db_ent.Software = str(self.stat_identifier.software) + '-' + str(self.stat_identifier.version)
+            self.user_db_ent.TYP = str(self.stat_identifier.typ)
+
     def find_stat_identifier(self):
-        if self.stat_identifier is None:
-            inp_lines = self.last_line + self.raw_input
-            inp_lines = inp_lines.replace(b'\n', b'\r')
-            inp_lines = inp_lines.decode(self.encoding[0], 'ignore')
-            inp_lines = inp_lines.split('\r')
-            print(f"find_id line inp_lines: {inp_lines}")
-            for li in inp_lines:
-                print(f"find_id line: {li}")
-                self.stat_identifier = get_station_id_obj(li)
-                if self.stat_identifier is not None:
-                    print(self.stat_identifier.software)
-                    print(self.stat_identifier.version)
-                    print(self.stat_identifier.flags)
-                    print(self.stat_identifier.typ)
+        inp_lines = self.last_line + self.raw_input
+        inp_lines = inp_lines.replace(b'\n', b'\r')
+        inp_lines = inp_lines.decode(self.encoding[0], 'ignore')
+        inp_lines = inp_lines.split('\r')
+        for li in inp_lines:
+            temp_stat_identifier = get_station_id_obj(li)
+            if temp_stat_identifier is not None:
+                if self.stat_identifier is None:
+                    self.stat_identifier = temp_stat_identifier
+                    self.set_user_db_software_id()
                     return
+                else:
+                    if self.stat_identifier.id_str != temp_stat_identifier.id_str:
+                        self.stat_identifier = temp_stat_identifier
+                        self.set_user_db_software_id()
+                        return
 
     def find_cmd(self):
         if self.cmd:

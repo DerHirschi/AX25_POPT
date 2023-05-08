@@ -742,6 +742,8 @@ class TkMainWin:
         loc = ''
         status = ''
         typ = ''
+        sw = ''
+        enc = ''
         conn = self.get_conn()
         if conn:
             db_ent = conn.user_db_ent
@@ -750,6 +752,8 @@ class TkMainWin:
                 qth = db_ent.QTH
                 loc = db_ent.LOC
                 typ = db_ent.TYP
+                sw = db_ent.Software
+                enc = db_ent.Encoding
             if conn.is_link:
                 status = 'LINK'
             elif conn.pipe is not None:
@@ -762,6 +766,8 @@ class TkMainWin:
         self.txt_win.stat_info_qth_var.set(qth)
         self.txt_win.stat_info_loc_var.set(loc)
         self.txt_win.stat_info_typ_var.set(typ)
+        self.txt_win.stat_info_sw_var.set(sw)
+        self.txt_win.stat_info_encoding_var.set(enc)
 
     def dx_alarm(self):
         """ Alarm when new User in MH List """

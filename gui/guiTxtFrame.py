@@ -34,15 +34,15 @@ class TxTframe:
         # self.status_frame.grid(row=1, column=1, sticky="nsew")
         self.status_frame.pack(side=tk.BOTTOM, expand=0)
 
-        self.status_frame.columnconfigure(1, minsize=70, weight=2)  # Name
-        self.status_frame.columnconfigure(2, minsize=50, weight=3)  # Status
-        self.status_frame.columnconfigure(3, minsize=70, weight=4)  # unACK
-        self.status_frame.columnconfigure(4, minsize=70, weight=4)  # VS VR
-        self.status_frame.columnconfigure(5, minsize=50, weight=5)  # N2
-        self.status_frame.columnconfigure(6, minsize=70, weight=5)  # T1
-        self.status_frame.columnconfigure(7, minsize=70, weight=5)  # T1
-        self.status_frame.columnconfigure(8, minsize=70, weight=5)  # T2
-        self.status_frame.columnconfigure(9, minsize=70, weight=5)  # T3
+        self.status_frame.columnconfigure(1, minsize=60, weight=2)  # Name
+        self.status_frame.columnconfigure(2, minsize=40, weight=3)  # Status
+        self.status_frame.columnconfigure(3, minsize=40, weight=4)  # unACK
+        self.status_frame.columnconfigure(4, minsize=40, weight=4)  # VS VR
+        self.status_frame.columnconfigure(5, minsize=20, weight=5)  # N2
+        self.status_frame.columnconfigure(6, minsize=20, weight=5)  # T1
+        self.status_frame.columnconfigure(7, minsize=20, weight=5)  # T1
+        self.status_frame.columnconfigure(8, minsize=20, weight=5)  # T2
+        self.status_frame.columnconfigure(9, minsize=20, weight=5)  # T3
         self.status_frame.columnconfigure(10, minsize=50, weight=1)  # RX Beep
         self.status_frame.columnconfigure(11, minsize=20, weight=1)  # TimeStamp
         self.status_frame.rowconfigure(0, weight=1)  # Stat
@@ -147,22 +147,27 @@ class TxTframe:
         self.out_frame.rowconfigure(1, minsize=25, weight=0)
         self.out_frame.rowconfigure(0, weight=1)
         self.out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
-        self.out_frame.columnconfigure(1, minsize=70, weight=2)  # Name
-        self.out_frame.columnconfigure(2, minsize=50, weight=3)  # QTH
-        self.out_frame.columnconfigure(3, minsize=70, weight=4)  # LOC
-        self.out_frame.columnconfigure(4, minsize=70, weight=4)  # Typ
-        self.out_frame.columnconfigure(5, minsize=50, weight=5)  # Status (PIPE/FT)
+        self.out_frame.columnconfigure(1, minsize=80, weight=2)  # Name
+        self.out_frame.columnconfigure(2, minsize=60, weight=3)  # QTH
+        self.out_frame.columnconfigure(3, minsize=20, weight=4)  # LOC
+        self.out_frame.columnconfigure(4, minsize=20, weight=5)  # Typ
+        self.out_frame.columnconfigure(5, minsize=80, weight=4)  # Software
+        self.out_frame.columnconfigure(6, minsize=20, weight=6)  # Status (PIPE/FT)
+        self.out_frame.columnconfigure(7, minsize=34, weight=4)  # Text Encoding
+        self.out_frame.columnconfigure(8, minsize=3, weight=0)  # Spacer
         self.out_txt_win = scrolledtext.ScrolledText(self.out_frame, background=TXT_BACKGROUND_CLR,
                                                      foreground=TXT_OUT_CLR,
                                                      font=(FONT, self.text_size),
                                                      height=100, bd=0, borderwidth=0, state="disabled")
         self.out_txt_win.tag_config("input", foreground="yellow")
-        self.out_txt_win.grid(row=0, column=0, columnspan=6, sticky="nsew")
+        self.out_txt_win.grid(row=0, column=0, columnspan=9, sticky="nsew")
         # Stat INFO (Name,QTH usw)
         self.stat_info_name_var = tk.StringVar(self.out_frame)
         self.stat_info_qth_var = tk.StringVar(self.out_frame)
         self.stat_info_loc_var = tk.StringVar(self.out_frame)
         self.stat_info_typ_var = tk.StringVar(self.out_frame)
+        self.stat_info_sw_var = tk.StringVar(self.out_frame)
+        self.stat_info_encoding_var = tk.StringVar(self.out_frame)
         self.stat_info_status_var = tk.StringVar(self.out_frame)
 
         tk.Label(self.out_frame,
@@ -176,25 +181,40 @@ class TxTframe:
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
-                 ).grid(row=1, column=2, sticky='w')
+                 ).grid(row=1, column=2, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_loc_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
-                 ).grid(row=1, column=3, sticky='w')
+                 ).grid(row=1, column=3, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_typ_var,
-                 bg=STAT_BAR_CLR,
+                 width=10,
+                 bg='#0ed8c3',
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
-                 ).grid(row=1, column=4, sticky='w')
+                 ).grid(row=1, column=4, )
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_sw_var,
+                 width=20,
+                 bg="#ffd444",
+                 # fg="red3",
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1)
+                 ).grid(row=1, column=5, )
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_status_var,
                  bg=STAT_BAR_CLR,
                  fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1, 'bold')
-                 ).grid(row=1, column=5, sticky='w')
+                 ).grid(row=1, column=6, )
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_encoding_var,
+                 width=8,
+                 bg="steel blue",
+                 # fg="red3",
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS + 1, )
+                 ).grid(row=1, column=7, sticky='e')
         #############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.pw,

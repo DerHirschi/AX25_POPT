@@ -52,6 +52,7 @@ class Client(object):
         self.QRG4 = ''
         self.QRG5 = ''
         self.Software = ''
+        self.Encoding = 'UTF-8'
 
         self.last_edit = datetime.datetime.now()
         self.Connects = 0
@@ -60,7 +61,7 @@ class Client(object):
         self.max_pac = 0
         self.CText = ''
         self.routes = []
-        self.Encoding = 'UTF-8'
+        self.software_str = ''
 
 
 class UserDB:
@@ -75,6 +76,7 @@ class UserDB:
             'max_pac',
             'CText',
             'routes',
+            'software_str',
         ]
         self.db = {}
         try:

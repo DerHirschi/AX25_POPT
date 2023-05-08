@@ -183,6 +183,11 @@ class UserDB(tk.Toplevel):
         self.encoding_var.set('UTF-8')
         self.encoding_ent = tk.OptionMenu(tab1, self.encoding_var, *opt)
         self.encoding_ent.place(x=_x + 185, y=_y - 2)
+        # Software
+        _x = 455
+        _y = 140
+        self.software_var = tk.StringVar(self)
+        tk.Label(tab1, textvariable=self.software_var).place(x=_x, y=_y)
 
         # PR-MAIL
         _x = 10
@@ -312,6 +317,7 @@ class UserDB(tk.Toplevel):
             self.email_var.set(self.db_ent.Email)
             self.http_var.set(self.db_ent.HTTP)
             self.encoding_var.set(self.db_ent.Encoding)
+            self.software_var.set(self.db_ent.Software)
             self.zip_var.set(self.db_ent.ZIP)
             self.land_var.set(self.db_ent.Land)
             self.typ_var.set(self.db_ent.TYP)
