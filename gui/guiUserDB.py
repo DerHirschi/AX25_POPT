@@ -318,7 +318,6 @@ class UserDB(tk.Toplevel):
             self.set_var_to_ent()
 
     def on_select_sysop(self, event=None):
-
         if self.db_ent:
             msg = AskMsg(titel=f'Einträge ergänzen?', message=f"Einträge vom Sysop ergänzen ?")
             # self.settings_win.lift()
@@ -427,6 +426,7 @@ class UserDB(tk.Toplevel):
                     self.tree.insert('', tk.END, values=ret_ent)
                 if ents:
                     self.db_ent = self.user_db.get_entry(ents[0])
+                self.select_entry()
 
     def destroy_win(self):
         self.destroy()

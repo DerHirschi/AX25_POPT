@@ -15,7 +15,7 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import config_station
-from fnc.str_fnc import tk_filter_bad_chars, try_decode
+from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta
 from gui.guiPipeToolSettings import PipeToolSettings
 from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
@@ -736,6 +736,14 @@ class TkMainWin:
         self.tabbed_sideFrame.on_ch_btn_stat_change()
         self.update_station_info()
 
+    def update_stat_info_conn_timer(self):
+        conn = self.get_conn()
+        if conn:
+            time_str = get_time_delta(conn.cli.time_start)
+            self.txt_win.stat_info_timer_var.set(time_str)
+        else:
+            self.txt_win.stat_info_timer_var.set('--:--:--')
+
     def update_station_info(self):
         name = '-------'
         qth = '-------'
@@ -795,25 +803,29 @@ class TkMainWin:
         """ Prio Tasks """
         self.monitor_task()
         self.update_qso_win()
-        self.txt_win.update_status_win()
-        if self.settings_win is not None:
-            # Settings Win ( Port,- Station settings )
-            self.settings_win.tasker()
 
     def tasker_low_prio(self):
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
+            self.txt_win.update_status_win()
+
             self.change_conn_btn()
             # self.tabbed_sideFrame.update_side_mh()
             self.check_sprech_ch_buf()
             self.rx_beep_sound()
             if self.ch_alarm:
                 self.ch_btn_status_update()
+            """
+            if self.settings_win is not None:
+                # Settings Win ( Port,- Station settings )
+                self.settings_win.tasker()
+            """
 
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
             self.update_bw_mon()
+            self.update_stat_info_conn_timer()
             self.tabbed_sideFrame.tasker()
             # print(f"{self.ax25_port_handler.link_connections.keys()}")
             if self.mh.new_call_alarm and self.setting_dx_alarm:
@@ -1196,6 +1208,7 @@ class TkMainWin:
             self.win_buf[k].new_data_tr = True
         self.win_buf[k].rx_beep_tr = True
         self.ch_btn_status_update()
+
     def on_click_inp_txt(self, event=None):
         ind = self.win_buf[self.channel_index].input_win_index
         if ind:

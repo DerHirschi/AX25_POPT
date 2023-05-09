@@ -117,9 +117,16 @@ STATION_ID_BBS = [
 ]
 
 STATION_ID_ENCODING = {
-    0: 'CP437-8',
+    0: 'CP437',
     1: 'ASCII',     # TODO Eigentlich ä > ae
     2: 'ASCII',     # TODO Eigentlich c64 Zeichensatz
     3: 'LATIN_1',
     4: 'UTF-8'
+}
+STATION_ID_ENCODING_REV = {
+    'CP437': 0,
+    'ASCII': 1,     # TODO Eigentlich ä > ae
+    # 'ASCII': 2,     # TODO Eigentlich c64 Zeichensatz
+    'LATIN_1': 3,
+    'UTF-8': 4
 }

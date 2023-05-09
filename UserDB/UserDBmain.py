@@ -140,11 +140,12 @@ class UserDB:
             return False
         if to_key not in self.db.keys():
             return False
-        new_obj = Client(to_key)
-        for att in list(dir(new_obj)):
+        # new_obj = Client(to_key)
+        for att in list(dir(self.db[to_key])):
             if '__' not in att:
                 if not getattr(self.db[to_key], att) and att not in [
                     'software_str',
+                    'Software',
                     'routes',
                     'Alias',
                     'TYP',
@@ -155,11 +156,18 @@ class UserDB:
                     'Connects',
                     'CText',
                     'last_edit',
+                    'Encoding',
                 ]:
-                    setattr(new_obj, att, getattr(self.db[fm_key], att))
+                    setattr(self.db[to_key], att, getattr(self.db[fm_key], att))
                 else:
-                    setattr(new_obj, att, getattr(self.db[to_key], att))
-        self.db[to_key] = new_obj
+                    setattr(self.db[to_key], att, getattr(self.db[to_key], att))
+        if self.db[to_key].TYP != 'SYSOP':
+            if self.db[to_key].Name and self.db[to_key].TYP:
+                self.db[to_key].Name = f"{self.db[to_key].TYP}-{self.db[to_key].Name}"
+            elif self.db[to_key].TYP:
+                self.db[to_key].Name = f"{self.db[to_key].TYP}-{self.db[to_key].call_str}"
+
+        # self.db[to_key] = new_obj
 
     def save_data(self):
         print('Save Client DB')

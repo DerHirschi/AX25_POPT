@@ -65,12 +65,12 @@ class DefaultID(object):
                     self.knows_me = False
                 if self.flags[0].isdigit():
                     enc_id = int(self.flags[0])
-                    if id in STATION_ID_ENCODING.keys():
+                    if enc_id in STATION_ID_ENCODING.keys():
                         self.txt_encoding = STATION_ID_ENCODING[enc_id]
             else:
-                logger.error(f"Flag Error: {self.flags} > inp: {inp} > temp: {temp}")
-        print(f"IF flags: {self.flags}")
-        print(f"IF knows_me: {self.knows_me}")
+                logger.error(f"SW-ID Flag Error: {self.flags} > inp: {inp} > temp: {temp}")
+        # print(f"IF flags: {self.flags}")
+        # print(f"IF knows_me: {self.knows_me}")
 
 
 class NODEid(DefaultID):

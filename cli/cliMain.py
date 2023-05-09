@@ -5,6 +5,7 @@ import logging
 import ax25.ax25Connection
 import config_station
 from cli.cliStationIdent import get_station_id_obj
+from constant import STATION_ID_ENCODING_REV
 from fnc.str_fnc import get_time_delta, find_decoding
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
@@ -20,7 +21,7 @@ class DefaultCLI(object):
     bye_text = '73 ...\r'
     prompt = ''
     prefix = b'//'
-    # sw_id = 'PoPT'
+    sw_id = ''
 
     def __init__(self, connection):
         print("CLI-INIT")
@@ -236,6 +237,21 @@ class DefaultCLI(object):
         except EOFError:
             return ''
 
+    def send_sw_id(self):
+        unknown = '?'
+        didadit = ''    # True = 'D'
+        txt_enc = '4'     # UTF-8
+        if self.user_db_ent:
+            if self.user_db_ent.Name:
+                unknown = ''
+            if self.user_db_ent.Encoding:
+                try:
+                    txt_enc = str(STATION_ID_ENCODING_REV[self.user_db_ent.Encoding])
+                except KeyError:
+                    logger.error(f"KeyERROR STATION_ID_ENCODING_REV (constant.py): {self.user_db_ent.Encoding}")
+        flag = txt_enc + didadit + unknown
+        return '{' + f"{self.sw_id}-{config_station.VER}-{flag}" + '}\r'
+
     def set_user_db_software_id(self):
         if self.user_db_ent:
             self.user_db_ent.software_str = str(self.stat_identifier.id_str)
@@ -244,22 +260,33 @@ class DefaultCLI(object):
                 self.user_db_ent.TYP = str(self.stat_identifier.typ)
 
     def software_identifier(self):
-        res = self.find_stat_identifier()
+        res = self.find_sw_identifier()
 
         if self.stat_identifier is None:
             if self.last_line:
                 self.stat_identifier = False
         elif res and self.stat_identifier:
+            # print(f"SW-ID flag: {self.stat_identifier.flags}")
+            # print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
             if self.stat_identifier.knows_me is not None:
                 if not self.stat_identifier.knows_me:
                     self.send_name_cmd_back()
+            if self.stat_identifier.txt_encoding is not None:
+                self.encoding = self.stat_identifier.txt_encoding, 'ignore'
+                if self.user_db_ent:
+                    self.user_db_ent.Encoding = self.stat_identifier.txt_encoding
 
     def send_name_cmd_back(self):
         name = self.connection.stat_cfg.stat_parm_Name
         if name:
-            self.send_output(f'\r//N {name}\r')
+            if self.stat_identifier is not None:
+                if self.stat_identifier:
+                    if self.stat_identifier.typ == 'SYSOP':
+                        self.send_output(f'\r//N {name}\r')
+                    else:
+                        self.send_output(f'\rN {name}\r')
 
-    def find_stat_identifier(self):
+    def find_sw_identifier(self):
 
         # print(f"find_stat_identifier self.stat_identifier: {self.stat_identifier}")
         if self.stat_identifier is None:
@@ -776,9 +803,9 @@ class DefaultCLI(object):
     def s0(self):  # C-Text
         self.state_index = 1
         if self.prefix:
-            return self.c_text
+            return self.send_sw_id() + self.c_text
         else:
-            return self.c_text + self.get_ts_prompt()
+            return self.send_sw_id() + self.c_text + self.get_ts_prompt()
 
     def s1(self):
         self.software_identifier()
@@ -811,7 +838,7 @@ class NodeCLI(DefaultCLI):
     bye_text = '73 ...\r'
     prompt = 'PoPT-NODE>'
     prefix = b''
-
+    sw_id = 'PoPTNode'
     # Extra CMDs for this CLI
 
     def init(self):
@@ -831,7 +858,7 @@ class UserCLI(DefaultCLI):
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-User-CLI>'
     prefix = b'//'
-
+    sw_id = 'PoPT'
     # Extra CMDs for this CLI
 
     def init(self):

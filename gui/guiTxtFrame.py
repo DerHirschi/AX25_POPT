@@ -153,20 +153,22 @@ class TxTframe:
         self.out_frame.columnconfigure(4, minsize=20, weight=5)  # Typ
         self.out_frame.columnconfigure(5, minsize=80, weight=4)  # Software
         self.out_frame.columnconfigure(6, minsize=20, weight=6)  # Status (PIPE/FT)
-        self.out_frame.columnconfigure(7, minsize=34, weight=4)  # Text Encoding
-        self.out_frame.columnconfigure(8, minsize=3, weight=0)  # Spacer
+        self.out_frame.columnconfigure(7, minsize=34, weight=4)  # Conn Timer
+        self.out_frame.columnconfigure(8, minsize=34, weight=4)  # Text Encoding
+        self.out_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
         self.out_txt_win = scrolledtext.ScrolledText(self.out_frame, background=TXT_BACKGROUND_CLR,
                                                      foreground=TXT_OUT_CLR,
                                                      font=(FONT, self.text_size),
                                                      height=100, bd=0, borderwidth=0, state="disabled")
         self.out_txt_win.tag_config("input", foreground="yellow")
-        self.out_txt_win.grid(row=0, column=0, columnspan=9, sticky="nsew")
+        self.out_txt_win.grid(row=0, column=0, columnspan=10, sticky="nsew")
         # Stat INFO (Name,QTH usw)
         self.stat_info_name_var = tk.StringVar(self.out_frame)
         self.stat_info_qth_var = tk.StringVar(self.out_frame)
         self.stat_info_loc_var = tk.StringVar(self.out_frame)
         self.stat_info_typ_var = tk.StringVar(self.out_frame)
         self.stat_info_sw_var = tk.StringVar(self.out_frame)
+        self.stat_info_timer_var = tk.StringVar(self.out_frame)
         self.stat_info_encoding_var = tk.StringVar(self.out_frame)
         self.stat_info_status_var = tk.StringVar(self.out_frame)
 
@@ -211,12 +213,19 @@ class TxTframe:
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , 'bold')
                  ).grid(row=1, column=6, )
         tk.Label(self.out_frame,
+                 textvariable=self.stat_info_timer_var,
+                 width=10,
+                 # bg="steel blue",
+                 # fg="red3",
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+                 ).grid(row=1, column=7, sticky='e')
+        tk.Label(self.out_frame,
                  textvariable=self.stat_info_encoding_var,
                  width=8,
                  bg="steel blue",
                  # fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , )
-                 ).grid(row=1, column=7, sticky='e')
+                 ).grid(row=1, column=8, sticky='e')
         #############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.pw,
