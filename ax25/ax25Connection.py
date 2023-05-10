@@ -371,6 +371,7 @@ class AX25Conn(object):
         self.user_db_ent = self.user_db.get_entry(self.to_call_str)
         if self.user_db_ent:
             self.user_db_ent.Connects += 1  # TODO Count just when connected
+            self.user_db_ent.last_seen = datetime.now()
             self.encoding = self.user_db_ent.Encoding
             if self.user_db_ent.Language == -1:
                 if self.gui is None:

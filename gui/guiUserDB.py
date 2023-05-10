@@ -3,6 +3,7 @@ from tkinter import ttk
 from datetime import datetime
 
 from constant import ENCODINGS, STATION_TYPS
+from fnc.str_fnc import conv_time_DE_str
 from string_tab import STR_TABLE
 from gui.guiMsgBoxes import AskMsg
 
@@ -257,8 +258,13 @@ class UserDB(tk.Toplevel):
         tk.Label(tab1, textvariable=self.last_edit_var).place(x=540, y=417)
         # Connection Counter
         self.conn_count_var = tk.StringVar(self)
-        tk.Label(tab1, text='Connections: ').place(x=440, y=393)
-        tk.Label(tab1, textvariable=self.conn_count_var).place(x=570, y=393)
+        tk.Label(tab1, text='Connections: ').place(x=240, y=393)
+        tk.Label(tab1, textvariable=self.conn_count_var).place(x=370, y=393)
+        # Last Connection
+        self.last_conn_var = tk.StringVar(self)
+        tk.Label(tab1, text='Last Conn: ').place(x=440, y=393)
+        tk.Label(tab1, textvariable=self.last_conn_var).place(x=540, y=393)
+        # self.last_conn_var.set('2023-05-08 13:12:12')
 
         #######################
         # TAB2
@@ -344,11 +350,13 @@ class UserDB(tk.Toplevel):
 
             self.pac_len_var.set(str(self.db_ent.pac_len))
             self.max_pac_var.set(str(self.db_ent.max_pac))
-            self.last_edit_var.set(
+            """self.last_edit_var.set(
                 f"{self.db_ent.last_edit.date()} - "
                 f"{self.db_ent.last_edit.time().hour}:"
                 f"{self.db_ent.last_edit.time().minute}"
-            )
+            )"""
+            self.last_edit_var.set(conv_time_DE_str(self.db_ent.last_edit))
+            self.last_conn_var.set(conv_time_DE_str(self.db_ent.last_seen))
             self.conn_count_var.set(str(self.db_ent.Connects))
 
             self.info_ent.delete(0.0, tk.END)

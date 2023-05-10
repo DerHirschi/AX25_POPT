@@ -55,6 +55,7 @@ class Client(object):
         self.Encoding = 'UTF-8'
 
         self.last_edit = datetime.datetime.now()
+        self.last_seen = datetime.datetime.now()
         self.Connects = 0
 
         self.pac_len = 0
@@ -82,8 +83,10 @@ class UserDB:
         try:
             with open(client_db, 'rb') as inp:
                 self.db = pickle.load(inp)
+            """
             for ke in self.db.keys():
                 print(ke)
+            """
         except FileNotFoundError:
             if 'linux' in sys.platform:
                 os.system('touch {}'.format(client_db))
@@ -156,6 +159,7 @@ class UserDB:
                     'Connects',
                     'CText',
                     'last_edit',
+                    'last_seen',
                     'Encoding',
                 ]:
                     setattr(self.db[to_key], att, getattr(self.db[fm_key], att))
