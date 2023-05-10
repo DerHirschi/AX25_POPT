@@ -748,7 +748,7 @@ class TkMainWin:
         name = '-------'
         qth = '-------'
         loc = '------'
-        status = ''
+        status = '-------'
         typ = '-----'
         sw = '---------'
         enc = ''
@@ -808,14 +808,13 @@ class TkMainWin:
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
             self.txt_win.update_status_win()
-
             self.change_conn_btn()
-            # self.tabbed_sideFrame.update_side_mh()
             self.check_sprech_ch_buf()
             self.rx_beep_sound()
             if self.ch_alarm:
                 self.ch_btn_status_update()
             """
+            # TASK FOR SETTING WIN IF NEEDED !!!
             if self.settings_win is not None:
                 # Settings Win ( Port,- Station settings )
                 self.settings_win.tasker()

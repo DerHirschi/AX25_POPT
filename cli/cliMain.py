@@ -113,6 +113,9 @@ class DefaultCLI(object):
 
         self.str_cmd_exec = {
             b'#REQUESTNAME:': self.str_cmd_req_name,
+            b'#NAM#': self.cmd_set_name,
+            b'#QTH#': self.cmd_set_qth,
+            b'#LOC#': self.cmd_set_loc,
         }
 
         self.state_exec = {
@@ -766,11 +769,11 @@ class DefaultCLI(object):
         qth = self.connection.stat_cfg.stat_parm_QTH
         loc = self.connection.stat_cfg.stat_parm_LOC
         if name:
-            name = f'#NAM# {name}\r'
+            name = f'\r#NAM# {name}\r'
         if qth:
-            qth = f'#QTH# {qth}\r'
+            qth = f'\r#QTH# {qth}\r'
         if loc:
-            loc = f'#LOC# {loc}\r'
+            loc = f'\r#LOC# {loc}\r'
         tmp = self.parameter[0]
         cmd_dict = {
             b'+++#': name + qth + loc,
@@ -780,8 +783,23 @@ class DefaultCLI(object):
             b'--+#': loc,
             b'-++#': qth + loc,
         }
+        req_name = '-'
+        req_qth = '-'
+        req_loc = '-'
+        if self.user_db_ent:
+            if not self.user_db_ent.Name:
+                req_name = '+'
+            if not self.user_db_ent.QTH:
+                req_qth = '+'
+            if not self.user_db_ent.LOC:
+                req_loc = '+'
+        req_str = req_name + req_qth + req_loc
+        if '+' in req_str:
+            req_str = '\r#REQUESTNAME:' + req_str + '#\r'
+        else:
+            req_str = ''
         if tmp in cmd_dict.keys():
-            return cmd_dict[tmp]
+            return cmd_dict[tmp] + req_str
         return ''
 
     def cli_exec(self, inp=b''):

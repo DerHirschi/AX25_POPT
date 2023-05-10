@@ -152,9 +152,9 @@ class TxTframe:
         self.out_frame.columnconfigure(3, minsize=20, weight=4)  # LOC
         self.out_frame.columnconfigure(4, minsize=20, weight=5)  # Typ
         self.out_frame.columnconfigure(5, minsize=80, weight=4)  # Software
-        self.out_frame.columnconfigure(6, minsize=20, weight=6)  # Status (PIPE/FT)
-        self.out_frame.columnconfigure(7, minsize=34, weight=4)  # Conn Timer
-        self.out_frame.columnconfigure(8, minsize=34, weight=4)  # Text Encoding
+        self.out_frame.columnconfigure(6, minsize=28, weight=4)  # Status (PIPE/FT)
+        self.out_frame.columnconfigure(7, minsize=30, weight=4)  # Conn Timer
+        self.out_frame.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
         self.out_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
         self.out_txt_win = scrolledtext.ScrolledText(self.out_frame, background=TXT_BACKGROUND_CLR,
                                                      foreground=TXT_OUT_CLR,
@@ -174,58 +174,58 @@ class TxTframe:
 
         name_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_name_var,
-                 bg=STAT_BAR_CLR,
+                 # bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , 'bold')
                  )
-        name_label.grid(row=1, column=1, )
+        name_label.grid(row=1, column=1, sticky="nsew")
         name_label.bind('<Button-1>', self.main_class.open_user_db_win)
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_qth_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
-                 ).grid(row=1, column=2, )
+                 ).grid(row=1, column=2, sticky="nsew")
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_loc_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
-                 ).grid(row=1, column=3, )
+                 ).grid(row=1, column=3, sticky="nsew")
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_typ_var,
                  width=10,
                  bg='#0ed8c3',
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS ),
-                 ).grid(row=1, column=4, )
+                 ).grid(row=1, column=4, sticky="nsew")
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_sw_var,
                  width=20,
                  bg="#ffd444",
                  # fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
-                 ).grid(row=1, column=5, )
+                 ).grid(row=1, column=5, sticky="nsew")
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_status_var,
                  bg=STAT_BAR_CLR,
                  fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , 'bold')
-                 ).grid(row=1, column=6, )
+                 ).grid(row=1, column=6, sticky="nsew")
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_timer_var,
                  width=10,
                  # bg="steel blue",
                  # fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
-                 ).grid(row=1, column=7, sticky='e')
+                 ).grid(row=1, column=7, sticky="nsew")
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_encoding_var,
                  width=8,
                  bg="steel blue",
                  # fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , )
-                 ).grid(row=1, column=8, sticky='e')
+                 ).grid(row=1, column=8, sticky="nsew")
         #############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.pw,
