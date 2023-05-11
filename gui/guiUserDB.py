@@ -96,15 +96,18 @@ class UserDB(tk.Toplevel):
         ##################################
         # Selected Call Label
         self.call_labbel_var = tk.StringVar(self)
-        tk.Label(self, textvariable=self.call_labbel_var, font=("Courier", 14, 'bold')).place(x=int(self.win_width / 2), y=10)
+        tk.Label(self, textvariable=self.call_labbel_var, font=("Courier", 14, 'bold')).place(x=int(self.win_width / 2),
+                                                                                              y=10)
         ##################################
         # tabs
         self.tabControl = ttk.Notebook(self, height=self.win_height - 150, width=self.win_width - 220)
         self.tabControl.place(x=200, y=50)
         tab1 = ttk.Frame(self.tabControl)
         tab2 = ttk.Frame(self.tabControl)
+        tab3 = ttk.Frame(self.tabControl)
         self.tabControl.add(tab1, text=STR_TABLE['main_page'][self.lang])
         self.tabControl.add(tab2, text=STR_TABLE['settings'][self.lang])
+        self.tabControl.add(tab3, text=STR_TABLE['passwords'][self.lang])
         # self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
         #################################################
         # Entry
@@ -250,7 +253,7 @@ class UserDB(tk.Toplevel):
         ]
         self.lang_var.set('DEUTSCH')
         self.lang_ent = tk.OptionMenu(tab1, self.lang_var, *lang_opt)
-        self.lang_ent.configure(state='disabled')   # TODO
+        self.lang_ent.configure(state='disabled')  # TODO
         self.lang_ent.place(x=_x + 80, y=_y - 2)
         # Last Edit
         self.last_edit_var = tk.StringVar(self)
@@ -307,6 +310,52 @@ class UserDB(tk.Toplevel):
                                       )
         self.pac_len_ent.place(x=_x + 85, y=_y - 2)
 
+
+        #######################
+        # TAB3
+        # Passwörter
+        # Sys-PW
+        _x = 20
+        _y = 20
+        tk.Label(tab3, text=STR_TABLE['syspassword'][self.lang]).place(x=_x, y=_y)
+        # self.sys_password_var = tk.StringVar(self)
+        self.sys_password_ent = tk.Text(tab3,
+                                        height=5,
+                                        width=80)
+        _x = 15
+        _y = 60
+        self.sys_password_ent.place(x=_x , y=_y)
+        # Fake-Attempts inclusive real attempt
+        _x = 20
+        _y = 200
+        tk.Label(tab3, text=STR_TABLE['trys'][self.lang]).place(x=_x, y=_y)
+        self.fake_attempts_var = tk.StringVar(self)
+        self.fake_attempts_var.set('5')
+        # max_pac_opt = list(range(8))
+        self.fake_attempts_ent = tk.Spinbox(tab3,
+                                            textvariable=self.fake_attempts_var,
+                                            from_=1,
+                                            to=10,
+                                            increment=1,
+                                            width=3
+                                            )
+        self.fake_attempts_ent.place(x=_x + 140, y=_y - 2)
+        # Fill Chars
+        _x = 300
+        _y = 200
+        tk.Label(tab3, text=STR_TABLE['fillchars'][self.lang]).place(x=_x, y=_y)
+        self.fill_char_var = tk.StringVar(self)
+        self.fill_char_var.set('80')
+        # max_pac_opt = list(range(8))
+        self.fill_chars_ent = tk.Spinbox(tab3,
+                                            textvariable=self.fill_char_var,
+                                            from_=0,
+                                            to=120,
+                                            increment=10,
+                                            width=4
+                                            )
+        self.fill_chars_ent.place(x=_x + 140, y=_y - 2)
+
         self.select_entry_fm_ch_id()
 
     def select_entry(self, event=None):
@@ -347,7 +396,6 @@ class UserDB(tk.Toplevel):
             self.land_var.set(self.db_ent.Land)
             self.typ_var.set(self.db_ent.TYP)
 
-
             self.pac_len_var.set(str(self.db_ent.pac_len))
             self.max_pac_var.set(str(self.db_ent.max_pac))
             """self.last_edit_var.set(
@@ -364,6 +412,15 @@ class UserDB(tk.Toplevel):
 
             self.ctext_ent.delete(0.0, tk.END)
             self.ctext_ent.insert(tk.INSERT, self.db_ent.CText)
+
+
+            #self.sys_password_ent.delete(0.0, tk.END)
+            self.sys_password_ent.delete(0.0, tk.END)
+            self.sys_password_ent.insert(tk.INSERT, str(self.db_ent.sys_pw))
+            self.fake_attempts_var.set(str(self.db_ent.sys_pw_parm[0]))
+            self.fill_char_var.set(str(self.db_ent.sys_pw_parm[1]))
+
+
             self.update_sysop_opt()
 
     def sysop_opt_remove(self):
@@ -401,6 +458,13 @@ class UserDB(tk.Toplevel):
             self.db_ent.max_pac = int(self.max_pac_var.get())
             self.db_ent.CText = self.ctext_ent.get(0.0, tk.END)[:-1]
             self.db_ent.Info = self.info_ent.get(0.0, tk.END)[:-1]
+
+            self.db_ent.sys_pw = self.sys_password_ent.get(0.0, tk.END)[:-1]
+            self.db_ent.sys_pw_parm = [
+                int(self.fake_attempts_var.get()),
+                int(self.fill_char_var.get())
+            ]
+
             self.db_ent.last_edit = datetime.now()
             self.db_ent.TYP = self.typ_var.get()
             if self.db_ent.TYP == 'SYSOP':

@@ -63,6 +63,8 @@ class Client(object):
         self.CText = ''
         self.routes = []
         self.software_str = ''
+        self.sys_pw = ''
+        self.sys_pw_parm = [5, 80]
 
 
 class UserDB:
@@ -78,6 +80,8 @@ class UserDB:
             'CText',
             'routes',
             'software_str',
+            'sys_pw',
+            'sys_pw_parm',
         ]
         self.db = {}
         try:
@@ -91,7 +95,7 @@ class UserDB:
             if 'linux' in sys.platform:
                 os.system('touch {}'.format(client_db))
             default_client = Client('ALL')
-            default_client.is_new = False
+            # default_client.is_new = False
             default_client.name = 'Beacon'
             default_client.typ = 'BEACON'
             self.db = {
@@ -161,6 +165,8 @@ class UserDB:
                     'last_edit',
                     'last_seen',
                     'Encoding',
+                    'sys_pw',
+                    'sys_pw_parm',
                 ]:
                     setattr(self.db[to_key], att, getattr(self.db[fm_key], att))
                 else:

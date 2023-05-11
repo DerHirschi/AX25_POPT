@@ -1287,6 +1287,10 @@ class TkMainWin:
             channel=12
         )
         """
+        conn = self.get_conn()
+        if conn:
+
+            conn.cli.start_baycom_login()
 
     def switch_monitor_mode(self):
         self.txt_win.switch_mon_mode()
