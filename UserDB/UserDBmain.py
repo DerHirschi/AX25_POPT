@@ -65,7 +65,7 @@ class Client(object):
         self.routes = []
         self.software_str = ''
         self.sys_pw = ''
-        self.sys_pw_parm = [5, 80]
+        self.sys_pw_parm = [5, 80, 'SYS']
 
 
 class UserDB:
@@ -132,6 +132,19 @@ class UserDB:
         for k in list(self.db.keys()):
             if self.db[k].TYP == typ:
                 ret.append(k)
+        return ret
+
+    def get_keys_by_sysop(self, sysop: str):
+        ret = {
+            'NODE': [],
+            'BBS': [],
+        }
+        for k in self.db.keys():
+            if sysop == self.db[k].Sysop_Call:
+                if self.db[k].TYP in ret.keys():
+                    ret[self.db[k].TYP].append(k)
+                else:
+                    ret[self.db[k].TYP] = [k]
         return ret
 
     def entry_var_upgrade(self, ent_key):

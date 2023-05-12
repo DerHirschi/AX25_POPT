@@ -121,7 +121,8 @@ class PrivilegWin(tk.Toplevel):
         self.db_ent.sys_pw = self.sys_password_ent.get(0.0, tk.END)[:-1]
         self.db_ent.sys_pw_parm = [
             int(self.fake_attempts_var.get()),
-            int(self.fill_char_var.get())
+            int(self.fill_char_var.get()),
+            str(self.login_cmd_var.get()),
         ]
 
     def destroy_win(self):

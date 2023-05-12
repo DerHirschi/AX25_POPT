@@ -38,6 +38,7 @@ STR_TABLE = {
     'linkholder': ('Linkhalter', 'Link holder', 'Lekker'),
     'tools': ('Tools', 'Tools', 'Lekker hulpmiddelen'),
     'station': ('Station', 'Station', 'Lekker'),
+    'stations': ('Stationen', 'Stations', 'Lekker'),
     'port': ('Port', 'Port', 'Lekker Port'),
     'channel': ('Kanal', 'Channel', 'Lekker Kanaal'),
     'beacon': ('Baken', 'Beacons', 'Lekker Bakken'),

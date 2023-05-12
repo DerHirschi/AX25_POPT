@@ -106,9 +106,11 @@ class UserDB(tk.Toplevel):
         tab1 = ttk.Frame(self.tabControl)
         tab2 = ttk.Frame(self.tabControl)
         tab3 = ttk.Frame(self.tabControl)
+        tab4 = ttk.Frame(self.tabControl)
         self.tabControl.add(tab1, text=STR_TABLE['main_page'][self.lang])
         self.tabControl.add(tab2, text=STR_TABLE['settings'][self.lang])
         self.tabControl.add(tab3, text=STR_TABLE['passwords'][self.lang])
+        self.tabControl.add(tab4, text=STR_TABLE['stations'][self.lang])
         # self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
         #################################################
         # Entry
@@ -356,6 +358,35 @@ class UserDB(tk.Toplevel):
                                             width=4
                                             )
         self.fill_chars_ent.place(x=_x + 140, y=_y - 2)
+        # Login CMD
+        _x = 20
+        _y = 240
+        tk.Label(tab3, text=STR_TABLE['login_cmd'][self.lang]).place(x=_x, y=_y)
+        self.login_cmd_var = tk.StringVar(self)
+        self.login_cmd_var.set('SYS')
+        tk.Entry(tab3, textvariable=self.login_cmd_var, width=20).place(x=_x + 170, y=_y)
+        #######################
+        # TAB4
+        # Stationen
+        # NODES
+        _x = 20
+        _y = 20
+        self.stations_node_var = tk.StringVar(self)
+        tk.Label(tab4, textvariable=self.stations_node_var).place(x=_x, y=_y)
+        # self.stations_node_var.set('NODES: ')
+        # BBS
+        _x = 20
+        _y = 60
+        self.stations_bbs_var = tk.StringVar(self)
+        tk.Label(tab4, textvariable=self.stations_bbs_var).place(x=_x, y=_y)
+        # self.stations_bbs_var.set('BBS: ')
+        # Other
+        _x = 20
+        _y = 100
+        self.stations_other_var = tk.StringVar(self)
+        tk.Label(tab4, textvariable=self.stations_other_var).place(x=_x, y=_y)
+        # self.stations_other_var.set('OTHER: ')
+
         if not key:
             self.select_entry_fm_ch_id()
         else:
@@ -427,9 +458,13 @@ class UserDB(tk.Toplevel):
             self.sys_password_ent.insert(tk.INSERT, str(self.db_ent.sys_pw))
             self.fake_attempts_var.set(str(self.db_ent.sys_pw_parm[0]))
             self.fill_char_var.set(str(self.db_ent.sys_pw_parm[1]))
+            if len(self.db_ent.sys_pw_parm) == 2:
+                self.db_ent.sys_pw_parm.append('SYS')
+            self.login_cmd_var.set(str(self.db_ent.sys_pw_parm[2]))
 
 
             self.update_sysop_opt()
+            self.update_stations()
 
     def sysop_opt_remove(self):
         self.sysop_var.set('')  # remove default selection only, not the full list
@@ -439,8 +474,9 @@ class UserDB(tk.Toplevel):
         self.sysop_opt_remove()  # remove all options
 
         if self.db_ent.TYP == 'SYSOP':
-            self.sysop_ent.configure(state='disabled')
             self.sysop_var.set('')
+            self.sysop_ent.configure(state='disabled')
+
         else:
             self.sysop_ent.configure(state='normal')
             self.sysop_var.set(self.db_ent.Sysop_Call)
@@ -449,6 +485,34 @@ class UserDB(tk.Toplevel):
 
             for opt in sorted(self.user_db.get_keys_by_typ(typ='SYSOP')):
                 self.sysop_ent['menu'].add_command(label=opt, command=tk._setit(self.sysop_var, opt))
+
+    def update_stations(self):
+        sysop_key = ''
+        if self.db_ent.TYP == 'SYSOP':
+            sysop_key = self.db_ent.call_str
+        else:
+            sysop_key = self.db_ent.Sysop_Call
+
+        node_str = 'NODES: '
+        bbs_str = 'BBS: '
+        other_str = 'OTHER: '
+
+        if sysop_key:
+            stat_dict = self.user_db.get_keys_by_sysop(sysop=sysop_key)
+            node_calls = stat_dict['NODE']
+            bbs_calls = stat_dict['BBS']
+            other_calls = []
+            for k in stat_dict.keys():
+                if k not in ['NODE', 'BBS']:
+                    for call in stat_dict[k]:
+                        other_calls.append(call)
+            node_str = node_str + ' '.join(node_calls)
+            bbs_str = bbs_str + ' '.join(bbs_calls)
+            other_str = other_str + ' '.join(other_calls)
+
+        self.stations_node_var.set(node_str)
+        self.stations_bbs_var.set(bbs_str)
+        self.stations_other_var.set(other_str)
 
     def save_btn_cmd(self):
         if self.db_ent:
@@ -470,7 +534,8 @@ class UserDB(tk.Toplevel):
             self.db_ent.sys_pw = self.sys_password_ent.get(0.0, tk.END)[:-1]
             self.db_ent.sys_pw_parm = [
                 int(self.fake_attempts_var.get()),
-                int(self.fill_char_var.get())
+                int(self.fill_char_var.get()),
+                str(self.login_cmd_var.get()),
             ]
 
             self.db_ent.last_edit = datetime.now()
