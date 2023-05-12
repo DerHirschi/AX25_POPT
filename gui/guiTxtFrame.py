@@ -199,7 +199,7 @@ class TxTframe:
                  textvariable=self.stat_info_name_var,
                  # bg=STAT_BAR_CLR,
                  height=1,
-                              borderwidth=0,
+                 borderwidth=0,
                  # border=0,
                  fg=STAT_BAR_TXT_CLR,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, 'bold' )
