@@ -146,8 +146,10 @@ class TxTframe:
         # Output
         self.out_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, )
         self.out_frame.pack(side=tk.BOTTOM, expand=0)
-        self.out_frame.rowconfigure(1, minsize=10, weight=0)
         self.out_frame.rowconfigure(0, weight=1)
+        self.out_frame.rowconfigure(1, minsize=10, weight=0)
+        self.stat_info_bar = tk.Frame(self.out_frame, height=10, bd=0, borderwidth=0, )
+        """
         self.out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
         self.out_frame.columnconfigure(1, minsize=80, weight=2)  # Name
         self.out_frame.columnconfigure(2, minsize=60, weight=3)  # QTH
@@ -158,6 +160,19 @@ class TxTframe:
         self.out_frame.columnconfigure(7, minsize=30, weight=4)  # Conn Timer
         self.out_frame.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
         self.out_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
+        """
+
+        self.stat_info_bar.columnconfigure(0, minsize=3, weight=0)  # Spacer
+        self.stat_info_bar.columnconfigure(1, minsize=80, weight=2)  # Name
+        self.stat_info_bar.columnconfigure(2, minsize=60, weight=3)  # QTH
+        self.stat_info_bar.columnconfigure(3, minsize=20, weight=4)  # LOC
+        self.stat_info_bar.columnconfigure(4, minsize=20, weight=5)  # Typ
+        self.stat_info_bar.columnconfigure(5, minsize=80, weight=4)  # Software
+        self.stat_info_bar.columnconfigure(6, minsize=28, weight=4)  # Status (PIPE/FT)
+        self.stat_info_bar.columnconfigure(7, minsize=30, weight=4)  # Conn Timer
+        self.stat_info_bar.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
+        self.stat_info_bar.columnconfigure(9, minsize=3, weight=0)  # Spacer
+
         self.out_txt_win = scrolledtext.ScrolledText(self.out_frame,
                                                      background=TXT_BACKGROUND_CLR,
                                                      foreground=TXT_OUT_CLR,
@@ -167,18 +182,20 @@ class TxTframe:
                                                      borderwidth=0,
                                                      state="disabled")
         self.out_txt_win.tag_config("input", foreground="yellow")
-        self.out_txt_win.grid(row=0, column=0, columnspan=10, sticky="nsew")
+        # self.out_txt_win.grid(row=0, column=0, columnspan=10, sticky="nsew")
+        self.out_txt_win.grid(row=0, column=0,  sticky="nsew")
+        self.stat_info_bar.grid(row=1, column=0,  sticky="nsew")
         # Stat INFO (Name,QTH usw)
-        self.stat_info_name_var = tk.StringVar(self.out_frame)
-        self.stat_info_qth_var = tk.StringVar(self.out_frame)
-        self.stat_info_loc_var = tk.StringVar(self.out_frame)
-        self.stat_info_typ_var = tk.StringVar(self.out_frame)
-        self.stat_info_sw_var = tk.StringVar(self.out_frame)
-        self.stat_info_timer_var = tk.StringVar(self.out_frame)
-        self.stat_info_encoding_var = tk.StringVar(self.out_frame)
-        self.stat_info_status_var = tk.StringVar(self.out_frame)
+        self.stat_info_name_var = tk.StringVar(self.stat_info_bar)
+        self.stat_info_qth_var = tk.StringVar(self.stat_info_bar)
+        self.stat_info_loc_var = tk.StringVar(self.stat_info_bar)
+        self.stat_info_typ_var = tk.StringVar(self.stat_info_bar)
+        self.stat_info_sw_var = tk.StringVar(self.stat_info_bar)
+        self.stat_info_timer_var = tk.StringVar(self.stat_info_bar)
+        self.stat_info_encoding_var = tk.StringVar(self.stat_info_bar)
+        self.stat_info_status_var = tk.StringVar(self.stat_info_bar)
         size = 1
-        name_label = tk.Label(self.out_frame,
+        name_label = tk.Label(self.stat_info_bar,
                  textvariable=self.stat_info_name_var,
                  # bg=STAT_BAR_CLR,
                  height=1,
@@ -189,7 +206,7 @@ class TxTframe:
                  )
         name_label.grid(row=1, column=1, sticky="nsew")
         name_label.bind('<Button-1>', self.main_class.open_user_db_win)
-        qth_label = tk.Label(self.out_frame,
+        qth_label = tk.Label(self.stat_info_bar,
                  textvariable=self.stat_info_qth_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
@@ -199,7 +216,7 @@ class TxTframe:
                  )
         qth_label.bind('<Button-1>', self.main_class.open_user_db_win)
         qth_label.grid(row=1, column=2, sticky="nsew")
-        loc_label = tk.Label(self.out_frame,
+        loc_label = tk.Label(self.stat_info_bar,
                  textvariable=self.stat_info_loc_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
@@ -212,7 +229,7 @@ class TxTframe:
 
         opt = list(STATION_TYPS)
         stat_typ = tk.OptionMenu(
-            self.out_frame,
+            self.stat_info_bar,
             self.stat_info_typ_var,
             *opt,
             command=self.set_stat_typ
@@ -227,7 +244,7 @@ class TxTframe:
         )
         stat_typ.grid(row=1, column=4, sticky="nsew")
 
-        tk.Label(self.out_frame,
+        tk.Label(self.stat_info_bar,
                  textvariable=self.stat_info_sw_var,
                  width=20,
                  bg="#ffd444",
@@ -237,7 +254,7 @@ class TxTframe:
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size )
                  ).grid(row=1, column=5, sticky="nsew")
 
-        status_label = tk.Label(self.out_frame,
+        status_label = tk.Label(self.stat_info_bar,
                  textvariable=self.stat_info_status_var,
                  bg=STAT_BAR_CLR,
                  fg="red3",
@@ -248,7 +265,7 @@ class TxTframe:
         status_label.grid(row=1, column=6, sticky="nsew")
         status_label.bind('<Button-1>', self.main_class.do_priv)
 
-        tk.Label(self.out_frame,
+        tk.Label(self.stat_info_bar,
                  textvariable=self.stat_info_timer_var,
                  width=10,
                  height=1,
@@ -259,7 +276,7 @@ class TxTframe:
                  ).grid(row=1, column=7, sticky="nsew")
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
-            self.out_frame,
+            self.stat_info_bar,
             self.stat_info_encoding_var,
             *opt,
             command=self.change_txt_encoding
