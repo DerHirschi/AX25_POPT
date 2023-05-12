@@ -177,7 +177,7 @@ class TxTframe:
         self.stat_info_timer_var = tk.StringVar(self.out_frame)
         self.stat_info_encoding_var = tk.StringVar(self.out_frame)
         self.stat_info_status_var = tk.StringVar(self.out_frame)
-        size = 0
+        size = 1
         name_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_name_var,
                  # bg=STAT_BAR_CLR,
