@@ -146,7 +146,7 @@ class TxTframe:
         # Output
         self.out_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, )
         self.out_frame.pack(side=tk.BOTTOM, expand=0)
-        self.out_frame.rowconfigure(1, minsize=19, weight=0)
+        self.out_frame.rowconfigure(1, minsize=10, weight=0)
         self.out_frame.rowconfigure(0, weight=1)
         self.out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
         self.out_frame.columnconfigure(1, minsize=80, weight=2)  # Name
@@ -177,14 +177,15 @@ class TxTframe:
         self.stat_info_timer_var = tk.StringVar(self.out_frame)
         self.stat_info_encoding_var = tk.StringVar(self.out_frame)
         self.stat_info_status_var = tk.StringVar(self.out_frame)
-
+        size = 0
         name_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_name_var,
                  # bg=STAT_BAR_CLR,
-                 # height=1,
+                 height=1,
+                              borderwidth=0,
                  # border=0,
                  fg=STAT_BAR_TXT_CLR,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , 'bold' )
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, 'bold' )
                  )
         name_label.grid(row=1, column=1, sticky="nsew")
         name_label.bind('<Button-1>', self.main_class.open_user_db_win)
@@ -192,7 +193,9 @@ class TxTframe:
                  textvariable=self.stat_info_qth_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
+                             height=1,
+                             borderwidth=0,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                  )
         qth_label.bind('<Button-1>', self.main_class.open_user_db_win)
         qth_label.grid(row=1, column=2, sticky="nsew")
@@ -200,7 +203,9 @@ class TxTframe:
                  textvariable=self.stat_info_loc_var,
                  bg=STAT_BAR_CLR,
                  fg=STAT_BAR_TXT_CLR,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
+                             height=1,
+                             borderwidth=0,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                  )
         loc_label.bind('<Button-1>', self.main_class.open_user_db_win)
         loc_label.grid(row=1, column=3, sticky="nsew")
@@ -216,7 +221,9 @@ class TxTframe:
             background="#0ed8c3",
             fg=STAT_BAR_TXT_CLR,
             width=10,
-            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+            height=1,
+            borderwidth=0,
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size,)
         )
         stat_typ.grid(row=1, column=4, sticky="nsew")
 
@@ -225,14 +232,18 @@ class TxTframe:
                  width=20,
                  bg="#ffd444",
                  # fg="red3",
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
+                 height=1,
+                 borderwidth=0,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size )
                  ).grid(row=1, column=5, sticky="nsew")
 
         status_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_status_var,
                  bg=STAT_BAR_CLR,
                  fg="red3",
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , )
+                                height=1,
+                                borderwidth=0,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, )
                  )
         status_label.grid(row=1, column=6, sticky="nsew")
         status_label.bind('<Button-1>', self.main_class.do_priv)
@@ -240,9 +251,11 @@ class TxTframe:
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_timer_var,
                  width=10,
+                 height=1,
+                 borderwidth=0,
                  # bg="steel blue",
                  # fg="red3",
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size,)
                  ).grid(row=1, column=7, sticky="nsew")
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
@@ -253,8 +266,10 @@ class TxTframe:
         )
         txt_encoding_ent.configure(
             background="steel blue",
+            height=1,
             width=8,
-            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+            borderwidth=0,
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size,)
         )
         txt_encoding_ent.grid(row=1, column=8, sticky="nsew")
         #############

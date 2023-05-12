@@ -6,7 +6,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 
 logger = logging.getLogger(__name__)
 
-VER = '2.83.18'
+VER = '2.84.0dev'
 
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
