@@ -501,6 +501,7 @@ class SideTabbedFrame:
                 conn.link_holder_timer = 0
             else:
                 conn.link_holder_on = False
+            self.main_win.on_channel_status_change()
 
     def chk_t2auto(self):
         conn = self.main_win.get_conn()

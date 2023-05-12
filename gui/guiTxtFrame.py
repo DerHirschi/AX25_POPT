@@ -2,6 +2,8 @@ import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext, Label, Checkbutton
 
+from constant import ENCODINGS
+
 # from gui.guiMainNew import TkMainWin
 
 #LOOP_DELAY = 50  # ms
@@ -226,6 +228,25 @@ class TxTframe:
                  # fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
                  ).grid(row=1, column=7, sticky="nsew")
+        opt = ENCODINGS
+        self.txt_encoding_ent = tk.OptionMenu(
+            self.out_frame,
+            self.stat_info_encoding_var,
+            *opt,
+            command=self.main_class.change_txt_encoding
+            # textvariable=self.stat_info_encoding_var,
+            # width=8,
+            # bg="steel blue",
+            # fg="red3",
+            # font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+        )
+        self.txt_encoding_ent.configure(
+            background="steel blue",
+            width=8,
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+        )
+        self.txt_encoding_ent.grid(row=1, column=8, sticky="nsew")
+        """
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_encoding_var,
                  width=8,
@@ -233,6 +254,7 @@ class TxTframe:
                  # fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , )
                  ).grid(row=1, column=8, sticky="nsew")
+        """
         #############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.pw,

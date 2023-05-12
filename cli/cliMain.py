@@ -867,7 +867,7 @@ class DefaultCLI(object):
             # print("END")
             self.sysop_priv = True
             if self.gui:
-                self.gui.update_station_info()
+                self.gui.on_channel_status_change()
             self.change_cli_state(1)
             return ''
         res = self.sys_login.step(inp)
@@ -878,7 +878,7 @@ class DefaultCLI(object):
                 print("Priv: Failed !")
                 logger.warning("Priv: Failed !")
                 if self.gui:
-                    self.gui.update_station_info()
+                    self.gui.on_channel_status_change()
                 self.change_cli_state(1)
             return ""
         if self.sys_login.attempt_count == self.sys_login.attempts:
@@ -887,7 +887,7 @@ class DefaultCLI(object):
             # print("END")
             self.sysop_priv = True
             if self.gui:
-                self.gui.update_station_info()
+                self.gui.on_channel_status_change()
             self.change_cli_state(1)
         return res
 

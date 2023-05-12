@@ -1325,6 +1325,15 @@ class TkMainWin:
         if conn:
             conn.cli.start_baycom_login(login_cmd=login_cmd)
 
+    def change_txt_encoding(self, event=None, enc=''):
+        conn = self.get_conn()
+        if conn:
+            db_ent = conn.user_db_ent
+            if db_ent:
+                if not enc:
+                    enc = self.txt_win.stat_info_encoding_var.get()
+                db_ent.Encoding = enc
+
     def switch_monitor_mode(self):
         self.txt_win.switch_mon_mode()
         if self.mon_mode:
