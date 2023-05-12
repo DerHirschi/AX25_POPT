@@ -81,6 +81,7 @@ class DefaultCLI(object):
         self.last_line = b''
         self.parameter = []
         self.sys_login = None
+        self.sysop_priv = False
         # Crone
         self.cron_state_exec = {
             0: self.cron_s0,  # No CMDs / Doing nothing
@@ -243,13 +244,14 @@ class DefaultCLI(object):
         except EOFError:
             return ''
 
-    def start_baycom_login(self):
+    def start_baycom_login(self, login_cmd=''):
         if self.sys_login is None:
             if self.user_db_ent:
                 if self.user_db_ent.sys_pw:
                     self.sys_login = BaycomLogin(
                         sys_pw_parm=self.user_db_ent.sys_pw_parm,
-                        sys_pw=self.user_db_ent.sys_pw
+                        sys_pw=self.user_db_ent.sys_pw,
+                        login_cmd=login_cmd
                     )
                     self.send_output(self.sys_login.start())
                     self.change_cli_state(3)
@@ -859,19 +861,33 @@ class DefaultCLI(object):
             return ""
 
         inp = self.raw_input.decode(self.encoding[0], 'ignore')
-        res = self.sys_login.step(inp)
-        if not res:
-            if self.sys_login.fail_counter > 1 or \
-                    self.sys_login.attempt_count > self.sys_login.attempts:
-                del self.sys_login
-                self.sys_login = None
-                print("END 2")
-                self.change_cli_state(1)
-            return ""
-        if self.sys_login.attempt_count > self.sys_login.attempts:
+        if 'OK\r' in inp:
             del self.sys_login
             self.sys_login = None
-            print("END")
+            # print("END")
+            self.sysop_priv = True
+            if self.gui:
+                self.gui.update_station_info()
+            self.change_cli_state(1)
+            return ''
+        res = self.sys_login.step(inp)
+        if not res:
+            if self.sys_login.fail_counter > 1:
+                del self.sys_login
+                self.sys_login = None
+                print("Priv: Failed !")
+                logger.warning("Priv: Failed !")
+                if self.gui:
+                    self.gui.update_station_info()
+                self.change_cli_state(1)
+            return ""
+        if self.sys_login.attempt_count == self.sys_login.attempts:
+            del self.sys_login
+            self.sys_login = None
+            # print("END")
+            self.sysop_priv = True
+            if self.gui:
+                self.gui.update_station_info()
             self.change_cli_state(1)
         return res
 

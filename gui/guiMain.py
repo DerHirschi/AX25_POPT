@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import config_station
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta
 from gui.guiPipeToolSettings import PipeToolSettings
+from gui.guiPriv import PrivilegWin
 from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
 from gui.guiTxtFrame import TxTframe
@@ -171,6 +172,9 @@ class TkMainWin:
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
                                    underline=0)
+        self.MenuTools.add_command(label='Priv', command=self.open_priv_win,
+                                   underline=0)
+
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         self.menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=self.MenuTools, underline=0)
 
@@ -773,6 +777,15 @@ class TkMainWin:
                 status = 'PIPE'
             elif conn.ft_tx_activ is not None:
                 status = 'TX FILE'
+            else:
+                status = ['-'] * 7
+                if conn.is_RNR:
+                    status[2] = 'R'
+                if conn.link_holder_on:
+                    status[1] = 'L'
+                if conn.cli.sysop_priv:
+                    status[0] = 'S'
+                status = ''.join(status)
 
         self.txt_win.stat_info_status_var.set(status)
         self.txt_win.stat_info_name_var.set(name)
@@ -993,79 +1006,98 @@ class TkMainWin:
     ##########################
     # New Connection WIN
     def open_new_conn_win(self):
+        # TODO just build a f** switch ( dict )
         if self.new_conn_win is None:
             self.new_conn_win = NewConnWin(self)
 
     ##########################
     # Stat Settings WIN
     def open_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             self.settings_win = StationSettingsWin(self)
 
     ##########################
     # Port Settings WIN
     def open_port_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             self.settings_win = PortSettingsWin(self)
 
     ##########################
     # Beacon Settings WIN
     def open_beacon_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             BeaconSettings(self)
 
     ##########################
     # Beacon Settings WIN
     def open_rx_echo_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             RxEchoSettings(self)
 
     ##########################
     # Beacon Settings WIN
     def open_linkholder_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             LinkHolderSettings(self)
 
     ##########################
     # Beacon Settings WIN
     def open_multicast_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             MulticastSettings(self)
 
     ##########################
     # Beacon Settings WIN
     def open_user_db_win(self, event=None):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             UserDB(self)
 
     ##########################
     # About WIN
     def open_about_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             About(self)
 
     ##########################
     # Pipe Tool
     def pipe_tool_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             PipeToolSettings(self)
 
     ##########################
     # About WIN
     def open_file_send(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             FileSend(self)
 
     ##########################
     # Keybinds Help WIN
     def open_keybind_help_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             KeyBindsHelp(self)
 
     ##########################
+    # Priv Win
+    def open_priv_win(self):
+        # TODO just build a f** switch ( dict )
+        if self.settings_win is None:
+            PrivilegWin(self)
+
+    ##########################
     # Keybinds Help WIN
     def open_port_stat_win(self):
-        # TODO
+        # TODO Port selectable
         if 0 in self.mh.port_statistik_DB.keys():
             self.mh.port_statistik_DB[0].plot_test_graph(self)
 
@@ -1287,10 +1319,11 @@ class TkMainWin:
             channel=12
         )
         """
+
+    def do_priv(self, event=None, login_cmd=''):
         conn = self.get_conn()
         if conn:
-
-            conn.cli.start_baycom_login()
+            conn.cli.start_baycom_login(login_cmd=login_cmd)
 
     def switch_monitor_mode(self):
         self.txt_win.switch_mon_mode()

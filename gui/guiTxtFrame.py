@@ -210,12 +210,15 @@ class TxTframe:
                  # fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
                  ).grid(row=1, column=5, sticky="nsew")
-        tk.Label(self.out_frame,
+        status_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_status_var,
                  bg=STAT_BAR_CLR,
                  fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , 'bold')
-                 ).grid(row=1, column=6, sticky="nsew")
+                 )
+        status_label.grid(row=1, column=6, sticky="nsew")
+        status_label.bind('<Button-1>', self.main_class.do_priv)
+
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_timer_var,
                  width=10,
