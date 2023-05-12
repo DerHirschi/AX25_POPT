@@ -18,6 +18,7 @@ import config_station
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta
 from gui.guiPipeToolSettings import PipeToolSettings
 from gui.guiPriv import PrivilegWin
+from gui.guiUserDBoverview import UserDBtreeview
 from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
 from gui.guiTxtFrame import TxTframe
@@ -84,6 +85,7 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
+        self.user_db = self.ax25_port_handler.user_db
         self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
         #####################
@@ -162,6 +164,7 @@ class TkMainWin:
         self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
         self.MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win,
                                    underline=1)
+        self.MenuTools.add_command(label="User-DB Tree", command=self.UserDB_tree, underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
                                    command=self.open_linkholder_settings_win, underline=0)
@@ -302,6 +305,7 @@ class TkMainWin:
         self.new_conn_win = None
         self.settings_win = None
         self.mh_window = None
+        self.userDB_tree_win = None
         ###########################
         # Init
         # set Ch Btn Color
@@ -1101,6 +1105,21 @@ class TkMainWin:
         if 0 in self.mh.port_statistik_DB.keys():
             self.mh.port_statistik_DB[0].plot_test_graph(self)
 
+    ###################
+    # MH WIN
+    def MH_win(self):
+        """MH WIN"""
+        self.reset_dx_alarm()
+        if self.mh_window is None:
+            self.mh_window = MHWin(self)
+
+    ###################
+    # User-DB TreeView WIN
+    def UserDB_tree(self):
+        """MH WIN"""
+        if self.userDB_tree_win is None:
+            self.userDB_tree_win = UserDBtreeview(self)
+
     # ##############
     # DISCO
     def disco_conn(self):
@@ -1268,13 +1287,6 @@ class TkMainWin:
         """
 
     # SEND TEXT OUT
-    ###################
-    # MH WIN
-    def MH_win(self):
-        """MH WIN"""
-        self.reset_dx_alarm()
-        if self.mh_window is None:
-            self.mh_window = MHWin(self)
 
     ###################
     # BW Plot
@@ -1323,16 +1335,11 @@ class TkMainWin:
     def do_priv(self, event=None, login_cmd=''):
         conn = self.get_conn()
         if conn:
-            conn.cli.start_baycom_login(login_cmd=login_cmd)
-
-    def change_txt_encoding(self, event=None, enc=''):
-        conn = self.get_conn()
-        if conn:
-            db_ent = conn.user_db_ent
-            if db_ent:
-                if not enc:
-                    enc = self.txt_win.stat_info_encoding_var.get()
-                db_ent.Encoding = enc
+            if conn.user_db_ent:
+                if conn.user_db_ent.sys_pw:
+                    conn.cli.start_baycom_login(login_cmd=login_cmd)
+                else:
+                    self.open_priv_win()
 
     def switch_monitor_mode(self):
         self.txt_win.switch_mon_mode()

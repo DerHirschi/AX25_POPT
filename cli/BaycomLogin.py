@@ -3,7 +3,7 @@ import string
 
 
 def get_baycom_pw(password: str, req_pattern: str):
-    print(f"BC pw: {password}\n patt: {req_pattern}")
+    # print(f"BC pw: {password}\n patt: {req_pattern}")
     req_pattern = req_pattern.replace('\r', '')
     tmp = req_pattern.split(' ')
     tmp.reverse()
@@ -16,12 +16,12 @@ def get_baycom_pw(password: str, req_pattern: str):
 
     tmp_patt.reverse()
     res = ''
-    print(f"patt: {tmp_patt}")
+    # print(f"patt: {tmp_patt}")
     for index in tmp_patt:
         if len(password) < int(index):
             return ''
         res += password[int(index) - 1]
-    print(f"Patt: {req_pattern}")
+    # print(f"Patt: {req_pattern}")
     return res
 
 
@@ -59,7 +59,7 @@ class BaycomLogin(object):
 
         res = get_baycom_pw(self.sys_pw, inp)
         if not res:
-            print('not res')
+            # print('not res')
             self.fail_counter += 1
             return ''
         self.attempt_count += 1

@@ -4,6 +4,7 @@ import os
 import pickle
 import logging
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
+from fnc.str_fnc import conv_time_for_sorting
 
 # axip_clientList = 'data/axip_userList.popt'
 client_db = 'data/UserDB.popt'
@@ -178,6 +179,33 @@ class UserDB:
                 self.db[to_key].Name = f"{self.db[to_key].TYP}-{self.db[to_key].call_str}"
 
         # self.db[to_key] = new_obj
+
+    def get_sort_entr(self, flag_str: str, reverse: bool):
+        temp = {}
+        self.db: {str: Client}
+        for k in list(self.db.keys()):
+            flag: Client = self.db[k]
+            key: str = {
+                'call': str(flag.call_str),
+                'sysop': str(flag.Sysop_Call),
+                'typ': str(flag.TYP),
+                'loc': str(flag.LOC),
+                'qth': str(flag.QTH),
+                'land': str(flag.Land),
+                'last_seen': conv_time_for_sorting(flag.last_seen),
+            }[flag_str]
+            while key in temp.keys():
+                key += '1'
+            temp[key] = self.db[k]
+
+        temp_k = list(temp.keys())
+        temp_k.sort()
+        if not reverse:
+            temp_k.reverse()
+        temp_ret = {}
+        for k in temp_k:
+            temp_ret[k] = temp[k]
+        return temp_ret
 
     def save_data(self):
         print('Save Client DB')

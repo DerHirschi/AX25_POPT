@@ -29,7 +29,8 @@ class UserDB(tk.Toplevel):
         # self.attributes("-topmost", True)
         ###############
         # VARS
-        self.user_db = root.ax25_port_handler.user_db
+        # self.user_db = root.ax25_port_handler.user_db
+        self.user_db = root.user_db
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
