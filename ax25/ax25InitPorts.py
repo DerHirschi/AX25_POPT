@@ -1,6 +1,6 @@
 import config_station
 from ax25.ax25Port import *
-from UserDB.UserDB import UserDB
+from UserDB.UserDBmain import UserDB
 from ax25.ax25Statistics import MH
 from config_station import *
 from gui.guiRxEchoSettings import RxEchoVars

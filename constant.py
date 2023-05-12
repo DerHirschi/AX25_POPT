@@ -80,3 +80,53 @@ ENCODINGS = (
     'ASCII',
     'LATIN_1',
 )
+STATION_TYPS = [
+            'SYSOP',    # Don't change. Used as Key
+            'NODE',
+            'BBS',
+            'SYS-BBS',
+            'DIGI',
+            'CONVERS',
+            'BEACON',
+            'WX',
+            'TELEMETRIE',
+            'APRS-DIGI',
+            'APRS-IGATE',
+            'APRS-TELEMETRIE',
+            'APRS-WX',
+            'GATEWAY',
+            'OTHER',
+        ]
+
+STATION_ID_SYSOP = [
+    'WinSTOP',
+    'STOP',
+    'TOP',
+    'PoPT',
+]
+
+STATION_ID_NODE = [
+    'WinSTOPNode',
+    'PoPTNode',
+
+]
+
+STATION_ID_BBS = [
+    'WinSTOPBox',
+    'FBB'
+]
+
+STATION_ID_ENCODING = {
+    0: 'CP437',
+    1: 'ASCII',     # TODO Eigentlich ä > ae
+    2: 'ASCII',     # TODO Eigentlich c64 Zeichensatz
+    3: 'LATIN_1',
+    4: 'UTF-8'
+}
+STATION_ID_ENCODING_REV = {
+    'CP437': 0,
+    'ASCII': 1,     # TODO Eigentlich ä > ae
+    # 'ASCII': 2,     # TODO Eigentlich c64 Zeichensatz
+    'LATIN_1': 3,
+    'UTF-8': 4
+}

@@ -4,23 +4,28 @@ import logging
 
 import ax25.ax25Connection
 import config_station
+from cli.BaycomLogin import BaycomLogin
+from cli.cliStationIdent import get_station_id_obj
+from constant import STATION_ID_ENCODING_REV
 from fnc.str_fnc import get_time_delta, find_decoding
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from ax25.ax25Error import AX25EncodingERROR
-from UserDB.UserDB import Client
+from UserDB.UserDBmain import Client
 
 logger = logging.getLogger(__name__)
 
 
 class DefaultCLI(object):
-    cli_name = ''  # DON'T CHANGE !
+    cli_name = ''  # DON'T CHANGE!
     c_text = '-= Test C-TEXT =-\r\r'
     bye_text = '73 ...\r'
     prompt = ''
     prefix = b'//'
+    sw_id = ''
 
     def __init__(self, connection):
+        print("CLI-INIT")
         stat_cfg = connection.stat_cfg
         if stat_cfg is not None:
             # Override with optional Station Config Param
@@ -47,19 +52,20 @@ class DefaultCLI(object):
             self.gui = False
         else:
             self.gui = self.connection.gui
-        # self.connection = connection
-        # self.my_call = self.connection.ax25_out_frame.from_call.call
         self.my_call_str = self.connection.my_call_str
-        # self.to_call = self.connection.ax25_out_frame.to_call.call
         self.to_call_str = self.connection.to_call_str
         self.mh_list = self.connection.mh
         self.user_db = self.connection.user_db
         self.user_db_ent: Client = self.connection.user_db_ent
         self.encoding = 'UTF-8', 'ignore'
+        self.stat_identifier_str = ''
         if self.user_db_ent:
             self.encoding = self.user_db_ent.Encoding, 'ignore'
+            self.stat_identifier_str = self.user_db_ent.Software
             if self.user_db_ent.CText:
                 self.c_text = str(self.user_db_ent.CText)
+
+        self.stat_identifier = get_station_id_obj(self.stat_identifier_str)
 
         self.c_text = self.c_text.replace('\n', '\r')
         self.bye_text = self.bye_text.replace('\n', '\r')
@@ -73,10 +79,12 @@ class DefaultCLI(object):
         self.raw_input = b''
         self.cmd = b''
         self.last_line = b''
-        self.parameter: [bytes] = []
+        self.parameter = []
+        self.sys_login = None
+        self.sysop_priv = False
         # Crone
         self.cron_state_exec = {
-            0: self.cron_s0,        # No CMDs / Doing nothing
+            0: self.cron_s0,  # No CMDs / Doing nothing
             100: self.cron_s_quit  # QUIT
         }
         # Standard Commands ( GLOBAL )
@@ -85,14 +93,13 @@ class DefaultCLI(object):
             b'BYE': (self.cmd_q, ''),
             b'CONNECT': (self.cmd_connect, 'Connect'),
             b'PORT': (self.cmd_port, 'Ports'),
+            b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
-            b'INFO': (self.cmd_i, 'Info'),
-            b'LINFO': (self.cmd_li, 'Lange Info'),
-            b'NEWS': (self.cmd_news, 'NEWS'),
             b'ECHO': (self.cmd_echo, 'Echo'),
             b'VERSION': (self.cmd_ver, 'Version'),
             b'HELP': (self.cmd_help, STR_TABLE['help'][self.connection.cli_language]),
             b'?': (self.cmd_help, ''),
+
             b'NAME': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
             b'QTH': (self.cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
             b'LOC': (self.cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
@@ -102,21 +109,23 @@ class DefaultCLI(object):
             b'WEB': (self.cmd_set_http, STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
             b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
             b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
+            b'INFO': (self.cmd_i, 'Info'),
+            b'LINFO': (self.cmd_li, 'Lange Info'),
+            b'NEWS': (self.cmd_news, 'NEWS'),
         }
 
         self.str_cmd_exec = {
-            b'#REQUESTNAME:+++#': self.str_cmd_req_name,
-            b'#REQUESTNAME:++-#': self.str_cmd_req_name,
-            b'#REQUESTNAME:+--#': self.str_cmd_req_name,
-            b'#REQUESTNAME:+-+#': self.str_cmd_req_name,
-            b'#REQUESTNAME:--+#': self.str_cmd_req_name,
-            b'#REQUESTNAME:-++#': self.str_cmd_req_name,
+            b'#REQUESTNAME:': self.str_cmd_req_name,
+            b'#NAM#': self.cmd_set_name,
+            b'#QTH#': self.cmd_set_qth,
+            b'#LOC#': self.cmd_set_loc,
         }
 
         self.state_exec = {
             0: self.s0,  # C-Text
             1: self.s1,  # Cmd Handler
             2: self.s2,  # Nothing / no remote
+            3: self.s3,  # Baycom Login Shit
         }
         self.cmd_exec_ext = {}
         self.cron_state_exec_ext = {}
@@ -125,6 +134,8 @@ class DefaultCLI(object):
         self.cron_state_exec.update(self.cron_state_exec_ext)
         self.commands.update(self.cmd_exec_ext)
         self.state_exec.update(self.state_exec_ext)
+        if type(self.prefix) == str:  # Fix for old CFG Files
+            self.prefix = self.prefix.encode(self.encoding[0], self.encoding[1])
 
     """
     def init(self):
@@ -162,29 +173,23 @@ class DefaultCLI(object):
     def change_cli_state(self, state: int):
         self.state_index = state
 
-    """
-    def get_parameter(self):
-        param = self.input
-        self.parameter = self.input
-    """
-
     def is_prefix(self):
+        # TODO Cleanup !!!!
+        # print(self.input)
         if self.prefix:
-            # print(self.input)
             self.input = self.input.replace(b'\n', b'\r')
-            self.input = self.input.split(b'\r')[0]
-            """
-            while self.input[:1] in [b'\r', b'\n']:
-                self.input = self.input[1:]
-                if not self.input:
-                    return False
-            """
+            # self.input = self.input.split(b'\r')[0]
+            self.input = self.input.split(b'\r')
             # print(self.input)
-            """
-            if type(self.prefix) == str:    # Fix for old CFG Files
-                self.prefix = self.prefix.encode('UTF-8', 'ignore')
-            """
-            # print(self.prefix)
+            while self.input:
+                if self.input[0]:
+                    break
+                else:
+                    self.input = self.input[1:]
+            if not self.input:
+                return False
+            self.input = self.input[0]
+
             if self.input[:len(self.prefix)] == self.prefix:
                 # print(self.input)
                 self.parameter = []
@@ -239,6 +244,97 @@ class DefaultCLI(object):
         except EOFError:
             return ''
 
+    def start_baycom_login(self, login_cmd=''):
+        if self.sys_login is None:
+            if self.user_db_ent:
+                if self.user_db_ent.sys_pw:
+                    self.sys_login = BaycomLogin(
+                        sys_pw_parm=self.user_db_ent.sys_pw_parm,
+                        sys_pw=self.user_db_ent.sys_pw,
+                        login_cmd=login_cmd
+                    )
+                    self.send_output(self.sys_login.start())
+                    self.change_cli_state(3)
+
+    def send_sw_id(self):
+        unknown = '?'
+        didadit = ''  # True = 'D'
+        txt_enc = '4'  # UTF-8
+        if self.user_db_ent:
+            if self.user_db_ent.Name:
+                unknown = ''
+            if self.user_db_ent.Encoding:
+                try:
+                    txt_enc = str(STATION_ID_ENCODING_REV[self.user_db_ent.Encoding])
+                except KeyError:
+                    logger.error(f"KeyERROR STATION_ID_ENCODING_REV (constant.py): {self.user_db_ent.Encoding}")
+        flag = txt_enc + didadit + unknown
+        return '{' + f"{self.sw_id}-{config_station.VER}-{flag}" + '}\r'
+
+    def set_user_db_software_id(self):
+        if self.user_db_ent:
+            self.user_db_ent.software_str = str(self.stat_identifier.id_str)
+            self.user_db_ent.Software = str(self.stat_identifier.software) + '-' + str(self.stat_identifier.version)
+            if not self.user_db_ent.TYP:
+                self.user_db_ent.TYP = str(self.stat_identifier.typ)
+
+    def software_identifier(self):
+        res = self.find_sw_identifier()
+
+        if self.stat_identifier is None:
+            if self.last_line:
+                self.stat_identifier = False
+        elif res and self.stat_identifier:
+            # print(f"SW-ID flag: {self.stat_identifier.flags}")
+            # print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
+            if self.stat_identifier.knows_me is not None:
+                if not self.stat_identifier.knows_me:
+                    self.send_name_cmd_back()
+            if self.stat_identifier.txt_encoding is not None:
+                self.encoding = self.stat_identifier.txt_encoding, 'ignore'
+                if self.user_db_ent:
+                    self.user_db_ent.Encoding = self.stat_identifier.txt_encoding
+
+    def send_name_cmd_back(self):
+        name = self.connection.stat_cfg.stat_parm_Name
+        if name:
+            if self.stat_identifier is not None:
+                if self.stat_identifier:
+                    if self.stat_identifier.typ == 'SYSOP':
+                        self.send_output(f'\r//N {name}\r')
+                    else:
+                        self.send_output(f'\rN {name}\r')
+
+    def find_sw_identifier(self):
+
+        # print(f"find_stat_identifier self.stat_identifier: {self.stat_identifier}")
+        if self.stat_identifier is None:
+            inp_lines = self.last_line + self.raw_input
+            inp_lines = inp_lines.replace(b'\n', b'\r')
+            inp_lines = inp_lines.decode(self.encoding[0], 'ignore')
+            inp_lines = inp_lines.split('\r')
+            # print(f"find_stat_identifier inp_lines: {inp_lines}")
+            for li in inp_lines:
+                temp_stat_identifier = get_station_id_obj(li)
+                if temp_stat_identifier is not None:
+                    self.stat_identifier = temp_stat_identifier
+                    self.set_user_db_software_id()
+                    return True
+        elif not self.last_line and self.stat_identifier:
+            inp_lines = self.raw_input
+            inp_lines = inp_lines.replace(b'\n', b'\r')
+            inp_lines = inp_lines.decode(self.encoding[0], 'ignore')
+            inp_lines = inp_lines.split('\r')
+            # print(f"find_stat_identifier inp_lines: {inp_lines}")
+            for li in inp_lines:
+                temp_stat_identifier = get_station_id_obj(li)
+                if temp_stat_identifier is not None:
+                    if self.stat_identifier.id_str != temp_stat_identifier.id_str:
+                        self.stat_identifier = temp_stat_identifier
+                        self.set_user_db_software_id()
+                        return True
+        return False
+
     def find_cmd(self):
         if self.cmd:
             cmds = list(self.commands.keys())
@@ -248,36 +344,45 @@ class DefaultCLI(object):
                     treffer.append(cmd)
             if not treffer:
                 return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
-            # print(treffer)
-            """
-            if len(treffer) > 1:
-                ret = '\r # Ungenaue Eingabe, mehrere Kommandos erkannt:\r'
-                ret += ' #\r'
-                for cmd_str in treffer:
-                    ret += f" # {cmd_str.decode('UTF-8')}\r"
-                return ret
-            """
             self.cmd = b''
-            return self.commands[treffer[0]][0]()
+            ret = self.commands[treffer[0]][0]()
+            if ret is None:
+                return ''
+            return ret
 
         return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
 
     def exec_cmd(self):
-        # TODO Cleanup
         if self.is_prefix():
-            ret = self.find_cmd()
+            return self.find_cmd()
         # Message is for User ( Text , Chat )
-        elif self.prefix:
-            ret = ''
+        if self.prefix:
+            return ''
         # CMD Input for No User Terminals ( Node ... )
-        else:
-            ret = self.find_cmd()
-            if self.crone_state_index != 100 and self.state_index != 2:  # Not Quit
-                if ret is None:
-                    ret = ''
-                ret += self.get_ts_prompt()
+        ret = self.find_cmd()
+        if self.crone_state_index != 100 and self.state_index != 2:  # Not Quit
+            ret += self.get_ts_prompt()
+        return ret
+        # self.send_output(ret)
 
-        self.send_output(ret)
+    def exec_str_cmd(self):
+        inp_lines = self.last_line + self.raw_input
+        inp_lines = inp_lines.replace(b'\n', b'\r')
+        inp_lines = inp_lines.split(b'\r')
+        _ret = ''
+        for li in inp_lines:
+            for str_cmd in list(self.str_cmd_exec.keys()):
+                if str_cmd in li:
+                    self.cmd = str_cmd
+                    self.parameter = [li[len(str_cmd):]]
+                    # print(f"str_cmd cmd: {str_cmd}")
+                    # print(f"str_cmd par: {self.parameter}")
+                    _ret = self.str_cmd_exec[str_cmd]()
+                    self.cmd = b''
+                    self.send_output(_ret)
+        self.last_line = inp_lines[-1]
+        return _ret
+        # self.raw_input = b''
 
     def send_prompt(self):
         self.send_output(self.get_ts_prompt())
@@ -288,7 +393,7 @@ class DefaultCLI(object):
             tmp.append(el.decode(self.encoding[0], 'ignore').replace('\r', '').replace('\n', ''))
         self.parameter = list(tmp)
 
-    def cmd_connect(self):  # DUMMY
+    def cmd_connect(self):
         # print(f'cmd_connect() param: {self.parameter}')
         self.decode_param()
         # print(f'cmd_connect() param.decode: {self.parameter}')
@@ -341,9 +446,11 @@ class DefaultCLI(object):
 
     def cmd_echo(self):  # Quit
         ret = ''
+        # print(f"Echo Param: {self.parameter}")
         for el in self.parameter:
             ret += el.decode(self.encoding[0], self.encoding[1]) + ' '
-        return ret[:-1]
+        # print(f"Echo ret: {ret}")
+        return ret[:-1] + '\r'
 
     def cmd_q(self):  # Quit
         # self.connection: AX25Conn
@@ -429,13 +536,13 @@ class DefaultCLI(object):
     def cmd_set_name(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f" #\r Eingetragener Name: {self.user_db_ent.Name}\r"
+                return f" #\r Name: {self.user_db_ent.Name}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
-            self.user_db_ent.Name = self.parameter[0]\
-                .decode(self.encoding[0], self.encoding[1]).\
-                replace(' ', '').\
-                replace('\n', '').\
+            self.user_db_ent.Name = self.parameter[0] \
+                .decode(self.encoding[0], self.encoding[1]). \
+                replace(' ', ''). \
+                replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
             return "\r" \
@@ -448,13 +555,13 @@ class DefaultCLI(object):
     def cmd_set_qth(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragener QTH: {self.user_db_ent.QTH}\r"
+                return f"\r # QTH: {self.user_db_ent.QTH}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
-            self.user_db_ent.QTH = self.parameter[0]\
-                .decode(self.encoding[0], self.encoding[1]).\
-                replace(' ', '').\
-                replace('\n', '').\
+            self.user_db_ent.QTH = self.parameter[0] \
+                .decode(self.encoding[0], self.encoding[1]). \
+                replace(' ', ''). \
+                replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
             return "\r" \
@@ -467,13 +574,13 @@ class DefaultCLI(object):
     def cmd_set_loc(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragener Locator: {self.user_db_ent.LOC}\r"
+                return f"\r # Locator: {self.user_db_ent.LOC}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
-            self.user_db_ent.LOC = self.parameter[0]\
-                .decode(self.encoding[0], self.encoding[1]).\
-                replace(' ', '').\
-                replace('\n', '').\
+            self.user_db_ent.LOC = self.parameter[0] \
+                .decode(self.encoding[0], self.encoding[1]). \
+                replace(' ', ''). \
+                replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
             return "\r" \
@@ -486,13 +593,13 @@ class DefaultCLI(object):
     def cmd_set_zip(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragene Postleitzahl: {self.user_db_ent.ZIP}\r"
+                return f"\r # ZIP: {self.user_db_ent.ZIP}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
-            self.user_db_ent.ZIP = self.parameter[0]\
-                .decode(self.encoding[0], self.encoding[1]).\
-                replace(' ', '').\
-                replace('\n', '').\
+            self.user_db_ent.ZIP = self.parameter[0] \
+                .decode(self.encoding[0], self.encoding[1]). \
+                replace(' ', ''). \
+                replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
             return "\r" \
@@ -505,13 +612,13 @@ class DefaultCLI(object):
     def cmd_set_pr_mail(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragene PR-Mail Adresse: {self.user_db_ent.PRmail}\r"
+                return f"\r # PR-Mail: {self.user_db_ent.PRmail}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
-            self.user_db_ent.PRmail = self.parameter[0]\
-                .decode(self.encoding[0], self.encoding[1]).\
-                replace(' ', '').\
-                replace('\n', '').\
+            self.user_db_ent.PRmail = self.parameter[0] \
+                .decode(self.encoding[0], self.encoding[1]). \
+                replace(' ', ''). \
+                replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
             return "\r" \
@@ -524,13 +631,13 @@ class DefaultCLI(object):
     def cmd_set_e_mail(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragene E-Mail Adresse: {self.user_db_ent.Email}\r"
+                return f"\r # E-Mail: {self.user_db_ent.Email}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
-            self.user_db_ent.Email = self.parameter[0]\
-                .decode(self.encoding[0], self.encoding[1]).\
-                replace(' ', '').\
-                replace('\n', '').\
+            self.user_db_ent.Email = self.parameter[0] \
+                .decode(self.encoding[0], self.encoding[1]). \
+                replace(' ', ''). \
+                replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
             return "\r" \
@@ -543,13 +650,13 @@ class DefaultCLI(object):
     def cmd_set_http(self):
         if not self.parameter:
             if self.user_db_ent:
-                return f"\r # Eingetragene Web Adresse: {self.user_db_ent.HTTP}\r"
+                return f"\r # WEB: {self.user_db_ent.HTTP}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
-            self.user_db_ent.HTTP = self.parameter[0]\
-                .decode(self.encoding[0], self.encoding[1]).\
-                replace(' ', '').\
-                replace('\n', '').\
+            self.user_db_ent.HTTP = self.parameter[0] \
+                .decode(self.encoding[0], self.encoding[1]). \
+                replace(' ', ''). \
+                replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
             return "\r" \
@@ -559,7 +666,7 @@ class DefaultCLI(object):
         logger.error("User-DB Error. cmd_set_http NO ENTRY FOUND !")
         return "\r # USER-DB Error !\r"
 
-    def cmd_port(self):
+    def cmd_port(self):  # TODO Pipe
         ret = f"\r      < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
         ret += "-#--Name----PortTyp--Stations--Typ------Digi-\r"
         for port_id in self.port_handler.ax25_ports.keys():
@@ -585,6 +692,44 @@ class DefaultCLI(object):
                     digi = f"{port.port_cfg.parm_cli[stat].cli_name.ljust(7)} " + digi
                 ret += f"                     {stat.ljust(9)} {digi}\r"
         ret += '\r'
+        return ret
+
+    def cmd_lcstatus(self):
+        """ Long Connect-Status """
+        # ret = f"\r      < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
+        ret = '\r'
+        ret += "  Ch  Port  MyCall    Call      Name          LOC    QTH           Connect\r"
+        ret += "---------------------------------------------------------------------------\r"
+        all_conn = self.port_handler.all_connections
+        for k in all_conn.keys():
+            ch = k
+            conn = all_conn[k]
+            time_start = conn.time_start  # TODO DateSTR
+            port_id = conn.own_port.port_id
+            my_call = conn.my_call_str
+            to_call = conn.to_call_str
+            db_ent = conn.user_db_ent
+            name = ''
+            loc = ''
+            qth = ''
+            if db_ent:
+                name = db_ent.Name
+                loc = db_ent.LOC
+                qth = db_ent.QTH
+            if self.connection.ch_index == ch:
+                ret += ">"
+            else:
+                ret += " "
+
+            ret += f" {str(ch).ljust(3)} " \
+                   f"{str(port_id).ljust(3)}   " \
+                   f"{my_call.ljust(9)} " \
+                   f"{to_call.ljust(9)} " \
+                   f"{name.ljust(13)[:13]} " \
+                   f"{loc.ljust(6)[:6]} " \
+                   f"{qth.ljust(13)[:13]} " \
+                   f"{time_start.strftime('%H:%M:%S')}\r"
+
         return ret
 
     def cmd_help(self):
@@ -618,13 +763,13 @@ class DefaultCLI(object):
         for k in list(self.commands.keys()):
             if self.commands[k][1]:
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
-                                               k.decode('UTF-8', 'ignore'),
-                                               self.commands[k][1])
+                                                k.decode('UTF-8', 'ignore'),
+                                                self.commands[k][1])
         ret += '\r\r'
         return ret
 
     def cmd_umlaut(self):
-        print(self.parameter)
+        # print(self.parameter)
         if not self.parameter:
             return f"\r{STR_TABLE['cli_text_encoding_no_param'][self.connection.cli_language]}: {self.encoding[0]}\r"
         res = find_decoding(self.parameter[0].replace(b'\r', b''))
@@ -636,38 +781,48 @@ class DefaultCLI(object):
         return f"\r{STR_TABLE['cli_text_encoding_set'][self.connection.cli_language]} {res}\r"
 
     def str_cmd_req_name(self):
-        # print("REQ NAME")
         name = self.connection.stat_cfg.stat_parm_Name
         qth = self.connection.stat_cfg.stat_parm_QTH
         loc = self.connection.stat_cfg.stat_parm_LOC
         if name:
-            name = f'#NAM# {name}\r'
+            name = f'\r#NAM# {name}\r'
         if qth:
-            qth = f'#QTH# {qth}\r'
+            qth = f'\r#QTH# {qth}\r'
         if loc:
-            loc = f'#LOC# {loc}\r'
-
-        tmp = self.cmd.split(b':')[1]
-        tmp = tmp[:-1]
+            loc = f'\r#LOC# {loc}\r'
+        tmp = self.parameter[0]
         cmd_dict = {
-            b'+++': name + qth + loc,
-            b'++-': name + qth,
-            b'+--': name,
-            b'+-+': name + loc,
-            b'--+': loc,
-            b'-++': qth + loc,
+            b'+++#': name + qth + loc,
+            b'++-#': name + qth,
+            b'+--#': name,
+            b'+-+#': name + loc,
+            b'--+#': loc,
+            b'-++#': qth + loc,
         }
+        req_name = '-'
+        req_qth = '-'
+        req_loc = '-'
+        if self.user_db_ent:
+            if not self.user_db_ent.Name:
+                req_name = '+'
+            if not self.user_db_ent.QTH:
+                req_qth = '+'
+            if not self.user_db_ent.LOC:
+                req_loc = '+'
+        req_str = req_name + req_qth + req_loc
+        if '+' in req_str:
+            req_str = '\r#REQUESTNAME:' + req_str + '#\r'
+        else:
+            req_str = ''
         if tmp in cmd_dict.keys():
-            return cmd_dict[tmp]
+            return cmd_dict[tmp] + req_str
         return ''
 
     def cli_exec(self, inp=b''):
         if not self.connection.is_link:
             self.raw_input = bytes(inp)
             _ret = self.state_exec[self.state_index]()
-            if _ret:
-                _ret = _ret.replace('\n', '\r')
-                self.send_output(_ret)
+            self.send_output(_ret)
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -680,38 +835,61 @@ class DefaultCLI(object):
         self.send_output(ret)
 
     def s0(self):  # C-Text
-        # self.build_prompt()
         self.state_index = 1
         if self.prefix:
-            return self.c_text
+            return self.send_sw_id() + self.c_text
         else:
-            return self.c_text + self.get_ts_prompt()
+            return self.send_sw_id() + self.c_text + self.get_ts_prompt()
 
     def s1(self):
-        if type(self.prefix) == str:  # Fix for old CFG Files
-            self.prefix = self.prefix.encode(self.encoding[0], self.encoding[1])
-        self.input = self.last_line + self.raw_input
-        self.exec_cmd()
+        self.software_identifier()
         ########################
         # Check String Commands
-        inp_lines = self.last_line + self.raw_input
-        inp_lines = inp_lines.replace(b'\n', b'\r')
-        inp_lines = inp_lines.split(b'\r')
-        for li in inp_lines:
-            # for k in list(self.str_cmd_exec.keys()):
-            # if li in k:
-            if li in self.str_cmd_exec.keys():
-                self.cmd = li
-                # self.parameter
-                _ret = self.str_cmd_exec[li]()
-                self.cmd = b''
-                self.send_output(_ret)
-        self.last_line = inp_lines[-1]
-        self.raw_input = b''
+        if not self.exec_str_cmd():
+            self.input = self.raw_input
+            self.send_output(self.exec_cmd())
         return ''
 
     def s2(self):
+        """ Do nothing / No Remote"""
         return ""
+
+    def s3(self):
+        """ Sys Login """
+        if self.sys_login is None:
+            self.change_cli_state(1)
+            return ""
+
+        inp = self.raw_input.decode(self.encoding[0], 'ignore')
+        if 'OK\r' in inp:
+            del self.sys_login
+            self.sys_login = None
+            # print("END")
+            self.sysop_priv = True
+            if self.gui:
+                self.gui.on_channel_status_change()
+            self.change_cli_state(1)
+            return ''
+        res = self.sys_login.step(inp)
+        if not res:
+            if self.sys_login.fail_counter > 1:
+                del self.sys_login
+                self.sys_login = None
+                print("Priv: Failed !")
+                logger.warning("Priv: Failed !")
+                if self.gui:
+                    self.gui.on_channel_status_change()
+                self.change_cli_state(1)
+            return ""
+        if self.sys_login.attempt_count == self.sys_login.attempts:
+            del self.sys_login
+            self.sys_login = None
+            # print("END")
+            self.sysop_priv = True
+            if self.gui:
+                self.gui.on_channel_status_change()
+            self.change_cli_state(1)
+        return res
 
     def cron_s0(self):
         """ Dummy for doing nothing """
@@ -732,6 +910,7 @@ class NodeCLI(DefaultCLI):
     bye_text = '73 ...\r'
     prompt = 'PoPT-NODE>'
     prefix = b''
+    sw_id = 'PoPTNode'
 
     # Extra CMDs for this CLI
 
@@ -752,6 +931,7 @@ class UserCLI(DefaultCLI):
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-User-CLI>'
     prefix = b'//'
+    sw_id = 'PoPT'
 
     # Extra CMDs for this CLI
 

@@ -209,7 +209,7 @@ class SideTabbedFrame:
         self.rx_count_lable.place(x=_x, y=_y)
 
         ######################
-        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=135, relheight=0.6, relwidth=0.9)
+        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=150, relheight=0.6, relwidth=0.9)
         #####################
         # Status /Pipe/Link/File-RX/File-TX
         self.status_label_var = tk.StringVar(tab1_kanal)
@@ -501,6 +501,7 @@ class SideTabbedFrame:
                 conn.link_holder_timer = 0
             else:
                 conn.link_holder_on = False
+            self.main_win.on_channel_status_change()
 
     def chk_t2auto(self):
         conn = self.main_win.get_conn()

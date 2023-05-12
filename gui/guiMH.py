@@ -19,9 +19,9 @@ class MHWin(tk.Toplevel):
         # Vars
         self.rev_ent = False
         # self.mh_win = tk.Tk()
-        self.title("MHEARD")
+        self.title("MyHEARD")
         self.style = self.root_win.style
-        self.geometry("1250x700")
+        # self.geometry("1250x700")
         self.geometry(f"1250x"
                       f"700+"
                       f"{self.root_win.main_win.winfo_x()}+"

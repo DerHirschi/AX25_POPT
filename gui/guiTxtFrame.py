@@ -2,6 +2,8 @@ import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext, Label, Checkbutton
 
+from constant import ENCODINGS, STATION_TYPS
+
 # from gui.guiMainNew import TkMainWin
 
 #LOOP_DELAY = 50  # ms
@@ -34,15 +36,15 @@ class TxTframe:
         # self.status_frame.grid(row=1, column=1, sticky="nsew")
         self.status_frame.pack(side=tk.BOTTOM, expand=0)
 
-        self.status_frame.columnconfigure(1, minsize=70, weight=2)  # Name
-        self.status_frame.columnconfigure(2, minsize=50, weight=3)  # Status
-        self.status_frame.columnconfigure(3, minsize=70, weight=4)  # unACK
-        self.status_frame.columnconfigure(4, minsize=70, weight=4)  # VS VR
-        self.status_frame.columnconfigure(5, minsize=50, weight=5)  # N2
-        self.status_frame.columnconfigure(6, minsize=70, weight=5)  # T1
-        self.status_frame.columnconfigure(7, minsize=70, weight=5)  # T1
-        self.status_frame.columnconfigure(8, minsize=70, weight=5)  # T2
-        self.status_frame.columnconfigure(9, minsize=70, weight=5)  # T3
+        self.status_frame.columnconfigure(1, minsize=60, weight=2)  # Name
+        self.status_frame.columnconfigure(2, minsize=40, weight=3)  # Status
+        self.status_frame.columnconfigure(3, minsize=40, weight=4)  # unACK
+        self.status_frame.columnconfigure(4, minsize=40, weight=4)  # VS VR
+        self.status_frame.columnconfigure(5, minsize=20, weight=5)  # N2
+        self.status_frame.columnconfigure(6, minsize=20, weight=5)  # T1
+        self.status_frame.columnconfigure(7, minsize=20, weight=5)  # T1
+        self.status_frame.columnconfigure(8, minsize=20, weight=5)  # T2
+        self.status_frame.columnconfigure(9, minsize=20, weight=5)  # T3
         self.status_frame.columnconfigure(10, minsize=50, weight=1)  # RX Beep
         self.status_frame.columnconfigure(11, minsize=20, weight=1)  # TimeStamp
         self.status_frame.rowconfigure(0, weight=1)  # Stat
@@ -138,18 +140,123 @@ class TxTframe:
                                       command=self.chk_timestamp
                                       )
         self.ts_box_box.grid(row=1, column=11, sticky="nsew")
+        self.status_frame.pack(side=tk.BOTTOM)
 
         ####################
         # Output
-        self.out_txt_win = scrolledtext.ScrolledText(self.pw, background=TXT_BACKGROUND_CLR,
+        self.out_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, )
+        self.out_frame.pack(side=tk.BOTTOM, expand=0)
+        self.out_frame.rowconfigure(1, minsize=19, weight=0)
+        self.out_frame.rowconfigure(0, weight=1)
+        self.out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
+        self.out_frame.columnconfigure(1, minsize=80, weight=2)  # Name
+        self.out_frame.columnconfigure(2, minsize=60, weight=3)  # QTH
+        self.out_frame.columnconfigure(3, minsize=20, weight=4)  # LOC
+        self.out_frame.columnconfigure(4, minsize=20, weight=5)  # Typ
+        self.out_frame.columnconfigure(5, minsize=80, weight=4)  # Software
+        self.out_frame.columnconfigure(6, minsize=28, weight=4)  # Status (PIPE/FT)
+        self.out_frame.columnconfigure(7, minsize=30, weight=4)  # Conn Timer
+        self.out_frame.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
+        self.out_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
+        self.out_txt_win = scrolledtext.ScrolledText(self.out_frame,
+                                                     background=TXT_BACKGROUND_CLR,
                                                      foreground=TXT_OUT_CLR,
                                                      font=(FONT, self.text_size),
-                                                     height=100, bd=0, borderwidth=0, state="disabled")
-
+                                                     height=100,
+                                                     bd=0,
+                                                     borderwidth=0,
+                                                     state="disabled")
         self.out_txt_win.tag_config("input", foreground="yellow")
+        self.out_txt_win.grid(row=0, column=0, columnspan=10, sticky="nsew")
+        # Stat INFO (Name,QTH usw)
+        self.stat_info_name_var = tk.StringVar(self.out_frame)
+        self.stat_info_qth_var = tk.StringVar(self.out_frame)
+        self.stat_info_loc_var = tk.StringVar(self.out_frame)
+        self.stat_info_typ_var = tk.StringVar(self.out_frame)
+        self.stat_info_sw_var = tk.StringVar(self.out_frame)
+        self.stat_info_timer_var = tk.StringVar(self.out_frame)
+        self.stat_info_encoding_var = tk.StringVar(self.out_frame)
+        self.stat_info_status_var = tk.StringVar(self.out_frame)
 
-        self.status_frame.pack(side=tk.BOTTOM)
+        name_label = tk.Label(self.out_frame,
+                 textvariable=self.stat_info_name_var,
+                 # bg=STAT_BAR_CLR,
+                 # height=1,
+                 # border=0,
+                 fg=STAT_BAR_TXT_CLR,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , 'bold' )
+                 )
+        name_label.grid(row=1, column=1, sticky="nsew")
+        name_label.bind('<Button-1>', self.main_class.open_user_db_win)
+        qth_label = tk.Label(self.out_frame,
+                 textvariable=self.stat_info_qth_var,
+                 bg=STAT_BAR_CLR,
+                 fg=STAT_BAR_TXT_CLR,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
+                 )
+        qth_label.bind('<Button-1>', self.main_class.open_user_db_win)
+        qth_label.grid(row=1, column=2, sticky="nsew")
+        loc_label = tk.Label(self.out_frame,
+                 textvariable=self.stat_info_loc_var,
+                 bg=STAT_BAR_CLR,
+                 fg=STAT_BAR_TXT_CLR,
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
+                 )
+        loc_label.bind('<Button-1>', self.main_class.open_user_db_win)
+        loc_label.grid(row=1, column=3, sticky="nsew")
 
+        opt = list(STATION_TYPS)
+        stat_typ = tk.OptionMenu(
+            self.out_frame,
+            self.stat_info_typ_var,
+            *opt,
+            command=self.set_stat_typ
+        )
+        stat_typ.configure(
+            background="#0ed8c3",
+            fg=STAT_BAR_TXT_CLR,
+            width=10,
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+        )
+        stat_typ.grid(row=1, column=4, sticky="nsew")
+
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_sw_var,
+                 width=20,
+                 bg="#ffd444",
+                 # fg="red3",
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS )
+                 ).grid(row=1, column=5, sticky="nsew")
+
+        status_label = tk.Label(self.out_frame,
+                 textvariable=self.stat_info_status_var,
+                 bg=STAT_BAR_CLR,
+                 fg="red3",
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS , )
+                 )
+        status_label.grid(row=1, column=6, sticky="nsew")
+        status_label.bind('<Button-1>', self.main_class.do_priv)
+
+        tk.Label(self.out_frame,
+                 textvariable=self.stat_info_timer_var,
+                 width=10,
+                 # bg="steel blue",
+                 # fg="red3",
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+                 ).grid(row=1, column=7, sticky="nsew")
+        opt = ENCODINGS
+        txt_encoding_ent = tk.OptionMenu(
+            self.out_frame,
+            self.stat_info_encoding_var,
+            *opt,
+            command=self.change_txt_encoding
+        )
+        txt_encoding_ent.configure(
+            background="steel blue",
+            width=8,
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+        )
+        txt_encoding_ent.grid(row=1, column=8, sticky="nsew")
         #############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.pw,
@@ -158,15 +265,14 @@ class TxTframe:
                                                  font=(FONT, self.text_size),
                                                  height=100, bd=0, borderwidth=0, state="disabled")
 
-        self.mon_txt.pack(side=tk.BOTTOM)
+        # self.mon_txt.pack(side=tk.BOTTOM)
 
         # paned window
 
         self.pw.add(self.status_frame, weight=1)
         # self.pw.paneconfig(self.status_frame, height=40)
-        self.pw.add(self.out_txt_win, weight=1)
+        self.pw.add(self.out_frame, weight=1)
 
-        # self.pw.add(self.out_txt, weight=2)
         self.pw.add(self.mon_txt, weight=1)
 
         # place the panedwindow on the root window
@@ -259,11 +365,14 @@ class TxTframe:
     def switch_mon_mode(self):
         # TODO Save Stretched Positions
         if self.main_class.mon_mode:
-            self.pw.remove(self.status_frame)
-            self.pw.remove(self.mon_txt)
+            try:
+                self.pw.remove(self.status_frame)
+                self.pw.remove(self.mon_txt)
+            except tk.TclError:
+                pass
             self.pw.configure(height=800)
             self.pw.add(self.status_frame, weight=1)
-            self.pw.add(self.out_txt_win, weight=1)
+            self.pw.add(self.out_frame, weight=1)
             self.pw.add(self.mon_txt, weight=1)
             """
             self.status_frame.configure(height=self.inp_txt_height)
@@ -278,7 +387,7 @@ class TxTframe:
             self.out_txt_height = self.out_txt_win.cget('height')
             self.inp_txt_height = self.status_frame.cget('height')
             # pw_height = self.pw.cget('height')
-            self.pw.remove(self.out_txt_win)
+            self.pw.remove(self.out_frame)
             self.pw.configure(height=800)
             self.status_frame.configure(height=1)
             # self.mon_txt.configure(height=500)
@@ -298,3 +407,23 @@ class TxTframe:
         else:
             self.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.main_class.get_ch_param().timestamp_opt = ts_check
+
+    def set_stat_typ(self, event=None):
+        conn = self.main_class.get_conn()
+        if conn:
+            db_ent = conn.user_db_ent
+            if db_ent:
+                db_ent.TYP = self.stat_info_typ_var.get()
+        else:
+            self.stat_info_typ_var.set('-----')
+
+    def change_txt_encoding(self, event=None, enc=''):
+        conn = self.main_class.get_conn()
+        if conn:
+            db_ent = conn.user_db_ent
+            if db_ent:
+                if not enc:
+                    enc = self.stat_info_encoding_var.get()
+                db_ent.Encoding = enc
+        else:
+            self.stat_info_encoding_var.set('')

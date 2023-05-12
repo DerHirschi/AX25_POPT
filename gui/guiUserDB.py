@@ -2,12 +2,14 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 
-from constant import ENCODINGS
+from constant import ENCODINGS, STATION_TYPS
+from fnc.str_fnc import conv_time_DE_str
 from string_tab import STR_TABLE
+from gui.guiMsgBoxes import AskMsg
 
 
 class UserDB(tk.Toplevel):
-    def __init__(self, root):
+    def __init__(self, root, key=''):
         tk.Toplevel.__init__(self)
         self.root = root
         self.lang = self.root.language
@@ -27,7 +29,8 @@ class UserDB(tk.Toplevel):
         # self.attributes("-topmost", True)
         ###############
         # VARS
-        self.user_db = root.ax25_port_handler.user_db
+        # self.user_db = root.ax25_port_handler.user_db
+        self.user_db = root.user_db
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
@@ -89,20 +92,25 @@ class UserDB(tk.Toplevel):
         ents = sorted(list(self.user_db.db.keys()))
         for ret_ent in ents:
             self.tree.insert('', tk.END, values=ret_ent)
-        if ents:
-            self.db_ent = self.user_db.get_entry(ents[0])
+        # if ents:
+        #     self.db_ent = self.user_db.get_entry(ents[0])
         ##################################
         # Selected Call Label
         self.call_labbel_var = tk.StringVar(self)
-        tk.Label(self, textvariable=self.call_labbel_var, font=("Courier", 14, 'bold')).place(x=int(self.win_width / 2), y=10)
+        tk.Label(self, textvariable=self.call_labbel_var, font=("Courier", 14, 'bold')).place(x=int(self.win_width / 2),
+                                                                                              y=10)
         ##################################
         # tabs
         self.tabControl = ttk.Notebook(self, height=self.win_height - 150, width=self.win_width - 220)
         self.tabControl.place(x=200, y=50)
         tab1 = ttk.Frame(self.tabControl)
         tab2 = ttk.Frame(self.tabControl)
+        tab3 = ttk.Frame(self.tabControl)
+        tab4 = ttk.Frame(self.tabControl)
         self.tabControl.add(tab1, text=STR_TABLE['main_page'][self.lang])
         self.tabControl.add(tab2, text=STR_TABLE['settings'][self.lang])
+        self.tabControl.add(tab3, text=STR_TABLE['passwords'][self.lang])
+        self.tabControl.add(tab4, text=STR_TABLE['stations'][self.lang])
         # self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
         #################################################
         # Entry
@@ -120,24 +128,27 @@ class UserDB(tk.Toplevel):
         _y = 20
         tk.Label(tab1, text='Typ: ').place(x=_x, y=_y)
         self.typ_var = tk.StringVar(self)
-        opt = [
-            'SYSOP',
-            'NODE',
-            'BBS',
-            'DIGI',
-            'CONVERS',
-            'BEACON',
-            'WX',
-            'TELEMETRIE',
-            'APRS-DIGI',
-            'APRS-IGATE',
-            'APRS-TELEMETRIE',
-            'APRS-WX',
-            'OTHER',
-        ]
+        opt = STATION_TYPS
         self.typ_var.set('SYSOP')
         self.typ_ent = tk.OptionMenu(tab1, self.typ_var, *opt)
         self.typ_ent.place(x=_x + 80, y=_y - 2)
+        # SYSOP
+        _x = 625
+        _y = 20
+        tk.Label(tab1, text='Sysop: ').place(x=_x, y=_y)
+        self.sysop_var = tk.StringVar(self)
+        opt = sorted(self.user_db.get_keys_by_typ(typ='SYSOP'))
+        if not opt:
+            opt = ['']
+        self.sysop_var.set('SYSOP')
+        self.sysop_ent = tk.OptionMenu(tab1,
+                                       self.sysop_var,
+                                       *opt,
+                                       # command=lambda event: self.on_select_sysop(event)
+                                       )
+        # self.sysop_ent.bind()
+        self.sysop_ent.place(x=_x + 100, y=_y - 2)
+
         # QTH
         _x = 10
         _y = 50
@@ -183,6 +194,11 @@ class UserDB(tk.Toplevel):
         self.encoding_var.set('UTF-8')
         self.encoding_ent = tk.OptionMenu(tab1, self.encoding_var, *opt)
         self.encoding_ent.place(x=_x + 185, y=_y - 2)
+        # Software
+        _x = 455
+        _y = 140
+        self.software_var = tk.StringVar(self)
+        tk.Label(tab1, textvariable=self.software_var).place(x=_x, y=_y)
 
         # PR-MAIL
         _x = 10
@@ -240,7 +256,7 @@ class UserDB(tk.Toplevel):
         ]
         self.lang_var.set('DEUTSCH')
         self.lang_ent = tk.OptionMenu(tab1, self.lang_var, *lang_opt)
-        self.lang_ent.configure(state='disabled')   # TODO
+        self.lang_ent.configure(state='disabled')  # TODO
         self.lang_ent.place(x=_x + 80, y=_y - 2)
         # Last Edit
         self.last_edit_var = tk.StringVar(self)
@@ -248,8 +264,13 @@ class UserDB(tk.Toplevel):
         tk.Label(tab1, textvariable=self.last_edit_var).place(x=540, y=417)
         # Connection Counter
         self.conn_count_var = tk.StringVar(self)
-        tk.Label(tab1, text='Connections: ').place(x=440, y=393)
-        tk.Label(tab1, textvariable=self.conn_count_var).place(x=570, y=393)
+        tk.Label(tab1, text='Connections: ').place(x=240, y=393)
+        tk.Label(tab1, textvariable=self.conn_count_var).place(x=370, y=393)
+        # Last Connection
+        self.last_conn_var = tk.StringVar(self)
+        tk.Label(tab1, text='Last Conn: ').place(x=440, y=393)
+        tk.Label(tab1, textvariable=self.last_conn_var).place(x=540, y=393)
+        # self.last_conn_var.set('2023-05-08 13:12:12')
 
         #######################
         # TAB2
@@ -292,7 +313,84 @@ class UserDB(tk.Toplevel):
                                       )
         self.pac_len_ent.place(x=_x + 85, y=_y - 2)
 
-        self.set_var_to_ent()
+
+        #######################
+        # TAB3
+        # Passwörter
+        # Sys-PW
+        _x = 20
+        _y = 20
+        tk.Label(tab3, text=STR_TABLE['syspassword'][self.lang]).place(x=_x, y=_y)
+        # self.sys_password_var = tk.StringVar(self)
+        self.sys_password_ent = tk.Text(tab3,
+                                        height=5,
+                                        width=80)
+        _x = 15
+        _y = 60
+        self.sys_password_ent.place(x=_x , y=_y)
+        # Fake-Attempts inclusive real attempt
+        _x = 20
+        _y = 200
+        tk.Label(tab3, text=STR_TABLE['trys'][self.lang]).place(x=_x, y=_y)
+        self.fake_attempts_var = tk.StringVar(self)
+        self.fake_attempts_var.set('5')
+        # max_pac_opt = list(range(8))
+        self.fake_attempts_ent = tk.Spinbox(tab3,
+                                            textvariable=self.fake_attempts_var,
+                                            from_=1,
+                                            to=10,
+                                            increment=1,
+                                            width=3
+                                            )
+        self.fake_attempts_ent.place(x=_x + 140, y=_y - 2)
+        # Fill Chars
+        _x = 300
+        _y = 200
+        tk.Label(tab3, text=STR_TABLE['fillchars'][self.lang]).place(x=_x, y=_y)
+        self.fill_char_var = tk.StringVar(self)
+        self.fill_char_var.set('80')
+        # max_pac_opt = list(range(8))
+        self.fill_chars_ent = tk.Spinbox(tab3,
+                                            textvariable=self.fill_char_var,
+                                            from_=0,
+                                            to=120,
+                                            increment=10,
+                                            width=4
+                                            )
+        self.fill_chars_ent.place(x=_x + 140, y=_y - 2)
+        # Login CMD
+        _x = 20
+        _y = 240
+        tk.Label(tab3, text=STR_TABLE['login_cmd'][self.lang]).place(x=_x, y=_y)
+        self.login_cmd_var = tk.StringVar(self)
+        self.login_cmd_var.set('SYS')
+        tk.Entry(tab3, textvariable=self.login_cmd_var, width=20).place(x=_x + 170, y=_y)
+        #######################
+        # TAB4
+        # Stationen
+        # NODES
+        _x = 20
+        _y = 20
+        self.stations_node_var = tk.StringVar(self)
+        tk.Label(tab4, textvariable=self.stations_node_var).place(x=_x, y=_y)
+        # self.stations_node_var.set('NODES: ')
+        # BBS
+        _x = 20
+        _y = 60
+        self.stations_bbs_var = tk.StringVar(self)
+        tk.Label(tab4, textvariable=self.stations_bbs_var).place(x=_x, y=_y)
+        # self.stations_bbs_var.set('BBS: ')
+        # Other
+        _x = 20
+        _y = 100
+        self.stations_other_var = tk.StringVar(self)
+        tk.Label(tab4, textvariable=self.stations_other_var).place(x=_x, y=_y)
+        # self.stations_other_var.set('OTHER: ')
+
+        if not key:
+            self.select_entry_fm_ch_id()
+        else:
+            self.select_entry_fm_key(key)
 
     def select_entry(self, event=None):
         for selected_item in self.tree.selection():
@@ -301,6 +399,26 @@ class UserDB(tk.Toplevel):
             self.db_ent = self.user_db.get_entry(record)
             self.set_var_to_ent()
             break
+
+    def select_entry_fm_ch_id(self):
+        conn = self.root.get_conn()
+        if conn:
+            self.db_ent = conn.user_db_ent
+            self.set_var_to_ent()
+
+    def select_entry_fm_key(self, key: str):
+        if key in self.user_db.db.keys():
+            self.db_ent = self.user_db.db[key]
+            self.set_var_to_ent()
+
+    def on_select_sysop(self, event=None):
+        if self.db_ent:
+            msg = AskMsg(titel=f'Einträge ergänzen?', message=f"Einträge vom Sysop ergänzen ?")
+            # self.settings_win.lift()
+            if msg:
+                sysop_key = self.sysop_var.get()
+                if sysop_key in self.user_db.db.keys():
+                    self.user_db.update_var_fm_dbentry(fm_key=sysop_key, to_key=self.db_ent.call_str)
 
     def set_var_to_ent(self):
         if self.db_ent:
@@ -312,17 +430,20 @@ class UserDB(tk.Toplevel):
             self.email_var.set(self.db_ent.Email)
             self.http_var.set(self.db_ent.HTTP)
             self.encoding_var.set(self.db_ent.Encoding)
+            self.software_var.set(self.db_ent.Software)
             self.zip_var.set(self.db_ent.ZIP)
             self.land_var.set(self.db_ent.Land)
             self.typ_var.set(self.db_ent.TYP)
+
             self.pac_len_var.set(str(self.db_ent.pac_len))
             self.max_pac_var.set(str(self.db_ent.max_pac))
-            self.last_edit_var.set(
+            """self.last_edit_var.set(
                 f"{self.db_ent.last_edit.date()} - "
                 f"{self.db_ent.last_edit.time().hour}:"
                 f"{self.db_ent.last_edit.time().minute}"
-
-            )
+            )"""
+            self.last_edit_var.set(conv_time_DE_str(self.db_ent.last_edit))
+            self.last_conn_var.set(conv_time_DE_str(self.db_ent.last_seen))
             self.conn_count_var.set(str(self.db_ent.Connects))
 
             self.info_ent.delete(0.0, tk.END)
@@ -330,6 +451,68 @@ class UserDB(tk.Toplevel):
 
             self.ctext_ent.delete(0.0, tk.END)
             self.ctext_ent.insert(tk.INSERT, self.db_ent.CText)
+
+
+            #self.sys_password_ent.delete(0.0, tk.END)
+            self.sys_password_ent.delete(0.0, tk.END)
+            self.sys_password_ent.insert(tk.INSERT, str(self.db_ent.sys_pw))
+            self.fake_attempts_var.set(str(self.db_ent.sys_pw_parm[0]))
+            self.fill_char_var.set(str(self.db_ent.sys_pw_parm[1]))
+            if len(self.db_ent.sys_pw_parm) == 2:
+                self.db_ent.sys_pw_parm.append('SYS')
+            self.login_cmd_var.set(str(self.db_ent.sys_pw_parm[2]))
+
+
+            self.update_sysop_opt()
+            self.update_stations()
+
+    def sysop_opt_remove(self):
+        self.sysop_var.set('')  # remove default selection only, not the full list
+        self.sysop_ent['menu'].delete(0, 'end')  # remove full list
+
+    def update_sysop_opt(self):
+        self.sysop_opt_remove()  # remove all options
+
+        if self.db_ent.TYP == 'SYSOP':
+            self.sysop_var.set('')
+            self.sysop_ent.configure(state='disabled')
+
+        else:
+            self.sysop_ent.configure(state='normal')
+            self.sysop_var.set(self.db_ent.Sysop_Call)
+            print(f"Sysop_ca: {self.db_ent.Sysop_Call}")
+            self.sysop_ent.setvar(self.db_ent.Sysop_Call)
+
+            for opt in sorted(self.user_db.get_keys_by_typ(typ='SYSOP')):
+                self.sysop_ent['menu'].add_command(label=opt, command=tk._setit(self.sysop_var, opt))
+
+    def update_stations(self):
+        sysop_key = ''
+        if self.db_ent.TYP == 'SYSOP':
+            sysop_key = self.db_ent.call_str
+        else:
+            sysop_key = self.db_ent.Sysop_Call
+
+        node_str = 'NODES: '
+        bbs_str = 'BBS: '
+        other_str = 'OTHER: '
+
+        if sysop_key:
+            stat_dict = self.user_db.get_keys_by_sysop(sysop=sysop_key)
+            node_calls = stat_dict['NODE']
+            bbs_calls = stat_dict['BBS']
+            other_calls = []
+            for k in stat_dict.keys():
+                if k not in ['NODE', 'BBS']:
+                    for call in stat_dict[k]:
+                        other_calls.append(call)
+            node_str = node_str + ' '.join(node_calls)
+            bbs_str = bbs_str + ' '.join(bbs_calls)
+            other_str = other_str + ' '.join(other_calls)
+
+        self.stations_node_var.set(node_str)
+        self.stations_bbs_var.set(bbs_str)
+        self.stations_other_var.set(other_str)
 
     def save_btn_cmd(self):
         if self.db_ent:
@@ -342,14 +525,31 @@ class UserDB(tk.Toplevel):
             self.db_ent.Encoding = self.encoding_var.get()
             self.db_ent.ZIP = self.zip_var.get()
             self.db_ent.Land = self.land_var.get()
-            self.db_ent.TYP = self.typ_var.get()
+
             self.db_ent.pac_len = int(self.pac_len_var.get())
             self.db_ent.max_pac = int(self.max_pac_var.get())
             self.db_ent.CText = self.ctext_ent.get(0.0, tk.END)[:-1]
             self.db_ent.Info = self.info_ent.get(0.0, tk.END)[:-1]
+
+            self.db_ent.sys_pw = self.sys_password_ent.get(0.0, tk.END)[:-1]
+            self.db_ent.sys_pw_parm = [
+                int(self.fake_attempts_var.get()),
+                int(self.fill_char_var.get()),
+                str(self.login_cmd_var.get()),
+            ]
+
             self.db_ent.last_edit = datetime.now()
+            self.db_ent.TYP = self.typ_var.get()
+            if self.db_ent.TYP == 'SYSOP':
+                self.db_ent.Sysop_Call = ''
+            else:
+                tmp = self.sysop_var.get()
+                if tmp != self.db_ent.Sysop_Call:
+                    self.db_ent.Sysop_Call = tmp
+                    self.on_select_sysop()
 
         self.user_db.save_data()
+        self.select_entry()
         self.root.update_station_info()
         self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
 
@@ -359,14 +559,19 @@ class UserDB(tk.Toplevel):
         self.destroy_win()
 
     def del_btn_cmd(self):
-        del self.user_db.db[self.db_ent.call_str]
-        ents = sorted(list(self.user_db.db.keys()))
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-        for ret_ent in ents:
-            self.tree.insert('', tk.END, values=ret_ent)
-        if ents:
-            self.db_ent = self.user_db.get_entry(ents[0])
+        if self.db_ent:
+            msg = AskMsg(titel=f'lösche {self.db_ent.call_str} !', message=f"{self.db_ent.call_str} löschen ?")
+            # self.settings_win.lift()
+            if msg:
+                del self.user_db.db[self.db_ent.call_str]
+                ents = sorted(list(self.user_db.db.keys()))
+                for i in self.tree.get_children():
+                    self.tree.delete(i)
+                for ret_ent in ents:
+                    self.tree.insert('', tk.END, values=ret_ent)
+                if ents:
+                    self.db_ent = self.user_db.get_entry(ents[0])
+                self.select_entry()
 
     def destroy_win(self):
         self.destroy()

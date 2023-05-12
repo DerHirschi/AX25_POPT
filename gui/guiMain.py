@@ -15,8 +15,10 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import config_station
-from fnc.str_fnc import tk_filter_bad_chars, try_decode
+from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta
 from gui.guiPipeToolSettings import PipeToolSettings
+from gui.guiPriv import PrivilegWin
+from gui.guiUserDBoverview import UserDBtreeview
 from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
 from gui.guiTxtFrame import TxTframe
@@ -83,6 +85,7 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
+        self.user_db = self.ax25_port_handler.user_db
         self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
         #####################
@@ -161,6 +164,7 @@ class TkMainWin:
         self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
         self.MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win,
                                    underline=1)
+        self.MenuTools.add_command(label="User-DB Tree", command=self.UserDB_tree, underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
                                    command=self.open_linkholder_settings_win, underline=0)
@@ -171,6 +175,9 @@ class TkMainWin:
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
                                    underline=0)
+        self.MenuTools.add_command(label='Priv', command=self.open_priv_win,
+                                   underline=0)
+
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         self.menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=self.MenuTools, underline=0)
 
@@ -265,37 +272,6 @@ class TkMainWin:
                          text="Kaffèmaschine",
                          bg="HotPink2", width=12, command=self.kaffee)
         _btn.place(x=215, y=10)
-        ###############################################
-        # Stations Info ( Name, QTH ... )
-
-        self.stat_info_name_var = tk.StringVar(self.side_btn_frame_top)
-        stat_info_name = tk.Label(self.side_btn_frame_top,
-                                  textvariable=self.stat_info_name_var,
-                                  font=(FONT, 12, 'bold')
-                                  )
-        stat_info_name.place(x=10, y=90)
-        self.stat_info_qth_var = tk.StringVar(self.side_btn_frame_top)
-        stat_info_qth = tk.Label(self.side_btn_frame_top,
-                                 textvariable=self.stat_info_qth_var,
-                                 font=(FONT, 12, 'bold')
-                                 )
-        stat_info_qth.place(x=10, y=115)
-        self.stat_info_loc_var = tk.StringVar(self.side_btn_frame_top)
-        stat_info_loc = tk.Label(self.side_btn_frame_top,
-                                 textvariable=self.stat_info_loc_var,
-                                 font=(FONT, 12, 'bold')
-                                 )
-        stat_info_loc.place(x=10, y=140)
-        # Status /Pipe/Link/File-RX/File-TX
-        self.status_info_var = tk.StringVar(self.side_btn_frame_top)
-        self.status_label = tk.Label(
-            self.side_btn_frame_top,
-            textvariable=self.status_info_var,
-            fg='red')
-        # font = self.status_label.cget('font')
-        self.status_label.configure(font=(FONT, 14, 'bold'))
-        self.status_label.place(x=10, y=163)
-
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
         self.setting_sound = self.tabbed_sideFrame.sound_on
@@ -329,6 +305,7 @@ class TkMainWin:
         self.new_conn_win = None
         self.settings_win = None
         self.mh_window = None
+        self.userDB_tree_win = None
         ###########################
         # Init
         # set Ch Btn Color
@@ -767,29 +744,60 @@ class TkMainWin:
         self.tabbed_sideFrame.on_ch_btn_stat_change()
         self.update_station_info()
 
+    def update_stat_info_conn_timer(self):
+        conn = self.get_conn()
+        if conn:
+            time_str = get_time_delta(conn.cli.time_start)
+            self.txt_win.stat_info_timer_var.set(time_str)
+        else:
+            self.txt_win.stat_info_timer_var.set('--:--:--')
+
     def update_station_info(self):
-        name = ''
-        qth = ''
-        loc = ''
-        status = ''
+        name = '-------'
+        qth = '-------'
+        loc = '------'
+        status = '-------'
+        typ = '-----'
+        sw = '---------'
+        enc = ''
         conn = self.get_conn()
         if conn:
             db_ent = conn.user_db_ent
             if db_ent:
-                name = db_ent.Name
-                qth = db_ent.QTH
-                loc = db_ent.LOC
+                if db_ent.Name:
+                    name = db_ent.Name
+                if db_ent.QTH:
+                    qth = db_ent.QTH
+                if db_ent.LOC:
+                    loc = db_ent.LOC
+                if db_ent.TYP:
+                    typ = db_ent.TYP
+                if db_ent.Software:
+                    sw = db_ent.Software
+                enc = db_ent.Encoding
             if conn.is_link:
-                status = 'Link'
+                status = 'LINK'
             elif conn.pipe is not None:
-                status = 'Pipe'
+                status = 'PIPE'
             elif conn.ft_tx_activ is not None:
-                status = 'Sending File'
+                status = 'TX FILE'
+            else:
+                status = ['-'] * 7
+                if conn.is_RNR:
+                    status[2] = 'R'
+                if conn.link_holder_on:
+                    status[1] = 'L'
+                if conn.cli.sysop_priv:
+                    status[0] = 'S'
+                status = ''.join(status)
 
-        self.status_info_var.set(status)
-        self.stat_info_name_var.set(name)
-        self.stat_info_qth_var.set(qth)
-        self.stat_info_loc_var.set(loc)
+        self.txt_win.stat_info_status_var.set(status)
+        self.txt_win.stat_info_name_var.set(name)
+        self.txt_win.stat_info_qth_var.set(qth)
+        self.txt_win.stat_info_loc_var.set(loc)
+        self.txt_win.stat_info_typ_var.set(typ)
+        self.txt_win.stat_info_sw_var.set(sw)
+        self.txt_win.stat_info_encoding_var.set(enc)
 
     def dx_alarm(self):
         """ Alarm when new User in MH List """
@@ -812,25 +820,28 @@ class TkMainWin:
         """ Prio Tasks """
         self.monitor_task()
         self.update_qso_win()
-        self.txt_win.update_status_win()
-        if self.settings_win is not None:
-            # Settings Win ( Port,- Station settings )
-            self.settings_win.tasker()
 
     def tasker_low_prio(self):
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
+            self.txt_win.update_status_win()
             self.change_conn_btn()
-            # self.tabbed_sideFrame.update_side_mh()
             self.check_sprech_ch_buf()
             self.rx_beep_sound()
             if self.ch_alarm:
                 self.ch_btn_status_update()
+            """
+            # TASK FOR SETTING WIN IF NEEDED !!!
+            if self.settings_win is not None:
+                # Settings Win ( Port,- Station settings )
+                self.settings_win.tasker()
+            """
 
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
             self.update_bw_mon()
+            self.update_stat_info_conn_timer()
             self.tabbed_sideFrame.tasker()
             # print(f"{self.ax25_port_handler.link_connections.keys()}")
             if self.mh.new_call_alarm and self.setting_dx_alarm:
@@ -999,81 +1010,115 @@ class TkMainWin:
     ##########################
     # New Connection WIN
     def open_new_conn_win(self):
+        # TODO just build a f** switch ( dict )
         if self.new_conn_win is None:
             self.new_conn_win = NewConnWin(self)
 
     ##########################
     # Stat Settings WIN
     def open_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             self.settings_win = StationSettingsWin(self)
 
     ##########################
     # Port Settings WIN
     def open_port_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             self.settings_win = PortSettingsWin(self)
 
     ##########################
     # Beacon Settings WIN
     def open_beacon_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             BeaconSettings(self)
 
     ##########################
     # Beacon Settings WIN
     def open_rx_echo_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             RxEchoSettings(self)
 
     ##########################
     # Beacon Settings WIN
     def open_linkholder_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             LinkHolderSettings(self)
 
     ##########################
     # Beacon Settings WIN
     def open_multicast_settings_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             MulticastSettings(self)
 
     ##########################
     # Beacon Settings WIN
-    def open_user_db_win(self):
+    def open_user_db_win(self, event=None, key=''):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
-            UserDB(self)
+            UserDB(self, key=key)
 
     ##########################
     # About WIN
     def open_about_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             About(self)
 
     ##########################
     # Pipe Tool
     def pipe_tool_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             PipeToolSettings(self)
 
     ##########################
     # About WIN
     def open_file_send(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             FileSend(self)
 
     ##########################
     # Keybinds Help WIN
     def open_keybind_help_win(self):
+        # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             KeyBindsHelp(self)
 
     ##########################
+    # Priv Win
+    def open_priv_win(self):
+        # TODO just build a f** switch ( dict )
+        if self.settings_win is None:
+            PrivilegWin(self)
+
+    ##########################
     # Keybinds Help WIN
     def open_port_stat_win(self):
-        # TODO
+        # TODO Port selectable
         if 0 in self.mh.port_statistik_DB.keys():
             self.mh.port_statistik_DB[0].plot_test_graph(self)
+
+    ###################
+    # MH WIN
+    def MH_win(self):
+        """MH WIN"""
+        self.reset_dx_alarm()
+        if self.mh_window is None:
+            self.mh_window = MHWin(self)
+
+    ###################
+    # User-DB TreeView WIN
+    def UserDB_tree(self):
+        """MH WIN"""
+        if self.userDB_tree_win is None:
+            self.userDB_tree_win = UserDBtreeview(self)
 
     # ##############
     # DISCO
@@ -1213,6 +1258,7 @@ class TkMainWin:
             self.win_buf[k].new_data_tr = True
         self.win_buf[k].rx_beep_tr = True
         self.ch_btn_status_update()
+
     def on_click_inp_txt(self, event=None):
         ind = self.win_buf[self.channel_index].input_win_index
         if ind:
@@ -1241,13 +1287,6 @@ class TkMainWin:
         """
 
     # SEND TEXT OUT
-    ###################
-    # MH WIN
-    def MH_win(self):
-        """MH WIN"""
-        self.reset_dx_alarm()
-        if self.mh_window is None:
-            self.mh_window = MHWin(self)
 
     ###################
     # BW Plot
@@ -1292,6 +1331,15 @@ class TkMainWin:
             channel=12
         )
         """
+
+    def do_priv(self, event=None, login_cmd=''):
+        conn = self.get_conn()
+        if conn:
+            if conn.user_db_ent:
+                if conn.user_db_ent.sys_pw:
+                    conn.cli.start_baycom_login(login_cmd=login_cmd)
+                else:
+                    self.open_priv_win()
 
     def switch_monitor_mode(self):
         self.txt_win.switch_mon_mode()
@@ -1353,6 +1401,7 @@ class TkMainWin:
         set_all_tags(self.inp_txt, self.get_ch_param().input_win_tags)
         set_all_tags(self.out_txt, self.get_ch_param().output_win_tags)
         self.inp_txt.mark_set("insert", self.get_ch_param().input_win_cursor_index)
+        self.inp_txt.see(tk.END)
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if self.get_ch_param().rx_beep_opt and ind:
