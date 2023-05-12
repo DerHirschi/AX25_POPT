@@ -80,23 +80,16 @@ class UserDBtreeview(tk.Toplevel):
             self.tree.insert('', tk.END, values=ret_ent)
 
     def entry_selected(self, event):
-        pass
-        """
         for selected_item in self.tree.selection():
             item = self.tree.item(selected_item)
             record = item['values']
             # show a message
-            call = record[3]
-            vias = record[6]
-            port = record[2]
-            port = int(port.split(' ')[0])
-            if vias:
-                call = f'{call} {vias}'
-            #self.root_win.open_new_conn_win()
+            key = record[0]
+
+            self.root.open_user_db_win(key=key)
             #self.root_win.new_conn_win.call_txt_inp.insert(tk.END, call)
             #self.root_win.new_conn_win.set_port_index(port)
             #self.close()
-        """
 
     def sort_entry(self, flag: str):
         sort_date = self.user_db.get_sort_entr(flag_str=flag, reverse=self.rev_ent)

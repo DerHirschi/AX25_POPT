@@ -1058,10 +1058,10 @@ class TkMainWin:
 
     ##########################
     # Beacon Settings WIN
-    def open_user_db_win(self, event=None):
+    def open_user_db_win(self, event=None, key=''):
         # TODO just build a f** switch ( dict )
         if self.settings_win is None:
-            UserDB(self)
+            UserDB(self, key=key)
 
     ##########################
     # About WIN

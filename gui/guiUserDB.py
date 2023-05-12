@@ -9,7 +9,7 @@ from gui.guiMsgBoxes import AskMsg
 
 
 class UserDB(tk.Toplevel):
-    def __init__(self, root):
+    def __init__(self, root, key=''):
         tk.Toplevel.__init__(self)
         self.root = root
         self.lang = self.root.language
@@ -356,8 +356,10 @@ class UserDB(tk.Toplevel):
                                             width=4
                                             )
         self.fill_chars_ent.place(x=_x + 140, y=_y - 2)
-
-        self.select_entry_fm_ch_id()
+        if not key:
+            self.select_entry_fm_ch_id()
+        else:
+            self.select_entry_fm_key(key)
 
     def select_entry(self, event=None):
         for selected_item in self.tree.selection():
@@ -371,6 +373,11 @@ class UserDB(tk.Toplevel):
         conn = self.root.get_conn()
         if conn:
             self.db_ent = conn.user_db_ent
+            self.set_var_to_ent()
+
+    def select_entry_fm_key(self, key: str):
+        if key in self.user_db.db.keys():
+            self.db_ent = self.user_db.db[key]
             self.set_var_to_ent()
 
     def on_select_sysop(self, event=None):
