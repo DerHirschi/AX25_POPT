@@ -3,22 +3,9 @@ import os
 import logging
 from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
+from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save
 
 logger = logging.getLogger(__name__)
-
-VER = '2.84.2dev'
-
-CFG_data_path = 'data/'
-CFG_usertxt_path = 'userdata/'
-CFG_txt_save = {
-                'stat_parm_cli_ctext': 'ctx',
-                'stat_parm_cli_bye_text': 'btx',
-                'stat_parm_cli_itext': 'itx',
-                'stat_parm_cli_longitext': 'litx',
-                'stat_parm_cli_akttext': 'atx',
-               }
-
-CFG_clr_sys_msg = 'red'
 
 
 def init_dir_struct():

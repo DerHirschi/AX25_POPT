@@ -1,7 +1,7 @@
 import gui.guiMain
 import ax25.ax25InitPorts
 import logging
-from config_station import VER
+from constant import VER
 
 LANGUAGE = 0    # QUICK FIX
 """

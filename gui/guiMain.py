@@ -15,6 +15,7 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import config_station
+import constant
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta
 from gui.guiPipeToolSettings import PipeToolSettings
 from gui.guiPriv import PrivilegWin
@@ -114,7 +115,7 @@ class TkMainWin:
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
-        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(config_station.VER))
+        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(constant.VER))
         self.main_win.geometry("1400x850")
         # self.main_win.iconbitmap("favicon.ico")
         self.main_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
@@ -381,11 +382,11 @@ class TkMainWin:
               '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
               '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r' \
-              'Version: {}\r'.format(config_station.VER)
+              'Version: {}\r'.format(constant.VER)
         tmp = ban.split('\r')
         for el in tmp:
             self.msg_to_monitor(el)
-        self.msg_to_monitor('Python Other Packet Terminal ' + config_station.VER)
+        self.msg_to_monitor('Python Other Packet Terminal ' + constant.VER)
         for stat in self.ax25_port_handler.ax25_stations_settings.keys():
             self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in self.ax25_port_handler.ax25_ports.keys():
@@ -1017,7 +1018,7 @@ class TkMainWin:
 
         ind2 = self.mon_txt.index(tk.INSERT)
         self.mon_txt.tag_add("sys-msg", ind, ind2)
-        self.mon_txt.tag_config("sys-msg", foreground=config_station.CFG_clr_sys_msg)
+        self.mon_txt.tag_config("sys-msg", foreground=constant.CFG_clr_sys_msg)
 
         self.mon_txt.see(tk.END)
         if 'Lob: ' in var:

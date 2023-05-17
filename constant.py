@@ -1,3 +1,77 @@
+VER = '2.84.3dev'
+CFG_data_path = 'data/'
+CFG_usertxt_path = 'userdata/'
+CFG_txt_save = {
+                'stat_parm_cli_ctext': 'ctx',
+                'stat_parm_cli_bye_text': 'btx',
+                'stat_parm_cli_itext': 'itx',
+                'stat_parm_cli_longitext': 'litx',
+                'stat_parm_cli_akttext': 'atx',
+               }
+CFG_clr_sys_msg = 'red'
+
+ENCODINGS = (
+    'UTF-8',
+    'CP437',
+    'ASCII',
+    'LATIN_1',
+)
+STATION_TYPS = [
+            'SYSOP',    # Don't change. Used as Key
+            'NODE',
+            'BBS',
+            'SYS-BBS',
+            'DIGI',
+            'CONVERS',
+            'BEACON',
+            'WX',
+            'TELEMETRIE',
+            'APRS-DIGI',
+            'APRS-IGATE',
+            'APRS-TELEMETRIE',
+            'APRS-WX',
+            'GATEWAY',
+            'OTHER',
+        ]
+
+STATION_ID_SYSOP = [
+    'WinSTOP',
+    'STOP',
+    'TOP',
+    'PoPT',
+]
+
+STATION_ID_NODE = [
+    'WinSTOPNode',
+    'PoPTNode',
+
+]
+
+STATION_ID_BBS = [
+    'WinSTOPBox',
+    'FBB'
+]
+
+STATION_ID_ENCODING = {
+    0: 'CP437',
+    1: 'ASCII',     # TODO Eigentlich ä > ae
+    2: 'ASCII',     # TODO Eigentlich c64 Zeichensatz
+    3: 'LATIN_1',
+    4: 'UTF-8'
+}
+STATION_ID_ENCODING_REV = {
+    'CP437': 0,
+    'ASCII': 1,     # TODO Eigentlich ä > ae
+    # 'ASCII': 2,     # TODO Eigentlich c64 Zeichensatz
+    'LATIN_1': 3,
+    'UTF-8': 4
+}
+
+FT_MODES = [
+    'Text',
+    'AutoBin'
+]
+
 ALL_COLOURS = ('snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white', 'old lace',
                'linen', 'antique white', 'papaya whip', 'blanched almond', 'bisque', 'peach puff',
                'navajo white', 'lemon chiffon', 'mint cream', 'azure', 'alice blue', 'lavender',
@@ -74,64 +148,3 @@ ALL_COLOURS = ('snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white'
                'grey75', 'grey76', 'grey77', 'grey78', 'grey79', 'grey80', 'grey81', 'grey82', 'grey83',
                'grey84', 'grey85', 'grey86', 'grey87', 'grey88', 'grey89', 'grey90', 'grey91', 'grey92',
                'grey93', 'grey94', 'grey95', 'grey97', 'grey98', 'grey99')
-ENCODINGS = (
-    'UTF-8',
-    'CP437',
-    'ASCII',
-    'LATIN_1',
-)
-STATION_TYPS = [
-            'SYSOP',    # Don't change. Used as Key
-            'NODE',
-            'BBS',
-            'SYS-BBS',
-            'DIGI',
-            'CONVERS',
-            'BEACON',
-            'WX',
-            'TELEMETRIE',
-            'APRS-DIGI',
-            'APRS-IGATE',
-            'APRS-TELEMETRIE',
-            'APRS-WX',
-            'GATEWAY',
-            'OTHER',
-        ]
-
-STATION_ID_SYSOP = [
-    'WinSTOP',
-    'STOP',
-    'TOP',
-    'PoPT',
-]
-
-STATION_ID_NODE = [
-    'WinSTOPNode',
-    'PoPTNode',
-
-]
-
-STATION_ID_BBS = [
-    'WinSTOPBox',
-    'FBB'
-]
-
-STATION_ID_ENCODING = {
-    0: 'CP437',
-    1: 'ASCII',     # TODO Eigentlich ä > ae
-    2: 'ASCII',     # TODO Eigentlich c64 Zeichensatz
-    3: 'LATIN_1',
-    4: 'UTF-8'
-}
-STATION_ID_ENCODING_REV = {
-    'CP437': 0,
-    'ASCII': 1,     # TODO Eigentlich ä > ae
-    # 'ASCII': 2,     # TODO Eigentlich c64 Zeichensatz
-    'LATIN_1': 3,
-    'UTF-8': 4
-}
-
-FT_MODES = [
-    'Text',
-    'AutoBin'
-]

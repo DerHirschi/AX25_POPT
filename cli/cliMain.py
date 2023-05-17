@@ -4,6 +4,7 @@ import logging
 
 import ax25.ax25Connection
 import config_station
+import constant
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
 from constant import STATION_ID_ENCODING_REV
@@ -234,8 +235,8 @@ class DefaultCLI(object):
 
     def load_fm_file(self, filename: str):
         try:
-            with open(config_station.CFG_data_path +
-                      config_station.CFG_usertxt_path +
+            with open(constant.CFG_data_path +
+                      constant.CFG_usertxt_path +
                       self.stat_cfg_index_call + '/' +
                       filename, 'rb') as inp:
                 return pickle.load(inp)
@@ -269,7 +270,7 @@ class DefaultCLI(object):
                 except KeyError:
                     logger.error(f"KeyERROR STATION_ID_ENCODING_REV (constant.py): {self.user_db_ent.Encoding}")
         flag = txt_enc + didadit + unknown
-        return '{' + f"{self.sw_id}-{config_station.VER}-{flag}" + '}\r'
+        return '{' + f"{self.sw_id}-{constant.VER}-{flag}" + '}\r'
 
     def set_user_db_software_id(self):
         if self.user_db_ent:
@@ -475,7 +476,7 @@ class DefaultCLI(object):
               '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
               '$$ |       $$$$$$  |   $$ |        $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r\r' \
-              'Version: {}\r\r\r'.format(config_station.VER)
+              'Version: {}\r\r\r'.format(constant.VER)
         return ret
 
     def cmd_i(self):
