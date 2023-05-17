@@ -25,7 +25,7 @@ class DefaultCLI(object):
     sw_id = ''
 
     def __init__(self, connection):
-        print("CLI-INIT")
+        # print("CLI-INIT")
         stat_cfg = connection.stat_cfg
         if stat_cfg is not None:
             # Override with optional Station Config Param

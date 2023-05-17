@@ -314,21 +314,33 @@ class AX25Conn(object):
 
     def recv_data(self, data: b'', file_trans=False):
         self.vr = count_modulo(int(self.vr))
+        # self.ch_echo_frm_rx(data)   # TODO
         # Statistic
         self.rx_byte_count += len(data)
+        self.rx_buf_rawData += data
         if self.is_link:
             self.LINK_rx_buff += data
-        # self.ch_echo_frm_rx(data)   # TODO
+            self.update_gui_qso()
+            return
+        # Pipe-Tool
+        if self.pipe_rx(data):
+            self.update_gui_qso()
+            return
+
         if self.ft_tx_activ is None:
-            self.rx_buf_rawData += data
             # Station ( RE/DISC/Connect ) Sting Detection
             res = self.set_dest_call_fm_data_inp(data)
             # CLI
             if res:
                 self.exec_cli(res)
-        # Pipe-Tool
-        if self.pipe_rx(data):
+            self.update_gui_qso()
             return
+        self.ft_tx_activ.ft_rx()
+        # self.update_gui_qso()
+
+    def update_gui_qso(self):
+        if self.gui is not None:
+            self.gui.update_qso_win(conn=self)
 
     def set_dest_call_fm_data_inp(self, raw_data: b''):
         det = [

@@ -130,3 +130,8 @@ STATION_ID_ENCODING_REV = {
     'LATIN_1': 3,
     'UTF-8': 4
 }
+
+FT_MODES = [
+    'Text',
+    'AutoBin'
+]

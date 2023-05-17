@@ -414,6 +414,7 @@ class SideTabbedFrame:
         # self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
 
     def update_ch_echo(self):
+
         # TODO AGAIN !!
         _tab = self.tab5_ch_links
         akt_ch_id = self.main_win.channel_index

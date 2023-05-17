@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog as fd
 from ax25.ax25FileTransfer import FileTX
+from constant import FT_MODES
 from string_tab import STR_TABLE
 
 
@@ -62,10 +63,7 @@ class FileSend(tk.Toplevel):
         _y = 80
         _label = tk.Label(self, text=STR_TABLE['protocol'][self.root.language])
         self.protocol_var = tk.StringVar(self)
-        opt = [
-            'Text',
-            # 'AutoBin',
-        ]
+        opt = FT_MODES
         self.protocol_var.set(opt[0])
         prot = tk.OptionMenu(self, self.protocol_var, *opt, command=self.change_settings)
         prot.configure(width=8, height=1)
@@ -134,7 +132,7 @@ class FileSend(tk.Toplevel):
     def update_file_size(self):
         if self.FileOBJ is not None:
             if not self.FileOBJ.e:
-                size = len(self.FileOBJ.data)
+                size = len(self.FileOBJ.raw_data)
                 size = size / 1024
                 text = f"{STR_TABLE['size'][self.root.language]} {size} kb"
                 self.file_size.configure(text=text)
