@@ -278,6 +278,7 @@ class SideTabbedFrame:
                     text="Baken",
                     variable=self.bake_on,
                     ).place(x=10, y=60)
+        self.bake_on.set(True)
         # self.bake_on.set(True)
         # DX Alarm  > dx_alarm_on
         self.dx_alarm_on = tk.BooleanVar()

@@ -91,6 +91,11 @@ class FileSend(tk.Toplevel):
         _label.place(x=_x, y=_y)
         wait_tx.place(x=_x + 290, y=_y)
 
+        self.conn = self.root.get_conn()
+        if not self.conn:
+            ok_bt.configure(state='disabled')
+            openfile_btn.configure(state='disabled')
+
         #################
         #
         _x = 20
@@ -99,6 +104,7 @@ class FileSend(tk.Toplevel):
         self.file_size.place(x=_x, y=_y)
 
     def select_files(self):
+
         self.attributes("-topmost", False)
         # self.root.lower
         filetypes = (
@@ -117,6 +123,7 @@ class FileSend(tk.Toplevel):
             self.FileOBJ = FileTX(
                 filename=filenames[0],
                 protocol=prot,
+                connection=self.conn,
                 tx_wait=wait
             )
             if not self.FileOBJ.e:
@@ -145,7 +152,7 @@ class FileSend(tk.Toplevel):
                 self.FileOBJ.param_filename = f_n
                 self.FileOBJ.param_protocol = prot
                 self.FileOBJ.param_wait = wait
-                self.FileOBJ.change_settings()
+                self.FileOBJ.ft_init()
         self.update_file_size()
 
     def chancel_btn_cmd(self):

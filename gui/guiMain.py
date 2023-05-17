@@ -76,6 +76,7 @@ class ChVars(object):
         self.qso_tag_name = ''
         self.qso_tag_fg = ''
         self.qso_tag_bg = ''
+        # self.hex_output = True
 
 
 class TkMainWin:
@@ -858,23 +859,36 @@ class TkMainWin:
                 txt_enc = 'UTF-8'
                 if conn.user_db_ent:
                     txt_enc = conn.user_db_ent.Encoding
-                # if not conn.my_digi_call:
+
                 inp = bytes(conn.tx_buf_guiData)
                 conn.tx_buf_guiData = b''
-                inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
-                # Write RX Date to Window/Channel Buffer
-                self.win_buf[k].output_win += inp
-                # if self.win_buf[k].t2speech:
-                #     self.win_buf[k].t2speech_buf += inp
+
                 out = bytes(conn.rx_buf_rawData)
                 conn.rx_buf_rawData = b''
                 # out = try_decode(out)
+
+                # if self.win_buf[k].hex_output:
+                """
+                hex_out = out.hex()
+                hex_in = inp.hex()
+                """
+                inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
+                # Write RX Date to Window/Channel Buffer
+
                 out = out.decode(txt_enc, 'ignore')
                 out = out.replace('\r\n', '\n') \
                     .replace('\n\r', '\n')\
                     .replace('\r', '\n')
+                # print(f"{out}\nhex: {hex_out}")
                 out = tk_filter_bad_chars(out)
+                """
+                if hex_out:
+                    out = out + ' > ' + hex_out + '\n'
+                if hex_in:
+                    inp = inp + ' >' + hex_in + '<\n'
+                """
                 # Write RX Date to Window/Channel Buffer
+                self.win_buf[k].output_win += inp
                 self.win_buf[k].output_win += out
                 if self.win_buf[k].t2speech:
                     if k == self.channel_index:
@@ -1164,6 +1178,7 @@ class TkMainWin:
                 if station.user_db_ent:
                     txt_enc = station.user_db_ent.Encoding
                 tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
+
                 tmp_txt = tmp_txt.replace('\n', '\r')
                 station.send_data(tmp_txt.encode(txt_enc, 'ignore'))
 

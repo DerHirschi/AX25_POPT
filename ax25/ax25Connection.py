@@ -316,18 +316,19 @@ class AX25Conn(object):
         self.vr = count_modulo(int(self.vr))
         # Statistic
         self.rx_byte_count += len(data)
-        self.rx_buf_rawData += data
         if self.is_link:
             self.LINK_rx_buff += data
         # self.ch_echo_frm_rx(data)   # TODO
+        if self.ft_tx_activ is None:
+            self.rx_buf_rawData += data
+            # Station ( RE/DISC/Connect ) Sting Detection
+            res = self.set_dest_call_fm_data_inp(data)
+            # CLI
+            if res:
+                self.exec_cli(res)
         # Pipe-Tool
         if self.pipe_rx(data):
             return
-        # Station ( RE/DISC/Connect ) Sting Detection
-        res = self.set_dest_call_fm_data_inp(data)
-        # CLI
-        if res:
-            self.exec_cli(res)
 
     def set_dest_call_fm_data_inp(self, raw_data: b''):
         det = [
@@ -431,6 +432,8 @@ class AX25Conn(object):
         if self.zustand_exec.stat_index == 0:
             self.conn_cleanup()
 
+    #############################
+    # Proto PIPE
     def pipe_crone(self):
         if self.pipe is None:
             return False
@@ -450,34 +453,29 @@ class AX25Conn(object):
         if self.pipe.parm_max_pac:
             self.parm_MaxFrame = int(self.pipe.parm_max_pac)
 
+    ########################################
+    # File Transfer
     def ft_cron(self):
+        if self.ft_queue_handling():
+            return self.ft_tx_activ.ft_crone()
+        return False
+
+    def ft_queue_handling(self):
         if self.ft_tx_activ is not None:
             self.ft_tx_activ: FileTX
-            if not self.ft_tx_activ.data_out:
-                self.ft_tx_queue.remove(self.ft_tx_activ)
+            if self.ft_tx_activ.done:
                 self.ft_tx_activ = None
                 if self.ft_tx_queue:
                     self.ft_tx_activ = self.ft_tx_queue[0]
-                else:
-                    return False
-            if not self.ft_tx_activ.param_wait:
-                self.send_data(bytes(self.ft_tx_activ.data_out), file_trans=True)
-                self.ft_tx_activ.data_out = b''
-            elif self.ft_tx_activ.last_tx < time.time():
-                self.ft_tx_activ.reset_timer()
-                tmp_len = self.parm_PacLen * self.parm_MaxFrame
-                if len(self.ft_tx_activ.data_out) < tmp_len:
-                    tmp = self.ft_tx_activ.data_out
-                    tmp_len = len(tmp)
-                else:
-                    tmp = self.ft_tx_activ.data_out[:tmp_len]
-                self.send_data(tmp, file_trans=True)
-                self.ft_tx_activ.data_out = self.ft_tx_activ.data_out[tmp_len:]
+                    self.ft_tx_queue = self.ft_tx_queue[1:]
+                    return True
+                return False
             return True
-        else:
-            if self.ft_tx_queue:
-                self.ft_tx_activ = self.ft_tx_queue[0]
-                return True
+
+        if self.ft_tx_queue:
+            self.ft_tx_activ = self.ft_tx_queue[0]
+            self.ft_tx_queue = self.ft_tx_queue[1:]
+            return True
         return False
 
     def ft_reset_timer(self, conn_uid: str):
@@ -485,6 +483,8 @@ class AX25Conn(object):
             if conn_uid != self.uid and reverse_uid(conn_uid) != self.uid:
                 self.ft_tx_activ.reset_timer()
 
+    #######################
+    # Link Holder
     def link_holder_reset(self):
         if self.link_holder_on:
             self.link_holder_timer = time.time() + (self.link_holder_interval * 60)
