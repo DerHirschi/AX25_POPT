@@ -3,6 +3,35 @@ import time
 from constant import FT_MODES
 
 
+def init_crctab():
+    """ By: ChatGP """
+    crctab = [0] * 256
+    bitrmdrs = [0x9188, 0x48C4, 0x2462, 0x1231, 0x8108, 0x4084, 0x2042, 0x1021]
+
+    for n in range(256):
+        r = 0
+        for m in range(8):
+            mask = 0x0080 >> m
+            if n & mask:
+                r = bitrmdrs[m] ^ r
+        crctab[n] = r
+
+    return crctab
+
+
+def calculate_crc(data, polynomial):
+    """ By: ChatGP """
+    crc = 0x0000
+    for byte in data:
+        crc = crc ^ (byte << 8)
+        for _ in range(8):
+            if crc & 0x8000:
+                crc = (crc << 1) ^ polynomial
+            else:
+                crc = crc << 1
+    return crc & 0xFFFF
+
+
 class FileTX(object):
     def __init__(self,
                  filename: str,
@@ -25,15 +54,15 @@ class FileTX(object):
         self.done = False
         self.last_tx = 0
         self.raw_data = b''
+        self.raw_data_len = 0
+        self.raw_data_crc = 0
         self.ft_tx_buf = b''
         self.ft_rx_buf = b''
+        self.crc_tab = init_crctab()
         try:
-            f = open(self.param_filename, 'rb')
+            self.process_file(self.param_filename)
         except PermissionError:
             self.e = True
-        else:
-            if f is not None:
-                self.raw_data = f.read()
         if not self.raw_data:
             self.e = True
         # self.ft_init()
@@ -43,6 +72,19 @@ class FileTX(object):
             self.class_protocol.init()
         else:
             self.class_protocol = DefaultMODE_TX(self)
+
+    def process_file(self, filename):
+        """ by: Chat GB """
+        with open(filename, 'rb') as file:
+            buf = file.read()
+            crc = 0
+            length = len(buf)
+            for byte in buf:
+                crc = self.crc_tab[(crc >> 8) & 0xFF] ^ ((crc << 8) & 0xFFFF) ^ byte
+
+        self.raw_data = buf
+        self.raw_data_len = length
+        self.raw_data_crc = crc
 
     def ft_init(self):
         """
@@ -73,12 +115,20 @@ class FileTX(object):
             return True
         return False
 
-    def ft_end(self):
-        self.done = True
+    def ft_flush_buff(self):
+        self.ft_rx_buf = b''
+        self.ft_tx_buf = b''
+        self.connection.tx_buf_rawData = b''
 
     def ft_mode_wait_for_end(self):
         if self.ft_can_stop():
             self.ft_end()
+
+    def ft_end(self):
+        self.done = True
+
+    def ft_abort(self):
+        self.class_protocol.exec_abort()
 
     def reset_timer(self):
         if self.param_wait:
@@ -111,7 +161,7 @@ class FileTX(object):
 
 class DefaultMODE_TX(object):
     def __init__(self, ft_root):
-        self.ft_root = ft_root
+        self.ft_root: FileTX = ft_root
         self.connection = ft_root.connection
         self.ft_root.ft_tx_buf = bytes(self.ft_root.raw_data)
         self.state_tab = {}
@@ -134,10 +184,12 @@ class DefaultMODE_TX(object):
     def send_data(self, data):
         self.ft_root.send_data(data=data)
 
+    def exec_abort(self):
+        pass
+
 
 class TextMODE_TX(DefaultMODE_TX):
     def init(self):
-
         self.state_tab = {
             0: self.mode_wait_for_start,
             1: self.mode_s1,  # W/O Wait / direct to tx_buff
@@ -155,10 +207,8 @@ class TextMODE_TX(DefaultMODE_TX):
                 self.state = 1
 
     def mode_s1(self):
-        # ret = bytes(self.ft_root.data_out)
         self.send_data(bytes(self.ft_root.ft_tx_buf))
         self.ft_root.ft_tx_buf = b''
-        # self.ft_root.done = True
         self.state = 3
         return True
 
@@ -178,6 +228,11 @@ class TextMODE_TX(DefaultMODE_TX):
             return True
         return True
 
+    def exec_abort(self):
+        self.ft_root.ft_flush_buff()
+        # self.send_data(b'#ABORT#\r')
+        self.e = True
+        self.state = 3
 
 class AutoBinMODE_TX(DefaultMODE_TX):
     """
@@ -192,11 +247,18 @@ class AutoBinMODE_TX(DefaultMODE_TX):
             0: self.mode_wait_for_free_tx_buf,
             1: self.mode_init,
             2: self.mode_init_resp,
-            # 1: self.mode_s1,    # W/O Wait / direct to tx_buff
-            # 2: self.mode_s2     # With wait handling
+            3: self.mode_tx_data,
+            4: self.mode_tx_data_steps,
+            5: self.mode_tx_end_resp,
+            9: self.ft_root.ft_mode_wait_for_end,
         }
         """ Simple Mode .. There seems another Mode but i can't find any specs. """
-        self.header = f'\r#BIN#{len(self.ft_root.ft_tx_buf)}\r'.encode('ASCII')
+        # self.header = f'\r#BIN#{self.ft_root.raw_data_len}\r'.encode('ASCII')
+        pos = '0' * 8   # Don't know how to decode. Maybe it's a Timestamp but results don't match.
+        # pos += '1'
+        filename = self.ft_root.param_filename.split('/')[-1].upper()
+        filename = filename.replace(' ', '_')
+        self.header = f"\r#BIN#{self.ft_root.raw_data_len}#|{int(self.ft_root.raw_data_crc)}#${pos}#{filename}\r".encode('ASCII')
         """ 
         'EXT. MODE'
         Header from WinSTOP: #BIN#5314#|40769#$54E3A0D1#fbb.conf 
@@ -213,6 +275,69 @@ class AutoBinMODE_TX(DefaultMODE_TX):
         self.state = 2
 
     def mode_init_resp(self):
-        resp = b'#OK#'
-        if self.connection.rx_buf_rawData:
-            pass
+        if self.ft_root.ft_rx_buf:
+            lines = self.ft_root.ft_rx_buf.split(b'\r')
+            # print(f"M IRS {lines}")
+            self.ft_root.ft_rx_buf = b''
+            lines = [x for x in lines if x != b'']
+            if lines:
+                if lines[-1] == b'#OK#':
+                    if self.ft_root.param_wait:
+                        self.state = 4
+                    else:
+                        self.state = 3
+                    self.state_tab[self.state]()
+                elif b'#ABORT#' in lines:
+                    self.exec_abort()
+
+    def mode_tx_data(self):
+        if not self.check_abort():
+            self.send_data(bytes(self.ft_root.ft_tx_buf))
+            self.ft_root.ft_tx_buf = b''
+            self.state = 5
+            return True
+
+    def mode_tx_data_steps(self):
+        if not self.check_abort():
+            if self.ft_root.reset_timer():
+                tmp_len = self.ft_root.param_PacLen * self.ft_root.param_MaxFrame
+                if len(self.ft_root.ft_tx_buf) < tmp_len:
+                    tmp = self.ft_root.ft_tx_buf
+                    tmp_len = len(tmp)
+                    # self.ft_root.done = True
+                    self.state = 5
+                else:
+                    tmp = self.ft_root.ft_tx_buf[:tmp_len]
+                self.send_data(tmp)
+                self.ft_root.ft_tx_buf = self.ft_root.ft_tx_buf[tmp_len:]
+
+    def mode_tx_end_resp(self):
+        self.send_data(f'\rBIN-TX OK #{int(self.ft_root.raw_data_crc)}\r\r'.encode('ASCII'))
+        self.state = 9
+        """
+        if self.ft_root.ft_rx_buf:
+            lines = self.ft_root.ft_rx_buf.split(b'\r')
+            self.ft_root.ft_rx_buf = b''
+            if lines[-1] == b'#OK#':
+                # self.send_data(b'BIN-TX OK #25059\r')
+                self.send_data(f'BIN-TX OK #{int(self.ft_root.raw_data_crc)}\r'.encode('ASCII'))
+                self.state = 9
+            elif b'#ABORT#' in lines:
+                self.exec_abort()
+        """
+
+    def check_abort(self):
+        if self.ft_root.ft_rx_buf:
+            lines = self.ft_root.ft_rx_buf.split(b'\r')
+            self.ft_root.ft_rx_buf = b''
+            if b'#ABORT#' in lines:
+                self.exec_abort()
+                return True
+        return False
+
+    def exec_abort(self):
+        self.ft_root.ft_flush_buff()
+        self.send_data(b'#ABORT#\r')
+        self.e = True
+        self.state = 9
+
