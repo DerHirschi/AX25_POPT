@@ -575,6 +575,8 @@ class DefaultCLI(object):
     def cmd_set_loc(self):
         if not self.parameter:
             if self.user_db_ent:
+                if self.user_db_ent.Distance:
+                    return f"\r # Locator: {self.user_db_ent.LOC} > {round(self.user_db_ent.Distance)} km\r"
                 return f"\r # Locator: {self.user_db_ent.LOC}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
@@ -584,8 +586,13 @@ class DefaultCLI(object):
                 replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
+            self.connection.set_distance()
+            if self.user_db_ent.Distance:
+                return "\r" \
+                       f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC}" \
+                       "\r"
             return "\r" \
-                   f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC}" \
+                   f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC} > {round(self.user_db_ent.Distance)} km" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_loc NO ENTRY FOUND !")

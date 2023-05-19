@@ -1078,6 +1078,11 @@ class TkMainWin:
         if self.userDB_tree_win is None:
             self.userDB_tree_win = UserDBtreeview(self)
 
+    def gui_set_distance(self):
+        conn = self.get_conn()
+        if conn:
+            conn.set_distance()
+
     # ##############
     # DISCO
     def disco_conn(self):
@@ -1382,6 +1387,7 @@ class TkMainWin:
         name = '-------'
         qth = '-------'
         loc = '------'
+        dist = 0
         status = '-------'
         typ = '-----'
         sw = '---------'
@@ -1396,6 +1402,8 @@ class TkMainWin:
                     qth = db_ent.QTH
                 if db_ent.LOC:
                     loc = db_ent.LOC
+                if db_ent.Distance:
+                    dist = db_ent.Distance
                 if db_ent.TYP:
                     typ = db_ent.TYP
                 if db_ent.Software:
@@ -1416,6 +1424,8 @@ class TkMainWin:
                 if conn.cli.sysop_priv:
                     status[0] = 'S'
                 status = ''.join(status)
+        if dist:
+            loc += f" ({round(dist)} km)"
 
         self.txt_win.stat_info_status_var.set(status)
         self.txt_win.stat_info_name_var.set(name)

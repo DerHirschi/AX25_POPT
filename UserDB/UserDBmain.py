@@ -33,6 +33,7 @@ class Client(object):
         self.ZIP = ''
         self.QTH = ''
         self.LOC = ''
+        self.Distance = 0
         self.Language = -1
         self.PRmail = ''
         self.Email = ''
@@ -181,6 +182,7 @@ class UserDB:
                     'Encoding',
                     'sys_pw',
                     'sys_pw_parm',
+                    'Distance',
                 ]:
                     setattr(self.db[to_key], att, getattr(self.db[fm_key], att))
                 else:

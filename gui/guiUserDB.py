@@ -550,6 +550,7 @@ class UserDB(tk.Toplevel):
 
         self.user_db.save_data()
         self.select_entry()
+        self.root.gui_set_distance()
         self.root.update_station_info()
         self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
 

@@ -10,6 +10,7 @@ import config_station
 from ax25.ax25dec_enc import AX25Frame
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25FileTransfer import FileTX
+from fnc.loc_fnc import locator_distance
 
 
 def count_modulo(inp: int):
@@ -134,6 +135,7 @@ class AX25Conn(object):
         self.my_call_obj = self.ax25_out_frame.from_call
         self.my_call_str = self.my_call_obj.call_str
         self.my_call_alias = ''
+        self.my_locator = ''
         self.to_call_str = str(self.ax25_out_frame.to_call.call_str)
         self.to_call_alias = ''
         self.uid = str(self.ax25_out_frame.addr_uid)
@@ -146,7 +148,7 @@ class AX25Conn(object):
                     if self.my_call_obj.call in self.port_handler.ax25_stations_settings.keys():
                         self.stat_cfg = self.port_handler.ax25_stations_settings[self.my_call_obj.call]
                         break
-
+        self.my_locator = self.stat_cfg.stat_parm_LOC
         """ IO Buffer Packet For Handling """
         self.tx_buf_ctl: [AX25Frame] = []  # Buffer for CTL ( S ) Frame to send on next Cycle
         self.tx_buf_2send: [AX25Frame] = []  # Buffer for Sending. Will be processed in ax25PortHandler
@@ -383,43 +385,49 @@ class AX25Conn(object):
                 else:
                     self.user_db_ent.Language = int(self.gui.language)
                     self.cli_language = int(self.gui.language)
+            self.set_distance()
             """
             if int(self.user_db_ent.pac_len):
                 self.parm_PacLen = int(self.user_db_ent.pac_len)
             if int(self.user_db_ent.max_pac):
                 self.parm_MaxFrame = int(self.user_db_ent.max_pac)
             """
+
+    def set_distance(self):
+        if self.user_db_ent:
+            if self.my_locator and self.user_db_ent.LOC:
+                self.user_db_ent.Distance = locator_distance(self.my_locator, self.user_db_ent.LOC)
 
     def set_packet_param(self):
-        self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
-        self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
-        self.user_db_ent = self.user_db.get_entry(self.to_call_str)
-        stat_call = self.stat_cfg.stat_parm_Call
-
-        if self.user_db_ent:
-            if int(self.user_db_ent.pac_len):
-                self.parm_PacLen = int(self.user_db_ent.pac_len)
-            elif stat_call != config_station.DefaultStation.stat_parm_Call:
-                if stat_call in self.cfg.parm_stat_PacLen.keys():
-                    if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                        self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-
-            if int(self.user_db_ent.max_pac):
-                self.parm_MaxFrame = int(self.user_db_ent.max_pac)
-            elif stat_call != config_station.DefaultStation.stat_parm_Call:
-                if stat_call in self.cfg.parm_stat_MaxFrame.keys():
-                    if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                        self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
-
-        else:
+            self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
+            self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
+            self.user_db_ent = self.user_db.get_entry(self.to_call_str)
             stat_call = self.stat_cfg.stat_parm_Call
-            if stat_call != config_station.DefaultStation.stat_parm_Call:
-                if stat_call in self.cfg.parm_stat_PacLen.keys():
-                    if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                        self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-                if stat_call in self.cfg.parm_stat_MaxFrame.keys():
-                    if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                        self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
+
+            if self.user_db_ent:
+                if int(self.user_db_ent.pac_len):
+                    self.parm_PacLen = int(self.user_db_ent.pac_len)
+                elif stat_call != config_station.DefaultStation.stat_parm_Call:
+                    if stat_call in self.cfg.parm_stat_PacLen.keys():
+                        if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
+                            self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
+
+                if int(self.user_db_ent.max_pac):
+                    self.parm_MaxFrame = int(self.user_db_ent.max_pac)
+                elif stat_call != config_station.DefaultStation.stat_parm_Call:
+                    if stat_call in self.cfg.parm_stat_MaxFrame.keys():
+                        if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
+                            self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
+
+            else:
+                stat_call = self.stat_cfg.stat_parm_Call
+                if stat_call != config_station.DefaultStation.stat_parm_Call:
+                    if stat_call in self.cfg.parm_stat_PacLen.keys():
+                        if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
+                            self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
+                    if stat_call in self.cfg.parm_stat_MaxFrame.keys():
+                        if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
+                            self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
 
     def exec_cron(self):
         """ DefaultStat.cron() """
@@ -640,8 +648,6 @@ class AX25Conn(object):
         self.vs = 0
         self.init_cli()
         # self.zustand_exec.change_state(0)
-        # self.rx_buf_rawData = f'\n*** Disconnected from {self.to_call_str}\n'.encode()
-        # self.send_to_qso_win(f'\n*** Disconnected from {self.to_call_str}\n')
         """ !!!!!!!!! """
         """
         c = 0
@@ -1186,14 +1192,15 @@ class S2Aufbau(DefaultStat):  # INIT TX
         # TODO ??? Move up to Conn ???
         if not self.ax25conn.n2:
             if self.ax25conn.LINK_Connection is None:
-                to_qso_win = f'\n*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str} > ' \
-                             f'Port {self.ax25conn.own_port.port_id}\n'
+                to_qso_win = f'\n*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str}' \
+
                 user_db_ent = self.ax25conn.user_db.get_entry(self.ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
                 if user_db_ent:
                     if user_db_ent.Name:
-                        to_qso_win = f'\n*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str} - ' \
-                                     f'({user_db_ent.Name}) > Port {self.ax25conn.own_port.port_id}\n'
-
+                        to_qso_win += f' - ({user_db_ent.Name})'
+                    if user_db_ent.Distance:
+                        to_qso_win += f' - {round(user_db_ent.Distance)} km'
+                to_qso_win += f' > Port {self.ax25conn.own_port.port_id}\n'
                 self.ax25conn.rx_buf_rawData = to_qso_win.encode('UTF-8', 'ignore')
         self.ax25conn.send_SABM()
         self.ax25conn.n2 += 1
@@ -1299,15 +1306,8 @@ class S4Abbau(DefaultStat):
          """
 
     def end_conn(self):
-        # if self.digi_conn is None:
-        """
-        self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
-            self.ax25conn.to_call_str).encode()
-        """
         self.S1_end_connection()
         self.ax25conn.n2 = 100
-        # if self.ax25conn.is_prt_hndl:
-        # self.ax25conn.port_handler.del_conn2all_conn_var(conn=self.ax25conn)
 
     def state_cron(self):
         pass
@@ -1322,10 +1322,6 @@ class S4Abbau(DefaultStat):
         pass
 
     def n2_fail(self):
-        """
-        self.ax25conn.rx_buf_rawData = '\n*** Disconnected from {}\n'.format(
-            self.ax25conn.to_call_str).encode()
-        """
         self.S1_end_connection()
 
 
