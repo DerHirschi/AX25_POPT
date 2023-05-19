@@ -289,7 +289,7 @@ class NewConnWin:
                     add_str=call,
                     port_id=self.port_index,
                 )
-                self.main.ch_btn_status_update()
+                self.main.ch_status_update()
                 self.main.change_conn_btn()
                 self.destroy_new_conn_win()
 

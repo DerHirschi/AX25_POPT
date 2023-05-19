@@ -204,7 +204,7 @@ class AX25PortHandler(object):
             new_conn.ch_index = int(ind)
             self.all_connections[ind] = new_conn
         if self.gui is not None:
-            self.gui.ch_btn_status_update()
+            self.gui.ch_status_update()
 
     """
     def cleanup_conn2all_conn_var(self):
@@ -232,7 +232,7 @@ class AX25PortHandler(object):
                 del self.all_connections[k]
 
         if self.gui is not None:
-            self.gui.ch_btn_status_update()
+            self.gui.ch_status_update()
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():

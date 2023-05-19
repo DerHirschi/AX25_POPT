@@ -1,10 +1,17 @@
 import time
+import logging
+import datetime
 
 from constant import FT_MODES
+from fnc.str_fnc import calculate_time_remaining
+
+logger = logging.getLogger(__name__)
 
 
 def init_crctab():
     """ By: ChatGP """
+    print("CRC-TAB INIT")
+    logger.info("CRC-TAB INIT")
     crctab = [0] * 256
     bitrmdrs = [0x9188, 0x48C4, 0x2462, 0x1231, 0x8108, 0x4084, 0x2042, 0x1021]
 
@@ -15,8 +22,10 @@ def init_crctab():
             if n & mask:
                 r = bitrmdrs[m] ^ r
         crctab[n] = r
-
     return crctab
+
+
+CRC_TAB = init_crctab()
 
 
 def calculate_crc(data, polynomial):
@@ -50,22 +59,23 @@ class FileTX(object):
             FT_MODES[0]: TextMODE_TX,
             FT_MODES[1]: AutoBinMODE_TX,
         }
-        self.e = False
-        self.done = False
-        self.last_tx = 0
         self.raw_data = b''
         self.raw_data_len = 0
         self.raw_data_crc = 0
         self.ft_tx_buf = b''
         self.ft_rx_buf = b''
-        self.crc_tab = init_crctab()
+        self.crc_tab = CRC_TAB
+        self.e = False
+        self.done = False
+        self.last_tx = 0
+        self.time_start = 0
+
         try:
             self.process_file(self.param_filename)
         except PermissionError:
             self.e = True
         if not self.raw_data:
             self.e = True
-        # self.ft_init()
 
         if self.param_protocol in self.prot_dict.keys():
             self.class_protocol = self.prot_dict[self.param_protocol](self)
@@ -87,12 +97,6 @@ class FileTX(object):
         self.raw_data_crc = crc
 
     def ft_init(self):
-        """
-        {
-            'Text': self.proto_text,
-            'AutoBin': self.dummy,
-        }[self.param_protocol]()
-        """
         if not self.raw_data:
             self.e = True
             return False
@@ -124,17 +128,27 @@ class FileTX(object):
         if self.ft_can_stop():
             self.ft_end()
 
+    def ft_start(self):
+        self.time_start = time.time()
+
     def ft_end(self):
         self.done = True
 
     def ft_abort(self):
+        """ To trigger from the outside (GUI) """
         self.class_protocol.exec_abort()
 
-    def reset_timer(self):
+    def ft_set_wait_timer(self):
+        self.last_tx = self.param_wait + time.time()
+
+    def ft_can_send(self):
         if self.param_wait:
             if self.last_tx < time.time():
-                self.last_tx = self.param_wait + time.time()
-                return True
+                self.ft_set_wait_timer()
+                if not self.connection.tx_buf_rawData\
+                        and not self.connection.tx_buf_2send\
+                        and not self.connection.tx_buf_unACK:
+                    return True
             return False
         return True
 
@@ -155,8 +169,19 @@ class FileTX(object):
             self.class_protocol.crone_mode()
         """
 
-    def send_data(self, data):
+    def ft_tx(self, data):
         self.connection.send_data(data, file_trans=True)
+
+    def get_ft_infos(self):
+        data_in_buf = len(self.ft_tx_buf) + len(self.connection.tx_buf_rawData)
+        data_sendet = self.raw_data_len - data_in_buf
+        time_spend = (time.time() - self.time_start)
+        time_spend = datetime.timedelta(seconds=time_spend)
+        time_remaining, baud_rate, percentage_completion = calculate_time_remaining(time_spend,
+                                                                                    self.raw_data_len,
+                                                                                    data_sendet)
+
+        return percentage_completion, self.raw_data_len, data_sendet, time_spend, time_remaining, baud_rate
 
 
 class DefaultMODE_TX(object):
@@ -164,8 +189,8 @@ class DefaultMODE_TX(object):
         self.ft_root: FileTX = ft_root
         self.connection = ft_root.connection
         self.ft_root.ft_tx_buf = bytes(self.ft_root.raw_data)
-        self.state_tab = {}
         self.header = b''
+        self.state_tab = {}
         self.state = 0
         self.e = True  # No Prot set
         # self.done = False
@@ -182,10 +207,14 @@ class DefaultMODE_TX(object):
         return False
 
     def send_data(self, data):
-        self.ft_root.send_data(data=data)
+        self.ft_root.ft_tx(data=data)
 
     def exec_abort(self):
         pass
+
+    def start_ft(self):
+        self.ft_root.ft_start()
+        self.state_tab[self.state]()
 
 
 class TextMODE_TX(DefaultMODE_TX):
@@ -205,6 +234,7 @@ class TextMODE_TX(DefaultMODE_TX):
                 self.state = 2
             else:
                 self.state = 1
+            self.start_ft()
 
     def mode_s1(self):
         self.send_data(bytes(self.ft_root.ft_tx_buf))
@@ -214,7 +244,7 @@ class TextMODE_TX(DefaultMODE_TX):
 
     def mode_s2(self):
         """ :returns doesn't matter """
-        if self.ft_root.reset_timer():
+        if self.ft_root.ft_can_send():
             tmp_len = self.ft_root.param_PacLen * self.ft_root.param_MaxFrame
             if len(self.ft_root.ft_tx_buf) < tmp_len:
                 tmp = self.ft_root.ft_tx_buf
@@ -234,12 +264,14 @@ class TextMODE_TX(DefaultMODE_TX):
         self.e = True
         self.state = 3
 
+
 class AutoBinMODE_TX(DefaultMODE_TX):
     """
     Not sure if that is AutoBin or Bin
     Have no Specs.
     Also, it seems WinSTOP has a Bug with CRC in some of his FT Protocols.
     """
+    # I Guess Bin is just sending with AutoBin header but don't wait for #OK#
 
     def init(self):
         # self.ft_root.ft_tx_buf = bytes(self.ft_root.data)
@@ -258,7 +290,7 @@ class AutoBinMODE_TX(DefaultMODE_TX):
         # pos += '1'
         filename = self.ft_root.param_filename.split('/')[-1].upper()
         filename = filename.replace(' ', '_')
-        self.header = f"\r#BIN#{self.ft_root.raw_data_len}#|{int(self.ft_root.raw_data_crc)}#${pos}#{filename}\r".encode('ASCII')
+        self.header = f"#BIN#{self.ft_root.raw_data_len}#|{int(self.ft_root.raw_data_crc)}#${pos}#{filename}\r".encode('ASCII')
         """ 
         'EXT. MODE'
         Header from WinSTOP: #BIN#5314#|40769#$54E3A0D1#fbb.conf 
@@ -286,7 +318,7 @@ class AutoBinMODE_TX(DefaultMODE_TX):
                         self.state = 4
                     else:
                         self.state = 3
-                    self.state_tab[self.state]()
+                    self.start_ft()
                 elif b'#ABORT#' in lines:
                     self.exec_abort()
 
@@ -299,7 +331,7 @@ class AutoBinMODE_TX(DefaultMODE_TX):
 
     def mode_tx_data_steps(self):
         if not self.check_abort():
-            if self.ft_root.reset_timer():
+            if self.ft_root.ft_can_send():
                 tmp_len = self.ft_root.param_PacLen * self.ft_root.param_MaxFrame
                 if len(self.ft_root.ft_tx_buf) < tmp_len:
                     tmp = self.ft_root.ft_tx_buf
@@ -312,6 +344,7 @@ class AutoBinMODE_TX(DefaultMODE_TX):
                 self.ft_root.ft_tx_buf = self.ft_root.ft_tx_buf[tmp_len:]
 
     def mode_tx_end_resp(self):
+        """ END """
         self.send_data(f'\rBIN-TX OK #{int(self.ft_root.raw_data_crc)}\r\r'.encode('ASCII'))
         self.state = 9
         """

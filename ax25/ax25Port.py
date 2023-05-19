@@ -5,7 +5,6 @@ import time
 import crcmod
 
 from ax25.ax25Beacon import Beacon
-# mport main
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25UI_Pipe import AX25Pipe

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from constant import ENCODINGS
 
@@ -32,8 +32,50 @@ def conv_time_DE_str(dateti: datetime.now()):
     return dateti.strftime('%d/%m/%y %H:%M:%S')
 
 
+def conv_timestamp_delta(delta):
+    if delta:
+        timestamp = str(delta)
+        timestamp = timestamp.split(':')
+        if len(timestamp) > 3:
+            days, hours, minutes, seconds = timestamp
+            hours += days * 24
+        else:
+            hours, minutes, seconds = timestamp
+        return f"{hours.zfill(2)}:{minutes.zfill(2)}:{str(round(float(seconds))).zfill(2)}"
+    return "--:--:--"
+
+
 def get_time_delta(dateti: datetime.now()):
     return str(datetime.now() - dateti).split('.')[0]
+
+
+def calculate_time_remaining(time_delta, data_length, data_sent):
+    remaining_data = data_length - data_sent
+    if remaining_data <= 0 or not time_delta or not data_sent:
+        return 0, 0, 0
+    time_remaining = 0
+    baud_rate = 0
+    percentage_completion = 0
+    if data_sent and time_delta:
+        percentage_completion = (data_sent / data_length) * 100
+        time_per_byte = time_delta.total_seconds() / data_sent
+        time_remaining = timedelta(seconds=remaining_data * time_per_byte)
+    if time_delta:
+        baud_rate = data_sent / time_delta.total_seconds()
+    return time_remaining, int(baud_rate), round(percentage_completion)
+
+
+def format_number(number):
+    """ By: ChatGP. This shit makes me lazy. """
+    number_str = str(number)[::-1]
+    formatted_str = ""
+    for i, digit in enumerate(number_str, start=1):
+        formatted_str += digit
+        if i % 3 == 0 and i != len(number_str):
+            formatted_str += "."
+    formatted_number = formatted_str[::-1]
+    return formatted_number
+
 
 
 def try_decode(data: b'', ignore=False):

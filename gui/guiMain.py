@@ -16,7 +16,8 @@ import matplotlib.pyplot as plt
 
 import config_station
 import constant
-from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta
+from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
+    get_kb_str_fm_bytes
 from gui.guiPipeToolSettings import PipeToolSettings
 from gui.guiPriv import PrivilegWin
 from gui.guiUserDBoverview import UserDBtreeview
@@ -311,7 +312,7 @@ class TkMainWin:
         ###########################
         # Init
         # set Ch Btn Color
-        self.ch_btn_status_update()
+        self.ch_status_update()
         # set KEY BINDS
         self.set_binds()
         self.set_keybinds()
@@ -741,66 +742,6 @@ class TkMainWin:
     # no WIN FNC
     ##########################
 
-    def on_channel_status_change(self):
-        """Triggerd when Connection Status has changed"""
-        self.tabbed_sideFrame.on_ch_btn_stat_change()
-        self.update_station_info()
-
-    def update_stat_info_conn_timer(self):
-        conn = self.get_conn()
-        if conn:
-            time_str = get_time_delta(conn.cli.time_start)
-            self.txt_win.stat_info_timer_var.set(time_str)
-        else:
-            self.txt_win.stat_info_timer_var.set('--:--:--')
-
-    def update_station_info(self):
-        name = '-------'
-        qth = '-------'
-        loc = '------'
-        status = '-------'
-        typ = '-----'
-        sw = '---------'
-        enc = ''
-        conn = self.get_conn()
-        if conn:
-            db_ent = conn.user_db_ent
-            if db_ent:
-                if db_ent.Name:
-                    name = db_ent.Name
-                if db_ent.QTH:
-                    qth = db_ent.QTH
-                if db_ent.LOC:
-                    loc = db_ent.LOC
-                if db_ent.TYP:
-                    typ = db_ent.TYP
-                if db_ent.Software:
-                    sw = db_ent.Software
-                enc = db_ent.Encoding
-            if conn.is_link:
-                status = 'LINK'
-            elif conn.pipe is not None:
-                status = 'PIPE'
-            elif conn.ft_tx_activ is not None:
-                status = 'TX FILE'
-            else:
-                status = ['-'] * 7
-                if conn.is_RNR:
-                    status[2] = 'R'
-                if conn.link_holder_on:
-                    status[1] = 'L'
-                if conn.cli.sysop_priv:
-                    status[0] = 'S'
-                status = ''.join(status)
-
-        self.txt_win.stat_info_status_var.set(status)
-        self.txt_win.stat_info_name_var.set(name)
-        self.txt_win.stat_info_qth_var.set(qth)
-        self.txt_win.stat_info_loc_var.set(loc)
-        self.txt_win.stat_info_typ_var.set(typ)
-        self.txt_win.stat_info_sw_var.set(sw)
-        self.txt_win.stat_info_encoding_var.set(enc)
-
     def dx_alarm(self):
         """ Alarm when new User in MH List """
         # self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
@@ -826,15 +767,13 @@ class TkMainWin:
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
             self.monitor_task()
-
-            # self.update_qso_win()
-
+            self.update_qso_win()
             self.txt_win.update_status_win()
             self.change_conn_btn()
             self.check_sprech_ch_buf()
             self.rx_beep_sound()
             if self.ch_alarm:
-                self.ch_btn_status_update()
+                self.ch_status_update()
             """
             # TASK FOR SETTING WIN IF NEEDED !!!
             if self.settings_win is not None:
@@ -847,6 +786,7 @@ class TkMainWin:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
             self.update_bw_mon()
             self.update_stat_info_conn_timer()
+            self.update_ft_info()
             self.tabbed_sideFrame.tasker()
             # print(f"{self.ax25_port_handler.link_connections.keys()}")
             if self.mh.new_call_alarm and self.setting_dx_alarm:
@@ -854,109 +794,108 @@ class TkMainWin:
 
     #################################
     # TASKS
-    def update_qso_win(self, conn):  # INPUT WIN
+    def update_qso_win(self):  # INPUT WIN
         # UPDATE INPUT WIN
-        # for k in self.ax25_port_handler.all_connections.keys():
-        # conn: AX25Conn
-        # conn = self.get_conn(k)
-        if conn.rx_buf_rawData or conn.tx_buf_guiData:
-            k = conn.ch_index
-            txt_enc = 'UTF-8'
-            if conn.user_db_ent:
-                txt_enc = conn.user_db_ent.Encoding
+        for k in self.ax25_port_handler.all_connections.keys():
+            conn = self.get_conn(k)
+            if conn:
+                if conn.rx_buf_rawData or conn.tx_buf_guiData:
+                    k = conn.ch_index
+                    txt_enc = 'UTF-8'
+                    if conn.user_db_ent:
+                        txt_enc = conn.user_db_ent.Encoding
 
-            inp = bytes(conn.tx_buf_guiData)
-            conn.tx_buf_guiData = b''
+                    inp = bytes(conn.tx_buf_guiData)
+                    conn.tx_buf_guiData = b''
 
-            out = bytes(conn.rx_buf_rawData)
-            conn.rx_buf_rawData = b''
-            # out = try_decode(out)
+                    out = bytes(conn.rx_buf_rawData)
+                    conn.rx_buf_rawData = b''
 
-            # if self.win_buf[k].hex_output:
-            """
-            hex_out = out.hex()
-            hex_in = inp.hex()
-            """
-            inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
-            # Write RX Date to Window/Channel Buffer
+                    # if self.win_buf[k].hex_output:
+                    """
+                    hex_out = out.hex()
+                    hex_in = inp.hex()
+                    """
+                    inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
+                    # Write RX Date to Window/Channel Buffer
 
-            out = out.decode(txt_enc, 'ignore')
-            out = out.replace('\r\n', '\n') \
-                .replace('\n\r', '\n')\
-                .replace('\r', '\n')
-            # print(f"{out}\nhex: {hex_out}")
-            out = tk_filter_bad_chars(out)
-            """
-            if hex_out:
-                out = out + ' > ' + hex_out + '\n'
-            if hex_in:
-                inp = inp + ' >' + hex_in + '<\n'
-            """
-            # Write RX Date to Window/Channel Buffer
-            self.win_buf[k].output_win += inp
-            self.win_buf[k].output_win += out
-            if self.win_buf[k].t2speech:
-                if k == self.channel_index:
-                    self.win_buf[k].t2speech_buf += out.replace('\n', '')
-                else:
-                    self.win_buf[k].t2speech_buf += '{} {} . {} . {}'.format(
-                        STR_TABLE['channel'][self.language],
-                        k,
-                        conn.to_call_str,
-                        out.replace('\n', '')
-                    )
-            if self.channel_index == k:
-                fg = conn.stat_cfg.stat_parm_qso_col_text
-                bg = conn.stat_cfg.stat_parm_qso_col_bg
-                tag_name_out = 'OUT-' + str(conn.my_call_str)
-                self.get_ch_param(ch_index=k).qso_tag_fg = fg
-                self.get_ch_param(ch_index=k).qso_tag_bg = bg
-                self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
+                    out = out.decode(txt_enc, 'ignore')
+                    out = out.replace('\r\n', '\n') \
+                        .replace('\n\r', '\n')\
+                        .replace('\r', '\n')
+                    # print(f"{out}\nhex: {hex_out}")
+                    out = tk_filter_bad_chars(out)
+                    """
+                    if hex_out:
+                        out = out + ' > ' + hex_out + '\n'
+                    if hex_in:
+                        inp = inp + ' >' + hex_in + '<\n'
+                    """
+                    # Write RX Date to Window/Channel Buffer
+                    self.win_buf[k].output_win += inp
+                    self.win_buf[k].output_win += out
+                    if self.win_buf[k].t2speech:
+                        if k == self.channel_index:
+                            self.win_buf[k].t2speech_buf += out.replace('\n', '')
+                        else:
+                            self.win_buf[k].t2speech_buf += '{} {} . {} . {}'.format(
+                                STR_TABLE['channel'][self.language],
+                                k,
+                                conn.to_call_str,
+                                out.replace('\n', '')
+                            )
+                    if self.channel_index == k:
+                        fg = conn.stat_cfg.stat_parm_qso_col_text
+                        bg = conn.stat_cfg.stat_parm_qso_col_bg
+                        tag_name_out = 'OUT-' + str(conn.my_call_str)
+                        self.get_ch_param(ch_index=k).qso_tag_fg = fg
+                        self.get_ch_param(ch_index=k).qso_tag_bg = bg
+                        self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
 
-                tr = False
-                if float(self.out_txt.index(tk.END)) - float(self.out_txt.index(tk.INSERT)) < 15:
-                    tr = True
+                        tr = False
+                        if float(self.out_txt.index(tk.END)) - float(self.out_txt.index(tk.INSERT)) < 15:
+                            tr = True
 
-                self.out_txt.configure(state="normal")
+                        self.out_txt.configure(state="normal")
 
-                self.out_txt.tag_config(tag_name_out,
-                                        foreground=fg,
-                                        background=bg,
-                                        selectbackground=fg,
-                                        selectforeground=bg
-                                        )
+                        self.out_txt.tag_config(tag_name_out,
+                                                foreground=fg,
+                                                background=bg,
+                                                selectbackground=fg,
+                                                selectforeground=bg
+                                                )
 
-                ind = self.out_txt.index('end-1c')
-                self.out_txt.insert('end', inp)
-                ind2 = self.out_txt.index('end-1c')
-                self.out_txt.tag_add("input", ind, ind2)
+                        ind = self.out_txt.index('end-1c')
+                        self.out_txt.insert('end', inp)
+                        ind2 = self.out_txt.index('end-1c')
+                        self.out_txt.tag_add("input", ind, ind2)
 
-                # configuring a tag called start
-                ind = self.out_txt.index('end-1c')
-                self.out_txt.insert('end', out)
-                ind2 = self.out_txt.index('end-1c')
-                self.out_txt.tag_add(tag_name_out, ind, ind2)
-                self.out_txt.configure(state="disabled",
-                                       exportselection=1
-                                       )
-                if tr or self.get_ch_param().autoscroll:
-                    self.see_end_qso_win()
-            else:
-                tag_name_out = 'OUT-' + str(conn.my_call_str)
-                self.get_ch_param(ch_index=k).qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
-                self.get_ch_param(ch_index=k).qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
-                self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
-                if tag_name_out not in self.win_buf[k].output_win_tags.keys():
-                    self.win_buf[k].output_win_tags[tag_name_out] = ()
-                old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
-                if old_tags:
-                    old_tags = old_tags + ['end-1c']
-                else:
-                    old_tags = ['1.0', 'end-1c']
-                self.win_buf[k].output_win_tags[tag_name_out] = old_tags
-                self.win_buf[k].new_data_tr = True
-            self.win_buf[k].rx_beep_tr = True
-            self.ch_btn_status_update()
+                        # configuring a tag called start
+                        ind = self.out_txt.index('end-1c')
+                        self.out_txt.insert('end', out)
+                        ind2 = self.out_txt.index('end-1c')
+                        self.out_txt.tag_add(tag_name_out, ind, ind2)
+                        self.out_txt.configure(state="disabled",
+                                               exportselection=1
+                                               )
+                        if tr or self.get_ch_param().autoscroll:
+                            self.see_end_qso_win()
+                    else:
+                        tag_name_out = 'OUT-' + str(conn.my_call_str)
+                        self.get_ch_param(ch_index=k).qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
+                        self.get_ch_param(ch_index=k).qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
+                        self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
+                        if tag_name_out not in self.win_buf[k].output_win_tags.keys():
+                            self.win_buf[k].output_win_tags[tag_name_out] = ()
+                        old_tags = list(self.win_buf[k].output_win_tags[tag_name_out])
+                        if old_tags:
+                            old_tags = old_tags + ['end-1c']
+                        else:
+                            old_tags = ['1.0', 'end-1c']
+                        self.win_buf[k].output_win_tags[tag_name_out] = old_tags
+                        self.win_buf[k].new_data_tr = True
+                    self.win_buf[k].rx_beep_tr = True
+                    self.ch_status_update()
 
     def update_monitor(self, mon_str: str, conf, tx=False):
         """ Called from AX25Conn """
@@ -1146,24 +1085,6 @@ class TkMainWin:
         if conn:
             conn.conn_disco()
 
-    """
-    def disco_all(self):
-        for ch_id in range(1, 11):
-            station = self.get_conn(ch_id)
-            if station:
-                if station.zustand_exec.stat_index:
-                    tr = False
-                    if station.zustand_exec.stat_index in [2, 4]:
-                        tr = True
-                    station.set_T1()
-                    if tr:
-                        station.zustand_exec.change_state(1)
-                    else:
-                        station.zustand_exec.change_state(4)
-                    # station.set_new_state()
-                    station.zustand_exec.tx(None)
-    """
-
     # DISCO ENDE
     # ##############
     ###################
@@ -1277,7 +1198,7 @@ class TkMainWin:
             self.win_buf[k].output_win_tags[tag_name_out] = old_tags
             self.win_buf[k].new_data_tr = True
         self.win_buf[k].rx_beep_tr = True
-        self.ch_btn_status_update()
+        self.ch_status_update()
 
     def on_click_inp_txt(self, event=None):
         ind = self.win_buf[self.channel_index].input_win_index
@@ -1373,7 +1294,7 @@ class TkMainWin:
             self.ch_btn_clk(0)
             self.mon_btn.configure(bg='green')
 
-        self.ch_btn_status_update()
+        self.ch_status_update()
 
     def switch_channel(self, ch_ind: int = 0):
         # Channel 0 = Monitor
@@ -1386,8 +1307,9 @@ class TkMainWin:
             else:
                 self.ch_btn_clk(ch_ind)
 
-    def ch_btn_status_update(self):
+    def ch_status_update(self):
         self.ch_btn.ch_btn_status_update()
+        self.on_channel_status_change()
 
     def ch_btn_clk(self, ind: int):
         self.get_ch_param().input_win = self.inp_txt.get('1.0', tk.END)
@@ -1438,6 +1360,101 @@ class TkMainWin:
             self.txt_win.ts_box_box.deselect()
             self.txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
 
+        self.on_channel_status_change()
         self.ch_btn.ch_btn_status_update()
         # self.main_class.change_conn_btn()
         self.kanal_switch()     # Sprech
+
+    def on_channel_status_change(self):
+        """Triggerd when Connection Status has changed"""
+        self.tabbed_sideFrame.on_ch_stat_change()
+        self.update_station_info()
+
+    def update_stat_info_conn_timer(self):
+        conn = self.get_conn()
+        if conn:
+            time_str = get_time_delta(conn.cli.time_start)
+            self.txt_win.stat_info_timer_var.set(time_str)
+        else:
+            self.txt_win.stat_info_timer_var.set('--:--:--')
+
+    def update_station_info(self):
+        name = '-------'
+        qth = '-------'
+        loc = '------'
+        status = '-------'
+        typ = '-----'
+        sw = '---------'
+        enc = ''
+        conn = self.get_conn()
+        if conn:
+            db_ent = conn.user_db_ent
+            if db_ent:
+                if db_ent.Name:
+                    name = db_ent.Name
+                if db_ent.QTH:
+                    qth = db_ent.QTH
+                if db_ent.LOC:
+                    loc = db_ent.LOC
+                if db_ent.TYP:
+                    typ = db_ent.TYP
+                if db_ent.Software:
+                    sw = db_ent.Software
+                enc = db_ent.Encoding
+            if conn.is_link:
+                status = 'LINK'
+            elif conn.pipe is not None:
+                status = 'PIPE'
+            elif conn.ft_tx_activ is not None:
+                status = 'TX FILE'
+            else:
+                status = ['-'] * 7
+                if conn.is_RNR:
+                    status[2] = 'R'
+                if conn.link_holder_on:
+                    status[1] = 'L'
+                if conn.cli.sysop_priv:
+                    status[0] = 'S'
+                status = ''.join(status)
+
+        self.txt_win.stat_info_status_var.set(status)
+        self.txt_win.stat_info_name_var.set(name)
+        self.txt_win.stat_info_qth_var.set(qth)
+        self.txt_win.stat_info_loc_var.set(loc)
+        self.txt_win.stat_info_typ_var.set(typ)
+        self.txt_win.stat_info_sw_var.set(sw)
+        self.txt_win.stat_info_encoding_var.set(enc)
+
+    def update_ft_info(self):
+        prog_val = 0
+        prog_var = '--- %'
+        size_var = 'Size: ---,- / ---,- kb'
+        dur_var = 'Time: --:--:-- / --:--:--'
+        bps_var = 'BPS: ---.---'
+        next_tx = 'TX in: --- s'
+        conn = self.get_conn()
+        if conn:
+            if conn.ft_tx_activ is not None:
+                ft_obj = conn.ft_tx_activ
+                percentage_completion, data_len, data_sendet, time_spend, time_remaining, baud_rate = ft_obj.get_ft_infos()
+                prog_val = percentage_completion
+                prog_var = f"{percentage_completion} %"
+                data_len = get_kb_str_fm_bytes(data_len)
+                data_sendet = get_kb_str_fm_bytes(data_sendet)
+                size_var = f'Size: {data_sendet} / {data_len}'
+                t_spend = conv_timestamp_delta(time_spend)
+                t_remaining = conv_timestamp_delta(time_remaining)
+                dur_var = f'Time: {t_spend} / {t_remaining}'
+                bps_var = f"BPS: {format_number(baud_rate)}"
+                if ft_obj.param_wait:
+                    n_tx = ft_obj.last_tx - time.time()
+                    next_tx = f'TX in: {round(n_tx)} s'
+
+        if self.tabbed_sideFrame.ft_duration_var.get() != dur_var:
+            self.tabbed_sideFrame.ft_progress['value'] = prog_val
+            self.tabbed_sideFrame.ft_progress_var.set(prog_var)
+            self.tabbed_sideFrame.ft_size_var.set(size_var)
+            self.tabbed_sideFrame.ft_duration_var.set(dur_var)
+            self.tabbed_sideFrame.ft_bps_var.set(bps_var)
+            self.tabbed_sideFrame.ft_next_tx_var.set(next_tx)
+

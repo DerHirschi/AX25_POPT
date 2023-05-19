@@ -283,14 +283,6 @@ class AX25Conn(object):
             self.init_cli()
             self.cli.change_cli_state(state=1)
 
-
-    """
-    def send_to_qso_win(self, data: str):
-        if self.gui is not None:
-            self.gui.send_to_qso(data=data, conn=self)
-    """
-
-
     ####################
     # Zustand EXECs
     def handle_rx(self, ax25_frame: AX25Frame):
@@ -312,6 +304,13 @@ class AX25Conn(object):
                 return True
         return False
 
+    def send_gui_echo(self, data):
+        if self.ft_tx_activ is not None:
+            return
+        if self.pipe is not None:
+            return
+        self.tx_buf_guiData += data
+
     def recv_data(self, data: b'', file_trans=False):
         self.vr = count_modulo(int(self.vr))
         # self.ch_echo_frm_rx(data)   # TODO
@@ -320,11 +319,9 @@ class AX25Conn(object):
         self.rx_buf_rawData += data
         if self.is_link:
             self.LINK_rx_buff += data
-            self.update_gui_qso()
             return
         # Pipe-Tool
         if self.pipe_rx(data):
-            self.update_gui_qso()
             return
 
         if self.ft_tx_activ is None:
@@ -333,14 +330,8 @@ class AX25Conn(object):
             # CLI
             if res:
                 self.exec_cli(res)
-            self.update_gui_qso()
             return
         self.ft_tx_activ.ft_rx()
-        # self.update_gui_qso()
-
-    def update_gui_qso(self):
-        if self.gui is not None:
-            self.gui.update_qso_win(conn=self)
 
     def set_dest_call_fm_data_inp(self, raw_data: b''):
         det = [
@@ -493,7 +484,7 @@ class AX25Conn(object):
     def ft_reset_timer(self, conn_uid: str):
         if self.ft_tx_activ is not None:
             if conn_uid != self.uid and reverse_uid(conn_uid) != self.uid:
-                self.ft_tx_activ.reset_timer()
+                self.ft_tx_activ.ft_set_wait_timer()
 
     #######################
     # Link Holder
@@ -836,7 +827,8 @@ class AX25Conn(object):
             # PAYLOAD !!
             pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
             self.ax25_out_frame.data = self.tx_buf_rawData[:pac_len]
-            self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]  # GUI Echo
+            self.send_gui_echo(self.tx_buf_rawData[:pac_len])
+            # self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]  # GUI Echo
             self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])  # CH ECHO
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
@@ -919,7 +911,7 @@ class DefaultStat(object):
         self.ax25conn.zustand_exec = self.ax25conn.zustand_tab[zustand_id][0](self.ax25conn)
         if self.ax25conn.port_handler.gui is not None:
             # if self.ax25conn.is_gui:
-            self.ax25conn.port_handler.gui.ch_btn_status_update()
+            self.ax25conn.port_handler.gui.ch_status_update()
 
     def state_rx_handle(self, ax25_frame: AX25Frame):
         self.frame = ax25_frame
