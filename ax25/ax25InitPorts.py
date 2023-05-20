@@ -323,3 +323,19 @@ class AX25PortHandler(object):
             for pipe_uid in self.ax25_ports[port_id].pipes.keys():
                 ret.append(self.ax25_ports[port_id].pipes[pipe_uid])
         return ret
+
+    ######################
+    # FT
+    def get_all_ft_query(self):
+        # conn.ft_tx_queue: [FileTX]
+        # conn.ft_tx_activ: FileTX
+        res = {}
+        for ch_id in self.all_connections:
+            conn = self.all_connections[ch_id]
+            tmp = conn.ft_tx_queue
+            if conn.ft_tx_activ is not None:
+                tmp = [conn.ft_tx_activ] + tmp
+            if tmp:
+                res[ch_id] = tmp
+        return res
+

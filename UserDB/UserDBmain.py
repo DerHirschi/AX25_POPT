@@ -54,7 +54,7 @@ class Client(object):
         self.QRG4 = ''
         self.QRG5 = ''
         self.Software = ''
-        self.Encoding = 'UTF-8'
+        self.Encoding = 'CP437'    # 'UTF-8'
 
         self.last_edit = datetime.datetime.now()
         self.last_seen = datetime.datetime.now()
@@ -155,6 +155,8 @@ class UserDB:
                 # print(new_att)
                 if not hasattr(self.db[ent_key], new_att):
                     setattr(self.db[ent_key], new_att, getattr(compare, new_att))
+                if not hasattr(self.db[ent_key], 'Distance'):
+                    self.db[ent_key] = 0
                 # print(getattr(self.db[ent_key], new_att))
 
     def update_var_fm_dbentry(self, fm_key: str, to_key: str):
@@ -200,12 +202,17 @@ class UserDB:
         self.db: {str: Client}
         for k in list(self.db.keys()):
             flag: Client = self.db[k]
+            """ Update new Vars .. 
+            if not hasattr(flag, 'Distance'):
+                flag.Distance = 0
+            """
             key: str = {
                 'call': str(flag.call_str),
                 'sysop': str(flag.Sysop_Call),
                 'typ': str(flag.TYP),
                 'loc': str(flag.LOC),
                 'qth': str(flag.QTH),
+                'dist': str(flag.Distance),
                 'land': str(flag.Land),
                 'last_seen': conv_time_for_sorting(flag.last_seen),
             }[flag_str]

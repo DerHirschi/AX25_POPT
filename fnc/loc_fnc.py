@@ -22,7 +22,7 @@ def locator_distance(locator1, locator2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     distance = earth_radius * c
 
-    return distance
+    return round(distance)
 
 
 def locator_to_coordinates(locator):

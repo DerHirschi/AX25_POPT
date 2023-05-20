@@ -3,7 +3,7 @@ import logging
 import datetime
 
 from constant import FT_MODES
-from fnc.str_fnc import calculate_time_remaining
+from fnc.str_fnc import calculate_time_remaining, calculate_percentage
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,7 @@ class FileTX(object):
                  connection,
                  tx_wait: int = 0,
                  ):
+        self.dir = 'TX'
         self.param_filename = str(filename)
         self.param_protocol = str(protocol)
         self.param_wait = int(tx_wait)
@@ -57,8 +58,10 @@ class FileTX(object):
 
         self.prot_dict = {
             FT_MODES[0]: TextMODE_TX,
-            FT_MODES[1]: AutoBinMODE_TX,
+            FT_MODES[1]: BinMODE_TX,
+            FT_MODES[2]: AutoBinMODE_TX,
         }
+
         self.raw_data = b''
         self.raw_data_len = 0
         self.raw_data_crc = 0
@@ -67,6 +70,8 @@ class FileTX(object):
         self.crc_tab = CRC_TAB
         self.e = False
         self.done = False
+        self.abort = False
+        self.pause = False
         self.last_tx = 0
         self.time_start = 0
 
@@ -109,6 +114,8 @@ class FileTX(object):
         return False
 
     def ft_can_start(self):
+        if self.pause:
+            return False
         if not self.connection.tx_buf_rawData and \
                 not self.connection.rx_buf_rawData:
             return True
@@ -124,24 +131,46 @@ class FileTX(object):
         self.ft_tx_buf = b''
         self.connection.tx_buf_rawData = b''
 
+    def ft_recover_buff(self):
+        self.ft_tx_buf = bytes(self.connection.tx_buf_rawData) + self.ft_tx_buf
+        self.connection.tx_buf_rawData = b''
+
     def ft_mode_wait_for_end(self):
         if self.ft_can_stop():
             self.ft_end()
 
     def ft_start(self):
-        self.time_start = time.time()
+        if not self.time_start:
+            self.time_start = time.time()
 
     def ft_end(self):
         self.done = True
 
     def ft_abort(self):
         """ To trigger from the outside (GUI) """
-        self.class_protocol.exec_abort()
+        self.abort = True
+        if self.time_start:
+            self.class_protocol.exec_abort()
+        else:
+            self.ft_end()
+
+    def ft_pause(self):
+        """ To trigger from the outside (GUI) """
+        if self.class_protocol.parm_can_pause:
+            if not self.pause:
+                self.pause = True
+                self.class_protocol.exec_pause()
+                return True
+            self.pause = False
+        return False
 
     def ft_set_wait_timer(self):
-        self.last_tx = self.param_wait + time.time()
+        if self.param_wait:
+            self.last_tx = self.param_wait + time.time()
 
     def ft_can_send(self):
+        if self.pause:
+            return False
         if self.param_wait:
             if self.last_tx < time.time():
                 self.ft_set_wait_timer()
@@ -158,16 +187,19 @@ class FileTX(object):
                 del self.class_protocol
                 self.class_protocol = None
             return False
+        if self.pause:
+            return True
         if not self.e:
             return self.class_protocol.crone_mode()
 
     def ft_rx(self):
+        # TODO Pause State (Auswertung der Pakete)
+        # self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
+        if self.pause:
+            return True     # let CLI disabled
         self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
         self.connection.rx_buf_rawData = b''
-        """
-        if not self.e:
-            self.class_protocol.crone_mode()
-        """
+        return True
 
     def ft_tx(self, data):
         self.connection.send_data(data, file_trans=True)
@@ -183,6 +215,41 @@ class FileTX(object):
 
         return percentage_completion, self.raw_data_len, data_sendet, time_spend, time_remaining, baud_rate
 
+    def get_ft_info_percentage(self):
+        data_in_buf = len(self.ft_tx_buf) + len(self.connection.tx_buf_rawData)
+        data_sendet = self.raw_data_len - data_in_buf
+        return round(calculate_percentage(self.raw_data_len, data_sendet), 1)
+
+    def get_ft_info_status(self):
+        if self.abort or self.class_protocol.abort:
+            return 'ABORT'
+        if self.e or self.class_protocol.e:
+            return 'ERROR'
+        if self.done:
+            return 'DONE'
+        if self.pause:
+            return 'PAUSE'
+        if not self.class_protocol.state:
+            return 'WAIT'
+        if not self.time_start:
+            return 'INIT'
+        return 'TX'
+
+    def get_ft_active_status(self):
+        """ FT-Manager Buttons de/activate """
+        if self.abort or self.class_protocol.abort:
+            return False
+        if self.e or self.class_protocol.e:
+            return False
+        if self.done:
+            return False
+        # if not self.time_start:
+        #     return False
+        return True
+
+    def get_ft_can_pause(self):
+        return self.class_protocol.parm_can_pause
+
 
 class DefaultMODE_TX(object):
     def __init__(self, ft_root):
@@ -193,7 +260,9 @@ class DefaultMODE_TX(object):
         self.state_tab = {}
         self.state = 0
         self.e = True  # No Prot set
-        # self.done = False
+        self.start = False
+        self.abort = False
+        self.parm_can_pause = False
 
     def init(self):
         pass
@@ -212,6 +281,9 @@ class DefaultMODE_TX(object):
     def exec_abort(self):
         pass
 
+    def exec_pause(self):
+        pass
+
     def start_ft(self):
         self.ft_root.ft_start()
         self.state_tab[self.state]()
@@ -227,8 +299,10 @@ class TextMODE_TX(DefaultMODE_TX):
         }
         self.state = 0
         self.e = False
+        self.parm_can_pause = True
 
     def mode_wait_for_start(self):
+        self.start = True
         if self.ft_root.ft_can_start():
             if self.ft_root.param_wait:
                 self.state = 2
@@ -244,6 +318,8 @@ class TextMODE_TX(DefaultMODE_TX):
 
     def mode_s2(self):
         """ :returns doesn't matter """
+        if not self.ft_root.param_wait:
+            self.state = 1
         if self.ft_root.ft_can_send():
             tmp_len = self.ft_root.param_PacLen * self.ft_root.param_MaxFrame
             if len(self.ft_root.ft_tx_buf) < tmp_len:
@@ -260,9 +336,14 @@ class TextMODE_TX(DefaultMODE_TX):
 
     def exec_abort(self):
         self.ft_root.ft_flush_buff()
-        # self.send_data(b'#ABORT#\r')
-        self.e = True
+        self.send_data(b'\r#ABORT#\r')
+        self.abort = True
         self.state = 3
+
+    def exec_pause(self):
+        #if self.state == 3:
+        self.ft_root.ft_recover_buff()
+        self.state = 0
 
 
 class AutoBinMODE_TX(DefaultMODE_TX):
@@ -282,6 +363,7 @@ class AutoBinMODE_TX(DefaultMODE_TX):
             3: self.mode_tx_data,
             4: self.mode_tx_data_steps,
             5: self.mode_tx_end_resp,
+            6: self.mode_pause,
             9: self.ft_root.ft_mode_wait_for_end,
         }
         """ Simple Mode .. There seems another Mode but i can't find any specs. """
@@ -297,8 +379,10 @@ class AutoBinMODE_TX(DefaultMODE_TX):
         """
         self.state = 0
         self.e = False
+        self.parm_can_pause = True
 
     def mode_wait_for_free_tx_buf(self):
+        self.start = True
         if self.ft_root.ft_can_start():
             self.state = 1
 
@@ -358,6 +442,12 @@ class AutoBinMODE_TX(DefaultMODE_TX):
             elif b'#ABORT#' in lines:
                 self.exec_abort()
         """
+    def mode_pause(self):
+        if self.ft_root.ft_can_start():
+            if self.ft_root.param_wait:
+                self.state = 4
+            else:
+                self.state = 3
 
     def check_abort(self):
         if self.ft_root.ft_rx_buf:
@@ -370,7 +460,142 @@ class AutoBinMODE_TX(DefaultMODE_TX):
 
     def exec_abort(self):
         self.ft_root.ft_flush_buff()
-        self.send_data(b'#ABORT#\r')
-        self.e = True
+        self.send_data(b'\r#ABORT#\r')
+        self.abort = True
         self.state = 9
+
+    def exec_pause(self):
+        self.state = 6
+        self.ft_root.ft_recover_buff()
+
+
+class BinMODE_TX(DefaultMODE_TX):
+    """
+    Not sure if that is AutoBin or Bin
+    Have no Specs.
+    Also, it seems WinSTOP has a Bug with CRC in some of his FT Protocols.
+    """
+
+    # I Guess Bin is just sending with AutoBin header but don't wait for #OK#
+
+    def init(self):
+        # self.ft_root.ft_tx_buf = bytes(self.ft_root.data)
+        self.state_tab = {
+            0: self.mode_wait_for_free_tx_buf,
+            1: self.mode_init,
+            2: self.mode_init_resp,
+            3: self.mode_tx_data,
+            4: self.mode_tx_data_steps,
+            5: self.mode_tx_end_resp,
+            6: self.mode_pause,
+            9: self.ft_root.ft_mode_wait_for_end,
+        }
+        """ Simple Mode .. There seems another Mode but i can't find any specs. """
+        # self.header = f'\r#BIN#{self.ft_root.raw_data_len}\r'.encode('ASCII')
+        pos = '0' * 8  # Don't know how to decode. Maybe it's a Timestamp but results don't match.
+        # pos += '1'
+        filename = self.ft_root.param_filename.split('/')[-1].upper()
+        filename = filename.replace(' ', '_')
+        self.header = f"#BIN#{self.ft_root.raw_data_len}#|{int(self.ft_root.raw_data_crc)}#${pos}#{filename}\r".encode(
+            'ASCII')
+        """ 
+        'EXT. MODE'
+        Header from WinSTOP: #BIN#5314#|40769#$54E3A0D1#fbb.conf 
+        """
+        self.state = 0
+        self.e = False
+        self.parm_can_pause = True
+
+    def mode_wait_for_free_tx_buf(self):
+        self.start = True
+        if self.ft_root.ft_can_start():
+            self.state = 1
+
+    def mode_init(self):
+        self.send_data(self.header)
+        # self.state = 2
+        if self.ft_root.param_wait:
+            self.state = 4
+        else:
+            self.state = 3
+        self.start_ft()
+
+    def mode_init_resp(self):
+        if self.ft_root.ft_rx_buf:
+            lines = self.ft_root.ft_rx_buf.split(b'\r')
+            # print(f"M IRS {lines}")
+            self.ft_root.ft_rx_buf = b''
+            lines = [x for x in lines if x != b'']
+            if lines:
+                if lines[-1] == b'#OK#':
+                    if self.ft_root.param_wait:
+                        self.state = 4
+                    else:
+                        self.state = 3
+                    self.start_ft()
+                elif b'#ABORT#' in lines:
+                    self.exec_abort()
+
+    def mode_tx_data(self):
+        if not self.check_abort():
+            self.send_data(bytes(self.ft_root.ft_tx_buf))
+            self.ft_root.ft_tx_buf = b''
+            self.state = 5
+            return True
+
+    def mode_tx_data_steps(self):
+        if not self.check_abort():
+            if self.ft_root.ft_can_send():
+                tmp_len = self.ft_root.param_PacLen * self.ft_root.param_MaxFrame
+                if len(self.ft_root.ft_tx_buf) < tmp_len:
+                    tmp = self.ft_root.ft_tx_buf
+                    tmp_len = len(tmp)
+                    # self.ft_root.done = True
+                    self.state = 5
+                else:
+                    tmp = self.ft_root.ft_tx_buf[:tmp_len]
+                self.send_data(tmp)
+                self.ft_root.ft_tx_buf = self.ft_root.ft_tx_buf[tmp_len:]
+
+    def mode_tx_end_resp(self):
+        """ END """
+        # self.send_data(f'\rBIN-TX OK #{int(self.ft_root.raw_data_crc)}\r\r'.encode('ASCII'))
+        self.state = 9
+        """
+        if self.ft_root.ft_rx_buf:
+            lines = self.ft_root.ft_rx_buf.split(b'\r')
+            self.ft_root.ft_rx_buf = b''
+            if lines[-1] == b'#OK#':
+                # self.send_data(b'BIN-TX OK #25059\r')
+                self.send_data(f'BIN-TX OK #{int(self.ft_root.raw_data_crc)}\r'.encode('ASCII'))
+                self.state = 9
+            elif b'#ABORT#' in lines:
+                self.exec_abort()
+        """
+
+    def mode_pause(self):
+        if self.ft_root.ft_can_start():
+            if self.ft_root.param_wait:
+                self.state = 4
+            else:
+                self.state = 3
+
+    def check_abort(self):
+        if self.ft_root.ft_rx_buf:
+            lines = self.ft_root.ft_rx_buf.split(b'\r')
+            self.ft_root.ft_rx_buf = b''
+            if b'#ABORT#' in lines:
+                self.exec_abort()
+                return True
+        return False
+
+    def exec_abort(self):
+        self.ft_root.ft_flush_buff()
+        self.send_data(b'\r#ABORT#\r')
+        self.abort = True
+        self.state = 9
+
+    def exec_pause(self):
+        self.state = 6
+        self.ft_root.ft_recover_buff()
 

@@ -218,8 +218,13 @@ class SideTabbedFrame:
         # tk.Label(tab1_kanal, text='File Transfer').place(x=380, y=160)
         _x = 300
         _y = 170
-        self.ft_progress = tk.ttk.Progressbar(tab1_kanal, orient=tk.HORIZONTAL, length=150, mode='determinate')
+        self.ft_progress = tk.ttk.Progressbar(tab1_kanal,
+                                              orient=tk.HORIZONTAL,
+                                              length=150,
+                                              mode='determinate',
+                                              )
         self.ft_progress.place(x=_x, y=_y)
+        self.ft_progress.bind('<Button-1>', self.main_win.open_ft_manager)
         self.ft_progress['value'] = 0
         self.ft_progress_var = tk.StringVar(tab1_kanal)
         self.ft_size_var = tk.StringVar(tab1_kanal)

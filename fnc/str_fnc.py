@@ -49,6 +49,10 @@ def get_time_delta(dateti: datetime.now()):
     return str(datetime.now() - dateti).split('.')[0]
 
 
+def calculate_percentage(data_length, data_sent):
+    return round((data_sent / data_length) * 100, 1)
+
+
 def calculate_time_remaining(time_delta, data_length, data_sent):
     remaining_data = data_length - data_sent
     if remaining_data <= 0 or not time_delta or not data_sent:
@@ -57,12 +61,12 @@ def calculate_time_remaining(time_delta, data_length, data_sent):
     baud_rate = 0
     percentage_completion = 0
     if data_sent and time_delta:
-        percentage_completion = (data_sent / data_length) * 100
+        percentage_completion = calculate_percentage(data_length, data_sent)
         time_per_byte = time_delta.total_seconds() / data_sent
         time_remaining = timedelta(seconds=remaining_data * time_per_byte)
     if time_delta:
         baud_rate = data_sent / time_delta.total_seconds()
-    return time_remaining, int(baud_rate), round(percentage_completion)
+    return time_remaining, int(baud_rate), percentage_completion
 
 
 def format_number(number):
@@ -75,7 +79,6 @@ def format_number(number):
             formatted_str += "."
     formatted_number = formatted_str[::-1]
     return formatted_number
-
 
 
 def try_decode(data: b'', ignore=False):

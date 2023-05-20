@@ -103,13 +103,15 @@ class AX25Conn(object):
         self.mh = self.port_handler.mh
         """ GUI Stuff"""
         self.ch_index: int = 0  # Set in insert_conn2all_conn_var()
-        self.ch_echo: [AX25Conn] = []
+
         self.gui = self.port_handler.gui
-        self.ChVars = None
+        # self.ChVars = None
         if self.gui is None:
             self.is_gui = False
         else:
             self.is_gui = True
+        """ Ch-Echo"""
+        self.ch_echo: [AX25Conn] = []
         """ Config new Connection Address """
         # AX25 Frame for Connection Initialisation.
         self.ax25_out_frame = AX25Frame()  # Predefined AX25 Frame for Output
@@ -164,11 +166,6 @@ class AX25Conn(object):
         self.is_link = False
         self.is_link_remote = False
         # self.rx_buf_rawData_2: b'' = b''        # Received Data TEST Script
-        """ File Transfer Stuff """
-        self.ft_tx_queue: [FileTX] = []
-        self.ft_tx_activ = None
-        """ Pipe-Tool """
-        self.pipe = None
         """ Port Variablen"""
         self.vs = 0  # Sendefolgenummer     / N(S) = V(R)  TX
         self.vr = 0  # Empfangsfolgezählers / N(S) = V(R)  TX
@@ -222,13 +219,18 @@ class AX25Conn(object):
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
         self.is_RNR: bool = False
+        """ File Transfer Stuff """
+        self.ft_tx_queue: [FileTX] = []
+        self.ft_tx_activ = None
+        """ Pipe-Tool """
+        self.pipe = None
         """ Link Holder / Not related to Link Connection Stuff """
         self.link_holder_on: bool = False
         self.link_holder_interval: int = 30  # Minutes
         self.link_holder_timer = time.time()
         self.link_holder_text: str = '\r'
         """ Encoding """
-        self.encoding = 'UTF-8'
+        self.encoding = 'CP437'     # 'UTF-8'
         """ User DB Entry """
         self.user_db = self.port_handler.user_db
         self.user_db_ent = False
@@ -326,14 +328,15 @@ class AX25Conn(object):
         if self.pipe_rx(data):
             return
 
-        if self.ft_tx_activ is None:
+        # if self.ft_tx_activ is None:
+        if not self.ft_handle_rx():
             # Station ( RE/DISC/Connect ) Sting Detection
             res = self.set_dest_call_fm_data_inp(data)
             # CLI
             if res:
                 self.exec_cli(res)
             return
-        self.ft_tx_activ.ft_rx()
+        # self.ft_tx_activ.ft_rx()
 
     def set_dest_call_fm_data_inp(self, raw_data: b''):
         det = [
@@ -349,10 +352,10 @@ class AX25Conn(object):
                 _cut_str = _tmp_call[1:]
                 if b':' in _tmp_call[0]:
                     _tmp_call = _tmp_call[0].split(b':')
-                    self.to_call_str = _tmp_call[1].decode('UTF-8', 'ignore').replace(' ', '')
-                    self.to_call_alias = _tmp_call[0].decode('UTF-8', 'ignore').replace(' ', '')
+                    self.to_call_str = _tmp_call[1].decode('ASCII', 'ignore').replace(' ', '')
+                    self.to_call_alias = _tmp_call[0].decode('ASCII', 'ignore').replace(' ', '')
                 else:
-                    self.to_call_str = _tmp_call[0].decode('UTF-8', 'ignore').replace(' ', '')
+                    self.to_call_str = _tmp_call[0].decode('ASCII', 'ignore').replace(' ', '')
                     self.to_call_alias = ''
                 if self.is_gui:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
@@ -386,12 +389,6 @@ class AX25Conn(object):
                     self.user_db_ent.Language = int(self.gui.language)
                     self.cli_language = int(self.gui.language)
             self.set_distance()
-            """
-            if int(self.user_db_ent.pac_len):
-                self.parm_PacLen = int(self.user_db_ent.pac_len)
-            if int(self.user_db_ent.max_pac):
-                self.parm_MaxFrame = int(self.user_db_ent.max_pac)
-            """
 
     def set_distance(self):
         if self.user_db_ent:
@@ -466,6 +463,11 @@ class AX25Conn(object):
 
     ########################################
     # File Transfer
+    def ft_handle_rx(self):
+        if self.ft_tx_activ is None:
+            return False
+        return self.ft_tx_activ.ft_rx()
+
     def ft_cron(self):
         if self.ft_queue_handling():
             return self.ft_tx_activ.ft_crone()
@@ -474,6 +476,8 @@ class AX25Conn(object):
     def ft_queue_handling(self):
         if self.ft_tx_activ is not None:
             self.ft_tx_activ: FileTX
+            if self.ft_tx_activ.pause:
+                return False
             if self.ft_tx_activ.done:
                 self.ft_tx_activ = None
                 if self.ft_tx_queue:

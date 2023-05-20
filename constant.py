@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.84.6dev'
+VER = '2.84.7dev'
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {
@@ -16,10 +16,10 @@ CFG_txt_save = {
 CFG_clr_sys_msg = 'red'
 
 ENCODINGS = (
-    'UTF-8',
     'CP437',
     'ASCII',
     'LATIN_1',
+    'UTF-8',
 )
 STATION_TYPS = [
             'SYSOP',    # Don't change. Used as Key
@@ -74,7 +74,8 @@ STATION_ID_ENCODING_REV = {
 
 FT_MODES = [
     'Text',
-    'AutoBin'
+    'Bin',
+    'AutoBin',
 ]
 
 ALL_COLOURS = ('snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white', 'old lace',

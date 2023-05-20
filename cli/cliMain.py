@@ -80,6 +80,7 @@ class DefaultCLI(object):
         self.raw_input = b''
         self.cmd = b''
         self.last_line = b''
+        self.new_last_line = b''
         self.parameter = []
         self.sys_login = None
         self.sysop_priv = False
@@ -347,6 +348,8 @@ class DefaultCLI(object):
                 return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
             self.cmd = b''
             ret = self.commands[treffer[0]][0]()
+            # self.last_line = b''
+            self.new_last_line = b''
             if ret is None:
                 return ''
             return ret
@@ -354,6 +357,7 @@ class DefaultCLI(object):
         return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
 
     def exec_cmd(self):
+        self.input = self.last_line + self.input
         if self.is_prefix():
             return self.find_cmd()
         # Message is for User ( Text , Chat )
@@ -371,17 +375,19 @@ class DefaultCLI(object):
         inp_lines = inp_lines.replace(b'\n', b'\r')
         inp_lines = inp_lines.split(b'\r')
         _ret = ''
+        self.new_last_line = inp_lines[-1]
         for li in inp_lines:
             for str_cmd in list(self.str_cmd_exec.keys()):
                 if str_cmd in li:
                     self.cmd = str_cmd
                     self.parameter = [li[len(str_cmd):]]
-                    # print(f"str_cmd cmd: {str_cmd}")
-                    # print(f"str_cmd par: {self.parameter}")
                     _ret = self.str_cmd_exec[str_cmd]()
                     self.cmd = b''
                     self.send_output(_ret)
-        self.last_line = inp_lines[-1]
+                    self.last_line = b''
+                    self.new_last_line = b''
+                    return _ret
+        #self.last_line = inp_lines[-1]
         return _ret
         # self.raw_input = b''
 
@@ -856,6 +862,7 @@ class DefaultCLI(object):
         if not self.exec_str_cmd():
             self.input = self.raw_input
             self.send_output(self.exec_cmd())
+        self.last_line = self.new_last_line
         return ''
 
     def s2(self):

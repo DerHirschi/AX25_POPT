@@ -18,6 +18,7 @@ import config_station
 import constant
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
+from gui.guiFT_Manager import FileTransferManager
 from gui.guiPipeToolSettings import PipeToolSettings
 from gui.guiPriv import PrivilegWin
 from gui.guiUserDBoverview import UserDBtreeview
@@ -167,17 +168,22 @@ class TkMainWin:
         self.MenuTools.add_command(label="MH", command=self.MH_win, underline=0)
         self.MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win,
                                    underline=1)
+        self.MenuTools.add_separator()
         self.MenuTools.add_command(label="User-DB Tree", command=self.UserDB_tree, underline=0)
+        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
+                                   underline=0)
+        self.MenuTools.add_separator()
+
+        self.MenuTools.add_command(label="FT-Manager", command=self.open_ft_manager,
+                                   underline=0)
+        self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send,
+                                   underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
                                    command=self.open_linkholder_settings_win, underline=0)
-        self.MenuTools.add_separator()
-        self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send,
-                                   underline=0)
         self.MenuTools.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
         self.MenuTools.add_separator()
-        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
-                                   underline=0)
+
         self.MenuTools.add_command(label='Priv', command=self.open_priv_win,
                                    underline=0)
 
@@ -774,12 +780,6 @@ class TkMainWin:
             self.rx_beep_sound()
             if self.ch_alarm:
                 self.ch_status_update()
-            """
-            # TASK FOR SETTING WIN IF NEEDED !!!
-            if self.settings_win is not None:
-                # Settings Win ( Port,- Station settings )
-                self.settings_win.tasker()
-            """
 
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
@@ -788,9 +788,11 @@ class TkMainWin:
             self.update_stat_info_conn_timer()
             self.update_ft_info()
             self.tabbed_sideFrame.tasker()
-            # print(f"{self.ax25_port_handler.link_connections.keys()}")
             if self.mh.new_call_alarm and self.setting_dx_alarm:
                 self.dx_alarm()
+            if self.settings_win is not None:
+                # ( FT-Manager )
+                self.settings_win.tasker()
 
     #################################
     # TASKS
@@ -1036,11 +1038,18 @@ class TkMainWin:
             PipeToolSettings(self)
 
     ##########################
-    # About WIN
-    def open_file_send(self):
+    # FT TX
+    def open_file_send(self, event=None):
         # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             FileSend(self)
+
+    ##########################
+    # FT Manager
+    def open_ft_manager(self, event=None):
+        # TODO just build a f** switch ( dict )
+        if self.settings_win is None:
+            FileTransferManager(self)
 
     ##########################
     # Keybinds Help WIN
@@ -1378,8 +1387,7 @@ class TkMainWin:
     def update_stat_info_conn_timer(self):
         conn = self.get_conn()
         if conn:
-            time_str = get_time_delta(conn.cli.time_start)
-            self.txt_win.stat_info_timer_var.set(time_str)
+            self.txt_win.stat_info_timer_var.set(get_time_delta(conn.cli.time_start))
         else:
             self.txt_win.stat_info_timer_var.set('--:--:--')
 
@@ -1425,7 +1433,7 @@ class TkMainWin:
                     status[0] = 'S'
                 status = ''.join(status)
         if dist:
-            loc += f" ({round(dist)} km)"
+            loc += f" ({dist} km)"
 
         self.txt_win.stat_info_status_var.set(status)
         self.txt_win.stat_info_name_var.set(name)
@@ -1437,7 +1445,7 @@ class TkMainWin:
 
     def update_ft_info(self):
         prog_val = 0
-        prog_var = '--- %'
+        prog_var = '---.- %'
         size_var = 'Size: ---,- / ---,- kb'
         dur_var = 'Time: --:--:-- / --:--:--'
         bps_var = 'BPS: ---.---'
