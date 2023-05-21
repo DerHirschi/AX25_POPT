@@ -3,42 +3,11 @@ import logging
 import datetime
 
 from constant import FT_MODES
+from ax25.Yapp import Yapp
+from fnc.crc_fnc import get_crc
 from fnc.str_fnc import calculate_time_remaining, calculate_percentage
 
 logger = logging.getLogger(__name__)
-
-
-def init_crctab():
-    """ By: ChatGP """
-    print("CRC-TAB INIT")
-    logger.info("CRC-TAB INIT")
-    crctab = [0] * 256
-    bitrmdrs = [0x9188, 0x48C4, 0x2462, 0x1231, 0x8108, 0x4084, 0x2042, 0x1021]
-
-    for n in range(256):
-        r = 0
-        for m in range(8):
-            mask = 0x0080 >> m
-            if n & mask:
-                r = bitrmdrs[m] ^ r
-        crctab[n] = r
-    return crctab
-
-
-CRC_TAB = init_crctab()
-
-
-def calculate_crc(data, polynomial):
-    """ By: ChatGP """
-    crc = 0x0000
-    for byte in data:
-        crc = crc ^ (byte << 8)
-        for _ in range(8):
-            if crc & 0x8000:
-                crc = (crc << 1) ^ polynomial
-            else:
-                crc = crc << 1
-    return crc & 0xFFFF
 
 
 class FileTX(object):
@@ -60,6 +29,7 @@ class FileTX(object):
             FT_MODES[0]: TextMODE_TX,
             FT_MODES[1]: BinMODE_TX,
             FT_MODES[2]: AutoBinMODE_TX,
+            FT_MODES[3]: YappMODE_TX,
         }
 
         self.raw_data = b''
@@ -67,7 +37,6 @@ class FileTX(object):
         self.raw_data_crc = 0
         self.ft_tx_buf = b''
         self.ft_rx_buf = b''
-        self.crc_tab = CRC_TAB
         self.e = False
         self.done = False
         self.abort = False
@@ -89,19 +58,14 @@ class FileTX(object):
             self.class_protocol = DefaultMODE_TX(self)
 
     def process_file(self, filename):
-        """ by: Chat GB """
         with open(filename, 'rb') as file:
             buf = file.read()
-            crc = 0
-            length = len(buf)
-            for byte in buf:
-                crc = self.crc_tab[(crc >> 8) & 0xFF] ^ ((crc << 8) & 0xFFFF) ^ byte
-
-        self.raw_data = buf
-        self.raw_data_len = length
-        self.raw_data_crc = crc
+            self.raw_data = buf
+            self.raw_data_len = len(buf)
+            self.raw_data_crc = get_crc(buf)
 
     def ft_init(self):
+        # print()
         if not self.raw_data:
             self.e = True
             return False
@@ -174,12 +138,13 @@ class FileTX(object):
         if self.param_wait:
             if self.last_tx < time.time():
                 self.ft_set_wait_timer()
-                if not self.connection.tx_buf_rawData\
-                        and not self.connection.tx_buf_2send\
-                        and not self.connection.tx_buf_unACK:
-                    return True
-            return False
-        return True
+            else:
+                return False
+        if not self.connection.tx_buf_rawData\
+                and not self.connection.tx_buf_2send\
+                and not self.connection.tx_buf_unACK:
+            return True
+        return False
 
     def ft_crone(self):
         if self.done:
@@ -256,6 +221,7 @@ class DefaultMODE_TX(object):
         self.ft_root: FileTX = ft_root
         self.connection = ft_root.connection
         self.ft_root.ft_tx_buf = bytes(self.ft_root.raw_data)
+        self.filename = self.ft_root.param_filename.split('/')[-1]
         self.header = b''
         self.state_tab = {}
         self.state = 0
@@ -263,6 +229,7 @@ class DefaultMODE_TX(object):
         self.start = False
         self.abort = False
         self.parm_can_pause = False
+        self.yapp = None
 
     def init(self):
         pass
@@ -347,13 +314,6 @@ class TextMODE_TX(DefaultMODE_TX):
 
 
 class AutoBinMODE_TX(DefaultMODE_TX):
-    """
-    Not sure if that is AutoBin or Bin
-    Have no Specs.
-    Also, it seems WinSTOP has a Bug with CRC in some of his FT Protocols.
-    """
-    # I Guess Bin is just sending with AutoBin header but don't wait for #OK#
-
     def init(self):
         # self.ft_root.ft_tx_buf = bytes(self.ft_root.data)
         self.state_tab = {
@@ -369,14 +329,8 @@ class AutoBinMODE_TX(DefaultMODE_TX):
         """ Simple Mode .. There seems another Mode but i can't find any specs. """
         # self.header = f'\r#BIN#{self.ft_root.raw_data_len}\r'.encode('ASCII')
         pos = '0' * 8   # Don't know how to decode. Maybe it's a Timestamp but results don't match.
-        # pos += '1'
-        filename = self.ft_root.param_filename.split('/')[-1].upper()
-        filename = filename.replace(' ', '_')
-        self.header = f"#BIN#{self.ft_root.raw_data_len}#|{int(self.ft_root.raw_data_crc)}#${pos}#{filename}\r".encode('ASCII')
-        """ 
-        'EXT. MODE'
-        Header from WinSTOP: #BIN#5314#|40769#$54E3A0D1#fbb.conf 
-        """
+        self.filename = self.filename.replace(' ', '_').upper()
+        self.header = f"#BIN#{self.ft_root.raw_data_len}#|{int(self.ft_root.raw_data_crc)}#${pos}#{self.filename}\r".encode('ASCII')
         self.state = 0
         self.e = False
         self.parm_can_pause = True
@@ -393,7 +347,6 @@ class AutoBinMODE_TX(DefaultMODE_TX):
     def mode_init_resp(self):
         if self.ft_root.ft_rx_buf:
             lines = self.ft_root.ft_rx_buf.split(b'\r')
-            # print(f"M IRS {lines}")
             self.ft_root.ft_rx_buf = b''
             lines = [x for x in lines if x != b'']
             if lines:
@@ -470,14 +423,6 @@ class AutoBinMODE_TX(DefaultMODE_TX):
 
 
 class BinMODE_TX(DefaultMODE_TX):
-    """
-    Not sure if that is AutoBin or Bin
-    Have no Specs.
-    Also, it seems WinSTOP has a Bug with CRC in some of his FT Protocols.
-    """
-
-    # I Guess Bin is just sending with AutoBin header but don't wait for #OK#
-
     def init(self):
         # self.ft_root.ft_tx_buf = bytes(self.ft_root.data)
         self.state_tab = {
@@ -493,15 +438,9 @@ class BinMODE_TX(DefaultMODE_TX):
         """ Simple Mode .. There seems another Mode but i can't find any specs. """
         # self.header = f'\r#BIN#{self.ft_root.raw_data_len}\r'.encode('ASCII')
         pos = '0' * 8  # Don't know how to decode. Maybe it's a Timestamp but results don't match.
-        # pos += '1'
-        filename = self.ft_root.param_filename.split('/')[-1].upper()
-        filename = filename.replace(' ', '_')
-        self.header = f"#BIN#{self.ft_root.raw_data_len}#|{int(self.ft_root.raw_data_crc)}#${pos}#{filename}\r".encode(
+        self.filename = self.filename.replace(' ', '_').upper()
+        self.header = f"#BIN#{self.ft_root.raw_data_len}#|{int(self.ft_root.raw_data_crc)}#${pos}#{self.filename}\r".encode(
             'ASCII')
-        """ 
-        'EXT. MODE'
-        Header from WinSTOP: #BIN#5314#|40769#$54E3A0D1#fbb.conf 
-        """
         self.state = 0
         self.e = False
         self.parm_can_pause = True
@@ -521,20 +460,7 @@ class BinMODE_TX(DefaultMODE_TX):
         self.start_ft()
 
     def mode_init_resp(self):
-        if self.ft_root.ft_rx_buf:
-            lines = self.ft_root.ft_rx_buf.split(b'\r')
-            # print(f"M IRS {lines}")
-            self.ft_root.ft_rx_buf = b''
-            lines = [x for x in lines if x != b'']
-            if lines:
-                if lines[-1] == b'#OK#':
-                    if self.ft_root.param_wait:
-                        self.state = 4
-                    else:
-                        self.state = 3
-                    self.start_ft()
-                elif b'#ABORT#' in lines:
-                    self.exec_abort()
+        pass
 
     def mode_tx_data(self):
         if not self.check_abort():
@@ -559,19 +485,7 @@ class BinMODE_TX(DefaultMODE_TX):
 
     def mode_tx_end_resp(self):
         """ END """
-        # self.send_data(f'\rBIN-TX OK #{int(self.ft_root.raw_data_crc)}\r\r'.encode('ASCII'))
         self.state = 9
-        """
-        if self.ft_root.ft_rx_buf:
-            lines = self.ft_root.ft_rx_buf.split(b'\r')
-            self.ft_root.ft_rx_buf = b''
-            if lines[-1] == b'#OK#':
-                # self.send_data(b'BIN-TX OK #25059\r')
-                self.send_data(f'BIN-TX OK #{int(self.ft_root.raw_data_crc)}\r'.encode('ASCII'))
-                self.state = 9
-            elif b'#ABORT#' in lines:
-                self.exec_abort()
-        """
 
     def mode_pause(self):
         if self.ft_root.ft_can_start():
@@ -599,3 +513,88 @@ class BinMODE_TX(DefaultMODE_TX):
         self.state = 6
         self.ft_root.ft_recover_buff()
 
+
+class YappMODE_TX(DefaultMODE_TX):
+    def init(self):
+        print("Yapp prot_class INIT")
+        self.state_tab = {
+            0: self.mode_wait_for_free_tx_buf,
+            1: self.mode_init,
+            2: self.mode_yapp,
+            9: self.ft_root.ft_mode_wait_for_end,
+        }
+        self.filename = self.filename.replace(' ', '_')
+        self.state = 0
+        self.e = False
+        self.parm_can_pause = False
+        self.yapp = Yapp(self)
+
+    def mode_wait_for_free_tx_buf(self):
+        self.start = True
+        print("YAPP wait")
+        if self.ft_root.ft_can_start():
+            print("YAPP can INIT")
+            self.state = 1
+
+    def mode_init(self):
+        print("Yapp Init (mode_init)")
+        self.yapp.file_rawdata = self.ft_root.ft_tx_buf
+        self.yapp.file_name = self.filename
+        if self.yapp.init_tx():
+            if not self.yapp.e:
+                self.state = 2
+                self.e = False
+                self.yapp.e = self.e
+                self.start_ft()
+                # self.yapp.send_init_pack()
+                return True
+        # self.state = 9
+        print("Yapp Init Error (mode_init)")
+        logger.error("Yapp Init Error (mode_init)")
+        self.e = True
+        return False
+
+    def mode_yapp(self):
+        print("Yapp (mode_yapp)")
+        if self.yapp.Done:
+            self.state = 9
+            return
+        if self.yapp.e:
+            print("Yapp Error (mode_yapp)")
+            logger.error("Yapp Error (mode_yapp)")
+            self.state = 9
+            return
+        if self.ft_root.ft_rx_buf:
+            ret = self.yapp.yapp_rx(self.ft_root.ft_rx_buf)
+            """
+            if not ret:
+                error_count += 1
+            """
+            # self.yapp.clean_rx_buf()
+            self.ft_root.ft_rx_buf = b''
+            print("Yapp (mode_yapp) rx")
+            return
+        print("Yapp (mode_yapp) Cron")
+        self.yapp.yapp_cron()
+
+    def can_send(self):
+        return self.ft_root.ft_can_send()
+
+    def send_data(self, data):
+        self.ft_root.ft_tx(data=data)
+
+    """
+    def crone_mode(self):
+        #if self.e:
+        #    return False
+        #if self.state != 2:
+        #    return False
+        #self.yapp.yapp_cron()
+        #return True
+        if not self.e:
+            if self.state in self.state_tab:
+                self.state_tab[self.state]()
+                return True
+        self.e = True
+        return False
+    """

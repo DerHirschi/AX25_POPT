@@ -949,6 +949,7 @@ class TkMainWin:
         self.out_txt.see("end")
 
     def msg_to_monitor(self, var: str):
+        # var += bytes.fromhex('15').decode('UTF-8')+'\n'
         """ Called from AX25Conn """
         ind = self.mon_txt.index(tk.INSERT)
 

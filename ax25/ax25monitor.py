@@ -26,6 +26,11 @@ class Monitor(object):  # TODO: Static
         out_str += ' len {}\n'.format(ax25_frame.data_len) if ax25_frame.data_len else '\n'
 
         if ax25_frame.data:
+            print()
+            print('------ START ----------')
+            print(f"Data    : {ax25_frame.data}")
+            print(f"Data dec: {ax25_frame.data.decode('UTF-8', 'ignore')}")
+            print(f"Data hex: {ax25_frame.data.hex()}")
             try:
                 data = ax25_frame.data.decode('CP437')
             except UnicodeDecodeError:
@@ -40,5 +45,8 @@ class Monitor(object):  # TODO: Static
                 if da:
                     if da[-1] != '\n' or da[-1] != '\r':
                         out_str += da + '\n'
-        # logger.debug(out_str)
+            # logger.debug(out_str)
+            print(out_str)
+            print('------ EOL ----------')
+            print()
         return out_str
