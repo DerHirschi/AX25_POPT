@@ -2,6 +2,7 @@ Ideas/TODO's :
 
 - ESC Befehle
 - Individuelle Farben (Vorschreib Fenster)
+✓ UserDB
 - Infos / Ctext usw. in User-DB speichern
 - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 - Logbuch
@@ -27,8 +28,8 @@ Ideas/TODO's :
 - Filter für Monitorausgabe
 - Torrent ähnliches Filesharing via UI Frames
 - Daten Komprimierung
-- Daten Verschlüsselung ( AES )
-- ordentliches Noden System bzw CLI überarbeiten
+- Daten Verschlüsselung (AES/RSA)
+✓ ordentliches Noden System bzw CLI überarbeiten
 - DX-Alarm überarbeiten
 ✓ Autoscrolling überarbeiten.
 - Optional nur als Konsolen Anwendung ohne GUI. (Ist bereits dafür vorbereitet)

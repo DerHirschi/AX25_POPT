@@ -531,15 +531,14 @@ class YappMODE_TX(DefaultMODE_TX):
 
     def mode_wait_for_free_tx_buf(self):
         self.start = True
-        print("YAPP wait")
         if self.ft_root.ft_can_start():
-            print("YAPP can INIT")
             self.state = 1
 
     def mode_init(self):
-        print("Yapp Init (mode_init)")
-        self.yapp.file_rawdata = self.ft_root.ft_tx_buf
+        # self.yapp.file_rawdata = self.ft_root.ft_tx_buf
         self.yapp.file_name = self.filename
+        if self.connection is not None:
+            self.yapp.param_proto_conn = True
         if self.yapp.init_tx():
             if not self.yapp.e:
                 self.state = 2
@@ -555,9 +554,10 @@ class YappMODE_TX(DefaultMODE_TX):
         return False
 
     def mode_yapp(self):
-        print("Yapp (mode_yapp)")
+        # print("Yapp (mode_yapp)")
         if self.yapp.Done:
             self.state = 9
+            print("Yapp (mode_yapp) Done !")
             return
         if self.yapp.e:
             print("Yapp Error (mode_yapp)")
@@ -572,16 +572,22 @@ class YappMODE_TX(DefaultMODE_TX):
             """
             # self.yapp.clean_rx_buf()
             self.ft_root.ft_rx_buf = b''
-            print("Yapp (mode_yapp) rx")
+            # print("Yapp (mode_yapp) rx")
             return
-        print("Yapp (mode_yapp) Cron")
+        # print("Yapp (mode_yapp) Cron")
         self.yapp.yapp_cron()
 
     def can_send(self):
-        return self.ft_root.ft_can_send()
+        if self.yapp.pac_count < self.ft_root.param_MaxFrame:
+            return True
+        if self.ft_root.ft_can_send():
+            self.yapp.pac_count = 0
+            return True
+        return False
 
     def send_data(self, data):
         self.ft_root.ft_tx(data=data)
+        # self.ft_root.ft_tx_buf = self.yapp.file_rawdata
 
     """
     def crone_mode(self):

@@ -26,13 +26,13 @@ class Monitor(object):  # TODO: Static
         out_str += ' len {}\n'.format(ax25_frame.data_len) if ax25_frame.data_len else '\n'
 
         if ax25_frame.data:
-            print()
-            print('------ START ----------')
-            print(f"Data    : {ax25_frame.data}")
-            print(f"Data dec: {ax25_frame.data.decode('UTF-8', 'ignore')}")
-            print(f"Data hex: {ax25_frame.data.hex()}")
+            # print()
+            # print('------ START ----------')
+            # print(f"Data    : {ax25_frame.data}")
+            # print(f"Data dec: {ax25_frame.data.decode('UTF-8', 'ignore')}")
+            # print(f"Data hex: {ax25_frame.data.hex()}")
             try:
-                data = ax25_frame.data.decode('CP437')
+                data = ax25_frame.data.decode('ASCII')
             except UnicodeDecodeError:
                 data = f'<BIN> {len(ax25_frame.data)} Bytes'
             # data = try_decode(ax25_frame.data)
@@ -46,7 +46,7 @@ class Monitor(object):  # TODO: Static
                     if da[-1] != '\n' or da[-1] != '\r':
                         out_str += da + '\n'
             # logger.debug(out_str)
-            print(out_str)
-            print('------ EOL ----------')
-            print()
+            # print(out_str)
+            # print('------ EOL ----------')
+            # print()
         return out_str

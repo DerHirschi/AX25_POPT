@@ -34,8 +34,9 @@ YAPP_HEADERS_W_LEN = [
 class Yapp(object):
     def __init__(self, ft_class):
         self.ft_class = ft_class
-        self.param_PacLen = ft_class.ft_root.param_PacLen
+        # self.param_PacLen = ft_class.ft_root.param_PacLen
         self.param_MaxFrame = ft_class.ft_root.param_MaxFrame
+        self.param_proto_conn = True
         self.pack_types_enc = {
             'RR': self.enc_RR,
             'RF': self.enc_RF,  # Normal Yapp reply
@@ -58,6 +59,7 @@ class Yapp(object):
 
             # Unimplemented - Reserved for Server Commands
             'UU': self.enc_UU,
+            'Start/Done': self.done,
         }
         self.pack_types_dec = {
             b'\x06': self.dec_RR_RF_RT_AF_AT_CA,
@@ -105,8 +107,8 @@ class Yapp(object):
                    }),
             'SE': ('EF',    # EOF
                    {
-                       'AF': 'SH',      # More Files
-                       'AT': 'ST',      # No More Files
+                       # 'AF': 'SH', # TODO     # More Files
+                       'AF': 'ST',      # No More Files
                        'Other':   'Abort',
                        'Timeout': 'Abort'
                    }),
@@ -116,11 +118,12 @@ class Yapp(object):
                        'Other':   'Start/Done',
                        'Timeout': 'Start/Done',
                    }),
-            'Abort': ('',
+            'Abort': ('CN',
                       {
-                          '': 'Abort'       # TODO abort_fnc()
+                          '': 'Abort',       # TODO abort_fnc()
+                          'CA': 'Start/Done',
                       }),
-            'Start/Done': ('',
+            'Start/Done': ('Start/Done',
                       {
                           '': 'Start/Done'  # TODO done_fnc()
                       }),
@@ -168,22 +171,26 @@ class Yapp(object):
         self.TX = None       # Sending or Receiving
         self.state = ''
 
-        self.file_name = ''
+        # self.file_name = ''
+        self.file_name = self.ft_class.filename
         self.file_size = 0
         self.file_time = ''  # '12:30:45'
         self.file_date = ''  # '2023-05-18'
-        self.file_rawdata = b''
+        # self.file_rawdata = b''
+        # self.file_rawdata = self.ft_class.ft_root.ft_tx_buf
         self.rx_pack_buff = b''
         self.rx_pac_type = ''
         self.rx_pac_len = 0
+        self.tx_last_pack = b''
+        self.pac_count = 0
 
     def init_tx(self):
-        print("Yapp INIT")
+        # print("Yapp INIT")
         if self.check_init():
-            print("Yapp INIT Check OK")
+            # print("Yapp INIT Check OK")
             self.TX = True
             self.state = 'S'
-            self.file_size = len(self.file_rawdata)
+            self.file_size = len(self.ft_class.ft_root.ft_tx_buf)
             self.e = False
             return True
         return False
@@ -201,11 +208,21 @@ class Yapp(object):
             self.yapp_tx('SI')
 
     def check_init(self):
-        if not self.file_rawdata:
+        if not self.ft_class.ft_root.ft_tx_buf:
+            print("Yapp INIT Check - NO ft_class.ft_root.ft_tx_buf")
+            logger.error("Yapp INIT Check - NO ft_class.ft_root.ft_tx_buf")
             return False
         if not self.file_name:
+            print("Yapp INIT Check - NO file_name")
+            logger.error("Yapp INIT Check - NO file_name")
             return False
         return True
+
+    def done(self):
+        self.Done = True
+
+    def abort(self):
+        pass
 
     def check_packet_length(self):
         if len(self.rx_pack_buff) >= 2:
@@ -218,18 +235,6 @@ class Yapp(object):
                 return packet_length
         return False
 
-    def is_packet(self):
-
-        if len(self.rx_pack_buff) >= 2:
-            packet_length = self.rx_pack_buff[1]
-            if self.rx_pack_buff.startswith(b'\x02') \
-                    and (self.YappC or self.Resume):
-                # Exclude checksum length for DT packets
-                packet_length -= 2
-            if len(self.rx_pack_buff[2:]) == packet_length:
-                return packet_length
-        return False
-
     def yapp_tx(self, pack_typ: ''):
         if pack_typ:
             pack_data = None
@@ -238,18 +243,20 @@ class Yapp(object):
                     pack_data = self.pack_types_enc.get(pack_typ, False)
             else:
                 pack_data = self.pack_types_enc.get(pack_typ, False)
-            print(f"yapp_tx: pack_typ: {pack_typ} - pack_data: {pack_data}")
+            # print(f"yapp_tx: pack_typ: {pack_typ} - pack_data: {pack_data}")
             if pack_data is not None:
                 if pack_data:
                     pack_data = pack_data()
                     if pack_data:
-                        self.ft_class.send_data(pack_data)
-                        return True
+                        if pack_data != self.tx_last_pack and self.param_proto_conn:
+                            self.ft_class.send_data(pack_data)
+                            self.tx_last_pack = pack_data
+                            return True
         return False
 
     def yapp_rx(self, data_in: b''):
-        print(f"Yapp in:     {data_in}")
-        print(f"Yapp in hex: {data_in.hex()}")
+        # print(f"Yapp in:     {data_in}")
+        # print(f"Yapp in hex: {data_in.hex()}")
         e = True
         rest = b''
         if data_in:
@@ -284,7 +291,7 @@ class Yapp(object):
 
     def exec_state_tab(self):
         # STATES
-        print(f"Yapp exec_state_tab: {self.state}")
+        # print(f"Yapp exec_state_tab: {self.state}")
         if self.TX:
             # Send File
             # if self.state not in self.tx_state_table:
@@ -292,9 +299,10 @@ class Yapp(object):
             # return False
             # resp, self.state = self.tx_state_table[self.state]
             resp, tmp_state_tab = self.tx_state_table.get(self.state, ('', {}))
-            print(f"Yapp resp, self.state: {resp}, {tmp_state_tab}")
+            # print(f"Yapp resp, self.state: {resp}, {tmp_state_tab}")
             self.state = tmp_state_tab.get(self.rx_pac_type, self.state)
-            print(f"Yapp state: {self.state}")
+            # self.state = tmp_state_tab.get(self.rx_pac_type, '')
+            # print(f"Yapp state: {self.state}")
         else:
             # Receive File
             if self.state not in self.rx_state_table:
@@ -302,7 +310,7 @@ class Yapp(object):
                 return False
             resp, self.state = self.rx_state_table[self.state].get(self.rx_pac_type, ('CN', 'CW'))
         if resp:
-            print("Yapp Resp")
+            # print("Yapp Resp")
             self.yapp_tx(resp)
         return True
 
@@ -360,7 +368,7 @@ class Yapp(object):
                 b'\x03': self.dec_AF,
                 b'\x04': self.dec_AT,
                 b'\x05': self.dec_CA,
-            }.get(bytes([self.rx_pack_buff[2]]), False)
+            }.get(bytes([self.rx_pack_buff[1]]), False)
             if not ret:
                 return False
             return ret()
@@ -371,7 +379,7 @@ class Yapp(object):
                 b'\x01': self.dec_SI,
                 b'\x02': self.dec_RI,  # Used in Server mode
             }.get(
-                bytes([self.rx_pack_buff[2]]),
+                bytes([self.rx_pack_buff[1]]),
                 self.dec_UU  # Unimplemented - Reserved for Server Commands
             )
             return ret()
@@ -454,11 +462,25 @@ class Yapp(object):
         self.rx_pac_len = 2  # TODO !!!
         return 'HD'
 
-    def enc_DT(self, data: b''):
+    def enc_DT(self):
         """ Send_Data """
         #  STX   len   (Data)    {if len=0 then data length = 256}
         # [STX] [Len] [Datas] [Checksum]
-        checksum = bytes([get_crc(data)])   # TODO Maybe Checksum is not right (8 bit like x-modem ?)
+
+        # data_len = self.param_PacLen - 2
+        data_len = self.ft_class.ft_root.param_PacLen - 2
+        if self.YappC or self.Resume:
+            data_len = - 2  # TODO on 8 Bit CRC - 1
+        if len(self.ft_class.ft_root.ft_tx_buf) < data_len:
+            data_len = len(self.ft_class.ft_root.ft_tx_buf)
+        data = self.ft_class.ft_root.ft_tx_buf[:data_len]
+        self.ft_class.ft_root.ft_tx_buf = self.ft_class.ft_root.ft_tx_buf[data_len:]
+        # checksum = bytes([get_crc(data)])   # TODO Maybe Checksum is not right (8 bit like x-modem ?)
+        checksum = get_crc(data)   # TODO Maybe Checksum is not right (8 bit like x-modem ?)
+        # print(f"Yapp DT CRC: {checksum}")
+        if not self.ft_class.ft_root.ft_tx_buf:
+            self.state = 'SE'
+        self.pac_count += 1
         if self.YappC or self.Resume:
             return self.build_frame(pack_typ=b'\x02', data=data) + checksum
         return self.build_frame(pack_typ=b'\x02', data=data)
@@ -469,12 +491,12 @@ class Yapp(object):
         if pac_len:
             if self.YappC or self.Resume:
                 data = self.rx_pack_buff[2:pac_len]
-                self.rx_pac_len = pac_len + 2
+                self.rx_pac_len = pac_len + 2           # TODO + 1 if 8 Bit CRC
                 chk_sum = self.rx_pack_buff[pac_len: self.rx_pac_len]
                 calc_chk_sum = get_crc(data)
                 if chk_sum == calc_chk_sum:     # TODO Maybe Checksum is not right (8 bit like x-modem ?)
-                    self.file_rawdata += data
-                    print(f"Yapp get data: {data}")
+                    self.ft_class.ft_root.ft_tx_buf += data
+                    # print(f"Yapp get data: {data}")
                     return 'DT'
                 else:
                     logger.error(f"Yapp CRC-Error: chk_sum: {chk_sum} | calc_chk_sum: {calc_chk_sum}")
@@ -497,7 +519,7 @@ class Yapp(object):
     def dec_EF(self):
         """ Send_EOF """
         if len(self.rx_pack_buff) == 2:
-            if bytes([self.rx_pack_buff[2]]) == b'\x01':
+            if bytes([self.rx_pack_buff[1]]) == b'\x01':
                 self.rx_pac_len = 2
                 return 'EF'
         self.rx_pac_len = 0
@@ -510,7 +532,7 @@ class Yapp(object):
     def dec_ET(self):
         """ Send_EOT """
         if len(self.rx_pack_buff) == 2:
-            if bytes([self.rx_pack_buff[2]]) == b'\x01':
+            if bytes([self.rx_pack_buff[1]]) == b'\x01':
                 self.rx_pac_len = 2
                 return 'ET'
         self.rx_pac_len = 0
