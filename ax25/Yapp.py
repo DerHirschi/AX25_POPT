@@ -120,12 +120,12 @@ class Yapp(object):
                    }),
             'Abort': ('CN',
                       {
-                          '': 'Abort',       # TODO abort_fnc()
+                          '': 'Start/Done',
                           'CA': 'Start/Done',
                       }),
             'Start/Done': ('Start/Done',
                       {
-                          '': 'Start/Done'  # TODO done_fnc()
+                          '': 'Start/Done'
                       }),
         }
         """ State Tab Receiving File """
@@ -182,7 +182,6 @@ class Yapp(object):
         self.rx_pac_type = ''
         self.rx_pac_len = 0
         self.tx_last_pack = b''
-        self.pac_count = 0
 
     def init_tx(self):
         # print("Yapp INIT")
@@ -203,9 +202,11 @@ class Yapp(object):
             return True
         return False
 
+    """
     def send_init_pack(self):
         if self.TX:
             self.yapp_tx('SI')
+    """
 
     def check_init(self):
         if not self.ft_class.ft_root.ft_tx_buf:
@@ -221,8 +222,8 @@ class Yapp(object):
     def done(self):
         self.Done = True
 
-    def abort(self):
-        pass
+    def exec_abort(self):
+        self.state = 'Abort'
 
     def check_packet_length(self):
         if len(self.rx_pack_buff) >= 2:
@@ -480,7 +481,6 @@ class Yapp(object):
         # print(f"Yapp DT CRC: {checksum}")
         if not self.ft_class.ft_root.ft_tx_buf:
             self.state = 'SE'
-        self.pac_count += 1
         if self.YappC or self.Resume:
             return self.build_frame(pack_typ=b'\x02', data=data) + checksum
         return self.build_frame(pack_typ=b'\x02', data=data)
@@ -581,6 +581,8 @@ class Yapp(object):
         """ Cancel """
         # CAN  len  (Optional Reason in ASCII)
         ret = b'\x18' + NUL
+        self.ft_class.abort = True
+        self.Done = True
         return ret
 
     def dec_CN(self):

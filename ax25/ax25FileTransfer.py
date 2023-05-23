@@ -574,21 +574,30 @@ class YappMODE_TX(DefaultMODE_TX):
             self.ft_root.ft_rx_buf = b''
             # print("Yapp (mode_yapp) rx")
             return
-        # print("Yapp (mode_yapp) Cron")
-        self.yapp.yapp_cron()
+        else:
+            # print("Yapp (mode_yapp) Cron")
+            self.yapp.yapp_cron()
+            return
 
     def can_send(self):
-        if self.yapp.pac_count < self.ft_root.param_MaxFrame:
+        """
+        if len(self.ft_root.connection.tx_buf_unACK) < self.ft_root.param_MaxFrame:
             return True
         if self.ft_root.ft_can_send():
-            self.yapp.pac_count = 0
             return True
         return False
+        """
+        return True
 
     def send_data(self, data):
         self.ft_root.ft_tx(data=data)
         # self.ft_root.ft_tx_buf = self.yapp.file_rawdata
 
+    def exec_abort(self):
+        self.ft_root.ft_flush_buff()
+        self.yapp.exec_abort()
+        # self.abort = True
+        #self.state = 9
     """
     def crone_mode(self):
         #if self.e:

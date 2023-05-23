@@ -64,8 +64,8 @@ def calculate_time_remaining(time_delta, data_length, data_sent):
         percentage_completion = calculate_percentage(data_length, data_sent)
         time_per_byte = time_delta.total_seconds() / data_sent
         time_remaining = timedelta(seconds=remaining_data * time_per_byte)
-    if time_delta:
-        baud_rate = data_sent / time_delta.total_seconds()
+    if time_delta.total_seconds() > 0:
+        baud_rate = (data_sent * 8) / time_delta.total_seconds()  # Convert data_sent to bits
     return time_remaining, int(baud_rate), percentage_completion
 
 
