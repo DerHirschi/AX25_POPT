@@ -332,9 +332,9 @@ class AX25PortHandler(object):
         res = {}
         for ch_id in self.all_connections:
             conn = self.all_connections[ch_id]
-            tmp = conn.ft_tx_queue
-            if conn.ft_tx_activ is not None:
-                tmp = [conn.ft_tx_activ] + tmp
+            tmp = conn.ft_queue
+            if conn.ft_obj is not None:
+                tmp = [conn.ft_obj] + tmp
             if tmp:
                 res[ch_id] = tmp
         return res

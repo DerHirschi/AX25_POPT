@@ -1422,8 +1422,8 @@ class TkMainWin:
                 status = 'LINK'
             elif conn.pipe is not None:
                 status = 'PIPE'
-            elif conn.ft_tx_activ is not None:
-                status = 'TX FILE'
+            elif conn.ft_obj is not None:
+                status = f'{conn.ft_obj.dir} FILE'
             else:
                 status = ['-'] * 7
                 if conn.is_RNR:
@@ -1453,8 +1453,8 @@ class TkMainWin:
         next_tx = 'TX in: --- s'
         conn = self.get_conn()
         if conn:
-            if conn.ft_tx_activ is not None:
-                ft_obj = conn.ft_tx_activ
+            if conn.ft_obj is not None:
+                ft_obj = conn.ft_obj
                 percentage_completion, data_len, data_sendet, time_spend, time_remaining, baud_rate = ft_obj.get_ft_infos()
                 prog_val = percentage_completion
                 prog_var = f"{percentage_completion} %"

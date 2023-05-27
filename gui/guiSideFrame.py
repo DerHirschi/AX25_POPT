@@ -633,8 +633,11 @@ class SideTabbedFrame:
                 status_text = 'Link'
             elif station.pipe is not None:
                 status_text = 'Pipe'
-            elif station.ft_tx_activ is not None:
-                status_text = 'Sending File'
+            elif station.ft_obj is not None:
+                if station.ft_obj.dir == 'TX':
+                    status_text = 'Sending File'
+                else:
+                    status_text = 'Receiving File'
         self.status_label_var.set(status_text)
         self.rtt_best.configure(text=best)
         self.rtt_worst.configure(text=worst)

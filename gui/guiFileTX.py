@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog as fd
-from ax25.ax25FileTransfer import FileTX
+from ax25.ax25FileTransfer import FileTransport
 from constant import FT_MODES
 from string_tab import STR_TABLE
 
@@ -118,11 +118,12 @@ class FileSend(tk.Toplevel):
         if filenames:
             prot = self.protocol_var.get()
             wait = self.wait_tx_var.get()
-            self.FileOBJ = FileTX(
+            self.FileOBJ = FileTransport(
                 filename=filenames[0],
                 protocol=prot,
                 connection=self.conn,
-                tx_wait=wait
+                tx_wait=wait,
+                direction='TX'
             )
             if not self.FileOBJ.e:
                 self.filename.insert(tk.END, filenames[0])
@@ -165,8 +166,8 @@ class FileSend(tk.Toplevel):
                 # self.FileOBJ.reset_timer()
                 conn = self.root.get_conn()
                 if conn:
-                    if self.FileOBJ not in conn.ft_tx_queue:
-                        conn.ft_tx_queue.append(self.FileOBJ)
+                    if self.FileOBJ not in conn.ft_queue:
+                        conn.ft_queue.append(self.FileOBJ)
         self.destroy_win()
 
     def destroy_win(self):

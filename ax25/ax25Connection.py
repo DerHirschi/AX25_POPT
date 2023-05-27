@@ -9,7 +9,7 @@ import cli.cliMain
 import config_station
 from ax25.ax25dec_enc import AX25Frame
 from fnc.ax25_fnc import reverse_uid
-from ax25.ax25FileTransfer import FileTX
+from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
 
 
@@ -156,6 +156,7 @@ class AX25Conn(object):
         self.tx_buf_2send: [AX25Frame] = []  # Buffer for Sending. Will be processed in ax25PortHandler
         self.tx_buf_unACK: {int: AX25Frame} = {}  # Buffer for UNACK I-Frames
         self.rx_buf_last_frame = ax25_frame  # Buffers for last Frame !?!
+        self.rx_buf_last_data = b''  # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
         self.tx_buf_rawData: b'' = b''  # Buffer for TX RAW Data that will be packed into a Frame
         self.tx_buf_guiData: b'' = b''  # Buffer for TX Echo in GUI
@@ -220,8 +221,8 @@ class AX25Conn(object):
         self.REJ_is_set: bool = False
         self.is_RNR: bool = False
         """ File Transfer Stuff """
-        self.ft_tx_queue: [FileTX] = []
-        self.ft_tx_activ = None
+        self.ft_queue: [FileTransport] = []
+        self.ft_obj = None
         """ Pipe-Tool """
         self.pipe = None
         """ Link Holder / Not related to Link Connection Stuff """
@@ -292,6 +293,8 @@ class AX25Conn(object):
     def handle_rx(self, ax25_frame: AX25Frame):
         self.rx_buf_last_frame = ax25_frame
         self.zustand_exec.state_rx_handle(ax25_frame=ax25_frame)
+        if ax25_frame.data:
+            self.rx_buf_last_data = ax25_frame.data
         self.set_T3()
 
     def handle_tx(self, ax25_frame: AX25Frame):
@@ -299,7 +302,7 @@ class AX25Conn(object):
         self.zustand_exec.tx(ax25_frame=ax25_frame)
 
     def send_data(self, data, file_trans=False):
-        if self.ft_tx_activ is not None and not file_trans:
+        if self.ft_obj is not None and not file_trans:
             return False
         if data:
             if type(data) == bytes:
@@ -307,13 +310,6 @@ class AX25Conn(object):
                 self.tx_buf_rawData += data
                 return True
         return False
-
-    def send_gui_echo(self, data):
-        if self.ft_tx_activ is not None:
-            return
-        if self.pipe is not None:
-            return
-        self.tx_buf_guiData += data
 
     def recv_data(self, data: b'', file_trans=False):
         self.vr = count_modulo(int(self.vr))
@@ -327,18 +323,26 @@ class AX25Conn(object):
         # Pipe-Tool
         if self.pipe_rx(data):
             return
-
-        # if self.ft_tx_activ is None:
-        if not self.ft_handle_rx():
-            # Station ( RE/DISC/Connect ) Sting Detection
-            res = self.set_dest_call_fm_data_inp(data)
-            # CLI
-            if res:
-                self.exec_cli(res)
+        self.ft_check_incoming_ft(data)
+        if self.ft_handle_rx():
             return
+        # Station ( RE/DISC/Connect ) Sting Detection
+        if not self.set_dest_call_fm_data_inp(data):
+            return
+        # CLI
+        self.exec_cli(data)
+        return
         # self.ft_tx_activ.ft_rx()
 
+    def send_gui_echo(self, data):
+        if self.ft_obj is not None:
+            return
+        if self.pipe is not None:
+            return
+        self.tx_buf_guiData += data
+
     def set_dest_call_fm_data_inp(self, raw_data: b''):
+        # TODO AGAIN !!
         det = [
             b'*** Connected to',
             b'*** Reconnected to'
@@ -463,40 +467,49 @@ class AX25Conn(object):
 
     ########################################
     # File Transfer
+    def ft_check_incoming_ft(self, data):
+        if self.ft_obj is None:
+            ret = ft_rx_header_lookup(data=data, last_pack=self.rx_buf_last_data)
+            if ret:
+                self.ft_obj = ret
+                self.ft_obj.connection = self
+
     def ft_handle_rx(self):
-        if self.ft_tx_activ is None:
+        if self.ft_obj is None:
             return False
-        return self.ft_tx_activ.ft_rx()
+        return self.ft_obj.ft_rx()
 
     def ft_cron(self):
         if self.ft_queue_handling():
-            return self.ft_tx_activ.ft_crone()
+            return self.ft_obj.ft_crone()
         return False
 
     def ft_queue_handling(self):
-        if self.ft_tx_activ is not None:
-            self.ft_tx_activ: FileTX
-            if self.ft_tx_activ.pause:
+        if self.ft_obj is not None:
+            self.ft_obj: FileTransport
+            if self.ft_obj.pause:
                 return False
-            if self.ft_tx_activ.done:
-                self.ft_tx_activ = None
-                if self.ft_tx_queue:
-                    self.ft_tx_activ = self.ft_tx_queue[0]
-                    self.ft_tx_queue = self.ft_tx_queue[1:]
+            if self.ft_obj.done:
+                print(f"FT Done - rest: {self.ft_obj.ft_rx_buf}")
+                self.rx_buf_rawData += bytes(self.ft_obj.ft_rx_buf)
+                self.ft_obj = None
+                if self.ft_queue:
+                    self.ft_obj = self.ft_queue[0]
+                    self.ft_queue = self.ft_queue[1:]
                     return True
                 return False
             return True
 
-        if self.ft_tx_queue:
-            self.ft_tx_activ = self.ft_tx_queue[0]
-            self.ft_tx_queue = self.ft_tx_queue[1:]
+        if self.ft_queue:
+            self.ft_obj = self.ft_queue[0]
+            self.ft_queue = self.ft_queue[1:]
             return True
         return False
 
     def ft_reset_timer(self, conn_uid: str):
-        if self.ft_tx_activ is not None:
+        if self.ft_obj is not None:
             if conn_uid != self.uid and reverse_uid(conn_uid) != self.uid:
-                self.ft_tx_activ.ft_set_wait_timer()
+                self.ft_obj.ft_set_wait_timer()
 
     #######################
     # Link Holder
@@ -785,7 +798,7 @@ class AX25Conn(object):
 
     def exec_cli(self, inp=b''):
         """ CLI Processing like sending C-Text ... """
-        if self.ft_tx_activ is not None:
+        if self.ft_obj is not None:
             return False
         if self.is_link:
             return False
@@ -796,7 +809,7 @@ class AX25Conn(object):
 
     def cron_cli(self):
         """ CLI Processing like sending C-Text ... """
-        if self.ft_tx_activ is not None:
+        if self.ft_obj is not None:
             return False
         if self.is_link:
             return False

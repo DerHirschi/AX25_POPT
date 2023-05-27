@@ -33,6 +33,7 @@ Ideas/TODO's :
 - DX-Alarm überarbeiten
 ✓ Autoscrolling überarbeiten.
 - Optional nur als Konsolen Anwendung ohne GUI. (Ist bereits dafür vorbereitet)
+- Drucker Ausgabe vom QSO
 
 Evtl. später mal.
 

@@ -32,6 +32,10 @@ def conv_time_DE_str(dateti: datetime.now()):
     return dateti.strftime('%d/%m/%y %H:%M:%S')
 
 
+def get_file_timestamp():
+    return datetime.now().strftime('%d%m/%y-%H%M')
+
+
 def conv_timestamp_delta(delta):
     if delta:
         timestamp = str(delta)

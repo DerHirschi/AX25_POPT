@@ -3,7 +3,7 @@ import os
 import logging
 from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
-from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save
+from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,9 @@ def init_dir_struct():
         os.makedirs(CFG_data_path)
     if not os.path.exists(CFG_data_path + CFG_usertxt_path):
         os.makedirs(CFG_data_path + CFG_usertxt_path)
+    # File Transfer
+    if not os.path.exists(CFG_ft_downloads):
+        os.makedirs(CFG_ft_downloads)
 
 
 def get_all_stat_cfg():

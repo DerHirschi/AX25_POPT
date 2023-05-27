@@ -196,6 +196,7 @@ class Yapp(object):
 
     def init_rx(self):
         if self.check_init():
+            # TODO Feed in Header
             self.TX = False
             self.state = 'R'
             self.e = False
@@ -292,26 +293,16 @@ class Yapp(object):
 
     def exec_state_tab(self):
         # STATES
-        # print(f"Yapp exec_state_tab: {self.state}")
         if self.TX:
             # Send File
-            # if self.state not in self.tx_state_table:
-            # self.e = True
-            # return False
-            # resp, self.state = self.tx_state_table[self.state]
             resp, tmp_state_tab = self.tx_state_table.get(self.state, ('', {}))
-            # print(f"Yapp resp, self.state: {resp}, {tmp_state_tab}")
             self.state = tmp_state_tab.get(self.rx_pac_type, self.state)
-            # self.state = tmp_state_tab.get(self.rx_pac_type, '')
-            # print(f"Yapp state: {self.state}")
         else:
             # Receive File
             if self.state not in self.rx_state_table:
-                #self.e = True
                 return False
             resp, self.state = self.rx_state_table[self.state].get(self.rx_pac_type, ('CN', 'CW'))
         if resp:
-            # print("Yapp Resp")
             self.yapp_tx(resp)
         return True
 
