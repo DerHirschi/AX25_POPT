@@ -91,11 +91,8 @@ main.py line 9
 
 1 = English
 
-2 = Dutch   (I think it's Dutch ;-) )
+2 = Dutch (I think it's Dutch ;-) )
 
-
-Knowing Issues / TODO (AX25 Protocol):
-- FRMR Frame decoding not implemented yet
 
 
 [further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)

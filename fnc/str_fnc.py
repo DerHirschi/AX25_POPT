@@ -54,6 +54,9 @@ def get_time_delta(dateti: datetime.now()):
 
 
 def calculate_percentage(data_length, data_sent):
+    if not data_sent or not data_length:
+        # Divided by Zero let explode the Machine... So, better return 0
+        return 0
     return round((data_sent / data_length) * 100, 1)
 
 

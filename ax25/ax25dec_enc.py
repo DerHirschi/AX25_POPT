@@ -70,6 +70,7 @@ def decode_FRMR(ifield):
     logger.error("Data: {}".format("".join(data)))
     return tmp
 
+
 class Call(object):
     def __init__(self):
         self.call = ''
