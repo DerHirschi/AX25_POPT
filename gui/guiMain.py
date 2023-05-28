@@ -1420,11 +1420,15 @@ class TkMainWin:
                 enc = db_ent.Encoding
             if conn.is_link:
                 status = 'LINK'
+                self.txt_win.status_label.bind('<Button-1>', )
             elif conn.pipe is not None:
                 status = 'PIPE'
+                self.txt_win.status_label.bind('<Button-1>', )
             elif conn.ft_obj is not None:
                 status = f'{conn.ft_obj.dir} FILE'
+                self.txt_win.status_label.bind('<Button-1>', self.open_ft_manager)
             else:
+                self.txt_win.status_label.bind('<Button-1>', self.do_priv)
                 status = ['-'] * 7
                 if conn.is_RNR:
                     status[2] = 'R'

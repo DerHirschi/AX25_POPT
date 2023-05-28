@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.84.11dev'
+VER = '2.84.12dev'
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {
@@ -79,13 +79,13 @@ FT_MODES = [
     'Bin',
     'AutoBin',
     'Yapp',
- #   'YappC',
+    'YappC',
 ]
 
 FT_RX_HEADERS = [
     b'#BIN#',       # BIN/AUTOBIN
     b'\x05\x01',     # YAPP SI
-    b'\x05\x02',     # YAPP RI - Server Mode
+    # b'\x05\x02',     # YAPP RI - Server Mode
 ]
 
 ALL_COLOURS = ('snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white', 'old lace',

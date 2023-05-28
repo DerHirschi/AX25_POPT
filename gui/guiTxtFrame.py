@@ -241,7 +241,7 @@ class TxTframe:
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size )
                  ).grid(row=1, column=5, sticky="nsew")
 
-        status_label = tk.Label(self.out_frame,
+        self.status_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_status_var,
                  bg=STAT_BAR_CLR,
                  fg="red3",
@@ -250,8 +250,8 @@ class TxTframe:
                                 border=0,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, )
                  )
-        status_label.grid(row=1, column=6, sticky="nsew")
-        status_label.bind('<Button-1>', self.main_class.do_priv)
+        self.status_label.grid(row=1, column=6, sticky="nsew")
+        self.status_label.bind('<Button-1>', self.main_class.do_priv)
 
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_timer_var,

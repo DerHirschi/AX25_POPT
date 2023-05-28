@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 
 def ft_rx_header_lookup(data: b'', last_pack: b''):
     data = last_pack + data
-    print(f"ft lookup: {data}")
+    # print(f"ft lookup: {data}")
     for mode in FT_RX_HEADERS:
         if mode in data:
             ret = {
-                FT_RX_HEADERS[0]: is_autobin(data[data.index(FT_RX_HEADERS[0]):]),
-                FT_RX_HEADERS[1]: is_yapp_SI(data[data.index(FT_RX_HEADERS[0]):]),  # SI
-                # FT_RX_HEADERS[2]: is_yapp_RI(data[data.index(FT_RX_HEADERS[0]):]),  # RI - Server Mode
+                FT_RX_HEADERS[0]: is_autobin(data[data.index(mode):]),
+                FT_RX_HEADERS[1]: is_yapp_SI(data[data.index(mode):]),  # SI
+                # FT_RX_HEADERS[2]: is_yapp_RI(data[data.index(FT_RX_HEADERS[2]):]),  # RI - Server Mode
             }[mode]
             if ret:
-                print(f"ft lookup: True")
+                # print(f"ft lookup: True")
                 return ret
     return False
 
@@ -167,6 +167,7 @@ class FileTransport(object):
             FT_MODES[1]: BinMODE,
             FT_MODES[2]: AutoBinMODE,
             FT_MODES[3]: YappMODE,
+            FT_MODES[4]: YappCMODE,
         }
         self.class_protocol = DefaultMODE(self)
         if self.param_protocol in self.prot_dict.keys():
@@ -396,6 +397,11 @@ class DefaultMODE(object):
                 return False
         return False
 
+    def close_file(self):
+        if self.file is not None:
+            self.file.close()
+            self.file = None
+
     def crone_mode(self):
         if not self.e:
             if self.state in self.state_tab:
@@ -540,7 +546,6 @@ class AutoBinMODE(DefaultMODE):
                 length = min(
                     self.ft_root.raw_data_len - len(self.ft_root.raw_data),
                     len(self.ft_root.ft_rx_buf))
-
                 self.file.write(self.ft_root.ft_rx_buf[:length])
                 self.ft_root.raw_data += self.ft_root.ft_rx_buf[:length]
                 self.ft_root.ft_rx_buf = self.ft_root.ft_rx_buf[length:]
@@ -548,10 +553,8 @@ class AutoBinMODE(DefaultMODE):
                     """ END """
                     # self.state = 2
                     crc = get_crc(self.ft_root.raw_data)
-                    print(f"AutoBIN RX ENDE {self.ft_root.raw_data_crc} <> {crc}")
-                    if crc == self.ft_root.raw_data_crc:
-                        print(f"CRC OK")
-                    print(f"AutoBIN RX ENDE rest: {self.ft_root.ft_rx_buf}")
+                    # print(f"AutoBIN RX ENDE {crc}")
+                    # print(f"AutoBIN RX ENDE rest: {self.ft_root.ft_rx_buf}")
                     self.file.close()
                     self.state = 9
 
@@ -657,6 +660,20 @@ class BinMODE(DefaultMODE):
         self.e = False
         self.parm_can_pause = True
 
+    def init_RX(self):
+        self.state_tab = {
+            0: self.mode_init_rx,
+            1: self.mode_rx_data,
+            9: self.ft_root.ft_mode_wait_for_end,
+        }
+        self.state = 0
+        self.e = False
+        self.parm_can_pause = True
+        self.open_file()
+        if self.e:
+            self.exec_abort()
+        return self.e
+
     def mode_wait_for_free_tx_buf(self):
         self.start = True
         if self.ft_root.ft_can_start():
@@ -670,6 +687,39 @@ class BinMODE(DefaultMODE):
         else:
             self.state = 3
         self.start_ft()
+
+    def mode_init_rx(self):
+        if self.ft_root.ft_rx_buf:
+            if check_autobin(self.ft_root.ft_rx_buf):
+                self.start = True
+                self.ft_root.ft_rx_buf = b''
+                self.state = 1
+                self.send_data(b'#OK#')
+                self.start_ft()
+            else:
+                self.e = True
+                self.state = 9
+
+    def mode_rx_data(self):
+        if not self.check_abort():
+            if self.ft_root.ft_rx_buf:
+                length = min(
+                    self.ft_root.raw_data_len - len(self.ft_root.raw_data),
+                    len(self.ft_root.ft_rx_buf))
+
+                self.file.write(self.ft_root.ft_rx_buf[:length])
+                self.ft_root.raw_data += self.ft_root.ft_rx_buf[:length]
+                self.ft_root.ft_rx_buf = self.ft_root.ft_rx_buf[length:]
+                if len(self.ft_root.raw_data) == self.ft_root.raw_data_len:
+                    """ END """
+                    # self.state = 2
+                    crc = get_crc(self.ft_root.raw_data)
+                    print(f"AutoBIN RX ENDE {self.ft_root.raw_data_crc} <> {crc}")
+                    if crc == self.ft_root.raw_data_crc:
+                        print(f"CRC OK")
+                    print(f"AutoBIN RX ENDE rest: {self.ft_root.ft_rx_buf}")
+                    self.file.close()
+                    self.state = 9
 
     def mode_init_resp(self):
         pass
@@ -790,6 +840,7 @@ class YappMODE(DefaultMODE):
                 self.yapp.e = self.e
                 self.start_ft()
                 # self.yapp.send_init_pack()
+                print("Yapp Init RX (mode_init)")
                 return True
             # self.state = 9
         print("Yapp Init Error (mode_init)")
@@ -822,6 +873,10 @@ class YappMODE(DefaultMODE):
             # print("Yapp (mode_yapp) Cron")
             self.yapp.yapp_cron()
             return
+
+    def write_to_file(self, data: b''):
+        self.file.write(data)
+        self.ft_root.raw_data += data
 
     def can_send(self):
         # TODO process all Yapp packets at once or just if wait_timer is triggered
@@ -856,3 +911,22 @@ class YappMODE(DefaultMODE):
         self.e = True
         return False
     """
+
+
+class YappCMODE(YappMODE):
+    def init_TX(self):
+        print("Yapp prot_class INIT")
+        self.state_tab = {
+            0: self.mode_wait_for_free_tx_buf,
+            1: self.mode_init,
+            2: self.mode_yapp,
+            9: self.ft_root.ft_mode_wait_for_end,
+        }
+        self.filename = self.filename.replace(' ', '_')
+        self.state = 0
+        self.e = False
+        self.parm_can_pause = False
+        self.yapp = Yapp(self)
+        self.yapp.YappC = True
+        self.yapp.ext_header = True
+
