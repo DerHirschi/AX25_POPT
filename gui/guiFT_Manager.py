@@ -112,7 +112,7 @@ class FileTransferManager(tk.Toplevel):
         ttk.Label(self.progress_bar_frame, textvariable=self.bps_label_var).pack(pady=1, anchor=tk.W)
         ttk.Label(self.progress_bar_frame, textvariable=self.dir_label_var).pack(pady=1, anchor=tk.W)
 
-        combobox_values = list(range(0, 361, 10))
+        combobox_values = list(range(0, 361, 5))
         self.tx_wait_frame = ttk.Frame(self.buttons_frame)
         tk.Label(self.tx_wait_frame, text="TX-Wait: ").pack(side=tk.LEFT, padx=5)
 
@@ -237,7 +237,7 @@ class FileTransferManager(tk.Toplevel):
 
     def update_overview(self):
         # num_var = "#: --\n"
-        ch_var = "CH: --\n"
+        ch_var = "CH: - / Port: -\n"
         filename_var = "File Name:\n"
         size_var = "Size:\n"
         dir_var = "TX/RX: --\n"
@@ -246,7 +246,7 @@ class FileTransferManager(tk.Toplevel):
         crc_var = "CRC:\n"
         if self.selected_ft_obj is not None:
             # num_var = f"#: {}\n"
-            ch_var = f"CH: {self.selected_ft_obj.connection.ch_index}\n"
+            ch_var = f"CH: {self.selected_ft_obj.connection.ch_index} / Port: {self.selected_ft_obj.connection.port_id} {self.selected_ft_obj.connection.port_name}\n"
             filename_var = f"File Name: {self.selected_ft_obj.param_filename.split('/')[-1]}\n"
             size_var = f"Size: {get_kb_str_fm_bytes(self.selected_ft_obj.raw_data_len)}\n"
             dir_var = f"TX/RX: {self.selected_ft_obj.dir}\n"

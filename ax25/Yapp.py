@@ -253,11 +253,9 @@ class Yapp(object):
     def check_packet_length(self):
         if len(self.rx_pack_buff) >= 2:
             packet_length = self.rx_pack_buff[1]
-
             if self.rx_pack_buff.startswith(b'\x02'):
                 if not packet_length:
                     packet_length = 256
-
             if len(self.rx_pack_buff[2:]) >= packet_length:
                 return packet_length
             else:
@@ -319,12 +317,14 @@ class Yapp(object):
                     self.rx_pack_buff = self.rx_pack_buff[1:]
             self.rx_pack_buff = rest
             # print(f"Yapp RX LOOP ENDE - State: {self.state} - rx_buff: {self.rx_pack_buff}")
-
-        return e
+        self.ft_class.thread = None
+        # return e
 
     def yapp_cron(self):
         # if self.TX:
-        return self.exec_state_tab()
+        self.exec_state_tab()
+        self.ft_class.thread = None
+        # return ret
 
     def exec_state_tab(self):
         # STATES
@@ -529,8 +529,9 @@ class Yapp(object):
             self.ft_class.ft_root.param_filename = file_name
             self.ft_class.ft_root.raw_data_len = size
             self.ft_class.open_file()
-            # if self.ft_class.e:
-            # self.exec_abort()
+            if self.ft_class.e:
+                self.ft_class.e = False
+                self.exec_abort()
             print(f"YAPP dec_HD size : {size}")
             print(f"YAPP dec_HD self.ft_class.e : {self.ft_class.e}")
             # return 'RF', 'RD'
@@ -572,6 +573,7 @@ class Yapp(object):
         #print(f"YAPP dec_DT pac_len: {pac_len}")
         if pac_len > 0:
             data = self.rx_pack_buff[2:self.rx_pac_len]
+            self.ft_class.ft_root.can_rnr = True
             #print(f"YAPP dec_DT data: {data}")
             if self.YappC or self.Resume:
                 print("YAPP C DT DEC !!!!")
@@ -693,7 +695,7 @@ class Yapp(object):
         pac_len = self.check_packet_length()
         if pac_len < 0:
             return False
-        if (b'\x18' + NUL) in self.rx_pack_buff:
+        if b'\x18\x00' in self.rx_pack_buff:
             # CAN  len  (Optional Reason in ASCII)
             print(f"YAPP dec_CN - (b'\x18' + NUL): {self.rx_pack_buff}")
             self.rx_pac_len = 2
@@ -701,12 +703,12 @@ class Yapp(object):
         #if len(self.rx_pack_buff[2:]) != pac_len:
         #    return False
         tmp = self.rx_pack_buff[2:pac_len + 2]
-        if tmp.isalnum():
-            self.rx_pac_len = 2 + pac_len
-            print(f"YAPP ABORT REASON: {tmp}")
-            print(f"YAPP dec_CN - self.rx_pack_buff[2:pac_len].isalnum(): {self.rx_pack_buff}")
-            return 'CN'
-        return False
+        # if tmp.isalnum():
+        self.rx_pac_len = 2 + pac_len
+        print(f"YAPP ABORT REASON: {tmp}")
+        print(f"YAPP dec_CN - self.rx_pack_buff[2:pac_len].isalnum(): {self.rx_pack_buff}")
+        return 'CN'
+        #return False
 
     def enc_CA(self):
         """ Can_Ack """

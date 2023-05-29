@@ -17,11 +17,14 @@ Ideas/TODO's :
 - ?Pipe-TOOL: GPIOs ansteuerbar / auslesbar ..? oder besser
 - Remote-GPIO Tool (Idee von Lars)
 - Zeitgesteuerte connects und Kommando senden (MH Liste abfragen o.Ä.)
-- Bin
-- AutoBin
-- Yapp
+✓ Bin
+✓ AutoBin
+✓ Yapp
+- Yapp Server Modes
+- Yapp Resume
 - Didadit
-- APRS de/encoding
+- APRS decoding
+- APRS encoding
 - APRS Digi / I-Gate Funktion
 - "Managed-DIGI" Funktion (Die DIGI Verbindung wird wie ein Noden Link behandelt)
 - Optionale zusätzliche Monitorausgabe als Hex

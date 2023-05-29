@@ -144,6 +144,7 @@ class FileTransport(object):
         self.param_PacLen = 128
         self.param_MaxFrame = 3
         self.connection = connection
+
         """
         if self.connection is not None:
             self.param_PacLen = self.connection.parm_PacLen
@@ -159,8 +160,10 @@ class FileTransport(object):
         self.done = False
         self.abort = False
         self.pause = False
+        self.can_rnr = False
         self.last_tx = 0
         self.time_start = 0
+        self.tmp_param_wait = 0
 
         self.prot_dict = {
             FT_MODES[0]: TextMODE,
@@ -178,6 +181,7 @@ class FileTransport(object):
             self.class_protocol.init_TX()
         else:
             self.e = self.class_protocol.init_RX()
+
 
     def process_file(self):
         try:
@@ -249,6 +253,9 @@ class FileTransport(object):
 
     def ft_abort(self):
         """ To trigger from the outside (GUI) """
+        if self.pause:
+            self.ft_pause()
+        self.param_wait = 0
         self.abort = True
         if self.time_start:
             self.class_protocol.exec_abort()
@@ -292,15 +299,50 @@ class FileTransport(object):
         if self.pause:
             return True
         if not self.e:
+            # Set RNR for RECV
+            if self.dir != 'TX':
+                self.ft_rnr()
             return self.class_protocol.crone_mode()
+
+    def ft_rnr(self):
+        if self.connection is not None:
+            if not self.param_wait:
+                if self.connection.is_RNR:
+                    self.connection.unset_RNR()
+            else:
+                if not self.connection.is_RNR:
+                    if self.can_rnr:
+                        self.connection.set_RNR()
+                        self.ft_set_wait_timer()
+                else:
+                    if self.last_tx < time.time():
+                        self.connection.unset_RNR()
+                        self.can_rnr = False
+
+    def ft_switch_rnr(self):
+        if self.connection is not None:
+            self.can_rnr = False
+            if self.pause:
+                if not self.connection.is_RNR:
+                    self.connection.set_RNR()
+                    self.tmp_param_wait = self.param_wait
+                    self.param_wait = 0
+
+            else:
+                if self.connection.is_RNR:
+                    self.connection.unset_RNR()
+                    self.param_wait = self.tmp_param_wait
+                    self.last_tx = time.time()
 
     def ft_rx(self):
         # TODO Pause State (Auswertung der Pakete)
         # self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
         if self.pause:
             return True  # let CLI disabled
-        self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
-        self.connection.rx_buf_rawData = b''
+        inp_len = len(self.connection.rx_buf_rawData)
+        #self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
+        self.ft_rx_buf += bytes(self.connection.rx_buf_rawData[:inp_len])
+        self.connection.rx_buf_rawData = self.connection.rx_buf_rawData[inp_len:]
         return True
 
     def ft_tx(self, data):
@@ -332,19 +374,22 @@ class FileTransport(object):
             return round(calculate_percentage(self.raw_data_len, len(self.raw_data)), 1)
 
     def get_ft_info_status(self):
+        yapp_state = ''
+        if self.class_protocol.yapp is not None:
+            yapp_state = f" - {self.class_protocol.yapp.state}"
         if self.abort or self.class_protocol.abort:
-            return 'ABORT'
+            return 'ABORT' + yapp_state
         if self.e or self.class_protocol.e:
-            return 'ERROR'
+            return 'ERROR' + yapp_state
         if self.done:
-            return 'DONE'
+            return 'DONE' + yapp_state
         if self.pause:
-            return 'PAUSE'
+            return 'PAUSE' + yapp_state
         if not self.class_protocol.state:
-            return 'WAIT'
+            return 'WAIT' + yapp_state
         if not self.time_start:
-            return 'INIT'
-        return self.dir
+            return 'INIT' + yapp_state
+        return self.dir + yapp_state
 
     def get_ft_active_status(self):
         """ FT-Manager Buttons de/activate """
@@ -543,6 +588,7 @@ class AutoBinMODE(DefaultMODE):
     def mode_rx_data(self):
         if not self.check_abort():
             if self.ft_root.ft_rx_buf:
+                self.ft_root.can_rnr = True
                 length = min(
                     self.ft_root.raw_data_len - len(self.ft_root.raw_data),
                     len(self.ft_root.ft_rx_buf))
@@ -557,6 +603,7 @@ class AutoBinMODE(DefaultMODE):
                     # print(f"AutoBIN RX ENDE rest: {self.ft_root.ft_rx_buf}")
                     self.file.close()
                     self.state = 9
+                    self.ft_root.can_rnr = False
 
     def mode_init_resp(self):
         if self.ft_root.ft_rx_buf:
@@ -703,6 +750,7 @@ class BinMODE(DefaultMODE):
     def mode_rx_data(self):
         if not self.check_abort():
             if self.ft_root.ft_rx_buf:
+                self.ft_root.can_rnr = True
                 length = min(
                     self.ft_root.raw_data_len - len(self.ft_root.raw_data),
                     len(self.ft_root.ft_rx_buf))
@@ -720,6 +768,7 @@ class BinMODE(DefaultMODE):
                     print(f"AutoBIN RX ENDE rest: {self.ft_root.ft_rx_buf}")
                     self.file.close()
                     self.state = 9
+                    self.ft_root.can_rnr = False
 
     def mode_init_resp(self):
         pass
@@ -803,7 +852,7 @@ class YappMODE(DefaultMODE):
         self.filename = ''
         self.state = 0
         self.e = False
-        self.parm_can_pause = False
+        self.parm_can_pause = True
         self.yapp = Yapp(self)
 
     def mode_wait_for_free_tx_buf(self):
@@ -860,13 +909,14 @@ class YappMODE(DefaultMODE):
             self.state = 9
             return
         if self.ft_root.ft_rx_buf:
-            ret = self.yapp.yapp_rx(self.ft_root.ft_rx_buf)
+            inp_len = len(self.ft_root.ft_rx_buf)
+            ret = self.yapp.yapp_rx(self.ft_root.ft_rx_buf[:inp_len])
             """
             if not ret:
                 error_count += 1
             """
             # self.yapp.clean_rx_buf()
-            self.ft_root.ft_rx_buf = b''
+            self.ft_root.ft_rx_buf = self.ft_root.ft_rx_buf[inp_len:]
             # print("Yapp (mode_yapp) rx")
             return
         else:
@@ -883,10 +933,12 @@ class YappMODE(DefaultMODE):
         """
         if len(self.ft_root.connection.tx_buf_unACK) < self.ft_root.param_MaxFrame:
             return True
-        if self.ft_root.ft_can_send():
-            return True
-        return False
         """
+        if self.yapp is not None:
+            if self.yapp.state == 'SD':
+                if self.ft_root.ft_can_send():
+                    return True
+                return False
         return True
 
     def send_data(self, data):
@@ -896,6 +948,9 @@ class YappMODE(DefaultMODE):
         self.ft_root.ft_flush_buff()
         self.yapp.exec_abort()
 
+    def exec_pause(self):
+        """ Just in RX Mode """
+        self.ft_root.ft_switch_rnr()
     """
     def crone_mode(self):
         #if self.e:

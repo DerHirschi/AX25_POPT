@@ -1,4 +1,6 @@
 import socket
+import termios
+
 import serial
 import threading
 import time
@@ -674,7 +676,10 @@ class KISSSerial(AX25Port):
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_end())
                 """
-                self.device.flush()
+                try:
+                    self.device.flush()
+                except termios.error:
+                    pass
                 self.device.close()
                 self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):

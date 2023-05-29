@@ -103,7 +103,8 @@ class AX25Conn(object):
         self.mh = self.port_handler.mh
         """ GUI Stuff"""
         self.ch_index: int = 0  # Set in insert_conn2all_conn_var()
-
+        self.port_id: int = self.own_port.port_id
+        self.port_name: str = self.own_port.portname
         self.gui = self.port_handler.gui
         # self.ChVars = None
         if self.gui is None:
@@ -481,14 +482,16 @@ class AX25Conn(object):
 
     def ft_cron(self):
         if self.ft_queue_handling():
+            if self.gui is not None:
+                self.gui.on_channel_status_change()
             return self.ft_obj.ft_crone()
         return False
 
     def ft_queue_handling(self):
         if self.ft_obj is not None:
             self.ft_obj: FileTransport
-            if self.ft_obj.pause:
-                return False
+            # if self.ft_obj.pause:
+            #     return False
             if self.ft_obj.done:
                 print(f"FT Done - rest: {self.ft_obj.ft_rx_buf}")
                 self.rx_buf_rawData += bytes(self.ft_obj.ft_rx_buf)
@@ -524,48 +527,50 @@ class AX25Conn(object):
                 self.tx_buf_rawData += self.link_holder_text.encode(self.encoding, 'ignore')
 
     def set_RNR(self, link_remote=False):
-        self.send_RNR()
-        self.set_T1(stop=True)
-        self.set_T3()
-        self.is_RNR = True
-        if self.zustand_exec.stat_index == 5:
-            self.zustand_exec.change_state(8)
-        elif self.zustand_exec.stat_index == 6:
-            self.zustand_exec.change_state(14)
-        elif self.zustand_exec.stat_index == 7:
-            self.zustand_exec.change_state(11)
-        elif self.zustand_exec.stat_index == 9:
-            self.zustand_exec.change_state(10)
-        elif self.zustand_exec.stat_index == 12:
-            self.zustand_exec.change_state(13)
-        elif self.zustand_exec.stat_index == 15:
-            self.zustand_exec.change_state(16)
-        """
-        if self.LINK_Connection is not None and not link_remote:
-            self.LINK_Connection.set_RNR(link_remote=True)
-        """
+        if not self.is_RNR:
+            self.send_RNR()
+            self.set_T1(stop=True)
+            self.set_T3()
+            self.is_RNR = True
+            if self.zustand_exec.stat_index == 5:
+                self.zustand_exec.change_state(8)
+            elif self.zustand_exec.stat_index == 6:
+                self.zustand_exec.change_state(14)
+            elif self.zustand_exec.stat_index == 7:
+                self.zustand_exec.change_state(11)
+            elif self.zustand_exec.stat_index == 9:
+                self.zustand_exec.change_state(10)
+            elif self.zustand_exec.stat_index == 12:
+                self.zustand_exec.change_state(13)
+            elif self.zustand_exec.stat_index == 15:
+                self.zustand_exec.change_state(16)
+            """
+            if self.LINK_Connection is not None and not link_remote:
+                self.LINK_Connection.set_RNR(link_remote=True)
+            """
 
     def unset_RNR(self, link_remote=False):
-        self.is_RNR = False
-        self.send_RR()
-        self.set_T1()
-        # self.set_T3(stop=True)
-        if self.zustand_exec.stat_index == 8:
-            self.zustand_exec.change_state(5)
-        elif self.zustand_exec.stat_index == 10:
-            self.zustand_exec.change_state(9)
-        elif self.zustand_exec.stat_index == 11:
-            self.zustand_exec.change_state(7)
-        elif self.zustand_exec.stat_index == 13:
-            self.zustand_exec.change_state(12)
-        elif self.zustand_exec.stat_index == 14:
-            self.zustand_exec.change_state(6)
-        elif self.zustand_exec.stat_index == 16:
-            self.zustand_exec.change_state(15)
-        """
-        if self.LINK_Connection is not None and not link_remote:
-            self.LINK_Connection.unset_RNR(link_remote=True)
-        """
+        if self.is_RNR:
+            self.is_RNR = False
+            self.send_RR()
+            self.set_T1()
+            # self.set_T3(stop=True)
+            if self.zustand_exec.stat_index == 8:
+                self.zustand_exec.change_state(5)
+            elif self.zustand_exec.stat_index == 10:
+                self.zustand_exec.change_state(9)
+            elif self.zustand_exec.stat_index == 11:
+                self.zustand_exec.change_state(7)
+            elif self.zustand_exec.stat_index == 13:
+                self.zustand_exec.change_state(12)
+            elif self.zustand_exec.stat_index == 14:
+                self.zustand_exec.change_state(6)
+            elif self.zustand_exec.stat_index == 16:
+                self.zustand_exec.change_state(15)
+            """
+            if self.LINK_Connection is not None and not link_remote:
+                self.LINK_Connection.unset_RNR(link_remote=True)
+            """
 
     # Zustand EXECs ENDE
     #######################
