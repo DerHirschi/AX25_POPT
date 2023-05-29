@@ -1473,8 +1473,7 @@ class TkMainWin:
                 bps_var = f"BPS: {format_number(baud_rate)}"
                 if ft_obj.param_wait:
                     n_tx = ft_obj.last_tx - time.time()
-                    next_tx = f'TX in: {round(n_tx)} s'
-
+                    next_tx = f'TX in: {max(round(n_tx), 0)} s'
 
         if self.tabbed_sideFrame.ft_duration_var.get() != dur_var:
             self.tabbed_sideFrame.ft_progress['value'] = prog_val
