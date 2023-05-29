@@ -4,7 +4,7 @@
 """
 
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
-from fnc.ax25_fnc import reverse_uid, get_call_wo_ssid, get_call_str, call_tuple_fm_call_str
+from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str
 
 
 def bl2str(inp):
@@ -31,6 +31,44 @@ def format_hexstr(inp):
         return '{:02x}'.format(inp)
     elif type(inp) == str:
         return '{:02x}'.format(int(inp, 16))
+
+
+def decode_FRMR(ifield):
+    if len(ifield) != 3:
+        print("Invalid I-Field length")
+        return '\nInvalid I-Field length\n'
+
+    control_byte = ifield[0]
+    pid_byte = ifield[1]
+    data_bytes = ifield[2:]
+
+    # Decode Control byte
+    control_bits = bin(control_byte)[2:].zfill(8)
+    ns = int(control_bits[0:3], 2)
+    nr = int(control_bits[3:6], 2)
+    pf_bit = int(control_bits[6], 2)
+
+    # Decode PID byte
+    pid = pid_byte
+
+    # Decode Data bytes
+    data = []
+    for byte in data_bytes:
+        data.append(chr(byte))
+    tmp = "\nDecoded FRMR Frame:\n" +  \
+          f"Control: NS={ns}, NR={nr}, PF={pf_bit}\n" + \
+          f"PID: {pid}\n" + \
+          f"Data: {''.join(data)}\n"
+
+    print("Decoded FRMR Frame:")
+    print("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
+    print("PID: {}".format(pid))
+    print("Data: {}".format("".join(data)))
+    logger.error("Decoded FRMR Frame:")
+    logger.error("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
+    logger.error("PID: {}".format(pid))
+    logger.error("Data: {}".format("".join(data)))
+    return tmp
 
 
 class Call(object):
@@ -603,7 +641,11 @@ class AX25Frame(object):
                     raise AX25DecodingERROR(self)
             if self.ctl_byte.info:
                 index += 1
-                self.data = self.bytes[index:]
+                if self.ctl_byte.flag == 'FRMR':
+                    self.data = decode_FRMR(self.bytes[index:])
+                else:
+                    self.data = self.bytes[index:]
+
                 self.data_len = len(self.data)
             # Check if all Digi s have repeated packet
             self.set_check_h_bits(dec=True)

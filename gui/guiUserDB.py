@@ -258,18 +258,24 @@ class UserDB(tk.Toplevel):
         self.lang_ent = tk.OptionMenu(tab1, self.lang_var, *lang_opt)
         self.lang_ent.configure(state='disabled')  # TODO
         self.lang_ent.place(x=_x + 80, y=_y - 2)
-        # Last Edit
-        self.last_edit_var = tk.StringVar(self)
-        tk.Label(tab1, text='Last Edit: ').place(x=440, y=417)
-        tk.Label(tab1, textvariable=self.last_edit_var).place(x=540, y=417)
+
         # Connection Counter
         self.conn_count_var = tk.StringVar(self)
         tk.Label(tab1, text='Connections: ').place(x=240, y=393)
-        tk.Label(tab1, textvariable=self.conn_count_var).place(x=370, y=393)
+        tk.Label(tab1, textvariable=self.conn_count_var).place(x=357, y=393)
+        # Distance
+        self.dist_var = tk.StringVar(self)
+        tk.Label(tab1, text='Distance: ').place(x=240, y=417)
+        tk.Label(tab1, textvariable=self.dist_var).place(x=357, y=417)
+
         # Last Connection
         self.last_conn_var = tk.StringVar(self)
-        tk.Label(tab1, text='Last Conn: ').place(x=440, y=393)
-        tk.Label(tab1, textvariable=self.last_conn_var).place(x=540, y=393)
+        tk.Label(tab1, text='Last Conn: ').place(x=460, y=393)
+        tk.Label(tab1, textvariable=self.last_conn_var).place(x=560, y=393)
+        # Last Edit
+        self.last_edit_var = tk.StringVar(self)
+        tk.Label(tab1, text='Last Edit: ').place(x=460, y=417)
+        tk.Label(tab1, textvariable=self.last_edit_var).place(x=560, y=417)
         # self.last_conn_var.set('2023-05-08 13:12:12')
 
         #######################
@@ -426,6 +432,7 @@ class UserDB(tk.Toplevel):
             self.name_var.set(self.db_ent.Name)
             self.qth_var.set(self.db_ent.QTH)
             self.loc_var.set(self.db_ent.LOC)
+            self.dist_var.set(f"{round(self.db_ent.Distance)} km")
             self.prmail_var.set(self.db_ent.PRmail)
             self.email_var.set(self.db_ent.Email)
             self.http_var.set(self.db_ent.HTTP)
@@ -519,6 +526,7 @@ class UserDB(tk.Toplevel):
             self.db_ent.Name = self.name_var.get()
             self.db_ent.QTH = self.qth_var.get()
             self.db_ent.LOC = self.loc_var.get()
+
             self.db_ent.PRmail = self.prmail_var.get()
             self.db_ent.Email = self.email_var.get()
             self.db_ent.HTTP = self.http_var.get()
@@ -550,6 +558,7 @@ class UserDB(tk.Toplevel):
 
         self.user_db.save_data()
         self.select_entry()
+        self.root.gui_set_distance()
         self.root.update_station_info()
         self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
 
@@ -574,8 +583,8 @@ class UserDB(tk.Toplevel):
                 self.select_entry()
 
     def destroy_win(self):
-        self.destroy()
         self.root.settings_win = None
+        self.destroy()
 
     def tasker(self):
         pass

@@ -12,3 +12,7 @@ def is_windows():
 
 def get_root_dir():
     return os.getcwd()
+
+
+def path_exists(path):
+    return os.path.exists(path)

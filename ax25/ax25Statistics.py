@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import tkinter as tk
 from ax25.ax25dec_enc import AX25Frame
 from datetime import datetime
+from datetime import timedelta
 
 import pickle
 
@@ -87,8 +88,18 @@ class PortStatDB(object):
     def input(self, ax_frame: AX25Frame):
         # now = datetime.now().strftime('%d/%m/%y %H:%M:%S')
         self.input_bw_calc(ax_frame=ax_frame)
+        # date_str = '0' # TODO save Data to file. RAM is running full after couple of days running.
         now = datetime.now()
         date_str = now.strftime('%d/%m/%y')
+        if now.hour == 0:
+            last_days = [
+                date_str,
+                (datetime.now() - timedelta(days=1)).strftime('%d/%m/%y'),
+                (datetime.now() - timedelta(days=2)).strftime('%d/%m/%y'),
+            ]
+            for dt in list(self.stat_DB_days.keys()):
+                if dt not in last_days:
+                    del self.stat_DB_days[dt]
         hour = now.hour
         minute = now.minute
         if date_str not in list(self.stat_DB_days.keys()):

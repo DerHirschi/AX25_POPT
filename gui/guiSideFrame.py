@@ -175,10 +175,7 @@ class SideTabbedFrame:
         # Kanal Rechts / Status / FT
         ttk.Separator(tab1_kanal, orient='vertical').place(x=280, rely=0.05, relheight=0.9, relwidth=0.6)
         ##########################################
-        # Progress bar
-        # progress = tk.ttk.Progressbar(tab1_kanal, orient=tk.HORIZONTAL, length=150, mode='determinate')
-        # progress.place(x=300, y=30)
-        # progress['value'] = 60
+
         # Conn Dauer
         _x = 290
         _y = 20
@@ -208,16 +205,41 @@ class SideTabbedFrame:
         self.rx_count_var.set('')
         self.rx_count_lable.place(x=_x, y=_y)
 
-        ######################
-        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=150, relheight=0.6, relwidth=0.9)
-        #####################
         # Status /Pipe/Link/File-RX/File-TX
         self.status_label_var = tk.StringVar(tab1_kanal)
         self.status_label = tk.Label(tab1_kanal, fg='red', textvariable=self.status_label_var)
         font = self.status_label.cget('font')
         self.status_label.configure(font=(font[0], 12))
         self.status_label.place(x=290, y=120)
-
+        ######################
+        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=150, relheight=0.6, relwidth=0.9)
+        #####################
+        # Progress bar
+        # tk.Label(tab1_kanal, text='File Transfer').place(x=380, y=160)
+        _x = 300
+        _y = 170
+        self.ft_progress = tk.ttk.Progressbar(tab1_kanal,
+                                              orient=tk.HORIZONTAL,
+                                              length=150,
+                                              mode='determinate',
+                                              )
+        self.ft_progress.place(x=_x, y=_y)
+        self.ft_progress.bind('<Button-1>', self.main_win.open_ft_manager)
+        self.ft_progress['value'] = 0
+        self.ft_progress_var = tk.StringVar(tab1_kanal)
+        self.ft_size_var = tk.StringVar(tab1_kanal)
+        self.ft_duration_var = tk.StringVar(tab1_kanal)
+        self.ft_bps_var = tk.StringVar(tab1_kanal)
+        self.ft_next_tx_var = tk.StringVar(tab1_kanal)
+        tk.Label(tab1_kanal, textvariable=self.ft_progress_var).place(x=_x + 160, y=_y)
+        tk.Label(tab1_kanal, textvariable=self.ft_size_var).place(x=_x , y=_y + 25)
+        tk.Label(tab1_kanal, textvariable=self.ft_duration_var).place(x=_x , y=_y + 50)
+        tk.Label(tab1_kanal, textvariable=self.ft_bps_var).place(x=_x , y=_y + 75)
+        tk.Label(tab1_kanal, textvariable=self.ft_next_tx_var).place(x=_x + 160, y=_y + 75)
+        # self.ft_progress_var.set(f"--- %")
+        # self.ft_size_var.set(f"Size: 10.000,0 / 20.00,0 kb")
+        # self.ft_duration_var.set(f"Time: 00:00:00 / 00:00:00")
+        # self.ft_bps_var.set(f"BPS: 100.000")
         ################################
         # MH ##########################
         # TREE
@@ -278,6 +300,7 @@ class SideTabbedFrame:
                     text="Baken",
                     variable=self.bake_on,
                     ).place(x=10, y=60)
+        self.bake_on.set(True)
         # self.bake_on.set(True)
         # DX Alarm  > dx_alarm_on
         self.dx_alarm_on = tk.BooleanVar()
@@ -387,7 +410,7 @@ class SideTabbedFrame:
         self.mon_pid_var.set(_vals[0])
         self.mon_pid_ent.place(x=_x + 40, y=_y)
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
-        # RX-Filter
+        # Monitor RX-Filter
         """
         _x = 10
         _y = 105
@@ -413,6 +436,7 @@ class SideTabbedFrame:
         # self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
 
     def update_ch_echo(self):
+
         # TODO AGAIN !!
         _tab = self.tab5_ch_links
         akt_ch_id = self.main_win.channel_index
@@ -609,8 +633,11 @@ class SideTabbedFrame:
                 status_text = 'Link'
             elif station.pipe is not None:
                 status_text = 'Pipe'
-            elif station.ft_tx_activ is not None:
-                status_text = 'Sending File'
+            elif station.ft_obj is not None:
+                if station.ft_obj.dir == 'TX':
+                    status_text = 'Sending File'
+                else:
+                    status_text = 'Receiving File'
         self.status_label_var.set(status_text)
         self.rtt_best.configure(text=best)
         self.rtt_worst.configure(text=worst)
@@ -634,7 +661,7 @@ class SideTabbedFrame:
             self.format_tree_ent()
             self.update_tree()
 
-    def on_ch_btn_stat_change(self):
+    def on_ch_stat_change(self):
         conn = self.main_win.get_conn()
         if conn:
             self.max_frame.configure(state='normal')

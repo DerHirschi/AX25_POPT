@@ -4,6 +4,7 @@ import logging
 
 import ax25.ax25Connection
 import config_station
+import constant
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
 from constant import STATION_ID_ENCODING_REV
@@ -25,7 +26,7 @@ class DefaultCLI(object):
     sw_id = ''
 
     def __init__(self, connection):
-        print("CLI-INIT")
+        # print("CLI-INIT")
         stat_cfg = connection.stat_cfg
         if stat_cfg is not None:
             # Override with optional Station Config Param
@@ -79,6 +80,7 @@ class DefaultCLI(object):
         self.raw_input = b''
         self.cmd = b''
         self.last_line = b''
+        self.new_last_line = b''
         self.parameter = []
         self.sys_login = None
         self.sysop_priv = False
@@ -234,8 +236,8 @@ class DefaultCLI(object):
 
     def load_fm_file(self, filename: str):
         try:
-            with open(config_station.CFG_data_path +
-                      config_station.CFG_usertxt_path +
+            with open(constant.CFG_data_path +
+                      constant.CFG_usertxt_path +
                       self.stat_cfg_index_call + '/' +
                       filename, 'rb') as inp:
                 return pickle.load(inp)
@@ -269,7 +271,7 @@ class DefaultCLI(object):
                 except KeyError:
                     logger.error(f"KeyERROR STATION_ID_ENCODING_REV (constant.py): {self.user_db_ent.Encoding}")
         flag = txt_enc + didadit + unknown
-        return '{' + f"{self.sw_id}-{config_station.VER}-{flag}" + '}\r'
+        return '{' + f"{self.sw_id}-{constant.VER}-{flag}" + '}\r'
 
     def set_user_db_software_id(self):
         if self.user_db_ent:
@@ -346,6 +348,8 @@ class DefaultCLI(object):
                 return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
             self.cmd = b''
             ret = self.commands[treffer[0]][0]()
+            # self.last_line = b''
+            self.new_last_line = b''
             if ret is None:
                 return ''
             return ret
@@ -353,6 +357,7 @@ class DefaultCLI(object):
         return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
 
     def exec_cmd(self):
+        self.input = self.last_line + self.input
         if self.is_prefix():
             return self.find_cmd()
         # Message is for User ( Text , Chat )
@@ -370,17 +375,19 @@ class DefaultCLI(object):
         inp_lines = inp_lines.replace(b'\n', b'\r')
         inp_lines = inp_lines.split(b'\r')
         _ret = ''
+        self.new_last_line = inp_lines[-1]
         for li in inp_lines:
             for str_cmd in list(self.str_cmd_exec.keys()):
                 if str_cmd in li:
                     self.cmd = str_cmd
                     self.parameter = [li[len(str_cmd):]]
-                    # print(f"str_cmd cmd: {str_cmd}")
-                    # print(f"str_cmd par: {self.parameter}")
                     _ret = self.str_cmd_exec[str_cmd]()
                     self.cmd = b''
                     self.send_output(_ret)
-        self.last_line = inp_lines[-1]
+                    self.last_line = b''
+                    self.new_last_line = b''
+                    return _ret
+        #self.last_line = inp_lines[-1]
         return _ret
         # self.raw_input = b''
 
@@ -475,7 +482,7 @@ class DefaultCLI(object):
               '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
               '$$ |       $$$$$$  |   $$ |        $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r\r' \
-              'Version: {}\r\r\r'.format(config_station.VER)
+              'Version: {}\r\r\r'.format(constant.VER)
         return ret
 
     def cmd_i(self):
@@ -574,6 +581,8 @@ class DefaultCLI(object):
     def cmd_set_loc(self):
         if not self.parameter:
             if self.user_db_ent:
+                if self.user_db_ent.Distance:
+                    return f"\r # Locator: {self.user_db_ent.LOC} > {round(self.user_db_ent.Distance)} km\r"
                 return f"\r # Locator: {self.user_db_ent.LOC}\r"
             return "\r # USER-DB Error !\r"
         if self.user_db_ent:
@@ -583,8 +592,13 @@ class DefaultCLI(object):
                 replace('\n', ''). \
                 replace('\r', '')
             self.user_db_ent.last_edit = datetime.now()
+            self.connection.set_distance()
+            if self.user_db_ent.Distance:
+                return "\r" \
+                       f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC}" \
+                       "\r"
             return "\r" \
-                   f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC}" \
+                   f"{STR_TABLE['cli_loc_set'][self.connection.cli_language]}: {self.user_db_ent.LOC} > {round(self.user_db_ent.Distance)} km" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_loc NO ENTRY FOUND !")
@@ -848,6 +862,7 @@ class DefaultCLI(object):
         if not self.exec_str_cmd():
             self.input = self.raw_input
             self.send_output(self.exec_cmd())
+        self.last_line = self.new_last_line
         return ''
 
     def s2(self):

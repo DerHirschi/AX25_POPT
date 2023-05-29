@@ -57,7 +57,7 @@ class ChBtnFrm:
         }
 
     def ch_btn_status_update(self):
-        self.main_class.on_channel_status_change()
+        # self.main_class.on_channel_status_change()
         ch_alarm = False
         # if self.main_class.ax25_port_handler.all_connections.keys():
         for i in list(self.con_btn_dict.keys()):

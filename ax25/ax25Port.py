@@ -1,11 +1,12 @@
 import socket
+import termios
+
 import serial
 import threading
 import time
 import crcmod
 
 from ax25.ax25Beacon import Beacon
-# mport main
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25UI_Pipe import AX25Pipe
@@ -675,7 +676,10 @@ class KISSSerial(AX25Port):
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_end())
                 """
-                self.device.flush()
+                try:
+                    self.device.flush()
+                except termios.error:
+                    pass
                 self.device.close()
                 self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):

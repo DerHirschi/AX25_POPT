@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog as fd
-from ax25.ax25FileTransfer import FileTX
+from ax25.ax25FileTransfer import FileTransport
+from constant import FT_MODES
 from string_tab import STR_TABLE
 
 
@@ -62,10 +63,7 @@ class FileSend(tk.Toplevel):
         _y = 80
         _label = tk.Label(self, text=STR_TABLE['protocol'][self.root.language])
         self.protocol_var = tk.StringVar(self)
-        opt = [
-            'Text',
-            # 'AutoBin',
-        ]
+        opt = FT_MODES
         self.protocol_var.set(opt[0])
         prot = tk.OptionMenu(self, self.protocol_var, *opt, command=self.change_settings)
         prot.configure(width=8, height=1)
@@ -91,6 +89,11 @@ class FileSend(tk.Toplevel):
         _label.place(x=_x, y=_y)
         wait_tx.place(x=_x + 290, y=_y)
 
+        self.conn = self.root.get_conn()
+        if not self.conn:
+            ok_bt.configure(state='disabled')
+            openfile_btn.configure(state='disabled')
+
         #################
         #
         _x = 20
@@ -99,6 +102,7 @@ class FileSend(tk.Toplevel):
         self.file_size.place(x=_x, y=_y)
 
     def select_files(self):
+
         self.attributes("-topmost", False)
         # self.root.lower
         filetypes = (
@@ -114,10 +118,12 @@ class FileSend(tk.Toplevel):
         if filenames:
             prot = self.protocol_var.get()
             wait = self.wait_tx_var.get()
-            self.FileOBJ = FileTX(
+            self.FileOBJ = FileTransport(
                 filename=filenames[0],
                 protocol=prot,
-                tx_wait=wait
+                connection=self.conn,
+                tx_wait=wait,
+                direction='TX'
             )
             if not self.FileOBJ.e:
                 self.filename.insert(tk.END, filenames[0])
@@ -127,7 +133,7 @@ class FileSend(tk.Toplevel):
     def update_file_size(self):
         if self.FileOBJ is not None:
             if not self.FileOBJ.e:
-                size = len(self.FileOBJ.data)
+                size = len(self.FileOBJ.raw_data)
                 size = size / 1024
                 text = f"{STR_TABLE['size'][self.root.language]} {size} kb"
                 self.file_size.configure(text=text)
@@ -145,7 +151,7 @@ class FileSend(tk.Toplevel):
                 self.FileOBJ.param_filename = f_n
                 self.FileOBJ.param_protocol = prot
                 self.FileOBJ.param_wait = wait
-                self.FileOBJ.change_settings()
+                self.FileOBJ.ft_init()
         self.update_file_size()
 
     def chancel_btn_cmd(self):
@@ -160,8 +166,8 @@ class FileSend(tk.Toplevel):
                 # self.FileOBJ.reset_timer()
                 conn = self.root.get_conn()
                 if conn:
-                    if self.FileOBJ not in conn.ft_tx_queue:
-                        conn.ft_tx_queue.append(self.FileOBJ)
+                    if self.FileOBJ not in conn.ft_queue:
+                        conn.ft_queue.append(self.FileOBJ)
         self.destroy_win()
 
     def destroy_win(self):

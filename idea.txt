@@ -2,6 +2,7 @@ Ideas/TODO's :
 
 - ESC Befehle
 - Individuelle Farben (Vorschreib Fenster)
+✓ UserDB
 - Infos / Ctext usw. in User-DB speichern
 - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 - Logbuch
@@ -16,20 +17,26 @@ Ideas/TODO's :
 - ?Pipe-TOOL: GPIOs ansteuerbar / auslesbar ..? oder besser
 - Remote-GPIO Tool (Idee von Lars)
 - Zeitgesteuerte connects und Kommando senden (MH Liste abfragen o.Ä.)
-- AutoBin
-- Yapp
-- APRS de/encoding
+✓ Bin
+✓ AutoBin
+✓ Yapp
+- Yapp Server Modes
+- Yapp Resume
+- Didadit
+- APRS decoding
+- APRS encoding
 - APRS Digi / I-Gate Funktion
 - "Managed-DIGI" Funktion (Die DIGI Verbindung wird wie ein Noden Link behandelt)
 - Optionale zusätzliche Monitorausgabe als Hex
 - Filter für Monitorausgabe
 - Torrent ähnliches Filesharing via UI Frames
 - Daten Komprimierung
-- Daten Verschlüsselung ( AES )
-- ordentliches Noden System bzw CLI überarbeiten
+- Daten Verschlüsselung (AES/RSA)
+✓ ordentliches Noden System bzw CLI überarbeiten
 - DX-Alarm überarbeiten
 ✓ Autoscrolling überarbeiten.
 - Optional nur als Konsolen Anwendung ohne GUI. (Ist bereits dafür vorbereitet)
+- Drucker Ausgabe vom QSO
 
 Evtl. später mal.
 

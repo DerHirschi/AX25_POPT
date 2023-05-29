@@ -503,7 +503,7 @@ class BeaconSettings(tk.Toplevel):
         self.destroy_win()
 
     def new_beacon_btn_cmd(self):
-        # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs: bool = False
+        # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs_stuff: bool = False
         beacon = Beacon()
         label_txt = '{} {} {}'.format(len(self.tab_list), beacon.from_call, beacon.port_id)
         tab = BeaconTab(self, self.tabControl, beacon)

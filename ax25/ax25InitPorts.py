@@ -204,7 +204,7 @@ class AX25PortHandler(object):
             new_conn.ch_index = int(ind)
             self.all_connections[ind] = new_conn
         if self.gui is not None:
-            self.gui.ch_btn_status_update()
+            self.gui.ch_status_update()
 
     """
     def cleanup_conn2all_conn_var(self):
@@ -232,7 +232,7 @@ class AX25PortHandler(object):
                 del self.all_connections[k]
 
         if self.gui is not None:
-            self.gui.ch_btn_status_update()
+            self.gui.ch_status_update()
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
@@ -323,3 +323,19 @@ class AX25PortHandler(object):
             for pipe_uid in self.ax25_ports[port_id].pipes.keys():
                 ret.append(self.ax25_ports[port_id].pipes[pipe_uid])
         return ret
+
+    ######################
+    # FT
+    def get_all_ft_query(self):
+        # conn.ft_tx_queue: [FileTX]
+        # conn.ft_tx_activ: FileTX
+        res = {}
+        for ch_id in self.all_connections:
+            conn = self.all_connections[ch_id]
+            tmp = conn.ft_queue
+            if conn.ft_obj is not None:
+                tmp = [conn.ft_obj] + tmp
+            if tmp:
+                res[ch_id] = tmp
+        return res
+

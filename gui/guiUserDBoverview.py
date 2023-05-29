@@ -19,7 +19,7 @@ class UserDBtreeview(tk.Toplevel):
         self.title("User-DB")
         self.style = self.root.style
         # self.geometry("1250x700")
-        self.geometry(f"1000x"
+        self.geometry(f"1090x"
                       f"700+"
                       f"{self.root.main_win.winfo_x()}+"
                       f"{self.root.main_win.winfo_y()}")
@@ -36,6 +36,7 @@ class UserDBtreeview(tk.Toplevel):
             'uDB_sysop',
             'uDB_typ',
             'uDB_loc',
+            'uDB_dist',
             'uDB_qth',
             'uDB_land',
             'uDB_lastseen',
@@ -51,6 +52,7 @@ class UserDBtreeview(tk.Toplevel):
         self.tree.heading('uDB_sysop', text='Sysop', command=lambda: self.sort_entry('sysop'))
         self.tree.heading('uDB_typ', text='Typ', command=lambda: self.sort_entry('typ'))
         self.tree.heading('uDB_loc', text='Locator', command=lambda: self.sort_entry('loc'))
+        self.tree.heading('uDB_dist', text='Distance', command=lambda: self.sort_entry('dist'))
         self.tree.heading('uDB_qth', text='QTH', command=lambda: self.sort_entry('qth'))
         self.tree.heading('uDB_land', text='Land', command=lambda: self.sort_entry('land'))
         self.tree.heading('uDB_lastseen', text='Last Conn', command=lambda: self.sort_entry('last_seen'))
@@ -59,6 +61,7 @@ class UserDBtreeview(tk.Toplevel):
         self.tree.column("uDB_sysop", anchor=tk.W, stretch=tk.NO, width=130)
         self.tree.column("uDB_typ", anchor=tk.W, stretch=tk.NO, width=150)
         self.tree.column("uDB_loc", anchor=tk.W, stretch=tk.NO, width=100)
+        self.tree.column("uDB_dist", anchor=tk.W, stretch=tk.NO, width=90)
         self.tree.column("uDB_qth", anchor=tk.W, stretch=tk.YES, width=190)
         self.tree.column("uDB_land", anchor=tk.W, stretch=tk.NO, width=60)
         self.tree.column("uDB_lastseen", anchor=tk.W, stretch=tk.NO, width=190)
@@ -87,9 +90,6 @@ class UserDBtreeview(tk.Toplevel):
             key = record[0]
 
             self.root.open_user_db_win(key=key)
-            #self.root_win.new_conn_win.call_txt_inp.insert(tk.END, call)
-            #self.root_win.new_conn_win.set_port_index(port)
-            #self.close()
 
     def sort_entry(self, flag: str):
         sort_date = self.user_db.get_sort_entr(flag_str=flag, reverse=self.rev_ent)
@@ -110,6 +110,7 @@ class UserDBtreeview(tk.Toplevel):
                 f'{ent.Sysop_Call}',
                 f'{ent.TYP}',
                 f'{ent.LOC}',
+                f'{round(ent.Distance)}',
                 f'{ent.QTH}',
                 f'{ent.Land}',
                 f'{conv_time_DE_str(ent.last_seen)}',
