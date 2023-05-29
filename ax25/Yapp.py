@@ -253,10 +253,11 @@ class Yapp(object):
     def check_packet_length(self):
         if len(self.rx_pack_buff) >= 2:
             packet_length = self.rx_pack_buff[1]
+
             if self.rx_pack_buff.startswith(b'\x02'):
                 if not packet_length:
                     packet_length = 256
-                # Exclude checksum length for DT packets
+
             if len(self.rx_pack_buff[2:]) >= packet_length:
                 return packet_length
             else:
@@ -286,12 +287,11 @@ class Yapp(object):
         #print(f"Yapp in:     {data_in}")
         #print(f"Yapp in hex: {data_in.hex()}")
         e = True
-        # e = False
         rest = b''
         if data_in:
             self.rx_pack_buff += data_in
-            print(f"Yapp RX LOOP Start - State: {self.state} - rx_buff: {self.rx_pack_buff}")
-            while self.rx_pack_buff:
+            # print(f"Yapp RX LOOP Start - State: {self.state} - rx_buff: {self.rx_pack_buff}")
+            while len(self.rx_pack_buff) >= 2:
                 self.rx_pac_len = 0
                 res = self.pack_types_dec.get(bytes([self.rx_pack_buff[0]]), False)
                 if res:
@@ -307,32 +307,18 @@ class Yapp(object):
                             self.rx_pack_buff = self.rx_pack_buff[self.rx_pac_len:]
                             rest = b''
                             e = False
-                            # break
                         elif self.rx_pac_len <= 0:
                             rest = self.rx_pack_buff
                             e = False
                             break
-                        # else:
-                        """
-                        rest += bytes([self.rx_pack_buff[0]])
-                        self.rx_pack_buff = self.rx_pack_buff[1:]
-                        """
-                    #elif self.rx_pac_len < 0:
-                    #    rest = self.rx_pack_buff
-                    #    e = False
-                    #    break
                     else:
                         rest += bytes([self.rx_pack_buff[0]])
                         self.rx_pack_buff = self.rx_pack_buff[1:]
-                #elif self.rx_pac_len < 0:
-                #    rest = self.rx_pack_buff
-                #    e = False
-                #    break
                 else:
                     rest += bytes([self.rx_pack_buff[0]])
                     self.rx_pack_buff = self.rx_pack_buff[1:]
             self.rx_pack_buff = rest
-            print(f"Yapp RX LOOP ENDE - State: {self.state} - rx_buff: {self.rx_pack_buff}")
+            # print(f"Yapp RX LOOP ENDE - State: {self.state} - rx_buff: {self.rx_pack_buff}")
 
         return e
 
@@ -580,10 +566,11 @@ class Yapp(object):
         if self.state != 'RD':
             return False
         pac_len = self.check_packet_length()
+        if not pac_len:
+            return False
         self.rx_pac_len = pac_len + 2
         #print(f"YAPP dec_DT pac_len: {pac_len}")
         if pac_len > 0:
-
             data = self.rx_pack_buff[2:self.rx_pac_len]
             #print(f"YAPP dec_DT data: {data}")
             if self.YappC or self.Resume:
