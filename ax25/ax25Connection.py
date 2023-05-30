@@ -317,7 +317,6 @@ class AX25Conn(object):
         # self.ch_echo_frm_rx(data)   # TODO
         # Statistic
         self.rx_byte_count += len(data)
-        self.rx_buf_rawData += data
         if self.is_link:
             self.LINK_rx_buff += data
             return
@@ -325,15 +324,16 @@ class AX25Conn(object):
         if self.pipe_rx(data):
             return
         self.ft_check_incoming_ft(data)
-        if self.ft_handle_rx():
+        if self.ft_handle_rx(data):
             return
+
+        self.rx_buf_rawData += data
         # Station ( RE/DISC/Connect ) Sting Detection
         if not self.set_dest_call_fm_data_inp(data):
             return
         # CLI
         self.exec_cli(data)
         return
-        # self.ft_tx_activ.ft_rx()
 
     def send_gui_echo(self, data):
         if self.ft_obj is not None:
@@ -475,10 +475,10 @@ class AX25Conn(object):
                 self.ft_obj = ret
                 self.ft_obj.connection = self
 
-    def ft_handle_rx(self):
+    def ft_handle_rx(self, data: b''):
         if self.ft_obj is None:
             return False
-        return self.ft_obj.ft_rx()
+        return self.ft_obj.ft_rx(data)
 
     def ft_cron(self):
         if self.ft_queue_handling():

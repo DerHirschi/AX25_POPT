@@ -275,6 +275,10 @@ class Yapp(object):
                 if pack_data:
                     pack_data = pack_data()
                     if pack_data:
+                        if pack_typ == 'DT':
+                            self.ft_class.send_data(pack_data)
+                            self.tx_last_pack = pack_data
+                            return True
                         if pack_data != self.tx_last_pack and self.param_proto_conn:
                             self.ft_class.send_data(pack_data)
                             self.tx_last_pack = pack_data
@@ -294,6 +298,20 @@ class Yapp(object):
                 res = self.pack_types_dec.get(bytes([self.rx_pack_buff[0]]), False)
                 if res:
                     res = res()
+                    """
+                    if self.ft_class.ft_root.debug_trigger:
+                        out = "\n++++ DEB yapp_rx ++++\n"
+                        out += f"data_in: {data_in}\n"
+                        out += f"rx_pack_buff: {self.rx_pack_buff}\n"
+                        out += f"rest: {rest}\n"
+                        out += 'HEX:\n'
+                        out += f"data_in.hex: {data_in.hex()}\n\n"
+                        out += f"rx_pack_buff.hex: {self.rx_pack_buff.hex()}\n"
+                        out += f"rest.hex: {rest.hex()}\n"
+                        out += "\n++++ DEB yapp_rx ENDE ++++\n\n"
+                        print(out)
+                        logger.debug(out)
+                    """
                     if res:
                         self.rx_pac_type = res
                         # STATES EXEC
