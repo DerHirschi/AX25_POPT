@@ -186,12 +186,11 @@ class FileTransport(object):
             self.class_protocol.init_TX()
         else:
             self.e = self.class_protocol.init_RX()
-            # self.debug_process_file()
+            self.debug_process_file()
 
     def debug_process_file(self):
         try:
             with open('tests/Sally.exe', 'rb') as file:
-
                 self.debug_raw_data = file.read()
 
         except PermissionError:
@@ -351,17 +350,13 @@ class FileTransport(object):
                     self.last_tx = time.time()
 
     def ft_rx(self, data: b''):
+        self.ft_rx_buf += data
+        return True
         # TODO Pause State (Auswertung der Pakete)
-        # self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
         # if self.pause:
         #     return True  # let CLI disabled
-        # inp_len = len(self.connection.rx_buf_rawData)
-        # self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
-        if self.debug_run:
-            self.debug_input(data)
-        self.ft_rx_buf += data
-        # self.connection.rx_buf_rawData = self.connection.rx_buf_rawData[inp_len:]
-        return True
+        # if self.debug_run:
+        #     self.debug_input(data)
 
     def debug_input(self, data):
         if self.debug_run:
@@ -965,14 +960,7 @@ class YappMODE(DefaultMODE):
             # inp_len = len(self.ft_root.ft_rx_buf)
             tmp = bytes(self.ft_root.ft_rx_buf)
             self.ft_root.ft_rx_buf = b''
-            ret = self.yapp.yapp_rx(tmp)
-            """
-            if not ret:
-                error_count += 1
-            """
-            # self.yapp.clean_rx_buf()
-            # self.ft_root.ft_rx_buf = self.ft_root.ft_rx_buf[inp_len:]
-            # print("Yapp (mode_yapp) rx")
+            self.yapp.yapp_rx(tmp)
             return
         else:
             # print("Yapp (mode_yapp) Cron")

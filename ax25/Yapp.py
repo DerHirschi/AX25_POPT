@@ -89,6 +89,7 @@ class Yapp(object):
                       'RI': 'S',
                       # First few timeouts    S
                       # Other/Timeout         Abort
+                      'CN':   'Abort',
                       'Other':   'Abort',
                       'Timeout': 'Abort',
                   }),
@@ -99,27 +100,32 @@ class Yapp(object):
                        'NR': 'Start/Done',
                        # IF (RESUME)
                        # 'RE': """ Move file position then """ 'SD'
+                       'CN':   'Abort',
                        'Other':   'Abort',
                        'Timeout': 'Abort',
                    }),
             'SD': ('DT',    # DATA
                    {
-                       False: 'SD',     # Not EOF
-                       True:  'SE'      # EOF
+                       # 'CN': 'Abort',
+                       False: 'SD',         # Not EOF
+                       True:  'SE',         # EOF
                    }),
             'SE': ('EF',    # EOF
                    {
                        # 'AF': 'SH', # TODO     # More Files
                        'AF': 'ST',      # No More Files
+                       'CN':   'Abort',
                        'Other':   'Abort',
                        'Timeout': 'Abort'
                    }),
             'ST': ('ET',    # EOT
                    {
                        'AT':      'Start/Done',
+                       'CN':   'Abort',
                        'Other':   'Start/Done',
                        'Timeout': 'Start/Done',
                    }),
+
             'Abort': ('CN',
                       {
                           '': 'Start/Done',
@@ -127,7 +133,8 @@ class Yapp(object):
                       }),
             'Start/Done': ('Start/Done',
                       {
-                          '': 'Start/Done'
+                          '': 'Start/Done',
+                          'CA': 'Start/Done'
                       }),
         }
         """ State Tab Receiving File """
@@ -249,18 +256,19 @@ class Yapp(object):
     def exec_abort(self):
         # self.ft_class.close_file()
         self.state = 'Abort'
+        self.exec_state_tab()
 
     def check_packet_length(self):
         if len(self.rx_pack_buff) >= 2:
             packet_length = self.rx_pack_buff[1]
             if self.rx_pack_buff.startswith(b'\x02'):
-                if not packet_length:
+                if packet_length == 0:
                     packet_length = 256
             if len(self.rx_pack_buff[2:]) >= packet_length:
                 return packet_length
             else:
                 return len(self.rx_pack_buff[2:]) - packet_length
-        return 0
+        return -1
 
     def yapp_tx(self, pack_typ: ''):
         if pack_typ:
@@ -286,62 +294,57 @@ class Yapp(object):
         return False
 
     def yapp_rx(self, data_in: b''):
-        #print(f"Yapp in:     {data_in}")
-        #print(f"Yapp in hex: {data_in.hex()}")
-        e = True
-        rest = b''
         if data_in:
             self.rx_pack_buff += data_in
-            # print(f"Yapp RX LOOP Start - State: {self.state} - rx_buff: {self.rx_pack_buff}")
-            while len(self.rx_pack_buff) >= 2:
+        if 1 < len(self.rx_pack_buff) != self.rx_pac_len:
+            while len(self.rx_pack_buff) > 1:
                 self.rx_pac_len = 0
                 res = self.pack_types_dec.get(bytes([self.rx_pack_buff[0]]), False)
                 if res:
                     res = res()
-                    """
-                    if self.ft_class.ft_root.debug_trigger:
-                        out = "\n++++ DEB yapp_rx ++++\n"
-                        out += f"data_in: {data_in}\n"
-                        out += f"rx_pack_buff: {self.rx_pack_buff}\n"
-                        out += f"rest: {rest}\n"
-                        out += 'HEX:\n'
-                        out += f"data_in.hex: {data_in.hex()}\n\n"
-                        out += f"rx_pack_buff.hex: {self.rx_pack_buff.hex()}\n"
-                        out += f"rest.hex: {rest.hex()}\n"
-                        out += "\n++++ DEB yapp_rx ENDE ++++\n\n"
-                        print(out)
-                        logger.debug(out)
-                    """
                     if res:
                         self.rx_pac_type = res
                         # STATES EXEC
                         res = self.exec_state_tab()
                         if not res:
-                            rest += bytes([self.rx_pack_buff[0]])
+                            print("Yapp State Tab no results")
+                            logger.error("Yapp State Tab no results")
+                            logger.error(f"data_in: {data_in}")
+                            logger.error(f"rx_pack_buff: {self.rx_pack_buff}")
+                            self.e = True
                             self.rx_pack_buff = self.rx_pack_buff[1:]
-                        elif self.rx_pac_len > 0:
+                            self.exec_abort()
+                            return
+                        if self.rx_pac_len > 1:
                             self.rx_pack_buff = self.rx_pack_buff[self.rx_pac_len:]
-                            rest = b''
-                            e = False
-                        elif self.rx_pac_len <= 0:
-                            rest = self.rx_pack_buff
-                            e = False
-                            break
+                            self.rx_pac_len = len(self.rx_pack_buff)
+                        else:
+                            self.rx_pac_len = len(self.rx_pack_buff)
+                            return
                     else:
-                        rest += bytes([self.rx_pack_buff[0]])
+                        print("Yapp pack decoding Error")
+                        logger.error("Yapp pack decoding Error")
+                        logger.error(f"data_in: {data_in}")
+                        logger.error(f"rx_pack_buff: {self.rx_pack_buff}")
+                        logger.error(f"state: {self.state}")
+                        self.e = True
                         self.rx_pack_buff = self.rx_pack_buff[1:]
+                        self.exec_abort()
+                        return
                 else:
-                    rest += bytes([self.rx_pack_buff[0]])
+                    print("Yapp pack not Found")
+                    logger.error("Yapp pack not Found")
+                    logger.error(f"data_in: {data_in}")
+                    logger.error(f"rx_pack_buff: {self.rx_pack_buff}")
+                    self.e = True
                     self.rx_pack_buff = self.rx_pack_buff[1:]
-            self.rx_pack_buff = rest
-            # print(f"Yapp RX LOOP ENDE - State: {self.state} - rx_buff: {self.rx_pack_buff}")
-        self.ft_class.thread = None
-        # return e
+                    self.exec_abort()
+                    return
 
     def yapp_cron(self):
         # if self.TX:
         self.exec_state_tab()
-        self.ft_class.thread = None
+        # self.ft_class.thread = None
         # return ret
 
     def exec_state_tab(self):
@@ -582,17 +585,16 @@ class Yapp(object):
 
     def dec_DT(self):
         """ Send_Data """
-        if self.state != 'RD':
+        # if self.state not in ['RD', 'Abort', 'Start/Done']:
+        if self.state not in ['RD']:
             return False
         pac_len = self.check_packet_length()
         if not pac_len:
             return False
         self.rx_pac_len = pac_len + 2
-        #print(f"YAPP dec_DT pac_len: {pac_len}")
         if pac_len > 0:
             data = self.rx_pack_buff[2:self.rx_pac_len]
             self.ft_class.ft_root.can_rnr = True
-            #print(f"YAPP dec_DT data: {data}")
             if self.YappC or self.Resume:
                 print("YAPP C DT DEC !!!!")
                 self.rx_pac_len = pac_len + 2           # TODO + 1 if 8 Bit CRC
@@ -612,15 +614,9 @@ class Yapp(object):
             else:
                 self.ft_class.write_to_file(data)
                 return 'DT'
-        #  STX   len   (Data)    {if len=0 then data length = 256}
-        # [STX] [Len] [Datas] [Checksum]
         elif pac_len < 0:
-            #print(f"YAPP DT pac_len < 0 : pac_len: {pac_len} - self.rx_pac_len: {self.rx_pac_len}")
             return 'DT'
-            #return False
-        #print(f"YAPP dec_DT FALSE: ")
 
-        # self.rx_pac_len = 0
         return False
 
     def enc_EF(self):
@@ -702,7 +698,8 @@ class Yapp(object):
         """ Cancel """
         print("YAPP enc_CN !!")
         # CAN  len  (Optional Reason in ASCII)
-        ret = b'\x18' + NUL
+        ret = b'\x18\x00'
+        self.ft_class.send_data(b'\x06\x05')
         self.ft_class.abort = True
         self.Done = True
         return ret
@@ -712,7 +709,8 @@ class Yapp(object):
         print("YAPP dec_CN !!")
         pac_len = self.check_packet_length()
         if pac_len < 0:
-            return False
+            self.rx_pac_len = pac_len + 2
+            return 'CN'
         if b'\x18\x00' in self.rx_pack_buff:
             # CAN  len  (Optional Reason in ASCII)
             print(f"YAPP dec_CN - (b'\x18' + NUL): {self.rx_pack_buff}")
@@ -724,7 +722,7 @@ class Yapp(object):
         # if tmp.isalnum():
         self.rx_pac_len = 2 + pac_len
         print(f"YAPP ABORT REASON: {tmp}")
-        print(f"YAPP dec_CN - self.rx_pack_buff[2:pac_len].isalnum(): {self.rx_pack_buff}")
+        print(f"YAPP dec_CN - self.rx_pack_buff: {self.rx_pack_buff}")
         return 'CN'
         #return False
 
@@ -734,7 +732,8 @@ class Yapp(object):
 
     def dec_CA(self):
         """ Can_Ack """
-        if self.state != 'CW':
+        # if self.state not in ['CW', 'Abort', 'Start/Done']:
+        if self.state not in ['CW', 'Abort', 'SD']:
             return False
         self.rx_pac_len = 2
         return 'CA'
