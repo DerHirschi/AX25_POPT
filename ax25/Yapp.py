@@ -333,13 +333,13 @@ class Yapp(object):
                         return
                 else:
                     print("Yapp pack not Found")
-                    logger.error("Yapp pack not Found")
-                    logger.error(f"data_in: {data_in}")
-                    logger.error(f"rx_pack_buff: {self.rx_pack_buff}")
-                    self.e = True
+                    #logger.error("Yapp pack not Found")
+                    #logger.error(f"data_in: {data_in}")
+                    #logger.error(f"rx_pack_buff: {self.rx_pack_buff}")
+                    #self.e = True
                     self.rx_pack_buff = self.rx_pack_buff[1:]
-                    self.exec_abort()
-                    return
+                    #self.exec_abort()
+                    #return
 
     def yapp_cron(self):
         # if self.TX:
@@ -699,7 +699,7 @@ class Yapp(object):
         print("YAPP enc_CN !!")
         # CAN  len  (Optional Reason in ASCII)
         ret = b'\x18\x00'
-        self.ft_class.send_data(b'\x06\x05')
+        # self.ft_class.send_data(b'\x06\x05')
         self.ft_class.abort = True
         self.Done = True
         return ret

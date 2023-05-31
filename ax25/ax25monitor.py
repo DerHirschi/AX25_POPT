@@ -1,5 +1,7 @@
 from datetime import datetime
 import logging
+
+from ax25.APRS import aprs_parse
 from fnc.ax25_fnc import get_call_str
 
 logger = logging.getLogger(__name__)
@@ -31,6 +33,7 @@ class Monitor(object):  # TODO: Static
             # print(f"Data    : {ax25_frame.data}")
             # print(f"Data dec: {ax25_frame.data.decode('UTF-8', 'ignore')}")
             # print(f"Data hex: {ax25_frame.data.hex()}")
+
             try:
                 data = ax25_frame.data.decode('ASCII')
             except UnicodeDecodeError:
@@ -49,4 +52,7 @@ class Monitor(object):  # TODO: Static
             # print(out_str)
             # print('------ EOL ----------')
             # print()
+            if ax25_frame.ctl_byte.flag == 'UI':
+                out_str += aprs_parse(ax25_frame)
+                # return out_str
         return out_str

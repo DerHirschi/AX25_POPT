@@ -186,8 +186,9 @@ class FileTransport(object):
             self.class_protocol.init_TX()
         else:
             self.e = self.class_protocol.init_RX()
-            self.debug_process_file()
+            # self.debug_process_file()
 
+    """
     def debug_process_file(self):
         try:
             with open('tests/Sally.exe', 'rb') as file:
@@ -197,6 +198,7 @@ class FileTransport(object):
             print("DEBUG FILE INIT ERROR")
         self.debug_run = True
 
+    """
     def process_file(self):
         try:
             with open(self.param_filename, 'rb') as file:
@@ -263,7 +265,7 @@ class FileTransport(object):
             self.time_start = time.time()
 
     def ft_end(self):
-        self.debug_find_missing_data()
+        # self.debug_find_missing_data()
         self.done = True
 
     def ft_abort(self):
@@ -358,6 +360,7 @@ class FileTransport(object):
         # if self.debug_run:
         #     self.debug_input(data)
 
+    """
     def debug_input(self, data):
         if self.debug_run:
             self.debug_last_frames.append(data)
@@ -392,6 +395,7 @@ class FileTransport(object):
                     print(out)
                     logger.debug(out)
                 c += 1
+    """
 
     def ft_tx(self, data):
         self.connection.send_data(data, file_trans=True)
