@@ -14,7 +14,6 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg)
 import matplotlib.pyplot as plt
 
-import config_station
 import constant
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
