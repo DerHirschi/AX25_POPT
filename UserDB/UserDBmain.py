@@ -4,18 +4,13 @@ import os
 import pickle
 import logging
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
+from fnc.cfg_fnc import set_obj_att, cleanup_obj_dict
 from fnc.str_fnc import conv_time_for_sorting
 
 # axip_clientList = 'data/axip_userList.popt'
 client_db = 'data/UserDB.popt'
 
-"""
-def get_ssid(inp):
-    if inp.find('-') != -1:
-        return inp[:inp.find('-')].upper(), int(inp[inp.find('-') + 1:].upper())
-    else:
-        return inp, 0
-"""
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,7 +83,7 @@ class UserDB:
         self.db = {}
         try:
             with open(client_db, 'rb') as inp:
-                self.db = pickle.load(inp)
+                load = pickle.load(inp)
             """
             for ke in self.db.keys():
                 print(ke)
@@ -108,6 +103,9 @@ class UserDB:
         except ImportError:
             logger.error(f"User DB: Falsche Version der DB Datei. Bitte {client_db} löschen und PoPT neu starten!")
             raise
+
+        for k in load.keys():
+            self.db[k] = set_obj_att(new_obj=Client(load[k].call_str), input_obj=load[k])
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
@@ -232,9 +230,11 @@ class UserDB:
     def save_data(self):
         print('Save Client DB')
         logger.info('Save Client DB')
+        tmp = cleanup_obj_dict(self.db)
+
         try:
             with open(client_db, 'wb') as outp:
-                pickle.dump(self.db, outp, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(tmp, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError as e:
             # print("ERROR SAVE ClientDB: " + str(e))
             logger.error("ERROR SAVE ClientDB: " + str(e))

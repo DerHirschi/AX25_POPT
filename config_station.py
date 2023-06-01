@@ -1,9 +1,12 @@
 import pickle
 import os
 import logging
+
+import ax25.ax25Beacon
 from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
+from fnc.cfg_fnc import cleanup_obj, set_obj_att
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +112,7 @@ def load_fm_file(filename: str):
         logger.error(
             f"CFG: Falsche Version der CFG Datei. Bitte {CFG_data_path + filename} löschen und PoPT neu starten!")
         raise
+
 
 class DefaultStation(object):
     # parm_StationCalls: [''] = []
@@ -218,13 +222,23 @@ class DefaultPort(object):
             ############
             # Port CFG
             save_ports = {}
+            clean_beacon_cfg = {}
+            for be_k in self.parm_beacons:
+                tmp_be_list = []
+                for be in self.parm_beacons[be_k]:
+                    tmp_be_list.append(cleanup_obj(be))
+
+                clean_beacon_cfg[be_k] = tmp_be_list
             for att in dir(self):
                 if '__' not in att and \
                         att not in self.dont_save_this and \
                         not callable(getattr(self, att)):
                     # print(" {} - {}".format(att, getattr(self, att)))
-                    save_ports[att] = getattr(self, att)
-                    # print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
+                    if att == 'parm_beacons':
+                        save_ports[att] = clean_beacon_cfg
+                    else:
+                        save_ports[att] = getattr(self, att)
+                    print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
 
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)
@@ -257,12 +271,27 @@ class PortConfigInit(DefaultPort):
         ##########
         # Port
         if is_file:
-            # for att in list(port_cfg.keys()):
             for att in dir(self):
                 if att in port_cfg.keys():
-                    # print("Load Port Param {} >  {} - {}".format(port_cfg['parm_PortName'] , att, port_cfg[att]))
                     if not callable(getattr(self, att)):
                         setattr(self, att, port_cfg[att])
+
+            for be_k in self.parm_beacons:
+                tmp_be_list = []
+                for old_be in self.parm_beacons[be_k]:
+                    beacon = ax25.ax25Beacon.Beacon()
+                    # self.parm_beacons[be_k] = set_obj_att(beacon, self.parm_beacons[be_k])
+                    """
+                    inp = cleanup_obj(old_be)
+                    for att in dir(inp):
+                        if '__' not in att:
+                            print(att)
+                            print(beacon)
+                            print(inp)
+                            setattr(beacon, att, getattr(inp, att))
+                    """
+                    tmp_be_list.append(set_obj_att(beacon, old_be))
+                self.parm_beacons[be_k] = tmp_be_list
 
             if self.parm_StationCalls:
                 self.parm_Stations = []
@@ -287,20 +316,11 @@ class PortConfigInit(DefaultPort):
                     self.parm_full_duplex = True
                 else:
                     self.parm_full_duplex = False   # Maybe sometimes i ll implement it for HF
-                # print("Load from File..")
 
-            # self.parm_StationCalls: [str] = []
             stat: DefaultStation
             for stat in self.parm_Stations:
                 if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
                     self.parm_cli[stat.stat_parm_Call]: DefaultCLI = stat.stat_parm_cli
-
-                    ##############################################################
-                    # Optional Parameter for Stations
-                    # self.parm_StationCalls.append(stat.stat_parm_Call)
-        ##########################
-        # Debug .. Del Beacons
-        # self.parm_beacons = {}
 
     def __del__(self):
         # self.save_to_pickl()
