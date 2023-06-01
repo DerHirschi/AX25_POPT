@@ -41,7 +41,9 @@ def get_all_stat_cfg():
             if temp:
                 stat = DefaultStation()
                 for att in list(temp.keys()):
-                    setattr(stat, att, temp[att])
+                    if hasattr(stat, att):
+                        if not callable(getattr(stat, att)):
+                            setattr(stat, att, temp[att])
                 if stat.stat_parm_pipe is not None:
                     stat.stat_parm_pipe = AX25Pipe
                     stat.stat_parm_pipe.tx_filename = stat.stat_parm_pipe_tx
@@ -217,7 +219,9 @@ class DefaultPort(object):
             # Port CFG
             save_ports = {}
             for att in dir(self):
-                if '__' not in att and att not in self.dont_save_this:
+                if '__' not in att and \
+                        att not in self.dont_save_this and \
+                        not callable(getattr(self, att)):
                     # print(" {} - {}".format(att, getattr(self, att)))
                     save_ports[att] = getattr(self, att)
                     # print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
@@ -232,7 +236,7 @@ class PortConfigInit(DefaultPort):
     def __init__(self, loaded_stat: {str: DefaultStation}, port_id: int):
         # ReInit rest of this shit
         for att in dir(self):
-            if '__' not in att and att not in self.dont_save_this:
+            if '__' not in att and att not in self.dont_save_this and not callable(getattr(self, att)):
                 setattr(self, att, getattr(self, att))
         self.parm_PortNr = port_id
         self.parm_Stations: [DefaultStation] = []
@@ -257,7 +261,8 @@ class PortConfigInit(DefaultPort):
             for att in dir(self):
                 if att in port_cfg.keys():
                     # print("Load Port Param {} >  {} - {}".format(port_cfg['parm_PortName'] , att, port_cfg[att]))
-                    setattr(self, att, port_cfg[att])
+                    if not callable(getattr(self, att)):
+                        setattr(self, att, port_cfg[att])
 
             if self.parm_StationCalls:
                 self.parm_Stations = []
@@ -309,7 +314,7 @@ def save_station_to_file(conf: DefaultStation):
         file = '{1}{0}/stat{0}.popt'.format(conf.stat_parm_Call, CFG_usertxt_path)
         save_station = {}
         for att in dir(conf):
-            if '__' not in att:
+            if '__' not in att and not callable(getattr(conf, att)):
                 if att in CFG_txt_save.keys():
                     f_n = CFG_usertxt_path + \
                           '{0}/{0}.{1}'.format(conf.stat_parm_Call, CFG_txt_save[att])

@@ -2,7 +2,7 @@
     Layer 2 ??
     AX.25 Packet enc-/decoding
 """
-
+from ax25.APRS import parse_aprs_msg
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str
 
@@ -218,7 +218,7 @@ class CByte(object):
                 ret = '011' + ret[3] + '00' + ret[-2:]
             elif self.flag == 'UI':
                 ret = '000' + ret[3] + '00' + ret[-2:]
-            elif self.flag == 'FRMR':  # TODO Not completely implemented yet
+            elif self.flag == 'FRMR':
                 ret = '100' + ret[3] + '01' + ret[-2:]
             elif self.flag == 'TEST':  # TODO Not completely implemented yet
                 ret = '111' + ret[3] + '00' + ret[-2:]
@@ -230,12 +230,9 @@ class CByte(object):
 
     def dec_cbyte(self, in_byte):
         if int(in_byte) in self.pac_types.keys():
-            # print("Predefined Pac Type.. {}".format(in_byte))
             self.pac_types[int(in_byte)]()
         else:
-            # print("Not predefined Pac Type..")
             self.hex = hex(int(in_byte))
-            # print(self.hex)
             bi = bin(int(in_byte))[2:]
             bi = bi.zfill(8)
             pf = bool(int(bi[3], 2))  # P/F
@@ -519,7 +516,6 @@ class PIDByte(object):
 
 
 class AX25Frame(object):
-
     def __init__(self):
         # self.kiss = b''
         self.bytes = b''           # Dekiss
@@ -531,6 +527,7 @@ class AX25Frame(object):
         self.ctl_byte = CByte()
         self.pid_byte = PIDByte()
         self.data = b''
+        self.aprs_data = {}
         self.data_len = 0
         self.addr_uid = ''          # Unique ID/Address String
         self.axip_add = '', 0       # For AXIP Handling
@@ -645,7 +642,6 @@ class AX25Frame(object):
                     self.data = decode_FRMR(self.bytes[index:])
                 else:
                     self.data = self.bytes[index:]
-
                 self.data_len = len(self.data)
             # Check if all Digi s have repeated packet
             self.set_check_h_bits(dec=True)
@@ -653,8 +649,13 @@ class AX25Frame(object):
             self.build_uid(dec=True)
             if not self.validate():
                 raise AX25DecodingERROR(self)
+            self.decode_aprs()
         else:
             raise AX25DecodingERROR(self)
+
+    def decode_aprs(self):
+        if self.ctl_byte.flag == 'UI':
+            self.aprs_data = parse_aprs_msg(self)
 
     def encode_ax25frame(self, digi=False):
         # print(f'encode >>>>>> {self.digi_call}')
@@ -799,34 +800,12 @@ class AX25Frame(object):
                 ind += 1
         if search_ind:
             self.via_calls = self.via_calls[search_ind:]
-    """
-    def increment_viacall_ssid(self, call: str):
-        # TODO Cleanup ?? Not in Use 
-        el: Call
-        ind = 0
-        self.via_calls.reverse()
-        for el in self.via_calls:
-            if get_call_wo_ssid(call) in el.call_str:
-                if el.ssid < 15:
-                    el.ssid += 1
-                    self.via_calls.reverse()
-                    self.encode_ax25frame()
-                    return el.call_str
-                else:
-                    self.via_calls.reverse()
-                    return False
-            else:
-                ind += 1
-        self.via_calls.reverse()
-        return False
-    """
+
 
 def via_calls_fm_str(inp_str: str):
-    # print(f'via_calls_fm_str: inp: {inp_str} ')
     ret: [Call] = []
     inp_str = inp_str.replace('\r', '').replace('\n', '')
     tmp = inp_str.split(' ')
-    # print(f'via_calls_fm_str: tmp: {tmp} ')
 
     for call in tmp:
         call = call.replace(' ', '')
