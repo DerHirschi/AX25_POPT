@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 
 import cli.cliMain
+# from cli.cliMain import CLI_OPT, NoneCLI
 import config_station
 from ax25.ax25dec_enc import AX25Frame
 from fnc.ax25_fnc import reverse_uid
@@ -275,8 +276,11 @@ class AX25Conn(object):
     def init_cli(self):
         if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
             del self.cli
-            self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
+            # self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
+            print(f"CLI INIT : {self.cfg.parm_cli[self.stat_cfg.stat_parm_Call]}")
+            self.cli = cli.cliMain.CLI_OPT[self.cfg.parm_cli[self.stat_cfg.stat_parm_Call]](self)
             self.cli_type = self.cli.cli_name
+            print(f"CLI INIT typ: {self.cli.cli_name}")
             self.cli.build_prompt()
         """
         else:

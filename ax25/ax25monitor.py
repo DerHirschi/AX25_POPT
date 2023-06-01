@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 
-from ax25.APRS import format_aprs_f_monitor
+from ax25aprs.aprs_dec import format_aprs_f_monitor
 from fnc.ax25_fnc import get_call_str
 
 logger = logging.getLogger(__name__)

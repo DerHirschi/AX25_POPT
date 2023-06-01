@@ -6,7 +6,7 @@ import ax25.ax25Beacon
 from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
-from fnc.cfg_fnc import cleanup_obj, set_obj_att
+from fnc.cfg_fnc import cleanup_obj, set_obj_att, cleanup_obj_dict
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,9 @@ def get_all_stat_cfg():
                     stat.stat_parm_pipe.tx_filename = stat.stat_parm_pipe_tx
                     stat.stat_parm_pipe.rx_filename = stat.stat_parm_pipe_rx
                     stat.stat_parm_pipe.parm_tx_file_check_timer = stat.stat_parm_pipe_loop_timer
+                if type(stat.stat_parm_cli) != str:
+                    if hasattr(stat.stat_parm_cli, 'cli_name'):
+                        stat.stat_parm_cli = stat.stat_parm_cli.cli_name
                 ################################
                 # Gather Text Files (C-Text ...)
                 for att in CFG_txt_save.keys():
@@ -127,7 +130,7 @@ class DefaultStation(object):
     stat_parm_isSmartDigi = False
     stat_parm_is_StupidDigi = False
     # Parameter for CLI
-    stat_parm_cli: DefaultCLI = NoneCLI
+    stat_parm_cli: '' = 'NO-CLI'
     stat_parm_pipe = None
     stat_parm_pipe_tx = ''
     stat_parm_pipe_rx = ''
@@ -172,7 +175,7 @@ class DefaultPort(object):
     # Station related Parameter
     parm_stat_PacLen: {str: int} = {}
     parm_stat_MaxFrame: {str: int} = {}
-    parm_cli: {str: DefaultCLI} = {}
+    parm_cli: {str: ''} = {}
     parm_StationCalls: [str] = []  # def in __init__    Keys for Station Parameter
     ####################################
     # parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
@@ -223,6 +226,7 @@ class DefaultPort(object):
             # Port CFG
             save_ports = {}
             clean_beacon_cfg = {}
+            # clean_cli_param = cleanup_obj_dict(self.parm_cli)
             for be_k in self.parm_beacons:
                 tmp_be_list = []
                 for be in self.parm_beacons[be_k]:
@@ -236,6 +240,8 @@ class DefaultPort(object):
                     # print(" {} - {}".format(att, getattr(self, att)))
                     if att == 'parm_beacons':
                         save_ports[att] = clean_beacon_cfg
+                    # elif att == 'parm_cli':
+                    #     save_ports[att] = clean_cli_param
                     else:
                         save_ports[att] = getattr(self, att)
                     print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
@@ -292,6 +298,11 @@ class PortConfigInit(DefaultPort):
                     """
                     tmp_be_list.append(set_obj_att(beacon, old_be))
                 self.parm_beacons[be_k] = tmp_be_list
+
+            for k in self.parm_cli:
+                if type(self.parm_cli[k]) != str:
+                    if hasattr(self.parm_cli[k], 'cli_name'):
+                        self.parm_cli[k] = self.parm_cli[k].cli_name
 
             if self.parm_StationCalls:
                 self.parm_Stations = []
