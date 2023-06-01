@@ -23,7 +23,7 @@ Ideas/TODO's :
 - Yapp Server Modes
 - Yapp Resume
 - Didadit
-- APRS decoding
+✓ APRS decoding
 - APRS encoding
 - APRS Digi / I-Gate Funktion
 - "Managed-DIGI" Funktion (Die DIGI Verbindung wird wie ein Noden Link behandelt)

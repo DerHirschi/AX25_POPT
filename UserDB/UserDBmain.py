@@ -28,6 +28,8 @@ class Client(object):
         self.ZIP = ''
         self.QTH = ''
         self.LOC = ''
+        self.Lat = 0
+        self.Lon = 0
         self.Distance = 0
         self.Language = -1
         self.PRmail = ''
@@ -125,6 +127,24 @@ class UserDB:
             self.entry_var_upgrade(call_str)
             return self.db[call_str]
         return False
+
+    def new_entry(self, call_str):
+        call_str = validate_call(call_str)
+        if call_str:
+            call_tup = call_tuple_fm_call_str(call_str)
+            if call_str not in self.db.keys():
+                if call_tup[0] not in self.db.keys():
+                    print('# User DB: New User added > ' + call_str)
+                    logger.info('User DB: New User added > ' + call_str)
+                    self.db[call_str] = Client(call_str)
+                    return self.db[call_str]
+        return False
+
+    def get_distance(self, call_str):
+        ret = self.db.get(call_str, False)
+        if ret:
+            return ret.Distance
+        return 0
 
     def get_keys_by_typ(self, typ='SYSOP'):
         ret = []
@@ -239,6 +259,8 @@ class UserDB:
             # print("ERROR SAVE ClientDB: " + str(e))
             logger.error("ERROR SAVE ClientDB: " + str(e))
 
+
+USER_DB = UserDB()
 
 """
 class AXIPClientDB(object):

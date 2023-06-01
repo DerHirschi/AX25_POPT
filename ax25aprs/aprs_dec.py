@@ -1,5 +1,6 @@
 import aprslib
 
+from UserDB.UserDBmain import USER_DB
 from fnc.loc_fnc import coordinates_to_locator, locator_distance
 
 
@@ -12,29 +13,29 @@ def parse_aprs_msg(ax25frame):
         aprs_msg_input += f",{via_call.call_str}"
         if via_call.c_bit:
             aprs_msg_input += "*"
-    print(aprs_msg_input)
+    # print(aprs_msg_input)
     try:
         aprs_msg_input += f":{ax25frame.data.decode('UTF-8')}"
     except UnicodeDecodeError:
-        print(f"APRS Data decoding error: {ax25frame.data}")
+        # print(f"APRS Data decoding error: {ax25frame.data}")
         return {}
     try:
         aprs_msg = aprslib.parse(aprs_msg_input)
     except aprslib.UnknownFormat:
         return {}
     except aprslib.ParseError as e:
-        print(e)
-        print(aprs_msg_input)
+        # print(e)
+        # print(aprs_msg_input)
         return {}
     else:
         return aprs_msg
 
 
-def format_aprs_f_monitor(ax25frame, own_locator='JO52NU'):
+def format_aprs_f_monitor(ax25frame, own_locator):
     if not ax25frame.aprs_data:
         return ''
     aprs_msg = ax25frame.aprs_data
-    print(aprs_msg)
+    # print(aprs_msg)
     ret, dist = format_aprs_msg(aprs_msg, own_locator)
     if 'subpacket' in aprs_msg.keys():
         ret += 'APRS-subpacket    :\n' + format_aprs_msg(aprs_msg['subpacket'], own_locator)[0]
@@ -62,11 +63,12 @@ def format_aprs_f_monitor(ax25frame, own_locator='JO52NU'):
     return ret
 
 
-def format_aprs_msg(aprs_frame: aprslib.parse, own_locator='JO52NU'):
+def format_aprs_msg(aprs_frame: aprslib.parse, own_locator):
     ret = ''
     dist = ''
+    db_ent = USER_DB.new_entry(aprs_frame['from'])
     for k in aprs_frame:
-        print(f"{k}: {aprs_frame[k]}")
+        # print(f"{k}: {aprs_frame[k]}")
         if aprs_frame[k]:
             if k not in ['from', 'to', 'via', 'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
                 if k == 'messagecapable':
@@ -85,9 +87,15 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator='JO52NU'):
                     loc = coordinates_to_locator(latitude=aprs_frame['latitude'],
                                                  longitude=aprs_frame['longitude'])
                     ret += f"APRS-Locator      : {loc}\n"
+                    if db_ent:
+                        db_ent.LOC = loc
+                        db_ent.Lat = aprs_frame['latitude']
+                        db_ent.Lon = aprs_frame['longitude']
                     if own_locator:
                         dist = locator_distance(own_locator, loc)
                         ret += f"APRS-Distance     : {dist} km\n"
+                        if db_ent:
+                            db_ent.Distance = dist
     return ret, dist
 
 

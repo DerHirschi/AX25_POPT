@@ -80,7 +80,7 @@ class APRSSettingsWin(tk.Toplevel):
         tab.columnconfigure(4, minsize=5, weight=0)
         call_label = ttk.Label(tab, text="Call:")
         call_label.grid(row=0, column=1, padx=10, pady=5, sticky=tk.W)
-        call_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['call'])
+        call_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['call'], state='disabled')
         call_entry.grid(row=0, column=2, padx=10, pady=5, sticky=tk.W)
         self.vars[-1]['call'].set(port_aprs.aprs_parm_call)
 
@@ -110,7 +110,7 @@ class APRSSettingsWin(tk.Toplevel):
         # Create DIGI checkbutton
         digi_checkbutton_label = ttk.Label(tab, text="DIGI:")
         digi_checkbutton_label.grid(row=4, column=1, padx=10, pady=5, sticky=tk.W)
-        digi_checkbutton = ttk.Checkbutton(tab, variable=self.vars[-1]['digi'])
+        digi_checkbutton = ttk.Checkbutton(tab, variable=self.vars[-1]['digi'], state='disabled')
         digi_checkbutton.grid(row=4, column=2, columnspan=2, padx=10, pady=5, sticky=tk.W)
         self.vars[-1]['digi'].set(port_aprs.aprs_parm_digi)
 
@@ -118,7 +118,7 @@ class APRSSettingsWin(tk.Toplevel):
         ais_var = tk.StringVar()
         ais_checkbutton_label = ttk.Label(tab, text="AIS:")
         ais_checkbutton_label.grid(row=5, column=1, padx=10, pady=5, sticky=tk.W)
-        ais_checkbutton = ttk.Checkbutton(tab, variable=self.vars[-1]['ais'])
+        ais_checkbutton = ttk.Checkbutton(tab, variable=self.vars[-1]['ais'], state='disabled')
         ais_checkbutton.grid(row=5, column=2, columnspan=2, padx=10, pady=5, sticky=tk.W)
         self.vars[-1]['ais'].set(port_aprs.aprs_parm_igate)
 
@@ -126,7 +126,7 @@ class APRSSettingsWin(tk.Toplevel):
         baken_label = ttk.Label(tab, text="Baken Text:")
         baken_label.grid(row=6, column=1, padx=10, pady=5, sticky=tk.W)
 
-        baken_textbox = tk.Text(tab, width=85, height=5)
+        baken_textbox = tk.Text(tab, width=85, height=5, state='disabled')
         baken_textbox.grid(row=7, column=1, columnspan=3, padx=10, pady=5, sticky=tk.W)
         self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 

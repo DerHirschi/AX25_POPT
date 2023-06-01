@@ -1,6 +1,6 @@
 import config_station
 from ax25.ax25Port import *
-from UserDB.UserDBmain import UserDB
+from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH
 from config_station import *
 from gui.guiRxEchoSettings import RxEchoVars
@@ -20,7 +20,7 @@ class AX25PortHandler(object):
         ###########################
         # VArs for gathering Stuff
         self.mh = MH()
-        self.user_db = UserDB()
+        self.user_db = USER_DB
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
