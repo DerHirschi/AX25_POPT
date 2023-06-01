@@ -1,9 +1,13 @@
 import pickle
 import os
 import logging
+
+import ax25.ax25Beacon
+from ax25aprs.aprs_station import APRS_Station
 from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
+from fnc.cfg_fnc import cleanup_obj, set_obj_att, cleanup_obj_dict
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +45,17 @@ def get_all_stat_cfg():
             if temp:
                 stat = DefaultStation()
                 for att in list(temp.keys()):
-                    setattr(stat, att, temp[att])
+                    if hasattr(stat, att):
+                        if not callable(getattr(stat, att)):
+                            setattr(stat, att, temp[att])
                 if stat.stat_parm_pipe is not None:
                     stat.stat_parm_pipe = AX25Pipe
                     stat.stat_parm_pipe.tx_filename = stat.stat_parm_pipe_tx
                     stat.stat_parm_pipe.rx_filename = stat.stat_parm_pipe_rx
                     stat.stat_parm_pipe.parm_tx_file_check_timer = stat.stat_parm_pipe_loop_timer
+                if type(stat.stat_parm_cli) != str:
+                    if hasattr(stat.stat_parm_cli, 'cli_name'):
+                        stat.stat_parm_cli = stat.stat_parm_cli.cli_name
                 ################################
                 # Gather Text Files (C-Text ...)
                 for att in CFG_txt_save.keys():
@@ -108,6 +117,7 @@ def load_fm_file(filename: str):
             f"CFG: Falsche Version der CFG Datei. Bitte {CFG_data_path + filename} löschen und PoPT neu starten!")
         raise
 
+
 class DefaultStation(object):
     # parm_StationCalls: [''] = []
     stat_parm_Call: str = 'NOCALL'
@@ -121,7 +131,7 @@ class DefaultStation(object):
     stat_parm_isSmartDigi = False
     stat_parm_is_StupidDigi = False
     # Parameter for CLI
-    stat_parm_cli: DefaultCLI = NoneCLI
+    stat_parm_cli: '' = 'NO-CLI'
     stat_parm_pipe = None
     stat_parm_pipe_tx = ''
     stat_parm_pipe_rx = ''
@@ -166,7 +176,7 @@ class DefaultPort(object):
     # Station related Parameter
     parm_stat_PacLen: {str: int} = {}
     parm_stat_MaxFrame: {str: int} = {}
-    parm_cli: {str: DefaultCLI} = {}
+    parm_cli: {str: ''} = {}
     parm_StationCalls: [str] = []  # def in __init__    Keys for Station Parameter
     ####################################
     # parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
@@ -184,6 +194,7 @@ class DefaultPort(object):
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
     parm_mon_clr_bg = "black"
+    parm_aprs_station = cleanup_obj(APRS_Station())
     ##################################
     # Port Parameter for Save to file
     parm_beacons = {}
@@ -197,18 +208,10 @@ class DefaultPort(object):
                       'parm_Stations',
                       ]
 
+
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """
-        """
-        print(time.time())
-        for k in self.parm_beacons.keys():
-            be_list = self.parm_beacons[k]
-            for be in be_list:
-                print('----------- Bake {} --------------'.format(be.to_call))
-                for att in dir(be):
-                    print('{} > {}'.format(att, getattr(be, att)))
-        print('----------- Bake Ende --------------')
-        """
+
         if self.parm_PortNr != -1:
 
             gui = self.glb_gui
@@ -216,11 +219,26 @@ class DefaultPort(object):
             ############
             # Port CFG
             save_ports = {}
+            clean_beacon_cfg = {}
+            # clean_cli_param = cleanup_obj_dict(self.parm_cli)
+            for be_k in self.parm_beacons:
+                tmp_be_list = []
+                for be in self.parm_beacons[be_k]:
+                    tmp_be_list.append(cleanup_obj(be))
+
+                clean_beacon_cfg[be_k] = tmp_be_list
             for att in dir(self):
-                if '__' not in att and att not in self.dont_save_this:
+                if '__' not in att and \
+                        att not in self.dont_save_this and \
+                        not callable(getattr(self, att)):
                     # print(" {} - {}".format(att, getattr(self, att)))
-                    save_ports[att] = getattr(self, att)
-                    # print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
+                    if att == 'parm_beacons':
+                        save_ports[att] = clean_beacon_cfg
+                    elif att == 'parm_aprs_station':
+                        save_ports[att] = cleanup_obj(self.parm_aprs_station)
+                    else:
+                        save_ports[att] = getattr(self, att)
+                    print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
 
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)
@@ -232,16 +250,18 @@ class PortConfigInit(DefaultPort):
     def __init__(self, loaded_stat: {str: DefaultStation}, port_id: int):
         # ReInit rest of this shit
         for att in dir(self):
-            if '__' not in att and att not in self.dont_save_this:
+            if '__' not in att and att not in self.dont_save_this and not callable(getattr(self, att)):
                 setattr(self, att, getattr(self, att))
         self.parm_PortNr = port_id
         self.parm_Stations: [DefaultStation] = []
         self.station_save_files = []
-        file = CFG_data_path + 'port{}.popt'.format(self.parm_PortNr)
+        file = CFG_data_path + f'port{self.parm_PortNr}.popt'
         is_file = False
+
         try:
             with open(file, 'rb') as inp:
                 port_cfg = pickle.load(inp)
+                # port_cfg = set_obj_att(D, port_cfg)
                 is_file = True
         except (FileNotFoundError, EOFError):
             pass
@@ -253,11 +273,25 @@ class PortConfigInit(DefaultPort):
         ##########
         # Port
         if is_file:
-            # for att in list(port_cfg.keys()):
             for att in dir(self):
                 if att in port_cfg.keys():
-                    # print("Load Port Param {} >  {} - {}".format(port_cfg['parm_PortName'] , att, port_cfg[att]))
-                    setattr(self, att, port_cfg[att])
+                    if not callable(getattr(self, att)):
+                        setattr(self, att, port_cfg[att])
+
+            for be_k in self.parm_beacons:
+                tmp_be_list = []
+                for old_be in self.parm_beacons[be_k]:
+                    beacon = ax25.ax25Beacon.Beacon()
+
+                    tmp_be_list.append(set_obj_att(beacon, old_be))
+                self.parm_beacons[be_k] = tmp_be_list
+
+            for k in self.parm_cli:
+                if type(self.parm_cli[k]) != str:
+                    if hasattr(self.parm_cli[k], 'cli_name'):
+                        self.parm_cli[k] = self.parm_cli[k].cli_name
+
+
 
             if self.parm_StationCalls:
                 self.parm_Stations = []
@@ -282,20 +316,13 @@ class PortConfigInit(DefaultPort):
                     self.parm_full_duplex = True
                 else:
                     self.parm_full_duplex = False   # Maybe sometimes i ll implement it for HF
-                # print("Load from File..")
 
-            # self.parm_StationCalls: [str] = []
-            stat: DefaultStation
+            # stat: DefaultStation
             for stat in self.parm_Stations:
                 if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
-                    self.parm_cli[stat.stat_parm_Call]: DefaultCLI = stat.stat_parm_cli
+                    self.parm_cli[stat.stat_parm_Call] = stat.stat_parm_cli
 
-                    ##############################################################
-                    # Optional Parameter for Stations
-                    # self.parm_StationCalls.append(stat.stat_parm_Call)
-        ##########################
-        # Debug .. Del Beacons
-        # self.parm_beacons = {}
+        self.parm_aprs_station = set_obj_att(APRS_Station(), self.parm_aprs_station)
 
     def __del__(self):
         # self.save_to_pickl()
@@ -309,7 +336,7 @@ def save_station_to_file(conf: DefaultStation):
         file = '{1}{0}/stat{0}.popt'.format(conf.stat_parm_Call, CFG_usertxt_path)
         save_station = {}
         for att in dir(conf):
-            if '__' not in att:
+            if '__' not in att and not callable(getattr(conf, att)):
                 if att in CFG_txt_save.keys():
                     f_n = CFG_usertxt_path + \
                           '{0}/{0}.{1}'.format(conf.stat_parm_Call, CFG_txt_save[att])

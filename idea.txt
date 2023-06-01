@@ -12,7 +12,7 @@ Ideas/TODO's :
 - Simple Mailbox
 - BBS Tool was Bulletins und PMs von/an Heimat-BBS holt/sendet und Mails aufbereitet darstellt.
 - Telnet Port
-- Loop Port
+- Loop Port oder einfach localhost via AXIP
 - MultiKISS
 - ?Pipe-TOOL: GPIOs ansteuerbar / auslesbar ..? oder besser
 - Remote-GPIO Tool (Idee von Lars)
@@ -23,7 +23,7 @@ Ideas/TODO's :
 - Yapp Server Modes
 - Yapp Resume
 - Didadit
-- APRS decoding
+✓ APRS decoding
 - APRS encoding
 - APRS Digi / I-Gate Funktion
 - "Managed-DIGI" Funktion (Die DIGI Verbindung wird wie ein Noden Link behandelt)

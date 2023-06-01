@@ -3,8 +3,7 @@ from tkinter import filedialog as fd
 from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data
-from cli.cliMain import *
-from ax25.ax25UI_Pipe import AX25Pipe
+from cli.cliMain import CLI_OPT
 from gui.guiMsgBoxes import *
 from string_tab import STR_TABLE
 
@@ -36,12 +35,7 @@ class StatSetTab:
         cli_label = tk.Label(self.own_tab, text='CLI:')
         cli_label.place(x=cli_x, y=height - cli_y)
         self.cli_select_var = tk.StringVar(self.own_tab)
-        self.cli_opt = {
-            UserCLI.cli_name: UserCLI,
-            NodeCLI.cli_name: NodeCLI,
-            NoneCLI.cli_name: NoneCLI,
-            'PIPE': AX25Pipe
-        }
+        self.cli_opt = CLI_OPT
         opt = list(self.cli_opt.keys())
 
         cli = tk.OptionMenu(self.own_tab, self.cli_select_var, *opt, command=self.chk_CLI)
@@ -367,7 +361,7 @@ class StatSetTab:
         self.call.delete(0, tk.END)
         self.call.insert(tk.END, self.station_setting.stat_parm_Call)
         # CLI
-        self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)
+        self.cli_select_var.set(self.station_setting.stat_parm_cli)
         # Ports
         """
         for k in self.ports_sett.keys():
@@ -423,7 +417,7 @@ class StatSetTab:
             self.loop_timer.configure(state='disabled')
             self.tx_filename.configure(state='disabled')
             self.rx_filename.configure(state='disabled')
-            self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)
+            self.cli_select_var.set(self.station_setting.stat_parm_cli)
         else:
             self.cli_select_var.set('PIPE')  # default value
             self.c_text_ent.configure(state='disabled')
@@ -446,16 +440,19 @@ class StatSetTab:
         self.station_setting.stat_parm_Call = call
         # CLI
         cli_key = self.cli_select_var.get()
+
         if cli_key not in ['PIPE']:
-            self.station_setting.stat_parm_cli = self.cli_opt[cli_key]
+            # self.station_setting.stat_parm_cli = self.cli_opt[cli_key]
+            self.station_setting.stat_parm_cli = cli_key
+
         else:
-            self.station_setting.stat_parm_cli = NoneCLI
+            self.station_setting.stat_parm_cli = 'NO-CLI'
             new_pipe = self.cli_opt[cli_key]
             new_pipe.tx_filename = self.tx_filename_var.get()
             new_pipe.rx_filename = self.rx_filename_var.get()
             new_pipe.parm_tx_file_check_timer = int(self.loop_timer_var.get())
-            self.station_setting.stat_parm_pipe = self.cli_opt[cli_key]
-
+            self.station_setting.stat_parm_pipe = new_pipe
+        print(self.station_setting.stat_parm_cli)
         # MaxPac
         var_maxpac = int(self.max_pac_select_var.get())
         self.station_setting.stat_parm_MaxFrame = var_maxpac

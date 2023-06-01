@@ -13,6 +13,7 @@ from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from ax25.ax25Error import AX25EncodingERROR
 from UserDB.UserDBmain import Client
+from ax25.ax25UI_Pipe import AX25Pipe
 
 logger = logging.getLogger(__name__)
 
@@ -259,6 +260,8 @@ class DefaultCLI(object):
                     self.change_cli_state(3)
 
     def send_sw_id(self):
+        if not self.sw_id:
+            return ""
         unknown = '?'
         didadit = ''  # True = 'D'
         txt_enc = '4'  # UTF-8
@@ -970,3 +973,11 @@ class NoneCLI(DefaultCLI):
 
     def cli_cron(self):
         pass
+
+
+CLI_OPT = {
+            UserCLI.cli_name: UserCLI,
+            NodeCLI.cli_name: NodeCLI,
+            NoneCLI.cli_name: NoneCLI,
+            'PIPE': AX25Pipe
+        }

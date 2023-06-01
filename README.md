@@ -44,6 +44,10 @@ Install all dependencies:
   $ pip install pyserial
   $ pip install gtts
   ```
+PoPT Ver. >= 2.85.2:
+  ``` sh
+  $ pip install aprslib
+  ```
 
 If problems with playsound on Debian OS:
   ``` sh
@@ -56,12 +60,12 @@ Run:
   ```
 
 
-Supported AX.25 connection options:
+#### Supported AX.25 connection options:
 - KISS via TCP (e.g. Direwolf)
 - KISS via Serail (e.g. Linux AX.25 Device (kissattach). Not tested on TNCs or Modems yet)
 - AXIP via UDP (AXIP Client)
 
-Keybindings:
+#### Keybindings:
 - ESC > New Connection
 - ALT + C > New Connection
 - ALT + D > Disconnect
@@ -72,7 +76,7 @@ Keybindings:
 - CTRL + Left > decrease Text Window
 - CTRL + Right > increase Text Window
 
-File ext in Station Profile Folder (data/usertxt/<USER CALL>):
+#### File ext in Station Profile Folder (data/usertxt/<USER CALL>):
 - *.ctx > C-Text
 - *.btx > Bye-Text
 - *.atx > News-Text
@@ -80,12 +84,14 @@ File ext in Station Profile Folder (data/usertxt/<USER CALL>):
 - *.litx > Long Info-Text
 - *.popt > Programm Data Files (Don't change !) 
 
-Choosing Language (Quick Fix):
-main.py line 6
 
-Choosing Language (Quick Fix):
+#### QTH Locator Functions:
+- Author: 4X5DM
+- Source: https://github.com/4x1md/qth_locator_functions
+- License location: doc/qth_locator_functions-master/LICENSE
 
-main.py line 9
+Choosing Language (Quick Fix): main.py line 6
+
 
 0 = German
 
@@ -95,6 +101,7 @@ main.py line 9
 
 
 
-[further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
+
+[Further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
 
 [Telegram Group](https://t.me/poptsupport)

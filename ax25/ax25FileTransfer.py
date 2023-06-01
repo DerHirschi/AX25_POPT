@@ -164,6 +164,11 @@ class FileTransport(object):
         self.last_tx = 0
         self.time_start = 0
         self.tmp_param_wait = 0
+        """ DEBUG """
+        self.debug_raw_data = b''
+        self.debug_last_frames = []
+        self.debug_trigger = False
+        self.debug_run = False
 
         self.prot_dict = {
             FT_MODES[0]: TextMODE,
@@ -181,8 +186,19 @@ class FileTransport(object):
             self.class_protocol.init_TX()
         else:
             self.e = self.class_protocol.init_RX()
+            # self.debug_process_file()
 
+    """
+    def debug_process_file(self):
+        try:
+            with open('tests/Sally.exe', 'rb') as file:
+                self.debug_raw_data = file.read()
 
+        except PermissionError:
+            print("DEBUG FILE INIT ERROR")
+        self.debug_run = True
+
+    """
     def process_file(self):
         try:
             with open(self.param_filename, 'rb') as file:
@@ -249,6 +265,7 @@ class FileTransport(object):
             self.time_start = time.time()
 
     def ft_end(self):
+        # self.debug_find_missing_data()
         self.done = True
 
     def ft_abort(self):
@@ -334,16 +351,51 @@ class FileTransport(object):
                     self.param_wait = self.tmp_param_wait
                     self.last_tx = time.time()
 
-    def ft_rx(self):
-        # TODO Pause State (Auswertung der Pakete)
-        # self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
-        if self.pause:
-            return True  # let CLI disabled
-        inp_len = len(self.connection.rx_buf_rawData)
-        #self.ft_rx_buf += bytes(self.connection.rx_buf_rawData)
-        self.ft_rx_buf += bytes(self.connection.rx_buf_rawData[:inp_len])
-        self.connection.rx_buf_rawData = self.connection.rx_buf_rawData[inp_len:]
+    def ft_rx(self, data: b''):
+        self.ft_rx_buf += data
         return True
+        # TODO Pause State (Auswertung der Pakete)
+        # if self.pause:
+        #     return True  # let CLI disabled
+        # if self.debug_run:
+        #     self.debug_input(data)
+
+    """
+    def debug_input(self, data):
+        if self.debug_run:
+            self.debug_last_frames.append(data)
+            while len(self.debug_last_frames) > 3:
+                del self.debug_last_frames[0]
+            if self.debug_trigger:
+                out = "\n++++ DEB INPUT ++++\n"
+                c = 0
+                for el in self.debug_last_frames:
+                    out += f"Index: {c} > raw: {el}\n"
+                    out += f"Index: {c} > hex: {el.hex()}\n\n"
+                    c += 1
+                out += "++++ DEB INPUT Ende++++\n\n"
+                print(out)
+                logger.debug(out)
+
+    def debug_find_missing_data(self):
+        if self.debug_run:
+            c = 0
+            for el in self.raw_data:
+                if el != self.debug_raw_data[c]:
+                    self.debug_trigger = True
+                    out   = "\n++++ DEB TRIGGER ++++\n"
+                    out += f"Index: {c}\n"
+                    out += "RAW[c - 100:]\n"
+                    out += f"raw: {self.raw_data[min(c - 100, c - len(self.raw_data)):]}\n\n"
+                    out += f"debug: {self.debug_raw_data[min(c - 100, c - len(self.debug_raw_data)):len(self.raw_data)]}\n\n"
+                    out += "HEX[c - 100:]\n"
+                    out += f"raw.hex: {self.raw_data[min(c - 100, c - len(self.raw_data)):].hex()}\n\n"
+                    out += f"debug.hex  : {self.debug_raw_data[min(c - 100, c - len(self.debug_raw_data)):len(self.raw_data)].hex()}\n\n"
+                    out += "\n++++ DEB TRIGGER ENDE ++++\n\n"
+                    print(out)
+                    logger.debug(out)
+                c += 1
+    """
 
     def ft_tx(self, data):
         self.connection.send_data(data, file_trans=True)
@@ -909,15 +961,10 @@ class YappMODE(DefaultMODE):
             self.state = 9
             return
         if self.ft_root.ft_rx_buf:
-            inp_len = len(self.ft_root.ft_rx_buf)
-            ret = self.yapp.yapp_rx(self.ft_root.ft_rx_buf[:inp_len])
-            """
-            if not ret:
-                error_count += 1
-            """
-            # self.yapp.clean_rx_buf()
-            self.ft_root.ft_rx_buf = self.ft_root.ft_rx_buf[inp_len:]
-            # print("Yapp (mode_yapp) rx")
+            # inp_len = len(self.ft_root.ft_rx_buf)
+            tmp = bytes(self.ft_root.ft_rx_buf)
+            self.ft_root.ft_rx_buf = b''
+            self.yapp.yapp_rx(tmp)
             return
         else:
             # print("Yapp (mode_yapp) Cron")

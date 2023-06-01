@@ -1,5 +1,5 @@
 import socket
-import termios
+# import termios
 
 import serial
 import threading
@@ -13,7 +13,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
-import ax25.ax25monitor as ax25monitor
+from ax25.ax25monitor import monitor_frame_inp
 from fnc.socket_fnc import get_ip_by_hostname
 
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
@@ -60,7 +60,7 @@ class AX25Port(threading.Thread):
         #############
         #############
         # VARS
-        self.monitor = ax25monitor.Monitor()
+        # self.monitor = ax25monitor.Monitor()
         self.gui = None
         self.device = None
         ##############
@@ -227,8 +227,7 @@ class AX25Port(threading.Thread):
                     except AX25DeviceFAIL as e:
                         raise e
                     # Monitor
-                    if self.gui is not None:
-                        self.gui.update_monitor(self.monitor.frame_inp(el, self.portname), conf=self.port_cfg, tx=True)
+                    self.gui_monitor(ax25frame=el, tx=True)
             else:
                 tr = True
         return tr
@@ -246,8 +245,7 @@ class AX25Port(threading.Thread):
                 except AX25DeviceFAIL as e:
                     raise e
                 # Monitor
-                if self.gui is not None:
-                    self.gui.update_monitor(self.monitor.frame_inp(frame, self.portname), conf=self.port_cfg, tx=True)
+                self.gui_monitor(ax25frame=frame, tx=True)
             pipe.tx_frame_buf = []
         return tr
 
@@ -261,8 +259,7 @@ class AX25Port(threading.Thread):
             except AX25DeviceFAIL as e:
                 raise e
             # Monitor
-            if self.gui is not None:
-                self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=self.port_cfg, tx=True)
+            self.gui_monitor(ax25frame=fr, tx=True)
         self.UI_buf = []
         return tr
 
@@ -277,8 +274,7 @@ class AX25Port(threading.Thread):
                 except AX25DeviceFAIL as e:
                     raise e
                 # Monitor
-                if self.gui is not None:
-                    self.gui.update_monitor(self.monitor.frame_inp(fr, self.portname), conf=self.port_cfg, tx=True)
+                self.gui_monitor(ax25frame=fr, tx=True)
             self.digi_buf = []
         return tr
 
@@ -296,11 +292,8 @@ class AX25Port(threading.Thread):
                 except AX25EncodingERROR:
                     logger.error('Encoding Error: ! MSG to short !')
                 # Monitor
-                if self.gui is not None:
-                    self.gui.update_monitor(
-                        self.monitor.frame_inp(fr, self.portname),
-                        conf=self.port_cfg,
-                        tx=True)
+                self.gui_monitor(ax25frame=fr, tx=True)
+
             self.port_handler.rx_echo[self.port_id].tx_buff = []
         return tr
 
@@ -492,6 +485,13 @@ class AX25Port(threading.Thread):
             for k in self.connections.keys():
                 self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
 
+    def gui_monitor(self, ax25frame: AX25Frame,  tx: bool = True):
+        if self.gui is not None:
+            self.gui.update_monitor(
+                monitor_frame_inp(ax25frame, self.port_cfg),
+                conf=self.port_cfg,
+                tx=tx)
+
     def run(self):
         while self.loop_is_running and self.device_is_running:
             self.tasks()
@@ -511,12 +511,10 @@ class AX25Port(threading.Thread):
             if buf is None:
                 buf = RxBuf()
             if buf.raw_data and self.loop_is_running:  # RX ############
-                # logger.debug('Inp RAW Buf - Port {} > {}'.format(self.port_id, buf.raw_data))
                 self.set_TXD()
                 self.set_digi_TXD()
                 ax25frame = AX25Frame()
                 ax25frame.axip_add = buf.axip_add
-                # ax25frame.kiss = buf.kiss
                 e = None
                 try:
                     # Decoding
@@ -526,17 +524,12 @@ class AX25Port(threading.Thread):
                     logger.error('{}: org {}'.format(self.portname, buf.raw_data))
                     logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
                     break
-                # logger.debug('Inp fromhexstr fnc() - Port {} > {}'.format(self.port_id, ax25frame.hexstr))
                 if e is None and ax25frame.validate():
                     # ######### RX #############
                     # MH List and Statistics
                     self.mh.mh_inp(ax25frame, self.portname, self.port_id)
                     # Monitor
-                    if self.gui is not None:
-                        self.gui.update_monitor(
-                            self.monitor.frame_inp(ax25frame, self.portname),
-                            conf=self.port_cfg,
-                            tx=False)
+                    self.gui_monitor(ax25frame=ax25frame, tx=False)
                     # Handling
                     self.rx_handler(ax25frame)
                     # RX-ECHO
@@ -676,10 +669,13 @@ class KISSSerial(AX25Port):
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_end())
                 """
+                """
                 try:
                     self.device.flush()
                 except termios.error:
                     pass
+                """
+                self.device.flush()
                 self.device.close()
                 self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):

@@ -69,6 +69,7 @@ STR_TABLE = {
     'i_text': ('Info Text', 'Info Text', 'Lekker Info-Text'),
     'li_text': ('Lang-Info Text', 'Long-Info Text', 'Lekker Long-Info Text'),
     'news_text': ('News Text', 'News Text', 'Lekker News-Text'),
+    'aprs_settings': ('APRS-Einstellungen', 'APRS-Settings', 'Lekker APRS-Settings'),
     'stat_settings': ('Station-Einstellungen', 'Station-Settings', 'Lekker Station-Settings'),
     'new_stat': ('Neue Station', 'New Station', 'Lekker nieuw station'),
     'txt_decoding': ('Umlautumwandlung', 'Text decoding', 'Lekker Text decoding'),

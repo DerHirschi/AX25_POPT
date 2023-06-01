@@ -5,7 +5,7 @@ from ax25.ax25Error import AX25EncodingERROR, logger
 from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
 
-class Beacon:
+class Beacon(object):
     def __init__(self):
         # TODO Load and SAVE to/fm file
         self.text_filename = ''

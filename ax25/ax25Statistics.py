@@ -1,3 +1,8 @@
+"""
+Nightmare !!!
+TODO: Cleanup
+"""
+
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import matplotlib.pyplot as plt
 import tkinter as tk
@@ -7,6 +12,7 @@ from datetime import timedelta
 
 import pickle
 
+from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_DE_str
 
@@ -442,15 +448,19 @@ class PortStatDB(object):
 class MH(object):
     def __init__(self):
         print("MH Init")
-        self.calls: {str: MyHeard} = {}
+        mh_load = {}
         self.port_statistik_DB: {int: PortStatDB} = {}
         try:
             with open(mh_data_file, 'rb') as inp:
-                self.calls = pickle.load(inp)
+                mh_load = pickle.load(inp)
         except FileNotFoundError:
             pass
         except EOFError:
             pass
+        self.calls: {str: MyHeard} = {}
+        for call in mh_load:
+            self.calls[call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[call])
+
         port_stat_DB = []
         try:
             with open(port_stat_data_file, 'rb') as inp:
@@ -650,13 +660,14 @@ class MH(object):
 
     def save_mh_data(self):
         print('Save MH')
+        tmp_mh = cleanup_obj_dict(self.calls)
         try:
             with open(mh_data_file, 'wb') as outp:
                 # print(self.calls.keys())
-                pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
             with open(mh_data_file, 'xb') as outp:
-                pickle.dump(self.calls, outp, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
 
         port_stat_DB = []
         for port_id in self.port_statistik_DB.keys():
