@@ -238,7 +238,7 @@ class DefaultPort(object):
                         save_ports[att] = cleanup_obj(self.parm_aprs_station)
                     else:
                         save_ports[att] = getattr(self, att)
-                    # print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
+                    print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
 
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)

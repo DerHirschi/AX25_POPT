@@ -66,7 +66,7 @@ def format_aprs_f_monitor(ax25frame, own_locator):
 def format_aprs_msg(aprs_frame: aprslib.parse, own_locator):
     ret = ''
     dist = ''
-    db_ent = USER_DB.new_entry(aprs_frame['from'])
+    db_ent = USER_DB.get_entry(aprs_frame['from'])
     for k in aprs_frame:
         # print(f"{k}: {aprs_frame[k]}")
         if aprs_frame[k]:
@@ -88,14 +88,17 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator):
                                                  longitude=aprs_frame['longitude'])
                     ret += f"APRS-Locator      : {loc}\n"
                     if db_ent:
-                        db_ent.LOC = loc
-                        db_ent.Lat = aprs_frame['latitude']
-                        db_ent.Lon = aprs_frame['longitude']
+                        if not db_ent.LOC:
+                            db_ent.LOC = loc
+                        if not db_ent.Lat:
+                            db_ent.Lat = aprs_frame['latitude']
+                            db_ent.Lon = aprs_frame['longitude']
                     if own_locator:
                         dist = locator_distance(own_locator, loc)
                         ret += f"APRS-Distance     : {dist} km\n"
                         if db_ent:
-                            db_ent.Distance = dist
+                            if dist:
+                                db_ent.Distance = dist
     return ret, dist
 
 
