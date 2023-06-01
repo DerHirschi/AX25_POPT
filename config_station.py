@@ -3,6 +3,7 @@ import os
 import logging
 
 import ax25.ax25Beacon
+from ax25aprs.aprs_station import APRS_Station
 from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
@@ -193,6 +194,7 @@ class DefaultPort(object):
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
     parm_mon_clr_bg = "black"
+    parm_aprs_station = cleanup_obj(APRS_Station())
     ##################################
     # Port Parameter for Save to file
     parm_beacons = {}
@@ -206,18 +208,10 @@ class DefaultPort(object):
                       'parm_Stations',
                       ]
 
+
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """
-        """
-        print(time.time())
-        for k in self.parm_beacons.keys():
-            be_list = self.parm_beacons[k]
-            for be in be_list:
-                print('----------- Bake {} --------------'.format(be.to_call))
-                for att in dir(be):
-                    print('{} > {}'.format(att, getattr(be, att)))
-        print('----------- Bake Ende --------------')
-        """
+
         if self.parm_PortNr != -1:
 
             gui = self.glb_gui
@@ -240,11 +234,11 @@ class DefaultPort(object):
                     # print(" {} - {}".format(att, getattr(self, att)))
                     if att == 'parm_beacons':
                         save_ports[att] = clean_beacon_cfg
-                    # elif att == 'parm_cli':
-                    #     save_ports[att] = clean_cli_param
+                    elif att == 'parm_aprs_station':
+                        save_ports[att] = cleanup_obj(self.parm_aprs_station)
                     else:
                         save_ports[att] = getattr(self, att)
-                    print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
+                    # print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
 
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)
@@ -261,11 +255,13 @@ class PortConfigInit(DefaultPort):
         self.parm_PortNr = port_id
         self.parm_Stations: [DefaultStation] = []
         self.station_save_files = []
-        file = CFG_data_path + 'port{}.popt'.format(self.parm_PortNr)
+        file = CFG_data_path + f'port{self.parm_PortNr}.popt'
         is_file = False
+
         try:
             with open(file, 'rb') as inp:
                 port_cfg = pickle.load(inp)
+                # port_cfg = set_obj_att(D, port_cfg)
                 is_file = True
         except (FileNotFoundError, EOFError):
             pass
@@ -286,16 +282,7 @@ class PortConfigInit(DefaultPort):
                 tmp_be_list = []
                 for old_be in self.parm_beacons[be_k]:
                     beacon = ax25.ax25Beacon.Beacon()
-                    # self.parm_beacons[be_k] = set_obj_att(beacon, self.parm_beacons[be_k])
-                    """
-                    inp = cleanup_obj(old_be)
-                    for att in dir(inp):
-                        if '__' not in att:
-                            print(att)
-                            print(beacon)
-                            print(inp)
-                            setattr(beacon, att, getattr(inp, att))
-                    """
+
                     tmp_be_list.append(set_obj_att(beacon, old_be))
                 self.parm_beacons[be_k] = tmp_be_list
 
@@ -303,6 +290,8 @@ class PortConfigInit(DefaultPort):
                 if type(self.parm_cli[k]) != str:
                     if hasattr(self.parm_cli[k], 'cli_name'):
                         self.parm_cli[k] = self.parm_cli[k].cli_name
+
+
 
             if self.parm_StationCalls:
                 self.parm_Stations = []
@@ -328,10 +317,12 @@ class PortConfigInit(DefaultPort):
                 else:
                     self.parm_full_duplex = False   # Maybe sometimes i ll implement it for HF
 
-            stat: DefaultStation
+            # stat: DefaultStation
             for stat in self.parm_Stations:
                 if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
-                    self.parm_cli[stat.stat_parm_Call]: DefaultCLI = stat.stat_parm_cli
+                    self.parm_cli[stat.stat_parm_Call] = stat.stat_parm_cli
+
+        self.parm_aprs_station = set_obj_att(APRS_Station(), self.parm_aprs_station)
 
     def __del__(self):
         # self.save_to_pickl()

@@ -18,6 +18,7 @@ import config_station
 import constant
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
+from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiPipeToolSettings import PipeToolSettings
 from gui.guiPriv import PrivilegWin
@@ -198,6 +199,9 @@ class TkMainWin:
                                       underline=0)
         self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], command=self.open_beacon_settings_win,
                                       underline=0)
+        self.MenuSettings.add_command(label='APRS', command=self.open_aprs_settings,
+                                      underline=0)
+
         self.MenuSettings.add_separator()
         self.MenuSettings.add_command(label='Multicast', command=self.open_multicast_settings_win, underline=0)
         self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
@@ -1054,6 +1058,12 @@ class TkMainWin:
         if self.settings_win is None:
             FileTransferManager(self)
 
+    ##########################
+    # APRS Settings
+    def open_aprs_settings(self, event=None):
+        # TODO just build a f** switch ( dict )
+        if self.settings_win is None:
+            APRSSettingsWin(self)
     ##########################
     # Keybinds Help WIN
     def open_keybind_help_win(self):

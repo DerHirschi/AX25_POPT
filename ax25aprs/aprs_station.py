@@ -17,3 +17,5 @@ class APRS_Station(object):
         self.aprs_parm_igate_login = ''
         self.aprs_parm_igate_passw = ''
 
+        self.aprs_beacon_text = ''
+

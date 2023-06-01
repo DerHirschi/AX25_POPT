@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 def monitor_frame_inp(ax25_frame, port_cfg):
     port_name = port_cfg.parm_PortName
+    aprs_loc = port_cfg.parm_aprs_station.aprs_parm_loc
     from_call = get_call_str(ax25_frame.from_call.call, ax25_frame.from_call.ssid)
     to_call = get_call_str(ax25_frame.to_call.call, ax25_frame.to_call.ssid)
     via_calls = [get_call_str(stat.call, stat.ssid) + '*' if stat.c_bit else get_call_str(stat.call, stat.ssid) for
@@ -38,7 +39,7 @@ def monitor_frame_inp(ax25_frame, port_cfg):
                     out_str += da + '\n'
 
         if ax25_frame.ctl_byte.flag == 'UI':
-            out_str += format_aprs_f_monitor(ax25_frame, own_locator='JO52NU')
+            out_str += format_aprs_f_monitor(ax25_frame, own_locator=aprs_loc)
     return out_str
 
 
