@@ -4,10 +4,9 @@ import logging
 
 import ax25.ax25Beacon
 from ax25aprs.aprs_station import APRS_Station
-from cli.cliMain import DefaultCLI, NoneCLI
 from ax25.ax25UI_Pipe import AX25Pipe
 from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
-from fnc.cfg_fnc import cleanup_obj, set_obj_att, cleanup_obj_dict
+from fnc.cfg_fnc import cleanup_obj, set_obj_att
 
 logger = logging.getLogger(__name__)
 

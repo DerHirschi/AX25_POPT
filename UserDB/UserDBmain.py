@@ -83,9 +83,10 @@ class UserDB:
             'sys_pw_parm',
         ]
         self.db = {}
+        db_load = {}
         try:
             with open(client_db, 'rb') as inp:
-                load = pickle.load(inp)
+                db_load = pickle.load(inp)
             """
             for ke in self.db.keys():
                 print(ke)
@@ -106,8 +107,8 @@ class UserDB:
             logger.error(f"User DB: Falsche Version der DB Datei. Bitte {client_db} löschen und PoPT neu starten!")
             raise
 
-        for k in load.keys():
-            self.db[k] = set_obj_att(new_obj=Client(load[k].call_str), input_obj=load[k])
+        for k in db_load.keys():
+            self.db[k] = set_obj_att(new_obj=Client(db_load[k].call_str), input_obj=db_load[k])
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
