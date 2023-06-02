@@ -19,6 +19,7 @@ from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_
     get_kb_str_fm_bytes
 from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiFT_Manager import FileTransferManager
+from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
 from gui.guiPriv import PrivilegWin
 from gui.guiUserDBoverview import UserDBtreeview
@@ -172,6 +173,9 @@ class TkMainWin:
         self.MenuTools.add_command(label="User-DB Tree", command=self.UserDB_tree, underline=0)
         self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
                                    underline=0)
+        self.MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self.locator_calc_win,
+                                   underline=0)
+
         self.MenuTools.add_separator()
 
         self.MenuTools.add_command(label="FT-Manager", command=self.open_ft_manager,
@@ -317,6 +321,7 @@ class TkMainWin:
         self.new_conn_win = None
         self.settings_win = None
         self.mh_window = None
+        self.locator_calc_window = None
         self.userDB_tree_win = None
         ###########################
         # Init
@@ -1091,6 +1096,13 @@ class TkMainWin:
         self.reset_dx_alarm()
         if self.mh_window is None:
             self.mh_window = MHWin(self)
+
+    ###################
+    # MH WIN
+    def locator_calc_win(self):
+        """ """
+        if self.locator_calc_window is None:
+            self.locator_calc_window = LocatorCalculator(self)
 
     ###################
     # User-DB TreeView WIN

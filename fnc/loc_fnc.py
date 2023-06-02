@@ -108,10 +108,13 @@ def coordinates_to_locator(latitude, longitude):
     '''
 
     # Validate input
-    assert isinstance(latitude, (int, float))
-    assert isinstance(longitude, (int, float))
-    assert -90.0 <= latitude <= 90.0
-    assert -180.0 <= longitude <= 180.0
+    try:
+        assert isinstance(latitude, (int, float))
+        assert isinstance(longitude, (int, float))
+        assert -90.0 <= latitude <= 90.0
+        assert -180.0 <= longitude <= 180.0
+    except AssertionError:
+        return ''
 
     # Separate fields, squares and subsquares
     longitude += 180
