@@ -13,7 +13,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
-from ax25.ax25monitor import monitor_frame_inp
+# from ax25.ax25monitor import monitor_frame_inp
 from fnc.socket_fnc import get_ip_by_hostname
 
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
@@ -61,6 +61,7 @@ class AX25Port(threading.Thread):
         #############
         # VARS
         # self.monitor = ax25monitor.Monitor()
+        self.monitor_out = True
         self.gui = None
         self.device = None
         ##############
@@ -486,11 +487,13 @@ class AX25Port(threading.Thread):
                 self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
 
     def gui_monitor(self, ax25frame: AX25Frame,  tx: bool = True):
-        if self.gui is not None:
-            self.gui.update_monitor(
-                monitor_frame_inp(ax25frame, self.port_cfg),
-                conf=self.port_cfg,
-                tx=tx)
+        if self.monitor_out:
+            if self.gui is not None:
+                self.gui.update_monitor(
+                    # monitor_frame_inp(ax25frame, self.port_cfg),
+                    ax25frame,
+                    conf=self.port_cfg,
+                    tx=tx)
 
     def run(self):
         while self.loop_is_running and self.device_is_running:

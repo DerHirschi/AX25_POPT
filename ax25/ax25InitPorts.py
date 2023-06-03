@@ -20,7 +20,7 @@ class AX25PortHandler(object):
         ###########################
         # VArs for gathering Stuff
         self.mh = MH()
-        self.user_db = USER_DB
+        # self.user_db = USER_DB
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
@@ -71,7 +71,7 @@ class AX25PortHandler(object):
             tmp.main_win.quit()
             tmp.main_win.destroy()
         self.mh.save_mh_data()
-        self.user_db.save_data()
+        USER_DB.save_data()
 
     def close_all_ports(self):
         if self.is_running:
@@ -292,7 +292,7 @@ class AX25PortHandler(object):
         if connection:
             self.insert_conn2all_conn_var(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
-            user_db_ent = self.user_db.get_entry(dest_call, add_new=False)
+            user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
                 if user_db_ent.Name:
                     return True, f'\r*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r'

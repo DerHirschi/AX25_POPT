@@ -16,11 +16,11 @@ def monitor_frame_inp(ax25_frame, port_cfg):
         aprs_data = format_aprs_f_monitor(ax25_frame, own_locator=aprs_loc)
 
     from_call = get_call_str(ax25_frame.from_call.call, ax25_frame.from_call.ssid)
-    from_call_d = USER_DB.get_distance(from_call)
+    from_call_d = round(USER_DB.get_distance(from_call))
     if from_call_d:
         from_call += f"({from_call_d} km)"
     to_call = get_call_str(ax25_frame.to_call.call, ax25_frame.to_call.ssid)
-    to_call_d = USER_DB.get_distance(to_call)
+    to_call_d = round(USER_DB.get_distance(to_call))
     if to_call_d:
         to_call += f"({to_call_d} km)"
     """
@@ -29,7 +29,7 @@ def monitor_frame_inp(ax25_frame, port_cfg):
     """
     via_calls = []
     for stat in ax25_frame.via_calls:
-        dist = USER_DB.get_distance(get_call_str(stat.call, stat.ssid))
+        dist = round(USER_DB.get_distance(get_call_str(stat.call, stat.ssid)))
         if dist:
             dist = f"({dist} km)"
         else:

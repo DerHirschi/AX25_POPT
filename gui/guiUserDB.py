@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 
+from UserDB.UserDBmain import USER_DB
 from constant import ENCODINGS, STATION_TYPS
 from fnc.str_fnc import conv_time_DE_str
 from string_tab import STR_TABLE
@@ -30,7 +31,7 @@ class UserDB(tk.Toplevel):
         ###############
         # VARS
         # self.user_db = root.ax25_port_handler.user_db
-        self.user_db = root.user_db
+        self.user_db = USER_DB
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
@@ -432,7 +433,7 @@ class UserDB(tk.Toplevel):
             self.name_var.set(self.db_ent.Name)
             self.qth_var.set(self.db_ent.QTH)
             self.loc_var.set(self.db_ent.LOC)
-            self.dist_var.set(f"{round(self.db_ent.Distance)} km")
+            self.dist_var.set(f"{round(self.db_ent.Distance, 1)} km")
             self.prmail_var.set(self.db_ent.PRmail)
             self.email_var.set(self.db_ent.Email)
             self.http_var.set(self.db_ent.HTTP)

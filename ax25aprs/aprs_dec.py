@@ -145,8 +145,8 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     if own_locator:
                         dist = locator_distance(own_locator, loc)
                         ret += f"├►DISTANCE     : {dist} km\n"
-                    if db_ent:
-                        db_ent.Distance = dist
+                    # if db_ent:
+                    #     db_ent.Distance = dist
                 elif k in ['tPARM', 'tUNIT', 'tEQNS']:
                     ret += f"└┬►{k.upper().ljust(13)}\n"
                     for ind in range(len(aprs_frame[k])):
@@ -161,11 +161,37 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
     if db_ent:
         # if not db_ent.Distance:
-        if db_ent.LOC:
+        if db_ent.LOC and own_locator:
             db_ent.Distance = locator_distance(own_locator, db_ent.LOC)
             dist = locator_distance(own_locator, db_ent.LOC)
 
     return ret, dist
 
 
+def decimal_degrees_to_aprs(latitude, longitude):
+    """ By ChatGP """
+    lat_degrees = abs(int(latitude))
+    lat_minutes = abs(int((latitude - lat_degrees) * 60))
+    lat_seconds = abs(round(((latitude - lat_degrees) * 60 - lat_minutes) * 60))
+    lat_direction = 'N' if latitude >= 0 else 'S'
+
+    lon_degrees = abs(int(longitude))
+    lon_minutes = abs(int((longitude - lon_degrees) * 60))
+    lon_seconds = abs(round(((longitude - lon_degrees) * 60 - lon_minutes) * 60))
+    lon_direction = 'E' if longitude >= 0 else 'W'
+
+    aprs_latitude = f"{lat_degrees:02d}{lat_minutes:02d}.{lat_seconds:02d}{lat_direction}"
+    aprs_longitude = f"{lon_degrees:03d}{lon_minutes:02d}.{lon_seconds:02d}{lon_direction}"
+
+    return aprs_latitude, aprs_longitude
+
+"""
+# Example usage
+latitude = 52.8526
+longitude = 11.1634
+aprs_latitude, aprs_longitude = decimal_degrees_to_aprs(latitude, longitude)
+
+print(f"APRS Latitude: {aprs_latitude}")
+print(f"APRS Longitude: {aprs_longitude}")
+"""
 

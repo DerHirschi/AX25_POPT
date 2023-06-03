@@ -15,6 +15,8 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import constant
+# from UserDB.UserDBmain import USER_DB
+from ax25.ax25monitor import monitor_frame_inp
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
 from gui.guiAPRS_Settings import APRSSettingsWin
@@ -90,7 +92,7 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
-        self.user_db = self.ax25_port_handler.user_db
+        # self.user_db = USER_DB
         self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
         #####################
@@ -173,9 +175,9 @@ class TkMainWin:
         self.MenuTools.add_command(label="User-DB Tree", command=self.UserDB_tree, underline=0)
         self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
                                    underline=0)
+        self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self.locator_calc_win,
                                    underline=0)
-
         self.MenuTools.add_separator()
 
         self.MenuTools.add_command(label="FT-Manager", command=self.open_ft_manager,
@@ -909,10 +911,10 @@ class TkMainWin:
                         self.win_buf[k].rx_beep_tr = True
                         self.ch_status_update()
 
-    def update_monitor(self, mon_str: str, conf, tx=False):
+    def update_monitor(self, ax25frame, conf, tx=False):
         """ Called from AX25Conn """
         self.mon_buff.append((
-            str(mon_str),
+            ax25frame,
             conf,
             bool(tx)
         ))
@@ -924,10 +926,9 @@ class TkMainWin:
             tr = False
             self.mon_txt.configure(state="normal")
             for el in tmp_buff:
-                var = el[0]
+                var = monitor_frame_inp(el[0], el[1])
                 conf = el[1]
                 tx = el[2]
-
                 var = tk_filter_bad_chars(var)
                 ind = self.mon_txt.index('end-1c')
                 color_bg = conf.parm_mon_clr_bg

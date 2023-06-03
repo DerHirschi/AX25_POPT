@@ -622,7 +622,7 @@ class MH(object):
         return ret
 
     def mh_ip_failed(self, axip: str):
-        for k in self.calls.keys:
+        for k in self.calls.keys():
             if self.calls[k].axip_add == axip:
                 self.calls[k].axip_fail += 1
 

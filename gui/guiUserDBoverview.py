@@ -2,6 +2,7 @@ import logging
 import tkinter as tk
 from tkinter import ttk
 
+from UserDB.UserDBmain import USER_DB
 from fnc.str_fnc import conv_time_DE_str
 
 logger = logging.getLogger(__name__)
@@ -11,7 +12,7 @@ class UserDBtreeview(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self.root = root_win
-        self.user_db = self.root.user_db
+        # self.user_db = USER_DB
         ###################################
         # Vars
         self.rev_ent = False
@@ -92,7 +93,7 @@ class UserDBtreeview(tk.Toplevel):
             self.root.open_user_db_win(key=key)
 
     def sort_entry(self, flag: str):
-        sort_date = self.user_db.get_sort_entr(flag_str=flag, reverse=self.rev_ent)
+        sort_date = USER_DB.get_sort_entr(flag_str=flag, reverse=self.rev_ent)
         if self.rev_ent:
             self.rev_ent = False
         else:
