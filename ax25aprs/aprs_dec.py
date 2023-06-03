@@ -31,17 +31,38 @@ def parse_aprs_msg(ax25frame):
         return aprs_msg
 
 
-def format_aprs_f_monitor(ax25frame, own_locator):
-    if not ax25frame.aprs_data:
+def format_aprs_f_aprs_mon(aprs_frame, own_locator, add_new_user=False):
+    # aprs_frame = "12:12:21", aprs_frame
+    ret = f"{aprs_frame[0]}: {aprs_frame[1]['from']} to {aprs_frame[1]['to']}"
+    if aprs_frame[1]['path']:
+        ret += " via" + ' '.join(aprs_frame[1]['path'])
+    ret += ":\n"
+
+    msg = format_aprs_f_monitor(aprs_pack=aprs_frame[1], own_locator=own_locator, add_new_user=add_new_user)
+    #msg = msg.replace('\n', '\n  ')
+    #ret = ret + msg[:-2] + '\n'
+    # print(msg)
+    return ret + msg + '\n'
+
+
+def format_aprs_f_monitor(ax25frame=None, own_locator='', aprs_pack=None, add_new_user=True):
+    if ax25frame is not None:
+        if ax25frame.ctl_byte.flag != 'UI':
+            return ''
+        aprs_msg = parse_aprs_msg(ax25frame)
+    elif aprs_pack is not None:
+        aprs_msg = aprs_pack
+    else:
         return ''
-    aprs_msg = ax25frame.aprs_data
+    if not aprs_msg:
+        return ''
     # print(aprs_msg)
     symbol = '  '
-    ret, dist = format_aprs_msg(aprs_msg, own_locator, aprs_msg)
+    ret, dist = format_aprs_msg(aprs_msg, own_locator, aprs_msg, add_new_user=add_new_user)
     if 'subpacket' in aprs_msg.keys():
-        ret += '├►SUBPACKET    :\n' + format_aprs_msg(aprs_msg['subpacket'], own_locator, aprs_msg)[0]
+        ret += '├►SUBPACKET    :\n' + format_aprs_msg(aprs_msg['subpacket'], own_locator, aprs_msg, add_new_user=add_new_user)[0]
     if 'weather' in aprs_msg.keys():
-        ret += '├►WEATHER ☀☁   :\n' + format_aprs_msg(aprs_msg['weather'], own_locator, aprs_msg)[0]
+        ret += '├►WEATHER ☀☁   :\n' + format_aprs_msg(aprs_msg['weather'], own_locator, aprs_msg, add_new_user=add_new_user)[0]
         symbol = '☀☁'
     if 'format' in aprs_msg.keys():
         if 'message' == aprs_msg['format']:
@@ -80,7 +101,6 @@ def format_aprs_f_monitor(ax25frame, own_locator):
             else:
                 ret += f"└─►COMMENT     : n/a\n"
 
-
         ret = ret.replace('\r', '\n')
         if len(ret) > 1:
             if ret[-2:] == '\n\n':
@@ -102,20 +122,23 @@ def format_aprs_f_monitor(ax25frame, own_locator):
             dist = f" ({dist} km)"
         else:
             dist = ''
-        ret = f'┌──┴─▶APRS :{symbol} : {ax25frame.from_call.call_str}{dist}{via_str}\n' + ret
-
+        ret = f"┌──┴─▶APRS :{symbol} : {aprs_msg['from']}{dist}{via_str}\n" + ret
+    # print(ret)
     return ret
 
 
-def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: aprslib.parse):
+def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: aprslib.parse, add_new_user=True):
     ret = ''
     dist = ''
-    db_ent = USER_DB.get_entry(full_aprs_frame['from'])
+    db_ent = USER_DB.get_entry(full_aprs_frame['from'], add_new=add_new_user)
     for k in aprs_frame:
         # print(f"{k}: {aprs_frame[k]}")
         if aprs_frame[k]:
-            if k not in ['from', 'to', 'via', 'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
-                if k == 'messagecapable':
+            if k not in ['from', 'to',  'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
+                if k == 'via':
+                    if aprs_frame[k]:
+                        ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
+                elif k == 'messagecapable':
                     ret += f"├►{'m-capable'.upper().ljust(13)}: {aprs_frame[k]}\n"
                 elif k == 'gpsfixstatus':
                     ret += f"├►{'gpsfix'.upper().ljust(13)}: {aprs_frame[k]}\n"

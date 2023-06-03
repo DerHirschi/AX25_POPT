@@ -15,10 +15,10 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import constant
-# from UserDB.UserDBmain import USER_DB
 from ax25.ax25monitor import monitor_frame_inp
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
+from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
@@ -190,6 +190,10 @@ class TkMainWin:
         self.MenuTools.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
         self.MenuTools.add_separator()
 
+        self.MenuTools.add_command(label='AIS Monitor', command=self.open_aismon_win,
+                                   underline=0)
+        self.MenuTools.add_separator()
+
         self.MenuTools.add_command(label='Priv', command=self.open_priv_win,
                                    underline=0)
 
@@ -324,6 +328,7 @@ class TkMainWin:
         self.settings_win = None
         self.mh_window = None
         self.locator_calc_window = None
+        self.aprs_mon_win = None
         self.userDB_tree_win = None
         ###########################
         # Init
@@ -782,6 +787,7 @@ class TkMainWin:
     def tasker_low_prio(self):
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
+            # APRS_AIS.task()
             self.monitor_task()
             self.update_qso_win()
             self.txt_win.update_status_win()
@@ -790,6 +796,8 @@ class TkMainWin:
             self.rx_beep_sound()
             if self.ch_alarm:
                 self.ch_status_update()
+            if self.aprs_mon_win is not None:
+                self.aprs_mon_win.tasker()
 
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
@@ -802,7 +810,7 @@ class TkMainWin:
                 self.dx_alarm()
             if self.settings_win is not None:
                 # ( FT-Manager )
-                self.settings_win.tasker()
+                self.settings_win.task()
 
     #################################
     # TASKS
@@ -1069,6 +1077,7 @@ class TkMainWin:
         # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             APRSSettingsWin(self)
+
     ##########################
     # Keybinds Help WIN
     def open_keybind_help_win(self):
@@ -1096,14 +1105,21 @@ class TkMainWin:
         """MH WIN"""
         self.reset_dx_alarm()
         if self.mh_window is None:
-            self.mh_window = MHWin(self)
+            MHWin(self)
 
     ###################
     # MH WIN
     def locator_calc_win(self):
         """ """
         if self.locator_calc_window is None:
-            self.locator_calc_window = LocatorCalculator(self)
+            LocatorCalculator(self)
+
+    ###################
+    # MH WIN
+    def open_aismon_win(self):
+        """ """
+        if self.aprs_mon_win is None:
+            AISmonitor(self)
 
     ###################
     # User-DB TreeView WIN

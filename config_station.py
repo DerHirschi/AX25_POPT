@@ -6,7 +6,7 @@ import ax25.ax25Beacon
 from ax25aprs.aprs_station import APRS_Station
 from ax25.ax25UI_Pipe import AX25Pipe
 from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
-from fnc.cfg_fnc import cleanup_obj, set_obj_att
+from fnc.cfg_fnc import cleanup_obj, set_obj_att, save_to_file, load_fm_file
 
 logger = logging.getLogger(__name__)
 
@@ -92,29 +92,6 @@ def del_port_data(port_id):
     port_file = '{0}port{1}.popt'.format(CFG_data_path, port_id)
     if os.path.exists(port_file):
         os.remove(port_file)
-
-
-def save_to_file(filename: str, data):
-    try:
-        with open(CFG_data_path + filename, 'wb') as f:
-            pickle.dump(data, f, 2)
-    except FileNotFoundError:
-        with open(CFG_data_path + filename, 'xb') as f:
-            pickle.dump(data, f, 2)
-    except EOFError:
-        pass
-
-
-def load_fm_file(filename: str):
-    try:
-        with open(CFG_data_path + filename, 'rb') as inp:
-            return pickle.load(inp)
-    except (FileNotFoundError, EOFError):
-        return ''
-    except ImportError:
-        logger.error(
-            f"CFG: Falsche Version der CFG Datei. Bitte {CFG_data_path + filename} löschen und PoPT neu starten!")
-        raise
 
 
 class DefaultStation(object):
@@ -206,7 +183,6 @@ class DefaultPort(object):
                       'glb_gui',
                       'parm_Stations',
                       ]
-
 
     def save_to_pickl(self):
         """ Such a BULLSHIT !! """

@@ -14,7 +14,6 @@ class UserDB(tk.Toplevel):
         tk.Toplevel.__init__(self)
         self.root = root
         self.lang = self.root.language
-        root.settings_win = self
         self.win_height = 600
         self.win_width = 1060
         self.style = root.style
@@ -398,6 +397,8 @@ class UserDB(tk.Toplevel):
             self.select_entry_fm_ch_id()
         else:
             self.select_entry_fm_key(key)
+        root.settings_win = self
+
 
     def select_entry(self, event=None):
         for selected_item in self.tree.selection():
@@ -587,5 +588,5 @@ class UserDB(tk.Toplevel):
         self.root.settings_win = None
         self.destroy()
 
-    def tasker(self):
+    def task(self):
         pass

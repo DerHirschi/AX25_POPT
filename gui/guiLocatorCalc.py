@@ -111,7 +111,7 @@ class LocatorCalculator(tk.Toplevel):
         # Create Calculate button
         calculate_button = ttk.Button(button_frame, text=STR_TABLE['delete'][self.lang], command=self.clean_vars)
         calculate_button.pack(side=tk.LEFT, padx=5)
-
+        main_win.locator_calc_window = self
     def clean_vars(self):
         self.loc_var_1.set('')
         self.lat_var_1.set('')

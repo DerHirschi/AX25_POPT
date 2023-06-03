@@ -11,7 +11,7 @@ class APRSSettingsWin(tk.Toplevel):
         self.root_cl = root_win
         self.lang = self.root_cl.language
         self.root_cl.settings_win = self
-        self.win_height = 500
+        self.win_height = 620
         self.win_width = 800
         self.style = self.root_cl.style
         self.title(STR_TABLE['aprs_settings'][self.lang])
@@ -20,10 +20,58 @@ class APRSSettingsWin(tk.Toplevel):
                       f"{self.root_cl.main_win.winfo_x()}+"
                       f"{self.root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
-        #self.resizable(False, False)
+        self.resizable(False, False)
         self.lift()
         self.all_ports = self.root_cl.ax25_port_handler.ax25_ports
+        self.port_handler = self.root_cl.ax25_port_handler
+        self.ais = self.root_cl.ax25_port_handler.aprs_ais
         self.vars = []
+
+        self.ais_call_var = tk.StringVar(self)
+        self.ais_pass_var = tk.StringVar(self)
+        self.ais_port_var = tk.StringVar(self)
+        self.ais_host_var = tk.StringVar(self)
+        self.ais_run_var = tk.BooleanVar(self)
+        self.ais_add_new_user_var = tk.BooleanVar(self)
+        if self.ais is not None:
+            self.ais_call_var.set(self.ais.ais_call)
+            self.ais_pass_var.set(self.ais.ais_pass)
+            self.ais_port_var.set(str(self.ais.ais_host[1]))
+            self.ais_host_var.set(self.ais.ais_host[0])
+            self.ais_run_var.set(self.ais.active)
+            self.ais_add_new_user_var.set(self.ais.add_new_user)
+
+        ais_conf_frame = ttk.Frame(self)
+        ais_conf_frame.pack(side=tk.TOP, padx=10, pady=10)
+        ais_conf_frame.rowconfigure(0, minsize=40, weight=0)
+        ais_conf_frame.columnconfigure(0, minsize=5, weight=0)
+        ais_conf_frame.columnconfigure(1, minsize=60, weight=1)
+        ais_conf_frame.columnconfigure(2, minsize=120, weight=1)
+        ais_conf_frame.columnconfigure(3, minsize=30, weight=0)
+        ais_conf_frame.columnconfigure(4, minsize=80, weight=1)
+        ais_conf_frame.columnconfigure(5, minsize=120, weight=1)
+        ais_conf_frame.columnconfigure(6, minsize=5, weight=0)
+        ttk.Label(ais_conf_frame, text="AIS/APRS-Server Config").place(x=240, y=0)
+
+        ttk.Label(ais_conf_frame, text="Call:").grid(row=2, column=1, sticky=tk.W)
+        ais_call_ent = ttk.Entry(ais_conf_frame, width=10, textvariable=self.ais_call_var)
+        ais_call_ent.grid(row=2, column=2,  sticky=tk.W)
+
+        ttk.Label(ais_conf_frame, text="PW:").grid(row=3, column=1, sticky=tk.W)
+        ais_call_ent = ttk.Entry(ais_conf_frame, width=20, textvariable=self.ais_pass_var)
+        ais_call_ent.grid(row=3, column=2, sticky=tk.W)
+
+        ttk.Label(ais_conf_frame, text="Adresse:").grid(row=2, column=4, sticky=tk.W)
+        ais_call_ent = ttk.Entry(ais_conf_frame, width=30, textvariable=self.ais_host_var)
+        ais_call_ent.grid(row=2, column=5, sticky=tk.W)
+
+        ttk.Label(ais_conf_frame, text="Port:").grid(row=3, column=4, sticky=tk.W)
+        ais_call_ent = ttk.Entry(ais_conf_frame, width=10, textvariable=self.ais_port_var)
+        ais_call_ent.grid(row=3, column=5, sticky=tk.W)
+
+        tk.Checkbutton(ais_conf_frame, text="Run", variable=self.ais_run_var).grid(row=4, column=1, sticky=tk.W)
+        tk.Checkbutton(ais_conf_frame, text="Add to UserDB", variable=self.ais_add_new_user_var).grid(row=4, column=4, columnspan=3, sticky=tk.W)
+
         # Create a Notebook widget
         notebook = ttk.Notebook(self)
 
@@ -38,18 +86,7 @@ class APRSSettingsWin(tk.Toplevel):
 
         # Pack the Notebook widget
         notebook.pack(fill=tk.BOTH, expand=True)
-        """
-        # Create a frame for additional buttons
-        button_frame = ttk.Frame(self)
-        button_frame.pack(side=tk.TOP, padx=10, pady=10)
 
-        # Create additional buttons
-        button1 = ttk.Button(button_frame, text="Button 1")
-        button1.pack(side=tk.LEFT, padx=5)
-
-        button2 = ttk.Button(button_frame, text="Button 2")
-        button2.pack(side=tk.LEFT, padx=5)
-        """
         # Create OK and Cancel buttons
         button_frame2 = ttk.Frame(self)
         button_frame2.pack(side=tk.BOTTOM, padx=10, pady=10)
@@ -131,7 +168,7 @@ class APRSSettingsWin(tk.Toplevel):
         self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 
     def set_vars(self):
-
+        ais_loc = ''
         ind = 0
         for port_id in self.all_ports.keys():
             lon = self.vars[ind]['lon'].get()
@@ -158,7 +195,24 @@ class APRSSettingsWin(tk.Toplevel):
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_igate = self.vars[ind]['ais'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_digi = self.vars[ind]['digi'].get()
+            if loc:
+                ais_loc = loc
             ind += 1
+
+        if self.ais is not None:
+            self.ais.task_halt()
+            self.ais.ais_close()
+            self.ais.ais_call = self.ais_call_var.get()
+            self.ais.ais_pass = self.ais_pass_var.get()
+            self.ais.active = self.ais_run_var.get()
+            self.ais.add_new_user = self.ais_add_new_user_var.get()
+            if ais_loc:
+                self.ais.ais_loc = ais_loc
+            if self.ais_port_var.get().isdigit():
+                self.ais.ais_host = self.ais_host_var.get(), int(self.ais_port_var.get())
+            self.ais.save_conf_to_file()
+            if self.ais.login():
+                self.port_handler.init_aprs_ais()
 
     def on_ok_button(self):
         self.set_vars()
@@ -172,5 +226,5 @@ class APRSSettingsWin(tk.Toplevel):
         self.destroy()
         self.root_cl.settings_win = None
 
-    def tasker(self):
+    def task(self):
         pass

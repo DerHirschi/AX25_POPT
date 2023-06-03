@@ -22,6 +22,7 @@ STR_TABLE = {
     'file_1': ('Datei', 'File', 'Lekker'),
     'file_2': ('Datei:', 'File:', 'Lekker'),
     'locator_calc': ('Locator Rechner', 'Locator Calculator', 'Lekker Locator Calculator'),
+    'aprs_mon': ('AIS Monitor', 'AIS Monitor', 'Lekker AIS Monitor'),
     'protocol': ('Protokoll:', 'Protocol:', 'Lekker Protocol:'),
     'send_if_free': ('Senden wenn Band frei für (sek.):', 'Send when band is free for (sec.):', ''),
     'size': ('Größe:', 'Size:', 'Lekker groot:'),
