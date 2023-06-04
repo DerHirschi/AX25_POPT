@@ -277,6 +277,7 @@ class Yapp(object):
                 if self.ft_class.can_send():
                     pack_data = self.pack_types_enc.get(pack_typ, False)
             else:
+
                 pack_data = self.pack_types_enc.get(pack_typ, False)
             # print(f"yapp_tx: pack_typ: {pack_typ} - pack_data: {pack_data}")
             if pack_data is not None:

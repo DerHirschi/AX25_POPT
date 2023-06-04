@@ -16,8 +16,9 @@ def cleanup_obj(class_obj: object):
 def set_obj_att(new_obj: object, input_obj: object):
     inp = cleanup_obj(input_obj)
     for att in dir(inp):
-        if '__' not in att:
-            setattr(new_obj, att, getattr(inp, att))
+        if hasattr(new_obj, att):
+            if '__' not in att and not callable(getattr(new_obj, att)) and not callable(getattr(input_obj, att)):
+                setattr(new_obj, att, getattr(inp, att))
     return new_obj
 
 

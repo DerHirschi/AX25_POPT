@@ -110,6 +110,7 @@ class AISmonitor(tk.Toplevel):
 
     def tasker(self):
         if self.ais_obj is not None:
+            tr = False
             while self.ais_obj.ais_rx_buff \
                     and self.ais_obj.loop_is_running \
                     and self.ais_obj.active:
@@ -118,13 +119,15 @@ class AISmonitor(tk.Toplevel):
                 self.tmp_buffer.append(pack)
                 if self.call_filter.get():
                     if pack[1]['from'] in self.ais_aprs_stat_calls:
+                        tr = True
                         tmp = format_aprs_f_aprs_mon(pack, self.ais_obj.ais_loc, add_new_user=self.ais_obj.add_new_user)
                         self.text_widget.insert(tk.END, tmp)
                 else:
+                    tr = True
                     tmp = format_aprs_f_aprs_mon(pack, self.ais_obj.ais_loc, add_new_user=self.ais_obj.add_new_user)
                     self.text_widget.insert(tk.END, tmp)
-
-            self.scroll_to_end()
+            if tr:
+                self.scroll_to_end()
 
     def increase_textsize(self):
         self.text_size += 1

@@ -342,7 +342,7 @@ class AX25Port(threading.Thread):
                                 if ip_fm_mh == ('', 0):
                                     send_it = False
                             if send_it:
-                                if beacon.encode():
+                                if beacon.encode_beacon():
                                     self.UI_buf.append(beacon.ax_frame)
 
     def build_new_pipe(self,
