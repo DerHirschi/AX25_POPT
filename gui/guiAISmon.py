@@ -119,10 +119,10 @@ class AISmonitor(tk.Toplevel):
                 if self.call_filter.get():
                     if pack[1]['from'] in self.ais_aprs_stat_calls:
                         tmp = format_aprs_f_aprs_mon(pack, self.ais_obj.ais_loc, add_new_user=self.ais_obj.add_new_user)
-                        self.text_widget.insert(tk.INSERT, tmp)
+                        self.text_widget.insert(tk.END, tmp)
                 else:
                     tmp = format_aprs_f_aprs_mon(pack, self.ais_obj.ais_loc, add_new_user=self.ais_obj.add_new_user)
-                    self.text_widget.insert(tk.INSERT, tmp)
+                    self.text_widget.insert(tk.END, tmp)
 
             self.scroll_to_end()
 
