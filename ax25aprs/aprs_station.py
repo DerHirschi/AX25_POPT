@@ -12,8 +12,9 @@ class APRS_Station(object):
     def __init__(self):
         self.aprs_parm_call = ''
         self.aprs_parm_loc = ''
-        self.aprs_parm_lat = ''
-        self.aprs_parm_lon = ''
+        self.aprs_port_id = 0
+        # self.aprs_parm_lat: float = 0
+        # self.aprs_parm_lon: float = 0
 
         self.aprs_parm_digi = False
         self.aprs_parm_igate = False
@@ -21,7 +22,7 @@ class APRS_Station(object):
         self.aprs_parm_igate_rx = False
 
         # self.aprs_beacon_text = ''
-        self.ais = None
+        self.aprs_ais = None
 
 
 class APRS_ais(object):
@@ -31,8 +32,11 @@ class APRS_ais(object):
         self.ais_call = ''
         self.ais_pass = ''
         self.ais_loc = ''
+        self.ais_lat: float = 0
+        self.ais_lon: float = 0
         self.add_new_user = False
         # self.ais_host = "cbaprs.dyndns.org", 27234
+        self.ais_aprs_stations: {int: APRS_Station} = {}
         self.ais_host = '', 0
         self.ais = None
         self.active = False

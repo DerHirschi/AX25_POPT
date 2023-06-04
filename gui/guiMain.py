@@ -42,7 +42,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import ALL_COLOURS
+from constant import ALL_COLOURS, FONT
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -53,7 +53,6 @@ elif is_windows():
     from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
 
 TEXT_SIZE_STATUS = 11
-FONT = "Courier"
 TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
 TXT_INP_CLR = 'yellow'
@@ -190,10 +189,6 @@ class TkMainWin:
         self.MenuTools.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
         self.MenuTools.add_separator()
 
-        self.MenuTools.add_command(label='AIS Monitor', command=self.open_aismon_win,
-                                   underline=0)
-        self.MenuTools.add_separator()
-
         self.MenuTools.add_command(label='Priv', command=self.open_priv_win,
                                    underline=0)
 
@@ -216,6 +211,13 @@ class TkMainWin:
         self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
 
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
+        # APRS Menu
+        self.MenuAPRS = Menu(self.menubar, tearoff=False)
+        self.MenuAPRS.add_command(label='AIS Monitor', command=self.open_aismon_win,
+                                  underline=0)
+        # self.MenuAPRS.add_separator()
+        self.menubar.add_cascade(label="APRS", menu=self.MenuAPRS, underline=0)
+
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
         # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
@@ -810,7 +812,7 @@ class TkMainWin:
                 self.dx_alarm()
             if self.settings_win is not None:
                 # ( FT-Manager )
-                self.settings_win.task()
+                self.settings_win.tasker()
 
     #################################
     # TASKS
@@ -843,7 +845,7 @@ class TkMainWin:
 
                         out = out.decode(txt_enc, 'ignore')
                         out = out.replace('\r\n', '\n') \
-                            .replace('\n\r', '\n')\
+                            .replace('\n\r', '\n') \
                             .replace('\r', '\n')
                         # print(f"{out}\nhex: {hex_out}")
                         out = tk_filter_bad_chars(out)
@@ -1418,7 +1420,7 @@ class TkMainWin:
         self.on_channel_status_change()
         self.ch_btn.ch_btn_status_update()
         # self.main_class.change_conn_btn()
-        self.kanal_switch()     # Sprech
+        self.kanal_switch()  # Sprech
 
     def on_channel_status_change(self):
         """Triggerd when Connection Status has changed"""
@@ -1520,4 +1522,3 @@ class TkMainWin:
             self.tabbed_sideFrame.ft_duration_var.set(dur_var)
             self.tabbed_sideFrame.ft_bps_var.set(bps_var)
             self.tabbed_sideFrame.ft_next_tx_var.set(next_tx)
-

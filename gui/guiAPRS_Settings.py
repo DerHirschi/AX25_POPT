@@ -31,6 +31,9 @@ class APRSSettingsWin(tk.Toplevel):
         self.ais_pass_var = tk.StringVar(self)
         self.ais_port_var = tk.StringVar(self)
         self.ais_host_var = tk.StringVar(self)
+        self.ais_loc_var = tk.StringVar(self)
+        self.ais_lat_var = tk.StringVar(self)
+        self.ais_lon_var = tk.StringVar(self)
         self.ais_run_var = tk.BooleanVar(self)
         self.ais_add_new_user_var = tk.BooleanVar(self)
         if self.ais is not None:
@@ -38,6 +41,9 @@ class APRSSettingsWin(tk.Toplevel):
             self.ais_pass_var.set(self.ais.ais_pass)
             self.ais_port_var.set(str(self.ais.ais_host[1]))
             self.ais_host_var.set(self.ais.ais_host[0])
+            self.ais_lat_var.set(str(self.ais.ais_lat))
+            self.ais_lon_var.set(str(self.ais.ais_lon))
+            self.ais_loc_var.set(self.ais.ais_loc)
             self.ais_run_var.set(self.ais.active)
             self.ais_add_new_user_var.set(self.ais.add_new_user)
 
@@ -69,8 +75,29 @@ class APRSSettingsWin(tk.Toplevel):
         ais_call_ent = ttk.Entry(ais_conf_frame, width=10, textvariable=self.ais_port_var)
         ais_call_ent.grid(row=3, column=5, sticky=tk.W)
 
-        tk.Checkbutton(ais_conf_frame, text="Run", variable=self.ais_run_var).grid(row=4, column=1, sticky=tk.W)
-        tk.Checkbutton(ais_conf_frame, text="Add to UserDB", variable=self.ais_add_new_user_var).grid(row=4, column=4, columnspan=3, sticky=tk.W)
+        # Create Locator entry field
+        locator_label = ttk.Label(ais_conf_frame, text="Locator:")
+        locator_label.grid(row=4, column=1, sticky=tk.W)
+        locator_entry = ttk.Entry(ais_conf_frame, width=10, textvariable=self.ais_loc_var)
+        locator_entry.grid(row=4, column=2, sticky=tk.W)
+        # self.vars[-1]['loc'].set(port_aprs.aprs_parm_loc)
+
+        # Create Latitude entry field
+        latitude_label = ttk.Label(ais_conf_frame, text="Latitude:")
+        latitude_label.grid(row=4, column=4, sticky=tk.W)
+        latitude_entry = ttk.Entry(ais_conf_frame, width=10, textvariable=self.ais_lat_var)
+        latitude_entry.grid(row=4, column=5, sticky=tk.W)
+
+
+        # Create Longitude entry field
+        longitude_label = ttk.Label(ais_conf_frame, text="Longitude:")
+        longitude_label.grid(row=5, column=4, sticky=tk.W)
+        longitude_entry = ttk.Entry(ais_conf_frame, width=10, textvariable=self.ais_lon_var)
+        longitude_entry.grid(row=5, column=5, sticky=tk.W)
+        # self.vars[-1]['lon'].set(port_aprs.aprs_parm_lon)
+
+        tk.Checkbutton(ais_conf_frame, text="Run", variable=self.ais_run_var).grid(row=5, column=1, sticky=tk.W)
+        tk.Checkbutton(ais_conf_frame, text="Add to UserDB", variable=self.ais_add_new_user_var).grid(row=6, column=1, columnspan=3, sticky=tk.W)
 
         # Create a Notebook widget
         notebook = ttk.Notebook(self)
@@ -100,9 +127,9 @@ class APRSSettingsWin(tk.Toplevel):
     def create_settings_widgets(self, tab, port_aprs):
         self.vars.append({
             'call': tk.StringVar(tab),
-            'loc': tk.StringVar(tab),
-            'lat': tk.StringVar(tab),
-            'lon': tk.StringVar(tab),
+            # 'loc': tk.StringVar(tab),
+            # 'lat': tk.StringVar(tab),
+            # 'lon': tk.StringVar(tab),
             'text': tk.StringVar(tab),
             'digi': tk.BooleanVar(tab),
             'ais': tk.BooleanVar(tab),
@@ -117,32 +144,9 @@ class APRSSettingsWin(tk.Toplevel):
         tab.columnconfigure(4, minsize=5, weight=0)
         call_label = ttk.Label(tab, text="Call:")
         call_label.grid(row=0, column=1, padx=10, pady=5, sticky=tk.W)
-        call_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['call'], state='disabled')
+        call_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['call'])
         call_entry.grid(row=0, column=2, padx=10, pady=5, sticky=tk.W)
         self.vars[-1]['call'].set(port_aprs.aprs_parm_call)
-
-        # Create Locator entry field
-        locator_label = ttk.Label(tab, text="Locator:")
-        locator_label.grid(row=1, column=1, padx=10, pady=5, sticky=tk.W)
-        locator_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['loc'])
-        locator_entry.grid(row=1, column=2, padx=10, pady=5, sticky=tk.W)
-        self.vars[-1]['loc'].set(port_aprs.aprs_parm_loc)
-
-
-        # Create Latitude entry field
-        latitude_label = ttk.Label(tab, text="Latitude:")
-        latitude_label.grid(row=2, column=1, padx=10, pady=5, sticky=tk.W)
-        latitude_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['lat'])
-        latitude_entry.grid(row=2, column=2, padx=10, pady=5, sticky=tk.W)
-        self.vars[-1]['lat'].set(port_aprs.aprs_parm_lat)
-
-
-        # Create Longitude entry field
-        longitude_label = ttk.Label(tab, text="Longitude:")
-        longitude_label.grid(row=3, column=1, padx=10, pady=5, sticky=tk.W)
-        longitude_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['lon'])
-        longitude_entry.grid(row=3, column=2, padx=10, pady=5, sticky=tk.W)
-        self.vars[-1]['lon'].set(port_aprs.aprs_parm_lon)
 
         # Create DIGI checkbutton
         digi_checkbutton_label = ttk.Label(tab, text="DIGI:")
@@ -152,7 +156,6 @@ class APRSSettingsWin(tk.Toplevel):
         self.vars[-1]['digi'].set(port_aprs.aprs_parm_digi)
 
         # Create AIS checkbutton
-        ais_var = tk.StringVar()
         ais_checkbutton_label = ttk.Label(tab, text="AIS:")
         ais_checkbutton_label.grid(row=5, column=1, padx=10, pady=5, sticky=tk.W)
         ais_checkbutton = ttk.Checkbutton(tab, variable=self.vars[-1]['ais'], state='disabled')
@@ -168,36 +171,34 @@ class APRSSettingsWin(tk.Toplevel):
         self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 
     def set_vars(self):
-        ais_loc = ''
         ind = 0
+        aprs_station = {}
         for port_id in self.all_ports.keys():
-            lon = self.vars[ind]['lon'].get()
-            lat = self.vars[ind]['lat'].get()
-            loc = self.vars[ind]['loc'].get()
-
-            if not loc:
-                if lat and lon:
-                    loc = coordinates_to_locator(
-                        latitude=float(self.vars[ind]['lat'].get()),
-                        longitude=float(self.vars[ind]['lon'].get()),
-                    )
-                    self.vars[ind]['loc'].set(loc)
-            if not lat:
-                if loc:
-                    lat, lon = locator_to_coordinates(self.vars[ind]['loc'].get())
-                    self.vars[ind]['lat'].set(str(lat))
-                    self.vars[ind]['lon'].set(str(lon))
-
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_call = self.vars[ind]['call'].get()
-            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self.vars[ind]['loc'].get()
-            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_lat = self.vars[ind]['lat'].get()
-            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_lon = self.vars[ind]['lon'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_igate = self.vars[ind]['ais'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_digi = self.vars[ind]['digi'].get()
-            if loc:
-                ais_loc = loc
+            if self.ais is not None:
+                self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
+            aprs_station[port_id] = self.all_ports[port_id].port_cfg.parm_aprs_station
             ind += 1
+
+        lon = float(self.ais_lon_var.get())
+        lat = float(self.ais_lat_var.get())
+        loc = self.ais_loc_var.get()
+
+        if not loc:
+            if lat and lon:
+                loc = coordinates_to_locator(
+                    latitude=lat,
+                    longitude=lon,
+                )
+                self.ais_loc_var.set(loc)
+        if not lat or not lon:
+            if loc:
+                lat, lon = locator_to_coordinates(loc)
+                self.ais_lat_var.set(str(lat))
+                self.ais_lon_var.set(str(lon))
 
         if self.ais is not None:
             self.ais.task_halt()
@@ -206,8 +207,11 @@ class APRSSettingsWin(tk.Toplevel):
             self.ais.ais_pass = self.ais_pass_var.get()
             self.ais.active = self.ais_run_var.get()
             self.ais.add_new_user = self.ais_add_new_user_var.get()
-            if ais_loc:
-                self.ais.ais_loc = ais_loc
+            self.ais.ais_loc = loc
+            self.ais.ais_lat = float(lat)
+            self.ais.ais_lon = float(lon)
+            self.ais.ais_aprs_stations = aprs_station
+
             if self.ais_port_var.get().isdigit():
                 self.ais.ais_host = self.ais_host_var.get(), int(self.ais_port_var.get())
             self.ais.save_conf_to_file()
@@ -226,5 +230,5 @@ class APRSSettingsWin(tk.Toplevel):
         self.destroy()
         self.root_cl.settings_win = None
 
-    def task(self):
+    def tasker(self):
         pass

@@ -35,7 +35,7 @@ def format_aprs_f_aprs_mon(aprs_frame, own_locator, add_new_user=False):
     # aprs_frame = "12:12:21", aprs_frame
     ret = f"{aprs_frame[0]}: {aprs_frame[1]['from']} to {aprs_frame[1]['to']}"
     if aprs_frame[1]['path']:
-        ret += " via" + ' '.join(aprs_frame[1]['path'])
+        ret += " via " + ' '.join(aprs_frame[1]['path'])
     ret += ":\n"
 
     msg = format_aprs_f_monitor(aprs_pack=aprs_frame[1], own_locator=own_locator, add_new_user=add_new_user)
@@ -100,6 +100,8 @@ def format_aprs_f_monitor(ax25frame=None, own_locator='', aprs_pack=None, add_ne
                     ret += f"└┬►COMMENT\n ▽\n{aprs_msg['comment']}\n"
             else:
                 ret += f"└─►COMMENT     : n/a\n"
+        elif 'status' in aprs_msg.keys():
+            ret += f"└►STATUS       : {aprs_msg['status']}\n"
 
         ret = ret.replace('\r', '\n')
         if len(ret) > 1:
@@ -178,7 +180,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                             ret += f" ├► {el}\n"
                         else:
                             ret += f" └► {el}\n"
-                elif k in ['text', 'comment']:
+                elif k in ['text', 'comment', 'status']:
                     pass
                 else:
                     ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"

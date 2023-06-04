@@ -266,8 +266,6 @@ class PortConfigInit(DefaultPort):
                     if hasattr(self.parm_cli[k], 'cli_name'):
                         self.parm_cli[k] = self.parm_cli[k].cli_name
 
-
-
             if self.parm_StationCalls:
                 self.parm_Stations = []
                 ############
@@ -298,6 +296,7 @@ class PortConfigInit(DefaultPort):
                     self.parm_cli[stat.stat_parm_Call] = stat.stat_parm_cli
 
         self.parm_aprs_station = set_obj_att(APRS_Station(), self.parm_aprs_station)
+        self.parm_aprs_station.aprs_port_id = port_id
 
     def __del__(self):
         # self.save_to_pickl()

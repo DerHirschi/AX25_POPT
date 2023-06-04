@@ -588,5 +588,5 @@ class UserDB(tk.Toplevel):
         self.root.settings_win = None
         self.destroy()
 
-    def task(self):
+    def tasker(self):
         pass
