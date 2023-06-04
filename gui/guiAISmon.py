@@ -137,6 +137,15 @@ class AISmonitor(tk.Toplevel):
         self.text_widget.configure(font=(FONT, self.text_size))
 
     def chk_call_filter(self):
+        self.ais_aprs_stations = {}
+        self.ais_aprs_stat_calls = []
+        if self.ais_obj is not None:
+            self.ais_aprs_stations = self.ais_obj.ais_aprs_stations
+            for port_id in self.ais_aprs_stations.keys():
+                if self.ais_aprs_stations[port_id].aprs_parm_call:
+                    self.ais_aprs_stat_calls.append(
+                        self.ais_aprs_stations[port_id].aprs_parm_call
+                    )
         calls = self.call_filter_calls_var.get()
         calls = calls.split(' ')
         tmp = []
