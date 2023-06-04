@@ -158,6 +158,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     for tele_k in aprs_frame[k].keys():
                         ret += f"├►{k.upper().ljust(13)}-{tele_k.ljust(4)}: {aprs_frame[k][tele_k]}\n"
                 elif k == 'longitude':
+                    ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
                     loc = coordinates_to_locator(latitude=aprs_frame['latitude'],
                                                  longitude=aprs_frame['longitude'])
                     ret += f"├►LOCATOR      : {loc}\n"

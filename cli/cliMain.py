@@ -698,7 +698,7 @@ class DefaultCLI(object):
             if stations[0] in port.stupid_digi_calls and stations[0]:
                 digi = '(DIGI)'
             if stations[0] in port.port_cfg.parm_cli.keys():
-                digi = f"{port.port_cfg.parm_cli[stations[0]].cli_name.ljust(7)} " + digi
+                digi = f"{port.port_cfg.parm_cli[stations[0]].ljust(7)} " + digi
 
             ret += f" {str(port_id).ljust(2)} {name} {typ}  {stations[0].ljust(9)} {digi}\r"
             for stat in stations[1:]:
@@ -706,7 +706,7 @@ class DefaultCLI(object):
                 if stat in port.stupid_digi_calls:
                     digi = '(DIGI)'
                 if stat in port.port_cfg.parm_cli.keys():
-                    digi = f"{port.port_cfg.parm_cli[stat].cli_name.ljust(7)} " + digi
+                    digi = f"{port.port_cfg.parm_cli[stat].ljust(7)} " + digi
                 ret += f"                     {stat.ljust(9)} {digi}\r"
         ret += '\r'
         return ret

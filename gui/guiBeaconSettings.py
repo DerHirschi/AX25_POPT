@@ -459,7 +459,7 @@ class BeaconSettings(tk.Toplevel):
                 tab.beacon.port_id = int(tab.port_select_var.get())
                 tab.beacon.repeat_time = float(tab.interv.get())
                 tab.beacon.move_time = int(tab.move.get())
-                tab.beacon.text = tab.b_text_ent.get('1.0', tk.END)[:-1]
+                tab.beacon.text = tab.b_text_ent.get(0.0, tk.END)[:-1]
                 port_id = tab.beacon.port_id
                 stat_call = tab.beacon.from_call
                 label_txt = '{} {}'.format(port_id, stat_call)

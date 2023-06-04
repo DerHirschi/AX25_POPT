@@ -334,15 +334,16 @@ class AX25Port(threading.Thread):
                     beacon_list = self.beacons[self.port_id][k]
                     beacon: Beacon
                     for beacon in beacon_list:
-                        send_it = beacon.crone()
-                        ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
-                        beacon.ax_frame.axip_add = ip_fm_mh
-                        if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
-                            if ip_fm_mh == ('', 0):
-                                send_it = False
-                        if send_it:
-                            if beacon.encode():
-                                self.UI_buf.append(beacon.ax_frame)
+                        if beacon.is_enabled:
+                            send_it = beacon.crone()
+                            ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
+                            beacon.ax_frame.axip_add = ip_fm_mh
+                            if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
+                                if ip_fm_mh == ('', 0):
+                                    send_it = False
+                            if send_it:
+                                if beacon.encode_beacon():
+                                    self.UI_buf.append(beacon.ax_frame)
 
     def build_new_pipe(self,
                        own_call,

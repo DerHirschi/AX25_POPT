@@ -213,7 +213,7 @@ class TkMainWin:
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
         # APRS Menu
         self.MenuAPRS = Menu(self.menubar, tearoff=False)
-        self.MenuAPRS.add_command(label='AIS Monitor', command=self.open_aismon_win,
+        self.MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language], command=self.open_aismon_win,
                                   underline=0)
         # self.MenuAPRS.add_separator()
         self.menubar.add_cascade(label="APRS", menu=self.MenuAPRS, underline=0)
@@ -798,8 +798,6 @@ class TkMainWin:
             self.rx_beep_sound()
             if self.ch_alarm:
                 self.ch_status_update()
-            if self.aprs_mon_win is not None:
-                self.aprs_mon_win.tasker()
 
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
@@ -813,6 +811,8 @@ class TkMainWin:
             if self.settings_win is not None:
                 # ( FT-Manager )
                 self.settings_win.tasker()
+            if self.aprs_mon_win is not None:
+                self.aprs_mon_win.tasker()
 
     #################################
     # TASKS

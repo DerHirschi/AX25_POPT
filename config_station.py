@@ -196,12 +196,12 @@ class DefaultPort(object):
             save_ports = {}
             clean_beacon_cfg = {}
             # clean_cli_param = cleanup_obj_dict(self.parm_cli)
-            for be_k in self.parm_beacons:
+            for stat_call in self.parm_beacons.keys():
                 tmp_be_list = []
-                for be in self.parm_beacons[be_k]:
+                for be in self.parm_beacons[stat_call]:
                     tmp_be_list.append(cleanup_obj(be))
 
-                clean_beacon_cfg[be_k] = tmp_be_list
+                clean_beacon_cfg[stat_call] = tmp_be_list
             for att in dir(self):
                 if '__' not in att and \
                         att not in self.dont_save_this and \
@@ -257,7 +257,6 @@ class PortConfigInit(DefaultPort):
                 tmp_be_list = []
                 for old_be in self.parm_beacons[be_k]:
                     beacon = ax25.ax25Beacon.Beacon()
-
                     tmp_be_list.append(set_obj_att(beacon, old_be))
                 self.parm_beacons[be_k] = tmp_be_list
 

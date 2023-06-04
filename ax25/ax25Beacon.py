@@ -73,8 +73,15 @@ class Beacon(object):
             self.via_calls = calls
 
     def encode(self):
+        # Todo :Delete.. Just dummy for compatibility
+        pass
+
+    def encode_beacon(self):
         self.set_text_fm_file()
         if self.text:
+            # self.ax_frame = AX25Frame()
+            self.ax_frame.ctl_byte.UIcByte()
+            self.ax_frame.pid_byte.text()
             self.ax_frame.ctl_byte.cmd = self.aprs
             self.ax_frame.ctl_byte.pf = self.pool
             self.ax_frame.to_call.call = ''
@@ -136,8 +143,8 @@ class Beacon(object):
             if time.time() > self.cooldown:
                 now = datetime.now()
                 month = now.month
-                hour = now.hour
-                minutes = now.minute
+                # hour = now.hour
+                # minutes = now.minute
                 week_day = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now.weekday()]
                 send_it = False
 
