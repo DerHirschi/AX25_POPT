@@ -410,15 +410,19 @@ class SideTabbedFrame:
         self.mon_pid_var.set(_vals[0])
         self.mon_pid_ent.place(x=_x + 40, y=_y)
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
-        # Monitor RX-Filter
-        """
-        _x = 10
-        _y = 105
-        self.rx_filter_var = tk.StringVar(self.tab6_monitor)
-        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['filter'][self.lang]}:").place(x=_x, y=_y)
-        self.rx_filter_ent = tk.Entry(self.tab6_monitor, textvariable=self.rx_filter_var)
-        self.rx_filter_ent.place(x=_x + 50, y=_y)
-        """
+        # Monitor RX-Filter Ports
+        self.mon_port_on_vars = {}
+        all_ports = self.main_win.ax25_port_handler.ax25_ports
+        for port_id in all_ports:
+            self.mon_port_on_vars[port_id] = tk.BooleanVar(self.tab6_monitor)
+            _x = 170
+            _y = 80 + (25 * port_id)
+            tk.Checkbutton(self.tab6_monitor,
+                           text=f"Port {port_id}",
+                           variable=self.mon_port_on_vars[port_id],
+                           command=self.chk_mon_port_filter
+                           ).place(x=_x, y=_y)
+            self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
 
         ##################
         # Tasker
@@ -555,6 +559,11 @@ class SideTabbedFrame:
         if vals:
             self.mon_call_var.set(vals[0])
         self.mon_call_ent.configure(values=vals)
+
+    def chk_mon_port_filter(self):
+        all_ports = self.main_win.ax25_port_handler.ax25_ports
+        for port_id in all_ports:
+            all_ports[port_id].monitor_out = self.mon_port_on_vars[port_id].get()
 
     def update_mon_port_id(self):
         if self.main_win.ax25_port_handler.ax25_ports.keys():

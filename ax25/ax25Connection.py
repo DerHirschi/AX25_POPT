@@ -8,6 +8,7 @@ from datetime import datetime
 import cli.cliMain
 # from cli.cliMain import CLI_OPT, NoneCLI
 import config_station
+from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
@@ -235,7 +236,7 @@ class AX25Conn(object):
         """ Encoding """
         self.encoding = 'CP437'     # 'UTF-8'
         """ User DB Entry """
-        self.user_db = self.port_handler.user_db
+        # self.user_db = USER_DB
         self.user_db_ent = False
         self.set_user_db_ent()
         """ Station Individual Parameter """
@@ -386,7 +387,7 @@ class AX25Conn(object):
         return raw_data
 
     def set_user_db_ent(self):
-        self.user_db_ent = self.user_db.get_entry(self.to_call_str)
+        self.user_db_ent = USER_DB.get_entry(self.to_call_str)
         if self.user_db_ent:
             self.user_db_ent.Connects += 1  # TODO Count just when connected
             self.user_db_ent.last_seen = datetime.now()
@@ -407,7 +408,7 @@ class AX25Conn(object):
     def set_packet_param(self):
             self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
             self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
-            self.user_db_ent = self.user_db.get_entry(self.to_call_str)
+            self.user_db_ent = USER_DB.get_entry(self.to_call_str)
             stat_call = self.stat_cfg.stat_parm_Call
 
             if self.user_db_ent:
@@ -1220,7 +1221,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
             if self.ax25conn.LINK_Connection is None:
                 to_qso_win = f'\n*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str}' \
 
-                user_db_ent = self.ax25conn.user_db.get_entry(self.ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
+                user_db_ent = USER_DB.get_entry(self.ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
                 if user_db_ent:
                     if user_db_ent.Name:
                         to_qso_win += f' - ({user_db_ent.Name})'
@@ -1238,7 +1239,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
     def n2_fail(self):
         to_qso_win = f'\n*** Failed connect to {self.ax25conn.ax25_out_frame.to_call.call_str} > ' \
                      f'Port {self.ax25conn.own_port.port_id}\n'
-        user_db_ent = self.ax25conn.user_db.get_entry(self.ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
+        user_db_ent = USER_DB.get_entry(self.ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
         if user_db_ent:
             if user_db_ent.Name:
                 to_qso_win = f'\n*** Failed connect to {self.ax25conn.ax25_out_frame.to_call.call_str} - ' \

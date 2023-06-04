@@ -1,7 +1,10 @@
+import threading
+
 import config_station
 from ax25.ax25Port import *
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH
+from ax25aprs.aprs_station import APRS_ais
 from config_station import *
 from gui.guiRxEchoSettings import RxEchoVars
 
@@ -20,7 +23,8 @@ class AX25PortHandler(object):
         ###########################
         # VArs for gathering Stuff
         self.mh = MH()
-        self.user_db = USER_DB
+        self.aprs_ais = None
+        self.aprs_ais = APRS_ais()
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
@@ -36,6 +40,9 @@ class AX25PortHandler(object):
         logger.info(f"Port Init Max-Ports: {self.max_ports}")
         for port_id in range(self.max_ports):       # Max Ports
             self.init_port(port_id=port_id)
+        #######################################################
+        # APRS AIS Thread
+        self.init_aprs_ais()
 
     def __del__(self):
         self.close_all_ports()
@@ -71,9 +78,19 @@ class AX25PortHandler(object):
             tmp.main_win.quit()
             tmp.main_win.destroy()
         self.mh.save_mh_data()
-        self.user_db.save_data()
+        USER_DB.save_data()
+
+    def close_aprs_ais(self):
+        if self.aprs_ais is None:
+            return False
+        self.aprs_ais.loop_is_running = False
+        self.aprs_ais.ais_close()
+        del self.aprs_ais
+        self.aprs_ais = None
+        return True
 
     def close_all_ports(self):
+        self.close_aprs_ais()
         if self.is_running:
             self.is_running = False
             for k in list(self.ax25_ports.keys()):
@@ -162,6 +179,11 @@ class AX25PortHandler(object):
                 self.rx_echo[port_id] = RxEchoVars(port_id)
                 self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
                 logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
+
+    def init_aprs_ais(self):
+        if self.aprs_ais.ais is not None:
+            self.aprs_ais.loop_is_running = True
+            threading.Thread(target=self.aprs_ais.task).start()
 
     def save_all_port_cfgs(self):
         for port_id in self.ax25_ports.keys():
@@ -292,7 +314,7 @@ class AX25PortHandler(object):
         if connection:
             self.insert_conn2all_conn_var(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
-            user_db_ent = self.user_db.get_entry(dest_call, add_new=False)
+            user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
                 if user_db_ent.Name:
                     return True, f'\r*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r'

@@ -11,12 +11,16 @@ logger = logging.getLogger(__name__)
 def monitor_frame_inp(ax25_frame, port_cfg):
     port_name = port_cfg.parm_PortName
     aprs_loc = port_cfg.parm_aprs_station.aprs_parm_loc
+    aprs_data = ''
+    if ax25_frame.ctl_byte.flag == 'UI':
+        aprs_data = format_aprs_f_monitor(ax25_frame, own_locator=aprs_loc)
+
     from_call = get_call_str(ax25_frame.from_call.call, ax25_frame.from_call.ssid)
-    from_call_d = USER_DB.get_distance(from_call)
+    from_call_d = round(USER_DB.get_distance(from_call))
     if from_call_d:
         from_call += f"({from_call_d} km)"
     to_call = get_call_str(ax25_frame.to_call.call, ax25_frame.to_call.ssid)
-    to_call_d = USER_DB.get_distance(to_call)
+    to_call_d = round(USER_DB.get_distance(to_call))
     if to_call_d:
         to_call += f"({to_call_d} km)"
     """
@@ -25,7 +29,7 @@ def monitor_frame_inp(ax25_frame, port_cfg):
     """
     via_calls = []
     for stat in ax25_frame.via_calls:
-        dist = USER_DB.get_distance(get_call_str(stat.call, stat.ssid))
+        dist = round(USER_DB.get_distance(get_call_str(stat.call, stat.ssid)))
         if dist:
             dist = f"({dist} km)"
         else:
@@ -40,7 +44,7 @@ def monitor_frame_inp(ax25_frame, port_cfg):
     out_str += ' cmd' if ax25_frame.ctl_byte.cmd else ' rpt'
     # out_str += f' ({ax25_frame.ctl_byte.hex}) {ax25_frame.ctl_byte.mon_str}'
     out_str += f' {ax25_frame.ctl_byte.mon_str}'
-    out_str += f'\n{port_name} ------->: ctl={ax25_frame.ctl_byte.hex} pid={hex(ax25_frame.pid_byte.hex)}({ax25_frame.pid_byte.flag})'\
+    out_str += f'\n   ├──────▶: ctl={ax25_frame.ctl_byte.hex} pid={hex(ax25_frame.pid_byte.hex)}({ax25_frame.pid_byte.flag})'\
         if int(ax25_frame.pid_byte.hex) else ''
     out_str += ' len={}\n'.format(ax25_frame.data_len) if ax25_frame.data_len else '\n'
 
@@ -59,8 +63,8 @@ def monitor_frame_inp(ax25_frame, port_cfg):
                 if da[-1] != '\n' or da[-1] != '\r':
                     out_str += da + '\n'
 
-        if ax25_frame.ctl_byte.flag == 'UI':
-            out_str += format_aprs_f_monitor(ax25_frame, own_locator=aprs_loc)
+        # if ax25_frame.ctl_byte.flag == 'UI':
+        out_str += aprs_data
     return out_str
 
 

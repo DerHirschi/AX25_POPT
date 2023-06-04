@@ -15,10 +15,13 @@ from matplotlib.backends.backend_tkagg import (
 import matplotlib.pyplot as plt
 
 import constant
+from ax25.ax25monitor import monitor_frame_inp
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
+from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiFT_Manager import FileTransferManager
+from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
 from gui.guiPriv import PrivilegWin
 from gui.guiUserDBoverview import UserDBtreeview
@@ -39,7 +42,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import ALL_COLOURS
+from constant import ALL_COLOURS, FONT
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -50,7 +53,6 @@ elif is_windows():
     from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
 
 TEXT_SIZE_STATUS = 11
-FONT = "Courier"
 TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
 TXT_INP_CLR = 'yellow'
@@ -89,7 +91,7 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
-        self.user_db = self.ax25_port_handler.user_db
+        # self.user_db = USER_DB
         self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
         #####################
@@ -173,6 +175,9 @@ class TkMainWin:
         self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
                                    underline=0)
         self.MenuTools.add_separator()
+        self.MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self.locator_calc_win,
+                                   underline=0)
+        self.MenuTools.add_separator()
 
         self.MenuTools.add_command(label="FT-Manager", command=self.open_ft_manager,
                                    underline=0)
@@ -206,6 +211,13 @@ class TkMainWin:
         self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
 
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
+        # APRS Menu
+        self.MenuAPRS = Menu(self.menubar, tearoff=False)
+        self.MenuAPRS.add_command(label='AIS Monitor', command=self.open_aismon_win,
+                                  underline=0)
+        # self.MenuAPRS.add_separator()
+        self.menubar.add_cascade(label="APRS", menu=self.MenuAPRS, underline=0)
+
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
         # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
@@ -317,6 +329,8 @@ class TkMainWin:
         self.new_conn_win = None
         self.settings_win = None
         self.mh_window = None
+        self.locator_calc_window = None
+        self.aprs_mon_win = None
         self.userDB_tree_win = None
         ###########################
         # Init
@@ -775,6 +789,7 @@ class TkMainWin:
     def tasker_low_prio(self):
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
+            # APRS_AIS.task()
             self.monitor_task()
             self.update_qso_win()
             self.txt_win.update_status_win()
@@ -783,6 +798,8 @@ class TkMainWin:
             self.rx_beep_sound()
             if self.ch_alarm:
                 self.ch_status_update()
+            if self.aprs_mon_win is not None:
+                self.aprs_mon_win.tasker()
 
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
@@ -828,7 +845,7 @@ class TkMainWin:
 
                         out = out.decode(txt_enc, 'ignore')
                         out = out.replace('\r\n', '\n') \
-                            .replace('\n\r', '\n')\
+                            .replace('\n\r', '\n') \
                             .replace('\r', '\n')
                         # print(f"{out}\nhex: {hex_out}")
                         out = tk_filter_bad_chars(out)
@@ -904,10 +921,10 @@ class TkMainWin:
                         self.win_buf[k].rx_beep_tr = True
                         self.ch_status_update()
 
-    def update_monitor(self, mon_str: str, conf, tx=False):
+    def update_monitor(self, ax25frame, conf, tx=False):
         """ Called from AX25Conn """
         self.mon_buff.append((
-            str(mon_str),
+            ax25frame,
             conf,
             bool(tx)
         ))
@@ -919,10 +936,9 @@ class TkMainWin:
             tr = False
             self.mon_txt.configure(state="normal")
             for el in tmp_buff:
-                var = el[0]
+                var = monitor_frame_inp(el[0], el[1])
                 conf = el[1]
                 tx = el[2]
-
                 var = tk_filter_bad_chars(var)
                 ind = self.mon_txt.index('end-1c')
                 color_bg = conf.parm_mon_clr_bg
@@ -1063,6 +1079,7 @@ class TkMainWin:
         # TODO just build a f** switch ( dict )
         if self.settings_win is None:
             APRSSettingsWin(self)
+
     ##########################
     # Keybinds Help WIN
     def open_keybind_help_win(self):
@@ -1090,7 +1107,21 @@ class TkMainWin:
         """MH WIN"""
         self.reset_dx_alarm()
         if self.mh_window is None:
-            self.mh_window = MHWin(self)
+            MHWin(self)
+
+    ###################
+    # MH WIN
+    def locator_calc_win(self):
+        """ """
+        if self.locator_calc_window is None:
+            LocatorCalculator(self)
+
+    ###################
+    # MH WIN
+    def open_aismon_win(self):
+        """ """
+        if self.aprs_mon_win is None:
+            AISmonitor(self)
 
     ###################
     # User-DB TreeView WIN
@@ -1389,7 +1420,7 @@ class TkMainWin:
         self.on_channel_status_change()
         self.ch_btn.ch_btn_status_update()
         # self.main_class.change_conn_btn()
-        self.kanal_switch()     # Sprech
+        self.kanal_switch()  # Sprech
 
     def on_channel_status_change(self):
         """Triggerd when Connection Status has changed"""
@@ -1491,4 +1522,3 @@ class TkMainWin:
             self.tabbed_sideFrame.ft_duration_var.set(dur_var)
             self.tabbed_sideFrame.ft_bps_var.set(bps_var)
             self.tabbed_sideFrame.ft_next_tx_var.set(next_tx)
-

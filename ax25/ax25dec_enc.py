@@ -2,7 +2,6 @@
     Layer 2 ??
     AX.25 Packet enc-/decoding
 """
-from ax25aprs.aprs_dec import parse_aprs_msg
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str
 
@@ -527,7 +526,7 @@ class AX25Frame(object):
         self.ctl_byte = CByte()
         self.pid_byte = PIDByte()
         self.data = b''
-        self.aprs_data = {}
+        # self.aprs_data = {}
         self.data_len = 0
         self.addr_uid = ''          # Unique ID/Address String
         self.axip_add = '', 0       # For AXIP Handling
@@ -649,13 +648,9 @@ class AX25Frame(object):
             self.build_uid(dec=True)
             if not self.validate():
                 raise AX25DecodingERROR(self)
-            self.decode_aprs()
+            # self.decode_aprs()
         else:
             raise AX25DecodingERROR(self)
-
-    def decode_aprs(self):
-        if self.ctl_byte.flag == 'UI':
-            self.aprs_data = parse_aprs_msg(self)
 
     def encode_ax25frame(self, digi=False):
         # print(f'encode >>>>>> {self.digi_call}')

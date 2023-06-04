@@ -110,33 +110,9 @@ class PortStatDB(object):
         minute = now.minute
         if date_str not in list(self.stat_DB_days.keys()):
             self.stat_DB_days[date_str] = self.init_day_dic()
-            """
-            if hour in list(self.stat_DB_days[date_str].keys()):
-                ent = self.stat_DB_days[date_str][hour]
-            else:
-                ent = PortStatHourStruc()
-                self.stat_DB_days[date_str][hour] = ent
-            """
 
         self.stat_DB_days[date_str][hour].n_packets_hr[minute] += 1
-        """
-        if ax_frame.ctl_byte.flag == 'I':
-            self.stat_DB_days[date_str][hour].I_packets_hr[minute] += 1
-        elif ax_frame.ctl_byte.flag == 'UI':
-            self.stat_DB_days[date_str][hour].UI_packets_hr[minute] += 1
-        elif ax_frame.ctl_byte.flag == 'REJ':
-            self.stat_DB_days[date_str][hour].REJ_packets_hr[minute] += 1
-        elif ax_frame.ctl_byte.flag == 'RR':
-            self.stat_DB_days[date_str][hour].RR_packets_hr[minute] += 1
-        elif ax_frame.ctl_byte.flag == 'RNR':
-            self.stat_DB_days[date_str][hour].RNR_packets_hr[minute] += 1
-        elif ax_frame.ctl_byte.flag == 'SABM':
-            self.stat_DB_days[date_str][hour].SABM_packets_hr[minute] += 1
-        elif ax_frame.ctl_byte.flag == 'DM':
-            self.stat_DB_days[date_str][hour].DM_packets_hr[minute] += 1
-        elif ax_frame.ctl_byte.flag == 'DISC':
-            self.stat_DB_days[date_str][hour].DISC_packets_hr[minute] += 1
-        """
+
         if ax_frame.ctl_byte.flag == 'I':
             self.stat_DB_days[date_str][hour].I_packets_hr[minute] += len(ax_frame.bytes)
         elif ax_frame.ctl_byte.flag == 'UI':
@@ -440,8 +416,6 @@ class PortStatDB(object):
             byt = int(self.bandwidth[k])
             f = (((byt * 8) / 10) * 100) / baud
             ret.append(f)
-        #print(ret)
-        #print(len(ret))
         return ret
 
 
@@ -622,7 +596,7 @@ class MH(object):
         return ret
 
     def mh_ip_failed(self, axip: str):
-        for k in self.calls.keys:
+        for k in self.calls.keys():
             if self.calls[k].axip_add == axip:
                 self.calls[k].axip_fail += 1
 

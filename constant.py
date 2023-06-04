@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.85.10'
+VER = '2.86.4'
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {
@@ -167,3 +167,4 @@ ALL_COLOURS = ('snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white'
 ASCII_0 = 48
 ASCII_A = 65
 ASCII_a = 97
+FONT = "Courier"

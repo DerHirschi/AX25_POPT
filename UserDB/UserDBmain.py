@@ -116,10 +116,10 @@ class UserDB:
             call_tup = call_tuple_fm_call_str(call_str)
             if call_str not in self.db.keys():
                 if call_tup[0] not in self.db.keys():
-                    print('# User DB: New User added > ' + call_str)
-                    logger.info('User DB: New User added > ' + call_str)
                     if add_new:
                         self.db[call_str] = Client(call_str)
+                        print('# User DB: New User added > ' + call_str)
+                        logger.info('User DB: New User added > ' + call_str)
                     else:
                         return False
                 else:

@@ -12,7 +12,7 @@ from fnc.str_fnc import get_time_delta, find_decoding
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from ax25.ax25Error import AX25EncodingERROR
-from UserDB.UserDBmain import Client
+from UserDB.UserDBmain import Client, USER_DB
 from ax25.ax25UI_Pipe import AX25Pipe
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class DefaultCLI(object):
         self.my_call_str = self.connection.my_call_str
         self.to_call_str = self.connection.to_call_str
         self.mh_list = self.connection.mh
-        self.user_db = self.connection.user_db
+        self.user_db = USER_DB
         self.user_db_ent: Client = self.connection.user_db_ent
         self.encoding = 'UTF-8', 'ignore'
         self.stat_identifier_str = ''
