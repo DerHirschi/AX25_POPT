@@ -168,7 +168,7 @@ class APRSSettingsWin(tk.Toplevel):
 
         baken_textbox = tk.Text(tab, width=85, height=5, state='disabled')
         baken_textbox.grid(row=7, column=1, columnspan=3, padx=10, pady=5, sticky=tk.W)
-        self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
+        # self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 
     def set_vars(self):
         ind = 0
