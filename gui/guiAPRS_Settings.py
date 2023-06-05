@@ -44,7 +44,7 @@ class APRSSettingsWin(tk.Toplevel):
             self.ais_lat_var.set(str(self.ais.ais_lat))
             self.ais_lon_var.set(str(self.ais.ais_lon))
             self.ais_loc_var.set(self.ais.ais_loc)
-            self.ais_run_var.set(self.ais.active)
+            self.ais_run_var.set(self.ais.ais_active)
             self.ais_add_new_user_var.set(self.ais.add_new_user)
 
         ais_conf_frame = ttk.Frame(self)
@@ -63,7 +63,7 @@ class APRSSettingsWin(tk.Toplevel):
         ais_call_ent = ttk.Entry(ais_conf_frame, width=10, textvariable=self.ais_call_var)
         ais_call_ent.grid(row=2, column=2,  sticky=tk.W)
 
-        ttk.Label(ais_conf_frame, text="PW:").grid(row=3, column=1, sticky=tk.W)
+        ttk.Label(ais_conf_frame, text="Passw:").grid(row=3, column=1, sticky=tk.W)
         ais_call_ent = ttk.Entry(ais_conf_frame, width=20, textvariable=self.ais_pass_var)
         ais_call_ent.grid(row=3, column=2, sticky=tk.W)
 
@@ -168,18 +168,21 @@ class APRSSettingsWin(tk.Toplevel):
 
         baken_textbox = tk.Text(tab, width=85, height=5, state='disabled')
         baken_textbox.grid(row=7, column=1, columnspan=3, padx=10, pady=5, sticky=tk.W)
-        self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
+        # self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 
     def set_vars(self):
         ind = 0
         aprs_station = {}
         for port_id in self.all_ports.keys():
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_call = self.vars[ind]['call'].get()
-            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
+            # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_igate = self.vars[ind]['ais'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_digi = self.vars[ind]['digi'].get()
+
+            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self.vars[ind]['digi'].get()
             if self.ais is not None:
                 self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
+                self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self.ais.ais_loc
             aprs_station[port_id] = self.all_ports[port_id].port_cfg.parm_aprs_station
             ind += 1
 
@@ -205,7 +208,7 @@ class APRSSettingsWin(tk.Toplevel):
             self.ais.ais_close()
             self.ais.ais_call = self.ais_call_var.get()
             self.ais.ais_pass = self.ais_pass_var.get()
-            self.ais.active = self.ais_run_var.get()
+            self.ais.ais_active = self.ais_run_var.get()
             self.ais.add_new_user = self.ais_add_new_user_var.get()
             self.ais.ais_loc = loc
             self.ais.ais_lat = float(lat)

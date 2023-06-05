@@ -132,9 +132,11 @@ def format_aprs_f_monitor(ax25frame=None, own_locator='', aprs_pack=None, add_ne
 def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: aprslib.parse, add_new_user=True):
     ret = ''
     dist = ''
+    typ = ''
     db_ent = USER_DB.get_entry(full_aprs_frame['from'], add_new=add_new_user)
     for k in aprs_frame:
         # print(f"{k}: {aprs_frame[k]}")
+
         if aprs_frame[k]:
             if k not in ['from', 'to',  'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
                 if k == 'via':
@@ -154,6 +156,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     """
 
                 elif k == 'telemetry':
+                    typ = "APRS-TELEMETRIE"
                     ret += f"├►{k.upper().ljust(13)}:\n"
                     for tele_k in aprs_frame[k].keys():
                         ret += f"├►{k.upper().ljust(13)}-{tele_k.ljust(4)}: {aprs_frame[k][tele_k]}\n"
@@ -174,6 +177,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     # if db_ent:
                     #     db_ent.Distance = dist
                 elif k in ['tPARM', 'tUNIT', 'tEQNS']:
+                    typ = "APRS-TELEMETRIE"
                     ret += f"└┬►{k.upper().ljust(13)}\n"
                     for ind in range(len(aprs_frame[k])):
                         el = aprs_frame[k][ind]
@@ -185,11 +189,15 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     pass
                 else:
                     ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
+        elif k == 'weather':
+            typ = 'APRS-WX'
     if db_ent:
         # if not db_ent.Distance:
         if db_ent.LOC and own_locator:
             db_ent.Distance = locator_distance(own_locator, db_ent.LOC)
             dist = locator_distance(own_locator, db_ent.LOC)
+            if not db_ent.TYP and typ:
+                db_ent.TYP = typ
 
     return ret, dist
 

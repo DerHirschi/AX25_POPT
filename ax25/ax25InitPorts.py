@@ -23,7 +23,7 @@ class AX25PortHandler(object):
         ###########################
         # VArs for gathering Stuff
         self.mh = MH()
-        self.aprs_ais = None
+        # self.aprs_ais = None
         self.aprs_ais = APRS_ais()
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
