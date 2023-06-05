@@ -1,5 +1,4 @@
 import socket
-# import termios
 
 import serial
 import threading
@@ -13,8 +12,11 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
+from fnc.os_fnc import is_linux
 # from ax25.ax25monitor import monitor_frame_inp
 from fnc.socket_fnc import get_ip_by_hostname
+if is_linux():
+    import termios
 
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
@@ -673,13 +675,13 @@ class KISSSerial(AX25Port):
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_end())
                 """
-                """
-                try:
+                if is_linux():
+                    try:
+                        self.device.flush()
+                    except termios.error:
+                        pass
+                else:
                     self.device.flush()
-                except termios.error:
-                    pass
-                """
-                self.device.flush()
                 self.device.close()
                 self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):

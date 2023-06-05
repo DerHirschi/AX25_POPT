@@ -188,9 +188,10 @@ class DefaultPort(object):
         """ Such a BULLSHIT !! """
 
         if self.parm_PortNr != -1:
-
+            ais = self.parm_aprs_station.aprs_ais
             gui = self.glb_gui
             self.glb_gui = None
+            self.parm_aprs_station.aprs_ais = None
             ############
             # Port CFG
             save_ports = {}
@@ -219,6 +220,7 @@ class DefaultPort(object):
             save_to_file(file, save_ports)
 
             self.glb_gui = gui
+            self.parm_aprs_station.aprs_ais = ais
 
 
 class PortConfigInit(DefaultPort):
@@ -296,6 +298,7 @@ class PortConfigInit(DefaultPort):
 
         self.parm_aprs_station = set_obj_att(APRS_Station(), self.parm_aprs_station)
         self.parm_aprs_station.aprs_port_id = port_id
+        # self.parm_aprs_station.aprs_ais =
 
     def __del__(self):
         # self.save_to_pickl()

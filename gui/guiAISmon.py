@@ -111,9 +111,7 @@ class AISmonitor(tk.Toplevel):
     def tasker(self):
         if self.ais_obj is not None:
             tr = False
-            while self.ais_obj.ais_rx_buff \
-                    and self.ais_obj.loop_is_running \
-                    and self.ais_obj.active:
+            while self.ais_obj.ais_rx_buff:
                 pack = self.ais_obj.ais_rx_buff[0]
                 self.ais_obj.ais_rx_buff = self.ais_obj.ais_rx_buff[1:]
                 self.tmp_buffer.append(pack)
