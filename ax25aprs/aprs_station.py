@@ -44,16 +44,10 @@ class APRS_ais(object):
         self.ais_active = False
         self.ais_rx_buff = []
         """ Global APRS Stuff """
-        """
-        self.ais_msg_pool = {
-            "message": {
-                -1: [],      # -1 = AIS > Aprs I-Gate Server
-            },
-            "bulletin": {
-                -1: [],     # -1 = AIS > Aprs I-Gate Server
-            },
+        self.ais_aprs_msg_pool = {
+            "message":  [],
+            "bulletin":  [],
         }
-        """
         """ Loop Control """
         self.loop_is_running = False
         """ Load CFGs and Init (Login to APRS-Server) """
@@ -62,14 +56,20 @@ class APRS_ais(object):
             self.login()
 
     def save_conf_to_file(self):
+
         save_date = cleanup_obj(self)
         save_date.ais = None
         save_date.ais_rx_buff = []
         save_date.loop_is_running = False
         save_date.ais_aprs_stations = {}
+        save_date.ais_aprs_msg_pool = {
+            "message": [],
+            "bulletin": [],
+        }
         for k in self.ais_aprs_stations.keys():
-            save_date.ais_aprs_stations[k] = cleanup_obj(self.ais_aprs_stations[k])
-
+            tmp = cleanup_obj(self.ais_aprs_stations[k])
+            tmp.aprs_ais = None
+            save_date.ais_aprs_stations[k] = tmp
         save_to_file('ais.popt', data=save_date)
 
     def load_conf_fm_file(self):
@@ -87,6 +87,8 @@ class APRS_ais(object):
                                 for k in getattr(load_data, att):
                                     tmp[k] = set_obj_att(APRS_Station(), load_data.ais_aprs_stations[k])
                                     tmp[k].aprs_parm_loc = self.ais_loc
+                                    tmp[k].aprs_ais = self
+
                                 load_data.ais_aprs_stations = tmp
 
     def login(self):
