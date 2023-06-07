@@ -7,7 +7,7 @@ from fnc.loc_fnc import coordinates_to_locator, locator_distance
 # print(aprslib.parse("M0XER-4>APRS64,TF3RPF,WIDE2*,qAR,TF3SUT-2:!/.(M4I^C,O `DXa/A=040849|#B>@\"v90!+|"))
 # print(aprslib.parse("M0XER-4>APRS64:!/.(M4I^C,O `DXa/A=040849|#B>@\"v90!+|"))
 
-def parse_aprs_msg(ax25frame):
+def parse_aprs_fm_ax25frame(ax25frame):
     aprs_msg_input = f"{ax25frame.from_call.call_str}>{ax25frame.to_call.call_str}"
     for via_call in ax25frame.via_calls:
         aprs_msg_input += f",{via_call.call_str}"
@@ -49,7 +49,7 @@ def format_aprs_f_monitor(ax25frame=None, own_locator='', aprs_pack=None, add_ne
     if ax25frame is not None:
         if ax25frame.ctl_byte.flag != 'UI':
             return ''
-        aprs_msg = parse_aprs_msg(ax25frame)
+        aprs_msg = parse_aprs_fm_ax25frame(ax25frame)
     elif aprs_pack is not None:
         aprs_msg = aprs_pack
     else:
@@ -189,7 +189,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     pass
                 else:
                     ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
-        elif k == 'weather':
+        if k in ['weather', 'wx']:
             typ = 'APRS-WX'
     if db_ent:
         # if not db_ent.Distance:

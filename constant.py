@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.88.2'
+VER = '2.89.0dev'
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {
@@ -14,7 +14,6 @@ CFG_txt_save = {
                 'stat_parm_cli_akttext': 'atx',
                }
 CFG_ft_downloads = 'ft_downloads/'
-
 CFG_clr_sys_msg = 'red'
 
 ENCODINGS = (
@@ -87,6 +86,9 @@ FT_RX_HEADERS = [
     b'\x05\x01',     # YAPP SI
     # b'\x05\x02',     # YAPP RI - Server Mode
 ]
+
+APRS_SW_ID = f"APZPOP"  # TODO get SW ID
+
 
 ALL_COLOURS = ('snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white', 'old lace',
                'linen', 'antique white', 'papaya whip', 'blanched almond', 'bisque', 'peach puff',

@@ -144,9 +144,9 @@ class APRSSettingsWin(tk.Toplevel):
         tab.columnconfigure(4, minsize=5, weight=0)
         call_label = ttk.Label(tab, text="Call:")
         call_label.grid(row=0, column=1, padx=10, pady=5, sticky=tk.W)
-        call_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['call'])
+        call_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['call'] , state='disabled')
         call_entry.grid(row=0, column=2, padx=10, pady=5, sticky=tk.W)
-        self.vars[-1]['call'].set(port_aprs.aprs_parm_call)
+        # self.vars[-1]['call'].set(port_aprs.aprs_parm_call)
 
         # Create DIGI checkbutton
         digi_checkbutton_label = ttk.Label(tab, text="DIGI:")
@@ -174,14 +174,14 @@ class APRSSettingsWin(tk.Toplevel):
         ind = 0
         aprs_station = {}
         for port_id in self.all_ports.keys():
-            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_call = self.vars[ind]['call'].get()
+            # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_call = self.vars[ind]['call'].get()
             # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_igate = self.vars[ind]['ais'].get()
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_digi = self.vars[ind]['digi'].get()
 
             self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self.vars[ind]['digi'].get()
             if self.ais is not None:
-                self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
+                # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
                 self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self.ais.ais_loc
             aprs_station[port_id] = self.all_ports[port_id].port_cfg.parm_aprs_station
             ind += 1
@@ -218,8 +218,9 @@ class APRSSettingsWin(tk.Toplevel):
             if self.ais_port_var.get().isdigit():
                 self.ais.ais_host = self.ais_host_var.get(), int(self.ais_port_var.get())
             self.ais.save_conf_to_file()
-            if self.ais.login():
-                self.port_handler.init_aprs_ais()
+            if self.ais.ais_active:
+                self.ais.login()
+            self.port_handler.init_aprs_ais()
 
     def on_ok_button(self):
         self.set_vars()

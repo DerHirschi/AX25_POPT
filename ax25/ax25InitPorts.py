@@ -83,8 +83,8 @@ class AX25PortHandler(object):
     def close_aprs_ais(self):
         if self.aprs_ais is None:
             return False
-        self.aprs_ais.loop_is_running = False
         self.aprs_ais.ais_close()
+        # self.aprs_ais.save_conf_to_file()
         del self.aprs_ais
         self.aprs_ais = None
         return True
@@ -181,9 +181,11 @@ class AX25PortHandler(object):
                 logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
 
     def init_aprs_ais(self):
-        if self.aprs_ais.ais is not None:
-            self.aprs_ais.loop_is_running = True
-            threading.Thread(target=self.aprs_ais.task).start()
+        if self.aprs_ais is not None:
+            self.aprs_ais.port_handler = self
+            if self.aprs_ais.ais is not None:
+                self.aprs_ais.loop_is_running = True
+                threading.Thread(target=self.aprs_ais.task).start()
 
     def save_all_port_cfgs(self):
         for port_id in self.ax25_ports.keys():

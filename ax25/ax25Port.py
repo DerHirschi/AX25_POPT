@@ -58,6 +58,9 @@ class AX25Port(threading.Thread):
         self.UI_buf: [AX25Frame] = []
         self.connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
+        """ APRS Stuff """
+        self.aprs_stat = self.port_cfg.parm_aprs_station
+        self.aprs_ais = self.port_handler.aprs_ais
         # CONFIG ENDE
         #############
         #############
@@ -122,6 +125,8 @@ class AX25Port(threading.Thread):
     def rx_handler(self, ax25_frame: AX25Frame):
         """ Main RX-Handler """
         self.reset_ft_wait_timer(ax25_frame)
+        if ax25_frame.ctl_byte.flag == 'UI':
+            self.rx_UI_handler(ax25_frame=ax25_frame)
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
             if self.rx_link_handler(ax25_frame=ax25_frame):
                 # Link Connection Handler
@@ -157,6 +162,16 @@ class AX25Port(threading.Thread):
         uid = str(ax25_frame.addr_uid)
         if uid in self.pipes.keys():
             self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
+            return True
+        return False
+
+    def rx_UI_handler(self, ax25_frame: AX25Frame):
+        # print(f"Port RX UI Handler - aprs_ais: {self.aprs_stat.aprs_ais}")
+        if self.aprs_ais is not None:
+            self.aprs_ais.aprs_ax25frame_rx(
+                port_id=self.port_id,
+                ax25_frame=ax25_frame
+            )
             return True
         return False
 

@@ -2,13 +2,13 @@ import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext, Label, Checkbutton
 
-from constant import ENCODINGS, STATION_TYPS
+from constant import ENCODINGS, STATION_TYPS, FONT
 
 # from gui.guiMainNew import TkMainWin
 
 #LOOP_DELAY = 50  # ms
 #TEXT_SIZE = 15
-FONT = "Courier"
+# FONT = "Courier"
 TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
 TXT_INP_CLR = 'yellow'

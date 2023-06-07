@@ -20,6 +20,7 @@ from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_
     get_kb_str_fm_bytes
 from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
+from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
@@ -215,6 +216,8 @@ class TkMainWin:
         self.MenuAPRS = Menu(self.menubar, tearoff=False)
         self.MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language], command=self.open_aismon_win,
                                   underline=0)
+        self.MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self.open_aprs_pn_msg_win,
+                                  underline=0)
         # self.MenuAPRS.add_separator()
         self.menubar.add_cascade(label="APRS", menu=self.MenuAPRS, underline=0)
 
@@ -331,6 +334,7 @@ class TkMainWin:
         self.mh_window = None
         self.locator_calc_window = None
         self.aprs_mon_win = None
+        self.aprs_pn_msg_win = None
         self.userDB_tree_win = None
         ###########################
         # Init
@@ -1122,6 +1126,13 @@ class TkMainWin:
         """ """
         if self.aprs_mon_win is None:
             AISmonitor(self)
+
+    ###################
+    # MH WIN
+    def open_aprs_pn_msg_win(self):
+        """ """
+        if self.aprs_pn_msg_win is None:
+            APRS_msg_SYS_PN(self)
 
     ###################
     # User-DB TreeView WIN

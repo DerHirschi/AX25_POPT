@@ -114,3 +114,13 @@ def find_decoding(inp: b''):
     if len(res) > 1:
         logging.warning(f"find_decoding() more then 1 Result: {res} inp: {inp}")
     return res[0]
+
+
+def convert_umlaute_to_ascii(in_str: str):
+    return in_str.replace('ä', 'ae')\
+        .replace('ö', 'oe')\
+        .replace('ü', 'ue')\
+        .replace('Ä', 'Ae')\
+        .replace('Ö', 'Oe')\
+        .replace('Ü', 'Ue')\
+        .replace('ß', 'ss')
