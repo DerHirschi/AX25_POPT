@@ -20,15 +20,23 @@ def parse_aprs_fm_ax25frame(ax25frame):
         # print(f"APRS Data decoding error: {ax25frame.data}")
         return {}
     try:
-        aprs_msg = aprslib.parse(aprs_msg_input)
+        return aprslib.parse(aprs_msg_input)
+    except aprslib.UnknownFormat:
+        return {}
+    except aprslib.ParseError as e:
+
+        return {}
+
+
+def parse_aprs_fm_aprsframe(aprs_frame):
+    try:
+        return aprslib.parse(aprs_frame)
     except aprslib.UnknownFormat:
         return {}
     except aprslib.ParseError as e:
         # print(e)
         # print(aprs_msg_input)
         return {}
-    else:
-        return aprs_msg
 
 
 def format_aprs_f_aprs_mon(aprs_frame, own_locator, add_new_user=False):
@@ -138,7 +146,8 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
         # print(f"{k}: {aprs_frame[k]}")
 
         if aprs_frame[k]:
-            if k not in ['from', 'to',  'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
+            # if k not in ['from', 'to',  'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
+            if k not in ['from', 'to',  'symbol_table', 'symbol', 'subpacket', 'weather']:
                 if k == 'via':
                     if aprs_frame[k]:
                         ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"

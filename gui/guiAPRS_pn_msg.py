@@ -37,10 +37,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
         button4 = ttk.Button(top_frame, text=STR_TABLE['new_msg'][self.lang], command=self.btn_new_msg)
         button4.pack(side=tk.LEFT, padx=5)
-        """
-        button5 = ttk.Button(top_frame, text="Button 5", command=self.button5_clicked)
-        button5.pack(side=tk.LEFT, padx=5)
 
+        button5 = ttk.Button(top_frame, text=STR_TABLE['del_all'][self.lang], command=self.btn_del_all_msg)
+        button5.pack(side=tk.LEFT, padx=5)
+        """"
         button6 = ttk.Button(top_frame, text="Button 6", command=self.button6_clicked)
         button6.pack(side=tk.LEFT, padx=5)
         """
@@ -233,6 +233,13 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self.selected_message_text.see(tk.END)
 
     def send_aprs_msg(self, event=None):
+        msg = self.out_text.get(0.0, tk.END)[:-1].replace('\n', '')
+        with_ack = False
+        if self.antwort_pack[1][1].get('msgNo', False):
+            with_ack = True
+        if self.aprs_ais.send_aprs_answer_msg(self.antwort_pack, msg, with_ack):
+            self.out_text.delete(0.0, tk.END)
+        """
         with_ack = False
         ack_nr = 0
         if self.antwort_pack:
@@ -259,7 +266,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                     else:
                         msg_text = f":{to_call.ljust(9)}:{el}"
                     if port_id == -1:
-                        self.aprs_ais.ais_pack_tcpip(from_call=from_call, msg=msg_text)
+                        self.aprs_ais.build_ais_pack(from_call=from_call, msg=msg_text)
                         self.out_text.delete(0.0, tk.END)
                     else:
                         ax_port = self.root_cl.ax25_port_handler.ax25_ports.get(port_id, False)
@@ -278,15 +285,20 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                                 own_call=from_call,
                                 add_str=add_str,
                                 text=msg_text,
+                                cmd_poll=(False, True)
                             )
                             self.out_text.delete(0.0, tk.END)
-
+        """
     def btn_close(self):
         self.destroy_win()
 
     def btn_new_msg(self):
         if self.new_msg_win is None:
             NewMessageWindow(self)
+
+    def btn_del_all_msg(self):
+        self.aprs_ais.ais_aprs_msg_pool['message'] = []
+        self.update_tree()
 
     def destroy_win(self):
         self.root_cl.aprs_pn_msg_win = None

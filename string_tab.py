@@ -15,6 +15,7 @@ STR_TABLE = {
     'OK': ('OK', 'OK', 'OK'),
     'cancel': ('Abbrechen', 'Cancel', 'Onderbreken'),
     'delete': ('Löschen', 'Delete', 'Lekker'),
+    'del_all': ('Alles Löschen', 'Delete all', 'Lekker Delete all'),
     'go': ('Los', 'Go', 'Lekker'),
     'close': ('Schließen', 'Close', 'Lekker'),
     'save': ('Speichern', 'Save', 'Lekker'),

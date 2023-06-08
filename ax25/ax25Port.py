@@ -495,9 +495,10 @@ class AX25Port(threading.Thread):
         try:
             frame.encode_ax25frame()
         except AX25EncodingERROR:
-            pass
+            return False
         else:
             self.UI_buf.append(frame)
+            return True
 
     def reset_ft_wait_timer(self, ax25_frame: AX25Frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
 from constant import APRS_SW_ID
 from fnc.str_fnc import convert_umlaute_to_ascii
 from string_tab import STR_TABLE
@@ -94,55 +95,29 @@ class NewMessageWindow(tk.Toplevel):
         self.bind('<Return>', self.send_message)
 
     def send_message(self, event=None):
-        with_ack = False
-        ack_nr = 0
-        msg = self.msg_entry.get(0.0, tk.END)[:-1]
-        msg_list = []
-        while len(msg) > 67:
-            msg_list.append(msg[:67])
-            msg = msg[67:]
-        msg_list.append(msg)
-        print(msg)
+        with_ack = self.ack_var.get()
+        msg = self.msg_entry.get(0.0, tk.END)[:-1].replace('\n', '')
         from_call = self.from_var.get()
-        print(from_call)
-
+        port_id = self.port_var.get()
+        if port_id.isdigit():
+            port_id = int(port_id)
         if from_call in self.port_handler.ax25_stations_settings:
             add_str = self.to_call_ent.get().upper()
             if add_str:
                 # to_call = APRS_SW_ID
                 tmp = add_str.split(' ')
                 to_call = tmp[0]
-                add_str = f"{APRS_SW_ID}"
-                for el in tmp[1:]:
-                    add_str += f" {el}"
-                # path = self.antwort_pack[1][1].get('path', '')
-                # print(path)
-                port_id = self.port_var.get()
-                if port_id != '':
-                    if port_id == 'I-NET':
-                        port_id = -1
-                    else:
-                        port_id = int(port_id)
-                    for el in msg_list:
-                        if with_ack:
-                            msg_text = f":{to_call.ljust(9)}:{el}" + "{" + f"{ack_nr}"
-                        else:
-                            msg_text = f":{to_call.ljust(9)}:{el}"
-                        if port_id == -1:
-                            self.aprs_root.aprs_ais.ais_pack_tcpip(from_call=from_call, msg=msg_text)
-                            self.destroy_win()
-                        else:
-                            ax_port = self.port_handler.ax25_ports.get(port_id, False)
-                            if ax_port:
-                                msg_text = convert_umlaute_to_ascii(msg_text).encode('ASCII', 'ignore')
+                path = tmp[1:]
+                aprs_str = f"{from_call}>{APRS_SW_ID}"
+                for el in path:
+                    aprs_str += f",{el}"
+                aprs_str += f"::{to_call.ljust(9)}:dummy"
+                aprs_pack = parse_aprs_fm_aprsframe(aprs_str)
+                if aprs_pack:
+                    aprs_pack['popt_port_id'] = port_id
+                    self.aprs_root.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
 
-                                print(add_str)
-                                ax_port.send_UI_frame(
-                                    own_call=from_call,
-                                    add_str=add_str,
-                                    text=msg_text,
-                                )
-                                self.destroy_win()
+                self.destroy_win()
 
     def destroy_win(self):
         self.aprs_root.new_msg_win = None
