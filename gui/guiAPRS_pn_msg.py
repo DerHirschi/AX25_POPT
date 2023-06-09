@@ -13,6 +13,7 @@ from string_tab import STR_TABLE
 class APRS_msg_SYS_PN(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
+        self.init_done = False
         self.root_cl = root_win
         self.root_cl.aprs_pn_msg_win = self
         self.lang = self.root_cl.language
@@ -72,7 +73,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.messages_treeview.column("from", stretch=tk.NO, width=130)
         self.messages_treeview.column("to", stretch=tk.NO, width=130)
         self.messages_treeview.column("via", stretch=tk.NO, width=130)
-        self.messages_treeview.column("msgno", stretch=tk.NO, width=80)
+        self.messages_treeview.column("msgno", stretch=tk.NO, width=60)
         self.messages_treeview.tag_configure("not_own", background='white', foreground='black')
         self.messages_treeview.tag_configure("is_own", background='green2', foreground='black')
 
@@ -108,14 +109,33 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                                 insertbackground='white'
                                 )
         self.out_text.pack(fill=tk.BOTH, expand=False)
-        """
+
         # Rechter Bereich: Scrolled Window für den fortlaufenden Text
         right_frame = ttk.Frame(mid_frame)
-        right_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
+        right_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=False)
+        selected_message_label = ttk.Label(right_frame, text='Spooler:')
+        selected_message_label.pack(anchor=tk.W, padx=5, pady=5)
+        sppol_tree_scrollbar = ttk.Scrollbar(right_frame)
+        sppol_tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.spooler_treeview = ttk.Treeview(
+            right_frame,
+            columns=("add", "port_id", 'msgno', 'N', "time"),
+            show="headings",
+            yscrollcommand=sppol_tree_scrollbar.set
+        )
+        self.spooler_treeview.heading("add", text="Address")
+        self.spooler_treeview.heading("port_id", text="Port")
+        self.spooler_treeview.heading("msgno", text="#")
+        self.spooler_treeview.heading("N", text="N")
+        self.spooler_treeview.heading("time", text="TX in")
 
-        scrolled_text = ScrolledText(right_frame, width=30)
-        scrolled_text.pack(fill=tk.BOTH, expand=True)
-        """
+        self.spooler_treeview.column("add", stretch=tk.NO, width=200)
+        self.spooler_treeview.column("port_id", stretch=tk.NO, width=60)
+        self.spooler_treeview.column("msgno", stretch=tk.NO, width=60)
+        self.spooler_treeview.column("N", stretch=tk.NO, width=20)
+        self.spooler_treeview.column("time", stretch=tk.NO, width=60)
+        self.spooler_treeview.pack(fill=tk.BOTH, expand=True)
+
         # Unterer Bereich: Rahmen für Buttons
         bottom_frame = ttk.Frame(self)
         bottom_frame.pack(side=tk.BOTTOM, padx=10, pady=10)
@@ -134,6 +154,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.is_in_update = False
         self.bind('<Return>', self.send_aprs_msg)
         self.update_tree()
+        self.init_done = True
 
     def update_tree(self):
         while self.is_in_update:
@@ -171,27 +192,51 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.is_in_update = False
 
     def update_tree_single_pack(self, form_aprs_pack):
-        self.is_in_update = True
-        self.aprs_pn_msg = list(self.aprs_ais.ais_aprs_msg_pool['message'])
-        self.aprs_pn_msg.reverse()
-        port_id = form_aprs_pack[0]
-        if port_id == -1:
-            port_id = 'I-NET'
-        if form_aprs_pack[1][1]['addresse'] in self.root_cl.ax25_port_handler.ax25_stations_settings:
-            is_own = 'is_own'
-        else:
-            is_own = 'not_own'
+        if self.init_done:
+            self.is_in_update = True
+            self.aprs_pn_msg = list(self.aprs_ais.ais_aprs_msg_pool['message'])
+            self.aprs_pn_msg.reverse()
+            port_id = form_aprs_pack[0]
+            if port_id == -1:
+                port_id = 'I-NET'
+            if form_aprs_pack[1][1]['addresse'] in self.root_cl.ax25_port_handler.ax25_stations_settings:
+                is_own = 'is_own'
+            else:
+                is_own = 'not_own'
 
-        new_tree_data = ((
-                     f"{form_aprs_pack[1][0]}",
-                     f"{port_id}",
-                     f"{form_aprs_pack[1][1]['from']}",
-                     f"{form_aprs_pack[1][1]['addresse']}",
-                     f"{form_aprs_pack[1][1].get('via', '')}",
-                     f"{form_aprs_pack[1][1].get('msgNo', '')}",
-                 ), is_own)
-        self.messages_treeview.insert('', 0, values=new_tree_data[0], tags=new_tree_data[1])
-        self.is_in_update = False
+            new_tree_data = ((
+                         f"{form_aprs_pack[1][0]}",
+                         f"{port_id}",
+                         f"{form_aprs_pack[1][1]['from']}",
+                         f"{form_aprs_pack[1][1]['addresse']}",
+                         f"{form_aprs_pack[1][1].get('via', '')}",
+                         f"{form_aprs_pack[1][1].get('msgNo', '')}",
+                     ), is_own)
+            self.messages_treeview.insert('', 0, values=new_tree_data[0], tags=new_tree_data[1])
+            self.is_in_update = False
+
+    def update_spooler_tree(self):
+        if self.init_done:
+            for i in self.spooler_treeview.get_children():
+                self.spooler_treeview.delete(i)
+            self.update()
+            tree_data = []
+            for msg_no in self.aprs_ais.spooler_buffer:
+                pack = self.aprs_ais.spooler_buffer[msg_no]
+                if not pack['send_timer']:
+                    tx_timer = pack['send_timer']
+                else:
+                    tx_timer = max(round(pack['send_timer'] - time.time()), 0)
+                tree_data.append((
+                    f"{pack['addresse']}",
+                    f"{pack['popt_port_id']}",
+                    f"{pack['msgNo']}",
+                    f"{pack['N']}",
+                    f"{tx_timer}",
+
+                ))
+            for ret_ent in tree_data:
+                self.spooler_treeview.insert('', tk.END, values=ret_ent)
 
     def entry_selected(self, event=None):
         selected_iid = self.messages_treeview.selection()

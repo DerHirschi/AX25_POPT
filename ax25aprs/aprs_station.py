@@ -149,6 +149,10 @@ class APRS_ais(object):
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
             self.spooler_task()
+            if self.port_handler is not None:
+                if self.port_handler.gui is not None:
+                    if self.port_handler.gui.aprs_pn_msg_win is not None:
+                        self.port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
 
     def task_halt(self):
         self.loop_is_running = False
@@ -300,7 +304,7 @@ class APRS_ais(object):
         pack['send_timer'] = 0
         pack['msgNo'] = str(self.ack_counter)
         pack['address_str'] = f"{pack['from']}:{pack['addresse']}"
-        self.spooler_buffer[str(self.ack_counter)] = pack
+        self.spooler_buffer[str(self.ack_counter)] = dict(pack)
         self.ack_counter = (self.ack_counter + 1) % 99999
 
     def del_fm_spooler(self, pack):
