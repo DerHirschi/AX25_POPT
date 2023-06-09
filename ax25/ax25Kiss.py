@@ -25,7 +25,8 @@ class Kiss(object):
         # self.START = b'$0'
         self.JHOST0 = bytes.fromhex('11241B404B0D')  # jhost0 - DC1+CAN+ESC+'@K'  Da fehlt aber noch CR
         # self.START_TNC2 = bytes.fromhex('11241B404B0D')  # TNC2 KISS MODE
-        self.START_TNC_DEFAULT = bytes.fromhex('1B404B')  # TNC2 KISS MODE   b'\x1b@K'
+        # self.START_TNC_DEFAULT = bytes.fromhex('1B404B')  # TNC2 KISS MODE   b'\x1b@K'
+        self.START_TNC_DEFAULT = b'KISS ON\r'  # TNC2 KISS MODE   b'\x1b@K'
         # ESC & END Flags
         self.FEND = b'\xC0'
         self.FESC = b'\xDB'
