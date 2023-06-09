@@ -83,6 +83,7 @@ class NewMessageWindow(tk.Toplevel):
                                     text="ACK",
                                     variable=self.ack_var,
                                     )
+        self.ack_var.set(True)
         ack_check.pack(side=tk.LEFT, padx=60)
 
 

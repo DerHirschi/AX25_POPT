@@ -2,10 +2,7 @@ import time
 import tkinter as tk
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
-from tkinter import messagebox
 
-from constant import APRS_SW_ID
-from fnc.str_fnc import convert_umlaute_to_ascii
 from gui.guiAPRSnewMSG import NewMessageWindow
 from string_tab import STR_TABLE
 
@@ -135,6 +132,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.spooler_treeview.column("N", stretch=tk.NO, width=20)
         self.spooler_treeview.column("time", stretch=tk.NO, width=60)
         self.spooler_treeview.pack(fill=tk.BOTH, expand=True)
+        but = ttk.Button(right_frame, text="Reset", command=self.btn_reset_spooler)
+        but.pack(side=tk.LEFT, padx=5)
+        but = ttk.Button(right_frame, text=STR_TABLE['delete'][self.lang], command=self.btn_del_spooler)
+        but.pack(side=tk.RIGHT, padx=5)
 
         # Unterer Bereich: Rahmen für Buttons
         bottom_frame = ttk.Frame(self)
@@ -172,7 +173,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             port_id = form_msg[0]
             if port_id == -1:
                 port_id = 'I-NET'
-            if form_msg[1][1]['addresse'] in self.root_cl.ax25_port_handler.ax25_stations_settings:
+            if form_msg[1][1]['addresse'] in self.root_cl.ax25_port_handler.ax25_stations_settings \
+                    or form_msg[1][1]['from'] in self.root_cl.ax25_port_handler.ax25_stations_settings:
                 is_own = 'is_own'
             else:
                 is_own = 'not_own'
@@ -199,7 +201,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             port_id = form_aprs_pack[0]
             if port_id == -1:
                 port_id = 'I-NET'
-            if form_aprs_pack[1][1]['addresse'] in self.root_cl.ax25_port_handler.ax25_stations_settings:
+            if form_aprs_pack[1][1]['addresse'] in self.root_cl.ax25_port_handler.ax25_stations_settings \
+                    or form_aprs_pack[1][1]['from'] in self.root_cl.ax25_port_handler.ax25_stations_settings:
                 is_own = 'is_own'
             else:
                 is_own = 'not_own'
@@ -228,7 +231,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                 else:
                     tx_timer = max(round(pack['send_timer'] - time.time()), 0)
                 tree_data.append((
-                    f"{pack['addresse']}",
+                    f"{pack['address_str']}",
                     f"{pack['popt_port_id']}",
                     f"{pack['msgNo']}",
                     f"{pack['N']}",
@@ -239,6 +242,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                 self.spooler_treeview.insert('', tk.END, values=ret_ent)
 
     def entry_selected(self, event=None):
+        show_no_dbl = True
         selected_iid = self.messages_treeview.selection()
         self.antwort_pack = ()
         if selected_iid:
@@ -248,32 +252,38 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             current_idx = self.messages_treeview.index(selected_iid)
             msg_id = f"{self.aprs_pn_msg[current_idx][1][1].get('from', '')}-{self.aprs_pn_msg[current_idx][1][1].get('addresse', '')}"
             self.antwort_pack = self.aprs_pn_msg[current_idx]
-            last_pack = []
+            dbl_pack = []
 
             for pack_msg in self.aprs_pn_msg[current_idx:][::-1]:
                 msg = ''
                 tag_ind_1 = self.selected_message_text.index(tk.INSERT)
                 if f"{pack_msg[1][1].get('from', '')}-{pack_msg[1][1].get('addresse', '')}" == msg_id \
                         or f"{pack_msg[1][1].get('addresse', '')}-{pack_msg[1][1].get('from', '')}" == msg_id:
-                    if pack_msg[1][1] not in last_pack:
-                        last_pack.append(pack_msg[1][1])
-                        msg += f"Time: {pack_msg[1][0]}".ljust(28)
-                        msg_nr = pack_msg[1][1].get('msgNo', '')
-                        if msg_nr != '':
-                            msg += f"Msg#: {msg_nr}\n"
-                        else:
+                    if show_no_dbl:
+                        if pack_msg[1][1] not in dbl_pack:
+                            msg_nr = pack_msg[1][1].get('msgNo', '')
+                            if msg_nr not in dbl_pack:
+                                dbl_pack.append(pack_msg[1][1])
+                                if msg_nr:
+                                    dbl_pack.append(msg_nr)
+                                msg += f"Time: {pack_msg[1][0]}".ljust(28)
+                                if msg_nr != '':
+                                    msg += f"Msg#: {msg_nr}\n"
+                                else:
 
-                            msg += '\n'
-                        msg += f"Path: {str(pack_msg[1][1].get('path', '')).replace('[', '').replace(']', '').replace(',', '')}\n".replace(
-                            "'", "")
-                        msg += f"From: {str(pack_msg[1][1].get('from', '')).ljust(22)}"
-                        msg += f"Via : {pack_msg[1][1].get('via', '')}\n"
+                                    msg += '\n'
+                                msg += f"Path: {str(pack_msg[1][1].get('path', '')).replace('[', '').replace(']', '').replace(',', '')}\n".replace(
+                                    "'", "")
+                                msg += f"From: {str(pack_msg[1][1].get('from', '')).ljust(22)}"
+                                msg += f"Via : {pack_msg[1][1].get('via', '')}\n"
 
-                        msg_text = pack_msg[1][1].get('message_text', '') + '\n\n'
+                                msg_text = pack_msg[1][1].get('message_text', '') + '\n\n'
 
-                        self.selected_message_text.insert(tk.END, msg)
-                        self.selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
-                        self.selected_message_text.insert(tk.END, msg_text)
+                                self.selected_message_text.insert(tk.END, msg)
+                                self.selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
+                                self.selected_message_text.insert(tk.END, msg_text)
+
+
             self.selected_message_text.config(state='disabled')
             self.selected_message_text.see(tk.END)
 
@@ -284,58 +294,17 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             with_ack = True
         if self.aprs_ais.send_aprs_answer_msg(self.antwort_pack, msg, with_ack):
             self.out_text.delete(0.0, tk.END)
-        """
-        with_ack = False
-        ack_nr = 0
-        if self.antwort_pack:
-            msg = self.out_text.get(0.0, tk.END)[:-1]
-            msg_list = []
-            while len(msg) > 67:
-                msg_list.append(msg[:67])
-                msg = msg[67:]
-            msg_list.append(msg)
-            print(msg)
-            from_call = self.antwort_pack[1][1].get('addresse', '')
-            print(from_call)
 
-            if from_call in self.root_cl.ax25_port_handler.ax25_stations_settings:
-                to_call = self.antwort_pack[1][1].get('from', '')
-                path = self.antwort_pack[1][1].get('path', '')
-                print(path)
-                port_id = self.antwort_pack[0]
-                if port_id == 'I-NET':
-                    port_id = -1
-                for el in msg_list:
-                    if with_ack:
-                        msg_text = f":{to_call.ljust(9)}:{el}" + "{" + f"{ack_nr}"
-                    else:
-                        msg_text = f":{to_call.ljust(9)}:{el}"
-                    if port_id == -1:
-                        self.aprs_ais.build_ais_pack(from_call=from_call, msg=msg_text)
-                        self.out_text.delete(0.0, tk.END)
-                    else:
-                        ax_port = self.root_cl.ax25_port_handler.ax25_ports.get(port_id, False)
-                        if ax_port:
-                            msg_text = convert_umlaute_to_ascii(msg_text).encode('ASCII', 'ignore')
-                            print(path)
-                            path.reverse()
-                            add_str = f"{APRS_SW_ID}"
-                            print(path)
-                            for elm in path:
-                                elm = elm.replace('*', '')
-                                add_str += f" {elm}"
-                            print(path)
-                            print(add_str)
-                            ax_port.send_UI_frame(
-                                own_call=from_call,
-                                add_str=add_str,
-                                text=msg_text,
-                                cmd_poll=(False, True)
-                            )
-                            self.out_text.delete(0.0, tk.END)
-        """
     def btn_close(self):
         self.destroy_win()
+
+    def btn_del_spooler(self):
+        if self.aprs_ais is not None:
+            self.aprs_ais.del_spooler()
+
+    def btn_reset_spooler(self):
+        if self.aprs_ais is not None:
+            self.aprs_ais.reset_spooler()
 
     def btn_new_msg(self):
         if self.new_msg_win is None:
