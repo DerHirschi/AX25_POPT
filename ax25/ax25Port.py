@@ -683,9 +683,11 @@ class KISSSerial(AX25Port):
                 logger.error('{}'.format(e))
             else:
                 if self.kiss.is_enabled:
+                    print(self.device.readall())
+                    #self.device.flush()
                     self.device.write(self.kiss.device_kiss_start_1())
-                    print(self.device.read())
-                    self.device.flush()
+                    print(self.device.readall())
+                    # print(self.device.read())
                     # self.device.write(self.kiss.device_jhost())
                     # self.device.write(b'\xc0\x10\x0c\xc0')
                     self.set_kiss_parm()
