@@ -605,7 +605,7 @@ class KissTCP(AX25Port):
                 if self.kiss.is_enabled:
                     # self.device.sendall(self.kiss.device_kiss_start_1())
                     self.device.sendall(self.kiss.device_jhost())
-                    print(self.device.recv(999))
+                    # print(self.device.recv(999))
 
                     self.set_kiss_parm()
 
