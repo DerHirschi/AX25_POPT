@@ -18,7 +18,9 @@ class AX25PortHandler(object):
         # DEBUGGER
         self.deb_port = {}
         self.deb_conn = {}
+        self.deb_mh = {}
         self.deb_glbs = {}
+        self.deb_gui = {}
         #################
         self.is_running = True
         self.max_ports = 20
@@ -373,12 +375,20 @@ class AX25PortHandler(object):
     def debug_fnc(self):
         print("--Port")
         self.deb_port = dict(show_mem_size(self.ax25_ports, previous_sizes=dict(self.deb_port)))
+        for p_id in self.ax25_ports:
+            self.ax25_ports[p_id].debug_show_var_size()
+
         print()
         print("--Conn")
-        self.deb_conn = dict(show_mem_size(self.all_connections,previous_sizes=dict(self.deb_conn)))
+        self.deb_conn = dict(show_mem_size(self.all_connections, previous_sizes=dict(self.deb_conn)))
         print()
-        #print("--GUI")
-        #show_mem_size(self.gui)
+        print("--InitPorts.self")
+        self.deb_conn = dict(show_mem_size(self.__dict__, previous_sizes=dict(self.deb_conn)))
+        print()
+
+        print("--MH")
+        self.deb_mh = dict(show_mem_size(self.mh.__dict__, previous_sizes=dict(self.deb_mh)))
+        print()
 
         print("--Globals")
         self.deb_glbs = dict(show_mem_size(globals(),previous_sizes=dict(self.deb_glbs)))

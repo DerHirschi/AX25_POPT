@@ -8,10 +8,10 @@ def show_mem_size(var_items, compare=True, previous_sizes={}):
         size = sys.getsizeof(obj)
         if compare:
             if var in previous_sizes and previous_sizes[var] != size:
-                print(str(var).ljust(20), size, "(changed from", previous_sizes[var], ")")
+                print(str(var).ljust(30), size, "(changed from", previous_sizes[var], ")")
             else:
-                print(str(var).ljust(20), size)
+                print(str(var).ljust(30), size)
         else:
-            print(str(var).ljust(20), size)
+            print(str(var).ljust(30), size)
 
     return {var: sys.getsizeof(obj) for var, obj in local_vars}

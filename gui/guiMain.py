@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 import constant
 from ax25.ax25monitor import monitor_frame_inp
+from fnc.debug_fnc import show_mem_size
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
 from gui.guiAISmon import AISmonitor
@@ -88,6 +89,7 @@ class ChVars(object):
 class TkMainWin:
     def __init__(self, glb_ax25port_handler):
         self.language = LANGUAGE
+        self.deb_gui = {}
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
@@ -1331,6 +1333,9 @@ class TkMainWin:
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
+
+        print("--GUI")
+        self.deb_gui = show_mem_size(self.__dict__, previous_sizes=self.deb_gui)
         self.debug_fnc()
         """
         self.ax25_port_handler.new_outgoing_connection(

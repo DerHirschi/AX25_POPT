@@ -12,6 +12,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
+from fnc.debug_fnc import show_mem_size
 from fnc.os_fnc import is_linux
 # from ax25.ax25monitor import monitor_frame_inp
 from fnc.socket_fnc import get_ip_by_hostname
@@ -33,6 +34,8 @@ class AX25Port(threading.Thread):
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
+        self.deb_port_vars = {}
+
         """ self.ax25_port_handler will be set in AX25PortInit """
         # self.ax25_ports: {int: AX25Port}    # TODO Check if needed
         ############
@@ -84,6 +87,11 @@ class AX25Port(threading.Thread):
     def __del__(self):
         self.close()
         # self.loop_is_running = False
+
+    def debug_show_var_size(self):
+        print()
+        print(f"--Port: {self.port_id}")
+        self.deb_port_vars = show_mem_size(self.__dict__, previous_sizes=self.deb_port_vars)
 
     def set_kiss_parm(self):
         pass
