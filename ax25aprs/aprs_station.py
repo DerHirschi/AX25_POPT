@@ -199,32 +199,37 @@ class APRS_ais(object):
     #########################################
     # APRS MSG System
     def aprs_msg_sys_rx(self, port_id, aprs_pack: {}):
-        if "format" in aprs_pack:
-            if aprs_pack['format'] in ['message', 'bulletin']:
-                formated_pack = (port_id,
-                                 (datetime.now().strftime('%d/%m/%y %H:%M:%S'), aprs_pack)
-                                 )
-                if 'message_text' in aprs_pack:
-                    if 'message' == aprs_pack['format']:
-                        if formated_pack not in self.ais_aprs_msg_pool['message']:
-                            if [port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''), aprs_pack.get('message_text', '')] not in self.dbl_pack:
-                                self.dbl_pack.append([port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''), aprs_pack.get('message_text', '')])
-                                self.ais_aprs_msg_pool['message'].append(formated_pack)
-                                self.aprs_msg_sys_new_pn(formated_pack)
-                                print(f"aprs PN-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
-                        if aprs_pack.get('msgNo', False):
-                            self.send_ack(formated_pack)
-                        self.reset_address_in_spooler(aprs_pack)
-                    elif 'bulletin' == aprs_pack['format']:
-                        if formated_pack not in self.ais_aprs_msg_pool['bulletin']:
-                            self.ais_aprs_msg_pool['bulletin'].append(formated_pack)
-                            self.aprs_msg_sys_new_bn(formated_pack)
-                            print(
-                                f"aprs Bulletin-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
+        if aprs_pack.get('format', '') == 'thirdparty':
+            print(f"THP > {aprs_pack['subpacket']}")
+            path = aprs_pack.get('path', [])
+            aprs_pack = dict(aprs_pack['subpacket'])
+            aprs_pack['path'] = path
 
-                elif 'response' in aprs_pack:
-                    aprs_pack['popt_port_id'] = port_id
-                    self.handle_response(pack=aprs_pack)
+        if aprs_pack.get('format', '') in ['message', 'bulletin']:
+            formated_pack = (port_id,
+                             (datetime.now().strftime('%d/%m/%y %H:%M:%S'), aprs_pack)
+                             )
+            if 'message_text' in aprs_pack:
+                if 'message' == aprs_pack['format']:
+                    if formated_pack not in self.ais_aprs_msg_pool['message']:
+                        if [port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''), aprs_pack.get('message_text', '')] not in self.dbl_pack:
+                            self.dbl_pack.append([port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''), aprs_pack.get('message_text', '')])
+                            self.ais_aprs_msg_pool['message'].append(formated_pack)
+                            self.aprs_msg_sys_new_pn(formated_pack)
+                            print(f"aprs PN-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
+                    if aprs_pack.get('msgNo', False):
+                        self.send_ack(formated_pack)
+                    self.reset_address_in_spooler(aprs_pack)
+                elif 'bulletin' == aprs_pack['format']:
+                    if formated_pack not in self.ais_aprs_msg_pool['bulletin']:
+                        self.ais_aprs_msg_pool['bulletin'].append(formated_pack)
+                        self.aprs_msg_sys_new_bn(formated_pack)
+                        print(
+                            f"aprs Bulletin-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
+
+            elif 'response' in aprs_pack:
+                aprs_pack['popt_port_id'] = port_id
+                self.handle_response(pack=aprs_pack)
 
     def handle_response(self, pack):
         if pack.get('msgNo', False):
@@ -259,7 +264,7 @@ class APRS_ais(object):
         if aprs_pack:
             msg_format = aprs_pack.get("format", '')
             if msg_format:
-                if msg_format in ['message', 'bulletin']:
+                if msg_format in ['message', 'bulletin', 'thirdparty']:
                     self.aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
 
     def send_aprs_answer_msg(self, answer_pack, msg='', with_ack=False):

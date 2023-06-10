@@ -1331,6 +1331,7 @@ class TkMainWin:
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
+        self.debug_fnc()
         """
         self.ax25_port_handler.new_outgoing_connection(
             dest_call='DNX527',
@@ -1340,6 +1341,8 @@ class TkMainWin:
             channel=12
         )
         """
+    def debug_fnc(self):
+        self.ax25_port_handler.debug_fnc()
 
     def do_priv(self, event=None, login_cmd=''):
         conn = self.get_conn()

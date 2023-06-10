@@ -92,6 +92,7 @@ class PortStatDB(object):
         return ret
 
     def input(self, ax_frame: AX25Frame):
+        # print(self.stat_DB_days.keys())
         # now = datetime.now().strftime('%d/%m/%y %H:%M:%S')
         self.input_bw_calc(ax_frame=ax_frame)
         # date_str = '0' # TODO save Data to file. RAM is running full after couple of days running.
@@ -130,7 +131,7 @@ class PortStatDB(object):
         elif ax_frame.ctl_byte.flag == 'DISC':
             self.stat_DB_days[date_str][hour].DISC_packets_hr[minute] += len(ax_frame.bytes)
         self.stat_DB_days[date_str][hour].ALL_data_hr[minute] += len(ax_frame.bytes)
-        self.stat_DB_days[date_str][hour].DATA_data_hr[minute] += ax_frame.data_len
+        self.stat_DB_days[date_str][hour].DATA_data_hr[minute] += int(ax_frame.data_len)
 
     def input_bw_calc(self, ax_frame: AX25Frame = None):
         if ax_frame is not None:

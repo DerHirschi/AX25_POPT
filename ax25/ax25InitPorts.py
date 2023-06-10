@@ -6,6 +6,7 @@ from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from config_station import *
+from fnc.debug_fnc import show_mem_size
 from gui.guiRxEchoSettings import RxEchoVars
 
 
@@ -13,6 +14,12 @@ class AX25PortHandler(object):
     def __init__(self):
         logger.info("Port Init.")
         config_station.init_dir_struct()
+        ###########
+        # DEBUGGER
+        self.deb_port = {}
+        self.deb_conn = {}
+        self.deb_glbs = {}
+        #################
         self.is_running = True
         self.max_ports = 20
         self.ax25types = {
@@ -363,3 +370,15 @@ class AX25PortHandler(object):
                 res[ch_id] = tmp
         return res
 
+    def debug_fnc(self):
+        print("--Port")
+        self.deb_port = dict(show_mem_size(self.ax25_ports, previous_sizes=dict(self.deb_port)))
+        print()
+        print("--Conn")
+        self.deb_conn = dict(show_mem_size(self.all_connections,previous_sizes=dict(self.deb_conn)))
+        print()
+        #print("--GUI")
+        #show_mem_size(self.gui)
+
+        print("--Globals")
+        self.deb_glbs = dict(show_mem_size(globals(),previous_sizes=dict(self.deb_glbs)))
