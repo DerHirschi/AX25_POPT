@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.89.6dev'
+VER = '2.89.7dev'
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {
@@ -170,3 +170,13 @@ ASCII_0 = 48
 ASCII_A = 65
 ASCII_a = 97
 FONT = "Courier"
+
+POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
+              '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
+              '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
+              '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
+              '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
+              '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
+              '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
+              '\__|yton   \______/ther\__|acket   \__|erminal\r' \
+              'Version: {}\r'

@@ -1,5 +1,3 @@
-import threading
-
 import config_station
 from ax25.ax25Port import *
 from UserDB.UserDBmain import USER_DB
@@ -195,7 +193,7 @@ class AX25PortHandler(object):
             self.aprs_ais.port_handler = self
             if self.aprs_ais.ais is not None:
                 self.aprs_ais.loop_is_running = True
-                threading.Thread(target=self.aprs_ais.task).start()
+                threading.Thread(target=self.aprs_ais.ais_rx_task).start()
 
     def save_all_port_cfgs(self):
         for port_id in self.ax25_ports.keys():

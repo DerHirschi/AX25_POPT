@@ -211,6 +211,22 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
     return ret, dist
 
 
+def extract_ack(text):
+    start_index = text.find('{')  # Finde den Index der ersten öffnenden Klammer
+    end_index = text.find('}')    # Finde den Index der ersten schließenden Klammer
+
+    if start_index == -1 or end_index == -1:  # Überprüfe, ob beide Klammern im String vorhanden sind
+        return text, None
+
+    value = text[start_index + 1:end_index]  # Extrahiere den Wert zwischen den Klammern
+
+    if start_index > 0:  # Überprüfe, ob es Text vor der öffnenden Klammer gibt
+        text_before = text[:start_index]  # Extrahiere den Text vor der öffnenden Klammer
+        return text_before, value
+
+    return '', value
+
+
 def decimal_degrees_to_aprs(latitude, longitude):
     """ By ChatGP """
     lat_degrees = abs(int(latitude))

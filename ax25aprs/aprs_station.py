@@ -4,7 +4,7 @@ import aprslib
 import logging
 from datetime import datetime
 
-from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe
+from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack
 from constant import APRS_SW_ID
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
 from fnc.str_fnc import convert_umlaute_to_ascii
@@ -137,18 +137,21 @@ class APRS_ais(object):
         return True
 
     def task(self):
-        while self.loop_is_running:
-            self.prio_tasks()
-            self.non_prio_tasks()
-            time.sleep(0.1)
-        print("APRS-AIS Loop END")
-        logger.info("APRS-AIS Loop END")
+        # while self.loop_is_running:
+        self.prio_tasks()
+        self.non_prio_tasks()
+        # time.sleep(0.15)
+        # print("APRS-AIS Loop END")
+        # logger.info("APRS-AIS Loop END")
 
     def prio_tasks(self):
-        self.ais_rx_task()
+        pass
+        # self.ais_rx_task()
 
     def non_prio_tasks(self):
+        # print("non Prio")
         if time.time() > self.non_prio_task_timer:
+            # self.ais_rx_task()
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
             if self.del_spooler_tr:
                 self.flush_spooler_buff()
@@ -165,10 +168,16 @@ class APRS_ais(object):
     def ais_rx_task(self):
         if self.ais is not None:
             if self.ais_active:
-                self.ais.consumer(self.callback,
-                                  blocking=False,
-                                  immortal=True,  # TODO reconnect handling
-                                  raw=False)
+                print("Consumer")
+                try:
+                    self.ais.consumer(self.callback,
+                                      blocking=True,
+                                      immortal=True,  # TODO reconnect handling
+                                      raw=False)
+                except ValueError:
+                    self.ais_active = False
+                    del self.ais
+                    self.ais = None
 
     def ais_tx(self, ais_pack):
         if self.ais is not None:
@@ -200,10 +209,13 @@ class APRS_ais(object):
     # APRS MSG System
     def aprs_msg_sys_rx(self, port_id, aprs_pack: {}):
         if aprs_pack.get('format', '') == 'thirdparty':
-            print(f"THP > {aprs_pack['subpacket']}")
+            # print(f"THP > {aprs_pack['subpacket']}")
             path = aprs_pack.get('path', [])
             aprs_pack = dict(aprs_pack['subpacket'])
             aprs_pack['path'] = path
+            aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
+            if ack is not None:
+                aprs_pack['msgNo'] = ack
 
         if aprs_pack.get('format', '') in ['message', 'bulletin']:
             formated_pack = (port_id,

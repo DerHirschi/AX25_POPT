@@ -43,9 +43,12 @@ def locator_to_coordinates(locator):
     '''
 
     # Validate input
-    assert isinstance(locator, str)
-    assert 4 <= len(locator) <= 8
-    assert len(locator) % 2 == 0
+    try:
+        assert isinstance(locator, str)
+        assert 4 <= len(locator) <= 8
+        assert len(locator) % 2 == 0
+    except AssertionError:
+        return 0, 0
 
     qth_locator = locator.upper()
 

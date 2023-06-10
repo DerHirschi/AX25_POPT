@@ -10,8 +10,7 @@ import sys
 import gtts
 from gtts import gTTS
 
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg)
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
 import matplotlib.pyplot as plt
 
 import constant
@@ -44,7 +43,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import ALL_COLOURS, FONT
+from constant import ALL_COLOURS, FONT, POPT_BANNER
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -94,6 +93,7 @@ class TkMainWin:
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
         self.mh = self.ax25_port_handler.mh
+        self.aprs_ais = self.ax25_port_handler.aprs_ais
         # self.user_db = USER_DB
         self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
@@ -404,15 +404,7 @@ class TkMainWin:
         self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
         self.sprech(random.choice(speech))
         self.language = int(tmp_lang)
-        ban = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
-              '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
-              '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
-              '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
-              '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
-              '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
-              '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
-              '\__|yton   \______/ther\__|acket   \__|erminal\r' \
-              'Version: {}\r'.format(constant.VER)
+        ban = POPT_BANNER.format(constant.VER)
         tmp = ban.split('\r')
         for el in tmp:
             self.msg_to_monitor(el)
@@ -518,10 +510,6 @@ class TkMainWin:
     def set_binds(self):
         self.inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
 
-    """
-    def callback(self, event):
-        print("pressed ", event.keysym, " ", event.keysym_num)
-    """
 
     def set_keybinds(self):
         self.main_win.unbind("<Key-F10>")
@@ -795,7 +783,7 @@ class TkMainWin:
     def tasker_low_prio(self):
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
-            # APRS_AIS.task()
+            self.aprs_task()
             self.monitor_task()
             self.update_qso_win()
             self.txt_win.update_status_win()
@@ -819,6 +807,10 @@ class TkMainWin:
                 self.settings_win.tasker()
             if self.aprs_mon_win is not None:
                 self.aprs_mon_win.tasker()
+
+    def aprs_task(self):
+        if self.aprs_ais is not None:
+            self.aprs_ais.task()
 
     #################################
     # TASKS
@@ -1337,15 +1329,8 @@ class TkMainWin:
         print("--GUI")
         self.deb_gui = show_mem_size(self.__dict__, previous_sizes=self.deb_gui)
         self.debug_fnc()
-        """
-        self.ax25_port_handler.new_outgoing_connection(
-            dest_call='DNX527',
-            own_call='MD4TES',
-            # via_calls=['DX0SAW'],
-            # exclusive=True
-            channel=12
-        )
-        """
+
+
     def debug_fnc(self):
         self.ax25_port_handler.debug_fnc()
 
