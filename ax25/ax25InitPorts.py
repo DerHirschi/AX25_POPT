@@ -18,6 +18,7 @@ class AX25PortHandler(object):
         # DEBUGGER
         self.deb_port = {}
         self.deb_conn = {}
+        self.deb_self = {}
         self.deb_mh = {}
         self.deb_glbs = {}
         self.deb_gui = {}
@@ -383,7 +384,7 @@ class AX25PortHandler(object):
         self.deb_conn = dict(show_mem_size(self.all_connections, previous_sizes=dict(self.deb_conn)))
         print()
         print("--InitPorts.self")
-        self.deb_conn = dict(show_mem_size(self.__dict__, previous_sizes=dict(self.deb_conn)))
+        self.deb_self = dict(show_mem_size(self.__dict__, previous_sizes=dict(self.deb_self)))
         print()
 
         print("--MH")
