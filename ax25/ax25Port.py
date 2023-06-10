@@ -605,7 +605,8 @@ class KissTCP(AX25Port):
                 if self.kiss.is_enabled:
                     # self.device.sendall(self.kiss.device_kiss_start_1())
                     self.device.sendall(self.kiss.device_jhost())
-                    # self.device.sendall(self.kiss.device_kiss_start_1())
+                    print(self.device.recv(999))
+
                     self.set_kiss_parm()
 
     def __del__(self):
@@ -683,6 +684,8 @@ class KISSSerial(AX25Port):
             else:
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_start_1())
+                    print(self.device.read())
+                    self.device.flush()
                     # self.device.write(self.kiss.device_jhost())
                     # self.device.write(b'\xc0\x10\x0c\xc0')
                     self.set_kiss_parm()
