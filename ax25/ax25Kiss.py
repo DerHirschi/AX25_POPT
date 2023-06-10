@@ -114,7 +114,8 @@ class Kiss(object):
         return inp
 
     def device_kiss_end(self):
-        return b''.join([self.FEND, self.RETURN, self.FEND])
+        # return b''.join([self.FEND, self.RETURN, self.FEND])
+        return bytes.fromhex('C0FFC0')
 
     def device_jhost(self):
         return self.JHOST0

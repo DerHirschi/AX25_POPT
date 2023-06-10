@@ -683,10 +683,12 @@ class KISSSerial(AX25Port):
                 logger.error('{}'.format(e))
             else:
                 if self.kiss.is_enabled:
-                    print(self.device.readall())
+                    tnc_banner = self.device.readall().decode('UTF-8', 'ignore')
+                    logger.info(f"TNC-Banner: {tnc_banner}")
+                    print(f"TNC-Banner: {tnc_banner}")
                     #self.device.flush()
                     self.device.write(self.kiss.device_kiss_start_1())
-                    print(self.device.readall())
+                    self.device.readall()
                     # print(self.device.read())
                     # self.device.write(self.kiss.device_jhost())
                     # self.device.write(b'\xc0\x10\x0c\xc0')
@@ -700,10 +702,8 @@ class KISSSerial(AX25Port):
         if self.device is not None:
             try:
                 # Deactivate KISS Mode on TNC
-                """
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_end())
-                """
                 if is_linux():
                     try:
                         self.device.flush()
