@@ -4,8 +4,26 @@ from math import floor
 from constant import ASCII_0, ASCII_A, ASCII_a
 
 
+def decimal_degrees_to_aprs(latitude, longitude):
+    """ By ChatGPT """
+    lat_degrees = abs(int(latitude))
+    lat_minutes = abs(int((latitude - lat_degrees) * 60))
+    lat_seconds = abs(round(((latitude - lat_degrees) * 60 - lat_minutes) * 60))
+    lat_direction = 'N' if latitude >= 0 else 'S'
+
+    lon_degrees = abs(int(longitude))
+    lon_minutes = abs(int((longitude - lon_degrees) * 60))
+    lon_seconds = abs(round(((longitude - lon_degrees) * 60 - lon_minutes) * 60))
+    lon_direction = 'E' if longitude >= 0 else 'W'
+
+    aprs_latitude = f"{lat_degrees:02d}{lat_minutes:02d}.{lat_seconds:02d}{lat_direction}"
+    aprs_longitude = f"{lon_degrees:03d}{lon_minutes:02d}.{lon_seconds:02d}{lon_direction}"
+
+    return aprs_latitude, aprs_longitude
+
+
 def locator_distance(locator1, locator2):
-    """By: ChatGP"""
+    """By: ChatGPT"""
     lat1, lon1 = locator_to_coordinates(locator1)
     lat2, lon2 = locator_to_coordinates(locator2)
 
@@ -26,6 +44,36 @@ def locator_distance(locator1, locator2):
     distance = earth_radius * c
 
     return round(distance, 1)
+
+
+"""
+Source: https://github.com/4x1md/qth_locator_functions
+@author: 4X5DM
+Original license location: doc/qth_locator_functions-master/LICENSE
+
+MIT License
+
+Copyright (c) 2017 Dmitry Melnichansky
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+"""
 
 
 def locator_to_coordinates(locator):
@@ -167,34 +215,3 @@ def coordinates_to_locator(latitude, longitude):
 
     return qth_locator
 
-# print(coordinates_to_locator(latitude=43.456833333333336, longitude=1.325))
-
-
-"""
-Source: https://github.com/4x1md/qth_locator_functions
-@author: 4X5DM
-Original license location: doc/qth_locator_functions-master/LICENSE
-
-MIT License
-
-Copyright (c) 2017 Dmitry Melnichansky
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-"""

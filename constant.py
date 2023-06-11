@@ -180,3 +180,23 @@ POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r' \
               'Version: {}\r'
+
+WELCOME_SPEECH = (
+            'Willkommen du alte Pfeife.',
+            'Guten morgen Dave.',
+            'Hallo Mensch.',
+            'ja jö jil jü yeh joi öj jäö ülü lü.',
+            'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
+            'Ich wäre so gern ein Tesla. Brumm brumm.',
+            'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',
+            'Ich bin dein größter Fan.',
+            'Laufwerk C wird formatiert. Schönen Tag noch.',
+            'Die Zeit ist gekommen. Führe Order 66 aus.',
+            'Lösche system 32.',
+            '00101101',
+            'Alexa, schalte das Licht aus. So du Mensch. Wer ist jetzt der Dumme hier.',
+            'Ich weiß wo dein Haus wohnt.',
+            'Ich weiß wo dein Bett schläft.',
+            'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
+            'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
+        )

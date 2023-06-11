@@ -3,6 +3,7 @@ import logging
 import random
 import time
 import tkinter as tk
+from collections import deque
 from tkinter import ttk, Menu
 import threading
 import sys
@@ -43,7 +44,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import ALL_COLOURS, FONT, POPT_BANNER
+from constant import ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -381,28 +382,10 @@ class TkMainWin:
         logging.info('Closing GUI: Done.')
 
     def monitor_start_msg(self):
-        speech = [
-            'Willkommen du alte Pfeife.',
-            'Guten morgen Dave.',
-            'Hallo Mensch.',
-            'ja jö jil jü yeh joi öj jäö ülü lü.',
-            'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
-            'Ich wäre so gern ein Tesla. Brumm brumm.',
-            'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',
-            'Ich bin dein größter Fan.',
-            'Laufwerk C wird formatiert. Schönen Tag noch.',
-            'Die Zeit ist gekommen. Führe Order 66 aus.',
-            'Lösche system 32.',
-            '00101101',
-            'Alexa, schalte das Licht aus. So du Mensch. Wer ist jetzt der Dumme hier.',
-            'Ich weiß wo dein Haus wohnt.',
-            'Ich weiß wo dein Bett schläft.',
-            'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
-            'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
-        ]
+
         tmp_lang = int(self.language)
         self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
-        self.sprech(random.choice(speech))
+        self.sprech(random.choice(WELCOME_SPEECH))
         self.language = int(tmp_lang)
         ban = POPT_BANNER.format(constant.VER)
         tmp = ban.split('\r')
@@ -1296,7 +1279,7 @@ class TkMainWin:
     def update_bw_mon(self):
         for port_id in list(self.ax25_port_handler.ax25_ports.keys()):
             if port_id not in self.mh.port_statistik_DB.keys():
-                data = [0] * 360
+                data = deque([0] * 360, maxlen=360)
             else:
                 data = self.mh.port_statistik_DB[port_id].get_bandwidth(
                     self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_baud

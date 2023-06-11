@@ -227,30 +227,5 @@ def extract_ack(text):
     return '', value
 
 
-def decimal_degrees_to_aprs(latitude, longitude):
-    """ By ChatGP """
-    lat_degrees = abs(int(latitude))
-    lat_minutes = abs(int((latitude - lat_degrees) * 60))
-    lat_seconds = abs(round(((latitude - lat_degrees) * 60 - lat_minutes) * 60))
-    lat_direction = 'N' if latitude >= 0 else 'S'
 
-    lon_degrees = abs(int(longitude))
-    lon_minutes = abs(int((longitude - lon_degrees) * 60))
-    lon_seconds = abs(round(((longitude - lon_degrees) * 60 - lon_minutes) * 60))
-    lon_direction = 'E' if longitude >= 0 else 'W'
-
-    aprs_latitude = f"{lat_degrees:02d}{lat_minutes:02d}.{lat_seconds:02d}{lat_direction}"
-    aprs_longitude = f"{lon_degrees:03d}{lon_minutes:02d}.{lon_seconds:02d}{lon_direction}"
-
-    return aprs_latitude, aprs_longitude
-
-"""
-# Example usage
-latitude = 52.8526
-longitude = 11.1634
-aprs_latitude, aprs_longitude = decimal_degrees_to_aprs(latitude, longitude)
-
-print(f"APRS Latitude: {aprs_latitude}")
-print(f"APRS Longitude: {aprs_longitude}")
-"""
 
