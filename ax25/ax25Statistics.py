@@ -2,6 +2,7 @@
 Nightmare !!!
 TODO: Cleanup
 """
+from collections import deque
 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import matplotlib.pyplot as plt
@@ -407,16 +408,20 @@ class PortStatDB(object):
 
     def get_bandwidth(self, baud=1200):
         self.input_bw_calc()
-        ret = []
-        now = datetime.now().strftime('%M:%S')[:-1]
+        ret = deque([0] * 100, maxlen=100)
+        now = datetime.now()
+        ten_minutes_ago = now - timedelta(minutes=10)
         minutes = list(self.bandwidth.keys())
         minutes.reverse()
-        ind = minutes.index(now)
-        new_key_list = minutes[ind:] + minutes[:ind]
+        ind = minutes.index(now.strftime('%M:%S')[:-1])
+        ind2 = minutes.index(ten_minutes_ago.strftime('%M:%S')[:-1])
+        new_key_list = minutes[ind:ind2 + 1]
+        i = 0
         for k in new_key_list:
             byt = int(self.bandwidth[k])
             f = (((byt * 8) / 10) * 100) / baud
-            ret.append(f)
+            ret[i] = round(f)
+            i += 1
         return ret
 
 

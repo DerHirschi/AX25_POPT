@@ -11,8 +11,11 @@ import sys
 import gtts
 from gtts import gTTS
 
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
-import matplotlib.pyplot as plt
+#from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
+#import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 
 import constant
 from ax25.ax25monitor import monitor_frame_inp
@@ -330,20 +333,23 @@ class TkMainWin:
         ############################
         # Canvas Plot ( TEST )
         # plt.ion()
-        self.bw_fig = plt.figure(figsize=(8, 4.5), dpi=80)
-        plt.style.use('dark_background')
+        self.bw_fig = Figure(figsize=(8, 4.5), dpi=80)
+        # plt.style.use('dark_background')
         self.ax = self.bw_fig.add_subplot(111)
-        self.ax.axis([0, 59, 0, 100])
+        self.ax.axis([0, 10, 0, 100])
         self.bw_fig.set_facecolor('xkcd:light grey')
-        # self.ax.set_facecolor('xkcd:silver')
+        self.ax.set_facecolor('#000000')
+        # self.bw_fig.xlim(0, 10)  # TODO As Option
         self.ax.xaxis.label.set_color('black')
         self.ax.yaxis.label.set_color('black')
         self.ax.tick_params(axis='x', colors='black')
         self.ax.tick_params(axis='y', colors='black')
+        self.ax.set_xlabel(STR_TABLE['minutes'][self.language])
+        self.ax.set_ylabel(STR_TABLE['occup'][self.language])
         self.bw_plot_lines = {}
-        plt.xlabel(STR_TABLE['minutes'][self.language])
-        plt.xlim(0, 10)  # TODO As Option
-        plt.ylabel(STR_TABLE['occup'][self.language])
+        # plt.xlabel(STR_TABLE['minutes'][self.language])
+        # plt.xlim(0, 10)  # TODO As Option
+        # plt.ylabel(STR_TABLE['occup'][self.language])
         canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
         canvas.draw()
         canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
@@ -551,20 +557,6 @@ class TkMainWin:
     def any_key(self, event: tk.Event):
         if event.keycode == 104:  # Numpad Enter
             self.snd_text(event)
-            # self.inp_txt.insert(tk.INSERT, '\n')
-        """
-        if event.keycode == 86:     # Num +
-            self.increase_textsize()
-        elif event.keycode == 82:   # Num -
-            self.decrease_textsize()
-        """
-        # print(event)
-        """
-        if self.inp_txt.focus_get() != self.inp_txt:
-            self.inp_txt.focus_set()
-            self.inp_txt.insert(tk.INSERT, event.char)
-        """
-        # self.on_click_inp_txt()
 
     def arrow_keys(self, event=None):
         self.on_click_inp_txt()
@@ -1218,7 +1210,7 @@ class TkMainWin:
     def update_bw_mon(self):
         for port_id in list(self.ax25_port_handler.ax25_ports.keys()):
             if port_id not in self.mh.port_statistik_DB.keys():
-                data = deque([0] * 360, maxlen=360)
+                data = deque([0] * 100, maxlen=100)
             else:
                 data = self.mh.port_statistik_DB[port_id].get_bandwidth(
                     self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_baud
@@ -1228,21 +1220,16 @@ class TkMainWin:
                 # print(data)
                 label = '{}'.format(self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_PortName)
                 x_scale = []
-                for i in list(range(360)):
+                for i in list(range(100)):
                     x_scale.append(i / 10)
                 # x_scale = list(range(360))
                 self.bw_plot_lines[port_id], = self.ax.plot(x_scale, data, label=label)
-                plt.legend()
+                self.ax.legend()
             else:
                 self.bw_plot_lines[port_id].set_ydata(data)
-        """
-        for port_id in list(self.bw_plot_lines.keys()):
-            if port_id not in list(self.ax25_port_handler.ax25_ports.keys()):
-                self.bw_plot_lines[port_id].clf()
-                plt.legend()
-        """
+
         self.bw_fig.canvas.draw()
-        self.bw_fig.canvas.flush_events()
+        # self.bw_fig.canvas.flush_events()
 
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
@@ -1251,7 +1238,6 @@ class TkMainWin:
         print("--GUI")
         self.deb_gui = show_mem_size(self.__dict__, previous_sizes=self.deb_gui)
         self.debug_fnc()
-
 
     def debug_fnc(self):
         self.ax25_port_handler.debug_fnc()
