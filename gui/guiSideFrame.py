@@ -157,7 +157,7 @@ class SideTabbedFrame:
 
         link_holder_settings_btn = tk.Button(tab1_kanal,
                                              text='Linkhalter',
-                                             command=self.main_win.open_linkholder_settings_win
+                                             command=lambda: self.main_win.open_settings_window('l_holder')
                                              )
         link_holder_settings_btn.place(x=140, y=165)
         # RTT
@@ -224,7 +224,7 @@ class SideTabbedFrame:
                                               mode='determinate',
                                               )
         self.ft_progress.place(x=_x, y=_y)
-        self.ft_progress.bind('<Button-1>', self.main_win.open_ft_manager)
+        self.ft_progress.bind('<Button-1>', lambda event: self.main_win.open_settings_window('ft_manager'))
         self.ft_progress['value'] = 0
         self.ft_progress_var = tk.StringVar(tab1_kanal)
         self.ft_size_var = tk.StringVar(tab1_kanal)

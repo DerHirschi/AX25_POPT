@@ -188,7 +188,7 @@ class TxTframe:
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, 'bold' )
                  )
         name_label.grid(row=1, column=1, sticky="nsew")
-        name_label.bind('<Button-1>', self.main_class.open_user_db_win)
+        name_label.bind('<Button-1>', lambda event: self.main_class.open_settings_window('user_db'))
         qth_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_qth_var,
                  bg=STAT_BAR_CLR,
@@ -198,7 +198,7 @@ class TxTframe:
                              border=0,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                  )
-        qth_label.bind('<Button-1>', self.main_class.open_user_db_win)
+        qth_label.bind('<Button-1>', lambda event: self.main_class.open_settings_window('user_db'))
         qth_label.grid(row=1, column=2, sticky="nsew")
         loc_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_loc_var,
@@ -209,7 +209,7 @@ class TxTframe:
                              border=0,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                  )
-        loc_label.bind('<Button-1>', self.main_class.open_user_db_win)
+        loc_label.bind('<Button-1>',lambda event: self.main_class.open_settings_window('user_db'))
         loc_label.grid(row=1, column=3, sticky="nsew")
 
         opt = list(STATION_TYPS)

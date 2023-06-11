@@ -143,3 +143,6 @@ class MulticastSettings(tk.Toplevel):
     def close(self):
         self.root_win.settings_win = None
         self.destroy()
+
+    def tasker(self):
+        pass

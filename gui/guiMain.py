@@ -176,24 +176,31 @@ class TkMainWin:
                                    underline=1)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label="User-DB Tree", command=self.UserDB_tree, underline=0)
-        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
+        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], 
+                                   command=lambda: self.open_settings_window('user_db'),
                                    underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self.locator_calc_win,
                                    underline=0)
         self.MenuTools.add_separator()
 
-        self.MenuTools.add_command(label="FT-Manager", command=self.open_ft_manager,
+        self.MenuTools.add_command(label="FT-Manager", 
+                                   command=lambda: self.open_settings_window('ft_manager'),
                                    underline=0)
-        self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send,
+        self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], 
+                                   command=lambda: self.open_settings_window('ft_send'),
                                    underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
-                                   command=self.open_linkholder_settings_win, underline=0)
-        self.MenuTools.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
+                                   command=lambda: self.open_settings_window('l_holder'), 
+                                   underline=0)
+        self.MenuTools.add_command(label='Pipe-Tool', 
+                                   command=lambda: self.open_settings_window('pipe_sett'), 
+                                   underline=0)
         self.MenuTools.add_separator()
 
-        self.MenuTools.add_command(label='Priv', command=self.open_priv_win,
+        self.MenuTools.add_command(label='Priv', 
+                                   command=lambda: self.open_settings_window('priv_win'),
                                    underline=0)
 
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
@@ -201,18 +208,26 @@ class TkMainWin:
 
         # Menü 4 Einstellungen
         self.MenuSettings = Menu(self.menubar, tearoff=False)
-        self.MenuSettings.add_command(label=STR_TABLE['station'][self.language], command=self.open_settings_win,
+        self.MenuSettings.add_command(label=STR_TABLE['station'][self.language], 
+                                      command=lambda: self.open_settings_window('stat_sett'),
                                       underline=0)
-        self.MenuSettings.add_command(label=STR_TABLE['port'][self.language], command=self.open_port_settings_win,
+        self.MenuSettings.add_command(label=STR_TABLE['port'][self.language], 
+                                      command=lambda: self.open_settings_window('port_sett'),
                                       underline=0)
-        self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], command=self.open_beacon_settings_win,
+        self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], 
+                                      command=lambda: self.open_settings_window('beacon_sett'),
                                       underline=0)
-        self.MenuSettings.add_command(label='APRS', command=self.open_aprs_settings,
+        self.MenuSettings.add_command(label='APRS', 
+                                      command=lambda: self.open_settings_window('aprs_sett'),
                                       underline=0)
 
         self.MenuSettings.add_separator()
-        self.MenuSettings.add_command(label='Multicast', command=self.open_multicast_settings_win, underline=0)
-        self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
+        self.MenuSettings.add_command(label='Multicast', 
+                                      command=lambda: self.open_settings_window('mcast_sett'), 
+                                      underline=0)
+        self.MenuSettings.add_command(label="RX-Echo", 
+                                      command=lambda: self.open_settings_window('rx_echo_sett'), 
+                                      underline=0)
 
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
         # APRS Menu
@@ -227,10 +242,13 @@ class TkMainWin:
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
         # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
-        self.MenuHelp.add_command(label=STR_TABLE['keybind'][self.language], command=self.open_keybind_help_win,
+        self.MenuHelp.add_command(label=STR_TABLE['keybind'][self.language], 
+                                  command=lambda: self.open_settings_window('keybinds'),
                                   underline=0)
         self.MenuHelp.add_separator()
-        self.MenuHelp.add_command(label=STR_TABLE['about'][self.language], command=self.open_about_win, underline=0)
+        self.MenuHelp.add_command(label=STR_TABLE['about'][self.language], 
+                                  command=lambda: self.open_settings_window('about'),
+                                  underline=0)
         self.menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=self.MenuHelp, underline=0)
 
         # Menü 4 "Debug"
@@ -492,7 +510,6 @@ class TkMainWin:
 
     def set_binds(self):
         self.inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
-
 
     def set_keybinds(self):
         self.main_win.unbind("<Key-F10>")
@@ -970,110 +987,32 @@ class TkMainWin:
             if len(var) > 1:
                 self.sprech(var[1])
 
+    def open_settings_window(self, win_key: str):
+        if self.settings_win is None:
+            settings_win = {
+                'priv_win': PrivilegWin,              # Priv Win
+                'keybinds': KeyBindsHelp,             # Keybinds Help WIN
+                'about': About,                       # About WIN
+                'aprs_sett': APRSSettingsWin,         # APRS Settings
+                'ft_manager': FileTransferManager,    # FT Manager
+                'ft_send': FileSend,                  # FT TX
+                'pipe_sett': PipeToolSettings,        # Pipe Tool
+                'user_db': UserDB,                    # UserDB
+                'mcast_sett': MulticastSettings,      # Multicast Settings
+                'l_holder': LinkHolderSettings,       # Linkholder
+                'rx_echo_sett': RxEchoSettings,       # RX Echo
+                'beacon_sett': BeaconSettings,        # Beacon Settings
+                'port_sett': PortSettingsWin,         # Port Settings
+                'stat_sett': StationSettingsWin,      # Stat Settings
+            }.get(win_key, '')
+            if settings_win:
+                self.settings_win = settings_win(self)
+
     ##########################
     # New Connection WIN
     def open_new_conn_win(self):
-        # TODO just build a f** switch ( dict )
         if self.new_conn_win is None:
             self.new_conn_win = NewConnWin(self)
-
-    ##########################
-    # Stat Settings WIN
-    def open_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            self.settings_win = StationSettingsWin(self)
-
-    ##########################
-    # Port Settings WIN
-    def open_port_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            self.settings_win = PortSettingsWin(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_beacon_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            BeaconSettings(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_rx_echo_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            RxEchoSettings(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_linkholder_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            LinkHolderSettings(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_multicast_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            MulticastSettings(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_user_db_win(self, event=None, key=''):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            UserDB(self, key=key)
-
-    ##########################
-    # About WIN
-    def open_about_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            About(self)
-
-    ##########################
-    # Pipe Tool
-    def pipe_tool_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            PipeToolSettings(self)
-
-    ##########################
-    # FT TX
-    def open_file_send(self, event=None):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            FileSend(self)
-
-    ##########################
-    # FT Manager
-    def open_ft_manager(self, event=None):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            FileTransferManager(self)
-
-    ##########################
-    # APRS Settings
-    def open_aprs_settings(self, event=None):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            APRSSettingsWin(self)
-
-    ##########################
-    # Keybinds Help WIN
-    def open_keybind_help_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            KeyBindsHelp(self)
-
-    ##########################
-    # Priv Win
-    def open_priv_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            PrivilegWin(self)
 
     ##########################
     # Keybinds Help WIN
@@ -1324,7 +1263,7 @@ class TkMainWin:
                 if conn.user_db_ent.sys_pw:
                     conn.cli.start_baycom_login(login_cmd=login_cmd)
                 else:
-                    self.open_priv_win()
+                    self.open_settings_window('priv_win')
 
     def switch_monitor_mode(self):
         self.txt_win.switch_mon_mode()
