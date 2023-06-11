@@ -11,15 +11,13 @@ import sys
 import gtts
 from gtts import gTTS
 
-#from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
-#import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 import constant
 from ax25.ax25monitor import monitor_frame_inp
-from fnc.debug_fnc import show_mem_size
+
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
 from gui.guiAISmon import AISmonitor
@@ -28,6 +26,7 @@ from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
+from gui.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 from gui.guiUserDBoverview import UserDBtreeview
 from main import LANGUAGE
@@ -92,7 +91,6 @@ class ChVars(object):
 class TkMainWin:
     def __init__(self, glb_ax25port_handler):
         self.language = LANGUAGE
-        self.deb_gui = {}
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
@@ -359,6 +357,7 @@ class TkMainWin:
         self.new_conn_win = None
         self.settings_win = None
         self.mh_window = None
+        self.port_stat_win = None
         self.locator_calc_window = None
         self.aprs_mon_win = None
         self.aprs_pn_msg_win = None
@@ -391,7 +390,7 @@ class TkMainWin:
 
     def destroy_win(self):
         logging.info('Closing GUI.')
-
+        self.close_port_stat_win()
         if self.settings_win is not None:
             self.settings_win.destroy()
         if self.mh_window is not None:
@@ -1009,9 +1008,16 @@ class TkMainWin:
     ##########################
     # Keybinds Help WIN
     def open_port_stat_win(self):
-        # TODO Port selectable
-        if 0 in self.mh.port_statistik_DB.keys():
-            self.mh.port_statistik_DB[0].plot_test_graph(self)
+        if self.port_stat_win is None:
+            self.port_stat_win = PlotWindow(self)
+        else:
+            self.port_stat_win.deiconify()
+
+    def close_port_stat_win(self):
+        if self.port_stat_win is not None:
+            self.port_stat_win.destroy_plot()
+            del self.port_stat_win
+            self.port_stat_win = None
 
     ###################
     # MH WIN
@@ -1235,12 +1241,6 @@ class TkMainWin:
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
 
-        print("--GUI")
-        self.deb_gui = show_mem_size(self.__dict__, previous_sizes=self.deb_gui)
-        self.debug_fnc()
-
-    def debug_fnc(self):
-        self.ax25_port_handler.debug_fnc()
 
     def do_priv(self, event=None, login_cmd=''):
         conn = self.get_conn()

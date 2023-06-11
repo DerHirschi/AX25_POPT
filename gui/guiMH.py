@@ -32,7 +32,7 @@ class MHWin(tk.Toplevel):
         self.menubar = Menu(self)
         self.config(menu=self.menubar)
         self.menubar.add_command(label="Quit", command=self.close)
-        self.menubar.add_command(label="Port-Statistik", command=lambda: self.mh.port_statistik_DB[0].plot_test_graph(self.root_win))
+        self.menubar.add_command(label="Port-Statistik", command=lambda: self.root_win.open_port_stat_win())
         # ############################### Columns ############################
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=0, minsize=50)
