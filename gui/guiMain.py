@@ -1215,12 +1215,11 @@ class TkMainWin:
     # BW Plot
     def update_bw_mon(self):
         for port_id in list(self.ax25_port_handler.ax25_ports.keys()):
-            if port_id not in self.mh.port_statistik_DB.keys():
-                data = deque([0] * 100, maxlen=100)
-            else:
-                data = self.mh.port_statistik_DB[port_id].get_bandwidth(
-                    self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_baud
-                )
+
+            data = self.mh.get_bandwidth(
+                port_id,
+                self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_baud,
+            )
 
             if port_id not in self.bw_plot_lines:
                 # print(data)
@@ -1240,7 +1239,6 @@ class TkMainWin:
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
-
 
     def do_priv(self, event=None, login_cmd=''):
         conn = self.get_conn()
@@ -1290,24 +1288,15 @@ class TkMainWin:
         self.channel_index = ind
         self.get_ch_param().new_data_tr = False
         self.get_ch_param().rx_beep_tr = False
-        """
-        conn = self.get_conn()
-        if conn:
-            bg = conn.stat_cfg.stat_parm_qso_col_bg
-            fg = conn.stat_cfg.stat_parm_qso_col_text
-            self.out_txt.configure(state="normal", fg=fg, bg=bg)
-        else:
-        """
+
         self.out_txt.configure(state="normal")
 
         self.out_txt.delete('1.0', tk.END)
         self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
         self.out_txt.configure(state="disabled")
         self.out_txt.see(tk.END)
-        # print(f"{self.inp_txt.tag_ranges('send')}")
 
         self.inp_txt.delete('1.0', tk.END)
-        # self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
         self.inp_txt.insert(tk.END, self.win_buf[ind].input_win[:-1])
         set_all_tags(self.inp_txt, self.get_ch_param().input_win_tags)
         set_all_tags(self.out_txt, self.get_ch_param().output_win_tags)

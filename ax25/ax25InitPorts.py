@@ -5,10 +5,12 @@ from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from config_station import *
 # from fnc.debug_fnc import show_mem_size
+from memory_profiler import profile
 from gui.guiRxEchoSettings import RxEchoVars
 
 
 class AX25PortHandler(object):
+    @profile
     def __init__(self):
         logger.info("Port Init.")
         config_station.init_dir_struct()

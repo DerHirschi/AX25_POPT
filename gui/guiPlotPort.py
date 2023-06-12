@@ -7,8 +7,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import datetime
 
-from ax25.ax25Statistics import MH
-
 
 class PlotWindow(tk.Toplevel):
     def __init__(self, root_cl):
@@ -60,13 +58,15 @@ class PlotWindow(tk.Toplevel):
         # Plot erstellen
         self.fig = Figure(figsize=(5, 4), dpi=100)
         self.fig.set_facecolor('xkcd:light grey')
+
         self.plot1 = self.fig.add_subplot(211)
         self.plot1.set_facecolor('#000000')
-        self.plot1.set_title("Plot 1")
+        # self.plot1.set_title("Plot 1")
 
         self.plot2 = self.fig.add_subplot(212)
         self.plot2.set_facecolor('#000000')
-        self.plot2.set_title("Plot 2")
+        # self.plot2.set_title("Plot 2")
+        self.fig.subplots_adjust(top=0.98, bottom=0.05, left=0.05, right=0.98, hspace=0.10)
 
         # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
         self.canvas = FigureCanvasTkAgg(self.fig, master=self)
@@ -91,8 +91,7 @@ class PlotWindow(tk.Toplevel):
         #self.plot2.clear()
         port_id = self.port_var.get()
         db = self.mh.port_statistik_DB.get(port_id, {})
-        if db:
-            db = db.stat_DB_days
+
         range_day = True
         now = datetime.datetime.now() - datetime.timedelta(hours=self.hour_var.get())
         date_str = now.strftime('%d/%m/%y')
@@ -128,30 +127,30 @@ class PlotWindow(tk.Toplevel):
                 if h in db[date_str].keys():
                     for minu in min_list:
                         if (h == now.hour and minu <= now.minute) or h != now.hour:
-                            tmp_n_packets.append(db[date_str][h].n_packets_hr[minu])
-                            tmp_I_packets.append(db[date_str][h].I_packets_hr[minu])
-                            tmp_REJ_packets.append(db[date_str][h].REJ_packets_hr[minu])
-                            tmp_RR_packets.append(db[date_str][h].RR_packets_hr[minu])
-                            tmp_RNR_packets.append(db[date_str][h].RNR_packets_hr[minu])
-                            tmp_UI_packets.append(db[date_str][h].UI_packets_hr[minu])
-                            tmp_SABM_packets.append(db[date_str][h].SABM_packets_hr[minu])
-                            tmp_ALL_data.append(db[date_str][h].ALL_data_hr[minu])
-                            tmp_DATA_data.append(db[date_str][h].DATA_data_hr[minu])
+                            tmp_n_packets.append(db[date_str][h]['N_pack'][minu])
+                            tmp_I_packets.append(db[date_str][h]['I'][minu])
+                            tmp_REJ_packets.append(db[date_str][h]['REJ'][minu])
+                            tmp_RR_packets.append(db[date_str][h]['RR'][minu])
+                            tmp_RNR_packets.append(db[date_str][h]['RNR'][minu])
+                            tmp_UI_packets.append(db[date_str][h]['UI'][minu])
+                            tmp_SABM_packets.append(db[date_str][h]['SABM'][minu])
+                            tmp_ALL_data.append(db[date_str][h]['DATA_W_HEADER'][minu])
+                            tmp_DATA_data.append(db[date_str][h]['DATA'][minu])
                         # if h == dt_now.hour and minu < dt_now.minute:
                         #     break
             for h in last_hours:
                 if las_day:
                     if h in db[las_day].keys():
                         for minu in min_list:
-                            tmp_n_packets.append(db[las_day][h].n_packets_hr[minu])
-                            tmp_I_packets.append(db[las_day][h].I_packets_hr[minu])
-                            tmp_REJ_packets.append(db[las_day][h].REJ_packets_hr[minu])
-                            tmp_RR_packets.append(db[las_day][h].RR_packets_hr[minu])
-                            tmp_RNR_packets.append(db[las_day][h].RNR_packets_hr[minu])
-                            tmp_UI_packets.append(db[las_day][h].UI_packets_hr[minu])
-                            tmp_SABM_packets.append(db[las_day][h].SABM_packets_hr[minu])
-                            tmp_ALL_data.append(db[las_day][h].ALL_data_hr[minu])
-                            tmp_DATA_data.append(db[las_day][h].DATA_data_hr[minu])
+                            tmp_n_packets.append(db[las_day][h]['N_pack'][minu])
+                            tmp_I_packets.append(db[las_day][h]['I'][minu])
+                            tmp_REJ_packets.append(db[las_day][h]['REJ'][minu])
+                            tmp_RR_packets.append(db[las_day][h]['RR'][minu])
+                            tmp_RNR_packets.append(db[las_day][h]['RNR'][minu])
+                            tmp_UI_packets.append(db[las_day][h]['UI'][minu])
+                            tmp_SABM_packets.append(db[las_day][h]['SABM'][minu])
+                            tmp_ALL_data.append(db[las_day][h]['DATA_W_HEADER'][minu])
+                            tmp_DATA_data.append(db[las_day][h]['DATA'][minu])
                     else:
                         for minu in min_list:
                             tmp_n_packets.append(0)
@@ -180,6 +179,7 @@ class PlotWindow(tk.Toplevel):
 
             for i in list(range(len(tmp_n_packets))):
                 x_scale.append((i / 60))
+            print(x_scale)
 
             self.plot1.plot(x_scale, tmp_ALL_data, label='Bytes')
             self.plot1.plot(x_scale, tmp_I_packets, label='I')
@@ -193,6 +193,8 @@ class PlotWindow(tk.Toplevel):
             x_scale, tmp_ALL_data,
             x_scale, tmp_DATA_data, 'r--'
             )
+            self.plot1.set_xlim([0, 24])  # x-Achse auf 24 Stunden begrenzen
+            self.plot2.set_xlim([0, 24])
 
     def destroy_win(self):
         # self.root_cl.close_port_stat_win()
