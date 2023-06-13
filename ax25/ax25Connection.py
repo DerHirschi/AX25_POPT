@@ -102,7 +102,6 @@ class AX25Conn(object):
         """ Global Stuff """
         self.own_port = port
         self.port_handler = self.own_port.port_handler
-        self.mh = self.port_handler.mh
         """ GUI Stuff"""
         self.ch_index: int = 0  # Set in insert_conn2all_conn_var()
         self.port_id: int = self.own_port.port_id

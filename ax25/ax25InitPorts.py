@@ -1,7 +1,7 @@
 import config_station
 from ax25.ax25Port import *
 from UserDB.UserDBmain import USER_DB
-from ax25.ax25Statistics import MH
+from ax25.ax25Statistics import MH_LIST
 from ax25aprs.aprs_station import APRS_ais
 from config_station import *
 # from fnc.debug_fnc import show_mem_size
@@ -34,7 +34,7 @@ class AX25PortHandler(object):
         }
         ###########################
         # VArs for gathering Stuff
-        self.mh = MH()
+        # self.mh = MH_LIST
         # self.aprs_ais = None
         self.aprs_ais = APRS_ais()
         self.gui = None
@@ -89,7 +89,7 @@ class AX25PortHandler(object):
             self.set_gui()
             tmp.main_win.quit()
             tmp.main_win.destroy()
-        self.mh.save_mh_data()
+        MH_LIST.save_mh_data()
         USER_DB.save_data()
 
     def close_aprs_ais(self):
@@ -292,7 +292,7 @@ class AX25PortHandler(object):
             return False, 'Error: Link No Via Call'
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
-        mh_entry = self.mh.mh_get_data_fm_call(dest_call)
+        mh_entry = MH_LIST.mh_get_data_fm_call(dest_call)
         if not exclusive:
             if mh_entry:
                 # port_id = int(mh_entry.port_id)

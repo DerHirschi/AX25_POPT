@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from ax25.ax25Statistics import MyHeard
+from ax25.ax25Statistics import MyHeard, MH_LIST
 from fnc.str_fnc import conv_time_DE_str
 from string_tab import STR_TABLE
 # import matplotlib.pyplot as plt
@@ -12,11 +12,11 @@ class MulticastSettings(tk.Toplevel):
         self.flag = ''
         self.root_win = root_win
         self.lang = self.root_win.language
-        self.mh = self.root_win.mh
+
         ###################################
         # Vars
         self.rev_ent = False
-        # self.mh_win = tk.Tk()
+
         self.title("Multicast")
         self.style = self.root_win.style
         # self.geometry("1250x700")
@@ -71,7 +71,7 @@ class MulticastSettings(tk.Toplevel):
             record = item['values']
             # show a message
             call = record[2]
-            ip_add = self.mh.mh_get_last_ip(call)
+            ip_add = MH_LIST.mh_get_last_ip(call)
             if ip_add in self.root_win.ax25_port_handler.multicast_ip_s:
                 self.root_win.ax25_port_handler.multicast_ip_s.remove(ip_add)
             else:
@@ -100,7 +100,7 @@ class MulticastSettings(tk.Toplevel):
             self.flag = flag
 
         if self.flag:
-            sort_date = self.mh.output_sort_mh_entr(flag_str=self.flag, reverse=self.rev_ent)
+            sort_date = MH_LIST.output_sort_mh_entr(flag_str=self.flag, reverse=self.rev_ent)
             if flag:
                 if self.rev_ent:
                     self.rev_ent = False

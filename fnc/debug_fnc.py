@@ -1,5 +1,6 @@
 import sys
 
+
 def show_mem_size(var_items, compare=True, depth=0, previous_sizes={}):
     indent = "  " * depth
     local_vars = list(var_items.items())

@@ -7,6 +7,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import datetime
 
+from ax25.ax25Statistics import MH_LIST
+
 
 class PlotWindow(tk.Toplevel):
     def __init__(self, root_cl):
@@ -18,8 +20,6 @@ class PlotWindow(tk.Toplevel):
                       f"{root_cl.main_win.winfo_x()}+"
                       f"{root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
-        self.mh = root_cl.mh
-
         ##################
         upper_frame = tk.Frame(self)
         upper_frame.pack()
@@ -90,7 +90,7 @@ class PlotWindow(tk.Toplevel):
     def update_plots(self):
         #self.plot2.clear()
         port_id = self.port_var.get()
-        db = self.mh.port_statistik_DB.get(port_id, {})
+        db = MH_LIST.port_statistik_DB.get(port_id, {})
 
         range_day = True
         now = datetime.datetime.now() - datetime.timedelta(hours=self.hour_var.get())

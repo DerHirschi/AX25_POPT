@@ -116,11 +116,10 @@ class MH(object):
     def bw_mon_inp(self, ax25_frame, port_id):
         if port_id not in self.port_statistik_DB.keys():
             self.port_statistik_DB[port_id] = {}
-        if port_id not in self.bandwidth.keys():
-            self.bandwidth[port_id] = {}
+        self.init_bw_struct(port_id)
         self.input_stat_db(ax_frame=ax25_frame, port_id=port_id)
 
-    def input_bw_calc(self, port_id, ax_frame = None, ):
+    def input_bw_calc(self, port_id, ax_frame=None, ):
         self.init_bw_struct(port_id=port_id)
         if ax_frame is not None:
             if self.now_min == datetime.now().strftime('%M:%S')[:-1]:
@@ -356,3 +355,5 @@ class MH(object):
             with open(port_stat_data_file, 'xb') as outp:
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
 
+
+MH_LIST = MH()

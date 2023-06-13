@@ -3,19 +3,19 @@ import logging
 import random
 import time
 import tkinter as tk
-from collections import deque
 from tkinter import ttk, Menu
 import threading
 import sys
 
+from memory_profiler import profile
+import gc
 import gtts
 from gtts import gTTS
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-
-import constant
+from ax25.ax25Statistics import MH_LIST
 from ax25.ax25monitor import monitor_frame_inp
 
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
@@ -46,7 +46,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH
+from constant import ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -89,12 +89,13 @@ class ChVars(object):
 
 
 class TkMainWin:
+    @profile
     def __init__(self, glb_ax25port_handler):
         self.language = LANGUAGE
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
-        self.mh = self.ax25_port_handler.mh
+        # self.mh = self.ax25_port_handler.mh
         self.aprs_ais = self.ax25_port_handler.aprs_ais
         # self.user_db = USER_DB
         self.root_dir = get_root_dir()
@@ -117,14 +118,19 @@ class TkMainWin:
         self.loop_delay = 80  # ms
         self.parm_non_prio_task_timer = 0.5  # s
         self.parm_non_non_prio_task_timer = 1  # s
+        self.parm_non_non_non_prio_task_timer = 2  # s
+        #self.parm_bw_mon_reset_task_timer = 3600  # s
+        self.parm_bw_mon_reset_task_timer = 30  # s
         self.non_prio_task_timer = time.time()
         self.non_non_prio_task_timer = time.time()
+        self.non_non_non_prio_task_timer = time.time()
+        self.bw_mon_reset_task_timer = time.time() + self.parm_bw_mon_reset_task_timer
         ###############
         self.text_size = 15
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
-        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(constant.VER))
+        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
         # self.main_win.iconbitmap("favicon.ico")
         self.main_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
@@ -331,6 +337,7 @@ class TkMainWin:
         ############################
         # Canvas Plot ( TEST )
         # plt.ion()
+        """
         self.bw_fig = Figure(figsize=(8, 4.5), dpi=80)
         # plt.style.use('dark_background')
         self.ax = self.bw_fig.add_subplot(111)
@@ -348,9 +355,16 @@ class TkMainWin:
         # plt.xlabel(STR_TABLE['minutes'][self.language])
         # plt.xlim(0, 10)  # TODO As Option
         # plt.ylabel(STR_TABLE['occup'][self.language])
-        canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
-        canvas.draw()
-        canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        self.canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
+        self.canvas.draw()
+        self.canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        """
+        self.canvas = None
+        self.can_widget = None
+        self.bw_fig = None
+        self.ax = None
+        self.bw_plot_lines = {}
+        self.reset_bw_mon()
 
         ############################
         # Windows
@@ -410,11 +424,11 @@ class TkMainWin:
         self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
         self.sprech(random.choice(WELCOME_SPEECH))
         self.language = int(tmp_lang)
-        ban = POPT_BANNER.format(constant.VER)
+        ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
             self.msg_to_monitor(el)
-        self.msg_to_monitor('Python Other Packet Terminal ' + constant.VER)
+        self.msg_to_monitor('Python Other Packet Terminal ' + VER)
         for stat in self.ax25_port_handler.ax25_stations_settings.keys():
             self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in self.ax25_port_handler.ax25_ports.keys():
@@ -756,15 +770,15 @@ class TkMainWin:
         self.mh_btn.configure(bg=random.choice(ALL_COLOURS))
 
     def reset_dx_alarm(self):
-        self.mh.new_call_alarm = False
+        MH_LIST.new_call_alarm = False
         self.mh_btn.configure(bg=self.mh_btn_def_clr)
 
     #################################
     # TASKER
     def tasker(self):  # MAINLOOP
-        self.tasker_prio()
+        # self.tasker_prio()
         self.tasker_low_prio()
-        self.tasker_low_low_prio()
+        # self.tasker_low_low_prio()
         self.main_win.after(self.loop_delay, self.tasker)
 
     def tasker_prio(self):
@@ -781,17 +795,19 @@ class TkMainWin:
             self.change_conn_btn()
             self.check_sprech_ch_buf()
             self.rx_beep_sound()
+            self.bw_mon_reset_task()
             if self.ch_alarm:
                 self.ch_status_update()
+            self.tasker_low_low_prio()
+            self.tasker_low_low_low_prio()
 
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
-            self.update_bw_mon()
             self.update_stat_info_conn_timer()
             self.update_ft_info()
             self.tabbed_sideFrame.tasker()
-            if self.mh.new_call_alarm and self.setting_dx_alarm:
+            if MH_LIST.new_call_alarm and self.setting_dx_alarm:
                 self.dx_alarm()
             if self.settings_win is not None:
                 # ( FT-Manager )
@@ -799,9 +815,21 @@ class TkMainWin:
             if self.aprs_mon_win is not None:
                 self.aprs_mon_win.tasker()
 
+    def tasker_low_low_low_prio(self):
+        """ 2 Sec """
+        if time.time() > self.non_non_non_prio_task_timer:
+            self.non_non_non_prio_task_timer = time.time() + self.parm_non_non_non_prio_task_timer
+            self.update_bw_mon()
+
     def aprs_task(self):
         if self.aprs_ais is not None:
             self.aprs_ais.task()
+
+    def bw_mon_reset_task(self):
+        if time.time() > self.bw_mon_reset_task_timer:
+            self.bw_mon_reset_task_timer = time.time() + self.parm_bw_mon_reset_task_timer
+            # self.reset_bw_mon()
+            # self.clean_bw_mon()
 
     #################################
     # TASKS
@@ -970,7 +998,7 @@ class TkMainWin:
 
         ind2 = self.mon_txt.index(tk.INSERT)
         self.mon_txt.tag_add("sys-msg", ind, ind2)
-        self.mon_txt.tag_config("sys-msg", foreground=constant.CFG_clr_sys_msg)
+        self.mon_txt.tag_config("sys-msg", foreground=CFG_clr_sys_msg)
 
         self.mon_txt.see(tk.END)
         if 'Lob: ' in var:
@@ -1213,10 +1241,60 @@ class TkMainWin:
 
     ###################
     # BW Plot
-    def update_bw_mon(self):
-        for port_id in list(self.ax25_port_handler.ax25_ports.keys()):
+    @profile
+    def reset_bw_mon(self):
+        for port_id in list(self.bw_plot_lines.keys()):
+            # self.bw_plot_lines[port_id].close('all')
+            del self.bw_plot_lines[port_id]
+            self.bw_plot_lines[port_id] = None
 
-            data = self.mh.get_bandwidth(
+        if self.bw_fig is not None:
+            self.bw_fig.clear()
+            #self.bw_fig.close('all')
+        if self.canvas is not None:
+            self.canvas.close_event()
+        del self.bw_plot_lines
+        del self.canvas
+        del self.ax
+        del self.bw_fig
+        self.bw_plot_lines = None
+        self.canvas = None
+        self.bw_fig = None
+        self.ax = None
+
+        gc.collect()
+        self.bw_plot_lines = {}
+        self.bw_fig = Figure(figsize=(8, 4.5), dpi=80)
+        # plt.style.use('dark_background')
+        self.ax = self.bw_fig.add_subplot(111)
+        self.ax.axis([0, 10, 0, 100])
+        self.bw_fig.set_facecolor('xkcd:light grey')
+        self.ax.set_facecolor('#000000')
+        # self.bw_fig.xlim(0, 10)  # TODO As Option
+        self.ax.xaxis.label.set_color('black')
+        self.ax.yaxis.label.set_color('black')
+        self.ax.tick_params(axis='x', colors='black')
+        self.ax.tick_params(axis='y', colors='black')
+        self.ax.set_xlabel(STR_TABLE['minutes'][self.language])
+        self.ax.set_ylabel(STR_TABLE['occup'][self.language])
+
+        self.canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
+
+        # self.canvas = tk.Frame(self.side_btn_frame_top, )  # A tk.DrawingArea.
+
+        self.canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        self.canvas.draw()
+
+    def clean_bw_mon(self):
+        for port_id in self.bw_plot_lines:
+            del self.bw_plot_lines[port_id]
+        self.bw_plot_lines = {}
+
+    # @profile
+    def update_bw_mon(self):
+        # self.bw_fig.clear()
+        for port_id in list(self.ax25_port_handler.ax25_ports.keys()):
+            data = MH_LIST.get_bandwidth(
                 port_id,
                 self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_baud,
             )
@@ -1230,11 +1308,13 @@ class TkMainWin:
                 # x_scale = list(range(360))
                 self.bw_plot_lines[port_id], = self.ax.plot(x_scale, data, label=label)
                 self.ax.legend()
+
             else:
                 self.bw_plot_lines[port_id].set_ydata(data)
+                self.ax.relim()
 
         self.bw_fig.canvas.draw()
-        # self.bw_fig.canvas.flush_events()
+        #
 
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
