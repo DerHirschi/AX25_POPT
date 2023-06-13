@@ -7,7 +7,7 @@ from tkinter import ttk, Menu
 import threading
 import sys
 
-from memory_profiler import profile
+# from memory_profiler import profile
 import gc
 import gtts
 from gtts import gTTS
@@ -89,7 +89,7 @@ class ChVars(object):
 
 
 class TkMainWin:
-    @profile
+    # @profile
     def __init__(self, glb_ax25port_handler):
         self.language = LANGUAGE
         ###############################
@@ -1241,7 +1241,7 @@ class TkMainWin:
 
     ###################
     # BW Plot
-    @profile
+    # @profile
     def reset_bw_mon(self):
         for port_id in list(self.bw_plot_lines.keys()):
             # self.bw_plot_lines[port_id].close('all')
