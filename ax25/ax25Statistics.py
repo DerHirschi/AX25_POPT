@@ -1,12 +1,4 @@
-"""
-Nightmare !!!
-TODO: Cleanup
-"""
-
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-import matplotlib.pyplot as plt
-import tkinter as tk
-from ax25.ax25dec_enc import AX25Frame
+from collections import deque
 from datetime import datetime
 from datetime import timedelta
 
@@ -24,406 +16,68 @@ def get_time_str():
     return datetime.now().strftime('%d/%m/%y %H:%M:%S')
 
 
-class MyHeard(object):
-    def __init__(self):
-        self.own_call = ''
-        self.to_calls = ["""call_str"""]
-        self.route = []
-        self.all_routes = []
-        self.port = ''
-        self.port_id = 0    # Not used yet
-        self.first_seen = datetime.now()
-        self.last_seen = datetime.now()
-        self.pac_n = 0                      # N Packets
-        self.byte_n = 0                     # N Bytes
-        self.h_byte_n = 0                   # N Header Bytes
-        self.rej_n = 0                      # N REJ
-        self.axip_add = '', 0               # IP, Port
-        self.axip_fail = 0                  # Fail Counter
+def get_bandwidth_struct():
+    struct = {}
+    for m in range(60):
+        for s in range(6):
+            ts_str = '{}:{}'.format(str(m).zfill(2), s)
+            struct[ts_str] = 0
+    return struct
 
 
-class PortStatHourStruc(object):
-    def __init__(self):
-        self.n_packets_hr = {}
-        self.I_packets_hr = {}
-        self.SABM_packets_hr = {}
-        self.DM_packets_hr = {}
-        self.DISC_packets_hr = {}
-        self.REJ_packets_hr = {}
-        self.RR_packets_hr = {}
-        self.RNR_packets_hr = {}
-        self.UI_packets_hr = {}
-        self.ALL_data_hr = {}
-        self.DATA_data_hr = {}
-
-        for minute in range(60):
-            self.n_packets_hr[minute] = 0
-            self.I_packets_hr[minute] = 0
-            self.SABM_packets_hr[minute] = 0
-            self.DM_packets_hr[minute] = 0
-            self.DISC_packets_hr[minute] = 0
-            self.REJ_packets_hr[minute] = 0
-            self.RR_packets_hr[minute] = 0
-            self.RNR_packets_hr[minute] = 0
-            self.UI_packets_hr[minute] = 0
-            self.ALL_data_hr[minute] = 0
-            self.DATA_data_hr[minute] = 0
+def get_port_stat_struct():
+    struct_hour = {}
+    for key in [
+        'N_pack',
+        'I',
+        'SABM',
+        'DM',
+        'DISC',
+        'REJ',
+        'RR',
+        'RNR',
+        'UI',
+        'FRMR',
+        'DATA_W_HEADER',
+        'DATA'
+    ]:
+        struct_hour[key] = {minute: 0 for minute in range(60)}
+    return struct_hour
 
 
-class PortStatDB(object):
-    def __init__(self):
-        #                   DATE   HOUR
-        # TODO Init fm File and Save
-        self.stat_DB_days: {'str': {int: PortStatHourStruc}} = {}
+def init_day_dic():
 
-        self.bandwidth = {}
-        for m in range(60):
-            for s in range(6):
-                ts_str = '{}:{}'.format(str(m).zfill(2), s)
-                self.bandwidth[ts_str] = 0
-
-        self.now_min = datetime.now().strftime('%M:%S')[:-1]
-
-    def init_day_dic(self):
-        ret = {}
-        for hour in range(24):
-            ret[hour] = PortStatHourStruc()
-
-        return ret
-
-    def input(self, ax_frame: AX25Frame):
-        # now = datetime.now().strftime('%d/%m/%y %H:%M:%S')
-        self.input_bw_calc(ax_frame=ax_frame)
-        # date_str = '0' # TODO save Data to file. RAM is running full after couple of days running.
-        now = datetime.now()
-        date_str = now.strftime('%d/%m/%y')
-        if now.hour == 0:
-            last_days = [
-                date_str,
-                (datetime.now() - timedelta(days=1)).strftime('%d/%m/%y'),
-                (datetime.now() - timedelta(days=2)).strftime('%d/%m/%y'),
-            ]
-            for dt in list(self.stat_DB_days.keys()):
-                if dt not in last_days:
-                    del self.stat_DB_days[dt]
-        hour = now.hour
-        minute = now.minute
-        if date_str not in list(self.stat_DB_days.keys()):
-            self.stat_DB_days[date_str] = self.init_day_dic()
-
-        self.stat_DB_days[date_str][hour].n_packets_hr[minute] += 1
-
-        if ax_frame.ctl_byte.flag == 'I':
-            self.stat_DB_days[date_str][hour].I_packets_hr[minute] += len(ax_frame.bytes)
-        elif ax_frame.ctl_byte.flag == 'UI':
-            self.stat_DB_days[date_str][hour].UI_packets_hr[minute] += len(ax_frame.bytes)
-        elif ax_frame.ctl_byte.flag == 'REJ':
-            self.stat_DB_days[date_str][hour].REJ_packets_hr[minute] += len(ax_frame.bytes)
-        elif ax_frame.ctl_byte.flag == 'RR':
-            self.stat_DB_days[date_str][hour].RR_packets_hr[minute] += len(ax_frame.bytes)
-        elif ax_frame.ctl_byte.flag == 'RNR':
-            self.stat_DB_days[date_str][hour].RNR_packets_hr[minute] += len(ax_frame.bytes)
-        elif ax_frame.ctl_byte.flag == 'SABM':
-            self.stat_DB_days[date_str][hour].SABM_packets_hr[minute] += len(ax_frame.bytes)
-        elif ax_frame.ctl_byte.flag == 'DM':
-            self.stat_DB_days[date_str][hour].DM_packets_hr[minute] += len(ax_frame.bytes)
-        elif ax_frame.ctl_byte.flag == 'DISC':
-            self.stat_DB_days[date_str][hour].DISC_packets_hr[minute] += len(ax_frame.bytes)
-        self.stat_DB_days[date_str][hour].ALL_data_hr[minute] += len(ax_frame.bytes)
-        self.stat_DB_days[date_str][hour].DATA_data_hr[minute] += ax_frame.data_len
-
-    def input_bw_calc(self, ax_frame: AX25Frame = None):
-        if ax_frame is not None:
-            if self.now_min == datetime.now().strftime('%M:%S')[:-1]:
-                self.bandwidth[self.now_min] += len(ax_frame.bytes)
-            else:
-                self.now_min = datetime.now().strftime('%M:%S')[:-1]
-                self.bandwidth[self.now_min] = len(ax_frame.bytes)
-        else:
-            if self.now_min != datetime.now().strftime('%M:%S')[:-1]:
-                self.now_min = datetime.now().strftime('%M:%S')[:-1]
-                self.bandwidth[self.now_min] = 0
-
-    def plot_test_graph(self, root_win, now_hour: int = -1, day=True):
-        range_day = day
-        now = datetime.now()
-        date_str = now.strftime('%d/%m/%y')
-        if now_hour == -1:
-            now_hour = now.hour
-        last_hour = now.hour - 1
-        now_minute = list(range(0, now.minute))
-        last_hr_minute = list(range(60 - (60 - now.minute), 60))
-        # print('now_minute  {}'.format(now_minute))
-        # print('last_hr_minute  {}'.format(last_hr_minute))
-        _tmp_n_packets = []
-        _tmp_I_packets = []
-        _tmp_REJ_packets = []
-        _tmp_RR_packets = []
-        _tmp_RNR_packets = []
-        _tmp_UI_packets = []
-        _tmp_SABM_packets = []
-        _tmp_ALL_data = []
-        _tmp_DATA_data = []
-        if date_str in list(self.stat_DB_days.keys()):
-
-            if now_hour == 0 or range_day:
-                last_hour = 23
-                ind = list(self.stat_DB_days.keys()).index(date_str) - 1
-                if ind >= 0:
-                    las_day = list(self.stat_DB_days.keys())[ind]
-                else:
-                    las_day = ''
-                    # las_day = date_str
-            else:
-                las_day = date_str
-            if not range_day:
-                now_minute.reverse()
-                last_hr_minute.reverse()
-                # print('<<>>>>  {}'.format(now_minute + last_hr_minute))
-                for minute in now_minute:
-                    _tmp_n_packets.append(self.stat_DB_days[date_str][now_hour].n_packets_hr[minute])
-                    _tmp_I_packets.append(self.stat_DB_days[date_str][now_hour].I_packets_hr[minute])
-                    _tmp_REJ_packets.append(self.stat_DB_days[date_str][now_hour].REJ_packets_hr[minute])
-                    _tmp_RR_packets.append(self.stat_DB_days[date_str][now_hour].RR_packets_hr[minute])
-                    _tmp_RNR_packets.append(self.stat_DB_days[date_str][now_hour].RNR_packets_hr[minute])
-                    _tmp_UI_packets.append(self.stat_DB_days[date_str][now_hour].UI_packets_hr[minute])
-                    _tmp_SABM_packets.append(self.stat_DB_days[date_str][now_hour].SABM_packets_hr[minute])
-                    _tmp_ALL_data.append(self.stat_DB_days[date_str][now_hour].ALL_data_hr[minute])
-                    _tmp_DATA_data.append(self.stat_DB_days[date_str][now_hour].DATA_data_hr[minute])
-
-                for minu in last_hr_minute:
-                    if las_day:
-
-                        _tmp_n_packets.append(self.stat_DB_days[las_day][last_hour].n_packets_hr[minu])
-                        _tmp_I_packets.append(self.stat_DB_days[las_day][last_hour].I_packets_hr[minu])
-                        _tmp_REJ_packets.append(self.stat_DB_days[las_day][last_hour].REJ_packets_hr[minu])
-                        _tmp_RR_packets.append(self.stat_DB_days[las_day][last_hour].RR_packets_hr[minu])
-                        _tmp_RNR_packets.append(self.stat_DB_days[las_day][last_hour].RNR_packets_hr[minu])
-                        _tmp_UI_packets.append(self.stat_DB_days[las_day][last_hour].UI_packets_hr[minu])
-                        _tmp_SABM_packets.append(self.stat_DB_days[las_day][last_hour].SABM_packets_hr[minu])
-                        _tmp_ALL_data.append(self.stat_DB_days[las_day][last_hour].ALL_data_hr[minu])
-                        _tmp_DATA_data.append(self.stat_DB_days[las_day][last_hour].DATA_data_hr[minu])
-                    else:
-                        _tmp_n_packets.append(0)
-                        _tmp_I_packets.append(0)
-                        _tmp_REJ_packets.append(0)
-                        _tmp_RR_packets.append(0)
-                        _tmp_RNR_packets.append(0)
-                        _tmp_UI_packets.append(0)
-                        _tmp_SABM_packets.append(0)
-                        _tmp_ALL_data.append(0)
-                        _tmp_DATA_data.append(0)
-            else:
-                day_hours = list(range(0, now_hour + 1))
-                last_hours = list(range(now_hour + 1, 24))
-                min_list = list(range(60))
-                day_hours.reverse()
-                last_hours.reverse()
-                min_list.reverse()
-                # print('<<>>>>  {}  {}'.format(last_hours , day_hours))
-                dt_now = datetime.now()
-                for h in day_hours:
-                    if h in self.stat_DB_days[date_str].keys():
-                        for minu in min_list:
-                            if (h == dt_now.hour and minu <= dt_now.minute) or h != dt_now.hour:
-                                _tmp_n_packets.append(self.stat_DB_days[date_str][h].n_packets_hr[minu])
-                                _tmp_I_packets.append(self.stat_DB_days[date_str][h].I_packets_hr[minu])
-                                _tmp_REJ_packets.append(self.stat_DB_days[date_str][h].REJ_packets_hr[minu])
-                                _tmp_RR_packets.append(self.stat_DB_days[date_str][h].RR_packets_hr[minu])
-                                _tmp_RNR_packets.append(self.stat_DB_days[date_str][h].RNR_packets_hr[minu])
-                                _tmp_UI_packets.append(self.stat_DB_days[date_str][h].UI_packets_hr[minu])
-                                _tmp_SABM_packets.append(self.stat_DB_days[date_str][h].SABM_packets_hr[minu])
-                                _tmp_ALL_data.append(self.stat_DB_days[date_str][h].ALL_data_hr[minu])
-                                _tmp_DATA_data.append(self.stat_DB_days[date_str][h].DATA_data_hr[minu])
-                            # if h == dt_now.hour and minu < dt_now.minute:
-                            #     break
-                for h in last_hours:
-                    if las_day:
-                        if h in self.stat_DB_days[las_day].keys():
-                            for minu in min_list:
-                                _tmp_n_packets.append(self.stat_DB_days[las_day][h].n_packets_hr[minu])
-                                _tmp_I_packets.append(self.stat_DB_days[las_day][h].I_packets_hr[minu])
-                                _tmp_REJ_packets.append(self.stat_DB_days[las_day][h].REJ_packets_hr[minu])
-                                _tmp_RR_packets.append(self.stat_DB_days[las_day][h].RR_packets_hr[minu])
-                                _tmp_RNR_packets.append(self.stat_DB_days[las_day][h].RNR_packets_hr[minu])
-                                _tmp_UI_packets.append(self.stat_DB_days[las_day][h].UI_packets_hr[minu])
-                                _tmp_SABM_packets.append(self.stat_DB_days[las_day][h].SABM_packets_hr[minu])
-                                _tmp_ALL_data.append(self.stat_DB_days[las_day][h].ALL_data_hr[minu])
-                                _tmp_DATA_data.append(self.stat_DB_days[las_day][h].DATA_data_hr[minu])
-                        else:
-                            for minu in min_list:
-                                _tmp_n_packets.append(0)
-                                _tmp_I_packets.append(0)
-                                _tmp_REJ_packets.append(0)
-                                _tmp_RR_packets.append(0)
-                                _tmp_RNR_packets.append(0)
-                                _tmp_UI_packets.append(0)
-                                _tmp_SABM_packets.append(0)
-                                _tmp_ALL_data.append(0)
-                                _tmp_DATA_data.append(0)
-                    else:
-                        for minu in min_list:
-                            _tmp_n_packets.append(0)
-                            _tmp_I_packets.append(0)
-                            _tmp_REJ_packets.append(0)
-                            _tmp_RR_packets.append(0)
-                            _tmp_RNR_packets.append(0)
-                            _tmp_UI_packets.append(0)
-                            _tmp_SABM_packets.append(0)
-                            _tmp_ALL_data.append(0)
-                            _tmp_DATA_data.append(0)
-
-        ke = list(range(len(_tmp_n_packets)))
-        # len(ke)
-        if _tmp_n_packets:
-            x_scale = []
-            if range_day:
-                for i in list(range(len(_tmp_n_packets))):
-                    x_scale.append((i / 60))
-            else:
-                x_scale = ke
-            # print(x_scale)
-            root = tk.Tk()
-            root.wm_title("Port Statistik")
-            root.geometry("800x600")
-            root.geometry(f"800x"
-                          f"600+"
-                          f"{root_win.main_win.winfo_x()}+"
-                          f"{root_win.main_win.winfo_y()}")
-            # root.protocol("WM_DELETE_WINDOW", root.destroy())
-            plot1 = tk.Frame(root)
-            plot2 = tk.Frame(root)
-            """
-            _tmp_n_packets.reverse()
-            _tmp_I_packets.reverse()
-            _tmp_REJ_packets.reverse()
-            _tmp_RR_packets.reverse()
-            _tmp_UI_packets.reverse()
-            _tmp_SABM_packets.reverse()
-            _tmp_ALL_data.reverse()
-            _tmp_DATA_data.reverse()
-            """
-            """
-            print('------------------------')
-            print(_tmp_n_packets)
-            print(_tmp_I_packets)
-            print(_tmp_REJ_packets)
-            print(_tmp_RR_packets)
-            print(_tmp_UI_packets)
-            print(_tmp_SABM_packets)
-            print(_tmp_ALL_data)
-            print(_tmp_DATA_data)
-            """
-
-            fig = plt.figure(figsize=(5, 4), dpi=100)
-            plt.style.use('dark_background')
-            fig.add_subplot(111).plot(
-                # x_scale, _tmp_n_packets,
-                x_scale, _tmp_ALL_data,
-                x_scale, _tmp_I_packets,
-                x_scale, _tmp_UI_packets,
-                x_scale, _tmp_REJ_packets,
-                x_scale, _tmp_RR_packets,
-                x_scale, _tmp_RNR_packets,
-                x_scale, _tmp_SABM_packets,
-            )
-
-            # fig.axis([0, 59, 0, 50])
-            """
-            if not range_day:
-                plt.axis([0, 59, 0, 100])
-            else:
-            """
-            if range_day:
-                plt.axis([0, 24, 0, max(_tmp_ALL_data)])
-            else:
-                plt.axis([0, 59, 0, max(_tmp_ALL_data)])
-            # plt.axis([0, 59, 0, 50])
-            plt.legend(['Bytes', 'I-Frames', 'UI-Frames', 'REJ-Frames', 'RR-Frames', 'RNR-Frames', 'SABM-Frames', ])
-            #ax.suptitle('Port Statistik')
-
-            canvas = FigureCanvasTkAgg(fig, master=plot1)  # A tk.DrawingArea.
-            canvas.draw()
-            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-            toolbar = NavigationToolbar2Tk(canvas, plot1)
-            toolbar.update()
-            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    ret = {}
+    for hour in range(24):
+        ret[hour] = get_port_stat_struct()
+    return ret
 
 
-            fig = plt.figure(figsize=(5, 4), dpi=100)
-            plt.style.use('dark_background')
-            fig.add_subplot(111).plot(
-                x_scale, _tmp_ALL_data,
-                x_scale, _tmp_DATA_data, 'r--'
-
-            )
-            # y_max = max(_tmp_ALL_data)
-            # fig.axis([0, 59, 0, 50])
-            """
-            if not range_day:
-                plt.axis([0, 59, 0, 100])
-            else:
-            """
-            if range_day:
-                plt.axis([0, 24, 0, max(_tmp_ALL_data)])
-            else:
-                plt.axis([0, 59, 0, max(_tmp_ALL_data)])
-            # plt.axis([0, 59, 0, 50])
-            plt.legend(['Daten gesamt', 'Nutzdaten'])
-            # ax.suptitle('Port Statistik')
-            canvas = FigureCanvasTkAgg(fig, master=plot2)  # A tk.DrawingArea.
-            canvas.draw()
-            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-            toolbar = NavigationToolbar2Tk(canvas, plot2)
-            toolbar.update()
-            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-
-
-            plot1.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
-            plot2.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
-
-            frame = tk.Frame(root)
-            prt_sel_var = tk.IntVar()
-            prt_sel_var.set(0)
-            lable = tk.Label(frame, text='Port: ')
-            prt_sel = tk.Spinbox(frame,
-                                         from_=0,
-                                         to=7,
-                                        increment=1,
-                                        width=2,
-                                        textvariable=prt_sel_var,
-                                        state='disabled',
-                                        # command=self.set_max_frame,
-                                        )
-            prt_sel.configure(state='disabled')
-            frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=0)
-            lable.grid(row=0, column=0)
-            prt_sel.grid(row=0, column=1)
-            # root.protocol("WM_DELETE_WINDOW", root.destroy())
-
-    def get_bandwidth(self, baud=1200):
-        self.input_bw_calc()
-        ret = []
-        now = datetime.now().strftime('%M:%S')[:-1]
-        minutes = list(self.bandwidth.keys())
-        minutes.reverse()
-        ind = minutes.index(now)
-        new_key_list = minutes[ind:] + minutes[:ind]
-        for k in new_key_list:
-            byt = int(self.bandwidth[k])
-            f = (((byt * 8) / 10) * 100) / baud
-            ret.append(f)
-        return ret
+class MyHeard:
+    own_call = ''
+    to_calls = []
+    route = []
+    all_routes = []
+    port = ''
+    port_id = 0    # Not used yet
+    first_seen = datetime.now()
+    last_seen = datetime.now()
+    pac_n = 0                      # N Packets
+    byte_n = 0                     # N Bytes
+    h_byte_n = 0                   # N Header Bytes
+    rej_n = 0                      # N REJ
+    axip_add = '', 0               # IP, Port
+    axip_fail = 0                  # Fail Counter
 
 
 class MH(object):
     def __init__(self):
         print("MH Init")
         mh_load = {}
-        self.port_statistik_DB: {int: PortStatDB} = {}
+        self.port_statistik_DB: {int: {str: {}}} = {}
+        self.bandwidth = {}
+
+        self.now_min = datetime.now().strftime('%M:%S')[:-1]
         try:
             with open(mh_data_file, 'rb') as inp:
                 mh_load = pickle.load(inp)
@@ -435,54 +89,101 @@ class MH(object):
         for call in mh_load:
             self.calls[call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[call])
 
-        port_stat_DB = []
         try:
             with open(port_stat_data_file, 'rb') as inp:
-                port_stat_DB = pickle.load(inp)
+                self.port_statistik_DB = pickle.load(inp)
+
         except FileNotFoundError:
             pass
         except EOFError:
             pass
-
-        port_id = 0
-        for el in port_stat_DB:
-            self.port_statistik_DB[port_id] = PortStatDB()
-            self.port_statistik_DB[port_id].stat_DB_days = el
-            port_id += 1
 
         for call in list(self.calls.keys()):
             for att in dir(MyHeard):
                 if not hasattr(self.calls[call], att):
                     setattr(self.calls[call], att, getattr(MyHeard, att))
 
-        if not self.port_statistik_DB:  # Übergangsweise
-            self.port_statistik_DB[0] = PortStatDB()
         self.new_call_alarm = False
-        """
-        self.connections = {
-            # conn_id: bla TODO Reverse id 
-        }
-        """
 
     def __del__(self):
         pass
 
-    def bw_mon_inp(self, ax25_frame: AX25Frame, port_id):
+    def bw_mon_inp(self, ax25_frame, port_id):
         if port_id not in self.port_statistik_DB.keys():
-            self.port_statistik_DB[port_id] = PortStatDB()
+            self.port_statistik_DB[port_id] = {}
+        self.init_bw_struct(port_id)
+        self.input_stat_db(ax_frame=ax25_frame, port_id=port_id)
 
-        self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)
+    def input_bw_calc(self, port_id, ax_frame=None, ):
+        self.init_bw_struct(port_id=port_id)
+        if ax_frame is not None:
+            if self.now_min == datetime.now().strftime('%M:%S')[:-1]:
+                self.bandwidth[port_id][self.now_min] += len(ax_frame.bytes)
+            else:
+                self.now_min = datetime.now().strftime('%M:%S')[:-1]
+                self.bandwidth[port_id][self.now_min] = len(ax_frame.bytes)
+        else:
+            if self.now_min != datetime.now().strftime('%M:%S')[:-1]:
+                self.now_min = datetime.now().strftime('%M:%S')[:-1]
+                self.bandwidth[port_id][self.now_min] = 0
 
-    def mh_inp_axip_add(self, ent:'', axip_add: tuple):
+    def init_bw_struct(self, port_id):
+        if port_id not in self.bandwidth:
+            self.bandwidth[port_id] = get_bandwidth_struct()
+
+    def get_bandwidth(self, port_id, baud=1200):
+        self.init_bw_struct(port_id=port_id)
+        ret = deque([0] * 100, maxlen=100)
+        now = datetime.now()
+        ten_minutes_ago = now - timedelta(minutes=10)
+        minutes = list(self.bandwidth[port_id].keys())
+        minutes.reverse()
+        ind = minutes.index(now.strftime('%M:%S')[:-1])
+        ind2 = minutes.index(ten_minutes_ago.strftime('%M:%S')[:-1])
+        new_key_list = minutes[ind:ind2 + 1]
+        i = 0
+        for k in new_key_list:
+            byt = int(self.bandwidth[port_id][k])
+            f = (((byt * 8) / 10) * 100) / baud
+            ret[i] = round(f)
+            i += 1
+        return ret
+
+    def input_stat_db(self, ax_frame, port_id):
+        now = datetime.now()
+        date_str = now.strftime('%d/%m/%y')
+        hour = now.hour
+        minute = now.minute
+        if now.hour == 0:
+            last_days = [
+                date_str,
+                (datetime.now() - timedelta(days=1)).strftime('%d/%m/%y'),
+                (datetime.now() - timedelta(days=2)).strftime('%d/%m/%y'),
+            ]
+            for dt in list(self.port_statistik_DB[port_id].keys()):
+                if dt not in last_days:
+                    del self.port_statistik_DB[port_id][dt]
+
+        self.input_bw_calc(ax_frame=ax_frame, port_id=port_id)
+        if date_str not in list(self.port_statistik_DB[port_id].keys()):
+            self.port_statistik_DB[port_id][date_str] = init_day_dic()
+        self.port_statistik_DB[port_id][date_str][hour]['N_pack'][minute] += 1
+        if ax_frame.ctl_byte.flag in self.port_statistik_DB[port_id][date_str][hour]:
+            self.port_statistik_DB[port_id][date_str][hour][ax_frame.ctl_byte.flag][minute] += len(ax_frame.bytes)
+        self.port_statistik_DB[port_id][date_str][hour]['DATA_W_HEADER'][minute] += len(ax_frame.bytes)
+        self.port_statistik_DB[port_id][date_str][hour]['DATA'][minute] += int(ax_frame.data_len)
+
+    def mh_inp_axip_add(self, ent: '', axip_add: tuple):
         if ent in self.calls.keys():
             self.calls[ent].axip_add = axip_add
 
-    def mh_inp(self, ax25_frame: AX25Frame, port_name, port_id):
+    def mh_inp(self, ax25_frame, port_name, port_id):
         ########################
         # Port Stat
         if port_id not in self.port_statistik_DB.keys():
-            self.port_statistik_DB[port_id] = PortStatDB()
-        self.port_statistik_DB[port_id].input(ax_frame=ax25_frame)
+            self.port_statistik_DB[port_id] = init_day_dic()
+        # self.port_statistik_DB[port_id].input_stat_db(ax_frame=ax25_frame)
+        self.input_stat_db(ax25_frame, port_id)
         ########################
         # MH Entry
         call_str = ax25_frame.from_call.call_str
@@ -637,29 +338,17 @@ class MH(object):
         tmp_mh = cleanup_obj_dict(self.calls)
         try:
             with open(mh_data_file, 'wb') as outp:
-                # print(self.calls.keys())
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
             with open(mh_data_file, 'xb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
 
-        port_stat_DB = []
-        for port_id in self.port_statistik_DB.keys():
-            port_stat_DB.append(self.port_statistik_DB[port_id].stat_DB_days)
         try:
             with open(port_stat_data_file, 'wb') as outp:
-                # print(self.calls.keys())
-                pickle.dump(port_stat_DB, outp, pickle.HIGHEST_PROTOCOL)
-        except FileNotFoundError:
-            with open(port_stat_data_file, 'xb') as outp:
-                pickle.dump(port_stat_DB, outp, pickle.HIGHEST_PROTOCOL)
-        """    
-        try:
-            with open(port_stat_data_file, 'wb') as outp:
-                # print(self.calls.keys())
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
             with open(port_stat_data_file, 'xb') as outp:
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
-        """
 
+
+MH_LIST = MH()

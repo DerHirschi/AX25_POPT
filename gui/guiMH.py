@@ -2,7 +2,7 @@ import logging
 import tkinter as tk
 from tkinter import Menu
 from tkinter import ttk
-from ax25.ax25Statistics import MyHeard
+from ax25.ax25Statistics import MyHeard, MH_LIST
 from fnc.str_fnc import conv_time_DE_str
 
 # import matplotlib.pyplot as plt
@@ -14,7 +14,6 @@ class MHWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self.root_win = root_win
-        self.mh = self.root_win.mh
         ###################################
         # Vars
         self.rev_ent = False
@@ -32,7 +31,7 @@ class MHWin(tk.Toplevel):
         self.menubar = Menu(self)
         self.config(menu=self.menubar)
         self.menubar.add_command(label="Quit", command=self.close)
-        self.menubar.add_command(label="Port-Statistik", command=lambda: self.mh.port_statistik_DB[0].plot_test_graph(self.root_win))
+        self.menubar.add_command(label="Port-Statistik", command=lambda: self.root_win.open_port_stat_win())
         # ############################### Columns ############################
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=0, minsize=50)
@@ -106,7 +105,7 @@ class MHWin(tk.Toplevel):
             self.tree.insert('', tk.END, values=ret_ent)
 
     def sort_entry(self, flag: str):
-        sort_date = self.mh.output_sort_mh_entr(flag_str=flag, reverse=self.rev_ent)
+        sort_date = MH_LIST.output_sort_mh_entr(flag_str=flag, reverse=self.rev_ent)
         if self.rev_ent:
             self.rev_ent = False
         else:

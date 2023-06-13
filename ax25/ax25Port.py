@@ -8,10 +8,12 @@ import crcmod
 from ax25.ax25Beacon import Beacon
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
+from ax25.ax25Statistics import MH_LIST
 from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
+from fnc.debug_fnc import show_mem_size
 from fnc.os_fnc import is_linux
 # from ax25.ax25monitor import monitor_frame_inp
 from fnc.socket_fnc import get_ip_by_hostname
@@ -33,13 +35,14 @@ class AX25Port(threading.Thread):
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
+        self.deb_port_vars = {}
+
         """ self.ax25_port_handler will be set in AX25PortInit """
         # self.ax25_ports: {int: AX25Port}    # TODO Check if needed
         ############
         # CONFIG
         self.port_cfg = port_cfg
         self.port_handler = port_handler
-        self.mh = port_handler.mh
         self.beacons = self.port_handler.beacons
         self.kiss = Kiss(self.port_cfg)
         self.port_param = self.port_cfg.parm_PortParm
@@ -58,6 +61,9 @@ class AX25Port(threading.Thread):
         self.UI_buf: [AX25Frame] = []
         self.connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
+        """ APRS Stuff """
+        self.aprs_stat = self.port_cfg.parm_aprs_station
+        self.aprs_ais = self.port_handler.aprs_ais
         # CONFIG ENDE
         #############
         #############
@@ -81,6 +87,11 @@ class AX25Port(threading.Thread):
     def __del__(self):
         self.close()
         # self.loop_is_running = False
+
+    def debug_show_var_size(self):
+        print()
+        print(f"--Port: {self.port_id}")
+        self.deb_port_vars = show_mem_size(self.__dict__, previous_sizes=self.deb_port_vars)
 
     def set_kiss_parm(self):
         pass
@@ -122,6 +133,8 @@ class AX25Port(threading.Thread):
     def rx_handler(self, ax25_frame: AX25Frame):
         """ Main RX-Handler """
         self.reset_ft_wait_timer(ax25_frame)
+        if ax25_frame.ctl_byte.flag == 'UI':
+            self.rx_UI_handler(ax25_frame=ax25_frame)
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
             if self.rx_link_handler(ax25_frame=ax25_frame):
                 # Link Connection Handler
@@ -157,6 +170,16 @@ class AX25Port(threading.Thread):
         uid = str(ax25_frame.addr_uid)
         if uid in self.pipes.keys():
             self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
+            return True
+        return False
+
+    def rx_UI_handler(self, ax25_frame: AX25Frame):
+        # print(f"Port RX UI Handler - aprs_ais: {self.aprs_stat.aprs_ais}")
+        if self.aprs_ais is not None:
+            self.aprs_ais.aprs_ax25frame_rx(
+                port_id=self.port_id,
+                ax25_frame=ax25_frame
+            )
             return True
         return False
 
@@ -338,7 +361,7 @@ class AX25Port(threading.Thread):
                     for beacon in beacon_list:
                         if beacon.is_enabled:
                             send_it = beacon.crone()
-                            ip_fm_mh = self.mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
+                            ip_fm_mh = MH_LIST.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
                             beacon.ax_frame.axip_add = ip_fm_mh
                             if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
                                 if ip_fm_mh == ('', 0):
@@ -474,15 +497,16 @@ class AX25Port(threading.Thread):
         else:
             frame.pid_byte.text()
         frame.data = text
-        frame.axip_add = self.mh.mh_get_last_ip(call_str=dest_call)
+        frame.axip_add = MH_LIST.mh_get_last_ip(call_str=dest_call)
         frame.from_call.call_str = own_call
         frame.to_call.call_str = dest_call
         try:
             frame.encode_ax25frame()
         except AX25EncodingERROR:
-            pass
+            return False
         else:
             self.UI_buf.append(frame)
+            return True
 
     def reset_ft_wait_timer(self, ax25_frame: AX25Frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
@@ -533,7 +557,7 @@ class AX25Port(threading.Thread):
                 if e is None and ax25frame.validate():
                     # ######### RX #############
                     # MH List and Statistics
-                    self.mh.mh_inp(ax25frame, self.portname, self.port_id)
+                    MH_LIST.mh_inp(ax25frame, self.portname, self.port_id)
                     # Monitor
                     self.gui_monitor(ax25frame=ax25frame, tx=False)
                     # Handling
@@ -581,7 +605,8 @@ class KissTCP(AX25Port):
                 if self.kiss.is_enabled:
                     # self.device.sendall(self.kiss.device_kiss_start_1())
                     self.device.sendall(self.kiss.device_jhost())
-                    # self.device.sendall(self.kiss.device_kiss_start_1())
+                    # print(self.device.recv(999))
+
                     self.set_kiss_parm()
 
     def __del__(self):
@@ -639,7 +664,7 @@ class KissTCP(AX25Port):
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
         else:
-            self.mh.bw_mon_inp(frame, self.port_id)
+            MH_LIST.bw_mon_inp(frame, self.port_id)
         ############################################
 
 
@@ -658,7 +683,13 @@ class KISSSerial(AX25Port):
                 logger.error('{}'.format(e))
             else:
                 if self.kiss.is_enabled:
+                    tnc_banner = self.device.readall().decode('UTF-8', 'ignore')
+                    logger.info(f"TNC-Banner: {tnc_banner}")
+                    print(f"TNC-Banner: {tnc_banner}")
+                    #self.device.flush()
                     self.device.write(self.kiss.device_kiss_start_1())
+                    self.device.readall()
+                    # print(self.device.read())
                     # self.device.write(self.kiss.device_jhost())
                     # self.device.write(b'\xc0\x10\x0c\xc0')
                     self.set_kiss_parm()
@@ -671,10 +702,8 @@ class KISSSerial(AX25Port):
         if self.device is not None:
             try:
                 # Deactivate KISS Mode on TNC
-                """
                 if self.kiss.is_enabled:
                     self.device.write(self.kiss.device_kiss_end())
-                """
                 if is_linux():
                     try:
                         self.device.flush()
@@ -730,7 +759,7 @@ class KISSSerial(AX25Port):
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
         else:
-            self.mh.bw_mon_inp(frame, self.port_id)
+            MH_LIST.bw_mon_inp(frame, self.port_id)
 
 
 class AXIP(AX25Port):
@@ -833,7 +862,7 @@ class AXIP(AX25Port):
             except OSError:
                 pass
             else:
-                self.mh.bw_mon_inp(frame, self.port_id)
+                MH_LIST.bw_mon_inp(frame, self.port_id)
         if self.port_cfg.parm_axip_Multicast and not no_multicast:
             self.tx_multicast(frame=frame)
 
@@ -844,7 +873,7 @@ class AXIP(AX25Port):
                 try:
                     self.tx(frame, no_multicast=True)
                 except (ConnectionRefusedError, ConnectionError, socket.timeout):
-                    self.mh.mh_ip_failed(axip_add)
+                    MH_LIST.mh_ip_failed(axip_add)
                 except (OSError, socket.error) as e:
                     logger.error(
                         'Error. Cant send Packet to AXIP Device MULTICAST {}'.format(frame.axip_add))

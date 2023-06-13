@@ -2,6 +2,7 @@ import tkinter
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
+from ax25.ax25Statistics import MH_LIST
 from fnc.str_fnc import get_kb_str_fm_bytes, conv_time_DE_str, get_time_delta
 from string_tab import STR_TABLE
 from ax25.ax25dec_enc import PIDByte
@@ -12,7 +13,6 @@ class SideTabbedFrame:
     def __init__(self, main_cl):
         self.main_win = main_cl
         self.lang = self.main_win.language
-        self.mh = main_cl.mh
         self.style = self.main_win.style
         self.ch_index = self.main_win.channel_index
         self.all_connections = self.main_win.ax25_port_handler.all_connections
@@ -157,7 +157,7 @@ class SideTabbedFrame:
 
         link_holder_settings_btn = tk.Button(tab1_kanal,
                                              text='Linkhalter',
-                                             command=self.main_win.open_linkholder_settings_win
+                                             command=lambda: self.main_win.open_settings_window('l_holder')
                                              )
         link_holder_settings_btn.place(x=140, y=165)
         # RTT
@@ -224,7 +224,7 @@ class SideTabbedFrame:
                                               mode='determinate',
                                               )
         self.ft_progress.place(x=_x, y=_y)
-        self.ft_progress.bind('<Button-1>', self.main_win.open_ft_manager)
+        self.ft_progress.bind('<Button-1>', lambda event: self.main_win.open_settings_window('ft_manager'))
         self.ft_progress['value'] = 0
         self.ft_progress_var = tk.StringVar(tab1_kanal)
         self.ft_size_var = tk.StringVar(tab1_kanal)
@@ -664,7 +664,7 @@ class SideTabbedFrame:
             self.tree.insert('', tk.END, values=ret_ent)
 
     def update_side_mh(self):
-        mh_ent = list(self.mh.output_sort_entr(8))
+        mh_ent = list(MH_LIST.output_sort_entr(8))
         if mh_ent != self.last_mh_ent:
             self.last_mh_ent = mh_ent
             self.format_tree_ent()

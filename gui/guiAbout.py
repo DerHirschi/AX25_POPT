@@ -53,3 +53,6 @@ class About(tk.Toplevel):
     def destroy_win(self):
         self.destroy()
         self.main_cl.settings_win = None
+
+    def tasker(self):
+        pass

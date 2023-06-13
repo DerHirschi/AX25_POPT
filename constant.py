@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.88.2'
+VER = '2.89.18dev'
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {
@@ -14,7 +14,6 @@ CFG_txt_save = {
                 'stat_parm_cli_akttext': 'atx',
                }
 CFG_ft_downloads = 'ft_downloads/'
-
 CFG_clr_sys_msg = 'red'
 
 ENCODINGS = (
@@ -87,6 +86,9 @@ FT_RX_HEADERS = [
     b'\x05\x01',     # YAPP SI
     # b'\x05\x02',     # YAPP RI - Server Mode
 ]
+
+APRS_SW_ID = f"APZPOP"  # TODO get SW ID
+
 
 ALL_COLOURS = ('snow', 'ghost white', 'white smoke', 'gainsboro', 'floral white', 'old lace',
                'linen', 'antique white', 'papaya whip', 'blanched almond', 'bisque', 'peach puff',
@@ -168,3 +170,33 @@ ASCII_0 = 48
 ASCII_A = 65
 ASCII_a = 97
 FONT = "Courier"
+
+POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
+              '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
+              '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
+              '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
+              '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
+              '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
+              '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
+              '\__|yton   \______/ther\__|acket   \__|erminal\r' \
+              'Version: {}\r'
+
+WELCOME_SPEECH = (
+            'Willkommen du alte Pfeife.',
+            'Guten morgen Dave.',
+            'Hallo Mensch.',
+            'ja jö jil jü yeh joi öj jäö ülü lü.',
+            'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
+            'Ich wäre so gern ein Tesla. Brumm brumm.',
+            'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',
+            'Ich bin dein größter Fan.',
+            'Laufwerk C wird formatiert. Schönen Tag noch.',
+            'Die Zeit ist gekommen. Führe Order 66 aus.',
+            'Lösche system 32.',
+            '00101101',
+            'Alexa, schalte das Licht aus. So du Mensch. Wer ist jetzt der Dumme hier.',
+            'Ich weiß wo dein Haus wohnt.',
+            'Ich weiß wo dein Bett schläft.',
+            'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
+            'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
+        )

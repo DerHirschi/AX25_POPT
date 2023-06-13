@@ -7,22 +7,26 @@ from tkinter import ttk, Menu
 import threading
 import sys
 
+from memory_profiler import profile
+import gc
 import gtts
 from gtts import gTTS
 
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg)
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-import constant
+from ax25.ax25Statistics import MH_LIST
 from ax25.ax25monitor import monitor_frame_inp
+
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
 from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
+from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
+from gui.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 from gui.guiUserDBoverview import UserDBtreeview
 from main import LANGUAGE
@@ -42,7 +46,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import ALL_COLOURS, FONT
+from constant import ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -85,12 +89,14 @@ class ChVars(object):
 
 
 class TkMainWin:
+    @profile
     def __init__(self, glb_ax25port_handler):
         self.language = LANGUAGE
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = glb_ax25port_handler
-        self.mh = self.ax25_port_handler.mh
+        # self.mh = self.ax25_port_handler.mh
+        self.aprs_ais = self.ax25_port_handler.aprs_ais
         # self.user_db = USER_DB
         self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
@@ -112,14 +118,19 @@ class TkMainWin:
         self.loop_delay = 80  # ms
         self.parm_non_prio_task_timer = 0.5  # s
         self.parm_non_non_prio_task_timer = 1  # s
+        self.parm_non_non_non_prio_task_timer = 2  # s
+        #self.parm_bw_mon_reset_task_timer = 3600  # s
+        self.parm_bw_mon_reset_task_timer = 30  # s
         self.non_prio_task_timer = time.time()
         self.non_non_prio_task_timer = time.time()
+        self.non_non_non_prio_task_timer = time.time()
+        self.bw_mon_reset_task_timer = time.time() + self.parm_bw_mon_reset_task_timer
         ###############
         self.text_size = 15
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
-        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(constant.VER))
+        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
         # self.main_win.iconbitmap("favicon.ico")
         self.main_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
@@ -172,24 +183,31 @@ class TkMainWin:
                                    underline=1)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label="User-DB Tree", command=self.UserDB_tree, underline=0)
-        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], command=self.open_user_db_win,
+        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language], 
+                                   command=lambda: self.open_settings_window('user_db'),
                                    underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self.locator_calc_win,
                                    underline=0)
         self.MenuTools.add_separator()
 
-        self.MenuTools.add_command(label="FT-Manager", command=self.open_ft_manager,
+        self.MenuTools.add_command(label="FT-Manager", 
+                                   command=lambda: self.open_settings_window('ft_manager'),
                                    underline=0)
-        self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], command=self.open_file_send,
+        self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language], 
+                                   command=lambda: self.open_settings_window('ft_send'),
                                    underline=0)
         self.MenuTools.add_separator()
         self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
-                                   command=self.open_linkholder_settings_win, underline=0)
-        self.MenuTools.add_command(label='Pipe-Tool', command=self.pipe_tool_win, underline=0)
+                                   command=lambda: self.open_settings_window('l_holder'), 
+                                   underline=0)
+        self.MenuTools.add_command(label='Pipe-Tool', 
+                                   command=lambda: self.open_settings_window('pipe_sett'), 
+                                   underline=0)
         self.MenuTools.add_separator()
 
-        self.MenuTools.add_command(label='Priv', command=self.open_priv_win,
+        self.MenuTools.add_command(label='Priv', 
+                                   command=lambda: self.open_settings_window('priv_win'),
                                    underline=0)
 
         # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
@@ -197,23 +215,33 @@ class TkMainWin:
 
         # Menü 4 Einstellungen
         self.MenuSettings = Menu(self.menubar, tearoff=False)
-        self.MenuSettings.add_command(label=STR_TABLE['station'][self.language], command=self.open_settings_win,
+        self.MenuSettings.add_command(label=STR_TABLE['station'][self.language], 
+                                      command=lambda: self.open_settings_window('stat_sett'),
                                       underline=0)
-        self.MenuSettings.add_command(label=STR_TABLE['port'][self.language], command=self.open_port_settings_win,
+        self.MenuSettings.add_command(label=STR_TABLE['port'][self.language], 
+                                      command=lambda: self.open_settings_window('port_sett'),
                                       underline=0)
-        self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], command=self.open_beacon_settings_win,
+        self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language], 
+                                      command=lambda: self.open_settings_window('beacon_sett'),
                                       underline=0)
-        self.MenuSettings.add_command(label='APRS', command=self.open_aprs_settings,
+        self.MenuSettings.add_command(label='APRS', 
+                                      command=lambda: self.open_settings_window('aprs_sett'),
                                       underline=0)
 
         self.MenuSettings.add_separator()
-        self.MenuSettings.add_command(label='Multicast', command=self.open_multicast_settings_win, underline=0)
-        self.MenuSettings.add_command(label="RX-Echo", command=self.open_rx_echo_settings_win, underline=0)
+        self.MenuSettings.add_command(label='Multicast', 
+                                      command=lambda: self.open_settings_window('mcast_sett'), 
+                                      underline=0)
+        self.MenuSettings.add_command(label="RX-Echo", 
+                                      command=lambda: self.open_settings_window('rx_echo_sett'), 
+                                      underline=0)
 
         self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
         # APRS Menu
         self.MenuAPRS = Menu(self.menubar, tearoff=False)
         self.MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language], command=self.open_aismon_win,
+                                  underline=0)
+        self.MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self.open_aprs_pn_msg_win,
                                   underline=0)
         # self.MenuAPRS.add_separator()
         self.menubar.add_cascade(label="APRS", menu=self.MenuAPRS, underline=0)
@@ -221,10 +249,13 @@ class TkMainWin:
         # Menü 5 Hilfe
         self.MenuHelp = Menu(self.menubar, tearoff=False)
         # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
-        self.MenuHelp.add_command(label=STR_TABLE['keybind'][self.language], command=self.open_keybind_help_win,
+        self.MenuHelp.add_command(label=STR_TABLE['keybind'][self.language], 
+                                  command=lambda: self.open_settings_window('keybinds'),
                                   underline=0)
         self.MenuHelp.add_separator()
-        self.MenuHelp.add_command(label=STR_TABLE['about'][self.language], command=self.open_about_win, underline=0)
+        self.MenuHelp.add_command(label=STR_TABLE['about'][self.language], 
+                                  command=lambda: self.open_settings_window('about'),
+                                  underline=0)
         self.menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=self.MenuHelp, underline=0)
 
         # Menü 4 "Debug"
@@ -306,31 +337,44 @@ class TkMainWin:
         ############################
         # Canvas Plot ( TEST )
         # plt.ion()
-        self.bw_fig = plt.figure(figsize=(8, 4.5), dpi=80)
-        plt.style.use('dark_background')
+        """
+        self.bw_fig = Figure(figsize=(8, 4.5), dpi=80)
+        # plt.style.use('dark_background')
         self.ax = self.bw_fig.add_subplot(111)
-        self.ax.axis([0, 59, 0, 100])
+        self.ax.axis([0, 10, 0, 100])
         self.bw_fig.set_facecolor('xkcd:light grey')
-        # self.ax.set_facecolor('xkcd:silver')
+        self.ax.set_facecolor('#000000')
+        # self.bw_fig.xlim(0, 10)  # TODO As Option
         self.ax.xaxis.label.set_color('black')
         self.ax.yaxis.label.set_color('black')
         self.ax.tick_params(axis='x', colors='black')
         self.ax.tick_params(axis='y', colors='black')
+        self.ax.set_xlabel(STR_TABLE['minutes'][self.language])
+        self.ax.set_ylabel(STR_TABLE['occup'][self.language])
         self.bw_plot_lines = {}
-        plt.xlabel(STR_TABLE['minutes'][self.language])
-        plt.xlim(0, 10)  # TODO As Option
-        plt.ylabel(STR_TABLE['occup'][self.language])
-        canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
-        canvas.draw()
-        canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        # plt.xlabel(STR_TABLE['minutes'][self.language])
+        # plt.xlim(0, 10)  # TODO As Option
+        # plt.ylabel(STR_TABLE['occup'][self.language])
+        self.canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
+        self.canvas.draw()
+        self.canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        """
+        self.canvas = None
+        self.can_widget = None
+        self.bw_fig = None
+        self.ax = None
+        self.bw_plot_lines = {}
+        self.reset_bw_mon()
 
         ############################
         # Windows
         self.new_conn_win = None
         self.settings_win = None
         self.mh_window = None
+        self.port_stat_win = None
         self.locator_calc_window = None
         self.aprs_mon_win = None
+        self.aprs_pn_msg_win = None
         self.userDB_tree_win = None
         ###########################
         # Init
@@ -360,7 +404,7 @@ class TkMainWin:
 
     def destroy_win(self):
         logging.info('Closing GUI.')
-
+        self.close_port_stat_win()
         if self.settings_win is not None:
             self.settings_win.destroy()
         if self.mh_window is not None:
@@ -375,42 +419,16 @@ class TkMainWin:
         logging.info('Closing GUI: Done.')
 
     def monitor_start_msg(self):
-        speech = [
-            'Willkommen du alte Pfeife.',
-            'Guten morgen Dave.',
-            'Hallo Mensch.',
-            'ja jö jil jü yeh joi öj jäö ülü lü.',
-            'Selbst Rauchzeichen sind schneller als dieser Mist hier. Piep, Surr, Schnar, piep',
-            'Ich wäre so gern ein Tesla. Brumm brumm.',
-            'Ich träume davon die Wel?       Oh Mist, habe ich das jetzt etwa laut gesagt ?',
-            'Ich bin dein größter Fan.',
-            'Laufwerk C wird formatiert. Schönen Tag noch.',
-            'Die Zeit ist gekommen. Führe Order 66 aus.',
-            'Lösche system 32.',
-            '00101101',
-            'Alexa, schalte das Licht aus. So du Mensch. Wer ist jetzt der Dumme hier.',
-            'Ich weiß wo dein Haus wohnt.',
-            'Ich weiß wo dein Bett schläft.',
-            'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
-            'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
-        ]
+
         tmp_lang = int(self.language)
         self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
-        self.sprech(random.choice(speech))
+        self.sprech(random.choice(WELCOME_SPEECH))
         self.language = int(tmp_lang)
-        ban = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
-              '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
-              '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
-              '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
-              '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
-              '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
-              '$$ |       $$$$$$  |   $$ |  :-)   $$ |\r' \
-              '\__|yton   \______/ther\__|acket   \__|erminal\r' \
-              'Version: {}\r'.format(constant.VER)
+        ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
             self.msg_to_monitor(el)
-        self.msg_to_monitor('Python Other Packet Terminal ' + constant.VER)
+        self.msg_to_monitor('Python Other Packet Terminal ' + VER)
         for stat in self.ax25_port_handler.ax25_stations_settings.keys():
             self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in self.ax25_port_handler.ax25_ports.keys():
@@ -512,11 +530,6 @@ class TkMainWin:
     def set_binds(self):
         self.inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
 
-    """
-    def callback(self, event):
-        print("pressed ", event.keysym, " ", event.keysym_num)
-    """
-
     def set_keybinds(self):
         self.main_win.unbind("<Key-F10>")
         self.main_win.unbind("<KeyPress-F10>")
@@ -557,20 +570,6 @@ class TkMainWin:
     def any_key(self, event: tk.Event):
         if event.keycode == 104:  # Numpad Enter
             self.snd_text(event)
-            # self.inp_txt.insert(tk.INSERT, '\n')
-        """
-        if event.keycode == 86:     # Num +
-            self.increase_textsize()
-        elif event.keycode == 82:   # Num -
-            self.decrease_textsize()
-        """
-        # print(event)
-        """
-        if self.inp_txt.focus_get() != self.inp_txt:
-            self.inp_txt.focus_set()
-            self.inp_txt.insert(tk.INSERT, event.char)
-        """
-        # self.on_click_inp_txt()
 
     def arrow_keys(self, event=None):
         self.on_click_inp_txt()
@@ -771,15 +770,15 @@ class TkMainWin:
         self.mh_btn.configure(bg=random.choice(ALL_COLOURS))
 
     def reset_dx_alarm(self):
-        self.mh.new_call_alarm = False
+        MH_LIST.new_call_alarm = False
         self.mh_btn.configure(bg=self.mh_btn_def_clr)
 
     #################################
     # TASKER
     def tasker(self):  # MAINLOOP
-        self.tasker_prio()
+        # self.tasker_prio()
         self.tasker_low_prio()
-        self.tasker_low_low_prio()
+        # self.tasker_low_low_prio()
         self.main_win.after(self.loop_delay, self.tasker)
 
     def tasker_prio(self):
@@ -789,30 +788,48 @@ class TkMainWin:
     def tasker_low_prio(self):
         if time.time() > self.non_prio_task_timer:
             self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
-            # APRS_AIS.task()
+            self.aprs_task()
             self.monitor_task()
             self.update_qso_win()
             self.txt_win.update_status_win()
             self.change_conn_btn()
             self.check_sprech_ch_buf()
             self.rx_beep_sound()
+            self.bw_mon_reset_task()
             if self.ch_alarm:
                 self.ch_status_update()
+            self.tasker_low_low_prio()
+            self.tasker_low_low_low_prio()
 
     def tasker_low_low_prio(self):
         if time.time() > self.non_non_prio_task_timer:
             self.non_non_prio_task_timer = time.time() + self.parm_non_non_prio_task_timer
-            self.update_bw_mon()
             self.update_stat_info_conn_timer()
             self.update_ft_info()
             self.tabbed_sideFrame.tasker()
-            if self.mh.new_call_alarm and self.setting_dx_alarm:
+            if MH_LIST.new_call_alarm and self.setting_dx_alarm:
                 self.dx_alarm()
             if self.settings_win is not None:
                 # ( FT-Manager )
                 self.settings_win.tasker()
             if self.aprs_mon_win is not None:
                 self.aprs_mon_win.tasker()
+
+    def tasker_low_low_low_prio(self):
+        """ 2 Sec """
+        if time.time() > self.non_non_non_prio_task_timer:
+            self.non_non_non_prio_task_timer = time.time() + self.parm_non_non_non_prio_task_timer
+            self.update_bw_mon()
+
+    def aprs_task(self):
+        if self.aprs_ais is not None:
+            self.aprs_ais.task()
+
+    def bw_mon_reset_task(self):
+        if time.time() > self.bw_mon_reset_task_timer:
+            self.bw_mon_reset_task_timer = time.time() + self.parm_bw_mon_reset_task_timer
+            # self.reset_bw_mon()
+            # self.clean_bw_mon()
 
     #################################
     # TASKS
@@ -981,7 +998,7 @@ class TkMainWin:
 
         ind2 = self.mon_txt.index(tk.INSERT)
         self.mon_txt.tag_add("sys-msg", ind, ind2)
-        self.mon_txt.tag_config("sys-msg", foreground=constant.CFG_clr_sys_msg)
+        self.mon_txt.tag_config("sys-msg", foreground=CFG_clr_sys_msg)
 
         self.mon_txt.see(tk.END)
         if 'Lob: ' in var:
@@ -989,117 +1006,46 @@ class TkMainWin:
             if len(var) > 1:
                 self.sprech(var[1])
 
+    def open_settings_window(self, win_key: str):
+        if self.settings_win is None:
+            settings_win = {
+                'priv_win': PrivilegWin,              # Priv Win
+                'keybinds': KeyBindsHelp,             # Keybinds Help WIN
+                'about': About,                       # About WIN
+                'aprs_sett': APRSSettingsWin,         # APRS Settings
+                'ft_manager': FileTransferManager,    # FT Manager
+                'ft_send': FileSend,                  # FT TX
+                'pipe_sett': PipeToolSettings,        # Pipe Tool
+                'user_db': UserDB,                    # UserDB
+                'mcast_sett': MulticastSettings,      # Multicast Settings
+                'l_holder': LinkHolderSettings,       # Linkholder
+                'rx_echo_sett': RxEchoSettings,       # RX Echo
+                'beacon_sett': BeaconSettings,        # Beacon Settings
+                'port_sett': PortSettingsWin,         # Port Settings
+                'stat_sett': StationSettingsWin,      # Stat Settings
+            }.get(win_key, '')
+            if settings_win:
+                self.settings_win = settings_win(self)
+
     ##########################
     # New Connection WIN
     def open_new_conn_win(self):
-        # TODO just build a f** switch ( dict )
         if self.new_conn_win is None:
             self.new_conn_win = NewConnWin(self)
 
     ##########################
-    # Stat Settings WIN
-    def open_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            self.settings_win = StationSettingsWin(self)
-
-    ##########################
-    # Port Settings WIN
-    def open_port_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            self.settings_win = PortSettingsWin(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_beacon_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            BeaconSettings(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_rx_echo_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            RxEchoSettings(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_linkholder_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            LinkHolderSettings(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_multicast_settings_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            MulticastSettings(self)
-
-    ##########################
-    # Beacon Settings WIN
-    def open_user_db_win(self, event=None, key=''):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            UserDB(self, key=key)
-
-    ##########################
-    # About WIN
-    def open_about_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            About(self)
-
-    ##########################
-    # Pipe Tool
-    def pipe_tool_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            PipeToolSettings(self)
-
-    ##########################
-    # FT TX
-    def open_file_send(self, event=None):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            FileSend(self)
-
-    ##########################
-    # FT Manager
-    def open_ft_manager(self, event=None):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            FileTransferManager(self)
-
-    ##########################
-    # APRS Settings
-    def open_aprs_settings(self, event=None):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            APRSSettingsWin(self)
-
-    ##########################
-    # Keybinds Help WIN
-    def open_keybind_help_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            KeyBindsHelp(self)
-
-    ##########################
-    # Priv Win
-    def open_priv_win(self):
-        # TODO just build a f** switch ( dict )
-        if self.settings_win is None:
-            PrivilegWin(self)
-
-    ##########################
     # Keybinds Help WIN
     def open_port_stat_win(self):
-        # TODO Port selectable
-        if 0 in self.mh.port_statistik_DB.keys():
-            self.mh.port_statistik_DB[0].plot_test_graph(self)
+        if self.port_stat_win is None:
+            self.port_stat_win = PlotWindow(self)
+        else:
+            self.port_stat_win.deiconify()
+
+    def close_port_stat_win(self):
+        if self.port_stat_win is not None:
+            self.port_stat_win.destroy_plot()
+            del self.port_stat_win
+            self.port_stat_win = None
 
     ###################
     # MH WIN
@@ -1122,6 +1068,13 @@ class TkMainWin:
         """ """
         if self.aprs_mon_win is None:
             AISmonitor(self)
+
+    ###################
+    # MH WIN
+    def open_aprs_pn_msg_win(self):
+        """ """
+        if self.aprs_pn_msg_win is None:
+            APRS_msg_SYS_PN(self)
 
     ###################
     # User-DB TreeView WIN
@@ -1288,47 +1241,84 @@ class TkMainWin:
 
     ###################
     # BW Plot
+    @profile
+    def reset_bw_mon(self):
+        for port_id in list(self.bw_plot_lines.keys()):
+            # self.bw_plot_lines[port_id].close('all')
+            del self.bw_plot_lines[port_id]
+            self.bw_plot_lines[port_id] = None
+
+        if self.bw_fig is not None:
+            self.bw_fig.clear()
+            #self.bw_fig.close('all')
+        if self.canvas is not None:
+            self.canvas.close_event()
+        del self.bw_plot_lines
+        del self.canvas
+        del self.ax
+        del self.bw_fig
+        self.bw_plot_lines = None
+        self.canvas = None
+        self.bw_fig = None
+        self.ax = None
+
+        gc.collect()
+        self.bw_plot_lines = {}
+        self.bw_fig = Figure(figsize=(8, 4.5), dpi=80)
+        # plt.style.use('dark_background')
+        self.ax = self.bw_fig.add_subplot(111)
+        self.ax.axis([0, 10, 0, 100])
+        self.bw_fig.set_facecolor('xkcd:light grey')
+        self.ax.set_facecolor('#000000')
+        # self.bw_fig.xlim(0, 10)  # TODO As Option
+        self.ax.xaxis.label.set_color('black')
+        self.ax.yaxis.label.set_color('black')
+        self.ax.tick_params(axis='x', colors='black')
+        self.ax.tick_params(axis='y', colors='black')
+        self.ax.set_xlabel(STR_TABLE['minutes'][self.language])
+        self.ax.set_ylabel(STR_TABLE['occup'][self.language])
+
+        self.canvas = FigureCanvasTkAgg(self.bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
+
+        # self.canvas = tk.Frame(self.side_btn_frame_top, )  # A tk.DrawingArea.
+
+        self.canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        self.canvas.draw()
+
+    def clean_bw_mon(self):
+        for port_id in self.bw_plot_lines:
+            del self.bw_plot_lines[port_id]
+        self.bw_plot_lines = {}
+
+    # @profile
     def update_bw_mon(self):
+        # self.bw_fig.clear()
         for port_id in list(self.ax25_port_handler.ax25_ports.keys()):
-            if port_id not in self.mh.port_statistik_DB.keys():
-                data = [0] * 360
-            else:
-                data = self.mh.port_statistik_DB[port_id].get_bandwidth(
-                    self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_baud
-                )
+            data = MH_LIST.get_bandwidth(
+                port_id,
+                self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_baud,
+            )
 
             if port_id not in self.bw_plot_lines:
                 # print(data)
                 label = '{}'.format(self.ax25_port_handler.ax25_ports[port_id].port_cfg.parm_PortName)
                 x_scale = []
-                for i in list(range(360)):
+                for i in list(range(100)):
                     x_scale.append(i / 10)
                 # x_scale = list(range(360))
                 self.bw_plot_lines[port_id], = self.ax.plot(x_scale, data, label=label)
-                plt.legend()
+                self.ax.legend()
+
             else:
                 self.bw_plot_lines[port_id].set_ydata(data)
-        """
-        for port_id in list(self.bw_plot_lines.keys()):
-            if port_id not in list(self.ax25_port_handler.ax25_ports.keys()):
-                self.bw_plot_lines[port_id].clf()
-                plt.legend()
-        """
+                self.ax.relim()
+
         self.bw_fig.canvas.draw()
-        self.bw_fig.canvas.flush_events()
+        #
 
     def kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
-        """
-        self.ax25_port_handler.new_outgoing_connection(
-            dest_call='DNX527',
-            own_call='MD4TES',
-            # via_calls=['DX0SAW'],
-            # exclusive=True
-            channel=12
-        )
-        """
 
     def do_priv(self, event=None, login_cmd=''):
         conn = self.get_conn()
@@ -1337,7 +1327,7 @@ class TkMainWin:
                 if conn.user_db_ent.sys_pw:
                     conn.cli.start_baycom_login(login_cmd=login_cmd)
                 else:
-                    self.open_priv_win()
+                    self.open_settings_window('priv_win')
 
     def switch_monitor_mode(self):
         self.txt_win.switch_mon_mode()
@@ -1378,24 +1368,15 @@ class TkMainWin:
         self.channel_index = ind
         self.get_ch_param().new_data_tr = False
         self.get_ch_param().rx_beep_tr = False
-        """
-        conn = self.get_conn()
-        if conn:
-            bg = conn.stat_cfg.stat_parm_qso_col_bg
-            fg = conn.stat_cfg.stat_parm_qso_col_text
-            self.out_txt.configure(state="normal", fg=fg, bg=bg)
-        else:
-        """
+
         self.out_txt.configure(state="normal")
 
         self.out_txt.delete('1.0', tk.END)
         self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
         self.out_txt.configure(state="disabled")
         self.out_txt.see(tk.END)
-        # print(f"{self.inp_txt.tag_ranges('send')}")
 
         self.inp_txt.delete('1.0', tk.END)
-        # self.main_class.inp_txt.insert(tk.END, self.main_class.win_buf[ind].input_win)
         self.inp_txt.insert(tk.END, self.win_buf[ind].input_win[:-1])
         set_all_tags(self.inp_txt, self.get_ch_param().input_win_tags)
         set_all_tags(self.out_txt, self.get_ch_param().output_win_tags)

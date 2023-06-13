@@ -231,11 +231,13 @@ class UserDB:
                 'typ': str(flag.TYP),
                 'loc': str(flag.LOC),
                 'qth': str(flag.QTH),
-                'dist': str(flag.Distance),
+                'dist': flag.Distance,
                 'land': str(flag.Land),
                 'last_seen': conv_time_for_sorting(flag.last_seen),
             }[flag_str]
             while key in temp.keys():
+                if type(key) != str:
+                    break
                 key += '1'
             temp[key] = self.db[k]
 

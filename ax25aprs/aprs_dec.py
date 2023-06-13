@@ -7,7 +7,7 @@ from fnc.loc_fnc import coordinates_to_locator, locator_distance
 # print(aprslib.parse("M0XER-4>APRS64,TF3RPF,WIDE2*,qAR,TF3SUT-2:!/.(M4I^C,O `DXa/A=040849|#B>@\"v90!+|"))
 # print(aprslib.parse("M0XER-4>APRS64:!/.(M4I^C,O `DXa/A=040849|#B>@\"v90!+|"))
 
-def parse_aprs_msg(ax25frame):
+def parse_aprs_fm_ax25frame(ax25frame):
     aprs_msg_input = f"{ax25frame.from_call.call_str}>{ax25frame.to_call.call_str}"
     for via_call in ax25frame.via_calls:
         aprs_msg_input += f",{via_call.call_str}"
@@ -20,15 +20,23 @@ def parse_aprs_msg(ax25frame):
         # print(f"APRS Data decoding error: {ax25frame.data}")
         return {}
     try:
-        aprs_msg = aprslib.parse(aprs_msg_input)
+        return aprslib.parse(aprs_msg_input)
+    except aprslib.UnknownFormat:
+        return {}
+    except aprslib.ParseError as e:
+
+        return {}
+
+
+def parse_aprs_fm_aprsframe(aprs_frame):
+    try:
+        return aprslib.parse(aprs_frame)
     except aprslib.UnknownFormat:
         return {}
     except aprslib.ParseError as e:
         # print(e)
         # print(aprs_msg_input)
         return {}
-    else:
-        return aprs_msg
 
 
 def format_aprs_f_aprs_mon(aprs_frame, own_locator, add_new_user=False):
@@ -49,7 +57,7 @@ def format_aprs_f_monitor(ax25frame=None, own_locator='', aprs_pack=None, add_ne
     if ax25frame is not None:
         if ax25frame.ctl_byte.flag != 'UI':
             return ''
-        aprs_msg = parse_aprs_msg(ax25frame)
+        aprs_msg = parse_aprs_fm_ax25frame(ax25frame)
     elif aprs_pack is not None:
         aprs_msg = aprs_pack
     else:
@@ -138,7 +146,8 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
         # print(f"{k}: {aprs_frame[k]}")
 
         if aprs_frame[k]:
-            if k not in ['from', 'to',  'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
+            # if k not in ['from', 'to',  'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
+            if k not in ['from', 'to',  'symbol_table', 'symbol', 'subpacket', 'weather']:
                 if k == 'via':
                     if aprs_frame[k]:
                         ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
@@ -189,7 +198,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     pass
                 else:
                     ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
-        elif k == 'weather':
+        if k in ['weather', 'wx']:
             typ = 'APRS-WX'
     if db_ent:
         # if not db_ent.Distance:
@@ -202,30 +211,21 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
     return ret, dist
 
 
-def decimal_degrees_to_aprs(latitude, longitude):
-    """ By ChatGP """
-    lat_degrees = abs(int(latitude))
-    lat_minutes = abs(int((latitude - lat_degrees) * 60))
-    lat_seconds = abs(round(((latitude - lat_degrees) * 60 - lat_minutes) * 60))
-    lat_direction = 'N' if latitude >= 0 else 'S'
+def extract_ack(text):
+    start_index = text.find('{')  # Finde den Index der ersten öffnenden Klammer
+    end_index = text.find('}')    # Finde den Index der ersten schließenden Klammer
 
-    lon_degrees = abs(int(longitude))
-    lon_minutes = abs(int((longitude - lon_degrees) * 60))
-    lon_seconds = abs(round(((longitude - lon_degrees) * 60 - lon_minutes) * 60))
-    lon_direction = 'E' if longitude >= 0 else 'W'
+    if start_index == -1 or end_index == -1:  # Überprüfe, ob beide Klammern im String vorhanden sind
+        return text, None
 
-    aprs_latitude = f"{lat_degrees:02d}{lat_minutes:02d}.{lat_seconds:02d}{lat_direction}"
-    aprs_longitude = f"{lon_degrees:03d}{lon_minutes:02d}.{lon_seconds:02d}{lon_direction}"
+    value = text[start_index + 1:end_index]  # Extrahiere den Wert zwischen den Klammern
 
-    return aprs_latitude, aprs_longitude
+    if start_index > 0:  # Überprüfe, ob es Text vor der öffnenden Klammer gibt
+        text_before = text[:start_index]  # Extrahiere den Text vor der öffnenden Klammer
+        return text_before, value
 
-"""
-# Example usage
-latitude = 52.8526
-longitude = 11.1634
-aprs_latitude, aprs_longitude = decimal_degrees_to_aprs(latitude, longitude)
+    return '', value
 
-print(f"APRS Latitude: {aprs_latitude}")
-print(f"APRS Longitude: {aprs_longitude}")
-"""
+
+
 

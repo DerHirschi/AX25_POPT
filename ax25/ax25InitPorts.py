@@ -1,18 +1,30 @@
-import threading
-
 import config_station
 from ax25.ax25Port import *
 from UserDB.UserDBmain import USER_DB
-from ax25.ax25Statistics import MH
+from ax25.ax25Statistics import MH_LIST
 from ax25aprs.aprs_station import APRS_ais
 from config_station import *
+# from fnc.debug_fnc import show_mem_size
+# from memory_profiler import profile
 from gui.guiRxEchoSettings import RxEchoVars
 
 
 class AX25PortHandler(object):
+    # @profile
     def __init__(self):
         logger.info("Port Init.")
         config_station.init_dir_struct()
+        ###########
+        # DEBUGGER
+        """
+        self.deb_port = {}
+        self.deb_conn = {}
+        self.deb_self = {}
+        self.deb_mh = {}
+        self.deb_glbs = {}
+        self.deb_gui = {}
+        """
+        #################
         self.is_running = True
         self.max_ports = 20
         self.ax25types = {
@@ -22,7 +34,7 @@ class AX25PortHandler(object):
         }
         ###########################
         # VArs for gathering Stuff
-        self.mh = MH()
+        # self.mh = MH_LIST
         # self.aprs_ais = None
         self.aprs_ais = APRS_ais()
         self.gui = None
@@ -77,14 +89,14 @@ class AX25PortHandler(object):
             self.set_gui()
             tmp.main_win.quit()
             tmp.main_win.destroy()
-        self.mh.save_mh_data()
+        MH_LIST.save_mh_data()
         USER_DB.save_data()
 
     def close_aprs_ais(self):
         if self.aprs_ais is None:
             return False
-        self.aprs_ais.loop_is_running = False
         self.aprs_ais.ais_close()
+        # self.aprs_ais.save_conf_to_file()
         del self.aprs_ais
         self.aprs_ais = None
         return True
@@ -181,9 +193,11 @@ class AX25PortHandler(object):
                 logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
 
     def init_aprs_ais(self):
-        if self.aprs_ais.ais is not None:
-            self.aprs_ais.loop_is_running = True
-            threading.Thread(target=self.aprs_ais.task).start()
+        if self.aprs_ais is not None:
+            self.aprs_ais.port_handler = self
+            if self.aprs_ais.ais is not None:
+                self.aprs_ais.loop_is_running = True
+                threading.Thread(target=self.aprs_ais.ais_rx_task).start()
 
     def save_all_port_cfgs(self):
         for port_id in self.ax25_ports.keys():
@@ -278,7 +292,7 @@ class AX25PortHandler(object):
             return False, 'Error: Link No Via Call'
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
-        mh_entry = self.mh.mh_get_data_fm_call(dest_call)
+        mh_entry = MH_LIST.mh_get_data_fm_call(dest_call)
         if not exclusive:
             if mh_entry:
                 # port_id = int(mh_entry.port_id)
@@ -360,4 +374,25 @@ class AX25PortHandler(object):
             if tmp:
                 res[ch_id] = tmp
         return res
+    """
+    def debug_fnc(self):
+        print("--Port")
+        self.deb_port = dict(show_mem_size(self.ax25_ports, previous_sizes=dict(self.deb_port)))
+        for p_id in self.ax25_ports:
+            self.ax25_ports[p_id].debug_show_var_size()
 
+        print()
+        print("--Conn")
+        self.deb_conn = dict(show_mem_size(self.all_connections, previous_sizes=dict(self.deb_conn)))
+        print()
+        print("--InitPorts.self")
+        self.deb_self = dict(show_mem_size(self.__dict__, previous_sizes=dict(self.deb_self)))
+        print()
+
+        print("--MH")
+        self.deb_mh = dict(show_mem_size(self.mh.__dict__, previous_sizes=dict(self.deb_mh)))
+        print()
+
+        print("--Globals")
+        self.deb_glbs = dict(show_mem_size(globals(),previous_sizes=dict(self.deb_glbs)))
+    """

@@ -5,6 +5,7 @@ import logging
 import ax25.ax25Connection
 import config_station
 import constant
+from ax25.ax25Statistics import MH_LIST
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
 from constant import STATION_ID_ENCODING_REV
@@ -56,7 +57,6 @@ class DefaultCLI(object):
             self.gui = self.connection.gui
         self.my_call_str = self.connection.my_call_str
         self.to_call_str = self.connection.to_call_str
-        self.mh_list = self.connection.mh
         self.user_db = USER_DB
         self.user_db_ent: Client = self.connection.user_db_ent
         self.encoding = 'UTF-8', 'ignore'
@@ -473,7 +473,7 @@ class DefaultCLI(object):
         return ''
 
     def cmd_mh(self):
-        ret = self.mh_list.mh_out_cli()
+        ret = MH_LIST.mh_out_cli()
         return ret + '\r'
 
     def cmd_ver(self):
