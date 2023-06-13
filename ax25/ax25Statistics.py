@@ -1,7 +1,3 @@
-"""
-Nightmare !!!
-TODO: Cleanup
-"""
 from collections import deque
 from datetime import datetime
 from datetime import timedelta
@@ -57,22 +53,21 @@ def init_day_dic():
     return ret
 
 
-class MyHeard(object):
-    def __init__(self):
-        self.own_call = ''
-        self.to_calls = ["""call_str"""]
-        self.route = []
-        self.all_routes = []
-        self.port = ''
-        self.port_id = 0    # Not used yet
-        self.first_seen = datetime.now()
-        self.last_seen = datetime.now()
-        self.pac_n = 0                      # N Packets
-        self.byte_n = 0                     # N Bytes
-        self.h_byte_n = 0                   # N Header Bytes
-        self.rej_n = 0                      # N REJ
-        self.axip_add = '', 0               # IP, Port
-        self.axip_fail = 0                  # Fail Counter
+class MyHeard:
+    own_call = ''
+    to_calls = []
+    route = []
+    all_routes = []
+    port = ''
+    port_id = 0    # Not used yet
+    first_seen = datetime.now()
+    last_seen = datetime.now()
+    pac_n = 0                      # N Packets
+    byte_n = 0                     # N Bytes
+    h_byte_n = 0                   # N Header Bytes
+    rej_n = 0                      # N REJ
+    axip_add = '', 0               # IP, Port
+    axip_fail = 0                  # Fail Counter
 
 
 class MH(object):
