@@ -69,7 +69,7 @@ class APRS_ais(object):
         print("Save APRS Conf")
         logger.info("Save APRS Conf")
         save_data = cleanup_obj(set_obj_att(APRS_ais(load_cfg=False), self))
-        save_data.ais = None
+        save_data._ais = None
         save_data.port_handler = None
         save_data.ais_rx_buff = []
         save_data.loop_is_running = False

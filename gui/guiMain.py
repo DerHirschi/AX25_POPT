@@ -96,15 +96,16 @@ class TkMainWin:
         ###############################
         # AX25 PortHandler and stuff
         self.ax25_port_handler = PORT_HANDLER
+
         # self.mh = self.ax25_port_handler.mh
-        self.aprs_ais = self.ax25_port_handler.aprs_ais
+        # self.aprs_ais = self.ax25_port_handler.aprs_ais
         # self.user_db = USER_DB
         self.root_dir = get_root_dir()
         self.root_dir = self.root_dir.replace('/', '//')
         #####################
         #####################
         # GUI VARS
-        self.sound_th = None
+        self._sound_th = None
         self.ch_alarm = False
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
@@ -134,7 +135,7 @@ class TkMainWin:
         self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
         # self.main_win.iconbitmap("favicon.ico")
-        self.main_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ##########################
         self.style = ttk.Style()
         self.style.theme_use('classic')
@@ -158,7 +159,7 @@ class TkMainWin:
         self.MenuVerb.add_command(label=STR_TABLE['new'][self.language], command=self.open_new_conn_win)
         self.MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self.disco_conn)
         self.MenuVerb.add_separator()
-        self.MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self.destroy_win)
+        self.MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self._destroy_win)
         self.menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=self.MenuVerb, underline=0)
         # Menü 2 "Bearbeiten"
         self.MenuEdit = Menu(self.menubar, tearoff=False)
@@ -265,15 +266,15 @@ class TkMainWin:
         ############################
         # Input Output TXT Frames and Status Bar
         self.txt_win = TxTframe(self)
-        self.out_txt = self.txt_win.out_txt_win
-        self.inp_txt = self.txt_win.in_txt_win
-        self.mon_txt = self.txt_win.mon_txt
+        self._out_txt = self.txt_win.out_txt_win
+        self._inp_txt = self.txt_win.in_txt_win
+        self._mon_txt = self.txt_win.mon_txt
         #######################
         # Window Text Buffers
         self.win_buf: {int: ChVars} = {}
         for i in range(11):
             self.win_buf[i] = ChVars()
-            self.win_buf[i].input_win_index = str(self.inp_txt.index(tk.INSERT))
+            self.win_buf[i].input_win_index = str(self._inp_txt.index(tk.INSERT))
         # Channel Buttons
         self.ch_btn = ChBtnFrm(self)
         self.ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
@@ -295,27 +296,27 @@ class TkMainWin:
         self.side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
         self.side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
         self.side_btn_frame_top.columnconfigure(6, minsize=10, weight=1)
-        self.conn_btn = tk.Button(self.side_btn_frame_top,
-                                  text="New Conn",
-                                  bg="green",
-                                  width=8,
-                                  command=self.open_new_conn_win)
-        self.conn_btn.place(x=5, y=10)
+        self._conn_btn = tk.Button(self.side_btn_frame_top,
+                                   text="New Conn",
+                                   bg="green",
+                                   width=8,
+                                   command=self.open_new_conn_win)
+        self._conn_btn.place(x=5, y=10)
 
-        self.mh_btn = tk.Button(self.side_btn_frame_top,
-                                text="MH",
-                                # bg="yellow",
-                                width=8,
-                                command=self.MH_win)
+        self._mh_btn = tk.Button(self.side_btn_frame_top,
+                                 text="MH",
+                                 # bg="yellow",
+                                 width=8,
+                                 command=self.MH_win)
 
-        self.mh_btn.place(x=5, y=45)
+        self._mh_btn.place(x=5, y=45)
         # self.mh_btn.place(x=110, y=10)
-        self.mh_btn_def_clr = self.mh_btn.cget('bg')
-        self.mon_btn = tk.Button(self.side_btn_frame_top,
-                                 text="Monitor",
-                                 bg="yellow", width=8, command=lambda: self.switch_channel(0))
+        self.mh_btn_def_clr = self._mh_btn.cget('bg')
+        self._mon_btn = tk.Button(self.side_btn_frame_top,
+                                  text="Monitor",
+                                  bg="yellow", width=8, command=lambda: self.switch_channel(0))
         # self.mon_btn.place(x=110, y=45)
-        self.mon_btn.place(x=110, y=10)
+        self._mon_btn.place(x=110, y=10)
 
         _btn = tk.Button(self.side_btn_frame_top,
                          text="Port-Stat",
@@ -360,11 +361,10 @@ class TkMainWin:
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
         """
-        self.canvas = None
-        self.can_widget = None
-        self.bw_fig = None
-        self.ax = None
-        self.bw_plot_lines = {}
+        self._canvas = None
+        self._bw_fig = None
+        self._ax = None
+        self._bw_plot_lines = {}
         # self.reset_bw_mon()
 
         ############################
@@ -390,12 +390,11 @@ class TkMainWin:
         # TEST
         # self.open_rx_echo_settings_win()
         #######################
-        # set GUI Var
-        self.ax25_port_handler.gui = self
-        self.ax25_port_handler.set_gui()
+        # set GUI Vav
+        PORT_HANDLER.set_gui(self)
         #######################
         # LOOP
-        self.main_win.after(self.loop_delay, self.tasker)
+        self.main_win.after(self.loop_delay, self._tasker)
         self.main_win.mainloop()
 
     def __del__(self):
@@ -403,7 +402,7 @@ class TkMainWin:
         # self.ax25_port_handler.close_all()
         pass
 
-    def destroy_win(self):
+    def _destroy_win(self):
         logging.info('Closing GUI.')
         self.close_port_stat_win()
         if self.settings_win is not None:
@@ -451,34 +450,34 @@ class TkMainWin:
     ##########################
     # Clipboard Stuff
     def copy_select(self):
-        if self.out_txt.tag_ranges("sel"):
+        if self._out_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self.out_txt.selection_get())
-            self.out_txt.tag_remove(tk.SEL, "1.0", tk.END)
-        elif self.inp_txt.tag_ranges("sel"):
+            self.main_win.clipboard_append(self._out_txt.selection_get())
+            self._out_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        elif self._inp_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self.inp_txt.selection_get())
-            self.inp_txt.tag_remove(tk.SEL, "1.0", tk.END)
-        elif self.mon_txt.tag_ranges("sel"):
+            self.main_win.clipboard_append(self._inp_txt.selection_get())
+            self._inp_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        elif self._mon_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self.mon_txt.selection_get())
-            self.mon_txt.tag_remove(tk.SEL, "1.0", tk.END)
+            self.main_win.clipboard_append(self._mon_txt.selection_get())
+            self._mon_txt.tag_remove(tk.SEL, "1.0", tk.END)
 
     def cut_select(self):
-        if self.out_txt.tag_ranges("sel"):
+        if self._out_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self.out_txt.selection_get())
-            self.out_txt.delete('sel.first', 'sel.last')
+            self.main_win.clipboard_append(self._out_txt.selection_get())
+            self._out_txt.delete('sel.first', 'sel.last')
 
     def clipboard_past(self):
         clp_brd = self.main_win.clipboard_get()
         if clp_brd:
-            self.inp_txt.insert(tk.END, clp_brd)
+            self._inp_txt.insert(tk.END, clp_brd)
 
     def select_all(self):
-        self.inp_txt.tag_add(tk.SEL, "1.0", tk.END)
-        self.inp_txt.mark_set(tk.INSERT, "1.0")
-        self.inp_txt.see(tk.INSERT)
+        self._inp_txt.tag_add(tk.SEL, "1.0", tk.END)
+        self._inp_txt.mark_set(tk.INSERT, "1.0")
+        self._inp_txt.see(tk.INSERT)
 
     ##########################
     # no WIN FNC
@@ -502,34 +501,34 @@ class TkMainWin:
                 self.win_buf[i + 1].t2speech_buf = ''
 
     def clear_channel_data(self):
-        self.out_txt.configure(state='normal')
-        self.out_txt.delete('1.0', tk.END)
-        self.out_txt.configure(state='disabled')
-        self.inp_txt.delete('1.0', tk.END)
+        self._out_txt.configure(state='normal')
+        self._out_txt.delete('1.0', tk.END)
+        self._out_txt.configure(state='disabled')
+        self._inp_txt.delete('1.0', tk.END)
         del self.win_buf[self.channel_index]
         self.win_buf[self.channel_index] = ChVars()
 
     def clear_monitor_data(self):
-        self.mon_txt.configure(state='normal')
-        self.mon_txt.delete('1.0', tk.END)
-        self.mon_txt.configure(state='disabled')
+        self._mon_txt.configure(state='normal')
+        self._mon_txt.delete('1.0', tk.END)
+        self._mon_txt.configure(state='disabled')
 
     def insert_fm_file(self):
         data = open_file_dialog()
         if data:
             # TODO Maybe Channel Decoding ?  ?
-            self.inp_txt.insert(tk.INSERT, try_decode(data, ignore=True))
+            self._inp_txt.insert(tk.INSERT, try_decode(data, ignore=True))
 
     def save_to_file(self):
-        data = self.out_txt.get('1.0', tk.END)
+        data = self._out_txt.get('1.0', tk.END)
         save_file_dialog(data)
 
     def save_monitor_to_file(self):
-        data = self.mon_txt.get('1.0', tk.END)
+        data = self._mon_txt.get('1.0', tk.END)
         save_file_dialog(data)
 
     def set_binds(self):
-        self.inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
+        self._inp_txt.bind("<ButtonRelease-1>", self.on_click_inp_txt)
 
     def set_keybinds(self):
         self.main_win.unbind("<Key-F10>")
@@ -578,36 +577,36 @@ class TkMainWin:
     def increase_textsize(self):
         self.text_size += 1
         self.text_size = max(self.text_size, 3)
-        width = self.inp_txt.cget('width')
-        self.inp_txt.configure(font=(FONT, self.text_size), width=width + 1)
-        self.out_txt.configure(font=(FONT, self.text_size), width=width + 1)
-        self.mon_txt.configure(font=(FONT, self.text_size), width=width + 1)
+        width = self._inp_txt.cget('width')
+        self._inp_txt.configure(font=(FONT, self.text_size), width=width + 1)
+        self._out_txt.configure(font=(FONT, self.text_size), width=width + 1)
+        self._mon_txt.configure(font=(FONT, self.text_size), width=width + 1)
 
     def decrease_textsize(self):
         self.text_size -= 1
         self.text_size = max(self.text_size, 3)
-        width = self.inp_txt.cget('width')
-        self.inp_txt.configure(font=(FONT, self.text_size), width=width - 1)
-        self.out_txt.configure(font=(FONT, self.text_size), width=width - 1)
-        self.mon_txt.configure(font=(FONT, self.text_size), width=width - 1)
+        width = self._inp_txt.cget('width')
+        self._inp_txt.configure(font=(FONT, self.text_size), width=width - 1)
+        self._out_txt.configure(font=(FONT, self.text_size), width=width - 1)
+        self._mon_txt.configure(font=(FONT, self.text_size), width=width - 1)
 
     def text_win_bigger(self):
-        width = self.inp_txt.cget('width')
-        self.inp_txt.configure(width=width + 1)
-        self.out_txt.configure(width=width + 1)
-        self.mon_txt.configure(width=width + 1)
+        width = self._inp_txt.cget('width')
+        self._inp_txt.configure(width=width + 1)
+        self._out_txt.configure(width=width + 1)
+        self._mon_txt.configure(width=width + 1)
 
     def text_win_smaller(self):
-        width = self.inp_txt.cget('width')
-        self.inp_txt.configure(width=max(width - 1, 56))
-        self.out_txt.configure(width=max(width - 1, 56))
-        self.mon_txt.configure(width=max(width - 1, 56))
+        width = self._inp_txt.cget('width')
+        self._inp_txt.configure(width=max(width - 1, 56))
+        self._out_txt.configure(width=max(width - 1, 56))
+        self._mon_txt.configure(width=max(width - 1, 56))
 
     def change_conn_btn(self):
         if self.get_conn(self.channel_index):
-            self.conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
+            self._conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
         else:
-            self.conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
+            self._conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
 
     ###############
     # Sound
@@ -664,8 +663,8 @@ class TkMainWin:
     def sprech(self, text: str):
         if self.setting_sprech.get() and self.setting_sound.get():
             if text:
-                if self.sound_th is not None:
-                    if self.sound_th.is_alive():
+                if self._sound_th is not None:
+                    if self._sound_th.is_alive():
                         return False
                 text = text.replace('\r', '').replace('\n', '')
                 text = text.replace('****', '*')
@@ -712,26 +711,26 @@ class TkMainWin:
         # TODO .. Again !!! ... Don't like this mess
         if self.setting_sound.get():
             if wait:
-                if self.sound_th is not None:
-                    if not self.sound_th.is_alive():
+                if self._sound_th is not None:
+                    if not self._sound_th.is_alive():
                         # print('Lebt nicht mehr')
-                        self.sound_th.join()
+                        self._sound_th.join()
                         # print('Join')
                         if is_linux():
-                            self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
-                            self.sound_th.start()
+                            self._sound_th = threading.Thread(target=playsound, args=(snd_file, True))
+                            self._sound_th.start()
                         elif 'win' in sys.platform:
-                            self.sound_th = threading.Thread(target=PlaySound,
-                                                             args=(snd_file, SND_FILENAME | SND_NOWAIT))
-                            self.sound_th.start()
+                            self._sound_th = threading.Thread(target=PlaySound,
+                                                              args=(snd_file, SND_FILENAME | SND_NOWAIT))
+                            self._sound_th.start()
                         return True
                     return False
                 if is_linux():
-                    self.sound_th = threading.Thread(target=playsound, args=(snd_file, True))
-                    self.sound_th.start()
+                    self._sound_th = threading.Thread(target=playsound, args=(snd_file, True))
+                    self._sound_th.start()
                 elif is_windows():
-                    self.sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
-                    self.sound_th.start()
+                    self._sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
+                    self._sound_th.start()
                 return True
             else:
                 if is_linux():
@@ -768,19 +767,19 @@ class TkMainWin:
     def dx_alarm(self):
         """ Alarm when new User in MH List """
         # self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
-        self.mh_btn.configure(bg=random.choice(ALL_COLOURS))
+        self._mh_btn.configure(bg=random.choice(ALL_COLOURS))
 
     def reset_dx_alarm(self):
         MH_LIST.new_call_alarm = False
-        self.mh_btn.configure(bg=self.mh_btn_def_clr)
+        self._mh_btn.configure(bg=self.mh_btn_def_clr)
 
     #################################
     # TASKER
-    def tasker(self):  # MAINLOOP
+    def _tasker(self):  # MAINLOOP
         # self.tasker_prio()
         self.tasker_low_prio()
         # self.tasker_low_low_prio()
-        self.main_win.after(self.loop_delay, self.tasker)
+        self.main_win.after(self.loop_delay, self._tasker)
 
     def tasker_prio(self):
         """ Prio Tasks """
@@ -823,8 +822,8 @@ class TkMainWin:
             # self.update_bw_mon()
 
     def aprs_task(self):
-        if self.aprs_ais is not None:
-            self.aprs_ais.task()
+        if PORT_HANDLER.get_aprs_ais() is not None:
+            PORT_HANDLER.get_aprs_ais().task()
 
     def bw_mon_reset_task(self):
         if time.time() > self.bw_mon_reset_task_timer:
@@ -895,31 +894,31 @@ class TkMainWin:
                             self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
 
                             tr = False
-                            if float(self.out_txt.index(tk.END)) - float(self.out_txt.index(tk.INSERT)) < 15:
+                            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15:
                                 tr = True
 
-                            self.out_txt.configure(state="normal")
+                            self._out_txt.configure(state="normal")
 
-                            self.out_txt.tag_config(tag_name_out,
-                                                    foreground=fg,
-                                                    background=bg,
-                                                    selectbackground=fg,
-                                                    selectforeground=bg
-                                                    )
+                            self._out_txt.tag_config(tag_name_out,
+                                                     foreground=fg,
+                                                     background=bg,
+                                                     selectbackground=fg,
+                                                     selectforeground=bg
+                                                     )
 
-                            ind = self.out_txt.index('end-1c')
-                            self.out_txt.insert('end', inp)
-                            ind2 = self.out_txt.index('end-1c')
-                            self.out_txt.tag_add("input", ind, ind2)
+                            ind = self._out_txt.index('end-1c')
+                            self._out_txt.insert('end', inp)
+                            ind2 = self._out_txt.index('end-1c')
+                            self._out_txt.tag_add("input", ind, ind2)
 
                             # configuring a tag called start
-                            ind = self.out_txt.index('end-1c')
-                            self.out_txt.insert('end', out)
-                            ind2 = self.out_txt.index('end-1c')
-                            self.out_txt.tag_add(tag_name_out, ind, ind2)
-                            self.out_txt.configure(state="disabled",
-                                                   exportselection=1
-                                                   )
+                            ind = self._out_txt.index('end-1c')
+                            self._out_txt.insert('end', out)
+                            ind2 = self._out_txt.index('end-1c')
+                            self._out_txt.tag_add(tag_name_out, ind, ind2)
+                            self._out_txt.configure(state="disabled",
+                                                    exportselection=1
+                                                    )
                             if tr or self.get_ch_param().autoscroll:
                                 self.see_end_qso_win()
                         else:
@@ -952,15 +951,15 @@ class TkMainWin:
             tmp_buff = list(self.mon_buff)
             self.mon_buff = []
             tr = False
-            self.mon_txt.configure(state="normal")
+            self._mon_txt.configure(state="normal")
             for el in tmp_buff:
                 var = monitor_frame_inp(el[0], el[1])
                 conf = el[1]
                 tx = el[2]
                 var = tk_filter_bad_chars(var)
-                ind = self.mon_txt.index('end-1c')
+                ind = self._mon_txt.index('end-1c')
                 color_bg = conf.parm_mon_clr_bg
-                if float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index(tk.INSERT)) < 15:
+                if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
                     tr = True
                 if tx:
                     tag = "tx{}".format(conf.parm_PortNr)
@@ -969,39 +968,39 @@ class TkMainWin:
                     tag = "rx{}".format(conf.parm_PortNr)
                     color = conf.parm_mon_clr_rx
 
-                if tag in self.mon_txt.tag_names(None):
-                    self.mon_txt.insert(tk.END, var, tag)
+                if tag in self._mon_txt.tag_names(None):
+                    self._mon_txt.insert(tk.END, var, tag)
                 else:
-                    self.mon_txt.insert(tk.END, var)
-                    ind2 = self.mon_txt.index('end-1c')
-                    self.mon_txt.tag_config(tag, foreground=color,
-                                            background=color_bg,
-                                            selectbackground=self.mon_txt.cget('selectbackground'),
-                                            selectforeground=self.mon_txt.cget('selectforeground'),
-                                            )
-                    self.mon_txt.tag_add(tag, ind, ind2)
-            self.mon_txt.configure(state="disabled", exportselection=1)
+                    self._mon_txt.insert(tk.END, var)
+                    ind2 = self._mon_txt.index('end-1c')
+                    self._mon_txt.tag_config(tag, foreground=color,
+                                             background=color_bg,
+                                             selectbackground=self._mon_txt.cget('selectbackground'),
+                                             selectforeground=self._mon_txt.cget('selectforeground'),
+                                             )
+                    self._mon_txt.tag_add(tag, ind, ind2)
+            self._mon_txt.configure(state="disabled", exportselection=1)
             if tr or self.tabbed_sideFrame.mon_scroll_var.get():
-                self.mon_txt.see(tk.END)
+                self._mon_txt.see(tk.END)
 
     def see_end_qso_win(self):
-        self.out_txt.see("end")
+        self._out_txt.see("end")
 
     def msg_to_monitor(self, var: str):
         # var += bytes.fromhex('15').decode('UTF-8')+'\n'
         """ Called from AX25Conn """
-        ind = self.mon_txt.index(tk.INSERT)
+        ind = self._mon_txt.index(tk.INSERT)
 
-        self.mon_txt.configure(state="normal")
+        self._mon_txt.configure(state="normal")
         ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
-        self.mon_txt.insert(tk.END, ins)
-        self.mon_txt.configure(state="disabled")
+        self._mon_txt.insert(tk.END, ins)
+        self._mon_txt.configure(state="disabled")
 
-        ind2 = self.mon_txt.index(tk.INSERT)
-        self.mon_txt.tag_add("sys-msg", ind, ind2)
-        self.mon_txt.tag_config("sys-msg", foreground=CFG_clr_sys_msg)
+        ind2 = self._mon_txt.index(tk.INSERT)
+        self._mon_txt.tag_add("sys-msg", ind, ind2)
+        self._mon_txt.tag_config("sys-msg", foreground=CFG_clr_sys_msg)
 
-        self.mon_txt.see(tk.END)
+        self._mon_txt.see(tk.END)
         if 'Lob: ' in var:
             var = var.split('Lob: ')
             if len(var) > 1:
@@ -1106,26 +1105,26 @@ class TkMainWin:
             if station:
                 ind = str(self.win_buf[self.channel_index].input_win_index)
                 if ind:
-                    if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
-                        ind = str(self.inp_txt.index(tk.INSERT))
+                    if float(ind) >= float(self._inp_txt.index(tk.INSERT)):
+                        ind = str(self._inp_txt.index(tk.INSERT))
                     ind = str(int(float(ind))) + '.0'
                 else:
                     ind = '1.0'
                 txt_enc = 'UTF-8'
                 if station.user_db_ent:
                     txt_enc = station.user_db_ent.Encoding
-                tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
+                tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
 
                 tmp_txt = tmp_txt.replace('\n', '\r')
                 station.send_data(tmp_txt.encode(txt_enc, 'ignore'))
 
-                self.inp_txt.tag_remove('send', ind, str(self.inp_txt.index(tk.INSERT)))
-                self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
+                self._inp_txt.tag_remove('send', ind, str(self._inp_txt.index(tk.INSERT)))
+                self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
 
-                self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
+                self.win_buf[self.channel_index].input_win_index = str(self._inp_txt.index(tk.INSERT))
 
-                if '.0' in self.inp_txt.index(tk.INSERT):
-                    self.inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
+                if '.0' in self._inp_txt.index(tk.INSERT):
+                    self._inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
 
         else:
             self.send_to_monitor()
@@ -1133,12 +1132,12 @@ class TkMainWin:
     def send_to_monitor(self):
         ind = str(self.win_buf[self.channel_index].input_win_index)
         if ind:
-            if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
-                ind = str(self.inp_txt.index(tk.INSERT))
+            if float(ind) >= float(self._inp_txt.index(tk.INSERT)):
+                ind = str(self._inp_txt.index(tk.INSERT))
             ind = str(int(float(ind))) + '.0'
         else:
             ind = '1.0'
-        tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
+        tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
         tmp_txt = tmp_txt.replace('\n', '\r')
         port_id = int(self.tabbed_sideFrame.mon_port_var.get())
         if port_id in self.ax25_port_handler.ax25_ports.keys():
@@ -1162,9 +1161,9 @@ class TkMainWin:
                         pid=pid
                     )
                 # self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
-        self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
-        if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
-            self.inp_txt.delete(tk.END, tk.END)
+        self.win_buf[self.channel_index].input_win_index = str(self._inp_txt.index(tk.INSERT))
+        if int(float(self._inp_txt.index(tk.INSERT))) != int(float(self._inp_txt.index(tk.END))) - 1:
+            self._inp_txt.delete(tk.END, tk.END)
 
     def send_to_qso(self, data, ch_index):
         data = data.replace('\r', '\n')
@@ -1176,25 +1175,25 @@ class TkMainWin:
         self.win_buf[k].output_win += data
         if self.channel_index == k:
             tr = False
-            if float(self.out_txt.index(tk.END)) - float(self.out_txt.index("@0,0")) < 22:
+            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index("@0,0")) < 22:
                 tr = True
 
-            self.out_txt.configure(state="normal")
-            self.out_txt.tag_config(tag_name_out,
-                                    foreground=fg,
-                                    background=bg,
-                                    selectbackground=fg,
-                                    selectforeground=bg
-                                    )
+            self._out_txt.configure(state="normal")
+            self._out_txt.tag_config(tag_name_out,
+                                     foreground=fg,
+                                     background=bg,
+                                     selectbackground=fg,
+                                     selectforeground=bg
+                                     )
 
             # configuring a tag called start
-            ind = self.out_txt.index(tk.INSERT)
-            self.out_txt.insert('end', data)
-            ind2 = self.out_txt.index(tk.INSERT)
-            self.out_txt.tag_add(tag_name_out, ind, ind2)
-            self.out_txt.configure(state="disabled",
-                                   exportselection=1
-                                   )
+            ind = self._out_txt.index(tk.INSERT)
+            self._out_txt.insert('end', data)
+            ind2 = self._out_txt.index(tk.INSERT)
+            self._out_txt.tag_add(tag_name_out, ind, ind2)
+            self._out_txt.configure(state="disabled",
+                                    exportselection=1
+                                    )
             if tr or self.get_ch_param().autoscroll:
                 self.see_end_qso_win()
 
@@ -1214,16 +1213,16 @@ class TkMainWin:
     def on_click_inp_txt(self, event=None):
         ind = self.win_buf[self.channel_index].input_win_index
         if ind:
-            self.inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
+            self._inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
             # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
-            self.inp_txt.tag_remove('send', str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0',
-                                    self.inp_txt.index(tk.INSERT))
+            self._inp_txt.tag_remove('send', str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0',
+                                     self._inp_txt.index(tk.INSERT))
         # self.inp_txt.tag_remove('send', tk.line.column, self.inp_txt.index(tk.INSERT))
-        ind2 = str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0'
+        ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
         # print(f'ind2: {ind2}')
 
-        self.inp_txt.tag_remove('send', ind2, self.inp_txt.index(tk.INSERT))
-        self.win_buf[self.channel_index].input_win_index = str(self.inp_txt.index(tk.INSERT))
+        self._inp_txt.tag_remove('send', ind2, self._inp_txt.index(tk.INSERT))
+        self.win_buf[self.channel_index].input_win_index = str(self._inp_txt.index(tk.INSERT))
 
     def shift_return(self, event=None):
         pass
@@ -1336,11 +1335,11 @@ class TkMainWin:
             # self.channel_index = int(self.mon_mode)
             self.ch_btn_clk(int(self.mon_mode))
             self.mon_mode = 0
-            self.mon_btn.configure(bg='yellow')
+            self._mon_btn.configure(bg='yellow')
         else:
             self.mon_mode = int(self.channel_index)
             self.ch_btn_clk(0)
-            self.mon_btn.configure(bg='green')
+            self._mon_btn.configure(bg='green')
 
         self.ch_status_update()
 
@@ -1360,29 +1359,29 @@ class TkMainWin:
         self.on_channel_status_change()
 
     def ch_btn_clk(self, ind: int):
-        self.get_ch_param().input_win = self.inp_txt.get('1.0', tk.END)
+        self.get_ch_param().input_win = self._inp_txt.get('1.0', tk.END)
         # self.get_ch_param().input_win_tags = self.inp_txt.tag_ranges('send')
-        self.get_ch_param().input_win_tags = get_all_tags(self.inp_txt)
-        self.get_ch_param().output_win_tags = get_all_tags(self.out_txt)
-        self.get_ch_param().input_win_cursor_index = self.inp_txt.index(tk.INSERT)
+        self.get_ch_param().input_win_tags = get_all_tags(self._inp_txt)
+        self.get_ch_param().output_win_tags = get_all_tags(self._out_txt)
+        self.get_ch_param().input_win_cursor_index = self._inp_txt.index(tk.INSERT)
 
         self.channel_index = ind
         self.get_ch_param().new_data_tr = False
         self.get_ch_param().rx_beep_tr = False
 
-        self.out_txt.configure(state="normal")
+        self._out_txt.configure(state="normal")
 
-        self.out_txt.delete('1.0', tk.END)
-        self.out_txt.insert(tk.END, self.win_buf[ind].output_win)
-        self.out_txt.configure(state="disabled")
-        self.out_txt.see(tk.END)
+        self._out_txt.delete('1.0', tk.END)
+        self._out_txt.insert(tk.END, self.win_buf[ind].output_win)
+        self._out_txt.configure(state="disabled")
+        self._out_txt.see(tk.END)
 
-        self.inp_txt.delete('1.0', tk.END)
-        self.inp_txt.insert(tk.END, self.win_buf[ind].input_win[:-1])
-        set_all_tags(self.inp_txt, self.get_ch_param().input_win_tags)
-        set_all_tags(self.out_txt, self.get_ch_param().output_win_tags)
-        self.inp_txt.mark_set("insert", self.get_ch_param().input_win_cursor_index)
-        self.inp_txt.see(tk.END)
+        self._inp_txt.delete('1.0', tk.END)
+        self._inp_txt.insert(tk.END, self.win_buf[ind].input_win[:-1])
+        set_all_tags(self._inp_txt, self.get_ch_param().input_win_tags)
+        set_all_tags(self._out_txt, self.get_ch_param().output_win_tags)
+        self._inp_txt.mark_set("insert", self.get_ch_param().input_win_cursor_index)
+        self._inp_txt.see(tk.END)
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if self.get_ch_param().rx_beep_opt and ind:

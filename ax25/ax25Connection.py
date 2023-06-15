@@ -6,7 +6,6 @@ import time
 from datetime import datetime
 
 import cli.cliMain
-# from cli.cliMain import CLI_OPT, NoneCLI
 import config_station
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
@@ -108,10 +107,6 @@ class AX25Conn(object):
         self.port_name: str = self.own_port.portname
         self.gui = self.port_handler.gui
         # self.ChVars = None
-        if self.gui is None:
-            self.is_gui = False
-        else:
-            self.is_gui = True
         """ Ch-Echo"""
         self.ch_echo: [AX25Conn] = []
         """ Config new Connection Address """
@@ -366,7 +361,7 @@ class AX25Conn(object):
                 else:
                     self.to_call_str = _tmp_call[0].decode('ASCII', 'ignore').replace(' ', '')
                     self.to_call_alias = ''
-                if self.is_gui:
+                if self.gui is not None:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
                     self.gui.sprech(speech)
                 self.tx_byte_count = 0
@@ -1099,7 +1094,7 @@ class S1Frei(DefaultStat):  # INIT RX
         # Handle Incoming Connection
         if self.ax25conn.LINK_Connection is None:
             self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
-            if self.ax25conn.is_gui:
+            if self.ax25conn.gui is not None:
                 self.ax25conn.gui.new_conn_sound()
                 speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
                 self.ax25conn.gui.sprech(speech)
@@ -1197,14 +1192,14 @@ class S2Aufbau(DefaultStat):  # INIT TX
             self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
         else:
             self.send_to_link('\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore'))
-        if self.ax25conn.is_gui:
+        if self.ax25conn.gui is not None:
             speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
             self.ax25conn.gui.sprech(speech)
         self.ax25conn.tx_buf_2send = []  # Clean Send Buffer.
         self.ax25conn.tx_buf_rawData = b''  # Clean Send Buffer.
         self.ax25conn.n2 = 0
         self.change_state(5)
-        if self.ax25conn.is_gui:
+        if self.ax25conn.gui is not None:
             self.ax25conn.gui.new_conn_sound()
 
     def reject(self):

@@ -6,6 +6,7 @@ import time
 import crcmod
 
 from ax25.ax25Beacon import Beacon
+# from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25Statistics import MH_LIST
@@ -63,7 +64,7 @@ class AX25Port(threading.Thread):
         self.pipes: {str: AX25Pipe} = {}
         """ APRS Stuff """
         self.aprs_stat = self.port_cfg.parm_aprs_station
-        self.aprs_ais = self.port_handler.aprs_ais
+        # self.aprs_ais = PORT_HANDLER.get_aprs_ais()
         # CONFIG ENDE
         #############
         #############
@@ -175,8 +176,8 @@ class AX25Port(threading.Thread):
 
     def rx_UI_handler(self, ax25_frame: AX25Frame):
         # print(f"Port RX UI Handler - aprs_ais: {self.aprs_stat.aprs_ais}")
-        if self.aprs_ais is not None:
-            self.aprs_ais.aprs_ax25frame_rx(
+        if self.port_handler.get_aprs_ais() is not None:
+            self.port_handler.get_aprs_ais().aprs_ax25frame_rx(
                 port_id=self.port_id,
                 ax25_frame=ax25_frame
             )

@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
+from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import format_aprs_f_aprs_mon
 from constant import FONT
 from string_tab import STR_TABLE
@@ -10,22 +11,23 @@ from string_tab import STR_TABLE
 class AISmonitor(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
-        self.root_cl = root_win
-        self.lang = self.root_cl.language
-        self.text_size = self.root_cl.text_size
+        self._root_cl = root_win
+        self.lang = self._root_cl.language
+        self.text_size = self._root_cl.text_size
         self.win_height = 700
         self.win_width = 1500
-        self.style = self.root_cl.style
+        self.style = self._root_cl.style
         self.title(STR_TABLE['aprs_mon'][self.lang])
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self.root_cl.main_win.winfo_x()}+"
-                      f"{self.root_cl.main_win.winfo_y()}")
+                      f"{self._root_cl.main_win.winfo_x()}+"
+                      f"{self._root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         # self.resizable(False, False)
         self.lift()
         self.tmp_buffer = []
-        self.ais_obj = self.root_cl.ax25_port_handler.aprs_ais
+        self._ais_obj = PORT_HANDLER.get_aprs_ais()
+
         # Frame für den linken Bereich
         left_frame = ttk.Frame(self)
         left_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
@@ -90,16 +92,16 @@ class AISmonitor(tk.Toplevel):
         # Text-Widget an die Größe des Hauptfensters anpassen
         text_frame.columnconfigure(0, weight=1)
         text_frame.rowconfigure(0, weight=1)
-        if self.ais_obj is not None:
-            self.new_user_var.set(self.ais_obj.add_new_user)
+        if self._ais_obj is not None:
+            self.new_user_var.set(self._ais_obj.add_new_user)
         self.bind('<Control-plus>', lambda event: self.increase_textsize())
         self.bind('<Control-minus>', lambda event: self.decrease_textsize())
 
         self.ais_aprs_stations = {}
         self.ais_aprs_stat_calls = []
-        if self.ais_obj is not None:
-            self.ais_aprs_stations = self.ais_obj.ais_aprs_stations
-            self.ais_aprs_stat_calls.append(self.ais_obj.ais_call)
+        if self._ais_obj is not None:
+            self.ais_aprs_stations = self._ais_obj.ais_aprs_stations
+            self.ais_aprs_stat_calls.append(self._ais_obj.ais_call)
             """
             for port_id in self.ais_aprs_stations.keys():
                 if self.ais_aprs_stations[port_id].aprs_parm_call:
@@ -111,20 +113,20 @@ class AISmonitor(tk.Toplevel):
         self.tasker()
 
     def tasker(self):
-        if self.ais_obj is not None:
+        if self._ais_obj is not None:
             tr = False
-            while self.ais_obj.ais_rx_buff:
-                pack = self.ais_obj.ais_rx_buff[0]
-                self.ais_obj.ais_rx_buff = self.ais_obj.ais_rx_buff[1:]
+            while self._ais_obj.ais_rx_buff:
+                pack = self._ais_obj.ais_rx_buff[0]
+                self._ais_obj.ais_rx_buff = self._ais_obj.ais_rx_buff[1:]
                 self.tmp_buffer.append(pack)
                 if self.call_filter.get():
                     if pack[1]['from'] in self.ais_aprs_stat_calls:
                         tr = True
-                        tmp = format_aprs_f_aprs_mon(pack, self.ais_obj.ais_loc, add_new_user=self.ais_obj.add_new_user)
+                        tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc, add_new_user=self._ais_obj.add_new_user)
                         self.text_widget.insert(tk.END, tmp)
                 else:
                     tr = True
-                    tmp = format_aprs_f_aprs_mon(pack, self.ais_obj.ais_loc, add_new_user=self.ais_obj.add_new_user)
+                    tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc, add_new_user=self._ais_obj.add_new_user)
                     self.text_widget.insert(tk.END, tmp)
             if tr:
                 self.scroll_to_end()
@@ -142,9 +144,9 @@ class AISmonitor(tk.Toplevel):
     def chk_call_filter(self):
         self.ais_aprs_stations = {}
         self.ais_aprs_stat_calls = []
-        if self.ais_obj is not None:
-            self.ais_aprs_stations = self.ais_obj.ais_aprs_stations
-            self.ais_aprs_stat_calls.append(self.ais_obj.ais_call)
+        if self._ais_obj is not None:
+            self.ais_aprs_stations = self._ais_obj.ais_aprs_stations
+            self.ais_aprs_stat_calls.append(self._ais_obj.ais_call)
             """
             for port_id in self.ais_aprs_stations.keys():
                 if self.ais_aprs_stations[port_id].aprs_parm_call:
@@ -162,13 +164,13 @@ class AISmonitor(tk.Toplevel):
         self.ais_aprs_stat_calls = self.ais_aprs_stat_calls + calls
 
     def chk_new_user(self):
-        if self.ais_obj is not None:
-            self.ais_obj.add_new_user = self.new_user_var.get()
+        if self._ais_obj is not None:
+            self._ais_obj.add_new_user = self.new_user_var.get()
 
     def del_buffer(self):
         self.tmp_buffer = []
-        if self.ais_obj is not None:
-            self.ais_obj.ais_rx_buff = []
+        if self._ais_obj is not None:
+            self._ais_obj.ais_rx_buff = []
         self.text_widget.delete(0.0, tk.END)
 
     def scroll_to_end(self):
@@ -177,7 +179,7 @@ class AISmonitor(tk.Toplevel):
 
     def destroy_win(self):
         # self.tasker = lambda: 0
-        self.root_cl.aprs_mon_win = None
-        self.ais_obj.ais_rx_buff = self.tmp_buffer + self.ais_obj.ais_rx_buff
+        self._root_cl.aprs_mon_win = None
+        self._ais_obj.ais_rx_buff = self.tmp_buffer + self._ais_obj.ais_rx_buff
         self.destroy()
 

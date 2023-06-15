@@ -52,7 +52,7 @@ class NewConnWin:
         self.main = main_win
         self.style = self.main.style
         self.ax25_port_handler = self.main.ax25_port_handler
-        self.out_txt = self.main.out_txt
+        self.out_txt = self.main._out_txt
         self.conn_hist: {str: ConnHistory} = self.main.connect_history
         self.new_conn_win = tk.Tk()
         self.new_conn_win.title("New Connection")

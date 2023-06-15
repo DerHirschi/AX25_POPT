@@ -197,8 +197,10 @@ class AX25PortHandler(object):
 
     ######################
     # GUI Handling
-    def set_gui(self):
+    def set_gui(self, gui=None):
         """ PreInit: Set GUI Var """
+        if gui is not None:
+            self.gui = gui
         for k in self.ax25_ports.keys():
             self.ax25_ports[k].gui = self.gui
 
@@ -366,6 +368,13 @@ class AX25PortHandler(object):
             if tmp:
                 res[ch_id] = tmp
         return res
+
+    def get_aprs_ais(self):
+        return self.aprs_ais
+
+    def get_all_ports(self):
+        return self.ax25_ports
+
     """
     def debug_fnc(self):
         print("--Port")

@@ -1,28 +1,25 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
 from constant import APRS_SW_ID
-from fnc.str_fnc import convert_umlaute_to_ascii
 from string_tab import STR_TABLE
 
 
 class NewMessageWindow(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
-        self.root_cl = root_win.root_cl
-        self.aprs_root = root_win
-        self.aprs_root.new_msg_win = self
-        self.port_handler = self.root_cl.ax25_port_handler
-        self.lang = self.root_cl.language
-        self.text_size = self.root_cl.text_size
+        self._aprs_root = root_win
+        self._aprs_root._new_msg_win = self
+        self.lang = root_win.lang
         self.win_height = 250
         self.win_width = 700
-        self.style = self.root_cl.style
+        self.style = root_win.style
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self.root_cl.main_win.winfo_x()}+"
-                      f"{self.root_cl.main_win.winfo_y()}")
+                      f"{root_win.winfo_x()}+"
+                      f"{root_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         # self.resizable(False, False)
         self.lift()
@@ -35,7 +32,7 @@ class NewMessageWindow(tk.Toplevel):
         label1 = ttk.Label(top_frame, text="Port:")
         label1.pack(side=tk.LEFT, padx=5)
 
-        port_vals = ['I-NET'] + list(self.port_handler.ax25_ports.keys())
+        port_vals = ['I-NET'] + list(PORT_HANDLER.ax25_ports.keys())
         self.port_var = tk.StringVar(self)
         dropdown1 = ttk.Combobox(top_frame,
                                  width=3,
@@ -47,7 +44,7 @@ class NewMessageWindow(tk.Toplevel):
         label2 = ttk.Label(top_frame, text="     From:")
         label2.pack(side=tk.LEFT, padx=60)
 
-        from_vals = list(self.port_handler.ax25_stations_settings.keys())
+        from_vals = list(PORT_HANDLER.ax25_stations_settings.keys())
         self.from_var = tk.StringVar(self)
         dropdown2 = ttk.Combobox(top_frame,
                                  width=10,
@@ -102,7 +99,7 @@ class NewMessageWindow(tk.Toplevel):
         port_id = self.port_var.get()
         if port_id.isdigit():
             port_id = int(port_id)
-        if from_call in self.port_handler.ax25_stations_settings:
+        if from_call in PORT_HANDLER.ax25_stations_settings:
             add_str = self.to_call_ent.get().upper()
             if add_str:
                 # to_call = APRS_SW_ID
@@ -116,10 +113,10 @@ class NewMessageWindow(tk.Toplevel):
                 aprs_pack = parse_aprs_fm_aprsframe(aprs_str)
                 if aprs_pack:
                     aprs_pack['popt_port_id'] = port_id
-                    self.aprs_root.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
+                    PORT_HANDLER.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
 
                 self.destroy_win()
 
     def destroy_win(self):
-        self.aprs_root.new_msg_win = None
+        self._aprs_root._new_msg_win = None
         self.destroy()

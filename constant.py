@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.90.0'
+VER = '2.90.1dev'
 LANGUAGE = 0    # QUICK FIX
 """
 0 = German
@@ -21,6 +21,7 @@ CFG_txt_save = {
                }
 CFG_ft_downloads = 'ft_downloads/'
 CFG_clr_sys_msg = 'red'
+
 
 ENCODINGS = (
     'CP437',
