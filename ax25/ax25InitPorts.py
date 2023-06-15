@@ -1,9 +1,10 @@
-import config_station
-from ax25.ax25Port import *
+import time
+import threading
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH_LIST
 from ax25aprs.aprs_station import APRS_ais
-from config_station import *
+from config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
+from ax25.ax25Port import KissTCP, KISSSerial, AXIP
 # from fnc.debug_fnc import show_mem_size
 # from memory_profiler import profile
 from gui.guiRxEchoSettings import RxEchoVars
@@ -13,17 +14,8 @@ class AX25PortHandler(object):
     # @profile
     def __init__(self):
         logger.info("Port Init.")
-        config_station.init_dir_struct()
-        ###########
-        # DEBUGGER
-        """
-        self.deb_port = {}
-        self.deb_conn = {}
-        self.deb_self = {}
-        self.deb_mh = {}
-        self.deb_glbs = {}
-        self.deb_gui = {}
-        """
+        init_dir_struct()
+
         #################
         self.is_running = True
         self.max_ports = 20
@@ -43,10 +35,10 @@ class AX25PortHandler(object):
         self.all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.rx_echo: {int:  RxEchoVars} = {}
-        self.beacons: {int: {str: [Beacon]}} = {}
-        self.ax25_stations_settings: {str: DefaultStation} = config_station.get_all_stat_cfg()
-        self.ax25_port_settings: {int: DefaultPort} = {}    # Port settings are in Port .. TODO Cleanup
-        self.ax25_ports: {int: AX25Port} = {}
+        self.beacons = {}
+        self.ax25_stations_settings = get_all_stat_cfg()
+        self.ax25_port_settings = {}    # Port settings are in Port .. TODO Cleanup
+        self.ax25_ports = {}
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"Port Init Max-Ports: {self.max_ports}")
@@ -64,7 +56,7 @@ class AX25PortHandler(object):
     # Setting/Parameter Updates
     def update_digi_setting(self):
         for port_kk in self.ax25_ports.keys():
-            port: AX25Port = self.ax25_ports[port_kk]
+            port = self.ax25_ports[port_kk]
             new_digi_calls = []
             for stat_key in port.my_stations:
                 if self.ax25_stations_settings[stat_key].stat_parm_is_StupidDigi:
@@ -165,11 +157,11 @@ class AX25PortHandler(object):
         else:
             ##########
             # Init CFG
-            cfg = config_station.PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
+            cfg = PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
             if cfg.parm_PortTyp:
                 #########################
                 # Init Port/Device
-                temp: AX25Port = self.ax25types[cfg.parm_PortTyp](cfg, self)
+                temp = self.ax25types[cfg.parm_PortTyp](cfg, self)
                 if not temp.device_is_running:
                     logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
                     self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
@@ -337,7 +329,7 @@ class AX25PortHandler(object):
 
     ######################
     # RX-ECHO Handling
-    def rx_echo_input(self, ax_frame: AX25Frame, port_id):
+    def rx_echo_input(self, ax_frame, port_id):
         from_call = ax_frame.from_call.call_str
         for k in self.rx_echo.keys():
             rx_echo_var: RxEchoVars = self.rx_echo[k]
@@ -396,3 +388,6 @@ class AX25PortHandler(object):
         print("--Globals")
         self.deb_glbs = dict(show_mem_size(globals(),previous_sizes=dict(self.deb_glbs)))
     """
+
+
+PORT_HANDLER = AX25PortHandler()

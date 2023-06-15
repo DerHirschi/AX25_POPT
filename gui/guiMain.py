@@ -15,6 +15,7 @@ from gtts import gTTS
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
 from ax25.ax25monitor import monitor_frame_inp
 
@@ -29,7 +30,6 @@ from gui.guiPipeToolSettings import PipeToolSettings
 from gui.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 from gui.guiUserDBoverview import UserDBtreeview
-from main import LANGUAGE
 from gui.guiMulticastSettings import MulticastSettings
 from gui.guiTxtFrame import TxTframe
 from gui.guiChBtnFrm import ChBtnFrm
@@ -46,7 +46,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg
+from constant import LANGUAGE,ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -90,11 +90,12 @@ class ChVars(object):
 
 class TkMainWin:
     # @profile
-    def __init__(self, glb_ax25port_handler):
+    # def __init__(self, glb_ax25port_handler):
+    def __init__(self):
         self.language = LANGUAGE
         ###############################
         # AX25 PortHandler and stuff
-        self.ax25_port_handler = glb_ax25port_handler
+        self.ax25_port_handler = PORT_HANDLER
         # self.mh = self.ax25_port_handler.mh
         self.aprs_ais = self.ax25_port_handler.aprs_ais
         # self.user_db = USER_DB
@@ -364,7 +365,7 @@ class TkMainWin:
         self.bw_fig = None
         self.ax = None
         self.bw_plot_lines = {}
-        self.reset_bw_mon()
+        # self.reset_bw_mon()
 
         ############################
         # Windows
@@ -819,7 +820,7 @@ class TkMainWin:
         """ 2 Sec """
         if time.time() > self.non_non_non_prio_task_timer:
             self.non_non_non_prio_task_timer = time.time() + self.parm_non_non_non_prio_task_timer
-            self.update_bw_mon()
+            # self.update_bw_mon()
 
     def aprs_task(self):
         if self.aprs_ais is not None:

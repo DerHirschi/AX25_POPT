@@ -3,7 +3,13 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.89.18dev'
+VER = '2.90.0'
+LANGUAGE = 0    # QUICK FIX
+"""
+0 = German
+1 = English
+2 = Dutch
+"""
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {
