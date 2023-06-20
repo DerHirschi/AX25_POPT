@@ -2,6 +2,7 @@ import tkinter
 import tkinter as tk
 from tkinter import ttk, Checkbutton
 
+from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
 from fnc.str_fnc import get_kb_str_fm_bytes, conv_time_DE_str, get_time_delta
 from string_tab import STR_TABLE
@@ -11,14 +12,13 @@ from fnc.os_fnc import is_linux
 
 class SideTabbedFrame:
     def __init__(self, main_cl):
-        self.main_win = main_cl
-        self.lang = self.main_win.language
-        self.style = self.main_win.style
-        self.ch_index = self.main_win.channel_index
-        self.all_connections = self.main_win.ax25_port_handler.all_connections
-        self.side_btn_frame_top = self.main_win.side_btn_frame_top
+        self._main_win = main_cl
+        self._lang = int(main_cl.language)
+        self.style = main_cl.style
+        self.ch_index = main_cl.channel_index
+
         self.tab_side_frame = tk.Frame(
-            self.side_btn_frame_top,
+            main_cl.side_btn_frame_top,
             # width=300,
             height=400
         )
@@ -52,7 +52,7 @@ class SideTabbedFrame:
         # Kanal
         parm_y = 20
         m_f_label = tk.Label(tab1_kanal, text='Max Pac:')
-        self.max_frame_var = tk.StringVar()
+        self.max_frame_var = tk.StringVar(tab1_kanal)
         self.max_frame_var.set('1')
         self.max_frame = tk.Spinbox(tab1_kanal,
                                     from_=1,
@@ -126,7 +126,7 @@ class SideTabbedFrame:
                                        variable=self.t2speech_var,
                                        command=self.chk_t2speech)
         self.t2speech.place(x=10, y=parm_y)
-        self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
+        self.t2speech_var.set(self._main_win.get_ch_param().t2speech)
         # Autoscroll
         parm_y = 225
         self.autoscroll_var = tk.BooleanVar(tab1_kanal)
@@ -137,7 +137,7 @@ class SideTabbedFrame:
                                          command=self.chk_autoscroll
                                          )
         self.autoscroll.place(x=10, y=parm_y)
-        self.autoscroll_var.set(self.main_win.get_ch_param().autoscroll)
+        self.autoscroll_var.set(self._main_win.get_ch_param().autoscroll)
 
         # Link Holder
         parm_y = 175
@@ -151,13 +151,13 @@ class SideTabbedFrame:
 
         clear_ch_data_btn = tk.Button(tab1_kanal,
                                       text='Säubern',
-                                      command=self.main_win.clear_channel_data
+                                      command=self._main_win.clear_channel_data
                                       )
         clear_ch_data_btn.place(x=140, y=135)
 
         link_holder_settings_btn = tk.Button(tab1_kanal,
                                              text='Linkhalter',
-                                             command=lambda: self.main_win.open_settings_window('l_holder')
+                                             command=self._main_win.open_link_holder_sett
                                              )
         link_holder_settings_btn.place(x=140, y=165)
         # RTT
@@ -224,7 +224,7 @@ class SideTabbedFrame:
                                               mode='determinate',
                                               )
         self.ft_progress.place(x=_x, y=_y)
-        self.ft_progress.bind('<Button-1>', lambda event: self.main_win.open_settings_window('ft_manager'))
+        self.ft_progress.bind('<Button-1>', self._main_win.open_ft_manager)
         self.ft_progress['value'] = 0
         self.ft_progress_var = tk.StringVar(tab1_kanal)
         self.ft_size_var = tk.StringVar(tab1_kanal)
@@ -269,19 +269,19 @@ class SideTabbedFrame:
 
         self.tree_data = []
         self.last_mh_ent = []
-        self.update_side_mh()
-        self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
+        self._update_side_mh()
+        self.tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
         # Settings ##########################
         # Global Sound
-        self.sound_on = tk.BooleanVar()
+        self.sound_on = tk.BooleanVar(self.tab4_settings)
         Checkbutton(self.tab4_settings,
                     text="Sound",
                     variable=self.sound_on,
                     ).place(x=10, y=10)
         # self.sound_on.set(True)
         # Global Sprech
-        self.sprech_on = tk.BooleanVar()
+        self.sprech_on = tk.BooleanVar(self.tab4_settings)
         sprech_btn = Checkbutton(self.tab4_settings,
                                  text="Sprachausgabe",
                                  variable=self.sprech_on,
@@ -295,7 +295,7 @@ class SideTabbedFrame:
             sprech_btn.configure(state='disabled')
 
         # Global Bake
-        self.bake_on = tk.BooleanVar()
+        self.bake_on = tk.BooleanVar(self.tab4_settings)
         Checkbutton(self.tab4_settings,
                     text="Baken",
                     variable=self.bake_on,
@@ -303,7 +303,7 @@ class SideTabbedFrame:
         self.bake_on.set(True)
         # self.bake_on.set(True)
         # DX Alarm  > dx_alarm_on
-        self.dx_alarm_on = tk.BooleanVar()
+        self.dx_alarm_on = tk.BooleanVar(self.tab4_settings)
         _chk_btn = Checkbutton(self.tab4_settings,
                                text="DX-Alarm",
                                variable=self.dx_alarm_on,
@@ -313,7 +313,7 @@ class SideTabbedFrame:
         _chk_btn.place(x=10, y=85)
 
         # RX ECHO
-        self.rx_echo_on = tk.BooleanVar()
+        self.rx_echo_on = tk.BooleanVar(self.tab4_settings)
         _chk_btn = Checkbutton(self.tab4_settings,
                                text="RX-Echo",
                                variable=self.rx_echo_on,
@@ -331,7 +331,7 @@ class SideTabbedFrame:
         _x = 10
         _y = 10
         self.to_add_var = tk.StringVar(self.tab6_monitor)
-        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['to'][self.lang]}:").place(x=_x, y=_y)
+        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['to'][self._lang]}:").place(x=_x, y=_y)
         self.to_add_ent = tk.Entry(self.tab6_monitor, textvariable=self.to_add_var)
         self.to_add_ent.place(x=_x + 40, y=_y)
 
@@ -356,12 +356,12 @@ class SideTabbedFrame:
         # Port
         _x = 40
         _y = 140
-        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['port'][self.lang]}:").place(x=_x, y=_y)
+        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['port'][self._lang]}:").place(x=_x, y=_y)
         self.mon_port_var = tk.StringVar(self.tab6_monitor)
         self.mon_port_var.set('0')
         _vals = ['0']
-        if self.main_win.ax25_port_handler.ax25_ports.keys():
-            _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
+        if PORT_HANDLER.get_all_ports().keys():
+            _vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
         self.mon_port_ent = tk.ttk.Combobox(self.tab6_monitor,
                                             width=4,
                                             textvariable=self.mon_port_var,
@@ -389,7 +389,7 @@ class SideTabbedFrame:
         self.mon_scroll_var = tk.BooleanVar(self.tab6_monitor)
         self.mon_scroll_ent = tk.Checkbutton(self.tab6_monitor,
                                              variable=self.mon_scroll_var,
-                                             text=STR_TABLE['scrolling'][self.lang])
+                                             text=STR_TABLE['scrolling'][self._lang])
         self.mon_scroll_ent.place(x=_x, y=_y)
 
         # PID
@@ -412,7 +412,7 @@ class SideTabbedFrame:
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         # Monitor RX-Filter Ports
         self.mon_port_on_vars = {}
-        all_ports = self.main_win.ax25_port_handler.ax25_ports
+        all_ports = PORT_HANDLER.get_all_ports()
         for port_id in all_ports:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.tab6_monitor)
             _x = 170
@@ -427,30 +427,30 @@ class SideTabbedFrame:
         ##################
         # Tasker
         self.tasker_dict = {
-            0: self.update_rtt,
-            1: self.update_side_mh,
+            0: self._update_rtt,
+            1: self._update_side_mh,
             # 5: self.update_ch_echo,
         }
 
         self.chk_mon_port()
-        self.update_ch_echo()
+        self._update_ch_echo()
 
     def reset_dx_alarm(self, event=None):
-        self.main_win.reset_dx_alarm()
+        self._main_win.reset_dx_alarm()
         # self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
 
-    def update_ch_echo(self):
+    def _update_ch_echo(self):
 
         # TODO AGAIN !!
         _tab = self.tab5_ch_links
-        akt_ch_id = self.main_win.channel_index
+        akt_ch_id = self._main_win.channel_index
         _var = tk.BooleanVar(_tab)
         for ch_id in list(self.ch_echo_vars.keys()):
-            if ch_id not in list(self.all_connections.keys()):
+            if ch_id not in list(PORT_HANDLER.get_all_connections().keys()):
                 self.ch_echo_vars[ch_id][1].destroy()
                 del self.ch_echo_vars[ch_id]
-        for ch_id in list(self.all_connections.keys()):
-            conn = self.all_connections[ch_id]
+        for ch_id in list(PORT_HANDLER.get_all_connections().keys()):
+            conn = PORT_HANDLER.get_all_connections()[ch_id]
             if ch_id not in self.ch_echo_vars.keys():
                 chk_bt_var = tk.IntVar()
                 chk_bt = tk.Checkbutton(_tab,
@@ -485,16 +485,16 @@ class SideTabbedFrame:
         # self.main_win.channel_index
         for ch_id in list(self.ch_echo_vars.keys()):
             _vars = self.ch_echo_vars[ch_id]
-            if ch_id != self.main_win.channel_index:
-                if _vars[0].get() and self.ch_echo_vars[self.main_win.channel_index][0].get():
-                    self.all_connections[ch_id].ch_echo.append(self.all_connections[self.main_win.channel_index])
-                    self.all_connections[self.main_win.channel_index].ch_echo.append(self.all_connections[ch_id])
+            if ch_id != self._main_win.channel_index:
+                if _vars[0].get() and self.ch_echo_vars[self._main_win.channel_index][0].get():
+                    PORT_HANDLER.get_all_connections()[ch_id].ch_echo.append(PORT_HANDLER.get_all_connections()[self._main_win.channel_index])
+                    PORT_HANDLER.get_all_connections()[self._main_win.channel_index].ch_echo.append(PORT_HANDLER.get_all_connections()[ch_id])
                 else:
-                    if self.all_connections[self.main_win.channel_index] in self.all_connections[ch_id].ch_echo:
-                        self.all_connections[ch_id].ch_echo.remove(self.all_connections[self.main_win.channel_index])
+                    if PORT_HANDLER.get_all_connections()[self._main_win.channel_index] in PORT_HANDLER.get_all_connections()[ch_id].ch_echo:
+                        PORT_HANDLER.get_all_connections()[ch_id].ch_echo.remove(PORT_HANDLER.get_all_connections()[self._main_win.channel_index])
 
-                    if self.all_connections[ch_id] in self.all_connections[self.main_win.channel_index].ch_echo:
-                        self.all_connections[self.main_win.channel_index].ch_echo.remove(self.all_connections[ch_id])
+                    if PORT_HANDLER.get_all_connections()[ch_id] in PORT_HANDLER.get_all_connections()[self._main_win.channel_index].ch_echo:
+                        PORT_HANDLER.get_all_connections()[self._main_win.channel_index].ch_echo.remove(PORT_HANDLER.get_all_connections()[ch_id])
 
         """   
         for ch_id in list(self.ch_echo_vars.keys()):
@@ -511,10 +511,10 @@ class SideTabbedFrame:
         """
 
     def chk_dx_alarm(self):
-        self.main_win.setting_dx_alarm = self.dx_alarm_on.get()
+        self._main_win.setting_dx_alarm = self.dx_alarm_on.get()
 
     def chk_rnr(self):
-        conn = self.main_win.get_conn()
+        conn = self._main_win.get_conn()
         if conn:
             if self.rnr_var.get():
                 conn.set_RNR()
@@ -522,17 +522,17 @@ class SideTabbedFrame:
                 conn.unset_RNR()
 
     def chk_link_holder(self):
-        conn = self.main_win.get_conn()
+        conn = self._main_win.get_conn()
         if conn:
             if self.link_holder_var.get():
                 conn.link_holder_on = True
                 conn.link_holder_timer = 0
             else:
                 conn.link_holder_on = False
-            self.main_win.on_channel_status_change()
+            self._main_win.on_channel_status_change()
 
     def chk_t2auto(self):
-        conn = self.main_win.get_conn()
+        conn = self._main_win.get_conn()
         if conn:
             if self.t2_auto_var.get():
                 conn.own_port.port_cfg.parm_T2_auto = True
@@ -549,29 +549,29 @@ class SideTabbedFrame:
             self.t2speech.configure(state='normal')
         else:
             self.t2speech.configure(state='disabled')
-        self.main_win.set_var_to_all_ch_param()
+        self._main_win.set_var_to_all_ch_param()
 
     def chk_mon_port(self, event=None):
         vals = []
         port_id = int(self.mon_port_var.get())
-        if port_id in self.main_win.ax25_port_handler.ax25_ports.keys():
-            vals = self.main_win.ax25_port_handler.ax25_ports[port_id].my_stations
+        if port_id in PORT_HANDLER.get_all_ports().keys():
+            vals = PORT_HANDLER.get_all_ports()[port_id].my_stations
         if vals:
             self.mon_call_var.set(vals[0])
         self.mon_call_ent.configure(values=vals)
 
     def chk_mon_port_filter(self):
-        all_ports = self.main_win.ax25_port_handler.ax25_ports
+        all_ports = PORT_HANDLER.get_all_ports()
         for port_id in all_ports:
             all_ports[port_id].monitor_out = self.mon_port_on_vars[port_id].get()
 
     def update_mon_port_id(self):
-        if self.main_win.ax25_port_handler.ax25_ports.keys():
-            _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
+        if PORT_HANDLER.get_all_ports().keys():
+            _vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
             self.mon_call_ent.configure(values=_vals)
 
     def set_t2(self, event):
-        conn = self.main_win.get_conn()
+        conn = self._main_win.get_conn()
         if conn:
             conn.cfg.parm_T2 = min(max(int(self.t2_var.get()), 500), 3000)
             conn.calc_irtt()
@@ -585,7 +585,7 @@ class SideTabbedFrame:
             if ind in self.tasker_dict.keys():
                 self.tasker_dict[ind]()
 
-    def entry_selected(self, event):
+    def _entry_selected(self, event):
         for selected_item in self.tree.selection():
             item = self.tree.item(selected_item)
             record = item['values']
@@ -596,11 +596,11 @@ class SideTabbedFrame:
             port = int(port.split(' ')[0])
             if vias:
                 call = f'{call} {vias}'
-            self.main_win.open_new_conn_win()
-            self.main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
-            self.main_win.new_conn_win.set_port_index(port)
+            self._main_win.open_new_conn_win()
+            self._main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
+            self._main_win.new_conn_win.set_port_index(port)
 
-    def format_tree_ent(self):
+    def _format_tree_ent(self):
         self.tree_data = []
         for k in self.last_mh_ent:
             # ent: MyHeard
@@ -615,17 +615,17 @@ class SideTabbedFrame:
                 ' '.join(route),
             ))
 
-    def update_rtt(self):
+    def _update_rtt(self):
         best = ''
         worst = ''
         avg = ''
         last = ''
         status_text = ''
-        duration = f"{STR_TABLE['time_connected'][self.lang]}: --:--:--"
+        duration = f"{STR_TABLE['time_connected'][self._lang]}: --:--:--"
         tx_buff = 'TX-Buffer: --- kb'
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
-        station = self.main_win.get_conn(self.main_win.channel_index)
+        station = self._main_win.get_conn(self._main_win.channel_index)
         if station:
             if station.RTT_Timer.rtt_best == 999.0:
                 best = "Best: -1"
@@ -634,7 +634,7 @@ class SideTabbedFrame:
             worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
             avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
             last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
-            duration = f"{STR_TABLE['time_connected'][self.lang]}: {get_time_delta(station.time_start)}"
+            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(station.time_start)}"
             tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
             tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
             rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
@@ -663,15 +663,15 @@ class SideTabbedFrame:
         for ret_ent in self.tree_data:
             self.tree.insert('', tk.END, values=ret_ent)
 
-    def update_side_mh(self):
+    def _update_side_mh(self):
         mh_ent = list(MH_LIST.output_sort_entr(8))
         if mh_ent != self.last_mh_ent:
             self.last_mh_ent = mh_ent
-            self.format_tree_ent()
+            self._format_tree_ent()
             self.update_tree()
 
     def on_ch_stat_change(self):
-        conn = self.main_win.get_conn()
+        conn = self._main_win.get_conn()
         if conn:
             self.max_frame.configure(state='normal')
             self.pac_len.configure(state='normal')
@@ -719,25 +719,25 @@ class SideTabbedFrame:
             self.tx_count_var.set('TX: --- kb')
             self.rx_count_var.set('RX: --- kb')
 
-        self.t2speech_var.set(self.main_win.get_ch_param().t2speech)
-        self.update_ch_echo()
+        self.t2speech_var.set(self._main_win.get_ch_param().t2speech)
+        self._update_ch_echo()
 
     def set_max_frame(self):
-        conn = self.main_win.get_conn()
+        conn = self._main_win.get_conn()
         if conn:
             conn.parm_MaxFrame = int(self.max_frame_var.get())
 
     def set_pac_len(self, event):
-        conn = self.main_win.get_conn()
+        conn = self._main_win.get_conn()
         if conn:
             conn.parm_PacLen = min(max(self.pac_len_var.get(), 1), 256)
             conn.calc_irtt()
             self.t2_var.set(str(conn.parm_T2 * 1000))
 
     def chk_t2speech(self):
-        self.main_win.get_ch_param().t2speech = bool(self.t2speech_var.get())
+        self._main_win.get_ch_param().t2speech = bool(self.t2speech_var.get())
 
     def chk_autoscroll(self):
-        self.main_win.get_ch_param().autoscroll = bool(self.autoscroll_var.get())
+        self._main_win.get_ch_param().autoscroll = bool(self.autoscroll_var.get())
         if bool(self.autoscroll_var.get()):
-            self.main_win.see_end_qso_win()
+            self._main_win.see_end_qso_win()

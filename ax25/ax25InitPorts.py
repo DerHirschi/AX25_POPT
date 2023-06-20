@@ -375,6 +375,8 @@ class AX25PortHandler(object):
     def get_all_ports(self):
         return self.ax25_ports
 
+    def get_all_connections(self):
+        return self.all_connections
     """
     def debug_fnc(self):
         print("--Port")

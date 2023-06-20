@@ -104,7 +104,7 @@ def del_port_data(port_id):
         os.remove(port_file)
 
 
-class DefaultStation(object):
+class DefaultStation:
     # parm_StationCalls: [''] = []
     stat_parm_Call: str = 'NOCALL'
     ##########################
