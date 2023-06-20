@@ -24,7 +24,7 @@ class TxTframe:
     def __init__(self, main_win):
 
         self.pw = ttk.PanedWindow(orient=tk.VERTICAL)
-        self.main_class = main_win
+        self._main_class = main_win
         self.text_size = main_win.text_size
         self.mon_txt_height = 0
         self.out_txt_height = 0
@@ -188,7 +188,7 @@ class TxTframe:
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, 'bold' )
                  )
         name_label.grid(row=1, column=1, sticky="nsew")
-        name_label.bind('<Button-1>', lambda event: self.main_class.open_settings_window('user_db'))
+        name_label.bind('<Button-1>', self._main_class.open_user_db)
         qth_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_qth_var,
                  bg=STAT_BAR_CLR,
@@ -198,7 +198,7 @@ class TxTframe:
                              border=0,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                  )
-        qth_label.bind('<Button-1>', lambda event: self.main_class.open_settings_window('user_db'))
+        qth_label.bind('<Button-1>', self._main_class.open_user_db)
         qth_label.grid(row=1, column=2, sticky="nsew")
         loc_label = tk.Label(self.out_frame,
                  textvariable=self.stat_info_loc_var,
@@ -209,7 +209,7 @@ class TxTframe:
                              border=0,
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                  )
-        loc_label.bind('<Button-1>',lambda event: self.main_class.open_settings_window('user_db'))
+        loc_label.bind('<Button-1>', self._main_class.open_user_db)
         loc_label.grid(row=1, column=3, sticky="nsew")
 
         opt = list(STATION_TYPS)
@@ -251,7 +251,7 @@ class TxTframe:
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, )
                  )
         self.status_label.grid(row=1, column=6, sticky="nsew")
-        self.status_label.bind('<Button-1>', self.main_class.do_priv)
+        self.status_label.bind('<Button-1>', self._main_class.do_priv)
 
         tk.Label(self.out_frame,
                  textvariable=self.stat_info_timer_var,
@@ -306,7 +306,7 @@ class TxTframe:
         Main Win
         Debug WIN
         """
-        station = self.main_class.get_conn(self.main_class.channel_index)
+        station = self._main_class.get_conn(self._main_class.channel_index)
         if station:
             from_call = station.ax25_out_frame.from_call.call_str
             via_calls = ''
@@ -386,7 +386,7 @@ class TxTframe:
 
     def switch_mon_mode(self):
         # TODO Save Stretched Positions
-        if self.main_class.mon_mode:
+        if self._main_class.mon_mode:
             try:
                 self.pw.remove(self.status_frame)
                 self.pw.remove(self.mon_txt)
@@ -420,7 +420,7 @@ class TxTframe:
             self.rx_beep_box.configure(bg='green', activebackground='green')
         else:
             self.rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
-        self.main_class.get_ch_param().rx_beep_opt = rx_beep_check
+        self._main_class.get_ch_param().rx_beep_opt = rx_beep_check
 
     def chk_timestamp(self):
         ts_check = self.ts_box_var.get()
@@ -428,10 +428,10 @@ class TxTframe:
             self.ts_box_box.configure(bg='green', activebackground='green')
         else:
             self.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
-        self.main_class.get_ch_param().timestamp_opt = ts_check
+        self._main_class.get_ch_param().timestamp_opt = ts_check
 
     def set_stat_typ(self, event=None):
-        conn = self.main_class.get_conn()
+        conn = self._main_class.get_conn()
         if conn:
             db_ent = conn.user_db_ent
             if db_ent:
@@ -440,7 +440,7 @@ class TxTframe:
             self.stat_info_typ_var.set('-----')
 
     def change_txt_encoding(self, event=None, enc=''):
-        conn = self.main_class.get_conn()
+        conn = self._main_class.get_conn()
         if conn:
             db_ent = conn.user_db_ent
             if db_ent:
