@@ -12,8 +12,8 @@ from memory_profiler import profile
 import gtts
 from gtts import gTTS
 
-#from matplotlib.figure import Figure
-#from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# from matplotlib.figure import Figure
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
@@ -21,7 +21,7 @@ from ax25.ax25monitor import monitor_frame_inp
 
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
-from gui.bw_plot import BWPlotApp as BW
+#from gui.bw_plot import BWPlotApp as BW
 from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
@@ -47,7 +47,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import LANGUAGE,ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg
+from constant import LANGUAGE, ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags
@@ -96,10 +96,10 @@ class TkMainWin:
         self.language = LANGUAGE
         ###############################
         # AX25 PortHandler and stuff
-        self.ax25_port_handler = PORT_HANDLER
+        # self.ax25_port_handler = PORT_HANDLER
 
-        self.root_dir = get_root_dir()
-        self.root_dir = self.root_dir.replace('/', '//')
+        self._root_dir = get_root_dir()
+        self._root_dir = self._root_dir.replace('/', '//')
         #####################
         #####################
         # GUI VARS
@@ -116,10 +116,10 @@ class TkMainWin:
         self._parm_rx_beep_cooldown = 1.5
         # Tasker Timings
         self._loop_delay = 80  # ms
-        self._parm_non_prio_task_timer = 0.5         # s
-        self._parm_non_non_prio_task_timer = 1       # s
-        self._parm_non_non_non_prio_task_timer = 5   # s
-        self._parm_bw_mon_reset_task_timer = 120   # s
+        self._parm_non_prio_task_timer = 0.5  # s
+        self._parm_non_non_prio_task_timer = 1  # s
+        self._parm_non_non_non_prio_task_timer = 60 # 5  # s
+        self._parm_bw_mon_reset_task_timer = 3600  # s
         # self._parm_bw_mon_reset_task_timer = 120    # s
         self._non_prio_task_timer = time.time()
         self._non_non_prio_task_timer = time.time()
@@ -150,116 +150,116 @@ class TkMainWin:
         ############################
         ##############
         # Menüleiste
-        self.menubar = Menu(self.main_win, tearoff=False)
-        self.main_win.config(menu=self.menubar)
+        _menubar = Menu(self.main_win, tearoff=False)
+        self.main_win.config(menu=_menubar)
         # Menü 1 "Verbindungen"
-        self.MenuVerb = Menu(self.menubar, tearoff=False)
-        self.MenuVerb.add_command(label=STR_TABLE['new'][self.language], command=self.open_new_conn_win)
-        self.MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self._disco_conn)
-        self.MenuVerb.add_separator()
-        self.MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self._destroy_win)
-        self.menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=self.MenuVerb, underline=0)
+        _MenuVerb = Menu(_menubar, tearoff=False)
+        _MenuVerb.add_command(label=STR_TABLE['new'][self.language], command=self.open_new_conn_win)
+        _MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self._disco_conn)
+        _MenuVerb.add_separator()
+        _MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self._destroy_win)
+        _menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=_MenuVerb, underline=0)
         # Menü 2 "Bearbeiten"
-        self.MenuEdit = Menu(self.menubar, tearoff=False)
-        self.MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self._copy_select, underline=0)
-        self.MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self._clipboard_past, underline=1)
-        self.MenuEdit.add_separator()
-        self.MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language], command=self._insert_fm_file,
-                                  underline=0)
-        self.MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language], command=self._save_to_file,
-                                  underline=1)
-        self.MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self._save_monitor_to_file,
-                                  underline=1)
-        self.MenuEdit.add_separator()
-        self.MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_data,
-                                  underline=0)
-        self.MenuEdit.add_command(label=STR_TABLE['clean_mon_win'][self.language], command=self._clear_monitor_data,
-                                  underline=0)
-        self.menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=self.MenuEdit, underline=0)
+        _MenuEdit = Menu(_menubar, tearoff=False)
+        _MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self._copy_select, underline=0)
+        _MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self._clipboard_past, underline=1)
+        _MenuEdit.add_separator()
+        _MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language], command=self._insert_fm_file,
+                              underline=0)
+        _MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language], command=self._save_to_file,
+                              underline=1)
+        _MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self._save_monitor_to_file,
+                              underline=1)
+        _MenuEdit.add_separator()
+        _MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_data,
+                              underline=0)
+        _MenuEdit.add_command(label=STR_TABLE['clean_mon_win'][self.language], command=self._clear_monitor_data,
+                              underline=0)
+        _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
         # Menü 3 "Tools"
-        self.MenuTools = Menu(self.menubar, tearoff=False)
-        self.MenuTools.add_command(label="MH", command=self._MH_win, underline=0)
-        self.MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win,
-                                   underline=1)
-        self.MenuTools.add_separator()
-        self.MenuTools.add_command(label="User-DB Tree", command=self._UserDB_tree, underline=0)
-        self.MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
-                                   command=lambda: self._open_settings_window('user_db'),
-                                   underline=0)
-        self.MenuTools.add_separator()
-        self.MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self._locator_calc_win,
-                                   underline=0)
-        self.MenuTools.add_separator()
+        _MenuTools = Menu(_menubar, tearoff=False)
+        _MenuTools.add_command(label="MH", command=self._MH_win, underline=0)
+        _MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win,
+                               underline=1)
+        _MenuTools.add_separator()
+        _MenuTools.add_command(label="User-DB Tree", command=self._UserDB_tree, underline=0)
+        _MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
+                               command=lambda: self._open_settings_window('user_db'),
+                               underline=0)
+        _MenuTools.add_separator()
+        _MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self._locator_calc_win,
+                               underline=0)
+        _MenuTools.add_separator()
 
-        self.MenuTools.add_command(label="FT-Manager",
-                                   command=lambda: self._open_settings_window('ft_manager'),
-                                   underline=0)
-        self.MenuTools.add_command(label=STR_TABLE['send_file'][self.language],
-                                   command=lambda: self._open_settings_window('ft_send'),
-                                   underline=0)
-        self.MenuTools.add_separator()
-        self.MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
-                                   command=lambda: self._open_settings_window('l_holder'),
-                                   underline=0)
-        self.MenuTools.add_command(label='Pipe-Tool',
-                                   command=lambda: self._open_settings_window('pipe_sett'),
-                                   underline=0)
-        self.MenuTools.add_separator()
+        _MenuTools.add_command(label="FT-Manager",
+                               command=lambda: self._open_settings_window('ft_manager'),
+                               underline=0)
+        _MenuTools.add_command(label=STR_TABLE['send_file'][self.language],
+                               command=lambda: self._open_settings_window('ft_send'),
+                               underline=0)
+        _MenuTools.add_separator()
+        _MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
+                               command=lambda: self._open_settings_window('l_holder'),
+                               underline=0)
+        _MenuTools.add_command(label='Pipe-Tool',
+                               command=lambda: self._open_settings_window('pipe_sett'),
+                               underline=0)
+        _MenuTools.add_separator()
 
-        self.MenuTools.add_command(label='Priv',
-                                   command=lambda: self._open_settings_window('priv_win'),
-                                   underline=0)
+        _MenuTools.add_command(label='Priv',
+                               command=lambda: self._open_settings_window('priv_win'),
+                               underline=0)
 
-        # self.MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
-        self.menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=self.MenuTools, underline=0)
+        # MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
+        _menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=_MenuTools, underline=0)
 
         # Menü 4 Einstellungen
-        self.MenuSettings = Menu(self.menubar, tearoff=False)
-        self.MenuSettings.add_command(label=STR_TABLE['station'][self.language],
-                                      command=lambda: self._open_settings_window('stat_sett'),
-                                      underline=0)
-        self.MenuSettings.add_command(label=STR_TABLE['port'][self.language],
-                                      command=lambda: self._open_settings_window('port_sett'),
-                                      underline=0)
-        self.MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
-                                      command=lambda: self._open_settings_window('beacon_sett'),
-                                      underline=0)
-        self.MenuSettings.add_command(label='APRS',
-                                      command=lambda: self._open_settings_window('aprs_sett'),
-                                      underline=0)
+        _MenuSettings = Menu(_menubar, tearoff=False)
+        _MenuSettings.add_command(label=STR_TABLE['station'][self.language],
+                                  command=lambda: self._open_settings_window('stat_sett'),
+                                  underline=0)
+        _MenuSettings.add_command(label=STR_TABLE['port'][self.language],
+                                  command=lambda: self._open_settings_window('port_sett'),
+                                  underline=0)
+        _MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
+                                  command=lambda: self._open_settings_window('beacon_sett'),
+                                  underline=0)
+        _MenuSettings.add_command(label='APRS',
+                                  command=lambda: self._open_settings_window('aprs_sett'),
+                                  underline=0)
 
-        self.MenuSettings.add_separator()
-        self.MenuSettings.add_command(label='Multicast',
-                                      command=lambda: self._open_settings_window('mcast_sett'),
-                                      underline=0)
-        self.MenuSettings.add_command(label="RX-Echo",
-                                      command=lambda: self._open_settings_window('rx_echo_sett'),
-                                      underline=0)
+        _MenuSettings.add_separator()
+        _MenuSettings.add_command(label='Multicast',
+                                  command=lambda: self._open_settings_window('mcast_sett'),
+                                  underline=0)
+        _MenuSettings.add_command(label="RX-Echo",
+                                  command=lambda: self._open_settings_window('rx_echo_sett'),
+                                  underline=0)
 
-        self.menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=self.MenuSettings, underline=0)
+        _menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=_MenuSettings, underline=0)
         # APRS Menu
-        self.MenuAPRS = Menu(self.menubar, tearoff=False)
-        self.MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language], command=self._open_aismon_win,
-                                  underline=0)
-        self.MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
-                                  underline=0)
-        # self.MenuAPRS.add_separator()
-        self.menubar.add_cascade(label="APRS", menu=self.MenuAPRS, underline=0)
+        _MenuAPRS = Menu(_menubar, tearoff=False)
+        _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language], command=self._open_aismon_win,
+                              underline=0)
+        _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
+                              underline=0)
+        # MenuAPRS.add_separator()
+        _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
 
         # Menü 5 Hilfe
-        self.MenuHelp = Menu(self.menubar, tearoff=False)
-        # self.MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
-        self.MenuHelp.add_command(label=STR_TABLE['keybind'][self.language],
-                                  command=lambda: self._open_settings_window('keybinds'),
-                                  underline=0)
-        self.MenuHelp.add_separator()
-        self.MenuHelp.add_command(label=STR_TABLE['about'][self.language],
-                                  command=lambda: self._open_settings_window('about'),
-                                  underline=0)
-        self.menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=self.MenuHelp, underline=0)
+        _MenuHelp = Menu(_menubar, tearoff=False)
+        # MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
+        _MenuHelp.add_command(label=STR_TABLE['keybind'][self.language],
+                              command=lambda: self._open_settings_window('keybinds'),
+                              underline=0)
+        _MenuHelp.add_separator()
+        _MenuHelp.add_command(label=STR_TABLE['about'][self.language],
+                              command=lambda: self._open_settings_window('about'),
+                              underline=0)
+        _menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=_MenuHelp, underline=0)
 
         # Menü 4 "Debug"
-        # self.menubar.add_command(label="Debug")
+        # menubar.add_command(label="Debug")
         ############################
         ############################
         # Input Output TXT Frames and Status Bar
@@ -274,34 +274,34 @@ class TkMainWin:
             self._win_buf[i] = ChVars()
             self._win_buf[i].input_win_index = str(self._inp_txt.index(tk.INSERT))
         # Channel Buttons
-        self.ch_btn = ChBtnFrm(self)
-        self.ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
+        self._ch_btn = ChBtnFrm(self)
+        self._ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
         #########################
         # BTN and Tabbed Frame right side
-        self.side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
+        self._side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
         # self.side_btn_frame_top = tk.Frame(self.pw, width=200, height=540)
         # self.pw.add(self.txt_win.pw)
-        self.side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
-        self.side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)  # CONN BTN
-        self.side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)  # BTN row 2
-        self.side_btn_frame_top.rowconfigure(2, minsize=50, weight=0)  # Dummy
-        self.side_btn_frame_top.rowconfigure(3, minsize=50, weight=2)  # Dummy
-        self.side_btn_frame_top.rowconfigure(4, minsize=300, weight=10)  # Reiter Frame
+        self._side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
+        self._side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)  # CONN BTN
+        self._side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)  # BTN row 2
+        self._side_btn_frame_top.rowconfigure(2, minsize=50, weight=0)  # Dummy
+        self._side_btn_frame_top.rowconfigure(3, minsize=50, weight=2)  # Dummy
+        self._side_btn_frame_top.rowconfigure(4, minsize=300, weight=10)  # Reiter Frame
 
-        self.side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
-        self.side_btn_frame_top.columnconfigure(1, minsize=100, weight=2)
-        self.side_btn_frame_top.columnconfigure(2, minsize=100, weight=2)
-        self.side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
-        self.side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
-        self.side_btn_frame_top.columnconfigure(6, minsize=10, weight=1)
-        self._conn_btn = tk.Button(self.side_btn_frame_top,
+        self._side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
+        self._side_btn_frame_top.columnconfigure(1, minsize=100, weight=2)
+        self._side_btn_frame_top.columnconfigure(2, minsize=100, weight=2)
+        self._side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
+        self._side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
+        self._side_btn_frame_top.columnconfigure(6, minsize=10, weight=1)
+        self._conn_btn = tk.Button(self._side_btn_frame_top,
                                    text="New Conn",
                                    bg="green",
                                    width=8,
                                    command=self.open_new_conn_win)
         self._conn_btn.place(x=5, y=10)
 
-        self._mh_btn = tk.Button(self.side_btn_frame_top,
+        self._mh_btn = tk.Button(self._side_btn_frame_top,
                                  text="MH",
                                  # bg="yellow",
                                  width=8,
@@ -310,20 +310,20 @@ class TkMainWin:
         self._mh_btn.place(x=5, y=45)
         # self.mh_btn.place(x=110, y=10)
         self.mh_btn_def_clr = self._mh_btn.cget('bg')
-        self._mon_btn = tk.Button(self.side_btn_frame_top,
+        self._mon_btn = tk.Button(self._side_btn_frame_top,
                                   text="Monitor",
                                   bg="yellow", width=8, command=lambda: self.switch_channel(0))
         # self.mon_btn.place(x=110, y=45)
         self._mon_btn.place(x=110, y=10)
 
-        _btn = tk.Button(self.side_btn_frame_top,
+        _btn = tk.Button(self._side_btn_frame_top,
                          text="Port-Stat",
                          width=8,
                          command=self.open_port_stat_win)
         # _btn.place(x=5, y=80)
         _btn.place(x=110, y=45)
 
-        _btn = tk.Button(self.side_btn_frame_top,
+        _btn = tk.Button(self._side_btn_frame_top,
                          text="Kaffèmaschine",
                          bg="HotPink2", width=12, command=self._kaffee)
         _btn.place(x=215, y=10)
@@ -364,14 +364,14 @@ class TkMainWin:
         """
         # self._bw_plot = BW(self)
 
-        #self._canvas = None
-        #self._bw_fig = None
-        #self._ax = None
+        # self._canvas = None
+        # self._bw_fig = None
+        # self._ax = None
         self._bw_plot_x_scale = []
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 10)
         self._bw_plot_lines = {}
-        #self._reset_bw_mon()
+        # self._reset_bw_mon()
 
         ############################
         # Windows
@@ -416,7 +416,7 @@ class TkMainWin:
         if self.mh_window is not None:
             self.mh_window.destroy()
         logging.info('Closing GUI: Closing Ports.')
-        self.ax25_port_handler.close_all()
+        PORT_HANDLER.close_all()
         # logging.info('Closing GUI: Destroying Loop.')
         # self.main_win.destroy()
 
@@ -435,22 +435,22 @@ class TkMainWin:
         for el in tmp:
             self.msg_to_monitor(el)
         self.msg_to_monitor('Python Other Packet Terminal ' + VER)
-        for stat in self.ax25_port_handler.ax25_stations_settings.keys():
+        for stat in PORT_HANDLER.ax25_stations_settings.keys():
             self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
-        for port_k in self.ax25_port_handler.ax25_ports.keys():
+        for port_k in PORT_HANDLER.get_all_ports().keys():
             msg = 'konnte nicht initialisiert werden!'
-            if self.ax25_port_handler.ax25_ports[port_k].device_is_running:
+            if PORT_HANDLER.get_all_ports()[port_k].device_is_running:
                 msg = 'erfolgreich initialisiert.'
             self.msg_to_monitor('Info: Port {}: {} - {} {}'
                                 .format(port_k,
-                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortName,
-                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortTyp,
+                                        PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortName,
+                                        PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortTyp,
                                         msg
                                         ))
             self.msg_to_monitor('Info: Port {}: Parameter: {} | {}'
                                 .format(port_k,
-                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortParm[0],
-                                        self.ax25_port_handler.ax25_ports[port_k].port_cfg.parm_PortParm[1]
+                                        PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[0],
+                                        PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[1]
                                         ))
 
     ##########################
@@ -490,8 +490,8 @@ class TkMainWin:
     def get_conn(self, con_ind: int = 0):
         if not con_ind:
             con_ind = self.channel_index
-        if con_ind in self.ax25_port_handler.all_connections.keys():
-            ret = self.ax25_port_handler.all_connections[con_ind]
+        if con_ind in PORT_HANDLER.get_all_connections().keys():
+            ret = PORT_HANDLER.get_all_connections()[con_ind]
             return ret
         return False
 
@@ -716,7 +716,7 @@ class TkMainWin:
                         except gtts.gTTSError:
                             self.setting_sprech.set(False)
                             return False
-                        return self._sound_play(self.root_dir + '//data//speech.mp3')
+                        return self._sound_play(self._root_dir + '//data//speech.mp3')
         return False
 
     def _sound_play(self, snd_file: str, wait=True):
@@ -763,13 +763,13 @@ class TkMainWin:
                         if tr:
                             if temp.rx_beep_tr:
                                 temp.rx_beep_tr = False
-                                self._sound_play(self.root_dir + '//data//sound//rx_beep.wav', False)
+                                self._sound_play(self._root_dir + '//data//sound//rx_beep.wav', False)
 
     def new_conn_sound(self):
-        self._sound_play(self.root_dir + '//data//sound//conn_alarm.wav', False)
+        self._sound_play(self._root_dir + '//data//sound//conn_alarm.wav', False)
 
     def disco_sound(self):
-        self._sound_play(self.root_dir + '//data//sound//disco_alarm.wav', False)
+        self._sound_play(self._root_dir + '//data//sound//disco_alarm.wav', False)
 
     # Sound Ende
     #################
@@ -839,9 +839,10 @@ class TkMainWin:
             if self._bw_plot is not None:
                 self._bw_plot.bw_tasker()
             else:
-                from gui.bw_plot import BWPlotApp as BW
+                # from gui.bw_plot import BWPlotApp as BW
                 self._bw_plot = BW(self)
             """
+
     @profile(precision=4)
     def _tester(self):
         pass
@@ -858,6 +859,9 @@ class TkMainWin:
             # self._reset_bw_mon()
             # self.clean_bw_mon()
 
+    def get_side_frame(self):
+        return self._side_btn_frame_top
+
     @profile(precision=4)
     def _reset_bw_plot(self):
         self._bw_plot.destroy_win()
@@ -869,9 +873,9 @@ class TkMainWin:
         time.sleep(0.05)
         gc.collect()
         time.sleep(0.05)
-        #print(f"GB_main: {gc.garbage}\n")
-        #print(f"CB_main: {gc.callbacks}\n")
-        #print(f"OB_main: {gc.get_objects()}\n")
+        # print(f"GB_main: {gc.garbage}\n")
+        # print(f"CB_main: {gc.callbacks}\n")
+        # print(f"OB_main: {gc.get_objects()}\n")
         # self._bw_plot = BWPlotApp(self)
 
     #################################
@@ -1061,20 +1065,20 @@ class TkMainWin:
     def _open_settings_window(self, win_key: str):
         if self.settings_win is None:
             settings_win = {
-                'priv_win': PrivilegWin,              # Priv Win
-                'keybinds': KeyBindsHelp,             # Keybinds Help WIN
-                'about': About,                       # About WIN
-                'aprs_sett': APRSSettingsWin,         # APRS Settings
-                'ft_manager': FileTransferManager,    # FT Manager
-                'ft_send': FileSend,                  # FT TX
-                'pipe_sett': PipeToolSettings,        # Pipe Tool
-                'user_db': UserDB,                    # UserDB
-                'mcast_sett': MulticastSettings,      # Multicast Settings
-                'l_holder': LinkHolderSettings,       # Linkholder
-                'rx_echo_sett': RxEchoSettings,       # RX Echo
-                'beacon_sett': BeaconSettings,        # Beacon Settings
-                'port_sett': PortSettingsWin,         # Port Settings
-                'stat_sett': StationSettingsWin,      # Stat Settings
+                'priv_win': PrivilegWin,  # Priv Win
+                'keybinds': KeyBindsHelp,  # Keybinds Help WIN
+                'about': About,  # About WIN
+                'aprs_sett': APRSSettingsWin,  # APRS Settings
+                'ft_manager': FileTransferManager,  # FT Manager
+                'ft_send': FileSend,  # FT TX
+                'pipe_sett': PipeToolSettings,  # Pipe Tool
+                'user_db': UserDB,  # UserDB
+                'mcast_sett': MulticastSettings,  # Multicast Settings
+                'l_holder': LinkHolderSettings,  # Linkholder
+                'rx_echo_sett': RxEchoSettings,  # RX Echo
+                'beacon_sett': BeaconSettings,  # Beacon Settings
+                'port_sett': PortSettingsWin,  # Port Settings
+                'stat_sett': StationSettingsWin,  # Stat Settings
             }.get(win_key, '')
             if settings_win:
                 self.settings_win = settings_win(self)
@@ -1195,8 +1199,8 @@ class TkMainWin:
         tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
         tmp_txt = tmp_txt.replace('\n', '\r')
         port_id = int(self.tabbed_sideFrame.mon_port_var.get())
-        if port_id in self.ax25_port_handler.ax25_ports.keys():
-            port = self.ax25_port_handler.ax25_ports[port_id]
+        if port_id in PORT_HANDLER.get_all_ports().keys():
+            port = PORT_HANDLER.get_all_ports()[port_id]
             add = self.tabbed_sideFrame.to_add_var.get()
             own_call = str(self.tabbed_sideFrame.mon_call_var.get())
             poll = bool(self.tabbed_sideFrame.poll_var.get())
@@ -1327,6 +1331,7 @@ class TkMainWin:
         self._bw_fig.canvas.flush_events()
         self._canvas.flush_events()
     """
+
     def _kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
@@ -1366,7 +1371,7 @@ class TkMainWin:
                 self._ch_btn_clk(ch_ind)
 
     def ch_status_update(self):
-        self.ch_btn.ch_btn_status_update()
+        self._ch_btn.ch_btn_status_update()
         self.on_channel_status_change()
 
     def _ch_btn_clk(self, ind: int):
@@ -1410,7 +1415,7 @@ class TkMainWin:
             self._txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
 
         self.on_channel_status_change()
-        self.ch_btn.ch_btn_status_update()
+        self._ch_btn.ch_btn_status_update()
         # self.main_class.change_conn_btn()
         self._kanal_switch()  # Sprech
 

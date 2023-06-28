@@ -2,6 +2,8 @@ import tkinter as tk
 import threading
 from tkinter import ttk as ttk
 from tkinter.colorchooser import askcolor
+
+from ax25.ax25InitPorts import PORT_HANDLER
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
 from config_station import DefaultPort, get_all_stat_cfg, del_port_data
 from fnc.os_fnc import is_linux
@@ -17,10 +19,9 @@ class PortSetTab:
         self.height = main_stt_win.win_height
         height = self.height
         self.width = main_stt_win.win_width
-        width = self.width
+
         self.port_setting = setting
-        self.port_handler = main_stt_win.ax25_handler
-        port_types = list(self.port_handler.ax25types.keys())
+        port_types = list(PORT_HANDLER.ax25types.keys())
         self.style = main_stt_win.style
         self.tab = ttk.Frame(self.tab_clt)
         #################
@@ -34,8 +35,8 @@ class PortSetTab:
         self.prt_name.insert(tk.END, self.port_setting.parm_PortName)
         ######################
         # Not initialised Info
-        if self.port_setting.parm_PortNr in self.port_handler.ax25_ports.keys():
-            if not self.port_handler.ax25_ports[self.port_setting.parm_PortNr].device_is_running:
+        if self.port_setting.parm_PortNr in PORT_HANDLER.get_all_ports().keys():
+            if not PORT_HANDLER.get_all_ports()[self.port_setting.parm_PortNr].device_is_running:
                 _x = 520
                 _y = 570
                 _label = tk.Label(self.tab, text='!! Port ist nicht Initialisiert !!', fg='red')
@@ -55,7 +56,7 @@ class PortSetTab:
 
         opt = port_types
         self.port_select_var.set(self.port_setting.parm_PortTyp)  # default value
-        port_men = tk.OptionMenu(self.tab, self.port_select_var, *opt, command=self.update_port_parameter)
+        port_men = tk.OptionMenu(self.tab, self.port_select_var, *opt, command=self._update_port_parameter)
         port_men.configure(width=10, height=1)
         port_men.place(x=port_x + 55, y=height - port_y - 5)
         #######################
@@ -175,7 +176,7 @@ class PortSetTab:
         self.axip_multicast_dd = tk.Checkbutton(self.tab,
                                                 text='AXIP-Multicast',
                                                 variable=self.axip_multicast_var,
-                                                command=self.update_port_parameter,
+                                                command=self._update_port_parameter,
                                                 state='disabled')
         self.axip_multicast_dd.var = self.axip_multicast_var
         if self.port_setting.parm_PortTyp == 'AXIP':
@@ -376,7 +377,7 @@ class PortSetTab:
         tx_sel_y = 20
         tk.Button(mon_col_frame,
                   text='TX',
-                  command=lambda: self.choose_color('TX')
+                  command=lambda: self._choose_color('TX')
                   ).place(x=tx_sel_x, y=tx_sel_y)
         """
         tx_sel_label = tk.Label(mon_col_frame, text='TX:', bg=bg_cl)
@@ -393,7 +394,7 @@ class PortSetTab:
         rx_sel_y = 70
         tk.Button(mon_col_frame,
                   text='RX',
-                  command=lambda: self.choose_color('RX')
+                  command=lambda: self._choose_color('RX')
                   ).place(x=rx_sel_x, y=rx_sel_y)
         #################
         # BG
@@ -401,7 +402,7 @@ class PortSetTab:
         bg_sel_y = 120
         tk.Button(mon_col_frame,
                   text='BG',
-                  command=lambda: self.choose_color('BG')
+                  command=lambda: self._choose_color('BG')
                   ).place(x=bg_sel_x, y=bg_sel_y)
         """
         rx_sel_label = tk.Label(mon_col_frame, text='RX:', bg=bg_cl)
@@ -442,13 +443,13 @@ class PortSetTab:
             else:
                 y_f += 1
 
-        self.update_port_parameter()
+        self._update_port_parameter()
 
     def win_tasker(self):
         # self.update_port_parameter()
         pass
 
-    def choose_color(self, fg_bg: str):
+    def _choose_color(self, fg_bg: str):
         self.main_cl.settings_win.attributes("-topmost", False)
         # self.main_cl.settings_win.lower()
         # self.main_cl.settings_win.lift()
@@ -474,7 +475,7 @@ class PortSetTab:
 
         self.main_cl.settings_win.attributes("-topmost", True)
 
-    def update_port_parameter(self, dummy=None):
+    def _update_port_parameter(self, dummy=None):
         height = self.height
         param_sel_x = 20
         param_sel_y = 535
@@ -720,89 +721,87 @@ class PortSetTab:
 
 class PortSettingsWin:
     def __init__(self, main_cl):
-        self.main_class = main_cl
-        self.all_ax25_ports = main_cl.ax25_port_handler.ax25_ports
-        self.ax25_handler = main_cl.ax25_port_handler
+        self._main_class = main_cl
         self.win_height = 600
         self.win_width = 1059
         self.style = main_cl.style
-        self.settings_win = tk.Toplevel()
+        self._settings_win = tk.Toplevel()
         # self.settings_win
-        self.settings_win.title("Port-Settings")
-        # self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
-        self.settings_win.geometry(f"{self.win_width}x"
+        self._settings_win.title("Port-Settings")
+        # self._settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
+        self._settings_win.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self.main_class.main_win.winfo_x()}+"
-                      f"{self.main_class.main_win.winfo_y()}")
-        self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
-        self.settings_win.resizable(False, False)
-        self.settings_win.attributes("-topmost", True)
+                      f"{self._main_class.main_win.winfo_x()}+"
+                      f"{self._main_class.main_win.winfo_y()}")
+        self._settings_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
+        self._settings_win.resizable(False, False)
+        self._settings_win.attributes("-topmost", True)
 
-        self.lang = self.main_class.language
+        self.lang = self._main_class.language
         ##########################
         # OK, Save, Cancel
-        ok_bt = tk.Button(self.settings_win,
+        ok_bt = tk.Button(self._settings_win,
                           text="Ok",
                           # font=("TkFixedFont", 15),
                           # bg="green",
                           height=1,
                           width=6,
-                          command=self.ok_btn_cmd)
+                          command=self._ok_btn_cmd)
 
-        save_bt = tk.Button(self.settings_win,
+        save_bt = tk.Button(self._settings_win,
                             text="Speichern",
                             # font=("TkFixedFont", 15),
                             # bg="green",
                             height=1,
                             width=7,
-                            command=self.save_btn_cmd)
+                            command=self._save_btn_cmd)
 
-        cancel_bt = tk.Button(self.settings_win,
+        cancel_bt = tk.Button(self._settings_win,
                               text="Abbrechen",
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               height=1,
                               width=8,
-                              command=self.destroy_win)
+                              command=self._destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
         save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
         ####################################
         # New Station, Del Station Buttons
-        new_port_bt = tk.Button(self.settings_win,
+        new_port_bt = tk.Button(self._settings_win,
                                 text="Neuer Port",
                                 # font=("TkFixedFont", 15),
                                 # bg="green",
                                 height=1,
                                 width=10,
-                                command=self.new_port_btn_cmd)
-        del_st_bt = tk.Button(self.settings_win,
+                                command=self._new_port_btn_cmd)
+        del_st_bt = tk.Button(self._settings_win,
                               text="Löschen",
                               # font=("TkFixedFont", 15),
                               bg="red3",
                               height=1,
                               width=10,
-                              command=self.del_port_btn_cmd)
+                              command=self._del_port_btn_cmd)
         new_port_bt.place(x=20, y=self.win_height - 590)
         del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
 
         # Root Tab
-        self.tabControl = ttk.Notebook(self.settings_win, height=self.win_height - 140, width=self.win_width - 40)
+        self.tabControl = ttk.Notebook(self._settings_win, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
         # Tab Vars
         self.tab_list: {int: ttk.Frame} = {}
         # Tab Frames ( Port Settings )
-        for k in self.all_ax25_ports.keys():
+        for k in PORT_HANDLER.get_all_ports().keys():
             # port.port_cfg: DefaultPortConfig
-            tmp: DefaultPort = self.all_ax25_ports[k].port_cfg
+            tmp: DefaultPort = PORT_HANDLER.get_all_ports()[k].port_cfg
             tab = PortSetTab(self, tmp, self.tabControl)
             self.tab_list[k] = tab
             port_lable_text = 'Port {}'.format(k)
-            if not self.all_ax25_ports[k].device_is_running:
+            if not PORT_HANDLER.get_all_ports()[k].device_is_running:
                 port_lable_text += ' (!)'
             self.tabControl.add(tab.tab, text=port_lable_text)
 
-    def new_port_btn_cmd(self):
+    def _new_port_btn_cmd(self):
         # port.port_cfg: DefaultPortConfig
         prtcfg = DefaultPort()
         prt_id = 0
@@ -816,8 +815,8 @@ class PortSettingsWin:
         self.tabControl.select(prt_id)
         self.tab_list[prt_id] = tab
 
-    def del_port_btn_cmd(self):
-        self.settings_win.attributes("-topmost", False)
+    def _del_port_btn_cmd(self):
+        self._settings_win.attributes("-topmost", False)
         msg = AskMsg(titel='lösche Port', message="Willst du diesen Port wirklich löschen? \n"
                                                   "Alle Einstellungen gehen verloren !")
         # self.settings_win.lift()
@@ -833,50 +832,50 @@ class PortSettingsWin:
                 ind = int(ind.replace('Port ', '')[0])
 
                 del_port_data(ind)
-                self.main_class.ax25_port_handler.close_port(ind)
+                PORT_HANDLER.close_port(ind)
                 del self.tab_list[ind]
                 self.tabControl.forget(tab_ind)
 
                 WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
-                self.main_class.msg_to_monitor('Info: Port erfolgreich gelöscht.')
+                self._main_class.msg_to_monitor('Info: Port erfolgreich gelöscht.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
                                    'Das hast du gut gemacht, mach weiter so. ')
-            self.main_class.msg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
-        self.settings_win.lift()
+            self._main_class.msg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
+        self._settings_win.lift()
         # self.settings_win.attributes("-topmost", True)
 
-    def destroy_win(self):
-        self.settings_win.destroy()
-        self.main_class.settings_win = None
+    def _destroy_win(self):
+        self._settings_win.destroy()
+        self._main_class.settings_win = None
 
-    def save_btn_cmd(self):
-        self.main_class.msg_to_monitor('Info: Port Einstellungen werden gespeichert.')
+    def _save_btn_cmd(self):
+        self._main_class.msg_to_monitor('Info: Port Einstellungen werden gespeichert.')
         for port_id in self.tab_list.keys():
             self.tab_list[port_id].set_vars_to_cfg()
             self.tab_list[port_id].port_setting.save_to_pickl()
-        self.main_class.msg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
-        # self.main_class.msg_to_monitor('Lob: Gute Entscheidung!')
-        self.main_class.msg_to_monitor('Info: Ports werden neu Initialisiert.')
-        threading.Thread(target=self.main_class.ax25_port_handler.reinit_all_ports).start()
-        # self.main_class.ax25_port_handler.reinit_all_ports()
-        # self.main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
-        self.main_class.msg_to_monitor('Lob: Du bist stets bemüht..')
+        self._main_class.msg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
+        # self._main_class.msg_to_monitor('Lob: Gute Entscheidung!')
+        self._main_class.msg_to_monitor('Info: Ports werden neu Initialisiert.')
+        threading.Thread(target=PORT_HANDLER.reinit_all_ports).start()
+        # self._main_class.ax25_port_handler.reinit_all_ports()
+        # self._main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
+        self._main_class.msg_to_monitor('Lob: Du bist stets bemüht..')
 
         """    
-        for k in self.all_ax25_ports.keys():
-            self.all_ax25_ports[k].port_cfg.save_to_pickl()
+        for k in PORT_HANDLER.get_all_ports().keys():
+            PORT_HANDLER.get_all_ports()[k].port_cfg.save_to_pickl()
         """
 
-    def ok_btn_cmd(self):
+    def _ok_btn_cmd(self):
         for port_id in self.tab_list.keys():
             self.tab_list[port_id].set_vars_to_cfg()
             self.tab_list[port_id].port_setting.save_to_pickl()
-        self.ax25_handler.set_kiss_param_all_ports()
-        self.main_class.msg_to_monitor('Lob: Das war richtig. Mach weiter so.')
-        self.main_class.msg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
-        self.main_class.tabbed_sideFrame.update_mon_port_id()
-        self.destroy_win()
+        PORT_HANDLER.set_kiss_param_all_ports()
+        self._main_class.msg_to_monitor('Lob: Das war richtig. Mach weiter so.')
+        self._main_class.msg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
+        self._main_class.tabbed_sideFrame.update_mon_port_id()
+        self._destroy_win()
 
     def tasker(self):
         pass

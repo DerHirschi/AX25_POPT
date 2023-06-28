@@ -7,7 +7,7 @@ from config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfig
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
 # from fnc.debug_fnc import show_mem_size
 # from memory_profiler import profile
-from gui.guiRxEchoSettings import RxEchoVars
+from classes import RxEchoVars
 
 
 class AX25PortHandler(object):
@@ -102,20 +102,20 @@ class AX25PortHandler(object):
 
     def close_port(self, port_id: int):
         logger.info('Info: Versuche Port {} zu schließen.'.format(port_id))
-        port = self.ax25_ports[port_id]
-        port.close()
-        c = 0
-        while not port.ende:
-            time.sleep(0.3)
-            # self.sysmsg_to_gui("Hinweis: Warte auf Port " + str(port_id))
-            print("Warte auf Port " + str(port_id))
-            logger.debug("Warte auf Port " + str(port_id))
-            port.close()
-            c += 1
-            if c == 3:
-                break
-
         if port_id in self.ax25_ports.keys():
+            port = self.ax25_ports[port_id]
+            port.close()
+            c = 0
+            while not port.ende:
+                time.sleep(0.3)
+                # self.sysmsg_to_gui("Hinweis: Warte auf Port " + str(port_id))
+                print("Warte auf Port " + str(port_id))
+                logger.debug("Warte auf Port " + str(port_id))
+                port.close()
+                c += 1
+                if c == 3:
+                    break
+
             del self.ax25_ports[port_id]
         if port_id in self.ax25_port_settings.keys():
             del self.ax25_port_settings[port_id]

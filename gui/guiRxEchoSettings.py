@@ -1,31 +1,18 @@
 import tkinter as tk
 import math
-from ax25.ax25Port import AX25Port
 
-
-class RxEchoVars(object):
-    def __init__(self, port_id: int):
-        self.port_id = port_id
-        self.rx_ports: {int: [str]} = {}
-        self.tx_ports: {int: [str]} = {}
-        self.tx_buff: [] = []
-    """
-    def buff_input(self, ax_frame, port_id: int):
-        if port_id != self.port_id:
-            self.tx_buff.append(ax_frame)
-    """
+from ax25.ax25InitPorts import PORT_HANDLER
 
 
 class RxEchoSettings(tk.Toplevel):
     def __init__(self, main_win):
         tk.Toplevel.__init__(self)
-        self.main_cl = main_win
+        self._main_cl = main_win
         main_win.settings_win = self
         ###############
         # VARS
-        self.port_handler = main_win.ax25_port_handler
-        self.ports = self.port_handler.ax25_ports
-        n_ports = len(self.ports.keys())
+        # self.port_handler = main_win.ax25_port_handler
+        n_ports = len(PORT_HANDLER.get_all_ports().keys())
         self.win_height = 650
         self.win_width = 280 * max(math.ceil(n_ports / 2), 2)
         self.style = main_win.style
@@ -33,9 +20,9 @@ class RxEchoSettings(tk.Toplevel):
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self.main_cl.main_win.winfo_x()}+"
-                      f"{self.main_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+                      f"{self._main_cl.main_win.winfo_x()}+"
+                      f"{self._main_cl.main_win.winfo_y()}")
+        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(True, True)
         self.off_color = ''
         ##########################
@@ -46,7 +33,7 @@ class RxEchoSettings(tk.Toplevel):
                           # bg="green",
                           height=1,
                           width=6,
-                          command=self.ok_btn_cmd)
+                          command=self._ok_btn_cmd)
 
         save_bt = tk.Button(self,
                             text="Speichern",
@@ -54,7 +41,7 @@ class RxEchoSettings(tk.Toplevel):
                             # bg="green",
                             height=1,
                             width=7,
-                            command=self.save_btn_cmd)
+                            command=self._save_btn_cmd)
 
         cancel_bt = tk.Button(self,
                               text="Abbrechen",
@@ -62,7 +49,7 @@ class RxEchoSettings(tk.Toplevel):
                               # bg="green",
                               height=1,
                               width=8,
-                              command=self.destroy_win)
+                              command=self._destroy_win)
 
         ok_bt.place(x=20, y=self.win_height - 50)
         save_bt.place(x=110, y=self.win_height - 50)
@@ -74,9 +61,9 @@ class RxEchoSettings(tk.Toplevel):
         _label = tk.Label(self, text="Achtung! Diese Funktion ersetzt kein Digipeater!")
         _label.place(x=30, y=10)
         _x = 30
-        for i in range(len(list(self.ports.keys()))):
-            k = list(self.ports.keys())[i]
-            port: AX25Port = self.ports[k]
+        for i in range(len(list(PORT_HANDLER.get_all_ports().keys()))):
+            k = list(PORT_HANDLER.get_all_ports().keys())[i]
+            port = PORT_HANDLER.get_all_ports()[k]
             var_dict = {}
             text = 'Port {}: {}'.format(port.port_id, port.port_cfg.parm_PortName)
             # Left
@@ -88,9 +75,9 @@ class RxEchoSettings(tk.Toplevel):
             _label.place(x=_x, y=_y)
 
             _yy = _y + 20
-            for kk in list(self.ports.keys()):
+            for kk in list(PORT_HANDLER.get_all_ports().keys()):
                 if kk != k:
-                    # tmp_port: AX25Port = self.ports[kk]
+                    # tmp_port: AX25Port = PORT_HANDLER.get_all_ports()[kk]
                     _rx_text = 'Port {} RX'.format(kk)
                     rx_check_var = tk.BooleanVar(self)
                     rx_check = tk.Checkbutton(self,
@@ -119,34 +106,34 @@ class RxEchoSettings(tk.Toplevel):
                                           rx_call_ent,
                                           tx_call_ent]
                     self.off_color = tx_check.cget('background'), tx_check.cget('activebackground')
-                    rx_check.configure(command=self.check_cmd)
-                    tx_check.configure(command=self.check_cmd)
+                    rx_check.configure(command=self._check_cmd)
+                    tx_check.configure(command=self._check_cmd)
 
             self.check_vars[k] = var_dict
-        self.update_settings()
+        self._update_settings()
         #print(self.check_vars)
 
-    def save_btn_cmd(self):
+    def _save_btn_cmd(self):
         # self.set_vars()
-        self.main_cl.ax25_port_handler.save_all_port_cfgs()
-        self.main_cl.msg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
-        self.main_cl.msg_to_monitor('Lob: Eine sehr gute Entscheidung. Du bist großartig!')
+        PORT_HANDLER.save_all_port_cfgs()
+        self._main_cl.msg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
+        self._main_cl.msg_to_monitor('Lob: Eine sehr gute Entscheidung. Du bist großartig!')
 
-    def ok_btn_cmd(self):
+    def _ok_btn_cmd(self):
         # self.set_vars()
         # self.re_init_beacons()
-        self.main_cl.msg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
-        self.main_cl.msg_to_monitor('Lob: Du hast eine gute Einstellung. Mach weiter so!')
-        self.destroy_win()
+        self._main_cl.msg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
+        self._main_cl.msg_to_monitor('Lob: Du hast eine gute Einstellung. Mach weiter so!')
+        self._destroy_win()
 
-    def destroy_win(self):
+    def _destroy_win(self):
         self.destroy()
-        self.main_cl.settings_win = None
+        self._main_cl.settings_win = None
 
     def tasker(self):
         pass
 
-    def check_cmd(self):
+    def _check_cmd(self):
         """
         _rx_check_var,
         _tx_check_var,
@@ -155,7 +142,7 @@ class RxEchoSettings(tk.Toplevel):
         _rx_call_ent,
         _tx_call_ent
         """
-        for k in self.port_handler.rx_echo.keys():
+        for k in PORT_HANDLER.rx_echo.keys():
             for kk in list(self.check_vars[k].keys()):
                 # RX
                 if self.check_vars[k][kk][0].get() and self.check_vars[kk][k][1].get():
@@ -172,8 +159,8 @@ class RxEchoSettings(tk.Toplevel):
                     else:
                         calls = var.split(' ')
 
-                    self.port_handler.rx_echo[k].rx_ports[kk] = list(calls)
-                    self.port_handler.rx_echo[kk].tx_ports[k] = list(calls)
+                    PORT_HANDLER.rx_echo[k].rx_ports[kk] = list(calls)
+                    PORT_HANDLER.rx_echo[kk].tx_ports[k] = list(calls)
 
                     self.check_vars[kk][k][5].delete(0, tk.END)
                     self.check_vars[kk][k][5].insert(tk.END, var)
@@ -184,10 +171,10 @@ class RxEchoSettings(tk.Toplevel):
                     self.check_vars[kk][k][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
                     # self.check_vars[k][kk][2].deselect()
                     # self.check_vars[kk][k][2].deselect()
-                    if kk in list(self.port_handler.rx_echo[k].rx_ports.keys()):
-                        del self.port_handler.rx_echo[k].rx_ports[kk]
-                    if k in list(self.port_handler.rx_echo[kk].tx_ports.keys()):
-                        del self.port_handler.rx_echo[kk].tx_ports[k]
+                    if kk in list(PORT_HANDLER.rx_echo[k].rx_ports.keys()):
+                        del PORT_HANDLER.rx_echo[k].rx_ports[kk]
+                    if k in list(PORT_HANDLER.rx_echo[kk].tx_ports.keys()):
+                        del PORT_HANDLER.rx_echo[kk].tx_ports[k]
                 # TX
                 if self.check_vars[k][kk][1].get() and self.check_vars[kk][k][0].get():
                     self.check_vars[k][kk][3].configure(background='green1', activebackground='green4')
@@ -202,8 +189,8 @@ class RxEchoSettings(tk.Toplevel):
                             calls = var.split(' ')
                     else:
                         calls = var.split(' ')
-                    self.port_handler.rx_echo[k].tx_ports[kk] = calls
-                    self.port_handler.rx_echo[kk].rx_ports[k] = calls
+                    PORT_HANDLER.rx_echo[k].tx_ports[kk] = calls
+                    PORT_HANDLER.rx_echo[kk].rx_ports[k] = calls
 
                     self.check_vars[kk][k][4].delete(0, tk.END)
                     self.check_vars[kk][k][4].insert(tk.END, var)
@@ -214,33 +201,33 @@ class RxEchoSettings(tk.Toplevel):
                     self.check_vars[kk][k][2].configure(background=self.off_color[0], activebackground=self.off_color[1])
                     # self.check_vars[k][kk][3].deselect()
                     # self.check_vars[kk][k][3].deselect()
-                    if kk in list(self.port_handler.rx_echo[k].tx_ports.keys()):
-                        del self.port_handler.rx_echo[k].tx_ports[kk]
-                    if k in list(self.port_handler.rx_echo[kk].rx_ports.keys()):
-                        del self.port_handler.rx_echo[kk].rx_ports[k]
+                    if kk in list(PORT_HANDLER.rx_echo[k].tx_ports.keys()):
+                        del PORT_HANDLER.rx_echo[k].tx_ports[kk]
+                    if k in list(PORT_HANDLER.rx_echo[kk].rx_ports.keys()):
+                        del PORT_HANDLER.rx_echo[kk].rx_ports[k]
 
         """
-        for k in self.port_handler.rx_echo.keys():
+        for k in PORT_HANDLER.rx_echo.keys():
             print('Port ' + str(k))
-            for att in dir(self.port_handler.rx_echo[k]):
+            for att in dir(PORT_HANDLER.rx_echo[k]):
                 if '__' not in att:
-                    print('{} > {}'.format(att, getattr(self.port_handler.rx_echo[k], att)))
-                    #print(self.port_handler.rx_echo[k])
+                    print('{} > {}'.format(att, getattr(PORT_HANDLER.rx_echo[k], att)))
+                    #print(PORT_HANDLER.rx_echo[k])
             print()
         """
 
-    def update_settings(self):
+    def _update_settings(self):
 
-        for k in self.port_handler.rx_echo.keys():
+        for k in PORT_HANDLER.rx_echo.keys():
 
             for kk in list(self.check_vars[k].keys()):
                 tr_k_kk = False
                 tr_kk_k = False
                 # RX
-                if k in self.port_handler.rx_echo[kk].tx_ports.keys():
+                if k in PORT_HANDLER.rx_echo[kk].tx_ports.keys():
                     self.check_vars[kk][k][5].delete(0, tk.END)
 
-                    call_list_kk_k = self.port_handler.rx_echo[kk].tx_ports[k]
+                    call_list_kk_k = PORT_HANDLER.rx_echo[kk].tx_ports[k]
                     call_st = ''
                     for el in call_list_kk_k:
                         call_st += el + ' '
@@ -250,10 +237,10 @@ class RxEchoSettings(tk.Toplevel):
                 else:
                     self.check_vars[kk][k][1].set(False)
 
-                if kk in self.port_handler.rx_echo[k].rx_ports.keys():
+                if kk in PORT_HANDLER.rx_echo[k].rx_ports.keys():
                     self.check_vars[k][kk][4].delete(0, tk.END)
 
-                    call_list_k_kk = self.port_handler.rx_echo[k].rx_ports[kk]
+                    call_list_k_kk = PORT_HANDLER.rx_echo[k].rx_ports[kk]
                     call_st = ''
                     for el in call_list_k_kk:
                         call_st += el + ' '

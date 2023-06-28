@@ -25,7 +25,7 @@ class BWPlotApp(tk.Toplevel):
         self._cpu_loads = deque([0] * 120, maxlen=120)
         self._line, = self._ax.plot(self._cpu_loads)
 
-        self._canvas = FigureCanvasTkAgg(self._fig, master=_root_cl.side_btn_frame_top)
+        self._canvas = FigureCanvasTkAgg(self._fig, master=_root_cl.get_side_frame())
         self._canvas.draw()
         self._widget = self._canvas.get_tk_widget()
         self._widget.grid(row=5, column=0, columnspan=7, sticky="nsew")

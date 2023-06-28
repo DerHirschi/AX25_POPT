@@ -17,37 +17,37 @@ class SideTabbedFrame:
         self.style = main_cl.style
         self.ch_index = main_cl.channel_index
 
-        self.tab_side_frame = tk.Frame(
-            main_cl.side_btn_frame_top,
+        self._tab_side_frame = tk.Frame(
+            main_cl.get_side_frame(),
             # width=300,
             height=400
         )
-        self.tab_side_frame.grid(row=4, column=0, columnspan=6, pady=10, sticky="nsew")
-        self.tabControl = ttk.Notebook(
-            self.tab_side_frame,
+        self._tab_side_frame.grid(row=4, column=0, columnspan=6, pady=10, sticky="nsew")
+        self._tabControl = ttk.Notebook(
+            self._tab_side_frame,
             height=300,
             # width=500
         )
 
-        tab1_kanal = ttk.Frame(self.tabControl)
-        # self.tab1_1_RTT = ttk.Frame(self.tabControl)
-        self.tab2_mh = tk.Frame(self.tabControl)
+        tab1_kanal = ttk.Frame(self._tabControl)
+        # self.tab1_1_RTT = ttk.Frame(self._tabControl)
+        self.tab2_mh = tk.Frame(self._tabControl)
         # self.tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
         self.tab2_mh_def_bg_clr = self.tab2_mh.cget('bg')
-        self.tab4_settings = ttk.Frame(self.tabControl)
-        self.tab5_ch_links = ttk.Frame(self.tabControl)  # TODO
-        self.tab6_monitor = ttk.Frame(self.tabControl)
+        self.tab4_settings = ttk.Frame(self._tabControl)
+        self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
+        self.tab6_monitor = ttk.Frame(self._tabControl)
 
-        self.tabControl.add(tab1_kanal, text='Kanal')
-        self.tabControl.add(self.tab2_mh, text='MH')
-        # tab3 = ttk.Frame(self.tabControl)                         # TODO
-        # self.tabControl.add(tab3, text='Ports')                   # TODO
-        self.tabControl.add(self.tab4_settings, text='Global')
-        self.tabControl.add(self.tab6_monitor, text='Monitor')
+        self._tabControl.add(tab1_kanal, text='Kanal')
+        self._tabControl.add(self.tab2_mh, text='MH')
+        # tab3 = ttk.Frame(self._tabControl)                         # TODO
+        # self._tabControl.add(tab3, text='Ports')                   # TODO
+        self._tabControl.add(self.tab4_settings, text='Global')
+        self._tabControl.add(self.tab6_monitor, text='Monitor')
 
-        # self.tabControl.add(self.tab5_ch_links, text='CH-Echo')   # TODO
-        self.tabControl.pack(expand=0, fill="both")
-        self.tabControl.select(self.tab2_mh)
+        # self._tabControl.add(self.tab5_ch_links, text='CH-Echo')   # TODO
+        self._tabControl.pack(expand=0, fill="both")
+        self._tabControl.select(self.tab2_mh)
         ################################################
         # Kanal
         parm_y = 20
@@ -95,7 +95,7 @@ class SideTabbedFrame:
                                   textvariable=self.t2_var,
                                   values=val_list,
                                   state='disabled')
-        self.t2.bind("<<ComboboxSelected>>", self.set_t2)
+        self.t2.bind("<<ComboboxSelected>>", self._set_t2)
         _label.place(x=10, y=parm_y)
         self.t2.place(x=50, y=parm_y)
 
@@ -104,7 +104,7 @@ class SideTabbedFrame:
                                       text='T2-Auto',
                                       variable=self.t2_auto_var,
                                       state='disabled',
-                                      command=self.chk_t2auto
+                                      command=self._chk_t2auto
                                       )
         self.t2_auto.place(x=10, y=parm_y + 35)
 
@@ -115,7 +115,7 @@ class SideTabbedFrame:
         self.rnr = tk.Checkbutton(tab1_kanal,
                                   text='RNR',
                                   variable=self.rnr_var,
-                                  command=self.chk_rnr)
+                                  command=self._chk_rnr)
         self.rnr.place(x=10, y=parm_y)
         # Sprech
         parm_y = 200
@@ -145,7 +145,7 @@ class SideTabbedFrame:
         self.link_holder = tk.Checkbutton(tab1_kanal,
                                           text='Linkhalter',
                                           variable=self.link_holder_var,
-                                          command=self.chk_link_holder
+                                          command=self._chk_link_holder
                                           )
         self.link_holder.place(x=10, y=parm_y)
 
@@ -285,7 +285,7 @@ class SideTabbedFrame:
         sprech_btn = Checkbutton(self.tab4_settings,
                                  text="Sprachausgabe",
                                  variable=self.sprech_on,
-                                 command=self.chk_sprech_on
+                                 command=self._chk_sprech_on
                                  )
         sprech_btn.place(x=10, y=35)
         if is_linux():
@@ -307,7 +307,7 @@ class SideTabbedFrame:
         _chk_btn = Checkbutton(self.tab4_settings,
                                text="DX-Alarm",
                                variable=self.dx_alarm_on,
-                               command=self.chk_dx_alarm,
+                               command=self._chk_dx_alarm,
                                # state='disabled'
                                )
         _chk_btn.place(x=10, y=85)
@@ -368,7 +368,7 @@ class SideTabbedFrame:
                                             values=_vals,
                                             )
         self.mon_port_ent.place(x=_x + 50, y=_y)
-        self.mon_port_ent.bind("<<ComboboxSelected>>", self.chk_mon_port)
+        self.mon_port_ent.bind("<<ComboboxSelected>>", self._chk_mon_port)
         # Calls
         _x = 40
         _y = 175
@@ -420,24 +420,26 @@ class SideTabbedFrame:
             tk.Checkbutton(self.tab6_monitor,
                            text=f"Port {port_id}",
                            variable=self.mon_port_on_vars[port_id],
-                           command=self.chk_mon_port_filter
+                           command=self._chk_mon_port_filter
                            ).place(x=_x, y=_y)
             self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
 
         ##################
         # Tasker
-        self.tasker_dict = {
+        self._tasker_dict = {
             0: self._update_rtt,
             1: self._update_side_mh,
             # 5: self.update_ch_echo,
         }
 
-        self.chk_mon_port()
+        self._chk_mon_port()
         self._update_ch_echo()
 
+    """
     def reset_dx_alarm(self, event=None):
         self._main_win.reset_dx_alarm()
         # self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
+    """
 
     def _update_ch_echo(self):
 
@@ -458,7 +460,7 @@ class SideTabbedFrame:
                                         variable=chk_bt_var,
                                         onvalue=int(ch_id),
                                         offvalue=0,
-                                        command=self.chk_ch_echo
+                                        command=self._chk_ch_echo
                                         )
                 chk_bt.place(x=10, y=10 + (28 * (ch_id - 1)))
                 # _chk_bt.configure(state='disabled')
@@ -481,7 +483,7 @@ class SideTabbedFrame:
 
         # self.sound_on.set(1)
 
-    def chk_ch_echo(self):
+    def _chk_ch_echo(self):
         # self.main_win.channel_index
         for ch_id in list(self.ch_echo_vars.keys()):
             _vars = self.ch_echo_vars[ch_id]
@@ -510,10 +512,10 @@ class SideTabbedFrame:
                 self.ch_echo_vars[self.main_win.channel_index][1].configure(bg=self.chk_btn_default_clr)
         """
 
-    def chk_dx_alarm(self):
+    def _chk_dx_alarm(self):
         self._main_win.setting_dx_alarm = self.dx_alarm_on.get()
 
-    def chk_rnr(self):
+    def _chk_rnr(self):
         conn = self._main_win.get_conn()
         if conn:
             if self.rnr_var.get():
@@ -521,7 +523,7 @@ class SideTabbedFrame:
             else:
                 conn.unset_RNR()
 
-    def chk_link_holder(self):
+    def _chk_link_holder(self):
         conn = self._main_win.get_conn()
         if conn:
             if self.link_holder_var.get():
@@ -531,7 +533,7 @@ class SideTabbedFrame:
                 conn.link_holder_on = False
             self._main_win.on_channel_status_change()
 
-    def chk_t2auto(self):
+    def _chk_t2auto(self):
         conn = self._main_win.get_conn()
         if conn:
             if self.t2_auto_var.get():
@@ -544,14 +546,14 @@ class SideTabbedFrame:
                 self.t2.configure(state='normal')
             conn.calc_irtt()
 
-    def chk_sprech_on(self):
+    def _chk_sprech_on(self):
         if self.sprech_on.get():
             self.t2speech.configure(state='normal')
         else:
             self.t2speech.configure(state='disabled')
         self._main_win.set_var_to_all_ch_param()
 
-    def chk_mon_port(self, event=None):
+    def _chk_mon_port(self, event=None):
         vals = []
         port_id = int(self.mon_port_var.get())
         if port_id in PORT_HANDLER.get_all_ports().keys():
@@ -560,17 +562,17 @@ class SideTabbedFrame:
             self.mon_call_var.set(vals[0])
         self.mon_call_ent.configure(values=vals)
 
-    def chk_mon_port_filter(self):
-        all_ports = PORT_HANDLER.get_all_ports()
-        for port_id in all_ports:
-            all_ports[port_id].monitor_out = self.mon_port_on_vars[port_id].get()
+    def _chk_mon_port_filter(self):
+        _all_ports = PORT_HANDLER.get_all_ports()
+        for port_id in _all_ports:
+            _all_ports[port_id].monitor_out = self.mon_port_on_vars[port_id].get()
 
     def update_mon_port_id(self):
         if PORT_HANDLER.get_all_ports().keys():
             _vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
             self.mon_call_ent.configure(values=_vals)
 
-    def set_t2(self, event):
+    def _set_t2(self, event):
         conn = self._main_win.get_conn()
         if conn:
             conn.cfg.parm_T2 = min(max(int(self.t2_var.get()), 500), 3000)
@@ -578,12 +580,12 @@ class SideTabbedFrame:
 
     def tasker(self):
         try:    # TODO Need correct prozedur to end the whole shit
-            ind = self.tabControl.index(self.tabControl.select())
+            ind = self._tabControl.index(self._tabControl.select())
         except tkinter.TclError:
             pass
         else:
-            if ind in self.tasker_dict.keys():
-                self.tasker_dict[ind]()
+            if ind in self._tasker_dict.keys():
+                self._tasker_dict[ind]()
 
     def _entry_selected(self, event):
         for selected_item in self.tree.selection():
