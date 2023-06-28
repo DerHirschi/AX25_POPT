@@ -4,7 +4,7 @@ from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from config_station import save_station_to_file, del_user_data
+from config_station import save_station_to_file, del_user_data, DefaultStation
 from cli.cliMain import CLI_OPT
 from gui.guiMsgBoxes import *
 from string_tab import STR_TABLE
@@ -501,9 +501,9 @@ class StationSettingsWin:
         # self.ax25_porthandler = main_cl.ax25_port_handler
         # self.all_port_settings: {int: PortConfigInit} = {}
         # self.all_ports: {int: AX25Port} = {}
-        self.all_stat_settings: {str: DefaultStation} = main_cl.ax25_port_handler.ax25_stations_settings
+        # self.all_stat_settings: {str: DefaultStation} = main_cl.ax25_port_handler.ax25_stations_settings
 
-        self.all_dev_types = list(main_cl.ax25_port_handler.ax25types.keys())
+        self.all_dev_types = list(PORT_HANDLER.ax25types.keys())
 
         self.win_height = 600
         self.win_width = 1059
@@ -577,8 +577,8 @@ class StationSettingsWin:
         # self.tab_index = 0
         self.tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
-        for k in self.all_stat_settings.keys():
-            sett: DefaultStation = self.all_stat_settings[k]
+        for k in PORT_HANDLER.ax25_stations_settings.keys():
+            sett = PORT_HANDLER.ax25_stations_settings[k]
             tab = StatSetTab(self, sett, self.tabControl)
             self.tab_list.append(tab)
             self.tabControl.add(tab.own_tab, text=k)
@@ -605,7 +605,7 @@ class StationSettingsWin:
         for conf in self.tab_list:
             stat_conf = conf.station_setting
             if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
-                self.all_stat_settings[stat_conf.stat_parm_Call] = stat_conf
+                PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
                 save_station_to_file(stat_conf)
         self.main_class.msg_to_monitor(STR_TABLE['suc_save'][self.lang])
 

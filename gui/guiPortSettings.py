@@ -5,13 +5,13 @@ from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
-from config_station import DefaultPort, get_all_stat_cfg, del_port_data
+from config_station import get_all_stat_cfg, del_port_data
 from fnc.os_fnc import is_linux
 from string_tab import STR_TABLE
 
 
 class PortSetTab:
-    def __init__(self, main_stt_win, setting: DefaultPort, tabclt: ttk.Notebook):
+    def __init__(self, main_stt_win, setting, tabclt: ttk.Notebook):
         self.tab_clt = tabclt
         self.main_cl = main_stt_win
         self.lang = main_stt_win.lang
