@@ -1,5 +1,4 @@
 import datetime
-import gc
 import logging
 import random
 import time
@@ -12,8 +11,8 @@ from memory_profiler import profile
 import gtts
 from gtts import gTTS
 
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
@@ -21,7 +20,6 @@ from ax25.ax25monitor import monitor_frame_inp
 
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes
-#from gui.bw_plot import BWPlotApp as BW
 from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
@@ -118,13 +116,14 @@ class TkMainWin:
         self._loop_delay = 80  # ms
         self._parm_non_prio_task_timer = 0.5  # s
         self._parm_non_non_prio_task_timer = 1  # s
-        self._parm_non_non_non_prio_task_timer = 60 # 5  # s
+        self._parm_non_non_non_prio_task_timer = 5 # 5  # s
+        self._parm_test_task_timer = 60 # 5  # s
         self._parm_bw_mon_reset_task_timer = 3600  # s
         # self._parm_bw_mon_reset_task_timer = 120    # s
         self._non_prio_task_timer = time.time()
         self._non_non_prio_task_timer = time.time()
         self._non_non_non_prio_task_timer = time.time()
-        self._bw_mon_reset_task_timer = time.time() + self._parm_bw_mon_reset_task_timer
+        self._test_task_timer = time.time()
         ###############
         self.text_size = 15
         ######################################
@@ -287,6 +286,7 @@ class TkMainWin:
         self._side_btn_frame_top.rowconfigure(2, minsize=50, weight=0)  # Dummy
         self._side_btn_frame_top.rowconfigure(3, minsize=50, weight=2)  # Dummy
         self._side_btn_frame_top.rowconfigure(4, minsize=300, weight=10)  # Reiter Frame
+        # self._side_btn_frame_top.rowconfigure(5, minsize=15, weight=1)  # Reiter Frame
 
         self._side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
         self._side_btn_frame_top.columnconfigure(1, minsize=100, weight=2)
@@ -336,11 +336,23 @@ class TkMainWin:
         self.setting_dx_alarm = self.tabbed_sideFrame.dx_alarm_on
         ############################
         # Canvas Plot ( TEST )
-        # plt.ion()
+        # ### BushFIX F*** Plot eating up memory ###
         """
+        self._bw_plot_enabled_var = tk.BooleanVar(self._side_btn_frame_top)
+        self._bw_plot_enabled_var.set(True)
+        tk.Checkbutton(
+            self._side_btn_frame_top,
+            text=STR_TABLE['bw_plot_enable'][self.language],
+            variable=self._bw_plot_enabled_var
+        ).grid(row=5, column=0, columnspan=7, sticky="nsew")
+        """
+        """
+        # plt.ion()
+        # TODO F*** Plot eating up memory
         self._bw_fig = Figure(figsize=(8, 4.5), dpi=80)
         # plt.style.use('dark_background')
         self._ax = self._bw_fig.add_subplot(111)
+        self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.97, bottom=0.1)
         self._ax.axis([0, 10, 0, 60])
         self._bw_fig.set_facecolor('xkcd:light grey')
         self._ax.set_facecolor('#000000')
@@ -355,24 +367,18 @@ class TkMainWin:
         # plt.xlabel(STR_TABLE['minutes'][self.language])
         # plt.xlim(0, 10)  # TODO As Option
         # plt.ylabel(STR_TABLE['occup'][self.language])
-        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self.side_btn_frame_top)  # A tk.DrawingArea.
+        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._side_btn_frame_top)  # A tk.DrawingArea.
         self._canvas.flush_events()
         self._canvas.draw()
         self._canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
         self._canvas.get_tk_widget().config(cursor="none")
         self._bw_fig.canvas.flush_events()
-        """
-        # self._bw_plot = BW(self)
 
-        # self._canvas = None
-        # self._bw_fig = None
-        # self._ax = None
         self._bw_plot_x_scale = []
         for _i in list(range(60)):
-            self._bw_plot_x_scale.append(_i / 10)
+            self._bw_plot_x_scale.append(_i / 6)
         self._bw_plot_lines = {}
-        # self._reset_bw_mon()
-
+        """
         ############################
         # Windows
         self.new_conn_win = None
@@ -792,6 +798,7 @@ class TkMainWin:
         self._tasker_low_prio()
         self._tasker_low_low_prio()
         self._tasker_low_low_low_prio()
+        self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
 
     def _tasker_prio(self):
@@ -810,7 +817,6 @@ class TkMainWin:
                 self._rx_beep_sound()
                 if self.setting_sprech:
                     self._check_sprech_ch_buf()
-            self._bw_mon_reset_task()
             if self.ch_alarm:
                 self.ch_status_update()
 
@@ -835,15 +841,14 @@ class TkMainWin:
         """ 5 Sec """
         if time.time() > self._non_non_non_prio_task_timer:
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
+            # if self._bw_plot_enabled_var.get():
             # self._update_bw_mon()
+
+    def _tasker_tester(self):
+        """ 5 Sec """
+        if time.time() > self._test_task_timer:
+            self._test_task_timer = time.time() + self._parm_test_task_timer
             self._tester()
-            """
-            if self._bw_plot is not None:
-                self._bw_plot.bw_tasker()
-            else:
-                # from gui.bw_plot import BWPlotApp as BW
-                self._bw_plot = BW(self)
-            """
 
     @profile(precision=4)
     def _tester(self):
@@ -853,32 +858,8 @@ class TkMainWin:
         if PORT_HANDLER.get_aprs_ais() is not None:
             PORT_HANDLER.get_aprs_ais().task()
 
-    def _bw_mon_reset_task(self):
-        if time.time() > self._bw_mon_reset_task_timer:
-            self._bw_mon_reset_task_timer = time.time() + self._parm_bw_mon_reset_task_timer
-            # self._reset_bw_plot()
-
-            # self._reset_bw_mon()
-            # self.clean_bw_mon()
-
     def get_side_frame(self):
         return self._side_btn_frame_top
-
-    @profile(precision=4)
-    def _reset_bw_plot(self):
-        self._bw_plot.destroy_win()
-        del self._bw_plot
-        self._bw_plot = None
-        # del BWPlotApp
-        # del BW
-        # import time as BW
-        time.sleep(0.05)
-        gc.collect()
-        time.sleep(0.05)
-        # print(f"GB_main: {gc.garbage}\n")
-        # print(f"CB_main: {gc.callbacks}\n")
-        # print(f"OB_main: {gc.get_objects()}\n")
-        # self._bw_plot = BWPlotApp(self)
 
     #################################
     # TASKS
@@ -1229,22 +1210,22 @@ class TkMainWin:
     def send_to_qso(self, data, ch_index):
         data = data.replace('\r', '\n')
         data = tk_filter_bad_chars(data)
-        k = ch_index
-        bg = self.get_ch_param(ch_index).qso_tag_bg
-        fg = self.get_ch_param(ch_index).qso_tag_fg
+        _k = ch_index
+        _bg = self.get_ch_param(ch_index).qso_tag_bg
+        _fg = self.get_ch_param(ch_index).qso_tag_fg
         tag_name_out = self.get_ch_param(ch_index).qso_tag_name
-        self._win_buf[k].output_win += data
-        if self.channel_index == k:
+        self._win_buf[_k].output_win += data
+        if self.channel_index == _k:
             tr = False
             if float(self._out_txt.index(tk.END)) - float(self._out_txt.index("@0,0")) < 22:
                 tr = True
 
             self._out_txt.configure(state="normal")
             self._out_txt.tag_config(tag_name_out,
-                                     foreground=fg,
-                                     background=bg,
-                                     selectbackground=fg,
-                                     selectforeground=bg
+                                     foreground=_fg,
+                                     background=_bg,
+                                     selectbackground=_fg,
+                                     selectforeground=_bg
                                      )
 
             # configuring a tag called start
@@ -1259,16 +1240,16 @@ class TkMainWin:
                 self.see_end_qso_win()
 
         else:
-            if tag_name_out not in self._win_buf[k].output_win_tags.keys():
-                self._win_buf[k].output_win_tags[tag_name_out] = ()
-            old_tags = list(self._win_buf[k].output_win_tags[tag_name_out])
+            if tag_name_out not in self._win_buf[_k].output_win_tags.keys():
+                self._win_buf[_k].output_win_tags[tag_name_out] = ()
+            old_tags = list(self._win_buf[_k].output_win_tags[tag_name_out])
             if old_tags:
                 old_tags = old_tags[:-1] + [tk.INSERT]
             else:
                 old_tags = ['1.0', tk.INSERT]
-            self._win_buf[k].output_win_tags[tag_name_out] = old_tags
-            self._win_buf[k].new_data_tr = True
-        self._win_buf[k].rx_beep_tr = True
+            self._win_buf[_k].output_win_tags[tag_name_out] = old_tags
+            self._win_buf[_k].new_data_tr = True
+        self._win_buf[_k].rx_beep_tr = True
         self.ch_status_update()
 
     def _on_click_inp_txt(self, event=None):
@@ -1286,7 +1267,6 @@ class TkMainWin:
         self._win_buf[self.channel_index].input_win_index = str(self._inp_txt.index(tk.INSERT))
 
     # SEND TEXT OUT
-
     ###################
     # BW Plot
     """
@@ -1306,7 +1286,9 @@ class TkMainWin:
         for port_id in self._bw_plot_lines:
             del self._bw_plot_lines[port_id]
         self._bw_plot_lines = {}
-
+    """
+    """
+    @profile(precision=4)
     def _update_bw_mon(self):
         _tr = False
         for _port_id in list(PORT_HANDLER.ax25_ports.keys()):
@@ -1325,10 +1307,8 @@ class TkMainWin:
                     _tr = True
         if _tr:
             self._draw_bw_plot()
-
-    @profile(precision=2)
+    # @profile(precision=2)
     def _draw_bw_plot(self):
-
         self._bw_fig.canvas.draw()
         self._bw_fig.canvas.flush_events()
         self._canvas.flush_events()

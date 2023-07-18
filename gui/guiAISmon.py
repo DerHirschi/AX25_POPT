@@ -12,20 +12,19 @@ class AISmonitor(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_cl = root_win
-        self.lang = self._root_cl.language
-        self.text_size = self._root_cl.text_size
-        self.win_height = 700
-        self.win_width = 1500
+        self._lang = self._root_cl.language
+        self._text_size = self._root_cl.text_size
+        self._win_height = 700
+        self._win_width = 1500
         self.style = self._root_cl.style
-        self.title(STR_TABLE['aprs_mon'][self.lang])
-        self.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
+        self.title(STR_TABLE['aprs_mon'][self._lang])
+        self.geometry(f"{self._win_width}x"
+                      f"{self._win_height}+"
                       f"{self._root_cl.main_win.winfo_x()}+"
                       f"{self._root_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         # self.resizable(False, False)
         self.lift()
-        self._tmp_buffer = []
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
 
         # Frame für den linken Bereich
@@ -37,49 +36,49 @@ class AISmonitor(tk.Toplevel):
         text_frame.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
 
         # Scrolled Text erstellen
-        self.text_widget = ScrolledText(text_frame,
-                                        background='black',
-                                        foreground='green',
-                                        width=85
-                                        )
-        self.text_widget.configure(font=(FONT, self.text_size))
-        self.text_widget.pack(fill=tk.BOTH, expand=True)
+        self._text_widget = ScrolledText(text_frame,
+                                         background='black',
+                                         foreground='green',
+                                         width=85
+                                         )
+        self._text_widget.configure(font=(FONT, self._text_size))
+        self._text_widget.pack(fill=tk.BOTH, expand=True)
 
         # Frame für den rechten Bereich
         right_frame = ttk.Frame(self)
         right_frame.pack(side=tk.RIGHT, padx=10, pady=10)
 
-        self.autoscroll_var = tk.BooleanVar(self)
-        self.autoscroll_var.set(True)
+        self._autoscroll_var = tk.BooleanVar(self)
+        self._autoscroll_var.set(True)
         tk.Checkbutton(right_frame,
-                       variable=self.autoscroll_var,
+                       variable=self._autoscroll_var,
                        text="Autoscroll  ",
-                       command=self.scroll_to_end).pack(side=tk.TOP, padx=2)
-        self.new_user_var = tk.BooleanVar(self)
-        self.new_user_var.set(False)
+                       command=self._scroll_to_end).pack(side=tk.TOP, padx=2)
+        self._new_user_var = tk.BooleanVar(self)
+        self._new_user_var.set(False)
         tk.Checkbutton(right_frame,
-                       variable=self.new_user_var,
+                       variable=self._new_user_var,
                        text="UserDB      ",
-                       command=self.chk_new_user
+                       command=self._chk_new_user
                        ).pack(side=tk.TOP, padx=2)
-        self.call_filter = tk.BooleanVar(self)
-        self.call_filter.set(False)
+        self._call_filter = tk.BooleanVar(self)
+        self._call_filter.set(False)
         tk.Checkbutton(right_frame,
-                       variable=self.call_filter,
+                       variable=self._call_filter,
                        text="Call-Filter  ",
-                       command=self.chk_call_filter
+                       command=self._chk_call_filter
                        ).pack(side=tk.TOP, padx=2)
 
         tk.Label(right_frame, text="Call-Filter:").pack(side=tk.TOP, padx=2)
-        self.call_filter_calls_var = tk.StringVar(self)
+        self._call_filter_calls_var = tk.StringVar(self)
         tk.Entry(right_frame,
-                 textvariable=self.call_filter_calls_var,
+                 textvariable=self._call_filter_calls_var,
                  width=20
                  ).pack(side=tk.TOP, padx=2)
 
         tk.Button(right_frame,
-                  text=STR_TABLE['delete'][self.lang],
-                  command=self.del_buffer
+                  text=STR_TABLE['delete'][self._lang],
+                  command=self._del_buffer
                   ).pack(side=tk.TOP, padx=2)
 
         # Konfigurieren des Grid-Layouts
@@ -93,117 +92,119 @@ class AISmonitor(tk.Toplevel):
         text_frame.columnconfigure(0, weight=1)
         text_frame.rowconfigure(0, weight=1)
         if self._ais_obj is not None:
-            self.new_user_var.set(self._ais_obj.add_new_user)
-        self.bind('<Control-plus>', lambda event: self.increase_textsize())
-        self.bind('<Control-minus>', lambda event: self.decrease_textsize())
+            self._new_user_var.set(self._ais_obj.add_new_user)
+        self.bind('<Control-plus>', lambda event: self._increase_textsize())
+        self.bind('<Control-minus>', lambda event: self._decrease_textsize())
 
-        self.ais_aprs_stations = {}
-        self.ais_aprs_stat_calls = []
+        self._ais_aprs_stations = {}
+        self._ais_aprs_stat_calls = []
         if self._ais_obj is not None:
-            self.ais_aprs_stations = self._ais_obj.ais_aprs_stations
-            self.ais_aprs_stat_calls.append(self._ais_obj.ais_call)
+            self._ais_aprs_stations = self._ais_obj.ais_aprs_stations
+            self._ais_aprs_stat_calls.append(self._ais_obj.ais_call)
             self._ais_obj.ais_mon_gui = self
             """
-            for port_id in self.ais_aprs_stations.keys():
-                if self.ais_aprs_stations[port_id].aprs_parm_call:
-                    self.ais_aprs_stat_calls.append(
-                        self.ais_aprs_stations[port_id].aprs_parm_call
+            for port_id in self._ais_aprs_stations.keys():
+                if self._ais_aprs_stations[port_id].aprs_parm_call:
+                    self._ais_aprs_stat_calls.append(
+                        self._ais_aprs_stations[port_id].aprs_parm_call
                     )
             """
         root_win.aprs_mon_win = self
-        self.init_ais_mon()
+        self._init_ais_mon()
 
-    def init_ais_mon(self):
+    def _init_ais_mon(self):
         if self._ais_obj is not None:
             _tr = False
-            for _el in self._ais_obj.ais_rx_buff:
+            for _el in list(self._ais_obj.ais_rx_buff):
                 if _el:
-                    if _el not in self._tmp_buffer:
-                        self._tmp_buffer.append(_el)
-                        if self.call_filter.get():
-                            if _el[1]['from'] in self.ais_aprs_stat_calls:
-                                _tr = True
-                                tmp = format_aprs_f_aprs_mon(_el, self._ais_obj.ais_loc,
-                                                             add_new_user=self._ais_obj.add_new_user)
-                                self.text_widget.insert(tk.END, tmp)
-                        else:
+                    if self._call_filter.get():
+                        if _el[1]['from'] in self._ais_aprs_stat_calls:
                             _tr = True
-                            tmp = format_aprs_f_aprs_mon(_el, self._ais_obj.ais_loc,
-                                                         add_new_user=self._ais_obj.add_new_user)
-                            self.text_widget.insert(tk.END, tmp)
+                            _tmp = format_aprs_f_aprs_mon(_el, self._ais_obj.ais_loc,
+                                                          add_new_user=self._ais_obj.add_new_user)
+                            self._text_widget.insert(tk.END, _tmp)
+                    else:
+                        _tr = True
+                        _tmp = format_aprs_f_aprs_mon(_el, self._ais_obj.ais_loc,
+                                                      add_new_user=self._ais_obj.add_new_user)
+                        self._text_widget.insert(tk.END, _tmp)
             if _tr:
-                self.scroll_to_end()
-
-    def tasker(self):
-        pass
+                self._scroll_to_end()
 
     def pack_to_mon(self, date_time, pack):
         _tr = False
-        if self.call_filter.get():
-            if pack['from'] in self.ais_aprs_stat_calls:
+        if self._call_filter.get():
+            if pack['from'] in self._ais_aprs_stat_calls:
                 _tr = True
                 tmp = format_aprs_f_aprs_mon((date_time, pack), self._ais_obj.ais_loc,
                                              add_new_user=self._ais_obj.add_new_user)
-                self.text_widget.insert(tk.END, tmp)
+                self._text_widget.insert(tk.END, tmp)
         else:
             _tr = True
             tmp = format_aprs_f_aprs_mon((date_time, pack), self._ais_obj.ais_loc,
                                          add_new_user=self._ais_obj.add_new_user)
-            self.text_widget.insert(tk.END, tmp)
+            self._text_widget.insert(tk.END, tmp)
 
         if _tr:
-            self.scroll_to_end()
+            self._scroll_to_end()
 
-    def increase_textsize(self):
-        self.text_size += 1
-        self.text_size = max(self.text_size, 3)
-        self.text_widget.configure(font=(FONT, self.text_size))
+    def _increase_textsize(self):
+        self._text_size += 1
+        self._text_size = max(self._text_size, 3)
+        self._text_widget.configure(font=(FONT, self._text_size))
 
-    def decrease_textsize(self):
-        self.text_size -= 1
-        self.text_size = max(self.text_size, 3)
-        self.text_widget.configure(font=(FONT, self.text_size))
+    def _decrease_textsize(self):
+        self._text_size -= 1
+        self._text_size = max(self._text_size, 3)
+        self._text_widget.configure(font=(FONT, self._text_size))
 
-    def chk_call_filter(self):
-        self.ais_aprs_stations = {}
-        self.ais_aprs_stat_calls = []
+    def _chk_call_filter(self):
+        self._ais_aprs_stations = {}
+        self._ais_aprs_stat_calls = []
         if self._ais_obj is not None:
-            self.ais_aprs_stations = self._ais_obj.ais_aprs_stations
-            self.ais_aprs_stat_calls.append(self._ais_obj.ais_call)
+            self._ais_aprs_stations = self._ais_obj.ais_aprs_stations
+            self._ais_aprs_stat_calls.append(self._ais_obj.ais_call)
             """
-            for port_id in self.ais_aprs_stations.keys():
-                if self.ais_aprs_stations[port_id].aprs_parm_call:
-                    self.ais_aprs_stat_calls.append(
-                        self.ais_aprs_stations[port_id].aprs_parm_call
+            for port_id in self._ais_aprs_stations.keys():
+                if self._ais_aprs_stations[port_id].aprs_parm_call:
+                    self._ais_aprs_stat_calls.append(
+                        self._ais_aprs_stations[port_id].aprs_parm_call
                     )
             """
-        calls = self.call_filter_calls_var.get()
+        calls = self._call_filter_calls_var.get()
         calls = calls.split(' ')
         tmp = []
         for el in list(calls):
             if el:
                 tmp.append(el.upper())
         calls = tmp
-        self.ais_aprs_stat_calls = self.ais_aprs_stat_calls + calls
+        self._ais_aprs_stat_calls = self._ais_aprs_stat_calls + calls
 
-    def chk_new_user(self):
+    def _chk_new_user(self):
         if self._ais_obj is not None:
-            self._ais_obj.add_new_user = self.new_user_var.get()
+            self._ais_obj.add_new_user = self._new_user_var.get()
 
-    def del_buffer(self):
-        self._tmp_buffer = []
+    def _del_buffer(self):
         if self._ais_obj is not None:
             self._ais_obj.del_ais_rx_buff()
-        self.text_widget.delete(0.0, tk.END)
+        self._text_widget.delete(0.0, tk.END)
 
-    def scroll_to_end(self):
-        if self.autoscroll_var.get():
-            self.text_widget.see(tk.END)
+    def _scroll_to_end(self):
+        if self._autoscroll_var.get():
+            self._text_widget.see(tk.END)
 
-    def destroy_win(self):
+    def _destroy_win(self):
         # self.tasker = lambda: 0
+        del self._ais_obj.ais_mon_gui
         self._ais_obj.ais_mon_gui = None
+        del self._ais_obj
+        self._ais_obj = None
+        del self._root_cl.aprs_mon_win
         self._root_cl.aprs_mon_win = None
+        self._text_widget.delete(0.0, tk.END)
+        # self._text_widget.quit()
+        self._text_widget.destroy()
+        del self._text_widget
+        self._text_widget = None
         # self._ais_obj.ais_rx_buff = self._tmp_buffer + self._ais_obj.ais_rx_buff
         self.destroy()
-
