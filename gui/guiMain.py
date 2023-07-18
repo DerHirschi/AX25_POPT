@@ -826,8 +826,10 @@ class TkMainWin:
             if self.settings_win is not None:
                 # ( FT-Manager )
                 self.settings_win.tasker()
+            """
             if self.aprs_mon_win is not None:
                 self.aprs_mon_win.tasker()
+            """
 
     def _tasker_low_low_low_prio(self):
         """ 5 Sec """
