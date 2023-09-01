@@ -13,10 +13,10 @@ class AISmonitor(tk.Toplevel):
         tk.Toplevel.__init__(self)
         self._root_cl = root_win
         self._lang = self._root_cl.language
-        self._text_size = self._root_cl.text_size
+        self._text_size = int(self._root_cl.text_size)
         self._win_height = 700
         self._win_width = 1500
-        self.style = self._root_cl.style
+        # self.style = self._root_cl.style
         self.title(STR_TABLE['aprs_mon'][self._lang])
         self.geometry(f"{self._win_width}x"
                       f"{self._win_height}+"
@@ -206,5 +206,8 @@ class AISmonitor(tk.Toplevel):
         self._text_widget.destroy()
         del self._text_widget
         self._text_widget = None
+        del self._root_cl
+        # self.style = None
+        self._root_cl = None
         # self._ais_obj.ais_rx_buff = self._tmp_buffer + self._ais_obj.ais_rx_buff
         self.destroy()
