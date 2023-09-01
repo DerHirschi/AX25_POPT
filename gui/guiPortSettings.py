@@ -5,7 +5,7 @@ from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
-from config_station import get_all_stat_cfg, del_port_data
+from config_station import get_all_stat_cfg, del_port_data, DefaultPort
 from fnc.os_fnc import is_linux
 from string_tab import STR_TABLE
 
@@ -793,7 +793,7 @@ class PortSettingsWin:
         # Tab Frames ( Port Settings )
         for k in PORT_HANDLER.get_all_ports().keys():
             # port.port_cfg: DefaultPortConfig
-            tmp: DefaultPort = PORT_HANDLER.get_all_ports()[k].port_cfg
+            tmp = PORT_HANDLER.get_all_ports()[k].port_cfg
             tab = PortSetTab(self, tmp, self.tabControl)
             self.tab_list[k] = tab
             port_lable_text = 'Port {}'.format(k)
