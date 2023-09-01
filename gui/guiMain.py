@@ -8,15 +8,13 @@ from tkinter import ttk, Menu, Checkbutton, TclError, scrolledtext, Label
 import threading
 import sys
 
-# from memory_profiler import profile
 import gtts
 from gtts import gTTS
 
 from ax25.ax25dec_enc import PIDByte
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# from config_station import logger
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
 from ax25.ax25monitor import monitor_frame_inp
@@ -1509,9 +1507,8 @@ class TkMainWin:
             variable=self._bw_plot_enabled_var
         ).grid(row=5, column=0, columnspan=7, sticky="nsew")
         """
-        """
+
         # plt.ion()
-        # TODO F*** Plot eating up memory
         self._bw_fig = Figure(figsize=(8, 4.5), dpi=80)
         # plt.style.use('dark_background')
         self._ax = self._bw_fig.add_subplot(111)
@@ -1541,7 +1538,7 @@ class TkMainWin:
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 6)
         self._bw_plot_lines = {}
-        """
+
         ############################
         # Windows
         self.new_conn_win = None
@@ -1955,7 +1952,7 @@ class TkMainWin:
         # self._tasker_prio()
         self._tasker_low_prio()
         self._tasker_low_low_prio()
-        # self._tasker_low_low_low_prio()
+        self._tasker_low_low_low_prio()
         # self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
 
@@ -1968,14 +1965,10 @@ class TkMainWin:
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             #####################
             self._aprs_task()
-
             self._monitor_task()
             self._update_qso_win()
-
             self._txt_win.update_status_win()
-
             self.change_conn_btn()
-
             if self.setting_sound:
                 self._rx_beep_sound()
                 if self.setting_sprech:
@@ -2006,8 +1999,7 @@ class TkMainWin:
         if time.time() > self._non_non_non_prio_task_timer:
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             #####################
-            # if self._bw_plot_enabled_var.get():
-            # self._update_bw_mon()
+            self._update_bw_mon()
 
     def _tasker_tester(self):
         """ 5 Sec """
@@ -2454,8 +2446,7 @@ class TkMainWin:
             del self._bw_plot_lines[port_id]
         self._bw_plot_lines = {}
     """
-    """
-    @profile(precision=4)
+
     def _update_bw_mon(self):
         _tr = False
         for _port_id in list(PORT_HANDLER.ax25_ports.keys()):
@@ -2474,12 +2465,11 @@ class TkMainWin:
                     _tr = True
         if _tr:
             self._draw_bw_plot()
-    # @profile(precision=2)
+
     def _draw_bw_plot(self):
         self._bw_fig.canvas.draw()
         self._bw_fig.canvas.flush_events()
         self._canvas.flush_events()
-    """
 
     def _kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
