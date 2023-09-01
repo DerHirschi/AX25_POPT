@@ -596,18 +596,19 @@ class KissTCP(AX25Port):
                 # ?? TODO DNS support ??
                 self.device.connect(self.port_param)
                 self.device_is_running = True
+
             except (OSError, ConnectionRefusedError, ConnectionError) as e:
                 logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
                 logger.error('{}'.format(e))
                 # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 # raise AX25DeviceFAIL
+
             else:
                 if self.kiss.is_enabled:
                     # self.device.sendall(self.kiss.device_kiss_start_1())
                     self.device.sendall(self.kiss.device_jhost())
                     # print(self.device.recv(999))
-
                     self.set_kiss_parm()
 
     def __del__(self):
@@ -623,12 +624,19 @@ class KissTCP(AX25Port):
                 if self.kiss.is_enabled:
                     self.device.sendall(self.kiss.device_kiss_end())
                 """
-                self.device.settimeout(0)
-                self.device.recv(9999999)
-                self.device.shutdown(socket.SHUT_RDWR)
+                # self.device.settimeout(0)
+                # self.device.recv(9999999)
+                # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
             except (OSError, ConnectionRefusedError, ConnectionError):
                 pass
+            finally:
+                # self.device.settimeout(0)
+                # self.device.recv(9999999)
+                # self.device.shutdown(socket.SHUT_RDWR)
+                self.device.close()
+                # print(f"KISS TCP LOCK: {threading.Lock()}")
+                print("KISS TCP FINALLY")
 
     def set_kiss_parm(self):
         if self.kiss.is_enabled and self.device is not None:
@@ -716,10 +724,16 @@ class KISSSerial(AX25Port):
                 self.device_is_running = False
             except (FileNotFoundError, serial.serialutil.SerialException):
                 pass
+            finally:
+                self.device.close()
 
     def set_kiss_parm(self):
         if self.kiss.is_enabled and self.device is not None:
-            self.device.write(self.kiss.set_all_parameter())
+            try:
+                self.device.write(self.kiss.set_all_parameter())
+            except serial.portNotOpenError:
+                self.device_is_running = False
+                self.close_device()
 
     def rx(self):
         recv_buff = b''
@@ -805,15 +819,23 @@ class AXIP(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
-                self.device.settimeout(0)
-                self.device.recv(9999999)
-                self.device.shutdown(socket.SHUT_RDWR)
-                self.device.detach()
                 self.device.close()
-                # self.device.recv(999)
-                # time.sleep(0.5)
             except socket.error:
                 pass
+            finally:
+                # self.device.settimeout(0)
+                """
+                try:
+                    self.device.recv(9999999)
+                except socket.error:
+                    pass
+                """
+                # self.device.shutdown(socket.SHUT_RDWR)
+                # self.device.detach()
+                self.device.close()
+                # self.device = None
+
+                print("AXIP FINALLY")
 
     def rx(self):
         try:
