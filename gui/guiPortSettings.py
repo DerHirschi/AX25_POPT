@@ -725,22 +725,22 @@ class PortSettingsWin:
         self.win_height = 600
         self.win_width = 1059
         self.style = main_cl.style
-        self._settings_win = tk.Toplevel()
+        self.settings_win = tk.Toplevel()
         # self.settings_win
-        self._settings_win.title("Port-Settings")
+        self.settings_win.title("Port-Settings")
         # self._settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
-        self._settings_win.geometry(f"{self.win_width}x"
+        self.settings_win.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
                       f"{self._main_class.main_win.winfo_x()}+"
                       f"{self._main_class.main_win.winfo_y()}")
-        self._settings_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
-        self._settings_win.resizable(False, False)
-        self._settings_win.attributes("-topmost", True)
+        self.settings_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
+        self.settings_win.resizable(False, False)
+        self.settings_win.attributes("-topmost", True)
 
         self.lang = self._main_class.language
         ##########################
         # OK, Save, Cancel
-        ok_bt = tk.Button(self._settings_win,
+        ok_bt = tk.Button(self.settings_win,
                           text="Ok",
                           # font=("TkFixedFont", 15),
                           # bg="green",
@@ -748,7 +748,7 @@ class PortSettingsWin:
                           width=6,
                           command=self._ok_btn_cmd)
 
-        save_bt = tk.Button(self._settings_win,
+        save_bt = tk.Button(self.settings_win,
                             text="Speichern",
                             # font=("TkFixedFont", 15),
                             # bg="green",
@@ -756,7 +756,7 @@ class PortSettingsWin:
                             width=7,
                             command=self._save_btn_cmd)
 
-        cancel_bt = tk.Button(self._settings_win,
+        cancel_bt = tk.Button(self.settings_win,
                               text="Abbrechen",
                               # font=("TkFixedFont", 15),
                               # bg="green",
@@ -768,14 +768,14 @@ class PortSettingsWin:
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
         ####################################
         # New Station, Del Station Buttons
-        new_port_bt = tk.Button(self._settings_win,
+        new_port_bt = tk.Button(self.settings_win,
                                 text="Neuer Port",
                                 # font=("TkFixedFont", 15),
                                 # bg="green",
                                 height=1,
                                 width=10,
                                 command=self._new_port_btn_cmd)
-        del_st_bt = tk.Button(self._settings_win,
+        del_st_bt = tk.Button(self.settings_win,
                               text="Löschen",
                               # font=("TkFixedFont", 15),
                               bg="red3",
@@ -786,7 +786,7 @@ class PortSettingsWin:
         del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
 
         # Root Tab
-        self.tabControl = ttk.Notebook(self._settings_win, height=self.win_height - 140, width=self.win_width - 40)
+        self.tabControl = ttk.Notebook(self.settings_win, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
         # Tab Vars
         self.tab_list: {int: ttk.Frame} = {}
@@ -816,7 +816,7 @@ class PortSettingsWin:
         self.tab_list[prt_id] = tab
 
     def _del_port_btn_cmd(self):
-        self._settings_win.attributes("-topmost", False)
+        self.settings_win.attributes("-topmost", False)
         msg = AskMsg(titel='lösche Port', message="Willst du diesen Port wirklich löschen? \n"
                                                   "Alle Einstellungen gehen verloren !")
         # self.settings_win.lift()
@@ -842,11 +842,11 @@ class PortSettingsWin:
             InfoMsg('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
                                    'Das hast du gut gemacht, mach weiter so. ')
             self._main_class.msg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
-        self._settings_win.lift()
+        self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)
 
     def _destroy_win(self):
-        self._settings_win.destroy()
+        self.settings_win.destroy()
         self._main_class.settings_win = None
 
     def _save_btn_cmd(self):
