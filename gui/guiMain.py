@@ -2412,41 +2412,21 @@ class TkMainWin:
         self.ch_status_update()
 
     def _on_click_inp_txt(self, event=None):
-        ind = self._win_buf[self.channel_index].input_win_index
-        if ind:
-            self._inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
+        _ind = self._win_buf[self.channel_index].input_win_index
+        if _ind:
+            self._inp_txt.tag_add('send', str(int(float(_ind))) + '.0', _ind)
             # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
             self._inp_txt.tag_remove('send', str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0',
                                      self._inp_txt.index(tk.INSERT))
         # self.inp_txt.tag_remove('send', tk.line.column, self.inp_txt.index(tk.INSERT))
-        ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-        # print(f'ind2: {ind2}')
+        _ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
 
-        self._inp_txt.tag_remove('send', ind2, self._inp_txt.index(tk.INSERT))
+        self._inp_txt.tag_remove('send', _ind2, self._inp_txt.index(tk.INSERT))
         self._win_buf[self.channel_index].input_win_index = str(self._inp_txt.index(tk.INSERT))
 
     # SEND TEXT OUT
     ###################
     # BW Plot
-    """
-    @profile(precision=2)
-    def _reset_bw_mon(self):
-        if self._ax is not None:
-            self._ax.clear()
-        del self._bw_plot_lines
-        self._bw_plot_lines = None
-        self._bw_plot_lines = {}
-        self._ax.axis([0, 10, 0, 60])
-        self._ax.set_xlabel(STR_TABLE['minutes'][self.language])
-        self._ax.set_ylabel(STR_TABLE['occup'][self.language])
-    """
-    """
-    def _clean_bw_mon(self):
-        for port_id in self._bw_plot_lines:
-            del self._bw_plot_lines[port_id]
-        self._bw_plot_lines = {}
-    """
-
     def _update_bw_mon(self):
         _tr = False
         for _port_id in list(PORT_HANDLER.ax25_ports.keys()):
@@ -2563,7 +2543,6 @@ class TkMainWin:
         """Triggerd when Connection Status has changed"""
         self.tabbed_sideFrame.on_ch_stat_change()
         self.update_station_info()
-
 
     def _update_stat_info_conn_timer(self):
         _conn = self.get_conn()
