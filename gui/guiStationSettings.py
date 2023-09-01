@@ -2,19 +2,21 @@ from tkinter import ttk as ttk
 from tkinter import filedialog as fd
 from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
-from config_station import DefaultStation, DefaultPort, save_station_to_file, del_user_data
+
+from ax25.ax25InitPorts import PORT_HANDLER
+from config_station import save_station_to_file, del_user_data, DefaultStation
 from cli.cliMain import CLI_OPT
 from gui.guiMsgBoxes import *
 from string_tab import STR_TABLE
 
 
 class StatSetTab:
-    def __init__(self, main_stt_win, setting: DefaultStation, tabclt: ttk.Notebook):
+    def __init__(self, main_stt_win, setting, tabclt: ttk.Notebook):
         self.tab_clt = tabclt
-        self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
+        # self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
         height = main_stt_win.win_height
         width = main_stt_win.win_width
-        self.main_cl = main_stt_win
+        self._main_cl = main_stt_win
         self.station_setting = setting
         self.style = main_stt_win.style
         self.own_tab = ttk.Frame(self.tab_clt)
@@ -289,7 +291,7 @@ class StatSetTab:
         self.update_vars_fm_cfg()
 
     def choose_color(self, fg_bg: bool):
-        self.main_cl.settings_win.attributes("-topmost", False)
+        self._main_cl.settings_win.attributes("-topmost", False)
         if fg_bg:
             col = askcolor(self.station_setting.stat_parm_qso_col_text,
                            title=STR_TABLE['text_color'][self.lang])
@@ -305,7 +307,7 @@ class StatSetTab:
                 if col:
                     self.station_setting.stat_parm_qso_col_bg = col[1]
                     self.color_example_text.configure(bg=col[1])
-        self.main_cl.settings_win.attributes("-topmost", True)
+        self._main_cl.settings_win.attributes("-topmost", True)
 
     def chk_CLI(self, event=None):
         if self.cli_select_var.get() != 'PIPE':
@@ -460,15 +462,15 @@ class StatSetTab:
         var_paclen = int(self.pac_len.get())
         self.station_setting.stat_parm_PacLen = var_paclen
 
-        for k in self.ports_sett.keys():
+        for k in PORT_HANDLER.ax25_port_settings.keys():
             """
             print(self.ports_sett[k])
             for att in dir(self.ports_sett[k]):
                 print(att)
             """
-            if call in self.ports_sett[k].parm_StationCalls:
-                self.ports_sett[k].parm_stat_PacLen[call] = var_paclen
-                self.ports_sett[k].parm_stat_MaxFrame[call] = var_maxpac
+            if call in PORT_HANDLER.ax25_port_settings[k].parm_StationCalls:
+                PORT_HANDLER.ax25_port_settings[k].parm_stat_PacLen[call] = var_paclen
+                PORT_HANDLER.ax25_port_settings[k].parm_stat_MaxFrame[call] = var_maxpac
 
         # DIGI
         self.station_setting.stat_parm_is_StupidDigi = bool(self.digi_set_var.get())
@@ -496,12 +498,12 @@ class StationSettingsWin:
     def __init__(self, main_cl):
         self.main_class = main_cl
         self.lang = self.main_class.language
-        self.ax25_porthandler = main_cl.ax25_port_handler
+        # self.ax25_porthandler = main_cl.ax25_port_handler
         # self.all_port_settings: {int: PortConfigInit} = {}
         # self.all_ports: {int: AX25Port} = {}
-        self.all_stat_settings: {str: DefaultStation} = main_cl.ax25_port_handler.ax25_stations_settings
+        # self.all_stat_settings: {str: DefaultStation} = main_cl.ax25_port_handler.ax25_stations_settings
 
-        self.all_dev_types = list(main_cl.ax25_port_handler.ax25types.keys())
+        self.all_dev_types = list(PORT_HANDLER.ax25types.keys())
 
         self.win_height = 600
         self.win_width = 1059
@@ -575,8 +577,8 @@ class StationSettingsWin:
         # self.tab_index = 0
         self.tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
-        for k in self.all_stat_settings.keys():
-            sett: DefaultStation = self.all_stat_settings[k]
+        for k in PORT_HANDLER.ax25_stations_settings.keys():
+            sett = PORT_HANDLER.ax25_stations_settings[k]
             tab = StatSetTab(self, sett, self.tabControl)
             self.tab_list.append(tab)
             self.tabControl.add(tab.own_tab, text=k)
@@ -597,13 +599,13 @@ class StationSettingsWin:
                 el.call.delete(0, tk.END)
                 el.call.insert(tk.END, DefaultStation.stat_parm_Call)
 
-        self.main_class.ax25_port_handler.update_digi_setting()
+        PORT_HANDLER.update_digi_setting()
 
     def save_cfg_to_file(self):
         for conf in self.tab_list:
             stat_conf = conf.station_setting
             if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
-                self.all_stat_settings[stat_conf.stat_parm_Call] = stat_conf
+                PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
                 save_station_to_file(stat_conf)
         self.main_class.msg_to_monitor(STR_TABLE['suc_save'][self.lang])
 

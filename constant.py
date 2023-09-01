@@ -3,7 +3,13 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.89.18dev'
+VER = '2.90.8'
+LANGUAGE = 0    # QUICK FIX
+"""
+0 = German
+1 = English
+2 = Dutch
+"""
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_txt_save = {
@@ -15,6 +21,7 @@ CFG_txt_save = {
                }
 CFG_ft_downloads = 'ft_downloads/'
 CFG_clr_sys_msg = 'red'
+
 
 ENCODINGS = (
     'CP437',
@@ -200,3 +207,13 @@ WELCOME_SPEECH = (
             'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
             'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
         )
+TEXT_SIZE_STATUS = 11
+TXT_BACKGROUND_CLR = 'black'
+TXT_OUT_CLR = 'red'
+TXT_INP_CLR = 'yellow'
+TXT_INP_CURSOR_CLR = 'white'
+TXT_MON_CLR = 'green'
+TXT_MON_TX_CLR = 'medium violet red'
+STAT_BAR_CLR = 'grey60'
+STAT_BAR_TXT_CLR = 'black'
+FONT_STAT_BAR = 'Arial'

@@ -1,6 +1,10 @@
 import tkinter as tk
 import time
 import random
+
+from ax25.ax25InitPorts import PORT_HANDLER
+
+
 # from tkinter import scrolledtext
 
 # STAT_BAR_CLR = 'grey60'
@@ -8,10 +12,9 @@ import random
 
 class ChBtnFrm:
     def __init__(self, main_win):
-        self.main_frame = main_win.main_win
-        self.main_class = main_win
+        self._main_class = main_win
         self.ch_btn_blink_timer = time.time()
-        self.ch_btn_frame = tk.Frame(self.main_frame, width=500, height=30)
+        self.ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=30)
         self.ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
@@ -23,16 +26,16 @@ class ChBtnFrm:
         self.ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
         self.ch_btn_frame.grid(row=2, column=1, sticky="nsew")
-        self.ch_button1 = tk.Button(self.ch_btn_frame, text=" 1 ", bg="red", command=lambda: self.main_class.switch_channel(1))
-        self.ch_button2 = tk.Button(self.ch_btn_frame, text=" 2 ", bg="red", command=lambda: self.main_class.switch_channel(2))
-        self.ch_button3 = tk.Button(self.ch_btn_frame, text=" 3 ", bg="red", command=lambda: self.main_class.switch_channel(3))
-        self.ch_button4 = tk.Button(self.ch_btn_frame, text=" 4 ", bg="red", command=lambda: self.main_class.switch_channel(4))
-        self.ch_button5 = tk.Button(self.ch_btn_frame, text=" 5 ", bg="red", command=lambda: self.main_class.switch_channel(5))
-        self.ch_button6 = tk.Button(self.ch_btn_frame, text=" 6 ", bg="red", command=lambda: self.main_class.switch_channel(6))
-        self.ch_button7 = tk.Button(self.ch_btn_frame, text=" 7 ", bg="red", command=lambda: self.main_class.switch_channel(7))
-        self.ch_button8 = tk.Button(self.ch_btn_frame, text=" 8 ", bg="red", command=lambda: self.main_class.switch_channel(8))
-        self.ch_button9 = tk.Button(self.ch_btn_frame, text=" 9 ", bg="red", command=lambda: self.main_class.switch_channel(9))
-        self.ch_button10 = tk.Button(self.ch_btn_frame, text=" 10 ", bg="red", command=lambda: self.main_class.switch_channel(10))
+        self.ch_button1 = tk.Button(self.ch_btn_frame, text=" 1 ", bg="red", command=lambda: self._main_class.switch_channel(1))
+        self.ch_button2 = tk.Button(self.ch_btn_frame, text=" 2 ", bg="red", command=lambda: self._main_class.switch_channel(2))
+        self.ch_button3 = tk.Button(self.ch_btn_frame, text=" 3 ", bg="red", command=lambda: self._main_class.switch_channel(3))
+        self.ch_button4 = tk.Button(self.ch_btn_frame, text=" 4 ", bg="red", command=lambda: self._main_class.switch_channel(4))
+        self.ch_button5 = tk.Button(self.ch_btn_frame, text=" 5 ", bg="red", command=lambda: self._main_class.switch_channel(5))
+        self.ch_button6 = tk.Button(self.ch_btn_frame, text=" 6 ", bg="red", command=lambda: self._main_class.switch_channel(6))
+        self.ch_button7 = tk.Button(self.ch_btn_frame, text=" 7 ", bg="red", command=lambda: self._main_class.switch_channel(7))
+        self.ch_button8 = tk.Button(self.ch_btn_frame, text=" 8 ", bg="red", command=lambda: self._main_class.switch_channel(8))
+        self.ch_button9 = tk.Button(self.ch_btn_frame, text=" 9 ", bg="red", command=lambda: self._main_class.switch_channel(9))
+        self.ch_button10 = tk.Button(self.ch_btn_frame, text=" 10 ", bg="red", command=lambda: self._main_class.switch_channel(10))
         self.ch_button1.grid(row=1, column=1, sticky="nsew")
         self.ch_button2.grid(row=1, column=2, sticky="nsew")
         self.ch_button3.grid(row=1, column=3, sticky="nsew")
@@ -59,12 +62,12 @@ class ChBtnFrm:
     def ch_btn_status_update(self):
         # self.main_class.on_channel_status_change()
         ch_alarm = False
-        # if self.main_class.ax25_port_handler.all_connections.keys():
+        # if PORT_HANDLER.get_all_connections().keys():
         for i in list(self.con_btn_dict.keys()):
-            if i in self.main_class.ax25_port_handler.all_connections.keys():
-                btn_txt = self.main_class.ax25_port_handler.all_connections[i].to_call_str
-                is_link = self.main_class.ax25_port_handler.all_connections[i].is_link
-                is_pipe = self.main_class.ax25_port_handler.all_connections[i].pipe
+            if i in PORT_HANDLER.get_all_connections().keys():
+                btn_txt = PORT_HANDLER.get_all_connections()[i].to_call_str
+                is_link = PORT_HANDLER.get_all_connections()[i].is_link
+                is_pipe = PORT_HANDLER.get_all_connections()[i].pipe
                 if is_pipe is None:
                     is_pipe = False
                 if is_link:
@@ -73,7 +76,7 @@ class ChBtnFrm:
                     btn_txt = 'P>' + btn_txt
 
                 self.con_btn_dict[i].configure(text=btn_txt)
-                if i == self.main_class.channel_index:
+                if i == self._main_class.channel_index:
                     if is_link:
                         self.con_btn_dict[i].configure(bg='SteelBlue2')
                     elif is_pipe:
@@ -81,7 +84,7 @@ class ChBtnFrm:
                     else:
                         self.con_btn_dict[i].configure(bg='green2')
                 else:
-                    if self.main_class.win_buf[i].new_data_tr:
+                    if self._main_class.get_ch_new_data_tr(i):
                         if is_link:
                             self.con_btn_dict[i].configure(bg='SteelBlue4')
                             ch_alarm = False
@@ -102,8 +105,8 @@ class ChBtnFrm:
                             self.con_btn_dict[i].configure(bg='green4')
             else:
                 self.con_btn_dict[i].configure(text=str(i))
-                if not self.main_class.win_buf[i].new_data_tr:
-                    if i == self.main_class.channel_index:
+                if not self._main_class.get_ch_new_data_tr(i):
+                    if i == self._main_class.channel_index:
                         self.con_btn_dict[i].configure(bg='red2')
                     else:
                         self.con_btn_dict[i].configure(bg='red4')
@@ -111,8 +114,8 @@ class ChBtnFrm:
                     self.con_btn_dict[i].configure(bg='yellow')
 
         if self.ch_btn_blink_timer < time.time():
-            self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
-        self.main_class.ch_alarm = ch_alarm
+            self.ch_btn_blink_timer = time.time() + self._main_class.parm_btn_blink_time
+        self._main_class.ch_alarm = ch_alarm
 
     def ch_btn_alarm(self, btn: tk.Button):
         if self.ch_btn_blink_timer < time.time():

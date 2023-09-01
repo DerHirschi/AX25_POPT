@@ -3,6 +3,7 @@ import time
 import tkinter as tk
 from tkinter import ttk
 
+from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number
 
 
@@ -11,7 +12,7 @@ class FileTransferManager(tk.Toplevel):
         tk.Toplevel.__init__(self)
 
         self.root = root
-        self.port_handler = self.root.ax25_port_handler
+        # self.port_handler = self.root.ax25_port_handler
         self.lang = self.root.language
         root.settings_win = self
         self.win_height = 600
@@ -178,7 +179,7 @@ class FileTransferManager(tk.Toplevel):
     def populate_query_list(self):
         data = []
         self.ft_obj_list = []
-        ft_dict = self.port_handler.get_all_ft_query()
+        ft_dict = PORT_HANDLER.get_all_ft_query()
         for ch_id in ft_dict:
             ft_list = ft_dict[ch_id]
             for el in ft_list:

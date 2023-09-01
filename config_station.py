@@ -5,9 +5,19 @@ import logging
 import ax25.ax25Beacon
 from ax25aprs.aprs_station import APRS_Station
 from ax25.ax25UI_Pipe import AX25Pipe
-from constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
+from constant import VER, CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
 from fnc.cfg_fnc import cleanup_obj, set_obj_att, save_to_file, load_fm_file
 
+if "dev" in VER:
+    log_level = logging.DEBUG
+else:
+    log_level = logging.INFO
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    filename='error.log',
+    level=log_level
+)
 logger = logging.getLogger(__name__)
 
 
@@ -94,7 +104,7 @@ def del_port_data(port_id):
         os.remove(port_file)
 
 
-class DefaultStation(object):
+class DefaultStation:
     # parm_StationCalls: [''] = []
     stat_parm_Call: str = 'NOCALL'
     ##########################

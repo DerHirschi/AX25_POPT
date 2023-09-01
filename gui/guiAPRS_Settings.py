@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.loc_fnc import locator_to_coordinates, coordinates_to_locator
 from string_tab import STR_TABLE
 
@@ -8,24 +9,23 @@ from string_tab import STR_TABLE
 class APRSSettingsWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
-        self.root_cl = root_win
-        self.lang = self.root_cl.language
-        self.root_cl.settings_win = self
+        self._root_cl = root_win
+        self.lang = self._root_cl.language
+        self._root_cl.settings_win = self
         self.win_height = 620
         self.win_width = 800
-        self.style = self.root_cl.style
+        self.style = self._root_cl.style
         self.title(STR_TABLE['aprs_settings'][self.lang])
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self.root_cl.main_win.winfo_x()}+"
-                      f"{self.root_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+                      f"{self._root_cl.main_win.winfo_x()}+"
+                      f"{self._root_cl.main_win.winfo_y()}")
+        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(False, False)
         self.lift()
-        self.all_ports = self.root_cl.ax25_port_handler.ax25_ports
-        self.port_handler = self.root_cl.ax25_port_handler
-        self.ais = self.root_cl.ax25_port_handler.aprs_ais
-        self.vars = []
+        self._all_ports = PORT_HANDLER.get_all_ports()
+        self._ais = PORT_HANDLER.get_aprs_ais()
+        self._vars = []
 
         self.ais_call_var = tk.StringVar(self)
         self.ais_pass_var = tk.StringVar(self)
@@ -36,16 +36,16 @@ class APRSSettingsWin(tk.Toplevel):
         self.ais_lon_var = tk.StringVar(self)
         self.ais_run_var = tk.BooleanVar(self)
         self.ais_add_new_user_var = tk.BooleanVar(self)
-        if self.ais is not None:
-            self.ais_call_var.set(self.ais.ais_call)
-            self.ais_pass_var.set(self.ais.ais_pass)
-            self.ais_port_var.set(str(self.ais.ais_host[1]))
-            self.ais_host_var.set(self.ais.ais_host[0])
-            self.ais_lat_var.set(str(self.ais.ais_lat))
-            self.ais_lon_var.set(str(self.ais.ais_lon))
-            self.ais_loc_var.set(self.ais.ais_loc)
-            self.ais_run_var.set(self.ais.ais_active)
-            self.ais_add_new_user_var.set(self.ais.add_new_user)
+        if self._ais is not None:
+            self.ais_call_var.set(self._ais.ais_call)
+            self.ais_pass_var.set(self._ais.ais_pass)
+            self.ais_port_var.set(str(self._ais.ais_host[1]))
+            self.ais_host_var.set(self._ais.ais_host[0])
+            self.ais_lat_var.set(str(self._ais.ais_lat))
+            self.ais_lon_var.set(str(self._ais.ais_lon))
+            self.ais_loc_var.set(self._ais.ais_loc)
+            self.ais_run_var.set(self._ais.ais_active)
+            self.ais_add_new_user_var.set(self._ais.add_new_user)
 
         ais_conf_frame = ttk.Frame(self)
         ais_conf_frame.pack(side=tk.TOP, padx=10, pady=10)
@@ -102,13 +102,13 @@ class APRSSettingsWin(tk.Toplevel):
         # Create a Notebook widget
         notebook = ttk.Notebook(self)
 
-        for port_id in self.all_ports.keys():
+        for port_id in self._all_ports.keys():
             # Create the "Port 1" tab
             port_tab = ttk.Frame(notebook)
             notebook.add(port_tab, text=f"Port {port_id}")
 
             # Add content to the "Port 1" tab
-            self.create_settings_widgets(port_tab, self.all_ports[port_id].port_cfg.parm_aprs_station)
+            self.create_settings_widgets(port_tab, self._all_ports[port_id].port_cfg.parm_aprs_station)
 
 
         # Pack the Notebook widget
@@ -118,14 +118,14 @@ class APRSSettingsWin(tk.Toplevel):
         button_frame2 = ttk.Frame(self)
         button_frame2.pack(side=tk.BOTTOM, padx=10, pady=10)
 
-        ok_button = ttk.Button(button_frame2, text="OK", command=self.on_ok_button)
+        ok_button = ttk.Button(button_frame2, text="OK", command=self._on_ok_button)
         ok_button.pack(side=tk.LEFT)
 
-        cancel_button = ttk.Button(button_frame2, text="Abbrechen", command=self.on_cancel_button)
+        cancel_button = ttk.Button(button_frame2, text="Abbrechen", command=self._on_cancel_button)
         cancel_button.pack(side=tk.RIGHT)
 
     def create_settings_widgets(self, tab, port_aprs):
-        self.vars.append({
+        self._vars.append({
             'call': tk.StringVar(tab),
             # 'loc': tk.StringVar(tab),
             # 'lat': tk.StringVar(tab),
@@ -144,23 +144,23 @@ class APRSSettingsWin(tk.Toplevel):
         tab.columnconfigure(4, minsize=5, weight=0)
         call_label = ttk.Label(tab, text="Call:")
         call_label.grid(row=0, column=1, padx=10, pady=5, sticky=tk.W)
-        call_entry = ttk.Entry(tab, width=10, textvariable=self.vars[-1]['call'] , state='disabled')
+        call_entry = ttk.Entry(tab, width=10, textvariable=self._vars[-1]['call'], state='disabled')
         call_entry.grid(row=0, column=2, padx=10, pady=5, sticky=tk.W)
         # self.vars[-1]['call'].set(port_aprs.aprs_parm_call)
 
         # Create DIGI checkbutton
         digi_checkbutton_label = ttk.Label(tab, text="DIGI:")
         digi_checkbutton_label.grid(row=4, column=1, padx=10, pady=5, sticky=tk.W)
-        digi_checkbutton = ttk.Checkbutton(tab, variable=self.vars[-1]['digi'], state='disabled')
+        digi_checkbutton = ttk.Checkbutton(tab, variable=self._vars[-1]['digi'], state='disabled')
         digi_checkbutton.grid(row=4, column=2, columnspan=2, padx=10, pady=5, sticky=tk.W)
-        self.vars[-1]['digi'].set(port_aprs.aprs_parm_digi)
+        self._vars[-1]['digi'].set(port_aprs.aprs_parm_digi)
 
         # Create AIS checkbutton
         ais_checkbutton_label = ttk.Label(tab, text="AIS:")
         ais_checkbutton_label.grid(row=5, column=1, padx=10, pady=5, sticky=tk.W)
-        ais_checkbutton = ttk.Checkbutton(tab, variable=self.vars[-1]['ais'], state='disabled')
+        ais_checkbutton = ttk.Checkbutton(tab, variable=self._vars[-1]['ais'], state='disabled')
         ais_checkbutton.grid(row=5, column=2, columnspan=2, padx=10, pady=5, sticky=tk.W)
-        self.vars[-1]['ais'].set(port_aprs.aprs_parm_igate)
+        self._vars[-1]['ais'].set(port_aprs.aprs_parm_igate)
 
         # Create Baken Text label
         baken_label = ttk.Label(tab, text="Baken Text:")
@@ -170,69 +170,69 @@ class APRSSettingsWin(tk.Toplevel):
         baken_textbox.grid(row=7, column=1, columnspan=3, padx=10, pady=5, sticky=tk.W)
         # self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 
-    def set_vars(self):
-        ind = 0
-        aprs_station = {}
-        for port_id in self.all_ports.keys():
+    def _set_vars(self):
+        _ind = 0
+        _aprs_station = {}
+        for port_id in self._all_ports.keys():
             # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_call = self.vars[ind]['call'].get()
             # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
-            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_igate = self.vars[ind]['ais'].get()
-            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_digi = self.vars[ind]['digi'].get()
+            self._all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_igate = self._vars[_ind]['ais'].get()
+            self._all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_digi = self._vars[_ind]['digi'].get()
 
-            self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self.vars[ind]['digi'].get()
-            if self.ais is not None:
+            self._all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self._vars[_ind]['digi'].get()
+            if self._ais is not None:
                 # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
-                self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self.ais.ais_loc
-            aprs_station[port_id] = self.all_ports[port_id].port_cfg.parm_aprs_station
-            ind += 1
+                self._all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self._ais.ais_loc
+            _aprs_station[port_id] = self._all_ports[port_id].port_cfg.parm_aprs_station
+            _ind += 1
 
-        lon = float(self.ais_lon_var.get())
-        lat = float(self.ais_lat_var.get())
-        loc = self.ais_loc_var.get()
+        _lon = float(self.ais_lon_var.get())
+        _lat = float(self.ais_lat_var.get())
+        _loc = self.ais_loc_var.get()
 
-        if not loc:
-            if lat and lon:
-                loc = coordinates_to_locator(
-                    latitude=lat,
-                    longitude=lon,
+        if not _loc:
+            if _lat and _lon:
+                _loc = coordinates_to_locator(
+                    latitude=_lat,
+                    longitude=_lon,
                 )
-                self.ais_loc_var.set(loc)
-        if not lat or not lon:
-            if loc:
-                lat, lon = locator_to_coordinates(loc)
-                self.ais_lat_var.set(str(lat))
-                self.ais_lon_var.set(str(lon))
+                self.ais_loc_var.set(_loc)
+        if not _lat or not _lon:
+            if _loc:
+                _lat, _lon = locator_to_coordinates(_loc)
+                self.ais_lat_var.set(str(_lat))
+                self.ais_lon_var.set(str(_lon))
 
-        if self.ais is not None:
-            self.ais.task_halt()
-            self.ais.ais_close()
-            self.ais.ais_call = self.ais_call_var.get()
-            self.ais.ais_pass = self.ais_pass_var.get()
-            self.ais.ais_active = self.ais_run_var.get()
-            self.ais.add_new_user = self.ais_add_new_user_var.get()
-            self.ais.ais_loc = loc
-            self.ais.ais_lat = float(lat)
-            self.ais.ais_lon = float(lon)
-            self.ais.ais_aprs_stations = aprs_station
+        if self._ais is not None:
+            self._ais.task_halt()
+            self._ais.ais_close()
+            self._ais.ais_call = self.ais_call_var.get()
+            self._ais.ais_pass = self.ais_pass_var.get()
+            self._ais.ais_active = self.ais_run_var.get()
+            self._ais.add_new_user = self.ais_add_new_user_var.get()
+            self._ais.ais_loc = _loc
+            self._ais.ais_lat = float(_lat)
+            self._ais.ais_lon = float(_lon)
+            self._ais.ais_aprs_stations = _aprs_station
 
             if self.ais_port_var.get().isdigit():
-                self.ais.ais_host = self.ais_host_var.get(), int(self.ais_port_var.get())
-            self.ais.save_conf_to_file()
-            if self.ais.ais_active:
-                self.ais.login()
-            self.port_handler.init_aprs_ais()
+                self._ais.ais_host = self.ais_host_var.get(), int(self.ais_port_var.get())
+            self._ais.save_conf_to_file()
+            if self._ais.ais_active:
+                self._ais.login()
+            PORT_HANDLER.init_aprs_ais()
 
-    def on_ok_button(self):
-        self.set_vars()
-        self.destroy_win()
+    def _on_ok_button(self):
+        self._set_vars()
+        self._destroy_win()
 
-    def on_cancel_button(self):
+    def _on_cancel_button(self):
         # Cancel button click handler
-        self.destroy_win()
+        self._destroy_win()
 
-    def destroy_win(self):
+    def _destroy_win(self):
+        self._root_cl.settings_win = None
         self.destroy()
-        self.root_cl.settings_win = None
 
     def tasker(self):
         pass

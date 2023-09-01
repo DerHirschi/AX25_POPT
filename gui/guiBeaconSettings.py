@@ -4,18 +4,19 @@ from tkinter import ttk as ttk
 from tkinter import scrolledtext
 # from ax25.ax25Port import AX25Frame
 from ax25.ax25Beacon import Beacon
+from ax25.ax25InitPorts import PORT_HANDLER
 from string_tab import STR_TABLE
 
 
 class BeaconTab:
     def __init__(self, root, tabclt: ttk.Notebook, beacon: Beacon):
-        self.tab_clt = tabclt
+        self._tab_clt = tabclt
         self.root = root
         self.lang = self.root.lang
         self.style = root.style
-        self.own_tab = ttk.Frame(self.tab_clt)
+        self.own_tab = ttk.Frame(self._tab_clt)
         # self.own_tab = tk.Toplevel()
-        self.port_handler = root.port_handler
+        # self.port_handler = root.port_handler
         self.beacon = beacon
         # height = root.win_height
         # width = root.win_width
@@ -26,7 +27,7 @@ class BeaconTab:
         call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['from'][self.lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.from_select_var = tk.StringVar(self.own_tab)
-        self.from_opt = dict(self.port_handler.ax25_stations_settings)
+        self.from_opt = dict(PORT_HANDLER.ax25_stations_settings)
         self.from_select_var.set(beacon.from_call)  # default value
         opt = list(self.from_opt.keys())
         if not opt:
@@ -89,7 +90,7 @@ class BeaconTab:
         call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['port'][self.lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.port_select_var = tk.StringVar(self.own_tab)
-        self.port_opt = self.port_handler.ax25_ports
+        self.port_opt = PORT_HANDLER.get_all_ports()
         self.port_select_var.set(str(self.beacon.port_id))  # default value
         opt = list(self.port_opt.keys())
         if not opt:
@@ -361,8 +362,8 @@ class BeaconTab:
 class BeaconSettings(tk.Toplevel):
     def __init__(self, main_win):
         tk.Toplevel.__init__(self)
-        self.main_cl = main_win
-        self.lang = self.main_cl.language
+        self._main_cl = main_win
+        self.lang = self._main_cl.language
         main_win.settings_win = self
         self.win_height = 600
         self.win_width = 1060
@@ -371,15 +372,15 @@ class BeaconSettings(tk.Toplevel):
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self.main_cl.main_win.winfo_x()}+"
-                      f"{self.main_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+                      f"{self._main_cl.main_win.winfo_x()}+"
+                      f"{self._main_cl.main_win.winfo_y()}")
+        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(False, False)
         self.lift()
         # self.attributes("-topmost", True)
         ###############
         # VARS
-        self.port_handler = main_win.ax25_port_handler
+        # self.port_handler = main_win.ax25_port_handler
         # self.all_beacons: {int: {str: [Beacon]}} = self.port_handler.beacons
         ##########################
         # OK, Save, Cancel
@@ -389,7 +390,7 @@ class BeaconSettings(tk.Toplevel):
                           # bg="green",
                           height=1,
                           width=6,
-                          command=self.ok_btn_cmd)
+                          command=self._ok_btn_cmd)
 
         save_bt = tk.Button(self,
                             text=STR_TABLE['save'][self.lang],
@@ -397,7 +398,7 @@ class BeaconSettings(tk.Toplevel):
                             # bg="green",
                             height=1,
                             width=7,
-                            command=self.save_btn_cmd)
+                            command=self._save_btn_cmd)
 
         cancel_bt = tk.Button(self,
                               text=STR_TABLE['cancel'][self.lang],
@@ -405,7 +406,7 @@ class BeaconSettings(tk.Toplevel):
                               # bg="green",
                               height=1,
                               width=8,
-                              command=self.destroy_win)
+                              command=self._destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
         save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
@@ -417,36 +418,36 @@ class BeaconSettings(tk.Toplevel):
                            # bg="green",
                            height=1,
                            width=10,
-                           command=self.new_beacon_btn_cmd)
+                           command=self._new_beacon_btn_cmd)
         del_bt = tk.Button(self,
                            text=STR_TABLE['delete'][self.lang],
                            # font=("TkFixedFont", 15),
                            bg="red3",
                            height=1,
                            width=10,
-                           command=self.del_beacon_btn_cmd)
+                           command=self._del_beacon_btn_cmd)
 
         new_bt.place(x=20, y=self.win_height - 590)
         del_bt.place(x=self.win_width - 141, y=self.win_height - 590)
         ############################################
         #
-        self.tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)
-        self.tabControl.place(x=20, y=self.win_height - 550)
-        self.tab_list: [ttk.Frame] = []
+        self._tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)
+        self._tabControl.place(x=20, y=self.win_height - 550)
+        self._tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
-        for port_id in self.port_handler.beacons.keys():
-            for stat_call in self.port_handler.beacons[port_id]:
-                for beacon in self.port_handler.beacons[port_id][stat_call]:
+        for port_id in PORT_HANDLER.beacons.keys():
+            for stat_call in PORT_HANDLER.beacons[port_id]:
+                for beacon in PORT_HANDLER.beacons[port_id][stat_call]:
                     beacon: Beacon
-                    label_txt = '{} {} {}'.format(len(self.tab_list), beacon.from_call, port_id)
-                    tab = BeaconTab(self, self.tabControl, beacon)
+                    label_txt = '{} {} {}'.format(len(self._tab_list), beacon.from_call, port_id)
+                    tab = BeaconTab(self, self._tabControl, beacon)
                     # tab.port_select_var.set(str(port_id))
                     # tab.from_select_var.set(stat_call)
-                    self.tabControl.add(tab.own_tab, text=label_txt)
-                    self.tab_list.append(tab)
+                    self._tabControl.add(tab.own_tab, text=label_txt)
+                    self._tab_list.append(tab)
 
-    def set_vars(self):
-        for tab in self.tab_list:
+    def _set_vars(self):
+        for tab in self._tab_list:
 
             tab.beacon.set_from_call(tab.from_select_var.get())
             tab.beacon.set_to_call(tab.call.get())
@@ -463,84 +464,74 @@ class BeaconSettings(tk.Toplevel):
                 port_id = tab.beacon.port_id
                 stat_call = tab.beacon.from_call
                 label_txt = '{} {}'.format(port_id, stat_call)
-                self.tabControl.tab(self.tab_list.index(tab), text=label_txt)
-                if port_id in self.port_handler.beacons.keys():
-                    if stat_call in self.port_handler.beacons[port_id].keys():
+                self._tabControl.tab(self._tab_list.index(tab), text=label_txt)
+                if port_id in PORT_HANDLER.beacons.keys():
+                    if stat_call in PORT_HANDLER.beacons[port_id].keys():
                         """ Should never get to this condition """
-                        tmp: [] = self.port_handler.beacons[port_id][stat_call]
+                        tmp: [] = PORT_HANDLER.beacons[port_id][stat_call]
                         if tab.beacon not in tmp:
-                            self.port_handler.beacons[port_id][stat_call].append(tab.beacon)
+                            PORT_HANDLER.beacons[port_id][stat_call].append(tab.beacon)
                     else:
-                        self.port_handler.beacons[port_id][stat_call] = [tab.beacon]
-
+                        PORT_HANDLER.beacons[port_id][stat_call] = [tab.beacon]
                 else:
-                    self.port_handler.beacons[port_id] = {stat_call: [tab.beacon]}
+                    PORT_HANDLER.beacons[port_id] = {stat_call: [tab.beacon]}
 
-    def re_init_beacons(self):
-        for tab in self.tab_list:
+    def _re_init_beacons(self):
+        for tab in self._tab_list:
             tab.beacon.re_init()
 
-    def save_btn_cmd(self):
-        """
-        for tab in self.tab_list:
-            beacon = tab.beacon
-            for k in list(self.port_handler.beacons.keys()):
-                for kk in list(self.port_handler.beacons[k].keys()):
-                    if beacon in list(self.port_handler.beacons[k][kk]):
-                        self.port_handler.beacons[k][kk].remove(beacon)
-                        break
-        """
-        self.set_vars()
-        self.main_cl.ax25_port_handler.save_all_port_cfgs()
-        self.main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
-        self.main_cl.msg_to_monitor('Lob: Gute Entscheidung! Bake bake Kuchen.')
+    def _save_btn_cmd(self):
+        self._set_vars()
+        PORT_HANDLER.save_all_port_cfgs()
+        self._main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
+        self._main_cl.msg_to_monitor('Lob: Gute Entscheidung! Bake bake Kuchen.')
 
-    def ok_btn_cmd(self):
-        self.set_vars()
-        self.re_init_beacons()
-        self.main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
-        self.main_cl.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
-        self.destroy_win()
+    def _ok_btn_cmd(self):
+        self._set_vars()
+        self._re_init_beacons()
+        self._main_cl.msg_to_monitor('Info: Baken Settings wurden gespeichert..')
+        self._main_cl.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
+        self._destroy_win()
 
-    def new_beacon_btn_cmd(self):
+    def _new_beacon_btn_cmd(self):
         # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs_stuff: bool = False
         beacon = Beacon()
-        label_txt = '{} {} {}'.format(len(self.tab_list), beacon.from_call, beacon.port_id)
-        tab = BeaconTab(self, self.tabControl, beacon)
-        self.tabControl.add(tab.own_tab, text=label_txt)
-        self.tabControl.select(len(self.tab_list))
-        self.tab_list.append(tab)
+        label_txt = '{} {} {}'.format(len(self._tab_list), beacon.from_call, beacon.port_id)
+        tab = BeaconTab(self, self._tabControl, beacon)
+        self._tabControl.add(tab.own_tab, text=label_txt)
+        self._tabControl.select(len(self._tab_list))
+        self._tab_list.append(tab)
 
-    def del_beacon_btn_cmd(self):
+    def _del_beacon_btn_cmd(self):
         try:
-            ind = self.tabControl.index('current')
+            ind = self._tabControl.index('current')
         except tk.TclError:
             pass
         else:
-            tab: BeaconTab = self.tab_list[ind]
+            tab: BeaconTab = self._tab_list[ind]
             beacon = tab.beacon
-            for k in list(self.port_handler.beacons.keys()):
-                for kk in list(self.port_handler.beacons[k].keys()):
-                    if beacon in list(self.port_handler.beacons[k][kk]):
-                        self.port_handler.beacons[k][kk].remove(beacon)
+            for k in list(PORT_HANDLER.beacons.keys()):
+                for kk in list(PORT_HANDLER.beacons[k].keys()):
+                    if beacon in list(PORT_HANDLER.beacons[k][kk]):
+                        PORT_HANDLER.beacons[k][kk].remove(beacon)
                         break
-            del self.tab_list[ind]
-            self.tabControl.forget(ind)
+            del self._tab_list[ind]
+            self._tabControl.forget(ind)
 
     def change_port(self, event):
-        ind = self.tabControl.index('current')
-        tab: BeaconTab = self.tab_list[ind]
+        ind = self._tabControl.index('current')
+        tab: BeaconTab = self._tab_list[ind]
         beacon = tab.beacon
-        for k in list(self.port_handler.beacons.keys()):
-            for kk in list(self.port_handler.beacons[k].keys()):
-                if beacon in list(self.port_handler.beacons[k][kk]):
-                    self.port_handler.beacons[k][kk].remove(beacon)
+        for k in list(PORT_HANDLER.beacons.keys()):
+            for kk in list(PORT_HANDLER.beacons[k].keys()):
+                if beacon in list(PORT_HANDLER.beacons[k][kk]):
+                    PORT_HANDLER.beacons[k][kk].remove(beacon)
                     break
-        self.set_vars()
+        self._set_vars()
 
-    def destroy_win(self):
+    def _destroy_win(self):
         self.destroy()
-        self.main_cl.settings_win = None
+        self._main_cl.settings_win = None
 
     def tasker(self):
         pass

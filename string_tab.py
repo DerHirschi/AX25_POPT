@@ -38,6 +38,7 @@ STR_TABLE = {
     'save_mon_to_file': ('Monitor in Datei speichern', 'Save Monitor to File', 'Lekker'),
     'clean_qso_win': ('QSO/Vorschreibfenster löschen', 'Clear QSO/Prescription window', 'Lekker'),
     'clean_mon_win': ('Monitor löschen', 'Clear Monitor', 'Lekker'),
+    'bw_plot_enable': ('Plot (!frisst RAM auf!)', 'Plot (!eating up Memory!', 'Plot (!eating up Memory!'),
     'edit': ('Bearbeiten', 'Edit', 'Lekker bewerking'),
     'statistic': ('Statistik', 'Statistics', 'Lekker'),
     'linkholder': ('Linkhalter', 'Link holder', 'Lekker'),

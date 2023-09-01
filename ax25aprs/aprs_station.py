@@ -1,4 +1,5 @@
 import time
+from collections import deque
 
 import aprslib
 import logging
@@ -41,8 +42,10 @@ class APRS_ais(object):
         self.ais_aprs_stations: {int: APRS_Station} = {}
         self.ais_host = '', 0
         self.ais = None
+        self.ais_mon_gui = None
         self.ais_active = False
-        self.ais_rx_buff = []
+        self.ais_rx_buff = deque([] * 20000, maxlen=20000)
+        # self.ais_new_rx_buff = []
         self.dbl_pack = []
         """ Global APRS Stuff """
         self.ais_aprs_msg_pool = {
@@ -65,11 +68,14 @@ class APRS_ais(object):
         if self.ais_active:
             self.login()
 
+    def del_ais_rx_buff(self):
+        self.ais_rx_buff = deque([] * 20000, maxlen=20000)
+
     def save_conf_to_file(self):
         print("Save APRS Conf")
         logger.info("Save APRS Conf")
         save_data = cleanup_obj(set_obj_att(APRS_ais(load_cfg=False), self))
-        save_data.ais = None
+        save_data._ais = None
         save_data.port_handler = None
         save_data.ais_rx_buff = []
         save_data.loop_is_running = False
@@ -202,6 +208,10 @@ class APRS_ais(object):
             (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
              packet)
         )
+        if self.ais_mon_gui is not None:
+            self.ais_mon_gui.pack_to_mon(
+                datetime.now().strftime('%d/%m/%y %H:%M:%S'),
+                packet)
         self.aprs_msg_sys_rx(port_id='I-NET', aprs_pack=packet)
         # print(packet)
 
@@ -224,8 +234,10 @@ class APRS_ais(object):
             if 'message_text' in aprs_pack:
                 if 'message' == aprs_pack['format']:
                     if formated_pack not in self.ais_aprs_msg_pool['message']:
-                        if [port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''), aprs_pack.get('message_text', '')] not in self.dbl_pack:
-                            self.dbl_pack.append([port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''), aprs_pack.get('message_text', '')])
+                        if [port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
+                            aprs_pack.get('message_text', '')] not in self.dbl_pack:
+                            self.dbl_pack.append([port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
+                                                  aprs_pack.get('message_text', '')])
                             self.ais_aprs_msg_pool['message'].append(formated_pack)
                             self.aprs_msg_sys_new_pn(formated_pack)
                             # print(f"aprs PN-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
@@ -236,7 +248,8 @@ class APRS_ais(object):
                     if formated_pack not in self.ais_aprs_msg_pool['bulletin']:
                         self.ais_aprs_msg_pool['bulletin'].append(formated_pack)
                         self.aprs_msg_sys_new_bn(formated_pack)
-                        print(f"aprs Bulletin-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
+                        print(
+                            f"aprs Bulletin-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
 
             elif 'response' in aprs_pack:
                 aprs_pack['popt_port_id'] = port_id

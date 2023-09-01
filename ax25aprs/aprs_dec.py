@@ -146,15 +146,17 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
         # print(f"{k}: {aprs_frame[k]}")
 
         if aprs_frame[k]:
-            # if k not in ['from', 'to',  'path', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
-            if k not in ['from', 'to',  'symbol_table', 'symbol', 'subpacket', 'weather']:
+            # if k not in ['from', 'to',  'symbol_table', 'symbol', 'subpacket', 'weather']:
+            if k not in ['from', 'to', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
                 if k == 'via':
                     if aprs_frame[k]:
                         ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
+                elif k == 'path':
+                    ret += f"├►{'PATH'.ljust(13)}: {' '.join(aprs_frame[k])}\n"
                 elif k == 'messagecapable':
-                    ret += f"├►{'m-capable'.upper().ljust(13)}: {aprs_frame[k]}\n"
+                    ret += f"├►{'M-CAPABLE'.ljust(13)}: {aprs_frame[k]}\n"
                 elif k == 'gpsfixstatus':
-                    ret += f"├►{'gpsfix'.upper().ljust(13)}: {aprs_frame[k]}\n"
+                    ret += f"├►{'GPS-FIX'.ljust(13)}: {aprs_frame[k]}\n"
                     """
                     if k in ['text', 'comment']:
                         if aprs_frame[k][0] == '\n':

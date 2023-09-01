@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import ax25.ax25dec_enc
+from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
 from fnc.socket_fnc import get_ip_by_hostname, check_ip_add_format
 
@@ -49,34 +50,32 @@ class ConnHistory(object):
 
 class NewConnWin:
     def __init__(self, main_win):
-        self.main = main_win
-        self.style = self.main.style
-        self.ax25_port_handler = self.main.ax25_port_handler
-        self.out_txt = self.main.out_txt
-        self.conn_hist: {str: ConnHistory} = self.main.connect_history
-        self.new_conn_win = tk.Tk()
-        self.new_conn_win.title("New Connection")
-        self.new_conn_win.geometry(f"700x285+{self.main.main_win.winfo_x()}+{self.main.main_win.winfo_y()}")
-        # self.new_conn_win.geometry("700x285")
-        self.new_conn_win.protocol("WM_DELETE_WINDOW", self.destroy_new_conn_win)
-        self.new_conn_win.resizable(False, False)
-        self.new_conn_win.attributes("-topmost", True)
-        self.new_conn_win.columnconfigure(0, minsize=20, weight=1)
-        self.new_conn_win.columnconfigure(1, minsize=100, weight=1)
-        self.new_conn_win.columnconfigure(2, minsize=50, weight=5)
-        self.new_conn_win.columnconfigure(3, minsize=120, weight=1)
-        self.new_conn_win.columnconfigure(4, minsize=20, weight=1)
-        self.new_conn_win.rowconfigure(0, minsize=38, weight=3)
-        self.new_conn_win.rowconfigure(1, minsize=5, weight=5)
-        self.new_conn_win.rowconfigure(2, minsize=35, weight=3)
-        self.new_conn_win.rowconfigure(3, minsize=5, weight=1)
-        self.new_conn_win.rowconfigure(4, minsize=40, weight=3)
-        self.new_conn_win.rowconfigure(5, minsize=40, weight=1)
+        self._main = main_win
+        self.style = self._main.style
+        self.conn_hist: {str: ConnHistory} = self._main.connect_history
+        self._new_conn_win = tk.Tk()
+        self._new_conn_win.title("New Connection")
+        self._new_conn_win.geometry(f"700x285+{self._main.main_win.winfo_x()}+{self._main.main_win.winfo_y()}")
+        # self._new_conn_win.geometry("700x285")
+        self._new_conn_win.protocol("WM_DELETE_WINDOW", self._destroy_new_conn_win)
+        self._new_conn_win.resizable(False, False)
+        self._new_conn_win.attributes("-topmost", True)
+        self._new_conn_win.columnconfigure(0, minsize=20, weight=1)
+        self._new_conn_win.columnconfigure(1, minsize=100, weight=1)
+        self._new_conn_win.columnconfigure(2, minsize=50, weight=5)
+        self._new_conn_win.columnconfigure(3, minsize=120, weight=1)
+        self._new_conn_win.columnconfigure(4, minsize=20, weight=1)
+        self._new_conn_win.rowconfigure(0, minsize=38, weight=3)
+        self._new_conn_win.rowconfigure(1, minsize=5, weight=5)
+        self._new_conn_win.rowconfigure(2, minsize=35, weight=3)
+        self._new_conn_win.rowconfigure(3, minsize=5, weight=1)
+        self._new_conn_win.rowconfigure(4, minsize=40, weight=3)
+        self._new_conn_win.rowconfigure(5, minsize=40, weight=1)
         self.port_index = 0
         self.port_btn: {int: tk.Button} = {}
-        for port in self.ax25_port_handler.ax25_ports.keys():
-            tmp = tk.Button(self.new_conn_win,
-                            text=self.ax25_port_handler.ax25_ports[port].portname,
+        for port in PORT_HANDLER.get_all_ports().keys():
+            tmp = tk.Button(self._new_conn_win,
+                            text=PORT_HANDLER.get_all_ports()[port].portname,
                             bg="red",
                             width=5,
                             height=1,
@@ -88,9 +87,9 @@ class NewConnWin:
                 tmp.place(x=10, y=1)
             self.port_btn[port] = tmp
 
-        self.set_port_btn()
+        self._set_port_btn()
 
-        call_label = tk.Label(self.new_conn_win,
+        call_label = tk.Label(self._new_conn_win,
                               text='Ziel:',
                               foreground='black',
                               font=("TkFixedFont", 12),
@@ -98,66 +97,66 @@ class NewConnWin:
                               width=5)
         call_label.place(x=2, y=40)
         """
-        self.call_txt_inp = tk.Text(self.new_conn_win, background='grey80', foreground='black',
+        self.call_txt_inp = tk.Text(self._new_conn_win, background='grey80', foreground='black',
                                     font=("TkFixedFont", 12),
                                     height=1,
                                     width=45)
         """
         vals = list(self.conn_hist.keys())
         vals.reverse()
-        self.call_txt_inp = tk.ttk.Combobox(self.new_conn_win,
+        self.call_txt_inp = tk.ttk.Combobox(self._new_conn_win,
                                             font=("TkFixedFont", 12),
                                             # height=1,
                                             values=vals,
                                             width=45
                                             )
-        self.call_txt_inp.bind("<<ComboboxSelected>>", self.set_conn_hist)
+        self.call_txt_inp.bind("<<ComboboxSelected>>", self._set_conn_hist)
         self.call_txt_inp.place(x=80, y=40)
         self.ax_ip_ip = None
         self.ax_ip_port = None
         ############
         # Own Call
-        self.own_call_var = tk.StringVar(self.new_conn_win)
+        self.own_call_var = tk.StringVar(self._new_conn_win)
         opt = ['NOCALL']
-        if self.port_index in self.ax25_port_handler.ax25_ports.keys():
-            opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
+        if self.port_index in PORT_HANDLER.get_all_ports().keys():
+            opt = PORT_HANDLER.get_all_ports()[self.port_index].my_stations
             if not opt:
                 opt = ['NOCALL']
             self.own_call_var.set(opt[0])
 
-        self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
+        self.own_call_dd_men = tk.OptionMenu(self._new_conn_win, self.own_call_var, *opt)
         ############
         # BTN
-        conn_btn = tk.Button(self.new_conn_win,
+        conn_btn = tk.Button(self._new_conn_win,
                              text="Los",
                              font=("TkFixedFont", 15),
                              bg="green",
                              height=1,
                              width=4,
-                             command=self.process_new_conn_win)
+                             command=self._process_new_conn_win)
         conn_btn.place(x=10, y=220)
         self.call_txt_inp.focus_set()
         self.set_port_index(self.port_index)
         ##############
         # KEY BINDS
-        self.new_conn_win.bind('<Return>', lambda event: self.process_new_conn_win())
-        self.new_conn_win.bind('<KP_Enter>', lambda event: self.process_new_conn_win())
-        self.new_conn_win.bind('<Escape>', lambda event: self.destroy_new_conn_win())
+        self._new_conn_win.bind('<Return>', lambda event: self._process_new_conn_win())
+        self._new_conn_win.bind('<KP_Enter>', lambda event: self._process_new_conn_win())
+        self._new_conn_win.bind('<Escape>', lambda event: self._destroy_new_conn_win())
 
     def set_port_index(self, index: int):
         self.port_index = index
-        port = self.ax25_port_handler.get_port_by_index(index)
+        port = PORT_HANDLER.get_port_by_index(index)
         if port:
             if port.port_typ == 'AXIP':
                 self.ax_ip_ip = \
                     (
-                        tk.Label(self.new_conn_win,
+                        tk.Label(self._new_conn_win,
                                  text='IP:',
                                  foreground='black',
                                  font=("TkFixedFont", 12),
                                  height=1,
                                  width=5),
-                        tk.Text(self.new_conn_win,
+                        tk.Text(self._new_conn_win,
                                 background='grey80',
                                 foreground='black',
                                 font=("TkFixedFont", 12),
@@ -168,13 +167,13 @@ class NewConnWin:
                 self.ax_ip_ip[1].place(x=80, y=80)
                 self.ax_ip_port = \
                     (
-                        tk.Label(self.new_conn_win,
+                        tk.Label(self._new_conn_win,
                                  text='Port:',
                                  foreground='black',
                                  font=("TkFixedFont", 12),
                                  height=1,
                                  width=5),
-                        tk.Text(self.new_conn_win,
+                        tk.Text(self._new_conn_win,
                                 background='grey80',
                                 foreground='black',
                                 font=("TkFixedFont", 12),
@@ -197,8 +196,8 @@ class NewConnWin:
                     self.ax_ip_port[1].insert(tk.END, prt)
                 self.call_txt_inp.focus_set()
                 self.own_call_dd_men.destroy()
-                opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
-                self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
+                opt = PORT_HANDLER.get_all_ports()[self.port_index].my_stations
+                self.own_call_dd_men = tk.OptionMenu(self._new_conn_win, self.own_call_var, *opt)
                 self.own_call_dd_men.place(x=80, y=120)
                 self.own_call_dd_men.configure()
                 if opt:
@@ -211,16 +210,16 @@ class NewConnWin:
                     self.ax_ip_port[0].destroy()
                     self.ax_ip_port[1].destroy()
                 self.own_call_dd_men.destroy()
-                opt = self.ax25_port_handler.ax25_ports[self.port_index].my_stations
-                self.own_call_dd_men = tk.OptionMenu(self.new_conn_win, self.own_call_var, *opt)
+                opt = PORT_HANDLER.get_all_ports()[self.port_index].my_stations
+                self.own_call_dd_men = tk.OptionMenu(self._new_conn_win, self.own_call_var, *opt)
                 self.own_call_dd_men.place(x=80, y=80)
                 self.own_call_dd_men.configure()
                 if opt:
                     self.own_call_var.set(opt[0])
 
-            self.set_port_btn()
+            self._set_port_btn()
 
-    def set_port_btn(self):
+    def _set_port_btn(self):
         for k in self.port_btn.keys():
             btn = self.port_btn[k]
             if k == self.port_index:
@@ -228,7 +227,7 @@ class NewConnWin:
             else:
                 btn.configure(bg='red')
 
-    def process_new_conn_win(self):
+    def _process_new_conn_win(self):
         txt_win = self.call_txt_inp
         # call = txt_win.get('0.0', tk.END)
         call = txt_win.get()
@@ -241,7 +240,7 @@ class NewConnWin:
             ax_frame.to_call.call = call_obj.call
             ax_frame.to_call.ssid = call_obj.ssid
             ax_frame.via_calls = call_obj.via
-            port = self.ax25_port_handler.get_port_by_index(self.port_index)
+            port = PORT_HANDLER.get_port_by_index(self.port_index)
             if port:
                 if port.port_typ == 'AXIP':
                     mh_ent = MH_LIST.mh_get_last_ip(call_obj.call_str, port.port_cfg.parm_axip_fail)
@@ -275,12 +274,12 @@ class NewConnWin:
 
                 # TODO Error or Not Processing if no IP
                 # ax_frame.ctl_byte.SABMcByte()
-                conn = self.ax25_port_handler.ax25_ports[self.port_index].new_connection(ax25_frame=ax_frame)
+                conn = PORT_HANDLER.get_all_ports()[self.port_index].new_connection(ax25_frame=ax_frame)
                 if conn:
                     # conn: AX25Conn
-                    self.ax25_port_handler.insert_conn2all_conn_var(new_conn=conn, ind=self.main.channel_index)
+                    PORT_HANDLER.insert_conn2all_conn_var(new_conn=conn, ind=self._main.channel_index)
                 else:
-                    self.out_txt.insert(tk.END, '\n*** Busy. No free SSID available.\n\n')
+                    self._main.send_to_qso('\n*** Busy. No free SSID available.\n\n', self.port_index)
                 if call.upper() in self.conn_hist.keys():
                     del self.conn_hist[call.upper()]
                 self.conn_hist[call.upper()] = ConnHistory(
@@ -289,11 +288,11 @@ class NewConnWin:
                     add_str=call,
                     port_id=self.port_index,
                 )
-                self.main.ch_status_update()
-                self.main.change_conn_btn()
-                self.destroy_new_conn_win()
+                self._main.ch_status_update()
+                self._main.change_conn_btn()
+                self._destroy_new_conn_win()
 
-    def set_conn_hist(self, event):
+    def _set_conn_hist(self, event):
         # call = txt_win.get('0.0', tk.END)
         ent_key = self.call_txt_inp.get()
         if ent_key in self.conn_hist:
@@ -303,6 +302,6 @@ class NewConnWin:
     def insert_conn_hist(self):
         pass
 
-    def destroy_new_conn_win(self):
-        self.new_conn_win.destroy()
-        self.main.new_conn_win = None
+    def _destroy_new_conn_win(self):
+        self._new_conn_win.destroy()
+        self._main.new_conn_win = None

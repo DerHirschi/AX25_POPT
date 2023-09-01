@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+
+from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
 from fnc.str_fnc import conv_time_DE_str
 from string_tab import STR_TABLE
@@ -70,10 +72,10 @@ class MulticastSettings(tk.Toplevel):
             # show a message
             call = record[2]
             ip_add = MH_LIST.mh_get_last_ip(call)
-            if ip_add in self.root_win.ax25_port_handler.multicast_ip_s:
-                self.root_win.ax25_port_handler.multicast_ip_s.remove(ip_add)
+            if ip_add in PORT_HANDLER.multicast_ip_s:
+                PORT_HANDLER.multicast_ip_s.remove(ip_add)
             else:
-                self.root_win.ax25_port_handler.multicast_ip_s.append(ip_add)
+                PORT_HANDLER.multicast_ip_s.append(ip_add)
 
         self.update_mh()
 
@@ -120,7 +122,7 @@ class MulticastSettings(tk.Toplevel):
                     route = min(ent.all_routes)
                 if not route:
                     is_set = 'not_set'
-                    if ent.axip_add in self.root_win.ax25_port_handler.multicast_ip_s:
+                    if ent.axip_add in PORT_HANDLER.multicast_ip_s:
                         is_set = 'is_set'
                     self.tree_data.append(((
                         f'{conv_time_DE_str(ent.last_seen)}',

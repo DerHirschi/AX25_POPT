@@ -17,12 +17,13 @@ def get_time_str():
 
 
 def get_bandwidth_struct():
-    struct = {}
-    for m in range(60):
-        for s in range(6):
-            ts_str = '{}:{}'.format(str(m).zfill(2), s)
-            struct[ts_str] = 0
-    return struct
+    _struct = {}
+    for _h in range(24):
+        for _m in range(60):
+            for _s in range(6):
+                _ts_str = f'{str(_h).zfill(2)}:{str(_m).zfill(2)}:{_s}'
+                _struct[_ts_str] = 0
+    return _struct
 
 
 def get_port_stat_struct():
@@ -117,14 +118,14 @@ class MH(object):
     def input_bw_calc(self, port_id, ax_frame=None, ):
         self.init_bw_struct(port_id=port_id)
         if ax_frame is not None:
-            if self.now_min == datetime.now().strftime('%M:%S')[:-1]:
+            if self.now_min == datetime.now().strftime('%H:%M:%S')[:-1]:
                 self.bandwidth[port_id][self.now_min] += len(ax_frame.bytes)
             else:
-                self.now_min = datetime.now().strftime('%M:%S')[:-1]
+                self.now_min = datetime.now().strftime('%H:%M:%S')[:-1]
                 self.bandwidth[port_id][self.now_min] = len(ax_frame.bytes)
         else:
-            if self.now_min != datetime.now().strftime('%M:%S')[:-1]:
-                self.now_min = datetime.now().strftime('%M:%S')[:-1]
+            if self.now_min != datetime.now().strftime('%H:%M:%S')[:-1]:
+                self.now_min = datetime.now().strftime('%H:%M:%S')[:-1]
                 self.bandwidth[port_id][self.now_min] = 0
 
     def init_bw_struct(self, port_id):
@@ -133,14 +134,14 @@ class MH(object):
 
     def get_bandwidth(self, port_id, baud=1200):
         self.init_bw_struct(port_id=port_id)
-        ret = deque([0] * 100, maxlen=100)
+        ret = deque([0] * 60, maxlen=60)
         now = datetime.now()
         ten_minutes_ago = now - timedelta(minutes=10)
         minutes = list(self.bandwidth[port_id].keys())
         minutes.reverse()
-        ind = minutes.index(now.strftime('%M:%S')[:-1])
-        ind2 = minutes.index(ten_minutes_ago.strftime('%M:%S')[:-1])
-        new_key_list = minutes[ind:ind2 + 1]
+        ind = minutes.index(now.strftime('%H:%M:%S')[:-1])
+        ind2 = minutes.index(ten_minutes_ago.strftime('%H:%M:%S')[:-1])
+        new_key_list = minutes[ind:ind2]
         i = 0
         for k in new_key_list:
             byt = int(self.bandwidth[port_id][k])
