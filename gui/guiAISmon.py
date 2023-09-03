@@ -5,6 +5,7 @@ from tkinter.scrolledtext import ScrolledText
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import format_aprs_f_aprs_mon
 from constant import FONT
+from fnc.str_fnc import tk_filter_bad_chars
 from string_tab import STR_TABLE
 
 
@@ -138,11 +139,13 @@ class AISmonitor(tk.Toplevel):
                 _tr = True
                 tmp = format_aprs_f_aprs_mon((date_time, pack), self._ais_obj.ais_loc,
                                              add_new_user=self._ais_obj.add_new_user)
+                tmp = tk_filter_bad_chars(tmp)
                 self._text_widget.insert(tk.END, tmp)
         else:
             _tr = True
             tmp = format_aprs_f_aprs_mon((date_time, pack), self._ais_obj.ais_loc,
                                          add_new_user=self._ais_obj.add_new_user)
+            tmp = tk_filter_bad_chars(tmp)
             self._text_widget.insert(tk.END, tmp)
 
         if _tr:

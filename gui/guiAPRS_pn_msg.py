@@ -4,6 +4,7 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from fnc.str_fnc import tk_filter_bad_chars
 from gui.guiAPRSnewMSG import NewMessageWindow
 from string_tab import STR_TABLE
 
@@ -11,7 +12,7 @@ from string_tab import STR_TABLE
 class APRS_msg_SYS_PN(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
-        self.init_done = False
+        self._init_done = False
         self._root_cl = root_win
         self._root_cl.aprs_pn_msg_win = self
         self.lang = self._root_cl.language
@@ -156,7 +157,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._is_in_update = False
         self.bind('<Return>', self._send_aprs_msg)
         self._update_tree()
-        self.init_done = True
+        self._init_done = True
 
     def _update_tree(self):
         while self._is_in_update:
@@ -195,7 +196,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._is_in_update = False
 
     def update_tree_single_pack(self, form_aprs_pack):
-        if self.init_done:
+        if self._init_done:
             self._is_in_update = True
             self._aprs_pn_msg = list(self._aprs_ais.ais_aprs_msg_pool['message'])
             self._aprs_pn_msg.reverse()
@@ -220,7 +221,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self._is_in_update = False
 
     def update_spooler_tree(self):
-        if self.init_done:
+        if self._init_done:
             for i in self.spooler_treeview.get_children():
                 self.spooler_treeview.delete(i)
             self.update()
@@ -278,7 +279,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                                 msg += f"From: {str(pack_msg[1][1].get('from', '')).ljust(22)}"
                                 msg += f"Via : {pack_msg[1][1].get('via', '')}\n"
 
-                                msg_text = pack_msg[1][1].get('message_text', '') + '\n\n'
+                                msg_text = tk_filter_bad_chars(pack_msg[1][1].get('message_text', '')) + '\n\n'
 
                                 self.selected_message_text.insert(tk.END, msg)
                                 self.selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
