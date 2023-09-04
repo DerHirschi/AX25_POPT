@@ -820,9 +820,11 @@ class TxTframe:
         self.pw = ttk.PanedWindow(orient=tk.VERTICAL)
         self._main_class = main_win
         self.text_size = main_win.text_size
+        """
         self.mon_txt_height = 0
         self.out_txt_height = 0
         self.inp_txt_height = 0
+        """
         # self.mon_btn: tk.Button = main_win.mon_btn
         ###################
         # Input Win
@@ -849,7 +851,8 @@ class TxTframe:
                                                     foreground=TXT_INP_CLR,
                                                     font=(FONT, self.text_size),
                                                     insertbackground=TXT_INP_CURSOR_CLR,
-                                                    height=100, bd=0, )
+                                                    height=100, bd=0,
+                                                    )
         self.in_txt_win.tag_config("send", foreground="green2")
 
         # self.in_txt_win.insert(tk.END, "Inp")
@@ -959,7 +962,8 @@ class TxTframe:
                                                      height=100,
                                                      bd=0,
                                                      borderwidth=0,
-                                                     state="disabled")
+                                                     state="disabled",
+                                                     )
         self.out_txt_win.tag_config("input", foreground="yellow")
         self.out_txt_win.grid(row=0, column=0, columnspan=10, sticky="nsew")
         # Stat INFO (Name,QTH usw)
@@ -1079,7 +1083,8 @@ class TxTframe:
                                                  background=TXT_BACKGROUND_CLR,
                                                  foreground=TXT_MON_CLR,
                                                  font=(FONT, self.text_size),
-                                                 height=100, bd=0, borderwidth=0, state="disabled")
+                                                 height=100, bd=0, borderwidth=0, state="disabled",
+                                                 )
 
         # self.mon_txt.pack(side=tk.BOTTOM)
 
@@ -1092,7 +1097,7 @@ class TxTframe:
         self.pw.add(self.mon_txt, weight=1)
 
         # place the panedwindow on the root window
-        self.pw.pack(fill=tk.BOTH, expand=False)
+        self.pw.pack(fill=tk.BOTH, expand=True)
         self.pw.grid(row=1, column=0, sticky="nsew")
 
     def update_status_win(self):
@@ -1186,27 +1191,18 @@ class TxTframe:
                 self.pw.remove(self.mon_txt)
             except tk.TclError:
                 pass
-            self.pw.configure(height=800)
             self.pw.add(self.status_frame, weight=1)
             self.pw.add(self.out_frame, weight=1)
             self.pw.add(self.mon_txt, weight=1)
-            """
-            self.status_frame.configure(height=self.inp_txt_height)
-            self.out_txt_win.configure(height=self.out_txt_height)
-            self.mon_txt.configure(height=self.mon_txt_height)
-            """
-            self.status_frame.configure(height=10)
-            self.out_txt_win.configure(height=10)
-            self.mon_txt.configure(height=10)
+            self.pw.configure(height=817)
+
         else:
-            self.mon_txt_height = self.mon_txt.cget('height')
-            self.out_txt_height = self.out_txt_win.cget('height')
-            self.inp_txt_height = self.status_frame.cget('height')
-            # pw_height = self.pw.cget('height')
+            _pw_height = self.pw.winfo_height()
+            _mon_txt_height = self.mon_txt.winfo_height()
+            _out_txt_height = self.out_txt_win.winfo_height()
             self.pw.remove(self.out_frame)
-            self.pw.configure(height=800)
-            self.status_frame.configure(height=1)
-            # self.mon_txt.configure(height=500)
+            self.pw.configure(height=817)
+
 
     def chk_rx_beep(self):
         rx_beep_check = self.rx_beep_var.get()
@@ -1431,9 +1427,6 @@ class TkMainWin:
     def __init__(self):
         self.language = LANGUAGE
         ###############################
-        # AX25 PortHandler and stuff
-        # self.ax25_port_handler = PORT_HANDLER
-
         self._root_dir = get_root_dir()
         self._root_dir = self._root_dir.replace('/', '//')
         #####################
