@@ -1,11 +1,11 @@
 from datetime import datetime
-import logging
+# import logging
 
 from ax25aprs.aprs_dec import format_aprs_f_monitor
 from fnc.ax25_fnc import get_call_str
 from UserDB.UserDBmain import USER_DB
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 def monitor_frame_inp(ax25_frame, port_cfg):
@@ -68,7 +68,7 @@ def monitor_frame_inp(ax25_frame, port_cfg):
                     out_str += da + '\n'
 
         # if ax25_frame.ctl_byte.flag == 'UI':
-        out_str += aprs_data
-    return out_str
+        # out_str += aprs_data
+    return out_str, aprs_data
 
 

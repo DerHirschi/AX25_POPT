@@ -44,7 +44,7 @@ class APRS_ais(object):
         self.ais = None
         self.ais_mon_gui = None
         self.ais_active = False
-        self.ais_rx_buff = deque([] * 20000, maxlen=20000)
+        self.ais_rx_buff = deque([] * 5000, maxlen=5000)
         # self.ais_new_rx_buff = []
         self.dbl_pack = []
         """ Global APRS Stuff """
