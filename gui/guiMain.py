@@ -462,6 +462,16 @@ class SideTabbedFrame:
                                              text=STR_TABLE['scrolling'][self._lang])
         self.mon_scroll_ent.place(x=_x, y=_y)
 
+        # Monitor APRS Decoding Output
+        _x = 10
+        _y = 245
+        self.mon_aprs_var = tk.BooleanVar(self.tab6_monitor)
+        self.mon_aprs_var.set(True)
+        self.mon_aprs_ent = tk.Checkbutton(self.tab6_monitor,
+                                             variable=self.mon_aprs_var,
+                                             text='APRS-Decoding')
+        self.mon_aprs_ent.place(x=_x, y=_y)
+
         # PID
         _x = 10
         _y = 45
@@ -2310,10 +2320,14 @@ class TkMainWin:
             tr = False
             self._mon_txt.configure(state="normal")
             for el in tmp_buff:
-                var = monitor_frame_inp(el[0], el[1])
+                _mon_out = monitor_frame_inp(el[0], el[1])
+                if self.tabbed_sideFrame.mon_aprs_var.get():
+                    _mon_str = _mon_out[0] + _mon_out[1]
+                else:
+                    _mon_str = _mon_out[0]
                 conf = el[1]
                 tx = el[2]
-                var = tk_filter_bad_chars(var)
+                _var = tk_filter_bad_chars(_mon_str)
                 ind = self._mon_txt.index('end-1c')
                 color_bg = conf.parm_mon_clr_bg
                 if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
@@ -2326,9 +2340,9 @@ class TkMainWin:
                     color = conf.parm_mon_clr_rx
 
                 if tag in self._mon_txt.tag_names(None):
-                    self._mon_txt.insert(tk.END, var, tag)
+                    self._mon_txt.insert(tk.END, _var, tag)
                 else:
-                    self._mon_txt.insert(tk.END, var)
+                    self._mon_txt.insert(tk.END, _var)
                     ind2 = self._mon_txt.index('end-1c')
                     self._mon_txt.tag_config(tag, foreground=color,
                                              background=color_bg,
