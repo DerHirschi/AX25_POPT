@@ -92,7 +92,7 @@ class NewConnWin:
         call_label = tk.Label(self._new_conn_win,
                               text='Ziel:',
                               foreground='black',
-                              font=("TkFixedFont", 12),
+                              font=("TkFixedFont", 11),
                               height=1,
                               width=5)
         call_label.place(x=2, y=40)
@@ -105,7 +105,7 @@ class NewConnWin:
         vals = list(self.conn_hist.keys())
         vals.reverse()
         self.call_txt_inp = tk.ttk.Combobox(self._new_conn_win,
-                                            font=("TkFixedFont", 12),
+                                            font=("TkFixedFont", 11),
                                             # height=1,
                                             values=vals,
                                             width=45
@@ -129,7 +129,7 @@ class NewConnWin:
         # BTN
         conn_btn = tk.Button(self._new_conn_win,
                              text="Los",
-                             font=("TkFixedFont", 15),
+                             font=("TkFixedFont", 13),
                              bg="green",
                              height=1,
                              width=4,

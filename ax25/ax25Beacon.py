@@ -3,6 +3,7 @@ from datetime import datetime
 
 from ax25.ax25Error import AX25EncodingERROR, logger
 from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
+from ax25.ax25Statistics import MH_LIST
 
 
 class Beacon(object):
@@ -10,23 +11,28 @@ class Beacon(object):
         # TODO Load and SAVE to/fm file
         self.text_filename = ''
         self.text = ''
+        self.text_out = ''
         self.aprs = False
         self.pool = False
         self.is_enabled = False
         self.port_id = 0
+        self.typ = 'Text'
         # self.beacon_id = 0
         self.cooldown = time.time()
         self.next_run = time.time()
         self.from_call = 'NOCALL'
         self.to_call = 'NOCALL'
         self.via_calls = ''
-        self.ax_frame = AX25Frame()
+        self.axip_add = ('', 0)
+        """
+        self.ax_frame = None
         self.ax_frame.ctl_byte.UIcByte()
         self.ax_frame.pid_byte.text()
         self.ax_frame.from_call.call_str = self.from_call
         self.ax_frame.to_call.call_str = self.to_call
         self.ax_frame.ctl_byte.cmd = self.aprs
         self.ax_frame.ctl_byte.pf = self.pool
+        """
         #################
         # Time Vars
         self.repeat_time: float = 30.0  # Min
@@ -54,11 +60,17 @@ class Beacon(object):
         if self.text_filename:
             try:
                 with open(self.text_filename, 'rb') as f:
-                    self.text = f.read().decode('utf-8', 'ignore')
-                    print(self.text)
+                    self.text_out = f.read().decode('utf-8', 'ignore')
+                    # print(self.text)
                     return True
             except (FileNotFoundError, EOFError, IsADirectoryError):
                 return False
+
+    def set_text_fm_mh(self):
+        self.text_out = MH_LIST.mh_out_beacon(max_ent=12)
+
+    def set_text(self):
+        self.text_out = self.text
 
     def set_from_call(self, call: str):
         self.from_call = call
@@ -67,36 +79,53 @@ class Beacon(object):
         self.to_call = call
 
     def set_via_calls(self, calls: str):
-        vias = via_calls_fm_str(calls)
-        if vias:
-            self.ax_frame.via_calls = vias
+        _vias = via_calls_fm_str(calls)
+        if _vias:
             self.via_calls = calls
 
     def encode(self):
         # Todo :Delete.. Just dummy for compatibility
-        pass
+        print("!!!!!!!! ax25Beacon.py encode() !!!!!!!!!!!!!")
+        print("!!!!!!!! ax25Beacon.py encode() !!!!!!!!!!!!!")
 
     def encode_beacon(self):
-        self.set_text_fm_file()
-        if self.text:
-            # self.ax_frame = AX25Frame()
-            self.ax_frame.ctl_byte.UIcByte()
-            self.ax_frame.pid_byte.text()
-            self.ax_frame.ctl_byte.cmd = self.aprs
-            self.ax_frame.ctl_byte.pf = self.pool
-            self.ax_frame.to_call.call = ''
-            self.ax_frame.to_call.ssid = 0
-            self.ax_frame.to_call.call_str = self.to_call
-            self.ax_frame.from_call.call = ''
-            self.ax_frame.from_call.ssid = 0
-            self.ax_frame.from_call.call_str = self.from_call
-            self.ax_frame.data = self.text.encode('UTF-8', 'ignore')
+        # self.set_text_fm_file()
+        _type_handler = {
+            'Text': self.set_text,
+            'MH': self.set_text_fm_mh,
+            'File': self.set_text_fm_file,
+
+        }.get(self.typ, False)
+        if _type_handler:
+            _type_handler()
+        if self.text_out:
+            _ax_frame = AX25Frame()
+            _ax_frame.ctl_byte.UIcByte()
+            _ax_frame.pid_byte.text()
+            _ax_frame.ctl_byte.cmd = self.aprs
+            _ax_frame.ctl_byte.pf = self.pool
+            _ax_frame.to_call.call = ''
+            _ax_frame.to_call.ssid = 0
+            """
+            if self.typ == 'MH':
+                _ax_frame.to_call.call_str = "MHEARD"
+            else:
+            """
+            _ax_frame.to_call.call_str = self.to_call
+            _ax_frame.from_call.call = ''
+            _ax_frame.from_call.ssid = 0
+            _ax_frame.from_call.call_str = self.from_call
+            _vias = via_calls_fm_str(self.via_calls)
+            if _vias:
+                _ax_frame.via_calls = _vias
+            _ax_frame.axip_add = self.axip_add
+            _ax_frame.data = self.text_out.encode('UTF-8', 'ignore')
             try:
-                self.ax_frame.encode_ax25frame()
+                _ax_frame.encode_ax25frame()
             except AX25EncodingERROR:
                 logger.error("AX25EncodingERROR: Beacon")
                 return False
-            return True
+            return _ax_frame
         return False
 
     def is_week_day_enabled(self):

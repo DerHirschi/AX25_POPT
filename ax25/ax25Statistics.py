@@ -334,6 +334,21 @@ class MH(object):
 
         return out
 
+    def mh_out_beacon(self, max_ent=12):
+        _tmp = self.output_sort_mh_entr('last', False)
+        _ret = ''
+        _mh_keys = list(_tmp.keys())
+        if len(_mh_keys) > max_ent:
+            _mh_keys = _mh_keys[:max_ent]
+        _n = 0
+        for _k in _mh_keys:
+            if _n == 6:
+                _n = 0
+                _ret += '\r'
+            _ret += f"{_tmp[_k].own_call} "
+            _n += 1
+        return _ret
+
     def save_mh_data(self):
         print('Save MH')
         tmp_mh = cleanup_obj_dict(self.calls)
