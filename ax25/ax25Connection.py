@@ -347,6 +347,7 @@ class AX25Conn(object):
             b'*** Connected to',
             b'*** Reconnected to'
         ]
+        print(raw_data)
         for _det_str in det:
             if _det_str in raw_data:
                 _index = raw_data.index(_det_str) + len(_det_str)
@@ -1093,7 +1094,7 @@ class S1Frei(DefaultStat):  # INIT RX
         self.ax25conn.port_handler.insert_conn2all_conn_var(new_conn=self.ax25conn)
         # Handle Incoming Connection
         if self.ax25conn.LINK_Connection is None:
-            self.ax25conn.rx_buf_rawData = '*** Connect from {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
+            self.ax25conn.rx_buf_rawData = '*** Connect from {}\r'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
             if self.ax25conn.gui is not None:
                 self.ax25conn.gui.new_conn_sound()
                 speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
@@ -1189,9 +1190,9 @@ class S2Aufbau(DefaultStat):  # INIT TX
     def accept(self):
         # print("S2 - ACCEPT")
         if self.ax25conn.LINK_Connection is None:
-            self.ax25conn.rx_buf_rawData = '\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
+            self.ax25conn.rx_buf_rawData = '\r*** Connected to {}\r'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
         else:
-            self.send_to_link('\n*** Connected to {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore'))
+            self.send_to_link('\r*** Connected to {}\r'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore'))
         if self.ax25conn.gui is not None:
             speech = ' '.join(self.ax25conn.to_call_str.replace('-', ' '))
             self.ax25conn.gui.sprech(speech)
@@ -1203,7 +1204,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
             self.ax25conn.gui.new_conn_sound()
 
     def reject(self):
-        self.ax25conn.rx_buf_rawData = '\n*** Busy from {}\n'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
+        self.ax25conn.rx_buf_rawData = '\r*** Busy from {}\r'.format(self.ax25conn.to_call_str).encode('ASCII', 'ignore')
         self.S1_end_connection()
 
     def state_cron(self):
@@ -1213,7 +1214,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         # TODO ??? Move up to Conn ???
         if not self.ax25conn.n2:
             if self.ax25conn.LINK_Connection is None:
-                to_qso_win = f'\n*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str}' \
+                to_qso_win = f'\r*** Try connect to {self.ax25conn.ax25_out_frame.to_call.call_str}' \
 
                 user_db_ent = USER_DB.get_entry(self.ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
                 if user_db_ent:
@@ -1221,7 +1222,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
                         to_qso_win += f' - ({user_db_ent.Name})'
                     if user_db_ent.Distance:
                         to_qso_win += f' - {round(user_db_ent.Distance)} km'
-                to_qso_win += f' > Port {self.ax25conn.own_port.port_id}\n'
+                to_qso_win += f' > Port {self.ax25conn.own_port.port_id}\r'
                 self.ax25conn.rx_buf_rawData = to_qso_win.encode('UTF-8', 'ignore')
         self.ax25conn.send_SABM()
         self.ax25conn.n2 += 1
@@ -1231,13 +1232,13 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def n2_fail(self):
-        to_qso_win = f'\n*** Failed connect to {self.ax25conn.ax25_out_frame.to_call.call_str} > ' \
-                     f'Port {self.ax25conn.own_port.port_id}\n'
+        to_qso_win = f'\r*** Failed connect to {self.ax25conn.ax25_out_frame.to_call.call_str} > ' \
+                     f'Port {self.ax25conn.own_port.port_id}\r'
         user_db_ent = USER_DB.get_entry(self.ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
         if user_db_ent:
             if user_db_ent.Name:
-                to_qso_win = f'\n*** Failed connect to {self.ax25conn.ax25_out_frame.to_call.call_str} - ' \
-                             f'({user_db_ent.Name}) > Port {self.ax25conn.own_port.port_id}\n'
+                to_qso_win = f'\r*** Failed connect to {self.ax25conn.ax25_out_frame.to_call.call_str} - ' \
+                             f'({user_db_ent.Name}) > Port {self.ax25conn.own_port.port_id}\r'
 
         self.ax25conn.rx_buf_rawData = to_qso_win.encode('UTF-8', 'ignore')
         self.ax25conn.send_DISC()

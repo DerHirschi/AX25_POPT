@@ -887,6 +887,12 @@ class AXIP(AX25Port):
                     raise AX25DeviceFAIL
             except OSError:
                 pass
+            except TypeError as e:
+                logger.error(f"TypeError AXIP Dev !!! \n {e}")
+                logger.error(frame.axip_add)
+                print(frame.axip_add)
+                logger.error(frame.bytes + calc_crc)
+                print(frame.bytes + calc_crc)
             else:
                 MH_LIST.bw_mon_inp(frame, self.port_id)
         if self.port_cfg.parm_axip_Multicast and not no_multicast:

@@ -1264,7 +1264,7 @@ class ChBtnFrm:
         self._main_class = main_win
         self.ch_btn_blink_timer = time.time()
         self.ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=10)
-        _btn_font = ("fixedsys", 8, 'bold')
+        _btn_font = ("fixedsys", 8, )
         self.ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
