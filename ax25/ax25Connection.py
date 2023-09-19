@@ -1376,6 +1376,7 @@ class S5Ready(DefaultStat):
         if self.pf:
             self.ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self.ax25conn.set_T1(stop=True)
+            # self.ax25conn.set_T2(stop=True)
         else:
             # Maybe all ? or Automode ?
             self.ax25conn.resend_unACK_buf(1)

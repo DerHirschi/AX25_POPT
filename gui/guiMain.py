@@ -622,17 +622,17 @@ class SideTabbedFrame:
             self._main_win.on_channel_status_change()
 
     def _chk_t2auto(self):
-        conn = self._main_win.get_conn()
-        if conn:
+        _conn = self._main_win.get_conn()
+        if _conn:
             if self.t2_auto_var.get():
-                conn.own_port.port_cfg.parm_T2_auto = True
-                conn.calc_irtt()
-                self.t2_var.set(str(conn.parm_T2 * 1000))
+                _conn.own_port.port_cfg.parm_T2_auto = True
+                _conn.calc_irtt()
+                self.t2_var.set(str(_conn.parm_T2 * 1000))
                 self.t2.configure(state='disabled')
             else:
-                conn.own_port.port_cfg.parm_T2_auto = False
+                _conn.own_port.port_cfg.parm_T2_auto = False
                 self.t2.configure(state='normal')
-            conn.calc_irtt()
+            _conn.calc_irtt()
 
     def _chk_sprech_on(self):
         if self.sprech_on.get():
@@ -715,29 +715,30 @@ class SideTabbedFrame:
         tx_buff = 'TX-Buffer: --- kb'
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
-        station = self._main_win.get_conn(self._main_win.channel_index)
-        if station:
-            if station.RTT_Timer.rtt_best == 999.0:
+        _station = self._main_win.get_conn(self._main_win.channel_index)
+        if _station:
+            if _station.RTT_Timer.rtt_best == 999.0:
                 best = "Best: -1"
             else:
-                best = "Best: {:.1f}".format(station.RTT_Timer.rtt_best)
-            worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
-            avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
-            last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
-            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(station.time_start)}"
-            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
-            tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
-            rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
-            if station.is_link:
+                best = "Best: {:.1f}".format(_station.RTT_Timer.rtt_best)
+            worst = "Worst: {:.1f}".format(_station.RTT_Timer.rtt_worst)
+            avg = "AVG: {:.1f}".format(_station.RTT_Timer.rtt_average)
+            last = "Last: {:.1f}".format(_station.RTT_Timer.rtt_last)
+            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(_station.time_start)}"
+            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(_station.tx_buf_rawData))
+            tx_count = 'TX: ' + get_kb_str_fm_bytes(_station.tx_byte_count)
+            rx_count = 'RX: ' + get_kb_str_fm_bytes(_station.rx_byte_count)
+            if _station.is_link:
                 status_text = 'Link'
-            elif station.pipe is not None:
+            elif _station.pipe is not None:
                 status_text = 'Pipe'
-            elif station.ft_obj is not None:
-                if station.ft_obj.dir == 'TX':
+            elif _station.ft_obj is not None:
+                if _station.ft_obj.dir == 'TX':
                     status_text = 'Sending File'
                 else:
                     status_text = 'Receiving File'
         self.status_label_var.set(status_text)
+        # TODO tk.StringVar
         self.rtt_best.configure(text=best)
         self.rtt_worst.configure(text=worst)
         self.rtt_avg.configure(text=avg)
@@ -761,37 +762,37 @@ class SideTabbedFrame:
             self.update_tree()
 
     def on_ch_stat_change(self):
-        conn = self._main_win.get_conn()
-        if conn:
+        _conn = self._main_win.get_conn()
+        if _conn:
             self.max_frame.configure(state='normal')
             self.pac_len.configure(state='normal')
-            self.max_frame_var.set(str(conn.parm_MaxFrame))
-            self.pac_len_var.set(conn.parm_PacLen)
-            self.rnr_var.set(conn.is_RNR)
+            self.max_frame_var.set(str(_conn.parm_MaxFrame))
+            self.pac_len_var.set(_conn.parm_PacLen)
+            self.rnr_var.set(_conn.is_RNR)
             self.rnr.configure(state='normal')
             self.link_holder.configure(state='normal')
-            if conn.link_holder_on:
+            if _conn.link_holder_on:
                 self.link_holder_var.set(True)
             else:
                 self.link_holder_var.set(False)
 
-            self.tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
+            self.tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(_conn.tx_buf_rawData)))
 
-            if conn.is_RNR:
+            if _conn.is_RNR:
                 self.rnr.select()
             else:
                 self.rnr.deselect()
             self.t2_auto.configure(state='normal')
-            if conn.own_port.port_cfg.parm_T2_auto:
+            if _conn.own_port.port_cfg.parm_T2_auto:
                 self.t2_auto_var.set(True)
                 self.t2_auto.select()
-                self.t2_var.set(str(conn.parm_T2 * 1000))
+                self.t2_var.set(str(_conn.parm_T2 * 1000))
                 self.t2.configure(state='disabled')
             else:
                 self.t2_auto_var.set(False)
                 self.t2_auto.deselect()
                 self.t2.configure(state='normal')
-                self.t2_var.set(str(conn.parm_T2 * 1000))
+                self.t2_var.set(str(_conn.parm_T2 * 1000))
 
         else:
             self.max_frame.configure(state='disabled')
@@ -2637,6 +2638,9 @@ class TkMainWin:
                 else:
                     self._open_settings_window('priv_win')
 
+    def _open_ft_manager(self, event=None):
+        self._open_settings_window('ft_manager')
+
     def _switch_monitor_mode(self):
         self._txt_win.switch_mon_mode()
         if self.mon_mode:
@@ -2765,9 +2769,10 @@ class TkMainWin:
                 _status = f'{_conn.ft_obj.dir} FILE'
                 if self._txt_win.stat_info_status_var.get() != _status:
                     self._txt_win.stat_info_status_var.set(_status)
-                    self._txt_win.status_label.bind('<Button-1>', lambda: self._open_settings_window('ft_manager'))
+                    # self._txt_win.status_label.bind('<Button-1>', lambda: self._open_settings_window('ft_manager'))
+                    self._txt_win.status_label.bind('<Button-1>', self._open_ft_manager)
             else:
-                _status = ""
+                _status = ''
                 if _conn.cli.sysop_priv:
                     _status += 'S'
                 else:
@@ -2784,6 +2789,9 @@ class TkMainWin:
                 if self._txt_win.stat_info_status_var.get() != _status:
                     self._txt_win.stat_info_status_var.set(_status)
                     self._txt_win.status_label.bind('<Button-1>', self.do_priv)
+        elif self._txt_win.stat_info_status_var.get() != _status:
+            self._txt_win.stat_info_status_var.set(_status)
+            self._txt_win.status_label.bind('<Button-1>',)
         """
         if _dist:
             _loc += f" ({_dist} km)"
