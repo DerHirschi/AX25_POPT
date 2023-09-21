@@ -28,7 +28,7 @@ class AX25PortHandler(object):
         # VArs for gathering Stuff
         # self.mh = MH_LIST
         # self.aprs_ais = None
-        self.aprs_ais = APRS_ais()
+        self.aprs_ais = None
         self.gui = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
@@ -184,6 +184,7 @@ class AX25PortHandler(object):
                 logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
 
     def init_aprs_ais(self):
+        self.aprs_ais = APRS_ais()
         if self.aprs_ais is not None:
             self.aprs_ais.port_handler = self
             if self.aprs_ais.ais is not None:

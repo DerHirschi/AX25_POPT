@@ -48,23 +48,24 @@ class APRS_ais(object):
         # self.ais_new_rx_buff = []
         self._dbl_pack = []
         """ Global APRS Stuff """
-        self.ais_aprs_msg_pool = {
+        self.aprs_msg_pool = {
             "message": [],
             "bulletin": [],
         }
+        self.aprs_wx_msg_pool = {}
         self._ack_counter = 0
         self.spooler_buffer = {}
         self._parm_max_n = 2
         self._parm_resend = 60
         """ Loop Control """
-        # self.loop_is_running = False
+        self.loop_is_running = False
         self._non_prio_task_timer = 0
         self._parm_non_prio_task_timer = 1
         self.port_handler = None
         self._del_spooler_tr = False
         """ Watchdog """
         self._watchdog_last = time.time()
-        self._parm_watchdog = 60    # Sec.
+        self._parm_watchdog = 20    # Sec.
         """ Load CFGs and Init (Login to APRS-Server) """
         if load_cfg:
             self._load_conf_fm_file()
@@ -82,7 +83,7 @@ class APRS_ais(object):
         save_data.ais_mon_gui = None
         save_data.port_handler = None
         save_data.ais_rx_buff = []
-        # save_data.loop_is_running = False
+        save_data.loop_is_running = False
         save_data.ais_aprs_stations = {}
         save_data.spooler_buffer = {}
         """
@@ -147,6 +148,7 @@ class APRS_ais(object):
             return False
         print("APRS-IS Login successful")
         logger.info("APRS-IS Login successful")
+        self.loop_is_running = True
         return True
 
     def task(self):
@@ -175,7 +177,6 @@ class APRS_ais(object):
                     if self.port_handler.gui.aprs_pn_msg_win is not None:
                         self.port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
 
-
     """
     def task_halt(self):
         self.loop_is_running = False
@@ -184,15 +185,19 @@ class APRS_ais(object):
         if self.ais is not None:
             if self.ais_active:
                 print("Consumer")
-                try:
-                    self.ais.consumer(self.callback,
-                                      blocking=True,
-                                      immortal=True,  # TODO reconnect handling
-                                      raw=False)
-                except ValueError:
-                    self.ais_active = False
-                    del self.ais
-                    self.ais = None
+                while self.loop_is_running:
+                    try:
+                        self.ais.consumer(self.callback,
+                                          blocking=False,
+                                          immortal=True,  # TODO reconnect handling
+                                          raw=False)
+                    except ValueError:
+                        # self.ais_active = False
+                        del self.ais
+                        self.ais = None
+                        self.loop_is_running = False
+                        break
+                print("Consumer ENDE")
 
     def _ais_tx(self, ais_pack):
         if self.ais is not None:
@@ -200,19 +205,20 @@ class APRS_ais(object):
                 try:
                     self.ais.sendall(ais_pack)
                 except aprslib.ConnectionError:
-                    # self.loop_is_running = False
+                    self.loop_is_running = False
                     del self.ais
                     self.ais = None
 
     def ais_close(self):
         if self.ais is not None:
-            # self.loop_is_running = False
+            self.loop_is_running = False
             self.ais.close()
             del self.ais
             self.ais = None
             self.save_conf_to_file()
 
     def callback(self, packet):
+        """ RX fm APRS-Server"""
         self.watchdog_reset()
         self.ais_rx_buff.append(
             (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
@@ -223,7 +229,16 @@ class APRS_ais(object):
                 datetime.now().strftime('%d/%m/%y %H:%M:%S'),
                 packet)
         self._aprs_msg_sys_rx(port_id='I-NET', aprs_pack=packet)
-        # print(packet)
+        print(packet)
+
+    def aprs_ax25frame_rx(self, port_id, ax25_frame):
+        """ RX fm AX25Frame (HF/AXIP) """
+        aprs_pack = parse_aprs_fm_ax25frame(ax25_frame)
+        if aprs_pack:
+            msg_format = aprs_pack.get("format", '')
+            if msg_format:
+                if msg_format in ['message', 'bulletin', 'thirdparty']:
+                    self._aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
 
     def watchdog_reset(self):
         self._watchdog_last = time.time()
@@ -234,10 +249,15 @@ class APRS_ais(object):
                 print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
                 logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
                 # self.task_halt()
-                self.ais_close()
+                # self.ais_close()
                 if self.port_handler is not None:
+                    # self.login()
+                    # self.port_handler.close_aprs_ais()
+                    self.ais_close()
                     if self.login():
                         self.port_handler.init_aprs_ais()
+                else:
+                    self.ais_close()
 
     #########################################
     # APRS MSG System
@@ -261,20 +281,20 @@ class APRS_ais(object):
                              )
             if 'message_text' in aprs_pack:
                 if 'message' == aprs_pack['format']:
-                    if formated_pack not in self.ais_aprs_msg_pool['message']:
+                    if formated_pack not in self.aprs_msg_pool['message']:
                         if [port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
                             aprs_pack.get('message_text', '')] not in self._dbl_pack:
                             self._dbl_pack.append([port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
                                                    aprs_pack.get('message_text', '')])
-                            self.ais_aprs_msg_pool['message'].append(formated_pack)
+                            self.aprs_msg_pool['message'].append(formated_pack)
                             self._aprs_msg_sys_new_pn(formated_pack)
                             # print(f"aprs PN-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
                     if aprs_pack.get('msgNo', False):
                         self._send_ack(formated_pack)
                     self._reset_address_in_spooler(aprs_pack)
                 elif 'bulletin' == aprs_pack['format']:
-                    if formated_pack not in self.ais_aprs_msg_pool['bulletin']:
-                        self.ais_aprs_msg_pool['bulletin'].append(formated_pack)
+                    if formated_pack not in self.aprs_msg_pool['bulletin']:
+                        self.aprs_msg_pool['bulletin'].append(formated_pack)
                         self._aprs_msg_sys_new_bn(formated_pack)
                         print(
                             f"aprs Bulletin-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
@@ -310,13 +330,6 @@ class APRS_ais(object):
         print(
             f"aprs Bulletin-MSG fm {formated_pack[1][1]['from']} {formated_pack[0]} - {formated_pack[1][1].get('message_text', '')}")
 
-    def aprs_ax25frame_rx(self, port_id, ax25_frame):
-        aprs_pack = parse_aprs_fm_ax25frame(ax25_frame)
-        if aprs_pack:
-            msg_format = aprs_pack.get("format", '')
-            if msg_format:
-                if msg_format in ['message', 'bulletin', 'thirdparty']:
-                    self._aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
 
     def send_aprs_answer_msg(self, answer_pack, msg='', with_ack=False):
         if answer_pack and msg:
@@ -376,7 +389,7 @@ class APRS_ais(object):
                         pack)
 
                 )
-                self.ais_aprs_msg_pool['message'].append(formated_pack)
+                self.aprs_msg_pool['message'].append(formated_pack)
                 self._aprs_msg_sys_new_pn(formated_pack)
         return True
 
