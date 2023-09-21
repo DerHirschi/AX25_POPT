@@ -187,7 +187,7 @@ class AX25PortHandler(object):
         if self.aprs_ais is not None:
             self.aprs_ais.port_handler = self
             if self.aprs_ais.ais is not None:
-                self.aprs_ais.loop_is_running = True
+                # self.aprs_ais.loop_is_running = True
                 threading.Thread(target=self.aprs_ais.ais_rx_task).start()
 
     def save_all_port_cfgs(self):

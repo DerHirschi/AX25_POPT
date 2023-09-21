@@ -46,25 +46,28 @@ class APRS_ais(object):
         self.ais_active = False
         self.ais_rx_buff = deque([] * 5000, maxlen=5000)
         # self.ais_new_rx_buff = []
-        self.dbl_pack = []
+        self._dbl_pack = []
         """ Global APRS Stuff """
         self.ais_aprs_msg_pool = {
             "message": [],
             "bulletin": [],
         }
-        self.ack_counter = 0
+        self._ack_counter = 0
         self.spooler_buffer = {}
-        self.parm_max_n = 2
-        self.parm_resend = 60
+        self._parm_max_n = 2
+        self._parm_resend = 60
         """ Loop Control """
-        self.loop_is_running = False
-        self.non_prio_task_timer = 0
-        self.parm_non_prio_task_timer = 1
+        # self.loop_is_running = False
+        self._non_prio_task_timer = 0
+        self._parm_non_prio_task_timer = 1
         self.port_handler = None
-        self.del_spooler_tr = False
+        self._del_spooler_tr = False
+        """ Watchdog """
+        self._watchdog_last = time.time()
+        self._parm_watchdog = 60    # Sec.
         """ Load CFGs and Init (Login to APRS-Server) """
         if load_cfg:
-            self.load_conf_fm_file()
+            self._load_conf_fm_file()
         if self.ais_active:
             self.login()
 
@@ -75,10 +78,11 @@ class APRS_ais(object):
         print("Save APRS Conf")
         logger.info("Save APRS Conf")
         save_data = cleanup_obj(set_obj_att(APRS_ais(load_cfg=False), self))
-        save_data._ais = None
+        save_data.ais = None
+        save_data.ais_mon_gui = None
         save_data.port_handler = None
         save_data.ais_rx_buff = []
-        save_data.loop_is_running = False
+        # save_data.loop_is_running = False
         save_data.ais_aprs_stations = {}
         save_data.spooler_buffer = {}
         """
@@ -93,7 +97,7 @@ class APRS_ais(object):
             save_data.ais_aprs_stations[k] = tmp
         save_to_file('ais.popt', data=save_data)
 
-    def load_conf_fm_file(self):
+    def _load_conf_fm_file(self):
         load_data = load_fm_file('ais.popt')
         if load_data:
             load_data = cleanup_obj(load_data)
@@ -113,15 +117,18 @@ class APRS_ais(object):
                                 load_data.ais_aprs_stations = tmp
 
     def login(self):
+        self.watchdog_reset()
         if not self.ais_active:
             return False
         if not self.ais_call:
+            self.ais_active = False
             return False
         if self.ais_host == ('', 0):
+            self.ais_active = False
             return False
         if not self.ais_host[0] or not self.ais_host[1]:
+            self.ais_active = False
             return False
-
         self.ais = aprslib.IS(callsign=self.ais_call,
                               passwd=self.ais_pass,
                               host=self.ais_host[0],
@@ -143,34 +150,36 @@ class APRS_ais(object):
         return True
 
     def task(self):
-        # while self.loop_is_running:
         # self.prio_tasks()
         self._non_prio_tasks()
-        # time.sleep(0.15)
-        # print("APRS-AIS Loop END")
-        # logger.info("APRS-AIS Loop END")
 
+    """
     def prio_tasks(self):
         pass
         # self.ais_rx_task()
+    """
 
     def _non_prio_tasks(self):
         # print("non Prio")
-        if time.time() > self.non_prio_task_timer:
+        if time.time() > self._non_prio_task_timer:
             # self.ais_rx_task()
-            self.non_prio_task_timer = time.time() + self.parm_non_prio_task_timer
-            if self.del_spooler_tr:
-                self.flush_spooler_buff()
-                self.del_spooler_tr = False
-            self.spooler_task()
+            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
+            if self.ais_active:
+                self._watchdog_task()
+            if self._del_spooler_tr:
+                self._flush_spooler_buff()
+                self._del_spooler_tr = False
+            self._spooler_task()
             if self.port_handler is not None:
                 if self.port_handler.gui is not None:
                     if self.port_handler.gui.aprs_pn_msg_win is not None:
                         self.port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
 
+
+    """
     def task_halt(self):
         self.loop_is_running = False
-
+    """
     def ais_rx_task(self):
         if self.ais is not None:
             if self.ais_active:
@@ -185,25 +194,26 @@ class APRS_ais(object):
                     del self.ais
                     self.ais = None
 
-    def ais_tx(self, ais_pack):
+    def _ais_tx(self, ais_pack):
         if self.ais is not None:
             if ais_pack:
                 try:
                     self.ais.sendall(ais_pack)
                 except aprslib.ConnectionError:
-                    self.loop_is_running = False
+                    # self.loop_is_running = False
                     del self.ais
                     self.ais = None
 
     def ais_close(self):
         if self.ais is not None:
-            self.loop_is_running = False
+            # self.loop_is_running = False
             self.ais.close()
             del self.ais
             self.ais = None
             self.save_conf_to_file()
 
     def callback(self, packet):
+        self.watchdog_reset()
         self.ais_rx_buff.append(
             (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
              packet)
@@ -212,12 +222,26 @@ class APRS_ais(object):
             self.ais_mon_gui.pack_to_mon(
                 datetime.now().strftime('%d/%m/%y %H:%M:%S'),
                 packet)
-        self.aprs_msg_sys_rx(port_id='I-NET', aprs_pack=packet)
+        self._aprs_msg_sys_rx(port_id='I-NET', aprs_pack=packet)
         # print(packet)
+
+    def watchdog_reset(self):
+        self._watchdog_last = time.time()
+
+    def _watchdog_task(self):
+        if self.ais_active:
+            if time.time() > self._watchdog_last + self._parm_watchdog:
+                print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
+                logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
+                # self.task_halt()
+                self.ais_close()
+                if self.port_handler is not None:
+                    if self.login():
+                        self.port_handler.init_aprs_ais()
 
     #########################################
     # APRS MSG System
-    def aprs_msg_sys_rx(self, port_id, aprs_pack: {}):
+    def _aprs_msg_sys_rx(self, port_id, aprs_pack: {}):
         if aprs_pack.get('format', '') == 'thirdparty':
             # print(f"THP > {aprs_pack['subpacket']}")
             path = aprs_pack.get('path', [])
@@ -239,29 +263,29 @@ class APRS_ais(object):
                 if 'message' == aprs_pack['format']:
                     if formated_pack not in self.ais_aprs_msg_pool['message']:
                         if [port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
-                            aprs_pack.get('message_text', '')] not in self.dbl_pack:
-                            self.dbl_pack.append([port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
-                                                  aprs_pack.get('message_text', '')])
+                            aprs_pack.get('message_text', '')] not in self._dbl_pack:
+                            self._dbl_pack.append([port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
+                                                   aprs_pack.get('message_text', '')])
                             self.ais_aprs_msg_pool['message'].append(formated_pack)
-                            self.aprs_msg_sys_new_pn(formated_pack)
+                            self._aprs_msg_sys_new_pn(formated_pack)
                             # print(f"aprs PN-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
                     if aprs_pack.get('msgNo', False):
-                        self.send_ack(formated_pack)
-                    self.reset_address_in_spooler(aprs_pack)
+                        self._send_ack(formated_pack)
+                    self._reset_address_in_spooler(aprs_pack)
                 elif 'bulletin' == aprs_pack['format']:
                     if formated_pack not in self.ais_aprs_msg_pool['bulletin']:
                         self.ais_aprs_msg_pool['bulletin'].append(formated_pack)
-                        self.aprs_msg_sys_new_bn(formated_pack)
+                        self._aprs_msg_sys_new_bn(formated_pack)
                         print(
                             f"aprs Bulletin-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
 
             elif 'response' in aprs_pack:
                 aprs_pack['popt_port_id'] = port_id
-                self.handle_response(pack=aprs_pack)
+                self._handle_response(pack=aprs_pack)
 
-    def handle_response(self, pack):
+    def _handle_response(self, pack):
         if pack.get('msgNo', False):
-            self.handle_ack(pack)
+            self._handle_ack(pack)
 
     """
     def check_duplicate_msg(self, aprs_pack, msg_typ: str):
@@ -272,16 +296,17 @@ class APRS_ais(object):
         return False
     """
 
-    def update_pn_msg_gui(self, aprs_pack):
+    def _update_pn_msg_gui(self, aprs_pack):
         if self.port_handler is not None:
             if self.port_handler.gui is not None:
                 if self.port_handler.gui.aprs_pn_msg_win is not None:
                     self.port_handler.gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
 
-    def aprs_msg_sys_new_pn(self, formated_pack: (int, (str, dict))):
-        self.update_pn_msg_gui(formated_pack)
+    def _aprs_msg_sys_new_pn(self, formated_pack: (int, (str, dict))):
+        self._update_pn_msg_gui(formated_pack)
 
-    def aprs_msg_sys_new_bn(self, formated_pack: (int, (str, dict))):
+    @staticmethod
+    def _aprs_msg_sys_new_bn(self, formated_pack: (int, (str, dict))):
         print(
             f"aprs Bulletin-MSG fm {formated_pack[1][1]['from']} {formated_pack[0]} - {formated_pack[1][1].get('message_text', '')}")
 
@@ -291,7 +316,7 @@ class APRS_ais(object):
             msg_format = aprs_pack.get("format", '')
             if msg_format:
                 if msg_format in ['message', 'bulletin', 'thirdparty']:
-                    self.aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
+                    self._aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
 
     def send_aprs_answer_msg(self, answer_pack, msg='', with_ack=False):
         if answer_pack and msg:
@@ -336,12 +361,12 @@ class APRS_ais(object):
         for el in msg_list:
             if with_ack:
                 pack['message_text'] = f"{el}"
-                pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}" + "{" + f"{int(self.ack_counter)}"
-                self.add_to_spooler(pack)
+                pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}" + "{" + f"{int(self._ack_counter)}"
+                self._add_to_spooler(pack)
             else:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}"
-                self.send_it(pack)
+                self._send_it(pack)
             if not pack.get('is_ack', False):
                 # print(f"ECHO {pack}")
                 formated_pack = (
@@ -352,34 +377,34 @@ class APRS_ais(object):
 
                 )
                 self.ais_aprs_msg_pool['message'].append(formated_pack)
-                self.aprs_msg_sys_new_pn(formated_pack)
+                self._aprs_msg_sys_new_pn(formated_pack)
         return True
 
-    def send_it(self, pack):
+    def _send_it(self, pack):
         if pack['popt_port_id'] == 'I-NET':
-            self.send_as_AIS(pack)
+            self._send_as_AIS(pack)
         else:
-            self.send_as_UI(pack)
+            self._send_as_UI(pack)
 
-    def add_to_spooler(self, pack):
+    def _add_to_spooler(self, pack):
         # print(f"Spooler in > {pack}")
         pack['N'] = 0
         pack['send_timer'] = 0
-        pack['msgNo'] = str(self.ack_counter)
+        pack['msgNo'] = str(self._ack_counter)
         pack['address_str'] = f"{pack['from']}:{pack['addresse']}"
-        self.spooler_buffer[str(self.ack_counter)] = dict(pack)
-        self.ack_counter = (self.ack_counter + 1) % 99999
+        self.spooler_buffer[str(self._ack_counter)] = dict(pack)
+        self._ack_counter = (self._ack_counter + 1) % 99999
 
-    def del_fm_spooler(self, pack):
+    def _del_fm_spooler(self, pack):
         # print("del_fm_spooler")
         msg_no = pack.get('msgNo', '')
         ack_pack = self.spooler_buffer.get(msg_no, {})
         if ack_pack.get('address_str', '') == f"{pack.get('addresse', '')}:{pack.get('from', '')}":
             # print(f"ACK DEL {msg_no}")
             del self.spooler_buffer[msg_no]
-            self.reset_address_in_spooler(pack)
+            self._reset_address_in_spooler(pack)
 
-    def reset_address_in_spooler(self, pack):
+    def _reset_address_in_spooler(self, pack):
         add_str = f"{pack.get('addresse', '')}:{pack.get('from', '')}"
         for msg_no in self.spooler_buffer:
             if self.spooler_buffer[msg_no]['address_str'] == add_str:
@@ -392,37 +417,37 @@ class APRS_ais(object):
             self.spooler_buffer[msg_no]['send_timer'] = 0
 
     def del_spooler(self):
-        self.del_spooler_tr = True
+        self._del_spooler_tr = True
 
-    def flush_spooler_buff(self):
+    def _flush_spooler_buff(self):
         self.spooler_buffer = {}
 
-    def handle_ack(self, pack):
-        self.del_fm_spooler(pack)
-        self.reset_address_in_spooler(pack)
+    def _handle_ack(self, pack):
+        self._del_fm_spooler(pack)
+        self._reset_address_in_spooler(pack)
 
-    def spooler_task(self):
+    def _spooler_task(self):
         send = []
         for msg_no in list(self.spooler_buffer.keys()):
             pack = self.spooler_buffer[msg_no]
             if (pack['address_str'], pack['popt_port_id']) not in send:
                 send.append((pack['address_str'], pack['popt_port_id']))
                 if pack['send_timer'] < time.time():
-                    if pack['N'] < self.parm_max_n:
-                        pack['send_timer'] = time.time() + self.parm_resend
+                    if pack['N'] < self._parm_max_n:
+                        pack['send_timer'] = time.time() + self._parm_resend
                         pack['N'] += 1
-                        self.send_it(pack)
-                        if pack['N'] == self.parm_max_n:
-                            self.del_address_fm_spooler(pack)
+                        self._send_it(pack)
+                        if pack['N'] == self._parm_max_n:
+                            self._del_address_fm_spooler(pack)
                     # else: self.del_fm_spooler(pack, rx=False)
 
-    def del_address_fm_spooler(self, pack):
+    def _del_address_fm_spooler(self, pack):
         for msg_no in list(self.spooler_buffer.keys()):
             if self.spooler_buffer[msg_no]['address_str'] == pack['address_str']:
-                self.spooler_buffer[msg_no]['N'] = self.parm_max_n
+                self.spooler_buffer[msg_no]['N'] = self._parm_max_n
                 # self.del_fm_spooler(pack, rx=False)
 
-    def send_as_UI(self, pack):
+    def _send_as_UI(self, pack):
         port_id = pack.get('popt_port_id', False)
         ax_port = self.port_handler.ax25_ports.get(port_id, False)
         if ax_port:
@@ -440,14 +465,14 @@ class APRS_ais(object):
                 cmd_poll=(False, False)
             )
 
-    def send_as_AIS(self, pack):
+    def _send_as_AIS(self, pack):
         # print(f"send_as_AIS : {pack}")
         msg = pack['raw_message_text']
         pack_str = f"{pack['from']}>{pack['to']},TCPIP*:{msg}"
         # print(f" AIS OUT > {pack_str}")
-        self.ais_tx(pack_str)
+        self._ais_tx(pack_str)
 
-    def send_ack(self, pack_to_resp):
+    def _send_ack(self, pack_to_resp):
 
         msg_no = pack_to_resp[1][1].get('msgNo', False)
         # print(f"SEND ACK > {msg_no}")
@@ -457,5 +482,7 @@ class APRS_ais(object):
             pack[1][1]['is_ack'] = True
             self.send_aprs_answer_msg(pack, f"ack{msg_no}", False)
 
+    """
     def send_rej(self, pack_to_resp):
         pass
+    """

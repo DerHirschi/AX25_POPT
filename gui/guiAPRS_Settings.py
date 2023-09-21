@@ -204,7 +204,7 @@ class APRSSettingsWin(tk.Toplevel):
                 self.ais_lon_var.set(str(_lon))
 
         if self._ais is not None:
-            self._ais.task_halt()
+            # self._ais.task_halt()
             self._ais.ais_close()
             self._ais.ais_call = self.ais_call_var.get()
             self._ais.ais_pass = self.ais_pass_var.get()

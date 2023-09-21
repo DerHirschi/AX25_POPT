@@ -38,6 +38,10 @@ def save_to_file(filename: str, data):
             pickle.dump(data, f, 2)
     except EOFError:
         pass
+    except TypeError as e:
+        logger.error(f"save_to_file Error: {e}")
+        logger.error(f"save_to_file Error: {data}")
+        print(f"save_to_file Error: {data}")
 
 
 def load_fm_file(filename: str):
