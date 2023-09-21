@@ -91,7 +91,7 @@ class SideTabbedFrame:
             # width=300,
             height=400
         )
-        self._tab_side_frame.grid(row=4, column=0, columnspan=6, pady=10, sticky="nsew")
+        self._tab_side_frame.grid(row=3, column=0, columnspan=6, pady=10, sticky="nsew")
         self._tabControl = ttk.Notebook(
             self._tab_side_frame,
             height=300,
@@ -1471,7 +1471,10 @@ class TkMainWin:
         self.main_win = tk.Tk()
         self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
-        # self.main_win.iconbitmap("favicon.ico")
+        try:
+            self.main_win.iconbitmap("favicon.ico")
+        except TclError:
+            pass
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ##########################
         self.style = ttk.Style()
@@ -1623,9 +1626,9 @@ class TkMainWin:
         self._side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
         self._side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)  # CONN BTN
         self._side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)  # BTN row 2
-        self._side_btn_frame_top.rowconfigure(2, minsize=50, weight=0)  # Dummy
-        self._side_btn_frame_top.rowconfigure(3, minsize=50, weight=2)  # Dummy
-        self._side_btn_frame_top.rowconfigure(4, minsize=300, weight=10)  # Reiter Frame
+        self._side_btn_frame_top.rowconfigure(2, minsize=1, weight=0)  # Dummy
+        # self._side_btn_frame_top.rowconfigure(3, minsize=1, weight=2)  # Dummy
+        self._side_btn_frame_top.rowconfigure(3, minsize=300, weight=10)  # Reiter Frame
         # self._side_btn_frame_top.rowconfigure(5, minsize=15, weight=1)  # Reiter Frame
 
         self._side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
@@ -1679,7 +1682,7 @@ class TkMainWin:
         # plt.style.use('dark_background')
         self._ax = self._bw_fig.add_subplot(111)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.97, bottom=0.1)
-        self._ax.axis([0, 10, 0, 60])
+        self._ax.axis([0, 10, 0, 100])
         self._bw_fig.set_facecolor('xkcd:light grey')
         self._ax.set_facecolor('#000000')
         # self.bw_fig.xlim(0, 10)  # TODO As Option
@@ -1694,7 +1697,7 @@ class TkMainWin:
         self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._side_btn_frame_top)  # A tk.DrawingArea.
         self._canvas.flush_events()
         self._canvas.draw()
-        self._canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
         # self._canvas.get_tk_widget().config(cursor="none")
         self._bw_fig.canvas.flush_events()
 

@@ -144,8 +144,8 @@ class APRS_ais(object):
 
     def task(self):
         # while self.loop_is_running:
-        self.prio_tasks()
-        self.non_prio_tasks()
+        # self.prio_tasks()
+        self._non_prio_tasks()
         # time.sleep(0.15)
         # print("APRS-AIS Loop END")
         # logger.info("APRS-AIS Loop END")
@@ -154,7 +154,7 @@ class APRS_ais(object):
         pass
         # self.ais_rx_task()
 
-    def non_prio_tasks(self):
+    def _non_prio_tasks(self):
         # print("non Prio")
         if time.time() > self.non_prio_task_timer:
             # self.ais_rx_task()
@@ -228,6 +228,10 @@ class APRS_ais(object):
                 aprs_pack['msgNo'] = ack
 
         if aprs_pack.get('format', '') in ['message', 'bulletin']:
+            if not aprs_pack.get('msgNo', False):
+                aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
+                if ack is not None:
+                    aprs_pack['msgNo'] = ack
             formated_pack = (port_id,
                              (datetime.now().strftime('%d/%m/%y %H:%M:%S'), aprs_pack)
                              )
