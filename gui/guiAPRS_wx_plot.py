@@ -87,35 +87,66 @@ class WXPlotWindow(tk.Toplevel):
         _y_lum = []
         _wx_data = list(self._wx_data)
         _wx_data.reverse()
+        _now = datetime.now()
         for _data in self._wx_data:
             _timestamp = _data[0]
             _timestamt_dt = convert_str_to_datetime(_timestamp)
             if _timestamt_dt:
                 # if datetime.now().timestamp() - _timestamt_dt.timestamp() < _delta_time_24h.timestamp():
-                _dif = datetime.now() - _timestamt_dt
-                _x_scale.append(_dif.total_seconds() / 3600)
 
                 if 'weather' in _data[1].keys():
                     if 'pressure' in _data[1]['weather'].keys():
+                        if len(_y_pressure) < len(_x_scale):
+                            _y_pressure.extend([0] * (len(_x_scale) - len(_y_pressure)))
                         _y_pressure.append(_data[1]['weather']['pressure'])
+
                     if 'humidity' in _data[1]['weather'].keys():
+                        if len(_y_hum) < len(_x_scale):
+                            _y_hum.extend([0] * (len(_x_scale) - len(_y_hum)))
                         _y_hum.append(_data[1]['weather']['humidity'])
+
                     if 'rain_1h' in _data[1]['weather'].keys():
+                        if len(_y_rain_1) < len(_x_scale):
+                            _y_rain_1.extend([0] * (len(_x_scale) - len(_y_rain_1)))
                         _y_rain_1.append(_data[1]['weather']['rain_1h'])
+
                     if 'rain_24h' in _data[1]['weather'].keys():
+                        if len(_y_rain_24) < len(_x_scale):
+                            _y_rain_24.extend([0] * (len(_x_scale) - len(_y_rain_24)))
                         _y_rain_24.append(_data[1]['weather']['rain_24h'])
+
                     if 'rain_since_midnight' in _data[1]['weather'].keys():
+                        if len(_y_rain_day) < len(_x_scale):
+                            _y_rain_day.extend([0] * (len(_x_scale) - len(_y_rain_day)))
                         _y_rain_day.append(_data[1]['weather']['rain_since_midnight'])
+
                     if 'temperature' in _data[1]['weather'].keys():
+                        if len(_y_temp) < len(_x_scale):
+                            _y_temp.extend([0] * (len(_x_scale) - len(_y_temp)))
                         _y_temp.append(_data[1]['weather']['temperature'])
+
                     if 'wind_direction' in _data[1]['weather'].keys():
+                        if len(_y_wind_dir) < len(_x_scale):
+                            _y_wind_dir.extend([0] * (len(_x_scale) - len(_y_wind_dir)))
                         _y_wind_dir.append(_data[1]['weather']['wind_direction'])
+
                     if 'wind_gust' in _data[1]['weather'].keys():
+                        if len(_y_wind_gust) < len(_x_scale):
+                            _y_wind_gust.extend([0] * (len(_x_scale) - len(_y_wind_gust)))
                         _y_wind_gust.append(_data[1]['weather']['wind_gust'])
+
                     if 'wind_speed' in _data[1]['weather'].keys():
+                        if len(_y_wind_speed) < len(_x_scale):
+                            _y_wind_speed.extend([0] * (len(_x_scale) - len(_y_wind_speed)))
                         _y_wind_speed.append(_data[1]['weather']['wind_speed'])
+
                     if 'luminosity' in _data[1]['weather'].keys():
+                        if len(_y_lum) < len(_x_scale):
+                            _y_lum.extend([0] * (len(_x_scale) - len(_y_lum)))
                         _y_lum.append(_data[1]['weather']['luminosity'])
+
+                    _dif = _now - _timestamt_dt
+                    _x_scale.append(_dif.total_seconds() / 3600)
 
         if _y_pressure:
             self._plot1.plot(_x_scale, _y_pressure, label='Pressure')
