@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.92.3'
+VER = '2.93.9'
 LANGUAGE = 0  # QUICK FIX
 """
 0 = German
@@ -205,7 +205,7 @@ WELCOME_SPEECH = (
     'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
     'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
 )
-TEXT_SIZE_STATUS = 11
+TEXT_SIZE_STATUS = 10
 TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
 TXT_INP_CLR = 'yellow'

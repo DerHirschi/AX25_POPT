@@ -29,7 +29,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         # self.resizable(False, False)
         self.lift()
         self._aprs_ais = PORT_HANDLER.get_aprs_ais()
-        self._aprs_pn_msg = self._aprs_ais.ais_aprs_msg_pool['message']
+        self._aprs_pn_msg = self._aprs_ais.aprs_msg_pool['message']
 
         # Oberer Bereich: Rahmen für Buttons
         top_frame = ttk.Frame(self)
@@ -164,7 +164,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             time.sleep(0.1)
 
         self._is_in_update = True
-        self._aprs_pn_msg = list(self._aprs_ais.ais_aprs_msg_pool['message'])
+        self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
         self._aprs_pn_msg.reverse()
 
         for i in self._messages_treeview.get_children():
@@ -198,7 +198,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
     def update_tree_single_pack(self, form_aprs_pack):
         if self._init_done:
             self._is_in_update = True
-            self._aprs_pn_msg = list(self._aprs_ais.ais_aprs_msg_pool['message'])
+            self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
             self._aprs_pn_msg.reverse()
             port_id = form_aprs_pack[0]
             if port_id == -1:
@@ -312,7 +312,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             NewMessageWindow(self)
 
     def _btn_del_all_msg(self):
-        self._aprs_ais.ais_aprs_msg_pool['message'] = []
+        self._aprs_ais.aprs_msg_pool['message'] = []
         self._update_tree()
 
     def _destroy_win(self):

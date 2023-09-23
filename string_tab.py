@@ -29,6 +29,7 @@ STR_TABLE = {
     'size': ('Größe:', 'Size:', 'Lekker groot:'),
     'new': ('Neu', 'New', 'Lekker Nieuw'),
     'disconnect': ('Disconnect', 'Disconnect', 'Lekker'),
+    'wx_window': ('Wetterstationen', 'Weather Stations', 'Lekker WX-Stations'),
     'quit': ('Quit', 'Quit', 'niet Lekker'),
     'connections': ('Verbindungen', 'Connections', 'Lekker'),
     'copy': ('Kopieren', 'Copy', 'Lekker Kopiëren'),

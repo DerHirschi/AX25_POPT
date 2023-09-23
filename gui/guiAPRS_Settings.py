@@ -156,7 +156,7 @@ class APRSSettingsWin(tk.Toplevel):
         self._vars[-1]['digi'].set(port_aprs.aprs_parm_digi)
 
         # Create AIS checkbutton
-        ais_checkbutton_label = ttk.Label(tab, text="AIS:")
+        ais_checkbutton_label = ttk.Label(tab, text="I-GATE:")
         ais_checkbutton_label.grid(row=5, column=1, padx=10, pady=5, sticky=tk.W)
         ais_checkbutton = ttk.Checkbutton(tab, variable=self._vars[-1]['ais'], state='disabled')
         ais_checkbutton.grid(row=5, column=2, columnspan=2, padx=10, pady=5, sticky=tk.W)
@@ -166,7 +166,7 @@ class APRSSettingsWin(tk.Toplevel):
         baken_label = ttk.Label(tab, text="Baken Text:")
         baken_label.grid(row=6, column=1, padx=10, pady=5, sticky=tk.W)
 
-        baken_textbox = tk.Text(tab, width=85, height=5, state='disabled')
+        baken_textbox = tk.Text(tab, width=85, height=3, state='disabled')
         baken_textbox.grid(row=7, column=1, columnspan=3, padx=10, pady=5, sticky=tk.W)
         # self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 
@@ -204,7 +204,7 @@ class APRSSettingsWin(tk.Toplevel):
                 self.ais_lon_var.set(str(_lon))
 
         if self._ais is not None:
-            self._ais.task_halt()
+            # self._ais.task_halt()
             self._ais.ais_close()
             self._ais.ais_call = self.ais_call_var.get()
             self._ais.ais_pass = self.ais_pass_var.get()

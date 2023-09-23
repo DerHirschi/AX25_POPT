@@ -14,7 +14,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
-from fnc.debug_fnc import show_mem_size
+# from fnc.debug_fnc import show_mem_size
 from fnc.os_fnc import is_linux
 # from ax25.ax25monitor import monitor_frame_inp
 from fnc.socket_fnc import get_ip_by_hostname
@@ -89,10 +89,12 @@ class AX25Port(threading.Thread):
         self.close()
         # self.loop_is_running = False
 
+    """
     def debug_show_var_size(self):
         print()
         print(f"--Port: {self.port_id}")
         self.deb_port_vars = show_mem_size(self.__dict__, previous_sizes=self.deb_port_vars)
+    """
 
     def set_kiss_parm(self):
         pass
@@ -363,13 +365,14 @@ class AX25Port(threading.Thread):
                         if beacon.is_enabled:
                             send_it = beacon.crone()
                             ip_fm_mh = MH_LIST.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
-                            beacon.ax_frame.axip_add = ip_fm_mh
+                            beacon.axip_add = ip_fm_mh
                             if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
                                 if ip_fm_mh == ('', 0):
                                     send_it = False
                             if send_it:
-                                if beacon.encode_beacon():
-                                    self.UI_buf.append(beacon.ax_frame)
+                                _beacon_ax25frame = beacon.encode_beacon()
+                                if _beacon_ax25frame:
+                                    self.UI_buf.append(_beacon_ax25frame)
 
     def build_new_pipe(self,
                        own_call,
@@ -884,6 +887,12 @@ class AXIP(AX25Port):
                     raise AX25DeviceFAIL
             except OSError:
                 pass
+            except TypeError as e:
+                logger.error(f"TypeError AXIP Dev !!! \n {e}")
+                logger.error(frame.axip_add)
+                print(frame.axip_add)
+                logger.error(frame.bytes + calc_crc)
+                print(frame.bytes + calc_crc)
             else:
                 MH_LIST.bw_mon_inp(frame, self.port_id)
         if self.port_cfg.parm_axip_Multicast and not no_multicast:

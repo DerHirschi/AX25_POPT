@@ -24,6 +24,7 @@ from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_
 from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
+from gui.guiAPRS_wx_tree import WXWin
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
@@ -91,7 +92,7 @@ class SideTabbedFrame:
             # width=300,
             height=400
         )
-        self._tab_side_frame.grid(row=4, column=0, columnspan=6, pady=10, sticky="nsew")
+        self._tab_side_frame.grid(row=3, column=0, columnspan=6, pady=10, sticky="nsew")
         self._tabControl = ttk.Notebook(
             self._tab_side_frame,
             height=300,
@@ -464,7 +465,7 @@ class SideTabbedFrame:
 
         # Monitor APRS Decoding Output
         _x = 10
-        _y = 245
+        _y = 235
         self.mon_aprs_var = tk.BooleanVar(self.tab6_monitor)
         self.mon_aprs_var.set(True)
         self.mon_aprs_ent = tk.Checkbutton(self.tab6_monitor,
@@ -622,17 +623,17 @@ class SideTabbedFrame:
             self._main_win.on_channel_status_change()
 
     def _chk_t2auto(self):
-        conn = self._main_win.get_conn()
-        if conn:
+        _conn = self._main_win.get_conn()
+        if _conn:
             if self.t2_auto_var.get():
-                conn.own_port.port_cfg.parm_T2_auto = True
-                conn.calc_irtt()
-                self.t2_var.set(str(conn.parm_T2 * 1000))
+                _conn.own_port.port_cfg.parm_T2_auto = True
+                _conn.calc_irtt()
+                self.t2_var.set(str(_conn.parm_T2 * 1000))
                 self.t2.configure(state='disabled')
             else:
-                conn.own_port.port_cfg.parm_T2_auto = False
+                _conn.own_port.port_cfg.parm_T2_auto = False
                 self.t2.configure(state='normal')
-            conn.calc_irtt()
+            _conn.calc_irtt()
 
     def _chk_sprech_on(self):
         if self.sprech_on.get():
@@ -715,29 +716,30 @@ class SideTabbedFrame:
         tx_buff = 'TX-Buffer: --- kb'
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
-        station = self._main_win.get_conn(self._main_win.channel_index)
-        if station:
-            if station.RTT_Timer.rtt_best == 999.0:
+        _station = self._main_win.get_conn(self._main_win.channel_index)
+        if _station:
+            if _station.RTT_Timer.rtt_best == 999.0:
                 best = "Best: -1"
             else:
-                best = "Best: {:.1f}".format(station.RTT_Timer.rtt_best)
-            worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
-            avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
-            last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
-            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(station.time_start)}"
-            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
-            tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
-            rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
-            if station.is_link:
+                best = "Best: {:.1f}".format(_station.RTT_Timer.rtt_best)
+            worst = "Worst: {:.1f}".format(_station.RTT_Timer.rtt_worst)
+            avg = "AVG: {:.1f}".format(_station.RTT_Timer.rtt_average)
+            last = "Last: {:.1f}".format(_station.RTT_Timer.rtt_last)
+            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(_station.time_start)}"
+            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(_station.tx_buf_rawData))
+            tx_count = 'TX: ' + get_kb_str_fm_bytes(_station.tx_byte_count)
+            rx_count = 'RX: ' + get_kb_str_fm_bytes(_station.rx_byte_count)
+            if _station.is_link:
                 status_text = 'Link'
-            elif station.pipe is not None:
+            elif _station.pipe is not None:
                 status_text = 'Pipe'
-            elif station.ft_obj is not None:
-                if station.ft_obj.dir == 'TX':
+            elif _station.ft_obj is not None:
+                if _station.ft_obj.dir == 'TX':
                     status_text = 'Sending File'
                 else:
                     status_text = 'Receiving File'
         self.status_label_var.set(status_text)
+        # TODO tk.StringVar
         self.rtt_best.configure(text=best)
         self.rtt_worst.configure(text=worst)
         self.rtt_avg.configure(text=avg)
@@ -761,37 +763,37 @@ class SideTabbedFrame:
             self.update_tree()
 
     def on_ch_stat_change(self):
-        conn = self._main_win.get_conn()
-        if conn:
+        _conn = self._main_win.get_conn()
+        if _conn:
             self.max_frame.configure(state='normal')
             self.pac_len.configure(state='normal')
-            self.max_frame_var.set(str(conn.parm_MaxFrame))
-            self.pac_len_var.set(conn.parm_PacLen)
-            self.rnr_var.set(conn.is_RNR)
+            self.max_frame_var.set(str(_conn.parm_MaxFrame))
+            self.pac_len_var.set(_conn.parm_PacLen)
+            self.rnr_var.set(_conn.is_RNR)
             self.rnr.configure(state='normal')
             self.link_holder.configure(state='normal')
-            if conn.link_holder_on:
+            if _conn.link_holder_on:
                 self.link_holder_var.set(True)
             else:
                 self.link_holder_var.set(False)
 
-            self.tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
+            self.tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(_conn.tx_buf_rawData)))
 
-            if conn.is_RNR:
+            if _conn.is_RNR:
                 self.rnr.select()
             else:
                 self.rnr.deselect()
             self.t2_auto.configure(state='normal')
-            if conn.own_port.port_cfg.parm_T2_auto:
+            if _conn.own_port.port_cfg.parm_T2_auto:
                 self.t2_auto_var.set(True)
                 self.t2_auto.select()
-                self.t2_var.set(str(conn.parm_T2 * 1000))
+                self.t2_var.set(str(_conn.parm_T2 * 1000))
                 self.t2.configure(state='disabled')
             else:
                 self.t2_auto_var.set(False)
                 self.t2_auto.deselect()
                 self.t2.configure(state='normal')
-                self.t2_var.set(str(conn.parm_T2 * 1000))
+                self.t2_var.set(str(_conn.parm_T2 * 1000))
 
         else:
             self.max_frame.configure(state='disabled')
@@ -839,16 +841,9 @@ class TxTframe:
         self.pw = ttk.PanedWindow(orient=tk.VERTICAL)
         self._main_class = main_win
         self.text_size = main_win.text_size
-        """
-        self.mon_txt_height = 0
-        self.out_txt_height = 0
-        self.inp_txt_height = 0
-        """
-        # self.mon_btn: tk.Button = main_win.mon_btn
         ###################
         # Input Win
         self.status_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
-        # self.status_frame.grid(row=1, column=1, sticky="nsew")
         self.status_frame.pack(side=tk.BOTTOM, expand=0)
 
         self.status_frame.columnconfigure(1, minsize=60, weight=2)  # Name
@@ -870,7 +865,9 @@ class TxTframe:
                                                     foreground=TXT_INP_CLR,
                                                     font=(FONT, self.text_size),
                                                     insertbackground=TXT_INP_CURSOR_CLR,
-                                                    height=100, bd=0,
+                                                    height=100,
+                                                    width=82,
+                                                    bd=0,
                                                     )
         self.in_txt_win.tag_config("send", foreground="green2")
 
@@ -935,6 +932,7 @@ class TxTframe:
         self.rx_beep_box = Checkbutton(self.status_frame,
                                        text="RX-BEEP",
                                        bg=STAT_BAR_CLR,
+                                       font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                        activebackground=STAT_BAR_CLR,
                                        borderwidth=0,
                                        onvalue=1, offvalue=0,
@@ -943,17 +941,19 @@ class TxTframe:
                                        command=self.chk_rx_beep
                                        )
         self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
-        # Checkbox RX-BEEP
+        # TODO Checkbox Time Stamp
         self.ts_box_var = tk.IntVar()
         self.ts_box_box = Checkbutton(self.status_frame,
                                       text="T-S",
+                                      font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                       bg=STAT_BAR_CLR,
                                       borderwidth=0,
                                       activebackground=STAT_BAR_CLR,
                                       onvalue=1, offvalue=0,
                                       foreground=STAT_BAR_TXT_CLR,
                                       variable=self.ts_box_var,
-                                      command=self.chk_timestamp
+                                      command=self.chk_timestamp,
+                                      state='disabled'
                                       )
         self.ts_box_box.grid(row=1, column=11, sticky="nsew")
         self.status_frame.pack(side=tk.BOTTOM)
@@ -962,7 +962,7 @@ class TxTframe:
         # Output
         self.out_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, )
         self.out_frame.pack(side=tk.BOTTOM, expand=0)
-        self.out_frame.rowconfigure(1, minsize=10, weight=0)
+        self.out_frame.rowconfigure(1, minsize=22, weight=1)
         self.out_frame.rowconfigure(0, weight=1)
         self.out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
         self.out_frame.columnconfigure(1, minsize=80, weight=2)  # Name
@@ -979,6 +979,7 @@ class TxTframe:
                                                      foreground=TXT_OUT_CLR,
                                                      font=(FONT, self.text_size),
                                                      height=100,
+                                                     width=82,
                                                      bd=0,
                                                      borderwidth=0,
                                                      state="disabled",
@@ -994,7 +995,7 @@ class TxTframe:
         self.stat_info_timer_var = tk.StringVar(self.out_frame)
         self.stat_info_encoding_var = tk.StringVar(self.out_frame)
         self.stat_info_status_var = tk.StringVar(self.out_frame)
-        size = 1
+        size = 0
         name_label = tk.Label(self.out_frame,
                               textvariable=self.stat_info_name_var,
                               # bg=STAT_BAR_CLR,
@@ -1093,16 +1094,20 @@ class TxTframe:
             width=8,
             borderwidth=0,
             border=0,
-            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size,)
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - 1,)
         )
-        txt_encoding_ent.grid(row=1, column=8, sticky="nsew")
+        txt_encoding_ent.grid(row=1, column=8, sticky="nsew",)
         #############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.pw,
                                                  background=TXT_BACKGROUND_CLR,
                                                  foreground=TXT_MON_CLR,
                                                  font=(FONT, self.text_size),
-                                                 height=100, bd=0, borderwidth=0, state="disabled",
+                                                 height=100,
+                                                 width=82,
+                                                 bd=0,
+                                                 borderwidth=0,
+                                                 state="disabled",
                                                  )
 
         # self.mon_txt.pack(side=tk.BOTTOM)
@@ -1207,14 +1212,14 @@ class TxTframe:
             self.pw.add(self.status_frame, weight=1)
             self.pw.add(self.out_frame, weight=1)
             self.pw.add(self.mon_txt, weight=1)
-            self.pw.configure(height=817)
+            # self.pw.configure(height=837)
 
         else:
-            _pw_height = self.pw.winfo_height()
-            _mon_txt_height = self.mon_txt.winfo_height()
-            _out_txt_height = self.out_txt_win.winfo_height()
+            # _pw_height = self.pw.winfo_height()
+            # _mon_txt_height = self.mon_txt.winfo_height()
+            # _out_txt_height = self.out_txt_win.winfo_height()
             self.pw.remove(self.out_frame)
-            self.pw.configure(height=817)
+            # self.pw.configure(height=837)
 
     def chk_rx_beep(self):
         _rx_beep_check = self.rx_beep_var.get()
@@ -1262,7 +1267,7 @@ class ChBtnFrm:
         self._main_class = main_win
         self.ch_btn_blink_timer = time.time()
         self.ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=10)
-        _btn_font = ("fixedsys", 10)
+        _btn_font = ("fixedsys", 8, )
         self.ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
@@ -1388,7 +1393,8 @@ class ChBtnFrm:
                             _ch_alarm = False
                         else:
                             _ch_alarm = True
-                            self.ch_btn_alarm(self._con_btn_dict[i])
+                            if self.ch_btn_blink_timer < time.time():
+                                self.ch_btn_alarm(self._con_btn_dict[i])
                     else:
                         if _is_link:
                             _ch_alarm = False
@@ -1448,38 +1454,40 @@ class TkMainWin:
         self.connect_history = {}
         ####################
         # GUI PARAM
-        self.parm_btn_blink_time = 0.3
-        self._parm_rx_beep_cooldown = 1.5
+        self.parm_btn_blink_time = 1                # s
+        self._parm_rx_beep_cooldown = 2             # s
         # Tasker Timings
-        self._loop_delay = 80  # ms
-        self._parm_non_prio_task_timer = 0.5  # s
-        self._parm_non_non_prio_task_timer = 1  # s
+        self._loop_delay = 250                      # ms
+        self._parm_non_prio_task_timer = 0.5        # s
+        self._parm_non_non_prio_task_timer = 1      # s
         self._parm_non_non_non_prio_task_timer = 5  # s
         self._parm_test_task_timer = 60  # 5        # s
-        self._parm_bw_mon_reset_task_timer = 3600  # s
         self._non_prio_task_timer = time.time()
         self._non_non_prio_task_timer = time.time()
         self._non_non_non_prio_task_timer = time.time()
         self._test_task_timer = time.time()
         ###############
-        self.text_size = 15
+        self.text_size = 14
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
         self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
         self.main_win.geometry("1400x850")
-        # self.main_win.iconbitmap("favicon.ico")
+        try:
+            self.main_win.iconbitmap("favicon.ico")
+        except TclError:
+            pass
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ##########################
         self.style = ttk.Style()
-        self.style.theme_use('classic')
+        # self.style.theme_use('classic')
         # self.style.theme_use('clam')
         self.main_win.columnconfigure(0, minsize=500, weight=1)
         self.main_win.columnconfigure(1, minsize=2, weight=5)
         self.main_win.rowconfigure(0, minsize=3, weight=1)  # Boarder
         # self.main_win.rowconfigure(1, minsize=0, weight=1)     # BTN SIDE
-        self.main_win.rowconfigure(1, minsize=200, weight=2)
-        self.main_win.rowconfigure(2, minsize=30, weight=1)  # CH BTN
+        self.main_win.rowconfigure(1, minsize=220, weight=2)
+        self.main_win.rowconfigure(2, minsize=28, weight=1)  # CH BTN
         # self.main_win.rowconfigure(3, minsize=2, weight=0)  # Boarder
         ############################
         ############################
@@ -1579,6 +1587,8 @@ class TkMainWin:
                               underline=0)
         _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
                               underline=0)
+        _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language], command=self._WX_win,
+                              underline=0)
         # MenuAPRS.add_separator()
         _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
 
@@ -1620,9 +1630,9 @@ class TkMainWin:
         self._side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
         self._side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)  # CONN BTN
         self._side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)  # BTN row 2
-        self._side_btn_frame_top.rowconfigure(2, minsize=50, weight=0)  # Dummy
-        self._side_btn_frame_top.rowconfigure(3, minsize=50, weight=2)  # Dummy
-        self._side_btn_frame_top.rowconfigure(4, minsize=300, weight=10)  # Reiter Frame
+        self._side_btn_frame_top.rowconfigure(2, minsize=1, weight=0)  # Dummy
+        # self._side_btn_frame_top.rowconfigure(3, minsize=1, weight=2)  # Dummy
+        self._side_btn_frame_top.rowconfigure(3, minsize=300, weight=10)  # Reiter Frame
         # self._side_btn_frame_top.rowconfigure(5, minsize=15, weight=1)  # Reiter Frame
 
         self._side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
@@ -1671,23 +1681,12 @@ class TkMainWin:
         # self.setting_dx_alarm = self.tabbed_sideFrame.dx_alarm_on
         ############################
         # Canvas Plot ( TEST )
-        # ### BushFIX F*** Plot eating up memory ###
-        """
-        self._bw_plot_enabled_var = tk.BooleanVar(self._side_btn_frame_top)
-        self._bw_plot_enabled_var.set(True)
-        tk.Checkbutton(
-            self._side_btn_frame_top,
-            text=STR_TABLE['bw_plot_enable'][self.language],
-            variable=self._bw_plot_enabled_var
-        ).grid(row=5, column=0, columnspan=7, sticky="nsew")
-        """
-
         # plt.ion()
         self._bw_fig = Figure(figsize=(8, 4.5), dpi=80)
         # plt.style.use('dark_background')
         self._ax = self._bw_fig.add_subplot(111)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.97, bottom=0.1)
-        self._ax.axis([0, 10, 0, 60])
+        self._ax.axis([0, 10, 0, 100])
         self._bw_fig.set_facecolor('xkcd:light grey')
         self._ax.set_facecolor('#000000')
         # self.bw_fig.xlim(0, 10)  # TODO As Option
@@ -1698,13 +1697,11 @@ class TkMainWin:
         self._ax.set_xlabel(STR_TABLE['minutes'][self.language])
         self._ax.set_ylabel(STR_TABLE['occup'][self.language])
         self._bw_plot_lines = {}
-        # plt.xlabel(STR_TABLE['minutes'][self.language])
         # plt.xlim(0, 10)  # TODO As Option
-        # plt.ylabel(STR_TABLE['occup'][self.language])
         self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._side_btn_frame_top)  # A tk.DrawingArea.
         self._canvas.flush_events()
         self._canvas.draw()
-        self._canvas.get_tk_widget().grid(row=5, column=0, columnspan=7, sticky="nsew")
+        self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
         # self._canvas.get_tk_widget().config(cursor="none")
         self._bw_fig.canvas.flush_events()
 
@@ -1718,6 +1715,7 @@ class TkMainWin:
         self.new_conn_win = None
         self.settings_win = None
         self.mh_window = None
+        self.wx_window = None
         self.port_stat_win = None
         self.locator_calc_window = None
         self.aprs_mon_win = None
@@ -1752,6 +1750,8 @@ class TkMainWin:
             self.settings_win.destroy()
         if self.mh_window is not None:
             self.mh_window.destroy()
+        if self.wx_window is not None:
+            self.wx_window.destroy()
         logging.info('Closing GUI: Closing Ports.')
         PORT_HANDLER.close_all()
         logging.info('Closing GUI: Done.')
@@ -1852,10 +1852,10 @@ class TkMainWin:
         self._mon_txt.configure(state='disabled')
 
     def _insert_fm_file(self):
-        data = open_file_dialog()
-        if data:
+        _data = open_file_dialog()
+        if _data:
             # TODO Maybe Channel Decoding ?  ?
-            self._inp_txt.insert(tk.INSERT, try_decode(data, ignore=True))
+            self._inp_txt.insert(tk.INSERT, try_decode(_data, ignore=True))
 
     def _save_to_file(self):
         data = self._out_txt.get('1.0', tk.END)
@@ -1935,16 +1935,16 @@ class TkMainWin:
         self._mon_txt.configure(font=(FONT, self.text_size), width=width - 1)
 
     def _text_win_bigger(self):
-        width = self._inp_txt.cget('width')
-        self._inp_txt.configure(width=width + 1)
-        self._out_txt.configure(width=width + 1)
-        self._mon_txt.configure(width=width + 1)
+        _width = self._inp_txt.cget('width')
+        self._inp_txt.configure(width=_width + 1)
+        self._out_txt.configure(width=_width + 1)
+        self._mon_txt.configure(width=_width + 1)
 
     def _text_win_smaller(self):
-        width = self._inp_txt.cget('width')
-        self._inp_txt.configure(width=max(width - 1, 56))
-        self._out_txt.configure(width=max(width - 1, 56))
-        self._mon_txt.configure(width=max(width - 1, 56))
+        _width = self._inp_txt.cget('width')
+        self._inp_txt.configure(width=max(_width - 1, 56))
+        self._out_txt.configure(width=max(_width - 1, 56))
+        self._mon_txt.configure(width=max(_width - 1, 56))
 
     def change_conn_btn(self):
         # TODO Nur triggern wenn ch_btn click | neue in conn | disco
@@ -2166,7 +2166,6 @@ class TkMainWin:
             if MH_LIST.new_call_alarm:
                 self._dx_alarm()
             if self.settings_win is not None:
-                # ( FT-Manager )
                 self.settings_win.tasker()
             """
             if self.aprs_mon_win is not None:
@@ -2179,6 +2178,7 @@ class TkMainWin:
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             #####################
             self._update_bw_mon()
+            self._aprs_wx_tree_task()
 
     def _tasker_tester(self):
         """ 5 Sec """
@@ -2194,6 +2194,11 @@ class TkMainWin:
     def _aprs_task():
         if PORT_HANDLER.get_aprs_ais() is not None:
             PORT_HANDLER.get_aprs_ais().task()
+
+    @staticmethod
+    def _aprs_wx_tree_task():
+        if PORT_HANDLER.get_aprs_ais() is not None:
+            PORT_HANDLER.get_aprs_ais().aprs_wx_tree_task()
 
     def get_side_frame(self):
         return self._side_btn_frame_top
@@ -2352,12 +2357,12 @@ class TkMainWin:
                     self._mon_txt.tag_add(tag, ind, ind2)
             self._mon_txt.configure(state="disabled", exportselection=True)
             if tr or self.tabbed_sideFrame.mon_scroll_var.get():
-                self.see_end_mon_win()
+                self._see_end_mon_win()
 
     def see_end_qso_win(self):
         self._out_txt.see("end")
 
-    def see_end_mon_win(self):
+    def _see_end_mon_win(self):
         self._mon_txt.see("end")
 
     def msg_to_monitor(self, var: str):
@@ -2374,7 +2379,7 @@ class TkMainWin:
         self._mon_txt.tag_add("sys-msg", ind, ind2)
         self._mon_txt.tag_config("sys-msg", foreground=CFG_clr_sys_msg)
 
-        self.see_end_mon_win()
+        self._see_end_mon_win()
         if 'Lob: ' in var:
             var = var.split('Lob: ')
             if len(var) > 1:
@@ -2440,6 +2445,14 @@ class TkMainWin:
         self._reset_dx_alarm()
         if self.mh_window is None:
             MHWin(self)
+
+    ###################
+    # WX WIN
+    def _WX_win(self):
+        """MH WIN"""
+        self._reset_dx_alarm()
+        if self.wx_window is None:
+            WXWin(self)
 
     ###################
     # MH WIN
@@ -2649,6 +2662,9 @@ class TkMainWin:
                 else:
                     self._open_settings_window('priv_win')
 
+    def _open_ft_manager(self, event=None):
+        self._open_settings_window('ft_manager')
+
     def _switch_monitor_mode(self):
         self._txt_win.switch_mon_mode()
         if self.mon_mode:
@@ -2777,9 +2793,10 @@ class TkMainWin:
                 _status = f'{_conn.ft_obj.dir} FILE'
                 if self._txt_win.stat_info_status_var.get() != _status:
                     self._txt_win.stat_info_status_var.set(_status)
-                    self._txt_win.status_label.bind('<Button-1>', lambda: self._open_settings_window('ft_manager'))
+                    # self._txt_win.status_label.bind('<Button-1>', lambda: self._open_settings_window('ft_manager'))
+                    self._txt_win.status_label.bind('<Button-1>', self._open_ft_manager)
             else:
-                _status = ""
+                _status = ''
                 if _conn.cli.sysop_priv:
                     _status += 'S'
                 else:
@@ -2796,6 +2813,9 @@ class TkMainWin:
                 if self._txt_win.stat_info_status_var.get() != _status:
                     self._txt_win.stat_info_status_var.set(_status)
                     self._txt_win.status_label.bind('<Button-1>', self.do_priv)
+        elif self._txt_win.stat_info_status_var.get() != _status:
+            self._txt_win.stat_info_status_var.set(_status)
+            self._txt_win.status_label.bind('<Button-1>',)
         """
         if _dist:
             _loc += f" ({_dist} km)"

@@ -14,7 +14,7 @@ class PlotWindow(tk.Toplevel):
     def __init__(self, root_cl):
         tk.Toplevel.__init__(self)
         self.wm_title("Port Statistik")
-        self.root_cl = root_cl
+        # self.root_cl = root_cl
         self.geometry(f"800x"
                       f"600+"
                       f"{root_cl.main_win.winfo_x()}+"
@@ -34,7 +34,7 @@ class PlotWindow(tk.Toplevel):
                                         width=2,
                                         from_=0,
                                         to=10,
-                                        command=self.update_plots
+                                        command=self._update_plots
                                         )
         self.port_spinbox.pack(side=tk.LEFT)
         tk.Label(upper_frame, text='                  ').pack(side=tk.LEFT)
@@ -48,47 +48,46 @@ class PlotWindow(tk.Toplevel):
                                         from_=0,
                                         to=23,
                                         width=4,
-                                        command=self.update_plots,
+                                        command=self._update_plots,
                                         state='disabled'
                                         )
 
         self.hour_spinbox.pack(side=tk.LEFT)
 
-
         # Plot erstellen
-        self.fig = Figure(figsize=(5, 4), dpi=100)
-        self.fig.set_facecolor('xkcd:light grey')
+        self._fig = Figure(figsize=(5, 4), dpi=100)
+        self._fig.set_facecolor('xkcd:light grey')
 
-        self.plot1 = self.fig.add_subplot(211)
-        self.plot1.set_facecolor('#000000')
+        self._plot1 = self._fig.add_subplot(211)
+        self._plot1.set_facecolor('#000000')
         # self.plot1.set_title("Plot 1")
 
-        self.plot2 = self.fig.add_subplot(212)
-        self.plot2.set_facecolor('#000000')
+        self._plot2 = self._fig.add_subplot(212)
+        self._plot2.set_facecolor('#000000')
         # self.plot2.set_title("Plot 2")
-        self.fig.subplots_adjust(top=0.98, bottom=0.05, left=0.05, right=0.98, hspace=0.10)
+        self._fig.subplots_adjust(top=0.98, bottom=0.05, left=0.05, right=0.98, hspace=0.10)
 
         # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH)
+        self._canvas = FigureCanvasTkAgg(self._fig, master=self)
+        self._canvas.draw()
+        self._canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH)
         # Werkzeugleisten für die Plots erstellen
-        self.toolbar1 = NavigationToolbar2Tk(self.canvas, self)
-        self.toolbar1.update()
-        self.toolbar1.pack(side=tk.TOP, fill=tk.X)
+        toolbar1 = NavigationToolbar2Tk(self._canvas, self)
+        toolbar1.update()
+        toolbar1.pack(side=tk.TOP, fill=tk.X)
 
-        self.update_plots()
-        self.plot1.legend(['Bytes', 'I', 'UI', 'REJ', 'RR', 'RNR', 'SABM', ],
-                          fontsize=8,
-                          loc='right')
-        self.plot2.legend(['Daten gesamt', 'Nutzdaten'],
-                          fontsize=8,
-                          loc='right')
+        self._update_plots()
+        self._plot1.legend(['Bytes', 'I', 'UI', 'REJ', 'RR', 'RNR', 'SABM', ],
+                           fontsize=8,
+                           loc='right')
+        self._plot2.legend(['Daten gesamt', 'Nutzdaten'],
+                           fontsize=8,
+                           loc='right')
 
-        self.canvas.draw()
+        self._canvas.draw()
 
-    def update_plots(self):
-        #self.plot2.clear()
+    def _update_plots(self):
+        # self.plot2.clear()
         port_id = self.port_var.get()
         db = MH_LIST.port_statistik_DB.get(port_id, {})
 
@@ -97,7 +96,7 @@ class PlotWindow(tk.Toplevel):
         date_str = now.strftime('%d/%m/%y')
         now_hour = now.hour
 
-        print(db)
+        # print(db)
         tmp_n_packets = []
         tmp_I_packets = []
         tmp_REJ_packets = []
@@ -181,20 +180,20 @@ class PlotWindow(tk.Toplevel):
                 x_scale.append((i / 60))
             print(x_scale)
 
-            self.plot1.plot(x_scale, tmp_ALL_data, label='Bytes')
-            self.plot1.plot(x_scale, tmp_I_packets, label='I')
-            self.plot1.plot(x_scale, tmp_UI_packets, label='UI')
-            self.plot1.plot(x_scale, tmp_REJ_packets, label='REJ')
-            self.plot1.plot(x_scale, tmp_RR_packets, label='RR')
-            self.plot1.plot(x_scale, tmp_RNR_packets, label='RNR')
-            self.plot1.plot(x_scale, tmp_SABM_packets, label='SABM')
+            self._plot1.plot(x_scale, tmp_ALL_data, label='Bytes')
+            self._plot1.plot(x_scale, tmp_I_packets, label='I')
+            self._plot1.plot(x_scale, tmp_UI_packets, label='UI')
+            self._plot1.plot(x_scale, tmp_REJ_packets, label='REJ')
+            self._plot1.plot(x_scale, tmp_RR_packets, label='RR')
+            self._plot1.plot(x_scale, tmp_RNR_packets, label='RNR')
+            self._plot1.plot(x_scale, tmp_SABM_packets, label='SABM')
 
-            self.plot2.plot(
+            self._plot2.plot(
             x_scale, tmp_ALL_data,
             x_scale, tmp_DATA_data, 'r--'
             )
-            self.plot1.set_xlim([0, 24])  # x-Achse auf 24 Stunden begrenzen
-            self.plot2.set_xlim([0, 24])
+            self._plot1.set_xlim([0, 24])  # x-Achse auf 24 Stunden begrenzen
+            self._plot2.set_xlim([0, 24])
 
     def destroy_win(self):
         # self.root_cl.close_port_stat_win()
@@ -202,13 +201,15 @@ class PlotWindow(tk.Toplevel):
 
     def destroy_plot(self):
 
-        self.canvas.close_event('all')
-        self.canvas.get_tk_widget().destroy()
-        self.canvas.close_event()
-        self.canvas = None
+        self._canvas.close_event('all')
+        self._canvas.get_tk_widget().destroy()
+        self._canvas.close_event()
+        self._canvas = None
         plt.close()
-        del self.canvas
-        del self.plot1
-        del self.plot2
+        self._plot1 = None
+        self._plot2 = None
+        del self._canvas
+        del self._plot1
+        del self._plot2
         self.destroy()
 

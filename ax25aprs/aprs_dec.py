@@ -221,7 +221,6 @@ def extract_ack(text):
         return text, None
 
     value = text[start_index + 1:end_index]  # Extrahiere den Wert zwischen den Klammern
-
     if start_index > 0:  # Überprüfe, ob es Text vor der öffnenden Klammer gibt
         text_before = text[:start_index]  # Extrahiere den Text vor der öffnenden Klammer
         return text_before, value

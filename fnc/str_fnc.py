@@ -20,6 +20,12 @@ def tk_filter_bad_chars(inp: str):
     return inp
 
 
+def time_to_decimal(dt):
+    total_minutes = dt.hour * 60 + dt.minute + dt.second / 60.0  # Gesamtminuten seit Mitternacht
+    decimal_value = total_minutes / 60.0  # Umrechnung in Dezimalform
+    return decimal_value
+
+
 def conv_time_for_sorting(dateti: datetime.now()):
     return dateti.strftime('%y/%m/%d %H:%M:%S')
 
@@ -34,6 +40,14 @@ def conv_time_DE_str(dateti: datetime.now()):
 
 def get_file_timestamp():
     return datetime.now().strftime('%d%m/%y-%H%M')
+
+
+def convert_str_to_datetime(date_str, date_format='%d/%m/%y %H:%M:%S'):
+    try:
+        converted_date = datetime.strptime(date_str, date_format)
+        return converted_date
+    except ValueError:
+        return 0
 
 
 def conv_timestamp_delta(delta):
