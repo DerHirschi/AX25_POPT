@@ -253,14 +253,11 @@ class APRS_ais(object):
         if from_aprs:
             if not self.aprs_wx_msg_pool.get(from_aprs, False):
                 self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
-
-            #print(self.aprs_wx_msg_pool[from_aprs])
             self.aprs_wx_msg_pool[from_aprs].append(
                 (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
                  aprs_pack,
                  port_id)
             )
-            print(self.aprs_wx_msg_pool)
 
     def get_wx_data(self):
         return dict(self.aprs_wx_msg_pool)
@@ -506,10 +503,7 @@ class APRS_ais(object):
         self._ais_tx(pack_str)
 
     def _send_ack(self, pack_to_resp):
-
         msg_no = pack_to_resp[1][1].get('msgNo', False)
-        # print(f"SEND ACK > {msg_no}")
-        # print(f"SEND ACK > {pack_to_resp[1][1]}")
         if msg_no:
             pack = tuple(pack_to_resp)
             pack[1][1]['is_ack'] = True

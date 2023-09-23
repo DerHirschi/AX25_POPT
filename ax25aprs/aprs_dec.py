@@ -214,17 +214,13 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
 
 
 def extract_ack(text):
-    print(f"extr ACK: {text}")
     start_index = text.find('{')  # Finde den Index der ersten öffnenden Klammer
     end_index = text.find('}')    # Finde den Index der ersten schließenden Klammer
-    print(f"extr ACK start: {start_index}")
-    print(f"extr ACK end: {end_index}")
 
     if start_index == -1 or end_index == -1:  # Überprüfe, ob beide Klammern im String vorhanden sind
         return text, None
 
     value = text[start_index + 1:end_index]  # Extrahiere den Wert zwischen den Klammern
-    print(f"extr ACK value: {value}")
     if start_index > 0:  # Überprüfe, ob es Text vor der öffnenden Klammer gibt
         text_before = text[:start_index]  # Extrahiere den Text vor der öffnenden Klammer
         return text_before, value

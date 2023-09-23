@@ -4,6 +4,7 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.loc_fnc import coordinates_to_locator, locator_distance
+from gui.guiAPRS_wx_plot import WXPlotWindow
 
 # from fnc.str_fnc import conv_time_DE_str
 
@@ -13,19 +14,19 @@ logger = logging.getLogger(__name__)
 class WXWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
-        self.root_win = root_win
+        self._root_win = root_win
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
         ###################################
         # Vars
         self._rev_ent = False
         # self.mh_win = tk.Tk()
         self.title("WX-Stations")
-        self.style = self.root_win.style
+        self.style = self._root_win.style
         # self.geometry("1250x700")
         self.geometry(f"1250x"
                       f"700+"
-                      f"{self.root_win.main_win.winfo_x()}+"
-                      f"{self.root_win.main_win.winfo_y()}")
+                      f"{self._root_win.main_win.winfo_x()}+"
+                      f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
@@ -94,13 +95,11 @@ class WXWin(tk.Toplevel):
         self._tree.column("wind_speed", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("luminosity", anchor=tk.CENTER, stretch=tk.YES, width=50)
         self._tree.column("comment", anchor=tk.CENTER, stretch=tk.YES, width=150)
-        # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
-        # tree.column(1, stretch=True)
 
         self._tree_data = []
-        self._wx_data = []
+        self._wx_data = {}
         self._init_tree_data()
-        # self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
+        self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
     def _init_tree_data(self):
         self._get_wx_data()
@@ -177,6 +176,18 @@ class WXWin(tk.Toplevel):
             return locator_distance(locator, self._ais_obj.ais_loc)
         return -1
 
+    def _entry_selected(self, event):
+        _key = ''
+        for selected_item in self._tree.selection():
+            _item = self._tree.item(selected_item)
+            _key = _item['values'][1]
+            print(_key)
+        if _key:
+            _data = self._wx_data.get(_key, False)
+            if _data:
+                # print(_data)
+                WXPlotWindow(self._root_win, _data)
+
     def close(self):
-        self.root_win.wx_window = None
+        self._root_win.wx_window = None
         self.destroy()
