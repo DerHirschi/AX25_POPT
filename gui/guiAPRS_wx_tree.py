@@ -6,8 +6,6 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.loc_fnc import coordinates_to_locator, locator_distance
 from gui.guiAPRS_wx_plot import WXPlotWindow
 
-# from fnc.str_fnc import conv_time_DE_str
-
 logger = logging.getLogger(__name__)
 
 
@@ -16,9 +14,11 @@ class WXWin(tk.Toplevel):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
+        self._ais_obj.wx_tree_gui = self
         ###################################
         # Vars
         self._rev_ent = False
+        self._last_sort_col = None
         # self.mh_win = tk.Tk()
         self.title("WX-Stations")
         self.style = self._root_win.style
@@ -106,6 +106,14 @@ class WXWin(tk.Toplevel):
         self._format_tree_data()
         self._update_tree()
 
+    def update_tree_data(self):
+        self._get_wx_data()
+        self._format_tree_data()
+        self._update_tree()
+        if self._last_sort_col is not None:
+            self._rev_ent = not self._rev_ent
+            self._sort_entry(self._last_sort_col)
+
     def _format_tree_data(self):
         self._tree_data = []
         for k in self._wx_data:
@@ -131,6 +139,7 @@ class WXWin(tk.Toplevel):
             ))
 
     def _sort_entry(self, col):
+        self._last_sort_col = col
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
         if col in ['distance', 'pressure', 'humidity', 'rain_1h', 'rain_24h', 'rain_since_midnight',
                    'temperature', 'wind_gust', 'wind_speed', 'luminosity']:
@@ -181,13 +190,12 @@ class WXWin(tk.Toplevel):
         for selected_item in self._tree.selection():
             _item = self._tree.item(selected_item)
             _key = _item['values'][1]
-            print(_key)
         if _key:
             _data = self._wx_data.get(_key, False)
             if _data:
-                # print(_data)
                 WXPlotWindow(self._root_win, _data)
 
     def close(self):
+        self._ais_obj.wx_tree_gui = None
         self._root_win.wx_window = None
         self.destroy()

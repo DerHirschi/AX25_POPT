@@ -941,7 +941,7 @@ class TxTframe:
                                        command=self.chk_rx_beep
                                        )
         self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
-        # Checkbox RX-BEEP
+        # TODO Checkbox Time Stamp
         self.ts_box_var = tk.IntVar()
         self.ts_box_box = Checkbutton(self.status_frame,
                                       text="T-S",
@@ -952,7 +952,8 @@ class TxTframe:
                                       onvalue=1, offvalue=0,
                                       foreground=STAT_BAR_TXT_CLR,
                                       variable=self.ts_box_var,
-                                      command=self.chk_timestamp
+                                      command=self.chk_timestamp,
+                                      state='disabled'
                                       )
         self.ts_box_box.grid(row=1, column=11, sticky="nsew")
         self.status_frame.pack(side=tk.BOTTOM)
@@ -2177,6 +2178,7 @@ class TkMainWin:
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             #####################
             self._update_bw_mon()
+            self._aprs_wx_tree_task()
 
     def _tasker_tester(self):
         """ 5 Sec """
@@ -2192,6 +2194,11 @@ class TkMainWin:
     def _aprs_task():
         if PORT_HANDLER.get_aprs_ais() is not None:
             PORT_HANDLER.get_aprs_ais().task()
+
+    @staticmethod
+    def _aprs_wx_tree_task():
+        if PORT_HANDLER.get_aprs_ais() is not None:
+            PORT_HANDLER.get_aprs_ais().aprs_wx_tree_task()
 
     def get_side_frame(self):
         return self._side_btn_frame_top

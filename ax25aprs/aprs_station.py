@@ -43,6 +43,7 @@ class APRS_ais(object):
         self.ais_host = '', 0
         self.ais = None
         self.ais_mon_gui = None
+        self.wx_tree_gui = None
         self.ais_active = False
         self.ais_rx_buff = deque([] * 5000, maxlen=5000)
         # self.ais_new_rx_buff = []
@@ -63,6 +64,7 @@ class APRS_ais(object):
         self._parm_non_prio_task_timer = 1
         self.port_handler = None
         self._del_spooler_tr = False
+        self._wx_update_tr = False
         """ Watchdog """
         self._watchdog_last = time.time()
         self._parm_watchdog = 20  # Sec.
@@ -81,11 +83,12 @@ class APRS_ais(object):
         save_data = cleanup_obj(set_obj_att(APRS_ais(load_cfg=False), self))
         save_data.ais = None
         save_data.ais_mon_gui = None
+        save_data.wx_tree_gui = None
         save_data.port_handler = None
         save_data.ais_rx_buff = []
         save_data.loop_is_running = False
         save_data.ais_aprs_stations = {}
-        save_data.aprs_wx_msg_pool = {}
+        # save_data.aprs_wx_msg_pool = {}
         save_data.spooler_buffer = {}
         """
         save_date.ais_aprs_msg_pool = {
@@ -178,6 +181,12 @@ class APRS_ais(object):
                     if self.port_handler.gui.aprs_pn_msg_win is not None:
                         self.port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
 
+    def aprs_wx_tree_task(self):
+        if self.wx_tree_gui is not None:
+            if self._wx_update_tr:
+                self._wx_update_tr = False
+                self.wx_tree_gui.update_tree_data()
+
     """
     def task_halt(self):
         self.loop_is_running = False
@@ -258,6 +267,8 @@ class APRS_ais(object):
                  aprs_pack,
                  port_id)
             )
+            if self.wx_tree_gui is not None:
+                self._wx_update_tr = True
 
     def get_wx_data(self):
         return dict(self.aprs_wx_msg_pool)

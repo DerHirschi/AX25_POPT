@@ -7,7 +7,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from fnc.loc_fnc import coordinates_to_locator
-from fnc.str_fnc import convert_str_to_datetime, time_to_decimal
+from fnc.str_fnc import convert_str_to_datetime
 
 
 class WXPlotWindow(tk.Toplevel):
@@ -64,11 +64,12 @@ class WXPlotWindow(tk.Toplevel):
         _lat = f'Lat: {self._wx_data[0][1].get("latitude", "")}'
         _lon = f'Lon: {self._wx_data[0][1].get("longitude", "")}'
 
-        tk.Label(info_frame, text=_call).pack(side=tk.TOP, padx=20)
+        tk.Label(info_frame, text=_call).pack(side=tk.TOP,)
+        tk.Label(info_frame, text=_comment).pack()
         tk.Label(info_frame, text=_loc).pack(side=tk.LEFT, padx=20)
         tk.Label(info_frame, text=_lat).pack(side=tk.LEFT, padx=20)
         tk.Label(info_frame, text=_lon).pack(side=tk.LEFT, padx=20)
-        tk.Label(info_frame, text=_comment).pack(side=tk.TOP, pady=25)
+
         self.wm_title(f"WX Plot {_call}")
 
     def _update_plots(self):
@@ -141,19 +142,19 @@ class WXPlotWindow(tk.Toplevel):
 
     def destroy_win(self):
         # self.root_cl.close_port_stat_win()
-        self.withdraw()
-        # self.destroy_plot()
+        self.destroy_plot()
 
     def destroy_plot(self):
-
         self._canvas.close_event('all')
         self._canvas.get_tk_widget().destroy()
         self._canvas.close_event()
-        self._canvas = None
         plt.close()
-        self._plot1 = None
         del self._canvas
         del self._plot1
-
+        del self._fig
+        self._canvas = None
+        self._plot1 = None
+        self._fig = None
+        self.withdraw()
         self.destroy()
 
