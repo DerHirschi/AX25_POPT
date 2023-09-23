@@ -1524,8 +1524,8 @@ class TkMainWin:
         # Menü 3 "Tools"
         _MenuTools = Menu(_menubar, tearoff=False)
         _MenuTools.add_command(label="MH", command=self._MH_win, underline=0)
-        _MenuTools.add_command(label="Tracer",
-                               command=self.open_be_tracer_win,
+        _MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
+                               command=self.open_port_stat_win,
                                underline=1)
         _MenuTools.add_separator()
         _MenuTools.add_command(label="User-DB Tree", command=self._UserDB_tree, underline=0)
@@ -1667,9 +1667,9 @@ class TkMainWin:
         self._mon_btn.place(x=110, y=10)
 
         tk.Button(self._side_btn_frame_top,
-                  text="Port-Stat",
+                  text="Tracer",
                   width=8,
-                  command=self.open_port_stat_win).place(x=110, y=45)
+                  command=self.open_be_tracer_win).place(x=110, y=45)
         # _btn.place(x=5, y=80)
 
         tk.Button(self._side_btn_frame_top,

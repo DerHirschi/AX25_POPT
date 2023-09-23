@@ -41,7 +41,7 @@ STR_TABLE = {
     'clean_mon_win': ('Monitor löschen', 'Clear Monitor', 'Lekker'),
     'bw_plot_enable': ('Plot (!frisst RAM auf!)', 'Plot (!eating up Memory!', 'Plot (!eating up Memory!'),
     'edit': ('Bearbeiten', 'Edit', 'Lekker bewerking'),
-    'statistic': ('Statistik', 'Statistics', 'Lekker'),
+    'statistic': ('Statistik', 'Statistics', 'Lekker statistic'),
     'linkholder': ('Linkhalter', 'Link holder', 'Lekker'),
     'tools': ('Tools', 'Tools', 'Lekker hulpmiddelen'),
     'station': ('Station', 'Station', 'Lekker'),
