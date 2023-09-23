@@ -20,6 +20,10 @@ class LocatorCalculator(tk.Toplevel):
                       f"{self.root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         self.loc_var_1 = tk.StringVar()
         self.lat_var_1 = tk.StringVar()

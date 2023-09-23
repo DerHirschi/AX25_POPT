@@ -24,6 +24,10 @@ class AISmonitor(tk.Toplevel):
                       f"{self._root_cl.main_win.winfo_x()}+"
                       f"{self._root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         # self.resizable(False, False)
         self.lift()
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
@@ -136,6 +140,7 @@ class AISmonitor(tk.Toplevel):
         _tr = False
         if self._call_filter.get():
             if pack['from'] in self._ais_aprs_stat_calls:
+                print(pack)
                 _tr = True
                 tmp = format_aprs_f_aprs_mon((date_time, pack), self._ais_obj.ais_loc,
                                              add_new_user=self._ais_obj.add_new_user)

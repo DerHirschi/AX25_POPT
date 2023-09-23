@@ -18,6 +18,10 @@ class LinkHolderSettings(tk.Toplevel):
                       f"{self.root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(True, True)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         # OK, Save, Cancel
         ok_bt = tk.Button(self,

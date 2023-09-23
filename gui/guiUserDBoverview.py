@@ -27,6 +27,11 @@ class UserDBtreeview(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.lift()
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         # self.grid_rowconfigure(1, weight=1)
@@ -88,9 +93,9 @@ class UserDBtreeview(tk.Toplevel):
             item = self.tree.item(selected_item)
             record = item['values']
             # show a message
-            key = record[0]
+            _key = record[0]
 
-            self.root.open_user_db_win(key=key)
+            self.root.open_user_db_win(ent_key=_key)
 
     def sort_entry(self, flag: str):
         sort_date = USER_DB.get_sort_entr(flag_str=flag, reverse=self.rev_ent)

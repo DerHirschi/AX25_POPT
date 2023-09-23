@@ -17,6 +17,11 @@ class About(tk.Toplevel):
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.lift()
         ##########################
         # OK
         ok_bt = tk.Button(self,

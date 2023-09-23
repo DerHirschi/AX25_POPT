@@ -27,6 +27,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                       f"{self._root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         # self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         self._aprs_ais = PORT_HANDLER.get_aprs_ais()
         self._aprs_pn_msg = self._aprs_ais.aprs_msg_pool['message']

@@ -22,6 +22,10 @@ class APRSSettingsWin(tk.Toplevel):
                       f"{self._root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         self._all_ports = PORT_HANDLER.get_all_ports()
         self._ais = PORT_HANDLER.get_aprs_ais()

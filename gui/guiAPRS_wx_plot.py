@@ -19,6 +19,10 @@ class WXPlotWindow(tk.Toplevel):
                       f"{root_cl.main_win.winfo_x()}+"
                       f"{root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         self._wx_data = wx_data
         ##################
@@ -43,11 +47,12 @@ class WXPlotWindow(tk.Toplevel):
         self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
 
         self._update_plots()
-        self._plot1.legend(['Pressure', 'Humidity', 'Rain 1h', 'Rain 24h', 'rain Day', 'Temperature',
-                           'Wind Dir', 'Wind Gust', 'Wind Speed', 'Luminosity'],
+
+        self._plot1.legend(
                            fontsize=8,
                            loc='upper left'
                            )
+
 
         self._canvas.draw()
         #################
@@ -172,7 +177,6 @@ class WXPlotWindow(tk.Toplevel):
         self._plot1.set_xlim([24, 0])  # x-Achse auf 24 Stunden begrenzen
 
     def destroy_win(self):
-        # self.root_cl.close_port_stat_win()
         self.destroy_plot()
 
     def destroy_plot(self):

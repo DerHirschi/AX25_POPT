@@ -10,7 +10,7 @@ from gui.guiMsgBoxes import AskMsg
 
 
 class UserDB(tk.Toplevel):
-    def __init__(self, root, key=''):
+    def __init__(self, root, ent_key=''):
         tk.Toplevel.__init__(self)
         self.root = root
         self.lang = self.root.language
@@ -25,6 +25,10 @@ class UserDB(tk.Toplevel):
                       f"{self.root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         # self.attributes("-topmost", True)
         ###############
@@ -393,10 +397,10 @@ class UserDB(tk.Toplevel):
         tk.Label(tab4, textvariable=self.stations_other_var).place(x=_x, y=_y)
         # self.stations_other_var.set('OTHER: ')
 
-        if not key:
+        if not ent_key:
             self.select_entry_fm_ch_id()
         else:
-            self.select_entry_fm_key(key)
+            self.select_entry_fm_key(ent_key)
         root.settings_win = self
 
 

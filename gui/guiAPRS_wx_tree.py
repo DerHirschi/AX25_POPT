@@ -30,6 +30,10 @@ class WXWin(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         # ############################### Columns ############################
 
@@ -197,5 +201,6 @@ class WXWin(tk.Toplevel):
 
     def close(self):
         self._ais_obj.wx_tree_gui = None
+        # self._ais_obj = None
         self._root_win.wx_window = None
         self.destroy()

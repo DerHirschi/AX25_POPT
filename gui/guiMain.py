@@ -23,6 +23,7 @@ from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_
     get_kb_str_fm_bytes, conv_time_DE_str
 from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
+from gui.guiAPRS_be_tracer import BeaconTracer
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.guiAPRS_wx_tree import WXWin
 from gui.guiFT_Manager import FileTransferManager
@@ -1523,7 +1524,8 @@ class TkMainWin:
         # Menü 3 "Tools"
         _MenuTools = Menu(_menubar, tearoff=False)
         _MenuTools.add_command(label="MH", command=self._MH_win, underline=0)
-        _MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win,
+        _MenuTools.add_command(label="Tracer",
+                               command=self.open_be_tracer_win,
                                underline=1)
         _MenuTools.add_separator()
         _MenuTools.add_command(label="User-DB Tree", command=self._UserDB_tree, underline=0)
@@ -1719,9 +1721,11 @@ class TkMainWin:
         self.mh_window = None
         self.wx_window = None
         self.port_stat_win = None
+        self.be_tracer_win = None
         self.locator_calc_window = None
         self.aprs_mon_win = None
         self.aprs_pn_msg_win = None
+        self.userdb_win = None
         self.userDB_tree_win = None
         ###########################
         # Init
@@ -2396,26 +2400,39 @@ class TkMainWin:
     def open_user_db(self, event=None):
         self._open_settings_window('user_db')
 
-    def _open_settings_window(self, win_key: str):
-        if self.settings_win is None:
-            settings_win = {
-                'priv_win': PrivilegWin,  # Priv Win
-                'keybinds': KeyBindsHelp,  # Keybinds Help WIN
-                'about': About,  # About WIN
-                'aprs_sett': APRSSettingsWin,  # APRS Settings
-                'ft_manager': FileTransferManager,  # FT Manager
-                'ft_send': FileSend,  # FT TX
-                'pipe_sett': PipeToolSettings,  # Pipe Tool
-                'user_db': UserDB,  # UserDB
-                'mcast_sett': MulticastSettings,  # Multicast Settings
-                'l_holder': LinkHolderSettings,  # Linkholder
-                'rx_echo_sett': RxEchoSettings,  # RX Echo
-                'beacon_sett': BeaconSettings,  # Beacon Settings
-                'port_sett': PortSettingsWin,  # Port Settings
-                'stat_sett': StationSettingsWin,  # Stat Settings
-            }.get(win_key, '')
-            if settings_win:
+    def _open_settings_window(self, win_key: str, parm=''):
+        if win_key == 'user_db':
+            if self.userdb_win is not None:
+                return
+        else:
+            if self.settings_win is not None:
+                return
+        settings_win = {
+            'priv_win': PrivilegWin,  # Priv Win
+            'keybinds': KeyBindsHelp,  # Keybinds Help WIN
+            'about': About,  # About WIN
+            'aprs_sett': APRSSettingsWin,  # APRS Settings
+            'ft_manager': FileTransferManager,  # FT Manager
+            'ft_send': FileSend,  # FT TX
+            'pipe_sett': PipeToolSettings,  # Pipe Tool
+            'user_db': UserDB,  # UserDB
+            'mcast_sett': MulticastSettings,  # Multicast Settings
+            'l_holder': LinkHolderSettings,  # Linkholder
+            'rx_echo_sett': RxEchoSettings,  # RX Echo
+            'beacon_sett': BeaconSettings,  # Beacon Settings
+            'port_sett': PortSettingsWin,  # Port Settings
+            'stat_sett': StationSettingsWin,  # Stat Settings
+        }.get(win_key, '')
+        if settings_win:
+            if win_key == 'user_db':
+                self.userdb_win = settings_win(self, parm)
+            else:
                 self.settings_win = settings_win(self)
+
+    ##########################
+    # UserDB
+    def open_user_db_win(self, ent_key=''):
+        self._open_settings_window('user_db', parm=ent_key)
 
     ##########################
     # New Connection WIN
@@ -2427,7 +2444,7 @@ class TkMainWin:
             self.new_conn_win = NewConnWin(self)
 
     ##########################
-    # Keybinds Help WIN
+    #
     def open_port_stat_win(self):
         if self.port_stat_win is None:
             self.port_stat_win = PlotWindow(self)
@@ -2439,6 +2456,12 @@ class TkMainWin:
             self.port_stat_win.destroy_plot()
             del self.port_stat_win
             self.port_stat_win = None
+
+    ######################
+    # APRS Beacon Tracer
+    def open_be_tracer_win(self):
+        if self.be_tracer_win is None:
+            self.be_tracer_win = BeaconTracer(self)
 
     ###################
     # MH WIN

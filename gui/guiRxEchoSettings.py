@@ -24,6 +24,11 @@ class RxEchoSettings(tk.Toplevel):
                       f"{self._main_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(True, True)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.lift()
         self.off_color = ''
         ##########################
         # OK, Save, Cancel

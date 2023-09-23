@@ -630,6 +630,8 @@ class KissTCP(AX25Port):
                 # self.device.settimeout(0)
                 # self.device.recv(9999999)
                 # self.device.shutdown(socket.SHUT_RDWR)
+                self.device.settimeout(0)
+                self.device.recv(9999999)
                 self.device.close()
             except (OSError, ConnectionRefusedError, ConnectionError):
                 pass

@@ -27,6 +27,11 @@ class MulticastSettings(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.lift()
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=0, minsize=50)
         self.grid_rowconfigure(1, weight=1)

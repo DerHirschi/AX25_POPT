@@ -60,6 +60,11 @@ class NewConnWin:
         self._new_conn_win.protocol("WM_DELETE_WINDOW", self._destroy_new_conn_win)
         self._new_conn_win.resizable(False, False)
         self._new_conn_win.attributes("-topmost", True)
+        try:
+            self._new_conn_win.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self._new_conn_win.lift()
         self._new_conn_win.columnconfigure(0, minsize=20, weight=1)
         self._new_conn_win.columnconfigure(1, minsize=100, weight=1)
         self._new_conn_win.columnconfigure(2, minsize=50, weight=5)

@@ -20,6 +20,10 @@ class PlotWindow(tk.Toplevel):
                       f"{root_cl.main_win.winfo_x()}+"
                       f"{root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         ##################
         upper_frame = tk.Frame(self)
         upper_frame.pack()
