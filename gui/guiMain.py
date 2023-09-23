@@ -24,6 +24,7 @@ from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_
 from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
+from gui.guiAPRS_wx_tree import WXWin
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
@@ -1585,6 +1586,8 @@ class TkMainWin:
                               underline=0)
         _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
                               underline=0)
+        _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language], command=self._WX_win,
+                              underline=0)
         # MenuAPRS.add_separator()
         _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
 
@@ -1711,6 +1714,7 @@ class TkMainWin:
         self.new_conn_win = None
         self.settings_win = None
         self.mh_window = None
+        self.wx_window = None
         self.port_stat_win = None
         self.locator_calc_window = None
         self.aprs_mon_win = None
@@ -1745,6 +1749,8 @@ class TkMainWin:
             self.settings_win.destroy()
         if self.mh_window is not None:
             self.mh_window.destroy()
+        if self.wx_window is not None:
+            self.wx_window.destroy()
         logging.info('Closing GUI: Closing Ports.')
         PORT_HANDLER.close_all()
         logging.info('Closing GUI: Done.')
@@ -2432,6 +2438,14 @@ class TkMainWin:
         self._reset_dx_alarm()
         if self.mh_window is None:
             MHWin(self)
+
+    ###################
+    # WX WIN
+    def _WX_win(self):
+        """MH WIN"""
+        self._reset_dx_alarm()
+        if self.wx_window is None:
+            WXWin(self)
 
     ###################
     # MH WIN

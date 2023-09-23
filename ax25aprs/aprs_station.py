@@ -65,7 +65,7 @@ class APRS_ais(object):
         self._del_spooler_tr = False
         """ Watchdog """
         self._watchdog_last = time.time()
-        self._parm_watchdog = 20    # Sec.
+        self._parm_watchdog = 20  # Sec.
         """ Load CFGs and Init (Login to APRS-Server) """
         if load_cfg:
             self._load_conf_fm_file()
@@ -73,7 +73,7 @@ class APRS_ais(object):
             self.login()
 
     def del_ais_rx_buff(self):
-        self.ais_rx_buff = deque([] * 20000, maxlen=20000)
+        self.ais_rx_buff = deque([] * 5000, maxlen=5000)
 
     def save_conf_to_file(self):
         print("Save APRS Conf")
@@ -85,6 +85,7 @@ class APRS_ais(object):
         save_data.ais_rx_buff = []
         save_data.loop_is_running = False
         save_data.ais_aprs_stations = {}
+        save_data.aprs_wx_msg_pool = {}
         save_data.spooler_buffer = {}
         """
         save_date.ais_aprs_msg_pool = {
@@ -181,6 +182,7 @@ class APRS_ais(object):
     def task_halt(self):
         self.loop_is_running = False
     """
+
     def ais_rx_task(self):
         if self.ais is not None:
             if self.ais_active:
@@ -197,6 +199,7 @@ class APRS_ais(object):
                         self.ais = None
                         self.loop_is_running = False
                         break
+                    time.sleep(0.5)
                 print("Consumer ENDE")
 
     def _ais_tx(self, ais_pack):
@@ -228,17 +231,39 @@ class APRS_ais(object):
             self.ais_mon_gui.pack_to_mon(
                 datetime.now().strftime('%d/%m/%y %H:%M:%S'),
                 packet)
-        self._aprs_msg_sys_rx(port_id='I-NET', aprs_pack=packet)
-        print(packet)
+        self._aprs_proces_rx(port_id='I-NET', aprs_pack=packet)
+        # print(packet)
 
     def aprs_ax25frame_rx(self, port_id, ax25_frame):
         """ RX fm AX25Frame (HF/AXIP) """
         aprs_pack = parse_aprs_fm_ax25frame(ax25_frame)
+        self._aprs_proces_rx(port_id=port_id, aprs_pack=aprs_pack)
+
+    def _aprs_proces_rx(self, port_id, aprs_pack):
         if aprs_pack:
-            msg_format = aprs_pack.get("format", '')
-            if msg_format:
-                if msg_format in ['message', 'bulletin', 'thirdparty']:
-                    self._aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
+            # APRS PN/BULLETIN MSG
+            if aprs_pack.get("format", '') in ['message', 'bulletin', 'thirdparty']:
+                self._aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
+            # APRS Weather
+            elif aprs_pack.get("weather", False):
+                self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=aprs_pack)
+
+    def _aprs_wx_msg_rx(self, port_id, aprs_pack):
+        from_aprs = aprs_pack.get('from', '')
+        if from_aprs:
+            if not self.aprs_wx_msg_pool.get(from_aprs, False):
+                self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
+
+            #print(self.aprs_wx_msg_pool[from_aprs])
+            self.aprs_wx_msg_pool[from_aprs].append(
+                (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
+                 aprs_pack,
+                 port_id)
+            )
+            print(self.aprs_wx_msg_pool)
+
+    def get_wx_data(self):
+        return dict(self.aprs_wx_msg_pool)
 
     def watchdog_reset(self):
         self._watchdog_last = time.time()
@@ -248,11 +273,7 @@ class APRS_ais(object):
             if time.time() > self._watchdog_last + self._parm_watchdog:
                 print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
                 logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
-                # self.task_halt()
-                # self.ais_close()
                 if self.port_handler is not None:
-                    # self.login()
-                    # self.port_handler.close_aprs_ais()
                     self.ais_close()
                     if self.login():
                         self.port_handler.init_aprs_ais()
@@ -326,10 +347,9 @@ class APRS_ais(object):
         self._update_pn_msg_gui(formated_pack)
 
     @staticmethod
-    def _aprs_msg_sys_new_bn(self, formated_pack: (int, (str, dict))):
+    def _aprs_msg_sys_new_bn(formated_pack: (int, (str, dict))):
         print(
             f"aprs Bulletin-MSG fm {formated_pack[1][1]['from']} {formated_pack[0]} - {formated_pack[1][1].get('message_text', '')}")
-
 
     def send_aprs_answer_msg(self, answer_pack, msg='', with_ack=False):
         if answer_pack and msg:
