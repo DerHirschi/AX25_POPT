@@ -738,7 +738,8 @@ class SideTabbedFrame:
             self._main_win.new_conn_win.set_port_index(port)
 
     def _trace_entry_selected(self, event=None):
-        self._main_win.open_be_tracer_win()
+        pass
+        # self._main_win.open_be_tracer_win()
 
     @staticmethod
     def _tracer_send():
