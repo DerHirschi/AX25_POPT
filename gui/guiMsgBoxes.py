@@ -58,6 +58,10 @@ class ErrorMsg(tk.Toplevel):
             self.protocol("WM_DELETE_WINDOW", self.destroy)
             self.resizable(False, False)
             self.attributes("-topmost", True)
+            try:
+                self.iconbitmap("favicon.ico")
+            except tk.TclError:
+                pass
             self.lift()  # Puts Window on top
             self.grab_set()  # Prevents other Tkinter windows from being used
             self.init()

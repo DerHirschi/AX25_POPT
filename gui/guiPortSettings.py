@@ -736,7 +736,11 @@ class PortSettingsWin:
         self.settings_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.settings_win.resizable(False, False)
         self.settings_win.attributes("-topmost", True)
-
+        try:
+            self.settings_win.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.settings_win.lift()
         self.lang = self._main_class.language
         ##########################
         # OK, Save, Cancel

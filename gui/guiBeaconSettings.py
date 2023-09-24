@@ -398,6 +398,10 @@ class BeaconSettings(tk.Toplevel):
                       f"{self._main_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         # self.attributes("-topmost", True)
         ###############

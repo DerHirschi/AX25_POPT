@@ -5,9 +5,11 @@ import aprslib
 import logging
 from datetime import datetime
 
-from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack
-from constant import APRS_SW_ID
+from UserDB.UserDBmain import USER_DB
+from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
+from constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
+from fnc.loc_fnc import decimal_degrees_to_aprs
 from fnc.str_fnc import convert_umlaute_to_ascii
 
 logger = logging.getLogger(__name__)
@@ -40,7 +42,7 @@ class APRS_ais(object):
         self.add_new_user = False
         # self.ais_host = "cbaprs.dyndns.org", 27234
         self.ais_aprs_stations: {int: APRS_Station} = {}
-        self.ais_host = '', 0
+        self.ais_host = 'cbaprs.dyndns.org', 27234
         self.ais = None
         self.ais_mon_gui = None
         self.wx_tree_gui = None
@@ -68,6 +70,22 @@ class APRS_ais(object):
         """ Watchdog """
         self._watchdog_last = time.time()
         self._parm_watchdog = 20  # Sec.
+        """ Beacon Tracer """
+        # Param
+        self.be_tracer_active = False
+        self.be_tracer_interval = 5
+        self.be_tracer_port = 0
+        self.be_tracer_station = 'NOCALL'
+        self.be_tracer_wide = 1
+        self.be_tracer_alarm_active = False
+        self.be_tracer_alarm_range = 50
+        # Packet Pool TODO: extra var f Packet history
+        self.be_tracer_traced_packets = {}
+        # Control vars
+        self._be_tracer_is_alarm = False
+        self._be_tracer_tx_trace_packet = ''
+        self._be_tracer_tx_rtt = time.time()
+        self._be_tracer_interval_timer = time.time()
         """ Load CFGs and Init (Login to APRS-Server) """
         if load_cfg:
             self._load_conf_fm_file()
@@ -90,6 +108,9 @@ class APRS_ais(object):
         save_data.ais_aprs_stations = {}
         # save_data.aprs_wx_msg_pool = {}
         save_data.spooler_buffer = {}
+        save_data.be_tracer_active = False
+        save_data.be_tracer_traced_packets = {}
+        save_data._be_tracer_tx_trace_packet = ''
         """
         save_date.ais_aprs_msg_pool = {
             "message": [],
@@ -170,18 +191,25 @@ class APRS_ais(object):
         if time.time() > self._non_prio_task_timer:
             # self.ais_rx_task()
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
+            # WatchDog
             if self.ais_active:
                 self._watchdog_task()
+            # PN MSG Spooler
             if self._del_spooler_tr:
                 self._flush_spooler_buff()
                 self._del_spooler_tr = False
             self._spooler_task()
+            # Tracer
+            self._tracer_task()
+            # update GUIs
             if self.port_handler is not None:
                 if self.port_handler.gui is not None:
+                    # APRS PN-MSG GUI
                     if self.port_handler.gui.aprs_pn_msg_win is not None:
                         self.port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
 
     def aprs_wx_tree_task(self):
+        """ Called fm guiMain Tasker """
         if self.wx_tree_gui is not None:
             if self._wx_update_tr:
                 self._wx_update_tr = False
@@ -193,6 +221,7 @@ class APRS_ais(object):
     """
 
     def ais_rx_task(self):
+        """ Thread loop called fm Porthandler Init """
         if self.ais is not None:
             if self.ais_active:
                 print("Consumer")
@@ -207,8 +236,20 @@ class APRS_ais(object):
                         del self.ais
                         self.ais = None
                         self.loop_is_running = False
+                        print("Consumer ValueError")
+                        logger.error("APRS Consumer ValueError")
                         break
-                    time.sleep(0.5)
+                    except aprslib.LoginError:
+                        del self.ais
+                        self.ais = None
+                        self.loop_is_running = False
+                        print("Consumer LoginError")
+                        logger.warning("APRS Consumer LoginError")
+                        break
+                    if self.loop_is_running:
+                        time.sleep(0.5)
+                    else:
+                        break
                 print("Consumer ENDE")
 
     def _ais_tx(self, ais_pack):
@@ -250,14 +291,33 @@ class APRS_ais(object):
 
     def _aprs_proces_rx(self, port_id, aprs_pack):
         if aprs_pack:
+            aprs_pack['port_id'] = port_id
             # APRS PN/BULLETIN MSG
             if aprs_pack.get("format", '') in ['message', 'bulletin', 'thirdparty']:
+                # TODO get return fm fnc
                 self._aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
+                return True
             # APRS Weather
-            elif aprs_pack.get("weather", False):
-                self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=aprs_pack)
+            elif self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=aprs_pack):
+                USER_DB.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
+                return True
+            # Tracer
+            elif self._tracer_msg_rx(aprs_pack):
+                return True
+        return False
 
     def _aprs_wx_msg_rx(self, port_id, aprs_pack):
+        if not aprs_pack.get("weather", False):
+            return False
+        new_aprs_pack = self._correct_wrong_wx_data(aprs_pack)
+        if not new_aprs_pack:
+            print("APRS Weather Pack correction Failed!")
+            print(f"Org Pack: {aprs_pack}")
+            logger.warning("APRS Weather Pack correction Failed!")
+            logger.warning(f"Org Pack: {aprs_pack}")
+            return True
+            # self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=new_aprs_pack)
+
         from_aprs = aprs_pack.get('from', '')
         if from_aprs:
             if not self.aprs_wx_msg_pool.get(from_aprs, False):
@@ -269,6 +329,18 @@ class APRS_ais(object):
             )
             if self.wx_tree_gui is not None:
                 self._wx_update_tr = True
+            return True
+        return False
+        # print(aprs_pack)
+
+    @staticmethod
+    def _correct_wrong_wx_data(aprs_pack):
+        _raw = aprs_pack.get('raw', '')
+        if _raw:
+            if 'h100b' in _raw:
+                _raw = _raw.replace('h100b', 'h00b')
+                return parse_aprs_fm_aprsframe(_raw)
+        return aprs_pack
 
     def get_wx_data(self):
         return dict(self.aprs_wx_msg_pool)
@@ -524,3 +596,127 @@ class APRS_ais(object):
     def send_rej(self, pack_to_resp):
         pass
     """
+
+    #########################################
+    # Beacon Tracer
+    def _tracer_task(self):
+        # Send Tracer Beacon in intervall
+        if self.be_tracer_active:
+            if time.time() > self._be_tracer_interval_timer:
+                print("TRACER TASKER")
+                self.tracer_sendit()
+
+    def _tracer_build_msg(self):
+        # !5251.12N\01109.78E-27.235MHz P.ython o.ther P.acket T.erminal (PoPT)
+        _coordinate = decimal_degrees_to_aprs(self.ais_lat, self.ais_lon)
+        _rtt_timer = time.time()
+        self._be_tracer_tx_rtt = _rtt_timer
+        _aprs_msg = f'!{_coordinate[0]}/{_coordinate[1]}%{APRS_TRACER_COMMENT} #{self.ais_loc}#{_rtt_timer}#'
+        # _aprs_msg = _aprs_msg.replace('`', '')
+        return _aprs_msg
+
+    def _tracer_build_pack(self):
+        # TODO Make a static for building Header
+        _port_id = int(self.be_tracer_port)
+        _station_call = str(self.be_tracer_station)
+        _wide = f'WIDE{self.be_tracer_wide}-{self.be_tracer_wide}'
+        _dest = APRS_SW_ID
+
+        if _station_call in self.port_handler.get_stat_calls_fm_port(_port_id):
+            _add_str = f'{_station_call}>{APRS_SW_ID},{_wide}:'
+            _msg = self._tracer_build_msg()
+            _aprs_raw = _add_str + _msg
+            _aprs_pack = parse_aprs_fm_aprsframe(_aprs_raw)
+            if _aprs_pack:
+                _aprs_pack['popt_port_id'] = _port_id
+                _aprs_pack['raw_message_text'] = _msg
+                return _aprs_pack
+        return {}
+
+    def tracer_sendit(self):
+        if self.be_tracer_station != 'NOCALL':
+            _pack = self._tracer_build_pack()
+            if _pack.get('raw_message_text', '') and _pack.get('comment', ''):
+                self._be_tracer_tx_trace_packet = _pack.get('comment', '')
+                self._send_as_UI(_pack)
+                self._be_tracer_interval_timer = time.time() + (60 * self.be_tracer_interval)
+                # print(self._tracer_build_msg())
+
+    def _tracer_msg_rx(self, pack):
+        if pack.get("from", '') != self.be_tracer_station:
+            return False
+        if pack.get("comment", '') != self._be_tracer_tx_trace_packet:
+            return False
+        # print(f'Tracer RX: {pack}')
+        # print(f'Tracer RX path: {pack["path"]}')
+        return self._tracer_add_traced_packet(pack)
+
+    def _tracer_get_rtt_fm_pack(self, pack):
+        if not pack.get('comment', False):
+            return 0
+        _rtt_str = str(pack['comment'])
+        _rtt_str = _rtt_str.replace(f'{APRS_TRACER_COMMENT} #{self.ais_loc}#', '')
+        _rtt_str = _rtt_str[:-1]
+        try:
+            return float(_rtt_str)
+        except ValueError:
+            return 0
+
+    def _tracer_add_traced_packet(self, pack):
+        _k = pack.get('path', [])
+        if not _k:
+            return False
+        _k = str(_k)
+        _pack_rtt = self._tracer_get_rtt_fm_pack(pack)
+        if not _pack_rtt:
+            return False
+        pack['rtt'] = time.time() - _pack_rtt
+        pack['rx_time'] = datetime.now()
+        _path = pack.get('path', [])
+        _call = pack.get('via', '')
+        if not _call and _path:
+            _call = get_last_digi_fm_path(pack)
+        if _call:
+            pack['call'] = str(_call)
+            _loc = ''
+            _dist = 0
+            _user_db_ent = USER_DB.get_entry(call_str=_call, add_new=True)
+            if _user_db_ent:
+                _loc = _user_db_ent.LOC
+                _dist = _user_db_ent.Distance
+            pack['distance'] = _dist
+            pack['locator'] = _loc
+
+            if _k in self.be_tracer_traced_packets.keys():
+                self.be_tracer_traced_packets[_k].append(pack)
+            else:
+                self.be_tracer_traced_packets[_k] = deque([pack], maxlen=500)
+            # print(f'Tracer RX dict: {self.be_tracer_traced_packets}')
+            self._tracer_check_alarm(pack)
+            self.tracer_update_gui()
+            return True
+        return False
+
+    def _tracer_check_alarm(self, pack):
+        if not self.be_tracer_alarm_active:
+            return False
+        _dist = pack.get('distance', 0)
+        if _dist >= self.be_tracer_alarm_range:
+            self._be_tracer_is_alarm = True
+
+    def tracer_is_alarm(self):
+        return self._be_tracer_is_alarm
+
+    def tracer_alarm_reset(self):
+        self._be_tracer_is_alarm = False
+
+    def tracer_update_gui(self):
+        _root_gui = self.port_handler.get_root_gui()
+        if _root_gui is not None:
+            _root_gui.tabbed_sideFrame.update_side_trace()
+            if _root_gui.be_tracer_win is not None:
+                _root_gui.be_tracer_win.update_tree_data()
+
+    def tracer_traces_get(self):
+        return self.be_tracer_traced_packets
+

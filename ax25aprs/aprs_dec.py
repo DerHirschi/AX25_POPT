@@ -1,11 +1,11 @@
 import aprslib
-
 from UserDB.UserDBmain import USER_DB
 from fnc.loc_fnc import coordinates_to_locator, locator_distance
 
 
 # print(aprslib.parse("M0XER-4>APRS64,TF3RPF,WIDE2*,qAR,TF3SUT-2:!/.(M4I^C,O `DXa/A=040849|#B>@\"v90!+|"))
 # print(aprslib.parse("M0XER-4>APRS64:!/.(M4I^C,O `DXa/A=040849|#B>@\"v90!+|"))
+
 
 def parse_aprs_fm_ax25frame(ax25frame):
     aprs_msg_input = f"{ax25frame.from_call.call_str}>{ax25frame.to_call.call_str}"
@@ -24,7 +24,6 @@ def parse_aprs_fm_ax25frame(ax25frame):
     except aprslib.UnknownFormat:
         return {}
     except aprslib.ParseError as e:
-
         return {}
 
 
@@ -228,5 +227,11 @@ def extract_ack(text):
     return '', value
 
 
-
+def get_last_digi_fm_path(pack: dict):
+    _path = pack.get('path', [])
+    _res = ''
+    for _call in _path:
+        if _call[-1] == '*':
+            _res = _call[:-1]
+    return _res
 

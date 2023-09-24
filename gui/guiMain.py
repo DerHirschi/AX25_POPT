@@ -23,6 +23,7 @@ from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_
     get_kb_str_fm_bytes, conv_time_DE_str
 from gui.guiAISmon import AISmonitor
 from gui.guiAPRS_Settings import APRSSettingsWin
+from gui.guiAPRS_be_tracer import BeaconTracer
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.guiAPRS_wx_tree import WXWin
 from gui.guiFT_Manager import FileTransferManager
@@ -45,12 +46,12 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import LANGUAGE, ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
+from constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
-    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, CH_BTN_ALARM_COLORS
+    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
-from fnc.gui_fnc import get_all_tags, set_all_tags
+from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color
 
 if is_linux():
     from playsound import playsound
@@ -107,13 +108,15 @@ class SideTabbedFrame:
         self.tab4_settings = ttk.Frame(self._tabControl)
         self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
         self.tab6_monitor = ttk.Frame(self._tabControl)
+        self.tab7_tracer = ttk.Frame(self._tabControl)
 
         self._tabControl.add(tab1_kanal, text='Kanal')
-        self._tabControl.add(self.tab2_mh, text='MH')
         # tab3 = ttk.Frame(self._tabControl)                         # TODO
         # self._tabControl.add(tab3, text='Ports')                   # TODO
         self._tabControl.add(self.tab4_settings, text='Global')
         self._tabControl.add(self.tab6_monitor, text='Monitor')
+        self._tabControl.add(self.tab2_mh, text='MH')
+        self._tabControl.add(self.tab7_tracer, text='Tracer')
 
         # self._tabControl.add(self.tab5_ch_links, text='CH-Echo')   # TODO
         self._tabControl.pack(expand=0, fill="both")
@@ -373,16 +376,16 @@ class SideTabbedFrame:
         self.bake_on.set(True)
         # self.bake_on.set(True)
         # DX Alarm  > dx_alarm_on
-        # self.dx_alarm_on = tk.BooleanVar(self.tab4_settings)
-        """
+        self.tracer_on = tk.BooleanVar(self.tab4_settings)
+
         _chk_btn = Checkbutton(self.tab4_settings,
-                               text="DX-Alarm",
-                               variable=self.dx_alarm_on,
-                               command=self._chk_dx_alarm,
+                               text="Tracer",
+                               variable=self.tracer_on,
+                               command=self._chk_tracer,
                                # state='disabled'
                                )
         _chk_btn.place(x=10, y=85)
-        """
+
         # RX ECHO
         self.rx_echo_on = tk.BooleanVar(self.tab4_settings)
         _chk_btn = Checkbutton(self.tab4_settings,
@@ -469,8 +472,8 @@ class SideTabbedFrame:
         self.mon_aprs_var = tk.BooleanVar(self.tab6_monitor)
         self.mon_aprs_var.set(True)
         self.mon_aprs_ent = tk.Checkbutton(self.tab6_monitor,
-                                             variable=self.mon_aprs_var,
-                                             text='APRS-Decoding')
+                                           variable=self.mon_aprs_var,
+                                           text='APRS-Decoding')
         self.mon_aprs_ent.place(x=_x, y=_y)
 
         # PID
@@ -504,12 +507,51 @@ class SideTabbedFrame:
                            command=self._chk_mon_port_filter
                            ).place(x=_x, y=_y)
             self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
+        ################################
+        # TRACER
+        # TREE
+        self.tab7_tracer.columnconfigure(0, minsize=150, weight=1)
+        self.tab7_tracer.columnconfigure(1, minsize=150, weight=1)
+        self.tab7_tracer.rowconfigure(0, minsize=100, weight=1)
+        self.tab7_tracer.rowconfigure(1, minsize=50, weight=1)
+
+        tracer_columns = (
+            'rx_time',
+            'call',
+            'port',
+            'distance',
+            'path',
+        )
+
+        self.trace_tree = ttk.Treeview(self.tab7_tracer, columns=tracer_columns, show='headings')
+        self.trace_tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
+
+        self.trace_tree.heading('rx_time', text='Zeit')
+        self.trace_tree.heading('call', text='Call')
+        self.trace_tree.heading('port', text='Port')
+        self.trace_tree.heading('distance', text='km')
+        self.trace_tree.heading('path', text='Path')
+        self.trace_tree.column("rx_time", anchor=tk.CENTER, stretch=tk.YES, width=90)
+        self.trace_tree.column("call", stretch=tk.YES, width=80)
+        self.trace_tree.column("port", anchor=tk.CENTER, stretch=tk.NO, width=60)
+        self.trace_tree.column("distance", stretch=tk.NO, width=70)
+        self.trace_tree.column("path", anchor=tk.CENTER, stretch=tk.YES, width=180)
+
+        self.trace_tree_data = []
+        self.update_side_trace()
+
+        tk.Button(self.tab7_tracer,
+                  text="SEND",
+                  command=self._tracer_send
+                  ).grid(row=1, column=0, padx=10)
+        # tk.Button(self.tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
+        self.trace_tree.bind('<<TreeviewSelect>>', self._trace_entry_selected)
 
         ##################
         # Tasker
         self._tasker_dict = {
             0: self._update_rtt,
-            1: self._update_side_mh,
+            3: self._update_side_mh,
             # 5: self.update_ch_echo,
         }
 
@@ -604,6 +646,12 @@ class SideTabbedFrame:
         self._main_win.setting_dx_alarm = self.dx_alarm_on.get()
     """
 
+    def _chk_tracer(self):
+        self._main_win.set_tracer(self.tracer_on.get())
+
+    def set_tracer_chk(self, state: bool):
+        self.tracer_on.set(state)
+
     def _chk_rnr(self):
         conn = self._main_win.get_conn()
         if conn:
@@ -643,10 +691,8 @@ class SideTabbedFrame:
         self._main_win.set_var_to_all_ch_param()
 
     def _chk_mon_port(self, event=None):
-        vals = []
         port_id = int(self.mon_port_var.get())
-        if port_id in PORT_HANDLER.get_all_ports().keys():
-            vals = PORT_HANDLER.get_all_ports()[port_id].my_stations
+        vals = PORT_HANDLER.get_stat_calls_fm_port(port_id)
         if vals:
             self.mon_call_var.set(vals[0])
         self.mon_call_ent.configure(values=vals)
@@ -690,6 +736,13 @@ class SideTabbedFrame:
             self._main_win.open_new_conn_win()
             self._main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
             self._main_win.new_conn_win.set_port_index(port)
+
+    def _trace_entry_selected(self, event=None):
+        self._main_win.open_be_tracer_win()
+
+    @staticmethod
+    def _tracer_send():
+        PORT_HANDLER.get_aprs_ais().tracer_sendit()
 
     def _format_tree_ent(self):
         self.tree_data = []
@@ -761,6 +814,47 @@ class SideTabbedFrame:
             self.last_mh_ent = mh_ent
             self._format_tree_ent()
             self.update_tree()
+
+    def update_side_trace(self):
+        try:  # TODO Need correct prozedur to end the whole shit
+            ind = self._tabControl.index(self._tabControl.select())
+        except TclError:
+            pass
+        else:
+            if ind == 4:
+                self._format_trace_tree_data()
+                self._update_trace_tree()
+
+    def _format_trace_tree_data(self):
+        _traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
+        self.trace_tree_data = []
+        for k in _traces:
+            _pack = _traces[k][-1]
+            _rx_time = _pack.get('rx_time', '')
+            if _rx_time:
+                _rx_time = _rx_time.strftime('%H:%M:%S')
+            _path = _pack.get('path', [])
+            _call = _pack.get('call', '')
+            if _call:
+                _path = ', '.join(_path)
+                _port_id = _pack.get('port_id', -1)
+                _rtt = _pack.get('rtt', 0)
+                _loc = _pack.get('locator', '')
+                _dist = _pack.get('distance', 0)
+
+                self.trace_tree_data.append((
+                    _rx_time,
+                    _call,
+                    _port_id,
+                    _dist,
+                    _path,
+                ))
+
+    def _update_trace_tree(self):
+        for i in self.trace_tree.get_children():
+            self.trace_tree.delete(i)
+        for ret_ent in self.trace_tree_data:
+            self.trace_tree.insert('', tk.END, values=ret_ent)
 
     def on_ch_stat_change(self):
         _conn = self._main_win.get_conn()
@@ -1096,7 +1190,7 @@ class TxTframe:
             border=0,
             font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - 1,)
         )
-        txt_encoding_ent.grid(row=1, column=8, sticky="nsew",)
+        txt_encoding_ent.grid(row=1, column=8, sticky="nsew", )
         #############
         # Monitor
         self.mon_txt = scrolledtext.ScrolledText(self.pw,
@@ -1267,7 +1361,7 @@ class ChBtnFrm:
         self._main_class = main_win
         self.ch_btn_blink_timer = time.time()
         self.ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=10)
-        _btn_font = ("fixedsys", 8, )
+        _btn_font = ("fixedsys", 8,)
         self.ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
         self.ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
@@ -1430,7 +1524,7 @@ class ChBtnFrm:
     def ch_btn_alarm(self, btn: tk.Button):
         # TODO find another solution
         if self.ch_btn_blink_timer < time.time():
-            _clr = random.choice(CH_BTN_ALARM_COLORS)
+            _clr = generate_random_hex_color()
             if btn.cget('bg') != _clr:
                 btn.configure(bg=_clr)
             # self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
@@ -1454,12 +1548,12 @@ class TkMainWin:
         self.connect_history = {}
         ####################
         # GUI PARAM
-        self.parm_btn_blink_time = 1                # s
-        self._parm_rx_beep_cooldown = 2             # s
+        self.parm_btn_blink_time = 1  # s
+        self._parm_rx_beep_cooldown = 2  # s
         # Tasker Timings
-        self._loop_delay = 250                      # ms
-        self._parm_non_prio_task_timer = 0.5        # s
-        self._parm_non_non_prio_task_timer = 1      # s
+        self._loop_delay = 250  # ms
+        self._parm_non_prio_task_timer = 0.5  # s
+        self._parm_non_non_prio_task_timer = 1  # s
         self._parm_non_non_non_prio_task_timer = 5  # s
         self._parm_test_task_timer = 60  # 5        # s
         self._non_prio_task_timer = time.time()
@@ -1523,12 +1617,13 @@ class TkMainWin:
         # Menü 3 "Tools"
         _MenuTools = Menu(_menubar, tearoff=False)
         _MenuTools.add_command(label="MH", command=self._MH_win, underline=0)
-        _MenuTools.add_command(label=STR_TABLE['statistic'][self.language], command=self.open_port_stat_win,
+        _MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
+                               command=self.open_port_stat_win,
                                underline=1)
         _MenuTools.add_separator()
         _MenuTools.add_command(label="User-DB Tree", command=self._UserDB_tree, underline=0)
         _MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
-                               command=lambda: self._open_settings_window('user_db'),
+                               command=lambda: self.open_user_db_win(),
                                underline=0)
         _MenuTools.add_separator()
         _MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self._locator_calc_win,
@@ -1552,6 +1647,11 @@ class TkMainWin:
 
         _MenuTools.add_command(label='Priv',
                                command=lambda: self._open_settings_window('priv_win'),
+                               underline=0)
+        _MenuTools.add_separator()
+
+        _MenuTools.add_command(label='Kaffèmaschine',
+                               command=lambda: self._kaffee(),
                                underline=0)
 
         # MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
@@ -1585,9 +1685,12 @@ class TkMainWin:
         _MenuAPRS = Menu(_menubar, tearoff=False)
         _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language], command=self._open_aismon_win,
                               underline=0)
-        _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
+        _MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
                               underline=0)
+        _MenuAPRS.add_separator()
         _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language], command=self._WX_win,
+                              underline=0)
+        _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
                               underline=0)
         # MenuAPRS.add_separator()
         _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
@@ -1633,6 +1736,7 @@ class TkMainWin:
         self._side_btn_frame_top.rowconfigure(2, minsize=1, weight=0)  # Dummy
         # self._side_btn_frame_top.rowconfigure(3, minsize=1, weight=2)  # Dummy
         self._side_btn_frame_top.rowconfigure(3, minsize=300, weight=10)  # Reiter Frame
+        self._side_btn_frame_top.rowconfigure(4, minsize=100, weight=1)  # Reiter Frame
         # self._side_btn_frame_top.rowconfigure(5, minsize=15, weight=1)  # Reiter Frame
 
         self._side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
@@ -1641,37 +1745,46 @@ class TkMainWin:
         self._side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
         self._side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
         self._side_btn_frame_top.columnconfigure(6, minsize=10, weight=1)
-        self._conn_btn = tk.Button(self._side_btn_frame_top,
+
+        _btn_upper_frame = tk.Frame(self._side_btn_frame_top)
+        _btn_lower_frame = tk.Frame(self._side_btn_frame_top)
+        _btn_upper_frame.place(x=5, y=5)
+        _btn_lower_frame.place(x=5, y=38)
+        self._conn_btn = tk.Button(_btn_upper_frame,
                                    text="New Conn",
                                    bg="green",
                                    width=8,
                                    command=self.open_new_conn_win)
-        self._conn_btn.place(x=5, y=10)
+        # self._conn_btn.place(x=5, y=10)
+        self._conn_btn.pack(side=tk.LEFT)
 
-        self._mh_btn = tk.Button(self._side_btn_frame_top,
+        self._mh_btn = tk.Button(_btn_lower_frame,
                                  text="MH",
                                  # bg="yellow",
                                  width=8,
                                  command=self._MH_win)
 
-        self._mh_btn.place(x=5, y=45)
-        # self.mh_btn.place(x=110, y=10)
+        # self._mh_btn.place(x=5, y=45)
+        self._mh_btn.pack(side=tk.LEFT)
         self._mh_btn_def_clr = self._mh_btn.cget('bg')
-        self._mon_btn = tk.Button(self._side_btn_frame_top,
+
+        self._mon_btn = tk.Button(_btn_upper_frame,
                                   text="Monitor",
                                   bg="yellow", width=8, command=lambda: self.switch_channel(0))
-        # self.mon_btn.place(x=110, y=45)
-        self._mon_btn.place(x=110, y=10)
+        # self._mon_btn.place(x=110, y=10)
+        self._mon_btn.pack(padx=2)
 
-        tk.Button(self._side_btn_frame_top,
-                  text="Port-Stat",
-                  width=8,
-                  command=self.open_port_stat_win).place(x=110, y=45)
-        # _btn.place(x=5, y=80)
-
+        self._tracer_btn = tk.Button(_btn_lower_frame,
+                                     text="Tracer",
+                                     width=8,
+                                     command=self.open_be_tracer_win)  # .place(x=110, y=45)
+        self._tracer_btn.pack(side=tk.LEFT, padx=2)
+        self._tracer_btn_def_clr = self._tracer_btn.cget('bg')
+        """
         tk.Button(self._side_btn_frame_top,
                   text="Kaffèmaschine",
                   bg="HotPink2", width=12, command=self._kaffee).place(x=215, y=10)
+        """
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
         self.setting_sound = self.tabbed_sideFrame.sound_on
@@ -1682,10 +1795,10 @@ class TkMainWin:
         ############################
         # Canvas Plot ( TEST )
         # plt.ion()
-        self._bw_fig = Figure(figsize=(8, 4.5), dpi=80)
+        self._bw_fig = Figure(figsize=(8, 5), dpi=80)
         # plt.style.use('dark_background')
         self._ax = self._bw_fig.add_subplot(111)
-        self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.97, bottom=0.1)
+        self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
         self._ax.axis([0, 10, 0, 100])
         self._bw_fig.set_facecolor('xkcd:light grey')
         self._ax.set_facecolor('#000000')
@@ -1702,6 +1815,7 @@ class TkMainWin:
         self._canvas.flush_events()
         self._canvas.draw()
         self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
+        # self._canvas.get_tk_widget().pack(fill=tk.BOTH)
         # self._canvas.get_tk_widget().config(cursor="none")
         self._bw_fig.canvas.flush_events()
 
@@ -1717,9 +1831,11 @@ class TkMainWin:
         self.mh_window = None
         self.wx_window = None
         self.port_stat_win = None
+        self.be_tracer_win = None
         self.locator_calc_window = None
         self.aprs_mon_win = None
         self.aprs_pn_msg_win = None
+        self.userdb_win = None
         self.userDB_tree_win = None
         ###########################
         # Init
@@ -2114,9 +2230,22 @@ class TkMainWin:
     def _dx_alarm(self):
         """ Alarm when new User in MH List """
         # self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
-        _clr = random.choice(ALL_COLOURS)
+        _clr = generate_random_hex_color()
         if self._mh_btn.cget('bg') != _clr:
             self._mh_btn.configure(bg=_clr)
+
+    def _tracer_alarm(self):
+        """ Tracer Alarm """
+        # self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
+        _clr = generate_random_hex_color()
+        if self._tracer_btn.cget('bg') != _clr:
+            self._tracer_btn.configure(bg=_clr)
+
+    def _reset_tracer_alarm(self):
+        """ Tracer Alarm """
+        PORT_HANDLER.get_aprs_ais().tracer_alarm_reset()
+        if self._tracer_btn.cget('bg') != self._tracer_btn_def_clr:
+            self._tracer_btn.configure(bg=self._tracer_btn_def_clr)
 
     def _reset_dx_alarm(self):
         MH_LIST.new_call_alarm = False
@@ -2165,6 +2294,8 @@ class TkMainWin:
                 self.ch_status_update()
             if MH_LIST.new_call_alarm:
                 self._dx_alarm()
+            if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
+                self._tracer_alarm()
             if self.settings_win is not None:
                 self.settings_win.tasker()
             """
@@ -2394,26 +2525,41 @@ class TkMainWin:
     def open_user_db(self, event=None):
         self._open_settings_window('user_db')
 
-    def _open_settings_window(self, win_key: str):
-        if self.settings_win is None:
-            settings_win = {
-                'priv_win': PrivilegWin,  # Priv Win
-                'keybinds': KeyBindsHelp,  # Keybinds Help WIN
-                'about': About,  # About WIN
-                'aprs_sett': APRSSettingsWin,  # APRS Settings
-                'ft_manager': FileTransferManager,  # FT Manager
-                'ft_send': FileSend,  # FT TX
-                'pipe_sett': PipeToolSettings,  # Pipe Tool
-                'user_db': UserDB,  # UserDB
-                'mcast_sett': MulticastSettings,  # Multicast Settings
-                'l_holder': LinkHolderSettings,  # Linkholder
-                'rx_echo_sett': RxEchoSettings,  # RX Echo
-                'beacon_sett': BeaconSettings,  # Beacon Settings
-                'port_sett': PortSettingsWin,  # Port Settings
-                'stat_sett': StationSettingsWin,  # Stat Settings
-            }.get(win_key, '')
-            if settings_win:
+    def _open_settings_window(self, win_key: str, parm=''):
+        if win_key == 'user_db':
+            if self.userdb_win is not None:
+                return
+        else:
+            if self.settings_win is not None:
+                return
+        settings_win = {
+            'priv_win': PrivilegWin,  # Priv Win
+            'keybinds': KeyBindsHelp,  # Keybinds Help WIN
+            'about': About,  # About WIN
+            'aprs_sett': APRSSettingsWin,  # APRS Settings
+            'ft_manager': FileTransferManager,  # FT Manager
+            'ft_send': FileSend,  # FT TX
+            'pipe_sett': PipeToolSettings,  # Pipe Tool
+            'user_db': UserDB,  # UserDB
+            'mcast_sett': MulticastSettings,  # Multicast Settings
+            'l_holder': LinkHolderSettings,  # Linkholder
+            'rx_echo_sett': RxEchoSettings,  # RX Echo
+            'beacon_sett': BeaconSettings,  # Beacon Settings
+            'port_sett': PortSettingsWin,  # Port Settings
+            'stat_sett': StationSettingsWin,  # Stat Settings
+        }.get(win_key, '')
+        if settings_win:
+            if win_key == 'user_db':
+                self.userdb_win = settings_win(self, parm)
+            else:
                 self.settings_win = settings_win(self)
+
+    ##########################
+    # UserDB
+    def open_user_db_win(self, ent_key=''):
+        if self.userdb_win is None:
+            self.userdb_win = UserDB(self, ent_key)
+        # self._open_settings_window('user_db', parm=ent_key)
 
     ##########################
     # New Connection WIN
@@ -2425,7 +2571,7 @@ class TkMainWin:
             self.new_conn_win = NewConnWin(self)
 
     ##########################
-    # Keybinds Help WIN
+    #
     def open_port_stat_win(self):
         if self.port_stat_win is None:
             self.port_stat_win = PlotWindow(self)
@@ -2437,6 +2583,13 @@ class TkMainWin:
             self.port_stat_win.destroy_plot()
             del self.port_stat_win
             self.port_stat_win = None
+
+    ######################
+    # APRS Beacon Tracer
+    def open_be_tracer_win(self):
+        self._reset_tracer_alarm()
+        if self.be_tracer_win is None:
+            self.be_tracer_win = BeaconTracer(self)
 
     ###################
     # MH WIN
@@ -2815,7 +2968,7 @@ class TkMainWin:
                     self._txt_win.status_label.bind('<Button-1>', self.do_priv)
         elif self._txt_win.stat_info_status_var.get() != _status:
             self._txt_win.stat_info_status_var.set(_status)
-            self._txt_win.status_label.bind('<Button-1>',)
+            self._txt_win.status_label.bind('<Button-1>', )
         """
         if _dist:
             _loc += f" ({_dist} km)"
@@ -2870,6 +3023,12 @@ class TkMainWin:
 
     def get_ch_new_data_tr(self, ch_id):
         return bool(self._win_buf[ch_id].new_data_tr)
+
+    @staticmethod
+    def set_tracer(state: bool):
+        _ais_obj = PORT_HANDLER.get_aprs_ais()
+        if _ais_obj is not None:
+            _ais_obj.be_tracer_active = bool(state)
 
 
 """

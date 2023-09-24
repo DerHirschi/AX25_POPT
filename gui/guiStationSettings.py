@@ -520,6 +520,11 @@ class StationSettingsWin:
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.settings_win.resizable(False, False)
         self.settings_win.attributes("-topmost", True)
+        try:
+            self.settings_win.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.settings_win.lift()
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self.settings_win,

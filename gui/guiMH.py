@@ -26,6 +26,11 @@ class MHWin(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.lift()
         self._menubar = Menu(self)
         self.config(menu=self._menubar)
         self._menubar.add_command(label="Quit", command=self.close)

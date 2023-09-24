@@ -24,7 +24,11 @@ class FileTransferManager(tk.Toplevel):
         self.geometry(
             f"{self.win_width}x{self.win_height}+{self.root.main_win.winfo_x()}+{self.root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
-
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.lift()
         self.progress_label_var = tk.StringVar(self)
         self.size_label_var = tk.StringVar(self)
         self.time_label_var = tk.StringVar(self)

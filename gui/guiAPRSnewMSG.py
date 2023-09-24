@@ -22,6 +22,10 @@ class NewMessageWindow(tk.Toplevel):
                       f"{root_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         # self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
         self.lift()
         self.title(STR_TABLE['new_msg'][self.lang])
 

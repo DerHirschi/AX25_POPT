@@ -126,9 +126,9 @@ def location_to_square(lat, lon):
 
     return qth_locator
 
-
+"""
 if __name__ == '__main__':
-    print 'Testing QTH Locator conversion...'
+    print('Testing QTH Locator conversion...')
     squares = [
         ('JJ00', (0, 0)),
         ('KM32', (32, 26)),
@@ -141,14 +141,15 @@ if __name__ == '__main__':
         # ('', (0, 0)),
         ]
     
-    print '\nQTH locator to coordinates:'
+    print('\nQTH locator to coordinates:')
     for sq, res in squares:
         loc = square_to_location(sq)
-        print '%s: %s, calculated: %s' % (sq, res, loc)
+        print('%s: %s, calculated: %s' % (sq, res, loc))
 
-    print '\nCoordinates to QTH locator:'
+    print('\nCoordinates to QTH locator:')
     for sq, loc in squares:
         qth = location_to_square(loc[0], loc[1])
-        print '%s: %s, calculated: %s' % (loc, sq, qth)
+        print('%s: %s, calculated: %s' % (loc, sq, qth))
     
-    print '\nDone.'
+    print('\nDone.')
+"""
