@@ -194,6 +194,8 @@ class APRS_ais(object):
                 self._flush_spooler_buff()
                 self._del_spooler_tr = False
             self._spooler_task()
+            # Tracer
+            self._tracer_task()
             # update GUIs
             if self.port_handler is not None:
                 if self.port_handler.gui is not None:
@@ -594,6 +596,12 @@ class APRS_ais(object):
 
     #########################################
     # Beacon Tracer
+    def _tracer_task(self):
+        # Send Tracer Beacon in intervall
+        if self.be_tracer_active:
+            if time.time() > self._be_tracer_interval_timer:
+                print("TRACER TASKER")
+                self.tracer_sendit()
 
     def _tracer_build_msg(self):
         # !5251.12N\01109.78E-27.235MHz P.ython o.ther P.acket T.erminal (PoPT)
@@ -623,12 +631,13 @@ class APRS_ais(object):
         return {}
 
     def tracer_sendit(self):
-        _pack = self._tracer_build_pack()
-        if _pack.get('raw_message_text', '') and _pack.get('comment', ''):
-            self._be_tracer_tx_trace_packet = _pack.get('comment', '')
-            self._send_as_UI(_pack)
-            self._be_tracer_interval_timer = time.time()
-            # print(self._tracer_build_msg())
+        if self.be_tracer_station != 'NOCALL':
+            _pack = self._tracer_build_pack()
+            if _pack.get('raw_message_text', '') and _pack.get('comment', ''):
+                self._be_tracer_tx_trace_packet = _pack.get('comment', '')
+                self._send_as_UI(_pack)
+                self._be_tracer_interval_timer = time.time() + (60 * self.be_tracer_interval)
+                # print(self._tracer_build_msg())
 
     def _tracer_msg_rx(self, pack):
         if pack.get("from", '') != self.be_tracer_station:
@@ -671,6 +680,7 @@ class APRS_ais(object):
     def tracer_update_gui(self):
         _root_gui = self.port_handler.get_root_gui()
         if _root_gui is not None:
+            _root_gui.tabbed_sideFrame.update_side_trace()
             if _root_gui.be_tracer_win is not None:
                 _root_gui.be_tracer_win.update_tree_data()
 

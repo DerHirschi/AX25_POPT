@@ -148,7 +148,6 @@ class UserDB:
             if not _ent.TYP:
                 _ent.TYP = typ
 
-
     def get_distance(self, call_str):
         ret = self.db.get(call_str, False)
         if ret:

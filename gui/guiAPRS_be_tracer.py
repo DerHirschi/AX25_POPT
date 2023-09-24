@@ -16,11 +16,11 @@ class BeaconTracer(tk.Toplevel):
         # self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self.style = self._root_win.style
         self.geometry(f"1250x"
-                      f"700+"
+                      f"350+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.close)
-        self.wm_title("APRS Beacon Trace")
+        self.wm_title("APRS Trace")
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -31,10 +31,10 @@ class BeaconTracer(tk.Toplevel):
 
         upper_frame = tk.Frame(self)  # Setting
         middle_frame = tk.Frame(self)  # Tree
-        lower_frame = tk.Frame(self)  # Selected Info
+        # lower_frame = tk.Frame(self)  # Selected Info
         upper_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
         middle_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
-        lower_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
+        # lower_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
 
         ##########################
         # Upper Frame ( Settings )
@@ -108,7 +108,10 @@ class BeaconTracer(tk.Toplevel):
         self._be_active_var = tk.BooleanVar(frame_2_active)
         self._be_active_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_active)
         tk.Label(frame_2_active, text='Activate ').pack(side=tk.LEFT, )
-        tk.Checkbutton(frame_2_active, variable=self._be_active_var).pack(side=tk.LEFT, )
+        tk.Checkbutton(frame_2_active,
+                       variable=self._be_active_var,
+                       command=self._chk_active
+                       ).pack(side=tk.LEFT, )
 
         # Save Button
 
@@ -202,10 +205,12 @@ class BeaconTracer(tk.Toplevel):
                     _loc = _user_db_ent.LOC
                     _dist = _user_db_ent.Distance
                     # if not _user_db_ent.TYP:
+                    """
                     if _pack.get('via', ''):
                         USER_DB.set_typ(_call, 'APRS-IGATE')
                     else:
                         USER_DB.set_typ(_call, 'APRS-DIGI')
+                    """
 
                 self._tree_data.append((
                     _rx_time,
@@ -242,6 +247,13 @@ class BeaconTracer(tk.Toplevel):
         if vals:
             self._be_stat_var.set(vals[0])
         self._be_stat_opt.configure(values=vals)
+        self._save_vars()
+
+    def _chk_active(self, event=None):
+        self._save_vars()
+        _root_gui = PORT_HANDLER.get_root_gui()
+        if _root_gui is not None:
+            _root_gui.tabbed_sideFrame.set_tracer_chk(PORT_HANDLER.get_aprs_ais().be_tracer_active)
 
     def close(self):
         self._root_win.be_tracer_win = None

@@ -11,6 +11,7 @@ import sys
 import gtts
 from gtts import gTTS
 
+from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import PIDByte
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -18,6 +19,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
 from ax25.ax25monitor import monitor_frame_inp
+from ax25aprs.aprs_dec import get_last_digi_fm_path
 
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
@@ -108,13 +110,15 @@ class SideTabbedFrame:
         self.tab4_settings = ttk.Frame(self._tabControl)
         self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
         self.tab6_monitor = ttk.Frame(self._tabControl)
+        self.tab7_tracer = ttk.Frame(self._tabControl)
 
         self._tabControl.add(tab1_kanal, text='Kanal')
-        self._tabControl.add(self.tab2_mh, text='MH')
         # tab3 = ttk.Frame(self._tabControl)                         # TODO
         # self._tabControl.add(tab3, text='Ports')                   # TODO
         self._tabControl.add(self.tab4_settings, text='Global')
         self._tabControl.add(self.tab6_monitor, text='Monitor')
+        self._tabControl.add(self.tab2_mh, text='MH')
+        self._tabControl.add(self.tab7_tracer, text='Tracer')
 
         # self._tabControl.add(self.tab5_ch_links, text='CH-Echo')   # TODO
         self._tabControl.pack(expand=0, fill="both")
@@ -343,6 +347,7 @@ class SideTabbedFrame:
         self._update_side_mh()
         self.tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
+
         # Settings ##########################
         # Global Sound
         self.sound_on = tk.BooleanVar(self.tab4_settings)
@@ -374,16 +379,16 @@ class SideTabbedFrame:
         self.bake_on.set(True)
         # self.bake_on.set(True)
         # DX Alarm  > dx_alarm_on
-        # self.dx_alarm_on = tk.BooleanVar(self.tab4_settings)
-        """
+        self.tracer_on = tk.BooleanVar(self.tab4_settings)
+
         _chk_btn = Checkbutton(self.tab4_settings,
-                               text="DX-Alarm",
-                               variable=self.dx_alarm_on,
-                               command=self._chk_dx_alarm,
+                               text="Tracer",
+                               variable=self.tracer_on,
+                               command=self._chk_tracer,
                                # state='disabled'
                                )
         _chk_btn.place(x=10, y=85)
-        """
+
         # RX ECHO
         self.rx_echo_on = tk.BooleanVar(self.tab4_settings)
         _chk_btn = Checkbutton(self.tab4_settings,
@@ -505,12 +510,51 @@ class SideTabbedFrame:
                            command=self._chk_mon_port_filter
                            ).place(x=_x, y=_y)
             self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
+        ################################
+        # TRACER
+        # TREE
+        self.tab7_tracer.columnconfigure(0, minsize=150, weight=1)
+        self.tab7_tracer.columnconfigure(1, minsize=150, weight=1)
+        self.tab7_tracer.rowconfigure(0, minsize=100, weight=1)
+        self.tab7_tracer.rowconfigure(1, minsize=50, weight=1)
+
+        tracer_columns = (
+            'rx_time',
+            'call',
+            'port',
+            'distance',
+            'path',
+        )
+
+        self.trace_tree = ttk.Treeview(self.tab7_tracer, columns=tracer_columns, show='headings')
+        self.trace_tree.grid(row=0, column=0, columnspan=2,sticky='nsew')
+
+        self.trace_tree.heading('rx_time', text='Zeit')
+        self.trace_tree.heading('call', text='Call')
+        self.trace_tree.heading('port', text='Port')
+        self.trace_tree.heading('distance', text='km')
+        self.trace_tree.heading('path', text='Path')
+        self.trace_tree.column("rx_time", anchor=tk.CENTER, stretch=tk.YES, width=90)
+        self.trace_tree.column("call", stretch=tk.YES, width=80)
+        self.trace_tree.column("port", anchor=tk.CENTER, stretch=tk.NO, width=60)
+        self.trace_tree.column("distance", stretch=tk.NO, width=70)
+        self.trace_tree.column("path", anchor=tk.CENTER, stretch=tk.YES, width=180)
+
+        self.trace_tree_data = []
+        self.update_side_trace()
+
+        tk.Button(self.tab7_tracer,
+                  text="SEND",
+                  command=self._tracer_send
+                  ).grid(row=1, column=0, padx=10)
+        # tk.Button(self.tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
+        self.trace_tree.bind('<<TreeviewSelect>>', self._trace_entry_selected)
 
         ##################
         # Tasker
         self._tasker_dict = {
             0: self._update_rtt,
-            1: self._update_side_mh,
+            3: self._update_side_mh,
             # 5: self.update_ch_echo,
         }
 
@@ -604,6 +648,11 @@ class SideTabbedFrame:
     def _chk_dx_alarm(self):
         self._main_win.setting_dx_alarm = self.dx_alarm_on.get()
     """
+    def _chk_tracer(self):
+        self._main_win.set_tracer(self.tracer_on.get())
+
+    def set_tracer_chk(self, state:bool):
+        self.tracer_on.set(state)
 
     def _chk_rnr(self):
         conn = self._main_win.get_conn()
@@ -690,6 +739,13 @@ class SideTabbedFrame:
             self._main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
             self._main_win.new_conn_win.set_port_index(port)
 
+    def _trace_entry_selected(self, event=None):
+        self._main_win.open_be_tracer_win()
+
+    @staticmethod
+    def _tracer_send():
+        PORT_HANDLER.get_aprs_ais().tracer_sendit()
+
     def _format_tree_ent(self):
         self.tree_data = []
         for k in self.last_mh_ent:
@@ -760,6 +816,56 @@ class SideTabbedFrame:
             self.last_mh_ent = mh_ent
             self._format_tree_ent()
             self.update_tree()
+
+    def update_side_trace(self):
+        try:  # TODO Need correct prozedur to end the whole shit
+            ind = self._tabControl.index(self._tabControl.select())
+        except TclError:
+            pass
+        else:
+            if ind == 4:
+                self._format_trace_tree_data()
+                self._update_trace_tree()
+
+    def _format_trace_tree_data(self):
+        _traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
+        self.trace_tree_data = []
+        for k in _traces:
+            _pack = _traces[k][-1]
+            _rx_time = _pack.get('rx_time', '')
+            if _rx_time:
+                _rx_time = _rx_time.strftime('%d/%m/%y %H:%M:%S')
+            _path = _pack.get('path', [])
+            _call = _pack.get('via', '')
+            if not _call and _path:
+                _call = get_last_digi_fm_path(_pack)
+            if _call:
+                _path = ', '.join(_path)
+                _port_id = _pack.get('port_id', -1)
+                _dist = 0
+                _user_db_ent = USER_DB.get_entry(call_str=_call, add_new=True)
+                if _user_db_ent:
+                    _loc = _user_db_ent.LOC
+                    _dist = _user_db_ent.Distance
+                    # if not _user_db_ent.TYP:
+                    if _pack.get('via', ''):
+                        USER_DB.set_typ(_call, 'APRS-IGATE')
+                    else:
+                        USER_DB.set_typ(_call, 'APRS-DIGI')
+
+                self.trace_tree_data.append((
+                    _rx_time,
+                    _call,
+                    _port_id,
+                    _dist,
+                    _path,
+                ))
+
+    def _update_trace_tree(self):
+        for i in self.trace_tree.get_children():
+            self.trace_tree.delete(i)
+        for ret_ent in self.trace_tree_data:
+            self.trace_tree.insert('', tk.END, values=ret_ent)
 
     def on_ch_stat_change(self):
         _conn = self._main_win.get_conn()
@@ -2912,6 +3018,11 @@ class TkMainWin:
     def get_ch_new_data_tr(self, ch_id):
         return bool(self._win_buf[ch_id].new_data_tr)
 
+    @staticmethod
+    def set_tracer(state: bool):
+        _ais_obj = PORT_HANDLER.get_aprs_ais()
+        if _ais_obj is not None:
+            _ais_obj.be_tracer_active = bool(state)
 
 """
 if __name__ == '__main__':

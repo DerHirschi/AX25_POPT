@@ -12,8 +12,8 @@ from gui.guiMsgBoxes import AskMsg
 class UserDB(tk.Toplevel):
     def __init__(self, root, ent_key=''):
         tk.Toplevel.__init__(self)
-        self.root = root
-        self.lang = self.root.language
+        self._root = root
+        self.lang = self._root.language
         self.win_height = 600
         self.win_width = 1060
         self.style = root.style
@@ -21,8 +21,8 @@ class UserDB(tk.Toplevel):
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self.root.main_win.winfo_x()}+"
-                      f"{self.root.main_win.winfo_y()}")
+                      f"{self._root.main_win.winfo_x()}+"
+                      f"{self._root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
         try:
@@ -34,7 +34,7 @@ class UserDB(tk.Toplevel):
         ###############
         # VARS
         # self.user_db = root.ax25_port_handler.user_db
-        self.user_db = USER_DB
+        self._user_db = USER_DB
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
@@ -93,7 +93,7 @@ class UserDB(tk.Toplevel):
         self.tree.column("#0", width=0, minwidth=0)
         self.tree.column("call", anchor='w', stretch=tk.NO, width=150)
         self.db_ent = False
-        ents = sorted(list(self.user_db.db.keys()))
+        ents = sorted(list(self._user_db.db.keys()))
         for ret_ent in ents:
             self.tree.insert('', tk.END, values=ret_ent)
         # if ents:
@@ -141,7 +141,7 @@ class UserDB(tk.Toplevel):
         _y = 20
         tk.Label(tab1, text='Sysop: ').place(x=_x, y=_y)
         self.sysop_var = tk.StringVar(self)
-        opt = sorted(self.user_db.get_keys_by_typ(typ='SYSOP'))
+        opt = sorted(self._user_db.get_keys_by_typ(typ='SYSOP'))
         if not opt:
             opt = ['']
         self.sysop_var.set('SYSOP')
@@ -408,19 +408,19 @@ class UserDB(tk.Toplevel):
         for selected_item in self.tree.selection():
             item = self.tree.item(selected_item)
             record = item['values'][0]
-            self.db_ent = self.user_db.get_entry(record)
+            self.db_ent = self._user_db.get_entry(record)
             self.set_var_to_ent()
             break
 
     def select_entry_fm_ch_id(self):
-        conn = self.root.get_conn()
+        conn = self._root.get_conn()
         if conn:
             self.db_ent = conn.user_db_ent
             self.set_var_to_ent()
 
     def select_entry_fm_key(self, key: str):
-        if key in self.user_db.db.keys():
-            self.db_ent = self.user_db.db[key]
+        if key in self._user_db.db.keys():
+            self.db_ent = self._user_db.db[key]
             self.set_var_to_ent()
 
     def on_select_sysop(self, event=None):
@@ -429,8 +429,8 @@ class UserDB(tk.Toplevel):
             # self.settings_win.lift()
             if msg:
                 sysop_key = self.sysop_var.get()
-                if sysop_key in self.user_db.db.keys():
-                    self.user_db.update_var_fm_dbentry(fm_key=sysop_key, to_key=self.db_ent.call_str)
+                if sysop_key in self._user_db.db.keys():
+                    self._user_db.update_var_fm_dbentry(fm_key=sysop_key, to_key=self.db_ent.call_str)
 
     def set_var_to_ent(self):
         if self.db_ent:
@@ -496,7 +496,7 @@ class UserDB(tk.Toplevel):
             print(f"Sysop_ca: {self.db_ent.Sysop_Call}")
             self.sysop_ent.setvar(self.db_ent.Sysop_Call)
 
-            for opt in sorted(self.user_db.get_keys_by_typ(typ='SYSOP')):
+            for opt in sorted(self._user_db.get_keys_by_typ(typ='SYSOP')):
                 self.sysop_ent['menu'].add_command(label=opt, command=tk._setit(self.sysop_var, opt))
 
     def update_stations(self):
@@ -511,7 +511,7 @@ class UserDB(tk.Toplevel):
         other_str = 'OTHER: '
 
         if sysop_key:
-            stat_dict = self.user_db.get_keys_by_sysop(sysop=sysop_key)
+            stat_dict = self._user_db.get_keys_by_sysop(sysop=sysop_key)
             node_calls = stat_dict['NODE']
             bbs_calls = stat_dict['BBS']
             other_calls = []
@@ -562,15 +562,15 @@ class UserDB(tk.Toplevel):
                     self.db_ent.Sysop_Call = tmp
                     self.on_select_sysop()
 
-        self.user_db.save_data()
+        self._user_db.save_data()
         self.select_entry()
-        self.root.gui_set_distance()
-        self.root.update_station_info()
-        self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
+        self._root.gui_set_distance()
+        self._root.update_station_info()
+        self._root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
 
     def ok_btn_cmd(self):
 
-        self.root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
+        self._root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.destroy_win()
 
     def del_btn_cmd(self):
@@ -578,18 +578,18 @@ class UserDB(tk.Toplevel):
             msg = AskMsg(titel=f'lösche {self.db_ent.call_str} !', message=f"{self.db_ent.call_str} löschen ?")
             # self.settings_win.lift()
             if msg:
-                del self.user_db.db[self.db_ent.call_str]
-                ents = sorted(list(self.user_db.db.keys()))
+                del self._user_db.db[self.db_ent.call_str]
+                ents = sorted(list(self._user_db.db.keys()))
                 for i in self.tree.get_children():
                     self.tree.delete(i)
                 for ret_ent in ents:
                     self.tree.insert('', tk.END, values=ret_ent)
                 if ents:
-                    self.db_ent = self.user_db.get_entry(ents[0])
+                    self.db_ent = self._user_db.get_entry(ents[0])
                 self.select_entry()
 
     def destroy_win(self):
-        self.root.settings_win = None
+        self._root.userdb_win = None
         self.destroy()
 
     def tasker(self):
