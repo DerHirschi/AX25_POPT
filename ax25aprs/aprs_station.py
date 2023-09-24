@@ -603,7 +603,7 @@ class APRS_ais(object):
         # Send Tracer Beacon in intervall
         if self.be_tracer_active:
             if time.time() > self._be_tracer_interval_timer:
-                print("TRACER TASKER")
+                # print("TRACER TASKER")
                 self.tracer_sendit()
 
     def _tracer_build_msg(self):

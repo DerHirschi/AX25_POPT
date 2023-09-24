@@ -25,6 +25,8 @@ Ideas/TODO's :
 - Didadit
 ✓ APRS decoding
 - APRS encoding
+✓ APRS Tracer
+✓ APRS Tracer Alarm
 - APRS Digi / I-Gate Funktion
 - "Managed-DIGI" Funktion (Die DIGI Verbindung wird wie ein Noden Link behandelt)
 - Optionale zusätzliche Monitorausgabe als Hex

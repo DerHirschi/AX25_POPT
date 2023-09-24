@@ -52,6 +52,8 @@ class BeaconTracer(tk.Toplevel):
         options = list(PORT_HANDLER.get_all_ports().keys())
         if len(options) > PORT_HANDLER.get_aprs_ais().be_tracer_port:
             self._be_port_var.set(options[PORT_HANDLER.get_aprs_ais().be_tracer_port])
+        if not options:
+            options = [0]
         tk.Label(frame_2_port, text='Port ').pack(side=tk.LEFT, padx=5)
         tk.OptionMenu(frame_2_port, self._be_port_var, *options, command=self._chk_port).pack(side=tk.LEFT, )
 
@@ -268,12 +270,16 @@ class BeaconTracer(tk.Toplevel):
         PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range = int(self._alarm_distance_var.get())
 
     def _chk_port(self, event=None):
-        port_id = int(self._be_port_var.get())
-        vals = PORT_HANDLER.get_stat_calls_fm_port(port_id)
-        if vals:
-            self._be_stat_var.set(vals[0])
-        self._be_stat_opt.configure(values=vals)
-        self._save_vars()
+        try:
+            port_id = int(self._be_port_var.get())
+        except ValueError:
+            pass
+        else:
+            vals = PORT_HANDLER.get_stat_calls_fm_port(port_id)
+            if vals:
+                self._be_stat_var.set(vals[0])
+            self._be_stat_opt.configure(values=vals)
+            self._save_vars()
 
     def _chk_active(self, event=None):
         self._save_vars()
