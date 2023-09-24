@@ -7,7 +7,6 @@ from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
 from fnc.cfg_fnc import set_obj_att, cleanup_obj_dict
 from fnc.str_fnc import conv_time_for_sorting
 
-# axip_clientList = 'data/axip_userList.popt'
 client_db = 'data/UserDB.popt'
 
 
@@ -140,6 +139,15 @@ class UserDB:
                     self.db[call_str] = Client(call_str)
                     return self.db[call_str]
         return False
+
+    def set_typ(self, call_str: str, typ: str, add_new=True, overwrite=False):
+        _ent = self.get_entry(call_str, add_new)
+        if overwrite:
+            _ent.TYP = typ
+        else:
+            if not _ent.TYP:
+                _ent.TYP = typ
+
 
     def get_distance(self, call_str):
         ret = self.db.get(call_str, False)

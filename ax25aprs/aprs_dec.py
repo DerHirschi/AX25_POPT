@@ -227,5 +227,11 @@ def extract_ack(text):
     return '', value
 
 
-
+def get_last_digi_fm_path(pack: dict):
+    _path = pack.get('path', [])
+    _res = ''
+    for _call in _path:
+        if _call[-1] == '*':
+            _res = _call[:-1]
+    return _res
 

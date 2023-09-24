@@ -378,6 +378,10 @@ class AX25PortHandler(object):
         if port_id in self.ax25_ports.keys():
             return self.ax25_ports[port_id].my_stations
         return []
+
+    def get_root_gui(self):
+        return self.gui
+
     """
     def debug_fnc(self):
         print("--Port")

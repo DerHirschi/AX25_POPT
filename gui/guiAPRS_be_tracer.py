@@ -2,7 +2,9 @@ import logging
 import tkinter as tk
 from tkinter import ttk
 
+from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
+from ax25aprs.aprs_dec import get_last_digi_fm_path
 
 logger = logging.getLogger(__name__)
 
@@ -130,11 +132,13 @@ class BeaconTracer(tk.Toplevel):
         tree_Frame.pack(fill=tk.BOTH)
         tree_Frame.grid_rowconfigure(0, weight=1)
         tree_Frame.grid_columnconfigure(0, weight=1)
-
+        self._tree_data = []
         columns = (
-            'last_seen',
+            'rx_time',
             'call',
             'port',
+            'path',
+            'rtt',
             'locator',
             'distance',
         )
@@ -144,14 +148,18 @@ class BeaconTracer(tk.Toplevel):
         scrollbar = ttk.Scrollbar(tree_Frame, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
-        self._tree.heading('last_seen', text='Letzte Paket', )
+        self._tree.heading('rx_time', text='RX-TIME', )
         self._tree.heading('call', text='CALL', )
         self._tree.heading('port', text='Port', )
+        self._tree.heading('path', text='Path', )
+        self._tree.heading('rtt', text='RTT', )
         self._tree.heading('locator', text='LOC', )
         self._tree.heading('distance', text='Distance', )
-        self._tree.column("last_seen", anchor=tk.CENTER, stretch=tk.YES, width=120)
-        self._tree.column("call", anchor=tk.CENTER, stretch=tk.YES, width=120)
-        self._tree.column("port", anchor=tk.CENTER, stretch=tk.YES, width=80)
+        self._tree.column("rx_time", anchor=tk.CENTER, stretch=tk.YES, width=100)
+        self._tree.column("call", anchor=tk.CENTER, stretch=tk.YES, width=90)
+        self._tree.column("port", anchor=tk.CENTER, stretch=tk.YES, width=60)
+        self._tree.column("path", anchor=tk.CENTER, stretch=tk.YES, width=180)
+        self._tree.column("rtt", anchor=tk.CENTER, stretch=tk.YES, width=60)
         self._tree.column("locator", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("distance", anchor=tk.CENTER, stretch=tk.YES, width=80)
         ##########################
@@ -159,6 +167,55 @@ class BeaconTracer(tk.Toplevel):
 
         ##########################
         self._chk_port()
+        self.update_tree_data()
+
+    def update_tree_data(self):
+        self._format_tree_data()
+        self._update_tree()
+
+    def _update_tree(self):
+        for i in self._tree.get_children():
+            self._tree.delete(i)
+        for ret_ent in self._tree_data:
+            self._tree.insert('', tk.END, values=ret_ent)
+
+    def _format_tree_data(self):
+        _traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
+        self._tree_data = []
+        for k in _traces:
+            _pack = _traces[k][-1]
+            _rx_time = _pack.get('rx_time', '')
+            if _rx_time:
+                _rx_time = _rx_time.strftime('%d/%m/%y %H:%M:%S')
+            _path = _pack.get('path', [])
+            _call = _pack.get('via', '')
+            if not _call and _path:
+                _call = get_last_digi_fm_path(_pack)
+            if _call:
+                _path = ', '.join(_path)
+                _port_id = _pack.get('port_id', -1)
+                _rtt = _pack.get('rtt', 0)
+                _loc = ''
+                _dist = 0
+                _user_db_ent = USER_DB.get_entry(call_str=_call, add_new=True)
+                if _user_db_ent:
+                    _loc = _user_db_ent.LOC
+                    _dist = _user_db_ent.Distance
+                    # if not _user_db_ent.TYP:
+                    if _pack.get('via', ''):
+                        USER_DB.set_typ(_call, 'APRS-IGATE')
+                    else:
+                        USER_DB.set_typ(_call, 'APRS-DIGI')
+
+                self._tree_data.append((
+                    _rx_time,
+                    _call,
+                    _port_id,
+                    _path,
+                    f'{_rtt:.2f}',
+                    _loc,
+                    _dist,
+                ))
 
     def _save_btn(self):
         self._save_vars()
