@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
-from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack
+from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
 from constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
 from fnc.loc_fnc import decimal_degrees_to_aprs
@@ -71,13 +71,18 @@ class APRS_ais(object):
         self._watchdog_last = time.time()
         self._parm_watchdog = 20  # Sec.
         """ Beacon Tracer """
+        # Param
         self.be_tracer_active = False
         self.be_tracer_interval = 5
         self.be_tracer_port = 0
         self.be_tracer_station = 'NOCALL'
         self.be_tracer_wide = 1
+        self.be_tracer_alarm_active = False
+        self.be_tracer_alarm_range = 50
+        # Packet Pool TODO: extra var f Packet history
         self.be_tracer_traced_packets = {}
-
+        # Control vars
+        self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''
         self._be_tracer_tx_rtt = time.time()
         self._be_tracer_interval_timer = time.time()
@@ -558,7 +563,6 @@ class APRS_ais(object):
     def _send_as_UI(self, pack):
         port_id = pack.get('popt_port_id', False)
         ax_port = self.port_handler.ax25_ports.get(port_id, False)
-        print(f'sendUI in: {pack}')
         if ax_port:
             path = pack.get('path', [])
             msg_text = pack.get('raw_message_text', '').encode('ASCII', 'ignore')
@@ -573,7 +577,6 @@ class APRS_ais(object):
                 text=msg_text,
                 cmd_poll=(False, False)
             )
-            print('sendUI DONE!')
 
     def _send_as_AIS(self, pack):
         # print(f"send_as_AIS : {pack}")
@@ -669,13 +672,43 @@ class APRS_ais(object):
             return False
         pack['rtt'] = time.time() - _pack_rtt
         pack['rx_time'] = datetime.now()
-        if _k in self.be_tracer_traced_packets.keys():
-            self.be_tracer_traced_packets[_k].append(pack)
-        else:
-            self.be_tracer_traced_packets[_k] = deque([pack], maxlen=500)
-        # print(f'Tracer RX dict: {self.be_tracer_traced_packets}')
-        self.tracer_update_gui()
-        return True
+        _path = pack.get('path', [])
+        _call = pack.get('via', '')
+        if not _call and _path:
+            _call = get_last_digi_fm_path(pack)
+        if _call:
+            pack['call'] = str(_call)
+            _loc = ''
+            _dist = 0
+            _user_db_ent = USER_DB.get_entry(call_str=_call, add_new=True)
+            if _user_db_ent:
+                _loc = _user_db_ent.LOC
+                _dist = _user_db_ent.Distance
+            pack['distance'] = _dist
+            pack['locator'] = _loc
+
+            if _k in self.be_tracer_traced_packets.keys():
+                self.be_tracer_traced_packets[_k].append(pack)
+            else:
+                self.be_tracer_traced_packets[_k] = deque([pack], maxlen=500)
+            # print(f'Tracer RX dict: {self.be_tracer_traced_packets}')
+            self._tracer_check_alarm(pack)
+            self.tracer_update_gui()
+            return True
+        return False
+
+    def _tracer_check_alarm(self, pack):
+        if not self.be_tracer_alarm_active:
+            return False
+        _dist = pack.get('distance', 0)
+        if _dist >= self.be_tracer_alarm_range:
+            self._be_tracer_is_alarm = True
+
+    def tracer_is_alarm(self):
+        return self._be_tracer_is_alarm
+
+    def tracer_alarm_reset(self):
+        self._be_tracer_is_alarm = False
 
     def tracer_update_gui(self):
         _root_gui = self.port_handler.get_root_gui()

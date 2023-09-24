@@ -2,9 +2,7 @@ import logging
 import tkinter as tk
 from tkinter import ttk
 
-from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
-from ax25aprs.aprs_dec import get_last_digi_fm_path
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +13,8 @@ class BeaconTracer(tk.Toplevel):
         self._root_win = root_win
         # self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self.style = self._root_win.style
-        self.geometry(f"1250x"
-                      f"350+"
+        self.geometry(f"1300x"
+                      f"400+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.close)
@@ -30,11 +28,13 @@ class BeaconTracer(tk.Toplevel):
         self.lift()
 
         upper_frame = tk.Frame(self)  # Setting
+        # upper_frame2 = tk.Frame(self)  # Setting
         middle_frame = tk.Frame(self)  # Tree
-        # lower_frame = tk.Frame(self)  # Selected Info
+        lower_frame = tk.Frame(self)  # Selected Info
         upper_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
+        # upper_frame2.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
         middle_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
-        # lower_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
+        lower_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
 
         ##########################
         # Upper Frame ( Settings )
@@ -128,6 +128,37 @@ class BeaconTracer(tk.Toplevel):
             text='SEND',
             command=self._send_btn
         ).pack(side=tk.LEFT, fill=tk.BOTH, padx=20)
+        # ALARM
+        frame_11_label = tk.Frame(lower_frame)
+        frame_11_label.pack(side=tk.TOP)
+        tk.Label(frame_11_label, text='Alarm Setting').pack()
+        ###
+        # activ Checkbox
+        frame_21_active = tk.Frame(lower_frame)
+        frame_21_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+        self._alarm_active_var = tk.BooleanVar(frame_21_active)
+        self._alarm_active_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active)
+        tk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
+        tk.Checkbutton(frame_21_active,
+                       variable=self._alarm_active_var,
+                       command=self._chk_alarm_active
+                       ).pack(side=tk.LEFT, )
+
+        # Alarm Distance
+        frame_21_distance = tk.Frame(lower_frame)
+        frame_21_distance.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+        self._alarm_distance_var = tk.StringVar(frame_21_distance)
+
+        self._alarm_distance_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range))
+        tk.Label(frame_21_distance, text='Distance ').pack(side=tk.LEFT, )
+        tk.Spinbox(frame_21_distance,
+                   from_=1,
+                   to=20000,
+                   increment=1,
+                   width=6,
+                   textvariable=self._alarm_distance_var,
+                   command=self._set_alarm_distance
+                   ).pack(side=tk.LEFT, )
 
         ##########################
         # Middle Frame ( Treeview )
@@ -191,26 +222,13 @@ class BeaconTracer(tk.Toplevel):
             if _rx_time:
                 _rx_time = _rx_time.strftime('%d/%m/%y %H:%M:%S')
             _path = _pack.get('path', [])
-            _call = _pack.get('via', '')
-            if not _call and _path:
-                _call = get_last_digi_fm_path(_pack)
+            _call = _pack.get('call', '')
             if _call:
                 _path = ', '.join(_path)
                 _port_id = _pack.get('port_id', -1)
                 _rtt = _pack.get('rtt', 0)
-                _loc = ''
-                _dist = 0
-                _user_db_ent = USER_DB.get_entry(call_str=_call, add_new=True)
-                if _user_db_ent:
-                    _loc = _user_db_ent.LOC
-                    _dist = _user_db_ent.Distance
-                    # if not _user_db_ent.TYP:
-                    """
-                    if _pack.get('via', ''):
-                        USER_DB.set_typ(_call, 'APRS-IGATE')
-                    else:
-                        USER_DB.set_typ(_call, 'APRS-DIGI')
-                    """
+                _loc = _pack.get('locator', '')
+                _dist = _pack.get('distance', 0)
 
                 self._tree_data.append((
                     _rx_time,
@@ -232,6 +250,8 @@ class BeaconTracer(tk.Toplevel):
         PORT_HANDLER.get_aprs_ais().be_tracer_wide = self._be_wide_var.get()
         PORT_HANDLER.get_aprs_ais().be_tracer_interval = int(self._be_interval_var.get())
         PORT_HANDLER.get_aprs_ais().be_tracer_active = self._be_active_var.get()
+        PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active = bool(self._alarm_active_var.get())
+        PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range = int(self._alarm_distance_var.get())
 
     @staticmethod
     def _save_to_cfg():
@@ -240,6 +260,12 @@ class BeaconTracer(tk.Toplevel):
     def _send_btn(self):
         self._save_vars()
         PORT_HANDLER.get_aprs_ais().tracer_sendit()
+
+    def _chk_alarm_active(self, event=None):
+        PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active = bool(self._alarm_active_var.get())
+
+    def _set_alarm_distance(self, event=None):
+        PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range = int(self._alarm_distance_var.get())
 
     def _chk_port(self, event=None):
         port_id = int(self._be_port_var.get())

@@ -12,8 +12,8 @@ from gui.guiMsgBoxes import AskMsg
 class UserDB(tk.Toplevel):
     def __init__(self, root, ent_key=''):
         tk.Toplevel.__init__(self)
-        self._root = root
-        self.lang = self._root.language
+        self.root = root
+        self.lang = self.root.language
         self.win_height = 600
         self.win_width = 1060
         self.style = root.style
@@ -21,8 +21,8 @@ class UserDB(tk.Toplevel):
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self._root.main_win.winfo_x()}+"
-                      f"{self._root.main_win.winfo_y()}")
+                      f"{self.root.main_win.winfo_x()}+"
+                      f"{self.root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
         try:
@@ -413,7 +413,7 @@ class UserDB(tk.Toplevel):
             break
 
     def select_entry_fm_ch_id(self):
-        conn = self._root.get_conn()
+        conn = self.root.get_conn()
         if conn:
             self.db_ent = conn.user_db_ent
             self.set_var_to_ent()
@@ -564,13 +564,13 @@ class UserDB(tk.Toplevel):
 
         self._user_db.save_data()
         self.select_entry()
-        self._root.gui_set_distance()
-        self._root.update_station_info()
-        self._root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
+        self.root.gui_set_distance()
+        self.root.update_station_info()
+        self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
 
     def ok_btn_cmd(self):
 
-        self._root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
+        self.root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.destroy_win()
 
     def del_btn_cmd(self):
@@ -589,7 +589,7 @@ class UserDB(tk.Toplevel):
                 self.select_entry()
 
     def destroy_win(self):
-        self._root.userdb_win = None
+        self.root.userdb_win = None
         self.destroy()
 
     def tasker(self):
