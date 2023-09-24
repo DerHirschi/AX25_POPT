@@ -190,8 +190,14 @@ class APRSSettingsWin(tk.Toplevel):
             _aprs_station[port_id] = self._all_ports[port_id].port_cfg.parm_aprs_station
             _ind += 1
 
-        _lon = float(self.ais_lon_var.get())
-        _lat = float(self.ais_lat_var.get())
+        try:
+            _lon = float(self.ais_lon_var.get())
+        except ValueError:
+            _lon = 0
+        try:
+            _lat = float(self.ais_lat_var.get())
+        except ValueError:
+            _lat = 0
         _loc = self.ais_loc_var.get()
 
         if not _loc:

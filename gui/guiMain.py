@@ -46,12 +46,12 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
-from constant import LANGUAGE, ALL_COLOURS, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
+from constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
-    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, CH_BTN_ALARM_COLORS
+    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
-from fnc.gui_fnc import get_all_tags, set_all_tags
+from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color
 
 if is_linux():
     from playsound import playsound
@@ -644,10 +644,8 @@ class SideTabbedFrame:
         self._main_win.set_var_to_all_ch_param()
 
     def _chk_mon_port(self, event=None):
-        vals = []
         port_id = int(self.mon_port_var.get())
-        if port_id in PORT_HANDLER.get_all_ports().keys():
-            vals = PORT_HANDLER.get_all_ports()[port_id].my_stations
+        vals = PORT_HANDLER.get_stat_calls_fm_port(port_id)
         if vals:
             self.mon_call_var.set(vals[0])
         self.mon_call_ent.configure(values=vals)
@@ -1431,7 +1429,7 @@ class ChBtnFrm:
     def ch_btn_alarm(self, btn: tk.Button):
         # TODO find another solution
         if self.ch_btn_blink_timer < time.time():
-            _clr = random.choice(CH_BTN_ALARM_COLORS)
+            _clr = generate_random_hex_color()
             if btn.cget('bg') != _clr:
                 btn.configure(bg=_clr)
             # self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
@@ -1555,6 +1553,11 @@ class TkMainWin:
         _MenuTools.add_command(label='Priv',
                                command=lambda: self._open_settings_window('priv_win'),
                                underline=0)
+        _MenuTools.add_separator()
+
+        _MenuTools.add_command(label='Kaffèmaschine',
+                               command=lambda: self._kaffee(),
+                               underline=0)
 
         # MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         _menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=_MenuTools, underline=0)
@@ -1587,9 +1590,12 @@ class TkMainWin:
         _MenuAPRS = Menu(_menubar, tearoff=False)
         _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language], command=self._open_aismon_win,
                               underline=0)
-        _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
+        _MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
                               underline=0)
+        _MenuAPRS.add_separator()
         _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language], command=self._WX_win,
+                              underline=0)
+        _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
                               underline=0)
         # MenuAPRS.add_separator()
         _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
@@ -1644,37 +1650,45 @@ class TkMainWin:
         self._side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
         self._side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
         self._side_btn_frame_top.columnconfigure(6, minsize=10, weight=1)
-        self._conn_btn = tk.Button(self._side_btn_frame_top,
+
+        _btn_upper_frame = tk.Frame(self._side_btn_frame_top)
+        _btn_lower_frame = tk.Frame(self._side_btn_frame_top)
+        _btn_upper_frame.place(x=5, y=5)
+        _btn_lower_frame.place(x=5, y=38)
+        self._conn_btn = tk.Button(_btn_upper_frame,
                                    text="New Conn",
                                    bg="green",
                                    width=8,
                                    command=self.open_new_conn_win)
-        self._conn_btn.place(x=5, y=10)
+        # self._conn_btn.place(x=5, y=10)
+        self._conn_btn.pack(side=tk.LEFT)
 
-        self._mh_btn = tk.Button(self._side_btn_frame_top,
+        self._mh_btn = tk.Button(_btn_lower_frame,
                                  text="MH",
                                  # bg="yellow",
                                  width=8,
                                  command=self._MH_win)
 
-        self._mh_btn.place(x=5, y=45)
-        # self.mh_btn.place(x=110, y=10)
+        # self._mh_btn.place(x=5, y=45)
+        self._mh_btn.pack(side=tk.LEFT)
         self._mh_btn_def_clr = self._mh_btn.cget('bg')
-        self._mon_btn = tk.Button(self._side_btn_frame_top,
+
+        self._mon_btn = tk.Button(_btn_upper_frame,
                                   text="Monitor",
                                   bg="yellow", width=8, command=lambda: self.switch_channel(0))
-        # self.mon_btn.place(x=110, y=45)
-        self._mon_btn.place(x=110, y=10)
+        #self._mon_btn.place(x=110, y=10)
+        self._mon_btn.pack(padx=2)
 
-        tk.Button(self._side_btn_frame_top,
+        tk.Button(_btn_lower_frame,
                   text="Tracer",
                   width=8,
-                  command=self.open_be_tracer_win).place(x=110, y=45)
-        # _btn.place(x=5, y=80)
+                  command=self.open_be_tracer_win).pack(side=tk.LEFT, padx=2) # .place(x=110, y=45)
 
+        """
         tk.Button(self._side_btn_frame_top,
                   text="Kaffèmaschine",
                   bg="HotPink2", width=12, command=self._kaffee).place(x=215, y=10)
+        """
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
         self.setting_sound = self.tabbed_sideFrame.sound_on
@@ -2120,7 +2134,7 @@ class TkMainWin:
     def _dx_alarm(self):
         """ Alarm when new User in MH List """
         # self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
-        _clr = random.choice(ALL_COLOURS)
+        _clr = generate_random_hex_color()
         if self._mh_btn.cget('bg') != _clr:
             self._mh_btn.configure(bg=_clr)
 
@@ -2674,9 +2688,11 @@ class TkMainWin:
         self._bw_fig.canvas.flush_events()
         self._canvas.flush_events()
 
+
     def _kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
+
 
     def do_priv(self, event=None, login_cmd=''):
         _conn = self.get_conn()

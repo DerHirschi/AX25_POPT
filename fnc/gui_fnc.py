@@ -1,3 +1,4 @@
+import random
 
 
 def get_all_tags(text_wig):
@@ -17,3 +18,13 @@ def set_all_tags(text_wig, tag_dic):
             if len(tmp) == 2:
                 text_wig.tag_add(tag_n, tmp[0], tmp[1])
                 tmp = []
+
+
+def generate_random_hex_color():
+    red = random.randint(0, 255)
+    green = random.randint(0, 255)
+    blue = random.randint(0, 255)
+
+    hex_color = "#{:02x}{:02x}{:02x}".format(red, green, blue)
+
+    return hex_color

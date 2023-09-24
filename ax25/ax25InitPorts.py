@@ -5,13 +5,10 @@ from ax25.ax25Statistics import MH_LIST
 from ax25aprs.aprs_station import APRS_ais
 from config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
-# from fnc.debug_fnc import show_mem_size
-# from memory_profiler import profile
 from classes import RxEchoVars
 
 
 class AX25PortHandler(object):
-    # @profile
     def __init__(self):
         logger.info("Port Init.")
         init_dir_struct()
@@ -26,7 +23,6 @@ class AX25PortHandler(object):
         }
         ###########################
         # VArs for gathering Stuff
-        # self.mh = MH_LIST
         # self.aprs_ais = None
         self.aprs_ais = None
         self.gui = None
@@ -377,6 +373,11 @@ class AX25PortHandler(object):
 
     def get_all_connections(self):
         return self.all_connections
+
+    def get_stat_calls_fm_port(self, port_id=0):
+        if port_id in self.ax25_ports.keys():
+            return self.ax25_ports[port_id].my_stations
+        return []
     """
     def debug_fnc(self):
         print("--Port")

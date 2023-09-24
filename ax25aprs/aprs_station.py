@@ -6,8 +6,9 @@ import logging
 from datetime import datetime
 
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack
-from constant import APRS_SW_ID
+from constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
+from fnc.loc_fnc import decimal_degrees_to_aprs
 from fnc.str_fnc import convert_umlaute_to_ascii
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ class APRS_ais(object):
         self.add_new_user = False
         # self.ais_host = "cbaprs.dyndns.org", 27234
         self.ais_aprs_stations: {int: APRS_Station} = {}
-        self.ais_host = '', 0
+        self.ais_host = 'cbaprs.dyndns.org', 27234
         self.ais = None
         self.ais_mon_gui = None
         self.wx_tree_gui = None
@@ -68,6 +69,17 @@ class APRS_ais(object):
         """ Watchdog """
         self._watchdog_last = time.time()
         self._parm_watchdog = 20  # Sec.
+        """ Beacon Tracer """
+        self.be_tracer_active = False
+        self.be_tracer_interval = 5
+        self.be_tracer_port = 0
+        self.be_tracer_station = 'NOCALL'
+        self.be_tracer_wide = 1
+        self.be_tracer_traced_packets = {}
+
+        # self._be_tracer_dest = APRS_SW_ID
+        # self._be_tracer_comment = APRS_TRACER_COMMENT
+        self._be_tracer_timer = time.time()
         """ Load CFGs and Init (Login to APRS-Server) """
         if load_cfg:
             self._load_conf_fm_file()
@@ -207,8 +219,20 @@ class APRS_ais(object):
                         del self.ais
                         self.ais = None
                         self.loop_is_running = False
+                        print("Consumer ValueError")
+                        logger.error("APRS Consumer ValueError")
                         break
-                    time.sleep(0.5)
+                    except aprslib.LoginError:
+                        del self.ais
+                        self.ais = None
+                        self.loop_is_running = False
+                        print("Consumer LoginError")
+                        logger.warning("APRS Consumer LoginError")
+                        break
+                    if self.loop_is_running:
+                        time.sleep(0.5)
+                    else:
+                        break
                 print("Consumer ENDE")
 
     def _ais_tx(self, ais_pack):
@@ -255,7 +279,14 @@ class APRS_ais(object):
                 self._aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
             # APRS Weather
             elif aprs_pack.get("weather", False):
-                self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=aprs_pack)
+                new_aprs_pack = self._correct_wrong_wx_data(aprs_pack)
+                if new_aprs_pack:
+                    self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=new_aprs_pack)
+                else:
+                    print("APRS Weather Pack correction Failed!")
+                    print(f"Org Pack: {aprs_pack}")
+                    logger.warning("APRS Weather Pack correction Failed!")
+                    logger.warning(f"Org Pack: {aprs_pack}")
 
     def _aprs_wx_msg_rx(self, port_id, aprs_pack):
         from_aprs = aprs_pack.get('from', '')
@@ -269,6 +300,16 @@ class APRS_ais(object):
             )
             if self.wx_tree_gui is not None:
                 self._wx_update_tr = True
+            # print(aprs_pack)
+
+    @staticmethod
+    def _correct_wrong_wx_data(aprs_pack):
+        _raw = aprs_pack.get('raw', '')
+        if _raw:
+            if 'h100b' in _raw:
+                _raw = _raw.replace('h100b', 'h00b')
+                return parse_aprs_fm_aprsframe(_raw)
+        return aprs_pack
 
     def get_wx_data(self):
         return dict(self.aprs_wx_msg_pool)
@@ -524,3 +565,15 @@ class APRS_ais(object):
     def send_rej(self, pack_to_resp):
         pass
     """
+    #########################################
+    # Beacon Tracer
+
+    def _tracer_build_msg(self):
+        # !5251.12N\01109.78E-27.235MHz P.ython o.ther P.acket T.erminal (PoPT)
+        _coordinate = decimal_degrees_to_aprs(self.ais_lat, self.ais_lon)
+        _aprs_msg = f'!{_coordinate[0]}/{_coordinate[1]}%{APRS_TRACER_COMMENT} #{self.ais_loc}#{str(time.time())}#'
+        # _aprs_msg = _aprs_msg.replace('`', '')
+        return _aprs_msg
+
+    def tracer_sendit(self):
+        print(self._tracer_build_msg())
