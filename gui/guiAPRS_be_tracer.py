@@ -202,7 +202,7 @@ class BeaconTracer(tk.Toplevel):
         # Lower Frame ( Infos )
 
         ##########################
-        self._chk_port()
+        # self._chk_port()
         self.update_tree_data()
 
     def update_tree_data(self):

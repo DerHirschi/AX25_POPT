@@ -713,7 +713,7 @@ class APRS_ais(object):
     def tracer_update_gui(self):
         _root_gui = self.port_handler.get_root_gui()
         if _root_gui is not None:
-            _root_gui.tabbed_sideFrame.update_side_trace()
+            # _root_gui.tabbed_sideFrame.update_side_trace()
             if _root_gui.be_tracer_win is not None:
                 _root_gui.be_tracer_win.update_tree_data()
 

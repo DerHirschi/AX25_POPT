@@ -326,24 +326,24 @@ class SideTabbedFrame:
             'mh_route',
         )
 
-        self.tree = ttk.Treeview(self.tab2_mh, columns=columns, show='headings')
-        self.tree.grid(row=0, column=0, sticky='nsew')
+        self._tree = ttk.Treeview(self.tab2_mh, columns=columns, show='headings')
+        self._tree.grid(row=0, column=0, sticky='nsew')
 
-        self.tree.heading('mh_last_seen', text='Zeit')
-        self.tree.heading('mh_call', text='Call')
-        self.tree.heading('mh_port', text='Port')
-        self.tree.heading('mh_nPackets', text='PACK')
-        self.tree.heading('mh_route', text='Route')
-        self.tree.column("mh_last_seen", anchor=tk.CENTER, stretch=tk.NO, width=90)
-        self.tree.column("mh_call", stretch=tk.NO, width=100)
-        self.tree.column("mh_port", anchor=tk.CENTER, stretch=tk.NO, width=80)
-        self.tree.column("mh_nPackets", anchor=tk.CENTER, stretch=tk.NO, width=60)
-        self.tree.column("mh_route", stretch=tk.YES, width=180)
+        self._tree.heading('mh_last_seen', text='Zeit')
+        self._tree.heading('mh_call', text='Call')
+        self._tree.heading('mh_port', text='Port')
+        self._tree.heading('mh_nPackets', text='PACK')
+        self._tree.heading('mh_route', text='Route')
+        self._tree.column("mh_last_seen", anchor=tk.CENTER, stretch=tk.NO, width=90)
+        self._tree.column("mh_call", stretch=tk.NO, width=100)
+        self._tree.column("mh_port", anchor=tk.CENTER, stretch=tk.NO, width=80)
+        self._tree.column("mh_nPackets", anchor=tk.CENTER, stretch=tk.NO, width=60)
+        self._tree.column("mh_route", stretch=tk.YES, width=180)
 
-        self.tree_data = []
-        self.last_mh_ent = []
+        self._tree_data = []
+        self._last_mh_ent = []
         self._update_side_mh()
-        self.tree.bind('<<TreeviewSelect>>', self._entry_selected)
+        self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
         # Settings ##########################
         # Global Sound
@@ -523,36 +523,37 @@ class SideTabbedFrame:
             'path',
         )
 
-        self.trace_tree = ttk.Treeview(self.tab7_tracer, columns=tracer_columns, show='headings')
-        self.trace_tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
+        self._trace_tree = ttk.Treeview(self.tab7_tracer, columns=tracer_columns, show='headings')
+        self._trace_tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
 
-        self.trace_tree.heading('rx_time', text='Zeit')
-        self.trace_tree.heading('call', text='Call')
-        self.trace_tree.heading('port', text='Port')
-        self.trace_tree.heading('distance', text='km')
-        self.trace_tree.heading('path', text='Path')
-        self.trace_tree.column("rx_time", anchor=tk.CENTER, stretch=tk.YES, width=90)
-        self.trace_tree.column("call", stretch=tk.YES, width=80)
-        self.trace_tree.column("port", anchor=tk.CENTER, stretch=tk.NO, width=60)
-        self.trace_tree.column("distance", stretch=tk.NO, width=70)
-        self.trace_tree.column("path", anchor=tk.CENTER, stretch=tk.YES, width=180)
+        self._trace_tree.heading('rx_time', text='Zeit')
+        self._trace_tree.heading('call', text='Call')
+        self._trace_tree.heading('port', text='Port')
+        self._trace_tree.heading('distance', text='km')
+        self._trace_tree.heading('path', text='Path')
+        self._trace_tree.column("rx_time", anchor=tk.CENTER, stretch=tk.YES, width=90)
+        self._trace_tree.column("call", stretch=tk.YES, width=80)
+        self._trace_tree.column("port", anchor=tk.CENTER, stretch=tk.NO, width=60)
+        self._trace_tree.column("distance", stretch=tk.NO, width=70)
+        self._trace_tree.column("path", anchor=tk.CENTER, stretch=tk.YES, width=180)
 
-        self.trace_tree_data = []
-        self.update_side_trace()
+        self._trace_tree_data = []
+        self._trace_tree_data_old = {}
+        self._update_side_trace()
 
         tk.Button(self.tab7_tracer,
                   text="SEND",
                   command=self._tracer_send
                   ).grid(row=1, column=0, padx=10)
         # tk.Button(self.tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
-        self.trace_tree.bind('<<TreeviewSelect>>', self._trace_entry_selected)
+        self._trace_tree.bind('<<TreeviewSelect>>', self._trace_entry_selected)
 
         ##################
         # Tasker
         self._tasker_dict = {
             0: self._update_rtt,
             3: self._update_side_mh,
-            # 5: self.update_ch_echo,
+            4: self._update_side_trace,
         }
 
         self._chk_mon_port()
@@ -723,8 +724,8 @@ class SideTabbedFrame:
                 self._tasker_dict[ind]()
 
     def _entry_selected(self, event):
-        for selected_item in self.tree.selection():
-            item = self.tree.item(selected_item)
+        for selected_item in self._tree.selection():
+            item = self._tree.item(selected_item)
             record = item['values']
             # show a message
             call = record[1]
@@ -746,13 +747,13 @@ class SideTabbedFrame:
         PORT_HANDLER.get_aprs_ais().tracer_sendit()
 
     def _format_tree_ent(self):
-        self.tree_data = []
-        for k in self.last_mh_ent:
+        self._tree_data = []
+        for k in self._last_mh_ent:
             # ent: MyHeard
             ent = k
             route = ent.route
 
-            self.tree_data.append((
+            self._tree_data.append((
                 f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
                 f'{ent.own_call}',
                 f'{ent.port_id} {ent.port}',
@@ -804,58 +805,56 @@ class SideTabbedFrame:
         self.rx_count_var.set(rx_count)
 
     def update_tree(self):
-        for i in self.tree.get_children():
-            self.tree.delete(i)
-        for ret_ent in self.tree_data:
-            self.tree.insert('', tk.END, values=ret_ent)
+        for i in self._tree.get_children():
+            self._tree.delete(i)
+        for ret_ent in self._tree_data:
+            self._tree.insert('', tk.END, values=ret_ent)
 
     def _update_side_mh(self):
         mh_ent = list(MH_LIST.output_sort_entr(8))
-        if mh_ent != self.last_mh_ent:
-            self.last_mh_ent = mh_ent
+        if mh_ent != self._last_mh_ent:
+            self._last_mh_ent = mh_ent
             self._format_tree_ent()
             self.update_tree()
 
-    def update_side_trace(self):
-        try:  # TODO Need correct prozedur to end the whole shit
-            ind = self._tabControl.index(self._tabControl.select())
-        except TclError:
-            pass
-        else:
-            if ind == 4:
-                self._format_trace_tree_data()
-                self._update_trace_tree()
+    def _update_side_trace(self):
+
+        self._format_trace_tree_data()
+        self._update_trace_tree()
 
     def _format_trace_tree_data(self):
         _traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
-        self.trace_tree_data = []
-        for k in _traces:
-            _pack = _traces[k][-1]
-            _rx_time = _pack.get('rx_time', '')
-            if _rx_time:
-                _rx_time = _rx_time.strftime('%H:%M:%S')
-            _path = _pack.get('path', [])
-            _call = _pack.get('call', '')
-            if _call:
-                _path = ', '.join(_path)
-                _port_id = _pack.get('port_id', -1)
-                _rtt = _pack.get('rtt', 0)
-                _loc = _pack.get('locator', '')
-                _dist = _pack.get('distance', 0)
+        if self._trace_tree_data_old != _traces:
+            self._trace_tree_data_old = _traces
+            self._trace_tree_data = []
+            for k in _traces:
+                _pack = _traces[k][-1]
+                _rx_time = _pack.get('rx_time', '')
+                if _rx_time:
+                    _rx_time = _rx_time.strftime('%H:%M:%S')
+                _path = _pack.get('path', [])
+                _call = _pack.get('call', '')
+                if _call:
+                    _path = ', '.join(_path)
+                    _port_id = _pack.get('port_id', -1)
+                    _rtt = _pack.get('rtt', 0)
+                    _loc = _pack.get('locator', '')
+                    _dist = _pack.get('distance', 0)
 
-                self.trace_tree_data.append((
-                    _rx_time,
-                    _call,
-                    _port_id,
-                    _dist,
-                    _path,
-                ))
+                    self._trace_tree_data.append((
+                        _rx_time,
+                        _call,
+                        _port_id,
+                        _dist,
+                        _path,
+                    ))
+            self._update_trace_tree()
 
     def _update_trace_tree(self):
-        for i in self.trace_tree.get_children():
-            self.trace_tree.delete(i)
-        for ret_ent in self.trace_tree_data:
-            self.trace_tree.insert('', tk.END, values=ret_ent)
+        for i in self._trace_tree.get_children():
+            self._trace_tree.delete(i)
+        for ret_ent in self._trace_tree_data:
+            self._trace_tree.insert('', tk.END, values=ret_ent)
 
     def on_ch_stat_change(self):
         _conn = self._main_win.get_conn()
@@ -2256,6 +2255,7 @@ class TkMainWin:
     #################################
     # TASKER
     def _tasker(self):  # MAINLOOP
+        # TODO Build a Tasker framework that randomly calls tasks
         # self._tasker_prio()
         self._tasker_low_prio()
         self._tasker_low_low_prio()
