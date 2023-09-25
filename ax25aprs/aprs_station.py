@@ -318,13 +318,13 @@ class APRS_ais(object):
             return True
             # self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=new_aprs_pack)
 
-        from_aprs = aprs_pack.get('from', '')
+        from_aprs = new_aprs_pack.get('from', '')
         if from_aprs:
             if not self.aprs_wx_msg_pool.get(from_aprs, False):
                 self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
             self.aprs_wx_msg_pool[from_aprs].append(
                 (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
-                 aprs_pack,
+                 new_aprs_pack,
                  port_id)
             )
             if self.wx_tree_gui is not None:
@@ -603,7 +603,7 @@ class APRS_ais(object):
         # Send Tracer Beacon in intervall
         if self.be_tracer_active:
             if time.time() > self._be_tracer_interval_timer:
-                print("TRACER TASKER")
+                # print("TRACER TASKER")
                 self.tracer_sendit()
 
     def _tracer_build_msg(self):
@@ -713,7 +713,7 @@ class APRS_ais(object):
     def tracer_update_gui(self):
         _root_gui = self.port_handler.get_root_gui()
         if _root_gui is not None:
-            _root_gui.tabbed_sideFrame.update_side_trace()
+            # _root_gui.tabbed_sideFrame.update_side_trace()
             if _root_gui.be_tracer_win is not None:
                 _root_gui.be_tracer_win.update_tree_data()
 

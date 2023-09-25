@@ -272,10 +272,10 @@ class AX25Conn(object):
         if self.stat_cfg.stat_parm_Call in self.cfg.parm_cli.keys():
             del self.cli
             # self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
-            print(f"CLI INIT : {self.cfg.parm_cli[self.stat_cfg.stat_parm_Call]}")
+            # print(f"CLI INIT : {self.cfg.parm_cli[self.stat_cfg.stat_parm_Call]}")
             self.cli = cli.cliMain.CLI_OPT[self.cfg.parm_cli[self.stat_cfg.stat_parm_Call]](self)
             self.cli_type = self.cli.cli_name
-            print(f"CLI INIT typ: {self.cli.cli_name}")
+            # print(f"CLI INIT typ: {self.cli.cli_name}")
             self.cli.build_prompt()
         """
         else:
@@ -347,7 +347,7 @@ class AX25Conn(object):
             b'*** Connected to',
             b'*** Reconnected to'
         ]
-        print(raw_data)
+        # print(raw_data)
         for _det_str in det:
             if _det_str in raw_data:
                 _index = raw_data.index(_det_str) + len(_det_str)

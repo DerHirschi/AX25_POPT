@@ -24,7 +24,10 @@ Ideas/TODO's :
 - Yapp Resume
 - Didadit
 ✓ APRS decoding
-- APRS encoding
+✓ APRS Private Message System
+✓ APRS Tracer
+✓ APRS Tracer Alarm
+✓ APRS WX Stationen (Wetterstationen) Monitoring Auswertung
 - APRS Digi / I-Gate Funktion
 - "Managed-DIGI" Funktion (Die DIGI Verbindung wird wie ein Noden Link behandelt)
 - Optionale zusätzliche Monitorausgabe als Hex
