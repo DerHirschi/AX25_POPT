@@ -2258,9 +2258,9 @@ class TkMainWin:
     def _tasker(self):  # MAINLOOP
         # TODO Build a Tasker framework that randomly calls tasks
         # self._tasker_prio()
-        self._tasker_low_prio()
-        self._tasker_low_low_prio()
-        self._tasker_low_low_low_prio()
+        self._tasker_05_sec()
+        self._tasker_1_sec()
+        self._tasker_5_sec()
         # self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
 
@@ -2268,7 +2268,7 @@ class TkMainWin:
         """ Prio Tasks """
         pass
 
-    def _tasker_low_prio(self):
+    def _tasker_05_sec(self):
         """ 0.5 Sec """
         if time.time() > self._non_prio_task_timer:
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
@@ -2283,7 +2283,7 @@ class TkMainWin:
                 if self.setting_sprech:
                     self._check_sprech_ch_buf()
 
-    def _tasker_low_low_prio(self):
+    def _tasker_1_sec(self):
         """ 1 Sec """
         if time.time() > self._non_non_prio_task_timer:
             self._non_non_prio_task_timer = time.time() + self._parm_non_non_prio_task_timer
@@ -2305,7 +2305,7 @@ class TkMainWin:
                 self.aprs_mon_win.tasker()
             """
 
-    def _tasker_low_low_low_prio(self):
+    def _tasker_5_sec(self):
         """ 5 Sec """
         if time.time() > self._non_non_non_prio_task_timer:
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
