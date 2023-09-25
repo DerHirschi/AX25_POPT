@@ -558,6 +558,8 @@ class SideTabbedFrame:
 
         self._chk_mon_port()
         self._update_ch_echo()
+        self._update_side_mh()
+        self._update_side_trace()
 
     """
     def reset_dx_alarm(self, event=None):
@@ -818,14 +820,13 @@ class SideTabbedFrame:
             self.update_tree()
 
     def _update_side_trace(self):
-
         self._format_trace_tree_data()
-        self._update_trace_tree()
+        # self._update_trace_tree()
 
     def _format_trace_tree_data(self):
-        _traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
-        if self._trace_tree_data_old != _traces:
-            self._trace_tree_data_old = _traces
+        _traces = dict(PORT_HANDLER.get_aprs_ais().tracer_traces_get())
+        if self._trace_tree_data_old != len(str(_traces)):
+            self._trace_tree_data_old = len(str(_traces))
             self._trace_tree_data = []
             for k in _traces:
                 _pack = _traces[k][-1]
