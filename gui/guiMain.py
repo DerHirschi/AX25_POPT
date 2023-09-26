@@ -1101,7 +1101,7 @@ class TxTframe:
                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, 'bold')
                               )
         name_label.grid(row=1, column=1, sticky="nsew")
-        name_label.bind('<Button-1>', self._main_class.open_user_db)
+        name_label.bind('<Button-1>', self._main_class.open_user_db_win)
         qth_label = tk.Label(self.out_frame,
                              textvariable=self.stat_info_qth_var,
                              bg=STAT_BAR_CLR,
@@ -1111,7 +1111,7 @@ class TxTframe:
                              border=0,
                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                              )
-        qth_label.bind('<Button-1>', self._main_class.open_user_db)
+        qth_label.bind('<Button-1>', self._main_class.open_user_db_win)
         qth_label.grid(row=1, column=2, sticky="nsew")
         loc_label = tk.Label(self.out_frame,
                              textvariable=self.stat_info_loc_var,
@@ -1122,7 +1122,7 @@ class TxTframe:
                              border=0,
                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                              )
-        loc_label.bind('<Button-1>', self._main_class.open_user_db)
+        loc_label.bind('<Button-1>', self._main_class.open_user_db_win)
         loc_label.grid(row=1, column=3, sticky="nsew")
 
         opt = list(STATION_TYPS)
@@ -2524,41 +2524,36 @@ class TkMainWin:
     def open_ft_manager(self, event=None):
         self._open_settings_window('ft_manager')
 
+    """
     def open_user_db(self, event=None):
-        self._open_settings_window('user_db')
+        self._open_us
+    """
 
-    def _open_settings_window(self, win_key: str, parm=''):
-        if win_key == 'user_db':
-            if self.userdb_win is not None:
-                return
-        else:
-            if self.settings_win is not None:
-                return
-        settings_win = {
-            'priv_win': PrivilegWin,  # Priv Win
-            'keybinds': KeyBindsHelp,  # Keybinds Help WIN
-            'about': About,  # About WIN
-            'aprs_sett': APRSSettingsWin,  # APRS Settings
-            'ft_manager': FileTransferManager,  # FT Manager
-            'ft_send': FileSend,  # FT TX
-            'pipe_sett': PipeToolSettings,  # Pipe Tool
-            'user_db': UserDB,  # UserDB
-            'mcast_sett': MulticastSettings,  # Multicast Settings
-            'l_holder': LinkHolderSettings,  # Linkholder
-            'rx_echo_sett': RxEchoSettings,  # RX Echo
-            'beacon_sett': BeaconSettings,  # Beacon Settings
-            'port_sett': PortSettingsWin,  # Port Settings
-            'stat_sett': StationSettingsWin,  # Stat Settings
-        }.get(win_key, '')
-        if settings_win:
-            if win_key == 'user_db':
-                self.userdb_win = settings_win(self, parm)
-            else:
+    def _open_settings_window(self, win_key: str):
+        print(f"settings_win: {self.settings_win}")
+        if self.settings_win is None:
+            settings_win = {
+                'priv_win': PrivilegWin,  # Priv Win
+                'keybinds': KeyBindsHelp,  # Keybinds Help WIN
+                'about': About,  # About WIN
+                'aprs_sett': APRSSettingsWin,  # APRS Settings
+                'ft_manager': FileTransferManager,  # FT Manager
+                'ft_send': FileSend,  # FT TX
+                'pipe_sett': PipeToolSettings,  # Pipe Tool
+                # 'user_db': UserDB,  # UserDB
+                'mcast_sett': MulticastSettings,  # Multicast Settings
+                'l_holder': LinkHolderSettings,  # Linkholder
+                'rx_echo_sett': RxEchoSettings,  # RX Echo
+                'beacon_sett': BeaconSettings,  # Beacon Settings
+                'port_sett': PortSettingsWin,  # Port Settings
+                'stat_sett': StationSettingsWin,  # Stat Settings
+            }.get(win_key, '')
+            if settings_win:
                 self.settings_win = settings_win(self)
 
     ##########################
     # UserDB
-    def open_user_db_win(self, ent_key=''):
+    def open_user_db_win(self, ent_key='', event=None):
         if self.userdb_win is None:
             self.userdb_win = UserDB(self, ent_key)
         # self._open_settings_window('user_db', parm=ent_key)
