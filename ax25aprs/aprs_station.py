@@ -68,8 +68,8 @@ class APRS_ais(object):
         self._del_spooler_tr = False
         self._wx_update_tr = False
         """ Watchdog """
-        self._watchdog_last = time.time()
-        self._parm_watchdog = 20  # Sec.
+        self._parm_watchdog = 60  # Sec.
+        self._watchdog_last = time.time() + self._parm_watchdog
         """ Beacon Tracer """
         # Param
         self.be_tracer_active = False
@@ -109,7 +109,7 @@ class APRS_ais(object):
         # save_data.aprs_wx_msg_pool = {}
         save_data.spooler_buffer = {}
         save_data.be_tracer_active = False
-        save_data.be_tracer_traced_packets = {}
+        # save_data.be_tracer_traced_packets = {}
         save_data._be_tracer_tx_trace_packet = ''
         """
         save_date.ais_aprs_msg_pool = {
@@ -171,9 +171,11 @@ class APRS_ais(object):
         except IndexError:
             self.ais = None
             return False
+        # finally:
+        #     self.ais.close()
         print("APRS-IS Login successful")
         logger.info("APRS-IS Login successful")
-        self.loop_is_running = True
+         # self.loop_is_running = True
         return True
 
     def task(self):
@@ -192,8 +194,10 @@ class APRS_ais(object):
             # self.ais_rx_task()
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             # WatchDog
+
             if self.ais_active:
                 self._watchdog_task()
+
             # PN MSG Spooler
             if self._del_spooler_tr:
                 self._flush_spooler_buff()
@@ -225,31 +229,53 @@ class APRS_ais(object):
         if self.ais is not None:
             if self.ais_active:
                 print("Consumer")
-                while self.loop_is_running:
-                    try:
-                        self.ais.consumer(self.callback,
-                                          blocking=False,
-                                          immortal=True,  # TODO reconnect handling
-                                          raw=False)
-                    except ValueError:
-                        # self.ais_active = False
-                        del self.ais
-                        self.ais = None
-                        self.loop_is_running = False
-                        print("Consumer ValueError")
-                        logger.error("APRS Consumer ValueError")
-                        break
-                    except aprslib.LoginError:
-                        del self.ais
-                        self.ais = None
-                        self.loop_is_running = False
-                        print("Consumer LoginError")
-                        logger.warning("APRS Consumer LoginError")
-                        break
-                    if self.loop_is_running:
-                        time.sleep(0.5)
-                    else:
-                        break
+                # while self.loop_is_running:
+                self.loop_is_running = True
+                try:
+                    self.ais.consumer(self.callback,
+                                      blocking=True,
+                                      immortal=False,
+                                      raw=False)
+                except ValueError:
+                    # self.ais_active = False
+                    # del self.ais
+                    # self.ais = None
+                    self.loop_is_running = False
+                    print("Consumer ValueError")
+                    logger.error("APRS Consumer ValueError")
+                    # break
+                except aprslib.LoginError:
+                    # del self.ais
+                    # self.ais = None
+                    # self.loop_is_running = False
+                    print("Consumer LoginError")
+                    logger.warning("APRS Consumer LoginError")
+                    # break
+                except aprslib.ConnectionError:
+                    # del self.ais
+                    # self.ais = None
+                    print("Consumer Connection Error")
+                    # self.loop_is_running = False
+
+                # del self.ais
+                # self.ais = None
+                self.loop_is_running = False
+
+                if self.ais is not None:
+                    self.ais.close()
+
+                """
+                finally:
+                    if self.ais is not None:
+                        self.ais.close()
+                """
+                """    
+                if self.loop_is_running:
+                    time.sleep(0.5)
+                
+                else:
+                    break
+                """
                 print("Consumer ENDE")
 
     def _ais_tx(self, ais_pack):
@@ -264,7 +290,11 @@ class APRS_ais(object):
 
     def ais_close(self):
         if self.ais is not None:
-            self.loop_is_running = False
+            # self.loop_is_running = False
+            try:
+                self.ais.sendall(f"N0CALL>{APRS_SW_ID},TCPIP*:>")
+            except aprslib.ConnectionError:
+                pass
             self.ais.close()
             del self.ais
             self.ais = None
@@ -346,19 +376,29 @@ class APRS_ais(object):
         return dict(self.aprs_wx_msg_pool)
 
     def watchdog_reset(self):
-        self._watchdog_last = time.time()
+        self._watchdog_last = time.time() + self._parm_watchdog
 
     def _watchdog_task(self):
         if self.ais_active:
-            if time.time() > self._watchdog_last + self._parm_watchdog:
+            if time.time() > self._watchdog_last:
+
                 print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
                 logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
+                if self.loop_is_running:
+                    self.ais_close()
+                    self._watchdog_last = time.time() + 10
+                else:
+                    if self.login():
+                        self.port_handler.init_aprs_ais()
+                        self._watchdog_last = time.time() + self._parm_watchdog
+                """
                 if self.port_handler is not None:
                     self.ais_close()
                     if self.login():
                         self.port_handler.init_aprs_ais()
                 else:
                     self.ais_close()
+                """
 
     #########################################
     # APRS MSG System

@@ -2524,13 +2524,7 @@ class TkMainWin:
     def open_ft_manager(self, event=None):
         self._open_settings_window('ft_manager')
 
-    """
-    def open_user_db(self, event=None):
-        self._open_us
-    """
-
     def _open_settings_window(self, win_key: str):
-        print(f"settings_win: {self.settings_win}")
         if self.settings_win is None:
             settings_win = {
                 'priv_win': PrivilegWin,  # Priv Win
@@ -2553,10 +2547,13 @@ class TkMainWin:
 
     ##########################
     # UserDB
-    def open_user_db_win(self, ent_key='', event=None):
+    def open_user_db_win(self, event=None, ent_key=''):
         if self.userdb_win is None:
+            if not ent_key:
+                _conn = self.get_conn()
+                if _conn:
+                    ent_key = _conn.to_call_str
             self.userdb_win = UserDB(self, ent_key)
-        # self._open_settings_window('user_db', parm=ent_key)
 
     ##########################
     # New Connection WIN
