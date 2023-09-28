@@ -67,10 +67,16 @@ class AX25PortHandler(object):
             return self.ax25_ports[index]
         return False
 
+    def check_all_ports_closed(self):
+        ret = True
+        for port_id in self.ax25_ports.keys():
+            port = self.ax25_ports[port_id]
+            if port.device is not None:
+                ret = False
+        return ret
+
     def close_all(self):
-        for k in list(self.all_connections.keys()):
-            del self.all_connections[k]
-        self.close_all_ports()
+        # self.close_all_ports()
         if self.gui is not None:
             tmp = self.gui
             self.gui = None
@@ -90,6 +96,8 @@ class AX25PortHandler(object):
         return True
 
     def close_all_ports(self):
+        for k in list(self.all_connections.keys()):
+            del self.all_connections[k]
         self.close_aprs_ais()
         if self.is_running:
             self.is_running = False
@@ -102,6 +110,7 @@ class AX25PortHandler(object):
             port = self.ax25_ports[port_id]
             port.close()
             c = 0
+            """
             while not port.ende:
                 # time.sleep(0.3)   # !! Lockt den Thread !!
                 print("Warte auf Port " + str(port_id))
@@ -110,6 +119,7 @@ class AX25PortHandler(object):
                 c += 1
                 if c == 2:
                     break
+            """
 
             del self.ax25_ports[port_id]
         if port_id in self.ax25_port_settings.keys():

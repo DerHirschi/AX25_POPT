@@ -1547,6 +1547,7 @@ class TkMainWin:
         self.mon_mode = 0
         self._mon_buff = []
         self.connect_history = {}
+        self._is_closing = False
         ####################
         # GUI PARAM
         self.parm_btn_blink_time = 1  # s
@@ -1781,11 +1782,11 @@ class TkMainWin:
                                      command=self.open_be_tracer_win)  # .place(x=110, y=45)
         self._tracer_btn.pack(side=tk.LEFT, padx=2)
         self._tracer_btn_def_clr = self._tracer_btn.cget('bg')
-        """
+
         tk.Button(self._side_btn_frame_top,
                   text="Kaffèmaschine",
                   bg="HotPink2", width=12, command=self._kaffee).place(x=215, y=10)
-        """
+
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
         self.setting_sound = self.tabbed_sideFrame.sound_on
@@ -1861,6 +1862,10 @@ class TkMainWin:
         pass
 
     def _destroy_win(self):
+        self._is_closing = True
+        logging.info('Closing GUI: Closing Ports.')
+        PORT_HANDLER.close_all_ports()
+
         logging.info('Closing GUI.')
         self._close_port_stat_win()
         if self.settings_win is not None:
@@ -1869,9 +1874,16 @@ class TkMainWin:
             self.mh_window.destroy()
         if self.wx_window is not None:
             self.wx_window.destroy()
-        logging.info('Closing GUI: Closing Ports.')
-        PORT_HANDLER.close_all()
-        logging.info('Closing GUI: Done.')
+        if self.userdb_win is not None:
+            self.userdb_win.destroy()
+        if self.userDB_tree_win is not None:
+            self.userDB_tree_win.destroy()
+        if self.aprs_mon_win is not None:
+            self.aprs_mon_win.destroy()
+        if self.aprs_pn_msg_win is not None:
+            self.aprs_pn_msg_win.destroy()
+        if self.be_tracer_win is not None:
+            self.be_tracer_win.destroy()
 
     def _monitor_start_msg(self):
 
@@ -2257,12 +2269,21 @@ class TkMainWin:
     # TASKER
     def _tasker(self):  # MAINLOOP
         # TODO Build a Tasker framework that randomly calls tasks
-        # self._tasker_prio()
-        self._tasker_05_sec()
-        self._tasker_1_sec()
-        self._tasker_5_sec()
-        # self._tasker_tester()
+        if self._is_closing:
+            self._tasker_quit()
+        else:
+            # self._tasker_prio()
+            self._tasker_05_sec()
+            self._tasker_1_sec()
+            self._tasker_5_sec()
+            # self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
+
+    @staticmethod
+    def _tasker_quit():
+        if PORT_HANDLER.check_all_ports_closed():
+            PORT_HANDLER.close_all()
+            logging.info('Closing GUI: Done.')
 
     def _tasker_prio(self):
         """ Prio Tasks """
@@ -2296,8 +2317,9 @@ class TkMainWin:
                 self.ch_status_update()
             if MH_LIST.new_call_alarm:
                 self._dx_alarm()
-            if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
-                self._tracer_alarm()
+            if PORT_HANDLER.get_aprs_ais() is not None:
+                if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
+                    self._tracer_alarm()
             if self.settings_win is not None:
                 self.settings_win.tasker()
             """
@@ -2799,6 +2821,7 @@ class TkMainWin:
     def _kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
+        PORT_HANDLER.close_all_ports()
 
     def do_priv(self, event=None, login_cmd=''):
         _conn = self.get_conn()

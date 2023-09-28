@@ -68,7 +68,7 @@ class APRS_ais(object):
         self._del_spooler_tr = False
         self._wx_update_tr = False
         """ Watchdog """
-        self._parm_watchdog = 60  # Sec.
+        self._parm_watchdog = 120  # Sec.
         self._watchdog_last = time.time() + self._parm_watchdog
         """ Beacon Tracer """
         # Param
@@ -292,7 +292,7 @@ class APRS_ais(object):
         if self.ais is not None:
             # self.loop_is_running = False
             try:
-                self.ais.sendall(f"N0CALL>{APRS_SW_ID},TCPIP*:>")
+                self.ais.sendall(" ")
             except aprslib.ConnectionError:
                 pass
             self.ais.close()
