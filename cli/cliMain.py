@@ -98,6 +98,7 @@ class DefaultCLI(object):
             b'PORT': (self.cmd_port, 'Ports'),
             b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
+            b'LMH': (self.cmd_mhl, 'Long MYHeard Liste'),
             b'ECHO': (self.cmd_echo, 'Echo'),
             b'VERSION': (self.cmd_ver, 'Version'),
             b'HELP': (self.cmd_help, STR_TABLE['help'][self.connection.cli_language]),
@@ -469,6 +470,17 @@ class DefaultCLI(object):
 
         return ret + '\r'
 
+    def cmd_mhl(self):
+        parm = 10
+        if self.parameter:
+            try:
+                parm = int(self.parameter[0])
+            except ValueError:
+                pass
+        ret = MH_LIST.mh_long_out_cli(max_ent=parm)
+
+        return ret + '\r'
+
     """
     def cmd_ver(self):
         ret = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
@@ -716,8 +728,8 @@ class DefaultCLI(object):
         """ Long Connect-Status """
         # ret = f"\r      < {STR_TABLE['port_overview'][self.connection.cli_language]} >\r\r"
         ret = '\r'
-        ret += "  Ch  Port  MyCall    Call      Name          LOC    QTH           Connect\r"
-        ret += "---------------------------------------------------------------------------\r"
+        ret += "--Ch--Port--MyCall----Call------Name----------LOC----QTH-----------Connect\r"
+        # ret += "---------------------------------------------------------------------------\r"
         all_conn = self.port_handler.all_connections
         for k in all_conn.keys():
             ch = k
