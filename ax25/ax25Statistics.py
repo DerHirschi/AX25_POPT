@@ -305,23 +305,44 @@ class MH(object):
     def mh_set_ip(self, call: str, axip: (str, int)):
         self.calls[call].axip_add = axip
 
-    def mh_out_cli(self):
-        out = ''
-        out += '\r                       < MH - List >\r\r'
+    def mh_out_cli(self, max_ent=20):
+        now = datetime.now()
+        out = '\r'
+        # out += '\r                       < MH - List >\r\r'
         c = 0
+        max_c = 0
         tp = 0
         tb = 0
         rj = 0
-        for call in list(self.calls.keys()):
+        sort_list = self.output_sort_mh_entr('last', False)
 
-            out += 'P:{:2}>{:5} {:9} {:3}'.format(self.calls[call].port,
-                                                  conv_time_DE_str(self.calls[call].last_seen),
-                                                  call,
-                                                '')
+        for call in list(sort_list.keys()):
+            max_c += 1
+            if max_c > max_ent:
+                break
+            time_delta = now - sort_list[call].last_seen
+            td_days = time_delta.days
+            td_hours = int(time_delta.seconds / 3600)
+            td_min = int(time_delta.seconds / 60)
+            td_sec = time_delta.seconds
 
-            tp += self.calls[call].pac_n
-            tb += self.calls[call].byte_n
-            rj += self.calls[call].rej_n
+            if td_days:
+                # td_hours = td_hours - td_days * 24
+                time_delta_str = f'{str(td_days).rjust(3, " ")}d,{str(td_hours).rjust(2, " ")}h'
+            elif td_hours:
+                td_min = td_min - td_hours * 60
+                time_delta_str = f'{str(td_hours).rjust(3, " ")}h,{str(td_min).rjust(2, " ")}m'
+            elif td_min:
+                td_sec = td_sec - td_min * 60
+                time_delta_str = f'{str(td_min).rjust(3, " ")}m,{str(td_sec).rjust(2, " ")}s'
+            else:
+                time_delta_str = f'{str(td_min).rjust(7, " ")}s'
+
+            out += f'{time_delta_str} P:{sort_list[call].port:4} {sort_list[call].own_call:9}'.ljust(27, " ")
+
+            tp += sort_list[call].pac_n
+            tb += sort_list[call].byte_n
+            rj += sort_list[call].rej_n
             c += 1
             if c == 2:  # Breite
                 c = 0

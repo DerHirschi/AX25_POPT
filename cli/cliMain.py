@@ -148,9 +148,7 @@ class DefaultCLI(object):
     """
 
     def build_prompt(self):
-        pass
         self.prompt = f"\r<{self.prompt}>{self.my_call_str}>"
-        # self.prompt = self.prompt
 
     def get_ts_prompt(self):
         return f"\r{self.my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
@@ -158,10 +156,8 @@ class DefaultCLI(object):
     def send_output(self, ret):
         if ret:
             if type(ret) == str:
-                # gui_out = str(ret)
                 ret = ret.encode(self.encoding[0], self.encoding[1])
                 ret = ret.replace(b'\n', b'\r')
-            # self.send_2_gui(ret)
             self.connection.tx_buf_rawData += ret
 
     """
@@ -178,12 +174,10 @@ class DefaultCLI(object):
 
     def is_prefix(self):
         # TODO Cleanup !!!!
-        # print(self.input)
         if self.prefix:
             self.input = self.input.replace(b'\n', b'\r')
             # self.input = self.input.split(b'\r')[0]
             self.input = self.input.split(b'\r')
-            # print(self.input)
             while self.input:
                 if self.input[0]:
                     break
@@ -194,15 +188,12 @@ class DefaultCLI(object):
             self.input = self.input[0]
 
             if self.input[:len(self.prefix)] == self.prefix:
-                # print(self.input)
                 self.parameter = []
                 cmd = self.input[len(self.prefix):]
                 cmd = cmd.split(b' ')
                 if len(cmd) > 1:
                     self.input = cmd[1:]
                     self.parameter = cmd[1:]
-                    # print("input INP: {}".format(self.input))
-                    # print("parameter INP: {}".format(self.parameter))
                 else:
                     self.input = b''
 
@@ -224,8 +215,6 @@ class DefaultCLI(object):
         if len(cmd) > 1:
             self.input = cmd[1:]
             self.parameter = cmd[1:]
-            # print("input INP: {}".format(self.input))
-            # print("parameter INP: {}".format(self.parameter))
         else:
             self.input = b''
         cmd = cmd[0]
@@ -371,7 +360,6 @@ class DefaultCLI(object):
         if self.crone_state_index != 100 and self.state_index != 2:  # Not Quit
             ret += self.get_ts_prompt()
         return ret
-        # self.send_output(ret)
 
     def exec_str_cmd(self):
         inp_lines = self.last_line + self.raw_input
@@ -390,9 +378,7 @@ class DefaultCLI(object):
                     self.last_line = b''
                     self.new_last_line = b''
                     return _ret
-        #self.last_line = inp_lines[-1]
         return _ret
-        # self.raw_input = b''
 
     def send_prompt(self):
         self.send_output(self.get_ts_prompt())
@@ -473,9 +459,17 @@ class DefaultCLI(object):
         return ''
 
     def cmd_mh(self):
-        ret = MH_LIST.mh_out_cli()
+        parm = 20
+        if self.parameter:
+            try:
+                parm = int(self.parameter[0])
+            except ValueError:
+                pass
+        ret = MH_LIST.mh_out_cli(max_ent=parm)
+
         return ret + '\r'
 
+    """
     def cmd_ver(self):
         ret = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
@@ -486,6 +480,13 @@ class DefaultCLI(object):
               '$$ |       $$$$$$  |   $$ |        $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r\r' \
               'Version: {}\r\r\r'.format(constant.VER)
+        return ret
+    """
+
+    @staticmethod
+    def cmd_ver():
+        ret = '\r-= P.yton o.ther P.acket T.erminal =-\r\r' \
+              '-= Version: {} \r\r\r'.format(constant.VER)
         return ret
 
     def cmd_i(self):
@@ -909,7 +910,8 @@ class DefaultCLI(object):
             self.change_cli_state(1)
         return res
 
-    def cron_s0(self):
+    @staticmethod
+    def cron_s0():
         """ Dummy for doing nothing """
         return ''
 
