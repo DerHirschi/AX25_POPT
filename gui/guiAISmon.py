@@ -136,6 +136,9 @@ class AISmonitor(tk.Toplevel):
             if _tr:
                 self._scroll_to_end()
 
+    def set_ais_obj(self):
+        self._ais_obj = PORT_HANDLER.get_aprs_ais()
+
     def pack_to_mon(self, date_time, pack):
         _tr = False
         if self._call_filter.get():

@@ -401,8 +401,7 @@ class UserDB(tk.Toplevel):
             self.select_entry_fm_ch_id()
         else:
             self.select_entry_fm_key(ent_key)
-        root.settings_win = self
-
+        root.userdb_win = self
 
     def select_entry(self, event=None):
         for selected_item in self.tree.selection():

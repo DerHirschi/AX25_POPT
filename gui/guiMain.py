@@ -48,7 +48,7 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
 from constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
-    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG
+    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color
@@ -1101,7 +1101,7 @@ class TxTframe:
                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, 'bold')
                               )
         name_label.grid(row=1, column=1, sticky="nsew")
-        name_label.bind('<Button-1>', self._main_class.open_user_db)
+        name_label.bind('<Button-1>', self._main_class.open_user_db_win)
         qth_label = tk.Label(self.out_frame,
                              textvariable=self.stat_info_qth_var,
                              bg=STAT_BAR_CLR,
@@ -1111,7 +1111,7 @@ class TxTframe:
                              border=0,
                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                              )
-        qth_label.bind('<Button-1>', self._main_class.open_user_db)
+        qth_label.bind('<Button-1>', self._main_class.open_user_db_win)
         qth_label.grid(row=1, column=2, sticky="nsew")
         loc_label = tk.Label(self.out_frame,
                              textvariable=self.stat_info_loc_var,
@@ -1122,7 +1122,7 @@ class TxTframe:
                              border=0,
                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                              )
-        loc_label.bind('<Button-1>', self._main_class.open_user_db)
+        loc_label.bind('<Button-1>', self._main_class.open_user_db_win)
         loc_label.grid(row=1, column=3, sticky="nsew")
 
         opt = list(STATION_TYPS)
@@ -1547,6 +1547,7 @@ class TkMainWin:
         self.mon_mode = 0
         self._mon_buff = []
         self.connect_history = {}
+        self._is_closing = False
         ####################
         # GUI PARAM
         self.parm_btn_blink_time = 1  # s
@@ -1861,6 +1862,11 @@ class TkMainWin:
         pass
 
     def _destroy_win(self):
+        self.msg_to_monitor("PoPT wird beendet.")
+        self._is_closing = True
+        logging.info('Closing GUI: Closing Ports.')
+        PORT_HANDLER.close_all_ports()
+
         logging.info('Closing GUI.')
         self._close_port_stat_win()
         if self.settings_win is not None:
@@ -1869,9 +1875,16 @@ class TkMainWin:
             self.mh_window.destroy()
         if self.wx_window is not None:
             self.wx_window.destroy()
-        logging.info('Closing GUI: Closing Ports.')
-        PORT_HANDLER.close_all()
-        logging.info('Closing GUI: Done.')
+        if self.userdb_win is not None:
+            self.userdb_win.destroy()
+        if self.userDB_tree_win is not None:
+            self.userDB_tree_win.destroy()
+        if self.aprs_mon_win is not None:
+            self.aprs_mon_win.destroy()
+        if self.aprs_pn_msg_win is not None:
+            self.aprs_pn_msg_win.destroy()
+        if self.be_tracer_win is not None:
+            self.be_tracer_win.destroy()
 
     def _monitor_start_msg(self):
 
@@ -2257,12 +2270,21 @@ class TkMainWin:
     # TASKER
     def _tasker(self):  # MAINLOOP
         # TODO Build a Tasker framework that randomly calls tasks
-        # self._tasker_prio()
-        self._tasker_05_sec()
-        self._tasker_1_sec()
-        self._tasker_5_sec()
-        # self._tasker_tester()
+        if self._is_closing:
+            self._tasker_quit()
+        else:
+            # self._tasker_prio()
+            self._tasker_05_sec()
+            self._tasker_1_sec()
+            self._tasker_5_sec()
+            # self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
+
+    @staticmethod
+    def _tasker_quit():
+        if PORT_HANDLER.check_all_ports_closed():
+            PORT_HANDLER.close_gui()
+            logging.info('Closing GUI: Done.')
 
     def _tasker_prio(self):
         """ Prio Tasks """
@@ -2296,8 +2318,9 @@ class TkMainWin:
                 self.ch_status_update()
             if MH_LIST.new_call_alarm:
                 self._dx_alarm()
-            if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
-                self._tracer_alarm()
+            if PORT_HANDLER.get_aprs_ais() is not None:
+                if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
+                    self._tracer_alarm()
             if self.settings_win is not None:
                 self.settings_win.tasker()
             """
@@ -2488,9 +2511,13 @@ class TkMainWin:
                                              selectforeground=self._mon_txt.cget('selectforeground'),
                                              )
                     self._mon_txt.tag_add(tag, ind, ind2)
+            cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
+            if cut_len > 0:
+                self._mon_txt.delete('1.0', f"{cut_len}.0")
             self._mon_txt.configure(state="disabled", exportselection=True)
             if tr or self.tabbed_sideFrame.mon_scroll_var.get():
                 self._see_end_mon_win()
+            self.main_win.update_idletasks()
 
     def see_end_qso_win(self):
         self._out_txt.see("end")
@@ -2524,44 +2551,36 @@ class TkMainWin:
     def open_ft_manager(self, event=None):
         self._open_settings_window('ft_manager')
 
-    def open_user_db(self, event=None):
-        self._open_settings_window('user_db')
-
-    def _open_settings_window(self, win_key: str, parm=''):
-        if win_key == 'user_db':
-            if self.userdb_win is not None:
-                return
-        else:
-            if self.settings_win is not None:
-                return
-        settings_win = {
-            'priv_win': PrivilegWin,  # Priv Win
-            'keybinds': KeyBindsHelp,  # Keybinds Help WIN
-            'about': About,  # About WIN
-            'aprs_sett': APRSSettingsWin,  # APRS Settings
-            'ft_manager': FileTransferManager,  # FT Manager
-            'ft_send': FileSend,  # FT TX
-            'pipe_sett': PipeToolSettings,  # Pipe Tool
-            'user_db': UserDB,  # UserDB
-            'mcast_sett': MulticastSettings,  # Multicast Settings
-            'l_holder': LinkHolderSettings,  # Linkholder
-            'rx_echo_sett': RxEchoSettings,  # RX Echo
-            'beacon_sett': BeaconSettings,  # Beacon Settings
-            'port_sett': PortSettingsWin,  # Port Settings
-            'stat_sett': StationSettingsWin,  # Stat Settings
-        }.get(win_key, '')
-        if settings_win:
-            if win_key == 'user_db':
-                self.userdb_win = settings_win(self, parm)
-            else:
+    def _open_settings_window(self, win_key: str):
+        if self.settings_win is None:
+            settings_win = {
+                'priv_win': PrivilegWin,  # Priv Win
+                'keybinds': KeyBindsHelp,  # Keybinds Help WIN
+                'about': About,  # About WIN
+                'aprs_sett': APRSSettingsWin,  # APRS Settings
+                'ft_manager': FileTransferManager,  # FT Manager
+                'ft_send': FileSend,  # FT TX
+                'pipe_sett': PipeToolSettings,  # Pipe Tool
+                # 'user_db': UserDB,  # UserDB
+                'mcast_sett': MulticastSettings,  # Multicast Settings
+                'l_holder': LinkHolderSettings,  # Linkholder
+                'rx_echo_sett': RxEchoSettings,  # RX Echo
+                'beacon_sett': BeaconSettings,  # Beacon Settings
+                'port_sett': PortSettingsWin,  # Port Settings
+                'stat_sett': StationSettingsWin,  # Stat Settings
+            }.get(win_key, '')
+            if settings_win:
                 self.settings_win = settings_win(self)
 
     ##########################
     # UserDB
-    def open_user_db_win(self, ent_key=''):
+    def open_user_db_win(self, event=None, ent_key=''):
         if self.userdb_win is None:
+            if not ent_key:
+                _conn = self.get_conn()
+                if _conn:
+                    ent_key = _conn.to_call_str
             self.userdb_win = UserDB(self, ent_key)
-        # self._open_settings_window('user_db', parm=ent_key)
 
     ##########################
     # New Connection WIN
@@ -2807,6 +2826,7 @@ class TkMainWin:
     def _kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
+        PORT_HANDLER.close_all_ports()
 
     def do_priv(self, event=None, login_cmd=''):
         _conn = self.get_conn()

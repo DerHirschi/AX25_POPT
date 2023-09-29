@@ -215,7 +215,7 @@ class APRSSettingsWin(tk.Toplevel):
 
         if self._ais is not None:
             # self._ais.task_halt()
-            self._ais.ais_close()
+            # self._ais.ais_close()
             self._ais.ais_call = self.ais_call_var.get()
             self._ais.ais_pass = self.ais_pass_var.get()
             self._ais.ais_active = self.ais_run_var.get()
@@ -227,10 +227,13 @@ class APRSSettingsWin(tk.Toplevel):
 
             if self.ais_port_var.get().isdigit():
                 self._ais.ais_host = self.ais_host_var.get(), int(self.ais_port_var.get())
-            self._ais.save_conf_to_file()
+            # self._ais.save_conf_to_file()
+            self._ais.watchdog_task(run_now=True)
+            """
             if self._ais.ais_active:
                 self._ais.login()
             PORT_HANDLER.init_aprs_ais()
+            """
 
     def _on_ok_button(self):
         self._set_vars()

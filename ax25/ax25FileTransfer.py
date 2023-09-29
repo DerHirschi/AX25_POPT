@@ -250,7 +250,8 @@ class FileTransport(object):
     def ft_flush_buff(self):
         self.ft_rx_buf = b''
         self.ft_tx_buf = b''
-        self.connection.tx_buf_rawData = b''
+        if self.connection is not None:
+            self.connection.tx_buf_rawData = b''
 
     def ft_recover_buff(self):
         self.ft_tx_buf = bytes(self.connection.tx_buf_rawData) + self.ft_tx_buf
@@ -606,6 +607,7 @@ class AutoBinMODE(DefaultMODE):
         self.state_tab = {
             0: self.mode_init_rx,
             1: self.mode_rx_data,
+            8: self.exec_abort,
             9: self.ft_root.ft_mode_wait_for_end,
         }
         self.state = 0
@@ -613,7 +615,9 @@ class AutoBinMODE(DefaultMODE):
         self.parm_can_pause = True
         self.open_file()
         if self.e:
-            self.exec_abort()
+            self.state = 8
+            self.e = False
+            # self.exec_abort()
         return self.e
 
     def mode_wait_for_free_tx_buf(self):
@@ -763,6 +767,7 @@ class BinMODE(DefaultMODE):
         self.state_tab = {
             0: self.mode_init_rx,
             1: self.mode_rx_data,
+            8: self.exec_abort,
             9: self.ft_root.ft_mode_wait_for_end,
         }
         self.state = 0
@@ -770,7 +775,8 @@ class BinMODE(DefaultMODE):
         self.parm_can_pause = True
         self.open_file()
         if self.e:
-            self.exec_abort()
+            self.state = 8
+            self.e = False
         return self.e
 
     def mode_wait_for_free_tx_buf(self):

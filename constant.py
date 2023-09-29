@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.95.4'
+VER = '2.96.5'
 LANGUAGE = 0  # QUICK FIX
 """
 0 = German
@@ -140,6 +140,7 @@ TXT_MON_TX_CLR = 'medium violet red'
 STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = 'black'
 FONT_STAT_BAR = 'Arial'
+PARAM_MAX_MON_LEN = 100000
 
 STATUS_BG = {
     'ENDE': 'red',  # 0

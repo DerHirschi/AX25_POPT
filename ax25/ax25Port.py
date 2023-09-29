@@ -89,13 +89,6 @@ class AX25Port(threading.Thread):
         self.close()
         # self.loop_is_running = False
 
-    """
-    def debug_show_var_size(self):
-        print()
-        print(f"--Port: {self.port_id}")
-        self.deb_port_vars = show_mem_size(self.__dict__, previous_sizes=self.deb_port_vars)
-    """
-
     def set_kiss_parm(self):
         pass
 
@@ -111,7 +104,7 @@ class AX25Port(threading.Thread):
             conn.zustand_exec.tx(None)
         time.sleep(1)
         """
-        # self.loop_is_running = False
+        self.loop_is_running = False
         self.close_device()
         # if self.device is not None:
         # self.device.close()
@@ -528,9 +521,13 @@ class AX25Port(threading.Thread):
 
     def run(self):
         while self.loop_is_running and self.device_is_running:
+
             self.tasks()
-            # time.sleep(0.05)
+        # time.sleep(0.05)
+        print(f"Loop Ends Port: {self.port_id}")
+        logger.info(f"Loop Ends Port: {self.port_id}")
         self.close()
+        self.device = None
         self.ende = True
 
     def tasks(self):
@@ -540,53 +537,54 @@ class AX25Port(threading.Thread):
                 buf: RxBuf = self.rx()
                 ##############################################
             except AX25DeviceERROR:
-                time.sleep(0.1)
+                # time.sleep(0.1)
+                break
+            if not self.loop_is_running:
                 break
             if buf is None:
-                buf = RxBuf()
-            if buf.raw_data and self.loop_is_running:  # RX ############
-                self.set_TXD()
-                self.set_digi_TXD()
-                ax25frame = AX25Frame()
-                ax25frame.axip_add = buf.axip_add
-                e = None
-                try:
-                    # Decoding
-                    ax25frame.decode_ax25frame(buf.raw_data)
-                except AX25DecodingERROR:
-                    logger.error('Port:{} decoding: '.format(self.portname))
-                    logger.error('{}: org {}'.format(self.portname, buf.raw_data))
-                    logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
-                    break
-                if e is None and ax25frame.validate():
-                    # ######### RX #############
-                    # MH List and Statistics
-                    MH_LIST.mh_inp(ax25frame, self.portname, self.port_id)
-                    # Monitor
-                    self.gui_monitor(ax25frame=ax25frame, tx=False)
-                    # Handling
-                    self.rx_handler(ax25frame)
-                    # RX-ECHO
-                    self.rx_echo(ax25_frame=ax25frame)
-                    # AXIP-Multicast
-                    if self.port_cfg.parm_axip_Multicast:
-                        self.tx_multicast(frame=ax25frame)
-                if self.port_cfg.parm_full_duplex:
-                    break
-            else:
-                time.sleep(0.1)
+                # buf = RxBuf()
                 break
-        if (time.time() > self.TXD and self.loop_is_running) \
-                or (self.port_cfg.parm_full_duplex and self.loop_is_running):
-            #############################################
-            # Crone
-            self.cron_port_handler()
-            # ######### TX #############
-            self.tx_handler()
+            if not buf.raw_data:  # RX ############
+                time.sleep(0.02)
+                break
+            self.set_TXD()
+            self.set_digi_TXD()
+            ax25frame = AX25Frame()
+            ax25frame.axip_add = buf.axip_add
+            try:
+                # Decoding
+                ax25frame.decode_ax25frame(buf.raw_data)
+            except AX25DecodingERROR:
+                logger.error('Port:{} decoding: '.format(self.portname))
+                logger.error('{}: org {}'.format(self.portname, buf.raw_data))
+                logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
+                break
+            if ax25frame.validate():
+                # ######### RX #############
+                # MH List and Statistics
+                MH_LIST.mh_inp(ax25frame, self.portname, self.port_id)
+                # Monitor
+                self.gui_monitor(ax25frame=ax25frame, tx=False)
+                # Handling
+                self.rx_handler(ax25frame)
+                # RX-ECHO
+                self.rx_echo(ax25_frame=ax25frame)
+                # AXIP-Multicast
+                if self.port_cfg.parm_axip_Multicast:
+                    self.tx_multicast(frame=ax25frame)
+            if self.port_cfg.parm_full_duplex:
+                break
+
+        if self.loop_is_running:
+            if time.time() > self.TXD or self.port_cfg.parm_full_duplex:
+                #############################################
+                # Crone
+                self.cron_port_handler()
+                # ######### TX #############
+                self.tx_handler()
 
 
 class KissTCP(AX25Port):
-
     def init(self):
         if self.loop_is_running:
             print("KISS TCP INIT")
@@ -627,20 +625,15 @@ class KissTCP(AX25Port):
                 if self.kiss.is_enabled:
                     self.device.sendall(self.kiss.device_kiss_end())
                 """
-                # self.device.settimeout(0)
-                # self.device.recv(9999999)
-                # self.device.shutdown(socket.SHUT_RDWR)
-                self.device.settimeout(0)
-                self.device.recv(9999999)
+
+                self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
-            except (OSError, ConnectionRefusedError, ConnectionError):
+            except (OSError, ConnectionRefusedError, ConnectionError, AttributeError):
                 pass
             finally:
-                # self.device.settimeout(0)
-                # self.device.recv(9999999)
-                # self.device.shutdown(socket.SHUT_RDWR)
-                self.device.close()
-                # print(f"KISS TCP LOCK: {threading.Lock()}")
+                self.device_is_running = False
+                if self.device is not None:
+                    self.device.close()
                 print("KISS TCP FINALLY")
 
     def set_kiss_parm(self):
@@ -679,6 +672,7 @@ class KissTCP(AX25Port):
                 raise AX25DeviceFAIL
         else:
             MH_LIST.bw_mon_inp(frame, self.port_id)
+
         ############################################
 
 
@@ -794,27 +788,20 @@ class AXIP(AX25Port):
             self.own_ipAddr = self.port_param[0]
             logger.info('AXIP bind on IP: {}'.format(self.own_ipAddr))
             sock_timeout = 0.01
+
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+            # self.device.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
             self.device.settimeout(sock_timeout)
             try:
                 self.device.bind(self.port_param)
                 self.device_is_running = True
             except OSError as e:
-                logger.warning('AXIP {}'.format(e))
+                logger.error('AXIP 2 {}'.format(e))
                 # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
-                self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-                self.device.settimeout(sock_timeout)
                 self.device_is_running = False
-                try:
-                    self.device.bind(self.port_param)
-                    self.device_is_running = True
-                except OSError as e:
-                    logger.error('AXIP 2 {}'.format(e))
-                    # self.device.shutdown(socket.SHUT_RDWR)
-                    self.device.close()
-                    self.device_is_running = False
-                    # raise AX25DeviceFAIL
+                # raise AX25DeviceFAIL
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)
@@ -824,22 +811,14 @@ class AXIP(AX25Port):
         self.loop_is_running = False
         if self.device is not None:
             try:
+                print("Try Close AXIP")
                 self.device.close()
-            except socket.error:
-                pass
+            except (socket.error, AttributeError) as e:
+                print(f"Try Close AXIP except: {e}")
             finally:
-                # self.device.settimeout(0)
-                """
-                try:
-                    self.device.recv(9999999)
-                except socket.error:
-                    pass
-                """
-                # self.device.shutdown(socket.SHUT_RDWR)
-                # self.device.detach()
-                self.device.close()
-                # self.device = None
-
+                self.device_is_running = False
+                if self.device is not None:
+                    self.device.close()
                 print("AXIP FINALLY")
 
     def rx(self):
@@ -880,7 +859,9 @@ class AXIP(AX25Port):
                 self.device.sendto(frame.bytes + calc_crc, frame.axip_add)
                 # self.device.settimeout(0.1)
             except (ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
+                print('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
                 logger.warning('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
+                print('{}'.format(e))
                 logger.warning('{}'.format(e))
                 try:
                     self.init()
@@ -897,6 +878,7 @@ class AXIP(AX25Port):
                 print(frame.bytes + calc_crc)
             else:
                 MH_LIST.bw_mon_inp(frame, self.port_id)
+
         if self.port_cfg.parm_axip_Multicast and not no_multicast:
             self.tx_multicast(frame=frame)
 
