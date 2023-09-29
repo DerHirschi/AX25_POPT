@@ -75,7 +75,7 @@ class AX25PortHandler(object):
                 ret = False
         return ret
 
-    def close_all(self):
+    def close_gui(self):
         # self.close_all_ports()
         if self.gui is not None:
             tmp = self.gui
@@ -109,18 +109,6 @@ class AX25PortHandler(object):
         if port_id in self.ax25_ports.keys():
             port = self.ax25_ports[port_id]
             port.close()
-            c = 0
-            """
-            while not port.ende:
-                # time.sleep(0.3)   # !! Lockt den Thread !!
-                print("Warte auf Port " + str(port_id))
-                logger.debug("Warte auf Port " + str(port_id))
-                port.close()
-                c += 1
-                if c == 2:
-                    break
-            """
-
             del self.ax25_ports[port_id]
         if port_id in self.ax25_port_settings.keys():
             del self.ax25_port_settings[port_id]
@@ -189,13 +177,18 @@ class AX25PortHandler(object):
                 self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
                 logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
 
-    def init_aprs_ais(self):
-        self.aprs_ais = APRS_ais()
+    def init_aprs_ais(self, aprs_obj=None):
+        if aprs_obj is None:
+            self.aprs_ais = APRS_ais()
+        else:
+            self.aprs_ais = aprs_obj
         if self.aprs_ais is not None:
             self.aprs_ais.port_handler = self
             if self.aprs_ais.ais is not None:
                 # self.aprs_ais.loop_is_running = True
                 threading.Thread(target=self.aprs_ais.ais_rx_task).start()
+                if self.aprs_ais.ais_mon_gui is not None:
+                    self.aprs_ais.ais_mon_gui.set_ais_obj()
 
     def save_all_port_cfgs(self):
         for port_id in self.ax25_ports.keys():

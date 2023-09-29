@@ -1782,11 +1782,11 @@ class TkMainWin:
                                      command=self.open_be_tracer_win)  # .place(x=110, y=45)
         self._tracer_btn.pack(side=tk.LEFT, padx=2)
         self._tracer_btn_def_clr = self._tracer_btn.cget('bg')
-
+        """
         tk.Button(self._side_btn_frame_top,
                   text="Kaffèmaschine",
                   bg="HotPink2", width=12, command=self._kaffee).place(x=215, y=10)
-
+        """
         self.tabbed_sideFrame = SideTabbedFrame(self)
         # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
         self.setting_sound = self.tabbed_sideFrame.sound_on
@@ -1862,6 +1862,7 @@ class TkMainWin:
         pass
 
     def _destroy_win(self):
+        self.msg_to_monitor("PoPT wird beendet.")
         self._is_closing = True
         logging.info('Closing GUI: Closing Ports.')
         PORT_HANDLER.close_all_ports()
@@ -2282,7 +2283,7 @@ class TkMainWin:
     @staticmethod
     def _tasker_quit():
         if PORT_HANDLER.check_all_ports_closed():
-            PORT_HANDLER.close_all()
+            PORT_HANDLER.close_gui()
             logging.info('Closing GUI: Done.')
 
     def _tasker_prio(self):

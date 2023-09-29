@@ -525,6 +525,7 @@ class AX25Port(threading.Thread):
             self.tasks()
         # time.sleep(0.05)
         print(f"Loop Ends Port: {self.port_id}")
+        logger.info(f"Loop Ends Port: {self.port_id}")
         self.close()
         self.device = None
         self.ende = True
@@ -544,6 +545,7 @@ class AX25Port(threading.Thread):
                 # buf = RxBuf()
                 break
             if not buf.raw_data:  # RX ############
+                time.sleep(0.02)
                 break
             self.set_TXD()
             self.set_digi_TXD()
@@ -817,8 +819,6 @@ class AXIP(AX25Port):
                 self.device_is_running = False
                 if self.device is not None:
                     self.device.close()
-                # self.device = None
-                # print(f"AXIP LOCK: {threading.Lock()}")
                 print("AXIP FINALLY")
 
     def rx(self):
