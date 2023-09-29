@@ -48,7 +48,7 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
 from constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
-    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG
+    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color
@@ -2511,9 +2511,13 @@ class TkMainWin:
                                              selectforeground=self._mon_txt.cget('selectforeground'),
                                              )
                     self._mon_txt.tag_add(tag, ind, ind2)
+            cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
+            if cut_len > 0:
+                self._mon_txt.delete('1.0', f"{cut_len}.0")
             self._mon_txt.configure(state="disabled", exportselection=True)
             if tr or self.tabbed_sideFrame.mon_scroll_var.get():
                 self._see_end_mon_win()
+            self.main_win.update_idletasks()
 
     def see_end_qso_win(self):
         self._out_txt.see("end")
