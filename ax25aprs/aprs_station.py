@@ -7,7 +7,7 @@ from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
-from constant import APRS_SW_ID, APRS_TRACER_COMMENT
+from constant import APRS_SW_ID, APRS_TRACER_COMMENT, CFG_aprs_data_file
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii, get_timedelta_str, convert_str_to_datetime
@@ -124,10 +124,10 @@ class APRS_ais(object):
             tmp = cleanup_obj(self.ais_aprs_stations[k])
             # tmp.aprs_ais = None
             save_data.ais_aprs_stations[k] = tmp
-        save_to_file('ais.popt', data=save_data)
+        save_to_file(CFG_aprs_data_file, data=save_data)
 
     def _load_conf_fm_file(self):
-        load_data = load_fm_file('ais.popt')
+        load_data = load_fm_file(CFG_aprs_data_file)
         if load_data:
             load_data = cleanup_obj(load_data)
             for att in dir(load_data):

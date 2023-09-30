@@ -5,12 +5,10 @@ from datetime import timedelta
 import pickle
 
 from UserDB.UserDBmain import USER_DB
+from constant import CFG_mh_data_file, CFG_port_stat_data_file
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, get_timedelta_str
-
-mh_data_file = 'data/mh_data.popt'
-port_stat_data_file = 'data/port_stat.popt'
 
 
 def get_time_str():
@@ -81,7 +79,7 @@ class MH(object):
 
         self.now_min = datetime.now().strftime('%M:%S')[:-1]
         try:
-            with open(mh_data_file, 'rb') as inp:
+            with open(CFG_mh_data_file, 'rb') as inp:
                 mh_load = pickle.load(inp)
         except FileNotFoundError:
             pass
@@ -92,7 +90,7 @@ class MH(object):
             self.calls[call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[call])
 
         try:
-            with open(port_stat_data_file, 'rb') as inp:
+            with open(CFG_port_stat_data_file, 'rb') as inp:
                 self.port_statistik_DB = pickle.load(inp)
 
         except FileNotFoundError:
@@ -411,17 +409,17 @@ class MH(object):
         print('Save MH')
         tmp_mh = cleanup_obj_dict(self.calls)
         try:
-            with open(mh_data_file, 'wb') as outp:
+            with open(CFG_mh_data_file, 'wb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
-            with open(mh_data_file, 'xb') as outp:
+            with open(CFG_mh_data_file, 'xb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
 
         try:
-            with open(port_stat_data_file, 'wb') as outp:
+            with open(CFG_port_stat_data_file, 'wb') as outp:
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
-            with open(port_stat_data_file, 'xb') as outp:
+            with open(CFG_port_stat_data_file, 'xb') as outp:
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
 
 

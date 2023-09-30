@@ -6,9 +6,7 @@ import logging
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
 from fnc.cfg_fnc import set_obj_att, cleanup_obj_dict
 from fnc.str_fnc import conv_time_for_sorting
-
-client_db = 'data/UserDB.popt'
-
+from constant import CFG_user_db
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +82,7 @@ class UserDB:
         self.db = {}
         db_load = {}
         try:
-            with open(client_db, 'rb') as inp:
+            with open(CFG_user_db, 'rb') as inp:
                 db_load = pickle.load(inp)
             """
             for ke in self.db.keys():
@@ -92,7 +90,7 @@ class UserDB:
             """
         except FileNotFoundError:
             if 'linux' in sys.platform:
-                os.system('touch {}'.format(client_db))
+                os.system('touch {}'.format(CFG_user_db))
             default_client = Client('ALL')
             # default_client.is_new = False
             default_client.name = 'Beacon'
@@ -103,7 +101,7 @@ class UserDB:
         except EOFError:
             pass
         except ImportError:
-            logger.error(f"User DB: Falsche Version der DB Datei. Bitte {client_db} löschen und PoPT neu starten!")
+            logger.error(f"User DB: Falsche Version der DB Datei. Bitte {CFG_user_db} löschen und PoPT neu starten!")
             raise
 
         for k in db_load.keys():
@@ -263,7 +261,7 @@ class UserDB:
         tmp = cleanup_obj_dict(self.db)
 
         try:
-            with open(client_db, 'wb') as outp:
+            with open(CFG_user_db, 'wb') as outp:
                 pickle.dump(tmp, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError as e:
             # print("ERROR SAVE ClientDB: " + str(e))
