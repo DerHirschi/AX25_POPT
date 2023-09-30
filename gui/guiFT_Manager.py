@@ -11,6 +11,7 @@ class FileTransferManager(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self)
 
+        self.overview_frame = None
         self.root = root
         # self.port_handler = self.root.ax25_port_handler
         self.lang = self.root.language

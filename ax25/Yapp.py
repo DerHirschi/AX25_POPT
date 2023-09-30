@@ -367,7 +367,8 @@ class Yapp(object):
             self.yapp_tx(resp)
         return True
 
-    def resp_R_SI(self):
+    @staticmethod
+    def resp_R_SI():
         """
         R (Rec)     SI (ready)                       RR              RH
                     SI (opt)*       open file        RF              RD
@@ -406,7 +407,8 @@ class Yapp(object):
         # self.rx_pac_type = ''
         self.rx_pack_buff = b''
 
-    def build_frame(self, pack_typ: b'', data: b''):
+    @staticmethod
+    def build_frame(pack_typ: b'', data: b''):
         return pack_typ + bytes([len(data)]) + data
 
     def dec_NR_OR_RE(self):
@@ -441,7 +443,9 @@ class Yapp(object):
             return ret()
 
     """ Packet definitions """
-    def enc_RR(self):
+
+    @staticmethod
+    def enc_RR():
         """ Rcv_Rdy """
         return b'\x06\x01'
 
@@ -450,7 +454,8 @@ class Yapp(object):
         self.rx_pac_len = 2
         return 'RR'
 
-    def enc_RF(self):
+    @staticmethod
+    def enc_RF():
         """ Rcv_File > Normal Yapp reply """
         return b'\x06\x02'
 
@@ -459,7 +464,8 @@ class Yapp(object):
         self.rx_pac_len = 2
         return 'RF'
 
-    def enc_RT(self):
+    @staticmethod
+    def enc_RT():
         """ Receive_TPK > Extended Yapp reply """
         return b'\x06\x06'
 
@@ -468,7 +474,8 @@ class Yapp(object):
         self.rx_pac_len = 2
         return 'RT'
 
-    def enc_AF(self):
+    @staticmethod
+    def enc_AF():
         """ Ack_EOF """
         return b'\x06\x03'  # [1.1]
 
@@ -477,7 +484,8 @@ class Yapp(object):
         self.rx_pac_len = 2
         return 'AF'  # [1.1]
 
-    def enc_AT(self):
+    @staticmethod
+    def enc_AT():
         """ Ack_EOT """
         return b'\x06\x04'  # [1.1]
 
@@ -486,7 +494,8 @@ class Yapp(object):
         self.rx_pac_len = 2
         return 'AT'  # [1.1]
 
-    def enc_SI(self):
+    @staticmethod
+    def enc_SI():
         """ Send_Init """
         return b'\x05\x01'
 
@@ -620,7 +629,8 @@ class Yapp(object):
 
         return False
 
-    def enc_EF(self):
+    @staticmethod
+    def enc_EF():
         """ Send_EOF """
         return b'\x03\x01'
 
@@ -639,7 +649,8 @@ class Yapp(object):
         self.rx_pac_len = 0
         return False
 
-    def enc_ET(self):
+    @staticmethod
+    def enc_ET():
         """ Send_EOT """
         return b'\x04\x01'
 
@@ -654,7 +665,8 @@ class Yapp(object):
         self.rx_pac_len = 0
         return False
 
-    def enc_NR(self):
+    @staticmethod
+    def enc_NR():
         """ Not_Rdy """
         # NAK  len  (Optional Reason in ASCII)
         ret = b'\x15' + NUL
@@ -725,9 +737,9 @@ class Yapp(object):
         print(f"YAPP ABORT REASON: {tmp}")
         print(f"YAPP dec_CN - self.rx_pack_buff: {self.rx_pack_buff}")
         return 'CN'
-        #return False
 
-    def enc_CA(self):
+    @staticmethod
+    def enc_CA():
         """ Can_Ack """
         return b'\x06\x05'
 
@@ -741,7 +753,8 @@ class Yapp(object):
 
     """ Following are for use in Server mode """
 
-    def enc_RI(self):
+    @staticmethod
+    def enc_RI():
         """ Rcv_Init """
         # ENQ   02   len   (Filespec requested - wildcard allowed)
         ret = b'\x05\x02'
@@ -753,7 +766,8 @@ class Yapp(object):
         self.rx_pac_len = 2  # TODO !!!
         return 'RI'
 
-    def enc_TX(self):
+    @staticmethod
+    def enc_TX():
         """ Text """
         # DLE   len  (ASCII text for display)  {to send text from server}
         ret = b'\x10' + NUL
@@ -767,7 +781,8 @@ class Yapp(object):
 
     """ Unimplemented - Reserved for Server Commands """
 
-    def enc_UU(self):
+    @staticmethod
+    def enc_UU():
         """ Commands """
         # DLE   len  (ASCII text for display)  {to send text from server}
         # ret = b'\x0503'

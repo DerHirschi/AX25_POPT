@@ -37,22 +37,22 @@ class RTT(object):
         # self.rtt_single_list = [float(self.rtt_average)]*4
         self.rtt_single_list = []
 
-    def get_RTT_avrg(self):
-        self.calc_rtt_vars()
+    def _get_rtt_avrg(self):
+        self._calc_rtt_vars()
         if self.rtt_best == 999:
             return self.rtt_average
         else:
             return (self.rtt_average + self.rtt_best) / 2
 
-    def set_rtt_timer(self, vs: int, paclen: int):
+    def _set_rtt_timer(self, vs: int, paclen: int):
         self.rtt_dict[vs]['timer'] = time.time()
         self.rtt_dict[vs]['paclen'] = paclen
         # print('set {}'.format(self.rtt_dict))
 
-    def set_rtt_single_timer(self):
+    def _set_rtt_single_timer(self):
         self.rtt_single_timer = time.time()
 
-    def rtt_single_rx(self, stop=False):
+    def _rtt_single_rx(self, stop=False):
         if stop:
             self.rtt_single_timer = 0.0
         if self.rtt_single_timer:
@@ -63,20 +63,20 @@ class RTT(object):
             self.rtt_single_timer = 0.0
         # print("RTT-S: {}".format(self.rtt_single_list))
 
-    def rtt_rx(self, vs: int):
+    def _rtt_rx(self, vs: int):
         # print('RX {}' .format(self.rtt_dict))
         timer = float(self.rtt_dict[vs]['timer'])
         if timer:
             self.rtt_dict[vs]['rtt'] = time.time() - timer
         self.rtt_last = float(self.rtt_dict[vs]['rtt'])
-        self.calc_rtt_vars()
+        self._calc_rtt_vars()
         # print('RX rtt_last {}'.format(self.rtt_last))
         # print('RX rtt_best {}'.format(self.rtt_best))
         # print('RX rtt_worst {}'.format(self.rtt_worst))
         # print('RX rtt_average {}'.format(self.rtt_average))
         return self.rtt_last
 
-    def calc_rtt_vars(self):
+    def _calc_rtt_vars(self):
         # print('_________calc_rtt____________')
         self.rtt_best = min(self.rtt_last, self.rtt_best)
         self.rtt_worst = max(self.rtt_last, self.rtt_worst)
@@ -712,7 +712,7 @@ class AX25Conn(object):
         auto = False  # TODO
         self.calc_irtt()
         if auto:
-            return self.RTT_Timer.get_RTT_avrg() * 1000
+            return self.RTT_Timer._get_rtt_avrg() * 1000
         else:
             return self.IRTT
 
@@ -784,7 +784,7 @@ class AX25Conn(object):
                     break
                 del self.tx_buf_unACK[i]
                 # RTT
-                self.RTT_Timer.rtt_rx(i)
+                self.RTT_Timer._rtt_rx(i)
 
     def resend_unACK_buf(self, max_pac=None):
         if max_pac is None:
@@ -856,7 +856,7 @@ class AX25Conn(object):
             self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
             self.tx_buf_2send.append(self.ax25_out_frame)
             # RTT
-            self.RTT_Timer.set_rtt_timer(int(self.vs), int(pac_len))
+            self.RTT_Timer._set_rtt_timer(int(self.vs), int(pac_len))
             # !!! COUNT VS !!!
             self.vs = count_modulo(int(self.vs))  # Increment VS Modulo 8
             self.set_T1()  # Re/Set T1

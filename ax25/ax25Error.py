@@ -11,7 +11,7 @@ class AX25EncodingERROR(Exception):
     def __init__(self, frame=None):
         if frame is not None:
             logger.error('AX25 Packet Encoding Error !')
-            logger.error('all hex: {}'.format(frame.bytes))
+            logger.error('all hex: {}'.format(frame.data_bytes))
             logger.error('___________From Call_________________')
             for att in dir(frame.from_call):
                 if '__' not in att:
@@ -53,7 +53,7 @@ class AX25DecodingERROR(Exception):
     def __init__(self, frame=None):
         if frame is not None:
             logger.error('AX25 Packet Decoding Error !')
-            logger.error('all hex: {}'.format(frame.bytes))
+            logger.error('all hex: {}'.format(frame.data_bytes))
             logger.error('___________From Call_________________')
             for att in dir(frame.from_call):
                 if '__' not in att:

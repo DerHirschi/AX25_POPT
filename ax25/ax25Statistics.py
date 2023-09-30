@@ -120,10 +120,10 @@ class MH(object):
         self.init_bw_struct(port_id=port_id)
         if ax_frame is not None:
             if self.now_min == datetime.now().strftime('%H:%M:%S')[:-1]:
-                self.bandwidth[port_id][self.now_min] += len(ax_frame.bytes)
+                self.bandwidth[port_id][self.now_min] += len(ax_frame.data_bytes)
             else:
                 self.now_min = datetime.now().strftime('%H:%M:%S')[:-1]
-                self.bandwidth[port_id][self.now_min] = len(ax_frame.bytes)
+                self.bandwidth[port_id][self.now_min] = len(ax_frame.data_bytes)
         else:
             if self.now_min != datetime.now().strftime('%H:%M:%S')[:-1]:
                 self.now_min = datetime.now().strftime('%H:%M:%S')[:-1]
@@ -171,8 +171,8 @@ class MH(object):
             self.port_statistik_DB[port_id][date_str] = init_day_dic()
         self.port_statistik_DB[port_id][date_str][hour]['N_pack'][minute] += 1
         if ax_frame.ctl_byte.flag in self.port_statistik_DB[port_id][date_str][hour]:
-            self.port_statistik_DB[port_id][date_str][hour][ax_frame.ctl_byte.flag][minute] += len(ax_frame.bytes)
-        self.port_statistik_DB[port_id][date_str][hour]['DATA_W_HEADER'][minute] += len(ax_frame.bytes)
+            self.port_statistik_DB[port_id][date_str][hour][ax_frame.ctl_byte.flag][minute] += len(ax_frame.data_bytes)
+        self.port_statistik_DB[port_id][date_str][hour]['DATA_W_HEADER'][minute] += len(ax_frame.data_bytes)
         self.port_statistik_DB[port_id][date_str][hour]['DATA'][minute] += int(ax_frame.data_len)
 
     def mh_inp_axip_add(self, ent: '', axip_add: tuple):
@@ -201,7 +201,7 @@ class MH(object):
         ent.port = port_name
         ent.port_id = port_id
         ent.byte_n += ax25_frame.data_len
-        ent.h_byte_n += len(ax25_frame.bytes) - ax25_frame.data_len
+        ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
         if ax25_frame.ctl_byte.flag == 'REJ':
             ent.rej_n += 1
         # TO Calls
