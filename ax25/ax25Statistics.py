@@ -7,7 +7,7 @@ import pickle
 from UserDB.UserDBmain import USER_DB
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
 from fnc.socket_fnc import check_ip_add_format
-from fnc.str_fnc import conv_time_for_sorting
+from fnc.str_fnc import conv_time_for_sorting, get_timedelta_str
 
 mh_data_file = 'data/mh_data.popt'
 port_stat_data_file = 'data/port_stat.popt'
@@ -253,7 +253,7 @@ class MH(object):
                 break
         return temp_ret
 
-    def output_sort_mh_entr(self, flag_str: str, reverse: bool):
+    def get_sort_mh_entry(self, flag_str: str, reverse: bool):
         temp = {}
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
@@ -307,87 +307,59 @@ class MH(object):
         self.calls[call].axip_add = axip
 
     def mh_out_cli(self, max_ent=20):
-        now = datetime.now()
         out = '\r'
         # out += '\r                       < MH - List >\r\r'
         c = 0
         max_c = 0
+        """
         tp = 0
         tb = 0
         rj = 0
-        sort_list = self.output_sort_mh_entr('last', False)
+        """
+        sort_list = self.get_sort_mh_entry('last', False)
 
         for call in list(sort_list.keys()):
             max_c += 1
             if max_c > max_ent:
                 break
-            time_delta = now - sort_list[call].last_seen
-            td_days = time_delta.days
-            td_hours = int(time_delta.seconds / 3600)
-            td_min = int(time_delta.seconds / 60)
-            td_sec = time_delta.seconds
-
-            if td_days:
-                # td_hours = td_hours - td_days * 24
-                time_delta_str = f'{str(td_days).rjust(3, " ")}d,{str(td_hours).rjust(2, " ")}h'
-            elif td_hours:
-                td_min = td_min - td_hours * 60
-                time_delta_str = f'{str(td_hours).rjust(3, " ")}h,{str(td_min).rjust(2, " ")}m'
-            elif td_min:
-                td_sec = td_sec - td_min * 60
-                time_delta_str = f'{str(td_min).rjust(3, " ")}m,{str(td_sec).rjust(2, " ")}s'
-            else:
-                time_delta_str = f'{str(td_min).rjust(7, " ")}s'
+            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
 
             out += f'{time_delta_str} P:{sort_list[call].port:4} {sort_list[call].own_call:9}'.ljust(27, " ")
-
+            """
             tp += sort_list[call].pac_n
             tb += sort_list[call].byte_n
             rj += sort_list[call].rej_n
+            """
             c += 1
             if c == 2:  # Breite
                 c = 0
                 out += '\r'
+        """
         out += '\r'
         out += '\rTotal Packets Rec.: ' + str(tp)
         out += '\rTotal REJ-Packets Rec.: ' + str(rj)
         out += '\rTotal Bytes Rec.: ' + str(tb)
+        """
         out += '\r'
 
         return out
 
     def mh_long_out_cli(self, max_ent=10):
-        now = datetime.now()
         out = '\r'
         out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r"
         max_c = 0
+        """
         tp = 0
         tb = 0
         rj = 0
-        sort_list = self.output_sort_mh_entr('last', False)
+        """
+        sort_list = self.get_sort_mh_entry('last', False)
 
         for call in list(sort_list.keys()):
             max_c += 1
             if max_c > max_ent:
                 break
-            time_delta = now - sort_list[call].last_seen
-            td_days = time_delta.days
-            td_hours = int(time_delta.seconds / 3600)
-            td_min = int(time_delta.seconds / 60)
-            td_sec = time_delta.seconds
-
-            if td_days:
-                # td_hours = td_hours - td_days * 24
-                time_delta_str = f'{str(td_days).rjust(3, " ")}d,{str(td_hours).rjust(2, " ")}h'
-            elif td_hours:
-                td_min = td_min - td_hours * 60
-                time_delta_str = f'{str(td_hours).rjust(3, " ")}h,{str(td_min).rjust(2, " ")}m'
-            elif td_min:
-                td_sec = td_sec - td_min * 60
-                time_delta_str = f'{str(td_min).rjust(3, " ")}m,{str(td_sec).rjust(2, " ")}s'
-            else:
-                time_delta_str = f'{str(td_min).rjust(7, " ")}s'
-
+            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
             via = sort_list[call].route
             if via:
                 via = via[-1]
@@ -405,22 +377,23 @@ class MH(object):
 
             out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
                     f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
-
+            """
             tp += sort_list[call].pac_n
             tb += sort_list[call].byte_n
             rj += sort_list[call].rej_n
-
+            """
             out += '\r'
         out += '\r'
+        """
         out += '\rTotal Packets Rec.: ' + str(tp)
         out += '\rTotal REJ-Packets Rec.: ' + str(rj)
         out += '\rTotal Bytes Rec.: ' + str(tb)
         out += '\r'
-
+        """
         return out
 
     def mh_out_beacon(self, max_ent=12):
-        _tmp = self.output_sort_mh_entr('last', False)
+        _tmp = self.get_sort_mh_entry('last', False)
         _ret = ''
         _mh_keys = list(_tmp.keys())
         if len(_mh_keys) > max_ent:

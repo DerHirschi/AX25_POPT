@@ -121,14 +121,12 @@ class WXWin(tk.Toplevel):
     def _format_tree_data(self):
         self._tree_data = []
         for k in self._wx_data:
-            _loc = self._get_loc(self._wx_data[k][-1][1])
-            _dist = self._get_loc_dist(_loc)
             self._tree_data.append((
                 f'{self._wx_data[k][-1][0]}',
                 f'{k}',
-                f'{self._wx_data[k][-1][2]}',
-                _loc,
-                _dist,
+                f'{self._wx_data[k][-1][1].get("port_id", "-")}',
+                f'{self._wx_data[k][-1][1].get("locator", "-")}',
+                f'{self._wx_data[k][-1][1].get("distance", "-")}',
                 f'{self._wx_data[k][-1][1]["weather"].get("pressure", "-")}',
                 f'{self._wx_data[k][-1][1]["weather"].get("humidity", "-")}',
                 f'{self._wx_data[k][-1][1]["weather"].get("rain_1h", "-")}',
@@ -175,19 +173,6 @@ class WXWin(tk.Toplevel):
             self._tree.delete(i)
         for ret_ent in self._tree_data:
             self._tree.insert('', tk.END, values=ret_ent)
-
-    @staticmethod
-    def _get_loc(aprs_pack):
-        _ret = coordinates_to_locator(
-            aprs_pack.get('latitude', 0),
-            aprs_pack.get('longitude', 0)
-        )
-        return _ret
-
-    def _get_loc_dist(self, locator):
-        if self._ais_obj.ais_loc:
-            return locator_distance(locator, self._ais_obj.ais_loc)
-        return -1
 
     def _entry_selected(self, event):
         _key = ''

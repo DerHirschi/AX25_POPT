@@ -42,6 +42,27 @@ def get_file_timestamp():
     return datetime.now().strftime('%d%m/%y-%H%M')
 
 
+def get_timedelta_str(dateti: datetime.now()):
+    _time_delta = datetime.now() - dateti
+    _td_days = _time_delta.days
+    _td_hours = int(_time_delta.seconds / 3600)
+    _td_min = int(_time_delta.seconds / 60)
+    _td_sec = _time_delta.seconds
+
+    if _td_days:
+        # td_hours = td_hours - td_days * 24
+        _time_delta_str = f'{str(_td_days).rjust(3, " ")}d,{str(_td_hours).rjust(2, " ")}h'
+    elif _td_hours:
+        _td_min = _td_min - _td_hours * 60
+        _time_delta_str = f'{str(_td_hours).rjust(3, " ")}h,{str(_td_min).rjust(2, " ")}m'
+    elif _td_min:
+        _td_sec = _td_sec - _td_min * 60
+        _time_delta_str = f'{str(_td_min).rjust(3, " ")}m,{str(_td_sec).rjust(2, " ")}s'
+    else:
+        _time_delta_str = f'{str(_td_min).rjust(7, " ")}s'
+    return _time_delta_str
+
+
 def convert_str_to_datetime(date_str, date_format='%d/%m/%y %H:%M:%S'):
     try:
         converted_date = datetime.strptime(date_str, date_format)

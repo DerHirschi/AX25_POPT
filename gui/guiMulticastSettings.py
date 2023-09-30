@@ -105,7 +105,7 @@ class MulticastSettings(tk.Toplevel):
             self.flag = flag
 
         if self.flag:
-            sort_date = MH_LIST.output_sort_mh_entr(flag_str=self.flag, reverse=self.rev_ent)
+            sort_date = MH_LIST.get_sort_mh_entry(flag_str=self.flag, reverse=self.rev_ent)
             if flag:
                 if self.rev_ent:
                     self.rev_ent = False

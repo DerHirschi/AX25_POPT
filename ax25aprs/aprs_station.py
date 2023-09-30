@@ -9,8 +9,8 @@ from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
 from constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
-from fnc.loc_fnc import decimal_degrees_to_aprs
-from fnc.str_fnc import convert_umlaute_to_ascii
+from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
+from fnc.str_fnc import convert_umlaute_to_ascii, get_timedelta_str, convert_str_to_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -310,6 +310,9 @@ class APRS_ais(object):
     def _aprs_proces_rx(self, port_id, aprs_pack):
         if aprs_pack:
             aprs_pack['port_id'] = port_id
+            # aprs_pack['timestamp'] = datetime.now().strftime('%d/%m/%y %H:%M:%S')
+            aprs_pack['locator'] = self._get_loc(aprs_pack)
+            aprs_pack['distance'] = self._get_loc_dist(aprs_pack['locator'])
             # APRS PN/BULLETIN MSG
             if aprs_pack.get("format", '') in ['message', 'bulletin', 'thirdparty']:
                 # TODO get return fm fnc
@@ -324,6 +327,8 @@ class APRS_ais(object):
                 return True
         return False
 
+    ##########################
+    # WX
     def _aprs_wx_msg_rx(self, port_id, aprs_pack):
         if not aprs_pack.get("weather", False):
             return False
@@ -338,12 +343,15 @@ class APRS_ais(object):
 
         from_aprs = new_aprs_pack.get('from', '')
         if from_aprs:
+            """
+            new_aprs_pack['locator'] = self._get_loc(new_aprs_pack)
+            new_aprs_pack['distance'] = self._get_loc_dist(new_aprs_pack['locator'])
+            """
             if not self.aprs_wx_msg_pool.get(from_aprs, False):
                 self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
             self.aprs_wx_msg_pool[from_aprs].append(
                 (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
-                 new_aprs_pack,
-                 port_id)
+                 new_aprs_pack)
             )
             if self.wx_tree_gui is not None:
                 self._wx_update_tr = True
@@ -360,8 +368,55 @@ class APRS_ais(object):
                 return parse_aprs_fm_aprsframe(_raw)
         return aprs_pack
 
+    def get_wx_entry_sort_distance(self):
+        _temp = {}
+        for k in list(self.aprs_wx_msg_pool.keys()):
+            _temp[k] = self.aprs_wx_msg_pool[k][-1][1]
+        return list(dict(sorted(_temp.items(), key=lambda item: item[1].get('distance', -1))).keys())
+
     def get_wx_data(self):
         return dict(self.aprs_wx_msg_pool)
+
+    def get_wx_cli_out(self, max_ent=10):
+        max_c = 0
+        out = '\r'
+        out += "-----Time-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r"
+        #      "10:TS3>CB0SAW   0  16    1     128    3    120   3    0   KERNEL Interface ax4"
+        _data = self.get_wx_entry_sort_distance()
+        print(_data)
+        for k in _data:
+            max_c += 1
+            if max_c > max_ent:
+                break
+            _ent = self.aprs_wx_msg_pool[k][-1]
+            _td = get_timedelta_str(convert_str_to_datetime(_ent[0]))
+            _loc = f'{_ent[1].get("locator", "------")[:6]}({round(_ent[1].get("distance", -1))}km)'
+            _pres = f'{_ent[1]["weather"].get("pressure", 0):.2f}'
+            _rain = f'{_ent[1]["weather"].get("rain_24h", 0):.3f}'
+            print(_ent)
+            print(_td)
+            out += f'{_td.rjust(9):10}{_ent[1].get("port_id", ""):6}{k:10}{_loc:16}'
+            out += f'{str(round(_ent[1]["weather"].get("temperature", 0))):5}'
+            out += f'{_pres:7} '
+            out += f'{_ent[1]["weather"].get("humidity", 0):3} '
+            out += f'{_ent[1]["weather"].get("luminosity", 0):3} '
+            out += f'{_rain:6}\r'
+        return out
+
+    #####################
+    #
+    @staticmethod
+    def _get_loc(aprs_pack):
+        _ret = coordinates_to_locator(
+            aprs_pack.get('latitude', 0),
+            aprs_pack.get('longitude', 0)
+        )
+        return _ret
+
+    def _get_loc_dist(self, locator):
+        if self.ais_loc:
+            return locator_distance(locator, self.ais_loc)
+        return -1
 
     def _watchdog_reset(self):
         self._watchdog_last = time.time() + self._parm_watchdog
