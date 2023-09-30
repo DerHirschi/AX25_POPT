@@ -1,7 +1,9 @@
 import sys
 
 
-def show_mem_size(var_items, compare=True, depth=0, previous_sizes={}):
+def show_mem_size(var_items, compare=True, depth=0, previous_sizes=None):
+    if previous_sizes is None:
+        previous_sizes = {}
     indent = "  " * depth
     local_vars = list(var_items.items())
     local_vars.sort(key=lambda x: sys.getsizeof(x[1]))

@@ -372,7 +372,7 @@ class APRS_ais(object):
         _temp = {}
         for k in list(self.aprs_wx_msg_pool.keys()):
             _temp[k] = self.aprs_wx_msg_pool[k][-1][1]
-        return list(dict(sorted(_temp.items(), key=lambda item: item[1].get('distance', -1))).keys())
+        return list(dict(sorted(_temp.items(), key=lambda item: item[1].get('distance', 99999))).keys())
 
     def get_wx_data(self):
         return dict(self.aprs_wx_msg_pool)
@@ -380,10 +380,8 @@ class APRS_ais(object):
     def get_wx_cli_out(self, max_ent=10):
         max_c = 0
         out = '\r'
-        out += "-----Time-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r"
-        #      "10:TS3>CB0SAW   0  16    1     128    3    120   3    0   KERNEL Interface ax4"
+        out += "-----Last-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r"
         _data = self.get_wx_entry_sort_distance()
-        print(_data)
         for k in _data:
             max_c += 1
             if max_c > max_ent:
@@ -393,8 +391,6 @@ class APRS_ais(object):
             _loc = f'{_ent[1].get("locator", "------")[:6]}({round(_ent[1].get("distance", -1))}km)'
             _pres = f'{_ent[1]["weather"].get("pressure", 0):.2f}'
             _rain = f'{_ent[1]["weather"].get("rain_24h", 0):.3f}'
-            print(_ent)
-            print(_td)
             out += f'{_td.rjust(9):10}{_ent[1].get("port_id", ""):6}{k:10}{_loc:16}'
             out += f'{str(round(_ent[1]["weather"].get("temperature", 0))):5}'
             out += f'{_pres:7} '

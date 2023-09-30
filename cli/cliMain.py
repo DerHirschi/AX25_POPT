@@ -493,7 +493,6 @@ class DefaultCLI(object):
             except ValueError:
                 pass
         ret = self.port_handler.aprs_ais.get_wx_cli_out(max_ent=parm)
-        # print(ret.keys())
         return ret + '\r'
 
     """

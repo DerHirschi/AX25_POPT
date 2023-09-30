@@ -149,7 +149,7 @@ class AX25PipeTab:
         _vals = []
         for x in list(pac_types.keys()):
             pid.pac_types[int(x)]()
-            _vals.append(f"{str(hex(x)).upper()}>{pid.flag}")
+            _vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
         self.pid_ent = tk.ttk.Combobox(self.own_tab,
                                        width=30,
                                        values=_vals,

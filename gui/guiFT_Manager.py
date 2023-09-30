@@ -118,6 +118,7 @@ class FileTransferManager(tk.Toplevel):
         ttk.Label(self.progress_bar_frame, textvariable=self.dir_label_var).pack(pady=1, anchor=tk.W)
 
         combobox_values = list(range(0, 361, 5))
+        combobox_values = [str(x) for x in combobox_values]
         self.tx_wait_frame = ttk.Frame(self.buttons_frame)
         tk.Label(self.tx_wait_frame, text="TX-Wait: ").pack(side=tk.LEFT, padx=5)
 

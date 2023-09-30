@@ -486,7 +486,7 @@ class SideTabbedFrame:
         _vals = []
         for x in list(pac_types.keys()):
             pid.pac_types[int(x)]()
-            _vals.append(f"{str(hex(x)).upper()}>{pid.flag}")
+            _vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
         self.mon_pid_ent = tk.ttk.Combobox(self.tab6_monitor,
                                            width=20,
                                            values=_vals,
@@ -2445,7 +2445,7 @@ class TkMainWin:
                             ind2 = self._out_txt.index('end-1c')
                             self._out_txt.tag_add(tag_name_out, ind, ind2)
                             self._out_txt.configure(state="disabled",
-                                                    exportselection=1
+                                                    exportselection=True
                                                     )
                             if tr or self.get_ch_param().autoscroll:
                                 self.see_end_qso_win()
@@ -2765,7 +2765,7 @@ class TkMainWin:
             ind2 = self._out_txt.index(tk.INSERT)
             self._out_txt.tag_add(tag_name_out, ind, ind2)
             self._out_txt.configure(state="disabled",
-                                    exportselection=1
+                                    exportselection=True
                                     )
             if tr or self.get_ch_param().autoscroll:
                 self.see_end_qso_win()
