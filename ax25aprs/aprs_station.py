@@ -291,6 +291,7 @@ class APRS_ais(object):
     def callback(self, packet):
         """ RX fm APRS-Server"""
         self._watchdog_reset()
+        packet['port_id'] = 'I-NET'
         self.ais_rx_buff.append(
             (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
              packet)
@@ -299,27 +300,27 @@ class APRS_ais(object):
             self.ais_mon_gui.pack_to_mon(
                 datetime.now().strftime('%d/%m/%y %H:%M:%S'),
                 packet)
-        self._aprs_proces_rx(port_id='I-NET', aprs_pack=packet)
+        self._aprs_proces_rx(aprs_pack=packet)
         # print(packet)
 
     def aprs_ax25frame_rx(self, port_id, ax25_frame):
         """ RX fm AX25Frame (HF/AXIP) """
         aprs_pack = parse_aprs_fm_ax25frame(ax25_frame)
-        self._aprs_proces_rx(port_id=port_id, aprs_pack=aprs_pack)
+        aprs_pack['port_id'] = 'I-NET'
+        self._aprs_proces_rx(aprs_pack=aprs_pack)
 
-    def _aprs_proces_rx(self, port_id, aprs_pack):
+    def _aprs_proces_rx(self, aprs_pack):
         if aprs_pack:
-            aprs_pack['port_id'] = port_id
-            # aprs_pack['timestamp'] = datetime.now().strftime('%d/%m/%y %H:%M:%S')
+            aprs_pack['timestamp'] = datetime.now()
             aprs_pack['locator'] = self._get_loc(aprs_pack)
-            aprs_pack['distance'] = self._get_loc_dist(aprs_pack['locator'])
+            aprs_pack['distance'] = self._get_loc_dist(aprs_pack.get('locator', ''))
             # APRS PN/BULLETIN MSG
             if aprs_pack.get("format", '') in ['message', 'bulletin', 'thirdparty']:
                 # TODO get return fm fnc
-                self._aprs_msg_sys_rx(port_id=port_id, aprs_pack=aprs_pack)
+                self._aprs_msg_sys_rx(aprs_pack=aprs_pack)
                 return True
             # APRS Weather
-            elif self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=aprs_pack):
+            elif self._aprs_wx_msg_rx(aprs_pack=aprs_pack):
                 USER_DB.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
                 return True
             # Tracer
@@ -329,7 +330,7 @@ class APRS_ais(object):
 
     ##########################
     # WX
-    def _aprs_wx_msg_rx(self, port_id, aprs_pack):
+    def _aprs_wx_msg_rx(self, aprs_pack):
         if not aprs_pack.get("weather", False):
             return False
         new_aprs_pack = self._correct_wrong_wx_data(aprs_pack)
@@ -343,10 +344,7 @@ class APRS_ais(object):
 
         from_aprs = new_aprs_pack.get('from', '')
         if from_aprs:
-            """
-            new_aprs_pack['locator'] = self._get_loc(new_aprs_pack)
-            new_aprs_pack['distance'] = self._get_loc_dist(new_aprs_pack['locator'])
-            """
+
             if not self.aprs_wx_msg_pool.get(from_aprs, False):
                 self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
             self.aprs_wx_msg_pool[from_aprs].append(
@@ -365,7 +363,11 @@ class APRS_ais(object):
         if _raw:
             if 'h100b' in _raw:
                 _raw = _raw.replace('h100b', 'h00b')
-                return parse_aprs_fm_aprsframe(_raw)
+                _new_pack = parse_aprs_fm_aprsframe(_raw)
+                _new_pack['locator'] = str(aprs_pack.get('locator', ''))
+                _new_pack['distance'] = float(aprs_pack.get('distance', -1))
+                _new_pack['port_id'] = str(aprs_pack.get('port_id', ''))
+                return _new_pack
         return aprs_pack
 
     def get_wx_entry_sort_distance(self):
@@ -435,7 +437,7 @@ class APRS_ais(object):
 
     #########################################
     # APRS MSG System
-    def _aprs_msg_sys_rx(self, port_id, aprs_pack: {}):
+    def _aprs_msg_sys_rx(self, aprs_pack: {}):
         if aprs_pack.get('format', '') == 'thirdparty':
             # print(f"THP > {aprs_pack['subpacket']}")
             path = aprs_pack.get('path', [])
@@ -450,15 +452,15 @@ class APRS_ais(object):
                 aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
                 if ack is not None:
                     aprs_pack['msgNo'] = ack
-            formated_pack = (port_id,
+            formated_pack = (aprs_pack.get('port_id', ''),
                              (datetime.now().strftime('%d/%m/%y %H:%M:%S'), aprs_pack)
                              )
             if 'message_text' in aprs_pack:
                 if 'message' == aprs_pack['format']:
                     if formated_pack not in self.aprs_msg_pool['message']:
-                        if [port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
+                        if [aprs_pack.get('port_id', ''), aprs_pack['from'], aprs_pack.get('msgNo', ''),
                             aprs_pack.get('message_text', '')] not in self._dbl_pack:
-                            self._dbl_pack.append([port_id, aprs_pack['from'], aprs_pack.get('msgNo', ''),
+                            self._dbl_pack.append([aprs_pack.get('port_id', ''), aprs_pack['from'], aprs_pack.get('msgNo', ''),
                                                    aprs_pack.get('message_text', '')])
                             self.aprs_msg_pool['message'].append(formated_pack)
                             self._aprs_msg_sys_new_pn(formated_pack)
@@ -471,10 +473,10 @@ class APRS_ais(object):
                         self.aprs_msg_pool['bulletin'].append(formated_pack)
                         self._aprs_msg_sys_new_bn(formated_pack)
                         print(
-                            f"aprs Bulletin-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
+                            f"aprs Bulletin-MSG fm {aprs_pack['from']} {aprs_pack.get('port_id', '')} - {aprs_pack.get('message_text', '')}")
 
             elif 'response' in aprs_pack:
-                aprs_pack['popt_port_id'] = port_id
+                aprs_pack['popt_port_id'] = aprs_pack.get('port_id', '')
                 self._handle_response(pack=aprs_pack)
 
     def _handle_response(self, pack):
