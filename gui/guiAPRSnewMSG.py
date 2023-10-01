@@ -116,7 +116,7 @@ class NewMessageWindow(tk.Toplevel):
                 aprs_str += f"::{to_call.ljust(9)}:dummy"
                 aprs_pack = parse_aprs_fm_aprsframe(aprs_str)
                 if aprs_pack:
-                    aprs_pack['popt_port_id'] = port_id
+                    aprs_pack['port_id'] = port_id
                     PORT_HANDLER.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
 
                 self.destroy_win()

@@ -306,7 +306,7 @@ class APRS_ais(object):
     def aprs_ax25frame_rx(self, port_id, ax25_frame):
         """ RX fm AX25Frame (HF/AXIP) """
         aprs_pack = parse_aprs_fm_ax25frame(ax25_frame)
-        aprs_pack['port_id'] = 'I-NET'
+        aprs_pack['port_id'] = str(port_id)
         self._aprs_proces_rx(aprs_pack=aprs_pack)
 
     def _aprs_proces_rx(self, aprs_pack):
@@ -476,7 +476,7 @@ class APRS_ais(object):
                             f"aprs Bulletin-MSG fm {aprs_pack['from']} {aprs_pack.get('port_id', '')} - {aprs_pack.get('message_text', '')}")
 
             elif 'response' in aprs_pack:
-                aprs_pack['popt_port_id'] = aprs_pack.get('port_id', '')
+                # aprs_pack['popt_port_id'] = aprs_pack.get('port_id', '')
                 self._handle_response(pack=aprs_pack)
 
     def _handle_response(self, pack):
@@ -534,7 +534,7 @@ class APRS_ais(object):
                 out_pack['from'] = from_call
                 out_pack['path'] = path
                 out_pack['addresse'] = to_call
-                out_pack['popt_port_id'] = port_id
+                out_pack['port_id'] = port_id
                 out_pack['is_ack'] = answer_pack[1][1].get('is_ack', False)
                 return self.send_pn_msg(out_pack, msg, with_ack)
             return False
@@ -558,7 +558,7 @@ class APRS_ais(object):
             if not pack.get('is_ack', False):
                 # print(f"ECHO {pack}")
                 formated_pack = (
-                    pack['popt_port_id'],
+                    pack['port_id'],
                     (
                         datetime.now().strftime('%d/%m/%y %H:%M:%S'),
                         pack)
@@ -569,7 +569,7 @@ class APRS_ais(object):
         return True
 
     def _send_it(self, pack):
-        if pack['popt_port_id'] == 'I-NET':
+        if pack['port_id'] == 'I-NET':
             self._send_as_AIS(pack)
         else:
             self._send_as_UI(pack)
@@ -618,8 +618,8 @@ class APRS_ais(object):
         send = []
         for msg_no in list(self.spooler_buffer.keys()):
             pack = self.spooler_buffer[msg_no]
-            if (pack['address_str'], pack['popt_port_id']) not in send:
-                send.append((pack['address_str'], pack['popt_port_id']))
+            if (pack['address_str'], pack['port_id']) not in send:
+                send.append((pack['address_str'], pack['port_id']))
                 if pack['send_timer'] < time.time():
                     if pack['N'] < self._parm_max_n:
                         pack['send_timer'] = time.time() + self._parm_resend
@@ -636,7 +636,7 @@ class APRS_ais(object):
                 # self.del_fm_spooler(pack, rx=False)
 
     def _send_as_UI(self, pack):
-        port_id = pack.get('popt_port_id', False)
+        port_id = pack.get('port_id', False)
         ax_port = self.port_handler.ax25_ports.get(port_id, False)
         if ax_port:
             path = pack.get('path', [])
@@ -703,7 +703,7 @@ class APRS_ais(object):
             _aprs_raw = _add_str + _msg
             _aprs_pack = parse_aprs_fm_aprsframe(_aprs_raw)
             if _aprs_pack:
-                _aprs_pack['popt_port_id'] = _port_id
+                _aprs_pack['port_id'] = _port_id
                 _aprs_pack['raw_message_text'] = _msg
                 return _aprs_pack
         return {}

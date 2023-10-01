@@ -238,7 +238,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                     tx_timer = max(round(pack['send_timer'] - time.time()), 0)
                 tree_data.append((
                     f"{pack['address_str']}",
-                    f"{pack['popt_port_id']}",
+                    f"{pack['port_id']}",
                     f"{pack['msgNo']}",
                     f"{pack['N']}",
                     f"{tx_timer}",
