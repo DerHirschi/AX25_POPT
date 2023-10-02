@@ -65,15 +65,13 @@ class WXPlotWindow(tk.Toplevel):
         # Info Frame
         info_frame = tk.Frame(self)
         info_frame.pack(side=tk.TOP, fill=tk.BOTH)
-        _call = self._wx_data[0][1].get('from', '')
-        _comment = self._wx_data[0][1].get('comment', '')
-        _loc = coordinates_to_locator(
-            self._wx_data[0][1].get("latitude", 0),
-            self._wx_data[0][1].get("longitude", 0),
-        )
+        _call = self._wx_data[0].get('from', '')
+        _comment = self._wx_data[0].get('comment', '')
+        _loc = self._wx_data[0].get("locator", ''),
+
         _loc = f'Locator: {_loc}'
-        _lat = f'Lat: {self._wx_data[0][1].get("latitude", "")}'
-        _lon = f'Lon: {self._wx_data[0][1].get("longitude", "")}'
+        _lat = f'Lat: {self._wx_data[0].get("latitude", "")}'
+        _lon = f'Lon: {self._wx_data[0].get("longitude", "")}'
 
         tk.Label(info_frame, text=_call).pack(side=tk.TOP,)
         tk.Label(info_frame, text=_comment).pack()

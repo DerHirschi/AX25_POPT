@@ -9,7 +9,7 @@ from ax25.ax25Statistics import MH_LIST
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
 from constant import STATION_ID_ENCODING_REV
-from fnc.str_fnc import get_time_delta, find_decoding
+from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_str
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from ax25.ax25Error import AX25EncodingERROR
@@ -99,6 +99,7 @@ class DefaultCLI(object):
             b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
             b'LMH': (self.cmd_mhl, 'Long MYHeard Liste'),
+            b'ATR': (self.cmd_aprs_trace, 'APRS-Tracer'),
             b'WX': (self.cmd_wx, 'Wetterstationen'),
             b'ECHO': (self.cmd_echo, 'Echo'),
             b'VERSION': (self.cmd_ver, 'Version'),
@@ -117,6 +118,7 @@ class DefaultCLI(object):
             b'INFO': (self.cmd_i, 'Info'),
             b'LINFO': (self.cmd_li, 'Lange Info'),
             b'NEWS': (self.cmd_news, 'NEWS'),
+            b'POPT': (self.cmd_popt_banner, 'PoPT Banner'),
         }
 
         self.str_cmd_exec = {
@@ -279,6 +281,7 @@ class DefaultCLI(object):
 
         if self.stat_identifier is None:
             if self.last_line:
+                # TODO WTF ?
                 self.stat_identifier = False
         elif res and self.stat_identifier:
             # print(f"SW-ID flag: {self.stat_identifier.flags}")
@@ -485,18 +488,65 @@ class DefaultCLI(object):
     def cmd_wx(self):
         """ WX Stations """
         if self.port_handler.aprs_ais is None:
-            return "\r # No WX-Stations available !\r"
+            return f'\r # {STR_TABLE["cli_no_wx_data"][self.connection.cli_language]}\r\r'
         parm = 10
         if self.parameter:
             try:
                 parm = int(self.parameter[0])
             except ValueError:
                 pass
-        ret = self.port_handler.aprs_ais.get_wx_cli_out(max_ent=parm)
+        ret = self.port_handler.aprs_ais.get_wx_cli_out(max_ent=parm)   # TODO move CLI shit to cliMain
+        if not ret:
+            return f'\r # {STR_TABLE["cli_no_wx_data"][self.connection.cli_language]}\r\r'
         return ret + '\r'
 
-    """
-    def cmd_ver(self):
+    def cmd_aprs_trace(self):
+        """APRS Tracer"""
+        if self.port_handler.aprs_ais is None:
+            return f'\r # {STR_TABLE["cli_no_tracer_data"][self.connection.cli_language]}\r\r'
+        parm = 10
+        if self.parameter:
+            try:
+                parm = int(self.parameter[0])
+            except ValueError:
+                pass
+        _data = self.port_handler.aprs_ais.tracer_traces_get()
+        if not _data:
+            return f'\r # {STR_TABLE["cli_no_tracer_data"][self.connection.cli_language]}\r\r'
+        _intervall = self.port_handler.aprs_ais.be_tracer_interval
+        _active = self.port_handler.aprs_ais.be_tracer_active
+        _last_send = self.port_handler.aprs_ais.tracer_get_last_send()
+        _last_send = get_timedelta_str_fm_sec(_last_send, r_just=False)
+        if not _active:
+            intervall_str = 'off'
+        else:
+            intervall_str = str(_intervall)
+        out = '\r # APRS-Tracer Beacon\r\r'
+        out += f'Tracer Call     : {self.port_handler.aprs_ais.be_tracer_port}\r'
+        out += f'Tracer Port     : {self.port_handler.aprs_ais.be_tracer_station}\r'
+        out += f'Tracer WIDE Path: {self.port_handler.aprs_ais.be_tracer_wide}\r'
+        out += f'Tracer intervall: {intervall_str}\r'
+        out += f'Last Trace send : {_last_send}\r\r'
+        out += '-----Last-Port--Call------LOC-------------Path----------------------------------\r'
+        max_c = 0
+        for k in _data:
+            max_c += 1
+            if max_c > parm:
+                break
+            _ent = _data[k][-1]
+            _td = get_timedelta_str(_ent['rx_time'])
+            _path = ', '.join(_ent.get('path', []))
+            _loc = f'{_ent.get("locator", "------")[:6]}({round(_ent.get("distance", -1))}km)'
+            _call = _ent.get('call', '')
+            _path = ', '.join(_ent.get('path', []))
+            out += f'{_td.rjust(9):10}{_ent.get("port_id", "-"):6}{_call:10}{_loc:16}'
+            out += f'{_path}'
+            out += '\r'
+
+        return out + '\r'
+
+    @staticmethod
+    def cmd_popt_banner():
         ret = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
               '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
@@ -507,7 +557,6 @@ class DefaultCLI(object):
               '\__|yton   \______/ther\__|acket   \__|erminal\r\r' \
               'Version: {}\r\r\r'.format(constant.VER)
         return ret
-    """
 
     @staticmethod
     def cmd_ver():
@@ -538,13 +587,15 @@ class DefaultCLI(object):
 
     def cmd_user_db_detail(self):
         if not self.parameter:
+            _db_list = list(self.user_db.db.keys())
             header = "\r" \
-                     "| USER-DB\r" \
-                     "|-------------------\r"
+                     f" USER-DB - {len(_db_list)} Calls\r" \
+                     "------------------------------------\r"
             ent_ret = ""
-            for call in self.user_db.db.keys():
-                ent_ret += f"| {call}\r"
-            ent_ret += "|-------------------\r\r"
+            _db_list.sort()
+            for call in _db_list:
+                ent_ret += f"{call}\r"
+            ent_ret += "------------------------------------\r\r"
             return header + ent_ret
         else:
             call_str = self.parameter[0].decode(self.encoding[0], self.encoding[1])

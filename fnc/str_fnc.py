@@ -1,3 +1,4 @@
+import time
 from datetime import datetime, timedelta
 import logging
 from constant import ENCODINGS
@@ -60,6 +61,39 @@ def get_timedelta_str(dateti: datetime.now()):
         _time_delta_str = f'{str(_td_min).rjust(3, " ")}m,{str(_td_sec).rjust(2, " ")}s'
     else:
         _time_delta_str = f'{str(_td_sec).rjust(7, " ")}s'
+    return _time_delta_str
+
+
+def get_timedelta_str_fm_sec(time_st: time.time(), r_just=True):
+    _td_sec = int(time_st)
+    _td_min = int(_td_sec / 60)
+    _td_hours = int(_td_sec / 3600)
+    _td_days = int(_td_hours / 24)
+
+    if _td_days:
+        # td_hours = td_hours - td_days * 24
+        if r_just:
+            _time_delta_str = f'{str(_td_days).rjust(3, " ")}d,{str(_td_hours).rjust(2, " ")}h'
+        else:
+            _time_delta_str = f'{_td_days}d,{_td_hours}h'
+
+    elif _td_hours:
+        _td_min = _td_min - _td_hours * 60
+        if r_just:
+            _time_delta_str = f'{str(_td_hours).rjust(3, " ")}h,{str(_td_min).rjust(2, " ")}m'
+        else:
+            _time_delta_str = f'{_td_hours}h,{_td_min}m'
+    elif _td_min:
+        _td_sec = _td_sec - _td_min * 60
+        if r_just:
+            _time_delta_str = f'{str(_td_min).rjust(3, " ")}m,{str(_td_sec).rjust(2, " ")}s'
+        else:
+            _time_delta_str = f'{_td_min}m,{_td_sec}s'
+    else:
+        if r_just:
+            _time_delta_str = f'{str(_td_sec).rjust(7, " ")}s'
+        else:
+            _time_delta_str = f'{_td_sec}s'
     return _time_delta_str
 
 

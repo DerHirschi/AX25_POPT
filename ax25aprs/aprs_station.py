@@ -384,7 +384,7 @@ class APRS_ais(object):
     def get_wx_cli_out(self, max_ent=10):
         _data = self.get_wx_entry_sort_distance()
         if not _data:
-            return '\r # Keine Wetterdaten vorhanden.\r'
+            return ''
         max_c = 0
         out = '\r-----Last-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r'
         for k in _data:
@@ -726,6 +726,9 @@ class APRS_ais(object):
                 self._be_tracer_interval_timer = time.time() + (60 * self.be_tracer_interval)
                 # print(self._tracer_build_msg())
 
+    def tracer_get_last_send(self):
+        return time.time() - (self._be_tracer_interval_timer - (60 * self.be_tracer_interval))
+
     def _tracer_msg_rx(self, pack):
         if pack.get("from", '') != self.be_tracer_station:
             return False
@@ -755,13 +758,14 @@ class APRS_ais(object):
         if not _pack_rtt:
             return False
         pack['rtt'] = time.time() - _pack_rtt
-        pack['rx_time'] = datetime.now()
+        # pack['rx_time'] = datetime.now()
         _path = pack.get('path', [])
         _call = pack.get('via', '')
         if not _call and _path:
             _call = get_last_digi_fm_path(pack)
         if _call:
             pack['call'] = str(_call)
+
             _loc = ''
             _dist = 0
             _user_db_ent = USER_DB.get_entry(call_str=_call, add_new=True)

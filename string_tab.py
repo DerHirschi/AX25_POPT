@@ -216,5 +216,7 @@ STR_TABLE = {
     'cmd_help_lcstatus': ('Verbundene Terminalkanäle anzeigen (ausführliche Version)',
                           'Show connected terminal channels (detailed version)',
                           'Toon lekker aangesloten terminalkanalen (gedetailleerde versie)'),
+    'cli_no_wx_data': ('Keine Wetterdaten vorhanden.', 'No WX data available', 'No WX data available'),
+    'cli_no_tracer_data': ('Keine Tracerdaten vorhanden.', 'No Tracer data available', 'No Tracer data available'),
 
 }
