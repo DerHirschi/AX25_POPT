@@ -176,9 +176,11 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.update()
         tree_data = []
         for form_msg in self._aprs_pn_msg:
-            port_id = form_msg[0]
+            port_id = form_msg[1][1].get('port_id', '-')
+            """
             if port_id == -1:
                 port_id = 'I-NET'
+            """
             if form_msg[1][1]['addresse'] in PORT_HANDLER.ax25_stations_settings \
                     or form_msg[1][1]['from'] in PORT_HANDLER.ax25_stations_settings:
                 is_own = 'is_own'
@@ -204,9 +206,11 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self._is_in_update = True
             self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
             self._aprs_pn_msg.reverse()
-            port_id = form_aprs_pack[0]
+            port_id = form_aprs_pack[1][1].get('port_id', '-')
+            """
             if port_id == -1:
                 port_id = 'I-NET'
+            """
             if form_aprs_pack[1][1]['addresse'] in PORT_HANDLER.ax25_stations_settings \
                     or form_aprs_pack[1][1]['from'] in PORT_HANDLER.ax25_stations_settings:
                 is_own = 'is_own'

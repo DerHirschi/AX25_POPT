@@ -441,8 +441,10 @@ class APRS_ais(object):
         if aprs_pack.get('format', '') == 'thirdparty':
             # print(f"THP > {aprs_pack['subpacket']}")
             path = aprs_pack.get('path', [])
+            port_id = aprs_pack.get('port_id', '')
             aprs_pack = dict(aprs_pack['subpacket'])
             aprs_pack['path'] = path
+            aprs_pack['port_id'] = port_id
             aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
             if ack is not None:
                 aprs_pack['msgNo'] = ack
@@ -452,6 +454,7 @@ class APRS_ais(object):
                 aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
                 if ack is not None:
                     aprs_pack['msgNo'] = ack
+            # WHY ??? TODO just .append(aprs_pack)
             formated_pack = (aprs_pack.get('port_id', ''),
                              (datetime.now().strftime('%d/%m/%y %H:%M:%S'), aprs_pack)
                              )
@@ -460,6 +463,7 @@ class APRS_ais(object):
                     if formated_pack not in self.aprs_msg_pool['message']:
                         if [aprs_pack.get('port_id', ''), aprs_pack['from'], aprs_pack.get('msgNo', ''),
                             aprs_pack.get('message_text', '')] not in self._dbl_pack:
+                            # WHY ??? TODO just self._dbl_pack.append(aprs_pack)
                             self._dbl_pack.append([aprs_pack.get('port_id', ''), aprs_pack['from'], aprs_pack.get('msgNo', ''),
                                                    aprs_pack.get('message_text', '')])
                             self.aprs_msg_pool['message'].append(formated_pack)
@@ -521,7 +525,9 @@ class APRS_ais(object):
                 path = answer_pack[1][1].get('path', [])
             else:
                 return False
-            port_id = answer_pack[0]
+            port_id = answer_pack[1][1].get('port_id', '')
+            if not port_id:
+                return False
             # out_pack = dict(answer_pack[1][1])
             aprs_str = f"{from_call}>{APRS_SW_ID}"
             for el in path:
@@ -636,7 +642,13 @@ class APRS_ais(object):
                 # self.del_fm_spooler(pack, rx=False)
 
     def _send_as_UI(self, pack):
-        port_id = pack.get('port_id', False)
+        port_id = pack.get('port_id', '')
+        if not port_id:
+            return
+        try:
+            port_id = int(port_id)
+        except ValueError:
+            return
         ax_port = self.port_handler.ax25_ports.get(port_id, False)
         if ax_port:
             path = pack.get('path', [])
@@ -703,7 +715,7 @@ class APRS_ais(object):
             _aprs_raw = _add_str + _msg
             _aprs_pack = parse_aprs_fm_aprsframe(_aprs_raw)
             if _aprs_pack:
-                _aprs_pack['port_id'] = _port_id
+                _aprs_pack['port_id'] = str(_port_id)
                 _aprs_pack['raw_message_text'] = _msg
                 return _aprs_pack
         return {}
