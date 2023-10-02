@@ -83,7 +83,8 @@ class Beacon(object):
         if _vias:
             self.via_calls = calls
 
-    def encode(self):
+    @staticmethod
+    def encode():
         # Todo :Delete.. Just dummy for compatibility
         print("!!!!!!!! ax25Beacon.py encode() !!!!!!!!!!!!!")
         print("!!!!!!!! ax25Beacon.py encode() !!!!!!!!!!!!!")

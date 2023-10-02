@@ -660,7 +660,7 @@ class KissTCP(AX25Port):
 
     def tx(self, frame: AX25Frame):
         try:
-            self.device.sendall(self.kiss.kiss(frame.bytes))
+            self.device.sendall(self.kiss.kiss(frame.data_bytes))
             # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
             logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
@@ -762,7 +762,7 @@ class KISSSerial(AX25Port):
 
     def tx(self, frame: AX25Frame):
         try:
-            self.device.write(self.kiss.kiss(frame.bytes))
+            self.device.write(self.kiss.kiss(frame.data_bytes))
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
             logger.warning(
                 'Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
@@ -852,11 +852,11 @@ class AXIP(AX25Port):
                 frame.axip_add = (axip_add, frame.axip_add[1])
             ###################################
             # CRC
-            calc_crc = crc_x25(frame.bytes)
+            calc_crc = crc_x25(frame.data_bytes)
             calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
             ###################################
             try:
-                self.device.sendto(frame.bytes + calc_crc, frame.axip_add)
+                self.device.sendto(frame.data_bytes + calc_crc, frame.axip_add)
                 # self.device.settimeout(0.1)
             except (ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
                 print('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
@@ -874,8 +874,8 @@ class AXIP(AX25Port):
                 logger.error(f"TypeError AXIP Dev !!! \n {e}")
                 logger.error(frame.axip_add)
                 print(frame.axip_add)
-                logger.error(frame.bytes + calc_crc)
-                print(frame.bytes + calc_crc)
+                logger.error(frame.data_bytes + calc_crc)
+                print(frame.data_bytes + calc_crc)
             else:
                 MH_LIST.bw_mon_inp(frame, self.port_id)
 

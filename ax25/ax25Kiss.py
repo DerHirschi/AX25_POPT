@@ -113,7 +113,8 @@ class Kiss(object):
             )
         return inp
 
-    def device_kiss_end(self):
+    @staticmethod
+    def device_kiss_end():
         # return b''.join([self.FEND, self.RETURN, self.FEND])
         return bytes.fromhex('C0FFC0')
 

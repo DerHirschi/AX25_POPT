@@ -37,22 +37,22 @@ class RTT(object):
         # self.rtt_single_list = [float(self.rtt_average)]*4
         self.rtt_single_list = []
 
-    def get_RTT_avrg(self):
-        self.calc_rtt_vars()
+    def _get_rtt_avrg(self):
+        self._calc_rtt_vars()
         if self.rtt_best == 999:
             return self.rtt_average
         else:
             return (self.rtt_average + self.rtt_best) / 2
 
-    def set_rtt_timer(self, vs: int, paclen: int):
+    def _set_rtt_timer(self, vs: int, paclen: int):
         self.rtt_dict[vs]['timer'] = time.time()
         self.rtt_dict[vs]['paclen'] = paclen
         # print('set {}'.format(self.rtt_dict))
 
-    def set_rtt_single_timer(self):
+    def _set_rtt_single_timer(self):
         self.rtt_single_timer = time.time()
 
-    def rtt_single_rx(self, stop=False):
+    def _rtt_single_rx(self, stop=False):
         if stop:
             self.rtt_single_timer = 0.0
         if self.rtt_single_timer:
@@ -63,20 +63,20 @@ class RTT(object):
             self.rtt_single_timer = 0.0
         # print("RTT-S: {}".format(self.rtt_single_list))
 
-    def rtt_rx(self, vs: int):
+    def _rtt_rx(self, vs: int):
         # print('RX {}' .format(self.rtt_dict))
         timer = float(self.rtt_dict[vs]['timer'])
         if timer:
             self.rtt_dict[vs]['rtt'] = time.time() - timer
         self.rtt_last = float(self.rtt_dict[vs]['rtt'])
-        self.calc_rtt_vars()
+        self._calc_rtt_vars()
         # print('RX rtt_last {}'.format(self.rtt_last))
         # print('RX rtt_best {}'.format(self.rtt_best))
         # print('RX rtt_worst {}'.format(self.rtt_worst))
         # print('RX rtt_average {}'.format(self.rtt_average))
         return self.rtt_last
 
-    def calc_rtt_vars(self):
+    def _calc_rtt_vars(self):
         # print('_________calc_rtt____________')
         self.rtt_best = min(self.rtt_last, self.rtt_best)
         self.rtt_worst = max(self.rtt_last, self.rtt_worst)
@@ -328,8 +328,7 @@ class AX25Conn(object):
 
         self.rx_buf_rawData += data
         # Station ( RE/DISC/Connect ) Sting Detection
-        if not self.set_dest_call_fm_data_inp(data):
-            return
+        self.set_dest_call_fm_data_inp(data)
         # CLI
         self.exec_cli(data)
         return
@@ -343,24 +342,24 @@ class AX25Conn(object):
 
     def set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
-        det = [
-            b'*** Connected to',
-            b'*** Reconnected to'
-        ]
-        # print(raw_data)
-        for _det_str in det:
-            if _det_str in raw_data:
-                _index = raw_data.index(_det_str) + len(_det_str)
+        if b'*** ' not in raw_data:
+            return
+        for _det_str in [
+            b'*** connected to',
+            b'*** reconnected to'
+        ]:
+            if _det_str in raw_data.lower():
+                _index = raw_data.lower().index(_det_str) + len(_det_str)
+                raw_data = raw_data.decode('ASCII', 'ignore')
                 _tmp_call = raw_data[_index:]
-
-                _tmp_call = _tmp_call.split(b'\r')
+                _tmp_call = _tmp_call.split('\r')
                 _cut_str = _tmp_call[1:]
-                if b':' in _tmp_call[0]:
-                    _tmp_call = _tmp_call[0].split(b':')
-                    self.to_call_str = _tmp_call[1].decode('ASCII', 'ignore').replace(' ', '')
-                    self.to_call_alias = _tmp_call[0].decode('ASCII', 'ignore').replace(' ', '')
+                if ':' in _tmp_call[0]:
+                    _tmp_call = _tmp_call[0].split(':')
+                    self.to_call_str = _tmp_call[1].replace(' ', '')
+                    self.to_call_alias = _tmp_call[0].replace(' ', '')
                 else:
-                    self.to_call_str = _tmp_call[0].decode('ASCII', 'ignore').replace(' ', '')
+                    self.to_call_str = _tmp_call[0].replace(' ', '')
                     self.to_call_alias = ''
                 if self.gui is not None:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
@@ -372,14 +371,9 @@ class AX25Conn(object):
                 self.reinit_cli()
                 if self.gui is not None:
                     self.gui.on_channel_status_change()
-                # self.cli.s1
                 # Maybe it's better to look at the whole string (include last frame)?
-                # _cut_str.remove(b'')
-                for el in _cut_str:
-                    if el != b'':
-                        return b'\r'.join(_cut_str)
-                return b''
-        return raw_data
+                return
+        return
 
     def set_user_db_ent(self):
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
@@ -401,35 +395,35 @@ class AX25Conn(object):
                 self.user_db_ent.Distance = locator_distance(self.my_locator, self.user_db_ent.LOC)
 
     def set_packet_param(self):
-            self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
-            self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
-            self.user_db_ent = USER_DB.get_entry(self.to_call_str)
+        self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
+        self.parm_MaxFrame = self.cfg.parm_MaxFrame  # Max (I) Frames
+        self.user_db_ent = USER_DB.get_entry(self.to_call_str)
+        stat_call = self.stat_cfg.stat_parm_Call
+
+        if self.user_db_ent:
+            if int(self.user_db_ent.pac_len):
+                self.parm_PacLen = int(self.user_db_ent.pac_len)
+            elif stat_call != config_station.DefaultStation.stat_parm_Call:
+                if stat_call in self.cfg.parm_stat_PacLen.keys():
+                    if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
+                        self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
+
+            if int(self.user_db_ent.max_pac):
+                self.parm_MaxFrame = int(self.user_db_ent.max_pac)
+            elif stat_call != config_station.DefaultStation.stat_parm_Call:
+                if stat_call in self.cfg.parm_stat_MaxFrame.keys():
+                    if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
+                        self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
+
+        else:
             stat_call = self.stat_cfg.stat_parm_Call
-
-            if self.user_db_ent:
-                if int(self.user_db_ent.pac_len):
-                    self.parm_PacLen = int(self.user_db_ent.pac_len)
-                elif stat_call != config_station.DefaultStation.stat_parm_Call:
-                    if stat_call in self.cfg.parm_stat_PacLen.keys():
-                        if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                            self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-
-                if int(self.user_db_ent.max_pac):
-                    self.parm_MaxFrame = int(self.user_db_ent.max_pac)
-                elif stat_call != config_station.DefaultStation.stat_parm_Call:
-                    if stat_call in self.cfg.parm_stat_MaxFrame.keys():
-                        if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                            self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
-
-            else:
-                stat_call = self.stat_cfg.stat_parm_Call
-                if stat_call != config_station.DefaultStation.stat_parm_Call:
-                    if stat_call in self.cfg.parm_stat_PacLen.keys():
-                        if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                            self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-                    if stat_call in self.cfg.parm_stat_MaxFrame.keys():
-                        if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                            self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
+            if stat_call != config_station.DefaultStation.stat_parm_Call:
+                if stat_call in self.cfg.parm_stat_PacLen.keys():
+                    if self.cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
+                        self.parm_PacLen = self.cfg.parm_stat_PacLen[stat_call]  # Max Pac len
+                if stat_call in self.cfg.parm_stat_MaxFrame.keys():
+                    if self.cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
+                        self.parm_MaxFrame = self.cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
 
     def exec_cron(self):
         """ DefaultStat.cron() """
@@ -718,7 +712,7 @@ class AX25Conn(object):
         auto = False  # TODO
         self.calc_irtt()
         if auto:
-            return self.RTT_Timer.get_RTT_avrg() * 1000
+            return self.RTT_Timer._get_rtt_avrg() * 1000
         else:
             return self.IRTT
 
@@ -790,7 +784,7 @@ class AX25Conn(object):
                     break
                 del self.tx_buf_unACK[i]
                 # RTT
-                self.RTT_Timer.rtt_rx(i)
+                self.RTT_Timer._rtt_rx(i)
 
     def resend_unACK_buf(self, max_pac=None):
         if max_pac is None:
@@ -862,7 +856,7 @@ class AX25Conn(object):
             self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
             self.tx_buf_2send.append(self.ax25_out_frame)
             # RTT
-            self.RTT_Timer.set_rtt_timer(int(self.vs), int(pac_len))
+            self.RTT_Timer._set_rtt_timer(int(self.vs), int(pac_len))
             # !!! COUNT VS !!!
             self.vs = count_modulo(int(self.vs))  # Increment VS Modulo 8
             self.set_T1()  # Re/Set T1

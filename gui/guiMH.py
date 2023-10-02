@@ -108,7 +108,7 @@ class MHWin(tk.Toplevel):
             self._tree.insert('', tk.END, values=ret_ent)
 
     def _sort_entry(self, flag: str):
-        sort_date = MH_LIST.output_sort_mh_entr(flag_str=flag, reverse=self._rev_ent)
+        sort_date = MH_LIST.get_sort_mh_entry(flag_str=flag, reverse=self._rev_ent)
         if self._rev_ent:
             self._rev_ent = False
         else:

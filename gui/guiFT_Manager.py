@@ -11,6 +11,7 @@ class FileTransferManager(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self)
 
+        self.overview_frame = None
         self.root = root
         # self.port_handler = self.root.ax25_port_handler
         self.lang = self.root.language
@@ -118,6 +119,7 @@ class FileTransferManager(tk.Toplevel):
         ttk.Label(self.progress_bar_frame, textvariable=self.dir_label_var).pack(pady=1, anchor=tk.W)
 
         combobox_values = list(range(0, 361, 5))
+        combobox_values = [str(x) for x in combobox_values]
         self.tx_wait_frame = ttk.Frame(self.buttons_frame)
         tk.Label(self.tx_wait_frame, text="TX-Wait: ").pack(side=tk.LEFT, padx=5)
 

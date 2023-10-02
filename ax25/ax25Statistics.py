@@ -4,12 +4,11 @@ from datetime import timedelta
 
 import pickle
 
+from UserDB.UserDBmain import USER_DB
+from constant import CFG_mh_data_file, CFG_port_stat_data_file
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
 from fnc.socket_fnc import check_ip_add_format
-from fnc.str_fnc import conv_time_for_sorting, conv_time_DE_str
-
-mh_data_file = 'data/mh_data.popt'
-port_stat_data_file = 'data/port_stat.popt'
+from fnc.str_fnc import conv_time_for_sorting, get_timedelta_str
 
 
 def get_time_str():
@@ -80,7 +79,7 @@ class MH(object):
 
         self.now_min = datetime.now().strftime('%M:%S')[:-1]
         try:
-            with open(mh_data_file, 'rb') as inp:
+            with open(CFG_mh_data_file, 'rb') as inp:
                 mh_load = pickle.load(inp)
         except FileNotFoundError:
             pass
@@ -91,7 +90,7 @@ class MH(object):
             self.calls[call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[call])
 
         try:
-            with open(port_stat_data_file, 'rb') as inp:
+            with open(CFG_port_stat_data_file, 'rb') as inp:
                 self.port_statistik_DB = pickle.load(inp)
 
         except FileNotFoundError:
@@ -119,10 +118,10 @@ class MH(object):
         self.init_bw_struct(port_id=port_id)
         if ax_frame is not None:
             if self.now_min == datetime.now().strftime('%H:%M:%S')[:-1]:
-                self.bandwidth[port_id][self.now_min] += len(ax_frame.bytes)
+                self.bandwidth[port_id][self.now_min] += len(ax_frame.data_bytes)
             else:
                 self.now_min = datetime.now().strftime('%H:%M:%S')[:-1]
-                self.bandwidth[port_id][self.now_min] = len(ax_frame.bytes)
+                self.bandwidth[port_id][self.now_min] = len(ax_frame.data_bytes)
         else:
             if self.now_min != datetime.now().strftime('%H:%M:%S')[:-1]:
                 self.now_min = datetime.now().strftime('%H:%M:%S')[:-1]
@@ -170,8 +169,8 @@ class MH(object):
             self.port_statistik_DB[port_id][date_str] = init_day_dic()
         self.port_statistik_DB[port_id][date_str][hour]['N_pack'][minute] += 1
         if ax_frame.ctl_byte.flag in self.port_statistik_DB[port_id][date_str][hour]:
-            self.port_statistik_DB[port_id][date_str][hour][ax_frame.ctl_byte.flag][minute] += len(ax_frame.bytes)
-        self.port_statistik_DB[port_id][date_str][hour]['DATA_W_HEADER'][minute] += len(ax_frame.bytes)
+            self.port_statistik_DB[port_id][date_str][hour][ax_frame.ctl_byte.flag][minute] += len(ax_frame.data_bytes)
+        self.port_statistik_DB[port_id][date_str][hour]['DATA_W_HEADER'][minute] += len(ax_frame.data_bytes)
         self.port_statistik_DB[port_id][date_str][hour]['DATA'][minute] += int(ax_frame.data_len)
 
     def mh_inp_axip_add(self, ent: '', axip_add: tuple):
@@ -200,7 +199,7 @@ class MH(object):
         ent.port = port_name
         ent.port_id = port_id
         ent.byte_n += ax25_frame.data_len
-        ent.h_byte_n += len(ax25_frame.bytes) - ax25_frame.data_len
+        ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
         if ax25_frame.ctl_byte.flag == 'REJ':
             ent.rej_n += 1
         # TO Calls
@@ -252,7 +251,7 @@ class MH(object):
                 break
         return temp_ret
 
-    def output_sort_mh_entr(self, flag_str: str, reverse: bool):
+    def get_sort_mh_entry(self, flag_str: str, reverse: bool):
         temp = {}
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
@@ -306,57 +305,93 @@ class MH(object):
         self.calls[call].axip_add = axip
 
     def mh_out_cli(self, max_ent=20):
-        now = datetime.now()
         out = '\r'
         # out += '\r                       < MH - List >\r\r'
         c = 0
         max_c = 0
+        """
         tp = 0
         tb = 0
         rj = 0
-        sort_list = self.output_sort_mh_entr('last', False)
+        """
+        sort_list = self.get_sort_mh_entry('last', False)
 
         for call in list(sort_list.keys()):
             max_c += 1
             if max_c > max_ent:
                 break
-            time_delta = now - sort_list[call].last_seen
-            td_days = time_delta.days
-            td_hours = int(time_delta.seconds / 3600)
-            td_min = int(time_delta.seconds / 60)
-            td_sec = time_delta.seconds
-
-            if td_days:
-                # td_hours = td_hours - td_days * 24
-                time_delta_str = f'{str(td_days).rjust(3, " ")}d,{str(td_hours).rjust(2, " ")}h'
-            elif td_hours:
-                td_min = td_min - td_hours * 60
-                time_delta_str = f'{str(td_hours).rjust(3, " ")}h,{str(td_min).rjust(2, " ")}m'
-            elif td_min:
-                td_sec = td_sec - td_min * 60
-                time_delta_str = f'{str(td_min).rjust(3, " ")}m,{str(td_sec).rjust(2, " ")}s'
-            else:
-                time_delta_str = f'{str(td_min).rjust(7, " ")}s'
+            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
 
             out += f'{time_delta_str} P:{sort_list[call].port:4} {sort_list[call].own_call:9}'.ljust(27, " ")
-
+            """
             tp += sort_list[call].pac_n
             tb += sort_list[call].byte_n
             rj += sort_list[call].rej_n
+            """
             c += 1
             if c == 2:  # Breite
                 c = 0
                 out += '\r'
+        """
         out += '\r'
         out += '\rTotal Packets Rec.: ' + str(tp)
         out += '\rTotal REJ-Packets Rec.: ' + str(rj)
         out += '\rTotal Bytes Rec.: ' + str(tb)
+        """
         out += '\r'
 
         return out
 
+    def mh_long_out_cli(self, max_ent=10):
+        out = '\r'
+        out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r"
+        max_c = 0
+        """
+        tp = 0
+        tb = 0
+        rj = 0
+        """
+        sort_list = self.get_sort_mh_entry('last', False)
+
+        for call in list(sort_list.keys()):
+            max_c += 1
+            if max_c > max_ent:
+                break
+            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
+            via = sort_list[call].route
+            if via:
+                via = via[-1]
+            else:
+                via = ''
+            loc = ''
+            dis = ''
+            typ = ''
+            userdb_ent = USER_DB.get_entry(sort_list[call].own_call, add_new=False)
+            if userdb_ent:
+                loc = userdb_ent.LOC
+                if userdb_ent.Distance:
+                    dis = str(userdb_ent.Distance)
+                typ = userdb_ent.TYP
+
+            out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
+                    f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
+            """
+            tp += sort_list[call].pac_n
+            tb += sort_list[call].byte_n
+            rj += sort_list[call].rej_n
+            """
+            out += '\r'
+        out += '\r'
+        """
+        out += '\rTotal Packets Rec.: ' + str(tp)
+        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
+        out += '\rTotal Bytes Rec.: ' + str(tb)
+        out += '\r'
+        """
+        return out
+
     def mh_out_beacon(self, max_ent=12):
-        _tmp = self.output_sort_mh_entr('last', False)
+        _tmp = self.get_sort_mh_entry('last', False)
         _ret = ''
         _mh_keys = list(_tmp.keys())
         if len(_mh_keys) > max_ent:
@@ -374,17 +409,17 @@ class MH(object):
         print('Save MH')
         tmp_mh = cleanup_obj_dict(self.calls)
         try:
-            with open(mh_data_file, 'wb') as outp:
+            with open(CFG_mh_data_file, 'wb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
-            with open(mh_data_file, 'xb') as outp:
+            with open(CFG_mh_data_file, 'xb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
 
         try:
-            with open(port_stat_data_file, 'wb') as outp:
+            with open(CFG_port_stat_data_file, 'wb') as outp:
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError:
-            with open(port_stat_data_file, 'xb') as outp:
+            with open(CFG_port_stat_data_file, 'xb') as outp:
                 pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
 
 

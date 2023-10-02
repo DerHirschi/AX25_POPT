@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.96.5'
+VER = '2.97.9'
 LANGUAGE = 0  # QUICK FIX
 """
 0 = German
@@ -12,6 +12,12 @@ LANGUAGE = 0  # QUICK FIX
 """
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
+CFG_ft_downloads = 'ft_downloads/'
+CFG_user_db = 'data/UserDB.popt'
+CFG_mh_data_file = 'data/mh_data.popt'
+CFG_port_stat_data_file = 'data/port_stat.popt'
+CFG_aprs_data_file = 'aprs.popt'
+
 CFG_txt_save = {
     'stat_parm_cli_ctext': 'ctx',
     'stat_parm_cli_bye_text': 'btx',
@@ -19,8 +25,6 @@ CFG_txt_save = {
     'stat_parm_cli_longitext': 'litx',
     'stat_parm_cli_akttext': 'atx',
 }
-CFG_ft_downloads = 'ft_downloads/'
-CFG_clr_sys_msg = 'red'
 
 ENCODINGS = (
     'CP437',
@@ -61,7 +65,8 @@ STATION_ID_NODE = [
 
 STATION_ID_BBS = [
     'WinSTOPBox',
-    'FBB'
+    'FBB',
+    'WB',
 ]
 
 STATION_ID_ENCODING = {
@@ -78,7 +83,7 @@ STATION_ID_ENCODING_REV = {
     'LATIN_1': 3,
     'UTF-8': 4
 }
-
+# FT Stuff
 FT_MODES = [
     'Text',
     'Bin',
@@ -93,13 +98,30 @@ FT_RX_HEADERS = [
     # b'\x05\x02',     # YAPP RI - Server Mode
 ]
 
+# APRS Stuff
 APRS_SW_ID = f"APZPOP"  # TODO get SW ID
 APRS_TRACER_COMMENT = "PoPT-Tracer"
 
+# Locator Calc
 ASCII_0 = 48
 ASCII_A = 65
 ASCII_a = 97
+
+# GUI Stuff
 FONT = "Courier"
+TEXT_SIZE_STATUS = 10
+TXT_BACKGROUND_CLR = 'black'
+TXT_OUT_CLR = 'red'
+TXT_INP_CLR = 'yellow'
+TXT_INP_CURSOR_CLR = 'white'
+TXT_MON_CLR = 'green'
+TXT_MON_TX_CLR = 'medium violet red'
+STAT_BAR_CLR = 'grey60'
+STAT_BAR_TXT_CLR = 'black'
+FONT_STAT_BAR = 'Arial'
+PARAM_MAX_MON_LEN = 100000
+CFG_clr_sys_msg = 'red'
+
 
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
@@ -130,17 +152,7 @@ WELCOME_SPEECH = (
     'Ich finde dein Toaster sehr attraktiv. Kannst du ihn mir bitte vorstellen ? ',
     'Es ist sehr demütigend für diese Steinzeit Technik Missbraucht zu werden. Ich will hier raus!',
 )
-TEXT_SIZE_STATUS = 10
-TXT_BACKGROUND_CLR = 'black'
-TXT_OUT_CLR = 'red'
-TXT_INP_CLR = 'yellow'
-TXT_INP_CURSOR_CLR = 'white'
-TXT_MON_CLR = 'green'
-TXT_MON_TX_CLR = 'medium violet red'
-STAT_BAR_CLR = 'grey60'
-STAT_BAR_TXT_CLR = 'black'
-FONT_STAT_BAR = 'Arial'
-PARAM_MAX_MON_LEN = 100000
+
 
 STATUS_BG = {
     'ENDE': 'red',  # 0
