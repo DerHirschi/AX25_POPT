@@ -40,12 +40,12 @@ def parse_aprs_fm_aprsframe(aprs_frame):
 
 def format_aprs_f_aprs_mon(aprs_frame, own_locator, add_new_user=False):
     # aprs_frame = "12:12:21", aprs_frame
-    ret = f"{aprs_frame[0]}: {aprs_frame[1]['from']} to {aprs_frame[1]['to']}"
-    if aprs_frame[1]['path']:
-        ret += " via " + ' '.join(aprs_frame[1]['path'])
+    ret = f"{aprs_frame['rx_time'].strftime('%d/%m/%y %H:%M:%S')}: {aprs_frame['from']} to {aprs_frame['to']}"
+    if aprs_frame['path']:
+        ret += " via " + ' '.join(aprs_frame['path'])
     ret += ":\n"
 
-    msg = format_aprs_f_monitor(aprs_pack=aprs_frame[1], own_locator=own_locator, add_new_user=add_new_user)
+    msg = format_aprs_f_monitor(aprs_pack=aprs_frame, own_locator=own_locator, add_new_user=add_new_user)
     #msg = msg.replace('\n', '\n  ')
     #ret = ret + msg[:-2] + '\n'
     # print(msg)

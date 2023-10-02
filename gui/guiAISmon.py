@@ -123,7 +123,7 @@ class AISmonitor(tk.Toplevel):
             for _el in list(self._ais_obj.ais_rx_buff):
                 if _el:
                     if self._call_filter.get():
-                        if _el[1]['from'] in self._ais_aprs_stat_calls:
+                        if _el['from'] in self._ais_aprs_stat_calls:
                             _tr = True
                             _tmp = format_aprs_f_aprs_mon(_el, self._ais_obj.ais_loc,
                                                           add_new_user=self._ais_obj.add_new_user)
@@ -139,19 +139,18 @@ class AISmonitor(tk.Toplevel):
     def set_ais_obj(self):
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
 
-    def pack_to_mon(self, date_time, pack):
+    def pack_to_mon(self, pack):
         _tr = False
         if self._call_filter.get():
             if pack['from'] in self._ais_aprs_stat_calls:
-                print(pack)
                 _tr = True
-                tmp = format_aprs_f_aprs_mon((date_time, pack), self._ais_obj.ais_loc,
+                tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc,
                                              add_new_user=self._ais_obj.add_new_user)
                 tmp = tk_filter_bad_chars(tmp)
                 self._text_widget.insert(tk.END, tmp)
         else:
             _tr = True
-            tmp = format_aprs_f_aprs_mon((date_time, pack), self._ais_obj.ais_loc,
+            tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc,
                                          add_new_user=self._ais_obj.add_new_user)
             tmp = tk_filter_bad_chars(tmp)
             self._text_widget.insert(tk.END, tmp)

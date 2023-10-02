@@ -122,22 +122,22 @@ class WXWin(tk.Toplevel):
         self._tree_data = []
         for k in self._wx_data:
             self._tree_data.append((
-                f'{self._wx_data[k][-1][0]}',
+                f'{self._wx_data[k][-1]["rx_time"].strftime("%d/%m/%y %H:%M:%S")}',
                 f'{k}',
-                f'{self._wx_data[k][-1][1].get("port_id", "-")}',
-                f'{self._wx_data[k][-1][1].get("locator", "-")}',
-                f'{self._wx_data[k][-1][1].get("distance", -1)}',
-                f'{self._wx_data[k][-1][1]["weather"].get("pressure", "-")}',
-                f'{self._wx_data[k][-1][1]["weather"].get("humidity", "-")}',
-                f'{self._wx_data[k][-1][1]["weather"].get("rain_1h", "-")}',
-                f'{self._wx_data[k][-1][1]["weather"].get("rain_24h", "-")}',
-                f'{self._wx_data[k][-1][1]["weather"].get("rain_since_midnight", "-")}',
-                f'{self._wx_data[k][-1][1]["weather"].get("temperature", -99):.1f}',
-                f'{self._wx_data[k][-1][1]["weather"].get("wind_direction", "-")}',
-                f'{self._wx_data[k][-1][1]["weather"].get("wind_gust", "-")}',
-                f'{self._wx_data[k][-1][1]["weather"].get("wind_speed", "-")}',
-                f'{self._wx_data[k][-1][1]["weather"].get("luminosity", "-")}',
-                f'{self._wx_data[k][-1][1].get("comment", "")}',
+                f'{self._wx_data[k][-1].get("port_id", "-")}',
+                f'{self._wx_data[k][-1].get("locator", "-")}',
+                f'{self._wx_data[k][-1].get("distance", -1)}',
+                f'{self._wx_data[k][-1]["weather"].get("pressure", "-")}',
+                f'{self._wx_data[k][-1]["weather"].get("humidity", "-")}',
+                f'{self._wx_data[k][-1]["weather"].get("rain_1h", "-")}',
+                f'{self._wx_data[k][-1]["weather"].get("rain_24h", "-")}',
+                f'{self._wx_data[k][-1]["weather"].get("rain_since_midnight", "-")}',
+                f'{self._wx_data[k][-1]["weather"].get("temperature", -99):.1f}',
+                f'{self._wx_data[k][-1]["weather"].get("wind_direction", "-")}',
+                f'{self._wx_data[k][-1]["weather"].get("wind_gust", "-")}',
+                f'{self._wx_data[k][-1]["weather"].get("wind_speed", "-")}',
+                f'{self._wx_data[k][-1]["weather"].get("luminosity", "-")}',
+                f'{self._wx_data[k][-1].get("comment", "")}',
             ))
 
     def _sort_entry(self, col):

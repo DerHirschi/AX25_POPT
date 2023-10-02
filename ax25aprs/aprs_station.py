@@ -71,11 +71,18 @@ class APRS_ais(object):
         if load_cfg:
             self._load_conf_fm_file()
         """"""
+        """
+        self.aprs_msg_pool = {
+            "message": [],
+            "bulletin": [],
+        }
+        self.aprs_wx_msg_pool = {}
+        """
+        """"""
         self.ais = None
         self.ais_mon_gui = None
         self.wx_tree_gui = None
         self.ais_rx_buff = deque([] * 5000, maxlen=5000)
-        self._dbl_pack = []
         """ Global APRS Stuff """
         self._ack_counter = 0
         self.spooler_buffer = {}
@@ -292,14 +299,11 @@ class APRS_ais(object):
         """ RX fm APRS-Server"""
         self._watchdog_reset()
         packet['port_id'] = 'I-NET'
-        self.ais_rx_buff.append(
-            (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
-             packet)
-        )
+        packet['rx_time'] = datetime.now()
+        self.ais_rx_buff.append(packet)
         if self.ais_mon_gui is not None:
-            self.ais_mon_gui.pack_to_mon(
-                datetime.now().strftime('%d/%m/%y %H:%M:%S'),
-                packet)
+            self.ais_mon_gui.pack_to_mon(packet)
+            # datetime.now().strftime('%d/%m/%y %H:%M:%S'),
         self._aprs_proces_rx(aprs_pack=packet)
         # print(packet)
 
@@ -307,11 +311,11 @@ class APRS_ais(object):
         """ RX fm AX25Frame (HF/AXIP) """
         aprs_pack = parse_aprs_fm_ax25frame(ax25_frame)
         aprs_pack['port_id'] = str(port_id)
+        aprs_pack['rx_time'] = datetime.now()
         self._aprs_proces_rx(aprs_pack=aprs_pack)
 
     def _aprs_proces_rx(self, aprs_pack):
         if aprs_pack:
-            aprs_pack['timestamp'] = datetime.now()
             aprs_pack['locator'] = self._get_loc(aprs_pack)
             aprs_pack['distance'] = self._get_loc_dist(aprs_pack.get('locator', ''))
             # APRS PN/BULLETIN MSG
@@ -347,10 +351,7 @@ class APRS_ais(object):
 
             if not self.aprs_wx_msg_pool.get(from_aprs, False):
                 self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
-            self.aprs_wx_msg_pool[from_aprs].append(
-                (datetime.now().strftime('%d/%m/%y %H:%M:%S'),
-                 new_aprs_pack)
-            )
+            self.aprs_wx_msg_pool[from_aprs].append(new_aprs_pack)
             if self.wx_tree_gui is not None:
                 self._wx_update_tr = True
             return True
@@ -367,37 +368,39 @@ class APRS_ais(object):
                 _new_pack['locator'] = str(aprs_pack.get('locator', ''))
                 _new_pack['distance'] = float(aprs_pack.get('distance', -1))
                 _new_pack['port_id'] = str(aprs_pack.get('port_id', ''))
+                _new_pack['rx_time'] = aprs_pack['rx_time']
                 return _new_pack
         return aprs_pack
 
     def get_wx_entry_sort_distance(self):
         _temp = {}
         for k in list(self.aprs_wx_msg_pool.keys()):
-            _temp[k] = self.aprs_wx_msg_pool[k][-1][1]
+            _temp[k] = self.aprs_wx_msg_pool[k][-1]
         return list(dict(sorted(_temp.items(), key=lambda item: item[1].get('distance', 99999))).keys())
 
     def get_wx_data(self):
         return dict(self.aprs_wx_msg_pool)
 
     def get_wx_cli_out(self, max_ent=10):
-        max_c = 0
-        out = '\r'
-        out += "-----Last-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r"
         _data = self.get_wx_entry_sort_distance()
+        if not _data:
+            return '\r # Keine Wetterdaten vorhanden.\r'
+        max_c = 0
+        out = '\r-----Last-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r'
         for k in _data:
             max_c += 1
             if max_c > max_ent:
                 break
             _ent = self.aprs_wx_msg_pool[k][-1]
-            _td = get_timedelta_str(convert_str_to_datetime(_ent[0]))
-            _loc = f'{_ent[1].get("locator", "------")[:6]}({round(_ent[1].get("distance", -1))}km)'
-            _pres = f'{_ent[1]["weather"].get("pressure", 0):.2f}'
-            _rain = f'{_ent[1]["weather"].get("rain_24h", 0):.3f}'
-            out += f'{_td.rjust(9):10}{_ent[1].get("port_id", ""):6}{k:10}{_loc:16}'
-            out += f'{str(round(_ent[1]["weather"].get("temperature", 0))):5}'
+            _td = get_timedelta_str(_ent['rx_time'])
+            _loc = f'{_ent.get("locator", "------")[:6]}({round(_ent.get("distance", -1))}km)'
+            _pres = f'{_ent["weather"].get("pressure", 0):.2f}'
+            _rain = f'{_ent["weather"].get("rain_24h", 0):.3f}'
+            out += f'{_td.rjust(9):10}{_ent.get("port_id", ""):6}{k:10}{_loc:16}'
+            out += f'{str(round(_ent["weather"].get("temperature", 0))):5}'
             out += f'{_pres:7} '
-            out += f'{_ent[1]["weather"].get("humidity", 0):3} '
-            out += f'{_ent[1]["weather"].get("luminosity", 0):3} '
+            out += f'{_ent["weather"].get("humidity", 0):3} '
+            out += f'{_ent["weather"].get("luminosity", 0):3} '
             out += f'{_rain:6}\r'
         return out
 
@@ -405,14 +408,20 @@ class APRS_ais(object):
     #
     @staticmethod
     def _get_loc(aprs_pack):
-        _ret = coordinates_to_locator(
-            aprs_pack.get('latitude', 0),
-            aprs_pack.get('longitude', 0)
-        )
-        return _ret
+        lat = aprs_pack.get('latitude', None)
+        lon = aprs_pack.get('longitude', None)
+        if lat is not None and lon is not None:
+            return coordinates_to_locator(
+                aprs_pack.get('latitude', 0),
+                aprs_pack.get('longitude', 0)
+            )
+        _db_ent = USER_DB.get_entry(aprs_pack.get('from', ''), add_new=False)
+        if _db_ent:
+            return _db_ent.LOC
+        return ''
 
     def _get_loc_dist(self, locator):
-        if self.ais_loc:
+        if self.ais_loc and locator:
             return locator_distance(locator, self.ais_loc)
         return -1
 
@@ -442,40 +451,34 @@ class APRS_ais(object):
             # print(f"THP > {aprs_pack['subpacket']}")
             path = aprs_pack.get('path', [])
             port_id = aprs_pack.get('port_id', '')
+            rx_time = aprs_pack['rx_time']
+            loc = aprs_pack['locator']
+            dist = aprs_pack['distance']
             aprs_pack = dict(aprs_pack['subpacket'])
             aprs_pack['path'] = path
             aprs_pack['port_id'] = port_id
-            aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
-            if ack is not None:
-                aprs_pack['msgNo'] = ack
+            aprs_pack['rx_time'] = rx_time
+            aprs_pack['locator'] = loc
+            aprs_pack['distance'] = dist
+            # aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
 
         if aprs_pack.get('format', '') in ['message', 'bulletin']:
-            if not aprs_pack.get('msgNo', False):
-                aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
-                if ack is not None:
-                    aprs_pack['msgNo'] = ack
-            # WHY ??? TODO just .append(aprs_pack)
-            formated_pack = (aprs_pack.get('port_id', ''),
-                             (datetime.now().strftime('%d/%m/%y %H:%M:%S'), aprs_pack)
-                             )
+            if aprs_pack.get('msgNo', None) is None:
+                aprs_pack['message_text'], aprs_pack['msgNo'] = extract_ack(aprs_pack.get('message_text', ''))
             if 'message_text' in aprs_pack:
-                if 'message' == aprs_pack['format']:
-                    if formated_pack not in self.aprs_msg_pool['message']:
-                        if [aprs_pack.get('port_id', ''), aprs_pack['from'], aprs_pack.get('msgNo', ''),
-                            aprs_pack.get('message_text', '')] not in self._dbl_pack:
-                            # WHY ??? TODO just self._dbl_pack.append(aprs_pack)
-                            self._dbl_pack.append([aprs_pack.get('port_id', ''), aprs_pack['from'], aprs_pack.get('msgNo', ''),
-                                                   aprs_pack.get('message_text', '')])
-                            self.aprs_msg_pool['message'].append(formated_pack)
-                            self._aprs_msg_sys_new_pn(formated_pack)
-                            # print(f"aprs PN-MSG fm {aprs_pack['from']} {port_id} - {aprs_pack.get('message_text', '')}")
-                    if aprs_pack.get('msgNo', False):
-                        self._send_ack(formated_pack)
+                if 'message' == aprs_pack.get('format', ''):
+                    if aprs_pack not in self.aprs_msg_pool['message']:
+                        # print(f"APRS-MSG: {aprs_pack}")
+                        self.aprs_msg_pool['message'].append(aprs_pack)
+                        self._aprs_msg_sys_new_pn(aprs_pack)
+                    if aprs_pack.get('addresse', '') in list(self.port_handler.ax25_stations_settings.keys()):
+                        if aprs_pack.get('msgNo', None) is not None:
+                            self._send_ack(aprs_pack)
                     self._reset_address_in_spooler(aprs_pack)
                 elif 'bulletin' == aprs_pack['format']:
-                    if formated_pack not in self.aprs_msg_pool['bulletin']:
-                        self.aprs_msg_pool['bulletin'].append(formated_pack)
-                        self._aprs_msg_sys_new_bn(formated_pack)
+                    if aprs_pack not in self.aprs_msg_pool['bulletin']:
+                        self.aprs_msg_pool['bulletin'].append(aprs_pack)
+                        self._aprs_msg_sys_new_bn(aprs_pack)
                         print(
                             f"aprs Bulletin-MSG fm {aprs_pack['from']} {aprs_pack.get('port_id', '')} - {aprs_pack.get('message_text', '')}")
 
@@ -491,44 +494,44 @@ class APRS_ais(object):
     def check_duplicate_msg(self, aprs_pack, msg_typ: str):
         check_msg_typ = self.ais_aprs_msg_pool[msg_typ]
         for f_msg in check_msg_typ:
-            if aprs_pack == f_msg[1][1]:
+            if aprs_pack == f_msg:
                 return True
         return False
     """
 
-    def _update_pn_msg_gui(self, aprs_pack):
+    def _update_pn_msg_gui(self, aprs_pack: dict):
         if self.port_handler is not None:
             if self.port_handler.gui is not None:
                 if self.port_handler.gui.aprs_pn_msg_win is not None:
                     self.port_handler.gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
 
-    def _aprs_msg_sys_new_pn(self, formated_pack: (int, (str, dict))):
-        self._update_pn_msg_gui(formated_pack)
+    def _aprs_msg_sys_new_pn(self, aprs_pack: dict):
+        self._update_pn_msg_gui(aprs_pack)
 
     @staticmethod
-    def _aprs_msg_sys_new_bn(formated_pack: (int, (str, dict))):
+    def _aprs_msg_sys_new_bn(aprs_pack: dict):
         print(
-            f"aprs Bulletin-MSG fm {formated_pack[1][1]['from']} {formated_pack[0]} - {formated_pack[1][1].get('message_text', '')}")
+            f"aprs Bulletin-MSG fm {aprs_pack['from']} {aprs_pack['port_id']} - {aprs_pack.get('message_text', '')}")
 
     def send_aprs_answer_msg(self, answer_pack, msg='', with_ack=False):
         if answer_pack and msg:
-            from_call = answer_pack[1][1].get('addresse', '')
-            to_call = answer_pack[1][1].get('from', '')
+            from_call = answer_pack.get('addresse', '')
+            to_call = answer_pack.get('from', '')
             if from_call in self.port_handler.ax25_stations_settings:
-                # to_call = answer_pack[1][1].get('from', '')
-                path = answer_pack[1][1].get('path', [])
+                # to_call = answer_pack.get('from', '')
+                path = answer_pack.get('path', [])
                 path.reverse()
             elif to_call in self.port_handler.ax25_stations_settings:
                 tmp = from_call
                 from_call = to_call
                 to_call = tmp
-                path = answer_pack[1][1].get('path', [])
+                path = answer_pack.get('path', [])
             else:
                 return False
-            port_id = answer_pack[1][1].get('port_id', '')
+            port_id = answer_pack.get('port_id', '')
             if not port_id:
                 return False
-            # out_pack = dict(answer_pack[1][1])
+            # out_pack = dict(answer_pack)
             aprs_str = f"{from_call}>{APRS_SW_ID}"
             for el in path:
                 if el[-1] == '*':
@@ -541,7 +544,8 @@ class APRS_ais(object):
                 out_pack['path'] = path
                 out_pack['addresse'] = to_call
                 out_pack['port_id'] = port_id
-                out_pack['is_ack'] = answer_pack[1][1].get('is_ack', False)
+                out_pack['rx_time'] = datetime.now()
+                out_pack['is_ack'] = answer_pack.get('is_ack', False)
                 return self.send_pn_msg(out_pack, msg, with_ack)
             return False
 
@@ -563,15 +567,8 @@ class APRS_ais(object):
                 self._send_it(pack)
             if not pack.get('is_ack', False):
                 # print(f"ECHO {pack}")
-                formated_pack = (
-                    pack['port_id'],
-                    (
-                        datetime.now().strftime('%d/%m/%y %H:%M:%S'),
-                        pack)
-
-                )
-                self.aprs_msg_pool['message'].append(formated_pack)
-                self._aprs_msg_sys_new_pn(formated_pack)
+                self.aprs_msg_pool['message'].append(pack)
+                self._aprs_msg_sys_new_pn(pack)
         return True
 
     def _send_it(self, pack):
@@ -673,10 +670,10 @@ class APRS_ais(object):
         self._ais_tx(pack_str)
 
     def _send_ack(self, pack_to_resp):
-        msg_no = pack_to_resp[1][1].get('msgNo', False)
+        msg_no = pack_to_resp.get('msgNo', False)
         if msg_no:
-            pack = tuple(pack_to_resp)
-            pack[1][1]['is_ack'] = True
+            pack = dict(pack_to_resp)
+            pack['is_ack'] = True
             self.send_aprs_answer_msg(pack, f"ack{msg_no}", False)
 
     """
@@ -806,4 +803,3 @@ class APRS_ais(object):
 
     def tracer_traces_get(self):
         return self.be_tracer_traced_packets
-

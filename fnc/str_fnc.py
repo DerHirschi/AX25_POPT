@@ -59,7 +59,7 @@ def get_timedelta_str(dateti: datetime.now()):
         _td_sec = _td_sec - _td_min * 60
         _time_delta_str = f'{str(_td_min).rjust(3, " ")}m,{str(_td_sec).rjust(2, " ")}s'
     else:
-        _time_delta_str = f'{str(_td_min).rjust(7, " ")}s'
+        _time_delta_str = f'{str(_td_sec).rjust(7, " ")}s'
     return _time_delta_str
 
 

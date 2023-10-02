@@ -100,51 +100,51 @@ class WXPlotWindow(tk.Toplevel):
         _wx_data.reverse()
         _now = datetime.now()
         for _data in self._wx_data:
-            _timestamp = _data[0]
-            _timestamt_dt = convert_str_to_datetime(_timestamp)
+            _timestamt_dt = _data['rx_time']
+            # _timestamt_dt = convert_str_to_datetime(_timestamp)
             if _timestamt_dt:
                 # if datetime.now().timestamp() - _timestamt_dt.timestamp() < _delta_time_24h.timestamp():
 
-                if 'weather' in _data[1].keys():
-                    if 'pressure' in _data[1]['weather'].keys():
+                if 'weather' in _data.keys():
+                    if 'pressure' in _data['weather'].keys():
                         _y_pressure = adjust_list_len(_y_pressure, _x_scale)
-                        _y_pressure.append(_data[1]['weather']['pressure'])
+                        _y_pressure.append(_data['weather']['pressure'])
 
-                    if 'humidity' in _data[1]['weather'].keys():
+                    if 'humidity' in _data['weather'].keys():
                         _y_hum = adjust_list_len(_y_hum, _x_scale)
-                        _y_hum.append(_data[1]['weather']['humidity'])
+                        _y_hum.append(_data['weather']['humidity'])
 
-                    if 'rain_1h' in _data[1]['weather'].keys():
+                    if 'rain_1h' in _data['weather'].keys():
                         _y_rain_1 = adjust_list_len(_y_rain_1, _x_scale)
-                        _y_rain_1.append(_data[1]['weather']['rain_1h'])
+                        _y_rain_1.append(_data['weather']['rain_1h'])
 
-                    if 'rain_24h' in _data[1]['weather'].keys():
+                    if 'rain_24h' in _data['weather'].keys():
                         _y_rain_24 = adjust_list_len(_y_rain_24, _x_scale)
-                        _y_rain_24.append(_data[1]['weather']['rain_24h'])
+                        _y_rain_24.append(_data['weather']['rain_24h'])
 
-                    if 'rain_since_midnight' in _data[1]['weather'].keys():
+                    if 'rain_since_midnight' in _data['weather'].keys():
                         _y_rain_day = adjust_list_len(_y_rain_day, _x_scale)
-                        _y_rain_day.append(_data[1]['weather']['rain_since_midnight'])
+                        _y_rain_day.append(_data['weather']['rain_since_midnight'])
 
-                    if 'temperature' in _data[1]['weather'].keys():
+                    if 'temperature' in _data['weather'].keys():
                         _y_temp = adjust_list_len(_y_temp, _x_scale)
-                        _y_temp.append(_data[1]['weather']['temperature'])
+                        _y_temp.append(_data['weather']['temperature'])
 
-                    if 'wind_direction' in _data[1]['weather'].keys():
+                    if 'wind_direction' in _data['weather'].keys():
                         _y_wind_dir = adjust_list_len(_y_wind_dir, _x_scale)
-                        _y_wind_dir.append(_data[1]['weather']['wind_direction'])
+                        _y_wind_dir.append(_data['weather']['wind_direction'])
 
-                    if 'wind_gust' in _data[1]['weather'].keys():
+                    if 'wind_gust' in _data['weather'].keys():
                         _y_wind_gust = adjust_list_len(_y_wind_gust, _x_scale)
-                        _y_wind_gust.append(_data[1]['weather']['wind_gust'])
+                        _y_wind_gust.append(_data['weather']['wind_gust'])
 
-                    if 'wind_speed' in _data[1]['weather'].keys():
+                    if 'wind_speed' in _data['weather'].keys():
                         _y_wind_speed = adjust_list_len(_y_wind_speed, _x_scale)
-                        _y_wind_speed.append(_data[1]['weather']['wind_speed'])
+                        _y_wind_speed.append(_data['weather']['wind_speed'])
 
-                    if 'luminosity' in _data[1]['weather'].keys():
+                    if 'luminosity' in _data['weather'].keys():
                         _y_lum = adjust_list_len(_y_lum, _x_scale)
-                        _y_lum.append(_data[1]['weather']['luminosity'])
+                        _y_lum.append(_data['weather']['luminosity'])
 
                     _dif = _now - _timestamt_dt
                     _x_scale.append(_dif.total_seconds() / 3600)

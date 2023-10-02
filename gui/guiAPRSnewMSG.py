@@ -1,3 +1,4 @@
+import datetime
 import tkinter as tk
 from tkinter import ttk
 
@@ -101,8 +102,6 @@ class NewMessageWindow(tk.Toplevel):
         msg = self.msg_entry.get(0.0, tk.END)[:-1].replace('\n', '')
         from_call = self.from_var.get()
         port_id = self.port_var.get()
-        if port_id.isdigit():
-            port_id = int(port_id)
         if from_call in PORT_HANDLER.ax25_stations_settings:
             add_str = self.to_call_ent.get().upper()
             if add_str:
@@ -117,6 +116,7 @@ class NewMessageWindow(tk.Toplevel):
                 aprs_pack = parse_aprs_fm_aprsframe(aprs_str)
                 if aprs_pack:
                     aprs_pack['port_id'] = port_id
+                    aprs_pack['rx_time'] = datetime.datetime.now()
                     PORT_HANDLER.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
 
                 self.destroy_win()

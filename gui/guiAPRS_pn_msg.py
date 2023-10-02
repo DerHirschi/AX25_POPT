@@ -104,13 +104,13 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.selected_message_text.pack(fill=tk.BOTH, expand=True)
         self.selected_message_text.tag_config("header", foreground="green2")
         self._out_text = tk.Text(middle_frame,
-                                height=3,
-                                width=67,
-                                background='black',
-                                foreground='white',
-                                fg='white',
-                                insertbackground='white'
-                                )
+                                 height=3,
+                                 width=67,
+                                 background='black',
+                                 foreground='white',
+                                 fg='white',
+                                 insertbackground='white'
+                                 )
         self._out_text.pack(fill=tk.BOTH, expand=False)
 
         # Rechter Bereich: Scrolled Window für den fortlaufenden Text
@@ -157,7 +157,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         button3.pack(side=tk.LEFT, padx=5)
         """
         self._new_msg_win = None
-        self._antwort_pack = ()
+        self._antwort_pack = {}
         self._is_in_update = False
         self.bind('<Return>', self._send_aprs_msg)
         self._update_tree()
@@ -176,24 +176,19 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.update()
         tree_data = []
         for form_msg in self._aprs_pn_msg:
-            port_id = form_msg[1][1].get('port_id', '-')
-            """
-            if port_id == -1:
-                port_id = 'I-NET'
-            """
-            if form_msg[1][1]['addresse'] in PORT_HANDLER.ax25_stations_settings \
-                    or form_msg[1][1]['from'] in PORT_HANDLER.ax25_stations_settings:
+            if form_msg['addresse'] in PORT_HANDLER.ax25_stations_settings \
+                    or form_msg['from'] in PORT_HANDLER.ax25_stations_settings:
                 is_own = 'is_own'
             else:
                 is_own = 'not_own'
             tree_data.append(
                 ((
-                     f"{form_msg[1][0]}",
-                     f"{port_id}",
-                     f"{form_msg[1][1]['from']}",
-                     f"{form_msg[1][1]['addresse']}",
-                     f"{form_msg[1][1].get('via', '')}",
-                     f"{form_msg[1][1].get('msgNo', '')}",
+                     f"{form_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S'),}",
+                     f"{form_msg.get('port_id', '-')}",
+                     f"{form_msg['from']}",
+                     f"{form_msg['addresse']}",
+                     f"{form_msg.get('via', '')}",
+                     f"{form_msg.get('msgNo', '')}",
                  ), is_own)
             )
 
@@ -206,25 +201,22 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self._is_in_update = True
             self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
             self._aprs_pn_msg.reverse()
-            port_id = form_aprs_pack[1][1].get('port_id', '-')
-            """
-            if port_id == -1:
-                port_id = 'I-NET'
-            """
-            if form_aprs_pack[1][1]['addresse'] in PORT_HANDLER.ax25_stations_settings \
-                    or form_aprs_pack[1][1]['from'] in PORT_HANDLER.ax25_stations_settings:
+            # print(form_aprs_pack)
+
+            if form_aprs_pack['addresse'] in PORT_HANDLER.ax25_stations_settings \
+                    or form_aprs_pack['from'] in PORT_HANDLER.ax25_stations_settings:
                 is_own = 'is_own'
             else:
                 is_own = 'not_own'
 
             new_tree_data = ((
-                         f"{form_aprs_pack[1][0]}",
-                         f"{port_id}",
-                         f"{form_aprs_pack[1][1]['from']}",
-                         f"{form_aprs_pack[1][1]['addresse']}",
-                         f"{form_aprs_pack[1][1].get('via', '')}",
-                         f"{form_aprs_pack[1][1].get('msgNo', '')}",
-                     ), is_own)
+                                 f"{form_aprs_pack['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
+                                 f"{form_aprs_pack.get('port_id', '-')}",
+                                 f"{form_aprs_pack['from']}",
+                                 f"{form_aprs_pack['addresse']}",
+                                 f"{form_aprs_pack.get('via', '')}",
+                                 f"{form_aprs_pack.get('msgNo', '')}",
+                             ), is_own)
             self._messages_treeview.insert('', 0, values=new_tree_data[0], tags=new_tree_data[1])
             self._is_in_update = False
 
@@ -254,40 +246,40 @@ class APRS_msg_SYS_PN(tk.Toplevel):
     def _entry_selected(self, event=None):
         show_no_dbl = True
         selected_iid = self._messages_treeview.selection()
-        self._antwort_pack = ()
+        self._antwort_pack = {}
         if selected_iid:
             self.selected_message_text.config(state='normal')
             self.selected_message_text.delete(0.0, tk.END)
             selected_iid = selected_iid[0]
             current_idx = self._messages_treeview.index(selected_iid)
-            msg_id = f"{self._aprs_pn_msg[current_idx][1][1].get('from', '')}-{self._aprs_pn_msg[current_idx][1][1].get('addresse', '')}"
+            msg_id = f"{self._aprs_pn_msg[current_idx].get('from', '')}-{self._aprs_pn_msg[current_idx].get('addresse', '')}"
             self._antwort_pack = self._aprs_pn_msg[current_idx]
             dbl_pack = []
 
             for pack_msg in self._aprs_pn_msg[current_idx:][::-1]:
                 msg = ''
                 tag_ind_1 = self.selected_message_text.index(tk.INSERT)
-                if f"{pack_msg[1][1].get('from', '')}-{pack_msg[1][1].get('addresse', '')}" == msg_id \
-                        or f"{pack_msg[1][1].get('addresse', '')}-{pack_msg[1][1].get('from', '')}" == msg_id:
+                if f"{pack_msg.get('from', '')}-{pack_msg.get('addresse', '')}" == msg_id \
+                        or f"{pack_msg.get('addresse', '')}-{pack_msg.get('from', '')}" == msg_id:
                     if show_no_dbl:
-                        if pack_msg[1][1] not in dbl_pack:
-                            msg_nr = pack_msg[1][1].get('msgNo', '')
+                        if pack_msg not in dbl_pack:
+                            msg_nr = pack_msg.get('msgNo', '')
                             if msg_nr not in dbl_pack:
-                                dbl_pack.append(pack_msg[1][1])
+                                dbl_pack.append(pack_msg)
                                 if msg_nr:
                                     dbl_pack.append(msg_nr)
-                                msg += f"Time: {pack_msg[1][0]}".ljust(28)
+                                msg += f"Time: {pack_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S')}".ljust(28)
                                 if msg_nr != '':
                                     msg += f"Msg#: {msg_nr}\n"
                                 else:
 
                                     msg += '\n'
-                                msg += f"Path: {str(pack_msg[1][1].get('path', '')).replace('[', '').replace(']', '').replace(',', '')}\n".replace(
+                                msg += f"Path: {str(pack_msg.get('path', '')).replace('[', '').replace(']', '').replace(',', '')}\n".replace(
                                     "'", "")
-                                msg += f"From: {str(pack_msg[1][1].get('from', '')).ljust(22)}"
-                                msg += f"Via : {pack_msg[1][1].get('via', '')}\n"
+                                msg += f"From: {pack_msg.get('from', '')}({pack_msg.get('distance', -1)}km)".ljust(22)
+                                msg += f"Via : {pack_msg.get('via', '')}\n"
 
-                                msg_text = tk_filter_bad_chars(pack_msg[1][1].get('message_text', '')) + '\n\n'
+                                msg_text = tk_filter_bad_chars(pack_msg.get('message_text', '')) + '\n\n'
 
                                 self.selected_message_text.insert(tk.END, msg)
                                 self.selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
@@ -299,7 +291,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
     def _send_aprs_msg(self, event=None):
         msg = self._out_text.get(0.0, tk.END)[:-1].replace('\n', '')
         with_ack = False
-        if self._antwort_pack[1][1].get('msgNo', False):
+        if self._antwort_pack.get('msgNo', False):
             with_ack = True
         if self._aprs_ais.send_aprs_answer_msg(self._antwort_pack, msg, with_ack):
             self._out_text.delete(0.0, tk.END)
