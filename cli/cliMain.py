@@ -521,9 +521,10 @@ class DefaultCLI(object):
             intervall_str = 'off'
         else:
             intervall_str = str(_intervall)
-        out = '\r # APRS-Tracer Beacon\r\r'
-        out += f'Tracer Call     : {self.port_handler.aprs_ais.be_tracer_port}\r'
-        out += f'Tracer Port     : {self.port_handler.aprs_ais.be_tracer_station}\r'
+        # out = '\r # APRS-Tracer Beacon\r\r'
+        out = '\r'
+        out += f'Tracer Port     : {self.port_handler.aprs_ais.be_tracer_port}\r'
+        out += f'Tracer Call     : {self.port_handler.aprs_ais.be_tracer_station}\r'
         out += f'Tracer WIDE Path: {self.port_handler.aprs_ais.be_tracer_wide}\r'
         out += f'Tracer intervall: {intervall_str}\r'
         out += f'Last Trace send : {_last_send}\r\r'
@@ -538,9 +539,18 @@ class DefaultCLI(object):
             _path = ', '.join(_ent.get('path', []))
             _loc = f'{_ent.get("locator", "------")[:6]}({round(_ent.get("distance", -1))}km)'
             _call = _ent.get('call', '')
-            _path = ', '.join(_ent.get('path', []))
+            _path_raw = _ent.get('path', [])
+            _path = ''
+            _c = 0
+            for _el in _path_raw:
+                _path += f'{_el}> '
+                _c += 1
+                if _c == 3:
+                    _path += '\r' + ''.rjust(42, ' ')
+                    _c = 0
+
             out += f'{_td.rjust(9):10}{_ent.get("port_id", "-"):6}{_call:10}{_loc:16}'
-            out += f'{_path}'
+            out += f'{_path[:-2]}'
             out += '\r'
 
         return out + '\r'
