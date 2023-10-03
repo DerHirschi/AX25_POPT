@@ -4,11 +4,10 @@ from datetime import timedelta
 
 import pickle
 
-from UserDB.UserDBmain import USER_DB
 from constant import CFG_mh_data_file, CFG_port_stat_data_file
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
 from fnc.socket_fnc import check_ip_add_format
-from fnc.str_fnc import conv_time_for_sorting, get_timedelta_str
+from fnc.str_fnc import conv_time_for_sorting
 
 
 def get_time_str():
@@ -303,92 +302,6 @@ class MH(object):
 
     def mh_set_ip(self, call: str, axip: (str, int)):
         self.calls[call].axip_add = axip
-
-    def mh_out_cli(self, max_ent=20):
-        out = '\r'
-        # out += '\r                       < MH - List >\r\r'
-        c = 0
-        max_c = 0
-        """
-        tp = 0
-        tb = 0
-        rj = 0
-        """
-        sort_list = self.get_sort_mh_entry('last', False)
-
-        for call in list(sort_list.keys()):
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-
-            out += f'{time_delta_str} P:{sort_list[call].port:4} {sort_list[call].own_call:9}'.ljust(27, " ")
-            """
-            tp += sort_list[call].pac_n
-            tb += sort_list[call].byte_n
-            rj += sort_list[call].rej_n
-            """
-            c += 1
-            if c == 2:  # Breite
-                c = 0
-                out += '\r'
-        """
-        out += '\r'
-        out += '\rTotal Packets Rec.: ' + str(tp)
-        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
-        out += '\rTotal Bytes Rec.: ' + str(tb)
-        """
-        out += '\r'
-
-        return out
-
-    def mh_long_out_cli(self, max_ent=10):
-        out = '\r'
-        out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r"
-        max_c = 0
-        """
-        tp = 0
-        tb = 0
-        rj = 0
-        """
-        sort_list = self.get_sort_mh_entry('last', False)
-
-        for call in list(sort_list.keys()):
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-            via = sort_list[call].route
-            if via:
-                via = via[-1]
-            else:
-                via = ''
-            loc = ''
-            dis = ''
-            typ = ''
-            userdb_ent = USER_DB.get_entry(sort_list[call].own_call, add_new=False)
-            if userdb_ent:
-                loc = userdb_ent.LOC
-                if userdb_ent.Distance:
-                    dis = str(userdb_ent.Distance)
-                typ = userdb_ent.TYP
-
-            out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
-                    f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
-            """
-            tp += sort_list[call].pac_n
-            tb += sort_list[call].byte_n
-            rj += sort_list[call].rej_n
-            """
-            out += '\r'
-        out += '\r'
-        """
-        out += '\rTotal Packets Rec.: ' + str(tp)
-        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
-        out += '\rTotal Bytes Rec.: ' + str(tb)
-        out += '\r'
-        """
-        return out
 
     def mh_out_beacon(self, max_ent=12):
         _tmp = self.get_sort_mh_entry('last', False)

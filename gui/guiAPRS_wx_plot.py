@@ -6,9 +6,6 @@ from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from fnc.loc_fnc import coordinates_to_locator
-from fnc.str_fnc import convert_str_to_datetime
-
 
 def adjust_list_len(target_list: list, compare_list: list):
     if len(target_list) < len(compare_list):

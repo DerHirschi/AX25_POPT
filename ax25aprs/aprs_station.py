@@ -381,29 +381,6 @@ class APRS_ais(object):
     def get_wx_data(self):
         return dict(self.aprs_wx_msg_pool)
 
-    def get_wx_cli_out(self, max_ent=10):
-        _data = self.get_wx_entry_sort_distance()
-        if not _data:
-            return ''
-        max_c = 0
-        out = '\r-----Last-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r'
-        for k in _data:
-            max_c += 1
-            if max_c > max_ent:
-                break
-            _ent = self.aprs_wx_msg_pool[k][-1]
-            _td = get_timedelta_str(_ent['rx_time'])
-            _loc = f'{_ent.get("locator", "------")[:6]}({round(_ent.get("distance", -1))}km)'
-            _pres = f'{_ent["weather"].get("pressure", 0):.2f}'
-            _rain = f'{_ent["weather"].get("rain_24h", 0):.3f}'
-            out += f'{_td.rjust(9):10}{_ent.get("port_id", ""):6}{k:10}{_loc:16}'
-            out += f'{str(round(_ent["weather"].get("temperature", 0))):5}'
-            out += f'{_pres:7} '
-            out += f'{_ent["weather"].get("humidity", 0):3} '
-            out += f'{_ent["weather"].get("luminosity", 0):3} '
-            out += f'{_rain:6}\r'
-        return out
-
     #####################
     #
     @staticmethod
