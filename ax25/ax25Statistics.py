@@ -4,14 +4,11 @@ from datetime import timedelta
 
 import pickle
 
+from UserDB.UserDBmain import USER_DB
 from constant import CFG_mh_data_file, CFG_port_stat_data_file
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting
-
-
-def get_time_str():
-    return datetime.now().strftime('%d/%m/%y %H:%M:%S')
 
 
 def get_bandwidth_struct():
@@ -67,6 +64,8 @@ class MyHeard:
     rej_n = 0                      # N REJ
     axip_add = '', 0               # IP, Port
     axip_fail = 0                  # Fail Counter
+    locator = ''
+    distance = -1
 
 
 class MH(object):
@@ -185,7 +184,7 @@ class MH(object):
         self.input_stat_db(ax25_frame, port_id)
         ########################
         # MH Entry
-        call_str = ax25_frame.from_call.call_str
+        call_str = str(ax25_frame.from_call.call_str)
         if call_str not in self.calls.keys():
             self.new_call_alarm = True
             ent = MyHeard()
@@ -195,14 +194,14 @@ class MH(object):
         ent.last_seen = datetime.now()
         ent.own_call = call_str
         ent.pac_n += 1
-        ent.port = port_name
-        ent.port_id = port_id
-        ent.byte_n += ax25_frame.data_len
+        ent.port = str(port_name)
+        ent.port_id = int(port_id)
+        ent.byte_n += int(ax25_frame.data_len)
         ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
         if ax25_frame.ctl_byte.flag == 'REJ':
             ent.rej_n += 1
         # TO Calls
-        to_c_str = ax25_frame.to_call.call_str
+        to_c_str = str(ax25_frame.to_call.call_str)
         if to_c_str not in ent.to_calls:
             ent.to_calls.append(to_c_str)
         # Routes
@@ -210,7 +209,7 @@ class MH(object):
         if ax25_frame.via_calls:
             for call in ax25_frame.via_calls:
                 if call.c_bit:
-                    ent.route.append(call.call_str)
+                    ent.route.append(str(call.call_str))
 
         if ent.route not in ent.all_routes:
             ent.all_routes.append(list(ent.route))
@@ -219,10 +218,15 @@ class MH(object):
             if ent.axip_add[0]:
                 if check_ip_add_format(ent.axip_add[0]):
                     if check_ip_add_format(ax25_frame.axip_add[0]):
-                        ent.axip_add = ax25_frame.axip_add
+                        ent.axip_add = tuple(ax25_frame.axip_add)
             else:
-                ent.axip_add = ax25_frame.axip_add
+                ent.axip_add = tuple(ax25_frame.axip_add)
+        # Get Locator and Distance from User-DB
 
+        db_ent = USER_DB.get_entry(call_str, add_new=False)
+        if db_ent:
+            ent.locator = str(db_ent.LOC)
+            ent.distance = float(db_ent.Distance)
         self.calls[call_str] = ent
 
     def mh_get_data_fm_call(self, call_str):
@@ -260,6 +264,8 @@ class MH(object):
                 'first': conv_time_for_sorting(flag.first_seen),
                 'port': str(flag.port_id),
                 'call': flag.own_call,
+                'loc': flag.locator,
+                'dist': str(flag.distance),
                 'pack': str(flag.pac_n),
                 'rej': str(flag.rej_n),
                 'route': str(max(flag.all_routes)),

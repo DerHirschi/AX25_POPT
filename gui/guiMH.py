@@ -44,7 +44,10 @@ class MHWin(tk.Toplevel):
         columns = (
             'mh_last_seen',
             'mh_first_seen' ,
-            'mh_port', 'mh_call',
+            'mh_port',
+            'mh_call',
+            'mh_loc',
+            'mh_dist',
             'mh_nPackets',
             'mh_REJ',
             'mh_route',
@@ -62,15 +65,22 @@ class MHWin(tk.Toplevel):
         self._tree.heading('mh_first_seen', text='Erste Paket', command=lambda: self._sort_entry('first'))
         self._tree.heading('mh_port', text='Port', command=lambda: self._sort_entry('port'))
         self._tree.heading('mh_call', text='Call', command=lambda: self._sort_entry('call'))
+        self._tree.heading('mh_loc', text='LOC', command=lambda: self._sort_entry('loc'))
+        self._tree.heading('mh_dist', text='km', command=lambda: self._sort_entry('dist'))
         self._tree.heading('mh_nPackets', text='Packets', command=lambda: self._sort_entry('pack'))
         self._tree.heading('mh_REJ', text='REJs', command=lambda: self._sort_entry('rej'))
         self._tree.heading('mh_route', text='Route', command=lambda: self._sort_entry('route'))
         self._tree.heading('mh_last_ip', text='AXIP', command=lambda: self._sort_entry('axip'))
         self._tree.heading('mh_ip_fail', text='Fail', command=lambda: self._sort_entry('axipfail'))
-        self._tree.column("mh_port", anchor=tk.CENTER, stretch=tk.NO, width=80)
-        self._tree.column("mh_nPackets", anchor=tk.CENTER, stretch=tk.NO, width=80)
-        self._tree.column("mh_REJ", anchor=tk.CENTER, stretch=tk.NO, width=55)
-        self._tree.column("mh_ip_fail", anchor=tk.CENTER, stretch=tk.NO, width=50)
+        self._tree.column("mh_last_seen", anchor=tk.W, stretch=tk.YES, width=180)
+        self._tree.column("mh_first_seen", anchor=tk.W, stretch=tk.YES, width=180)
+        self._tree.column("mh_call", anchor=tk.W, stretch=tk.YES, width=120)
+        self._tree.column("mh_loc", anchor=tk.W, stretch=tk.YES, width=100)
+        self._tree.column("mh_dist", anchor=tk.W, stretch=tk.YES, width=70)
+        self._tree.column("mh_port", anchor=tk.W, stretch=tk.NO, width=80)
+        self._tree.column("mh_nPackets", anchor=tk.W, stretch=tk.NO, width=80)
+        self._tree.column("mh_REJ", anchor=tk.W, stretch=tk.NO, width=55)
+        self._tree.column("mh_ip_fail", anchor=tk.W, stretch=tk.NO, width=50)
         # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
         # tree.column(1, stretch=True)
 
@@ -85,7 +95,7 @@ class MHWin(tk.Toplevel):
             record = item['values']
             # show a message
             call = record[3]
-            vias = record[6]
+            vias = record[8]
             port = record[2]
             port = int(port.split(' ')[0])
             if vias:
@@ -134,6 +144,8 @@ class MHWin(tk.Toplevel):
                 f'{conv_time_DE_str(ent.first_seen)}',
                 f'{ent.port_id} {ent.port}',
                 f'{ent.own_call}',
+                f'{ent.locator}',
+                f'{ent.distance}',
                 f'{ent.pac_n}',
                 f'{ent.rej_n}',
                 ' '.join(route),

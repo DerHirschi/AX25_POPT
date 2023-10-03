@@ -321,6 +321,7 @@ class SideTabbedFrame:
         columns = (
             'mh_last_seen',
             'mh_call',
+            'mh_dist',
             'mh_port',
             'mh_nPackets',
             'mh_route',
@@ -331,14 +332,16 @@ class SideTabbedFrame:
 
         self._tree.heading('mh_last_seen', text='Zeit')
         self._tree.heading('mh_call', text='Call')
+        self._tree.heading('mh_dist', text='km')
         self._tree.heading('mh_port', text='Port')
         self._tree.heading('mh_nPackets', text='PACK')
         self._tree.heading('mh_route', text='Route')
-        self._tree.column("mh_last_seen", anchor=tk.CENTER, stretch=tk.NO, width=90)
-        self._tree.column("mh_call", stretch=tk.NO, width=100)
-        self._tree.column("mh_port", anchor=tk.CENTER, stretch=tk.NO, width=80)
-        self._tree.column("mh_nPackets", anchor=tk.CENTER, stretch=tk.NO, width=60)
-        self._tree.column("mh_route", stretch=tk.YES, width=180)
+        self._tree.column("mh_last_seen", anchor=tk.W, stretch=tk.NO, width=85)
+        self._tree.column("mh_call", anchor=tk.W, stretch=tk.NO, width=105)
+        self._tree.column("mh_dist", anchor=tk.CENTER, stretch=tk.NO, width=70)
+        self._tree.column("mh_port", anchor=tk.W, stretch=tk.NO, width=61)
+        self._tree.column("mh_nPackets", anchor=tk.W, stretch=tk.NO, width=60)
+        self._tree.column("mh_route", anchor=tk.W, stretch=tk.YES, width=180)
 
         self._tree_data = []
         self._last_mh_ent = []
@@ -731,7 +734,7 @@ class SideTabbedFrame:
             record = item['values']
             # show a message
             call = record[1]
-            vias = record[4]
+            vias = record[5]
             port = record[2]
             port = int(port.split(' ')[0])
             if vias:
@@ -758,6 +761,7 @@ class SideTabbedFrame:
             self._tree_data.append((
                 f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
                 f'{ent.own_call}',
+                f'{ent.distance}',
                 f'{ent.port_id} {ent.port}',
                 f'{ent.pac_n}',
                 ' '.join(route),
