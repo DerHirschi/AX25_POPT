@@ -10,7 +10,7 @@ from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, 
 from constant import APRS_SW_ID, APRS_TRACER_COMMENT, CFG_aprs_data_file
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
-from fnc.str_fnc import convert_umlaute_to_ascii, get_timedelta_str, convert_str_to_datetime
+from fnc.str_fnc import convert_umlaute_to_ascii
 
 logger = logging.getLogger(__name__)
 
@@ -53,13 +53,14 @@ class APRS_ais(object):
         self.aprs_wx_msg_pool = {}
         """ Beacon Tracer """
         # Param
-        self.be_tracer_active = False
         self.be_tracer_interval = 5
         self.be_tracer_port = 0
         self.be_tracer_station = 'NOCALL'
         self.be_tracer_wide = 1
         self.be_tracer_alarm_active = False
         self.be_tracer_alarm_range = 50
+        self.be_auto_tracer_duration = 60
+
         # Packet Pool TODO: extra var f Packet history
         self.be_tracer_traced_packets = {}
         # Control vars
@@ -78,6 +79,9 @@ class APRS_ais(object):
         }
         self.aprs_wx_msg_pool = {}
         """
+        self.be_tracer_active = False
+        self.be_auto_tracer_active = False
+        self._be_auto_tracer_timer = 0
         """"""
         self.ais = None
         self.ais_mon_gui = None
@@ -666,6 +670,15 @@ class APRS_ais(object):
             if time.time() > self._be_tracer_interval_timer:
                 # print("TRACER TASKER")
                 self.tracer_sendit()
+                return
+        if self.be_auto_tracer_active:
+            if not self.be_auto_tracer_duration:
+                return
+            if time.time() > self._be_auto_tracer_timer:
+                return
+            if time.time() > self._be_tracer_interval_timer:
+                self.tracer_sendit()
+                return
 
     def _tracer_build_msg(self):
         # !5251.12N\01109.78E-27.235MHz P.ython o.ther P.acket T.erminal (PoPT)
@@ -700,8 +713,17 @@ class APRS_ais(object):
             if _pack.get('raw_message_text', '') and _pack.get('comment', ''):
                 self._be_tracer_tx_trace_packet = _pack.get('comment', '')
                 self._send_as_UI(_pack)
-                self._be_tracer_interval_timer = time.time() + (60 * self.be_tracer_interval)
+                self._tracer_reset_timer()
                 # print(self._tracer_build_msg())
+
+    def _tracer_reset_timer(self):
+        self._be_tracer_interval_timer = time.time() + (60 * self.be_tracer_interval)
+
+    def tracer_reset_auto_timer(self, ext_timer=None):
+        if ext_timer is None:
+            self._be_auto_tracer_timer = time.time() + (self.be_auto_tracer_duration * 60)
+        else:
+            self._be_auto_tracer_timer = ext_timer + (self.be_auto_tracer_duration * 60)
 
     def tracer_get_last_send(self):
         return time.time() - (self._be_tracer_interval_timer - (60 * self.be_tracer_interval))
@@ -784,3 +806,19 @@ class APRS_ais(object):
 
     def tracer_traces_get(self):
         return self.be_tracer_traced_packets
+
+    def tracer_auto_tracer_set(self, state=None):
+        if self.be_tracer_active:
+            self.be_auto_tracer_active = False
+            return False
+        if state is None:
+            self.be_auto_tracer_active = not self.be_auto_tracer_active
+            self.tracer_reset_auto_timer()
+            return bool(self.be_auto_tracer_active)
+        self._be_auto_tracer_timer = 0
+        self.be_auto_tracer_active = state
+        return bool(self.be_auto_tracer_active)
+
+    def tracer_auto_tracer_duration_set(self, dur: int):
+        self.be_auto_tracer_duration = dur
+

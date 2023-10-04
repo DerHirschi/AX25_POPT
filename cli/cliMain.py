@@ -639,6 +639,7 @@ class DefaultCLI(object):
         out += f'Tracer Call     : {self.port_handler.aprs_ais.be_tracer_station}\r'
         out += f'Tracer WIDE Path: {self.port_handler.aprs_ais.be_tracer_wide}\r'
         out += f'Tracer intervall: {intervall_str}\r'
+        out += f'Auto Tracer     : {constant.BOOL_ON_OFF.get(self.port_handler.aprs_ais.be_auto_tracer_active, False)}\r'
         out += f'Last Trace send : {_last_send}\r\r'
         out += '-----Last-Port--Call------LOC-------------Path----------------------------------\r'
         max_c = 0

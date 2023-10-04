@@ -120,9 +120,9 @@ class UserDB:
                     else:
                         return False
                 else:
-                    self.entry_var_upgrade(call_tup[0])
+                    # self.entry_var_upgrade(call_tup[0])
                     return self.db[call_tup[0]]
-            self.entry_var_upgrade(call_str)
+            # self.entry_var_upgrade(call_str)
             return self.db[call_str]
         return False
 

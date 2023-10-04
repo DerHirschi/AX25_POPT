@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.98.5dev'
+VER = '2.98.6dev'
 LANGUAGE = 0  # QUICK FIX
 """
 0 = German
@@ -175,4 +175,9 @@ STATUS_BG = {
     'RNR-REJ': 'light sky blue',  # 14
     'DEST-RNR-REJ': 'sky blue',  # 15
     'BOTH-RNR-REJ': 'deep sky blue',  # 16
+}
+
+BOOL_ON_OFF = {
+    True: 'ON',
+    False: 'OFF',
 }

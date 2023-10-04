@@ -1,3 +1,4 @@
+import time
 from collections import deque
 from datetime import datetime
 from datetime import timedelta
@@ -102,12 +103,17 @@ class MH(object):
                     setattr(self.calls[call], att, getattr(MyHeard, att))
 
         self.dx_alarm_trigger = False
+        self.last_dx_alarm = time.time()
         self.parm_new_call_alarm = False
         self.parm_distance_alarm = 50
         self.parm_lastseen_alarm = 1
 
     def __del__(self):
         pass
+
+    def _set_dx_alarm(self):
+        self.dx_alarm_trigger = True
+        self.last_dx_alarm = time.time()
 
     def bw_mon_inp(self, ax25_frame, port_id):
         if port_id not in self.port_statistik_DB.keys():
@@ -191,13 +197,13 @@ class MH(object):
         if call_str not in self.calls.keys():
             ent = MyHeard()
             if self.parm_new_call_alarm:
-                self.dx_alarm_trigger = True
+                self._set_dx_alarm()
         else:
             ent = self.calls[call_str]
         _t_delta = datetime.now() - ent.last_seen
         if self.parm_lastseen_alarm:
             if _t_delta.days >= self.parm_lastseen_alarm:
-                self.dx_alarm_trigger = True
+                self._set_dx_alarm()
         ent.last_seen = datetime.now()
         ent.own_call = call_str
         ent.pac_n += 1
@@ -236,7 +242,7 @@ class MH(object):
             ent.distance = float(db_ent.Distance)
         if self.parm_distance_alarm:
             if ent.distance >= self.parm_distance_alarm:
-                self.dx_alarm_trigger = True
+                self._set_dx_alarm()
 
         self.calls[call_str] = ent
 

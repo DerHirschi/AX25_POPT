@@ -23,7 +23,7 @@ class UserDB(tk.Toplevel):
                       f"{self.win_height}+"
                       f"{self.root.main_win.winfo_x()}+"
                       f"{self.root.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(False, False)
         try:
             self.iconbitmap("favicon.ico")
@@ -59,7 +59,7 @@ class UserDB(tk.Toplevel):
                               # bg="green",
                               height=1,
                               width=8,
-                              command=self.destroy_win)
+                              command=self._destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
         save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
@@ -404,6 +404,7 @@ class UserDB(tk.Toplevel):
         root.userdb_win = self
 
     def select_entry(self, event=None):
+        self._save_vars()
         for selected_item in self.tree.selection():
             item = self.tree.item(selected_item)
             record = item['values'][0]
@@ -474,15 +475,14 @@ class UserDB(tk.Toplevel):
                 self.db_ent.sys_pw_parm.append('SYS')
             self.login_cmd_var.set(str(self.db_ent.sys_pw_parm[2]))
 
-
-            self.update_sysop_opt()
-            self.update_stations()
+            self._update_sysop_opt()
+            self._update_stations()
 
     def sysop_opt_remove(self):
         self.sysop_var.set('')  # remove default selection only, not the full list
         self.sysop_ent['menu'].delete(0, 'end')  # remove full list
 
-    def update_sysop_opt(self):
+    def _update_sysop_opt(self):
         self.sysop_opt_remove()  # remove all options
 
         if self.db_ent.TYP == 'SYSOP':
@@ -498,12 +498,13 @@ class UserDB(tk.Toplevel):
             for opt in sorted(self._user_db.get_keys_by_typ(typ='SYSOP')):
                 self.sysop_ent['menu'].add_command(label=opt, command=tk._setit(self.sysop_var, opt))
 
-    def update_stations(self):
+    def _update_stations(self):
         sysop_key = ''
-        if self.db_ent.TYP == 'SYSOP':
-            sysop_key = self.db_ent.call_str
-        else:
-            sysop_key = self.db_ent.Sysop_Call
+        if self.db_ent:
+            if self.db_ent.TYP == 'SYSOP':
+                sysop_key = self.db_ent.call_str
+            else:
+                sysop_key = self.db_ent.Sysop_Call
 
         node_str = 'NODES: '
         bbs_str = 'BBS: '
@@ -527,6 +528,13 @@ class UserDB(tk.Toplevel):
         self.stations_other_var.set(other_str)
 
     def save_btn_cmd(self):
+        self._save_vars()
+        self._user_db.save_data()
+        self.select_entry()
+        self.root.update_station_info()
+        self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
+
+    def _save_vars(self):
         if self.db_ent:
             self.db_ent.Name = self.name_var.get()
             self.db_ent.QTH = self.qth_var.get()
@@ -560,17 +568,12 @@ class UserDB(tk.Toplevel):
                 if tmp != self.db_ent.Sysop_Call:
                     self.db_ent.Sysop_Call = tmp
                     self.on_select_sysop()
-
-        self._user_db.save_data()
-        self.select_entry()
         self.root.gui_set_distance()
-        self.root.update_station_info()
-        self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
 
     def ok_btn_cmd(self):
-
+        self._save_vars()
         self.root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
-        self.destroy_win()
+        self._destroy_win()
 
     def del_btn_cmd(self):
         if self.db_ent:
@@ -587,7 +590,7 @@ class UserDB(tk.Toplevel):
                     self.db_ent = self._user_db.get_entry(ents[0])
                 self.select_entry()
 
-    def destroy_win(self):
+    def _destroy_win(self):
         self.root.userdb_win = None
         self.destroy()
 

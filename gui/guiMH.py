@@ -135,8 +135,8 @@ class MHWin(tk.Toplevel):
                    increment=5,
                    width=5,
                    textvariable=self._tracer_duration_var,
-                   state=_auto_tracer_state
-                   # command=self._set_alarm_distance
+                   state=_auto_tracer_state,
+                   command=self._set_auto_tracer,
                    ).pack(side=tk.LEFT, )
 
         ##########################################################################################
@@ -195,7 +195,7 @@ class MHWin(tk.Toplevel):
         self._alarm_seenSince_var.set(str(MH_LIST.parm_lastseen_alarm))
         self._alarm_distance_var.set(str(MH_LIST.parm_distance_alarm))
         # self._tracer_active_var.set(bool(self._root_win.setting_auto_tracer.get()))
-        self._tracer_duration_var.set(str())
+        self._tracer_duration_var.set(str(self._root_win.get_auto_tracer_duration()))
 
     def _set_alarm_distance(self, event=None):
         _var = self._alarm_distance_var.get()
@@ -215,6 +215,14 @@ class MHWin(tk.Toplevel):
 
     def _set_alarm_newCall(self, event=None):
         MH_LIST.parm_new_call_alarm = bool(self._alarm_newCall_var.get())
+
+    def _set_auto_tracer(self, event=None):
+        _dur = self._tracer_duration_var.get()
+        try:
+            _dur = int(_dur)
+        except ValueError:
+            return
+        self._root_win.set_auto_tracer_duration(_dur)
 
     def entry_selected(self, event):
         for selected_item in self._tree.selection():

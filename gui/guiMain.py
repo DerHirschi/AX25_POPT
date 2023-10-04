@@ -383,14 +383,14 @@ class SideTabbedFrame:
         self._autotracer_chk_btn = Checkbutton(self.tab4_settings,
                                                text="Auto-Tracer",
                                                variable=self._main_win.setting_auto_tracer,
-                                               command=self._chk_tracer,
+                                               command=self._chk_auto_tracer,
                                                state=_auto_tracer_state
                                                )
         self._autotracer_chk_btn.place(x=10, y=110)
         Checkbutton(self.tab4_settings,
                     text="DX-Alarm",
                     variable=self._main_win.setting_dx_alarm,
-                    # command=self._chk_tracer,
+                    command=self._main_win.set_dx_alarm,
                     # state='disabled'
                     ).place(x=10, y=135)
         # RX ECHO
@@ -572,10 +572,11 @@ class SideTabbedFrame:
     """
 
     def set_auto_tracer_state(self):
+        _bool_state = self._main_win.get_tracer() or not self._main_win.get_dx_alarm()
         _state = {
             True: 'disabled',
             False: 'normal'
-        }.get(self._main_win.get_tracer(), 'disabled')
+        }.get(_bool_state, 'disabled')
         self._autotracer_chk_btn.configure(state=_state)
 
     def _update_ch_echo(self):
@@ -661,6 +662,9 @@ class SideTabbedFrame:
 
     def _chk_tracer(self):
         self._main_win.set_tracer()
+
+    def _chk_auto_tracer(self):
+        self._main_win.set_auto_tracer()
 
     def _chk_rnr(self):
         conn = self._main_win.get_conn()
@@ -1652,6 +1656,8 @@ class TkMainWin:
             self.aprs_pn_msg_win.destroy()
         if self.be_tracer_win is not None:
             self.be_tracer_win.destroy()
+        self.main_win.update_idletasks()
+        self._loop_delay = 800
 
     ####################
     # Init Stuff
@@ -2284,6 +2290,9 @@ class TkMainWin:
             _clr = generate_random_hex_color()
             if self._mh_btn.cget('bg') != _clr:
                 self._mh_btn.configure(bg=_clr)
+            _aprs_obj = PORT_HANDLER.get_aprs_ais()
+            if _aprs_obj is not None:
+                _aprs_obj.tracer_reset_auto_timer(MH_LIST.last_dx_alarm)
 
     def _tracer_alarm(self):
         """ Tracer Alarm """
@@ -2315,6 +2324,7 @@ class TkMainWin:
             self._tasker_1_sec()
             self._tasker_5_sec()
             # self._tasker_tester()
+            self.main_win.update_idletasks()
         self.main_win.after(self._loop_delay, self._tasker)
 
     @staticmethod
@@ -2554,7 +2564,6 @@ class TkMainWin:
             self._mon_txt.configure(state="disabled", exportselection=True)
             if tr or self.tabbed_sideFrame.mon_scroll_var.get():
                 self._see_end_mon_win()
-            self.main_win.update_idletasks()
 
     def see_end_qso_win(self):
         self._out_txt.see("end")
@@ -2694,9 +2703,14 @@ class TkMainWin:
             self.userDB_tree_win = UserDBtreeview(self)
 
     def gui_set_distance(self):
+        self._set_distance_fm_conn()
+
+    def _set_distance_fm_conn(self):
         _conn = self.get_conn()
         if _conn:
             _conn.set_distance()
+            return True
+        return False
 
     # ##############
     # DISCO
@@ -3089,6 +3103,7 @@ class TkMainWin:
             _ais_obj.be_tracer_active = bool(self.setting_tracer.get())
         else:
             self.setting_tracer.set(False)
+        self.set_auto_tracer()
         self.tabbed_sideFrame.set_auto_tracer_state()
 
     @staticmethod
@@ -3110,9 +3125,35 @@ class TkMainWin:
         _ais_obj = PORT_HANDLER.get_aprs_ais()
         set_to = False
         if _ais_obj is not None:
+            self.set_tracer_fm_aprs()
             if self.setting_tracer.get():
                 set_to = False
             else:
-                set_to = not bool(self.setting_auto_tracer.get())
+                set_to = bool(self.setting_auto_tracer.get())
+            _ais_obj.tracer_auto_tracer_set(set_to)
         self.setting_auto_tracer.set(set_to)
         self.tabbed_sideFrame.set_auto_tracer_state()
+
+    @staticmethod
+    def get_auto_tracer_duration():
+        _ais_obj = PORT_HANDLER.get_aprs_ais()
+        if _ais_obj is None:
+            return 0
+        return _ais_obj.be_auto_tracer_duration
+
+    def set_auto_tracer_duration(self, dur):
+        _ais_obj = PORT_HANDLER.get_aprs_ais()
+        if _ais_obj is not None:
+            if type(dur) == int:
+                _ais_obj.tracer_auto_tracer_duration_set(dur)
+                self.set_auto_tracer()
+
+    def set_dx_alarm(self, event=None):
+        _dx_alarm = bool(self.setting_dx_alarm.get())
+        if not _dx_alarm:
+            self.setting_auto_tracer.set(False)
+        self.set_auto_tracer()
+
+    def get_dx_alarm(self):
+        return bool(self.setting_dx_alarm.get())
+
