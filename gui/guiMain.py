@@ -1537,37 +1537,9 @@ class ChBtnFrm:
 
 class TkMainWin:
     def __init__(self):
-        self.language = LANGUAGE
-        ###############################
-        self._root_dir = get_root_dir()
-        self._root_dir = self._root_dir.replace('/', '//')
-        #####################
-        #####################
-        # GUI VARS
-        self._sound_th = None
-        self.ch_alarm = False
-        self.ch_alarm_sound_one_time = False
-        self.channel_index = 1
-        self.mon_mode = 0
-        self._mon_buff = []
-        self.connect_history = {}
-        self._is_closing = False
-        ####################
-        # GUI PARAM
-        self.parm_btn_blink_time = 1  # s
-        self._parm_rx_beep_cooldown = 2  # s
-        # Tasker Timings
-        self._loop_delay = 250  # ms
-        self._parm_non_prio_task_timer = 0.5  # s
-        self._parm_non_non_prio_task_timer = 1  # s
-        self._parm_non_non_non_prio_task_timer = 5  # s
-        self._parm_test_task_timer = 60  # 5        # s
-        self._non_prio_task_timer = time.time()
-        self._non_non_prio_task_timer = time.time()
-        self._non_non_non_prio_task_timer = time.time()
-        self._test_task_timer = time.time()
-        ###############
-        self.text_size = 14
+        ######################################
+        # Init Vars
+        self._init_vars()
         ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
@@ -1585,15 +1557,187 @@ class TkMainWin:
         self.main_win.columnconfigure(0, minsize=500, weight=1)
         self.main_win.columnconfigure(1, minsize=2, weight=5)
         self.main_win.rowconfigure(0, minsize=3, weight=1)  # Boarder
-        # self.main_win.rowconfigure(1, minsize=0, weight=1)     # BTN SIDE
         self.main_win.rowconfigure(1, minsize=220, weight=2)
         self.main_win.rowconfigure(2, minsize=28, weight=1)  # CH BTN
-        # self.main_win.rowconfigure(3, minsize=2, weight=0)  # Boarder
         ############################
         ############################
-        ############################
+        # Input Output TXT Frames and Status Bar
+        self._txt_win = TxTframe(self)
+        self._out_txt = self._txt_win.out_txt_win
+        self._inp_txt = self._txt_win.in_txt_win
+        self._mon_txt = self._txt_win.mon_txt
+        #######################
+        # Window Text Buffers
+        self._win_buf: {int: ChVars} = {}
+        for i in range(11):
+            self._win_buf[i] = ChVars()
+            self._win_buf[i].input_win_index = str(self._inp_txt.index(tk.INSERT))
+        #########################
+        # Channel Buttons
+        self._ch_btn = ChBtnFrm(self)
+        self._ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
+        #########################
+
+        #########################
+        # Tabbed Frame right
+        self._side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
+        self._side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
+        self._side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)  # CONN BTN
+        self._side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)  # BTN row 2
+        self._side_btn_frame_top.rowconfigure(2, minsize=1, weight=0)  # Dummy
+        self._side_btn_frame_top.rowconfigure(3, minsize=300, weight=10)  # Reiter Frame
+        self._side_btn_frame_top.rowconfigure(4, minsize=100, weight=1)  # Reiter Frame
+
+        self._side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
+        self._side_btn_frame_top.columnconfigure(1, minsize=100, weight=2)
+        self._side_btn_frame_top.columnconfigure(2, minsize=100, weight=2)
+        self._side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
+        self._side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
+        self._side_btn_frame_top.columnconfigure(6, minsize=10, weight=1)
         ##############
-        # Menüleiste
+        # GUI Buttons
+        self._init_btn()
+        ##############
+        # Side Frame
+        self.tabbed_sideFrame = SideTabbedFrame(self)
+        self.setting_sound = self.tabbed_sideFrame.sound_on
+        self.setting_sprech = self.tabbed_sideFrame.sprech_on
+        self.setting_bake = self.tabbed_sideFrame.bake_on
+        self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
+        # self.setting_dx_alarm = self.tabbed_sideFrame.dx_alarm_on
+        ############################
+        # Canvas Plot
+        self._init_bw_plot()
+        ###########################
+        # set KEY BINDS
+        self._set_binds()
+        self._set_keybinds()
+        # Menubar
+        self._init_menubar()
+        # set Ch Btn Color
+        self.ch_status_update()
+        # .....
+        self._monitor_start_msg()
+        #############################
+        # set GUI Var to Port Handler
+        PORT_HANDLER.set_gui(self)
+        #######################
+        # LOOP LOOP LOOP
+        self.main_win.after(self._loop_delay, self._tasker)
+        self.main_win.mainloop()
+
+    def __del__(self):
+        # self.disco_all()
+        # self.ax25_port_handler.close_all()
+        pass
+
+    def _destroy_win(self):
+        self.msg_to_monitor("PoPT wird beendet.")
+        self._is_closing = True
+        logging.info('Closing GUI: Closing Ports.')
+        PORT_HANDLER.close_all_ports()
+
+        logging.info('Closing GUI.')
+        self._close_port_stat_win()
+        if self.settings_win is not None:
+            self.settings_win.destroy()
+        if self.mh_window is not None:
+            self.mh_window.destroy()
+        if self.wx_window is not None:
+            self.wx_window.destroy()
+        if self.userdb_win is not None:
+            self.userdb_win.destroy()
+        if self.userDB_tree_win is not None:
+            self.userDB_tree_win.destroy()
+        if self.aprs_mon_win is not None:
+            self.aprs_mon_win.destroy()
+        if self.aprs_pn_msg_win is not None:
+            self.aprs_pn_msg_win.destroy()
+        if self.be_tracer_win is not None:
+            self.be_tracer_win.destroy()
+
+    ####################
+    # Init Stuff
+    def _init_vars(self):
+        self.language = LANGUAGE
+        ###############################
+        self._root_dir = get_root_dir()
+        self._root_dir = self._root_dir.replace('/', '//')
+        #####################
+        #####################
+        # GUI VARS
+        self.connect_history = {}
+
+        self.ch_alarm = False
+        self.ch_alarm_sound_one_time = False
+        self.channel_index = 1
+
+        self.mon_mode = 0
+        self._mon_buff = []
+        self._sound_th = None
+        self._is_closing = False
+        ####################
+        # GUI PARAM
+        self.parm_btn_blink_time = 1  # s
+        self._parm_rx_beep_cooldown = 2  # s
+        # Tasker Timings
+        self._loop_delay = 250  # ms
+        self._parm_non_prio_task_timer = 0.5  # s
+        self._parm_non_non_prio_task_timer = 1  # s
+        self._parm_non_non_non_prio_task_timer = 5  # s
+        self._parm_test_task_timer = 60  # 5        # s
+        self._non_prio_task_timer = time.time()
+        self._non_non_prio_task_timer = time.time()
+        self._non_non_non_prio_task_timer = time.time()
+        self._test_task_timer = time.time()
+        ###############
+        self.text_size = 14
+        ############################
+        # Windows
+        self.new_conn_win = None
+        self.settings_win = None
+        self.mh_window = None
+        self.wx_window = None
+        self.port_stat_win = None
+        self.be_tracer_win = None
+        self.locator_calc_window = None
+        self.aprs_mon_win = None
+        self.aprs_pn_msg_win = None
+        self.userdb_win = None
+        self.userDB_tree_win = None
+        ##############################
+        # BW-Plot
+        self._bw_plot_x_scale = []
+        for _i in list(range(60)):
+            self._bw_plot_x_scale.append(_i / 6)
+        self._bw_plot_lines = {}
+
+    def _init_bw_plot(self):
+        # plt.ion()
+        self._bw_fig = Figure(figsize=(8, 5), dpi=80)
+        # plt.style.use('dark_background')
+        self._ax = self._bw_fig.add_subplot(111)
+        self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
+        self._ax.axis([0, 10, 0, 100])
+        self._bw_fig.set_facecolor('xkcd:light grey')
+        self._ax.set_facecolor('#000000')
+        # self.bw_fig.xlim(0, 10)  # TODO As Option
+        self._ax.xaxis.label.set_color('black')
+        self._ax.yaxis.label.set_color('black')
+        self._ax.tick_params(axis='x', colors='black')
+        self._ax.tick_params(axis='y', colors='black')
+        self._ax.set_xlabel(STR_TABLE['minutes'][self.language])
+        self._ax.set_ylabel(STR_TABLE['occup'][self.language])
+        # plt.xlim(0, 10)  # TODO As Option
+        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._side_btn_frame_top)  # A tk.DrawingArea.
+        self._canvas.flush_events()
+        self._canvas.draw()
+        self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
+        # self._canvas.get_tk_widget().pack(fill=tk.BOTH)
+        # self._canvas.get_tk_widget().config(cursor="none")
+        self._bw_fig.canvas.flush_events()
+
+    def _init_menubar(self):
         _menubar = Menu(self.main_win, tearoff=False)
         self.main_win.config(menu=_menubar)
         # Menü 1 "Verbindungen"
@@ -1713,45 +1857,7 @@ class TkMainWin:
                               underline=0)
         _menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=_MenuHelp, underline=0)
 
-        # Menü 4 "Debug"
-        # menubar.add_command(label="Debug")
-        ############################
-        ############################
-        # Input Output TXT Frames and Status Bar
-        self._txt_win = TxTframe(self)
-        self._out_txt = self._txt_win.out_txt_win
-        self._inp_txt = self._txt_win.in_txt_win
-        self._mon_txt = self._txt_win.mon_txt
-        #######################
-        # Window Text Buffers
-        self._win_buf: {int: ChVars} = {}
-        for i in range(11):
-            self._win_buf[i] = ChVars()
-            self._win_buf[i].input_win_index = str(self._inp_txt.index(tk.INSERT))
-        # Channel Buttons
-        self._ch_btn = ChBtnFrm(self)
-        self._ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
-        #########################
-        # BTN and Tabbed Frame right side
-        self._side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
-        # self.side_btn_frame_top = tk.Frame(self.pw, width=200, height=540)
-        # self.pw.add(self.txt_win.pw)
-        self._side_btn_frame_top.grid(row=1, rowspan=2, column=1, sticky="nsew")
-        self._side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)  # CONN BTN
-        self._side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)  # BTN row 2
-        self._side_btn_frame_top.rowconfigure(2, minsize=1, weight=0)  # Dummy
-        # self._side_btn_frame_top.rowconfigure(3, minsize=1, weight=2)  # Dummy
-        self._side_btn_frame_top.rowconfigure(3, minsize=300, weight=10)  # Reiter Frame
-        self._side_btn_frame_top.rowconfigure(4, minsize=100, weight=1)  # Reiter Frame
-        # self._side_btn_frame_top.rowconfigure(5, minsize=15, weight=1)  # Reiter Frame
-
-        self._side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
-        self._side_btn_frame_top.columnconfigure(1, minsize=100, weight=2)
-        self._side_btn_frame_top.columnconfigure(2, minsize=100, weight=2)
-        self._side_btn_frame_top.columnconfigure(3, minsize=10, weight=1)
-        self._side_btn_frame_top.columnconfigure(4, minsize=10, weight=5)
-        self._side_btn_frame_top.columnconfigure(6, minsize=10, weight=1)
-
+    def _init_btn(self):
         _btn_upper_frame = tk.Frame(self._side_btn_frame_top)
         _btn_lower_frame = tk.Frame(self._side_btn_frame_top)
         _btn_upper_frame.place(x=5, y=5)
@@ -1791,104 +1897,6 @@ class TkMainWin:
                   text="Kaffèmaschine",
                   bg="HotPink2", width=12, command=self._kaffee).place(x=215, y=10)
         """
-        self.tabbed_sideFrame = SideTabbedFrame(self)
-        # self.pw.add(self.tabbed_sideFrame.tab_side_frame)
-        self.setting_sound = self.tabbed_sideFrame.sound_on
-        self.setting_sprech = self.tabbed_sideFrame.sprech_on
-        self.setting_bake = self.tabbed_sideFrame.bake_on
-        self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
-        # self.setting_dx_alarm = self.tabbed_sideFrame.dx_alarm_on
-        ############################
-        # Canvas Plot ( TEST )
-        # plt.ion()
-        self._bw_fig = Figure(figsize=(8, 5), dpi=80)
-        # plt.style.use('dark_background')
-        self._ax = self._bw_fig.add_subplot(111)
-        self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
-        self._ax.axis([0, 10, 0, 100])
-        self._bw_fig.set_facecolor('xkcd:light grey')
-        self._ax.set_facecolor('#000000')
-        # self.bw_fig.xlim(0, 10)  # TODO As Option
-        self._ax.xaxis.label.set_color('black')
-        self._ax.yaxis.label.set_color('black')
-        self._ax.tick_params(axis='x', colors='black')
-        self._ax.tick_params(axis='y', colors='black')
-        self._ax.set_xlabel(STR_TABLE['minutes'][self.language])
-        self._ax.set_ylabel(STR_TABLE['occup'][self.language])
-        self._bw_plot_lines = {}
-        # plt.xlim(0, 10)  # TODO As Option
-        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._side_btn_frame_top)  # A tk.DrawingArea.
-        self._canvas.flush_events()
-        self._canvas.draw()
-        self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
-        # self._canvas.get_tk_widget().pack(fill=tk.BOTH)
-        # self._canvas.get_tk_widget().config(cursor="none")
-        self._bw_fig.canvas.flush_events()
-
-        self._bw_plot_x_scale = []
-        for _i in list(range(60)):
-            self._bw_plot_x_scale.append(_i / 6)
-        self._bw_plot_lines = {}
-
-        ############################
-        # Windows
-        self.new_conn_win = None
-        self.settings_win = None
-        self.mh_window = None
-        self.wx_window = None
-        self.port_stat_win = None
-        self.be_tracer_win = None
-        self.locator_calc_window = None
-        self.aprs_mon_win = None
-        self.aprs_pn_msg_win = None
-        self.userdb_win = None
-        self.userDB_tree_win = None
-        ###########################
-        # Init
-        # set Ch Btn Color
-        self.ch_status_update()
-        # set KEY BINDS
-        self._set_binds()
-        self._set_keybinds()
-        # .....
-        self._monitor_start_msg()
-        #######################
-        # set GUI Vav
-        PORT_HANDLER.set_gui(self)
-        #######################
-        # LOOP
-        self.main_win.after(self._loop_delay, self._tasker)
-        self.main_win.mainloop()
-
-    def __del__(self):
-        # self.disco_all()
-        # self.ax25_port_handler.close_all()
-        pass
-
-    def _destroy_win(self):
-        self.msg_to_monitor("PoPT wird beendet.")
-        self._is_closing = True
-        logging.info('Closing GUI: Closing Ports.')
-        PORT_HANDLER.close_all_ports()
-
-        logging.info('Closing GUI.')
-        self._close_port_stat_win()
-        if self.settings_win is not None:
-            self.settings_win.destroy()
-        if self.mh_window is not None:
-            self.mh_window.destroy()
-        if self.wx_window is not None:
-            self.wx_window.destroy()
-        if self.userdb_win is not None:
-            self.userdb_win.destroy()
-        if self.userDB_tree_win is not None:
-            self.userDB_tree_win.destroy()
-        if self.aprs_mon_win is not None:
-            self.aprs_mon_win.destroy()
-        if self.aprs_pn_msg_win is not None:
-            self.aprs_pn_msg_win.destroy()
-        if self.be_tracer_win is not None:
-            self.be_tracer_win.destroy()
 
     def _monitor_start_msg(self):
 

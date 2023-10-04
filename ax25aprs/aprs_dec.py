@@ -140,6 +140,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
     ret = ''
     dist = ''
     typ = ''
+    loc = ''
     db_ent = USER_DB.get_entry(full_aprs_frame['from'], add_new=add_new_user)
     for k in aprs_frame:
         # print(f"{k}: {aprs_frame[k]}")
@@ -175,13 +176,8 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     loc = coordinates_to_locator(latitude=aprs_frame['latitude'],
                                                  longitude=aprs_frame['longitude'])
                     ret += f"├►LOCATOR      : {loc}\n"
-                    if db_ent:
-                        if not db_ent.LOC:
-                            db_ent.LOC = loc
-                        if not db_ent.Lat:
-                            db_ent.Lat = aprs_frame['latitude']
-                            db_ent.Lon = aprs_frame['longitude']
-                    if own_locator:
+
+                    if own_locator and loc:
                         dist = locator_distance(own_locator, loc)
                         ret += f"├►DISTANCE     : {dist} km\n"
                     # if db_ent:
@@ -202,12 +198,14 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
         if k in ['weather', 'wx']:
             typ = 'APRS-WX'
     if db_ent:
-        # if not db_ent.Distance:
-        if db_ent.LOC and own_locator:
-            db_ent.Distance = locator_distance(own_locator, db_ent.LOC)
-            dist = locator_distance(own_locator, db_ent.LOC)
-            if not db_ent.TYP and typ:
-                db_ent.TYP = typ
+        if loc:
+            db_ent.LOC = loc
+            db_ent.Lat = aprs_frame['latitude']
+            db_ent.Lon = aprs_frame['longitude']
+            if type(dist) == float:
+                db_ent.Distance = float(dist)
+        if not db_ent.TYP and typ:
+            db_ent.TYP = typ
 
     return ret, dist
 
