@@ -98,6 +98,7 @@ class DefaultCLI(object):
             b'PORT': (self.cmd_port, 'Ports'),
             b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
             b'MH': (self.cmd_mh, 'MYHeard Liste'),
+            b'AXIP': (self.cmd_axip, 'AXIP-MH Liste'),
             b'LMH': (self.cmd_mhl, 'Long MYHeard Liste'),
             b'ATR': (self.cmd_aprs_trace, 'APRS-Tracer'),
             b'WX': (self.cmd_wx, 'Wetterstationen'),
@@ -462,6 +463,36 @@ class DefaultCLI(object):
         self.send_output(ret)
         self.crone_state_index = 100  # Quit State
         return ''
+
+    def cmd_axip(self):
+        parm = 10
+        if self.parameter:
+            try:
+                parm = int(self.parameter[0])
+            except ValueError:
+                pass
+        ret = self._get_axip_out_cli(max_ent=parm)
+
+        return ret + '\r'
+
+    @staticmethod
+    def _get_axip_out_cli(max_ent=10):
+        _ent = MH_LIST.get_sort_mh_entry('last', reverse=False)
+        max_c = 0
+        out = '\r'
+        # out += '\r                       < AXIP - Clients >\r\r'
+        out += '-Call-----IP:Port------------------------Last---------------\r'
+        for k in _ent.keys():
+            if _ent[k].axip_add[0]:
+                max_c += 1
+                if max_c > max_ent:
+                    break
+                out += '{:9} {:30} {:8}\r'.format(
+                    _ent[k].own_call,
+                    _ent[k].axip_add[0] + ':' + str(_ent[k].axip_add[1]),
+                    get_timedelta_str(_ent[k].last_seen, r_just=False)
+                )
+        return out
 
     def cmd_mh(self):
         parm = 20
