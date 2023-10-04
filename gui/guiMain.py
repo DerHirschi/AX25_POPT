@@ -1563,6 +1563,21 @@ class TkMainWin:
         ######################################
         # Init Vars
         self._init_vars()
+        ###############
+        self.text_size = 14
+        ############################
+        # Windows
+        self.new_conn_win = None
+        self.settings_win = None
+        self.mh_window = None
+        self.wx_window = None
+        self.port_stat_win = None
+        self.be_tracer_win = None
+        self.locator_calc_window = None
+        self.aprs_mon_win = None
+        self.aprs_pn_msg_win = None
+        self.userdb_win = None
+        self.userDB_tree_win = None
         ######################################
         # ....
         self.main_win.columnconfigure(0, minsize=500, weight=1)
@@ -1667,7 +1682,6 @@ class TkMainWin:
         self._root_dir = get_root_dir()
         self._root_dir = self._root_dir.replace('/', '//')
         #####################
-        #####################
         # GUI VARS
         self.connect_history = {}
         # GLb Setting Vars
@@ -1700,21 +1714,6 @@ class TkMainWin:
         self._non_non_prio_task_timer = time.time()
         self._non_non_non_prio_task_timer = time.time()
         self._test_task_timer = time.time()
-        ###############
-        self.text_size = 14
-        ############################
-        # Windows
-        self.new_conn_win = None
-        self.settings_win = None
-        self.mh_window = None
-        self.wx_window = None
-        self.port_stat_win = None
-        self.be_tracer_win = None
-        self.locator_calc_window = None
-        self.aprs_mon_win = None
-        self.aprs_pn_msg_win = None
-        self.userdb_win = None
-        self.userDB_tree_win = None
         ##############################
         # BW-Plot
         self._bw_plot_x_scale = []
@@ -1739,27 +1738,23 @@ class TkMainWin:
         MH_LIST.parm_lastseen_alarm = 1
 
     def _init_bw_plot(self):
-        # plt.ion()
         self._bw_fig = Figure(figsize=(8, 5), dpi=80)
         # plt.style.use('dark_background')
         self._ax = self._bw_fig.add_subplot(111)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
-        self._ax.axis([0, 10, 0, 100])
+        self._ax.axis([0, 10, 0, 100])  # TODO As Option
         self._bw_fig.set_facecolor('xkcd:light grey')
         self._ax.set_facecolor('#000000')
-        # self.bw_fig.xlim(0, 10)  # TODO As Option
         self._ax.xaxis.label.set_color('black')
         self._ax.yaxis.label.set_color('black')
         self._ax.tick_params(axis='x', colors='black')
         self._ax.tick_params(axis='y', colors='black')
         self._ax.set_xlabel(STR_TABLE['minutes'][self.language])
         self._ax.set_ylabel(STR_TABLE['occup'][self.language])
-        # plt.xlim(0, 10)  # TODO As Option
-        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._side_btn_frame_top)  # A tk.DrawingArea.
+        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._side_btn_frame_top)
         self._canvas.flush_events()
         self._canvas.draw()
         self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
-        # self._canvas.get_tk_widget().pack(fill=tk.BOTH)
         # self._canvas.get_tk_widget().config(cursor="none")
         self._bw_fig.canvas.flush_events()
 

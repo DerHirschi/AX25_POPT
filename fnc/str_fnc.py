@@ -116,7 +116,6 @@ def convert_str_to_datetime(date_str, date_format='%d/%m/%y %H:%M:%S'):
     except ValueError:
         return 0
 
-
 def conv_timestamp_delta(delta):
     if delta:
         timestamp = str(delta)

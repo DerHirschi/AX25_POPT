@@ -677,6 +677,7 @@ class APRS_ais(object):
             if time.time() > self._be_auto_tracer_timer:
                 return
             if time.time() > self._be_tracer_interval_timer:
+                print(f"Auto-Tracer timer: {round(self._be_auto_tracer_timer - time.time())}")
                 self.tracer_sendit()
                 return
 

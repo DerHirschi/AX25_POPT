@@ -481,13 +481,13 @@ class DefaultCLI(object):
         max_c = 0
         out = '\r'
         # out += '\r                       < AXIP - Clients >\r\r'
-        out += '-Call-----IP:Port------------------------Last---------------\r'
+        out += '-Call-----IP:Port---------------------------Last------------\r'
         for k in _ent.keys():
             if _ent[k].axip_add[0]:
                 max_c += 1
                 if max_c > max_ent:
                     break
-                out += '{:9} {:30} {:8}\r'.format(
+                out += '{:9} {:33} {:8}\r'.format(
                     _ent[k].own_call,
                     _ent[k].axip_add[0] + ':' + str(_ent[k].axip_add[1]),
                     get_timedelta_str(_ent[k].last_seen, r_just=False)
@@ -609,16 +609,60 @@ class DefaultCLI(object):
         if self.port_handler.aprs_ais is None:
             return f'\r # {STR_TABLE["cli_no_wx_data"][self.connection.cli_language]}\r\r'
         parm = 10
+        _ret = ''
+        self.decode_param()
         if self.parameter:
-            try:
-                parm = int(self.parameter[0])
-            except ValueError:
-                pass
-        ret = self._get_wx_cli_out(max_ent=parm)
-
-        if not ret:
+            if self.parameter[0].isdigit():
+                try:
+                    parm = int(self.parameter[0])
+                except ValueError:
+                    pass
+                _ret = self._get_wx_cli_out(max_ent=parm)
+            else:
+                _call = validate_call(self.parameter[0])
+                if _call:
+                    _len = parm
+                    if len(self.parameter) == 2:
+                        try:
+                            _len = int(self.parameter[1])
+                        except ValueError:
+                            pass
+                    _ret = self._get_wx_fm_call_cli_out(call=_call, max_ent=_len)
+        else:
+            _ret = self._get_wx_cli_out(max_ent=parm)
+        if not _ret:
             return f'\r # {STR_TABLE["cli_no_wx_data"][self.connection.cli_language]}\r\r'
-        return ret + '\r'
+        return _ret + '\r'
+
+    def _get_wx_fm_call_cli_out(self, call, max_ent=10):
+        _data = self.port_handler.aprs_ais.get_wx_data().get(call, '')
+        if not _data:
+            return ''
+        _data.reverse()
+        max_c = 0
+        _loc = f'{_data[0].get("locator", "------")[:6]}({round(_data[0].get("distance", -1))}km)'
+        out = '\r'
+        out += f'WX-Station: {call}\r'
+        out += f'Locator   : {_loc}\r'
+        out += f'Comment   : {_data[0].get("comment", "")}\r'
+        out += f'Datapoints: {len(_data)}\r\r'
+        out += '-----Last-Port--Temp-Press---Hum-Lum-Rain(24h)-WindGust\r'
+        for el in _data:
+            max_c += 1
+            if max_c > max_ent:
+                break
+            # _ent = self.port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
+            _td = get_timedelta_str(el['rx_time'])
+            _pres = f'{el["weather"].get("pressure", 0):.2f}'
+            _rain = f'{el["weather"].get("rain_24h", 0):.3f}'
+            out += f'{_td.rjust(9):10}{el.get("port_id", ""):6}'
+            out += f'{str(round(el["weather"].get("temperature", 0))):5}'
+            out += f'{_pres:7} '
+            out += f'{el["weather"].get("humidity", 0):3} '
+            out += f'{el["weather"].get("luminosity", 0):3} '
+            out += f'{_rain:9} '
+            out += f'{el["weather"].get("wind_gust", 0):.3f}\r'
+        return out
 
     def _get_wx_cli_out(self, max_ent=10):
         _data = self.port_handler.aprs_ais.get_wx_entry_sort_distance()
@@ -670,7 +714,8 @@ class DefaultCLI(object):
         out += f'Tracer Call     : {self.port_handler.aprs_ais.be_tracer_station}\r'
         out += f'Tracer WIDE Path: {self.port_handler.aprs_ais.be_tracer_wide}\r'
         out += f'Tracer intervall: {intervall_str}\r'
-        out += f'Auto Tracer     : {constant.BOOL_ON_OFF.get(self.port_handler.aprs_ais.be_auto_tracer_active, False)}\r'
+        out += f'Auto Tracer     : {constant.BOOL_ON_OFF.get(self.port_handler.aprs_ais.be_auto_tracer_active, False).lower()}\r'
+        # out += f'APRS-Server     : {constant.BOOL_ON_OFF.get(self.port_handler.aprs_ais., False).lower()}\r'
         out += f'Last Trace send : {_last_send}\r\r'
         out += '-----Last-Port--Call------LOC-------------Path----------------------------------\r'
         max_c = 0
