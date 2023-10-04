@@ -34,11 +34,11 @@ class MHWin(tk.Toplevel):
         ###################################
         # Vars
         self._rev_ent = False
-        self._alarm_active_var = tk.BooleanVar(self)
+        # self._alarm_active_var = self._root_win.setting_dx_alarm
         self._alarm_newCall_var = tk.BooleanVar(self)
         self._alarm_seenSince_var = tk.StringVar(self)
         self._alarm_distance_var = tk.StringVar(self)
-        self._tracer_active_var = tk.BooleanVar(self)
+        # self._tracer_active_var = tk.BooleanVar(self)
         self._tracer_duration_var = tk.StringVar(self)
         self._get_vars()
         # ############################### Columns ############################
@@ -60,7 +60,7 @@ class MHWin(tk.Toplevel):
 
         tk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
         tk.Checkbutton(frame_21_active,
-                       variable=self._alarm_active_var,
+                       variable=self._root_win.setting_dx_alarm,
                        # command=self._chk_alarm_active
                        ).pack(side=tk.LEFT, )
 
@@ -104,6 +104,10 @@ class MHWin(tk.Toplevel):
 
         # ###################### Auto Tracer ######################
         # Tracer
+        _auto_tracer_state = {
+            True: 'disabled',
+            False: 'normal'
+        }.get(self._root_win.get_tracer(), 'disabled')
         lower_frame_tracer = tk.Frame(self)
         lower_frame_tracer.grid(row=1, column=0, columnspan=2, sticky='nsew')
         frame_12_label = tk.Frame(lower_frame_tracer)
@@ -116,8 +120,9 @@ class MHWin(tk.Toplevel):
 
         tk.Label(frame_22_active, text='Activate ').pack(side=tk.LEFT, )
         tk.Checkbutton(frame_22_active,
-                       variable=self._tracer_active_var,
-                       # command=self._chk_alarm_active
+                       variable=self._root_win.setting_auto_tracer,
+                       command=self._root_win.set_auto_tracer,
+                       state=_auto_tracer_state
                        ).pack(side=tk.LEFT, )
         # duration
         frame_22_duration = tk.Frame(lower_frame_tracer)
@@ -130,6 +135,7 @@ class MHWin(tk.Toplevel):
                    increment=5,
                    width=5,
                    textvariable=self._tracer_duration_var,
+                   state=_auto_tracer_state
                    # command=self._set_alarm_distance
                    ).pack(side=tk.LEFT, )
 
@@ -137,7 +143,7 @@ class MHWin(tk.Toplevel):
         # TREE
         columns = (
             'mh_last_seen',
-            'mh_first_seen' ,
+            'mh_first_seen',
             'mh_port',
             'mh_call',
             'mh_loc',
@@ -184,11 +190,11 @@ class MHWin(tk.Toplevel):
         self._tree.bind('<<TreeviewSelect>>', self.entry_selected)
 
     def _get_vars(self):
-        self._alarm_active_var.set(bool())
+        # self._alarm_active_var.set(bool())
         self._alarm_newCall_var.set(bool())
         self._alarm_seenSince_var.set(str())
         self._alarm_distance_var.set(str())
-        self._tracer_active_var.set(bool())
+        # self._tracer_active_var.set(bool(self._root_win.setting_auto_tracer.get()))
         self._tracer_duration_var.set(str())
 
     def entry_selected(self, event):

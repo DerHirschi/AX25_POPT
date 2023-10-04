@@ -283,9 +283,7 @@ class BeaconTracer(tk.Toplevel):
 
     def _chk_active(self, event=None):
         self._save_vars()
-        _root_gui = PORT_HANDLER.get_root_gui()
-        if _root_gui is not None:
-            _root_gui.tabbed_sideFrame.set_tracer_chk(PORT_HANDLER.get_aprs_ais().be_tracer_active)
+        self._root_win.set_tracer_fm_aprs()
 
     def close(self):
         self._root_win.be_tracer_win = None

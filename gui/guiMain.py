@@ -348,59 +348,59 @@ class SideTabbedFrame:
         self._update_side_mh()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
-        # Settings ##########################
+        # Global Settings ##########################
         # Global Sound
-        self.sound_on = tk.BooleanVar(self.tab4_settings)
         Checkbutton(self.tab4_settings,
                     text="Sound",
-                    variable=self.sound_on,
+                    variable=self._main_win.setting_sound,
                     ).place(x=10, y=10)
-        # self.sound_on.set(True)
         # Global Sprech
-        self.sprech_on = tk.BooleanVar(self.tab4_settings)
         sprech_btn = Checkbutton(self.tab4_settings,
                                  text="Sprachausgabe",
-                                 variable=self.sprech_on,
+                                 variable=self._main_win.setting_sprech,
                                  command=self._chk_sprech_on
                                  )
         sprech_btn.place(x=10, y=35)
-        if is_linux():
-            self.sprech_on.set(True)
-        else:
-            self.sprech_on.set(False)
+        if not is_linux():
             sprech_btn.configure(state='disabled')
-
         # Global Bake
-        self.bake_on = tk.BooleanVar(self.tab4_settings)
         Checkbutton(self.tab4_settings,
                     text="Baken",
-                    variable=self.bake_on,
+                    variable=self._main_win.setting_bake,
                     ).place(x=10, y=60)
-        self.bake_on.set(True)
-        # self.bake_on.set(True)
         # DX Alarm  > dx_alarm_on
-        self.tracer_on = tk.BooleanVar(self.tab4_settings)
-
-        _chk_btn = Checkbutton(self.tab4_settings,
-                               text="Tracer",
-                               variable=self.tracer_on,
-                               command=self._chk_tracer,
-                               # state='disabled'
-                               )
-        _chk_btn.place(x=10, y=85)
-
+        Checkbutton(self.tab4_settings,
+                    text="Tracer",
+                    variable=self._main_win.setting_tracer,
+                    command=self._chk_tracer,
+                    # state='disabled'
+                    ).place(x=10, y=85)
+        _auto_tracer_state = {
+            True: 'disabled',
+            False: 'normal'
+        }.get(self._main_win.get_tracer(), 'disabled')
+        self._autotracer_chk_btn = Checkbutton(self.tab4_settings,
+                                               text="Auto-Tracer",
+                                               variable=self._main_win.setting_auto_tracer,
+                                               command=self._chk_tracer,
+                                               state=_auto_tracer_state
+                                               )
+        self._autotracer_chk_btn.place(x=10, y=115)
+        Checkbutton(self.tab4_settings,
+                    text="DX-Alarm",
+                    variable=self._main_win.setting_dx_alarm,
+                    # command=self._chk_tracer,
+                    # state='disabled'
+                    ).place(x=10, y=145)
         # RX ECHO
-        self.rx_echo_on = tk.BooleanVar(self.tab4_settings)
-        _chk_btn = Checkbutton(self.tab4_settings,
-                               text="RX-Echo",
-                               variable=self.rx_echo_on,
-                               )
-        _chk_btn.place(x=10, y=115)
-
+        Checkbutton(self.tab4_settings,
+                    text="RX-Echo",
+                    variable=self._main_win.setting_rx_echo,
+                    ).place(x=10, y=175)
         ############
         # CH ECHO
-        self.chk_btn_default_clr = _chk_btn.cget('bg')
-        self.ch_echo_vars = {}
+        self._chk_btn_default_clr = self._autotracer_chk_btn.cget('bg')
+        self._ch_echo_vars = {}
         #################
         #################
         # Monitor Frame
@@ -560,7 +560,7 @@ class SideTabbedFrame:
         }
 
         self._chk_mon_port()
-        self._update_ch_echo()
+        # self._update_ch_echo()
         self._update_side_mh()
         self._update_side_trace()
 
@@ -570,19 +570,25 @@ class SideTabbedFrame:
         # self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
     """
 
-    def _update_ch_echo(self):
+    def set_auto_tracer_state(self):
+        _state = {
+            True: 'disabled',
+            False: 'normal'
+        }.get(self._main_win.get_tracer(), 'disabled')
+        self._autotracer_chk_btn.configure(state=_state)
 
+    def _update_ch_echo(self):
         # TODO AGAIN !!
         _tab = self.tab5_ch_links
         akt_ch_id = self._main_win.channel_index
         _var = tk.BooleanVar(_tab)
-        for ch_id in list(self.ch_echo_vars.keys()):
+        for ch_id in list(self._ch_echo_vars.keys()):
             if ch_id not in list(PORT_HANDLER.get_all_connections().keys()):
-                self.ch_echo_vars[ch_id][1].destroy()
-                del self.ch_echo_vars[ch_id]
+                self._ch_echo_vars[ch_id][1].destroy()
+                del self._ch_echo_vars[ch_id]
         for ch_id in list(PORT_HANDLER.get_all_connections().keys()):
             conn = PORT_HANDLER.get_all_connections()[ch_id]
-            if ch_id not in self.ch_echo_vars.keys():
+            if ch_id not in self._ch_echo_vars.keys():
                 chk_bt_var = tk.IntVar()
                 chk_bt = tk.Checkbutton(_tab,
                                         text=conn.to_call_str,
@@ -594,30 +600,30 @@ class SideTabbedFrame:
                 chk_bt.place(x=10, y=10 + (28 * (ch_id - 1)))
                 # _chk_bt.configure(state='disabled')
                 tmp = chk_bt_var, chk_bt
-                self.ch_echo_vars[ch_id] = tmp
+                self._ch_echo_vars[ch_id] = tmp
             else:
-                self.ch_echo_vars[ch_id][1].configure(state='normal')
-                self.ch_echo_vars[ch_id][1].configure(text=conn.to_call_str)
+                self._ch_echo_vars[ch_id][1].configure(state='normal')
+                self._ch_echo_vars[ch_id][1].configure(text=conn.to_call_str)
             if ch_id != akt_ch_id:
-                self.ch_echo_vars[ch_id][1].configure(state='normal')
+                self._ch_echo_vars[ch_id][1].configure(state='normal')
             else:
-                self.ch_echo_vars[ch_id][1].configure(state='disabled')
-            if akt_ch_id in self.ch_echo_vars.keys():
-                if self.ch_echo_vars[ch_id][0].get() and self.ch_echo_vars[akt_ch_id][0].get():
-                    self.ch_echo_vars[ch_id][1].configure(bg='green1')
-                    self.ch_echo_vars[akt_ch_id][1].configure(bg='green1')
+                self._ch_echo_vars[ch_id][1].configure(state='disabled')
+            if akt_ch_id in self._ch_echo_vars.keys():
+                if self._ch_echo_vars[ch_id][0].get() and self._ch_echo_vars[akt_ch_id][0].get():
+                    self._ch_echo_vars[ch_id][1].configure(bg='green1')
+                    self._ch_echo_vars[akt_ch_id][1].configure(bg='green1')
                 else:
-                    self.ch_echo_vars[ch_id][1].configure(bg=self.chk_btn_default_clr)
-                    self.ch_echo_vars[akt_ch_id][1].configure(bg=self.chk_btn_default_clr)
+                    self._ch_echo_vars[ch_id][1].configure(bg=self._chk_btn_default_clr)
+                    self._ch_echo_vars[akt_ch_id][1].configure(bg=self._chk_btn_default_clr)
 
         # self.sound_on.set(1)
 
     def _chk_ch_echo(self):
         # self.main_win.channel_index
-        for ch_id in list(self.ch_echo_vars.keys()):
-            _vars = self.ch_echo_vars[ch_id]
+        for ch_id in list(self._ch_echo_vars.keys()):
+            _vars = self._ch_echo_vars[ch_id]
             if ch_id != self._main_win.channel_index:
-                if _vars[0].get() and self.ch_echo_vars[self._main_win.channel_index][0].get():
+                if _vars[0].get() and self._ch_echo_vars[self._main_win.channel_index][0].get():
                     PORT_HANDLER.get_all_connections()[ch_id].ch_echo.append(
                         PORT_HANDLER.get_all_connections()[self._main_win.channel_index])
                     PORT_HANDLER.get_all_connections()[self._main_win.channel_index].ch_echo.append(
@@ -653,10 +659,7 @@ class SideTabbedFrame:
     """
 
     def _chk_tracer(self):
-        self._main_win.set_tracer(self.tracer_on.get())
-
-    def set_tracer_chk(self, state: bool):
-        self.tracer_on.set(state)
+        self._main_win.set_tracer()
 
     def _chk_rnr(self):
         conn = self._main_win.get_conn()
@@ -690,7 +693,8 @@ class SideTabbedFrame:
             _conn.calc_irtt()
 
     def _chk_sprech_on(self):
-        if self.sprech_on.get():
+
+        if self._main_win.setting_sprech.get():
             self.t2speech.configure(state='normal')
         else:
             self.t2speech.configure(state='disabled')
@@ -735,7 +739,7 @@ class SideTabbedFrame:
             # show a message
             call = record[1]
             vias = record[5]
-            port = record[2]
+            port = record[3]
             port = int(port.split(' ')[0])
             if vias:
                 call = f'{call} {vias}'
@@ -911,7 +915,7 @@ class SideTabbedFrame:
             self.rx_count_var.set('RX: --- kb')
 
         self.t2speech_var.set(self._main_win.get_ch_param().t2speech)
-        self._update_ch_echo()
+        # self._update_ch_echo()
 
     def set_max_frame(self):
         conn = self._main_win.get_conn()
@@ -1538,12 +1542,9 @@ class ChBtnFrm:
 class TkMainWin:
     def __init__(self):
         ######################################
-        # Init Vars
-        self._init_vars()
-        ######################################
         # GUI Stuff
         self.main_win = tk.Tk()
-        self.main_win.title("P.ython o.ther P.acket T.erminal {}".format(VER))
+        self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
         self.main_win.geometry("1400x850")
         try:
             self.main_win.iconbitmap("favicon.ico")
@@ -1554,12 +1555,16 @@ class TkMainWin:
         self.style = ttk.Style()
         # self.style.theme_use('classic')
         # self.style.theme_use('clam')
+        ######################################
+        # Init Vars
+        self._init_vars()
+        ######################################
+        # ....
         self.main_win.columnconfigure(0, minsize=500, weight=1)
         self.main_win.columnconfigure(1, minsize=2, weight=5)
         self.main_win.rowconfigure(0, minsize=3, weight=1)  # Boarder
         self.main_win.rowconfigure(1, minsize=220, weight=2)
         self.main_win.rowconfigure(2, minsize=28, weight=1)  # CH BTN
-        ############################
         ############################
         # Input Output TXT Frames and Status Bar
         self._txt_win = TxTframe(self)
@@ -1576,8 +1581,6 @@ class TkMainWin:
         # Channel Buttons
         self._ch_btn = ChBtnFrm(self)
         self._ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
-        #########################
-
         #########################
         # Tabbed Frame right
         self._side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
@@ -1600,11 +1603,6 @@ class TkMainWin:
         ##############
         # Side Frame
         self.tabbed_sideFrame = SideTabbedFrame(self)
-        self.setting_sound = self.tabbed_sideFrame.sound_on
-        self.setting_sprech = self.tabbed_sideFrame.sprech_on
-        self.setting_bake = self.tabbed_sideFrame.bake_on
-        self.setting_rx_echo = self.tabbed_sideFrame.rx_echo_on
-        # self.setting_dx_alarm = self.tabbed_sideFrame.dx_alarm_on
         ############################
         # Canvas Plot
         self._init_bw_plot()
@@ -1627,8 +1625,6 @@ class TkMainWin:
         self.main_win.mainloop()
 
     def __del__(self):
-        # self.disco_all()
-        # self.ax25_port_handler.close_all()
         pass
 
     def _destroy_win(self):
@@ -1667,11 +1663,29 @@ class TkMainWin:
         #####################
         # GUI VARS
         self.connect_history = {}
-
+        # GLb Settings
+        self.setting_sound = tk.BooleanVar(self.main_win)
+        self.setting_sprech = tk.BooleanVar(self.main_win)
+        self.setting_bake = tk.BooleanVar(self.main_win)
+        self.setting_rx_echo = tk.BooleanVar(self.main_win)
+        self.setting_tracer = tk.BooleanVar(self.main_win)
+        self.setting_auto_tracer = tk.BooleanVar(self.main_win)
+        self.setting_dx_alarm = tk.BooleanVar(self.main_win)
+        # Glb Settings Defaults
+        self.setting_sound.set(False)
+        self.setting_bake.set(True)
+        self.setting_rx_echo.set(False)
+        self.setting_tracer.set(False)
+        self.setting_auto_tracer.set(False)
+        self.setting_dx_alarm.set(True)
+        if is_linux():
+            self.setting_sprech.set(True)
+        else:
+            self.setting_sprech.set(False)
+        # Controlling
         self.ch_alarm = False
         self.ch_alarm_sound_one_time = False
         self.channel_index = 1
-
         self.mon_mode = 0
         self._mon_buff = []
         self._sound_th = None
@@ -1898,8 +1912,64 @@ class TkMainWin:
                   bg="HotPink2", width=12, command=self._kaffee).place(x=215, y=10)
         """
 
-    def _monitor_start_msg(self):
+    #######################################
+    # KEYBIND Stuff
+    def _set_binds(self):
+        self._inp_txt.bind("<ButtonRelease-1>", self._on_click_inp_txt)
 
+    def _set_keybinds(self):
+        self.main_win.unbind("<Key-F10>")
+        self.main_win.unbind("<KeyPress-F10>")
+        # self.main_win.bind("<KeyPress>",lambda event: self.callback(event))
+        self.main_win.bind('<F1>', lambda event: self.switch_channel(1))
+        self.main_win.bind('<F2>', lambda event: self.switch_channel(2))
+        self.main_win.bind('<F3>', lambda event: self.switch_channel(3))
+        self.main_win.bind('<F4>', lambda event: self.switch_channel(4))
+        self.main_win.bind('<F5>', lambda event: self.switch_channel(5))
+        self.main_win.bind('<F6>', lambda event: self.switch_channel(6))
+        self.main_win.bind('<F7>', lambda event: self.switch_channel(7))
+        self.main_win.bind('<F8>', lambda event: self.switch_channel(8))
+        self.main_win.bind('<F9>', lambda event: self.switch_channel(9))
+        self.main_win.bind('<F10>', lambda event: self.switch_channel(10))
+        self.main_win.bind('<F12>', lambda event: self.switch_channel(0))
+        self.main_win.bind('<Return>', self._snd_text)
+        self.main_win.bind('<KeyRelease-Return>', self._release_return)
+        self.main_win.bind('<Shift-KeyPress-Return>', self._shift_return)
+        self.main_win.bind('<KeyRelease-Left>', self._arrow_keys)
+        self.main_win.bind('<KeyRelease-Right>', self._arrow_keys)
+        self.main_win.bind('<KeyRelease-Up>', self._arrow_keys)
+        self.main_win.bind('<KeyRelease-Down>', self._arrow_keys)
+        # self.main_win.bind('<KP_Enter>', self.snd_text)
+        self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
+        self.main_win.bind('<Escape>', lambda event: self.open_new_conn_win())
+        self.main_win.bind('<Alt-d>', lambda event: self._disco_conn())
+        self.main_win.bind('<Control-c>', lambda event: self._copy_select())
+        self.main_win.bind('<Control-x>', lambda event: self._cut_select())
+        # self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
+        self.main_win.bind('<Control-a>', lambda event: self._select_all())
+        self.main_win.bind('<Control-plus>', lambda event: self._increase_textsize())
+        self.main_win.bind('<Control-minus>', lambda event: self._decrease_textsize())
+        self.main_win.bind('<Control-Right>', lambda event: self._text_win_bigger())
+        self.main_win.bind('<Control-Left>', lambda event: self._text_win_smaller())
+
+        self.main_win.bind('<Key>', lambda event: self._any_key(event))
+
+    def _any_key(self, event: tk.Event):
+        if event.keycode == 104:  # Numpad Enter
+            self._snd_text(event)
+
+    def _arrow_keys(self, event=None):
+        self._on_click_inp_txt()
+
+    def _shift_return(self, event=None):
+        pass
+
+    def _release_return(self, event=None):
+        pass
+
+    ##########################
+    # Start Message in Monitor
+    def _monitor_start_msg(self):
         # tmp_lang = int(self.language)
         # self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
         self.sprech(random.choice(WELCOME_SPEECH))
@@ -1926,6 +1996,36 @@ class TkMainWin:
                                         PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[0],
                                         PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[1]
                                         ))
+
+    ##########################
+    # GUI Sizing/Formatting Stuff
+    def _increase_textsize(self):
+        self.text_size += 1
+        self.text_size = max(self.text_size, 3)
+        width = self._inp_txt.cget('width')
+        self._inp_txt.configure(font=(FONT, self.text_size), width=width + 1)
+        self._out_txt.configure(font=(FONT, self.text_size), width=width + 1)
+        self._mon_txt.configure(font=(FONT, self.text_size), width=width + 1)
+
+    def _decrease_textsize(self):
+        self.text_size -= 1
+        self.text_size = max(self.text_size, 3)
+        width = self._inp_txt.cget('width')
+        self._inp_txt.configure(font=(FONT, self.text_size), width=width - 1)
+        self._out_txt.configure(font=(FONT, self.text_size), width=width - 1)
+        self._mon_txt.configure(font=(FONT, self.text_size), width=width - 1)
+
+    def _text_win_bigger(self):
+        _width = self._inp_txt.cget('width')
+        self._inp_txt.configure(width=_width + 1)
+        self._out_txt.configure(width=_width + 1)
+        self._mon_txt.configure(width=_width + 1)
+
+    def _text_win_smaller(self):
+        _width = self._inp_txt.cget('width')
+        self._inp_txt.configure(width=max(_width - 1, 56))
+        self._out_txt.configure(width=max(_width - 1, 56))
+        self._mon_txt.configure(width=max(_width - 1, 56))
 
     ##########################
     # Clipboard Stuff
@@ -2006,87 +2106,6 @@ class TkMainWin:
     def _save_monitor_to_file(self):
         data = self._mon_txt.get('1.0', tk.END)
         save_file_dialog(data)
-
-    def _set_binds(self):
-        self._inp_txt.bind("<ButtonRelease-1>", self._on_click_inp_txt)
-
-    def _set_keybinds(self):
-        self.main_win.unbind("<Key-F10>")
-        self.main_win.unbind("<KeyPress-F10>")
-        # self.main_win.bind("<KeyPress>",lambda event: self.callback(event))
-        self.main_win.bind('<F1>', lambda event: self.switch_channel(1))
-        self.main_win.bind('<F2>', lambda event: self.switch_channel(2))
-        self.main_win.bind('<F3>', lambda event: self.switch_channel(3))
-        self.main_win.bind('<F4>', lambda event: self.switch_channel(4))
-        self.main_win.bind('<F5>', lambda event: self.switch_channel(5))
-        self.main_win.bind('<F6>', lambda event: self.switch_channel(6))
-        self.main_win.bind('<F7>', lambda event: self.switch_channel(7))
-        self.main_win.bind('<F8>', lambda event: self.switch_channel(8))
-        self.main_win.bind('<F9>', lambda event: self.switch_channel(9))
-        self.main_win.bind('<F10>', lambda event: self.switch_channel(10))
-        self.main_win.bind('<F12>', lambda event: self.switch_channel(0))
-        self.main_win.bind('<Return>', self._snd_text)
-        self.main_win.bind('<KeyRelease-Return>', self._release_return)
-        self.main_win.bind('<Shift-KeyPress-Return>', self._shift_return)
-        self.main_win.bind('<KeyRelease-Left>', self._arrow_keys)
-        self.main_win.bind('<KeyRelease-Right>', self._arrow_keys)
-        self.main_win.bind('<KeyRelease-Up>', self._arrow_keys)
-        self.main_win.bind('<KeyRelease-Down>', self._arrow_keys)
-        # self.main_win.bind('<KP_Enter>', self.snd_text)
-        self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
-        self.main_win.bind('<Escape>', lambda event: self.open_new_conn_win())
-        self.main_win.bind('<Alt-d>', lambda event: self._disco_conn())
-        self.main_win.bind('<Control-c>', lambda event: self._copy_select())
-        self.main_win.bind('<Control-x>', lambda event: self._cut_select())
-        # self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
-        self.main_win.bind('<Control-a>', lambda event: self._select_all())
-        self.main_win.bind('<Control-plus>', lambda event: self._increase_textsize())
-        self.main_win.bind('<Control-minus>', lambda event: self._decrease_textsize())
-        self.main_win.bind('<Control-Right>', lambda event: self._text_win_bigger())
-        self.main_win.bind('<Control-Left>', lambda event: self._text_win_smaller())
-
-        self.main_win.bind('<Key>', lambda event: self._any_key(event))
-
-    def _any_key(self, event: tk.Event):
-        if event.keycode == 104:  # Numpad Enter
-            self._snd_text(event)
-
-    def _arrow_keys(self, event=None):
-        self._on_click_inp_txt()
-
-    def _shift_return(self, event=None):
-        pass
-
-    def _release_return(self, event=None):
-        pass
-
-    def _increase_textsize(self):
-        self.text_size += 1
-        self.text_size = max(self.text_size, 3)
-        width = self._inp_txt.cget('width')
-        self._inp_txt.configure(font=(FONT, self.text_size), width=width + 1)
-        self._out_txt.configure(font=(FONT, self.text_size), width=width + 1)
-        self._mon_txt.configure(font=(FONT, self.text_size), width=width + 1)
-
-    def _decrease_textsize(self):
-        self.text_size -= 1
-        self.text_size = max(self.text_size, 3)
-        width = self._inp_txt.cget('width')
-        self._inp_txt.configure(font=(FONT, self.text_size), width=width - 1)
-        self._out_txt.configure(font=(FONT, self.text_size), width=width - 1)
-        self._mon_txt.configure(font=(FONT, self.text_size), width=width - 1)
-
-    def _text_win_bigger(self):
-        _width = self._inp_txt.cget('width')
-        self._inp_txt.configure(width=_width + 1)
-        self._out_txt.configure(width=_width + 1)
-        self._mon_txt.configure(width=_width + 1)
-
-    def _text_win_smaller(self):
-        _width = self._inp_txt.cget('width')
-        self._inp_txt.configure(width=max(_width - 1, 56))
-        self._out_txt.configure(width=max(_width - 1, 56))
-        self._mon_txt.configure(width=max(_width - 1, 56))
 
     def change_conn_btn(self):
         # TODO Nur triggern wenn ch_btn click | neue in conn | disco
@@ -3058,26 +3077,36 @@ class TkMainWin:
     def get_ch_new_data_tr(self, ch_id):
         return bool(self._win_buf[ch_id].new_data_tr)
 
-    @staticmethod
-    def set_tracer(state: bool):
+    def set_tracer(self, state=None):
         _ais_obj = PORT_HANDLER.get_aprs_ais()
         if _ais_obj is not None:
-            _ais_obj.be_tracer_active = bool(state)
+            _ais_obj.be_tracer_active = bool(self.setting_tracer.get())
+        else:
+            self.setting_tracer.set(False)
+        self.tabbed_sideFrame.set_auto_tracer_state()
 
+    @staticmethod
+    def get_tracer():
+        _ais_obj = PORT_HANDLER.get_aprs_ais()
+        if _ais_obj is not None:
+            return _ais_obj.be_tracer_active
+        return False
 
-"""
-if __name__ == '__main__':
-    logger.info(f"PoPT_{VER} start....")
-    #############
-    # INIT GUI
-    # TODO: if setting_gui (running without GUI option):
-    logger.info(f"Loading GUI.")
-    root = tk.Tk()
-    # gui.guiMain.TkMainWin()
-    TkMainWin(root)
-    root.mainloop()
+    def set_tracer_fm_aprs(self):
+        _ais_obj = PORT_HANDLER.get_aprs_ais()
+        if _ais_obj is not None:
+            self.setting_tracer.set(_ais_obj.be_tracer_active)
+        else:
+            self.setting_tracer.set(False)
+        self.tabbed_sideFrame.set_auto_tracer_state()
 
-    logger.info(f"PoPT_{VER} ENDE.")
-    print('ENDE')
-
-"""
+    def set_auto_tracer(self, event=None):
+        _ais_obj = PORT_HANDLER.get_aprs_ais()
+        set_to = False
+        if _ais_obj is not None:
+            if self.setting_tracer.get():
+                set_to = False
+            else:
+                set_to = not bool(self.setting_auto_tracer.get())
+        self.setting_auto_tracer.set(set_to)
+        self.tabbed_sideFrame.set_auto_tracer_state()
