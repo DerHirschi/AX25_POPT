@@ -71,35 +71,35 @@ class MHWin(tk.Toplevel):
         tk.Label(frame_21_newCall, text='new Call ').pack(side=tk.LEFT, )
         tk.Checkbutton(frame_21_newCall,
                        variable=self._alarm_newCall_var,
-                       # command=self._chk_alarm_active
+                       command=self._set_alarm_newCall
                        ).pack(side=tk.LEFT, )
 
         # Alarm seen since Days
         frame_21_seen = tk.Frame(lower_frame)
         frame_21_seen.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
 
-        tk.Label(frame_21_seen, text='seen since (Days) ').pack(side=tk.LEFT, )
+        tk.Label(frame_21_seen, text='seen since (Days) (0 = off)').pack(side=tk.LEFT, )
         tk.Spinbox(frame_21_seen,
                    from_=1,
                    to=365,
-                   increment=10,
+                   increment=1,
                    width=4,
                    textvariable=self._alarm_seenSince_var,
-                   # command=self._set_alarm_distance
+                   command=self._set_alarm_last_seen
                    ).pack(side=tk.LEFT, )
 
         # Alarm Distance
         frame_21_distance = tk.Frame(lower_frame)
         frame_21_distance.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
 
-        tk.Label(frame_21_distance, text='Distance ').pack(side=tk.LEFT, )
+        tk.Label(frame_21_distance, text='Distance (0 = off)').pack(side=tk.LEFT, )
         tk.Spinbox(frame_21_distance,
-                   from_=1,
+                   from_=0,
                    to=20000,
-                   increment=50,
+                   increment=1,
                    width=6,
                    textvariable=self._alarm_distance_var,
-                   # command=self._set_alarm_distance
+                   command=self._set_alarm_distance
                    ).pack(side=tk.LEFT, )
 
         # ###################### Auto Tracer ######################
@@ -191,11 +191,30 @@ class MHWin(tk.Toplevel):
 
     def _get_vars(self):
         # self._alarm_active_var.set(bool())
-        self._alarm_newCall_var.set(bool())
-        self._alarm_seenSince_var.set(str())
-        self._alarm_distance_var.set(str())
+        self._alarm_newCall_var.set(bool(MH_LIST.parm_new_call_alarm))
+        self._alarm_seenSince_var.set(str(MH_LIST.parm_lastseen_alarm))
+        self._alarm_distance_var.set(str(MH_LIST.parm_distance_alarm))
         # self._tracer_active_var.set(bool(self._root_win.setting_auto_tracer.get()))
         self._tracer_duration_var.set(str())
+
+    def _set_alarm_distance(self, event=None):
+        _var = self._alarm_distance_var.get()
+        try:
+            _var = int(_var)
+        except ValueError:
+            return
+        MH_LIST.parm_distance_alarm = _var
+
+    def _set_alarm_last_seen(self, event=None):
+        _var = self._alarm_seenSince_var.get()
+        try:
+            _var = int(_var)
+        except ValueError:
+            return
+        MH_LIST.parm_lastseen_alarm = _var
+
+    def _set_alarm_newCall(self, event=None):
+        MH_LIST.parm_new_call_alarm = bool(self._alarm_newCall_var.get())
 
     def entry_selected(self, event):
         for selected_item in self._tree.selection():

@@ -48,7 +48,8 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.guiFileTX import FileSend
 from constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
-    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN
+    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, CFG_sound_CONN, \
+    CFG_sound_DICO
 from string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color
@@ -385,18 +386,18 @@ class SideTabbedFrame:
                                                command=self._chk_tracer,
                                                state=_auto_tracer_state
                                                )
-        self._autotracer_chk_btn.place(x=10, y=115)
+        self._autotracer_chk_btn.place(x=10, y=110)
         Checkbutton(self.tab4_settings,
                     text="DX-Alarm",
                     variable=self._main_win.setting_dx_alarm,
                     # command=self._chk_tracer,
                     # state='disabled'
-                    ).place(x=10, y=145)
+                    ).place(x=10, y=135)
         # RX ECHO
         Checkbutton(self.tab4_settings,
                     text="RX-Echo",
                     variable=self._main_win.setting_rx_echo,
-                    ).place(x=10, y=175)
+                    ).place(x=10, y=160)
         ############
         # CH ECHO
         self._chk_btn_default_clr = self._autotracer_chk_btn.cget('bg')
@@ -1663,7 +1664,7 @@ class TkMainWin:
         #####################
         # GUI VARS
         self.connect_history = {}
-        # GLb Settings
+        # GLb Setting Vars
         self.setting_sound = tk.BooleanVar(self.main_win)
         self.setting_sprech = tk.BooleanVar(self.main_win)
         self.setting_bake = tk.BooleanVar(self.main_win)
@@ -1671,17 +1672,6 @@ class TkMainWin:
         self.setting_tracer = tk.BooleanVar(self.main_win)
         self.setting_auto_tracer = tk.BooleanVar(self.main_win)
         self.setting_dx_alarm = tk.BooleanVar(self.main_win)
-        # Glb Settings Defaults
-        self.setting_sound.set(False)
-        self.setting_bake.set(True)
-        self.setting_rx_echo.set(False)
-        self.setting_tracer.set(False)
-        self.setting_auto_tracer.set(False)
-        self.setting_dx_alarm.set(True)
-        if is_linux():
-            self.setting_sprech.set(True)
-        else:
-            self.setting_sprech.set(False)
         # Controlling
         self.ch_alarm = False
         self.ch_alarm_sound_one_time = False
@@ -1725,6 +1715,22 @@ class TkMainWin:
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 6)
         self._bw_plot_lines = {}
+        ########################################
+        # Set Default Settings TODO Save to cfg
+        self.setting_sound.set(False)
+        self.setting_bake.set(True)
+        self.setting_rx_echo.set(False)
+        self.setting_tracer.set(False)
+        self.setting_auto_tracer.set(False)
+        self.setting_dx_alarm.set(True)
+        if is_linux():
+            self.setting_sprech.set(True)
+        else:
+            self.setting_sprech.set(False)
+        # MH
+        MH_LIST.parm_new_call_alarm = True
+        MH_LIST.parm_distance_alarm = 50
+        MH_LIST.parm_lastseen_alarm = 1
 
     def _init_bw_plot(self):
         # plt.ion()
@@ -2259,13 +2265,13 @@ class TkMainWin:
                         if tr:
                             if temp.rx_beep_tr:
                                 temp.rx_beep_tr = False
-                                self._sound_play(self._root_dir + '//data//sound//rx_beep.wav', False)
+                                self._sound_play(self._root_dir + CFG_sound_RX_BEEP, False)
 
     def new_conn_sound(self):
-        self._sound_play(self._root_dir + '//data//sound//conn_alarm.wav', False)
+        self._sound_play(self._root_dir + CFG_sound_CONN, False)
 
     def disco_sound(self):
-        self._sound_play(self._root_dir + '//data//sound//disco_alarm.wav', False)
+        self._sound_play(self._root_dir + CFG_sound_DICO, False)
 
     # Sound Ende
     #################
@@ -2274,10 +2280,10 @@ class TkMainWin:
 
     def _dx_alarm(self):
         """ Alarm when new User in MH List """
-        # self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
-        _clr = generate_random_hex_color()
-        if self._mh_btn.cget('bg') != _clr:
-            self._mh_btn.configure(bg=_clr)
+        if self.setting_dx_alarm.get():
+            _clr = generate_random_hex_color()
+            if self._mh_btn.cget('bg') != _clr:
+                self._mh_btn.configure(bg=_clr)
 
     def _tracer_alarm(self):
         """ Tracer Alarm """
@@ -2293,7 +2299,7 @@ class TkMainWin:
             self._tracer_btn.configure(bg=self._tracer_btn_def_clr)
 
     def _reset_dx_alarm(self):
-        MH_LIST.new_call_alarm = False
+        MH_LIST.dx_alarm_trigger = False
         if self._mh_btn.cget('bg') != self._mh_btn_def_clr:
             self._mh_btn.configure(bg=self._mh_btn_def_clr)
 
@@ -2347,7 +2353,7 @@ class TkMainWin:
             # if MH_LIST.new_call_alarm and self.setting_dx_alarm.get():
             if self.ch_alarm:
                 self.ch_status_update()
-            if MH_LIST.new_call_alarm:
+            if MH_LIST.dx_alarm_trigger:
                 self._dx_alarm()
             if PORT_HANDLER.get_aprs_ais() is not None:
                 if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():

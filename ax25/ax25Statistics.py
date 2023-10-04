@@ -101,7 +101,10 @@ class MH(object):
                 if not hasattr(self.calls[call], att):
                     setattr(self.calls[call], att, getattr(MyHeard, att))
 
-        self.new_call_alarm = False
+        self.dx_alarm_trigger = False
+        self.parm_new_call_alarm = False
+        self.parm_distance_alarm = 50
+        self.parm_lastseen_alarm = 1
 
     def __del__(self):
         pass
@@ -109,11 +112,11 @@ class MH(object):
     def bw_mon_inp(self, ax25_frame, port_id):
         if port_id not in self.port_statistik_DB.keys():
             self.port_statistik_DB[port_id] = {}
-        self.init_bw_struct(port_id)
-        self.input_stat_db(ax_frame=ax25_frame, port_id=port_id)
+        self._init_bw_struct(port_id)
+        self._input_stat_db(ax_frame=ax25_frame, port_id=port_id)
 
-    def input_bw_calc(self, port_id, ax_frame=None, ):
-        self.init_bw_struct(port_id=port_id)
+    def _input_bw_calc(self, port_id, ax_frame=None, ):
+        self._init_bw_struct(port_id=port_id)
         if ax_frame is not None:
             if self.now_min == datetime.now().strftime('%H:%M:%S')[:-1]:
                 self.bandwidth[port_id][self.now_min] += len(ax_frame.data_bytes)
@@ -125,12 +128,12 @@ class MH(object):
                 self.now_min = datetime.now().strftime('%H:%M:%S')[:-1]
                 self.bandwidth[port_id][self.now_min] = 0
 
-    def init_bw_struct(self, port_id):
+    def _init_bw_struct(self, port_id):
         if port_id not in self.bandwidth:
             self.bandwidth[port_id] = get_bandwidth_struct()
 
     def get_bandwidth(self, port_id, baud=1200):
-        self.init_bw_struct(port_id=port_id)
+        self._init_bw_struct(port_id=port_id)
         ret = deque([0] * 60, maxlen=60)
         now = datetime.now()
         ten_minutes_ago = now - timedelta(minutes=10)
@@ -147,7 +150,7 @@ class MH(object):
             i += 1
         return ret
 
-    def input_stat_db(self, ax_frame, port_id):
+    def _input_stat_db(self, ax_frame, port_id):
         now = datetime.now()
         date_str = now.strftime('%d/%m/%y')
         hour = now.hour
@@ -162,7 +165,7 @@ class MH(object):
                 if dt not in last_days:
                     del self.port_statistik_DB[port_id][dt]
 
-        self.input_bw_calc(ax_frame=ax_frame, port_id=port_id)
+        self._input_bw_calc(ax_frame=ax_frame, port_id=port_id)
         if date_str not in list(self.port_statistik_DB[port_id].keys()):
             self.port_statistik_DB[port_id][date_str] = init_day_dic()
         self.port_statistik_DB[port_id][date_str][hour]['N_pack'][minute] += 1
@@ -181,16 +184,20 @@ class MH(object):
         if port_id not in self.port_statistik_DB.keys():
             self.port_statistik_DB[port_id] = init_day_dic()
         # self.port_statistik_DB[port_id].input_stat_db(ax_frame=ax25_frame)
-        self.input_stat_db(ax25_frame, port_id)
+        self._input_stat_db(ax25_frame, port_id)
         ########################
         # MH Entry
         call_str = str(ax25_frame.from_call.call_str)
         if call_str not in self.calls.keys():
-            self.new_call_alarm = True
             ent = MyHeard()
-            ent.first_seen = datetime.now()
+            if self.parm_new_call_alarm:
+                self.dx_alarm_trigger = True
         else:
             ent = self.calls[call_str]
+        _t_delta = datetime.now() - ent.last_seen
+        if self.parm_lastseen_alarm:
+            if _t_delta.days >= self.parm_lastseen_alarm:
+                self.dx_alarm_trigger = True
         ent.last_seen = datetime.now()
         ent.own_call = call_str
         ent.pac_n += 1
@@ -227,6 +234,10 @@ class MH(object):
         if db_ent:
             ent.locator = str(db_ent.LOC)
             ent.distance = float(db_ent.Distance)
+        if self.parm_distance_alarm:
+            if ent.distance >= self.parm_distance_alarm:
+                self.dx_alarm_trigger = True
+
         self.calls[call_str] = ent
 
     def mh_get_data_fm_call(self, call_str):
@@ -292,6 +303,7 @@ class MH(object):
                     return self.calls[call_str].axip_add
         return '', 0
 
+    """
     def mh_get_ip_fm_all(self, param_fail=20):
         ret: [(str, (str, int))] = []
         for stat_call in self.calls.keys():
@@ -300,6 +312,7 @@ class MH(object):
                 ent = stat_call, station.axip_add
                 ret.append(ent)
         return ret
+    """
 
     def mh_ip_failed(self, axip: str):
         for k in self.calls.keys():

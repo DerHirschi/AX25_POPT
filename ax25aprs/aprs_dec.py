@@ -141,10 +141,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
     dist = ''
     typ = ''
     loc = ''
-    db_ent = USER_DB.get_entry(full_aprs_frame['from'], add_new=add_new_user)
     for k in aprs_frame:
-        # print(f"{k}: {aprs_frame[k]}")
-
         if aprs_frame[k]:
             # if k not in ['from', 'to',  'symbol_table', 'symbol', 'subpacket', 'weather']:
             if k not in ['from', 'to', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
@@ -197,15 +194,17 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
         if k in ['weather', 'wx']:
             typ = 'APRS-WX'
-    if db_ent:
-        if loc:
+
+    if loc:
+        db_ent = USER_DB.get_entry(full_aprs_frame.get('from', ''), add_new=add_new_user)
+        if db_ent:
             db_ent.LOC = loc
             db_ent.Lat = aprs_frame['latitude']
             db_ent.Lon = aprs_frame['longitude']
             if type(dist) == float:
                 db_ent.Distance = float(dist)
-        if not db_ent.TYP and typ:
-            db_ent.TYP = typ
+            if not db_ent.TYP and typ:
+                db_ent.TYP = typ
 
     return ret, dist
 
