@@ -105,6 +105,8 @@ class MH(object):
 
         self.dx_alarm_trigger = False
         self.last_dx_alarm = time.time()
+        self.dx_alarm_hist = []
+        self.dx_alarm_perma_hist = {}
         self.parm_new_call_alarm = False
         self.parm_distance_alarm = 50
         self.parm_lastseen_alarm = 1
@@ -113,10 +115,17 @@ class MH(object):
     def __del__(self):
         pass
 
-    def _set_dx_alarm(self, port_id: int):
+    def _set_dx_alarm(self, ent, port_id: int):
         if port_id in self.parm_alarm_ports:
             self.dx_alarm_trigger = True
             self.last_dx_alarm = time.time()
+            _now = datetime.now()
+            self.dx_alarm_hist.append(ent.own_call)
+            self.dx_alarm_perma_hist[str(ent.own_call)] = _now, ent
+
+    def reset_dx_alarm_his(self):
+        self.dx_alarm_hist = []
+        self.dx_alarm_trigger = False
 
     def bw_mon_inp(self, ax25_frame, port_id):
         if port_id not in self.port_statistik_DB.keys():
@@ -188,6 +197,7 @@ class MH(object):
             self.calls[ent].axip_add = axip_add
 
     def mh_inp(self, ax25_frame, port_name, port_id, digi=''):
+        _dx_alarm = False
         if not digi:
             ########################
             # Port Stat
@@ -204,13 +214,13 @@ class MH(object):
         if call_str not in self.calls.keys():
             ent = MyHeard()
             if self.parm_new_call_alarm:
-                self._set_dx_alarm(port_id)
+                _dx_alarm = True
         else:
             ent = self.calls[call_str]
         _t_delta = datetime.now() - ent.last_seen
         if self.parm_lastseen_alarm:
             if _t_delta.days >= self.parm_lastseen_alarm:
-                self._set_dx_alarm(port_id)
+                _dx_alarm = True
         ent.last_seen = datetime.now()
         ent.own_call = call_str
         ent.pac_n += 1
@@ -253,7 +263,9 @@ class MH(object):
             ent.distance = float(db_ent.Distance)
         if self.parm_distance_alarm:
             if ent.distance >= self.parm_distance_alarm:
-                self._set_dx_alarm(port_id)
+                _dx_alarm = True
+        if _dx_alarm:
+            self._set_dx_alarm(port_id=port_id, ent=ent)
 
         self.calls[call_str] = ent
 

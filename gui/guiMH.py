@@ -292,8 +292,12 @@ class MHWin(tk.Toplevel):
     def _update_tree(self):
         for i in self._tree.get_children():
             self._tree.delete(i)
+        self._tree.tag_configure("dx_alarm", background='#55ed9f', foreground='black')
         for ret_ent in self._tree_data:
-            self._tree.insert('', tk.END, values=ret_ent)
+            if ret_ent[1]:
+                self._tree.insert('', tk.END, values=ret_ent[0], tags=('dx_alarm',))
+            else:
+                self._tree.insert('', tk.END, values=ret_ent[0], )
 
     def _sort_entry(self, flag: str):
         sort_date = MH_LIST.get_sort_mh_entry(flag_str=flag, reverse=self._rev_ent)
@@ -313,8 +317,11 @@ class MHWin(tk.Toplevel):
                 axip_str = '{} - {}'.format(ent.axip_add[0], ent.axip_add[1])
             else:
                 axip_str = ''
+            _dx_alarm = False
+            if ent.own_call in list(MH_LIST.dx_alarm_hist):
+                _dx_alarm = True
 
-            self._tree_data.append((
+            self._tree_data.append(((
                 f'{conv_time_DE_str(ent.last_seen)}',
                 f'{conv_time_DE_str(ent.first_seen)}',
                 f'{ent.port_id} {ent.port}',
@@ -326,12 +333,13 @@ class MHWin(tk.Toplevel):
                 ' '.join(ent.route),
                 f'{axip_str}',
                 f'{ent.axip_fail}',
-            ))
+            ), _dx_alarm))
 
     def __del__(self):
         self._root_win.mh_window = None
         # self.destroy()
 
     def close(self):
+        MH_LIST.reset_dx_alarm_his()
         self._root_win.mh_window = None
         self.destroy()

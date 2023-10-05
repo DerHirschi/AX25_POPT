@@ -774,13 +774,13 @@ class APRS_ais(object):
                 _dist = _user_db_ent.Distance
             pack['distance'] = _dist
             pack['locator'] = _loc
-
+            pack['tr_alarm'] = self._tracer_check_alarm(pack)
             if _k in self.be_tracer_traced_packets.keys():
                 self.be_tracer_traced_packets[_k].append(pack)
             else:
                 self.be_tracer_traced_packets[_k] = deque([pack], maxlen=500)
             # print(f'Tracer RX dict: {self.be_tracer_traced_packets}')
-            self._tracer_check_alarm(pack)
+            # self._tracer_check_alarm(pack)
             self.tracer_update_gui()
             return True
         return False
@@ -791,6 +791,8 @@ class APRS_ais(object):
         _dist = pack.get('distance', 0)
         if _dist >= self.be_tracer_alarm_range:
             self._be_tracer_is_alarm = True
+            return True
+        return False
 
     def tracer_is_alarm(self):
         return self._be_tracer_is_alarm
