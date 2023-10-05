@@ -230,7 +230,6 @@ class AX25Conn(object):
         """ Encoding """
         self.encoding = 'CP437'     # 'UTF-8'
         """ User DB Entry """
-        # self.user_db = USER_DB
         self.user_db_ent = False
         self.cli_language = 0
         self.set_user_db_ent()

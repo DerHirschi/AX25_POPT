@@ -983,58 +983,80 @@ class TxTframe:
         self.in_txt_win.grid(row=0, column=0, columnspan=12, sticky="nsew")
         ##############
         # Status Frame
-        self.status_name = Label(self._status_frame, text="", font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                 foreground=STAT_BAR_TXT_CLR,
-                                 bg=STAT_BAR_CLR)
-        self.status_name.grid(row=1, column=1, sticky="nsew")
+        self.status_name_var = tk.StringVar(self._status_frame)
+        self.status_status_var = tk.StringVar(self._status_frame)
+        self.status_unack_var = tk.StringVar(self._status_frame)
+        self.status_vs_var = tk.StringVar(self._status_frame)
+        self.status_n2_var = tk.StringVar(self._status_frame)
+        self.status_t1_var = tk.StringVar(self._status_frame)
+        self.status_t2_var = tk.StringVar(self._status_frame)
+        self.status_rtt_var = tk.StringVar(self._status_frame)
+        self.status_t3_var = tk.StringVar(self._status_frame)
+        Label(self._status_frame,
+              textvariable=self.status_name_var,
+              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+              foreground=STAT_BAR_TXT_CLR,
+              bg=STAT_BAR_CLR
+              ).grid(row=1, column=1, sticky="nsew")
 
-        self.status_status = Label(self._status_frame, text="",
+        self.status_status = Label(self._status_frame,
+                                   textvariable=self.status_status_var,
                                    font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                    bg=STAT_BAR_CLR,
-                                   foreground=STAT_BAR_TXT_CLR)
+                                   foreground=STAT_BAR_TXT_CLR
+                                   )
         self.status_status.grid(row=1, column=2, sticky="nsew")
 
-        self.status_unack = Label(self._status_frame, text="",
+        self.status_unack = Label(self._status_frame,
+                                  textvariable=self.status_unack_var,
                                   foreground=STAT_BAR_TXT_CLR,
                                   font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                  bg=STAT_BAR_CLR)
+                                  bg=STAT_BAR_CLR
+                                  )
         self.status_unack.grid(row=1, column=3, sticky="nsew")
 
-        self.status_vs = Label(self._status_frame, text="",
-                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                               bg=STAT_BAR_CLR,
-                               foreground=STAT_BAR_TXT_CLR)
-        self.status_vs.grid(row=1, column=4, sticky="nsew")
+        Label(self._status_frame,
+              textvariable=self.status_vs_var,
+              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+              bg=STAT_BAR_CLR,
+              foreground=STAT_BAR_TXT_CLR
+              ).grid(row=1, column=4, sticky="nsew")
 
-        self.status_n2 = Label(self._status_frame, text="",
+        self.status_n2 = Label(self._status_frame,
+                               textvariable=self.status_n2_var,
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
-                               foreground=STAT_BAR_TXT_CLR)
+                               foreground=STAT_BAR_TXT_CLR
+                               )
         self.status_n2.grid(row=1, column=7, sticky="nsew")
 
-        self.status_t1 = Label(self._status_frame, text="",
-                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                               bg=STAT_BAR_CLR,
-                               foreground=STAT_BAR_TXT_CLR)
-        self.status_t1.grid(row=1, column=8, sticky="nsew")
+        Label(self._status_frame,
+              textvariable=self.status_t1_var,
+              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+              bg=STAT_BAR_CLR,
+              foreground=STAT_BAR_TXT_CLR
+              ).grid(row=1, column=8, sticky="nsew")
         # PARM T2
-        self.status_t2 = Label(self._status_frame, text="",
-                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                               bg=STAT_BAR_CLR,
-                               foreground=STAT_BAR_TXT_CLR)
-        self.status_t2.grid(row=1, column=5, sticky="nsew")
+        Label(self._status_frame,
+              textvariable=self.status_t2_var,
+              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+              bg=STAT_BAR_CLR,
+              foreground=STAT_BAR_TXT_CLR
+              ).grid(row=1, column=5, sticky="nsew")
         # RTT
-        self.status_rtt = Label(self._status_frame, text="",
-                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                bg=STAT_BAR_CLR,
-                                foreground=STAT_BAR_TXT_CLR)
-        self.status_rtt.grid(row=1, column=6, sticky="nsew")
+        Label(self._status_frame,
+              textvariable=self.status_rtt_var,
+              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+              bg=STAT_BAR_CLR,
+              foreground=STAT_BAR_TXT_CLR
+              ).grid(row=1, column=6, sticky="nsew")
 
-        self.status_t3 = Label(self._status_frame, text="",
-                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                               bg=STAT_BAR_CLR,
-                               foreground=STAT_BAR_TXT_CLR)
-        self.status_t3.grid(row=1, column=9, sticky="nsew")
+        Label(self._status_frame,
+              textvariable=self.status_t3_var,
+              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+              bg=STAT_BAR_CLR,
+              foreground=STAT_BAR_TXT_CLR
+              ).grid(row=1, column=9, sticky="nsew")
         # Checkbox RX-BEEP
         self.rx_beep_var = tk.IntVar()
         self.rx_beep_box = Checkbutton(self._status_frame,
@@ -1046,7 +1068,7 @@ class TxTframe:
                                        onvalue=1, offvalue=0,
                                        foreground=STAT_BAR_TXT_CLR,
                                        variable=self.rx_beep_var,
-                                       command=self.chk_rx_beep
+                                       command=self._chk_rx_beep
                                        )
         self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
         # TODO Checkbox Time Stamp
@@ -1143,7 +1165,7 @@ class TxTframe:
             self._out_frame,
             self.stat_info_typ_var,
             *opt,
-            command=self.set_stat_typ
+            command=self._set_stat_typ
         )
         stat_typ.configure(
             background="#0ed8c3",
@@ -1194,7 +1216,7 @@ class TxTframe:
             self._out_frame,
             self.stat_info_encoding_var,
             *opt,
-            command=self.change_txt_encoding
+            command=self._change_txt_encoding
         )
         txt_encoding_ent.configure(
             background="steel blue",
@@ -1236,10 +1258,12 @@ class TxTframe:
         station = self._main_class.get_conn(self._main_class.channel_index)
         if station:
             _from_call = station.ax25_out_frame.from_call.call_str
+            """
             _via_calls = ''
             for _via in station.ax25_out_frame.via_calls:
                 # via: Call
                 _via_calls += _via.call_str + ' '
+            """
             _status = station.zustand_tab[station.zustand_exec.stat_index][1]
             # uid = station.ax25_out_frame.addr_uid
             _n2 = station.n2
@@ -1253,61 +1277,57 @@ class TxTframe:
                 _t2_text = f"T2: {int(station.parm_T2 * 1000)}A"
             else:
                 _t2_text = f"T2: {int(station.parm_T2 * 1000)}"
-
-            if self.status_name.cget('text') != _from_call:
-                self.status_name.configure(text=_from_call)
-            if self.status_status.cget('text') != _status:
+            if self.status_name_var.get() != _from_call:
+                self.status_name_var.set(_from_call)
+            if self.status_status_var.get() != _status:
                 _status_bg = STATUS_BG[_status]
-                self.status_status.configure(text=_status, bg=_status_bg)
-
-            if len(station.tx_buf_unACK.keys()):
-                if self.status_unack.cget('bg') != 'yellow':
-                    self.status_unack.configure(bg='yellow')
-            else:
-                if self.status_unack.cget('bg') != 'green':
-                    self.status_unack.configure(bg='green')
-            if self.status_unack.cget('text') != _unAck:
-                self.status_unack.configure(text=_unAck)
-
-            if self.status_vs.cget('text') != _vs_vr:
-                self.status_vs.configure(text=_vs_vr)
-
-            if _n2 > 4:
-                if self.status_n2.cget('bg') != 'yellow':
-                    self.status_n2.configure(bg='yellow')
-            elif _n2 > 10:
-                if self.status_n2.cget('bg') != 'orange':
-                    self.status_n2.configure(bg='orange')
-            else:
-                if self.status_n2.cget('bg') != STAT_BAR_CLR:
-                    self.status_n2.configure(bg=STAT_BAR_CLR)
-
-            if self.status_n2.cget('text') != _n2_text:
-                self.status_n2.configure(text=_n2_text)
-
-            if self.status_t1.cget('text') != _t1_text:
-                self.status_t1.configure(text=_t1_text)
-
-            if self.status_t2.cget('text') != _t2_text:
-                self.status_t2.configure(text=_t2_text)
-
-            if self.status_rtt.cget('text') != _rtt_text:
-                self.status_rtt.configure(text=_rtt_text)
-
-            if self.status_t3.cget('text') != _t3_text:
-                self.status_t3.configure(text=_t3_text)
+                self.status_status_var.set(_status)
+                self.status_status.configure(bg=_status_bg)
+            if self.status_unack_var.get() != _unAck:
+                self.status_unack_var.set(_unAck)
+                if len(station.tx_buf_unACK.keys()):
+                    if self.status_unack.cget('bg') != 'yellow':
+                        self.status_unack.configure(bg='yellow')
+                else:
+                    if self.status_unack.cget('bg') != 'green':
+                        self.status_unack.configure(bg='green')
+            if self.status_vs_var.get() != _vs_vr:
+                self.status_vs_var.set(_vs_vr)
+            if self.status_n2_var.get() != _n2_text:
+                self.status_n2_var.set(_n2_text)
+                if _n2 > 4:
+                    if self.status_n2.cget('bg') != 'yellow':
+                        self.status_n2.configure(bg='yellow')
+                elif _n2 > 10:
+                    if self.status_n2.cget('bg') != 'orange':
+                        self.status_n2.configure(bg='orange')
+                else:
+                    if self.status_n2.cget('bg') != STAT_BAR_CLR:
+                        self.status_n2.configure(bg=STAT_BAR_CLR)
+            if self.status_t1_var.get() != _t1_text:
+                self.status_t1_var.set(_t1_text)
+            if self.status_t2_var.get() != _t2_text:
+                self.status_t2_var.set(_t2_text)
+            if self.status_rtt_var.get() != _rtt_text:
+                self.status_rtt_var.set(_rtt_text)
+            if self.status_t3_var.get() != _t3_text:
+                self.status_t3_var.set(_t3_text)
 
         else:
             if self.status_status.cget('text') or self.status_status.cget('bg') != STAT_BAR_CLR:
-                self.status_name.configure(text="", bg=STAT_BAR_CLR)
-                self.status_status.configure(text="", bg=STAT_BAR_CLR)
-                self.status_unack.configure(text="", bg=STAT_BAR_CLR)
-                self.status_vs.configure(text="", bg=STAT_BAR_CLR)
-                self.status_n2.configure(text="", bg=STAT_BAR_CLR)
-                self.status_t1.configure(text="", bg=STAT_BAR_CLR)
-                self.status_t2.configure(text="", bg=STAT_BAR_CLR)
-                self.status_t3.configure(text="", bg=STAT_BAR_CLR)
-                self.status_rtt.configure(text="", bg=STAT_BAR_CLR)
+                # self.status_name.configure(text="", bg=STAT_BAR_CLR)
+                self.status_name_var.set('')
+                self.status_status.configure(bg=STAT_BAR_CLR)
+                self.status_status_var.set('')
+                self.status_unack.configure(bg=STAT_BAR_CLR)
+                self.status_unack_var.set('')
+                self.status_vs_var.set('')
+                self.status_n2.configure(bg=STAT_BAR_CLR)
+                self.status_n2_var.set('')
+                self.status_t1_var.set('')
+                self.status_t2_var.set('')
+                self.status_t3_var.set('')
+                self.status_rtt_var.set('')
 
     def switch_mon_mode(self):
         # TODO Save Stretched Positions
@@ -1329,7 +1349,7 @@ class TxTframe:
             self._pw.remove(self._out_frame)
             # self.pw.configure(height=837)
 
-    def chk_rx_beep(self):
+    def _chk_rx_beep(self):
         _rx_beep_check = self.rx_beep_var.get()
         if _rx_beep_check:
             if self.rx_beep_box.cget('bg') != 'green':
@@ -1349,7 +1369,7 @@ class TxTframe:
                 self.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self._main_class.get_ch_param().timestamp_opt = _ts_check
 
-    def set_stat_typ(self, event=None):
+    def _set_stat_typ(self, event=None):
         conn = self._main_class.get_conn()
         if conn:
             db_ent = conn.user_db_ent
@@ -1358,7 +1378,7 @@ class TxTframe:
         else:
             self.stat_info_typ_var.set('-----')
 
-    def change_txt_encoding(self, event=None, enc=''):
+    def _change_txt_encoding(self, event=None, enc=''):
         conn = self._main_class.get_conn()
         if conn:
             db_ent = conn.user_db_ent
@@ -1374,29 +1394,30 @@ class ChBtnFrm:
     def __init__(self, main_win):
         self._main_class = main_win
         self._ch_btn_blink_timer = time.time()
-        self._ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=10)
+        _ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=10)
+        _ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
         _btn_font = ("fixedsys", 8,)
-        self._ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(4, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(5, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(6, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(7, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(8, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
-        self._ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(4, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(5, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(6, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(7, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(8, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
+        _ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
         # self.ch_btn_frame.grid(row=1, column=1, sticky="nsew")
-        ch_1_var = tk.StringVar(self._ch_btn_frame)
-        ch_2_var = tk.StringVar(self._ch_btn_frame)
-        ch_3_var = tk.StringVar(self._ch_btn_frame)
-        ch_4_var = tk.StringVar(self._ch_btn_frame)
-        ch_5_var = tk.StringVar(self._ch_btn_frame)
-        ch_6_var = tk.StringVar(self._ch_btn_frame)
-        ch_7_var = tk.StringVar(self._ch_btn_frame)
-        ch_8_var = tk.StringVar(self._ch_btn_frame)
-        ch_9_var = tk.StringVar(self._ch_btn_frame)
-        ch_10_var = tk.StringVar(self._ch_btn_frame)
+        ch_1_var = tk.StringVar(_ch_btn_frame)
+        ch_2_var = tk.StringVar(_ch_btn_frame)
+        ch_3_var = tk.StringVar(_ch_btn_frame)
+        ch_4_var = tk.StringVar(_ch_btn_frame)
+        ch_5_var = tk.StringVar(_ch_btn_frame)
+        ch_6_var = tk.StringVar(_ch_btn_frame)
+        ch_7_var = tk.StringVar(_ch_btn_frame)
+        ch_8_var = tk.StringVar(_ch_btn_frame)
+        ch_9_var = tk.StringVar(_ch_btn_frame)
+        ch_10_var = tk.StringVar(_ch_btn_frame)
         ch_1_var.set('1')
         ch_2_var.set('2')
         ch_3_var.set('3')
@@ -1407,25 +1428,25 @@ class ChBtnFrm:
         ch_8_var.set('8')
         ch_9_var.set('9')
         ch_10_var.set('10')
-        ch_button1 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_1_var, bg="red",
+        ch_button1 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_1_var, bg="red",
                                command=lambda: self._main_class.switch_channel(1))
-        ch_button2 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_2_var, bg="red",
+        ch_button2 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_2_var, bg="red",
                                command=lambda: self._main_class.switch_channel(2))
-        ch_button3 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_3_var, bg="red",
+        ch_button3 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_3_var, bg="red",
                                command=lambda: self._main_class.switch_channel(3))
-        ch_button4 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_4_var, bg="red",
+        ch_button4 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_4_var, bg="red",
                                command=lambda: self._main_class.switch_channel(4))
-        ch_button5 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_5_var, bg="red",
+        ch_button5 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_5_var, bg="red",
                                command=lambda: self._main_class.switch_channel(5))
-        ch_button6 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_6_var, bg="red",
+        ch_button6 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_6_var, bg="red",
                                command=lambda: self._main_class.switch_channel(6))
-        ch_button7 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_7_var, bg="red",
+        ch_button7 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_7_var, bg="red",
                                command=lambda: self._main_class.switch_channel(7))
-        ch_button8 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_8_var, bg="red",
+        ch_button8 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_8_var, bg="red",
                                command=lambda: self._main_class.switch_channel(8))
-        ch_button9 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_9_var, bg="red",
+        ch_button9 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_9_var, bg="red",
                                command=lambda: self._main_class.switch_channel(9))
-        ch_button10 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_10_var, bg="red",
+        ch_button10 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_10_var, bg="red",
                                 command=lambda: self._main_class.switch_channel(10))
         ch_button1.grid(row=1, column=1, sticky="nsew")
         ch_button2.grid(row=1, column=2, sticky="nsew")
@@ -1598,7 +1619,7 @@ class TkMainWin:
         #########################
         # Channel Buttons
         self._ch_btn = ChBtnFrm(self)
-        self._ch_btn._ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
+        # self._ch_btn._ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
         #########################
         # Tabbed Frame right
         self._side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
@@ -1704,7 +1725,8 @@ class TkMainWin:
         self._parm_rx_beep_cooldown = 2  # s
         # Tasker Timings
         self._loop_delay = 250  # ms
-        self._parm_non_prio_task_timer = 0.5  # s
+        self._parm_non_prio_task_timer = 0.25  # s
+        self._prio_task_flip = True
         self._parm_non_non_prio_task_timer = 1  # s
         self._parm_non_non_non_prio_task_timer = 5  # s
         self._parm_test_task_timer = 60  # 5        # s
@@ -2318,12 +2340,12 @@ class TkMainWin:
         if self._is_closing:
             self._tasker_quit()
         else:
-            # self._tasker_prio()
-            self._tasker_05_sec()
+            self._tasker_prio()
+            # self._tasker_05_sec()
             self._tasker_1_sec()
             self._tasker_5_sec()
             # self._tasker_tester()
-            self.main_win.update_idletasks()
+            # self.main_win.update_idletasks()
         self.main_win.after(self._loop_delay, self._tasker)
 
     @staticmethod
@@ -2333,23 +2355,26 @@ class TkMainWin:
             logging.info('Closing GUI: Done.')
 
     def _tasker_prio(self):
-        """ Prio Tasks """
-        pass
-
-    def _tasker_05_sec(self):
-        """ 0.5 Sec """
-        if time.time() > self._non_prio_task_timer:
-            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
-            #####################
+        """ Prio Tasks 250 ms each flip """
+        if self._prio_task_flip:
             self._aprs_task()
             self._monitor_task()
             self._update_qso_win()
+        else:
             self._txt_win.update_status_win()
             self.change_conn_btn()
             if self.setting_sound:
                 self._rx_beep_sound()
                 if self.setting_sprech:
                     self._check_sprech_ch_buf()
+        self._prio_task_flip = not self._prio_task_flip
+
+    def _tasker_05_sec(self):
+        """ 0.5 Sec """
+        if time.time() > self._non_prio_task_timer:
+            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
+            #####################
+            pass
 
     def _tasker_1_sec(self):
         """ 1 Sec """

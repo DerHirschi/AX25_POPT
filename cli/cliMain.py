@@ -93,7 +93,7 @@ class DefaultCLI(object):
         # Standard Commands ( GLOBAL )
         self.commands = {
             b'QUIT': (self.cmd_q, 'Quit'),
-            b'BYE': (self.cmd_q, ''),
+            b'BYE': (self.cmd_q, 'Bye'),
             b'CONNECT': (self.cmd_connect, 'Connect'),
             b'ECHO': (self.cmd_echo, 'Echo'),
             b'PORT': (self.cmd_port, 'Ports'),
@@ -104,24 +104,25 @@ class DefaultCLI(object):
             b'DXLIST': (self.cmd_dxlist, 'DX/Tracer Alarm List'),
             b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
             b'WX': (self.cmd_wx, 'Wetterstationen'),
+
+            b'INFO': (self.cmd_i, 'Info'),
+            b'LINFO': (self.cmd_li, 'Long Info'),
+            b'NEWS': (self.cmd_news, 'NEWS'),
             b'VERSION': (self.cmd_ver, 'Version'),
+            b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
+            b'DBNAME': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
+            b'DBQTH': (self.cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
+            b'DBLOC': (self.cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
+            b'DBZIP': (self.cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self.connection.cli_language]),
+            b'DBPRMAIL': (self.cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self.connection.cli_language]),
+            b'DBEMAIL': (self.cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self.connection.cli_language]),
+            b'DBWEB': (self.cmd_set_http, STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
+            b'LANG': (self.cmd_lang, STR_TABLE['cli_change_language'][self.connection.cli_language]),
+            b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
+            b'POPT': (self.cmd_popt_banner, 'PoPT Banner'),
             b'HELP': (self.cmd_help, STR_TABLE['help'][self.connection.cli_language]),
             b'?': (self.cmd_shelp, STR_TABLE['cmd_shelp'][self.connection.cli_language]),
 
-            b'NAME': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
-            b'QTH': (self.cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
-            b'LOC': (self.cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
-            b'ZIP': (self.cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self.connection.cli_language]),
-            b'PRMAIL': (self.cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self.connection.cli_language]),
-            b'EMAIL': (self.cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self.connection.cli_language]),
-            b'WEB': (self.cmd_set_http, STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
-            b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
-            b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
-            b'INFO': (self.cmd_i, 'Info'),
-            b'LINFO': (self.cmd_li, 'Long Info'),
-            b'LANG': (self.cmd_lang, STR_TABLE['cli_change_language'][self.connection.cli_language]),
-            b'NEWS': (self.cmd_news, 'NEWS'),
-            b'POPT': (self.cmd_popt_banner, 'PoPT Banner'),
         }
 
         self.str_cmd_exec = {
@@ -1078,7 +1079,8 @@ class DefaultCLI(object):
         return ret
 
     def cmd_help(self):
-        ret = f"\r   < {STR_TABLE['help'][self.connection.cli_language]} >\r"
+        # ret = f"\r   < {STR_TABLE['help'][self.connection.cli_language]} >\r"
+        ret = "\r"
         """
         c = 1
         new_cmd = {}
