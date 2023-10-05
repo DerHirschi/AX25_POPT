@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from constant import CFG_TR_DX_ALARM_BG_CLR
 
 logger = logging.getLogger(__name__)
 
@@ -212,7 +213,7 @@ class BeaconTracer(tk.Toplevel):
     def _update_tree(self):
         for i in self._tree.get_children():
             self._tree.delete(i)
-        self._tree.tag_configure("tr_alarm", background='#55ed9f', foreground='black')
+        self._tree.tag_configure("tr_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         for ret_ent in self._tree_data:
             if ret_ent[1]:
                 self._tree.insert('', tk.END, values=ret_ent[0], tags=('tr_alarm',))

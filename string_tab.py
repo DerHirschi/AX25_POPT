@@ -201,6 +201,9 @@ STR_TABLE = {
     'port_overview': ('Port Übersicht',
                       'Port Overview',
                       'Lekker Ports'),
+    'cmd_shelp': ('Kurzhilfe',
+                  'Short help',
+                  'Lekker Short Helpye'),
 
     'time_connected': ('Connect Dauer',
                        'Connect duration',
@@ -217,6 +220,7 @@ STR_TABLE = {
                           'Show connected terminal channels (detailed version)',
                           'Toon lekker aangesloten terminalkanalen (gedetailleerde versie)'),
     'cli_no_wx_data': ('Keine Wetterdaten vorhanden.', 'No WX data available', 'No WX data available'),
+    'cli_no_data': ('Keine Daten vorhanden.', 'No data available.', 'No data available.'),
     'cli_no_tracer_data': ('Keine Tracerdaten vorhanden.', 'No Tracer data available', 'No Tracer data available'),
 
 }

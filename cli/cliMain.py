@@ -97,15 +97,16 @@ class DefaultCLI(object):
             b'CONNECT': (self.cmd_connect, 'Connect'),
             b'PORT': (self.cmd_port, 'Ports'),
             b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
-            b'MH': (self.cmd_mh, 'MYHeard Liste'),
-            b'AXIP': (self.cmd_axip, 'AXIP-MH Liste'),
-            b'LMH': (self.cmd_mhl, 'Long MYHeard Liste'),
+            b'MH': (self.cmd_mh, 'MYHeard List'),
+            b'LMH': (self.cmd_mhl, 'Long MYHeard List'),
+            b'AXIP': (self.cmd_axip, 'AXIP-MH List'),
             b'ATR': (self.cmd_aprs_trace, 'APRS-Tracer'),
+            b'DXLIST': (self.cmd_dxlist, 'DX/Tracer Alarm List'),
             b'WX': (self.cmd_wx, 'Wetterstationen'),
             b'ECHO': (self.cmd_echo, 'Echo'),
             b'VERSION': (self.cmd_ver, 'Version'),
             b'HELP': (self.cmd_help, STR_TABLE['help'][self.connection.cli_language]),
-            b'?': (self.cmd_help, ''),
+            b'?': (self.cmd_shelp, STR_TABLE['cmd_shelp'][self.connection.cli_language]),
 
             b'NAME': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
             b'QTH': (self.cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
@@ -117,7 +118,7 @@ class DefaultCLI(object):
             b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
             b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
             b'INFO': (self.cmd_i, 'Info'),
-            b'LINFO': (self.cmd_li, 'Lange Info'),
+            b'LINFO': (self.cmd_li, 'Long Info'),
             b'NEWS': (self.cmd_news, 'NEWS'),
             b'POPT': (self.cmd_popt_banner, 'PoPT Banner'),
         }
@@ -344,6 +345,9 @@ class DefaultCLI(object):
                     treffer.append(cmd)
             if not treffer:
                 return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
+            if len(treffer) > 1:
+                return (f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}"
+                        f"\r # {(b' '.join(treffer)).decode(self.encoding[0], 'ignore')} ?\r")
             self.cmd = b''
             ret = self.commands[treffer[0]][0]()
             # self.last_line = b''
@@ -464,6 +468,43 @@ class DefaultCLI(object):
         self.crone_state_index = 100  # Quit State
         return ''
 
+    def cmd_dxlist(self):
+        parm = 10
+        if self.parameter:
+            try:
+                parm = int(self.parameter[0])
+            except ValueError:
+                pass
+        ret = self._get_alarm_out_cli(max_ent=parm)
+
+        return ret + '\r'
+
+    def _get_alarm_out_cli(self, max_ent=10):
+        alarm_his = dict(MH_LIST.dx_alarm_perma_hist)
+        alarm_his.update(dict(self.port_handler.get_aprs_ais().be_tracer_alarm_hist))
+        if not alarm_his:
+            return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
+        out = '\r'
+        out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---\r"
+        max_c = 0
+        key_list = list(alarm_his.keys())
+        key_list.sort(reverse=True)
+        for _k in key_list:
+            max_c += 1
+            if max_c > max_ent:
+                break
+            time_delta_str = get_timedelta_str(alarm_his[_k]['ts'])
+            via = alarm_his[_k]['via']
+            loc = alarm_his[_k]['loc']
+            dis = str(alarm_his[_k]['dist'])
+            typ = alarm_his[_k]['typ']
+            port = str(alarm_his[_k]['port_id'])
+            call = alarm_his[_k]['call_str']
+
+            out += f' {time_delta_str} {port:6} {call:10}{via:10}{loc:9}{dis:10}{typ}\r'
+
+        return out
+
     def cmd_axip(self):
         parm = 10
         if self.parameter:
@@ -475,9 +516,10 @@ class DefaultCLI(object):
 
         return ret + '\r'
 
-    @staticmethod
-    def _get_axip_out_cli(max_ent=10):
+    def _get_axip_out_cli(self, max_ent=10):
         _ent = MH_LIST.get_sort_mh_entry('last', reverse=False)
+        if not _ent:
+            return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         max_c = 0
         out = '\r'
         # out += '\r                       < AXIP - Clients >\r\r'
@@ -505,8 +547,10 @@ class DefaultCLI(object):
 
         return ret + '\r'
 
-    @staticmethod
-    def _get_mh_out_cli(max_ent=20):
+    def _get_mh_out_cli(self, max_ent=20):
+        sort_list = MH_LIST.get_sort_mh_entry('last', False)
+        if not sort_list:
+            return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         out = '\r'
         # out += '\r                       < MH - List >\r\r'
         c = 0
@@ -516,7 +560,6 @@ class DefaultCLI(object):
         tb = 0
         rj = 0
         """
-        sort_list = MH_LIST.get_sort_mh_entry('last', False)
 
         for call in list(sort_list.keys()):
             max_c += 1
@@ -542,7 +585,6 @@ class DefaultCLI(object):
         out += '\rTotal REJ-Packets Rec.: ' + str(rj)
         out += '\rTotal Bytes Rec.: ' + str(tb)
         """
-        out += '\r'
 
         return out
 
@@ -557,8 +599,10 @@ class DefaultCLI(object):
 
         return ret + '\r'
 
-    @staticmethod
-    def _get_mh_long_out_cli(max_ent=10):
+    def _get_mh_long_out_cli(self, max_ent=10):
+        sort_list = MH_LIST.get_sort_mh_entry('last', False)
+        if not sort_list:
+            return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         out = '\r'
         out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r"
         max_c = 0
@@ -567,8 +611,6 @@ class DefaultCLI(object):
         tb = 0
         rj = 0
         """
-        sort_list = MH_LIST.get_sort_mh_entry('last', False)
-
         for call in list(sort_list.keys()):
             max_c += 1
             if max_c > max_ent:
@@ -597,7 +639,6 @@ class DefaultCLI(object):
             rj += sort_list[call].rej_n
             """
             out += '\r'
-        out += '\r'
         """
         out += '\rTotal Packets Rec.: ' + str(tp)
         out += '\rTotal REJ-Packets Rec.: ' + str(rj)
@@ -1059,6 +1100,19 @@ class DefaultCLI(object):
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
                                                 k.decode('UTF-8', 'ignore'),
                                                 self.commands[k][1])
+        ret += '\r\r'
+        return ret
+
+    def cmd_shelp(self):
+        ret = '\r # '
+        _c = 0
+        _cmds = list(self.commands.keys())
+        _cmds.sort()
+        for k in _cmds:
+            ret += (k + b' ').decode(self.encoding[0], 'ignore')
+            if len(ret) - _c > 60:
+                ret += '\r # '
+                _c += 60
         ret += '\r\r'
         return ret
 

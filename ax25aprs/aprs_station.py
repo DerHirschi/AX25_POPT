@@ -11,6 +11,7 @@ from constant import APRS_SW_ID, APRS_TRACER_COMMENT, CFG_aprs_data_file
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii
+from fnc.struct_fnc import get_dx_tx_alarm_his_pack
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +62,9 @@ class APRS_ais(object):
         self.be_tracer_alarm_range = 50
         self.be_auto_tracer_duration = 60
 
-        # Packet Pool TODO: extra var f Packet history
+        # Packet Pool
         self.be_tracer_traced_packets = {}
+        self.be_tracer_alarm_hist = {}
         # Control vars
         self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''
@@ -677,7 +679,6 @@ class APRS_ais(object):
             if time.time() > self._be_auto_tracer_timer:
                 return
             if time.time() > self._be_tracer_interval_timer:
-                print(f"Auto-Tracer timer: {round(self._be_auto_tracer_timer - time.time())}")
                 self.tracer_sendit()
                 return
 
@@ -791,8 +792,33 @@ class APRS_ais(object):
         _dist = pack.get('distance', 0)
         if _dist >= self.be_tracer_alarm_range:
             self._be_tracer_is_alarm = True
+            self._tracer_add_alarm_hist(pack)
             return True
         return False
+
+    def _tracer_add_alarm_hist(self, aprs_pack):
+        _via = ''
+        if aprs_pack.get('via', ''):
+            if aprs_pack.get('path', []):
+                _via = get_last_digi_fm_path(aprs_pack)
+        else:
+            _via_list = []
+            for _digi in aprs_pack.get('path', []):
+                if '*' == _digi[-1]:
+                    _via_list.append(str(_digi))
+            if len(_via_list) > 1:
+                _via = _via_list[-2]
+
+        _hist_struc = get_dx_tx_alarm_his_pack(
+            port_id=aprs_pack.get('port_id', -1),
+            call_str=aprs_pack.get('call', ''),
+            via=_via,
+            path=aprs_pack.get('path', []),
+            locator=aprs_pack.get('locator', ''),
+            distance=aprs_pack.get('distance', -1),
+            typ='TRACE',
+        )
+        self.be_tracer_alarm_hist[str(_hist_struc['key'])] = dict(_hist_struc)
 
     def tracer_is_alarm(self):
         return self._be_tracer_is_alarm

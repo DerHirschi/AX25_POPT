@@ -10,44 +10,7 @@ from constant import CFG_mh_data_file, CFG_port_stat_data_file
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting
-
-
-def get_bandwidth_struct():
-    _struct = {}
-    for _h in range(24):
-        for _m in range(60):
-            for _s in range(6):
-                _ts_str = f'{str(_h).zfill(2)}:{str(_m).zfill(2)}:{_s}'
-                _struct[_ts_str] = 0
-    return _struct
-
-
-def get_port_stat_struct():
-    struct_hour = {}
-    for key in [
-        'N_pack',
-        'I',
-        'SABM',
-        'DM',
-        'DISC',
-        'REJ',
-        'RR',
-        'RNR',
-        'UI',
-        'FRMR',
-        'DATA_W_HEADER',
-        'DATA'
-    ]:
-        struct_hour[key] = {minute: 0 for minute in range(60)}
-    return struct_hour
-
-
-def init_day_dic():
-
-    ret = {}
-    for hour in range(24):
-        ret[hour] = get_port_stat_struct()
-    return ret
+from fnc.struct_fnc import get_bandwidth_struct, init_day_dic, get_dx_tx_alarm_his_pack
 
 
 class MyHeard:
@@ -56,15 +19,15 @@ class MyHeard:
     route = []
     all_routes = []
     port = ''
-    port_id = 0    # Not used yet
+    port_id = 0  # Not used yet
     first_seen = datetime.now()
     last_seen = datetime.now()
-    pac_n = 0                      # N Packets
-    byte_n = 0                     # N Bytes
-    h_byte_n = 0                   # N Header Bytes
-    rej_n = 0                      # N REJ
-    axip_add = '', 0               # IP, Port
-    axip_fail = 0                  # Fail Counter
+    pac_n = 0  # N Packets
+    byte_n = 0  # N Bytes
+    h_byte_n = 0  # N Header Bytes
+    rej_n = 0  # N REJ
+    axip_add = '', 0  # IP, Port
+    axip_fail = 0  # Fail Counter
     locator = ''
     distance = -1
 
@@ -115,13 +78,28 @@ class MH(object):
     def __del__(self):
         pass
 
-    def _set_dx_alarm(self, ent, port_id: int):
+    def _set_dx_alarm(self, ent):
+        port_id = ent.port_id
         if port_id in self.parm_alarm_ports:
             self.dx_alarm_trigger = True
             self.last_dx_alarm = time.time()
-            _now = datetime.now()
             self.dx_alarm_hist.append(ent.own_call)
-            self.dx_alarm_perma_hist[str(ent.own_call)] = _now, ent
+            self._add_dx_alarm_hist(ent=ent)
+
+    def _add_dx_alarm_hist(self, ent):
+        _via = ''
+        if ent.route:
+            _via = ent.route[-1]
+        _hist_struc = get_dx_tx_alarm_his_pack(
+            port_id=ent.port_id,
+            call_str=ent.own_call,
+            via=_via,
+            path=ent.route,
+            locator=ent.locator,
+            distance=ent.distance,
+            typ='MHEARD',
+        )
+        self.dx_alarm_perma_hist[str(_hist_struc['key'])] = dict(_hist_struc)
 
     def reset_dx_alarm_his(self):
         self.dx_alarm_hist = []
@@ -235,7 +213,7 @@ class MH(object):
         if to_c_str not in ent.to_calls:
             ent.to_calls.append(to_c_str)
         # Routes
-        ent.route = []      # Last Route
+        ent.route = []  # Last Route
         _last_digi = ''
         if ax25_frame.via_calls:
             for call in ax25_frame.via_calls:
@@ -265,7 +243,7 @@ class MH(object):
             if ent.distance >= self.parm_distance_alarm:
                 _dx_alarm = True
         if _dx_alarm:
-            self._set_dx_alarm(port_id=port_id, ent=ent)
+            self._set_dx_alarm(ent=ent)
 
         self.calls[call_str] = ent
 

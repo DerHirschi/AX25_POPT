@@ -3,7 +3,7 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.98.12dev'
+VER = '2.98.13dev'
 LANGUAGE = 0  # QUICK FIX
 """
 0 = German
@@ -124,6 +124,7 @@ STAT_BAR_TXT_CLR = 'black'
 FONT_STAT_BAR = 'Arial'
 PARAM_MAX_MON_LEN = 100000
 CFG_clr_sys_msg = 'red'
+CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 
 
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \

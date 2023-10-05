@@ -4,6 +4,7 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MyHeard, MH_LIST
+from constant import CFG_TR_DX_ALARM_BG_CLR
 from fnc.str_fnc import conv_time_DE_str
 
 logger = logging.getLogger(__name__)
@@ -292,7 +293,7 @@ class MHWin(tk.Toplevel):
     def _update_tree(self):
         for i in self._tree.get_children():
             self._tree.delete(i)
-        self._tree.tag_configure("dx_alarm", background='#55ed9f', foreground='black')
+        self._tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         for ret_ent in self._tree_data:
             if ret_ent[1]:
                 self._tree.insert('', tk.END, values=ret_ent[0], tags=('dx_alarm',))

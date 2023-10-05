@@ -31,6 +31,10 @@ def conv_time_for_sorting(dateti: datetime.now()):
     return dateti.strftime('%y/%m/%d %H:%M:%S')
 
 
+def conv_time_for_key(dateti: datetime.now()):
+    return dateti.strftime('%y%m%d%H%M%S')
+
+
 def conv_time_US_str(dateti: datetime.now()):
     return dateti.strftime('%m/%d/%y %H:%M:%S')
 
