@@ -183,7 +183,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                 is_own = 'not_own'
             tree_data.append(
                 ((
-                     f"{form_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S'),}",
+                     f"{form_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
                      f"{form_msg.get('port_id', '-')}",
                      f"{form_msg['from']}",
                      f"{form_msg['addresse']}",

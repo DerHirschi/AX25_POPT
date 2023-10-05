@@ -79,8 +79,8 @@ class APRS_ais(object):
             "message": [],
             "bulletin": [],
         }
-        self.aprs_wx_msg_pool = {}
         """
+        # self.aprs_wx_msg_pool = {}
         self.be_tracer_active = False
         self.be_auto_tracer_active = False
         self._be_auto_tracer_timer = 0
