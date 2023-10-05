@@ -1,6 +1,5 @@
 import logging
 import tkinter as tk
-from tkinter import Menu
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
@@ -240,7 +239,6 @@ class MHWin(tk.Toplevel):
                 if _i in MH_LIST.parm_alarm_ports:
                     MH_LIST.parm_alarm_ports.remove(int(_i))
             _i += 1
-        print(MH_LIST.parm_alarm_ports)
 
     def _set_alarm_distance(self, event=None):
         _var = self._alarm_distance_var.get()
@@ -315,9 +313,6 @@ class MHWin(tk.Toplevel):
                 axip_str = '{} - {}'.format(ent.axip_add[0], ent.axip_add[1])
             else:
                 axip_str = ''
-            route = ''
-            if ent.all_routes:
-                route = min(ent.all_routes)
 
             self._tree_data.append((
                 f'{conv_time_DE_str(ent.last_seen)}',
@@ -328,7 +323,7 @@ class MHWin(tk.Toplevel):
                 f'{ent.distance}',
                 f'{ent.pac_n}',
                 f'{ent.rej_n}',
-                ' '.join(route),
+                ' '.join(ent.route),
                 f'{axip_str}',
                 f'{ent.axip_fail}',
             ))

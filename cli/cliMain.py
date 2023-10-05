@@ -523,8 +523,10 @@ class DefaultCLI(object):
             if max_c > max_ent:
                 break
             time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-
-            out += f'{time_delta_str} P:{sort_list[call].port:4} {sort_list[call].own_call:9}'.ljust(27, " ")
+            _call_str = sort_list[call].own_call
+            if sort_list[call].route:
+                _call_str += '*'
+            out += f'{time_delta_str} P:{sort_list[call].port:4} {_call_str:10}'.ljust(27, " ")
             """
             tp += sort_list[call].pac_n
             tb += sort_list[call].byte_n

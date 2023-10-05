@@ -87,7 +87,8 @@ class MH(object):
         self.calls: {str: MyHeard} = {}
         for call in mh_load:
             self.calls[call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[call])
-
+            # Fix: Delete empty Routes in routes entry
+            # self.calls[call].all_routes = list(filter(lambda a: a != [], self.calls[call].all_routes))
         try:
             with open(CFG_port_stat_data_file, 'rb') as inp:
                 self.port_statistik_DB = pickle.load(inp)
@@ -231,11 +232,11 @@ class MH(object):
                 if call.c_bit:
                     ent.route.append(str(call.call_str))
                     _last_digi = str(call.call_str)
-        if digi and ent.route:
+        if ent.route and digi:
             ent.route = ent.route[:-1]
-
         if ent.route not in ent.all_routes:
             ent.all_routes.append(list(ent.route))
+
         # Update AXIP Address
         if ax25_frame.axip_add[0]:
             if ent.axip_add[0]:
@@ -292,6 +293,7 @@ class MH(object):
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
+
             key: str = {
                 'last': conv_time_for_sorting(flag.last_seen),
                 'first': conv_time_for_sorting(flag.first_seen),
@@ -301,7 +303,7 @@ class MH(object):
                 'dist': str(flag.distance),
                 'pack': str(flag.pac_n),
                 'rej': str(flag.rej_n),
-                'route': str(max(flag.all_routes)),
+                'route': str(flag.route),
                 'axip': str(flag.axip_add),
                 'axipfail': str(flag.axip_fail),
             }[flag_str]
