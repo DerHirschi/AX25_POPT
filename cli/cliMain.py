@@ -95,15 +95,15 @@ class DefaultCLI(object):
             b'QUIT': (self.cmd_q, 'Quit'),
             b'BYE': (self.cmd_q, ''),
             b'CONNECT': (self.cmd_connect, 'Connect'),
+            b'ECHO': (self.cmd_echo, 'Echo'),
             b'PORT': (self.cmd_port, 'Ports'),
-            b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
             b'MH': (self.cmd_mh, 'MYHeard List'),
             b'LMH': (self.cmd_mhl, 'Long MYHeard List'),
             b'AXIP': (self.cmd_axip, 'AXIP-MH List'),
             b'ATR': (self.cmd_aprs_trace, 'APRS-Tracer'),
             b'DXLIST': (self.cmd_dxlist, 'DX/Tracer Alarm List'),
+            b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
             b'WX': (self.cmd_wx, 'Wetterstationen'),
-            b'ECHO': (self.cmd_echo, 'Echo'),
             b'VERSION': (self.cmd_ver, 'Version'),
             b'HELP': (self.cmd_help, STR_TABLE['help'][self.connection.cli_language]),
             b'?': (self.cmd_shelp, STR_TABLE['cmd_shelp'][self.connection.cli_language]),
@@ -119,6 +119,7 @@ class DefaultCLI(object):
             b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
             b'INFO': (self.cmd_i, 'Info'),
             b'LINFO': (self.cmd_li, 'Long Info'),
+            b'LANG': (self.cmd_lang, STR_TABLE['cli_change_language'][self.connection.cli_language]),
             b'NEWS': (self.cmd_news, 'NEWS'),
             b'POPT': (self.cmd_popt_banner, 'PoPT Banner'),
         }
@@ -467,6 +468,15 @@ class DefaultCLI(object):
         self.send_output(ret)
         self.crone_state_index = 100  # Quit State
         return ''
+
+    def cmd_lang(self):
+        if not self.parameter:
+            return f'\r # {STR_TABLE["cli_no_lang_param"][self.connection.cli_language]}{" ".join(list(constant.LANG_IND.keys()))}\r'
+        self.decode_param()
+        if self.parameter[0].upper() in constant.LANG_IND.keys():
+            self.connection.set_user_db_language(constant.LANG_IND[self.parameter[0].upper()])
+            return f'\r # {STR_TABLE["cli_lang_set"][self.connection.cli_language]}\r'
+        return f'\r # {STR_TABLE["cli_no_lang_param"][self.connection.cli_language]}{" ".join(list(constant.LANG_IND.keys()))}\r'
 
     def cmd_dxlist(self):
         parm = 10

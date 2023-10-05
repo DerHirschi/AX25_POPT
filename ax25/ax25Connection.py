@@ -232,11 +232,11 @@ class AX25Conn(object):
         """ User DB Entry """
         # self.user_db = USER_DB
         self.user_db_ent = False
+        self.cli_language = 0
         self.set_user_db_ent()
         """ Station Individual Parameter """
         self.set_packet_param()
         """ Init CLI """
-        self.cli_language = 0
         self.cli = cli.cliMain.NoneCLI(self)
         self.cli_type = ''
         if self.stat_cfg.stat_parm_pipe is None:
@@ -386,8 +386,12 @@ class AX25Conn(object):
                     self.user_db_ent.Language = 0
                 else:
                     self.user_db_ent.Language = int(self.gui.language)
-                    self.cli_language = int(self.gui.language)
+            self.cli_language = self.user_db_ent.Language
             self.set_distance()
+
+    def set_user_db_language(self, lang_ind: int):
+        self.user_db_ent.Language = int(lang_ind)
+        self.cli_language = int(lang_ind)
 
     def set_distance(self):
         if self.user_db_ent:

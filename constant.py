@@ -3,13 +3,19 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.98.13dev'
+VER = '2.98.14dev'
 LANGUAGE = 0  # QUICK FIX
 """
 0 = German
 1 = English
 2 = Dutch
 """
+LANG_IND = {
+            'DE': 0,
+            'EN': 1,
+            'NL': 2,
+        }
+
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_ft_downloads = 'ft_downloads/'
