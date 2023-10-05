@@ -2,6 +2,8 @@ import logging
 import tkinter as tk
 from tkinter import Menu
 from tkinter import ttk
+
+from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MyHeard, MH_LIST
 from fnc.str_fnc import conv_time_DE_str
 
@@ -26,10 +28,12 @@ class MHWin(tk.Toplevel):
             self.iconbitmap("favicon.ico")
         except tk.TclError:
             pass
+        """
         self._menubar = Menu(self)
         self.config(menu=self._menubar)
         self._menubar.add_command(label="Quit", command=self.close)
         self._menubar.add_command(label="Port-Statistik", command=lambda: self._root_win.open_port_stat_win())
+        """
         self.lift()
         ###################################
         # Vars
@@ -40,12 +44,17 @@ class MHWin(tk.Toplevel):
         self._alarm_distance_var = tk.StringVar(self)
         # self._tracer_active_var = tk.BooleanVar(self)
         self._tracer_duration_var = tk.StringVar(self)
+        self._alarm_ports = []
+        _ports = list(PORT_HANDLER.get_all_ports().keys())
+        for _por_id in _ports:
+            self._alarm_ports.append(tk.BooleanVar(self))
         self._get_vars()
         # ############################### Columns ############################
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=0, minsize=50)
-        self.grid_rowconfigure(1, weight=0, minsize=30)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(1, weight=0, minsize=25)
+        self.grid_rowconfigure(2, weight=0, minsize=25)
+        self.grid_rowconfigure(3, weight=1)
         # ###################### DX Alarm Settings ######################
         # ALARM
         lower_frame = tk.Frame(self)
@@ -102,6 +111,23 @@ class MHWin(tk.Toplevel):
                    command=self._set_alarm_distance
                    ).pack(side=tk.LEFT, )
 
+        # ###################### Ports ############################
+        lower_frame_ports = tk.Frame(self)
+        lower_frame_ports.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        frame_13_label = tk.Frame(lower_frame_ports)
+        frame_13_label.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+        tk.Label(frame_13_label, text='Ports: ').pack(side=tk.LEFT, )
+        _i = 0
+        for _port_id in _ports:
+            _frame = tk.Frame(lower_frame_ports)
+            _frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=7)
+            _text = f'{_port_id}'
+            tk.Label(_frame, text=_text, width=3).pack(side=tk.LEFT, padx=1)
+            tk.Checkbutton(_frame,
+                           variable=self._alarm_ports[_i],
+                           command=self._set_alarm_ports,
+                           ).pack(side=tk.LEFT, padx=1)
+            _i += 1
         # ###################### Auto Tracer ######################
         # Tracer
         _auto_tracer_state = {
@@ -109,7 +135,7 @@ class MHWin(tk.Toplevel):
             False: 'normal'
         }.get(self._root_win.get_tracer(), 'disabled')
         lower_frame_tracer = tk.Frame(self)
-        lower_frame_tracer.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        lower_frame_tracer.grid(row=2, column=0, columnspan=2, sticky='nsew')
         frame_12_label = tk.Frame(lower_frame_tracer)
         frame_12_label.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
         tk.Label(frame_12_label, text='Auto APRS-Tracer: ').pack(side=tk.LEFT, )
@@ -155,11 +181,11 @@ class MHWin(tk.Toplevel):
             'mh_ip_fail'
         )
         self._tree = ttk.Treeview(self, columns=columns, show='headings')
-        self._tree.grid(row=2, column=0, sticky='nsew')
+        self._tree.grid(row=3, column=0, sticky='nsew')
         # add a scrollbar
         scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.grid(row=2, column=1, sticky='ns')
+        scrollbar.grid(row=3, column=1, sticky='ns')
 
         self._tree.heading('mh_last_seen', text='Letzte Paket', command=lambda: self._sort_entry('last'))
         self._tree.heading('mh_first_seen', text='Erste Paket', command=lambda: self._sort_entry('first'))
@@ -196,6 +222,25 @@ class MHWin(tk.Toplevel):
         self._alarm_distance_var.set(str(MH_LIST.parm_distance_alarm))
         # self._tracer_active_var.set(bool(self._root_win.setting_auto_tracer.get()))
         self._tracer_duration_var.set(str(self._root_win.get_auto_tracer_duration()))
+        _i = 0
+        for _var in self._alarm_ports:
+            if _i in MH_LIST.parm_alarm_ports:
+                _var.set(True)
+            else:
+                _var.set(False)
+            _i += 1
+
+    def _set_alarm_ports(self, event=None):
+        _i = 0
+        for _var in self._alarm_ports:
+            if _var.get():
+                if _i not in MH_LIST.parm_alarm_ports:
+                    MH_LIST.parm_alarm_ports.append(int(_i))
+            else:
+                if _i in MH_LIST.parm_alarm_ports:
+                    MH_LIST.parm_alarm_ports.remove(int(_i))
+            _i += 1
+        print(MH_LIST.parm_alarm_ports)
 
     def _set_alarm_distance(self, event=None):
         _var = self._alarm_distance_var.get()

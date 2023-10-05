@@ -481,13 +481,13 @@ class DefaultCLI(object):
         max_c = 0
         out = '\r'
         # out += '\r                       < AXIP - Clients >\r\r'
-        out += '-Call-----IP:Port---------------------------Last------------\r'
+        out += '-Call------IP:Port---------------------------Last------------\r'
         for k in _ent.keys():
             if _ent[k].axip_add[0]:
                 max_c += 1
                 if max_c > max_ent:
                     break
-                out += '{:9} {:33} {:8}\r'.format(
+                out += ' {:9} {:33} {:8}\r'.format(
                     _ent[k].own_call,
                     _ent[k].axip_add[0] + ':' + str(_ent[k].axip_add[1]),
                     get_timedelta_str(_ent[k].last_seen, r_just=False)

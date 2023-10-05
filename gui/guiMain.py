@@ -1733,13 +1733,19 @@ class TkMainWin:
         else:
             self.setting_sprech.set(False)
         # MH
-        MH_LIST.parm_new_call_alarm = True
+        """
         MH_LIST.parm_distance_alarm = 50
         MH_LIST.parm_lastseen_alarm = 1
+        """
+        MH_LIST.parm_new_call_alarm = True
+        # Set Port 0 for DX Alarm as default # TODO remove
+        if PORT_HANDLER.get_port_by_index(0):
+            MH_LIST.parm_alarm_ports = [0]
+        else:
+            MH_LIST.parm_alarm_ports = []
 
     def _init_bw_plot(self):
         self._bw_fig = Figure(figsize=(8, 5), dpi=80)
-        # plt.style.use('dark_background')
         self._ax = self._bw_fig.add_subplot(111)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
         self._ax.axis([0, 10, 0, 100])  # TODO As Option
