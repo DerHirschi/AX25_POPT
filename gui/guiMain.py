@@ -89,39 +89,39 @@ class SideTabbedFrame:
         self.style = main_cl.style
         self.ch_index = main_cl.channel_index
 
-        self._tab_side_frame = tk.Frame(
+        _tab_side_frame = tk.Frame(
             main_cl.get_side_frame(),
             # width=300,
             height=400
         )
-        self._tab_side_frame.grid(row=3, column=0, columnspan=6, pady=10, sticky="nsew")
+        _tab_side_frame.grid(row=3, column=0, columnspan=6, pady=10, sticky="nsew")
         self._tabControl = ttk.Notebook(
-            self._tab_side_frame,
+            _tab_side_frame,
             height=300,
             # width=500
         )
 
         tab1_kanal = ttk.Frame(self._tabControl)
         # self.tab1_1_RTT = ttk.Frame(self._tabControl)
-        self.tab2_mh = tk.Frame(self._tabControl)
-        # self.tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
-        self.tab2_mh_def_bg_clr = self.tab2_mh.cget('bg')
-        self.tab4_settings = ttk.Frame(self._tabControl)
-        self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
-        self.tab6_monitor = ttk.Frame(self._tabControl)
-        self.tab7_tracer = ttk.Frame(self._tabControl)
+        tab2_mh = tk.Frame(self._tabControl)
+        # tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
+        # self.tab2_mh_def_bg_clr = tab2_mh.cget('bg')
+        tab4_settings = ttk.Frame(self._tabControl)
+        # self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
+        tab6_monitor = ttk.Frame(self._tabControl)
+        tab7_tracer = ttk.Frame(self._tabControl)
 
         self._tabControl.add(tab1_kanal, text='Kanal')
         # tab3 = ttk.Frame(self._tabControl)                         # TODO
         # self._tabControl.add(tab3, text='Ports')                   # TODO
-        self._tabControl.add(self.tab4_settings, text='Global')
-        self._tabControl.add(self.tab6_monitor, text='Monitor')
-        self._tabControl.add(self.tab2_mh, text='MH')
-        self._tabControl.add(self.tab7_tracer, text='Tracer')
+        self._tabControl.add(tab4_settings, text='Global')
+        self._tabControl.add(tab6_monitor, text='Monitor')
+        self._tabControl.add(tab2_mh, text='MH')
+        self._tabControl.add(tab7_tracer, text='Tracer')
 
         # self._tabControl.add(self.tab5_ch_links, text='CH-Echo')   # TODO
         self._tabControl.pack(expand=0, fill="both")
-        self._tabControl.select(self.tab2_mh)
+        self._tabControl.select(tab2_mh)
         ################################################
         # Kanal
         parm_y = 20
@@ -317,7 +317,7 @@ class SideTabbedFrame:
         ################################
         # MH ##########################
         # TREE
-        self.tab2_mh.columnconfigure(0, minsize=300, weight=1)
+        tab2_mh.columnconfigure(0, minsize=300, weight=1)
 
         columns = (
             'mh_last_seen',
@@ -328,7 +328,7 @@ class SideTabbedFrame:
             'mh_route',
         )
 
-        self._tree = ttk.Treeview(self.tab2_mh, columns=columns, show='headings')
+        self._tree = ttk.Treeview(tab2_mh, columns=columns, show='headings')
         self._tree.grid(row=0, column=0, sticky='nsew')
 
         self._tree.heading('mh_last_seen', text='Zeit')
@@ -351,12 +351,12 @@ class SideTabbedFrame:
 
         # Global Settings ##########################
         # Global Sound
-        Checkbutton(self.tab4_settings,
+        Checkbutton(tab4_settings,
                     text="Sound",
                     variable=self._main_win.setting_sound,
                     ).place(x=10, y=10)
         # Global Sprech
-        sprech_btn = Checkbutton(self.tab4_settings,
+        sprech_btn = Checkbutton(tab4_settings,
                                  text="Sprachausgabe",
                                  variable=self._main_win.setting_sprech,
                                  command=self._chk_sprech_on
@@ -365,12 +365,12 @@ class SideTabbedFrame:
         if not is_linux():
             sprech_btn.configure(state='disabled')
         # Global Bake
-        Checkbutton(self.tab4_settings,
+        Checkbutton(tab4_settings,
                     text="Baken",
                     variable=self._main_win.setting_bake,
                     ).place(x=10, y=60)
         # DX Alarm  > dx_alarm_on
-        Checkbutton(self.tab4_settings,
+        Checkbutton(tab4_settings,
                     text="Tracer",
                     variable=self._main_win.setting_tracer,
                     command=self._chk_tracer,
@@ -380,21 +380,21 @@ class SideTabbedFrame:
             True: 'disabled',
             False: 'normal'
         }.get(self._main_win.get_tracer(), 'disabled')
-        self._autotracer_chk_btn = Checkbutton(self.tab4_settings,
+        self._autotracer_chk_btn = Checkbutton(tab4_settings,
                                                text="Auto-Tracer",
                                                variable=self._main_win.setting_auto_tracer,
                                                command=self._chk_auto_tracer,
                                                state=_auto_tracer_state
                                                )
         self._autotracer_chk_btn.place(x=10, y=110)
-        Checkbutton(self.tab4_settings,
+        Checkbutton(tab4_settings,
                     text="DX-Alarm",
                     variable=self._main_win.setting_dx_alarm,
                     command=self._main_win.set_dx_alarm,
                     # state='disabled'
                     ).place(x=10, y=135)
         # RX ECHO
-        Checkbutton(self.tab4_settings,
+        Checkbutton(tab4_settings,
                     text="RX-Echo",
                     variable=self._main_win.setting_rx_echo,
                     ).place(x=10, y=160)
@@ -408,16 +408,16 @@ class SideTabbedFrame:
         # Address
         _x = 10
         _y = 10
-        self.to_add_var = tk.StringVar(self.tab6_monitor)
-        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['to'][self._lang]}:").place(x=_x, y=_y)
-        self.to_add_ent = tk.Entry(self.tab6_monitor, textvariable=self.to_add_var)
+        self.to_add_var = tk.StringVar(tab6_monitor)
+        tk.Label(tab6_monitor, text=f"{STR_TABLE['to'][self._lang]}:").place(x=_x, y=_y)
+        self.to_add_ent = tk.Entry(tab6_monitor, textvariable=self.to_add_var)
         self.to_add_ent.place(x=_x + 40, y=_y)
 
         # CMD/RPT
         _x = 10
         _y = 80
-        self.cmd_var = tk.BooleanVar(self.tab6_monitor)
-        self.cmd_ent = tk.Checkbutton(self.tab6_monitor,
+        self.cmd_var = tk.BooleanVar(tab6_monitor)
+        self.cmd_ent = tk.Checkbutton(tab6_monitor,
                                       variable=self.cmd_var,
                                       text='CMD/RPT')
         self.cmd_ent.place(x=_x, y=_y)
@@ -425,8 +425,8 @@ class SideTabbedFrame:
         # Poll
         _x = 10
         _y = 105
-        self.poll_var = tk.BooleanVar(self.tab6_monitor)
-        self.poll_ent = tk.Checkbutton(self.tab6_monitor,
+        self.poll_var = tk.BooleanVar(tab6_monitor)
+        self.poll_ent = tk.Checkbutton(tab6_monitor,
                                        variable=self.poll_var,
                                        text='Poll')
         self.poll_ent.place(x=_x, y=_y)
@@ -434,13 +434,13 @@ class SideTabbedFrame:
         # Port
         _x = 40
         _y = 140
-        tk.Label(self.tab6_monitor, text=f"{STR_TABLE['port'][self._lang]}:").place(x=_x, y=_y)
-        self.mon_port_var = tk.StringVar(self.tab6_monitor)
+        tk.Label(tab6_monitor, text=f"{STR_TABLE['port'][self._lang]}:").place(x=_x, y=_y)
+        self.mon_port_var = tk.StringVar(tab6_monitor)
         self.mon_port_var.set('0')
         _vals = ['0']
         if PORT_HANDLER.get_all_ports().keys():
             _vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
-        self.mon_port_ent = tk.ttk.Combobox(self.tab6_monitor,
+        self.mon_port_ent = tk.ttk.Combobox(tab6_monitor,
                                             width=4,
                                             textvariable=self.mon_port_var,
                                             values=_vals,
@@ -450,11 +450,11 @@ class SideTabbedFrame:
         # Calls
         _x = 40
         _y = 175
-        self.mon_call_var = tk.StringVar(self.tab6_monitor)
+        self.mon_call_var = tk.StringVar(tab6_monitor)
         _vals = []
         # if self.main_win.ax25_port_handler.ax25_ports.keys():
         #     _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
-        self.mon_call_ent = tk.ttk.Combobox(self.tab6_monitor,
+        self.mon_call_ent = tk.ttk.Combobox(tab6_monitor,
                                             width=9,
                                             textvariable=self.mon_call_var,
                                             values=_vals,
@@ -464,8 +464,8 @@ class SideTabbedFrame:
         # Auto Scrolling
         _x = 10
         _y = 210
-        self.mon_scroll_var = tk.BooleanVar(self.tab6_monitor)
-        self.mon_scroll_ent = tk.Checkbutton(self.tab6_monitor,
+        self.mon_scroll_var = tk.BooleanVar(tab6_monitor)
+        self.mon_scroll_ent = tk.Checkbutton(tab6_monitor,
                                              variable=self.mon_scroll_var,
                                              text=STR_TABLE['scrolling'][self._lang])
         self.mon_scroll_ent.place(x=_x, y=_y)
@@ -473,9 +473,9 @@ class SideTabbedFrame:
         # Monitor APRS Decoding Output
         _x = 10
         _y = 235
-        self.mon_aprs_var = tk.BooleanVar(self.tab6_monitor)
+        self.mon_aprs_var = tk.BooleanVar(tab6_monitor)
         self.mon_aprs_var.set(True)
-        self.mon_aprs_ent = tk.Checkbutton(self.tab6_monitor,
+        self.mon_aprs_ent = tk.Checkbutton(tab6_monitor,
                                            variable=self.mon_aprs_var,
                                            text='APRS-Decoding')
         self.mon_aprs_ent.place(x=_x, y=_y)
@@ -483,15 +483,15 @@ class SideTabbedFrame:
         # PID
         _x = 10
         _y = 45
-        self.mon_pid_var = tk.StringVar(self.tab6_monitor)
-        tk.Label(self.tab6_monitor, text='PID:').place(x=_x, y=_y)
+        self.mon_pid_var = tk.StringVar(tab6_monitor)
+        tk.Label(tab6_monitor, text='PID:').place(x=_x, y=_y)
         pid = PIDByte()
         pac_types = dict(pid.pac_types)
         _vals = []
         for x in list(pac_types.keys()):
             pid.pac_types[int(x)]()
             _vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
-        self.mon_pid_ent = tk.ttk.Combobox(self.tab6_monitor,
+        self.mon_pid_ent = tk.ttk.Combobox(tab6_monitor,
                                            width=20,
                                            values=_vals,
                                            textvariable=self.mon_pid_var)
@@ -502,10 +502,10 @@ class SideTabbedFrame:
         self.mon_port_on_vars = {}
         all_ports = PORT_HANDLER.get_all_ports()
         for port_id in all_ports:
-            self.mon_port_on_vars[port_id] = tk.BooleanVar(self.tab6_monitor)
+            self.mon_port_on_vars[port_id] = tk.BooleanVar(tab6_monitor)
             _x = 170
             _y = 80 + (25 * port_id)
-            tk.Checkbutton(self.tab6_monitor,
+            tk.Checkbutton(tab6_monitor,
                            text=f"Port {port_id}",
                            variable=self.mon_port_on_vars[port_id],
                            command=self._chk_mon_port_filter
@@ -514,10 +514,10 @@ class SideTabbedFrame:
         ################################
         # TRACER
         # TREE
-        self.tab7_tracer.columnconfigure(0, minsize=150, weight=1)
-        self.tab7_tracer.columnconfigure(1, minsize=150, weight=1)
-        self.tab7_tracer.rowconfigure(0, minsize=100, weight=1)
-        self.tab7_tracer.rowconfigure(1, minsize=50, weight=1)
+        tab7_tracer.columnconfigure(0, minsize=150, weight=1)
+        tab7_tracer.columnconfigure(1, minsize=150, weight=1)
+        tab7_tracer.rowconfigure(0, minsize=100, weight=1)
+        tab7_tracer.rowconfigure(1, minsize=50, weight=1)
 
         tracer_columns = (
             'rx_time',
@@ -527,7 +527,7 @@ class SideTabbedFrame:
             'path',
         )
 
-        self._trace_tree = ttk.Treeview(self.tab7_tracer, columns=tracer_columns, show='headings')
+        self._trace_tree = ttk.Treeview(tab7_tracer, columns=tracer_columns, show='headings')
         self._trace_tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
 
         self._trace_tree.heading('rx_time', text='Zeit')
@@ -545,11 +545,11 @@ class SideTabbedFrame:
         self._trace_tree_data_old = {}
         self._update_side_trace()
 
-        tk.Button(self.tab7_tracer,
+        tk.Button(tab7_tracer,
                   text="SEND",
                   command=self._tracer_send
                   ).grid(row=1, column=0, padx=10)
-        # tk.Button(self.tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
+        # tk.Button(tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
         self._trace_tree.bind('<<TreeviewSelect>>', self._trace_entry_selected)
 
         ##################
@@ -568,7 +568,7 @@ class SideTabbedFrame:
     """
     def reset_dx_alarm(self, event=None):
         self._main_win.reset_dx_alarm()
-        # self.tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
+        # tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
     """
 
     def set_auto_tracer_state(self):
@@ -946,32 +946,32 @@ class SideTabbedFrame:
 class TxTframe:
     def __init__(self, main_win):
 
-        self.pw = ttk.PanedWindow(orient=tk.VERTICAL)
+        self._pw = ttk.PanedWindow(orient=tk.VERTICAL)
         self._main_class = main_win
-        self.text_size = main_win.text_size
+        self._text_size = main_win.text_size
         ###################
         # Input Win
-        self.status_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
-        self.status_frame.pack(side=tk.BOTTOM, expand=0)
+        self._status_frame = tk.Frame(self._pw, width=500, height=320, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
+        self._status_frame.pack(side=tk.BOTTOM, expand=0)
 
-        self.status_frame.columnconfigure(1, minsize=60, weight=2)  # Name
-        self.status_frame.columnconfigure(2, minsize=40, weight=3)  # Status
-        self.status_frame.columnconfigure(3, minsize=40, weight=4)  # unACK
-        self.status_frame.columnconfigure(4, minsize=40, weight=4)  # VS VR
-        self.status_frame.columnconfigure(5, minsize=20, weight=5)  # N2
-        self.status_frame.columnconfigure(6, minsize=20, weight=5)  # T1
-        self.status_frame.columnconfigure(7, minsize=20, weight=5)  # T1
-        self.status_frame.columnconfigure(8, minsize=20, weight=5)  # T2
-        self.status_frame.columnconfigure(9, minsize=20, weight=5)  # T3
-        self.status_frame.columnconfigure(10, minsize=50, weight=1)  # RX Beep
-        self.status_frame.columnconfigure(11, minsize=20, weight=1)  # TimeStamp
-        self.status_frame.rowconfigure(0, weight=1)  # Stat
-        self.status_frame.rowconfigure(1, minsize=20, weight=0)  # Out
+        self._status_frame.columnconfigure(1, minsize=60, weight=2)  # Name
+        self._status_frame.columnconfigure(2, minsize=40, weight=3)  # Status
+        self._status_frame.columnconfigure(3, minsize=40, weight=4)  # unACK
+        self._status_frame.columnconfigure(4, minsize=40, weight=4)  # VS VR
+        self._status_frame.columnconfigure(5, minsize=20, weight=5)  # N2
+        self._status_frame.columnconfigure(6, minsize=20, weight=5)  # T1
+        self._status_frame.columnconfigure(7, minsize=20, weight=5)  # T1
+        self._status_frame.columnconfigure(8, minsize=20, weight=5)  # T2
+        self._status_frame.columnconfigure(9, minsize=20, weight=5)  # T3
+        self._status_frame.columnconfigure(10, minsize=50, weight=1)  # RX Beep
+        self._status_frame.columnconfigure(11, minsize=20, weight=1)  # TimeStamp
+        self._status_frame.rowconfigure(0, weight=1)  # Stat
+        self._status_frame.rowconfigure(1, minsize=20, weight=0)  # Out
 
-        self.in_txt_win = scrolledtext.ScrolledText(self.status_frame,
+        self.in_txt_win = scrolledtext.ScrolledText(self._status_frame,
                                                     background=TXT_BACKGROUND_CLR,
                                                     foreground=TXT_INP_CLR,
-                                                    font=(FONT, self.text_size),
+                                                    font=(FONT, self._text_size),
                                                     insertbackground=TXT_INP_CURSOR_CLR,
                                                     height=100,
                                                     width=82,
@@ -983,61 +983,61 @@ class TxTframe:
         self.in_txt_win.grid(row=0, column=0, columnspan=12, sticky="nsew")
         ##############
         # Status Frame
-        self.status_name = Label(self.status_frame, text="", font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+        self.status_name = Label(self._status_frame, text="", font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                  foreground=STAT_BAR_TXT_CLR,
                                  bg=STAT_BAR_CLR)
         self.status_name.grid(row=1, column=1, sticky="nsew")
 
-        self.status_status = Label(self.status_frame, text="",
+        self.status_status = Label(self._status_frame, text="",
                                    font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                    bg=STAT_BAR_CLR,
                                    foreground=STAT_BAR_TXT_CLR)
         self.status_status.grid(row=1, column=2, sticky="nsew")
 
-        self.status_unack = Label(self.status_frame, text="",
+        self.status_unack = Label(self._status_frame, text="",
                                   foreground=STAT_BAR_TXT_CLR,
                                   font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                   bg=STAT_BAR_CLR)
         self.status_unack.grid(row=1, column=3, sticky="nsew")
 
-        self.status_vs = Label(self.status_frame, text="",
+        self.status_vs = Label(self._status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
         self.status_vs.grid(row=1, column=4, sticky="nsew")
 
-        self.status_n2 = Label(self.status_frame, text="",
+        self.status_n2 = Label(self._status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
         self.status_n2.grid(row=1, column=7, sticky="nsew")
 
-        self.status_t1 = Label(self.status_frame, text="",
+        self.status_t1 = Label(self._status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
         self.status_t1.grid(row=1, column=8, sticky="nsew")
         # PARM T2
-        self.status_t2 = Label(self.status_frame, text="",
+        self.status_t2 = Label(self._status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
         self.status_t2.grid(row=1, column=5, sticky="nsew")
         # RTT
-        self.status_rtt = Label(self.status_frame, text="",
+        self.status_rtt = Label(self._status_frame, text="",
                                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                 bg=STAT_BAR_CLR,
                                 foreground=STAT_BAR_TXT_CLR)
         self.status_rtt.grid(row=1, column=6, sticky="nsew")
 
-        self.status_t3 = Label(self.status_frame, text="",
+        self.status_t3 = Label(self._status_frame, text="",
                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                bg=STAT_BAR_CLR,
                                foreground=STAT_BAR_TXT_CLR)
         self.status_t3.grid(row=1, column=9, sticky="nsew")
         # Checkbox RX-BEEP
         self.rx_beep_var = tk.IntVar()
-        self.rx_beep_box = Checkbutton(self.status_frame,
+        self.rx_beep_box = Checkbutton(self._status_frame,
                                        text="RX-BEEP",
                                        bg=STAT_BAR_CLR,
                                        font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
@@ -1051,7 +1051,7 @@ class TxTframe:
         self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
         # TODO Checkbox Time Stamp
         self.ts_box_var = tk.IntVar()
-        self.ts_box_box = Checkbutton(self.status_frame,
+        self.ts_box_box = Checkbutton(self._status_frame,
                                       text="T-S",
                                       font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                       bg=STAT_BAR_CLR,
@@ -1064,28 +1064,28 @@ class TxTframe:
                                       state='disabled'
                                       )
         self.ts_box_box.grid(row=1, column=11, sticky="nsew")
-        self.status_frame.pack(side=tk.BOTTOM)
+        self._status_frame.pack(side=tk.BOTTOM)
 
         ####################
         # Output
-        self.out_frame = tk.Frame(self.pw, width=500, height=320, bd=0, borderwidth=0, )
-        self.out_frame.pack(side=tk.BOTTOM, expand=0)
-        self.out_frame.rowconfigure(1, minsize=22, weight=1)
-        self.out_frame.rowconfigure(0, weight=1)
-        self.out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
-        self.out_frame.columnconfigure(1, minsize=80, weight=2)  # Name
-        self.out_frame.columnconfigure(2, minsize=60, weight=3)  # QTH
-        self.out_frame.columnconfigure(3, minsize=20, weight=4)  # LOC
-        self.out_frame.columnconfigure(4, minsize=20, weight=5)  # Typ
-        self.out_frame.columnconfigure(5, minsize=80, weight=4)  # Software
-        self.out_frame.columnconfigure(6, minsize=28, weight=4)  # Status (PIPE/FT)
-        self.out_frame.columnconfigure(7, minsize=30, weight=4)  # Conn Timer
-        self.out_frame.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
-        self.out_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
-        self.out_txt_win = scrolledtext.ScrolledText(self.out_frame,
+        self._out_frame = tk.Frame(self._pw, width=500, height=320, bd=0, borderwidth=0, )
+        self._out_frame.pack(side=tk.BOTTOM, expand=0)
+        self._out_frame.rowconfigure(1, minsize=22, weight=1)
+        self._out_frame.rowconfigure(0, weight=1)
+        self._out_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
+        self._out_frame.columnconfigure(1, minsize=80, weight=2)  # Name
+        self._out_frame.columnconfigure(2, minsize=60, weight=3)  # QTH
+        self._out_frame.columnconfigure(3, minsize=20, weight=4)  # LOC
+        self._out_frame.columnconfigure(4, minsize=20, weight=5)  # Typ
+        self._out_frame.columnconfigure(5, minsize=80, weight=4)  # Software
+        self._out_frame.columnconfigure(6, minsize=28, weight=4)  # Status (PIPE/FT)
+        self._out_frame.columnconfigure(7, minsize=30, weight=4)  # Conn Timer
+        self._out_frame.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
+        self._out_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
+        self.out_txt_win = scrolledtext.ScrolledText(self._out_frame,
                                                      background=TXT_BACKGROUND_CLR,
                                                      foreground=TXT_OUT_CLR,
-                                                     font=(FONT, self.text_size),
+                                                     font=(FONT, self._text_size),
                                                      height=100,
                                                      width=82,
                                                      bd=0,
@@ -1095,16 +1095,16 @@ class TxTframe:
         self.out_txt_win.tag_config("input", foreground="yellow")
         self.out_txt_win.grid(row=0, column=0, columnspan=10, sticky="nsew")
         # Stat INFO (Name,QTH usw)
-        self.stat_info_name_var = tk.StringVar(self.out_frame)
-        self.stat_info_qth_var = tk.StringVar(self.out_frame)
-        self.stat_info_loc_var = tk.StringVar(self.out_frame)
-        self.stat_info_typ_var = tk.StringVar(self.out_frame)
-        self.stat_info_sw_var = tk.StringVar(self.out_frame)
-        self.stat_info_timer_var = tk.StringVar(self.out_frame)
-        self.stat_info_encoding_var = tk.StringVar(self.out_frame)
-        self.stat_info_status_var = tk.StringVar(self.out_frame)
+        self.stat_info_name_var = tk.StringVar(self._out_frame)
+        self.stat_info_qth_var = tk.StringVar(self._out_frame)
+        self.stat_info_loc_var = tk.StringVar(self._out_frame)
+        self.stat_info_typ_var = tk.StringVar(self._out_frame)
+        self.stat_info_sw_var = tk.StringVar(self._out_frame)
+        self.stat_info_timer_var = tk.StringVar(self._out_frame)
+        self.stat_info_encoding_var = tk.StringVar(self._out_frame)
+        self.stat_info_status_var = tk.StringVar(self._out_frame)
         size = 0
-        name_label = tk.Label(self.out_frame,
+        name_label = tk.Label(self._out_frame,
                               textvariable=self.stat_info_name_var,
                               # bg=STAT_BAR_CLR,
                               height=1,
@@ -1115,7 +1115,7 @@ class TxTframe:
                               )
         name_label.grid(row=1, column=1, sticky="nsew")
         name_label.bind('<Button-1>', self._main_class.open_user_db_win)
-        qth_label = tk.Label(self.out_frame,
+        qth_label = tk.Label(self._out_frame,
                              textvariable=self.stat_info_qth_var,
                              bg=STAT_BAR_CLR,
                              fg=STAT_BAR_TXT_CLR,
@@ -1126,7 +1126,7 @@ class TxTframe:
                              )
         qth_label.bind('<Button-1>', self._main_class.open_user_db_win)
         qth_label.grid(row=1, column=2, sticky="nsew")
-        loc_label = tk.Label(self.out_frame,
+        loc_label = tk.Label(self._out_frame,
                              textvariable=self.stat_info_loc_var,
                              bg=STAT_BAR_CLR,
                              fg=STAT_BAR_TXT_CLR,
@@ -1140,7 +1140,7 @@ class TxTframe:
 
         opt = list(STATION_TYPS)
         stat_typ = tk.OptionMenu(
-            self.out_frame,
+            self._out_frame,
             self.stat_info_typ_var,
             *opt,
             command=self.set_stat_typ
@@ -1156,7 +1156,7 @@ class TxTframe:
         )
         stat_typ.grid(row=1, column=4, sticky="nsew")
 
-        tk.Label(self.out_frame,
+        tk.Label(self._out_frame,
                  textvariable=self.stat_info_sw_var,
                  width=20,
                  bg="#ffd444",
@@ -1167,7 +1167,7 @@ class TxTframe:
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
                  ).grid(row=1, column=5, sticky="nsew")
 
-        self.status_label = tk.Label(self.out_frame,
+        self.status_label = tk.Label(self._out_frame,
                                      textvariable=self.stat_info_status_var,
                                      bg=STAT_BAR_CLR,
                                      fg="red3",
@@ -1179,7 +1179,7 @@ class TxTframe:
         self.status_label.grid(row=1, column=6, sticky="nsew")
         self.status_label.bind('<Button-1>', self._main_class.do_priv)
 
-        tk.Label(self.out_frame,
+        tk.Label(self._out_frame,
                  textvariable=self.stat_info_timer_var,
                  width=10,
                  height=1,
@@ -1191,7 +1191,7 @@ class TxTframe:
                  ).grid(row=1, column=7, sticky="nsew")
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
-            self.out_frame,
+            self._out_frame,
             self.stat_info_encoding_var,
             *opt,
             command=self.change_txt_encoding
@@ -1207,10 +1207,10 @@ class TxTframe:
         txt_encoding_ent.grid(row=1, column=8, sticky="nsew", )
         #############
         # Monitor
-        self.mon_txt = scrolledtext.ScrolledText(self.pw,
+        self.mon_txt = scrolledtext.ScrolledText(self._pw,
                                                  background=TXT_BACKGROUND_CLR,
                                                  foreground=TXT_MON_CLR,
-                                                 font=(FONT, self.text_size),
+                                                 font=(FONT, self._text_size),
                                                  height=100,
                                                  width=82,
                                                  bd=0,
@@ -1222,15 +1222,15 @@ class TxTframe:
 
         # paned window
 
-        self.pw.add(self.status_frame, weight=1)
+        self._pw.add(self._status_frame, weight=1)
         # self.pw.paneconfig(self.status_frame, height=40)
-        self.pw.add(self.out_frame, weight=1)
+        self._pw.add(self._out_frame, weight=1)
 
-        self.pw.add(self.mon_txt, weight=1)
+        self._pw.add(self.mon_txt, weight=1)
 
         # place the panedwindow on the root window
-        self.pw.pack(fill=tk.BOTH, expand=True)
-        self.pw.grid(row=1, column=0, sticky="nsew")
+        self._pw.pack(fill=tk.BOTH, expand=True)
+        self._pw.grid(row=1, column=0, sticky="nsew")
 
     def update_status_win(self):
         station = self._main_class.get_conn(self._main_class.channel_index)
@@ -1313,20 +1313,20 @@ class TxTframe:
         # TODO Save Stretched Positions
         if self._main_class.mon_mode:
             try:
-                self.pw.remove(self.status_frame)
-                self.pw.remove(self.mon_txt)
+                self._pw.remove(self._status_frame)
+                self._pw.remove(self.mon_txt)
             except tk.TclError:
                 pass
-            self.pw.add(self.status_frame, weight=1)
-            self.pw.add(self.out_frame, weight=1)
-            self.pw.add(self.mon_txt, weight=1)
+            self._pw.add(self._status_frame, weight=1)
+            self._pw.add(self._out_frame, weight=1)
+            self._pw.add(self.mon_txt, weight=1)
             # self.pw.configure(height=837)
 
         else:
             # _pw_height = self.pw.winfo_height()
             # _mon_txt_height = self.mon_txt.winfo_height()
             # _out_txt_height = self.out_txt_win.winfo_height()
-            self.pw.remove(self.out_frame)
+            self._pw.remove(self._out_frame)
             # self.pw.configure(height=837)
 
     def chk_rx_beep(self):
@@ -1373,96 +1373,96 @@ class TxTframe:
 class ChBtnFrm:
     def __init__(self, main_win):
         self._main_class = main_win
-        self.ch_btn_blink_timer = time.time()
-        self.ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=10)
+        self._ch_btn_blink_timer = time.time()
+        self._ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=10)
         _btn_font = ("fixedsys", 8,)
-        self.ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(4, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(5, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(6, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(7, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(8, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
-        self.ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(4, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(5, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(6, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(7, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(8, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
+        self._ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
         # self.ch_btn_frame.grid(row=1, column=1, sticky="nsew")
-        self.ch_1_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_2_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_3_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_4_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_5_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_6_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_7_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_8_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_9_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_10_var = tk.StringVar(self.ch_btn_frame)
-        self.ch_1_var.set('1')
-        self.ch_2_var.set('2')
-        self.ch_3_var.set('3')
-        self.ch_4_var.set('4')
-        self.ch_5_var.set('5')
-        self.ch_6_var.set('6')
-        self.ch_7_var.set('7')
-        self.ch_8_var.set('8')
-        self.ch_9_var.set('9')
-        self.ch_10_var.set('10')
-        self.ch_button1 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_1_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(1))
-        self.ch_button2 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_2_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(2))
-        self.ch_button3 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_3_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(3))
-        self.ch_button4 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_4_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(4))
-        self.ch_button5 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_5_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(5))
-        self.ch_button6 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_6_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(6))
-        self.ch_button7 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_7_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(7))
-        self.ch_button8 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_8_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(8))
-        self.ch_button9 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_9_var, bg="red",
-                                    command=lambda: self._main_class.switch_channel(9))
-        self.ch_button10 = tk.Button(self.ch_btn_frame, font=_btn_font, textvariable=self.ch_10_var, bg="red",
-                                     command=lambda: self._main_class.switch_channel(10))
-        self.ch_button1.grid(row=1, column=1, sticky="nsew")
-        self.ch_button2.grid(row=1, column=2, sticky="nsew")
-        self.ch_button3.grid(row=1, column=3, sticky="nsew")
-        self.ch_button4.grid(row=1, column=4, sticky="nsew")
-        self.ch_button5.grid(row=1, column=5, sticky="nsew")
-        self.ch_button6.grid(row=1, column=6, sticky="nsew")
-        self.ch_button7.grid(row=1, column=7, sticky="nsew")
-        self.ch_button8.grid(row=1, column=8, sticky="nsew")
-        self.ch_button9.grid(row=1, column=9, sticky="nsew")
-        self.ch_button10.grid(row=1, column=10, sticky="nsew")
+        ch_1_var = tk.StringVar(self._ch_btn_frame)
+        ch_2_var = tk.StringVar(self._ch_btn_frame)
+        ch_3_var = tk.StringVar(self._ch_btn_frame)
+        ch_4_var = tk.StringVar(self._ch_btn_frame)
+        ch_5_var = tk.StringVar(self._ch_btn_frame)
+        ch_6_var = tk.StringVar(self._ch_btn_frame)
+        ch_7_var = tk.StringVar(self._ch_btn_frame)
+        ch_8_var = tk.StringVar(self._ch_btn_frame)
+        ch_9_var = tk.StringVar(self._ch_btn_frame)
+        ch_10_var = tk.StringVar(self._ch_btn_frame)
+        ch_1_var.set('1')
+        ch_2_var.set('2')
+        ch_3_var.set('3')
+        ch_4_var.set('4')
+        ch_5_var.set('5')
+        ch_6_var.set('6')
+        ch_7_var.set('7')
+        ch_8_var.set('8')
+        ch_9_var.set('9')
+        ch_10_var.set('10')
+        ch_button1 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_1_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(1))
+        ch_button2 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_2_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(2))
+        ch_button3 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_3_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(3))
+        ch_button4 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_4_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(4))
+        ch_button5 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_5_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(5))
+        ch_button6 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_6_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(6))
+        ch_button7 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_7_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(7))
+        ch_button8 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_8_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(8))
+        ch_button9 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_9_var, bg="red",
+                               command=lambda: self._main_class.switch_channel(9))
+        ch_button10 = tk.Button(self._ch_btn_frame, font=_btn_font, textvariable=ch_10_var, bg="red",
+                                command=lambda: self._main_class.switch_channel(10))
+        ch_button1.grid(row=1, column=1, sticky="nsew")
+        ch_button2.grid(row=1, column=2, sticky="nsew")
+        ch_button3.grid(row=1, column=3, sticky="nsew")
+        ch_button4.grid(row=1, column=4, sticky="nsew")
+        ch_button5.grid(row=1, column=5, sticky="nsew")
+        ch_button6.grid(row=1, column=6, sticky="nsew")
+        ch_button7.grid(row=1, column=7, sticky="nsew")
+        ch_button8.grid(row=1, column=8, sticky="nsew")
+        ch_button9.grid(row=1, column=9, sticky="nsew")
+        ch_button10.grid(row=1, column=10, sticky="nsew")
         self._con_btn_dict = {
-            1: self.ch_button1,
-            2: self.ch_button2,
-            3: self.ch_button3,
-            4: self.ch_button4,
-            5: self.ch_button5,
-            6: self.ch_button6,
-            7: self.ch_button7,
-            8: self.ch_button8,
-            9: self.ch_button9,
-            10: self.ch_button10,
+            1: ch_button1,
+            2: ch_button2,
+            3: ch_button3,
+            4: ch_button4,
+            5: ch_button5,
+            6: ch_button6,
+            7: ch_button7,
+            8: ch_button8,
+            9: ch_button9,
+            10: ch_button10,
         }
         self._ch_btn_textvar = {
-            1: self.ch_1_var,
-            2: self.ch_2_var,
-            3: self.ch_3_var,
-            4: self.ch_4_var,
-            5: self.ch_5_var,
-            6: self.ch_6_var,
-            7: self.ch_7_var,
-            8: self.ch_8_var,
-            9: self.ch_9_var,
-            10: self.ch_10_var,
+            1: ch_1_var,
+            2: ch_2_var,
+            3: ch_3_var,
+            4: ch_4_var,
+            5: ch_5_var,
+            6: ch_6_var,
+            7: ch_7_var,
+            8: ch_8_var,
+            9: ch_9_var,
+            10: ch_10_var,
         }
 
-    def ch_btn_status_update(self):
+    def _ch_btn_status_update(self):
         # self.main_class.on_channel_status_change()
         _ch_alarm = False
         # if PORT_HANDLER.get_all_connections().keys():
@@ -1501,8 +1501,8 @@ class ChBtnFrm:
                             _ch_alarm = False
                         else:
                             _ch_alarm = True
-                            if self.ch_btn_blink_timer < time.time():
-                                self.ch_btn_alarm(self._con_btn_dict[i])
+                            if self._ch_btn_blink_timer < time.time():
+                                self._ch_btn_alarm(self._con_btn_dict[i])
                     else:
                         if _is_link:
                             _ch_alarm = False
@@ -1531,17 +1531,15 @@ class ChBtnFrm:
                     if self._con_btn_dict[i].cget('bg') != 'yellow':
                         self._con_btn_dict[i].configure(bg='yellow')
 
-        if self.ch_btn_blink_timer < time.time():
-            self.ch_btn_blink_timer = time.time() + self._main_class.parm_btn_blink_time
+        if self._ch_btn_blink_timer < time.time():
+            self._ch_btn_blink_timer = time.time() + self._main_class.parm_btn_blink_time
         self._main_class.ch_alarm = _ch_alarm
 
-    def ch_btn_alarm(self, btn: tk.Button):
-        # TODO find another solution
-        if self.ch_btn_blink_timer < time.time():
+    def _ch_btn_alarm(self, btn: tk.Button):
+        if self._ch_btn_blink_timer < time.time():
             _clr = generate_random_hex_color()
             if btn.cget('bg') != _clr:
                 btn.configure(bg=_clr)
-            # self.ch_btn_blink_timer = time.time() + self.main_class.parm_btn_blink_time
 
 
 class TkMainWin:
@@ -1600,7 +1598,7 @@ class TkMainWin:
         #########################
         # Channel Buttons
         self._ch_btn = ChBtnFrm(self)
-        self._ch_btn.ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
+        self._ch_btn._ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
         #########################
         # Tabbed Frame right
         self._side_btn_frame_top = tk.Frame(self.main_win, width=200, height=540)
@@ -2919,7 +2917,7 @@ class TkMainWin:
     def ch_status_update(self):
         """ Triggered by tasker !!! """
         """Triggerd when Connection Status has changed"""
-        self._ch_btn.ch_btn_status_update()
+        self._ch_btn._ch_btn_status_update()
         # self.change_conn_btn()
         self.on_channel_status_change()
 
@@ -2964,7 +2962,7 @@ class TkMainWin:
             self._txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
 
         self.on_channel_status_change()
-        self._ch_btn.ch_btn_status_update()
+        self._ch_btn._ch_btn_status_update()
         self._kanal_switch()  # Sprech
 
     def on_channel_status_change(self):
@@ -3157,4 +3155,3 @@ class TkMainWin:
 
     def get_dx_alarm(self):
         return bool(self.setting_dx_alarm.get())
-
