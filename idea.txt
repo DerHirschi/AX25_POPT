@@ -2,6 +2,7 @@ Ideas/TODO's :
 
 - ESC Befehle
 - Individuelle Farben (Vorschreib Fenster)
+- Beacon System überarbeiten
 ✓ UserDB
 - Infos / Ctext usw. in User-DB speichern
 - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)

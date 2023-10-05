@@ -186,16 +186,20 @@ class MH(object):
         if ent in self.calls.keys():
             self.calls[ent].axip_add = axip_add
 
-    def mh_inp(self, ax25_frame, port_name, port_id):
-        ########################
-        # Port Stat
-        if port_id not in self.port_statistik_DB.keys():
-            self.port_statistik_DB[port_id] = init_day_dic()
-        # self.port_statistik_DB[port_id].input_stat_db(ax_frame=ax25_frame)
-        self._input_stat_db(ax25_frame, port_id)
+    def mh_inp(self, ax25_frame, port_name, port_id, digi=''):
+        if not digi:
+            ########################
+            # Port Stat
+            if port_id not in self.port_statistik_DB.keys():
+                self.port_statistik_DB[port_id] = init_day_dic()
+            # self.port_statistik_DB[port_id].input_stat_db(ax_frame=ax25_frame)
+            self._input_stat_db(ax25_frame, port_id)
         ########################
         # MH Entry
-        call_str = str(ax25_frame.from_call.call_str)
+        if digi:
+            call_str = digi
+        else:
+            call_str = str(ax25_frame.from_call.call_str)
         if call_str not in self.calls.keys():
             ent = MyHeard()
             if self.parm_new_call_alarm:
@@ -221,10 +225,14 @@ class MH(object):
             ent.to_calls.append(to_c_str)
         # Routes
         ent.route = []      # Last Route
+        _last_digi = ''
         if ax25_frame.via_calls:
             for call in ax25_frame.via_calls:
                 if call.c_bit:
                     ent.route.append(str(call.call_str))
+                    _last_digi = str(call.call_str)
+        if digi and ent.route:
+            ent.route = ent.route[:-1]
 
         if ent.route not in ent.all_routes:
             ent.all_routes.append(list(ent.route))
@@ -238,7 +246,7 @@ class MH(object):
                 ent.axip_add = tuple(ax25_frame.axip_add)
         # Get Locator and Distance from User-DB
 
-        db_ent = USER_DB.get_entry(call_str, add_new=False)
+        db_ent = USER_DB.get_entry(call_str, add_new=True)
         if db_ent:
             ent.locator = str(db_ent.LOC)
             ent.distance = float(db_ent.Distance)
@@ -247,6 +255,12 @@ class MH(object):
                 self._set_dx_alarm(port_id)
 
         self.calls[call_str] = ent
+
+        if digi:
+            USER_DB.set_typ(call_str=digi, add_new=False, typ='DIGI')
+            return
+        if _last_digi:
+            self.mh_inp(ax25_frame, port_name, port_id, _last_digi)
 
     def mh_get_data_fm_call(self, call_str):
         if call_str in self.calls.keys():
