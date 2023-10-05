@@ -140,10 +140,8 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
     ret = ''
     dist = ''
     typ = ''
-    db_ent = USER_DB.get_entry(full_aprs_frame['from'], add_new=add_new_user)
+    loc = ''
     for k in aprs_frame:
-        # print(f"{k}: {aprs_frame[k]}")
-
         if aprs_frame[k]:
             # if k not in ['from', 'to',  'symbol_table', 'symbol', 'subpacket', 'weather']:
             if k not in ['from', 'to', 'raw', 'symbol_table', 'symbol', 'subpacket', 'weather']:
@@ -175,13 +173,8 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     loc = coordinates_to_locator(latitude=aprs_frame['latitude'],
                                                  longitude=aprs_frame['longitude'])
                     ret += f"├►LOCATOR      : {loc}\n"
-                    if db_ent:
-                        if not db_ent.LOC:
-                            db_ent.LOC = loc
-                        if not db_ent.Lat:
-                            db_ent.Lat = aprs_frame['latitude']
-                            db_ent.Lon = aprs_frame['longitude']
-                    if own_locator:
+
+                    if own_locator and loc:
                         dist = locator_distance(own_locator, loc)
                         ret += f"├►DISTANCE     : {dist} km\n"
                     # if db_ent:
@@ -201,11 +194,15 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
                     ret += f"├►{k.upper().ljust(13)}: {aprs_frame[k]}\n"
         if k in ['weather', 'wx']:
             typ = 'APRS-WX'
-    if db_ent:
-        # if not db_ent.Distance:
-        if db_ent.LOC and own_locator:
-            db_ent.Distance = locator_distance(own_locator, db_ent.LOC)
-            dist = locator_distance(own_locator, db_ent.LOC)
+
+    if loc:
+        db_ent = USER_DB.get_entry(full_aprs_frame.get('from', ''), add_new=add_new_user)
+        if db_ent:
+            db_ent.LOC = loc
+            db_ent.Lat = aprs_frame['latitude']
+            db_ent.Lon = aprs_frame['longitude']
+            if type(dist) == float:
+                db_ent.Distance = float(dist)
             if not db_ent.TYP and typ:
                 db_ent.TYP = typ
 

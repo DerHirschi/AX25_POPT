@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from constant import CFG_TR_DX_ALARM_BG_CLR
 
 logger = logging.getLogger(__name__)
 
@@ -212,8 +213,12 @@ class BeaconTracer(tk.Toplevel):
     def _update_tree(self):
         for i in self._tree.get_children():
             self._tree.delete(i)
+        self._tree.tag_configure("tr_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         for ret_ent in self._tree_data:
-            self._tree.insert('', tk.END, values=ret_ent)
+            if ret_ent[1]:
+                self._tree.insert('', tk.END, values=ret_ent[0], tags=('tr_alarm',))
+            else:
+                self._tree.insert('', tk.END, values=ret_ent[0], )
 
     def _format_tree_data(self):
         _traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
@@ -232,7 +237,7 @@ class BeaconTracer(tk.Toplevel):
                 _loc = _pack.get('locator', '')
                 _dist = _pack.get('distance', 0)
 
-                self._tree_data.append((
+                self._tree_data.append(((
                     _rx_time,
                     _call,
                     _port_id,
@@ -240,7 +245,8 @@ class BeaconTracer(tk.Toplevel):
                     f'{_rtt:.2f}',
                     _loc,
                     _dist,
-                ))
+                ), _pack.get('tr_alarm', False)))
+                _pack['tr_alarm'] = False
 
     def _save_btn(self):
         self._save_vars()
@@ -283,9 +289,7 @@ class BeaconTracer(tk.Toplevel):
 
     def _chk_active(self, event=None):
         self._save_vars()
-        _root_gui = PORT_HANDLER.get_root_gui()
-        if _root_gui is not None:
-            _root_gui.tabbed_sideFrame.set_tracer_chk(PORT_HANDLER.get_aprs_ais().be_tracer_active)
+        self._root_win.set_tracer_fm_aprs()
 
     def close(self):
         self._root_win.be_tracer_win = None

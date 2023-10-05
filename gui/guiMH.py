@@ -1,8 +1,10 @@
 import logging
 import tkinter as tk
-from tkinter import Menu
 from tkinter import ttk
+
+from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MyHeard, MH_LIST
+from constant import CFG_TR_DX_ALARM_BG_CLR
 from fnc.str_fnc import conv_time_DE_str
 
 logger = logging.getLogger(__name__)
@@ -12,10 +14,6 @@ class MHWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
-        ###################################
-        # Vars
-        self._rev_ent = False
-        # self.mh_win = tk.Tk()
         self.title("MyHEARD")
         self.style = self._root_win.style
         # self.geometry("1250x700")
@@ -30,21 +28,152 @@ class MHWin(tk.Toplevel):
             self.iconbitmap("favicon.ico")
         except tk.TclError:
             pass
-        self.lift()
+        """
         self._menubar = Menu(self)
         self.config(menu=self._menubar)
         self._menubar.add_command(label="Quit", command=self.close)
         self._menubar.add_command(label="Port-Statistik", command=lambda: self._root_win.open_port_stat_win())
+        """
+        self.lift()
+        ###################################
+        # Vars
+        self._rev_ent = False
+        # self._alarm_active_var = self._root_win.setting_dx_alarm
+        self._alarm_newCall_var = tk.BooleanVar(self)
+        self._alarm_seenSince_var = tk.StringVar(self)
+        self._alarm_distance_var = tk.StringVar(self)
+        # self._tracer_active_var = tk.BooleanVar(self)
+        self._tracer_duration_var = tk.StringVar(self)
+        self._alarm_ports = []
+        _ports = list(PORT_HANDLER.get_all_ports().keys())
+        for _por_id in _ports:
+            self._alarm_ports.append(tk.BooleanVar(self))
+        self._get_vars()
         # ############################### Columns ############################
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=0, minsize=50)
-        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(1, weight=0, minsize=25)
+        self.grid_rowconfigure(2, weight=0, minsize=25)
+        self.grid_rowconfigure(3, weight=1)
+        # ###################### DX Alarm Settings ######################
+        # ALARM
+        lower_frame = tk.Frame(self)
+        lower_frame.grid(row=0, column=0, columnspan=2, sticky='nsew')
+        frame_11_label = tk.Frame(lower_frame)
+        frame_11_label.pack(side=tk.TOP)
+        tk.Label(frame_11_label, text='DX-Alarm Setting').pack()
+        ###
+        # activ Checkbox
+        frame_21_active = tk.Frame(lower_frame)
+        frame_21_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+
+        tk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
+        tk.Checkbutton(frame_21_active,
+                       variable=self._root_win.setting_dx_alarm,
+                       # command=self._chk_alarm_active
+                       ).pack(side=tk.LEFT, )
+
+        # New Call in List Checkbox
+        frame_21_newCall = tk.Frame(lower_frame)
+        frame_21_newCall.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+
+        tk.Label(frame_21_newCall, text='new Call ').pack(side=tk.LEFT, )
+        tk.Checkbutton(frame_21_newCall,
+                       variable=self._alarm_newCall_var,
+                       command=self._set_alarm_newCall
+                       ).pack(side=tk.LEFT, )
+
+        # Alarm seen since Days
+        frame_21_seen = tk.Frame(lower_frame)
+        frame_21_seen.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+
+        tk.Label(frame_21_seen, text='seen since (Days) (0 = off)').pack(side=tk.LEFT, )
+        tk.Spinbox(frame_21_seen,
+                   from_=1,
+                   to=365,
+                   increment=1,
+                   width=4,
+                   textvariable=self._alarm_seenSince_var,
+                   command=self._set_alarm_last_seen
+                   ).pack(side=tk.LEFT, )
+
+        # Alarm Distance
+        frame_21_distance = tk.Frame(lower_frame)
+        frame_21_distance.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+
+        tk.Label(frame_21_distance, text='Distance (0 = off)').pack(side=tk.LEFT, )
+        tk.Spinbox(frame_21_distance,
+                   from_=0,
+                   to=20000,
+                   increment=1,
+                   width=6,
+                   textvariable=self._alarm_distance_var,
+                   command=self._set_alarm_distance
+                   ).pack(side=tk.LEFT, )
+
+        # ###################### Ports ############################
+        lower_frame_ports = tk.Frame(self)
+        lower_frame_ports.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        frame_13_label = tk.Frame(lower_frame_ports)
+        frame_13_label.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+        tk.Label(frame_13_label, text='Ports: ').pack(side=tk.LEFT, )
+        _i = 0
+        for _port_id in _ports:
+            _frame = tk.Frame(lower_frame_ports)
+            _frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=7)
+            _text = f'{_port_id}'
+            tk.Label(_frame, text=_text, width=3).pack(side=tk.LEFT, padx=1)
+            tk.Checkbutton(_frame,
+                           variable=self._alarm_ports[_i],
+                           command=self._set_alarm_ports,
+                           ).pack(side=tk.LEFT, padx=1)
+            _i += 1
+        # ###################### Auto Tracer ######################
+        # Tracer
+        _auto_tracer_state = {
+            True: 'disabled',
+            False: 'normal'
+        }.get(self._root_win.get_tracer(), 'disabled')
+        lower_frame_tracer = tk.Frame(self)
+        lower_frame_tracer.grid(row=2, column=0, columnspan=2, sticky='nsew')
+        frame_12_label = tk.Frame(lower_frame_tracer)
+        frame_12_label.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+        tk.Label(frame_12_label, text='Auto APRS-Tracer: ').pack(side=tk.LEFT, )
+        ###
+        # activ Checkbox
+        frame_22_active = tk.Frame(lower_frame_tracer)
+        frame_22_active.pack(side=tk.LEFT, fill=tk.BOTH, )
+
+        tk.Label(frame_22_active, text='Activate ').pack(side=tk.LEFT, )
+        tk.Checkbutton(frame_22_active,
+                       variable=self._root_win.setting_auto_tracer,
+                       command=self._root_win.set_auto_tracer,
+                       state=_auto_tracer_state
+                       ).pack(side=tk.LEFT, )
+        # duration
+        frame_22_duration = tk.Frame(lower_frame_tracer)
+        frame_22_duration.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+
+        tk.Label(frame_22_duration, text='Duration (min) ').pack(side=tk.LEFT, )
+        tk.Spinbox(frame_22_duration,
+                   from_=5,
+                   to=1440,
+                   increment=5,
+                   width=5,
+                   textvariable=self._tracer_duration_var,
+                   state=_auto_tracer_state,
+                   command=self._set_auto_tracer,
+                   ).pack(side=tk.LEFT, )
+
         ##########################################################################################
         # TREE
         columns = (
             'mh_last_seen',
-            'mh_first_seen' ,
-            'mh_port', 'mh_call',
+            'mh_first_seen',
+            'mh_port',
+            'mh_call',
+            'mh_loc',
+            'mh_dist',
             'mh_nPackets',
             'mh_REJ',
             'mh_route',
@@ -52,25 +181,32 @@ class MHWin(tk.Toplevel):
             'mh_ip_fail'
         )
         self._tree = ttk.Treeview(self, columns=columns, show='headings')
-        self._tree.grid(row=1, column=0, sticky='nsew')
+        self._tree.grid(row=3, column=0, sticky='nsew')
         # add a scrollbar
         scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.grid(row=1, column=1, sticky='ns')
+        scrollbar.grid(row=3, column=1, sticky='ns')
 
         self._tree.heading('mh_last_seen', text='Letzte Paket', command=lambda: self._sort_entry('last'))
         self._tree.heading('mh_first_seen', text='Erste Paket', command=lambda: self._sort_entry('first'))
         self._tree.heading('mh_port', text='Port', command=lambda: self._sort_entry('port'))
         self._tree.heading('mh_call', text='Call', command=lambda: self._sort_entry('call'))
+        self._tree.heading('mh_loc', text='LOC', command=lambda: self._sort_entry('loc'))
+        self._tree.heading('mh_dist', text='km', command=lambda: self._sort_entry('dist'))
         self._tree.heading('mh_nPackets', text='Packets', command=lambda: self._sort_entry('pack'))
         self._tree.heading('mh_REJ', text='REJs', command=lambda: self._sort_entry('rej'))
         self._tree.heading('mh_route', text='Route', command=lambda: self._sort_entry('route'))
         self._tree.heading('mh_last_ip', text='AXIP', command=lambda: self._sort_entry('axip'))
         self._tree.heading('mh_ip_fail', text='Fail', command=lambda: self._sort_entry('axipfail'))
-        self._tree.column("mh_port", anchor=tk.CENTER, stretch=tk.NO, width=80)
-        self._tree.column("mh_nPackets", anchor=tk.CENTER, stretch=tk.NO, width=80)
-        self._tree.column("mh_REJ", anchor=tk.CENTER, stretch=tk.NO, width=55)
-        self._tree.column("mh_ip_fail", anchor=tk.CENTER, stretch=tk.NO, width=50)
+        self._tree.column("mh_last_seen", anchor=tk.W, stretch=tk.YES, width=180)
+        self._tree.column("mh_first_seen", anchor=tk.W, stretch=tk.YES, width=180)
+        self._tree.column("mh_call", anchor=tk.W, stretch=tk.YES, width=120)
+        self._tree.column("mh_loc", anchor=tk.W, stretch=tk.YES, width=100)
+        self._tree.column("mh_dist", anchor=tk.W, stretch=tk.YES, width=70)
+        self._tree.column("mh_port", anchor=tk.W, stretch=tk.NO, width=80)
+        self._tree.column("mh_nPackets", anchor=tk.W, stretch=tk.NO, width=80)
+        self._tree.column("mh_REJ", anchor=tk.W, stretch=tk.NO, width=55)
+        self._tree.column("mh_ip_fail", anchor=tk.W, stretch=tk.NO, width=50)
         # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
         # tree.column(1, stretch=True)
 
@@ -79,13 +215,66 @@ class MHWin(tk.Toplevel):
         self._update_mh()
         self._tree.bind('<<TreeviewSelect>>', self.entry_selected)
 
+    def _get_vars(self):
+        # self._alarm_active_var.set(bool())
+        self._alarm_newCall_var.set(bool(MH_LIST.parm_new_call_alarm))
+        self._alarm_seenSince_var.set(str(MH_LIST.parm_lastseen_alarm))
+        self._alarm_distance_var.set(str(MH_LIST.parm_distance_alarm))
+        # self._tracer_active_var.set(bool(self._root_win.setting_auto_tracer.get()))
+        self._tracer_duration_var.set(str(self._root_win.get_auto_tracer_duration()))
+        _i = 0
+        for _var in self._alarm_ports:
+            if _i in MH_LIST.parm_alarm_ports:
+                _var.set(True)
+            else:
+                _var.set(False)
+            _i += 1
+
+    def _set_alarm_ports(self, event=None):
+        _i = 0
+        for _var in self._alarm_ports:
+            if _var.get():
+                if _i not in MH_LIST.parm_alarm_ports:
+                    MH_LIST.parm_alarm_ports.append(int(_i))
+            else:
+                if _i in MH_LIST.parm_alarm_ports:
+                    MH_LIST.parm_alarm_ports.remove(int(_i))
+            _i += 1
+
+    def _set_alarm_distance(self, event=None):
+        _var = self._alarm_distance_var.get()
+        try:
+            _var = int(_var)
+        except ValueError:
+            return
+        MH_LIST.parm_distance_alarm = _var
+
+    def _set_alarm_last_seen(self, event=None):
+        _var = self._alarm_seenSince_var.get()
+        try:
+            _var = int(_var)
+        except ValueError:
+            return
+        MH_LIST.parm_lastseen_alarm = _var
+
+    def _set_alarm_newCall(self, event=None):
+        MH_LIST.parm_new_call_alarm = bool(self._alarm_newCall_var.get())
+
+    def _set_auto_tracer(self, event=None):
+        _dur = self._tracer_duration_var.get()
+        try:
+            _dur = int(_dur)
+        except ValueError:
+            return
+        self._root_win.set_auto_tracer_duration(_dur)
+
     def entry_selected(self, event):
         for selected_item in self._tree.selection():
             item = self._tree.item(selected_item)
             record = item['values']
             # show a message
             call = record[3]
-            vias = record[6]
+            vias = record[8]
             port = record[2]
             port = int(port.split(' ')[0])
             if vias:
@@ -104,8 +293,12 @@ class MHWin(tk.Toplevel):
     def _update_tree(self):
         for i in self._tree.get_children():
             self._tree.delete(i)
+        self._tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         for ret_ent in self._tree_data:
-            self._tree.insert('', tk.END, values=ret_ent)
+            if ret_ent[1]:
+                self._tree.insert('', tk.END, values=ret_ent[0], tags=('dx_alarm',))
+            else:
+                self._tree.insert('', tk.END, values=ret_ent[0], )
 
     def _sort_entry(self, flag: str):
         sort_date = MH_LIST.get_sort_mh_entry(flag_str=flag, reverse=self._rev_ent)
@@ -125,26 +318,29 @@ class MHWin(tk.Toplevel):
                 axip_str = '{} - {}'.format(ent.axip_add[0], ent.axip_add[1])
             else:
                 axip_str = ''
-            route = ''
-            if ent.all_routes:
-                route = min(ent.all_routes)
+            _dx_alarm = False
+            if ent.own_call in list(MH_LIST.dx_alarm_hist):
+                _dx_alarm = True
 
-            self._tree_data.append((
+            self._tree_data.append(((
                 f'{conv_time_DE_str(ent.last_seen)}',
                 f'{conv_time_DE_str(ent.first_seen)}',
                 f'{ent.port_id} {ent.port}',
                 f'{ent.own_call}',
+                f'{ent.locator}',
+                f'{ent.distance}',
                 f'{ent.pac_n}',
                 f'{ent.rej_n}',
-                ' '.join(route),
+                ' '.join(ent.route),
                 f'{axip_str}',
                 f'{ent.axip_fail}',
-            ))
+            ), _dx_alarm))
 
     def __del__(self):
         self._root_win.mh_window = None
         # self.destroy()
 
     def close(self):
+        MH_LIST.reset_dx_alarm_his()
         self._root_win.mh_window = None
         self.destroy()

@@ -1,3 +1,4 @@
+import time
 from collections import deque
 from datetime import datetime
 from datetime import timedelta
@@ -8,49 +9,8 @@ from UserDB.UserDBmain import USER_DB
 from constant import CFG_mh_data_file, CFG_port_stat_data_file
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
 from fnc.socket_fnc import check_ip_add_format
-from fnc.str_fnc import conv_time_for_sorting, get_timedelta_str
-
-
-def get_time_str():
-    return datetime.now().strftime('%d/%m/%y %H:%M:%S')
-
-
-def get_bandwidth_struct():
-    _struct = {}
-    for _h in range(24):
-        for _m in range(60):
-            for _s in range(6):
-                _ts_str = f'{str(_h).zfill(2)}:{str(_m).zfill(2)}:{_s}'
-                _struct[_ts_str] = 0
-    return _struct
-
-
-def get_port_stat_struct():
-    struct_hour = {}
-    for key in [
-        'N_pack',
-        'I',
-        'SABM',
-        'DM',
-        'DISC',
-        'REJ',
-        'RR',
-        'RNR',
-        'UI',
-        'FRMR',
-        'DATA_W_HEADER',
-        'DATA'
-    ]:
-        struct_hour[key] = {minute: 0 for minute in range(60)}
-    return struct_hour
-
-
-def init_day_dic():
-
-    ret = {}
-    for hour in range(24):
-        ret[hour] = get_port_stat_struct()
-    return ret
+from fnc.str_fnc import conv_time_for_sorting
+from fnc.struct_fnc import get_bandwidth_struct, init_day_dic, get_dx_tx_alarm_his_pack
 
 
 class MyHeard:
@@ -59,15 +19,17 @@ class MyHeard:
     route = []
     all_routes = []
     port = ''
-    port_id = 0    # Not used yet
+    port_id = 0  # Not used yet
     first_seen = datetime.now()
     last_seen = datetime.now()
-    pac_n = 0                      # N Packets
-    byte_n = 0                     # N Bytes
-    h_byte_n = 0                   # N Header Bytes
-    rej_n = 0                      # N REJ
-    axip_add = '', 0               # IP, Port
-    axip_fail = 0                  # Fail Counter
+    pac_n = 0  # N Packets
+    byte_n = 0  # N Bytes
+    h_byte_n = 0  # N Header Bytes
+    rej_n = 0  # N REJ
+    axip_add = '', 0  # IP, Port
+    axip_fail = 0  # Fail Counter
+    locator = ''
+    distance = -1
 
 
 class MH(object):
@@ -88,7 +50,8 @@ class MH(object):
         self.calls: {str: MyHeard} = {}
         for call in mh_load:
             self.calls[call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[call])
-
+            # Fix: Delete empty Routes in routes entry
+            # self.calls[call].all_routes = list(filter(lambda a: a != [], self.calls[call].all_routes))
         try:
             with open(CFG_port_stat_data_file, 'rb') as inp:
                 self.port_statistik_DB = pickle.load(inp)
@@ -103,19 +66,53 @@ class MH(object):
                 if not hasattr(self.calls[call], att):
                     setattr(self.calls[call], att, getattr(MyHeard, att))
 
-        self.new_call_alarm = False
+        self.dx_alarm_trigger = False
+        self.last_dx_alarm = time.time()
+        self.dx_alarm_hist = []
+        self.dx_alarm_perma_hist = {}
+        self.parm_new_call_alarm = False
+        self.parm_distance_alarm = 50
+        self.parm_lastseen_alarm = 1
+        self.parm_alarm_ports = []
 
     def __del__(self):
         pass
 
+    def _set_dx_alarm(self, ent):
+        port_id = ent.port_id
+        if port_id in self.parm_alarm_ports:
+            self.dx_alarm_trigger = True
+            self.last_dx_alarm = time.time()
+            self.dx_alarm_hist.append(ent.own_call)
+            self._add_dx_alarm_hist(ent=ent)
+
+    def _add_dx_alarm_hist(self, ent):
+        _via = ''
+        if ent.route:
+            _via = ent.route[-1]
+        _hist_struc = get_dx_tx_alarm_his_pack(
+            port_id=ent.port_id,
+            call_str=ent.own_call,
+            via=_via,
+            path=ent.route,
+            locator=ent.locator,
+            distance=ent.distance,
+            typ='MHEARD',
+        )
+        self.dx_alarm_perma_hist[str(_hist_struc['key'])] = dict(_hist_struc)
+
+    def reset_dx_alarm_his(self):
+        self.dx_alarm_hist = []
+        self.dx_alarm_trigger = False
+
     def bw_mon_inp(self, ax25_frame, port_id):
         if port_id not in self.port_statistik_DB.keys():
             self.port_statistik_DB[port_id] = {}
-        self.init_bw_struct(port_id)
-        self.input_stat_db(ax_frame=ax25_frame, port_id=port_id)
+        self._init_bw_struct(port_id)
+        self._input_stat_db(ax_frame=ax25_frame, port_id=port_id)
 
-    def input_bw_calc(self, port_id, ax_frame=None, ):
-        self.init_bw_struct(port_id=port_id)
+    def _input_bw_calc(self, port_id, ax_frame=None, ):
+        self._init_bw_struct(port_id=port_id)
         if ax_frame is not None:
             if self.now_min == datetime.now().strftime('%H:%M:%S')[:-1]:
                 self.bandwidth[port_id][self.now_min] += len(ax_frame.data_bytes)
@@ -127,12 +124,12 @@ class MH(object):
                 self.now_min = datetime.now().strftime('%H:%M:%S')[:-1]
                 self.bandwidth[port_id][self.now_min] = 0
 
-    def init_bw_struct(self, port_id):
+    def _init_bw_struct(self, port_id):
         if port_id not in self.bandwidth:
             self.bandwidth[port_id] = get_bandwidth_struct()
 
     def get_bandwidth(self, port_id, baud=1200):
-        self.init_bw_struct(port_id=port_id)
+        self._init_bw_struct(port_id=port_id)
         ret = deque([0] * 60, maxlen=60)
         now = datetime.now()
         ten_minutes_ago = now - timedelta(minutes=10)
@@ -149,7 +146,7 @@ class MH(object):
             i += 1
         return ret
 
-    def input_stat_db(self, ax_frame, port_id):
+    def _input_stat_db(self, ax_frame, port_id):
         now = datetime.now()
         date_str = now.strftime('%d/%m/%y')
         hour = now.hour
@@ -164,7 +161,7 @@ class MH(object):
                 if dt not in last_days:
                     del self.port_statistik_DB[port_id][dt]
 
-        self.input_bw_calc(ax_frame=ax_frame, port_id=port_id)
+        self._input_bw_calc(ax_frame=ax_frame, port_id=port_id)
         if date_str not in list(self.port_statistik_DB[port_id].keys()):
             self.port_statistik_DB[port_id][date_str] = init_day_dic()
         self.port_statistik_DB[port_id][date_str][hour]['N_pack'][minute] += 1
@@ -177,54 +174,84 @@ class MH(object):
         if ent in self.calls.keys():
             self.calls[ent].axip_add = axip_add
 
-    def mh_inp(self, ax25_frame, port_name, port_id):
-        ########################
-        # Port Stat
-        if port_id not in self.port_statistik_DB.keys():
-            self.port_statistik_DB[port_id] = init_day_dic()
-        # self.port_statistik_DB[port_id].input_stat_db(ax_frame=ax25_frame)
-        self.input_stat_db(ax25_frame, port_id)
+    def mh_inp(self, ax25_frame, port_name, port_id, digi=''):
+        _dx_alarm = False
+        if not digi:
+            ########################
+            # Port Stat
+            if port_id not in self.port_statistik_DB.keys():
+                self.port_statistik_DB[port_id] = init_day_dic()
+            # self.port_statistik_DB[port_id].input_stat_db(ax_frame=ax25_frame)
+            self._input_stat_db(ax25_frame, port_id)
         ########################
         # MH Entry
-        call_str = ax25_frame.from_call.call_str
+        if digi:
+            call_str = digi
+        else:
+            call_str = str(ax25_frame.from_call.call_str)
         if call_str not in self.calls.keys():
-            self.new_call_alarm = True
             ent = MyHeard()
-            ent.first_seen = datetime.now()
+            if self.parm_new_call_alarm:
+                _dx_alarm = True
         else:
             ent = self.calls[call_str]
+        _t_delta = datetime.now() - ent.last_seen
+        if self.parm_lastseen_alarm:
+            if _t_delta.days >= self.parm_lastseen_alarm:
+                _dx_alarm = True
         ent.last_seen = datetime.now()
         ent.own_call = call_str
         ent.pac_n += 1
-        ent.port = port_name
-        ent.port_id = port_id
-        ent.byte_n += ax25_frame.data_len
+        ent.port = str(port_name)
+        ent.port_id = int(port_id)
+        ent.byte_n += int(ax25_frame.data_len)
         ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
         if ax25_frame.ctl_byte.flag == 'REJ':
             ent.rej_n += 1
         # TO Calls
-        to_c_str = ax25_frame.to_call.call_str
+        to_c_str = str(ax25_frame.to_call.call_str)
         if to_c_str not in ent.to_calls:
             ent.to_calls.append(to_c_str)
         # Routes
-        ent.route = []      # Last Route
+        ent.route = []  # Last Route
+        _last_digi = ''
         if ax25_frame.via_calls:
             for call in ax25_frame.via_calls:
                 if call.c_bit:
-                    ent.route.append(call.call_str)
-
+                    ent.route.append(str(call.call_str))
+                    _last_digi = str(call.call_str)
+        if ent.route and digi:
+            ent.route = ent.route[:-1]
         if ent.route not in ent.all_routes:
             ent.all_routes.append(list(ent.route))
+
         # Update AXIP Address
         if ax25_frame.axip_add[0]:
             if ent.axip_add[0]:
                 if check_ip_add_format(ent.axip_add[0]):
                     if check_ip_add_format(ax25_frame.axip_add[0]):
-                        ent.axip_add = ax25_frame.axip_add
+                        ent.axip_add = tuple(ax25_frame.axip_add)
             else:
-                ent.axip_add = ax25_frame.axip_add
+                ent.axip_add = tuple(ax25_frame.axip_add)
+        # Get Locator and Distance from User-DB
+
+        db_ent = USER_DB.get_entry(call_str, add_new=True)
+        if db_ent:
+            ent.locator = str(db_ent.LOC)
+            ent.distance = float(db_ent.Distance)
+        if self.parm_distance_alarm:
+            if ent.distance >= self.parm_distance_alarm:
+                _dx_alarm = True
+        if _dx_alarm:
+            self._set_dx_alarm(ent=ent)
 
         self.calls[call_str] = ent
+
+        if digi:
+            USER_DB.set_typ(call_str=digi, add_new=False, typ='DIGI')
+            return
+        if _last_digi:
+            self.mh_inp(ax25_frame, port_name, port_id, _last_digi)
 
     def mh_get_data_fm_call(self, call_str):
         if call_str in self.calls.keys():
@@ -256,14 +283,17 @@ class MH(object):
         self.calls: {str: MyHeard}
         for k in self.calls.keys():
             flag: MyHeard = self.calls[k]
+
             key: str = {
                 'last': conv_time_for_sorting(flag.last_seen),
                 'first': conv_time_for_sorting(flag.first_seen),
                 'port': str(flag.port_id),
                 'call': flag.own_call,
+                'loc': flag.locator,
+                'dist': str(flag.distance),
                 'pack': str(flag.pac_n),
                 'rej': str(flag.rej_n),
-                'route': str(max(flag.all_routes)),
+                'route': str(flag.route),
                 'axip': str(flag.axip_add),
                 'axipfail': str(flag.axip_fail),
             }[flag_str]
@@ -287,6 +317,7 @@ class MH(object):
                     return self.calls[call_str].axip_add
         return '', 0
 
+    """
     def mh_get_ip_fm_all(self, param_fail=20):
         ret: [(str, (str, int))] = []
         for stat_call in self.calls.keys():
@@ -295,6 +326,7 @@ class MH(object):
                 ent = stat_call, station.axip_add
                 ret.append(ent)
         return ret
+    """
 
     def mh_ip_failed(self, axip: str):
         for k in self.calls.keys():
@@ -303,92 +335,6 @@ class MH(object):
 
     def mh_set_ip(self, call: str, axip: (str, int)):
         self.calls[call].axip_add = axip
-
-    def mh_out_cli(self, max_ent=20):
-        out = '\r'
-        # out += '\r                       < MH - List >\r\r'
-        c = 0
-        max_c = 0
-        """
-        tp = 0
-        tb = 0
-        rj = 0
-        """
-        sort_list = self.get_sort_mh_entry('last', False)
-
-        for call in list(sort_list.keys()):
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-
-            out += f'{time_delta_str} P:{sort_list[call].port:4} {sort_list[call].own_call:9}'.ljust(27, " ")
-            """
-            tp += sort_list[call].pac_n
-            tb += sort_list[call].byte_n
-            rj += sort_list[call].rej_n
-            """
-            c += 1
-            if c == 2:  # Breite
-                c = 0
-                out += '\r'
-        """
-        out += '\r'
-        out += '\rTotal Packets Rec.: ' + str(tp)
-        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
-        out += '\rTotal Bytes Rec.: ' + str(tb)
-        """
-        out += '\r'
-
-        return out
-
-    def mh_long_out_cli(self, max_ent=10):
-        out = '\r'
-        out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r"
-        max_c = 0
-        """
-        tp = 0
-        tb = 0
-        rj = 0
-        """
-        sort_list = self.get_sort_mh_entry('last', False)
-
-        for call in list(sort_list.keys()):
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-            via = sort_list[call].route
-            if via:
-                via = via[-1]
-            else:
-                via = ''
-            loc = ''
-            dis = ''
-            typ = ''
-            userdb_ent = USER_DB.get_entry(sort_list[call].own_call, add_new=False)
-            if userdb_ent:
-                loc = userdb_ent.LOC
-                if userdb_ent.Distance:
-                    dis = str(userdb_ent.Distance)
-                typ = userdb_ent.TYP
-
-            out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
-                    f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
-            """
-            tp += sort_list[call].pac_n
-            tb += sort_list[call].byte_n
-            rj += sort_list[call].rej_n
-            """
-            out += '\r'
-        out += '\r'
-        """
-        out += '\rTotal Packets Rec.: ' + str(tp)
-        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
-        out += '\rTotal Bytes Rec.: ' + str(tb)
-        out += '\r'
-        """
-        return out
 
     def mh_out_beacon(self, max_ent=12):
         _tmp = self.get_sort_mh_entry('last', False)

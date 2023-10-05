@@ -201,6 +201,9 @@ STR_TABLE = {
     'port_overview': ('Port Übersicht',
                       'Port Overview',
                       'Lekker Ports'),
+    'cmd_shelp': ('Kurzhilfe',
+                  'Short help',
+                  'Lekker Korte hulp'),
 
     'time_connected': ('Connect Dauer',
                        'Connect duration',
@@ -216,7 +219,15 @@ STR_TABLE = {
     'cmd_help_lcstatus': ('Verbundene Terminalkanäle anzeigen (ausführliche Version)',
                           'Show connected terminal channels (detailed version)',
                           'Toon lekker aangesloten terminalkanalen (gedetailleerde versie)'),
-    'cli_no_wx_data': ('Keine Wetterdaten vorhanden.', 'No WX data available', 'No WX data available'),
-    'cli_no_tracer_data': ('Keine Tracerdaten vorhanden.', 'No Tracer data available', 'No Tracer data available'),
+    'cli_no_wx_data': ('Keine Wetterdaten vorhanden.', 'No WX data available', 'Geen lekker WX beschikbaar.'),
+    'cli_no_data': ('Keine Daten vorhanden.', 'No data available.', 'Geen gegevens beschikbaar.'),
+    'cli_no_tracer_data': ('Keine Tracerdaten vorhanden.', 'No Tracer data available', 'Geen tracergegevens beschikbaar.'),
+    'cli_change_language': ('Sprache ändern.', 'Change language.', 'Lekker taal veranderen'),
+    'cli_lang_set': ('Sprache auf Deutsch geändert.',
+                     'Language changed to English.',
+                     'Taal veranderd naar lekker Nederlands.'),
+    'cli_no_lang_param': ('Sprache nicht erkannt! Mögliche Sprachen: ',
+                          'Language not recognized! Possible languages: ',
+                          'Taal niet herkend! Mogelijke talen: '),
 
 }

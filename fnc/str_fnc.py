@@ -31,6 +31,10 @@ def conv_time_for_sorting(dateti: datetime.now()):
     return dateti.strftime('%y/%m/%d %H:%M:%S')
 
 
+def conv_time_for_key(dateti: datetime.now()):
+    return dateti.strftime('%y%m%d%H%M%S')
+
+
 def conv_time_US_str(dateti: datetime.now()):
     return dateti.strftime('%m/%d/%y %H:%M:%S')
 
@@ -43,7 +47,7 @@ def get_file_timestamp():
     return datetime.now().strftime('%d%m/%y-%H%M')
 
 
-def get_timedelta_str(dateti: datetime.now()):
+def get_timedelta_str(dateti: datetime.now(), r_just=True):
     _time_delta = datetime.now() - dateti
     _td_days = _time_delta.days
     _td_hours = int(_time_delta.seconds / 3600)
@@ -52,15 +56,27 @@ def get_timedelta_str(dateti: datetime.now()):
 
     if _td_days:
         # td_hours = td_hours - td_days * 24
-        _time_delta_str = f'{str(_td_days).rjust(3, " ")}d,{str(_td_hours).rjust(2, " ")}h'
+        if r_just:
+            _time_delta_str = f'{str(_td_days).rjust(3, " ")}d,{str(_td_hours).rjust(2, " ")}h'
+        else:
+            _time_delta_str = f'{_td_days}d,{_td_hours}h'
     elif _td_hours:
         _td_min = _td_min - _td_hours * 60
-        _time_delta_str = f'{str(_td_hours).rjust(3, " ")}h,{str(_td_min).rjust(2, " ")}m'
+        if r_just:
+            _time_delta_str = f'{str(_td_hours).rjust(3, " ")}h,{str(_td_min).rjust(2, " ")}m'
+        else:
+            _time_delta_str = f'{_td_hours}h,{_td_min}m'
     elif _td_min:
         _td_sec = _td_sec - _td_min * 60
-        _time_delta_str = f'{str(_td_min).rjust(3, " ")}m,{str(_td_sec).rjust(2, " ")}s'
+        if r_just:
+            _time_delta_str = f'{str(_td_min).rjust(3, " ")}m,{str(_td_sec).rjust(2, " ")}s'
+        else:
+            _time_delta_str = f'{_td_min}m,{_td_sec}s'
     else:
-        _time_delta_str = f'{str(_td_sec).rjust(7, " ")}s'
+        if r_just:
+            _time_delta_str = f'{str(_td_sec).rjust(7, " ")}s'
+        else:
+            _time_delta_str = f'{_td_sec}s'
     return _time_delta_str
 
 
@@ -103,7 +119,6 @@ def convert_str_to_datetime(date_str, date_format='%d/%m/%y %H:%M:%S'):
         return converted_date
     except ValueError:
         return 0
-
 
 def conv_timestamp_delta(delta):
     if delta:

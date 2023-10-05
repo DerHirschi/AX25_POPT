@@ -3,13 +3,19 @@ TODO IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.97.9'
+VER = '2.98.15'
 LANGUAGE = 0  # QUICK FIX
 """
 0 = German
 1 = English
 2 = Dutch
 """
+LANG_IND = {
+            'DE': 0,
+            'EN': 1,
+            'NL': 2,
+        }
+
 CFG_data_path = 'data/'
 CFG_usertxt_path = 'userdata/'
 CFG_ft_downloads = 'ft_downloads/'
@@ -17,6 +23,9 @@ CFG_user_db = 'data/UserDB.popt'
 CFG_mh_data_file = 'data/mh_data.popt'
 CFG_port_stat_data_file = 'data/port_stat.popt'
 CFG_aprs_data_file = 'aprs.popt'
+CFG_sound_DICO = '//data//sound//disco_alarm.wav'
+CFG_sound_CONN = '//data//sound//conn_alarm.wav'
+CFG_sound_RX_BEEP = '//data//sound//rx_beep.wav'
 
 CFG_txt_save = {
     'stat_parm_cli_ctext': 'ctx',
@@ -121,6 +130,7 @@ STAT_BAR_TXT_CLR = 'black'
 FONT_STAT_BAR = 'Arial'
 PARAM_MAX_MON_LEN = 100000
 CFG_clr_sys_msg = 'red'
+CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 
 
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
@@ -172,4 +182,9 @@ STATUS_BG = {
     'RNR-REJ': 'light sky blue',  # 14
     'DEST-RNR-REJ': 'sky blue',  # 15
     'BOTH-RNR-REJ': 'deep sky blue',  # 16
+}
+
+BOOL_ON_OFF = {
+    True: 'ON',
+    False: 'OFF',
 }
