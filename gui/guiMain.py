@@ -1483,7 +1483,7 @@ class ChBtnFrm:
             10: ch_10_var,
         }
 
-    def _ch_btn_status_update(self):
+    def ch_btn_status_update(self):
         # self.main_class.on_channel_status_change()
         _ch_alarm = False
         # if PORT_HANDLER.get_all_connections().keys():
@@ -1515,24 +1515,23 @@ class ChBtnFrm:
                         if _is_link:
                             if self._con_btn_dict[i].cget('bg') != 'SteelBlue4':
                                 self._con_btn_dict[i].configure(bg='SteelBlue4')
-                            _ch_alarm = False
+                            # _ch_alarm = False
                         elif _is_pipe:
                             if self._con_btn_dict[i].cget('bg') != 'cyan4':
                                 self._con_btn_dict[i].configure(bg='cyan4')
-                            _ch_alarm = False
+                            # _ch_alarm = False
                         else:
                             _ch_alarm = True
-                            if self._ch_btn_blink_timer < time.time():
-                                self._ch_btn_alarm(self._con_btn_dict[i])
+                            self._ch_btn_alarm(self._con_btn_dict[i])
                     else:
                         if _is_link:
-                            _ch_alarm = False
+                            # _ch_alarm = False
                             if self._con_btn_dict[i].cget('bg') != 'SteelBlue4':
                                 self._con_btn_dict[i].configure(bg='SteelBlue4')
                         elif _is_pipe:
                             if self._con_btn_dict[i].cget('bg') != 'cyan4':
                                 self._con_btn_dict[i].configure(bg='cyan4')
-                            _ch_alarm = False
+                            # _ch_alarm = False
                         else:
                             if self._con_btn_dict[i].cget('bg') != 'green4':
                                 self._con_btn_dict[i].configure(bg='green4')
@@ -1559,6 +1558,7 @@ class ChBtnFrm:
     def _ch_btn_alarm(self, btn: tk.Button):
         if self._ch_btn_blink_timer < time.time():
             _clr = generate_random_hex_color()
+
             if btn.cget('bg') != _clr:
                 btn.configure(bg=_clr)
 
@@ -1581,8 +1581,51 @@ class TkMainWin:
         # self.style.theme_use('clam')
         ######################################
         # Init Vars
-        self._init_vars()
-        ###############
+        self.language = LANGUAGE
+        ###############################
+        self._root_dir = get_root_dir()
+        self._root_dir = self._root_dir.replace('/', '//')
+        #####################
+        # GUI VARS
+        self.connect_history = {}
+        # GLb Setting Vars
+        self.setting_sound = tk.BooleanVar(self.main_win)
+        self.setting_sprech = tk.BooleanVar(self.main_win)
+        self.setting_bake = tk.BooleanVar(self.main_win)
+        self.setting_rx_echo = tk.BooleanVar(self.main_win)
+        self.setting_tracer = tk.BooleanVar(self.main_win)
+        self.setting_auto_tracer = tk.BooleanVar(self.main_win)
+        self.setting_dx_alarm = tk.BooleanVar(self.main_win)
+        # Controlling
+        self.ch_alarm = False
+        self.ch_alarm_sound_one_time = False
+        self.channel_index = 1
+        self.mon_mode = 0
+        self._mon_buff = []
+        self._sound_th = None
+        self._is_closing = False
+        ####################
+        # GUI PARAM
+        self.parm_btn_blink_time = 1  # s
+        self._parm_rx_beep_cooldown = 2  # s
+        # Tasker Timings
+        self._loop_delay = 250  # ms
+        self._parm_non_prio_task_timer = 0.25  # s
+        self._prio_task_flip = True
+        self._parm_non_non_prio_task_timer = 1  # s
+        self._parm_non_non_non_prio_task_timer = 5  # s
+        self._parm_test_task_timer = 60  # 5        # s
+        self._non_prio_task_timer = time.time()
+        self._non_non_prio_task_timer = time.time()
+        self._non_non_non_prio_task_timer = time.time()
+        self._test_task_timer = time.time()
+        ##############################
+        # BW-Plot
+        self._bw_plot_x_scale = []
+        for _i in list(range(60)):
+            self._bw_plot_x_scale.append(_i / 6)
+        self._bw_plot_lines = {}
+        ########################################
         self.text_size = 14
         ############################
         # Windows
@@ -1597,6 +1640,8 @@ class TkMainWin:
         self.aprs_pn_msg_win = None
         self.userdb_win = None
         self.userDB_tree_win = None
+        #####
+        self._init_vars()
         ######################################
         # ....
         self.main_win.columnconfigure(0, minsize=500, weight=1)
@@ -1696,51 +1741,7 @@ class TkMainWin:
     ####################
     # Init Stuff
     def _init_vars(self):
-        self.language = LANGUAGE
-        ###############################
-        self._root_dir = get_root_dir()
-        self._root_dir = self._root_dir.replace('/', '//')
-        #####################
-        # GUI VARS
-        self.connect_history = {}
-        # GLb Setting Vars
-        self.setting_sound = tk.BooleanVar(self.main_win)
-        self.setting_sprech = tk.BooleanVar(self.main_win)
-        self.setting_bake = tk.BooleanVar(self.main_win)
-        self.setting_rx_echo = tk.BooleanVar(self.main_win)
-        self.setting_tracer = tk.BooleanVar(self.main_win)
-        self.setting_auto_tracer = tk.BooleanVar(self.main_win)
-        self.setting_dx_alarm = tk.BooleanVar(self.main_win)
-        # Controlling
-        self.ch_alarm = False
-        self.ch_alarm_sound_one_time = False
-        self.channel_index = 1
-        self.mon_mode = 0
-        self._mon_buff = []
-        self._sound_th = None
-        self._is_closing = False
-        ####################
-        # GUI PARAM
-        self.parm_btn_blink_time = 1  # s
-        self._parm_rx_beep_cooldown = 2  # s
-        # Tasker Timings
-        self._loop_delay = 250  # ms
-        self._parm_non_prio_task_timer = 0.25  # s
-        self._prio_task_flip = True
-        self._parm_non_non_prio_task_timer = 1  # s
-        self._parm_non_non_non_prio_task_timer = 5  # s
-        self._parm_test_task_timer = 60  # 5        # s
-        self._non_prio_task_timer = time.time()
-        self._non_non_prio_task_timer = time.time()
-        self._non_non_non_prio_task_timer = time.time()
-        self._test_task_timer = time.time()
-        ##############################
-        # BW-Plot
-        self._bw_plot_x_scale = []
-        for _i in list(range(60)):
-            self._bw_plot_x_scale.append(_i / 6)
-        self._bw_plot_lines = {}
-        ########################################
+
         # Set Default Settings TODO Save to cfg
         self.setting_sound.set(False)
         self.setting_bake.set(True)
@@ -2942,7 +2943,7 @@ class TkMainWin:
     def ch_status_update(self):
         """ Triggered by tasker !!! """
         """Triggerd when Connection Status has changed"""
-        self._ch_btn._ch_btn_status_update()
+        self._ch_btn.ch_btn_status_update()
         # self.change_conn_btn()
         self.on_channel_status_change()
 
@@ -2987,7 +2988,7 @@ class TkMainWin:
             self._txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
 
         self.on_channel_status_change()
-        self._ch_btn._ch_btn_status_update()
+        self._ch_btn.ch_btn_status_update()
         self._kanal_switch()  # Sprech
 
     def on_channel_status_change(self):
