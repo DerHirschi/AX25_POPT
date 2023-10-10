@@ -849,7 +849,7 @@ class AXIP(AX25Port):
         if frame.axip_add != ('', 0):
             axip_add = get_ip_by_hostname(frame.axip_add[0])
             if axip_add:
-                frame.axip_add = (axip_add, frame.axip_add[1])
+                frame.axip_add = (axip_add, int(frame.axip_add[1]))
             ###################################
             # CRC
             calc_crc = crc_x25(frame.data_bytes)
@@ -872,6 +872,7 @@ class AXIP(AX25Port):
                 pass
             except TypeError as e:
                 logger.error(f"TypeError AXIP Dev !!! \n {e}")
+                print(f"TypeError AXIP Dev !!! \n {e}")
                 logger.error(frame.axip_add)
                 print(frame.axip_add)
                 logger.error(frame.data_bytes + calc_crc)
