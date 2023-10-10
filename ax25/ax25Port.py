@@ -720,11 +720,10 @@ class KISSSerial(AX25Port):
                 else:
                     self.device.flush()
                 self.device.close()
-                self.device_is_running = False
-            except (FileNotFoundError, serial.serialutil.SerialException):
+                # self.device_is_running = False
+            except (FileNotFoundError, serial.serialutil.SerialException, OSError):
                 pass
-            finally:
-                self.device.close()
+            self.device_is_running = False
 
     def set_kiss_parm(self):
         if self.kiss.is_enabled and self.device is not None:
