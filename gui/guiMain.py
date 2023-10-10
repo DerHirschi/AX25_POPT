@@ -184,13 +184,13 @@ class SideTabbedFrame:
 
         # RNR Checkbutton
         parm_y = 150
-        self.rnr_var = tk.BooleanVar(tab1_kanal)
+        self._rnr_var = tk.BooleanVar(tab1_kanal)
 
-        self.rnr = tk.Checkbutton(tab1_kanal,
-                                  text='RNR',
-                                  variable=self.rnr_var,
-                                  command=self._chk_rnr)
-        self.rnr.place(x=10, y=parm_y)
+        self._rnr = tk.Checkbutton(tab1_kanal,
+                                   text='RNR',
+                                   variable=self._rnr_var,
+                                   command=self._chk_rnr)
+        self._rnr.place(x=10, y=parm_y)
         # Sprech
         parm_y = 200
         self.t2speech_var = tk.BooleanVar(tab1_kanal)
@@ -660,7 +660,7 @@ class SideTabbedFrame:
     def _chk_rnr(self):
         conn = self._main_win.get_conn()
         if conn:
-            if self.rnr_var.get():
+            if self._rnr_var.get():
                 conn.set_RNR()
             else:
                 conn.unset_RNR()
@@ -875,45 +875,37 @@ class SideTabbedFrame:
         # print("-----------------------")
         _conn = self._main_win.get_conn()
         if _conn:
-            self._ch_is_disc = False
-            self.max_frame.configure(state='normal')
-            self.pac_len.configure(state='normal')
+            if self._ch_is_disc:
+                self._ch_is_disc = False
+                self.max_frame.configure(state='normal')
+                self.pac_len.configure(state='normal')
+                self._rnr.configure(state='normal')
+                self.link_holder.configure(state='normal')
+                self.t2_auto.configure(state='normal')
+
             self.max_frame_var.set(str(_conn.parm_MaxFrame))
             self.pac_len_var.set(_conn.parm_PacLen)
-            self.rnr_var.set(_conn.is_RNR)
-            self.rnr.configure(state='normal')
-            self.link_holder.configure(state='normal')
-            if _conn.link_holder_on:
-                self.link_holder_var.set(True)
-            else:
-                self.link_holder_var.set(False)
-
+            self._rnr_var.set(_conn.is_RNR)
+            self.link_holder_var.set(_conn.link_holder_on)
             self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(_conn.tx_buf_rawData)))
-
-            if _conn.is_RNR:
-                self.rnr.select()
-            else:
-                self.rnr.deselect()
-            self.t2_auto.configure(state='normal')
             if _conn.own_port.port_cfg.parm_T2_auto:
-                self.t2_auto_var.set(True)
-                self.t2_auto.select()
-                self.t2_var.set(str(_conn.parm_T2 * 1000))
-                self.t2.configure(state='disabled')
+                if not self.t2_auto_var.get():
+                    self.t2_var.set(str(_conn.parm_T2 * 1000))
+                    self.t2.configure(state='disabled')
             else:
-                self.t2_auto_var.set(False)
-                self.t2_auto.deselect()
-                self.t2.configure(state='normal')
-                self.t2_var.set(str(_conn.parm_T2 * 1000))
+                if self.t2_auto_var.get():
+                    self.t2.configure(state='normal')
+                    self.t2_var.set(str(_conn.parm_T2 * 1000))
+            self.t2_auto_var.set(_conn.own_port.port_cfg.parm_T2_auto)
 
         else:
             if not self._ch_is_disc:
                 self._ch_is_disc = True
                 self.max_frame.configure(state='disabled')
                 self.pac_len.configure(state='disabled')
-                self.rnr_var.set(False)
+                self._rnr_var.set(False)
                 # self.rnr.deselect()
-                self.rnr.configure(state='disabled')
+                self._rnr.configure(state='disabled')
                 self.t2_auto_var.set(False)
                 # self.t2_auto.deselect()
                 self.t2_auto.configure(state='disabled')

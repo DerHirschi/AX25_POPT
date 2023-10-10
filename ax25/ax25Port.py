@@ -520,7 +520,7 @@ class AX25Port(threading.Thread):
                     tx=tx)
 
     def run(self):
-        while self.loop_is_running and self.device_is_running:
+        while self.loop_is_running:
 
             self.tasks()
         # time.sleep(0.05)
@@ -687,14 +687,17 @@ class KISSSerial(AX25Port):
                 self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.2)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
+                print('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
                 logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
                 logger.error('{}'.format(e))
+                print('{}'.format(e))
+                self.close_device()
             else:
                 if self.kiss.is_enabled:
                     tnc_banner = self.device.readall().decode('UTF-8', 'ignore')
                     logger.info(f"TNC-Banner: {tnc_banner}")
                     print(f"TNC-Banner: {tnc_banner}")
-                    #self.device.flush()
+                    # self.device.flush()
                     self.device.write(self.kiss.device_kiss_start_1())
                     self.device.readall()
                     # print(self.device.read())
@@ -705,8 +708,16 @@ class KISSSerial(AX25Port):
     def __del__(self):
         self.close_device()
 
+    def _reinit(self):
+        self._close_dev()
+        self.init()
+
     def close_device(self):
         self.loop_is_running = False
+        self._close_dev()
+
+    def _close_dev(self):
+        # self.loop_is_running = False
         if self.device is not None:
             try:
                 # Deactivate KISS Mode on TNC
@@ -745,7 +756,8 @@ class KISSSerial(AX25Port):
             except TypeError as e:
                 logger.warning('Serial Device Error {}'.format(e))
                 try:
-                    self.init()
+                    # self.init()
+                    self._reinit()
                 except AX25DeviceFAIL:
                     logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                     raise AX25DeviceFAIL
@@ -760,6 +772,21 @@ class KISSSerial(AX25Port):
                     return ret
 
     def tx(self, frame: AX25Frame):
+        if self.device is None:
+            try:
+                # self.init()
+                self._reinit()
+            except AX25DeviceFAIL:
+                logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                self.close_device()
+                # raise AX25DeviceFAIL
+                return
+        if self.device is None:
+            logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+            self.close_device()
+            # raise AX25DeviceFAIL
+            return
+
         try:
             self.device.write(self.kiss.kiss(frame.data_bytes))
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
@@ -767,7 +794,8 @@ class KISSSerial(AX25Port):
                 'Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
             logger.warning('{}'.format(e))
             try:
-                self.init()
+                # self.init()
+                self._reinit()
             except AX25DeviceFAIL:
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
