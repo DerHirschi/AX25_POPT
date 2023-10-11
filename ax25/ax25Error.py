@@ -10,6 +10,11 @@ class AX25EncodingERROR(Exception):
 
     def __init__(self, frame=None):
         if frame is not None:
+            logger.error('AX25 Packet Decoding Error !')
+            logger.error('all hex: {}'.format(hex(int(bytes(frame.data_bytes).hex()))))
+            if hasattr(frame, 'data'):
+                logger.error("DATA: {}".format(bytes(frame.data)))
+            """
             logger.error('AX25 Packet Encoding Error !')
             logger.error('all hex: {}'.format(frame.data_bytes))
             logger.error('___________From Call_________________')
@@ -45,15 +50,17 @@ class AX25EncodingERROR(Exception):
             logger.error('____________Data________________')
             if hasattr(frame, 'data'):
                 logger.error("DATA: {}".format(frame.data))
-
-
+            """
 class AX25DecodingERROR(Exception):
     # logger.error('AX25 Packet Decoding Error !')
 
     def __init__(self, frame=None):
         if frame is not None:
             logger.error('AX25 Packet Decoding Error !')
-            logger.error('all hex: {}'.format(frame.data_bytes))
+            logger.error('all hex: {}'.format(hex(int(bytes(frame.data_bytes).hex()))))
+            if hasattr(frame, 'data'):
+                logger.error("DATA: {}".format(bytes(frame.data)))
+            """
             logger.error('___________From Call_________________')
             for att in dir(frame.from_call):
                 if '__' not in att:
@@ -88,6 +95,7 @@ class AX25DecodingERROR(Exception):
             if hasattr(frame, 'data'):
                 logger.error("DATA: {}".format(frame.data))
 
+            """
 
 class AX25DeviceERROR(Exception):
     logger.error('AX25DeviceERROR Error !')

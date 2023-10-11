@@ -89,7 +89,7 @@ class MHWin(tk.Toplevel):
 
         tk.Label(frame_21_seen, text='seen since (Days) (0 = off)').pack(side=tk.LEFT, )
         tk.Spinbox(frame_21_seen,
-                   from_=1,
+                   from_=0,
                    to=365,
                    increment=1,
                    width=4,

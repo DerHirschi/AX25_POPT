@@ -689,7 +689,7 @@ class DefaultCLI(object):
         return _ret + '\r'
 
     def _get_wx_fm_call_cli_out(self, call, max_ent=10):
-        _data = self.port_handler.aprs_ais.get_wx_data().get(call, '')
+        _data = list(self.port_handler.aprs_ais.get_wx_data().get(call, ''))
         if not _data:
             return ''
         _data.reverse()

@@ -195,10 +195,9 @@ class MH(object):
                 _dx_alarm = True
         else:
             ent = self.calls[call_str]
-        _t_delta = datetime.now() - ent.last_seen
-        if self.parm_lastseen_alarm:
-            if _t_delta.days >= self.parm_lastseen_alarm:
-                _dx_alarm = True
+
+
+
         ent.last_seen = datetime.now()
         ent.own_call = call_str
         ent.pac_n += 1
@@ -239,12 +238,23 @@ class MH(object):
         if db_ent:
             ent.locator = str(db_ent.LOC)
             ent.distance = float(db_ent.Distance)
-        if self.parm_distance_alarm:
-            if ent.distance >= self.parm_distance_alarm:
-                _dx_alarm = True
+
+        if not _dx_alarm:
+            if self.parm_lastseen_alarm:
+                _t_delta = datetime.now() - ent.last_seen
+                if self.parm_distance_alarm:
+                    if _t_delta.days >= self.parm_lastseen_alarm:
+                        if ent.distance >= self.parm_distance_alarm:
+                            _dx_alarm = True
+                else:
+                    if _t_delta.days >= self.parm_lastseen_alarm:
+                        _dx_alarm = True
+            else:
+                if self.parm_distance_alarm:
+                    if ent.distance >= self.parm_distance_alarm:
+                        _dx_alarm = True
         if _dx_alarm:
             self._set_dx_alarm(ent=ent)
-
         self.calls[call_str] = ent
 
         if digi:

@@ -56,7 +56,6 @@ class WXPlotWindow(tk.Toplevel):
                            loc='upper left'
                            )
 
-
         self._canvas.draw()
         #################
         # Info Frame
@@ -65,11 +64,11 @@ class WXPlotWindow(tk.Toplevel):
         _call = self._wx_data[0].get('from', '')
         _comment = self._wx_data[0].get('comment', '')
         _loc = self._wx_data[0].get("locator", ''),
-
+        if type(_loc) == tuple:
+            _loc = _loc[0]
         _loc = f'Locator: {_loc}'
         _lat = f'Lat: {self._wx_data[0].get("latitude", "")}'
         _lon = f'Lon: {self._wx_data[0].get("longitude", "")}'
-
         tk.Label(info_frame, text=_call).pack(side=tk.TOP,)
         tk.Label(info_frame, text=_comment).pack()
         tk.Label(info_frame, text=_loc).pack(side=tk.LEFT, padx=20)
