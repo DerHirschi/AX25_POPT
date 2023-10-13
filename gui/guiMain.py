@@ -980,82 +980,92 @@ class TxTframe:
         self.in_txt_win.grid(row=0, column=0, columnspan=12, sticky="nsew")
         ##############
         # Status Frame
-        self.status_name_var = tk.StringVar(self._status_frame)
-        self.status_status_var = tk.StringVar(self._status_frame)
-        self.status_unack_var = tk.StringVar(self._status_frame)
-        self.status_vs_var = tk.StringVar(self._status_frame)
-        self.status_n2_var = tk.StringVar(self._status_frame)
-        self.status_t1_var = tk.StringVar(self._status_frame)
-        self.status_t2_var = tk.StringVar(self._status_frame)
-        self.status_rtt_var = tk.StringVar(self._status_frame)
-        self.status_t3_var = tk.StringVar(self._status_frame)
+        self._status_name_var = tk.StringVar(self._pw)
+        self._status_status_var = tk.StringVar(self._pw)
+        self._status_unack_var = tk.StringVar(self._pw)
+        self._status_vs_var = tk.StringVar(self._pw)
+        self._status_n2_var = tk.StringVar(self._pw)
+        self._status_t1_var = tk.StringVar(self._pw)
+        self._status_t2_var = tk.StringVar(self._pw)
+        self._status_rtt_var = tk.StringVar(self._pw)
+        self._status_t3_var = tk.StringVar(self._pw)
+        self._rx_beep_var = tk.IntVar(self._pw)
+        self._ts_box_var = tk.IntVar(self._pw)
+        # Stat INFO (Name,QTH usw)
+        self.stat_info_name_var = tk.StringVar(self._pw)
+        self.stat_info_qth_var = tk.StringVar(self._pw)
+        self.stat_info_loc_var = tk.StringVar(self._pw)
+        self.stat_info_typ_var = tk.StringVar(self._pw)
+        self.stat_info_sw_var = tk.StringVar(self._pw)
+        self.stat_info_timer_var = tk.StringVar(self._pw)
+        self.stat_info_encoding_var = tk.StringVar(self._pw)
+        self.stat_info_status_var = tk.StringVar(self._pw)
         Label(self._status_frame,
-              textvariable=self.status_name_var,
+              textvariable=self._status_name_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               foreground=STAT_BAR_TXT_CLR,
               bg=STAT_BAR_CLR
               ).grid(row=1, column=1, sticky="nsew")
 
-        self.status_status = Label(self._status_frame,
-                                   textvariable=self.status_status_var,
-                                   font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                   bg=STAT_BAR_CLR,
-                                   foreground=STAT_BAR_TXT_CLR
-                                   )
-        self.status_status.grid(row=1, column=2, sticky="nsew")
+        self._status_status = Label(self._status_frame,
+                                    textvariable=self._status_status_var,
+                                    font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                                    bg=STAT_BAR_CLR,
+                                    foreground=STAT_BAR_TXT_CLR
+                                    )
+        self._status_status.grid(row=1, column=2, sticky="nsew")
 
-        self.status_unack = Label(self._status_frame,
-                                  textvariable=self.status_unack_var,
-                                  foreground=STAT_BAR_TXT_CLR,
-                                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                  bg=STAT_BAR_CLR
-                                  )
-        self.status_unack.grid(row=1, column=3, sticky="nsew")
+        self._status_unack = Label(self._status_frame,
+                                   textvariable=self._status_unack_var,
+                                   foreground=STAT_BAR_TXT_CLR,
+                                   font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                                   bg=STAT_BAR_CLR
+                                   )
+        self._status_unack.grid(row=1, column=3, sticky="nsew")
 
         Label(self._status_frame,
-              textvariable=self.status_vs_var,
+              textvariable=self._status_vs_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=4, sticky="nsew")
 
-        self.status_n2 = Label(self._status_frame,
-                               textvariable=self.status_n2_var,
-                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                               bg=STAT_BAR_CLR,
-                               foreground=STAT_BAR_TXT_CLR
-                               )
-        self.status_n2.grid(row=1, column=7, sticky="nsew")
+        self._status_n2 = Label(self._status_frame,
+                                textvariable=self._status_n2_var,
+                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                                bg=STAT_BAR_CLR,
+                                foreground=STAT_BAR_TXT_CLR
+                                )
+        self._status_n2.grid(row=1, column=7, sticky="nsew")
 
         Label(self._status_frame,
-              textvariable=self.status_t1_var,
+              textvariable=self._status_t1_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=8, sticky="nsew")
         # PARM T2
         Label(self._status_frame,
-              textvariable=self.status_t2_var,
+              textvariable=self._status_t2_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=5, sticky="nsew")
         # RTT
         Label(self._status_frame,
-              textvariable=self.status_rtt_var,
+              textvariable=self._status_rtt_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=6, sticky="nsew")
 
         Label(self._status_frame,
-              textvariable=self.status_t3_var,
+              textvariable=self._status_t3_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=9, sticky="nsew")
         # Checkbox RX-BEEP
-        self.rx_beep_var = tk.IntVar()
         self.rx_beep_box = Checkbutton(self._status_frame,
                                        text="RX-BEEP",
                                        bg=STAT_BAR_CLR,
@@ -1064,12 +1074,11 @@ class TxTframe:
                                        borderwidth=0,
                                        onvalue=1, offvalue=0,
                                        foreground=STAT_BAR_TXT_CLR,
-                                       variable=self.rx_beep_var,
+                                       variable=self._rx_beep_var,
                                        command=self._chk_rx_beep
                                        )
         self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
         # TODO Checkbox Time Stamp
-        self.ts_box_var = tk.IntVar()
         self.ts_box_box = Checkbutton(self._status_frame,
                                       text="T-S",
                                       font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
@@ -1078,13 +1087,12 @@ class TxTframe:
                                       activebackground=STAT_BAR_CLR,
                                       onvalue=1, offvalue=0,
                                       foreground=STAT_BAR_TXT_CLR,
-                                      variable=self.ts_box_var,
+                                      variable=self._ts_box_var,
                                       command=self.chk_timestamp,
                                       state='disabled'
                                       )
         self.ts_box_box.grid(row=1, column=11, sticky="nsew")
         self._status_frame.pack(side=tk.BOTTOM)
-
         ####################
         # Output
         self._out_frame = tk.Frame(self._pw, width=500, height=320, bd=0, borderwidth=0, )
@@ -1113,16 +1121,7 @@ class TxTframe:
                                                      )
         self.out_txt_win.tag_config("input", foreground="yellow")
         self.out_txt_win.grid(row=0, column=0, columnspan=10, sticky="nsew")
-        # Stat INFO (Name,QTH usw)
-        self.stat_info_name_var = tk.StringVar(self._out_frame)
-        self.stat_info_qth_var = tk.StringVar(self._out_frame)
-        self.stat_info_loc_var = tk.StringVar(self._out_frame)
-        self.stat_info_typ_var = tk.StringVar(self._out_frame)
-        self.stat_info_sw_var = tk.StringVar(self._out_frame)
-        self.stat_info_timer_var = tk.StringVar(self._out_frame)
-        self.stat_info_encoding_var = tk.StringVar(self._out_frame)
-        self.stat_info_status_var = tk.StringVar(self._out_frame)
-        size = 0
+
         name_label = tk.Label(self._out_frame,
                               textvariable=self.stat_info_name_var,
                               # bg=STAT_BAR_CLR,
@@ -1130,7 +1129,7 @@ class TxTframe:
                               borderwidth=0,
                               border=0,
                               fg=STAT_BAR_TXT_CLR,
-                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size, 'bold')
+                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS, 'bold')
                               )
         name_label.grid(row=1, column=1, sticky="nsew")
         name_label.bind('<Button-1>', self._main_class.open_user_db_win)
@@ -1141,7 +1140,7 @@ class TxTframe:
                              height=1,
                              borderwidth=0,
                              border=0,
-                             font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
+                             font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
                              )
         qth_label.bind('<Button-1>', self._main_class.open_user_db_win)
         qth_label.grid(row=1, column=2, sticky="nsew")
@@ -1152,7 +1151,7 @@ class TxTframe:
                              height=1,
                              borderwidth=0,
                              border=0,
-                             font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
+                             font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
                              )
         loc_label.bind('<Button-1>', self._main_class.open_user_db_win)
         loc_label.grid(row=1, column=3, sticky="nsew")
@@ -1171,7 +1170,7 @@ class TxTframe:
             height=1,
             borderwidth=0,
             border=0,
-            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size,)
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
         )
         stat_typ.grid(row=1, column=4, sticky="nsew")
 
@@ -1183,7 +1182,7 @@ class TxTframe:
                  height=1,
                  borderwidth=0,
                  border=0,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size)
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
                  ).grid(row=1, column=5, sticky="nsew")
 
         self.status_label = tk.Label(self._out_frame,
@@ -1193,7 +1192,7 @@ class TxTframe:
                                      height=1,
                                      borderwidth=0,
                                      border=0,
-                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size,)
+                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
                                      )
         self.status_label.grid(row=1, column=6, sticky="nsew")
         self.status_label.bind('<Button-1>', self._main_class.do_priv)
@@ -1206,7 +1205,7 @@ class TxTframe:
                  border=0,
                  # bg="steel blue",
                  # fg="red3",
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - size,)
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
                  ).grid(row=1, column=7, sticky="nsew")
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
@@ -1274,57 +1273,57 @@ class TxTframe:
                 _t2_text = f"T2: {int(station.parm_T2 * 1000)}A"
             else:
                 _t2_text = f"T2: {int(station.parm_T2 * 1000)}"
-            if self.status_name_var.get() != _from_call:
-                self.status_name_var.set(_from_call)
-            if self.status_status_var.get() != _status:
+            if self._status_name_var.get() != _from_call:
+                self._status_name_var.set(_from_call)
+            if self._status_status_var.get() != _status:
                 _status_bg = STATUS_BG[_status]
-                self.status_status_var.set(_status)
-                self.status_status.configure(bg=_status_bg)
-            if self.status_unack_var.get() != _unAck:
-                self.status_unack_var.set(_unAck)
+                self._status_status_var.set(_status)
+                self._status_status.configure(bg=_status_bg)
+            if self._status_unack_var.get() != _unAck:
+                self._status_unack_var.set(_unAck)
                 if len(station.tx_buf_unACK.keys()):
-                    if self.status_unack.cget('bg') != 'yellow':
-                        self.status_unack.configure(bg='yellow')
+                    if self._status_unack.cget('bg') != 'yellow':
+                        self._status_unack.configure(bg='yellow')
                 else:
-                    if self.status_unack.cget('bg') != 'green':
-                        self.status_unack.configure(bg='green')
-            if self.status_vs_var.get() != _vs_vr:
-                self.status_vs_var.set(_vs_vr)
-            if self.status_n2_var.get() != _n2_text:
-                self.status_n2_var.set(_n2_text)
+                    if self._status_unack.cget('bg') != 'green':
+                        self._status_unack.configure(bg='green')
+            if self._status_vs_var.get() != _vs_vr:
+                self._status_vs_var.set(_vs_vr)
+            if self._status_n2_var.get() != _n2_text:
+                self._status_n2_var.set(_n2_text)
                 if _n2 > 4:
-                    if self.status_n2.cget('bg') != 'yellow':
-                        self.status_n2.configure(bg='yellow')
+                    if self._status_n2.cget('bg') != 'yellow':
+                        self._status_n2.configure(bg='yellow')
                 elif _n2 > 10:
-                    if self.status_n2.cget('bg') != 'orange':
-                        self.status_n2.configure(bg='orange')
+                    if self._status_n2.cget('bg') != 'orange':
+                        self._status_n2.configure(bg='orange')
                 else:
-                    if self.status_n2.cget('bg') != STAT_BAR_CLR:
-                        self.status_n2.configure(bg=STAT_BAR_CLR)
-            if self.status_t1_var.get() != _t1_text:
-                self.status_t1_var.set(_t1_text)
-            if self.status_t2_var.get() != _t2_text:
-                self.status_t2_var.set(_t2_text)
-            if self.status_rtt_var.get() != _rtt_text:
-                self.status_rtt_var.set(_rtt_text)
-            if self.status_t3_var.get() != _t3_text:
-                self.status_t3_var.set(_t3_text)
+                    if self._status_n2.cget('bg') != STAT_BAR_CLR:
+                        self._status_n2.configure(bg=STAT_BAR_CLR)
+            if self._status_t1_var.get() != _t1_text:
+                self._status_t1_var.set(_t1_text)
+            if self._status_t2_var.get() != _t2_text:
+                self._status_t2_var.set(_t2_text)
+            if self._status_rtt_var.get() != _rtt_text:
+                self._status_rtt_var.set(_rtt_text)
+            if self._status_t3_var.get() != _t3_text:
+                self._status_t3_var.set(_t3_text)
 
         else:
-            if self.status_status.cget('text') or self.status_status.cget('bg') != STAT_BAR_CLR:
+            if self._status_status.cget('text') or self._status_status.cget('bg') != STAT_BAR_CLR:
                 # self.status_name.configure(text="", bg=STAT_BAR_CLR)
-                self.status_name_var.set('')
-                self.status_status.configure(bg=STAT_BAR_CLR)
-                self.status_status_var.set('')
-                self.status_unack.configure(bg=STAT_BAR_CLR)
-                self.status_unack_var.set('')
-                self.status_vs_var.set('')
-                self.status_n2.configure(bg=STAT_BAR_CLR)
-                self.status_n2_var.set('')
-                self.status_t1_var.set('')
-                self.status_t2_var.set('')
-                self.status_t3_var.set('')
-                self.status_rtt_var.set('')
+                self._status_name_var.set('')
+                self._status_status.configure(bg=STAT_BAR_CLR)
+                self._status_status_var.set('')
+                self._status_unack.configure(bg=STAT_BAR_CLR)
+                self._status_unack_var.set('')
+                self._status_vs_var.set('')
+                self._status_n2.configure(bg=STAT_BAR_CLR)
+                self._status_n2_var.set('')
+                self._status_t1_var.set('')
+                self._status_t2_var.set('')
+                self._status_t3_var.set('')
+                self._status_rtt_var.set('')
 
     def switch_mon_mode(self):
         # TODO Save Stretched Positions
@@ -1337,17 +1336,12 @@ class TxTframe:
             self._pw.add(self._status_frame, weight=1)
             self._pw.add(self._out_frame, weight=1)
             self._pw.add(self.mon_txt, weight=1)
-            # self.pw.configure(height=837)
-
         else:
-            # _pw_height = self.pw.winfo_height()
-            # _mon_txt_height = self.mon_txt.winfo_height()
-            # _out_txt_height = self.out_txt_win.winfo_height()
             self._pw.remove(self._out_frame)
-            # self.pw.configure(height=837)
+
 
     def _chk_rx_beep(self):
-        _rx_beep_check = self.rx_beep_var.get()
+        _rx_beep_check = self._rx_beep_var.get()
         if _rx_beep_check:
             if self.rx_beep_box.cget('bg') != 'green':
                 self.rx_beep_box.configure(bg='green', activebackground='green')
@@ -1357,7 +1351,7 @@ class TxTframe:
         self._main_class.get_ch_param().rx_beep_opt = _rx_beep_check
 
     def chk_timestamp(self):
-        _ts_check = self.ts_box_var.get()
+        _ts_check = self._ts_box_var.get()
         if _ts_check:
             if self.ts_box_box.cget('bg') != 'green':
                 self.ts_box_box.configure(bg='green', activebackground='green')
