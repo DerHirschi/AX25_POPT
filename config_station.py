@@ -6,7 +6,7 @@ import ax25.ax25Beacon
 from ax25aprs.aprs_station import APRS_Station
 from ax25.ax25UI_Pipe import AX25Pipe
 from constant import VER, CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
-from fnc.cfg_fnc import cleanup_obj, set_obj_att, save_to_file, load_fm_file
+from fnc.cfg_fnc import cleanup_obj, set_obj_att, save_to_file, load_fm_file, set_obj_att_fm_dict, cleanup_obj_to_dict
 
 if "dev" in VER:
     log_level = logging.DEBUG
@@ -192,6 +192,7 @@ class DefaultPort(object):
                       'mh',
                       'glb_gui',
                       'parm_Stations',
+                      'parm_aprs_station',
                       ]
 
     def save_to_pickl(self):
@@ -210,7 +211,8 @@ class DefaultPort(object):
             for stat_call in self.parm_beacons.keys():
                 tmp_be_list = []
                 for be in self.parm_beacons[stat_call]:
-                    tmp_be_list.append(cleanup_obj(be))
+                    # tmp_be_list.append(cleanup_obj(be))
+                    tmp_be_list.append(cleanup_obj_to_dict(be))
 
                 clean_beacon_cfg[stat_call] = tmp_be_list
             for att in dir(self):
@@ -239,7 +241,7 @@ class PortConfigInit(DefaultPort):
         for att in dir(self):
             if '__' not in att and att not in self.dont_save_this and not callable(getattr(self, att)):
                 setattr(self, att, getattr(self, att))
-        self.parm_PortNr = port_id
+        self.parm_PortNr = int(port_id)
         self.parm_Stations: [DefaultStation] = []
         self.station_save_files = []
         file = CFG_data_path + f'port{self.parm_PortNr}.popt'
@@ -269,7 +271,10 @@ class PortConfigInit(DefaultPort):
                 tmp_be_list = []
                 for old_be in self.parm_beacons[be_k]:
                     beacon = ax25.ax25Beacon.Beacon()
-                    tmp_be_list.append(set_obj_att(beacon, old_be))
+                    if type(old_be) == dict:
+                        tmp_be_list.append(set_obj_att_fm_dict(beacon, old_be))
+                    else:
+                        tmp_be_list.append(set_obj_att(beacon, old_be))
                 self.parm_beacons[be_k] = tmp_be_list
 
             for k in self.parm_cli:
@@ -316,7 +321,6 @@ class PortConfigInit(DefaultPort):
 
 
 def save_station_to_file(conf: DefaultStation):
-
     if conf.stat_parm_Call != DefaultStation.stat_parm_Call:
         exist_userpath(conf.stat_parm_Call)
         file = '{1}{0}/stat{0}.popt'.format(conf.stat_parm_Call, CFG_usertxt_path)

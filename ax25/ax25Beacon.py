@@ -6,7 +6,7 @@ from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 from ax25.ax25Statistics import MH_LIST
 
 
-class Beacon(object):
+class Beacon:
     def __init__(self):
         # TODO Load and SAVE to/fm file
         self.text_filename = ''
@@ -24,15 +24,6 @@ class Beacon(object):
         self.to_call = 'NOCALL'
         self.via_calls = ''
         self.axip_add = ('', 0)
-        """
-        self.ax_frame = None
-        self.ax_frame.ctl_byte.UIcByte()
-        self.ax_frame.pid_byte.text()
-        self.ax_frame.from_call.call_str = self.from_call
-        self.ax_frame.to_call.call_str = self.to_call
-        self.ax_frame.ctl_byte.cmd = self.aprs
-        self.ax_frame.ctl_byte.pf = self.pool
-        """
         #################
         # Time Vars
         self.repeat_time: float = 30.0  # Min
@@ -82,12 +73,6 @@ class Beacon(object):
         _vias = via_calls_fm_str(calls)
         if _vias:
             self.via_calls = calls
-
-    @staticmethod
-    def encode():
-        # Todo :Delete.. Just dummy for compatibility
-        print("!!!!!!!! ax25Beacon.py encode() !!!!!!!!!!!!!")
-        print("!!!!!!!! ax25Beacon.py encode() !!!!!!!!!!!!!")
 
     def encode_beacon(self):
         # self.set_text_fm_file()

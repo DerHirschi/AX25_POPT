@@ -732,7 +732,7 @@ class KISSSerial(AX25Port):
                     self.device.flush()
                 self.device.close()
                 # self.device_is_running = False
-            except (FileNotFoundError, serial.serialutil.SerialException, OSError):
+            except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError):
                 pass
             self.device_is_running = False
 

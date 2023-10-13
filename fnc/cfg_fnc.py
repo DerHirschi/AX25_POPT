@@ -13,12 +13,28 @@ def cleanup_obj(class_obj: object):
     return class_obj
 
 
+def cleanup_obj_to_dict(class_obj: object):
+    out = {}
+    for att in dir(class_obj):
+        if '__' not in att and not callable(getattr(class_obj, att)):
+            out[att] = getattr(class_obj, att)
+    return out
+
+
 def set_obj_att(new_obj: object, input_obj: object):
     inp = cleanup_obj(input_obj)
     for att in dir(inp):
         if hasattr(new_obj, att):
             if '__' not in att and not callable(getattr(new_obj, att)) and not callable(getattr(input_obj, att)):
                 setattr(new_obj, att, getattr(inp, att))
+    return new_obj
+
+
+def set_obj_att_fm_dict(new_obj: object, input_obj: dict):
+    for att in list(input_obj.keys()):
+        if hasattr(new_obj, att):
+            if '__' not in att and not callable(getattr(new_obj, att)):
+                setattr(new_obj, att, input_obj[att])
     return new_obj
 
 
