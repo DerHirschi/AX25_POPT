@@ -7,13 +7,13 @@ import pickle
 
 from UserDB.UserDBmain import USER_DB
 from constant import CFG_mh_data_file, CFG_port_stat_data_file
-from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att
+from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting
 from fnc.struct_fnc import get_bandwidth_struct, init_day_dic, get_dx_tx_alarm_his_pack
 
 
-class MyHeard:
+class MyHeard(object):
     own_call = ''
     to_calls = []
     route = []
@@ -32,7 +32,7 @@ class MyHeard:
     distance = -1
 
 
-class MH(object):
+class MH:
     def __init__(self):
         print("MH Init")
         mh_load = {}
@@ -49,9 +49,10 @@ class MH(object):
             pass
         self.calls: {str: MyHeard} = {}
         for call in mh_load:
-            self.calls[call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[call])
-            # Fix: Delete empty Routes in routes entry
-            # self.calls[call].all_routes = list(filter(lambda a: a != [], self.calls[call].all_routes))
+            if type(mh_load[call]) == dict:
+                self.calls[call] = set_obj_att_fm_dict(new_obj=MyHeard(), input_obj=mh_load[call])
+            else:
+                self.calls[call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[call])
         try:
             with open(CFG_port_stat_data_file, 'rb') as inp:
                 self.port_statistik_DB = pickle.load(inp)
@@ -65,7 +66,6 @@ class MH(object):
             for att in dir(MyHeard):
                 if not hasattr(self.calls[call], att):
                     setattr(self.calls[call], att, getattr(MyHeard, att))
-
         self.dx_alarm_trigger = False
         self.last_dx_alarm = time.time()
         self.dx_alarm_hist = []

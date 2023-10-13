@@ -41,7 +41,8 @@ def set_obj_att_fm_dict(new_obj: object, input_obj: dict):
 def cleanup_obj_dict(inp_dict: dict):
     tmp = {}
     for k in inp_dict.keys():
-        tmp[k] = cleanup_obj(inp_dict[k])
+        # tmp[k] = cleanup_obj(inp_dict[k])
+        tmp[k] = cleanup_obj_to_dict(inp_dict[k])
     return tmp
 
 

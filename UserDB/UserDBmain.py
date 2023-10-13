@@ -4,7 +4,7 @@ import os
 import pickle
 import logging
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
-from fnc.cfg_fnc import set_obj_att, cleanup_obj_dict
+from fnc.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
 from fnc.str_fnc import conv_time_for_sorting
 from constant import CFG_user_db
 
@@ -105,7 +105,10 @@ class UserDB:
             raise
 
         for k in db_load.keys():
-            self.db[k] = set_obj_att(new_obj=Client(db_load[k].call_str), input_obj=db_load[k])
+            if type(db_load[k]) == dict:
+                self.db[k] = set_obj_att_fm_dict(new_obj=Client(db_load[k]['call_str']), input_obj=db_load[k])
+            else:
+                self.db[k] = set_obj_att(new_obj=Client(db_load[k].call_str), input_obj=db_load[k])
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
@@ -259,7 +262,7 @@ class UserDB:
         print('Save Client DB')
         logger.info('Save Client DB')
         tmp = cleanup_obj_dict(self.db)
-
+        print(tmp)
         try:
             with open(CFG_user_db, 'wb') as outp:
                 pickle.dump(tmp, outp, pickle.HIGHEST_PROTOCOL)

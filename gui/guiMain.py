@@ -736,7 +736,10 @@ class SideTabbedFrame:
             call = record[1]
             vias = record[5]
             port = record[3]
+            if type(port) != str:
+                return
             port = int(port.split(' ')[0])
+
             if vias:
                 call = f'{call} {vias}'
             self._main_win.open_new_conn_win()
