@@ -209,8 +209,7 @@ class DefaultCLI(object):
                 self.cmd = cmd \
                     .upper() \
                     .replace(b' ', b'') \
-                    .replace(b'\r', b'') \
-                    .replace(b'\n', b'')
+                    .replace(b'\r', b'')
                 # self.input = self.input[len(self.prefix):]
                 return True
             else:
@@ -228,8 +227,7 @@ class DefaultCLI(object):
         cmd = cmd[0]
         self.cmd = cmd \
             .upper() \
-            .replace(b'\r', b'') \
-            .replace(b'\n', b'')
+            .replace(b'\r', b'')
         return False
 
     def load_fm_file(self, filename: str):
@@ -395,10 +393,26 @@ class DefaultCLI(object):
     def send_prompt(self):
         self.send_output(self.get_ts_prompt())
 
-    def decode_param(self):
+    def decode_param(self, defaults=None):
+        if defaults is None:
+            defaults = []
+        if type(defaults) != list:
+            defaults = []
         tmp = []
-        for el in self.parameter:
-            tmp.append(el.decode(self.encoding[0], 'ignore').replace('\r', '').replace('\n', ''))
+        if not defaults:
+            for el in self.parameter:
+                tmp.append(el.decode(self.encoding[0], 'ignore').replace('\r', ''))
+        else:
+            for el in defaults:
+                if len(self.parameter) > len(tmp):
+                    _tmp_parm = self.parameter[len(tmp)].decode(self.encoding[0], 'ignore').replace('\r', '')
+                    try:
+                        _tmp_parm = type(el)(_tmp_parm)
+                    except ValueError:
+                        _tmp_parm = defaults[len(tmp)]
+                else:
+                    _tmp_parm = defaults[len(tmp)]
+                tmp.append(_tmp_parm)
         self.parameter = list(tmp)
 
     def cmd_connect(self):
@@ -548,115 +562,123 @@ class DefaultCLI(object):
         return out
 
     def cmd_mh(self):
-        parm = 20
-        if self.parameter:
-            try:
-                parm = int(self.parameter[0])
-            except ValueError:
-                pass
-        ret = self._get_mh_out_cli(max_ent=parm)
+        last_port_id = len(self.port_handler.get_all_port_ids())
+        if last_port_id > 20:
+            max_ent = int(last_port_id)
+        else:
+            max_ent = 20
+        self.decode_param(defaults=[
+            max_ent,    # Entry's
+            -1,         # Port
+        ])
+        print(self.parameter)
+        print(max_ent)
+        parm = self.parameter[0]
+        if parm < last_port_id:
+            port = self.parameter[0]
+            if self.parameter[1] == -1:
+                parm = 20
+            else:
+                parm = self.parameter[1]
+        else:
+            port = self.parameter[1]
+
+        ret = self._get_mh_out_cli(max_ent=parm, port_id=port)
 
         return ret + '\r'
 
-    def _get_mh_out_cli(self, max_ent=20):
+    def _get_mh_out_cli(self, max_ent=20, port_id=-1):
         sort_list = MH_LIST.get_sort_mh_entry('last', False)
         if not sort_list:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
-        out = '\r'
-        # out += '\r                       < MH - List >\r\r'
+        out = ''
         c = 0
         max_c = 0
-        """
-        tp = 0
-        tb = 0
-        rj = 0
-        """
 
         for call in list(sort_list.keys()):
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-            _call_str = sort_list[call].own_call
-            if sort_list[call].route:
-                _call_str += '*'
-            out += f'{time_delta_str} P:{sort_list[call].port:4} {_call_str:10}'.ljust(27, " ")
-            """
-            tp += sort_list[call].pac_n
-            tb += sort_list[call].byte_n
-            rj += sort_list[call].rej_n
-            """
-            c += 1
-            if c == 2:  # Breite
-                c = 0
-                out += '\r'
-        """
-        out += '\r'
-        out += '\rTotal Packets Rec.: ' + str(tp)
-        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
-        out += '\rTotal Bytes Rec.: ' + str(tb)
-        """
+            if port_id == -1 or port_id == sort_list[call].port_id:
+                max_c += 1
+                if max_c > max_ent:
+                    break
+                time_delta_str = get_timedelta_str(sort_list[call].last_seen)
+                _call_str = sort_list[call].own_call
+                if sort_list[call].route:
+                    _call_str += '*'
+                out += f'{time_delta_str} P:{sort_list[call].port_id:2} {_call_str:10}'.ljust(27, " ")
 
-        return out
+                c += 1
+                if c == 2:  # Breite
+                    c = 0
+                    out += '\r'
+        if not out:
+            return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
+        return '\r' + out
 
     def cmd_mhl(self):
-        parm = 10
-        if self.parameter:
-            try:
-                parm = int(self.parameter[0])
-            except ValueError:
-                pass
-        ret = self._get_mh_long_out_cli(max_ent=parm)
+        last_port_id = len(self.port_handler.get_all_port_ids())
+        if last_port_id > 10:
+            max_ent = int(last_port_id)
+        else:
+            max_ent = 10
+        self.decode_param(defaults=[
+            max_ent,  # Entry's
+            -1,  # Port
+        ])
+
+        parm = self.parameter[0]
+        if parm < last_port_id:
+            port = self.parameter[0]
+            if self.parameter[1] == -1:
+                parm = 10
+            else:
+                parm = self.parameter[1]
+        else:
+            port = self.parameter[1]
+
+        ret = self._get_mh_long_out_cli(max_ent=parm, port_id=port)
 
         return ret + '\r'
 
-    def _get_mh_long_out_cli(self, max_ent=10):
+    def _get_mh_long_out_cli(self, max_ent=10, port_id=-1):
         sort_list = MH_LIST.get_sort_mh_entry('last', False)
         if not sort_list:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
-        out = '\r'
-        out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r"
+        out = ''
         max_c = 0
         """
         tp = 0
         tb = 0
         rj = 0
         """
-        for call in list(sort_list.keys()):
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-            via = sort_list[call].route
-            if via:
-                via = via[-1]
-            else:
-                via = ''
-            loc = ''
-            dis = ''
-            typ = ''
-            userdb_ent = USER_DB.get_entry(sort_list[call].own_call, add_new=False)
-            if userdb_ent:
-                loc = userdb_ent.LOC
-                if userdb_ent.Distance:
-                    dis = str(userdb_ent.Distance)
-                typ = userdb_ent.TYP
 
-            out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
-                    f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
-            """
-            tp += sort_list[call].pac_n
-            tb += sort_list[call].byte_n
-            rj += sort_list[call].rej_n
-            """
-            out += '\r'
-        """
-        out += '\rTotal Packets Rec.: ' + str(tp)
-        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
-        out += '\rTotal Bytes Rec.: ' + str(tb)
-        out += '\r'
-        """
-        return out
+        for call in list(sort_list.keys()):
+            if port_id == -1 or port_id == sort_list[call].port_id:
+                max_c += 1
+                if max_c > max_ent:
+                    break
+                time_delta_str = get_timedelta_str(sort_list[call].last_seen)
+                via = sort_list[call].route
+                if via:
+                    via = via[-1]
+                else:
+                    via = ''
+                loc = ''
+                dis = ''
+                typ = ''
+                userdb_ent = USER_DB.get_entry(sort_list[call].own_call, add_new=False)
+                if userdb_ent:
+                    loc = userdb_ent.LOC
+                    if userdb_ent.Distance:
+                        dis = str(userdb_ent.Distance)
+                    typ = userdb_ent.TYP
+
+                out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
+                        f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
+
+                out += '\r'
+        if not out:
+            return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
+        return "\r-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r" + out
 
     def cmd_wx(self):
         """ WX Stations """
@@ -1320,8 +1342,8 @@ class NoneCLI(DefaultCLI):
 
 
 CLI_OPT = {
-            UserCLI.cli_name: UserCLI,
-            NodeCLI.cli_name: NodeCLI,
-            NoneCLI.cli_name: NoneCLI,
-            'PIPE': AX25Pipe
-        }
+    UserCLI.cli_name: UserCLI,
+    NodeCLI.cli_name: NodeCLI,
+    NoneCLI.cli_name: NoneCLI,
+    'PIPE': AX25Pipe
+}

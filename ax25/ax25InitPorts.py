@@ -6,6 +6,7 @@ from ax25aprs.aprs_station import APRS_ais
 from config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
 from classes import RxEchoVars
+from constant import MAX_PORTS
 
 
 class AX25PortHandler(object):
@@ -15,7 +16,6 @@ class AX25PortHandler(object):
 
         #################
         self.is_running = True
-        self.max_ports = 20
         self.ax25types = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
@@ -37,8 +37,8 @@ class AX25PortHandler(object):
         self.ax25_ports = {}
         #######################################################
         # Init Ports/Devices with Config and running as Thread
-        logger.info(f"Port Init Max-Ports: {self.max_ports}")
-        for port_id in range(self.max_ports):       # Max Ports
+        logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
+        for port_id in range(MAX_PORTS):       # Max Ports
             self.init_port(port_id=port_id)
         #######################################################
         # APRS AIS Thread
@@ -125,7 +125,7 @@ class AX25PortHandler(object):
         for port_id in list(self.ax25_ports.keys()):
             self.close_port(port_id=port_id)
         time.sleep(1)  # Cooldown for Device
-        for port_id in range(self.max_ports):  # Max Ports
+        for port_id in range(MAX_PORTS):  # Max Ports
             self.init_port(port_id=port_id)
 
     def reinit_port(self, port_id: int):    # Not used !!!!
@@ -385,6 +385,9 @@ class AX25PortHandler(object):
 
     def get_root_gui(self):
         return self.gui
+
+    def get_all_port_ids(self):
+        return list(self.ax25_ports.keys())
 
     """
     def debug_fnc(self):
