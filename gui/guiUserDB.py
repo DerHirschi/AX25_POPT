@@ -92,7 +92,7 @@ class UserDB(tk.Toplevel):
         self.tree.bind('<<TreeviewSelect>>', self.select_entry)
         self.tree.column("#0", width=0, minwidth=0)
         self.tree.column("call", anchor='w', stretch=tk.NO, width=150)
-        self.db_ent = False
+        self._db_ent = None
         ents = sorted(list(self._user_db.db.keys()))
         for ret_ent in ents:
             self.tree.insert('', tk.END, values=ret_ent)
@@ -323,7 +323,6 @@ class UserDB(tk.Toplevel):
                                       )
         self.pac_len_ent.place(x=_x + 85, y=_y - 2)
 
-
         #######################
         # TAB3
         # Passwörter
@@ -337,7 +336,7 @@ class UserDB(tk.Toplevel):
                                         width=80)
         _x = 15
         _y = 60
-        self.sys_password_ent.place(x=_x , y=_y)
+        self.sys_password_ent.place(x=_x, y=_y)
         # Fake-Attempts inclusive real attempt
         _x = 20
         _y = 200
@@ -361,12 +360,12 @@ class UserDB(tk.Toplevel):
         self.fill_char_var.set('80')
         # max_pac_opt = list(range(8))
         self.fill_chars_ent = tk.Spinbox(tab3,
-                                            textvariable=self.fill_char_var,
-                                            from_=0,
-                                            to=120,
-                                            increment=10,
-                                            width=4
-                                            )
+                                         textvariable=self.fill_char_var,
+                                         from_=0,
+                                         to=120,
+                                         increment=10,
+                                         width=4
+                                         )
         self.fill_chars_ent.place(x=_x + 140, y=_y - 2)
         # Login CMD
         _x = 20
@@ -408,72 +407,72 @@ class UserDB(tk.Toplevel):
         for selected_item in self.tree.selection():
             item = self.tree.item(selected_item)
             record = item['values'][0]
-            self.db_ent = self._user_db.get_entry(record)
+            self._db_ent = self._user_db.get_entry(record)
             self.set_var_to_ent()
             break
 
     def select_entry_fm_ch_id(self):
         conn = self.root.get_conn()
         if conn:
-            self.db_ent = conn.user_db_ent
+            self._db_ent = conn.user_db_ent
             self.set_var_to_ent()
 
     def select_entry_fm_key(self, key: str):
         if key in self._user_db.db.keys():
-            self.db_ent = self._user_db.db[key]
+            self._db_ent = self._user_db.db[key]
             self.set_var_to_ent()
 
     def on_select_sysop(self, event=None):
-        if self.db_ent:
+        if self._db_ent is not None:
             msg = AskMsg(titel=f'Einträge ergänzen?', message=f"Einträge vom Sysop ergänzen ?")
             # self.settings_win.lift()
             if msg:
                 sysop_key = self.sysop_var.get()
                 if sysop_key in self._user_db.db.keys():
-                    self._user_db.update_var_fm_dbentry(fm_key=sysop_key, to_key=self.db_ent.call_str)
+                    self._user_db.update_var_fm_dbentry(fm_key=sysop_key, to_key=self._db_ent.call_str)
+                    self.set_var_to_ent()
 
     def set_var_to_ent(self):
-        if self.db_ent:
-            self.call_labbel_var.set(self.db_ent.call_str)
-            self.name_var.set(self.db_ent.Name)
-            self.qth_var.set(self.db_ent.QTH)
-            self.loc_var.set(self.db_ent.LOC)
-            self.dist_var.set(f"{round(self.db_ent.Distance, 1)} km")
-            self.prmail_var.set(self.db_ent.PRmail)
-            self.email_var.set(self.db_ent.Email)
-            self.http_var.set(self.db_ent.HTTP)
-            self.encoding_var.set(self.db_ent.Encoding)
-            self.software_var.set(self.db_ent.Software)
-            self.zip_var.set(self.db_ent.ZIP)
-            self.land_var.set(self.db_ent.Land)
-            self.typ_var.set(self.db_ent.TYP)
+        if self._db_ent is not None:
+            self.call_labbel_var.set(self._db_ent.call_str)
+            self.name_var.set(self._db_ent.Name)
+            self.qth_var.set(self._db_ent.QTH)
+            self.loc_var.set(self._db_ent.LOC)
+            self.dist_var.set(f"{round(self._db_ent.Distance, 1)} km")
+            self.prmail_var.set(self._db_ent.PRmail)
+            self.email_var.set(self._db_ent.Email)
+            self.http_var.set(self._db_ent.HTTP)
+            self.encoding_var.set(self._db_ent.Encoding)
+            self.software_var.set(self._db_ent.Software)
+            self.zip_var.set(self._db_ent.ZIP)
+            self.land_var.set(self._db_ent.Land)
+            self.typ_var.set(self._db_ent.TYP)
 
-            self.pac_len_var.set(str(self.db_ent.pac_len))
-            self.max_pac_var.set(str(self.db_ent.max_pac))
+            self.pac_len_var.set(str(self._db_ent.pac_len))
+            self.max_pac_var.set(str(self._db_ent.max_pac))
             """self.last_edit_var.set(
                 f"{self.db_ent.last_edit.date()} - "
                 f"{self.db_ent.last_edit.time().hour}:"
                 f"{self.db_ent.last_edit.time().minute}"
             )"""
-            self.last_edit_var.set(conv_time_DE_str(self.db_ent.last_edit))
-            self.last_conn_var.set(conv_time_DE_str(self.db_ent.last_seen))
-            self.conn_count_var.set(str(self.db_ent.Connects))
+            self.last_edit_var.set(conv_time_DE_str(self._db_ent.last_edit))
+            self.last_conn_var.set(conv_time_DE_str(self._db_ent.last_seen))
+            self.conn_count_var.set(str(self._db_ent.Connects))
 
             self.info_ent.delete(0.0, tk.END)
-            self.info_ent.insert(tk.INSERT, self.db_ent.Info)
+            self.info_ent.insert(tk.INSERT, self._db_ent.Info)
 
             self.ctext_ent.delete(0.0, tk.END)
-            self.ctext_ent.insert(tk.INSERT, self.db_ent.CText)
+            self.ctext_ent.insert(tk.INSERT, self._db_ent.CText)
 
-
-            #self.sys_password_ent.delete(0.0, tk.END)
+            # self.sys_password_ent.delete(0.0, tk.END)
             self.sys_password_ent.delete(0.0, tk.END)
-            self.sys_password_ent.insert(tk.INSERT, str(self.db_ent.sys_pw))
-            self.fake_attempts_var.set(str(self.db_ent.sys_pw_parm[0]))
-            self.fill_char_var.set(str(self.db_ent.sys_pw_parm[1]))
-            if len(self.db_ent.sys_pw_parm) == 2:
-                self.db_ent.sys_pw_parm.append('SYS')
-            self.login_cmd_var.set(str(self.db_ent.sys_pw_parm[2]))
+            self.sys_password_ent.insert(tk.INSERT, str(self._db_ent.sys_pw))
+            self.fake_attempts_var.set(str(self._db_ent.sys_pw_parm[0]))
+            self.fill_char_var.set(str(self._db_ent.sys_pw_parm[1]))
+            if len(self._db_ent.sys_pw_parm) == 2:
+                self._db_ent.sys_pw_parm.append('SYS')
+            self.login_cmd_var.set(str(self._db_ent.sys_pw_parm[2]))
 
             self._update_sysop_opt()
             self._update_stations()
@@ -485,26 +484,26 @@ class UserDB(tk.Toplevel):
     def _update_sysop_opt(self):
         self.sysop_opt_remove()  # remove all options
 
-        if self.db_ent.TYP == 'SYSOP':
+        if self._db_ent.TYP == 'SYSOP':
             self.sysop_var.set('')
             self.sysop_ent.configure(state='disabled')
 
         else:
             self.sysop_ent.configure(state='normal')
-            self.sysop_var.set(self.db_ent.Sysop_Call)
-            print(f"Sysop_ca: {self.db_ent.Sysop_Call}")
-            self.sysop_ent.setvar(self.db_ent.Sysop_Call)
+            self.sysop_var.set(self._db_ent.Sysop_Call)
+            # print(f"Sysop_ca: {self._db_ent.Sysop_Call}")
+            self.sysop_ent.setvar(self._db_ent.Sysop_Call)
 
             for opt in sorted(self._user_db.get_keys_by_typ(typ='SYSOP')):
                 self.sysop_ent['menu'].add_command(label=opt, command=tk._setit(self.sysop_var, opt))
 
     def _update_stations(self):
         sysop_key = ''
-        if self.db_ent:
-            if self.db_ent.TYP == 'SYSOP':
-                sysop_key = self.db_ent.call_str
+        if self._db_ent is not None:
+            if self._db_ent.TYP == 'SYSOP':
+                sysop_key = self._db_ent.call_str
             else:
-                sysop_key = self.db_ent.Sysop_Call
+                sysop_key = self._db_ent.Sysop_Call
 
         node_str = 'NODES: '
         bbs_str = 'BBS: '
@@ -532,43 +531,79 @@ class UserDB(tk.Toplevel):
         self._user_db.save_data()
         self.select_entry()
         self.root.update_station_info()
-        self.root.msg_to_monitor(f'Info: User Daten für {self.db_ent.call_str} wurden gespeichert..')
+        self.root.msg_to_monitor(f'Info: User Daten für {self._db_ent.call_str} wurden gespeichert..')
 
     def _save_vars(self):
-        if self.db_ent:
-            self.db_ent.Name = self.name_var.get()
-            self.db_ent.QTH = self.qth_var.get()
-            self.db_ent.LOC = self.loc_var.get()
+        if self._db_ent is not None:
+            self._db_ent.Name = str(self.name_var.get())
+            self._db_ent.QTH = str(self.qth_var.get())
+            self._db_ent.LOC = str(self.loc_var.get())
 
-            self.db_ent.PRmail = self.prmail_var.get()
-            self.db_ent.Email = self.email_var.get()
-            self.db_ent.HTTP = self.http_var.get()
-            self.db_ent.Encoding = self.encoding_var.get()
-            self.db_ent.ZIP = self.zip_var.get()
-            self.db_ent.Land = self.land_var.get()
+            self._db_ent.PRmail = str(self.prmail_var.get())
+            self._db_ent.Email = str(self.email_var.get())
+            self._db_ent.HTTP = str(self.http_var.get())
+            self._db_ent.Encoding = str(self.encoding_var.get())
+            self._db_ent.ZIP = str(self.zip_var.get())
+            self._db_ent.Land = str(self.land_var.get())
 
-            self.db_ent.pac_len = int(self.pac_len_var.get())
-            self.db_ent.max_pac = int(self.max_pac_var.get())
-            self.db_ent.CText = self.ctext_ent.get(0.0, tk.END)[:-1]
-            self.db_ent.Info = self.info_ent.get(0.0, tk.END)[:-1]
+            self._db_ent.pac_len = int(self.pac_len_var.get())
+            self._db_ent.max_pac = int(self.max_pac_var.get())
+            self._db_ent.CText = str(self.ctext_ent.get(0.0, tk.END)[:-1])
+            self._db_ent.Info = str(self.info_ent.get(0.0, tk.END)[:-1])
 
-            self.db_ent.sys_pw = self.sys_password_ent.get(0.0, tk.END)[:-1]
-            self.db_ent.sys_pw_parm = [
+            self._db_ent.sys_pw = str(self.sys_password_ent.get(0.0, tk.END)[:-1])
+            self._db_ent.sys_pw_parm = [
                 int(self.fake_attempts_var.get()),
                 int(self.fill_char_var.get()),
                 str(self.login_cmd_var.get()),
             ]
 
-            self.db_ent.last_edit = datetime.now()
-            self.db_ent.TYP = self.typ_var.get()
-            if self.db_ent.TYP == 'SYSOP':
-                self.db_ent.Sysop_Call = ''
+            self._db_ent.last_edit = datetime.now()
+            self._db_ent.TYP = str(self.typ_var.get())
+            if self._db_ent.TYP == 'SYSOP':
+                self._db_ent.Sysop_Call = ''
             else:
-                tmp = self.sysop_var.get()
-                if tmp != self.db_ent.Sysop_Call:
-                    self.db_ent.Sysop_Call = tmp
+                tmp = str(self.sysop_var.get())
+                if tmp != self._db_ent.Sysop_Call:
+                    self._db_ent.Sysop_Call = tmp
                     self.on_select_sysop()
         self.root.gui_set_distance()
+
+    def _clean_ent(self):
+        self._db_ent = None
+        self.call_labbel_var.set('')
+        self.name_var.set('')
+        self.qth_var.set('')
+        self.loc_var.set('')
+        self.dist_var.set('')
+        self.prmail_var.set('')
+        self.email_var.set('')
+        self.http_var.set('')
+        self.encoding_var.set('')
+        self.software_var.set('')
+        self.zip_var.set('')
+        self.land_var.set('')
+        self.typ_var.set('')
+
+        self.pac_len_var.set(str(0))
+        self.max_pac_var.set(str(0))
+
+        self.last_edit_var.set('')
+        self.last_conn_var.set('')
+        self.conn_count_var.set(str(0))
+
+        self.info_ent.delete(0.0, tk.END)
+        self.ctext_ent.delete(0.0, tk.END)
+
+        # self.sys_password_ent.delete(0.0, tk.END)
+        self.sys_password_ent.delete(0.0, tk.END)
+        self.fake_attempts_var.set(str(0))
+        self.fill_char_var.set(str(0))
+
+        self.login_cmd_var.set('')
+
+
+
 
     def ok_btn_cmd(self):
         self._save_vars()
@@ -576,19 +611,19 @@ class UserDB(tk.Toplevel):
         self._destroy_win()
 
     def del_btn_cmd(self):
-        if self.db_ent:
-            msg = AskMsg(titel=f'lösche {self.db_ent.call_str} !', message=f"{self.db_ent.call_str} löschen ?")
+        if self._db_ent is not None:
+            msg = AskMsg(titel=f'lösche {self._db_ent.call_str} !', message=f"{self._db_ent.call_str} löschen ?")
             # self.settings_win.lift()
             if msg:
-                del self._user_db.db[self.db_ent.call_str]
+                self._user_db.del_entry(str(self._db_ent.call_str))
                 ents = sorted(list(self._user_db.db.keys()))
                 for i in self.tree.get_children():
                     self.tree.delete(i)
                 for ret_ent in ents:
                     self.tree.insert('', tk.END, values=ret_ent)
                 if ents:
-                    self.db_ent = self._user_db.get_entry(ents[0])
-                self.select_entry()
+                    self._db_ent = self._user_db.get_entry(ents[0])
+                self._clean_ent()
 
     def _destroy_win(self):
         self.root.userdb_win = None

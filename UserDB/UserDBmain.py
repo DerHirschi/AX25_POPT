@@ -12,55 +12,54 @@ logger = logging.getLogger(__name__)
 
 
 class Client(object):
-    def __init__(self, call):
-        self.call_str = call
-        tmp_call = call_tuple_fm_call_str(call)
-        self.Call = tmp_call[0]
-        self.SSID = tmp_call[1]
-        self.Alias = ''
-        self.TYP = ''
+    # def __init__(self, call):
+    call_str = 'ALL'
+    Call = 'ALL'
+    SSID = 0
+    Alias = ''
+    TYP = ''
 
-        self.Name = ''
-        self.Land = ''
-        self.ZIP = ''
-        self.QTH = ''
-        self.LOC = ''
-        self.Lat = 0
-        self.Lon = 0
-        self.Distance = 0
-        self.Language = -1
-        self.PRmail = ''
-        self.Email = ''
-        self.HTTP = ''
-        self.Info = ''
+    Name = ''
+    Land = ''
+    ZIP = ''
+    QTH = ''
+    LOC = ''
+    Lat = 0
+    Lon = 0
+    Distance = 0
+    Language = -1
+    PRmail = ''
+    Email = ''
+    HTTP = ''
+    Info = ''
 
-        self.NODE = []
-        self.BBS = []
-        self.Other = []
-        self.Sysop_Call = ''
+    NODE = []
+    BBS = []
+    Other = []
+    Sysop_Call = ''
 
-        self.via_NODE_HF = ''
-        self.via_NODE_AXIP = ''
-        self.AXIP = ()
-        self.QRG1 = ''  # 27.235FM-1200-AD/AI/FX
-        self.QRG2 = ''
-        self.QRG3 = ''
-        self.QRG4 = ''
-        self.QRG5 = ''
-        self.Software = ''
-        self.Encoding = 'CP437'    # 'UTF-8'
+    via_NODE_HF = ''
+    via_NODE_AXIP = ''
+    AXIP = ()
+    QRG1 = ''  # 27.235FM-1200-AD/AI/FX
+    QRG2 = ''
+    QRG3 = ''
+    QRG4 = ''
+    QRG5 = ''
+    Software = ''
+    Encoding = 'CP437'    # 'UTF-8'
 
-        self.last_edit = datetime.datetime.now()
-        self.last_seen = datetime.datetime.now()
-        self.Connects = 0
+    last_edit = datetime.datetime.now()
+    last_seen = datetime.datetime.now()
+    Connects = 0
 
-        self.pac_len = 0
-        self.max_pac = 0
-        self.CText = ''
-        self.routes = []
-        self.software_str = ''
-        self.sys_pw = ''
-        self.sys_pw_parm = [5, 80, 'SYS']
+    pac_len = 0
+    max_pac = 0
+    CText = ''
+    routes = []
+    software_str = ''
+    sys_pw = ''
+    sys_pw_parm = [5, 80, 'SYS']
 
 
 class UserDB:
@@ -91,8 +90,11 @@ class UserDB:
         except FileNotFoundError:
             if 'linux' in sys.platform:
                 os.system('touch {}'.format(CFG_user_db))
-            default_client = Client('ALL')
+            default_client = Client()
             # default_client.is_new = False
+            default_client.call_str = 'ALL'
+            default_client.call = 'ALL'
+            default_client.SSID = 0
             default_client.name = 'Beacon'
             default_client.typ = 'BEACON'
             self.db = {
@@ -105,10 +107,11 @@ class UserDB:
             raise
 
         for k in db_load.keys():
+            client_obj = Client()
             if type(db_load[k]) == dict:
-                self.db[k] = set_obj_att_fm_dict(new_obj=Client(db_load[k]['call_str']), input_obj=db_load[k])
+                self.db[k] = set_obj_att_fm_dict(new_obj=client_obj, input_obj=db_load[k])
             else:
-                self.db[k] = set_obj_att(new_obj=Client(db_load[k].call_str), input_obj=db_load[k])
+                self.db[k] = set_obj_att(new_obj=client_obj, input_obj=db_load[k])
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
@@ -117,9 +120,7 @@ class UserDB:
             if call_str not in self.db.keys():
                 if call_tup[0] not in self.db.keys():
                     if add_new:
-                        self.db[call_str] = Client(call_str)
-                        print('# User DB: New User added > ' + call_str)
-                        logger.info('User DB: New User added > ' + call_str)
+                        return self.new_entry(call_str)
                     else:
                         return False
                 else:
@@ -132,13 +133,22 @@ class UserDB:
     def new_entry(self, call_str):
         call_str = validate_call(call_str)
         if call_str:
-            call_tup = call_tuple_fm_call_str(call_str)
             if call_str not in self.db.keys():
-                if call_tup[0] not in self.db.keys():
-                    print('# User DB: New User added > ' + call_str)
-                    logger.info('User DB: New User added > ' + call_str)
-                    self.db[call_str] = Client(call_str)
-                    return self.db[call_str]
+                call_tup = call_tuple_fm_call_str(call_str)
+                # if call_tup[0] not in self.db.keys():
+                print('# User DB: New User added > ' + call_str)
+                logger.info('User DB: New User added > ' + call_str)
+                self.db[call_str] = Client()
+                self.db[call_str].call_str = str(call_str)
+                self.db[call_str].call = str(call_tup[0])
+                self.db[call_str].call_str = int(call_tup[1])
+                return self.db[call_str]
+        return False
+
+    def del_entry(self, call_str: str):
+        if call_str in self.db.keys():
+            del self.db[call_str]
+            return True
         return False
 
     def set_typ(self, call_str: str, typ: str, add_new=True, overwrite=False):
@@ -177,7 +187,7 @@ class UserDB:
 
     def entry_var_upgrade(self, ent_key):
         if ent_key in self.db.keys():
-            compare = Client('ALL')
+            compare = Client()
             for new_att in dir(compare):
                 # print(new_att)
                 if not hasattr(self.db[ent_key], new_att):
@@ -192,6 +202,7 @@ class UserDB:
         if to_key not in self.db.keys():
             return False
         # new_obj = Client(to_key)
+        # print(self.db[to_key])
         for att in list(dir(self.db[to_key])):
             if '__' not in att:
                 if not getattr(self.db[to_key], att) and att not in [
@@ -214,8 +225,10 @@ class UserDB:
                     'Distance',
                 ]:
                     setattr(self.db[to_key], att, getattr(self.db[fm_key], att))
+                """
                 else:
                     setattr(self.db[to_key], att, getattr(self.db[to_key], att))
+                """
         if self.db[to_key].TYP != 'SYSOP':
             if self.db[to_key].Name and self.db[to_key].TYP:
                 self.db[to_key].Name = f"{self.db[to_key].TYP}-{self.db[to_key].Name}"
@@ -262,7 +275,6 @@ class UserDB:
         print('Save Client DB')
         logger.info('Save Client DB')
         tmp = cleanup_obj_dict(self.db)
-        print(tmp)
         try:
             with open(CFG_user_db, 'wb') as outp:
                 pickle.dump(tmp, outp, pickle.HIGHEST_PROTOCOL)
