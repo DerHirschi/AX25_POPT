@@ -33,7 +33,13 @@ Packages Required:
 - matplotlib
 - gtts
 
+
 Install all dependencies:
+``` sh
+$ pip install -r requirements.txt
+```
+or
+
   ``` sh
   $ pip uninstall matplotlib
   $ sudo apt install python3-matplotlib
