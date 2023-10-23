@@ -104,7 +104,7 @@ class PrivilegWin(tk.Toplevel):
         # VARS
         self.db_ent = False
         conn = self.root.get_conn()
-        if not conn:
+        if conn is None:
             ok_bt.configure(state='disabled')
         else:
             self.db_ent = conn.user_db_ent

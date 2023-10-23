@@ -413,7 +413,7 @@ class UserDB(tk.Toplevel):
 
     def select_entry_fm_ch_id(self):
         conn = self.root.get_conn()
-        if conn:
+        if conn is not None:
             self._db_ent = conn.user_db_ent
             self.set_var_to_ent()
 

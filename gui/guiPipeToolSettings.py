@@ -398,8 +398,8 @@ class PipeToolSettings(tk.Toplevel):
         self.tab_list.append(tab)
 
     def _new_pipe_on_conn(self):
-        conn: AX25Conn = self._root.get_conn()
-        if conn:
+        conn = self._root.get_conn()
+        if conn is not None:
             new_pipe = AX25Pipe(
                 port_id=conn.own_port.port_id,
             )

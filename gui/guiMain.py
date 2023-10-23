@@ -659,7 +659,7 @@ class SideTabbedFrame:
 
     def _chk_rnr(self):
         conn = self._main_win.get_conn()
-        if conn:
+        if conn is not None:
             if self._rnr_var.get():
                 conn.set_RNR()
             else:
@@ -667,7 +667,7 @@ class SideTabbedFrame:
 
     def _chk_link_holder(self):
         conn = self._main_win.get_conn()
-        if conn:
+        if conn is not None:
             if self.link_holder_var.get():
                 conn.link_holder_on = True
                 conn.link_holder_timer = 0
@@ -677,7 +677,7 @@ class SideTabbedFrame:
 
     def _chk_t2auto(self):
         _conn = self._main_win.get_conn()
-        if _conn:
+        if _conn is not None:
             if self.t2_auto_var.get():
                 _conn.own_port.port_cfg.parm_T2_auto = True
                 _conn.calc_irtt()
@@ -715,7 +715,7 @@ class SideTabbedFrame:
 
     def _set_t2(self, event):
         conn = self._main_win.get_conn()
-        if conn:
+        if conn is not None:
             conn.cfg.parm_T2 = min(max(int(self.t2_var.get()), 500), 3000)
             conn.calc_irtt()
 
@@ -781,7 +781,7 @@ class SideTabbedFrame:
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
         _station = self._main_win.get_conn(self._main_win.channel_index)
-        if _station:
+        if _station is not None:
             if _station.RTT_Timer.rtt_best == 999.0:
                 best = "Best: -1"
             else:
@@ -877,7 +877,7 @@ class SideTabbedFrame:
         """
         # print("-----------------------")
         _conn = self._main_win.get_conn()
-        if _conn:
+        if _conn is not None:
             if self._ch_is_disc:
                 self._ch_is_disc = False
                 self.max_frame.configure(state='normal')
@@ -924,12 +924,12 @@ class SideTabbedFrame:
 
     def set_max_frame(self):
         conn = self._main_win.get_conn()
-        if conn:
+        if conn is not None:
             conn.parm_MaxFrame = int(self.max_frame_var.get())
 
     def set_pac_len(self, event):
         conn = self._main_win.get_conn()
-        if conn:
+        if conn is not None:
             conn.parm_PacLen = min(max(self.pac_len_var.get(), 1), 256)
             conn.calc_irtt()
             self.t2_var.set(str(conn.parm_T2 * 1000))
@@ -1255,7 +1255,7 @@ class TxTframe:
 
     def update_status_win(self):
         station = self._main_class.get_conn(self._main_class.channel_index)
-        if station:
+        if station is not None:
             _from_call = station.ax25_out_frame.from_call.call_str
             """
             _via_calls = ''
@@ -1365,7 +1365,7 @@ class TxTframe:
 
     def _set_stat_typ(self, event=None):
         conn = self._main_class.get_conn()
-        if conn:
+        if conn is not None:
             db_ent = conn.user_db_ent
             if db_ent:
                 db_ent.TYP = self.stat_info_typ_var.get()
@@ -1374,7 +1374,7 @@ class TxTframe:
 
     def _change_txt_encoding(self, event=None, enc=''):
         conn = self._main_class.get_conn()
-        if conn:
+        if conn is not None:
             db_ent = conn.user_db_ent
             if db_ent:
                 if not enc:
@@ -2095,7 +2095,7 @@ class TkMainWin:
         if con_ind in PORT_HANDLER.get_all_connections().keys():
             ret = PORT_HANDLER.get_all_connections()[con_ind]
             return ret
-        return False
+        return None
 
     def get_ch_param(self, ch_index=0):
         if ch_index:
@@ -2138,7 +2138,8 @@ class TkMainWin:
     def change_conn_btn(self):
         # TODO Nur triggern wenn ch_btn click | neue in conn | disco
         # TODO extra Funktionen für on_disco & on_newconn
-        if self.get_conn(self.channel_index):
+        _conn = self.get_conn(self.channel_index)
+        if _conn is not None:
             if self._conn_btn.cget('bg') != "red":
                 self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
         elif self._conn_btn.cget('bg') != "green":
@@ -2152,7 +2153,7 @@ class TkMainWin:
 
     def _kanal_switch_sprech_th(self):
         conn = self.get_conn(self.channel_index)
-        if conn:
+        if conn is not None:
             if self._win_buf[self.channel_index].t2speech \
                     and self._win_buf[self.channel_index].t2speech_buf:
                 # to_speech = 'Kanal {} .'.format(self.channel_index)
@@ -2181,7 +2182,7 @@ class TkMainWin:
 
     def _check_sprech_ch_buf(self):
         conn = self.get_conn(self.channel_index)
-        if conn:
+        if conn is not None:
             if self._win_buf[self.channel_index].t2speech \
                     and self._win_buf[self.channel_index].t2speech_buf:
                 to_speech = str(self._win_buf[self.channel_index].t2speech_buf)
@@ -2431,7 +2432,7 @@ class TkMainWin:
         # UPDATE INPUT WIN
         for k in PORT_HANDLER.get_all_connections():
             conn = self.get_conn(k)
-            if conn:
+            if conn is not None:
                 if conn.ft_obj is None:
                     if conn.rx_buf_rawData or conn.tx_buf_guiData:
                         k = conn.ch_index
@@ -2643,7 +2644,7 @@ class TkMainWin:
         if self.userdb_win is None:
             if not ent_key:
                 _conn = self.get_conn()
-                if _conn:
+                if _conn is not None:
                     ent_key = _conn.to_call_str
             self.userdb_win = UserDB(self, ent_key)
 
@@ -2726,7 +2727,7 @@ class TkMainWin:
 
     def _set_distance_fm_conn(self):
         _conn = self.get_conn()
-        if _conn:
+        if _conn is not None:
             _conn.set_distance()
             return True
         return False
@@ -2735,7 +2736,7 @@ class TkMainWin:
     # DISCO
     def _disco_conn(self):
         _conn = self.get_conn(self.channel_index)
-        if _conn:
+        if _conn is not None:
             _conn.conn_disco()
 
     # DISCO ENDE
@@ -2745,7 +2746,7 @@ class TkMainWin:
     def _snd_text(self, event: tk.Event):
         if self.channel_index:
             _station = self.get_conn(self.channel_index)
-            if _station:
+            if _station is not None:
                 _ind = str(self._win_buf[self.channel_index].input_win_index)
                 if _ind:
                     if float(_ind) >= float(self._inp_txt.index(tk.INSERT)):
@@ -2896,11 +2897,17 @@ class TkMainWin:
     def _kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
-        PORT_HANDLER.close_all_ports()
+        # PORT_HANDLER.close_all_ports()
+        self._do_bbs_fwd()
+
+    def _do_bbs_fwd(self):
+        conn = self.get_conn()
+        if conn is not None:
+            conn.bbsFwd_start_reverse()
 
     def do_priv(self, event=None, login_cmd=''):
         _conn = self.get_conn()
-        if _conn:
+        if _conn is not None:
             if _conn.user_db_ent:
                 if _conn.user_db_ent.sys_pw:
                     _conn.cli.start_baycom_login(login_cmd=login_cmd)
@@ -2992,7 +2999,7 @@ class TkMainWin:
 
     def _update_stat_info_conn_timer(self):
         _conn = self.get_conn()
-        if _conn:
+        if _conn is not None:
             self._txt_win.stat_info_timer_var.set(get_time_delta(_conn.cli.time_start))
         else:
             if self._txt_win.stat_info_timer_var.get() != '--:--:--':
@@ -3008,7 +3015,7 @@ class TkMainWin:
         _sw = '---------'
         _enc = ''
         _conn = self.get_conn()
-        if _conn:
+        if _conn is not None:
             _db_ent = _conn.user_db_ent
             if _db_ent:
                 if _db_ent.Name:
@@ -3088,7 +3095,7 @@ class TkMainWin:
         _bps_var = 'BPS: ---.---'
         _next_tx = 'TX in: --- s'
         _conn = self.get_conn()
-        if _conn:
+        if _conn is not None:
             if _conn.ft_obj is not None:
                 _ft_obj = _conn.ft_obj
                 _percentage_completion, _data_len, _data_sendet, _time_spend, _time_remaining, _baud_rate = _ft_obj.get_ft_infos()

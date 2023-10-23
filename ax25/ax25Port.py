@@ -1,12 +1,10 @@
 import socket
-
 import serial
 import threading
 import time
 import crcmod
 
 from ax25.ax25Beacon import Beacon
-# from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25Statistics import MH_LIST
@@ -14,9 +12,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
-# from fnc.debug_fnc import show_mem_size
 from fnc.os_fnc import is_linux
-# from ax25.ax25monitor import monitor_frame_inp
 from fnc.socket_fnc import get_ip_by_hostname
 if is_linux():
     import termios
@@ -332,7 +328,7 @@ class AX25Port(threading.Thread):
 
     def cron_pipes(self):
         for uid in self.pipes.keys():
-            self.pipes[uid].crone_exec()
+            self.pipes[uid].cron_exec()
 
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""

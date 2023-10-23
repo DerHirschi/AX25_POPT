@@ -94,6 +94,8 @@ class FileSend(tk.Toplevel):
         wait_tx.place(x=_x + 290, y=_y)
 
         self.conn = self.root.get_conn()
+        if self.conn is None:
+            self.conn = False
         if not self.conn:
             ok_bt.configure(state='disabled')
             openfile_btn.configure(state='disabled')
@@ -169,7 +171,7 @@ class FileSend(tk.Toplevel):
             if not self.FileOBJ.e:
                 # self.FileOBJ.reset_timer()
                 conn = self.root.get_conn()
-                if conn:
+                if conn is not None:
                     if self.FileOBJ not in conn.ft_queue:
                         conn.ft_queue.append(self.FileOBJ)
         self.destroy_win()

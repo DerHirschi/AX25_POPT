@@ -1,15 +1,20 @@
 """
-TODO IDEA:
+IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.100.5dev'
-LANGUAGE = 0  # QUICK FIX
+VER = '2.100.6dev'
 """
+LANGUAGE:
 0 = German
 1 = English
 2 = Dutch
 """
+LANGUAGE = 0    # QUICK FIX
+MYSQL = True    # MYSQL/SQLITE
+MAX_PORTS = 15  #
+
+
 LANG_IND = {
             'DE': 0,
             'EN': 1,
@@ -27,7 +32,6 @@ CFG_sound_DICO = '//data//sound//disco_alarm.wav'
 CFG_sound_CONN = '//data//sound//conn_alarm.wav'
 CFG_sound_RX_BEEP = '//data//sound//rx_beep.wav'
 
-MAX_PORTS = 15
 
 CFG_txt_save = {
     'stat_parm_cli_ctext': 'ctx',
@@ -78,6 +82,7 @@ STATION_ID_BBS = [
     'WinSTOPBox',
     'FBB',
     'WB',
+    'PoPTBOX',
 ]
 
 STATION_ID_ENCODING = {
@@ -108,6 +113,10 @@ FT_RX_HEADERS = [
     b'\x05\x01',  # YAPP SI
     # b'\x05\x02',     # YAPP RI - Server Mode
 ]
+
+# BBS Stuff
+BBS_SW_ID = "PoPTBOX"
+BBS_FEATURE_FLAGS = ["$", "A", "B", "1", "C", "F", "H", "I", "L", "M", "R", "S", "T", "U", "X"]
 
 # APRS Stuff
 APRS_SW_ID = f"APZPOP"  # TODO get SW ID

@@ -3,10 +3,24 @@ import threading
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH_LIST
 from ax25aprs.aprs_station import APRS_ais
+from bbs.bbs_Error import bbsInitError
+from bbs.bbs_main import BBS
 from config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
-from classes import RxEchoVars
 from constant import MAX_PORTS
+
+
+class RxEchoVars(object):
+    def __init__(self, port_id: int):
+        self.port_id = port_id
+        self.rx_ports: {int: [str]} = {}
+        self.tx_ports: {int: [str]} = {}
+        self.tx_buff: [] = []
+    """
+    def buff_input(self, ax_frame, port_id: int):
+        if port_id != self.port_id:
+            self.tx_buff.append(ax_frame)
+    """
 
 
 class AX25PortHandler(object):
@@ -26,6 +40,7 @@ class AX25PortHandler(object):
         # self.aprs_ais = None
         self.aprs_ais = None
         self.gui = None
+        self.bbs = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
         self.all_connections = {}       # {int: AX25Conn} Channel Index
@@ -43,6 +58,9 @@ class AX25PortHandler(object):
         #######################################################
         # APRS AIS Thread
         self.init_aprs_ais()
+        #######################################################
+        # BBS OBJ
+        self.init_bbs()
 
     def __del__(self):
         self.close_all_ports()
@@ -388,6 +406,18 @@ class AX25PortHandler(object):
 
     def get_all_port_ids(self):
         return list(self.ax25_ports.keys())
+
+    ###############################
+    # BBS
+    def init_bbs(self):
+        if self.bbs is None:
+            try:
+                self.bbs = BBS(self)
+            except bbsInitError:
+                self.bbs = None
+
+    def get_bbs(self):
+        return self.bbs
 
     """
     def debug_fnc(self):
