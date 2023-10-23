@@ -1,0 +1,18 @@
+SQL_CREATE_BBS_PN_MAIL_TAB = ("CREATE TABLE bbs_pn_msg (\n"
+                              "	BID varchar(100) NOT NULL,\n"
+                              "	`from` VARCHAR(100) NOT NULL,\n"
+                              "	`to` varchar(100) NULL,\n"
+                              "	`size` BIGINT UNSIGNED NULL,\n"
+                              "	msg BINARY NULL,\n"
+                              "	`path` VARCHAR(100) NULL,\n"
+                              "	z_time varchar(100) NULL\n"
+                              ");\n")
+SQL_CREATE_BBS_BL_MAIL_TAB = ("CREATE TABLE bbs_bl_msg (\n"
+                              "	BID varchar(100) NOT NULL,\n"
+                              "	`from` VARCHAR(100) NOT NULL,\n"
+                              "	`to` varchar(100) NULL,\n"
+                              "	`size` BIGINT UNSIGNED NULL,\n"
+                              "	msg BINARY NULL,\n"
+                              "	`path` VARCHAR(100) NULL,\n"
+                              "	z_time varchar(100) NULL\n"
+                              ");\n")

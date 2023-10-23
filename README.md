@@ -49,9 +49,6 @@ or
   $ pip install crcmod
   $ pip install pyserial
   $ pip install gtts
-  ```
-PoPT Ver. >= 2.85.2:
-  ``` sh
   $ pip install aprslib
   ```
 

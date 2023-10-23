@@ -344,17 +344,17 @@ class APRS_ais(object):
         if not aprs_pack.get("weather", False):
             return False
         new_aprs_pack = self._correct_wrong_wx_data(aprs_pack)
+        """
         if not new_aprs_pack:
             print("APRS Weather Pack correction Failed!")
             print(f"Org Pack: {aprs_pack}")
             logger.warning("APRS Weather Pack correction Failed!")
             logger.warning(f"Org Pack: {aprs_pack}")
-            return True
+            new_aprs_pack = aprs_pack
             # self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=new_aprs_pack)
-
+        """
         from_aprs = new_aprs_pack.get('from', '')
         if from_aprs:
-
             if not self.aprs_wx_msg_pool.get(from_aprs, False):
                 self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
             self.aprs_wx_msg_pool[from_aprs].append(new_aprs_pack)
@@ -368,8 +368,8 @@ class APRS_ais(object):
     def _correct_wrong_wx_data(aprs_pack):
         _raw = aprs_pack.get('raw', '')
         if _raw:
-            if 'h100b' in _raw:
-                _raw = _raw.replace('h100b', 'h00b')
+            if 'h100b' in _raw or 'b9' in _raw:
+                _raw = _raw.replace('h100b', 'h00b').replace('b9', 'b09')
                 _new_pack = parse_aprs_fm_aprsframe(_raw)
                 _new_pack['locator'] = str(aprs_pack.get('locator', ''))
                 _new_pack['distance'] = float(aprs_pack.get('distance', -1))
