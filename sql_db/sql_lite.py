@@ -1,5 +1,6 @@
 import sqlite3
 from config_station import logger
+from constant import CFG_data_path
 from sql_db.sql_Error import MySQLConnectionError
 
 
@@ -10,7 +11,7 @@ class SQL_DB:
         if not self.database_name:
             logger.error("SQLITE: No Database in Config")
             raise MySQLConnectionError("SQLITE: No Database in Config")
-        self.conn = sqlite3.connect(self.database_name, check_same_thread=False)
+        self.conn = sqlite3.connect(CFG_data_path + self.database_name, check_same_thread=False)
 
     def close(self):
         if self.conn:
@@ -21,6 +22,23 @@ class SQL_DB:
         if self.conn:
             cursor = self.conn.cursor()
             res = cursor.execute(query_str)
+            rows = res.fetchall()
+            print(f"execute_query: {rows}")
+            # db_conn.close()
+            return rows
+        raise MySQLConnectionError
+
+    def execute_query_bin(self, query_str: str, binary_data: tuple):
+        if self.conn:
+            query_str = query_str.replace('%s', '?').replace('%d', '?')
+            cursor = self.conn.cursor()
+            _new_data = []
+            for el in tuple(binary_data):
+                if type(el) == bytes:
+                    _new_data.append(sqlite3.Binary(el))
+                else:
+                    _new_data.append(el)
+            res = cursor.execute(query_str, tuple(_new_data))
             rows = res.fetchall()
             print(f"execute_query: {rows}")
             # db_conn.close()

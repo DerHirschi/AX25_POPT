@@ -1,8 +1,6 @@
-import re
-import time
-
 from config_station import logger
 from constant import MYSQL
+from fnc.sql_fnc import search_sql_injections
 from sql_db.sql_Error import MySQLConnectionError
 from sql_db.sql_str import SQL_CREATE_BBS_PN_MAIL_TAB, SQL_CREATE_BBS_BL_MAIL_TAB
 
@@ -12,26 +10,11 @@ if MYSQL:
 else:
     from sql_db.sql_lite import SQL_DB
 
-ALL_TABLES = {
+BBS_TABLES = {
     "bbs_bl_msg": SQL_CREATE_BBS_BL_MAIL_TAB,
     "bbs_pn_msg": SQL_CREATE_BBS_PN_MAIL_TAB
 }
 
-
-def search_sql_injections(code):
-    # Dies sind einige einfache Muster, die auf mögliche SQL-Injektionen hinweisen können.
-    patterns = [
-        r'\'\s*or\s+1=1',  # Prüfen auf "OR 1=1"
-        r'\"\s*or\s+1=1',  # Prüfen auf "OR 1=1"
-        r'\'\s*union\s+select',  # Prüfen auf "UNION SELECT"
-        r'\"\s*union\s+select',  # Prüfen auf "UNION SELECT"
-    ]
-
-    for pattern in patterns:
-        if re.search(pattern, code, re.IGNORECASE):
-            return True
-
-    return False
 
 class SQL_Database:
     def __init__(self):
@@ -53,8 +36,8 @@ class SQL_Database:
         except MySQLConnectionError:
             self.error = True
             logger.error("Database Init Error !")
-        else:
-            self.check_tables_exists()
+
+        # self.check_bbs_tables_exists()
 
     def __del__(self):
         if self.db:
@@ -64,7 +47,7 @@ class SQL_Database:
         if self.db:
             self.db.close()
 
-    def check_tables_exists(self):
+    def check_bbs_tables_exists(self):
         """
         SHOW TABLE STATUS FROM popt_db;
         :return: bool
@@ -76,15 +59,15 @@ class SQL_Database:
             self.error = True
             self.db = None
         else:
-            for tab in ALL_TABLES.keys():
+            for tab in BBS_TABLES.keys():
                 if tab not in ret:
                     print(f"Database WARNING. Table {tab} not exists !!")
                     logger.warning(f"Database WARNING. Table {tab} not exists !!")
-                    self.create_db_tables(ALL_TABLES[tab])
+                    self.create_db_tables(BBS_TABLES[tab])
 
     def create_db_tables(self, query):
         if self.db:
-            self.commit_query(query)
+            print(self.commit_query(query))
 
     def send_query(self, query):
         print(f"Query:\n{query}")
@@ -96,14 +79,32 @@ class SQL_Database:
                 self.db = None
 
     def commit_query(self, query):
+        print("Query <<>>")
+        print(query)
         if self.db:
             try:
-                self.db.execute_query(query)
+                ret = self.db.execute_query(query)
             except MySQLConnectionError:
                 self.error = True
                 self.db = None
+                return None
             else:
                 self.db.commit_query()
+                return ret
+
+    def commit_query_bin(self, query, data: tuple):
+        print("Query <<BIN>>")
+        print(query)
+        if self.db:
+            try:
+                ret = self.db.execute_query_bin(query, data)
+            except MySQLConnectionError:
+                self.error = True
+                self.db = None
+                return None
+            else:
+                self.db.commit_query()
+                return ret
 
     def bbs_check_pn_mid_exists(self, bid_mid: str):
         if search_sql_injections(bid_mid):
@@ -118,8 +119,73 @@ class SQL_Database:
             logger.warning(f"BBS BID_MID SQL Injection Warning. !!")
             return False
         query = f"SELECT EXISTS(SELECT bbs_bl_msg.BID FROM bbs_bl_msg WHERE BID = '{bid_mid}');"
-        return bool(self.send_query(query)[0][0])
+        ret = self.send_query(query)[0][0]
+        return bool(ret)
+
+    def bbs_insert_msg_fm_fwd(self, msg_struc: dict):
+        print("bbs_insert_msg_fm_fwd -------------")
+        _bid = msg_struc.get('bid_mid', '')
+        _from_call = msg_struc.get('sender', '')
+        _from_bbs = msg_struc.get('recipient', '')
+        _to_call = msg_struc.get('receiver', '')
+        _to_bbs = msg_struc.get('recipient_bbs', '')
+        _subject = msg_struc.get('subject', '')
+        # _path = str(['R:221203/2334Z @:MD2BBS.#SAW.SAA.DEU.EU #:11082 [Salzwedel] $:4CWDBO527004',
+        #              'R:221204/0133z @:DBO527.#SAW.SAA.DEU.EU [Mailbox Salzwedel] OpenBcm1.02 LT:030']).replace("'", '"')
+        _path = str(msg_struc.get('path', []))
+        _msg = msg_struc.get('msg', b'')
+        _typ = msg_struc.get('message_type', '')
+        _msg_size = msg_struc.get('message_size', '')
+        try:
+            _msg_size = int(_msg_size)
+        except ValueError:
+            _msg_size = 0
+        print(f"_bid: {_bid}")
+        print(f"_from_call: {_from_call}")
+        print(f"_to_call: {_to_call}")
+        print(f"_subject: {_subject}")
+        print(f"_path: {_path}")
+        print(f"_msg_size: {_msg_size}")
+        print(f"_typ: {_typ}")
+        print(f"_msg: {_msg}")
+        if not _bid or \
+                not _from_call or \
+                not _to_call or \
+                not _msg_size or \
+                _typ not in ['B', 'P']:
+
+            print(f"bbs_insert_msg_fm_fwd 1: {msg_struc}")
+            return False
+        for el in [_from_call, _from_bbs, _to_call, _to_bbs, _subject]:
+            if search_sql_injections(el):
+                print(f"bbs_insert_msg_fm_fwd 2: {msg_struc}")
+                return False
+        if search_sql_injections(_msg.decode('UTF-8', 'ignore')):
+            print(f"SQL-Injection erkannt in Nachricht {_bid} von {_from_call}@{_from_bbs}")
+            logger.warning(f"SQL-Injection erkannt in Nachricht {_bid} von {_from_call}@{_from_bbs}")
+            return False
+        if search_sql_injections(_subject):
+            print(f"SQL-Injection erkannt in Betreff {_bid} von {_from_call}@{_from_bbs}")
+            logger.warning(f"SQL-Injection erkannt in Betreff {_bid} von {_from_call}@{_from_bbs}")
+            return False
+
+        _table = {
+            'P': 'bbs_pn_msg',
+            'B': 'bbs_bl_msg',
+            'T': 'bbs_bl_msg'   # TODO
+        }[_typ]
+        _query = (f"INSERT INTO {_table} "
+                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg)"
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);")
+        _query_data = (_bid, _from_call, _from_bbs, _to_call, _to_bbs, _msg_size, _subject, _path, _msg)
+        res = self.commit_query_bin(_query, _query_data)
+        if res is None:
+            return False
+
+        print('-------------------------------')
+        print('-------------------------------')
+        return True
 
 
 DB = SQL_Database()
-print(DB.bbs_check_pn_mid_exists('MD2SAW_12222'))
+# print(DB.bbs_check_pn_mid_exists('MD2SAW_12222'))

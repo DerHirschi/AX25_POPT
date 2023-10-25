@@ -39,15 +39,14 @@ class SQL_DB:
             self.conn.close()
             self.conn = None
 
-    def execute_query(self, query_str: str):
+    def execute_query(self, query: str):
         if self.conn:
             if self.conn.is_connected():
                 try:
                     with self.conn.cursor() as cursor:
-                        print(f"Querry: {query_str}")
-                        result = cursor.execute(query_str)
-                        rows = cursor.fetchall()
-                        print(f"execute_query: {rows}")
+                        print(f"Query: {query}")
+                        print(f"cur :{cursor.execute(query)}")
+                        return cursor.fetchall()
                 except AttributeError:
                     print("MySQL: Version error !")
                     logger.error("MySQL: Version error !")
@@ -57,7 +56,29 @@ class SQL_DB:
                     self.conn.close()
                     raise MySQLConnectionError("MySQL: Version error !")
                 # db_conn.close()
-                return rows
+        self.conn = None
+        print("MYSQL (execute_query): Could not connect")
+        logger.error("MYSQL (execute_query): Could not connect")
+        raise MySQLConnectionError("MYSQL (execute_query): Could not connect")
+
+    def execute_query_bin(self, query_str: str, query_data: tuple):
+        if self.conn:
+            if self.conn.is_connected():
+                try:
+                    with self.conn.cursor() as cursor:
+                        print(f"Query: {query_str}")
+                        print(f"QData: {query_data}")
+                        cursor.execute(query_str, query_data)
+                        return cursor.fetchall()
+                except AttributeError:
+                    print("MySQL: Version error !")
+                    logger.error("MySQL: Version error !")
+                    logger.error("MySQL: pip uninstall mysql-connector-python")
+                    logger.error("MySQL: pip uninstall mysql-connector")
+                    logger.error("MySQL: pip install mysql-connector-python")
+                    self.conn.close()
+                    raise MySQLConnectionError("MySQL: Version error !")
+                # db_conn.close()
         self.conn = None
         print("MYSQL (execute_query): Could not connect")
         logger.error("MYSQL (execute_query): Could not connect")
