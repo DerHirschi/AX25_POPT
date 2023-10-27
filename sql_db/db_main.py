@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from config_station import logger
-from constant import MYSQL
+from constant import MYSQL, SQL_TIME_FORMAT
 from fnc.sql_fnc import search_sql_injections
 from sql_db.sql_Error import MySQLConnectionError
-from sql_db.sql_str import SQL_CREATE_BBS_PN_MAIL_TAB, SQL_CREATE_BBS_BL_MAIL_TAB
+from sql_db.sql_str import SQL_CREATE_BBS_PN_MAIL_TAB, SQL_CREATE_BBS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB
 
 # MYSQL = False
 if MYSQL:
@@ -12,7 +14,8 @@ else:
 
 BBS_TABLES = {
     "bbs_bl_msg": SQL_CREATE_BBS_BL_MAIL_TAB,
-    "bbs_pn_msg": SQL_CREATE_BBS_PN_MAIL_TAB
+    "bbs_pn_msg": SQL_CREATE_BBS_PN_MAIL_TAB,
+    "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
 }
 
 
@@ -93,8 +96,8 @@ class SQL_Database:
                 return ret
 
     def commit_query_bin(self, query, data: tuple):
-        print("Query <<BIN>>")
-        print(query)
+        # print("Query <<BIN>>")
+        # print(query)
         if self.db:
             try:
                 ret = self.db.execute_query_bin(query, data)
@@ -137,7 +140,7 @@ class SQL_Database:
         _header = msg_struc.get('header', b'')
         _typ = msg_struc.get('message_type', '')
         _msg_size = msg_struc.get('message_size', '')
-        _time = msg_struc.get('time', '')
+        _time = datetime.now().strftime(SQL_TIME_FORMAT)
         try:
             _msg_size = int(_msg_size)
         except ValueError:
@@ -157,7 +160,6 @@ class SQL_Database:
                 not _to_call or \
                 not _msg_size or \
                 _typ not in ['B', 'P']:
-
             print(f"bbs_insert_msg_fm_fwd 1: {msg_struc}")
             return False
         for el in [_from_call, _from_bbs, _to_call, _to_bbs, _subject]:
@@ -176,7 +178,7 @@ class SQL_Database:
         _table = {
             'P': 'bbs_pn_msg',
             'B': 'bbs_bl_msg',
-            'T': 'bbs_bl_msg'   # TODO
+            'T': 'bbs_bl_msg'  # TODO
         }[_typ]
         _query = (f"INSERT INTO {_table} "
                   "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time)"
@@ -200,6 +202,50 @@ class SQL_Database:
             return False
         print(res)
         print('-------------------------------')
+        print('-------------------------------')
+        self._fwd_paths_insert(msg_struc.get('fwd_path', []))
+        return True
+
+    def _fwd_paths_insert(self, path: list):
+        """
+        :param path: [(BBS-ADD, WP-Infos), ]
+        :return:
+        """
+        print("------------------")
+        print(f"- patch in: {path}")
+        if not path:
+            return False
+        _path_k = '>'.join([a[0].split('.')[0] for a in path])
+        print(f"- _path_k in: {_path_k}")
+        _temp = str(path[0][0]).split('.')
+        _from_bbs = str(_temp[0])
+        _to_bbs = str(path[-1][0]).split('.')[0]
+        _time_stamp = datetime.now().strftime(SQL_TIME_FORMAT)
+        _regions = list(_temp[1:] + [''] * (4 - len(_temp[1:])))
+        print(f"Regions: 1: {_regions}")
+        _query = ("INSERT INTO `fwdPaths` "
+                  "(`path`, `destBBS`, `fromBBS`, `hops`,`destR1`,`destR2`,`destR3`,`destR4`,`lastUpdate`)"
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)\n"
+                  " ON DUPLICATE KEY UPDATE `lastUpdate` = %s;")
+        _query_data = (_path_k,
+                       _to_bbs,
+                       _from_bbs,
+                       len(path),
+                       _regions[0],
+                       _regions[1],
+                       _regions[2],
+                       _regions[3],
+                       _time_stamp,
+                       _time_stamp,
+                       )
+        res = self.commit_query_bin(_query, _query_data)
+        if res is None:
+            print("res None")
+            print('----------Path---------------')
+            print('-------------------------------')
+            return False
+        print(res)
+        print('----------Path---------------')
         print('-------------------------------')
         return True
 

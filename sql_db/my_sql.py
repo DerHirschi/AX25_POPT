@@ -65,11 +65,12 @@ class SQL_DB:
         if self.conn:
             if self.conn.is_connected():
                 try:
-                    with self.conn.cursor() as cursor:
-                        print(f"Query: {query_str}")
-                        print(f"QData: {query_data}")
-                        cursor.execute(query_str, query_data)
-                        return cursor.fetchall()
+                    # with self.conn.cursor() as cursor:
+                    cursor = self.conn.cursor()
+                    # print(f"Query: {query_str}")
+                    # print(f"QData: {query_data}")
+                    cursor.execute(query_str, query_data)
+                    return cursor.fetchall()
                 except AttributeError:
                     print("MySQL: Version error !")
                     logger.error("MySQL: Version error !")

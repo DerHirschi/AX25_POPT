@@ -1,4 +1,3 @@
-import datetime
 
 from bbs.bbs_Error import bbsInitError, logger
 from cli.cliStationIdent import get_station_id_obj
@@ -285,7 +284,7 @@ class BBSConnection:
         # 4
         _rx_bytes = self._get_data_fm_rx_buff(b'\x1a', cut_rx_buff=True)
         if _rx_bytes:
-            print(_rx_bytes)
+            # print(_rx_bytes)
             self._parse_msg(_rx_bytes[:-1])
 
     def _parse_msg(self, msg: bytes):
@@ -360,7 +359,6 @@ class BBSConnection:
                 print(f"len msg lt header: {self._msg_header[_k]['message_size']}")
                 print(f"len msg - header: {len(_msg)}")
 
-                self._msg_header[_k]['time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 self._msg_header[_k]['msg'] = _msg
                 self._msg_header[_k]['header'] = _header
                 self._msg_header[_k]['path'] = path
