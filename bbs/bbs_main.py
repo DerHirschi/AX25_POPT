@@ -1,3 +1,5 @@
+import datetime
+
 from bbs.bbs_Error import bbsInitError, logger
 from cli.cliStationIdent import get_station_id_obj
 from constant import BBS_SW_ID, VER
@@ -51,6 +53,31 @@ def parse_forward_header(header):
         "recipient": recipient,
         "message_size": hdr[6]
     }
+
+
+def parse_fwd_paths(path_list: list):
+    """
+    R:231004/1739Z @:MD2BBS.#SAW.SAA.DEU.EU #:18122 [Salzwedel] $:2620_KE2BBS
+    R:231004/1112Z 2620@KE2BBS.#KEH.BAY.DEU.EU BPQK6.0.23
+    [['MD2BBS.#SAW.SAA.DEU.EU', 'Salzwedel] $:2620_KE2BBS'], ['KE2BBS.#KEH.BAY.DEU.EU', 'KE2BBS.#KEH.BAY.DEU.EU BPQK6.0.23']]
+    """
+    path = []
+    for line in path_list:
+        if "R:" in line:
+            if "@" in line:
+                print(line + "\n")
+                tmp = line.split("@")[-1]
+                add = tmp.split(" ")[0].replace(":", "")
+                if '[' and ']' in tmp:
+                    path.append((add, tmp.split(" [")[-1].split("]")[0]))
+                else:
+                    path.append((add, ))
+                """
+                path.append([line.split("@")[-1].split(" ")[0].replace(":", ""),
+                             line.split("@")[-1].split(" [")[-1]])
+                """
+    print(path)
+    return path
 
 
 class BBSConnection:
@@ -116,6 +143,25 @@ class BBSConnection:
                     self._rx_buff = bytes(self._rx_buff[_cut_index:])
                 return _ret
             return []
+
+    def _get_data_fm_rx_buff(self, data, cut_rx_buff=False):
+        if type(data) == str:
+            try:
+                data = data.encode('ASCII')
+            except UnicodeEncodeError:
+                return b''
+
+        if data in self._rx_buff:
+            _index = self._rx_buff.index(data) + 1
+            _ret = bytes(self._rx_buff[:_index])
+            if cut_rx_buff:
+                if self._rx_buff[_index:_index + 1] == b'\r':
+                    _index += 1
+                self._rx_buff = bytes(self._rx_buff[_index:])
+
+
+            return _ret
+        return b''
 
     def _connection_tx(self, raw_data: b''):
         print(f"_connection_tx: {raw_data}")
@@ -237,32 +283,35 @@ class BBSConnection:
 
     def _get_msg(self):
         # 4
-        _rx_lines = self._get_lines_fm_rx_buff(b'\x1a', cut_rx_buff=True)
-        if _rx_lines:
-            print(_rx_lines)
-            self._parse_msg(_rx_lines)
+        _rx_bytes = self._get_data_fm_rx_buff(b'\x1a', cut_rx_buff=True)
+        if _rx_bytes:
+            print(_rx_bytes)
+            self._parse_msg(_rx_bytes[:-1])
 
-    def _parse_msg(self, msg: list):
-        if b'$:' in msg[1]:
-            _tmp = msg[1].split(b'$:')
+    def _parse_msg(self, msg: bytes):
+        _lines = msg.split(b'\r')
+        if b'$:' in _lines[1]:
+            _tmp = _lines[1].split(b'$:')
             _k = _tmp[1].decode('UTF-8', 'ignore')
             print(f"KEY: {_k}")
 
             if _k in self._msg_header.keys():
-                subject = bytes(msg[0]).decode('UTF-8', 'ignore')
+                subject = bytes(_lines[0]).decode('UTF-8', 'ignore')
                 path = []
                 to_call = ''
                 to_bbs = ''
                 from_call = ''
                 from_bbs = ''
-                _msg_index = 1
+                _msg_index = len(_lines[0]) + 1
                 _trigger = False
-                _len_msg = len(b'\r'.join(msg))
-                for line in msg[1:]:
-                    _msg_index += 1
+                #  _len_msg = len(b'\r'.join(msg))
+                for line in _lines[1:]:
+                    _msg_index += len(line) + 1
                     if line[:2] == b'R:':
+                        # _trigger = False
                         path.append(bytes(line).decode('UTF-8', 'ignore'))
                     elif line[:5] == b'From:':
+                        # _trigger = False
                         tmp = line.split(b':')
                         if len(tmp) == 2:
                             tmp = bytes(tmp[1]).decode('UTF-8', 'ignore')
@@ -272,6 +321,7 @@ class BBSConnection:
                                 if len(tmp) == 2:
                                     from_bbs = str(tmp[1])
                     elif line[:5] == b'To  :' or line[:3] == b'To:':
+                        # _trigger = False
                         tmp = line.split(b':')
                         if len(tmp) == 2:
                             tmp = bytes(tmp[1]).decode('UTF-8', 'ignore')
@@ -287,10 +337,12 @@ class BBSConnection:
                     elif line == b'':
                         _trigger = True
                     elif _trigger:
-                        _msg_index -= 1
                         break
 
-                _msg = b'\r'.join(msg[_msg_index:-1])
+                # _msg = b'\r'.join(msg[_msg_index:-1])
+                _msg = bytes(msg[_msg_index + 1:])
+                _header = bytes(msg[:_msg_index])
+
                 print(f"K: {_k}")
                 print(f"From call header: {from_call}")
                 print(f"From bbs header: {from_bbs}")
@@ -304,46 +356,25 @@ class BBSConnection:
                 print("###################")
                 print(f"subject: {subject}")
                 print(f"path: {path}")
-                print(f"msg: {_msg}")
+                # print(f"msg: {_msg}")
                 print(f"len msg lt header: {self._msg_header[_k]['message_size']}")
                 print(f"len msg - header: {len(_msg)}")
-                print(f"len msg: {_len_msg}")
+
+                self._msg_header[_k]['time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 self._msg_header[_k]['msg'] = _msg
+                self._msg_header[_k]['header'] = _header
                 self._msg_header[_k]['path'] = path
+                self._msg_header[_k]['fwd_path'] = parse_fwd_paths(path)
+
                 self._msg_header[_k]['subject'] = subject
                 res = DB.bbs_insert_msg_fm_fwd(dict(self._msg_header[_k]))
-                if res:
-                    del self._msg_header[_k]
-                    if not self._msg_header:
-                        self._state = 2
+                if not res:
+                    logger.error(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
+                    print(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
 
-                """
-                [
-                b'MSG MAINT at MD2BBS.#SAW.SAA.DEU.EU', 
-                b'R:231021/0015Z @:MD2BBS.#SAW.SAA.DEU.EU #:18243 [Salzwedel] $:18243-MD2BBS', 
-                b'', 
-                b'From: MD2BBS@MD2BBS.#SAW.SAA.DEU.EU', 
-                b'To  : MD2SAW@MD2SAW', 
-                b'', 
-                b'Sa 21. Okt 02:15:02 CEST 2023', 
-                b'', 
-                b'File cleared  :  224 private message(s)    ', b'              :  626 bulletin message(s)   ', b'              :  736 active message(s)     ', b'              :  114 killed message(s)     ', b'              :  850 total message(s)      ', b'              :    0 archived message(s)   ', b'              :    8 destroyed message(s)  ', b'              :    1 Timed-out message(s)  ', b'              :    2 No-Route message(s)   ', b'', b'Start computing     : 23-10-21 02:15', b'End computing       : 23-10-21 02:15', 
-                b'\x1a']
-                
-                [
-                b'SYS-Logbuch-Report ', 
-                b'R:221203/2334Z @:MD2BBS.#SAW.SAA.DEU.EU #:11082 [Salzwedel] $:4CWDBO527004', 
-                b'R:221204/0133z @:DBO527.#SAW.SAA.DEU.EU [Mailbox Salzwedel] OpenBcm1.02 LT:030', 
-                b'From: DBO527 @ DBO527.#SAW.SAA.DEU.EU', 
-                b'To:   STATUS @ SAW', 
-                b'X-Info: This message was generated automatically', 
-                b'', 
-                b'----------------------------------------- ',
-                 b'----------------------------------------- ', 
-                 b'------------- LOGBUCH REPORT ------------ ',
-                 b'\x1a']
-                """
-
+                del self._msg_header[_k]
+                if not self._msg_header:
+                    self._state = 2
 
     def _send_ff(self):
         # 10

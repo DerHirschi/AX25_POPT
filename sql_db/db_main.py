@@ -134,12 +134,15 @@ class SQL_Database:
         #              'R:221204/0133z @:DBO527.#SAW.SAA.DEU.EU [Mailbox Salzwedel] OpenBcm1.02 LT:030']).replace("'", '"')
         _path = str(msg_struc.get('path', []))
         _msg = msg_struc.get('msg', b'')
+        _header = msg_struc.get('header', b'')
         _typ = msg_struc.get('message_type', '')
         _msg_size = msg_struc.get('message_size', '')
+        _time = msg_struc.get('time', '')
         try:
             _msg_size = int(_msg_size)
         except ValueError:
             _msg_size = 0
+        """    
         print(f"_bid: {_bid}")
         print(f"_from_call: {_from_call}")
         print(f"_to_call: {_to_call}")
@@ -148,6 +151,7 @@ class SQL_Database:
         print(f"_msg_size: {_msg_size}")
         print(f"_typ: {_typ}")
         print(f"_msg: {_msg}")
+        """
         if not _bid or \
                 not _from_call or \
                 not _to_call or \
@@ -175,13 +179,26 @@ class SQL_Database:
             'T': 'bbs_bl_msg'   # TODO
         }[_typ]
         _query = (f"INSERT INTO {_table} "
-                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg)"
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);")
-        _query_data = (_bid, _from_call, _from_bbs, _to_call, _to_bbs, _msg_size, _subject, _path, _msg)
+                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time)"
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
+        _query_data = (_bid,
+                       _from_call,
+                       _from_bbs,
+                       _to_call,
+                       _to_bbs,
+                       _msg_size,
+                       _subject,
+                       _path,
+                       _msg,
+                       _header,
+                       _time)
         res = self.commit_query_bin(_query, _query_data)
         if res is None:
+            print("res None")
+            print('-------------------------------')
+            print('-------------------------------')
             return False
-
+        print(res)
         print('-------------------------------')
         print('-------------------------------')
         return True
