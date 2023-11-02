@@ -280,12 +280,13 @@ class DefaultCLI(object):
 
     def software_identifier(self):
         res = self.find_sw_identifier()
-
+        """
         if self.stat_identifier is None:
             if self.last_line:
                 # TODO WTF ?
                 self.stat_identifier = False
-        elif res and self.stat_identifier:
+        """
+        if res and self.stat_identifier:
             # print(f"SW-ID flag: {self.stat_identifier.flags}")
             # print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
             if self.stat_identifier.knows_me is not None:

@@ -1603,7 +1603,7 @@ class TkMainWin:
         self.parm_btn_blink_time = 1  # s
         self._parm_rx_beep_cooldown = 2  # s
         # Tasker Timings
-        self._loop_delay = 250  # ms
+        self._loop_delay = 100  # ms
         self._parm_non_prio_task_timer = 0.25  # s
         self._prio_task_flip = True
         self._parm_non_non_prio_task_timer = 1  # s
@@ -2336,10 +2336,10 @@ class TkMainWin:
         if self._is_closing:
             self._tasker_quit()
         else:
-            self._tasker_prio()
-            # self._tasker_05_sec()
-            self._tasker_1_sec()
-            self._tasker_5_sec()
+            # self._tasker_prio()
+            if not self._tasker_05_sec():
+                if not self._tasker_1_sec():
+                    self._tasker_5_sec()
             # self._tasker_tester()
             # self.main_win.update_idletasks()
         self.main_win.after(self._loop_delay, self._tasker)
@@ -2352,25 +2352,31 @@ class TkMainWin:
 
     def _tasker_prio(self):
         """ Prio Tasks 250 ms each flip """
+        pass
+        """
         if self._prio_task_flip:
-            self._aprs_task()
-            self._monitor_task()
-            self._update_qso_win()
+            
         else:
-            self._txt_win.update_status_win()
-            self.change_conn_btn()
-            if self.setting_sound:
-                self._rx_beep_sound()
-                if self.setting_sprech:
-                    self._check_sprech_ch_buf()
+           
         self._prio_task_flip = not self._prio_task_flip
+        """
 
     def _tasker_05_sec(self):
         """ 0.5 Sec """
         if time.time() > self._non_prio_task_timer:
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             #####################
-            pass
+            self._aprs_task()
+            self._monitor_task()
+            self._update_qso_win()
+            self._txt_win.update_status_win()
+            self.change_conn_btn()
+            if self.setting_sound:
+                self._rx_beep_sound()
+                if self.setting_sprech:
+                    self._check_sprech_ch_buf()
+            return True
+        return False
 
     def _tasker_1_sec(self):
         """ 1 Sec """
@@ -2394,6 +2400,8 @@ class TkMainWin:
             if self.aprs_mon_win is not None:
                 self.aprs_mon_win.tasker()
             """
+            return True
+        return False
 
     def _tasker_5_sec(self):
         """ 5 Sec """
@@ -2402,6 +2410,8 @@ class TkMainWin:
             #####################
             self._update_bw_mon()
             self._aprs_wx_tree_task()
+            return True
+        return False
 
     def _tasker_tester(self):
         """ 5 Sec """

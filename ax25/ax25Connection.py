@@ -111,7 +111,7 @@ class AX25Conn(object):
         self.ch_echo: [AX25Conn] = []
         """ Config new Connection Address """
         # AX25 Frame for Connection Initialisation.
-        self.ax25_out_frame = AX25Frame()  # Predefined AX25 Frame for Output
+        self.ax25_out_frame = AX25Frame()  # BULLSHIT Predefined AX25 Frame for Output
         self.ax25_out_frame.axip_add = ax25_frame.axip_add
         self.axip_add = self.ax25_out_frame.axip_add
         if rx:
@@ -393,8 +393,8 @@ class AX25Conn(object):
     def bbsFwd_rx(self, data):
         if self.bbs_connection is None:
             return False
-        self.bbs_connection.connection_rx(data)
-        return True
+        return self.bbs_connection.connection_rx(data)
+        # return True
 
     def bbsFwd_disc(self):
         if self.bbs_connection is None:

@@ -67,8 +67,8 @@ class SQL_DB:
                 try:
                     # with self.conn.cursor() as cursor:
                     cursor = self.conn.cursor()
-                    # print(f"Query: {query_str}")
-                    # print(f"QData: {query_data}")
+                    print(f"Query: {query_str}")
+                    print(f"QData: {query_data}")
                     cursor.execute(query_str, query_data)
                     return cursor.fetchall()
                 except AttributeError:
@@ -79,6 +79,11 @@ class SQL_DB:
                     logger.error("MySQL: pip install mysql-connector-python")
                     self.conn.close()
                     raise MySQLConnectionError("MySQL: Version error !")
+                except mysql.connector.errors.DataError as e:
+                    print(e)
+                    print(f"Query: {query_str}")
+                    print(f"QData: {query_data}")
+                    raise e
                 # db_conn.close()
         self.conn = None
         print("MYSQL (execute_query): Could not connect")

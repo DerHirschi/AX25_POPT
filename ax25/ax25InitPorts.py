@@ -1,5 +1,6 @@
 import time
 import threading
+from sql_db.db_main import DB
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH_LIST
 from ax25aprs.aprs_station import APRS_ais
@@ -8,6 +9,7 @@ from bbs.bbs_main import BBS
 from config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
 from constant import MAX_PORTS
+from sql_db.sql_Error import MySQLConnectionError
 
 
 class RxEchoVars(object):
@@ -27,7 +29,12 @@ class AX25PortHandler(object):
     def __init__(self):
         logger.info("Port Init.")
         init_dir_struct()
-
+        #################
+        # Init SQL-DB
+        try:
+            self.init_DB()
+        except MySQLConnectionError:
+            raise MySQLConnectionError
         #################
         self.is_running = True
         self.ax25types = {
@@ -103,6 +110,7 @@ class AX25PortHandler(object):
             tmp.main_win.destroy()
         MH_LIST.save_mh_data()
         USER_DB.save_data()
+        DB.close_db()
 
     def close_aprs_ais(self):
         if self.aprs_ais is None:
@@ -418,6 +426,22 @@ class AX25PortHandler(object):
 
     def get_bbs(self):
         return self.bbs
+
+    @staticmethod
+    def init_DB():
+        ###############
+        # Init DB
+        if not DB.error:
+            # DB.check_tables_exists('bbs')
+            DB.check_tables_exists('user_db')
+            if DB.error:
+                raise MySQLConnectionError
+        else:
+            raise MySQLConnectionError
+
+    @staticmethod
+    def close_DB():
+        DB.close_db()
 
     """
     def debug_fnc(self):
