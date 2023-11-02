@@ -5,19 +5,24 @@ from constant import MYSQL, SQL_TIME_FORMAT
 from fnc.sql_fnc import search_sql_injections
 from sql_db.sql_Error import MySQLConnectionError
 from sql_db.sql_str import SQL_CREATE_BBS_PN_MAIL_TAB, SQL_CREATE_BBS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
-    SQL_CREATE_BBS_OUT_MAIL_TAB, SQL_CREATE_BBS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID
+    SQL_CREATE_BBS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_BBS_OUT_MAIL_TAB, \
+    SQLITE_CREATE_BBS_OUT_MAIL_TAB
 
-# MYSQL = False
-if MYSQL:
-    from sql_db.my_sql import SQL_DB
-else:
-    from sql_db.sql_lite import SQL_DB
 
-BBS_TABLES = {
+SQL_BBS_TABLES = {
     "bbs_bl_msg": SQL_CREATE_BBS_BL_MAIL_TAB,
     "bbs_pn_msg": SQL_CREATE_BBS_PN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
     "bbs_out_msg": SQL_CREATE_BBS_OUT_MAIL_TAB,
+    "bbs_fwd_q": SQL_CREATE_BBS_FWD_TASK_TAB,
+}
+
+
+SQLITE_BBS_TABLES = {
+    "bbs_bl_msg": SQL_CREATE_BBS_BL_MAIL_TAB,
+    "bbs_pn_msg": SQL_CREATE_BBS_PN_MAIL_TAB,
+    "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
+    "bbs_out_msg": SQLITE_CREATE_BBS_OUT_MAIL_TAB,
     "bbs_fwd_q": SQL_CREATE_BBS_FWD_TASK_TAB,
 }
 USERDB_TABLES = {
@@ -30,6 +35,13 @@ class SQL_Database:
         print("SQL_Database INIT!")
         # ##########
         self.error = False
+        # self.cfg_mysql = True
+        self.MYSQL = bool(MYSQL)
+        if self.MYSQL:
+            from sql_db.my_sql import SQL_DB
+        else:
+            from sql_db.sql_lite import SQL_DB
+
         self.db_config = {
             'user': 'popt',
             'password': '83g6u45908k91HG2jhj5jeGG',
@@ -65,10 +77,16 @@ class SQL_Database:
                 self.error = True
                 self.db = None
             else:
-                tables = {
-                    'bbs': BBS_TABLES,
-                    'user_db': USERDB_TABLES,
-                }.get(tables, {})
+                if self.MYSQL:
+                    tables = {
+                        'bbs': SQL_BBS_TABLES,
+                        'user_db': USERDB_TABLES,
+                    }.get(tables, {})
+                else:
+                    tables = {
+                        'bbs': SQLITE_BBS_TABLES,
+                        'user_db': USERDB_TABLES,
+                    }.get(tables, {})
                 for tab in tables.keys():
                     if tab not in ret:
                         print(f"Database WARNING. Table {tab} not exists !!")
@@ -131,7 +149,7 @@ class SQL_Database:
             return False
         query = f"SELECT EXISTS(SELECT bbs_bl_msg.BID FROM bbs_bl_msg WHERE BID = '{bid_mid}');"
         ret = self.send_query(query)[0][0]
-        return bool(ret)#
+        return bool(ret)  #
 
     def bbs_check_fwdID_exists(self, fwd_id: str):
         query = f"SELECT EXISTS(SELECT FWDID FROM bbs_fwd_q WHERE FWDID = '{fwd_id}');"
@@ -238,20 +256,36 @@ class SQL_Database:
             _temp = list(_temp[:-1])
         _regions = list(_temp[1:-2] + ([''] * (6 - len(_temp[1:]))) + _temp[-2:])
         print(f"Regions: 1: {_regions}")
-        _query = ("INSERT INTO `fwdPaths` "
-                  "(`path`, "
-                  "`destBBS`, "
-                  "`fromBBS`, "
-                  "`hops`, "
-                  "`destR1`, "
-                  "`destR2`, "
-                  "`destR3`, "
-                  "`destR4`, "
-                  "`destR5`, "
-                  "`destR6`, "
-                  "`lastUpdate`)"
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n"
-                  " ON DUPLICATE KEY UPDATE `lastUpdate` = %s;")
+        if self.MYSQL:
+            _query = ("INSERT INTO `fwdPaths` "
+                      "(`path`, "
+                      "`destBBS`, "
+                      "`fromBBS`, "
+                      "`hops`, "
+                      "`destR1`, "
+                      "`destR2`, "
+                      "`destR3`, "
+                      "`destR4`, "
+                      "`destR5`, "
+                      "`destR6`, "
+                      "`lastUpdate`)"
+                      "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n"
+                      " ON DUPLICATE KEY UPDATE `lastUpdate` = %s;")
+        else:
+            _query = ("INSERT INTO `fwdPaths` "
+                      "(`path`, "
+                      "`destBBS`, "
+                      "`fromBBS`, "
+                      "`hops`, "
+                      "`destR1`, "
+                      "`destR2`, "
+                      "`destR3`, "
+                      "`destR4`, "
+                      "`destR5`, "
+                      "`destR6`, "
+                      "`lastUpdate`)"
+                      "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n"
+                      " ON CONFLICT(path) DO UPDATE SET `lastUpdate` = %s;")
         _query_data = (_path_k,
                        _to_bbs,
                        _from_bbs,

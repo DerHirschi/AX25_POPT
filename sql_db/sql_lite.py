@@ -21,6 +21,7 @@ class SQL_DB:
     def execute_query(self, query_str: str):
         if self.conn:
             cursor = self.conn.cursor()
+            # query_str = query_str.replace('AUTO_INCREMENT', 'AUTOINCREMENT')
             res = cursor.execute(query_str)
             rows = res.fetchall()
             print(f"execute_query: {rows}")
@@ -31,6 +32,7 @@ class SQL_DB:
     def execute_query_bin(self, query_str: str, binary_data: tuple):
         if self.conn:
             query_str = query_str.replace('%s', '?').replace('%d', '?')
+            # query_str = query_str.replace('AUTO_INCREMENT', 'AUTOINCREMENT')
             cursor = self.conn.cursor()
             _new_data = []
             for el in tuple(binary_data):

@@ -580,21 +580,21 @@ class BBS:
             'msg': b'TEST 1234\r',
             'message_type': 'P',
         })
-        self.add_msg_to_fwd_by_id(_mid, 'DBO527')  # ADD MSG-ID to BBS
+        self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
         _mid = self.new_msg({
             'sender': 'MD2SAW',
             'sender_bbs': 'MD2SAW',
-            'receiver': 'TESTER',
-            'recipient_bbs': 'SAW',
+            'receiver': 'MD2SAW',
+            'recipient_bbs': 'MD2SAW',
             'subject': 'TEST-MAIL',
             'msg': b'TEST 1234\r',
-            'message_type': 'B',
+            'message_type': 'P',
         })
-        self.add_msg_to_fwd_by_id(_mid, 'DBO527')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(1, 'DBO527')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(2, 'DBO527')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(3, 'DBO527')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(4, 'DBO527')  # ADD MSG-ID to BBS
+        self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
+        self.add_msg_to_fwd_by_id(1, 'MD2BBS')  # ADD MSG-ID to BBS
+        self.add_msg_to_fwd_by_id(2, 'MD2BBS')  # ADD MSG-ID to BBS
+        self.add_msg_to_fwd_by_id(3, 'MD2BBS')  # ADD MSG-ID to BBS
+        self.add_msg_to_fwd_by_id(4, 'MD2BBS')  # ADD MSG-ID to BBS
         self.add_msg_to_fwd_by_id(5, 'MD2BBS')  # ADD MSG-ID to BBS
         self.add_msg_to_fwd_by_id(6, 'MD2BBS')  # ADD MSG-ID to BBS
         self.add_msg_to_fwd_by_id(7, 'MD2BBS')  # ADD MSG-ID to BBS

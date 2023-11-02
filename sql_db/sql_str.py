@@ -19,6 +19,26 @@ SQL_CREATE_BBS_OUT_MAIL_TAB = ("CREATE TABLE bbs_out_msg (\n"
                                "PRIMARY KEY (MID)\n"
                                ");\n")
 
+SQLITE_CREATE_BBS_OUT_MAIL_TAB = ("CREATE TABLE bbs_out_msg (\n"
+                                  "`MID` INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+                                  "`BID` varchar(12),\n"
+                                  "`from_call` VARCHAR(10) NOT NULL,\n"
+                                  "`from_bbs` VARCHAR(40) NULL,\n"
+                                  "`from_bbs_call` VARCHAR(100) NULL,\n"
+                                  "`to_call` varchar(10) NOT NULL,\n"
+                                  "`to_bbs` varchar(40) NULL,\n"
+                                  "`to_bbs_call` varchar(10) NULL,\n"
+                                  "`size` BIGINT UNSIGNED NULL,\n"
+                                  "`subject` varchar(100) NULL,\n"
+                                  "`header` BLOB,\n"
+                                  "`msg` LONGBLOB,\n"
+                                  # "`sent_to` VARCHAR(202) DEFAULT '[]' NULL,\n"
+                                  "`time` varchar(30) NULL,\n"
+                                  "`utctime` varchar(30) NULL,\n"
+                                  "`type` varchar(1) NOT NULL,\n"
+                                  "`flag` varchar(2) DEFAULT 'E'\n"
+                                  ");\n")
+
 SQL_CREATE_BBS_FWD_TASK_TAB = ("CREATE TABLE bbs_fwd_q (\n"
                                "`FWDID` varchar(20) NOT NULL,\n"
                                "`BID` varchar(12) NOT NULL,\n"
@@ -86,4 +106,4 @@ SQL_CREATE_FWD_PATHS_TAB = ("CREATE TABLE fwdPaths (\n"
 
 SQL_GET_LAST_MSG_ID = "SELECT MID FROM bbs_out_msg ORDER BY MID DESC LIMIT 1;"
 SQL_BBS_OUT_MAIL_TAB_IS_EMPTY = "SELECT CASE WHEN EXISTS(SELECT 1 FROM bbs_out_msg) THEN 0 ELSE 1 END AS IsEmpty;"
-# SQL_CREATE_MID_VAR = "DECLARE @MIDvar INT;"
+

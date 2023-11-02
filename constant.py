@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.100.10dev'
+VER = '2.100.11dev'
 """
 LANGUAGE:
 0 = German
@@ -11,7 +11,7 @@ LANGUAGE:
 2 = Dutch
 """
 LANGUAGE = 0    # QUICK FIX
-MYSQL = True    # MYSQL/SQLITE
+MYSQL = False    # MYSQL/SQLITE
 MAX_PORTS = 15  #
 
 
