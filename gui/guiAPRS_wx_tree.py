@@ -26,7 +26,7 @@ class WXWin(tk.Toplevel):
                       f"700+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.close)
+        self.protocol("WM_DELETE_WINDOW", self._close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
         try:
@@ -183,7 +183,7 @@ class WXWin(tk.Toplevel):
             if _data:
                 WXPlotWindow(self._root_win, _data)
 
-    def close(self):
+    def _close(self):
         self._ais_obj.wx_tree_gui = None
         # self._ais_obj = None
         self._root_win.wx_window = None

@@ -118,10 +118,11 @@ class BBSConnection:
         self.e = False
         self._mybbs_flag = self._bbs.bbs_flag
         self._dest_stat_id = self._ax25_conn.cli.stat_identifier
+        # print(f"BBS-Conn : {self._dest_stat_id}")
+        # self._bbs_fwd_cmd = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         self._dest_bbs_call = str(self._ax25_conn.to_call_str).split('-')[0]
         self._my_stat_id = self._bbs.my_stat_id
         self._feat_flag = []
-        self.e = self._check_feature_flags()
         ###########
         self._rx_buff = b''
         self._rx_msg_header = {}
@@ -129,7 +130,6 @@ class BBSConnection:
         self._tx_msg_header = b''
         self._tx_msg_BIDs = []
         self._tx_fs_list = ''
-        self._check_msg_to_fwd()
 
         self._state_tab = {
             0: self._init_rev_fwd,
@@ -142,8 +142,11 @@ class BBSConnection:
             11: self._wait_fq,
         }
         self._state = 0
+        self.e = self._check_feature_flags()
         if self._dest_stat_id is None:
             self.e = True
+        if not self.e:
+            self._check_msg_to_fwd()
 
     def _check_feature_flags(self):
         for el in self._dest_stat_id.feat_flag:
@@ -242,7 +245,6 @@ class BBSConnection:
     def _send_rev_fwd_init_cmd(self):
         # 2
         if self._is_fwd_q():
-            print(f"STAT-2: _tx_msg_header: {self._tx_msg_header}")
             _tx = self._tx_msg_header + b'F>\r'
             self._connection_tx(_tx)
             self._state = 5
@@ -265,6 +267,8 @@ class BBSConnection:
             print('FF')
             self._act_out_msg()
             if self._is_fwd_q():
+                _tx = self._tx_msg_header + b'F>\r'
+                self._connection_tx(_tx)
                 self._state = 5
             else:
                 self._state = 10
@@ -349,7 +353,6 @@ class BBSConnection:
             return False
         _fs_line = ''
         for el in _rx_bytes:
-            print(el)
             if b'FS' in el:
                 _fs_line = el.decode('ASCII', 'ignore')
                 break
@@ -392,22 +395,16 @@ class BBSConnection:
         self._connection_tx(_tx_msg)
 
     def _check_msg_to_fwd(self):
-        print(f"FWD-CHK _tx_msg_BIDs: {self._tx_msg_BIDs}")
-        print(f"FWD-CHK _tx_fs_list: {self._tx_fs_list}")
-        print(f"FWD-CHK _tx_msg_header: {self._tx_msg_header}")
         tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
+        print("_check_msg_to_fwd")
         self._tx_msg_header = tmp[0]
         self._tx_msg_BIDs = tmp[1]
-        print(f"FWD-CHK-aft _tx_msg_BIDs: {self._tx_msg_BIDs}")
-        print(f"FWD-CHK-aft _tx_fs_list: {self._tx_fs_list}")
-        print(f"FWD-CHK-aft _tx_msg_header: {self._tx_msg_header}")
+        print(f"_check_msg_to_fwd {self._tx_msg_BIDs}")
+        print(f"_check_msg_to_fwd {self._tx_msg_header}")
 
     def _act_out_msg(self):
         _bids = list(self._tx_msg_BIDs)
         # for bid in _bids:
-        print(f"FWD-ACT _tx_msg_BIDs: {self._tx_msg_BIDs}")
-        print(f"FWD-ACT _tx_fs_list: {self._tx_fs_list}")
-        print(f"FWD-ACT _tx_msg_header: {self._tx_msg_header}")
         for bid in _bids:
             _fwd_id = self._get_fwd_id(bid)
             flag = self._tx_fs_list[0]
@@ -456,10 +453,7 @@ class BBSConnection:
         if _k in self._rx_msg_header.keys():
             subject = bytes(_lines[0]).decode('UTF-8', 'ignore')
             path = []
-            to_call = ''
-            to_bbs = ''
             from_call = ''
-            from_bbs = ''
             _msg_index = len(_lines[0]) + 1
             trigger = False
             #  _len_msg = len(b'\r'.join(msg))
@@ -504,7 +498,7 @@ class BBSConnection:
             # _msg = b'\r'.join(msg[_msg_index:-1])
             _msg = bytes(msg[_msg_index + 1:])
             _header = bytes(msg[len(_lines[0]) + 1:_msg_index])
-
+            """
             print(f"K: {_k}")
             print(f"From call header: {from_call}")
             print(f"From bbs header: {from_bbs}")
@@ -521,7 +515,7 @@ class BBSConnection:
             # print(f"msg: {_msg}")
             print(f"len msg lt header: {self._rx_msg_header[_k]['message_size']}")
             print(f"len msg - header: {len(_msg)}")
-
+            """
             self._rx_msg_header[_k]['msg'] = _msg
             self._rx_msg_header[_k]['header'] = _header
             self._rx_msg_header[_k]['path'] = path
@@ -570,7 +564,10 @@ class BBS:
         ###############
         # Init DB
         DB.check_tables_exists('bbs')
+        ###############
+        # DEBUG/DEV
         # DB.bbs_get_MID()
+        """
         _mid = self.new_msg({
             'sender': 'MD3SAW',
             'sender_bbs': 'MD2SAW',
@@ -584,11 +581,11 @@ class BBS:
         _mid = self.new_msg({
             'sender': 'MD2SAW',
             'sender_bbs': 'MD2SAW',
-            'receiver': 'MD2SAW',
-            'recipient_bbs': 'MD2SAW',
+            'receiver': 'TEST',
+            'recipient_bbs': 'SAW',
             'subject': 'TEST-MAIL',
             'msg': b'TEST 1234\r',
-            'message_type': 'P',
+            'message_type': 'B',
         })
         self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
         self.add_msg_to_fwd_by_id(1, 'MD2BBS')  # ADD MSG-ID to BBS
@@ -600,26 +597,17 @@ class BBS:
         self.add_msg_to_fwd_by_id(7, 'MD2BBS')  # ADD MSG-ID to BBS
         self.add_msg_to_fwd_by_id(8, 'MD2BBS')  # ADD MSG-ID to BBS
         self.add_msg_to_fwd_by_id(9, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(25, 'MD2BBS')  # ADD MSG-ID to BBS
+        self.add_msg_to_fwd_by_id(25, 'DBO527')  # ADD MSG-ID to BBS
+        """
         # self.build_fwd_header('MD2BBS')
-        ###############
-        # User related
-        """
-        self.bbs_user_db = {}
-        self.users_inbox = {
-            # 'MD2SAW: []
-            # ...
-        }
-        """
-        ###############
-        # All Msg's
-        # self.pn_msg_pool = {}
-        # self.bl_msg_pool = {}
 
     def main_cron(self):
         pass
 
     def init_fwd_conn(self, ax25_conn):
+        if ax25_conn.cli.stat_identifier is None:
+            return None
+        # if ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         _conn = BBSConnection(self, ax25_conn)
         if _conn.e:
             return None
@@ -681,20 +669,33 @@ class BBS:
         return False
 
     @staticmethod
-    def get_out_msg_fwd_header(fwd_bbs_call: str):
-        return DB.bbs_get_fwd_q_Tab(fwd_bbs_call)
+    def get_fwd_q_tab_forBBS(fwd_bbs_call: str):
+        return DB.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
 
     def build_fwd_header(self, bbs_call: str):
-        fwd_q_data = self.get_out_msg_fwd_header(bbs_call)
+        fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
         _ret = ""
         _ret_bids = []
         for el in fwd_q_data:
             _ret += f"FB {el[11]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
             _ret_bids.append(el[1])
-
-        print(_ret.encode('ASCII'))
         try:
             return _ret.encode('ASCII'), _ret_bids
         except UnicodeEncodeError:
-            print("build_fwd_header UnicodeEncodeError")
+            print("BBS: build_fwd_header UnicodeEncodeError")
+            logger.error("BBS: build_fwd_header UnicodeEncodeError")
             return b'', _ret_bids
+
+    @staticmethod
+    def get_fwd_q_tab():
+        return DB.bbs_get_fwd_q_Tab_for_GUI()
+
+    @staticmethod
+    def get_pn_msg_tab():
+        return DB.bbs_get_pn_msg_Tab_for_GUI()
+
+    @staticmethod
+    def get_bl_msg_tab():
+        return DB.bbs_get_bl_msg_Tab_for_GUI()
+
+

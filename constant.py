@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.100.11dev'
+VER = '2.100.12dev'
 """
 LANGUAGE:
 0 = German
@@ -11,7 +11,7 @@ LANGUAGE:
 2 = Dutch
 """
 LANGUAGE = 0    # QUICK FIX
-MYSQL = False    # MYSQL/SQLITE
+MYSQL = True    # MYSQL/SQLITE
 MAX_PORTS = 15  #
 
 
@@ -82,6 +82,7 @@ STATION_ID_BBS = [
     'WinSTOPBox',
     'FBB',
     'WB',
+    'BayCom',
     'PoPTBOX',
 ]
 
@@ -117,6 +118,9 @@ FT_RX_HEADERS = [
 # BBS Stuff
 BBS_SW_ID = "PoPTBOX"
 BBS_FEATURE_FLAGS = ["$", "A", "B", "1", "C", "F", "H", "I", "L", "M", "R", "S", "T", "U", "X"]
+BBS_REVERS_FWD_CMD = {
+    'BayCom': b'F>\r',
+}
 
 # APRS Stuff
 APRS_SW_ID = f"APZPOP"  # TODO get SW ID

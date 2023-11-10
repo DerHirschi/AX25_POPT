@@ -4,6 +4,7 @@ Ideas/TODO's :
 - Individuelle Farben (Vorschreib Fenster)
 - Beacon System überarbeiten
 ✓ UserDB
+- Dual-TNC Mode (2 TNC's zu einem Port zusammen fassen)
 - Infos / Ctext usw. in User-DB speichern
 - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 - Logbuch

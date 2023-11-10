@@ -32,14 +32,17 @@ USERDB_TABLES = {
 
 class SQL_Database:
     def __init__(self):
-        print("SQL_Database INIT!")
+        print("Database INIT!")
+        logger.info("Database INIT!")
         # ##########
         self.error = False
         # self.cfg_mysql = True
         self.MYSQL = bool(MYSQL)
         if self.MYSQL:
+            logger.info("Database: set to MYSQL-Server")
             from sql_db.my_sql import SQL_DB
         else:
+            logger.info("Database: set to SQLite")
             from sql_db.sql_lite import SQL_DB
 
         self.db_config = {
@@ -52,11 +55,12 @@ class SQL_Database:
         self.db = None
         try:
             self.db = SQL_DB(self.db_config)
-            print("Database Init ok")
-            logger.info("Database Init ok")
+            print("Database: Init ok")
+            logger.info("Database: Init ok")
         except MySQLConnectionError:
             self.error = True
-            logger.error("Database Init Error !")
+            print("Database: Init Error !")
+            logger.error("Database: Init Error !")
 
         # self.check_bbs_tables_exists()
 
@@ -72,7 +76,6 @@ class SQL_Database:
         if not self.error:
             try:
                 ret = self.db.get_all_tables()
-                print(ret)
             except MySQLConnectionError:
                 self.error = True
                 self.db = None
@@ -89,17 +92,17 @@ class SQL_Database:
                     }.get(tables, {})
                 for tab in tables.keys():
                     if tab not in ret:
-                        print(f"Database WARNING. Table {tab} not exists !!")
-                        logger.warning(f"Database WARNING. Table {tab} not exists !!")
+                        print(f"Database: WARNING Table {tab} not exists !!")
+                        logger.warning(f"Database: WARNING Table {tab} not exists !!")
                         self.create_db_tables(tables[tab])
                 # self.create_db_var()
 
     def create_db_tables(self, query):
         if self.db:
-            print(self.commit_query(query))
+            self.commit_query(query)
 
     def send_query(self, query):
-        print(f"Query:\n{query}")
+        print(f"Query: {query}")
         if self.db:
             try:
                 return self.db.execute_query(query)
@@ -108,8 +111,7 @@ class SQL_Database:
                 self.db = None
 
     def commit_query(self, query):
-        print("Query <<>>")
-        print(query)
+        print(f"Query commit: {query}")
         if self.db:
             try:
                 ret = self.db.execute_query(query)
@@ -161,31 +163,24 @@ class SQL_Database:
         _bid = msg_struc.get('bid_mid', '')
         _from_call = msg_struc.get('sender', '')
         _from_bbs = msg_struc.get('sender_bbs', '')
-        _to_call = msg_struc.get('receiver', '')
-        _to_bbs = msg_struc.get('recipient_bbs', '')
+        _typ = msg_struc.get('message_type', '')
+        if _typ == 'B':
+            _to_call = msg_struc.get('recipient_bbs', '')
+            _to_bbs = msg_struc.get('receiver', '')
+        else:
+            _to_call = msg_struc.get('receiver', '')
+            _to_bbs = msg_struc.get('recipient_bbs', '')
         _subject = msg_struc.get('subject', '')
-        # _path = str(['R:221203/2334Z @:MD2BBS.#SAW.SAA.DEU.EU #:11082 [Salzwedel] $:4CWDBO527004',
-        #              'R:221204/0133z @:DBO527.#SAW.SAA.DEU.EU [Mailbox Salzwedel] OpenBcm1.02 LT:030']).replace("'", '"')
         _path = str(msg_struc.get('path', []))
         _msg = msg_struc.get('msg', b'')
         _header = msg_struc.get('header', b'')
-        _typ = msg_struc.get('message_type', '')
         _msg_size = msg_struc.get('message_size', '')
         _time = datetime.now().strftime(SQL_TIME_FORMAT)
         try:
             _msg_size = int(_msg_size)
         except ValueError:
             _msg_size = 0
-        """    
-        print(f"_bid: {_bid}")
-        print(f"_from_call: {_from_call}")
-        print(f"_to_call: {_to_call}")
-        print(f"_subject: {_subject}")
-        print(f"_path: {_path}")
-        print(f"_msg_size: {_msg_size}")
-        print(f"_typ: {_typ}")
-        print(f"_msg: {_msg}")
-        """
+
         if not _bid or \
                 not _from_call or \
                 not _to_call or \
@@ -227,13 +222,7 @@ class SQL_Database:
                        _time)
         res = self.commit_query_bin(_query, _query_data)
         if res is None:
-            print("res None")
-            print('-------------------------------')
-            print('-------------------------------')
             return False
-        print(res)
-        print('-------------------------------')
-        print('-------------------------------')
         self._fwd_paths_insert(msg_struc.get('fwd_path', []))
         return True
 
@@ -242,12 +231,12 @@ class SQL_Database:
         :param path: [(BBS-ADD, WP-Infos), ]
         :return:
         """
-        print("------------------")
-        print(f"- patch in: {path}")
+        # print("------------------")
+        # print(f"- path in: {path}")
         if not path:
             return False
         _path_k = '>'.join([a[0].split('.')[0] for a in path])
-        print(f"- _path_k in: {_path_k}")
+        # print(f"- _path_k in: {_path_k}")
         _temp = str(path[-1][0]).split('.')
         _from_bbs = str(path[0][0]).split('.')[0]
         _to_bbs = str(_temp[0])
@@ -255,7 +244,7 @@ class SQL_Database:
         if _temp[-1] == 'WW':
             _temp = list(_temp[:-1])
         _regions = list(_temp[1:-2] + ([''] * (6 - len(_temp[1:]))) + _temp[-2:])
-        print(f"Regions: 1: {_regions}")
+        # print(f"Regions: 1: {_regions}")
         if self.MYSQL:
             _query = ("INSERT INTO `fwdPaths` "
                       "(`path`, "
@@ -301,24 +290,14 @@ class SQL_Database:
                        )
         res = self.commit_query_bin(_query, _query_data)
         if res is None:
-            print("res None")
-            print('----------Path---------------')
-            print('-------------------------------')
             return False
-        print(res)
-        print('----------Path---------------')
-        print('-------------------------------')
         return True
 
     def bbs_get_MID(self):
         ret = self.send_query(SQL_BBS_OUT_MAIL_TAB_IS_EMPTY)[0][0]
         if ret:
-            print("bbs_get_BID EMPTY-------------")
-            print(ret)
             return 0
         ret = self.send_query(SQL_GET_LAST_MSG_ID)[0][0]
-        print("bbs_get_BID NOT EMPTY-------------")
-        print(ret)
         return ret
 
     def bbs_insert_new_msg(self, msg_struc: dict):
@@ -344,10 +323,7 @@ class SQL_Database:
                   "to_bbs_call, "
                   "size, "
                   "subject, "
-                  # "header, "
                   "msg, "
-                  # "time, "
-                  # "utctime, "
                   "type) "
                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
         _query_data = (_from_call,
@@ -362,10 +338,7 @@ class SQL_Database:
                        _typ,
                        )
         self.commit_query_bin(_query, _query_data)
-        res = self.bbs_get_MID()
-        print('--------------------------')
-        print(res)
-        return res
+        return self.bbs_get_MID()
 
     def bbs_insert_msg_to_fwd(self, msg_struc: dict):
         print("bbs_add_msg_to_fwd -------------")
@@ -447,8 +420,6 @@ class SQL_Database:
             return {}
         res = res[0]
         # [(12, None, 'MD2SAW', '', 'MD2SAW', 'MD2BBS', 9, 'TEST-MAIL', None, b'TEST 1234', None, None, 'P', 'E')]
-        print('-------get ---------')
-        print(res)
         return {
             'mid': res[0],
             'bid_mid': res[1],
@@ -468,10 +439,53 @@ class SQL_Database:
             'flag': res[15],
         }
 
-    def bbs_get_fwd_q_Tab(self, bbs_call: str):
+    def bbs_get_fwd_q_Tab_for_BBS(self, bbs_call: str):
         _query = "SELECT * FROM bbs_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
         _query_data = (bbs_call,)
         res = self.commit_query_bin(_query, _query_data)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_pn_msg_Tab_for_GUI(self):
+        _query = ("SELECT BID, "
+                  "from_call, "
+                  "from_bbs, "
+                  "to_call, "
+                  "subject, "
+                  "time, "
+                  "new "
+                  "FROM bbs_pn_msg;")
+        res = self.commit_query(_query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_bl_msg_Tab_for_GUI(self):
+        _query = ("SELECT BID, "
+                  "from_call, "
+                  "from_bbs, "
+                  "to_call, "
+                  "to_bbs, "
+                  "subject, "
+                  "time, "
+                  "new "
+                  "FROM bbs_bl_msg;")
+        res = self.commit_query(_query)
+        print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_fwd_q_Tab_for_GUI(self):
+        _query = ("SELECT BID, "
+                  "from_call, "
+                  "from_bbs_call, "
+                  "to_call, "
+                  "to_bbs_call, "
+                  "fwd_bbs_call, "
+                  "size, "
+                  "type, "
+                  "flag, "
+                  "tx_time "
+                  "FROM bbs_fwd_q;")
+        res = self.commit_query(_query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 

@@ -26,6 +26,8 @@ from gui.guiAPRS_Settings import APRSSettingsWin
 from gui.guiAPRS_be_tracer import BeaconTracer
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.guiAPRS_wx_tree import WXWin
+from gui.guiBBS_APRS_MSGcenter import MSG_Center
+from gui.guiBBS_fwd_q import BBS_fwd_Q
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
@@ -413,16 +415,16 @@ class SideTabbedFrame:
         _y = 80
         self.cmd_var = tk.BooleanVar(tab6_monitor)
         tk.Checkbutton(tab6_monitor,
-                                      variable=self.cmd_var,
-                                      text='CMD/RPT').place(x=_x, y=_y)
+                       variable=self.cmd_var,
+                       text='CMD/RPT').place(x=_x, y=_y)
 
         # Poll
         _x = 10
         _y = 105
         self.poll_var = tk.BooleanVar(tab6_monitor)
         tk.Checkbutton(tab6_monitor,
-                                       variable=self.poll_var,
-                                       text='Poll').place(x=_x, y=_y)
+                       variable=self.poll_var,
+                       text='Poll').place(x=_x, y=_y)
 
         # Port
         _x = 40
@@ -434,10 +436,10 @@ class SideTabbedFrame:
         if PORT_HANDLER.get_all_ports().keys():
             _vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
         mon_port_ent = tk.ttk.Combobox(tab6_monitor,
-                                            width=4,
-                                            textvariable=self.mon_port_var,
-                                            values=_vals,
-                                            )
+                                       width=4,
+                                       textvariable=self.mon_port_var,
+                                       values=_vals,
+                                       )
         mon_port_ent.place(x=_x + 50, y=_y)
         mon_port_ent.bind("<<ComboboxSelected>>", self._chk_mon_port)
         # Calls
@@ -459,8 +461,8 @@ class SideTabbedFrame:
         _y = 210
         self.mon_scroll_var = tk.BooleanVar(tab6_monitor)
         tk.Checkbutton(tab6_monitor,
-                                             variable=self.mon_scroll_var,
-                                             text=STR_TABLE['scrolling'][self._lang]).place(x=_x, y=_y)
+                       variable=self.mon_scroll_var,
+                       text=STR_TABLE['scrolling'][self._lang]).place(x=_x, y=_y)
 
         # Monitor APRS Decoding Output
         _x = 10
@@ -468,8 +470,8 @@ class SideTabbedFrame:
         self.mon_aprs_var = tk.BooleanVar(tab6_monitor)
         self.mon_aprs_var.set(True)
         tk.Checkbutton(tab6_monitor,
-                                           variable=self.mon_aprs_var,
-                                           text='APRS-Decoding').place(x=_x, y=_y)
+                       variable=self.mon_aprs_var,
+                       text='APRS-Decoding').place(x=_x, y=_y)
 
         # PID
         _x = 10
@@ -483,9 +485,9 @@ class SideTabbedFrame:
             pid.pac_types[int(x)]()
             _vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
         tk.ttk.Combobox(tab6_monitor,
-                                           width=20,
-                                           values=_vals,
-                                           textvariable=self.mon_pid_var).place(x=_x + 40, y=_y)
+                        width=20,
+                        values=_vals,
+                        textvariable=self.mon_pid_var).place(x=_x + 40, y=_y)
         self.mon_pid_var.set(_vals[0])
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         # Monitor RX-Filter Ports
@@ -611,6 +613,7 @@ class SideTabbedFrame:
 
         # self.sound_on.set(1)
     """
+
     def _chk_ch_echo(self):
         # self.main_win.channel_index
         for ch_id in list(self._ch_echo_vars.keys()):
@@ -1342,7 +1345,6 @@ class TxTframe:
         else:
             self._pw.remove(self._out_frame)
 
-
     def _chk_rx_beep(self):
         _rx_beep_check = self._rx_beep_var.get()
         if _rx_beep_check:
@@ -1634,6 +1636,8 @@ class TkMainWin:
         self.aprs_pn_msg_win = None
         self.userdb_win = None
         self.userDB_tree_win = None
+        self.BBS_fwd_q_list = None
+        self.MSG_Center = None
         #####
         self._init_vars()
         ######################################
@@ -1729,6 +1733,10 @@ class TkMainWin:
             self.aprs_pn_msg_win.destroy()
         if self.be_tracer_win is not None:
             self.be_tracer_win.destroy()
+        if self.BBS_fwd_q_list is not None:
+            self.BBS_fwd_q_list.destroy()
+        if self.MSG_Center is not None:
+            self.MSG_Center.destroy()
         self.main_win.update_idletasks()
         self._loop_delay = 800
 
@@ -1886,6 +1894,20 @@ class TkMainWin:
                               underline=0)
         # MenuAPRS.add_separator()
         _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
+        # BBS/PMS
+        _MenuBBS = Menu(_menubar, tearoff=False)
+
+        _MenuBBS.add_command(label=STR_TABLE['msg_center'][self.language],
+                             command=self._open_MSG_center,
+                             underline=0)
+        _MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
+                             command=self._open_BBS_fwd_Q_win,
+                             underline=0)
+        _MenuBBS.add_separator()
+        _MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
+                             command=self._do_bbs_fwd,
+                             underline=0)
+        _menubar.add_cascade(label='PMS', menu=_MenuBBS, underline=0)
 
         # Menü 5 Hilfe
         _MenuHelp = Menu(_menubar, tearoff=False)
@@ -2726,6 +2748,19 @@ class TkMainWin:
             APRS_msg_SYS_PN(self)
 
     ###################
+    # BBS FWQ Q
+    def _open_BBS_fwd_Q_win(self):
+        """ """
+        if self.BBS_fwd_q_list is None:
+            self.BBS_fwd_q_list = BBS_fwd_Q(self)
+
+    def _open_MSG_center(self):
+        """ """
+        if self.MSG_Center is None:
+            self.MSG_Center = MSG_Center(self)
+
+
+    ###################
     # User-DB TreeView WIN
     def _UserDB_tree(self):
         """MH WIN"""
@@ -2908,7 +2943,7 @@ class TkMainWin:
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
         # PORT_HANDLER.close_all_ports()
-        self._do_bbs_fwd()
+        # self._do_bbs_fwd()
 
     def _do_bbs_fwd(self):
         conn = self.get_conn()

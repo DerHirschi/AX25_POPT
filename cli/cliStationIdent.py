@@ -1,4 +1,5 @@
-from constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STATION_ID_ENCODING, BBS_FEATURE_FLAGS
+from constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STATION_ID_ENCODING, BBS_FEATURE_FLAGS, \
+    BBS_REVERS_FWD_CMD
 import logging
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,6 @@ class NODEid(DefaultID):
 
 
 class BBSid:
-
     def __init__(self, inp: str):
         self.typ = 'BBS'
         temp = inp[1:-1].split('-')
@@ -97,6 +97,7 @@ class BBSid:
         self.txt_encoding = None
         ########################
         self.e = False
+        self.bbs_rev_fwd_cmd = BBS_REVERS_FWD_CMD.get(self.software, None)
         #  AB1FH  MR   X   $
         # $ABCFHILMRSTUX
         self.feat_flag = []

@@ -86,6 +86,7 @@ SQL_CREATE_BBS_BL_MAIL_TAB = ("CREATE TABLE bbs_bl_msg (\n"
                               "	`msg` LONGBLOB,\n"
                               "	`path` VARCHAR(2048) NULL,\n"
                               "	`time` varchar(30) NULL,\n"
+                              "	`new` TINYINT(1) DEFAULT 1 NOT NULL,\n"
                               "	PRIMARY KEY (BID)\n"
                               ");\n")
 
