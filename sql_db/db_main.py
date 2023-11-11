@@ -393,9 +393,10 @@ class SQL_Database:
                   "to_bbs, "
                   "to_bbs_call, "
                   "fwd_bbs_call, "
+                  "subject, "
                   "size, "
                   "type) "
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
         _query_data = (_fwd_id,
                        _bid,
                        _mid,
@@ -406,6 +407,7 @@ class SQL_Database:
                        msg_struc.get('recipient_bbs'),
                        msg_struc.get('recipient_bbs_call'),
                        msg_struc.get('fwd_bbs_call'),
+                       msg_struc.get('subject'),
                        msg_struc.get('message_size'),
                        _type,
                        )
@@ -454,9 +456,24 @@ class SQL_Database:
                   "subject, "
                   "time, "
                   "new "
-                  "FROM bbs_pn_msg;")
+                  "FROM bbs_pn_msg "
+                  "WHERE flag='IN';")
         res = self.commit_query(_query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_pn_msg_for_GUI(self, bid: str):
+        if not bid:
+            return []
+        _query = ("SELECT * "
+                  "FROM bbs_pn_msg "
+                  f"WHERE BID='{bid}';")
+        res = self.commit_query(_query)
+        _query = ("UPDATE bbs_pn_msg SET new=0 "
+                  f"WHERE BID='{bid}';")
+        self.commit_query(_query)
+
+        # print(f"bbs_get_bl_msg_for_GUI res: {res}")
         return res
 
     def bbs_get_bl_msg_Tab_for_GUI(self):
@@ -468,9 +485,24 @@ class SQL_Database:
                   "subject, "
                   "time, "
                   "new "
-                  "FROM bbs_bl_msg;")
+                  "FROM bbs_bl_msg "
+                  "WHERE flag='IN';")
         res = self.commit_query(_query)
-        print(f"bbs_get_fwd_q_Tab res: {res}")
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_bl_msg_for_GUI(self, bid: str):
+        if not bid:
+            return []
+        _query = ("SELECT * "
+                  "FROM bbs_bl_msg "
+                  f"WHERE BID='{bid}';")
+        res = self.commit_query(_query)
+        _query = ("UPDATE bbs_bl_msg SET new=0 "
+                  f"WHERE BID='{bid}';")
+        self.commit_query(_query)
+
+        # print(f"bbs_get_bl_msg_for_GUI res: {res}")
         return res
 
     def bbs_get_fwd_q_Tab_for_GUI(self):
@@ -480,6 +512,7 @@ class SQL_Database:
                   "to_call, "
                   "to_bbs_call, "
                   "fwd_bbs_call, "
+                  "subject, "
                   "size, "
                   "type, "
                   "flag, "
@@ -495,6 +528,10 @@ class SQL_Database:
         res = self.commit_query_bin(_query, _query_data)
         # print(f"bbs_get_outMsg_by_BID res: {res}")
         return res
+
+    def bbs_get_out_msg_for_GUI(self, bid: str):
+        _query = "SELECT * FROM bbs_out_msg WHERE BID=%s;"
+        return self.commit_query_bin(_query, (bid,))
 
     def bbs_act_outMsg_by_FWD_ID(self, fwd_id: str, flag: str):
         _query = "SELECT BID FROM bbs_fwd_q WHERE FWDID=%s;"

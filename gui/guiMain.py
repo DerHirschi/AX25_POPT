@@ -1622,7 +1622,7 @@ class TkMainWin:
             self._bw_plot_x_scale.append(_i / 6)
         self._bw_plot_lines = {}
         ########################################
-        self.text_size = 14
+        self.text_size = 13
         ############################
         # Windows
         self.new_conn_win = None

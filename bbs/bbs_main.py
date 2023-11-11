@@ -677,7 +677,7 @@ class BBS:
         _ret = ""
         _ret_bids = []
         for el in fwd_q_data:
-            _ret += f"FB {el[11]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
+            _ret += f"FB {el[12]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
             _ret_bids.append(el[1])
         try:
             return _ret.encode('ASCII'), _ret_bids
@@ -698,4 +698,14 @@ class BBS:
     def get_bl_msg_tab():
         return DB.bbs_get_bl_msg_Tab_for_GUI()
 
+    @staticmethod
+    def get_bl_msg_fm_BID(bid):
+        return DB.bbs_get_bl_msg_for_GUI(bid)
 
+    @staticmethod
+    def get_pn_msg_fm_BID(bid):
+        return DB.bbs_get_pn_msg_for_GUI(bid)
+
+    @staticmethod
+    def get_out_msg_fm_BID(bid):
+        return DB.bbs_get_out_msg_for_GUI(bid)
