@@ -175,7 +175,8 @@ class SQL_Database:
         _msg = msg_struc.get('msg', b'')
         _header = msg_struc.get('header', b'')
         _msg_size = msg_struc.get('message_size', '')
-        _time = datetime.now().strftime(SQL_TIME_FORMAT)
+        _time = msg_struc.get('time', '')
+        _rx_time = datetime.now().strftime(SQL_TIME_FORMAT)
         try:
             _msg_size = int(_msg_size)
         except ValueError:
@@ -207,8 +208,8 @@ class SQL_Database:
             'T': 'bbs_bl_msg'  # TODO
         }[_typ]
         _query = (f"INSERT INTO {_table} "
-                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time)"
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
+                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time, rx_time)"
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
         _query_data = (_bid,
                        _from_call,
                        _from_bbs,
@@ -219,7 +220,8 @@ class SQL_Database:
                        _path,
                        _msg,
                        _header,
-                       _time)
+                       _time,
+                       _rx_time)
         res = self.commit_query_bin(_query, _query_data)
         if res is None:
             return False
@@ -314,6 +316,8 @@ class SQL_Database:
         _msg = msg_struc.get('msg', b'')
         _typ = msg_struc.get('message_type', '')
         _msg_size = msg_struc.get('message_size', 0)
+        _time = datetime.now().strftime(SQL_TIME_FORMAT)
+        _utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
         _query = ("INSERT INTO `bbs_out_msg` "
                   "(from_call, "
                   "from_bbs, "
@@ -324,8 +328,10 @@ class SQL_Database:
                   "size, "
                   "subject, "
                   "msg, "
+                  "time, "
+                  "utctime, "
                   "type) "
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
         _query_data = (_from_call,
                        _from_bbs,
                        _from_bbs_call,
@@ -335,10 +341,56 @@ class SQL_Database:
                        _msg_size,
                        _subject,
                        _msg,
+                       _time,
+                       _utctime,
                        _typ,
                        )
         self.commit_query_bin(_query, _query_data)
         return self.bbs_get_MID()
+
+    def bbs_update_out_msg(self, msg_struc: dict):
+        _mid = msg_struc.get('mid', '')
+        _from_call = msg_struc.get('sender', '')
+        _from_bbs = msg_struc.get('sender_bbs', '')
+        _from_bbs_call = msg_struc.get('sender_bbs', '').split('.')[0]
+        _to_call = msg_struc.get('receiver', '')
+        _to_bbs = msg_struc.get('recipient_bbs', '')
+        _to_bbs_call = msg_struc.get('recipient_bbs', '').split('.')[0]
+        _subject = msg_struc.get('subject', '')
+        _msg = msg_struc.get('msg', b'')
+        _typ = msg_struc.get('message_type', '')
+        _msg_size = msg_struc.get('message_size', 0)
+        _time = datetime.now().strftime(SQL_TIME_FORMAT)
+        _utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
+        _query = ("UPDATE bbs_out_msg SET "
+                  "from_call=%s, "
+                  "from_bbs=%s, "
+                  "from_bbs_call=%s, "
+                  "to_call=%s, "
+                  "to_bbs=%s, "
+                  "to_bbs_call=%s, "
+                  "size=%s, "
+                  "subject=%s, "
+                  "msg=%s, "
+                  "time=%s, "
+                  "utctime=%s, "
+                  "type=%s WHERE MID=%s;"
+                  )
+        _query_data = (_from_call,
+                       _from_bbs,
+                       _from_bbs_call,
+                       _to_call,
+                       _to_bbs,
+                       _to_bbs_call,
+                       _msg_size,
+                       _subject,
+                       _msg,
+                       _time,
+                       _utctime,
+                       _typ,
+                       _mid)
+        self.commit_query_bin(_query, _query_data)
+        return True
 
     def bbs_insert_msg_to_fwd(self, msg_struc: dict):
         print("bbs_add_msg_to_fwd -------------")
@@ -351,6 +403,7 @@ class SQL_Database:
         _flag = msg_struc.get('flag', '')
         if _flag != 'E':
             return False
+        _flag = 'F'     # MSG flagged for forward
         _type = msg_struc.get('message_type', '')
         if not _type:
             return False
@@ -362,21 +415,19 @@ class SQL_Database:
         # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
         # _path = str(msg_struc.get('path', []))
         _header = msg_struc.get('header', b'')
-        _time = msg_struc.get('time', '')
-        _utctime = msg_struc.get('utctime', '')
+        _time = msg_struc.get('tx-time', '')
+        # _utctime = msg_struc.get('utctime', '')
 
         _query = ("UPDATE bbs_out_msg SET "
                   "BID=%s, "
                   "header=%s, "
-                  "time=%s, "
-                  "utctime=%s, "
+                  "tx_time=%s, "
                   "flag=%s WHERE MID=%s;"
                   )
         _query_data = (
             _bid,
             _header,
             _time,
-            _utctime,
             _flag,
             _mid,
         )
@@ -436,9 +487,10 @@ class SQL_Database:
             'header': res[10],
             'msg': res[11],
             'time': res[12],
-            'utctime': res[13],
-            'message_type': res[14],
-            'flag': res[15],
+            'tx-time': res[13],
+            'utctime': res[14],
+            'message_type': res[15],
+            'flag': res[16],
         }
 
     def bbs_get_fwd_q_Tab_for_BBS(self, bbs_call: str):
@@ -468,13 +520,12 @@ class SQL_Database:
         _query = ("SELECT * "
                   "FROM bbs_pn_msg "
                   f"WHERE BID='{bid}';")
-        res = self.commit_query(_query)
+        return self.commit_query(_query)
+
+    def bbs_set_pn_msg_notNew(self, bid: str):
         _query = ("UPDATE bbs_pn_msg SET new=0 "
                   f"WHERE BID='{bid}';")
         self.commit_query(_query)
-
-        # print(f"bbs_get_bl_msg_for_GUI res: {res}")
-        return res
 
     def bbs_get_bl_msg_Tab_for_GUI(self):
         _query = ("SELECT BID, "
@@ -497,13 +548,12 @@ class SQL_Database:
         _query = ("SELECT * "
                   "FROM bbs_bl_msg "
                   f"WHERE BID='{bid}';")
-        res = self.commit_query(_query)
+        return self.commit_query(_query)
+
+    def bbs_set_bl_msg_notNew(self, bid: str):
         _query = ("UPDATE bbs_bl_msg SET new=0 "
                   f"WHERE BID='{bid}';")
         self.commit_query(_query)
-
-        # print(f"bbs_get_bl_msg_for_GUI res: {res}")
-        return res
 
     def bbs_get_fwd_q_Tab_for_GUI(self):
         _query = ("SELECT BID, "
@@ -528,6 +578,29 @@ class SQL_Database:
         res = self.commit_query_bin(_query, _query_data)
         # print(f"bbs_get_outMsg_by_BID res: {res}")
         return res
+
+    def bbs_get_sv_msg_Tab_for_GUI(self):
+        _query = ("SELECT MID, "
+                  "from_call, "
+                  "from_bbs, "
+                  "to_call, "
+                  "to_bbs, "
+                  "subject, "
+                  "time, "
+                  "type "
+                  "FROM bbs_out_msg "
+                  "WHERE flag='E';")
+        res = self.commit_query(_query)
+        print(f"bbs_get_sv_msg_Tab_for_GUI res: {res}")
+        return res
+
+    def bbs_get_sv_msg_for_GUI(self, mid: str):
+        if not mid:
+            return []
+        _query = ("SELECT * "
+                  "FROM bbs_out_msg "
+                  f"WHERE MID='{mid}';")
+        return self.commit_query(_query)
 
     def bbs_get_out_msg_for_GUI(self, bid: str):
         _query = "SELECT * FROM bbs_out_msg WHERE BID=%s;"

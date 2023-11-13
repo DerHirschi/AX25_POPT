@@ -1,3 +1,15 @@
+"""
+flags MSG OUT TAB & FWD Q TAB:
+F  = Forward (Set to FWD but not FWD Yet)
+E  = Entwurf/Draft (Default)
+S= = Send (BBS is already receiving MSG fm other BBS) Try again on next connect.
+S+ = Send (delivered to BBS)
+S- = Send (BBS already has msg)
+H  = Send (Message is accepted but will be held)
+R  = Reject (Message is rejected)
+EE = There is an error in the line
+EO = OFFSET Error not implemented yet TODO
+"""
 from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError, logger
@@ -56,15 +68,16 @@ def parse_forward_header(header):
 
 
 def build_new_msg_header(msg_struc: dict):
-    print("build_new_msg_header -------------")
+    # print("build_new_msg_header -------------")
     _bbs_call = msg_struc['sender_bbs'].split('.')[0]
     _mid = msg_struc['mid']
     _bid = f"{str(_mid).rjust(6, '0')}{_bbs_call}"
-    msg_struc['time'] = datetime.now().strftime(SQL_TIME_FORMAT)
+    msg_struc['tx-time'] = datetime.now().strftime(SQL_TIME_FORMAT)
+    _utc = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
     msg_struc['mid'] = _mid
     msg_struc['bid_mid'] = _bid
-    _utc = datetime.utcnow()
-    msg_struc['utctime'] = _utc.strftime(SQL_TIME_FORMAT)
+    # _utc = datetime.utcnow()
+    # msg_struc['utctime'] = _utc.strftime(SQL_TIME_FORMAT)
     # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
     # R:231101/0520z @:MD2SAW.#SAW.SAA.DEU.EU #:000003 $:000003MD2SAW
     _header = (f"R:{str(_utc.year)[2:].rjust(2, '0')}"
@@ -105,8 +118,27 @@ def parse_fwd_paths(path_list: list):
                 path.append([line.split("@")[-1].split(" ")[0].replace(":", ""),
                              line.split("@")[-1].split(" [")[-1]])
                 """
-    print(path)
+    # print(path)
     return path
+
+
+def parse_header_timestamp(path_str: str):
+    if path_str[:2] != 'R:':
+        print(f"TS-Parser R not FOUND: {path_str}")
+        return ''
+    path_str = path_str[2:].split(' ')[0]
+    """
+    if path_str[-1].upper() != 'Z':
+        print(f"TS-Parser Z not FOUND: {path_str}")
+        return ''
+    """
+    return (
+        f"{path_str[:2]}-"
+        f"{path_str[2:4]}-"
+        f"{path_str[4:6]} "
+        f"{path_str[7:9]}:"
+        f"{path_str[9:11]}:"
+        "00")
 
 
 class BBSConnection:
@@ -366,7 +398,7 @@ class BBSConnection:
             elif flag in ['-', 'N']:
                 DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S-')
             elif flag in ['=', 'L']:
-                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'E')
+                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S=')
             elif flag == 'H':
                 self._tx_out_msg_by_bid(_bids[_i])
             elif flag == 'R':
@@ -390,13 +422,11 @@ class BBSConnection:
         if not _msg:
             return False
         print(f"tx_out- 0: {_msg[0][0]}  1: {_msg[0][1]}  3: {_msg[0][2]}  len3: {len(_msg[0][2])}")
-        # _tx_msg = _msg[0][0].encode('ASCII', 'ignore') + b'\r' + _msg[0][1] + b'\r' + _msg[0][2] + b'\x1a\r'
         _tx_msg = _msg[0][0].encode('ASCII', 'ignore') + b'\r' + _msg[0][2] + b'\x1a\r'
         self._connection_tx(_tx_msg)
 
     def _check_msg_to_fwd(self):
         tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
-        print("_check_msg_to_fwd")
         self._tx_msg_header = tmp[0]
         self._tx_msg_BIDs = tmp[1]
         print(f"_check_msg_to_fwd {self._tx_msg_BIDs}")
@@ -423,14 +453,14 @@ class BBSConnection:
         if b'$:' in _lines[1]:
             _tmp = bytes(_lines[1]).split(b'$:')
             _k = _tmp[1].decode('UTF-8', 'ignore')
-            print(f"KEY: {_k}")
+            # print(f"KEY: {_k}")
         else:
             _k = ''
             _temp_k = str(list(self._rx_msg_header.keys())[0])
-            print(f"KEY not Found in Header. Use KEY: {_temp_k}")
-            print(f"KEY not Found Sender: {self._rx_msg_header[_temp_k]['sender']}")
+            # print(f"KEY not Found in Header. Use KEY: {_temp_k}")
+            # print(f"KEY not Found Sender: {self._rx_msg_header[_temp_k]['sender']}")
             _sender = self._rx_msg_header[_temp_k]['sender'].encode('ASCII', 'ignore')
-            print(f"Sender: {_sender}")
+            # print(f"Sender: {_sender}")
             for _l in list(_lines[1:]):
                 print(f"NoKeyFound _l: {_l}")
                 if _l != b'':
@@ -458,7 +488,7 @@ class BBSConnection:
             trigger = False
             #  _len_msg = len(b'\r'.join(msg))
             for line in list(_lines[1:]):
-                print(f"Line msgParser: {line}")
+                # print(f"Line msgParser: {line}")
                 _msg_index += len(line) + 1
                 if line[:2] == b'R:':
                     # _trigger = False
@@ -498,29 +528,12 @@ class BBSConnection:
             # _msg = b'\r'.join(msg[_msg_index:-1])
             _msg = bytes(msg[_msg_index + 1:])
             _header = bytes(msg[len(_lines[0]) + 1:_msg_index])
-            """
-            print(f"K: {_k}")
-            print(f"From call header: {from_call}")
-            print(f"From bbs header: {from_bbs}")
-            print(f"To call header: {to_call}")
-            print(f"To bbs header: {to_bbs}")
-            print("###################")
-            print(f"From: {self._rx_msg_header[_k]['sender']}")
-            print(f"From bbs: {self._rx_msg_header[_k]['sender_bbs']}")
-            print(f"To: {self._rx_msg_header[_k]['receiver']}")
-            print(f"To bbs: {self._rx_msg_header[_k]['recipient_bbs']}")
-            print("###################")
-            print(f"subject: {subject}")
-            print(f"path: {path}")
-            # print(f"msg: {_msg}")
-            print(f"len msg lt header: {self._rx_msg_header[_k]['message_size']}")
-            print(f"len msg - header: {len(_msg)}")
-            """
             self._rx_msg_header[_k]['msg'] = _msg
             self._rx_msg_header[_k]['header'] = _header
             self._rx_msg_header[_k]['path'] = path
             self._rx_msg_header[_k]['fwd_path'] = parse_fwd_paths(path)
-
+            # 'R:230513/2210z @:CB0ESN.#E.W.DLNET.DEU.EU [E|JO31MK] obcm1.07b5 LT:007'
+            self._rx_msg_header[_k]['time'] = parse_header_timestamp(path[-1])
             self._rx_msg_header[_k]['subject'] = subject
             res = DB.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[_k]))
             if not res:
@@ -565,19 +578,31 @@ class BBS:
         # Init DB
         DB.check_tables_exists('bbs')
         ###############
+        # Config's
+        self.pms_cfg = {
+            'user': 'MD2SAW',
+            'regio': '#SAW.SAA.DEU.EU',
+            'home_bbs': [
+                'MD2BBS.#SAW.SAA.DEU.EU',
+                'DBO527.#SAW.SAA.DEU.EU',
+            ],
+        }
+        ###############
         # DEBUG/DEV
         # DB.bbs_get_MID()
         """
         _mid = self.new_msg({
-            'sender': 'MD3SAW',
-            'sender_bbs': 'MD2SAW',
-            'receiver': 'MD2SAW',
-            'recipient_bbs': 'MD2BBS.#SAW.SAA.DEU.EU',
+            'sender': 'MD2SAW',
+            'sender_bbs': 'MD2SAW.#SAW.SAA.DEU.EU',
+            'receiver': 'MD3SAW',
+            'recipient_bbs': 'DBO527.#SAW.SAA.DEU.EU',
             'subject': 'TEST-MAIL',
             'msg': b'TEST 1234\r',
             'message_type': 'P',
         })
-        self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
+        """
+        # self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
+        """
         _mid = self.new_msg({
             'sender': 'MD2SAW',
             'sender_bbs': 'MD2SAW',
@@ -642,20 +667,17 @@ class BBS:
 
     @staticmethod
     def new_msg(msg_struc: dict):
-        """
-        flags:
-        F  = Forward (Set to FWD but not FWD Yet)
-        E  = Entwurf (Default)
-        S+ = Send (delivered to BBS)
-        S- = Send (BBS already has msg)
-        H = Send (Message is accepted but will be held)
-        R = Reject (Message is rejected)
-        EE = There is an error in the line
-        EO = OFFSET Error not implemented yet TODO
-        """
         msg_struc['message_size'] = int(len(msg_struc['msg']))
 
         return DB.bbs_insert_new_msg(msg_struc)
+
+    @staticmethod
+    def update_msg(msg_struc: dict):
+        if not msg_struc.get('mid', ''):
+            return False
+        msg_struc['message_size'] = int(len(msg_struc['msg']))
+
+        return DB.bbs_update_out_msg(msg_struc)
 
     @staticmethod
     def add_msg_to_fwd_by_id(mid: int, fwd_bbs_call: str):
@@ -700,12 +722,111 @@ class BBS:
 
     @staticmethod
     def get_bl_msg_fm_BID(bid):
-        return DB.bbs_get_bl_msg_for_GUI(bid)
+        data = DB.bbs_get_bl_msg_for_GUI(bid)
+        if not data:
+            return {}
+        return {
+            'typ': 'B',
+            'bid': data[0][0],
+            'from_call': data[0][1],
+            'from_bbs': data[0][2],
+            'to_call': data[0][3],
+            'to_bbs': data[0][4],
+            'size': data[0][5],
+            'subject': data[0][6],
+            'header': data[0][7],
+            'msg': data[0][8],
+            'path': data[0][9],
+            'time': data[0][10],
+            'rx-time': data[0][11],
+            'new': data[0][12],
+            'flag': data[0][13],
+        }
+
+    @staticmethod
+    def set_bl_msg_notNew(bid):
+        DB.bbs_set_bl_msg_notNew(bid)
 
     @staticmethod
     def get_pn_msg_fm_BID(bid):
-        return DB.bbs_get_pn_msg_for_GUI(bid)
+        data = DB.bbs_get_pn_msg_for_GUI(bid)
+        if not data:
+            return {}
+        return {
+            'typ': 'P',
+            'bid': data[0][0],
+            'from_call': data[0][1],
+            'from_bbs': data[0][2],
+            'to_call': data[0][3],
+            'to_bbs': data[0][4],
+            'size': data[0][5],
+            'subject': data[0][6],
+            'header': data[0][7],
+            'msg': data[0][8],
+            'path': data[0][9],
+            'time': data[0][10],
+            'rx-time': data[0][11],
+            'new': data[0][12],
+            'flag': data[0][13],
+        }
+
+    @staticmethod
+    def set_pn_msg_notNew(bid):
+        DB.bbs_set_pn_msg_notNew(bid)
 
     @staticmethod
     def get_out_msg_fm_BID(bid):
-        return DB.bbs_get_out_msg_for_GUI(bid)
+        data = DB.bbs_get_out_msg_for_GUI(bid)
+        if not data:
+            return {}
+        return {
+            'bid': data[0][1],
+            'from_call': data[0][2],
+            'from_bbs': data[0][3],
+            'from_bbs_call': data[0][4],
+            'to_call': data[0][5],
+            'to_bbs': data[0][6],
+            'fwd_bbs': data[0][7],
+            'size': data[0][8],
+            'subject': data[0][9],
+            'header': data[0][10],
+            'msg': data[0][11],
+            # 'path': data[0][9],
+            'time': data[0][12],
+            'tx-time': data[0][13],
+            'typ': data[0][15],
+            'flag': data[0][16],
+        }
+
+    def get_pms_cfg(self):
+        return self.pms_cfg
+
+    @staticmethod
+    def get_sv_msg_tab():
+        return DB.bbs_get_sv_msg_Tab_for_GUI()
+
+    @staticmethod
+    def get_sv_msg_fm_BID(mid):
+        data = DB.bbs_get_sv_msg_for_GUI(mid)
+        if not data:
+            return {}
+        return {
+            'mid': data[0][0],
+            'bid': data[0][1],
+            'from_call': data[0][2],
+            'from_bbs': data[0][3],
+            'from_bbs_call': data[0][4],
+            'to_call': data[0][5],
+            'to_bbs': data[0][6],
+            'to_bbs_call': data[0][7],
+            'size': data[0][8],
+            'subject': data[0][9],
+            'header': data[0][10],
+            'msg': data[0][11],
+            'time': data[0][12],
+            'tx-time': data[0][13],
+            'utctime': data[0][14],
+            'typ': data[0][15],
+            'flag': data[0][16],
+        }
+

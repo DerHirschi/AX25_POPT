@@ -84,6 +84,7 @@ STR_TABLE = {
     'pn_msg': ('Private Nachrichten', 'Private Messages', 'Lekker Private Messages'),
     'msg': ('Nachricht', 'Message', 'Lekker Message'),
     'new_msg': ('Neue Nachricht', 'New Message', 'Lekker new Message'),
+    'new_pr_mail': ('Neue PR-Mail', 'New PR-Mail', 'Lekker new PR-Mail'),
     'stat_settings': ('Station-Einstellungen', 'Station-Settings', 'Lekker Station-Settings'),
     'new_stat': ('Neue Station', 'New Station', 'Lekker nieuw station'),
     'txt_decoding': ('Umlautumwandlung', 'Text decoding', 'Lekker Text decoding'),

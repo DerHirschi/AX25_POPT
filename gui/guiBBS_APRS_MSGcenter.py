@@ -1,28 +1,36 @@
-import logging
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from constant import FONT
+from constant import FONT, ENCODINGS
+from fnc.str_fnc import format_number
+from gui.guiBBS_newMSG import BBS_newMSG
+from gui.guiMsgBoxes import save_file_dialog
 from string_tab import STR_TABLE
-
-logger = logging.getLogger(__name__)
 
 
 class MSG_Center(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
+        self.language = root_win.language
         ###################################
         # Vars
         self._bbs_obj = PORT_HANDLER.get_bbs()
         self._sort_rev = False
         self._last_sort_col = {}
-        self._selected_BID = ''
-        self._text_size = int(root_win.text_size)
+        self._selected_msg = {
+            'P': {},
+            'B': {},
+            'O': {},
+            'S': {},
+        }
+        self._var_encoding = tk.StringVar(self, 'UTF-8')
+        self.text_size = int(root_win.text_size)
         self._text_size_tabs = 10
+        self._newMSG_win = None
         ###################################
-        self.title(STR_TABLE['msg_center'][self._root_win.language])
+        self.title(STR_TABLE['msg_center'][self.language])
         self.style = self._root_win.style
         # self.geometry("1250x700")
         self.geometry(f"1250x"
@@ -37,12 +45,6 @@ class MSG_Center(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
-        """
-        btn_frame = tk.Frame(self, background='blue', height=10)
-        btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        tk.Button(btn_frame, text='test').pack(side=tk.LEFT, expand=False)
-        """
-        self._sort_rev = False
         ####################
         self._init_Menu()
         ######################################################################
@@ -82,7 +84,7 @@ class MSG_Center(tk.Toplevel):
             BBS_tab_frame,
         )
         self._tabControl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
+        self._tabControl.bind("<<NotebookTabChanged>>", self.on_bbsTab_select)
         tab_PN = ttk.Frame(self._tabControl)
         tab_BL = ttk.Frame(self._tabControl)
         tab_OUT = ttk.Frame(self._tabControl)
@@ -117,16 +119,19 @@ class MSG_Center(tk.Toplevel):
         self._pn_tree_data = []
         self._pn_data = []
         self._update_PN_tree_data()
-
         ########################
         self._var_pn_from_label = tk.StringVar(self, '')
         self._var_pn_to_label = tk.StringVar(self, '')
         self._var_pn_subj_label = tk.StringVar(self, '')
         self._var_pn_time_label = tk.StringVar(self, '')
         self._var_pn_bid_label = tk.StringVar(self, '')
+        # self._var_pn_encoding = tk.StringVar(self, 'UTF-8')
+        self._var_pn_msg_size = tk.StringVar(self, ' Size: --- Bytes')
+
         # ## lower_f_top / MSG Header ect.
         self._pn_text = None
         self._init_pn_lower_frame(lower_f_top)
+        self._init_pn_footer_frame(lower_f_top)
 
         #################################################
         # ######### BBS/BL
@@ -171,9 +176,12 @@ class MSG_Center(tk.Toplevel):
         self._var_bl_subj_label = tk.StringVar(self, '')
         self._var_bl_time_label = tk.StringVar(self, '')
         self._var_bl_bid_label = tk.StringVar(self, '')
+        # self._var_bl_encoding = tk.StringVar(self, 'UTF-8')
+        self._var_bl_msg_size = tk.StringVar(self, ' Size: --- Bytes')
         # ## lower_f_lower / Msg Text
         self._bl_text = None
         self._init_bl_lower_frame(lower_f_lower)
+        self._init_bl_footer_frame(lower_f_lower)
 
         ######################################################
         # ######### BBS/OUT
@@ -200,19 +208,58 @@ class MSG_Center(tk.Toplevel):
         self._out_tree_data = []
         self._out_data = []
         self._update_OUT_tree_data()
-
         ########################
         self._var_out_from_label = tk.StringVar(self, '')
         self._var_out_to_label = tk.StringVar(self, '')
         self._var_out_subj_label = tk.StringVar(self, '')
         self._var_out_time_label = tk.StringVar(self, '')
         self._var_out_bid_label = tk.StringVar(self, '')
+        # self._var_out_encoding = tk.StringVar(self, 'UTF-8')
+        self._var_out_msg_size = tk.StringVar(self, ' Size: --- Bytes')
         # ## lower_f_top / MSG Header ect.
         self._out_text = None
         self._init_out_lower_frame(lower_f_top)
+        self._init_out_footer_frame(lower_f_top)
+        ######################################################
+        # ######### BBS/Drafts/Saved Msg
+        pn_pan_frame = tk.Frame(tab_SAVE)
+        pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        _pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
+
+        top_f = tk.Frame(_pw_pn)
+        lower_f_main = tk.Frame(_pw_pn)
+        lower_f_top = tk.Frame(lower_f_main)
+
+        top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        lower_f_top.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        _pw_pn.add(top_f, weight=1)
+        _pw_pn.add(lower_f_main, weight=1)
+        _pw_pn.pack(fill=tk.BOTH, expand=True)
+        ########################
+        # ## top_f / Msg Table
+        self._sv_tree = None
+        self._init_sv_tree(top_f)
+        self._sv_tree_data = []
+        self._sv_data = []
+        self._update_SV_tree_data()
+        ########################
+        self._var_sv_from_label = tk.StringVar(self, '')
+        self._var_sv_to_label = tk.StringVar(self, '')
+        self._var_sv_subj_label = tk.StringVar(self, '')
+        self._var_sv_time_label = tk.StringVar(self, '')
+        self._var_sv_bid_label = tk.StringVar(self, '')
+        self._var_sv_msg_size = tk.StringVar(self, ' Size: --- Bytes')
+
+        # ## lower_f_top / MSG Header ect.
+        self._sv_text = None
+        self._init_sv_lower_frame(lower_f_top)
+        self._init_sv_footer_frame(lower_f_top)
 
         ###############################################
-        #
+        # Keybindings
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
 
@@ -220,8 +267,10 @@ class MSG_Center(tk.Toplevel):
         _menubar = tk.Menu(self, tearoff=False)
         self.config(menu=_menubar)
         _MenuVerb = tk.Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label='New Mail')
-        _menubar.add_cascade(label='Mail', menu=_MenuVerb, underline=0)
+        _MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win('P'))
+        _MenuVerb.add_separator()
+        _MenuVerb.add_command(label='in Datei speichern', command=lambda: self._save_msg_to_file())
+        _menubar.add_cascade(label='Nachricht', menu=_MenuVerb, underline=0)
 
     # PN TAB
     def _init_pn_tree(self, root_frame):
@@ -232,7 +281,7 @@ class MSG_Center(tk.Toplevel):
             'Datum',
         )
 
-        self._pn_tree = ttk.Treeview(root_frame, columns=columns, show='headings', height=25)
+        self._pn_tree = ttk.Treeview(root_frame, columns=columns, show='headings')
         self._pn_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # add a scrollbar
         scrollbar = ttk.Scrollbar(root_frame, orient=tk.VERTICAL, command=self._pn_tree.yview)
@@ -259,10 +308,22 @@ class MSG_Center(tk.Toplevel):
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
-        tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame, text='Löschen').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame, text='Weiterleiten').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame, text='Antworten').pack(side=tk.RIGHT, expand=False)
+        btn_frame_r = tk.Frame(btn_frame)
+        btn_frame_l = tk.Frame(btn_frame)
+        btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
+        btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
+
+        tk.Button(btn_frame_l,
+                  text='Neu',
+                  command=lambda: self._open_newMSG_win()
+                  ).pack(side=tk.LEFT, expand=False)
+        tk.Button(btn_frame_r, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r, text='Löschen').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r, text='Weiterleiten').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Antworten',
+                  command=lambda: self._open_newMSG_win_reply('P'),
+                  ).pack(side=tk.RIGHT, expand=False)
 
         from_label = tk.Label(header_frame, textvariable=self._var_pn_from_label)
         to_label = tk.Label(header_frame, textvariable=self._var_pn_to_label)
@@ -277,14 +338,37 @@ class MSG_Center(tk.Toplevel):
 
         # ## lower_f_lower / Msg Text
         self._pn_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self._text_size),
+                                                  font=(FONT, self.text_size),
                                                   bd=0,
+                                                  height=3,
                                                   borderwidth=0,
                                                   background='black',
                                                   foreground='white',
                                                   state="disabled",
                                                   )
         self._pn_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    def _init_pn_footer_frame(self, root_frame):
+        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        txt_encoding_ent = tk.OptionMenu(
+            footer_frame,
+            self._var_encoding,
+            *ENCODINGS,
+            command=self._update_PN_msg
+        )
+        txt_encoding_ent.configure(
+            font=(None, 6),
+            border=0,
+            borderwidth=0,
+            height=1
+        )
+        txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
+
+        tk.Label(footer_frame,
+                 textvariable=self._var_pn_msg_size,
+                 font=(None, 7),
+                 ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
 
     # BL TAB
     def _init_bl_tree(self, root_frame):
@@ -297,10 +381,10 @@ class MSG_Center(tk.Toplevel):
             'Datum',
         )
 
-        self._bl_tree = ttk.Treeview(root_frame, columns=columns, show='headings', height=25)
+        self._bl_tree = ttk.Treeview(root_frame, columns=columns, show='headings')
         self._bl_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # add a scrollbar
-        scrollbar = ttk.Scrollbar(root_frame, orient=tk.VERTICAL, command=self._pn_tree.yview)
+        scrollbar = ttk.Scrollbar(root_frame, orient=tk.VERTICAL, command=self._bl_tree.yview)
         self._bl_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
@@ -346,10 +430,23 @@ class MSG_Center(tk.Toplevel):
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
-        tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame, text='Löschen').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame, text='Weiterleiten').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame, text='Antworten').pack(side=tk.RIGHT, expand=False)
+        btn_frame_r = tk.Frame(btn_frame)
+        btn_frame_l = tk.Frame(btn_frame)
+        btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
+        btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
+
+        tk.Button(btn_frame_l,
+                  text='Neu',
+                  command=lambda: self._open_newMSG_win()
+                  ).pack(side=tk.LEFT, expand=False)
+        tk.Button(btn_frame_r, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r, text='Löschen').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r, text='Weiterleiten').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Antworten',
+                  command=lambda: self._open_newMSG_win_reply('B'),
+                  ).pack(side=tk.RIGHT, expand=False)
+
         # Header Frame
         from_label = tk.Label(header_frame, textvariable=self._var_bl_from_label)
         to_label = tk.Label(header_frame, textvariable=self._var_bl_to_label)
@@ -363,14 +460,37 @@ class MSG_Center(tk.Toplevel):
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
 
         self._bl_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self._text_size),
+                                                  font=(FONT, self.text_size),
                                                   bd=0,
+                                                  height=3,
                                                   background='black',
                                                   foreground='white',
                                                   borderwidth=0,
                                                   state="disabled",
                                                   )
         self._bl_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    def _init_bl_footer_frame(self, root_frame):
+        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        txt_encoding_ent = tk.OptionMenu(
+            footer_frame,
+            self._var_encoding,
+            *ENCODINGS,
+            command=self._update_BL_msg
+        )
+        txt_encoding_ent.configure(
+            font=(None, 6),
+            border=0,
+            borderwidth=0,
+            height=1,
+        )
+        txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
+
+        tk.Label(footer_frame,
+                 textvariable=self._var_bl_msg_size,
+                 font=(None, 7),
+                 ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
 
     # OUT TAB
     def _init_out_tree(self, root_frame):
@@ -384,7 +504,7 @@ class MSG_Center(tk.Toplevel):
             'Datum',
         )
 
-        self._out_tree = ttk.Treeview(root_frame, columns=columns, show='headings', height=25)
+        self._out_tree = ttk.Treeview(root_frame, columns=columns, show='headings')
         self._out_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # add a scrollbar
         scrollbar = ttk.Scrollbar(root_frame, orient=tk.VERTICAL, command=self._out_tree.yview)
@@ -435,14 +555,138 @@ class MSG_Center(tk.Toplevel):
 
         # ## lower_f_lower / Msg Text
         self._out_text = scrolledtext.ScrolledText(root_frame,
-                                                   font=(FONT, self._text_size),
+                                                   font=(FONT, self.text_size),
                                                    bd=0,
+                                                   height=3,
                                                    borderwidth=0,
                                                    background='black',
                                                    foreground='white',
                                                    state="disabled",
                                                    )
         self._out_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    def _init_out_footer_frame(self, root_frame):
+        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        txt_encoding_ent = tk.OptionMenu(
+            footer_frame,
+            self._var_encoding,
+            *ENCODINGS,
+            command=self._update_OUT_msg
+        )
+        txt_encoding_ent.configure(
+            font=(None, 6),
+            border=0,
+            borderwidth=0,
+            height=1
+        )
+        txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
+
+        tk.Label(footer_frame,
+                 textvariable=self._var_out_msg_size,
+                 font=(None, 7),
+                 ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+
+    # SV TAB
+    def _init_sv_tree(self, root_frame):
+        columns = (
+            'Typ',
+            'Betreff',
+            'Von',
+            'An',
+            'Datum',
+        )
+
+        self._sv_tree = ttk.Treeview(root_frame, columns=columns, show='headings')
+        self._sv_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # add a scrollbar
+        scrollbar = ttk.Scrollbar(root_frame, orient=tk.VERTICAL, command=self._sv_tree.yview)
+        self._sv_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+
+        self._sv_tree.heading('Typ', text='Typ', command=lambda: self._sort_entry('Typ', self._sv_tree))
+        self._sv_tree.heading('Betreff', text='Betreff', command=lambda: self._sort_entry('Betreff', self._sv_tree))
+        self._sv_tree.heading('Von', text='Von', command=lambda: self._sort_entry('Von', self._sv_tree))
+        self._sv_tree.heading('An', text='An', command=lambda: self._sort_entry('An', self._sv_tree))
+        self._sv_tree.heading('Datum', text='Datum', command=lambda: self._sort_entry('Datum', self._sv_tree))
+        self._sv_tree.column("Typ", anchor='w', stretch=tk.NO, width=50)
+        self._sv_tree.column("Betreff", anchor='w', stretch=tk.YES, width=190)
+        self._sv_tree.column("Von", anchor='w', stretch=tk.YES, width=190)
+        self._sv_tree.column("An", anchor='w', stretch=tk.YES, width=190)
+        self._sv_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
+
+        # self._sv_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
+        # self._sv_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+
+        self._sv_tree.bind('<<TreeviewSelect>>', self._SV_entry_selected)
+
+    def _init_sv_lower_frame(self, root_frame):
+        btn_frame = tk.Frame(root_frame, height=30)
+        header_frame = tk.Frame(root_frame, height=80)
+        btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+
+        btn_frame_r = tk.Frame(btn_frame)
+        btn_frame_l = tk.Frame(btn_frame)
+        btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
+        btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
+
+        tk.Button(btn_frame_l,
+                  text='Neu',
+                  command=lambda: self._open_newMSG_win()
+                  ).pack(side=tk.LEFT, expand=False)
+        # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r, text='Löschen').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r, text='Als Vorlage').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Bearbeiten',
+                  command=lambda: self._open_newMSG_win_reply('S'),
+                  ).pack(side=tk.RIGHT, expand=False)
+
+        from_label = tk.Label(header_frame, textvariable=self._var_sv_from_label)
+        to_label = tk.Label(header_frame, textvariable=self._var_sv_to_label)
+        subject_label = tk.Label(header_frame, textvariable=self._var_sv_subj_label)
+        time_label = tk.Label(header_frame, textvariable=self._var_sv_time_label)
+        bid_label = tk.Label(header_frame, textvariable=self._var_sv_bid_label)
+        from_label.place(x=2, y=0)
+        to_label.place(x=2, y=25)
+        subject_label.place(x=2, y=50)
+        time_label.place(relx=0.98, y=36, anchor=tk.E)
+        bid_label.place(relx=0.98, y=61, anchor=tk.E)
+
+        # ## lower_f_lower / Msg Text
+        self._sv_text = scrolledtext.ScrolledText(root_frame,
+                                                  font=(FONT, self.text_size),
+                                                  bd=0,
+                                                  height=3,
+                                                  borderwidth=0,
+                                                  background='black',
+                                                  foreground='white',
+                                                  state="disabled",
+                                                  )
+        self._sv_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    def _init_sv_footer_frame(self, root_frame):
+        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        txt_encoding_ent = tk.OptionMenu(
+            footer_frame,
+            self._var_encoding,
+            *ENCODINGS,
+            command=self._update_SV_msg
+        )
+        txt_encoding_ent.configure(
+            font=(None, 6),
+            border=0,
+            borderwidth=0,
+            height=1
+        )
+        txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
+
+        tk.Label(footer_frame,
+                 textvariable=self._var_sv_msg_size,
+                 font=(None, 7),
+                 ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
 
     ################################
     # PN
@@ -452,10 +696,13 @@ class MSG_Center(tk.Toplevel):
         self._update_PN_tree()
 
     def _get_PN_data(self):
-        self._pn_data = list(self._bbs_obj.get_pn_msg_tab())
+        self._pn_data = self._bbs_obj.get_pn_msg_tab()
 
     def _get_PN_MSG_data(self, bid):
-        return list(self._bbs_obj.get_pn_msg_fm_BID(bid))
+        return self._bbs_obj.get_pn_msg_fm_BID(bid)
+
+    def _set_PN_MSG_notNew(self, bid: str):
+        self._bbs_obj.set_pn_msg_notNew(bid)
 
     def _format_PN_tree_data(self):
         self._pn_tree_data = []
@@ -483,6 +730,7 @@ class MSG_Center(tk.Toplevel):
             else:
                 tag = 'alt'
             self._pn_tree.insert('', tk.END, values=ret_ent[:-1], tags=(tag, ret_ent[-1]))
+        self._update_sort_entry(self._pn_tree)
 
     def _PN_entry_selected(self, event=None):
         bid = ''
@@ -490,10 +738,21 @@ class MSG_Center(tk.Toplevel):
             item = self._pn_tree.item(selected_item)
             bid = item['tags'][1]
         if bid:
-            self._selected_BID = str(bid)
+            self._set_PN_MSG_notNew(bid)
             self._PN_show_msg_fm_BID(bid)
             self._update_PN_tree_data()
-            self._update_sort_entry(self._pn_tree)
+
+    def _update_PN_msg(self, event=None):
+        _msg = self._selected_msg['P'].get('msg', None)
+        if _msg:
+            _enc = self._var_encoding.get()
+            self._selected_msg['P']['enc'] = _enc
+            _msg = _msg.decode(_enc, 'ignore')
+            _msg = str(_msg).replace('\r', '\n')
+            self._pn_text.configure(state='normal')
+            self._pn_text.delete('1.0', tk.END)
+            self._pn_text.insert('1.0', _msg)
+            self._pn_text.configure(state='disabled')
 
     def _PN_show_msg_fm_BID(self, bid):
         if bid:
@@ -501,30 +760,31 @@ class MSG_Center(tk.Toplevel):
             self._pn_text.delete('1.0', tk.END)
             db_data = self._get_PN_MSG_data(bid)
             if db_data:
-                db_data = db_data[0]
-                _bid = db_data[0]
-                _from = db_data[1]
-                _from_bbs = db_data[2]
-                _to = db_data[3]  # Cat
-                _to_bbs = db_data[4]  # Verteiler
-                _subj = db_data[6]
-                _msg = db_data[8]
-                # _path = _db_data[9]
-                _time = db_data[10]
-                # _size = len(_msg)
-                # TODO Change Decoding
-                _msg = _msg.decode('UTF-8', 'ignore')
+                _enc = self._var_encoding.get()
+                db_data['enc'] = _enc
+                self._selected_msg['P'] = db_data
+                _bid = db_data['bid']
+                _from = db_data['from_call']
+                _from_bbs = db_data['from_bbs']
+                _to = db_data['to_call']  # Cat
+                _to_bbs = db_data['to_bbs']  # Verteiler
+                _subj = db_data['subject']
+                _msg = db_data['msg']
+                _time = db_data['time']
+                _size = format_number(len(_msg))
+                _msg = _msg.decode(_enc, 'ignore')
                 _msg = str(_msg).replace('\r', '\n')
                 if _from_bbs:
                     _from = _from + ' @ ' + _from_bbs
                 if _to_bbs:
                     _to = _to + ' @ ' + _to_bbs
 
-                self._var_pn_from_label.set(f"From: {_from}")
-                self._var_pn_to_label.set(f"To    : {_to}")
-                self._var_pn_subj_label.set(f"{_subj}")
+                self._var_pn_from_label.set(f"From     : {_from}")
+                self._var_pn_to_label.set(f"To          : {_to}")
+                self._var_pn_subj_label.set(f"Subject : {_subj}")
                 self._var_pn_time_label.set(f"{_time}")
-                self._var_pn_bid_label.set(f"BID: {_bid}")
+                self._var_pn_bid_label.set(f"BID : {_bid}")
+                self._var_pn_msg_size.set(f' Size: {_size} Bytes')
 
                 self._pn_text.insert('1.0', _msg)
 
@@ -539,10 +799,13 @@ class MSG_Center(tk.Toplevel):
         self._update_CAT_tree()
 
     def _get_BL_data(self):
-        self._bl_data = list(self._bbs_obj.get_bl_msg_tab())
+        self._bl_data = self._bbs_obj.get_bl_msg_tab()
 
     def _get_BL_MSG_data(self, bid):
-        return list(self._bbs_obj.get_bl_msg_fm_BID(bid))
+        return self._bbs_obj.get_bl_msg_fm_BID(bid)
+
+    def _set_BL_MSG_notNew(self, bid: str):
+        self._bbs_obj.set_bl_msg_notNew(bid)
 
     def _format_BL_tree_data(self):
         self._bl_tree_data = []
@@ -595,10 +858,22 @@ class MSG_Center(tk.Toplevel):
             item = self._bl_tree.item(selected_item)
             bid = item['tags'][1]
         if bid:
-            self._selected_BID = str(bid)
+            self._selected_bl_BID = str(bid)
+            self._set_BL_MSG_notNew(bid)
             self._BL_show_msg_fm_BID(bid)
             self._update_BL_tree_data()
-            self._update_sort_entry(self._bl_tree)
+
+    def _update_BL_msg(self, event=None):
+        _msg = self._selected_msg['B'].get('msg', None)
+        if _msg:
+            _enc = self._var_encoding.get()
+            self._selected_msg['B']['enc'] = _enc
+            _msg = _msg.decode(_enc, 'ignore')
+            _msg = str(_msg).replace('\r', '\n')
+            self._bl_text.configure(state='normal')
+            self._bl_text.delete('1.0', tk.END)
+            self._bl_text.insert('1.0', _msg)
+            self._bl_text.configure(state='disabled')
 
     def _BL_show_msg_fm_BID(self, bid):
         if bid:
@@ -606,30 +881,32 @@ class MSG_Center(tk.Toplevel):
             self._bl_text.delete('1.0', tk.END)
             db_data = self._get_BL_MSG_data(bid)
             if db_data:
-                db_data = db_data[0]
-                _bid = db_data[0]
-                _from = db_data[1]
-                _from_bbs = db_data[2]
-                _to = db_data[3]  # Cat
-                _to_bbs = db_data[4]  # Verteiler
-                _subj = db_data[6]
-                _msg = db_data[8]
+                _enc = self._var_encoding.get()
+                db_data['enc'] = _enc
+                self._selected_msg['B'] = db_data
+                _bid = db_data['bid']
+                _from = db_data['from_call']
+                _from_bbs = db_data['from_bbs']
+                _to = db_data['to_call']  # Cat
+                _to_bbs = db_data['to_bbs']  # Verteiler
+                _subj = db_data['subject']
+                _msg = db_data['msg']
                 # _path = _db_data[9]
-                _time = db_data[10]
-                # _size = len(_msg)
-                # TODO Change Decoding
-                _msg = _msg.decode('UTF-8', 'ignore')
+                _time = db_data['time']
+                _size = format_number(len(_msg))
+                _msg = _msg.decode(_enc, 'ignore')
                 _msg = str(_msg).replace('\r', '\n')
                 if _from_bbs:
                     _from = _from + ' @ ' + _from_bbs
                 if _to_bbs:
                     _to = _to + ' @ ' + _to_bbs
 
-                self._var_bl_from_label.set(f"From: {_from}")
-                self._var_bl_to_label.set(f"To    : {_to}")
-                self._var_bl_subj_label.set(f"{_subj}")
+                self._var_bl_from_label.set(f"From     : {_from}")
+                self._var_bl_to_label.set(f"To          : {_to}")
+                self._var_bl_subj_label.set(f"Subject : {_subj}")
                 self._var_bl_time_label.set(f"{_time}")
                 self._var_bl_bid_label.set(f"BID: {_bid}")
+                self._var_bl_msg_size.set(f' Size: {_size} Bytes')
 
                 # self._bl_text.insert(tk.INSERT, try_decode(_msg, ignore=True))
                 self._bl_text.insert('1.0', _msg)
@@ -665,10 +942,10 @@ class MSG_Center(tk.Toplevel):
         self._update_OUT_tree()
 
     def _get_OUT_data(self):
-        self._out_data = list(self._bbs_obj.get_fwd_q_tab())
+        self._out_data = self._bbs_obj.get_fwd_q_tab()
 
     def _get_OUT_MSG_data(self, bid):
-        return list(self._bbs_obj.get_out_msg_fm_BID(bid))
+        return self._bbs_obj.get_out_msg_fm_BID(bid)
 
     def _format_OUT_tree_data(self):
         self._out_tree_data = []
@@ -711,6 +988,7 @@ class MSG_Center(tk.Toplevel):
             else:
                 tag = 'alt'
             self._out_tree.insert('', tk.END, values=ret_ent[:-1], tags=(tag, ret_ent[-1]))
+        self._update_sort_entry(self._out_tree)
 
     def _OUT_entry_selected(self, event=None):
         bid = ''
@@ -718,10 +996,23 @@ class MSG_Center(tk.Toplevel):
             item = self._out_tree.item(selected_item)
             bid = item['tags'][1]
         if bid:
-            self._selected_BID = str(bid)
+            self._selected_out_BID = str(bid)
             self._OUT_show_msg_fm_BID(bid)
             # self._update_OUT_tree_data()
             # self._update_sort_entry(self._out_tree)
+
+    def _update_OUT_msg(self, event=None):
+        # self._OUT_show_msg_fm_BID(self._selected_out_BID)
+        _msg = self._selected_msg['O'].get('msg', None)
+        if _msg:
+            _enc = self._var_encoding.get()
+            self._selected_msg['O']['enc'] = _enc
+            _msg = _msg.decode(_enc, 'ignore')
+            _msg = str(_msg).replace('\r', '\n')
+            self._out_text.configure(state='normal')
+            self._out_text.delete('1.0', tk.END)
+            self._out_text.insert('1.0', _msg)
+            self._out_text.configure(state='disabled')
 
     def _OUT_show_msg_fm_BID(self, bid):
         if bid:
@@ -729,20 +1020,21 @@ class MSG_Center(tk.Toplevel):
             self._out_text.delete('1.0', tk.END)
             db_data = self._get_OUT_MSG_data(bid)
             if db_data:
-                db_data = db_data[0]
-                _bid = db_data[1]
-                _from = db_data[3]
-                _from_bbs = db_data[4]
-                _to = db_data[5]  # Cat
-                _to_bbs = db_data[6]  # Verteiler
-                _to_bbs_fwd = db_data[7]  # Verteiler
-                _subj = db_data[9]
-                _msg = db_data[11]
+                _enc = self._var_encoding.get()
+                db_data['enc'] = _enc
+                self._selected_msg['O'] = db_data
+                _bid = db_data['bid']
+                _from = db_data['from_call']
+                _from_bbs = db_data['from_bbs_call']
+                _to = db_data['to_call']  # Cat
+                _to_bbs = db_data['to_bbs']  # Verteiler
+                _to_bbs_fwd = db_data['fwd_bbs']  # Verteiler
+                _subj = db_data['subject']
+                _msg = db_data['msg']
                 # _path = _db_data[9]
-                _time = db_data[12]
-                # _size = len(_msg)
-                # TODO Change Decoding
-                _msg = _msg.decode('UTF-8', 'ignore')
+                _time = db_data['tx-time']
+                _size = format_number(len(_msg))
+                _msg = _msg.decode(_enc, 'ignore')
                 _msg = str(_msg).replace('\r', '\n')
                 if _from_bbs:
                     _from = _from + ' @ ' + _from_bbs
@@ -751,15 +1043,111 @@ class MSG_Center(tk.Toplevel):
 
                 _to += f' > {_to_bbs_fwd}'
 
-                self._var_out_from_label.set(f"From: {_from}")
-                self._var_out_to_label.set(f"To    : {_to}")
-                self._var_out_subj_label.set(f"{_subj}")
+                self._var_out_from_label.set(f"From     : {_from}")
+                self._var_out_to_label.set(f"To          : {_to}")
+                self._var_out_subj_label.set(f"Subject : {_subj}")
                 self._var_out_time_label.set(f"{_time}")
                 self._var_out_bid_label.set(f"BID: {_bid}")
+                self._var_out_msg_size.set(f' Size: {_size} Bytes')
 
                 self._out_text.insert('1.0', _msg)
 
             self._out_text.configure(state='disabled')
+
+    ################################
+    # OUT Tab
+    def _update_SV_tree_data(self):
+        self._get_SV_data()
+        self._format_SV_tree_data()
+        self._update_SV_tree()
+
+    def _get_SV_data(self):
+        self._sv_data = self._bbs_obj.get_sv_msg_tab()
+
+    def _get_SV_MSG_data(self, mid):
+        return self._bbs_obj.get_sv_msg_fm_BID(mid)
+
+    def _format_SV_tree_data(self):
+        self._sv_tree_data = []
+        for el in self._sv_data:
+            from_call = f"{el[1]}"
+            if el[2]:
+                from_call += f"@{el[2]}"
+            to_call = f"{el[3]}"
+            if el[4]:
+                to_call += f"@{el[4]}"
+            self._sv_tree_data.append((
+                f'{el[7]}',     # TYP
+                f'{el[5]}',     # SUB
+                f'{from_call}',
+                f'{to_call}',
+                f'{el[6]}',     # DATE
+                f'{el[0]}',     # MID
+            ))
+
+    def _update_SV_tree(self):
+        for i in self._sv_tree.get_children():
+            self._sv_tree.delete(i)
+        for ret_ent in self._sv_tree_data:
+            self._sv_tree.insert('', tk.END, values=ret_ent[:-1], tags=('dummy', ret_ent[-1]))
+        self._update_sort_entry(self._sv_tree)
+
+    def _SV_entry_selected(self, event=None):
+        mid = ''
+        for selected_item in self._sv_tree.selection():
+            item = self._sv_tree.item(selected_item)
+            mid = item['tags'][1]
+        if mid:
+            self._SV_show_msg_fm_MID(mid)
+            self._update_SV_tree_data()
+
+    def _update_SV_msg(self, event=None):
+        _msg = self._selected_msg['S'].get('msg', None)
+        if _msg:
+            _enc = self._var_encoding.get()
+            self._selected_msg['S']['enc'] = _enc
+            _msg = _msg.decode(_enc, 'ignore')
+            _msg = str(_msg).replace('\r', '\n')
+            self._sv_text.configure(state='normal')
+            self._sv_text.delete('1.0', tk.END)
+            self._sv_text.insert('1.0', _msg)
+            self._sv_text.configure(state='disabled')
+
+    def _SV_show_msg_fm_MID(self, mid):
+        if mid:
+            self._sv_text.configure(state='normal')
+            self._sv_text.delete('1.0', tk.END)
+            db_data = self._get_SV_MSG_data(mid)
+            if db_data:
+                _enc = self._var_encoding.get()
+                db_data['enc'] = _enc
+                self._selected_msg['S'] = db_data
+                _mid = db_data['mid']
+                _from = db_data['from_call']
+                _from_bbs = db_data['from_bbs']
+                _to = db_data['to_call']  # Cat
+                _to_bbs = db_data['to_bbs']  # Verteiler
+                _subj = db_data['subject']
+                _msg = db_data['msg']
+                _time = db_data['time']
+                _size = format_number(len(_msg))
+                _msg = _msg.decode(_enc, 'ignore')
+                _msg = str(_msg).replace('\r', '\n')
+                if _from_bbs:
+                    _from = _from + ' @ ' + _from_bbs
+                if _to_bbs:
+                    _to = _to + ' @ ' + _to_bbs
+
+                self._var_sv_from_label.set(f"From     : {_from}")
+                self._var_sv_to_label.set(f"To          : {_to}")
+                self._var_sv_subj_label.set(f"Subject : {_subj}")
+                self._var_sv_time_label.set(f"{_time}")
+                self._var_sv_bid_label.set(f"MID : {_mid}")
+                self._var_sv_msg_size.set(f' Size: {_size} Bytes')
+
+                self._sv_text.insert('1.0', _msg)
+
+            self._sv_text.configure(state='disabled')
 
     #####################################
     # Global
@@ -776,25 +1164,23 @@ class MSG_Center(tk.Toplevel):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
         col = self._last_sort_col.get(tree, 'Datum')
         _tmp = [(tree.set(k, col), k) for k in tree.get_children('')]
-        _tmp.sort(reverse=self._sort_rev)
-        self._sort_rev = not self._sort_rev
-        self._last_sort_col[tree] = col
+        _tmp.sort(reverse=not self._sort_rev)
         for index, (val, k) in enumerate(_tmp):
             tree.move(k, '', int(index))
 
     #####################################
     # GUI
     def _increase_textsize(self):
-        self._text_size += 1
-        self._text_size = max(self._text_size, 3)
-        self._bl_text.configure(font=(FONT, self._text_size))
-        self._pn_text.configure(font=(FONT, self._text_size))
+        self.text_size += 1
+        self.text_size = max(self.text_size, 3)
+        self._bl_text.configure(font=(FONT, self.text_size))
+        self._pn_text.configure(font=(FONT, self.text_size))
 
     def _decrease_textsize(self):
-        self._text_size -= 1
-        self._text_size = max(self._text_size, 3)
-        self._bl_text.configure(font=(FONT, self._text_size))
-        self._pn_text.configure(font=(FONT, self._text_size))
+        self.text_size -= 1
+        self.text_size = max(self.text_size, 3)
+        self._bl_text.configure(font=(FONT, self.text_size))
+        self._pn_text.configure(font=(FONT, self.text_size))
 
     def _update_textsize_trees(self):
         # TODO
@@ -804,6 +1190,47 @@ class MSG_Center(tk.Toplevel):
         self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
         self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+
+    def _open_newMSG_win_reply(self, typ: str):
+        if self._newMSG_win is None:
+            if self._selected_msg.get(typ, None):
+                self._newMSG_win = BBS_newMSG(self, self._selected_msg[typ])
+
+    def _open_newMSG_win(self):
+        if self._newMSG_win is None:
+            self._newMSG_win = BBS_newMSG(self)
+
+    def on_bbsTab_select(self, event=None):
+        # print(self._tabControl.select())
+        tab = self._tabControl.tab(self._tabControl.select(), "text")
+        enc = {
+            'Private': self._selected_msg['P'].get('enc', 'UTF-8'),
+            'Bulletin': self._selected_msg['B'].get('enc', 'UTF-8'),
+            'Gesendet': self._selected_msg['O'].get('enc', 'UTF-8'),
+            'Gespeichert': self._selected_msg['S'].get('enc', 'UTF-8'),
+        }.get(tab, 'UTF-8')
+        self._var_encoding.set(enc)
+        # Update Tab
+        _update_task = {
+            'Private': self._update_PN_tree_data,
+            'Bulletin': self._update_BL_tree_data,
+            'Gesendet': self._update_OUT_tree_data,
+            'Gespeichert': self._update_SV_tree_data,
+        }.get(tab, None)
+        if _update_task:
+            _update_task()
+
+    def _save_msg_to_file(self):
+        tab = self._tabControl.tab(self._tabControl.select(), "text")
+        msg_text = {
+            'Private': self._pn_text,
+            'Bulletin': self._bl_text,
+            'Gesendet': self._out_text,
+            'Gespeichert': self._sv_text,
+        }.get(tab, None)
+        if msg_text:
+            data = msg_text.get('1.0', tk.END)
+            save_file_dialog(data)
 
     def _close(self):
         self._bbs_obj = None
