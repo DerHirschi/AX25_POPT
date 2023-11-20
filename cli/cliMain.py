@@ -63,11 +63,13 @@ class DefaultCLI(object):
         self.stat_identifier_str = ''
         if self.user_db_ent:
             self.encoding = self.user_db_ent.Encoding, 'ignore'
-            self.stat_identifier_str = self.user_db_ent.Software
+            self.stat_identifier_str = self.user_db_ent.software_str
             if self.user_db_ent.CText:
                 self.c_text = str(self.user_db_ent.CText)
 
         self.stat_identifier = get_station_id_obj(self.stat_identifier_str)
+        print(f"CLI STST ID : {self.stat_identifier}")
+        print(f"CLI STST str : {self.stat_identifier_str}")
 
         self.c_text = self.c_text.replace('\n', '\r')
         self.bye_text = self.bye_text.replace('\n', '\r')
@@ -275,17 +277,11 @@ class DefaultCLI(object):
         if self.user_db_ent:
             self.user_db_ent.software_str = str(self.stat_identifier.id_str)
             self.user_db_ent.Software = str(self.stat_identifier.software) + '-' + str(self.stat_identifier.version)
-            if not self.user_db_ent.TYP:
-                self.user_db_ent.TYP = str(self.stat_identifier.typ)
+            # if not self.user_db_ent.TYP:
+            self.user_db_ent.TYP = str(self.stat_identifier.typ)
 
     def software_identifier(self):
         res = self.find_sw_identifier()
-        """
-        if self.stat_identifier is None:
-            if self.last_line:
-                # TODO WTF ?
-                self.stat_identifier = False
-        """
         if res and self.stat_identifier:
             # print(f"SW-ID flag: {self.stat_identifier.flags}")
             # print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")

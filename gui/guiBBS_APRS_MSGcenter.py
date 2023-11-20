@@ -55,7 +55,7 @@ class MSG_Center(tk.Toplevel):
             upper_frame,
             padding=5,
         )
-        self._tabControl_type.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self._tabControl_type.pack(side=tk.TOP, fill=tk.BOTH, expand=True, )
 
         BBS_tab_frame = tk.Frame(self)
         APRS_tab_frame = tk.Frame(self)
@@ -262,12 +262,13 @@ class MSG_Center(tk.Toplevel):
         # Keybindings
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
+        self.bind('<Control-c>', lambda event: self._copy_select())
 
     def _init_Menu(self):
         _menubar = tk.Menu(self, tearoff=False)
         self.config(menu=_menubar)
         _MenuVerb = tk.Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win('P'))
+        _MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win())
         _MenuVerb.add_separator()
         _MenuVerb.add_command(label='in Datei speichern', command=lambda: self._save_msg_to_file())
         _menubar.add_cascade(label='Nachricht', menu=_MenuVerb, underline=0)
@@ -301,6 +302,7 @@ class MSG_Center(tk.Toplevel):
         self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
         self._pn_tree.bind('<<TreeviewSelect>>', self._PN_entry_selected)
+        # self._pn_tree.get_children()
 
     def _init_pn_lower_frame(self, root_frame):
         btn_frame = tk.Frame(root_frame, height=30)
@@ -317,9 +319,15 @@ class MSG_Center(tk.Toplevel):
                   text='Neu',
                   command=lambda: self._open_newMSG_win()
                   ).pack(side=tk.LEFT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Löschen',
+                  command=lambda: self._delete_msg()
+                  ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r, text='Löschen').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r, text='Weiterleiten').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Weiterleiten',
+                  command=lambda: self._open_newMSG_win_forward('P')
+                  ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text='Antworten',
                   command=lambda: self._open_newMSG_win_reply('P'),
@@ -439,9 +447,15 @@ class MSG_Center(tk.Toplevel):
                   text='Neu',
                   command=lambda: self._open_newMSG_win()
                   ).pack(side=tk.LEFT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Löschen',
+                  command=lambda: self._delete_msg()
+                  ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r, text='Löschen').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r, text='Weiterleiten').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Weiterleiten',
+                  command=lambda: self._open_newMSG_win_forward('B')
+                  ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text='Antworten',
                   command=lambda: self._open_newMSG_win_reply('B'),
@@ -538,8 +552,14 @@ class MSG_Center(tk.Toplevel):
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame, text='Löschen').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame, text='Weiterleiten').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame,
+                  text='Löschen',
+                  command=lambda: self._delete_msg()
+                  ).pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame,
+                  text='Weiterleiten',
+                  command=lambda: self._open_newMSG_win_forward('O')
+                  ).pack(side=tk.RIGHT, expand=False)
         # tk.Button(btn_frame, text='Antworten').pack(side=tk.RIGHT, expand=False)
 
         from_label = tk.Label(header_frame, textvariable=self._var_out_from_label)
@@ -636,7 +656,10 @@ class MSG_Center(tk.Toplevel):
                   command=lambda: self._open_newMSG_win()
                   ).pack(side=tk.LEFT, expand=False)
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r, text='Löschen').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Löschen',
+                  command=lambda: self._delete_msg()
+                  ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r, text='Als Vorlage').pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text='Bearbeiten',
@@ -722,6 +745,10 @@ class MSG_Center(tk.Toplevel):
             ))
 
     def _update_PN_tree(self):
+        # curItem = self._pn_tree.selection()
+        # curItem = self._pn_tree.selection_get()
+        # print(curItem)
+        # print(self._pn_tree.item(curItem))
         for i in self._pn_tree.get_children():
             self._pn_tree.delete(i)
         for ret_ent in self._pn_tree_data:
@@ -738,7 +765,6 @@ class MSG_Center(tk.Toplevel):
             item = self._pn_tree.item(selected_item)
             bid = item['tags'][1]
         if bid:
-            self._set_PN_MSG_notNew(bid)
             self._PN_show_msg_fm_BID(bid)
             self._update_PN_tree_data()
 
@@ -759,6 +785,7 @@ class MSG_Center(tk.Toplevel):
             self._pn_text.configure(state='normal')
             self._pn_text.delete('1.0', tk.END)
             db_data = self._get_PN_MSG_data(bid)
+            self._set_PN_MSG_notNew(bid)
             if db_data:
                 _enc = self._var_encoding.get()
                 db_data['enc'] = _enc
@@ -789,6 +816,10 @@ class MSG_Center(tk.Toplevel):
                 self._pn_text.insert('1.0', _msg)
 
             self._pn_text.configure(state='disabled')
+
+    def _delete_PN(self, bid: str):
+        if bid:
+            return self._bbs_obj.del_pn_by_BID(bid)
 
     ###########
     # Bulletin
@@ -858,8 +889,6 @@ class MSG_Center(tk.Toplevel):
             item = self._bl_tree.item(selected_item)
             bid = item['tags'][1]
         if bid:
-            self._selected_bl_BID = str(bid)
-            self._set_BL_MSG_notNew(bid)
             self._BL_show_msg_fm_BID(bid)
             self._update_BL_tree_data()
 
@@ -880,6 +909,7 @@ class MSG_Center(tk.Toplevel):
             self._bl_text.configure(state='normal')
             self._bl_text.delete('1.0', tk.END)
             db_data = self._get_BL_MSG_data(bid)
+            self._set_BL_MSG_notNew(bid)
             if db_data:
                 _enc = self._var_encoding.get()
                 db_data['enc'] = _enc
@@ -911,6 +941,10 @@ class MSG_Center(tk.Toplevel):
                 # self._bl_text.insert(tk.INSERT, try_decode(_msg, ignore=True))
                 self._bl_text.insert('1.0', _msg)
             self._bl_text.configure(state='disabled')
+
+    def _delete_BL(self, bid: str):
+        if bid:
+            return self._bbs_obj.del_bl_by_BID(bid)
 
     ###################
     # Bulletin Category
@@ -996,7 +1030,6 @@ class MSG_Center(tk.Toplevel):
             item = self._out_tree.item(selected_item)
             bid = item['tags'][1]
         if bid:
-            self._selected_out_BID = str(bid)
             self._OUT_show_msg_fm_BID(bid)
             # self._update_OUT_tree_data()
             # self._update_sort_entry(self._out_tree)
@@ -1053,6 +1086,10 @@ class MSG_Center(tk.Toplevel):
                 self._out_text.insert('1.0', _msg)
 
             self._out_text.configure(state='disabled')
+
+    def _delete_OUT(self, bid: str):
+        if bid:
+            return self._bbs_obj.del_out_by_BID(bid)
 
     ################################
     # OUT Tab
@@ -1149,6 +1186,10 @@ class MSG_Center(tk.Toplevel):
 
             self._sv_text.configure(state='disabled')
 
+    def _delete_SV(self, mid: str):
+        if mid:
+            return self._bbs_obj.del_sv_by_MID(mid)
+
     #####################################
     # Global
     def _sort_entry(self, col, tree):
@@ -1191,43 +1232,133 @@ class MSG_Center(tk.Toplevel):
         self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
+    def _delete_msg(self):
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return
+
+        bid_mid = {
+            0: self._selected_msg['P'].get('bid', ''),
+            1: self._selected_msg['B'].get('bid', ''),
+            2: self._selected_msg['O'].get('bid', ''),
+            3: self._selected_msg['S'].get('mid', ''),
+        }.get(ind, '')
+        del_fnc = {
+            0: self._delete_PN,
+            1: self._delete_BL,
+            2: self._delete_OUT,
+            3: self._delete_SV,
+        }.get(ind, None)
+        if del_fnc is not None:
+            tree = {
+                0: self._pn_tree,
+                1: self._bl_tree,
+                2: self._out_tree,
+                3: self._sv_tree,
+            }[ind]
+            bid_next_msg = ''
+            ind_ex = 0
+            for i in tree.get_children():
+                ind_ex += 1
+                if tree.item(i)['tags'][1] == bid_mid:
+                    try:
+                        bid_next_msg = tree.item(tree.get_children()[ind_ex]).get('tags', [])
+                        if len(bid_next_msg) == 2:
+                            bid_next_msg = bid_next_msg[1]
+                    except IndexError:
+                        pass
+                    # print(bid_next_msg)
+                    break
+            if del_fnc(bid_mid):
+                self.on_bbsTab_select()
+                if bid_next_msg:
+                    fnc = {
+                        0: self._PN_show_msg_fm_BID,
+                        1: self._BL_show_msg_fm_BID,
+                        2: self._OUT_show_msg_fm_BID,
+                        3: self._SV_show_msg_fm_MID,
+                    }.get(ind)
+                    fnc(bid_next_msg)
+                    self._tree_update_task(ind)
+
+    def _copy_select(self):
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return
+        text = {
+            0: self._pn_text,
+            1: self._bl_text,
+            2: self._out_text,
+            3: self._sv_text,
+        }[ind]
+        if text.tag_ranges("sel"):
+            self.clipboard_clear()
+            self.clipboard_append(text.selection_get())
+            text.tag_remove(tk.SEL, "1.0", tk.END)
+
     def _open_newMSG_win_reply(self, typ: str):
         if self._newMSG_win is None:
             if self._selected_msg.get(typ, None):
-                self._newMSG_win = BBS_newMSG(self, self._selected_msg[typ])
+                msg = dict(self._selected_msg[typ])
+                msg['subject'] = ('Re: ' + msg['subject'])
+                self._newMSG_win = BBS_newMSG(self, msg)
+
+    def _open_newMSG_win_forward(self, typ: str):
+        if self._newMSG_win is None:
+            if self._selected_msg.get(typ, None):
+                msg = dict(self._selected_msg[typ])
+                msg['flag'] = 'E'
+                msg['typ'] = 'P'
+                msg['to_call'] = ''
+                msg['to_bbs'] = ''
+                msg['subject'] = ('Fwd: ' + msg['subject'])
+                self._newMSG_win = BBS_newMSG(self, msg)
 
     def _open_newMSG_win(self):
         if self._newMSG_win is None:
             self._newMSG_win = BBS_newMSG(self)
 
     def on_bbsTab_select(self, event=None):
-        # print(self._tabControl.select())
-        tab = self._tabControl.tab(self._tabControl.select(), "text")
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return
         enc = {
-            'Private': self._selected_msg['P'].get('enc', 'UTF-8'),
-            'Bulletin': self._selected_msg['B'].get('enc', 'UTF-8'),
-            'Gesendet': self._selected_msg['O'].get('enc', 'UTF-8'),
-            'Gespeichert': self._selected_msg['S'].get('enc', 'UTF-8'),
-        }.get(tab, 'UTF-8')
+            0: self._selected_msg['P'].get('enc', 'UTF-8'),
+            1: self._selected_msg['B'].get('enc', 'UTF-8'),
+            2: self._selected_msg['O'].get('enc', 'UTF-8'),
+            3: self._selected_msg['S'].get('enc', 'UTF-8'),
+        }.get(ind, 'UTF-8')
         self._var_encoding.set(enc)
-        # Update Tab
-        _update_task = {
-            'Private': self._update_PN_tree_data,
-            'Bulletin': self._update_BL_tree_data,
-            'Gesendet': self._update_OUT_tree_data,
-            'Gespeichert': self._update_SV_tree_data,
-        }.get(tab, None)
-        if _update_task:
-            _update_task()
+        self._tree_update_task(ind)
+        # self._pn_tree.selection_toggle(self._pn_tree.focus())
+        # print(f'>>> {self._pn_tree.selection()}')
+
+    def _tree_update_task(self, ind: int):
+        update_task = {
+            0: self._update_PN_tree_data,
+            1: self._update_BL_tree_data,
+            2: self._update_OUT_tree_data,
+            3: self._update_SV_tree_data,
+        }.get(ind, None)
+        if update_task:
+            update_task()
+        # self._pn_tree.selection_set('"Row 0"')
+
 
     def _save_msg_to_file(self):
-        tab = self._tabControl.tab(self._tabControl.select(), "text")
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return
         msg_text = {
-            'Private': self._pn_text,
-            'Bulletin': self._bl_text,
-            'Gesendet': self._out_text,
-            'Gespeichert': self._sv_text,
-        }.get(tab, None)
+            0: self._pn_text,
+            1: self._bl_text,
+            2: self._out_text,
+            3: self._sv_text,
+        }.get(ind, None)
         if msg_text:
             data = msg_text.get('1.0', tk.END)
             save_file_dialog(data)

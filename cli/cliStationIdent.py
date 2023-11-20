@@ -85,6 +85,8 @@ class NODEid(DefaultID):
 
 class BBSid:
     def __init__(self, inp: str):
+        print(f"SW-ID inp:  {inp} ")
+
         self.typ = 'BBS'
         temp = inp[1:-1].split('-')
         self.software = temp[0]
@@ -107,6 +109,7 @@ class BBSid:
                     self.feat_flag.append(str(el))
             if '$' not in self.feat_flag:
                 self.e = True
+                print(f"SW-ID Flag $ Error: {self._flags} > inp: {inp} > temp: {temp}")
         else:
             self.e = True
             print(f"SW-ID Flag Error: {self._flags} > inp: {inp} > temp: {temp}")

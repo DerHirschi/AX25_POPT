@@ -153,7 +153,7 @@ class AX25Conn(object):
         self.tx_buf_2send: [AX25Frame] = []  # Buffer for Sending. Will be processed in ax25PortHandler
         self.tx_buf_unACK: {int: AX25Frame} = {}  # Buffer for UNACK I-Frames
         self._rx_buf_last_frame = ax25_frame  # Buffers for last Frame !?!
-        self._rx_buf_last_data = b''  # Buffers for last Frame !?!
+        self.rx_buf_last_data = b''  # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
         self.tx_buf_rawData: b'' = b''  # Buffer for TX RAW Data that will be packed into a Frame
         self.tx_buf_guiData: b'' = b''  # Buffer for TX Echo in GUI
@@ -295,7 +295,7 @@ class AX25Conn(object):
         self._rx_buf_last_frame = ax25_frame
         self.zustand_exec.state_rx_handle(ax25_frame=ax25_frame)
         if ax25_frame.data:
-            self._rx_buf_last_data = ax25_frame.data
+            self.rx_buf_last_data = ax25_frame.data
         self.set_T3()
 
     def handle_tx(self, ax25_frame: AX25Frame):
@@ -427,7 +427,7 @@ class AX25Conn(object):
     # File Transfer
     def ft_check_incoming_ft(self, data):
         if self.ft_obj is None:
-            ret = ft_rx_header_lookup(data=data, last_pack=self._rx_buf_last_data)
+            ret = ft_rx_header_lookup(data=data, last_pack=self.rx_buf_last_data)
             if ret:
                 self.ft_obj = ret
                 self.ft_obj.connection = self
@@ -971,6 +971,9 @@ class AX25Conn(object):
         self.tx_buf_ctl = [self.ax25_out_frame]
         # ??? if not self.REJ_is_set:
         # self.REJ_is_set = True
+
+    def get_state_index(self):
+        return self.zustand_exec.stat_index
 
 
 class DefaultStat(object):

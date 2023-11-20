@@ -1,4 +1,4 @@
-SQL_CREATE_BBS_OUT_MAIL_TAB = ("CREATE TABLE bbs_out_msg (\n"
+SQL_CREATE_PMS_OUT_MAIL_TAB = ("CREATE TABLE pms_out_msg (\n"
                                "`MID` INT(6) AUTO_INCREMENT NOT NULL,\n"
                                "`BID` varchar(12),\n"
                                "`from_call` VARCHAR(10) NOT NULL,\n"
@@ -20,7 +20,7 @@ SQL_CREATE_BBS_OUT_MAIL_TAB = ("CREATE TABLE bbs_out_msg (\n"
                                "PRIMARY KEY (MID)\n"
                                ");\n")
 
-SQLITE_CREATE_BBS_OUT_MAIL_TAB = ("CREATE TABLE bbs_out_msg (\n"
+SQLITE_CREATE_PMS_OUT_MAIL_TAB = ("CREATE TABLE pms_out_msg (\n"
                                   "`MID` INTEGER PRIMARY KEY AUTOINCREMENT,\n"
                                   "`BID` varchar(12),\n"
                                   "`from_call` VARCHAR(10) NOT NULL,\n"
@@ -41,7 +41,7 @@ SQLITE_CREATE_BBS_OUT_MAIL_TAB = ("CREATE TABLE bbs_out_msg (\n"
                                   "`flag` varchar(2) DEFAULT 'E'\n"
                                   ");\n")
 
-SQL_CREATE_BBS_FWD_TASK_TAB = ("CREATE TABLE bbs_fwd_q (\n"
+SQL_CREATE_PMS_FWD_TASK_TAB = ("CREATE TABLE pms_fwd_q (\n"
                                "`FWDID` varchar(20) NOT NULL,\n"
                                "`BID` varchar(12) NOT NULL,\n"
                                "`MID` INT NOT NULL,\n"
@@ -62,7 +62,7 @@ SQL_CREATE_BBS_FWD_TASK_TAB = ("CREATE TABLE bbs_fwd_q (\n"
                                ");\n"
                                )
 
-SQL_CREATE_BBS_PN_MAIL_TAB = ("CREATE TABLE bbs_pn_msg (\n"
+SQL_CREATE_PMS_PN_MAIL_TAB = ("CREATE TABLE pms_pn_msg (\n"
                               "	`BID` varchar(20) NOT NULL,\n"
                               "	`from_call` VARCHAR(100) NOT NULL,\n"
                               "	`from_bbs` VARCHAR(100) NULL,\n"
@@ -79,7 +79,7 @@ SQL_CREATE_BBS_PN_MAIL_TAB = ("CREATE TABLE bbs_pn_msg (\n"
                               " `flag` varchar(2) DEFAULT 'IN' NOT NULL,\n"
                               "	PRIMARY KEY (BID)\n"
                               ");\n")
-SQL_CREATE_BBS_BL_MAIL_TAB = ("CREATE TABLE bbs_bl_msg (\n"
+SQL_CREATE_PMS_BL_MAIL_TAB = ("CREATE TABLE pms_bl_msg (\n"
                               "	`BID` varchar(20) NOT NULL,\n"
                               "	`from_call` VARCHAR(100) NOT NULL,\n"
                               "	`from_bbs` VARCHAR(100) NULL,\n"
@@ -112,6 +112,6 @@ SQL_CREATE_FWD_PATHS_TAB = ("CREATE TABLE fwdPaths (\n"
                             "PRIMARY KEY (`path`)\n"
                             ");\n")
 
-SQL_GET_LAST_MSG_ID = "SELECT MID FROM bbs_out_msg ORDER BY MID DESC LIMIT 1;"
-SQL_BBS_OUT_MAIL_TAB_IS_EMPTY = "SELECT CASE WHEN EXISTS(SELECT 1 FROM bbs_out_msg) THEN 0 ELSE 1 END AS IsEmpty;"
+SQL_GET_LAST_MSG_ID = "SELECT MID FROM pms_out_msg ORDER BY MID DESC LIMIT 1;"
+SQL_BBS_OUT_MAIL_TAB_IS_EMPTY = "SELECT CASE WHEN EXISTS(SELECT 1 FROM pms_out_msg) THEN 0 ELSE 1 END AS IsEmpty;"
 

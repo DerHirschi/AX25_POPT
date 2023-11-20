@@ -4,7 +4,6 @@ import threading
 import time
 import crcmod
 
-from ax25.ax25Beacon import Beacon
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25Statistics import MH_LIST
@@ -347,22 +346,23 @@ class AX25Port(threading.Thread):
             if not self.gui.setting_bake.get():
                 tr = False
         if tr:
-            if self.port_id in self.beacons.keys():
-                for k in self.beacons[self.port_id].keys():
-                    beacon_list = self.beacons[self.port_id][k]
-                    beacon: Beacon
-                    for beacon in beacon_list:
-                        if beacon.is_enabled:
-                            send_it = beacon.crone()
-                            ip_fm_mh = MH_LIST.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
-                            beacon.axip_add = ip_fm_mh
-                            if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
-                                if ip_fm_mh == ('', 0):
-                                    send_it = False
-                            if send_it:
-                                _beacon_ax25frame = beacon.encode_beacon()
-                                if _beacon_ax25frame:
-                                    self.UI_buf.append(_beacon_ax25frame)
+            # if self.port_id in self.beacons.keys():
+            beacon_tasks = self.beacons.get(self.port_id, {})
+            for k in beacon_tasks.keys():
+                beacon_list = beacon_tasks[k]
+                # beacon: Beacon
+                for beacon in beacon_list:
+                    if beacon.is_enabled:
+                        send_it = beacon.crone()
+                        ip_fm_mh = MH_LIST.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
+                        beacon.axip_add = ip_fm_mh
+                        if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
+                            if ip_fm_mh == ('', 0):
+                                send_it = False
+                        if send_it:
+                            _beacon_ax25frame = beacon.encode_beacon()
+                            if _beacon_ax25frame:
+                                self.UI_buf.append(_beacon_ax25frame)
 
     def build_new_pipe(self,
                        own_call,
@@ -542,7 +542,7 @@ class AX25Port(threading.Thread):
                 # buf = RxBuf()
                 break
             if not buf.raw_data:  # RX ############
-                time.sleep(0.02)
+                time.sleep(0.05)
                 break
             self.set_TXD()
             self.set_digi_TXD()
@@ -747,7 +747,7 @@ class KISSSerial(AX25Port):
             try:
                 recv_buff += self.device.read()
 
-            except serial.SerialException as e:
+            except serial.SerialException:
                 # There is no new data from serial port
                 return RxBuf()
             except TypeError as e:

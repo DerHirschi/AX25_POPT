@@ -12,8 +12,8 @@ class APRSSettingsWin(tk.Toplevel):
         self._root_cl = root_win
         self.lang = self._root_cl.language
         self._root_cl.settings_win = self
-        self.win_height = 620
         self.win_width = 800
+        self.win_height = 620
         self.style = self._root_cl.style
         self.title(STR_TABLE['aprs_settings'][self.lang])
         self.geometry(f"{self.win_width}x"

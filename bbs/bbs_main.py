@@ -9,6 +9,7 @@ H  = Send (Message is accepted but will be held)
 R  = Reject (Message is rejected)
 EE = There is an error in the line
 EO = OFFSET Error not implemented yet TODO
+DL = Deleted MSG
 """
 from datetime import datetime
 
@@ -16,6 +17,16 @@ from bbs.bbs_Error import bbsInitError, logger
 from cli.cliStationIdent import get_station_id_obj
 from constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 from sql_db.db_main import DB
+
+FWD_RESP_TAB = {
+    True: '-',
+    False: '+',
+}
+
+FWD_RESP_LATER = '='
+FWD_RESP_REJ = 'R'
+FWD_RESP_HLD = 'H'
+FWD_RESP_ERR = 'E'
 
 
 def generate_sid(features=("F", "M", "H")):
@@ -343,7 +354,7 @@ class BBSConnection:
                             _trigger = True
                         _pn_check += _db_ret
                     else:
-                        _pn_check += 'E'
+                        _pn_check += FWD_RESP_ERR
 
         print(_pn_check)
         print(f"_msg_header.keys: {self._rx_msg_header.keys()}")
@@ -351,11 +362,11 @@ class BBSConnection:
 
     @staticmethod
     def _header_error(inp=None):
-        return "E"
+        return FWD_RESP_ERR
 
     @staticmethod
     def _header_reject(inp=None):
-        return "-"
+        return FWD_RESP_REJ
 
     def _get_msg(self):
         # 4
@@ -421,7 +432,7 @@ class BBSConnection:
         _msg = DB.bbs_get_outMsg_by_BID(bid)
         if not _msg:
             return False
-        print(f"tx_out- 0: {_msg[0][0]}  1: {_msg[0][1]}  3: {_msg[0][2]}  len3: {len(_msg[0][2])}")
+        # print(f"tx_out- 0: {_msg[0][0]}  1: {_msg[0][1]}  3: {_msg[0][2]}  len3: {len(_msg[0][2])}")
         _tx_msg = _msg[0][0].encode('ASCII', 'ignore') + b'\r' + _msg[0][2] + b'\x1a\r'
         self._connection_tx(_tx_msg)
 
@@ -429,8 +440,8 @@ class BBSConnection:
         tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
         self._tx_msg_header = tmp[0]
         self._tx_msg_BIDs = tmp[1]
-        print(f"_check_msg_to_fwd {self._tx_msg_BIDs}")
-        print(f"_check_msg_to_fwd {self._tx_msg_header}")
+        # print(f"_check_msg_to_fwd {self._tx_msg_BIDs}")
+        # print(f"_check_msg_to_fwd {self._tx_msg_header}")
 
     def _act_out_msg(self):
         _bids = list(self._tx_msg_BIDs)
@@ -582,14 +593,37 @@ class BBS:
         self.pms_cfg = {
             'user': 'MD2SAW',
             'regio': '#SAW.SAA.DEU.EU',
-            'home_bbs': [
-                'MD2BBS.#SAW.SAA.DEU.EU',
-                'DBO527.#SAW.SAA.DEU.EU',
-            ],
+            'home_bbs': [],
+            'home_bbs_cfg': {
+                'MD2BBS': {
+                    'port_id': 1,
+                    'regio': '#SAW.SAA.DEU.EU',
+                    # 'own_call': user,
+                    'dest_call': 'MD2BBS',
+                    'via_calls': ['CB0SAW'],
+                    'axip_add': ('', 0),
+                },
+                'DBO527': {
+                    'port_id': 0,
+                    'regio': '#SAW.SAA.DEU.EU',
+                    # 'own_call': user,
+                    'dest_call': 'DBO527',
+                    'via_calls': ['DNX527-1'],
+                    'axip_add': ('', 0),
+                },
+            },
         }
+        home_bbs = []
+        for h_bbs_k in list(self.pms_cfg.get('home_bbs_cfg', {}).keys()):
+            regio = self.pms_cfg['home_bbs_cfg'][h_bbs_k].get('regio', '')
+            if regio:
+                home_bbs.append((h_bbs_k + '.' + regio))
+            self.pms_cfg['home_bbs_cfg'][h_bbs_k]['own_call'] = self.pms_cfg['user']
+        self.pms_cfg['home_bbs'] = home_bbs
         ###############
         # DEBUG/DEV
-        # DB.bbs_get_MID()
+        # self.set_bid(440)
+        # print(self.get_bid())
         """
         _mid = self.new_msg({
             'sender': 'MD2SAW',
@@ -602,29 +636,6 @@ class BBS:
         })
         """
         # self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
-        """
-        _mid = self.new_msg({
-            'sender': 'MD2SAW',
-            'sender_bbs': 'MD2SAW',
-            'receiver': 'TEST',
-            'recipient_bbs': 'SAW',
-            'subject': 'TEST-MAIL',
-            'msg': b'TEST 1234\r',
-            'message_type': 'B',
-        })
-        self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(1, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(2, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(3, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(4, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(5, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(6, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(7, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(8, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(9, 'MD2BBS')  # ADD MSG-ID to BBS
-        self.add_msg_to_fwd_by_id(25, 'DBO527')  # ADD MSG-ID to BBS
-        """
-        # self.build_fwd_header('MD2BBS')
 
     def main_cron(self):
         pass
@@ -650,20 +661,14 @@ class BBS:
         if not bid_mid:
             return 'E'
         _ret = DB.bbs_check_pn_mid_exists(bid_mid)
-        return {
-            True: '-',
-            False: '+',
-        }[_ret]
+        return FWD_RESP_TAB[_ret]
 
     @staticmethod
     def is_bl_in_db(bid_mid: str):
         if not bid_mid:
             return 'E'
         _ret = DB.bbs_check_bl_mid_exists(bid_mid)
-        return {
-            True: '-',
-            False: '+',
-        }[_ret]
+        return FWD_RESP_TAB[_ret]
 
     @staticmethod
     def new_msg(msg_struc: dict):
@@ -698,9 +703,18 @@ class BBS:
         fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
         _ret = ""
         _ret_bids = []
+        if not fwd_q_data:
+            return b'', _ret_bids
         for el in fwd_q_data:
-            _ret += f"FB {el[12]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
-            _ret_bids.append(el[1])
+            if el[3] and el[7] and el[6]:
+                _ret += f"FB {el[12]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
+                _ret_bids.append(el[1])
+            """
+            else:
+                print("BBS: build_fwd_header No BBS in Address")
+                logger.error("BBS: build_fwd_header No BBS in Address")
+                return b'', _ret_bids
+            """
         try:
             return _ret.encode('ASCII'), _ret_bids
         except UnicodeEncodeError:
@@ -830,3 +844,26 @@ class BBS:
             'flag': data[0][16],
         }
 
+    @staticmethod
+    def del_pn_by_BID(bid):
+        return DB.bbs_del_pn_msg_by_BID(bid)
+
+    @staticmethod
+    def del_bl_by_BID(bid):
+        return DB.bbs_del_bl_msg_by_BID(bid)
+
+    @staticmethod
+    def del_out_by_BID(bid):
+        return DB.bbs_del_out_msg_by_BID(bid)
+
+    @staticmethod
+    def del_sv_by_MID(mid):
+        return DB.bbs_del_sv_msg_by_MID(mid)
+
+    @staticmethod
+    def set_bid(bid):
+        return DB.pms_set_bid(bid)
+
+    @staticmethod
+    def get_bid():
+        return DB.pms_get_bid()

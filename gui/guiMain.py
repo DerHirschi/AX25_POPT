@@ -11,6 +11,7 @@ import sys
 import gtts
 from gtts import gTTS
 
+from ax25.ax25ConnTask import ConnTask
 from ax25.ax25dec_enc import PIDByte
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -27,6 +28,7 @@ from gui.guiAPRS_be_tracer import BeaconTracer
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.guiAPRS_wx_tree import WXWin
 from gui.guiBBS_APRS_MSGcenter import MSG_Center
+from gui.guiBBS_PMS_Settings import PMS_Settings
 from gui.guiBBS_fwd_q import BBS_fwd_Q
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
@@ -84,14 +86,14 @@ class ChVars(object):
         # self.hex_output = True
 
 
-class SideTabbedFrame:
+class SideTabbedFrame:  # TODO: WTF
     def __init__(self, main_cl):
         self._main_win = main_cl
         self._lang = int(main_cl.language)
         self.style = main_cl.style
         self.ch_index = main_cl.channel_index
         self._ch_is_disc = False
-        _tab_side_frame = tk.Frame(
+        _tab_side_frame = tk.Frame(     # TODO: WTF
             main_cl.get_side_frame(),
             # width=300,
             height=400
@@ -946,10 +948,10 @@ class SideTabbedFrame:
             self._main_win.see_end_qso_win()
 
 
-class TxTframe:
+class TxTframe:     # TODO: WTF
     def __init__(self, main_win):
 
-        self._pw = ttk.PanedWindow(orient=tk.VERTICAL)
+        self._pw = ttk.PanedWindow(main_win.main_win, orient=tk.VERTICAL)
         self._main_class = main_win
         self._text_size = main_win.text_size
         ###################
@@ -1266,7 +1268,7 @@ class TxTframe:
                 # via: Call
                 _via_calls += _via.call_str + ' '
             """
-            _status = station.zustand_tab[station.zustand_exec.stat_index][1]
+            _status = station.zustand_tab[station.get_state_index()][1]
             # uid = station.ax25_out_frame.addr_uid
             _n2 = station.n2
             _unAck = f"unACK: {len(station.tx_buf_unACK.keys())}"
@@ -1615,6 +1617,7 @@ class TkMainWin:
         self._non_non_prio_task_timer = time.time()
         self._non_non_non_prio_task_timer = time.time()
         self._test_task_timer = time.time()
+        self.conn_task = None
         ##############################
         # BW-Plot
         self._bw_plot_x_scale = []
@@ -1642,11 +1645,27 @@ class TkMainWin:
         self._init_vars()
         ######################################
         # ....
+        # self._main_pw = ttk.PanedWindow(self.main_win, orient=tk.HORIZONTAL)
+        # self._main_pw.pack(fill=tk.BOTH, expand=True)
+
+        #self.l_frame = tk.Frame(self._main_pw)
+        #self.r_frame = tk.Frame(self._main_pw)
+        #self.l_frame.pack(fill=tk.BOTH, expand=True)
+        #self._main_pw.add(self.l_frame, weight=2)
+        #self._main_pw.add(self.r_frame, weight=1)
         self.main_win.columnconfigure(0, minsize=500, weight=1)
         self.main_win.columnconfigure(1, minsize=2, weight=5)
         self.main_win.rowconfigure(0, minsize=3, weight=1)  # Boarder
+        #self.l_frame.rowconfigure(0, minsize=3, weight=1)  # Boarder
+        #self.r_frame.rowconfigure(0, minsize=3, weight=1)  # Boarder
         self.main_win.rowconfigure(1, minsize=220, weight=2)
+        #self.l_frame.rowconfigure(1, minsize=220, weight=2)
+        #self.r_frame.rowconfigure(1, minsize=220, weight=2)
         self.main_win.rowconfigure(2, minsize=28, weight=1)  # CH BTN
+        #self.l_frame.rowconfigure(2, minsize=28, weight=1)  # CH BTN
+        #self.r_frame.rowconfigure(2, minsize=28, weight=1)  # CH BTN
+        ##
+
         ############################
         # Input Output TXT Frames and Status Bar
         self._txt_win = TxTframe(self)
@@ -1906,6 +1925,10 @@ class TkMainWin:
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
                              command=self._do_bbs_fwd,
+                             underline=0)
+        _MenuBBS.add_separator()
+        _MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
+                             command=lambda: self._open_settings_window('pms_setting'),
                              underline=0)
         _menubar.add_cascade(label='PMS', menu=_MenuBBS, underline=0)
 
@@ -2432,6 +2455,13 @@ class TkMainWin:
             #####################
             self._update_bw_mon()
             self._aprs_wx_tree_task()
+            #####################
+            if self.conn_task:
+                # print("ConnTasker")
+                if self.conn_task.state_id:
+                    self.conn_task.crone()
+                else:
+                    self.conn_task = None
             return True
         return False
 
@@ -2666,6 +2696,7 @@ class TkMainWin:
                 'beacon_sett': BeaconSettings,  # Beacon Settings
                 'port_sett': PortSettingsWin,  # Port Settings
                 'stat_sett': StationSettingsWin,  # Stat Settings
+                'pms_setting': PMS_Settings,  # PMS Settings
             }.get(win_key, '')
             if settings_win:
                 self.settings_win = settings_win(self)
@@ -2759,7 +2790,6 @@ class TkMainWin:
         if self.MSG_Center is None:
             self.MSG_Center = MSG_Center(self)
 
-
     ###################
     # User-DB TreeView WIN
     def _UserDB_tree(self):
@@ -2780,9 +2810,9 @@ class TkMainWin:
     # ##############
     # DISCO
     def _disco_conn(self):
-        _conn = self.get_conn(self.channel_index)
-        if _conn is not None:
-            _conn.conn_disco()
+        conn = self.get_conn(self.channel_index)
+        if conn is not None:
+            conn.conn_disco()
 
     # DISCO ENDE
     # ##############
@@ -2944,6 +2974,7 @@ class TkMainWin:
         self.sprech('Gluck gluck gluck blubber blubber')
         # PORT_HANDLER.close_all_ports()
         # self._do_bbs_fwd()
+        self.conn_task = ConnTask()
 
     def _do_bbs_fwd(self):
         conn = self.get_conn()

@@ -100,3 +100,13 @@ class SQL_DB:
         """
         ret = self.execute_query("SHOW TABLE STATUS FROM popt_db;")
         return [i[0] for i in ret]
+
+    def set_bid(self, bid):
+        return self.execute_query(f"ALTER TABLE pms_out_msg AUTO_INCREMENT={bid};")
+
+    def get_bid(self):
+        return self.execute_query((
+            "SELECT `AUTO_INCREMENT` "
+            "FROM INFORMATION_SCHEMA.TABLES "
+            "WHERE TABLE_SCHEMA='popt_db' "
+            "AND TABLE_NAME='pms_out_msg';"))

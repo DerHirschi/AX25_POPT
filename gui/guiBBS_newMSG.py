@@ -3,6 +3,7 @@ from tkinter import scrolledtext, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from constant import FONT, ENCODINGS
+from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.str_fnc import format_number
 from string_tab import STR_TABLE
 
@@ -46,6 +47,13 @@ class BBS_newMSG(tk.Toplevel):
         self._subject_var = tk.StringVar(self)
         self._var_encoding = tk.StringVar(self, 'UTF-8')
         self._var_msg_size = tk.StringVar(self, ' Size: 0 Bytes')
+
+        self.chiefs = [
+            'MD2SAW@MD2BBS.#SAW.SAA.DEU.EU',
+            'MD3SAW@MD2BBS.#SAW.SAA.DEU.EU',
+            'DAC527@DBO527.#SAW.SAA.DEU.EU',
+        ]
+
         ####################
         # Frames
         frame_btn_oben = tk.Frame(self, height=30)
@@ -76,6 +84,8 @@ class BBS_newMSG(tk.Toplevel):
         if self._reply_msg:
             self._init_data_f_reply()
         self.bind('<Key>', self._update_msg_size)
+        self.bind('<Control-c>', lambda event: self._copy_select())
+        self.bind('<Control-x>', lambda event: self._cut_select())
 
     def _init_Menu(self):
         _menubar = tk.Menu(self, tearoff=False)
@@ -132,14 +142,24 @@ class BBS_newMSG(tk.Toplevel):
                       *opt, ).pack(side=tk.LEFT, expand=False)
 
         tk.Label(to_frame, text='An: ').pack(side=tk.LEFT, expand=False)
-        tk.Entry(to_frame,
-                 textvariable=self._to_call_var,
-                 width=40).pack(side=tk.LEFT, expand=False, padx=35)
-
+        self._to_call_ent = tk.Entry(to_frame,
+                                     textvariable=self._to_call_var,
+                                     # highlightcolor='blue',
+                                     # fg='white',
+                                     # bg='black',
+                                     width=40)
+        self._to_call_ent.pack(side=tk.LEFT, expand=False, padx=35)
+        self._to_call_ent.bind('<KeyRelease>',
+                               lambda event: get_typed(event, self.chiefs, self._to_call_var, self._to_call_ent))
+        self._to_call_ent.bind('<Key>', lambda event: detect_pressed(event, self._to_call_ent))
         tk.Label(to_frame, text='CC: ').pack(side=tk.LEFT, expand=False, padx=20)
-        tk.Entry(to_frame,
-                 textvariable=self._to_cc_call_var,
-                 width=40).pack(side=tk.LEFT, expand=False)
+        self._cc_entry = tk.Entry(to_frame,
+                                  textvariable=self._to_cc_call_var,
+                                  width=40)
+        self._cc_entry.pack(side=tk.LEFT, expand=False)
+        self._cc_entry.bind('<KeyRelease>',
+                            lambda event: get_typed(event, self.chiefs, self._to_cc_call_var, self._cc_entry))
+        self._cc_entry.bind('<Key>', lambda event: detect_pressed(event, self._cc_entry))
 
         tk.Label(subj_frame, text='Betreff: ').pack(side=tk.LEFT, expand=False)
         tk.Entry(subj_frame,
@@ -206,12 +226,12 @@ class BBS_newMSG(tk.Toplevel):
                 self._from_call_var.set(self._reply_msg['to_call'])
 
         rep_msg = self._reply_msg.get('msg', b'').decode(self._var_encoding.get(), 'ignore')
-        subject = 'RE: ' + self._reply_msg['subject']
+        # subject = 'RE: ' + self._reply_msg['subject']
         rep_msg = '> ' + rep_msg.replace('\r', '\n> ') + '\n'
         rep_msg = f"{self._reply_msg['time']} fm {self._reply_msg['from_call']}:\n\n" + rep_msg
         self._msg_typ_var.set(self._reply_msg['typ'])
         self._to_call_var.set(to_add)
-        self._subject_var.set(subject)
+        self._subject_var.set(self._reply_msg.get('subject', 'Re: '))
         self._var_encoding.set(self._reply_msg.get('enc', 'UTF-8'))
         self._text.insert('1.0', rep_msg)
         self._text.focus_set()
@@ -244,7 +264,8 @@ class BBS_newMSG(tk.Toplevel):
         if self._save_msg():
             messagebox.showinfo(title='Entwurf gespeichert! ', message='Nachricht wurde als Entwurf gespeichert.')
         else:
-            messagebox.showerror(title='Entwurf nicht gespeichert! ', message='Entwurf konnte nicht gespeichert werden.')
+            messagebox.showerror(title='Entwurf nicht gespeichert! ',
+                                 message='Entwurf konnte nicht gespeichert werden.')
 
     def _btn_delete_all(self, event=None):
         if messagebox.askokcancel(title='Nachricht löschen? ', message='Nachricht wirklich verwerfen?'):
@@ -344,6 +365,18 @@ class BBS_newMSG(tk.Toplevel):
     def _update_msg_size(self, event=None):
         size = len(self._text.get('1.0', tk.INSERT))
         self._var_msg_size.set(f" Size: {format_number(size)} Bytes")
+
+    def _copy_select(self):
+        if self._text.tag_ranges("sel"):
+            self.clipboard_clear()
+            self.clipboard_append(self._text.selection_get())
+            self._text.tag_remove(tk.SEL, "1.0", tk.END)
+
+    def _cut_select(self):
+        if self._text.tag_ranges("sel"):
+            self.clipboard_clear()
+            self.clipboard_append(self._text.selection_get())
+            self._text.delete('sel.first', 'sel.last')
 
     def _close(self):
         self._bbs_obj = None

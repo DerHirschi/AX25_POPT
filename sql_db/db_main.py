@@ -4,26 +4,26 @@ from config_station import logger
 from constant import MYSQL, SQL_TIME_FORMAT
 from fnc.sql_fnc import search_sql_injections
 from sql_db.sql_Error import MySQLConnectionError
-from sql_db.sql_str import SQL_CREATE_BBS_PN_MAIL_TAB, SQL_CREATE_BBS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
-    SQL_CREATE_BBS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_BBS_OUT_MAIL_TAB, \
-    SQLITE_CREATE_BBS_OUT_MAIL_TAB
+from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
+    SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
+    SQLITE_CREATE_PMS_OUT_MAIL_TAB
 
 
 SQL_BBS_TABLES = {
-    "bbs_bl_msg": SQL_CREATE_BBS_BL_MAIL_TAB,
-    "bbs_pn_msg": SQL_CREATE_BBS_PN_MAIL_TAB,
+    "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
+    "pms_pn_msg": SQL_CREATE_PMS_PN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
-    "bbs_out_msg": SQL_CREATE_BBS_OUT_MAIL_TAB,
-    "bbs_fwd_q": SQL_CREATE_BBS_FWD_TASK_TAB,
+    "pms_out_msg": SQL_CREATE_PMS_OUT_MAIL_TAB,
+    "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
 }
 
 
 SQLITE_BBS_TABLES = {
-    "bbs_bl_msg": SQL_CREATE_BBS_BL_MAIL_TAB,
-    "bbs_pn_msg": SQL_CREATE_BBS_PN_MAIL_TAB,
+    "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
+    "pms_pn_msg": SQL_CREATE_PMS_PN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
-    "bbs_out_msg": SQLITE_CREATE_BBS_OUT_MAIL_TAB,
-    "bbs_fwd_q": SQL_CREATE_BBS_FWD_TASK_TAB,
+    "pms_out_msg": SQLITE_CREATE_PMS_OUT_MAIL_TAB,
+    "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
 }
 USERDB_TABLES = {
 
@@ -141,20 +141,20 @@ class SQL_Database:
         if search_sql_injections(bid_mid):
             logger.warning(f"BBS BID_MID SQL Injection Warning. !!")
             return False
-        # query = f"SELECT EXISTS(SELECT bbs_pn_msg.BID FROM bbs_pn_msg WHERE BID = 'MD2SAW');"
-        query = f"SELECT EXISTS(SELECT bbs_pn_msg.BID FROM bbs_pn_msg WHERE BID = '{bid_mid}');"
+        # query = f"SELECT EXISTS(SELECT pms_pn_msg.BID FROM pms_pn_msg WHERE BID = 'MD2SAW');"
+        query = f"SELECT EXISTS(SELECT pms_pn_msg.BID FROM pms_pn_msg WHERE BID = '{bid_mid}');"
         return bool(self.send_query(query)[0][0])
 
     def bbs_check_bl_mid_exists(self, bid_mid: str):
         if search_sql_injections(bid_mid):
             logger.warning(f"BBS BID_MID SQL Injection Warning. !!")
             return False
-        query = f"SELECT EXISTS(SELECT bbs_bl_msg.BID FROM bbs_bl_msg WHERE BID = '{bid_mid}');"
+        query = f"SELECT EXISTS(SELECT pms_bl_msg.BID FROM pms_bl_msg WHERE BID = '{bid_mid}');"
         ret = self.send_query(query)[0][0]
         return bool(ret)  #
 
     def bbs_check_fwdID_exists(self, fwd_id: str):
-        query = f"SELECT EXISTS(SELECT FWDID FROM bbs_fwd_q WHERE FWDID = '{fwd_id}');"
+        query = f"SELECT EXISTS(SELECT FWDID FROM pms_fwd_q WHERE FWDID = '{fwd_id}');"
         ret = self.send_query(query)[0][0]
         return bool(ret)
 
@@ -203,9 +203,9 @@ class SQL_Database:
             return False
 
         _table = {
-            'P': 'bbs_pn_msg',
-            'B': 'bbs_bl_msg',
-            'T': 'bbs_bl_msg'  # TODO
+            'P': 'pms_pn_msg',
+            'B': 'pms_bl_msg',
+            'T': 'pms_bl_msg'  # TODO
         }[_typ]
         _query = (f"INSERT INTO {_table} "
                   "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time, rx_time)"
@@ -318,7 +318,7 @@ class SQL_Database:
         _msg_size = msg_struc.get('message_size', 0)
         _time = datetime.now().strftime(SQL_TIME_FORMAT)
         _utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
-        _query = ("INSERT INTO `bbs_out_msg` "
+        _query = ("INSERT INTO `pms_out_msg` "
                   "(from_call, "
                   "from_bbs, "
                   "from_bbs_call, "
@@ -362,7 +362,7 @@ class SQL_Database:
         _msg_size = msg_struc.get('message_size', 0)
         _time = datetime.now().strftime(SQL_TIME_FORMAT)
         _utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
-        _query = ("UPDATE bbs_out_msg SET "
+        _query = ("UPDATE pms_out_msg SET "
                   "from_call=%s, "
                   "from_bbs=%s, "
                   "from_bbs_call=%s, "
@@ -418,7 +418,7 @@ class SQL_Database:
         _time = msg_struc.get('tx-time', '')
         # _utctime = msg_struc.get('utctime', '')
 
-        _query = ("UPDATE bbs_out_msg SET "
+        _query = ("UPDATE pms_out_msg SET "
                   "BID=%s, "
                   "header=%s, "
                   "tx_time=%s, "
@@ -433,7 +433,7 @@ class SQL_Database:
         )
         self.commit_query_bin(_query, _query_data)
 
-        _query = ("INSERT INTO `bbs_fwd_q` "
+        _query = ("INSERT INTO `pms_fwd_q` "
                   "(FWDID, "
                   "BID, "
                   "MID, "
@@ -466,7 +466,7 @@ class SQL_Database:
         return True
 
     def bbs_get_msg_fm_outTab_by_mid(self, mid: int):
-        _query = "SELECT * FROM bbs_out_msg WHERE MID=%s;"
+        _query = "SELECT * FROM pms_out_msg WHERE MID=%s;"
         _query_data = (mid,)
         res = self.commit_query_bin(_query, _query_data)
         if not res:
@@ -494,7 +494,7 @@ class SQL_Database:
         }
 
     def bbs_get_fwd_q_Tab_for_BBS(self, bbs_call: str):
-        _query = "SELECT * FROM bbs_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
+        _query = "SELECT * FROM pms_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
         _query_data = (bbs_call,)
         res = self.commit_query_bin(_query, _query_data)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
@@ -508,7 +508,7 @@ class SQL_Database:
                   "subject, "
                   "time, "
                   "new "
-                  "FROM bbs_pn_msg "
+                  "FROM pms_pn_msg "
                   "WHERE flag='IN';")
         res = self.commit_query(_query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
@@ -518,12 +518,12 @@ class SQL_Database:
         if not bid:
             return []
         _query = ("SELECT * "
-                  "FROM bbs_pn_msg "
+                  "FROM pms_pn_msg "
                   f"WHERE BID='{bid}';")
         return self.commit_query(_query)
 
     def bbs_set_pn_msg_notNew(self, bid: str):
-        _query = ("UPDATE bbs_pn_msg SET new=0 "
+        _query = ("UPDATE pms_pn_msg SET new=0 "
                   f"WHERE BID='{bid}';")
         self.commit_query(_query)
 
@@ -536,7 +536,7 @@ class SQL_Database:
                   "subject, "
                   "time, "
                   "new "
-                  "FROM bbs_bl_msg "
+                  "FROM pms_bl_msg "
                   "WHERE flag='IN';")
         res = self.commit_query(_query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
@@ -546,12 +546,12 @@ class SQL_Database:
         if not bid:
             return []
         _query = ("SELECT * "
-                  "FROM bbs_bl_msg "
+                  "FROM pms_bl_msg "
                   f"WHERE BID='{bid}';")
         return self.commit_query(_query)
 
     def bbs_set_bl_msg_notNew(self, bid: str):
-        _query = ("UPDATE bbs_bl_msg SET new=0 "
+        _query = ("UPDATE pms_bl_msg SET new=0 "
                   f"WHERE BID='{bid}';")
         self.commit_query(_query)
 
@@ -567,13 +567,13 @@ class SQL_Database:
                   "type, "
                   "flag, "
                   "tx_time "
-                  "FROM bbs_fwd_q;")
+                  "FROM pms_fwd_q WHERE NOT flag='DL';")
         res = self.commit_query(_query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
     def bbs_get_outMsg_by_BID(self, bid: str):
-        _query = "SELECT subject, header, msg FROM bbs_out_msg WHERE BID=%s LIMIT 5;"
+        _query = "SELECT subject, header, msg FROM pms_out_msg WHERE BID=%s LIMIT 5;"
         _query_data = (bid,)
         res = self.commit_query_bin(_query, _query_data)
         # print(f"bbs_get_outMsg_by_BID res: {res}")
@@ -588,7 +588,7 @@ class SQL_Database:
                   "subject, "
                   "time, "
                   "type "
-                  "FROM bbs_out_msg "
+                  "FROM pms_out_msg "
                   "WHERE flag='E';")
         res = self.commit_query(_query)
         print(f"bbs_get_sv_msg_Tab_for_GUI res: {res}")
@@ -598,16 +598,16 @@ class SQL_Database:
         if not mid:
             return []
         _query = ("SELECT * "
-                  "FROM bbs_out_msg "
+                  "FROM pms_out_msg "
                   f"WHERE MID='{mid}';")
         return self.commit_query(_query)
 
     def bbs_get_out_msg_for_GUI(self, bid: str):
-        _query = "SELECT * FROM bbs_out_msg WHERE BID=%s;"
+        _query = "SELECT * FROM pms_out_msg WHERE BID=%s;"
         return self.commit_query_bin(_query, (bid,))
 
     def bbs_act_outMsg_by_FWD_ID(self, fwd_id: str, flag: str):
-        _query = "SELECT BID FROM bbs_fwd_q WHERE FWDID=%s;"
+        _query = "SELECT BID FROM pms_fwd_q WHERE FWDID=%s;"
         _query_data = (fwd_id,)
         res = self.commit_query_bin(_query, _query_data)
         print(f"bbs_act_outMsg_by_FWDID res: {res}")
@@ -616,13 +616,48 @@ class SQL_Database:
         bid = res[0][0]
         print(f"bbs_act_outMsg_by_FWDID bid: {bid}")
         _tx_time = datetime.now().strftime(SQL_TIME_FORMAT)
-        _query = "UPDATE bbs_fwd_q SET flag=%s, tx_time=%s WHERE FWDID=%s;"
+        _query = "UPDATE pms_fwd_q SET flag=%s, tx_time=%s WHERE FWDID=%s;"
         _query_data = (flag, _tx_time, fwd_id)
         self.commit_query_bin(_query, _query_data)
-        _query = "UPDATE bbs_out_msg SET flag=%s WHERE BID=%s;"
+        _query = "UPDATE pms_out_msg SET flag=%s WHERE BID=%s;"
         _query_data = (flag, bid)
         self.commit_query_bin(_query, _query_data)
 
+    def bbs_del_pn_msg_by_BID(self, bid: str):
+        _query = ("UPDATE pms_pn_msg SET flag='DL' "
+                  f"WHERE BID='{bid}';")
+        self.commit_query(_query)
+        return True
+
+    def bbs_del_bl_msg_by_BID(self, bid: str):
+        _query = ("UPDATE pms_bl_msg SET flag='DL' "
+                  f"WHERE BID='{bid}';")
+        self.commit_query(_query)
+        return True
+
+    def bbs_del_out_msg_by_BID(self, bid: str):
+        _query = ("UPDATE pms_fwd_q SET flag='DL' "
+                  f"WHERE BID='{bid}';")
+        self.commit_query(_query)
+        _query = ("UPDATE pms_out_msg SET flag='DL' "
+                  f"WHERE BID='{bid}';")
+        self.commit_query(_query)
+        return True
+
+    def bbs_del_sv_msg_by_MID(self, mid: str):
+        _query = ("UPDATE pms_out_msg SET flag='DL' "
+                  f"WHERE MID='{mid}';")
+        self.commit_query(_query)
+        return True
+
+    def pms_set_bid(self, bid: int):
+        self.db.set_bid(bid)
+        # _query = f"ALTER TABLE pms_out_msg AUTO_INCREMENT={bid};"
+        # self.commit_query(_query)
+        return True
+
+    def pms_get_bid(self):
+        return self.db.get_bid()
 
 DB = SQL_Database()
 # print(DB.bbs_check_pn_mid_exists('MD2SAW_12222'))

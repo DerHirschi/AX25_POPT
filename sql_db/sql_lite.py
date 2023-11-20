@@ -56,3 +56,11 @@ class SQL_DB:
         if not ret:
             return []
         return [i[0] for i in ret]
+
+    def set_bid(self, bid):
+        if bid:
+            bid -= 1
+        return self.execute_query(f"UPDATE sqlite_sequence SET  seq = {bid} WHERE name= 'pms_out_msg';")
+
+    def get_bid(self):
+        return self.execute_query("SELECT SEQ from sqlite_sequence WHERE name='pms_out_msg'")
