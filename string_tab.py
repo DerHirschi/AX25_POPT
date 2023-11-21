@@ -69,6 +69,7 @@ STR_TABLE = {
     'name': ('Name', 'Name', 'Lekker Name'),
     'fwd_list': ('Forward Warteschlange', 'Forward queue', 'Lekker Voorwaartse wachtrij'),
     'start_fwd': ('FWD Start', 'FWD start', 'Start Lekker FWD'),
+    'start_auto_fwd': ('AutoFWD Start', 'AutoFWD start', 'Start Lekker AutoFWD'),
     'msg_center': ('Nachrichten Center', 'Message Center', 'Lekker Message Center'),
     'qso_win_color': ('QSO Fenster Farben', 'QSO Win Color', 'Lekker QSO Win Color'),
     'text_color': ('Text Farben', 'Text Color', 'Lekker Text Color'),

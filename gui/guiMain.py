@@ -1,5 +1,4 @@
 import datetime
-import gc
 import logging
 import random
 import time
@@ -11,7 +10,6 @@ import sys
 import gtts
 from gtts import gTTS
 
-from ax25.ax25ConnTask import ConnTask
 from ax25.ax25dec_enc import PIDByte
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -1617,7 +1615,7 @@ class TkMainWin:
         self._non_non_prio_task_timer = time.time()
         self._non_non_non_prio_task_timer = time.time()
         self._test_task_timer = time.time()
-        self.conn_task = None
+        # self.conn_task = None
         ##############################
         # BW-Plot
         self._bw_plot_x_scale = []
@@ -1924,7 +1922,11 @@ class TkMainWin:
                              underline=0)
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
-                             command=self._do_bbs_fwd,
+                             command=self._do_pms_fwd,
+                             underline=0)
+
+        _MenuBBS.add_command(label=STR_TABLE['start_auto_fwd'][self.language],
+                             command=self._do_pms_autoFWD,
                              underline=0)
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
@@ -2409,9 +2411,8 @@ class TkMainWin:
     def _tasker_05_sec(self):
         """ 0.5 Sec """
         if time.time() > self._non_prio_task_timer:
-            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             #####################
-            self._aprs_task()
+            # self._aprs_task()
             self._monitor_task()
             self._update_qso_win()
             self._txt_win.update_status_win()
@@ -2420,13 +2421,13 @@ class TkMainWin:
                 self._rx_beep_sound()
                 if self.setting_sprech:
                     self._check_sprech_ch_buf()
+            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             return True
         return False
 
     def _tasker_1_sec(self):
         """ 1 Sec """
         if time.time() > self._non_non_prio_task_timer:
-            self._non_non_prio_task_timer = time.time() + self._parm_non_non_prio_task_timer
             #####################
             self._update_stat_info_conn_timer()
             self._update_ft_info()
@@ -2445,23 +2446,26 @@ class TkMainWin:
             if self.aprs_mon_win is not None:
                 self.aprs_mon_win.tasker()
             """
+            self._non_non_prio_task_timer = time.time() + self._parm_non_non_prio_task_timer
             return True
         return False
 
     def _tasker_5_sec(self):
         """ 5 Sec """
         if time.time() > self._non_non_non_prio_task_timer:
-            self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             #####################
             self._update_bw_mon()
             self._aprs_wx_tree_task()
             #####################
+            """
             if self.conn_task:
                 # print("ConnTasker")
                 if self.conn_task.state_id:
                     self.conn_task.crone()
                 else:
                     self.conn_task = None
+            """
+            self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             return True
         return False
 
@@ -2470,15 +2474,13 @@ class TkMainWin:
         if time.time() > self._test_task_timer:
             self._test_task_timer = time.time() + self._parm_test_task_timer
             #####################
-            self._tester()
 
-    def _tester(self):
-        print(gc.garbage)
-
+    """
     @staticmethod
     def _aprs_task():
         if PORT_HANDLER.get_aprs_ais() is not None:
             PORT_HANDLER.get_aprs_ais().task()
+    """
 
     @staticmethod
     def _aprs_wx_tree_task():
@@ -2974,9 +2976,13 @@ class TkMainWin:
         self.sprech('Gluck gluck gluck blubber blubber')
         # PORT_HANDLER.close_all_ports()
         # self._do_bbs_fwd()
-        self.conn_task = ConnTask()
+        # self.conn_task = AutoConnTask()
 
-    def _do_bbs_fwd(self):
+    @staticmethod
+    def _do_pms_autoFWD():
+        PORT_HANDLER.get_bbs().start_autoFwd()
+
+    def _do_pms_fwd(self):
         conn = self.get_conn()
         if conn is not None:
             conn.bbsFwd_start_reverse()

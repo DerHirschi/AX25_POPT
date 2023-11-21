@@ -1,11 +1,11 @@
 import logging
-from ax25.ax25InitPorts import PORT_HANDLER
 
 logger = logging.getLogger(__name__)
 
 
-class ConnTask:
-    def __init__(self):
+class AutoConnTask:
+    def __init__(self, port_handler, conf: dict):
+        """
         self._conf = {
             'task_typ': 'PMS',
             'port_id': 0,
@@ -14,7 +14,6 @@ class ConnTask:
             'via_calls': ['DNX527-1'],
             # 'axip_add': ('192.168.178.160', 8093),
         }
-        """
         self._conf = {
             'task_typ': 'PMS',
             'port_id': 1,
@@ -25,7 +24,9 @@ class ConnTask:
             'axip_add': ('', 0),
         }
         """
-        connection = PORT_HANDLER.new_outgoing_connection(
+
+        self._conf = conf
+        connection = port_handler.new_outgoing_connection(
             dest_call=self._conf.get('dest_call'),
             own_call=self._conf.get('own_call'),
             via_calls=self._conf.get('via_calls'),          # Auto lookup in MH if not exclusive Mode
@@ -39,7 +40,7 @@ class ConnTask:
         self.connection = None
         self.conn_state = None
         self.dest_station_id = None
-        self._e = None
+        self.e = None
         self._state_exec = None
         self.state_id = 1
         self._state_tab = {
@@ -52,12 +53,12 @@ class ConnTask:
             }
         }.get(self._conf.get('task_typ', None))
         if not self._state_tab:
-            self._e = True
+            self.e = True
             print(f"Error ConnTask no state_tab Typ: {self._conf}")
             logger.error(f"Error ConnTask no state_tab Typ: {self._conf}")
             self._set_state_exec(0)
         if not connection[0]:
-            self._e = True
+            self.e = True
             print(f"Error ConnTask connection: {connection[1]}")
             logger.error(f"Error ConnTask connection: {connection[1]}")
             self._set_state_exec(0)
@@ -80,7 +81,7 @@ class ConnTask:
     def crone(self):
         # print(f"Station ID: {self.dest_station_id}")
         # print(f"Station CLI ID: {self.connection.cli.stat_identifier}")
-        if self._e:
+        if self.e:
             self._ConnTask_ende()
             return False
         if self._is_connected():
@@ -90,14 +91,14 @@ class ConnTask:
         return False
 
     def _is_connected(self):
-        if self._e:
+        if self.e:
             return False
         if not self.connection:
-            self._e = True
+            self.e = True
             return False
         state_index = self.connection.get_state_index()
         if not state_index:
-            self._e = True
+            self.e = True
             return False
         if state_index in [1, 2, 3, 4]:
             return False
@@ -134,13 +135,15 @@ class ConnTask:
         if not self.connection.bbs_connection:
             # self._set_state_exec(0)
             if self.connection:
+                # self._set_state_exec(0)
                 self._end_connection()
             else:
                 self._ConnTask_ende()
 
     def _ConnTask_ende(self):
         # print("ConnTask PMS END")
-        pass
+        if self.state_id:
+            self._set_state_exec(0)
         # if self.connection:
         #     self._end_connection()
 
@@ -149,5 +152,6 @@ class ConnTask:
         if self.connection:
             self.connection.conn_disco()
             self.connection = None
+        self._set_state_exec(0)
         self._ConnTask_ende()
 

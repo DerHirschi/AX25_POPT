@@ -640,6 +640,8 @@ class BBS:
     def main_cron(self):
         pass
 
+    ###################################
+    # Man. FWD when already connected
     def init_fwd_conn(self, ax25_conn):
         if ax25_conn.cli.stat_identifier is None:
             return None
@@ -655,6 +657,23 @@ class BBS:
             self.bbs_connections.remove(bbs_conn)
             return True
         return False
+
+    ###################################
+    # Auto FWD
+    def init_autoFwd(self):
+        pass
+
+    def start_autoFwd(self):
+        conf = {
+            'task_typ': 'PMS',
+            'port_id': 1,
+            'own_call': 'MD2SAW',
+            'dest_call': 'MD2BBS',
+            'via_calls': ['CB0SAW'],
+            # 'axip_add': ('192.168.178.160', 8093),
+            'axip_add': ('', 0),
+        }
+        self._port_handler.init_autoConn(conf)  # -> bool
 
     @staticmethod
     def is_pn_in_db(bid_mid: str):

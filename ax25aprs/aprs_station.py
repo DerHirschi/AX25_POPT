@@ -251,29 +251,15 @@ class APRS_ais(object):
                                       immortal=False,
                                       raw=False)
                 except ValueError:
-                    # self.ais_active = False
-                    # del self.ais
-                    # self.ais = None
-                    self.loop_is_running = False
                     print("APRS-Consumer ValueError")
                     logger.error("APRS-Consumer ValueError")
-                    # break
                 except aprslib.LoginError:
-                    # del self.ais
-                    # self.ais = None
-                    # self.loop_is_running = False
                     print("APRS-Consumer LoginError")
                     logger.warning("APRS-Consumer LoginError")
-                    # break
                 except aprslib.ConnectionError:
-                    # del self.ais
-                    # self.ais = None
                     print("APRS-Consumer Connection Error")
                     logger.warning("APRS-Consumer Connection Error")
-                    # self.loop_is_running = False
 
-                # del self.ais
-                # self.ais = None
                 self.loop_is_running = False
 
                 if self.ais is not None:

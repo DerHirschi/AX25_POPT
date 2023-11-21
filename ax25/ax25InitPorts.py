@@ -1,5 +1,7 @@
 import time
 import threading
+
+from ax25.ax25AutoConnTask import AutoConnTask
 from sql_db.db_main import DB
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH_LIST
@@ -52,8 +54,9 @@ class AX25PortHandler(object):
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
         self.all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
+        self.auto_connections = {}      # [AutoConnTask()]
         self.rx_echo: {int:  RxEchoVars} = {}
-        self.beacons = {}
+        self.beacons = {}               # TODO move task fm Port.thread to self._tasker()
         self.ax25_stations_settings = get_all_stat_cfg()
         self.ax25_port_settings = {}    # Port settings are in Port .. TODO Cleanup
         self.ax25_ports = {}
@@ -68,10 +71,43 @@ class AX25PortHandler(object):
         #######################################################
         # BBS OBJ
         self.init_bbs()
+        #######################################################
+        # Port Handler Tasker (threaded Loop)
+        # - APRS task()
+        # - BBS/ConnTasker
+        self._task_timer_05sec = time.time() + 0.5
+        self._task_timer_1sec = time.time() + 1
+
+        self._init_PH_tasker()
 
     def __del__(self):
         self.close_all_ports()
         # logger.info("Ende PoPT Ver.: {}".format(VER))
+
+    ######################
+    # Port Handler Tasker
+    def _init_PH_tasker(self):
+        threading.Thread(target=self._tasker).start()
+
+    def _tasker(self):
+        while self.is_running:
+            self._05sec_task()
+            # self._1sec_task()
+            if not self.is_running:
+                break
+            time.sleep(0.1)
+
+    def _05sec_task(self):
+        """ 0.5 Sec """
+        if time.time() > self._task_timer_05sec:
+            self._aprs_task()
+            self._auto_conn_tasker()
+            self._task_timer_05sec = time.time() + 0.5
+
+    def _1sec_task(self):
+        """ 1 Sec """
+        if time.time() > self._task_timer_1sec:
+            self._task_timer_1sec = time.time() + 1
 
     #####################
     # Setting/Parameter Updates
@@ -100,35 +136,17 @@ class AX25PortHandler(object):
                 ret = False
         return ret
 
-    def close_gui(self):
-        # self.close_all_ports()
-        if self.gui is not None:
-            tmp = self.gui
-            self.gui = None
-            self.set_gui()
-            tmp.main_win.quit()
-            tmp.main_win.destroy()
+    def close_all_ports(self):
+        self.is_running = False
+        for k in list(self.all_connections.keys()):
+            del self.all_connections[k]
+        # if self.is_running:
+        self.close_aprs_ais()
+        for k in list(self.ax25_ports.keys()):
+            self.close_port(k)
         MH_LIST.save_mh_data()
         USER_DB.save_data()
         DB.close_db()
-
-    def close_aprs_ais(self):
-        if self.aprs_ais is None:
-            return False
-        self.aprs_ais.ais_close()
-        # self.aprs_ais.save_conf_to_file()
-        del self.aprs_ais
-        self.aprs_ais = None
-        return True
-
-    def close_all_ports(self):
-        for k in list(self.all_connections.keys()):
-            del self.all_connections[k]
-        self.close_aprs_ais()
-        if self.is_running:
-            self.is_running = False
-            for k in list(self.ax25_ports.keys()):
-                self.close_port(k)
 
     def close_port(self, port_id: int):
         logger.info('Info: Versuche Port {} zu schließen.'.format(port_id))
@@ -153,13 +171,6 @@ class AX25PortHandler(object):
         time.sleep(1)  # Cooldown for Device
         for port_id in range(MAX_PORTS):  # Max Ports
             self.init_port(port_id=port_id)
-
-    def reinit_port(self, port_id: int):    # Not used !!!!
-        if port_id in self.ax25_ports.keys():
-            self.close_port(port_id=port_id)
-            time.sleep(1)  # Cooldown for Device
-            self.init_port(port_id=port_id)
-            self.set_gui()
 
     def set_kiss_param_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
@@ -203,6 +214,12 @@ class AX25PortHandler(object):
                 self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
                 logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
 
+    def save_all_port_cfgs(self):
+        for port_id in self.ax25_ports.keys():
+            self.ax25_ports[port_id].port_cfg.save_to_pickl()
+
+    ######################
+    # APRS
     def init_aprs_ais(self, aprs_obj=None):
         if aprs_obj is None:
             self.aprs_ais = APRS_ais()
@@ -216,9 +233,42 @@ class AX25PortHandler(object):
                 if self.aprs_ais.ais_mon_gui is not None:
                     self.aprs_ais.ais_mon_gui.set_ais_obj()
 
-    def save_all_port_cfgs(self):
-        for port_id in self.ax25_ports.keys():
-            self.ax25_ports[port_id].port_cfg.save_to_pickl()
+    def _aprs_task(self):
+        if self.aprs_ais is not None:
+            self.aprs_ais.task()
+
+    def close_aprs_ais(self):
+        if self.aprs_ais is None:
+            return False
+        self.aprs_ais.ais_close()
+        # self.aprs_ais.save_conf_to_file()
+        del self.aprs_ais
+        self.aprs_ais = None
+        return True
+
+    ######################
+    # Auto Connection Tasker
+    def init_autoConn(self, conf):
+        k = conf.get('dest_call', '')
+        if not k:
+            return False
+        if k in self.auto_connections.keys():
+            return False
+        autoConn = AutoConnTask(self, conf)
+        if autoConn.state_id and not autoConn.e:
+            self.auto_connections[k] = autoConn
+            return True
+        del autoConn
+        return False
+
+    def _auto_conn_tasker(self):
+        for k in list(self.auto_connections.keys()):
+            print(f"AutoConn state_id: {self.auto_connections[k].state_id}")
+            if self.auto_connections[k].state_id:
+                self.auto_connections[k].crone()
+            else:
+                print(f"AutoConn remove: {self.auto_connections[k]}")
+                del self.auto_connections[k]
 
     ######################
     # GUI Handling
@@ -232,6 +282,15 @@ class AX25PortHandler(object):
     def sysmsg_to_gui(self, msg: str = ''):
         if self.gui is not None and self.is_running:
             self.gui.msg_to_monitor(msg)
+
+    def close_gui(self):
+        # self.close_all_ports()
+        if self.gui is not None:
+            tmp = self.gui
+            self.gui = None
+            self.set_gui()
+            tmp.main_win.quit()
+            tmp.main_win.destroy()
 
     ######################
     # Connection Handling
@@ -395,6 +454,8 @@ class AX25PortHandler(object):
                 res[ch_id] = tmp
         return res
 
+    ######################
+    # Getter
     def get_aprs_ais(self):
         return self.aprs_ais
 
@@ -415,6 +476,9 @@ class AX25PortHandler(object):
     def get_all_port_ids(self):
         return list(self.ax25_ports.keys())
 
+    def get_bbs(self):
+        return self.bbs
+
     ###############################
     # BBS
     def init_bbs(self):
@@ -424,9 +488,8 @@ class AX25PortHandler(object):
             except bbsInitError:
                 self.bbs = None
 
-    def get_bbs(self):
-        return self.bbs
-
+    ###############################
+    # SQL-DB
     @staticmethod
     def init_DB():
         ###############
