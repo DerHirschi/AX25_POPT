@@ -24,7 +24,7 @@ class Beacon:
         self.via_calls = ''
         self.axip_add = ('', 0)
         #################
-        # Time Vars
+        # Time Vars TODO change to PoPTSchedule
         self.repeat_time: float = 30.0  # Min
         self.move_time: int = 0  # Sec
         self.minutes: {int: bool} = {}

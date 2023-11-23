@@ -24,7 +24,7 @@ class AutoConnTask:
             'axip_add': ('', 0),
         }
         """
-
+        START_CH_RANGE = 9
         self._conf = conf
         connection = port_handler.new_outgoing_connection(
             dest_call=self._conf.get('dest_call'),
@@ -34,7 +34,7 @@ class AutoConnTask:
             axip_add=self._conf.get('axip_add', ('', 0)),   # AXIP Adress
             exclusive=True,                                 # True = no lookup in MH list
             link_conn=None,                                 # Linked Connection AX25Conn
-            channel=10                                      # GUI Channel
+            channel=START_CH_RANGE                          # GUI Channel
         )
         # print(self.connection)
         self.connection = None
@@ -65,11 +65,9 @@ class AutoConnTask:
         else:
             self.connection = connection[2]
             # self.dest_station_id = self.connection.cli.stat_identifier
-            print(f"Station ID: {self.connection.cli.stat_identifier}")
             self._set_state_exec(1)
 
     def _set_state_exec(self, state_id):
-        print(f"ConnTask switch State fm {self.state_id} to {state_id}")
         if self._state_tab:
             self.state_id = state_id
             self._state_exec = self._state_tab[self.state_id]

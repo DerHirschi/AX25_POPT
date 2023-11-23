@@ -92,7 +92,7 @@ class AX25PortHandler(object):
     def _tasker(self):
         while self.is_running:
             self._05sec_task()
-            # self._1sec_task()
+            self._1sec_task()
             if not self.is_running:
                 break
             time.sleep(0.1)
@@ -107,6 +107,7 @@ class AX25PortHandler(object):
     def _1sec_task(self):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
+            self.bbs.main_cron()
             self._task_timer_1sec = time.time() + 1
 
     #####################
@@ -251,15 +252,15 @@ class AX25PortHandler(object):
     def init_autoConn(self, conf):
         k = conf.get('dest_call', '')
         if not k:
-            return False
+            return None
         if k in self.auto_connections.keys():
-            return False
+            return None
         autoConn = AutoConnTask(self, conf)
         if autoConn.state_id and not autoConn.e:
             self.auto_connections[k] = autoConn
-            return True
+            return autoConn
         del autoConn
-        return False
+        return None
 
     def _auto_conn_tasker(self):
         for k in list(self.auto_connections.keys()):
@@ -364,6 +365,8 @@ class AX25PortHandler(object):
                                 ):
         """ Handels New Outgoing Connections for CLI and LINKS """
         # Incoming Parameter Check
+        if axip_add is None:
+            axip_add = ('', 0)
         if via_calls is None:
             via_calls = []
         if link_conn and not via_calls:
@@ -377,7 +380,6 @@ class AX25PortHandler(object):
                     # port_id = int(mh_entry.port_id)
                     via_calls += min(list(mh_entry.all_routes), key=len)
                     axip_add = tuple(mh_entry.axip_add)
-
         if not axip_add[0] and mh_entry:
             axip_add = tuple(mh_entry.axip_add)
         if port_id == -1 and mh_entry:

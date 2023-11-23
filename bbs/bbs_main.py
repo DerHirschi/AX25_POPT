@@ -11,11 +11,13 @@ EE = There is an error in the line
 EO = OFFSET Error not implemented yet TODO
 DL = Deleted MSG
 """
+import time
 from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError, logger
 from cli.cliStationIdent import get_station_id_obj
 from constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
+from fnc.popt_sched import build_schedule_config, PoPTSchedule
 from sql_db.db_main import DB
 
 FWD_RESP_TAB = {
@@ -159,7 +161,7 @@ class BBSConnection:
         self._bbs = bbs_obj
         ###########
         self.e = False
-        self._mybbs_flag = self._bbs.bbs_flag
+        self._mybbs_flag = self._bbs.pms_flag
         self._dest_stat_id = self._ax25_conn.cli.stat_identifier
         # print(f"BBS-Conn : {self._dest_stat_id}")
         # self._bbs_fwd_cmd = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
@@ -574,26 +576,28 @@ class BBS:
         logger.info('BBS INIT')
         print('BBS INIT')
         self._port_handler = port_handler
-        self.bbs_flag = generate_sid(features=("F", "M", "H"))
-        self.my_stat_id = get_station_id_obj(str(self.bbs_flag))
+        self.pms_flag = generate_sid(features=("F", "M", "H"))
+        self.my_stat_id = get_station_id_obj(str(self.pms_flag))
         try:
-            self.bbs_flag = self.bbs_flag.encode('ASCII')
+            self.pms_flag = self.pms_flag.encode('ASCII')
         except UnicodeEncodeError:
             raise bbsInitError('UnicodeEncodeError')
         if self.my_stat_id is None:
             raise bbsInitError('my_stat_id is None')
         if self.my_stat_id.e:
             raise bbsInitError('my_stat_id.e Error')
-        self.bbs_connections = []
+        self.pms_connections = []
         ###############
         # Init DB
         DB.check_tables_exists('bbs')
         ###############
         # Config's
+        sched1 = build_schedule_config(intervall=5, move_time=20, set_interval=False)
+        sched2 = build_schedule_config(intervall=60, move_time=20, set_interval=True)
         self.pms_cfg = {
             'user': 'MD2SAW',
             'regio': '#SAW.SAA.DEU.EU',
-            'home_bbs': [],
+            # 'home_bbs': [],
             'home_bbs_cfg': {
                 'MD2BBS': {
                     'port_id': 1,
@@ -602,6 +606,7 @@ class BBS:
                     'dest_call': 'MD2BBS',
                     'via_calls': ['CB0SAW'],
                     'axip_add': ('', 0),
+                    'scheduler_cfg': sched1,
                 },
                 'DBO527': {
                     'port_id': 0,
@@ -609,17 +614,24 @@ class BBS:
                     # 'own_call': user,
                     'dest_call': 'DBO527',
                     'via_calls': ['DNX527-1'],
-                    'axip_add': ('', 0),
+                    'scheduler_cfg': sched2,
                 },
             },
+            'single_auto_conn': True,
         }
-        home_bbs = []
-        for h_bbs_k in list(self.pms_cfg.get('home_bbs_cfg', {}).keys()):
-            regio = self.pms_cfg['home_bbs_cfg'][h_bbs_k].get('regio', '')
-            if regio:
-                home_bbs.append((h_bbs_k + '.' + regio))
-            self.pms_cfg['home_bbs_cfg'][h_bbs_k]['own_call'] = self.pms_cfg['user']
-        self.pms_cfg['home_bbs'] = home_bbs
+        ####################
+        # Set Vars
+        self._set_pms_home_bbs()
+        ####################
+        # Scheduler
+        self._schedule_q = []
+        self._set_pms_fwd_schedule()
+        # Auto Connection
+        self._autoConn = None
+        ####################
+        # Tasker/crone
+        # self._var_task_1sec = time.time()
+        self._var_task_5sec = time.time()
         ###############
         # DEBUG/DEV
         # self.set_bid(440)
@@ -638,7 +650,43 @@ class BBS:
         # self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
 
     def main_cron(self):
-        pass
+        self._5sec_task()
+
+    ###################################
+    # Tasks
+    def _5sec_task(self):
+        if time.time() > self._var_task_5sec:
+            self._scheduler_task()
+            self._var_task_5sec = time.time() + 5
+
+    ###################################
+    # CFG Stuff
+    def _set_pms_home_bbs(self):
+        home_bbs = []
+        for h_bbs_k in list(self.pms_cfg.get('home_bbs_cfg', {}).keys()):
+            regio = self.pms_cfg['home_bbs_cfg'][h_bbs_k].get('regio', '')
+            if regio:
+                home_bbs.append((h_bbs_k + '.' + regio))
+            self.pms_cfg['home_bbs_cfg'][h_bbs_k]['own_call'] = self.pms_cfg['user']
+        self.pms_cfg['home_bbs'] = home_bbs
+
+    def _set_pms_fwd_schedule(self):
+        for h_bbs_k in list(self.pms_cfg.get('home_bbs_cfg', {}).keys()):
+            cfg = self.pms_cfg['home_bbs_cfg'][h_bbs_k]
+            sched_cfg = cfg.get('scheduler_cfg', None)
+            if sched_cfg:
+                autoconn_cfg = {
+                    'task_typ': 'PMS',
+                    'port_id': cfg.get('port_id'),
+                    'own_call': cfg.get('own_call'),
+                    'dest_call': cfg.get('dest_call'),
+                    'via_calls': cfg.get('via_calls'),
+                    'axip_add': cfg.get('axip_add'),
+                }
+                poptSched = PoPTSchedule(sched_cfg)
+                self._schedule_q.append(
+                    (poptSched, autoconn_cfg)
+                )
 
     ###################################
     # Man. FWD when already connected
@@ -649,21 +697,43 @@ class BBS:
         _conn = BBSConnection(self, ax25_conn)
         if _conn.e:
             return None
-        self.bbs_connections.append(_conn)
+        self.pms_connections.append(_conn)
         return _conn
 
     def end_fwd_conn(self, bbs_conn):
-        if bbs_conn in self.bbs_connections:
-            self.bbs_connections.remove(bbs_conn)
+        if bbs_conn in self.pms_connections:
+            self.pms_connections.remove(bbs_conn)
             return True
         return False
 
     ###################################
     # Auto FWD
-    def init_autoFwd(self):
-        pass
+    def _scheduler_task(self):
+        single = self.pms_cfg.get('single_auto_conn', True)
+        if single:
+            if self._check_autoConn_status():
+                return
+        for task in self._schedule_q:
+            if single:
+                if self._check_autoConn_status():
+                    return
+            if task[0].is_schedule():
+                self.start_autoFwd(task[1])
+        return
 
-    def start_autoFwd(self):
+    def _check_autoConn_status(self):
+        if self._autoConn:
+            if self._autoConn.state_id:
+                return True
+            self._autoConn = None
+        return False
+
+    def start_man_autoFwd(self):
+        for task in self._schedule_q:
+            self.start_autoFwd(task[1])
+
+    def start_autoFwd(self, conf):
+        """
         conf = {
             'task_typ': 'PMS',
             'port_id': 1,
@@ -673,7 +743,8 @@ class BBS:
             # 'axip_add': ('192.168.178.160', 8093),
             'axip_add': ('', 0),
         }
-        self._port_handler.init_autoConn(conf)  # -> bool
+        """
+        self._autoConn = self._port_handler.init_autoConn(conf)
 
     @staticmethod
     def is_pn_in_db(bid_mid: str):
