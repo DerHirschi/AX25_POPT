@@ -27,7 +27,7 @@ class SQL_DB:
             # query_str = query_str.replace('AUTO_INCREMENT', 'AUTOINCREMENT')
             res = cursor.execute(query_str)
             rows = res.fetchall()
-            print(f"execute_query: {rows}")
+            # print(f"execute_query: {rows}")
             # db_conn.close()
             return rows
         raise MySQLConnectionError

@@ -52,9 +52,9 @@ class SQL_Database:
             logger.info("Database: set to SQLite")
             from sql_db.sql_lite import SQL_DB
 
-        self.db_config = {
+        self.db_config = {  # TODO GUI and DB-TOOLs
             'user': 'popt',
-            'password': '83g6u45908k91HG2jhj5jeGG',
+            'password': '83g6u45908k91HG2jhj5jeGG',     # OMG, my super secret password
             'host': '127.0.0.1',
             'database': 'popt_db',
             'raise_on_warnings': True
@@ -109,7 +109,7 @@ class SQL_Database:
             self.commit_query(query)
 
     def send_query(self, query):
-        print(f"Query: {query}")
+        # print(f"Query: {query}")
         if self.db:
             try:
                 return self.db.execute_query(query)
@@ -118,7 +118,7 @@ class SQL_Database:
                 self.db = None
 
     def commit_query(self, query):
-        print(f"Query commit: {query}")
+        # print(f"Query commit: {query}")
         if self.db:
             try:
                 ret = self.db.execute_query(query)
@@ -166,7 +166,7 @@ class SQL_Database:
         return bool(ret)
 
     def bbs_insert_msg_fm_fwd(self, msg_struc: dict):
-        print("bbs_insert_msg_fm_fwd -------------")
+        # print("bbs_insert_msg_fm_fwd -------------")
         _bid = msg_struc.get('bid_mid', '')
         _from_call = msg_struc.get('sender', '')
         _from_bbs = msg_struc.get('sender_bbs', '')
@@ -310,7 +310,7 @@ class SQL_Database:
         return ret
 
     def bbs_insert_new_msg(self, msg_struc: dict):
-        print("bbs_new_msg -------------")
+        # print("bbs_new_msg -------------")
         # _bid = msg_struc.get('bid_mid', '')
         # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
         _from_call = msg_struc.get('sender', '')
@@ -400,7 +400,7 @@ class SQL_Database:
         return True
 
     def bbs_insert_msg_to_fwd(self, msg_struc: dict):
-        print("bbs_add_msg_to_fwd -------------")
+        # print("bbs_add_msg_to_fwd -------------")
         _bid = msg_struc.get('bid_mid', '')
         if not _bid:
             return False
@@ -598,7 +598,7 @@ class SQL_Database:
                   "FROM pms_out_msg "
                   "WHERE flag='E';")
         res = self.commit_query(_query)
-        print(f"bbs_get_sv_msg_Tab_for_GUI res: {res}")
+        # print(f"bbs_get_sv_msg_Tab_for_GUI res: {res}")
         return res
 
     def bbs_get_sv_msg_for_GUI(self, mid: str):
@@ -617,11 +617,11 @@ class SQL_Database:
         _query = "SELECT BID FROM pms_fwd_q WHERE FWDID=%s;"
         _query_data = (fwd_id,)
         res = self.commit_query_bin(_query, _query_data)
-        print(f"bbs_act_outMsg_by_FWDID res: {res}")
+        # print(f"bbs_act_outMsg_by_FWDID res: {res}")
         if not res:
             print("Error bbs_act_outMsg_by_BID. No BID")
         bid = res[0][0]
-        print(f"bbs_act_outMsg_by_FWDID bid: {bid}")
+        # print(f"bbs_act_outMsg_by_FWDID bid: {bid}")
         _tx_time = datetime.now().strftime(SQL_TIME_FORMAT)
         _query = "UPDATE pms_fwd_q SET flag=%s, tx_time=%s WHERE FWDID=%s;"
         _query_data = (flag, _tx_time, fwd_id)

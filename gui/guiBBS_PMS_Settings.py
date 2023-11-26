@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from bbs.bbs_main import getNew_homeBBS_cfg
+from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import validate_call, get_list_fm_viaStr
 from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
@@ -171,7 +171,7 @@ class PMS_Settings(tk.Toplevel):
         if not cfg:
             if 'NOCALL' in self._bbs_vars.keys():
                 return
-            cfg = getNew_homeBBS_cfg()
+            cfg = POPT_CFG.get_default_CFG_by_key('pms_home_bbs')
         port_id_var = tk.StringVar(self, value=cfg.get('port_id', '0'))
         dest_call_var = tk.StringVar(self, value=cfg.get('dest_call', 'NOCALL'))
         regio_var = tk.StringVar(self, value=cfg.get('regio', ''))
@@ -251,14 +251,9 @@ class PMS_Settings(tk.Toplevel):
     def _del_homeBBS_tab(self):
         cfg_key = self._get_sel_tabKey()
         if cfg_key:
-            print(f"Vor: {self._bbs_obj.get_pms_cfg()}")
-
             self._del_homeBBS_cfg(cfg_key)
-            print(f"nach: {self._bbs_obj.get_pms_cfg()}")
             self._del_homeBBS_vars(cfg_key)
             self._tabctl.forget(self._tabctl.select())
-            print(f"forget: {self._bbs_obj.get_pms_cfg()}")
-
 
     def _get_BID(self):
         bid = self._bbs_obj.get_bid()[0]
@@ -330,7 +325,7 @@ class PMS_Settings(tk.Toplevel):
                 axip_port = int(nocall_vars['axip_port_var'].get())
             except ValueError:
                 axip_port = 0
-            home_bbs_cfg = getNew_homeBBS_cfg()
+            home_bbs_cfg = POPT_CFG.get_default_CFG_by_key('pms_home_bbs')
             home_bbs_cfg['port_id'] = port_id
             home_bbs_cfg['regio'] = regio
             home_bbs_cfg['dest_call'] = dest_call
@@ -340,6 +335,7 @@ class PMS_Settings(tk.Toplevel):
             self._bbs_vars[dest_call] = dict(self._bbs_vars['NOCALL'])
             self._set_tab_name(dest_call)
             self._bbs_vars['NOCALL'] = {}
+            self._del_NOCALL_homeBBS_cfg()
 
     def _save_hBBS_tab(self):
         ind = self._get_sel_tabKey()
@@ -381,7 +377,6 @@ class PMS_Settings(tk.Toplevel):
             self._bbs_vars[cfg_key] = None
             del self._bbs_vars[cfg_key]
 
-
     def tasker(self):
         pass
 
@@ -407,11 +402,14 @@ class PMS_Settings(tk.Toplevel):
 
     def _get_homeBBS_cfg(self, pms_cfg_k: str):
         all_bbs_cfgs = dict(self._pms_cfg.get('home_bbs_cfg', {}))
-        bbs_cfg = dict(all_bbs_cfgs.get(pms_cfg_k, getNew_homeBBS_cfg()))
+        bbs_cfg = dict(all_bbs_cfgs.get(pms_cfg_k, POPT_CFG.get_default_CFG_by_key('pms_home_bbs')))
         return bbs_cfg
 
     def _set_homeBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
         self._pms_cfg['home_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
+
+    def _del_NOCALL_homeBBS_cfg(self):
+        del self._pms_cfg['home_bbs_cfg']['NOCALL']
 
     def _del_homeBBS_cfg(self, pms_cfg_k: str):
         if pms_cfg_k in self._pms_cfg['home_bbs_cfg'].keys():
@@ -425,10 +423,8 @@ class PMS_Settings(tk.Toplevel):
             self._save_scheCfg(ind)
 
     def _select_hBBS_tab(self, event=None):
-        # ind = self._tabctl.index(self._tabctl.select())
         ind = self._get_sel_tabKey()
         if ind:
-            # print(ind)
             self._select_scheCfg(ind)
 
     def _get_sel_tabKey(self):
@@ -442,6 +438,8 @@ class PMS_Settings(tk.Toplevel):
         self._get_user_data_fm_vars()
         self._set_homeBBS_list()
         if self._pms_cfg:
+            if self._pms_cfg.get('home_bbs_cfg', {}).get('NOCALL', None):
+                del self._pms_cfg['home_bbs_cfg']['NOCALL']
             if self._bbs_obj:
                 self._bbs_obj.set_pms_cfg(self._pms_cfg)
 
@@ -450,7 +448,7 @@ class PMS_Settings(tk.Toplevel):
 
     def _save_btn(self):
         self._save_pms_cfg()
-        print(self._pms_cfg)
+        POPT_CFG.save_CFG_to_file()
 
     def _ok_btn(self):
         self._save_pms_cfg()

@@ -40,7 +40,7 @@ def getNew_schedule_config(intervall: float = 0,
         if week_days_r not in week_days.keys():
             week_days[week_days_r] = False
     """
-    return dict({
+    return {
         "repeat_min": intervall,        # Float: Minutes. Also needed when 'minutes' not set.
         "move": move_time,              # 0-59 sec
         "minutes": minutes,             # {10: True, 33: True, 57: True}
@@ -49,7 +49,7 @@ def getNew_schedule_config(intervall: float = 0,
         "month": month,                 # {1: True, 11: True}
         "month_day": month_day,         # {18: True, 22: True}
         "set_interval": set_interval,   # False = Trigger after Init + move_time
-    })
+    }
 
 
 class PoPTSchedule:

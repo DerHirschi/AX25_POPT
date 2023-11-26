@@ -2,6 +2,7 @@ import time
 import threading
 
 from ax25.ax25AutoConnTask import AutoConnTask
+from cfg.popt_config import POPT_CFG
 from sql_db.db_main import SQL_Database
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH_LIST
@@ -150,6 +151,7 @@ class AX25PortHandler(object):
         MH_LIST.save_mh_data()
         USER_DB.save_data()
         self.close_DB()
+        POPT_CFG.save_CFG_to_file()
 
     def close_port(self, port_id: int):
         logger.info('Info: Versuche Port {} zu schließen.'.format(port_id))
@@ -266,7 +268,7 @@ class AX25PortHandler(object):
 
     def _auto_conn_tasker(self):
         for k in list(self.auto_connections.keys()):
-            print(f"AutoConn state_id: {self.auto_connections[k].state_id}")
+            # print(f"AutoConn state_id: {self.auto_connections[k].state_id}")
             if self.auto_connections[k].state_id:
                 self.auto_connections[k].crone()
             else:

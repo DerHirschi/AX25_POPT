@@ -1,3 +1,15 @@
+"""
+pip uninstall mysql-connector-python
+pip uninstall mysql-connector
+pip install mysql-connector-python
+
+##################
+sudo mysql
+CREATE DATABASE IF NOT EXISTS popt_db;
+CREATE USER 'popt'@'localhost' IDENTIFIED BY '83g6u45908k91HG2jhj5jeGG';
+GRANT ALL PRIVILEGES ON popt_db.* TO 'popt'@'localhost';
+FLUSH PRIVILEGES;
+"""
 import time
 from config_station import logger
 import mysql.connector
@@ -67,8 +79,8 @@ class SQL_DB:
                 try:
                     # with self.conn.cursor() as cursor:
                     cursor = self.conn.cursor()
-                    print(f"Query: {query_str}")
-                    print(f"QData: {query_data}")
+                    # print(f"Query: {query_str}")
+                    # print(f"QData: {query_data}")
                     cursor.execute(query_str, query_data)
                     return cursor.fetchall()
                 except AttributeError:

@@ -12,7 +12,6 @@ from constant import STATION_ID_ENCODING_REV
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_str
 from string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
-from ax25.ax25Error import AX25EncodingERROR
 from UserDB.UserDBmain import Client, USER_DB
 from ax25.ax25UI_Pipe import AX25Pipe
 
