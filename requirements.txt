@@ -8,5 +8,5 @@ aprslib~=0.7.2
 plotly~=5.14.1
 pandas~=2.0.2
 future~=0.18.2
-mysql-connector-python~=8.1.0
+# mysql-connector-python~=8.1.0
 setuptools~=45.2.0
