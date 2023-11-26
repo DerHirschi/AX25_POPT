@@ -11,7 +11,10 @@ class SQL_DB:
         if not self.database_name:
             logger.error("SQLITE: No Database in Config")
             raise MySQLConnectionError("SQLITE: No Database in Config")
-        self.conn = sqlite3.connect(CFG_data_path + self.database_name, check_same_thread=False)
+        try:
+            self.conn = sqlite3.connect(CFG_data_path + self.database_name, check_same_thread=False)
+        except sqlite3.OperationalError as e:
+            raise MySQLConnectionError(f"SQLITE: {e}")
 
     def close(self):
         if self.conn:
@@ -64,3 +67,4 @@ class SQL_DB:
 
     def get_bid(self):
         return self.execute_query("SELECT SEQ from sqlite_sequence WHERE name='pms_out_msg'")
+

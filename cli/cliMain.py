@@ -429,22 +429,21 @@ class DefaultCLI(object):
         # port_id = self.own_port.port_id
         port_id = -1
         vias = [self.connection.my_call_str]
+        port_tr = False
         if len(self.parameter) > 1:
             if self.parameter[-1].isdigit():
+                port_tr = True
                 port_id = int(self.parameter[-1])
                 if port_id not in self.port_handler.ax25_ports.keys():
                     ret = '\r # Ungültiger Port..\r'
                     return ret
-            if self != -1:
+            if port_tr:
                 parm = self.parameter[1:-1]
             else:
                 parm = self.parameter[1:]
 
             for call in parm:
-                try:
-                    tmp_call = validate_call(call)
-                except AX25EncodingERROR:
-                    break
+                tmp_call = validate_call(call)
                 if tmp_call:
                     vias.append(tmp_call)
                 else:

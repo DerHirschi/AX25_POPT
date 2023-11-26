@@ -26,6 +26,7 @@ from gui.guiAPRS_be_tracer import BeaconTracer
 from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.guiAPRS_wx_tree import WXWin
 from gui.guiBBS_APRS_MSGcenter import MSG_Center
+from gui.guiBBS_PMS_Settings import PMS_Settings
 # from gui.guiBBS_PMS_Settings import PMS_Settings
 from gui.guiBBS_fwd_q import BBS_fwd_Q
 from gui.guiFT_Manager import FileTransferManager
@@ -2698,8 +2699,7 @@ class TkMainWin:
                 'beacon_sett': BeaconSettings,  # Beacon Settings
                 'port_sett': PortSettingsWin,  # Port Settings
                 'stat_sett': StationSettingsWin,  # Stat Settings
-                # 'pms_setting': PMS_Settings,  # PMS Settings
-                'pms_setting': None,  # PMS Settings
+                'pms_setting': PMS_Settings,  # PMS Settings
             }.get(win_key, '')
             if settings_win:
                 self.settings_win = settings_win(self)

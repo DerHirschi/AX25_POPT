@@ -4,15 +4,15 @@ from datetime import datetime
 from fnc.str_fnc import get_weekDay_fm_dt
 
 
-def build_schedule_config(intervall: float = 0,
-                          move_time: int = 0,
-                          minutes=None,
-                          hours=None,
-                          week_days=None,
-                          month=None,
-                          month_day=None,
-                          set_interval=True,
-                          ):
+def getNew_schedule_config(intervall: float = 0,
+                           move_time: int = 0,
+                           minutes=None,
+                           hours=None,
+                           week_days=None,
+                           month=None,
+                           month_day=None,
+                           set_interval=True,
+                           ):
     """
     for minutes_r in range(60):
         minutes[minutes_r] = False
@@ -40,7 +40,7 @@ def build_schedule_config(intervall: float = 0,
         if week_days_r not in week_days.keys():
             week_days[week_days_r] = False
     """
-    return {
+    return dict({
         "repeat_min": intervall,        # Float: Minutes. Also needed when 'minutes' not set.
         "move": move_time,              # 0-59 sec
         "minutes": minutes,             # {10: True, 33: True, 57: True}
@@ -49,7 +49,7 @@ def build_schedule_config(intervall: float = 0,
         "month": month,                 # {1: True, 11: True}
         "month_day": month_day,         # {18: True, 22: True}
         "set_interval": set_interval,   # False = Trigger after Init + move_time
-    }
+    })
 
 
 class PoPTSchedule:
@@ -199,7 +199,7 @@ class PoPTSchedule:
 
 
 if __name__ == '__main__':
-    confi = build_schedule_config()
+    confi = getNew_schedule_config()
     confi['repeat_min'] = 1
     confi['hours'][1] = True
     confi['hours'][0] = True

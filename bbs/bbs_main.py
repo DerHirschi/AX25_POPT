@@ -17,8 +17,7 @@ from datetime import datetime
 from bbs.bbs_Error import bbsInitError, logger
 from cli.cliStationIdent import get_station_id_obj
 from constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
-from fnc.popt_sched import build_schedule_config, PoPTSchedule
-from sql_db.db_main import DB
+from schedule.popt_sched import getNew_schedule_config, PoPTSchedule
 
 FWD_RESP_TAB = {
     True: '-',
@@ -29,6 +28,29 @@ FWD_RESP_LATER = '='
 FWD_RESP_REJ = 'R'
 FWD_RESP_HLD = 'H'
 FWD_RESP_ERR = 'E'
+
+
+def getNew_PMS_cfg():
+    return dict({
+        'user': 'NOCALL',
+        'regio': '',
+        'home_bbs_cfg': {},
+        'home_bbs': [],
+        'single_auto_conn': True,
+        'auto_conn': True,
+    })
+
+
+def getNew_homeBBS_cfg():
+    return dict({
+                'port_id': 0,
+                'regio': '',
+                # 'own_call': user,
+                'dest_call': 'NOCALL',
+                'via_calls': [],
+                'axip_add': ('', 0),
+                'scheduler_cfg': dict(getNew_schedule_config()),
+            })
 
 
 def generate_sid(features=("F", "M", "H")):
@@ -159,6 +181,7 @@ class BBSConnection:
         print('BBSConnection INIT')
         self._ax25_conn = ax25_connection
         self._bbs = bbs_obj
+        self._db = bbs_obj.get_db()
         ###########
         self.e = False
         self._mybbs_flag = self._bbs.pms_flag
@@ -409,20 +432,20 @@ class BBSConnection:
             if flag in ['+', 'Y']:
                 self._tx_out_msg_by_bid(_bids[_i])
             elif flag in ['-', 'N']:
-                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S-')
+                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S-')
             elif flag in ['=', 'L']:
-                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S=')
+                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S=')
             elif flag == 'H':
                 self._tx_out_msg_by_bid(_bids[_i])
             elif flag == 'R':
-                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'R')
+                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'R')
             elif flag == 'E':
-                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'EE')
+                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'EE')
             # TODO
             elif flag in ['!', '']:  # Offset
                 print("BBS FWD Prot Error! OFFSET Error not implemented yet")
                 logger.error("BBS FWD Prot Error! OFFSET Error not implemented yet")
-                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'EO')
+                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'EO')
                 # ABORT ?
             _i += 1
             # self._tx_msg_BIDs = self._tx_msg_BIDs[1:]
@@ -431,7 +454,7 @@ class BBSConnection:
         return True
 
     def _tx_out_msg_by_bid(self, bid: str):
-        _msg = DB.bbs_get_outMsg_by_BID(bid)
+        _msg = self._db.bbs_get_outMsg_by_BID(bid)
         if not _msg:
             return False
         # print(f"tx_out- 0: {_msg[0][0]}  1: {_msg[0][1]}  3: {_msg[0][2]}  len3: {len(_msg[0][2])}")
@@ -452,10 +475,10 @@ class BBSConnection:
             _fwd_id = self._get_fwd_id(bid)
             flag = self._tx_fs_list[0]
             if flag in ['+', 'Y']:
-                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S+')
+                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S+')
 
             elif flag == 'H':
-                DB.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'H')
+                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'H')
 
             self._tx_msg_BIDs = self._tx_msg_BIDs[1:]
             self._tx_fs_list = self._tx_fs_list[1:]
@@ -548,7 +571,7 @@ class BBSConnection:
             # 'R:230513/2210z @:CB0ESN.#E.W.DLNET.DEU.EU [E|JO31MK] obcm1.07b5 LT:007'
             self._rx_msg_header[_k]['time'] = parse_header_timestamp(path[-1])
             self._rx_msg_header[_k]['subject'] = subject
-            res = DB.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[_k]))
+            res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[_k]))
             if not res:
                 logger.error(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
                 print(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
@@ -576,6 +599,7 @@ class BBS:
         logger.info('BBS INIT')
         print('BBS INIT')
         self._port_handler = port_handler
+        self._db = self._port_handler.get_database()
         self.pms_flag = generate_sid(features=("F", "M", "H"))
         self.my_stat_id = get_station_id_obj(str(self.pms_flag))
         try:
@@ -586,19 +610,18 @@ class BBS:
             raise bbsInitError('my_stat_id is None')
         if self.my_stat_id.e:
             raise bbsInitError('my_stat_id.e Error')
-        self.pms_connections = []
         ###############
         # Init DB
-        DB.check_tables_exists('bbs')
+        self._db.check_tables_exists('bbs')
         ###############
         # Config's
-        sched1 = build_schedule_config(intervall=5, move_time=20, set_interval=False)
-        sched2 = build_schedule_config(intervall=60, move_time=20, set_interval=True)
-        self.pms_cfg = {
+        sched1 = dict(getNew_schedule_config(intervall=10, move_time=20, set_interval=False))
+        sched2 = dict(getNew_schedule_config(intervall=60, move_time=20, set_interval=True))
+        self._pms_cfg: dict = {
             'user': 'MD2SAW',
             'regio': '#SAW.SAA.DEU.EU',
             # 'home_bbs': [],
-            'home_bbs_cfg': {
+            'home_bbs_cfg': dict({
                 'MD2BBS': {
                     'port_id': 1,
                     'regio': '#SAW.SAA.DEU.EU',
@@ -616,9 +639,12 @@ class BBS:
                     'via_calls': ['DNX527-1'],
                     'scheduler_cfg': sched2,
                 },
-            },
+            }),
             'single_auto_conn': True,
+            'auto_conn': True,
         }
+        self._new_pms_cfg = None
+        self._pms_cfg_hasChanged = False
         ####################
         # Set Vars
         self._set_pms_home_bbs()
@@ -626,8 +652,10 @@ class BBS:
         # Scheduler
         self._schedule_q = []
         self._set_pms_fwd_schedule()
-        # Auto Connection
-        self._autoConn = None
+        ####################
+        # CTL & Auto Connection
+        self._autoConn = None  # TODO Cleanup. Use self.pms_connections
+        self.pms_connections = []
         ####################
         # Tasker/crone
         # self._var_task_1sec = time.time()
@@ -648,9 +676,34 @@ class BBS:
         })
         """
         # self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
+    def _reinit(self):
+        if not self.pms_connections:
+            if self._new_pms_cfg:
+                self._pms_cfg = dict(self._new_pms_cfg)
+                self._new_pms_cfg = None
+            self._reinit_stationID_pmsFlag()
+            self._set_pms_home_bbs()
+            self._schedule_q = []
+            self._set_pms_fwd_schedule()
+            self._pms_cfg_hasChanged = False
+
+    def _reinit_stationID_pmsFlag(self):
+        self.pms_flag = generate_sid(features=("F", "M", "H"))
+        self.my_stat_id = get_station_id_obj(str(self.pms_flag))
+        try:
+            self.pms_flag = self.pms_flag.encode('ASCII')
+        except UnicodeEncodeError:
+            raise bbsInitError('UnicodeEncodeError')
+        if self.my_stat_id is None:
+            raise bbsInitError('my_stat_id is None')
+        if self.my_stat_id.e:
+            raise bbsInitError('my_stat_id.e Error')
 
     def main_cron(self):
-        self._5sec_task()
+        if self._pms_cfg_hasChanged:
+            self._reinit()
+        else:
+            self._5sec_task()
 
     ###################################
     # Tasks
@@ -663,16 +716,16 @@ class BBS:
     # CFG Stuff
     def _set_pms_home_bbs(self):
         home_bbs = []
-        for h_bbs_k in list(self.pms_cfg.get('home_bbs_cfg', {}).keys()):
-            regio = self.pms_cfg['home_bbs_cfg'][h_bbs_k].get('regio', '')
+        for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
+            regio = self._pms_cfg['home_bbs_cfg'][h_bbs_k].get('regio', '')
             if regio:
                 home_bbs.append((h_bbs_k + '.' + regio))
-            self.pms_cfg['home_bbs_cfg'][h_bbs_k]['own_call'] = self.pms_cfg['user']
-        self.pms_cfg['home_bbs'] = home_bbs
+            self._pms_cfg['home_bbs_cfg'][h_bbs_k]['own_call'] = self._pms_cfg['user']
+        self._pms_cfg['home_bbs'] = home_bbs
 
     def _set_pms_fwd_schedule(self):
-        for h_bbs_k in list(self.pms_cfg.get('home_bbs_cfg', {}).keys()):
-            cfg = self.pms_cfg['home_bbs_cfg'][h_bbs_k]
+        for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
+            cfg = self._pms_cfg['home_bbs_cfg'][h_bbs_k]
             sched_cfg = cfg.get('scheduler_cfg', None)
             if sched_cfg:
                 autoconn_cfg = {
@@ -709,7 +762,9 @@ class BBS:
     ###################################
     # Auto FWD
     def _scheduler_task(self):
-        single = self.pms_cfg.get('single_auto_conn', True)
+        if not self._pms_cfg.get('auto_conn', False):
+            return
+        single = self._pms_cfg.get('single_auto_conn', True)
         if single:
             if self._check_autoConn_status():
                 return
@@ -746,48 +801,42 @@ class BBS:
         """
         self._autoConn = self._port_handler.init_autoConn(conf)
 
-    @staticmethod
-    def is_pn_in_db(bid_mid: str):
+    def is_pn_in_db(self, bid_mid: str):
         if not bid_mid:
             return 'E'
-        _ret = DB.bbs_check_pn_mid_exists(bid_mid)
+        _ret = self._db.bbs_check_pn_mid_exists(bid_mid)
         return FWD_RESP_TAB[_ret]
 
-    @staticmethod
-    def is_bl_in_db(bid_mid: str):
+    def is_bl_in_db(self, bid_mid: str):
         if not bid_mid:
             return 'E'
-        _ret = DB.bbs_check_bl_mid_exists(bid_mid)
+        _ret = self._db.bbs_check_bl_mid_exists(bid_mid)
         return FWD_RESP_TAB[_ret]
 
-    @staticmethod
-    def new_msg(msg_struc: dict):
+    def new_msg(self, msg_struc: dict):
         msg_struc['message_size'] = int(len(msg_struc['msg']))
 
-        return DB.bbs_insert_new_msg(msg_struc)
+        return self._db.bbs_insert_new_msg(msg_struc)
 
-    @staticmethod
-    def update_msg(msg_struc: dict):
+    def update_msg(self, msg_struc: dict):
         if not msg_struc.get('mid', ''):
             return False
         msg_struc['message_size'] = int(len(msg_struc['msg']))
 
-        return DB.bbs_update_out_msg(msg_struc)
+        return self._db.bbs_update_out_msg(msg_struc)
 
-    @staticmethod
-    def add_msg_to_fwd_by_id(mid: int, fwd_bbs_call: str):
-        _msg_fm_db = DB.bbs_get_msg_fm_outTab_by_mid(mid)
+    def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call: str):
+        _msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if _msg_fm_db:
             # print(_msg_fm_db)
             _new_msg = build_new_msg_header(_msg_fm_db)
             _new_msg['fwd_bbs_call'] = fwd_bbs_call
             # print(_new_msg)
-            return DB.bbs_insert_msg_to_fwd(_new_msg)
+            return self._db.bbs_insert_msg_to_fwd(_new_msg)
         return False
 
-    @staticmethod
-    def get_fwd_q_tab_forBBS(fwd_bbs_call: str):
-        return DB.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
+    def get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
+        return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
 
     def build_fwd_header(self, bbs_call: str):
         fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
@@ -812,21 +861,18 @@ class BBS:
             logger.error("BBS: build_fwd_header UnicodeEncodeError")
             return b'', _ret_bids
 
-    @staticmethod
-    def get_fwd_q_tab():
-        return DB.bbs_get_fwd_q_Tab_for_GUI()
 
-    @staticmethod
-    def get_pn_msg_tab():
-        return DB.bbs_get_pn_msg_Tab_for_GUI()
+    def get_fwd_q_tab(self):
+        return self._db.bbs_get_fwd_q_Tab_for_GUI()
 
-    @staticmethod
-    def get_bl_msg_tab():
-        return DB.bbs_get_bl_msg_Tab_for_GUI()
+    def get_pn_msg_tab(self):
+        return self._db.bbs_get_pn_msg_Tab_for_GUI()
 
-    @staticmethod
-    def get_bl_msg_fm_BID(bid):
-        data = DB.bbs_get_bl_msg_for_GUI(bid)
+    def get_bl_msg_tab(self):
+        return self._db.bbs_get_bl_msg_Tab_for_GUI()
+
+    def get_bl_msg_fm_BID(self, bid):
+        data = self._db.bbs_get_bl_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -847,13 +893,11 @@ class BBS:
             'flag': data[0][13],
         }
 
-    @staticmethod
-    def set_bl_msg_notNew(bid):
-        DB.bbs_set_bl_msg_notNew(bid)
+    def set_bl_msg_notNew(self, bid):
+        self._db.bbs_set_bl_msg_notNew(bid)
 
-    @staticmethod
-    def get_pn_msg_fm_BID(bid):
-        data = DB.bbs_get_pn_msg_for_GUI(bid)
+    def get_pn_msg_fm_BID(self, bid):
+        data = self._db.bbs_get_pn_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -874,13 +918,11 @@ class BBS:
             'flag': data[0][13],
         }
 
-    @staticmethod
-    def set_pn_msg_notNew(bid):
-        DB.bbs_set_pn_msg_notNew(bid)
+    def set_pn_msg_notNew(self, bid):
+        self._db.bbs_set_pn_msg_notNew(bid)
 
-    @staticmethod
-    def get_out_msg_fm_BID(bid):
-        data = DB.bbs_get_out_msg_for_GUI(bid)
+    def get_out_msg_fm_BID(self, bid):
+        data = self._db.bbs_get_out_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -903,15 +945,21 @@ class BBS:
         }
 
     def get_pms_cfg(self):
-        return self.pms_cfg
+        if not self._pms_cfg:
+            self._pms_cfg = getNew_PMS_cfg()
+        return dict(self._pms_cfg)
 
-    @staticmethod
-    def get_sv_msg_tab():
-        return DB.bbs_get_sv_msg_Tab_for_GUI()
+    def set_pms_cfg(self, pms_cfg: dict):
+        if pms_cfg:
+            self._new_pms_cfg = pms_cfg
+            self._pms_cfg_hasChanged = True
+        # TODO: Save to cfg file
 
-    @staticmethod
-    def get_sv_msg_fm_BID(mid):
-        data = DB.bbs_get_sv_msg_for_GUI(mid)
+    def get_sv_msg_tab(self):
+        return self._db.bbs_get_sv_msg_Tab_for_GUI()
+
+    def get_sv_msg_fm_BID(self, mid):
+        data = self._db.bbs_get_sv_msg_for_GUI(mid)
         if not data:
             return {}
         return {
@@ -934,26 +982,25 @@ class BBS:
             'flag': data[0][16],
         }
 
-    @staticmethod
-    def del_pn_by_BID(bid):
-        return DB.bbs_del_pn_msg_by_BID(bid)
+    def del_pn_by_BID(self, bid):
+        return self._db.bbs_del_pn_msg_by_BID(bid)
 
-    @staticmethod
-    def del_bl_by_BID(bid):
-        return DB.bbs_del_bl_msg_by_BID(bid)
+    def del_bl_by_BID(self, bid):
+        return self._db.bbs_del_bl_msg_by_BID(bid)
 
-    @staticmethod
-    def del_out_by_BID(bid):
-        return DB.bbs_del_out_msg_by_BID(bid)
+    def del_out_by_BID(self, bid):
+        return self._db.bbs_del_out_msg_by_BID(bid)
 
-    @staticmethod
-    def del_sv_by_MID(mid):
-        return DB.bbs_del_sv_msg_by_MID(mid)
+    def del_sv_by_MID(self, mid):
+        return self._db.bbs_del_sv_msg_by_MID(mid)
 
-    @staticmethod
-    def set_bid(bid):
-        return DB.pms_set_bid(bid)
+    def set_bid(self, bid):
+        return self._db.pms_set_bid(bid)
 
-    @staticmethod
-    def get_bid():
-        return DB.pms_get_bid()
+    def get_bid(self):
+        return self._db.pms_get_bid()
+
+    def get_db(self):
+        return self._db
+
+

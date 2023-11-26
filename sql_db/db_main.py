@@ -40,7 +40,14 @@ class SQL_Database:
         self.MYSQL = bool(MYSQL)
         if self.MYSQL:
             logger.info("Database: set to MYSQL-Server")
-            from sql_db.my_sql import SQL_DB
+            try:
+                from sql_db.my_sql import SQL_DB
+            except ImportError:
+                self.MYSQL = False
+                logger.warning("Database: Python mysql_connector not installed !!\n"
+                               "pip install mysql-connector-python~=8.1.0")
+                logger.info("Database: fallback to SQLite")
+                from sql_db.sql_lite import SQL_DB
         else:
             logger.info("Database: set to SQLite")
             from sql_db.sql_lite import SQL_DB
@@ -659,5 +666,5 @@ class SQL_Database:
     def pms_get_bid(self):
         return self.db.get_bid()
 
-DB = SQL_Database()
+# DB = SQL_Database()
 # print(DB.bbs_check_pn_mid_exists('MD2SAW_12222'))

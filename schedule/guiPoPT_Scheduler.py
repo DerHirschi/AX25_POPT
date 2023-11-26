@@ -2,22 +2,29 @@ import tkinter as tk
 from tkinter import ttk
 
 from constant import WEEK_DAYS_GE
-from fnc.popt_sched import build_schedule_config
+from schedule.popt_sched import getNew_schedule_config
 
 
 # from string_tab import STR_TABLE
 
 
 class PoPT_Set_Scheduler(tk.Toplevel):
-    def __init__(self, root_win, schedule_conf=None, sel_frames=None):
+    def __init__(self, root_win, sel_frames=None):
         """
+        ROOT WIN VARS needed:
+        self.schedule_config = getNew_schedule_config()
+        self.schedule_win = None
+        Func needed/triggered when closed:
+        self.scheduler_config_save_task()
+
         :returns to self._root_win.schedule_config on call self._set_vars_to_conf()
         :param root_win:
-        :param schedule_conf:   build_schedule_config()
+        # :param schedule_conf:   getNew_schedule_config()
         :param sel_frames:      ['min', 'h', 'wd', 'm', 'md']
         """
         tk.Toplevel.__init__(self)
         self._root_win = root_win
+        self._root_win.schedule_win = self
         # self._lang = root_win.language
         ##############
         # DEV
@@ -32,13 +39,15 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         """
         ###################################
         # Vars
-        self.schedule_config = schedule_conf
+        if not self._root_win.schedule_config:
+            self._root_win.schedule_config = getNew_schedule_config()
+        self.schedule_config = self._root_win.schedule_config
         self._select_vars = {}
         self._min_sel = {}
         self._interval_var = tk.StringVar(self, value='0')
         self._offset_var = tk.StringVar(self, value='0')
         if not self.schedule_config:
-            self.schedule_config = build_schedule_config()
+            self.schedule_config = dict(getNew_schedule_config())
         if not sel_frames:
             sel_frames = ['min', 'h', 'wd', 'm', 'md']
             # sel_frames = ['wd', 'm', 'md']
@@ -209,6 +218,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
 
     def _set_vars_to_conf(self):
         # Todo: Testen
+        # Don't like this solution..
         for k in self._select_vars.keys():
             for kk in self._select_vars[k]:
                 if self._select_vars[k][kk].get():
@@ -250,21 +260,11 @@ class PoPT_Set_Scheduler(tk.Toplevel):
 
     def _ok(self):
         self._set_vars_to_conf()
+        if self._root_win.scheduler_config_save_task:
+            self._root_win.scheduler_config_save_task()
         self._close()
 
     def _close(self):
-        # self._root_win.settings_win = None
+        self._root_win.schedule_win = None
         self.destroy()
 
-
-if __name__ == '__main__':
-    def tasker():
-        pass
-
-
-    main_win = tk.Tk()
-    main_win.title(f"PTest")
-    main_win.geometry("400x150")
-    win = PoPT_Set_Scheduler(main_win)
-    main_win.after(100, tasker)
-    main_win.mainloop()

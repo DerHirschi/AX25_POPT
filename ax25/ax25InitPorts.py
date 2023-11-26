@@ -2,7 +2,7 @@ import time
 import threading
 
 from ax25.ax25AutoConnTask import AutoConnTask
-from sql_db.db_main import DB
+from sql_db.db_main import SQL_Database
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH_LIST
 from ax25aprs.aprs_station import APRS_ais
@@ -32,12 +32,6 @@ class AX25PortHandler(object):
         logger.info("Port Init.")
         init_dir_struct()
         #################
-        # Init SQL-DB
-        try:
-            self.init_DB()
-        except MySQLConnectionError:
-            raise MySQLConnectionError
-        #################
         self.is_running = True
         self.ax25types = {
             'KISSTCP': KissTCP,
@@ -45,11 +39,11 @@ class AX25PortHandler(object):
             'AXIP': AXIP,
         }
         ###########################
-        # VArs for gathering Stuff
-        # self.aprs_ais = None
-        self.aprs_ais = None
+        # VARs
+        self.db = None
         self.gui = None
         self.bbs = None
+        self.aprs_ais = None
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
         self.all_connections = {}       # {int: AX25Conn} Channel Index
@@ -60,6 +54,14 @@ class AX25PortHandler(object):
         self.ax25_stations_settings = get_all_stat_cfg()
         self.ax25_port_settings = {}    # Port settings are in Port .. TODO Cleanup
         self.ax25_ports = {}
+        #################
+        # Init SQL-DB
+        try:
+            self._init_DB()
+        except MySQLConnectionError:
+            logger.error("Database Init Error !! Can't start PoPT !")
+            print("Database Init Error !! Can't start PoPT !")
+            # raise MySQLConnectionError # TODO !!! Commented out for GUI testing
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
@@ -147,7 +149,7 @@ class AX25PortHandler(object):
             self.close_port(k)
         MH_LIST.save_mh_data()
         USER_DB.save_data()
-        DB.close_db()
+        self.close_DB()
 
     def close_port(self, port_id: int):
         logger.info('Info: Versuche Port {} zu schließen.'.format(port_id))
@@ -492,21 +494,23 @@ class AX25PortHandler(object):
 
     ###############################
     # SQL-DB
-    @staticmethod
-    def init_DB():
+    def _init_DB(self):
         ###############
         # Init DB
-        if not DB.error:
+        self.db = SQL_Database()
+        if not self.db.error:
             # DB.check_tables_exists('bbs')
-            DB.check_tables_exists('user_db')
-            if DB.error:
+            self.db.check_tables_exists('user_db')
+            if self.db.error:
                 raise MySQLConnectionError
         else:
             raise MySQLConnectionError
 
-    @staticmethod
-    def close_DB():
-        DB.close_db()
+    def close_DB(self):
+        self.db.close_db()
+
+    def get_database(self):
+        return self.db
 
     """
     def debug_fnc(self):
