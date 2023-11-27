@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 from constant import FONT, ENCODINGS
 from fnc.str_fnc import format_number
 from gui.guiBBS_newMSG import BBS_newMSG
@@ -26,9 +27,9 @@ class MSG_Center(tk.Toplevel):
             'S': {},
         }
         self._var_encoding = tk.StringVar(self, 'UTF-8')
-        self.text_size = int(root_win.text_size)
+        self.text_size = int(POPT_CFG.get_guiCFG_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
         self._text_size_tabs = 10
-        self._newMSG_win = None
+        self.newPMS_MSG_win = self._root_win.newPMS_MSG_win
         ###################################
         self.title(STR_TABLE['msg_center'][self.language])
         self.style = self._root_win.style
@@ -263,6 +264,9 @@ class MSG_Center(tk.Toplevel):
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
         self.bind('<Control-c>', lambda event: self._copy_select())
+        #####################
+        # Get Settings fm CFG
+        self._init_Vars_fm_Cfg()
 
     def _init_Menu(self):
         _menubar = tk.Menu(self, tearoff=False)
@@ -270,8 +274,24 @@ class MSG_Center(tk.Toplevel):
         _MenuVerb = tk.Menu(_menubar, tearoff=False)
         _MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win())
         _MenuVerb.add_separator()
-        _MenuVerb.add_command(label='in Datei speichern', command=lambda: self._save_msg_to_file())
+        _MenuVerb.add_command(label='Alles sofort senden', command=lambda: self._do_pms_autoFWD())
         _menubar.add_cascade(label='Nachricht', menu=_MenuVerb, underline=0)
+        # ### Bearbeiten
+        _MenuEdit = tk.Menu(_menubar, tearoff=False)
+        _MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
+                              command=self._save_msg_to_file,
+                              underline=0)
+        _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
+
+    def _init_Vars_fm_Cfg(self):
+        pass
+        # self.text_size = int(POPT_CFG.get_guiCFG_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
+
+    def _save_Vars_to_Cfg(self):
+        cfg = POPT_CFG.get_guiCFG_main()
+        cfg['guiMsgC_parm_text_size'] = self.text_size
+
+        POPT_CFG.set_guiCFG_main(cfg)
 
     # PN TAB
     def _init_pn_tree(self, root_frame):
@@ -551,12 +571,21 @@ class MSG_Center(tk.Toplevel):
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
+        btn_frame_r = tk.Frame(btn_frame)
+        btn_frame_l = tk.Frame(btn_frame)
+        btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
+        btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
+
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame,
+        tk.Button(btn_frame_l,
+                  text='FWD Starten',
+                  command=lambda: self._do_pms_autoFWD()
+                  ).pack(side=tk.LEFT, expand=False)
+        tk.Button(btn_frame_r,
                   text='Löschen',
                   command=lambda: self._delete_msg()
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame,
+        tk.Button(btn_frame_r,
                   text='Weiterleiten',
                   command=lambda: self._open_newMSG_win_forward('O')
                   ).pack(side=tk.RIGHT, expand=False)
@@ -1299,14 +1328,14 @@ class MSG_Center(tk.Toplevel):
             text.tag_remove(tk.SEL, "1.0", tk.END)
 
     def _open_newMSG_win_reply(self, typ: str):
-        if self._newMSG_win is None:
+        if self.newPMS_MSG_win is None:
             if self._selected_msg.get(typ, None):
                 msg = dict(self._selected_msg[typ])
-                msg['subject'] = ('Re: ' + msg['subject'])
-                self._newMSG_win = BBS_newMSG(self, msg)
+                msg['subject'] = ('Re: ' + msg.get('subject', ''))
+                self.newPMS_MSG_win = BBS_newMSG(self, msg)
 
     def _open_newMSG_win_forward(self, typ: str):
-        if self._newMSG_win is None:
+        if self.newPMS_MSG_win is None:
             if self._selected_msg.get(typ, None):
                 msg = dict(self._selected_msg[typ])
                 msg['flag'] = 'E'
@@ -1314,11 +1343,12 @@ class MSG_Center(tk.Toplevel):
                 msg['to_call'] = ''
                 msg['to_bbs'] = ''
                 msg['subject'] = ('Fwd: ' + msg['subject'])
-                self._newMSG_win = BBS_newMSG(self, msg)
+                self.newPMS_MSG_win = BBS_newMSG(self, msg)
 
     def _open_newMSG_win(self):
-        if self._newMSG_win is None:
-            self._newMSG_win = BBS_newMSG(self)
+        if self.newPMS_MSG_win:
+            return
+        self.newPMS_MSG_win = BBS_newMSG(self)
 
     def on_bbsTab_select(self, event=None):
         try:
@@ -1347,8 +1377,8 @@ class MSG_Center(tk.Toplevel):
             update_task()
         # self._pn_tree.selection_set('"Row 0"')
 
-
-    def _save_msg_to_file(self):
+    ####################
+    def _save_msg_to_file(self, event=None):
         try:
             ind = self._tabControl.index(self._tabControl.select())
         except tk.TclError:
@@ -1363,7 +1393,26 @@ class MSG_Center(tk.Toplevel):
             data = msg_text.get('1.0', tk.END)
             save_file_dialog(data)
 
+    def _do_pms_autoFWD(self):
+        self._bbs_obj.start_man_autoFwd()
+
+    """
+    def _set_all_to_oldMSG(self):   # Set all Msg to read Status
+        bid_list = []
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return
+        # self._pn_data = self._bbs_obj.get_pn_msg_tab()
+        bid_mid = {
+            0: self._selected_msg['P'].get('bid', ''),
+            1: self._selected_msg['B'].get('bid', ''),
+            # 2: self._selected_msg['O'].get('bid', ''),
+            # 3: self._selected_msg['S'].get('mid', ''),
+        }.get(ind, '')
+    """
     def _close(self):
+        self._save_Vars_to_Cfg()
         self._bbs_obj = None
         self._root_win.MSG_Center = None
         self.destroy()

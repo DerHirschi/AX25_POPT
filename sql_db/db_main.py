@@ -579,6 +579,23 @@ class SQL_Database:
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
+    def pms_get_active_fwd_q_for_GUI(self):
+        _query = ("SELECT BID, "
+                  "from_call, "
+                  "from_bbs_call, "
+                  "to_call, "
+                  "to_bbs_call, "
+                  "fwd_bbs_call, "
+                  "subject, "
+                  "size, "
+                  "type, "
+                  "flag, "
+                  "tx_time "
+                  "FROM pms_fwd_q WHERE flag='F';")
+        res = self.commit_query(_query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
     def bbs_get_outMsg_by_BID(self, bid: str):
         _query = "SELECT subject, header, msg FROM pms_out_msg WHERE BID=%s LIMIT 5;"
         _query_data = (bid,)

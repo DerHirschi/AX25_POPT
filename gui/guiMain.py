@@ -30,6 +30,7 @@ from gui.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.guiBBS_PMS_Settings import PMS_Settings
 # from gui.guiBBS_PMS_Settings import PMS_Settings
 from gui.guiBBS_fwd_q import BBS_fwd_Q
+from gui.guiBBS_newMSG import BBS_newMSG
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
@@ -1567,7 +1568,7 @@ class TkMainWin:
         # GUI Stuff
         self.main_win = tk.Tk()
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
-        self.main_win.geometry("1400x850")
+        self.main_win.geometry("1400x850")  # TODO to/fm CFG
         try:
             self.main_win.iconbitmap("favicon.ico")
         except TclError:
@@ -1642,6 +1643,7 @@ class TkMainWin:
         self.userDB_tree_win = None
         self.BBS_fwd_q_list = None
         self.MSG_Center = None
+        self.newPMS_MSG_win = None
         #####
         self._init_GUIvars()
         ######################################
@@ -1794,6 +1796,8 @@ class TkMainWin:
     ####################
     # Init Stuff
     def _init_GUIvars(self):
+        #########################
+        # GUI-Vars fm cfg
         self.language = POPT_CFG.get_guiCFG_language()
         guiCfg = POPT_CFG.get_guiCFG_main()
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
@@ -1866,9 +1870,9 @@ class TkMainWin:
         _MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self._copy_select, underline=0)
         _MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self._clipboard_past, underline=1)
         _MenuEdit.add_separator()
-        _MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language], command=self._insert_fm_file,
+        _MenuEdit.add_command(label=STR_TABLE['past_qso_f_file'][self.language], command=self._insert_fm_file,
                               underline=0)
-        _MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language], command=self._save_to_file,
+        _MenuEdit.add_command(label=STR_TABLE['save_qso_to_file'][self.language], command=self._save_to_file,
                               underline=1)
         _MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self._save_monitor_to_file,
                               underline=1)
@@ -1960,10 +1964,14 @@ class TkMainWin:
         _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
         # BBS/PMS
         _MenuBBS = Menu(_menubar, tearoff=False)
-
+        _MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
+                             command=self._open_newPMS_mail,
+                             underline=0)
         _MenuBBS.add_command(label=STR_TABLE['msg_center'][self.language],
                              command=self._open_MSG_center,
                              underline=0)
+
+        _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
                              command=self._open_BBS_fwd_Q_win,
                              underline=0)
@@ -2838,6 +2846,12 @@ class TkMainWin:
         """ """
         if self.MSG_Center is None:
             self.MSG_Center = MSG_Center(self)
+
+    def _open_newPMS_mail(self):
+        """ """
+        if self.newPMS_MSG_win:
+            return
+        self.newPMS_MSG_win = BBS_newMSG(self)
 
     ###################
     # User-DB TreeView WIN

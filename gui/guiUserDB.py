@@ -531,6 +531,8 @@ class UserDB(tk.Toplevel):
         self._user_db.save_data()
         self.select_entry()
         self.root.update_station_info()
+        if self._db_ent is None:
+            return
         self.root.msg_to_monitor(f'Info: User Daten für {self._db_ent.call_str} wurden gespeichert..')
 
     def _save_vars(self):

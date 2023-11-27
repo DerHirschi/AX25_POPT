@@ -43,5 +43,7 @@ def getNew_maniGUI_cfg():
                 'gui_parm_channel_index': 1,
                 'gui_parm_text_size': 13,
                 'gui_parm__mon_buff': [],
-
+                #################
+                # MSG Center
+                'guiMsgC_parm_text_size': 13,
     }

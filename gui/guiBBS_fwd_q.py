@@ -21,8 +21,8 @@ class BBS_fwd_Q(tk.Toplevel):
         self.title(STR_TABLE['fwd_list'][self._root_win.language])
         self.style = self._root_win.style
         # self.geometry("1250x700")
-        self.geometry(f"1250x"
-                      f"700+"
+        self.geometry(f"1000x"
+                      f"300+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._close)
@@ -60,7 +60,6 @@ class BBS_fwd_Q(tk.Toplevel):
             'fwd_bbs_call',
             'size',
             'type',
-            'flag',
             'tx_time',
                     )
 
@@ -77,7 +76,6 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.heading('fwd_bbs_call', text='To BBS', command=lambda: self._sort_entry('fwd_bbs_call'))
         self._tree.heading('size', text='Size', command=lambda: self._sort_entry('size'))
         self._tree.heading('type', text='Type', command=lambda: self._sort_entry('type'))
-        self._tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag'))
         self._tree.heading('tx_time', text='TX Time', command=lambda: self._sort_entry('tx_time'))
         self._tree.column("BID", anchor=tk.CENTER, stretch=tk.YES, width=100)
         self._tree.column("from", anchor=tk.CENTER, stretch=tk.YES, width=190)
@@ -85,7 +83,6 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.column("fwd_bbs_call", anchor=tk.CENTER, stretch=tk.YES, width=90)
         self._tree.column("size", anchor=tk.CENTER, stretch=tk.YES, width=60)
         self._tree.column("type", anchor=tk.CENTER, stretch=tk.YES, width=60)
-        self._tree.column("flag", anchor=tk.CENTER, stretch=tk.YES, width=60)
         self._tree.column("tx_time", anchor=tk.CENTER, stretch=tk.YES, width=100)
 
         self._tree_data = []
@@ -105,7 +102,7 @@ class BBS_fwd_Q(tk.Toplevel):
             self._tree.insert('', tk.END, values=ret_ent)
 
     def _get_data(self):
-        self._data = list(self._bbs_obj.get_fwd_q_tab())
+        self._data = list(self._bbs_obj.get_active_fwd_q_tab())
 
     def _format_tree_data(self):
         self._tree_data = []
@@ -119,7 +116,6 @@ class BBS_fwd_Q(tk.Toplevel):
                 f'{el[5]}',
                 f'{el[6]}',
                 f'{el[7]}',
-                f'{el[8]}',
                 f'{el[9]}',
             ))
 

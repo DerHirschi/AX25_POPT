@@ -36,6 +36,7 @@ class ProcCallInput:
 
 
 class ConnHistory(object):
+    # TODO WTF .. change to DICT
     def __init__(self,
                  own_call: str,
                  dest_call: str,
@@ -49,6 +50,7 @@ class ConnHistory(object):
 
 
 class NewConnWin:
+    # TODO Again . . .
     def __init__(self, main_win):
         self._main = main_win
         self.style = self._main.style

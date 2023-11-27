@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import scrolledtext, messagebox
 
+from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
-from constant import FONT, ENCODINGS
+from cfg.popt_config import POPT_CFG
+from constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
 from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.str_fnc import format_number
+from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from string_tab import STR_TABLE
 
 
@@ -15,15 +18,19 @@ class BBS_newMSG(tk.Toplevel):
             reply_msg = {}
         self._root_win = root_win
         self._bbs_obj = PORT_HANDLER.get_bbs()
-        self.text_size = int(root_win.text_size)
+        self.text_size = int(POPT_CFG.get_guiCFG_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
         self.language = root_win.language
         ###################################
         self.title(STR_TABLE['new_pr_mail'][self.language])
         self.style = self._root_win.style
+        if self._root_win.main_win:
+            win = self._root_win.main_win
+        else:
+            win = self._root_win
         self.geometry(f"1150x"
                       f"700+"
-                      f"{self._root_win.winfo_x()}+"
-                      f"{self._root_win.winfo_y()}")
+                      f"{win.winfo_x()}+"
+                      f"{win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
@@ -48,11 +55,10 @@ class BBS_newMSG(tk.Toplevel):
         self._var_encoding = tk.StringVar(self, 'UTF-8')
         self._var_msg_size = tk.StringVar(self, ' Size: 0 Bytes')
 
-        self.chiefs = [
-            'MD2SAW@MD2BBS.#SAW.SAA.DEU.EU',
-            'MD3SAW@MD2BBS.#SAW.SAA.DEU.EU',
-            'DAC527@DBO527.#SAW.SAA.DEU.EU',
-        ]
+        prmail_list = USER_DB.get_all_PRmail()
+        if DEV_PRMAIL_ADD not in prmail_list:
+            prmail_list.append(DEV_PRMAIL_ADD)
+        self._chiefs = prmail_list
 
         ####################
         # Frames
@@ -90,9 +96,22 @@ class BBS_newMSG(tk.Toplevel):
     def _init_Menu(self):
         _menubar = tk.Menu(self, tearoff=False)
         self.config(menu=_menubar)
+        # ### Mail
         _MenuVerb = tk.Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label='Senden')
+        _MenuVerb.add_command(
+            label='Senden',
+            command=self._btn_send_msg,
+        )
         _menubar.add_cascade(label='Mail', menu=_MenuVerb, underline=0)
+        # ### Bearbeiten
+        _MenuEdit = tk.Menu(_menubar, tearoff=False)
+        _MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language],
+                              command=self._insert_fm_file,
+                              underline=0)
+        _MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
+                              command=self._save_to_file,
+                              underline=0)
+        _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
 
     def _init_upper_btn_frame(self, root_frame):
         tk.Button(root_frame,
@@ -150,7 +169,7 @@ class BBS_newMSG(tk.Toplevel):
                                      width=40)
         self._to_call_ent.pack(side=tk.LEFT, expand=False, padx=35)
         self._to_call_ent.bind('<KeyRelease>',
-                               lambda event: get_typed(event, self.chiefs, self._to_call_var, self._to_call_ent))
+                               lambda event: get_typed(event, self._chiefs, self._to_call_var, self._to_call_ent))
         self._to_call_ent.bind('<Key>', lambda event: detect_pressed(event, self._to_call_ent))
         tk.Label(to_frame, text='CC: ').pack(side=tk.LEFT, expand=False, padx=20)
         self._cc_entry = tk.Entry(to_frame,
@@ -158,7 +177,7 @@ class BBS_newMSG(tk.Toplevel):
                                   width=40)
         self._cc_entry.pack(side=tk.LEFT, expand=False)
         self._cc_entry.bind('<KeyRelease>',
-                            lambda event: get_typed(event, self.chiefs, self._to_cc_call_var, self._cc_entry))
+                            lambda event: get_typed(event, self._chiefs, self._to_cc_call_var, self._cc_entry))
         self._cc_entry.bind('<Key>', lambda event: detect_pressed(event, self._cc_entry))
 
         tk.Label(subj_frame, text='Betreff: ').pack(side=tk.LEFT, expand=False)
@@ -378,8 +397,22 @@ class BBS_newMSG(tk.Toplevel):
             self.clipboard_append(self._text.selection_get())
             self._text.delete('sel.first', 'sel.last')
 
+    def _insert_fm_file(self):
+        data = open_file_dialog()
+        if data:
+            if type(data) == bytes:
+                decoder = self._var_encoding.get()
+                self._text.insert(tk.INSERT, data.decode(decoder, 'ignore'))
+                return
+            self._text.insert(tk.INSERT, data)
+
+    def _save_to_file(self):
+        data = self._text.get('1.0', tk.END)
+        save_file_dialog(data)
+
     def _close(self):
         self._bbs_obj = None
-        self._root_win.on_bbsTab_select()
-        self._root_win._newMSG_win = None
+        if hasattr(self._root_win, 'on_bbsTab_select'):
+            self._root_win.on_bbsTab_select()
+        self._root_win.newPMS_MSG_win = None
         self.destroy()

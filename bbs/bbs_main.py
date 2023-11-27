@@ -636,6 +636,7 @@ class BBS:
         # CTL & Auto Connection
         self._autoConn = None  # TODO Cleanup. Use self.pms_connections
         self.pms_connections = []
+        self._new_man_FWD_wait_t = time.time()
         ####################
         # Tasker/crone
         # self._var_task_1sec = time.time()
@@ -770,11 +771,14 @@ class BBS:
         return False
 
     def start_man_autoFwd(self):
-        for task in self._schedule_q:
-            self.start_autoFwd(task[1])
+        if time.time() > self._new_man_FWD_wait_t:
+            self._new_man_FWD_wait_t = time.time() + 60
+            for task in self._schedule_q:
+                task[0].manual_trigger()
+                self.start_autoFwd(task[1])
 
     def start_autoFwd(self, conf):
-        print(f"BBS AutoConn: {conf}")
+        # print(f"BBS AutoConn: {conf}")
         """
         conf = {
             'task_typ': 'PMS',
@@ -850,6 +854,9 @@ class BBS:
 
     def get_fwd_q_tab(self):
         return self._db.bbs_get_fwd_q_Tab_for_GUI()
+
+    def get_active_fwd_q_tab(self):
+        return self._db.pms_get_active_fwd_q_for_GUI()
 
     def get_pn_msg_tab(self):
         return self._db.bbs_get_pn_msg_Tab_for_GUI()

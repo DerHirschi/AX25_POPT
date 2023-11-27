@@ -67,8 +67,8 @@ class DefaultCLI(object):
                 self.c_text = str(self.user_db_ent.CText)
 
         self.stat_identifier = get_station_id_obj(self.stat_identifier_str)
-        print(f"CLI STST ID : {self.stat_identifier}")
-        print(f"CLI STST str : {self.stat_identifier_str}")
+        # print(f"CLI STST ID : {self.stat_identifier}")
+        # print(f"CLI STST str : {self.stat_identifier_str}")
 
         self.c_text = self.c_text.replace('\n', '\r')
         self.bye_text = self.bye_text.replace('\n', '\r')
@@ -857,14 +857,19 @@ class DefaultCLI(object):
 
     def cmd_user_db_detail(self):
         if not self.parameter:
+            max_entry = 20   # TODO: from parameter
             _db_list = list(self.user_db.db.keys())
             header = "\r" \
                      f" USER-DB - {len(_db_list)} Calls\r" \
                      "------------------------------------\r"
             ent_ret = ""
             _db_list.sort()
+            c = 0
             for call in _db_list:
                 ent_ret += f"{call}\r"
+                c += 1
+                if c >= max_entry:
+                    break
             ent_ret += "------------------------------------\r\r"
             return header + ent_ret
         else:

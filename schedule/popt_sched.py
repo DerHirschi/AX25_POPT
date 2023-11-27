@@ -84,6 +84,11 @@ class PoPTSchedule:
     def _set_intervall(self):
         self._next_run = time.time() + (self.conf.get('repeat_min', 1) * 60)
 
+    def manual_trigger(self):
+        """ Reset Timers when Task is triggered manual """
+        self._set_cooldown()
+        self._set_intervall()
+
     def _is_enabled(self, conf_k):
         for k in self.conf.get(conf_k).keys():
             if self.conf.get(conf_k)[k]:

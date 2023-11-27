@@ -159,12 +159,6 @@ class UserDB:
             if not _ent.TYP:
                 _ent.TYP = typ
 
-    def get_distance(self, call_str):
-        ret = self.db.get(call_str, False)
-        if ret:
-            return ret.Distance
-        return 0
-
     def get_keys_by_typ(self, typ='SYSOP'):
         ret = []
         for k in list(self.db.keys()):
@@ -271,6 +265,20 @@ class UserDB:
             temp_ret[k] = temp[k]
         return temp_ret
 
+    def get_distance(self, call_str):
+        ret = self.db.get(call_str, False)
+        if ret:
+            return ret.Distance
+        return 0
+
+    def get_all_PRmail(self):
+        ret = []
+        for k in list(self.db.keys()):
+            if self.db[k].TYP == 'SYSOP':
+                if self.db[k].PRmail:
+                    ret.append(self.db[k].PRmail)
+        return ret
+
     def save_data(self):
         print('Save Client DB')
         logger.info('Save Client DB')
@@ -284,7 +292,7 @@ class UserDB:
 
 
 USER_DB = UserDB()
-
+# USER_DB.get_all_PRmail()
 """
 class AXIPClientDB(object):
 
