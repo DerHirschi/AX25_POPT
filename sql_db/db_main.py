@@ -667,4 +667,3 @@ class SQL_Database:
         return self.db.get_bid()
 
 # DB = SQL_Database()
-# print(DB.bbs_check_pn_mid_exists('MD2SAW_12222'))

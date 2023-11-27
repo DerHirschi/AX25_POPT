@@ -17,6 +17,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
 from ax25.ax25monitor import monitor_frame_inp
+from cfg.popt_config import POPT_CFG
 
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
@@ -1578,6 +1579,7 @@ class TkMainWin:
         # self.style.theme_use('clam')
         ######################################
         # Init Vars
+        # self.language = POPT_CFG.get_guiCFG_language()
         self.language = LANGUAGE
         ###############################
         self._root_dir = get_root_dir()
@@ -1641,7 +1643,7 @@ class TkMainWin:
         self.BBS_fwd_q_list = None
         self.MSG_Center = None
         #####
-        self._init_vars()
+        self._init_GUIvars()
         ######################################
         # ....
         # self._main_pw = ttk.PanedWindow(self.main_win, orient=tk.HORIZONTAL)
@@ -1714,6 +1716,8 @@ class TkMainWin:
         self._init_menubar()
         # set Ch Btn Color
         self.ch_status_update()
+        # Init Vars fm CFG
+        self._init_vars()
         # .....
         self._monitor_start_msg()
         #############################
@@ -1724,16 +1728,21 @@ class TkMainWin:
         self.main_win.after(self._loop_delay, self._tasker)
         self.main_win.mainloop()
 
+    ##############################################################
     def __del__(self):
         pass
 
     def _destroy_win(self):
         self.msg_to_monitor("PoPT wird beendet.")
+        logging.info('Closing GUI')
         self._is_closing = True
+        logging.info('Closing GUI: Save GUI Vars & Parameter.')
+        self._save_GUIvars()
+        self._save_vars()
         logging.info('Closing GUI: Closing Ports.')
         PORT_HANDLER.close_all_ports()
 
-        logging.info('Closing GUI.')
+        logging.info('Closing GUI: Destroying all Sub-Windows')
         self._close_port_stat_win()
         if self.settings_win is not None:
             self.settings_win.destroy()
@@ -1757,20 +1766,44 @@ class TkMainWin:
             self.MSG_Center.destroy()
         self.main_win.update_idletasks()
         self._loop_delay = 800
+        logging.info('Closing GUI: Done')
+
+    def _save_GUIvars(self):
+        #########################
+        # GUI-Vars to cfg
+        guiCfg = POPT_CFG.get_guiCFG_main()
+        guiCfg['gui_lang'] = int(self.language)
+        guiCfg['gui_cfg_sound'] = bool(self.setting_sound.get())
+        guiCfg['gui_cfg_beacon'] = bool(self.setting_bake.get())
+        guiCfg['gui_cfg_rx_echo'] = bool(self.setting_rx_echo.get())
+        guiCfg['gui_cfg_tracer'] = bool(self.setting_tracer.get())
+        guiCfg['gui_cfg_auto_tracer'] = bool(self.setting_auto_tracer.get())
+        guiCfg['gui_cfg_dx_alarm'] = bool(self.setting_dx_alarm.get())
+        guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
+        POPT_CFG.set_guiCFG_main(guiCfg)
+
+    def _save_vars(self):
+        #########################
+        # Parameter to cfg
+        guiCfg = POPT_CFG.get_guiCFG_main()
+        guiCfg['gui_parm_new_call_alarm'] = bool(MH_LIST.parm_new_call_alarm)
+        guiCfg['gui_parm_channel_index'] = int(self.channel_index)
+        guiCfg['gui_parm_text_size'] = int(self.text_size)
+        POPT_CFG.set_guiCFG_main(guiCfg)
 
     ####################
     # Init Stuff
-    def _init_vars(self):
-
-        # Set Default Settings TODO Save to cfg
-        self.setting_sound.set(False)
-        self.setting_bake.set(True)
-        self.setting_rx_echo.set(False)
-        self.setting_tracer.set(False)
-        self.setting_auto_tracer.set(False)
-        self.setting_dx_alarm.set(True)
+    def _init_GUIvars(self):
+        self.language = POPT_CFG.get_guiCFG_language()
+        guiCfg = POPT_CFG.get_guiCFG_main()
+        self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
+        self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
+        self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
+        self.setting_tracer.set(guiCfg.get('gui_cfg_tracer', False))
+        self.setting_auto_tracer.set(guiCfg.get('gui_cfg_auto_tracer', False))
+        self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
         if is_linux():
-            self.setting_sprech.set(True)
+            self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
         else:
             self.setting_sprech.set(False)
         # MH
@@ -1778,12 +1811,25 @@ class TkMainWin:
         MH_LIST.parm_distance_alarm = 50
         MH_LIST.parm_lastseen_alarm = 1
         """
-        MH_LIST.parm_new_call_alarm = True
         # Set Port 0 for DX Alarm as default # TODO remove
         if PORT_HANDLER.get_port_by_index(0):
             MH_LIST.parm_alarm_ports = [0]
         else:
             MH_LIST.parm_alarm_ports = []
+
+    def _init_vars(self):
+        #########################
+        # Parameter fm cfg
+        guiCfg = POPT_CFG.get_guiCFG_main()
+        MH_LIST.parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
+        self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
+        self.text_size = guiCfg.get('gui_parm_text_size', 13)
+        # self.connect_history: {str: ConnHistory}
+        # self._mon_buff: (
+        #             ax25frame,
+        #             conf,
+        #             bool(tx)
+        #         )
 
     def _init_bw_plot(self):
         self._bw_fig = Figure(figsize=(8, 5), dpi=80)

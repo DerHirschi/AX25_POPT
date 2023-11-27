@@ -3,8 +3,13 @@ Ideas/TODO's :
 - ESC Befehle
 - Individuelle Farben (Vorschreib Fenster)
 - Beacon System überarbeiten
+- "Dual-TNC" 2 Ports zu einem zusammenfassen um z.B. RTX+SDR o. 2xRTX gleichzeitig auf einem Kanal betreiben zu können.
+- --Anwendung Beispiel-- Antenne1(klein) Nordseite vertikal, Antenne2(groß) Südseite horizontal.
+  --Und zweimal PI als SW TNC(Direwolf) via WIFI an PoPT--
+- - TX Port manuell wählbar oder automode.
+- - "Automode" sendet Paket an über den Port über den der Call zuletzt empfangen wurde.
 ✓ UserDB
-- Dual-TNC Mode (2 TNC's zu einem Port zusammen fassen)
+- UserDB auf SQL-DB Umstellen
 - Infos / Ctext usw. in User-DB speichern
 - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 - Logbuch
@@ -13,8 +18,11 @@ Ideas/TODO's :
 - Debugging Tool
 - Simple Mailbox
 - BBS Tool was Bulletins und PMs von/an Heimat-BBS holt/sendet und Mails aufbereitet darstellt.
+✓ PMS (S&F ohne Gedöns)
 - BBS (S&F und all den Gedöns)
-- "Nachrichten-Center" fasst alle Nachrichtenkanäle (APRS Bulletin/PN, BBS) übersichtlich zusammen.
+✓ "Nachrichten-Center" fasst alle Nachrichtenkanäle (APRS Bulletin/PN, BBS) übersichtlich zusammen.
+✓ - BBS
+- - APRS
 - Telnet Port
 - Loop Port oder einfach localhost via AXIP
 - MultiKISS

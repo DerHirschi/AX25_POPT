@@ -1,7 +1,7 @@
 import logging
 
-from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg
-from constant import CFG_MAIN_data_file
+from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_cfg
+from constant import CFG_MAIN_data_file, LANGUAGE
 from fnc.cfg_fnc import load_fm_file, save_to_file
 
 logger = logging.getLogger(__name__)
@@ -14,19 +14,25 @@ class Main_CFG:
         self._config_filename = CFG_MAIN_data_file
         self._config = {}
         self._default_cfg_tab = {
+            # --PMS
             'pms_main': getNew_PMS_cfg,
             'pms_home_bbs': getNew_homeBBS_cfg,
+            # --GUI
+            # GUI Main
+            'gui_main': getNew_maniGUI_cfg,
         }
         self.load_CFG_fm_file()
+        self._set_all_default_CFGs()
 
-    def __del__(self):
-        pass
-
+    ####################
+    # Init Stuff
     def _set_all_default_CFGs(self):
         for cfg_key in self._default_cfg_tab.keys():
-            if cfg_key not in self._config:
+            if cfg_key not in list(self._config.keys()):
                 self._config[cfg_key] = self.get_default_CFG_by_key(cfg_key)
 
+    ####################
+    # File Fnc
     def load_CFG_fm_file(self):
         logger.info(f'Main CFG: Load from {self._config_filename}')
         print(f'Main CFG: Load from {self._config_filename}')
@@ -48,9 +54,12 @@ class Main_CFG:
         with open(self._config_filename, 'w') as configfile:
             self._config.write(configfile)
         """
+
+    ####################
+    # Global CFG by Key
     def get_default_CFG_by_key(self, cfg_key: str):
         def_cfg = self._default_cfg_tab.get(cfg_key, None)
-        if def_cfg:
+        if def_cfg is not None:
             return def_cfg()
 
     def get_CFG_by_key(self, cfg_key: str):
@@ -60,6 +69,18 @@ class Main_CFG:
 
     def set_CFG_by_key(self, cfg_key: str, data):
         self._config[cfg_key] = data
+
+    ####################
+    # GUI
+    def get_guiCFG_language(self):
+        return int(self._config['gui_main'].get('gui_lang', 0))
+
+    # GUI Main
+    def get_guiCFG_main(self):
+        return dict(self._config['gui_main'])
+
+    def set_guiCFG_main(self, data: dict):
+        self._config['gui_main'] = data
 
 
 POPT_CFG = Main_CFG()
