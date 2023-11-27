@@ -586,11 +586,9 @@ class SQL_Database:
                   "to_call, "
                   "to_bbs_call, "
                   "fwd_bbs_call, "
-                  "subject, "
-                  "size, "
                   "type, "
-                  "flag, "
-                  "tx_time "
+                  "subject, "
+                  "size "
                   "FROM pms_fwd_q WHERE flag='F';")
         res = self.commit_query(_query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")

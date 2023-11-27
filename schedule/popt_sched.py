@@ -205,18 +205,19 @@ class PoPTSchedule:
 
 if __name__ == '__main__':
     confi = getNew_schedule_config()
-    confi['repeat_min'] = 1
+    confi['repeat_min'] = 0
     confi['hours'][1] = True
     confi['hours'][0] = True
     confi['hours'][23] = True
-    confi['minutes'][20] = True
-    confi['minutes'][40] = True
-    confi['minutes'][48] = True
-    confi['minutes'][50] = True
+    #confi['minutes'][20] = True
+    #confi['minutes'][40] = True
+    #confi['minutes'][48] = True
+    #confi['minutes'][50] = True
     confi['week_days']['DI'] = True
     confi['move'] = 20
     sched = PoPTSchedule(confi)
     while True:
         if sched.is_schedule():
             print(f"Trigger {datetime.now()}")
+        # print(f"Rem: {sched.time_until_next_trigger()}")
         time.sleep(1)

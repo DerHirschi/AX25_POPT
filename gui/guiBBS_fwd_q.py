@@ -34,34 +34,37 @@ class BBS_fwd_Q(tk.Toplevel):
             pass
         self.lift()
         # ############################### Columns ############################
-        #_frame = tk.Frame(self, background='red')
-        #_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        #_frame.columnconfigure(0, weight=1, minsize=1000)
-        #_frame.columnconfigure(1, weight=0, minsize=150)
+        # _frame = tk.Frame(self, background='red')
+        # _frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        # _frame.columnconfigure(0, weight=1, minsize=1000)
+        # _frame.columnconfigure(1, weight=0, minsize=150)
         # _frame.rowconfigure(0, weight=0)
         # tk.Label(_frame, text='sags').grid(row=0, column=1)
         ##########################################################################################
         # TREE
-        _tree_frame = tk.Frame(self, background='green')
-        _tree_frame.rowconfigure(0, weight=1,)
+        _tree_frame = tk.Frame(self, )
+        _tree_frame.rowconfigure(0, weight=1, )
         _tree_frame.columnconfigure(0, weight=1)
         _tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        _btn_frame = tk.Frame(self, background='red', width=150)
-        _btn_frame.rowconfigure(0, weight=1,)
-        _btn_frame.rowconfigure(1, weight=1,)
-        _btn_frame.rowconfigure(2, weight=1,)
+        _btn_frame = tk.Frame(self, width=150)
+        _btn_frame.rowconfigure(0, weight=1, )
+        _btn_frame.rowconfigure(1, weight=1, )
+        _btn_frame.rowconfigure(2, weight=1, )
         _btn_frame.columnconfigure(0, weight=1, minsize=150)
         _btn_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
-        tk.Label(_btn_frame, text="sfqwaf").grid(row=0, column=0)
+        tk.Button(_btn_frame,
+                  text="FWD Starten",
+                  command=self._do_fwd
+                  ).grid(row=0, column=0)
         columns = (
             'BID',
             'from',
             'to',
             'fwd_bbs_call',
-            'size',
             'type',
-            'tx_time',
-                    )
+            'sub',
+            'size',
+        )
 
         self._tree = ttk.Treeview(_tree_frame, columns=columns, show='headings')
         self._tree.grid(row=0, column=0, sticky='nsew')
@@ -74,16 +77,16 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.heading('from', text='From', command=lambda: self._sort_entry('from'))
         self._tree.heading('to', text='To', command=lambda: self._sort_entry('to'))
         self._tree.heading('fwd_bbs_call', text='To BBS', command=lambda: self._sort_entry('fwd_bbs_call'))
-        self._tree.heading('size', text='Size', command=lambda: self._sort_entry('size'))
         self._tree.heading('type', text='Type', command=lambda: self._sort_entry('type'))
-        self._tree.heading('tx_time', text='TX Time', command=lambda: self._sort_entry('tx_time'))
+        self._tree.heading('sub', text='Subject', command=lambda: self._sort_entry('sub'))
+        self._tree.heading('size', text='Size', command=lambda: self._sort_entry('size'))
         self._tree.column("BID", anchor=tk.CENTER, stretch=tk.YES, width=100)
         self._tree.column("from", anchor=tk.CENTER, stretch=tk.YES, width=190)
         self._tree.column("to", anchor=tk.CENTER, stretch=tk.YES, width=190)
         self._tree.column("fwd_bbs_call", anchor=tk.CENTER, stretch=tk.YES, width=90)
-        self._tree.column("size", anchor=tk.CENTER, stretch=tk.YES, width=60)
         self._tree.column("type", anchor=tk.CENTER, stretch=tk.YES, width=60)
-        self._tree.column("tx_time", anchor=tk.CENTER, stretch=tk.YES, width=100)
+        self._tree.column("sub", anchor=tk.CENTER, stretch=tk.YES, width=150)
+        self._tree.column("size", anchor=tk.CENTER, stretch=tk.YES, width=60)
 
         self._tree_data = []
         self._data = []
@@ -113,10 +116,10 @@ class BBS_fwd_Q(tk.Toplevel):
                 f'{el[0]}',
                 f'{_from_call}',
                 f'{_to_call}',
-                f'{el[5]}',
-                f'{el[6]}',
-                f'{el[7]}',
-                f'{el[9]}',
+                f'{el[5]}',  # to BBS
+                f'{el[6]}',  # typ
+                f'{el[7]}',  # sub
+                f'{el[8]}',  # size
             ))
 
     def _sort_entry(self, col):
@@ -127,8 +130,10 @@ class BBS_fwd_Q(tk.Toplevel):
         for index, (val, k) in enumerate(_tmp):
             self._tree.move(k, '', int(index))
 
+    def _do_fwd(self):
+        self._bbs_obj.start_man_autoFwd()
+
     def _close(self):
         self._bbs_obj = None
         self._root_win.BBS_fwd_q_list = None
         self.destroy()
-

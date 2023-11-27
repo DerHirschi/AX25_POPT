@@ -1766,6 +1766,8 @@ class TkMainWin:
             self.BBS_fwd_q_list.destroy()
         if self.MSG_Center is not None:
             self.MSG_Center.destroy()
+        if self.newPMS_MSG_win is not None:
+            self.newPMS_MSG_win.destroy()
         self.main_win.update_idletasks()
         self._loop_delay = 800
         logging.info('Closing GUI: Done')
