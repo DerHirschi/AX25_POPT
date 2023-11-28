@@ -23,7 +23,7 @@ class BBS_newMSG(tk.Toplevel):
         ###################################
         self.title(STR_TABLE['new_pr_mail'][self.language])
         self.style = self._root_win.style
-        if self._root_win.main_win:
+        if hasattr(self._root_win, 'main_win'):
             win = self._root_win.main_win
         else:
             win = self._root_win
