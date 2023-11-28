@@ -63,7 +63,7 @@ class MSG_Center(tk.Toplevel):
         BBS_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         APRS_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabControl_type.add(BBS_tab_frame, text='PMS', padding=8)
-        self._tabControl_type.add(APRS_tab_frame, text='APRS', padding=8)
+        self._tabControl_type.add(APRS_tab_frame, text='APRS', padding=8, state='disabled') # TODO
         ################################################
         # APRS-TAB
         self._tabControl = ttk.Notebook(
@@ -278,6 +278,10 @@ class MSG_Center(tk.Toplevel):
         _menubar.add_cascade(label='Nachricht', menu=_MenuVerb, underline=0)
         # ### Bearbeiten
         _MenuEdit = tk.Menu(_menubar, tearoff=False)
+        _MenuEdit.add_command(label='Alle als gelesen markieren',
+                              command=self._set_all_to_oldMSG,
+                              underline=0)
+        _MenuVerb.add_separator()
         _MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
                               command=self._save_msg_to_file,
                               underline=0)
@@ -1396,21 +1400,19 @@ class MSG_Center(tk.Toplevel):
     def _do_pms_autoFWD(self):
         self._bbs_obj.start_man_autoFwd()
 
-    """
     def _set_all_to_oldMSG(self):   # Set all Msg to read Status
-        bid_list = []
         try:
             ind = self._tabControl.index(self._tabControl.select())
         except tk.TclError:
             return
-        # self._pn_data = self._bbs_obj.get_pn_msg_tab()
-        bid_mid = {
-            0: self._selected_msg['P'].get('bid', ''),
-            1: self._selected_msg['B'].get('bid', ''),
-            # 2: self._selected_msg['O'].get('bid', ''),
-            # 3: self._selected_msg['S'].get('mid', ''),
-        }.get(ind, '')
-    """
+        fnc = {
+            0: self._bbs_obj.set_all_pn_msg_notNew,
+            1: self._bbs_obj.set_all_bl_msg_notNew,
+        }.get(ind, None)
+        if fnc:
+            fnc()
+            self.on_bbsTab_select()
+
     def _close(self):
         self._save_Vars_to_Cfg()
         self._bbs_obj = None

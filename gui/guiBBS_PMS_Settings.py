@@ -41,6 +41,7 @@ class PMS_Settings(tk.Toplevel):
         ######################
         # TK Stuff
         # self.title(STR_TABLE['fwd_list'][self._root_win.language])
+        self.title('PMS Einstellungen')
         self.style = self._root_win.style
         self.geometry(f"1010x"
                       f"620+"

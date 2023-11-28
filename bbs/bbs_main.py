@@ -550,6 +550,7 @@ class BBSConnection:
             self._rx_msg_header[_k]['time'] = parse_header_timestamp(path[-1])
             self._rx_msg_header[_k]['subject'] = subject
             res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[_k]))
+            # self._bbs.new_msg_alarm[str(self._rx_msg_header[_k]['typ'])] = True
             if not res:
                 logger.error(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
                 print(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
@@ -633,6 +634,14 @@ class BBS:
         self._schedule_q = []
         self._set_pms_fwd_schedule()
         ####################
+        # New Msg Noty/Alarm
+        """
+        self.new_msg_alarm = {
+            'P': False,
+            'B': False,
+        }
+        """
+        ####################
         # CTL & Auto Connection
         self._autoConn = None  # TODO Cleanup. Use self.pms_connections
         self.pms_connections = []
@@ -641,10 +650,9 @@ class BBS:
         # Tasker/crone
         # self._var_task_1sec = time.time()
         self._var_task_5sec = time.time()
+
         ###############
         # DEBUG/DEV
-        # self.set_bid(440)
-        # print(self.get_bid())
         """
         _mid = self.new_msg({
             'sender': 'MD2SAW',
@@ -697,6 +705,11 @@ class BBS:
         if time.time() > self._var_task_5sec:
             self._scheduler_task()
             self._var_task_5sec = time.time() + 5
+            """
+            for k in self.new_msg_alarm.keys():
+                if self.new_msg_alarm[k]:
+                    print(f'DIETER {k}')
+            """
 
     ###################################
     # CFG Stuff
@@ -889,6 +902,9 @@ class BBS:
     def set_bl_msg_notNew(self, bid):
         self._db.bbs_set_bl_msg_notNew(bid)
 
+    def set_all_bl_msg_notNew(self):
+        self._db.bbs_set_all_bl_msg_notNew()
+
     def get_pn_msg_fm_BID(self, bid):
         data = self._db.bbs_get_pn_msg_for_GUI(bid)
         if not data:
@@ -913,6 +929,9 @@ class BBS:
 
     def set_pn_msg_notNew(self, bid):
         self._db.bbs_set_pn_msg_notNew(bid)
+
+    def set_all_pn_msg_notNew(self):
+        self._db.bbs_set_all_pn_msg_notNew()
 
     def get_out_msg_fm_BID(self, bid):
         data = self._db.bbs_get_out_msg_for_GUI(bid)

@@ -45,7 +45,7 @@ class SQL_DB:
                     _new_data.append(el)
             res = cursor.execute(query_str, tuple(_new_data))
             rows = res.fetchall()
-            print(f"execute_query: {rows}")
+            # print(f"execute_query: {rows}")
             # db_conn.close()
             return rows
         raise MySQLConnectionError

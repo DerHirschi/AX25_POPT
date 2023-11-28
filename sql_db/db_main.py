@@ -534,6 +534,10 @@ class SQL_Database:
                   f"WHERE BID='{bid}';")
         self.commit_query(_query)
 
+    def bbs_set_all_pn_msg_notNew(self):
+        _query = "UPDATE pms_pn_msg SET new=0;"
+        self.commit_query(_query)
+
     def bbs_get_bl_msg_Tab_for_GUI(self):
         _query = ("SELECT BID, "
                   "from_call, "
@@ -560,6 +564,10 @@ class SQL_Database:
     def bbs_set_bl_msg_notNew(self, bid: str):
         _query = ("UPDATE pms_bl_msg SET new=0 "
                   f"WHERE BID='{bid}';")
+        self.commit_query(_query)
+
+    def bbs_set_all_bl_msg_notNew(self):
+        _query = "UPDATE pms_bl_msg SET new=0;"
         self.commit_query(_query)
 
     def bbs_get_fwd_q_Tab_for_GUI(self):
