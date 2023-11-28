@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from config_station import logger
-from constant import MYSQL, SQL_TIME_FORMAT
+from constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
 from fnc.sql_fnc import search_sql_injections
 from sql_db.sql_Error import MySQLConnectionError
 from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
@@ -53,10 +53,10 @@ class SQL_Database:
             from sql_db.sql_lite import SQL_DB
 
         self.db_config = {  # TODO GUI and DB-TOOLs
-            'user': 'popt',
-            'password': '83g6u45908k91HG2jhj5jeGG',     # OMG, my super secret password
-            'host': '127.0.0.1',
-            'database': 'popt_db',
+            'user': MYSQL_USER,
+            'password': MYSQL_PASS,     # OMG, my super secret password
+            'host': MYSQL_HOST,
+            'database': MYSQL_DB,
             'raise_on_warnings': True
         }
         self.db = None

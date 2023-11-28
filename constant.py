@@ -3,8 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.100.23dev'
-DEV_PRMAIL_ADD = 'MD2SAW@MD2BBS.#SAW.SAA.DEU.EU'
+VER = '2.100.24dev'
 """
 LANGUAGE:
 0 = German
@@ -12,9 +11,14 @@ LANGUAGE:
 2 = Dutch
 """
 LANGUAGE = 0    # QUICK FIX
-MYSQL = False    # MYSQL/SQLITE
 MAX_PORTS = 15  #
 
+# doc/PoPT/mysql_setup.txt
+MYSQL = False    # MYSQL/SQLITE
+MYSQL_USER = 'popt'
+MYSQL_PASS = '83g6u45908k91HG2jhj5jeGG'
+MYSQL_HOST = '127.0.0.1'
+MYSQL_DB = 'popt_db'
 
 LANG_IND = {
             'DE': 0,
@@ -124,6 +128,7 @@ BBS_REVERS_FWD_CMD = {
     # 'WB': b'F>\r',
     'BayCom': b'F>\r',
 }
+DEV_PRMAIL_ADD = 'MD2SAW@MD2BBS.#SAW.SAA.DEU.EU'
 
 # APRS Stuff
 APRS_SW_ID = f"APZPOP"  # TODO get SW ID

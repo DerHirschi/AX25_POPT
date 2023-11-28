@@ -1,0 +1,26 @@
+
+
+                    [Frontend]
+                        |
+                    WX-Data-Tab
+                 Port-Statistic-Tab
+                    MH-List-Tab
+                  APRS-Tracer-Tab
+                        |
+  ¸--------------[Frontend(SYSOP)]------------------¸
+  |                     |                           |
+UserTab ---[Frontend]   |                BBS-TAB(For own BBS System)
+  |                     |                           |
+  |--BBSTab -----¸  BBS-CLI-Permissions ------------|
+  |--NodeTab     |  NodeCLI-Permissions             |-- FWD-Paths(Statistic)¸
+  |--SysopTab    |  UserCLI-Permissions             |             |         |
+  |--WX-Stat-Tab |      |                        PN Mails  -------|         |
+  |--I-Gate-Tab  |  APRS-Permissions             BL Mails  ---[Frontend]    |
+                 |                               OUT Mails -------|         |
+                 |                                  |             |         |
+                 ’----------------------------------+--------- {Var: BBS-Address} "UPDATE"
+                                                    |          {Var: LOC, QTH, ..}"UPDATE"
+                                                   FWD            |
+                                                   *WP -----------`
+
+
