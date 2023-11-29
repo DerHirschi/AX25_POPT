@@ -2550,109 +2550,116 @@ class TkMainWin:
     #################################
     # TASKS
     def _update_qso_win(self):  # INPUT WIN
+        # TODO.. Again
         # UPDATE INPUT WIN
+        tr = False
         for k in PORT_HANDLER.get_all_connections():
+
             conn = self.get_conn(k)
             if conn is not None:
                 if conn.ft_obj is None:
                     if conn.rx_buf_rawData or conn.tx_buf_guiData:
                         k = conn.ch_index
-                        txt_enc = 'UTF-8'
-                        if conn.user_db_ent:
-                            txt_enc = conn.user_db_ent.Encoding
+                        if k < 11:
+                            tr = True
+                            txt_enc = 'UTF-8'
+                            if conn.user_db_ent:
+                                txt_enc = conn.user_db_ent.Encoding
 
-                        inp = bytes(conn.tx_buf_guiData)
-                        conn.tx_buf_guiData = b''
+                            inp = bytes(conn.tx_buf_guiData)
+                            conn.tx_buf_guiData = b''
 
-                        inp_len = len(conn.rx_buf_rawData)
-                        out = bytes(conn.rx_buf_rawData[:inp_len])
-                        conn.rx_buf_rawData = conn.rx_buf_rawData[inp_len:]
+                            inp_len = len(conn.rx_buf_rawData)
+                            out = bytes(conn.rx_buf_rawData[:inp_len])
+                            conn.rx_buf_rawData = conn.rx_buf_rawData[inp_len:]
 
-                        # if self.win_buf[k].hex_output:
-                        """
-                        hex_out = out.hex()
-                        hex_in = inp.hex()
-                        """
-                        inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
-                        # Write RX Date to Window/Channel Buffer
+                            # if self.win_buf[k].hex_output:
+                            """
+                            hex_out = out.hex()
+                            hex_in = inp.hex()
+                            """
+                            inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
+                            # Write RX Date to Window/Channel Buffer
 
-                        out = out.decode(txt_enc, 'ignore')
-                        out = out.replace('\r\n', '\n') \
-                            .replace('\n\r', '\n') \
-                            .replace('\r', '\n')
-                        # print(f"{out}\nhex: {hex_out}")
-                        out = tk_filter_bad_chars(out)
-                        """
-                        if hex_out:
-                            out = out + ' > ' + hex_out + '\n'
-                        if hex_in:
-                            inp = inp + ' >' + hex_in + '<\n'
-                        """
-                        # Write RX Date to Window/Channel Buffer
-                        self._win_buf[k].output_win += inp
-                        self._win_buf[k].output_win += out
-                        if self._win_buf[k].t2speech:
-                            if k == self.channel_index:
-                                self._win_buf[k].t2speech_buf += out.replace('\n', '')
+                            out = out.decode(txt_enc, 'ignore')
+                            out = out.replace('\r\n', '\n') \
+                                .replace('\n\r', '\n') \
+                                .replace('\r', '\n')
+                            # print(f"{out}\nhex: {hex_out}")
+                            out = tk_filter_bad_chars(out)
+                            """
+                            if hex_out:
+                                out = out + ' > ' + hex_out + '\n'
+                            if hex_in:
+                                inp = inp + ' >' + hex_in + '<\n'
+                            """
+                            # Write RX Date to Window/Channel Buffer
+
+                            self._win_buf[k].output_win += inp
+                            self._win_buf[k].output_win += out
+                            if self._win_buf[k].t2speech:
+                                if k == self.channel_index:
+                                    self._win_buf[k].t2speech_buf += out.replace('\n', '')
+                                else:
+                                    self._win_buf[k].t2speech_buf += '{} {} . {} . {}'.format(
+                                        STR_TABLE['channel'][self.language],
+                                        k,
+                                        conn.to_call_str,
+                                        out.replace('\n', '')
+                                    )
+                            if self.channel_index == k:
+                                fg = conn.stat_cfg.stat_parm_qso_col_text
+                                bg = conn.stat_cfg.stat_parm_qso_col_bg
+                                tag_name_out = 'OUT-' + str(conn.my_call_str)
+                                self.get_ch_param(ch_index=k).qso_tag_fg = fg
+                                self.get_ch_param(ch_index=k).qso_tag_bg = bg
+                                self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
+
+                                tr = False
+                                if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15:
+                                    tr = True
+
+                                self._out_txt.configure(state="normal")
+
+                                self._out_txt.tag_config(tag_name_out,
+                                                         foreground=fg,
+                                                         background=bg,
+                                                         selectbackground=fg,
+                                                         selectforeground=bg
+                                                         )
+
+                                ind = self._out_txt.index('end-1c')
+                                self._out_txt.insert('end', inp)
+                                ind2 = self._out_txt.index('end-1c')
+                                self._out_txt.tag_add("input", ind, ind2)
+
+                                # configuring a tag called start
+                                ind = self._out_txt.index('end-1c')
+                                self._out_txt.insert('end', out)
+                                ind2 = self._out_txt.index('end-1c')
+                                self._out_txt.tag_add(tag_name_out, ind, ind2)
+                                self._out_txt.configure(state="disabled",
+                                                        exportselection=True
+                                                        )
+                                if tr or self.get_ch_param().autoscroll:
+                                    self.see_end_qso_win()
                             else:
-                                self._win_buf[k].t2speech_buf += '{} {} . {} . {}'.format(
-                                    STR_TABLE['channel'][self.language],
-                                    k,
-                                    conn.to_call_str,
-                                    out.replace('\n', '')
-                                )
-                        if self.channel_index == k:
-                            fg = conn.stat_cfg.stat_parm_qso_col_text
-                            bg = conn.stat_cfg.stat_parm_qso_col_bg
-                            tag_name_out = 'OUT-' + str(conn.my_call_str)
-                            self.get_ch_param(ch_index=k).qso_tag_fg = fg
-                            self.get_ch_param(ch_index=k).qso_tag_bg = bg
-                            self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
-
-                            tr = False
-                            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15:
-                                tr = True
-
-                            self._out_txt.configure(state="normal")
-
-                            self._out_txt.tag_config(tag_name_out,
-                                                     foreground=fg,
-                                                     background=bg,
-                                                     selectbackground=fg,
-                                                     selectforeground=bg
-                                                     )
-
-                            ind = self._out_txt.index('end-1c')
-                            self._out_txt.insert('end', inp)
-                            ind2 = self._out_txt.index('end-1c')
-                            self._out_txt.tag_add("input", ind, ind2)
-
-                            # configuring a tag called start
-                            ind = self._out_txt.index('end-1c')
-                            self._out_txt.insert('end', out)
-                            ind2 = self._out_txt.index('end-1c')
-                            self._out_txt.tag_add(tag_name_out, ind, ind2)
-                            self._out_txt.configure(state="disabled",
-                                                    exportselection=True
-                                                    )
-                            if tr or self.get_ch_param().autoscroll:
-                                self.see_end_qso_win()
-                        else:
-                            tag_name_out = 'OUT-' + str(conn.my_call_str)
-                            self.get_ch_param(ch_index=k).qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
-                            self.get_ch_param(ch_index=k).qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
-                            self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
-                            if tag_name_out not in self._win_buf[k].output_win_tags.keys():
-                                self._win_buf[k].output_win_tags[tag_name_out] = ()
-                            old_tags = list(self._win_buf[k].output_win_tags[tag_name_out])
-                            if old_tags:
-                                old_tags = old_tags + ['end-1c']
-                            else:
-                                old_tags = ['1.0', 'end-1c']
-                            self._win_buf[k].output_win_tags[tag_name_out] = old_tags
-                            self._win_buf[k].new_data_tr = True
-                        self._win_buf[k].rx_beep_tr = True
-                        self.ch_status_update()
+                                tag_name_out = 'OUT-' + str(conn.my_call_str)
+                                self.get_ch_param(ch_index=k).qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
+                                self.get_ch_param(ch_index=k).qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
+                                self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
+                                if tag_name_out not in self._win_buf[k].output_win_tags.keys():
+                                    self._win_buf[k].output_win_tags[tag_name_out] = ()
+                                old_tags = list(self._win_buf[k].output_win_tags[tag_name_out])
+                                if old_tags:
+                                    old_tags = old_tags + ['end-1c']
+                                else:
+                                    old_tags = ['1.0', 'end-1c']
+                                self._win_buf[k].output_win_tags[tag_name_out] = old_tags
+                                self._win_buf[k].new_data_tr = True
+                            self._win_buf[k].rx_beep_tr = True
+        if tr:
+            self.ch_status_update()
 
     def update_monitor(self, ax25frame, conf, tx=False):
         """ Called from AX25Conn """

@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 class Client(object):
     # def __init__(self, call):
-    call_str = 'ALL'
-    Call = 'ALL'
+    call_str = 'NOCALL'
+    Call = 'NOCALL'
     SSID = 0
     Alias = ''
     TYP = ''

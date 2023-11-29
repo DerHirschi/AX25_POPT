@@ -11,6 +11,10 @@ class AX25EncodingERROR(Exception):
     def __init__(self, frame=None):
         if frame is not None:
             logger.warning('AX25 Packet Decoding Error !')
+            if hasattr(frame, 'data'):
+                logger.warning(frame.data)
+                logger.warning(f'Data: {frame.data}')
+                logger.warning(f'Hex: {frame.data.hex()}')
             """
             logger.error('all hex: {}'.format(hex(int(bytes(frame.data_bytes).hex()))))
             if hasattr(frame, 'data'):

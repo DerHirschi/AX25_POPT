@@ -93,36 +93,37 @@ class DefaultCLI(object):
         }
         # Standard Commands ( GLOBAL )
         self.commands = {
-            b'QUIT': (self.cmd_q, 'Quit'),
-            b'BYE': (self.cmd_q, 'Bye'),
-            b'CONNECT': (self.cmd_connect, 'Connect'),
-            b'ECHO': (self.cmd_echo, 'Echo'),
-            b'PORT': (self.cmd_port, 'Ports'),
-            b'MH': (self.cmd_mh, 'MYHeard List'),
-            b'LMH': (self.cmd_mhl, 'Long MYHeard List'),
-            b'AXIP': (self.cmd_axip, 'AXIP-MH List'),
-            b'ATR': (self.cmd_aprs_trace, 'APRS-Tracer'),
-            b'DXLIST': (self.cmd_dxlist, 'DX/Tracer Alarm List'),
-            b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
-            b'WX': (self.cmd_wx, 'Wetterstationen'),
+            # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
+            'QUIT':    (1, self.cmd_q,             'Quit'),
+            'BYE':     (1, self.cmd_q,             'Bye'),
+            'CONNECT': (1, self.cmd_connect,       'Connect'),
+            'ECHO':    (1, self.cmd_echo,          'Echo'),
+            'PORT':    (1, self.cmd_port,          'Ports'),
+            'MH':      (0, self.cmd_mh,            'MYHeard List'),
+            'LMH':     (0, self.cmd_mhl,           'Long MYHeard List'),
+            'AXIP':    (2, self.cmd_axip,          'AXIP-MH List'),
+            'ATR':     (2, self.cmd_aprs_trace,    'APRS-Tracer'),
+            'DXLIST':  (2, self.cmd_dxlist,        'DX/Tracer Alarm List'),
+            'LCSTATUS': (2, self.cmd_lcstatus,     STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
+            'WX':      (0, self.cmd_wx,            'Wetterstationen'),
 
-            b'INFO': (self.cmd_i, 'Info'),
-            b'LINFO': (self.cmd_li, 'Long Info'),
-            b'NEWS': (self.cmd_news, 'NEWS'),
-            b'VERSION': (self.cmd_ver, 'Version'),
-            b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
-            b'DBNAME': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
-            b'DBQTH': (self.cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
-            b'DBLOC': (self.cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
-            b'DBZIP': (self.cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self.connection.cli_language]),
-            b'DBPRMAIL': (self.cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self.connection.cli_language]),
-            b'DBEMAIL': (self.cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self.connection.cli_language]),
-            b'DBWEB': (self.cmd_set_http, STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
-            b'LANG': (self.cmd_lang, STR_TABLE['cli_change_language'][self.connection.cli_language]),
-            b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
-            b'POPT': (self.cmd_popt_banner, 'PoPT Banner'),
-            b'HELP': (self.cmd_help, STR_TABLE['help'][self.connection.cli_language]),
-            b'?': (self.cmd_shelp, STR_TABLE['cmd_shelp'][self.connection.cli_language]),
+            'INFO':    (1, self.cmd_i,             'Info'),
+            'LINFO':   (2, self.cmd_li,            'Long Info'),
+            'NEWS':    (2, self.cmd_news,          'NEWS'),
+            'VERSION': (3, self.cmd_ver,           'Version'),
+            'USER':    (0, self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
+            'NAME':    (1, self.cmd_set_name,      STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
+            'QTH':     (0, self.cmd_set_qth,       STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
+            'LOC':     (0, self.cmd_set_loc,       STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
+            'ZIP':     (0, self.cmd_set_zip,       STR_TABLE['cmd_help_set_zip'][self.connection.cli_language]),
+            'PRMAIL':  (0, self.cmd_set_pr_mail,   STR_TABLE['cmd_help_set_prmail'][self.connection.cli_language]),
+            'EMAIL':   (0, self.cmd_set_e_mail,    STR_TABLE['cmd_help_set_email'][self.connection.cli_language]),
+            'WEB':     (3, self.cmd_set_http,      STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
+            'LANG':    (0, self.cmd_lang,          STR_TABLE['cli_change_language'][self.connection.cli_language]),
+            'UMLAUT':  (2, self.cmd_umlaut,        STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
+            'POPT':    (0, self.cmd_popt_banner,   'PoPT Banner'),
+            'HELP':    (1, self.cmd_help,          STR_TABLE['help'][self.connection.cli_language]),
+            '?':       (0, self.cmd_shelp,         STR_TABLE['cmd_shelp'][self.connection.cli_language]),
 
         }
 
@@ -139,9 +140,9 @@ class DefaultCLI(object):
             2: self.s2,  # Nothing / no remote
             3: self.s3,  # Baycom Login Shit
         }
-        self.cmd_exec_ext = {}
-        self.cron_state_exec_ext = {}
-        self.state_exec_ext = {}
+        self.cmd_exec_ext = {}          # Extern Command's ??
+        self.cron_state_exec_ext = {}   # Extern Tasks ??
+        self.state_exec_ext = {}        # Extern State Tab ??
         # self.init()
         self.cron_state_exec.update(self.cron_state_exec_ext)
         self.commands.update(self.cmd_exec_ext)
@@ -333,24 +334,37 @@ class DefaultCLI(object):
         return False
 
     def find_cmd(self):
+        # TODO AGAIN
         if self.cmd:
+            inp_cmd = str(self.cmd.decode(self.encoding[0], 'ignore'))
+            inp_cmd = inp_cmd.replace(' ', '')
             cmds = list(self.commands.keys())
             treffer = []
             for cmd in cmds:
-                if self.cmd == cmd[:len(self.cmd)]:
+                if self.commands[cmd][0]:
+                    if inp_cmd == cmd[:self.commands[cmd][0]]:
+                        self.cmd = b''
+                        ret = tuple(self.commands[cmd])[1]()
+                        self.new_last_line = b''
+                        if ret:
+                            return ret
+                        return ''
+                if inp_cmd == cmd[:len(inp_cmd)]:
                     treffer.append(cmd)
             if not treffer:
                 return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
             if len(treffer) > 1:
                 return (f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}"
-                        f"\r # {(b' '.join(treffer)).decode(self.encoding[0], 'ignore')} ?\r")
+                        f"\r # {(' '.join(treffer))} ?\r")
             self.cmd = b''
-            ret = self.commands[treffer[0]][0]()
+            if not callable(self.commands[treffer[0]][1]):
+                return ''
+            ret = tuple(self.commands[treffer[0]])[1]()
             # self.last_line = b''
             self.new_last_line = b''
-            if ret is None:
-                return ''
-            return ret
+            if ret:
+                return ret
+            return ''
 
         return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
 
@@ -1130,10 +1144,10 @@ class DefaultCLI(object):
         """
         # for k in new_cmd.keys():
         for k in list(self.commands.keys()):
-            if self.commands[k][1]:
+            if self.commands[k][2]:
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
                                                 k.decode('UTF-8', 'ignore'),
-                                                self.commands[k][1])
+                                                self.commands[k][2])
         ret += '\r\r'
         return ret
 
@@ -1143,7 +1157,7 @@ class DefaultCLI(object):
         _cmds = list(self.commands.keys())
         _cmds.sort()
         for k in _cmds:
-            ret += (k + b' ').decode(self.encoding[0], 'ignore')
+            ret += (k + ' ')
             if len(ret) - _c > 60:
                 ret += '\r # '
                 _c += 60
