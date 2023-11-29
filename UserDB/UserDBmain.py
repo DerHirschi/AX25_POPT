@@ -106,12 +106,24 @@ class UserDB:
             logger.error(f"User DB: Falsche Version der DB Datei. Bitte {CFG_user_db} löschen und PoPT neu starten!")
             raise
 
-        for k in db_load.keys():
+        for k in list(db_load.keys()):
             client_obj = Client()
             if type(db_load[k]) == dict:
                 self.db[k] = set_obj_att_fm_dict(new_obj=client_obj, input_obj=db_load[k])
             else:
                 self.db[k] = set_obj_att(new_obj=client_obj, input_obj=db_load[k])
+            # "Repair old Data" TODO . CLEANUP
+            if k != self.db[k].Call:
+                if type(self.db[k].call_str) == str:
+                    call_tup = call_tuple_fm_call_str(self.db[k].call_str)
+                    self.db[k].Call = str(call_tup[0])
+                    self.db[k].SSID = int(call_tup[1])
+                else:
+                    self.db[k].call_str = str(k)
+                    self.db[k].Call = str(k)
+                    self.db[k].SSID = 0
+
+
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
@@ -140,8 +152,8 @@ class UserDB:
                 logger.info('User DB: New User added > ' + call_str)
                 self.db[call_str] = Client()
                 self.db[call_str].call_str = str(call_str)
-                self.db[call_str].call = str(call_tup[0])
-                self.db[call_str].call_str = int(call_tup[1])
+                self.db[call_str].Call = str(call_tup[0])
+                self.db[call_str].SSID = int(call_tup[1])
                 return self.db[call_str]
         return False
 
