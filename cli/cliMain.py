@@ -1146,7 +1146,7 @@ class DefaultCLI(object):
         for k in list(self.commands.keys()):
             if self.commands[k][2]:
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
-                                                k.decode('UTF-8', 'ignore'),
+                                                k,
                                                 self.commands[k][2])
         ret += '\r\r'
         return ret
@@ -1185,7 +1185,13 @@ class DefaultCLI(object):
         if qth:
             qth = f'\r#QTH# {qth}\r'
         if loc:
-            loc = f'\r#LOC# {loc}\r'
+            if 'PoPT' == self.stat_identifier.software:
+                loc = f'\r#LOC# {loc}\r'
+            else:
+                try:
+                    loc = f'\r#LOC# {loc[:6]}\r'
+                except IndexError:
+                    loc = ''
         tmp = self.parameter[0]
         cmd_dict = {
             b'+++#': name + qth + loc,

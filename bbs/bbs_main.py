@@ -963,7 +963,6 @@ class BBS:
 
     def set_pms_cfg(self, pms_cfg: dict):
         if pms_cfg:
-            print(pms_cfg)
             self._pms_cfg_hasChanged = True
             POPT_CFG.set_CFG_by_key('pms_main', pms_cfg)
 
