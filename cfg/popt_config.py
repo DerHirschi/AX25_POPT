@@ -1,7 +1,7 @@
 import logging
 
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_cfg
-from constant import CFG_MAIN_data_file, LANGUAGE
+from constant import CFG_MAIN_data_file
 from fnc.cfg_fnc import load_fm_file, save_to_file
 
 logger = logging.getLogger(__name__)

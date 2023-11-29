@@ -785,7 +785,7 @@ class BBS:
 
     def start_man_autoFwd(self):
         if time.time() > self._new_man_FWD_wait_t:
-            self._new_man_FWD_wait_t = time.time() + 60
+            self._new_man_FWD_wait_t = time.time() + 10
             for task in self._schedule_q:
                 task[0].manual_trigger()
                 self.start_autoFwd(task[1])
@@ -963,6 +963,7 @@ class BBS:
 
     def set_pms_cfg(self, pms_cfg: dict):
         if pms_cfg:
+            print(pms_cfg)
             self._pms_cfg_hasChanged = True
             POPT_CFG.set_CFG_by_key('pms_main', pms_cfg)
 

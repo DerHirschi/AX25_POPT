@@ -257,9 +257,7 @@ class PMS_Settings(tk.Toplevel):
             self._tabctl.forget(self._tabctl.select())
 
     def _get_BID(self):
-        bid = self._bbs_obj.get_bid()[0]
-        if bid:
-            bid = bid[0]
+        bid = self._bbs_obj.get_bid()
         self._bid_ent_var.set(str(bid))
         bid_str = f"MID: {bid}"
         self._bid_var.set(bid_str)
@@ -349,7 +347,7 @@ class PMS_Settings(tk.Toplevel):
         self._tabctl.tab(self._tabctl.select(), text=name)
 
     def _get_hBBS_data_fm_vars(self):
-        for k in self._bbs_vars.keys():
+        for k in list(self._bbs_vars.keys()):
             if k != 'NOCALL':
                 port_id = 0
                 try:
@@ -368,10 +366,15 @@ class PMS_Settings(tk.Toplevel):
                 home_bbs_cfg = self._get_homeBBS_cfg(k)
                 home_bbs_cfg['port_id'] = port_id
                 home_bbs_cfg['regio'] = regio
-                home_bbs_cfg['dest_call'] = dest_call
+                home_bbs_cfg['dest_call'] = dest_call  # # # #
                 home_bbs_cfg['via_calls'] = get_list_fm_viaStr(via_calls)
                 home_bbs_cfg['axip_add'] = axip_ip, axip_port
+                if k != dest_call:
+                    self._bbs_vars[dest_call] = dict(self._bbs_vars[k])
+                    self._set_tab_name(dest_call)
+                    del self._bbs_vars[k]
                 self._set_homeBBS_cfg(k, home_bbs_cfg)
+        self._cleanup_hBBS_cfg()
 
     def _del_homeBBS_vars(self, cfg_key):
         if cfg_key in self._bbs_vars.keys():
@@ -403,14 +406,14 @@ class PMS_Settings(tk.Toplevel):
 
     def _get_homeBBS_cfg(self, pms_cfg_k: str):
         all_bbs_cfgs = dict(self._pms_cfg.get('home_bbs_cfg', {}))
-        bbs_cfg = dict(all_bbs_cfgs.get(pms_cfg_k, POPT_CFG.get_default_CFG_by_key('pms_home_bbs')))
-        return bbs_cfg
+        return dict(all_bbs_cfgs.get(pms_cfg_k, POPT_CFG.get_default_CFG_by_key('pms_home_bbs')))
 
     def _set_homeBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
         self._pms_cfg['home_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
 
     def _del_NOCALL_homeBBS_cfg(self):
-        del self._pms_cfg['home_bbs_cfg']['NOCALL']
+        if 'NOCALL' in self._pms_cfg.get('home_bbs_cfg', {}).keys():
+            del self._pms_cfg['home_bbs_cfg']['NOCALL']
 
     def _del_homeBBS_cfg(self, pms_cfg_k: str):
         if pms_cfg_k in self._pms_cfg['home_bbs_cfg'].keys():
@@ -437,12 +440,19 @@ class PMS_Settings(tk.Toplevel):
     def _save_pms_cfg(self):
         self._get_hBBS_data_fm_vars()
         self._get_user_data_fm_vars()
-        self._set_homeBBS_list()
+        if self._pms_cfg:
+            # self._cleanup_hBBS_cfg()
+            self._set_homeBBS_list()
+            if self._bbs_obj:
+                self._bbs_obj.set_pms_cfg(self._pms_cfg)
+
+    def _cleanup_hBBS_cfg(self):
         if self._pms_cfg:
             if self._pms_cfg.get('home_bbs_cfg', {}).get('NOCALL', None):
                 del self._pms_cfg['home_bbs_cfg']['NOCALL']
-            if self._bbs_obj:
-                self._bbs_obj.set_pms_cfg(self._pms_cfg)
+            for k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
+                if k not in self._bbs_vars.keys():
+                    del self._pms_cfg['home_bbs_cfg'][k]
 
     def _set_homeBBS_list(self):
         self._pms_cfg['home_bbs'] = list(self._pms_cfg.get('home_bbs_cfg', {}).keys())

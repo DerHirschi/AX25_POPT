@@ -687,6 +687,12 @@ class SQL_Database:
         return True
 
     def pms_get_bid(self):
-        return self.db.get_bid()
+        bid = self.db.get_bid()
+        if bid:
+            bid = bid[0]
+            if type(bid) == tuple:
+                if bid[0]:
+                    return bid[0]
+        return 1
 
 # DB = SQL_Database()
