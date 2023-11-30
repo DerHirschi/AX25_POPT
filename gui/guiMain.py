@@ -1719,7 +1719,8 @@ class TkMainWin:
         # set Ch Btn Color
         self.ch_status_update()
         # Init Vars fm CFG
-        self._init_vars()
+        self._init_PARM_vars()
+        self._set_CFG()
         # .....
         self._monitor_start_msg()
         #############################
@@ -1789,15 +1790,23 @@ class TkMainWin:
     def _save_vars(self):
         #########################
         # Parameter to cfg
-        guiCfg = POPT_CFG.get_guiCFG_main()
+        guiCfg = POPT_CFG.get_guiPARM_main()
         guiCfg['gui_parm_new_call_alarm'] = bool(MH_LIST.parm_new_call_alarm)
         guiCfg['gui_parm_channel_index'] = int(self.channel_index)
         guiCfg['gui_parm_text_size'] = int(self.text_size)
-        POPT_CFG.set_guiCFG_main(guiCfg)
+        POPT_CFG.set_guiPARM_main(guiCfg)
 
     ####################
     # Init Stuff
     def _init_GUIvars(self):
+        self._init_CFG_vars()
+        # MH
+        if PORT_HANDLER.get_port_by_index(0):
+            MH_LIST.parm_alarm_ports = [0]
+        else:
+            MH_LIST.parm_alarm_ports = []
+
+    def _init_CFG_vars(self):
         #########################
         # GUI-Vars fm cfg
         self.language = POPT_CFG.get_guiCFG_language()
@@ -1805,25 +1814,15 @@ class TkMainWin:
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
-        self.setting_tracer.set(guiCfg.get('gui_cfg_tracer', False))
-        self.setting_auto_tracer.set(guiCfg.get('gui_cfg_auto_tracer', False))
-        self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
         if is_linux():
             self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
         else:
             self.setting_sprech.set(False)
-        # MH
-        """
-        MH_LIST.parm_distance_alarm = 50
-        MH_LIST.parm_lastseen_alarm = 1
-        """
-        # Set Port 0 for DX Alarm as default # TODO remove
-        if PORT_HANDLER.get_port_by_index(0):
-            MH_LIST.parm_alarm_ports = [0]
-        else:
-            MH_LIST.parm_alarm_ports = []
+        self.setting_tracer.set(guiCfg.get('gui_cfg_tracer', False))
+        self.setting_auto_tracer.set(guiCfg.get('gui_cfg_auto_tracer', False))
+        self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
 
-    def _init_vars(self):
+    def _init_PARM_vars(self):
         #########################
         # Parameter fm cfg
         guiCfg = POPT_CFG.get_guiCFG_main()
@@ -1836,6 +1835,11 @@ class TkMainWin:
         #             conf,
         #             bool(tx)
         #         )
+
+    def _set_CFG(self):
+        self.set_tracer()
+        self.set_auto_tracer()
+        self.set_dx_alarm()
 
     def _init_bw_plot(self):
         self._bw_fig = Figure(figsize=(8, 5), dpi=80)

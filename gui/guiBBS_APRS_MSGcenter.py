@@ -27,7 +27,7 @@ class MSG_Center(tk.Toplevel):
             'S': {},
         }
         self._var_encoding = tk.StringVar(self, 'UTF-8')
-        self.text_size = int(POPT_CFG.get_guiCFG_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
+        self.text_size = int(POPT_CFG.get_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
         self._text_size_tabs = 10
         self.newPMS_MSG_win = self._root_win.newPMS_MSG_win
         ###################################
@@ -292,10 +292,10 @@ class MSG_Center(tk.Toplevel):
         # self.text_size = int(POPT_CFG.get_guiCFG_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
 
     def _save_Vars_to_Cfg(self):
-        cfg = POPT_CFG.get_guiCFG_main()
+        cfg = POPT_CFG.get_guiPARM_main()
         cfg['guiMsgC_parm_text_size'] = self.text_size
 
-        POPT_CFG.set_guiCFG_main(cfg)
+        POPT_CFG.set_guiPARM_main(cfg)
 
     # PN TAB
     def _init_pn_tree(self, root_frame):

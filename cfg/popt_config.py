@@ -1,6 +1,6 @@
 import logging
 
-from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_cfg
+from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_cfg, getNew_maniGUI_parm
 from constant import CFG_MAIN_data_file
 from fnc.cfg_fnc import load_fm_file, save_to_file
 
@@ -19,10 +19,12 @@ class Main_CFG:
             'pms_home_bbs': getNew_homeBBS_cfg,
             # --GUI
             # GUI Main
-            'gui_main': getNew_maniGUI_cfg,
+            'gui_main_cfg': getNew_maniGUI_cfg,
+            'gui_main_parm': getNew_maniGUI_parm,
         }
         self.load_CFG_fm_file()
         self._set_all_default_CFGs()
+        self._clean_old_CFGs()
 
     ####################
     # Init Stuff
@@ -30,6 +32,11 @@ class Main_CFG:
         for cfg_key in self._default_cfg_tab.keys():
             if cfg_key not in list(self._config.keys()):
                 self._config[cfg_key] = self.get_default_CFG_by_key(cfg_key)
+
+    def _clean_old_CFGs(self):
+        for cfg_key in list(self._config.keys()):
+            if cfg_key not in self._default_cfg_tab.keys():
+                del self._config[cfg_key]
 
     ####################
     # File Fnc
@@ -73,14 +80,21 @@ class Main_CFG:
     ####################
     # GUI
     def get_guiCFG_language(self):
-        return int(self._config['gui_main'].get('gui_lang', 0))
+        return int(self._config['gui_main_cfg'].get('gui_lang', 0))
 
-    # GUI Main
+    # GUI CFG
     def get_guiCFG_main(self):
-        return dict(self._config['gui_main'])
+        return dict(self._config['gui_main_cfg'])
 
     def set_guiCFG_main(self, data: dict):
-        self._config['gui_main'] = data
+        self._config['gui_main_cfg'] = data
+
+    # GUI PARM
+    def get_guiPARM_main(self):
+        return dict(self._config['gui_main_parm'])
+
+    def set_guiPARM_main(self, data: dict):
+        self._config['gui_main_parm'] = data
 
 
 POPT_CFG = Main_CFG()

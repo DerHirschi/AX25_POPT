@@ -7,7 +7,7 @@ from cfg.popt_config import POPT_CFG
 from constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
 from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.str_fnc import format_number
-from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
+from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
 from string_tab import STR_TABLE
 
 
@@ -18,7 +18,7 @@ class BBS_newMSG(tk.Toplevel):
             reply_msg = {}
         self._root_win = root_win
         self._bbs_obj = PORT_HANDLER.get_bbs()
-        self.text_size = int(POPT_CFG.get_guiCFG_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
+        self.text_size = int(POPT_CFG.get_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
         self.language = root_win.language
         ###################################
         self.title(STR_TABLE['new_pr_mail'][self.language])
@@ -375,11 +375,27 @@ class BBS_newMSG(tk.Toplevel):
     def _send_msg(self):
         if not self._mid:
             return False
+        if not self._dest_call_check():
+            return False
         home_bbs = self._home_bbs_var.get()
         if not home_bbs:
             return False
         home_bbs = home_bbs.split('.')[0]
         return self._bbs_obj.add_msg_to_fwd_by_id(self._mid, home_bbs)
+
+    def _dest_call_check(self):
+        to_call = str(self._to_call_var.get())
+        if '@' not in to_call:
+            self._to_call_warning()
+            return False
+        if not to_call.split('@')[1]:
+            self._to_call_warning()
+            return False
+        return True
+
+    def _to_call_warning(self):
+        self._to_call_ent.focus_set()
+        WarningMsg('Adresse nicht korrekt', 'Die Adresse des Empfängers ist nicht korrekt.   Keine BBS')
 
     def _update_msg_size(self, event=None):
         size = len(self._text.get('1.0', tk.INSERT))
