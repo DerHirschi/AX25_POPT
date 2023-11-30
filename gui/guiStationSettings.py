@@ -1,3 +1,4 @@
+import time
 from tkinter import ttk as ttk
 from tkinter import filedialog as fd
 from tkinter import scrolledtext
@@ -519,7 +520,7 @@ class StationSettingsWin:
                       f"{self.main_class.main_win.winfo_y()}")
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.settings_win.resizable(False, False)
-        self.settings_win.attributes("-topmost", True)
+        # self.settings_win.attributes("-topmost", True)
         try:
             self.settings_win.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -615,11 +616,24 @@ class StationSettingsWin:
         self.main_class.msg_to_monitor(STR_TABLE['suc_save'][self.lang])
 
     def save_btn_cmd(self):
+        # TODO Cleanup
+        PORT_HANDLER.disco_all_Conn()
+        messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
+        self.settings_win.lift()
+        time.sleep(1)   # TODO Quick fix
+        # TODO PORT_HANDLER.is_all_disco()
+        PORT_HANDLER.disco_all_Conn()
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
         self.main_class.msg_to_monitor(STR_TABLE['lob1'][self.lang])
 
     def ok_btn_cmd(self):
+        # TODO Cleanup
+        if not PORT_HANDLER.is_all_disco():
+            PORT_HANDLER.disco_all_Conn()
+            messagebox.showerror('Stationen nicht disconnected', 'Nicht alle Stationen disconnected!')
+            self.settings_win.lift()
+            return
         self.set_all_vars_to_cfg()
         self.save_cfg_to_file()
         self.main_class.msg_to_monitor(STR_TABLE['hin1'][self.lang])

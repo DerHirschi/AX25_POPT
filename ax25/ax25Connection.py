@@ -98,6 +98,7 @@ class RTT(object):
 class AX25Conn(object):
     def __init__(self, ax25_frame: AX25Frame, cfg, port, rx=True):
         """ AX25 Connection class """
+        # TODO: Cleanup
         """ Global Stuff """
         self.own_port = port
         self.port_handler = self.own_port.port_handler
@@ -110,8 +111,8 @@ class AX25Conn(object):
         """ Ch-Echo"""
         self.ch_echo: [AX25Conn] = []
         """ Config new Connection Address """
-        # AX25 Frame for Connection Initialisation.
-        self.ax25_out_frame = AX25Frame()  # BULLSHIT Predefined AX25 Frame for Output
+        # AX25 Frame for Connection Initialisation TODO in init_fnc().
+        self.ax25_out_frame = AX25Frame()  # TODO: Cleanup: PreDefined AX25 Frame for Output needed ?
         self.ax25_out_frame.axip_add = ax25_frame.axip_add
         self.axip_add = self.ax25_out_frame.axip_add
         if rx:
@@ -194,7 +195,8 @@ class AX25Conn(object):
         self.rx_byte_count = 0
         """ Connection Start Time """
         self.time_start = datetime.now()
-        """ Zustandstabelle / Statechart """
+        """ Zustandstabelle / States """
+        # TODO Cleanup  CONST zustand_tab
         self.zustand_tab = {
             0: (DefaultStat, 'ENDE'),
             1: (S1Frei, 'FREI'),
@@ -556,8 +558,10 @@ class AX25Conn(object):
     # ##############
     # DISCO
     def conn_disco(self):
+        """ 2'nd time called = HardDisco """
         if self.zustand_exec.stat_index:
-            self.bbsFwd_disc()
+
+            self.bbsFwd_disc()  # TODO return "is_"self.bbs_connection
             self.set_T1(stop=True)
             self.zustand_exec.tx(None)
             if self.zustand_exec.stat_index in [2, 4]:
@@ -570,8 +574,9 @@ class AX25Conn(object):
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
         self.link_cleanup()
-        self.port_handler.del_conn2all_conn_var(self)   # Doppelt ..
+        self.port_handler.del_conn_var(self)   # Doppelt ..
         self.own_port.del_connections(conn=self)
+        # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self):
         # print(f"end_connection: {self.uid}")
@@ -591,7 +596,16 @@ class AX25Conn(object):
             c += 1
         """
         # self.ax25conn.link_cleanup()
-        self.port_handler.del_conn2all_conn_var(self)
+        self.port_handler.del_conn_var(self)
+
+    def is_dico(self):
+        if not self.zustand_exec:
+            return True
+        if not self.zustand_exec.stat_index:
+            return True
+        if self.zustand_exec.stat_index in [0, 1]:
+            return True
+        return False
 
     ###############################################
     # Channel ECHO  # TODO Again !

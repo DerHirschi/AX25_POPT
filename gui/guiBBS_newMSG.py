@@ -32,8 +32,8 @@ class BBS_newMSG(tk.Toplevel):
                       f"{win.winfo_x()}+"
                       f"{win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._close)
-        self.attributes("-topmost", True)
-        self.attributes("-topmost", False)
+        # self.attributes("-topmost", True)
+        # self.attributes("-topmost", False)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -396,6 +396,7 @@ class BBS_newMSG(tk.Toplevel):
     def _to_call_warning(self):
         self._to_call_ent.focus_set()
         WarningMsg('Adresse nicht korrekt', 'Die Adresse des Empfängers ist nicht korrekt.   Keine BBS')
+        self.lift()
 
     def _update_msg_size(self, event=None):
         size = len(self._text.get('1.0', tk.INSERT))
@@ -415,6 +416,7 @@ class BBS_newMSG(tk.Toplevel):
 
     def _insert_fm_file(self):
         data = open_file_dialog()
+        self.lift()
         if data:
             if type(data) == bytes:
                 decoder = self._var_encoding.get()
@@ -425,6 +427,7 @@ class BBS_newMSG(tk.Toplevel):
     def _save_to_file(self):
         data = self._text.get('1.0', tk.END)
         save_file_dialog(data)
+        self.lift()
 
     def _close(self):
         self._bbs_obj = None

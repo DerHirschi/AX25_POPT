@@ -1,6 +1,7 @@
+import time
 import tkinter as tk
 import threading
-from tkinter import ttk as ttk
+from tkinter import ttk as ttk, messagebox
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
@@ -735,7 +736,7 @@ class PortSettingsWin:
                       f"{self._main_class.main_win.winfo_y()}")
         self.settings_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.settings_win.resizable(False, False)
-        self.settings_win.attributes("-topmost", True)
+        # self.settings_win.attributes("-topmost", True)
         try:
             self.settings_win.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -854,6 +855,15 @@ class PortSettingsWin:
         self._main_class.settings_win = None
 
     def _save_btn_cmd(self):
+        # TODO Cleanup
+        PORT_HANDLER.disco_all_Conn()
+        # self.settings_win.lower()
+        messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
+        self.settings_win.lift()
+        self._main_class.msg_to_monitor('Info: Alle Stationen werden disconnected !')
+        time.sleep(1)  # TODO Quick fix
+        # TODO PORT_HANDLER.is_all_disco()
+        PORT_HANDLER.disco_all_Conn()
         self._main_class.msg_to_monitor('Info: Port Einstellungen werden gespeichert.')
         for port_id in self.tab_list.keys():
             self.tab_list[port_id].set_vars_to_cfg()
@@ -872,6 +882,12 @@ class PortSettingsWin:
         """
 
     def _ok_btn_cmd(self):
+        # TODO Cleanup
+        if not PORT_HANDLER.is_all_disco():
+            PORT_HANDLER.disco_all_Conn()
+            messagebox.showerror('Stationen nicht disconnected', 'Nicht alle Stationen disconnected!')
+            self.settings_win.lift()
+            return
         for port_id in self.tab_list.keys():
             self.tab_list[port_id].set_vars_to_cfg()
             self.tab_list[port_id].port_setting.save_to_pickl()

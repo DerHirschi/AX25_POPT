@@ -220,12 +220,14 @@ class AX25PortHandler(object):
                 logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
 
     def save_all_port_cfgs(self):
+        """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         for port_id in self.ax25_ports.keys():
             self.ax25_ports[port_id].port_cfg.save_to_pickl()
 
     ######################
     # APRS
     def init_aprs_ais(self, aprs_obj=None):
+        """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         if aprs_obj is None:
             self.aprs_ais = APRS_ais()
         else:
@@ -243,6 +245,7 @@ class AX25PortHandler(object):
             self.aprs_ais.task()
 
     def close_aprs_ais(self):
+        """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         if self.aprs_ais is None:
             return False
         self.aprs_ais.ais_close()
@@ -340,13 +343,15 @@ class AX25PortHandler(object):
             del self.all_connections[k]
     """
 
-    def del_conn2all_conn_var(self, conn):
+    def del_conn_var(self, conn):
+        # TODO , Cleanup. Get conn by Key
         for k in list(self.all_connections.keys()):
             # temp_conn: AX25Conn = self.all_connections[k]
             if self.all_connections[k] == conn:
                 if self.gui is not None:
                     self.gui.send_to_qso(data=f'\n*** Disconnected from {str(conn.to_call_str)}\n', ch_index=int(conn.ch_index))
                     self.gui.disco_sound()
+                    # TODO: Trigger here, Logbook and UserDB-Conn C
                 self.all_connections[k].ch_index = 0
                 del self.all_connections[k]
 
@@ -356,6 +361,29 @@ class AX25PortHandler(object):
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
             del self.link_connections[uid]
+
+    def disco_all_Conn(self):
+        for k in list(self.all_connections.keys()):
+            # temp_conn: AX25Conn = self.all_connections[k]
+            if self.all_connections[k]:
+                self.all_connections[k].conn_disco()
+
+    # TODO def disco_Conn(self, conn):
+
+    def is_all_disco(self):
+        for k in list(self.all_connections.keys()):
+            if self.all_connections[k]:
+                if not self.all_connections[k].is_dico():
+                    return False
+        return True
+
+    @staticmethod
+    def is_disco(conn):
+        if not conn:
+            return True
+        if not hasattr(conn, 'is_dico'):
+            return True
+        return conn.is_dico()
 
     def new_outgoing_connection(self,               # NICE ..
                                 dest_call: str,
@@ -461,7 +489,7 @@ class AX25PortHandler(object):
         return res
 
     ######################
-    # Getter
+    # Returns
     def get_aprs_ais(self):
         return self.aprs_ais
 

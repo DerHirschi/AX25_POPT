@@ -1,20 +1,18 @@
 pip uninstall mysql-connector-python
 pip uninstall mysql-connector
 pip install mysql-connector-python
-
-##################
-
+-------------------------------------------------------------------------
+mysql:
 CREATE DATABASE IF NOT EXISTS popt_db;
 CREATE USER 'popt'@'localhost' IDENTIFIED BY '83g6u45908k91HG2jhj5jeGG';
 GRANT ALL PRIVILEGES ON popt_db.* TO 'popt'@'localhost';
 FLUSH PRIVILEGES;
-
-# Reset/Set MID/BID
+# Reset/Set MID/BID in DB popt_db
 ALTER TABLE pms_out_msg AUTO_INCREMENT = 350;
 
-
+-------------------------------------------------------------------------
 Change in constants.py:
-MYSQL = True       # MYSQL/SQLITE
+MYSQL = True # MYSQL/SQLITE
 optional:
 MYSQL_USER = 'popt'
 MYSQL_PASS = '83g6u45908k91HG2jhj5jeGG'

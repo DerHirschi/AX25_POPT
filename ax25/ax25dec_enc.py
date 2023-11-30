@@ -1,6 +1,7 @@
 """
     Layer 2 ??
     AX.25 Packet enc-/decoding
+    TODO: Cleanup/optimising
 """
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str

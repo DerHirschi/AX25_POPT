@@ -2402,6 +2402,7 @@ class TkMainWin:
         self._sound_play(self._root_dir + CFG_sound_CONN, False)
 
     def disco_sound(self):
+        """ fm PortHandler """
         self._sound_play(self._root_dir + CFG_sound_DICO, False)
 
     # Sound Ende
