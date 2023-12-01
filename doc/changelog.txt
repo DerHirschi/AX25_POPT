@@ -6,6 +6,7 @@ Fixes:
 - Scripterror beim Speichern der User-DB mit gelöschten einträgen
 
 Optimierung:
+- CLI/Remote CMD's: dbname, dbqth, dbloc geändert zu Name, qth, loc
 - CLI/Remote CMD's: Kurzeingabe von Befehlen wie N & Q statt QTH & Quit bei doppelten CMD Anfangsbuchstaben
 - Zu speichernde Datensätze für MH-Liste & User-DB
 - Überflüssige debug ausgaben in error.log aufgeräumt
