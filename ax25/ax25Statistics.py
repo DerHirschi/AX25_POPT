@@ -6,7 +6,7 @@ from datetime import timedelta
 import pickle
 
 from UserDB.UserDBmain import USER_DB
-from constant import CFG_mh_data_file, CFG_port_stat_data_file
+from cfg.constant import CFG_mh_data_file, CFG_port_stat_data_file
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting

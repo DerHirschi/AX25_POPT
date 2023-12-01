@@ -1,7 +1,7 @@
 import math
 from math import floor
 
-from constant import ASCII_0, ASCII_A, ASCII_a
+from cfg.constant import ASCII_0, ASCII_A, ASCII_a
 
 
 def decimal_degrees_to_aprs(latitude, longitude):

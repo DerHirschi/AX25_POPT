@@ -17,7 +17,7 @@ from datetime import datetime
 from bbs.bbs_Error import bbsInitError, logger
 from cfg.popt_config import POPT_CFG
 from cli.cliStationIdent import get_station_id_obj
-from constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
+from cfg.constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 from schedule.popt_sched import PoPTSchedule
 
 FWD_RESP_TAB = {
@@ -578,7 +578,7 @@ class BBS:
         logger.info('BBS INIT')
         print('BBS INIT')
         self._port_handler = port_handler
-        self._db = self._port_handler.get_database()
+        self.db = self._port_handler.get_database()
         self.pms_flag = generate_sid(features=("F", "M", "H"))
         self.my_stat_id = get_station_id_obj(str(self.pms_flag))
         try:
@@ -591,7 +591,7 @@ class BBS:
             raise bbsInitError('my_stat_id.e Error')
         ###############
         # Init DB
-        self._db.check_tables_exists('bbs')
+        self.db.check_tables_exists('bbs')
         ###############
         # Config's
         """
@@ -808,39 +808,39 @@ class BBS:
     def is_pn_in_db(self, bid_mid: str):
         if not bid_mid:
             return 'E'
-        _ret = self._db.bbs_check_pn_mid_exists(bid_mid)
+        _ret = self.db.bbs_check_pn_mid_exists(bid_mid)
         return FWD_RESP_TAB[_ret]
 
     def is_bl_in_db(self, bid_mid: str):
         if not bid_mid:
             return 'E'
-        _ret = self._db.bbs_check_bl_mid_exists(bid_mid)
+        _ret = self.db.bbs_check_bl_mid_exists(bid_mid)
         return FWD_RESP_TAB[_ret]
 
     def new_msg(self, msg_struc: dict):
         msg_struc['message_size'] = int(len(msg_struc['msg']))
 
-        return self._db.bbs_insert_new_msg(msg_struc)
+        return self.db.bbs_insert_new_msg(msg_struc)
 
     def update_msg(self, msg_struc: dict):
         if not msg_struc.get('mid', ''):
             return False
         msg_struc['message_size'] = int(len(msg_struc['msg']))
 
-        return self._db.bbs_update_out_msg(msg_struc)
+        return self.db.bbs_update_out_msg(msg_struc)
 
     def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call: str):
-        _msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
+        _msg_fm_db = self.db.bbs_get_msg_fm_outTab_by_mid(mid)
         if _msg_fm_db:
             # print(_msg_fm_db)
             _new_msg = build_new_msg_header(_msg_fm_db)
             _new_msg['fwd_bbs_call'] = fwd_bbs_call
             # print(_new_msg)
-            return self._db.bbs_insert_msg_to_fwd(_new_msg)
+            return self.db.bbs_insert_msg_to_fwd(_new_msg)
         return False
 
     def get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
-        return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
+        return self.db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
 
     def build_fwd_header(self, bbs_call: str):
         fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
@@ -866,19 +866,19 @@ class BBS:
             return b'', _ret_bids
 
     def get_fwd_q_tab(self):
-        return self._db.bbs_get_fwd_q_Tab_for_GUI()
+        return self.db.bbs_get_fwd_q_Tab_for_GUI()
 
     def get_active_fwd_q_tab(self):
-        return self._db.pms_get_active_fwd_q_for_GUI()
+        return self.db.pms_get_active_fwd_q_for_GUI()
 
     def get_pn_msg_tab(self):
-        return self._db.bbs_get_pn_msg_Tab_for_GUI()
+        return self.db.bbs_get_pn_msg_Tab_for_GUI()
 
     def get_bl_msg_tab(self):
-        return self._db.bbs_get_bl_msg_Tab_for_GUI()
+        return self.db.bbs_get_bl_msg_Tab_for_GUI()
 
     def get_bl_msg_fm_BID(self, bid):
-        data = self._db.bbs_get_bl_msg_for_GUI(bid)
+        data = self.db.bbs_get_bl_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -900,13 +900,13 @@ class BBS:
         }
 
     def set_bl_msg_notNew(self, bid):
-        self._db.bbs_set_bl_msg_notNew(bid)
+        self.db.bbs_set_bl_msg_notNew(bid)
 
     def set_all_bl_msg_notNew(self):
-        self._db.bbs_set_all_bl_msg_notNew()
+        self.db.bbs_set_all_bl_msg_notNew()
 
     def get_pn_msg_fm_BID(self, bid):
-        data = self._db.bbs_get_pn_msg_for_GUI(bid)
+        data = self.db.bbs_get_pn_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -928,13 +928,13 @@ class BBS:
         }
 
     def set_pn_msg_notNew(self, bid):
-        self._db.bbs_set_pn_msg_notNew(bid)
+        self.db.bbs_set_pn_msg_notNew(bid)
 
     def set_all_pn_msg_notNew(self):
-        self._db.bbs_set_all_pn_msg_notNew()
+        self.db.bbs_set_all_pn_msg_notNew()
 
     def get_out_msg_fm_BID(self, bid):
-        data = self._db.bbs_get_out_msg_for_GUI(bid)
+        data = self.db.bbs_get_out_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -967,10 +967,10 @@ class BBS:
             POPT_CFG.set_CFG_by_key('pms_main', pms_cfg)
 
     def get_sv_msg_tab(self):
-        return self._db.bbs_get_sv_msg_Tab_for_GUI()
+        return self.db.bbs_get_sv_msg_Tab_for_GUI()
 
     def get_sv_msg_fm_BID(self, mid):
-        data = self._db.bbs_get_sv_msg_for_GUI(mid)
+        data = self.db.bbs_get_sv_msg_for_GUI(mid)
         if not data:
             return {}
         return {
@@ -994,24 +994,24 @@ class BBS:
         }
 
     def del_pn_by_BID(self, bid):
-        return self._db.bbs_del_pn_msg_by_BID(bid)
+        return self.db.bbs_del_pn_msg_by_BID(bid)
 
     def del_bl_by_BID(self, bid):
-        return self._db.bbs_del_bl_msg_by_BID(bid)
+        return self.db.bbs_del_bl_msg_by_BID(bid)
 
     def del_out_by_BID(self, bid):
-        return self._db.bbs_del_out_msg_by_BID(bid)
+        return self.db.bbs_del_out_msg_by_BID(bid)
 
     def del_sv_by_MID(self, mid):
-        return self._db.bbs_del_sv_msg_by_MID(mid)
+        return self.db.bbs_del_sv_msg_by_MID(mid)
 
     def set_bid(self, bid):
-        return self._db.pms_set_bid(bid)
+        return self.db.pms_set_bid(bid)
 
     def get_bid(self):
-        return self._db.pms_get_bid()
+        return self.db.pms_get_bid()
 
     def get_db(self):
-        return self._db
+        return self.db
 
 

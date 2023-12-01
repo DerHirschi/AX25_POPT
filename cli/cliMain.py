@@ -4,13 +4,13 @@ import logging
 
 import ax25.ax25Connection
 import config_station
-import constant
+from cfg import constant
 from ax25.ax25Statistics import MH_LIST
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
-from constant import STATION_ID_ENCODING_REV
+from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_str
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from UserDB.UserDBmain import Client, USER_DB
 from ax25.ax25UI_Pipe import AX25Pipe

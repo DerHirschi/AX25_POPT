@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from config_station import logger
-from constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
+from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
 from fnc.sql_fnc import search_sql_injections
 from sql_db.sql_Error import MySQLConnectionError
 from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
@@ -652,6 +652,15 @@ class SQL_Database:
         _query = "UPDATE pms_out_msg SET flag=%s WHERE BID=%s;"
         _query_data = (flag, bid)
         self.commit_query_bin(_query, _query_data)
+
+    def pms_save_outMsg_by_MID(self, mid: str):
+        # TODO Copy original Mail with new MID
+        if not mid:
+            return []
+        _query = ("UPDATE pms_out_msg "
+                  "SET flag='E' "
+                  f"WHERE MID='{mid}';")
+        return self.commit_query(_query)
 
     def bbs_del_pn_msg_by_BID(self, bid: str):
         _query = ("UPDATE pms_pn_msg SET flag='DL' "

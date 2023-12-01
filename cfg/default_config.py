@@ -1,4 +1,4 @@
-from constant import LANGUAGE
+from cfg.constant import LANGUAGE
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -27,7 +27,7 @@ def getNew_homeBBS_cfg():
 
 
 #######################################
-# GUI
+# GUI Configs
 def getNew_maniGUI_cfg():
     return {
                 'gui_lang': LANGUAGE,  # TODO CFG GUI
@@ -43,6 +43,8 @@ def getNew_maniGUI_cfg():
     }
 
 
+#######################################
+# GUI Parameter
 def getNew_maniGUI_parm():
     return {
         'gui_parm_new_call_alarm': False,

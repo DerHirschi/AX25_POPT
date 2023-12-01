@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from constant import WEEK_DAYS_GE
+from cfg.constant import WEEK_DAYS_GE
 from schedule.popt_sched import getNew_schedule_config
 
 

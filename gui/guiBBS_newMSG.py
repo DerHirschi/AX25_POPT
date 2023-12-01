@@ -4,11 +4,11 @@ from tkinter import scrolledtext, messagebox
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
-from constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
+from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
 from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.str_fnc import format_number
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class BBS_newMSG(tk.Toplevel):

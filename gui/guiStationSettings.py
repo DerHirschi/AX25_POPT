@@ -8,7 +8,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from config_station import save_station_to_file, del_user_data, DefaultStation
 from cli.cliMain import CLI_OPT
 from gui.guiMsgBoxes import *
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class StatSetTab:

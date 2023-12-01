@@ -4,7 +4,7 @@ from tkinter import ttk
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MH_LIST
 from fnc.str_fnc import conv_time_DE_str
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class MulticastSettings(tk.Toplevel):

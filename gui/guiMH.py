@@ -4,7 +4,7 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MyHeard, MH_LIST
-from constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 from fnc.str_fnc import conv_time_DE_str
 
 logger = logging.getLogger(__name__)

@@ -4,9 +4,9 @@ from tkinter.scrolledtext import ScrolledText
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import format_aprs_f_aprs_mon
-from constant import FONT
+from cfg.constant import FONT
 from fnc.str_fnc import tk_filter_bad_chars
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class AISmonitor(tk.Toplevel):

@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class PrivilegWin(tk.Toplevel):

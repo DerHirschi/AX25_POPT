@@ -1,5 +1,4 @@
 import tkinter as tk
-from constant import VER
 
 
 class KeyBindsHelp(tk.Toplevel):

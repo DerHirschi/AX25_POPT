@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 
 logger = logging.getLogger(__name__)
 

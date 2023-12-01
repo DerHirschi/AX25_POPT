@@ -3,7 +3,7 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.loc_fnc import locator_to_coordinates, coordinates_to_locator
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class APRSSettingsWin(tk.Toplevel):

@@ -11,7 +11,7 @@ from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
 from config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
-from constant import MAX_PORTS
+from cfg.constant import MAX_PORTS
 from sql_db.sql_Error import MySQLConnectionError
 
 

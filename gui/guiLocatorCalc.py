@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 from fnc.loc_fnc import coordinates_to_locator, locator_to_coordinates, locator_distance
 
 

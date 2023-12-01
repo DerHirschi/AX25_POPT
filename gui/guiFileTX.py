@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog as fd
 from ax25.ax25FileTransfer import FileTransport
-from constant import FT_MODES
-from string_tab import STR_TABLE
+from cfg.constant import FT_MODES
+from cfg.string_tab import STR_TABLE
 
 
 class FileSend(tk.Toplevel):

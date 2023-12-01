@@ -5,7 +5,7 @@ from tkinter import scrolledtext
 from ax25.ax25Beacon import Beacon
 from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.str_fnc import tk_filter_bad_chars
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class BeaconTab:

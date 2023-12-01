@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timedelta
 import logging
-from constant import ENCODINGS
+from cfg.constant import ENCODINGS
 
 
 def get_kb_str_fm_bytes(len_: int):

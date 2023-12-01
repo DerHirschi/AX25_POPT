@@ -1,6 +1,6 @@
 import sqlite3
 from config_station import logger
-from constant import CFG_data_path
+from cfg.constant import CFG_data_path
 from sql_db.sql_Error import MySQLConnectionError
 
 

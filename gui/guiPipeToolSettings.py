@@ -5,8 +5,7 @@ from tkinter import filedialog as fd
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25dec_enc import PIDByte
 from ax25.ax25UI_Pipe import AX25Pipe
-from ax25.ax25Connection import AX25Conn
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class AX25PipeTab:

@@ -8,7 +8,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
 from config_station import get_all_stat_cfg, del_port_data, DefaultPort
 from fnc.os_fnc import is_linux
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class PortSetTab:

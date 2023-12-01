@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 logger = logging.getLogger(__name__)
 

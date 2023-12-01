@@ -4,8 +4,8 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
-from constant import APRS_SW_ID
-from string_tab import STR_TABLE
+from cfg.constant import APRS_SW_ID
+from cfg.string_tab import STR_TABLE
 
 
 class NewMessageWindow(tk.Toplevel):

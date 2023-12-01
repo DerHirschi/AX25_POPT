@@ -3,11 +3,11 @@ from tkinter import ttk, scrolledtext
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
-from constant import FONT, ENCODINGS
+from cfg.constant import FONT, ENCODINGS
 from fnc.str_fnc import format_number
 from gui.guiBBS_newMSG import BBS_newMSG
 from gui.guiMsgBoxes import save_file_dialog
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 
 
 class MSG_Center(tk.Toplevel):
@@ -347,7 +347,10 @@ class MSG_Center(tk.Toplevel):
                   text='Löschen',
                   command=lambda: self._delete_msg()
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Speichern',
+                  # TODO cmd
+                  ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text='Weiterleiten',
                   command=lambda: self._open_newMSG_win_forward('P')
@@ -475,7 +478,10 @@ class MSG_Center(tk.Toplevel):
                   text='Löschen',
                   command=lambda: self._delete_msg()
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Speichern',
+                  # TODO cmd
+                  ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text='Weiterleiten',
                   command=lambda: self._open_newMSG_win_forward('B')
@@ -588,6 +594,10 @@ class MSG_Center(tk.Toplevel):
         tk.Button(btn_frame_r,
                   text='Löschen',
                   command=lambda: self._delete_msg()
+                  ).pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text='Speichern',
+                  command=lambda: self._save_outMSG()
                   ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text='Weiterleiten',
@@ -1314,6 +1324,14 @@ class MSG_Center(tk.Toplevel):
                     }.get(ind)
                     fnc(bid_next_msg)
                     self._tree_update_task(ind)
+
+    def _save_outMSG(self):
+
+        bid = self._selected_msg['O'].get('bid', '')
+        if bid:
+            mid = int(bid[:6])
+            print(mid)
+            self._bbs_obj.db.pms_save_outMsg_by_MID(mid)
 
     def _copy_select(self):
         try:

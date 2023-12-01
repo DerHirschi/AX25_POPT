@@ -1,5 +1,5 @@
 import tkinter as tk
-from constant import VER
+from cfg.constant import VER
 
 
 class About(tk.Toplevel):

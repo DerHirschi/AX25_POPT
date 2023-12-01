@@ -3,9 +3,9 @@ from tkinter import ttk
 from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
-from constant import ENCODINGS, STATION_TYPS
+from cfg.constant import ENCODINGS, STATION_TYPS
 from fnc.str_fnc import conv_time_DE_str
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 from gui.guiMsgBoxes import AskMsg
 
 

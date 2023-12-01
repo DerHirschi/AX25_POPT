@@ -7,7 +7,7 @@ from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
-from constant import APRS_SW_ID, APRS_TRACER_COMMENT, CFG_aprs_data_file
+from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT, CFG_aprs_data_file
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii

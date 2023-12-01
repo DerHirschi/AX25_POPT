@@ -1,7 +1,7 @@
 import pickle
 
 import logging
-from constant import CFG_data_path
+from cfg.constant import CFG_data_path
 
 logger = logging.getLogger(__name__)
 
