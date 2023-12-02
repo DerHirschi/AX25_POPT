@@ -1326,7 +1326,6 @@ class MSG_Center(tk.Toplevel):
                     self._tree_update_task(ind)
 
     def _save_outMSG(self):
-
         bid = self._selected_msg['O'].get('bid', '')
         if bid:
             mid = int(bid[:6])

@@ -1,7 +1,7 @@
 import sqlite3
-from config_station import logger
+from cfg.config_station import logger
 from cfg.constant import CFG_data_path
-from sql_db.sql_Error import MySQLConnectionError
+from sql_db.sql_Error import SQLConnectionError
 
 
 class SQL_DB:
@@ -10,11 +10,11 @@ class SQL_DB:
         self.database_name = config.get('database', '')
         if not self.database_name:
             logger.error("SQLITE: No Database in Config")
-            raise MySQLConnectionError("SQLITE: No Database in Config")
+            raise SQLConnectionError("SQLITE: No Database in Config")
         try:
             self.conn = sqlite3.connect(CFG_data_path + self.database_name, check_same_thread=False)
         except sqlite3.OperationalError as e:
-            raise MySQLConnectionError(f"SQLITE: {e}")
+            raise SQLConnectionError(f"SQLITE: {e}")
 
     def close(self):
         if self.conn:
@@ -30,7 +30,7 @@ class SQL_DB:
             # print(f"execute_query: {rows}")
             # db_conn.close()
             return rows
-        raise MySQLConnectionError
+        raise SQLConnectionError
 
     def execute_query_bin(self, query_str: str, binary_data: tuple):
         if self.conn:
@@ -48,7 +48,7 @@ class SQL_DB:
             # print(f"execute_query: {rows}")
             # db_conn.close()
             return rows
-        raise MySQLConnectionError
+        raise SQLConnectionError
 
     def commit_query(self):
         if self.conn:

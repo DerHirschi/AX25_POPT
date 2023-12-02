@@ -9,10 +9,10 @@ from ax25.ax25Statistics import MH_LIST
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
-from config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
+from cfg.config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
 from cfg.constant import MAX_PORTS
-from sql_db.sql_Error import MySQLConnectionError
+from sql_db.sql_Error import SQLConnectionError
 
 
 class RxEchoVars(object):
@@ -59,7 +59,7 @@ class AX25PortHandler(object):
         # Init SQL-DB
         try:
             self._init_DB()
-        except MySQLConnectionError:
+        except SQLConnectionError:
             logger.error("Database Init Error !! Can't start PoPT !")
             print("Database Init Error !! Can't start PoPT !")
             # raise MySQLConnectionError # TODO !!! Commented out for GUI testing
@@ -532,9 +532,9 @@ class AX25PortHandler(object):
             # DB.check_tables_exists('bbs')
             self.db.check_tables_exists('user_db')
             if self.db.error:
-                raise MySQLConnectionError
+                raise SQLConnectionError
         else:
-            raise MySQLConnectionError
+            raise SQLConnectionError
 
     def close_DB(self):
         self.db.close_db()

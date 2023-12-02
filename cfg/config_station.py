@@ -7,11 +7,14 @@ from ax25aprs.aprs_station import APRS_Station
 from ax25.ax25UI_Pipe import AX25Pipe
 from cfg.constant import VER, CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
 from fnc.cfg_fnc import cleanup_obj, set_obj_att, save_to_file, load_fm_file, set_obj_att_fm_dict, cleanup_obj_to_dict
+"""
 if "dev" in VER:
     log_level = logging.DEBUG
 else:
     log_level = logging.INFO
-# log_level = logging.INFO
+"""
+
+log_level = logging.INFO
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

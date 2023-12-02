@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 
 import cli.cliMain
-import config_station
+from cfg import config_station
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
 from fnc.ax25_fnc import reverse_uid

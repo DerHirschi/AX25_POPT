@@ -1,13 +1,12 @@
 from datetime import datetime
 
-from config_station import logger
+from cfg.config_station import logger
 from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
 from fnc.sql_fnc import search_sql_injections
-from sql_db.sql_Error import MySQLConnectionError
+from sql_db.sql_Error import SQLConnectionError
 from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
     SQLITE_CREATE_PMS_OUT_MAIL_TAB
-
 
 SQL_BBS_TABLES = {
     "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
@@ -16,7 +15,6 @@ SQL_BBS_TABLES = {
     "pms_out_msg": SQL_CREATE_PMS_OUT_MAIL_TAB,
     "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
 }
-
 
 SQLITE_BBS_TABLES = {
     "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
@@ -54,7 +52,7 @@ class SQL_Database:
 
         self.db_config = {  # TODO GUI and DB-TOOLs
             'user': MYSQL_USER,
-            'password': MYSQL_PASS,     # OMG, my super secret password
+            'password': MYSQL_PASS,  # OMG, my super secret password
             'host': MYSQL_HOST,
             'database': MYSQL_DB,
             'raise_on_warnings': True
@@ -64,7 +62,7 @@ class SQL_Database:
             self.db = SQL_DB(self.db_config)
             print("Database: Init ok")
             logger.info("Database: Init ok")
-        except MySQLConnectionError:
+        except SQLConnectionError:
             self.error = True
             print("Database: Init Error !")
             logger.error("Database: Init Error !")
@@ -83,7 +81,7 @@ class SQL_Database:
         if not self.error:
             try:
                 ret = self.db.get_all_tables()
-            except MySQLConnectionError:
+            except SQLConnectionError:
                 self.error = True
                 self.db = None
             else:
@@ -113,7 +111,7 @@ class SQL_Database:
         if self.db:
             try:
                 return self.db.execute_query(query)
-            except MySQLConnectionError:
+            except SQLConnectionError:
                 self.error = True
                 self.db = None
 
@@ -122,7 +120,7 @@ class SQL_Database:
         if self.db:
             try:
                 ret = self.db.execute_query(query)
-            except MySQLConnectionError:
+            except SQLConnectionError:
                 self.error = True
                 self.db = None
                 return None
@@ -136,7 +134,7 @@ class SQL_Database:
         if self.db:
             try:
                 ret = self.db.execute_query_bin(query, data)
-            except MySQLConnectionError:
+            except SQLConnectionError:
                 self.error = True
                 self.db = None
                 return None
@@ -410,7 +408,7 @@ class SQL_Database:
         _flag = msg_struc.get('flag', '')
         if _flag != 'E':
             return False
-        _flag = 'F'     # MSG flagged for forward
+        _flag = 'F'  # MSG flagged for forward
         _type = msg_struc.get('message_type', '')
         if not _type:
             return False
@@ -654,13 +652,78 @@ class SQL_Database:
         self.commit_query_bin(_query, _query_data)
 
     def pms_save_outMsg_by_MID(self, mid: str):
-        # TODO Copy original Mail with new MID
+        if not mid:
+            return False
+        """
+        _q = (
+            "SELECT flag FROM pms_out_msg "
+            f"WHERE MID='{mid}';"
+              )
+
+        msg_flag = self.commit_query(_q)
+        if not msg_flag:
+            return False
+        if not msg_flag[0]:
+            return False
+        if not msg_flag[0][0]:
+            return False
+        flag = msg_flag[0][0]
+        if flag == 'F':
+            self.pms_setFlag_outMsg_by_MID(mid, 'E')
+            self.pms_setFlag_fwdQ_by_MID(mid, 'E')
+            return True
+        """
+        self.pms_copy_outMsg_by_MID(mid)
+        return True
+
+    def pms_setFlag_outMsg_by_MID(self, mid: str, flag: str):
+        _query = ("UPDATE pms_out_msg "
+                  f"SET flag='{flag}' "
+                  f"WHERE MID='{mid}';")
+        self.commit_query(_query)
+        return True
+
+    def pms_setFlag_fwdQ_by_MID(self, mid: str, flag: str):
+        _query = ("UPDATE pms_fwd_q "
+                  f"SET flag='{flag}' "
+                  f"WHERE MID='{mid}';")
+        self.commit_query(_query)
+
+    def pms_copy_outMsg_by_MID(self, mid: str):
         if not mid:
             return []
-        _query = ("UPDATE pms_out_msg "
-                  "SET flag='E' "
-                  f"WHERE MID='{mid}';")
-        return self.commit_query(_query)
+        _q = ("INSERT INTO `pms_out_msg` "
+              "(from_call, "
+              "from_bbs, "
+              "from_bbs_call, "
+              "to_call, "
+              "to_bbs, "
+              "to_bbs_call, "
+              "size, "
+              "subject, "
+              "msg, "
+              "time, "
+              "utctime, "
+              "type) "
+              ""
+              "SELECT "
+              "from_call, "
+              "from_bbs, "
+              "from_bbs_call, "
+              "to_call, "
+              "to_bbs, "
+              "to_bbs_call, "
+              "size, "
+              "subject, "
+              "msg, "
+              "time, "
+              "utctime, "
+              "type "
+              ""
+              "FROM pms_out_msg "
+              f"WHERE MID='{mid}';")
+
+        return self.commit_query(_q)
 
     def bbs_del_pn_msg_by_BID(self, bid: str):
         _query = ("UPDATE pms_pn_msg SET flag='DL' "

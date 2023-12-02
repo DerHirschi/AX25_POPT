@@ -1,5 +1,5 @@
 import gui.guiMain
-from config_station import logger
+from cfg.config_station import logger
 from cfg.constant import VER
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-from config_station import logger
+from cfg.config_station import logger
 import re
 
 

@@ -3,8 +3,7 @@ import pickle
 import logging
 
 import ax25.ax25Connection
-import config_station
-from cfg import constant
+from cfg import constant, config_station
 from ax25.ax25Statistics import MH_LIST
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj

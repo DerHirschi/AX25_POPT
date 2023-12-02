@@ -1,9 +1,11 @@
 Fixes:
-- Debugausgaben erzeugen Scripterror bei TNC's, die defekte Pakte durchlassen
+- Debugausgaben erzeugen ScriptError bei TNC's, die defekte Pakte durchlassen
   (Ich konnte PoPT nie an echten TNC's testen)
 - User-DB Eintrag löschen war fehlerhaft.
 - User-DB Call, SSID, call_str Einträge erhielten falsche Daten. (fehlerhafte Datensätze werden repariert)
-- Scripterror beim Speichern der User-DB mit gelöschten einträgen
+- ScriptError beim Speichern der User-DB mit gelöschten einträgen
+- ScriptError beim Beenden von PoPT, wenn Station Settings Fenster noch geöffnet ist.
+
 
 Optimierung:
 - CLI/Remote CMD's: dbname, dbqth, dbloc geändert zu Name, qth, loc
@@ -18,7 +20,7 @@ Optimierung:
       MH <LÄNGE-der-AUSGABE>
       MH <PORT-ID> <LÄNGE-der-AUSGABE>
 - Das selbe mit "LMH"
-- Neu MainConfig (ToDo: Alten CFGs auf neues System übertragen)
+- Neu MainConfig
 
 
 Neue Implementierungen / Funktionen:

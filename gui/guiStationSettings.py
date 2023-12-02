@@ -5,7 +5,7 @@ from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from config_station import save_station_to_file, del_user_data, DefaultStation
+from cfg.config_station import save_station_to_file, del_user_data, DefaultStation
 from cli.cliMain import CLI_OPT
 from gui.guiMsgBoxes import *
 from cfg.string_tab import STR_TABLE
@@ -52,7 +52,7 @@ class StatSetTab:
         max_pac_label = tk.Label(self.own_tab, text='Max-Pac:')
         max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
         self.max_pac_select_var = tk.StringVar(self.own_tab)
-        opt = range(1, 8)
+        opt = range(8)
         self.max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
         self.max_pac = tk.OptionMenu(self.own_tab, self.max_pac_select_var, *opt)
         self.max_pac.configure(width=4, height=1)
@@ -518,7 +518,7 @@ class StationSettingsWin:
                       f"{self.win_height}+"
                       f"{self.main_class.main_win.winfo_x()}+"
                       f"{self.main_class.main_win.winfo_y()}")
-        self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy)
         self.settings_win.resizable(False, False)
         # self.settings_win.attributes("-topmost", True)
         try:
@@ -550,7 +550,7 @@ class StationSettingsWin:
                               # bg="green",
                               height=1,
                               width=8,
-                              command=self.destroy_win)
+                              command=self.destroy)
         ok_bt.place(x=20, y=self.win_height - 50)
         save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
@@ -639,7 +639,7 @@ class StationSettingsWin:
         self.main_class.msg_to_monitor(STR_TABLE['hin1'][self.lang])
         self.main_class.msg_to_monitor(STR_TABLE['lob2'][self.lang])
 
-        self.destroy_win()
+        self.destroy()
 
     def new_stat_btn_cmd(self):
         sett = DefaultStation()
@@ -649,7 +649,7 @@ class StationSettingsWin:
         self.tab_list.append(tab)
         # print(self.tabControl.index('current'))
 
-    def destroy_win(self):
+    def destroy(self):
         self.settings_win.destroy()
         self.main_class.settings_win = None
 
@@ -681,3 +681,4 @@ class StationSettingsWin:
             self.main_class.msg_to_monitor('Hinweis: Knack!! Abgebrochen..')
         self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)
+

@@ -11,10 +11,10 @@ GRANT ALL PRIVILEGES ON popt_db.* TO 'popt'@'localhost';
 FLUSH PRIVILEGES;
 """
 import time
-from config_station import logger
+from cfg.config_station import logger
 import mysql.connector
 
-from sql_db.sql_Error import MySQLConnectionError
+from sql_db.sql_Error import SQLConnectionError
 
 MYSQL_CONN_ATTEMPTS = 3
 
@@ -35,7 +35,7 @@ class SQL_DB:
                     # Attempts to reconnect failed; returning None
                     logger.error(f"MySQL: Failed to connect, exiting without a connection: {err}")
                     print(f"MySQL: Failed to connect, exiting without a connection: {err}")
-                    raise MySQLConnectionError("Failed to connect")
+                    raise SQLConnectionError("Failed to connect")
                 logger.info(
                     f"MySQL: Connection failed: {err}. Retrying ({attempt}/{MYSQL_CONN_ATTEMPTS - 1})..."
                 )
@@ -66,12 +66,12 @@ class SQL_DB:
                     logger.error("MySQL: pip uninstall mysql-connector")
                     logger.error("MySQL: pip install mysql-connector-python")
                     self.conn.close()
-                    raise MySQLConnectionError("MySQL: Version error !")
+                    raise SQLConnectionError("MySQL: Version error !")
                 # db_conn.close()
         self.conn = None
         print("MYSQL (execute_query): Could not connect")
         logger.error("MYSQL (execute_query): Could not connect")
-        raise MySQLConnectionError("MYSQL (execute_query): Could not connect")
+        raise SQLConnectionError("MYSQL (execute_query): Could not connect")
 
     def execute_query_bin(self, query_str: str, query_data: tuple):
         if self.conn:
@@ -90,7 +90,7 @@ class SQL_DB:
                     logger.error("MySQL: pip uninstall mysql-connector")
                     logger.error("MySQL: pip install mysql-connector-python")
                     self.conn.close()
-                    raise MySQLConnectionError("MySQL: Version error !")
+                    raise SQLConnectionError("MySQL: Version error !")
                 except mysql.connector.errors.DataError as e:
                     print(e)
                     print(f"Query: {query_str}")
@@ -100,7 +100,7 @@ class SQL_DB:
         self.conn = None
         print("MYSQL (execute_query): Could not connect")
         logger.error("MYSQL (execute_query): Could not connect")
-        raise MySQLConnectionError("MYSQL (execute_query): Could not connect")
+        raise SQLConnectionError("MYSQL (execute_query): Could not connect")
 
     def commit_query(self):
         if self.conn:
