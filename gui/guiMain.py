@@ -31,26 +31,26 @@ from gui.pms.guiBBS_PMS_Settings import PMS_Settings
 # from gui.guiBBS_PMS_Settings import PMS_Settings
 from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
 from gui.pms.guiBBS_newMSG import BBS_newMSG
-from gui.guiFT_Manager import FileTransferManager
+from gui.ft.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
-from gui.guiPipeToolSettings import PipeToolSettings
+from gui.settings.guiPipeToolSettings import PipeToolSettings
 from gui.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 
-from gui.guiUserDBoverview import UserDBtreeview
-from gui.guiMulticastSettings import MulticastSettings
+from gui.UserDB.guiUserDBoverview import UserDBtreeview
+from gui.settings.guiMulticastSettings import MulticastSettings
 from gui.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
-from gui.guiStationSettings import StationSettingsWin
-from gui.guiPortSettings import PortSettingsWin
-from gui.guiBeaconSettings import BeaconSettings
-from gui.guiRxEchoSettings import RxEchoSettings
-from gui.guiLinkholderSettings import LinkHolderSettings
-from gui.guiUserDB import UserDB
+from gui.settings.guiStationSettings import StationSettingsWin
+from gui.settings.guiPortSettings import PortSettingsWin
+from gui.settings.guiBeaconSettings import BeaconSettings
+from gui.settings.guiRxEchoSettings import RxEchoSettings
+from gui.settings.guiLinkholderSettings import LinkHolderSettings
+from gui.UserDB.guiUserDB import UserDB
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
-from gui.guiFileTX import FileSend
+from gui.ft.guiFileTX import FileSend
 from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, CFG_sound_CONN, \
