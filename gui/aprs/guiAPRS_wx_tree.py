@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from gui.guiAPRS_wx_plot import WXPlotWindow
+from gui.aprs.guiAPRS_wx_plot import WXPlotWindow
 
 logger = logging.getLogger(__name__)
 

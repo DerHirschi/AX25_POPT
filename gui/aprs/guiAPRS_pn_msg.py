@@ -5,7 +5,7 @@ from tkinter.scrolledtext import ScrolledText
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.str_fnc import tk_filter_bad_chars
-from gui.guiAPRSnewMSG import NewMessageWindow
+from gui.aprs.guiAPRSnewMSG import NewMessageWindow
 from cfg.string_tab import STR_TABLE
 
 

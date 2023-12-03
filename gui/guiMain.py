@@ -21,16 +21,16 @@ from cfg.popt_config import POPT_CFG
 
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
-from gui.guiAISmon import AISmonitor
-from gui.guiAPRS_Settings import APRSSettingsWin
-from gui.guiAPRS_be_tracer import BeaconTracer
-from gui.guiAPRS_pn_msg import APRS_msg_SYS_PN
-from gui.guiAPRS_wx_tree import WXWin
-from gui.guiBBS_APRS_MSGcenter import MSG_Center
-from gui.guiBBS_PMS_Settings import PMS_Settings
+from gui.aprs.guiAISmon import AISmonitor
+from gui.aprs.guiAPRS_Settings import APRSSettingsWin
+from gui.aprs.guiAPRS_be_tracer import BeaconTracer
+from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
+from gui.aprs.guiAPRS_wx_tree import WXWin
+from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
+from gui.pms.guiBBS_PMS_Settings import PMS_Settings
 # from gui.guiBBS_PMS_Settings import PMS_Settings
-from gui.guiBBS_fwd_q import BBS_fwd_Q
-from gui.guiBBS_newMSG import BBS_newMSG
+from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
+from gui.pms.guiBBS_newMSG import BBS_newMSG
 from gui.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.guiPipeToolSettings import PipeToolSettings
@@ -1935,9 +1935,7 @@ class TkMainWin:
         _MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
                                   command=lambda: self._open_settings_window('beacon_sett'),
                                   underline=0)
-        _MenuSettings.add_command(label='APRS',
-                                  command=lambda: self._open_settings_window('aprs_sett'),
-                                  underline=0)
+
 
         _MenuSettings.add_separator()
         _MenuSettings.add_command(label='Multicast',
@@ -1959,6 +1957,10 @@ class TkMainWin:
                               underline=0)
         _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
                               underline=0)
+        _MenuAPRS.add_separator()
+        _MenuAPRS.add_command(label=STR_TABLE['settings'][self.language],
+                                  command=lambda: self._open_settings_window('aprs_sett'),
+                                  underline=0)
         # MenuAPRS.add_separator()
         _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
         # BBS/PMS
