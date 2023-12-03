@@ -1747,28 +1747,21 @@ class TkMainWin:
 
         logging.info('Closing GUI: Destroying all Sub-Windows')
         self._close_port_stat_win()
-        if self.settings_win is not None:
-            self.settings_win.destroy()
-        if self.mh_window is not None:
-            self.mh_window.destroy()
-        if self.wx_window is not None:
-            self.wx_window.destroy()
-        if self.userdb_win is not None:
-            self.userdb_win.destroy()
-        if self.userDB_tree_win is not None:
-            self.userDB_tree_win.destroy()
-        if self.aprs_mon_win is not None:
-            self.aprs_mon_win.destroy()
-        if self.aprs_pn_msg_win is not None:
-            self.aprs_pn_msg_win.destroy()
-        if self.be_tracer_win is not None:
-            self.be_tracer_win.destroy()
-        if self.BBS_fwd_q_list is not None:
-            self.BBS_fwd_q_list.destroy()
-        if self.MSG_Center is not None:
-            self.MSG_Center.destroy()
-        if self.newPMS_MSG_win is not None:
-            self.newPMS_MSG_win.destroy()
+        for wn in [
+            self.settings_win,
+            self.mh_window,
+            self.wx_window,
+            self.userdb_win,
+            self.userDB_tree_win,
+            self.aprs_mon_win,
+            self.aprs_pn_msg_win,
+            self.be_tracer_win,
+            self.BBS_fwd_q_list,
+            self.MSG_Center,
+            self.newPMS_MSG_win,
+        ]:
+            if wn is not None:
+                wn.destroy()
         self.main_win.update_idletasks()
         self._loop_delay = 800
         logging.info('Closing GUI: Done')
@@ -2186,7 +2179,12 @@ class TkMainWin:
             self._out_txt.delete('sel.first', 'sel.last')
 
     def _clipboard_past(self):
-        clp_brd = self.main_win.clipboard_get()
+        try:
+            clp_brd = self.main_win.clipboard_get()
+        except tk.TclError:
+            logging.warning("TclError Clipboard no STR")
+            return
+
         if clp_brd:
             self._inp_txt.insert(tk.END, clp_brd)
 
@@ -2504,6 +2502,10 @@ class TkMainWin:
                     self._tracer_alarm()
             if self.settings_win is not None:
                 self.settings_win.tasker()
+            """
+            if self.MSG_Center is not None:
+                self.MSG_Center.tasker()
+            """
             """
             if self.aprs_mon_win is not None:
                 self.aprs_mon_win.tasker()

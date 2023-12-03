@@ -467,14 +467,10 @@ class BBSConnection:
         if b'$:' in _lines[1]:
             _tmp = bytes(_lines[1]).split(b'$:')
             _k = _tmp[1].decode('UTF-8', 'ignore')
-            # print(f"KEY: {_k}")
         else:
             _k = ''
             _temp_k = str(list(self._rx_msg_header.keys())[0])
-            # print(f"KEY not Found in Header. Use KEY: {_temp_k}")
-            # print(f"KEY not Found Sender: {self._rx_msg_header[_temp_k]['sender']}")
             _sender = self._rx_msg_header[_temp_k]['sender'].encode('ASCII', 'ignore')
-            # print(f"Sender: {_sender}")
             for _l in list(_lines[1:]):
                 print(f"NoKeyFound _l: {_l}")
                 if _l != b'':
@@ -635,16 +631,12 @@ class BBS:
         self._set_pms_fwd_schedule()
         ####################
         # New Msg Noty/Alarm
-        """
-        self.new_msg_alarm = {
-            'P': False,
-            'B': False,
-        }
-        """
+        # self.new_pn_msg = False
+        # self.new_bl_msg = False
         ####################
         # CTL & Auto Connection
-        self._autoConn = None  # TODO Cleanup. Use self.pms_connections
-        self.pms_connections = []
+        self._autoConn = None
+        self.pms_connections = []   # Outgoing Conns using FWG Prot
         self._new_man_FWD_wait_t = time.time()
         ####################
         # Tasker/crone
@@ -663,8 +655,8 @@ class BBS:
             'msg': b'TEST 1234\r',
             'message_type': 'P',
         })
+        self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
         """
-        # self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
     def _reinit(self):
         if not self.pms_connections:
             print("PMS reINIT")
@@ -705,11 +697,6 @@ class BBS:
         if time.time() > self._var_task_5sec:
             self._scheduler_task()
             self._var_task_5sec = time.time() + 5
-            """
-            for k in self.new_msg_alarm.keys():
-                if self.new_msg_alarm[k]:
-                    print(f'DIETER {k}')
-            """
 
     ###################################
     # CFG Stuff

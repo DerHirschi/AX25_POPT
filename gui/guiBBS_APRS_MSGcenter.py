@@ -1323,7 +1323,7 @@ class MSG_Center(tk.Toplevel):
                         3: self._SV_show_msg_fm_MID,
                     }.get(ind)
                     fnc(bid_next_msg)
-                    self._tree_update_task(ind)
+                    self._tree_update_task()
 
     def _save_outMSG(self):
         bid = self._selected_msg['O'].get('bid', '')
@@ -1383,11 +1383,15 @@ class MSG_Center(tk.Toplevel):
             3: self._selected_msg['S'].get('enc', 'UTF-8'),
         }.get(ind, 'UTF-8')
         self._var_encoding.set(enc)
-        self._tree_update_task(ind)
+        self._tree_update_task()
         # self._pn_tree.selection_toggle(self._pn_tree.focus())
         # print(f'>>> {self._pn_tree.selection()}')
 
-    def _tree_update_task(self, ind: int):
+    def _tree_update_task(self):
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return
         update_task = {
             0: self._update_PN_tree_data,
             1: self._update_BL_tree_data,

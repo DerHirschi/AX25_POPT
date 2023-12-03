@@ -1184,8 +1184,9 @@ class DefaultCLI(object):
         if qth:
             qth = f'\r#QTH# {qth}\r'
         if loc:
-            if 'PoPT' == self.stat_identifier.software:
-                loc = f'\r#LOC# {loc}\r'
+            if hasattr(self.stat_identifier, 'software'):
+                if 'PoPT' == self.stat_identifier.software:
+                    loc = f'\r#LOC# {loc}\r'
             else:
                 try:
                     loc = f'\r#LOC# {loc[:6]}\r'
