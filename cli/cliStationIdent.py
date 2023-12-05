@@ -1,4 +1,5 @@
-from constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STATION_ID_ENCODING
+from cfg.constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STATION_ID_ENCODING, BBS_FEATURE_FLAGS, \
+    BBS_REVERS_FWD_CMD
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,10 @@ def get_station_id_obj(inp_line: str):
     if inp_line.startswith('[') and inp_line.endswith(']'):
         """ ? BBS ?"""
         if validate_id_str(inp_line):
-            return BBSid(inp_line)
+            _id = BBSid(inp_line)
+            if _id.e:
+                return None
+            return _id
         return None
 
 
@@ -42,7 +46,7 @@ def validate_id_str(inp: str):
     return []
 
 
-class DefaultID(object):
+class DefaultID:
     typ = ''
 
     def __init__(self, inp: str):
@@ -50,25 +54,27 @@ class DefaultID(object):
         temp = inp[1:-1].split('-')
         self.software = temp[0]
         self.version = temp[1]
-        self.flags = temp[2]
+        self._flags = temp[2]
         self.id_str = str(inp)
+        # NODE & SYSOP Parameter
         self.didadit = None
         self.knows_me = None
         self.txt_encoding = None
-        if self.typ in ['SYSOP', 'NODE']:
-            if self.flags:
-                self.knows_me = True
-                self.didadit = False
-                if 'D' in self.flags:
-                    self.didadit = True
-                if '?' in self.flags:
-                    self.knows_me = False
-                if self.flags[0].isdigit():
-                    enc_id = int(self.flags[0])
-                    if enc_id in STATION_ID_ENCODING.keys():
-                        self.txt_encoding = STATION_ID_ENCODING[enc_id]
-            else:
-                logger.error(f"SW-ID Flag Error: {self.flags} > inp: {inp} > temp: {temp}")
+        self.e = False
+        if self._flags:
+            self.knows_me = True
+            self.didadit = False
+            if 'D' in self._flags:
+                self.didadit = True
+            if '?' in self._flags:
+                self.knows_me = False
+            if self._flags[0].isdigit():
+                enc_id = int(self._flags[0])
+                if enc_id in STATION_ID_ENCODING.keys():
+                    self.txt_encoding = STATION_ID_ENCODING[enc_id]
+        else:
+            self.e = True
+            logger.error(f"SW-ID Flag Error: {self._flags} > inp: {inp} > temp: {temp}")
         # print(f"IF flags: {self.flags}")
         # print(f"IF knows_me: {self.knows_me}")
 
@@ -77,8 +83,40 @@ class NODEid(DefaultID):
     typ = 'NODE'
 
 
-class BBSid(DefaultID):
-    typ = 'BBS'
+class BBSid:
+    def __init__(self, inp: str):
+        print(f"SW-ID inp:  {inp} ")
+
+        self.typ = 'BBS'
+        temp = inp[1:-1].split('-')
+        self.software = temp[0]
+        self.version = temp[1]
+        self._flags = temp[2]
+        self.id_str = str(inp)
+        # NODE & SYSOP Parameter
+        self.didadit = None
+        self.knows_me = None
+        self.txt_encoding = None
+        ########################
+        self.e = False
+        self.bbs_rev_fwd_cmd = BBS_REVERS_FWD_CMD.get(self.software, None)
+        #  AB1FH  MR   X   $
+        # $ABCFHILMRSTUX
+        self.feat_flag = []
+        if self._flags:
+            for el in BBS_FEATURE_FLAGS:
+                if el in self._flags:
+                    self.feat_flag.append(str(el))
+            if '$' not in self.feat_flag:
+                self.e = True
+                print(f"SW-ID Flag $ Error: {self._flags} > inp: {inp} > temp: {temp}")
+        else:
+            self.e = True
+            print(f"SW-ID Flag Error: {self._flags} > inp: {inp} > temp: {temp}")
+            logger.error(f"SW-ID Flag Error: {self._flags} > inp: {inp} > temp: {temp}")
+
+        # print(f"IF flags: {self._flags}")
+        # print(f"IF knows_me: {self.knows_me}")
 
 
 class SYSOPid(DefaultID):

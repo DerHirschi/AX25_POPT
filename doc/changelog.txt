@@ -1,0 +1,30 @@
+Fixes:
+- Debugausgaben erzeugen ScriptError bei TNC's, die defekte Pakte durchlassen
+  (Ich konnte PoPT nie an echten TNC's testen)
+- User-DB Eintrag löschen war fehlerhaft.
+- User-DB Call, SSID, call_str Einträge erhielten falsche Daten. (fehlerhafte Datensätze werden repariert)
+- ScriptError beim Speichern der User-DB mit gelöschten einträgen
+- ScriptError beim Beenden von PoPT, wenn Station Settings Fenster noch geöffnet ist.
+- TclError in guiMain.py.py _clipboard_past(). Danke fürs Melden.
+
+
+Optimierung:
+- CLI/Remote CMD's: dbname, dbqth, dbloc geändert zu Name, qth, loc
+- CLI/Remote CMD's: Kurzeingabe von Befehlen wie N & Q statt QTH & Quit bei doppelten CMD Anfangsbuchstaben
+- Zu speichernde Datensätze für MH-Liste & User-DB
+- Überflüssige debug ausgaben in error.log aufgeräumt
+- Cleanups (CPU/RAM optimierungen)
+- CLI Kommando "MH" & "LMH" sind jetzt nach Ports filterbar.
+  Mögliche Eingaben:
+      MH
+      MH <PORT-ID>
+      MH <LÄNGE-der-AUSGABE>
+      MH <PORT-ID> <LÄNGE-der-AUSGABE>
+- Das selbe mit "LMH"
+- Neu MainConfig
+
+
+Neue Implementierungen / Funktionen:
+- PMS System mit Autoconnect Funktion zu BBS (getestet an FBB & BayCom)
+- Neue SQL-DB System (SQLite, optional MySQL(ToDo: Config GUI für DB & DB-Tool))
+- Hauptfenster Einstellungen werden jetzt über den Neustart hinweg gespeichert

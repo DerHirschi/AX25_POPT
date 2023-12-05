@@ -3,16 +3,14 @@ import pickle
 import logging
 
 import ax25.ax25Connection
-import config_station
-import constant
+from cfg import constant, config_station
 from ax25.ax25Statistics import MH_LIST
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
-from constant import STATION_ID_ENCODING_REV
+from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_str
-from string_tab import STR_TABLE
+from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
-from ax25.ax25Error import AX25EncodingERROR
 from UserDB.UserDBmain import Client, USER_DB
 from ax25.ax25UI_Pipe import AX25Pipe
 
@@ -63,11 +61,13 @@ class DefaultCLI(object):
         self.stat_identifier_str = ''
         if self.user_db_ent:
             self.encoding = self.user_db_ent.Encoding, 'ignore'
-            self.stat_identifier_str = self.user_db_ent.Software
+            self.stat_identifier_str = self.user_db_ent.software_str
             if self.user_db_ent.CText:
                 self.c_text = str(self.user_db_ent.CText)
 
         self.stat_identifier = get_station_id_obj(self.stat_identifier_str)
+        # print(f"CLI STST ID : {self.stat_identifier}")
+        # print(f"CLI STST str : {self.stat_identifier_str}")
 
         self.c_text = self.c_text.replace('\n', '\r')
         self.bye_text = self.bye_text.replace('\n', '\r')
@@ -92,36 +92,37 @@ class DefaultCLI(object):
         }
         # Standard Commands ( GLOBAL )
         self.commands = {
-            b'QUIT': (self.cmd_q, 'Quit'),
-            b'BYE': (self.cmd_q, 'Bye'),
-            b'CONNECT': (self.cmd_connect, 'Connect'),
-            b'ECHO': (self.cmd_echo, 'Echo'),
-            b'PORT': (self.cmd_port, 'Ports'),
-            b'MH': (self.cmd_mh, 'MYHeard List'),
-            b'LMH': (self.cmd_mhl, 'Long MYHeard List'),
-            b'AXIP': (self.cmd_axip, 'AXIP-MH List'),
-            b'ATR': (self.cmd_aprs_trace, 'APRS-Tracer'),
-            b'DXLIST': (self.cmd_dxlist, 'DX/Tracer Alarm List'),
-            b'LCSTATUS': (self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
-            b'WX': (self.cmd_wx, 'Wetterstationen'),
+            # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
+            'QUIT':    (1, self.cmd_q,             'Quit'),
+            'BYE':     (1, self.cmd_q,             'Bye'),
+            'CONNECT': (1, self.cmd_connect,       'Connect'),
+            'ECHO':    (1, self.cmd_echo,          'Echo'),
+            'PORT':    (1, self.cmd_port,          'Ports'),
+            'MH':      (0, self.cmd_mh,            'MYHeard List'),
+            'LMH':     (0, self.cmd_mhl,           'Long MYHeard List'),
+            'AXIP':    (2, self.cmd_axip,          'AXIP-MH List'),
+            'ATR':     (2, self.cmd_aprs_trace,    'APRS-Tracer'),
+            'DXLIST':  (2, self.cmd_dxlist,        'DX/Tracer Alarm List'),
+            'LCSTATUS': (2, self.cmd_lcstatus,     STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
+            'WX':      (0, self.cmd_wx,            'Wetterstationen'),
 
-            b'INFO': (self.cmd_i, 'Info'),
-            b'LINFO': (self.cmd_li, 'Long Info'),
-            b'NEWS': (self.cmd_news, 'NEWS'),
-            b'VERSION': (self.cmd_ver, 'Version'),
-            b'USER': (self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
-            b'DBNAME': (self.cmd_set_name, STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
-            b'DBQTH': (self.cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
-            b'DBLOC': (self.cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
-            b'DBZIP': (self.cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self.connection.cli_language]),
-            b'DBPRMAIL': (self.cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self.connection.cli_language]),
-            b'DBEMAIL': (self.cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self.connection.cli_language]),
-            b'DBWEB': (self.cmd_set_http, STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
-            b'LANG': (self.cmd_lang, STR_TABLE['cli_change_language'][self.connection.cli_language]),
-            b'UMLAUT': (self.cmd_umlaut, STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
-            b'POPT': (self.cmd_popt_banner, 'PoPT Banner'),
-            b'HELP': (self.cmd_help, STR_TABLE['help'][self.connection.cli_language]),
-            b'?': (self.cmd_shelp, STR_TABLE['cmd_shelp'][self.connection.cli_language]),
+            'INFO':    (1, self.cmd_i,             'Info'),
+            'LINFO':   (2, self.cmd_li,            'Long Info'),
+            'NEWS':    (2, self.cmd_news,          'NEWS'),
+            'VERSION': (3, self.cmd_ver,           'Version'),
+            'USER':    (0, self.cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self.connection.cli_language]),
+            'NAME':    (1, self.cmd_set_name,      STR_TABLE['cmd_help_set_name'][self.connection.cli_language]),
+            'QTH':     (0, self.cmd_set_qth,       STR_TABLE['cmd_help_set_qth'][self.connection.cli_language]),
+            'LOC':     (0, self.cmd_set_loc,       STR_TABLE['cmd_help_set_loc'][self.connection.cli_language]),
+            'ZIP':     (0, self.cmd_set_zip,       STR_TABLE['cmd_help_set_zip'][self.connection.cli_language]),
+            'PRMAIL':  (0, self.cmd_set_pr_mail,   STR_TABLE['cmd_help_set_prmail'][self.connection.cli_language]),
+            'EMAIL':   (0, self.cmd_set_e_mail,    STR_TABLE['cmd_help_set_email'][self.connection.cli_language]),
+            'WEB':     (3, self.cmd_set_http,      STR_TABLE['cmd_help_set_http'][self.connection.cli_language]),
+            'LANG':    (0, self.cmd_lang,          STR_TABLE['cli_change_language'][self.connection.cli_language]),
+            'UMLAUT':  (2, self.cmd_umlaut,        STR_TABLE['auto_text_encoding'][self.connection.cli_language]),
+            'POPT':    (0, self.cmd_popt_banner,   'PoPT Banner'),
+            'HELP':    (1, self.cmd_help,          STR_TABLE['help'][self.connection.cli_language]),
+            '?':       (0, self.cmd_shelp,         STR_TABLE['cmd_shelp'][self.connection.cli_language]),
 
         }
 
@@ -138,9 +139,9 @@ class DefaultCLI(object):
             2: self.s2,  # Nothing / no remote
             3: self.s3,  # Baycom Login Shit
         }
-        self.cmd_exec_ext = {}
-        self.cron_state_exec_ext = {}
-        self.state_exec_ext = {}
+        self.cmd_exec_ext = {}          # Extern Command's ??
+        self.cron_state_exec_ext = {}   # Extern Tasks ??
+        self.state_exec_ext = {}        # Extern State Tab ??
         # self.init()
         self.cron_state_exec.update(self.cron_state_exec_ext)
         self.commands.update(self.cmd_exec_ext)
@@ -209,8 +210,7 @@ class DefaultCLI(object):
                 self.cmd = cmd \
                     .upper() \
                     .replace(b' ', b'') \
-                    .replace(b'\r', b'') \
-                    .replace(b'\n', b'')
+                    .replace(b'\r', b'')
                 # self.input = self.input[len(self.prefix):]
                 return True
             else:
@@ -228,8 +228,7 @@ class DefaultCLI(object):
         cmd = cmd[0]
         self.cmd = cmd \
             .upper() \
-            .replace(b'\r', b'') \
-            .replace(b'\n', b'')
+            .replace(b'\r', b'')
         return False
 
     def load_fm_file(self, filename: str):
@@ -277,17 +276,12 @@ class DefaultCLI(object):
         if self.user_db_ent:
             self.user_db_ent.software_str = str(self.stat_identifier.id_str)
             self.user_db_ent.Software = str(self.stat_identifier.software) + '-' + str(self.stat_identifier.version)
-            if not self.user_db_ent.TYP:
-                self.user_db_ent.TYP = str(self.stat_identifier.typ)
+            # if not self.user_db_ent.TYP:
+            self.user_db_ent.TYP = str(self.stat_identifier.typ)
 
     def software_identifier(self):
         res = self.find_sw_identifier()
-
-        if self.stat_identifier is None:
-            if self.last_line:
-                # TODO WTF ?
-                self.stat_identifier = False
-        elif res and self.stat_identifier:
+        if res and self.stat_identifier:
             # print(f"SW-ID flag: {self.stat_identifier.flags}")
             # print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
             if self.stat_identifier.knows_me is not None:
@@ -339,24 +333,37 @@ class DefaultCLI(object):
         return False
 
     def find_cmd(self):
+        # TODO AGAIN
         if self.cmd:
+            inp_cmd = str(self.cmd.decode(self.encoding[0], 'ignore'))
+            inp_cmd = inp_cmd.replace(' ', '')
             cmds = list(self.commands.keys())
             treffer = []
             for cmd in cmds:
-                if self.cmd == cmd[:len(self.cmd)]:
+                if self.commands[cmd][0]:
+                    if inp_cmd == cmd[:self.commands[cmd][0]]:
+                        self.cmd = b''
+                        ret = tuple(self.commands[cmd])[1]()
+                        self.new_last_line = b''
+                        if ret:
+                            return ret
+                        return ''
+                if inp_cmd == cmd[:len(inp_cmd)]:
                     treffer.append(cmd)
             if not treffer:
                 return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
             if len(treffer) > 1:
                 return (f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}"
-                        f"\r # {(b' '.join(treffer)).decode(self.encoding[0], 'ignore')} ?\r")
+                        f"\r # {(' '.join(treffer))} ?\r")
             self.cmd = b''
-            ret = self.commands[treffer[0]][0]()
+            if not callable(self.commands[treffer[0]][1]):
+                return ''
+            ret = tuple(self.commands[treffer[0]])[1]()
             # self.last_line = b''
             self.new_last_line = b''
-            if ret is None:
-                return ''
-            return ret
+            if ret:
+                return ret
+            return ''
 
         return f"\r # {STR_TABLE['cmd_not_known'][self.connection.cli_language]}\r"
 
@@ -395,10 +402,26 @@ class DefaultCLI(object):
     def send_prompt(self):
         self.send_output(self.get_ts_prompt())
 
-    def decode_param(self):
+    def decode_param(self, defaults=None):
+        if defaults is None:
+            defaults = []
+        if type(defaults) != list:
+            defaults = []
         tmp = []
-        for el in self.parameter:
-            tmp.append(el.decode(self.encoding[0], 'ignore').replace('\r', '').replace('\n', ''))
+        if not defaults:
+            for el in self.parameter:
+                tmp.append(el.decode(self.encoding[0], 'ignore').replace('\r', ''))
+        else:
+            for el in defaults:
+                if len(self.parameter) > len(tmp):
+                    _tmp_parm = self.parameter[len(tmp)].decode(self.encoding[0], 'ignore').replace('\r', '')
+                    try:
+                        _tmp_parm = type(el)(_tmp_parm)
+                    except ValueError:
+                        _tmp_parm = defaults[len(tmp)]
+                else:
+                    _tmp_parm = defaults[len(tmp)]
+                tmp.append(_tmp_parm)
         self.parameter = list(tmp)
 
     def cmd_connect(self):
@@ -418,22 +441,21 @@ class DefaultCLI(object):
         # port_id = self.own_port.port_id
         port_id = -1
         vias = [self.connection.my_call_str]
+        port_tr = False
         if len(self.parameter) > 1:
             if self.parameter[-1].isdigit():
+                port_tr = True
                 port_id = int(self.parameter[-1])
                 if port_id not in self.port_handler.ax25_ports.keys():
                     ret = '\r # Ungültiger Port..\r'
                     return ret
-            if self != -1:
+            if port_tr:
                 parm = self.parameter[1:-1]
             else:
                 parm = self.parameter[1:]
 
             for call in parm:
-                try:
-                    tmp_call = validate_call(call)
-                except AX25EncodingERROR:
-                    break
+                tmp_call = validate_call(call)
                 if tmp_call:
                     vias.append(tmp_call)
                 else:
@@ -548,115 +570,123 @@ class DefaultCLI(object):
         return out
 
     def cmd_mh(self):
-        parm = 20
-        if self.parameter:
-            try:
-                parm = int(self.parameter[0])
-            except ValueError:
-                pass
-        ret = self._get_mh_out_cli(max_ent=parm)
+        last_port_id = len(self.port_handler.get_all_port_ids())
+        if last_port_id > 20:
+            max_ent = int(last_port_id)
+        else:
+            max_ent = 20
+        self.decode_param(defaults=[
+            max_ent,    # Entry's
+            -1,         # Port
+        ])
+        print(self.parameter)
+        print(max_ent)
+        parm = self.parameter[0]
+        if parm < last_port_id:
+            port = self.parameter[0]
+            if self.parameter[1] == -1:
+                parm = 20
+            else:
+                parm = self.parameter[1]
+        else:
+            port = self.parameter[1]
+
+        ret = self._get_mh_out_cli(max_ent=parm, port_id=port)
 
         return ret + '\r'
 
-    def _get_mh_out_cli(self, max_ent=20):
+    def _get_mh_out_cli(self, max_ent=20, port_id=-1):
         sort_list = MH_LIST.get_sort_mh_entry('last', False)
         if not sort_list:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
-        out = '\r'
-        # out += '\r                       < MH - List >\r\r'
+        out = ''
         c = 0
         max_c = 0
-        """
-        tp = 0
-        tb = 0
-        rj = 0
-        """
 
         for call in list(sort_list.keys()):
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-            _call_str = sort_list[call].own_call
-            if sort_list[call].route:
-                _call_str += '*'
-            out += f'{time_delta_str} P:{sort_list[call].port:4} {_call_str:10}'.ljust(27, " ")
-            """
-            tp += sort_list[call].pac_n
-            tb += sort_list[call].byte_n
-            rj += sort_list[call].rej_n
-            """
-            c += 1
-            if c == 2:  # Breite
-                c = 0
-                out += '\r'
-        """
-        out += '\r'
-        out += '\rTotal Packets Rec.: ' + str(tp)
-        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
-        out += '\rTotal Bytes Rec.: ' + str(tb)
-        """
+            if port_id == -1 or port_id == sort_list[call].port_id:
+                max_c += 1
+                if max_c > max_ent:
+                    break
+                time_delta_str = get_timedelta_str(sort_list[call].last_seen)
+                _call_str = sort_list[call].own_call
+                if sort_list[call].route:
+                    _call_str += '*'
+                out += f'{time_delta_str} P:{sort_list[call].port_id:2} {_call_str:10}'.ljust(27, " ")
 
-        return out
+                c += 1
+                if c == 2:  # Breite
+                    c = 0
+                    out += '\r'
+        if not out:
+            return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
+        return '\r' + out
 
     def cmd_mhl(self):
-        parm = 10
-        if self.parameter:
-            try:
-                parm = int(self.parameter[0])
-            except ValueError:
-                pass
-        ret = self._get_mh_long_out_cli(max_ent=parm)
+        last_port_id = len(self.port_handler.get_all_port_ids())
+        if last_port_id > 10:
+            max_ent = int(last_port_id)
+        else:
+            max_ent = 10
+        self.decode_param(defaults=[
+            max_ent,  # Entry's
+            -1,  # Port
+        ])
+
+        parm = self.parameter[0]
+        if parm < last_port_id:
+            port = self.parameter[0]
+            if self.parameter[1] == -1:
+                parm = 10
+            else:
+                parm = self.parameter[1]
+        else:
+            port = self.parameter[1]
+
+        ret = self._get_mh_long_out_cli(max_ent=parm, port_id=port)
 
         return ret + '\r'
 
-    def _get_mh_long_out_cli(self, max_ent=10):
+    def _get_mh_long_out_cli(self, max_ent=10, port_id=-1):
         sort_list = MH_LIST.get_sort_mh_entry('last', False)
         if not sort_list:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
-        out = '\r'
-        out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r"
+        out = ''
         max_c = 0
         """
         tp = 0
         tb = 0
         rj = 0
         """
-        for call in list(sort_list.keys()):
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_str(sort_list[call].last_seen)
-            via = sort_list[call].route
-            if via:
-                via = via[-1]
-            else:
-                via = ''
-            loc = ''
-            dis = ''
-            typ = ''
-            userdb_ent = USER_DB.get_entry(sort_list[call].own_call, add_new=False)
-            if userdb_ent:
-                loc = userdb_ent.LOC
-                if userdb_ent.Distance:
-                    dis = str(userdb_ent.Distance)
-                typ = userdb_ent.TYP
 
-            out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
-                    f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
-            """
-            tp += sort_list[call].pac_n
-            tb += sort_list[call].byte_n
-            rj += sort_list[call].rej_n
-            """
-            out += '\r'
-        """
-        out += '\rTotal Packets Rec.: ' + str(tp)
-        out += '\rTotal REJ-Packets Rec.: ' + str(rj)
-        out += '\rTotal Bytes Rec.: ' + str(tb)
-        out += '\r'
-        """
-        return out
+        for call in list(sort_list.keys()):
+            if port_id == -1 or port_id == sort_list[call].port_id:
+                max_c += 1
+                if max_c > max_ent:
+                    break
+                time_delta_str = get_timedelta_str(sort_list[call].last_seen)
+                via = sort_list[call].route
+                if via:
+                    via = via[-1]
+                else:
+                    via = ''
+                loc = ''
+                dis = ''
+                typ = ''
+                userdb_ent = USER_DB.get_entry(sort_list[call].own_call, add_new=False)
+                if userdb_ent:
+                    loc = userdb_ent.LOC
+                    if userdb_ent.Distance:
+                        dis = str(userdb_ent.Distance)
+                    typ = userdb_ent.TYP
+
+                out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
+                        f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
+
+                out += '\r'
+        if not out:
+            return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
+        return "\r-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r" + out
 
     def cmd_wx(self):
         """ WX Stations """
@@ -840,14 +870,19 @@ class DefaultCLI(object):
 
     def cmd_user_db_detail(self):
         if not self.parameter:
+            max_entry = 20   # TODO: from parameter
             _db_list = list(self.user_db.db.keys())
             header = "\r" \
                      f" USER-DB - {len(_db_list)} Calls\r" \
                      "------------------------------------\r"
             ent_ret = ""
             _db_list.sort()
+            c = 0
             for call in _db_list:
                 ent_ret += f"{call}\r"
+                c += 1
+                if c >= max_entry:
+                    break
             ent_ret += "------------------------------------\r\r"
             return header + ent_ret
         else:
@@ -1108,10 +1143,10 @@ class DefaultCLI(object):
         """
         # for k in new_cmd.keys():
         for k in list(self.commands.keys()):
-            if self.commands[k][1]:
+            if self.commands[k][2]:
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
-                                                k.decode('UTF-8', 'ignore'),
-                                                self.commands[k][1])
+                                                k,
+                                                self.commands[k][2])
         ret += '\r\r'
         return ret
 
@@ -1121,7 +1156,7 @@ class DefaultCLI(object):
         _cmds = list(self.commands.keys())
         _cmds.sort()
         for k in _cmds:
-            ret += (k + b' ').decode(self.encoding[0], 'ignore')
+            ret += (k + ' ')
             if len(ret) - _c > 60:
                 ret += '\r # '
                 _c += 60
@@ -1149,7 +1184,14 @@ class DefaultCLI(object):
         if qth:
             qth = f'\r#QTH# {qth}\r'
         if loc:
-            loc = f'\r#LOC# {loc}\r'
+            if hasattr(self.stat_identifier, 'software'):
+                if 'PoPT' == self.stat_identifier.software:
+                    loc = f'\r#LOC# {loc}\r'
+            else:
+                try:
+                    loc = f'\r#LOC# {loc[:6]}\r'
+                except IndexError:
+                    loc = ''
         tmp = self.parameter[0]
         cmd_dict = {
             b'+++#': name + qth + loc,
@@ -1320,8 +1362,8 @@ class NoneCLI(DefaultCLI):
 
 
 CLI_OPT = {
-            UserCLI.cli_name: UserCLI,
-            NodeCLI.cli_name: NodeCLI,
-            NoneCLI.cli_name: NoneCLI,
-            'PIPE': AX25Pipe
-        }
+    UserCLI.cli_name: UserCLI,
+    NodeCLI.cli_name: NodeCLI,
+    NoneCLI.cli_name: NoneCLI,
+    'PIPE': AX25Pipe
+}

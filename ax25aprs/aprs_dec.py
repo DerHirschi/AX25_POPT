@@ -3,10 +3,6 @@ from UserDB.UserDBmain import USER_DB
 from fnc.loc_fnc import coordinates_to_locator, locator_distance
 
 
-# print(aprslib.parse("M0XER-4>APRS64,TF3RPF,WIDE2*,qAR,TF3SUT-2:!/.(M4I^C,O `DXa/A=040849|#B>@\"v90!+|"))
-# print(aprslib.parse("M0XER-4>APRS64:!/.(M4I^C,O `DXa/A=040849|#B>@\"v90!+|"))
-
-
 def parse_aprs_fm_ax25frame(ax25frame):
     aprs_msg_input = f"{ax25frame.from_call.call_str}>{ax25frame.to_call.call_str}"
     for via_call in ax25frame.via_calls:
@@ -46,9 +42,7 @@ def format_aprs_f_aprs_mon(aprs_frame, own_locator, add_new_user=False):
     ret += ":\n"
 
     msg = format_aprs_f_monitor(aprs_pack=aprs_frame, own_locator=own_locator, add_new_user=add_new_user)
-    #msg = msg.replace('\n', '\n  ')
-    #ret = ret + msg[:-2] + '\n'
-    # print(msg)
+
     return ret + msg + '\n'
 
 

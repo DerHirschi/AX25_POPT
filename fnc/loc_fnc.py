@@ -1,7 +1,7 @@
 import math
 from math import floor
 
-from constant import ASCII_0, ASCII_A, ASCII_a
+from cfg.constant import ASCII_0, ASCII_A, ASCII_a
 
 
 def decimal_degrees_to_aprs(latitude, longitude):
@@ -49,7 +49,7 @@ def locator_distance(locator1, locator2):
 """
 Source: https://github.com/4x1md/qth_locator_functions
 @author: 4X5DM
-Original license location: doc/qth_locator_functions-master/LICENSE
+Original license location: doc-other/qth_locator_functions-master/LICENSE
 
 MIT License
 

@@ -7,7 +7,7 @@ from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
-from constant import APRS_SW_ID, APRS_TRACER_COMMENT, CFG_aprs_data_file
+from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT, CFG_aprs_data_file
 from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii
@@ -251,29 +251,15 @@ class APRS_ais(object):
                                       immortal=False,
                                       raw=False)
                 except ValueError:
-                    # self.ais_active = False
-                    # del self.ais
-                    # self.ais = None
-                    self.loop_is_running = False
                     print("APRS-Consumer ValueError")
                     logger.error("APRS-Consumer ValueError")
-                    # break
                 except aprslib.LoginError:
-                    # del self.ais
-                    # self.ais = None
-                    # self.loop_is_running = False
                     print("APRS-Consumer LoginError")
                     logger.warning("APRS-Consumer LoginError")
-                    # break
                 except aprslib.ConnectionError:
-                    # del self.ais
-                    # self.ais = None
                     print("APRS-Consumer Connection Error")
                     logger.warning("APRS-Consumer Connection Error")
-                    # self.loop_is_running = False
 
-                # del self.ais
-                # self.ais = None
                 self.loop_is_running = False
 
                 if self.ais is not None:
@@ -344,17 +330,17 @@ class APRS_ais(object):
         if not aprs_pack.get("weather", False):
             return False
         new_aprs_pack = self._correct_wrong_wx_data(aprs_pack)
+        """
         if not new_aprs_pack:
             print("APRS Weather Pack correction Failed!")
             print(f"Org Pack: {aprs_pack}")
             logger.warning("APRS Weather Pack correction Failed!")
             logger.warning(f"Org Pack: {aprs_pack}")
-            return True
+            new_aprs_pack = aprs_pack
             # self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=new_aprs_pack)
-
+        """
         from_aprs = new_aprs_pack.get('from', '')
         if from_aprs:
-
             if not self.aprs_wx_msg_pool.get(from_aprs, False):
                 self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
             self.aprs_wx_msg_pool[from_aprs].append(new_aprs_pack)
@@ -368,8 +354,8 @@ class APRS_ais(object):
     def _correct_wrong_wx_data(aprs_pack):
         _raw = aprs_pack.get('raw', '')
         if _raw:
-            if 'h100b' in _raw:
-                _raw = _raw.replace('h100b', 'h00b')
+            if 'h100b' in _raw or 'b9' in _raw:
+                _raw = _raw.replace('h100b', 'h00b').replace('b9', 'b09')
                 _new_pack = parse_aprs_fm_aprsframe(_raw)
                 _new_pack['locator'] = str(aprs_pack.get('locator', ''))
                 _new_pack['distance'] = float(aprs_pack.get('distance', -1))

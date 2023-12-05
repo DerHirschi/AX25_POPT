@@ -25,39 +25,21 @@ Tested on Python Version:
 
 [![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
 
-Packages Required:
-- tkinter
-- playsound
-- crcmod
-- pyserial
-- matplotlib
-- gtts
 
 Install all dependencies:
-  ``` sh
-  $ pip uninstall matplotlib
-  $ sudo apt install python3-matplotlib
-  $ pip uninstall tk
-  $ sudo apt install python3-tk
-  $ pip install playsound
-  $ pip install crcmod
-  $ pip install pyserial
-  $ pip install gtts
-  ```
-PoPT Ver. >= 2.85.2:
-  ``` sh
-  $ pip install aprslib
-  ```
+``` sh
+$ pip install -r requirements.txt
+```
 
 If problems with playsound on Debian OS:
-  ``` sh
-  $ sudo apt install python3-gst-1.0
-  ```
+``` sh
+$ sudo apt install python3-gst-1.0
+```
 
 Run:
-  ``` sh
-  $ python3 main.py
-  ```
+``` sh
+$ python3 PoPT.py
+```
 
 
 #### Supported AX.25 connection options:

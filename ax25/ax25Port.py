@@ -1,12 +1,9 @@
 import socket
-
 import serial
 import threading
 import time
 import crcmod
 
-from ax25.ax25Beacon import Beacon
-# from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25Statistics import MH_LIST
@@ -14,9 +11,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
-# from fnc.debug_fnc import show_mem_size
 from fnc.os_fnc import is_linux
-# from ax25.ax25monitor import monitor_frame_inp
 from fnc.socket_fnc import get_ip_by_hostname
 if is_linux():
     import termios
@@ -332,17 +327,18 @@ class AX25Port(threading.Thread):
 
     def cron_pipes(self):
         for uid in self.pipes.keys():
-            self.pipes[uid].crone_exec()
+            self.pipes[uid].cron_exec()
 
     def cron_pac_handler(self):
         """ Execute Cronjob on all Connections"""
-        for k in list(self.connections.keys()):
-            if k in self.connections.keys():
-                try:    # TODO Not happy. When no more Errors delete this shit.
-                    self.connections[k].exec_cron()
-                except KeyError:
-                    logger.error(f"KeyError cron_pac_handler(): {k}")
-                    print(f"KeyError cron_pac_handler(): {k}")
+        for _k in list(self.connections.keys()):
+            # if _k in self.connections.keys():
+            try:    # TODO Not happy. When no more Errors delete this shit.
+                self.connections[_k].exec_cron()
+            except KeyError:
+                logger.error(f"KeyError cron_pac_handler(): {_k}")
+                print(f"KeyError cron_pac_handler(): {_k}")
+                print(f"KeyError cron_pac_handler()keys:: {list(self.connections.keys())}")
 
     def cron_send_beacons(self):
         tr = True
@@ -350,22 +346,23 @@ class AX25Port(threading.Thread):
             if not self.gui.setting_bake.get():
                 tr = False
         if tr:
-            if self.port_id in self.beacons.keys():
-                for k in self.beacons[self.port_id].keys():
-                    beacon_list = self.beacons[self.port_id][k]
-                    beacon: Beacon
-                    for beacon in beacon_list:
-                        if beacon.is_enabled:
-                            send_it = beacon.crone()
-                            ip_fm_mh = MH_LIST.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
-                            beacon.axip_add = ip_fm_mh
-                            if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
-                                if ip_fm_mh == ('', 0):
-                                    send_it = False
-                            if send_it:
-                                _beacon_ax25frame = beacon.encode_beacon()
-                                if _beacon_ax25frame:
-                                    self.UI_buf.append(_beacon_ax25frame)
+            # if self.port_id in self.beacons.keys():
+            beacon_tasks = self.beacons.get(self.port_id, {})
+            for k in beacon_tasks.keys():
+                beacon_list = beacon_tasks[k]
+                # beacon: Beacon
+                for beacon in beacon_list:
+                    if beacon.is_enabled:
+                        send_it = beacon.crone()
+                        ip_fm_mh = MH_LIST.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
+                        beacon.axip_add = ip_fm_mh
+                        if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
+                            if ip_fm_mh == ('', 0):
+                                send_it = False
+                        if send_it:
+                            _beacon_ax25frame = beacon.encode_beacon()
+                            if _beacon_ax25frame:
+                                self.UI_buf.append(_beacon_ax25frame)
 
     def build_new_pipe(self,
                        own_call,
@@ -545,7 +542,7 @@ class AX25Port(threading.Thread):
                 # buf = RxBuf()
                 break
             if not buf.raw_data:  # RX ############
-                time.sleep(0.02)
+                time.sleep(0.05)
                 break
             self.set_TXD()
             self.set_digi_TXD()
@@ -732,7 +729,7 @@ class KISSSerial(AX25Port):
                     self.device.flush()
                 self.device.close()
                 # self.device_is_running = False
-            except (FileNotFoundError, serial.serialutil.SerialException, OSError):
+            except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError):
                 pass
             self.device_is_running = False
 
@@ -750,7 +747,7 @@ class KISSSerial(AX25Port):
             try:
                 recv_buff += self.device.read()
 
-            except serial.SerialException as e:
+            except serial.SerialException:
                 # There is no new data from serial port
                 return RxBuf()
             except TypeError as e:

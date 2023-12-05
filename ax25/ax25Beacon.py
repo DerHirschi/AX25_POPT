@@ -6,9 +6,8 @@ from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 from ax25.ax25Statistics import MH_LIST
 
 
-class Beacon(object):
+class Beacon:
     def __init__(self):
-        # TODO Load and SAVE to/fm file
         self.text_filename = ''
         self.text = ''
         self.text_out = ''
@@ -24,17 +23,8 @@ class Beacon(object):
         self.to_call = 'NOCALL'
         self.via_calls = ''
         self.axip_add = ('', 0)
-        """
-        self.ax_frame = None
-        self.ax_frame.ctl_byte.UIcByte()
-        self.ax_frame.pid_byte.text()
-        self.ax_frame.from_call.call_str = self.from_call
-        self.ax_frame.to_call.call_str = self.to_call
-        self.ax_frame.ctl_byte.cmd = self.aprs
-        self.ax_frame.ctl_byte.pf = self.pool
-        """
         #################
-        # Time Vars
+        # Time Vars TODO change to PoPTSchedule
         self.repeat_time: float = 30.0  # Min
         self.move_time: int = 0  # Sec
         self.minutes: {int: bool} = {}
@@ -66,10 +56,10 @@ class Beacon(object):
             except (FileNotFoundError, EOFError, IsADirectoryError):
                 return False
 
-    def set_text_fm_mh(self):
+    def _set_text_fm_mh(self):
         self.text_out = MH_LIST.mh_out_beacon(max_ent=12)
 
-    def set_text(self):
+    def _set_text(self):
         self.text_out = self.text
 
     def set_from_call(self, call: str):
@@ -83,17 +73,11 @@ class Beacon(object):
         if _vias:
             self.via_calls = calls
 
-    @staticmethod
-    def encode():
-        # Todo :Delete.. Just dummy for compatibility
-        print("!!!!!!!! ax25Beacon.py encode() !!!!!!!!!!!!!")
-        print("!!!!!!!! ax25Beacon.py encode() !!!!!!!!!!!!!")
-
     def encode_beacon(self):
         # self.set_text_fm_file()
         _type_handler = {
-            'Text': self.set_text,
-            'MH': self.set_text_fm_mh,
+            'Text': self._set_text,
+            'MH': self._set_text_fm_mh,
             'File': self.set_text_fm_file,
 
         }.get(self.typ, False)
@@ -129,19 +113,19 @@ class Beacon(object):
             return _ax_frame
         return False
 
-    def is_week_day_enabled(self):
+    def _is_week_day_enabled(self):
         for k in self.week_days.keys():
             if self.week_days[k]:
                 return True
         return False
 
-    def is_month_enabled(self):
+    def _is_month_enabled(self):
         for k in self.month.keys():
             if self.month[k]:
                 return True
         return False
 
-    def is_hour_enabled(self):
+    def _is_hour_enabled(self):
         for k in self.hours.keys():
             if self.hours[k]:
                 return True
@@ -153,7 +137,7 @@ class Beacon(object):
                 return True
         return False
 
-    def is_hour(self):
+    def _is_hour(self):
         return self.hours[datetime.now().hour]
 
     """
@@ -178,35 +162,35 @@ class Beacon(object):
                 week_day = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now.weekday()]
                 send_it = False
 
-                if not self.is_hour_enabled() \
-                        and not self.is_month_enabled() \
-                        and not self.is_week_day_enabled():
+                if not self._is_hour_enabled() \
+                        and not self._is_month_enabled() \
+                        and not self._is_week_day_enabled():
                     send_it = True
-                elif self.is_month_enabled():
-                    if self.is_week_day_enabled():
+                elif self._is_month_enabled():
+                    if self._is_week_day_enabled():
                         if self.month[month] \
                                 and self.week_days[week_day] \
-                                and not self.is_hour_enabled():
+                                and not self._is_hour_enabled():
                             send_it = True
                         elif self.month[month] \
-                                and not self.is_hour_enabled():
+                                and not self._is_hour_enabled():
                             send_it = True
-                        elif self.is_hour() \
+                        elif self._is_hour() \
                                 and self.month[month] \
                                 and self.week_days[week_day]:
                             send_it = True
-                    elif self.is_hour() \
+                    elif self._is_hour() \
                             and self.month[month]:
                         send_it = True
-                elif self.is_week_day_enabled():
+                elif self._is_week_day_enabled():
                     if self.week_days[week_day]:
-                        if self.is_hour_enabled():
-                            if self.is_hour():
+                        if self._is_hour_enabled():
+                            if self._is_hour():
                                 send_it = True
                         else:
                             send_it = True
-                elif self.is_hour_enabled():
-                    if self.is_hour():
+                elif self._is_hour_enabled():
+                    if self._is_hour():
                         send_it = True
 
                 """

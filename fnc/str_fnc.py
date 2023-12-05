@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timedelta
 import logging
-from constant import ENCODINGS
+from cfg.constant import ENCODINGS
 
 
 def get_kb_str_fm_bytes(len_: int):
@@ -120,6 +120,7 @@ def convert_str_to_datetime(date_str, date_format='%d/%m/%y %H:%M:%S'):
     except ValueError:
         return 0
 
+
 def conv_timestamp_delta(delta):
     if delta:
         timestamp = str(delta)
@@ -208,3 +209,7 @@ def convert_umlaute_to_ascii(in_str: str):
         .replace('Ö', 'Oe')\
         .replace('Ü', 'Ue')\
         .replace('ß', 'ss')
+
+
+def get_weekDay_fm_dt(now_weekday):
+    return ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now_weekday]

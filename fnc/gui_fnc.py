@@ -28,3 +28,44 @@ def generate_random_hex_color():
     hex_color = "#{:02x}{:02x}{:02x}".format(red, green, blue)
 
     return hex_color
+
+
+"""
+ent = tk.Entry()
+ent.bind('<KeyRelease>', lambda event: get_typed(event, self.chiefs, self._to_call_var, self._to_call_ent))
+ent.bind('<Key>', lambda event: detect_pressed(event, self._to_call_ent))
+"""
+
+
+def match_string(add_list, entry_var):
+    """ Source: https://stackoverflow.com/questions/58428545/clarify-functionality-of-tkinter-autocomplete-entry"""
+    hits = []
+    got = entry_var.get()
+    for item in add_list:
+        if item.startswith(got.upper()):
+            hits.append(item)
+    return hits
+
+
+def get_typed(event, add_list, entry_var, entry):
+    """ Source: https://stackoverflow.com/questions/58428545/clarify-functionality-of-tkinter-autocomplete-entry"""
+    if len(event.keysym) == 1:
+        hits = match_string(add_list, entry_var)
+        show_hit(hits, entry_var, entry)
+
+
+def show_hit(lst, entry_var, entry):
+    """ Source: https://stackoverflow.com/questions/58428545/clarify-functionality-of-tkinter-autocomplete-entry"""
+    if len(lst) == 1:
+        pos = entry.index('insert')
+        entry_var.set(lst[0])
+        entry.selection_range(pos, 'end')
+
+
+def detect_pressed(event, entry):
+    """ Source: https://stackoverflow.com/questions/58428545/clarify-functionality-of-tkinter-autocomplete-entry"""
+    key = event.keysym
+    if len(key) == 1:
+        pos = entry.index('insert')
+        entry.delete(pos, 'end')
+

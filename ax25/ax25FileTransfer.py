@@ -2,7 +2,7 @@ import time
 import logging
 import datetime
 
-from constant import FT_MODES, FT_RX_HEADERS, CFG_ft_downloads
+from cfg.constant import FT_MODES, FT_RX_HEADERS, CFG_ft_downloads
 from ax25.Yapp import Yapp
 from fnc.crc_fnc import get_crc
 from fnc.os_fnc import path_exists
@@ -191,7 +191,7 @@ class FileTransport(object):
     """
     def debug_process_file(self):
         try:
-            with open('tests/Sally.exe', 'rb') as file:
+            with open('DEV_STUFF/Sally.exe', 'rb') as file:
                 self.debug_raw_data = file.read()
 
         except PermissionError:

@@ -1,6 +1,7 @@
 """
     Layer 2 ??
     AX.25 Packet enc-/decoding
+    TODO: Cleanup/optimising
 """
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str
@@ -725,6 +726,7 @@ class AX25Frame(object):
             self.data_bytes += self.data
         if not self.validate():
             logger.error('Encoding Error Validator')
+            print('Encoding Error Validator')
             raise AX25EncodingERROR
         # Build address UID
         self.build_uid(dec=False)
@@ -737,23 +739,29 @@ class AX25Frame(object):
         """
         ret = True
         if len(self.data_bytes) < 15:
+            print('Validate Error: Pac length')
             logger.error('Validate Error: Pac length')
             ret = False
         if not self.from_call.validate():
+            print('Validate Error: From Call')
             logger.error('Validate Error: From Call')
             ret = False
         if not self.to_call.validate():
+            print('Validate Error: TO Call')
             logger.error('Validate Error: TO Call')
             ret = False
         ca: Call
         for ca in self.via_calls:
             if not ca.validate():
+                print('Validate Error: ca.validate')
                 ret = False
         if not self.ctl_byte.validate():
+            print('Validate Error: C_Byte')
             logger.error('Validate Error: C_Byte')
             ret = False
         if self.ctl_byte.pid:
             if not self.pid_byte.validate():
+                print('Validate Error: PID_Byte')
                 logger.error('Validate Error: PID_Byte')
                 ret = False
         if not ret:

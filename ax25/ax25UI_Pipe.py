@@ -52,19 +52,19 @@ class AX25Pipe(object):
         """ Protocoled Pipe """
         self.connection = None
 
-    def crone_exec(self):
+    def cron_exec(self):
         # self.save_rx_buff_to_file()
         if self.tx_filename or self.rx_filename:
-            self.tx_file_crone()
-            self.tx_crone()
+            self.tx_file_cron()
+            self.tx_cron()
 
-    def tx_file_crone(self):
+    def tx_file_cron(self):
         if self.tx_file_check_timer < time.time():
             self.tx_file_check_timer = time.time() + self.parm_tx_file_check_timer
             """"""
             self.load_tx_buff_fm_file()
 
-    def tx_crone(self):
+    def tx_cron(self):
         if self.tx_data:
             if self.check_parm_max_pac_timer():
                 self.tx_unProto()
