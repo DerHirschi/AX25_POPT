@@ -5,6 +5,7 @@ Fixes:
 - User-DB Call, SSID, call_str Einträge erhielten falsche Daten. (fehlerhafte Datensätze werden repariert)
 - ScriptError beim Speichern der User-DB mit gelöschten einträgen
 - ScriptError beim Beenden von PoPT, wenn Station Settings Fenster noch geöffnet ist.
+- TclError in guiMain.py.py _clipboard_past(). Danke fürs Melden.
 
 
 Optimierung:

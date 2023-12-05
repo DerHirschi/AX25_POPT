@@ -26,6 +26,7 @@ class PMS_Settings(tk.Toplevel):
         self._own_regio_var = tk.StringVar(self)
         self._own_call_var = tk.StringVar(self)
         self._singleConn_var = tk.BooleanVar(self)
+        self._silentConn_var = tk.BooleanVar(self)
         self._autoConn_var = tk.BooleanVar(self)
         self.schedule_config = dict(getNew_schedule_config())
         self.schedule_win = None
@@ -38,6 +39,7 @@ class PMS_Settings(tk.Toplevel):
         self._pms_cfg['user'] = str(self._pms_cfg['user'])
         self._pms_cfg['single_auto_conn'] = bool(self._pms_cfg['single_auto_conn'])
         self._pms_cfg['auto_conn'] = bool(self._pms_cfg['auto_conn'])
+        # TODO self._pms_cfg['auto_conn_silent'] = bool(self._pms_cfg.get('auto_conn_silent', True))
         ######################
         # TK Stuff
         # self.title(STR_TABLE['fwd_list'][self._root_win.language])
@@ -117,6 +119,11 @@ class PMS_Settings(tk.Toplevel):
         tk.Checkbutton(r_check_fr,
                        variable=self._singleConn_var,
                        text='Single Conn').pack(side=tk.LEFT, expand=True)
+        tk.Checkbutton(r_check_fr,
+                       variable=self._silentConn_var,
+                       text='Silent Conn',
+                       state='disabled',    # TODO Silent Conn/Service Port
+                       ).pack(side=tk.LEFT, expand=True)
 
         # r2
         tk.Button(r_btn_fr,
@@ -266,7 +273,8 @@ class PMS_Settings(tk.Toplevel):
         self._own_call_var.set(self._pms_cfg.get('user', 'NOCALL'))
         self._own_regio_var.set(self._pms_cfg.get('regio', 'NOCALL'))
         self._singleConn_var.set(self._pms_cfg.get('single_auto_conn', True))
-        self._autoConn_var.set(self._pms_cfg.get('auto_conn', True))
+        self._silentConn_var.set(self._pms_cfg.get('auto_conn_silent', True))
+        self._autoConn_var.set(self._pms_cfg.get('auto_conn', False))
 
     def _get_hBBS_vars_fm_cfg(self):
         home_bbs_cfg = self._pms_cfg.get('home_bbs_cfg', {})
@@ -301,12 +309,8 @@ class PMS_Settings(tk.Toplevel):
         self._pms_cfg['user'] = user
         self._pms_cfg['regio'] = str(self._own_regio_var.get().upper())   # TODO Validator
         self._pms_cfg['single_auto_conn'] = bool(self._singleConn_var.get())
+        self._pms_cfg['auto_conn_silent'] = bool(self._silentConn_var.get())
         self._pms_cfg['auto_conn'] = bool(self._autoConn_var.get())
-
-        self._own_call_var.set(self._pms_cfg.get('user', 'NOCALL'))
-        self._own_regio_var.set(self._pms_cfg.get('regio', 'NOCALL'))
-        self._singleConn_var.set(self._pms_cfg.get('single_auto_conn', True))
-        self._autoConn_var.set(self._pms_cfg.get('auto_conn', True))
 
     def _set_NOCALL_tab(self):
         nocall_vars = self._bbs_vars.get('NOCALL', {})

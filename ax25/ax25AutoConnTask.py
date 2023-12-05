@@ -13,18 +13,10 @@ class AutoConnTask:
             'dest_call': 'DBO527',
             'via_calls': ['DNX527-1'],
             # 'axip_add': ('192.168.178.160', 8093),
-        }
-        self._conf = {
-            'task_typ': 'PMS',
-            'port_id': 1,
-            'own_call': 'MD2SAW',
-            'dest_call': 'MD2BBS',
-            'via_calls': ['CB0SAW'],
-            # 'axip_add': ('192.168.178.160', 8093),
-            'axip_add': ('', 0),
+            'silent_conn': True,
         }
         """
-        START_CH_RANGE = 9
+        START_CH_RANGE = 8
         self._conf = conf
         connection = port_handler.new_outgoing_connection(
             dest_call=self._conf.get('dest_call'),
@@ -34,7 +26,7 @@ class AutoConnTask:
             axip_add=self._conf.get('axip_add', ('', 0)),   # AXIP Adress
             exclusive=True,                                 # True = no lookup in MH list
             link_conn=None,                                 # Linked Connection AX25Conn
-            channel=START_CH_RANGE                          # GUI Channel
+            channel=START_CH_RANGE,                         # GUI Channel
         )
         # print(self.connection)
         self.connection = None

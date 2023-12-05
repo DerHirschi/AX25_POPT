@@ -12,6 +12,7 @@ def getNew_PMS_cfg():
                 'home_bbs': [],
                 'single_auto_conn': True,
                 'auto_conn': False,
+                # TODO 'auto_conn_silent': True,
             }
 
 

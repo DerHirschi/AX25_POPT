@@ -49,7 +49,7 @@ def locator_distance(locator1, locator2):
 """
 Source: https://github.com/4x1md/qth_locator_functions
 @author: 4X5DM
-Original license location: doc/qth_locator_functions-master/LICENSE
+Original license location: doc-other/qth_locator_functions-master/LICENSE
 
 MIT License
 

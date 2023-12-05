@@ -1329,7 +1329,7 @@ class MSG_Center(tk.Toplevel):
         bid = self._selected_msg['O'].get('bid', '')
         if bid:
             mid = int(bid[:6])
-            print(mid)
+            # print(mid)
             self._bbs_obj.db.pms_save_outMsg_by_MID(mid)
 
     def _copy_select(self):

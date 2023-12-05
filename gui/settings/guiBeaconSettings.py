@@ -4,6 +4,7 @@ from tkinter import ttk as ttk
 from tkinter import scrolledtext
 from ax25.ax25Beacon import Beacon
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.constant import GUI_DISABLED_CLR
 from fnc.str_fnc import tk_filter_bad_chars
 from cfg.string_tab import STR_TABLE
 
@@ -269,7 +270,7 @@ class BeaconTab:
         self.be_txt_filename_var = tk.StringVar(self.own_tab)
         self.be_txt_filename = tk.Entry(self.own_tab, textvariable=self.be_txt_filename_var, width=50)
         self.be_txt_filename.bind("<KeyRelease>", self._on_key_press_filename_ent)
-        self.b_text_bg_color = self.b_text_ent.cget('background')
+        self._b_text_bg_color = self.b_text_ent.cget('background')
         if self.beacon.text_filename:
             self.be_txt_filename_var.set(self.beacon.text_filename)
             self.b_text_ent.configure(state='disabled', background='#b1b1b3')
@@ -295,18 +296,18 @@ class BeaconTab:
             self.beacon.text_filename = filenames
 
             if self.beacon.set_text_fm_file():
-                self.b_text_ent.configure(state='normal', background='#b1b1b3')
+                self.b_text_ent.configure(state='normal', background=GUI_DISABLED_CLR)
                 self.b_text_ent.delete('1.0', tk.END)
                 self.b_text_ent.insert(tk.END, tk_filter_bad_chars(self.beacon.text))
                 self.b_text_ent.configure(state='disabled')
             else:
-                self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
+                self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
                 # self.be_txt_filename_var.set('')
                 self.beacon.text_filename = ''
         else:
             # self.be_txt_filename_var.set('')
             self.beacon.text_filename = ''
-            self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
+            self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
 
     def _select_files(self):
         self._root.attributes("-topmost", False)
@@ -325,18 +326,18 @@ class BeaconTab:
             self.be_txt_filename_var.set(filenames[0])
             self.beacon.text_filename = filenames[0]
             if self.beacon.set_text_fm_file():
-                self.b_text_ent.configure(state='normal', background='#b1b1b3')
+                self.b_text_ent.configure(state='normal', background=GUI_DISABLED_CLR)
                 self.b_text_ent.delete('1.0', tk.END)
                 self.b_text_ent.insert(tk.END, tk_filter_bad_chars(self.beacon.text))
                 self.b_text_ent.configure(state='disabled')
             else:
-                self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
+                self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
                 self.be_txt_filename_var.set('')
                 self.beacon.text_filename = ''
         else:
             self.be_txt_filename_var.set('')
             self.beacon.text_filename = ''
-            self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
+            self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
 
     def _check_day_cmd(self):
         # self.tag_sel.append((sel_var, sel))
@@ -376,9 +377,15 @@ class BeaconTab:
 
     def _cmd_be_change_typ(self, event=None):
         if self.beacon_type_var.get() == "Text":
-            self.b_text_ent.configure(state='normal', background=self.b_text_bg_color)
+            self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
+            self.be_txt_filename.configure(state='disabled', background=GUI_DISABLED_CLR)
+        elif self.beacon_type_var.get() == "File":
+            self.b_text_ent.configure(state='disabled', background=GUI_DISABLED_CLR)
+            self.be_txt_filename.configure(state='normal', background=self._b_text_bg_color)
+        # elif self.beacon_type_var.get() == "MH":
         else:
-            self.b_text_ent.configure(state='disabled', background='#b1b1b3')
+            self.b_text_ent.configure(state='disabled', background=GUI_DISABLED_CLR)
+            self.be_txt_filename.configure(state='disabled', background=GUI_DISABLED_CLR)
 
 
 class BeaconSettings(tk.Toplevel):

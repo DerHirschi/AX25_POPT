@@ -120,7 +120,7 @@ def parse_fwd_paths(path_list: list):
     for line in path_list:
         if "R:" in line:
             if "@" in line:
-                print(line + "\n")
+                # print(line + "\n")
                 tmp = line.split("@")[-1]
                 add = tmp.split(" ")[0].replace(":", "")
                 if '[' and ']' in tmp:
@@ -198,7 +198,7 @@ class BBSConnection:
         for el in self._dest_stat_id.feat_flag:
             if el in self._my_stat_id.feat_flag:
                 self._feat_flag.append(str(el))
-        print(self._feat_flag)
+        # print(self._feat_flag)
         if '$' in self._feat_flag:
             return False
         return True
@@ -248,7 +248,7 @@ class BBSConnection:
         return b''
 
     def _connection_tx(self, raw_data: b''):
-        print(f"_connection_tx: {raw_data}")
+        # print(f"_connection_tx: {raw_data}")
         self._ax25_conn.send_data(data=raw_data)
 
     def connection_rx(self, raw_data: b''):
@@ -268,7 +268,7 @@ class BBSConnection:
         self._connection_tx(b'*\r')
 
     def _send_my_bbs_flag(self):
-        print(f"_send_my_bbs_flag: {self._mybbs_flag}")
+        # print(f"_send_my_bbs_flag: {self._mybbs_flag}")
         self._connection_tx(self._mybbs_flag + b'\r')
 
     def exec_state(self):
@@ -310,7 +310,7 @@ class BBSConnection:
             else:
                 self._state = 2
         elif self._get_lines_fm_rx_buff('FF', cut_rx_buff=True):
-            print('FF')
+            # print('FF')
             self._act_out_msg()
             if self._is_fwd_q():
                 _tx = self._tx_msg_header + b'F>\r'
@@ -319,7 +319,7 @@ class BBSConnection:
             else:
                 self._state = 10
         elif self._get_lines_fm_rx_buff('FQ', cut_rx_buff=False):
-            print('FQ')
+            # print('FQ')
             self._state = 11
             # self.end_conn()
 
@@ -330,7 +330,7 @@ class BBSConnection:
         return False
 
     def _parse_header(self, header_lines):
-        print(header_lines)
+        # print(header_lines)
         self._rx_msg_header = {}
         _pn_check = ''
         _trigger = False
@@ -342,7 +342,7 @@ class BBSConnection:
             else:
                 if el[:2] == 'FB':
                     _ret = parse_forward_header(el)
-                    print(_ret)
+                    # print(_ret)
                     if _ret:
                         _key = str(_ret.get('bid_mid', ''))
                         _db_ret = {
@@ -359,8 +359,8 @@ class BBSConnection:
                     else:
                         _pn_check += FWD_RESP_ERR
 
-        print(_pn_check)
-        print(f"_msg_header.keys: {self._rx_msg_header.keys()}")
+        # print(_pn_check)
+        # print(f"_msg_header.keys: {self._rx_msg_header.keys()}")
         return _pn_check, _trigger
 
     @staticmethod
@@ -528,10 +528,10 @@ class BBSConnection:
                         logger.error(f"Error INDEX: {line}")
                     break
                 elif not line:
-                    print("Line msgParser TRIGGER")
+                    # print("Line msgParser TRIGGER")
                     trigger = True
                 elif trigger:
-                    print("Line msgParser BREAK")
+                    # print("Line msgParser BREAK")
                     _msg_index -= len(line) + 2
                     break
 
@@ -759,7 +759,7 @@ class BBS:
                 if self._check_autoConn_status():
                     return
             if task[0].is_schedule():
-                print('Start')
+                # print('Start')
                 self.start_autoFwd(task[1])
         return
 
@@ -790,6 +790,8 @@ class BBS:
             'axip_add': ('', 0),
         }
         """
+        # TODO Silent Conn or Service Ports
+        # conf['silent_conn'] = self._pms_cfg.get('auto_conn_silent', True)
         self._autoConn = self._port_handler.init_autoConn(conf)
 
     def is_pn_in_db(self, bid_mid: str):
