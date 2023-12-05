@@ -16,7 +16,7 @@ class AutoConnTask:
             'silent_conn': True,
         }
         """
-        START_CH_RANGE = 8
+        START_CH_RANGE = 9
         self._conf = conf
         connection = port_handler.new_outgoing_connection(
             dest_call=self._conf.get('dest_call'),

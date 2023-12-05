@@ -703,7 +703,7 @@ class MSG_Center(tk.Toplevel):
                   text='Löschen',
                   command=lambda: self._delete_msg()
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r, text='Als Vorlage').pack(side=tk.RIGHT, expand=False)
+        # TODO ? tk.Button(btn_frame_r, text='Als Vorlage').pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text='Bearbeiten',
                   command=lambda: self._open_newMSG_win_reply('S'),
