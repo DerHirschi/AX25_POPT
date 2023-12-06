@@ -1769,7 +1769,7 @@ class TkMainWin:
     def _save_GUIvars(self):
         #########################
         # GUI-Vars to cfg
-        guiCfg = POPT_CFG.get_guiCFG_main()
+        guiCfg = POPT_CFG.load_guiPARM_main()
         guiCfg['gui_lang'] = int(self.language)
         guiCfg['gui_cfg_sound'] = bool(self.setting_sound.get())
         guiCfg['gui_cfg_beacon'] = bool(self.setting_bake.get())
@@ -1778,16 +1778,16 @@ class TkMainWin:
         guiCfg['gui_cfg_auto_tracer'] = bool(self.setting_auto_tracer.get())
         guiCfg['gui_cfg_dx_alarm'] = bool(self.setting_dx_alarm.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
-        POPT_CFG.set_guiCFG_main(guiCfg)
+        POPT_CFG.save_guiPARM_main(guiCfg)
 
     def _save_vars(self):
         #########################
         # Parameter to cfg
-        guiCfg = POPT_CFG.get_guiPARM_main()
+        guiCfg = POPT_CFG.load_guiPARM_main()
         guiCfg['gui_parm_new_call_alarm'] = bool(MH_LIST.parm_new_call_alarm)
         guiCfg['gui_parm_channel_index'] = int(self.channel_index)
         guiCfg['gui_parm_text_size'] = int(self.text_size)
-        POPT_CFG.set_guiPARM_main(guiCfg)
+        POPT_CFG.save_guiPARM_main(guiCfg)
 
     ####################
     # Init Stuff
@@ -1803,7 +1803,7 @@ class TkMainWin:
         #########################
         # GUI-Vars fm cfg
         self.language = POPT_CFG.get_guiCFG_language()
-        guiCfg = POPT_CFG.get_guiCFG_main()
+        guiCfg = POPT_CFG.load_guiPARM_main()
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
@@ -1818,7 +1818,7 @@ class TkMainWin:
     def _init_PARM_vars(self):
         #########################
         # Parameter fm cfg
-        guiCfg = POPT_CFG.get_guiCFG_main()
+        guiCfg = POPT_CFG.load_guiPARM_main()
         MH_LIST.parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
         self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
         self.text_size = guiCfg.get('gui_parm_text_size', 13)

@@ -1,3 +1,14 @@
+###########################################################################################################
+# 2.101.x
+Fixes:
+
+Optimierung:
+
+Neue Implementierungen / Funktionen:
+
+
+###########################################################################################################
+# 2.100.35
 Fixes:
 - Debugausgaben erzeugen ScriptError bei TNC's, die defekte Pakte durchlassen
   (Ich konnte PoPT nie an echten TNC's testen)

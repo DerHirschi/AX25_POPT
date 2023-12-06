@@ -18,7 +18,7 @@ class BBS_newMSG(tk.Toplevel):
             reply_msg = {}
         self._root_win = root_win
         self._bbs_obj = PORT_HANDLER.get_bbs()
-        self.text_size = int(POPT_CFG.get_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
+        self.text_size = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
         self.language = root_win.language
         ###################################
         self.title(STR_TABLE['new_pr_mail'][self.language])

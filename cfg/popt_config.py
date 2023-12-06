@@ -1,6 +1,6 @@
 import logging
 
-from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_cfg, getNew_maniGUI_parm
+from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm
 from cfg.constant import CFG_MAIN_data_file
 from fnc.cfg_fnc import load_fm_file, save_to_file
 
@@ -19,7 +19,6 @@ class Main_CFG:
             'pms_home_bbs': getNew_homeBBS_cfg,
             # --GUI
             # GUI Main
-            'gui_main_cfg': getNew_maniGUI_cfg,
             'gui_main_parm': getNew_maniGUI_parm,
         }
         self.load_CFG_fm_file()
@@ -80,20 +79,13 @@ class Main_CFG:
     ####################
     # GUI
     def get_guiCFG_language(self):
-        return int(self._config['gui_main_cfg'].get('gui_lang', 0))
-
-    # GUI CFG
-    def get_guiCFG_main(self):
-        return dict(self._config['gui_main_cfg'])
-
-    def set_guiCFG_main(self, data: dict):
-        self._config['gui_main_cfg'] = data
+        return int(self._config['gui_main_parm'].get('gui_lang', 0))
 
     # GUI PARM
-    def get_guiPARM_main(self):
+    def load_guiPARM_main(self):
         return dict(self._config['gui_main_parm'])
 
-    def set_guiPARM_main(self, data: dict):
+    def save_guiPARM_main(self, data: dict):
         self._config['gui_main_parm'] = data
 
 
