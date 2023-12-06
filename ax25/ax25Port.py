@@ -58,7 +58,7 @@ class AX25Port(threading.Thread):
         self.connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
         """ APRS Stuff """
-        self.aprs_stat = self.port_cfg.parm_aprs_station
+        self.aprs_stat = self.port_cfg.parm_aprs_station    # TODO not used yet
         # self.aprs_ais = PORT_HANDLER.get_aprs_ais()
         # CONFIG ENDE
         #############

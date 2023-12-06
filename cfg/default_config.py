@@ -28,6 +28,46 @@ def getNew_homeBBS_cfg():
 
 
 #######################################
+# APRS
+def getNew_APRS_Station_cfg():
+    return {
+        'aprs_parm_loc': '',
+        'aprs_port_id': 0,
+        'aprs_parm_digi': False,
+        'aprs_parm_igate': False,
+        'aprs_parm_igate_tx': False,
+        'aprs_parm_igate_rx': False,
+    }
+
+
+def getNew_APRS_ais_cfg():
+    return {
+        'ais_call': '',
+        'ais_pass': '',
+        'ais_loc': '',
+        'ais_lat': 0.0,
+        'ais_lon': 0.0,
+        'add_new_user': False,
+        'ais_aprs_stations': {},
+        'ais_host': ('cbaprs.dyndns.org', 27234),
+        'ais_active': False,
+        # Tracer Parameter
+        'be_tracer_interval': 5,
+        'be_tracer_port': 0,
+        'be_tracer_station': 'NOCALL',
+        'be_tracer_wide': 1,
+        'be_tracer_alarm_active': False,
+        'be_tracer_alarm_range': 50,
+        'be_auto_tracer_duration': 60,
+        'be_tracer_traced_packets': {},
+        'be_tracer_alarm_hist': {},
+        'be_tracer_active': False,
+        'be_auto_tracer_active': False,
+
+    }
+
+
+#######################################
 # GUI Parameter
 def getNew_maniGUI_parm():
     return {

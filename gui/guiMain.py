@@ -1774,7 +1774,8 @@ class TkMainWin:
         guiCfg['gui_cfg_sound'] = bool(self.setting_sound.get())
         guiCfg['gui_cfg_beacon'] = bool(self.setting_bake.get())
         guiCfg['gui_cfg_rx_echo'] = bool(self.setting_rx_echo.get())
-        guiCfg['gui_cfg_tracer'] = bool(self.setting_tracer.get())
+        # guiCfg['gui_cfg_tracer'] = bool(self.setting_tracer.get())
+        guiCfg['gui_cfg_tracer'] = False
         guiCfg['gui_cfg_auto_tracer'] = bool(self.setting_auto_tracer.get())
         guiCfg['gui_cfg_dx_alarm'] = bool(self.setting_dx_alarm.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())

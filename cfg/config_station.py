@@ -3,10 +3,10 @@ import os
 import logging
 
 import ax25.ax25Beacon
-from ax25aprs.aprs_station import APRS_Station
 from ax25.ax25UI_Pipe import AX25Pipe
-from cfg.constant import VER, CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
-from fnc.cfg_fnc import cleanup_obj, set_obj_att, save_to_file, load_fm_file, set_obj_att_fm_dict, cleanup_obj_to_dict
+from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
+from cfg.popt_config import POPT_CFG
+from fnc.cfg_fnc import set_obj_att, save_to_file, load_fm_file, set_obj_att_fm_dict, cleanup_obj_to_dict
 """
 if "dev" in VER:
     log_level = logging.DEBUG
@@ -184,7 +184,7 @@ class DefaultPort(object):
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
     parm_mon_clr_bg = "black"
-    parm_aprs_station = cleanup_obj(APRS_Station())
+    parm_aprs_station = POPT_CFG.load_CFG_aprs_station()
     ##################################
     # Port Parameter for Save to file
     parm_beacons = {}
@@ -226,8 +226,9 @@ class DefaultPort(object):
                     # print(" {} - {}".format(att, getattr(self, att)))
                     if att == 'parm_beacons':
                         save_ports[att] = clean_beacon_cfg
+                    # TODO ####### parm_aprs_station
                     elif att == 'parm_aprs_station':
-                        save_ports[att] = cleanup_obj(self.parm_aprs_station)
+                        save_ports[att] = dict(self.parm_aprs_station)
                     else:
                         save_ports[att] = getattr(self, att)
                     print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
@@ -315,8 +316,8 @@ class PortConfigInit(DefaultPort):
                 if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
                     self.parm_cli[stat.stat_parm_Call] = stat.stat_parm_cli
 
-        self.parm_aprs_station = set_obj_att(APRS_Station(), self.parm_aprs_station)
-        self.parm_aprs_station.aprs_port_id = port_id
+        # self.parm_aprs_station = set_obj_att(APRS_Station(), self.parm_aprs_station)
+        self.parm_aprs_station['aprs_port_id'] = port_id
         # self.parm_aprs_station.aprs_ais =
 
     def __del__(self):

@@ -10,7 +10,7 @@ from UserDB.UserDBmain import USER_DB
 
 def monitor_frame_inp(ax25_frame, port_cfg):
     port_name = port_cfg.parm_PortName
-    aprs_loc = port_cfg.parm_aprs_station.aprs_parm_loc
+    aprs_loc = port_cfg.parm_aprs_station.get('aprs_parm_loc', '')
     aprs_data = ''
     if ax25_frame.ctl_byte.flag == 'UI':
         aprs_data = format_aprs_f_monitor(ax25_frame, own_locator=aprs_loc)
