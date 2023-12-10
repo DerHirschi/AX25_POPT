@@ -1821,7 +1821,8 @@ class TkMainWin:
         # Parameter fm cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
         MH_LIST.parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
-        self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
+        # self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
+        self.channel_index = 1
         self.text_size = guiCfg.get('gui_parm_text_size', 13)
         # self.connect_history: {str: ConnHistory}
         # self._mon_buff: (
@@ -3054,7 +3055,7 @@ class TkMainWin:
     def _kaffee(self):
         self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
-        # PORT_HANDLER.close_all_ports()
+        # PORT_HANDLER.db.aprsWX_get_data_f_wxTree()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
 

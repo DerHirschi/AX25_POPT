@@ -316,9 +316,7 @@ class PortConfigInit(DefaultPort):
                 if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
                     self.parm_cli[stat.stat_parm_Call] = stat.stat_parm_cli
 
-        # self.parm_aprs_station = set_obj_att(APRS_Station(), self.parm_aprs_station)
         self.parm_aprs_station['aprs_port_id'] = port_id
-        # self.parm_aprs_station.aprs_ais =
 
     def __del__(self):
         # self.save_to_pickl()
@@ -338,7 +336,7 @@ def save_station_to_file(conf: DefaultStation):
                     save_to_file(f_n, getattr(conf, att))
                 else:
                     save_station[att] = getattr(conf, att)
-        if conf.stat_parm_pipe is not None:
+        if conf.stat_parm_pipe:
             # save_station.stat_parm_pipe = True
             save_station['stat_parm_pipe_tx'] = conf.stat_parm_pipe.tx_filename
             save_station['stat_parm_pipe_rx'] = conf.stat_parm_pipe.rx_filename

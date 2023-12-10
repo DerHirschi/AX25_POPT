@@ -34,11 +34,12 @@ class APRS_ais(object):
         # self.ais_new_rx_buff = []
         self.ais_active = ais_cfg.get('ais_active', False)
         """ Global APRS Stuff """
-        self.aprs_msg_pool = {      # TODO > DB
-            "message": [],
-            "bulletin": [],
-        }
-        self.aprs_wx_msg_pool = {}  # TODO > DB
+        self.aprs_msg_pool = ais_cfg.get('aprs_msg_pool',
+                                         {  # TODO > DB ?
+                                             "message": [],
+                                             "bulletin": [],
+                                         })
+        # self.aprs_wx_msg_pool = {}  # TO-DO > DB
         """ Beacon Tracer """
         # Param
         self.be_tracer_interval = ais_cfg.get('be_tracer_interval', 5)
@@ -48,7 +49,6 @@ class APRS_ais(object):
         self.be_tracer_alarm_active = ais_cfg.get('be_tracer_alarm_active', False)
         self.be_tracer_alarm_range = ais_cfg.get('be_tracer_alarm_range', 50)
         self.be_auto_tracer_duration = ais_cfg.get('be_auto_tracer_duration', 60)
-
         # Packet Pool
         self.be_tracer_traced_packets = {}
         self.be_tracer_alarm_hist = {}
@@ -77,9 +77,9 @@ class APRS_ais(object):
         self.loop_is_running = False
         self._non_prio_task_timer = 0
         self._parm_non_prio_task_timer = 1
-        self.port_handler = None
         self._del_spooler_tr = False
         self._wx_update_tr = False
+        self.port_handler = None
         """ Watchdog """
         self._parm_watchdog = 60  # Sec.
         self._watchdog_last = time.time() + self._parm_watchdog
@@ -113,6 +113,7 @@ class APRS_ais(object):
         # ais_cfg['be_tracer_active'] = bool(self.be_tracer_active)
         ais_cfg['be_auto_tracer_active'] = bool(self.be_auto_tracer_active)
         ais_cfg['ais_aprs_stations'] = dict(self.ais_aprs_stations)
+        ais_cfg['aprs_msg_pool'] = dict(self.aprs_msg_pool)
         POPT_CFG.save_CFG_aprs_ais(ais_cfg)
 
     def login(self):
@@ -274,6 +275,7 @@ class APRS_ais(object):
                 return True
             # APRS Weather
             elif self._aprs_wx_msg_rx(aprs_pack=aprs_pack):
+                # print(aprs_pack)
                 USER_DB.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
                 return True
             # Tracer
@@ -298,14 +300,20 @@ class APRS_ais(object):
         """
         from_aprs = new_aprs_pack.get('from', '')
         if from_aprs:
-            if not self.aprs_wx_msg_pool.get(from_aprs, False):
-                self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
-            self.aprs_wx_msg_pool[from_aprs].append(new_aprs_pack)
+            ########
+            # db
+            db = self._get_db()
+            if db:
+                db.aprsWX_insert_data(new_aprs_pack)
+
             if self.wx_tree_gui is not None:
                 self._wx_update_tr = True
             return True
         return False
         # print(aprs_pack)
+
+    def _get_db(self):
+        return self.port_handler.get_database()
 
     @staticmethod
     def _correct_wrong_wx_data(aprs_pack):
@@ -322,13 +330,26 @@ class APRS_ais(object):
         return aprs_pack
 
     def get_wx_entry_sort_distance(self):
+        # TODO
         _temp = {}
+        """
         for k in list(self.aprs_wx_msg_pool.keys()):
             _temp[k] = self.aprs_wx_msg_pool[k][-1]
         return list(dict(sorted(_temp.items(), key=lambda item: item[1].get('distance', 99999))).keys())
+        """
 
     def get_wx_data(self):
-        return dict(self.aprs_wx_msg_pool)
+        db = self._get_db()
+        if not db:
+            return []
+        return list(db.aprsWX_get_data_f_wxTree())
+        # return dict(self.aprs_wx_msg_pool)
+
+    def get_wx_data_f_call(self, call: str):
+        db = self._get_db()
+        if not db:
+            return []
+        return list(db.aprsWX_get_data_f_call(call))
 
     #####################
     #
@@ -793,4 +814,3 @@ class APRS_ais(object):
 
     def tracer_auto_tracer_duration_set(self, dur: int):
         self.be_auto_tracer_duration = dur
-

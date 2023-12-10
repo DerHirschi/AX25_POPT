@@ -3,6 +3,9 @@
 Fixes:
 
 Optimierung:
+- APRS Config Management(load/save) ins neue System übertragen
+- APRS WX-Daten (Wetterdaten) werden jetzt in der SQL-DB gespeichert
+
 
 Neue Implementierungen / Funktionen:
 

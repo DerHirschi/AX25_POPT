@@ -56,8 +56,8 @@ class SQL_DB:
             if self.conn.is_connected():
                 try:
                     with self.conn.cursor() as cursor:
-                        print(f"Query: {query}")
-                        print(f"cur :{cursor.execute(query)}")
+                        # print(f"Query: {query}")
+                        cursor.execute(query)
                         return cursor.fetchall()
                 except AttributeError:
                     print("MySQL: Version error !")
@@ -93,8 +93,11 @@ class SQL_DB:
                     raise SQLConnectionError("MySQL: Version error !")
                 except mysql.connector.errors.DataError as e:
                     print(e)
+                    logger.error(e)
                     print(f"Query: {query_str}")
+                    logger.error(f"Query: {query_str}")
                     print(f"QData: {query_data}")
+                    logger.error(f"QData: {query_data}")
                     raise e
                 # db_conn.close()
         self.conn = None

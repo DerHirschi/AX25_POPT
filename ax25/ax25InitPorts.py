@@ -530,7 +530,9 @@ class AX25PortHandler(object):
         self.db = SQL_Database()
         if not self.db.error:
             # DB.check_tables_exists('bbs')
+            self.db.check_tables_exists('bbs')
             self.db.check_tables_exists('user_db')
+            self.db.check_tables_exists('aprs')
             if self.db.error:
                 raise SQLConnectionError
         else:

@@ -587,7 +587,7 @@ class BBS:
             raise bbsInitError('my_stat_id.e Error')
         ###############
         # Init DB
-        self.db.check_tables_exists('bbs')
+        # self.db.check_tables_exists('bbs')
         ###############
         # Config's
         """

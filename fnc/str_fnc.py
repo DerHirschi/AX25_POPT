@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timedelta
 import logging
-from cfg.constant import ENCODINGS
+from cfg.constant import ENCODINGS, SQL_TIME_FORMAT
 
 
 def get_kb_str_fm_bytes(len_: int):
@@ -47,7 +47,7 @@ def get_file_timestamp():
     return datetime.now().strftime('%d%m/%y-%H%M')
 
 
-def get_timedelta_str(dateti: datetime.now(), r_just=True):
+def get_timedelta_CLIstr(dateti: datetime.now(), r_just=True):
     _time_delta = datetime.now() - dateti
     _td_days = _time_delta.days
     _td_hours = int(_time_delta.seconds / 3600)
@@ -113,7 +113,7 @@ def get_timedelta_str_fm_sec(time_st: time.time(), r_just=True):
     return _time_delta_str
 
 
-def convert_str_to_datetime(date_str, date_format='%d/%m/%y %H:%M:%S'):
+def convert_str_to_datetime(date_str, date_format=SQL_TIME_FORMAT):
     try:
         converted_date = datetime.strptime(date_str, date_format)
         return converted_date

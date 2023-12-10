@@ -1,10 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import tkinter as tk
 
 import matplotlib.pyplot as plt
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+from fnc.str_fnc import convert_str_to_datetime
 
 
 def adjust_list_len(target_list: list, compare_list: list):
@@ -38,7 +40,7 @@ class WXPlotWindow(tk.Toplevel):
         self._plot1 = self._fig.add_subplot(111)
         self._plot1.set_facecolor('#000000')
 
-        self._fig.subplots_adjust(top=0.98, bottom=0.05, left=0.05, right=0.98,)
+        self._fig.subplots_adjust(top=0.98, bottom=0.05, left=0.05, right=0.98, )
 
         # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
         self._canvas = FigureCanvasTkAgg(self._fig, master=plot_frame)
@@ -52,33 +54,35 @@ class WXPlotWindow(tk.Toplevel):
         self._update_plots()
 
         self._plot1.legend(
-                           fontsize=8,
-                           loc='upper left'
-                           )
+            fontsize=8,
+            loc='upper left'
+        )
 
         self._canvas.draw()
         #################
         # Info Frame
         info_frame = tk.Frame(self)
         info_frame.pack(side=tk.TOP, fill=tk.BOTH)
-        _call = self._wx_data[0].get('from', '')
-        _comment = self._wx_data[0].get('comment', '')
-        _loc = self._wx_data[0].get("locator", ''),
-        if type(_loc) == tuple:
-            _loc = _loc[0]
-        _loc = f'Locator: {_loc}'
-        _lat = f'Lat: {self._wx_data[0].get("latitude", "")}'
-        _lon = f'Lon: {self._wx_data[0].get("longitude", "")}'
-        tk.Label(info_frame, text=_call).pack(side=tk.TOP,)
-        tk.Label(info_frame, text=_comment).pack()
-        tk.Label(info_frame, text=_loc).pack(side=tk.LEFT, padx=20)
-        tk.Label(info_frame, text=_lat).pack(side=tk.LEFT, padx=20)
-        tk.Label(info_frame, text=_lon).pack(side=tk.LEFT, padx=20)
+        if self._wx_data:
+            if self._wx_data[-1]:
+                _call = self._wx_data[-1][10]
+                _comment = self._wx_data[-1][11]
 
-        self.wm_title(f"WX Plot {_call}")
+                _loc = f'Locator: {self._wx_data[-1][12]}'
+                _lat = f'Lat: {self._wx_data[-1][13]}'
+                _lon = f'Lon: {self._wx_data[-1][14]}'
+                tk.Label(info_frame, text=_call).pack(side=tk.TOP, )
+                tk.Label(info_frame, text=_comment).pack()
+                tk.Label(info_frame, text=_loc).pack(side=tk.LEFT, padx=20)
+                tk.Label(info_frame, text=_lat).pack(side=tk.LEFT, padx=20)
+                tk.Label(info_frame, text=_lon).pack(side=tk.LEFT, padx=20)
+
+                self.wm_title(f"WX Plot {_call}")
 
     def _update_plots(self):
-        _delta_time_24h = datetime.now() - timedelta(hours=24)
+        if not self._wx_data:
+            return
+        # _delta_time_24h = datetime.now() - timedelta(hours=24)
         _x_scale = []
         _y_pressure = []
         _y_hum = []
@@ -90,58 +94,47 @@ class WXPlotWindow(tk.Toplevel):
         _y_wind_gust = []
         _y_wind_speed = []
         _y_lum = []
-        _wx_data = list(self._wx_data)
-        _wx_data.reverse()
         _now = datetime.now()
         for _data in self._wx_data:
-            _timestamt_dt = _data['rx_time']
-            # _timestamt_dt = convert_str_to_datetime(_timestamp)
+            _timestamt_dt = _data[-1]
+            _timestamt_dt = convert_str_to_datetime(_timestamt_dt)
             if _timestamt_dt:
+
+                if _data[0]:
+                    _y_pressure.append(_data[0])
+                    _y_pressure = adjust_list_len(_y_pressure, _x_scale)
+                if _data[1]:
+                    _y_hum.append(_data[1])
+                    _y_hum = adjust_list_len(_y_hum, _x_scale)
+                if _data[2]:
+                    _y_rain_1.append(_data[2])
+                    _y_rain_1 = adjust_list_len(_y_rain_1, _x_scale)
+                if _data[3]:
+                    _y_rain_24.append(_data[3])
+                    _y_rain_24 = adjust_list_len(_y_rain_24, _x_scale)
+                if _data[4]:
+                    _y_rain_day.append(_data[4])
+                    _y_rain_day = adjust_list_len(_y_rain_day, _x_scale)
+                if _data[5]:
+                    _y_temp.append(_data[5])
+                    _y_temp = adjust_list_len(_y_temp, _x_scale)
+                if _data[6]:
+                    _y_wind_dir.append(_data[6])
+                    _y_wind_dir = adjust_list_len(_y_wind_dir, _x_scale)
+                if _data[7]:
+                    _y_wind_gust.append(_data[7])
+                    _y_wind_gust = adjust_list_len(_y_wind_gust, _x_scale)
+                if _data[8]:
+                    _y_wind_speed.append(_data[8])
+                    _y_wind_speed = adjust_list_len(_y_wind_speed, _x_scale)
+                if _data[9]:
+                    _y_lum.append(_data[9])
+                    _y_lum = adjust_list_len(_y_lum, _x_scale)
+
                 # if datetime.now().timestamp() - _timestamt_dt.timestamp() < _delta_time_24h.timestamp():
 
-                if 'weather' in _data.keys():
-                    if 'pressure' in _data['weather'].keys():
-                        _y_pressure = adjust_list_len(_y_pressure, _x_scale)
-                        _y_pressure.append(_data['weather']['pressure'])
-
-                    if 'humidity' in _data['weather'].keys():
-                        _y_hum = adjust_list_len(_y_hum, _x_scale)
-                        _y_hum.append(_data['weather']['humidity'])
-
-                    if 'rain_1h' in _data['weather'].keys():
-                        _y_rain_1 = adjust_list_len(_y_rain_1, _x_scale)
-                        _y_rain_1.append(_data['weather']['rain_1h'])
-
-                    if 'rain_24h' in _data['weather'].keys():
-                        _y_rain_24 = adjust_list_len(_y_rain_24, _x_scale)
-                        _y_rain_24.append(_data['weather']['rain_24h'])
-
-                    if 'rain_since_midnight' in _data['weather'].keys():
-                        _y_rain_day = adjust_list_len(_y_rain_day, _x_scale)
-                        _y_rain_day.append(_data['weather']['rain_since_midnight'])
-
-                    if 'temperature' in _data['weather'].keys():
-                        _y_temp = adjust_list_len(_y_temp, _x_scale)
-                        _y_temp.append(_data['weather']['temperature'])
-
-                    if 'wind_direction' in _data['weather'].keys():
-                        _y_wind_dir = adjust_list_len(_y_wind_dir, _x_scale)
-                        _y_wind_dir.append(_data['weather']['wind_direction'])
-
-                    if 'wind_gust' in _data['weather'].keys():
-                        _y_wind_gust = adjust_list_len(_y_wind_gust, _x_scale)
-                        _y_wind_gust.append(_data['weather']['wind_gust'])
-
-                    if 'wind_speed' in _data['weather'].keys():
-                        _y_wind_speed = adjust_list_len(_y_wind_speed, _x_scale)
-                        _y_wind_speed.append(_data['weather']['wind_speed'])
-
-                    if 'luminosity' in _data['weather'].keys():
-                        _y_lum = adjust_list_len(_y_lum, _x_scale)
-                        _y_lum.append(_data['weather']['luminosity'])
-
-                    _dif = _now - _timestamt_dt
-                    _x_scale.append(_dif.total_seconds() / 3600)
+                _dif = _now - _timestamt_dt
+                _x_scale.append(_dif.total_seconds() / 3600)
 
         if _y_pressure:
             _y_pressure = adjust_list_len(_y_pressure, _x_scale)
@@ -192,4 +185,3 @@ class WXPlotWindow(tk.Toplevel):
         self._fig = None
         self.withdraw()
         self.destroy()
-

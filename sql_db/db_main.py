@@ -3,10 +3,11 @@ from datetime import datetime
 from cfg.config_station import logger
 from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
 from fnc.sql_fnc import search_sql_injections
+from fnc.str_fnc import convert_str_to_datetime
 from sql_db.sql_Error import SQLConnectionError
 from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
-    SQLITE_CREATE_PMS_OUT_MAIL_TAB
+    SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB
 
 SQL_BBS_TABLES = {
     "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
@@ -27,6 +28,14 @@ USERDB_TABLES = {
 
 }
 
+APRS_TABLES = {
+    'APRSwx': SQL_CREATE_APRS_WX_TAB
+}
+# TODO Check MySQL and just load Cons for MySQL/SQLite
+SQLITE_APRS_TABLES = {
+    'APRSwx': SQLITE_CREATE_APRS_WX_TAB
+}
+
 
 class SQL_Database:
     def __init__(self):
@@ -45,10 +54,10 @@ class SQL_Database:
                 logger.warning("Database: Python mysql_connector not installed !!\n"
                                "pip install mysql-connector-python~=8.1.0")
                 logger.info("Database: fallback to SQLite")
-                from sql_db.sql_lite import SQL_DB
+                from sql_db.sqlite import SQL_DB
         else:
             logger.info("Database: set to SQLite")
-            from sql_db.sql_lite import SQL_DB
+            from sql_db.sqlite import SQL_DB
 
         self.db_config = {  # TODO GUI and DB-TOOLs
             'user': MYSQL_USER,
@@ -89,11 +98,13 @@ class SQL_Database:
                     tables = {
                         'bbs': SQL_BBS_TABLES,
                         'user_db': USERDB_TABLES,
+                        'aprs': APRS_TABLES,
                     }.get(tables, {})
                 else:
                     tables = {
                         'bbs': SQLITE_BBS_TABLES,
                         'user_db': USERDB_TABLES,
+                        'aprs': SQLITE_APRS_TABLES,
                     }.get(tables, {})
                 for tab in tables.keys():
                     if tab not in ret:
@@ -311,18 +322,6 @@ class SQL_Database:
         # print("bbs_new_msg -------------")
         # _bid = msg_struc.get('bid_mid', '')
         # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
-        _from_call = msg_struc.get('sender', '')
-        _from_bbs = msg_struc.get('sender_bbs', '')
-        _from_bbs_call = msg_struc.get('sender_bbs', '').split('.')[0]
-        _to_call = msg_struc.get('receiver', '')
-        _to_bbs = msg_struc.get('recipient_bbs', '')
-        _to_bbs_call = msg_struc.get('recipient_bbs', '').split('.')[0]
-        _subject = msg_struc.get('subject', '')
-        _msg = msg_struc.get('msg', b'')
-        _typ = msg_struc.get('message_type', '')
-        _msg_size = msg_struc.get('message_size', 0)
-        _time = datetime.now().strftime(SQL_TIME_FORMAT)
-        _utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
         _query = ("INSERT INTO `pms_out_msg` "
                   "(from_call, "
                   "from_bbs, "
@@ -336,20 +335,21 @@ class SQL_Database:
                   "time, "
                   "utctime, "
                   "type) "
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
-        _query_data = (_from_call,
-                       _from_bbs,
-                       _from_bbs_call,
-                       _to_call,
-                       _to_bbs,
-                       _to_bbs_call,
-                       _msg_size,
-                       _subject,
-                       _msg,
-                       _time,
-                       _utctime,
-                       _typ,
-                       )
+                  f"VALUES ({', '.join(['%s'] * 12)});")
+        _query_data = (
+            msg_struc.get('sender', ''),
+            msg_struc.get('sender_bbs', ''),
+            msg_struc.get('sender_bbs', '').split('.')[0],
+            msg_struc.get('receiver', ''),
+            msg_struc.get('recipient_bbs', ''),
+            msg_struc.get('recipient_bbs', '').split('.')[0],
+            msg_struc.get('message_size', 0),
+            msg_struc.get('subject', ''),
+            msg_struc.get('msg', b''),
+            datetime.now().strftime(SQL_TIME_FORMAT),
+            datetime.utcnow().strftime(SQL_TIME_FORMAT),
+            msg_struc.get('message_type', ''),
+        )
         self.commit_query_bin(_query, _query_data)
         return self.bbs_get_MID()
 
@@ -766,5 +766,225 @@ class SQL_Database:
                 if bid[0]:
                     return bid[0]
         return 1
+
+    ############################################
+    # APRS - WX
+
+    def aprsWX_insert_data(self, data_struc: dict):
+        # print(f"db WX {data_struc}")
+        """
+        {'raw': 'CH79FL-13>APRS,TCPIP*,qAC,EIFEL-CB:@080807z4734.49N/00834.84E_258/000g000t034h99b10465P015L000www.wasnlos.ch - Wetterstation Flaach',
+        'from': 'CH79FL-13',
+        'to': 'APRS',
+        'path': ['TCPIP*', 'qAC', 'EIFEL-CB'],
+        'via': 'EIFEL-CB',
+        'messagecapable': True,
+        'raw_timestamp': '080807z',
+        'timestamp': 1702022820,
+        'format': 'uncompressed',
+        'posambiguity': 0,
+        'symbol': '_',
+        'symbol_table': '/',
+        'latitude': 47.57483333333333,
+        'longitude': 8.580666666666668,
+        'course': 258,
+        'comment': 'www.waSnlos.ch - Wetterstation Flaach',
+
+        'weather': {
+            'wind_gust': 0.0,
+            'temperature': 1.1111111111111112,
+            'humidity': 99,
+            'pressure': 1046.5,
+            'rain_since_midnight': 3.81,
+            'luminosity': 0
+        },
+        'port_id': 'I-NET',     # TODO Change 'I-NET' to 'SERVER'
+        'rx_time': datetime.datetime(2023, 12, 8, 8, 7, 1, 574225),
+        'locator': 'JN47gn98',
+        'distance': 614.6}
+
+        """
+        if not data_struc:
+            return None
+        if data_struc.get('distance', False):
+            data_struc['distance'] = round(float(data_struc['distance']), 1)
+        if data_struc.get('weather', {}).get('pressure', False):
+            data_struc['weather']['pressure'] = round(float(data_struc['weather']['pressure']), 1)
+        if data_struc.get('weather', {}).get('humidity', False):
+            data_struc['weather']['humidity'] = int(data_struc['weather']['humidity'])
+        if data_struc.get('weather', {}).get('rain_1h', False):
+            data_struc['weather']['rain_1h'] = round(float(data_struc['weather']['rain_1h']), 2)
+        if data_struc.get('weather', {}).get('rain_24h', False):
+            data_struc['weather']['rain_24h'] = round(float(data_struc['weather']['rain_24h']), 2)
+        if data_struc.get('weather', {}).get('rain_since_midnight', False):
+            data_struc['weather']['rain_since_midnight'] = round(float(data_struc['weather']['rain_since_midnight']), 2)
+        if data_struc.get('weather', {}).get('temperature', False):
+            data_struc['weather']['temperature'] = round(float(data_struc['weather']['temperature']), 1)
+        if data_struc.get('weather', {}).get('wind_direction', False):
+            data_struc['weather']['wind_direction'] = round(float(data_struc['weather']['wind_direction']), 1)
+        if data_struc.get('weather', {}).get('wind_gust', False):
+            data_struc['weather']['wind_gust'] = round(float(data_struc['weather']['wind_gust']), 1)
+        if data_struc.get('weather', {}).get('wind_speed', False):
+            data_struc['weather']['wind_speed'] = round(float(data_struc['weather']['wind_speed']), 1)
+        if data_struc.get('weather', {}).get('luminosity', False):
+            data_struc['weather']['luminosity'] = round(float(data_struc['weather']['luminosity']), 1)
+
+        now = datetime.now().strftime(SQL_TIME_FORMAT)
+        _query = ("INSERT INTO `APRSwx` "
+                  "(`from_call`, "
+                  "`to_call`, "
+                  "`via`, "
+                  "`path`, "
+                  "`port_id`, "
+                  "`symbol`, "
+                  "`symbol_table`, "
+                  "`locator`, "
+                  "`distance`, "
+                  "`latitude`, "
+                  "`longitude`, "
+                  "`pressure`, "
+                  "`humidity`, "
+                  "`rain_1h`, "
+                  "`rain_24h`, "
+                  "`rain_since_midnight`, "
+                  "`temperature`, "
+                  "`wind_direction`, "
+                  "`wind_gust`, "
+                  "`wind_speed`, "
+                  "`luminosity`, "
+                  "`raw_timestamp`, "
+                  "`rx_time`, "
+                  "`comment`) "
+                  f"VALUES ({', '.join(['%s'] * 24)});")
+        _query_data = (
+            str(data_struc.get('from', ''))[:9],
+            str(data_struc.get('to', ''))[:9],
+            str(data_struc.get('via', ''))[:9],
+            str(data_struc.get('path', ''))[:100],
+            str(data_struc.get('port_id', ''))[:6],
+            str(data_struc.get('symbol', ''))[:1],
+            str(data_struc.get('symbol_table', ''))[:1],
+            str(data_struc.get('locator', ''))[:8],
+            data_struc.get('distance', ''),
+            str(data_struc.get('latitude', ''))[:9],
+            str(data_struc.get('longitude', ''))[:9],
+            data_struc.get('weather', {}).get('pressure', ''),
+            data_struc.get('weather', {}).get('humidity', ''),
+            data_struc.get('weather', {}).get('rain_1h', ''),
+            data_struc.get('weather', {}).get('rain_24h', ''),
+            data_struc.get('weather', {}).get('rain_since_midnight', ''),
+            data_struc.get('weather', {}).get('temperature', ''),
+            data_struc.get('weather', {}).get('wind_direction', ''),
+            data_struc.get('weather', {}).get('wind_gust', ''),
+            data_struc.get('weather', {}).get('wind_speed', ''),
+            data_struc.get('luminosity', {}).get('luminosity', ''),
+            str(data_struc.get('raw_timestamp', ''))[:10],
+            str(now)[:19],
+            str(data_struc.get('comment', ''))[:200],
+        )
+        return self.commit_query_bin(_query, _query_data)
+
+    def aprsWX_get_data_f_wxTree(self, last_rx_days=0):
+        ids = self._aprsWX_get_ids_fm_last_ent(last_rx_days)
+        if not ids:
+            return []
+        query = ("SELECT "
+                 "`rx_time`, "
+                 "`from_call`, "
+                 "`port_id`, "
+                 "`locator`, "
+                 "`distance`, "
+                 "`pressure`, "
+                 "`humidity`, "
+                 "`rain_1h`, "
+                 "`rain_24h`, "
+                 "`rain_since_midnight`, "
+                 "`temperature`, "
+                 "`wind_direction`, "
+                 "`wind_gust`, "
+                 "`wind_speed`, "
+                 "`luminosity`, "
+                 "`comment` "
+                 "FROM APRSwx "
+                 f"WHERE `ID` in ({', '.join(ids)});")
+        res = self.commit_query(query)
+        if not res:
+            return []
+        return res
+
+    def aprsWX_get_data_f_call(self, call: str):
+        """ WX Plot"""
+        if not call:
+            return []
+        query = ("SELECT "
+                 "pressure, "
+                 "humidity, "
+                 "rain_1h, "
+                 "rain_24h, "
+                 "rain_since_midnight, "
+                 "temperature, "
+                 "wind_direction, "
+                 "wind_gust, "
+                 "wind_speed, "
+                 "luminosity, "
+                 "from_call, "
+                 "comment, "
+                 "locator, "
+                 "latitude, "
+                 "longitude, "
+                 "rx_time "
+                 f"FROM APRSwx WHERE `from_call`='{call}';")
+        ret = self.commit_query(query)
+        if not ret:
+            return []
+        return ret
+
+    def aprsWX_get_data_f_CLItree(self, last_rx_days=3):
+        ids = self._aprsWX_get_ids_fm_last_ent(last_rx_days)
+        if not ids:
+            return []
+        query = ("SELECT "
+                 "`rx_time`, "
+                 "`from_call`, "
+                 "`port_id`, "
+                 "`locator`, "
+                 "CAST(`distance` as FLOAT), "
+                 "`pressure`, "
+                 "`humidity`, "
+                 "`rain_24h`, "
+                 "`temperature`, "
+                 "`luminosity`, "
+                 "`comment` "
+                 "FROM APRSwx "
+                 f"WHERE `ID` in ({', '.join(ids)}) "
+                 f"ORDER BY CAST(distance as FLOAT) ASC;")
+        res = self.commit_query(query)
+        if not res:
+            return []
+        return res
+
+    def _aprsWX_get_ids_fm_last_ent(self, last_rx_days=0):
+        """
+        Gather last Entry from Each Station in DB
+        :last_rx_days: int # Filter for old entry's
+
+        :return: [()]
+        """
+
+        query = "SELECT `ID`,MAX(rx_time) FROM APRSwx GROUP BY `from_call`;"
+        ent_list = self.commit_query(query)
+        if not ent_list:
+            return []
+        if not last_rx_days:
+            return [str(el[0]) for el in ent_list]
+        # TODO TESTEN
+        ids = []
+        now = datetime.now()
+        for el in ent_list:
+            dt_ts: datetime.now = convert_str_to_datetime(el[1])
+            t_delta = now - dt_ts
+            if t_delta.days <= last_rx_days:
+                ids.append(str(el[0]))
+        return ids
 
 # DB = SQL_Database()

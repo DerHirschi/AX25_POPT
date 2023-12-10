@@ -6,25 +6,25 @@ from schedule.popt_sched import getNew_schedule_config
 # PMS
 def getNew_PMS_cfg():
     return {
-                'user': 'NOCALL',
-                'regio': '',
-                'home_bbs_cfg': {},
-                'home_bbs': [],
-                'single_auto_conn': True,
-                'auto_conn': False,
-                # TODO 'auto_conn_silent': True,
-            }
+        'user': 'NOCALL',
+        'regio': '',
+        'home_bbs_cfg': {},
+        'home_bbs': [],
+        'single_auto_conn': True,
+        'auto_conn': False,
+        # TODO 'auto_conn_silent': True,
+    }
 
 
 def getNew_homeBBS_cfg():
     return {
-                'port_id': 0,
-                'regio': '',
-                'dest_call': 'NOCALL',
-                'via_calls': [],
-                'axip_add': ('', 0),
-                'scheduler_cfg': dict(getNew_schedule_config()),
-            }
+        'port_id': 0,
+        'regio': '',
+        'dest_call': 'NOCALL',
+        'via_calls': [],
+        'axip_add': ('', 0),
+        'scheduler_cfg': dict(getNew_schedule_config()),
+    }
 
 
 #######################################
@@ -63,7 +63,10 @@ def getNew_APRS_ais_cfg():
         'be_tracer_alarm_hist': {},
         'be_tracer_active': False,
         'be_auto_tracer_active': False,
-
+        'aprs_msg_pool': {  # TODO > DB ?
+            "message": [],
+            "bulletin": [],
+        }
     }
 
 
