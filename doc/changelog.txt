@@ -5,10 +5,14 @@ Fixes:
 Optimierung:
 - APRS Config Management(load/save) ins neue System übertragen
 - APRS WX-Daten (Wetterdaten) werden jetzt in der SQL-DB gespeichert
+- MH Listen System optimiert/aufgeräumt
+- Separate MH Listen je Port
+- AXIP Adresse wird jetzt generell von der User-DB bezogen. Wenn nicht bekannt dann von der MH-Liste
 
 
 Neue Implementierungen / Funktionen:
-
+- DX Alarm Parameter werden gespeichert
+- CLI DX Alarm History wird gespeichert
 
 ###########################################################################################################
 # 2.100.35

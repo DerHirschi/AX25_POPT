@@ -45,6 +45,7 @@ SQLITE_MH_TABLES = {
 }
 """
 
+
 class SQL_Database:
     def __init__(self):
         print("Database INIT!")
@@ -897,7 +898,7 @@ class SQL_Database:
 
     def aprsWX_get_data_f_wxTree(self, last_rx_days=0):
         ids = self._aprsWX_get_ids_fm_last_ent(last_rx_days)
-        print(f"WX-ids {ids}")
+        # print(f"WX-ids {ids}")
         if not ids:
             return []
         query = ("SELECT "
@@ -920,7 +921,7 @@ class SQL_Database:
                  "FROM APRSwx "
                  f"WHERE `ID` in ({', '.join(ids)});")
         res = self.commit_query(query)
-        print(f"WX-RES {res}")
+        # print(f"WX-RES {res}")
         if not res:
             return []
         return res

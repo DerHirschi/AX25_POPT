@@ -479,9 +479,7 @@ class MH:
                 temp[time_str] = ent
         temp_k = list(temp.keys())
         temp_k.sort(reverse=True)
-        # print(temp_k)
         for k in temp_k:
-            print(temp[k].own_call)
             self._short_MH.appendleft(temp[k])
             if len(self._short_MH) == 40:
                 break
