@@ -76,7 +76,7 @@ class MulticastSettings(tk.Toplevel):
             record = item['values']
             # show a message
             call = record[2]
-            ip_add = PORT_HANDLER.get_MH().mh_get_last_ip(call)
+            ip_add = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(call)
             if ip_add in PORT_HANDLER.multicast_ip_s:
                 PORT_HANDLER.multicast_ip_s.remove(ip_add)
             else:

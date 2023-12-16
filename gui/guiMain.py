@@ -347,7 +347,7 @@ class SideTabbedFrame:  # TODO: WTF
 
         self._tree_data = []
         self._last_mh_ent = []
-        self._update_side_mh()
+        # self._update_side_mh()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
         # Global Settings ##########################
@@ -742,9 +742,8 @@ class SideTabbedFrame:  # TODO: WTF
             call = record[1]
             vias = record[5]
             port = record[3]
-            if type(port) is not str:
-                return
-            port = int(port.split(' ')[0])
+            if type(port) is str:
+                port = int(port.split(' ')[0])
 
             if vias:
                 call = f'{call} {vias}'
@@ -771,7 +770,7 @@ class SideTabbedFrame:  # TODO: WTF
                 f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
                 f'{ent.own_call}',
                 f'{ent.distance}',
-                f'{ent.port_id} {ent.port}',
+                f'{ent.port_id}',
                 f'{ent.pac_n}',
                 ' '.join(route),
             ))
@@ -826,7 +825,7 @@ class SideTabbedFrame:  # TODO: WTF
             self._tree.insert('', tk.END, values=ret_ent)
 
     def _update_side_mh(self):
-        mh_ent = list(PORT_HANDLER.get_MH().output_sort_entr(8))
+        mh_ent = list(PORT_HANDLER.get_MH().output_sort_entr(10))
         if mh_ent != self._last_mh_ent:
             self._last_mh_ent = mh_ent
             self._format_tree_ent()
@@ -881,7 +880,6 @@ class SideTabbedFrame:  # TODO: WTF
         if ind != 0:
             return
         """
-        # print("-----------------------")
         _conn = self._main_win.get_conn()
         if _conn is not None:
             if self._ch_is_disc:
@@ -1609,7 +1607,7 @@ class TkMainWin:
         self.parm_btn_blink_time = 1  # s
         self._parm_rx_beep_cooldown = 2  # s
         # Tasker Timings
-        self._loop_delay = 100  # ms
+        self._loop_delay = 50  # ms
         self._parm_non_prio_task_timer = 0.25  # s
         self._prio_task_flip = True
         self._parm_non_non_prio_task_timer = 1  # s
@@ -2360,9 +2358,7 @@ class TkMainWin:
             if wait:
                 if self._sound_th is not None:
                     if not self._sound_th.is_alive():
-                        # print('Lebt nicht mehr')
                         self._sound_th.join()
-                        # print('Join')
                         if is_linux():
                             self._sound_th = threading.Thread(target=playsound, args=(snd_file, True))
                             self._sound_th.start()
@@ -2450,9 +2446,9 @@ class TkMainWin:
             # self._tasker_prio()
             if not self._tasker_05_sec():
                 if not self._tasker_1_sec():
-                    self._tasker_5_sec()
+                    if not self._tasker_5_sec():
+                        self.main_win.update_idletasks()
             # self._tasker_tester()
-            # self.main_win.update_idletasks()
         self.main_win.after(self._loop_delay, self._tasker)
 
     @staticmethod
@@ -2564,7 +2560,7 @@ class TkMainWin:
         # TODO.. Again
         # UPDATE INPUT WIN
         tr = False
-        for k in PORT_HANDLER.get_all_connections():
+        for k in list(PORT_HANDLER.get_all_connections()):
 
             conn = self.get_conn(k)
             if conn is not None:

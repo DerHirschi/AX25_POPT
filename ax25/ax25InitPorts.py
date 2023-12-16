@@ -113,6 +113,7 @@ class AX25PortHandler(object):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
             self._aprs_task()
+            self._mh_task()
             self._auto_conn_tasker()
             self._task_timer_05sec = time.time() + 0.5
 
@@ -123,10 +124,13 @@ class AX25PortHandler(object):
             self._task_timer_1sec = time.time() + 1
 
     #####################
-    # MH INIT
+    # MH
     def _init_MH(self):
         self.mh = MH()
-        self.mh.set_DB(self.db)
+        # self.mh.set_DB(self.db)
+
+    def _mh_task(self):
+        self.mh.mh_task()
 
     #####################
     # Setting/Parameter Updates
@@ -163,7 +167,8 @@ class AX25PortHandler(object):
         self.close_aprs_ais()
         for k in list(self.ax25_ports.keys()):
             self.close_port(k)
-        self.mh.save_mh_data()
+        if self.mh:
+            self.mh.save_mh_data()
         USER_DB.save_data()
         self.close_DB()
         POPT_CFG.save_CFG_to_file()
@@ -413,20 +418,21 @@ class AX25PortHandler(object):
         """ Handels New Outgoing Connections for CLI and LINKS """
         # Incoming Parameter Check
         if axip_add is None:
-            axip_add = ('', 0)
+            axip_add = USER_DB.get_AXIP(dest_call)
         if via_calls is None:
             via_calls = []
         if link_conn and not via_calls:
             return False, 'Error: Link No Via Call'
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
-        mh_entry = self.mh.mh_get_data_fm_call(dest_call)
+        mh_entry = self.mh.mh_get_data_fm_call(dest_call, port_id)
         if not exclusive:
             if mh_entry:
                 if mh_entry.all_routes:
                     # port_id = int(mh_entry.port_id)
                     via_calls += min(list(mh_entry.all_routes), key=len)
-                    axip_add = tuple(mh_entry.axip_add)
+                    if not axip_add[0]:
+                        axip_add = tuple(mh_entry.axip_add)
         if not axip_add[0] and mh_entry:
             axip_add = tuple(mh_entry.axip_add)
         if port_id == -1 and mh_entry:
@@ -548,7 +554,7 @@ class AX25PortHandler(object):
             self.db.check_tables_exists('bbs')
             self.db.check_tables_exists('user_db')
             self.db.check_tables_exists('aprs')
-            self.db.check_tables_exists('mh')
+            # self.db.check_tables_exists('mh')
             if self.db.error:
                 raise SQLConnectionError
         else:

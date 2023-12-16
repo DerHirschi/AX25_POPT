@@ -7,8 +7,7 @@ from fnc.str_fnc import convert_str_to_datetime
 from sql_db.sql_Error import SQLConnectionError
 from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
-    SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB, SQL_CREATE_MH_TAB, \
-    SQLITE_CREATE_MH_TAB
+    SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB
 
 SQL_BBS_TABLES = {
     "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
@@ -37,13 +36,14 @@ SQLITE_APRS_TABLES = {
     'APRSwx': SQLITE_CREATE_APRS_WX_TAB
 }
 
+"""
 MH_TABLES = {
     'MH': SQL_CREATE_MH_TAB
 }
 SQLITE_MH_TABLES = {
     'MH': SQLITE_CREATE_MH_TAB
 }
-
+"""
 
 class SQL_Database:
     def __init__(self):
@@ -107,14 +107,14 @@ class SQL_Database:
                         'bbs': SQL_BBS_TABLES,
                         'user_db': USERDB_TABLES,
                         'aprs': APRS_TABLES,
-                        'mh': MH_TABLES,
+                        # 'mh': MH_TABLES,
                     }.get(tables, {})
                 else:
                     tables = {
                         'bbs': SQLITE_BBS_TABLES,
                         'user_db': USERDB_TABLES,
                         'aprs': SQLITE_APRS_TABLES,
-                        'mh': SQLITE_MH_TABLES,
+                        # 'mh': SQLITE_MH_TABLES,
                     }.get(tables, {})
                 for tab in tables.keys():
                     if tab not in ret:
@@ -1003,11 +1003,12 @@ class SQL_Database:
 
     ############################################
     # MH
+    """
     def mh_get_entry(self, call: str):
         _query = ("SELECT * "
                   f"FROM `MH` WHERE `call`='{call}';")
         res = self.commit_query(_query)
-        print(f"MH res: {res}")
+        # print(f"MH res: {res}")
         return res
 
     def mh_set_entry(self, mh_struc):
@@ -1019,7 +1020,7 @@ class SQL_Database:
         _query = ("SELECT * "
                   f"FROM `MH` WHERE `call`='{call}';")
         res = self.commit_query(_query)
-        print(f"MH res: {res}")
+        # print(f"MH res: {res}")
         if not res:
             return self._mh_insert_new_entry(mh_struc)
 
@@ -1066,6 +1067,7 @@ class SQL_Database:
 
     def _mh_update_new_entry(self, mh_struc):
         """
+    """
         rx = mh_struc.get('RX', True)
         to_call = mh_struc.get('to_calls', [])
         route = mh_struc.get('route', [])
@@ -1084,6 +1086,7 @@ class SQL_Database:
         locator = mh_struc.get('locator', '')
         distance = mh_struc.get('distance', -1)
         """
+    """
         route = mh_struc.get('route', [])
         byte_n = mh_struc.get('byte_n', 0)
         h_byte_n = mh_struc.get('h_byte_n', 0)
@@ -1187,7 +1190,7 @@ class SQL_Database:
         )
 
         return self.commit_query_bin(_query, _query_data)
-
+    """
 
 
 

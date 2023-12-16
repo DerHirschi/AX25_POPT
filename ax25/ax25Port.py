@@ -1,3 +1,4 @@
+import datetime
 import socket
 import serial
 import threading
@@ -122,9 +123,11 @@ class AX25Port(threading.Thread):
         """ Internal TXD. Not Kiss TXD """
         self.digi_TXD = time.time() + self.parm_digi_TXD / 1000
 
-    def rx_handler(self, ax25_frame: AX25Frame):
+    def _rx_handler(self, ax25_frame: AX25Frame):
         """ Main RX-Handler """
         self.reset_ft_wait_timer(ax25_frame)
+        # Monitor / MH / Port-Statistic
+        self.gui_monitor(ax25frame=ax25_frame, tx=False)
         if ax25_frame.ctl_byte.flag == 'UI':
             self.rx_UI_handler(ax25_frame=ax25_frame)
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
@@ -355,7 +358,7 @@ class AX25Port(threading.Thread):
                 for beacon in beacon_list:
                     if beacon.is_enabled:
                         send_it = beacon.crone()
-                        ip_fm_mh = self._mh.mh_get_last_ip(beacon.to_call, self.port_cfg.parm_axip_fail)
+                        ip_fm_mh = self._mh.get_AXIP_fm_DB_MH(beacon.to_call, self.port_cfg.parm_axip_fail)
                         beacon.axip_add = ip_fm_mh
                         if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
                             if ip_fm_mh == ('', 0):
@@ -492,7 +495,7 @@ class AX25Port(threading.Thread):
         else:
             frame.pid_byte.text()
         frame.data = text
-        frame.axip_add = self._mh.mh_get_last_ip(call_str=dest_call)
+        frame.axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
         frame.from_call.call_str = own_call
         frame.to_call.call_str = dest_call
         try:
@@ -509,8 +512,9 @@ class AX25Port(threading.Thread):
                 self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
 
     def gui_monitor(self, ax25frame: AX25Frame,  tx: bool = True):
+        self._mh.mh_input(ax25frame, self.port_id, tx)
         if self.monitor_out:
-            if self.gui is not None:
+            if self.gui:
                 self.gui.update_monitor(
                     # monitor_frame_inp(ax25frame, self.port_cfg),
                     ax25frame,
@@ -519,7 +523,6 @@ class AX25Port(threading.Thread):
 
     def run(self):
         while self.loop_is_running:
-
             self.tasks()
         # time.sleep(0.05)
         print(f"Loop Ends Port: {self.port_id}")
@@ -548,7 +551,6 @@ class AX25Port(threading.Thread):
             self.set_TXD()
             self.set_digi_TXD()
             ax25frame = AX25Frame()
-            ax25frame.axip_add = buf.axip_add
             try:
                 # Decoding
                 ax25frame.decode_ax25frame(buf.raw_data)
@@ -558,18 +560,18 @@ class AX25Port(threading.Thread):
                 logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
                 break
             if ax25frame.validate():
+                ax25frame.axip_add = buf.axip_add
                 # ######### RX #############
-                # MH List and Statistics
-                self._mh.mh_inp(ax25frame, self.portname, self.port_id)
-                # Monitor
-                self.gui_monitor(ax25frame=ax25frame, tx=False)
                 # Handling
-                self.rx_handler(ax25frame)
+                self._rx_handler(ax25frame)
                 # RX-ECHO
                 self.rx_echo(ax25_frame=ax25frame)
                 # AXIP-Multicast
                 if self.port_cfg.parm_axip_Multicast:
                     self.tx_multicast(frame=ax25frame)
+                # MH List and Statistics
+                # self._mh.mh_inp(ax25frame, self.port_id)
+
             if self.port_cfg.parm_full_duplex:
                 break
 
@@ -668,8 +670,8 @@ class KissTCP(AX25Port):
             except AX25DeviceFAIL:
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
-        else:
-            self._mh.bw_mon_inp(frame, self.port_id)
+        # else:
+        #     self._mh.bw_mon_inp(frame, self.port_id)
 
         ############################################
 
@@ -797,8 +799,8 @@ class KISSSerial(AX25Port):
             except AX25DeviceFAIL:
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 raise AX25DeviceFAIL
-        else:
-            self._mh.bw_mon_inp(frame, self.port_id)
+        # else:
+        #     self._mh.bw_mon_inp(frame, self.port_id)
 
 
 class AXIP(AX25Port):
@@ -902,8 +904,8 @@ class AXIP(AX25Port):
                 print(frame.axip_add)
                 logger.error(frame.data_bytes + calc_crc)
                 print(frame.data_bytes + calc_crc)
-            else:
-                self._mh.bw_mon_inp(frame, self.port_id)
+            # else:
+            #     self._mh.bw_mon_inp(frame, self.port_id)
 
         if self.port_cfg.parm_axip_Multicast and not no_multicast:
             self.tx_multicast(frame=frame)
@@ -912,10 +914,11 @@ class AXIP(AX25Port):
         for axip_add in self.port_handler.multicast_ip_s:
             if axip_add != frame.axip_add:
                 frame.axip_add = axip_add
+                # TODO Failed IP
                 try:
                     self.tx(frame, no_multicast=True)
                 except (ConnectionRefusedError, ConnectionError, socket.timeout):
-                    self._mh.mh_ip_failed(axip_add)
+                    self._mh.mh_ip_failed(axip_add, self.port_id)
                 except (OSError, socket.error) as e:
                     logger.error(
                         'Error. Cant send Packet to AXIP Device MULTICAST {}'.format(frame.axip_add))

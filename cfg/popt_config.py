@@ -61,11 +61,8 @@ class Main_CFG:
     def save_CFG_to_file(self):
         logger.info(f'Main CFG: Config Saved to {self._config_filename}')
         print(f'Main CFG: Config Saved to {self._config_filename}')
+        # print(f'Main CFG: Config  {self._config}')
         save_to_file(self._config_filename, dict(self._config))
-        """
-        with open(self._config_filename, 'w') as configfile:
-            self._config.write(configfile)
-        """
 
     ####################
     # Global CFG by Key

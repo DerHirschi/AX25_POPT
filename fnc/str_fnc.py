@@ -28,7 +28,7 @@ def time_to_decimal(dt):
 
 
 def conv_time_for_sorting(dateti: datetime.now()):
-    return dateti.strftime('%y/%m/%d %H:%M:%S')
+    return dateti.strftime('%y%m%d%H%M%S')
 
 
 def conv_time_for_key(dateti: datetime.now()):

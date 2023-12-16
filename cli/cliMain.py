@@ -580,8 +580,8 @@ class DefaultCLI(object):
             max_ent,    # Entry's
             -1,         # Port
         ])
-        print(self.parameter)
-        print(max_ent)
+        # print(self.parameter)
+        # print(max_ent)
         parm = self.parameter[0]
         if parm < last_port_id:
             port = self.parameter[0]
@@ -681,13 +681,13 @@ class DefaultCLI(object):
                         dis = str(userdb_ent.Distance)
                     typ = userdb_ent.TYP
 
-                out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
+                out += (f' {time_delta_str:9}{str(sort_list[call].port_id).ljust(5)}{sort_list[call].own_call:10}'
                         f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
 
                 out += '\r'
         if not out:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
-        return "\r-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r" + out
+        return "\r-----Time-Port-Call------via-------LOC------Dist(km)--Type---Packets\r" + out
 
     def cmd_wx(self):
         """ WX Stations """

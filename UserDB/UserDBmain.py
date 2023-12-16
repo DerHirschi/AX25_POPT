@@ -40,7 +40,7 @@ class Client(object):
 
     via_NODE_HF = ''
     via_NODE_AXIP = ''
-    AXIP = ()
+    AXIP = '', 0
     QRG1 = ''  # 27.235FM-1200-AD/AI/FX
     QRG2 = ''
     QRG3 = ''
@@ -122,8 +122,6 @@ class UserDB:
                     self.db[k].call_str = str(k)
                     self.db[k].Call = str(k)
                     self.db[k].SSID = 0
-
-
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
@@ -282,6 +280,22 @@ class UserDB:
         if ret:
             return ret.Distance
         return 0
+
+    def get_AXIP(self, call_str):
+        ret = self.db.get(call_str, False)
+        if ret:
+            return ret.AXIP
+        return '', 0
+
+    def set_AXIP(self, call_str: str, axip: tuple):
+        if not all((call_str, axip)):
+            return False
+        if not axip[0]:
+            return False
+        if not self.db.get(call_str, None):
+            return False
+        self.db[call_str].AXIP = tuple(axip)
+        return True
 
     def get_all_PRmail(self):
         ret = []

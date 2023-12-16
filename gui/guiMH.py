@@ -277,7 +277,9 @@ class MHWin(tk.Toplevel):
             call = record[3]
             vias = record[8]
             port = record[2]
-            port = int(port.split(' ')[0])
+            if type(port) is str:
+                port = int(port.split(' ')[0])
+            # print(port)
             if vias:
                 call = f'{call} {vias}'
             self._root_win.open_new_conn_win()

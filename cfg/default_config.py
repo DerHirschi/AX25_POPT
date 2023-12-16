@@ -37,6 +37,7 @@ def getNew_MH_cfg():
         'parm_distance_alarm': 50,
         'parm_lastseen_alarm': 1,
         'parm_alarm_ports': [],
+        # '_short_MH': deque([], maxlen=40),
     }
 
 

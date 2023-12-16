@@ -158,6 +158,7 @@ SQLITE_CREATE_APRS_WX_TAB = SQL_CREATE_APRS_WX_TAB.replace(
 
 #######################################
 # MH
+"""
 SQL_CREATE_MH_TAB = ("CREATE TABLE `MH`(\n"
                      "`call` varchar(9) NOT NULL, \n"
                      "`to_call` varchar(9) NOT NULL, \n"
@@ -177,6 +178,7 @@ SQL_CREATE_MH_TAB = ("CREATE TABLE `MH`(\n"
                      ");\n")
 
 SQLITE_CREATE_MH_TAB = SQL_CREATE_MH_TAB
+"""
 """
 SQLITE_CREATE_MH_TAB = SQL_CREATE_MH_TAB.replace(
     "`ID` INTEGER AUTO_INCREMENT NOT NULL,",
