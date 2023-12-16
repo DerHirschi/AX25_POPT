@@ -7,7 +7,8 @@ from fnc.str_fnc import convert_str_to_datetime
 from sql_db.sql_Error import SQLConnectionError
 from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
-    SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB
+    SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB, SQL_CREATE_MH_TAB, \
+    SQLITE_CREATE_MH_TAB
 
 SQL_BBS_TABLES = {
     "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
@@ -31,9 +32,16 @@ USERDB_TABLES = {
 APRS_TABLES = {
     'APRSwx': SQL_CREATE_APRS_WX_TAB
 }
-# TODO Check MySQL and just load Cons for MySQL/SQLite
+
 SQLITE_APRS_TABLES = {
     'APRSwx': SQLITE_CREATE_APRS_WX_TAB
+}
+
+MH_TABLES = {
+    'MH': SQL_CREATE_MH_TAB
+}
+SQLITE_MH_TABLES = {
+    'MH': SQLITE_CREATE_MH_TAB
 }
 
 
@@ -99,12 +107,14 @@ class SQL_Database:
                         'bbs': SQL_BBS_TABLES,
                         'user_db': USERDB_TABLES,
                         'aprs': APRS_TABLES,
+                        'mh': MH_TABLES,
                     }.get(tables, {})
                 else:
                     tables = {
                         'bbs': SQLITE_BBS_TABLES,
                         'user_db': USERDB_TABLES,
                         'aprs': SQLITE_APRS_TABLES,
+                        'mh': SQLITE_MH_TABLES,
                     }.get(tables, {})
                 for tab in tables.keys():
                     if tab not in ret:
@@ -153,6 +163,8 @@ class SQL_Database:
                 self.db.commit_query()
                 return ret
 
+    ############################################
+    # BBS - PMS
     def bbs_check_pn_mid_exists(self, bid_mid: str):
         if search_sql_injections(bid_mid):
             logger.warning(f"BBS BID_MID SQL Injection Warning. !!")
@@ -762,14 +774,13 @@ class SQL_Database:
         bid = self.db.get_bid()
         if bid:
             bid = bid[0]
-            if type(bid) == tuple:
+            if type(bid) is tuple:
                 if bid[0]:
                     return bid[0]
         return 1
 
     ############################################
     # APRS - WX
-
     def aprsWX_insert_data(self, data_struc: dict):
         # print(f"db WX {data_struc}")
         """
@@ -886,6 +897,7 @@ class SQL_Database:
 
     def aprsWX_get_data_f_wxTree(self, last_rx_days=0):
         ids = self._aprsWX_get_ids_fm_last_ent(last_rx_days)
+        print(f"WX-ids {ids}")
         if not ids:
             return []
         query = ("SELECT "
@@ -908,6 +920,7 @@ class SQL_Database:
                  "FROM APRSwx "
                  f"WHERE `ID` in ({', '.join(ids)});")
         res = self.commit_query(query)
+        print(f"WX-RES {res}")
         if not res:
             return []
         return res
@@ -971,7 +984,8 @@ class SQL_Database:
         :return: [()]
         """
 
-        query = "SELECT `ID`,MAX(rx_time) FROM APRSwx GROUP BY `from_call`;"
+        # query = "SELECT `ID`,MAX(rx_time) FROM APRSwx GROUP BY `from_call`;"
+        query = "SELECT MAX(`ID`),MAX(rx_time) FROM APRSwx GROUP BY `from_call`;"
         ent_list = self.commit_query(query)
         if not ent_list:
             return []
@@ -986,5 +1000,195 @@ class SQL_Database:
             if t_delta.days <= last_rx_days:
                 ids.append(str(el[0]))
         return ids
+
+    ############################################
+    # MH
+    def mh_get_entry(self, call: str):
+        _query = ("SELECT * "
+                  f"FROM `MH` WHERE `call`='{call}';")
+        res = self.commit_query(_query)
+        print(f"MH res: {res}")
+        return res
+
+    def mh_set_entry(self, mh_struc):
+
+        call = mh_struc.get('own_call', '')
+        if not call:
+            return False
+
+        _query = ("SELECT * "
+                  f"FROM `MH` WHERE `call`='{call}';")
+        res = self.commit_query(_query)
+        print(f"MH res: {res}")
+        if not res:
+            return self._mh_insert_new_entry(mh_struc)
+
+        # return self._mh_update_new_entry(mh_struc)
+        return False
+
+        # return self._mh_insert_new_entry(mh_struc)
+
+    def _mh_insert_new_entry(self, mh_struc):
+        _query = ("INSERT INTO `MH` "
+                  "(`call`, "
+                  "to_call, "
+                  "route, "
+                  "port_id, "
+                  "`pack_len`, "
+                  "`header_len`, "
+                  "frame_typ, "
+                  "frame_pid, "
+                  "`rx_tx`, "
+                  "axip_add, "
+                  "locator, "
+                  "distance,  "
+                  "first_seen,"
+                  "last_seen) "
+                  f"VALUES ({', '.join(['%s'] * 14)});")
+        _query_data = (
+            str(mh_struc.get('own_call', '')),
+            str(mh_struc.get('to_call', '')),
+            str(list([str(x.call_str) for x in mh_struc.get('route', [])])),
+            int(mh_struc.get('port_id', 0)),
+            str(mh_struc.get('byte_n', 0)),
+            str(mh_struc.get('h_byte_n', 0)),
+            str(mh_struc.get('type', '')),
+            str(mh_struc.get('pid', '')),
+            str({True: 'rx', False: 'tx'}.get(mh_struc.get('RX', True), True)),
+            str(mh_struc.get('axip_add', ('', 0))),
+            str(mh_struc.get('locator', '')),
+            int(mh_struc.get('distance', -1)),
+            str(mh_struc.get('first_seen', '')),
+            str(mh_struc.get('last_seen', '')),
+        )
+
+        return self.commit_query_bin(_query, _query_data)
+
+    def _mh_update_new_entry(self, mh_struc):
+        """
+        rx = mh_struc.get('RX', True)
+        to_call = mh_struc.get('to_calls', [])
+        route = mh_struc.get('route', [])
+        routes_ids = mh_struc.get('routes_ids', [])
+        port = mh_struc.get('port', '')
+        port_id = mh_struc.get('port_id', 0)
+        first_seen = mh_struc.get('first_seen', 0)
+        last_seen = mh_struc.get('last_seen', 0)
+        pac_n = mh_struc.get('pac_n', 0)
+        byte_n = mh_struc.get('byte_n', 0)
+        h_byte_n = mh_struc.get('h_byte_n', 0)
+        pac_type = mh_struc.get('type', '')
+        pid = mh_struc.get('pid', '')
+        axip_add = mh_struc.get('axip_add', ('', 0))
+        axip_fail = mh_struc.get('axip_fail', 0)
+        locator = mh_struc.get('locator', '')
+        distance = mh_struc.get('distance', -1)
+        """
+        route = mh_struc.get('route', [])
+        byte_n = mh_struc.get('byte_n', 0)
+        h_byte_n = mh_struc.get('h_byte_n', 0)
+        rej_n = mh_struc.get('rej_n', 0)
+        pac_type = mh_struc.get('type', '')
+
+        rx_pac_n = 0
+        tx_pac_n = 0
+        rx_rej_n = 0
+        tx_rej_n = 0
+        rx_U_n = 0
+        rx_I_n = 0
+        rx_S_n = 0
+        tx_U_n = 0
+        tx_I_n = 0
+        tx_S_n = 0
+        rx_byte_n = 0
+        rx_h_byte_n = 0
+        tx_byte_n = 0
+        tx_h_byte_n = 0
+        if mh_struc.get('RX', True):
+            rx_pac_n = 1
+            rx_rej_n = rej_n
+            rx_byte_n = byte_n
+            rx_h_byte_n = h_byte_n
+            if pac_type == 'I':
+                rx_I_n = 1
+            elif pac_type == 'S':
+                rx_S_n = 1
+            elif pac_type == 'U':
+                rx_U_n = 1
+        else:
+            tx_pac_n = 1
+            tx_rej_n = rej_n
+            tx_byte_n = byte_n
+            tx_h_byte_n = h_byte_n
+            if pac_type == 'I':
+                tx_I_n = 1
+            elif pac_type == 'S':
+                tx_S_n = 1
+            elif pac_type == 'U':
+                tx_U_n = 1
+        print(mh_struc.get('pid', ''))
+        _query = ("UPDATE `MH` SET "
+                  "`call`=%s, "       # TODO Add to Ent
+                  "route=%s, "
+                  "routes_ids=%s, "
+                  "port=%s, "
+                  "port_id=%s, "
+                  "first_seen=%s, "
+                  "last_seen=%s, "
+                  "rx_rej_n=%s, "
+                  "rx_U_n=%s, "
+                  "rx_I_n=%s, "
+                  "rx_S_n=%s, "
+                  "rx_pac_n=%s, "
+                  "rx_byte_n=%s, "
+                  "rx_h_byte_n=%s, "
+                  "tx_rej_n=%s, "
+                  "tx_U_n=%s, "
+                  "tx_I_n=%s, "
+                  "tx_S_n=%s, "
+                  "tx_pac_n=%s, "
+                  "tx_byte_n=%s, "
+                  "tx_h_byte_n=%s, "
+                  "last_frame_typ=%s, "
+                  "last_frame_pid=%s, "
+                  "axip_add=%s, "
+                  "axip_fail=%s, "
+                  "locator=%s, "
+                  "distance=%s "
+                  f"WHERE own_call = '{mh_struc.get('own_call')};")
+        _query_data = (
+            str(mh_struc.get('to_calls', [])),  # Max 30 Calls in List
+            str(route),
+            str(mh_struc.get('routes_ids', [])),  # TODO
+            str(mh_struc.get('port', '')),
+            int(mh_struc.get('port_id', 0)),
+            mh_struc.get('first_seen', ''),
+            mh_struc.get('last_seen', ''),
+            rx_rej_n,
+            rx_U_n,
+            rx_I_n,
+            rx_S_n,
+            rx_pac_n,
+            rx_byte_n,
+            rx_h_byte_n,
+            tx_rej_n,
+            tx_U_n,
+            tx_I_n,
+            tx_S_n,
+            tx_pac_n,
+            tx_byte_n,
+            tx_h_byte_n,
+            pac_type,
+            str(mh_struc.get('pid', '')),
+            str(mh_struc.get('axip_add', ('', 0))),
+            int(mh_struc.get('axip_fail', 0)),
+            str(mh_struc.get('locator', '')),
+            int(mh_struc.get('distance', -1))
+        )
+
+        return self.commit_query_bin(_query, _query_data)
+
+
+
 
 # DB = SQL_Database()

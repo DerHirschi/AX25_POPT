@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from ax25.ax25Statistics import MH_LIST
+# from ax25.ax25Statistics import MH_LIST
 from fnc.str_fnc import conv_time_DE_str
 from cfg.string_tab import STR_TABLE
 
@@ -76,7 +76,7 @@ class MulticastSettings(tk.Toplevel):
             record = item['values']
             # show a message
             call = record[2]
-            ip_add = MH_LIST.mh_get_last_ip(call)
+            ip_add = PORT_HANDLER.get_MH().mh_get_last_ip(call)
             if ip_add in PORT_HANDLER.multicast_ip_s:
                 PORT_HANDLER.multicast_ip_s.remove(ip_add)
             else:
@@ -105,7 +105,7 @@ class MulticastSettings(tk.Toplevel):
             self.flag = flag
 
         if self.flag:
-            sort_date = MH_LIST.get_sort_mh_entry(flag_str=self.flag, reverse=self.rev_ent)
+            sort_date = PORT_HANDLER.get_MH().get_sort_mh_entry(flag_str=self.flag, reverse=self.rev_ent)
             if flag:
                 if self.rev_ent:
                     self.rev_ent = False

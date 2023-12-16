@@ -3,11 +3,14 @@ from datetime import datetime
 
 from ax25.ax25Error import AX25EncodingERROR, logger
 from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
-from ax25.ax25Statistics import MH_LIST
+# from ax25.ax25Statistics import MH_LIST
+# from ax25.ax25InitPorts import PORT_HANDLER
 
 
 class Beacon:
-    def __init__(self):
+    def __init__(self, port_handler=None):
+        # TODO Main CFG
+        self._port_handler = port_handler
         self.text_filename = ''
         self.text = ''
         self.text_out = ''
@@ -55,12 +58,22 @@ class Beacon:
                     return True
             except (FileNotFoundError, EOFError, IsADirectoryError):
                 return False
+        return False
 
     def _set_text_fm_mh(self):
-        self.text_out = MH_LIST.mh_out_beacon(max_ent=12)
+        # TODO ..No access PortHandler or MH
+        # self.text_out = MH_LIST.mh_out_beacon(max_ent=12)
+        if not self._port_handler:
+            return False
+        mh = self._port_handler.get_MH()
+        if mh:
+            self.text_out = mh.mh_out_beacon(max_ent=12)
+            return True
+        return False
 
     def _set_text(self):
         self.text_out = self.text
+        return True
 
     def set_from_call(self, call: str):
         self.from_call = call
@@ -81,8 +94,10 @@ class Beacon:
             'File': self.set_text_fm_file,
 
         }.get(self.typ, False)
-        if _type_handler:
-            _type_handler()
+        if not _type_handler:
+            return False
+        if not _type_handler():
+            return False
         if self.text_out:
             _ax_frame = AX25Frame()
             _ax_frame.ctl_byte.UIcByte()

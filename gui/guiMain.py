@@ -15,7 +15,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from ax25.ax25Statistics import MH_LIST
+# from ax25.ax25Statistics import MH_LIST
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.popt_config import POPT_CFG
 
@@ -742,7 +742,7 @@ class SideTabbedFrame:  # TODO: WTF
             call = record[1]
             vias = record[5]
             port = record[3]
-            if type(port) != str:
+            if type(port) is not str:
                 return
             port = int(port.split(' ')[0])
 
@@ -826,7 +826,7 @@ class SideTabbedFrame:  # TODO: WTF
             self._tree.insert('', tk.END, values=ret_ent)
 
     def _update_side_mh(self):
-        mh_ent = list(MH_LIST.output_sort_entr(8))
+        mh_ent = list(PORT_HANDLER.get_MH().output_sort_entr(8))
         if mh_ent != self._last_mh_ent:
             self._last_mh_ent = mh_ent
             self._format_tree_ent()
@@ -1785,7 +1785,7 @@ class TkMainWin:
         #########################
         # Parameter to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
-        guiCfg['gui_parm_new_call_alarm'] = bool(MH_LIST.parm_new_call_alarm)
+        guiCfg['gui_parm_new_call_alarm'] = bool(PORT_HANDLER.get_MH().parm_new_call_alarm)
         guiCfg['gui_parm_channel_index'] = int(self.channel_index)
         guiCfg['gui_parm_text_size'] = int(self.text_size)
         POPT_CFG.save_guiPARM_main(guiCfg)
@@ -1796,9 +1796,9 @@ class TkMainWin:
         self._init_CFG_vars()
         # MH
         if PORT_HANDLER.get_port_by_index(0):
-            MH_LIST.parm_alarm_ports = [0]
+            PORT_HANDLER.get_MH().parm_alarm_ports = [0]
         else:
-            MH_LIST.parm_alarm_ports = []
+            PORT_HANDLER.get_MH().parm_alarm_ports = []
 
     def _init_CFG_vars(self):
         #########################
@@ -1820,7 +1820,7 @@ class TkMainWin:
         #########################
         # Parameter fm cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
-        MH_LIST.parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
+        PORT_HANDLER.get_MH().parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
         # self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
         self.channel_index = 1
         self.text_size = guiCfg.get('gui_parm_text_size', 13)
@@ -2420,7 +2420,7 @@ class TkMainWin:
                 self._mh_btn.configure(bg=_clr)
             _aprs_obj = PORT_HANDLER.get_aprs_ais()
             if _aprs_obj is not None:
-                _aprs_obj.tracer_reset_auto_timer(MH_LIST.last_dx_alarm)
+                _aprs_obj.tracer_reset_auto_timer(PORT_HANDLER.get_MH().last_dx_alarm)
 
     def _tracer_alarm(self):
         """ Tracer Alarm """
@@ -2436,7 +2436,7 @@ class TkMainWin:
             self._tracer_btn.configure(bg=self._tracer_btn_def_clr)
 
     def _reset_dx_alarm(self):
-        MH_LIST.dx_alarm_trigger = False
+        PORT_HANDLER.get_MH().dx_alarm_trigger = False
         if self._mh_btn.cget('bg') != self._mh_btn_def_clr:
             self._mh_btn.configure(bg=self._mh_btn_def_clr)
 
@@ -2499,7 +2499,7 @@ class TkMainWin:
             # if MH_LIST.new_call_alarm and self.setting_dx_alarm.get():
             if self.ch_alarm:
                 self.ch_status_update()
-            if MH_LIST.dx_alarm_trigger:
+            if PORT_HANDLER.get_MH().dx_alarm_trigger:
                 self._dx_alarm()
             if PORT_HANDLER.get_aprs_ais() is not None:
                 if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
@@ -3031,7 +3031,7 @@ class TkMainWin:
     def _update_bw_mon(self):
         _tr = False
         for _port_id in list(PORT_HANDLER.ax25_ports.keys()):
-            _data = MH_LIST.get_bandwidth(
+            _data = PORT_HANDLER.get_MH().get_bandwidth(
                 _port_id,
                 PORT_HANDLER.ax25_ports[_port_id].port_cfg.parm_baud,
             )
@@ -3333,7 +3333,7 @@ class TkMainWin:
     def set_auto_tracer_duration(self, dur):
         _ais_obj = PORT_HANDLER.get_aprs_ais()
         if _ais_obj is not None:
-            if type(dur) == int:
+            if type(dur) is int:
                 _ais_obj.tracer_auto_tracer_duration_set(dur)
                 self.set_auto_tracer()
 

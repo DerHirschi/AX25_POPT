@@ -35,7 +35,7 @@ class SQL_DB:
             cursor = self.conn.cursor()
             _new_data = []
             for el in tuple(binary_data):
-                if el == bytes:
+                if type(el) is bytes:
                     _new_data.append(sqlite3.Binary(el))
                 else:
                     _new_data.append(el)

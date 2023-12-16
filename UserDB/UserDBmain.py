@@ -108,13 +108,13 @@ class UserDB:
 
         for k in list(db_load.keys()):
             client_obj = Client()
-            if type(db_load[k]) == dict:
+            if type(db_load[k]) is dict:
                 self.db[k] = set_obj_att_fm_dict(new_obj=client_obj, input_obj=db_load[k])
             else:
                 self.db[k] = set_obj_att(new_obj=client_obj, input_obj=db_load[k])
             # "Repair old Data" TODO . CLEANUP
             if k != self.db[k].Call:
-                if type(self.db[k].call_str) == str:
+                if type(self.db[k].call_str) is str:
                     call_tup = call_tuple_fm_call_str(self.db[k].call_str)
                     self.db[k].Call = str(call_tup[0])
                     self.db[k].SSID = int(call_tup[1])
@@ -263,7 +263,7 @@ class UserDB:
                 'last_seen': conv_time_for_sorting(flag.last_seen),
             }[flag_str]
             while key in temp.keys():
-                if type(key) != str:
+                if type(key) is not str:
                     break
                 key += '1'
             temp[key] = self.db[k]

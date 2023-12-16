@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from ax25.ax25Statistics import MyHeard, MH_LIST
+from ax25.ax25Statistics import MyHeard
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 from fnc.str_fnc import conv_time_DE_str
 
@@ -37,6 +37,7 @@ class MHWin(tk.Toplevel):
         self.lift()
         ###################################
         # Vars
+        self._mh = PORT_HANDLER.get_MH()
         self._rev_ent = False
         # self._alarm_active_var = self._root_win.setting_dx_alarm
         self._alarm_newCall_var = tk.BooleanVar(self)
@@ -217,14 +218,14 @@ class MHWin(tk.Toplevel):
 
     def _get_vars(self):
         # self._alarm_active_var.set(bool())
-        self._alarm_newCall_var.set(bool(MH_LIST.parm_new_call_alarm))
-        self._alarm_seenSince_var.set(str(MH_LIST.parm_lastseen_alarm))
-        self._alarm_distance_var.set(str(MH_LIST.parm_distance_alarm))
+        self._alarm_newCall_var.set(bool(self._mh.parm_new_call_alarm))
+        self._alarm_seenSince_var.set(str(self._mh.parm_lastseen_alarm))
+        self._alarm_distance_var.set(str(self._mh.parm_distance_alarm))
         # self._tracer_active_var.set(bool(self._root_win.setting_auto_tracer.get()))
         self._tracer_duration_var.set(str(self._root_win.get_auto_tracer_duration()))
         _i = 0
         for _var in self._alarm_ports:
-            if _i in MH_LIST.parm_alarm_ports:
+            if _i in self._mh.parm_alarm_ports:
                 _var.set(True)
             else:
                 _var.set(False)
@@ -234,11 +235,11 @@ class MHWin(tk.Toplevel):
         _i = 0
         for _var in self._alarm_ports:
             if _var.get():
-                if _i not in MH_LIST.parm_alarm_ports:
-                    MH_LIST.parm_alarm_ports.append(int(_i))
+                if _i not in self._mh.parm_alarm_ports:
+                    self._mh.parm_alarm_ports.append(int(_i))
             else:
-                if _i in MH_LIST.parm_alarm_ports:
-                    MH_LIST.parm_alarm_ports.remove(int(_i))
+                if _i in self._mh.parm_alarm_ports:
+                    self._mh.parm_alarm_ports.remove(int(_i))
             _i += 1
 
     def _set_alarm_distance(self, event=None):
@@ -247,7 +248,7 @@ class MHWin(tk.Toplevel):
             _var = int(_var)
         except ValueError:
             return
-        MH_LIST.parm_distance_alarm = _var
+        self._mh.parm_distance_alarm = _var
 
     def _set_alarm_last_seen(self, event=None):
         _var = self._alarm_seenSince_var.get()
@@ -255,10 +256,10 @@ class MHWin(tk.Toplevel):
             _var = int(_var)
         except ValueError:
             return
-        MH_LIST.parm_lastseen_alarm = _var
+        self._mh.parm_lastseen_alarm = _var
 
     def _set_alarm_newCall(self, event=None):
-        MH_LIST.parm_new_call_alarm = bool(self._alarm_newCall_var.get())
+        self._mh.parm_new_call_alarm = bool(self._alarm_newCall_var.get())
 
     def _set_auto_tracer(self, event=None):
         _dur = self._tracer_duration_var.get()
@@ -301,7 +302,7 @@ class MHWin(tk.Toplevel):
                 self._tree.insert('', tk.END, values=ret_ent[0], )
 
     def _sort_entry(self, flag: str):
-        sort_date = MH_LIST.get_sort_mh_entry(flag_str=flag, reverse=self._rev_ent)
+        sort_date = self._mh.get_sort_mh_entry(flag_str=flag, reverse=self._rev_ent)
         if self._rev_ent:
             self._rev_ent = False
         else:
@@ -319,7 +320,7 @@ class MHWin(tk.Toplevel):
             else:
                 axip_str = ''
             _dx_alarm = False
-            if ent.own_call in list(MH_LIST.dx_alarm_hist):
+            if ent.own_call in list(self._mh.dx_alarm_hist):
                 _dx_alarm = True
 
             self._tree_data.append(((
@@ -341,6 +342,6 @@ class MHWin(tk.Toplevel):
         # self.destroy()
 
     def close(self):
-        MH_LIST.reset_dx_alarm_his()
+        self._mh.reset_dx_alarm_his()
         self._root_win.mh_window = None
         self.destroy()

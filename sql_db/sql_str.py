@@ -155,3 +155,34 @@ SQLITE_CREATE_APRS_WX_TAB = SQL_CREATE_APRS_WX_TAB.replace(
     ", \nPRIMARY KEY (ID)\n",
     ""
 )
+
+#######################################
+# MH
+SQL_CREATE_MH_TAB = ("CREATE TABLE `MH`(\n"
+                     "`call` varchar(9) NOT NULL, \n"
+                     "`to_call` varchar(9) NOT NULL, \n"
+                     "`route` varchar(200) DEFAULT '', \n"
+                     "`port_id` varchar(2) NOT NULL, \n"
+                     "`pack_len` varchar(3) DEFAULT '0', \n"
+                     "`header_len` varchar(3) DEFAULT '0', \n"
+                     "`frame_typ` varchar(4) DEFAULT '', \n"   # 
+                     "`frame_pid` varchar(4) DEFAULT '', \n"   # 
+                     "`rx_tx` varchar(2) DEFAULT 'rx', \n"   # 
+                     "`axip_add` varchar(50) DEFAULT '', \n"
+                     "`locator` varchar(8) DEFAULT '', \n"
+                     "`distance` varchar(8) DEFAULT '', \n"
+                     "`first_seen` varchar(19) NOT NULL, \n"
+                     "`last_seen` varchar(19) NOT NULL, \n"
+                     "PRIMARY KEY (`call`)\n"
+                     ");\n")
+
+SQLITE_CREATE_MH_TAB = SQL_CREATE_MH_TAB
+"""
+SQLITE_CREATE_MH_TAB = SQL_CREATE_MH_TAB.replace(
+    "`ID` INTEGER AUTO_INCREMENT NOT NULL,",
+    "`ID` INTEGER PRIMARY KEY AUTOINCREMENT,"
+).replace(
+    ", \nPRIMARY KEY (ID)\n",
+    ""
+)
+"""

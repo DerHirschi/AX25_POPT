@@ -11,7 +11,7 @@ from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii
-from fnc.struct_fnc import get_dx_tx_alarm_his_pack
+from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
 logger = logging.getLogger(__name__)
 
@@ -342,7 +342,7 @@ class APRS_ais(object):
         db = self._get_db()
         if not db:
             return []
-        return list(db.aprsWX_get_data_f_wxTree())
+        return list(db.aprsWX_get_data_f_wxTree(last_rx_days=0))
         # return dict(self.aprs_wx_msg_pool)
 
     def get_wx_data_f_call(self, call: str):

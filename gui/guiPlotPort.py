@@ -7,7 +7,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import datetime
 
-from ax25.ax25Statistics import MH_LIST
+from ax25.ax25InitPorts import PORT_HANDLER
 
 
 class PlotWindow(tk.Toplevel):
@@ -93,7 +93,7 @@ class PlotWindow(tk.Toplevel):
     def _update_plots(self):
         # self.plot2.clear()
         port_id = self.port_var.get()
-        db = MH_LIST.port_statistik_DB.get(port_id, {})
+        db = PORT_HANDLER.get_MH().port_statistik_DB.get(port_id, {})
 
         range_day = True
         now = datetime.datetime.now() - datetime.timedelta(hours=self.hour_var.get())

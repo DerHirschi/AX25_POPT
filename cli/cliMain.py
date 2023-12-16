@@ -4,7 +4,7 @@ import logging
 
 import ax25.ax25Connection
 from cfg import constant, config_station
-from ax25.ax25Statistics import MH_LIST
+# from ax25.ax25Statistics import MH_LIST
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV
@@ -147,7 +147,7 @@ class DefaultCLI(object):
         self.cron_state_exec.update(self.cron_state_exec_ext)
         self.commands.update(self.cmd_exec_ext)
         self.state_exec.update(self.state_exec_ext)
-        if type(self.prefix) == str:  # Fix for old CFG Files
+        if type(self.prefix) is str:  # Fix for old CFG Files
             self.prefix = self.prefix.encode(self.encoding[0], self.encoding[1])
 
     """
@@ -165,7 +165,7 @@ class DefaultCLI(object):
 
     def send_output(self, ret):
         if ret:
-            if type(ret) == str:
+            if type(ret) is str:
                 ret = ret.encode(self.encoding[0], self.encoding[1])
                 ret = ret.replace(b'\n', b'\r')
             self.connection.tx_buf_rawData += ret
@@ -514,7 +514,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_alarm_out_cli(self, max_ent=10):
-        alarm_his = dict(MH_LIST.dx_alarm_perma_hist)
+        alarm_his = dict(self.port_handler.get_MH().dx_alarm_perma_hist)
         alarm_his.update(dict(self.port_handler.get_aprs_ais().be_tracer_alarm_hist))
         if not alarm_his:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
@@ -551,7 +551,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_axip_out_cli(self, max_ent=10):
-        _ent = MH_LIST.get_sort_mh_entry('last', reverse=False)
+        _ent = self.port_handler.get_MH().get_sort_mh_entry('last', reverse=False)
         if not _ent:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         max_c = 0
@@ -597,7 +597,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_mh_out_cli(self, max_ent=20, port_id=-1):
-        sort_list = MH_LIST.get_sort_mh_entry('last', False)
+        sort_list = self.port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         out = ''
@@ -649,7 +649,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_mh_long_out_cli(self, max_ent=10, port_id=-1):
-        sort_list = MH_LIST.get_sort_mh_entry('last', False)
+        sort_list = self.port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         out = ''

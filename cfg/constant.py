@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.101.2'
+VER = '2.101.3'
 """
 LANGUAGE:
 0 = German
@@ -14,7 +14,7 @@ LANGUAGE = 0    # QUICK FIX
 MAX_PORTS = 15  #
 
 # doc/PoPT/mysql_setup.txt
-MYSQL = False    # MYSQL/SQLITE
+MYSQL = True    # MYSQL/SQLITE
 MYSQL_USER = 'popt'
 MYSQL_PASS = '83g6u45908k91HG2jhj5jeGG'
 MYSQL_HOST = '127.0.0.1'

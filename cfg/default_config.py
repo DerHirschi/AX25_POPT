@@ -28,6 +28,19 @@ def getNew_homeBBS_cfg():
 
 
 #######################################
+# MH / Port-Stat
+def getNew_MH_cfg():
+    return {
+        'dx_alarm_hist': [],
+        'dx_alarm_perma_hist': {},
+        'parm_new_call_alarm': False,
+        'parm_distance_alarm': 50,
+        'parm_lastseen_alarm': 1,
+        'parm_alarm_ports': [],
+    }
+
+
+#######################################
 # APRS
 def getNew_APRS_Station_cfg():
     return {

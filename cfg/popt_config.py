@@ -1,7 +1,7 @@
 import logging
 
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, getNew_APRS_Station_cfg, \
-    getNew_APRS_ais_cfg
+    getNew_APRS_ais_cfg, getNew_MH_cfg
 from cfg.constant import CFG_MAIN_data_file
 from fnc.cfg_fnc import load_fm_file, save_to_file
 
@@ -18,6 +18,8 @@ class Main_CFG:
             # -- PMS
             'pms_main': getNew_PMS_cfg,
             'pms_home_bbs': getNew_homeBBS_cfg,
+            # -- MH
+            'mh_cfg': getNew_MH_cfg,
             # -- APRS
             'aprs_station': getNew_APRS_Station_cfg,
             'aprs_ais': getNew_APRS_ais_cfg,
@@ -79,6 +81,14 @@ class Main_CFG:
 
     def set_CFG_by_key(self, cfg_key: str, data):
         self._config[cfg_key] = data
+
+    ####################
+    # MH
+    def load_CFG_MH(self):
+        return dict(self._config['mh_cfg'])
+
+    def save_CFG_MH(self, data: dict):
+        self._config['mh_cfg'] = data
 
     ####################
     # APRS

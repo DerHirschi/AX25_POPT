@@ -5,7 +5,7 @@ from ax25.ax25AutoConnTask import AutoConnTask
 from cfg.popt_config import POPT_CFG
 from sql_db.db_main import SQL_Database
 from UserDB.UserDBmain import USER_DB
-from ax25.ax25Statistics import MH_LIST
+from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
@@ -42,6 +42,7 @@ class AX25PortHandler(object):
         ###########################
         # VARs
         self.db = None
+        self.mh = None
         self.gui = None
         self.bbs = None
         self.aprs_ais = None
@@ -62,7 +63,15 @@ class AX25PortHandler(object):
         except SQLConnectionError:
             logger.error("Database Init Error !! Can't start PoPT !")
             print("Database Init Error !! Can't start PoPT !")
-            # raise MySQLConnectionError # TODO !!! Commented out for GUI testing
+            raise SQLConnectionError
+        #################
+        # Init MH
+        try:
+            self._init_MH()
+        except SQLConnectionError:
+            logger.error("MH Init Error !! Can't start PoPT !")
+            print("MH  Init Error !! Can't start PoPT !")
+            raise SQLConnectionError
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
@@ -114,6 +123,12 @@ class AX25PortHandler(object):
             self._task_timer_1sec = time.time() + 1
 
     #####################
+    # MH INIT
+    def _init_MH(self):
+        self.mh = MH()
+        self.mh.set_DB(self.db)
+
+    #####################
     # Setting/Parameter Updates
     def update_digi_setting(self):
         for port_kk in self.ax25_ports.keys():
@@ -148,7 +163,7 @@ class AX25PortHandler(object):
         self.close_aprs_ais()
         for k in list(self.ax25_ports.keys()):
             self.close_port(k)
-        MH_LIST.save_mh_data()
+        self.mh.save_mh_data()
         USER_DB.save_data()
         self.close_DB()
         POPT_CFG.save_CFG_to_file()
@@ -405,7 +420,7 @@ class AX25PortHandler(object):
             return False, 'Error: Link No Via Call'
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
-        mh_entry = MH_LIST.mh_get_data_fm_call(dest_call)
+        mh_entry = self.mh.mh_get_data_fm_call(dest_call)
         if not exclusive:
             if mh_entry:
                 if mh_entry.all_routes:
@@ -533,6 +548,7 @@ class AX25PortHandler(object):
             self.db.check_tables_exists('bbs')
             self.db.check_tables_exists('user_db')
             self.db.check_tables_exists('aprs')
+            self.db.check_tables_exists('mh')
             if self.db.error:
                 raise SQLConnectionError
         else:
@@ -543,6 +559,9 @@ class AX25PortHandler(object):
 
     def get_database(self):
         return self.db
+
+    def get_MH(self):
+        return self.mh
 
     """
     def debug_fnc(self):
