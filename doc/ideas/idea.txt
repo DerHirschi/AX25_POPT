@@ -1,5 +1,8 @@
 Ideas/TODO's :
 
+- Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
+- PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
+  - Ausnahmen (Call-Filter)
 - ESC Befehle
 - UmgebungVARS für C-Text und der gleichen
 - Erweiterte C-Texte

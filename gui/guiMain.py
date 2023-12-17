@@ -15,9 +15,9 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from ax25.ax25InitPorts import PORT_HANDLER
-# from ax25.ax25Statistics import MH_LIST
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.popt_config import POPT_CFG
+from fnc.cfg_fnc import cleanup_obj_to_dict, set_obj_att_fm_dict
 
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
@@ -28,7 +28,6 @@ from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.aprs.guiAPRS_wx_tree import WXWin
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.pms.guiBBS_PMS_Settings import PMS_Settings
-# from gui.guiBBS_PMS_Settings import PMS_Settings
 from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
 from gui.pms.guiBBS_newMSG import BBS_newMSG
 from gui.ft.guiFT_Manager import FileTransferManager
@@ -66,25 +65,24 @@ elif is_windows():
 
 
 class ChVars(object):
-    def __init__(self):
-        self.output_win = ''
-        self.output_win_tags = {}
-        self.input_win = ''
-        self.input_win_tags = {}
-        self.input_win_index = '1.0'
-        self.input_win_cursor_index = tk.INSERT
-        self.new_data_tr = False
-        self.rx_beep_tr = False
-        self.rx_beep_cooldown = time.time()
-        self.rx_beep_opt = None
-        self.timestamp_opt = None
-        self.t2speech = False
-        self.t2speech_buf = ''
-        self.autoscroll = True
-        self.qso_tag_name = ''
-        self.qso_tag_fg = ''
-        self.qso_tag_bg = ''
-        # self.hex_output = True
+    output_win = ''
+    output_win_tags = {}
+    input_win = ''
+    input_win_tags = {}
+    input_win_index = '1.0'
+    input_win_cursor_index = tk.INSERT
+    new_data_tr = False
+    rx_beep_tr = False
+    rx_beep_cooldown = time.time()
+    rx_beep_opt = False
+    timestamp_opt = False
+    t2speech = False
+    t2speech_buf = ''
+    autoscroll = True
+    qso_tag_name = ''
+    qso_tag_fg = ''
+    qso_tag_bg = ''
+    # self.hex_output = True
 
 
 class SideTabbedFrame:  # TODO: WTF
@@ -202,7 +200,7 @@ class SideTabbedFrame:  # TODO: WTF
                                        variable=self.t2speech_var,
                                        command=self._chk_t2speech)
         self.t2speech.place(x=10, y=parm_y)
-        self.t2speech_var.set(self._main_win.get_ch_param().t2speech)
+        self.t2speech_var.set(self._main_win.get_ch_var().t2speech)
         # Autoscroll
         parm_y = 225
         self.autoscroll_var = tk.BooleanVar(tab1_kanal)
@@ -213,7 +211,7 @@ class SideTabbedFrame:  # TODO: WTF
                                          command=self._chk_autoscroll
                                          )
         self.autoscroll.place(x=10, y=parm_y)
-        self.autoscroll_var.set(self._main_win.get_ch_param().autoscroll)
+        self.autoscroll_var.set(self._main_win.get_ch_var().autoscroll)
 
         # Link Holder
         parm_y = 175
@@ -227,7 +225,7 @@ class SideTabbedFrame:  # TODO: WTF
 
         clear_ch_data_btn = tk.Button(tab1_kanal,
                                       text='Säubern',
-                                      command=self._main_win.clear_channel_data
+                                      command=self._main_win.clear_channel_vars
                                       )
         clear_ch_data_btn.place(x=140, y=135)
 
@@ -920,7 +918,7 @@ class SideTabbedFrame:  # TODO: WTF
                 self._tx_count_var.set('TX: --- kb')
                 self._rx_count_var.set('RX: --- kb')
 
-        self.t2speech_var.set(self._main_win.get_ch_param().t2speech)
+        self.t2speech_var.set(self._main_win.get_ch_var().t2speech)
         # self._update_ch_echo()
 
     def _set_max_frame(self):
@@ -936,10 +934,10 @@ class SideTabbedFrame:  # TODO: WTF
             self.t2_var.set(str(conn.parm_T2 * 1000))
 
     def _chk_t2speech(self):
-        self._main_win.get_ch_param().t2speech = bool(self.t2speech_var.get())
+        self._main_win.get_ch_var().t2speech = bool(self.t2speech_var.get())
 
     def _chk_autoscroll(self):
-        self._main_win.get_ch_param().autoscroll = bool(self.autoscroll_var.get())
+        self._main_win.get_ch_var().autoscroll = bool(self.autoscroll_var.get())
         if bool(self.autoscroll_var.get()):
             self._main_win.see_end_qso_win()
 
@@ -1257,13 +1255,7 @@ class TxTframe:     # TODO: WTF
     def update_status_win(self):
         station = self._main_class.get_conn(self._main_class.channel_index)
         if station is not None:
-            _from_call = station.ax25_out_frame.from_call.call_str
-            """
-            _via_calls = ''
-            for _via in station.ax25_out_frame.via_calls:
-                # via: Call
-                _via_calls += _via.call_str + ' '
-            """
+            _from_call = str(station.ax25_out_frame.from_call.call_str)
             _status = station.zustand_tab[station.get_state_index()][1]
             # uid = station.ax25_out_frame.addr_uid
             _n2 = station.n2
@@ -1351,7 +1343,7 @@ class TxTframe:     # TODO: WTF
         else:
             if self.rx_beep_box.cget('bg') != STAT_BAR_CLR:
                 self.rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
-        self._main_class.get_ch_param().rx_beep_opt = _rx_beep_check
+        self._main_class.get_ch_var().rx_beep_opt = _rx_beep_check
 
     def chk_timestamp(self):
         _ts_check = self._ts_box_var.get()
@@ -1361,7 +1353,7 @@ class TxTframe:     # TODO: WTF
         else:
             if self.ts_box_box.cget('bg') != STAT_BAR_CLR:
                 self.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
-        self._main_class.get_ch_param().timestamp_opt = _ts_check
+        self._main_class.get_ch_var().timestamp_opt = _ts_check
 
     def _set_stat_typ(self, event=None):
         conn = self._main_class.get_conn()
@@ -1552,7 +1544,6 @@ class ChBtnFrm:
     def _ch_btn_alarm(self, btn: tk.Button):
         if self._ch_btn_blink_timer < time.time():
             _clr = generate_random_hex_color()
-
             if btn.cget('bg') != _clr:
                 btn.configure(bg=_clr)
 
@@ -1604,9 +1595,8 @@ class TkMainWin:
         self.parm_btn_blink_time = 1  # s
         self._parm_rx_beep_cooldown = 2  # s
         # Tasker Timings
-        self._loop_delay = 50  # ms
+        self._loop_delay = 60  # ms
         self._parm_non_prio_task_timer = 0.25  # s
-        self._prio_task_flip = True
         self._parm_non_non_prio_task_timer = 1  # s
         self._parm_non_non_non_prio_task_timer = 5  # s
         self._parm_test_task_timer = 60  # 5        # s
@@ -1614,12 +1604,9 @@ class TkMainWin:
         self._non_non_prio_task_timer = time.time()
         self._non_non_non_prio_task_timer = time.time()
         self._test_task_timer = time.time()
-        # self.conn_task = None
         ##############################
         # BW-Plot
         self._bw_plot_x_scale = []
-        for _i in list(range(60)):
-            self._bw_plot_x_scale.append(_i / 6)
         self._bw_plot_lines = {}
         ########################################
         self.text_size = 13
@@ -1640,7 +1627,7 @@ class TkMainWin:
         self.MSG_Center = None
         self.newPMS_MSG_win = None
         #####
-        self._init_GUIvars()
+        self._init_GUI_vars_fm_CFG()
         ######################################
         # ....
         # self._main_pw = ttk.PanedWindow(self.main_win, orient=tk.HORIZONTAL)
@@ -1670,12 +1657,10 @@ class TkMainWin:
         self._out_txt = self._txt_win.out_txt_win
         self._inp_txt = self._txt_win.in_txt_win
         self._mon_txt = self._txt_win.mon_txt
-        #######################
-        # Window Text Buffers
-        self._win_buf: {int: ChVars} = {}
-        for i in range(11):
-            self._win_buf[i] = ChVars()
-            self._win_buf[i].input_win_index = str(self._inp_txt.index(tk.INSERT))
+        ####################################
+        # Window Text Buffers & Channel Vars
+        self._channel_vars = {}
+        self._init_Channel_Vars()
         #########################
         # Channel Buttons
         self._ch_btn = ChBtnFrm(self)
@@ -1717,6 +1702,7 @@ class TkMainWin:
         self._init_PARM_vars()
         self._set_CFG()
         # .....
+        self._set_Channel_Vars()
         self._monitor_start_msg()
         #############################
         # set GUI Var to Port Handler
@@ -1737,6 +1723,7 @@ class TkMainWin:
         logging.info('Closing GUI: Save GUI Vars & Parameter.')
         self._save_GUIvars()
         self._save_vars()
+        self._save_Channel_Vars()
         logging.info('Closing GUI: Closing Ports.')
         PORT_HANDLER.close_all_ports()
 
@@ -1785,17 +1772,64 @@ class TkMainWin:
         guiCfg['gui_parm_text_size'] = int(self.text_size)
         POPT_CFG.save_guiPARM_main(guiCfg)
 
+    def _save_Channel_Vars(self):
+        # guiCfg = POPT_CFG.load_guiCH_VARS()
+        ch_vars = {}
+        for ch_id in list(self._channel_vars.keys()):
+            ch_vars[ch_id] = cleanup_obj_to_dict(self._channel_vars[ch_id])
+            del ch_vars[ch_id]['t2speech_buf']
+            del ch_vars[ch_id]['rx_beep_cooldown']
+            del ch_vars[ch_id]['rx_beep_tr']
+            del ch_vars[ch_id]['output_win_tags']
+            del ch_vars[ch_id]['qso_tag_bg']
+            del ch_vars[ch_id]['input_win_tags']
+        POPT_CFG.save_guiCH_VARS(dict(ch_vars))
+
     ####################
     # Init Stuff
-    def _init_GUIvars(self):
-        self._init_CFG_vars()
-        # MH
-        if PORT_HANDLER.get_port_by_index(0):
-            PORT_HANDLER.get_MH().parm_alarm_ports = [0]
-        else:
-            PORT_HANDLER.get_MH().parm_alarm_ports = []
+    def _init_Channel_Vars(self):
+        cfg_ch_vars = POPT_CFG.load_guiCH_VARS()
+        for ch_id in list(cfg_ch_vars.keys()):
+            self._channel_vars[ch_id] = set_obj_att_fm_dict(ChVars(), cfg_ch_vars[ch_id])
 
-    def _init_CFG_vars(self):
+    def _set_Channel_Vars(self):
+        ch_vars = self.get_ch_var(ch_index=self.channel_index)
+        ch_vars.new_data_tr = False
+        ch_vars.rx_beep_tr = False
+
+        self._out_txt.configure(state="normal")
+
+        self._out_txt.delete('1.0', tk.END)
+        self._out_txt.insert(tk.END, ch_vars.output_win)
+        self._out_txt.configure(state="disabled")
+        self._out_txt.see(tk.END)
+
+        self._inp_txt.delete('1.0', tk.END)
+        self._inp_txt.insert(tk.END, ch_vars.input_win[:-1])
+        set_all_tags(self._inp_txt, ch_vars.input_win_tags)
+        set_all_tags(self._out_txt, ch_vars.output_win_tags)
+        self._inp_txt.mark_set("insert", ch_vars.input_win_cursor_index)
+        self._inp_txt.see(tk.END)
+
+        # self.main_class: gui.guiMainNew.TkMainWin
+        if ch_vars.rx_beep_opt and self.channel_index:
+            self._txt_win.rx_beep_box.select()
+            self._txt_win.rx_beep_box.configure(bg='green')
+        else:
+            self._txt_win.rx_beep_box.deselect()
+            self._txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR)
+
+        if ch_vars.timestamp_opt and self.channel_index:
+            self._txt_win.ts_box_box.select()
+            self._txt_win.ts_box_box.configure(bg='green')
+        else:
+            self._txt_win.ts_box_box.deselect()
+            self._txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
+
+        self.on_channel_status_change()
+        self._ch_btn.ch_btn_status_update()
+        
+    def _init_GUI_vars_fm_CFG(self):
         #########################
         # GUI-Vars fm cfg
         self.language = POPT_CFG.get_guiCFG_language()
@@ -1815,7 +1849,7 @@ class TkMainWin:
         #########################
         # Parameter fm cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
-        PORT_HANDLER.get_MH().parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
+        # PORT_HANDLER.get_MH().parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
         # self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
         self.channel_index = 1
         self.text_size = guiCfg.get('gui_parm_text_size', 13)
@@ -1832,6 +1866,8 @@ class TkMainWin:
         self.set_dx_alarm()
 
     def _init_bw_plot(self):
+        for _i in list(range(60)):
+            self._bw_plot_x_scale.append(_i / 6)
         self._bw_fig = Figure(figsize=(8, 5), dpi=80)
         self._ax = self._bw_fig.add_subplot(111)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
@@ -1873,9 +1909,13 @@ class TkMainWin:
         _MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self._save_monitor_to_file,
                               underline=1)
         _MenuEdit.add_separator()
-        _MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_data,
+        _MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_vars,
                               underline=0)
         _MenuEdit.add_command(label=STR_TABLE['clean_mon_win'][self.language], command=self._clear_monitor_data,
+                              underline=0)
+
+        _MenuEdit.add_separator()
+        _MenuEdit.add_command(label=STR_TABLE['clean_all_qso_win'][self.language], command=self._clear_all_Channel_vars,
                               underline=0)
         _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
         # Menü 3 "Tools"
@@ -2202,24 +2242,44 @@ class TkMainWin:
             return ret
         return None
 
-    def get_ch_param(self, ch_index=0):
+    def get_ch_var(self, ch_index=0):
         if ch_index:
-            return self._win_buf[ch_index]
-        else:
-            return self._win_buf[self.channel_index]
+            if ch_index not in self._channel_vars.keys():
+                self._channel_vars[ch_index] = ChVars()
+            return self._channel_vars[ch_index]
+
+        if self.channel_index not in self._channel_vars.keys():
+            self._channel_vars[self.channel_index] = ChVars()
+        return self._channel_vars[self.channel_index]
 
     def set_var_to_all_ch_param(self):
-        for i in range(10):  # TODO Max Channels
-            if not self._win_buf[i + 1].t2speech:
-                self._win_buf[i + 1].t2speech_buf = ''
+        for ch_id in self._channel_vars.keys():
+            ch_vars = self.get_ch_var(ch_index=ch_id)
+            if not ch_vars.t2speech:
+                ch_vars.t2speech_buf = ''
 
-    def clear_channel_data(self):
+    def clear_channel_vars(self):
+        """
         self._out_txt.configure(state='normal')
         self._out_txt.delete('1.0', tk.END)
         self._out_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
-        del self._win_buf[self.channel_index]
-        self._win_buf[self.channel_index] = ChVars()
+        # del self._channel_vars[self.channel_index]
+        """
+        self._channel_vars[self.channel_index] = ChVars()
+        self._set_Channel_Vars()
+
+    def _clear_all_Channel_vars(self):
+        """
+        self._out_txt.configure(state='normal')
+        self._out_txt.delete('1.0', tk.END)
+        self._out_txt.configure(state='disabled')
+        self._inp_txt.delete('1.0', tk.END)
+        """
+        self._set_Channel_Vars()
+        # del self._channel_vars[self.channel_index]
+        for ch_id in self._channel_vars.keys():
+            self._channel_vars[ch_id] = ChVars()
 
     def _clear_monitor_data(self):
         self._mon_txt.configure(state='normal')
@@ -2258,28 +2318,29 @@ class TkMainWin:
 
     def _kanal_switch_sprech_th(self):
         conn = self.get_conn(self.channel_index)
+        ch_vars = self.get_ch_var(ch_index=self.channel_index)
         if conn is not None:
-            if self._win_buf[self.channel_index].t2speech \
-                    and self._win_buf[self.channel_index].t2speech_buf:
+            if ch_vars.t2speech \
+                    and ch_vars.t2speech_buf:
                 # to_speech = 'Kanal {} .'.format(self.channel_index)
                 # to_speech += '{} .'.format(conn.to_call_str)
-                to_speech = str(self._win_buf[self.channel_index].t2speech_buf)
+                to_speech = str(ch_vars.t2speech_buf)
                 if self.sprech(to_speech):
-                    self._win_buf[self.channel_index].t2speech_buf = ''
+                    ch_vars.t2speech_buf = ''
 
             else:
-                self._win_buf[self.channel_index].t2speech_buf = ''
+                ch_vars.t2speech_buf = ''
                 self.sprech('{} {} . {} .'.format(STR_TABLE['channel'][self.language],
                                                   self.channel_index,
                                                   conn.to_call_str))
 
         else:
-            if not self._win_buf[self.channel_index].t2speech:
-                self._win_buf[self.channel_index].t2speech_buf = ''
+            if not ch_vars.t2speech:
+                ch_vars.t2speech_buf = ''
                 self.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
-            elif self._win_buf[self.channel_index].t2speech_buf:
-                if self.sprech(self._win_buf[self.channel_index].t2speech_buf):
-                    self._win_buf[self.channel_index].t2speech_buf = ''
+            elif ch_vars.t2speech_buf:
+                if self.sprech(ch_vars.t2speech_buf):
+                    ch_vars.t2speech_buf = ''
                 else:
                     self.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
             else:
@@ -2287,20 +2348,21 @@ class TkMainWin:
 
     def _check_sprech_ch_buf(self):
         conn = self.get_conn(self.channel_index)
+        ch_vars = self.get_ch_var(ch_index=self.channel_index)
         if conn is not None:
-            if self._win_buf[self.channel_index].t2speech \
-                    and self._win_buf[self.channel_index].t2speech_buf:
-                to_speech = str(self._win_buf[self.channel_index].t2speech_buf)
+            if ch_vars.t2speech \
+                    and ch_vars.t2speech_buf:
+                to_speech = str(ch_vars.t2speech_buf)
                 if self.setting_sprech.get() and self.setting_sound.get():
                     if self.sprech(to_speech):
-                        self._win_buf[self.channel_index].t2speech_buf = ''
+                        ch_vars.t2speech_buf = ''
                 else:
-                    self._win_buf[self.channel_index].t2speech_buf = ''
+                    ch_vars.t2speech_buf = ''
 
-            elif not self._win_buf[self.channel_index].t2speech:
-                self._win_buf[self.channel_index].t2speech_buf = ''
+            elif not ch_vars.t2speech:
+                ch_vars.t2speech_buf = ''
         else:
-            self._win_buf[self.channel_index].t2speech_buf = ''
+            ch_vars.t2speech_buf = ''
 
     def sprech(self, text: str):
         if self.setting_sprech.get() and self.setting_sound.get():
@@ -2380,18 +2442,15 @@ class TkMainWin:
                 return True
 
     def _rx_beep_sound(self):
-        for k in self._win_buf.keys():
-            if k:
-                temp: ChVars = self._win_buf[k]
-                if temp.rx_beep_cooldown < time.time():
-                    temp.rx_beep_cooldown = time.time() + self._parm_rx_beep_cooldown
-                    tr = temp.rx_beep_opt
-                    if tr is not None:
-                        tr = temp.rx_beep_opt
-                        if tr:
-                            if temp.rx_beep_tr:
-                                temp.rx_beep_tr = False
-                                self._sound_play(self._root_dir + CFG_sound_RX_BEEP, False)
+        for k in self._channel_vars.keys():
+            if k:   # not int(0)    # TODO Service Ports
+                ch_vars = self.get_ch_var(ch_index=k)
+                if ch_vars.rx_beep_cooldown < time.time():
+                    ch_vars.rx_beep_cooldown = time.time() + self._parm_rx_beep_cooldown
+                    if ch_vars.rx_beep_opt:
+                        if ch_vars.rx_beep_tr:
+                            ch_vars.rx_beep_tr = False
+                            self._sound_play(self._root_dir + CFG_sound_RX_BEEP, False)
 
     def new_conn_sound(self):
         self._sound_play(self._root_dir + CFG_sound_CONN, False)
@@ -2558,7 +2617,6 @@ class TkMainWin:
         # UPDATE INPUT WIN
         tr = False
         for k in list(PORT_HANDLER.get_all_connections()):
-
             conn = self.get_conn(k)
             if conn is not None:
                 if conn.ft_obj is None:
@@ -2571,11 +2629,10 @@ class TkMainWin:
                                 txt_enc = conn.user_db_ent.Encoding
 
                             inp = bytes(conn.tx_buf_guiData)
-                            conn.tx_buf_guiData = b''
+                            conn.tx_buf_guiData = conn.tx_buf_guiData[len(inp):]
 
-                            inp_len = len(conn.rx_buf_rawData)
-                            out = bytes(conn.rx_buf_rawData[:inp_len])
-                            conn.rx_buf_rawData = conn.rx_buf_rawData[inp_len:]
+                            out = bytes(conn.rx_buf_rawData)
+                            conn.rx_buf_rawData = conn.rx_buf_rawData[len(out):]
 
                             # if self.win_buf[k].hex_output:
                             """
@@ -2598,38 +2655,32 @@ class TkMainWin:
                                 inp = inp + ' >' + hex_in + '<\n'
                             """
                             # Write RX Date to Window/Channel Buffer
+                            Ch_var = self.get_ch_var(ch_index=k)
+                            Ch_var.output_win += inp
+                            Ch_var.output_win += out
 
-                            self._win_buf[k].output_win += inp
-                            self._win_buf[k].output_win += out
-                            if self._win_buf[k].t2speech:
-                                if k == self.channel_index:
-                                    self._win_buf[k].t2speech_buf += out.replace('\n', '')
-                                else:
-                                    self._win_buf[k].t2speech_buf += '{} {} . {} . {}'.format(
-                                        STR_TABLE['channel'][self.language],
-                                        k,
-                                        conn.to_call_str,
-                                        out.replace('\n', '')
-                                    )
                             if self.channel_index == k:
+                                if Ch_var.t2speech:
+                                    Ch_var.t2speech_buf += out.replace('\n', '')
+                                # TODO get the TAGs right.. .
                                 fg = conn.stat_cfg.stat_parm_qso_col_text
                                 bg = conn.stat_cfg.stat_parm_qso_col_bg
                                 tag_name_out = 'OUT-' + str(conn.my_call_str)
-                                self.get_ch_param(ch_index=k).qso_tag_fg = fg
-                                self.get_ch_param(ch_index=k).qso_tag_bg = bg
-                                self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
+                                Ch_var.qso_tag_fg = fg
+                                Ch_var.qso_tag_bg = bg
+                                Ch_var.qso_tag_name = tag_name_out
 
                                 tr = False
                                 if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15:
                                     tr = True
 
                                 self._out_txt.configure(state="normal")
-
+                                # TODO get the TAGs right.. . Just config tags on new connection
                                 self._out_txt.tag_config(tag_name_out,
                                                          foreground=fg,
                                                          background=bg,
                                                          selectbackground=fg,
-                                                         selectforeground=bg
+                                                         selectforeground=bg,
                                                          )
 
                                 ind = self._out_txt.index('end-1c')
@@ -2645,23 +2696,30 @@ class TkMainWin:
                                 self._out_txt.configure(state="disabled",
                                                         exportselection=True
                                                         )
-                                if tr or self.get_ch_param().autoscroll:
+                                if tr or self.get_ch_var().autoscroll:
                                     self.see_end_qso_win()
                             else:
+                                if Ch_var.t2speech:
+                                    Ch_var.t2speech_buf += '{} {} . {} . {}'.format(
+                                        STR_TABLE['channel'][self.language],
+                                        k,
+                                        conn.to_call_str,
+                                        out.replace('\n', '')
+                                    )
                                 tag_name_out = 'OUT-' + str(conn.my_call_str)
-                                self.get_ch_param(ch_index=k).qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
-                                self.get_ch_param(ch_index=k).qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
-                                self.get_ch_param(ch_index=k).qso_tag_name = tag_name_out
-                                if tag_name_out not in self._win_buf[k].output_win_tags.keys():
-                                    self._win_buf[k].output_win_tags[tag_name_out] = ()
-                                old_tags = list(self._win_buf[k].output_win_tags[tag_name_out])
+                                Ch_var.qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
+                                Ch_var.qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
+                                Ch_var.qso_tag_name = tag_name_out
+                                if tag_name_out not in Ch_var.output_win_tags.keys():
+                                    Ch_var.output_win_tags[tag_name_out] = ()
+                                old_tags = list(Ch_var.output_win_tags[tag_name_out])
                                 if old_tags:
                                     old_tags = old_tags + ['end-1c']
                                 else:
                                     old_tags = ['1.0', 'end-1c']
-                                self._win_buf[k].output_win_tags[tag_name_out] = old_tags
-                                self._win_buf[k].new_data_tr = True
-                            self._win_buf[k].rx_beep_tr = True
+                                Ch_var.output_win_tags[tag_name_out] = old_tags
+                                Ch_var.new_data_tr = True
+                            Ch_var.rx_beep_tr = True
         if tr:
             self.ch_status_update()
 
@@ -2897,8 +2955,9 @@ class TkMainWin:
     def _snd_text(self, event: tk.Event):
         if self.channel_index:
             _station = self.get_conn(self.channel_index)
-            if _station is not None:
-                _ind = str(self._win_buf[self.channel_index].input_win_index)
+            if _station:
+                ch_vars = self.get_ch_var(ch_index=self.channel_index)
+                _ind = str(ch_vars.input_win_index)
                 if _ind:
                     if float(_ind) >= float(self._inp_txt.index(tk.INSERT)):
                         _ind = str(self._inp_txt.index(tk.INSERT))
@@ -2916,7 +2975,7 @@ class TkMainWin:
                 self._inp_txt.tag_remove('send', _ind, str(self._inp_txt.index(tk.INSERT)))
                 self._inp_txt.tag_add('send', _ind, str(self._inp_txt.index(tk.INSERT)))
 
-                self._win_buf[self.channel_index].input_win_index = str(self._inp_txt.index(tk.INSERT))
+                ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
 
                 if '.0' in self._inp_txt.index(tk.INSERT):
                     self._inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
@@ -2925,7 +2984,8 @@ class TkMainWin:
             self._send_to_monitor()
 
     def _send_to_monitor(self):
-        ind = str(self._win_buf[self.channel_index].input_win_index)
+        ch_vars = self.get_ch_var(ch_index=self.channel_index)
+        ind = str(ch_vars.input_win_index)
         if ind:
             if float(ind) >= float(self._inp_txt.index(tk.INSERT)):
                 ind = str(self._inp_txt.index(tk.INSERT))
@@ -2956,19 +3016,19 @@ class TkMainWin:
                         pid=pid
                     )
                 # self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
-        self._win_buf[self.channel_index].input_win_index = str(self._inp_txt.index(tk.INSERT))
+        ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
         if int(float(self._inp_txt.index(tk.INSERT))) != int(float(self._inp_txt.index(tk.END))) - 1:
             self._inp_txt.delete(tk.END, tk.END)
 
     def send_to_qso(self, data, ch_index):
         data = data.replace('\r', '\n')
         data = tk_filter_bad_chars(data)
-        _k = ch_index
-        _bg = self.get_ch_param(ch_index).qso_tag_bg
-        _fg = self.get_ch_param(ch_index).qso_tag_fg
-        tag_name_out = self.get_ch_param(ch_index).qso_tag_name
-        self._win_buf[_k].output_win += data
-        if self.channel_index == _k:
+        ch_vars = self.get_ch_var(ch_index=ch_index)
+        _bg = self.get_ch_var(ch_index).qso_tag_bg
+        _fg = self.get_ch_var(ch_index).qso_tag_fg
+        tag_name_out = self.get_ch_var(ch_index).qso_tag_name
+        ch_vars.output_win += data
+        if self.channel_index == ch_index:
             tr = False
             if float(self._out_txt.index(tk.END)) - float(self._out_txt.index("@0,0")) < 22:
                 tr = True
@@ -2989,24 +3049,25 @@ class TkMainWin:
             self._out_txt.configure(state="disabled",
                                     exportselection=True
                                     )
-            if tr or self.get_ch_param().autoscroll:
+            if tr or self.get_ch_var().autoscroll:
                 self.see_end_qso_win()
 
         else:
-            if tag_name_out not in self._win_buf[_k].output_win_tags.keys():
-                self._win_buf[_k].output_win_tags[tag_name_out] = ()
-            old_tags = list(self._win_buf[_k].output_win_tags[tag_name_out])
+            if tag_name_out not in ch_vars.output_win_tags.keys():
+                ch_vars.output_win_tags[tag_name_out] = ()
+            old_tags = list(ch_vars.output_win_tags[tag_name_out])
             if old_tags:
                 old_tags = old_tags[:-1] + [tk.INSERT]
             else:
                 old_tags = ['1.0', tk.INSERT]
-            self._win_buf[_k].output_win_tags[tag_name_out] = old_tags
-            self._win_buf[_k].new_data_tr = True
-        self._win_buf[_k].rx_beep_tr = True
+            ch_vars.output_win_tags[tag_name_out] = old_tags
+            ch_vars.new_data_tr = True
+        ch_vars.rx_beep_tr = True
         self.ch_status_update()
 
     def _on_click_inp_txt(self, event=None):
-        _ind = self._win_buf[self.channel_index].input_win_index
+        ch_vars = self.get_ch_var(ch_index=self.channel_index)
+        _ind = ch_vars.input_win_index
         if _ind:
             self._inp_txt.tag_add('send', str(int(float(_ind))) + '.0', _ind)
             # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
@@ -3016,7 +3077,7 @@ class TkMainWin:
         _ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
 
         self._inp_txt.tag_remove('send', _ind2, self._inp_txt.index(tk.INSERT))
-        self._win_buf[self.channel_index].input_win_index = str(self._inp_txt.index(tk.INSERT))
+        ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
 
     # SEND TEXT OUT
     ###################
@@ -3105,39 +3166,42 @@ class TkMainWin:
         self.on_channel_status_change()
 
     def _ch_btn_clk(self, ind: int):
-        self.get_ch_param().input_win = self._inp_txt.get('1.0', tk.END)
+        old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
+        old_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
         # self.get_ch_param().input_win_tags = self.inp_txt.tag_ranges('send')
-        self.get_ch_param().input_win_tags = get_all_tags(self._inp_txt)
-        self.get_ch_param().output_win_tags = get_all_tags(self._out_txt)
-        self.get_ch_param().input_win_cursor_index = self._inp_txt.index(tk.INSERT)
-
+        old_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
+        old_ch_vars.output_win_tags = get_all_tags(self._out_txt)
+        old_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         self.channel_index = ind
-        self.get_ch_param().new_data_tr = False
-        self.get_ch_param().rx_beep_tr = False
+
+        self._set_Channel_Vars()
+        """
+        new_ch_vars.new_data_tr = False
+        new_ch_vars.rx_beep_tr = False
 
         self._out_txt.configure(state="normal")
 
         self._out_txt.delete('1.0', tk.END)
-        self._out_txt.insert(tk.END, self._win_buf[ind].output_win)
+        self._out_txt.insert(tk.END, new_ch_vars.output_win)
         self._out_txt.configure(state="disabled")
         self._out_txt.see(tk.END)
 
         self._inp_txt.delete('1.0', tk.END)
-        self._inp_txt.insert(tk.END, self._win_buf[ind].input_win[:-1])
-        set_all_tags(self._inp_txt, self.get_ch_param().input_win_tags)
-        set_all_tags(self._out_txt, self.get_ch_param().output_win_tags)
-        self._inp_txt.mark_set("insert", self.get_ch_param().input_win_cursor_index)
+        self._inp_txt.insert(tk.END, new_ch_vars.input_win[:-1])
+        set_all_tags(self._inp_txt, new_ch_vars.input_win_tags)
+        set_all_tags(self._out_txt, new_ch_vars.output_win_tags)
+        self._inp_txt.mark_set("insert", new_ch_vars.input_win_cursor_index)
         self._inp_txt.see(tk.END)
 
         # self.main_class: gui.guiMainNew.TkMainWin
-        if self.get_ch_param().rx_beep_opt and ind:
+        if new_ch_vars.rx_beep_opt and ind:
             self._txt_win.rx_beep_box.select()
             self._txt_win.rx_beep_box.configure(bg='green')
         else:
             self._txt_win.rx_beep_box.deselect()
             self._txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR)
 
-        if self.get_ch_param().timestamp_opt and ind:
+        if new_ch_vars.timestamp_opt and ind:
             self._txt_win.ts_box_box.select()
             self._txt_win.ts_box_box.configure(bg='green')
         else:
@@ -3146,7 +3210,9 @@ class TkMainWin:
 
         self.on_channel_status_change()
         self._ch_btn.ch_btn_status_update()
+        """
         self._kanal_switch()  # Sprech
+
 
     def on_channel_status_change(self):
         """Triggerd when Connection Status has changed"""
@@ -3277,7 +3343,7 @@ class TkMainWin:
             self.tabbed_sideFrame.ft_next_tx_var.set(_next_tx)
 
     def get_ch_new_data_tr(self, ch_id):
-        return bool(self._win_buf[ch_id].new_data_tr)
+        return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)
 
     def set_tracer(self, state=None):
         _ais_obj = PORT_HANDLER.get_aprs_ais()

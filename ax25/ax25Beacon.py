@@ -13,7 +13,7 @@ class Beacon:
         self._port_handler = port_handler
         self.text_filename = ''
         self.text = ''
-        self.text_out = ''
+        self._text_out = ''
         self.aprs = False
         self.pool = False
         self.is_enabled = False
@@ -53,7 +53,7 @@ class Beacon:
         if self.text_filename:
             try:
                 with open(self.text_filename, 'rb') as f:
-                    self.text_out = f.read().decode('utf-8', 'ignore')
+                    self._text_out = f.read().decode('utf-8', 'ignore')
                     # print(self.text)
                     return True
             except (FileNotFoundError, EOFError, IsADirectoryError):
@@ -65,12 +65,12 @@ class Beacon:
             return False
         mh = self._port_handler.get_MH()
         if mh:
-            self.text_out = mh.mh_out_beacon(max_ent=12)
+            self._text_out = mh.mh_out_beacon(max_ent=12)
             return True
         return False
 
     def _set_text(self):
-        self.text_out = self.text
+        self._text_out = self.text
         return True
 
     def set_from_call(self, call: str):
@@ -96,7 +96,7 @@ class Beacon:
             return False
         if not _type_handler():
             return False
-        if self.text_out:
+        if self._text_out:
             _ax_frame = AX25Frame()
             _ax_frame.ctl_byte.UIcByte()
             _ax_frame.pid_byte.text()
@@ -117,7 +117,7 @@ class Beacon:
             if _vias:
                 _ax_frame.via_calls = _vias
             _ax_frame.axip_add = self.axip_add
-            _ax_frame.data = self.text_out.encode('UTF-8', 'ignore')
+            _ax_frame.data = self._text_out.encode('UTF-8', 'ignore')
             try:
                 _ax_frame.encode_ax25frame()
             except AX25EncodingERROR:

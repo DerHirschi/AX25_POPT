@@ -572,10 +572,8 @@ class MH:
         _tmp = self.get_sort_mh_entry('last', False)
         _ret = ''
         _mh_keys = list(_tmp.keys())
-        if len(_mh_keys) > max_ent:
-            _mh_keys = _mh_keys[:max_ent]
         _n = 0
-        for _k in _mh_keys:
+        for _k in _mh_keys[:max_ent]:
             if _n == 6:
                 _n = 0
                 _ret += '\r'

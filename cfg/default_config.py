@@ -96,12 +96,13 @@ def getNew_maniGUI_parm():
         'gui_cfg_tracer': False,
         'gui_cfg_auto_tracer': False,
         'gui_cfg_dx_alarm': True,
-        ###########
-        'gui_parm_new_call_alarm': False,
+        ###################################
+        # 'gui_parm_new_call_alarm': False,
         'gui_parm_channel_index': 1,
         'gui_parm_text_size': 13,
         # 'gui_parm__mon_buff': [],
         #################
         # MSG Center
         'guiMsgC_parm_text_size': 13,
+
     }

@@ -8,6 +8,10 @@ from fnc.cfg_fnc import load_fm_file, save_to_file
 logger = logging.getLogger(__name__)
 
 
+def getNew_dict():
+    return {}
+
+
 class Main_CFG:
     def __init__(self):
         logger.info('Main CFG: Init')
@@ -26,6 +30,7 @@ class Main_CFG:
             # -- GUI
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
+            'gui_channel_vars': getNew_dict,
         }
         self.load_CFG_fm_file()
         self._set_all_default_CFGs()
@@ -42,6 +47,7 @@ class Main_CFG:
         for cfg_key in list(self._config.keys()):
             if cfg_key not in self._default_cfg_tab.keys():
                 del self._config[cfg_key]
+            # TODO Clean Configs itself except gui_channel_vars
 
     ####################
     # File Fnc
@@ -109,6 +115,13 @@ class Main_CFG:
 
     def save_guiPARM_main(self, data: dict):
         self._config['gui_main_parm'] = data
+
+    # Channel Vars
+    def load_guiCH_VARS(self):
+        return dict(self._config['gui_channel_vars'])
+
+    def save_guiCH_VARS(self, data: dict):
+        self._config['gui_channel_vars'] = data
 
 
 POPT_CFG = Main_CFG()
