@@ -34,22 +34,22 @@ class WXPlotWindow(tk.Toplevel):
         # Plot erstellen
         plot_frame = tk.Frame(self)
         plot_frame.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
-        self._fig = Figure(figsize=(10, 1), dpi=100)
-        self._fig.set_facecolor('xkcd:light grey')
+        fig = Figure(figsize=(10, 1), dpi=100)
+        fig.set_facecolor('xkcd:light grey')
 
-        self._plot1 = self._fig.add_subplot(111)
+        self._plot1 = fig.add_subplot(111)
         self._plot1.set_facecolor('#000000')
 
-        self._fig.subplots_adjust(top=0.98, bottom=0.05, left=0.05, right=0.98, )
+        fig.subplots_adjust(top=0.98, bottom=0.05, left=0.05, right=0.98, )
 
         # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
-        self._canvas = FigureCanvasTkAgg(self._fig, master=plot_frame)
-        self._canvas.draw()
+        canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+        canvas.draw()
         # Werkzeugleisten für die Plots erstellen
-        toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame, pack_toolbar=False)
+        toolbar1 = NavigationToolbar2Tk(canvas, plot_frame, pack_toolbar=False)
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, )
-        self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+        canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
 
         self._update_plots()
 
@@ -58,7 +58,7 @@ class WXPlotWindow(tk.Toplevel):
             loc='upper left'
         )
 
-        self._canvas.draw()
+        canvas.draw()
         #################
         # Info Frame
         info_frame = tk.Frame(self)
@@ -173,15 +173,15 @@ class WXPlotWindow(tk.Toplevel):
         self.destroy_plot()
 
     def destroy_plot(self):
-        self._canvas.close_event('all')
-        self._canvas.get_tk_widget().destroy()
-        self._canvas.close_event()
+        # self._canvas.close_event('all')
+        # self._canvas.get_tk_widget().destroy()
+        # self._canvas.close_event()
         plt.close()
-        del self._canvas
+        # del self._canvas
         del self._plot1
-        del self._fig
-        self._canvas = None
+        # del self._fig
+        # self._canvas = None
         self._plot1 = None
-        self._fig = None
+        # self._fig = None
         self.withdraw()
         self.destroy()

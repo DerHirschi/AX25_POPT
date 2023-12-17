@@ -61,8 +61,6 @@ class Beacon:
         return False
 
     def _set_text_fm_mh(self):
-        # TODO ..No access PortHandler or MH
-        # self.text_out = MH_LIST.mh_out_beacon(max_ent=12)
         if not self._port_handler:
             return False
         mh = self._port_handler.get_MH()

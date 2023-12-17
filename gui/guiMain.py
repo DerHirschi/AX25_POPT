@@ -107,10 +107,7 @@ class SideTabbedFrame:  # TODO: WTF
         )
 
         tab1_kanal = ttk.Frame(self._tabControl)
-        # self.tab1_1_RTT = ttk.Frame(self._tabControl)
         tab2_mh = tk.Frame(self._tabControl)
-        # tab2_mh.bind("<Button-1>", self.reset_dx_alarm)
-        # self.tab2_mh_def_bg_clr = tab2_mh.cget('bg')
         tab4_settings = ttk.Frame(self._tabControl)
         # self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
         tab6_monitor = ttk.Frame(self._tabControl)
@@ -139,7 +136,7 @@ class SideTabbedFrame:  # TODO: WTF
                                     increment=1,
                                     width=2,
                                     textvariable=self.max_frame_var,
-                                    command=self.set_max_frame,
+                                    command=self._set_max_frame,
                                     state='disabled')
         m_f_label.place(x=10, y=parm_y)
         self.max_frame.place(x=10 + 80, y=parm_y)
@@ -148,14 +145,14 @@ class SideTabbedFrame:  # TODO: WTF
         self.pac_len_var = tk.IntVar(tab1_kanal)
         self.pac_len_var.set(128)
         vals = []
-        for i in range(255):
+        for i in range(256):
             vals.append(str(i + 1))
         self.pac_len = tk.ttk.Combobox(tab1_kanal,
                                        width=4,
                                        textvariable=self.pac_len_var,
                                        values=vals,
                                        state='disabled')
-        self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
+        self.pac_len.bind("<<ComboboxSelected>>", self._set_pac_len)
         p_l_label.place(x=10, y=parm_y)
         self.pac_len.place(x=10 + 80, y=parm_y)
         # t2 Auto Checkbutton
@@ -203,7 +200,7 @@ class SideTabbedFrame:  # TODO: WTF
         self.t2speech = tk.Checkbutton(tab1_kanal,
                                        text='Sprachausgabe',
                                        variable=self.t2speech_var,
-                                       command=self.chk_t2speech)
+                                       command=self._chk_t2speech)
         self.t2speech.place(x=10, y=parm_y)
         self.t2speech_var.set(self._main_win.get_ch_param().t2speech)
         # Autoscroll
@@ -213,7 +210,7 @@ class SideTabbedFrame:  # TODO: WTF
         self.autoscroll = tk.Checkbutton(tab1_kanal,
                                          text='Autoscroll',
                                          variable=self.autoscroll_var,
-                                         command=self.chk_autoscroll
+                                         command=self._chk_autoscroll
                                          )
         self.autoscroll.place(x=10, y=parm_y)
         self.autoscroll_var.set(self._main_win.get_ch_param().autoscroll)
@@ -494,18 +491,18 @@ class SideTabbedFrame:  # TODO: WTF
         self.mon_pid_var.set(_vals[0])
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         # Monitor RX-Filter Ports
-        self.mon_port_on_vars = {}
+        self._mon_port_on_vars = {}
         all_ports = PORT_HANDLER.get_all_ports()
         for port_id in all_ports:
-            self.mon_port_on_vars[port_id] = tk.BooleanVar(tab6_monitor)
+            self._mon_port_on_vars[port_id] = tk.BooleanVar(tab6_monitor)
             _x = 170
             _y = 80 + (25 * port_id)
             tk.Checkbutton(tab6_monitor,
                            text=f"Port {port_id}",
-                           variable=self.mon_port_on_vars[port_id],
+                           variable=self._mon_port_on_vars[port_id],
                            command=self._chk_mon_port_filter
                            ).place(x=_x, y=_y)
-            self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
+            self._mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
         ################################
         # TRACER
         # TREE
@@ -566,7 +563,7 @@ class SideTabbedFrame:  # TODO: WTF
         # tab2_mh.configure(bg=self.tab2_mh_def_bg_clr)
     """
 
-    def set_auto_tracer_state(self):
+    def _set_auto_tracer_state(self):
         _bool_state = self._main_win.get_tracer() or not self._main_win.get_dx_alarm()
         _state = {
             True: 'disabled',
@@ -616,7 +613,7 @@ class SideTabbedFrame:  # TODO: WTF
 
         # self.sound_on.set(1)
     """
-
+    """ 
     def _chk_ch_echo(self):
         # self.main_win.channel_index
         for ch_id in list(self._ch_echo_vars.keys()):
@@ -637,8 +634,8 @@ class SideTabbedFrame:  # TODO: WTF
                         self._main_win.channel_index].ch_echo:
                         PORT_HANDLER.get_all_connections()[self._main_win.channel_index].ch_echo.remove(
                             PORT_HANDLER.get_all_connections()[ch_id])
-
-        """   
+        
+          
         for ch_id in list(self.ch_echo_vars.keys()):
             _vars = self.ch_echo_vars[ch_id]
             if _vars[0].get() and self.ch_echo_vars[self.main_win.channel_index][0].get():
@@ -650,7 +647,7 @@ class SideTabbedFrame:  # TODO: WTF
                 self.ch_echo_vars[ch_id][1].configure(bg=self.chk_btn_default_clr)
                 # self.ch_echo_vars[self.main_win.channel_index][0].set(False)
                 self.ch_echo_vars[self.main_win.channel_index][1].configure(bg=self.chk_btn_default_clr)
-        """
+    """
 
     """
     def _chk_dx_alarm(self):
@@ -712,7 +709,7 @@ class SideTabbedFrame:  # TODO: WTF
     def _chk_mon_port_filter(self):
         _all_ports = PORT_HANDLER.get_all_ports()
         for port_id in _all_ports:
-            _all_ports[port_id].monitor_out = self.mon_port_on_vars[port_id].get()
+            _all_ports[port_id].monitor_out = self._mon_port_on_vars[port_id].get()
 
     def update_mon_port_id(self):
         if PORT_HANDLER.get_all_ports().keys():
@@ -818,7 +815,7 @@ class SideTabbedFrame:  # TODO: WTF
             self._tx_count_var.set(tx_count)
             self._rx_count_var.set(rx_count)
 
-    def update_tree(self):
+    def _update_tree(self):
         for i in self._tree.get_children():
             self._tree.delete(i)
         for ret_ent in self._tree_data:
@@ -829,7 +826,7 @@ class SideTabbedFrame:  # TODO: WTF
         if mh_ent != self._last_mh_ent:
             self._last_mh_ent = mh_ent
             self._format_tree_ent()
-            self.update_tree()
+            self._update_tree()
 
     def _update_side_trace(self):
         self._format_trace_tree_data()
@@ -926,22 +923,22 @@ class SideTabbedFrame:  # TODO: WTF
         self.t2speech_var.set(self._main_win.get_ch_param().t2speech)
         # self._update_ch_echo()
 
-    def set_max_frame(self):
+    def _set_max_frame(self):
         conn = self._main_win.get_conn()
         if conn is not None:
             conn.parm_MaxFrame = int(self.max_frame_var.get())
 
-    def set_pac_len(self, event):
+    def _set_pac_len(self, event):
         conn = self._main_win.get_conn()
         if conn is not None:
             conn.parm_PacLen = min(max(self.pac_len_var.get(), 1), 256)
             conn.calc_irtt()
             self.t2_var.set(str(conn.parm_T2 * 1000))
 
-    def chk_t2speech(self):
+    def _chk_t2speech(self):
         self._main_win.get_ch_param().t2speech = bool(self.t2speech_var.get())
 
-    def chk_autoscroll(self):
+    def _chk_autoscroll(self):
         self._main_win.get_ch_param().autoscroll = bool(self.autoscroll_var.get())
         if bool(self.autoscroll_var.get()):
             self._main_win.see_end_qso_win()
@@ -3289,7 +3286,7 @@ class TkMainWin:
         else:
             self.setting_tracer.set(False)
         self.set_auto_tracer()
-        self.tabbed_sideFrame.set_auto_tracer_state()
+        self.tabbed_sideFrame._set_auto_tracer_state()
 
     @staticmethod
     def get_tracer():
@@ -3304,7 +3301,7 @@ class TkMainWin:
             self.setting_tracer.set(_ais_obj.be_tracer_active)
         else:
             self.setting_tracer.set(False)
-        self.tabbed_sideFrame.set_auto_tracer_state()
+        self.tabbed_sideFrame._set_auto_tracer_state()
 
     def set_auto_tracer(self, event=None):
         _ais_obj = PORT_HANDLER.get_aprs_ais()
@@ -3317,7 +3314,7 @@ class TkMainWin:
                 set_to = bool(self.setting_auto_tracer.get())
             _ais_obj.tracer_auto_tracer_set(set_to)
         self.setting_auto_tracer.set(set_to)
-        self.tabbed_sideFrame.set_auto_tracer_state()
+        self.tabbed_sideFrame._set_auto_tracer_state()
 
     @staticmethod
     def get_auto_tracer_duration():
