@@ -9,12 +9,14 @@ Optimierung:
 - Separate MH Listen je Port
 - AXIP Adresse wird jetzt generell von der User-DB bezogen. Wenn nicht bekannt dann von der MH-Liste
 - GUI UserDB aufgeräumt(Code) und Eingabemöglichkeit für AXIP Adresse hinzugefügt
+- Hauptfenster Code aufgeräumt
 
 Neue Implementierungen / Funktionen:
 - DX Alarm Parameter werden gespeichert
 - CLI DX Alarm History wird gespeichert
 - QSO- und Vorschreibfenster werden gespeichert
 - Alle QSO/Vorschreibfenster löschen option in Menüleiste
+- Hauptfenster: Seitenverhältnisse von QSO- zu Seitenfenster kann jetzt per Maus angepasst werden
 
 ###########################################################################################################
 # 2.100.35
