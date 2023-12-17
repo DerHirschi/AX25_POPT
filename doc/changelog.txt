@@ -13,6 +13,8 @@ Optimierung:
 Neue Implementierungen / Funktionen:
 - DX Alarm Parameter werden gespeichert
 - CLI DX Alarm History wird gespeichert
+- QSO- und Vorschreibfenster werden gespeichert
+- Alle QSO/Vorschreibfenster löschen option in Menüleiste
 
 ###########################################################################################################
 # 2.100.35

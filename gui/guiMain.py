@@ -1376,178 +1376,6 @@ class TxTframe:     # TODO: WTF
             self.stat_info_encoding_var.set('')
 
 
-class ChBtnFrm:
-    def __init__(self, main_win):
-        self._main_class = main_win
-        self._ch_btn_blink_timer = time.time()
-        _ch_btn_frame = tk.Frame(self._main_class.main_win, width=500, height=10)
-        _ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
-        _btn_font = ("fixedsys", 8,)
-        _ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(4, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(5, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(6, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(7, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(8, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
-        _ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
-        # self.ch_btn_frame.grid(row=1, column=1, sticky="nsew")
-        ch_1_var = tk.StringVar(_ch_btn_frame)
-        ch_2_var = tk.StringVar(_ch_btn_frame)
-        ch_3_var = tk.StringVar(_ch_btn_frame)
-        ch_4_var = tk.StringVar(_ch_btn_frame)
-        ch_5_var = tk.StringVar(_ch_btn_frame)
-        ch_6_var = tk.StringVar(_ch_btn_frame)
-        ch_7_var = tk.StringVar(_ch_btn_frame)
-        ch_8_var = tk.StringVar(_ch_btn_frame)
-        ch_9_var = tk.StringVar(_ch_btn_frame)
-        ch_10_var = tk.StringVar(_ch_btn_frame)
-        ch_1_var.set('1')
-        ch_2_var.set('2')
-        ch_3_var.set('3')
-        ch_4_var.set('4')
-        ch_5_var.set('5')
-        ch_6_var.set('6')
-        ch_7_var.set('7')
-        ch_8_var.set('8')
-        ch_9_var.set('9')
-        ch_10_var.set('10')
-        ch_button1 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_1_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(1))
-        ch_button2 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_2_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(2))
-        ch_button3 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_3_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(3))
-        ch_button4 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_4_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(4))
-        ch_button5 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_5_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(5))
-        ch_button6 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_6_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(6))
-        ch_button7 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_7_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(7))
-        ch_button8 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_8_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(8))
-        ch_button9 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_9_var, bg="red",
-                               command=lambda: self._main_class.switch_channel(9))
-        ch_button10 = tk.Button(_ch_btn_frame, font=_btn_font, textvariable=ch_10_var, bg="red",
-                                command=lambda: self._main_class.switch_channel(10))
-        ch_button1.grid(row=1, column=1, sticky="nsew")
-        ch_button2.grid(row=1, column=2, sticky="nsew")
-        ch_button3.grid(row=1, column=3, sticky="nsew")
-        ch_button4.grid(row=1, column=4, sticky="nsew")
-        ch_button5.grid(row=1, column=5, sticky="nsew")
-        ch_button6.grid(row=1, column=6, sticky="nsew")
-        ch_button7.grid(row=1, column=7, sticky="nsew")
-        ch_button8.grid(row=1, column=8, sticky="nsew")
-        ch_button9.grid(row=1, column=9, sticky="nsew")
-        ch_button10.grid(row=1, column=10, sticky="nsew")
-        self._con_btn_dict = {
-            1: ch_button1,
-            2: ch_button2,
-            3: ch_button3,
-            4: ch_button4,
-            5: ch_button5,
-            6: ch_button6,
-            7: ch_button7,
-            8: ch_button8,
-            9: ch_button9,
-            10: ch_button10,
-        }
-        self._ch_btn_textvar = {
-            1: ch_1_var,
-            2: ch_2_var,
-            3: ch_3_var,
-            4: ch_4_var,
-            5: ch_5_var,
-            6: ch_6_var,
-            7: ch_7_var,
-            8: ch_8_var,
-            9: ch_9_var,
-            10: ch_10_var,
-        }
-
-    def ch_btn_status_update(self):
-        # self.main_class.on_channel_status_change()
-        _ch_alarm = False
-        # if PORT_HANDLER.get_all_connections().keys():
-        for i in list(self._con_btn_dict.keys()):
-            if i in PORT_HANDLER.get_all_connections().keys():
-                _btn_txt = PORT_HANDLER.get_all_connections()[i].to_call_str
-                _is_link = PORT_HANDLER.get_all_connections()[i].is_link
-                _is_pipe = PORT_HANDLER.get_all_connections()[i].pipe
-                if _is_pipe is None:
-                    _is_pipe = False
-                if _is_link:
-                    _btn_txt = 'L>' + _btn_txt
-                elif _is_pipe:
-                    _btn_txt = 'P>' + _btn_txt
-                if self._ch_btn_textvar[i].get() != _btn_txt:
-                    self._ch_btn_textvar[i].set(_btn_txt)
-                if i == self._main_class.channel_index:
-                    if _is_link:
-                        if self._con_btn_dict[i].cget('bg') != 'SteelBlue2':
-                            self._con_btn_dict[i].configure(bg='SteelBlue2')
-                    elif _is_pipe:
-                        if self._con_btn_dict[i].cget('bg') != 'cyan2':
-                            self._con_btn_dict[i].configure(bg='cyan2')
-                    else:
-                        if self._con_btn_dict[i].cget('bg') != 'green2':
-                            self._con_btn_dict[i].configure(bg='green2')
-                else:
-                    if self._main_class.get_ch_new_data_tr(i):
-                        if _is_link:
-                            if self._con_btn_dict[i].cget('bg') != 'SteelBlue4':
-                                self._con_btn_dict[i].configure(bg='SteelBlue4')
-                            # _ch_alarm = False
-                        elif _is_pipe:
-                            if self._con_btn_dict[i].cget('bg') != 'cyan4':
-                                self._con_btn_dict[i].configure(bg='cyan4')
-                            # _ch_alarm = False
-                        else:
-                            _ch_alarm = True
-                            self._ch_btn_alarm(self._con_btn_dict[i])
-                    else:
-                        if _is_link:
-                            # _ch_alarm = False
-                            if self._con_btn_dict[i].cget('bg') != 'SteelBlue4':
-                                self._con_btn_dict[i].configure(bg='SteelBlue4')
-                        elif _is_pipe:
-                            if self._con_btn_dict[i].cget('bg') != 'cyan4':
-                                self._con_btn_dict[i].configure(bg='cyan4')
-                            # _ch_alarm = False
-                        else:
-                            if self._con_btn_dict[i].cget('bg') != 'green4':
-                                self._con_btn_dict[i].configure(bg='green4')
-            else:
-                if self._ch_btn_textvar[i].get() != str(i):
-                    # self.con_btn_dict[i].configure(text=str(i))
-                    self._ch_btn_textvar[i].set(str(i))
-
-                if not self._main_class.get_ch_new_data_tr(i):
-                    if i == self._main_class.channel_index:
-                        if self._con_btn_dict[i].cget('bg') != 'red2':
-                            self._con_btn_dict[i].configure(bg='red2')
-                    else:
-                        if self._con_btn_dict[i].cget('bg') != 'red4':
-                            self._con_btn_dict[i].configure(bg='red4')
-                else:
-                    if self._con_btn_dict[i].cget('bg') != 'yellow':
-                        self._con_btn_dict[i].configure(bg='yellow')
-
-        if self._ch_btn_blink_timer < time.time():
-            self._ch_btn_blink_timer = time.time() + self._main_class.parm_btn_blink_time
-        self._main_class.ch_alarm = _ch_alarm
-
-    def _ch_btn_alarm(self, btn: tk.Button):
-        if self._ch_btn_blink_timer < time.time():
-            _clr = generate_random_hex_color()
-            if btn.cget('bg') != _clr:
-                btn.configure(bg=_clr)
-
-
 class TkMainWin:
     def __init__(self):
         ######################################
@@ -1663,7 +1491,13 @@ class TkMainWin:
         self._init_Channel_Vars()
         #########################
         # Channel Buttons
-        self._ch_btn = ChBtnFrm(self)
+        self._ch_btn_blink_timer = time.time()
+        self._con_btn_dict = {}
+        ch_btn_frame = tk.Frame(self.main_win, width=500, height=10)
+        ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
+        self._init_ch_btn_frame(ch_btn_frame)
+        # self._ch_btn = ChBtnFrm(self)
+
         # self._ch_btn._ch_btn_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
         #########################
         # Tabbed Frame right
@@ -1827,7 +1661,7 @@ class TkMainWin:
             self._txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
 
         self.on_channel_status_change()
-        self._ch_btn.ch_btn_status_update()
+        self._ch_btn_status_update()
         
     def _init_GUI_vars_fm_CFG(self):
         #########################
@@ -2079,6 +1913,72 @@ class TkMainWin:
                   text="Kaffèmaschine",
                   bg="HotPink2", width=12, command=self._kaffee).place(x=215, y=10)
         """
+
+    def _init_ch_btn_frame(self, root_frame):
+        btn_font = ("fixedsys", 8,)
+        root_frame.columnconfigure(1, minsize=50, weight=1)
+        root_frame.columnconfigure(2, minsize=50, weight=1)
+        root_frame.columnconfigure(3, minsize=50, weight=1)
+        root_frame.columnconfigure(4, minsize=50, weight=1)
+        root_frame.columnconfigure(5, minsize=50, weight=1)
+        root_frame.columnconfigure(6, minsize=50, weight=1)
+        root_frame.columnconfigure(7, minsize=50, weight=1)
+        root_frame.columnconfigure(8, minsize=50, weight=1)
+        root_frame.columnconfigure(9, minsize=50, weight=1)
+        root_frame.columnconfigure(10, minsize=50, weight=1)
+        # self.ch_btn_frame.grid(row=1, column=1, sticky="nsew")
+        ch_1_var = tk.StringVar(self.main_win, value='1')
+        ch_2_var = tk.StringVar(self.main_win, value='2')
+        ch_3_var = tk.StringVar(self.main_win, value='3')
+        ch_4_var = tk.StringVar(self.main_win, value='4')
+        ch_5_var = tk.StringVar(self.main_win, value='5')
+        ch_6_var = tk.StringVar(self.main_win, value='6')
+        ch_7_var = tk.StringVar(self.main_win, value='7')
+        ch_8_var = tk.StringVar(self.main_win, value='8')
+        ch_9_var = tk.StringVar(self.main_win, value='9')
+        ch_10_var = tk.StringVar(self.main_win, value='10')
+        ch_button1 = tk.Button(root_frame, font=btn_font, textvariable=ch_1_var, bg="red",
+                               command=lambda: self.switch_channel(1))
+        ch_button2 = tk.Button(root_frame, font=btn_font, textvariable=ch_2_var, bg="red",
+                               command=lambda: self.switch_channel(2))
+        ch_button3 = tk.Button(root_frame, font=btn_font, textvariable=ch_3_var, bg="red",
+                               command=lambda: self.switch_channel(3))
+        ch_button4 = tk.Button(root_frame, font=btn_font, textvariable=ch_4_var, bg="red",
+                               command=lambda: self.switch_channel(4))
+        ch_button5 = tk.Button(root_frame, font=btn_font, textvariable=ch_5_var, bg="red",
+                               command=lambda: self.switch_channel(5))
+        ch_button6 = tk.Button(root_frame, font=btn_font, textvariable=ch_6_var, bg="red",
+                               command=lambda: self.switch_channel(6))
+        ch_button7 = tk.Button(root_frame, font=btn_font, textvariable=ch_7_var, bg="red",
+                               command=lambda: self.switch_channel(7))
+        ch_button8 = tk.Button(root_frame, font=btn_font, textvariable=ch_8_var, bg="red",
+                               command=lambda: self.switch_channel(8))
+        ch_button9 = tk.Button(root_frame, font=btn_font, textvariable=ch_9_var, bg="red",
+                               command=lambda: self.switch_channel(9))
+        ch_button10 = tk.Button(root_frame, font=btn_font, textvariable=ch_10_var, bg="red",
+                                command=lambda: self.switch_channel(10))
+        ch_button1.grid(row=1, column=1, sticky="nsew")
+        ch_button2.grid(row=1, column=2, sticky="nsew")
+        ch_button3.grid(row=1, column=3, sticky="nsew")
+        ch_button4.grid(row=1, column=4, sticky="nsew")
+        ch_button5.grid(row=1, column=5, sticky="nsew")
+        ch_button6.grid(row=1, column=6, sticky="nsew")
+        ch_button7.grid(row=1, column=7, sticky="nsew")
+        ch_button8.grid(row=1, column=8, sticky="nsew")
+        ch_button9.grid(row=1, column=9, sticky="nsew")
+        ch_button10.grid(row=1, column=10, sticky="nsew")
+        self._con_btn_dict = {
+            1: (ch_button1, ch_1_var),
+            2: (ch_button2, ch_1_var),
+            3: (ch_button3, ch_1_var),
+            4: (ch_button4, ch_1_var),
+            5: (ch_button5, ch_1_var),
+            6: (ch_button6, ch_1_var),
+            7: (ch_button7, ch_1_var),
+            8: (ch_button8, ch_1_var),
+            9: (ch_button9, ch_1_var),
+            10: (ch_button10, ch_1_var),
+        }
 
     #######################################
     # KEYBIND Stuff
@@ -3161,7 +3061,7 @@ class TkMainWin:
     def ch_status_update(self):
         """ Triggered by tasker !!! """
         """Triggerd when Connection Status has changed"""
-        self._ch_btn.ch_btn_status_update()
+        self._ch_btn_status_update()
         # self.change_conn_btn()
         self.on_channel_status_change()
 
@@ -3213,6 +3113,83 @@ class TkMainWin:
         """
         self._kanal_switch()  # Sprech
 
+    def _ch_btn_status_update(self):
+        # self.main_class.on_channel_status_change()
+        _ch_alarm = False
+        # if PORT_HANDLER.get_all_connections().keys():
+        for i in list(self._con_btn_dict.keys()):
+            if i in PORT_HANDLER.get_all_connections().keys():
+                _btn_txt = PORT_HANDLER.get_all_connections()[i].to_call_str
+                _is_link = PORT_HANDLER.get_all_connections()[i].is_link
+                _is_pipe = PORT_HANDLER.get_all_connections()[i].pipe
+                if _is_pipe is None:
+                    _is_pipe = False
+                if _is_link:
+                    _btn_txt = 'L>' + _btn_txt
+                elif _is_pipe:
+                    _btn_txt = 'P>' + _btn_txt
+                if self._con_btn_dict[i][1].get() != _btn_txt:
+                    self._con_btn_dict[i][1].set(_btn_txt)
+                if i == self.channel_index:
+                    if _is_link:
+                        if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue2':
+                            self._con_btn_dict[i][0].configure(bg='SteelBlue2')
+                    elif _is_pipe:
+                        if self._con_btn_dict[i][0].cget('bg') != 'cyan2':
+                            self._con_btn_dict[i][0].configure(bg='cyan2')
+                    else:
+                        if self._con_btn_dict[i][0].cget('bg') != 'green2':
+                            self._con_btn_dict[i][0].configure(bg='green2')
+                else:
+                    if self.get_ch_new_data_tr(i):
+                        if _is_link:
+                            if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue4':
+                                self._con_btn_dict[i][0].configure(bg='SteelBlue4')
+                            # _ch_alarm = False
+                        elif _is_pipe:
+                            if self._con_btn_dict[i][0].cget('bg') != 'cyan4':
+                                self._con_btn_dict[i][0].configure(bg='cyan4')
+                            # _ch_alarm = False
+                        else:
+                            _ch_alarm = True
+                            self._ch_btn_alarm(self._con_btn_dict[i][0])
+                    else:
+                        if _is_link:
+                            # _ch_alarm = False
+                            if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue4':
+                                self._con_btn_dict[i][0].configure(bg='SteelBlue4')
+                        elif _is_pipe:
+                            if self._con_btn_dict[i][0].cget('bg') != 'cyan4':
+                                self._con_btn_dict[i][0].configure(bg='cyan4')
+                            # _ch_alarm = False
+                        else:
+                            if self._con_btn_dict[i][0].cget('bg') != 'green4':
+                                self._con_btn_dict[i][0].configure(bg='green4')
+            else:
+                if self._con_btn_dict[i][1].get() != str(i):
+                    # self.con_btn_dict[i].configure(text=str(i))
+                    self._con_btn_dict[i][1].set(str(i))
+
+                if not self.get_ch_new_data_tr(i):
+                    if i == self.channel_index:
+                        if self._con_btn_dict[i][0].cget('bg') != 'red2':
+                            self._con_btn_dict[i][0].configure(bg='red2')
+                    else:
+                        if self._con_btn_dict[i][0].cget('bg') != 'red4':
+                            self._con_btn_dict[i][0].configure(bg='red4')
+                else:
+                    if self._con_btn_dict[i][0].cget('bg') != 'yellow':
+                        self._con_btn_dict[i][0].configure(bg='yellow')
+
+        if self._ch_btn_blink_timer < time.time():
+            self._ch_btn_blink_timer = time.time() + self.parm_btn_blink_time
+        self.ch_alarm = _ch_alarm
+
+    def _ch_btn_alarm(self, btn: tk.Button):
+        if self._ch_btn_blink_timer < time.time():
+            _clr = generate_random_hex_color()
+            if btn.cget('bg') != _clr:
+                btn.configure(bg=_clr)
 
     def on_channel_status_change(self):
         """Triggerd when Connection Status has changed"""
