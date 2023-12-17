@@ -956,13 +956,13 @@ class PoPT_GUI_Main:
         # Init Vars
         # self.language = POPT_CFG.get_guiCFG_language()
         self.language = LANGUAGE
-        self.text_size = 13
+        self.text_size = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
         ###############################
         self._root_dir = get_root_dir()
         self._root_dir = self._root_dir.replace('/', '//')
         #####################
         # GUI VARS
-        self.connect_history = {}
+        self.connect_history = {}   # TODO: Persistent
         # GLb Setting Vars
         self.setting_sound = tk.BooleanVar(self.main_win)
         self.setting_sprech = tk.BooleanVar(self.main_win)
@@ -1049,7 +1049,7 @@ class PoPT_GUI_Main:
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
-        main_pw.add(l_frame, weight=30)
+        main_pw.add(l_frame, weight=100)
         main_pw.add(self._r_frame, weight=1)
 
         r_pack_frame.rowconfigure(0, minsize=3, weight=1)  # Boarder
@@ -1269,17 +1269,17 @@ class PoPT_GUI_Main:
     def _init_PARM_vars(self):
         #########################
         # Parameter fm cfg
-        guiCfg = POPT_CFG.load_guiPARM_main()
+        # ## guiCfg = POPT_CFG.load_guiPARM_main()
         # PORT_HANDLER.get_MH().parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
         # self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
-        self.channel_index = 1
-        self.text_size = guiCfg.get('gui_parm_text_size', 13)
+        # ## self.text_size = guiCfg.get('gui_parm_text_size', 13)
         # self.connect_history: {str: ConnHistory}
         # self._mon_buff: (
         #             ax25frame,
         #             conf,
         #             bool(tx)
         #         )
+        pass
 
     def _set_CFG(self):
         self.set_tracer()
@@ -1314,8 +1314,10 @@ class PoPT_GUI_Main:
         self.main_win.config(menu=_menubar)
         # Menü 1 "Verbindungen"
         _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['new'][self.language], command=self.open_new_conn_win)
+        _MenuVerb.add_command(label=STR_TABLE['new_conn'][self.language], command=self.open_new_conn_win)
         _MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self._disco_conn)
+        _MenuVerb.add_separator()
+        _MenuVerb.add_command(label=STR_TABLE['disconnect_all'][self.language], command=self._disco_all)
         _MenuVerb.add_separator()
         _MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self._destroy_win)
         _menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=_MenuVerb, underline=0)
@@ -2003,27 +2005,26 @@ class PoPT_GUI_Main:
                 ch_vars.t2speech_buf = ''
 
     def clear_channel_vars(self):
-        """
+
         self._out_txt.configure(state='normal')
         self._out_txt.delete('1.0', tk.END)
         self._out_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
-        """
+
         self._channel_vars[self.channel_index] = ChVars()
         self._set_Channel_Vars()
 
     def _clear_all_Channel_vars(self):
-        """
         self._out_txt.configure(state='normal')
         self._out_txt.delete('1.0', tk.END)
         self._out_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
-        """
-        self._set_Channel_Vars()
         # del self._channel_vars[self.channel_index]
         for ch_id in self._channel_vars.keys():
             self._channel_vars[ch_id] = ChVars()
+        self._set_Channel_Vars()
+
 
     def _clear_monitor_data(self):
         self._mon_txt.configure(state='normal')
@@ -2691,6 +2692,10 @@ class PoPT_GUI_Main:
         conn = self.get_conn(self.channel_index)
         if conn is not None:
             conn.conn_disco()
+
+    @staticmethod
+    def _disco_all():
+        PORT_HANDLER.disco_all_Conn()
 
     # DISCO ENDE
     # ##############

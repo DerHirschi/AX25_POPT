@@ -50,8 +50,8 @@ class APRS_ais(object):
         self.be_tracer_alarm_range = ais_cfg.get('be_tracer_alarm_range', 50)
         self.be_auto_tracer_duration = ais_cfg.get('be_auto_tracer_duration', 60)
         # Packet Pool
-        self.be_tracer_traced_packets = {}
-        self.be_tracer_alarm_hist = {}
+        self.be_tracer_traced_packets = ais_cfg['be_tracer_traced_packets']
+        self.be_tracer_alarm_hist = ais_cfg['be_tracer_alarm_hist']
         # Control vars
         self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''
@@ -112,6 +112,8 @@ class APRS_ais(object):
         ais_cfg['be_tracer_active'] = False
         # ais_cfg['be_tracer_active'] = bool(self.be_tracer_active)
         ais_cfg['be_auto_tracer_active'] = bool(self.be_auto_tracer_active)
+        ais_cfg['be_tracer_traced_packets'] = dict(self.be_tracer_traced_packets)
+        ais_cfg['be_tracer_alarm_hist'] = dict(self.be_tracer_alarm_hist)
         ais_cfg['ais_aprs_stations'] = dict(self.ais_aprs_stations)
         ais_cfg['aprs_msg_pool'] = dict(self.aprs_msg_pool)
         POPT_CFG.save_CFG_aprs_ais(ais_cfg)
