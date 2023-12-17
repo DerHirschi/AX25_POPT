@@ -8,7 +8,7 @@ if __name__ == '__main__':
     # INIT GUI
     # TODO: if setting_gui (running without GUI option):
     logger.info(f"Loading GUI.")
-    gui.guiMain.TkMainWin()
+    gui.guiMain.PoPT_GUI_Main()
 
     logger.info(f"PoPT_{VER} ENDE.")
     print('ENDE')
