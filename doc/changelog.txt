@@ -1,6 +1,7 @@
 ###########################################################################################################
 # 2.101.x
 Fixes:
+- PMS Einstellungen "Set MID" funktioniert nicht
 
 Optimierung:
 - APRS Config Management(load/save) ins neue System übertragen

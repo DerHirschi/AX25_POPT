@@ -94,6 +94,7 @@ class PMS_Settings(tk.Toplevel):
         bid_btn_fr.pack(side=tk.TOP, fill=tk.X, expand=False)
         tk.Button(bid_btn_fr,
                   text='Set MID',
+                  command=self._set_MID
                   ).pack(side=tk.LEFT, fill=tk.X, expand=False, padx=15)
         tk.Entry(bid_btn_fr,
                  width=8,
@@ -122,7 +123,7 @@ class PMS_Settings(tk.Toplevel):
         tk.Checkbutton(r_check_fr,
                        variable=self._silentConn_var,
                        text='Silent Conn',
-                       state='disabled',    # TODO Silent Conn/Service Port
+                       state='disabled',  # TODO Silent Conn/Service Port
                        ).pack(side=tk.LEFT, expand=True)
 
         # r2
@@ -161,9 +162,9 @@ class PMS_Settings(tk.Toplevel):
                   command=self._ok_btn
                   ).pack(side=tk.LEFT, expand=False, padx=20)
         tk.Button(frame,
-                 text='Speichern',
-                 command=self._save_btn
-                 ).pack(side=tk.LEFT, expand=False, padx=20)
+                  text='Speichern',
+                  command=self._save_btn
+                  ).pack(side=tk.LEFT, expand=False, padx=20)
         tk.Button(frame,
                   text='Abbrechen',
                   command=self._close
@@ -269,6 +270,15 @@ class PMS_Settings(tk.Toplevel):
         bid_str = f"MID: {bid}"
         self._bid_var.set(bid_str)
 
+    def _set_MID(self):
+        mid = self._bid_ent_var.get()
+        try:
+            mid = int(mid)
+        except ValueError:
+            return
+        self._bbs_obj.set_bid(mid)
+        self._get_BID()
+
     def _get_user_data_fm_cfg(self):
         self._own_call_var.set(self._pms_cfg.get('user', 'NOCALL'))
         self._own_regio_var.set(self._pms_cfg.get('regio', 'NOCALL'))
@@ -307,7 +317,7 @@ class PMS_Settings(tk.Toplevel):
         if not user:
             return
         self._pms_cfg['user'] = user
-        self._pms_cfg['regio'] = str(self._own_regio_var.get().upper())   # TODO Validator
+        self._pms_cfg['regio'] = str(self._own_regio_var.get().upper())  # TODO Validator
         self._pms_cfg['single_auto_conn'] = bool(self._singleConn_var.get())
         self._pms_cfg['auto_conn_silent'] = bool(self._silentConn_var.get())
         self._pms_cfg['auto_conn'] = bool(self._autoConn_var.get())
