@@ -323,17 +323,17 @@ class AX25Port(threading.Thread):
             if self.gui.setting_rx_echo.get():
                 self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
-    def cron_port_handler(self):
+    def task_Port(self):
         """ Execute Port related Cronjob like Beacon sending"""
-        self.cron_pac_handler()
-        self.cron_pipes()
-        self.cron_send_beacons()
+        self.task_connections()
+        self.task_pipes()           # TODO Move to Porthandler Loop
+        self.task_beacons()         # TODO Move to Porthandler Loop
 
-    def cron_pipes(self):
+    def task_pipes(self):
         for uid in self.pipes.keys():
             self.pipes[uid].cron_exec()
 
-    def cron_pac_handler(self):
+    def task_connections(self):
         """ Execute Cronjob on all Connections"""
         for _k in list(self.connections.keys()):
             # if _k in self.connections.keys():
@@ -344,7 +344,8 @@ class AX25Port(threading.Thread):
                 print(f"KeyError cron_pac_handler(): {_k}")
                 print(f"KeyError cron_pac_handler()keys:: {list(self.connections.keys())}")
 
-    def cron_send_beacons(self):
+    def task_beacons(self):
+        # TODO: Bullshit.. Move to Porthandler Loop
         tr = True
         if self.gui is not None:
             if not self.gui.setting_bake.get():
@@ -579,7 +580,7 @@ class AX25Port(threading.Thread):
             if time.time() > self.TXD or self.port_cfg.parm_full_duplex:
                 #############################################
                 # Crone
-                self.cron_port_handler()
+                self.task_Port()
                 # ######### TX #############
                 self.tx_handler()
 

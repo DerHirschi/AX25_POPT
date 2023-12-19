@@ -9,13 +9,13 @@ from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
 class Beacon:
     def __init__(self, port_handler=None):
-        # TODO Main CFG
+        # TODO Main CFG or better again !
         self._port_handler = port_handler
         self.text_filename = ''
         self.text = ''
         self._text_out = ''
-        self.aprs = False
-        self.pool = False
+        self.cmd_rpt = False
+        self.poll = False
         self.is_enabled = False
         self.port_id = 0
         self.typ = 'Text'
@@ -100,8 +100,8 @@ class Beacon:
             _ax_frame = AX25Frame()
             _ax_frame.ctl_byte.UIcByte()
             _ax_frame.pid_byte.text()
-            _ax_frame.ctl_byte.cmd = self.aprs
-            _ax_frame.ctl_byte.pf = self.pool
+            _ax_frame.ctl_byte.cmd = self.cmd_rpt
+            _ax_frame.ctl_byte.pf = self.poll
             _ax_frame.to_call.call = ''
             _ax_frame.to_call.ssid = 0
             """

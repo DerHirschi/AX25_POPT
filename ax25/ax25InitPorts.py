@@ -1,8 +1,8 @@
 import time
 import threading
 
-from ax25.ax25AutoConnTask import AutoConnTask
 from cfg.popt_config import POPT_CFG
+from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sql_db.db_main import SQL_Database
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH
@@ -31,7 +31,7 @@ class RxEchoVars(object):
 class AX25PortHandler(object):
     def __init__(self):
         logger.info("Port Init.")
-        init_dir_struct()
+        init_dir_struct()               # Setting up Directory's
         #################
         self.is_running = True
         self.ax25types = {
@@ -40,18 +40,20 @@ class AX25PortHandler(object):
             'AXIP': AXIP,
         }
         ###########################
-        # VARs
+        # Moduls
         self.db = None
         self.mh = None
         self.gui = None
         self.bbs = None
         self.aprs_ais = None
+        self.scheduled_tasker = None
+        ###########################
+        # VARs
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
         self.all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
-        self.auto_connections = {}      # [AutoConnTask()]
-        self.rx_echo: {int:  RxEchoVars} = {}
+        self.rx_echo = {}
         self.beacons = {}               # TODO move task fm Port.thread to self._tasker()
         self.ax25_stations_settings = get_all_stat_cfg()
         self.ax25_port_settings = {}    # Port settings are in Port .. TODO Cleanup
@@ -64,14 +66,20 @@ class AX25PortHandler(object):
             logger.error("Database Init Error !! Can't start PoPT !")
             print("Database Init Error !! Can't start PoPT !")
             raise SQLConnectionError
+        #######################################################
+        # Scheduled Tasks
+        self._init_SchedTasker()
         #################
         # Init MH
+        self._init_MH()
+        """
         try:
             self._init_MH()
         except SQLConnectionError:
             logger.error("MH Init Error !! Can't start PoPT !")
             print("MH  Init Error !! Can't start PoPT !")
             raise SQLConnectionError
+        """
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
@@ -82,7 +90,7 @@ class AX25PortHandler(object):
         self.init_aprs_ais()
         #######################################################
         # BBS OBJ
-        self.init_bbs()
+        self._init_bbs()
         #######################################################
         # Port Handler Tasker (threaded Loop)
         # - APRS task()
@@ -103,18 +111,22 @@ class AX25PortHandler(object):
 
     def _tasker(self):
         while self.is_running:
+            self._prio_task()
             self._05sec_task()
             self._1sec_task()
             if not self.is_running:
                 break
             time.sleep(0.1)
 
+    def _prio_task(self):
+        """ 0.1 Sec (Mainloop Speed) """
+        self._mh_task()
+
     def _05sec_task(self):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
             self._aprs_task()
-            self._mh_task()
-            self._auto_conn_tasker()
+            self._Sched_task()
             self._task_timer_05sec = time.time() + 0.5
 
     def _1sec_task(self):
@@ -131,6 +143,27 @@ class AX25PortHandler(object):
 
     def _mh_task(self):
         self.mh.mh_task()
+
+    #################################
+    # scheduled Tasks
+    def _init_SchedTasker(self):
+        self.scheduled_tasker = PoPTSchedule_Tasker(self)
+
+    def insert_SchedTask(self, sched_cfg, conf):
+        if self.scheduled_tasker:
+            self.scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
+
+    def del_SchedTask(self, conf):
+        if self.scheduled_tasker:
+            self.scheduled_tasker.del_scheduler_Task(conf)
+
+    def start_SchedTask_man(self, conf):
+        if self.scheduled_tasker:
+            self.scheduled_tasker.start_scheduler_Task_manual(conf)
+
+    def _Sched_task(self):
+        if self.scheduled_tasker:
+            self.scheduled_tasker.tasker()
 
     #####################
     # Setting/Parameter Updates
@@ -273,30 +306,6 @@ class AX25PortHandler(object):
         del self.aprs_ais
         self.aprs_ais = None
         return True
-
-    ######################
-    # Auto Connection Tasker
-    def init_autoConn(self, conf):
-        k = conf.get('dest_call', '')
-        if not k:
-            return None
-        if k in self.auto_connections.keys():
-            return None
-        autoConn = AutoConnTask(self, conf)
-        if autoConn.state_id and not autoConn.e:
-            self.auto_connections[k] = autoConn
-            return autoConn
-        del autoConn
-        return None
-
-    def _auto_conn_tasker(self):
-        for k in list(self.auto_connections.keys()):
-            # print(f"AutoConn state_id: {self.auto_connections[k].state_id}")
-            if self.auto_connections[k].state_id:
-                self.auto_connections[k].crone()
-            else:
-                print(f"AutoConn remove: {self.auto_connections[k]}")
-                del self.auto_connections[k]
 
     ######################
     # GUI Handling
@@ -474,7 +483,7 @@ class AX25PortHandler(object):
     def rx_echo_input(self, ax_frame, port_id):
         from_call = ax_frame.from_call.call_str
         for k in self.rx_echo.keys():
-            rx_echo_var: RxEchoVars = self.rx_echo[k]
+            rx_echo_var = self.rx_echo[k]
             if port_id != rx_echo_var.port_id:
                 for port in list(rx_echo_var.rx_ports):
                     if rx_echo_var.rx_ports[port]:
@@ -536,7 +545,7 @@ class AX25PortHandler(object):
 
     ###############################
     # BBS
-    def init_bbs(self):
+    def _init_bbs(self):
         if self.bbs is None:
             try:
                 self.bbs = BBS(self)

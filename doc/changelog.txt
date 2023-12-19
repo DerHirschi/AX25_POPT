@@ -2,6 +2,7 @@
 # 2.101.x
 Fixes:
 - PMS Einstellungen "Set MID" funktioniert nicht
+- Auto Connect Funktion löscht "Task" nicht wenn Gegenstation nicht erreichbar und N2 abgelaufen
 
 Optimierung:
 - APRS Config Management(load/save) ins neue System übertragen

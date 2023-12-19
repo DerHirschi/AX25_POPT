@@ -64,7 +64,7 @@ class BeaconTab:
                                          text='CTL/RPT',
                                          variable=self.aprs_check_var)
         self.aprs_check.var = self.aprs_check_var
-        if self.beacon.aprs:
+        if self.beacon.cmd_rpt:
             self.aprs_check.select()
             self.aprs_check_var.set(1)
         self.aprs_check.place(x=call_x + 55, y=call_y)
@@ -77,7 +77,7 @@ class BeaconTab:
                                          text='Poll',
                                          variable=self.pool_check_var)
         self.pool_check.var = self.pool_check_var
-        if self.beacon.pool:
+        if self.beacon.poll:
             self.pool_check.select()
             self.pool_check_var.set(1)
         self.pool_check.place(x=call_x + 55, y=call_y)
@@ -479,8 +479,8 @@ class BeaconSettings(tk.Toplevel):
             if _tab.beacon.from_call != 'NOCALL' and \
                     _tab.beacon.to_call != 'NOCALL':
                 _tab.beacon.set_via_calls(_tab.via.get())
-                _tab.beacon.aprs = bool(_tab.aprs_check_var.get())
-                _tab.beacon.pool = bool(_tab.pool_check_var.get())
+                _tab.beacon.cmd_rpt = bool(_tab.aprs_check_var.get())
+                _tab.beacon.poll = bool(_tab.pool_check_var.get())
                 _tab.beacon.is_enabled = bool(_tab.active_check_var.get())
                 _tab.beacon.port_id = int(_tab.port_select_var.get())
                 _tab.beacon.repeat_time = float(_tab.interv.get())

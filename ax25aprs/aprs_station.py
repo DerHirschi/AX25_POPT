@@ -154,6 +154,25 @@ class APRS_ais(object):
         # self.loop_is_running = True
         return True
 
+    def _watchdog_reset(self):
+        self._watchdog_last = time.time() + self._parm_watchdog
+
+    def watchdog_task(self, run_now=False):
+        if not self.ais_active:
+            return
+        if time.time() < self._watchdog_last and not run_now:
+            return
+        print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
+        logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
+        if self.loop_is_running:
+            self.ais_close()
+            self._watchdog_last = time.time() + 10
+            return
+        if self.login():
+            self.port_handler.init_aprs_ais(aprs_obj=self)
+            self._watchdog_last = time.time() + self._parm_watchdog
+            return
+
     def task(self):
         # self.prio_tasks()
         self._non_prio_tasks()
@@ -168,7 +187,6 @@ class APRS_ais(object):
         # print("non Prio")
         if time.time() > self._non_prio_task_timer:
             # self.ais_rx_task()
-            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             # WatchDog
             self.watchdog_task()
             # PN MSG Spooler
@@ -184,6 +202,7 @@ class APRS_ais(object):
                     # APRS PN-MSG GUI
                     if self.port_handler.gui.aprs_pn_msg_win is not None:
                         self.port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
+            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
 
     def aprs_wx_tree_task(self):
         """ Called fm guiMain Tasker """
@@ -331,15 +350,6 @@ class APRS_ais(object):
                 return _new_pack
         return aprs_pack
 
-    def get_wx_entry_sort_distance(self):
-        # TODO
-        _temp = {}
-        """
-        for k in list(self.aprs_wx_msg_pool.keys()):
-            _temp[k] = self.aprs_wx_msg_pool[k][-1]
-        return list(dict(sorted(_temp.items(), key=lambda item: item[1].get('distance', 99999))).keys())
-        """
-
     def get_wx_data(self):
         db = self._get_db()
         if not db:
@@ -373,25 +383,6 @@ class APRS_ais(object):
         if self.ais_loc and locator:
             return locator_distance(locator, self.ais_loc)
         return -1
-
-    def _watchdog_reset(self):
-        self._watchdog_last = time.time() + self._parm_watchdog
-
-    def watchdog_task(self, run_now=False):
-        if not self.ais_active:
-            return
-        if time.time() < self._watchdog_last and not run_now:
-            return
-        print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
-        logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
-        if self.loop_is_running:
-            self.ais_close()
-            self._watchdog_last = time.time() + 10
-            return
-        if self.login():
-            self.port_handler.init_aprs_ais(aprs_obj=self)
-            self._watchdog_last = time.time() + self._parm_watchdog
-            return
 
     #########################################
     # APRS MSG System
