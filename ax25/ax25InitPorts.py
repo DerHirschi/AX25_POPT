@@ -104,7 +104,7 @@ class AX25PortHandler(object):
         self.close_all_ports()
         # logger.info("Ende PoPT Ver.: {}".format(VER))
 
-    ######################
+    #######################################################################
     # Port Handler Tasker
     def _init_PH_tasker(self):
         threading.Thread(target=self._tasker).start()
@@ -135,7 +135,7 @@ class AX25PortHandler(object):
             self.bbs.main_cron()
             self._task_timer_1sec = time.time() + 1
 
-    #####################
+    #######################################################################
     # MH
     def _init_MH(self):
         self.mh = MH()
@@ -144,7 +144,7 @@ class AX25PortHandler(object):
     def _mh_task(self):
         self.mh.mh_task()
 
-    #################################
+    #######################################################################
     # scheduled Tasks
     def _init_SchedTasker(self):
         self.scheduled_tasker = PoPTSchedule_Tasker(self)
@@ -165,7 +165,7 @@ class AX25PortHandler(object):
         if self.scheduled_tasker:
             self.scheduled_tasker.tasker()
 
-    #####################
+    #######################################################################
     # Setting/Parameter Updates
     def update_digi_setting(self):
         for port_kk in self.ax25_ports.keys():
@@ -177,7 +177,7 @@ class AX25PortHandler(object):
             self.ax25_ports[port_kk].port_cfg.parm_StupidDigi_calls = new_digi_calls
             self.ax25_ports[port_kk].stupid_digi_calls = new_digi_calls     # Same Object !!
 
-    ######################
+    #######################################################################
     # Port Handling
     def get_port_by_index(self, index: int):
         if index in self.ax25_ports.keys():
@@ -477,6 +477,24 @@ class AX25PortHandler(object):
                     return True, f'\r*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r', connection
             return True, f'\r*** Link Setup to {dest_call} > Port {port_id}\r', connection
         return False, '\r*** Busy'
+
+    def send_UI(self, conf: dict):
+        port_id = conf.get('port_id', 0)
+        if port_id not in self.ax25_ports:
+            return False
+        add_str = conf.get('add_str', '')
+        tx_call = conf.get('own_call', '')
+        text = conf.get('text', '')
+        if not all((tx_call, add_str, text)):
+            return False
+
+        self.ax25_ports[0].send_UI_frame(
+              own_call=tx_call,
+              add_str=add_str,
+              text=text,
+              cmd_poll=conf.get('cmd_poll',  (False, False)),
+              pid=conf.get('pid', 0xF0),
+              )
 
     ######################
     # RX-ECHO Handling

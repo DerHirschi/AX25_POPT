@@ -481,14 +481,18 @@ class AX25Port(threading.Thread):
                       cmd_poll=(False, False),
                       pid=0xF0
                       ):
+        if not own_call:
+            return False
+        if not add_str:
+            return False
+        if not text:
+            return False
         tmp = add_str.split(' ')
         dest_call = tmp[0].replace(' ', '')
         frame = AX25Frame()
-
         if len(tmp) > 1:
             vias = tmp[1:]
             frame.via_calls = list(via_calls_fm_str(' '.join(vias)))
-
         frame.ctl_byte.UIcByte()
         frame.ctl_byte.cmd, frame.ctl_byte.pf = cmd_poll
         if pid in frame.pid_byte.pac_types.keys():

@@ -31,6 +31,8 @@ class Main_CFG:
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
             'gui_channel_vars': getNew_dict,
+            # -- Beacon
+            'beacon_tasks': [],
         }
         self.load_CFG_fm_file()
         self._set_all_default_CFGs()
@@ -75,7 +77,9 @@ class Main_CFG:
     def get_default_CFG_by_key(self, cfg_key: str):
         def_cfg = self._default_cfg_tab.get(cfg_key, None)
         if def_cfg is not None:
-            return def_cfg()
+            if callable(def_cfg):
+                return def_cfg()
+            return def_cfg
 
     def get_CFG_by_key(self, cfg_key: str):
         if cfg_key not in self._config.keys():
@@ -116,12 +120,30 @@ class Main_CFG:
     def save_guiPARM_main(self, data: dict):
         self._config['gui_main_parm'] = data
 
+    def set_guiPARM_main(self, data: dict):
+        if not data:
+            return False
+        conf_data = self._config.get('gui_main_parm', getNew_maniGUI_parm())
+        for conf_k in list(data.keys()):
+            if conf_k in list(conf_data.keys()):
+                if type(data[conf_k]) is type(conf_k[conf_k]):
+                    conf_data[conf_k] = type(conf_data[conf_k])(data[conf_k])
+        self._config['gui_main_parm'] = conf_data
+
+    def get_guiPARM_main(self, conf_key: str):
+        return self._config.get('gui_main_parm', {}).get(conf_key, None)
+
     # Channel Vars
     def load_guiCH_VARS(self):
         return dict(self._config['gui_channel_vars'])
 
     def save_guiCH_VARS(self, data: dict):
         self._config['gui_channel_vars'] = data
+
+    #################################################
+    # Beacon
+    def get_Beacon_tasks(self):
+        return list(self._config.get('beacon_tasks', []))
 
 
 POPT_CFG = Main_CFG()

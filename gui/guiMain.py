@@ -364,6 +364,7 @@ class SideTabbedFrame:  # TODO: WTF
         Checkbutton(tab4_settings,
                     text="Baken",
                     variable=self._main_win.setting_bake,
+                    command=self._chk_beacon,
                     ).place(x=10, y=60)
         # DX Alarm  > dx_alarm_on
         Checkbutton(tab4_settings,
@@ -648,6 +649,12 @@ class SideTabbedFrame:  # TODO: WTF
 
     def _chk_tracer(self):
         self._main_win.set_tracer()
+
+    def _chk_beacon(self):
+        POPT_CFG.set_guiPARM_main({
+                'gui_cfg_beacon': bool(self._main_win.setting_bake.get())
+            })
+
 
     def _chk_auto_tracer(self):
         self._main_win.set_auto_tracer()

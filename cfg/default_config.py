@@ -106,3 +106,20 @@ def getNew_maniGUI_parm():
         'guiMsgC_parm_text_size': 13,
 
     }
+
+
+#######################################
+# Beacon CFGs
+def getNew_BEACON_cfg():
+    return {
+        'max_conn': 0,
+        'port_id': 0,
+        'own_call': '',
+        'dest_call': 'BEACON',
+        'via_calls': [],
+        'axip_add': ('', 0),
+        'text': b'TEST',
+        'cmd_poll': (False, False),
+        'pid': 0xF0,
+        'scheduler_cfg': dict(getNew_schedule_config()),
+    }

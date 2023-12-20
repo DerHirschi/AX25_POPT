@@ -12,6 +12,7 @@ Optimierung:
 - AXIP Adresse wird jetzt generell von der User-DB bezogen. Wenn nicht bekannt dann von der MH-Liste
 - GUI UserDB aufgeräumt(Code) und Eingabemöglichkeit für AXIP Adresse hinzugefügt
 - Hauptfenster Code aufgeräumt
+- Globalen zeitgesteuerten Tasker für Autoconnects/Beacons/Pipetool usw.
 
 Neue Implementierungen / Funktionen:
 - DX Alarm Parameter werden gespeichert

@@ -41,14 +41,14 @@ def getNew_schedule_config(intervall: float = 0,
             week_days[week_days_r] = False
     """
     return {
-        "repeat_min": intervall,        # Float: Minutes. Also needed when 'minutes' not set.
-        "move": move_time,              # 0-59 sec
-        "minutes": minutes,             # {10: True, 33: True, 57: True}
-        "hours": hours,                 # {3: True, 4: True, 12: True}
-        "week_days": week_days,         # {'MO'': True, 'DO': True}
-        "month": month,                 # {1: True, 11: True}
-        "month_day": month_day,         # {18: True, 22: True}
-        "set_interval": set_interval,   # False = Trigger after Init + move_time
+        "repeat_min": intervall,  # Float: Minutes. Also needed when 'minutes' not set.
+        "move": move_time,  # 0-59 sec
+        "minutes": minutes,  # {10: True, 33: True, 57: True}
+        "hours": hours,  # {3: True, 4: True, 12: True}
+        "week_days": week_days,  # {'MO'': True, 'DO': True}
+        "month": month,  # {1: True, 11: True}
+        "month_day": month_day,  # {18: True, 22: True}
+        "set_interval": set_interval,  # False = Trigger after Init + move_time
     }
 
 
@@ -170,13 +170,13 @@ class PoPTSchedule:
         return False
 
     def _check_intervall(self):
-        if any([
-            self._month_day_en,
-            self._month_en,
-            self._weekDay_en,
-            self._hour_en,
-            self._min_en,
-        ]):
+        if any((
+                self._month_day_en,
+                self._month_en,
+                self._weekDay_en,
+                self._hour_en,
+                self._min_en,
+        )):
             return False
         if not self._rep_min_en:
             return False
@@ -203,6 +203,7 @@ class PoPTSchedule:
         return False
 
 
+"""
 if __name__ == '__main__':
     confi = getNew_schedule_config()
     confi['repeat_min'] = 0
@@ -221,3 +222,4 @@ if __name__ == '__main__':
             print(f"Trigger {datetime.now()}")
         # print(f"Rem: {sched.time_until_next_trigger()}")
         time.sleep(1)
+"""
