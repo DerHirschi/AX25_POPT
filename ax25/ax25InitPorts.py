@@ -131,6 +131,7 @@ class AX25PortHandler(object):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
             self.bbs.main_cron()
+            self._pipeTool_task()
             self._Sched_task()
             self._mh_task()
             self._task_timer_1sec = time.time() + 1

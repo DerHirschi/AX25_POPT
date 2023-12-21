@@ -336,33 +336,6 @@ class AX25Port(threading.Thread):
                 print(f"KeyError cron_pac_handler(): {_k}")
                 print(f"KeyError cron_pac_handler()keys:: {list(self.connections.keys())}")
 
-    """
-    def task_beacons(self):
-        # TODO: Bullshit.. Move to Porthandler Loop
-        tr = True
-        if self.gui is not None:
-            if not self.gui.setting_bake.get():
-                tr = False
-        if tr:
-            # if self.port_id in self.beacons.keys():
-            beacon_tasks = self.beacons.get(self.port_id, {})
-            for k in beacon_tasks.keys():
-                beacon_list = beacon_tasks[k]
-                # beacon: Beacon
-                for beacon in beacon_list:
-                    if beacon.is_enabled:
-                        send_it = beacon.crone()
-                        ip_fm_mh = self._mh.get_AXIP_fm_DB_MH(beacon.to_call, self.port_cfg.parm_axip_fail)
-                        beacon.axip_add = ip_fm_mh
-                        if self.port_typ == 'AXIP' and not self.port_cfg.parm_axip_Multicast:
-                            if ip_fm_mh == ('', 0):
-                                send_it = False
-                        if send_it:
-                            _beacon_ax25frame = beacon.encode_beacon()
-                            if _beacon_ax25frame:
-                                self.UI_buf.append(_beacon_ax25frame)
-    """
-
     def build_new_pipe(self,
                        own_call,
                        add_str,
