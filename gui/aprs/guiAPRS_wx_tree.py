@@ -160,15 +160,15 @@ class WXWin(tk.Toplevel):
             self._tree.insert('', tk.END, values=ret_ent)
 
     def _entry_selected(self, event=None):
-        _key = ''
+        key = ''
         for selected_item in self._tree.selection():
-            _item = self._tree.item(selected_item)
-            _key = _item['values'][1]
-        if _key:
-            _data = self._ais_obj.get_wx_data_f_call(_key)
+            item = self._tree.item(selected_item)
+            key = item['values'][1]
+        if key:
+            data = self._ais_obj.get_wx_data_f_call(key)
             # _data = self._wx_data.get(_key, False)
-            if _data:
-                WXPlotWindow(self._root_win, _data)
+            if data:
+                WXPlotWindow(self._root_win, data)
 
     def _close(self):
         self._ais_obj.wx_tree_gui = None
