@@ -3,6 +3,7 @@ import time
 from cfg.popt_config import POPT_CFG
 from schedule.tasks.AutoConnTask import AutoConnTask
 from schedule.popt_sched import PoPTSchedule
+from schedule.tasks.BeaconTask import BeaconTask
 
 
 class PoPTSchedule_Tasker:
@@ -65,7 +66,6 @@ class PoPTSchedule_Tasker:
             if self.auto_connections[k].state_id:
                 self.auto_connections[k].crone()
             else:
-                print(f"AutoConn remove: {self.auto_connections[k]}")
                 del self.auto_connections[k]
 
     def _is_AutoConn_maxConn(self, autoconn_cfg):
@@ -80,55 +80,35 @@ class PoPTSchedule_Tasker:
 
     ####################################
     # Beacon Tasker
+    def reinit_beacon_tasks(self):
+        self.del_scheduler_Task_by_Typ('BEACON')
+        self._init_beacon_tasks()
+                
     def _init_beacon_tasks(self):
         beacons_cfg = POPT_CFG.get_Beacon_tasks()
         for beacon in beacons_cfg:
             sched_cfg = beacon.get('scheduler_cfg', None)
             if sched_cfg:
-                self._port_handler.insert_SchedTask(sched_cfg, beacon)
+                self.insert_scheduler_Task(sched_cfg, beacon)
 
     def start_BeaconTask(self, conf, sched_conf=None):
         is_glb_beacon = POPT_CFG.get_guiPARM_main('gui_cfg_beacon')
         if not is_glb_beacon:
             return None
-        add_str = conf.get('dest_call', '')
-        if not add_str:
+        if not conf.get('is_enabled', False):
+            return None
+        if conf.get('own_call', 'NOCALL') == 'NOCALL':
+            return None
+        if not conf.get('dest_call', ''):
             return None
         if sched_conf:
             if not sched_conf.is_schedule():
                 return None
-        add_str += ' '.join(conf.get('via_calls', []))
-        self._send_UI(
-            {
-                'port_id': conf.get('port_id', 0),
-                'own_call': conf.get('own_call', ''),
-                'add_str': add_str,
-                'text': conf.get('text', b''),
-                'cmd_poll': conf.get('cmd_poll', (False, False)),
-                'pid': conf.get('pid', 0xF0)
-            }
-        )
+        beacon = BeaconTask(self._port_handler, conf)
+        beacon.send_it()
 
     ####################################
-    # send UI
-    def _send_UI(self, ui_conf):
-        """
-        ui_conf = {
-
-            'max_conn': 0,
-            'port_id': 0,
-            'own_call': 'MDBLA1',
-            'dest_call': 'MDBLA2',
-            'via_calls': ['MDBLA5', 'MDBLA8'],
-            'text': b'TEST',
-            'cmd_poll': (False, False),
-            'pid': 0xF0
-        }
-        """
-
-        self._port_handler.send_UI(ui_conf)
-
-    ####################################
+    # Scheduler Q
     def insert_scheduler_Task(self, sched_cfg, conf: dict):
         """
         :param conf: {}  # PMS
@@ -156,7 +136,6 @@ class PoPTSchedule_Tasker:
         self._scheduled_tasks_q.append(
             (poptSched, conf)
         )
-        print('New Task')
 
     def del_scheduler_Task(self, conf):
         """
@@ -174,8 +153,14 @@ class PoPTSchedule_Tasker:
         for task in list(self._scheduled_tasks_q):
             if task[1] == conf:
                 self._scheduled_tasks_q.remove(task)
-                print('Del Task')
                 return
+    
+    def del_scheduler_Task_by_Typ(self, typ: str):
+        if not typ:
+            return
+        for task in list(self._scheduled_tasks_q):
+            if task[1]['task_typ'] == typ:
+                self._scheduled_tasks_q.remove(task)
 
     def start_scheduler_Task_manual(self, conf):
         """

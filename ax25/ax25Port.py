@@ -40,7 +40,7 @@ class AX25Port(threading.Thread):
         # CONFIG
         self.port_cfg = port_cfg
         self.port_handler = port_handler
-        self.beacons = self.port_handler.beacons
+        # self.beacons = self.port_handler.beacons
         self.kiss = Kiss(self.port_cfg)
         self.port_param = self.port_cfg.parm_PortParm
         self.portname = self.port_cfg.parm_PortName
@@ -327,7 +327,7 @@ class AX25Port(threading.Thread):
         """ Execute Port related Cronjob like Beacon sending"""
         self.task_connections()
         self.task_pipes()           # TODO Move to Porthandler Loop
-        self.task_beacons()         # TODO Move to Porthandler Loop
+        # self.task_beacons()         # TODO Move to Porthandler Loop
 
     def task_pipes(self):
         for uid in self.pipes.keys():
@@ -344,6 +344,7 @@ class AX25Port(threading.Thread):
                 print(f"KeyError cron_pac_handler(): {_k}")
                 print(f"KeyError cron_pac_handler()keys:: {list(self.connections.keys())}")
 
+    """
     def task_beacons(self):
         # TODO: Bullshit.. Move to Porthandler Loop
         tr = True
@@ -368,6 +369,7 @@ class AX25Port(threading.Thread):
                             _beacon_ax25frame = beacon.encode_beacon()
                             if _beacon_ax25frame:
                                 self.UI_buf.append(_beacon_ax25frame)
+    """
 
     def build_new_pipe(self,
                        own_call,

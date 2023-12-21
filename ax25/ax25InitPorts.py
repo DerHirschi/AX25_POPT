@@ -54,7 +54,6 @@ class AX25PortHandler(object):
         self.all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.rx_echo = {}
-        self.beacons = {}               # TODO move task fm Port.thread to self._tasker()
         self.ax25_stations_settings = get_all_stat_cfg()
         self.ax25_port_settings = {}    # Port settings are in Port .. TODO Cleanup
         self.ax25_ports = {}
@@ -84,7 +83,7 @@ class AX25PortHandler(object):
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
         for port_id in range(MAX_PORTS):       # Max Ports
-            self.init_port(port_id=port_id)
+            self._init_port(port_id=port_id)
         #######################################################
         # APRS AIS Thread
         self.init_aprs_ais()
@@ -111,7 +110,7 @@ class AX25PortHandler(object):
 
     def _tasker(self):
         while self.is_running:
-            self._prio_task()
+            # self._prio_task()
             self._05sec_task()
             self._1sec_task()
             if not self.is_running:
@@ -126,13 +125,14 @@ class AX25PortHandler(object):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
             self._aprs_task()
-            self._Sched_task()
             self._task_timer_05sec = time.time() + 0.5
 
     def _1sec_task(self):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
             self.bbs.main_cron()
+            self._Sched_task()
+            self._mh_task()
             self._task_timer_1sec = time.time() + 1
 
     #######################################################################
@@ -164,6 +164,10 @@ class AX25PortHandler(object):
     def _Sched_task(self):
         if self.scheduled_tasker:
             self.scheduled_tasker.tasker()
+
+    def reinit_beacon_task(self):
+        if self.scheduled_tasker:
+            self.scheduled_tasker.reinit_beacon_tasks()
 
     #######################################################################
     # Setting/Parameter Updates
@@ -214,8 +218,6 @@ class AX25PortHandler(object):
             del self.ax25_ports[port_id]
         if port_id in self.ax25_port_settings.keys():
             del self.ax25_port_settings[port_id]
-        if port_id in self.beacons.keys():
-            del self.beacons[port_id]
         if port_id in self.rx_echo.keys():
             del self.rx_echo[port_id]
         del port
@@ -228,7 +230,7 @@ class AX25PortHandler(object):
             self.close_port(port_id=port_id)
         time.sleep(1)  # Cooldown for Device
         for port_id in range(MAX_PORTS):  # Max Ports
-            self.init_port(port_id=port_id)
+            self._init_port(port_id=port_id)
 
     def set_kiss_param_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
@@ -236,7 +238,7 @@ class AX25PortHandler(object):
                 self.ax25_ports[port_id].set_kiss_parm()
                 self.sysmsg_to_gui('Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..'.format(port_id))
 
-    def init_port(self, port_id: int):
+    def _init_port(self, port_id: int):
         logger.info("Initialisiere Port: {}".format(port_id))
         if port_id in self.ax25_ports.keys():
             logger.error('Could not initialise Port {}. Port already in use'.format(port_id))
@@ -253,13 +255,6 @@ class AX25PortHandler(object):
                 if not temp.device_is_running:
                     logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
                     self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
-                ##########
-                # Beacons
-                for stat in temp.port_cfg.parm_beacons.keys():
-                    be_list = temp.port_cfg.parm_beacons[stat]
-                    for beacon in be_list:
-                        beacon.re_init()
-                self.beacons[port_id] = temp.port_cfg.parm_beacons
                 ##########################
                 # Start Port/Device Thread
                 temp.start()
@@ -484,11 +479,10 @@ class AX25PortHandler(object):
             return False
         add_str = conf.get('add_str', '')
         tx_call = conf.get('own_call', '')
-        text = conf.get('text', '')
+        text = conf.get('text', b'')[:256]
         if not all((tx_call, add_str, text)):
             return False
-
-        self.ax25_ports[0].send_UI_frame(
+        self.ax25_ports[port_id].send_UI_frame(
               own_call=tx_call,
               add_str=add_str,
               text=text,

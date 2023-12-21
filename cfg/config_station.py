@@ -2,11 +2,10 @@ import pickle
 import os
 import logging
 
-import ax25.ax25Beacon
 from ax25.ax25UI_Pipe import AX25Pipe
 from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
 from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import set_obj_att, save_to_file, load_fm_file, set_obj_att_fm_dict, cleanup_obj_to_dict
+from fnc.cfg_fnc import save_to_file, load_fm_file
 
 """
 if "dev" in VER:
@@ -189,7 +188,6 @@ class DefaultPort(object):
     parm_aprs_station = POPT_CFG.load_CFG_aprs_station()
     ##################################
     # Port Parameter for Save to file
-    parm_beacons = {}
     ##########################
     # Globals
     glb_gui = None
@@ -212,23 +210,17 @@ class DefaultPort(object):
             ############
             # Port CFG
             save_ports = {}
-            clean_beacon_cfg = {}
-            # clean_cli_param = cleanup_obj_dict(self.parm_cli)
-            for stat_call in self.parm_beacons.keys():
-                tmp_be_list = []
-                for be in self.parm_beacons[stat_call]:
-                    # tmp_be_list.append(cleanup_obj(be))
-                    tmp_be_list.append(cleanup_obj_to_dict(be))
 
-                clean_beacon_cfg[stat_call] = tmp_be_list
             for att in dir(self):
                 if '__' not in att and \
                         att not in self.dont_save_this and \
                         not callable(getattr(self, att)):
                     # print(" {} - {}".format(att, getattr(self, att)))
+
                     if att == 'parm_beacons':
-                        save_ports[att] = clean_beacon_cfg
-                    # TODO ####### parm_aprs_station
+                        pass
+
+                    # TODO ????????? ####### parm_aprs_station ????????????
                     elif att == 'parm_aprs_station':
                         save_ports[att] = dict(self.parm_aprs_station)
                     else:
@@ -273,7 +265,7 @@ class PortConfigInit(DefaultPort):
                 if att in port_cfg.keys():
                     if not callable(getattr(self, att)):
                         setattr(self, att, port_cfg[att])
-
+            """
             for be_k in self.parm_beacons:
                 tmp_be_list = []
                 for old_be in self.parm_beacons[be_k]:
@@ -283,6 +275,7 @@ class PortConfigInit(DefaultPort):
                     else:
                         tmp_be_list.append(set_obj_att(beacon, old_be))
                 self.parm_beacons[be_k] = tmp_be_list
+            """
 
             for k in self.parm_cli:
                 if type(self.parm_cli[k]) is not str:

@@ -126,8 +126,8 @@ class Main_CFG:
         conf_data = self._config.get('gui_main_parm', getNew_maniGUI_parm())
         for conf_k in list(data.keys()):
             if conf_k in list(conf_data.keys()):
-                if type(data[conf_k]) is type(conf_k[conf_k]):
-                    conf_data[conf_k] = type(conf_data[conf_k])(data[conf_k])
+                # if type(data[conf_k]) is type(conf_k[conf_k]):
+                conf_data[conf_k] = data[conf_k]
         self._config['gui_main_parm'] = conf_data
 
     def get_guiPARM_main(self, conf_key: str):
@@ -144,6 +144,9 @@ class Main_CFG:
     # Beacon
     def get_Beacon_tasks(self):
         return list(self._config.get('beacon_tasks', []))
+
+    def set_Beacon_tasks(self, data: list):
+        self._config['beacon_tasks'] = list(data)
 
 
 POPT_CFG = Main_CFG()

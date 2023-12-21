@@ -110,15 +110,19 @@ def getNew_maniGUI_parm():
 
 #######################################
 # Beacon CFGs
+
 def getNew_BEACON_cfg():
     return {
-        'max_conn': 0,
+        'task_typ': 'BEACON',
         'port_id': 0,
-        'own_call': '',
+        'is_enabled': True,
+        'typ': 'Text',      # "Text", "File", "MH"
+        'own_call': 'NOCALL',
         'dest_call': 'BEACON',
         'via_calls': [],
-        'axip_add': ('', 0),
-        'text': b'TEST',
+        # 'axip_add': ('', 0),
+        'text': '',
+        'text_filename': '',
         'cmd_poll': (False, False),
         'pid': 0xF0,
         'scheduler_cfg': dict(getNew_schedule_config()),
