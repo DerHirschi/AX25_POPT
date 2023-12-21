@@ -41,14 +41,14 @@ def getNew_schedule_config(intervall: float = 0,
             week_days[week_days_r] = False
     """
     return {
-        "repeat_min": intervall,  # Float: Minutes. Also needed when 'minutes' not set.
-        "move": move_time,  # 0-59 sec
-        "minutes": minutes,  # {10: True, 33: True, 57: True}
-        "hours": hours,  # {3: True, 4: True, 12: True}
-        "week_days": week_days,  # {'MO': True, 'DO': True}
-        "month": month,  # {1: True, 11: True}
-        "month_day": month_day,  # {18: True, 22: True}
-        "set_interval": set_interval,  # False = Trigger after Init + move_time
+        "repeat_min": int(intervall),  # Float: Minutes. Also needed when 'minutes' not set.
+        "move": int(move_time),  # 0-59 sec
+        "minutes": dict(minutes),  # {10: True, 33: True, 57: True}
+        "hours": dict(hours),  # {3: True, 4: True, 12: True}
+        "week_days": dict(week_days),  # {'MO': True, 'DO': True}
+        "month": dict(month),  # {1: True, 11: True}
+        "month_day": dict(month_day),  # {18: True, 22: True}
+        "set_interval": bool(set_interval),  # False = Trigger after Init + move_time
     }
 
 

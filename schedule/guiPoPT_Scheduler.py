@@ -225,12 +225,18 @@ class PoPT_Set_Scheduler(tk.Toplevel):
                     if not self.schedule_config.get(k, None):
                         self.schedule_config[k] = {}
                     self.schedule_config[k][kk] = True
-        self.schedule_config["repeat_min"] = int(self._interval_var.get())
-        self.schedule_config["move"] = int(self._offset_var.get())
+        try:
+            self.schedule_config["repeat_min"] = int(float(self._interval_var.get()))
+        except ValueError:
+            self.schedule_config["repeat_min"] = 0
+        try:
+            self.schedule_config["move"] = int(float(self._offset_var.get()))
+        except ValueError:
+            self.schedule_config["move"] = 0
         self._root_win.schedule_config = dict(self.schedule_config)
 
     def _state_min_frame(self, event=None):
-        if int(self._interval_var.get()):
+        if float(self._interval_var.get()):
             self._disable_min_sel()
         else:
             self._enable_min_sel()

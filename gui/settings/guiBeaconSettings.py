@@ -10,6 +10,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.file_fnc import get_bin_fm_file
 from fnc.str_fnc import tk_filter_bad_chars
 from cfg.string_tab import STR_TABLE
+from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -21,8 +22,9 @@ class BeaconTab:
         self.style = root.style
         self.own_tab = ttk.Frame(self._tab_clt)
         self.beacon: dict = beacon
-        sched = beacon.get('scheduler_cfg', dict(getNew_schedule_config()))
-        self.sched = sched
+        self.schedule_config = self.beacon.get('scheduler_cfg', dict(getNew_schedule_config()))
+        self.winfo_x = self._root.winfo_x
+        self.winfo_y = self._root.winfo_y
         # height = root.win_height
         # width = root.win_width
         #################
@@ -114,33 +116,35 @@ class BeaconTab:
         call_y = 55
         call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['intervall'][self._lang]} (min):")
         call_label.place(x=call_x, y=call_y)
-        self.interv = tk.Entry(self.own_tab, width=4)
-        self.interv.place(x=call_x + 135, y=call_y)
-        self.interv.insert(tk.END, str(sched.get('repeat_min')))
+        self.intervall_var = tk.StringVar(self.own_tab)
+        self.intervall_var.set(str(int(self.schedule_config.get('repeat_min', 30))))
+        self._interv = tk.Entry(self.own_tab, width=4, textvariable=self.intervall_var)
+        self._interv.place(x=call_x + 135, y=call_y)
         #################
         # Versatz
         call_x = 420
         call_y = 55
         move_label = tk.Label(self.own_tab, text=f"{STR_TABLE['versatz'][self._lang]} (sek):")
         move_label.place(x=call_x, y=call_y)
-        self.move = tk.Entry(self.own_tab, width=5)
-        self.move.place(x=call_x + 135, y=call_y)
-        self.move.insert(tk.END, str(sched.get('move')))
+        self.move_var = tk.StringVar(self.own_tab)
+        self.move_var.set(str(self.schedule_config.get('move', 0)))
+        move = tk.Entry(self.own_tab, width=5, textvariable=self.move_var)
+        move.place(x=call_x + 135, y=call_y)
         #################
         #################
         # Active Checkbox
         call_x = 750
         call_y = 90
         self.active_check_var = tk.IntVar(self.own_tab)
-        self.active_check = tk.Checkbutton(self.own_tab,
-                                           text=STR_TABLE['active'][self._lang],
-                                           variable=self.active_check_var,
-                                           command=self._cmd_be_enabled)
-        self.active_check.var = self.active_check_var
-        self.active_check.place(x=call_x + 55, y=call_y)
+        active_check = tk.Checkbutton(self.own_tab,
+                                      text=STR_TABLE['active'][self._lang],
+                                      variable=self.active_check_var,
+                                      command=self._cmd_be_enabled)
+        active_check.var = self.active_check_var
+        active_check.place(x=call_x + 55, y=call_y)
         if beacon.get('is_enabled', False):
             self.active_check_var.set(1)
-            self.active_check.select()
+            active_check.select()
 
         ########################
         # Typ TEXT/MH/File bla .. .
@@ -150,114 +154,22 @@ class BeaconTab:
         _options = ["Text", "File", "MH"]
         self.beacon_type_var = tk.StringVar(self.own_tab)
         self.beacon_type_var.set(beacon.get('typ', 'Text'))
-        self.beacon_type = tk.OptionMenu(self.own_tab,
-                                         self.beacon_type_var,
-                                         command=self._cmd_be_change_typ,
-                                         *_options
-                                         )
-        self.beacon_type.place(x=call_x + 125, y=call_y)
+        tk.OptionMenu(self.own_tab,
+                      self.beacon_type_var,
+                      command=self._cmd_be_change_typ,
+                      *_options
+                      ).place(x=call_x + 125, y=call_y)
+
+        ####################################################
+        # Scheduler BTN
+        call_x = 600
+        call_y = 55
+        tk.Button(self.own_tab,
+                  text="Scheduler",
+                  command=self._open_schedWin
+                  ).place(x=call_x + 55, y=call_y)
 
         ###################################################################
-        #################
-        #################
-        # Minutes Selector
-        call_x = 10
-        call_y = 90
-        minutes_sel_lable = tk.Label(self.own_tab, text=f"{STR_TABLE['minutes'][self._lang]}:")
-        minutes_sel_lable.place(x=call_x, y=call_y)
-        self._minutes_sel = {}
-        tr = False
-        for minute in range(12):
-            text = minute * 5
-            minutes_sel_var = tk.BooleanVar(self.own_tab)
-            minutes_sel = tk.Checkbutton(self.own_tab,
-                                         text=str(text),
-                                         variable=minutes_sel_var,
-                                         command=lambda: self._check_minutes_cmd(minute))
-            # minutes_sel.configure(state='disabled')  # TODO
-            minutes_sel.var = minutes_sel_var
-            minutes_sel.place(x=call_x + 75 + (55 * minute), y=call_y)
-            self._minutes_sel[minute] = minutes_sel_var
-            if minute in sched.get('minutes', {}).keys():
-                minutes_sel_var.set(True)
-                minutes_sel.select()
-                tr = True
-        #########################
-        # Disable Intervall Ent
-        if tr:
-            self.interv.configure(state='disabled')
-
-        #################
-        # Std Selector
-        call_x = 10
-        call_y = 122
-        std_sel_lable = tk.Label(self.own_tab, text=f"{STR_TABLE['hours'][self._lang]}:")
-        std_sel_lable.place(x=call_x, y=call_y)
-        self._std_sel = {}
-        for std in range(24):
-            text = std
-            std_var = tk.BooleanVar(self.own_tab)
-            std_sel = tk.Checkbutton(self.own_tab,
-                                     text=str(text),
-                                     variable=std_var,
-                                     command=lambda: self._check_hour_cmd(std))
-            # command=self.cmd_be_enabled)
-            std_sel.var = std_var
-            if std in sched.get('hours', {}).keys():
-                std_var.set(True)
-                std_sel.select()
-                # tr = True
-            if std > 11:
-                std = std - 12
-                std_sel.place(x=call_x + 75 + (55 * std), y=call_y + 21)
-            else:
-                std_sel.place(x=call_x + 75 + (55 * std), y=call_y)
-            self._std_sel[std] = std_var
-
-        #################
-        # Tag Selector
-        call_x = 10
-        call_y = 173
-        tag_sel_lable = tk.Label(self.own_tab, text=f"{STR_TABLE['day'][self._lang]}:")
-        tag_sel_lable.place(x=call_x, y=call_y)
-        self.tag_sel = {}
-        ind = 1
-        for tag in ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO']:
-            sel_var = tk.BooleanVar(self.own_tab)
-            sel = tk.Checkbutton(self.own_tab,
-                                 text=tag,
-                                 variable=sel_var,
-                                 command=lambda: self._check_day_cmd(tag))
-
-            # command=self.cmd_be_enabled)
-            sel.var = sel_var
-            sel.place(x=call_x + 75 + (65 * ind), y=call_y)
-            self.tag_sel[tag] = sel_var
-            if sched.get('week_days', {}).get(tag, False):
-                sel_var.set(True)
-                sel.select()
-            ind += 1
-        #################
-        # Monat Selector
-        call_x = 10
-        call_y = 205
-        tag_sel_lable = tk.Label(self.own_tab, text=f"{STR_TABLE['month'][self._lang]}:")
-        tag_sel_lable.place(x=call_x, y=call_y)
-        self._monat_sel = {}
-        for monat in list(range(1, 13)):
-            sel_var = tk.BooleanVar(self.own_tab)
-            sel = tk.Checkbutton(self.own_tab,
-                                 text=str(monat),
-                                 variable=sel_var,
-                                 command=lambda: self._check_month_cmd(monat))
-            # command=self.cmd_be_enabled)
-            sel.var = sel_var
-            sel.place(x=call_x + 75 + (55 * (monat - 1)), y=call_y)
-            self._monat_sel[monat] = sel_var
-            if sched.get('month', {}).get(monat, False):
-                sel_var.set(True)
-                sel.select()
-
         #################
         # Beacon Text
         call_x = 10
@@ -277,14 +189,13 @@ class BeaconTab:
         call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['text_fm_file'][self._lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.be_txt_filename_var = tk.StringVar(self.own_tab)
-        self.be_txt_filename = tk.Entry(self.own_tab, textvariable=self.be_txt_filename_var, width=50)
-        self.be_txt_filename.bind("<KeyRelease>", self._on_key_press_filename_ent)
+        self._be_txt_filename = tk.Entry(self.own_tab, textvariable=self.be_txt_filename_var, width=50)
+        self._be_txt_filename.bind("<KeyRelease>", self._on_key_press_filename_ent)
         self._b_text_bg_color = self.b_text_ent.cget('background')
         self.be_txt_filename_var.set(beacon.get('text_filename', ''))
-        self.be_txt_filename.place(x=call_x + 140, y=call_y)
+        self._be_txt_filename.place(x=call_x + 140, y=call_y)
         be_txt_openfile_btn = tk.Button(self.own_tab, text='Datei', command=self._select_files)
         be_txt_openfile_btn.place(x=call_x + 710, y=call_y - 2)
-
         self._cmd_be_change_typ()
 
     def _cmd_be_enabled(self):
@@ -329,7 +240,7 @@ class BeaconTab:
             title='Open files',
             initialdir='data/',
             filetypes=filetypes)
-
+        self._root.lift()
         if filenames:
             self.be_txt_filename_var.set(filenames[0])
             self.beacon['text_filename'] = filenames[0]
@@ -349,69 +260,49 @@ class BeaconTab:
             self.beacon['text_filename'] = ''
             self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
 
-    def _check_day_cmd(self, tag):
-        week_days = self.sched.get('week_days', {})
-        var = self.tag_sel.get(tag, None)
-        if not var:
-            return
-        var = var.get()
-        week_days[tag] = bool(var)
-        self.sched['week_days'] = week_days
-
-    def _check_month_cmd(self, monat: int):
-        month = self.sched.get('month', {})
-        var = self._monat_sel.get(monat, None)
-        if not var:
-            return
-        var = var.get()
-        month[monat] = bool(var)
-        self.sched['month'] = month
-
-    def _check_minutes_cmd(self, minute: int):
-        minutes = self.sched.get('minutes', {})
-        var = self._monat_sel.get(minute, None)
-        if not var:
-            return
-        var = var.get()
-        minutes[minute] = bool(var)
-        self.sched['minutes'] = minutes
-        self._disable_intervall()
-
-    def _check_hour_cmd(self, hour: int):
-        hours = self.sched.get('hours', {})
-        var = self._monat_sel.get(hour, None)
-        if not var:
-            return
-        var = var.get()
-        hours[hour] = bool(var)
-        self.sched['hours'] = hours
-        self._disable_intervall()
-
     def _disable_intervall(self):
-        hours = self.sched.get('hours', {})
-        minutes = self.sched.get('minutes', {})
+        hours = self.schedule_config.get('hours', {})
+        minutes = self.schedule_config.get('minutes', {})
 
         for k in hours:
             if hours[k]:
-                self.interv.configure(state='disabled')
+                self._interv.configure(state='disabled')
                 return
         for k in minutes:
             if minutes[k]:
-                self.interv.configure(state='disabled')
+                self._interv.configure(state='disabled')
                 return
-        self.interv.configure(state='normal')
+        self._interv.configure(state='normal')
 
     def _cmd_be_change_typ(self, event=None):
         if self.beacon_type_var.get() == "Text":
             self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
-            self.be_txt_filename.configure(state='disabled', background=GUI_DISABLED_CLR)
+            self._be_txt_filename.configure(state='disabled', background=GUI_DISABLED_CLR)
         elif self.beacon_type_var.get() == "File":
             self.b_text_ent.configure(state='disabled', background=GUI_DISABLED_CLR)
-            self.be_txt_filename.configure(state='normal', background=self._b_text_bg_color)
+            self._be_txt_filename.configure(state='normal', background=self._b_text_bg_color)
         # elif self.beacon_type_var.get() == "MH":
         else:
             self.b_text_ent.configure(state='disabled', background=GUI_DISABLED_CLR)
-            self.be_txt_filename.configure(state='disabled', background=GUI_DISABLED_CLR)
+            self._be_txt_filename.configure(state='disabled', background=GUI_DISABLED_CLR)
+
+    def _open_schedWin(self):
+        try:
+            self.schedule_config['repeat_min'] = int(float(self.intervall_var.get()))
+        except ValueError:
+            pass
+        try:
+            self.schedule_config['move'] = int(float(self.move_var.get()))
+        except ValueError:
+            pass
+        if not self._root.schedule_win:
+            PoPT_Set_Scheduler(self)
+
+    def scheduler_config_save_task(self):
+        """ Task fm PoPT-Scheduler_win"""
+        self.move_var.set(str(int(self.schedule_config.get('move', 0))))
+        self.intervall_var.set(str(int(self.schedule_config.get('repeat_min', 30))))
+        self._disable_intervall()
 
 
 class BeaconSettings(tk.Toplevel):
@@ -436,6 +327,7 @@ class BeaconSettings(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        self.schedule_win = None
         # self.attributes("-topmost", True)
         ###############
         # VARS
@@ -512,8 +404,14 @@ class BeaconSettings(tk.Toplevel):
                 tab.beacon['cmd_poll'] = (cmd_rpt, poll)
                 # tab.beacon['is_enabled'] = bool(tab.active_check_var.get())
                 tab.beacon['port_id'] = int(tab.port_select_var.get())
-                tab.beacon['scheduler_cfg']['repeat_min'] = float(tab.interv.get())
-                tab.beacon['scheduler_cfg']['move'] = int(tab.move.get())
+                try:
+                    tab.beacon['scheduler_cfg']['repeat_min'] = float(tab.intervall_var.get())
+                except ValueError:
+                    pass
+                try:
+                    tab.beacon['scheduler_cfg']['move'] = int(tab.move_var.get())
+                except ValueError:
+                    pass
                 tab.beacon['text'] = tab.b_text_ent.get(0.0, tk.END)[:-1]
                 tab.beacon['text_filename'] = str(tab.be_txt_filename_var.get())
                 tab.beacon['typ'] = tab.beacon_type_var.get()
