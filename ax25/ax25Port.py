@@ -324,11 +324,6 @@ class AX25Port(threading.Thread):
     def _task_Port(self):
         """ Execute Port related Cronjob like Beacon sending"""
         self._task_connections()
-        self._task_pipes()           # TODO Move to Porthandler Loop
-
-    def _task_pipes(self):
-        for uid in self.pipes.keys():
-            self.pipes[uid].cron_exec()
 
     def _task_connections(self):
         """ Execute Cronjob on all Connections"""

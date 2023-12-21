@@ -508,6 +508,12 @@ class AX25PortHandler(object):
 
     ######################
     # Pipe-Tool
+    def _pipeTool_task(self):
+        all_pipes = self.get_all_pipes()
+        for pipe in all_pipes:
+            if pipe:
+                pipe.cron_exec()
+
     def get_all_pipes(self):
         ret = []
         for port_id in self.ax25_ports.keys():

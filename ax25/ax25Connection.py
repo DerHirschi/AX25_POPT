@@ -188,7 +188,7 @@ class AX25Conn(object):
         self.parm_baud = self.cfg.parm_baud  # Baud for calculating Timer
         """ Timer Calculation & other Data for Statistics"""
         self.IRTT = 0
-        self.RTT = 0
+        # self.RTT = 0
         self.calc_irtt()
         self.RTT_Timer = RTT(self)
         self.tx_byte_count = 0
@@ -323,12 +323,12 @@ class AX25Conn(object):
             self.LINK_rx_buff += data
             return
         # Pipe-Tool
-        if self.pipe_rx(data):
+        if self._pipe_rx(data):
             return
-        self.ft_check_incoming_ft(data)
-        if self.ft_handle_rx(data):
+        self._ft_check_incoming_ft(data)
+        if self._ft_handle_rx(data):
             return
-        if self.bbsFwd_rx(data):
+        if self._bbsFwd_rx(data):
             return
 
         self.rx_buf_rawData += data
@@ -341,7 +341,7 @@ class AX25Conn(object):
     def exec_cron(self):
         """ DefaultStat.cron() """
         # print(self.ch_index)
-        self.app_cron()
+        self._app_cron()
         self.zustand_exec.cron()
         ########################################
         # DIGI / LINK Connection / Node Funktion
@@ -349,14 +349,12 @@ class AX25Conn(object):
         if self.zustand_exec.stat_index == 0:
             self.conn_cleanup()
 
-    def app_cron(self):
-        if self.link_crone():   # DIGI / LINK Connection / Node Funktion
+    def _app_cron(self):
+        if self._link_crone():   # DIGI / LINK Connection / Node Funktion
             return True
-        if self.pipe_cron():
+        if self._ft_cron():
             return True
-        if self.ft_cron():
-            return True
-        if self.bbsFwd_cron():
+        if self._bbsFwd_cron():
             return True
         self.cli.cli_cron()
         self.link_holder_cron()
@@ -386,13 +384,13 @@ class AX25Conn(object):
         print("Done: bbsFwd_start_reverse")
         return True
 
-    def bbsFwd_cron(self):
+    def _bbsFwd_cron(self):
         if self.bbs_connection is None:
             return False
         self.bbs_connection.connection_cron()
         return True
 
-    def bbsFwd_rx(self, data):
+    def _bbsFwd_rx(self, data):
         if self.bbs_connection is None:
             return False
         return self.bbs_connection.connection_rx(data)
@@ -406,13 +404,7 @@ class AX25Conn(object):
 
     #############################
     # Proto PIPE
-    def pipe_cron(self):
-        if self.pipe is None:
-            return False
-        self.pipe.cron_exec()
-        return True
-
-    def pipe_rx(self, raw_data: b''):
+    def _pipe_rx(self, raw_data: b''):
         if self.pipe is None:
             return False
         self.pipe.handle_rx_rawdata(raw_data)
@@ -427,19 +419,19 @@ class AX25Conn(object):
 
     ########################################
     # File Transfer
-    def ft_check_incoming_ft(self, data):
+    def _ft_check_incoming_ft(self, data):
         if self.ft_obj is None:
             ret = ft_rx_header_lookup(data=data, last_pack=self.rx_buf_last_data)
             if ret:
                 self.ft_obj = ret
                 self.ft_obj.connection = self
 
-    def ft_handle_rx(self, data: b''):
+    def _ft_handle_rx(self, data: b''):
         if self.ft_obj is None:
             return False
         return self.ft_obj.ft_rx(data)
 
-    def ft_cron(self):
+    def _ft_cron(self):
         if self.ft_queue_handling():
             # if self.gui is not None:
             #     self.gui.on_channel_status_change()
@@ -487,7 +479,7 @@ class AX25Conn(object):
 
     #######################
     # LINKS Linked Connections
-    def link_crone(self):
+    def _link_crone(self):
         if self.is_link and self.LINK_Connection is not None:
             self.LINK_Connection.tx_buf_rawData += bytes(self.LINK_rx_buff)
             self.LINK_rx_buff = b''
