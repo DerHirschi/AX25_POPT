@@ -47,7 +47,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         self._interval_var = tk.StringVar(self, value='0')
         self._offset_var = tk.StringVar(self, value='0')
         if not self.schedule_config:
-            self.schedule_config = dict(getNew_schedule_config())
+            self.schedule_config = getNew_schedule_config()
         if not sel_frames:
             sel_frames = ['min', 'h', 'wd', 'm', 'md']
             # sel_frames = ['wd', 'm', 'md']
@@ -218,13 +218,11 @@ class PoPT_Set_Scheduler(tk.Toplevel):
 
     def _set_vars_to_conf(self):
         # Todo: Testen
-        # Don't like this solution..
         for k in self._select_vars.keys():
-            for kk in self._select_vars[k]:
-                if self._select_vars[k][kk].get():
-                    if not self.schedule_config.get(k, None):
-                        self.schedule_config[k] = {}
-                    self.schedule_config[k][kk] = True
+            for kk in list(self._select_vars.get(k, {}).keys()):
+                if not self.schedule_config.get(k, None):
+                    self.schedule_config[k] = {}
+                self.schedule_config[k][kk] = bool(self._select_vars[k][kk].get())
         try:
             self.schedule_config["repeat_min"] = int(float(self._interval_var.get()))
         except ValueError:

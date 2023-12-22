@@ -166,12 +166,10 @@ class WXWin(tk.Toplevel):
             key = item['values'][1]
         if key:
             data = self._ais_obj.get_wx_data_f_call(key)
-            # _data = self._wx_data.get(_key, False)
             if data:
                 WXPlotWindow(self._root_win, data)
 
     def _close(self):
         self._ais_obj.wx_tree_gui = None
-        # self._ais_obj = None
         self._root_win.wx_window = None
         self.destroy()

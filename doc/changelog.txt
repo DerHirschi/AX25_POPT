@@ -1,12 +1,15 @@
 ###########################################################################################################
 # 2.101.x
+
 Fixes:
 - PMS Einstellungen "Set MID" funktioniert nicht
 - Auto Connect Funktion löscht "Task" nicht wenn Gegenstation nicht erreichbar und N2 abgelaufen
+- Scheduler deselektierte Optionen werden nicht gespeichert
 
 Optimierung:
 - APRS Config Management(load/save) ins neue System übertragen
 - APRS WX-Daten (Wetterdaten) werden jetzt in der SQL-DB gespeichert
+- APRS WX-Plot extra Achse und Skalierung für Luftdruck
 - MH Listen System optimiert/aufgeräumt
 - Separate MH Listen je Port
 - AXIP Adresse wird jetzt generell von der User-DB bezogen. Wenn nicht bekannt dann von der MH-Liste
@@ -14,6 +17,7 @@ Optimierung:
 - Hauptfenster Code aufgeräumt
 - Globalen zeitgesteuerten Tasker für Autoconnects/Beacons/Pipetool usw.
 - Beacon System überarbeitet/optimiert und auf PoPT-Scheduler umgestellt
+- PipeTool Task in PortHandler Schleife verlegt.
 
 Neue Implementierungen / Funktionen:
 - DX Alarm Parameter werden gespeichert
@@ -23,7 +27,9 @@ Neue Implementierungen / Funktionen:
 - Hauptfenster: Seitenverhältnisse von QSO- zu Seitenfenster kann jetzt per Maus angepasst werden
 
 ###########################################################################################################
+###########################################################################################################
 # 2.100.35
+
 Fixes:
 - Debugausgaben erzeugen ScriptError bei TNC's, die defekte Pakte durchlassen
   (Ich konnte PoPT nie an echten TNC's testen)
