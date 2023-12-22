@@ -219,8 +219,6 @@ class DefaultPort(object):
 
                     if att == 'parm_beacons':
                         pass
-
-                    # TODO ????????? ####### parm_aprs_station ????????????
                     elif att == 'parm_aprs_station':
                         save_ports[att] = dict(self.parm_aprs_station)
                     else:
@@ -265,17 +263,6 @@ class PortConfigInit(DefaultPort):
                 if att in port_cfg.keys():
                     if not callable(getattr(self, att)):
                         setattr(self, att, port_cfg[att])
-            """
-            for be_k in self.parm_beacons:
-                tmp_be_list = []
-                for old_be in self.parm_beacons[be_k]:
-                    beacon = ax25.ax25Beacon.Beacon()
-                    if type(old_be) is dict:
-                        tmp_be_list.append(set_obj_att_fm_dict(beacon, old_be))
-                    else:
-                        tmp_be_list.append(set_obj_att(beacon, old_be))
-                self.parm_beacons[be_k] = tmp_be_list
-            """
 
             for k in self.parm_cli:
                 if type(self.parm_cli[k]) is not str:

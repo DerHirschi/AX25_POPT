@@ -217,7 +217,6 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         self._offset_var.set(value=self.schedule_config["move"])
 
     def _set_vars_to_conf(self):
-        # Todo: Testen
         for k in self._select_vars.keys():
             for kk in list(self._select_vars.get(k, {}).keys()):
                 if not self.schedule_config.get(k, None):

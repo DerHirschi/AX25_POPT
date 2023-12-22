@@ -655,7 +655,6 @@ class SideTabbedFrame:  # TODO: WTF
                 'gui_cfg_beacon': bool(self._main_win.setting_bake.get())
             })
 
-
     def _chk_auto_tracer(self):
         self._main_win.set_auto_tracer()
 
@@ -1353,15 +1352,18 @@ class PoPT_GUI_Main:
         _MenuTools = Menu(_menubar, tearoff=False)
         _MenuTools.add_command(label="MH", command=self._MH_win, underline=0)
         _MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
-                               command=self.open_port_stat_win,
+                               command=self._open_port_stat_win,
                                underline=1)
         _MenuTools.add_separator()
-        _MenuTools.add_command(label="User-DB Tree", command=self._UserDB_tree, underline=0)
+        _MenuTools.add_command(label="User-DB Tree",
+                               command=lambda: self._open_window('userDB_tree'),
+                               underline=0)
         _MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
                                command=lambda: self.open_user_db_win(),
                                underline=0)
         _MenuTools.add_separator()
-        _MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language], command=self._locator_calc_win,
+        _MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language],
+                               command=lambda: self._open_window('locator_calc'),
                                underline=0)
         _MenuTools.add_separator()
 
@@ -1415,14 +1417,17 @@ class PoPT_GUI_Main:
         _menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=_MenuSettings, underline=0)
         # APRS Menu
         _MenuAPRS = Menu(_menubar, tearoff=False)
-        _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language], command=self._open_aismon_win,
+        _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
+                              command=lambda: self._open_window('aprs_mon'),
                               underline=0)
-        _MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
+        _MenuAPRS.add_command(label="Beacon Tracer", command=self._open_be_tracer_win,
                               underline=0)
         _MenuAPRS.add_separator()
-        _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language], command=self._WX_win,
+        _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language],
+                              command=lambda: self._open_window('wx_win'),
                               underline=0)
-        _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language], command=self._open_aprs_pn_msg_win,
+        _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language],
+                              command=lambda: self._open_window('aprs_msg'),
                               underline=0)
         _MenuAPRS.add_separator()
         _MenuAPRS.add_command(label=STR_TABLE['settings'][self.language],
@@ -1433,15 +1438,15 @@ class PoPT_GUI_Main:
         # BBS/PMS
         _MenuBBS = Menu(_menubar, tearoff=False)
         _MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
-                             command=self._open_newPMS_mail,
+                             command=lambda: self._open_window('pms_new_msg'),
                              underline=0)
         _MenuBBS.add_command(label=STR_TABLE['msg_center'][self.language],
-                             command=self._open_MSG_center,
+                             command=lambda: self._open_window('pms_msg_center'),
                              underline=0)
 
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
-                             command=self._open_BBS_fwd_Q_win,
+                             command=lambda: self._open_window('pms_fwq_q'),
                              underline=0)
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
@@ -1501,7 +1506,7 @@ class PoPT_GUI_Main:
         self._tracer_btn = tk.Button(_btn_lower_frame,
                                      text="Tracer",
                                      width=8,
-                                     command=self.open_be_tracer_win)  # .place(x=110, y=45)
+                                     command=self._open_be_tracer_win)  # .place(x=110, y=45)
         self._tracer_btn.pack(side=tk.LEFT, padx=2)
         self._tracer_btn_def_clr = self._tracer_btn.cget('bg')
         """
@@ -2560,26 +2565,29 @@ class PoPT_GUI_Main:
         self._open_settings_window('ft_manager')
 
     def _open_settings_window(self, win_key: str):
-        if self.settings_win is None:
-            settings_win = {
-                'priv_win': PrivilegWin,  # Priv Win
-                'keybinds': KeyBindsHelp,  # Keybinds Help WIN
-                'about': About,  # About WIN
-                'aprs_sett': APRSSettingsWin,  # APRS Settings
-                'ft_manager': FileTransferManager,  # FT Manager
-                'ft_send': FileSend,  # FT TX
-                'pipe_sett': PipeToolSettings,  # Pipe Tool
-                # 'user_db': UserDB,  # UserDB
-                'mcast_sett': MulticastSettings,  # Multicast Settings
-                'l_holder': LinkHolderSettings,  # Linkholder
-                'rx_echo_sett': RxEchoSettings,  # RX Echo
-                'beacon_sett': BeaconSettings,  # Beacon Settings
-                'port_sett': PortSettingsWin,  # Port Settings
-                'stat_sett': StationSettingsWin,  # Stat Settings
-                'pms_setting': PMS_Settings,  # PMS Settings
-            }.get(win_key, '')
-            if settings_win:
-                self.settings_win = settings_win(self)
+        if not win_key:
+            return
+        if self.settings_win:
+            return
+        settings_win = {
+            'priv_win': PrivilegWin,  # Priv Win
+            'keybinds': KeyBindsHelp,  # Keybinds Help WIN
+            'about': About,  # About WIN
+            'aprs_sett': APRSSettingsWin,  # APRS Settings
+            'ft_manager': FileTransferManager,  # FT Manager
+            'ft_send': FileSend,  # FT TX
+            'pipe_sett': PipeToolSettings,  # Pipe Tool
+            # 'user_db': UserDB,  # UserDB
+            'mcast_sett': MulticastSettings,  # Multicast Settings
+            'l_holder': LinkHolderSettings,  # Linkholder
+            'rx_echo_sett': RxEchoSettings,  # RX Echo
+            'beacon_sett': BeaconSettings,  # Beacon Settings
+            'port_sett': PortSettingsWin,  # Port Settings
+            'stat_sett': StationSettingsWin,  # Stat Settings
+            'pms_setting': PMS_Settings,  # PMS Settings
+        }.get(win_key, '')
+        if callable(settings_win):
+            self.settings_win = settings_win(self)
 
     ##########################
     # UserDB
@@ -2591,22 +2599,42 @@ class PoPT_GUI_Main:
                     ent_key = _conn.to_call_str
             self.userdb_win = UserDB(self, ent_key)
 
+    def _open_window(self, win_key: str):
+        # self._open_window('new_conn')
+        if not win_key:
+            return
+        win_list = {
+            'new_conn': (self.new_conn_win, NewConnWin),
+            'wx_win': (self.wx_window, WXWin),
+            'locator_calc': (self.locator_calc_window, LocatorCalculator),
+            'aprs_mon': (self.aprs_mon_win, AISmonitor),
+            'aprs_msg': (self.aprs_pn_msg_win, APRS_msg_SYS_PN),
+            'pms_fwq_q': (self.BBS_fwd_q_list, BBS_fwd_Q),
+            'pms_msg_center': (self.MSG_Center, MSG_Center),
+            'pms_new_msg': (self.newPMS_MSG_win, BBS_newMSG),
+            'userDB_tree': (self.userDB_tree_win, UserDBtreeview),
+            # TODO .......
+
+        }.get(win_key, None)
+        if not win_list:
+            return
+        if win_list[0]:
+            return
+        if callable(win_list[1]):
+            win_list[1](self)
+
     ##########################
     # New Connection WIN
     def open_new_conn_win(self):
-        self._new_conn_win()
-
-    def _new_conn_win(self):
-        if self.new_conn_win is None:
-            self.new_conn_win = NewConnWin(self)
+        self._open_window('new_conn')
 
     ##########################
     #
-    def open_port_stat_win(self):
+    def _open_port_stat_win(self):
         if self.port_stat_win is None:
             self.port_stat_win = PlotWindow(self)
         else:
-            self.port_stat_win.deiconify()
+            self._close_port_stat_win()
 
     def _close_port_stat_win(self):
         if self.port_stat_win is not None:
@@ -2616,7 +2644,7 @@ class PoPT_GUI_Main:
 
     ######################
     # APRS Beacon Tracer
-    def open_be_tracer_win(self):
+    def _open_be_tracer_win(self):
         self._reset_tracer_alarm()
         if self.be_tracer_win is None:
             self.be_tracer_win = BeaconTracer(self)
@@ -2629,60 +2657,7 @@ class PoPT_GUI_Main:
         if self.mh_window is None:
             MHWin(self)
 
-    ###################
-    # WX WIN
-    def _WX_win(self):
-        """MH WIN"""
-        self._reset_dx_alarm()
-        if self.wx_window is None:
-            WXWin(self)
-
-    ###################
-    # MH WIN
-    def _locator_calc_win(self):
-        """ """
-        if self.locator_calc_window is None:
-            LocatorCalculator(self)
-
-    ###################
-    # MH WIN
-    def _open_aismon_win(self):
-        """ """
-        if self.aprs_mon_win is None:
-            AISmonitor(self)
-
-    ###################
-    # MH WIN
-    def _open_aprs_pn_msg_win(self):
-        """ """
-        if self.aprs_pn_msg_win is None:
-            APRS_msg_SYS_PN(self)
-
-    ###################
-    # BBS FWQ Q
-    def _open_BBS_fwd_Q_win(self):
-        """ """
-        if self.BBS_fwd_q_list is None:
-            self.BBS_fwd_q_list = BBS_fwd_Q(self)
-
-    def _open_MSG_center(self):
-        """ """
-        if self.MSG_Center is None:
-            self.MSG_Center = MSG_Center(self)
-
-    def _open_newPMS_mail(self):
-        """ """
-        if self.newPMS_MSG_win:
-            return
-        self.newPMS_MSG_win = BBS_newMSG(self)
-
-    ###################
-    # User-DB TreeView WIN
-    def _UserDB_tree(self):
-        """MH WIN"""
-        if self.userDB_tree_win is None:
-            self.userDB_tree_win = UserDBtreeview(self)
-
+    #######################################################
     def gui_set_distance(self):
         self._set_distance_fm_conn()
 
@@ -2710,26 +2685,26 @@ class PoPT_GUI_Main:
     # SEND TEXT OUT
     def _snd_text(self, event: tk.Event):
         if self.channel_index:
-            _station = self.get_conn(self.channel_index)
-            if _station:
+            station = self.get_conn(self.channel_index)
+            if station:
                 ch_vars = self.get_ch_var(ch_index=self.channel_index)
-                _ind = str(ch_vars.input_win_index)
-                if _ind:
-                    if float(_ind) >= float(self._inp_txt.index(tk.INSERT)):
-                        _ind = str(self._inp_txt.index(tk.INSERT))
-                    _ind = str(int(float(_ind))) + '.0'
+                ind = str(ch_vars.input_win_index)
+                if ind:
+                    if float(ind) >= float(self._inp_txt.index(tk.INSERT)):
+                        ind = str(self._inp_txt.index(tk.INSERT))
+                    ind = str(int(float(ind))) + '.0'
                 else:
-                    _ind = '1.0'
-                _txt_enc = 'UTF-8'
-                if _station.user_db_ent:
-                    _txt_enc = _station.user_db_ent.Encoding
-                _tmp_txt = self._inp_txt.get(_ind, self._inp_txt.index(tk.INSERT))
+                    ind = '1.0'
+                txt_enc = 'UTF-8'
+                if station.user_db_ent:
+                    txt_enc = station.user_db_ent.Encoding
+                tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
 
-                _tmp_txt = _tmp_txt.replace('\n', '\r')
-                _station.send_data(_tmp_txt.encode(_txt_enc, 'ignore'))
+                tmp_txt = tmp_txt.replace('\n', '\r')
+                station.send_data(tmp_txt.encode(txt_enc, 'ignore'))
 
-                self._inp_txt.tag_remove('send', _ind, str(self._inp_txt.index(tk.INSERT)))
-                self._inp_txt.tag_add('send', _ind, str(self._inp_txt.index(tk.INSERT)))
+                self._inp_txt.tag_remove('send', ind, str(self._inp_txt.index(tk.INSERT)))
+                self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
 
                 ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
 
