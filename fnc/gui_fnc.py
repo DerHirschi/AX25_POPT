@@ -20,6 +20,31 @@ def set_all_tags(text_wig, tag_dic):
                 tmp = []
 
 
+def set_new_tags(text_wig, tag_list):
+    tmp = 1
+    for a in tag_list:
+        tmp += a[1]
+    for el in tag_list:
+        tag_name, tag_len = el
+        if tag_len:
+            ind = text_wig.index(f'end-{tmp}c')
+            ind2 = f'{ind}+{tag_len}c'
+            text_wig.tag_add(tag_name, ind, ind2)
+            tmp -= tag_len
+
+
+def cleanup_tags(tag_ranges):
+    ret = {}
+    for tag_n in tag_ranges:
+        ret[tag_n] = []
+        for el in tag_ranges[tag_n]:
+            if hasattr(el, 'string'):
+                ret[tag_n].append(el.string)
+            else:
+                ret[tag_n].append(el)
+    return ret
+
+
 def generate_random_hex_color():
     red = random.randint(0, 255)
     green = random.randint(0, 255)

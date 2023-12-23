@@ -5,6 +5,8 @@ Fixes:
 - PMS Einstellungen "Set MID" funktioniert nicht
 - Auto Connect Funktion löscht "Task" nicht wenn Gegenstation nicht erreichbar und N2 abgelaufen
 - Scheduler deselektierte Optionen werden nicht gespeichert
+- Textfarben im QSO Fenster werden nicht gesetzt, wenn Kanal nicht aktiv
+- Textfarben im QSO Fenster werden nicht gespeichert über den Neustart hinweg
 
 Optimierung:
 - APRS Config Management(load/save) ins neue System übertragen
@@ -19,7 +21,7 @@ Optimierung:
 - Beacon System überarbeitet/optimiert und auf PoPT-Scheduler umgestellt
 - PipeTool Task in PortHandler Schleife verlegt.
 - Connection Variablen Handling bei Neuen Connect und Disconnect
-- *** Connect from ..., usw. werden jetzt als "Systemnachricht" im QSO-Fenster ausgegeben (andere Farbe)
+- *** Connect from ..., usw. werden jetzt als "Systemnachricht"
 
 Neue Implementierungen / Funktionen:
 - DX Alarm Parameter werden gespeichert
@@ -28,6 +30,7 @@ Neue Implementierungen / Funktionen:
 - Alle QSO/Vorschreibfenster löschen option in Menüleiste
 - Hauptfenster: Seitenverhältnisse von QSO- zu Seitenfenster kann jetzt per Maus angepasst werden
 - TX Farben im QSO Fenster auswählbar (Station Einstellungen)
+- System Nachrichten im QSO-Fenster (andere Farbe)
 
 ###########################################################################################################
 ###########################################################################################################
