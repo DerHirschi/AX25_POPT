@@ -1191,8 +1191,10 @@ class PoPT_GUI_Main:
 
     def _save_Channel_Vars(self):
         current_ch_vars = self.get_ch_var(ch_index=self.channel_index)
+        current_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
         current_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
         current_ch_vars.output_win_tags = get_all_tags(self._out_txt)
+        current_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
         for ch_id in list(self._channel_vars.keys()):
@@ -2899,17 +2901,13 @@ class PoPT_GUI_Main:
     def _ch_btn_clk(self, ind: int):
         old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
         old_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
-        # self.get_ch_param().input_win_tags = self.inp_txt.tag_ranges('send')
         old_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
         old_ch_vars.output_win_tags = get_all_tags(self._out_txt)
         old_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         self.channel_index = ind
-        print(old_ch_vars.output_win_tags)
         self._update_qso_Vars()
         self.ch_status_update()
         self._kanal_switch()  # Sprech
-
-
 
     def _ch_btn_status_update(self):
         # self.main_class.on_channel_status_change()

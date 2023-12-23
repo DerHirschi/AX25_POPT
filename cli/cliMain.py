@@ -1088,7 +1088,7 @@ class DefaultCLI(object):
         """ Long Connect-Status """
         ret = '\r'
         ret += "--Ch--Port--MyCall----Call------Name----------LOC----QTH-----------Connect\r"
-        all_conn = self.port_handler.all_connections
+        all_conn = self.port_handler.get_all_connections()
         for k in all_conn.keys():
             ch = k
             conn = all_conn[k]

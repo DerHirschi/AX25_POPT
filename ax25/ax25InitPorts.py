@@ -51,7 +51,7 @@ class AX25PortHandler(object):
         # VARs
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
-        self.all_connections = {}       # {int: AX25Conn} Channel Index
+        self._all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.rx_echo = {}
         self.ax25_stations_settings = get_all_stat_cfg()
@@ -199,8 +199,8 @@ class AX25PortHandler(object):
 
     def close_all_ports(self):
         self.is_running = False
-        for k in list(self.all_connections.keys()):
-            del self.all_connections[k]
+        for k in list(self._all_connections.keys()):
+            del self._all_connections[k]
         # if self.is_running:
         self.close_aprs_ais()
         for k in list(self.ax25_ports.keys()):
@@ -330,11 +330,11 @@ class AX25PortHandler(object):
     def insert_new_connection(self, new_conn, ind: int = 1):
         """ Insert connection for handling """
         # if not new_conn.is_link:
-        keys = list(self.all_connections.keys())
+        keys = list(self._all_connections.keys())
         if keys:
             # Check if Connection is already in all_conn...
-            for k in list(self.all_connections.keys()):
-                if new_conn == self.all_connections[k]:
+            for k in list(self._all_connections.keys()):
+                if new_conn == self._all_connections[k]:
                     if new_conn.ch_index != k:
                         logger.warning("Channel Index != Real Index !!!")
                         new_conn.ch_index = int(k)
@@ -344,11 +344,11 @@ class AX25PortHandler(object):
                     ind += 1
                 else:
                     new_conn.ch_index = int(ind)
-                    self.all_connections[ind] = new_conn
+                    self._all_connections[ind] = new_conn
                     break
         else:
             new_conn.ch_index = int(ind)
-            self.all_connections[ind] = new_conn
+            self._all_connections[ind] = new_conn
 
     def accept_new_connection(self, connection):
         if self.gui:
@@ -386,10 +386,10 @@ class AX25PortHandler(object):
         ch_index = conn.ch_index
         # for k in list(self.all_connections.keys()):
         # temp_conn: AX25Conn = self.all_connections[k]
-        if ch_index not in self.all_connections.keys():
+        if ch_index not in self._all_connections.keys():
             return
-        if self.all_connections[ch_index] == conn:
-            del self.all_connections[ch_index]
+        if self._all_connections[ch_index] == conn:
+            del self._all_connections[ch_index]
             if self.gui:
                 # TODO: Trigger here, Logbook and UserDB-Conn C
                 self.gui.sysMsg_to_qso(
@@ -397,23 +397,24 @@ class AX25PortHandler(object):
                     ch_index=int(conn.ch_index))
                 self.gui.disco_sound()
                 self.gui.ch_status_update()
+            # self._all_connections[ch_index].own_port.del_connections(conn=conn)
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
             del self.link_connections[uid]
 
     def disco_all_Conn(self):
-        for k in list(self.all_connections.keys()):
+        for k in list(self._all_connections.keys()):
             # temp_conn: AX25Conn = self.all_connections[k]
-            if self.all_connections[k]:
-                self.all_connections[k].conn_disco()
+            if self._all_connections[k]:
+                self._all_connections[k].conn_disco()
 
     # TODO def disco_Conn(self, conn):
 
     def is_all_disco(self):
-        for k in list(self.all_connections.keys()):
-            if self.all_connections[k]:
-                if not self.all_connections[k].is_dico():
+        for k in list(self._all_connections.keys()):
+            if self._all_connections[k]:
+                if not self._all_connections[k].is_dico():
                     return False
         return True
 
@@ -543,8 +544,8 @@ class AX25PortHandler(object):
         # conn.ft_tx_queue: [FileTX]
         # conn.ft_tx_activ: FileTX
         res = {}
-        for ch_id in self.all_connections:
-            conn = self.all_connections[ch_id]
+        for ch_id in self._all_connections:
+            conn = self._all_connections[ch_id]
             tmp = conn.ft_queue
             if conn.ft_obj is not None:
                 tmp = [conn.ft_obj] + tmp
@@ -564,7 +565,7 @@ class AX25PortHandler(object):
         return self.ax25_ports
 
     def get_all_connections(self):
-        return self.all_connections
+        return self._all_connections
 
     def get_all_stat_cfg(self):
         return self.ax25_stations_settings

@@ -55,13 +55,6 @@ def generate_random_hex_color():
     return hex_color
 
 
-"""
-ent = tk.Entry()
-ent.bind('<KeyRelease>', lambda event: get_typed(event, self.chiefs, self._to_call_var, self._to_call_ent))
-ent.bind('<Key>', lambda event: detect_pressed(event, self._to_call_ent))
-"""
-
-
 def match_string(add_list, entry_var):
     """ Source: https://stackoverflow.com/questions/58428545/clarify-functionality-of-tkinter-autocomplete-entry"""
     hits = []
