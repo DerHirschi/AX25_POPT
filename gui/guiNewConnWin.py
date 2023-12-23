@@ -303,7 +303,7 @@ class NewConnWin(tk.Toplevel):
                     port_id=self.port_index,
                 )
                 self._main.ch_status_update()
-                self._main.change_conn_btn()
+                # self._main.change_conn_btn()
                 self._destroy_new_conn_win()
 
     def _set_conn_hist(self, event):

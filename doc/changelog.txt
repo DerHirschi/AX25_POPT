@@ -18,6 +18,8 @@ Optimierung:
 - Globalen zeitgesteuerten Tasker für Autoconnects/Beacons/Pipetool usw.
 - Beacon System überarbeitet/optimiert und auf PoPT-Scheduler umgestellt
 - PipeTool Task in PortHandler Schleife verlegt.
+- Connection Variablen Handling bei Neuen Connect und Disconnect
+- *** Connect from ..., usw. werden jetzt als "Systemnachricht" im QSO-Fenster ausgegeben (andere Farbe)
 
 Neue Implementierungen / Funktionen:
 - DX Alarm Parameter werden gespeichert
@@ -25,6 +27,7 @@ Neue Implementierungen / Funktionen:
 - QSO- und Vorschreibfenster werden gespeichert
 - Alle QSO/Vorschreibfenster löschen option in Menüleiste
 - Hauptfenster: Seitenverhältnisse von QSO- zu Seitenfenster kann jetzt per Maus angepasst werden
+- TX Farben im QSO Fenster auswählbar (Station Einstellungen)
 
 ###########################################################################################################
 ###########################################################################################################

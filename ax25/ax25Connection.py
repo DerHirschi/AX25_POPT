@@ -1165,6 +1165,7 @@ class S1Frei(DefaultStat):  # INIT RX
 
     def _rx_SABM(self):
         self._ax25conn.insert_new_connection()
+        self._ax25conn.accept_connection()
         self._ax25conn.send_UA()
         self.change_state(5)
         self._ax25conn.n2 = 0

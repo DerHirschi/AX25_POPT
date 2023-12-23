@@ -723,7 +723,7 @@ class SideTabbedFrame:  # TODO: WTF
             conn.calc_irtt()
 
     def tasker(self):
-        try:  # TODO Need correct prozedur to end the whole shit
+        try:
             ind = self._tabControl.index(self._tabControl.select())
         except TclError:
             pass
@@ -867,16 +867,6 @@ class SideTabbedFrame:  # TODO: WTF
             self._trace_tree.insert('', tk.END, values=ret_ent)
 
     def on_ch_stat_change(self):
-        """
-        try:  # TODO Need correct prozedur to end the whole shit
-            ind = self._tabControl.index(self._tabControl.select())
-        except TclError:
-            ind = None
-        if ind is None:
-            return
-        if ind != 0:
-            return
-        """
         _conn = self._main_win.get_conn()
         if _conn is not None:
             if self._ch_is_disc:
@@ -892,7 +882,7 @@ class SideTabbedFrame:  # TODO: WTF
             self._rnr_var.set(_conn.is_RNR)
             self.link_holder_var.set(_conn.link_holder_on)
             self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(_conn.tx_buf_rawData)))
-            if _conn.own_port.port_cfg.parm_T2_auto:
+            if _conn.own_port.port_cfg.parm_T2_auto:    # FIXME var parm_T2_auto to connection
                 if not self.t2_auto_var.get():
                     self.t2_var.set(str(_conn.parm_T2 * 1000))
                     self.t2.configure(state='disabled')
@@ -1257,8 +1247,8 @@ class PoPT_GUI_Main:
             self.ts_box_box.deselect()
             self.ts_box_box.configure(bg=STAT_BAR_CLR)
 
-        self.on_channel_status_change()
-        self._ch_btn_status_update()
+        # self.on_channel_status_change()
+        # self._ch_btn_status_update()
 
     def _init_GUI_vars_fm_CFG(self):
         #########################
@@ -1513,11 +1503,6 @@ class PoPT_GUI_Main:
                                      command=self._open_be_tracer_win)  # .place(x=110, y=45)
         self._tracer_btn.pack(side=tk.LEFT, padx=2)
         self._tracer_btn_def_clr = self._tracer_btn.cget('bg')
-        """
-        tk.Button(self._side_btn_frame_top,
-                  text="Kaffèmaschine",
-                  bg="HotPink2", width=12, command=self._kaffee).place(x=215, y=10)
-        """
 
     def _init_ch_btn_frame(self, root_frame):
         btn_font = ("fixedsys", 8,)
@@ -1533,8 +1518,6 @@ class PoPT_GUI_Main:
         ch_btn_frame.columnconfigure(8, minsize=50, weight=1)
         ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
         ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
-        # ch_btn_frame.rowconfigure(0, minsize=10, weight=0)
-        # self.ch_btn_frame.grid(row=1, column=1, sticky="nsew")
         ch_1_var = tk.StringVar(self.main_win, value='1')
         ch_2_var = tk.StringVar(self.main_win, value='2')
         ch_3_var = tk.StringVar(self.main_win, value='3')
@@ -2095,9 +2078,7 @@ class PoPT_GUI_Main:
         data = self._mon_txt.get('1.0', tk.END)
         save_file_dialog(data)
 
-    def change_conn_btn(self):
-        # TODO Nur triggern wenn ch_btn click | neue in conn | disco
-        # TODO extra Funktionen für on_disco & on_newconn
+    def _change_conn_btn(self):
         _conn = self.get_conn(self.channel_index)
         if _conn is not None:
             if self._conn_btn.cget('bg') != "red":
@@ -2327,7 +2308,7 @@ class PoPT_GUI_Main:
             self._monitor_task()
             self._update_qso_win()
             self._update_status_win()
-            self.change_conn_btn()
+            # self._change_conn_btn()
             if self.setting_sound:
                 self._rx_beep_sound()
                 if self.setting_sprech:
@@ -2345,7 +2326,7 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame.tasker()
             # if MH_LIST.new_call_alarm and self.setting_dx_alarm.get():
             if self._ch_alarm:
-                self.ch_status_update()
+                self._ch_btn_status_update()
             if PORT_HANDLER.get_MH().dx_alarm_trigger:
                 self._dx_alarm()
             if PORT_HANDLER.get_aprs_ais() is not None:
@@ -2508,116 +2489,6 @@ class PoPT_GUI_Main:
             return True
         return False
 
-    def _update_qso_win_1(self):  # INPUT WIN
-        # TODO.. Again
-        # UPDATE INPUT WIN
-        tr = False
-        for k in list(PORT_HANDLER.get_all_connections()):
-            conn = self.get_conn(k)
-            if conn is not None:
-                if conn.ft_obj is None:
-                    if conn.rx_buf_rawData or conn.tx_buf_guiData:
-                        k = conn.ch_index
-                        if k < 11:
-                            tr = True
-                            txt_enc = 'UTF-8'
-                            if conn.user_db_ent:
-                                txt_enc = conn.user_db_ent.Encoding
-
-                            inp = bytes(conn.tx_buf_guiData)
-                            conn.tx_buf_guiData = conn.tx_buf_guiData[len(inp):]
-
-                            out = bytes(conn.rx_buf_rawData)
-                            conn.rx_buf_rawData = conn.rx_buf_rawData[len(out):]
-
-                            # if self.win_buf[k].hex_output:
-                            """
-                            hex_out = out.hex()
-                            hex_in = inp.hex()
-                            """
-                            inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
-                            # Write RX Date to Window/Channel Buffer
-
-                            out = out.decode(txt_enc, 'ignore')
-                            out = out.replace('\r\n', '\n') \
-                                .replace('\n\r', '\n') \
-                                .replace('\r', '\n')
-                            # print(f"{out}\nhex: {hex_out}")
-                            out = tk_filter_bad_chars(out)
-                            """
-                            if hex_out:
-                                out = out + ' > ' + hex_out + '\n'
-                            if hex_in:
-                                inp = inp + ' >' + hex_in + '<\n'
-                            """
-                            # Write RX Date to Window/Channel Buffer
-                            Ch_var = self.get_ch_var(ch_index=k)
-                            Ch_var.output_win += inp
-                            Ch_var.output_win += out
-
-                            if self.channel_index == k:
-                                if Ch_var.t2speech:
-                                    Ch_var.t2speech_buf += out.replace('\n', '')
-                                # TODO get the TAGs right.. .
-                                fg = conn.stat_cfg.stat_parm_qso_col_text_tx
-                                bg = conn.stat_cfg.stat_parm_qso_col_bg
-                                tag_name_out = 'OUT-' + str(conn.my_call_str)
-                                Ch_var.qso_tag_fg = fg
-                                Ch_var.qso_tag_bg = bg
-                                Ch_var.qso_tag_name = tag_name_out
-
-                                tr = False
-                                if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15:
-                                    tr = True
-
-                                self._out_txt.configure(state="normal")
-                                # TODO get the TAGs right.. . Just config tags on new connection
-                                self._out_txt.tag_config(tag_name_out,
-                                                         foreground=fg,
-                                                         background=bg,
-                                                         selectbackground=fg,
-                                                         selectforeground=bg,
-                                                         )
-
-                                ind = self._out_txt.index('end-1c')
-                                self._out_txt.insert('end', inp)
-                                ind2 = self._out_txt.index('end-1c')
-                                self._out_txt.tag_add("input", ind, ind2)
-
-                                # configuring a tag called start
-                                ind = self._out_txt.index('end-1c')
-                                self._out_txt.insert('end', out)
-                                ind2 = self._out_txt.index('end-1c')
-                                self._out_txt.tag_add(tag_name_out, ind, ind2)
-                                self._out_txt.configure(state="disabled",
-                                                        exportselection=True
-                                                        )
-                                if tr or self.get_ch_var().autoscroll:
-                                    self.see_end_qso_win()
-                            else:
-                                if Ch_var.t2speech:
-                                    Ch_var.t2speech_buf += '{} {} . {} . {}'.format(
-                                        STR_TABLE['channel'][self.language],
-                                        k,
-                                        conn.to_call_str,
-                                        out.replace('\n', '')
-                                    )
-                                tag_name_out = 'OUT-' + str(conn.my_call_str)
-                                Ch_var.qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text_tx)
-                                Ch_var.qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
-                                Ch_var.qso_tag_name = tag_name_out
-                                if tag_name_out not in Ch_var.output_win_tags.keys():
-                                    Ch_var.output_win_tags[tag_name_out] = ()
-                                old_tags = list(Ch_var.output_win_tags[tag_name_out])
-                                if old_tags:
-                                    old_tags = old_tags + ['end-1c']
-                                else:
-                                    old_tags = ['1.0', 'end-1c']
-                                Ch_var.output_win_tags[tag_name_out] = old_tags
-                                Ch_var.new_data_tr = True
-                            Ch_var.rx_beep_tr = True
-        if tr:
-            self.ch_status_update()
 
     def update_monitor(self, ax25frame, conf, tx=False):
         """ Called from AX25Conn """
@@ -3023,10 +2894,10 @@ class PoPT_GUI_Main:
                 self._ch_btn_clk(ch_ind)
 
     def ch_status_update(self):
-        """ Triggered by tasker !!! """
-        """Triggerd when Connection Status has changed"""
+        """ Triggerd when Connection Status has changed """
         self._ch_btn_status_update()
         # self.change_conn_btn()
+        self._change_conn_btn()
         self.on_channel_status_change()
 
     def _ch_btn_clk(self, ind: int):
@@ -3038,9 +2909,8 @@ class PoPT_GUI_Main:
         old_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         self.channel_index = ind
         # print(old_ch_vars.output_win_tags)
-
         self._set_Channel_Vars()
-
+        self.ch_status_update()
         self._kanal_switch()  # Sprech
 
     def _ch_btn_status_update(self):
@@ -3122,7 +2992,7 @@ class PoPT_GUI_Main:
                 btn.configure(bg=_clr)
 
     def on_channel_status_change(self):
-        """Triggerd when Connection Status has changed"""
+        """ Triggerd when Connection Status has changed + additional Trigger"""
         self.tabbed_sideFrame.on_ch_stat_change()
         self.update_station_info()
 
@@ -3254,58 +3124,58 @@ class PoPT_GUI_Main:
     def _update_status_win(self):
         station = self.get_conn(self.channel_index)
         if station is not None:
-            _from_call = str(station.ax25_out_frame.from_call.call_str)
-            _status = station.zustand_tab[station.get_state_index()][1]
+            from_call = str(station.ax25_out_frame.from_call.call_str)
+            status = station.zustand_tab[station.get_state_index()][1]
             # uid = station.ax25_out_frame.addr_uid
-            _n2 = station.n2
-            _unAck = f"unACK: {len(station.tx_buf_unACK.keys())}"
-            _vs_vr = f"VS/VR: {station.vr}/{station.vs}"
-            _n2_text = f"N2: {_n2}"
-            _t1_text = f"T1: {max(0, int(station.t1 - time.time()))}"
-            _rtt_text = 'RTT: {:.1f}/{:.1f}'.format(station.RTT_Timer.rtt_last, station.RTT_Timer.rtt_average)
-            _t3_text = f"T3: {max(0, int(station.t3 - time.time()))}"
+            n2 = station.n2
+            unAck = f"unACK: {len(station.tx_buf_unACK.keys())}"
+            vs_vr = f"VS/VR: {station.vr}/{station.vs}"
+            n2_text = f"N2: {n2}"
+            t1_text = f"T1: {max(0, int(station.t1 - time.time()))}"
+            rtt_text = 'RTT: {:.1f}/{:.1f}'.format(station.RTT_Timer.rtt_last, station.RTT_Timer.rtt_average)
+            t3_text = f"T3: {max(0, int(station.t3 - time.time()))}"
             if station.own_port.port_cfg.parm_T2_auto:
-                _t2_text = f"T2: {int(station.parm_T2 * 1000)}A"
+                t2_text = f"T2: {int(station.parm_T2 * 1000)}A"
             else:
-                _t2_text = f"T2: {int(station.parm_T2 * 1000)}"
-            if self._status_name_var.get() != _from_call:
-                self._status_name_var.set(_from_call)
-            if self._status_status_var.get() != _status:
-                _status_bg = STATUS_BG[_status]
-                self._status_status_var.set(_status)
-                self._status_status.configure(bg=_status_bg)
-            if self._status_unack_var.get() != _unAck:
-                self._status_unack_var.set(_unAck)
+                t2_text = f"T2: {int(station.parm_T2 * 1000)}"
+            if self._status_name_var.get() != from_call:
+                self._status_name_var.set(from_call)
+            if self._status_status_var.get() != status:
+                status_bg = STATUS_BG[status]
+                self._status_status_var.set(status)
+                self._status_status.configure(bg=status_bg)
+            if self._status_unack_var.get() != unAck:
+                self._status_unack_var.set(unAck)
                 if len(station.tx_buf_unACK.keys()):
                     if self._status_unack.cget('bg') != 'yellow':
                         self._status_unack.configure(bg='yellow')
                 else:
                     if self._status_unack.cget('bg') != 'green':
                         self._status_unack.configure(bg='green')
-            if self._status_vs_var.get() != _vs_vr:
-                self._status_vs_var.set(_vs_vr)
-            if self._status_n2_var.get() != _n2_text:
-                self._status_n2_var.set(_n2_text)
-                if _n2 > 4:
+            if self._status_vs_var.get() != vs_vr:
+                self._status_vs_var.set(vs_vr)
+            if self._status_n2_var.get() != n2_text:
+                self._status_n2_var.set(n2_text)
+                if n2 > 4:
                     if self._status_n2.cget('bg') != 'yellow':
                         self._status_n2.configure(bg='yellow')
-                elif _n2 > 10:
+                elif n2 > 10:
                     if self._status_n2.cget('bg') != 'orange':
                         self._status_n2.configure(bg='orange')
                 else:
                     if self._status_n2.cget('bg') != STAT_BAR_CLR:
                         self._status_n2.configure(bg=STAT_BAR_CLR)
-            if self._status_t1_var.get() != _t1_text:
-                self._status_t1_var.set(_t1_text)
-            if self._status_t2_var.get() != _t2_text:
-                self._status_t2_var.set(_t2_text)
-            if self._status_rtt_var.get() != _rtt_text:
-                self._status_rtt_var.set(_rtt_text)
-            if self._status_t3_var.get() != _t3_text:
-                self._status_t3_var.set(_t3_text)
+            if self._status_t1_var.get() != t1_text:
+                self._status_t1_var.set(t1_text)
+            if self._status_t2_var.get() != t2_text:
+                self._status_t2_var.set(t2_text)
+            if self._status_rtt_var.get() != rtt_text:
+                self._status_rtt_var.set(rtt_text)
+            if self._status_t3_var.get() != t3_text:
+                self._status_t3_var.set(t3_text)
 
         else:
-            if self._status_status.cget('text') or self._status_status.cget('bg') != STAT_BAR_CLR:
+            if self._status_status.cget('bg') != STAT_BAR_CLR:
                 # self.status_name.configure(text="", bg=STAT_BAR_CLR)
                 self._status_name_var.set('')
                 self._status_status.configure(bg=STAT_BAR_CLR)

@@ -186,7 +186,7 @@ class AX25Port(threading.Thread):
         return False
 
     def _rx_new_conn_handler(self, ax25_frame: AX25Frame):
-        if ax25_frame.ctl_byte.flag != 'SABM':
+        if ax25_frame.ctl_byte.flag == 'UI':
             return False
         # New Incoming Connection
         if ax25_frame.to_call.call_str in self.my_stations:
@@ -328,15 +328,10 @@ class AX25Port(threading.Thread):
 
     def _task_connections(self):
         """ Execute Cronjob on all Connections"""
-        all_conn = dict(self._connections)
-        for k in list(all_conn.keys()):
-            # if _k in self.connections.keys():
-            try:    # TODO Not happy. When no more Errors delete this shit.
-                all_conn[k].exec_cron()
-            except KeyError:
-                logger.error(f"KeyError cron_pac_handler(): {k}")
-                print(f"KeyError cron_pac_handler(): {k}")
-                print(f"KeyError cron_pac_handler()keys:: {list(all_conn.keys())}")
+        for k in list(self._connections.keys()):
+            conn = self._connections.get(k, None)
+            if conn:
+                conn.exec_cron()
 
     def build_new_pipe(self,
                        own_call,

@@ -349,8 +349,6 @@ class AX25PortHandler(object):
         else:
             new_conn.ch_index = int(ind)
             self.all_connections[ind] = new_conn
-        if self.gui:
-            self.gui.ch_status_update()
 
     def accept_new_connection(self, connection):
         if self.gui:
@@ -364,7 +362,9 @@ class AX25PortHandler(object):
                 speech = ' '.join(connection.to_call_str.replace('-', ' '))
                 self.gui.sprech(speech)
             else:
-                connection.send_to_link()
+                connection.send_to_link(
+                    f'\r*** Connect from {connection.to_call_str}\r'.encode('ASCII', 'ignore')
+                )
             self.gui.ch_status_update()
 
     """
@@ -386,6 +386,8 @@ class AX25PortHandler(object):
         ch_index = conn.ch_index
         # for k in list(self.all_connections.keys()):
         # temp_conn: AX25Conn = self.all_connections[k]
+        if ch_index not in self.all_connections.keys():
+            return
         if self.all_connections[ch_index] == conn:
             del self.all_connections[ch_index]
             if self.gui:
