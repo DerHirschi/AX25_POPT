@@ -104,6 +104,7 @@ class WXWin(tk.Toplevel):
         self._wx_data = []
         self._init_tree_data()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
+        self._root_win.wx_window = self
 
     def _init_tree_data(self):
         self._get_wx_data()
@@ -111,6 +112,7 @@ class WXWin(tk.Toplevel):
         self._update_tree()
 
     def update_tree_data(self):
+        # TODO Call fm guiMain Loop
         self._get_wx_data()
         self._format_tree_data()
         self._update_tree()

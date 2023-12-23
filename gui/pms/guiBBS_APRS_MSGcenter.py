@@ -266,6 +266,7 @@ class MSG_Center(tk.Toplevel):
         self.bind('<Control-c>', lambda event: self._copy_select())
         #####################
         # Get Settings fm CFG
+        self._root_win.MSG_Center_win = self
         self._init_Vars_fm_Cfg()
 
     def _init_Menu(self):
@@ -1437,5 +1438,5 @@ class MSG_Center(tk.Toplevel):
     def _close(self):
         self._save_Vars_to_Cfg()
         self._bbs_obj = None
-        self._root_win.MSG_Center = None
+        self._root_win.MSG_Center_win = None
         self.destroy()

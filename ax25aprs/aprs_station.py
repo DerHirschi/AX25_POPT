@@ -209,6 +209,7 @@ class APRS_ais(object):
         if self.wx_tree_gui is not None:
             if self._wx_update_tr:
                 self._wx_update_tr = False
+                # TODO Call fm guiMain loop (may cause random crash ?)
                 self.wx_tree_gui.update_tree_data()
 
     """
@@ -788,6 +789,7 @@ class APRS_ais(object):
         if _root_gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
             if _root_gui.be_tracer_win is not None:
+                # TODO Call fm guiMain loop (may cause random crash ?)
                 _root_gui.be_tracer_win.update_tree_data()
 
     def tracer_traces_get(self):

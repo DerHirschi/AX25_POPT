@@ -14,7 +14,6 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         tk.Toplevel.__init__(self)
         self._init_done = False
         self._root_cl = root_win
-        self._root_cl.aprs_pn_msg_win = self
         self.lang = self._root_cl.language
         self.text_size = self._root_cl.text_size
         self.win_height = 700
@@ -159,9 +158,11 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._new_msg_win = None
         self._antwort_pack = {}
         self._is_in_update = False
+        self._root_cl.aprs_pn_msg_win = self
         self.bind('<Return>', self._send_aprs_msg)
         self._update_tree()
         self._init_done = True
+
 
     def _update_tree(self):
         while self._is_in_update:

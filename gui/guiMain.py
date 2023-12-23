@@ -1036,7 +1036,7 @@ class PoPT_GUI_Main:
         self.userdb_win = None
         self.userDB_tree_win = None
         self.BBS_fwd_q_list = None
-        self.MSG_Center = None
+        self.MSG_Center_win = None
         self.newPMS_MSG_win = None
         ####################################
         self._init_GUI_vars_fm_CFG()
@@ -1165,7 +1165,7 @@ class PoPT_GUI_Main:
             self.aprs_pn_msg_win,
             self.be_tracer_win,
             self.BBS_fwd_q_list,
-            self.MSG_Center,
+            self.MSG_Center_win,
             self.newPMS_MSG_win,
         ]:
             if wn is not None:
@@ -1852,6 +1852,7 @@ class PoPT_GUI_Main:
                                                   )
         self._mon_txt.pack(side=tk.TOP)
 
+
     #######################################
     # KEYBIND Stuff
     def _set_binds(self):
@@ -2036,7 +2037,6 @@ class PoPT_GUI_Main:
         for ch_id in self._channel_vars.keys():
             self._channel_vars[ch_id] = ChVars()
         self._set_Channel_Vars()
-
 
     def _clear_monitor_data(self):
         self._mon_txt.configure(state='normal')
@@ -2352,12 +2352,6 @@ class PoPT_GUI_Main:
             self._test_task_timer = time.time() + self._parm_test_task_timer
             #####################
 
-    """
-    @staticmethod
-    def _aprs_task():
-        if PORT_HANDLER.get_aprs_ais() is not None:
-            PORT_HANDLER.get_aprs_ais().task()
-    """
 
     @staticmethod
     def _aprs_wx_tree_task():
@@ -2369,7 +2363,127 @@ class PoPT_GUI_Main:
 
     #################################
     # TASKS
-    def _update_qso_win(self):  # INPUT WIN
+    def _update_qso_win(self):
+        all_conn_ch_index = list(PORT_HANDLER.get_all_connections().keys())
+        tr = False
+        for channel in all_conn_ch_index:
+            if self._update_channel(channel):
+                tr = True
+        if tr:
+            self.ch_status_update()
+
+    def _update_channel(self, channel: int):
+        conn = self.get_conn(channel)
+        if not conn:
+            return False
+        if conn.ft_obj:
+            return False
+        if conn.rx_buf_rawData or conn.tx_buf_guiData:
+            if channel > 10:
+                # TODO Service Channels
+                return False
+
+            txt_enc = 'UTF-8'
+            if conn.user_db_ent:
+                txt_enc = conn.user_db_ent.Encoding
+
+            inp = bytes(conn.tx_buf_guiData)
+            conn.tx_buf_guiData = conn.tx_buf_guiData[len(inp):]
+
+            out = bytes(conn.rx_buf_rawData)
+            conn.rx_buf_rawData = conn.rx_buf_rawData[len(out):]
+
+            # if self.win_buf[k].hex_output:
+            """
+            hex_out = out.hex()
+            hex_in = inp.hex()
+            """
+            inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
+            # Write RX Date to Window/Channel Buffer
+
+            out = out.decode(txt_enc, 'ignore')
+            out = out.replace('\r\n', '\n') \
+                .replace('\n\r', '\n') \
+                .replace('\r', '\n')
+            # print(f"{out}\nhex: {hex_out}")
+            out = tk_filter_bad_chars(out)
+            """
+            if hex_out:
+                out = out + ' > ' + hex_out + '\n'
+            if hex_in:
+                inp = inp + ' >' + hex_in + '<\n'
+            """
+            # Write RX Date to Window/Channel Buffer
+            Ch_var = self.get_ch_var(ch_index=channel)
+            Ch_var.output_win += inp
+            Ch_var.output_win += out
+
+            if self.channel_index == channel:
+                if Ch_var.t2speech:
+                    Ch_var.t2speech_buf += out.replace('\n', '')
+                # TODO get the TAGs right.. .
+                fg = conn.stat_cfg.stat_parm_qso_col_text
+                bg = conn.stat_cfg.stat_parm_qso_col_bg
+                tag_name_out = 'OUT-' + str(conn.my_call_str)
+                Ch_var.qso_tag_fg = fg
+                Ch_var.qso_tag_bg = bg
+                Ch_var.qso_tag_name = tag_name_out
+
+                tr = False
+                if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15:
+                    tr = True
+
+                self._out_txt.configure(state="normal")
+                # TODO get the TAGs right.. . Just config tags on new connection
+                self._out_txt.tag_config(tag_name_out,
+                                         foreground=fg,
+                                         background=bg,
+                                         selectbackground=fg,
+                                         selectforeground=bg,
+                                         )
+
+                ind = self._out_txt.index('end-1c')
+                self._out_txt.insert('end', inp)
+                ind2 = self._out_txt.index('end-1c')
+                self._out_txt.tag_add("input", ind, ind2)
+
+                # configuring a tag called start
+                ind = self._out_txt.index('end-1c')
+                self._out_txt.insert('end', out)
+                ind2 = self._out_txt.index('end-1c')
+                self._out_txt.tag_add(tag_name_out, ind, ind2)
+                self._out_txt.configure(state="disabled",
+                                        exportselection=True
+                                        )
+                if tr or self.get_ch_var().autoscroll:
+                    self.see_end_qso_win()
+            else:
+                if Ch_var.t2speech:
+                    Ch_var.t2speech_buf += '{} {} . {} . {}'.format(
+                        STR_TABLE['channel'][self.language],
+                        channel,
+                        conn.to_call_str,
+                        out.replace('\n', '')
+                    )
+                tag_name_out = 'OUT-' + str(conn.my_call_str)
+                Ch_var.qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
+                Ch_var.qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
+                Ch_var.qso_tag_name = tag_name_out
+                if tag_name_out not in Ch_var.output_win_tags.keys():
+                    Ch_var.output_win_tags[tag_name_out] = ()
+                old_tags = list(Ch_var.output_win_tags[tag_name_out])
+                if old_tags:
+                    old_tags = old_tags + ['end-1c']
+                else:
+                    old_tags = ['1.0', 'end-1c']
+                Ch_var.output_win_tags[tag_name_out] = old_tags
+                Ch_var.new_data_tr = True
+            Ch_var.rx_beep_tr = True
+            return True
+        return False
+
+
+    def _update_qso_win_1(self):  # INPUT WIN
         # TODO.. Again
         # UPDATE INPUT WIN
         tr = False
@@ -2589,16 +2703,6 @@ class PoPT_GUI_Main:
         if callable(settings_win):
             self.settings_win = settings_win(self)
 
-    ##########################
-    # UserDB
-    def open_user_db_win(self, event=None, ent_key=''):
-        if self.userdb_win is None:
-            if not ent_key:
-                _conn = self.get_conn()
-                if _conn is not None:
-                    ent_key = _conn.to_call_str
-            self.userdb_win = UserDB(self, ent_key)
-
     def _open_window(self, win_key: str):
         # self._open_window('new_conn')
         if not win_key:
@@ -2610,7 +2714,7 @@ class PoPT_GUI_Main:
             'aprs_mon': (self.aprs_mon_win, AISmonitor),
             'aprs_msg': (self.aprs_pn_msg_win, APRS_msg_SYS_PN),
             'pms_fwq_q': (self.BBS_fwd_q_list, BBS_fwd_Q),
-            'pms_msg_center': (self.MSG_Center, MSG_Center),
+            'pms_msg_center': (self.MSG_Center_win, MSG_Center),
             'pms_new_msg': (self.newPMS_MSG_win, BBS_newMSG),
             'userDB_tree': (self.userDB_tree_win, UserDBtreeview),
             # TODO .......
@@ -2619,9 +2723,21 @@ class PoPT_GUI_Main:
         if not win_list:
             return
         if win_list[0]:
+            if hasattr(win_list[0], 'lift'):
+                win_list[0].lift()
             return
         if callable(win_list[1]):
             win_list[1](self)
+
+    ##########################
+    # UserDB
+    def open_user_db_win(self, event=None, ent_key=''):
+        if self.userdb_win is None:
+            if not ent_key:
+                _conn = self.get_conn()
+                if _conn is not None:
+                    ent_key = _conn.to_call_str
+            self.userdb_win = UserDB(self, ent_key)
 
     ##########################
     # New Connection WIN
@@ -2904,6 +3020,7 @@ class PoPT_GUI_Main:
         old_ch_vars.output_win_tags = get_all_tags(self._out_txt)
         old_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         self.channel_index = ind
+        print(old_ch_vars.output_win_tags)
 
         self._set_Channel_Vars()
         """

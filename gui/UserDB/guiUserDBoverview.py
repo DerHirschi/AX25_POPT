@@ -75,6 +75,7 @@ class UserDBtreeview(tk.Toplevel):
         # tree.column(1, stretch=True)
 
         self.tree_data = []
+        self.root.userDB_tree_win = self
         self.init_tree_data()
         self.update_tree()
         self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
