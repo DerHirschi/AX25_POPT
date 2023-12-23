@@ -39,7 +39,7 @@ def get_all_stat_cfg():
     """ TODO Again !! Bullshit """
     stat_cfg_path = CFG_data_path + CFG_usertxt_path
     stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
-    ret: {str: DefaultStation} = {}
+    ret = {}
     if len(stat_cfg) > 1:
         stat_cfg = stat_cfg[1:]
         for folder in stat_cfg:
@@ -138,12 +138,13 @@ class DefaultStation:
     stat_parm_PacLen: int = 0  # Max Pac len
     stat_parm_MaxFrame: int = 0  # Max (I) Frames
     # stat_param_beacons: {int: [Beacon]} = {}
-    stat_parm_qso_col_text = 'red'
+    stat_parm_qso_col_text_tx = 'white'
     stat_parm_qso_col_bg = 'black'
+    stat_parm_qso_col_text_rx = '#25db04'
 
 
 class DefaultPort(object):
-    parm_Stations: [DefaultStation] = []
+    parm_Stations = []
     station_save_files: [str] = []
     """ Port Parameter """
     parm_PortNr: int = -1
@@ -233,13 +234,13 @@ class DefaultPort(object):
 
 
 class PortConfigInit(DefaultPort):
-    def __init__(self, loaded_stat: {str: DefaultStation}, port_id: int):
+    def __init__(self, loaded_stat: dict, port_id: int):
         # ReInit rest of this shit
         for att in dir(self):
             if '__' not in att and att not in self.dont_save_this and not callable(getattr(self, att)):
                 setattr(self, att, getattr(self, att))
         self.parm_PortNr = int(port_id)
-        self.parm_Stations: [DefaultStation] = []
+        self.parm_Stations = []
         self.station_save_files = []
         file = CFG_data_path + f'port{self.parm_PortNr}.popt'
         is_file = False

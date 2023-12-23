@@ -327,30 +327,44 @@ class AX25PortHandler(object):
 
     ######################
     # Connection Handling
-    def insert_conn2all_conn_var(self, new_conn, ind: int = 1):
+    def insert_new_connection(self, new_conn, ind: int = 1):
+        """ Insert connection for handling """
         # if not new_conn.is_link:
         keys = list(self.all_connections.keys())
         if keys:
-            tr = False
             # Check if Connection is already in all_conn...
             for k in list(self.all_connections.keys()):
                 if new_conn == self.all_connections[k]:
-                    tr = True
                     if new_conn.ch_index != k:
                         logger.warning("Channel Index != Real Index !!!")
                         new_conn.ch_index = int(k)
-            if not tr:
-                while True:
-                    if ind in keys:
-                        ind += 1
-                    else:
-                        new_conn.ch_index = int(ind)
-                        self.all_connections[ind] = new_conn
-                        break
+                        return
+            while True:
+                if ind in keys:
+                    ind += 1
+                else:
+                    new_conn.ch_index = int(ind)
+                    self.all_connections[ind] = new_conn
+                    break
         else:
             new_conn.ch_index = int(ind)
             self.all_connections[ind] = new_conn
-        if self.gui is not None:
+        if self.gui:
+            self.gui.ch_status_update()
+
+    def accept_new_connection(self, connection):
+        if self.gui:
+            if not connection.LINK_Connection:
+                # TODO: Trigger here, Logbook and UserDB-Conn C
+                self.gui.sysMsg_to_qso(
+                    data=f'\n*** Connect from {connection.to_call_str}\n',
+                    ch_index=connection.ch_index
+                )
+                self.gui.new_conn_sound()
+                speech = ' '.join(connection.to_call_str.replace('-', ' '))
+                self.gui.sprech(speech)
+            else:
+                connection.send_to_link()
             self.gui.ch_status_update()
 
     """
@@ -368,20 +382,19 @@ class AX25PortHandler(object):
             del self.all_connections[k]
     """
 
-    def del_conn_var(self, conn):
-        # TODO , Cleanup. Get conn by Key
-        for k in list(self.all_connections.keys()):
-            # temp_conn: AX25Conn = self.all_connections[k]
-            if self.all_connections[k] == conn:
-                if self.gui is not None:
-                    self.gui.send_to_qso(data=f'\n*** Disconnected from {str(conn.to_call_str)}\n', ch_index=int(conn.ch_index))
-                    self.gui.disco_sound()
-                    # TODO: Trigger here, Logbook and UserDB-Conn C
-                self.all_connections[k].ch_index = 0
-                del self.all_connections[k]
-
-        if self.gui is not None:
-            self.gui.ch_status_update()
+    def delete_connection(self, conn):
+        ch_index = conn.ch_index
+        # for k in list(self.all_connections.keys()):
+        # temp_conn: AX25Conn = self.all_connections[k]
+        if self.all_connections[ch_index] == conn:
+            del self.all_connections[ch_index]
+            if self.gui:
+                # TODO: Trigger here, Logbook and UserDB-Conn C
+                self.gui.sysMsg_to_qso(
+                    data=f'\n*** Disconnected from {str(conn.to_call_str)}\n',
+                    ch_index=int(conn.ch_index))
+                self.gui.disco_sound()
+                self.gui.ch_status_update()
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
@@ -465,7 +478,7 @@ class AX25PortHandler(object):
         """
 
         if connection:
-            self.insert_conn2all_conn_var(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
+            self.insert_new_connection(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
             user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
@@ -539,6 +552,9 @@ class AX25PortHandler(object):
 
     ######################
     # Returns
+    def get_gui(self):
+        return self.gui
+
     def get_aprs_ais(self):
         return self.aprs_ais
 
@@ -547,6 +563,9 @@ class AX25PortHandler(object):
 
     def get_all_connections(self):
         return self.all_connections
+
+    def get_all_stat_cfg(self):
+        return self.ax25_stations_settings
 
     def get_stat_calls_fm_port(self, port_id=0):
         if port_id in self.ax25_ports.keys():

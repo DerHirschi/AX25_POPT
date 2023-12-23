@@ -291,9 +291,9 @@ class NewConnWin(tk.Toplevel):
                 conn = PORT_HANDLER.get_all_ports()[self.port_index].new_connection(ax25_frame=ax_frame)
                 if conn:
                     # conn: AX25Conn
-                    PORT_HANDLER.insert_conn2all_conn_var(new_conn=conn, ind=self._main.channel_index)
+                    PORT_HANDLER.insert_new_connection(new_conn=conn, ind=self._main.channel_index)
                 else:
-                    self._main.send_to_qso('\n*** Busy. No free SSID available.\n\n', self.port_index)
+                    self._main.sysMsg_to_qso('\n*** Busy. No free SSID available.\n\n', self._main.channel_index)
                 if call.upper() in self._conn_hist.keys():
                     del self._conn_hist[call.upper()]
                 self._conn_hist[call.upper()] = ConnHistory(

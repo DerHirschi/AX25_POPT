@@ -56,7 +56,7 @@ class AX25Port(threading.Thread):
         self._digi_TXD = time.time()
         self._digi_buf: [AX25Frame] = []
         self._UI_buf: [AX25Frame] = []
-        self.connections: {str: AX25Conn} = {}
+        self._connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
         """ APRS Stuff """
         self.aprs_stat = self.port_cfg.parm_aprs_station    # TODO not used yet
@@ -180,20 +180,21 @@ class AX25Port(threading.Thread):
 
     def _rx_conn_handler(self, ax25_frame: AX25Frame):
         uid = str(ax25_frame.addr_uid)
-        if uid in self.connections.keys():
-            self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+        if uid in self._connections.keys():
+            self._connections[uid].handle_rx(ax25_frame=ax25_frame)
             return True
         return False
 
     def _rx_new_conn_handler(self, ax25_frame: AX25Frame):
-        if ax25_frame.ctl_byte.flag == 'UI':
+        if ax25_frame.ctl_byte.flag != 'SABM':
             return False
         # New Incoming Connection
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
-            self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
-            # self.connections[uid].handle_rx(ax25_frame=ax25_frame)
-            return True
+            if uid not in self._connections.keys():
+                self._connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
+                # self.connections[uid].handle_rx(ax25_frame=ax25_frame)
+                return True
         return False
 
     def _rx_simple_digi_handler(self, ax25_frame: AX25Frame):
@@ -226,8 +227,8 @@ class AX25Port(threading.Thread):
 
     def _tx_connection_buf(self):
         tr = False
-        for k in self.connections.keys():
-            conn: AX25Conn = self.connections[k]
+        for k in self._connections.keys():
+            conn: AX25Conn = self._connections[k]
             if time.time() > conn.t2 and not tr:
                 snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
                 conn.tx_buf_ctl = []
@@ -327,14 +328,15 @@ class AX25Port(threading.Thread):
 
     def _task_connections(self):
         """ Execute Cronjob on all Connections"""
-        for _k in list(self.connections.keys()):
+        all_conn = dict(self._connections)
+        for k in list(all_conn.keys()):
             # if _k in self.connections.keys():
             try:    # TODO Not happy. When no more Errors delete this shit.
-                self.connections[_k].exec_cron()
+                all_conn[k].exec_cron()
             except KeyError:
-                logger.error(f"KeyError cron_pac_handler(): {_k}")
-                print(f"KeyError cron_pac_handler(): {_k}")
-                print(f"KeyError cron_pac_handler()keys:: {list(self.connections.keys())}")
+                logger.error(f"KeyError cron_pac_handler(): {k}")
+                print(f"KeyError cron_pac_handler(): {k}")
+                print(f"KeyError cron_pac_handler()keys:: {list(all_conn.keys())}")
 
     def build_new_pipe(self,
                        own_call,
@@ -400,14 +402,14 @@ class AX25Port(threading.Thread):
                 reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
         """
         while True:
-            if ax25_frame.addr_uid not in self.connections.keys() and \
-                    reverse_uid(ax25_frame.addr_uid) not in self.connections.keys():
+            if ax25_frame.addr_uid not in self._connections.keys() and \
+                    reverse_uid(ax25_frame.addr_uid) not in self._connections.keys():
                 break
-            if ax25_frame.addr_uid in self.connections.keys():
-                if self.connections[ax25_frame.addr_uid].zustand_exec.stat_index in [0, 1]:
+            if ax25_frame.addr_uid in self._connections.keys():
+                if self._connections[ax25_frame.addr_uid].zustand_exec.stat_index in [0, 1]:
                     break
-            if reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
-                if self.connections[reverse_uid(ax25_frame.addr_uid)].zustand_exec.stat_index in [0, 1]:
+            if reverse_uid(ax25_frame.addr_uid) in self._connections.keys():
+                if self._connections[reverse_uid(ax25_frame.addr_uid)].zustand_exec.stat_index in [0, 1]:
                     break
 
             logger.debug("Same UID !! {}".format(ax25_frame.addr_uid))
@@ -426,20 +428,17 @@ class AX25Port(threading.Thread):
                 raise AX25EncodingERROR(self)
         conn = AX25Conn(ax25_frame, self.port_cfg, rx=False, port=self)
         # conn.cli.change_cli_state(1)
-        self.connections[ax25_frame.addr_uid] = conn
+        self._connections[ax25_frame.addr_uid] = conn
         return conn
 
     def del_connections(self, conn: AX25Conn):
-        logger.debug(f"del_connections: {conn.uid}\n"
-              f"state: {conn.zustand_exec.stat_index}\n"
-              f"conn.keys: {self.connections.keys()}\n")
         self.port_handler.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
-        if conn.uid in self.connections.keys():
-            del self.connections[conn.uid]
-        if reverse_uid(conn.uid) in self.connections.keys():
-            del self.connections[reverse_uid(conn.uid)]
+        if conn.uid in self._connections.keys():
+            del self._connections[conn.uid]
+        if reverse_uid(conn.uid) in self._connections.keys():
+            del self._connections[reverse_uid(conn.uid)]
 
     def send_UI_frame(self,
                       own_call,
@@ -480,8 +479,8 @@ class AX25Port(threading.Thread):
 
     def _reset_ft_wait_timer(self, ax25_frame: AX25Frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
-            for k in self.connections.keys():
-                self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
+            for k in self._connections.keys():
+                self._connections[k].ft_reset_timer(ax25_frame.addr_uid)
 
     def _gui_monitor(self, ax25frame: AX25Frame, tx: bool = True):
         self._mh.mh_input(ax25frame, self.port_id, tx)

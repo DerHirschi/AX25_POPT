@@ -66,8 +66,8 @@ elif is_windows():
 
 class ChVars(object):
     output_win = ''
-    output_win_tags = {}
     input_win = ''
+    output_win_tags = {}
     input_win_tags = {}
     input_win_index = '1.0'
     input_win_cursor_index = tk.INSERT
@@ -79,9 +79,11 @@ class ChVars(object):
     t2speech = False
     t2speech_buf = ''
     autoscroll = True
+    """
     qso_tag_name = ''
     qso_tag_fg = ''
     qso_tag_bg = ''
+    """
     # self.hex_output = True
 
 
@@ -1127,6 +1129,8 @@ class PoPT_GUI_Main:
         # Init Vars fm CFG
         self._init_PARM_vars()
         self._set_CFG()
+        # Text Tags
+        self.set_text_tags()
         # .....
         self._set_Channel_Vars()
         self._monitor_start_msg()
@@ -1207,7 +1211,7 @@ class PoPT_GUI_Main:
             del ch_vars[ch_id]['rx_beep_cooldown']
             del ch_vars[ch_id]['rx_beep_tr']
             del ch_vars[ch_id]['output_win_tags']
-            del ch_vars[ch_id]['qso_tag_bg']
+            # del ch_vars[ch_id]['qso_tag_bg']
             del ch_vars[ch_id]['input_win_tags']
         POPT_CFG.save_guiCH_VARS(dict(ch_vars))
         # POPT_CFG.save_guiCH_VARS({})
@@ -1852,6 +1856,40 @@ class PoPT_GUI_Main:
                                                   )
         self._mon_txt.pack(side=tk.TOP)
 
+    #######################################
+    # Text Tags
+
+    def set_text_tags(self):
+        all_stat_cfg = PORT_HANDLER.get_all_stat_cfg()
+        for call in list(all_stat_cfg.keys()):
+            stat_cfg = all_stat_cfg[call]
+            tx_fg = stat_cfg.stat_parm_qso_col_text_tx
+            tx_bg = stat_cfg.stat_parm_qso_col_bg
+
+            rx_fg = stat_cfg.stat_parm_qso_col_text_rx
+
+            tx_tag = 'TX-' + str(call)
+            rx_tag = 'RX-' + str(call)
+            self._out_txt.configure(state="normal")
+            self._out_txt.tag_config(tx_tag,
+                                     foreground=tx_fg,
+                                     background=tx_bg,
+                                     selectbackground=tx_fg,
+                                     selectforeground=tx_bg,
+                                     )
+            self._out_txt.tag_config(rx_tag,
+                                     foreground=rx_fg,
+                                     background=tx_bg,
+                                     selectbackground=rx_fg,
+                                     selectforeground=tx_bg,
+                                     )
+            self._out_txt.tag_config('SYS-MSG',
+                                     foreground='#fc7126',
+                                     background='#000000',
+                                     selectbackground='#fc7126',
+                                     selectforeground='#000000',
+                                     )
+            self._out_txt.configure(state="disabled")
 
     #######################################
     # KEYBIND Stuff
@@ -2407,12 +2445,7 @@ class PoPT_GUI_Main:
                 .replace('\r', '\n')
             # print(f"{out}\nhex: {hex_out}")
             out = tk_filter_bad_chars(out)
-            """
-            if hex_out:
-                out = out + ' > ' + hex_out + '\n'
-            if hex_in:
-                inp = inp + ' >' + hex_in + '<\n'
-            """
+
             # Write RX Date to Window/Channel Buffer
             Ch_var = self.get_ch_var(ch_index=channel)
             Ch_var.output_win += inp
@@ -2421,37 +2454,27 @@ class PoPT_GUI_Main:
             if self.channel_index == channel:
                 if Ch_var.t2speech:
                     Ch_var.t2speech_buf += out.replace('\n', '')
-                # TODO get the TAGs right.. .
-                fg = conn.stat_cfg.stat_parm_qso_col_text
-                bg = conn.stat_cfg.stat_parm_qso_col_bg
-                tag_name_out = 'OUT-' + str(conn.my_call_str)
-                Ch_var.qso_tag_fg = fg
-                Ch_var.qso_tag_bg = bg
-                Ch_var.qso_tag_name = tag_name_out
 
                 tr = False
                 if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15:
                     tr = True
 
                 self._out_txt.configure(state="normal")
-                # TODO get the TAGs right.. . Just config tags on new connection
-                self._out_txt.tag_config(tag_name_out,
-                                         foreground=fg,
-                                         background=bg,
-                                         selectbackground=fg,
-                                         selectforeground=bg,
-                                         )
+
+                tag_name_tx = 'TX-' + str(conn.my_call_str)        # TODO Test whit SSIDs
+                tag_name_rx = 'RX-' + str(conn.my_call_str)        # TODO Test whit SSIDs
 
                 ind = self._out_txt.index('end-1c')
                 self._out_txt.insert('end', inp)
                 ind2 = self._out_txt.index('end-1c')
-                self._out_txt.tag_add("input", ind, ind2)
+                self._out_txt.tag_add(tag_name_tx, ind, ind2)
 
                 # configuring a tag called start
                 ind = self._out_txt.index('end-1c')
                 self._out_txt.insert('end', out)
                 ind2 = self._out_txt.index('end-1c')
-                self._out_txt.tag_add(tag_name_out, ind, ind2)
+                self._out_txt.tag_add(tag_name_rx, ind, ind2)
+
                 self._out_txt.configure(state="disabled",
                                         exportselection=True
                                         )
@@ -2465,9 +2488,11 @@ class PoPT_GUI_Main:
                         conn.to_call_str,
                         out.replace('\n', '')
                     )
+
+                """
                 tag_name_out = 'OUT-' + str(conn.my_call_str)
-                Ch_var.qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
-                Ch_var.qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
+                Ch_var.qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text_tx)
+                Ch_var.qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg_tx)
                 Ch_var.qso_tag_name = tag_name_out
                 if tag_name_out not in Ch_var.output_win_tags.keys():
                     Ch_var.output_win_tags[tag_name_out] = ()
@@ -2477,11 +2502,11 @@ class PoPT_GUI_Main:
                 else:
                     old_tags = ['1.0', 'end-1c']
                 Ch_var.output_win_tags[tag_name_out] = old_tags
+                """
                 Ch_var.new_data_tr = True
             Ch_var.rx_beep_tr = True
             return True
         return False
-
 
     def _update_qso_win_1(self):  # INPUT WIN
         # TODO.. Again
@@ -2534,7 +2559,7 @@ class PoPT_GUI_Main:
                                 if Ch_var.t2speech:
                                     Ch_var.t2speech_buf += out.replace('\n', '')
                                 # TODO get the TAGs right.. .
-                                fg = conn.stat_cfg.stat_parm_qso_col_text
+                                fg = conn.stat_cfg.stat_parm_qso_col_text_tx
                                 bg = conn.stat_cfg.stat_parm_qso_col_bg
                                 tag_name_out = 'OUT-' + str(conn.my_call_str)
                                 Ch_var.qso_tag_fg = fg
@@ -2578,7 +2603,7 @@ class PoPT_GUI_Main:
                                         out.replace('\n', '')
                                     )
                                 tag_name_out = 'OUT-' + str(conn.my_call_str)
-                                Ch_var.qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text)
+                                Ch_var.qso_tag_fg = str(conn.stat_cfg.stat_parm_qso_col_text_tx)
                                 Ch_var.qso_tag_bg = str(conn.stat_cfg.stat_parm_qso_col_bg)
                                 Ch_var.qso_tag_name = tag_name_out
                                 if tag_name_out not in Ch_var.output_win_tags.keys():
@@ -2867,28 +2892,18 @@ class PoPT_GUI_Main:
         if int(float(self._inp_txt.index(tk.INSERT))) != int(float(self._inp_txt.index(tk.END))) - 1:
             self._inp_txt.delete(tk.END, tk.END)
 
-    def send_to_qso(self, data, ch_index):
-        data = data.replace('\r', '\n')
+    def sysMsg_to_qso(self, data, ch_index):
+        # data = data.replace('\r', '\n')
         data = tk_filter_bad_chars(data)
         ch_vars = self.get_ch_var(ch_index=ch_index)
-        _bg = self.get_ch_var(ch_index).qso_tag_bg
-        _fg = self.get_ch_var(ch_index).qso_tag_fg
-        tag_name_out = self.get_ch_var(ch_index).qso_tag_name
+        tag_name_out = 'SYS-MSG'
         ch_vars.output_win += data
         if self.channel_index == ch_index:
             tr = False
             if float(self._out_txt.index(tk.END)) - float(self._out_txt.index("@0,0")) < 22:
                 tr = True
-
             self._out_txt.configure(state="normal")
-            self._out_txt.tag_config(tag_name_out,
-                                     foreground=_fg,
-                                     background=_bg,
-                                     selectbackground=_fg,
-                                     selectforeground=_bg
-                                     )
 
-            # configuring a tag called start
             ind = self._out_txt.index(tk.INSERT)
             self._out_txt.insert('end', data)
             ind2 = self._out_txt.index(tk.INSERT)
@@ -2900,6 +2915,7 @@ class PoPT_GUI_Main:
                 self.see_end_qso_win()
 
         else:
+            """
             if tag_name_out not in ch_vars.output_win_tags.keys():
                 ch_vars.output_win_tags[tag_name_out] = ()
             old_tags = list(ch_vars.output_win_tags[tag_name_out])
@@ -2908,6 +2924,7 @@ class PoPT_GUI_Main:
             else:
                 old_tags = ['1.0', tk.INSERT]
             ch_vars.output_win_tags[tag_name_out] = old_tags
+            """
             ch_vars.new_data_tr = True
         ch_vars.rx_beep_tr = True
         self.ch_status_update()
@@ -3020,45 +3037,10 @@ class PoPT_GUI_Main:
         old_ch_vars.output_win_tags = get_all_tags(self._out_txt)
         old_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         self.channel_index = ind
-        print(old_ch_vars.output_win_tags)
+        # print(old_ch_vars.output_win_tags)
 
         self._set_Channel_Vars()
-        """
-        new_ch_vars.new_data_tr = False
-        new_ch_vars.rx_beep_tr = False
 
-        self._out_txt.configure(state="normal")
-
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.insert(tk.END, new_ch_vars.output_win)
-        self._out_txt.configure(state="disabled")
-        self._out_txt.see(tk.END)
-
-        self._inp_txt.delete('1.0', tk.END)
-        self._inp_txt.insert(tk.END, new_ch_vars.input_win[:-1])
-        set_all_tags(self._inp_txt, new_ch_vars.input_win_tags)
-        set_all_tags(self._out_txt, new_ch_vars.output_win_tags)
-        self._inp_txt.mark_set("insert", new_ch_vars.input_win_cursor_index)
-        self._inp_txt.see(tk.END)
-
-        # self.main_class: gui.guiMainNew.TkMainWin
-        if new_ch_vars.rx_beep_opt and ind:
-            self._txt_win.rx_beep_box.select()
-            self._txt_win.rx_beep_box.configure(bg='green')
-        else:
-            self._txt_win.rx_beep_box.deselect()
-            self._txt_win.rx_beep_box.configure(bg=STAT_BAR_CLR)
-
-        if new_ch_vars.timestamp_opt and ind:
-            self._txt_win.ts_box_box.select()
-            self._txt_win.ts_box_box.configure(bg='green')
-        else:
-            self._txt_win.ts_box_box.deselect()
-            self._txt_win.ts_box_box.configure(bg=STAT_BAR_CLR)
-
-        self.on_channel_status_change()
-        self._ch_btn.ch_btn_status_update()
-        """
         self._kanal_switch()  # Sprech
 
     def _ch_btn_status_update(self):
