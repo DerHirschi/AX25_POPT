@@ -11,6 +11,7 @@ Fixes:
 Optimierung:
 - APRS Config Management(load/save) ins neue System übertragen
 - APRS WX-Daten (Wetterdaten) werden jetzt in der SQL-DB gespeichert
+- APRS WX-Daten werden nicht in der Tabelle angezeigt, wenn länger als 2 Tage kein Paket empfangen wurde
 - APRS WX-Plot extra Achse und Skalierung für Luftdruck
 - MH Listen System optimiert/aufgeräumt
 - Separate MH Listen je Port
@@ -30,7 +31,7 @@ Neue Implementierungen / Funktionen:
 - Alle QSO/Vorschreibfenster löschen option in Menüleiste
 - Hauptfenster: Seitenverhältnisse von QSO- zu Seitenfenster kann jetzt per Maus angepasst werden
 - TX Farben im QSO Fenster auswählbar (Station Einstellungen)
-- System Nachrichten im QSO-Fenster (andere Farbe)
+- System Nachrichten im QSO-Fenster (andere Farbe & Timestamp)
 
 ###########################################################################################################
 ###########################################################################################################

@@ -482,7 +482,7 @@ class AX25Port(threading.Thread):
                 self.gui.update_monitor(
                     # monitor_frame_inp(ax25frame, self.port_cfg),
                     ax25frame,
-                    conf=self.port_cfg,
+                    port_conf=self.port_cfg,
                     tx=tx)
 
     def run(self):

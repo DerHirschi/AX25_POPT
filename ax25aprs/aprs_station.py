@@ -355,7 +355,7 @@ class APRS_ais(object):
         db = self._get_db()
         if not db:
             return []
-        return list(db.aprsWX_get_data_f_wxTree(last_rx_days=0))
+        return list(db.aprsWX_get_data_f_wxTree(last_rx_days=1))
         # return dict(self.aprs_wx_msg_pool)
 
     def get_wx_data_f_call(self, call: str):

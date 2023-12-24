@@ -354,8 +354,12 @@ class AX25PortHandler(object):
         if self.gui:
             if not connection.LINK_Connection:
                 # TODO: Trigger here, Logbook and UserDB-Conn C
+                if connection.is_incoming_connection():
+                    msg = f'*** Connected fm {connection.to_call_str}'
+                else:
+                    msg = f'*** Connected to {connection.to_call_str}'
                 self.gui.sysMsg_to_qso(
-                    data=f'\n*** Connect from {connection.to_call_str}\n',
+                    data=msg,
                     ch_index=connection.ch_index
                 )
                 self.gui.new_conn_sound()
@@ -393,7 +397,7 @@ class AX25PortHandler(object):
             if self.gui:
                 # TODO: Trigger here, Logbook and UserDB-Conn C
                 self.gui.sysMsg_to_qso(
-                    data=f'\n*** Disconnected from {str(conn.to_call_str)}\n',
+                    data=f'*** Disconnected fm {str(conn.to_call_str)}',
                     ch_index=int(conn.ch_index))
                 self.gui.disco_sound()
                 self.gui.ch_status_update()

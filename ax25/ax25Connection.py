@@ -526,7 +526,7 @@ class AX25Conn(object):
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
                     self.port_handler.del_link(self.LINK_Connection.uid)
-                    self.LINK_Connection.send_sys_Msg_to_gui(f'\n*** Reconnected to {self.my_call_str}\n')
+                    self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
@@ -600,6 +600,11 @@ class AX25Conn(object):
         if not self.zustand_exec.stat_index:
             return True
         if self.zustand_exec.stat_index in [0, 1]:
+            return True
+        return False
+
+    def is_incoming_connection(self):
+        if self.zustand_exec.stat_index == 1:
             return True
         return False
 
@@ -1278,7 +1283,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         self.change_state(5)
 
     def _reject(self):
-        self._ax25conn.send_sys_Msg_to_gui(f'\n*** Busy from {self._ax25conn.to_call_str}\n')
+        self._ax25conn.send_sys_Msg_to_gui(f'*** Busy from {self._ax25conn.to_call_str}')
         self.S1_end_connection()
 
     def _state_cron(self):
@@ -1288,7 +1293,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
         # TODO ??? Move up to Conn ???
         if not self._ax25conn.n2:
             if not self._ax25conn.LINK_Connection:
-                to_qso_win = f'\n*** Try connect to {self._ax25conn.ax25_out_frame.to_call.call_str}' \
+                to_qso_win = f'*** Try to connect to {self._ax25conn.ax25_out_frame.to_call.call_str}' \
 
                 user_db_ent = USER_DB.get_entry(self._ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
                 if user_db_ent:
@@ -1296,7 +1301,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
                         to_qso_win += f' - ({user_db_ent.Name})'
                     if user_db_ent.Distance:
                         to_qso_win += f' - {round(user_db_ent.Distance)} km'
-                to_qso_win += f' > Port {self._ax25conn.own_port.port_id}\n'
+                to_qso_win += f' > Port {self._ax25conn.own_port.port_id}'
                 self._ax25conn.send_sys_Msg_to_gui(to_qso_win)
 
         self._ax25conn.send_SABM()
@@ -1312,8 +1317,8 @@ class S2Aufbau(DefaultStat):  # INIT TX
         user_db_ent = USER_DB.get_entry(self._ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
         if user_db_ent:
             if user_db_ent.Name:
-                to_qso_win = f'\n*** Failed connect to {self._ax25conn.ax25_out_frame.to_call.call_str} - ' \
-                             f'({user_db_ent.Name}) > Port {self._ax25conn.own_port.port_id}\n'
+                to_qso_win = f'*** Failed connect to {self._ax25conn.ax25_out_frame.to_call.call_str} - ' \
+                             f'({user_db_ent.Name}) > Port {self._ax25conn.own_port.port_id}'
 
         self._ax25conn.send_sys_Msg_to_gui(to_qso_win)
         self._ax25conn.send_DISC()

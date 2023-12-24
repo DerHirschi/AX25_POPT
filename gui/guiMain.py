@@ -1840,6 +1840,28 @@ class PoPT_GUI_Main:
                                      )
             self._out_txt.configure(state="disabled")
 
+            self._mon_txt.configure(state="normal")
+
+            all_port = PORT_HANDLER.get_all_ports()
+            for port_id in all_port.keys():
+                tag_tx = f"tx{port_id}"
+                tag_rx = f"rx{port_id}"
+                tx_fg = all_port[port_id].port_cfg.parm_mon_clr_tx
+                tx_bg = all_port[port_id].port_cfg.parm_mon_clr_bg
+                rx_fg = all_port[port_id].port_cfg.parm_mon_clr_rx
+                self._mon_txt.tag_config(tag_tx, foreground=tx_fg,
+                                         background=tx_bg,
+                                         selectbackground=tx_fg,
+                                         selectforeground=tx_bg,
+                                         )
+                self._mon_txt.tag_config(tag_rx, foreground=rx_fg,
+                                         background=tx_bg,
+                                         selectbackground=rx_fg,
+                                         selectforeground=tx_bg,
+                                         )
+
+
+            self._mon_txt.configure(state="disabled")
     #######################################
     # KEYBIND Stuff
     def _set_binds(self):
@@ -2496,6 +2518,7 @@ class PoPT_GUI_Main:
 
     def sysMsg_to_qso(self, data, ch_index):
         # data = data.replace('\r', '\n')
+        data = f"\n<{conv_time_DE_str()}>\n" + data + '\n'
         data = tk_filter_bad_chars(data)
         ch_vars = self.get_ch_var(ch_index=ch_index)
         tag_name = 'SYS-MSG'
@@ -2524,12 +2547,12 @@ class PoPT_GUI_Main:
         ch_vars.rx_beep_tr = True
         self.ch_status_update()
 
-    def update_monitor(self, ax25frame, conf, tx=False):
+    def update_monitor(self, ax25frame, port_conf, tx=False):
         """ Called from AX25Conn """
         # TODO just get it from PortBuffer
         self._mon_buff.append((
             ax25frame,
-            conf,
+            port_conf,
             bool(tx)
         ))
 
@@ -2540,35 +2563,29 @@ class PoPT_GUI_Main:
             tr = False
             self._mon_txt.configure(state="normal")
             for el in tmp_buff:
-                _mon_out = monitor_frame_inp(el[0], el[1])
+                conf = el[1]
+                port_id = conf.parm_PortNr
+                tx = el[2]
+                _mon_out = monitor_frame_inp(el[0], conf)
                 if self.tabbed_sideFrame.mon_aprs_var.get():
                     _mon_str = _mon_out[0] + _mon_out[1]
                 else:
                     _mon_str = _mon_out[0]
-                conf = el[1]
-                tx = el[2]
                 _var = tk_filter_bad_chars(_mon_str)
                 ind = self._mon_txt.index('end-1c')
-                color_bg = conf.parm_mon_clr_bg
+                # TODO Autoscroll
                 if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
                     tr = True
                 if tx:
-                    tag = "tx{}".format(conf.parm_PortNr)
-                    color = conf.parm_mon_clr_tx
+                    tag = "tx{}".format(port_id)
                 else:
-                    tag = "rx{}".format(conf.parm_PortNr)
-                    color = conf.parm_mon_clr_rx
+                    tag = "rx{}".format(port_id)
 
                 if tag in self._mon_txt.tag_names(None):
                     self._mon_txt.insert(tk.END, _var, tag)
                 else:
                     self._mon_txt.insert(tk.END, _var)
                     ind2 = self._mon_txt.index('end-1c')
-                    self._mon_txt.tag_config(tag, foreground=color,
-                                             background=color_bg,
-                                             selectbackground=self._mon_txt.cget('selectbackground'),
-                                             selectforeground=self._mon_txt.cget('selectforeground'),
-                                             )
                     self._mon_txt.tag_add(tag, ind, ind2)
             cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
             if cut_len > 0:

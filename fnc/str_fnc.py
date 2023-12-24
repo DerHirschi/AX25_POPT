@@ -35,11 +35,15 @@ def conv_time_for_key(dateti: datetime.now()):
     return dateti.strftime('%y%m%d%H%M%S')
 
 
-def conv_time_US_str(dateti: datetime.now()):
+def conv_time_US_str(dateti=None):
+    if not dateti:
+        return datetime.now().strftime('%m/%d/%y %H:%M:%S')
     return dateti.strftime('%m/%d/%y %H:%M:%S')
 
 
-def conv_time_DE_str(dateti: datetime.now()):
+def conv_time_DE_str(dateti=None):
+    if not dateti:
+        return datetime.now().strftime('%d/%m/%y %H:%M:%S')
     return dateti.strftime('%d/%m/%y %H:%M:%S')
 
 
@@ -140,7 +144,7 @@ def get_time_delta(dateti: datetime.now()):
 
 def calculate_percentage(data_length, data_sent):
     if not data_sent or not data_length:
-        # Divided by Zero let explode the Machine... So, better return 0
+        # Divided by Zero
         return 0
     return round((data_sent / data_length) * 100, 1)
 
@@ -213,3 +217,4 @@ def convert_umlaute_to_ascii(in_str: str):
 
 def get_weekDay_fm_dt(now_weekday):
     return ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now_weekday]
+
