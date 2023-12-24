@@ -470,7 +470,10 @@ class AX25PortHandler(object):
                 return False, 'Error: No AXIP Address'
         if link_conn and not via_calls:
             return False, 'Error: Link No Via Call'
-
+        """
+        if (own_call == dest_call) and not via_calls:
+            return False, 'Error: Invalid Call. TX-CALL = RX-CALL'
+        """
         connection = self.ax25_ports[port_id].build_new_connection(own_call=own_call,
                                                                    dest_call=dest_call,
                                                                    via_calls=via_calls,
@@ -493,7 +496,7 @@ class AX25PortHandler(object):
                 if user_db_ent.Name:
                     return True, f'\r*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r', connection
             return True, f'\r*** Link Setup to {dest_call} > Port {port_id}\r', connection
-        return False, '\r*** Busy'
+        return False, '\r*** Busy. No free SSID available.'
 
     def send_UI(self, conf: dict):
         port_id = conf.get('port_id', 0)

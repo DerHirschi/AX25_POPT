@@ -741,9 +741,11 @@ class SideTabbedFrame:  # TODO: WTF
 
             if vias:
                 call = f'{call} {vias}'
-            self._main_win.open_new_conn_win()
-            self._main_win.new_conn_win.call_txt_inp.insert(tk.END, call)
-            self._main_win.new_conn_win.set_port_index(port)
+            if not self._main_win.new_conn_win:
+                self._main_win.open_new_conn_win()
+            if self._main_win.new_conn_win:
+                self._main_win.new_conn_win.call_txt_inp_var.set(call)
+                self._main_win.new_conn_win.set_port_index(port)
 
     def _trace_entry_selected(self, event=None):
         pass
@@ -957,7 +959,7 @@ class PoPT_GUI_Main:
         self._root_dir = self._root_dir.replace('/', '//')
         #####################
         # GUI VARS
-        self.connect_history = {}   # TODO: Persistent
+        self.connect_history = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
         # GLb Setting Vars
         self.setting_sound = tk.BooleanVar(self.main_win)
         self.setting_sprech = tk.BooleanVar(self.main_win)
@@ -1139,7 +1141,7 @@ class PoPT_GUI_Main:
         self._is_closing = True
         logging.info('Closing GUI: Save GUI Vars & Parameter.')
         self._save_GUIvars()
-        self._save_vars()
+        self._save_parameter()
         self._save_Channel_Vars()
         logging.info('Closing GUI: Closing Ports.')
         PORT_HANDLER.close_all_ports()
@@ -1180,13 +1182,14 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         POPT_CFG.save_guiPARM_main(guiCfg)
 
-    def _save_vars(self):
+    def _save_parameter(self):
         #########################
         # Parameter to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
         guiCfg['gui_parm_new_call_alarm'] = bool(PORT_HANDLER.get_MH().parm_new_call_alarm)
         guiCfg['gui_parm_channel_index'] = int(self.channel_index)
         guiCfg['gui_parm_text_size'] = int(self.text_size)
+        guiCfg['gui_parm_connect_history'] = dict(self.connect_history)
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     def _save_Channel_Vars(self):
@@ -3259,6 +3262,11 @@ class PoPT_GUI_Main:
 
     ##########################################
     #
+    def get_free_channel(self, start_channel=1):
+        for ch_id in range(start_channel, 11):
+            if not self.get_conn(con_ind=ch_id):
+                return ch_id
+
     def get_ch_new_data_tr(self, ch_id):
         return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)
 

@@ -351,7 +351,8 @@ class AX25Conn(object):
             # self.port_handler.delete_connection(self)
             # self.own_port.del_connections(conn=self)
         if self.zustand_exec.stat_index == 1:
-            self.zustand_exec.stat_index = 0
+            if not self.tx_buf_ctl:
+                self.zustand_exec.stat_index = 0
 
     def _app_cron(self):
         if self._link_crone():   # DIGI / LINK Connection / Node Funktion
@@ -570,12 +571,16 @@ class AX25Conn(object):
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
         self._link_cleanup()
-        self.port_handler.delete_connection(self)   # Doppelt ..
         self.own_port.del_connections(conn=self)
+        self.port_handler.delete_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self):
         # print(f"end_connection: {self.uid}")
+        self.ft_queue = []
+        if self.ft_obj:
+            self.ft_obj.ft_abort()
+        self.ft_obj = None
         self._link_disco()
         self.set_T1()
         self.vr = 0

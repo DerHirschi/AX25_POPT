@@ -998,7 +998,7 @@ class SQL_Database:
         for el in ent_list:
             dt_ts: datetime.now = convert_str_to_datetime(el[1])
             t_delta = now - dt_ts
-            if t_delta.days <= last_rx_days:
+            if t_delta.days < last_rx_days:
                 ids.append(str(el[0]))
         return ids
 

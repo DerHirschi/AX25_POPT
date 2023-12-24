@@ -283,7 +283,7 @@ class MHWin(tk.Toplevel):
             if vias:
                 call = f'{call} {vias}'
             self._root_win.open_new_conn_win()
-            self._root_win.new_conn_win.call_txt_inp.insert(tk.END, call)
+            self._root_win.new_conn_win.call_txt_inp_var.set(call)
             self._root_win.new_conn_win.set_port_index(port)
             self.close()
 

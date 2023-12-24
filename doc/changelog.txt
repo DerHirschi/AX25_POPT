@@ -4,8 +4,11 @@
 Fixes:
 
 Optimierung:
+- Code Optimierung im "Neue Verbindung Fenster"
 
 Neue Implementierungen / Funktionen:
+- Verbindung Historie wird jetzt permanent gespeichert
+- "Neue Verbindung Fenster" Ausgehender Call wird entsprechend der Historie gesetzt
 
 ###########################################################################################################
 ###########################################################################################################

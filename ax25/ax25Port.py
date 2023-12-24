@@ -393,20 +393,12 @@ class AX25Port(threading.Thread):
         print(self._connections)
         ax25_frame.ctl_byte.SABMcByte()
         ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
-        """
-        while ax25_frame.addr_uid in self.connections.keys() or \
-                reverse_uid(ax25_frame.addr_uid) in self.connections.keys():
-        """
+
         while True:
             if ax25_frame.addr_uid not in self._connections.keys() and \
-                    reverse_uid(ax25_frame.addr_uid) not in self._connections.keys():
+                    reverse_uid(ax25_frame.addr_uid) not in self._connections.keys() and \
+                    (ax25_frame.from_call.call_str != ax25_frame.to_call.call_str):
                 break
-            if ax25_frame.addr_uid in self._connections.keys():
-                if self._connections[ax25_frame.addr_uid].zustand_exec.stat_index in [0, 1]:
-                    break
-            if reverse_uid(ax25_frame.addr_uid) in self._connections.keys():
-                if self._connections[reverse_uid(ax25_frame.addr_uid)].zustand_exec.stat_index in [0, 1]:
-                    break
 
             logger.warning("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
@@ -431,11 +423,14 @@ class AX25Port(threading.Thread):
         self.port_handler.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
+        """
         if conn.uid in self._connections.keys():
             del self._connections[conn.uid]
+        """
         for conn_uid in list(self._connections.keys()):
             if conn == self._connections[conn_uid]:
                 del self._connections[conn_uid]
+                return
 
     def send_UI_frame(self,
                       own_call,
