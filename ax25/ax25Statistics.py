@@ -537,6 +537,8 @@ class MH:
                             return self._MH_db[port][call_str].axip_add
         return '', 0
 
+    def get_unsort_entrys_fm_port(self, port_id: int):
+        return list(self._MH_db.get(port_id, {}).keys())
     """
     def mh_get_last_ip(self, call_str: str, param_fail=0):
         if call_str:
@@ -581,6 +583,11 @@ class MH:
             _n += 1
         return _ret
 
+    def reset_mainMH(self):
+        self.dx_alarm_trigger = False
+        self._MH_db = {}
+        self.dx_alarm_hist = []  # For GUI MH
+        self.dx_alarm_perma_hist = {}  # CLI DX List
 
 # MH_LIST = MH()
 

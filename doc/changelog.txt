@@ -5,10 +5,12 @@ Fixes:
 
 Optimierung:
 - Code Optimierung im "Neue Verbindung Fenster"
+- "alte Verbindungen aufräumen" Prozedur optimiert
 
 Neue Implementierungen / Funktionen:
 - Verbindung Historie wird jetzt permanent gespeichert
 - "Neue Verbindung Fenster" Ausgehender Call wird entsprechend der Historie gesetzt
+- MH-Liste Menübar: MH-Liste löschen
 
 ###########################################################################################################
 ###########################################################################################################

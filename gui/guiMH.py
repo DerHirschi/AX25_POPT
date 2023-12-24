@@ -1,10 +1,11 @@
 import logging
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, Menu, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MyHeard
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import conv_time_DE_str
 
 logger = logging.getLogger(__name__)
@@ -14,26 +15,20 @@ class MHWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
+        self._lang = root_win.language
         self.title("MyHEARD")
         self.style = self._root_win.style
-        # self.geometry("1250x700")
         self.geometry(f"1250x"
                       f"700+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.close)
+        self.protocol("WM_DELETE_WINDOW", self._close_me)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
             pass
-        """
-        self._menubar = Menu(self)
-        self.config(menu=self._menubar)
-        self._menubar.add_command(label="Quit", command=self.close)
-        self._menubar.add_command(label="Port-Statistik", command=lambda: self._root_win.open_port_stat_win())
-        """
         self.lift()
         ###################################
         # Vars
@@ -131,7 +126,7 @@ class MHWin(tk.Toplevel):
             _i += 1
         # ###################### Auto Tracer ######################
         # Tracer
-        _auto_tracer_state = {
+        auto_tracer_state = {
             True: 'disabled',
             False: 'normal'
         }.get(self._root_win.get_tracer(), 'disabled')
@@ -149,7 +144,7 @@ class MHWin(tk.Toplevel):
         tk.Checkbutton(frame_22_active,
                        variable=self._root_win.setting_auto_tracer,
                        command=self._root_win.set_auto_tracer,
-                       state=_auto_tracer_state
+                       state=auto_tracer_state
                        ).pack(side=tk.LEFT, )
         # duration
         frame_22_duration = tk.Frame(lower_frame_tracer)
@@ -162,7 +157,7 @@ class MHWin(tk.Toplevel):
                    increment=5,
                    width=5,
                    textvariable=self._tracer_duration_var,
-                   state=_auto_tracer_state,
+                   state=auto_tracer_state,
                    command=self._set_auto_tracer,
                    ).pack(side=tk.LEFT, )
 
@@ -211,10 +206,18 @@ class MHWin(tk.Toplevel):
         # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
         # tree.column(1, stretch=True)
 
+        self._root_win.mh_window = self
         self._tree_data = []
-        self._init_tree_data()
         self._update_mh()
+        self._init_menubar()
         self._tree.bind('<<TreeviewSelect>>', self.entry_selected)
+
+    def _init_menubar(self):
+        _menubar = Menu(self, tearoff=False)
+        self.config(menu=_menubar)
+        _MenuVerb = Menu(_menubar, tearoff=False)
+        _MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._reset_mh_list)
+        _menubar.add_cascade(label='MyHeard', menu=_MenuVerb, underline=0)
 
     def _get_vars(self):
         # self._alarm_active_var.set(bool())
@@ -285,9 +288,10 @@ class MHWin(tk.Toplevel):
             self._root_win.open_new_conn_win()
             self._root_win.new_conn_win.call_txt_inp_var.set(call)
             self._root_win.new_conn_win.set_port_index(port)
-            self.close()
+            self._close_me()
 
     def _update_mh(self):
+        self._init_tree_data()
         self._update_tree()
 
     def _init_tree_data(self):
@@ -339,11 +343,20 @@ class MHWin(tk.Toplevel):
                 f'{ent.axip_fail}',
             ), _dx_alarm))
 
+    def _reset_mh_list(self):
+        self.lower()
+        if messagebox.askokcancel(title=STR_TABLE.get('msg_box_mh_delete', ('', '', ''))[self._lang],
+                                  message=STR_TABLE.get('msg_box_mh_delete_msg', ('', '', ''))[self._lang]):
+            mh = PORT_HANDLER.get_MH()
+            mh.reset_mainMH()
+            self._update_mh()
+        self.lift()
+
     def __del__(self):
         self._root_win.mh_window = None
         # self.destroy()
 
-    def close(self):
+    def _close_me(self):
         self._mh.reset_dx_alarm_his()
         self._root_win.mh_window = None
         self.destroy()

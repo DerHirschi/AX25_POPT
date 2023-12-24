@@ -3284,7 +3284,7 @@ class PoPT_GUI_Main:
     def get_tracer():
         _ais_obj = PORT_HANDLER.get_aprs_ais()
         if _ais_obj is not None:
-            return _ais_obj.be_tracer_active
+            return bool(_ais_obj.be_tracer_active)
         return False
 
     def set_tracer_fm_aprs(self):
