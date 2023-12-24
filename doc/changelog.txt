@@ -11,6 +11,8 @@ Neue Implementierungen / Funktionen:
 - Verbindung Historie wird jetzt permanent gespeichert
 - "Neue Verbindung Fenster" Ausgehender Call wird entsprechend der Historie gesetzt
 - MH-Liste Menübar: MH-Liste löschen
+- "Byte Zähler" in Baken Einstellungen. Zeigt die Größe de Bakentext an.
+- Textgrößenbegrenzer für Bakentext
 
 ###########################################################################################################
 ###########################################################################################################

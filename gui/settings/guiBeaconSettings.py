@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk as ttk
 from tkinter import scrolledtext
-# from ax25.ax25Beacon import Beacon
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import GUI_DISABLED_CLR
 from cfg.default_config import getNew_BEACON_cfg
@@ -22,7 +21,7 @@ class BeaconTab:
         self.style = root.style
         self.own_tab = ttk.Frame(self._tab_clt)
         self.beacon: dict = beacon
-        self.schedule_config = self.beacon.get('scheduler_cfg', dict(getNew_schedule_config()))
+        self.schedule_config = self.beacon.get('scheduler_cfg', getNew_schedule_config())
         self.winfo_x = self._root.winfo_x
         self.winfo_y = self._root.winfo_y
         # height = root.win_height
@@ -173,13 +172,14 @@ class BeaconTab:
         #################
         # Beacon Text
         call_x = 10
-        call_y = 235
+        call_y = 175
         # call_y = 100
         self.b_text_ent = tk.scrolledtext.ScrolledText(self.own_tab, font=("Courier", 12))
         # self.b_text_ent.configure(width=83, height=15)
         self.b_text_ent.configure(width=82, height=8)
         self.b_text_ent.place(x=call_x, y=call_y)
         self.b_text_ent.insert(tk.END, beacon.get('text', ''))
+        self.b_text_ent.bind('<KeyRelease>', self._update_byte_c_var_bind)
 
         #################
         # Aus Datei
@@ -194,9 +194,34 @@ class BeaconTab:
         self._b_text_bg_color = self.b_text_ent.cget('background')
         self.be_txt_filename_var.set(beacon.get('text_filename', ''))
         self._be_txt_filename.place(x=call_x + 140, y=call_y)
-        be_txt_openfile_btn = tk.Button(self.own_tab, text='Datei', command=self._select_files)
+        be_txt_openfile_btn = tk.Button(self.own_tab, text=STR_TABLE['file_1'][self._lang], command=self._select_files)
         be_txt_openfile_btn.place(x=call_x + 710, y=call_y - 2)
+        #################
+        # Byte Zähler
+        call_x = 885
+        call_y = self._root.win_height - 185
+        self._byte_count_var = tk.StringVar(self.own_tab, '')
+        tk.Label(self.own_tab,
+                 textvariable=self._byte_count_var,
+                 font=(None, 9),
+                 ).place(x=call_x, y=call_y)
+        self._update_byte_c_var_fm_text()
         self._cmd_be_change_typ()
+
+    def _update_byte_c_var_fm_text(self):
+        new_text = f"{len(self.beacon.get('text', ''))}/256 Bytes"
+        self._byte_count_var.set(new_text)
+
+    def _update_byte_c_var_bind(self, event=None):
+        text = self.b_text_ent.get(0.0, tk.END)[:-1]
+        t_len = len(text)
+        if t_len > 256:
+            ind = t_len - 256
+            self.b_text_ent.delete(f'insert-{ind}c', tk.INSERT)
+            text = self.b_text_ent.get(0.0, tk.END)[:-1]
+            t_len = len(text)
+        new_text = f"{t_len}/256 Bytes"
+        self._byte_count_var.set(new_text)
 
     def _cmd_be_enabled(self):
         self.beacon['is_enabled'] = bool(self.active_check_var.get())
@@ -214,7 +239,7 @@ class BeaconTab:
             self.beacon['text_filename'] = filename
             bin_text = get_bin_fm_file(filename)
             if bin_text:
-                self.beacon['text'] = bin_text.decode('utf-8', 'ignore')
+                self.beacon['text'] = bin_text.decode('utf-8', 'ignore')[:256]
                 self.b_text_ent.configure(state='normal', background=GUI_DISABLED_CLR)
                 self.b_text_ent.delete('1.0', tk.END)
                 self.b_text_ent.insert(tk.END, tk_filter_bad_chars(self.beacon['text']))
@@ -227,6 +252,7 @@ class BeaconTab:
             # self.be_txt_filename_var.set('')
             self.beacon['text_filename'] = ''
             self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
+        self._update_byte_c_var_fm_text()
 
     def _select_files(self):
         self._root.attributes("-topmost", False)
@@ -259,6 +285,7 @@ class BeaconTab:
             self.be_txt_filename_var.set('')
             self.beacon['text_filename'] = ''
             self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
+        self._update_byte_c_var_fm_text()
 
     def _disable_intervall(self):
         hours = self.schedule_config.get('hours', {})
@@ -311,7 +338,7 @@ class BeaconSettings(tk.Toplevel):
         self._main_cl = main_win
         self.lang = self._main_cl.language
         main_win.settings_win = self
-        self.win_height = 600
+        self.win_height = 540
         self.win_width = 1060
         self.style = main_win.style
         self.title(STR_TABLE['beacon_settings'][self.lang])
@@ -341,7 +368,7 @@ class BeaconSettings(tk.Toplevel):
                   # bg="green",
                   height=1,
                   width=6,
-                  command=self._ok_btn_cmd).place(x=20, y=self.win_height - 50)
+                  command=self._ok_btn_cmd).place(x=20, y=495)
 
         tk.Button(self,
                   text=STR_TABLE['save'][self.lang],
@@ -349,7 +376,7 @@ class BeaconSettings(tk.Toplevel):
                   # bg="green",
                   height=1,
                   width=7,
-                  command=self._save_btn_cmd).place(x=110, y=self.win_height - 50)
+                  command=self._save_btn_cmd).place(x=110, y=495)
 
         tk.Button(self,
                   text=STR_TABLE['cancel'][self.lang],
@@ -357,7 +384,7 @@ class BeaconSettings(tk.Toplevel):
                   # bg="green",
                   height=1,
                   width=8,
-                  command=self._destroy_win).place(x=self.win_width - 120, y=self.win_height - 50)
+                  command=self._destroy_win).place(x=self.win_width - 120, y=495)
 
         ####################################
         # New Station, Del Station Buttons
@@ -367,18 +394,18 @@ class BeaconSettings(tk.Toplevel):
                   # bg="green",
                   height=1,
                   width=10,
-                  command=self._new_beacon_btn_cmd).place(x=20, y=self.win_height - 590)
+                  command=self._new_beacon_btn_cmd).place(x=20, y=self.win_height - 530)
         tk.Button(self,
                   text=STR_TABLE['delete'][self.lang],
                   # font=("TkFixedFont", 15),
                   bg="red3",
                   height=1,
                   width=10,
-                  command=self._del_beacon_btn_cmd).place(x=self.win_width - 141, y=self.win_height - 590)
+                  command=self._del_beacon_btn_cmd).place(x=self.win_width - 141, y=self.win_height - 530)
 
         ############################################
         self.tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)
-        self.tabControl.place(x=20, y=self.win_height - 550)
+        self.tabControl.place(x=20, y=50)
         self.tab_list: [ttk.Frame] = []
         # Tab Frames
         for beacon in POPT_CFG.get_Beacon_tasks():
