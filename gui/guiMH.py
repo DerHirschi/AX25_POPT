@@ -285,9 +285,10 @@ class MHWin(tk.Toplevel):
             # print(port)
             if vias:
                 call = f'{call} {vias}'
-            self._root_win.open_new_conn_win()
-            self._root_win.new_conn_win.call_txt_inp_var.set(call)
-            self._root_win.new_conn_win.set_port_index(port)
+            if not self._root_win.new_conn_win:
+                self._root_win.open_new_conn_win()
+            if self._root_win.new_conn_win:
+                self._root_win.new_conn_win.preset_ent(call, port)
             self._close_me()
 
     def _update_mh(self):

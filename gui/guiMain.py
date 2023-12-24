@@ -744,8 +744,7 @@ class SideTabbedFrame:  # TODO: WTF
             if not self._main_win.new_conn_win:
                 self._main_win.open_new_conn_win()
             if self._main_win.new_conn_win:
-                self._main_win.new_conn_win.call_txt_inp_var.set(call)
-                self._main_win.new_conn_win.set_port_index(port)
+                self._main_win.new_conn_win.preset_ent(call, port)
 
     def _trace_entry_selected(self, event=None):
         pass

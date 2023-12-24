@@ -60,7 +60,7 @@ class NewConnWin(tk.Toplevel):
                             bg="red",
                             width=5,
                             height=1,
-                            command=lambda l_port=port: self.set_port_index(l_port)
+                            command=lambda l_port=port: self._set_port_index(l_port)
                             )
             if port:
                 tmp.place(x=10 + (80 * port), y=1)
@@ -118,7 +118,7 @@ class NewConnWin(tk.Toplevel):
                              command=self._process_new_conn_win)
         conn_btn.place(x=10, y=220)
         self._call_txt_inp.focus_set()
-        self.set_port_index(self._port_index)
+        self._set_port_index(self._port_index)
         ##############
         # KEY BINDS
         self.bind('<Return>', lambda event: self._process_new_conn_win())
@@ -136,7 +136,7 @@ class NewConnWin(tk.Toplevel):
         _MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._reset_conn_history)
         _menubar.add_cascade(label='History', menu=_MenuVerb, underline=0)
 
-    def set_port_index(self, index: int):
+    def _set_port_index(self, index: int):
         self._port_index = index
         port = PORT_HANDLER.get_port_by_index(index)
         if port:
@@ -292,9 +292,23 @@ class NewConnWin(tk.Toplevel):
         port_id = self._conn_hist.get(ent_key, {}).get('port_id', None)
         own_call = self._conn_hist.get(ent_key, {}).get('own_call', '')
         if port_id is not None:
-            self.set_port_index(port_id)
+            self._set_port_index(port_id)
         if own_call:
             self.own_call_var.set(own_call)
+
+    def _set_ownCall_fm_hist(self):
+        ent_key = self.call_txt_inp_var.get()
+        own_call = self._conn_hist.get(ent_key, {}).get('own_call', '')
+        if own_call:
+            self.own_call_var.set(own_call)
+
+    def preset_ent(self, call: str, port_id: int):
+        if not call:
+            return
+        self.call_txt_inp_var.set(call)
+        self._set_port_index(port_id)
+        self._set_ownCall_fm_hist()
+
 
     def _reset_conn_history(self, event=None):
         self._conn_hist = {}

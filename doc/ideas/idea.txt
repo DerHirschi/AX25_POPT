@@ -28,7 +28,7 @@ Ideas/TODO's :
   - ax25Connection.py aufräumen
   ✓ ax25Statistics aufräumen
   - ax25Statistics überarbeiten
-    - "Managed-DIGI" - Digi übernimmt Flusskontrolle
+  - "Managed-DIGI" - Digi übernimmt Flusskontrolle
 
 ✓ KISS
   - kompatibilität TNC nur teilweise
@@ -47,8 +47,8 @@ Ideas/TODO's :
   - UserDB auf SQL-DB Umstellen
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
-  - Logbuch
 
+- Logbuch
 - Channel-Echo überarbeiten (derzeit deaktiviert da Buggy)
 - QSO Fenster/Tool
 - Debugging Tool
