@@ -157,14 +157,14 @@ class APRSSettingsWin(tk.Toplevel):
         digi_checkbutton_label.grid(row=4, column=1, padx=10, pady=5, sticky=tk.W)
         digi_checkbutton = ttk.Checkbutton(tab, variable=self._vars[-1]['digi'], state='disabled')
         digi_checkbutton.grid(row=4, column=2, columnspan=2, padx=10, pady=5, sticky=tk.W)
-        self._vars[-1]['digi'].set(port_aprs.aprs_parm_digi)
+        self._vars[-1]['digi'].set(port_aprs['aprs_parm_digi'])
 
         # Create AIS checkbutton
         ais_checkbutton_label = ttk.Label(tab, text="I-GATE:")
         ais_checkbutton_label.grid(row=5, column=1, padx=10, pady=5, sticky=tk.W)
         ais_checkbutton = ttk.Checkbutton(tab, variable=self._vars[-1]['ais'], state='disabled')
         ais_checkbutton.grid(row=5, column=2, columnspan=2, padx=10, pady=5, sticky=tk.W)
-        self._vars[-1]['ais'].set(port_aprs.aprs_parm_igate)
+        self._vars[-1]['ais'].set(port_aprs['aprs_parm_igate'])
 
         # Create Baken Text label
         baken_label = ttk.Label(tab, text="Baken Text:")
@@ -180,13 +180,13 @@ class APRSSettingsWin(tk.Toplevel):
         for port_id in self._all_ports.keys():
             # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_call = self.vars[ind]['call'].get()
             # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
-            self._all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_igate = self._vars[_ind]['ais'].get()
-            self._all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_digi = self._vars[_ind]['digi'].get()
+            self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_igate'] = self._vars[_ind]['ais'].get()
+            self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_digi'] = self._vars[_ind]['digi'].get()
 
-            self._all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self._vars[_ind]['digi'].get()
+            self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._vars[_ind]['digi'].get()
             if self._ais is not None:
                 # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
-                self._all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_loc = self._ais.ais_loc
+                self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._ais.ais_loc
             _aprs_station[port_id] = self._all_ports[port_id].port_cfg.parm_aprs_station
             _ind += 1
 

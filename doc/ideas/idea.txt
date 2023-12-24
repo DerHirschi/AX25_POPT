@@ -1,7 +1,17 @@
 Ideas/TODO's :
 
+- Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
+- PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
+  - Ausnahmen (Call-Filter)
 - ESC Befehle
-- UmgebungsVARS für C-Text und der gleichen
+- UmgebungVARS für C-Text und der gleichen
+- Erweiterte C-Texte
+  - Mehrere C-Texte
+  - C-Texte umschaltbar in "global Settings (Seiten Frame)"
+  - C-Texte umschaltbar nach PoPT-Scheduler
+  - C-Texte automatisch umschaltbar je nach sysop aktivität (autom. AFK C-TEXT)
+  - UmgebungVARS
+
 ✓ Config System überarbeiten
   - alle alten configs zu ins neue System übertragen ohne Datenverlust
   - nötigen configs lesbar machen
@@ -16,6 +26,8 @@ Ideas/TODO's :
   Performance:
   - ax25dec_enc.py überarbeiten
   - ax25Connection.py aufräumen
+  ✓ ax25Statistics aufräumen
+  - ax25Statistics überarbeiten
     - "Managed-DIGI" - Digi übernimmt Flusskontrolle
 
 ✓ KISS
@@ -40,11 +52,11 @@ Ideas/TODO's :
 - Channel-Echo überarbeiten (derzeit deaktiviert da Buggy)
 - QSO Fenster/Tool
 - Debugging Tool
-- BBS Tool was Bulletins und PMs von/an Heimat-BBS holt/sendet und Mails aufbereitet darstellt.
 ✓ PMS (S&F ohne Gedöns)
 - Simple Mailbox (CLI übers PMS)
 - PMS (TST-HOST)
 - BBS (S&F und all den Gedöns)
+- BBS Tool.
 ✓ "Nachrichten-Center" fasst alle Nachrichtenkanäle (APRS Bulletin/PN, BBS) übersichtlich zusammen.
   ✓ PMS
     - Papierkorb usw
@@ -85,7 +97,7 @@ Ideas/TODO's :
 - Optional nur als Konsolen Anwendung ohne GUI. (Ist bereits dafür vorbereitet)
 - Drucker Ausgabe vom QSO
   - kompatibel mit Nadeldrucker
-- Torrent ähnliches Filesharing via UI Frames (Siehe ?DMR?)
+- Torrent ähnliches Filesharing via UI Frames (Siehe ?DMR/DRM?)
   Oder:
   - BBS TSTHOST?
   - 7Plus?

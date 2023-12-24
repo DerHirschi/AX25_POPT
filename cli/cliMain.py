@@ -4,11 +4,12 @@ import logging
 
 import ax25.ax25Connection
 from cfg import constant, config_station
-from ax25.ax25Statistics import MH_LIST
+# from ax25.ax25Statistics import MH_LIST
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV
-from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_str
+from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
+    convert_str_to_datetime
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from UserDB.UserDBmain import Client, USER_DB
@@ -146,7 +147,7 @@ class DefaultCLI(object):
         self.cron_state_exec.update(self.cron_state_exec_ext)
         self.commands.update(self.cmd_exec_ext)
         self.state_exec.update(self.state_exec_ext)
-        if type(self.prefix) == str:  # Fix for old CFG Files
+        if type(self.prefix) is str:  # Fix for old CFG Files
             self.prefix = self.prefix.encode(self.encoding[0], self.encoding[1])
 
     """
@@ -164,7 +165,7 @@ class DefaultCLI(object):
 
     def send_output(self, ret):
         if ret:
-            if type(ret) == str:
+            if type(ret) is str:
                 ret = ret.encode(self.encoding[0], self.encoding[1])
                 ret = ret.replace(b'\n', b'\r')
             self.connection.tx_buf_rawData += ret
@@ -513,7 +514,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_alarm_out_cli(self, max_ent=10):
-        alarm_his = dict(MH_LIST.dx_alarm_perma_hist)
+        alarm_his = dict(self.port_handler.get_MH().dx_alarm_perma_hist)
         alarm_his.update(dict(self.port_handler.get_aprs_ais().be_tracer_alarm_hist))
         if not alarm_his:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
@@ -526,7 +527,7 @@ class DefaultCLI(object):
             max_c += 1
             if max_c > max_ent:
                 break
-            time_delta_str = get_timedelta_str(alarm_his[_k]['ts'])
+            time_delta_str = get_timedelta_CLIstr(alarm_his[_k]['ts'])
             via = alarm_his[_k]['via']
             loc = alarm_his[_k]['loc']
             dis = str(alarm_his[_k]['dist'])
@@ -550,7 +551,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_axip_out_cli(self, max_ent=10):
-        _ent = MH_LIST.get_sort_mh_entry('last', reverse=False)
+        _ent = self.port_handler.get_MH().get_sort_mh_entry('last', reverse=False)
         if not _ent:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         max_c = 0
@@ -565,7 +566,7 @@ class DefaultCLI(object):
                 out += ' {:9} {:33} {:8}\r'.format(
                     _ent[k].own_call,
                     _ent[k].axip_add[0] + ':' + str(_ent[k].axip_add[1]),
-                    get_timedelta_str(_ent[k].last_seen, r_just=False)
+                    get_timedelta_CLIstr(_ent[k].last_seen, r_just=False)
                 )
         return out
 
@@ -579,8 +580,8 @@ class DefaultCLI(object):
             max_ent,    # Entry's
             -1,         # Port
         ])
-        print(self.parameter)
-        print(max_ent)
+        # print(self.parameter)
+        # print(max_ent)
         parm = self.parameter[0]
         if parm < last_port_id:
             port = self.parameter[0]
@@ -596,7 +597,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_mh_out_cli(self, max_ent=20, port_id=-1):
-        sort_list = MH_LIST.get_sort_mh_entry('last', False)
+        sort_list = self.port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         out = ''
@@ -608,7 +609,7 @@ class DefaultCLI(object):
                 max_c += 1
                 if max_c > max_ent:
                     break
-                time_delta_str = get_timedelta_str(sort_list[call].last_seen)
+                time_delta_str = get_timedelta_CLIstr(sort_list[call].last_seen)
                 _call_str = sort_list[call].own_call
                 if sort_list[call].route:
                     _call_str += '*'
@@ -648,7 +649,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_mh_long_out_cli(self, max_ent=10, port_id=-1):
-        sort_list = MH_LIST.get_sort_mh_entry('last', False)
+        sort_list = self.port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
         out = ''
@@ -664,7 +665,7 @@ class DefaultCLI(object):
                 max_c += 1
                 if max_c > max_ent:
                     break
-                time_delta_str = get_timedelta_str(sort_list[call].last_seen)
+                time_delta_str = get_timedelta_CLIstr(sort_list[call].last_seen)
                 via = sort_list[call].route
                 if via:
                     via = via[-1]
@@ -680,13 +681,13 @@ class DefaultCLI(object):
                         dis = str(userdb_ent.Distance)
                     typ = userdb_ent.TYP
 
-                out += (f' {time_delta_str:9}{sort_list[call].port:7}{sort_list[call].own_call:10}'
+                out += (f' {time_delta_str:9}{str(sort_list[call].port_id).ljust(5)}{sort_list[call].own_call:10}'
                         f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
 
                 out += '\r'
         if not out:
             return f'\r # {STR_TABLE["cli_no_data"][self.connection.cli_language]}\r'
-        return "\r-----Time-Port---Call------via-------LOC------Dist(km)--Type---Packets\r" + out
+        return "\r-----Time-Port-Call------via-------LOC------Dist(km)--Type---Packets\r" + out
 
     def cmd_wx(self):
         """ WX Stations """
@@ -736,7 +737,7 @@ class DefaultCLI(object):
             if max_c > max_ent:
                 break
             # _ent = self.port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
-            _td = get_timedelta_str(el['rx_time'])
+            _td = get_timedelta_CLIstr(el['rx_time'])
             _pres = f'{el["weather"].get("pressure", 0):.2f}'
             _rain = f'{el["weather"].get("rain_24h", 0):.3f}'
             out += f'{_td.rjust(9):10}{el.get("port_id", ""):6}'
@@ -749,25 +750,31 @@ class DefaultCLI(object):
         return out
 
     def _get_wx_cli_out(self, max_ent=10):
-        _data = self.port_handler.aprs_ais.get_wx_entry_sort_distance()
+        db = self.port_handler.get_database()
+        if not db:
+            return ''
+
+        # _data = self.port_handler.aprs_ais.get_wx_entry_sort_distance()
+        _data = db.aprsWX_get_data_f_CLItree(last_rx_days=3)
         if not _data:
             return ''
+
         max_c = 0
         out = '\r-----Last-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r'
-        for k in _data:
+        for el in _data:
             max_c += 1
             if max_c > max_ent:
                 break
-            _ent = self.port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
-            _td = get_timedelta_str(_ent['rx_time'])
-            _loc = f'{_ent.get("locator", "------")[:6]}({round(_ent.get("distance", -1))}km)'
-            _pres = f'{_ent["weather"].get("pressure", 0):.2f}'
-            _rain = f'{_ent["weather"].get("rain_24h", 0):.3f}'
-            out += f'{_td.rjust(9):10}{_ent.get("port_id", ""):6}{k:10}{_loc:16}'
-            out += f'{str(round(_ent["weather"].get("temperature", 0))):5}'
+            # _ent = self.port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
+            _td = get_timedelta_CLIstr(convert_str_to_datetime(el[0]))
+            _loc = f'{el[3].upper()[:6]}({int(el[4])}km)'
+            _pres = f'{el[5]}'
+            _rain = f'{el[7]}'
+            out += f'{_td.rjust(9):10}{el[2]:6}{el[1]:10}{_loc:16}'
+            out += f'{el[8]:5}'
             out += f'{_pres:7} '
-            out += f'{_ent["weather"].get("humidity", 0):3} '
-            out += f'{_ent["weather"].get("luminosity", 0):3} '
+            out += f'{el[6]:3} '
+            out += f'{el[9]:3} '
             out += f'{_rain:6}\r'
         return out
 
@@ -808,7 +815,7 @@ class DefaultCLI(object):
             if max_c > parm:
                 break
             _ent = _data[k][-1]
-            _td = get_timedelta_str(_ent['rx_time'])
+            _td = get_timedelta_CLIstr(_ent['rx_time'])
             _path = ', '.join(_ent.get('path', []))
             _loc = f'{_ent.get("locator", "------")[:6]}({round(_ent.get("distance", -1))}km)'
             _call = _ent.get('call', '')
@@ -1081,7 +1088,7 @@ class DefaultCLI(object):
         """ Long Connect-Status """
         ret = '\r'
         ret += "--Ch--Port--MyCall----Call------Name----------LOC----QTH-----------Connect\r"
-        all_conn = self.port_handler.all_connections
+        all_conn = self.port_handler.get_all_connections()
         for k in all_conn.keys():
             ch = k
             conn = all_conn[k]

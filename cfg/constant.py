@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.100.35'
+VER = '2.101.18'
 """
 LANGUAGE:
 0 = German
@@ -32,7 +32,7 @@ CFG_ft_downloads = 'ft_downloads/'
 CFG_user_db = 'data/UserDB.popt'
 CFG_mh_data_file = 'data/mh_data.popt'
 CFG_port_stat_data_file = 'data/port_stat.popt'
-CFG_aprs_data_file = 'aprs.popt'
+# CFG_aprs_data_file = 'aprs.popt'
 CFG_MAIN_data_file = 'popt_cfg.popt'    # New Global CFG
 CFG_sound_DICO = '//data//sound//disco_alarm.wav'
 CFG_sound_CONN = '//data//sound//conn_alarm.wav'

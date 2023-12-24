@@ -40,7 +40,7 @@ class Client(object):
 
     via_NODE_HF = ''
     via_NODE_AXIP = ''
-    AXIP = ()
+    AXIP = '', 0
     QRG1 = ''  # 27.235FM-1200-AD/AI/FX
     QRG2 = ''
     QRG3 = ''
@@ -108,13 +108,13 @@ class UserDB:
 
         for k in list(db_load.keys()):
             client_obj = Client()
-            if type(db_load[k]) == dict:
+            if type(db_load[k]) is dict:
                 self.db[k] = set_obj_att_fm_dict(new_obj=client_obj, input_obj=db_load[k])
             else:
                 self.db[k] = set_obj_att(new_obj=client_obj, input_obj=db_load[k])
             # "Repair old Data" TODO . CLEANUP
             if k != self.db[k].Call:
-                if type(self.db[k].call_str) == str:
+                if type(self.db[k].call_str) is str:
                     call_tup = call_tuple_fm_call_str(self.db[k].call_str)
                     self.db[k].Call = str(call_tup[0])
                     self.db[k].SSID = int(call_tup[1])
@@ -122,8 +122,6 @@ class UserDB:
                     self.db[k].call_str = str(k)
                     self.db[k].Call = str(k)
                     self.db[k].SSID = 0
-
-
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
@@ -263,7 +261,7 @@ class UserDB:
                 'last_seen': conv_time_for_sorting(flag.last_seen),
             }[flag_str]
             while key in temp.keys():
-                if type(key) != str:
+                if type(key) is not str:
                     break
                 key += '1'
             temp[key] = self.db[k]
@@ -282,6 +280,22 @@ class UserDB:
         if ret:
             return ret.Distance
         return 0
+
+    def get_AXIP(self, call_str):
+        ret = self.db.get(call_str, False)
+        if ret:
+            return ret.AXIP
+        return '', 0
+
+    def set_AXIP(self, call_str: str, axip: tuple):
+        if not all((call_str, axip)):
+            return False
+        if not axip[0]:
+            return False
+        if not self.db.get(call_str, None):
+            return False
+        self.db[call_str].AXIP = tuple(axip)
+        return True
 
     def get_all_PRmail(self):
         ret = []

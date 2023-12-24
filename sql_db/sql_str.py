@@ -1,3 +1,5 @@
+#######################################
+# PMS/BBS
 SQL_CREATE_PMS_OUT_MAIL_TAB = ("CREATE TABLE pms_out_msg (\n"
                                "`MID` INT(6) AUTO_INCREMENT NOT NULL,\n"
                                "`BID` varchar(12),\n"
@@ -115,3 +117,74 @@ SQL_CREATE_FWD_PATHS_TAB = ("CREATE TABLE fwdPaths (\n"
 SQL_GET_LAST_MSG_ID = "SELECT MID FROM pms_out_msg ORDER BY MID DESC LIMIT 1;"
 SQL_BBS_OUT_MAIL_TAB_IS_EMPTY = "SELECT CASE WHEN EXISTS(SELECT 1 FROM pms_out_msg) THEN 0 ELSE 1 END AS IsEmpty;"
 
+#######################################
+# APRS
+SQL_CREATE_APRS_WX_TAB = ("CREATE TABLE APRSwx (\n"
+                          "`ID` INTEGER AUTO_INCREMENT NOT NULL,\n"
+                          "`from_call` varchar(9) NOT NULL,\n"
+                          "`to_call` varchar(9) NOT NULL,\n"
+                          "`via` varchar(9),\n"
+                          "`path` varchar(100) NOT NULL,\n"
+                          "`port_id` varchar(6) NOT NULL,\n"
+                          "`symbol` varchar(2),\n"
+                          "`symbol_table` varchar(2),\n"
+                          "`locator` varchar(8),\n"
+                          "`distance` varchar(8),\n"
+                          "`latitude` varchar(9),\n"
+                          "`longitude` varchar(9),\n"
+                          "`pressure` varchar(8) DEFAULT '',\n"
+                          "`humidity` varchar(5) DEFAULT '',\n"
+                          "`rain_1h` varchar(8) DEFAULT '',\n"
+                          "`rain_24h` varchar(8) DEFAULT '',\n"
+                          "`rain_since_midnight` varchar(8) DEFAULT '',\n"
+                          "`temperature` varchar(5) DEFAULT '',\n"
+                          "`wind_direction` varchar(8) DEFAULT '',\n"
+                          "`wind_gust` varchar(8) DEFAULT '',\n"
+                          "`wind_speed` varchar(8) DEFAULT '',\n"
+                          "`luminosity` varchar(8) DEFAULT '',\n"
+                          "`raw_timestamp` varchar(10) NOT NULL,\n"
+                          "`rx_time` varchar(19) NOT NULL,\n"
+                          "`comment` varchar(200) DEFAULT '', \n"
+                          "PRIMARY KEY (ID)\n"
+                          ");\n")
+
+SQLITE_CREATE_APRS_WX_TAB = SQL_CREATE_APRS_WX_TAB.replace(
+    "`ID` INTEGER AUTO_INCREMENT NOT NULL,",
+    "`ID` INTEGER PRIMARY KEY AUTOINCREMENT,"
+).replace(
+    ", \nPRIMARY KEY (ID)\n",
+    ""
+)
+
+#######################################
+# MH
+"""
+SQL_CREATE_MH_TAB = ("CREATE TABLE `MH`(\n"
+                     "`call` varchar(9) NOT NULL, \n"
+                     "`to_call` varchar(9) NOT NULL, \n"
+                     "`route` varchar(200) DEFAULT '', \n"
+                     "`port_id` varchar(2) NOT NULL, \n"
+                     "`pack_len` varchar(3) DEFAULT '0', \n"
+                     "`header_len` varchar(3) DEFAULT '0', \n"
+                     "`frame_typ` varchar(4) DEFAULT '', \n"   # 
+                     "`frame_pid` varchar(4) DEFAULT '', \n"   # 
+                     "`rx_tx` varchar(2) DEFAULT 'rx', \n"   # 
+                     "`axip_add` varchar(50) DEFAULT '', \n"
+                     "`locator` varchar(8) DEFAULT '', \n"
+                     "`distance` varchar(8) DEFAULT '', \n"
+                     "`first_seen` varchar(19) NOT NULL, \n"
+                     "`last_seen` varchar(19) NOT NULL, \n"
+                     "PRIMARY KEY (`call`)\n"
+                     ");\n")
+
+SQLITE_CREATE_MH_TAB = SQL_CREATE_MH_TAB
+"""
+"""
+SQLITE_CREATE_MH_TAB = SQL_CREATE_MH_TAB.replace(
+    "`ID` INTEGER AUTO_INCREMENT NOT NULL,",
+    "`ID` INTEGER PRIMARY KEY AUTOINCREMENT,"
+).replace(
+    ", \nPRIMARY KEY (ID)\n",
+    ""
+)
+"""

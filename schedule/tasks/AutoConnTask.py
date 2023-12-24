@@ -5,6 +5,7 @@ logger = logging.getLogger(__name__)
 
 class AutoConnTask:
     def __init__(self, port_handler, conf: dict):
+        START_CH_RANGE = 9
         """
         self._conf = {
             'task_typ': 'PMS',
@@ -16,7 +17,6 @@ class AutoConnTask:
             'silent_conn': True,
         }
         """
-        START_CH_RANGE = 9
         self._conf = conf
         connection = port_handler.new_outgoing_connection(
             dest_call=self._conf.get('dest_call'),
@@ -43,7 +43,7 @@ class AutoConnTask:
                 3: self._PMS_start_rev_fwd,
                 4: self._PMS_wait_rev_fwd_ended,
             }
-        }.get(self._conf.get('task_typ', None))
+        }.get(self._conf.get('task_typ', ''), {})
         if not self._state_tab:
             self.e = True
             print(f"Error ConnTask no state_tab Typ: {self._conf}")
@@ -59,6 +59,16 @@ class AutoConnTask:
             # self.dest_station_id = self.connection.cli.stat_identifier
             self._set_state_exec(1)
 
+    def crone(self):
+        if self.e:
+            self._ConnTask_ende()
+            return False
+        if not self._is_connected():
+            self._ConnTask_ende()
+            return False
+        self._exec_state_tab()
+        return True
+
     def _set_state_exec(self, state_id):
         if self._state_tab:
             self.state_id = state_id
@@ -67,18 +77,6 @@ class AutoConnTask:
     def _exec_state_tab(self):
         if self._state_exec:
             self._state_exec()
-
-    def crone(self):
-        # print(f"Station ID: {self.dest_station_id}")
-        # print(f"Station CLI ID: {self.connection.cli.stat_identifier}")
-        if self.e:
-            self._ConnTask_ende()
-            return False
-        if self._is_connected():
-            self._exec_state_tab()
-            return True
-        # self._ConnTask_ende()
-        return False
 
     def _is_connected(self):
         if self.e:
@@ -90,10 +88,27 @@ class AutoConnTask:
         if not state_index:
             self.e = True
             return False
-        if state_index in [1, 2, 3, 4]:
+        if state_index in [1, 3, 4]:
             return False
         return True
 
+    def _ConnTask_ende(self):
+        print(f"ConnTask {self._conf.get('task_typ', '')} END")
+        if self.state_id:
+            self._set_state_exec(0)
+        # if self.connection:
+        #     self._end_connection()
+
+    def _end_connection(self):
+        # 0
+        if self.connection:
+            self.connection.conn_disco()
+            self.connection = None
+        self._set_state_exec(0)
+        self._ConnTask_ende()
+
+    ###############################################
+    # PMS
     def _PMS_send_fwd_cmd(self):
         # 1
         if self.connection.cli.stat_identifier:
@@ -130,18 +145,5 @@ class AutoConnTask:
             else:
                 self._ConnTask_ende()
 
-    def _ConnTask_ende(self):
-        # print("ConnTask PMS END")
-        if self.state_id:
-            self._set_state_exec(0)
-        # if self.connection:
-        #     self._end_connection()
-
-    def _end_connection(self):
-        # 0
-        if self.connection:
-            self.connection.conn_disco()
-            self.connection = None
-        self._set_state_exec(0)
-        self._ConnTask_ende()
-
+    ##########################################
+    #

@@ -491,7 +491,7 @@ class DefaultMODE(object):
                 self.file = open(CFG_ft_downloads + self.filename, 'wb')
                 self.e = False
                 return True
-            except PermissionError:
+            except (PermissionError, ValueError):
                 return False
         return False
 

@@ -1,3 +1,42 @@
+###########################################################################################################
+# 2.101.x
+
+Fixes:
+- PMS Einstellungen "Set MID" funktioniert nicht
+- Auto Connect Funktion löscht "Task" nicht wenn Gegenstation nicht erreichbar und N2 abgelaufen
+- Scheduler deselektierte Optionen werden nicht gespeichert
+- Textfarben im QSO Fenster werden nicht gesetzt, wenn Kanal nicht aktiv
+- Textfarben im QSO Fenster werden nicht gespeichert über den Neustart hinweg
+
+Optimierung:
+- APRS Config Management(load/save) ins neue System übertragen
+- APRS WX-Daten (Wetterdaten) werden jetzt in der SQL-DB gespeichert
+- APRS WX-Daten werden nicht in der Tabelle angezeigt, wenn länger als 2 Tage kein Paket empfangen wurde
+- APRS WX-Plot extra Achse und Skalierung für Luftdruck
+- MH Listen System optimiert/aufgeräumt
+- Separate MH Listen je Port
+- AXIP Adresse wird jetzt generell von der User-DB bezogen. Wenn nicht bekannt dann von der MH-Liste
+- GUI UserDB aufgeräumt(Code) und Eingabemöglichkeit für AXIP Adresse hinzugefügt
+- Hauptfenster Code aufgeräumt
+- Globalen zeitgesteuerten Tasker für Autoconnects/Beacons/Pipetool usw.
+- Beacon System überarbeitet/optimiert und auf PoPT-Scheduler umgestellt
+- PipeTool Task in PortHandler Schleife verlegt.
+- Connection Variablen Handling bei Neuen Connect und Disconnect
+- *** Connect from ..., usw. werden jetzt als "Systemnachricht"
+
+Neue Implementierungen / Funktionen:
+- DX Alarm Parameter werden gespeichert
+- CLI DX Alarm History wird gespeichert
+- QSO- und Vorschreibfenster werden gespeichert
+- Alle QSO/Vorschreibfenster löschen option in Menüleiste
+- Hauptfenster: Seitenverhältnisse von QSO- zu Seitenfenster kann jetzt per Maus angepasst werden
+- TX Farben im QSO Fenster auswählbar (Station Einstellungen)
+- System Nachrichten im QSO-Fenster (andere Farbe & Timestamp)
+
+###########################################################################################################
+###########################################################################################################
+# 2.100.35
+
 Fixes:
 - Debugausgaben erzeugen ScriptError bei TNC's, die defekte Pakte durchlassen
   (Ich konnte PoPT nie an echten TNC's testen)

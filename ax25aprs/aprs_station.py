@@ -7,27 +7,13 @@ from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
-from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT, CFG_aprs_data_file
-from fnc.cfg_fnc import cleanup_obj, save_to_file, load_fm_file, set_obj_att
+from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT
+from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii
-from fnc.struct_fnc import get_dx_tx_alarm_his_pack
+from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
 logger = logging.getLogger(__name__)
-
-
-class APRS_Station(object):
-    def __init__(self):
-        self.aprs_parm_loc = ''
-        self.aprs_port_id = 0
-        # self.aprs_parm_lat: float = 0
-        # self.aprs_parm_lon: float = 0
-        self.aprs_parm_digi = False
-        self.aprs_parm_igate = False
-        self.aprs_parm_igate_tx = False
-        self.aprs_parm_igate_rx = False
-        # self.aprs_beacon_text = ''
-        # self.aprs_ais = None
 
 
 class APRS_ais(object):
@@ -35,54 +21,47 @@ class APRS_ais(object):
         print("APRS-IS INIT")
         logger.info("APRS-IS INIT")
         """ APRS-Server Stuff """
-        self.ais_call = ''
-        self.ais_pass = ''
-        self.ais_loc = ''
-        self.ais_lat: float = 0
-        self.ais_lon: float = 0
-        self.add_new_user = False
+        ais_cfg = POPT_CFG.load_CFG_aprs_ais()
+        self.ais_call = ais_cfg.get('ais_call', '')
+        self.ais_pass = ais_cfg.get('ais_pass', '')
+        self.ais_loc = ais_cfg.get('ais_loc', '')
+        self.ais_lat = ais_cfg.get('ais_lat', 0.0)
+        self.ais_lon = ais_cfg.get('ais_lon', 0.0)
+        self.add_new_user = ais_cfg.get('add_new_user', False)
         # self.ais_host = "cbaprs.dyndns.org", 27234
-        self.ais_aprs_stations: {int: APRS_Station} = {}
-        self.ais_host = 'cbaprs.dyndns.org', 27234
+        self.ais_aprs_stations = ais_cfg.get('ais_aprs_stations', {})
+        self.ais_host = ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))
         # self.ais_new_rx_buff = []
-        self.ais_active = False
+        self.ais_active = ais_cfg.get('ais_active', False)
         """ Global APRS Stuff """
-        self.aprs_msg_pool = {
-            "message": [],
-            "bulletin": [],
-        }
-        self.aprs_wx_msg_pool = {}
+        self.aprs_msg_pool = ais_cfg.get('aprs_msg_pool',
+                                         {  # TODO > DB ?
+                                             "message": [],
+                                             "bulletin": [],
+                                         })
+        # self.aprs_wx_msg_pool = {}  # TO-DO > DB
         """ Beacon Tracer """
         # Param
-        self.be_tracer_interval = 5
-        self.be_tracer_port = 0
-        self.be_tracer_station = 'NOCALL'
-        self.be_tracer_wide = 1
-        self.be_tracer_alarm_active = False
-        self.be_tracer_alarm_range = 50
-        self.be_auto_tracer_duration = 60
-
+        self.be_tracer_interval = ais_cfg.get('be_tracer_interval', 5)
+        self.be_tracer_port = ais_cfg.get('be_tracer_port', 0)
+        self.be_tracer_station = ais_cfg.get('be_tracer_station', 'NOCALL')
+        self.be_tracer_wide = ais_cfg.get('be_tracer_wide', 1)
+        self.be_tracer_alarm_active = ais_cfg.get('be_tracer_alarm_active', False)
+        self.be_tracer_alarm_range = ais_cfg.get('be_tracer_alarm_range', 50)
+        self.be_auto_tracer_duration = ais_cfg.get('be_auto_tracer_duration', 60)
         # Packet Pool
-        self.be_tracer_traced_packets = {}
-        self.be_tracer_alarm_hist = {}
+        self.be_tracer_traced_packets = ais_cfg['be_tracer_traced_packets']
+        self.be_tracer_alarm_hist = ais_cfg['be_tracer_alarm_hist']
         # Control vars
         self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''
         self._be_tracer_tx_rtt = time.time()
         self._be_tracer_interval_timer = time.time()
         """ Load CFGs and Init (Login to APRS-Server) """
-        if load_cfg:
-            self._load_conf_fm_file()
-        """"""
-        """
-        self.aprs_msg_pool = {
-            "message": [],
-            "bulletin": [],
-        }
-        """
         # self.aprs_wx_msg_pool = {}
+        # self.be_tracer_active = ais_cfg.get('be_tracer_active', False)
         self.be_tracer_active = False
-        self.be_auto_tracer_active = False
+        self.be_auto_tracer_active = ais_cfg.get('be_auto_tracer_active', False)
         self._be_auto_tracer_timer = 0
         """"""
         self.ais = None
@@ -98,9 +77,9 @@ class APRS_ais(object):
         self.loop_is_running = False
         self._non_prio_task_timer = 0
         self._parm_non_prio_task_timer = 1
-        self.port_handler = None
         self._del_spooler_tr = False
         self._wx_update_tr = False
+        self.port_handler = None
         """ Watchdog """
         self._parm_watchdog = 60  # Sec.
         self._watchdog_last = time.time() + self._parm_watchdog
@@ -113,50 +92,31 @@ class APRS_ais(object):
     def save_conf_to_file(self):
         print("Save APRS Conf")
         logger.info("Save APRS Conf")
-        save_data = cleanup_obj(set_obj_att(APRS_ais(load_cfg=False), self))
-        save_data.ais = None
-        save_data.ais_mon_gui = None
-        save_data.wx_tree_gui = None
-        save_data.port_handler = None
-        save_data.ais_rx_buff = []
-        save_data.loop_is_running = False
-        save_data.ais_aprs_stations = {}
-        # save_data.aprs_wx_msg_pool = {}
-        save_data.spooler_buffer = {}
-        save_data.be_tracer_active = False
-        # save_data.be_tracer_traced_packets = {}
-        save_data._be_tracer_tx_trace_packet = ''
-        save_data._parm_watchdog = int(self._parm_watchdog)
-        """
-        save_date.ais_aprs_msg_pool = {
-            "message": [],
-            "bulletin": [],
-        }
-        """
-        for k in self.ais_aprs_stations.keys():
-            tmp = cleanup_obj(self.ais_aprs_stations[k])
-            # tmp.aprs_ais = None
-            save_data.ais_aprs_stations[k] = tmp
-        save_to_file(CFG_aprs_data_file, data=save_data)
-
-    def _load_conf_fm_file(self):
-        load_data = load_fm_file(CFG_aprs_data_file)
-        if load_data:
-            load_data = cleanup_obj(load_data)
-            for att in dir(load_data):
-                if '__' not in att:
-                    if hasattr(self, att):
-                        if not callable(getattr(self, att)):
-                            if att not in ['ais', 'ais_rx_buff']:
-                                setattr(self, att, getattr(load_data, att))
-                            elif att == 'ais_aprs_stations':
-                                tmp = {}
-                                for k in getattr(load_data, att):
-                                    tmp[k] = set_obj_att(APRS_Station(), load_data.ais_aprs_stations[k])
-                                    tmp[k].aprs_parm_loc = self.ais_loc
-                                    # tmp[k].aprs_ais = self
-
-                                load_data.ais_aprs_stations = tmp
+        ais_cfg = POPT_CFG.load_CFG_aprs_ais()
+        ais_cfg['ais_call'] = str(self.ais_call)
+        ais_cfg['ais_pass'] = str(self.ais_pass)
+        ais_cfg['ais_loc'] = str(self.ais_loc)
+        ais_cfg['ais_lat'] = float(self.ais_lat)
+        ais_cfg['ais_lon'] = float(self.ais_lon)
+        ais_cfg['add_new_user'] = bool(self.add_new_user)
+        ais_cfg['ais_host'] = tuple(self.ais_host)
+        ais_cfg['ais_active'] = bool(self.ais_active)
+        # Tracer
+        ais_cfg['be_tracer_interval'] = int(self.be_tracer_interval)
+        ais_cfg['be_tracer_port'] = int(self.be_tracer_port)
+        ais_cfg['be_tracer_station'] = str(self.be_tracer_station)
+        ais_cfg['be_tracer_wide'] = int(self.be_tracer_wide)
+        ais_cfg['be_tracer_alarm_active'] = bool(self.be_tracer_alarm_active)
+        ais_cfg['be_tracer_alarm_range'] = int(self.be_tracer_alarm_range)
+        ais_cfg['be_auto_tracer_duration'] = int(self.be_auto_tracer_duration)
+        ais_cfg['be_tracer_active'] = False
+        # ais_cfg['be_tracer_active'] = bool(self.be_tracer_active)
+        ais_cfg['be_auto_tracer_active'] = bool(self.be_auto_tracer_active)
+        ais_cfg['be_tracer_traced_packets'] = dict(self.be_tracer_traced_packets)
+        ais_cfg['be_tracer_alarm_hist'] = dict(self.be_tracer_alarm_hist)
+        ais_cfg['ais_aprs_stations'] = dict(self.ais_aprs_stations)
+        ais_cfg['aprs_msg_pool'] = dict(self.aprs_msg_pool)
+        POPT_CFG.save_CFG_aprs_ais(ais_cfg)
 
     def login(self):
         self._watchdog_reset()
@@ -194,6 +154,25 @@ class APRS_ais(object):
         # self.loop_is_running = True
         return True
 
+    def _watchdog_reset(self):
+        self._watchdog_last = time.time() + self._parm_watchdog
+
+    def watchdog_task(self, run_now=False):
+        if not self.ais_active:
+            return
+        if time.time() < self._watchdog_last and not run_now:
+            return
+        print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
+        logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
+        if self.loop_is_running:
+            self.ais_close()
+            self._watchdog_last = time.time() + 10
+            return
+        if self.login():
+            self.port_handler.init_aprs_ais(aprs_obj=self)
+            self._watchdog_last = time.time() + self._parm_watchdog
+            return
+
     def task(self):
         # self.prio_tasks()
         self._non_prio_tasks()
@@ -208,7 +187,6 @@ class APRS_ais(object):
         # print("non Prio")
         if time.time() > self._non_prio_task_timer:
             # self.ais_rx_task()
-            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             # WatchDog
             self.watchdog_task()
             # PN MSG Spooler
@@ -224,12 +202,14 @@ class APRS_ais(object):
                     # APRS PN-MSG GUI
                     if self.port_handler.gui.aprs_pn_msg_win is not None:
                         self.port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
+            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
 
     def aprs_wx_tree_task(self):
         """ Called fm guiMain Tasker """
         if self.wx_tree_gui is not None:
             if self._wx_update_tr:
                 self._wx_update_tr = False
+                # TODO Call fm guiMain loop (may cause random crash ?)
                 self.wx_tree_gui.update_tree_data()
 
     """
@@ -317,6 +297,7 @@ class APRS_ais(object):
                 return True
             # APRS Weather
             elif self._aprs_wx_msg_rx(aprs_pack=aprs_pack):
+                # print(aprs_pack)
                 USER_DB.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
                 return True
             # Tracer
@@ -341,14 +322,20 @@ class APRS_ais(object):
         """
         from_aprs = new_aprs_pack.get('from', '')
         if from_aprs:
-            if not self.aprs_wx_msg_pool.get(from_aprs, False):
-                self.aprs_wx_msg_pool[from_aprs] = deque([], maxlen=500)
-            self.aprs_wx_msg_pool[from_aprs].append(new_aprs_pack)
+            ########
+            # db
+            db = self._get_db()
+            if db:
+                db.aprsWX_insert_data(new_aprs_pack)
+
             if self.wx_tree_gui is not None:
                 self._wx_update_tr = True
             return True
         return False
         # print(aprs_pack)
+
+    def _get_db(self):
+        return self.port_handler.get_database()
 
     @staticmethod
     def _correct_wrong_wx_data(aprs_pack):
@@ -364,14 +351,18 @@ class APRS_ais(object):
                 return _new_pack
         return aprs_pack
 
-    def get_wx_entry_sort_distance(self):
-        _temp = {}
-        for k in list(self.aprs_wx_msg_pool.keys()):
-            _temp[k] = self.aprs_wx_msg_pool[k][-1]
-        return list(dict(sorted(_temp.items(), key=lambda item: item[1].get('distance', 99999))).keys())
-
     def get_wx_data(self):
-        return dict(self.aprs_wx_msg_pool)
+        db = self._get_db()
+        if not db:
+            return []
+        return list(db.aprsWX_get_data_f_wxTree(last_rx_days=1))
+        # return dict(self.aprs_wx_msg_pool)
+
+    def get_wx_data_f_call(self, call: str):
+        db = self._get_db()
+        if not db:
+            return []
+        return list(db.aprsWX_get_data_f_call(call))
 
     #####################
     #
@@ -393,25 +384,6 @@ class APRS_ais(object):
         if self.ais_loc and locator:
             return locator_distance(locator, self.ais_loc)
         return -1
-
-    def _watchdog_reset(self):
-        self._watchdog_last = time.time() + self._parm_watchdog
-
-    def watchdog_task(self, run_now=False):
-        if not self.ais_active:
-            return
-        if time.time() < self._watchdog_last and not run_now:
-            return
-        print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
-        logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
-        if self.loop_is_running:
-            self.ais_close()
-            self._watchdog_last = time.time() + 10
-            return
-        if self.login():
-            self.port_handler.init_aprs_ais(aprs_obj=self)
-            self._watchdog_last = time.time() + self._parm_watchdog
-            return
 
     #########################################
     # APRS MSG System
@@ -817,6 +789,7 @@ class APRS_ais(object):
         if _root_gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
             if _root_gui.be_tracer_win is not None:
+                # TODO Call fm guiMain loop (may cause random crash ?)
                 _root_gui.be_tracer_win.update_tree_data()
 
     def tracer_traces_get(self):
@@ -836,4 +809,3 @@ class APRS_ais(object):
 
     def tracer_auto_tracer_duration_set(self, dur: int):
         self.be_auto_tracer_duration = dur
-

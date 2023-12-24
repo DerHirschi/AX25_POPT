@@ -89,7 +89,7 @@ class StatSetTab:
                                          text='Managed-DIGI',
                                          width=12,
                                          variable=self.smart_digi_set_var,
-                                         state='disabled'   # TODO
+                                         state='disabled'  # TODO
                                          )
         self.smart_digi.place(x=digi_x, y=height - digi_y)
 
@@ -260,9 +260,9 @@ class StatSetTab:
         # Individual Colors for QSO Window
         tab_colors = ttk.Frame(self.textTab)
         bg = self.station_setting.stat_parm_qso_col_bg
-        fg = self.station_setting.stat_parm_qso_col_text
+        fg = self.station_setting.stat_parm_qso_col_text_tx
         self.color_example_text = tk.Text(tab_colors,
-                                          height=6,
+                                          height=5,
                                           width=50,
                                           font=('Courier', 11),
                                           fg=fg,
@@ -271,15 +271,34 @@ class StatSetTab:
         self.color_example_text.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
         tk.Button(tab_colors,
-                  text='Text',
-                  command= lambda : self.choose_color(True)
+                  text='TX-Text',
+                  command=lambda: self._choose_color('tx_fg')
                   ).place(x=20, y=20)
 
         # BG
         tk.Button(tab_colors,
                   text='BG',
-                  command= lambda : self.choose_color(False)
-                  ).place(x=20, y=120)
+                  command=lambda: self._choose_color('tx_bg')
+                  ).place(x=20, y=100)
+
+        fg = self.station_setting.stat_parm_qso_col_text_rx
+        self.color_example_text_rx = tk.Text(tab_colors,
+                                             height=5,
+                                             width=50,
+                                             font=('Courier', 11),
+                                             fg=fg,
+                                             bg=bg)
+        self.color_example_text_rx.place(x=200, y=130)
+        self.color_example_text_rx.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
+        # FG
+        tk.Button(tab_colors,
+                  text='RX-Text',
+                  command=lambda: self._choose_color('rx_fg')
+                  ).place(x=20, y=140)
+
+        self._qso_fg_tx = self.station_setting.stat_parm_qso_col_text_tx
+        self._qso_bg_tx = self.station_setting.stat_parm_qso_col_bg
+        self._qso_fg_rx = self.station_setting.stat_parm_qso_col_text_rx
 
         self.textTab.add(tab_ctext, text=STR_TABLE['c_text'][self.lang])
         self.textTab.add(tab_byetext, text=STR_TABLE['q_text'][self.lang])
@@ -291,23 +310,44 @@ class StatSetTab:
 
         self.update_vars_fm_cfg()
 
-    def choose_color(self, fg_bg: bool):
+    def _choose_color(self, fg_bg: str):
         self._main_cl.settings_win.attributes("-topmost", False)
-        if fg_bg:
-            col = askcolor(self.station_setting.stat_parm_qso_col_text,
+
+        if fg_bg == 'tx_fg':
+            col = askcolor(self._qso_fg_tx,
                            title=STR_TABLE['text_color'][self.lang])
-            if col[1] is not None:
-                # print(col)
-                if col:
-                    self.station_setting.stat_parm_qso_col_text = col[1]
-                    self.color_example_text.configure(fg=col[1])
-        else:
-            col = askcolor(self.station_setting.stat_parm_qso_col_bg,
-                           title=STR_TABLE['bg_color'][self.lang])
-            if col[1] is not None:
-                if col:
-                    self.station_setting.stat_parm_qso_col_bg = col[1]
-                    self.color_example_text.configure(bg=col[1])
+            if not col:
+                self._main_cl.settings_win.attributes("-topmost", True)
+                return
+            if col[1] is None:
+                self._main_cl.settings_win.attributes("-topmost", True)
+                return
+            self._qso_fg_tx = str(col[1])
+            self.color_example_text.configure(fg=str(col[1]))
+        elif fg_bg == 'tx_bg':
+            col = askcolor(self._qso_bg_tx,
+                           title=STR_TABLE['text_color'][self.lang])
+            if not col:
+                self._main_cl.settings_win.attributes("-topmost", True)
+                return
+            if col[1] is None:
+                self._main_cl.settings_win.attributes("-topmost", True)
+                return
+            self._qso_bg_tx = str(col[1])
+            self.color_example_text.configure(bg=str(col[1]))
+            self.color_example_text_rx.configure(bg=str(col[1]))
+        elif fg_bg == 'rx_fg':
+            col = askcolor(self._qso_fg_rx,
+                           title=STR_TABLE['text_color'][self.lang])
+            if not col:
+                self._main_cl.settings_win.attributes("-topmost", True)
+                return
+            if col[1] is None:
+                self._main_cl.settings_win.attributes("-topmost", True)
+                return
+            self._qso_fg_rx = str(col[1])
+            self.color_example_text_rx.configure(fg=str(col[1]))
+
         self._main_cl.settings_win.attributes("-topmost", True)
 
     def chk_CLI(self, event=None):
@@ -334,10 +374,10 @@ class StatSetTab:
             self.tx_filename.configure(state='normal')
             self.rx_filename.configure(state='normal')
 
-            #pipe = self.station_setting.stat_parm_pipe
-            #self.tx_filename_var.set(pipe.tx_filename)
-            #self.rx_filename_var.set(pipe.rx_filename)
-            #self.loop_timer_var.set(str(pipe.parm_tx_file_check_timer))
+            # pipe = self.station_setting.stat_parm_pipe
+            # self.tx_filename_var.set(pipe.tx_filename)
+            # self.rx_filename_var.set(pipe.rx_filename)
+            # self.loop_timer_var.set(str(pipe.parm_tx_file_check_timer))
             self.textTab.select(5)
 
     def select_files(self, tx=True):
@@ -455,7 +495,6 @@ class StatSetTab:
             new_pipe.rx_filename = self.rx_filename_var.get()
             new_pipe.parm_tx_file_check_timer = int(self.loop_timer_var.get())
             self.station_setting.stat_parm_pipe = new_pipe
-        print(self.station_setting.stat_parm_cli)
         # MaxPac
         var_maxpac = int(self.max_pac_select_var.get())
         self.station_setting.stat_parm_MaxFrame = var_maxpac
@@ -493,18 +532,16 @@ class StatSetTab:
         self.station_setting.stat_parm_QTH = self.qth.get()
         # LOC   TODO: Filter
         self.station_setting.stat_parm_LOC = self.loc.get()
+        # COLORS
+        self.station_setting.stat_parm_qso_col_text_tx = self._qso_fg_tx
+        self.station_setting.stat_parm_qso_col_bg = self._qso_bg_tx
+        self.station_setting.stat_parm_qso_col_text_rx = self._qso_fg_rx
 
 
 class StationSettingsWin:
     def __init__(self, main_cl):
-        self.main_class = main_cl
-        self.lang = self.main_class.language
-        # self.ax25_porthandler = main_cl.ax25_port_handler
-        # self.all_port_settings: {int: PortConfigInit} = {}
-        # self.all_ports: {int: AX25Port} = {}
-        # self.all_stat_settings: {str: DefaultStation} = main_cl.ax25_port_handler.ax25_stations_settings
-
-        self.all_dev_types = list(PORT_HANDLER.ax25types.keys())
+        self._root_win = main_cl
+        self.lang = self._root_win.language
 
         self.win_height = 600
         self.win_width = 1059
@@ -515,9 +552,9 @@ class StationSettingsWin:
         self.settings_win.title(STR_TABLE['stat_settings'][self.lang])
         self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
         self.settings_win.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
-                      f"{self.main_class.main_win.winfo_x()}+"
-                      f"{self.main_class.main_win.winfo_y()}")
+                                   f"{self.win_height}+"
+                                   f"{self._root_win.main_win.winfo_x()}+"
+                                   f"{self._root_win.main_win.winfo_y()}")
         self.settings_win.protocol("WM_DELETE_WINDOW", self.destroy)
         self.settings_win.resizable(False, False)
         # self.settings_win.attributes("-topmost", True)
@@ -534,7 +571,7 @@ class StationSettingsWin:
                           # bg="green",
                           height=1,
                           width=6,
-                          command=self.ok_btn_cmd)
+                          command=self._ok_btn_cmd)
 
         save_bt = tk.Button(self.settings_win,
                             text=STR_TABLE['save'][self.lang],
@@ -542,7 +579,7 @@ class StationSettingsWin:
                             # bg="green",
                             height=1,
                             width=7,
-                            command=self.save_btn_cmd)
+                            command=self._save_btn_cmd)
 
         cancel_bt = tk.Button(self.settings_win,
                               text=STR_TABLE['cancel'][self.lang],
@@ -562,14 +599,14 @@ class StationSettingsWin:
                               # bg="green",
                               height=1,
                               width=10,
-                              command=self.new_stat_btn_cmd)
+                              command=self._new_stat_btn_cmd)
         del_st_bt = tk.Button(self.settings_win,
                               text=STR_TABLE['delete'][self.lang],
                               # font=("TkFixedFont", 15),
                               bg="red3",
                               height=1,
                               width=10,
-                              command=self.del_station_btn)
+                              command=self._del_station_btn)
 
         new_st_bt.place(x=20, y=self.win_height - 590)
         del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
@@ -577,19 +614,19 @@ class StationSettingsWin:
         # Tab
 
         # Root Tab
-        self.tabControl = ttk.Notebook(self.settings_win, height=self.win_height - 140, width=self.win_width - 40)
-        self.tabControl.place(x=20, y=self.win_height - 550)
+        self._tabControl = ttk.Notebook(self.settings_win, height=self.win_height - 140, width=self.win_width - 40)
+        self._tabControl.place(x=20, y=self.win_height - 550)
         # Tab Vars
         # self.tab_index = 0
         self.tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
         for k in PORT_HANDLER.ax25_stations_settings.keys():
             sett = PORT_HANDLER.ax25_stations_settings[k]
-            tab = StatSetTab(self, sett, self.tabControl)
+            tab = StatSetTab(self, sett, self._tabControl)
             self.tab_list.append(tab)
-            self.tabControl.add(tab.own_tab, text=k)
+            self._tabControl.add(tab.own_tab, text=k)
 
-    def set_all_vars_to_cfg(self):
+    def _set_all_vars_to_cfg(self):
         """
         for k in self.all_port_settings.keys():
             self.all_port_settings[k].parm_Stations = []
@@ -599,7 +636,7 @@ class StationSettingsWin:
             call = el.call.get().upper()
             if call not in dbl_calls:
                 el.set_vars_to_cfg()
-                self.tabControl.tab(self.tab_list.index(el), text=call)
+                self._tabControl.tab(self.tab_list.index(el), text=call)
                 dbl_calls.append(call)
             else:
                 el.call.delete(0, tk.END)
@@ -607,63 +644,65 @@ class StationSettingsWin:
 
         PORT_HANDLER.update_digi_setting()
 
-    def save_cfg_to_file(self):
+    def _save_cfg_to_file(self):
         for conf in self.tab_list:
             stat_conf = conf.station_setting
             if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
                 PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
                 save_station_to_file(stat_conf)
-        self.main_class.msg_to_monitor(STR_TABLE['suc_save'][self.lang])
+        self._root_win.msg_to_monitor(STR_TABLE['suc_save'][self.lang])
 
-    def save_btn_cmd(self):
+    def _save_btn_cmd(self):
         # TODO Cleanup
         PORT_HANDLER.disco_all_Conn()
+        self.settings_win.attributes("-topmost", False)
         messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
-        self.settings_win.lift()
-        time.sleep(1)   # TODO Quick fix
+        self.settings_win.attributes("-topmost", True)
+        time.sleep(1)  # TODO Quick fix
         # TODO PORT_HANDLER.is_all_disco()
         PORT_HANDLER.disco_all_Conn()
-        self.set_all_vars_to_cfg()
-        self.save_cfg_to_file()
-        self.main_class.msg_to_monitor(STR_TABLE['lob1'][self.lang])
+        self._set_all_vars_to_cfg()
+        self._save_cfg_to_file()
+        self._root_win.msg_to_monitor(STR_TABLE['lob1'][self.lang])
 
-    def ok_btn_cmd(self):
+    def _ok_btn_cmd(self):
         # TODO Cleanup
         if not PORT_HANDLER.is_all_disco():
             PORT_HANDLER.disco_all_Conn()
             messagebox.showerror('Stationen nicht disconnected', 'Nicht alle Stationen disconnected!')
             self.settings_win.lift()
             return
-        self.set_all_vars_to_cfg()
-        self.save_cfg_to_file()
-        self.main_class.msg_to_monitor(STR_TABLE['hin1'][self.lang])
-        self.main_class.msg_to_monitor(STR_TABLE['lob2'][self.lang])
+        self._set_all_vars_to_cfg()
+        self._save_cfg_to_file()
+        self._root_win.set_text_tags()
+        self._root_win.msg_to_monitor(STR_TABLE['hin1'][self.lang])
+        self._root_win.msg_to_monitor(STR_TABLE['lob2'][self.lang])
 
         self.destroy()
 
-    def new_stat_btn_cmd(self):
+    def _new_stat_btn_cmd(self):
         sett = DefaultStation()
-        tab = StatSetTab(self, sett, self.tabControl)
-        self.tabControl.add(tab.own_tab, text=sett.stat_parm_Call)
-        self.tabControl.select(len(self.tab_list))
+        tab = StatSetTab(self, sett, self._tabControl)
+        self._tabControl.add(tab.own_tab, text=sett.stat_parm_Call)
+        self._tabControl.select(len(self.tab_list))
         self.tab_list.append(tab)
-        # print(self.tabControl.index('current'))
+        # print(self._tabControl.index('current'))
 
     def destroy(self):
         self.settings_win.destroy()
-        self.main_class.settings_win = None
+        self._root_win.settings_win = None
 
     def tasker(self):
         pass
 
-    def del_station_btn(self):
+    def _del_station_btn(self):
         self.settings_win.attributes("-topmost", False)
         msg = AskMsg(titel='lösche Station', message="Willst du diese Station wirklich löschen? \n"
                                                      "Alle Einstellungen sowie Texte gehen verloren !")
         # self.settings_win.lift()
         if msg:
             try:
-                ind = self.tabControl.index('current')
+                ind = self._tabControl.index('current')
             except tk.TclError:
                 pass
             else:
@@ -671,14 +710,13 @@ class StationSettingsWin:
                 call = tab.call.get()
                 del_user_data(call)
                 del self.tab_list[ind]
-                self.tabControl.forget(ind)
+                self._tabControl.forget(ind)
 
                 WarningMsg('Station gelöscht', 'Laufwerk C: wurde erfolgreich formatiert.')
-                self.main_class.msg_to_monitor('Hinweis: Station erfolgreich gelöscht.')
+                self._root_win.msg_to_monitor('Hinweis: Station erfolgreich gelöscht.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
                                    'Mach weiter so. Das hast du gut gemacht.')
-            self.main_class.msg_to_monitor('Hinweis: Knack!! Abgebrochen..')
+            self._root_win.msg_to_monitor('Hinweis: Knack!! Abgebrochen..')
         self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)
-

@@ -90,6 +90,7 @@ class BBS_fwd_Q(tk.Toplevel):
 
         self._tree_data = []
         self._data = []
+        self._root_win.BBS_fwd_q_list = self
         self._init_tree_data()
         # self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 

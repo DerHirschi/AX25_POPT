@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timedelta
 import logging
-from cfg.constant import ENCODINGS
+from cfg.constant import ENCODINGS, SQL_TIME_FORMAT
 
 
 def get_kb_str_fm_bytes(len_: int):
@@ -28,18 +28,22 @@ def time_to_decimal(dt):
 
 
 def conv_time_for_sorting(dateti: datetime.now()):
-    return dateti.strftime('%y/%m/%d %H:%M:%S')
+    return dateti.strftime('%y%m%d%H%M%S')
 
 
 def conv_time_for_key(dateti: datetime.now()):
     return dateti.strftime('%y%m%d%H%M%S')
 
 
-def conv_time_US_str(dateti: datetime.now()):
+def conv_time_US_str(dateti=None):
+    if not dateti:
+        return datetime.now().strftime('%m/%d/%y %H:%M:%S')
     return dateti.strftime('%m/%d/%y %H:%M:%S')
 
 
-def conv_time_DE_str(dateti: datetime.now()):
+def conv_time_DE_str(dateti=None):
+    if not dateti:
+        return datetime.now().strftime('%d/%m/%y %H:%M:%S')
     return dateti.strftime('%d/%m/%y %H:%M:%S')
 
 
@@ -47,7 +51,7 @@ def get_file_timestamp():
     return datetime.now().strftime('%d%m/%y-%H%M')
 
 
-def get_timedelta_str(dateti: datetime.now(), r_just=True):
+def get_timedelta_CLIstr(dateti: datetime.now(), r_just=True):
     _time_delta = datetime.now() - dateti
     _td_days = _time_delta.days
     _td_hours = int(_time_delta.seconds / 3600)
@@ -113,7 +117,7 @@ def get_timedelta_str_fm_sec(time_st: time.time(), r_just=True):
     return _time_delta_str
 
 
-def convert_str_to_datetime(date_str, date_format='%d/%m/%y %H:%M:%S'):
+def convert_str_to_datetime(date_str, date_format=SQL_TIME_FORMAT):
     try:
         converted_date = datetime.strptime(date_str, date_format)
         return converted_date
@@ -140,7 +144,7 @@ def get_time_delta(dateti: datetime.now()):
 
 def calculate_percentage(data_length, data_sent):
     if not data_sent or not data_length:
-        # Divided by Zero let explode the Machine... So, better return 0
+        # Divided by Zero
         return 0
     return round((data_sent / data_length) * 100, 1)
 
@@ -213,3 +217,4 @@ def convert_umlaute_to_ascii(in_str: str):
 
 def get_weekDay_fm_dt(now_weekday):
     return ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now_weekday]
+

@@ -2,11 +2,11 @@ import pickle
 import os
 import logging
 
-import ax25.ax25Beacon
-from ax25aprs.aprs_station import APRS_Station
 from ax25.ax25UI_Pipe import AX25Pipe
-from cfg.constant import VER, CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
-from fnc.cfg_fnc import cleanup_obj, set_obj_att, save_to_file, load_fm_file, set_obj_att_fm_dict, cleanup_obj_to_dict
+from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
+from cfg.popt_config import POPT_CFG
+from fnc.cfg_fnc import save_to_file, load_fm_file
+
 """
 if "dev" in VER:
     log_level = logging.DEBUG
@@ -39,7 +39,7 @@ def get_all_stat_cfg():
     """ TODO Again !! Bullshit """
     stat_cfg_path = CFG_data_path + CFG_usertxt_path
     stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
-    ret: {str: DefaultStation} = {}
+    ret = {}
     if len(stat_cfg) > 1:
         stat_cfg = stat_cfg[1:]
         for folder in stat_cfg:
@@ -52,7 +52,8 @@ def get_all_stat_cfg():
             except (FileNotFoundError, EOFError):
                 pass
             except ImportError:
-                logger.error(f"Station CFG: Falsche Version der CFG Datei. Bitte {folder + '/stat' + call + '.popt'} löschen und PoPT neu starten!")
+                logger.error(
+                    f"Station CFG: Falsche Version der CFG Datei. Bitte {folder + '/stat' + call + '.popt'} löschen und PoPT neu starten!")
                 raise
 
             if temp:
@@ -66,7 +67,7 @@ def get_all_stat_cfg():
                     stat.stat_parm_pipe.tx_filename = stat.stat_parm_pipe_tx
                     stat.stat_parm_pipe.rx_filename = stat.stat_parm_pipe_rx
                     stat.stat_parm_pipe.parm_tx_file_check_timer = stat.stat_parm_pipe_loop_timer
-                if type(stat.stat_parm_cli) != str:
+                if type(stat.stat_parm_cli) is not str:
                     if hasattr(stat.stat_parm_cli, 'cli_name'):
                         stat.stat_parm_cli = stat.stat_parm_cli.cli_name
                 ################################
@@ -134,25 +135,26 @@ class DefaultStation:
     stat_parm_cli_bye_text: str = ''
     stat_parm_cli_prompt: str = ''
     # Optional Parameter. Overrides Port Parameter
-    stat_parm_PacLen: int = 0      # Max Pac len
-    stat_parm_MaxFrame: int = 0    # Max (I) Frames
+    stat_parm_PacLen: int = 0  # Max Pac len
+    stat_parm_MaxFrame: int = 0  # Max (I) Frames
     # stat_param_beacons: {int: [Beacon]} = {}
-    stat_parm_qso_col_text = 'red'
+    stat_parm_qso_col_text_tx = 'white'
     stat_parm_qso_col_bg = 'black'
+    stat_parm_qso_col_text_rx = '#25db04'
 
 
 class DefaultPort(object):
-    parm_Stations: [DefaultStation] = []
+    parm_Stations = []
     station_save_files: [str] = []
     """ Port Parameter """
     parm_PortNr: int = -1
     parm_PortName: '' = ''
-    parm_PortTyp: '' = ''   # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIP' AXIP UDP
+    parm_PortTyp: '' = ''  # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIP' AXIP UDP
     parm_PortParm: (str, int) = ('', 0)
     # TODO DIGI is Station related
     parm_isSmartDigi = False
-    parm_StupidDigi_calls = []     # Just if parm_isDigi is set to False
-    parm_TXD = 400             # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+    parm_StupidDigi_calls = []  # Just if parm_isDigi is set to False
+    parm_TXD = 400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
     """ Kiss Parameter """
     parm_kiss_is_on = True
     parm_kiss_TXD = 35
@@ -161,8 +163,8 @@ class DefaultPort(object):
     parm_kiss_Tail = 15
     parm_kiss_F_Duplex = 0
     """ Connection Parameter """
-    parm_PacLen = 170   # Max Pac len
-    parm_MaxFrame = 3   # Max (I) Frames
+    parm_PacLen = 170  # Max Pac len
+    parm_MaxFrame = 3  # Max (I) Frames
     # Station related Parameter
     parm_stat_PacLen: {str: int} = {}
     parm_stat_MaxFrame: {str: int} = {}
@@ -170,24 +172,23 @@ class DefaultPort(object):
     parm_StationCalls: [str] = []  # def in __init__    Keys for Station Parameter
     ####################################
     # parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
-    parm_T2 = 1700      # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
+    parm_T2 = 1700  # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
     parm_T2_auto = True
-    parm_T3 = 180       # T3 sek (Inactive Link Timer) Default:180 Sek
-    parm_N2 = 20        # Max Try   Default 20
-    parm_baud = 1200    # Baud for calculating Timer
-    parm_full_duplex = False            # Pseudo Full duplex Mode (Just for AXIP)
-    parm_axip_Multicast = False     # AXIP Multicast
-    parm_axip_fail = 30             # AXIP Max Connection Fail
-    parm_Multicast_anti_spam = 2    # AXIP Multicast Anti Spam Timer. ( Detects loops and duplicated msgs)
+    parm_T3 = 180  # T3 sek (Inactive Link Timer) Default:180 Sek
+    parm_N2 = 20  # Max Try   Default 20
+    parm_baud = 1200  # Baud for calculating Timer
+    parm_full_duplex = False  # Pseudo Full duplex Mode (Just for AXIP)
+    parm_axip_Multicast = False  # AXIP Multicast
+    parm_axip_fail = 30  # AXIP Max Connection Fail
+    parm_Multicast_anti_spam = 2  # AXIP Multicast Anti Spam Timer. ( Detects loops and duplicated msgs)
     # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
     # Monitor Text Color
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
     parm_mon_clr_bg = "black"
-    parm_aprs_station = cleanup_obj(APRS_Station())
+    parm_aprs_station = POPT_CFG.load_CFG_aprs_station()
     ##################################
     # Port Parameter for Save to file
-    parm_beacons = {}
     ##########################
     # Globals
     glb_gui = None
@@ -210,24 +211,17 @@ class DefaultPort(object):
             ############
             # Port CFG
             save_ports = {}
-            clean_beacon_cfg = {}
-            # clean_cli_param = cleanup_obj_dict(self.parm_cli)
-            for stat_call in self.parm_beacons.keys():
-                tmp_be_list = []
-                for be in self.parm_beacons[stat_call]:
-                    # tmp_be_list.append(cleanup_obj(be))
-                    tmp_be_list.append(cleanup_obj_to_dict(be))
 
-                clean_beacon_cfg[stat_call] = tmp_be_list
             for att in dir(self):
                 if '__' not in att and \
                         att not in self.dont_save_this and \
                         not callable(getattr(self, att)):
                     # print(" {} - {}".format(att, getattr(self, att)))
+
                     if att == 'parm_beacons':
-                        save_ports[att] = clean_beacon_cfg
+                        pass
                     elif att == 'parm_aprs_station':
-                        save_ports[att] = cleanup_obj(self.parm_aprs_station)
+                        save_ports[att] = dict(self.parm_aprs_station)
                     else:
                         save_ports[att] = getattr(self, att)
                     print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
@@ -240,13 +234,13 @@ class DefaultPort(object):
 
 
 class PortConfigInit(DefaultPort):
-    def __init__(self, loaded_stat: {str: DefaultStation}, port_id: int):
+    def __init__(self, loaded_stat: dict, port_id: int):
         # ReInit rest of this shit
         for att in dir(self):
             if '__' not in att and att not in self.dont_save_this and not callable(getattr(self, att)):
                 setattr(self, att, getattr(self, att))
         self.parm_PortNr = int(port_id)
-        self.parm_Stations: [DefaultStation] = []
+        self.parm_Stations = []
         self.station_save_files = []
         file = CFG_data_path + f'port{self.parm_PortNr}.popt'
         is_file = False
@@ -271,18 +265,8 @@ class PortConfigInit(DefaultPort):
                     if not callable(getattr(self, att)):
                         setattr(self, att, port_cfg[att])
 
-            for be_k in self.parm_beacons:
-                tmp_be_list = []
-                for old_be in self.parm_beacons[be_k]:
-                    beacon = ax25.ax25Beacon.Beacon()
-                    if type(old_be) == dict:
-                        tmp_be_list.append(set_obj_att_fm_dict(beacon, old_be))
-                    else:
-                        tmp_be_list.append(set_obj_att(beacon, old_be))
-                self.parm_beacons[be_k] = tmp_be_list
-
             for k in self.parm_cli:
-                if type(self.parm_cli[k]) != str:
+                if type(self.parm_cli[k]) is not str:
                     if hasattr(self.parm_cli[k], 'cli_name'):
                         self.parm_cli[k] = self.parm_cli[k].cli_name
 
@@ -308,16 +292,14 @@ class PortConfigInit(DefaultPort):
                 if self.parm_PortTyp == 'AXIP':
                     self.parm_full_duplex = True
                 else:
-                    self.parm_full_duplex = False   # Maybe sometimes i ll implement it for HF
+                    self.parm_full_duplex = False  # Maybe sometimes i ll implement it for HF
 
             # stat: DefaultStation
             for stat in self.parm_Stations:
                 if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
                     self.parm_cli[stat.stat_parm_Call] = stat.stat_parm_cli
 
-        self.parm_aprs_station = set_obj_att(APRS_Station(), self.parm_aprs_station)
-        self.parm_aprs_station.aprs_port_id = port_id
-        # self.parm_aprs_station.aprs_ais =
+        self.parm_aprs_station['aprs_port_id'] = port_id
 
     def __del__(self):
         # self.save_to_pickl()
@@ -337,7 +319,7 @@ def save_station_to_file(conf: DefaultStation):
                     save_to_file(f_n, getattr(conf, att))
                 else:
                     save_station[att] = getattr(conf, att)
-        if conf.stat_parm_pipe is not None:
+        if conf.stat_parm_pipe:
             # save_station.stat_parm_pipe = True
             save_station['stat_parm_pipe_tx'] = conf.stat_parm_pipe.tx_filename
             save_station['stat_parm_pipe_rx'] = conf.stat_parm_pipe.rx_filename
@@ -345,4 +327,3 @@ def save_station_to_file(conf: DefaultStation):
             save_station['stat_parm_pipe'] = True
 
         save_to_file(file, save_station)
-

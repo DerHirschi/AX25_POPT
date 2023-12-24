@@ -195,7 +195,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
             db_ent.LOC = loc
             db_ent.Lat = aprs_frame['latitude']
             db_ent.Lon = aprs_frame['longitude']
-            if type(dist) == float:
+            if type(dist) is float:
                 db_ent.Distance = float(dist)
             if not db_ent.TYP and typ:
                 db_ent.TYP = typ

@@ -55,8 +55,7 @@ $ python3 PoPT.py
 - F12 > Monitor Mode
 - CTRL + plus > increase Text size
 - CTRL + minus > decrease Text size
-- CTRL + Left > decrease Text Window
-- CTRL + Right > increase Text Window
+
 
 #### File ext in Station Profile Folder (data/usertxt/<USER CALL>):
 - *.ctx > C-Text

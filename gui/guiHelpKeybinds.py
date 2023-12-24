@@ -37,8 +37,8 @@ class KeyBindsHelp(tk.Toplevel):
         tk.Label(self, text='F12 > Monitor').place(x=50, y=90)
         tk.Label(self, text='STRG + plus > Textgröße vergrößern').place(x=50, y=110)
         tk.Label(self, text='STRG + minus > Textgröße verkleinern').place(x=50, y=130)
-        tk.Label(self, text='STRG + Pfeil(Links) > Textfenster verkleinern').place(x=50, y=150)
-        tk.Label(self, text='STRG + Pfeil(Rechts) > Textfenster vergrößern').place(x=50, y=170)
+        # tk.Label(self, text='STRG + Pfeil(Links) > Textfenster verkleinern').place(x=50, y=150)
+        # tk.Label(self, text='STRG + Pfeil(Rechts) > Textfenster vergrößern').place(x=50, y=170)
 
     def destroy_win(self):
         self.destroy()

@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class WXWin(tk.Toplevel):
+    # TODO all Delete WX-DATA
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
@@ -100,9 +101,10 @@ class WXWin(tk.Toplevel):
         self._tree.column("comment", anchor=tk.CENTER, stretch=tk.YES, width=150)
 
         self._tree_data = []
-        self._wx_data = {}
+        self._wx_data = []
         self._init_tree_data()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
+        self._root_win.wx_window = self
 
     def _init_tree_data(self):
         self._get_wx_data()
@@ -110,6 +112,7 @@ class WXWin(tk.Toplevel):
         self._update_tree()
 
     def update_tree_data(self):
+        # TODO Call fm guiMain Loop
         self._get_wx_data()
         self._format_tree_data()
         self._update_tree()
@@ -119,25 +122,10 @@ class WXWin(tk.Toplevel):
 
     def _format_tree_data(self):
         self._tree_data = []
-        for k in self._wx_data:
-            self._tree_data.append((
-                f'{self._wx_data[k][-1]["rx_time"].strftime("%d/%m/%y %H:%M:%S")}',
-                f'{k}',
-                f'{self._wx_data[k][-1].get("port_id", "-")}',
-                f'{self._wx_data[k][-1].get("locator", "-")}',
-                f'{self._wx_data[k][-1].get("distance", -1)}',
-                f'{self._wx_data[k][-1]["weather"].get("pressure", "-")}',
-                f'{self._wx_data[k][-1]["weather"].get("humidity", "-")}',
-                f'{self._wx_data[k][-1]["weather"].get("rain_1h", "-")}',
-                f'{self._wx_data[k][-1]["weather"].get("rain_24h", "-")}',
-                f'{self._wx_data[k][-1]["weather"].get("rain_since_midnight", "-")}',
-                f'{self._wx_data[k][-1]["weather"].get("temperature", -99):.1f}',
-                f'{self._wx_data[k][-1]["weather"].get("wind_direction", "-")}',
-                f'{self._wx_data[k][-1]["weather"].get("wind_gust", "-")}',
-                f'{self._wx_data[k][-1]["weather"].get("wind_speed", "-")}',
-                f'{self._wx_data[k][-1]["weather"].get("luminosity", "-")}',
-                f'{self._wx_data[k][-1].get("comment", "")}',
-            ))
+        if not self._wx_data:
+            return
+        for el in self._wx_data:
+            self._tree_data.append(el)
 
     def _sort_entry(self, col):
         self._last_sort_col = col
@@ -173,18 +161,17 @@ class WXWin(tk.Toplevel):
         for ret_ent in self._tree_data:
             self._tree.insert('', tk.END, values=ret_ent)
 
-    def _entry_selected(self, event):
-        _key = ''
+    def _entry_selected(self, event=None):
+        key = ''
         for selected_item in self._tree.selection():
-            _item = self._tree.item(selected_item)
-            _key = _item['values'][1]
-        if _key:
-            _data = self._wx_data.get(_key, False)
-            if _data:
-                WXPlotWindow(self._root_win, _data)
+            item = self._tree.item(selected_item)
+            key = item['values'][1]
+        if key:
+            data = self._ais_obj.get_wx_data_f_call(key)
+            if data:
+                WXPlotWindow(self._root_win, data)
 
     def _close(self):
         self._ais_obj.wx_tree_gui = None
-        # self._ais_obj = None
         self._root_win.wx_window = None
         self.destroy()

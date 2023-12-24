@@ -27,9 +27,9 @@ def bytearray2hexstr(inp):
 
 
 def format_hexstr(inp):
-    if type(inp) == int:
+    if type(inp) is int:
         return '{:02x}'.format(inp)
-    elif type(inp) == str:
+    elif type(inp) is str:
         return '{:02x}'.format(int(inp, 16))
 
 
@@ -71,7 +71,7 @@ def decode_FRMR(ifield):
     return tmp
 
 
-class Call(object):
+class Call:
     def __init__(self):
         self.call = ''
         self.call_str = ''
@@ -151,7 +151,7 @@ class Call(object):
         return True
 
 
-class CByte(object):
+class CByte:
     """
     ctl_str = ''       # Monitor Out
     type = ''          # Control Field Type ( U, I, S )
@@ -411,7 +411,7 @@ class CByte(object):
         self.mon_str = self.flag + bl2str(self.pf)
 
 
-class PIDByte(object):
+class PIDByte:
 
     def __init__(self):
         self.hex = 0x00
@@ -515,7 +515,7 @@ class PIDByte(object):
         self.escape = True
 
 
-class AX25Frame(object):
+class AX25Frame:
     def __init__(self):
         # self.kiss = b''
         self.data_bytes = b''           # Dekiss
@@ -537,11 +537,8 @@ class AX25Frame(object):
             self.from_call.call_str,
             self.to_call.call_str
         )
-        ca: Call
         for ca in self.via_calls:
-            self.addr_uid += ':{}'.format(
-                ca.call_str
-            )
+            self.addr_uid += f':{ca.call_str}'
         if not dec:
             self.addr_uid = reverse_uid(self.addr_uid)
 
@@ -737,36 +734,39 @@ class AX25Frame(object):
         """
         :return: bool
         """
-        ret = True
         if len(self.data_bytes) < 15:
             print('Validate Error: Pac length')
             logger.error('Validate Error: Pac length')
-            ret = False
+            AX25EncodingERROR(self)
+            return False
         if not self.from_call.validate():
             print('Validate Error: From Call')
             logger.error('Validate Error: From Call')
-            ret = False
+            AX25EncodingERROR(self)
+            return False
         if not self.to_call.validate():
             print('Validate Error: TO Call')
             logger.error('Validate Error: TO Call')
-            ret = False
+            AX25EncodingERROR(self)
+            return False
         ca: Call
         for ca in self.via_calls:
             if not ca.validate():
                 print('Validate Error: ca.validate')
-                ret = False
+                AX25EncodingERROR(self)
+                return False
         if not self.ctl_byte.validate():
             print('Validate Error: C_Byte')
             logger.error('Validate Error: C_Byte')
-            ret = False
+            AX25EncodingERROR(self)
+            return False
         if self.ctl_byte.pid:
             if not self.pid_byte.validate():
                 print('Validate Error: PID_Byte')
                 logger.error('Validate Error: PID_Byte')
-                ret = False
-        if not ret:
-            AX25EncodingERROR(self)
-        return ret
+                AX25EncodingERROR(self)
+                return False
+        return True
 
     #############
     # DIGI Stuff

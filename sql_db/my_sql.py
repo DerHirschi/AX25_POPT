@@ -56,9 +56,11 @@ class SQL_DB:
             if self.conn.is_connected():
                 try:
                     with self.conn.cursor() as cursor:
-                        print(f"Query: {query}")
-                        print(f"cur :{cursor.execute(query)}")
+                        # print(f"Query: {query}")
+                        # cursor.execute(query)
+                        cursor.execute(query)
                         return cursor.fetchall()
+                        # return cursor.execute(query).fetchall()
                 except AttributeError:
                     print("MySQL: Version error !")
                     logger.error("MySQL: Version error !")
@@ -68,6 +70,11 @@ class SQL_DB:
                     self.conn.close()
                     raise SQLConnectionError("MySQL: Version error !")
                 # db_conn.close()
+                except ReferenceError:
+                    print("MySQL: ReferenceError !")
+                    logger.warning("MySQL: ReferenceError !")
+                    time.sleep(0.3)
+                    return self.execute_query(query)
         self.conn = None
         print("MYSQL (execute_query): Could not connect")
         logger.error("MYSQL (execute_query): Could not connect")
@@ -93,8 +100,11 @@ class SQL_DB:
                     raise SQLConnectionError("MySQL: Version error !")
                 except mysql.connector.errors.DataError as e:
                     print(e)
+                    logger.error(e)
                     print(f"Query: {query_str}")
+                    logger.error(f"Query: {query_str}")
                     print(f"QData: {query_data}")
+                    logger.error(f"QData: {query_data}")
                     raise e
                 # db_conn.close()
         self.conn = None
