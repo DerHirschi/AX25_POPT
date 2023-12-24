@@ -1860,8 +1860,8 @@ class PoPT_GUI_Main:
                                          selectforeground=tx_bg,
                                          )
 
-
             self._mon_txt.configure(state="disabled")
+
     #######################################
     # KEYBIND Stuff
     def _set_binds(self):

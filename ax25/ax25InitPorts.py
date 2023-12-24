@@ -335,6 +335,7 @@ class AX25PortHandler(object):
             # Check if Connection is already in all_conn...
             for k in list(self._all_connections.keys()):
                 if new_conn == self._all_connections[k]:
+                    print("Connection bereits Vorhanden in PortHandler Connections")
                     if new_conn.ch_index != k:
                         logger.warning("Channel Index != Real Index !!!")
                         new_conn.ch_index = int(k)
@@ -394,6 +395,7 @@ class AX25PortHandler(object):
             return
         if self._all_connections[ch_index] == conn:
             del self._all_connections[ch_index]
+            # self._all_connections[ch_index].own_port.del_connections(conn=conn)
             if self.gui:
                 # TODO: Trigger here, Logbook and UserDB-Conn C
                 self.gui.sysMsg_to_qso(
@@ -401,7 +403,6 @@ class AX25PortHandler(object):
                     ch_index=int(conn.ch_index))
                 self.gui.disco_sound()
                 self.gui.ch_status_update()
-            # self._all_connections[ch_index].own_port.del_connections(conn=conn)
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():

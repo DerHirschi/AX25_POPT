@@ -390,6 +390,7 @@ class AX25Port(threading.Thread):
 
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
+        print(self._connections)
         ax25_frame.ctl_byte.SABMcByte()
         ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
         """
@@ -407,7 +408,7 @@ class AX25Port(threading.Thread):
                 if self._connections[reverse_uid(ax25_frame.addr_uid)].zustand_exec.stat_index in [0, 1]:
                     break
 
-            logger.debug("Same UID !! {}".format(ax25_frame.addr_uid))
+            logger.warning("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
             try:
@@ -432,6 +433,9 @@ class AX25Port(threading.Thread):
             del self.pipes[conn.uid]
         if conn.uid in self._connections.keys():
             del self._connections[conn.uid]
+        for conn_uid in list(self._connections.keys()):
+            if conn == self._connections[conn_uid]:
+                del self._connections[conn_uid]
 
     def send_UI_frame(self,
                       own_call,
