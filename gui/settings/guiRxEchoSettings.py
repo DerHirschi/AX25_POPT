@@ -121,14 +121,14 @@ class RxEchoSettings(tk.Toplevel):
     def _save_btn_cmd(self):
         # self.set_vars()
         PORT_HANDLER.save_all_port_cfgs()
-        self._main_cl.msg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
-        self._main_cl.msg_to_monitor('Lob: Eine sehr gute Entscheidung. Du bist großartig!')
+        self._main_cl.sysMsg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
+        self._main_cl.sysMsg_to_monitor('Lob: Eine sehr gute Entscheidung. Du bist großartig!')
 
     def _ok_btn_cmd(self):
         # self.set_vars()
         # self.re_init_beacons()
-        self._main_cl.msg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
-        self._main_cl.msg_to_monitor('Lob: Du hast eine gute Einstellung. Mach weiter so!')
+        self._main_cl.sysMsg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
+        self._main_cl.sysMsg_to_monitor('Lob: Du hast eine gute Einstellung. Mach weiter so!')
         self._destroy_win()
 
     def _destroy_win(self):

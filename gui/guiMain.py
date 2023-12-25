@@ -1136,7 +1136,7 @@ class PoPT_GUI_Main:
         pass
 
     def _destroy_win(self):
-        self.msg_to_monitor("PoPT wird beendet.")
+        self.sysMsg_to_monitor("PoPT wird beendet.")
         logging.info('Closing GUI')
         self._is_closing = True
         logging.info('Closing GUI: Save GUI Vars & Parameter.')
@@ -1934,27 +1934,30 @@ class PoPT_GUI_Main:
         ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
-            self.msg_to_monitor(el)
-        self.msg_to_monitor('Python Other Packet Terminal ' + VER)
+            self.sysMsg_to_monitor(el)
+        self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
         for stat in PORT_HANDLER.ax25_stations_settings.keys():
-            self.msg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
+            self.sysMsg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         for port_k in PORT_HANDLER.get_all_ports().keys():
             msg = 'konnte nicht initialisiert werden!'
             if PORT_HANDLER.get_all_ports()[port_k].device_is_running:
                 msg = 'erfolgreich initialisiert.'
-            self.msg_to_monitor('Info: Port {}: {} - {} {}'
-                                .format(port_k,
+            self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
+                                   .format(port_k,
                                         PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortName,
                                         PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortTyp,
                                         msg
                                         ))
-            self.msg_to_monitor('Info: Port {}: Parameter: {} | {}'
-                                .format(port_k,
+            self.sysMsg_to_monitor('Info: Port {}: Parameter: {} | {}'
+                                   .format(port_k,
                                         PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[0],
                                         PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[1]
                                         ))
 
-    ##########################
+    # END Init Stuff
+    ######################################################################
+
+    ######################################################################
     # GUI Sizing/Formatting Stuff
     def _increase_textsize(self):
         self.text_size += 1
@@ -2007,8 +2010,11 @@ class PoPT_GUI_Main:
         self._inp_txt.mark_set(tk.INSERT, "1.0")
         self._inp_txt.see(tk.INSERT)
 
-    ##########################
-    # no WIN FNC
+    # END GUI Sizing/Formatting Stuff
+    ######################################################################
+
+    ######################################################################
+    #
     def get_conn(self, con_ind: int = 0):
         # TODO Call just if necessary
         # TODO current Chanel.connection to var, prevent unnecessary calls
@@ -2037,7 +2043,6 @@ class PoPT_GUI_Main:
                 ch_vars.t2speech_buf = ''
 
     def clear_channel_vars(self):
-
         self._out_txt.configure(state='normal')
         self._out_txt.delete('1.0', tk.END)
         self._out_txt.configure(state='disabled')
@@ -2076,16 +2081,7 @@ class PoPT_GUI_Main:
         data = self._mon_txt.get('1.0', tk.END)
         save_file_dialog(data)
 
-    def change_conn_btn(self):
-        conn = self.get_conn(self.channel_index)
-        if conn:
-            if self._conn_btn.cget('bg') != "red":
-                self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
-        elif self._conn_btn.cget('bg') != "green":
-            self._conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
-        # !! Loop !! self._ch_btn_status_update()
-
-    ###############
+    ######################################################################
     # Sound
     def _kanal_switch(self):
         """ Triggered on CH BTN Click """
@@ -2234,10 +2230,10 @@ class PoPT_GUI_Main:
         """ fm PortHandler """
         self._sound_play(self._root_dir + CFG_sound_DICO, False)
 
-    # Sound Ende
-    #################
-    # no WIN FNC
-    ##########################
+    # Sound
+    ######################################################################
+    #
+    ######################################################################
 
     def _dx_alarm(self):
         """ Alarm when new User in MH List """
@@ -2267,10 +2263,9 @@ class PoPT_GUI_Main:
         if self._mh_btn.cget('bg') != self._mh_btn_def_clr:
             self._mh_btn.configure(bg=self._mh_btn_def_clr)
 
-    #################################
+    ######################################################################
     # TASKER
     def _tasker(self):  # MAINLOOP
-        # TODO Build a Tasker framework that randomly calls tasks
         if self._is_closing:
             self._tasker_quit()
         else:
@@ -2289,7 +2284,7 @@ class PoPT_GUI_Main:
             logging.info('Closing GUI: Done.')
 
     def _tasker_prio(self):
-        """ Prio Tasks 250 ms each flip """
+        """ Prio Tasks every Irritation flip flop """
         pass
         """
         if self._prio_task_flip:
@@ -2307,11 +2302,7 @@ class PoPT_GUI_Main:
             self._monitor_task()
             self._update_qso_win()
             self._update_status_win()
-            # self._change_conn_btn()
-            if self.setting_sound:
-                self._rx_beep_sound()
-                if self.setting_sprech:
-                    self._check_sprech_ch_buf()
+            #####################
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             return True
         return False
@@ -2333,6 +2324,11 @@ class PoPT_GUI_Main:
                     self._tracer_alarm()
             if self.settings_win is not None:
                 self.settings_win.tasker()
+            if self.setting_sound:
+                # TODO Sound Task
+                self._rx_beep_sound()
+                if self.setting_sprech:
+                    self._check_sprech_ch_buf()
             """
             if self.MSG_Center is not None:
                 self.MSG_Center.tasker()
@@ -2341,6 +2337,7 @@ class PoPT_GUI_Main:
             if self.aprs_mon_win is not None:
                 self.aprs_mon_win.tasker()
             """
+            #####################
             self._non_non_prio_task_timer = time.time() + self._parm_non_non_prio_task_timer
             return True
         return False
@@ -2352,14 +2349,6 @@ class PoPT_GUI_Main:
             self._update_bw_mon()
             self._aprs_wx_tree_task()
             #####################
-            """
-            if self.conn_task:
-                # print("ConnTasker")
-                if self.conn_task.state_id:
-                    self.conn_task.crone()
-                else:
-                    self.conn_task = None
-            """
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             return True
         return False
@@ -2370,15 +2359,14 @@ class PoPT_GUI_Main:
             self._test_task_timer = time.time() + self._parm_test_task_timer
             #####################
 
+    # END TASKER
+    ######################################################################
     @staticmethod
     def _aprs_wx_tree_task():
         if PORT_HANDLER.get_aprs_ais() is not None:
             PORT_HANDLER.get_aprs_ais().aprs_wx_tree_task()
 
-    def get_side_frame(self):
-        return self._side_btn_frame_top
-
-    #################################
+    ###############################################################
     # QSO WIN
     def _update_qso_win(self):
         all_conn = PORT_HANDLER.get_all_connections()
@@ -2398,27 +2386,28 @@ class PoPT_GUI_Main:
             return False
         if conn.ft_obj:
             return False
-        if conn.rx_buf_rawData or conn.tx_buf_guiData:
-            if channel > 10:
-                # TODO Service Channels
-                return False
-
-            if conn.tx_buf_guiData:
-                self._update_qso_tx(conn)
-            if conn.rx_buf_rawData:
-                self._update_qso_rx(conn)
-
+        if channel > 10:
+            # TODO Service Channels
+            return False
+        if conn.tx_buf_guiData:
+            self._update_qso_spooler(conn)
             return True
         return False
 
-    def _update_qso_tx(self, conn):
+    def _update_qso_spooler(self, conn):
+        gui_buf = conn.tx_buf_guiData
+        conn.tx_buf_guiData = conn.tx_buf_guiData[len(gui_buf):]
+        for qso_data in gui_buf:
+            if qso_data[0] == 'TX':
+                self._update_qso_tx(conn, qso_data[1])
+            else:
+                self._update_qso_rx(conn, qso_data[1])
+
+    def _update_qso_tx(self, conn, data):
         txt_enc = 'UTF-8'
         if conn.user_db_ent:
             txt_enc = conn.user_db_ent.Encoding
-
-        inp = bytes(conn.tx_buf_guiData)
-        conn.tx_buf_guiData = conn.tx_buf_guiData[len(inp):]
-        inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
+        inp = data.decode(txt_enc, 'ignore').replace('\r', '\n')
         inp = tk_filter_bad_chars(inp)
 
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
@@ -2443,19 +2432,17 @@ class PoPT_GUI_Main:
             if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
         else:
-            Ch_var.new_tags.append(
-                (tag_name_tx, len(inp))
-            )
+            if tag_name_tx:
+                Ch_var.new_tags.append(
+                    (tag_name_tx, len(inp))
+                )
 
-    def _update_qso_rx(self, conn):
+    def _update_qso_rx(self, conn, data):
         txt_enc = 'UTF-8'
         if conn.user_db_ent:
             txt_enc = conn.user_db_ent.Encoding
 
-        out = bytes(conn.rx_buf_rawData)
-        conn.rx_buf_rawData = conn.rx_buf_rawData[len(out):]
-
-        out = out.decode(txt_enc, 'ignore')
+        out = data.decode(txt_enc, 'ignore')
         out = out.replace('\r', '\n')
         out = tk_filter_bad_chars(out)
 
@@ -2569,9 +2556,34 @@ class PoPT_GUI_Main:
         ch_vars.rx_beep_tr = True
         self.ch_status_update()
 
+    # END QSO WIN
+    ###############################################################
+    ###############################################################
+    # Monitor WIN
+
+    def sysMsg_to_monitor(self, var: str):
+        # var += bytes.fromhex('15').decode('UTF-8')+'\n'
+        """ Called from AX25Conn """
+        ind = self._mon_txt.index(tk.INSERT)
+
+        self._mon_txt.configure(state="normal")
+        ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
+        self._mon_txt.insert(tk.END, ins)
+        self._mon_txt.configure(state="disabled")
+
+        ind2 = self._mon_txt.index(tk.INSERT)
+        self._mon_txt.tag_add("sys-msg", ind, ind2)
+        self._mon_txt.tag_config("sys-msg", foreground=CFG_clr_sys_msg)
+
+        self._see_end_mon_win()
+        if 'Lob: ' in var:
+            var = var.split('Lob: ')
+            if len(var) > 1:
+                self.sprech(var[1])
+
     def update_monitor(self, ax25frame, port_conf, tx=False):
         """ Called from AX25Conn """
-        # TODO just get it from PortBuffer
+        # TODO just get it from PortBuffer(Porthandler)
         self._mon_buff.append((
             ax25frame,
             port_conf,
@@ -2622,25 +2634,10 @@ class PoPT_GUI_Main:
     def _see_end_mon_win(self):
         self._mon_txt.see("end")
 
-    def msg_to_monitor(self, var: str):
-        # var += bytes.fromhex('15').decode('UTF-8')+'\n'
-        """ Called from AX25Conn """
-        ind = self._mon_txt.index(tk.INSERT)
-
-        self._mon_txt.configure(state="normal")
-        ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
-        self._mon_txt.insert(tk.END, ins)
-        self._mon_txt.configure(state="disabled")
-
-        ind2 = self._mon_txt.index(tk.INSERT)
-        self._mon_txt.tag_add("sys-msg", ind, ind2)
-        self._mon_txt.tag_config("sys-msg", foreground=CFG_clr_sys_msg)
-
-        self._see_end_mon_win()
-        if 'Lob: ' in var:
-            var = var.split('Lob: ')
-            if len(var) > 1:
-                self.sprech(var[1])
+    # END Monitor WIN
+    ###############################################################
+    ###############################################################
+    # Open Toplevel Win
 
     def open_link_holder_sett(self):
         self._open_settings_window('l_holder')
@@ -2754,7 +2751,7 @@ class PoPT_GUI_Main:
             return True
         return False
 
-    # ##############
+    #######################################################################
     # DISCO
     def _disco_conn(self):
         conn = self.get_conn(self.channel_index)
@@ -2766,8 +2763,8 @@ class PoPT_GUI_Main:
         PORT_HANDLER.disco_all_Conn()
 
     # DISCO ENDE
-    # ##############
-    ###################
+    #######################################################################
+    #######################################################################
     # SEND TEXT OUT
     def _snd_text(self, event: tk.Event):
         if self.channel_index:
@@ -2852,7 +2849,7 @@ class PoPT_GUI_Main:
         ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
 
     # SEND TEXT OUT
-    ###################
+    #######################################################################
     # BW Plot
     def _update_bw_mon(self):
         _tr = False
@@ -2878,8 +2875,11 @@ class PoPT_GUI_Main:
         self._bw_fig.canvas.flush_events()
         self._canvas.flush_events()
 
+    # END BW Plot
+    #######################################################################
+
     def _kaffee(self):
-        self.msg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
+        self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
         # PORT_HANDLER.db.aprsWX_get_data_f_wxTree()
         # self._do_bbs_fwd()
@@ -2930,6 +2930,23 @@ class PoPT_GUI_Main:
             else:
                 self._ch_btn_clk(ch_ind)
 
+    #####################################################################
+    #
+    def conn_btn_update(self):
+        """
+        Called fm:
+        self._ch_btn_clk
+        PORT_HANDLER.accept_new_connection
+        PORT_HANDLER.end_connection
+        """
+        conn = self.get_conn(self.channel_index)
+        if conn:
+            if self._conn_btn.cget('bg') != "red":
+                self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
+        elif self._conn_btn.cget('bg') != "green":
+            self._conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
+        # !! Loop !! self._ch_btn_status_update()
+
     def ch_status_update(self):
         # TODO Call just if necessary
         """ Triggerd when Connection Status has changed """
@@ -2947,7 +2964,7 @@ class PoPT_GUI_Main:
         self.channel_index = ind
         self._update_qso_Vars()
         self.ch_status_update()
-        self.change_conn_btn()
+        self.conn_btn_update()
         self._kanal_switch()  # Sprech
 
     def _ch_btn_status_update(self):
@@ -3354,3 +3371,6 @@ class PoPT_GUI_Main:
 
     def get_dx_alarm(self):
         return bool(self.setting_dx_alarm.get())
+
+    def get_side_frame(self):
+        return self._side_btn_frame_top

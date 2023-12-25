@@ -312,7 +312,7 @@ class AX25PortHandler(object):
 
     def sysmsg_to_gui(self, msg: str = ''):
         if self.gui is not None and self.is_running:
-            self.gui.msg_to_monitor(msg)
+            self.gui.sysMsg_to_monitor(msg)
 
     def close_gui(self):
         # self.close_all_ports()
@@ -363,7 +363,7 @@ class AX25PortHandler(object):
                     f'\r*** Connect from {connection.to_call_str}\r'.encode('ASCII', 'ignore')
                 )
             self.gui.ch_status_update()
-            self.gui.change_conn_btn()
+            self.gui.conn_btn_update()
 
     def end_connection(self, conn):
         if self.gui:
@@ -373,7 +373,7 @@ class AX25PortHandler(object):
                 ch_index=int(conn.ch_index))
             self.gui.disco_sound()
             self.gui.ch_status_update()
-            self.gui.change_conn_btn()
+            self.gui.conn_btn_update()
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():

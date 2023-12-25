@@ -156,9 +156,9 @@ class AX25Conn(object):
         self._rx_buf_last_frame = ax25_frame  # Buffers for last Frame !?!
         self.rx_buf_last_data = b''  # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
-        self.tx_buf_rawData: b'' = b''  # Buffer for TX RAW Data that will be packed into a Frame
-        self.tx_buf_guiData: b'' = b''  # Buffer for TX Echo in GUI
-        self.rx_buf_rawData: b'' = b''  # Received Data for GUI
+        self.tx_buf_rawData: b'' = b''          # Buffer for TX RAW Data that will be packed into a Frame
+        self.tx_buf_guiData: [('', b'')] = []   # Buffer for GUI QSO Window ('TX', data), ('RX', data)
+        self.rx_buf_rawData: b'' = b''          # Received Data for GUI
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection = None
         self.LINK_rx_buff: b'' = b''
@@ -331,7 +331,10 @@ class AX25Conn(object):
         if self._bbsFwd_rx(data):
             return
 
+        self._send_gui_QSObuf_rx(data)
         self.rx_buf_rawData += data
+        # TODO ? rx_buf_rawData not needed for normal QSO.
+        # TODO Maybe empty data here or use to Save the QSO
         # Station ( RE/DISC/Connect ) Sting Detection
         self._set_dest_call_fm_data_inp(data)
         # CLI
@@ -691,12 +694,23 @@ class AX25Conn(object):
                 self.LINK_Connection.unset_RNR(link_remote=True)
             """
 
-    def _send_gui_echo(self, data):
-        if self.ft_obj is not None:
+    def _send_gui_QSObuf_tx(self, data):
+        if self.ft_obj:
             return
-        if self.pipe is not None:
+        if self.pipe:
             return
-        self.tx_buf_guiData += data
+        self.tx_buf_guiData.append(
+            ('TX', data)
+        )
+
+    def _send_gui_QSObuf_rx(self, data):
+        if self.ft_obj:
+            return
+        if self.pipe:
+            return
+        self.tx_buf_guiData.append(
+            ('RX', data)
+        )
 
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
@@ -928,8 +942,7 @@ class AX25Conn(object):
             # PAYLOAD !!
             pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
             self.ax25_out_frame.data = self.tx_buf_rawData[:pac_len]
-            self._send_gui_echo(self.tx_buf_rawData[:pac_len])
-            # self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]  # GUI Echo
+            self._send_gui_QSObuf_tx(self.tx_buf_rawData[:pac_len])
             self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])  # CH ECHO
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR

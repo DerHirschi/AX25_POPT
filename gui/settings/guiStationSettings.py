@@ -650,7 +650,7 @@ class StationSettingsWin:
             if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
                 PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
                 save_station_to_file(stat_conf)
-        self._root_win.msg_to_monitor(STR_TABLE['suc_save'][self.lang])
+        self._root_win.sysMsg_to_monitor(STR_TABLE['suc_save'][self.lang])
 
     def _save_btn_cmd(self):
         # TODO Cleanup
@@ -663,7 +663,7 @@ class StationSettingsWin:
         PORT_HANDLER.disco_all_Conn()
         self._set_all_vars_to_cfg()
         self._save_cfg_to_file()
-        self._root_win.msg_to_monitor(STR_TABLE['lob1'][self.lang])
+        self._root_win.sysMsg_to_monitor(STR_TABLE['lob1'][self.lang])
 
     def _ok_btn_cmd(self):
         # TODO Cleanup
@@ -675,8 +675,8 @@ class StationSettingsWin:
         self._set_all_vars_to_cfg()
         self._save_cfg_to_file()
         self._root_win.set_text_tags()
-        self._root_win.msg_to_monitor(STR_TABLE['hin1'][self.lang])
-        self._root_win.msg_to_monitor(STR_TABLE['lob2'][self.lang])
+        self._root_win.sysMsg_to_monitor(STR_TABLE['hin1'][self.lang])
+        self._root_win.sysMsg_to_monitor(STR_TABLE['lob2'][self.lang])
 
         self.destroy()
 
@@ -713,10 +713,10 @@ class StationSettingsWin:
                 self._tabControl.forget(ind)
 
                 WarningMsg('Station gelöscht', 'Laufwerk C: wurde erfolgreich formatiert.')
-                self._root_win.msg_to_monitor('Hinweis: Station erfolgreich gelöscht.')
+                self._root_win.sysMsg_to_monitor('Hinweis: Station erfolgreich gelöscht.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
                                    'Mach weiter so. Das hast du gut gemacht.')
-            self._root_win.msg_to_monitor('Hinweis: Knack!! Abgebrochen..')
+            self._root_win.sysMsg_to_monitor('Hinweis: Knack!! Abgebrochen..')
         self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)

@@ -3,6 +3,7 @@
 
 Fixes:
 - QSO Fenster Farben werden nicht gesetzt wenn eigener Call eine SSID bekommt
+- Fehlerhafte Sequenz der Ausgabe von empfangenen Daten / QSO Echo im QSO-Fenster
 
 Optimierung:
 - Code Optimierung im "Neue Verbindung Fenster"

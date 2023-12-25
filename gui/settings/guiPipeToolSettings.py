@@ -378,8 +378,8 @@ class PipeToolSettings(tk.Toplevel):
     def _ok_btn_cmd(self):
         self._set_vars()
         self._root.ch_status_update()
-        self._root.msg_to_monitor('Info: Pipe-Tool Settings wurden gespeichert..')
-        self._root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
+        self._root.sysMsg_to_monitor('Info: Pipe-Tool Settings wurden gespeichert..')
+        self._root.sysMsg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self._destroy_win()
 
     def _destroy_win(self):
