@@ -557,7 +557,6 @@ class AX25Conn(object):
     def conn_disco(self):
         """ 2'nd time called = HardDisco """
         if self.zustand_exec.stat_index:
-
             self.bbsFwd_disc()  # TODO return "is_"self.bbs_connection
             self.set_T1(stop=True)
             self.zustand_exec.tx(None)

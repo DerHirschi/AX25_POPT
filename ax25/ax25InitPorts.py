@@ -363,6 +363,7 @@ class AX25PortHandler(object):
                     f'\r*** Connect from {connection.to_call_str}\r'.encode('ASCII', 'ignore')
                 )
             self.gui.ch_status_update()
+            self.gui.change_conn_btn()
 
     def end_connection(self, conn):
         if self.gui:
@@ -372,6 +373,7 @@ class AX25PortHandler(object):
                 ch_index=int(conn.ch_index))
             self.gui.disco_sound()
             self.gui.ch_status_update()
+            self.gui.change_conn_btn()
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
@@ -380,11 +382,13 @@ class AX25PortHandler(object):
     def disco_all_Conn(self):
         all_conn = self.get_all_connections()
         for k in list(all_conn.keys()):
-            # temp_conn: AX25Conn = self.all_connections[k]
             if all_conn[k]:
                 all_conn[k].conn_disco()
 
-    # TODO def disco_Conn(self, conn):
+    @staticmethod
+    def disco_Conn(conn):
+        if conn:
+            conn.conn_disco()
 
     def is_all_disco(self):
         all_conn = self.get_all_connections()

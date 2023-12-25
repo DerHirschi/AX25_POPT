@@ -1118,6 +1118,7 @@ class PoPT_GUI_Main:
         self._init_PARM_vars()
         self._set_CFG()
         # Text Tags
+        self._all_tag_calls = []
         self.set_text_tags()
         # .....
         self._update_qso_Vars()
@@ -1811,6 +1812,7 @@ class PoPT_GUI_Main:
     # Text Tags
 
     def set_text_tags(self):
+        self._all_tag_calls = []
         all_stat_cfg = PORT_HANDLER.get_all_stat_cfg()
         for call in list(all_stat_cfg.keys()):
             stat_cfg = all_stat_cfg[call]
@@ -1821,6 +1823,8 @@ class PoPT_GUI_Main:
 
             tx_tag = 'TX-' + str(call)
             rx_tag = 'RX-' + str(call)
+            self._all_tag_calls.append(str(call))
+
             self._out_txt.configure(state="normal")
             self._out_txt.tag_config(tx_tag,
                                      foreground=tx_fg,
@@ -1844,25 +1848,26 @@ class PoPT_GUI_Main:
 
             self._mon_txt.configure(state="normal")
 
-            all_port = PORT_HANDLER.get_all_ports()
-            for port_id in all_port.keys():
-                tag_tx = f"tx{port_id}"
-                tag_rx = f"rx{port_id}"
-                tx_fg = all_port[port_id].port_cfg.parm_mon_clr_tx
-                tx_bg = all_port[port_id].port_cfg.parm_mon_clr_bg
-                rx_fg = all_port[port_id].port_cfg.parm_mon_clr_rx
-                self._mon_txt.tag_config(tag_tx, foreground=tx_fg,
-                                         background=tx_bg,
-                                         selectbackground=tx_fg,
-                                         selectforeground=tx_bg,
-                                         )
-                self._mon_txt.tag_config(tag_rx, foreground=rx_fg,
-                                         background=tx_bg,
-                                         selectbackground=rx_fg,
-                                         selectforeground=tx_bg,
-                                         )
+        # Monitor Tags
+        all_port = PORT_HANDLER.get_all_ports()
+        for port_id in all_port.keys():
+            tag_tx = f"tx{port_id}"
+            tag_rx = f"rx{port_id}"
+            tx_fg = all_port[port_id].port_cfg.parm_mon_clr_tx
+            tx_bg = all_port[port_id].port_cfg.parm_mon_clr_bg
+            rx_fg = all_port[port_id].port_cfg.parm_mon_clr_rx
+            self._mon_txt.tag_config(tag_tx, foreground=tx_fg,
+                                     background=tx_bg,
+                                     selectbackground=tx_fg,
+                                     selectforeground=tx_bg,
+                                     )
+            self._mon_txt.tag_config(tag_rx, foreground=rx_fg,
+                                     background=tx_bg,
+                                     selectbackground=rx_fg,
+                                     selectforeground=tx_bg,
+                                     )
 
-            self._mon_txt.configure(state="disabled")
+        self._mon_txt.configure(state="disabled")
 
     #######################################
     # KEYBIND Stuff
@@ -2005,6 +2010,8 @@ class PoPT_GUI_Main:
     ##########################
     # no WIN FNC
     def get_conn(self, con_ind: int = 0):
+        # TODO Call just if necessary
+        # TODO current Chanel.connection to var, prevent unnecessary calls
         if not con_ind:
             con_ind = self.channel_index
         all_conn = PORT_HANDLER.get_all_connections()
@@ -2069,13 +2076,14 @@ class PoPT_GUI_Main:
         data = self._mon_txt.get('1.0', tk.END)
         save_file_dialog(data)
 
-    def _change_conn_btn(self):
-        _conn = self.get_conn(self.channel_index)
-        if _conn is not None:
+    def change_conn_btn(self):
+        conn = self.get_conn(self.channel_index)
+        if conn:
             if self._conn_btn.cget('bg') != "red":
                 self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
         elif self._conn_btn.cget('bg') != "green":
             self._conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
+        # !! Loop !! self._ch_btn_status_update()
 
     ###############
     # Sound
@@ -2411,18 +2419,23 @@ class PoPT_GUI_Main:
         inp = bytes(conn.tx_buf_guiData)
         conn.tx_buf_guiData = conn.tx_buf_guiData[len(inp):]
         inp = inp.decode(txt_enc, 'ignore').replace('\r', '\n')
-        # Write RX Date to Window/Channel Buffer
+        inp = tk_filter_bad_chars(inp)
 
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         Ch_var.output_win += inp
-        tag_name_tx = 'TX-' + str(conn.my_call_str)  # TODO Test whit SSIDs
+        tag_name_tx = ''
+        if conn.my_call_str in self._all_tag_calls:
+            tag_name_tx = 'TX-' + str(conn.my_call_str)
+        elif conn.my_call_obj.call in self._all_tag_calls:
+            tag_name_tx = 'TX-' + str(conn.my_call_obj.call)
 
         if self.channel_index == conn.ch_index:
             self._out_txt.configure(state="normal")
             ind = self._out_txt.index('end-1c')
             self._out_txt.insert('end', inp)
             ind2 = self._out_txt.index('end-1c')
-            self._out_txt.tag_add(tag_name_tx, ind, ind2)
+            if tag_name_tx:
+                self._out_txt.tag_add(tag_name_tx, ind, ind2)
             self._out_txt.configure(state="disabled",
                                     exportselection=True
                                     )
@@ -2443,15 +2456,17 @@ class PoPT_GUI_Main:
         conn.rx_buf_rawData = conn.rx_buf_rawData[len(out):]
 
         out = out.decode(txt_enc, 'ignore')
-        out = out.replace('\r\n', '\n') \
-            .replace('\n\r', '\n') \
-            .replace('\r', '\n')
+        out = out.replace('\r', '\n')
         out = tk_filter_bad_chars(out)
 
         # Write RX Date to Window/Channel Buffer
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         Ch_var.output_win += out
-        tag_name_rx = 'RX-' + str(conn.my_call_str)  # TODO Test whit SSIDs
+        tag_name_rx = ''
+        if conn.my_call_str in self._all_tag_calls:
+            tag_name_rx = 'RX-' + str(conn.my_call_str)
+        elif conn.my_call_obj.call in self._all_tag_calls:
+            tag_name_rx = 'RX-' + str(conn.my_call_obj.call)
 
         if self.channel_index == conn.ch_index:
             if Ch_var.t2speech:
@@ -2462,7 +2477,8 @@ class PoPT_GUI_Main:
             ind = self._out_txt.index('end-1c')
             self._out_txt.insert('end', out)
             ind2 = self._out_txt.index('end-1c')
-            self._out_txt.tag_add(tag_name_rx, ind, ind2)
+            if tag_name_rx:
+                self._out_txt.tag_add(tag_name_rx, ind, ind2)
 
             self._out_txt.configure(state="disabled",
                                     exportselection=True
@@ -2480,13 +2496,13 @@ class PoPT_GUI_Main:
                     conn.to_call_str,
                     out.replace('\n', '')
                 )
-            Ch_var.new_tags.append(
-                (tag_name_rx, len(out))
-            )
+            if tag_name_rx:
+                Ch_var.new_tags.append(
+                    (tag_name_rx, len(out))
+                )
         Ch_var.rx_beep_tr = True
 
     def _update_qso_Vars(self):
-
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         ch_vars.new_data_tr = False
         ch_vars.rx_beep_tr = False
@@ -2915,10 +2931,11 @@ class PoPT_GUI_Main:
                 self._ch_btn_clk(ch_ind)
 
     def ch_status_update(self):
+        # TODO Call just if necessary
         """ Triggerd when Connection Status has changed """
         self._ch_btn_status_update()
         # self.change_conn_btn()
-        self._change_conn_btn()
+        # self._change_conn_btn()
         self.on_channel_status_change()
 
     def _ch_btn_clk(self, ind: int):
@@ -2930,9 +2947,12 @@ class PoPT_GUI_Main:
         self.channel_index = ind
         self._update_qso_Vars()
         self.ch_status_update()
+        self.change_conn_btn()
         self._kanal_switch()  # Sprech
 
     def _ch_btn_status_update(self):
+        # TODO Call just if necessary
+        # TODO not calling in Tasker Loop for Channel Alarm (change BTN Color)
         # self.main_class.on_channel_status_change()
         _ch_alarm = False
         # if PORT_HANDLER.get_all_connections().keys():

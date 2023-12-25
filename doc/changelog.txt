@@ -2,6 +2,7 @@
 # 2.102.x
 
 Fixes:
+- QSO Fenster Farben werden nicht gesetzt wenn eigener Call eine SSID bekommt
 
 Optimierung:
 - Code Optimierung im "Neue Verbindung Fenster"
