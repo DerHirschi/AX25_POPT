@@ -1025,6 +1025,7 @@ class PoPT_GUI_Main:
         self.aprs_pn_msg_win = None
         self.userdb_win = None
         self.userDB_tree_win = None
+        self.FileSend_win = None
         self.BBS_fwd_q_list = None
         self.MSG_Center_win = None
         self.newPMS_MSG_win = None
@@ -1319,14 +1320,14 @@ class PoPT_GUI_Main:
                                underline=1)
         _MenuTools.add_separator()
         _MenuTools.add_command(label="User-DB Tree",
-                               command=lambda: self._open_window('userDB_tree'),
+                               command=lambda: self.open_window('userDB_tree'),
                                underline=0)
         _MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
                                command=lambda: self.open_user_db_win(),
                                underline=0)
         _MenuTools.add_separator()
         _MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language],
-                               command=lambda: self._open_window('locator_calc'),
+                               command=lambda: self.open_window('locator_calc'),
                                underline=0)
         _MenuTools.add_separator()
 
@@ -1334,7 +1335,7 @@ class PoPT_GUI_Main:
                                command=lambda: self._open_settings_window('ft_manager'),
                                underline=0)
         _MenuTools.add_command(label=STR_TABLE['send_file'][self.language],
-                               command=lambda: self._open_settings_window('ft_send'),
+                               command=lambda: self.open_window('ft_send'),
                                underline=0)
         _MenuTools.add_separator()
         _MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
@@ -1381,16 +1382,16 @@ class PoPT_GUI_Main:
         # APRS Menu
         _MenuAPRS = Menu(_menubar, tearoff=False)
         _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
-                              command=lambda: self._open_window('aprs_mon'),
+                              command=lambda: self.open_window('aprs_mon'),
                               underline=0)
         _MenuAPRS.add_command(label="Beacon Tracer", command=self._open_be_tracer_win,
                               underline=0)
         _MenuAPRS.add_separator()
         _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language],
-                              command=lambda: self._open_window('wx_win'),
+                              command=lambda: self.open_window('wx_win'),
                               underline=0)
         _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language],
-                              command=lambda: self._open_window('aprs_msg'),
+                              command=lambda: self.open_window('aprs_msg'),
                               underline=0)
         _MenuAPRS.add_separator()
         _MenuAPRS.add_command(label=STR_TABLE['settings'][self.language],
@@ -1401,15 +1402,15 @@ class PoPT_GUI_Main:
         # BBS/PMS
         _MenuBBS = Menu(_menubar, tearoff=False)
         _MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
-                             command=lambda: self._open_window('pms_new_msg'),
+                             command=lambda: self.open_window('pms_new_msg'),
                              underline=0)
         _MenuBBS.add_command(label=STR_TABLE['msg_center'][self.language],
-                             command=lambda: self._open_window('pms_msg_center'),
+                             command=lambda: self.open_window('pms_msg_center'),
                              underline=0)
 
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
-                             command=lambda: self._open_window('pms_fwq_q'),
+                             command=lambda: self.open_window('pms_fwq_q'),
                              underline=0)
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
@@ -2656,7 +2657,6 @@ class PoPT_GUI_Main:
             'about': About,  # About WIN
             'aprs_sett': APRSSettingsWin,  # APRS Settings
             'ft_manager': FileTransferManager,  # FT Manager
-            'ft_send': FileSend,  # FT TX
             'pipe_sett': PipeToolSettings,  # Pipe Tool
             # 'user_db': UserDB,  # UserDB
             'mcast_sett': MulticastSettings,  # Multicast Settings
@@ -2670,7 +2670,7 @@ class PoPT_GUI_Main:
         if callable(settings_win):
             self.settings_win = settings_win(self)
 
-    def _open_window(self, win_key: str):
+    def open_window(self, win_key: str):
         # self._open_window('new_conn')
         if not win_key:
             return
@@ -2684,6 +2684,7 @@ class PoPT_GUI_Main:
             'pms_msg_center': (self.MSG_Center_win, MSG_Center),
             'pms_new_msg': (self.newPMS_MSG_win, BBS_newMSG),
             'userDB_tree': (self.userDB_tree_win, UserDBtreeview),
+            'ft_send': (self.FileSend_win, FileSend),
             # TODO .......
 
         }.get(win_key, None)
@@ -2709,7 +2710,7 @@ class PoPT_GUI_Main:
     ##########################
     # New Connection WIN
     def open_new_conn_win(self):
-        self._open_window('new_conn')
+        self.open_window('new_conn')
 
     ##########################
     #

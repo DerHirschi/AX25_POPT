@@ -203,7 +203,6 @@ class WXPlotWindow(tk.Toplevel):
         if not days:
             return
         lim = 24 * days
-        print(lim)
         self._plot1.set_xlim([lim, 0])  # x-Achse auf 24 Stunden begrenzen
         self._plot2.set_xlim([lim, 0])  # x-Achse auf 24 Stunden begrenzen
         self._canvas.draw()
