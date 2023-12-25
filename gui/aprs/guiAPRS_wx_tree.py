@@ -57,13 +57,32 @@ class WXWin(tk.Toplevel):
             'luminosity',
             'comment',
         )
+        settings_frame = tk.Frame(self)
+        self._seen_since_var = tk.StringVar(self, value='1')
+        tk.Label(settings_frame, text='No updates since (Days): ').pack(side=tk.LEFT)
+        tk.Spinbox(settings_frame,
+                   from_=1,
+                   to=3650,
+                   increment=1,
+                   width=5,
+                   textvariable=self._seen_since_var,
+                   command=self.update_tree_data,
+                   ).pack(side=tk.LEFT)
 
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self._tree = ttk.Treeview(self, columns=columns, show='headings')
+        tree_frame = tk.Frame(self)
+        settings_frame.pack(side=tk.TOP, expand=False)
+        tree_frame.pack(side=tk.TOP, expand=True)
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
+        self._tree = ttk.Treeview(tree_frame,
+                                  columns=columns,
+                                  show='headings',
+                                  height=700,
+
+                                  )
         self._tree.grid(row=0, column=0, sticky='nsew')
         # add a scrollbar
-        scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._tree.yview)
+        scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
@@ -83,10 +102,10 @@ class WXWin(tk.Toplevel):
         self._tree.heading('wind_speed', text='Wind Speed', command=lambda: self._sort_entry('wind_speed'))
         self._tree.heading('luminosity', text='Lum', command=lambda: self._sort_entry('luminosity'))
         self._tree.heading('comment', text='Comment', command=lambda: self._sort_entry('comment'))
-        self._tree.column("last_seen", anchor=tk.CENTER, stretch=tk.YES, width=120)
+        self._tree.column("last_seen", anchor=tk.CENTER, stretch=tk.YES, width=200)
         self._tree.column("call", anchor=tk.CENTER, stretch=tk.YES, width=120)
         self._tree.column("port", anchor=tk.CENTER, stretch=tk.YES, width=80)
-        self._tree.column("locator", anchor=tk.CENTER, stretch=tk.YES, width=80)
+        self._tree.column("locator", anchor=tk.CENTER, stretch=tk.YES, width=90)
         self._tree.column("distance", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("pressure", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("humidity", anchor=tk.CENTER, stretch=tk.YES, width=80)
@@ -98,7 +117,7 @@ class WXWin(tk.Toplevel):
         self._tree.column("wind_gust", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("wind_speed", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("luminosity", anchor=tk.CENTER, stretch=tk.YES, width=50)
-        self._tree.column("comment", anchor=tk.CENTER, stretch=tk.YES, width=150)
+        self._tree.column("comment", anchor=tk.CENTER, stretch=tk.YES, width=700)
 
         self._tree_data = []
         self._wx_data = []
@@ -116,7 +135,7 @@ class WXWin(tk.Toplevel):
         self._get_wx_data()
         self._format_tree_data()
         self._update_tree()
-        if self._last_sort_col is not None:
+        if self._last_sort_col:
             self._rev_ent = not self._rev_ent
             self._sort_entry(self._last_sort_col)
 
@@ -153,7 +172,11 @@ class WXWin(tk.Toplevel):
             self._tree.move(k, '', int(index))
 
     def _get_wx_data(self):
-        self._wx_data = self._ais_obj.get_wx_data()
+        try:
+            since = int(self._seen_since_var.get())
+        except ValueError:
+            return
+        self._wx_data = self._ais_obj.get_wx_data(since)
 
     def _update_tree(self):
         for i in self._tree.get_children():

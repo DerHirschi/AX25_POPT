@@ -20,7 +20,7 @@ class WXPlotWindow(tk.Toplevel):
         tk.Toplevel.__init__(self)
         # self.root_cl = root_cl
         self.geometry(f"800x"
-                      f"600+"
+                      f"640+"
                       f"{root_cl.main_win.winfo_x()}+"
                       f"{root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
@@ -30,6 +30,20 @@ class WXPlotWindow(tk.Toplevel):
             pass
         self.lift()
         self._wx_data = wx_data
+        #################
+        # Settings Frame Frame
+        settings_frame = tk.Frame(self)
+        settings_frame.pack(side=tk.TOP)
+        self._xLimt_var = tk.StringVar(self, value='7')
+        tk.Label(settings_frame, text='X-Limit (Days): ').pack(side=tk.LEFT)
+        tk.Spinbox(settings_frame,
+                   from_=1,
+                   to=3650,
+                   increment=1,
+                   width=5,
+                   textvariable=self._xLimt_var,
+                   command=self._change_xlim,
+                   ).pack(side=tk.LEFT)
         ##################
         # Plot erstellen
         plot_frame = tk.Frame(self)
@@ -42,7 +56,24 @@ class WXPlotWindow(tk.Toplevel):
         self._plot2 = self._plot1.twinx()
         self._plot2.set_facecolor('#000000')
         self._plot2.yaxis.tick_right()
-        self._update_plot()
+
+        fig.subplots_adjust(top=0.95, bottom=0.05, left=0.07, right=0.93, )
+
+        # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
+        self._canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+        self._canvas.draw()
+        # Werkzeugleisten für die Plots erstellen
+        toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame, pack_toolbar=False)
+        toolbar1.update()
+        toolbar1.pack(side=tk.TOP, )
+        self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+
+        self._canvas.draw()
+        #################
+        # Info Frame
+        info_frame = tk.Frame(self)
+        info_frame.pack(side=tk.TOP, fill=tk.BOTH)
+        self._change_xlim()
         self._plot1.legend(
             fontsize=8,
             loc='upper left'
@@ -51,37 +82,30 @@ class WXPlotWindow(tk.Toplevel):
             fontsize=8,
             loc='upper right'
         )
-        fig.subplots_adjust(top=0.95, bottom=0.05, left=0.07, right=0.93, )
-
-        # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
-        canvas = FigureCanvasTkAgg(fig, master=plot_frame)
-        canvas.draw()
-        # Werkzeugleisten für die Plots erstellen
-        toolbar1 = NavigationToolbar2Tk(canvas, plot_frame, pack_toolbar=False)
-        toolbar1.update()
-        toolbar1.pack(side=tk.TOP, )
-        canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
-
-        canvas.draw()
-        #################
-        # Info Frame
-        info_frame = tk.Frame(self)
-        info_frame.pack(side=tk.TOP, fill=tk.BOTH)
         if self._wx_data:
             if self._wx_data[-1]:
-                _call = self._wx_data[-1][10]
-                _comment = self._wx_data[-1][11]
+                call = self._wx_data[-1][10]
+                comment = self._wx_data[-1][11]
+                location_frame = tk.Frame(info_frame)
 
-                _loc = f'Locator: {self._wx_data[-1][12]}'
-                _lat = f'Lat: {self._wx_data[-1][13]}'
-                _lon = f'Lon: {self._wx_data[-1][14]}'
-                tk.Label(info_frame, text=_call).pack(side=tk.TOP, )
-                tk.Label(info_frame, text=_comment).pack()
-                tk.Label(info_frame, text=_loc).pack(side=tk.LEFT, padx=20)
-                tk.Label(info_frame, text=_lat).pack(side=tk.LEFT, padx=20)
-                tk.Label(info_frame, text=_lon).pack(side=tk.LEFT, padx=20)
+                wx_data_str = (f"{self._wx_data[-1][15]}: "
+                               f"Temp: {self._wx_data[-1][5]}°C | "
+                               f"Hum: {self._wx_data[-1][1]}% | "
+                               f"Pres: {self._wx_data[-1][0]}hPa")
 
-                self.wm_title(f"WX Plot {_call}")
+                tk.Label(info_frame, text=call).pack(side=tk.TOP, )
+                tk.Label(info_frame, text=comment).pack(side=tk.TOP, )
+                tk.Label(info_frame, text=wx_data_str).pack(side=tk.TOP, )
+                location_frame.pack(side=tk.TOP, )
+
+                loc = f'Locator: {self._wx_data[-1][12]}'
+                lat = f'Lat: {self._wx_data[-1][13]}'
+                lon = f'Lon: {self._wx_data[-1][14]}'
+                tk.Label(location_frame, text=loc).pack(side=tk.LEFT, padx=20)
+                tk.Label(location_frame, text=lat).pack(side=tk.LEFT, padx=20)
+                tk.Label(location_frame, text=lon).pack(side=tk.LEFT, padx=20)
+
+                self.wm_title(f"WX Plot {call}")
 
     def _update_plot(self):
         if not self._wx_data:
@@ -170,8 +194,20 @@ class WXPlotWindow(tk.Toplevel):
             y_lum = adjust_list_len(y_lum, x_scale)
             self._plot1.plot(x_scale, y_lum, label='Luminosity', color='orange')
 
-        self._plot1.set_xlim([24, 0])  # x-Achse auf 24 Stunden begrenzen
-        self._plot2.set_xlim([24, 0])  # x-Achse auf 24 Stunden begrenzen
+
+    def _change_xlim(self, event=None):
+        self._update_plot()
+        try:
+            days = int(self._xLimt_var.get())
+        except ValueError:
+            return
+        if not days:
+            return
+        lim = 24 * days
+        print(lim)
+        self._plot1.set_xlim([lim, 0])  # x-Achse auf 24 Stunden begrenzen
+        self._plot2.set_xlim([lim, 0])  # x-Achse auf 24 Stunden begrenzen
+        self._canvas.draw()
 
     def destroy_win(self):
         self.destroy_plot()

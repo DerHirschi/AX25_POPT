@@ -992,7 +992,6 @@ class SQL_Database:
             return []
         if not last_rx_days:
             return [str(el[0]) for el in ent_list]
-        # TODO TESTEN
         ids = []
         now = datetime.now()
         for el in ent_list:

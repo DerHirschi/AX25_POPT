@@ -15,6 +15,9 @@ Neue Implementierungen / Funktionen:
 - MH-Liste Menübar: MH-Liste löschen
 - "Byte Zähler" in Baken Einstellungen. Zeigt die Größe de Bakentext an.
 - Textgrößenbegrenzer für Bakentext
+- WX-Plot X Scala jetzt einstellbar (Tage)
+- WX-Plot zusätzliche Ausgabe der letzten Werte (Temp. Pres. Hum.) im Station Infobereich
+- WX-Tree Daten nach letzten update der Station (Tagen) filterbar
 
 ###########################################################################################################
 ###########################################################################################################
