@@ -1001,6 +1001,12 @@ class SQL_Database:
                 ids.append(str(el[0]))
         return ids
 
+    def aprsWX_delete_data(self):
+        if self.MYSQL:
+            self.commit_query("TRUNCATE TABLE APRSwx;")
+        else:
+            self.commit_query("DELETE FROM APRSwx;")
+
     ############################################
     # MH
     """

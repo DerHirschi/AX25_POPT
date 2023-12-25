@@ -364,6 +364,11 @@ class APRS_ais(object):
             return []
         return list(db.aprsWX_get_data_f_call(call))
 
+    def delete_wx_data(self):
+        db = self._get_db()
+        if db:
+            db.aprsWX_delete_data()
+
     #####################
     #
     @staticmethod

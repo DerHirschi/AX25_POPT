@@ -194,7 +194,6 @@ class WXPlotWindow(tk.Toplevel):
             y_lum = adjust_list_len(y_lum, x_scale)
             self._plot1.plot(x_scale, y_lum, label='Luminosity', color='orange')
 
-
     def _change_xlim(self, event=None):
         self._update_plot()
         try:

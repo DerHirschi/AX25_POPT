@@ -18,6 +18,7 @@ Neue Implementierungen / Funktionen:
 - WX-Plot X Scala jetzt einstellbar (Tage)
 - WX-Plot zusätzliche Ausgabe der letzten Werte (Temp. Pres. Hum.) im Station Infobereich
 - WX-Tree Daten nach letzten update der Station (Tagen) filterbar
+- WX-Tree Menübar > Daten löschen
 
 ###########################################################################################################
 ###########################################################################################################

@@ -1,8 +1,9 @@
 import logging
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, Menu, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.string_tab import STR_TABLE
 from gui.aprs.guiAPRS_wx_plot import WXPlotWindow
 
 logger = logging.getLogger(__name__)
@@ -13,6 +14,7 @@ class WXWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
+        self._lang = root_win.language
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self._ais_obj.wx_tree_gui = self
         ###################################
@@ -118,12 +120,19 @@ class WXWin(tk.Toplevel):
         self._tree.column("wind_speed", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("luminosity", anchor=tk.CENTER, stretch=tk.YES, width=50)
         self._tree.column("comment", anchor=tk.CENTER, stretch=tk.YES, width=700)
-
+        self._root_win.wx_window = self
         self._tree_data = []
         self._wx_data = []
         self._init_tree_data()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
-        self._root_win.wx_window = self
+        self._init_menubar()
+
+    def _init_menubar(self):
+        _menubar = Menu(self, tearoff=False)
+        self.config(menu=_menubar)
+        _MenuVerb = Menu(_menubar, tearoff=False)
+        _MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._delete_all_data)
+        _menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=_MenuVerb, underline=0)
 
     def _init_tree_data(self):
         self._get_wx_data()
@@ -176,6 +185,8 @@ class WXWin(tk.Toplevel):
             since = int(self._seen_since_var.get())
         except ValueError:
             return
+        if not self._ais_obj:
+            return
         self._wx_data = self._ais_obj.get_wx_data(since)
 
     def _update_tree(self):
@@ -193,6 +204,16 @@ class WXWin(tk.Toplevel):
             data = self._ais_obj.get_wx_data_f_call(key)
             if data:
                 WXPlotWindow(self._root_win, data)
+
+    def _delete_all_data(self):
+        if not self._ais_obj:
+            return
+        self.lower()
+        if messagebox.askokcancel(title=STR_TABLE.get('msg_box_delete_data', ('', '', ''))[self._lang],
+                                  message=STR_TABLE.get('msg_box_delete_data_msg', ('', '', ''))[self._lang]):
+            self._ais_obj.delete_wx_data()
+            self.update_tree_data()
+        self.lift()
 
     def _close(self):
         self._ais_obj.wx_tree_gui = None
