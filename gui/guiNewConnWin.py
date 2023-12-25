@@ -309,7 +309,6 @@ class NewConnWin(tk.Toplevel):
         self._set_port_index(port_id)
         self._set_ownCall_fm_hist()
 
-
     def _reset_conn_history(self, event=None):
         self._conn_hist = {}
         self._main.connect_history = {}

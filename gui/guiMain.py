@@ -2007,8 +2007,9 @@ class PoPT_GUI_Main:
     def get_conn(self, con_ind: int = 0):
         if not con_ind:
             con_ind = self.channel_index
-        if con_ind in PORT_HANDLER.get_all_connections().keys():
-            ret = PORT_HANDLER.get_all_connections()[con_ind]
+        all_conn = PORT_HANDLER.get_all_connections()
+        if con_ind in all_conn.keys():
+            ret = all_conn[con_ind]
             return ret
         return None
 
@@ -2372,16 +2373,19 @@ class PoPT_GUI_Main:
     #################################
     # QSO WIN
     def _update_qso_win(self):
-        all_conn_ch_index = list(PORT_HANDLER.get_all_connections().keys())
+        all_conn = PORT_HANDLER.get_all_connections()
+        all_conn_ch_index = list(all_conn.keys())
         tr = False
         for channel in all_conn_ch_index:
-            if self._update_qso(channel):
-                tr = True
+            conn = all_conn[channel]
+            if conn:
+                if self._update_qso(conn):
+                    tr = True
         if tr:
             self.ch_status_update()
 
-    def _update_qso(self, channel: int):
-        conn = self.get_conn(channel)
+    def _update_qso(self, conn):
+        channel = conn.ch_index
         if not conn:
             return False
         if conn.ft_obj:
@@ -2933,10 +2937,11 @@ class PoPT_GUI_Main:
         _ch_alarm = False
         # if PORT_HANDLER.get_all_connections().keys():
         for i in list(self._con_btn_dict.keys()):
-            if i in PORT_HANDLER.get_all_connections().keys():
-                _btn_txt = PORT_HANDLER.get_all_connections()[i].to_call_str
-                _is_link = PORT_HANDLER.get_all_connections()[i].is_link
-                _is_pipe = PORT_HANDLER.get_all_connections()[i].pipe
+            all_conn = PORT_HANDLER.get_all_connections()
+            if i in list(all_conn.keys()):
+                _btn_txt = all_conn[i].to_call_str
+                _is_link = all_conn[i].is_link
+                _is_pipe = all_conn[i].pipe
                 if _is_pipe is None:
                     _is_pipe = False
                 if _is_link:
@@ -3012,17 +3017,17 @@ class PoPT_GUI_Main:
         self.update_station_info()
 
     def _update_stat_info_conn_timer(self):
-        _conn = self.get_conn()
-        if _conn is not None:
-            self.stat_info_timer_var.set(get_time_delta(_conn.cli.time_start))
+        conn = self.get_conn()
+        if conn is not None:
+            self.stat_info_timer_var.set(get_time_delta(conn.cli.time_start))
         else:
             if self.stat_info_timer_var.get() != '--:--:--':
                 self.stat_info_timer_var.set('--:--:--')
 
     def update_station_info(self):
-        _name = '-------'
-        _qth = '-------'
-        _loc = '------'
+        name = '-------'
+        qth = '-------'
+        loc = '------'
         # _dist = 0
         _status = '-------'
         _typ = '-----'
@@ -3033,13 +3038,13 @@ class PoPT_GUI_Main:
             _db_ent = _conn.user_db_ent
             if _db_ent:
                 if _db_ent.Name:
-                    _name = _db_ent.Name
+                    name = _db_ent.Name
                 if _db_ent.QTH:
-                    _qth = _db_ent.QTH
+                    qth = _db_ent.QTH
                 if _db_ent.LOC:
-                    _loc = _db_ent.LOC
+                    loc = _db_ent.LOC
                 if _db_ent.Distance:
-                    _loc += f" ({_db_ent.Distance} km)"
+                    loc += f" ({_db_ent.Distance} km)"
                 if _db_ent.TYP:
                     _typ = _db_ent.TYP
                 if _db_ent.Software:
@@ -3084,16 +3089,16 @@ class PoPT_GUI_Main:
             self.status_label.bind('<Button-1>', )
         """
         if _dist:
-            _loc += f" ({_dist} km)"
+            loc += f" ({_dist} km)"
         """
         # if self.stat_info_status_var.get() != _status:
         #     self.stat_info_status_var.set(_status)
-        if self.stat_info_name_var.get() != _name:
-            self.stat_info_name_var.set(_name)
-        if self.stat_info_qth_var.get() != _qth:
-            self.stat_info_qth_var.set(_qth)
-        if self.stat_info_loc_var.get() != _loc:
-            self.stat_info_loc_var.set(_loc)
+        if self.stat_info_name_var.get() != name:
+            self.stat_info_name_var.set(name)
+        if self.stat_info_qth_var.get() != qth:
+            self.stat_info_qth_var.set(qth)
+        if self.stat_info_loc_var.get() != loc:
+            self.stat_info_loc_var.set(loc)
         if self.stat_info_typ_var.get() != _typ:
             self.stat_info_typ_var.set(_typ)
         if self.stat_info_sw_var.get() != _sw:

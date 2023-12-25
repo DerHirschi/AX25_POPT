@@ -56,7 +56,7 @@ class AX25Port(threading.Thread):
         self._digi_TXD = time.time()
         self._digi_buf: [AX25Frame] = []
         self._UI_buf: [AX25Frame] = []
-        self._connections: {str: AX25Conn} = {}
+        self.connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
         """ APRS Stuff """
         self.aprs_stat = self.port_cfg.parm_aprs_station    # TODO not used yet
@@ -180,8 +180,8 @@ class AX25Port(threading.Thread):
 
     def _rx_conn_handler(self, ax25_frame: AX25Frame):
         uid = str(ax25_frame.addr_uid)
-        if uid in self._connections.keys():
-            self._connections[uid].handle_rx(ax25_frame=ax25_frame)
+        if uid in self.connections.keys():
+            self.connections[uid].handle_rx(ax25_frame=ax25_frame)
             return True
         return False
 
@@ -191,8 +191,8 @@ class AX25Port(threading.Thread):
         # New Incoming Connection
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
-            if uid not in self._connections.keys():
-                self._connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
+            if uid not in self.connections.keys():
+                self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
                 # self.connections[uid].handle_rx(ax25_frame=ax25_frame)
                 return True
         return False
@@ -227,8 +227,8 @@ class AX25Port(threading.Thread):
 
     def _tx_connection_buf(self):
         tr = False
-        for k in self._connections.keys():
-            conn: AX25Conn = self._connections[k]
+        for k in self.connections.keys():
+            conn: AX25Conn = self.connections[k]
             if time.time() > conn.t2 and not tr:
                 snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
                 conn.tx_buf_ctl = []
@@ -328,8 +328,8 @@ class AX25Port(threading.Thread):
 
     def _task_connections(self):
         """ Execute Cronjob on all Connections"""
-        for k in list(self._connections.keys()):
-            conn = self._connections.get(k, None)
+        for k in list(self.connections.keys()):
+            conn = self.connections.get(k, None)
             if conn:
                 conn.exec_cron()
 
@@ -390,13 +390,13 @@ class AX25Port(threading.Thread):
 
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
-        print(self._connections)
+        print(self.connections)
         ax25_frame.ctl_byte.SABMcByte()
         ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
 
         while True:
-            if ax25_frame.addr_uid not in self._connections.keys() and \
-                    reverse_uid(ax25_frame.addr_uid) not in self._connections.keys() and \
+            if ax25_frame.addr_uid not in self.connections.keys() and \
+                    reverse_uid(ax25_frame.addr_uid) not in self.connections.keys() and \
                     (ax25_frame.from_call.call_str != ax25_frame.to_call.call_str):
                 break
 
@@ -416,7 +416,7 @@ class AX25Port(threading.Thread):
                 raise AX25EncodingERROR(self)
         conn = AX25Conn(ax25_frame, self.port_cfg, rx=False, port=self)
         # conn.cli.change_cli_state(1)
-        self._connections[ax25_frame.addr_uid] = conn
+        self.connections[ax25_frame.addr_uid] = conn
         return conn
 
     def del_connections(self, conn: AX25Conn):
@@ -427,9 +427,9 @@ class AX25Port(threading.Thread):
         if conn.uid in self._connections.keys():
             del self._connections[conn.uid]
         """
-        for conn_uid in list(self._connections.keys()):
-            if conn == self._connections[conn_uid]:
-                del self._connections[conn_uid]
+        for conn_uid in list(self.connections.keys()):
+            if conn == self.connections[conn_uid]:
+                del self.connections[conn_uid]
                 return
 
     def send_UI_frame(self,
@@ -471,8 +471,8 @@ class AX25Port(threading.Thread):
 
     def _reset_ft_wait_timer(self, ax25_frame: AX25Frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
-            for k in self._connections.keys():
-                self._connections[k].ft_reset_timer(ax25_frame.addr_uid)
+            for k in self.connections.keys():
+                self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
 
     def _gui_monitor(self, ax25frame: AX25Frame, tx: bool = True):
         self._mh.mh_input(ax25frame, self.port_id, tx)

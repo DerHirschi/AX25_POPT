@@ -51,7 +51,6 @@ class AX25PortHandler(object):
         # VARs
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
-        self._all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.rx_echo = {}
         self.ax25_stations_settings = get_all_stat_cfg()
@@ -114,12 +113,13 @@ class AX25PortHandler(object):
             self._05sec_task()
             self._1sec_task()
             if not self.is_running:
-                break
+                return
             time.sleep(0.1)
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
-        self._mh_task()
+        # self._mh_task()
+        pass
 
     def _05sec_task(self):
         """ 0.5 Sec """
@@ -173,6 +173,7 @@ class AX25PortHandler(object):
     #######################################################################
     # Setting/Parameter Updates
     def update_digi_setting(self):
+        # TODO
         for port_kk in self.ax25_ports.keys():
             port = self.ax25_ports[port_kk]
             new_digi_calls = []
@@ -199,9 +200,6 @@ class AX25PortHandler(object):
 
     def close_all_ports(self):
         self.is_running = False
-        for k in list(self._all_connections.keys()):
-            del self._all_connections[k]
-        # if self.is_running:
         self.close_aprs_ais()
         for k in list(self.ax25_ports.keys()):
             self.close_port(k)
@@ -329,27 +327,21 @@ class AX25PortHandler(object):
     # Connection Handling
     def insert_new_connection(self, new_conn, ind: int = 1):
         """ Insert connection for handling """
-        # if not new_conn.is_link:
-        keys = list(self._all_connections.keys())
-        if keys:
-            # Check if Connection is already in all_conn...
-            for k in list(self._all_connections.keys()):
-                if new_conn == self._all_connections[k]:
-                    print("Connection bereits Vorhanden in PortHandler Connections")
-                    if new_conn.ch_index != k:
-                        logger.warning("Channel Index != Real Index !!!")
-                        new_conn.ch_index = int(k)
-                        return
-            while True:
-                if ind in keys:
-                    ind += 1
-                else:
-                    new_conn.ch_index = int(ind)
-                    self._all_connections[ind] = new_conn
-                    break
-        else:
-            new_conn.ch_index = int(ind)
-            self._all_connections[ind] = new_conn
+        all_conn = self.get_all_connections()
+        # Check if Connection is already in all_conn...
+        for k in list(all_conn.keys()):
+            if new_conn == all_conn[k]:
+                print("Connection bereits Vorhanden in PortHandler Connections")
+                if new_conn.ch_index != k:
+                    logger.warning("Channel Index != Real Index !!!")
+                    new_conn.ch_index = int(k)
+                    return
+        while True:
+            if ind in list(all_conn.keys()):
+                ind += 1
+            else:
+                new_conn.ch_index = int(ind)
+                return
 
     def accept_new_connection(self, connection):
         if self.gui:
@@ -372,55 +364,33 @@ class AX25PortHandler(object):
                 )
             self.gui.ch_status_update()
 
-    """
-    def cleanup_conn2all_conn_var(self):
-        temp = []
-        for k in list(self.all_connections.keys()):
-            # conn: AX25Conn = self.all_connections[k]
-            conn = self.all_connections[k]
-            if conn.zustand_exec.stat_index in [0]:
-                temp.append(k)
-        for k in temp:
-            # conn: AX25Conn = self.all_connections[k]
-            conn = self.all_connections[k]
-            conn.ch_index = 0
-            del self.all_connections[k]
-    """
-
-    def delete_connection(self, conn):
-        ch_index = conn.ch_index
-        # for k in list(self.all_connections.keys()):
-        # temp_conn: AX25Conn = self.all_connections[k]
-        if ch_index not in self._all_connections.keys():
-            return
-        if self._all_connections[ch_index] == conn:
-            del self._all_connections[ch_index]
-            # self._all_connections[ch_index].own_port.del_connections(conn=conn)
-            if self.gui:
-                # TODO: Trigger here, Logbook and UserDB-Conn C
-                self.gui.sysMsg_to_qso(
-                    data=f'*** Disconnected fm {str(conn.to_call_str)}',
-                    ch_index=int(conn.ch_index))
-                self.gui.disco_sound()
-                self.gui.ch_status_update()
+    def end_connection(self, conn):
+        if self.gui:
+            # TODO: Trigger here, Logbook and UserDB-Conn C
+            self.gui.sysMsg_to_qso(
+                data=f'*** Disconnected fm {str(conn.to_call_str)}',
+                ch_index=int(conn.ch_index))
+            self.gui.disco_sound()
+            self.gui.ch_status_update()
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
             del self.link_connections[uid]
 
     def disco_all_Conn(self):
-        for k in list(self._all_connections.keys()):
+        all_conn = self.get_all_connections()
+        for k in list(all_conn.keys()):
             # temp_conn: AX25Conn = self.all_connections[k]
-            if self._all_connections[k]:
-                self._all_connections[k].conn_disco()
+            if all_conn[k]:
+                all_conn[k].conn_disco()
 
     # TODO def disco_Conn(self, conn):
 
     def is_all_disco(self):
-        for k in list(self._all_connections.keys()):
-            if self._all_connections[k]:
-                if not self._all_connections[k].is_dico():
-                    return False
+        all_conn = self.get_all_connections()
+        for k in list(all_conn.keys()):
+            if all_conn[k]:
+                return bool(all_conn[k].is_dico())
         return True
 
     @staticmethod
@@ -552,10 +522,11 @@ class AX25PortHandler(object):
         # conn.ft_tx_queue: [FileTX]
         # conn.ft_tx_activ: FileTX
         res = {}
-        for ch_id in self._all_connections:
-            conn = self._all_connections[ch_id]
+        all_conn = self.get_all_connections()
+        for ch_id in list(all_conn.keys()):
+            conn = all_conn[ch_id]
             tmp = conn.ft_queue
-            if conn.ft_obj is not None:
+            if conn.ft_obj:
                 tmp = [conn.ft_obj] + tmp
             if tmp:
                 res[ch_id] = tmp
@@ -573,7 +544,20 @@ class AX25PortHandler(object):
         return self.ax25_ports
 
     def get_all_connections(self):
-        return self._all_connections
+        # TODO Need a better solution to get all connections
+        ret = {}
+        for port_id in self.ax25_ports.keys():
+            port = self.ax25_ports[port_id]
+            if port:
+                all_port_conn = port.connections
+                for conn_key in all_port_conn.keys():
+                    conn = all_port_conn[conn_key]
+                    if conn:
+                        if conn.ch_index not in ret.keys():
+                            ret[conn.ch_index] = conn
+                        else:
+                            print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+        return ret
 
     def get_all_stat_cfg(self):
         return self.ax25_stations_settings

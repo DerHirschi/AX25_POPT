@@ -103,7 +103,7 @@ class AX25Conn(object):
         self.own_port = port
         self.port_handler = self.own_port.port_handler
         """ GUI Stuff"""
-        self.ch_index: int = 0  # Set in insert_conn2all_conn_var()
+        self.ch_index: int = 0
         self.port_id: int = self.own_port.port_id
         self.port_name: str = self.own_port.portname
         self.gui = self.port_handler.get_gui()
@@ -572,7 +572,7 @@ class AX25Conn(object):
         # self.bbsFwd_disc()
         self._link_cleanup()
         self.own_port.del_connections(conn=self)
-        self.port_handler.delete_connection(self)   # Doppelt ..
+        self.port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self):
