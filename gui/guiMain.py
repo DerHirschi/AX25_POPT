@@ -2546,8 +2546,8 @@ class PoPT_GUI_Main:
             self.ts_box_box.configure(bg=STAT_BAR_CLR)
 
     def sysMsg_to_qso(self, data, ch_index):
-        # data = data.replace('\r', '\n')
-        data = f"\n<{conv_time_DE_str()}>\n" + data + '\n'
+        data = data.replace('\r', '')
+        data = f"\n\n    <{conv_time_DE_str()}>\n" + data + '\n\n'
         data = tk_filter_bad_chars(data)
         ch_vars = self.get_ch_var(ch_index=ch_index)
         tag_name = 'SYS-MSG'

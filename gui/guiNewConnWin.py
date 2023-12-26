@@ -270,8 +270,7 @@ class NewConnWin(tk.Toplevel):
                     link_conn=None,  # Linked Connection AX25Conn
                     channel=int(ch_id)  # Channel/Connection Index = Channel-ID
                 )
-                msg = str(msg).replace('\r', '')
-                self._main.sysMsg_to_qso(msg,ch_id)
+                self._main.sysMsg_to_qso(msg, ch_id)
 
                 if conn:
                     if addrs_str in list(self._conn_hist.keys()):

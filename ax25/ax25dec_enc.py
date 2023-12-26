@@ -518,7 +518,7 @@ class PIDByte:
 class AX25Frame:
     def __init__(self):
         # self.kiss = b''
-        self.data_bytes = b''           # Dekiss
+        self.data_bytes = b''       # AX25-Frame Raw-Data
         self.from_call = Call()
         self.to_call = Call()
         self.via_calls: [Call] = []
