@@ -382,15 +382,14 @@ class AX25Port(threading.Thread):
             return False
         if link_conn:
             conn.is_link_remote = True
-            if conn.link_connection(link_conn):
-                if link_conn.link_connection(conn):
+            if conn.new_link_connection(link_conn):
+                if link_conn.new_link_connection(conn):
                     return conn
             return False
         return conn
 
     def new_connection(self, ax25_frame: AX25Frame):
         """ New Outgoing Connection """
-        print(self.connections)
         ax25_frame.ctl_byte.SABMcByte()
         ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
 
@@ -423,10 +422,6 @@ class AX25Port(threading.Thread):
         self.port_handler.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
-        """
-        if conn.uid in self._connections.keys():
-            del self._connections[conn.uid]
-        """
         for conn_uid in list(self.connections.keys()):
             if conn == self.connections[conn_uid]:
                 del self.connections[conn_uid]
@@ -486,7 +481,7 @@ class AX25Port(threading.Thread):
 
     def run(self):
         while self.loop_is_running:
-            self.tasks()
+            self._tasks()
         # time.sleep(0.05)
         print(f"Loop Ends Port: {self.port_id}")
         logger.info(f"Loop Ends Port: {self.port_id}")
@@ -494,7 +489,7 @@ class AX25Port(threading.Thread):
         self.device = None
         self.ende = True
 
-    def tasks(self):
+    def _tasks(self):
         while self.loop_is_running:
             try:
                 ##############################################

@@ -5,7 +5,6 @@ from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import get_list_fm_viaStr
-# from ax25.ax25Statistics import MH_LIST
 from fnc.socket_fnc import get_ip_by_hostname, check_ip_add_format
 
 

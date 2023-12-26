@@ -327,24 +327,31 @@ class AX25PortHandler(object):
     # Connection Handling
     def insert_new_connection(self, new_conn, ind: int = 1):
         """ Insert connection for handling """
+        """ Assign Channel Free to connection """
         all_conn = self.get_all_connections()
         # Check if Connection is already in all_conn...
+        """
         for k in list(all_conn.keys()):
             if new_conn == all_conn[k]:
                 print("Connection bereits Vorhanden in PortHandler Connections")
                 if new_conn.ch_index != k:
+                    print("Channel Index != Real Index !!!")
                     logger.warning("Channel Index != Real Index !!!")
                     new_conn.ch_index = int(k)
                     return
+        """
         while True:
             if ind in list(all_conn.keys()):
                 ind += 1
             else:
                 new_conn.ch_index = int(ind)
+                if self.gui:
+                    self.gui.conn_btn_update()
                 return
 
     def accept_new_connection(self, connection):
         if self.gui:
+            # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
                 # TODO: Trigger here, Logbook and UserDB-Conn C
                 if connection.is_incoming_connection():
@@ -358,15 +365,13 @@ class AX25PortHandler(object):
                 self.gui.new_conn_sound()
                 speech = ' '.join(connection.to_call_str.replace('-', ' '))
                 self.gui.sprech(speech)
-            else:
-                connection.send_to_link(
-                    f'\r*** Connect from {connection.to_call_str}\r'.encode('ASCII', 'ignore')
-                )
+
             self.gui.ch_status_update()
             self.gui.conn_btn_update()
 
     def end_connection(self, conn):
         if self.gui:
+            # TODO GUI Stuff > guiMain
             # TODO: Trigger here, Logbook and UserDB-Conn C
             self.gui.sysMsg_to_qso(
                 data=f'*** Disconnected fm {str(conn.to_call_str)}',
@@ -374,6 +379,7 @@ class AX25PortHandler(object):
             self.gui.disco_sound()
             self.gui.ch_status_update()
             self.gui.conn_btn_update()
+
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():

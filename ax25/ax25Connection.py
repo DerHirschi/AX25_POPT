@@ -496,7 +496,7 @@ class AX25Conn(object):
             return True
         return False
 
-    def link_connection(self, conn):
+    def new_link_connection(self, conn):
         conn: AX25Conn
         if conn is None:
             return False
@@ -529,8 +529,10 @@ class AX25Conn(object):
                     self.LINK_Connection.zustand_exec.change_state(4)
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
+
                     self.port_handler.del_link(self.LINK_Connection.uid)
                     self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
+                    self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
@@ -572,6 +574,10 @@ class AX25Conn(object):
         # print(f"conn_cleanup: {self.uid}\n"
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
+        if self.tx_buf_ctl:
+            return
+        if self.tx_buf_guiData:
+            return
         self._link_cleanup()
         self.own_port.del_connections(conn=self)
         self.port_handler.end_connection(self)   # Doppelt ..
@@ -721,6 +727,7 @@ class AX25Conn(object):
             b'*** reconnected to'
         ]:
             if _det_str in raw_data.lower():
+                # TODO Conn/reconn fnc
                 _index = raw_data.lower().index(_det_str) + len(_det_str)
                 raw_data = raw_data.decode('ASCII', 'ignore')
                 _tmp_call = raw_data[_index:]
@@ -911,6 +918,7 @@ class AX25Conn(object):
         return True
 
     def _init_new_ax25frame(self):
+        # TODO Just return new PACK !! nS/nR update in unACK_buf!!
         pac = AX25Frame()
         pac.from_call = self.ax25_out_frame.from_call
         pac.to_call = self.ax25_out_frame.to_call
@@ -943,9 +951,10 @@ class AX25Conn(object):
             pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
             self.ax25_out_frame.data = self.tx_buf_rawData[:pac_len]
             self._send_gui_QSObuf_tx(self.tx_buf_rawData[:pac_len])
-            self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])  # CH ECHO
+            self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])          # CH ECHO
+            #####################################################################
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
-            self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
+            self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame       # Keep Packet until ACK/RR
             self.tx_buf_2send.append(self.ax25_out_frame)
             # RTT
             self.RTT_Timer.set_rtt_timer(int(self.vs), int(pac_len))
@@ -1017,6 +1026,10 @@ class AX25Conn(object):
 
     def accept_connection(self):
         self.port_handler.accept_new_connection(self)
+        if self.LINK_Connection:
+            self.send_to_link(
+                f'\r*** Connected to {self.to_call_str}\r'.encode('ASCII', 'ignore')
+            )
 
     def insert_new_connection(self):
         """ Insert connection for handling """
