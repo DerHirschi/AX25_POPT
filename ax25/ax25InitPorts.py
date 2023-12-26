@@ -330,7 +330,7 @@ class AX25PortHandler(object):
         """ Assign Channel Free to connection """
         all_conn = self.get_all_connections()
         # Check if Connection is already in all_conn...
-        """
+
         for k in list(all_conn.keys()):
             if new_conn == all_conn[k]:
                 print("Connection bereits Vorhanden in PortHandler Connections")
@@ -338,8 +338,10 @@ class AX25PortHandler(object):
                     print("Channel Index != Real Index !!!")
                     logger.warning("Channel Index != Real Index !!!")
                     new_conn.ch_index = int(k)
+                    if self.gui:
+                        self.gui.conn_btn_update()
                     return
-        """
+        print(list(all_conn.keys()))
         while True:
             if ind in list(all_conn.keys()):
                 ind += 1
@@ -379,7 +381,6 @@ class AX25PortHandler(object):
             self.gui.disco_sound()
             self.gui.ch_status_update()
             self.gui.conn_btn_update()
-
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
@@ -459,14 +460,6 @@ class AX25PortHandler(object):
                                                                    via_calls=via_calls,
                                                                    axip_add=axip_add,
                                                                    link_conn=link_conn)
-        """
-        print('------------- InitPorts ---------------')
-        print(f'conn: {connection}')
-        print(f'dest_call: {dest_call}')
-        print(f'own_call: {own_call}')
-        print(f'via_calls: {via_calls}')
-        print(f'link_conn: {link_conn}')
-        """
 
         if connection:
             self.insert_new_connection(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
@@ -474,8 +467,14 @@ class AX25PortHandler(object):
             user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
                 if user_db_ent.Name:
-                    return True, f'\r*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r', connection
-            return True, f'\r*** Link Setup to {dest_call} > Port {port_id}\r', connection
+                    ret_msg = f'\r*** Link Setup to {dest_call} '
+                    if user_db_ent.Name:
+                        ret_msg += f' - ({user_db_ent.Name})'
+                    if user_db_ent.Distance:
+                        ret_msg += f' - {round(user_db_ent.Distance)} km '
+                    ret_msg += f'> Port {port_id}\r'
+                    return connection, ret_msg
+            return connection, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
         return False, '\r*** Busy. No free SSID available.'
 
     def send_UI(self, conf: dict):
@@ -563,6 +562,7 @@ class AX25PortHandler(object):
                 for conn_key in all_port_conn.keys():
                     conn = all_port_conn[conn_key]
                     if conn:
+                        # if conn.ch_index:    # Not Channel 0
                         if conn.ch_index not in ret.keys():
                             ret[conn.ch_index] = conn
                         else:

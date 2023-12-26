@@ -2,8 +2,12 @@
 # 2.102.x
 
 Fixes:
-- QSO Fenster Farben werden nicht gesetzt wenn eigener Call eine SSID bekommt
+- QSO Fenster Farben werden nicht gesetzt, wenn eigener Call eine SSID bekommt
+- QSO Fenster Farben werden falsch gesetzt nach harten disconnect
 - Fehlerhafte Sequenz der Ausgabe von empfangenen Daten / QSO Echo im QSO-Fenster
+- "*** Connected to ..", "Reconnected to .." Ausgaben bei weiter un Reconnect von/zur Node
+- Connect/Disconnect Button ändert Farbe/Status nicht bei neuen ausgehenden Connect
+- AX25Protokoll I/RR/REJ/RNR mit gesetzten Poll werden nicht korrekt zurückgewiesen im Zustand S1(Frei).
 
 Optimierung:
 - Code Optimierung im "Neue Verbindung Fenster"

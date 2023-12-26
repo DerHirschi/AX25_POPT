@@ -70,6 +70,7 @@ class ChVars(object):
     output_win_tags = {}
     input_win_tags = {}
     new_tags = []
+    last_tag_name = 'NOCALL'
     input_win_index = '1.0'
     input_win_cursor_index = tk.INSERT
     new_data_tr = False
@@ -1845,6 +1846,18 @@ class PoPT_GUI_Main:
                                      selectbackground='#fc7126',
                                      selectforeground='#000000',
                                      )
+            self._out_txt.tag_config('TX-NOCALL',
+                                     foreground='#ffffff',
+                                     background='#000000',
+                                     selectbackground='#ffffff',
+                                     selectforeground='#000000',
+                                     )
+            self._out_txt.tag_config('RX-NOCALL',
+                                     foreground='#000000',
+                                     background='#ffffff',
+                                     selectbackground='#000000',
+                                     selectforeground='#ffffff',
+                                     )
             self._out_txt.configure(state="disabled")
 
             self._mon_txt.configure(state="normal")
@@ -2390,14 +2403,14 @@ class PoPT_GUI_Main:
         if channel > 10:
             # TODO Service Channels
             return False
-        if conn.tx_buf_guiData:
+        if conn.rx_tx_buf_guiData:
             self._update_qso_spooler(conn)
             return True
         return False
 
     def _update_qso_spooler(self, conn):
-        gui_buf = conn.tx_buf_guiData
-        conn.tx_buf_guiData = conn.tx_buf_guiData[len(gui_buf):]
+        gui_buf = conn.rx_tx_buf_guiData
+        conn.rx_tx_buf_guiData = conn.rx_tx_buf_guiData[len(gui_buf):]
         for qso_data in gui_buf:
             if qso_data[0] == 'TX':
                 self._update_qso_tx(conn, qso_data[1])
@@ -2413,11 +2426,14 @@ class PoPT_GUI_Main:
 
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         Ch_var.output_win += inp
-        tag_name_tx = ''
         if conn.my_call_str in self._all_tag_calls:
             tag_name_tx = 'TX-' + str(conn.my_call_str)
+            Ch_var.last_tag_name = str(conn.my_call_str)
         elif conn.my_call_obj.call in self._all_tag_calls:
             tag_name_tx = 'TX-' + str(conn.my_call_obj.call)
+            Ch_var.last_tag_name = str(conn.my_call_str)
+        else:
+            tag_name_tx = 'TX-' + Ch_var.last_tag_name
 
         if self.channel_index == conn.ch_index:
             self._out_txt.configure(state="normal")
@@ -2450,11 +2466,14 @@ class PoPT_GUI_Main:
         # Write RX Date to Window/Channel Buffer
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         Ch_var.output_win += out
-        tag_name_rx = ''
         if conn.my_call_str in self._all_tag_calls:
             tag_name_rx = 'RX-' + str(conn.my_call_str)
+            Ch_var.last_tag_name = str(conn.my_call_str)
         elif conn.my_call_obj.call in self._all_tag_calls:
             tag_name_rx = 'RX-' + str(conn.my_call_obj.call)
+            Ch_var.last_tag_name = str(conn.my_call_str)
+        else:
+            tag_name_rx = 'RX-' + Ch_var.last_tag_name
 
         if self.channel_index == conn.ch_index:
             if Ch_var.t2speech:
@@ -2972,27 +2991,27 @@ class PoPT_GUI_Main:
         # TODO Call just if necessary
         # TODO not calling in Tasker Loop for Channel Alarm (change BTN Color)
         # self.main_class.on_channel_status_change()
-        _ch_alarm = False
+        ch_alarm = False
         # if PORT_HANDLER.get_all_connections().keys():
         for i in list(self._con_btn_dict.keys()):
             all_conn = PORT_HANDLER.get_all_connections()
             if i in list(all_conn.keys()):
-                _btn_txt = all_conn[i].to_call_str
-                _is_link = all_conn[i].is_link
-                _is_pipe = all_conn[i].pipe
-                if _is_pipe is None:
-                    _is_pipe = False
-                if _is_link:
-                    _btn_txt = 'L>' + _btn_txt
-                elif _is_pipe:
-                    _btn_txt = 'P>' + _btn_txt
-                if self._con_btn_dict[i][1].get() != _btn_txt:
-                    self._con_btn_dict[i][1].set(_btn_txt)
+                btn_txt = all_conn[i].to_call_str
+                is_link = all_conn[i].is_link
+                is_pipe = all_conn[i].pipe
+                if is_pipe is None:
+                    is_pipe = False
+                if is_link:
+                    btn_txt = 'L>' + btn_txt
+                elif is_pipe:
+                    btn_txt = 'P>' + btn_txt
+                if self._con_btn_dict[i][1].get() != btn_txt:
+                    self._con_btn_dict[i][1].set(btn_txt)
                 if i == self.channel_index:
-                    if _is_link:
+                    if is_link:
                         if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue2':
                             self._con_btn_dict[i][0].configure(bg='SteelBlue2')
-                    elif _is_pipe:
+                    elif is_pipe:
                         if self._con_btn_dict[i][0].cget('bg') != 'cyan2':
                             self._con_btn_dict[i][0].configure(bg='cyan2')
                     else:
@@ -3000,26 +3019,26 @@ class PoPT_GUI_Main:
                             self._con_btn_dict[i][0].configure(bg='green2')
                 else:
                     if self.get_ch_new_data_tr(i):
-                        if _is_link:
+                        if is_link:
                             if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue4':
                                 self._con_btn_dict[i][0].configure(bg='SteelBlue4')
-                            # _ch_alarm = False
-                        elif _is_pipe:
+                            # ch_alarm = False
+                        elif is_pipe:
                             if self._con_btn_dict[i][0].cget('bg') != 'cyan4':
                                 self._con_btn_dict[i][0].configure(bg='cyan4')
-                            # _ch_alarm = False
+                            # ch_alarm = False
                         else:
-                            _ch_alarm = True
+                            ch_alarm = True
                             self._ch_btn_alarm(self._con_btn_dict[i][0])
                     else:
-                        if _is_link:
-                            # _ch_alarm = False
+                        if is_link:
+                            # ch_alarm = False
                             if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue4':
                                 self._con_btn_dict[i][0].configure(bg='SteelBlue4')
-                        elif _is_pipe:
+                        elif is_pipe:
                             if self._con_btn_dict[i][0].cget('bg') != 'cyan4':
                                 self._con_btn_dict[i][0].configure(bg='cyan4')
-                            # _ch_alarm = False
+                            # ch_alarm = False
                         else:
                             if self._con_btn_dict[i][0].cget('bg') != 'green4':
                                 self._con_btn_dict[i][0].configure(bg='green4')
@@ -3036,12 +3055,13 @@ class PoPT_GUI_Main:
                         if self._con_btn_dict[i][0].cget('bg') != 'red4':
                             self._con_btn_dict[i][0].configure(bg='red4')
                 else:
-                    if self._con_btn_dict[i][0].cget('bg') != 'yellow':
-                        self._con_btn_dict[i][0].configure(bg='yellow')
+                    if i != self.channel_index:
+                        if self._con_btn_dict[i][0].cget('bg') != 'yellow':
+                            self._con_btn_dict[i][0].configure(bg='yellow')
 
         if self._ch_btn_blink_timer < time.time():
             self._ch_btn_blink_timer = time.time() + self._parm_btn_blink_time
-        self._ch_alarm = _ch_alarm
+        self._ch_alarm = ch_alarm
 
     def _ch_btn_alarm(self, btn: tk.Button):
         if self._ch_btn_blink_timer < time.time():

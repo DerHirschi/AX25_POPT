@@ -260,7 +260,7 @@ class NewConnWin(tk.Toplevel):
                         return
 
                 # conn = PORT_HANDLER.get_all_ports()[self.port_index].new_connection(ax25_frame=ax_frame)
-                is_connected, msg, conn = PORT_HANDLER.new_outgoing_connection(
+                conn, msg = PORT_HANDLER.new_outgoing_connection(
                     dest_call=dest_call,
                     own_call=own_call,
                     via_calls=via_calls,  # Auto lookup in MH if not exclusive Mode
@@ -273,7 +273,7 @@ class NewConnWin(tk.Toplevel):
                 msg = str(msg).replace('\r', '')
                 self._main.sysMsg_to_qso(msg,ch_id)
 
-                if is_connected:
+                if conn:
                     if addrs_str in list(self._conn_hist.keys()):
                         # Bring the newest Entry up in the List
                         del self._conn_hist[addrs_str]

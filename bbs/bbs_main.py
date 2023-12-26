@@ -261,7 +261,6 @@ class BBSConnection:
             self._send_abort()
         self._bbs.end_fwd_conn(self)
         self._ax25_conn.bbs_connection = None
-        # self._ax25_conn.rx_buf_rawData = bytes(self._rx_buff + self._ax25_conn.rx_buf_rawData)
 
     def _send_abort(self):
         self._connection_tx(b'*\r')

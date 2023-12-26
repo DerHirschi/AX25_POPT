@@ -55,7 +55,7 @@ class AutoConnTask:
             logger.error(f"Error ConnTask connection: {connection[1]}")
             self._set_state_exec(0)
         else:
-            self.connection = connection[2]
+            self.connection = connection[0]
             # self.dest_station_id = self.connection.cli.stat_identifier
             self._set_state_exec(1)
 
