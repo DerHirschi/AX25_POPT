@@ -49,7 +49,7 @@ from gui.ft.guiFileTX import FileSend
 from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, CFG_sound_CONN, \
-    CFG_sound_DICO
+    CFG_sound_DICO, CFG_TR_DX_ALARM_BG_CLR
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -62,6 +62,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 import matplotlib
+
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
@@ -93,9 +94,10 @@ class SideTabbedFrame:  # TODO: WTF
         self._lang = int(main_cl.language)
         self.style = main_cl.style
         self.ch_index = main_cl.channel_index
+        self._mh = self._main_win.mh
         self._ch_is_disc = False
         _tab_side_frame = tk.Frame(
-            main_cl.get_side_frame(), # TODO: WTF
+            main_cl.get_side_frame(),  # TODO: WTF
             # width=300,
             height=400
         )
@@ -344,6 +346,7 @@ class SideTabbedFrame:  # TODO: WTF
         self._tree.column("mh_port", anchor=tk.W, stretch=tk.NO, width=61)
         self._tree.column("mh_nPackets", anchor=tk.W, stretch=tk.NO, width=60)
         self._tree.column("mh_route", anchor=tk.W, stretch=tk.YES, width=180)
+        self._tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
 
         self._tree_data = []
         self._last_mh_ent = []
@@ -494,7 +497,7 @@ class SideTabbedFrame:  # TODO: WTF
         _y = 45
         self.mon_pid_var = tk.StringVar(tab6_monitor)
         tk.Label(tab6_monitor, text='PID:').place(x=_x, y=_y)
-        pid = PIDByte() # TODO CONST PIDByte().pac_types
+        pid = PIDByte()  # TODO CONST PIDByte().pac_types
         pac_types = dict(pid.pac_types)
         _vals = []
         for x in list(pac_types.keys()):
@@ -675,8 +678,8 @@ class SideTabbedFrame:  # TODO: WTF
 
     def _chk_beacon(self):
         POPT_CFG.set_guiPARM_main({
-                'gui_cfg_beacon': bool(self._main_win.setting_bake.get())
-            })
+            'gui_cfg_beacon': bool(self._main_win.setting_bake.get())
+        })
 
     def _chk_auto_tracer(self):
         self._main_win.set_auto_tracer()
@@ -778,21 +781,26 @@ class SideTabbedFrame:  # TODO: WTF
     def _tracer_send():
         PORT_HANDLER.get_aprs_ais().tracer_sendit()
 
+    # MH
     def _format_tree_ent(self):
         self._tree_data = []
         for k in self._last_mh_ent:
             # ent: MyHeard
             ent = k
             route = ent.route
-
-            self._tree_data.append((
-                f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
-                f'{ent.own_call}',
-                f'{ent.distance}',
-                f'{ent.port_id}',
-                f'{ent.pac_n}',
-                ' '.join(route),
-            ))
+            dx_alarm = False
+            if ent.own_call in list(self._mh.dx_alarm_hist):
+                dx_alarm = True
+            self._tree_data.append(
+                ((
+                     f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
+                     f'{ent.own_call}',
+                     f'{ent.distance}',
+                     f'{ent.port_id}',
+                     f'{ent.pac_n}',
+                     ' '.join(route),
+                 ), dx_alarm)
+            )
 
     def _update_rtt(self):
         best = ''
@@ -837,19 +845,32 @@ class SideTabbedFrame:  # TODO: WTF
             self._tx_count_var.set(tx_count)
             self._rx_count_var.set(rx_count)
 
+    ##########################################################
+    # MH
     def _update_tree(self):
         for i in self._tree.get_children():
             self._tree.delete(i)
         for ret_ent in self._tree_data:
-            self._tree.insert('', tk.END, values=ret_ent)
+            if ret_ent[1] and self._mh.dx_alarm_trigger:
+                self._tree.insert('', tk.END, values=ret_ent[0], tags=('dx_alarm',))
+            else:
+                self._tree.insert('', tk.END, values=ret_ent[0], )
 
     def _update_side_mh(self):
-        mh_ent = list(PORT_HANDLER.get_MH().output_sort_entr(10))
+        mh_ent = list(self._mh.output_sort_entr(10))
         if mh_ent != self._last_mh_ent:
             self._last_mh_ent = mh_ent
             self._format_tree_ent()
             self._update_tree()
 
+    def reset_dx_alarm(self):
+        mh_ent = list(self._mh.output_sort_entr(10))
+        self._last_mh_ent = mh_ent
+        self._format_tree_ent()
+        self._update_tree()
+
+    ############################################################
+    # Tracer
     def _update_side_trace(self):
         self._format_trace_tree_data()
         # self._update_trace_tree()
@@ -904,7 +925,7 @@ class SideTabbedFrame:  # TODO: WTF
             self._rnr_var.set(_conn.is_RNR)
             self.link_holder_var.set(_conn.link_holder_on)
             self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(_conn.tx_buf_rawData)))
-            if _conn.own_port.port_cfg.parm_T2_auto:    # FIXME var parm_T2_auto to connection
+            if _conn.own_port.port_cfg.parm_T2_auto:  # FIXME var parm_T2_auto to connection
                 if not self.t2_auto_var.get():
                     self.t2_var.set(str(_conn.parm_T2 * 1000))
                     self.t2.configure(state='disabled')
@@ -984,6 +1005,7 @@ class PoPT_GUI_Main:
         ######################################
         # Init Vars
         # self.language = POPT_CFG.get_guiCFG_language()
+        self.mh = PORT_HANDLER.get_MH()
         self.language = LANGUAGE
         self.text_size = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
         ###############################
@@ -1095,7 +1117,7 @@ class PoPT_GUI_Main:
         ###########################################
         # Input Output TXT Frames and Status Bar
         self._pw = ttk.PanedWindow(l_frame, orient=tk.VERTICAL, )
-        self._pw.pack(side=tk.BOTTOM,  expand=1)
+        self._pw.pack(side=tk.BOTTOM, expand=1)
         # Input
         self._TXT_upper_frame = tk.Frame(self._pw, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
         self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1)
@@ -1219,7 +1241,7 @@ class PoPT_GUI_Main:
         #########################
         # Parameter to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
-        guiCfg['gui_parm_new_call_alarm'] = bool(PORT_HANDLER.get_MH().parm_new_call_alarm)
+        guiCfg['gui_parm_new_call_alarm'] = bool(self.mh.parm_new_call_alarm)
         guiCfg['gui_parm_channel_index'] = int(self.channel_index)
         guiCfg['gui_parm_text_size'] = int(self.text_size)
         guiCfg['gui_parm_connect_history'] = dict(self.connect_history)
@@ -1992,15 +2014,15 @@ class PoPT_GUI_Main:
                 msg = 'erfolgreich initialisiert.'
             self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
                                    .format(port_k,
-                                        PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortName,
-                                        PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortTyp,
-                                        msg
-                                        ))
+                                           PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortName,
+                                           PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortTyp,
+                                           msg
+                                           ))
             self.sysMsg_to_monitor('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
-                                        PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[0],
-                                        PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[1]
-                                        ))
+                                           PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[0],
+                                           PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[1]
+                                           ))
 
     # END Init Stuff
     ######################################################################
@@ -2291,7 +2313,7 @@ class PoPT_GUI_Main:
                 self._mh_btn.configure(bg=_clr)
             _aprs_obj = PORT_HANDLER.get_aprs_ais()
             if _aprs_obj is not None:
-                _aprs_obj.tracer_reset_auto_timer(PORT_HANDLER.get_MH().last_dx_alarm)
+                _aprs_obj.tracer_reset_auto_timer(self.mh.last_dx_alarm)
 
     def _tracer_alarm(self):
         """ Tracer Alarm """
@@ -2307,7 +2329,8 @@ class PoPT_GUI_Main:
             self._tracer_btn.configure(bg=self._tracer_btn_def_clr)
 
     def _reset_dx_alarm(self):
-        PORT_HANDLER.get_MH().dx_alarm_trigger = False
+        self.mh.dx_alarm_trigger = False
+
         if self._mh_btn.cget('bg') != self._mh_btn_def_clr:
             self._mh_btn.configure(bg=self._mh_btn_def_clr)
 
@@ -2365,7 +2388,7 @@ class PoPT_GUI_Main:
             # if MH_LIST.new_call_alarm and self.setting_dx_alarm.get():
             if self._ch_alarm:
                 self._ch_btn_status_update()
-            if PORT_HANDLER.get_MH().dx_alarm_trigger:
+            if self.mh.dx_alarm_trigger:
                 self._dx_alarm()
             if PORT_HANDLER.get_aprs_ais() is not None:
                 if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
@@ -2781,9 +2804,10 @@ class PoPT_GUI_Main:
     # MH WIN
     def open_MH_win(self):
         """MH WIN"""
-        self._reset_dx_alarm()
+        self._reset_dx_alarm()  # TODO
         if self.mh_window is None:
             MHWin(self)
+        self.tabbed_sideFrame.reset_dx_alarm()
 
     #######################################################
     def gui_set_distance(self):
@@ -2899,7 +2923,7 @@ class PoPT_GUI_Main:
     def _update_bw_mon(self):
         _tr = False
         for _port_id in list(PORT_HANDLER.ax25_ports.keys()):
-            _data = PORT_HANDLER.get_MH().get_bandwidth(
+            _data = self.mh.get_bandwidth(
                 _port_id,
                 PORT_HANDLER.ax25_ports[_port_id].port_cfg.parm_baud,
             )

@@ -203,6 +203,7 @@ class MHWin(tk.Toplevel):
         self._tree.column("mh_nPackets", anchor=tk.W, stretch=tk.NO, width=80)
         self._tree.column("mh_REJ", anchor=tk.W, stretch=tk.NO, width=55)
         self._tree.column("mh_ip_fail", anchor=tk.W, stretch=tk.NO, width=50)
+        self._tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
         # tree.column(1, stretch=True)
 
@@ -301,7 +302,7 @@ class MHWin(tk.Toplevel):
     def _update_tree(self):
         for i in self._tree.get_children():
             self._tree.delete(i)
-        self._tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
+
         for ret_ent in self._tree_data:
             if ret_ent[1]:
                 self._tree.insert('', tk.END, values=ret_ent[0], tags=('dx_alarm',))
@@ -326,9 +327,9 @@ class MHWin(tk.Toplevel):
                 axip_str = '{} - {}'.format(ent.axip_add[0], ent.axip_add[1])
             else:
                 axip_str = ''
-            _dx_alarm = False
+            dx_alarm = False
             if ent.own_call in list(self._mh.dx_alarm_hist):
-                _dx_alarm = True
+                dx_alarm = True
 
             self._tree_data.append(((
                 f'{conv_time_DE_str(ent.last_seen)}',
@@ -342,7 +343,7 @@ class MHWin(tk.Toplevel):
                 ' '.join(ent.route),
                 f'{axip_str}',
                 f'{ent.axip_fail}',
-            ), _dx_alarm))
+            ), dx_alarm))
 
     def _reset_mh_list(self):
         self.lower()

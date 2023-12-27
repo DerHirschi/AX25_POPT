@@ -30,6 +30,8 @@ Neue Implementierungen / Funktionen:
 - WX-Tree Daten nach letzten update der Station (Tagen) filterbar
 - WX-Tree Menübar > Daten löschen
 - Filetransfer Manager Menübar > Datei senden
+- DX-Alarm wird jetzt auch in der kurzen MH-Liste in der Seite angezeigt. Um zu resetten einmal die MH-Liste aufrufen
+- MH- und Tracer Button in die Seiten Tabelle in die jeweilige Spalte verlegt.
 
 ###########################################################################################################
 ###########################################################################################################
