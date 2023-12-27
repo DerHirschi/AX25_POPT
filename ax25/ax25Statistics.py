@@ -114,7 +114,7 @@ class MH:
         self.dx_alarm_trigger = False
         self.last_dx_alarm = time.time()
         self._now_10sec = datetime.now().strftime('%M:%S')[:-1]
-        self._now_min = datetime.now().minute
+        self._now_min = int(datetime.now().minute)
         self._MH_db: {int: {str: MyHeard}} = {}  # MH TODO ? > SQL-DB ?
         self._short_MH = deque([], maxlen=40)
         self._port_statistik_minute = {}
@@ -265,18 +265,16 @@ class MH:
     ########################
     # Port Statistic
     def _PortStat_input(self, data):
-        if not self._db:
-            return
         self._PortStat_check_minute()
         self._PortStat_data_to_var(data=data)
 
     def _PortStat_check_minute(self):
         if not self._db:
             return
-        now_min = datetime.now().minute
+        now_min = int(datetime.now().minute)
         if now_min != self._now_min:
             for port_id in list(self._port_statistik_minute.keys()):
-                data_struc: dict = self._port_statistik_minute[port_id]
+                data_struc = dict(self._port_statistik_minute[port_id])
                 data_struc['port_id'] = port_id
                 self._db.PortStat_insert_data(data_struc)
             self._port_statistik_minute = {}
@@ -289,6 +287,8 @@ class MH:
             self._port_statistik_minute[port_id] = get_port_stat_struct()
         if ax_frame.ctl_byte.flag in self._port_statistik_minute[port_id].keys():
             self._port_statistik_minute[port_id][ax_frame.ctl_byte.flag] += len(ax_frame.data_bytes)
+        else:
+            print(f"PortStat inp: {ax_frame.ctl_byte.flag}")
         self._port_statistik_minute[port_id]['N_pack'] += 1
         self._port_statistik_minute[port_id]['DATA_W_HEADER'] += len(ax_frame.data_bytes)
         self._port_statistik_minute[port_id]['DATA'] += int(ax_frame.data_len)
@@ -340,9 +340,10 @@ class MH:
     def mh_task(self):  # TASKER
         """ Called fm Porthandler Tasker"""
         for el in list(self._mh_inp_buffer):
-            self._PortStat_input(el)
-            self._input_bw_calc(el)
-            self._mh_inp(el)
+            if not el.get('tx', False):
+                self._PortStat_input(el)
+                self._input_bw_calc(el)
+                self._mh_inp(el)
             self._mh_inp_buffer = self._mh_inp_buffer[1:]
 
     def mh_input(self, ax25frame, port_id: int, tx: bool):
@@ -352,7 +353,7 @@ class MH:
         self._mh_inp_buffer.append({
             'ax_frame': ax25frame,
             'port_id': int(port_id),
-            # 'tx': bool(tx),
+            'tx': bool(tx),
             'now': datetime.now(),
         })
         return

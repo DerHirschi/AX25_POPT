@@ -48,13 +48,13 @@ class PlotWindow(tk.Toplevel):
         tk.Label(upper_frame, text='                  ').pack(side=tk.LEFT)
         # Spinbox für Stunden erstellen
 
-        hour_label = tk.Label(upper_frame, text="Stunden zurück: ")
+        hour_label = tk.Label(upper_frame, text='X-Limit (Days): ')
         hour_label.pack(side=tk.LEFT)
-        self._hour_var = tk.IntVar(self, value=24)
+        self._hour_var = tk.IntVar(self, value=1)
         self._hour_spinbox = ttk.Spinbox(upper_frame,
                                          textvariable=self._hour_var,
                                          from_=1,
-                                         to=8760,
+                                         to=3650,
                                          width=5,
                                          command=self._change_xlim,
                                          )
@@ -180,15 +180,16 @@ class PlotWindow(tk.Toplevel):
     def _change_xlim(self, event=None):
         self._update_plots()
         try:
-            hours = int(self._hour_var.get())
+            days = int(self._hour_var.get())
         except ValueError:
             return
-        if not hours:
+        if not days:
             return
         self._plot1.legend(
             fontsize=8,
         )
-        self._plot1.set_xlim([hours, 0])  # x-Achse auf 24 Stunden begrenzen
+        lim = 24 * days
+        self._plot1.set_xlim([lim, 0])  # x-Achse auf 24 Stunden begrenzen
         # self._plot2.set_xlim([hours, 0])  # x-Achse auf 24 Stunden begrenzen
         self._canvas.draw()
 

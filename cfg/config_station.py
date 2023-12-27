@@ -3,16 +3,16 @@ import os
 import logging
 
 from ax25.ax25UI_Pipe import AX25Pipe
-from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads
+from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads, VER
 from cfg.popt_config import POPT_CFG
 from fnc.cfg_fnc import save_to_file, load_fm_file
 
-"""
+
 if "dev" in VER:
     log_level = logging.DEBUG
 else:
     log_level = logging.INFO
-"""
+
 
 log_level = logging.INFO
 
