@@ -12,6 +12,8 @@ Fixes:
 Optimierung:
 - Code Optimierung im "Neue Verbindung Fenster"
 - "alte Verbindungen aufräumen" Prozedur optimiert
+- Port-Statistik wird jetzt in SQL-DB gespeichert
+- Port-Statistik Plot überarbeitet
 
 Neue Implementierungen / Funktionen:
 - Verbindung Historie wird jetzt permanent gespeichert

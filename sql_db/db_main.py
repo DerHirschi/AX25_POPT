@@ -7,7 +7,8 @@ from fnc.str_fnc import convert_str_to_datetime
 from sql_db.sql_Error import SQLConnectionError
 from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
-    SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB
+    SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB, SQL_CREATE_PORT_STATISTIK_TAB, \
+    SQLITE_CREATE_PORT_STATISTIK_TAB
 
 SQL_BBS_TABLES = {
     "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
@@ -34,6 +35,14 @@ APRS_TABLES = {
 
 SQLITE_APRS_TABLES = {
     'APRSwx': SQLITE_CREATE_APRS_WX_TAB
+}
+
+PORT_STATISTIK_TAB = {
+    'PortStatistik': SQL_CREATE_PORT_STATISTIK_TAB
+}
+
+SQLITE_PORT_STATISTIK_TAB = {
+    'PortStatistik': SQLITE_CREATE_PORT_STATISTIK_TAB
 }
 
 """
@@ -108,6 +117,7 @@ class SQL_Database:
                         'bbs': SQL_BBS_TABLES,
                         'user_db': USERDB_TABLES,
                         'aprs': APRS_TABLES,
+                        'port_stat': PORT_STATISTIK_TAB,
                         # 'mh': MH_TABLES,
                     }.get(tables, {})
                 else:
@@ -115,6 +125,7 @@ class SQL_Database:
                         'bbs': SQLITE_BBS_TABLES,
                         'user_db': USERDB_TABLES,
                         'aprs': SQLITE_APRS_TABLES,
+                        'port_stat': SQLITE_PORT_STATISTIK_TAB,
                         # 'mh': SQLITE_MH_TABLES,
                     }.get(tables, {})
                 for tab in tables.keys():
@@ -1008,6 +1019,67 @@ class SQL_Database:
             self.commit_query("DELETE FROM APRSwx;")
 
     ############################################
+    # Port Statistic
+    def PortStat_insert_data(self, data_struc: dict):
+        if not data_struc:
+            return None
+
+        _query = ("INSERT INTO `PortStatistik` "
+                  "(`time`, "
+                  "`port_id`, "
+                  "`N_pack`, "
+                  "`I`, "
+                  "`SABM`, "
+                  "`DM`, "
+                  "`DISC`, "
+                  "`REJ`, "
+                  "`SREJ`, "
+                  "`RR`, "
+                  "`RNR`, "
+                  "`UA`, "
+                  "`UI`, "
+                  "`FRMR`, "
+                  "`DATA_W_HEADER`, "
+                  "`DATA`) "
+                  f"VALUES ({', '.join(['%s'] * 16)});")
+        _query_data = (
+            data_struc.get('time', ''),
+            data_struc.get('port_id', 0),
+            data_struc.get('N_pack', 0),
+            data_struc.get('I', 0),
+            data_struc.get('SABM', 0),
+            data_struc.get('DM', 0),
+            data_struc.get('DISC', 0),
+            data_struc.get('REJ', 0),
+            data_struc.get('SREJ', 0),
+            data_struc.get('RR', 0),
+            data_struc.get('RNR', 0),
+            data_struc.get('UI', 0),
+            data_struc.get('UA', 0),
+            data_struc.get('FRMR', 0),
+            data_struc.get('DATA_W_HEADER', 0),
+            data_struc.get('DATA', 0),
+        )
+        return self.commit_query_bin(_query, _query_data)
+
+    def PortStat_get_data_f_port(self, port_id=None):
+        if port_id is None:
+            return []
+        query = ("SELECT * "
+                 "FROM PortStatistik "
+                 f"WHERE port_id={port_id};")
+        ret = self.commit_query(query)
+        if not ret:
+            return []
+        return ret
+
+    def PortStat_delete_data(self):
+        if self.MYSQL:
+            self.commit_query("TRUNCATE TABLE PortStatistik;")
+        else:
+            self.commit_query("DELETE FROM PortStatistik;")
+
+    ############################################
     # MH
     """
     def mh_get_entry(self, call: str):
@@ -1197,7 +1269,5 @@ class SQL_Database:
 
         return self.commit_query_bin(_query, _query_data)
     """
-
-
 
 # DB = SQL_Database()

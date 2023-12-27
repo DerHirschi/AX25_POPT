@@ -2400,7 +2400,7 @@ class PoPT_GUI_Main:
             return False
         if conn.ft_obj:
             return False
-        if channel > 10:
+        if 1 > channel > 10:
             # TODO Service Channels
             return False
         if conn.rx_tx_buf_guiData:
@@ -2409,8 +2409,8 @@ class PoPT_GUI_Main:
         return False
 
     def _update_qso_spooler(self, conn):
-        gui_buf = conn.rx_tx_buf_guiData
-        conn.rx_tx_buf_guiData = conn.rx_tx_buf_guiData[len(gui_buf):]
+        gui_buf = list(conn.rx_tx_buf_guiData)
+        conn.rx_tx_buf_guiData = list(conn.rx_tx_buf_guiData[len(gui_buf):])
         for qso_data in gui_buf:
             if qso_data[0] == 'TX':
                 self._update_qso_tx(conn, qso_data[1])
@@ -2546,8 +2546,12 @@ class PoPT_GUI_Main:
             self.ts_box_box.configure(bg=STAT_BAR_CLR)
 
     def sysMsg_to_qso(self, data, ch_index):
+        if not data:
+            return
+        if 1 > ch_index > 10:
+            return False
         data = data.replace('\r', '')
-        data = f"\n\n    <{conv_time_DE_str()}>\n" + data + '\n\n'
+        data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
         data = tk_filter_bad_chars(data)
         ch_vars = self.get_ch_var(ch_index=ch_index)
         tag_name = 'SYS-MSG'

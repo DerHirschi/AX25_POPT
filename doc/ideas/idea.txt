@@ -34,6 +34,12 @@ Ideas/TODO's :
   - kompatibilität TNC nur teilweise
   - MultiPortKISS (Direwolf)
 
+- AXIP-Multicast überarbeiten
+  - ! LOOP-Preventer !
+  - Multicast Channels/Groups
+  - Multicast CLI/NODE
+  - Multicast Filter
+
 - Telnet Port
 - TCP-Listen/Kiss Device Port
 - "Dual-TNC" 2 Ports zu einem zusammenfassen um z.B. RTX+SDR o. 2xRTX gleichzeitig auf einem Kanal betreiben zu können.

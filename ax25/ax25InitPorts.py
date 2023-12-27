@@ -140,7 +140,7 @@ class AX25PortHandler(object):
     # MH
     def _init_MH(self):
         self.mh = MH()
-        # self.mh.set_DB(self.db)
+        self.mh.set_DB(self.db)
 
     def _mh_task(self):
         self.mh.mh_task()
@@ -205,6 +205,7 @@ class AX25PortHandler(object):
             self.close_port(k)
         if self.mh:
             self.mh.save_mh_data()
+            self.mh.save_PortStat()
         USER_DB.save_data()
         self.close_DB()
         POPT_CFG.save_CFG_to_file()
@@ -327,13 +328,12 @@ class AX25PortHandler(object):
     # Connection Handling
     def insert_new_connection(self, new_conn, ind: int = 1):
         """ Insert connection for handling """
-        """ Assign Channel Free to connection """
+        """ Assign Connection free to Channel """
         all_conn = self.get_all_connections()
         # Check if Connection is already in all_conn...
-
+        """
         for k in list(all_conn.keys()):
             if new_conn == all_conn[k]:
-                print("Connection bereits Vorhanden in PortHandler Connections")
                 if new_conn.ch_index != k:
                     print("Channel Index != Real Index !!!")
                     logger.warning("Channel Index != Real Index !!!")
@@ -341,7 +341,8 @@ class AX25PortHandler(object):
                     if self.gui:
                         self.gui.conn_btn_update()
                     return
-        print(list(all_conn.keys()))
+        """
+
         while True:
             if ind in list(all_conn.keys()):
                 ind += 1
@@ -475,7 +476,7 @@ class AX25PortHandler(object):
                     ret_msg += f'> Port {port_id}\r'
                     return connection, ret_msg
             return connection, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
-        return False, '\r*** Busy. No free SSID available.'
+        return False, '\r*** Busy. No free SSID available.\r'
 
     def send_UI(self, conf: dict):
         port_id = conf.get('port_id', 0)
@@ -607,6 +608,7 @@ class AX25PortHandler(object):
             self.db.check_tables_exists('bbs')
             self.db.check_tables_exists('user_db')
             self.db.check_tables_exists('aprs')
+            self.db.check_tables_exists('port_stat')
             # self.db.check_tables_exists('mh')
             if self.db.error:
                 raise SQLConnectionError
