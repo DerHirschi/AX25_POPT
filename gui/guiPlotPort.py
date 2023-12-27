@@ -48,9 +48,9 @@ class PlotWindow(tk.Toplevel):
         tk.Label(upper_frame, text='                  ').pack(side=tk.LEFT)
         # Spinbox für Stunden erstellen
 
-        hour_label = tk.Label(upper_frame, text="Stunden zurück:  ")
+        hour_label = tk.Label(upper_frame, text="Stunden zurück: ")
         hour_label.pack(side=tk.LEFT)
-        self._hour_var = tk.IntVar(self, value=3)
+        self._hour_var = tk.IntVar(self, value=24)
         self._hour_spinbox = ttk.Spinbox(upper_frame,
                                          textvariable=self._hour_var,
                                          from_=1,
@@ -128,10 +128,11 @@ class PlotWindow(tk.Toplevel):
                 last_ts = timestamt_dt
             min_dif = timestamt_dt - last_ts
             # print(f"DIF sec: {min_dif.total_seconds()}")
-            min_dif = math.ceil(min_dif.total_seconds() / 60)
+            min_dif = int(min_dif.total_seconds() / 60) - 1
             # print(f"DIF ceil: {min_dif}")
             last_ts = timestamt_dt
             null_list = list(range(min_dif))
+            # print(null_list)
             null_list.reverse()
             for minu in null_list:
                 tmp_I_packets.append(0)
@@ -184,6 +185,9 @@ class PlotWindow(tk.Toplevel):
             return
         if not hours:
             return
+        self._plot1.legend(
+            fontsize=8,
+        )
         self._plot1.set_xlim([hours, 0])  # x-Achse auf 24 Stunden begrenzen
         # self._plot2.set_xlim([hours, 0])  # x-Achse auf 24 Stunden begrenzen
         self._canvas.draw()

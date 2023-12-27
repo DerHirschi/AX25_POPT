@@ -12,15 +12,15 @@ Fixes:
 Optimierung:
 - Code Optimierung im "Neue Verbindung Fenster"
 - "alte Verbindungen aufräumen" Prozedur optimiert
-- Port-Statistik wird jetzt in SQL-DB gespeichert
+- Port-Statistik wird jetzt in SQL-DB gespeichert. (Datei data/port_stat.popt kann gelöscht werden)
 - Port-Statistik Plot überarbeitet
 
 Neue Implementierungen / Funktionen:
 - Verbindung Historie wird jetzt permanent gespeichert
 - "Neue Verbindung Fenster" Ausgehender Call wird entsprechend der Historie gesetzt
 - MH-Liste Menübar: MH-Liste löschen
-- "Byte Zähler" in Baken Einstellungen. Zeigt die Größe de Bakentext an.
-- Textgrößenbegrenzer für Bakentext
+- "Byte Zähler" in Baken Einstellungen. Zeigt die Größe de Baken-text an.
+- Textgrößenbegrenzer für Baken-text
 - WX-Plot X Scala jetzt einstellbar (Tage)
 - WX-Plot zusätzliche Ausgabe der letzten Werte (Temp. Pres. Hum.) im Station Infobereich
 - WX-Tree Daten nach letzten update der Station (Tagen) filterbar
