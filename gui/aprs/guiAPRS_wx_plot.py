@@ -1,10 +1,12 @@
 from datetime import datetime
 import tkinter as tk
 from fnc.str_fnc import convert_str_to_datetime
-import matplotlib
-matplotlib.use('Agg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
+# FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
+# FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 
@@ -73,16 +75,7 @@ class WXPlotWindow(tk.Toplevel):
         info_frame = tk.Frame(self)
         info_frame.pack(side=tk.TOP, fill=tk.BOTH)
         self._change_xlim()
-        """
-        self._plot1.legend(
-            fontsize=8,
-            loc='upper left'
-        )
-        self._plot2.legend(
-            fontsize=8,
-            loc='upper right'
-        )
-        """
+
         if self._wx_data:
             if self._wx_data[-1]:
                 call = self._wx_data[-1][10]

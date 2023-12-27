@@ -38,11 +38,11 @@ SQLITE_APRS_TABLES = {
 }
 
 PORT_STATISTIK_TAB = {
-    'PortStatistik': SQL_CREATE_PORT_STATISTIK_TAB
+    'PortStatistic': SQL_CREATE_PORT_STATISTIK_TAB
 }
 
 SQLITE_PORT_STATISTIK_TAB = {
-    'PortStatistik': SQLITE_CREATE_PORT_STATISTIK_TAB
+    'PortStatistic': SQLITE_CREATE_PORT_STATISTIK_TAB
 }
 
 """
@@ -93,8 +93,10 @@ class SQL_Database:
             self.error = True
             print("Database: Init Error !")
             logger.error("Database: Init Error !")
-
-        # self.check_bbs_tables_exists()
+        """
+        if self.db:
+            self._drope_tabel()
+        """
 
     def __del__(self):
         if self.db:
@@ -139,6 +141,11 @@ class SQL_Database:
         if self.db:
             self.commit_query(query)
 
+    def _drope_tabel(self):
+        if self.db:
+            query = f"DROP TABLE PortStatistik;"
+            self.commit_query(query)
+
     def send_query(self, query):
         # print(f"Query: {query}")
         if self.db:
@@ -157,6 +164,7 @@ class SQL_Database:
                 self.error = True
                 self.db = None
                 return None
+            # TODO sqlite3.OperationalError
             else:
                 self.db.commit_query()
                 return ret
@@ -1023,8 +1031,10 @@ class SQL_Database:
     def PortStat_insert_data(self, data_struc: dict):
         if not data_struc:
             return None
+        if not data_struc.get('time', ''):
+            return None
 
-        _query = ("INSERT INTO `PortStatistik` "
+        _query = ("INSERT INTO `PortStatistic` "
                   "(`time`, "
                   "`port_id`, "
                   "`N_pack`, "
@@ -1039,9 +1049,22 @@ class SQL_Database:
                   "`UI`, "
                   "`UA`, "
                   "`FRMR`, "
+                  
+                  "`n_I`, "
+                  "`n_SABM`, "
+                  "`n_DM`, "
+                  "`n_DISC`, "
+                  "`n_REJ`, "
+                  "`n_SREJ`, "
+                  "`n_RR`, "
+                  "`n_RNR`, "
+                  "`n_UI`, "
+                  "`n_UA`, "
+                  "`n_FRMR`, "
+                  
                   "`DATA_W_HEADER`, "
                   "`DATA`) "
-                  f"VALUES ({', '.join(['%s'] * 16)});")
+                  f"VALUES ({', '.join(['%s'] * 27)});")
         _query_data = (
             data_struc.get('time', ''),
             data_struc.get('port_id', 0),
@@ -1057,6 +1080,19 @@ class SQL_Database:
             data_struc.get('UI', 0),
             data_struc.get('UA', 0),
             data_struc.get('FRMR', 0),
+
+            data_struc.get('n_I', 0),
+            data_struc.get('n_SABM', 0),
+            data_struc.get('n_DM', 0),
+            data_struc.get('n_DISC', 0),
+            data_struc.get('n_REJ', 0),
+            data_struc.get('n_SREJ', 0),
+            data_struc.get('n_RR', 0),
+            data_struc.get('n_RNR', 0),
+            data_struc.get('n_UI', 0),
+            data_struc.get('n_UA', 0),
+            data_struc.get('n_FRMR', 0),
+
             data_struc.get('DATA_W_HEADER', 0),
             data_struc.get('DATA', 0),
         )
@@ -1066,7 +1102,7 @@ class SQL_Database:
         if port_id is None:
             return []
         query = ("SELECT * "
-                 "FROM PortStatistik "
+                 "FROM PortStatistic "
                  f"WHERE port_id={port_id};")
         ret = self.commit_query(query)
         if not ret:
@@ -1075,9 +1111,9 @@ class SQL_Database:
 
     def PortStat_delete_data(self):
         if self.MYSQL:
-            self.commit_query("TRUNCATE TABLE PortStatistik;")
+            self.commit_query("TRUNCATE TABLE PortStatistic;")
         else:
-            self.commit_query("DELETE FROM PortStatistik;")
+            self.commit_query("DELETE FROM PortStatistic;")
 
     ############################################
     # MH

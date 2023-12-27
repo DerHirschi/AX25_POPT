@@ -8,12 +8,15 @@ Fixes:
 - "*** Connected to ..", "Reconnected to .." Ausgaben bei weiter un Reconnect von/zur Node
 - Connect/Disconnect Button ändert Farbe/Status nicht bei neuen ausgehenden Connect
 - AX25Protokoll I/RR/REJ/RNR mit gesetzten Poll werden nicht korrekt zurückgewiesen im Zustand S1(Frei).
+- Evtl. "RuntimeError: Tcl_AsyncDelete:", führt sporadisch zum Crash. Zumindest in der PyCharm IDE.
+  - FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 
 Optimierung:
 - Code Optimierung im "Neue Verbindung Fenster"
 - "alte Verbindungen aufräumen" Prozedur optimiert
 - Port-Statistik wird jetzt in SQL-DB gespeichert. (Datei data/port_stat.popt kann gelöscht werden)
 - Port-Statistik Plot überarbeitet
+- Ram optimierungen aller Plots. (Plots werden jetzt korrekt geschlossen. Hoffentlich.)
 
 Neue Implementierungen / Funktionen:
 - Verbindung Historie wird jetzt permanent gespeichert

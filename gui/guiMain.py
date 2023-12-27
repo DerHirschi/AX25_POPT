@@ -11,14 +11,10 @@ import gtts
 from gtts import gTTS
 
 from ax25.ax25dec_enc import PIDByte
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.popt_config import POPT_CFG
 from fnc.cfg_fnc import cleanup_obj_to_dict, set_obj_att_fm_dict
-
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
 from gui.aprs.guiAISmon import AISmonitor
@@ -62,6 +58,12 @@ if is_linux():
     from playsound import playsound
 elif is_windows():
     from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
+# FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 
 
 class ChVars(object):
@@ -92,8 +94,8 @@ class SideTabbedFrame:  # TODO: WTF
         self.style = main_cl.style
         self.ch_index = main_cl.channel_index
         self._ch_is_disc = False
-        _tab_side_frame = tk.Frame(  # TODO: WTF
-            main_cl.get_side_frame(),
+        _tab_side_frame = tk.Frame(
+            main_cl.get_side_frame(), # TODO: WTF
             # width=300,
             height=400
         )
@@ -477,7 +479,7 @@ class SideTabbedFrame:  # TODO: WTF
         _y = 45
         self.mon_pid_var = tk.StringVar(tab6_monitor)
         tk.Label(tab6_monitor, text='PID:').place(x=_x, y=_y)
-        pid = PIDByte()
+        pid = PIDByte() # TODO CONST PIDByte().pac_types
         pac_types = dict(pid.pac_types)
         _vals = []
         for x in list(pac_types.keys()):
@@ -1259,8 +1261,11 @@ class PoPT_GUI_Main:
     def _init_bw_plot(self):
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 6)
+        """
         self._bw_fig = Figure(figsize=(8, 5), dpi=80)
         self._ax = self._bw_fig.add_subplot(111)
+        """
+        self._bw_fig, self._ax = plt.subplots()
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
         self._ax.axis([0, 10, 0, 100])  # TODO As Option
         self._bw_fig.set_facecolor('xkcd:light grey')

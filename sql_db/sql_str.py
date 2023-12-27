@@ -158,7 +158,7 @@ SQLITE_CREATE_APRS_WX_TAB = SQL_CREATE_APRS_WX_TAB.replace(
 
 #######################################
 # PortStatistik
-SQL_CREATE_PORT_STATISTIK_TAB = ("CREATE TABLE `PortStatistik`(\n"
+SQL_CREATE_PORT_STATISTIK_TAB = ("CREATE TABLE `PortStatistic`(\n"
                                  "`ID` INT(255) UNSIGNED AUTO_INCREMENT NOT NULL,"
                                  "`time` varchar(19) NOT NULL,\n"
                                  "`port_id` TINYINT(255) UNSIGNED NOT NULL,\n"
@@ -174,27 +174,56 @@ SQL_CREATE_PORT_STATISTIK_TAB = ("CREATE TABLE `PortStatistik`(\n"
                                  "`UA` INT(255) UNSIGNED DEFAULT 0,\n"
                                  "`UI` INT(255) UNSIGNED DEFAULT 0,\n"
                                  "`FRMR` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 
+                                 "`n_I` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_SABM` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_DM` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_DISC` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_REJ` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_SREJ` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_RR` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_RNR` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_UA` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_UI` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 "`n_FRMR` INT(255) UNSIGNED DEFAULT 0,\n"
+                                 
                                  "`DATA_W_HEADER` INT(255) UNSIGNED DEFAULT 0,\n"
                                  "`DATA` INT(255) UNSIGNED DEFAULT 0,\n"
                                  "PRIMARY KEY (`ID`)\n"
                                  ");\n")
 
-SQLITE_CREATE_PORT_STATISTIK_TAB = ("CREATE TABLE `PortStatistik`(\n"
+SQLITE_CREATE_PORT_STATISTIK_TAB = ("CREATE TABLE `PortStatistic`(\n"
                                     "`ID` INTEGER PRIMARY KEY AUTOINCREMENT,\n"
                                     "`time` varchar(19) NOT NULL,\n"
                                     "`port_id` UNSIGNED TINYINT(255) NOT NULL,\n"
                                     "`N_pack` UNSIGNED SMALLINT(255) DEFAULT 0,\n"
                                     "`I` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    
                                     "`SABM` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`DM` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`DISC` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`REJ` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`SREJ` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    
                                     "`RR` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`RNR` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`UA` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`UI` UNSIGNED INT(255)  DEFAULT 0,\n"
                                     "`FRMR` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    
+                                    "`n_I` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    "`n_SABM` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    "`n_DM` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    "`n_DISC` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    "`n_REJ` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    
+                                    "`n_SREJ` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    "`n_RR` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    "`n_RNR` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    "`n_UA` UNSIGNED INT(255) DEFAULT 0,\n"
+                                    "`n_UI` UNSIGNED INT(255)  DEFAULT 0,\n"
+                                    
+                                    "`n_FRMR` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`DATA_W_HEADER` UNSIGNED INT(255) DEFAULT 0,\n"
                                     "`DATA` UNSIGNED INT(255) DEFAULT 0\n"
                                     ");\n")

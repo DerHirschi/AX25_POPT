@@ -100,6 +100,19 @@ def get_port_stat_struct():
         'UI': 0,
         'UA': 0,
         'FRMR': 0,
+
+        'n_I': 0,
+        'n_SABM': 0,
+        'n_DM': 0,
+        'n_DISC': 0,
+        'n_REJ': 0,
+        'n_SREJ': 0,
+        'n_RR': 0,
+        'n_RNR': 0,
+        'n_UI': 0,
+        'n_UA': 0,
+        'n_FRMR': 0,
+
         'DATA_W_HEADER': 0,
         'DATA': 0,
         'time': str(datetime.now().replace(second=0, microsecond=0).strftime(SQL_TIME_FORMAT))
@@ -117,7 +130,7 @@ class MH:
         self._now_min = int(datetime.now().minute)
         self._MH_db: {int: {str: MyHeard}} = {}  # MH TODO ? > SQL-DB ?
         self._short_MH = deque([], maxlen=40)
-        self._port_statistik_minute = {}
+        self._PortStat_buf = {}
         self._bandwidth = {}
         ############################
         # MH
@@ -188,7 +201,7 @@ class MH:
     def save_mh_data(self):
         print('Save MH')
         self._save_to_cfg()
-        tmp_mh = dict(self._MH_db)
+        tmp_mh = self._MH_db
         for k in list(tmp_mh.keys()):
             tmp_mh[k] = cleanup_obj_dict(tmp_mh[k])
         try:
@@ -201,8 +214,8 @@ class MH:
     def save_PortStat(self):
         if not self._db:
             return
-        for port_id in list(self._port_statistik_minute.keys()):
-            data_struc: dict = self._port_statistik_minute[port_id]
+        for port_id in list(self._PortStat_buf.keys()):
+            data_struc: dict = self._PortStat_buf[port_id]
             data_struc['port_id'] = port_id
             self._db.PortStat_insert_data(data_struc)
 
@@ -273,31 +286,41 @@ class MH:
             return
         now_min = int(datetime.now().minute)
         if now_min != self._now_min:
-            for port_id in list(self._port_statistik_minute.keys()):
-                data_struc = dict(self._port_statistik_minute[port_id])
+            for port_id in list(self._PortStat_buf.keys()):
+                data_struc = dict(self._PortStat_buf[port_id])
                 data_struc['port_id'] = port_id
                 self._db.PortStat_insert_data(data_struc)
-            self._port_statistik_minute = {}
+            self._PortStat_buf = {}
             self._now_min = now_min
 
     def _PortStat_data_to_var(self, data):
         port_id = data.get('port_id', 0)
         ax_frame = data['ax_frame']
-        if port_id not in list(self._port_statistik_minute.keys()):
-            self._port_statistik_minute[port_id] = get_port_stat_struct()
-        if ax_frame.ctl_byte.flag in self._port_statistik_minute[port_id].keys():
-            self._port_statistik_minute[port_id][ax_frame.ctl_byte.flag] += len(ax_frame.data_bytes)
+        if port_id not in list(self._PortStat_buf.keys()):
+            self._PortStat_buf[port_id] = get_port_stat_struct()
+        if ax_frame.ctl_byte.flag in self._PortStat_buf[port_id].keys():
+            flag = str(ax_frame.ctl_byte.flag)
+            n_flag = f"n_{flag}"
+            self._PortStat_buf[port_id][flag] += len(ax_frame.data_bytes)
+            self._PortStat_buf[port_id][n_flag] += 1
         else:
             print(f"PortStat inp: {ax_frame.ctl_byte.flag}")
-        self._port_statistik_minute[port_id]['N_pack'] += 1
-        self._port_statistik_minute[port_id]['DATA_W_HEADER'] += len(ax_frame.data_bytes)
-        self._port_statistik_minute[port_id]['DATA'] += int(ax_frame.data_len)
+        self._PortStat_buf[port_id]['N_pack'] += 1
+        self._PortStat_buf[port_id]['DATA_W_HEADER'] += len(ax_frame.data_bytes)
+        self._PortStat_buf[port_id]['DATA'] += int(ax_frame.data_len)
 
     def PortStat_get_data_by_port(self, port_id: int):
+        if not self._db:
+            return []
         data = self._db.PortStat_get_data_f_port(port_id)
         if data:
             return data
         return []
+
+    def PortStat_reset(self):
+        if not self._db:
+            return
+        self._db.PortStat_delete_data()
 
     ###################################
     # BW Monitor
