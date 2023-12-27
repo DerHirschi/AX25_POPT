@@ -1,12 +1,11 @@
 from datetime import datetime
 import tkinter as tk
-
-import matplotlib.pyplot as plt
-from matplotlib.backends._backend_tk import NavigationToolbar2Tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
-
 from fnc.str_fnc import convert_str_to_datetime
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends._backend_tk import NavigationToolbar2Tk
+from matplotlib import pyplot as plt
 
 
 def adjust_list_len(target_list: list, compare_list: list):
@@ -23,7 +22,7 @@ class WXPlotWindow(tk.Toplevel):
                       f"640+"
                       f"{root_cl.main_win.winfo_x()}+"
                       f"{root_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.protocol("WM_DELETE_WINDOW", self.destroy_plot)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -74,6 +73,7 @@ class WXPlotWindow(tk.Toplevel):
         info_frame = tk.Frame(self)
         info_frame.pack(side=tk.TOP, fill=tk.BOTH)
         self._change_xlim()
+        """
         self._plot1.legend(
             fontsize=8,
             loc='upper left'
@@ -82,6 +82,7 @@ class WXPlotWindow(tk.Toplevel):
             fontsize=8,
             loc='upper right'
         )
+        """
         if self._wx_data:
             if self._wx_data[-1]:
                 call = self._wx_data[-1][10]
@@ -195,6 +196,8 @@ class WXPlotWindow(tk.Toplevel):
             self._plot1.plot(x_scale, y_lum, label='Luminosity', color='orange')
 
     def _change_xlim(self, event=None):
+        self._plot1.clear()
+        self._plot2.clear()
         self._update_plot()
         try:
             days = int(self._xLimt_var.get())
@@ -205,6 +208,14 @@ class WXPlotWindow(tk.Toplevel):
         lim = 24 * days
         self._plot1.set_xlim([lim, 0])  # x-Achse auf 24 Stunden begrenzen
         self._plot2.set_xlim([lim, 0])  # x-Achse auf 24 Stunden begrenzen
+        self._plot1.legend(
+            fontsize=8,
+            loc='upper left'
+        )
+        self._plot2.legend(
+            fontsize=8,
+            loc='upper right'
+        )
         self._canvas.draw()
 
     def destroy_win(self):
@@ -212,16 +223,18 @@ class WXPlotWindow(tk.Toplevel):
 
     def destroy_plot(self):
         # self._canvas.close_event('all')
-        # self._canvas.get_tk_widget().destroy()
+        # self._plot1.clear()
+        # self._plot2.clear()
         # self._canvas.close_event()
         plt.close()
+        self._canvas.get_tk_widget().destroy()
         # del self._canvas
-        del self._plot1
-        del self._plot2
+        # del self._plot1
+        # del self._plot2
         # del self._fig
         # self._canvas = None
-        self._plot1 = None
-        self._plot2 = None
+        # self._plot1 = None
+        # self._plot2 = None
         # self._fig = None
-        self.withdraw()
+        # self.withdraw()
         self.destroy()

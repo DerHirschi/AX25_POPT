@@ -1,14 +1,14 @@
-import math
 import tkinter as tk
 from tkinter import ttk
-
-import matplotlib.pyplot as plt
-from matplotlib.backends._backend_tk import NavigationToolbar2Tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from datetime import datetime
-
 from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.str_fnc import convert_str_to_datetime
+from matplotlib.backends._backend_tk import NavigationToolbar2Tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib
+
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 
 
 class PlotWindow(tk.Toplevel):
@@ -167,7 +167,6 @@ class PlotWindow(tk.Toplevel):
             x_scale.append(dif.total_seconds() / 3600)
 
         # print(x_scale)
-        self._plot1.clear()
         self._plot1.plot(x_scale, tmp_I_packets, label='I')
         self._plot1.plot(x_scale, tmp_UI_packets, label='UI')
         self._plot1.plot(x_scale, tmp_REJ_packets, label='REJ')
@@ -178,6 +177,7 @@ class PlotWindow(tk.Toplevel):
         self._plot1.plot(x_scale, tmp_FRMR_packets, label='FRMR')
 
     def _change_xlim(self, event=None):
+        self._plot1.clear()
         self._update_plots()
         try:
             days = int(self._hour_var.get())
@@ -193,21 +193,9 @@ class PlotWindow(tk.Toplevel):
         # self._plot2.set_xlim([hours, 0])  # x-Achse auf 24 Stunden begrenzen
         self._canvas.draw()
 
-    def destroy_win(self):
-        self.withdraw()
-
     def destroy_plot(self):
-
-        self._canvas.close_event('all')
-        self._canvas.get_tk_widget().destroy()
-        self._canvas.close_event()
-        self._canvas = None
         plt.close()
-        self._plot1 = None
-        self._plot2 = None
-        del self._canvas
-        del self._plot1
-        del self._plot2
+        self._canvas.get_tk_widget().destroy()
         self._root_win.port_stat_win = None
         self.destroy()
 

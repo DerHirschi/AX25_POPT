@@ -1149,7 +1149,6 @@ class PoPT_GUI_Main:
         PORT_HANDLER.close_all_ports()
 
         logging.info('Closing GUI: Destroying all Sub-Windows')
-        self._close_port_stat_win()
         for wn in [
             self.settings_win,
             self.mh_window,
@@ -1317,7 +1316,7 @@ class PoPT_GUI_Main:
         _MenuTools = Menu(_menubar, tearoff=False)
         _MenuTools.add_command(label="MH", command=self._MH_win, underline=0)
         _MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
-                               command=self._open_port_stat_win,
+                               command=lambda: self.open_window('PortStat'),
                                underline=1)
         _MenuTools.add_separator()
         _MenuTools.add_command(label="User-DB Tree",
@@ -2708,6 +2707,7 @@ class PoPT_GUI_Main:
             'pms_new_msg': (self.newPMS_MSG_win, BBS_newMSG),
             'userDB_tree': (self.userDB_tree_win, UserDBtreeview),
             'ft_send': (self.FileSend_win, FileSend),
+            'PortStat': (self.port_stat_win, PlotWindow),
             # TODO .......
 
         }.get(win_key, None)
@@ -2734,20 +2734,6 @@ class PoPT_GUI_Main:
     # New Connection WIN
     def open_new_conn_win(self):
         self.open_window('new_conn')
-
-    ##########################
-    #
-    def _open_port_stat_win(self):
-        if self.port_stat_win is None:
-            self.port_stat_win = PlotWindow(self)
-        else:
-            self._close_port_stat_win()
-
-    def _close_port_stat_win(self):
-        if self.port_stat_win is not None:
-            self.port_stat_win.destroy_plot()
-            del self.port_stat_win
-            self.port_stat_win = None
 
     ######################
     # APRS Beacon Tracer
