@@ -312,10 +312,13 @@ class SideTabbedFrame:  # TODO: WTF
         # self.ft_size_var.set(f"Size: 10.000,0 / 20.00,0 kb")
         # self.ft_duration_var.set(f"Time: 00:00:00 / 00:00:00")
         # self.ft_bps_var.set(f"BPS: 100.000")
-        ################################
+        #######################################################################
         # MH ##########################
         # TREE
-        tab2_mh.columnconfigure(0, minsize=300, weight=1)
+        tab2_mh.rowconfigure(0, minsize=100, weight=1)
+        tab2_mh.rowconfigure(1, minsize=50, weight=0)
+        tab2_mh.columnconfigure(0, minsize=150, weight=1)
+        tab2_mh.columnconfigure(1, minsize=150, weight=1)
 
         columns = (
             'mh_last_seen',
@@ -327,7 +330,7 @@ class SideTabbedFrame:  # TODO: WTF
         )
 
         self._tree = ttk.Treeview(tab2_mh, columns=columns, show='headings')
-        self._tree.grid(row=0, column=0, sticky='nsew')
+        self._tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
 
         self._tree.heading('mh_last_seen', text='Zeit')
         self._tree.heading('mh_call', text='Call')
@@ -347,7 +350,19 @@ class SideTabbedFrame:  # TODO: WTF
         # self._update_side_mh()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
-        # Global Settings ##########################
+        btn_frame = tk.Frame(tab2_mh)
+        btn_frame.grid(row=1, column=0)
+        tk.Button(btn_frame,
+                  text="MH",
+                  command=self._open_mh
+                  ).pack(side=tk.LEFT, padx=50)
+        tk.Button(btn_frame,
+                  text="Statistic",
+                  command=self._open_PortStat
+                  ).pack(side=tk.LEFT, padx=50)
+
+        #############################################################################
+        # Global Settings ################################
         # Global Sound
         Checkbutton(tab4_settings,
                     text="Sound",
@@ -402,7 +417,7 @@ class SideTabbedFrame:  # TODO: WTF
         self._chk_btn_default_clr = self._autotracer_chk_btn.cget('bg')
         self._ch_echo_vars = {}
         #################
-        #################
+        ###################################################################################
         # Monitor Frame
         # Address
         _x = 10
@@ -504,13 +519,13 @@ class SideTabbedFrame:  # TODO: WTF
                            command=self._chk_mon_port_filter
                            ).place(x=_x, y=_y)
             self._mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
-        ################################
+        ######################################################################################
         # TRACER
         # TREE
         tab7_tracer.columnconfigure(0, minsize=150, weight=1)
         tab7_tracer.columnconfigure(1, minsize=150, weight=1)
         tab7_tracer.rowconfigure(0, minsize=100, weight=1)
-        tab7_tracer.rowconfigure(1, minsize=50, weight=1)
+        tab7_tracer.rowconfigure(1, minsize=50, weight=0)
 
         tracer_columns = (
             'rx_time',
@@ -533,17 +548,23 @@ class SideTabbedFrame:  # TODO: WTF
         self._trace_tree.column("port", anchor=tk.CENTER, stretch=tk.NO, width=60)
         self._trace_tree.column("distance", stretch=tk.NO, width=70)
         self._trace_tree.column("path", anchor=tk.CENTER, stretch=tk.YES, width=180)
+        self._trace_tree.bind('<<TreeviewSelect>>', self._trace_entry_selected)
 
         self._trace_tree_data = []
         self._trace_tree_data_old = {}
         self._update_side_trace()
-
-        tk.Button(tab7_tracer,
+        btn_frame = tk.Frame(tab7_tracer)
+        btn_frame.grid(row=1, column=0)
+        tk.Button(btn_frame,
                   text="SEND",
                   command=self._tracer_send
-                  ).grid(row=1, column=0, padx=10)
+                  ).pack(side=tk.LEFT, padx=50)
+        tk.Button(btn_frame,
+                  text="Tracer",
+                  command=self._open_tracer
+                  ).pack(side=tk.LEFT, padx=50)
+
         # tk.Button(tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
-        self._trace_tree.bind('<<TreeviewSelect>>', self._trace_entry_selected)
 
         ##################
         # Tasker
@@ -934,6 +955,15 @@ class SideTabbedFrame:  # TODO: WTF
         if bool(self.autoscroll_var.get()):
             self._main_win.see_end_qso_win()
 
+    def _open_tracer(self):
+        self._main_win.open_be_tracer_win()
+
+    def _open_mh(self):
+        self._main_win.open_MH_win()
+
+    def _open_PortStat(self):
+        self._main_win.open_window('PortStat')
+
 
 class PoPT_GUI_Main:
     def __init__(self):
@@ -1319,7 +1349,7 @@ class PoPT_GUI_Main:
         _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
         # Menü 3 "Tools"
         _MenuTools = Menu(_menubar, tearoff=False)
-        _MenuTools.add_command(label="MH", command=self._MH_win, underline=0)
+        _MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
         _MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
                                command=lambda: self.open_window('PortStat'),
                                underline=1)
@@ -1389,7 +1419,7 @@ class PoPT_GUI_Main:
         _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
                               command=lambda: self.open_window('aprs_mon'),
                               underline=0)
-        _MenuAPRS.add_command(label="Beacon Tracer", command=self._open_be_tracer_win,
+        _MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
                               underline=0)
         _MenuAPRS.add_separator()
         _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language],
@@ -1460,7 +1490,7 @@ class PoPT_GUI_Main:
                                  text="MH",
                                  # bg="yellow",
                                  width=8,
-                                 command=self._MH_win)
+                                 command=self.open_MH_win)
 
         # self._mh_btn.place(x=5, y=45)
         self._mh_btn.pack(side=tk.LEFT)
@@ -1475,7 +1505,7 @@ class PoPT_GUI_Main:
         self._tracer_btn = tk.Button(_btn_lower_frame,
                                      text="Tracer",
                                      width=8,
-                                     command=self._open_be_tracer_win)  # .place(x=110, y=45)
+                                     command=self.open_be_tracer_win)  # .place(x=110, y=45)
         self._tracer_btn.pack(side=tk.LEFT, padx=2)
         self._tracer_btn_def_clr = self._tracer_btn.cget('bg')
 
@@ -2742,14 +2772,14 @@ class PoPT_GUI_Main:
 
     ######################
     # APRS Beacon Tracer
-    def _open_be_tracer_win(self):
+    def open_be_tracer_win(self):
         self._reset_tracer_alarm()
         if self.be_tracer_win is None:
             self.be_tracer_win = BeaconTracer(self)
 
     ###################
     # MH WIN
-    def _MH_win(self):
+    def open_MH_win(self):
         """MH WIN"""
         self._reset_dx_alarm()
         if self.mh_window is None:

@@ -303,8 +303,7 @@ class MH:
             n_flag = f"n_{flag}"
             self._PortStat_buf[port_id][flag] += len(ax_frame.data_bytes)
             self._PortStat_buf[port_id][n_flag] += 1
-        else:
-            print(f"PortStat inp: {ax_frame.ctl_byte.flag}")
+
         self._PortStat_buf[port_id]['N_pack'] += 1
         self._PortStat_buf[port_id]['DATA_W_HEADER'] += len(ax_frame.data_bytes)
         self._PortStat_buf[port_id]['DATA'] += int(ax_frame.data_len)
@@ -442,19 +441,18 @@ class MH:
             ent.distance = float(db_ent.Distance)
 
         if not dx_alarm:
-            if self.parm_lastseen_alarm:
-                _t_delta = datetime.now() - ent.last_seen
-                if self.parm_distance_alarm:
+            if self.parm_distance_alarm and ent.distance != -1:
+                if self.parm_lastseen_alarm:
+                    _t_delta = datetime.now() - ent.last_seen
                     if _t_delta.days >= self.parm_lastseen_alarm:
                         if ent.distance >= self.parm_distance_alarm:
                             dx_alarm = True
-                else:
+            else:
+                if self.parm_lastseen_alarm:
+                    _t_delta = datetime.now() - ent.last_seen
                     if _t_delta.days >= self.parm_lastseen_alarm:
                         dx_alarm = True
-            else:
-                if self.parm_distance_alarm:
-                    if ent.distance >= self.parm_distance_alarm:
-                        dx_alarm = True
+
         if dx_alarm:
             self._set_dx_alarm(ent=ent)
         self._MH_db[port_id][call_str] = ent

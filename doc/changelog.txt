@@ -10,6 +10,7 @@ Fixes:
 - AX25Protokoll I/RR/REJ/RNR mit gesetzten Poll werden nicht korrekt zurückgewiesen im Zustand S1(Frei).
 - Evtl. "RuntimeError: Tcl_AsyncDelete:", führt sporadisch zum Crash. Zumindest in der PyCharm IDE.
   - FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
+- DX-Alarm reagiert nicht, wenn Distanz der Station unbekannt ist.
 
 Optimierung:
 - Code Optimierung im "Neue Verbindung Fenster"
