@@ -102,6 +102,12 @@ class SideTabbedFrame:  # TODO: WTF
             height=400
         )
         _tab_side_frame.grid(row=3, column=0, columnspan=6, pady=10, sticky="nsew")
+        """
+        s = ttk.Style()
+        s.theme_use('default')
+        s.configure('TNotebook.Tab', background="green3")
+        s.map("TNotebook", background=[("selected", "green3")])
+        """
         self._tabControl = ttk.Notebook(
             _tab_side_frame,
             height=300,
@@ -581,6 +587,14 @@ class SideTabbedFrame:  # TODO: WTF
         # self._update_ch_echo()
         self._update_side_mh()
         self._update_side_trace()
+
+    """
+    def _init_tab_style(self):
+        s = ttk.Style()
+        s.theme_use('default')
+        s.configure('TNotebook.Tab', background="green3")
+        s.map("TNotebook", background=[("selected", "green3")])
+    """
 
     def set_auto_tracer_state(self):
         _bool_state = self._main_win.get_tracer() or not self._main_win.get_dx_alarm()

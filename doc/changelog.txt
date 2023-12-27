@@ -1,5 +1,5 @@
 ###########################################################################################################
-# 2.102.x
+# 2.102.19
 
 Fixes:
 - QSO Fenster Farben werden nicht gesetzt, wenn eigener Call eine SSID bekommt

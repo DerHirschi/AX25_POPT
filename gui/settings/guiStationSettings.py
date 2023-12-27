@@ -208,7 +208,8 @@ class StatSetTab:
         # self.bye_text_ent.place(x=5, y=15)
         self.akt_info_text_ent.grid(row=1, column=1)
         self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
-
+        # ########################################################################################
+        # ########################################################################################
         # Pipe
         tab_pipe = ttk.Frame(self.textTab)
         # TX-File Check Timer
@@ -242,7 +243,7 @@ class StatSetTab:
                   text=f"{STR_TABLE['file_1'][self.lang]}",
                   command=lambda: self.select_files(tx=True)
                   ).place(x=_x + 710, y=_y - 2)
-        #################
+        #################################
         # RX FILE
         _x = 10
         _y = 100
