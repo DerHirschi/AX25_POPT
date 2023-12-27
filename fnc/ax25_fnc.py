@@ -63,5 +63,5 @@ def get_list_fm_viaStr(via_str: str):
             if tmp_call:
                 vias.append(tmp_call)
             else:
-                break
+                return []
     return vias

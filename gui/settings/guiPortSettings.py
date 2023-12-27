@@ -842,11 +842,11 @@ class PortSettingsWin:
                 self.tabControl.forget(tab_ind)
 
                 WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
-                self._main_class.msg_to_monitor('Info: Port erfolgreich gelöscht.')
+                self._main_class.sysMsg_to_monitor('Info: Port erfolgreich gelöscht.')
         else:
             InfoMsg('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
                                    'Das hast du gut gemacht, mach weiter so. ')
-            self._main_class.msg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
+            self._main_class.sysMsg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
         self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)
 
@@ -860,21 +860,21 @@ class PortSettingsWin:
         # self.settings_win.lower()
         messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
         self.settings_win.lift()
-        self._main_class.msg_to_monitor('Info: Alle Stationen werden disconnected !')
+        self._main_class.sysMsg_to_monitor('Info: Alle Stationen werden disconnected !')
         time.sleep(1)  # TODO Quick fix
         # TODO PORT_HANDLER.is_all_disco()
         PORT_HANDLER.disco_all_Conn()
-        self._main_class.msg_to_monitor('Info: Port Einstellungen werden gespeichert.')
+        self._main_class.sysMsg_to_monitor('Info: Port Einstellungen werden gespeichert.')
         for port_id in self.tab_list.keys():
             self.tab_list[port_id].set_vars_to_cfg()
             self.tab_list[port_id].port_setting.save_to_pickl()
-        self._main_class.msg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
+        self._main_class.sysMsg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
         # self._main_class.msg_to_monitor('Lob: Gute Entscheidung!')
-        self._main_class.msg_to_monitor('Info: Ports werden neu Initialisiert.')
+        self._main_class.sysMsg_to_monitor('Info: Ports werden neu Initialisiert.')
         threading.Thread(target=PORT_HANDLER.reinit_all_ports).start()
         # self._main_class.ax25_port_handler.reinit_all_ports()
         # self._main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
-        self._main_class.msg_to_monitor('Lob: Du bist stets bemüht..')
+        self._main_class.sysMsg_to_monitor('Lob: Du bist stets bemüht..')
 
         """    
         for k in PORT_HANDLER.get_all_ports().keys():
@@ -892,8 +892,8 @@ class PortSettingsWin:
             self.tab_list[port_id].set_vars_to_cfg()
             self.tab_list[port_id].port_setting.save_to_pickl()
         PORT_HANDLER.set_kiss_param_all_ports()
-        self._main_class.msg_to_monitor('Lob: Das war richtig. Mach weiter so.')
-        self._main_class.msg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
+        self._main_class.sysMsg_to_monitor('Lob: Das war richtig. Mach weiter so.')
+        self._main_class.sysMsg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
         self._main_class.tabbed_sideFrame.update_mon_port_id()
         self._destroy_win()
 

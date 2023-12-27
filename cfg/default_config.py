@@ -100,6 +100,7 @@ def getNew_maniGUI_parm():
         # 'gui_parm_new_call_alarm': False,
         'gui_parm_channel_index': 1,
         'gui_parm_text_size': 13,
+        'gui_parm_connect_history': {},
         # 'gui_parm__mon_buff': [],
         #################
         # MSG Center

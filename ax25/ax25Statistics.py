@@ -6,12 +6,11 @@ from datetime import timedelta
 import pickle
 
 from UserDB.UserDBmain import USER_DB
-from cfg.constant import CFG_mh_data_file, CFG_port_stat_data_file
+from cfg.constant import CFG_mh_data_file, CFG_port_stat_data_file, SQL_TIME_FORMAT
 from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict, cleanup_obj_to_dict
+from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_for_key
-# from sql_db.sql_Error import SQLConnectionError
 
 """
 def getNew_MyHeard():
@@ -88,30 +87,36 @@ def get_bandwidth_struct():
 
 
 def get_port_stat_struct():
-    struct_hour = {}
-    for key in [
-        'N_pack',
-        'I',
-        'SABM',
-        'DM',
-        'DISC',
-        'REJ',
-        'RR',
-        'RNR',
-        'UI',
-        'FRMR',
-        'DATA_W_HEADER',
-        'DATA'
-    ]:
-        struct_hour[key] = {minute: 0 for minute in range(60)}
-    return struct_hour
+    return {
+        'N_pack': 0,
+        'I': 0,
+        'SABM': 0,
+        'DM': 0,
+        'DISC': 0,
+        'REJ': 0,
+        'SREJ': 0,
+        'RR': 0,
+        'RNR': 0,
+        'UI': 0,
+        'UA': 0,
+        'FRMR': 0,
 
+        'n_I': 0,
+        'n_SABM': 0,
+        'n_DM': 0,
+        'n_DISC': 0,
+        'n_REJ': 0,
+        'n_SREJ': 0,
+        'n_RR': 0,
+        'n_RNR': 0,
+        'n_UI': 0,
+        'n_UA': 0,
+        'n_FRMR': 0,
 
-def init_day_dic():
-    ret = {}
-    for hour in range(24):
-        ret[hour] = get_port_stat_struct()
-    return ret
+        'DATA_W_HEADER': 0,
+        'DATA': 0,
+        'time': str(datetime.now().replace(second=0, microsecond=0).strftime(SQL_TIME_FORMAT))
+    }
 
 
 class MH:
@@ -121,10 +126,11 @@ class MH:
         self._mh_inp_buffer = []
         self.dx_alarm_trigger = False
         self.last_dx_alarm = time.time()
-        self._now_min = datetime.now().strftime('%M:%S')[:-1]
+        self._now_10sec = datetime.now().strftime('%M:%S')[:-1]
+        self._now_min = int(datetime.now().minute)
         self._MH_db: {int: {str: MyHeard}} = {}  # MH TODO ? > SQL-DB ?
         self._short_MH = deque([], maxlen=40)
-        self.port_statistik_DB: {int: {str: {}}} = {}
+        self._PortStat_buf = {}
         self._bandwidth = {}
         ############################
         # MH
@@ -144,14 +150,9 @@ class MH:
 
         self._load_MH_update_ent()
         self._init_short_MH()
-        ############################
+        ################################
         # Port Statistic
-        try:
-            with open(CFG_port_stat_data_file, 'rb') as inp:
-                self.port_statistik_DB = pickle.load(inp)
-        except (FileNotFoundError, EOFError):
-            pass
-
+        self._db = None
         ##################
         # Saved Param
         self.dx_alarm_hist = []             # For GUI MH
@@ -200,7 +201,7 @@ class MH:
     def save_mh_data(self):
         print('Save MH')
         self._save_to_cfg()
-        tmp_mh = dict(self._MH_db)
+        tmp_mh = self._MH_db
         for k in list(tmp_mh.keys()):
             tmp_mh[k] = cleanup_obj_dict(tmp_mh[k])
         try:
@@ -210,12 +211,13 @@ class MH:
             with open(CFG_mh_data_file, 'xb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
 
-        try:
-            with open(CFG_port_stat_data_file, 'wb') as outp:
-                pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
-        except FileNotFoundError:
-            with open(CFG_port_stat_data_file, 'xb') as outp:
-                pickle.dump(self.port_statistik_DB, outp, pickle.HIGHEST_PROTOCOL)
+    def save_PortStat(self):
+        if not self._db:
+            return
+        for port_id in list(self._PortStat_buf.keys()):
+            data_struc: dict = self._PortStat_buf[port_id]
+            data_struc['port_id'] = port_id
+            self._db.PortStat_insert_data(data_struc)
 
     ###############################
     # Main CFG/PARAM
@@ -238,12 +240,11 @@ class MH:
         mh_cfg['parm_alarm_ports'] = list(self.parm_alarm_ports)
         POPT_CFG.save_CFG_MH(mh_cfg)
 
-    """
     def set_DB(self, sql_db):
+        """ called fm PORTHANDLER._init_MH() """
         if not sql_db:
-            raise SQLConnectionError
+            self._db = None
         self._db = sql_db
-    """
 
     #########################
     # DX Alarm
@@ -275,24 +276,63 @@ class MH:
         self.dx_alarm_trigger = False
 
     ########################
-    # BW Mon Stuff
-    def _bw_mon_inp(self, data):
-        port_id = data['port_id']
-        if port_id not in self.port_statistik_DB.keys():
-            self.port_statistik_DB[port_id] = {}
-        # self._init_bw_struct(port_id)
-        self._input_stat_db(data=data)
+    # Port Statistic
+    def _PortStat_input(self, data):
+        self._PortStat_check_minute()
+        self._PortStat_data_to_var(data=data)
 
+    def _PortStat_check_minute(self):
+        if not self._db:
+            return
+        now_min = int(datetime.now().minute)
+        if now_min != self._now_min:
+            for port_id in list(self._PortStat_buf.keys()):
+                data_struc = dict(self._PortStat_buf[port_id])
+                data_struc['port_id'] = port_id
+                self._db.PortStat_insert_data(data_struc)
+            self._PortStat_buf = {}
+            self._now_min = now_min
+
+    def _PortStat_data_to_var(self, data):
+        port_id = data.get('port_id', 0)
+        ax_frame = data['ax_frame']
+        if port_id not in list(self._PortStat_buf.keys()):
+            self._PortStat_buf[port_id] = get_port_stat_struct()
+        if ax_frame.ctl_byte.flag in self._PortStat_buf[port_id].keys():
+            flag = str(ax_frame.ctl_byte.flag)
+            n_flag = f"n_{flag}"
+            self._PortStat_buf[port_id][flag] += len(ax_frame.data_bytes)
+            self._PortStat_buf[port_id][n_flag] += 1
+
+        self._PortStat_buf[port_id]['N_pack'] += 1
+        self._PortStat_buf[port_id]['DATA_W_HEADER'] += len(ax_frame.data_bytes)
+        self._PortStat_buf[port_id]['DATA'] += int(ax_frame.data_len)
+
+    def PortStat_get_data_by_port(self, port_id: int):
+        if not self._db:
+            return []
+        data = self._db.PortStat_get_data_f_port(port_id)
+        if data:
+            return data
+        return []
+
+    def PortStat_reset(self):
+        if not self._db:
+            return
+        self._db.PortStat_delete_data()
+
+    ###################################
+    # BW Monitor
     def _input_bw_calc(self, data):
         port_id = data['port_id']
         ax_frame = data['ax_frame']
         now = data['now']
         self._init_bw_struct(port_id=port_id)
-        if self._now_min == now.strftime('%H:%M:%S')[:-1]:
-            self._bandwidth[port_id][str(self._now_min)] += len(ax_frame.data_bytes)
+        if self._now_10sec == now.strftime('%H:%M:%S')[:-1]:
+            self._bandwidth[port_id][str(self._now_10sec)] += len(ax_frame.data_bytes)
             return
-        self._now_min = str(now.strftime('%H:%M:%S')[:-1])
-        self._bandwidth[port_id][str(self._now_min)] = len(ax_frame.data_bytes)
+        self._now_10sec = str(now.strftime('%H:%M:%S')[:-1])
+        self._bandwidth[port_id][str(self._now_10sec)] = len(ax_frame.data_bytes)
         return
 
     def _init_bw_struct(self, port_id):
@@ -317,38 +357,15 @@ class MH:
             i += 1
         return ret
 
-    def _input_stat_db(self, data):
-        port_id = data['port_id']
-        ax_frame = data['ax_frame']
-        now = data['now']
-        date_str = now.strftime('%d/%m/%y')
-        hour = now.hour
-        minute = now.minute
-        if now.hour == 0:
-            last_days = [
-                date_str,
-                (datetime.now() - timedelta(days=1)).strftime('%d/%m/%y'),
-                (datetime.now() - timedelta(days=2)).strftime('%d/%m/%y'),
-            ]
-            for dt in list(self.port_statistik_DB[port_id].keys()):
-                if dt not in last_days:
-                    del self.port_statistik_DB[port_id][dt]
-        if date_str not in list(self.port_statistik_DB[port_id].keys()):
-            self.port_statistik_DB[port_id][date_str] = init_day_dic()
-        self.port_statistik_DB[port_id][date_str][hour]['N_pack'][minute] += 1
-        if ax_frame.ctl_byte.flag in self.port_statistik_DB[port_id][date_str][hour]:
-            self.port_statistik_DB[port_id][date_str][hour][ax_frame.ctl_byte.flag][minute] += len(ax_frame.data_bytes)
-        self.port_statistik_DB[port_id][date_str][hour]['DATA_W_HEADER'][minute] += len(ax_frame.data_bytes)
-        self.port_statistik_DB[port_id][date_str][hour]['DATA'][minute] += int(ax_frame.data_len)
-
     #########################
     # MH Stuff
     def mh_task(self):  # TASKER
         """ Called fm Porthandler Tasker"""
         for el in list(self._mh_inp_buffer):
-            self._bw_mon_inp(el)
-            self._input_bw_calc(el)
-            self._mh_inp(el)
+            if not el.get('tx', False):
+                self._PortStat_input(el)
+                self._input_bw_calc(el)
+                self._mh_inp(el)
             self._mh_inp_buffer = self._mh_inp_buffer[1:]
 
     def mh_input(self, ax25frame, port_id: int, tx: bool):
@@ -358,7 +375,7 @@ class MH:
         self._mh_inp_buffer.append({
             'ax_frame': ax25frame,
             'port_id': int(port_id),
-            # 'tx': bool(tx),
+            'tx': bool(tx),
             'now': datetime.now(),
         })
         return
@@ -424,19 +441,18 @@ class MH:
             ent.distance = float(db_ent.Distance)
 
         if not dx_alarm:
-            if self.parm_lastseen_alarm:
-                _t_delta = datetime.now() - ent.last_seen
-                if self.parm_distance_alarm:
+            if self.parm_distance_alarm and ent.distance != -1:
+                if self.parm_lastseen_alarm:
+                    _t_delta = datetime.now() - ent.last_seen
                     if _t_delta.days >= self.parm_lastseen_alarm:
                         if ent.distance >= self.parm_distance_alarm:
                             dx_alarm = True
-                else:
+            else:
+                if self.parm_lastseen_alarm:
+                    _t_delta = datetime.now() - ent.last_seen
                     if _t_delta.days >= self.parm_lastseen_alarm:
                         dx_alarm = True
-            else:
-                if self.parm_distance_alarm:
-                    if ent.distance >= self.parm_distance_alarm:
-                        dx_alarm = True
+
         if dx_alarm:
             self._set_dx_alarm(ent=ent)
         self._MH_db[port_id][call_str] = ent
@@ -537,6 +553,8 @@ class MH:
                             return self._MH_db[port][call_str].axip_add
         return '', 0
 
+    def get_unsort_entrys_fm_port(self, port_id: int):
+        return list(self._MH_db.get(port_id, {}).keys())
     """
     def mh_get_last_ip(self, call_str: str, param_fail=0):
         if call_str:
@@ -581,6 +599,11 @@ class MH:
             _n += 1
         return _ret
 
+    def reset_mainMH(self):
+        self.dx_alarm_trigger = False
+        self._MH_db = {}
+        self.dx_alarm_hist = []  # For GUI MH
+        self.dx_alarm_perma_hist = {}  # CLI DX List
 
 # MH_LIST = MH()
 

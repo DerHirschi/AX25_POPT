@@ -518,7 +518,7 @@ class PIDByte:
 class AX25Frame:
     def __init__(self):
         # self.kiss = b''
-        self.data_bytes = b''           # Dekiss
+        self.data_bytes = b''       # AX25-Frame decoded Raw-Data
         self.from_call = Call()
         self.to_call = Call()
         self.via_calls: [Call] = []
@@ -526,7 +526,7 @@ class AX25Frame:
         self.digi_call = ''         # Own DIGI Call to set C-BIT
         self.ctl_byte = CByte()
         self.pid_byte = PIDByte()
-        self.data = b''
+        self.data = b''             # Payload
         # self.aprs_data = {}
         self.data_len = 0
         self.addr_uid = ''          # Unique ID/Address String

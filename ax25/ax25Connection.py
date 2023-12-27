@@ -103,7 +103,7 @@ class AX25Conn(object):
         self.own_port = port
         self.port_handler = self.own_port.port_handler
         """ GUI Stuff"""
-        self.ch_index: int = 0  # Set in insert_conn2all_conn_var()
+        self.ch_index: int = 0
         self.port_id: int = self.own_port.port_id
         self.port_name: str = self.own_port.portname
         self.gui = self.port_handler.get_gui()
@@ -156,15 +156,13 @@ class AX25Conn(object):
         self._rx_buf_last_frame = ax25_frame  # Buffers for last Frame !?!
         self.rx_buf_last_data = b''  # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
-        self.tx_buf_rawData: b'' = b''  # Buffer for TX RAW Data that will be packed into a Frame
-        self.tx_buf_guiData: b'' = b''  # Buffer for TX Echo in GUI
-        self.rx_buf_rawData: b'' = b''  # Received Data for GUI
+        self.tx_buf_rawData: b'' = b''          # Buffer for TX RAW Data that will be packed into a Frame
+        self.rx_tx_buf_guiData: [('', b'')] = []   # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection = None
         self.LINK_rx_buff: b'' = b''
         self.is_link = False
         self.is_link_remote = False
-        # self.rx_buf_rawData_2: b'' = b''        # Received Data TEST Script
         """ Port Variablen"""
         self.vs = 0  # Sendefolgenummer     / N(S) = V(R)  TX
         self.vr = 0  # Empfangsfolgezählers / N(S) = V(R)  TX
@@ -330,8 +328,8 @@ class AX25Conn(object):
             return
         if self._bbsFwd_rx(data):
             return
-
-        self.rx_buf_rawData += data
+        self._send_gui_QSObuf_rx(data)
+        # self.rx_buf_rawData += data
         # Station ( RE/DISC/Connect ) Sting Detection
         self._set_dest_call_fm_data_inp(data)
         # CLI
@@ -351,7 +349,8 @@ class AX25Conn(object):
             # self.port_handler.delete_connection(self)
             # self.own_port.del_connections(conn=self)
         if self.zustand_exec.stat_index == 1:
-            self.zustand_exec.stat_index = 0
+            if not self.tx_buf_ctl:
+                self.zustand_exec.stat_index = 0
 
     def _app_cron(self):
         if self._link_crone():   # DIGI / LINK Connection / Node Funktion
@@ -448,8 +447,9 @@ class AX25Conn(object):
             # if self.ft_obj.pause:
             #     return False
             if self.ft_obj.done:
-                print(f"FT Done - rest: {self.ft_obj.ft_rx_buf}")
-                self.rx_buf_rawData += bytes(self.ft_obj.ft_rx_buf)
+                # print(f"FT Done - rest: {self.ft_obj.ft_rx_buf}")
+                # self.rx_buf_rawData += bytes(self.ft_obj.ft_rx_buf)
+                self._send_gui_QSObuf_rx(self.ft_obj.ft_rx_buf)
                 self.ft_obj = None
                 if self.ft_queue:
                     self.ft_obj = self.ft_queue[0]
@@ -492,7 +492,7 @@ class AX25Conn(object):
             return True
         return False
 
-    def link_connection(self, conn):
+    def new_link_connection(self, conn):
         conn: AX25Conn
         if conn is None:
             return False
@@ -525,8 +525,10 @@ class AX25Conn(object):
                     self.LINK_Connection.zustand_exec.change_state(4)
                     self.LINK_Connection.zustand_exec.tx(None)
                 else:
+
                     self.port_handler.del_link(self.LINK_Connection.uid)
                     self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
+                    self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
                     self.LINK_Connection.del_link()
                     self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
@@ -556,7 +558,6 @@ class AX25Conn(object):
     def conn_disco(self):
         """ 2'nd time called = HardDisco """
         if self.zustand_exec.stat_index:
-
             self.bbsFwd_disc()  # TODO return "is_"self.bbs_connection
             self.set_T1(stop=True)
             self.zustand_exec.tx(None)
@@ -569,13 +570,21 @@ class AX25Conn(object):
         # print(f"conn_cleanup: {self.uid}\n"
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
+        if self.tx_buf_ctl:
+            return
+        if self.rx_tx_buf_guiData:
+            return
         self._link_cleanup()
-        self.port_handler.delete_connection(self)   # Doppelt ..
         self.own_port.del_connections(conn=self)
+        self.port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self):
         # print(f"end_connection: {self.uid}")
+        self.ft_queue = []
+        if self.ft_obj:
+            self.ft_obj.ft_abort()
+        self.ft_obj = None
         self._link_disco()
         self.set_T1()
         self.vr = 0
@@ -687,12 +696,23 @@ class AX25Conn(object):
                 self.LINK_Connection.unset_RNR(link_remote=True)
             """
 
-    def _send_gui_echo(self, data):
-        if self.ft_obj is not None:
+    def _send_gui_QSObuf_tx(self, data):
+        if self.ft_obj:
             return
-        if self.pipe is not None:
+        if self.pipe:
             return
-        self.tx_buf_guiData += data
+        self.rx_tx_buf_guiData.append(
+            ('TX', data)
+        )
+
+    def _send_gui_QSObuf_rx(self, data):
+        if self.ft_obj:
+            return
+        if self.pipe:
+            return
+        self.rx_tx_buf_guiData.append(
+            ('RX', data)
+        )
 
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
@@ -703,6 +723,7 @@ class AX25Conn(object):
             b'*** reconnected to'
         ]:
             if _det_str in raw_data.lower():
+                # TODO Conn/reconn fnc
                 _index = raw_data.lower().index(_det_str) + len(_det_str)
                 raw_data = raw_data.decode('ASCII', 'ignore')
                 _tmp_call = raw_data[_index:]
@@ -893,6 +914,7 @@ class AX25Conn(object):
         return True
 
     def _init_new_ax25frame(self):
+        # TODO Just return new PACK !! nS/nR update in unACK_buf!!
         pac = AX25Frame()
         pac.from_call = self.ax25_out_frame.from_call
         pac.to_call = self.ax25_out_frame.to_call
@@ -924,11 +946,11 @@ class AX25Conn(object):
             # PAYLOAD !!
             pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
             self.ax25_out_frame.data = self.tx_buf_rawData[:pac_len]
-            self._send_gui_echo(self.tx_buf_rawData[:pac_len])
-            # self.tx_buf_guiData += self.tx_buf_rawData[:pac_len]  # GUI Echo
-            self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])  # CH ECHO
+            self._send_gui_QSObuf_tx(self.tx_buf_rawData[:pac_len])
+            self.ch_echo_frm_tx(self.tx_buf_rawData[:pac_len])          # CH ECHO
+            #####################################################################
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
-            self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame  # Keep Packet until ACK/RR
+            self.tx_buf_unACK[int(self.vs)] = self.ax25_out_frame       # Keep Packet until ACK/RR
             self.tx_buf_2send.append(self.ax25_out_frame)
             # RTT
             self.RTT_Timer.set_rtt_timer(int(self.vs), int(pac_len))
@@ -1000,6 +1022,10 @@ class AX25Conn(object):
 
     def accept_connection(self):
         self.port_handler.accept_new_connection(self)
+        if self.LINK_Connection:
+            self.send_to_link(
+                f'\r*** Connected to {self.to_call_str}\r'.encode('ASCII', 'ignore')
+            )
 
     def insert_new_connection(self):
         """ Insert connection for handling """
@@ -1201,31 +1227,38 @@ class S1Frei(DefaultStat):  # INIT RX
     def _rx_DM(self):
         self.change_state(0)
         self._ax25conn.set_T1(stop=True)
-        # self.ax25conn.set_T1()
 
     def _rx_RR(self):
+        if self.pf:
+            self._reject()
+        """
         self.change_state(0)
         self._ax25conn.set_T1(stop=True)
-        # else:
-        #     self.change_state(0)
+        """
 
     def _rx_RNR(self):
+        if self.pf:
+            self._reject()
+        """
         self.change_state(0)
         self._ax25conn.set_T1(stop=True)
-        # else:
-        #     self.change_state(0)
+        """
 
     def _rx_REJ(self):
+        if self.pf:
+            self._reject()
+        """
         self.change_state(0)
         self._ax25conn.set_T1(stop=True)
-        # else:
-        #     self.change_state(0)
+        """
 
     def _rx_I(self):
+        if self.pf:
+            self._reject()
+        """
         self.change_state(0)
         self._ax25conn.set_T1(stop=True)
-        # else:
-        #     self.change_state(0)
+        """
 
     def _rx_FRMR(self):
         self.change_state(4)
@@ -1290,20 +1323,6 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def _t1_fail(self):
-        # TODO ??? Move up to Conn ???
-        if not self._ax25conn.n2:
-            if not self._ax25conn.LINK_Connection:
-                to_qso_win = f'*** Try to connect to {self._ax25conn.ax25_out_frame.to_call.call_str}' \
-
-                user_db_ent = USER_DB.get_entry(self._ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
-                if user_db_ent:
-                    if user_db_ent.Name:
-                        to_qso_win += f' - ({user_db_ent.Name})'
-                    if user_db_ent.Distance:
-                        to_qso_win += f' - {round(user_db_ent.Distance)} km'
-                to_qso_win += f' > Port {self._ax25conn.own_port.port_id}'
-                self._ax25conn.send_sys_Msg_to_gui(to_qso_win)
-
         self._ax25conn.send_SABM()
         self._ax25conn.n2 += 1
         self._ax25conn.set_T1()
@@ -1312,12 +1331,12 @@ class S2Aufbau(DefaultStat):  # INIT TX
         pass
 
     def _n2_fail(self):
-        to_qso_win = f'\n*** Failed connect to {self._ax25conn.ax25_out_frame.to_call.call_str} > ' \
+        to_qso_win = f'\n*** Failed to connect to {self._ax25conn.ax25_out_frame.to_call.call_str} > ' \
                      f'Port {self._ax25conn.own_port.port_id}\n'
         user_db_ent = USER_DB.get_entry(self._ax25conn.ax25_out_frame.to_call.call_str, add_new=False)
         if user_db_ent:
             if user_db_ent.Name:
-                to_qso_win = f'*** Failed connect to {self._ax25conn.ax25_out_frame.to_call.call_str} - ' \
+                to_qso_win = f'*** Failed to connect to {self._ax25conn.ax25_out_frame.to_call.call_str} - ' \
                              f'({user_db_ent.Name}) > Port {self._ax25conn.own_port.port_id}'
 
         self._ax25conn.send_sys_Msg_to_gui(to_qso_win)

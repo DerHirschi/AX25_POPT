@@ -237,8 +237,7 @@ class FileTransport(object):
             return False
         if self.pause:
             return False
-        if not self.connection.tx_buf_rawData and \
-                not self.connection.rx_buf_rawData:
+        if not self.connection.tx_buf_rawData:
             return True
         return False
 

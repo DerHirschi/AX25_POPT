@@ -15,6 +15,6 @@ def check_ip_add_format(ip_add: ''):
     for el in check_ip:
         if not el.isdigit():
             return False
-        if len(el) > 3:
+        if 0 > int(el) > 255:
             return False
     return True

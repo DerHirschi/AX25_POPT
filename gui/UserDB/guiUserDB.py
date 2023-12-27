@@ -552,7 +552,7 @@ class UserDB(tk.Toplevel):
         self._root_win.update_station_info()
         if self._db_ent is None:
             return
-        self._root_win.msg_to_monitor(f'Info: User Daten für {self._db_ent.call_str} wurden gespeichert..')
+        self._root_win.sysMsg_to_monitor(f'Info: User Daten für {self._db_ent.call_str} wurden gespeichert..')
 
     def _save_vars(self):
         if self._db_ent is not None:
@@ -636,7 +636,7 @@ class UserDB(tk.Toplevel):
 
     def _ok_btn_cmd(self):
         self._save_vars()
-        self._root_win.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
+        self._root_win.sysMsg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self._destroy_win()
 
     def _del_btn_cmd(self):

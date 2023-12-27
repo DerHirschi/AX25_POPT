@@ -51,7 +51,6 @@ class AX25PortHandler(object):
         # VARs
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
-        self._all_connections = {}       # {int: AX25Conn} Channel Index
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.rx_echo = {}
         self.ax25_stations_settings = get_all_stat_cfg()
@@ -114,12 +113,13 @@ class AX25PortHandler(object):
             self._05sec_task()
             self._1sec_task()
             if not self.is_running:
-                break
+                return
             time.sleep(0.1)
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
-        self._mh_task()
+        # self._mh_task()
+        pass
 
     def _05sec_task(self):
         """ 0.5 Sec """
@@ -140,7 +140,7 @@ class AX25PortHandler(object):
     # MH
     def _init_MH(self):
         self.mh = MH()
-        # self.mh.set_DB(self.db)
+        self.mh.set_DB(self.db)
 
     def _mh_task(self):
         self.mh.mh_task()
@@ -173,6 +173,7 @@ class AX25PortHandler(object):
     #######################################################################
     # Setting/Parameter Updates
     def update_digi_setting(self):
+        # TODO
         for port_kk in self.ax25_ports.keys():
             port = self.ax25_ports[port_kk]
             new_digi_calls = []
@@ -199,14 +200,12 @@ class AX25PortHandler(object):
 
     def close_all_ports(self):
         self.is_running = False
-        for k in list(self._all_connections.keys()):
-            del self._all_connections[k]
-        # if self.is_running:
         self.close_aprs_ais()
         for k in list(self.ax25_ports.keys()):
             self.close_port(k)
         if self.mh:
             self.mh.save_mh_data()
+            self.mh.save_PortStat()
         USER_DB.save_data()
         self.close_DB()
         POPT_CFG.save_CFG_to_file()
@@ -314,7 +313,7 @@ class AX25PortHandler(object):
 
     def sysmsg_to_gui(self, msg: str = ''):
         if self.gui is not None and self.is_running:
-            self.gui.msg_to_monitor(msg)
+            self.gui.sysMsg_to_monitor(msg)
 
     def close_gui(self):
         # self.close_all_ports()
@@ -329,30 +328,33 @@ class AX25PortHandler(object):
     # Connection Handling
     def insert_new_connection(self, new_conn, ind: int = 1):
         """ Insert connection for handling """
-        # if not new_conn.is_link:
-        keys = list(self._all_connections.keys())
-        if keys:
-            # Check if Connection is already in all_conn...
-            for k in list(self._all_connections.keys()):
-                if new_conn == self._all_connections[k]:
-                    print("Connection bereits Vorhanden in PortHandler Connections")
-                    if new_conn.ch_index != k:
-                        logger.warning("Channel Index != Real Index !!!")
-                        new_conn.ch_index = int(k)
-                        return
-            while True:
-                if ind in keys:
-                    ind += 1
-                else:
-                    new_conn.ch_index = int(ind)
-                    self._all_connections[ind] = new_conn
-                    break
-        else:
-            new_conn.ch_index = int(ind)
-            self._all_connections[ind] = new_conn
+        """ Assign Connection free to Channel """
+        all_conn = self.get_all_connections()
+        # Check if Connection is already in all_conn...
+        """
+        for k in list(all_conn.keys()):
+            if new_conn == all_conn[k]:
+                if new_conn.ch_index != k:
+                    print("Channel Index != Real Index !!!")
+                    logger.warning("Channel Index != Real Index !!!")
+                    new_conn.ch_index = int(k)
+                    if self.gui:
+                        self.gui.conn_btn_update()
+                    return
+        """
+
+        while True:
+            if ind in list(all_conn.keys()):
+                ind += 1
+            else:
+                new_conn.ch_index = int(ind)
+                if self.gui:
+                    self.gui.conn_btn_update()
+                return
 
     def accept_new_connection(self, connection):
         if self.gui:
+            # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
                 # TODO: Trigger here, Logbook and UserDB-Conn C
                 if connection.is_incoming_connection():
@@ -366,61 +368,41 @@ class AX25PortHandler(object):
                 self.gui.new_conn_sound()
                 speech = ' '.join(connection.to_call_str.replace('-', ' '))
                 self.gui.sprech(speech)
-            else:
-                connection.send_to_link(
-                    f'\r*** Connect from {connection.to_call_str}\r'.encode('ASCII', 'ignore')
-                )
+
             self.gui.ch_status_update()
+            self.gui.conn_btn_update()
 
-    """
-    def cleanup_conn2all_conn_var(self):
-        temp = []
-        for k in list(self.all_connections.keys()):
-            # conn: AX25Conn = self.all_connections[k]
-            conn = self.all_connections[k]
-            if conn.zustand_exec.stat_index in [0]:
-                temp.append(k)
-        for k in temp:
-            # conn: AX25Conn = self.all_connections[k]
-            conn = self.all_connections[k]
-            conn.ch_index = 0
-            del self.all_connections[k]
-    """
-
-    def delete_connection(self, conn):
-        ch_index = conn.ch_index
-        # for k in list(self.all_connections.keys()):
-        # temp_conn: AX25Conn = self.all_connections[k]
-        if ch_index not in self._all_connections.keys():
-            return
-        if self._all_connections[ch_index] == conn:
-            del self._all_connections[ch_index]
-            # self._all_connections[ch_index].own_port.del_connections(conn=conn)
-            if self.gui:
-                # TODO: Trigger here, Logbook and UserDB-Conn C
-                self.gui.sysMsg_to_qso(
-                    data=f'*** Disconnected fm {str(conn.to_call_str)}',
-                    ch_index=int(conn.ch_index))
-                self.gui.disco_sound()
-                self.gui.ch_status_update()
+    def end_connection(self, conn):
+        if self.gui:
+            # TODO GUI Stuff > guiMain
+            # TODO: Trigger here, Logbook and UserDB-Conn C
+            self.gui.sysMsg_to_qso(
+                data=f'*** Disconnected fm {str(conn.to_call_str)}',
+                ch_index=int(conn.ch_index))
+            self.gui.disco_sound()
+            self.gui.ch_status_update()
+            self.gui.conn_btn_update()
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
             del self.link_connections[uid]
 
     def disco_all_Conn(self):
-        for k in list(self._all_connections.keys()):
-            # temp_conn: AX25Conn = self.all_connections[k]
-            if self._all_connections[k]:
-                self._all_connections[k].conn_disco()
+        all_conn = self.get_all_connections()
+        for k in list(all_conn.keys()):
+            if all_conn[k]:
+                all_conn[k].conn_disco()
 
-    # TODO def disco_Conn(self, conn):
+    @staticmethod
+    def disco_Conn(conn):
+        if conn:
+            conn.conn_disco()
 
     def is_all_disco(self):
-        for k in list(self._all_connections.keys()):
-            if self._all_connections[k]:
-                if not self._all_connections[k].is_dico():
-                    return False
+        all_conn = self.get_all_connections()
+        for k in list(all_conn.keys()):
+            if all_conn[k]:
+                return bool(all_conn[k].is_dico())
         return True
 
     @staticmethod
@@ -470,20 +452,15 @@ class AX25PortHandler(object):
                 return False, 'Error: No AXIP Address'
         if link_conn and not via_calls:
             return False, 'Error: Link No Via Call'
-
+        """
+        if (own_call == dest_call) and not via_calls:
+            return False, 'Error: Invalid Call. TX-CALL = RX-CALL'
+        """
         connection = self.ax25_ports[port_id].build_new_connection(own_call=own_call,
                                                                    dest_call=dest_call,
                                                                    via_calls=via_calls,
                                                                    axip_add=axip_add,
                                                                    link_conn=link_conn)
-        """
-        print('------------- InitPorts ---------------')
-        print(f'conn: {connection}')
-        print(f'dest_call: {dest_call}')
-        print(f'own_call: {own_call}')
-        print(f'via_calls: {via_calls}')
-        print(f'link_conn: {link_conn}')
-        """
 
         if connection:
             self.insert_new_connection(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
@@ -491,9 +468,15 @@ class AX25PortHandler(object):
             user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
                 if user_db_ent.Name:
-                    return True, f'\r*** Link Setup to {dest_call} - ({user_db_ent.Name})> Port {port_id}\r', connection
-            return True, f'\r*** Link Setup to {dest_call} > Port {port_id}\r', connection
-        return False, '\r*** Busy'
+                    ret_msg = f'\r*** Link Setup to {dest_call} '
+                    if user_db_ent.Name:
+                        ret_msg += f' - ({user_db_ent.Name})'
+                    if user_db_ent.Distance:
+                        ret_msg += f' - {round(user_db_ent.Distance)} km '
+                    ret_msg += f'> Port {port_id}\r'
+                    return connection, ret_msg
+            return connection, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
+        return False, '\r*** Busy. No free SSID available.\r'
 
     def send_UI(self, conf: dict):
         port_id = conf.get('port_id', 0)
@@ -549,10 +532,11 @@ class AX25PortHandler(object):
         # conn.ft_tx_queue: [FileTX]
         # conn.ft_tx_activ: FileTX
         res = {}
-        for ch_id in self._all_connections:
-            conn = self._all_connections[ch_id]
+        all_conn = self.get_all_connections()
+        for ch_id in list(all_conn.keys()):
+            conn = all_conn[ch_id]
             tmp = conn.ft_queue
-            if conn.ft_obj is not None:
+            if conn.ft_obj:
                 tmp = [conn.ft_obj] + tmp
             if tmp:
                 res[ch_id] = tmp
@@ -570,7 +554,21 @@ class AX25PortHandler(object):
         return self.ax25_ports
 
     def get_all_connections(self):
-        return self._all_connections
+        # TODO Need a better solution to get all connections
+        ret = {}
+        for port_id in self.ax25_ports.keys():
+            port = self.ax25_ports[port_id]
+            if port:
+                all_port_conn = port.connections
+                for conn_key in all_port_conn.keys():
+                    conn = all_port_conn[conn_key]
+                    if conn:
+                        # if conn.ch_index:    # Not Channel 0
+                        if conn.ch_index not in ret.keys():
+                            ret[conn.ch_index] = conn
+                        else:
+                            print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+        return ret
 
     def get_all_stat_cfg(self):
         return self.ax25_stations_settings
@@ -610,6 +608,7 @@ class AX25PortHandler(object):
             self.db.check_tables_exists('bbs')
             self.db.check_tables_exists('user_db')
             self.db.check_tables_exists('aprs')
+            self.db.check_tables_exists('port_stat')
             # self.db.check_tables_exists('mh')
             if self.db.error:
                 raise SQLConnectionError
