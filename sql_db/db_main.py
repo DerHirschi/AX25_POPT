@@ -93,9 +93,11 @@ class SQL_Database:
             self.error = True
             print("Database: Init Error !")
             logger.error("Database: Init Error !")
+        # DEV
         """
         if self.db:
-            self._drope_tabel()
+            # self._drope_tabel()
+            self.bbs_get_fwdPaths()
         """
 
     def __del__(self):
@@ -798,6 +800,12 @@ class SQL_Database:
                 if bid[0]:
                     return bid[0]
         return 1
+
+    ############################################
+    # BBS/PMS Forward Path Ana
+    def bbs_get_fwdPaths(self):
+        q = "SELECT path FROM fwdPaths;"
+        return self.commit_query(q)
 
     ############################################
     # APRS - WX

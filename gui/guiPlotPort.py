@@ -335,6 +335,7 @@ class PlotWindow(tk.Toplevel):
         tmp_I_packets = []
         tmp_UI_packets = []
         tmp_Payload = []
+        tmp_total = []
         x_scale = []
         ts_now = datetime.now()
         last_ts = None
@@ -353,6 +354,7 @@ class PlotWindow(tk.Toplevel):
                 tmp_I_packets.append(0)
                 tmp_UI_packets.append(0)
                 tmp_Payload.append(0)
+                tmp_total.append(0)
 
                 dif = ts_now - timestamt_dt
                 dif_sec = dif.total_seconds() + (60 * (minu + 1))
@@ -361,6 +363,7 @@ class PlotWindow(tk.Toplevel):
             tmp_I_packets.append(data[4])
             tmp_UI_packets.append(data[13])
             tmp_Payload.append(data[27])
+            tmp_total.append(data[26])
 
             dif = ts_now - timestamt_dt
             x_scale.append(dif.total_seconds() / 3600)
@@ -369,6 +372,7 @@ class PlotWindow(tk.Toplevel):
         self._plot1.plot(x_scale, tmp_I_packets, label='I')
         self._plot1.plot(x_scale, tmp_UI_packets, label='UI')
         self._plot1.plot(x_scale, tmp_Payload, ls=':', label='Payload')
+        self._plot1.plot(x_scale, tmp_total, ls='-.', label='Total')
 
         self._plot1.set_xlabel(STR_TABLE['hours'][self._lang])
         self._plot1.set_ylabel('Bytes')

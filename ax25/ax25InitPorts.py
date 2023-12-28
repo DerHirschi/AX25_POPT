@@ -49,13 +49,13 @@ class AX25PortHandler(object):
         self.scheduled_tasker = None
         ###########################
         # VARs
+        self.ax25_stations_settings = get_all_stat_cfg()
+        self.ax25_port_settings = {}    # Port settings are in Port .. TODO Cleanup
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []        # [axip-addresses('ip', port)]
         self.link_connections = {}      # {str: AX25Conn} UID Index
-        self.rx_echo = {}
-        self.ax25_stations_settings = get_all_stat_cfg()
-        self.ax25_port_settings = {}    # Port settings are in Port .. TODO Cleanup
         self.ax25_ports = {}
+        self.rx_echo = {}
         #################
         # Init SQL-DB
         try:
@@ -164,6 +164,7 @@ class AX25PortHandler(object):
 
     def _Sched_task(self):
         if self.scheduled_tasker:
+            # Scheduler & AutoConn Tasker
             self.scheduled_tasker.tasker()
 
     def reinit_beacon_task(self):

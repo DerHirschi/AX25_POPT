@@ -24,7 +24,7 @@ class PoPTSchedule_Tasker:
         self._1_sec_tasker()
 
     def _05_sec_tasker(self):
-        self._AutoConn_tasker()     # TODO move to Porthandler Loop
+        self._AutoConn_tasker()     # TODO ? Maybe move to Porthandler Loop
 
     def _1_sec_tasker(self):
         if time.time() > self._task_timer_1sec:

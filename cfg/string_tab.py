@@ -73,6 +73,7 @@ STR_TABLE = {
     'call': ('Call', 'Call', 'Call'),
     'name': ('Name', 'Name', 'Name'),
     'fwd_list': ('Forward Warteschlange', 'Forward queue', 'Voorwaartse wachtrij'),
+    'fwd_path': ('Forward Routen', 'Forward routes', 'Voorwaartse routes'),
     'start_fwd': ('FWD Start', 'FWD start', 'Start FWD'),
     'start_auto_fwd': ('AutoFWD Start', 'AutoFWD start', 'Start AutoFWD'),
     'msg_center': ('Nachrichten Center', 'Message Center', 'Message Center'),
