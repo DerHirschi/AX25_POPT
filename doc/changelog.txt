@@ -3,6 +3,7 @@
 Fixes:
 
 Optimierung:
+- Im WX-Plot und Port-Statistik Plot können jetzt einzelne Werte ein/ausgeblendet werden
 
 Neue Implementierungen / Funktionen:
 - Forward Routen/Pfade NetworkX Graph (grafische Darstellung)

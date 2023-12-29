@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 class FwdGraph(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
-        self.wm_title("Port Statistik")
+        self.wm_title("Forward Routes")
         self._root_win = root_win
         self.geometry(f"800x"
                       f"600+"
