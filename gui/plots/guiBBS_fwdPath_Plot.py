@@ -50,19 +50,23 @@ class FwdGraph(tk.Toplevel):
         #######################################################################
         self._db = PORT_HANDLER.get_database()
         self._user_DB = PORT_HANDLER.get_userDB()
-        # self._db_raw = self._db.bbs_get_fwdPaths()
+        self._db_raw = self._db.bbs_get_fwdPaths()
         self._path_data = {}
         self._call_info_vars = {}
         self._call_color_map = {}
         self._weight_color_map = {}
         self._call_default_coordinates = {}
+        self._country_chk_vars = {}
+        for k in list(DEFAULT_COUNTRY_CFG.keys()):
+            self._country_chk_vars[k] = tk.BooleanVar(self, value=True)
         self._node_dest_key_dict = {}
-        self._init_node_vars_fm_db()
+        # self._init_node_vars_fm_db()
+        self._init_vars_fm_raw_data()
         self._seed = 0
         self._pos = None
         #######################################################################
         btn_frame = tk.Frame(self)
-        btn_frame.pack()
+        btn_frame.pack(side=tk.TOP)
         refresh_btn = tk.Button(btn_frame,
                                 text='Refresh',
                                 command=self._refresh_btn
@@ -117,36 +121,52 @@ class FwdGraph(tk.Toplevel):
                                      to=1095,
                                      increment=5,
                                      width=4,
-                                     command=self._refresh_last_seen)
+                                     command=self._refresh_btn)
+        tk.Label(btn_frame, text='Last seen(Days):').pack(side=tk.LEFT, padx=10)
         last_seen_days.pack(side=tk.LEFT, padx=10)
 
         #############################################################################
         g_frame = tk.Frame(self)
-        g_frame.pack(expand=True, fill=tk.BOTH)
+        g_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self._fig, self._plot1 = plt.subplots()
+        self._plot2 = self._plot1.twinx()
         self._fig.subplots_adjust(top=1.00, bottom=0.00, left=0.00, right=1.00, hspace=0.00)
         self._canvas = FigureCanvasTkAgg(self._fig, master=g_frame)
         self._canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH)
         # Werkzeugleisten für die plots erstellen
-        toolbar1 = NavigationToolbar2Tk(self._canvas, self)
+        toolbar1 = NavigationToolbar2Tk(self._canvas, g_frame)
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, fill=tk.X)
 
+        right_frame = tk.Frame(self)
+        right_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._init_chk_frame(right_frame)
         self._root_win.fwd_Path_plot_win = self
 
         # self._init_stationInfo_vars(self._path_data)
-        self._init_vars_fm_raw_data()
+        ##self._init_vars_fm_raw_data()
         self._g = nx.Graph()
         self._refresh_btn()
+
+    def _init_chk_frame(self, root_frame):
+
+        for k in list(DEFAULT_COUNTRY_CFG.keys()):
+            tk.Checkbutton(root_frame,
+                           variable=self._country_chk_vars[k],
+                           text=k,
+                           command=self._refresh_btn, ).pack(padx=10, pady=5, anchor='w')
 
     def _init_node_vars_fm_db(self):
         node_db_data = self._db.fwd_node_get()
         if not node_db_data:
             return
+
         for entry in node_db_data:
             if entry[0]:
                 k = entry[0]
+                country_id = entry[6]
+
                 self._node_dest_key_dict[k] = (
                     entry[1],
                     entry[2],
@@ -156,7 +176,6 @@ class FwdGraph(tk.Toplevel):
                     entry[6],
                     entry[7],
                 )
-                country_id = entry[6]
                 cfg = DEFAULT_COUNTRY_CFG.get(country_id, None)
                 if k not in self._call_color_map.keys():
                     if cfg:
@@ -176,11 +195,12 @@ class FwdGraph(tk.Toplevel):
                         self._call_info_vars[k] = self._user_DB.get_location(k)
 
     def _init_vars_fm_raw_data(self):
-        db_raw = self._db.bbs_get_fwdPaths()
-        if not db_raw:
+        if not self._db_raw:
             return
+        self._path_data = {}
+
         # print(db_raw)
-        for el in db_raw:
+        for el in self._db_raw:
             self._path_data[el[1]] = dict(
                 path=el[0].split('>'),
                 fromBBS=el[1],
@@ -194,6 +214,15 @@ class FwdGraph(tk.Toplevel):
                 r6=el[9],
                 lastUpdate=convert_str_to_datetime(el[10]),
             )
+
+        self._init_node_vars_fm_db()
+
+    def _get_country_filter(self):
+        country_chk = []
+        for county in list(self._country_chk_vars.keys()):
+            if self._country_chk_vars[county].get():
+                country_chk.append(county)
+        return country_chk
 
     def _get_country(self, bbs_call):
         entry = self._node_dest_key_dict.get(bbs_call, ())
@@ -209,10 +238,6 @@ class FwdGraph(tk.Toplevel):
 
     def _get_country_color(self, bbs_call, default_color='black'):
         return self._call_color_map.get(bbs_call, default_color)
-
-    def _refresh_last_seen(self):
-        self._init_vars_fm_raw_data()
-        self._refresh_btn()
 
     def _refresh_btn(self, event=None):
         self._pos = None
@@ -237,26 +262,44 @@ class FwdGraph(tk.Toplevel):
         return Line2D([0, 1], [0, 1], color=clr, **kwargs)
 
     def _update_legend(self):
-        if not self._show_hops_var.get():
-            return
+        if self._show_hops_var.get():
+
+            label = []
+            color = []
+            hops = list(self._weight_color_map.keys())
+            hops.sort()
+            for k in hops:
+                label.append(
+                    f"Hops: {k}"
+                )
+                color.append(self._weight_color_map[k])
+            proxies = [self._make_proxy(clr, lw=5) for clr in color]
+            self._plot2.legend(proxies, label)
+
         label = []
         color = []
-        hops = list(self._weight_color_map.keys())
-        hops.sort()
-        for k in hops:
-            label.append(
-                f"Hops: {k}"
-            )
-            color.append(self._weight_color_map[k])
+        call_color_map = list(self._call_color_map.keys())
+        call_color_map.sort()
+        tmp = []
+        for k in call_color_map:
+            country = self._get_country(k)
+            if country not in tmp:
+                label.append(
+                    f"{country}"
+                )
+                color.append(self._get_country_color(k))
+                tmp.append(country)
         proxies = [self._make_proxy(clr, lw=5) for clr in color]
-        self._plot1.legend(proxies, label)
+        self._plot1.legend(proxies, label, loc='upper left')
 
     def _update_Node_pos(self):
         if not self._path_data:
             return
         self._plot1.clear()
+        self._plot2.clear()
         self._g.clear()
         now = datetime.now()
+        country_filter = self._get_country_filter()
         try:
             last_seen_var = int(self._last_seen_days_var.get())
         except ValueError:
@@ -272,6 +315,11 @@ class FwdGraph(tk.Toplevel):
                 else:
                     hops = 0
                 if len(path) > 1:
+                    """
+                    country_id = self._path_data[k].get('r5', '')
+                    if any([country_id not in DEFAULT_COUNTRY_CFG.keys(),
+                            country_id in country_filter]):
+                    """
                     if hops:
                         if hops not in self._weight_color_map.keys():
                             self._weight_color_map[hops] = generate_random_hex_color(a=60)
@@ -283,10 +331,19 @@ class FwdGraph(tk.Toplevel):
                     call_1 = path[0]
                     for call_2 in path[1:]:
                         # if call_2 != call_1:  # Don't show Loops
-                        if mark_edge_call in [call_1, call_2]:
-                            self._g.add_edge(call_1, call_2, color='red', weight=weight + 0.8)
-                        else:
-                            self._g.add_edge(call_1, call_2, color=edge_color, weight=weight)
+                        country_c_1 = self._get_country(call_1)
+                        country_c_2 = self._get_country(call_2)
+                        if country_c_1 not in DEFAULT_COUNTRY_CFG.keys():
+                            country_filter.append(country_c_1)
+                        if country_c_2 not in DEFAULT_COUNTRY_CFG.keys():
+                            country_filter.append(country_c_2)
+                        if all((country_c_1 in country_filter,
+                                country_c_2 in country_filter)):
+
+                            if mark_edge_call in [call_1, call_2]:
+                                self._g.add_edge(call_1, call_2, color='red', weight=weight + 0.8)
+                            else:
+                                self._g.add_edge(call_1, call_2, color=edge_color, weight=weight)
 
                         call_1 = call_2
 
@@ -327,10 +384,16 @@ class FwdGraph(tk.Toplevel):
 
     def _pos_related_layout(self):
         # Füge Nodes mit Koordinaten hinzu
+        tmp = []
         for node, coordinates in self._call_info_vars.items():
             if coordinates[0] or coordinates[1]:
+                pos = coordinates[1], coordinates[0]
+                if pos in tmp:
+                    rand = random.uniform(-0.1, 0.1)
+                    pos = coordinates[1] + rand, coordinates[0] + rand
+                tmp.append(pos)
                 self._g.add_node(node,
-                                 pos=(coordinates[1], coordinates[0]))  # Beachte die Reihenfolge von (lon, lat)
+                                 pos=pos)  # Beachte die Reihenfolge von (lon, lat)
 
         # Set 'pos' attribute for nodes with unknown coordinates
         for node in self._g.nodes:

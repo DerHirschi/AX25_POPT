@@ -603,7 +603,7 @@ class AX25PortHandler(object):
     def _init_DB(self):
         ###############
         # Init DB
-        self.db = SQL_Database()
+        self.db = SQL_Database(self)
         if not self.db.error:
             # DB.check_tables_exists('bbs')
             # TODO optional Moduls for minimum config

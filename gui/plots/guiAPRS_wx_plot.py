@@ -93,7 +93,6 @@ class WXPlotWindow(tk.Toplevel):
         self._init_chk_frame(right_frame)
         self._change_xlim()
 
-
         if self._wx_data:
             if self._wx_data[-1]:
                 call = self._wx_data[-1][10]
