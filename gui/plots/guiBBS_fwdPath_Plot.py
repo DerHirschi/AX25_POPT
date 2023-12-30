@@ -1,14 +1,18 @@
 import tkinter as tk
+from tkinter import ttk
 import random
-
+from datetime import datetime
 import networkx as nx
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.lines import Line2D
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 import matplotlib
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from fnc.gui_fnc import generate_random_hex_color
+from fnc.str_fnc import convert_str_to_datetime
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -22,7 +26,10 @@ DEFAULT_COUNTRY_CFG = {
     'AT': ((47.5, 14.5), 0.4, 'brown'),
     'GBR': ((53.8, -2.3), 0.7, 'purple'),
     'FIN': ((63.7, 27.1), 0.7, 'grey'),
-
+}
+DEFAULT_REGIO_DEU_CFG = {
+    'SAA': (),
+    'BAY': (),
 }
 
 
@@ -44,18 +51,21 @@ class FwdGraph(tk.Toplevel):
         self._db = PORT_HANDLER.get_database()
         self._user_DB = PORT_HANDLER.get_userDB()
         # self._db_raw = self._db.bbs_get_fwdPaths()
-        self._path_data = []
+        self._path_data = {}
         self._call_info_vars = {}
         self._call_color_map = {}
+        self._weight_color_map = {}
         self._call_default_coordinates = {}
         self._node_dest_key_dict = {}
         self._init_node_vars_fm_db()
+        self._seed = 0
+        self._pos = None
         #######################################################################
         btn_frame = tk.Frame(self)
         btn_frame.pack()
         refresh_btn = tk.Button(btn_frame,
                                 text='Refresh',
-                                command=self._update_Graph
+                                command=self._refresh_btn
                                 )
         refresh_btn.pack(side=tk.LEFT, padx=10)
         self._style_var = tk.StringVar(self, value='Position')
@@ -72,7 +82,7 @@ class FwdGraph(tk.Toplevel):
         style_option = tk.OptionMenu(btn_frame,
                                      self._style_var,
                                      *style_opt_keys,
-                                     command=self._update_Graph
+                                     command=self._refresh_btn
                                      )
         style_option.pack(side=tk.LEFT, padx=10)
 
@@ -93,6 +103,23 @@ class FwdGraph(tk.Toplevel):
                                       command=self._update_Graph)
         full_add_chk.pack(side=tk.LEFT, padx=10)
 
+        self._show_hops_var = tk.BooleanVar(self, value=True)
+        show_hops_chk = tk.Checkbutton(btn_frame,
+                                       variable=self._show_hops_var,
+                                       text='Hops',
+                                       command=self._update_Graph)
+        show_hops_chk.pack(side=tk.LEFT, padx=10)
+        # Last seen
+        self._last_seen_days_var = tk.IntVar(self, value=30)
+        last_seen_days = ttk.Spinbox(btn_frame,
+                                     textvariable=self._last_seen_days_var,
+                                     from_=1,
+                                     to=1095,
+                                     increment=5,
+                                     width=4,
+                                     command=self._refresh_last_seen)
+        last_seen_days.pack(side=tk.LEFT, padx=10)
+
         #############################################################################
         g_frame = tk.Frame(self)
         g_frame.pack(expand=True, fill=tk.BOTH)
@@ -111,7 +138,7 @@ class FwdGraph(tk.Toplevel):
         # self._init_stationInfo_vars(self._path_data)
         self._init_vars_fm_raw_data()
         self._g = nx.Graph()
-        self._update_Graph()
+        self._refresh_btn()
 
     def _init_node_vars_fm_db(self):
         node_db_data = self._db.fwd_node_get()
@@ -150,7 +177,23 @@ class FwdGraph(tk.Toplevel):
 
     def _init_vars_fm_raw_data(self):
         db_raw = self._db.bbs_get_fwdPaths()
-        self._path_data = [x[0].split('>') for x in db_raw]
+        if not db_raw:
+            return
+        # print(db_raw)
+        for el in db_raw:
+            self._path_data[el[1]] = dict(
+                path=el[0].split('>'),
+                fromBBS=el[1],
+                toBBS=el[2],
+                hops=el[3],
+                r1=el[4],
+                r2=el[5],
+                r3=el[6],
+                r4=el[7],
+                r5=el[8],
+                r6=el[9],
+                lastUpdate=convert_str_to_datetime(el[10]),
+            )
 
     def _get_country(self, bbs_call):
         entry = self._node_dest_key_dict.get(bbs_call, ())
@@ -167,61 +210,120 @@ class FwdGraph(tk.Toplevel):
     def _get_country_color(self, bbs_call, default_color='black'):
         return self._call_color_map.get(bbs_call, default_color)
 
+    def _refresh_last_seen(self):
+        self._init_vars_fm_raw_data()
+        self._refresh_btn()
+
+    def _refresh_btn(self, event=None):
+        self._pos = None
+        self._new_seed_()
+        self._update_Graph()
+
+    def _new_seed_(self):
+        self._seed = random.randint(1, 10000)
+
     def _update_Graph(self, event=None):
-        pos = self._update_Node_pos()
-        if pos:
-            self._update_node_label(pos)
+        self._update_Node_pos()
+        if self._pos:
+            self._update_node_label()
+            self._update_legend()
             self._plot1.axis('off')
             self._fig.set_facecolor('#191621')
             self._canvas.draw()
 
+    # https://stackoverflow.com/questions/19877666/add-legends-to-linecollection-plot - uses plotted data to define the color but here we already have colors defined, so just need a Line2D object.
+    @staticmethod
+    def _make_proxy(clr, **kwargs):
+        return Line2D([0, 1], [0, 1], color=clr, **kwargs)
+
+    def _update_legend(self):
+        if not self._show_hops_var.get():
+            return
+        label = []
+        color = []
+        hops = list(self._weight_color_map.keys())
+        hops.sort()
+        for k in hops:
+            label.append(
+                f"Hops: {k}"
+            )
+            color.append(self._weight_color_map[k])
+        proxies = [self._make_proxy(clr, lw=5) for clr in color]
+        self._plot1.legend(proxies, label)
+
     def _update_Node_pos(self):
         if not self._path_data:
             return
-        if not self._path_data[0]:
-            return
         self._plot1.clear()
         self._g.clear()
-
+        now = datetime.now()
+        try:
+            last_seen_var = int(self._last_seen_days_var.get())
+        except ValueError:
+            return
         mark_edge_call = self._node_option_var.get()
-        for path in self._path_data:
-            if len(path) > 1:
-                call_1 = path[0]
-                for call_2 in path[1:]:
-                    # if call_2 != call_1:  # Don't show Loops
-                    if mark_edge_call in [call_1, call_2]:
-                        self._g.add_edge(call_1, call_2, color='red', weight=2)
+        for k in self._path_data.keys():
+            seen_time = self._path_data[k].get('lastUpdate', datetime.now())
+            diff = (now - seen_time).days
+            if diff <= last_seen_var:
+                path = self._path_data[k].get('path', [])
+                if self._show_hops_var.get():
+                    hops = self._path_data[k].get('hops', 0)
+                else:
+                    hops = 0
+                if len(path) > 1:
+                    if hops:
+                        if hops not in self._weight_color_map.keys():
+                            self._weight_color_map[hops] = generate_random_hex_color(a=60)
+                        edge_color = self._weight_color_map[hops]
+                        weight = hops
                     else:
-                        self._g.add_edge(call_1, call_2, color='white', weight=1.5)
+                        edge_color = 'white'
+                        weight = 1
+                    call_1 = path[0]
+                    for call_2 in path[1:]:
+                        # if call_2 != call_1:  # Don't show Loops
+                        if mark_edge_call in [call_1, call_2]:
+                            self._g.add_edge(call_1, call_2, color='red', weight=weight + 0.8)
+                        else:
+                            self._g.add_edge(call_1, call_2, color=edge_color, weight=weight)
 
-                    call_1 = call_2
+                        call_1 = call_2
 
         # seed_val = random.randint(0, 10000)
+        if not self._pos:
+            layout = self._style_opt.get(self._style_var.get(), None)
+            if layout:
+                if layout.__name__ == nx.spring_layout.__name__:
+                    self._pos = layout(self._g, seed=self._seed)
+                else:
+                    try:
+                        self._pos = layout(self._g)
+                    except nx.NetworkXException as e:
+                        print(e)
+                        self._pos = None
+                        return
 
-        layout = self._style_opt.get(self._style_var.get(), None)
-        if layout:
-            pos = layout(self._g)
-        else:
-            pos = self._pos_related_layout()
+            else:
+                self._pos = self._pos_related_layout()
+        if self._pos:
+            colors = nx.get_edge_attributes(self._g, 'color').values()
+            weights = nx.get_edge_attributes(self._g, 'weight').values()
 
-        colors = nx.get_edge_attributes(self._g, 'color').values()
-        weights = nx.get_edge_attributes(self._g, 'weight').values()
-
-        nx.draw_networkx(self._g, pos=pos, ax=self._plot1,
-                         with_labels=False, node_shape='o',
-                         node_size=200,
-                         node_color='#386de0',
-                         edge_color=colors,
-                         width=list(weights),
-                         # alpha=0.7
-                         )
-        """
-        nx.draw_networkx_labels(self._g,
-                                pos=pos,
-                                ax=self._plot1,
-                                font_size=17)
-        """
-        return pos
+            nx.draw_networkx(self._g, pos=self._pos, ax=self._plot1,
+                             with_labels=False, node_shape='o',
+                             node_size=200,
+                             node_color='#386de0',
+                             edge_color=colors,
+                             width=list(weights),
+                             # alpha=0.7
+                             )
+            """
+            nx.draw_networkx_labels(self._g,
+                                    pos=pos,
+                                    ax=self._plot1,
+                                    font_size=17)
+            """
 
     def _pos_related_layout(self):
         # Füge Nodes mit Koordinaten hinzu
@@ -264,9 +366,10 @@ class FwdGraph(tk.Toplevel):
 
         return nx.get_node_attributes(self._g, 'pos')
 
-    def _update_node_label(self, pos):
-        if not pos:
+    def _update_node_label(self):
+        if not self._pos:
             return
+        pos = self._pos
         tmp = []
         full_add = self._full_address_name_var.get()
         for k in pos.keys():

@@ -45,10 +45,10 @@ def cleanup_tags(tag_ranges):
     return ret
 
 
-def generate_random_hex_color():
-    red = random.randint(0, 255)
-    green = random.randint(0, 255)
-    blue = random.randint(0, 255)
+def generate_random_hex_color(a=0, b=255):
+    red = random.randint(a, b)
+    green = random.randint(a, b)
+    blue = random.randint(a, b)
 
     hex_color = "#{:02x}{:02x}{:02x}".format(red, green, blue)
 
