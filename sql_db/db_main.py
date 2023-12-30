@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 from cfg.config_station import logger
@@ -8,12 +9,13 @@ from sql_db.sql_Error import SQLConnectionError
 from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
     SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB, SQL_CREATE_PORT_STATISTIK_TAB, \
-    SQLITE_CREATE_PORT_STATISTIK_TAB
+    SQLITE_CREATE_PORT_STATISTIK_TAB, SQL_CREATE_FWD_NODES_TAB
 
 SQL_BBS_TABLES = {
     "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
     "pms_pn_msg": SQL_CREATE_PMS_PN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
+    "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
     "pms_out_msg": SQL_CREATE_PMS_OUT_MAIL_TAB,
     "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
 }
@@ -22,6 +24,7 @@ SQLITE_BBS_TABLES = {
     "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
     "pms_pn_msg": SQL_CREATE_PMS_PN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
+    "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
     "pms_out_msg": SQLITE_CREATE_PMS_OUT_MAIL_TAB,
     "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
 }
@@ -61,6 +64,7 @@ class SQL_Database:
         logger.info("Database INIT!")
         # ##########
         self.error = False
+        self._access = False
         # self.cfg_mysql = True
         self.MYSQL = bool(MYSQL)
         if self.MYSQL:
@@ -150,39 +154,56 @@ class SQL_Database:
 
     def send_query(self, query):
         # print(f"Query: {query}")
+        while self._access:
+            time.sleep(0.1)
         if self.db:
-            try:
-                return self.db.execute_query(query)
-            except SQLConnectionError:
-                self.error = True
-                self.db = None
-
-    def commit_query(self, query):
-        # print(f"Query commit: {query}")
-        if self.db:
+            self._access = True
             try:
                 ret = self.db.execute_query(query)
             except SQLConnectionError:
                 self.error = True
                 self.db = None
+                self._access = False
+                return
+            self._access = False
+            return ret
+
+    def commit_query(self, query):
+        # print(f"Query commit: {query}")
+        while self._access:
+            time.sleep(0.1)
+        if self.db:
+            self._access = True
+            try:
+                ret = self.db.execute_query(query)
+            except SQLConnectionError:
+                self.error = True
+                self.db = None
+                self._access = False
                 return None
             # TODO sqlite3.OperationalError
             else:
                 self.db.commit_query()
+                self._access = False
                 return ret
 
     def commit_query_bin(self, query, data: tuple):
         # print("Query <<BIN>>")
         # print(query)
+        while self._access:
+            time.sleep(0.1)
         if self.db:
+            self._access = True
             try:
                 ret = self.db.execute_query_bin(query, data)
             except SQLConnectionError:
                 self.error = True
                 self.db = None
+                self._access = False
                 return None
             else:
                 self.db.commit_query()
+                self._access = False
                 return ret
 
     ############################################
@@ -276,6 +297,7 @@ class SQL_Database:
         if res is None:
             return False
         self._fwd_paths_insert(msg_struc.get('fwd_path', []))
+        self._fwd_node_insert(msg_struc.get('fwd_path', []))
         return True
 
     def _fwd_paths_insert(self, path: list):
@@ -344,6 +366,70 @@ class SQL_Database:
         if res is None:
             return False
         return True
+
+    def _fwd_node_insert(self, path: list):
+        if not path:
+            return False
+        path_add_list = [a[0] for a in path]
+        for address in path_add_list:
+
+            temp = str(address).split('.')
+            to_bbs = str(temp[0])
+            time_stamp = datetime.now().strftime(SQL_TIME_FORMAT)
+            if temp[-1] == 'WW':
+                temp = list(temp[:-1])
+            regions = list(temp[1:-2] + ([''] * (6 - len(temp[1:]))) + temp[-2:])
+
+            if self.MYSQL:
+                _query = ("INSERT INTO `fwdNodes` "
+                          "(`node`, "
+                          "`Address`, "
+                          "`destR1`, "
+                          "`destR2`, "
+                          "`destR3`, "
+                          "`destR4`, "
+                          "`destR5`, "
+                          "`destR6`, "
+                          "`locator`, "
+                          "`lastUpdate`)"
+                          f"VALUES ({', '.join(['%s'] * 10)})\n"
+                          " ON DUPLICATE KEY UPDATE `lastUpdate` = %s;")
+            else:
+                _query = ("INSERT INTO `fwdNodes` "
+                          "(`node`, "
+                          "`Address`, "
+                          "`destR1`, "
+                          "`destR2`, "
+                          "`destR3`, "
+                          "`destR4`, "
+                          "`destR5`, "
+                          "`destR6`, "
+                          "`locator`, "
+                          "`lastUpdate`)"
+                          f"VALUES ({', '.join(['%s'] * 10)})\n"
+                          " ON CONFLICT(node) DO UPDATE SET `lastUpdate` = %s;")
+            _query_data = (to_bbs,
+                           address,
+                           regions[0],
+                           regions[1],
+                           regions[2],
+                           regions[3],
+                           regions[4],  # F*** DLNET
+                           regions[5],
+                           '',
+                           time_stamp,
+                           time_stamp,
+                           )
+            res = self.commit_query_bin(_query, _query_data)
+            if res is None:
+                return False
+        return True
+
+    def fwd_node_get(self):
+        q = f"SELECT * FROM `fwdNodes`;"
+        res = self.send_query(q)
+        print(res)
+        return res
 
     def bbs_get_MID(self):
         ret = self.send_query(SQL_BBS_OUT_MAIL_TAB_IS_EMPTY)[0][0]
@@ -804,7 +890,7 @@ class SQL_Database:
     ############################################
     # BBS/PMS Forward Path Ana
     def bbs_get_fwdPaths(self):
-        q = "SELECT path FROM fwdPaths;"
+        q = "SELECT * FROM fwdPaths;"
         return self.commit_query(q)
 
     ############################################

@@ -41,6 +41,7 @@ class AX25PortHandler(object):
         }
         ###########################
         # Moduls
+        self.userDB = USER_DB
         self.db = None
         self.mh = None
         self.gui = None
@@ -621,6 +622,9 @@ class AX25PortHandler(object):
 
     def get_database(self):
         return self.db
+
+    def get_userDB(self):
+        return self.userDB
 
     def get_MH(self):
         return self.mh

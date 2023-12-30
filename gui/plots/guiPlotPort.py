@@ -92,7 +92,7 @@ class PlotWindow(tk.Toplevel):
         self._canvas = FigureCanvasTkAgg(self._fig, master=plot_frame)
         self._canvas.draw()
         self._canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH)
-        # Werkzeugleisten für die Plots erstellen
+        # Werkzeugleisten für die plots erstellen
         toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame)
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, fill=tk.X)

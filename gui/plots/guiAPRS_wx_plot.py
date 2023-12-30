@@ -63,7 +63,7 @@ class WXPlotWindow(tk.Toplevel):
         # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
         self._canvas = FigureCanvasTkAgg(fig, master=plot_frame)
         self._canvas.draw()
-        # Werkzeugleisten für die Plots erstellen
+        # Werkzeugleisten für die plots erstellen
         toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame, pack_toolbar=False)
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, )
