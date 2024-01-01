@@ -51,17 +51,17 @@ class WXPlotWindow(tk.Toplevel):
         plot_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # fig = Figure(figsize=(10, 1), dpi=100)
         # fig = plt.figure(figsize=(10, 1), dpi=100)
-        fig, self._plot1 = plt.subplots()
-        fig.set_facecolor('xkcd:light grey')
+        self._fig, self._plot1 = plt.subplots()
+        self._fig.set_facecolor('xkcd:light grey')
         self._plot1.set_facecolor('#000000')
         self._plot2 = self._plot1.twinx()
         self._plot2.set_facecolor('#000000')
         self._plot2.yaxis.tick_right()
 
-        fig.subplots_adjust(top=1.0, bottom=0.043, left=0.036, right=0.952, )
+        self._fig.subplots_adjust(top=1.0, bottom=0.043, left=0.036, right=0.952, )
 
         # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
-        self._canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+        self._canvas = FigureCanvasTkAgg(self._fig, master=plot_frame)
         self._canvas.draw()
         # Werkzeugleisten für die plots erstellen
         toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame, pack_toolbar=False)
@@ -274,6 +274,8 @@ class WXPlotWindow(tk.Toplevel):
         self.destroy_plot()
 
     def destroy_plot(self):
+        self._plot2.clear()
+        self._fig.clear()
         plt.close()
         self._canvas.get_tk_widget().destroy()
         self.destroy()

@@ -203,6 +203,8 @@ class NewConnWin(tk.Toplevel):
                     self.ax_ip_port[1].destroy()
                 self.own_call_dd_men.destroy()
                 opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
+                if not opt:
+                    opt = ['']
                 self.own_call_dd_men = tk.OptionMenu(self, self.own_call_var, *opt)
                 self.own_call_dd_men.place(x=80, y=80)
                 self.own_call_dd_men.configure()
