@@ -1,4 +1,16 @@
 ###########################################################################################################
+# 2.103.x
+Fixes:
+- Scripterror beim Öffnen des "neue Verbindung" Fensters, wenn ein Port ausgewählt wird der keine Station hinterlegt hat
+
+Optimierung:
+- Im WX-Plot und Port-Statistik Plot können jetzt einzelne Werte ein/ausgeblendet werden
+
+Neue Implementierungen / Funktionen:
+- Forward Routen/Pfade NetworkX Graph (grafische Darstellung)
+
+###########################################################################################################
+###########################################################################################################
 # 2.102.19
 
 Fixes:

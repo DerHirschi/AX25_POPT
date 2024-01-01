@@ -114,8 +114,22 @@ SQL_CREATE_FWD_PATHS_TAB = ("CREATE TABLE fwdPaths (\n"
                             "PRIMARY KEY (`path`)\n"
                             ");\n")
 
+SQL_CREATE_FWD_NODES_TAB = ("CREATE TABLE fwdNodes (\n"
+                            "`node` varchar(10) NOT NULL,\n"
+                            "Address varchar(30) NULL,\n"
+                            "destR1 varchar(10) NULL,\n"
+                            "destR2 varchar(10) NULL,\n"
+                            "destR3 varchar(10) NULL,\n"
+                            "destR4 varchar(10) NULL,\n"
+                            "destR5 varchar(10) NULL,\n"
+                            "destR6 varchar(10) NULL,\n"
+                            "locator varchar(8) NULL,\n"
+                            "lastUpdate varchar(30) NOT NULL,\n"
+                            "PRIMARY KEY (`node`)\n"
+                            ");\n")
 SQL_GET_LAST_MSG_ID = "SELECT MID FROM pms_out_msg ORDER BY MID DESC LIMIT 1;"
 SQL_BBS_OUT_MAIL_TAB_IS_EMPTY = "SELECT CASE WHEN EXISTS(SELECT 1 FROM pms_out_msg) THEN 0 ELSE 1 END AS IsEmpty;"
+
 
 #######################################
 # APRS

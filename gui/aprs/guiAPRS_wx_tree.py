@@ -4,7 +4,7 @@ from tkinter import ttk, Menu, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.string_tab import STR_TABLE
-from gui.aprs.guiAPRS_wx_plot import WXPlotWindow
+from gui.plots.guiAPRS_wx_plot import WXPlotWindow
 
 logger = logging.getLogger(__name__)
 

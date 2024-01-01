@@ -110,6 +110,7 @@ def build_new_msg_header(msg_struc: dict):
 
 
 def parse_fwd_paths(path_list: list):
+    # TODO: get Time from Header timecode
     """
     R:231004/1739Z @:MD2BBS.#SAW.SAA.DEU.EU #:18122 [Salzwedel] $:2620_KE2BBS
     R:231004/1112Z 2620@KE2BBS.#KEH.BAY.DEU.EU BPQK6.0.23
@@ -462,6 +463,7 @@ class BBSConnection:
 
     def _parse_msg(self, msg: bytes):
         _lines = msg.split(b'\r')
+        start_found = False
         if b'$:' in _lines[1]:
             _tmp = bytes(_lines[1]).split(b'$:')
             _k = _tmp[1].decode('UTF-8', 'ignore')
@@ -469,23 +471,26 @@ class BBSConnection:
             _k = ''
             _temp_k = str(list(self._rx_msg_header.keys())[0])
             _sender = self._rx_msg_header[_temp_k]['sender'].encode('ASCII', 'ignore')
-            for _l in list(_lines[1:]):
+            for _l in list(_lines):
                 print(f"NoKeyFound _l: {_l}")
-                if _l != b'':
-                    if b'R:' not in _l:
-                        print(f"No Header Key Found: {_temp_k}")
-                        print(f"No Header Key Found msg: {msg}")
-                        break
+                if _l[:2] == b'R:':
+                    if not start_found:
+                        start_found = True
+
                     if '_' in _temp_k:
                         _tmp = _temp_k.split('_')
                     elif '-' in _temp_k:
                         _tmp = _temp_k.split('-')
                     else:
                         _tmp = [_temp_k]
-
                     if str(_tmp[0] + '@').encode('ASCII', 'ignore') + _sender in _l:
                         _k = str(_temp_k)
                         print(f"Replaced Key Found msg: {_k}")
+                        break
+                else:
+                    print(f"No Header Key Found: {_temp_k}")
+                    print(f"No Header Key Found msg: {msg}")
+                    if start_found:
                         break
 
         if _k in self._rx_msg_header.keys():
@@ -539,7 +544,7 @@ class BBSConnection:
             self._rx_msg_header[_k]['msg'] = _msg
             self._rx_msg_header[_k]['header'] = _header
             self._rx_msg_header[_k]['path'] = path
-            self._rx_msg_header[_k]['fwd_path'] = parse_fwd_paths(path)
+            self._rx_msg_header[_k]['fwd_path'] = parse_fwd_paths(path) # TODO: get Time from Header timecode
             # 'R:230513/2210z @:CB0ESN.#E.W.DLNET.DEU.EU [E|JO31MK] obcm1.07b5 LT:007'
             self._rx_msg_header[_k]['time'] = parse_header_timestamp(path[-1])
             self._rx_msg_header[_k]['subject'] = subject

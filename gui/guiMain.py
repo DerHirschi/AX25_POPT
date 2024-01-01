@@ -24,12 +24,13 @@ from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.aprs.guiAPRS_wx_tree import WXWin
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.pms.guiBBS_PMS_Settings import PMS_Settings
+from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
 from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
 from gui.pms.guiBBS_newMSG import BBS_newMSG
 from gui.ft.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.settings.guiPipeToolSettings import PipeToolSettings
-from gui.guiPlotPort import PlotWindow
+from gui.plots.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 
 from gui.UserDB.guiUserDBoverview import UserDBtreeview
@@ -1098,6 +1099,7 @@ class PoPT_GUI_Main:
         self.BBS_fwd_q_list = None
         self.MSG_Center_win = None
         self.newPMS_MSG_win = None
+        self.fwd_Path_plot_win = None
         ####################################
         self._init_GUI_vars_fm_CFG()
         ####################################
@@ -1229,6 +1231,7 @@ class PoPT_GUI_Main:
             self.BBS_fwd_q_list,
             self.MSG_Center_win,
             self.newPMS_MSG_win,
+            self.fwd_Path_plot_win,
         ]:
             if wn is not None:
                 wn.destroy()
@@ -1482,6 +1485,9 @@ class PoPT_GUI_Main:
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
                              command=lambda: self.open_window('pms_fwq_q'),
+                             underline=0)
+        _MenuBBS.add_command(label=STR_TABLE['fwd_path'][self.language],
+                             command=lambda: self.open_window('fwdPath'),
                              underline=0)
         _MenuBBS.add_separator()
         _MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
@@ -2780,6 +2786,7 @@ class PoPT_GUI_Main:
             'userDB_tree': (self.userDB_tree_win, UserDBtreeview),
             'ft_send': (self.FileSend_win, FileSend),
             'PortStat': (self.port_stat_win, PlotWindow),
+            'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
             # TODO .......
 
         }.get(win_key, None)

@@ -5,6 +5,7 @@ import pickle
 import logging
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
 from fnc.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
+from fnc.loc_fnc import locator_to_coordinates
 from fnc.str_fnc import conv_time_for_sorting
 from cfg.constant import CFG_user_db
 
@@ -280,6 +281,22 @@ class UserDB:
         if ret:
             return ret.Distance
         return 0
+
+    def get_locator(self, call_str):
+        ret = self.db.get(call_str, False)
+        if ret:
+            return ret.LOC
+        return ''
+
+    def get_location(self, call_str):
+        ret = self.db.get(call_str, False)
+        if ret:
+            if ret.Lon or ret.Lon:
+                return ret.Lat, ret.Lon, ret.LOC
+            if ret.LOC:
+                lat, lon = locator_to_coordinates(ret.LOC)
+                return lat, lon, ret.LOC
+        return ()
 
     def get_AXIP(self, call_str):
         ret = self.db.get(call_str, False)

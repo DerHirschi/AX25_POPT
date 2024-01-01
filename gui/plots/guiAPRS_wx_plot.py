@@ -48,32 +48,49 @@ class WXPlotWindow(tk.Toplevel):
         ##################
         # Plot erstellen
         plot_frame = tk.Frame(self)
-        plot_frame.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+        plot_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # fig = Figure(figsize=(10, 1), dpi=100)
         # fig = plt.figure(figsize=(10, 1), dpi=100)
-        fig, self._plot1 = plt.subplots()
-        fig.set_facecolor('xkcd:light grey')
+        self._fig, self._plot1 = plt.subplots()
+        self._fig.set_facecolor('xkcd:light grey')
         self._plot1.set_facecolor('#000000')
         self._plot2 = self._plot1.twinx()
         self._plot2.set_facecolor('#000000')
         self._plot2.yaxis.tick_right()
 
-        fig.subplots_adjust(top=0.95, bottom=0.05, left=0.07, right=0.93, )
+        self._fig.subplots_adjust(top=1.0, bottom=0.043, left=0.036, right=0.952, )
 
         # Canvas für den Plot erstellen und in das Tkinter-Fenster einbetten
-        self._canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+        self._canvas = FigureCanvasTkAgg(self._fig, master=plot_frame)
         self._canvas.draw()
-        # Werkzeugleisten für die Plots erstellen
+        # Werkzeugleisten für die plots erstellen
         toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame, pack_toolbar=False)
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, )
         self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
 
         self._canvas.draw()
+
         #################
         # Info Frame
-        info_frame = tk.Frame(self)
+        info_frame = tk.Frame(plot_frame)
         info_frame.pack(side=tk.TOP, fill=tk.BOTH)
+
+        right_frame = tk.Frame(self)
+        right_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._press_chk_var = tk.BooleanVar(self, value=True)
+        self._hum_chk_var = tk.BooleanVar(self, value=True)
+        self._r1_chk_var = tk.BooleanVar(self, value=True)
+        self._r24_chk_var = tk.BooleanVar(self, value=True)
+        self._rd_chk_var = tk.BooleanVar(self, value=True)
+        self._temp_chk_var = tk.BooleanVar(self, value=True)
+        self._windd_chk_var = tk.BooleanVar(self, value=True)
+        self._windg_chk_var = tk.BooleanVar(self, value=True)
+        self._winds_chk_var = tk.BooleanVar(self, value=True)
+        self._windl_chk_var = tk.BooleanVar(self, value=True)
+        self._lum_chk_var = tk.BooleanVar(self, value=True)
+
+        self._init_chk_frame(right_frame)
         self._change_xlim()
 
         if self._wx_data:
@@ -100,6 +117,48 @@ class WXPlotWindow(tk.Toplevel):
                 tk.Label(location_frame, text=lon).pack(side=tk.LEFT, padx=20)
 
                 self.wm_title(f"WX Plot {call}")
+
+    def _init_chk_frame(self, root_frame):
+        tk.Checkbutton(root_frame,
+                       variable=self._press_chk_var,
+                       text='Pressure',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._hum_chk_var,
+                       text='Humidity',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._r1_chk_var,
+                       text='Rain 1h',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._r24_chk_var,
+                       text='Rain 24h',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._rd_chk_var,
+                       text='Rain Day',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._temp_chk_var,
+                       text='Temperature',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._windd_chk_var,
+                       text='Wind Dir',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._windg_chk_var,
+                       text='Wind Gust',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._winds_chk_var,
+                       text='Wind Speed',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
+        tk.Checkbutton(root_frame,
+                       variable=self._lum_chk_var,
+                       text='Luminosity',
+                       command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
 
     def _update_plot(self):
         if not self._wx_data:
@@ -157,34 +216,34 @@ class WXPlotWindow(tk.Toplevel):
                 dif = ts_now - timestamt_dt
                 x_scale.append(dif.total_seconds() / 3600)
 
-        if y_pressure:
+        if y_pressure and self._press_chk_var.get():
             y_pressure = adjust_list_len(y_pressure, x_scale)
             self._plot2.plot(x_scale, y_pressure, label='Pressure', color='yellow', linestyle='dashed')
-        if y_hum:
+        if y_hum and self._hum_chk_var.get():
             y_hum = adjust_list_len(y_hum, x_scale)
             self._plot1.plot(x_scale, y_hum, label='Humidity', color='blue')
-        if y_rain_1:
+        if y_rain_1 and self._r1_chk_var.get():
             y_rain_1 = adjust_list_len(y_rain_1, x_scale)
             self._plot1.plot(x_scale, y_rain_1, label='Rain 1h')
-        if y_rain_24:
+        if y_rain_24 and self._r24_chk_var.get():
             y_rain_24 = adjust_list_len(y_rain_24, x_scale)
             self._plot1.plot(x_scale, y_rain_24, label='Rain 24h')
-        if y_rain_day:
+        if y_rain_day and self._rd_chk_var.get():
             y_rain_day = adjust_list_len(y_rain_day, x_scale)
             self._plot1.plot(x_scale, y_rain_day, label='Rain Day')
-        if y_temp:
+        if y_temp and self._temp_chk_var.get():
             y_temp = adjust_list_len(y_temp, x_scale)
             self._plot1.plot(x_scale, y_temp, label='Temperature', color='red')
-        if y_wind_dir:
+        if y_wind_dir and self._windd_chk_var.get():
             y_wind_dir = adjust_list_len(y_wind_dir, x_scale)
             self._plot1.plot(x_scale, y_wind_dir, label='Wind Dir')
-        if y_wind_gust:
+        if y_wind_gust and self._windg_chk_var.get():
             y_wind_gust = adjust_list_len(y_wind_gust, x_scale)
             self._plot1.plot(x_scale, y_wind_gust, label='Wind Gust')
-        if y_wind_speed:
+        if y_wind_speed and self._winds_chk_var.get():
             y_wind_speed = adjust_list_len(y_wind_speed, x_scale)
             self._plot1.plot(x_scale, y_wind_speed, label='Wind Speed')
-        if y_lum:
+        if y_lum and self._lum_chk_var.get():
             y_lum = adjust_list_len(y_lum, x_scale)
             self._plot1.plot(x_scale, y_lum, label='Luminosity', color='orange')
 
@@ -215,19 +274,8 @@ class WXPlotWindow(tk.Toplevel):
         self.destroy_plot()
 
     def destroy_plot(self):
-        # self._canvas.close_event('all')
-        # self._plot1.clear()
-        # self._plot2.clear()
-        # self._canvas.close_event()
+        self._plot2.clear()
+        self._fig.clear()
         plt.close()
         self._canvas.get_tk_widget().destroy()
-        # del self._canvas
-        # del self._plot1
-        # del self._plot2
-        # del self._fig
-        # self._canvas = None
-        # self._plot1 = None
-        # self._plot2 = None
-        # self._fig = None
-        # self.withdraw()
         self.destroy()

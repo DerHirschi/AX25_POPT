@@ -6,7 +6,7 @@ from datetime import timedelta
 import pickle
 
 from UserDB.UserDBmain import USER_DB
-from cfg.constant import CFG_mh_data_file, CFG_port_stat_data_file, SQL_TIME_FORMAT
+from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT
 from cfg.popt_config import POPT_CFG
 from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
@@ -77,13 +77,13 @@ def get_dx_tx_alarm_his_pack(
 
 
 def get_bandwidth_struct():
-    _struct = {}
-    for _h in range(24):
-        for _m in range(60):
-            for _s in range(6):
-                _ts_str = f'{str(_h).zfill(2)}:{str(_m).zfill(2)}:{_s}'
-                _struct[_ts_str] = 0
-    return _struct
+    struct = {}
+    for h in range(24):
+        for m in range(60):
+            for s in range(6):
+                ts_str = f'{str(h).zfill(2)}:{str(m).zfill(2)}:{s}'
+                struct[ts_str] = 0
+    return struct
 
 
 def get_port_stat_struct():
@@ -257,19 +257,19 @@ class MH:
             self._add_dx_alarm_hist(ent=ent)
 
     def _add_dx_alarm_hist(self, ent):
-        _via = ''
+        via = ''
         if ent.route:
-            _via = ent.route[-1]
-        _hist_struc = get_dx_tx_alarm_his_pack(
+            via = ent.route[-1]
+        hist_struc = get_dx_tx_alarm_his_pack(
             port_id=ent.port_id,
             call_str=ent.own_call,
-            via=_via,
+            via=via,
             path=ent.route,
             locator=ent.locator,
             distance=ent.distance,
             typ='MHEARD',
         )
-        self.dx_alarm_perma_hist[str(_hist_struc['key'])] = dict(_hist_struc)
+        self.dx_alarm_perma_hist[str(hist_struc['key'])] = dict(hist_struc)
 
     def reset_dx_alarm_his(self):
         self.dx_alarm_hist = []
@@ -443,14 +443,14 @@ class MH:
         if not dx_alarm:
             if self.parm_distance_alarm and ent.distance != -1:
                 if self.parm_lastseen_alarm:
-                    _t_delta = datetime.now() - ent.last_seen
-                    if _t_delta.days >= self.parm_lastseen_alarm:
+                    t_delta = datetime.now() - ent.last_seen
+                    if t_delta.days >= self.parm_lastseen_alarm:
                         if ent.distance >= self.parm_distance_alarm:
                             dx_alarm = True
             else:
                 if self.parm_lastseen_alarm:
-                    _t_delta = datetime.now() - ent.last_seen
-                    if _t_delta.days >= self.parm_lastseen_alarm:
+                    t_delta = datetime.now() - ent.last_seen
+                    if t_delta.days >= self.parm_lastseen_alarm:
                         dx_alarm = True
 
         if dx_alarm:
@@ -587,17 +587,17 @@ class MH:
                 self._MH_db[port_id][k].axip_fail += 1
 
     def mh_out_beacon(self, max_ent=12):
-        _tmp = self.get_sort_mh_entry('last', False)
-        _ret = ''
-        _mh_keys = list(_tmp.keys())
-        _n = 0
-        for _k in _mh_keys[:max_ent]:
-            if _n == 6:
-                _n = 0
-                _ret += '\r'
-            _ret += f"{_tmp[_k].own_call} "
-            _n += 1
-        return _ret
+        tmp = self.get_sort_mh_entry('last', False)
+        ret = ''
+        mh_keys = list(tmp.keys())
+        n = 0
+        for k in mh_keys[:max_ent]:
+            if n == 6:
+                n = 0
+                ret += '\r'
+            ret += f"{tmp[k].own_call} "
+            n += 1
+        return ret
 
     def reset_mainMH(self):
         self.dx_alarm_trigger = False
