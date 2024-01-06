@@ -34,6 +34,7 @@ class AX25PortHandler(object):
         init_dir_struct()               # Setting up Directory's
         #################
         # Init SQL-DB
+        self.db = None
         try:
             self._init_DB()
         except SQLConnectionError:
@@ -50,7 +51,6 @@ class AX25PortHandler(object):
         ###########################
         # Moduls
         self.userDB = USER_DB
-        self.db = None
         self.mh = None
         self.gui = None
         self.bbs = None
@@ -65,6 +65,7 @@ class AX25PortHandler(object):
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.ax25_ports = {}
         self.rx_echo = {}
+        self.rx_echo_on = False
         ###########
         self._monitor_buffer = []
         #######################################################

@@ -1,4 +1,3 @@
-import datetime
 import socket
 import serial
 import threading
@@ -7,7 +6,6 @@ import crcmod
 
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
-# from ax25.ax25Statistics import MH_LIST
 from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
@@ -32,10 +30,8 @@ class AX25Port(threading.Thread):
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
-        self.deb_port_vars = {}
 
         """ self.ax25_port_handler will be set in AX25PortInit """
-        # self.ax25_ports: {int: AX25Port}    # TODO Check if needed
         ############
         # CONFIG
         self.port_cfg = port_cfg
@@ -54,8 +50,8 @@ class AX25Port(threading.Thread):
         self.is_smart_digi = self.port_cfg.parm_isSmartDigi
         self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
         self._digi_TXD = time.time()
-        self._digi_buf: [AX25Frame] = []
-        self._UI_buf: [AX25Frame] = []
+        self._digi_buf = []     # RX/TX
+        self._UI_buf = []       # TX
         self.connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
         """ APRS Stuff """
@@ -65,7 +61,6 @@ class AX25Port(threading.Thread):
         #############
         #############
         # VARS
-        # self.monitor = ax25monitor.Monitor()
         self.monitor_out = True
         self.gui = None
         self.device = None
@@ -286,7 +281,6 @@ class AX25Port(threading.Thread):
     def _tx_digi_buf(self):
         tr = False
         if time.time() > self._digi_TXD:
-            fr: AX25Frame
             for fr in self._digi_buf:
                 try:
                     self.tx(frame=fr)
@@ -318,9 +312,8 @@ class AX25Port(threading.Thread):
         return tr
 
     def _rx_echo(self, ax25_frame: AX25Frame):
-        if self.gui is not None:
-            if self.gui.setting_rx_echo.get():
-                self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
+        if self.port_handler.rx_echo_on:
+            self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
     def _task_Port(self):
         """ Execute Port related Cronjob like Beacon sending"""

@@ -421,6 +421,7 @@ class SideTabbedFrame:  # TODO: WTF
         Checkbutton(tab4_settings,
                     text="RX-Echo",
                     variable=self._main_win.setting_rx_echo,
+                    command=self._set_rx_echo
                     ).place(x=10, y=160)
         ############
         # CH ECHO
@@ -589,21 +590,16 @@ class SideTabbedFrame:  # TODO: WTF
         self._update_side_mh()
         self._update_side_trace()
 
-    """
-    def _init_tab_style(self):
-        s = ttk.Style()
-        s.theme_use('default')
-        s.configure('TNotebook.Tab', background="green3")
-        s.map("TNotebook", background=[("selected", "green3")])
-    """
+    def _set_rx_echo(self, event=None):
+        PORT_HANDLER.rx_echo_on = bool(self._main_win.setting_rx_echo.get())
 
     def set_auto_tracer_state(self):
-        _bool_state = self._main_win.get_tracer() or not self._main_win.get_dx_alarm()
-        _state = {
+        bool_state = self._main_win.get_tracer() or not self._main_win.get_dx_alarm()
+        state = {
             True: 'disabled',
             False: 'normal'
-        }.get(_bool_state, 'disabled')
-        self._autotracer_chk_btn.configure(state=_state)
+        }.get(bool_state, 'disabled')
+        self._autotracer_chk_btn.configure(state=state)
 
     """
     def _update_ch_echo(self):
@@ -1298,6 +1294,7 @@ class PoPT_GUI_Main:
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
+        PORT_HANDLER.rx_echo_on = bool(self.setting_rx_echo.get())
         if is_linux():
             self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
         else:

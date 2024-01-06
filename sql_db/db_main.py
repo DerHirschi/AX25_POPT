@@ -297,8 +297,8 @@ class SQL_Database:
         res = self.commit_query_bin(_query, _query_data)
         if res is None:
             return False
-        self._fwd_paths_insert(msg_struc.get('fwd_path', []))
-        self._fwd_node_insert(msg_struc.get('fwd_path', []))
+        self._fwd_paths_insert(msg_struc.get('fwd_path', []))   # TODO don't like accessing DB so many times
+        self._fwd_node_insert(msg_struc.get('fwd_path', []))    # TODO don't like accessing DB so many times
         return True
 
     def bbs_get_MID(self):
