@@ -261,7 +261,7 @@ class AX25PortHandler(object):
                 temp.start()
                 ######################################
                 # Gather all Ports in dict: ax25_ports
-                temp.gui = self.gui
+                # temp.gui = self.gui
                 self.ax25_ports[port_id] = temp
                 self.ax25_port_settings[port_id] = temp.port_cfg
                 self.rx_echo[port_id] = RxEchoVars(port_id)
@@ -309,8 +309,10 @@ class AX25PortHandler(object):
         """ PreInit: Set GUI Var """
         if gui is not None:
             self.gui = gui
+        """
         for k in self.ax25_ports.keys():
             self.ax25_ports[k].gui = self.gui
+        """
 
     def sysmsg_to_gui(self, msg: str = ''):
         if self.gui is not None and self.is_running:
@@ -593,9 +595,6 @@ class AX25PortHandler(object):
         if port_id in self.ax25_ports.keys():
             return self.ax25_ports[port_id].my_stations
         return []
-
-    def get_root_gui(self):
-        return self.gui
 
     def get_all_port_ids(self):
         return list(self.ax25_ports.keys())

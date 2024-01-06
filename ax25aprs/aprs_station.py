@@ -790,12 +790,12 @@ class APRS_ais(object):
         self._be_tracer_is_alarm = False
 
     def tracer_update_gui(self):
-        _root_gui = self.port_handler.get_root_gui()
-        if _root_gui is not None:
+        root_gui = self.port_handler.get_gui()
+        if root_gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
-            if _root_gui.be_tracer_win is not None:
+            if root_gui.be_tracer_win is not None:
                 # TODO Call fm guiMain loop (may cause random crash ?)
-                _root_gui.be_tracer_win.update_tree_data()
+                root_gui.be_tracer_win.update_tree_data()
 
     def tracer_traces_get(self):
         return self.be_tracer_traced_packets

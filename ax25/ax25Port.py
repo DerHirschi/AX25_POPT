@@ -62,7 +62,7 @@ class AX25Port(threading.Thread):
         #############
         # VARS
         self.monitor_out = True
-        self.gui = None
+        # self.gui = None
         self.device = None
         self._mh = self.port_handler.get_MH()
         ##############
