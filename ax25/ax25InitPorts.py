@@ -33,6 +33,14 @@ class AX25PortHandler(object):
         logger.info("Port Init.")
         init_dir_struct()               # Setting up Directory's
         #################
+        # Init SQL-DB
+        try:
+            self._init_DB()
+        except SQLConnectionError:
+            logger.error("Database Init Error !! Can't start PoPT !")
+            print("Database Init Error !! Can't start PoPT !")
+            raise SQLConnectionError
+        #################
         self.is_running = True
         self.ax25types = {
             'KISSTCP': KissTCP,
@@ -57,33 +65,19 @@ class AX25PortHandler(object):
         self.link_connections = {}      # {str: AX25Conn} UID Index
         self.ax25_ports = {}
         self.rx_echo = {}
-        #################
-        # Init SQL-DB
-        try:
-            self._init_DB()
-        except SQLConnectionError:
-            logger.error("Database Init Error !! Can't start PoPT !")
-            print("Database Init Error !! Can't start PoPT !")
-            raise SQLConnectionError
+        ###########
+        self._monitor_buffer = []
         #######################################################
-        # Scheduled Tasks
-        self._init_SchedTasker()
-        #################
         # Init MH
         self._init_MH()
-        """
-        try:
-            self._init_MH()
-        except SQLConnectionError:
-            logger.error("MH Init Error !! Can't start PoPT !")
-            print("MH  Init Error !! Can't start PoPT !")
-            raise SQLConnectionError
-        """
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
         for port_id in range(MAX_PORTS):       # Max Ports
             self._init_port(port_id=port_id)
+        #######################################################
+        # Scheduled Tasks
+        self._init_SchedTasker()
         #######################################################
         # APRS AIS Thread
         self.init_aprs_ais()
@@ -92,11 +86,9 @@ class AX25PortHandler(object):
         self._init_bbs()
         #######################################################
         # Port Handler Tasker (threaded Loop)
-        # - APRS task()
-        # - BBS/ConnTasker
         self._task_timer_05sec = time.time() + 0.5
         self._task_timer_1sec = time.time() + 1
-
+        self._task_timer_2sec = time.time() + 2
         self._init_PH_tasker()
 
     def __del__(self):
@@ -113,9 +105,10 @@ class AX25PortHandler(object):
             # self._prio_task()
             self._05sec_task()
             self._1sec_task()
+            self._2sec_task()
             if not self.is_running:
                 return
-            time.sleep(0.1)
+            time.sleep(0.25)
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
@@ -131,11 +124,16 @@ class AX25PortHandler(object):
     def _1sec_task(self):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
-            self.bbs.main_cron()
-            self._pipeTool_task()
             self._Sched_task()
             self._mh_task()
             self._task_timer_1sec = time.time() + 1
+
+    def _2sec_task(self):
+        """ 2 Sec """
+        if time.time() > self._task_timer_2sec:
+            self.bbs.main_cron()
+            self._pipeTool_task()
+            self._task_timer_2sec = time.time() + 2
 
     #######################################################################
     # MH
@@ -496,6 +494,21 @@ class AX25PortHandler(object):
               cmd_poll=conf.get('cmd_poll',  (False, False)),
               pid=conf.get('pid', 0xF0),
               )
+
+    ######################
+    # Monitor Buffer Stuff
+    def update_monitor(self, ax25frame, port_conf, tx=False):
+        """ Called from AX25Conn """
+        self._monitor_buffer.append((
+            ax25frame,
+            port_conf,
+            bool(tx)
+        ))
+
+    def get_monitor_data(self):
+        data = list(self._monitor_buffer)
+        self._monitor_buffer = self._monitor_buffer[len(data):]
+        return data
 
     ######################
     # RX-ECHO Handling

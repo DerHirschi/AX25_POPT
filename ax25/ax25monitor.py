@@ -55,13 +55,7 @@ def monitor_frame_inp(ax25_frame, port_cfg):
     if ax25_frame.data:
         data = ax25_frame.data
         if type(ax25_frame.data) is bytes:
-
             if int(ax25_frame.pid_byte.hex) == 0xCF:     # Net-Rom
-                # tmp = str(ax25_frame.data[20:].hex())
-                # opt = int(ax25_frame.data[19])
-                # data = f'Net-Rom opt: {opt}\r'
-                # b_tmp = bytes.fromhex(tmp)
-                # data += b_tmp.decode('ASCII', 'ignore')
                 if ax25_frame.ctl_byte.flag == 'UI':
                     data = NetRom_decode_UI(ax25_frame.data)
                 elif ax25_frame.ctl_byte.flag == 'I':

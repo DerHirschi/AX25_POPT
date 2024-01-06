@@ -472,8 +472,7 @@ class AX25Port(threading.Thread):
     def _gui_monitor(self, ax25frame: AX25Frame, tx: bool = True):
         self._mh.mh_input(ax25frame, self.port_id, tx)
         if self.monitor_out:
-            if self.gui:
-                self.gui.update_monitor(
+            self.port_handler.update_monitor(
                     # monitor_frame_inp(ax25frame, self.port_cfg),
                     ax25frame,
                     port_conf=self.port_cfg,
@@ -530,10 +529,10 @@ class AX25Port(threading.Thread):
                 break
 
         if self.loop_is_running:
+            #############################################
+            # Crone
+            self._task_Port()
             if time.time() > self.TXD or self.port_cfg.parm_full_duplex:
-                #############################################
-                # Crone
-                self._task_Port()
                 # ######### TX #############
                 self._tx_handler()
 

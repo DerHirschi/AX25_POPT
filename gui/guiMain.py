@@ -1064,7 +1064,6 @@ class PoPT_GUI_Main:
         self._ch_alarm = False
         self.channel_index = 1
         self.mon_mode = 0
-        self._mon_buff = []
         self._sound_th = None
         self._is_closing = False
         ####################
@@ -2682,22 +2681,22 @@ class PoPT_GUI_Main:
             if len(var) > 1:
                 self.sprech(var[1])
 
+    """
     def update_monitor(self, ax25frame, port_conf, tx=False):
-        """ Called from AX25Conn """
-        # TODO just get it from PortBuffer(Porthandler)
+        # Called from AX25Conn 
         self._mon_buff.append((
             ax25frame,
             port_conf,
             bool(tx)
         ))
+    """
 
     def _monitor_task(self):
-        if self._mon_buff:
-            tmp_buff = list(self._mon_buff)
-            self._mon_buff = []
+        mon_buff = PORT_HANDLER.get_monitor_data()
+        if mon_buff:
             tr = False
             self._mon_txt.configure(state="normal")
-            for el in tmp_buff:
+            for el in mon_buff:
                 conf = el[1]
                 port_id = conf.parm_PortNr
                 tx = el[2]

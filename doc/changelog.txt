@@ -3,8 +3,10 @@
 Fixes:
 
 Optimierung:
+- ax25 Call decoding optimiert
 
 Neue Implementierungen / Funktionen:
+- Grundlegendes dekodieren von NetRom Paketen (experimentell & unvollständig)
 
 ###########################################################################################################
 ###########################################################################################################
