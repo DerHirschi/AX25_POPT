@@ -36,8 +36,9 @@ class PortSetTab:
         self.prt_name.insert(tk.END, self.port_setting.parm_PortName)
         ######################
         # Not initialised Info
-        if self.port_setting.parm_PortNr in PORT_HANDLER.get_all_ports().keys():
-            if not PORT_HANDLER.get_all_ports()[self.port_setting.parm_PortNr].device_is_running:
+        all_ports = PORT_HANDLER.ax25_ports
+        if self.port_setting.parm_PortNr in all_ports.keys():
+            if not all_ports[self.port_setting.parm_PortNr].device_is_running:
                 _x = 520
                 _y = 570
                 _label = tk.Label(self.tab, text='!! Port ist nicht Initialisiert !!', fg='red')
@@ -261,7 +262,7 @@ class PortSetTab:
         self.default_bg_clr = self.t2_auto.cget('bg')
         # self.t1.insert(tk.END, self.port_setting.parm_T1)
         # t1_label.place(x=t1_x, y=height - t1_y)
-        self.t2_auto.place(x=_x , y=height - _y)
+        self.t2_auto.place(x=_x, y=height - _y)
         # T2
         t2_x = 20
         t2_y = 430
@@ -291,8 +292,8 @@ class PortSetTab:
         _y = 430
         self.kiss_duplex_var = tk.IntVar(self.tab)
         self.kiss_duplex_ent = tk.Checkbutton(self.tab, text='Full-Duplex', variable=self.kiss_duplex_var)
-        self.kiss_duplex_var.set( self.port_setting.parm_kiss_F_Duplex)
-        self.kiss_duplex_ent.place(x=_x , y=height - _y)
+        self.kiss_duplex_var.set(self.port_setting.parm_kiss_F_Duplex)
+        self.kiss_duplex_ent.place(x=_x, y=height - _y)
         if self.port_setting.parm_kiss_is_on:
             self.kiss_duplex_var.set(self.port_setting.parm_kiss_F_Duplex)
         else:
@@ -354,12 +355,12 @@ class PortSetTab:
         # bg = self.station_setting.stat_parm_qso_col_bg
         # fg = self.station_setting.stat_parm_qso_col_text
         self.color_example_text_tx = tk.Text(mon_col_frame,
-                                          height=3,
-                                          width=28,
-                                          font=('Courier', 11),
-                                          fg=self.port_setting.parm_mon_clr_tx,
-                                          bg=self.port_setting.parm_mon_clr_bg
-                                          )
+                                             height=3,
+                                             width=28,
+                                             font=('Courier', 11),
+                                             fg=self.port_setting.parm_mon_clr_tx,
+                                             bg=self.port_setting.parm_mon_clr_bg
+                                             )
         self.color_example_text_tx.place(x=100, y=10)
         self.color_example_text_tx.insert(tk.END, 'TX> Test TEXT. 1234. 73...')
         # preview win RX
@@ -380,15 +381,7 @@ class PortSetTab:
                   text='TX',
                   command=lambda: self._choose_color('TX')
                   ).place(x=tx_sel_x, y=tx_sel_y)
-        """
-        tx_sel_label = tk.Label(mon_col_frame, text='TX:', bg=bg_cl)
-        self.tx_col_select_var = tk.StringVar(self.tab)
-        self.tx_col_select_var.set(self.port_setting.parm_mon_clr_tx)  # default value
-        tx_sel = tk.ttk.Combobox(mon_col_frame, textvariable=self.tx_col_select_var, values=ALL_COLOURS)
-        # tx_sel.configure(width=18, height=20, bg=bg_cl)
-        tx_sel_label.place(x=tx_sel_x, y=tx_sel_y)
-        tx_sel.place(x=tx_sel_x + 55, y=tx_sel_y)
-        """
+
         #################
         # RX
         rx_sel_x = 20
@@ -405,44 +398,47 @@ class PortSetTab:
                   text='BG',
                   command=lambda: self._choose_color('BG')
                   ).place(x=bg_sel_x, y=bg_sel_y)
-        """
-        rx_sel_label = tk.Label(mon_col_frame, text='RX:', bg=bg_cl)
-        self.rx_col_select_var = tk.StringVar(self.tab)
-        self.rx_col_select_var.set(self.port_setting.parm_mon_clr_rx)  # default value
-        rx_sel = tk.ttk.Combobox(mon_col_frame, textvariable=self.rx_col_select_var, values=ALL_COLOURS)
-        # tx_sel.configure(width=18, height=20, bg=bg_cl)
-        rx_sel_label.place(x=rx_sel_x, y=rx_sel_y)
-        rx_sel.place(x=rx_sel_x + 55, y=rx_sel_y)
-        """
 
         #####################################
         #################
         # Station CFGs
+
         self.stat_check_vars = {}
         self.all_stat_cfgs = get_all_stat_cfg()
         x_f = 0
         y_f = 1
+        if self.port_setting.parm_PortNr in PORT_HANDLER.get_all_ports().keys():
 
-        for k in self.all_stat_cfgs.keys():
-            # stat = self.all_stat_cfgs[k]
-            cfg_x = 20 + x_f
-            cfg_y = 290 - (35 * y_f)  # Yeah X * 0
-            var = tk.IntVar(self.tab)
+            for k in self.all_stat_cfgs.keys():
+                # stat = self.all_stat_cfgs[k]
+                cfg_x = 20 + x_f
+                cfg_y = 290 - (35 * y_f)  # Yeah X * 0
+                var = tk.IntVar(self.tab)
 
-            cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=var, anchor='w', state='normal')
+                cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=var, anchor='w', state='normal')
 
-            if k in self.port_setting.parm_StationCalls:
-                var.set(1)
-                cfg.select()
-            # cfg.var = var
-            self.stat_check_vars[k] = var
-            cfg.place(x=cfg_x, y=height - cfg_y)
-            cfg.var = var
-            if y_f == 3:
-                y_f = 1
-                x_f += 150
-            else:
-                y_f += 1
+                if k in self.port_setting.parm_StationCalls:
+                    var.set(1)
+                    cfg.select()
+                # cfg.var = var
+                self.stat_check_vars[k] = var
+                cfg.place(x=cfg_x, y=height - cfg_y)
+                cfg.var = var
+                if y_f == 3:
+                    y_f = 1
+                    x_f += 150
+                else:
+                    y_f += 1
+        else:
+            cfg_x = 20
+            cfg_y = 290 - 35
+            prim_port = PORT_HANDLER.get_dualPort_primary_PH(self.port_setting.parm_PortNr)
+            prim_port_id = '! ERROR !'
+            if prim_port:
+                prim_port_id = prim_port.port_id
+            tk.Label(self.tab,
+                     text=f'Dual Port: Secondary-P: {self.port_setting.parm_PortNr}. Primary-P:  {prim_port_id}'
+                     ).place(x=cfg_x, y=height - cfg_y)
 
         self._update_port_parameter()
 
@@ -661,7 +657,7 @@ class PortSetTab:
             self.port_setting.parm_kiss_F_Duplex = self.kiss_duplex_var.get()
         # Baud
         # if self.port_setting.parm_PortTyp == 'KISSSER':
-            # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
+        # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
         self.port_setting.parm_baud = int(self.calc_baud.get())
         # T 2 auto
         self.port_setting.parm_T2_auto = bool(self.t2_auto_var.get())
@@ -731,9 +727,9 @@ class PortSettingsWin:
         self.settings_win.title("Port-Settings")
         # self._settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
         self.settings_win.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
-                      f"{self._main_class.main_win.winfo_x()}+"
-                      f"{self._main_class.main_win.winfo_y()}")
+                                   f"{self.win_height}+"
+                                   f"{self._main_class.main_win.winfo_x()}+"
+                                   f"{self._main_class.main_win.winfo_y()}")
         self.settings_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.settings_win.resizable(False, False)
         # self.settings_win.attributes("-topmost", True)
@@ -796,13 +792,14 @@ class PortSettingsWin:
         # Tab Vars
         self.tab_list: {int: ttk.Frame} = {}
         # Tab Frames ( Port Settings )
-        for k in PORT_HANDLER.get_all_ports().keys():
+        all_ports = PORT_HANDLER.ax25_ports
+        for k in all_ports.keys():
             # port.port_cfg: DefaultPortConfig
-            tmp = PORT_HANDLER.get_all_ports()[k].port_cfg
+            tmp = all_ports[k].port_cfg
             tab = PortSetTab(self, tmp, self.tabControl)
             self.tab_list[k] = tab
             port_lable_text = 'Port {}'.format(k)
-            if not PORT_HANDLER.get_all_ports()[k].device_is_running:
+            if not all_ports[k].device_is_running:
                 port_lable_text += ' (!)'
             self.tabControl.add(tab.tab, text=port_lable_text)
 
@@ -875,11 +872,6 @@ class PortSettingsWin:
         # self._main_class.ax25_port_handler.reinit_all_ports()
         # self._main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
         self._main_class.sysMsg_to_monitor('Lob: Du bist stets bemüht..')
-
-        """    
-        for k in PORT_HANDLER.get_all_ports().keys():
-            PORT_HANDLER.get_all_ports()[k].port_cfg.save_to_pickl()
-        """
 
     def _ok_btn_cmd(self):
         # TODO Cleanup

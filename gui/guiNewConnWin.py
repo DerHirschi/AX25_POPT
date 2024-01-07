@@ -136,9 +136,12 @@ class NewConnWin(tk.Toplevel):
         _menubar.add_cascade(label='History', menu=_MenuVerb, underline=0)
 
     def _set_port_index(self, index: int):
-        self._port_index = index
         port = PORT_HANDLER.get_port_by_index(index)
+
+        # port = PORT_HANDLER.get_port_by_index(index)
         if port:
+            index = port.port_id
+            self._port_index = index
             if port.port_typ == 'AXIP':
                 self.ax_ip_ip = \
                     (
@@ -188,7 +191,13 @@ class NewConnWin(tk.Toplevel):
                     self.ax_ip_port[1].insert(tk.END, prt)
                 self._call_txt_inp.focus_set()
                 self.own_call_dd_men.destroy()
-                opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
+                port = PORT_HANDLER.get_port_by_index(self._port_index)
+                if not port:
+                    opt = ['']
+                else:
+                    opt = port.my_stations
+                if not opt:
+                    opt = ['']
                 self.own_call_dd_men = tk.OptionMenu(self, self.own_call_var, *opt)
                 self.own_call_dd_men.place(x=80, y=120)
                 self.own_call_dd_men.configure()
@@ -202,7 +211,12 @@ class NewConnWin(tk.Toplevel):
                     self.ax_ip_port[0].destroy()
                     self.ax_ip_port[1].destroy()
                 self.own_call_dd_men.destroy()
-                opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
+
+                port = PORT_HANDLER.get_port_by_index(self._port_index)
+                if not port:
+                    opt = ['']
+                else:
+                    opt = port.my_stations
                 if not opt:
                     opt = ['']
                 self.own_call_dd_men = tk.OptionMenu(self, self.own_call_var, *opt)

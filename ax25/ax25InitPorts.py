@@ -77,6 +77,7 @@ class AX25PortHandler(object):
         logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
         for port_id in range(MAX_PORTS):  # Max Ports
             self._init_port(port_id=port_id)
+        self.set_dualPort_fm_cfg()
         #######################################################
         # Scheduled Tasks
         self._init_SchedTasker()
@@ -189,7 +190,11 @@ class AX25PortHandler(object):
     # Port Handling
     def get_port_by_index(self, index: int):
         if index in self.ax25_ports.keys():
-            return self.ax25_ports[index]
+            port = self.ax25_ports[index]
+            if not port.is_dualPort():
+                return port
+            else:
+                return port.get_dualPort_primary()
         return False
 
     def check_all_ports_closed(self):
@@ -273,24 +278,6 @@ class AX25PortHandler(object):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         for port_id in self.ax25_ports.keys():
             self.ax25_ports[port_id].port_cfg.save_to_pickl()
-
-    # Dual Port
-    def set_dualPort_PH(self, conf=None):
-        conf = dict(
-            tx_primary=False,  # Allowed to transmit (SDR)
-            auto_tx=False,  # Auto TX on last Port where Packet was received
-            primary_port_id=0,
-            secondary_port_id=3
-        )
-        if not conf:
-            return False
-        primary_port = self.ax25_ports.get(conf.get('primary_port_id', -1), None)
-        secondary_port = self.ax25_ports.get(conf.get('secondary_port_id', -1), None)
-        if not hasattr(secondary_port, 'set_dualPort'):
-            return False
-        if hasattr(primary_port, 'set_dualPort'):
-            return primary_port.set_dualPort(conf, secondary_port)
-        return False
 
     ######################
     # APRS
@@ -584,7 +571,67 @@ class AX25PortHandler(object):
         return self.aprs_ais
 
     def get_all_ports(self):
-        return self.ax25_ports
+        ret = {}
+        for port_id in list(self.ax25_ports.keys()):
+            port = self.ax25_ports.get(port_id, None)
+            if port:
+                prim_port = port.get_dualPort_primary()
+                if prim_port:
+                    port = prim_port
+                    port_id = port.port_id
+                if port_id not in ret.keys():
+                    ret[port_id] = port
+        return ret
+
+    ####################
+    # Dual Port
+    def set_dualPort_fm_cfg(self):
+        dualPort_cfg = POPT_CFG.get_dualPort_CFG()
+        print(f"dualPort CFG: {dualPort_cfg}")
+        for port_id in self.ax25_ports.keys():
+            self.ax25_ports[port_id].reset_dualPort()
+        for k in dualPort_cfg.keys():
+            cfg = dualPort_cfg.get(k, {})
+            if cfg:
+                prim_port_id = cfg.get('primary_port_id', -1)
+                sec_port_id = cfg.get('secondary_port_id', -1)
+                if not any((
+                    bool(prim_port_id == -1),
+                    bool(sec_port_id == -1),
+                    bool(sec_port_id == prim_port_id),
+                    bool(prim_port_id not in self.ax25_ports.keys()),
+                    bool(sec_port_id not in self.ax25_ports.keys()),
+                )):
+                    self.set_dualPort_PH(cfg)
+
+    def set_dualPort_PH(self, conf: dict):
+        print(f"set_dualPort_PH: {conf}")
+        if not conf:
+            return False
+        primary_port = self.ax25_ports.get(conf.get('primary_port_id', -1), None)
+        secondary_port = self.ax25_ports.get(conf.get('secondary_port_id', -1), None)
+        if not hasattr(secondary_port, 'set_dualPort'):
+            return False
+        if hasattr(primary_port, 'set_dualPort'):
+            return primary_port.set_dualPort(conf, secondary_port)
+        return False
+
+    def get_all_dualPorts_primary(self):
+        # Get all Primary Dual Ports
+        ret = {}
+        all_ports = self.get_all_ports()
+        for port_id in list(all_ports.keys()):
+            port = all_ports[port_id]
+            if port:
+                if port.is_dualPort_primary():
+                    ret[port_id] = port
+        return ret
+
+    def get_dualPort_primary_PH(self, port_id):
+        port = self.ax25_ports.get(port_id, None)
+        if port:
+            return port.get_dualPort_primary()
+        return None
 
     def get_all_connections(self):
         # TODO Need a better solution to get all connections

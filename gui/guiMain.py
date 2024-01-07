@@ -29,6 +29,7 @@ from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
 from gui.pms.guiBBS_newMSG import BBS_newMSG
 from gui.ft.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
+from gui.settings.guiDualPortSettings import DualPortSettingsWin
 from gui.settings.guiPipeToolSettings import PipeToolSettings
 from gui.plots.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
@@ -1095,6 +1096,7 @@ class PoPT_GUI_Main:
         self.MSG_Center_win = None
         self.newPMS_MSG_win = None
         self.fwd_Path_plot_win = None
+        self.dualPort_settings_win = None
         ####################################
         self._init_GUI_vars_fm_CFG()
         ####################################
@@ -1227,6 +1229,7 @@ class PoPT_GUI_Main:
             self.MSG_Center_win,
             self.newPMS_MSG_win,
             self.fwd_Path_plot_win,
+            self.dualPort_settings_win,
         ]:
             if wn is not None:
                 wn.destroy()
@@ -1352,6 +1355,7 @@ class PoPT_GUI_Main:
     def _init_menubar(self):
         _menubar = Menu(self.main_win, tearoff=False)
         self.main_win.config(menu=_menubar)
+        #########################################################################
         # Menü 1 "Verbindungen"
         _MenuVerb = Menu(_menubar, tearoff=False)
         _MenuVerb.add_command(label=STR_TABLE['new_conn'][self.language], command=self.open_new_conn_win)
@@ -1361,6 +1365,7 @@ class PoPT_GUI_Main:
         _MenuVerb.add_separator()
         _MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self._destroy_win)
         _menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=_MenuVerb, underline=0)
+        #####################################################################
         # Menü 2 "Bearbeiten"
         _MenuEdit = Menu(_menubar, tearoff=False)
         _MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self._copy_select, underline=0)
@@ -1382,6 +1387,7 @@ class PoPT_GUI_Main:
         _MenuEdit.add_command(label=STR_TABLE['clean_all_qso_win'][self.language], command=self._clear_all_Channel_vars,
                               underline=0)
         _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
+        ####################################################################
         # Menü 3 "Tools"
         _MenuTools = Menu(_menubar, tearoff=False)
         _MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
@@ -1428,6 +1434,7 @@ class PoPT_GUI_Main:
         # MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         _menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=_MenuTools, underline=0)
 
+        ###################################################################
         # Menü 4 Einstellungen
         _MenuSettings = Menu(_menubar, tearoff=False)
         _MenuSettings.add_command(label=STR_TABLE['station'][self.language],
@@ -1447,8 +1454,13 @@ class PoPT_GUI_Main:
         _MenuSettings.add_command(label="RX-Echo",
                                   command=lambda: self._open_settings_window('rx_echo_sett'),
                                   underline=0)
+        _MenuSettings.add_separator()
+        _MenuSettings.add_command(label='Dual-Port',
+                                  command=lambda: self.open_window('dualPort_settings'),
+                                  underline=0)
 
         _menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=_MenuSettings, underline=0)
+        ########################################################################
         # APRS Menu
         _MenuAPRS = Menu(_menubar, tearoff=False)
         _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
@@ -1469,6 +1481,7 @@ class PoPT_GUI_Main:
                               underline=0)
         # MenuAPRS.add_separator()
         _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
+        ################################################################
         # BBS/PMS
         _MenuBBS = Menu(_menubar, tearoff=False)
         _MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
@@ -1498,7 +1511,7 @@ class PoPT_GUI_Main:
                              command=lambda: self._open_settings_window('pms_setting'),
                              underline=0)
         _menubar.add_cascade(label='PMS', menu=_MenuBBS, underline=0)
-
+        #########################################################################
         # Menü 5 Hilfe
         _MenuHelp = Menu(_menubar, tearoff=False)
         # MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
@@ -1764,7 +1777,7 @@ class PoPT_GUI_Main:
                                                   borderwidth=0,
                                                   state="disabled",
                                                   )
-        self._out_txt.tag_config("input", foreground="yellow")
+        self._out_txt.tag_config("input", foreground="white")
         self._out_txt.grid(row=0, column=0, columnspan=10, sticky="nsew")
 
         name_label = tk.Label(self._TXT_mid_frame,
@@ -1935,7 +1948,7 @@ class PoPT_GUI_Main:
             self._mon_txt.configure(state="normal")
 
         # Monitor Tags
-        all_port = PORT_HANDLER.get_all_ports()
+        all_port = PORT_HANDLER.ax25_ports
         for port_id in all_port.keys():
             tag_tx = f"tx{port_id}"
             tag_rx = f"rx{port_id}"
@@ -2024,20 +2037,21 @@ class PoPT_GUI_Main:
         self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
         for stat in PORT_HANDLER.ax25_stations_settings.keys():
             self.sysMsg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
-        for port_k in PORT_HANDLER.get_all_ports().keys():
+        all_ports = PORT_HANDLER.ax25_ports
+        for port_k in all_ports.keys():
             msg = 'konnte nicht initialisiert werden!'
-            if PORT_HANDLER.get_all_ports()[port_k].device_is_running:
+            if all_ports[port_k].device_is_running:
                 msg = 'erfolgreich initialisiert.'
             self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
                                    .format(port_k,
-                                           PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortName,
-                                           PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortTyp,
+                                           all_ports[port_k].port_cfg.parm_PortName,
+                                           all_ports[port_k].port_cfg.parm_PortTyp,
                                            msg
                                            ))
             self.sysMsg_to_monitor('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
-                                           PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[0],
-                                           PORT_HANDLER.get_all_ports()[port_k].port_cfg.parm_PortParm[1]
+                                           all_ports[port_k].port_cfg.parm_PortParm[0],
+                                           all_ports[port_k].port_cfg.parm_PortParm[1]
                                            ))
 
     # END Init Stuff
@@ -2783,6 +2797,7 @@ class PoPT_GUI_Main:
             'ft_send': (self.FileSend_win, FileSend),
             'PortStat': (self.port_stat_win, PlotWindow),
             'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
+            'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             # TODO .......
 
         }.get(win_key, None)

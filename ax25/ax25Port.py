@@ -374,29 +374,50 @@ class AX25Port(threading.Thread):
 
     ##########################################################
     # DualPort
+    def reset_dualPort(self):
+        """ Called fm PortHandler """
+        if self.dualPort_secondaryPort:
+            self.dualPort_secondaryPort.dualPort_cfg = {}
+            self.dualPort_secondaryPort.dualPort_primaryPort = None
+            self.dualPort_secondaryPort.dualPort_secondaryPort = None
+        self.dualPort_cfg = {}
+        self.dualPort_primaryPort = None
+        self.dualPort_secondaryPort = None
+
     def set_dualPort(self, conf: dict, secondary_port):
+        """ Called fm PortHandler """
         if not all((conf, secondary_port)):
             return False
+        """
         if any((self.dualPort_primaryPort, self.dualPort_secondaryPort)):
             return False
+        """
+        del self.dualPort_primaryPort
+        del self.dualPort_secondaryPort
+        self.dualPort_primaryPort = None
+        self.dualPort_secondaryPort = None
         secondary_port.dualPort_cfg = conf
         secondary_port.dualPort_primaryPort = self
         secondary_port.dualPort_secondaryPort = secondary_port
         self.dualPort_cfg = secondary_port.dualPort_cfg
         self.dualPort_primaryPort = self
         self.dualPort_secondaryPort = secondary_port
+        return True
 
     def is_dualPort(self):
+        """ Called fm PortHandler """
         if self.dualPort_cfg:
             return self.check_dualPort()
         return False
 
     def is_dualPort_primary(self):
+        """ Called fm PortHandler """
         if self.check_dualPort():
             return bool(self.dualPort_primaryPort == self)
         return False
 
     def get_dualPort_primary(self):
+        """ Called fm PortHandler """
         if self.check_dualPort():
             return self.dualPort_primaryPort
         return None
