@@ -67,7 +67,7 @@ def decode_FRMR(ifield):
     logger.warning("Decoded FRMR Frame:")
     logger.warning("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
     logger.warning("PID: {}".format(pid))
-    logger.erwarningror("Data: {}".format("".join(data)))
+    logger.warning("Data: {}".format("".join(data)))
     return tmp
 
 

@@ -22,6 +22,7 @@ from gui.aprs.guiAPRS_Settings import APRSSettingsWin
 from gui.aprs.guiAPRS_be_tracer import BeaconTracer
 from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.aprs.guiAPRS_wx_tree import WXWin
+from gui.guiDualPortMon import DualPort_Monitor
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.pms.guiBBS_PMS_Settings import PMS_Settings
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
@@ -1097,6 +1098,7 @@ class PoPT_GUI_Main:
         self.newPMS_MSG_win = None
         self.fwd_Path_plot_win = None
         self.dualPort_settings_win = None
+        self.dualPortMon_win = None
         ####################################
         self._init_GUI_vars_fm_CFG()
         ####################################
@@ -1230,6 +1232,7 @@ class PoPT_GUI_Main:
             self.newPMS_MSG_win,
             self.fwd_Path_plot_win,
             self.dualPort_settings_win,
+            self.dualPortMon_win,
         ]:
             if wn is not None:
                 wn.destroy()
@@ -1424,6 +1427,10 @@ class PoPT_GUI_Main:
 
         _MenuTools.add_command(label='Priv',
                                command=lambda: self._open_settings_window('priv_win'),
+                               underline=0)
+        _MenuTools.add_separator()
+        _MenuTools.add_command(label='Dual-Port Monitor',
+                               command=lambda: self.open_window('dualPort_monitor'),
                                underline=0)
         _MenuTools.add_separator()
 
@@ -2798,6 +2805,7 @@ class PoPT_GUI_Main:
             'PortStat': (self.port_stat_win, PlotWindow),
             'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
+            'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
             # TODO .......
 
         }.get(win_key, None)
