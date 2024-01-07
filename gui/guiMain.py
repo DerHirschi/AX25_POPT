@@ -775,7 +775,7 @@ class SideTabbedFrame:  # TODO: WTF
             vias = record[5]
             port = record[3]
             if type(port) is str:
-                port = int(port.split(' ')[0])
+                port = int(port.split('-')[0])
 
             if vias:
                 call = f'{call} {vias}'
@@ -807,7 +807,7 @@ class SideTabbedFrame:  # TODO: WTF
                      f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
                      f'{ent.own_call}',
                      f'{ent.distance}',
-                     f'{ent.port_id}',
+                     f'{ent.port}',
                      f'{ent.pac_n}',
                      ' '.join(route),
                  ), dx_alarm)
@@ -2967,7 +2967,7 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
-        # PORT_HANDLER.db.aprsWX_get_data_f_wxTree()
+        PORT_HANDLER.set_dualPort_PH()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
 

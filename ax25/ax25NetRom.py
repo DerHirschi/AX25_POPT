@@ -131,7 +131,7 @@ def NetRom_decode_I(ax25_payload: bytes):
             return ''
         """
         monitor_str = "Net-Rom RIF\r"
-        monitor_str += f"Raw: {ax25_payload.hex()}\r"
+        # monitor_str += f"Raw: {ax25_payload.hex()}\r"
         """
         for k in dec_rip.keys():
             if k == 'rif_data':

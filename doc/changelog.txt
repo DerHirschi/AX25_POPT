@@ -8,6 +8,27 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - Grundlegendes dekodieren von NetRom Paketen (experimentell & unvollständig)
+- DualPort, es können 2 TNC's (2*RTX oder RTX+SDR) zu einem Port zusammengefasst werden.
+    Primär Port:
+    - Einstellungen:
+      - DIGI
+      - Pseudo TXD
+      - zugewiesene Stationen
+    - MH-Listen (Flag in Portnamen (pri-port-heard-port))(RX-Echos werden gefiltert)
+      - ! Es wird immer der Port angezeigt, über den der Frame zuletzt empfangen wurde.
+        ! Somit kann der MH-Listen Eintrag mit dem im Monitor angezeigten Frame abweichen,
+        ! da dort der zuerst empfangende Frame angezeigt wird.
+    - Station Handling (eingehende Rufe)
+    - Monitor (RX-Echos und Frames die von beiden Stationen empfangen werden, werden gefiltert)
+      - Es werden nur die Frames angezeigt, die PoPT zuerst übermittelt/verarbeitet hat.
+      - Frames im Monitor werden in der jeweils für den Port eingestellten Textfarbe dargestellt.
+
+    Port individuell:
+    - Einstellungen:
+      - Port-Typ/Verbindungsdaten *logisch
+      - KISS
+    - Port-Statistik (RX-Echos werden gefiltert)
+    - Bandweiten Monitor (RX-Echos werden gefiltert)
 
 ###########################################################################################################
 ###########################################################################################################

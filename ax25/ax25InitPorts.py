@@ -21,6 +21,7 @@ class RxEchoVars(object):
         self.rx_ports: {int: [str]} = {}
         self.tx_ports: {int: [str]} = {}
         self.tx_buff: [] = []
+
     """
     def buff_input(self, ax_frame, port_id: int):
         if port_id != self.port_id:
@@ -31,7 +32,7 @@ class RxEchoVars(object):
 class AX25PortHandler(object):
     def __init__(self):
         logger.info("Port Init.")
-        init_dir_struct()               # Setting up Directory's
+        init_dir_struct()  # Setting up Directory's
         #################
         # Init SQL-DB
         self.db = None
@@ -59,10 +60,10 @@ class AX25PortHandler(object):
         ###########################
         # VARs
         self.ax25_stations_settings = get_all_stat_cfg()
-        self.ax25_port_settings = {}    # Port settings are in Port .. TODO Cleanup
+        self.ax25_port_settings = {}  # Port settings are in Port .. TODO Cleanup
         # self.ch_echo: {int:  [AX25Conn]} = {}
-        self.multicast_ip_s = []        # [axip-addresses('ip', port)]
-        self.link_connections = {}      # {str: AX25Conn} UID Index
+        self.multicast_ip_s = []  # [axip-addresses('ip', port)]
+        self.link_connections = {}  # {str: AX25Conn} UID Index
         self.ax25_ports = {}
         self.rx_echo = {}
         self.rx_echo_on = False
@@ -74,7 +75,7 @@ class AX25PortHandler(object):
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
-        for port_id in range(MAX_PORTS):       # Max Ports
+        for port_id in range(MAX_PORTS):  # Max Ports
             self._init_port(port_id=port_id)
         #######################################################
         # Scheduled Tasks
@@ -182,7 +183,7 @@ class AX25PortHandler(object):
                 if self.ax25_stations_settings[stat_key].stat_parm_is_StupidDigi:
                     new_digi_calls.append(stat_key)
             self.ax25_ports[port_kk].port_cfg.parm_StupidDigi_calls = new_digi_calls
-            self.ax25_ports[port_kk].stupid_digi_calls = new_digi_calls     # Same Object !!
+            self.ax25_ports[port_kk].stupid_digi_calls = new_digi_calls  # Same Object !!
 
     #######################################################################
     # Port Handling
@@ -273,6 +274,24 @@ class AX25PortHandler(object):
         for port_id in self.ax25_ports.keys():
             self.ax25_ports[port_id].port_cfg.save_to_pickl()
 
+    # Dual Port
+    def set_dualPort_PH(self, conf=None):
+        conf = dict(
+            tx_primary=False,  # Allowed to transmit (SDR)
+            auto_tx=False,  # Auto TX on last Port where Packet was received
+            primary_port_id=0,
+            secondary_port_id=3
+        )
+        if not conf:
+            return False
+        primary_port = self.ax25_ports.get(conf.get('primary_port_id', -1), None)
+        secondary_port = self.ax25_ports.get(conf.get('secondary_port_id', -1), None)
+        if not hasattr(secondary_port, 'set_dualPort'):
+            return False
+        if hasattr(primary_port, 'set_dualPort'):
+            return primary_port.set_dualPort(conf, secondary_port)
+        return False
+
     ######################
     # APRS
     def init_aprs_ais(self, aprs_obj=None):
@@ -309,13 +328,9 @@ class AX25PortHandler(object):
         """ PreInit: Set GUI Var """
         if gui is not None:
             self.gui = gui
-        """
-        for k in self.ax25_ports.keys():
-            self.ax25_ports[k].gui = self.gui
-        """
 
     def sysmsg_to_gui(self, msg: str = ''):
-        if self.gui is not None and self.is_running:
+        if self.gui and self.is_running:
             self.gui.sysMsg_to_monitor(msg)
 
     def close_gui(self):
@@ -416,15 +431,15 @@ class AX25PortHandler(object):
             return True
         return conn.is_dico()
 
-    def new_outgoing_connection(self,               # NICE ..
+    def new_outgoing_connection(self,  # NICE ..
                                 dest_call: str,
                                 own_call: str,
-                                via_calls=None,     # Auto lookup in MH if not exclusive Mode
-                                port_id=-1,         # -1 Auto lookup in MH list
-                                axip_add=('', 0),   # AXIP Adress
-                                exclusive=False,    # True = no lookup in MH list
-                                link_conn=None,     # Linked Connection AX25Conn
-                                channel=1           # Channel/Connection Index = Channel-ID
+                                via_calls=None,  # Auto lookup in MH if not exclusive Mode
+                                port_id=-1,  # -1 Auto lookup in MH list
+                                axip_add=('', 0),  # AXIP Adress
+                                exclusive=False,  # True = no lookup in MH list
+                                link_conn=None,  # Linked Connection AX25Conn
+                                channel=1  # Channel/Connection Index = Channel-ID
                                 ):
         """ Handels New Outgoing Connections for CLI and LINKS """
         # Incoming Parameter Check
@@ -466,7 +481,7 @@ class AX25PortHandler(object):
                                                                    link_conn=link_conn)
 
         if connection:
-            self.insert_new_connection(new_conn=connection, ind=channel)   # TODO . ? IF Link CH 11 +
+            self.insert_new_connection(new_conn=connection, ind=channel)  # TODO . ? IF Link CH 11 +
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
             user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
@@ -491,12 +506,12 @@ class AX25PortHandler(object):
         if not all((tx_call, add_str, text)):
             return False
         self.ax25_ports[port_id].send_UI_frame(
-              own_call=tx_call,
-              add_str=add_str,
-              text=text,
-              cmd_poll=conf.get('cmd_poll',  (False, False)),
-              pid=conf.get('pid', 0xF0),
-              )
+            own_call=tx_call,
+            add_str=add_str,
+            text=text,
+            cmd_poll=conf.get('cmd_poll', (False, False)),
+            pid=conf.get('pid', 0xF0),
+        )
 
     ######################
     # Monitor Buffer Stuff

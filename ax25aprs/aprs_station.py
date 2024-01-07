@@ -592,7 +592,7 @@ class APRS_ais(object):
             port_id = int(port_id)
         except ValueError:
             return
-        ax_port = self.port_handler.ax25_ports.get(port_id, False)
+        ax_port = self.port_handler.get_all_ports().get(port_id, None)
         if ax_port:
             path = pack.get('path', [])
             msg_text = pack.get('raw_message_text', '').encode('ASCII', 'ignore')

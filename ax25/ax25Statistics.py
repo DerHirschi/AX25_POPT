@@ -368,13 +368,14 @@ class MH:
                 self._mh_inp(el)
             self._mh_inp_buffer = self._mh_inp_buffer[1:]
 
-    def mh_input(self, ax25frame, port_id: int, tx: bool):
+    def mh_input(self, ax25frame, port_id: int, tx: bool, primary_port_id=-1):
         """ Main Input from ax25Port.gui_monitor()"""
         if tx:
             return
         self._mh_inp_buffer.append({
             'ax_frame': ax25frame,
             'port_id': int(port_id),
+            'primary_port_id': int(primary_port_id),
             'tx': bool(tx),
             'now': datetime.now(),
         })
@@ -382,7 +383,13 @@ class MH:
 
     def _mh_inp(self, data, digi=''):
         # inp
-        port_id = data['port_id']
+        org_port_id = data['port_id']
+        primary_port_id = data['primary_port_id']
+        if primary_port_id != -1:
+            port_id = primary_port_id
+        else:
+            port_id = org_port_id
+
         ax25_frame = data['ax_frame']
         dx_alarm = False
         if port_id not in self._MH_db.keys():
@@ -403,7 +410,10 @@ class MH:
         ent.last_seen = data['now']
         ent.own_call = call_str
         ent.pac_n += 1
-        # ent.port = str(port_name)
+        if primary_port_id != -1:
+            ent.port = f"{primary_port_id}-{org_port_id}"
+        else:
+            ent.port = f"{org_port_id}"
         ent.port_id = int(port_id)
         ent.byte_n += int(ax25_frame.data_len)
         ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len

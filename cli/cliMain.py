@@ -447,7 +447,7 @@ class DefaultCLI(object):
             if self.parameter[-1].isdigit():
                 port_tr = True
                 port_id = int(self.parameter[-1])
-                if port_id not in self.port_handler.ax25_ports.keys():
+                if port_id not in self.port_handler.get_all_ports().keys():
                     ret = '\r # Ungültiger Port..\r'
                     return ret
             if port_tr:
