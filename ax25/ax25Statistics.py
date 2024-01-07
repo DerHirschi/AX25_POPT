@@ -475,6 +475,23 @@ class MH:
         elif last_digi:
             self._mh_inp(data, last_digi)
 
+    def get_dualPort_lastRX(self, call: str, port_id: int):
+        if not call:
+            return None
+        if port_id not in self._MH_db.keys():
+            return None
+        ent = self._MH_db.get(port_id, {}).get(call, None)
+        if hasattr(ent, 'port'):
+            tmp_portID = str(ent.port)
+            if '-' not in tmp_portID:
+                return None
+            portID = tmp_portID.split('-')[-1]
+            try:
+                return int(portID)
+            except ValueError:
+                return None
+        return None
+
     def mh_get_data_fm_call(self, call_str, port_id=-1):
         if port_id == -1:
             for port in self._MH_db.keys():

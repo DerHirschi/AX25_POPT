@@ -587,7 +587,7 @@ class AX25PortHandler(object):
     # Dual Port
     def set_dualPort_fm_cfg(self):
         dualPort_cfg = POPT_CFG.get_dualPort_CFG()
-        print(f"dualPort CFG: {dualPort_cfg}")
+        # print(f"dualPort CFG: {dualPort_cfg}")
         for port_id in self.ax25_ports.keys():
             self.ax25_ports[port_id].reset_dualPort()
         for k in dualPort_cfg.keys():
@@ -605,7 +605,6 @@ class AX25PortHandler(object):
                     self.set_dualPort_PH(cfg)
 
     def set_dualPort_PH(self, conf: dict):
-        print(f"set_dualPort_PH: {conf}")
         if not conf:
             return False
         primary_port = self.ax25_ports.get(conf.get('primary_port_id', -1), None)

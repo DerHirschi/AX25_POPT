@@ -166,7 +166,6 @@ class DualPortSettingsWin(tk.Toplevel):
                         new_cfg[prim_port_id] = cfg
 
         POPT_CFG.set_dualPort_CFG(new_cfg)
-        # print(new_cfg)
         PORT_HANDLER.set_dualPort_fm_cfg()
 
     def _save_cfg(self):

@@ -30,6 +30,11 @@ Neue Implementierungen / Funktionen:
     - Port-Statistik (RX-Echos werden gefiltert)
     - Bandweiten Monitor (RX-Echos werden gefiltert)
 
+    Auto-TX:
+    - Port zum Senden wird automatisch gewählt (Port an dem der Frame zuletzt empfangen/ausgewertet wurde).
+
+  - TX-Port wählbar (Primär-Port/Sekundär-Port)
+
 ###########################################################################################################
 ###########################################################################################################
 # 2.103.x

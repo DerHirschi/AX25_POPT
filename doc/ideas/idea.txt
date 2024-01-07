@@ -1,6 +1,6 @@
 Ideas/TODO's :
 
-- Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
+✓ Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
 - PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)
 - ESC Befehle
@@ -16,6 +16,7 @@ Ideas/TODO's :
   - alle alten configs zu ins neue System übertragen ohne Datenverlust
   - nötigen configs lesbar machen
   - nötigen configs einheitlich in/exportierbar machen
+  - Port Configs/Inits aufräumen/optimieren
 
 - Soundsystem/Sprachausgabe überarbeiten
 - Haupt GUI überarbeiten
@@ -42,12 +43,12 @@ Ideas/TODO's :
 
 - Telnet Port
 - TCP-Listen/Kiss Device Port
-- "Dual-TNC" 2 Ports zu einem zusammenfassen um z.B. RTX+SDR o. 2xRTX gleichzeitig auf einem Kanal betreiben zu können.
-- ** Anwendung Beispiel-- Antenne1(klein) Nordseite vertikal, Antenne2(groß) Südseite horizontal.
+✓ "Dual-TNC/Dual-Port" 2 Ports zu einem zusammenfassen um z.B. RTX+SDR o. 2xRTX gleichzeitig auf einem Kanal betreiben zu können.
+  ** Anwendung Beispiel-- Antenne1(klein) Nordseite vertikal, Antenne2(groß) Südseite horizontal.
   ** Und zweimal PI als SW TNC(Direwolf) via WIFI an PoPT
-  - Configs/Inits aufräumen/optimieren
-  - TX Port manuell wählbar oder automode.
-  - "Automode" sendet Paket an über den Port über den der Call zuletzt empfangen wurde.
+  ✓ TX Port manuell wählbar oder automode.
+    ** "Automode" sendet Paket an über den Port über den der Call zuletzt empfangen wurde.
+  - Dual-Port Monitor
 
 ✓ UserDB
   - UserDB auf SQL-DB Umstellen
@@ -75,7 +76,7 @@ Ideas/TODO's :
   ✓ Autoconnect
     ✓ PMS abfrage AutoFWD
     - Zeitgesteuerte connects und Kommando senden (MH Liste abfragen o.Ä.)
-    - Beacon System überarbeiten/umstellen auf PoPT-Scheduler
+    ✓ Beacon System überarbeiten/umstellen auf PoPT-Scheduler
 
 ✓ Bin
 ✓ AutoBin

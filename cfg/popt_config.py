@@ -71,7 +71,7 @@ class Main_CFG:
         logger.info(f'Main CFG: Config Saved to {self._config_filename}')
         print(f'Main CFG: Config Saved to {self._config_filename}')
         for conf_k in self._config.keys():
-            print(f'Main CFG: save {conf_k}')
+            logger.debug(f'Main CFG: save {conf_k}')
         save_to_file(self._config_filename, dict(self._config))
 
     ####################
@@ -157,7 +157,6 @@ class Main_CFG:
 
     def set_dualPort_CFG(self, cfg: dict):
         self._config['dualPort_cfg'] = dict(cfg)
-        # print(self._config['dualPort_cfg'])
 
 
 POPT_CFG = Main_CFG()
