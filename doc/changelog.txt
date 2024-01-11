@@ -1,10 +1,14 @@
 ###########################################################################################################
 # 2.104.x
 Fixes:
+- Bandauslastungs-Graph löscht alte Daten nicht und Zeigt sie nach 24 Std. erneut an
+- Bandauslastungs-Graph zeigt ab 0 Uhr für 10 Minuten nichts mehr an
+
 
 Optimierung:
 - ax25 Call decoding optimiert
 - Variablen/Funktionen Cleanups
+- Bandauslastungs-Graph speichert Datensätze nur noch für eine Stunde satt 24 Stunden
 
 Neue Implementierungen / Funktionen:
 - Grundlegendes dekodieren von NetRom Paketen (experimentell & unvollständig)

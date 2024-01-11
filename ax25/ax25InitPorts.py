@@ -336,7 +336,7 @@ class AX25PortHandler(object):
         """ Assign Connection free to Channel """
         all_conn = self.get_all_connections()
         # Check if Connection is already in all_conn...
-        """
+
         for k in list(all_conn.keys()):
             if new_conn == all_conn[k]:
                 if new_conn.ch_index != k:
@@ -346,7 +346,6 @@ class AX25PortHandler(object):
                     if self.gui:
                         self.gui.conn_btn_update()
                     return
-        """
 
         while True:
             if ind in list(all_conn.keys()):
@@ -453,6 +452,8 @@ class AX25PortHandler(object):
         if port_id not in self.ax25_ports.keys():
             return False, 'Error: Invalid Port'
         if self.ax25_ports[port_id].port_typ == 'AXIP':
+            if not mh_entry.axip_add:
+                return False, 'Error: No AXIP Address'
             if not mh_entry.axip_add[0]:
                 return False, 'Error: No AXIP Address'
         if link_conn and not via_calls:
@@ -642,7 +643,9 @@ class AX25PortHandler(object):
                 for conn_key in all_port_conn.keys():
                     conn = all_port_conn[conn_key]
                     if conn:
-                        # if conn.ch_index:    # Not Channel 0
+                        if not conn.ch_index:    # Not Channel 0
+                            print(f"Connection on Channel 0 - Port {port_id}! ")
+                            print(f"{conn_key} - MyCall: {conn.my_call_str} - TO: {conn.to_call_str}")
                         if conn.ch_index not in ret.keys():
                             ret[conn.ch_index] = conn
                         else:

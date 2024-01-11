@@ -141,24 +141,28 @@ class AX25Port(threading.Thread):
         self._reset_ft_wait_timer(ax25_frame)
         # Monitor / MH / Port-Statistic
         # self._gui_monitor(ax25frame=ax25_frame, tx=False)
+        isUI = False
         if ax25_frame.ctl_byte.flag == 'UI':
             self._rx_UI_handler(ax25_frame=ax25_frame)
+            isUI = True
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
-            if self._rx_link_handler(ax25_frame=ax25_frame):
-                # Link Connection Handler
-                return True
+            if not isUI:
+                if self._rx_link_handler(ax25_frame=ax25_frame):
+                    # Link Connection Handler
+                    return True
             if self._rx_simple_digi_handler(ax25_frame=ax25_frame):
                 # Simple DIGI
                 return True
         elif ax25_frame.is_digipeated:
-            if self._rx_conn_handler(ax25_frame=ax25_frame):
-                # Connections
-                return True
+            if not isUI:
+                if self._rx_conn_handler(ax25_frame=ax25_frame):
+                    # Connections
+                    return True
+                if self._rx_new_conn_handler(ax25_frame=ax25_frame):
+                    # New Connections
+                    return True
             if self._rx_pipe_handler(ax25_frame=ax25_frame):
                 # Pipe
-                return True
-            if self._rx_new_conn_handler(ax25_frame=ax25_frame):
-                # New Connections
                 return True
         return False
 
@@ -199,8 +203,6 @@ class AX25Port(threading.Thread):
         return False
 
     def _rx_new_conn_handler(self, ax25_frame: AX25Frame):
-        if ax25_frame.ctl_byte.flag == 'UI':
-            return False
         # New Incoming Connection
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)

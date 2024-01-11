@@ -78,11 +78,12 @@ def get_dx_tx_alarm_his_pack(
 
 def get_bandwidth_struct():
     struct = {}
-    for h in range(24):
-        for m in range(60):
-            for s in range(6):
-                ts_str = f'{str(h).zfill(2)}:{str(m).zfill(2)}:{s}'
-                struct[ts_str] = 0
+    # for h in range(24):
+    for m in range(60):
+        for s in range(6):
+            # ts_str = f'{str(h).zfill(2)}:{str(m).zfill(2)}:{s}'
+            ts_str = f'{str(m).zfill(2)}:{s}'
+            struct[ts_str] = 0
     return struct
 
 
@@ -328,11 +329,12 @@ class MH:
         ax_frame = data['ax_frame']
         now = data['now']
         self._init_bw_struct(port_id=port_id)
-        if self._now_10sec == now.strftime('%H:%M:%S')[:-1]:
+        if self._now_10sec == now.strftime('%M:%S')[:-1]:
             self._bandwidth[port_id][str(self._now_10sec)] += len(ax_frame.data_bytes)
             return
-        self._now_10sec = str(now.strftime('%H:%M:%S')[:-1])
+        self._now_10sec = str(now.strftime('%M:%S')[:-1])
         self._bandwidth[port_id][str(self._now_10sec)] = len(ax_frame.data_bytes)
+
         return
 
     def _init_bw_struct(self, port_id):
@@ -346,15 +348,24 @@ class MH:
         ten_minutes_ago = now - timedelta(minutes=10)
         minutes = list(self._bandwidth[port_id].keys())
         minutes.reverse()
-        ind = minutes.index(now.strftime('%H:%M:%S')[:-1])
-        ind2 = minutes.index(ten_minutes_ago.strftime('%H:%M:%S')[:-1])
+        ind = minutes.index(now.strftime('%M:%S')[:-1])
+        ind2 = minutes.index(ten_minutes_ago.strftime('%M:%S')[:-1])
+        #print(f"now {ind} - 10min vorher {ind2}")
+
         new_key_list = minutes[ind:ind2]
+        # print(minutes)
+        #print(new_key_list)
         i = 0
         for k in new_key_list:
             byt = int(self._bandwidth[port_id][k])
             f = (((byt * 8) / 10) * 100) / baud
             ret[i] = round(f)
             i += 1
+        # Bush fix
+        tmp = datetime.now() + timedelta(seconds=10)
+        if self._bandwidth[port_id][tmp.strftime('%M:%S')[:-1]]:
+            self._bandwidth[port_id][tmp.strftime('%M:%S')[:-1]] = 0
+
         return ret
 
     #########################
