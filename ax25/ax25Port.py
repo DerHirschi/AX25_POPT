@@ -1,3 +1,4 @@
+import datetime
 import socket
 import serial
 import threading
@@ -71,6 +72,7 @@ class AX25Port(threading.Thread):
         self.dualPort_lastRX = b''      # Prim
         self.dualPort_echoFilter = []   # Prim
         self.dualPort_cfg = {}
+        self.dualPort_monitor_buf = []
         # PORT_HANDLER.dualPort_Monitor_buffer
         ##############
         # AXIP VARs
@@ -118,6 +120,7 @@ class AX25Port(threading.Thread):
 
     def tx_out(self, frame):
         self._gui_monitor(ax25frame=frame, tx=True)
+        self._dualPort_monitor_input(ax25frame=frame, tx=True)
         self.tx_device(frame)
 
     def tx_device(self, frame: AX25Frame):
@@ -226,7 +229,6 @@ class AX25Port(threading.Thread):
             return False
         if not all((self.dualPort_primaryPort, self.dualPort_secondaryPort)):
             return False
-        # TODO Dual Port Monitor
         frame_raw = bytes(ax25_frame.data_bytes)
         # DualPort Echo Filter
         if frame_raw in self.dualPort_primaryPort.dualPort_echoFilter:
@@ -234,6 +236,8 @@ class AX25Port(threading.Thread):
         # DualPort lastRX Filter
         if frame_raw == self.dualPort_primaryPort.dualPort_lastRX:
             self.dualPort_primaryPort.dualPort_lastRX = b''
+            # DualPort Monitor
+            self._dualPort_monitor_input(ax25frame=ax25_frame, tx=False, double=True)
             # MH / Port-Statistic
             self._mh_input(ax25_frame, tx=False)
             return True
@@ -241,6 +245,8 @@ class AX25Port(threading.Thread):
         self.dualPort_primaryPort.rx_handler(ax25_frame)
         # Monitor
         self._gui_monitor(ax25frame=ax25_frame, tx=False)
+        # DualPort Monitor
+        self._dualPort_monitor_input(ax25frame=ax25_frame, tx=False)
         # MH / Port-Statistic
         self._mh_input(ax25_frame, tx=False)
         return True
@@ -250,7 +256,6 @@ class AX25Port(threading.Thread):
     def tx_dualPort_handler(self, frame: AX25Frame):
         if not self.check_dualPort():
             return False
-        # TODO Dual Port Monitor
         tx_port = self.get_dualPort_txPort(frame.to_call.call_str)
         tx_port.tx_out(frame)
         self.dualPort_echoFilter.append(bytes(frame.data_bytes))
@@ -449,6 +454,50 @@ class AX25Port(threading.Thread):
         if last_port_id == self.dualPort_secondaryPort.port_id:
             return self.dualPort_secondaryPort
         return self.dualPort_primaryPort
+
+    def _dualPort_monitor_input(self, ax25frame, tx: bool, double=False):
+        if not self.check_dualPort():
+            return False
+        data = dict(
+            tx=bool(tx),
+            ax25frame=ax25frame,
+            dtime=datetime.datetime.now(),
+            frame_rawData=bytes(ax25frame.data_bytes)
+        )
+        if not double:
+            self._dualPort_monitor_insert(data)
+            return
+        self._dualPort_monitor_update(data)
+
+    def _dualPort_monitor_update(self, data: dict):
+        if not self.dualPort_primaryPort.dualPort_monitor_buf:
+            self._dualPort_monitor_insert(data)
+            return
+        temp_data = self.dualPort_primaryPort.dualPort_monitor_buf[-1]
+        is_prim = self.is_dualPort_primary()
+        self_port_index = int(not is_prim)
+        sec_port_index = int(is_prim)
+        if temp_data[self_port_index]:
+            self._dualPort_monitor_insert(data)
+            return
+        if not temp_data[sec_port_index]:
+            self._dualPort_monitor_insert(data)
+            return
+        if temp_data[sec_port_index]['frame_rawData'] != data['frame_rawData']:
+            self._dualPort_monitor_insert(data)
+            return
+        temp_data[self_port_index] = data
+
+    def _dualPort_monitor_insert(self, data: dict):
+        if self.is_dualPort_primary():
+            self.dualPort_primaryPort.dualPort_monitor_buf.append(
+                [data, {}]
+            )
+        else:
+            self.dualPort_primaryPort.dualPort_monitor_buf.append(
+                [{}, data]
+            )
+        self.dualPort_primaryPort.dualPort_monitor_buf = self.dualPort_primaryPort.dualPort_monitor_buf[-10000:]
 
     ##########################################################
     # Port/Connection Tasker

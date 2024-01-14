@@ -1336,7 +1336,7 @@ class PoPT_GUI_Main:
         self._bw_fig = Figure(figsize=(8, 5), dpi=80)
         self._ax = self._bw_fig.add_subplot(111)
         """
-        self._bw_fig, self._ax = plt.subplots()
+        self._bw_fig, self._ax = plt.subplots(dpi=100)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
         self._ax.axis([0, 10, 0, 100])  # TODO As Option
         self._bw_fig.set_facecolor('xkcd:light grey')
@@ -2718,12 +2718,12 @@ class PoPT_GUI_Main:
                 conf = el[1]
                 port_id = conf.parm_PortNr
                 tx = el[2]
-                _mon_out = monitor_frame_inp(el[0], conf)
+                mon_out = monitor_frame_inp(el[0], conf)
                 if self.tabbed_sideFrame.mon_aprs_var.get():
-                    _mon_str = _mon_out[0] + _mon_out[1]
+                    mon_str = mon_out[0] + mon_out[1]
                 else:
-                    _mon_str = _mon_out[0]
-                _var = tk_filter_bad_chars(_mon_str)
+                    mon_str = mon_out[0]
+                var = tk_filter_bad_chars(mon_str)
                 ind = self._mon_txt.index('end-1c')
                 # TODO Autoscroll
                 if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
@@ -2734,9 +2734,9 @@ class PoPT_GUI_Main:
                     tag = "rx{}".format(port_id)
 
                 if tag in self._mon_txt.tag_names(None):
-                    self._mon_txt.insert(tk.END, _var, tag)
+                    self._mon_txt.insert(tk.END, var, tag)
                 else:
-                    self._mon_txt.insert(tk.END, _var)
+                    self._mon_txt.insert(tk.END, var)
                     ind2 = self._mon_txt.index('end-1c')
                     self._mon_txt.tag_add(tag, ind, ind2)
             cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1

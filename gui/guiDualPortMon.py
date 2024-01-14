@@ -1,8 +1,10 @@
 import tkinter as tk
-from tkinter import ttk, scrolledtext
+from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT
+from fnc.str_fnc import tk_filter_bad_chars
 
 
 class DP_MonitorTab(tk.Frame):
@@ -10,6 +12,7 @@ class DP_MonitorTab(tk.Frame):
         tk.Frame.__init__(self, root_win)
         self.pack(fill=tk.BOTH, expand=True)
         self._text_size = 12  # TODO
+        self._port = port
         ##################
         # Port
         mon_frame = tk.Frame(self)
@@ -53,9 +56,9 @@ class DP_MonitorTab(tk.Frame):
         self._secPort_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self._scroll_r.pack(side=tk.LEFT, fill=tk.Y)
 
-        tmp = ' '.join([str(x) for x in range(5000)])
-        self._primPort_text.insert(tk.END, tmp)
-        self._secPort_text.insert(tk.END, tmp)
+        self._set_tags()
+        self._init_text_fm_buf()
+        self._see_end()
 
     def sync_scroll(self, *args):
         """ https://stackoverflow.com/questions/74635102/tkinter-how-can-i-sync-two-scrollbars-with-two-text-widgets-to-mirrow-each-o """
@@ -72,6 +75,70 @@ class DP_MonitorTab(tk.Frame):
         self._scroll_r.set(*args)
         self._scroll_l.set(*args)
         self._secPort_text.yview_moveto(self._primPort_text.yview()[0])
+
+    def _init_text_fm_buf(self):
+        if not self._port.check_dualPort():
+            return
+        mon_buf = self._port.dualPort_monitor_buf
+        prim_port_cfg = self._port.dualPort_primaryPort.port_cfg
+        sec_port_cfg = self._port.dualPort_secondaryPort.port_cfg
+
+        for data in mon_buf:
+            prim_frame = data[0].get('ax25frame', None)
+            sec_frame = data[1].get('ax25frame', None)
+            prim_data = ''
+            sec_data = ''
+            prim_ind1 = self._primPort_text.index('end-1c')
+            sec_ind1 = self._secPort_text.index('end-1c')
+
+            if any((prim_frame, sec_frame)):
+
+                if all((prim_frame, sec_frame)):
+                    prim_data = monitor_frame_inp(prim_frame, prim_port_cfg)[0]
+                    sec_data = monitor_frame_inp(sec_frame, sec_port_cfg)[0]
+                elif prim_frame:
+                    prim_data = monitor_frame_inp(prim_frame, prim_port_cfg)[0]
+                    sec_data = ''
+                    for line in prim_data.split('\n'):
+                        sec_data += ' ' * len(line) + '\n'
+                    sec_data = sec_data[:-1]
+                else:
+                    sec_data = monitor_frame_inp(sec_frame, sec_port_cfg)[0]
+                    prim_data = ''
+                    for line in sec_data.split('\n'):
+                        prim_data += ' ' * len(line) + '\n'
+                    prim_data = prim_data[:-1]
+
+            prim_data = tk_filter_bad_chars(prim_data)
+            sec_data = tk_filter_bad_chars(sec_data)
+            self._primPort_text.insert(tk.END, prim_data)
+            self._secPort_text.insert(tk.END, sec_data)
+            prim_ind2 = self._primPort_text.index('end-1c')
+            sec_ind2 = self._secPort_text.index('end-1c')
+            if any((
+                    data[0].get('tx', False),
+                    data[1].get('tx', False),
+            )):
+                self._primPort_text.tag_add('TX', prim_ind1, prim_ind2)
+                self._secPort_text.tag_add('TX', sec_ind1, sec_ind2)
+
+    def _set_tags(self):
+        self._primPort_text.tag_config('TX',
+                                       foreground='#90fca2',
+                                       background='#000000',
+                                       selectbackground='#90fca2',
+                                       selectforeground='#000000',
+                                       )
+        self._secPort_text.tag_config('TX',
+                                      foreground='#90fca2',
+                                      background='#000068',
+                                      selectbackground='#90fca2',
+                                      selectforeground='#000068',
+                                      )
+
+    def _see_end(self):
+        self._primPort_text.see("end")
+        self._secPort_text.see("end")
 
 
 class DualPort_Monitor(tk.Toplevel):
