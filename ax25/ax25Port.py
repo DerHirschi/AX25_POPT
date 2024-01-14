@@ -439,6 +439,7 @@ class AX25Port(threading.Thread):
             if self.dualPort_cfg.get('tx_primary', True):
                 return self.dualPort_primaryPort
             return self.dualPort_secondaryPort
+        # AutoPort FIXME
         port_id = self.dualPort_primaryPort.port_id
         last_port_id = self._mh.get_dualPort_lastRX(call, port_id)
         if last_port_id is None:
@@ -692,7 +693,6 @@ class KissTCP(AX25Port):
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
             try:
                 self.device.settimeout(sock_timeout)
-                # ?? TODO DNS support ??
                 self.device.connect(self.port_param)
                 self.device_is_running = True
 

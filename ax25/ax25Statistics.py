@@ -76,17 +76,6 @@ def get_dx_tx_alarm_his_pack(
     }
 
 
-def get_bandwidth_struct():
-    struct = {}
-    # for h in range(24):
-    for m in range(60):
-        for s in range(6):
-            # ts_str = f'{str(h).zfill(2)}:{str(m).zfill(2)}:{s}'
-            ts_str = f'{str(m).zfill(2)}:{s}'
-            struct[ts_str] = 0
-    return struct
-
-
 def get_port_stat_struct():
     return {
         'N_pack': 0,
@@ -127,7 +116,7 @@ class MH:
         self._mh_inp_buffer = []
         self.dx_alarm_trigger = False
         self.last_dx_alarm = time.time()
-        self._now_10sec = datetime.now().strftime('%M:%S')[:-1]
+        self._now_10sec = datetime.now()
         self._now_min = int(datetime.now().minute)
         self._MH_db: {int: {str: MyHeard}} = {}  # MH TODO ? > SQL-DB ?
         self._short_MH = deque([], maxlen=40)
@@ -329,43 +318,32 @@ class MH:
         ax_frame = data['ax_frame']
         now = data['now']
         self._init_bw_struct(port_id=port_id)
-        if self._now_10sec == now.strftime('%M:%S')[:-1]:
-            self._bandwidth[port_id][str(self._now_10sec)] += len(ax_frame.data_bytes)
-            return
-        self._now_10sec = str(now.strftime('%M:%S')[:-1])
-        self._bandwidth[port_id][str(self._now_10sec)] = len(ax_frame.data_bytes)
-
+        if self._now_10sec.strftime('%M:%S')[:-1] != now.strftime('%M:%S')[:-1]:
+            dif: timedelta = now - self._now_10sec
+            dif_10 = int(dif.seconds / 10)
+            for port_ids in self._bandwidth.keys():
+                for i in range(dif_10):
+                    self._bandwidth[port_ids].append(0)
+            self._now_10sec = now
+        self._bandwidth[port_id][-1] += len(ax_frame.data_bytes)
         return
 
     def _init_bw_struct(self, port_id):
         if port_id not in self._bandwidth:
-            self._bandwidth[port_id] = get_bandwidth_struct()
+            self._bandwidth[port_id] = deque([0] * 60, maxlen=60)
 
     def get_bandwidth(self, port_id, baud=1200):
-        self._init_bw_struct(port_id=port_id)
-        ret = deque([0] * 60, maxlen=60)
+        ret = []
         now = datetime.now()
-        ten_minutes_ago = now - timedelta(minutes=10)
-        minutes = list(self._bandwidth[port_id].keys())
-        minutes.reverse()
-        ind = minutes.index(now.strftime('%M:%S')[:-1])
-        ind2 = minutes.index(ten_minutes_ago.strftime('%M:%S')[:-1])
-        #print(f"now {ind} - 10min vorher {ind2}")
-
-        new_key_list = minutes[ind:ind2]
-        # print(minutes)
-        #print(new_key_list)
-        i = 0
-        for k in new_key_list:
-            byt = int(self._bandwidth[port_id][k])
-            f = (((byt * 8) / 10) * 100) / baud
-            ret[i] = round(f)
-            i += 1
-        # Bush fix
-        tmp = datetime.now() + timedelta(seconds=10)
-        if self._bandwidth[port_id][tmp.strftime('%M:%S')[:-1]]:
-            self._bandwidth[port_id][tmp.strftime('%M:%S')[:-1]] = 0
-
+        data = list(self._bandwidth.get(port_id, [0] * 60))
+        dif: timedelta = now - self._now_10sec
+        dif_10 = int(dif.seconds / 10)
+        for i in range(dif_10):
+            data.append(0)
+        data = data[-60:]
+        data.reverse()
+        for byt in data:
+            ret.append(((byt * 80) / baud))
         return ret
 
     #########################

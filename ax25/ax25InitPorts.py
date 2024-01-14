@@ -1,5 +1,6 @@
 import time
 import threading
+from collections import deque
 
 from cfg.popt_config import POPT_CFG
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
@@ -69,6 +70,7 @@ class AX25PortHandler(object):
         self.rx_echo_on = False
         ###########
         self._monitor_buffer = []
+        self._dualPort_monitor_buffer = {}
         #######################################################
         # Init MH
         self._init_MH()
@@ -633,6 +635,14 @@ class AX25PortHandler(object):
             return port.get_dualPort_primary()
         return None
 
+    def update_dualPort_monitor(self, prim_port_id, prim_sec_port: bool, data: bytes, tx: bool):
+        if prim_port_id not in self._dualPort_monitor_buffer.keys():
+            self._dualPort_monitor_buffer[prim_port_id] = deque([], maxlen=100000)
+
+
+
+    ##################################
+    #
     def get_all_connections(self):
         # TODO Need a better solution to get all connections
         ret = {}

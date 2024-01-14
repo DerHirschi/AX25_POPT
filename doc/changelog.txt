@@ -8,7 +8,7 @@ Fixes:
 Optimierung:
 - ax25 Call decoding optimiert
 - Variablen/Funktionen Cleanups
-- Bandauslastungs-Graph speichert Datensätze nur noch für eine Stunde satt 24 Stunden
+- Bandauslastungs-Graph Datensätze optimiert
 
 Neue Implementierungen / Funktionen:
 - Grundlegendes dekodieren von NetRom Paketen (experimentell & unvollständig)
