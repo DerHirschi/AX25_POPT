@@ -43,7 +43,7 @@ def monitor_frame_inp(ax25_frame, port_cfg):
         else:
             via_calls.append(get_call_str(stat.call, stat.ssid) + dist)
 
-    out_str = f"{port_name} {datetime.now().strftime('%H:%M:%S')}: {from_call} to {to_call}"
+    out_str = f"{port_name} {ax25_frame.rx_time.strftime('%H:%M:%S')}: {from_call} to {to_call}"
     out_str += ' via ' + ' '.join(via_calls) if via_calls else ''
     out_str += ' cmd' if ax25_frame.ctl_byte.cmd else ' rpt'
     # out_str += f' ({ax25_frame.ctl_byte.hex}) {ax25_frame.ctl_byte.mon_str}'

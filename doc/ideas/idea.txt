@@ -48,7 +48,7 @@ Ideas/TODO's :
   ** Und zweimal PI als SW TNC(Direwolf) via WIFI an PoPT
   ✓ TX Port manuell wählbar oder automode.
     ** "Automode" sendet Paket an über den Port über den der Call zuletzt empfangen wurde.
-  - Dual-Port Monitor
+  ✓ Dual-Port Monitor
 
 ✓ UserDB
   - UserDB auf SQL-DB Umstellen

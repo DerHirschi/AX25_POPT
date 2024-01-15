@@ -453,9 +453,9 @@ class AX25PortHandler(object):
         if port_id not in self.ax25_ports.keys():
             return False, 'Error: Invalid Port'
         if self.ax25_ports[port_id].port_typ == 'AXIP':
-            if not mh_entry.axip_add:
+            if not axip_add:
                 return False, 'Error: No AXIP Address'
-            if not mh_entry.axip_add[0]:
+            if not axip_add[0]:
                 return False, 'Error: No AXIP Address'
         if link_conn and not via_calls:
             return False, 'Error: Link No Via Call'

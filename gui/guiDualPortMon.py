@@ -1,9 +1,10 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, TclError, Menu
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT
+from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import tk_filter_bad_chars
 
 
@@ -11,8 +12,18 @@ class DP_MonitorTab(tk.Frame):
     def __init__(self, root_win, port):
         tk.Frame.__init__(self, root_win)
         self.pack(fill=tk.BOTH, expand=True)
-        self._text_size = 12  # TODO
+        self._text_size = 12   # TODO fm main CFG
         self._port = port
+        self._port_mon_buf = []
+        #################################################
+        upper_frame = tk.Frame(self, height=15)
+        upper_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
+        self._autoscroll_var = tk.BooleanVar(self, value=True)
+        self._aprs_dec_var = tk.BooleanVar(self, value=False)
+        autoscroll_ent = tk.Checkbutton(upper_frame, text='Autoscroll', variable=self._autoscroll_var)
+        autoscroll_ent.pack(side=tk.LEFT)
+        aprs_ent = tk.Checkbutton(upper_frame, text='APRS-Decoding', variable=self._aprs_dec_var)
+        aprs_ent.pack(side=tk.LEFT)
         ##################
         # Port
         mon_frame = tk.Frame(self)
@@ -60,6 +71,18 @@ class DP_MonitorTab(tk.Frame):
         self._init_text_fm_buf()
         self._see_end()
 
+    def increase_textsize(self):
+        self._text_size += 1
+        self._text_size = max(self._text_size, 3)
+        self._primPort_text.configure(font=(FONT, self._text_size), )
+        self._secPort_text.configure(font=(FONT, self._text_size), )
+
+    def decrease_textsize(self):
+        self._text_size -= 1
+        self._text_size = max(self._text_size, 3)
+        self._primPort_text.configure(font=(FONT, self._text_size), )
+        self._secPort_text.configure(font=(FONT, self._text_size), )
+
     def sync_scroll(self, *args):
         """ https://stackoverflow.com/questions/74635102/tkinter-how-can-i-sync-two-scrollbars-with-two-text-widgets-to-mirrow-each-o """
         self._primPort_text.yview(*args)
@@ -76,13 +99,34 @@ class DP_MonitorTab(tk.Frame):
         self._scroll_l.set(*args)
         self._secPort_text.yview_moveto(self._primPort_text.yview()[0])
 
+    def _get_mon_buf(self):
+        if not self._port.check_dualPort():
+            return []
+        tmp = list(self._port.dualPort_monitor_buf)
+        self._port_mon_buf += tmp
+        self._port.dualPort_monitor_buf = self._port.dualPort_monitor_buf[len(tmp):]
+        return tmp
+
+    def del_mon_buf(self):
+        self._port.dualPort_monitor_buf = []
+        self._port_mon_buf = []
+        self._primPort_text.configure(state='normal')
+        self._primPort_text.delete('1.0', tk.END)
+        self._primPort_text.configure(state='disabled')
+        self._secPort_text.configure(state='normal')
+        self._secPort_text.delete('1.0', tk.END)
+        self._secPort_text.configure(state='disabled')
+
     def _init_text_fm_buf(self):
         if not self._port.check_dualPort():
             return
-        mon_buf = self._port.dualPort_monitor_buf
+        mon_buf = self._get_mon_buf()
         prim_port_cfg = self._port.dualPort_primaryPort.port_cfg
         sec_port_cfg = self._port.dualPort_secondaryPort.port_cfg
-
+        scroll = False
+        if mon_buf:
+            self._primPort_text.configure(state='normal')
+            self._secPort_text.configure(state='normal')
         for data in mon_buf:
             prim_frame = data[0].get('ax25frame', None)
             sec_frame = data[1].get('ax25frame', None)
@@ -92,22 +136,29 @@ class DP_MonitorTab(tk.Frame):
             sec_ind1 = self._secPort_text.index('end-1c')
 
             if any((prim_frame, sec_frame)):
-
                 if all((prim_frame, sec_frame)):
                     prim_data = monitor_frame_inp(prim_frame, prim_port_cfg)[0]
                     sec_data = monitor_frame_inp(sec_frame, sec_port_cfg)[0]
+                    if self._aprs_dec_var.get():
+                        prim_data += monitor_frame_inp(prim_frame, prim_port_cfg)[1]
+                        sec_data += monitor_frame_inp(sec_frame, sec_port_cfg)[1]
                 elif prim_frame:
                     prim_data = monitor_frame_inp(prim_frame, prim_port_cfg)[0]
+                    if self._aprs_dec_var.get():
+                        prim_data += monitor_frame_inp(prim_frame, prim_port_cfg)[1]
                     sec_data = ''
                     for line in prim_data.split('\n'):
                         sec_data += ' ' * len(line) + '\n'
                     sec_data = sec_data[:-1]
                 else:
                     sec_data = monitor_frame_inp(sec_frame, sec_port_cfg)[0]
+                    if self._aprs_dec_var.get():
+                        sec_data += monitor_frame_inp(sec_frame, sec_port_cfg)[1]
                     prim_data = ''
                     for line in sec_data.split('\n'):
                         prim_data += ' ' * len(line) + '\n'
                     prim_data = prim_data[:-1]
+                scroll = True
 
             prim_data = tk_filter_bad_chars(prim_data)
             sec_data = tk_filter_bad_chars(sec_data)
@@ -121,6 +172,12 @@ class DP_MonitorTab(tk.Frame):
             )):
                 self._primPort_text.tag_add('TX', prim_ind1, prim_ind2)
                 self._secPort_text.tag_add('TX', sec_ind1, sec_ind2)
+
+            if scroll:
+                self._see_end()
+        if mon_buf:
+            self._primPort_text.configure(state='disabled')
+            self._secPort_text.configure(state='disabled')
 
     def _set_tags(self):
         self._primPort_text.tag_config('TX',
@@ -137,8 +194,15 @@ class DP_MonitorTab(tk.Frame):
                                       )
 
     def _see_end(self):
-        self._primPort_text.see("end")
-        self._secPort_text.see("end")
+        if self._autoscroll_var.get():
+            self._primPort_text.see("end")
+            self._secPort_text.see("end")
+
+    def close_tab(self):
+        self._port.dualPort_monitor_buf = self._port_mon_buf + self._port.dualPort_monitor_buf
+
+    def tab_tasker(self):
+        self._init_text_fm_buf()
 
 
 class DualPort_Monitor(tk.Toplevel):
@@ -162,24 +226,62 @@ class DualPort_Monitor(tk.Toplevel):
         self.lift()
         self._root_win.dualPortMon_win = self
         #################################################
-        upper_frame = tk.Frame(self)
-        upper_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        tab_frame = tk.Frame(self)
+        tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabControl_prim_ports = ttk.Notebook(
-            upper_frame,
+            tab_frame,
             padding=5,
         )
         self._tabControl_prim_ports.pack(side=tk.TOP, fill=tk.BOTH, expand=True, )
         self.tab_list: {int: DP_MonitorTab} = {}
 
         all_prim_Ports = PORT_HANDLER.get_all_dualPorts_primary()
+        i = 0
         for port_id in all_prim_Ports.keys():
             port = all_prim_Ports.get(port_id, None)
             if port:
                 tab = DP_MonitorTab(self._tabControl_prim_ports, port, )
-                self.tab_list[port_id] = tab
+                self.tab_list[i] = tab
                 port_lable_text = 'Port {}'.format(port.port_id)
                 self._tabControl_prim_ports.add(tab, text=port_lable_text)
+                i += 1
+
+        self._init_menubar()
+        self.bind('<Control-plus>', lambda event: self._increase_textsize())
+        self.bind('<Control-plus>', lambda event: self._increase_textsize())
+        self.bind('<Control-minus>', lambda event: self._decrease_textsize())
+        self.bind('<Control-minus>', lambda event: self._decrease_textsize())
+
+    def _init_menubar(self):
+        _menubar = Menu(self, tearoff=False)
+        self.config(menu=_menubar)
+        _MenuVerb = Menu(_menubar, tearoff=False)
+        _MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._del_monitor_buf)
+        _menubar.add_cascade(label='Monitor', menu=_MenuVerb, underline=0)
+
+    def _del_monitor_buf(self):
+        for k in self.tab_list.keys():
+            self.tab_list[k].del_mon_buf()
+
+    def _increase_textsize(self):
+        for k in self.tab_list.keys():
+            self.tab_list[k].increase_textsize()
+
+    def _decrease_textsize(self):
+        for k in self.tab_list.keys():
+            self.tab_list[k].decrease_textsize()
+
+    def dB_mon_tasker(self):
+        try:
+            ind = self._tabControl_prim_ports.index(self._tabControl_prim_ports.select())
+        except TclError:
+            pass
+        else:
+            if ind in self.tab_list.keys():
+                self.tab_list[ind].tab_tasker()
 
     def _close(self):
         self._root_win.dualPortMon_win = None
+        for k in self.tab_list.keys():
+            self.tab_list[k].close_tab()
         self.destroy()

@@ -3,6 +3,7 @@
 Fixes:
 - Bandauslastungs-Graph löscht alte Daten nicht und Zeigt sie nach 24 Std. erneut an
 - Bandauslastungs-Graph zeigt ab 0 Uhr für 10 Minuten nichts mehr an
+- Scripterror bei AXIP Connection wenn IP nicht bekannt
 
 
 Optimierung:
@@ -38,6 +39,7 @@ Neue Implementierungen / Funktionen:
     - Port zum Senden wird automatisch gewählt (Port an dem der Frame zuletzt empfangen/ausgewertet wurde).
 
   - TX-Port wählbar (Primär-Port/Sekundär-Port)
+  - DualPort Monitor
 
 ###########################################################################################################
 ###########################################################################################################

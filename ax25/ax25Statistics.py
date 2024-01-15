@@ -316,7 +316,7 @@ class MH:
     def _input_bw_calc(self, data):
         port_id = data['port_id']
         ax_frame = data['ax_frame']
-        now = data['now']
+        now = ax_frame.rx_time
         self._init_bw_struct(port_id=port_id)
         if self._now_10sec.strftime('%M:%S')[:-1] != now.strftime('%M:%S')[:-1]:
             dif: timedelta = now - self._now_10sec
@@ -366,7 +366,7 @@ class MH:
             'port_id': int(port_id),
             'primary_port_id': int(primary_port_id),
             'tx': bool(tx),
-            'now': datetime.now(),
+            # 'now': datetime.now(),
         })
         return
 
@@ -396,7 +396,7 @@ class MH:
                 dx_alarm = True
         else:
             ent = self._MH_db[port_id][call_str]
-        ent.last_seen = data['now']
+        ent.last_seen = ax25_frame.rx_time
         ent.own_call = call_str
         ent.pac_n += 1
         if primary_port_id != -1:

@@ -119,6 +119,8 @@ class AX25Port(threading.Thread):
         self.tx_out(frame)
 
     def tx_out(self, frame):
+        setattr(frame, 'rx_time', datetime.datetime.now())
+        # frame.rx_time = datetime.datetime.now()
         self._gui_monitor(ax25frame=frame, tx=True)
         self._dualPort_monitor_input(ax25frame=frame, tx=True)
         self.tx_device(frame)
@@ -461,7 +463,6 @@ class AX25Port(threading.Thread):
         data = dict(
             tx=bool(tx),
             ax25frame=ax25frame,
-            dtime=datetime.datetime.now(),
             frame_rawData=bytes(ax25frame.data_bytes)
         )
         if not double:
@@ -707,6 +708,8 @@ class AX25Port(threading.Thread):
                 break
             if ax25frame.validate():
                 ax25frame.axip_add = buf.axip_add
+                # ax25frame.rx_time = datetime.datetime.now()
+                setattr(ax25frame, 'rx_time', datetime.datetime.now())
                 # ######### RX #############
                 if not self._rx_dualPort_handler(ax25_frame=ax25frame):
                     self.rx_handler(ax25frame)

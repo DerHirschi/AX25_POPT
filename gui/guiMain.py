@@ -402,7 +402,7 @@ class SideTabbedFrame:  # TODO: WTF
                     command=self._chk_tracer,
                     # state='disabled'
                     ).place(x=10, y=85)
-        _auto_tracer_state = {
+        auto_tracer_state = {
             True: 'disabled',
             False: 'normal'
         }.get(self._main_win.get_tracer(), 'disabled')
@@ -410,7 +410,7 @@ class SideTabbedFrame:  # TODO: WTF
                                                text="Auto-Tracer",
                                                variable=self._main_win.setting_auto_tracer,
                                                command=self._chk_auto_tracer,
-                                               state=_auto_tracer_state
+                                               state=auto_tracer_state
                                                )
         self._autotracer_chk_btn.place(x=10, y=110)
         Checkbutton(tab4_settings,
@@ -2408,6 +2408,7 @@ class PoPT_GUI_Main:
             #####################
             # self._aprs_task()
             self._monitor_task()
+            self._dualPort_monitor_task()
             self._update_qso_win()
             self._update_status_win()
             #####################
@@ -2754,6 +2755,16 @@ class PoPT_GUI_Main:
 
     # END Monitor WIN
     ###############################################################
+
+    ###############################################################
+    # Dual Port
+    def _dualPort_monitor_task(self):
+        if not self.dualPortMon_win:
+            return False
+        self.dualPortMon_win.dB_mon_tasker()
+        return True
+    ###############################################################
+
     ###############################################################
     # Open Toplevel Win
 
