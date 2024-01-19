@@ -91,7 +91,57 @@ class ChVars(object):
     # self.hex_output = True
 
 
-class SideTabbedFrame:  # TODO: WTF
+class AlarmIconFrame(tk.Frame):
+    def __init__(self, root):
+        tk.Frame.__init__(self, root, bg='#313336', height=20, width=50)
+        self.pack(fill=tk.X, pady=5)
+        self._mh_label = tk.Label(self, text='MH',
+                                  font=('Dyuthi', 11),
+                                  state='disabled',
+                                  background='#313336',
+                                  foreground='#18e002')
+        self._mh_label.pack(side=tk.LEFT, padx=3)
+
+        self._tracer_label = tk.Label(self, text='TRACER',
+                                      font=('Dyuthi', 11),
+                                      background='#313336',
+                                      state='disabled',
+                                      foreground='#18e002')
+        self._tracer_label.pack(side=tk.LEFT, padx=3)
+
+        self._pms_mail_label = tk.Label(self, text='✉',
+                                        font=('Dyuthi', 15, 'bold'),
+                                        background='#313336',
+                                        state='disabled',
+                                        foreground='#18e002')
+        self._pms_mail_label.pack(side=tk.LEFT, padx=3)
+
+    def set_dxAlarm(self, alarm_set=True):
+        if alarm_set:
+            if self._mh_label.cget('state') == 'disabled':
+                self._mh_label.configure(state='normal')
+        else:
+            if self._mh_label.cget('state') == 'normal':
+                self._mh_label.configure(state='disabled')
+
+    def set_tracerAlarm(self, alarm_set=True):
+        if alarm_set:
+            if self._tracer_label.cget('state') == 'disabled':
+                self._tracer_label.configure(state='normal')
+        else:
+            if self._tracer_label.cget('state') == 'normal':
+                self._tracer_label.configure(state='disabled')
+
+    def set_pmsMailAlarm(self, alarm_set=True):
+        if alarm_set:
+            if self._pms_mail_label.cget('state') == 'disabled':
+                self._pms_mail_label.configure(state='normal')
+        else:
+            if self._pms_mail_label.cget('state') == 'normal':
+                self._pms_mail_label.configure(state='disabled')
+
+
+class SideTabbedFrame:  # TODO
     def __init__(self, main_cl):
         self._main_win = main_cl
         self._lang = int(main_cl.language)
@@ -104,7 +154,8 @@ class SideTabbedFrame:  # TODO: WTF
             # width=300,
             height=400
         )
-        _tab_side_frame.grid(row=3, column=0, columnspan=6, pady=10, sticky="nsew")
+        # _tab_side_frame.grid(row=3, column=0, columnspan=6, pady=10, sticky="nsew")
+        _tab_side_frame.pack(fill=tk.X, expand=True, pady=5)
         """
         s = ttk.Style()
         s.theme_use('default')
@@ -521,7 +572,7 @@ class SideTabbedFrame:  # TODO: WTF
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         # Monitor RX-Filter Ports
         self._mon_port_on_vars = {}
-        all_ports = PORT_HANDLER.get_all_ports()
+        all_ports = PORT_HANDLER.ax25_ports
         for port_id in all_ports:
             self._mon_port_on_vars[port_id] = tk.BooleanVar(tab6_monitor)
             _x = 170
@@ -744,9 +795,9 @@ class SideTabbedFrame:  # TODO: WTF
         self.mon_call_ent.configure(values=vals)
 
     def _chk_mon_port_filter(self):
-        _all_ports = PORT_HANDLER.get_all_ports()
-        for port_id in _all_ports:
-            _all_ports[port_id].monitor_out = self._mon_port_on_vars[port_id].get()
+        all_ports = PORT_HANDLER.ax25_ports
+        for port_id in all_ports:
+            all_ports[port_id].monitor_out = self._mon_port_on_vars[port_id].get()
 
     def update_mon_port_id(self):
         if PORT_HANDLER.get_all_ports().keys():
@@ -1118,10 +1169,6 @@ class PoPT_GUI_Main:
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
         main_pw.add(l_frame, weight=100)
         main_pw.add(self._r_frame, weight=1)
-
-        r_pack_frame.rowconfigure(0, minsize=3, weight=1)  # Boarder
-        r_pack_frame.rowconfigure(1, minsize=220, weight=2)
-        r_pack_frame.rowconfigure(2, minsize=28, weight=1)  # CH BTN
         ###########################################
         # Channel Buttons
         self._ch_btn_blink_timer = time.time()
@@ -1155,22 +1202,15 @@ class PoPT_GUI_Main:
         self._pw.add(self._TXT_lower_frame, weight=1)
         #########################
         #########################
-        # Tabbed Frame right
-        self._side_btn_frame_top = tk.Frame(r_pack_frame, )
-        self._side_btn_frame_top.grid(row=1, rowspan=1, column=1, sticky="nsew")
-        self._side_btn_frame_top.rowconfigure(0, minsize=40, weight=0)  # CONN BTN
-        self._side_btn_frame_top.rowconfigure(1, minsize=40, weight=0)  # BTN row 2
-        self._side_btn_frame_top.rowconfigure(2, minsize=1, weight=0)  # Dummy
-        self._side_btn_frame_top.rowconfigure(3, minsize=300, weight=10)  # Reiter Frame
-
-        self._side_btn_frame_top.columnconfigure(0, minsize=10, weight=0)
-        self._side_btn_frame_top.columnconfigure(1, minsize=100, weight=2)
-        self._side_btn_frame_top.columnconfigure(2, minsize=100, weight=2)
+        # RIGHT Pane
+        self._Alarm_Frame = AlarmIconFrame(r_pack_frame)
         ##############
         # GUI Buttons
+        self._side_btn_frame_top = tk.Frame(r_pack_frame, )
+        self._side_btn_frame_top.pack(expand=True, pady=5)
         self._init_btn()
         ##############
-        # Side Frame
+        # tabbed Frame
         self.tabbed_sideFrame = SideTabbedFrame(self)
         ############################
         # Canvas Plot
@@ -1532,40 +1572,19 @@ class PoPT_GUI_Main:
         _menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=_MenuHelp, underline=0)
 
     def _init_btn(self):
-        _btn_upper_frame = tk.Frame(self._side_btn_frame_top)
-        _btn_lower_frame = tk.Frame(self._side_btn_frame_top)
-        _btn_upper_frame.place(x=5, y=5)
-        _btn_lower_frame.place(x=5, y=38)
-        self._conn_btn = tk.Button(_btn_upper_frame,
+        btn_upper_frame = tk.Frame(self._side_btn_frame_top)
+        btn_upper_frame.pack(anchor='w')
+        self._conn_btn = tk.Button(btn_upper_frame,
                                    text="New Conn",
                                    bg="green",
                                    width=8,
                                    command=self.open_new_conn_win)
-        # self._conn_btn.place(x=5, y=10)
         self._conn_btn.pack(side=tk.LEFT)
 
-        self._mh_btn = tk.Button(_btn_lower_frame,
-                                 text="MH",
-                                 # bg="yellow",
-                                 width=8,
-                                 command=self.open_MH_win)
-
-        # self._mh_btn.place(x=5, y=45)
-        self._mh_btn.pack(side=tk.LEFT)
-        self._mh_btn_def_clr = self._mh_btn.cget('bg')
-
-        self._mon_btn = tk.Button(_btn_upper_frame,
+        self._mon_btn = tk.Button(btn_upper_frame,
                                   text="Monitor",
                                   bg="yellow", width=8, command=lambda: self.switch_channel(0))
-        # self._mon_btn.place(x=110, y=10)
         self._mon_btn.pack(padx=2)
-
-        self._tracer_btn = tk.Button(_btn_lower_frame,
-                                     text="Tracer",
-                                     width=8,
-                                     command=self.open_be_tracer_win)  # .place(x=110, y=45)
-        self._tracer_btn.pack(side=tk.LEFT, padx=2)
-        self._tracer_btn_def_clr = self._tracer_btn.cget('bg')
 
     def _init_ch_btn_frame(self, root_frame):
         btn_font = ("fixedsys", 8,)
@@ -2341,37 +2360,6 @@ class PoPT_GUI_Main:
     ######################################################################
     #
     ######################################################################
-
-    def _dx_alarm(self):
-        """ Alarm when new User in MH List """
-        if self.setting_dx_alarm.get():
-            _clr = generate_random_hex_color()
-            if self._mh_btn.cget('bg') != _clr:
-                self._mh_btn.configure(bg=_clr)
-            _aprs_obj = PORT_HANDLER.get_aprs_ais()
-            if _aprs_obj is not None:
-                _aprs_obj.tracer_reset_auto_timer(self.mh.last_dx_alarm)
-
-    def _tracer_alarm(self):
-        """ Tracer Alarm """
-        # self.tabbed_sideFrame.tabControl.select(self.tabbed_sideFrame.tab2_mh)
-        _clr = generate_random_hex_color()
-        if self._tracer_btn.cget('bg') != _clr:
-            self._tracer_btn.configure(bg=_clr)
-
-    def _reset_tracer_alarm(self):
-        """ Tracer Alarm """
-        PORT_HANDLER.get_aprs_ais().tracer_alarm_reset()
-        if self._tracer_btn.cget('bg') != self._tracer_btn_def_clr:
-            self._tracer_btn.configure(bg=self._tracer_btn_def_clr)
-
-    def _reset_dx_alarm(self):
-        self.mh.dx_alarm_trigger = False
-
-        if self._mh_btn.cget('bg') != self._mh_btn_def_clr:
-            self._mh_btn.configure(bg=self._mh_btn_def_clr)
-
-    ######################################################################
     # TASKER
     def _tasker(self):  # MAINLOOP
         if self._is_closing:
@@ -2423,14 +2411,15 @@ class PoPT_GUI_Main:
             self._update_stat_info_conn_timer()
             self._update_ft_info()
             self.tabbed_sideFrame.tasker()
-            # if MH_LIST.new_call_alarm and self.setting_dx_alarm.get():
             if self._ch_alarm:
                 self._ch_btn_status_update()
-            if self.mh.dx_alarm_trigger:
-                self._dx_alarm()
+            # if self.mh.dx_alarm_trigger:
+            #     self.dx_alarm()
+            """
             if PORT_HANDLER.get_aprs_ais() is not None:
                 if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
-                    self._tracer_alarm()
+                    self.tracer_alarm()
+            """
             if self.settings_win is not None:
                 self.settings_win.tasker()
             if self.setting_sound:
@@ -2847,7 +2836,7 @@ class PoPT_GUI_Main:
     ######################
     # APRS Beacon Tracer
     def open_be_tracer_win(self):
-        self._reset_tracer_alarm()
+        self.reset_tracer_alarm()   # ??? PORTHANDLER set_tracerAlram ???
         if self.be_tracer_win is None:
             self.be_tracer_win = BeaconTracer(self)
 
@@ -2855,7 +2844,7 @@ class PoPT_GUI_Main:
     # MH WIN
     def open_MH_win(self):
         """MH WIN"""
-        self._reset_dx_alarm()  # TODO
+        PORT_HANDLER.set_dxAlarm(False)
         if self.mh_window is None:
             MHWin(self)
         self.tabbed_sideFrame.reset_dx_alarm()
@@ -3001,7 +2990,7 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
-        PORT_HANDLER.set_dualPort_PH()
+        PORT_HANDLER.set_dxAlarm()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
 
@@ -3495,3 +3484,28 @@ class PoPT_GUI_Main:
 
     def get_side_frame(self):
         return self._side_btn_frame_top
+
+        ######################################################################
+
+    def dx_alarm(self):
+        """ Alarm when new User in MH List """
+        if self.setting_dx_alarm.get():
+            self._Alarm_Frame.set_dxAlarm(True)
+
+    def tracer_alarm(self):
+        """ Tracer Alarm """
+        self._Alarm_Frame.set_tracerAlarm(True)
+
+    def reset_tracer_alarm(self):
+        """ Tracer Alarm """
+        self._Alarm_Frame.set_tracerAlarm(False)
+
+    def reset_dx_alarm(self):
+        self._Alarm_Frame.set_dxAlarm(False)
+
+    def pmsMail_alarm(self):
+        self._Alarm_Frame.set_pmsMailAlarm(True)
+
+    def reset_pmsMail_alarm(self):
+        self._Alarm_Frame.set_pmsMailAlarm(False)
+

@@ -110,8 +110,9 @@ def get_port_stat_struct():
 
 
 class MH:
-    def __init__(self):
+    def __init__(self, port_handler):
         print("MH Init")
+        self._port_handler = port_handler
         # self._db = None
         self._mh_inp_buffer = []
         self.dx_alarm_trigger = False
@@ -245,6 +246,7 @@ class MH:
             self.last_dx_alarm = time.time()
             self.dx_alarm_hist.append(ent.own_call)
             self._add_dx_alarm_hist(ent=ent)
+            self._port_handler.set_dxAlarm()
 
     def _add_dx_alarm_hist(self, ent):
         via = ''

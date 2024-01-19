@@ -18,6 +18,7 @@ class MSG_Center(tk.Toplevel):
         ###################################
         # Vars
         self._bbs_obj = PORT_HANDLER.get_bbs()
+        PORT_HANDLER.set_pmsMailAlarm(False)
         self._sort_rev = False
         self._last_sort_col = {}
         self._selected_msg = {

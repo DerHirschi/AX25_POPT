@@ -53,7 +53,7 @@ class APRS_ais(object):
         self.be_tracer_traced_packets = ais_cfg['be_tracer_traced_packets']
         self.be_tracer_alarm_hist = ais_cfg['be_tracer_alarm_hist']
         # Control vars
-        self._be_tracer_is_alarm = False
+        # self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''
         self._be_tracer_tx_rtt = time.time()
         self._be_tracer_interval_timer = time.time()
@@ -754,7 +754,9 @@ class APRS_ais(object):
             return False
         _dist = pack.get('distance', 0)
         if _dist >= self.be_tracer_alarm_range:
-            self._be_tracer_is_alarm = True
+            # self._be_tracer_is_alarm = True
+            if self.port_handler:
+                self.port_handler.set_tracerAlarm(True)
             self._tracer_add_alarm_hist(pack)
             return True
         return False
@@ -782,12 +784,6 @@ class APRS_ais(object):
             typ='TRACE',
         )
         self.be_tracer_alarm_hist[str(_hist_struc['key'])] = dict(_hist_struc)
-
-    def tracer_is_alarm(self):
-        return self._be_tracer_is_alarm
-
-    def tracer_alarm_reset(self):
-        self._be_tracer_is_alarm = False
 
     def tracer_update_gui(self):
         root_gui = self.port_handler.get_gui()

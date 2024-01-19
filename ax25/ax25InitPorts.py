@@ -142,7 +142,7 @@ class AX25PortHandler(object):
     #######################################################################
     # MH
     def _init_MH(self):
-        self.mh = MH()
+        self.mh = MH(self)
         self.mh.set_DB(self.db)
 
     def _mh_task(self):
@@ -714,6 +714,37 @@ class AX25PortHandler(object):
 
     def get_MH(self):
         return self.mh
+
+    #################################################
+    #
+
+    def set_dxAlarm(self, set_alarm=True):
+        if set_alarm:
+            aprs_obj = self.get_aprs_ais()
+            if all((aprs_obj, self.mh)):
+                aprs_obj.tracer_reset_auto_timer(self.mh.last_dx_alarm)
+
+            if self.gui:
+                self.gui.dx_alarm()
+        else:
+            if self.mh:
+                self.mh.dx_alarm_trigger = False
+            if self.gui:
+                self.gui.reset_dx_alarm()
+
+    def set_tracerAlarm(self, set_alarm=True):
+        if self.gui:
+            if set_alarm:
+                self.gui.tracer_alarm()
+            else:
+                self.gui.reset_tracer_alarm()
+
+    def set_pmsMailAlarm(self, set_alarm=True):
+        if self.gui:
+            if set_alarm:
+                self.gui.pmsMail_alarm()
+            else:
+                self.gui.reset_pmsMail_alarm()
 
 
 PORT_HANDLER = AX25PortHandler()

@@ -156,7 +156,7 @@ def parse_header_timestamp(path_str: str):
 
 class BBSConnection:
     def __init__(self, bbs_obj, ax25_connection):
-        print('BBSConnection INIT')
+        # print('BBSConnection INIT')
         self._ax25_conn = ax25_connection
         self._bbs = bbs_obj
         self._db = bbs_obj.get_db()
@@ -553,6 +553,9 @@ class BBSConnection:
             if not res:
                 logger.error(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
                 print(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
+            else:
+                ph = self._bbs.get_port_handler()
+                ph.set_pmsMailAlarm(True)
 
             del self._rx_msg_header[_k]
 
@@ -988,5 +991,8 @@ class BBS:
 
     def get_db(self):
         return self.db
+
+    def get_port_handler(self):
+        return self._port_handler
 
 
