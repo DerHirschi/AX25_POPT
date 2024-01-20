@@ -37,7 +37,7 @@ class NewMessageWindow(tk.Toplevel):
         label1 = ttk.Label(top_frame, text="Port:")
         label1.pack(side=tk.LEFT, padx=5)
 
-        port_vals = ['I-NET'] + list(PORT_HANDLER.ax25_ports.keys())
+        port_vals = ['I-NET'] + list(PORT_HANDLER.get_all_ports().keys())
         self.port_var = tk.StringVar(self)
         dropdown1 = ttk.Combobox(top_frame,
                                  width=3,

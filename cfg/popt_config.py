@@ -33,6 +33,7 @@ class Main_CFG:
             'gui_channel_vars': getNew_dict,
             # -- Beacon
             'beacon_tasks': [],
+            'dualPort_cfg': {},
         }
         self.load_CFG_fm_file()
         self._set_all_default_CFGs()
@@ -69,7 +70,8 @@ class Main_CFG:
     def save_CFG_to_file(self):
         logger.info(f'Main CFG: Config Saved to {self._config_filename}')
         print(f'Main CFG: Config Saved to {self._config_filename}')
-        # print(f'Main CFG: Config  {self._config}')
+        for conf_k in self._config.keys():
+            logger.debug(f'Main CFG: save {conf_k}')
         save_to_file(self._config_filename, dict(self._config))
 
     ####################
@@ -92,7 +94,7 @@ class Main_CFG:
     ####################
     # MH
     def load_CFG_MH(self):
-        return dict(self._config['mh_cfg'])
+        return self._config['mh_cfg']
 
     def save_CFG_MH(self, data: dict):
         self._config['mh_cfg'] = data
@@ -100,10 +102,10 @@ class Main_CFG:
     ####################
     # APRS
     def load_CFG_aprs_station(self):
-        return dict(self._config['aprs_station'])
+        return self._config['aprs_station']
 
     def load_CFG_aprs_ais(self):
-        return dict(self._config['aprs_ais'])
+        return self._config['aprs_ais']
 
     def save_CFG_aprs_ais(self, data: dict):
         self._config['aprs_ais'] = data
@@ -111,11 +113,11 @@ class Main_CFG:
     ####################
     # GUI
     def get_guiCFG_language(self):
-        return int(self._config['gui_main_parm'].get('gui_lang', 0))
+        return self._config['gui_main_parm'].get('gui_lang', 0)
 
     # GUI PARM
     def load_guiPARM_main(self):
-        return dict(self._config['gui_main_parm'])
+        return self._config['gui_main_parm']
 
     def save_guiPARM_main(self, data: dict):
         self._config['gui_main_parm'] = data
@@ -135,7 +137,7 @@ class Main_CFG:
 
     # Channel Vars
     def load_guiCH_VARS(self):
-        return dict(self._config['gui_channel_vars'])
+        return self._config['gui_channel_vars']
 
     def save_guiCH_VARS(self, data: dict):
         self._config['gui_channel_vars'] = data
@@ -143,10 +145,18 @@ class Main_CFG:
     #################################################
     # Beacon
     def get_Beacon_tasks(self):
-        return list(self._config.get('beacon_tasks', []))
+        return self._config.get('beacon_tasks', [])
 
     def set_Beacon_tasks(self, data: list):
         self._config['beacon_tasks'] = list(data)
+
+    #################################################
+    # Dual Port
+    def get_dualPort_CFG(self):
+        return self._config.get('dualPort_cfg', {})
+
+    def set_dualPort_CFG(self, cfg: dict):
+        self._config['dualPort_cfg'] = dict(cfg)
 
 
 POPT_CFG = Main_CFG()

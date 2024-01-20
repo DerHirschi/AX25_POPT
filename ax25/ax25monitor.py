@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from ax25.ax25NetRom import NetRom_decode_I, NetRom_decode_UI
 # import logging
 
 from ax25aprs.aprs_dec import format_aprs_f_monitor
@@ -41,7 +43,7 @@ def monitor_frame_inp(ax25_frame, port_cfg):
         else:
             via_calls.append(get_call_str(stat.call, stat.ssid) + dist)
 
-    out_str = f"{port_name} {datetime.now().strftime('%H:%M:%S')}: {from_call} to {to_call}"
+    out_str = f"{port_name} {ax25_frame.rx_time.strftime('%H:%M:%S')}: {from_call} to {to_call}"
     out_str += ' via ' + ' '.join(via_calls) if via_calls else ''
     out_str += ' cmd' if ax25_frame.ctl_byte.cmd else ' rpt'
     # out_str += f' ({ax25_frame.ctl_byte.hex}) {ax25_frame.ctl_byte.mon_str}'
@@ -53,22 +55,22 @@ def monitor_frame_inp(ax25_frame, port_cfg):
     if ax25_frame.data:
         data = ax25_frame.data
         if type(ax25_frame.data) is bytes:
-
-            if int(ax25_frame.pid_byte.hex) == int(0xCF):     # Net-Rom
-                tmp = str(ax25_frame.data[20:].hex())
-                opt = int(ax25_frame.data[19])
-                data = f'Net-Rom opt: {opt}\r'
-                b_tmp = bytes.fromhex(tmp)
-                data += b_tmp.decode('ASCII', 'ignore')
+            """
+            if int(ax25_frame.pid_byte.hex) == 0xCF:     # Net-Rom
+                if ax25_frame.ctl_byte.flag == 'UI':
+                    data = NetRom_decode_UI(ax25_frame.data)
+                elif ax25_frame.ctl_byte.flag == 'I':
+                    data = NetRom_decode_I(ax25_frame.data)
             else:
-                data = try_decode(ax25_frame.data)
-                """
-                try:
-                    data = ax25_frame.data.decode('ASCII')
-                    
-                except UnicodeDecodeError:
-                    data = f'<BIN> {len(ax25_frame.data)} Bytes'
-                """
+            """
+            data = try_decode(ax25_frame.data)
+            """
+            try:
+                data = ax25_frame.data.decode('ASCII')
+                
+            except UnicodeDecodeError:
+                data = f'<BIN> {len(ax25_frame.data)} Bytes'
+            """
         else:
             print(f"Monitor decode Data == STR: {data} - {ax25_frame.from_call.call_str} - {ax25_frame.ctl_byte.flag}")
         data = data.replace('\r\n', '\n').replace('\n\r', '\n').replace('\r', '\n')

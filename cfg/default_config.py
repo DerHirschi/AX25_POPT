@@ -128,3 +128,14 @@ def getNew_BEACON_cfg():
         'pid': 0xF0,
         'scheduler_cfg': dict(getNew_schedule_config()),
     }
+
+
+#######################################
+# Dual Port CFG
+def getNew_dualPort_cfg():
+    return dict(
+        tx_primary=True,        # TX Primary/Secondary
+        auto_tx=False,          # Auto TX
+        primary_port_id=-1,
+        secondary_port_id=-1
+    )

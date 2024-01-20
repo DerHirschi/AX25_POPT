@@ -7,7 +7,6 @@ import crcmod
 
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
-# from ax25.ax25Statistics import MH_LIST
 from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from fnc.ax25_fnc import reverse_uid
@@ -32,10 +31,8 @@ class AX25Port(threading.Thread):
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
-        self.deb_port_vars = {}
 
         """ self.ax25_port_handler will be set in AX25PortInit """
-        # self.ax25_ports: {int: AX25Port}    # TODO Check if needed
         ############
         # CONFIG
         self.port_cfg = port_cfg
@@ -54,22 +51,29 @@ class AX25Port(threading.Thread):
         self.is_smart_digi = self.port_cfg.parm_isSmartDigi
         self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
         self._digi_TXD = time.time()
-        self._digi_buf: [AX25Frame] = []
-        self._UI_buf: [AX25Frame] = []
+        self._digi_buf = []     # RX/TX
+        self._UI_buf = []       # TX
         self.connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
         """ APRS Stuff """
-        self.aprs_stat = self.port_cfg.parm_aprs_station    # TODO not used yet
+        # self.aprs_stat = self.port_cfg.parm_aprs_station
         # self.aprs_ais = PORT_HANDLER.get_aprs_ais()
         # CONFIG ENDE
         #############
         #############
         # VARS
-        # self.monitor = ax25monitor.Monitor()
         self.monitor_out = True
-        self.gui = None
         self.device = None
         self._mh = self.port_handler.get_MH()
+        #############
+        # Dual Port
+        self.dualPort_primaryPort = None
+        self.dualPort_secondaryPort = None
+        self.dualPort_lastRX = b''      # Prim
+        self.dualPort_echoFilter = []   # Prim
+        self.dualPort_cfg = {}
+        self.dualPort_monitor_buf = []
+        # PORT_HANDLER.dualPort_Monitor_buffer
         ##############
         # AXIP VARs
         self.own_ipAddr = ''
@@ -110,6 +114,18 @@ class AX25Port(threading.Thread):
         return RxBuf()
 
     def tx(self, frame: AX25Frame):
+        if self.tx_dualPort_handler(frame):
+            return
+        self.tx_out(frame)
+
+    def tx_out(self, frame):
+        setattr(frame, 'rx_time', datetime.datetime.now())
+        # frame.rx_time = datetime.datetime.now()
+        self._gui_monitor(ax25frame=frame, tx=True)
+        self._dualPort_monitor_input(ax25frame=frame, tx=True)
+        self.tx_device(frame)
+
+    def tx_device(self, frame: AX25Frame):
         pass
 
     def tx_multicast(self, frame: AX25Frame):
@@ -123,29 +139,35 @@ class AX25Port(threading.Thread):
         """ Internal TXD. Not Kiss TXD """
         self._digi_TXD = time.time() + self.parm_digi_TXD / 1000
 
-    def _rx_handler(self, ax25_frame: AX25Frame):
+    ###################################################
+    # RX Stuff
+    def rx_handler(self, ax25_frame: AX25Frame):
         """ Main RX-Handler """
         self._reset_ft_wait_timer(ax25_frame)
         # Monitor / MH / Port-Statistic
-        self._gui_monitor(ax25frame=ax25_frame, tx=False)
+        # self._gui_monitor(ax25frame=ax25_frame, tx=False)
+        isUI = False
         if ax25_frame.ctl_byte.flag == 'UI':
             self._rx_UI_handler(ax25_frame=ax25_frame)
+            isUI = True
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
-            if self._rx_link_handler(ax25_frame=ax25_frame):
-                # Link Connection Handler
-                return True
+            if not isUI:
+                if self._rx_link_handler(ax25_frame=ax25_frame):
+                    # Link Connection Handler
+                    return True
             if self._rx_simple_digi_handler(ax25_frame=ax25_frame):
                 # Simple DIGI
                 return True
         elif ax25_frame.is_digipeated:
-            if self._rx_conn_handler(ax25_frame=ax25_frame):
-                # Connections
-                return True
+            if not isUI:
+                if self._rx_conn_handler(ax25_frame=ax25_frame):
+                    # Connections
+                    return True
+                if self._rx_new_conn_handler(ax25_frame=ax25_frame):
+                    # New Connections
+                    return True
             if self._rx_pipe_handler(ax25_frame=ax25_frame):
                 # Pipe
-                return True
-            if self._rx_new_conn_handler(ax25_frame=ax25_frame):
-                # New Connections
                 return True
         return False
 
@@ -186,8 +208,6 @@ class AX25Port(threading.Thread):
         return False
 
     def _rx_new_conn_handler(self, ax25_frame: AX25Frame):
-        if ax25_frame.ctl_byte.flag == 'UI':
-            return False
         # New Incoming Connection
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
@@ -206,7 +226,45 @@ class AX25Port(threading.Thread):
                     return True
         return False
 
-    def _tx_handler(self):
+    def _rx_dualPort_handler(self, ax25_frame: AX25Frame):
+        if not self.dualPort_cfg:
+            return False
+        if not all((self.dualPort_primaryPort, self.dualPort_secondaryPort)):
+            return False
+        frame_raw = bytes(ax25_frame.data_bytes)
+        # DualPort Echo Filter
+        if frame_raw in self.dualPort_primaryPort.dualPort_echoFilter:
+            return True
+        # DualPort lastRX Filter
+        if frame_raw == self.dualPort_primaryPort.dualPort_lastRX:
+            self.dualPort_primaryPort.dualPort_lastRX = b''
+            # DualPort Monitor
+            self._dualPort_monitor_input(ax25frame=ax25_frame, tx=False, double=True)
+            # MH / Port-Statistic
+            self._mh_input(ax25_frame, tx=False)
+            return True
+        self.dualPort_primaryPort.dualPort_lastRX = frame_raw
+        self.dualPort_primaryPort.rx_handler(ax25_frame)
+        # Monitor
+        self._gui_monitor(ax25frame=ax25_frame, tx=False)
+        # DualPort Monitor
+        self._dualPort_monitor_input(ax25frame=ax25_frame, tx=False)
+        # MH / Port-Statistic
+        self._mh_input(ax25_frame, tx=False)
+        return True
+
+    ###################################################
+    # TX Stuff
+    def tx_dualPort_handler(self, frame: AX25Frame):
+        if not self.check_dualPort():
+            return False
+        tx_port = self.get_dualPort_txPort(frame.to_call.call_str)
+        tx_port.tx_out(frame)
+        self.dualPort_echoFilter.append(bytes(frame.data_bytes))
+        self.dualPort_echoFilter = self.dualPort_echoFilter[-7:]
+        return True
+
+    def tx_handler(self):
         """ Main TX-Handler """
         """All Connections"""
         if self._tx_connection_buf():
@@ -228,13 +286,12 @@ class AX25Port(threading.Thread):
     def _tx_connection_buf(self):
         tr = False
         for k in self.connections.keys():
-            conn: AX25Conn = self.connections[k]
+            conn = self.connections[k]
             if time.time() > conn.t2 and not tr:
                 snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
                 conn.tx_buf_ctl = []
                 conn.tx_buf_2send = []
                 conn.REJ_is_set = False
-                el: AX25Frame
                 for el in snd_buf:
                     if el.digi_call and conn.is_link:
                         # TODO Just check for digi_call while encoding
@@ -247,13 +304,12 @@ class AX25Port(threading.Thread):
                     except AX25DeviceFAIL as e:
                         raise e
                     # Monitor
-                    self._gui_monitor(ax25frame=el, tx=True)
+                    # self._gui_monitor(ax25frame=el, tx=True)
             else:
                 tr = True
         return tr
 
     def _tx_pipe_buf(self):
-        pipe: AX25Pipe
         tr = False
         for uid in self.pipes.keys():
             pipe = self.pipes[uid]
@@ -265,7 +321,7 @@ class AX25Port(threading.Thread):
                 except AX25DeviceFAIL as e:
                     raise e
                 # Monitor
-                self._gui_monitor(ax25frame=frame, tx=True)
+                # self._gui_monitor(ax25frame=frame, tx=True)
             pipe.tx_frame_buf = []
         return tr
 
@@ -279,14 +335,13 @@ class AX25Port(threading.Thread):
             except AX25DeviceFAIL as e:
                 raise e
             # Monitor
-            self._gui_monitor(ax25frame=fr, tx=True)
+            # self._gui_monitor(ax25frame=fr, tx=True)
         self._UI_buf = []
         return tr
 
     def _tx_digi_buf(self):
         tr = False
         if time.time() > self._digi_TXD:
-            fr: AX25Frame
             for fr in self._digi_buf:
                 try:
                     self.tx(frame=fr)
@@ -294,7 +349,7 @@ class AX25Port(threading.Thread):
                 except AX25DeviceFAIL as e:
                     raise e
                 # Monitor
-                self._gui_monitor(ax25frame=fr, tx=True)
+                # self._gui_monitor(ax25frame=fr, tx=True)
             self._digi_buf = []
         return tr
 
@@ -312,16 +367,139 @@ class AX25Port(threading.Thread):
                 except AX25EncodingERROR:
                     logger.error('Encoding Error: ! MSG to short !')
                 # Monitor
-                self._gui_monitor(ax25frame=fr, tx=True)
-
+                # self._gui_monitor(ax25frame=fr, tx=True)
             self.port_handler.rx_echo[self.port_id].tx_buff = []
         return tr
 
     def _rx_echo(self, ax25_frame: AX25Frame):
-        if self.gui is not None:
-            if self.gui.setting_rx_echo.get():
-                self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
+        if self.port_handler.rx_echo_on:
+            self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
+    ##########################################################
+    # DualPort
+    def reset_dualPort(self):
+        """ Called fm PortHandler """
+        if self.dualPort_secondaryPort:
+            self.dualPort_secondaryPort.dualPort_cfg = {}
+            self.dualPort_secondaryPort.dualPort_primaryPort = None
+            self.dualPort_secondaryPort.dualPort_secondaryPort = None
+        self.dualPort_cfg = {}
+        self.dualPort_primaryPort = None
+        self.dualPort_secondaryPort = None
+
+    def set_dualPort(self, conf: dict, secondary_port):
+        """ Called fm PortHandler """
+        if not all((conf, secondary_port)):
+            return False
+        """
+        if any((self.dualPort_primaryPort, self.dualPort_secondaryPort)):
+            return False
+        """
+        del self.dualPort_primaryPort
+        del self.dualPort_secondaryPort
+        self.dualPort_primaryPort = None
+        self.dualPort_secondaryPort = None
+        secondary_port.dualPort_cfg = conf
+        secondary_port.dualPort_primaryPort = self
+        secondary_port.dualPort_secondaryPort = secondary_port
+        self.dualPort_cfg = secondary_port.dualPort_cfg
+        self.dualPort_primaryPort = self
+        self.dualPort_secondaryPort = secondary_port
+        return True
+
+    def is_dualPort(self):
+        """ Called fm PortHandler """
+        if self.dualPort_cfg:
+            return self.check_dualPort()
+        return False
+
+    def is_dualPort_primary(self):
+        """ Called fm PortHandler """
+        if self.check_dualPort():
+            return bool(self.dualPort_primaryPort == self)
+        return False
+
+    def get_dualPort_primary(self):
+        """ Called fm PortHandler """
+        if self.check_dualPort():
+            return self.dualPort_primaryPort
+        return None
+
+    def check_dualPort(self):
+        if self.dualPort_cfg:
+            if not all((self.dualPort_primaryPort, self.dualPort_secondaryPort)):
+                self.reset_dualPort()
+                return False
+            return True
+        if any((self.dualPort_primaryPort, self.dualPort_secondaryPort)):
+            self.reset_dualPort()
+        return False
+
+    def get_dualPort_txPort(self, call=''):
+        if not self.check_dualPort():
+            return self
+        if not self.dualPort_cfg.get('auto_tx', False):
+            if self.dualPort_cfg.get('tx_primary', True):
+                return self.dualPort_primaryPort
+            return self.dualPort_secondaryPort
+        # AutoPort FIXME
+        port_id = self.dualPort_primaryPort.port_id
+        last_port_id = {
+            0: self._mh.get_dualPort_firstRX(call, port_id),
+            1: self._mh.get_dualPort_lastRX(call, port_id),
+        }.get(self.dualPort_cfg.get('auto_tx_mode', 0), None)
+        # last_port_id = self._mh.get_dualPort_lastRX(call, port_id)
+        if last_port_id is None:
+            return self.dualPort_primaryPort
+        if last_port_id == self.dualPort_secondaryPort.port_id:
+            return self.dualPort_secondaryPort
+        return self.dualPort_primaryPort
+
+    def _dualPort_monitor_input(self, ax25frame, tx: bool, double=False):
+        if not self.check_dualPort():
+            return False
+        data = dict(
+            tx=bool(tx),
+            ax25frame=ax25frame,
+            frame_rawData=bytes(ax25frame.data_bytes)
+        )
+        if not double:
+            self._dualPort_monitor_insert(data)
+            return
+        self._dualPort_monitor_update(data)
+
+    def _dualPort_monitor_update(self, data: dict):
+        if not self.dualPort_primaryPort.dualPort_monitor_buf:
+            self._dualPort_monitor_insert(data)
+            return
+        temp_data = self.dualPort_primaryPort.dualPort_monitor_buf[-1]
+        is_prim = self.is_dualPort_primary()
+        self_port_index = int(not is_prim)
+        sec_port_index = int(is_prim)
+        if temp_data[self_port_index]:
+            self._dualPort_monitor_insert(data)
+            return
+        if not temp_data[sec_port_index]:
+            self._dualPort_monitor_insert(data)
+            return
+        if temp_data[sec_port_index]['frame_rawData'] != data['frame_rawData']:
+            self._dualPort_monitor_insert(data)
+            return
+        temp_data[self_port_index] = data
+
+    def _dualPort_monitor_insert(self, data: dict):
+        if self.is_dualPort_primary():
+            self.dualPort_primaryPort.dualPort_monitor_buf.append(
+                [data, {}]
+            )
+        else:
+            self.dualPort_primaryPort.dualPort_monitor_buf.append(
+                [{}, data]
+            )
+        self.dualPort_primaryPort.dualPort_monitor_buf = self.dualPort_primaryPort.dualPort_monitor_buf[-10000:]
+
+    ##########################################################
+    # Port/Connection Tasker
     def _task_Port(self):
         """ Execute Port related Cronjob like Beacon sending"""
         self._task_connections()
@@ -333,6 +511,8 @@ class AX25Port(threading.Thread):
             if conn:
                 conn.exec_cron()
 
+    ############################################################
+    # Pipe-Tool
     def build_new_pipe(self,
                        own_call,
                        add_str,
@@ -357,6 +537,8 @@ class AX25Port(threading.Thread):
             return True
         return False
 
+    ############################################################
+    # L3 Connection
     def build_new_connection(self,
                              own_call: str,
                              dest_call: str,
@@ -427,6 +609,8 @@ class AX25Port(threading.Thread):
                 del self.connections[conn_uid]
                 return
 
+    ####################################################################
+    # L2 AX25 Frame
     def send_UI_frame(self,
                       own_call,
                       add_str: str,
@@ -464,22 +648,27 @@ class AX25Port(threading.Thread):
             self._UI_buf.append(frame)
             return True
 
-    def _reset_ft_wait_timer(self, ax25_frame: AX25Frame):
+    def _reset_ft_wait_timer(self, ax25_frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
             for k in self.connections.keys():
                 self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
 
-    def _gui_monitor(self, ax25frame: AX25Frame, tx: bool = True):
-        self._mh.mh_input(ax25frame, self.port_id, tx)
+    def _gui_monitor(self, ax25frame, tx: bool = True):
         if self.monitor_out:
-            if self.gui:
-                self.gui.update_monitor(
+            port_cfg = self.port_cfg
+            self.port_handler.update_monitor(
                     # monitor_frame_inp(ax25frame, self.port_cfg),
                     ax25frame,
-                    port_conf=self.port_cfg,
+                    port_conf=port_cfg,
                     tx=tx)
 
+    def _mh_input(self, ax25frame, tx: bool):
+        # MH / Port-Statistic
+        primary_port_id = self.dualPort_cfg.get('primary_port_id', -1)
+        self._mh.mh_input(ax25frame, self.port_id, tx=tx, primary_port_id=primary_port_id)
+
     def run(self):
+        """ Main Loop """
         while self.loop_is_running:
             self._tasks()
         # time.sleep(0.05)
@@ -517,9 +706,15 @@ class AX25Port(threading.Thread):
                 break
             if ax25frame.validate():
                 ax25frame.axip_add = buf.axip_add
+                # ax25frame.rx_time = datetime.datetime.now()
+                setattr(ax25frame, 'rx_time', datetime.datetime.now())
                 # ######### RX #############
-                # Handling
-                self._rx_handler(ax25frame)
+                if not self._rx_dualPort_handler(ax25_frame=ax25frame):
+                    self.rx_handler(ax25frame)
+                    # Monitor
+                    self._gui_monitor(ax25frame=ax25frame, tx=False)
+                    # MH / Port-Statistic
+                    self._mh_input(ax25frame, tx=False)
                 # RX-ECHO
                 self._rx_echo(ax25_frame=ax25frame)
                 # AXIP-Multicast
@@ -530,12 +725,12 @@ class AX25Port(threading.Thread):
                 break
 
         if self.loop_is_running:
+            #############################################
+            # Crone
+            self._task_Port()
             if time.time() > self.TXD or self.port_cfg.parm_full_duplex:
-                #############################################
-                # Crone
-                self._task_Port()
                 # ######### TX #############
-                self._tx_handler()
+                self.tx_handler()
 
 
 class KissTCP(AX25Port):
@@ -548,7 +743,6 @@ class KissTCP(AX25Port):
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
             try:
                 self.device.settimeout(sock_timeout)
-                # ?? TODO DNS support ??
                 self.device.connect(self.port_param)
                 self.device_is_running = True
 
@@ -612,7 +806,7 @@ class KissTCP(AX25Port):
         else:
             return ret
 
-    def tx(self, frame: AX25Frame):
+    def tx_device(self, frame: AX25Frame):
         try:
             self.device.sendall(self.kiss.kiss(frame.data_bytes))
             # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
@@ -725,7 +919,7 @@ class KISSSerial(AX25Port):
                 else:
                     return ret
 
-    def tx(self, frame: AX25Frame):
+    def tx_device(self, frame: AX25Frame):
         if self.device is None:
             try:
                 # self.init()
@@ -826,7 +1020,7 @@ class AXIP(AX25Port):
                 ret.kiss = b''
             return ret
 
-    def tx(self, frame: AX25Frame, no_multicast=False):
+    def tx_device(self, frame: AX25Frame, no_multicast=False):
         if frame.axip_add != ('', 0):
             axip_add = get_ip_by_hostname(frame.axip_add[0])
             if axip_add:
@@ -870,7 +1064,7 @@ class AXIP(AX25Port):
                 frame.axip_add = axip_add
                 # TODO Failed IP
                 try:
-                    self.tx(frame, no_multicast=True)
+                    self.tx_device(frame, no_multicast=True)
                 except (ConnectionRefusedError, ConnectionError, socket.timeout):
                     self._mh.mh_ip_failed(axip_add, self.port_id)
                 except (OSError, socket.error) as e:

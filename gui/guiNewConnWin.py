@@ -136,9 +136,12 @@ class NewConnWin(tk.Toplevel):
         _menubar.add_cascade(label='History', menu=_MenuVerb, underline=0)
 
     def _set_port_index(self, index: int):
-        self._port_index = index
         port = PORT_HANDLER.get_port_by_index(index)
+
+        # port = PORT_HANDLER.get_port_by_index(index)
         if port:
+            index = port.port_id
+            self._port_index = index
             if port.port_typ == 'AXIP':
                 self.ax_ip_ip = \
                     (
@@ -174,7 +177,9 @@ class NewConnWin(tk.Toplevel):
                     )
                 self.ax_ip_port[0].place(x=300, y=80)
                 self.ax_ip_port[1].place(x=380, y=80)
-                call_str = self.call_txt_inp_var.get()
+                call_str = self.call_txt_inp_var.get().upper()
+                if call_str:
+                    call_str = call_str.split(' ')[0]
 
                 # axip_fm_db = USER_DB.get_AXIP(str(call_obj.call_str))
                 mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(call_str, port.port_cfg.parm_axip_fail)
@@ -188,7 +193,13 @@ class NewConnWin(tk.Toplevel):
                     self.ax_ip_port[1].insert(tk.END, prt)
                 self._call_txt_inp.focus_set()
                 self.own_call_dd_men.destroy()
-                opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
+                port = PORT_HANDLER.get_port_by_index(self._port_index)
+                if not port:
+                    opt = ['']
+                else:
+                    opt = port.my_stations
+                if not opt:
+                    opt = ['']
                 self.own_call_dd_men = tk.OptionMenu(self, self.own_call_var, *opt)
                 self.own_call_dd_men.place(x=80, y=120)
                 self.own_call_dd_men.configure()
@@ -202,7 +213,12 @@ class NewConnWin(tk.Toplevel):
                     self.ax_ip_port[0].destroy()
                     self.ax_ip_port[1].destroy()
                 self.own_call_dd_men.destroy()
-                opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
+
+                port = PORT_HANDLER.get_port_by_index(self._port_index)
+                if not port:
+                    opt = ['']
+                else:
+                    opt = port.my_stations
                 if not opt:
                     opt = ['']
                 self.own_call_dd_men = tk.OptionMenu(self, self.own_call_var, *opt)
@@ -223,7 +239,7 @@ class NewConnWin(tk.Toplevel):
 
     def _process_new_conn_win(self):
         axip_address = ('', 0)
-        addrs_str = self.call_txt_inp_var.get()
+        addrs_str = self.call_txt_inp_var.get().upper()
         ch_id = self._main.get_free_channel(self._main.channel_index)
         if addrs_str:
             own_call = self.own_call_var.get()
@@ -236,13 +252,13 @@ class NewConnWin(tk.Toplevel):
             port = PORT_HANDLER.get_port_by_index(self._port_index)
             if port:
                 if port.port_typ == 'AXIP':
-                    mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(dest_call, port.port_cfg.parm_axip_fail)
                     # Just if u switch after enter in call
                     axip_ip_inp = self.ax_ip_ip[1].get('0.0', tk.END)[:-1]
                     axip_port = self.ax_ip_port[1].get('0.0', tk.END)[:-1]
                     axip_ip = get_ip_by_hostname(axip_ip_inp)
-                    if not axip_ip:
-                        if mh_ent[1]:
+                    if not axip_ip and not check_ip_add_format(axip_ip_inp):
+                        mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(dest_call, port.port_cfg.parm_axip_fail)
+                        if mh_ent[0]:
                             ip = mh_ent[0]
                             prt = str(mh_ent[1])
                             self.ax_ip_ip[1].delete('1.0', tk.END)
@@ -250,8 +266,10 @@ class NewConnWin(tk.Toplevel):
                             self.ax_ip_port[1].delete('1.0', tk.END)
                             self.ax_ip_port[1].insert(tk.END, prt)
                             axip_port = prt
-                            axip_ip = ip
-                            axip_ip = get_ip_by_hostname(axip_ip)
+                            if check_ip_add_format(ip):
+                                axip_ip = ip
+                            else:
+                                axip_ip = get_ip_by_hostname(axip_ip)
                     else:
                         USER_DB.set_AXIP(str(dest_call), (axip_ip_inp, axip_port))
 
@@ -288,7 +306,7 @@ class NewConnWin(tk.Toplevel):
                     self._destroy_new_conn_win()
 
     def _set_conn_hist(self, event):
-        ent_key = self.call_txt_inp_var.get()
+        ent_key = self.call_txt_inp_var.get().upper()
         port_id = self._conn_hist.get(ent_key, {}).get('port_id', None)
         own_call = self._conn_hist.get(ent_key, {}).get('own_call', '')
         if port_id is not None:
@@ -297,7 +315,7 @@ class NewConnWin(tk.Toplevel):
             self.own_call_var.set(own_call)
 
     def _set_ownCall_fm_hist(self):
-        ent_key = self.call_txt_inp_var.get()
+        ent_key = self.call_txt_inp_var.get().upper()
         own_call = self._conn_hist.get(ent_key, {}).get('own_call', '')
         if own_call:
             self.own_call_var.set(own_call)
@@ -305,7 +323,7 @@ class NewConnWin(tk.Toplevel):
     def preset_ent(self, call: str, port_id: int):
         if not call:
             return
-        self.call_txt_inp_var.set(call)
+        self.call_txt_inp_var.set(call.upper())
         self._set_port_index(port_id)
         self._set_ownCall_fm_hist()
 

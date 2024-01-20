@@ -53,7 +53,7 @@ class APRS_ais(object):
         self.be_tracer_traced_packets = ais_cfg['be_tracer_traced_packets']
         self.be_tracer_alarm_hist = ais_cfg['be_tracer_alarm_hist']
         # Control vars
-        self._be_tracer_is_alarm = False
+        # self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''
         self._be_tracer_tx_rtt = time.time()
         self._be_tracer_interval_timer = time.time()
@@ -592,7 +592,7 @@ class APRS_ais(object):
             port_id = int(port_id)
         except ValueError:
             return
-        ax_port = self.port_handler.ax25_ports.get(port_id, False)
+        ax_port = self.port_handler.get_all_ports().get(port_id, None)
         if ax_port:
             path = pack.get('path', [])
             msg_text = pack.get('raw_message_text', '').encode('ASCII', 'ignore')
@@ -754,7 +754,9 @@ class APRS_ais(object):
             return False
         _dist = pack.get('distance', 0)
         if _dist >= self.be_tracer_alarm_range:
-            self._be_tracer_is_alarm = True
+            # self._be_tracer_is_alarm = True
+            if self.port_handler:
+                self.port_handler.set_tracerAlarm(True)
             self._tracer_add_alarm_hist(pack)
             return True
         return False
@@ -783,19 +785,13 @@ class APRS_ais(object):
         )
         self.be_tracer_alarm_hist[str(_hist_struc['key'])] = dict(_hist_struc)
 
-    def tracer_is_alarm(self):
-        return self._be_tracer_is_alarm
-
-    def tracer_alarm_reset(self):
-        self._be_tracer_is_alarm = False
-
     def tracer_update_gui(self):
-        _root_gui = self.port_handler.get_root_gui()
-        if _root_gui is not None:
+        root_gui = self.port_handler.get_gui()
+        if root_gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
-            if _root_gui.be_tracer_win is not None:
+            if root_gui.be_tracer_win is not None:
                 # TODO Call fm guiMain loop (may cause random crash ?)
-                _root_gui.be_tracer_win.update_tree_data()
+                root_gui.be_tracer_win.update_tree_data()
 
     def tracer_traces_get(self):
         return self.be_tracer_traced_packets

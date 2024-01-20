@@ -64,10 +64,10 @@ def decode_FRMR(ifield):
     print("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
     print("PID: {}".format(pid))
     print("Data: {}".format("".join(data)))
-    logger.error("Decoded FRMR Frame:")
-    logger.error("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
-    logger.error("PID: {}".format(pid))
-    logger.error("Data: {}".format("".join(data)))
+    logger.warning("Decoded FRMR Frame:")
+    logger.warning("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
+    logger.warning("PID: {}".format(pid))
+    logger.warning("Data: {}".format("".join(data)))
     return tmp
 
 
@@ -88,11 +88,11 @@ class Call:
             self.call += chr(int(c) >> 1)
         self.call = self.call.replace(' ', '').upper()
         """Address > CRRSSID1    Digi > HRRSSID1"""
-        bi = bin(int(hex(inp[-1])[2:], 16))[2:].zfill(8)
-        self.s_bit = bool(int(bi[7], 2))  # Stop Bit      Bit 8
-        self.c_bit = bool(int(bi[0], 2))  # C bzw H Bit   Bit 1
-        self.ssid = int(bi[3:7], 2)  # SSID          Bit 4 - 7
-        self.r_bits = bi[1:3]  # Bit 2 - 3 not used. Free to use for any application .?..
+        bi = bin(inp[-1])[2:].zfill(8)
+        self.s_bit = bool(int(bi[7], 2))    # Stop Bit      Bit 8
+        self.c_bit = bool(int(bi[0], 2))    # C bzw H Bit   Bit 1
+        self.ssid = int(bi[3:7], 2)         # SSID          Bit 4 - 7
+        self.r_bits = bi[1:3]               # Bit 2 - 3 not used. Free to use for any application .?..
         self.call_str = get_call_str(self.call, self.ssid)
 
     def enc_call(self):
@@ -549,7 +549,6 @@ class AX25Frame:
         else:
             self.to_call.s_bit = False
             self.from_call.s_bit = False
-            el: Call
             for el in self.via_calls:
                 el.s_bit = False
             self.via_calls[-1].s_bit = True
@@ -559,7 +558,6 @@ class AX25Frame:
         Dec: Check if Packet runs through all Digi's
         Enc: Set all ViaCalls C-Bits to 0
         """
-        ca: Call
         if dec:
             for ca in self.via_calls:
                 if not ca.c_bit:
@@ -571,7 +569,6 @@ class AX25Frame:
 
     def digi_set_h_bits(self):
         if self.digi_call:
-            ca: Call
             tr = True
             for ca in self.via_calls:
                 ca.c_bit = bool(tr)
@@ -734,9 +731,9 @@ class AX25Frame:
         """
         :return: bool
         """
-        if len(self.data_bytes) < 15:
-            print('Validate Error: Pac length')
-            logger.error('Validate Error: Pac length')
+        if 256 < len(self.data_bytes) < 15:
+            print(f'Validate Error: Pac length {len(self.data_bytes)}')
+            logger.error(f'Validate Error: Pac length {len(self.data_bytes)}')
             AX25EncodingERROR(self)
             return False
         if not self.from_call.validate():
@@ -749,7 +746,6 @@ class AX25Frame:
             logger.error('Validate Error: TO Call')
             AX25EncodingERROR(self)
             return False
-        ca: Call
         for ca in self.via_calls:
             if not ca.validate():
                 print('Validate Error: ca.validate')
@@ -779,7 +775,6 @@ class AX25Frame:
         """
         if h_bit_enc:
             self.set_check_h_bits(dec=False)
-        ca: Call
         for ca in self.via_calls:
             """ C-Bit = H-Bit in Digi Address Space """
             if (not ca.c_bit and not ca.call_str == call) and h_bit_enc:
@@ -792,7 +787,6 @@ class AX25Frame:
         return False
 
     def short_via_calls(self, call: str):
-        el: Call
         ind = 0
         search_ind = 0
         for el in self.via_calls:
@@ -806,7 +800,7 @@ class AX25Frame:
 
 
 def via_calls_fm_str(inp_str: str):
-    ret: [Call] = []
+    ret = []
     inp_str = inp_str.replace('\r', '').replace('\n', '')
     tmp = inp_str.split(' ')
 

@@ -215,6 +215,10 @@ def convert_umlaute_to_ascii(in_str: str):
         .replace('ß', 'ss')
 
 
+def is_byte_ascii(s: int):
+    return 32 <= s <= 126
+
+
 def get_weekDay_fm_dt(now_weekday):
     return ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now_weekday]
 

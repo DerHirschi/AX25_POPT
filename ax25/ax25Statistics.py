@@ -40,6 +40,7 @@ class MyHeard(object):
     all_routes = []
     port = ''
     port_id = 0  # Not used yet
+    first_seen_port = None
     first_seen = datetime.now()
     last_seen = datetime.now()
     pac_n = 0  # N Packets
@@ -76,16 +77,6 @@ def get_dx_tx_alarm_his_pack(
     }
 
 
-def get_bandwidth_struct():
-    struct = {}
-    for h in range(24):
-        for m in range(60):
-            for s in range(6):
-                ts_str = f'{str(h).zfill(2)}:{str(m).zfill(2)}:{s}'
-                struct[ts_str] = 0
-    return struct
-
-
 def get_port_stat_struct():
     return {
         'N_pack': 0,
@@ -120,13 +111,14 @@ def get_port_stat_struct():
 
 
 class MH:
-    def __init__(self):
+    def __init__(self, port_handler):
         print("MH Init")
+        self._port_handler = port_handler
         # self._db = None
         self._mh_inp_buffer = []
         self.dx_alarm_trigger = False
         self.last_dx_alarm = time.time()
-        self._now_10sec = datetime.now().strftime('%M:%S')[:-1]
+        self._now_10sec = datetime.now()
         self._now_min = int(datetime.now().minute)
         self._MH_db: {int: {str: MyHeard}} = {}  # MH TODO ? > SQL-DB ?
         self._short_MH = deque([], maxlen=40)
@@ -255,6 +247,7 @@ class MH:
             self.last_dx_alarm = time.time()
             self.dx_alarm_hist.append(ent.own_call)
             self._add_dx_alarm_hist(ent=ent)
+            self._port_handler.set_dxAlarm()
 
     def _add_dx_alarm_hist(self, ent):
         via = ''
@@ -326,35 +319,34 @@ class MH:
     def _input_bw_calc(self, data):
         port_id = data['port_id']
         ax_frame = data['ax_frame']
-        now = data['now']
+        now = ax_frame.rx_time
         self._init_bw_struct(port_id=port_id)
-        if self._now_10sec == now.strftime('%H:%M:%S')[:-1]:
-            self._bandwidth[port_id][str(self._now_10sec)] += len(ax_frame.data_bytes)
-            return
-        self._now_10sec = str(now.strftime('%H:%M:%S')[:-1])
-        self._bandwidth[port_id][str(self._now_10sec)] = len(ax_frame.data_bytes)
+        if self._now_10sec.strftime('%M:%S')[:-1] != now.strftime('%M:%S')[:-1]:
+            dif: timedelta = now - self._now_10sec
+            dif_10 = int(dif.seconds / 10)
+            for port_ids in self._bandwidth.keys():
+                for i in range(dif_10):
+                    self._bandwidth[port_ids].append(0)
+            self._now_10sec = now
+        self._bandwidth[port_id][-1] += len(ax_frame.data_bytes)
         return
 
     def _init_bw_struct(self, port_id):
         if port_id not in self._bandwidth:
-            self._bandwidth[port_id] = get_bandwidth_struct()
+            self._bandwidth[port_id] = deque([0] * 60, maxlen=60)
 
     def get_bandwidth(self, port_id, baud=1200):
-        self._init_bw_struct(port_id=port_id)
-        ret = deque([0] * 60, maxlen=60)
+        ret = []
         now = datetime.now()
-        ten_minutes_ago = now - timedelta(minutes=10)
-        minutes = list(self._bandwidth[port_id].keys())
-        minutes.reverse()
-        ind = minutes.index(now.strftime('%H:%M:%S')[:-1])
-        ind2 = minutes.index(ten_minutes_ago.strftime('%H:%M:%S')[:-1])
-        new_key_list = minutes[ind:ind2]
-        i = 0
-        for k in new_key_list:
-            byt = int(self._bandwidth[port_id][k])
-            f = (((byt * 8) / 10) * 100) / baud
-            ret[i] = round(f)
-            i += 1
+        data = list(self._bandwidth.get(port_id, [0] * 60))
+        dif: timedelta = now - self._now_10sec
+        dif_10 = int(dif.seconds / 10)
+        for i in range(dif_10):
+            data.append(0)
+        data = data[-60:]
+        data.reverse()
+        for byt in data:
+            ret.append(((byt * 80) / baud))
         return ret
 
     #########################
@@ -368,21 +360,28 @@ class MH:
                 self._mh_inp(el)
             self._mh_inp_buffer = self._mh_inp_buffer[1:]
 
-    def mh_input(self, ax25frame, port_id: int, tx: bool):
+    def mh_input(self, ax25frame, port_id: int, tx: bool, primary_port_id=-1):
         """ Main Input from ax25Port.gui_monitor()"""
         if tx:
             return
         self._mh_inp_buffer.append({
             'ax_frame': ax25frame,
             'port_id': int(port_id),
+            'primary_port_id': int(primary_port_id),
             'tx': bool(tx),
-            'now': datetime.now(),
+            # 'now': datetime.now(),
         })
         return
 
     def _mh_inp(self, data, digi=''):
         # inp
-        port_id = data['port_id']
+        org_port_id = data['port_id']
+        primary_port_id = data['primary_port_id']
+        if primary_port_id != -1:
+            port_id = primary_port_id
+        else:
+            port_id = org_port_id
+
         ax25_frame = data['ax_frame']
         dx_alarm = False
         if port_id not in self._MH_db.keys():
@@ -400,11 +399,18 @@ class MH:
                 dx_alarm = True
         else:
             ent = self._MH_db[port_id][call_str]
-        ent.last_seen = data['now']
+        ent.last_seen = ax25_frame.rx_time
         ent.own_call = call_str
         ent.pac_n += 1
-        # ent.port = str(port_name)
+        if primary_port_id != -1:
+            ent.port = f"{primary_port_id}-{org_port_id}"
+        else:
+            ent.port = f"{org_port_id}"
         ent.port_id = int(port_id)
+        if not hasattr(ent, 'first_seen_port'):
+            ent.first_seen_port = org_port_id
+        elif ent.first_seen_port is None:
+            ent.first_seen_port = org_port_id
         ent.byte_n += int(ax25_frame.data_len)
         ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
         if ax25_frame.ctl_byte.flag == 'REJ':
@@ -464,6 +470,33 @@ class MH:
             USER_DB.set_typ(call_str=digi, add_new=False, typ='DIGI')
         elif last_digi:
             self._mh_inp(data, last_digi)
+
+    def get_dualPort_lastRX(self, call: str, port_id: int):
+        if not call:
+            return None
+        if port_id not in self._MH_db.keys():
+            return None
+        ent = self._MH_db.get(port_id, {}).get(call, None)
+        if hasattr(ent, 'port'):
+            tmp_portID = str(ent.port)
+            if '-' not in tmp_portID:
+                return None
+            portID = tmp_portID.split('-')[-1]
+            try:
+                return int(portID)
+            except ValueError:
+                return None
+        return None
+
+    def get_dualPort_firstRX(self, call: str, port_id: int):
+        if not call:
+            return None
+        if port_id not in self._MH_db.keys():
+            return None
+        ent = self._MH_db.get(port_id, {}).get(call, None)
+        if hasattr(ent, 'first_seen_port'):
+            return ent.first_seen_port
+        return None
 
     def mh_get_data_fm_call(self, call_str, port_id=-1):
         if port_id == -1:

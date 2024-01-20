@@ -14,7 +14,7 @@ STR_TABLE = {
     #  GER   ENG  NL
     'OK': ('OK', 'OK', 'OK'),
     'cancel': ('Abbrechen', 'Cancel', 'Onderbreken'),
-    'delete': ('Löschen', 'Delete', 'Lekker'),
+    'delete': ('Löschen', 'Delete', 'Verwijder'),
     'del_all': ('Alles Löschen', 'Delete all', 'Verwijder alles'),
     'go': ('Los', 'Go', 'Gaan'),
     'close': ('Schließen', 'Close', 'Schließen'),
