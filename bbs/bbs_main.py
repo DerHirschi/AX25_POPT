@@ -749,15 +749,17 @@ class BBS:
         if ax25_conn.cli.stat_identifier is None:
             return None
         # if ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
-        _conn = BBSConnection(self, ax25_conn)
-        if _conn.e:
+        conn = BBSConnection(self, ax25_conn)
+        if conn.e:
             return None
-        self.pms_connections.append(_conn)
-        return _conn
+        self.pms_connections.append(conn)
+        self._port_handler.set_pmsFwdAlarm(True)
+        return conn
 
     def end_fwd_conn(self, bbs_conn):
         if bbs_conn in self.pms_connections:
             self.pms_connections.remove(bbs_conn)
+            self._port_handler.set_pmsFwdAlarm(False)
             return True
         return False
 

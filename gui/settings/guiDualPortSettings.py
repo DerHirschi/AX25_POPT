@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, Menu
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.constant import DUALPORT_TX_MODE
 from cfg.default_config import getNew_dualPort_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
@@ -44,7 +45,17 @@ class DP_cfg_Tab(tk.Frame):
 
         self._tx_auto_var = tk.BooleanVar(self, value=bool(dp_settings.get('auto_tx', False)))
         tx_auto = tk.Checkbutton(opt_frame, text='Auto TX-Port', variable=self._tx_auto_var)
-        tx_auto.pack(anchor=tk.W)
+        tx_auto.pack(anchor=tk.W, side=tk.LEFT)
+        ################
+        # Auto-TX Mode
+        mode_opt = list(DUALPORT_TX_MODE.keys())
+        self._tx_auto_mode_var = tk.StringVar(self, value=mode_opt[0])
+        tx_auto_mode = tk.Frame(opt_frame)
+        tx_auto_mode.pack(padx=80)
+        tx_auto_mode_label = tk.Label(tx_auto_mode, text='Auto-TX Mode: ')
+        tx_auto_mode_label.pack(side=tk.LEFT)
+        tx_auto_mode = tk.OptionMenu(tx_auto_mode, self._tx_auto_mode_var, *mode_opt)
+        tx_auto_mode.pack(side=tk.LEFT)
 
     def get_cfg_fm_vars(self):
         prim_port = self._prim_port_var.get()
@@ -55,8 +66,9 @@ class DP_cfg_Tab(tk.Frame):
             return {}
 
         return dict(
-            tx_primary=bool(self._tx_prim_var.get()),       # TX Primary/Secondary
-            auto_tx=bool(self._tx_auto_var.get()),          # Auto TX
+            tx_primary=bool(self._tx_prim_var.get()),                               # TX Primary/Secondary
+            auto_tx=bool(self._tx_auto_var.get()),                                  # Auto TX
+            auto_tx_mode=int(DUALPORT_TX_MODE.get(self._tx_auto_var.get(), 0)),     # Auto TX Mode
             primary_port_id=int(prim_port),
             secondary_port_id=int(sec_port)
         )
@@ -133,7 +145,6 @@ class DualPortSettingsWin(tk.Toplevel):
 
     def _del_dualPort_cfg(self, event=None):
         try:
-            # TODO Again ! Such a mess
             tab_ind = self.tabControl.index('current')
             ind_tab = self.tabControl.tab('current')
         except tk.TclError:

@@ -49,6 +49,9 @@ Ideas/TODO's :
   ✓ TX Port manuell wählbar oder automode.
     ** "Automode" sendet Paket an über den Port über den der Call zuletzt empfangen wurde.
   ✓ Dual-Port Monitor
+  - Auto-TX: Port nach Entfernung wählbar
+  - Auto-TX: Port nach Station wählbar
+  ✓ Auto-TX: Port nach First Seen wählbar
 
 ✓ UserDB
   - UserDB auf SQL-DB Umstellen

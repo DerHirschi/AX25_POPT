@@ -55,20 +55,22 @@ def monitor_frame_inp(ax25_frame, port_cfg):
     if ax25_frame.data:
         data = ax25_frame.data
         if type(ax25_frame.data) is bytes:
+            """
             if int(ax25_frame.pid_byte.hex) == 0xCF:     # Net-Rom
                 if ax25_frame.ctl_byte.flag == 'UI':
                     data = NetRom_decode_UI(ax25_frame.data)
                 elif ax25_frame.ctl_byte.flag == 'I':
                     data = NetRom_decode_I(ax25_frame.data)
             else:
-                data = try_decode(ax25_frame.data)
-                """
-                try:
-                    data = ax25_frame.data.decode('ASCII')
-                    
-                except UnicodeDecodeError:
-                    data = f'<BIN> {len(ax25_frame.data)} Bytes'
-                """
+            """
+            data = try_decode(ax25_frame.data)
+            """
+            try:
+                data = ax25_frame.data.decode('ASCII')
+                
+            except UnicodeDecodeError:
+                data = f'<BIN> {len(ax25_frame.data)} Bytes'
+            """
         else:
             print(f"Monitor decode Data == STR: {data} - {ax25_frame.from_call.call_str} - {ax25_frame.ctl_byte.flag}")
         data = data.replace('\r\n', '\n').replace('\n\r', '\n').replace('\r', '\n')

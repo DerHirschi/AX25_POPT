@@ -4,6 +4,7 @@ Fixes:
 - Bandauslastungs-Graph löscht alte Daten nicht und Zeigt sie nach 24 Std. erneut an
 - Bandauslastungs-Graph zeigt ab 0 Uhr für 10 Minuten nichts mehr an
 - Scripterror bei AXIP Connection wenn IP nicht bekannt
+- AXIP wird bei bekannten Stationen nicht vorausgefüllt im "New Conn" Fenster
 
 
 Optimierung:
@@ -13,7 +14,7 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - GUI MH und Tracer Button entfernt
-- GUI neue Alarm-Status Anzeige für DX-, Tracer-Alarm & Neue Mail im PMS
+- GUI neue Alarm-Status Anzeige für DX-, Tracer-Alarm, Neue Mail im PMS, PMS Forward aktiv
 - Grundlegendes dekodieren von NetRom Paketen (experimentell & unvollständig)
 - DualPort, es können 2 TNC's (2*RTX oder RTX+SDR) zu einem Port zusammengefasst werden.
     Primär Port:
@@ -39,6 +40,7 @@ Neue Implementierungen / Funktionen:
 
     Auto-TX:
     - Port zum Senden wird automatisch gewählt (Port an dem der Frame zuletzt empfangen/ausgewertet wurde).
+    - Port zum Senden wird automatisch gewählt (Port an dem der Frame zuerst empfangen/ausgewertet wurde).
 
   - TX-Port wählbar (Primär-Port/Sekundär-Port)
   - DualPort Monitor

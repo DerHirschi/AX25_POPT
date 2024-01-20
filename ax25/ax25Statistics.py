@@ -40,6 +40,7 @@ class MyHeard(object):
     all_routes = []
     port = ''
     port_id = 0  # Not used yet
+    first_seen_port = None
     first_seen = datetime.now()
     last_seen = datetime.now()
     pac_n = 0  # N Packets
@@ -406,6 +407,10 @@ class MH:
         else:
             ent.port = f"{org_port_id}"
         ent.port_id = int(port_id)
+        if not hasattr(ent, 'first_seen_port'):
+            ent.first_seen_port = org_port_id
+        elif ent.first_seen_port is None:
+            ent.first_seen_port = org_port_id
         ent.byte_n += int(ax25_frame.data_len)
         ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
         if ax25_frame.ctl_byte.flag == 'REJ':
@@ -481,6 +486,16 @@ class MH:
                 return int(portID)
             except ValueError:
                 return None
+        return None
+
+    def get_dualPort_firstRX(self, call: str, port_id: int):
+        if not call:
+            return None
+        if port_id not in self._MH_db.keys():
+            return None
+        ent = self._MH_db.get(port_id, {}).get(call, None)
+        if hasattr(ent, 'first_seen_port'):
+            return ent.first_seen_port
         return None
 
     def mh_get_data_fm_call(self, call_str, port_id=-1):

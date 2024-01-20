@@ -436,11 +436,7 @@ class AX25Port(threading.Thread):
         return False
 
     def get_dualPort_txPort(self, call=''):
-        if not self.dualPort_primaryPort:
-            self.reset_dualPort()
-            return self
-        if not self.dualPort_secondaryPort:
-            self.reset_dualPort()
+        if not self.check_dualPort():
             return self
         if not self.dualPort_cfg.get('auto_tx', False):
             if self.dualPort_cfg.get('tx_primary', True):
@@ -448,10 +444,12 @@ class AX25Port(threading.Thread):
             return self.dualPort_secondaryPort
         # AutoPort FIXME
         port_id = self.dualPort_primaryPort.port_id
-        last_port_id = self._mh.get_dualPort_lastRX(call, port_id)
+        last_port_id = {
+            0: self._mh.get_dualPort_firstRX(call, port_id),
+            1: self._mh.get_dualPort_lastRX(call, port_id),
+        }.get(self.dualPort_cfg.get('auto_tx_mode', 0), None)
+        # last_port_id = self._mh.get_dualPort_lastRX(call, port_id)
         if last_port_id is None:
-            return self.dualPort_primaryPort
-        if last_port_id == self.dualPort_primaryPort.port_id:
             return self.dualPort_primaryPort
         if last_port_id == self.dualPort_secondaryPort.port_id:
             return self.dualPort_secondaryPort

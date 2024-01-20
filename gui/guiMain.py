@@ -93,10 +93,17 @@ class ChVars(object):
 
 class AlarmIconFrame(tk.Frame):
     def __init__(self, root):
-        tk.Frame.__init__(self, root, bg='#313336', height=20, width=50)
-        self.pack(fill=tk.X, pady=5)
-        self._mh_label = tk.Label(self, text='MH',
-                                  font=('Dyuthi', 11),
+        tk.Frame.__init__(self, root, bg='#313336', height=15, width=50)
+        self.pack(fill=tk.X, pady=5, expand=False)
+        self._diesel_label = tk.Label(self, text='➿',
+                                      font=(None, 13,),
+                                      # state='disabled',
+                                      background='#313336',
+                                      foreground='orange')
+        self._diesel_label.pack(side=tk.LEFT, padx=5)
+
+        self._mh_label = tk.Label(self, text='𝔻𝕏',
+                                  font=('Dyuthi', 10),
                                   state='disabled',
                                   background='#313336',
                                   foreground='#18e002')
@@ -110,11 +117,18 @@ class AlarmIconFrame(tk.Frame):
         self._tracer_label.pack(side=tk.LEFT, padx=3)
 
         self._pms_mail_label = tk.Label(self, text='✉',
-                                        font=('Dyuthi', 15, 'bold'),
+                                        font=(None, 13, 'bold'),
                                         background='#313336',
                                         state='disabled',
                                         foreground='#18e002')
         self._pms_mail_label.pack(side=tk.LEFT, padx=3)
+
+        self._pms_fwd_label = tk.Label(self, text='✉⇄',
+                                        font=(None, 13, 'bold'),
+                                        background='#313336',
+                                        state='disabled',
+                                        foreground='#18e002')
+        self._pms_fwd_label.pack(side=tk.LEFT, padx=3)
 
     def set_dxAlarm(self, alarm_set=True):
         if alarm_set:
@@ -139,6 +153,22 @@ class AlarmIconFrame(tk.Frame):
         else:
             if self._pms_mail_label.cget('state') == 'normal':
                 self._pms_mail_label.configure(state='disabled')
+
+    def set_diesel(self, alarm_set=True):
+        if alarm_set:
+            if self._diesel_label.cget('state') == 'disabled':
+                self._diesel_label.configure(state='normal')
+        else:
+            if self._diesel_label.cget('state') == 'normal':
+                self._diesel_label.configure(state='disabled')
+
+    def set_pms_fwd_alarm(self, alarm_set=True):
+        if alarm_set:
+            if self._pms_fwd_label.cget('state') == 'disabled':
+                self._pms_fwd_label.configure(state='normal')
+        else:
+            if self._pms_fwd_label.cget('state') == 'normal':
+                self._pms_fwd_label.configure(state='disabled')
 
 
 class SideTabbedFrame:  # TODO
@@ -420,7 +450,7 @@ class SideTabbedFrame:  # TODO
                   command=self._open_mh
                   ).pack(side=tk.LEFT, padx=50)
         tk.Button(btn_frame,
-                  text="Statistic",
+                  text="Statistik",
                   command=self._open_PortStat
                   ).pack(side=tk.LEFT, padx=50)
 
@@ -1115,6 +1145,7 @@ class PoPT_GUI_Main:
         self.mon_mode = 0
         self._sound_th = None
         self._is_closing = False
+        self._init_state = 0
         ####################
         # GUI PARAM
         self._parm_btn_blink_time = 1  # s
@@ -2247,8 +2278,7 @@ class PoPT_GUI_Main:
         conn = self.get_conn(self.channel_index)
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         if conn is not None:
-            if ch_vars.t2speech \
-                    and ch_vars.t2speech_buf:
+            if ch_vars.t2speech and ch_vars.t2speech_buf:
                 to_speech = str(ch_vars.t2speech_buf)
                 if self.setting_sprech.get() and self.setting_sound.get():
                     if self.sprech(to_speech):
@@ -2443,6 +2473,10 @@ class PoPT_GUI_Main:
     def _tasker_5_sec(self):
         """ 5 Sec """
         if time.time() > self._non_non_non_prio_task_timer:
+            if self._init_state < 2:
+                self._init_state += 1
+                if self._init_state == 2:
+                    self.reset_diesel()
             #####################
             self._update_bw_mon()
             self._aprs_wx_tree_task()
@@ -2752,6 +2786,7 @@ class PoPT_GUI_Main:
             return False
         self.dualPortMon_win.dB_mon_tasker()
         return True
+
     ###############################################################
 
     ###############################################################
@@ -2823,9 +2858,9 @@ class PoPT_GUI_Main:
     def open_user_db_win(self, event=None, ent_key=''):
         if self.userdb_win is None:
             if not ent_key:
-                _conn = self.get_conn()
-                if _conn is not None:
-                    ent_key = _conn.to_call_str
+                conn = self.get_conn()
+                if conn is not None:
+                    ent_key = conn.to_call_str
             self.userdb_win = UserDB(self, ent_key)
 
     ##########################
@@ -2836,7 +2871,7 @@ class PoPT_GUI_Main:
     ######################
     # APRS Beacon Tracer
     def open_be_tracer_win(self):
-        self.reset_tracer_alarm()   # ??? PORTHANDLER set_tracerAlram ???
+        self.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
         if self.be_tracer_win is None:
             self.be_tracer_win = BeaconTracer(self)
 
@@ -2854,9 +2889,9 @@ class PoPT_GUI_Main:
         self._set_distance_fm_conn()
 
     def _set_distance_fm_conn(self):
-        _conn = self.get_conn()
-        if _conn is not None:
-            _conn.set_distance()
+        conn = self.get_conn()
+        if conn is not None:
+            conn.set_distance()
             return True
         return False
 
@@ -2945,38 +2980,38 @@ class PoPT_GUI_Main:
 
     def _on_click_inp_txt(self, event=None):
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        _ind = ch_vars.input_win_index
-        if _ind:
-            self._inp_txt.tag_add('send', str(int(float(_ind))) + '.0', _ind)
+        ind = ch_vars.input_win_index
+        if ind:
+            self._inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
             # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
             self._inp_txt.tag_remove('send', str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0',
                                      self._inp_txt.index(tk.INSERT))
         # self.inp_txt.tag_remove('send', tk.line.column, self.inp_txt.index(tk.INSERT))
-        _ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
+        ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
 
-        self._inp_txt.tag_remove('send', _ind2, self._inp_txt.index(tk.INSERT))
+        self._inp_txt.tag_remove('send', ind2, self._inp_txt.index(tk.INSERT))
         ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
 
     # SEND TEXT OUT
     #######################################################################
     # BW Plot
     def _update_bw_mon(self):
-        _tr = False
-        for _port_id in list(PORT_HANDLER.ax25_ports.keys()):
-            _data = self.mh.get_bandwidth(
-                _port_id,
-                PORT_HANDLER.ax25_ports[_port_id].port_cfg.parm_baud,
+        tr = False
+        for port_id in list(PORT_HANDLER.ax25_ports.keys()):
+            data = self.mh.get_bandwidth(
+                port_id,
+                PORT_HANDLER.ax25_ports[port_id].port_cfg.parm_baud,
             )
-            _label = f'{PORT_HANDLER.ax25_ports[_port_id].port_cfg.parm_PortName}'
-            if _port_id not in self._bw_plot_lines:
-                self._bw_plot_lines[int(_port_id)], = self._ax.plot(self._bw_plot_x_scale, _data, label=_label)
+            label = f'{PORT_HANDLER.ax25_ports[port_id].port_cfg.parm_PortName}'
+            if port_id not in self._bw_plot_lines:
+                self._bw_plot_lines[int(port_id)], = self._ax.plot(self._bw_plot_x_scale, data, label=label)
                 self._ax.legend()
-                _tr = True
+                tr = True
             else:
-                if list(_data) != list(self._bw_plot_lines[int(_port_id)].get_data()[1]):
-                    self._bw_plot_lines[int(_port_id)].set_ydata(_data)
-                    _tr = True
-        if _tr:
+                if list(data) != list(self._bw_plot_lines[int(port_id)].get_data()[1]):
+                    self._bw_plot_lines[int(port_id)].set_ydata(data)
+                    tr = True
+        if tr:
             self._draw_bw_plot()
 
     def _draw_bw_plot(self):
@@ -3004,11 +3039,11 @@ class PoPT_GUI_Main:
             conn.bbsFwd_start_reverse()
 
     def do_priv(self, event=None, login_cmd=''):
-        _conn = self.get_conn()
-        if _conn is not None:
-            if _conn.user_db_ent:
-                if _conn.user_db_ent.sys_pw:
-                    _conn.cli.start_baycom_login(login_cmd=login_cmd)
+        conn = self.get_conn()
+        if conn is not None:
+            if conn.user_db_ent:
+                if conn.user_db_ent.sys_pw:
+                    conn.cli.start_baycom_login(login_cmd=login_cmd)
                 else:
                     self._open_settings_window('priv_win')
 
@@ -3154,9 +3189,9 @@ class PoPT_GUI_Main:
 
     def _ch_btn_alarm(self, btn: tk.Button):
         if self._ch_btn_blink_timer < time.time():
-            _clr = generate_random_hex_color()
-            if btn.cget('bg') != _clr:
-                btn.configure(bg=_clr)
+            clr = generate_random_hex_color()
+            if btn.cget('bg') != clr:
+                btn.configure(bg=clr)
 
     def on_channel_status_change(self):
         """ Triggerd when Connection Status has changed + additional Trigger"""
@@ -3254,37 +3289,37 @@ class PoPT_GUI_Main:
             self.stat_info_encoding_var.set(_enc)
 
     def _update_ft_info(self):
-        _prog_val = 0
-        _prog_var = '---.- %'
-        _size_var = 'Size: ---,- / ---,- kb'
-        _dur_var = 'Time: --:--:-- / --:--:--'
-        _bps_var = 'BPS: ---.---'
-        _next_tx = 'TX in: --- s'
-        _conn = self.get_conn()
-        if _conn is not None:
-            if _conn.ft_obj is not None:
-                _ft_obj = _conn.ft_obj
-                _percentage_completion, _data_len, _data_sendet, _time_spend, _time_remaining, _baud_rate = _ft_obj.get_ft_infos()
-                _prog_val = _percentage_completion
-                _prog_var = f"{_percentage_completion} %"
-                _data_len = get_kb_str_fm_bytes(_data_len)
-                _data_sendet = get_kb_str_fm_bytes(_data_sendet)
-                _size_var = f'Size: {_data_sendet} / {_data_len}'
-                _t_spend = conv_timestamp_delta(_time_spend)
-                _t_remaining = conv_timestamp_delta(_time_remaining)
-                _dur_var = f'Time: {_t_spend} / {_t_remaining}'
-                _bps_var = f"BPS: {format_number(_baud_rate)}"
-                if _ft_obj.param_wait:
-                    _n_tx = _ft_obj.last_tx - time.time()
-                    _next_tx = f'TX in: {max(round(_n_tx), 0)} s'
+        prog_val = 0
+        prog_var = '---.- %'
+        size_var = 'Size: ---,- / ---,- kb'
+        dur_var = 'Time: --:--:-- / --:--:--'
+        bps_var = 'BPS: ---.---'
+        next_tx = 'TX in: --- s'
+        conn = self.get_conn()
+        if conn is not None:
+            if conn.ft_obj is not None:
+                ft_obj = conn.ft_obj
+                percentage_completion, data_len, data_sendet, time_spend, time_remaining, baud_rate = ft_obj.get_ft_infos()
+                prog_val = percentage_completion
+                prog_var = f"{percentage_completion} %"
+                data_len = get_kb_str_fm_bytes(data_len)
+                data_sendet = get_kb_str_fm_bytes(data_sendet)
+                size_var = f'Size: {data_sendet} / {data_len}'
+                t_spend = conv_timestamp_delta(time_spend)
+                t_remaining = conv_timestamp_delta(time_remaining)
+                dur_var = f'Time: {t_spend} / {t_remaining}'
+                bps_var = f"BPS: {format_number(baud_rate)}"
+                if ft_obj.param_wait:
+                    _n_tx = ft_obj.last_tx - time.time()
+                    next_tx = f'TX in: {max(round(_n_tx), 0)} s'
 
-        if self.tabbed_sideFrame.ft_duration_var.get() != _dur_var:
-            self.tabbed_sideFrame.ft_progress['value'] = _prog_val
-            self.tabbed_sideFrame.ft_progress_var.set(_prog_var)
-            self.tabbed_sideFrame.ft_size_var.set(_size_var)
-            self.tabbed_sideFrame.ft_duration_var.set(_dur_var)
-            self.tabbed_sideFrame.ft_bps_var.set(_bps_var)
-            self.tabbed_sideFrame.ft_next_tx_var.set(_next_tx)
+        if self.tabbed_sideFrame.ft_duration_var.get() != dur_var:
+            self.tabbed_sideFrame.ft_progress['value'] = prog_val
+            self.tabbed_sideFrame.ft_progress_var.set(prog_var)
+            self.tabbed_sideFrame.ft_size_var.set(size_var)
+            self.tabbed_sideFrame.ft_duration_var.set(dur_var)
+            self.tabbed_sideFrame.ft_bps_var.set(bps_var)
+            self.tabbed_sideFrame.ft_next_tx_var.set(next_tx)
 
     #########################################
     # TxTframe FNCs
@@ -3422,9 +3457,9 @@ class PoPT_GUI_Main:
         return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)
 
     def set_tracer(self, state=None):
-        _ais_obj = PORT_HANDLER.get_aprs_ais()
-        if _ais_obj is not None:
-            _ais_obj.be_tracer_active = bool(self.setting_tracer.get())
+        ais_obj = PORT_HANDLER.get_aprs_ais()
+        if ais_obj is not None:
+            ais_obj.be_tracer_active = bool(self.setting_tracer.get())
         else:
             self.setting_tracer.set(False)
         self.set_auto_tracer()
@@ -3433,49 +3468,49 @@ class PoPT_GUI_Main:
 
     @staticmethod
     def get_tracer():
-        _ais_obj = PORT_HANDLER.get_aprs_ais()
-        if _ais_obj is not None:
-            return bool(_ais_obj.be_tracer_active)
+        ais_obj = PORT_HANDLER.get_aprs_ais()
+        if ais_obj is not None:
+            return bool(ais_obj.be_tracer_active)
         return False
 
     def set_tracer_fm_aprs(self):
-        _ais_obj = PORT_HANDLER.get_aprs_ais()
-        if _ais_obj is not None:
-            self.setting_tracer.set(_ais_obj.be_tracer_active)
+        ais_obj = PORT_HANDLER.get_aprs_ais()
+        if ais_obj is not None:
+            self.setting_tracer.set(ais_obj.be_tracer_active)
         else:
             self.setting_tracer.set(False)
         self.tabbed_sideFrame.set_auto_tracer_state()
 
     def set_auto_tracer(self, event=None):
-        _ais_obj = PORT_HANDLER.get_aprs_ais()
+        ais_obj = PORT_HANDLER.get_aprs_ais()
         set_to = False
-        if _ais_obj is not None:
+        if ais_obj is not None:
             self.set_tracer_fm_aprs()
             if self.setting_tracer.get():
                 set_to = False
             else:
                 set_to = bool(self.setting_auto_tracer.get())
-            _ais_obj.tracer_auto_tracer_set(set_to)
+            ais_obj.tracer_auto_tracer_set(set_to)
         self.setting_auto_tracer.set(set_to)
         self.tabbed_sideFrame.set_auto_tracer_state()
 
     @staticmethod
     def get_auto_tracer_duration():
-        _ais_obj = PORT_HANDLER.get_aprs_ais()
-        if _ais_obj is None:
+        ais_obj = PORT_HANDLER.get_aprs_ais()
+        if ais_obj is None:
             return 0
-        return _ais_obj.be_auto_tracer_duration
+        return ais_obj.be_auto_tracer_duration
 
     def set_auto_tracer_duration(self, dur):
-        _ais_obj = PORT_HANDLER.get_aprs_ais()
-        if _ais_obj is not None:
+        ais_obj = PORT_HANDLER.get_aprs_ais()
+        if ais_obj is not None:
             if type(dur) is int:
-                _ais_obj.tracer_auto_tracer_duration_set(dur)
+                ais_obj.tracer_auto_tracer_duration_set(dur)
                 self.set_auto_tracer()
 
     def set_dx_alarm(self, event=None):
-        _dx_alarm = bool(self.setting_dx_alarm.get())
-        if not _dx_alarm:
+        dx_alarm = bool(self.setting_dx_alarm.get())
+        if not dx_alarm:
             self.setting_auto_tracer.set(False)
         self.set_auto_tracer()
 
@@ -3509,3 +3544,15 @@ class PoPT_GUI_Main:
     def reset_pmsMail_alarm(self):
         self._Alarm_Frame.set_pmsMailAlarm(False)
 
+    def pmsFwd_alarm(self):
+        self._Alarm_Frame.set_pms_fwd_alarm(True)
+
+    def reset_pmsFwd_alarm(self):
+        self._Alarm_Frame.set_pms_fwd_alarm(False)
+
+    def set_diesel(self):
+        self._Alarm_Frame.set_diesel(True)
+        self._init_state = 0
+
+    def reset_diesel(self):
+        self._Alarm_Frame.set_diesel(False)

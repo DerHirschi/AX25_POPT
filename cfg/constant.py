@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.104.12dev'
+VER = '2.104.13'
 """
 LANGUAGE:
 0 = German
@@ -215,3 +215,8 @@ BOOL_ON_OFF = {
 
 SQL_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 WEEK_DAYS_GE = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO']
+
+DUALPORT_TX_MODE = {
+    'First-RX': 0,
+    'Last-RX': 1,
+}

@@ -239,6 +239,7 @@ class AX25PortHandler(object):
         time.sleep(1)  # Cooldown for Device
         for port_id in range(MAX_PORTS):  # Max Ports
             self._init_port(port_id=port_id)
+        self.set_diesel()
 
     def set_kiss_param_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
@@ -604,9 +605,9 @@ class AX25PortHandler(object):
                     bool(prim_port_id not in self.ax25_ports.keys()),
                     bool(sec_port_id not in self.ax25_ports.keys()),
                 )):
-                    self.set_dualPort_PH(cfg)
+                    self._set_dualPort_PH(cfg)
 
-    def set_dualPort_PH(self, conf: dict):
+    def _set_dualPort_PH(self, conf: dict):
         if not conf:
             return False
         primary_port = self.ax25_ports.get(conf.get('primary_port_id', -1), None)
@@ -745,6 +746,20 @@ class AX25PortHandler(object):
                 self.gui.pmsMail_alarm()
             else:
                 self.gui.reset_pmsMail_alarm()
+
+    def set_pmsFwdAlarm(self, set_alarm=True):
+        if self.gui:
+            if set_alarm:
+                self.gui.pmsFwd_alarm()
+            else:
+                self.gui.reset_pmsFwd_alarm()
+
+    def set_diesel(self, set_alarm=True):
+        if self.gui:
+            if set_alarm:
+                self.gui.set_diesel()
+            else:
+                self.gui.reset_diesel()
 
 
 PORT_HANDLER = AX25PortHandler()
