@@ -442,7 +442,6 @@ class AX25Port(threading.Thread):
             if self.dualPort_cfg.get('tx_primary', True):
                 return self.dualPort_primaryPort
             return self.dualPort_secondaryPort
-        # AutoPort FIXME
         port_id = self.dualPort_primaryPort.port_id
         last_port_id = {
             0: self._mh.get_dualPort_firstRX(call, port_id),

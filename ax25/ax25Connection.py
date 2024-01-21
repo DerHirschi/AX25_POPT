@@ -376,11 +376,11 @@ class AX25Conn(object):
             print("E: cli.stat_identifier.e")
             print(f"{self.cli.stat_identifier.typ}")
             return False
-        _bbs = self.port_handler.get_bbs()
-        if _bbs is None:
+        bbs = self.port_handler.get_bbs()
+        if bbs is None:
             print("E: _bbs is None")
             return False
-        self.bbs_connection = _bbs.init_fwd_conn(self)
+        self.bbs_connection = bbs.init_fwd_conn(self)
         if self.bbs_connection is None:
             print("E: bbs_connection is None")
             return False

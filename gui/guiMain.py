@@ -102,8 +102,8 @@ class AlarmIconFrame(tk.Frame):
                                       foreground='orange')
         self._diesel_label.pack(side=tk.LEFT, padx=5)
 
-        self._mh_label = tk.Label(self, text='𝔻𝕏',
-                                  font=('Dyuthi', 10),
+        self._mh_label = tk.Label(self, text='DX',
+                                  font=('Dyuthi', 11),
                                   state='disabled',
                                   background='#313336',
                                   foreground='#18e002')
