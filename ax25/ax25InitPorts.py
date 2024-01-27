@@ -182,8 +182,9 @@ class AX25PortHandler(object):
             port = self.ax25_ports[port_kk]
             new_digi_calls = []
             for stat_key in port.my_stations:
-                if self.ax25_stations_settings[stat_key].stat_parm_is_StupidDigi:
-                    new_digi_calls.append(stat_key)
+                if stat_key in self.ax25_stations_settings.keys():
+                    if self.ax25_stations_settings[stat_key].stat_parm_is_StupidDigi:
+                        new_digi_calls.append(stat_key)
             self.ax25_ports[port_kk].port_cfg.parm_StupidDigi_calls = new_digi_calls
             self.ax25_ports[port_kk].stupid_digi_calls = new_digi_calls  # Same Object !!
 

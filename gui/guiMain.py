@@ -95,62 +95,182 @@ class AlarmIconFrame(tk.Frame):
     def __init__(self, root):
         tk.Frame.__init__(self, root, bg='#313336', height=15, width=50)
         self.pack(fill=tk.X, pady=5, expand=False)
+
         self._diesel_label = tk.Label(self, text='➿',
-                                      font=(None, 13,),
+                                      font=(None, 12,),
                                       # state='disabled',
                                       background='#313336',
                                       foreground='orange')
         self._diesel_label.pack(side=tk.LEFT, padx=5)
 
-        self._mh_label = tk.Label(self, text='DX',
-                                  font=('Dyuthi', 11),
+        self._mh_label = tk.Label(self, text='⊛',
+                                  font=(None, 14),
                                   state='disabled',
                                   background='#313336',
                                   foreground='#18e002')
         self._mh_label.pack(side=tk.LEFT, padx=3)
 
-        self._tracer_label = tk.Label(self, text='TRACER',
-                                      font=('Dyuthi', 11),
+        self._tracer_label = tk.Label(self, text='⨂',
+                                      font=(None, 9),
                                       background='#313336',
                                       state='disabled',
                                       foreground='#18e002')
         self._tracer_label.pack(side=tk.LEFT, padx=3)
 
+        self._beacon_label = tk.Label(self, text='⨀',
+                                      font=(None, 9),
+                                      background='#313336',
+                                      state='disabled',
+                                      foreground='#18e002')
+        self._beacon_label.pack(side=tk.LEFT, padx=3)
+
+        self._rxEcho_label = tk.Label(self, text='⤨',
+                                      font=(None, 14),
+                                      background='#313336',
+                                      state='disabled',
+                                      foreground='#18e002')
+        self._rxEcho_label.pack(side=tk.LEFT, padx=3)
+
         self._pms_mail_label = tk.Label(self, text='✉',
-                                        font=(None, 13, 'bold'),
+                                        font=(None, 15,),
                                         background='#313336',
                                         state='disabled',
                                         foreground='#18e002')
         self._pms_mail_label.pack(side=tk.LEFT, padx=3)
 
         self._pms_fwd_label = tk.Label(self, text='✉⇄',
-                                        font=(None, 13, 'bold'),
-                                        background='#313336',
-                                        state='disabled',
-                                        foreground='#18e002')
+                                       font=(None, 15,),
+                                       background='#313336',
+                                       state='disabled',
+                                       foreground='#18e002')
         self._pms_fwd_label.pack(side=tk.LEFT, padx=3)
+
+        self._05_blink = {
+            'diesel': 0,
+            'dx': 0,
+            'tracer': 0,
+            'beacon': 0,
+            'rxecho': 0,
+            'pmsmail': 0,
+            'pmsfwd': 0,
+        }
+        self._1_blink = {
+            'diesel': 0,
+            'dx': 0,
+            'tracer': 0,
+            'beacon': 0,
+            'rxecho': 0,
+            'pmsmail': 0,
+            'pmsfwd': 0,
+        }
+
+        self._alarm_labels = {
+            'diesel': self._diesel_label,
+            'dx': self._mh_label,
+            'tracer': self._tracer_label,
+            'beacon': self._beacon_label,
+            'rxecho': self._rxEcho_label,
+            'pmsmail': self._pms_mail_label,
+            'pmsfwd': self._pms_fwd_label,
+        }
+
+    def AlarmIcon_tasker05(self):
+        for k in list(self._05_blink.keys()):
+            if self._05_blink[k]:
+                if self._05_blink[k] > 0:
+                    self._05_blink[k] -= 1
+                if k in self._alarm_labels.keys():
+                    if self._alarm_labels[k].cget('state') == 'disabled':
+                        self._alarm_labels[k].configure(state='normal')
+                    else:
+                        self._alarm_labels[k].configure(state='disabled')
+
+    def AlarmIcon_tasker1(self):
+        for k in list(self._1_blink.keys()):
+            if self._1_blink[k]:
+                if self._1_blink[k] > 0:
+                    self._1_blink[k] -= 1
+                if k in self._alarm_labels.keys():
+                    if self._alarm_labels[k].cget('state') == 'disabled':
+                        self._alarm_labels[k].configure(state='normal')
+                    else:
+                        self._alarm_labels[k].configure(state='disabled')
+        self._TracerIcon_tasker()
+
+    def add_blink_task(self, alarm_k: str, blink_n: int, sec05=True):
+        if not blink_n:
+            return
+        if alarm_k not in self._alarm_labels.keys():
+            return
+        label = self._alarm_labels.get(alarm_k, None)
+        if not label:
+            return
+        if sec05:
+            if alarm_k not in self._05_blink.keys():
+                return
+            self._05_blink[alarm_k] += blink_n
+        else:
+            if alarm_k not in self._1_blink.keys():
+                return
+            self._1_blink[alarm_k] += blink_n
+
+    def _is_blink_task(self, alarm_k):
+        task_05 = self._05_blink.get(alarm_k, 0)
+        task_1 = self._1_blink.get(alarm_k, 0)
+        if any((task_05, task_1)):
+            return True
+        return False
+
+    def remove_blink_task(self, alarm_k: str, sec05=True):
+        label = self._alarm_labels.get(alarm_k, None)
+        if not label:
+            return
+        if sec05:
+            if alarm_k not in self._05_blink.keys():
+                return
+            self._05_blink[alarm_k] = 0
+        else:
+            if alarm_k not in self._1_blink.keys():
+                return
+            self._1_blink[alarm_k] = 0
+        """
+        if label.cget('state') == 'normal':
+            label.configure(state='disabled')
+        """
 
     def set_dxAlarm(self, alarm_set=True):
         if alarm_set:
-            if self._mh_label.cget('state') == 'disabled':
-                self._mh_label.configure(state='normal')
+            if self._mh_label.cget('foreground') != '#18e002':
+                self._mh_label.configure(foreground='#18e002')
+            self.add_blink_task('dx', -1, sec05=False)
         else:
-            if self._mh_label.cget('state') == 'normal':
-                self._mh_label.configure(state='disabled')
+            if self._mh_label.cget('foreground') != '#f0d402':
+                self._mh_label.configure(foreground='#f0d402')
+            self.remove_blink_task('dx', sec05=False)
+
+    def set_dxAlarm_active(self, alarm_set=True):
+        self.set_dxAlarm(False)
+        if alarm_set:
+            if self._mh_label.cget('foreground') != '#f0d402':
+                self._mh_label.configure(foreground='#f0d402')
+            if self._mh_label.cget('state') == 'disabled':
+                self.add_blink_task('dx', 3, sec05=True)
+            return
+        if self._mh_label.cget('state') == 'normal':
+            self.add_blink_task('dx', 3, sec05=True)
+        return
 
     def set_tracerAlarm(self, alarm_set=True):
         if alarm_set:
-            if self._tracer_label.cget('state') == 'disabled':
-                self._tracer_label.configure(state='normal')
+            self.add_blink_task('tracer', -1, sec05=False)
         else:
-            if self._tracer_label.cget('state') == 'normal':
-                self._tracer_label.configure(state='disabled')
+            self.remove_blink_task('tracer', sec05=False)
 
     def set_pmsMailAlarm(self, alarm_set=True):
         if alarm_set:
-            if self._pms_mail_label.cget('state') == 'disabled':
-                self._pms_mail_label.configure(state='normal')
+            self.add_blink_task('pmsmail', -1, sec05=False)
         else:
+            self.remove_blink_task('pmsmail', sec05=False)
             if self._pms_mail_label.cget('state') == 'normal':
                 self._pms_mail_label.configure(state='disabled')
 
@@ -163,12 +283,96 @@ class AlarmIconFrame(tk.Frame):
                 self._diesel_label.configure(state='disabled')
 
     def set_pms_fwd_alarm(self, alarm_set=True):
+
         if alarm_set:
             if self._pms_fwd_label.cget('state') == 'disabled':
-                self._pms_fwd_label.configure(state='normal')
+                bl = 3
+            else:
+                bl = 2
         else:
             if self._pms_fwd_label.cget('state') == 'normal':
-                self._pms_fwd_label.configure(state='disabled')
+                bl = 3
+            else:
+                bl = 2
+
+        self.add_blink_task('pmsfwd', bl, sec05=True)
+
+    def set_beacon_icon(self, alarm_set=True):
+        if alarm_set:
+            if self._beacon_label.cget('state') == 'disabled':
+                bl = 3
+            else:
+                bl = 2
+        else:
+            if self._beacon_label.cget('state') == 'normal':
+                bl = 3
+            else:
+                bl = 2
+        self.add_blink_task('beacon', bl, sec05=True)
+
+    def set_rxEcho_icon(self, alarm_set=True):
+        if alarm_set:
+            if self._rxEcho_label.cget('state') == 'disabled':
+                bl = 3
+            else:
+                bl = 2
+        else:
+            if self._rxEcho_label.cget('state') == 'normal':
+                bl = 3
+            else:
+                bl = 2
+
+        self.add_blink_task('rxecho', bl, sec05=True)
+
+    def _TracerIcon_tasker(self):
+        """  """
+        tracer = PORT_HANDLER.get_aprs_ais()
+        alarm_k = 'tracer'
+        if not tracer:
+            if self._tracer_label.cget('state') == 'normal':
+                if not self._is_blink_task(alarm_k):
+                    # self._tracer_label.configure(state='disabled')
+                    self.add_blink_task(alarm_k, 3, sec05=True)
+            return
+        at_active = tracer.tracer_auto_tracer_get_active()
+        t_active = tracer.tracer_tracer_get_active()
+        if not t_active and not at_active:
+            if self._tracer_label.cget('state') == 'normal':
+                if not self._is_blink_task(alarm_k):
+                    # self._tracer_label.configure(state='disabled')
+                    self.add_blink_task(alarm_k, 3, sec05=True)
+            return
+        bl = 0
+        if not at_active:
+            if self._tracer_label.cget('foreground') != '#18e002':
+                self._tracer_label.configure(foreground='#18e002')
+                bl = 2
+            if self._tracer_label.cget('state') == 'disabled':
+                if not self._is_blink_task(alarm_k):
+                    # self._tracer_label.configure(state='disabled')
+                    bl = 3
+            self.add_blink_task(alarm_k, bl, sec05=True)
+            return
+        at_timer = tracer.tracer_auto_tracer_get_active_timer()
+        if at_timer < time.time():
+            if self._tracer_label.cget('foreground') != '#f0d402':
+                self._tracer_label.configure(foreground='#f0d402')
+                bl = 2
+            if self._tracer_label.cget('state') == 'disabled':
+                if not self._is_blink_task(alarm_k):
+                    # self._tracer_label.configure(state='disabled')
+                    bl = 3
+            self.add_blink_task(alarm_k, bl, sec05=True)
+            return
+        if self._tracer_label.cget('foreground') != '#03cefc':
+            self._tracer_label.configure(foreground='#03cefc')
+            bl = 2
+        if self._tracer_label.cget('state') == 'disabled':
+            if not self._is_blink_task(alarm_k):
+                # self._tracer_label.configure(state='disabled')
+                bl = 3
+        self.add_blink_task(alarm_k, bl, sec05=True)
+        return
 
 
 class SideTabbedFrame:  # TODO
@@ -675,6 +879,7 @@ class SideTabbedFrame:  # TODO
 
     def _set_rx_echo(self, event=None):
         PORT_HANDLER.rx_echo_on = bool(self._main_win.setting_rx_echo.get())
+        self._main_win.set_rxEcho_icon(self._main_win.setting_rx_echo.get())
 
     def set_auto_tracer_state(self):
         bool_state = self._main_win.get_tracer() or not self._main_win.get_dx_alarm()
@@ -683,6 +888,7 @@ class SideTabbedFrame:  # TODO
             False: 'normal'
         }.get(bool_state, 'disabled')
         self._autotracer_chk_btn.configure(state=state)
+
 
     """
     def _update_ch_echo(self):
@@ -769,14 +975,17 @@ class SideTabbedFrame:  # TODO
 
     def _chk_tracer(self):
         self._main_win.set_tracer()
+        self._main_win.set_tracer_icon()
 
     def _chk_beacon(self):
         POPT_CFG.set_guiPARM_main({
             'gui_cfg_beacon': bool(self._main_win.setting_bake.get())
         })
+        self._main_win.set_Beacon_icon(self._main_win.setting_bake.get())
 
     def _chk_auto_tracer(self):
         self._main_win.set_auto_tracer()
+        self._main_win.set_tracer_icon()
 
     def _chk_rnr(self):
         conn = self._main_win.get_conn()
@@ -1146,6 +1355,7 @@ class PoPT_GUI_Main:
         self._sound_th = None
         self._is_closing = False
         self._init_state = 0
+        self._tracer_alarm = False
         ####################
         # GUI PARAM
         self._parm_btn_blink_time = 1  # s
@@ -1399,6 +1609,8 @@ class PoPT_GUI_Main:
         self.set_tracer()
         self.set_auto_tracer()
         self.set_dx_alarm()
+        self.set_tracer_icon()
+        self.set_Beacon_icon(self.setting_bake.get())
 
     def _init_bw_plot(self):
         for _i in list(range(60)):
@@ -2429,6 +2641,7 @@ class PoPT_GUI_Main:
             self._dualPort_monitor_task()
             self._update_qso_win()
             self._update_status_win()
+            self._AlarmIcon_tasker05()
             #####################
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             return True
@@ -2441,6 +2654,7 @@ class PoPT_GUI_Main:
             self._update_stat_info_conn_timer()
             self._update_ft_info()
             self.tabbed_sideFrame.tasker()
+            self._AlarmIcon_tasker1()
             if self._ch_alarm:
                 self._ch_btn_status_update()
             # if self.mh.dx_alarm_trigger:
@@ -2497,6 +2711,14 @@ class PoPT_GUI_Main:
     def _aprs_wx_tree_task():
         if PORT_HANDLER.get_aprs_ais() is not None:
             PORT_HANDLER.get_aprs_ais().aprs_wx_tree_task()
+
+    def _AlarmIcon_tasker05(self):
+        if self._Alarm_Frame:
+            self._Alarm_Frame.AlarmIcon_tasker05()
+
+    def _AlarmIcon_tasker1(self):
+        if self._Alarm_Frame:
+            self._Alarm_Frame.AlarmIcon_tasker1()
 
     ###############################################################
     # QSO WIN
@@ -3026,6 +3248,8 @@ class PoPT_GUI_Main:
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         self.sprech('Gluck gluck gluck blubber blubber')
         PORT_HANDLER.set_dxAlarm()
+        PORT_HANDLER.set_tracerAlarm()
+        self._Alarm_Frame.set_pmsMailAlarm()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
 
@@ -3465,12 +3689,20 @@ class PoPT_GUI_Main:
         self.set_auto_tracer()
         # FIXME
         self.tabbed_sideFrame.set_auto_tracer_state()
+        # self.set_tracer_icon()
 
     @staticmethod
     def get_tracer():
         ais_obj = PORT_HANDLER.get_aprs_ais()
         if ais_obj is not None:
             return bool(ais_obj.be_tracer_active)
+        return False
+
+    @staticmethod
+    def get_auto_tracer():
+        ais_obj = PORT_HANDLER.get_aprs_ais()
+        if ais_obj is not None:
+            return bool(ais_obj.be_auto_tracer_active)
         return False
 
     def set_tracer_fm_aprs(self):
@@ -3493,6 +3725,7 @@ class PoPT_GUI_Main:
             ais_obj.tracer_auto_tracer_set(set_to)
         self.setting_auto_tracer.set(set_to)
         self.tabbed_sideFrame.set_auto_tracer_state()
+        # self.set_tracer_icon()
 
     @staticmethod
     def get_auto_tracer_duration():
@@ -3513,6 +3746,8 @@ class PoPT_GUI_Main:
         if not dx_alarm:
             self.setting_auto_tracer.set(False)
         self.set_auto_tracer()
+        if self._Alarm_Frame:
+            self._Alarm_Frame.set_dxAlarm_active(dx_alarm)
 
     def get_dx_alarm(self):
         return bool(self.setting_dx_alarm.get())
@@ -3529,16 +3764,36 @@ class PoPT_GUI_Main:
 
     def tracer_alarm(self):
         """ Tracer Alarm """
+        self._tracer_alarm = True
         self._Alarm_Frame.set_tracerAlarm(True)
 
     def reset_tracer_alarm(self):
         """ Tracer Alarm """
-        self._Alarm_Frame.set_tracerAlarm(False)
+        if self._tracer_alarm:
+            self._Alarm_Frame.set_tracerAlarm(False)
+            self._tracer_alarm = False
+            self.set_tracer_icon()
+
+    def set_tracer_icon(self):
+        pass
+        # self._Alarm_Frame.TracerIcon_tasker()
+        """
+        if self.get_auto_tracer():
+            self._Alarm_Frame.set_Tracer_icon(auto_tracer=True, set_icon=True)
+            return
+        if self.get_tracer():
+            self._Alarm_Frame.set_Tracer_icon(auto_tracer=False, set_icon=True)
+            return
+        self._Alarm_Frame.set_Tracer_icon(auto_tracer=False, set_icon=False)
+        """
 
     def reset_dx_alarm(self):
-        self._Alarm_Frame.set_dxAlarm(False)
+        dx_alarm = bool(self.setting_dx_alarm.get())
+        self._Alarm_Frame.set_dxAlarm_active(dx_alarm)
 
     def pmsMail_alarm(self):
+        if self.MSG_Center_win:
+            return
         self._Alarm_Frame.set_pmsMailAlarm(True)
 
     def reset_pmsMail_alarm(self):
@@ -3549,6 +3804,10 @@ class PoPT_GUI_Main:
 
     def reset_pmsFwd_alarm(self):
         self._Alarm_Frame.set_pms_fwd_alarm(False)
+        if self.MSG_Center_win:
+            self.MSG_Center_win.tree_update_task()
+        if self.BBS_fwd_q_list:
+            self.BBS_fwd_q_list.init_tree_data()
 
     def set_diesel(self):
         self._Alarm_Frame.set_diesel(True)
@@ -3556,3 +3815,10 @@ class PoPT_GUI_Main:
 
     def reset_diesel(self):
         self._Alarm_Frame.set_diesel(False)
+
+    def set_rxEcho_icon(self, alarm_set=True):
+        self._Alarm_Frame.set_rxEcho_icon(alarm_set=alarm_set)
+
+    def set_Beacon_icon(self, alarm_set=True):
+        self._Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
+

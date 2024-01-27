@@ -5,6 +5,8 @@ Fixes:
 Optimierung:
 
 Neue Implementierungen / Funktionen:
+- Message-Center und PMS-FWD Warteschlange wird aktualisiert wenn PMS-FWD beendet
+- Docs aktualisiert
 
 ###########################################################################################################
 ###########################################################################################################
