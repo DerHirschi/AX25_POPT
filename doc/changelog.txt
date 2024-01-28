@@ -6,6 +6,7 @@ Fixes:
 - CLI Connect-dauer Timer wurde bei reconnect von anderer Station neu gestartet
 - Dual-Port Auto-TX Mode Einstellungen werden nicht übernommen und gespeichert
 - Erfolgloser Verbindungsaufbau wird nicht mit Senden des DISC Frame beendet
+- Nach Disco wird sporadisch die Farbe des Kanal-Buttons nicht geändert
 
 Optimierung:
 - Alarm Status/Icons

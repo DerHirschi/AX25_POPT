@@ -657,10 +657,11 @@ class AX25PortHandler(object):
                         if not conn.ch_index:    # Not Channel 0
                             print(f"Connection on Channel 0 - Port {port_id}! ")
                             print(f"{conn_key} - MyCall: {conn.my_call_str} - TO: {conn.to_call_str}")
-                        if conn.ch_index not in ret.keys():
-                            ret[conn.ch_index] = conn
                         else:
-                            print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                            if conn.ch_index not in ret.keys():
+                                ret[conn.ch_index] = conn
+                            else:
+                                print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
         return ret
 
     def get_all_stat_cfg(self):
