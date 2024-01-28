@@ -1233,8 +1233,8 @@ class DefaultCLI(object):
 
     ##############################################
     def cli_exec(self, inp=b''):
-        print(f"cli_exec {self.cli_name}: {self.connection.uid} - SI: {self.state_index} - CSI: {self.crone_state_index}")
-        print(f"cli_exec {self.cli_name}: {self.connection.uid} - raw-input: {inp}")
+        # print(f"cli_exec {self.cli_name}: {self.connection.uid} - SI: {self.state_index} - CSI: {self.crone_state_index}")
+        # print(f"cli_exec {self.cli_name}: {self.connection.uid} - raw-input: {inp}")
         # if not self.connection.is_link:
         self.raw_input = bytes(inp)
         ret = self.state_exec[self.state_index]()

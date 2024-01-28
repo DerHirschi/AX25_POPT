@@ -49,7 +49,7 @@ class DP_cfg_Tab(tk.Frame):
         ################
         # Auto-TX Mode
         mode_opt = list(DUALPORT_TX_MODE.keys())
-        self._tx_auto_mode_var = tk.StringVar(self, value=mode_opt[0])
+        self._tx_auto_mode_var = tk.StringVar(self, value=mode_opt[dp_settings.get('auto_tx_mode', 0)])
         tx_auto_mode = tk.Frame(opt_frame)
         tx_auto_mode.pack(padx=80)
         tx_auto_mode_label = tk.Label(tx_auto_mode, text='Auto-TX Mode: ')
@@ -68,7 +68,7 @@ class DP_cfg_Tab(tk.Frame):
         return dict(
             tx_primary=bool(self._tx_prim_var.get()),                               # TX Primary/Secondary
             auto_tx=bool(self._tx_auto_var.get()),                                  # Auto TX
-            auto_tx_mode=int(DUALPORT_TX_MODE.get(self._tx_auto_var.get(), 0)),     # Auto TX Mode
+            auto_tx_mode=int(DUALPORT_TX_MODE.get(self._tx_auto_mode_var.get(), 0)),     # Auto TX Mode
             primary_port_id=int(prim_port),
             secondary_port_id=int(sec_port)
         )
