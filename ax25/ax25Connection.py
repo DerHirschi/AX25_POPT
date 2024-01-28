@@ -284,7 +284,7 @@ class AX25Conn(object):
         """
 
     def reinit_cli(self):
-        print("CLI RE-INIT")
+        print(f"CLI RE-INIT: {self.uid}")
         if self.stat_cfg.stat_parm_pipe is None:
             self.init_cli()
             self.cli.change_cli_state(state=1)
@@ -319,6 +319,7 @@ class AX25Conn(object):
         self.rx_byte_count += len(data)
         if self.is_link:
             self.LINK_rx_buff += data
+            self.exec_cli(data)
             return
         # Pipe-Tool
         if self._pipe_rx(data):
@@ -509,28 +510,31 @@ class AX25Conn(object):
 
         self.LINK_Connection = conn
         self.is_link = True
-        self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
+        #   self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
 
         return True
 
-    def _link_disco(self):
+    def link_disco(self):
         if self.is_link and self.LINK_Connection is not None:
-            if self.LINK_Connection.zustand_exec.stat_index == 1:
+            if self.LINK_Connection.zustand_exec.stat_index in [1, 2]:
                 # self.LINK_Connection.n2 = 100
                 self.LINK_Connection.set_T1(stop=True)
                 self.LINK_Connection.zustand_exec.change_state(0)
+                self.del_link()
             else:
                 if not self.is_link_remote:
                     # print(f'LINK DISCO : {self.uid}')
-                    self.LINK_Connection.zustand_exec.change_state(4)
-                    self.LINK_Connection.zustand_exec.tx(None)
+                    self.LINK_Connection.conn_disco()
+                    # self.LINK_Connection.zustand_exec.tx(None)
                 else:
 
                     self.port_handler.del_link(self.LINK_Connection.uid)
+                    # print(self.zustand_exec.stat_index)
+                    # if self.zustand_exec.stat_index not in [0, 1]:
                     self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
                     self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
                     self.LINK_Connection.del_link()
-                    self.LINK_Connection.init_cli()
+                    # self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
                     self.LINK_Connection.cli.send_prompt()
                     # self.LINK_Connection.cli.build_prompt()
@@ -585,11 +589,11 @@ class AX25Conn(object):
         if self.ft_obj:
             self.ft_obj.ft_abort()
         self.ft_obj = None
-        self._link_disco()
+        self.link_disco()
         self.set_T1()
         self.vr = 0
         self.vs = 0
-        self.init_cli()
+        # self.init_cli() # TODO Check if needed
         # self.zustand_exec.change_state(0)
         """ !!!!!!!!! """
         """
@@ -718,23 +722,23 @@ class AX25Conn(object):
         # TODO AGAIN !!
         if b'*** ' not in raw_data:
             return
-        for _det_str in [
+        for det_str in [
             b'*** connected to',
             b'*** reconnected to'
         ]:
-            if _det_str in raw_data.lower():
+            if det_str in raw_data.lower():
                 # TODO Conn/reconn fnc
-                _index = raw_data.lower().index(_det_str) + len(_det_str)
+                index = raw_data.lower().index(det_str) + len(det_str)
                 raw_data = raw_data.decode('ASCII', 'ignore')
-                _tmp_call = raw_data[_index:]
-                _tmp_call = _tmp_call.split('\r')
-                _cut_str = _tmp_call[1:]
-                if ':' in _tmp_call[0]:
-                    _tmp_call = _tmp_call[0].split(':')
-                    self.to_call_str = _tmp_call[1].replace(' ', '')
-                    self.to_call_alias = _tmp_call[0].replace(' ', '')
+                tmp_call = raw_data[index:]
+                tmp_call = tmp_call.split('\r')
+                _cut_str = tmp_call[1:]
+                if ':' in tmp_call[0]:
+                    tmp_call = tmp_call[0].split(':')
+                    self.to_call_str = tmp_call[1].replace(' ', '')
+                    self.to_call_alias = tmp_call[0].replace(' ', '')
                 else:
-                    self.to_call_str = _tmp_call[0].replace(' ', '')
+                    self.to_call_str = tmp_call[0].replace(' ', '')
                     self.to_call_alias = ''
                 if self.gui is not None:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
@@ -895,8 +899,8 @@ class AX25Conn(object):
         """ CLI Processing like sending C-Text ... """
         if self.ft_obj is not None:
             return False
-        if self.is_link:
-            return False
+        # if self.is_link:
+        #     return False
         if self.pipe is not None:
             return False
         self.cli.cli_exec(inp)
@@ -1023,6 +1027,7 @@ class AX25Conn(object):
     def accept_connection(self):
         self.port_handler.accept_new_connection(self)
         if self.LINK_Connection:
+            self.LINK_Connection.cli.change_cli_state(5)
             self.send_to_link(
                 f'\r*** Connected to {self.to_call_str}\r'.encode('ASCII', 'ignore')
             )
