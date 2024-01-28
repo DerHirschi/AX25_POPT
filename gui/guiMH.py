@@ -217,7 +217,7 @@ class MHWin(tk.Toplevel):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._reset_mh_list)
+        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._reset_mh_list)
         MenuVerb.add_separator()
         MenuVerb.add_command(label=STR_TABLE['delete_dx_history'][self._lang], command=self._reset_dx_history)
         menubar.add_cascade(label='MyHeard', menu=MenuVerb, underline=0)
