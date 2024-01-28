@@ -564,8 +564,9 @@ class AX25Conn(object):
         if self.zustand_exec.stat_index:
             self.bbsFwd_disc()  # TODO return "is_"self.bbs_connection
             self.set_T1(stop=True)
-            self.zustand_exec.tx(None)
+            # self.zustand_exec.tx(None)
             if self.zustand_exec.stat_index in [2, 4]:
+                self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
                 self.zustand_exec.change_state(4)
@@ -980,6 +981,11 @@ class AX25Conn(object):
         self.ax25_out_frame.ctl_byte.DISCcByte()
         self.tx_buf_2send.append(self.ax25_out_frame)
 
+    def send_DISC_ctlBuf(self):
+        self._init_new_ax25frame()
+        self.ax25_out_frame.ctl_byte.DISCcByte()
+        self.tx_buf_ctl.append(self.ax25_out_frame)
+
     def send_SABM(self):
         self._init_new_ax25frame()
         self.ax25_out_frame.ctl_byte.SABMcByte()
@@ -1345,7 +1351,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
                              f'({user_db_ent.Name}) > Port {self._ax25conn.own_port.port_id}'
 
         self._ax25conn.send_sys_Msg_to_gui(to_qso_win)
-        self._ax25conn.send_DISC()
+        self._ax25conn.send_DISC_ctlBuf()
         self.S1_end_connection()
 
 

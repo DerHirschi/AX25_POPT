@@ -2,12 +2,13 @@
 # 2.105.x
 Fixes:
 - Scripterror in Debug Ausgabe
-
-Optimierung:
-- Alarm Status/Icons
 - CLI "Connect" CMD: Connect wird nicht abgebrochen bei Benutzereingabe
 - CLI Connect-dauer Timer wurde bei reconnect von anderer Station neu gestartet
 - Dual-Port Auto-TX Mode Einstellungen werden nicht übernommen und gespeichert
+- Erfolgloser Verbindungsaufbau wird nicht mit Senden des DISC Frame beendet
+
+Optimierung:
+- Alarm Status/Icons
 
 Neue Implementierungen / Funktionen:
 - Message-Center und PMS-FWD Warteschlange wird aktualisiert, wenn PMS-FWD beendet
