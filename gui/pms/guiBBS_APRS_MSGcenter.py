@@ -271,23 +271,23 @@ class MSG_Center(tk.Toplevel):
         self._init_Vars_fm_Cfg()
 
     def _init_Menu(self):
-        _menubar = tk.Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = tk.Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win())
-        _MenuVerb.add_separator()
-        _MenuVerb.add_command(label='Alles sofort senden', command=lambda: self._do_pms_autoFWD())
-        _menubar.add_cascade(label='Nachricht', menu=_MenuVerb, underline=0)
+        menubar = tk.Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = tk.Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win())
+        MenuVerb.add_separator()
+        MenuVerb.add_command(label='Alles sofort senden', command=lambda: self._do_pms_autoFWD())
+        menubar.add_cascade(label='Nachricht', menu=MenuVerb, underline=0)
         # ### Bearbeiten
-        _MenuEdit = tk.Menu(_menubar, tearoff=False)
-        _MenuEdit.add_command(label='Alle als gelesen markieren',
+        MenuEdit = tk.Menu(menubar, tearoff=False)
+        MenuEdit.add_command(label='Alle als gelesen markieren',
                               command=self._set_all_to_oldMSG,
                               underline=0)
-        _MenuVerb.add_separator()
-        _MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
+        MenuVerb.add_separator()
+        MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
                               command=self._save_msg_to_file,
                               underline=0)
-        _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
+        menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
 
     def _init_Vars_fm_Cfg(self):
         pass

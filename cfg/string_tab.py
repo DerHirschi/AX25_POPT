@@ -15,6 +15,7 @@ STR_TABLE = {
     'OK': ('OK', 'OK', 'OK'),
     'cancel': ('Abbrechen', 'Cancel', 'Onderbreken'),
     'delete': ('Löschen', 'Delete', 'Verwijder'),
+    'delete_dx_history': ('DX-History Löschen', 'Delete DX-History', 'Verwijder DX-History'),
     'del_all': ('Alles Löschen', 'Delete all', 'Verwijder alles'),
     'go': ('Los', 'Go', 'Gaan'),
     'close': ('Schließen', 'Close', 'Schließen'),

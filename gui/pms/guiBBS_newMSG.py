@@ -95,24 +95,24 @@ class BBS_newMSG(tk.Toplevel):
         self.bind('<Control-x>', lambda event: self._cut_select())
 
     def _init_Menu(self):
-        _menubar = tk.Menu(self, tearoff=False)
-        self.config(menu=_menubar)
+        menubar = tk.Menu(self, tearoff=False)
+        self.config(menu=menubar)
         # ### Mail
-        _MenuVerb = tk.Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(
+        MenuVerb = tk.Menu(menubar, tearoff=False)
+        MenuVerb.add_command(
             label='Senden',
             command=self._btn_send_msg,
         )
-        _menubar.add_cascade(label='Mail', menu=_MenuVerb, underline=0)
+        menubar.add_cascade(label='Mail', menu=MenuVerb, underline=0)
         # ### Bearbeiten
-        _MenuEdit = tk.Menu(_menubar, tearoff=False)
-        _MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language],
+        MenuEdit = tk.Menu(menubar, tearoff=False)
+        MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language],
                               command=self._insert_fm_file,
                               underline=0)
-        _MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
+        MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
                               command=self._save_to_file,
                               underline=0)
-        _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
+        menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
 
     def _init_upper_btn_frame(self, root_frame):
         tk.Button(root_frame,

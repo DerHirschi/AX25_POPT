@@ -129,11 +129,11 @@ class NewConnWin(tk.Toplevel):
         self._main.new_conn_win = self
 
     def _init_menubar(self):
-        _menubar = Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._reset_conn_history)
-        _menubar.add_cascade(label='History', menu=_MenuVerb, underline=0)
+        menubar = Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._reset_conn_history)
+        menubar.add_cascade(label='History', menu=MenuVerb, underline=0)
 
     def _set_port_index(self, index: int):
         port = PORT_HANDLER.get_port_by_index(index)

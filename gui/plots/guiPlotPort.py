@@ -177,11 +177,11 @@ class PlotWindow(tk.Toplevel):
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
 
     def _init_menubar(self):
-        _menubar = Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._reset_PortStat)
-        _menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=_MenuVerb, underline=0)
+        menubar = Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._reset_PortStat)
+        menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=MenuVerb, underline=0)
 
     def _update_plots_bytes(self):
         port_id = int(self._port_var.get())

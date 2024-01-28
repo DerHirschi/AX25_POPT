@@ -253,11 +253,11 @@ class DualPort_Monitor(tk.Toplevel):
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
 
     def _init_menubar(self):
-        _menubar = Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._del_monitor_buf)
-        _menubar.add_cascade(label='Monitor', menu=_MenuVerb, underline=0)
+        menubar = Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._del_monitor_buf)
+        menubar.add_cascade(label='Monitor', menu=MenuVerb, underline=0)
 
     def _del_monitor_buf(self):
         for k in self.tab_list.keys():

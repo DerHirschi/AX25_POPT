@@ -126,15 +126,15 @@ class DualPortSettingsWin(tk.Toplevel):
         self._init_menubar()
 
     def _init_menubar(self):
-        _menubar = Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['new'][self._lang], command=self._new_dualPort_cfg)
-        _MenuVerb.add_separator()
-        _MenuVerb.add_command(label=STR_TABLE['delete'][self._lang],
+        menubar = Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['new'][self._lang], command=self._new_dualPort_cfg)
+        MenuVerb.add_separator()
+        MenuVerb.add_command(label=STR_TABLE['delete'][self._lang],
                               command=self._del_dualPort_cfg
                               )
-        _menubar.add_cascade(label="Dual-Port", menu=_MenuVerb, underline=0)
+        menubar.add_cascade(label="Dual-Port", menu=MenuVerb, underline=0)
 
     def _new_dualPort_cfg(self, event=None):
         new_cfg = getNew_dualPort_cfg()

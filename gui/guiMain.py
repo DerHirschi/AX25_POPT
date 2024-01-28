@@ -1639,180 +1639,180 @@ class PoPT_GUI_Main:
         self._bw_fig.canvas.flush_events()
 
     def _init_menubar(self):
-        _menubar = Menu(self.main_win, tearoff=False)
-        self.main_win.config(menu=_menubar)
+        menubar = Menu(self.main_win, tearoff=False)
+        self.main_win.config(menu=menubar)
         #########################################################################
         # Menü 1 "Verbindungen"
-        _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['new_conn'][self.language], command=self.open_new_conn_win)
-        _MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self._disco_conn)
-        _MenuVerb.add_separator()
-        _MenuVerb.add_command(label=STR_TABLE['disconnect_all'][self.language], command=self._disco_all)
-        _MenuVerb.add_separator()
-        _MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self._destroy_win)
-        _menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=_MenuVerb, underline=0)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['new_conn'][self.language], command=self.open_new_conn_win)
+        MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self._disco_conn)
+        MenuVerb.add_separator()
+        MenuVerb.add_command(label=STR_TABLE['disconnect_all'][self.language], command=self._disco_all)
+        MenuVerb.add_separator()
+        MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self._destroy_win)
+        menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=MenuVerb, underline=0)
         #####################################################################
         # Menü 2 "Bearbeiten"
-        _MenuEdit = Menu(_menubar, tearoff=False)
-        _MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self._copy_select, underline=0)
-        _MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self._clipboard_past, underline=1)
-        _MenuEdit.add_separator()
-        _MenuEdit.add_command(label=STR_TABLE['past_qso_f_file'][self.language], command=self._insert_fm_file,
+        MenuEdit = Menu(menubar, tearoff=False)
+        MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self._copy_select, underline=0)
+        MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self._clipboard_past, underline=1)
+        MenuEdit.add_separator()
+        MenuEdit.add_command(label=STR_TABLE['past_qso_f_file'][self.language], command=self._insert_fm_file,
                               underline=0)
-        _MenuEdit.add_command(label=STR_TABLE['save_qso_to_file'][self.language], command=self._save_to_file,
+        MenuEdit.add_command(label=STR_TABLE['save_qso_to_file'][self.language], command=self._save_to_file,
                               underline=1)
-        _MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self._save_monitor_to_file,
+        MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self._save_monitor_to_file,
                               underline=1)
-        _MenuEdit.add_separator()
-        _MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_vars,
+        MenuEdit.add_separator()
+        MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_vars,
                               underline=0)
-        _MenuEdit.add_command(label=STR_TABLE['clean_mon_win'][self.language], command=self._clear_monitor_data,
+        MenuEdit.add_command(label=STR_TABLE['clean_mon_win'][self.language], command=self._clear_monitor_data,
                               underline=0)
 
-        _MenuEdit.add_separator()
-        _MenuEdit.add_command(label=STR_TABLE['clean_all_qso_win'][self.language], command=self._clear_all_Channel_vars,
+        MenuEdit.add_separator()
+        MenuEdit.add_command(label=STR_TABLE['clean_all_qso_win'][self.language], command=self._clear_all_Channel_vars,
                               underline=0)
-        _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
+        menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
         ####################################################################
         # Menü 3 "Tools"
-        _MenuTools = Menu(_menubar, tearoff=False)
-        _MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
-        _MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
+        MenuTools = Menu(menubar, tearoff=False)
+        MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
+        MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
                                command=lambda: self.open_window('PortStat'),
                                underline=1)
-        _MenuTools.add_separator()
-        _MenuTools.add_command(label="User-DB Tree",
+        MenuTools.add_separator()
+        MenuTools.add_command(label="User-DB Tree",
                                command=lambda: self.open_window('userDB_tree'),
                                underline=0)
-        _MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
+        MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
                                command=lambda: self.open_user_db_win(),
                                underline=0)
-        _MenuTools.add_separator()
-        _MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language],
+        MenuTools.add_separator()
+        MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language],
                                command=lambda: self.open_window('locator_calc'),
                                underline=0)
-        _MenuTools.add_separator()
+        MenuTools.add_separator()
 
-        _MenuTools.add_command(label="FT-Manager",
+        MenuTools.add_command(label="FT-Manager",
                                command=lambda: self._open_settings_window('ft_manager'),
                                underline=0)
-        _MenuTools.add_command(label=STR_TABLE['send_file'][self.language],
+        MenuTools.add_command(label=STR_TABLE['send_file'][self.language],
                                command=lambda: self.open_window('ft_send'),
                                underline=0)
-        _MenuTools.add_separator()
-        _MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
+        MenuTools.add_separator()
+        MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
                                command=lambda: self._open_settings_window('l_holder'),
                                underline=0)
-        _MenuTools.add_command(label='Pipe-Tool',
+        MenuTools.add_command(label='Pipe-Tool',
                                command=lambda: self._open_settings_window('pipe_sett'),
                                underline=0)
-        _MenuTools.add_separator()
+        MenuTools.add_separator()
 
-        _MenuTools.add_command(label='Priv',
+        MenuTools.add_command(label='Priv',
                                command=lambda: self._open_settings_window('priv_win'),
                                underline=0)
-        _MenuTools.add_separator()
-        _MenuTools.add_command(label='Dual-Port Monitor',
+        MenuTools.add_separator()
+        MenuTools.add_command(label='Dual-Port Monitor',
                                command=lambda: self.open_window('dualPort_monitor'),
                                underline=0)
-        _MenuTools.add_separator()
+        MenuTools.add_separator()
 
-        _MenuTools.add_command(label='Kaffèmaschine',
+        MenuTools.add_command(label='Kaffèmaschine',
                                command=lambda: self._kaffee(),
                                underline=0)
 
         # MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
-        _menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=_MenuTools, underline=0)
+        menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=MenuTools, underline=0)
 
         ###################################################################
         # Menü 4 Einstellungen
-        _MenuSettings = Menu(_menubar, tearoff=False)
-        _MenuSettings.add_command(label=STR_TABLE['station'][self.language],
+        MenuSettings = Menu(menubar, tearoff=False)
+        MenuSettings.add_command(label=STR_TABLE['station'][self.language],
                                   command=lambda: self._open_settings_window('stat_sett'),
                                   underline=0)
-        _MenuSettings.add_command(label=STR_TABLE['port'][self.language],
+        MenuSettings.add_command(label=STR_TABLE['port'][self.language],
                                   command=lambda: self._open_settings_window('port_sett'),
                                   underline=0)
-        _MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
+        MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
                                   command=lambda: self._open_settings_window('beacon_sett'),
                                   underline=0)
 
-        _MenuSettings.add_separator()
-        _MenuSettings.add_command(label='Multicast',
+        MenuSettings.add_separator()
+        MenuSettings.add_command(label='Multicast',
                                   command=lambda: self._open_settings_window('mcast_sett'),
                                   underline=0)
-        _MenuSettings.add_command(label="RX-Echo",
+        MenuSettings.add_command(label="RX-Echo",
                                   command=lambda: self._open_settings_window('rx_echo_sett'),
                                   underline=0)
-        _MenuSettings.add_separator()
-        _MenuSettings.add_command(label='Dual-Port',
+        MenuSettings.add_separator()
+        MenuSettings.add_command(label='Dual-Port',
                                   command=lambda: self.open_window('dualPort_settings'),
                                   underline=0)
 
-        _menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=_MenuSettings, underline=0)
+        menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=MenuSettings, underline=0)
         ########################################################################
         # APRS Menu
-        _MenuAPRS = Menu(_menubar, tearoff=False)
-        _MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
+        MenuAPRS = Menu(menubar, tearoff=False)
+        MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
                               command=lambda: self.open_window('aprs_mon'),
                               underline=0)
-        _MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
+        MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
                               underline=0)
-        _MenuAPRS.add_separator()
-        _MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language],
+        MenuAPRS.add_separator()
+        MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language],
                               command=lambda: self.open_window('wx_win'),
                               underline=0)
-        _MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language],
+        MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language],
                               command=lambda: self.open_window('aprs_msg'),
                               underline=0)
-        _MenuAPRS.add_separator()
-        _MenuAPRS.add_command(label=STR_TABLE['settings'][self.language],
+        MenuAPRS.add_separator()
+        MenuAPRS.add_command(label=STR_TABLE['settings'][self.language],
                               command=lambda: self._open_settings_window('aprs_sett'),
                               underline=0)
         # MenuAPRS.add_separator()
-        _menubar.add_cascade(label="APRS", menu=_MenuAPRS, underline=0)
+        menubar.add_cascade(label="APRS", menu=MenuAPRS, underline=0)
         ################################################################
         # BBS/PMS
-        _MenuBBS = Menu(_menubar, tearoff=False)
-        _MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
+        MenuBBS = Menu(menubar, tearoff=False)
+        MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
                              command=lambda: self.open_window('pms_new_msg'),
                              underline=0)
-        _MenuBBS.add_command(label=STR_TABLE['msg_center'][self.language],
+        MenuBBS.add_command(label=STR_TABLE['msg_center'][self.language],
                              command=lambda: self.open_window('pms_msg_center'),
                              underline=0)
 
-        _MenuBBS.add_separator()
-        _MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
+        MenuBBS.add_separator()
+        MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
                              command=lambda: self.open_window('pms_fwq_q'),
                              underline=0)
-        _MenuBBS.add_command(label=STR_TABLE['fwd_path'][self.language],
+        MenuBBS.add_command(label=STR_TABLE['fwd_path'][self.language],
                              command=lambda: self.open_window('fwdPath'),
                              underline=0)
-        _MenuBBS.add_separator()
-        _MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
+        MenuBBS.add_separator()
+        MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
                              command=self._do_pms_fwd,
                              underline=0)
 
-        _MenuBBS.add_command(label=STR_TABLE['start_auto_fwd'][self.language],
+        MenuBBS.add_command(label=STR_TABLE['start_auto_fwd'][self.language],
                              command=self._do_pms_autoFWD,
                              underline=0)
-        _MenuBBS.add_separator()
-        _MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
+        MenuBBS.add_separator()
+        MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
                              command=lambda: self._open_settings_window('pms_setting'),
                              underline=0)
-        _menubar.add_cascade(label='PMS', menu=_MenuBBS, underline=0)
+        menubar.add_cascade(label='PMS', menu=MenuBBS, underline=0)
         #########################################################################
         # Menü 5 Hilfe
-        _MenuHelp = Menu(_menubar, tearoff=False)
+        MenuHelp = Menu(menubar, tearoff=False)
         # MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
-        _MenuHelp.add_command(label=STR_TABLE['keybind'][self.language],
+        MenuHelp.add_command(label=STR_TABLE['keybind'][self.language],
                               command=lambda: self._open_settings_window('keybinds'),
                               underline=0)
-        _MenuHelp.add_separator()
-        _MenuHelp.add_command(label=STR_TABLE['about'][self.language],
+        MenuHelp.add_separator()
+        MenuHelp.add_command(label=STR_TABLE['about'][self.language],
                               command=lambda: self._open_settings_window('about'),
                               underline=0)
-        _menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=_MenuHelp, underline=0)
+        menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=MenuHelp, underline=0)
 
     def _init_btn(self):
         btn_upper_frame = tk.Frame(self._side_btn_frame_top)
