@@ -3,7 +3,7 @@ import logging
 import random
 import time
 import tkinter as tk
-from tkinter import ttk, Menu, Checkbutton, TclError, scrolledtext, Label
+from tkinter import ttk, Menu, Checkbutton, TclError, scrolledtext, Label, messagebox
 import threading
 import sys
 
@@ -53,7 +53,7 @@ from gui.ft.guiFileTX import FileSend
 from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, CFG_sound_CONN, \
-    CFG_sound_DICO
+    CFG_sound_DICO, SERVICE_CH_START
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -1385,7 +1385,7 @@ class PoPT_GUI_Main:
 
     def _rx_beep_sound(self):
         for k in self._channel_vars.keys():
-            if k:  # not int(0)    # TODO Service Ports
+            if 0 < k < SERVICE_CH_START:  # not int(0)    # TODO Service Ports
                 ch_vars = self.get_ch_var(ch_index=k)
                 if ch_vars.rx_beep_cooldown < time.time():
                     ch_vars.rx_beep_cooldown = time.time() + self._parm_rx_beep_cooldown
@@ -1927,9 +1927,10 @@ class PoPT_GUI_Main:
         if conn is not None:
             conn.conn_disco()
 
-    @staticmethod
-    def _disco_all():
-        PORT_HANDLER.disco_all_Conn()
+    def _disco_all(self):
+        if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self.language],
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language]):
+            PORT_HANDLER.disco_all_Conn()
 
     # DISCO ENDE
     #######################################################################

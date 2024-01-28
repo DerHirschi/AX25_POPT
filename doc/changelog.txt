@@ -15,6 +15,10 @@ Neue Implementierungen / Funktionen:
 - Message-Center und PMS-FWD Warteschlange wird aktualisiert, wenn PMS-FWD beendet
 - Docs aktualisiert
 - MH-Liste: Menüleiste > DX-History löschen hinzugefügt
+- "Service Channels" für NODE/AutoConnect(PMS-FWD)/Link/Pipe ab Kanal 11
+  - Service Channels geben kein Connect/Disco/RX-Beep Sound aus
+  - Service Kanäle können über tabellarische Übersicht "Connects" im Seitenfenster, durch Klicken
+    auf den jeweiligen Eintrag, aufgerufen werden
 
 ###########################################################################################################
 ###########################################################################################################

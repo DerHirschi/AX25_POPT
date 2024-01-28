@@ -32,6 +32,7 @@ STR_TABLE = {
     'new_conn': ('Neu Verbindung', 'New Connection', 'Nieuw Koppelingen'),
     'disconnect': ('Disconnecten', 'Disconnect', 'Loskoppelen'),
     'disconnect_all': ('ALLE disconnecten', 'Disconnect ALL', 'Loskoppelen ALLE'),
+    'disconnect_all_ask': ('Wirklich ALLE Stationen disconnecten ?', 'Do you want to disconnect ALL stations?', 'Wilt u ALLE stations loskoppelen?'),
     'wx_window': ('Wetterstationen', 'Weather Stations', 'Weerstations'),
     'quit': ('Quit', 'Quit', 'Quit'),
     'connections': ('Verbindungen', 'Connections', 'Koppelingen'),

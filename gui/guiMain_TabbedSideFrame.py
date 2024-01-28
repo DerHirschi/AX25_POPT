@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk, Checkbutton, TclError
+from datetime import datetime
+from tkinter import ttk, Checkbutton, TclError, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25dec_enc import PIDByte
@@ -38,6 +39,7 @@ class SideTabbedFrame:  # TODO
         )
 
         tab1_kanal = ttk.Frame(self._tabControl)
+        tab_connects = tk.Frame(self._tabControl)
         tab2_mh = tk.Frame(self._tabControl)
         tab4_settings = ttk.Frame(self._tabControl)
         # self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
@@ -48,12 +50,13 @@ class SideTabbedFrame:  # TODO
         # tab3 = ttk.Frame(self._tabControl)                         # TODO
         # self._tabControl.add(tab3, text='Ports')                   # TODO
         self._tabControl.add(tab4_settings, text='Global')
+        self._tabControl.add(tab_connects, text='Connects')
         self._tabControl.add(tab6_monitor, text='Monitor')
         self._tabControl.add(tab2_mh, text='MH')
         self._tabControl.add(tab7_tracer, text='Tracer')
 
         # self._tabControl.add(self.tab5_ch_links, text='CH-Echo')   # TODO
-        self._tabControl.pack(expand=0, fill="both")
+        self._tabControl.pack(expand=1, fill="both")
         self._tabControl.select(tab2_mh)
         ################################################
         # Kanal
@@ -498,19 +501,73 @@ class SideTabbedFrame:  # TODO
                   ).pack(side=tk.LEFT, padx=50)
 
         # tk.Button(tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
-
+        #################################
+        self._init_connects_tab(tab_connects)
         ##################
         # Tasker
         self._tasker_dict = {
             0: self._update_rtt,
-            3: self._update_side_mh,
-            4: self._update_side_trace,
+            2: self._update_connects,
+            4: self._update_side_mh,
+            5: self._update_side_trace,
         }
 
         self._chk_mon_port()
         # self._update_ch_echo()
         self._update_side_mh()
         self._update_side_trace()
+
+    def _init_connects_tab(self, root_frame):
+        # TREE
+        root_frame.rowconfigure(0, minsize=100, weight=1)
+        root_frame.rowconfigure(1, minsize=50, weight=0)
+        root_frame.columnconfigure(0, minsize=150, weight=1)
+        root_frame.columnconfigure(1, minsize=150, weight=1)
+
+        columns = (
+            'channel',
+            'call',
+            'own_call',
+            'port',
+            'typ',
+            'dauer',
+        )
+
+        self._connects_tree = ttk.Treeview(root_frame, columns=columns, show='headings')
+        self._connects_tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
+
+        self._connects_tree.heading('channel', text='CH')
+        self._connects_tree.heading('call', text='To')
+        self._connects_tree.heading('own_call', text='Station')
+        self._connects_tree.heading('port', text='Port')
+        self._connects_tree.heading('typ', text='Typ')
+        self._connects_tree.heading('dauer', text='Time')
+        self._connects_tree.column("channel", anchor=tk.W, stretch=tk.NO, width=50)
+        self._connects_tree.column("call", anchor=tk.W, stretch=tk.NO, width=115)
+        self._connects_tree.column("own_call", anchor=tk.CENTER, stretch=tk.NO, width=115)
+        self._connects_tree.column("port", anchor=tk.W, stretch=tk.NO, width=61)
+        self._connects_tree.column("typ", anchor=tk.W, stretch=tk.NO, width=105)
+        self._connects_tree.column("dauer", anchor=tk.W, stretch=tk.YES, width=140)
+        # self._connects_tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
+
+        self._connects_tree_data = []
+        # self._last_mh_ent = []
+        # self._update_side_mh()
+        self._connects_tree.bind('<<TreeviewSelect>>', self._connects_entry_selected)
+
+        btn_frame = tk.Frame(root_frame)
+        btn_frame.grid(row=1, column=0)
+        tk.Button(btn_frame,
+                  text=STR_TABLE['disconnect_all'][self._lang],
+                  command=self._disoc_all
+                  ).pack(side=tk.LEFT, padx=50)
+        """
+
+        tk.Button(btn_frame,
+                  text="Statistik",
+                  command=self._open_PortStat
+                  ).pack(side=tk.LEFT, padx=50)
+        """
 
     def _set_rx_echo(self, event=None):
         PORT_HANDLER.rx_echo_on = bool(self._main_win.setting_rx_echo.get())
@@ -711,6 +768,14 @@ class SideTabbedFrame:  # TODO
             if self._main_win.new_conn_win:
                 self._main_win.new_conn_win.preset_ent(call, port)
 
+    def _connects_entry_selected(self, event=None):
+        for selected_item in self._connects_tree.selection():
+            item = self._connects_tree.item(selected_item)
+            record = item['values']
+            # show a message
+            ch_id = int(record[0])
+            self._main_win.switch_channel(ch_id)
+
     def _trace_entry_selected(self, event=None):
         pass
         # self._main_win.open_be_tracer_win()
@@ -720,25 +785,6 @@ class SideTabbedFrame:  # TODO
         PORT_HANDLER.get_aprs_ais().tracer_sendit()
 
     # MH
-    def _format_tree_ent(self):
-        self._tree_data = []
-        for k in self._last_mh_ent:
-            # ent: MyHeard
-            ent = k
-            route = ent.route
-            dx_alarm = False
-            if ent.own_call in list(self._mh.dx_alarm_hist):
-                dx_alarm = True
-            self._tree_data.append(
-                ((
-                     f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
-                     f'{ent.own_call}',
-                     f'{ent.distance}',
-                     f'{ent.port}',
-                     f'{ent.pac_n}',
-                     ' '.join(route),
-                 ), dx_alarm)
-            )
 
     def _update_rtt(self):
         best = ''
@@ -784,6 +830,37 @@ class SideTabbedFrame:  # TODO
             self._rx_count_var.set(rx_count)
 
     ##########################################################
+    # Connects
+    def _update_connects(self):
+        connects = PORT_HANDLER.get_all_connections(with_null=True)
+        for i in self._connects_tree.get_children():
+            self._connects_tree.delete(i)
+        ch_list = list(connects.keys())
+        ch_list.sort()
+        for ch_id in ch_list:
+            conn = connects[ch_id]
+            timer = datetime.now() - conn.time_start
+            timer = str(timer).split('.')[0]
+            typ = conn.cli_type
+            if conn.is_link:
+                if hasattr(conn.LINK_Connection, 'to_call_str'):
+                    typ = f'Link {conn.LINK_Connection.to_call_str}'
+                else:
+                    typ = 'Link'
+            if conn.pipe:
+                typ = 'Pipe'
+            ent = [
+                conn.ch_index,
+                conn.to_call_str,
+                conn.my_call_str,
+                conn.port_id,
+                typ,
+                timer,
+            ]
+            self._connects_tree.insert('', tk.END, values=ent, )
+
+
+    ##########################################################
     # MH
     def _update_tree(self):
         for i in self._tree.get_children():
@@ -793,6 +870,26 @@ class SideTabbedFrame:  # TODO
                 self._tree.insert('', tk.END, values=ret_ent[0], tags=('dx_alarm',))
             else:
                 self._tree.insert('', tk.END, values=ret_ent[0], )
+
+    def _format_tree_ent(self):
+        self._tree_data = []
+        for k in self._last_mh_ent:
+            # ent: MyHeard
+            ent = k
+            route = ent.route
+            dx_alarm = False
+            if ent.own_call in list(self._mh.dx_alarm_hist):
+                dx_alarm = True
+            self._tree_data.append(
+                ((
+                     f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
+                     f'{ent.own_call}',
+                     f'{ent.distance}',
+                     f'{ent.port}',
+                     f'{ent.pac_n}',
+                     ' '.join(route),
+                 ), dx_alarm)
+            )
 
     def _update_side_mh(self):
         mh_ent = list(self._mh.output_sort_entr(10))
@@ -922,3 +1019,9 @@ class SideTabbedFrame:  # TODO
 
     def _open_PortStat(self):
         self._main_win.open_window('PortStat')
+
+    def _disoc_all(self):
+        if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang]):
+            PORT_HANDLER.disco_all_Conn()
+

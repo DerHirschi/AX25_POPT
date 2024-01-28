@@ -1,11 +1,12 @@
 import logging
 
+from cfg.constant import SERVICE_CH_START
+
 logger = logging.getLogger(__name__)
 
 
 class AutoConnTask:
     def __init__(self, port_handler, conf: dict):
-        START_CH_RANGE = 9
         """
         self._conf = {
             'task_typ': 'PMS',
@@ -26,7 +27,7 @@ class AutoConnTask:
             axip_add=self._conf.get('axip_add', ('', 0)),   # AXIP Adress
             exclusive=True,                                 # True = no lookup in MH list
             link_conn=None,                                 # Linked Connection AX25Conn
-            channel=START_CH_RANGE,                         # GUI Channel
+            channel=SERVICE_CH_START,                       # GUI Channel
         )
         # print(self.connection)
         self.connection = None
@@ -56,6 +57,7 @@ class AutoConnTask:
             self._set_state_exec(0)
         else:
             self.connection = connection[0]
+            self.connection.cli_type = f"Task: {self._conf.get('task_typ', '-')}"
             # self.dest_station_id = self.connection.cli.stat_identifier
             self._set_state_exec(1)
 
@@ -93,7 +95,7 @@ class AutoConnTask:
         return True
 
     def _ConnTask_ende(self):
-        print(f"ConnTask {self._conf.get('task_typ', '')} END")
+        # print(f"ConnTask {self._conf.get('task_typ', '')} END")
         if self.state_id:
             self._set_state_exec(0)
         # if self.connection:

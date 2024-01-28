@@ -4,7 +4,6 @@ import logging
 
 import ax25.ax25Connection
 from cfg import constant, config_station
-# from ax25.ax25Statistics import MH_LIST
 from cli.BaycomLogin import BaycomLogin
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV
@@ -20,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class DefaultCLI(object):
     cli_name = ''  # DON'T CHANGE!
+    service_cli = True
     c_text = '-= Test C-TEXT =-\r\r'
     bye_text = '73 ...\r'
     prompt = ''
@@ -709,13 +709,13 @@ class DefaultCLI(object):
             else:
                 call = validate_call(self.parameter[0])
                 if call:
-                    len = parm
+                    le = parm
                     if len(self.parameter) == 2:
                         try:
-                            len = int(self.parameter[1])
+                            le = int(self.parameter[1])
                         except ValueError:
                             pass
-                    ret = self._get_wx_fm_call_cli_out(call=call, max_ent=len)
+                    ret = self._get_wx_fm_call_cli_out(call=call, max_ent=le)
         else:
             ret = self._get_wx_cli_out(max_ent=parm)
         if not ret:
@@ -1335,6 +1335,7 @@ class DefaultCLI(object):
 
 class NodeCLI(DefaultCLI):
     cli_name = 'NODE'  # DON'T CHANGE !
+    service_cli = True
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
     prompt = 'PoPT-NODE>'
@@ -1356,6 +1357,7 @@ class NodeCLI(DefaultCLI):
 
 class UserCLI(DefaultCLI):
     cli_name = 'USER'  # DON'T CHANGE !
+    service_cli = False
     c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     bye_text = '73 ...\r'
     prompt = 'TEST-STATION-User-CLI>'
@@ -1378,6 +1380,7 @@ class UserCLI(DefaultCLI):
 class NoneCLI(DefaultCLI):
     """ ? To Disable CLI / Remote ? """
     cli_name = 'NO-CLI'  # DON'T CHANGE !
+    service_cli = True
 
     def _exec_cmd(self):
         pass

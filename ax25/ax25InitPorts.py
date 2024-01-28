@@ -11,7 +11,7 @@ from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
 from cfg.config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
-from cfg.constant import MAX_PORTS
+from cfg.constant import MAX_PORTS, SERVICE_CH_START
 from sql_db.sql_Error import SQLConnectionError
 
 
@@ -334,12 +334,13 @@ class AX25PortHandler(object):
 
     ######################
     # Connection Handling
-    def insert_new_connection(self, new_conn, ind: int = 1):
+    def insert_new_connection_PH(self, new_conn, ind=1, is_service=False):
         """ Insert connection for handling """
-        """ Assign Connection free to Channel """
+        """ Assign Connection to free Channel """
         all_conn = self.get_all_connections()
         # Check if Connection is already in all_conn...
-
+        if is_service:
+            ind = 11
         for k in list(all_conn.keys()):
             if new_conn == all_conn[k]:
                 if new_conn.ch_index != k:
@@ -372,9 +373,10 @@ class AX25PortHandler(object):
                     data=msg,
                     ch_index=connection.ch_index
                 )
-                self.gui.new_conn_sound()
-                speech = ' '.join(connection.to_call_str.replace('-', ' '))
-                self.gui.sprech(speech)
+                if 0 < connection.ch_index < SERVICE_CH_START:
+                    self.gui.new_conn_sound()
+                    speech = ' '.join(connection.to_call_str.replace('-', ' '))
+                    self.gui.sprech(speech)
 
             self.gui.ch_status_update()
             self.gui.conn_btn_update()
@@ -386,7 +388,8 @@ class AX25PortHandler(object):
             self.gui.sysMsg_to_qso(
                 data=f'*** Disconnected fm {str(conn.to_call_str)}',
                 ch_index=int(conn.ch_index))
-            self.gui.disco_sound()
+            if 0 < conn.ch_index < SERVICE_CH_START:
+                self.gui.disco_sound()
             self.gui.ch_status_update()
             self.gui.conn_btn_update()
 
@@ -395,7 +398,7 @@ class AX25PortHandler(object):
             del self.link_connections[uid]
 
     def disco_all_Conn(self):
-        all_conn = self.get_all_connections()
+        all_conn = self.get_all_connections(with_null=True)
         for k in list(all_conn.keys()):
             if all_conn[k]:
                 all_conn[k].conn_disco()
@@ -406,7 +409,7 @@ class AX25PortHandler(object):
             conn.conn_disco()
 
     def is_all_disco(self):
-        all_conn = self.get_all_connections()
+        all_conn = self.get_all_connections(with_null=True)
         for k in list(all_conn.keys()):
             if all_conn[k]:
                 return bool(all_conn[k].is_dico())
@@ -436,7 +439,7 @@ class AX25PortHandler(object):
             axip_add = USER_DB.get_AXIP(dest_call)
         if via_calls is None:
             via_calls = []
-        if link_conn and not via_calls:
+        if link_conn and not via_calls and exclusive:
             return False, 'Error: Link No Via Call'
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
@@ -472,7 +475,9 @@ class AX25PortHandler(object):
                                                                    link_conn=link_conn)
 
         if connection:
-            self.insert_new_connection(new_conn=connection, ind=channel)  # TODO . ? IF Link CH 11 +
+            if link_conn:
+                channel = SERVICE_CH_START
+            self.insert_new_connection_PH(new_conn=connection, ind=channel)
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
             user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
@@ -644,7 +649,7 @@ class AX25PortHandler(object):
     """
     ##################################
     #
-    def get_all_connections(self):
+    def get_all_connections(self, with_null=False):
         # TODO Need a better solution to get all connections
         ret = {}
         for port_id in self.ax25_ports.keys():
@@ -654,7 +659,7 @@ class AX25PortHandler(object):
                 for conn_key in all_port_conn.keys():
                     conn = all_port_conn[conn_key]
                     if conn:
-                        if not conn.ch_index:    # Not Channel 0
+                        if not conn.ch_index and not with_null:    # Not Channel 0
                             print(f"Connection on Channel 0 - Port {port_id}! ")
                             print(f"{conn_key} - MyCall: {conn.my_call_str} - TO: {conn.to_call_str}")
                         else:

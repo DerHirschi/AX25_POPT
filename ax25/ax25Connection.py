@@ -1040,7 +1040,11 @@ class AX25Conn(object):
 
     def insert_new_connection(self):
         """ Insert connection for handling """
-        self.port_handler.insert_new_connection(new_conn=self)
+        is_service = self._is_service_connection()
+        self.port_handler.insert_new_connection_PH(new_conn=self, is_service=is_service)
+
+    def _is_service_connection(self):
+        return self.cli.service_cli
 
 
 class DefaultStat(object):
