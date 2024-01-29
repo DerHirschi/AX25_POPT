@@ -1385,7 +1385,7 @@ class PoPT_GUI_Main:
 
     def _rx_beep_sound(self):
         for k in self._channel_vars.keys():
-            if 0 < k < SERVICE_CH_START:  # not int(0)    # TODO Service Ports
+            if 0 < k < SERVICE_CH_START:
                 ch_vars = self.get_ch_var(ch_index=k)
                 if ch_vars.rx_beep_cooldown < time.time():
                     ch_vars.rx_beep_cooldown = time.time() + self._parm_rx_beep_cooldown
@@ -1538,13 +1538,9 @@ class PoPT_GUI_Main:
             self.ch_status_update()
 
     def _update_qso(self, conn):
-        channel = conn.ch_index
         if not conn:
             return False
         if conn.ft_obj:
-            return False
-        if 1 > channel > 10:
-            # TODO Service Channels
             return False
         if conn.rx_tx_buf_guiData:
             self._update_qso_spooler(conn)

@@ -514,7 +514,7 @@ class AX25Conn(object):
 
         return True
 
-    def link_disco(self):
+    def link_disco(self, reconnect=True):
         if self.is_link and self.LINK_Connection is not None:
             if self.LINK_Connection.zustand_exec.stat_index in [1, 2]:
                 # self.LINK_Connection.n2 = 100
@@ -531,8 +531,9 @@ class AX25Conn(object):
                     self.port_handler.del_link(self.LINK_Connection.uid)
                     # print(self.zustand_exec.stat_index)
                     # if self.zustand_exec.stat_index not in [0, 1]:
-                    self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
-                    self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
+                    if reconnect:
+                        self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
+                        self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
                     self.LINK_Connection.del_link()
                     # self.LINK_Connection.init_cli()
                     self.LINK_Connection.cli.change_cli_state(state=1)
@@ -584,13 +585,13 @@ class AX25Conn(object):
         self.port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
-    def end_connection(self):
+    def end_connection(self, reconn=True):
         # print(f"end_connection: {self.uid}")
         self.ft_queue = []
         if self.ft_obj:
             self.ft_obj.ft_abort()
         self.ft_obj = None
-        self.link_disco()
+        self.link_disco(reconnect=reconn)
         self.set_T1()
         self.vr = 0
         self.vs = 0
@@ -1167,9 +1168,9 @@ class DefaultStat(object):
         # print('STATE 0 Cleanup')
         self._ax25conn.conn_cleanup()
 
-    def S1_end_connection(self):
+    def S1_end_connection(self, reconn=True):
         self.change_state(1)
-        self._ax25conn.end_connection()
+        self._ax25conn.end_connection(reconn)
 
     def S0_end_connection(self):
         self.change_state(0)
@@ -1332,13 +1333,15 @@ class S2Aufbau(DefaultStat):  # INIT TX
 
     def _reject(self):
         self._ax25conn.send_sys_Msg_to_gui(f'*** Busy from {self._ax25conn.to_call_str}')
-        self.S1_end_connection()
+        self._ax25conn.send_to_link(f'*** Busy from {self._ax25conn.to_call_str}'.encode('ASCII', 'ignore'))
+        self.S1_end_connection(reconn=False)
 
     def _state_cron(self):
         pass
 
     def _t1_fail(self):
-        self._ax25conn.send_SABM()
+        if self._ax25conn.n2 < self._ax25conn.parm_N2:
+            self._ax25conn.send_SABM()
         self._ax25conn.n2 += 1
         self._ax25conn.set_T1()
 
@@ -1353,10 +1356,10 @@ class S2Aufbau(DefaultStat):  # INIT TX
             if user_db_ent.Name:
                 to_qso_win = f'*** Failed to connect to {self._ax25conn.ax25_out_frame.to_call.call_str} - ' \
                              f'({user_db_ent.Name}) > Port {self._ax25conn.own_port.port_id}'
-
+        self._ax25conn.send_to_link(to_qso_win.encode('ASCII', 'ignore'))
         self._ax25conn.send_sys_Msg_to_gui(to_qso_win)
         self._ax25conn.send_DISC_ctlBuf()
-        self.S1_end_connection()
+        self.S1_end_connection(reconn=False)
 
 
 class S3sendFRMR(DefaultStat):

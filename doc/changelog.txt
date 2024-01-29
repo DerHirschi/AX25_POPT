@@ -19,6 +19,7 @@ Neue Implementierungen / Funktionen:
   - Service Channels geben kein Connect/Disco/RX-Beep Sound aus
   - Service Kanäle können über tabellarische Übersicht "Connects" im Seitenfenster, durch Klicken
     auf den jeweiligen Eintrag, aufgerufen werden
+- CLI CMD "Connect": ""*** Busy from"/"*** Failed to connect to" Ausgabe, wenn "Weiterconnect" gescheitert ist.
 
 ###########################################################################################################
 ###########################################################################################################

@@ -546,8 +546,8 @@ class SideTabbedFrame:  # TODO
         self._connects_tree.column("call", anchor=tk.W, stretch=tk.NO, width=115)
         self._connects_tree.column("own_call", anchor=tk.CENTER, stretch=tk.NO, width=115)
         self._connects_tree.column("port", anchor=tk.W, stretch=tk.NO, width=61)
-        self._connects_tree.column("typ", anchor=tk.W, stretch=tk.NO, width=105)
-        self._connects_tree.column("dauer", anchor=tk.W, stretch=tk.YES, width=140)
+        self._connects_tree.column("typ", anchor=tk.W, stretch=tk.NO, width=155)
+        self._connects_tree.column("dauer", anchor=tk.W, stretch=tk.YES, width=110)
         # self._connects_tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
 
         self._connects_tree_data = []
@@ -858,7 +858,6 @@ class SideTabbedFrame:  # TODO
                 timer,
             ]
             self._connects_tree.insert('', tk.END, values=ent, )
-
 
     ##########################################################
     # MH
