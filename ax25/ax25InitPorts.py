@@ -3,6 +3,7 @@ import threading
 
 from cfg.popt_config import POPT_CFG
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
+from sound.popt_sound import SOUND
 from sql_db.db_main import SQL_Database
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25Statistics import MH
@@ -374,9 +375,9 @@ class AX25PortHandler(object):
                     ch_index=connection.ch_index
                 )
                 if 0 < connection.ch_index < SERVICE_CH_START:
-                    self.gui.new_conn_sound()
+                    SOUND.new_conn_sound()
                     speech = ' '.join(connection.to_call_str.replace('-', ' '))
-                    self.gui.sprech(speech)
+                    SOUND.sprech(speech)
 
             self.gui.ch_status_update()
             self.gui.conn_btn_update()
@@ -389,7 +390,7 @@ class AX25PortHandler(object):
                 data=f'*** Disconnected fm {str(conn.to_call_str)}',
                 ch_index=int(conn.ch_index))
             if 0 < conn.ch_index < SERVICE_CH_START:
-                self.gui.disco_sound()
+                SOUND.disco_sound()
             self.gui.ch_status_update()
             self.gui.conn_btn_update()
 

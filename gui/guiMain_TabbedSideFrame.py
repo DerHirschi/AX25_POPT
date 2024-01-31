@@ -9,6 +9,7 @@ from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux
 from fnc.str_fnc import conv_time_DE_str, get_time_delta, get_kb_str_fm_bytes
+from sound.popt_sound import SOUND
 
 
 class SideTabbedFrame:  # TODO
@@ -302,6 +303,7 @@ class SideTabbedFrame:  # TODO
         Checkbutton(tab4_settings,
                     text="Sound",
                     variable=self._main_win.setting_sound,
+                    command=self._chk_sound
                     ).place(x=10, y=10)
         # Global Sprech
         sprech_btn = Checkbutton(tab4_settings,
@@ -581,6 +583,11 @@ class SideTabbedFrame:  # TODO
         }.get(bool_state, 'disabled')
         self._autotracer_chk_btn.configure(state=state)
 
+    def _chk_sound(self):
+        if self._main_win.setting_sound.get():
+            SOUND.master_sound_on = True
+        else:
+            SOUND.master_sound_on = False
 
     """
     def _update_ch_echo(self):
@@ -711,10 +718,11 @@ class SideTabbedFrame:  # TODO
             _conn.calc_irtt()
 
     def _chk_sprech_on(self):
-
         if self._main_win.setting_sprech.get():
+            SOUND.master_sprech_on = True
             self.t2speech.configure(state='normal')
         else:
+            SOUND.master_sprech_on = False
             self.t2speech.configure(state='disabled')
         self._main_win.set_var_to_all_ch_param()
 

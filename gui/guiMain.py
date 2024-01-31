@@ -5,10 +5,6 @@ import time
 import tkinter as tk
 from tkinter import ttk, Menu, Checkbutton, TclError, scrolledtext, Label, messagebox
 import threading
-import sys
-
-import gtts
-from gtts import gTTS
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
@@ -52,16 +48,13 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
 from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
-    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, CFG_sound_CONN, \
-    CFG_sound_DICO, SERVICE_CH_START
+    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
+    SERVICE_CH_START
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
+from sound.popt_sound import SOUND
 
-if is_linux():
-    from playsound import playsound
-elif is_windows():
-    from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
@@ -382,13 +375,16 @@ class PoPT_GUI_Main:
         self.language = POPT_CFG.get_guiCFG_language()
         guiCfg = POPT_CFG.load_guiPARM_main()
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
+        SOUND.master_sound_on = guiCfg.get('gui_cfg_sound', False)
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
         PORT_HANDLER.rx_echo_on = bool(self.setting_rx_echo.get())
         if is_linux():
             self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
+            SOUND.master_sprech_on = guiCfg.get('gui_cfg_sprech', False)
         else:
             self.setting_sprech.set(False)
+            SOUND.master_sprech_on = False
         self.setting_tracer.set(guiCfg.get('gui_cfg_tracer', False))
         self.setting_auto_tracer.set(guiCfg.get('gui_cfg_auto_tracer', False))
         self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
@@ -1100,7 +1096,7 @@ class PoPT_GUI_Main:
     def _monitor_start_msg(self):
         # tmp_lang = int(self.language)
         # self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
-        self.sprech(random.choice(WELCOME_SPEECH))
+        SOUND.sprech(random.choice(WELCOME_SPEECH))
         # self.language = int(tmp_lang)
         ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
@@ -1268,26 +1264,26 @@ class PoPT_GUI_Main:
                 # to_speech = 'Kanal {} .'.format(self.channel_index)
                 # to_speech += '{} .'.format(conn.to_call_str)
                 to_speech = str(ch_vars.t2speech_buf)
-                if self.sprech(to_speech):
+                if SOUND.sprech(to_speech):
                     ch_vars.t2speech_buf = ''
 
             else:
                 ch_vars.t2speech_buf = ''
-                self.sprech('{} {} . {} .'.format(STR_TABLE['channel'][self.language],
+                SOUND.sprech('{} {} . {} .'.format(STR_TABLE['channel'][self.language],
                                                   self.channel_index,
                                                   conn.to_call_str))
 
         else:
             if not ch_vars.t2speech:
                 ch_vars.t2speech_buf = ''
-                self.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
+                SOUND.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
             elif ch_vars.t2speech_buf:
-                if self.sprech(ch_vars.t2speech_buf):
+                if SOUND.sprech(ch_vars.t2speech_buf):
                     ch_vars.t2speech_buf = ''
                 else:
-                    self.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
+                    SOUND.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
             else:
-                self.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
+                SOUND.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
 
     def _check_sprech_ch_buf(self):
         conn = self.get_conn(self.channel_index)
@@ -1296,7 +1292,7 @@ class PoPT_GUI_Main:
             if ch_vars.t2speech and ch_vars.t2speech_buf:
                 to_speech = str(ch_vars.t2speech_buf)
                 if self.setting_sprech.get() and self.setting_sound.get():
-                    if self.sprech(to_speech):
+                    if SOUND.sprech(to_speech):
                         ch_vars.t2speech_buf = ''
                 else:
                     ch_vars.t2speech_buf = ''
@@ -1305,83 +1301,6 @@ class PoPT_GUI_Main:
                 ch_vars.t2speech_buf = ''
         else:
             ch_vars.t2speech_buf = ''
-
-    def sprech(self, text: str):
-        if self.setting_sprech.get() and self.setting_sound.get():
-            if text:
-                if self._sound_th is not None:
-                    if self._sound_th.is_alive():
-                        return False
-                text = text.replace('\r', '').replace('\n', '')
-                text = text.replace('****', '*')
-                text = text.replace('***', '*')
-                text = text.replace('++++', '+')
-                text = text.replace('+++', '+')
-                text = text.replace('----', '-')
-                text = text.replace('---', '-')
-                text = text.replace('____', '_')
-                text = text.replace('___', '_')
-                text = text.replace('####', '#')
-                text = text.replace('###', '#')
-                text = text.replace('====', '=')
-                text = text.replace('===', '=')
-                text = text.replace('>>>', '>')
-                text = text.replace('<<<', '<')
-
-                if is_linux():
-                    if self.setting_sprech.get():
-                        language = {
-                            0: 'de',
-                            1: 'en',
-                            2: 'nl',
-                            3: 'fr',
-                            4: 'fi',
-                            5: 'pl',
-                            6: 'pt',
-                            7: 'it',
-                            8: 'zh',
-                        }[self.language]
-                        try:
-                            print("GTTS")
-                            tts = gTTS(text=text,
-                                       lang=language,
-                                       slow=False)
-                            tts.save('data/speech.mp3')
-                        except gtts.gTTSError:
-                            self.setting_sprech.set(False)
-                            return False
-                        return self._sound_play(self._root_dir + '//data//speech.mp3')
-        return False
-
-    def _sound_play(self, snd_file: str, wait=True):
-        # TODO .. Again !!! ... Don't like this mess
-        if self.setting_sound.get():
-            if wait:
-                if self._sound_th is not None:
-                    if not self._sound_th.is_alive():
-                        self._sound_th.join()
-                        if is_linux():
-                            self._sound_th = threading.Thread(target=playsound, args=(snd_file, True))
-                            self._sound_th.start()
-                        elif 'win' in sys.platform:
-                            self._sound_th = threading.Thread(target=PlaySound,
-                                                              args=(snd_file, SND_FILENAME | SND_NOWAIT))
-                            self._sound_th.start()
-                        return True
-                    return False
-                if is_linux():
-                    self._sound_th = threading.Thread(target=playsound, args=(snd_file, True))
-                    self._sound_th.start()
-                elif is_windows():
-                    self._sound_th = threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT))
-                    self._sound_th.start()
-                return True
-            else:
-                if is_linux():
-                    threading.Thread(target=playsound, args=(snd_file, True)).start()
-                elif is_windows():
-                    threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
-                return True
 
     def _rx_beep_sound(self):
         for k in self._channel_vars.keys():
@@ -1392,14 +1311,7 @@ class PoPT_GUI_Main:
                     if ch_vars.rx_beep_opt:
                         if ch_vars.rx_beep_tr:
                             ch_vars.rx_beep_tr = False
-                            self._sound_play(self._root_dir + CFG_sound_RX_BEEP, False)
-
-    def new_conn_sound(self):
-        self._sound_play(self._root_dir + CFG_sound_CONN, False)
-
-    def disco_sound(self):
-        """ fm PortHandler """
-        self._sound_play(self._root_dir + CFG_sound_DICO, False)
+                            SOUND.sound_play(self._root_dir + CFG_sound_RX_BEEP, False)
 
     # Sound
     ######################################################################
@@ -1742,7 +1654,7 @@ class PoPT_GUI_Main:
         if 'Lob: ' in var:
             var = var.split('Lob: ')
             if len(var) > 1:
-                self.sprech(var[1])
+                SOUND.sprech(var[1])
 
     """
     def update_monitor(self, ax25frame, port_conf, tx=False):
@@ -2046,7 +1958,7 @@ class PoPT_GUI_Main:
 
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
-        self.sprech('Gluck gluck gluck blubber blubber')
+        SOUND.sprech('Gluck gluck gluck blubber blubber')
         PORT_HANDLER.set_dxAlarm()
         PORT_HANDLER.set_tracerAlarm()
         self._Alarm_Frame.set_pmsMailAlarm()
@@ -2113,7 +2025,8 @@ class PoPT_GUI_Main:
                 self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
         elif self._conn_btn.cget('bg') != "green":
             self._conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
-        # !! Loop !! self._ch_btn_status_update()
+        # !! Loop !! ???
+        self._ch_btn_status_update()
 
     def ch_status_update(self):
         # TODO Call just if necessary
