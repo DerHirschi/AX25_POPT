@@ -15,6 +15,7 @@ STR_TABLE = {
     'OK': ('OK', 'OK', 'OK'),
     'cancel': ('Abbrechen', 'Cancel', 'Onderbreken'),
     'delete': ('Löschen', 'Delete', 'Verwijder'),
+    'delete_dx_history': ('DX-History Löschen', 'Delete DX-History', 'Verwijder DX-History'),
     'del_all': ('Alles Löschen', 'Delete all', 'Verwijder alles'),
     'go': ('Los', 'Go', 'Gaan'),
     'close': ('Schließen', 'Close', 'Schließen'),
@@ -31,6 +32,8 @@ STR_TABLE = {
     'new_conn': ('Neu Verbindung', 'New Connection', 'Nieuw Koppelingen'),
     'disconnect': ('Disconnecten', 'Disconnect', 'Loskoppelen'),
     'disconnect_all': ('ALLE disconnecten', 'Disconnect ALL', 'Loskoppelen ALLE'),
+    'disconnect_all_ask': ('Wirklich ALLE Stationen disconnecten ?', 'Do you want to disconnect ALL stations?',
+                           'Wilt u ALLE stations loskoppelen?'),
     'wx_window': ('Wetterstationen', 'Weather Stations', 'Weerstations'),
     'quit': ('Quit', 'Quit', 'Quit'),
     'connections': ('Verbindungen', 'Connections', 'Koppelingen'),
@@ -116,10 +119,11 @@ STR_TABLE = {
     'last_packet': ('letztes Paket', 'last packet', 'laatste pakket'),
     'scrolling': ('Auto Scrollen', 'Auto scrolling', 'Lekker Auto scrolling'),
     'msg_box_mh_delete': ('MH-Liste Löschen', 'Delete MH list', 'Verwijder MH-lijst'),
-    'msg_box_mh_delete_msg': ('Komplette MH-Liste löschen?', 'Delete entire MH list?', 'Volledige MH-lijst verwijderen?'),
+    'msg_box_mh_delete_msg': (
+        'Komplette MH-Liste löschen?', 'Delete entire MH list?', 'Volledige MH-lijst verwijderen?'),
     'msg_box_delete_data': ('Daten Löschen', 'Delete data', 'Verwijder data'),
     'msg_box_delete_data_msg': (
-    'Alle Daten löschen?', 'Delete all data?', 'Alle gegevens verwijderen?'),
+        'Alle Daten löschen?', 'Delete all data?', 'Alle gegevens verwijderen?'),
 
     'data': ('Daten', 'Data', 'Gegevens'),
     'multicast_warning': (
@@ -134,6 +138,14 @@ STR_TABLE = {
     ),
 
     # CLI
+    'cmd_help_bell': ('Sysop Rufen',
+                      'Call Sysop',
+                      'Bel Sysop',
+                      ),
+    'cmd_help_wx': ('Wetterstationen',
+                    'Weather stations',
+                    'Weerstations',
+                    ),
     'cmd_help_user_db': ('Call DB Abfrage',
                          'Get Call DB entry',
                          'Ontvang Call DB-invoer',
@@ -239,7 +251,8 @@ STR_TABLE = {
                           'Toon aangesloten terminalkanalen (gedetailleerde versie)'),
     'cli_no_wx_data': ('Keine Wetterdaten vorhanden.', 'No WX data available', 'Geen WX beschikbaar.'),
     'cli_no_data': ('Keine Daten vorhanden.', 'No data available.', 'Geen gegevens beschikbaar.'),
-    'cli_no_tracer_data': ('Keine Tracerdaten vorhanden.', 'No Tracer data available', 'Geen tracergegevens beschikbaar.'),
+    'cli_no_tracer_data': (
+        'Keine Tracerdaten vorhanden.', 'No Tracer data available', 'Geen tracergegevens beschikbaar.'),
     'cli_change_language': ('Sprache ändern.', 'Change language.', 'Taal veranderen'),
     'cli_lang_set': ('Sprache auf Deutsch geändert.',
                      'Language changed to English.',
@@ -247,5 +260,17 @@ STR_TABLE = {
     'cli_no_lang_param': ('Sprache nicht erkannt! Mögliche Sprachen: ',
                           'Language not recognized! Possible languages: ',
                           'Taal niet herkend! Mogelijke talen: '),
+
+    'cmd_bell': ('Sysop wird gerufen !!',
+                 'Sysop is called!!',
+                 'Sysop wordt gebeld!!'),
+
+    'cmd_bell_again': ('Sysop wurde bereits gerufen..',
+                       'Sysop has already been called..',
+                       'Sysop is al gebeld..'),
+
+    'cmd_bell_gui_msg': ('verlangt nach dem Sysop !!',
+                         'asks for the sysop!!',
+                         'vraagt om de sysop!!'),
 
 }

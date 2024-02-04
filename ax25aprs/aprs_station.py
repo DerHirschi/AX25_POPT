@@ -631,6 +631,7 @@ class APRS_ais(object):
     # Beacon Tracer
     def _tracer_task(self):
         # Send Tracer Beacon in intervall
+        # self._update_gui_icon()
         if self.be_tracer_active:
             if time.time() > self._be_tracer_interval_timer:
                 # print("TRACER TASKER")
@@ -742,10 +743,10 @@ class APRS_ais(object):
             if _k in self.be_tracer_traced_packets.keys():
                 self.be_tracer_traced_packets[_k].append(pack)
             else:
-                self.be_tracer_traced_packets[_k] = deque([pack], maxlen=500)
+                self.be_tracer_traced_packets[_k] = deque([pack], maxlen=100)
             # print(f'Tracer RX dict: {self.be_tracer_traced_packets}')
             # self._tracer_check_alarm(pack)
-            self.tracer_update_gui()
+            self._tracer_update_gui()
             return True
         return False
 
@@ -785,13 +786,21 @@ class APRS_ais(object):
         )
         self.be_tracer_alarm_hist[str(_hist_struc['key'])] = dict(_hist_struc)
 
-    def tracer_update_gui(self):
+    def _tracer_update_gui(self):
         root_gui = self.port_handler.get_gui()
         if root_gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
             if root_gui.be_tracer_win is not None:
                 # TODO Call fm guiMain loop (may cause random crash ?)
                 root_gui.be_tracer_win.update_tree_data()
+
+    """
+    def _update_gui_icon(self):
+        root_gui = self.port_handler.get_gui()
+        if not root_gui:
+            return
+        root_gui.tracer_icon_task()
+    """
 
     def tracer_traces_get(self):
         return self.be_tracer_traced_packets
@@ -810,3 +819,13 @@ class APRS_ais(object):
 
     def tracer_auto_tracer_duration_set(self, dur: int):
         self.be_auto_tracer_duration = dur
+
+    def tracer_auto_tracer_get_active_timer(self):
+        return self._be_auto_tracer_timer
+
+    def tracer_auto_tracer_get_active(self):
+        return self.be_auto_tracer_active
+
+    def tracer_tracer_get_active(self):
+        return self.be_tracer_active
+

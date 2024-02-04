@@ -1,4 +1,34 @@
 ###########################################################################################################
+# 2.105.x
+Fixes:
+- Scripterror in Debug Ausgabe
+- CLI "Connect" CMD: Connect wird nicht abgebrochen bei Benutzereingabe
+- CLI Connect-dauer Timer wurde bei reconnect von anderer Station neu gestartet
+- Dual-Port Auto-TX Mode Einstellungen werden nicht übernommen und gespeichert
+- Erfolgloser Verbindungsaufbau wird nicht mit Senden des DISC Frame beendet
+- Nach Disco wird sporadisch die Farbe des Kanal-Buttons nicht geändert
+- Textgrößen lassen sich nicht verändern im "Nachrichten-Center" "Gesendet" & "Gespeichert" Tab
+
+Optimierung:
+- Alarm Status/Icons
+- Sound Funktionen
+- CLI/Remote Kommandos: versehentlich gesendeter präfix wird in "Nicht User CLI" ausgefiltert.
+
+Neue Implementierungen / Funktionen:
+- Message-Center und PMS-FWD Warteschlange wird aktualisiert, wenn PMS-FWD beendet
+- Docs aktualisiert
+- MH-Liste: Menüleiste > DX-History löschen hinzugefügt
+- "Service Channels" für NODE/AutoConnect(PMS-FWD)/Link/Pipe ab Kanal 11
+  - Service Channels geben kein Connect/Disco/RX-Beep Sound aus
+  - Service Kanäle können über tabellarische Übersicht "Connects" im Seitenfenster, durch Klicken
+    auf den jeweiligen Eintrag, aufgerufen werden
+- CLI CMD "Connect": ""*** Busy from"/"*** Failed to connect to" Ausgabe, wenn "Weiterconnect" gescheitert ist.
+- "PMS-Neue Nachrichten" Fenster, Textgrößen verändern mit STRG + +/-
+- Text Decoding für Monitor Ausgabe wählbar zwischen 'Auto', 'CP437', 'ASCII', 'LATIN_1', 'UTF-8'
+- CLI/Remote Kommando "BELL" - Sysop rufen
+
+###########################################################################################################
+###########################################################################################################
 # 2.104.x
 Fixes:
 - Bandauslastungs-Graph löscht alte Daten nicht und Zeigt sie nach 24 Std. erneut an

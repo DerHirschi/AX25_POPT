@@ -577,8 +577,8 @@ class BBSConnection:
 
 class BBS:
     def __init__(self, port_handler):
-        logger.info('BBS INIT')
-        print('BBS INIT')
+        logger.info('PMS INIT')
+        print('PMS INIT')
         self._port_handler = port_handler
         self.db = self._port_handler.get_database()
         self.pms_flag = generate_sid(features=("F", "M", "H"))

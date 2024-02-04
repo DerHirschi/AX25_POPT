@@ -288,8 +288,10 @@ class BeaconTracer(tk.Toplevel):
             self._save_vars()
 
     def _chk_active(self, event=None):
+        # FIXME
         self._save_vars()
         self._root_win.set_tracer_fm_aprs()
+        # self._root_win.set_tracer_icon()
 
     def close(self):
         self._root_win.be_tracer_win = None

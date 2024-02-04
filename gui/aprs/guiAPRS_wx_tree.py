@@ -128,11 +128,11 @@ class WXWin(tk.Toplevel):
         self._init_menubar()
 
     def _init_menubar(self):
-        _menubar = Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._delete_all_data)
-        _menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=_MenuVerb, underline=0)
+        menubar = Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._delete_all_data)
+        menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=MenuVerb, underline=0)
 
     def _init_tree_data(self):
         self._get_wx_data()

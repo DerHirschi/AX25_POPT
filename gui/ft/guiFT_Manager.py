@@ -47,11 +47,11 @@ class FileTransferManager(tk.Toplevel):
         root.settings_win = self
 
     def _init_menubar(self):
-        _menubar = Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['send_file'][self._lang], command=self._open_txFile_win)
-        _menubar.add_cascade(label=STR_TABLE['file_1'][self._lang], menu=_MenuVerb, underline=0)
+        menubar = Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['send_file'][self._lang], command=self._open_txFile_win)
+        menubar.add_cascade(label=STR_TABLE['file_1'][self._lang], menu=MenuVerb, underline=0)
 
     def destroy_win(self):
         self._root_win.settings_win = None

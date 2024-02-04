@@ -638,5 +638,9 @@ class MH:
         self.dx_alarm_hist = []  # For GUI MH
         self.dx_alarm_perma_hist = {}  # CLI DX List
 
+    def reset_dxHistory(self):
+        self.dx_alarm_trigger = False
+        self.dx_alarm_hist = []  # For GUI MH
+        self.dx_alarm_perma_hist = {}  # CLI DX List
 # MH_LIST = MH()
 

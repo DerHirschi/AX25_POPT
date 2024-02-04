@@ -214,11 +214,13 @@ class MHWin(tk.Toplevel):
         self._tree.bind('<<TreeviewSelect>>', self.entry_selected)
 
     def _init_menubar(self):
-        _menubar = Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._reset_mh_list)
-        _menubar.add_cascade(label='MyHeard', menu=_MenuVerb, underline=0)
+        menubar = Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._reset_mh_list)
+        MenuVerb.add_separator()
+        MenuVerb.add_command(label=STR_TABLE['delete_dx_history'][self._lang], command=self._reset_dx_history)
+        menubar.add_cascade(label='MyHeard', menu=MenuVerb, underline=0)
 
     def _get_vars(self):
         # self._alarm_active_var.set(bool())
@@ -352,6 +354,14 @@ class MHWin(tk.Toplevel):
             mh = PORT_HANDLER.get_MH()
             mh.reset_mainMH()
             self._update_mh()
+        self.lift()
+
+    def _reset_dx_history(self):
+        self.lower()
+        if messagebox.askokcancel(title=STR_TABLE.get('msg_box_mh_delete', ('', '', ''))[self._lang],
+                                  message=STR_TABLE.get('msg_box_mh_delete_msg', ('', '', ''))[self._lang]):
+            mh = PORT_HANDLER.get_MH()
+            mh.reset_dxHistory()
         self.lift()
 
     def __del__(self):

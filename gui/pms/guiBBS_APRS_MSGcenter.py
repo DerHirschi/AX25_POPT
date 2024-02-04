@@ -101,19 +101,19 @@ class MSG_Center(tk.Toplevel):
         pn_pan_frame = tk.Frame(tab_PN)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        _pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
+        pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
 
-        top_f = tk.Frame(_pw_pn)
-        lower_f_main = tk.Frame(_pw_pn)
+        top_f = tk.Frame(pw_pn)
+        lower_f_main = tk.Frame(pw_pn)
         lower_f_top = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         lower_f_top.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        _pw_pn.add(top_f, weight=1)
-        _pw_pn.add(lower_f_main, weight=1)
-        _pw_pn.pack(fill=tk.BOTH, expand=True)
+        pw_pn.add(top_f, weight=1)
+        pw_pn.add(lower_f_main, weight=1)
+        pw_pn.pack(fill=tk.BOTH, expand=True)
         ########################
         # ## top_f / Msg Table
         self._pn_tree = None
@@ -227,19 +227,19 @@ class MSG_Center(tk.Toplevel):
         pn_pan_frame = tk.Frame(tab_SAVE)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        _pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
+        pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
 
-        top_f = tk.Frame(_pw_pn)
-        lower_f_main = tk.Frame(_pw_pn)
+        top_f = tk.Frame(pw_pn)
+        lower_f_main = tk.Frame(pw_pn)
         lower_f_top = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         lower_f_top.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        _pw_pn.add(top_f, weight=1)
-        _pw_pn.add(lower_f_main, weight=1)
-        _pw_pn.pack(fill=tk.BOTH, expand=True)
+        pw_pn.add(top_f, weight=1)
+        pw_pn.add(lower_f_main, weight=1)
+        pw_pn.pack(fill=tk.BOTH, expand=True)
         ########################
         # ## top_f / Msg Table
         self._sv_tree = None
@@ -271,23 +271,23 @@ class MSG_Center(tk.Toplevel):
         self._init_Vars_fm_Cfg()
 
     def _init_Menu(self):
-        _menubar = tk.Menu(self, tearoff=False)
-        self.config(menu=_menubar)
-        _MenuVerb = tk.Menu(_menubar, tearoff=False)
-        _MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win())
-        _MenuVerb.add_separator()
-        _MenuVerb.add_command(label='Alles sofort senden', command=lambda: self._do_pms_autoFWD())
-        _menubar.add_cascade(label='Nachricht', menu=_MenuVerb, underline=0)
+        menubar = tk.Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = tk.Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win())
+        MenuVerb.add_separator()
+        MenuVerb.add_command(label='Alles sofort senden', command=lambda: self._do_pms_autoFWD())
+        menubar.add_cascade(label='Nachricht', menu=MenuVerb, underline=0)
         # ### Bearbeiten
-        _MenuEdit = tk.Menu(_menubar, tearoff=False)
-        _MenuEdit.add_command(label='Alle als gelesen markieren',
+        MenuEdit = tk.Menu(menubar, tearoff=False)
+        MenuEdit.add_command(label='Alle als gelesen markieren',
                               command=self._set_all_to_oldMSG,
                               underline=0)
-        _MenuVerb.add_separator()
-        _MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
+        MenuVerb.add_separator()
+        MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
                               command=self._save_msg_to_file,
                               underline=0)
-        _menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=_MenuEdit, underline=0)
+        menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
 
     def _init_Vars_fm_Cfg(self):
         pass
@@ -1261,12 +1261,16 @@ class MSG_Center(tk.Toplevel):
         self.text_size = max(self.text_size, 3)
         self._bl_text.configure(font=(FONT, self.text_size))
         self._pn_text.configure(font=(FONT, self.text_size))
+        self._out_text.configure(font=(FONT, self.text_size))
+        self._sv_text.configure(font=(FONT, self.text_size))
 
     def _decrease_textsize(self):
         self.text_size -= 1
         self.text_size = max(self.text_size, 3)
         self._bl_text.configure(font=(FONT, self.text_size))
         self._pn_text.configure(font=(FONT, self.text_size))
+        self._out_text.configure(font=(FONT, self.text_size))
+        self._sv_text.configure(font=(FONT, self.text_size))
 
     def _update_textsize_trees(self):
         # TODO
@@ -1325,7 +1329,7 @@ class MSG_Center(tk.Toplevel):
                         3: self._SV_show_msg_fm_MID,
                     }.get(ind)
                     fnc(bid_next_msg)
-                    self._tree_update_task()
+                    self.tree_update_task()
 
     def _save_outMSG(self):
         bid = self._selected_msg['O'].get('bid', '')
@@ -1385,11 +1389,11 @@ class MSG_Center(tk.Toplevel):
             3: self._selected_msg['S'].get('enc', 'UTF-8'),
         }.get(ind, 'UTF-8')
         self._var_encoding.set(enc)
-        self._tree_update_task()
+        self.tree_update_task()
         # self._pn_tree.selection_toggle(self._pn_tree.focus())
         # print(f'>>> {self._pn_tree.selection()}')
 
-    def _tree_update_task(self):
+    def tree_update_task(self):
         try:
             ind = self._tabControl.index(self._tabControl.select())
         except tk.TclError:

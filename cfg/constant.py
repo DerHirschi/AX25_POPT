@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.104.13'
+VER = '2.105.12'
 """
 LANGUAGE:
 0 = German
@@ -12,6 +12,7 @@ LANGUAGE:
 """
 LANGUAGE = 0    # QUICK FIX
 MAX_PORTS = 15  #
+SERVICE_CH_START = 11
 
 # doc/PoPT/mysql_setup.txt
 MYSQL = False    # MYSQL/SQLITE
@@ -37,6 +38,7 @@ CFG_MAIN_data_file = 'popt_cfg.popt'    # New Global CFG
 CFG_sound_DICO = '//data//sound//disco_alarm.wav'
 CFG_sound_CONN = '//data//sound//conn_alarm.wav'
 CFG_sound_RX_BEEP = '//data//sound//rx_beep.wav'
+CFG_sound_BELL = '//data//sound//bell.wav'
 
 
 CFG_txt_save = {
