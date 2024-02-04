@@ -660,10 +660,7 @@ class AX25PortHandler(object):
                 for conn_key in all_port_conn.keys():
                     conn = all_port_conn[conn_key]
                     if conn:
-                        if not conn.ch_index and not with_null:    # Not Channel 0
-                            print(f"Connection on Channel 0 - Port {port_id}! ")
-                            print(f"{conn_key} - MyCall: {conn.my_call_str} - TO: {conn.to_call_str}")
-                        else:
+                        if conn.ch_index or with_null:    # Not Channel 0
                             if conn.ch_index not in ret.keys():
                                 ret[conn.ch_index] = conn
                             else:

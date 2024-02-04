@@ -187,29 +187,29 @@ class SideTabbedFrame:  # TODO
         ##########################################
 
         # Conn Dauer
-        _x = 290
-        _y = 20
+        x = 290
+        y = 20
         self._conn_durration_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._conn_durration_var).place(x=_x, y=_y)
+        tk.Label(tab1_kanal, textvariable=self._conn_durration_var).place(x=x, y=y)
         self._conn_durration_var.set('--:--:--')
         #### conn_durration_var
         # TX Buffer
-        _x = 290
-        _y = 45
+        x = 290
+        y = 45
         self._tx_buff_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._tx_buff_var).place(x=_x, y=_y)
+        tk.Label(tab1_kanal, textvariable=self._tx_buff_var).place(x=x, y=y)
         self._tx_buff_var.set('')
         # TX Gesamt
-        _x = 290
-        _y = 70
+        x = 290
+        y = 70
         self._tx_count_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._tx_count_var).place(x=_x, y=_y)
+        tk.Label(tab1_kanal, textvariable=self._tx_count_var).place(x=x, y=y)
         self._tx_count_var.set('')
         # RX Gesamt
-        _x = 290
-        _y = 95
+        x = 290
+        y = 95
         self._rx_count_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._rx_count_var).place(x=_x, y=_y)
+        tk.Label(tab1_kanal, textvariable=self._rx_count_var).place(x=x, y=y)
         self._rx_count_var.set('')
 
         # Status /Pipe/Link/File-RX/File-TX
@@ -223,14 +223,14 @@ class SideTabbedFrame:  # TODO
         #####################
         # Progress bar
         # tk.Label(tab1_kanal, text='File Transfer').place(x=380, y=160)
-        _x = 300
-        _y = 170
+        x = 300
+        y = 170
         self.ft_progress = tk.ttk.Progressbar(tab1_kanal,
                                               orient=tk.HORIZONTAL,
                                               length=150,
                                               mode='determinate',
                                               )
-        self.ft_progress.place(x=_x, y=_y)
+        self.ft_progress.place(x=x, y=y)
         self.ft_progress.bind('<Button-1>', self._main_win.open_ft_manager)
         self.ft_progress['value'] = 0
         self.ft_progress_var = tk.StringVar(tab1_kanal)
@@ -238,11 +238,11 @@ class SideTabbedFrame:  # TODO
         self.ft_duration_var = tk.StringVar(tab1_kanal)
         self.ft_bps_var = tk.StringVar(tab1_kanal)
         self.ft_next_tx_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self.ft_progress_var).place(x=_x + 160, y=_y)
-        tk.Label(tab1_kanal, textvariable=self.ft_size_var).place(x=_x, y=_y + 25)
-        tk.Label(tab1_kanal, textvariable=self.ft_duration_var).place(x=_x, y=_y + 50)
-        tk.Label(tab1_kanal, textvariable=self.ft_bps_var).place(x=_x, y=_y + 75)
-        tk.Label(tab1_kanal, textvariable=self.ft_next_tx_var).place(x=_x + 160, y=_y + 75)
+        tk.Label(tab1_kanal, textvariable=self.ft_progress_var).place(x=x + 160, y=y)
+        tk.Label(tab1_kanal, textvariable=self.ft_size_var).place(x=x, y=y + 25)
+        tk.Label(tab1_kanal, textvariable=self.ft_duration_var).place(x=x, y=y + 50)
+        tk.Label(tab1_kanal, textvariable=self.ft_bps_var).place(x=x, y=y + 75)
+        tk.Label(tab1_kanal, textvariable=self.ft_next_tx_var).place(x=x + 160, y=y + 75)
         # self.ft_progress_var.set(f"--- %")
         # self.ft_size_var.set(f"Size: 10.000,0 / 20.00,0 kb")
         # self.ft_duration_var.set(f"Time: 00:00:00 / 00:00:00")
@@ -352,111 +352,122 @@ class SideTabbedFrame:  # TODO
                     ).place(x=10, y=160)
         ############
         # CH ECHO
-        self._chk_btn_default_clr = self._autotracer_chk_btn.cget('bg')
-        self._ch_echo_vars = {}
+        # self._chk_btn_default_clr = self._autotracer_chk_btn.cget('bg')
+        # self._ch_echo_vars = {}
         #################
         ###################################################################################
         # Monitor Frame
         # Address
-        _x = 10
-        _y = 10
+        x = 10
+        y = 10
         self.to_add_var = tk.StringVar(tab6_monitor)
-        tk.Label(tab6_monitor, text=f"{STR_TABLE['to'][self._lang]}:").place(x=_x, y=_y)
-        tk.Entry(tab6_monitor, textvariable=self.to_add_var).place(x=_x + 40, y=_y)
+        tk.Label(tab6_monitor, text=f"{STR_TABLE['to'][self._lang]}:").place(x=x, y=y)
+        tk.Entry(tab6_monitor, textvariable=self.to_add_var).place(x=x + 40, y=y)
 
         # CMD/RPT
-        _x = 10
-        _y = 80
+        x = 10
+        y = 80
         self.cmd_var = tk.BooleanVar(tab6_monitor)
         tk.Checkbutton(tab6_monitor,
                        variable=self.cmd_var,
-                       text='CMD/RPT').place(x=_x, y=_y)
+                       text='CMD/RPT').place(x=x, y=y)
 
         # Poll
-        _x = 10
-        _y = 105
+        x = 10
+        y = 105
         self.poll_var = tk.BooleanVar(tab6_monitor)
         tk.Checkbutton(tab6_monitor,
                        variable=self.poll_var,
-                       text='Poll').place(x=_x, y=_y)
+                       text='Poll').place(x=x, y=y)
 
         # Port
-        _x = 40
-        _y = 140
-        tk.Label(tab6_monitor, text=f"{STR_TABLE['port'][self._lang]}:").place(x=_x, y=_y)
+        x = 40
+        y = 140
+        tk.Label(tab6_monitor, text=f"{STR_TABLE['port'][self._lang]}:").place(x=x, y=y)
         self.mon_port_var = tk.StringVar(tab6_monitor)
         self.mon_port_var.set('0')
-        _vals = ['0']
+        vals = ['0']
         if PORT_HANDLER.get_all_ports().keys():
-            _vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
+            vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
         mon_port_ent = tk.ttk.Combobox(tab6_monitor,
                                        width=4,
                                        textvariable=self.mon_port_var,
-                                       values=_vals,
+                                       values=vals,
                                        )
-        mon_port_ent.place(x=_x + 50, y=_y)
+        mon_port_ent.place(x=x + 50, y=y)
         mon_port_ent.bind("<<ComboboxSelected>>", self._chk_mon_port)
         # Calls
-        _x = 40
-        _y = 175
+        x = 40
+        y = 175
         self.mon_call_var = tk.StringVar(tab6_monitor)
-        _vals = []
+        # vals = []
         # if self.main_win.ax25_port_handler.ax25_ports.keys():
         #     _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
         self.mon_call_ent = tk.ttk.Combobox(tab6_monitor,
                                             width=9,
                                             textvariable=self.mon_call_var,
-                                            values=_vals,
+                                            values=[],
                                             )
-        self.mon_call_ent.place(x=_x, y=_y)
+        self.mon_call_ent.place(x=x, y=y)
 
         # Auto Scrolling
-        _x = 10
-        _y = 210
+        x = 10
+        y = 210
         self.mon_scroll_var = tk.BooleanVar(tab6_monitor)
         tk.Checkbutton(tab6_monitor,
                        variable=self.mon_scroll_var,
-                       text=STR_TABLE['scrolling'][self._lang]).place(x=_x, y=_y)
+                       text=STR_TABLE['scrolling'][self._lang]).place(x=x, y=y)
 
         # Monitor APRS Decoding Output
-        _x = 10
-        _y = 235
+        x = 10
+        y = 235
         self.mon_aprs_var = tk.BooleanVar(tab6_monitor)
         self.mon_aprs_var.set(True)
         tk.Checkbutton(tab6_monitor,
                        variable=self.mon_aprs_var,
-                       text='APRS-Decoding').place(x=_x, y=_y)
+                       text='APRS-Decoding').place(x=x, y=y)
+
+        # Monitor Decoding
+        tk.Label(tab6_monitor, text='Decoding:').place(x=40, y=265)
+        self.mon_decoding_var = tk.StringVar(tab6_monitor)
+        # self.mon_decoding_var.set(True)
+        tk.ttk.Combobox(tab6_monitor,
+                        width=9,
+                        textvariable=self.mon_decoding_var,
+                        values=[],
+                        ).place(x=135, y=265)
 
         # PID
-        _x = 10
-        _y = 45
+
         self.mon_pid_var = tk.StringVar(tab6_monitor)
-        tk.Label(tab6_monitor, text='PID:').place(x=_x, y=_y)
+        tk.Label(tab6_monitor, text='PID:').place(x=10, y=45)
         pid = PIDByte()  # TODO CONST PIDByte().pac_types
         pac_types = dict(pid.pac_types)
-        _vals = []
+        vals = []
         for x in list(pac_types.keys()):
             pid.pac_types[int(x)]()
-            _vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
+            vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
         tk.ttk.Combobox(tab6_monitor,
                         width=20,
-                        values=_vals,
-                        textvariable=self.mon_pid_var).place(x=_x + 40, y=_y)
-        self.mon_pid_var.set(_vals[0])
+                        values=vals,
+                        textvariable=self.mon_pid_var).place(x=50, y=45)
+        self.mon_pid_var.set(vals[0])
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         # Monitor RX-Filter Ports
         self._mon_port_on_vars = {}
         all_ports = PORT_HANDLER.ax25_ports
         for port_id in all_ports:
             self._mon_port_on_vars[port_id] = tk.BooleanVar(tab6_monitor)
-            _x = 170
-            _y = 80 + (25 * port_id)
+            x = 170
+            y = 80 + (25 * port_id)
             tk.Checkbutton(tab6_monitor,
                            text=f"Port {port_id}",
                            variable=self._mon_port_on_vars[port_id],
                            command=self._chk_mon_port_filter
-                           ).place(x=_x, y=_y)
+                           ).place(x=x, y=y)
             self._mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
+
+
         ######################################################################################
         # TRACER
         # TREE

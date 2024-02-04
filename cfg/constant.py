@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.105.9dev'
+VER = '2.105.10dev'
 """
 LANGUAGE:
 0 = German

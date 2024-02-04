@@ -4,8 +4,6 @@
                         |
                     WX-Data-Tab
                  Port-Statistic-Tab
-                    MH-List-Tab
-                  APRS-Tracer-Tab
                         |
   ¸--------------[Frontend(SYSOP)]------------------¸
   |                     |                           |

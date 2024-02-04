@@ -85,8 +85,7 @@ class NODEid(DefaultID):
 
 class BBSid:
     def __init__(self, inp: str):
-        print(f"SW-ID inp:  {inp} ")
-
+        # print(f"SW-ID inp:  {inp} ")
         self.typ = 'BBS'
         temp = inp[1:-1].split('-')
         self.software = temp[0]

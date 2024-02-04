@@ -101,19 +101,19 @@ class MSG_Center(tk.Toplevel):
         pn_pan_frame = tk.Frame(tab_PN)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        _pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
+        pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
 
-        top_f = tk.Frame(_pw_pn)
-        lower_f_main = tk.Frame(_pw_pn)
+        top_f = tk.Frame(pw_pn)
+        lower_f_main = tk.Frame(pw_pn)
         lower_f_top = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         lower_f_top.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        _pw_pn.add(top_f, weight=1)
-        _pw_pn.add(lower_f_main, weight=1)
-        _pw_pn.pack(fill=tk.BOTH, expand=True)
+        pw_pn.add(top_f, weight=1)
+        pw_pn.add(lower_f_main, weight=1)
+        pw_pn.pack(fill=tk.BOTH, expand=True)
         ########################
         # ## top_f / Msg Table
         self._pn_tree = None
@@ -227,19 +227,19 @@ class MSG_Center(tk.Toplevel):
         pn_pan_frame = tk.Frame(tab_SAVE)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        _pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
+        pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
 
-        top_f = tk.Frame(_pw_pn)
-        lower_f_main = tk.Frame(_pw_pn)
+        top_f = tk.Frame(pw_pn)
+        lower_f_main = tk.Frame(pw_pn)
         lower_f_top = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         lower_f_top.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        _pw_pn.add(top_f, weight=1)
-        _pw_pn.add(lower_f_main, weight=1)
-        _pw_pn.pack(fill=tk.BOTH, expand=True)
+        pw_pn.add(top_f, weight=1)
+        pw_pn.add(lower_f_main, weight=1)
+        pw_pn.pack(fill=tk.BOTH, expand=True)
         ########################
         # ## top_f / Msg Table
         self._sv_tree = None
@@ -1261,12 +1261,16 @@ class MSG_Center(tk.Toplevel):
         self.text_size = max(self.text_size, 3)
         self._bl_text.configure(font=(FONT, self.text_size))
         self._pn_text.configure(font=(FONT, self.text_size))
+        self._out_text.configure(font=(FONT, self.text_size))
+        self._sv_text.configure(font=(FONT, self.text_size))
 
     def _decrease_textsize(self):
         self.text_size -= 1
         self.text_size = max(self.text_size, 3)
         self._bl_text.configure(font=(FONT, self.text_size))
         self._pn_text.configure(font=(FONT, self.text_size))
+        self._out_text.configure(font=(FONT, self.text_size))
+        self._sv_text.configure(font=(FONT, self.text_size))
 
     def _update_textsize_trees(self):
         # TODO

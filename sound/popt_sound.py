@@ -4,6 +4,7 @@ import threading
 import sys
 
 from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, LANGUAGE
+from cfg.popt_config import POPT_CFG
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 
 if is_linux():
@@ -17,8 +18,12 @@ class POPT_Sound:
         self._root_dir = get_root_dir()
         self._root_dir = self._root_dir.replace('/', '//')
         self._sound_th = None
-        self.master_sound_on = True
-        self.master_sprech_on = True
+        guiCfg = POPT_CFG.load_guiPARM_main()
+        self.master_sound_on = guiCfg.get('gui_cfg_sound', False)
+        if is_linux():
+            self.master_sprech_on = guiCfg.get('gui_cfg_sprech', False)
+        else:
+            self.master_sprech_on = False
         self._lang = LANGUAGE
 
     def sound_play(self, snd_file: str, wait=True):

@@ -93,6 +93,8 @@ class BBS_newMSG(tk.Toplevel):
         self.bind('<Key>', self._update_msg_size)
         self.bind('<Control-c>', lambda event: self._copy_select())
         self.bind('<Control-x>', lambda event: self._cut_select())
+        self.bind('<Control-plus>', lambda event: self._increase_textsize())
+        self.bind('<Control-minus>', lambda event: self._decrease_textsize())
 
     def _init_Menu(self):
         menubar = tk.Menu(self, tearoff=False)
@@ -223,6 +225,16 @@ class BBS_newMSG(tk.Toplevel):
                  textvariable=self._var_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+
+    def _increase_textsize(self):
+        self.text_size += 1
+        self.text_size = max(self.text_size, 3)
+        self._text.configure(font=(FONT, self.text_size))
+
+    def _decrease_textsize(self):
+        self.text_size -= 1
+        self.text_size = max(self.text_size, 3)
+        self._text.configure(font=(FONT, self.text_size))
 
     def _init_data_f_reply(self):
         if self._reply_msg.get('flag', '') == 'E':

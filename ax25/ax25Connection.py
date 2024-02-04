@@ -12,6 +12,7 @@ from ax25.ax25dec_enc import AX25Frame
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
+from sound.popt_sound import SOUND
 
 
 def count_modulo(inp: int):
@@ -385,7 +386,7 @@ class AX25Conn(object):
         if self.bbs_connection is None:
             print("E: bbs_connection is None")
             return False
-        print("Done: bbsFwd_start_reverse")
+        # print("Done: bbsFwd_start_reverse")
         return True
 
     def _bbsFwd_cron(self):
@@ -744,7 +745,7 @@ class AX25Conn(object):
                     self.to_call_alias = ''
                 if self.gui is not None:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
-                    self.gui.sprech(speech)
+                    SOUND.sprech(speech)
                 self.tx_byte_count = 0
                 self.rx_byte_count = 0
                 self._set_user_db_ent()

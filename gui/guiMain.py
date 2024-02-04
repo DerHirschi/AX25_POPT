@@ -51,7 +51,7 @@ from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_c
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START
 from cfg.string_tab import STR_TABLE
-from fnc.os_fnc import is_linux, is_windows, get_root_dir
+from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
 from sound.popt_sound import SOUND
 
@@ -375,16 +375,13 @@ class PoPT_GUI_Main:
         self.language = POPT_CFG.get_guiCFG_language()
         guiCfg = POPT_CFG.load_guiPARM_main()
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
-        SOUND.master_sound_on = guiCfg.get('gui_cfg_sound', False)
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
         PORT_HANDLER.rx_echo_on = bool(self.setting_rx_echo.get())
         if is_linux():
             self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
-            SOUND.master_sprech_on = guiCfg.get('gui_cfg_sprech', False)
         else:
             self.setting_sprech.set(False)
-            SOUND.master_sprech_on = False
         self.setting_tracer.set(guiCfg.get('gui_cfg_tracer', False))
         self.setting_auto_tracer.set(guiCfg.get('gui_cfg_auto_tracer', False))
         self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
@@ -457,167 +454,166 @@ class PoPT_GUI_Main:
         MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self._clipboard_past, underline=1)
         MenuEdit.add_separator()
         MenuEdit.add_command(label=STR_TABLE['past_qso_f_file'][self.language], command=self._insert_fm_file,
-                              underline=0)
+                             underline=0)
         MenuEdit.add_command(label=STR_TABLE['save_qso_to_file'][self.language], command=self._save_to_file,
-                              underline=1)
+                             underline=1)
         MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self._save_monitor_to_file,
-                              underline=1)
+                             underline=1)
         MenuEdit.add_separator()
         MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_vars,
-                              underline=0)
+                             underline=0)
         MenuEdit.add_command(label=STR_TABLE['clean_mon_win'][self.language], command=self._clear_monitor_data,
-                              underline=0)
+                             underline=0)
 
         MenuEdit.add_separator()
         MenuEdit.add_command(label=STR_TABLE['clean_all_qso_win'][self.language], command=self._clear_all_Channel_vars,
-                              underline=0)
+                             underline=0)
         menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
         ####################################################################
         # Menü 3 "Tools"
         MenuTools = Menu(menubar, tearoff=False)
         MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
         MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
-                               command=lambda: self.open_window('PortStat'),
-                               underline=1)
+                              command=lambda: self.open_window('PortStat'),
+                              underline=1)
         MenuTools.add_separator()
         MenuTools.add_command(label="User-DB Tree",
-                               command=lambda: self.open_window('userDB_tree'),
-                               underline=0)
+                              command=lambda: self.open_window('userDB_tree'),
+                              underline=0)
         MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
-                               command=lambda: self.open_user_db_win(),
-                               underline=0)
+                              command=lambda: self.open_user_db_win(),
+                              underline=0)
         MenuTools.add_separator()
         MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language],
-                               command=lambda: self.open_window('locator_calc'),
-                               underline=0)
+                              command=lambda: self.open_window('locator_calc'),
+                              underline=0)
         MenuTools.add_separator()
 
         MenuTools.add_command(label="FT-Manager",
-                               command=lambda: self._open_settings_window('ft_manager'),
-                               underline=0)
+                              command=lambda: self._open_settings_window('ft_manager'),
+                              underline=0)
         MenuTools.add_command(label=STR_TABLE['send_file'][self.language],
-                               command=lambda: self.open_window('ft_send'),
-                               underline=0)
+                              command=lambda: self.open_window('ft_send'),
+                              underline=0)
         MenuTools.add_separator()
         MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
-                               command=lambda: self._open_settings_window('l_holder'),
-                               underline=0)
+                              command=lambda: self._open_settings_window('l_holder'),
+                              underline=0)
         MenuTools.add_command(label='Pipe-Tool',
-                               command=lambda: self._open_settings_window('pipe_sett'),
-                               underline=0)
+                              command=lambda: self._open_settings_window('pipe_sett'),
+                              underline=0)
         MenuTools.add_separator()
 
         MenuTools.add_command(label='Priv',
-                               command=lambda: self._open_settings_window('priv_win'),
-                               underline=0)
+                              command=lambda: self._open_settings_window('priv_win'),
+                              underline=0)
         MenuTools.add_separator()
         MenuTools.add_command(label='Dual-Port Monitor',
-                               command=lambda: self.open_window('dualPort_monitor'),
-                               underline=0)
+                              command=lambda: self.open_window('dualPort_monitor'),
+                              underline=0)
         MenuTools.add_separator()
 
         MenuTools.add_command(label='Kaffèmaschine',
-                               command=lambda: self._kaffee(),
-                               underline=0)
+                              command=lambda: self._kaffee(),
+                              underline=0)
 
-        # MenuTools.add_command(label="Datei senden", command=self.open_linkholder_settings_win, underline=0)
         menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=MenuTools, underline=0)
 
         ###################################################################
         # Menü 4 Einstellungen
         MenuSettings = Menu(menubar, tearoff=False)
         MenuSettings.add_command(label=STR_TABLE['station'][self.language],
-                                  command=lambda: self._open_settings_window('stat_sett'),
-                                  underline=0)
+                                 command=lambda: self._open_settings_window('stat_sett'),
+                                 underline=0)
         MenuSettings.add_command(label=STR_TABLE['port'][self.language],
-                                  command=lambda: self._open_settings_window('port_sett'),
-                                  underline=0)
+                                 command=lambda: self._open_settings_window('port_sett'),
+                                 underline=0)
         MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
-                                  command=lambda: self._open_settings_window('beacon_sett'),
-                                  underline=0)
+                                 command=lambda: self._open_settings_window('beacon_sett'),
+                                 underline=0)
 
         MenuSettings.add_separator()
         MenuSettings.add_command(label='Multicast',
-                                  command=lambda: self._open_settings_window('mcast_sett'),
-                                  underline=0)
+                                 command=lambda: self._open_settings_window('mcast_sett'),
+                                 underline=0)
         MenuSettings.add_command(label="RX-Echo",
-                                  command=lambda: self._open_settings_window('rx_echo_sett'),
-                                  underline=0)
+                                 command=lambda: self._open_settings_window('rx_echo_sett'),
+                                 underline=0)
         MenuSettings.add_separator()
         MenuSettings.add_command(label='Dual-Port',
-                                  command=lambda: self.open_window('dualPort_settings'),
-                                  underline=0)
+                                 command=lambda: self.open_window('dualPort_settings'),
+                                 underline=0)
 
         menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=MenuSettings, underline=0)
         ########################################################################
         # APRS Menu
         MenuAPRS = Menu(menubar, tearoff=False)
         MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
-                              command=lambda: self.open_window('aprs_mon'),
-                              underline=0)
+                             command=lambda: self.open_window('aprs_mon'),
+                             underline=0)
         MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
-                              underline=0)
+                             underline=0)
         MenuAPRS.add_separator()
         MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language],
-                              command=lambda: self.open_window('wx_win'),
-                              underline=0)
+                             command=lambda: self.open_window('wx_win'),
+                             underline=0)
         MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language],
-                              command=lambda: self.open_window('aprs_msg'),
-                              underline=0)
+                             command=lambda: self.open_window('aprs_msg'),
+                             underline=0)
         MenuAPRS.add_separator()
         MenuAPRS.add_command(label=STR_TABLE['settings'][self.language],
-                              command=lambda: self._open_settings_window('aprs_sett'),
-                              underline=0)
+                             command=lambda: self._open_settings_window('aprs_sett'),
+                             underline=0)
         # MenuAPRS.add_separator()
         menubar.add_cascade(label="APRS", menu=MenuAPRS, underline=0)
         ################################################################
         # BBS/PMS
         MenuBBS = Menu(menubar, tearoff=False)
         MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
-                             command=lambda: self.open_window('pms_new_msg'),
-                             underline=0)
+                            command=lambda: self.open_window('pms_new_msg'),
+                            underline=0)
         MenuBBS.add_command(label=STR_TABLE['msg_center'][self.language],
-                             command=lambda: self.open_window('pms_msg_center'),
-                             underline=0)
+                            command=lambda: self.open_window('pms_msg_center'),
+                            underline=0)
 
         MenuBBS.add_separator()
         MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
-                             command=lambda: self.open_window('pms_fwq_q'),
-                             underline=0)
+                            command=lambda: self.open_window('pms_fwq_q'),
+                            underline=0)
         MenuBBS.add_command(label=STR_TABLE['fwd_path'][self.language],
-                             command=lambda: self.open_window('fwdPath'),
-                             underline=0)
+                            command=lambda: self.open_window('fwdPath'),
+                            underline=0)
         MenuBBS.add_separator()
         MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
-                             command=self._do_pms_fwd,
-                             underline=0)
+                            command=self._do_pms_fwd,
+                            underline=0)
 
         MenuBBS.add_command(label=STR_TABLE['start_auto_fwd'][self.language],
-                             command=self._do_pms_autoFWD,
-                             underline=0)
+                            command=self._do_pms_autoFWD,
+                            underline=0)
         MenuBBS.add_separator()
         MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
-                             command=lambda: self._open_settings_window('pms_setting'),
-                             underline=0)
+                            command=lambda: self._open_settings_window('pms_setting'),
+                            underline=0)
         menubar.add_cascade(label='PMS', menu=MenuBBS, underline=0)
         #########################################################################
         # Menü 5 Hilfe
         MenuHelp = Menu(menubar, tearoff=False)
         # MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
         MenuHelp.add_command(label=STR_TABLE['keybind'][self.language],
-                              command=lambda: self._open_settings_window('keybinds'),
-                              underline=0)
+                             command=lambda: self._open_settings_window('keybinds'),
+                             underline=0)
         MenuHelp.add_separator()
         MenuHelp.add_command(label=STR_TABLE['about'][self.language],
-                              command=lambda: self._open_settings_window('about'),
-                              underline=0)
+                             command=lambda: self._open_settings_window('about'),
+                             underline=0)
         menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=MenuHelp, underline=0)
 
     def _init_btn(self):
         btn_upper_frame = tk.Frame(self._side_btn_frame_top)
         btn_upper_frame.pack(anchor='w')
         self._conn_btn = tk.Button(btn_upper_frame,
-                                   text="New Conn",
+                                   text="Connect",
                                    bg="green",
                                    width=8,
                                    command=self.open_new_conn_win)
@@ -1270,8 +1266,8 @@ class PoPT_GUI_Main:
             else:
                 ch_vars.t2speech_buf = ''
                 SOUND.sprech('{} {} . {} .'.format(STR_TABLE['channel'][self.language],
-                                                  self.channel_index,
-                                                  conn.to_call_str))
+                                                   self.channel_index,
+                                                   conn.to_call_str))
 
         else:
             if not ch_vars.t2speech:
@@ -1291,7 +1287,7 @@ class PoPT_GUI_Main:
         if conn is not None:
             if ch_vars.t2speech and ch_vars.t2speech_buf:
                 to_speech = str(ch_vars.t2speech_buf)
-                if self.setting_sprech.get() and self.setting_sound.get():
+                if SOUND.master_sprech_on and SOUND.master_sound_on:
                     if SOUND.sprech(to_speech):
                         ch_vars.t2speech_buf = ''
                 else:
@@ -1372,19 +1368,12 @@ class PoPT_GUI_Main:
             self._AlarmIcon_tasker1()
             if self._ch_alarm:
                 self._ch_btn_status_update()
-            # if self.mh.dx_alarm_trigger:
-            #     self.dx_alarm()
-            """
-            if PORT_HANDLER.get_aprs_ais() is not None:
-                if PORT_HANDLER.get_aprs_ais().tracer_is_alarm():
-                    self.tracer_alarm()
-            """
             if self.settings_win is not None:
                 self.settings_win.tasker()
-            if self.setting_sound:
+            if SOUND.master_sound_on:
                 # TODO Sound Task
                 self._rx_beep_sound()
-                if self.setting_sprech:
+                if SOUND.master_sprech_on:
                     self._check_sprech_ch_buf()
             """
             if self.MSG_Center is not None:
@@ -1818,6 +1807,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame.reset_dx_alarm()
 
     #######################################################
+
     def gui_set_distance(self):
         self._set_distance_fm_conn()
 
@@ -1983,9 +1973,6 @@ class PoPT_GUI_Main:
                 else:
                     self._open_settings_window('priv_win')
 
-    def _open_ft_manager(self, event=None):
-        self._open_settings_window('ft_manager')
-
     def _switch_monitor_mode(self):
         self._switch_mon_mode()
         if self.mon_mode:
@@ -2024,7 +2011,7 @@ class PoPT_GUI_Main:
             if self._conn_btn.cget('bg') != "red":
                 self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
         elif self._conn_btn.cget('bg') != "green":
-            self._conn_btn.configure(text="New Conn", bg="green", command=self.open_new_conn_win)
+            self._conn_btn.configure(text="Connect", bg="green", command=self.open_new_conn_win)
         # !! Loop !! ???
         self._ch_btn_status_update()
 
@@ -2148,63 +2135,63 @@ class PoPT_GUI_Main:
         qth = '-------'
         loc = '------'
         # _dist = 0
-        _status = '-------'
-        _typ = '-----'
-        _sw = '---------'
-        _enc = ''
-        _conn = self.get_conn()
-        if _conn is not None:
-            _db_ent = _conn.user_db_ent
-            if _db_ent:
-                if _db_ent.Name:
-                    name = _db_ent.Name
-                if _db_ent.QTH:
-                    qth = _db_ent.QTH
-                if _db_ent.LOC:
-                    loc = _db_ent.LOC
-                if _db_ent.Distance:
-                    loc += f" ({_db_ent.Distance} km)"
-                if _db_ent.TYP:
-                    _typ = _db_ent.TYP
-                if _db_ent.Software:
-                    _sw = _db_ent.Software
-                _enc = _db_ent.Encoding
-            if _conn.is_link:
-                _status = 'LINK'
-                if self.stat_info_status_var.get() != _status:
-                    self.stat_info_status_var.set(_status)
+        status = '-------'
+        typ = '-----'
+        sw = '---------'
+        enc = ''
+        conn = self.get_conn()
+        if conn is not None:
+            db_ent = conn.user_db_ent
+            if db_ent:
+                if db_ent.Name:
+                    name = db_ent.Name
+                if db_ent.QTH:
+                    qth = db_ent.QTH
+                if db_ent.LOC:
+                    loc = db_ent.LOC
+                if db_ent.Distance:
+                    loc += f" ({db_ent.Distance} km)"
+                if db_ent.TYP:
+                    typ = db_ent.TYP
+                if db_ent.Software:
+                    sw = db_ent.Software
+                enc = db_ent.Encoding
+            if conn.is_link:
+                status = 'LINK'
+                if self.stat_info_status_var.get() != status:
+                    self.stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', )
-            elif _conn.pipe is not None:
-                _status = 'PIPE'
-                if self.stat_info_status_var.get() != _status:
-                    self.stat_info_status_var.set(_status)
+            elif conn.pipe is not None:
+                status = 'PIPE'
+                if self.stat_info_status_var.get() != status:
+                    self.stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', )
-            elif _conn.ft_obj is not None:
-                _status = f'{_conn.ft_obj.dir} FILE'
-                if self.stat_info_status_var.get() != _status:
-                    self.stat_info_status_var.set(_status)
+            elif conn.ft_obj is not None:
+                status = f'{conn.ft_obj.dir} FILE'
+                if self.stat_info_status_var.get() != status:
+                    self.stat_info_status_var.set(status)
                     # self.status_label.bind('<Button-1>', lambda: self._open_settings_window('ft_manager'))
-                    self.status_label.bind('<Button-1>', self._open_ft_manager)
+                    self.status_label.bind('<Button-1>', self.open_ft_manager)
             else:
-                _status = ''
-                if _conn.cli.sysop_priv:
-                    _status += 'S'
+                status = ''
+                if conn.cli.sysop_priv:
+                    status += 'S'
                 else:
-                    _status += '-'
-                if _conn.link_holder_on:
-                    _status += 'L'
+                    status += '-'
+                if conn.link_holder_on:
+                    status += 'L'
                 else:
-                    _status += '-'
-                if _conn.is_RNR:
-                    _status += 'R'
+                    status += '-'
+                if conn.is_RNR:
+                    status += 'R'
                 else:
-                    _status += '-'
-                _status += '----'
-                if self.stat_info_status_var.get() != _status:
-                    self.stat_info_status_var.set(_status)
+                    status += '-'
+                status += '----'
+                if self.stat_info_status_var.get() != status:
+                    self.stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', self.do_priv)
-        elif self.stat_info_status_var.get() != _status:
-            self.stat_info_status_var.set(_status)
+        elif self.stat_info_status_var.get() != status:
+            self.stat_info_status_var.set(status)
             self.status_label.bind('<Button-1>', )
         """
         if _dist:
@@ -2218,12 +2205,12 @@ class PoPT_GUI_Main:
             self.stat_info_qth_var.set(qth)
         if self.stat_info_loc_var.get() != loc:
             self.stat_info_loc_var.set(loc)
-        if self.stat_info_typ_var.get() != _typ:
-            self.stat_info_typ_var.set(_typ)
-        if self.stat_info_sw_var.get() != _sw:
-            self.stat_info_sw_var.set(_sw)
-        if self.stat_info_encoding_var.get() != _enc:
-            self.stat_info_encoding_var.set(_enc)
+        if self.stat_info_typ_var.get() != typ:
+            self.stat_info_typ_var.set(typ)
+        if self.stat_info_sw_var.get() != sw:
+            self.stat_info_sw_var.set(sw)
+        if self.stat_info_encoding_var.get() != enc:
+            self.stat_info_encoding_var.set(enc)
 
     def _update_ft_info(self):
         prog_val = 0
@@ -2534,4 +2521,3 @@ class PoPT_GUI_Main:
 
     def set_Beacon_icon(self, alarm_set=True):
         self._Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
-

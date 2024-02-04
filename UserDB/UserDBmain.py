@@ -190,17 +190,6 @@ class UserDB:
                     ret[self.db[k].TYP] = [k]
         return ret
 
-    def entry_var_upgrade(self, ent_key):
-        if ent_key in self.db.keys():
-            compare = Client()
-            for new_att in dir(compare):
-                # print(new_att)
-                if not hasattr(self.db[ent_key], new_att):
-                    setattr(self.db[ent_key], new_att, getattr(compare, new_att))
-                if not hasattr(self.db[ent_key], 'Distance'):
-                    self.db[ent_key] = 0
-                # print(getattr(self.db[ent_key], new_att))
-
     def update_var_fm_dbentry(self, fm_key: str, to_key: str):
         if fm_key not in self.db.keys():
             return False
