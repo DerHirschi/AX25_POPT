@@ -205,7 +205,7 @@ class PoPT_GUI_Main:
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
-        main_pw.add(l_frame, weight=100)
+        main_pw.add(l_frame, weight=10)
         main_pw.add(self._r_frame, weight=1)
         ###########################################
         # Channel Buttons

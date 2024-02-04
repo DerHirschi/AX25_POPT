@@ -1,4 +1,15 @@
 ###########################################################################################################
+# 2.106.x
+Fixes:
+- Bandauslastung Graph wird in Windows nicht richtig dargestellt aufgrund Seitenverhältnis zum "Side-Frame"
+
+Optimierung:
+
+Neue Implementierungen / Funktionen:
+- PR-Mail Adresse wird jetzt in der User-DB vervollständigt anhand ausgewerteten Pfade empfangener PR-MAils
+
+###########################################################################################################
+###########################################################################################################
 # 2.105.x
 Fixes:
 - Scripterror in Debug Ausgabe

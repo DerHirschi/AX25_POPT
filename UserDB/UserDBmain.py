@@ -163,12 +163,21 @@ class UserDB:
         return False
 
     def set_typ(self, call_str: str, typ: str, add_new=True, overwrite=False):
-        _ent = self.get_entry(call_str, add_new)
+        ent = self.get_entry(call_str, add_new)
         if overwrite:
-            _ent.TYP = typ
+            ent.TYP = typ
         else:
-            if not _ent.TYP:
-                _ent.TYP = typ
+            if not ent.TYP:
+                ent.TYP = typ
+
+    def set_pr_mail_add_for_BBS(self, address: str, ):
+        call_str = address.split('.')[0]
+        if not call_str:
+            return
+        ent = self.get_entry(call_str, True)
+        if not ent.TYP:
+            ent.TYP = 'BBS'
+        ent.PRmail = address
 
     def get_keys_by_typ(self, typ='SYSOP'):
         ret = []
