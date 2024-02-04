@@ -4,7 +4,7 @@ from tkinter import ttk, Checkbutton, TclError, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25dec_enc import PIDByte
-from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux
@@ -429,12 +429,12 @@ class SideTabbedFrame:  # TODO
 
         # Monitor Decoding
         tk.Label(tab6_monitor, text='Decoding:').place(x=40, y=265)
-        self.mon_decoding_var = tk.StringVar(tab6_monitor)
         # self.mon_decoding_var.set(True)
+        dec_val = ['Auto'] + list(ENCODINGS)
         tk.ttk.Combobox(tab6_monitor,
                         width=9,
-                        textvariable=self.mon_decoding_var,
-                        values=[],
+                        textvariable=self._main_win.setting_mon_encoding,
+                        values=dec_val,
                         ).place(x=135, y=265)
 
         # PID

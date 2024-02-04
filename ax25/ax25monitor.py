@@ -1,9 +1,8 @@
-from datetime import datetime
-
-from ax25.ax25NetRom import NetRom_decode_I, NetRom_decode_UI
+# from ax25.ax25NetRom import NetRom_decode_I, NetRom_decode_UI
 # import logging
 
 from ax25aprs.aprs_dec import format_aprs_f_monitor
+from cfg.constant import ENCODINGS
 from fnc.ax25_fnc import get_call_str
 from UserDB.UserDBmain import USER_DB
 from fnc.str_fnc import try_decode
@@ -12,7 +11,7 @@ from fnc.str_fnc import try_decode
 # logger = logging.getLogger(__name__)
 
 
-def monitor_frame_inp(ax25_frame, port_cfg):
+def monitor_frame_inp(ax25_frame, port_cfg, decoding='Auto'):
     port_name = port_cfg.parm_PortName
     aprs_loc = port_cfg.parm_aprs_station.get('aprs_parm_loc', '')
     aprs_data = ''
@@ -63,14 +62,14 @@ def monitor_frame_inp(ax25_frame, port_cfg):
                     data = NetRom_decode_I(ax25_frame.data)
             else:
             """
-            data = try_decode(ax25_frame.data)
-            """
-            try:
-                data = ax25_frame.data.decode('ASCII')
-                
-            except UnicodeDecodeError:
-                data = f'<BIN> {len(ax25_frame.data)} Bytes'
-            """
+            if decoding == 'Auto':
+                data = try_decode(ax25_frame.data)
+            else:
+                if decoding in ENCODINGS:
+                    try:
+                        data = ax25_frame.data.decode(decoding)
+                    except UnicodeDecodeError:
+                        data = f'<BIN> {len(ax25_frame.data)} Bytes'
         else:
             print(f"Monitor decode Data == STR: {data} - {ax25_frame.from_call.call_str} - {ax25_frame.ctl_byte.flag}")
         data = data.replace('\r\n', '\n').replace('\n\r', '\n').replace('\r', '\n')

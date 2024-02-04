@@ -121,6 +121,7 @@ class PoPT_GUI_Main:
         self.setting_tracer = tk.BooleanVar(self.main_win)
         self.setting_auto_tracer = tk.BooleanVar(self.main_win)
         self.setting_dx_alarm = tk.BooleanVar(self.main_win)
+        self.setting_mon_encoding = tk.StringVar(self.main_win)
         ###################
         # Status Frame Vars
         self._status_name_var = tk.StringVar(self.main_win)
@@ -330,6 +331,7 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_auto_tracer'] = bool(self.setting_auto_tracer.get())
         guiCfg['gui_cfg_dx_alarm'] = bool(self.setting_dx_alarm.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
+        guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     def _save_parameter(self):
@@ -385,6 +387,7 @@ class PoPT_GUI_Main:
         self.setting_tracer.set(guiCfg.get('gui_cfg_tracer', False))
         self.setting_auto_tracer.set(guiCfg.get('gui_cfg_auto_tracer', False))
         self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
+        self.setting_mon_encoding.set(guiCfg.get('gui_cfg_mon_encoding', 'Auto'))
 
     def _init_PARM_vars(self):
         #########################
@@ -1664,7 +1667,7 @@ class PoPT_GUI_Main:
                 conf = el[1]
                 port_id = conf.parm_PortNr
                 tx = el[2]
-                mon_out = monitor_frame_inp(el[0], conf)
+                mon_out = monitor_frame_inp(el[0], conf, self.setting_mon_encoding.get())
                 if self.tabbed_sideFrame.mon_aprs_var.get():
                     mon_str = mon_out[0] + mon_out[1]
                 else:
