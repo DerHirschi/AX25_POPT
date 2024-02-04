@@ -4,9 +4,10 @@ Fixes:
 - Bandauslastung Graph wird in Windows nicht richtig dargestellt aufgrund Seitenverhältnis zum "Side-Frame"
 
 Optimierung:
+- CLi/Remote Kommando "PORT": Dual-Port wird jetzt gekennzeichnet
 
 Neue Implementierungen / Funktionen:
-- PR-Mail Adresse wird jetzt in der User-DB vervollständigt anhand ausgewerteten Pfade empfangener PR-MAils
+- PR-Mail Adresse wird jetzt in der User-DB vervollständigt anhand ausgewerteten Pfade empfangener PR-Mails
 
 ###########################################################################################################
 ###########################################################################################################
