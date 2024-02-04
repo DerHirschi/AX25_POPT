@@ -121,6 +121,7 @@ class PoPT_GUI_Main:
         self.setting_tracer = tk.BooleanVar(self.main_win)
         self.setting_auto_tracer = tk.BooleanVar(self.main_win)
         self.setting_dx_alarm = tk.BooleanVar(self.main_win)
+        self.setting_noty_bell = tk.BooleanVar(self.main_win)
         self.setting_mon_encoding = tk.StringVar(self.main_win)
         ###################
         # Status Frame Vars
@@ -149,7 +150,6 @@ class PoPT_GUI_Main:
         self._ch_alarm = False
         self.channel_index = 1
         self.mon_mode = 0
-        self._sound_th = None
         self._is_closing = False
         self._init_state = 0
         self._tracer_alarm = False
@@ -330,6 +330,7 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_tracer'] = False
         guiCfg['gui_cfg_auto_tracer'] = bool(self.setting_auto_tracer.get())
         guiCfg['gui_cfg_dx_alarm'] = bool(self.setting_dx_alarm.get())
+        guiCfg['gui_cfg_noty_bell'] = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
         POPT_CFG.save_guiPARM_main(guiCfg)
@@ -387,6 +388,7 @@ class PoPT_GUI_Main:
         self.setting_tracer.set(guiCfg.get('gui_cfg_tracer', False))
         self.setting_auto_tracer.set(guiCfg.get('gui_cfg_auto_tracer', False))
         self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
+        self.setting_noty_bell.set(guiCfg.get('gui_cfg_noty_bell', False))
         self.setting_mon_encoding.set(guiCfg.get('gui_cfg_mon_encoding', 'Auto'))
 
     def _init_PARM_vars(self):
@@ -408,6 +410,7 @@ class PoPT_GUI_Main:
         self.set_tracer()
         self.set_auto_tracer()
         self.set_dx_alarm()
+        self.set_noty_bell_active()
         self.set_tracer_icon()
         self.set_Beacon_icon(self.setting_bake.get())
 
@@ -1955,6 +1958,7 @@ class PoPT_GUI_Main:
         PORT_HANDLER.set_dxAlarm()
         PORT_HANDLER.set_tracerAlarm()
         self._Alarm_Frame.set_pmsMailAlarm()
+        self.set_noty_bell()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
 
@@ -2036,7 +2040,43 @@ class PoPT_GUI_Main:
         self._update_qso_Vars()
         self.ch_status_update()
         self.conn_btn_update()
+        self.reset_noty_bell()
         self._kanal_switch()  # Sprech
+
+    def reset_noty_bell(self):
+        conn = self.get_conn(self.channel_index)
+        if not conn:
+            return
+        if conn.noty_bell:
+            conn.noty_bell = False
+            self._Alarm_Frame.set_Bell_alarm(False)
+            self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
+
+    def set_noty_bell(self, ch_id, msg=''):
+        conn = self.get_conn(ch_id)
+        if not conn:
+            return
+        self._Alarm_Frame.set_Bell_alarm()
+
+        if self.setting_noty_bell.get():
+            if self.setting_sound.get():
+                SOUND.bell_sound()
+
+            threading.Thread(target=self._noty_bell, args=(ch_id, msg)).start()
+
+    def _noty_bell(self, ch_id, msg=''):
+        conn = self.get_conn(ch_id)
+        if not conn:
+            return
+        if not msg:
+            msg = f"{conn.to_call_str} {STR_TABLE['cmd_bell_gui_msg'][self.language]}"
+        if messagebox.askokcancel(f"Bell {STR_TABLE['channel'][self.language]} {ch_id}",
+                                  msg):
+            if not self._is_closing:
+                self.switch_channel(ch_id)
+
+    def set_noty_bell_active(self):
+        self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
     def _ch_btn_status_update(self):
         # TODO Call just if necessary

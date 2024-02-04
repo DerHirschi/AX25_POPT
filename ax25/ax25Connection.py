@@ -239,6 +239,7 @@ class AX25Conn(object):
         """ Station Individual Parameter """
         self._set_packet_param()
         """ Init CLI """
+        self.noty_bell = False
         self.cli = cli.cliMain.NoneCLI(self)
         self.cli_type = ''
         if self.stat_cfg.stat_parm_pipe is None:

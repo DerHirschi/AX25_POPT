@@ -766,5 +766,9 @@ class AX25PortHandler(object):
             else:
                 self.gui.reset_diesel()
 
+    def set_noty_bell_PH(self, ch_id, msg=''):
+        if self.gui:
+            self.gui.set_noty_bell(ch_id, msg)
+
 
 PORT_HANDLER = AX25PortHandler()

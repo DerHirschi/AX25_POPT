@@ -105,7 +105,8 @@ class DefaultCLI(object):
             'ATR': (2, self.cmd_aprs_trace, 'APRS-Tracer'),
             'DXLIST': (2, self._cmd_dxlist, 'DX/Tracer Alarm List'),
             'LCSTATUS': (2, self.cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self.connection.cli_language]),
-            'WX': (0, self.cmd_wx, 'Wetterstationen'),
+            'WX': (0, self.cmd_wx, STR_TABLE['cmd_help_wx'][self.connection.cli_language]),
+            'BELL': (2, self.cmd_bell, STR_TABLE['cmd_help_bell'][self.connection.cli_language]),
 
             'INFO': (1, self.cmd_i, 'Info'),
             'LINFO': (2, self.cmd_li, 'Long Info'),
@@ -231,7 +232,9 @@ class DefaultCLI(object):
         cmd = cmd[0]
         self.cmd = cmd \
             .upper() \
-            .replace(b'\r', b'')
+            .replace(b'\r', b'') \
+            .replace(b'//', b'')
+
         return False
 
     def load_fm_file(self, filename: str):
@@ -409,7 +412,7 @@ class DefaultCLI(object):
     def _decode_param(self, defaults=None):
         if defaults is None:
             defaults = []
-        if type(defaults) != list:
+        if type(defaults) is not list:
             defaults = []
         tmp = []
         if not defaults:
@@ -418,14 +421,14 @@ class DefaultCLI(object):
         else:
             for el in defaults:
                 if len(self.parameter) > len(tmp):
-                    _tmp_parm = self.parameter[len(tmp)].decode(self.encoding[0], 'ignore').replace('\r', '')
+                    tmp_parm = self.parameter[len(tmp)].decode(self.encoding[0], 'ignore').replace('\r', '')
                     try:
-                        _tmp_parm = type(el)(_tmp_parm)
+                        tmp_parm = type(el)(tmp_parm)
                     except ValueError:
-                        _tmp_parm = defaults[len(tmp)]
+                        tmp_parm = defaults[len(tmp)]
                 else:
-                    _tmp_parm = defaults[len(tmp)]
-                tmp.append(_tmp_parm)
+                    tmp_parm = defaults[len(tmp)]
+                tmp.append(tmp_parm)
         self.parameter = list(tmp)
 
     def _cmd_connect(self):
@@ -1162,14 +1165,14 @@ class DefaultCLI(object):
 
     def cmd_shelp(self):
         ret = '\r # '
-        _c = 0
-        _cmds = list(self.commands.keys())
-        _cmds.sort()
-        for k in _cmds:
+        c = 0
+        cmds = list(self.commands.keys())
+        cmds.sort()
+        for k in cmds:
             ret += (k + ' ')
-            if len(ret) - _c > 60:
+            if len(ret) - c > 60:
                 ret += '\r # '
-                _c += 60
+                c += 60
         ret += '\r\r'
         return ret
 
@@ -1184,6 +1187,15 @@ class DefaultCLI(object):
         if self.user_db_ent:
             self.user_db_ent.Encoding = str(res)
         return f"\r{STR_TABLE['cli_text_encoding_set'][self.connection.cli_language]} {res}\r"
+
+    def cmd_bell(self):
+        if not self.connection.noty_bell:
+            self.connection.noty_bell = True
+            msg = b' '.join(self.parameter)
+            msg = msg.decode(self.encoding[0], self.encoding[1])
+            self.port_handler.set_noty_bell_PH(self.connection.ch_index, msg)
+            return f'\r # {STR_TABLE["cmd_bell"][self.connection.cli_language]}\r'
+        return f'\r # {STR_TABLE["cmd_bell_again"][self.connection.cli_language]}\r'
 
     ##############################################
     def str_cmd_req_name(self):

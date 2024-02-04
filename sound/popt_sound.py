@@ -1,9 +1,11 @@
+import time
+
 import gtts
 from gtts import gTTS
 import threading
 import sys
 
-from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, LANGUAGE
+from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, LANGUAGE, CFG_sound_BELL
 from cfg.popt_config import POPT_CFG
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 
@@ -108,6 +110,12 @@ class POPT_Sound:
     def disco_sound(self):
         """ fm PortHandler """
         self.sound_play(self._root_dir + CFG_sound_DICO, False)
+
+    def bell_sound(self):
+        """ fm mainGUI """
+        self.sound_play(self._root_dir + CFG_sound_BELL, False)
+        time.sleep(0.22)
+        self.sound_play(self._root_dir + CFG_sound_BELL, False)
 
 
 SOUND = POPT_Sound()

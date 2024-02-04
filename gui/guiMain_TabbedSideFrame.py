@@ -305,6 +305,12 @@ class SideTabbedFrame:  # TODO
                     variable=self._main_win.setting_sound,
                     command=self._chk_sound
                     ).place(x=10, y=10)
+        # Bell
+        Checkbutton(tab4_settings,
+                    text="Bell",
+                    variable=self._main_win.setting_noty_bell,
+                    command=self._main_win.set_noty_bell_active
+                    ).place(x=150, y=10)
         # Global Sprech
         sprech_btn = Checkbutton(tab4_settings,
                                  text="Sprachausgabe",
@@ -561,7 +567,7 @@ class SideTabbedFrame:  # TODO
         self._connects_tree.column("port", anchor=tk.W, stretch=tk.NO, width=61)
         self._connects_tree.column("typ", anchor=tk.W, stretch=tk.NO, width=155)
         self._connects_tree.column("dauer", anchor=tk.W, stretch=tk.YES, width=110)
-        # self._connects_tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
+        self._connects_tree.tag_configure("bell", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
 
         self._connects_tree_data = []
         # self._last_mh_ent = []
@@ -599,89 +605,6 @@ class SideTabbedFrame:  # TODO
             SOUND.master_sound_on = True
         else:
             SOUND.master_sound_on = False
-
-    """
-    def _update_ch_echo(self):
-        # TODO AGAIN !!
-        _tab = self.tab5_ch_links
-        akt_ch_id = self._main_win.channel_index
-        _var = tk.BooleanVar(_tab)
-        for ch_id in list(self._ch_echo_vars.keys()):
-            if ch_id not in list(PORT_HANDLER.get_all_connections().keys()):
-                self._ch_echo_vars[ch_id][1].destroy()
-                del self._ch_echo_vars[ch_id]
-        for ch_id in list(PORT_HANDLER.get_all_connections().keys()):
-            conn = PORT_HANDLER.get_all_connections()[ch_id]
-            if ch_id not in self._ch_echo_vars.keys():
-                chk_bt_var = tk.IntVar()
-                chk_bt = tk.Checkbutton(_tab,
-                                        text=conn.to_call_str,
-                                        variable=chk_bt_var,
-                                        onvalue=int(ch_id),
-                                        offvalue=0,
-                                        command=self._chk_ch_echo
-                                        )
-                chk_bt.place(x=10, y=10 + (28 * (ch_id - 1)))
-                # _chk_bt.configure(state='disabled')
-                tmp = chk_bt_var, chk_bt
-                self._ch_echo_vars[ch_id] = tmp
-            else:
-                self._ch_echo_vars[ch_id][1].configure(state='normal')
-                self._ch_echo_vars[ch_id][1].configure(text=conn.to_call_str)
-            if ch_id != akt_ch_id:
-                self._ch_echo_vars[ch_id][1].configure(state='normal')
-            else:
-                self._ch_echo_vars[ch_id][1].configure(state='disabled')
-            if akt_ch_id in self._ch_echo_vars.keys():
-                if self._ch_echo_vars[ch_id][0].get() and self._ch_echo_vars[akt_ch_id][0].get():
-                    self._ch_echo_vars[ch_id][1].configure(bg='green1')
-                    self._ch_echo_vars[akt_ch_id][1].configure(bg='green1')
-                else:
-                    self._ch_echo_vars[ch_id][1].configure(bg=self._chk_btn_default_clr)
-                    self._ch_echo_vars[akt_ch_id][1].configure(bg=self._chk_btn_default_clr)
-
-        # self.sound_on.set(1)
-    """
-    """ 
-    def _chk_ch_echo(self):
-        # self.main_win.channel_index
-        for ch_id in list(self._ch_echo_vars.keys()):
-            _vars = self._ch_echo_vars[ch_id]
-            if ch_id != self._main_win.channel_index:
-                if _vars[0].get() and self._ch_echo_vars[self._main_win.channel_index][0].get():
-                    PORT_HANDLER.get_all_connections()[ch_id].ch_echo.append(
-                        PORT_HANDLER.get_all_connections()[self._main_win.channel_index])
-                    PORT_HANDLER.get_all_connections()[self._main_win.channel_index].ch_echo.append(
-                        PORT_HANDLER.get_all_connections()[ch_id])
-                else:
-                    if PORT_HANDLER.get_all_connections()[self._main_win.channel_index] in \
-                            PORT_HANDLER.get_all_connections()[ch_id].ch_echo:
-                        PORT_HANDLER.get_all_connections()[ch_id].ch_echo.remove(
-                            PORT_HANDLER.get_all_connections()[self._main_win.channel_index])
-
-                    if PORT_HANDLER.get_all_connections()[ch_id] in PORT_HANDLER.get_all_connections()[
-                        self._main_win.channel_index].ch_echo:
-                        PORT_HANDLER.get_all_connections()[self._main_win.channel_index].ch_echo.remove(
-                            PORT_HANDLER.get_all_connections()[ch_id])
-        
-          
-        for ch_id in list(self.ch_echo_vars.keys()):
-            _vars = self.ch_echo_vars[ch_id]
-            if _vars[0].get() and self.ch_echo_vars[self.main_win.channel_index][0].get():
-                self.ch_echo_vars[ch_id][1].configure(bg='green1')
-                # self.ch_echo_vars[self.main_win.channel_index][0].set(True)
-                self.ch_echo_vars[self.main_win.channel_index][1].configure(bg='green1')
-
-            else:
-                self.ch_echo_vars[ch_id][1].configure(bg=self.chk_btn_default_clr)
-                # self.ch_echo_vars[self.main_win.channel_index][0].set(False)
-                self.ch_echo_vars[self.main_win.channel_index][1].configure(bg=self.chk_btn_default_clr)
-    """
-
-    """
-    def _chk_dx_alarm(self):
-        self._main_win.setting_dx_alarm = self.dx_alarm_on.get()
-    """
 
     def _chk_tracer(self):
         self._main_win.set_tracer()
@@ -861,6 +784,7 @@ class SideTabbedFrame:  # TODO
             timer = datetime.now() - conn.time_start
             timer = str(timer).split('.')[0]
             typ = conn.cli_type
+            bell = conn.noty_bell
             if conn.is_link:
                 if hasattr(conn.LINK_Connection, 'to_call_str'):
                     typ = f'Link {conn.LINK_Connection.to_call_str}'
@@ -876,7 +800,10 @@ class SideTabbedFrame:  # TODO
                 typ,
                 timer,
             ]
-            self._connects_tree.insert('', tk.END, values=ent, )
+            if bell:
+                self._connects_tree.insert('', tk.END, values=ent, tags=('bell',))
+            else:
+                self._connects_tree.insert('', tk.END, values=ent, )
 
     ##########################################################
     # MH

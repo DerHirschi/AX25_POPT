@@ -12,6 +12,7 @@ Fixes:
 Optimierung:
 - Alarm Status/Icons
 - Sound Funktionen
+- CLI/Remote Kommandos: versehentlich gesendeter präfix wird in "Nicht User CLI" ausgefiltert.
 
 Neue Implementierungen / Funktionen:
 - Message-Center und PMS-FWD Warteschlange wird aktualisiert, wenn PMS-FWD beendet
@@ -24,6 +25,7 @@ Neue Implementierungen / Funktionen:
 - CLI CMD "Connect": ""*** Busy from"/"*** Failed to connect to" Ausgabe, wenn "Weiterconnect" gescheitert ist.
 - "PMS-Neue Nachrichten" Fenster, Textgrößen verändern mit STRG + +/-
 - Text Decoding für Monitor Ausgabe wählbar zwischen 'Auto', 'CP437', 'ASCII', 'LATIN_1', 'UTF-8'
+- CLI/Remote Kommando "BELL" - Sysop rufen
 
 ###########################################################################################################
 ###########################################################################################################

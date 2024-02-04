@@ -58,6 +58,13 @@ class AlarmIconFrame(tk.Frame):
                                        foreground='#18e002')
         self._pms_fwd_label.pack(side=tk.LEFT, padx=3)
 
+        self._bell_label = tk.Label(self, text='☎',
+                                    font=(None, 11,),
+                                    background='#313336',
+                                    state='disabled',
+                                    foreground='#18e002')
+        self._bell_label.pack(side=tk.LEFT, padx=3)
+
         self._05_blink = {
             'diesel': 0,
             'dx': 0,
@@ -66,6 +73,7 @@ class AlarmIconFrame(tk.Frame):
             'rxecho': 0,
             'pmsmail': 0,
             'pmsfwd': 0,
+            'bell': 0,
         }
         self._1_blink = {
             'diesel': 0,
@@ -75,6 +83,7 @@ class AlarmIconFrame(tk.Frame):
             'rxecho': 0,
             'pmsmail': 0,
             'pmsfwd': 0,
+            'bell': 0,
         }
 
         self._alarm_labels = {
@@ -85,6 +94,7 @@ class AlarmIconFrame(tk.Frame):
             'rxecho': self._rxEcho_label,
             'pmsmail': self._pms_mail_label,
             'pmsfwd': self._pms_fwd_label,
+            'bell': self._bell_label,
         }
 
     def AlarmIcon_tasker05(self):
@@ -153,24 +163,45 @@ class AlarmIconFrame(tk.Frame):
 
     def set_dxAlarm(self, alarm_set=True):
         if alarm_set:
+            """
             if self._mh_label.cget('foreground') != '#18e002':
                 self._mh_label.configure(foreground='#18e002')
+            """
             self.add_blink_task('dx', -1, sec05=False)
         else:
+            """
             if self._mh_label.cget('foreground') != '#f0d402':
                 self._mh_label.configure(foreground='#f0d402')
+            """
             self.remove_blink_task('dx', sec05=False)
 
     def set_dxAlarm_active(self, alarm_set=True):
         self.set_dxAlarm(False)
         if alarm_set:
+            """
             if self._mh_label.cget('foreground') != '#f0d402':
                 self._mh_label.configure(foreground='#f0d402')
+            """
             if self._mh_label.cget('state') == 'disabled':
                 self.add_blink_task('dx', 3, sec05=True)
             return
         if self._mh_label.cget('state') == 'normal':
             self.add_blink_task('dx', 3, sec05=True)
+        return
+
+    def set_Bell_alarm(self, alarm_set=True):
+        if alarm_set:
+            self.add_blink_task('bell', -1, sec05=False)
+        else:
+            self.remove_blink_task('bell', sec05=False)
+
+    def set_Bell_active(self, alarm_set=True):
+        if alarm_set:
+            if self._bell_label.cget('state') == 'disabled':
+                self.add_blink_task('bell', 3, sec05=True)
+            return
+        if self._bell_label.cget('state') == 'normal':
+            self.add_blink_task('bell', 3, sec05=True)
         return
 
     def set_tracerAlarm(self, alarm_set=True):
