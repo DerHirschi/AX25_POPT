@@ -448,6 +448,9 @@ class APRS_ais(object):
     def _update_pn_msg_gui(self, aprs_pack: dict):
         if self.port_handler is not None:
             if self.port_handler.gui is not None:
+                if aprs_pack['addresse'] in self.port_handler.ax25_stations_settings \
+                        or aprs_pack['from'] in self.port_handler.ax25_stations_settings:
+                    self.port_handler.gui.set_aprsMail_alarm()
                 if self.port_handler.gui.aprs_pn_msg_win is not None:
                     self.port_handler.gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
 

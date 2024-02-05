@@ -9,6 +9,7 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - PR-Mail Adresse wird jetzt in der User-DB vervollständigt anhand ausgewerteten Pfade empfangener PR-Mails
+- Alarm Icon für neue APRS-Mail(PN)
 
 ###########################################################################################################
 ###########################################################################################################

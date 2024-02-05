@@ -2081,6 +2081,12 @@ class PoPT_GUI_Main:
     def set_noty_bell_active(self):
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
+    def set_aprsMail_alarm(self):
+        self._Alarm_Frame.set_aprsMail_alarm(True)
+
+    def reset_aprsMail_alarm(self):
+        self._Alarm_Frame.set_aprsMail_alarm(False)
+
     def _ch_btn_status_update(self):
         # TODO Call just if necessary
         # TODO not calling in Tasker Loop for Channel Alarm (change BTN Color)

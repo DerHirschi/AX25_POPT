@@ -14,6 +14,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         tk.Toplevel.__init__(self)
         self._init_done = False
         self._root_cl = root_win
+        self._root_cl.reset_aprsMail_alarm()
         self.lang = self._root_cl.language
         self.text_size = self._root_cl.text_size
         self.win_height = 700
