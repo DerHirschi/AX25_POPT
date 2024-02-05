@@ -148,68 +148,69 @@ class RxEchoSettings(tk.Toplevel):
         _tx_call_ent
         """
         for k in PORT_HANDLER.rx_echo.keys():
-            for kk in list(self.check_vars[k].keys()):
-                # RX
-                if self.check_vars[k][kk][0].get() and self.check_vars[kk][k][1].get():
-                    self.check_vars[k][kk][2].configure(background='green1', activebackground='green4')
-                    self.check_vars[kk][k][3].configure(background='green1', activebackground='green4')
-                    # self.check_vars[k][kk][2].select()
-                    # self.check_vars[kk][k][2].select()
-                    var = self.check_vars[k][kk][4].get()
-                    calls = []
-                    if not var:
-                        var = self.check_vars[kk][k][5].get()
-                        if var:
+            if k in self.check_vars.keys():
+                for kk in list(self.check_vars[k].keys()):
+                    # RX
+                    if self.check_vars[k][kk][0].get() and self.check_vars[kk][k][1].get():
+                        self.check_vars[k][kk][2].configure(background='green1', activebackground='green4')
+                        self.check_vars[kk][k][3].configure(background='green1', activebackground='green4')
+                        # self.check_vars[k][kk][2].select()
+                        # self.check_vars[kk][k][2].select()
+                        var = self.check_vars[k][kk][4].get()
+                        calls = []
+                        if not var:
+                            var = self.check_vars[kk][k][5].get()
+                            if var:
+                                calls = var.split(' ')
+                        else:
                             calls = var.split(' ')
+
+                        PORT_HANDLER.rx_echo[k].rx_ports[kk] = list(calls)
+                        PORT_HANDLER.rx_echo[kk].tx_ports[k] = list(calls)
+
+                        self.check_vars[kk][k][5].delete(0, tk.END)
+                        self.check_vars[kk][k][5].insert(tk.END, var)
+                        self.check_vars[k][kk][4].delete(0, tk.END)
+                        self.check_vars[k][kk][4].insert(tk.END, var)
                     else:
-                        calls = var.split(' ')
-
-                    PORT_HANDLER.rx_echo[k].rx_ports[kk] = list(calls)
-                    PORT_HANDLER.rx_echo[kk].tx_ports[k] = list(calls)
-
-                    self.check_vars[kk][k][5].delete(0, tk.END)
-                    self.check_vars[kk][k][5].insert(tk.END, var)
-                    self.check_vars[k][kk][4].delete(0, tk.END)
-                    self.check_vars[k][kk][4].insert(tk.END, var)
-                else:
-                    self.check_vars[k][kk][2].configure(background=self.off_color[0], activebackground=self.off_color[1])
-                    self.check_vars[kk][k][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
-                    # self.check_vars[k][kk][2].deselect()
-                    # self.check_vars[kk][k][2].deselect()
-                    if kk in list(PORT_HANDLER.rx_echo[k].rx_ports.keys()):
-                        del PORT_HANDLER.rx_echo[k].rx_ports[kk]
-                    if k in list(PORT_HANDLER.rx_echo[kk].tx_ports.keys()):
-                        del PORT_HANDLER.rx_echo[kk].tx_ports[k]
-                # TX
-                if self.check_vars[k][kk][1].get() and self.check_vars[kk][k][0].get():
-                    self.check_vars[k][kk][3].configure(background='green1', activebackground='green4')
-                    self.check_vars[kk][k][2].configure(background='green1', activebackground='green4')
-                    # self.check_vars[k][kk][3].select()
-                    # self.check_vars[kk][k][3].select()
-                    var = self.check_vars[k][kk][5].get()
-                    calls = []
-                    if not var:
-                        var = self.check_vars[kk][k][4].get()
-                        if var:
+                        self.check_vars[k][kk][2].configure(background=self.off_color[0], activebackground=self.off_color[1])
+                        self.check_vars[kk][k][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
+                        # self.check_vars[k][kk][2].deselect()
+                        # self.check_vars[kk][k][2].deselect()
+                        if kk in list(PORT_HANDLER.rx_echo[k].rx_ports.keys()):
+                            del PORT_HANDLER.rx_echo[k].rx_ports[kk]
+                        if k in list(PORT_HANDLER.rx_echo[kk].tx_ports.keys()):
+                            del PORT_HANDLER.rx_echo[kk].tx_ports[k]
+                    # TX
+                    if self.check_vars[k][kk][1].get() and self.check_vars[kk][k][0].get():
+                        self.check_vars[k][kk][3].configure(background='green1', activebackground='green4')
+                        self.check_vars[kk][k][2].configure(background='green1', activebackground='green4')
+                        # self.check_vars[k][kk][3].select()
+                        # self.check_vars[kk][k][3].select()
+                        var = self.check_vars[k][kk][5].get()
+                        calls = []
+                        if not var:
+                            var = self.check_vars[kk][k][4].get()
+                            if var:
+                                calls = var.split(' ')
+                        else:
                             calls = var.split(' ')
-                    else:
-                        calls = var.split(' ')
-                    PORT_HANDLER.rx_echo[k].tx_ports[kk] = calls
-                    PORT_HANDLER.rx_echo[kk].rx_ports[k] = calls
+                        PORT_HANDLER.rx_echo[k].tx_ports[kk] = calls
+                        PORT_HANDLER.rx_echo[kk].rx_ports[k] = calls
 
-                    self.check_vars[kk][k][4].delete(0, tk.END)
-                    self.check_vars[kk][k][4].insert(tk.END, var)
-                    self.check_vars[k][kk][5].delete(0, tk.END)
-                    self.check_vars[k][kk][5].insert(tk.END, var)
-                else:
-                    self.check_vars[k][kk][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
-                    self.check_vars[kk][k][2].configure(background=self.off_color[0], activebackground=self.off_color[1])
-                    # self.check_vars[k][kk][3].deselect()
-                    # self.check_vars[kk][k][3].deselect()
-                    if kk in list(PORT_HANDLER.rx_echo[k].tx_ports.keys()):
-                        del PORT_HANDLER.rx_echo[k].tx_ports[kk]
-                    if k in list(PORT_HANDLER.rx_echo[kk].rx_ports.keys()):
-                        del PORT_HANDLER.rx_echo[kk].rx_ports[k]
+                        self.check_vars[kk][k][4].delete(0, tk.END)
+                        self.check_vars[kk][k][4].insert(tk.END, var)
+                        self.check_vars[k][kk][5].delete(0, tk.END)
+                        self.check_vars[k][kk][5].insert(tk.END, var)
+                    else:
+                        self.check_vars[k][kk][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
+                        self.check_vars[kk][k][2].configure(background=self.off_color[0], activebackground=self.off_color[1])
+                        # self.check_vars[k][kk][3].deselect()
+                        # self.check_vars[kk][k][3].deselect()
+                        if kk in list(PORT_HANDLER.rx_echo[k].tx_ports.keys()):
+                            del PORT_HANDLER.rx_echo[k].tx_ports[kk]
+                        if k in list(PORT_HANDLER.rx_echo[kk].rx_ports.keys()):
+                            del PORT_HANDLER.rx_echo[kk].rx_ports[k]
 
         """
         for k in PORT_HANDLER.rx_echo.keys():
@@ -224,43 +225,43 @@ class RxEchoSettings(tk.Toplevel):
     def _update_settings(self):
 
         for k in PORT_HANDLER.rx_echo.keys():
+            if k in self.check_vars.keys():
+                for kk in list(self.check_vars[k].keys()):
+                    tr_k_kk = False
+                    tr_kk_k = False
+                    # RX
+                    if k in PORT_HANDLER.rx_echo[kk].tx_ports.keys():
+                        self.check_vars[kk][k][5].delete(0, tk.END)
 
-            for kk in list(self.check_vars[k].keys()):
-                tr_k_kk = False
-                tr_kk_k = False
-                # RX
-                if k in PORT_HANDLER.rx_echo[kk].tx_ports.keys():
-                    self.check_vars[kk][k][5].delete(0, tk.END)
+                        call_list_kk_k = PORT_HANDLER.rx_echo[kk].tx_ports[k]
+                        call_st = ''
+                        for el in call_list_kk_k:
+                            call_st += el + ' '
+                        self.check_vars[kk][k][5].insert(tk.END, call_st)
+                        self.check_vars[kk][k][1].set(True)
+                        tr_kk_k = True
+                    else:
+                        self.check_vars[kk][k][1].set(False)
 
-                    call_list_kk_k = PORT_HANDLER.rx_echo[kk].tx_ports[k]
-                    call_st = ''
-                    for el in call_list_kk_k:
-                        call_st += el + ' '
-                    self.check_vars[kk][k][5].insert(tk.END, call_st)
-                    self.check_vars[kk][k][1].set(True)
-                    tr_kk_k = True
-                else:
-                    self.check_vars[kk][k][1].set(False)
+                    if kk in PORT_HANDLER.rx_echo[k].rx_ports.keys():
+                        self.check_vars[k][kk][4].delete(0, tk.END)
 
-                if kk in PORT_HANDLER.rx_echo[k].rx_ports.keys():
-                    self.check_vars[k][kk][4].delete(0, tk.END)
+                        call_list_k_kk = PORT_HANDLER.rx_echo[k].rx_ports[kk]
+                        call_st = ''
+                        for el in call_list_k_kk:
+                            call_st += el + ' '
+                        self.check_vars[k][kk][4].insert(tk.END, call_st)
+                        self.check_vars[k][kk][0].set(True)
+                        tr_k_kk = True
+                    else:
+                        self.check_vars[k][kk][0].set(False)
 
-                    call_list_k_kk = PORT_HANDLER.rx_echo[k].rx_ports[kk]
-                    call_st = ''
-                    for el in call_list_k_kk:
-                        call_st += el + ' '
-                    self.check_vars[k][kk][4].insert(tk.END, call_st)
-                    self.check_vars[k][kk][0].set(True)
-                    tr_k_kk = True
-                else:
-                    self.check_vars[k][kk][0].set(False)
-
-                if tr_kk_k and tr_k_kk:
-                    self.check_vars[k][kk][2].configure(background='green1', activebackground='green4')
-                    self.check_vars[kk][k][3].configure(background='green1', activebackground='green4')
-                else:
-                    self.check_vars[k][kk][2].configure(background=self.off_color[0],
-                                                        activebackground=self.off_color[1])
-                    self.check_vars[kk][k][3].configure(background=self.off_color[0],
-                                                        activebackground=self.off_color[1])
+                    if tr_kk_k and tr_k_kk:
+                        self.check_vars[k][kk][2].configure(background='green1', activebackground='green4')
+                        self.check_vars[kk][k][3].configure(background='green1', activebackground='green4')
+                    else:
+                        self.check_vars[k][kk][2].configure(background=self.off_color[0],
+                                                            activebackground=self.off_color[1])
+                        self.check_vars[kk][k][3].configure(background=self.off_color[0],
+                                                            activebackground=self.off_color[1])
 

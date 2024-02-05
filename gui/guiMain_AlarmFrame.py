@@ -23,8 +23,8 @@ class AlarmIconFrame(tk.Frame):
                                   foreground='#18e002')
         self._mh_label.pack(side=tk.LEFT, padx=3)
 
-        self._tracer_label = tk.Label(self, text='⨂',
-                                      font=(None, 9),
+        self._tracer_label = tk.Label(self, text='☈',
+                                      font=(None, 11),
                                       background='#313336',
                                       state='disabled',
                                       foreground='#18e002')
@@ -44,12 +44,12 @@ class AlarmIconFrame(tk.Frame):
                                       foreground='#18e002')
         self._rxEcho_label.pack(side=tk.LEFT, padx=3)
 
-        self._aprs_mail_label = tk.Label(self, text='Ⓐ✉',
-                                         font=(None, 15,),
-                                         background='#313336',
-                                         state='disabled',
-                                         foreground='#18e002')
-        self._aprs_mail_label.pack(side=tk.LEFT, padx=3)
+        self._pms_fwd_label = tk.Label(self, text='✉⇄',
+                                       font=(None, 15,),
+                                       background='#313336',
+                                       state='disabled',
+                                       foreground='#18e002')
+        self._pms_fwd_label.pack(side=tk.LEFT, padx=3)
 
         self._pms_mail_label = tk.Label(self, text='✉',
                                         font=(None, 15,),
@@ -58,12 +58,12 @@ class AlarmIconFrame(tk.Frame):
                                         foreground='#18e002')
         self._pms_mail_label.pack(side=tk.LEFT, padx=3)
 
-        self._pms_fwd_label = tk.Label(self, text='✉⇄',
-                                       font=(None, 15,),
-                                       background='#313336',
-                                       state='disabled',
-                                       foreground='#18e002')
-        self._pms_fwd_label.pack(side=tk.LEFT, padx=3)
+        self._aprs_mail_label = tk.Label(self, text='Ⓐ✉',
+                                         font=(None, 15,),
+                                         background='#313336',
+                                         state='disabled',
+                                         foreground='#18e002')
+        self._aprs_mail_label.pack(side=tk.LEFT, padx=3)
 
         self._bell_label = tk.Label(self, text='☎',
                                     font=(None, 11,),
