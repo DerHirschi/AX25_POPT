@@ -1958,7 +1958,7 @@ class PoPT_GUI_Main:
         PORT_HANDLER.set_dxAlarm()
         PORT_HANDLER.set_tracerAlarm()
         self._Alarm_Frame.set_pmsMailAlarm()
-        self.set_noty_bell()
+        # self.set_noty_bell()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
 
@@ -2049,8 +2049,11 @@ class PoPT_GUI_Main:
             return
         if conn.noty_bell:
             conn.noty_bell = False
-            self._Alarm_Frame.set_Bell_alarm(False)
-            self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
+            self.reset_noty_bell_alarm()
+
+    def reset_noty_bell_alarm(self):
+        self._Alarm_Frame.set_Bell_alarm(False)
+        self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
     def set_noty_bell(self, ch_id, msg=''):
         conn = self.get_conn(ch_id)

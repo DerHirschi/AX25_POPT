@@ -2,6 +2,7 @@
 # 2.106.x
 Fixes:
 - Bandauslastung Graph wird in Windows nicht richtig dargestellt aufgrund Seitenverhältnis zum "Side-Frame"
+- "Bell-Alarm" wird nicht resettet wenn Station disconnected
 
 Optimierung:
 - CLi/Remote Kommando "PORT": Dual-Port wird jetzt gekennzeichnet

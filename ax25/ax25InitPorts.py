@@ -393,6 +393,8 @@ class AX25PortHandler(object):
                 SOUND.disco_sound()
             self.gui.ch_status_update()
             self.gui.conn_btn_update()
+            if conn.noty_bell:
+                self.reset_noty_bell_PH()
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
@@ -769,6 +771,13 @@ class AX25PortHandler(object):
     def set_noty_bell_PH(self, ch_id, msg=''):
         if self.gui:
             self.gui.set_noty_bell(ch_id, msg)
+
+    def reset_noty_bell_PH(self):
+        if self.gui:
+            for conn in self.get_all_connections():
+                if conn.noty_bell:
+                    return
+            self.gui.reset_noty_bell_alarm()
 
 
 PORT_HANDLER = AX25PortHandler()
