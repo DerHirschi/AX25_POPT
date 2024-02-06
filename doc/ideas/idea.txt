@@ -81,6 +81,12 @@ Ideas/TODO's :
     - Zeitgesteuerte connects und Kommando senden (MH Liste abfragen o.Ä.)
     ✓ Beacon System überarbeiten/umstellen auf PoPT-Scheduler
 
+- EAX25
+- NetROM
+  - decoding
+  - grafische & tabellarische Auswertung der Routen/Routingtabellen (Siehe FWD Route)
+  - encoding/handling und gedöns
+
 ✓ Bin
 ✓ AutoBin
 ✓ Yapp

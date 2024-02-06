@@ -50,8 +50,8 @@ class APRS_ais(object):
         self.be_tracer_alarm_range = ais_cfg.get('be_tracer_alarm_range', 50)
         self.be_auto_tracer_duration = ais_cfg.get('be_auto_tracer_duration', 60)
         # Packet Pool
-        self.be_tracer_traced_packets = ais_cfg['be_tracer_traced_packets']
-        self.be_tracer_alarm_hist = ais_cfg['be_tracer_alarm_hist']
+        self.be_tracer_traced_packets = ais_cfg.get('be_tracer_traced_packets', {})
+        self.be_tracer_alarm_hist = ais_cfg.get('be_tracer_alarm_hist', {})
         # Control vars
         # self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''
@@ -339,16 +339,16 @@ class APRS_ais(object):
 
     @staticmethod
     def _correct_wrong_wx_data(aprs_pack):
-        _raw = aprs_pack.get('raw', '')
-        if _raw:
-            if 'h100b' in _raw or 'b9' in _raw:
-                _raw = _raw.replace('h100b', 'h00b').replace('b9', 'b09')
-                _new_pack = parse_aprs_fm_aprsframe(_raw)
-                _new_pack['locator'] = str(aprs_pack.get('locator', ''))
-                _new_pack['distance'] = float(aprs_pack.get('distance', -1))
-                _new_pack['port_id'] = str(aprs_pack.get('port_id', ''))
-                _new_pack['rx_time'] = aprs_pack['rx_time']
-                return _new_pack
+        raw = aprs_pack.get('raw', '')
+        if raw:
+            if 'h100b' in raw or 'b9' in raw:
+                raw = raw.replace('h100b', 'h00b').replace('b9', 'b09')
+                new_pack = parse_aprs_fm_aprsframe(raw)
+                new_pack['locator'] = str(aprs_pack.get('locator', ''))
+                new_pack['distance'] = float(aprs_pack.get('distance', -1))
+                new_pack['port_id'] = str(aprs_pack.get('port_id', ''))
+                new_pack['rx_time'] = aprs_pack['rx_time']
+                return new_pack
         return aprs_pack
 
     def get_wx_data(self, last_rx_days=1):
@@ -651,37 +651,36 @@ class APRS_ais(object):
 
     def _tracer_build_msg(self):
         # !5251.12N\01109.78E-27.235MHz P.ython o.ther P.acket T.erminal (PoPT)
-        _coordinate = decimal_degrees_to_aprs(self.ais_lat, self.ais_lon)
-        _rtt_timer = time.time()
-        self._be_tracer_tx_rtt = _rtt_timer
-        _aprs_msg = f'!{_coordinate[0]}/{_coordinate[1]}%{APRS_TRACER_COMMENT} #{self.ais_loc}#{_rtt_timer}#'
+        coordinate = decimal_degrees_to_aprs(self.ais_lat, self.ais_lon)
+        rtt_timer = time.time()
+        self._be_tracer_tx_rtt = rtt_timer
+        return f'!{coordinate[0]}/{coordinate[1]}%{APRS_TRACER_COMMENT} #{self.ais_loc}#{rtt_timer}#'
         # _aprs_msg = _aprs_msg.replace('`', '')
-        return _aprs_msg
 
     def _tracer_build_pack(self):
         # TODO Make a static for building Header
-        _port_id = int(self.be_tracer_port)
-        _station_call = str(self.be_tracer_station)
-        _wide = f'WIDE{self.be_tracer_wide}-{self.be_tracer_wide}'
-        _dest = APRS_SW_ID
+        port_id = int(self.be_tracer_port)
+        station_call = str(self.be_tracer_station)
+        wide = f'WIDE{self.be_tracer_wide}-{self.be_tracer_wide}'
+        # dest = APRS_SW_ID
 
-        if _station_call in self.port_handler.get_stat_calls_fm_port(_port_id):
-            _add_str = f'{_station_call}>{APRS_SW_ID},{_wide}:'
-            _msg = self._tracer_build_msg()
-            _aprs_raw = _add_str + _msg
-            _aprs_pack = parse_aprs_fm_aprsframe(_aprs_raw)
-            if _aprs_pack:
-                _aprs_pack['port_id'] = str(_port_id)
-                _aprs_pack['raw_message_text'] = _msg
-                return _aprs_pack
+        if station_call in self.port_handler.get_stat_calls_fm_port(port_id):
+            add_str = f'{station_call}>{APRS_SW_ID},{wide}:'
+            msg = self._tracer_build_msg()
+            aprs_raw = add_str + msg
+            aprs_pack = parse_aprs_fm_aprsframe(aprs_raw)
+            if aprs_pack:
+                aprs_pack['port_id'] = str(port_id)
+                aprs_pack['raw_message_text'] = msg
+                return aprs_pack
         return {}
 
     def tracer_sendit(self):
         if self.be_tracer_station != 'NOCALL':
-            _pack = self._tracer_build_pack()
-            if _pack.get('raw_message_text', '') and _pack.get('comment', ''):
-                self._be_tracer_tx_trace_packet = _pack.get('comment', '')
-                self._send_as_UI(_pack)
+            pack = self._tracer_build_pack()
+            if pack.get('raw_message_text', '') and pack.get('comment', ''):
+                self._be_tracer_tx_trace_packet = pack.get('comment', '')
+                self._send_as_UI(pack)
                 self._tracer_reset_timer()
                 # print(self._tracer_build_msg())
 
@@ -709,44 +708,44 @@ class APRS_ais(object):
     def _tracer_get_rtt_fm_pack(self, pack):
         if not pack.get('comment', False):
             return 0
-        _rtt_str = str(pack['comment'])
-        _rtt_str = _rtt_str.replace(f'{APRS_TRACER_COMMENT} #{self.ais_loc}#', '')
-        _rtt_str = _rtt_str[:-1]
+        rtt_str = str(pack['comment'])
+        rtt_str = rtt_str.replace(f'{APRS_TRACER_COMMENT} #{self.ais_loc}#', '')
+        rtt_str = rtt_str[:-1]
         try:
-            return float(_rtt_str)
+            return float(rtt_str)
         except ValueError:
             return 0
 
     def _tracer_add_traced_packet(self, pack):
-        _k = pack.get('path', [])
-        if not _k:
+        k = pack.get('path', [])
+        if not k:
             return False
-        _k = str(_k)
-        _pack_rtt = self._tracer_get_rtt_fm_pack(pack)
-        if not _pack_rtt:
+        k = str(k)
+        pack_rtt = self._tracer_get_rtt_fm_pack(pack)
+        if not pack_rtt:
             return False
-        pack['rtt'] = time.time() - _pack_rtt
+        pack['rtt'] = time.time() - pack_rtt
         # pack['rx_time'] = datetime.now()
-        _path = pack.get('path', [])
-        _call = pack.get('via', '')
-        if not _call and _path:
-            _call = get_last_digi_fm_path(pack)
-        if _call:
-            pack['call'] = str(_call)
+        path = pack.get('path', [])
+        call = pack.get('via', '')
+        if not call and path:
+            call = get_last_digi_fm_path(pack)
+        if call:
+            pack['call'] = str(call)
 
-            _loc = ''
-            _dist = 0
-            _user_db_ent = USER_DB.get_entry(call_str=_call, add_new=True)
-            if _user_db_ent:
-                _loc = _user_db_ent.LOC
-                _dist = _user_db_ent.Distance
-            pack['distance'] = _dist
-            pack['locator'] = _loc
+            loc = ''
+            dist = 0
+            user_db_ent = USER_DB.get_entry(call_str=call, add_new=True)
+            if user_db_ent:
+                loc = user_db_ent.LOC
+                dist = user_db_ent.Distance
+            pack['distance'] = dist
+            pack['locator'] = loc
             pack['tr_alarm'] = self._tracer_check_alarm(pack)
-            if _k in self.be_tracer_traced_packets.keys():
-                self.be_tracer_traced_packets[_k].append(pack)
+            if k in self.be_tracer_traced_packets.keys():
+                self.be_tracer_traced_packets[k].append(pack)
             else:
-                self.be_tracer_traced_packets[_k] = deque([pack], maxlen=100)
+                self.be_tracer_traced_packets[k] = deque([pack], maxlen=100)
             # print(f'Tracer RX dict: {self.be_tracer_traced_packets}')
             # self._tracer_check_alarm(pack)
             self._tracer_update_gui()
@@ -756,8 +755,8 @@ class APRS_ais(object):
     def _tracer_check_alarm(self, pack):
         if not self.be_tracer_alarm_active:
             return False
-        _dist = pack.get('distance', 0)
-        if _dist >= self.be_tracer_alarm_range:
+        dist = pack.get('distance', 0)
+        if dist >= self.be_tracer_alarm_range:
             # self._be_tracer_is_alarm = True
             if self.port_handler:
                 self.port_handler.set_tracerAlarm(True)
@@ -766,28 +765,28 @@ class APRS_ais(object):
         return False
 
     def _tracer_add_alarm_hist(self, aprs_pack):
-        _via = ''
+        via = ''
         if aprs_pack.get('via', ''):
             if aprs_pack.get('path', []):
-                _via = get_last_digi_fm_path(aprs_pack)
+                via = get_last_digi_fm_path(aprs_pack)
         else:
-            _via_list = []
+            via_list = []
             for _digi in aprs_pack.get('path', []):
                 if '*' == _digi[-1]:
-                    _via_list.append(str(_digi))
-            if len(_via_list) > 1:
-                _via = _via_list[-2]
+                    via_list.append(str(_digi))
+            if len(via_list) > 1:
+                via = via_list[-2]
 
-        _hist_struc = get_dx_tx_alarm_his_pack(
+        hist_struc = get_dx_tx_alarm_his_pack(
             port_id=aprs_pack.get('port_id', -1),
             call_str=aprs_pack.get('call', ''),
-            via=_via,
+            via=via,
             path=aprs_pack.get('path', []),
             locator=aprs_pack.get('locator', ''),
             distance=aprs_pack.get('distance', -1),
             typ='TRACE',
         )
-        self.be_tracer_alarm_hist[str(_hist_struc['key'])] = dict(_hist_struc)
+        self.be_tracer_alarm_hist[str(hist_struc['key'])] = dict(hist_struc)
 
     def _tracer_update_gui(self):
         root_gui = self.port_handler.get_gui()
@@ -807,6 +806,9 @@ class APRS_ais(object):
 
     def tracer_traces_get(self):
         return self.be_tracer_traced_packets
+
+    def tracer_traces_delete(self):
+        self.be_tracer_traced_packets = {}
 
     def tracer_auto_tracer_set(self, state=None):
         if self.be_tracer_active:

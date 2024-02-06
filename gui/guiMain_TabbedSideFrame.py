@@ -578,7 +578,7 @@ class SideTabbedFrame:  # TODO
         btn_frame.grid(row=1, column=0)
         tk.Button(btn_frame,
                   text=STR_TABLE['disconnect_all'][self._lang],
-                  command=self._disoc_all
+                  command=self._disco_all
                   ).pack(side=tk.LEFT, padx=50)
         """
 
@@ -863,24 +863,26 @@ class SideTabbedFrame:  # TODO
             for k in traces.keys():
                 pack = traces[k][-1]
                 rx_time = pack.get('rx_time', '')
-                if rx_time:
-                    rx_time = rx_time.strftime('%H:%M:%S')
-                path = pack.get('path', [])
-                call = pack.get('call', '')
-                if call:
-                    path = ', '.join(path)
-                    port_id = pack.get('port_id', -1)
-                    # rtt = pack.get('rtt', 0)
-                    # loc = pack.get('locator', '')
-                    dist = pack.get('distance', 0)
+                delta = datetime.now() - rx_time
+                if not delta.days:
+                    if rx_time:
+                        rx_time = rx_time.strftime('%H:%M:%S')
+                    path = pack.get('path', [])
+                    call = pack.get('call', '')
+                    if call:
+                        path = ', '.join(path)
+                        port_id = pack.get('port_id', -1)
+                        # rtt = pack.get('rtt', 0)
+                        # loc = pack.get('locator', '')
+                        dist = pack.get('distance', 0)
 
-                    self._trace_tree_data.append((
-                        rx_time,
-                        call,
-                        port_id,
-                        dist,
-                        path,
-                    ))
+                        self._trace_tree_data.append((
+                            rx_time,
+                            call,
+                            port_id,
+                            dist,
+                            path,
+                        ))
             self._update_trace_tree()
 
     def _update_trace_tree(self):
@@ -890,8 +892,8 @@ class SideTabbedFrame:  # TODO
             self._trace_tree.insert('', tk.END, values=ret_ent)
 
     def on_ch_stat_change(self):
-        _conn = self._main_win.get_conn()
-        if _conn is not None:
+        conn = self._main_win.get_conn()
+        if conn is not None:
             if self._ch_is_disc:
                 self._ch_is_disc = False
                 self.max_frame.configure(state='normal')
@@ -900,20 +902,20 @@ class SideTabbedFrame:  # TODO
                 self.link_holder.configure(state='normal')
                 self.t2_auto.configure(state='normal')
 
-            self.max_frame_var.set(str(_conn.parm_MaxFrame))
-            self.pac_len_var.set(_conn.parm_PacLen)
-            self._rnr_var.set(_conn.is_RNR)
-            self.link_holder_var.set(_conn.link_holder_on)
-            self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(_conn.tx_buf_rawData)))
-            if _conn.own_port.port_cfg.parm_T2_auto:  # FIXME var parm_T2_auto to connection
+            self.max_frame_var.set(str(conn.parm_MaxFrame))
+            self.pac_len_var.set(conn.parm_PacLen)
+            self._rnr_var.set(conn.is_RNR)
+            self.link_holder_var.set(conn.link_holder_on)
+            self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
+            if conn.own_port.port_cfg.parm_T2_auto:  # FIXME var parm_T2_auto to connection
                 if not self.t2_auto_var.get():
-                    self.t2_var.set(str(_conn.parm_T2 * 1000))
+                    self.t2_var.set(str(conn.parm_T2 * 1000))
                     self.t2.configure(state='disabled')
             else:
                 if self.t2_auto_var.get():
                     self.t2.configure(state='normal')
-                    self.t2_var.set(str(_conn.parm_T2 * 1000))
-            self.t2_auto_var.set(_conn.own_port.port_cfg.parm_T2_auto)
+                    self.t2_var.set(str(conn.parm_T2 * 1000))
+            self.t2_auto_var.set(conn.own_port.port_cfg.parm_T2_auto)
 
         else:
             if not self._ch_is_disc:
@@ -965,7 +967,7 @@ class SideTabbedFrame:  # TODO
     def _open_PortStat(self):
         self._main_win.open_window('PortStat')
 
-    def _disoc_all(self):
+    def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],
                                   message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang]):
             PORT_HANDLER.disco_all_Conn()
