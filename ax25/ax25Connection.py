@@ -241,6 +241,7 @@ class AX25Conn(object):
         """ Init CLI """
         self.noty_bell = False
         self.cli = cli.cliMain.NoneCLI(self)
+        self.cli_remote = True
         self.cli_type = ''
         if self.stat_cfg.stat_parm_pipe is None:
             self.init_cli()
@@ -906,6 +907,8 @@ class AX25Conn(object):
         # if self.is_link:
         #     return False
         if self.pipe is not None:
+            return False
+        if not self.cli_remote:
             return False
         self.cli.cli_exec(inp)
         return True

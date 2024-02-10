@@ -150,6 +150,17 @@ class SideTabbedFrame:  # TODO
         self.autoscroll.place(x=10, y=parm_y)
         self.autoscroll_var.set(self._main_win.get_ch_var().autoscroll)
 
+        # Remote /CLI Remote
+        parm_y = 250
+        self._cliRemote_var = tk.BooleanVar(tab1_kanal, value=True)
+
+        self._cliRemote = tk.Checkbutton(tab1_kanal,
+                                         text='CLI/Remote',
+                                         variable=self._cliRemote_var,
+                                         command=self._chk_cliRemote
+                                         )
+        self._cliRemote.place(x=10, y=parm_y)
+
         # Link Holder
         parm_y = 175
         self.link_holder_var = tk.BooleanVar(tab1_kanal)
@@ -473,7 +484,6 @@ class SideTabbedFrame:  # TODO
                            ).place(x=x, y=y)
             self._mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
 
-
         ######################################################################################
         # TRACER
         # TREE
@@ -637,6 +647,18 @@ class SideTabbedFrame:  # TODO
             else:
                 conn.link_holder_on = False
             self._main_win.on_channel_status_change()
+
+    def _chk_cliRemote(self):
+        conn = self._main_win.get_conn()
+        if not conn:
+            self._cliRemote_var.set(True)
+            self._cliRemote.configure(state='disabled')
+            return
+
+        if self._cliRemote_var.get():
+            conn.cli_remote = True
+            return
+        conn.cli_remote = False
 
     def _chk_t2auto(self):
         _conn = self._main_win.get_conn()
@@ -899,6 +921,8 @@ class SideTabbedFrame:  # TODO
                 self.max_frame.configure(state='normal')
                 self.pac_len.configure(state='normal')
                 self._rnr.configure(state='normal')
+                self._cliRemote.configure(state='normal')
+                # self._cliRemote_var.set(True)   # TODO CLI permissions
                 self.link_holder.configure(state='normal')
                 self.t2_auto.configure(state='normal')
 
@@ -906,6 +930,7 @@ class SideTabbedFrame:  # TODO
             self.pac_len_var.set(conn.parm_PacLen)
             self._rnr_var.set(conn.is_RNR)
             self.link_holder_var.set(conn.link_holder_on)
+            self._cliRemote_var.set(conn.cli_remote)
             self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
             if conn.own_port.port_cfg.parm_T2_auto:  # FIXME var parm_T2_auto to connection
                 if not self.t2_auto_var.get():
@@ -931,6 +956,7 @@ class SideTabbedFrame:  # TODO
                 self.t2.configure(state='disabled')
                 self.link_holder_var.set(False)
                 self.link_holder.configure(state='disabled')
+                self._cliRemote.configure(state='disabled')
                 self._tx_buff_var.set('TX-Buffer: --- kb')
                 self._tx_count_var.set('TX: --- kb')
                 self._rx_count_var.set('RX: --- kb')
@@ -971,4 +997,3 @@ class SideTabbedFrame:  # TODO
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],
                                   message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang]):
             PORT_HANDLER.disco_all_Conn()
-

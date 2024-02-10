@@ -13,6 +13,7 @@ Neue Implementierungen / Funktionen:
 - PR-Mail Adresse wird jetzt in der User-DB vervollständigt anhand ausgewerteten Pfade empfangener PR-Mails
 - Alarm Icon für neue APRS-Mail(PN)
 - Tracer Fenster Menüleiste > Alle Daten löschen
+- CLI/Remote Kommandos für bestehende Verbindung können jetzt deaktiviert werden
 
 ###########################################################################################################
 ###########################################################################################################

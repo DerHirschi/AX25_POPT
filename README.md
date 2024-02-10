@@ -71,9 +71,9 @@ $ python3 PoPT.py
 #### QTH Locator Functions:
 - Author: 4X5DM
 - Source: https://github.com/4x1md/qth_locator_functions
-- License location: doc/qth_locator_functions-master/LICENSE
+- License location: doc-other/qth_locator_functions-master/LICENSE
 
-Choosing Language (Quick Fix): main.py line 6
+Choosing Language (Quick Fix): cfg/constant.py line 13
 
 
 0 = German
