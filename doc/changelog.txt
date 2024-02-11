@@ -4,6 +4,8 @@ Fixes:
 - Bandauslastung Graph wird in Windows nicht richtig dargestellt aufgrund Seitenverhältnis zum "Side-Frame"
 - "Bell-Alarm" wird nicht resettet wenn Station disconnected
 - Scripterror beim Aufrufen der RX-Echo Einstellungen und aktivierten Dual-Port
+- '*** connected to ' und '*** reconnected to ', erkennt calls unvollständig wenn '*** ...' Nachricht in mehreren
+  Frames gesendet wird (Es wurden nicht nach vollständigen Zeilen ausgewertet).
 
 Optimierung:
 - CLi/Remote Kommando "PORT": Dual-Port wird jetzt gekennzeichnet

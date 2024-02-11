@@ -725,35 +725,31 @@ class AX25Conn(object):
 
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
-        if b'*** ' not in raw_data:
+        data = self.rx_buf_last_data + raw_data
+        if b'\r' not in data:
             return
-        for det_str in [
-            b'*** connected to',
-            b'*** reconnected to'
-        ]:
-            if det_str in raw_data.lower():
+        data = data.split(b'\r')[:-1]
+        for line in data:
+            if line.lower().startswith(b'*** connected to ') or\
+                    line.lower().startswith(b'*** reconnected to '):
+                tmp_data = line.split(b' to ')[-1]
+                tmp_data = tmp_data.decode('ASCII', 'ignore')
                 # TODO Conn/reconn fnc
-                index = raw_data.lower().index(det_str) + len(det_str)
-                raw_data = raw_data.decode('ASCII', 'ignore')
-                tmp_call = raw_data[index:]
-                tmp_call = tmp_call.split('\r')
-                _cut_str = tmp_call[1:]
-                if ':' in tmp_call[0]:
-                    tmp_call = tmp_call[0].split(':')
+                if ':' in tmp_data:
+                    tmp_call = tmp_data.split(':')
                     self.to_call_str = tmp_call[1].replace(' ', '')
                     self.to_call_alias = tmp_call[0].replace(' ', '')
                 else:
-                    self.to_call_str = tmp_call[0].replace(' ', '')
+                    self.to_call_str = tmp_data.replace(' ', '')
                     self.to_call_alias = ''
-                if self.gui is not None:
-                    speech = ' '.join(self.to_call_str.replace('-', ' '))
-                    SOUND.sprech(speech)
                 self.tx_byte_count = 0
                 self.rx_byte_count = 0
                 self._set_user_db_ent()
                 self._set_packet_param()
                 self.reinit_cli()
-                if self.gui is not None:
+                if self.gui:
+                    speech = ' '.join(self.to_call_str.replace('-', ' '))
+                    SOUND.sprech(speech)
                     self.gui.on_channel_status_change()
                 # Maybe it's better to look at the whole string (include last frame)?
                 return
