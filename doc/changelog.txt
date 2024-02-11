@@ -16,6 +16,7 @@ Neue Implementierungen / Funktionen:
 - Alarm Icon für neue APRS-Mail(PN)
 - Tracer Fenster Menüleiste > Alle Daten löschen
 - CLI/Remote Kommandos für bestehende Verbindung können jetzt deaktiviert werden
+- Grafische MH-Listen/Routen Auswertung (Netzwerk-Graf)
 
 ###########################################################################################################
 ###########################################################################################################

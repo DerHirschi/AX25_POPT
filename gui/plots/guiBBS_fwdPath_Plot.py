@@ -6,13 +6,13 @@ import networkx as nx
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.lines import Line2D
-# FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
-# FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-import matplotlib
-
 from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.gui_fnc import generate_random_hex_color
 from fnc.str_fnc import convert_str_to_datetime
+
+# FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
+# FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
+import matplotlib
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt

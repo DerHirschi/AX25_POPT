@@ -533,6 +533,9 @@ class MH:
             if len(self._short_MH) == 40:
                 break
 
+    def get_mh_db_by_port(self, port: int):
+        return self._MH_db.get(port, {})
+
     def get_sort_mh_entry(self, flag_str: str, reverse: bool):
         temp = {}
         for port in self._MH_db.keys():

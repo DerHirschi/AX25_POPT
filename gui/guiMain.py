@@ -9,7 +9,7 @@ import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import cleanup_obj_to_dict, set_obj_att_fm_dict
+from fnc.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
 from gui.aprs.guiAISmon import AISmonitor
@@ -20,6 +20,7 @@ from gui.aprs.guiAPRS_wx_tree import WXWin
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.pms.guiBBS_PMS_Settings import PMS_Settings
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
@@ -188,6 +189,7 @@ class PoPT_GUI_Main:
         self.fwd_Path_plot_win = None
         self.dualPort_settings_win = None
         self.dualPortMon_win = None
+        self.conn_Path_plot_win = None
         ####################################
         self._init_GUI_vars_fm_CFG()
         ####################################
@@ -311,6 +313,7 @@ class PoPT_GUI_Main:
             self.fwd_Path_plot_win,
             self.dualPort_settings_win,
             self.dualPortMon_win,
+            self.conn_Path_plot_win,
         ]:
             if wn is not None:
                 wn.destroy()
@@ -354,7 +357,7 @@ class PoPT_GUI_Main:
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
         for ch_id in list(self._channel_vars.keys()):
-            ch_vars[ch_id] = cleanup_obj_to_dict(self._channel_vars[ch_id])
+            ch_vars[ch_id] = convert_obj_to_dict(self._channel_vars[ch_id])
             del ch_vars[ch_id]['t2speech_buf']
             del ch_vars[ch_id]['rx_beep_cooldown']
             del ch_vars[ch_id]['rx_beep_tr']
@@ -479,6 +482,9 @@ class PoPT_GUI_Main:
         # Menü 3 "Tools"
         MenuTools = Menu(menubar, tearoff=False)
         MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
+        MenuTools.add_command(label="MH-Graph",
+                              command=lambda: self.open_window('ConnPathPlot'),
+                              underline=0)
         MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
                               command=lambda: self.open_window('PortStat'),
                               underline=1)
@@ -1769,6 +1775,7 @@ class PoPT_GUI_Main:
             'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
+            'ConnPathPlot': (self.conn_Path_plot_win, ConnPathsPlot),
             # TODO .......
 
         }.get(win_key, None)
