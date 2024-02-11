@@ -877,6 +877,24 @@ class AX25Conn(object):
         else:
             self.t3 = float(self.parm_T3 + time.time())
 
+    def prozess_I_frame(self):
+        self.set_T2()
+        self.set_T1(stop=True)
+        self.n2 = 0
+        self.delUNACK()
+        if self.zustand_exec.ns == self.vr:  # !!!! Korrekt
+            # Process correct I-Frame
+            self.recv_data(bytes(self.zustand_exec.frame.data))
+            return True
+        else:
+            return False
+
+    def delUNACK(self):
+        if ((self.zustand_exec.nr - 1) % 8) in self.tx_buf_unACK.keys():
+            self.del_unACK_buf()
+            return True
+        return False
+
     def del_unACK_buf(self):
         nr = int(self._rx_buf_last_frame.ctl_byte.nr)
         if nr != -1:  # Check if right Packet
@@ -1192,24 +1210,10 @@ class DefaultStat(object):
         self.S1_end_connection()
 
     def _prozess_I_frame(self):
-        # TODO Move up
-        self._ax25conn.set_T2()
-        self._ax25conn.set_T1(stop=True)
-        self._ax25conn.n2 = 0
-        self._delUNACK()
-        if self.ns == self._ax25conn.vr:  # !!!! Korrekt
-            # Process correct I-Frame
-            self._ax25conn.recv_data(bytes(self.frame.data))
-            return True
-        else:
-            return False
+        return self._ax25conn.prozess_I_frame()
 
     def _delUNACK(self):
-        # TODO Move up
-        if ((self.nr - 1) % 8) in self._ax25conn.tx_buf_unACK.keys():
-            self._ax25conn.del_unACK_buf()
-            return True
-        return False
+        return self._ax25conn.delUNACK()
 
 
 class S1Frei(DefaultStat):  # INIT RX
