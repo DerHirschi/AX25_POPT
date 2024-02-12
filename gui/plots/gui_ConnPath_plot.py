@@ -160,6 +160,8 @@ class ConnPathsPlot(tk.Toplevel):
             return
         self._path_data = {}
         data = self._mh.get_mh_db_by_port(self._port.get())
+        if not data:
+            return
         last_route = self._show_last_route_var.get()
         for k in data.keys():
             el = data[k]
@@ -174,7 +176,7 @@ class ConnPathsPlot(tk.Toplevel):
                     lastUpdate=el.last_seen,
                 )
         self._node_key = list(data.keys())
-        print(self._path_data)
+        #print(self._path_data)
 
     def _update_Node_pos(self):
         if not self._path_data:
@@ -202,22 +204,25 @@ class ConnPathsPlot(tk.Toplevel):
                     if path:
                         for route in path:
                             weight = len(route) + 1
-                            route.reverse()
-                            call1 = 'HOME'
+                            r = list(route)
+                            # r.reverse()
+                            call1 = k
                             if k in mark_edge_call:
                                 if is_markt:
                                     edge_color = generate_random_hex_color(a=60)
                                 else:
                                     edge_color = 'red'
                                     is_markt = True
-
-                            for station in route:
+                            print(f"k: {k} - p: {r}")
+                            for station in r:
+                                print(f"c1: {call1} - c2: {station}")
                                 self._g.add_edge(call1, station, color=edge_color, weight=weight)
                                 call1 = station
-                            self._g.add_edge(call1, k, color=edge_color, weight=weight)
+                            print(f"c1: {call1} - c2: HOME")
+                            self._g.add_edge(call1, 'HOME', color=edge_color, weight=weight)
 
                     else:
-                        self._g.add_edge('HOME', k, color=edge_color, weight=weight)
+                        self._g.add_edge(k, 'HOME', color=edge_color, weight=weight)
         # seed_val = random.randint(0, 10000)
         if not self._pos:
             layout = self._style_opt.get(self._style_var.get(), None)
