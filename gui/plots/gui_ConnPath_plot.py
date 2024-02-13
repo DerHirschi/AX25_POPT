@@ -12,6 +12,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 import matplotlib
 
+from fnc.cfg_fnc import convert_obj_to_dict
 from fnc.gui_fnc import generate_random_hex_color
 
 matplotlib.use('Agg')
@@ -165,18 +166,20 @@ class ConnPathsPlot(tk.Toplevel):
         last_route = self._show_last_route_var.get()
         for k in data.keys():
             el = data[k]
+            # print(f"{k} - {convert_obj_to_dict(el)}")
+
             if last_route:
                 self._path_data[el.own_call] = dict(
-                    route=[el.route],
+                    route=[list(el.route)],
                     lastUpdate=el.last_seen,
                 )
             else:
                 self._path_data[el.own_call] = dict(
-                    route=el.all_routes,
+                    route=list(el.all_routes),
                     lastUpdate=el.last_seen,
                 )
         self._node_key = list(data.keys())
-        #print(self._path_data)
+        # print(self._path_data)
 
     def _update_Node_pos(self):
         if not self._path_data:
@@ -202,7 +205,9 @@ class ConnPathsPlot(tk.Toplevel):
                     edge_color = 'white'
                     weight = 1
                     if path:
+                        # print(f"Path: {path}")
                         for route in path:
+                            # print(f"Route: {route}")
                             weight = len(route) + 1
                             r = list(route)
                             # r.reverse()
@@ -213,15 +218,16 @@ class ConnPathsPlot(tk.Toplevel):
                                 else:
                                     edge_color = 'red'
                                     is_markt = True
-                            print(f"k: {k} - p: {r}")
+                            # print(f"k: {k} - p: {r}")
                             for station in r:
-                                print(f"c1: {call1} - c2: {station}")
+                                # print(f"c1: {call1} - c2: {station}")
                                 self._g.add_edge(call1, station, color=edge_color, weight=weight)
                                 call1 = station
-                            print(f"c1: {call1} - c2: HOME")
+                            # print(f"c1: {call1} - c2: HOME")
                             self._g.add_edge(call1, 'HOME', color=edge_color, weight=weight)
 
                     else:
+                        # print(f"noPath: c1: {k} - c2: HOME")
                         self._g.add_edge(k, 'HOME', color=edge_color, weight=weight)
         # seed_val = random.randint(0, 10000)
         if not self._pos:

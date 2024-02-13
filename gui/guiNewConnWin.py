@@ -182,7 +182,8 @@ class NewConnWin(tk.Toplevel):
                     call_str = call_str.split(' ')[0]
 
                 # axip_fm_db = USER_DB.get_AXIP(str(call_obj.call_str))
-                mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(call_str, port.port_cfg.parm_axip_fail)
+                # mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(call_str, port.port_cfg.parm_axip_fail)
+                mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(call_str, 0)
                 # Just if u switch after enter in call
                 if mh_ent[1]:
                     ip = mh_ent[0]

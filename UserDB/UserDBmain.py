@@ -297,7 +297,7 @@ class UserDB:
         return ()
 
     def get_AXIP(self, call_str):
-        ret = self.db.get(call_str, False)
+        ret = self.db.get(call_str, None)
         if ret:
             return ret.AXIP
         return '', 0
