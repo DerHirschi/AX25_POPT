@@ -146,6 +146,30 @@ class PoPT_GUI_Main:
         self.stat_info_timer_var = tk.StringVar(self.main_win)
         self.stat_info_encoding_var = tk.StringVar(self.main_win)
         self.stat_info_status_var = tk.StringVar(self.main_win)
+        # Tabbed SideFrame FT
+        self.ft_progress_var = tk.StringVar(self.main_win)
+        self.ft_size_var = tk.StringVar(self.main_win)
+        self.ft_duration_var = tk.StringVar(self.main_win)
+        self.ft_bps_var = tk.StringVar(self.main_win)
+        self.ft_next_tx_var = tk.StringVar(self.main_win)
+        # Tabbed SideFrame Channel
+        self.link_holder_var = tk.BooleanVar(self.main_win)
+        # Tabbed SideFrame Monitor
+        self.mon_to_add_var = tk.StringVar(self.main_win)       #
+        self.mon_cmd_var = tk.BooleanVar(self.main_win)          #
+        self.mon_poll_var = tk.BooleanVar(self.main_win)         #
+        self.mon_port_var = tk.StringVar(self.main_win)
+        self.mon_call_var = tk.StringVar(self.main_win)
+        self.mon_scroll_var = tk.BooleanVar(self.main_win)
+        self.mon_aprs_var = tk.BooleanVar(self.main_win)
+        self.mon_pid_var = tk.StringVar(self.main_win)
+        self.mon_port_on_vars = {}
+        all_ports = PORT_HANDLER.ax25_ports
+        for port_id in all_ports:
+            self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
+            self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
+        self.mon_port_var.set('0')
+        self.mon_aprs_var.set(True)
         ##############
         # Controlling
         self._ch_alarm = False
@@ -251,7 +275,7 @@ class PoPT_GUI_Main:
         self._init_btn()
         ##############
         # tabbed Frame
-        self.tabbed_sideFrame = SideTabbedFrame(self)
+        self.tabbed_sideFrame = SideTabbedFrame(self, self._side_btn_frame_top)
         ############################
         # Canvas Plot
         self._bw_plot_x_scale = []
@@ -1677,7 +1701,7 @@ class PoPT_GUI_Main:
                 port_id = conf.parm_PortNr
                 tx = el[2]
                 mon_out = monitor_frame_inp(el[0], conf, self.setting_mon_encoding.get())
-                if self.tabbed_sideFrame.mon_aprs_var.get():
+                if self.mon_aprs_var.get():
                     mon_str = mon_out[0] + mon_out[1]
                 else:
                     mon_str = mon_out[0]
@@ -1701,7 +1725,7 @@ class PoPT_GUI_Main:
             if cut_len > 0:
                 self._mon_txt.delete('1.0', f"{cut_len}.0")
             self._mon_txt.configure(state="disabled", exportselection=True)
-            if tr or self.tabbed_sideFrame.mon_scroll_var.get():
+            if tr or self.mon_scroll_var.get():
                 self._see_end_mon_win()
 
     def see_end_qso_win(self):
@@ -1889,14 +1913,14 @@ class PoPT_GUI_Main:
             ind = '1.0'
         tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
         tmp_txt = tmp_txt.replace('\n', '\r')
-        port_id = int(self.tabbed_sideFrame.mon_port_var.get())
+        port_id = int(self.mon_port_var.get())
         if port_id in PORT_HANDLER.get_all_ports().keys():
             port = PORT_HANDLER.get_all_ports()[port_id]
-            add = self.tabbed_sideFrame.to_add_var.get()
-            own_call = str(self.tabbed_sideFrame.mon_call_var.get())
-            poll = bool(self.tabbed_sideFrame.poll_var.get())
-            cmd = bool(self.tabbed_sideFrame.cmd_var.get())
-            pid = self.tabbed_sideFrame.mon_pid_var.get()
+            add = self.mon_to_add_var.get()
+            own_call = str(self.mon_call_var.get())
+            poll = bool(self.mon_poll_var.get())
+            cmd = bool(self.mon_cmd_var.get())
+            pid = self.mon_pid_var.get()
             pid = pid.split('>')[0]
             pid = int(pid, 16)
             text = tmp_txt.encode()
@@ -2010,6 +2034,7 @@ class PoPT_GUI_Main:
                 self._switch_monitor_mode()
             else:
                 self._ch_btn_clk(ch_ind)
+        self.on_channel_status_change()
 
     #####################################################################
     #
@@ -2279,8 +2304,8 @@ class PoPT_GUI_Main:
         bps_var = 'BPS: ---.---'
         next_tx = 'TX in: --- s'
         conn = self.get_conn()
-        if conn is not None:
-            if conn.ft_obj is not None:
+        if conn:
+            if conn.ft_obj:
                 ft_obj = conn.ft_obj
                 percentage_completion, data_len, data_sendet, time_spend, time_remaining, baud_rate = ft_obj.get_ft_infos()
                 prog_val = percentage_completion
@@ -2293,16 +2318,16 @@ class PoPT_GUI_Main:
                 dur_var = f'Time: {t_spend} / {t_remaining}'
                 bps_var = f"BPS: {format_number(baud_rate)}"
                 if ft_obj.param_wait:
-                    _n_tx = ft_obj.last_tx - time.time()
-                    next_tx = f'TX in: {max(round(_n_tx), 0)} s'
+                    n_tx = ft_obj.last_tx - time.time()
+                    next_tx = f'TX in: {max(round(n_tx), 0)} s'
 
-        if self.tabbed_sideFrame.ft_duration_var.get() != dur_var:
+        if self.ft_duration_var.get() != dur_var:
             self.tabbed_sideFrame.ft_progress['value'] = prog_val
-            self.tabbed_sideFrame.ft_progress_var.set(prog_var)
-            self.tabbed_sideFrame.ft_size_var.set(size_var)
-            self.tabbed_sideFrame.ft_duration_var.set(dur_var)
-            self.tabbed_sideFrame.ft_bps_var.set(bps_var)
-            self.tabbed_sideFrame.ft_next_tx_var.set(next_tx)
+            self.ft_progress_var.set(prog_var)
+            self.ft_size_var.set(size_var)
+            self.ft_duration_var.set(dur_var)
+            self.ft_bps_var.set(bps_var)
+            self.ft_next_tx_var.set(next_tx)
 
     #########################################
     # TxTframe FNCs
@@ -2511,10 +2536,7 @@ class PoPT_GUI_Main:
     def get_dx_alarm(self):
         return bool(self.setting_dx_alarm.get())
 
-    def get_side_frame(self):
-        return self._side_btn_frame_top
-
-        ######################################################################
+    ######################################################################
 
     def dx_alarm(self):
         """ Alarm when new User in MH List """

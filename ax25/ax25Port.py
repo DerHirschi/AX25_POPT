@@ -630,11 +630,11 @@ class AX25Port(threading.Thread):
             vias = tmp[1:]
             frame.via_calls = list(via_calls_fm_str(' '.join(vias)))
         frame.ctl_byte.UIcByte()
-        frame.ctl_byte.cmd, frame.ctl_byte.pf = cmd_poll
         if pid in frame.pid_byte.pac_types.keys():
             frame.pid_byte.pac_types[pid]()
         else:
             frame.pid_byte.text()
+        frame.ctl_byte.cmd, frame.ctl_byte.pf = cmd_poll
         frame.data = text
         frame.axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
         frame.from_call.call_str = own_call
