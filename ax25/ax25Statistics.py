@@ -433,8 +433,8 @@ class MH:
                     ent.route.append(str(call.call_str))
                     last_digi = str(call.call_str)
 
-            if ent.route and ent.route not in ent.all_routes:
-                ent.all_routes.append(list(ent.route))
+        if ent.route not in ent.all_routes:
+            ent.all_routes.append(list(ent.route))
         # Update AXIP Address
         if ax25_frame.axip_add[0]:
             if ent.axip_add[0]:

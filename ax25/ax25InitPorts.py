@@ -97,7 +97,8 @@ class AX25PortHandler(object):
         self._init_PH_tasker()
 
     def __del__(self):
-        self.close_all_ports()
+        pass
+        # self.close_all_ports()
         # logger.info("Ende PoPT Ver.: {}".format(VER))
 
     #######################################################################

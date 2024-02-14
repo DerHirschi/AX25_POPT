@@ -7,13 +7,12 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import networkx as nx
 import random
 from ax25.ax25InitPorts import PORT_HANDLER
+# from fnc.cfg_fnc import convert_obj_to_dict
+# from fnc.gui_fnc import generate_random_hex_color
 
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 import matplotlib
-
-from fnc.cfg_fnc import convert_obj_to_dict
-from fnc.gui_fnc import generate_random_hex_color
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -36,7 +35,7 @@ class ConnPathsPlot(tk.Toplevel):
         #######################################################################
         self._seed = random.randint(1, 10000)
         self._path_data = {}
-        self._node_key = {}
+        self._node_key = []
         self._pos = None
         self._port = tk.IntVar(self, value=0)
         self._mh = PORT_HANDLER.get_MH()
@@ -70,22 +69,25 @@ class ConnPathsPlot(tk.Toplevel):
                                      )
         style_option.pack(side=tk.LEFT, padx=10)
 
-        node_option = [''] + list(self._node_key)
-        node_option.sort()
+        # node_option = [''] + list(self._node_key)
+        # node_option.sort()
         self._node_option_var = tk.StringVar(self, '')
+        """
         node_optionmen = tk.OptionMenu(btn_frame,
                                        self._node_option_var,
                                        *node_option,
                                        command=self._update_Graph
                                        )
         node_optionmen.pack(side=tk.LEFT, padx=10)
-
+        """
+        """
         self._show_all_routes_var = tk.BooleanVar(self, value=True)
         show_hops_chk = tk.Checkbutton(btn_frame,
                                        variable=self._show_all_routes_var,
                                        text='All Routes',
                                        command=self._update_Graph)
         show_hops_chk.pack(side=tk.LEFT, padx=10)
+        """
         # Last seen
         self._last_seen_days_var = tk.IntVar(self, value=30)
         last_seen_days = ttk.Spinbox(btn_frame,
@@ -160,12 +162,14 @@ class ConnPathsPlot(tk.Toplevel):
         if not self._mh:
             return
         self._path_data = {}
+        self._node_key = []
         data = self._mh.get_mh_db_by_port(self._port.get())
         if not data:
             return
         last_route = self._show_last_route_var.get()
-        for k in data.keys():
+        for k in list(data.keys()):
             el = data[k]
+
             # print(f"{k} - {convert_obj_to_dict(el)}")
 
             if last_route:
@@ -173,12 +177,17 @@ class ConnPathsPlot(tk.Toplevel):
                     route=[list(el.route)],
                     lastUpdate=el.last_seen,
                 )
+                if not el.route:
+                    self._node_key.append(k)
             else:
                 self._path_data[el.own_call] = dict(
                     route=list(el.all_routes),
                     lastUpdate=el.last_seen,
                 )
-        self._node_key = list(data.keys())
+                if [] in el.all_routes or not el.all_routes:
+                    self._node_key.append(k)
+
+        # self._node_key = list(data.keys())
         # print(self._path_data)
 
     def _update_Node_pos(self):
@@ -194,41 +203,70 @@ class ConnPathsPlot(tk.Toplevel):
         except ValueError:
             return
         is_markt = False
-        mark_edge_call = self._node_option_var.get()
-        show_all_routes = self._show_all_routes_var.get()
+        # mark_edge_call = self._node_option_var.get()
+        # show_all_routes = self._show_all_routes_var.get()
+        port = self._port.get()
+        own_calls = []
+        tmp = PORT_HANDLER.ax25_port_settings.get(port, None)
+        if tmp:
+            own_calls = list(tmp.parm_StationCalls)
         for k in self._path_data.keys():
-            if show_all_routes or not mark_edge_call or (k == mark_edge_call and not show_all_routes):
-                seen_time = self._path_data[k].get('lastUpdate', datetime.now())
-                diff = (now - seen_time).days
-                if diff <= last_seen_var:
-                    path = self._path_data[k].get('route', [])
-                    edge_color = 'white'
-                    weight = 1
-                    if path:
-                        # print(f"Path: {path}")
-                        for route in path:
-                            # print(f"Route: {route}")
-                            weight = len(route) + 1
-                            r = list(route)
-                            # r.reverse()
-                            call1 = k
-                            if k in mark_edge_call:
-                                if is_markt:
-                                    edge_color = generate_random_hex_color(a=60)
-                                else:
-                                    edge_color = 'red'
-                                    is_markt = True
-                            # print(f"k: {k} - p: {r}")
-                            for station in r:
-                                # print(f"c1: {call1} - c2: {station}")
-                                self._g.add_edge(call1, station, color=edge_color, weight=weight)
-                                call1 = station
-                            # print(f"c1: {call1} - c2: HOME")
-                            self._g.add_edge(call1, 'HOME', color=edge_color, weight=weight)
+            # if show_all_routes or not mark_edge_call or (k == mark_edge_call and not show_all_routes):
+            seen_time = self._path_data[k].get('lastUpdate', datetime.now())
+            diff = (now - seen_time).days
+            if diff <= last_seen_var:
+                path = self._path_data[k].get('route', [])
+                weight = 1
+                if path:
+                    # print(f"Path: {path}")
+                    for route in path:
+                        # print(f"Route: {route}")
+                        # edge_color = 'white'
+                        weight = len(route) + 1
+                        r = list(route)
+                        # r.reverse()
+                        call1 = k
+                        if call1 in own_calls:
+                            call1 = 'HOME'
+                        """
+                        if k in mark_edge_call:
+                            if is_markt:
+                                edge_color = generate_random_hex_color(a=60)
+                            else:
+                                edge_color = 'red'
+                                is_markt = True
+                        """
 
-                    else:
+                        # print(f"k: {k} - p: {r}")
+                        for station in r:
+                            # if not mark_edge_call:
+                            if station in self._node_key:
+                                # edge_color = 'red'
+                                self._g.add_edge(call1, station, color='white', weight=weight)
+
+                            # else:
+                            #     edge_color = 'white'
+                            # print(f"c1: {call1} - c2: {station}")
+                            # self._g.add_edge(call1, station, color=edge_color, weight=weight)
+                            call1 = station
+                        if call1 in self._node_key:
+                            # edge_color = 'red'
+                            self._g.add_edge(call1, 'HOME', color='white', weight=weight)
+                        # else:
+                        #     edge_color = 'white'
+                        # print(f"c1: {call1} - c2: HOME")
+                        # self._g.add_edge(call1, 'HOME', color=edge_color, weight=weight)
+
+                else:
+                    if k not in own_calls:
+                        if k in self._node_key:
+                            # edge_color = 'red'
+                            self._g.add_edge(k, 'HOME', color='white', weight=weight)
+
+                        # else:
+                        #     edge_color = 'white'
                         # print(f"noPath: c1: {k} - c2: HOME")
-                        self._g.add_edge(k, 'HOME', color=edge_color, weight=weight)
+                        # self._g.add_edge(k, 'HOME', color=edge_color, weight=weight)
         # seed_val = random.randint(0, 10000)
         if not self._pos:
             layout = self._style_opt.get(self._style_var.get(), None)
@@ -259,12 +297,6 @@ class ConnPathsPlot(tk.Toplevel):
                              width=list(weights),
                              # alpha=0.7
                              )
-            """
-            nx.draw_networkx_labels(self._g,
-                                    pos=pos,
-                                    ax=self._plot1,
-                                    font_size=17)
-            """
 
     def _update_node_label(self):
         if not self._pos:
@@ -277,12 +309,16 @@ class ConnPathsPlot(tk.Toplevel):
                 tmp.append(k)
                 l_pos = pos[k]
                 node_name = k
+                if node_name in self._node_key:
+                    node_color = '#f70505'
+                else:
+                    node_color = 'black'
 
                 self._plot1.text(l_pos[0], l_pos[1] + 0.05,
                                  s=node_name,
                                  color='#ffffff',
                                  bbox=dict(
-                                     # facecolor=node_color,
+                                     facecolor=node_color,
                                      edgecolor='#ffffff',
                                      boxstyle='round',
                                      alpha=0.5),
