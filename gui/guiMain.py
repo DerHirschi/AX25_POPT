@@ -270,17 +270,30 @@ class PoPT_GUI_Main:
         self._Alarm_Frame = AlarmIconFrame(r_pack_frame)
         ##############
         # GUI Buttons
-        self._side_btn_frame_top = tk.Frame(r_pack_frame, )
-        self._side_btn_frame_top.pack(expand=True, pady=5)
-        self._init_btn()
+        conn_btn_frame = tk.Frame(r_pack_frame, )
+        conn_btn_frame.pack(expand=False, pady=5, fill=tk.X)
+        # conn_btn_frame.pack(anchor='w', fill=tk.X, expand=True)
+        self._init_btn(conn_btn_frame)
+        ##############
+        # Pane Tabbed Frame
+        side_frame_pw = ttk.PanedWindow(r_pack_frame, orient=tk.VERTICAL, )
+        side_frame_pw.pack(expand=True, pady=5, fill=tk.BOTH)
+        tabbedF_upper_frame = tk.Frame(side_frame_pw)
+        tabbedF_upper_frame.pack()
+        tabbedF_lower_frame = tk.Frame(side_frame_pw, height=500)
+        tabbedF_lower_frame.pack()
+        side_frame_pw.add(tabbedF_upper_frame, weight=1)
+        side_frame_pw.add(tabbedF_lower_frame, weight=1)
+        # dummy_frame = tk.Frame(self.main_win)
         ##############
         # tabbed Frame
-        self.tabbed_sideFrame = SideTabbedFrame(self, self._side_btn_frame_top)
+        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame)
+        # self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame)
         ############################
         # Canvas Plot
         self._bw_plot_x_scale = []
         self._bw_plot_lines = {}
-        self._init_bw_plot()
+        self._init_bw_plot(tabbedF_lower_frame)
         ###########################
         # set KEY BINDS
         self._set_binds()
@@ -441,7 +454,7 @@ class PoPT_GUI_Main:
         self.set_tracer_icon()
         self.set_Beacon_icon(self.setting_bake.get())
 
-    def _init_bw_plot(self):
+    def _init_bw_plot(self, frame):
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 6)
         """
@@ -459,7 +472,8 @@ class PoPT_GUI_Main:
         self._ax.tick_params(axis='y', colors='black')
         self._ax.set_xlabel(STR_TABLE['minutes'][self.language])
         self._ax.set_ylabel(STR_TABLE['occup'][self.language])
-        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._r_frame)
+        # self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._r_frame)
+        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=frame)
         self._canvas.flush_events()
         self._canvas.draw()
         # self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
@@ -645,20 +659,20 @@ class PoPT_GUI_Main:
                              underline=0)
         menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=MenuHelp, underline=0)
 
-    def _init_btn(self):
-        btn_upper_frame = tk.Frame(self._side_btn_frame_top)
-        btn_upper_frame.pack(anchor='w')
-        self._conn_btn = tk.Button(btn_upper_frame,
+    def _init_btn(self, frame):
+        btn_upper_frame = tk.Frame(frame)
+        # btn_upper_frame.pack(anchor='w', fill=tk.X, expand=True)
+        self._conn_btn = tk.Button(frame,
                                    text="Connect",
                                    bg="green",
                                    width=8,
                                    command=self.open_new_conn_win)
         self._conn_btn.pack(side=tk.LEFT)
 
-        self._mon_btn = tk.Button(btn_upper_frame,
+        self._mon_btn = tk.Button(frame,
                                   text="Monitor",
                                   bg="yellow", width=8, command=lambda: self.switch_channel(0))
-        self._mon_btn.pack(padx=2)
+        self._mon_btn.pack(side=tk.LEFT, padx=2)
 
     def _init_ch_btn_frame(self, root_frame):
         btn_font = ("fixedsys", 8,)
