@@ -8,6 +8,7 @@ Fixes:
   Frames gesendet wird (Es wurden nicht nach vollständigen Zeilen ausgewertet).
 - AXIP-Adresse wird bei neuen Connect nicht aus der User-DB bezogen wenn kein AXIP Eintrag in MH-Liste vorhanden
 - MH-Liste automatische Erfassung von DIGIs/Noden im Connect-Pfad
+- 2. Button-Reihe verschwinden, wenn Seitenfenster zu "klein gezogen" ist
 
 Optimierung:
 - CLi/Remote Kommando "PORT": Dual-Port wird jetzt gekennzeichnet

@@ -302,15 +302,16 @@ class SideTabbedFrame:  # TODO
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
         btn_frame = tk.Frame(tab2_mh)
-        btn_frame.grid(row=1, column=0)
+        btn_frame.grid(row=1, column=0, columnspan=2)
         tk.Button(btn_frame,
                   text="MH",
                   command=self._open_mh
-                  ).pack(side=tk.LEFT, padx=50)
+                  ).pack(side=tk.LEFT, )
         tk.Button(btn_frame,
-                  text="Statistik",
+                  # text="Statistik",
+                  text=STR_TABLE['statistic'][self._lang],
                   command=self._open_PortStat
-                  ).pack(side=tk.LEFT, padx=50)
+                  ).pack(side=tk.LEFT, padx=20)
 
         #############################################################################
         # Global Settings ################################
@@ -522,16 +523,16 @@ class SideTabbedFrame:  # TODO
         self._trace_tree_data = []
         self._trace_tree_data_old = {}
         self._update_side_trace()
-        btn_frame = tk.Frame(tab7_tracer)
-        btn_frame.grid(row=1, column=0)
-        tk.Button(btn_frame,
+        btn_frame_tr = tk.Frame(tab7_tracer)
+        btn_frame_tr.grid(row=1, column=0, columnspan=2)
+        tk.Button(btn_frame_tr,
                   text="SEND",
                   command=self._tracer_send
-                  ).pack(side=tk.LEFT, padx=50)
-        tk.Button(btn_frame,
+                  ).pack(side=tk.LEFT)
+        tk.Button(btn_frame_tr,
                   text="Tracer",
                   command=self._open_tracer
-                  ).pack(side=tk.LEFT, padx=50)
+                  ).pack(side=tk.LEFT, padx=20)
 
         # tk.Button(tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
         #################################
@@ -589,12 +590,12 @@ class SideTabbedFrame:  # TODO
         # self._update_side_mh()
         self._connects_tree.bind('<<TreeviewSelect>>', self._connects_entry_selected)
 
-        btn_frame = tk.Frame(root_frame)
-        btn_frame.grid(row=1, column=0)
-        tk.Button(btn_frame,
+        btn_frame3 = tk.Frame(root_frame)
+        btn_frame3.grid(row=1, column=0, columnspan=2)
+        tk.Button(btn_frame3,
                   text=STR_TABLE['disconnect_all'][self._lang],
                   command=self._disco_all
-                  ).pack(side=tk.LEFT, padx=50)
+                  ).pack(side=tk.LEFT)
         """
 
         tk.Button(btn_frame,
