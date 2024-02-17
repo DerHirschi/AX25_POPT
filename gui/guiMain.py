@@ -178,6 +178,7 @@ class PoPT_GUI_Main:
         self._is_closing = False
         self._init_state = 0
         self._tracer_alarm = False
+        self._flip05 = True
         ####################
         # GUI PARAM
         self._parm_btn_blink_time = 1  # s
@@ -280,20 +281,20 @@ class PoPT_GUI_Main:
         side_frame_pw.pack(expand=True, pady=5, fill=tk.BOTH)
         tabbedF_upper_frame = tk.Frame(side_frame_pw)
         tabbedF_upper_frame.pack()
-        tabbedF_lower_frame = tk.Frame(side_frame_pw, height=500)
+        tabbedF_lower_frame = tk.Frame(side_frame_pw)
         tabbedF_lower_frame.pack()
         side_frame_pw.add(tabbedF_upper_frame, weight=1)
         side_frame_pw.add(tabbedF_lower_frame, weight=1)
-        # dummy_frame = tk.Frame(self.main_win)
+        bw_plot_frame = tk.Frame(self.main_win)
         ##############
         # tabbed Frame
         self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame)
-        # self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame)
+        self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, bw_plot_frame)
         ############################
         # Canvas Plot
         self._bw_plot_x_scale = []
         self._bw_plot_lines = {}
-        self._init_bw_plot(tabbedF_lower_frame)
+        self._init_bw_plot(bw_plot_frame)
         ###########################
         # set KEY BINDS
         self._set_binds()
@@ -660,7 +661,7 @@ class PoPT_GUI_Main:
         menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=MenuHelp, underline=0)
 
     def _init_btn(self, frame):
-        btn_upper_frame = tk.Frame(frame)
+        # btn_upper_frame = tk.Frame(frame)
         # btn_upper_frame.pack(anchor='w', fill=tk.X, expand=True)
         self._conn_btn = tk.Button(frame,
                                    text="Connect",
@@ -1401,9 +1402,11 @@ class PoPT_GUI_Main:
             self._monitor_task()
             self._dualPort_monitor_task()
             self._update_qso_win()
+            self._SideFrame_tasker()
             self._update_status_win()
             self._AlarmIcon_tasker05()
             #####################
+            self._flip05 = not self._flip05
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             return True
         return False
@@ -1414,7 +1417,6 @@ class PoPT_GUI_Main:
             #####################
             self._update_stat_info_conn_timer()
             self._update_ft_info()
-            self.tabbed_sideFrame.tasker()
             self._AlarmIcon_tasker1()
             if self._ch_alarm:
                 self._ch_btn_status_update()
@@ -1453,12 +1455,6 @@ class PoPT_GUI_Main:
             return True
         return False
 
-    def _tasker_tester(self):
-        """ 5 Sec """
-        if time.time() > self._test_task_timer:
-            self._test_task_timer = time.time() + self._parm_test_task_timer
-            #####################
-
     # END TASKER
     ######################################################################
     @staticmethod
@@ -1473,6 +1469,14 @@ class PoPT_GUI_Main:
     def _AlarmIcon_tasker1(self):
         if self._Alarm_Frame:
             self._Alarm_Frame.AlarmIcon_tasker1()
+
+    def _SideFrame_tasker(self):
+        if self._flip05:
+            self.tabbed_sideFrame.tasker()
+            self.tabbed_sideFrame.on_ch_stat_change()
+        else:
+            self.tabbed_sideFrame2.tasker()
+            self.tabbed_sideFrame2.on_ch_stat_change()
 
     ###############################################################
     # QSO WIN
@@ -2072,8 +2076,6 @@ class PoPT_GUI_Main:
         # TODO Call just if necessary
         """ Triggerd when Connection Status has changed """
         self._ch_btn_status_update()
-        # self.change_conn_btn()
-        # self._change_conn_btn()
         self.on_channel_status_change()
 
     def _ch_btn_clk(self, ind: int):
@@ -2218,6 +2220,7 @@ class PoPT_GUI_Main:
     def on_channel_status_change(self):
         """ Triggerd when Connection Status has changed + additional Trigger"""
         self.tabbed_sideFrame.on_ch_stat_change()
+        self.tabbed_sideFrame2.on_ch_stat_change()
         self.update_station_info()
 
     def _update_stat_info_conn_timer(self):

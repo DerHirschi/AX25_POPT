@@ -13,20 +13,14 @@ from sound.popt_sound import SOUND
 
 
 class SideTabbedFrame:  # TODO
-    def __init__(self, main_cl, frame):
+    def __init__(self, main_cl, frame, plot_frame=None):
         self._main_win = main_cl
         self._lang = int(main_cl.language)
         self.style = main_cl.style
         self.ch_index = main_cl.channel_index
         self._mh = self._main_win.mh
         self._ch_is_disc = False
-        tab_side_frame = tk.Frame(
-            frame,
-            # width=300,
-            height=400
-        )
-        # _tab_side_frame.grid(row=3, column=0, columnspan=6, pady=10, sticky="nsew")
-        tab_side_frame.pack(fill=tk.X, expand=True, pady=5)
+
         """
         s = ttk.Style()
         s.theme_use('default')
@@ -34,7 +28,7 @@ class SideTabbedFrame:  # TODO
         s.map("TNotebook", background=[("selected", "green3")])
         """
         self._tabControl = ttk.Notebook(
-            tab_side_frame,
+            frame,
             height=300,
             # width=500
         )
@@ -56,10 +50,14 @@ class SideTabbedFrame:  # TODO
         self._tabControl.add(tab6_monitor, text='Monitor')
         self._tabControl.add(tab2_mh, text='MH')
         self._tabControl.add(tab7_tracer, text='Tracer')
+        if plot_frame:
+            self._tabControl.add(plot_frame, text='BW-Plot')
 
-        # self._tabControl.add(self.tab5_ch_links, text='CH-Echo')   # TODO
         self._tabControl.pack(expand=1, fill="both")
-        self._tabControl.select(tab2_mh)
+        if plot_frame:
+            self._tabControl.select(plot_frame)
+        else:
+            self._tabControl.select(tab2_mh)
         ################################################
         # Kanal
         parm_y = 20
@@ -866,14 +864,14 @@ class SideTabbedFrame:  # TODO
             )
 
     def _update_side_mh(self):
-        mh_ent = list(self._mh.output_sort_entr(10))
+        mh_ent = list(self._mh.output_sort_entr(20))
         if mh_ent != self._last_mh_ent:
             self._last_mh_ent = mh_ent
             self._format_tree_ent()
             self._update_tree()
 
     def reset_dx_alarm(self):
-        mh_ent = list(self._mh.output_sort_entr(10))
+        mh_ent = list(self._mh.output_sort_entr(20))
         self._last_mh_ent = mh_ent
         self._format_tree_ent()
         self._update_tree()
