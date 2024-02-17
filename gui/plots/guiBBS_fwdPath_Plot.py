@@ -295,6 +295,7 @@ class FwdGraph(tk.Toplevel):
     def _update_Node_pos(self):
         if not self._path_data:
             return
+
         self._plot1.clear()
         self._plot2.clear()
         self._g.clear()
@@ -383,6 +384,7 @@ class FwdGraph(tk.Toplevel):
             """
 
     def _pos_related_layout(self):
+        """ with help of ChatGPT """
         # Füge Nodes mit Koordinaten hinzu
         tmp = []
         for node, coordinates in self._call_info_vars.items():

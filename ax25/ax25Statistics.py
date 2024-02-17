@@ -36,7 +36,8 @@ def getNew_MyHeard():
 class MyHeard:
     def __init__(self):
         self.own_call = ''
-        self.to_calls = []
+        self.to_calls = {}
+        self.last_dest = ''
         self.route = []
         self.all_routes = []
         self.port = ''
@@ -180,8 +181,14 @@ class MH:
                 self._MH_db[port] = {}
             for call in list(mh_load[port].keys()):
                 if type(mh_load[port][call]) is dict:
+                    if type(mh_load[port][call]['to_calls']) is list:
+                        # FIX old MH
+                        mh_load[port][call]['to_calls'] = {}
                     self._MH_db[port][call] = set_obj_att_fm_dict(new_obj=MyHeard(), input_obj=mh_load[port][call])
                 else:
+                    if type(mh_load[port][call].to_calls) is list:
+                        # FIX old MH
+                        mh_load[port][call].to_calls = {}
                     self._MH_db[port][call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[port][call])
 
     def _load_MH_update_ent(self):
@@ -417,10 +424,7 @@ class MH:
         ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
         if ax25_frame.ctl_byte.flag == 'REJ':
             ent.rej_n += 1
-        # TO Calls
-        to_c_str = str(ax25_frame.to_call.call_str)
-        if to_c_str not in ent.to_calls:
-            ent.to_calls.append(to_c_str)
+
         # Routes
         ent.route = []  # Last Route
         last_digi = ''
@@ -435,6 +439,17 @@ class MH:
 
         if ent.route not in ent.all_routes:
             ent.all_routes.append(list(ent.route))
+
+        # TO Calls
+        to_c_str = str(ax25_frame.to_call.call_str)
+        route_key = ','.join(ent.route)
+
+        if to_c_str not in ent.to_calls.keys():
+            ent.to_calls[to_c_str] = {route_key: ax25_frame.rx_time}
+        else:
+            ent.to_calls[to_c_str][route_key] = ax25_frame.rx_time
+        ent.last_dest = to_c_str
+        # ent.to_calls.append(to_c_str)
         # Update AXIP Address
         if ax25_frame.axip_add[0]:
             if ent.axip_add[0]:

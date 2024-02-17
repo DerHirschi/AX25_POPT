@@ -19,7 +19,7 @@ class SideTabbedFrame:  # TODO
         self.style = main_cl.style
         self.ch_index = main_cl.channel_index
         self._mh = self._main_win.mh
-        self._ch_is_disc = False
+        self._ch_is_disc = True
 
         """
         s = ttk.Style()
