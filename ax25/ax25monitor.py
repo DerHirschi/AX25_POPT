@@ -3,7 +3,6 @@
 
 from ax25aprs.aprs_dec import format_aprs_f_monitor
 from cfg.constant import ENCODINGS
-from fnc.ax25_fnc import get_call_str
 from UserDB.UserDBmain import USER_DB
 from fnc.str_fnc import try_decode
 
@@ -18,11 +17,11 @@ def monitor_frame_inp(ax25_frame, port_cfg, decoding='Auto'):
     if ax25_frame.ctl_byte.flag == 'UI':
         aprs_data = format_aprs_f_monitor(ax25_frame, own_locator=aprs_loc)
 
-    from_call = get_call_str(ax25_frame.from_call.call, ax25_frame.from_call.ssid)
+    from_call = ax25_frame.from_call.call_str
     from_call_d = round(USER_DB.get_distance(from_call))
     if from_call_d:
         from_call += f"({from_call_d} km)"
-    to_call = get_call_str(ax25_frame.to_call.call, ax25_frame.to_call.ssid)
+    to_call = ax25_frame.to_call.call_str
     to_call_d = round(USER_DB.get_distance(to_call))
     if to_call_d:
         to_call += f"({to_call_d} km)"
@@ -32,15 +31,15 @@ def monitor_frame_inp(ax25_frame, port_cfg, decoding='Auto'):
     """
     via_calls = []
     for stat in ax25_frame.via_calls:
-        dist = round(USER_DB.get_distance(get_call_str(stat.call, stat.ssid)))
+        dist = round(USER_DB.get_distance(stat.call_str))
         if dist:
             dist = f"({dist} km)"
         else:
             dist = ''
         if stat.c_bit:
-            via_calls.append(get_call_str(stat.call, stat.ssid) + '*' + dist)
+            via_calls.append(stat.call_str + '*' + dist)
         else:
-            via_calls.append(get_call_str(stat.call, stat.ssid) + dist)
+            via_calls.append(stat.call_str + dist)
 
     out_str = f"{port_name} {ax25_frame.rx_time.strftime('%H:%M:%S')}: {from_call} to {to_call}"
     out_str += ' via ' + ' '.join(via_calls) if via_calls else ''

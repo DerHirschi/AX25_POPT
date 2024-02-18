@@ -1,5 +1,6 @@
 Ideas/TODO's :
 
+- Sysopnachricht an alle Kanäle senden
 ✓ Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
 - PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)

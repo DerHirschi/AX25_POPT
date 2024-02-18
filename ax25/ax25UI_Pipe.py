@@ -78,7 +78,7 @@ class AX25Pipe(object):
                 self.tx_frame_buf.append(new_frame)
 
     def _tx_Proto(self):
-        if self.connection is not None:
+        if self.connection:
             self.connection.tx_buf_rawData += bytes(self._tx_data)
             self._tx_data = b''
 
@@ -92,7 +92,7 @@ class AX25Pipe(object):
             self.ax25_frame.via_calls = dest_add[1:]
 
     def change_settings(self):
-        if self.connection is not None:
+        if self.connection:
             self.ax25_frame = self.connection.ax25_out_frame
         if not self.ax25_frame.from_call.call_str:
             return False

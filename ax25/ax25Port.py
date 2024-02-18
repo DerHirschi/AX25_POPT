@@ -48,7 +48,8 @@ class AX25Port(threading.Thread):
         self.TXD = time.time()
         """ DIGI """
         self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
-        self.is_smart_digi = self.port_cfg.parm_isSmartDigi
+        # self.is_smart_digi = self.port_cfg.parm_isSmartDigi
+        self.is_smart_digi = False
         self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
         self._digi_TXD = time.time()
         self._digi_buf = []     # RX/TX
@@ -143,6 +144,7 @@ class AX25Port(threading.Thread):
     # RX Stuff
     def rx_handler(self, ax25_frame: AX25Frame):
         """ Main RX-Handler """
+        # print(ax25_frame.get_frame_conf())
         self._reset_ft_wait_timer(ax25_frame)
         # Monitor / MH / Port-Statistic
         # self._gui_monitor(ax25frame=ax25_frame, tx=False)
@@ -155,7 +157,7 @@ class AX25Port(threading.Thread):
                 if self._rx_link_handler(ax25_frame=ax25_frame):
                     # Link Connection Handler
                     return True
-            if self._rx_simple_digi_handler(ax25_frame=ax25_frame):
+            if self._rx_digi_handler(ax25_frame=ax25_frame):
                 # Simple DIGI
                 return True
         elif ax25_frame.is_digipeated:
@@ -192,7 +194,7 @@ class AX25Port(threading.Thread):
 
     def _rx_UI_handler(self, ax25_frame: AX25Frame):
         # print(f"Port RX UI Handler - aprs_ais: {self.aprs_stat.aprs_ais}")
-        if self.port_handler.get_aprs_ais() is not None:
+        if self.port_handler.get_aprs_ais():
             self.port_handler.get_aprs_ais().aprs_ax25frame_rx(
                 port_id=self.port_id,
                 ax25_frame=ax25_frame
@@ -217,13 +219,29 @@ class AX25Port(threading.Thread):
                 return True
         return False
 
-    def _rx_simple_digi_handler(self, ax25_frame: AX25Frame):
+    def _rx_digi_handler(self, ax25_frame: AX25Frame):
+        if not self.stupid_digi_calls:
+            return False
+        if self.is_smart_digi:
+            return self._rx_managed_digi(ax25_frame)
+        return self._rx_simple_digi(ax25_frame)
+
+    def _rx_simple_digi(self, ax25_frame):
         for call in ax25_frame.via_calls:
             if call.call_str in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
                     self._digi_buf.append(ax25_frame)
                     # self.set_digi_TXD()
                     return True
+        return False
+
+    def _rx_managed_digi(self, ax25_frame):
+        for call in ax25_frame.via_calls:
+            if call.call_str in self.stupid_digi_calls:
+                if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                    ax25_frame.short_via_calls(call.call_str)
+                    if ax25_frame.ctl_byte.flag == 'SABM':
+                        self._digi_buf.append(ax25_frame)
         return False
 
     def _rx_dualPort_handler(self, ax25_frame: AX25Frame):
@@ -241,16 +259,18 @@ class AX25Port(threading.Thread):
             # DualPort Monitor
             self._dualPort_monitor_input(ax25frame=ax25_frame, tx=False, double=True)
             # MH / Port-Statistic
-            self._mh_input(ax25_frame, tx=False)
+            ax25frame_conf = ax25_frame.get_frame_conf()
+            self._mh_input(ax25frame_conf, tx=False)
             return True
         self.dualPort_primaryPort.dualPort_lastRX = frame_raw
-        self.dualPort_primaryPort.rx_handler(ax25_frame)
         # Monitor
         self._gui_monitor(ax25frame=ax25_frame, tx=False)
         # DualPort Monitor
         self._dualPort_monitor_input(ax25frame=ax25_frame, tx=False)
         # MH / Port-Statistic
-        self._mh_input(ax25_frame, tx=False)
+        ax25frame_conf = ax25_frame.get_frame_conf()
+        self._mh_input(ax25frame_conf, tx=False)
+        self.dualPort_primaryPort.rx_handler(ax25_frame)
         return True
 
     ###################################################
@@ -661,10 +681,10 @@ class AX25Port(threading.Thread):
                     port_conf=port_cfg,
                     tx=tx)
 
-    def _mh_input(self, ax25frame, tx: bool):
+    def _mh_input(self, ax25frame_conf, tx: bool):
         # MH / Port-Statistic
         primary_port_id = self.dualPort_cfg.get('primary_port_id', -1)
-        self._mh.mh_input(ax25frame, self.port_id, tx=tx, primary_port_id=primary_port_id)
+        self._mh.mh_input(ax25frame_conf, self.port_id, tx=tx, primary_port_id=primary_port_id)
 
     def run(self):
         """ Main Loop """
@@ -706,14 +726,16 @@ class AX25Port(threading.Thread):
             if ax25frame.validate():
                 ax25frame.axip_add = buf.axip_add
                 # ax25frame.rx_time = datetime.datetime.now()
-                setattr(ax25frame, 'rx_time', datetime.datetime.now())
+                # setattr(ax25frame, 'rx_time', datetime.datetime.now())
                 # ######### RX #############
                 if not self._rx_dualPort_handler(ax25_frame=ax25frame):
-                    self.rx_handler(ax25frame)
                     # Monitor
                     self._gui_monitor(ax25frame=ax25frame, tx=False)
                     # MH / Port-Statistic
-                    self._mh_input(ax25frame, tx=False)
+                    ax25frame_conf = ax25frame.get_frame_conf()
+                    self._mh_input(ax25frame_conf, tx=False)
+                    self.rx_handler(ax25frame)
+
                 # RX-ECHO
                 self._rx_echo(ax25_frame=ax25frame)
                 # AXIP-Multicast
