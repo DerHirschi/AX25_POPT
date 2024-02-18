@@ -246,13 +246,7 @@ class SideTabbedFrame:  # TODO
         self.ft_progress.place(x=x, y=y)
         self.ft_progress.bind('<Button-1>', self._main_win.open_ft_manager)
         self.ft_progress['value'] = 0
-        """
-        self.ft_progress_var = tk.StringVar(tab1_kanal)
-        self.ft_size_var = tk.StringVar(tab1_kanal)
-        self.ft_duration_var = tk.StringVar(tab1_kanal)
-        self.ft_bps_var = tk.StringVar(tab1_kanal)
-        self.ft_next_tx_var = tk.StringVar(tab1_kanal)
-        """
+
         tk.Label(tab1_kanal, textvariable=self._main_win.ft_progress_var).place(x=x + 160, y=y)
         tk.Label(tab1_kanal, textvariable=self._main_win.ft_size_var).place(x=x, y=y + 25)
         tk.Label(tab1_kanal, textvariable=self._main_win.ft_duration_var).place(x=x, y=y + 50)
@@ -309,9 +303,14 @@ class SideTabbedFrame:  # TODO
                   ).pack(side=tk.LEFT, )
         tk.Button(btn_frame,
                   # text="Statistik",
+                  text='Plot',
+                  command=self._open_MHPlot
+                  ).pack(side=tk.LEFT, padx=20)
+        tk.Button(btn_frame,
+                  # text="Statistik",
                   text=STR_TABLE['statistic'][self._lang],
                   command=self._open_PortStat
-                  ).pack(side=tk.LEFT, padx=20)
+                  ).pack(side=tk.LEFT, )
 
         #############################################################################
         # Global Settings ################################
@@ -680,13 +679,7 @@ class SideTabbedFrame:  # TODO
             _conn.calc_irtt()
 
     def _chk_sprech_on(self):
-        if self._main_win.setting_sprech.get():
-            SOUND.master_sprech_on = True
-            self.t2speech.configure(state='normal')
-        else:
-            SOUND.master_sprech_on = False
-            self.t2speech.configure(state='disabled')
-        self._main_win.set_var_to_all_ch_param()
+        self._main_win.chk_master_sprech_on()
 
     def _chk_mon_port(self, event=None):
         port_id = int(self._main_win.mon_port_var.get())
@@ -766,25 +759,25 @@ class SideTabbedFrame:  # TODO
         tx_buff = 'TX-Buffer: --- kb'
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
-        _station = self._main_win.get_conn(self._main_win.channel_index)
-        if _station is not None:
-            if _station.RTT_Timer.rtt_best == 999.0:
+        station = self._main_win.get_conn(self._main_win.channel_index)
+        if station is not None:
+            if station.RTT_Timer.rtt_best == 999.0:
                 best = "Best: -1"
             else:
-                best = "Best: {:.1f}".format(_station.RTT_Timer.rtt_best)
-            worst = "Worst: {:.1f}".format(_station.RTT_Timer.rtt_worst)
-            avg = "AVG: {:.1f}".format(_station.RTT_Timer.rtt_average)
-            last = "Last: {:.1f}".format(_station.RTT_Timer.rtt_last)
-            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(_station.time_start)}"
-            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(_station.tx_buf_rawData))
-            tx_count = 'TX: ' + get_kb_str_fm_bytes(_station.tx_byte_count)
-            rx_count = 'RX: ' + get_kb_str_fm_bytes(_station.rx_byte_count)
-            if _station.is_link:
+                best = "Best: {:.1f}".format(station.RTT_Timer.rtt_best)
+            worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
+            avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
+            last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
+            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(station.time_start)}"
+            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
+            tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
+            rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
+            if station.is_link:
                 status_text = 'Link'
-            elif _station.pipe is not None:
+            elif station.pipe is not None:
                 status_text = 'Pipe'
-            elif _station.ft_obj is not None:
-                if _station.ft_obj.dir == 'TX':
+            elif station.ft_obj is not None:
+                if station.ft_obj.dir == 'TX':
                     status_text = 'Sending File'
                 else:
                     status_text = 'Receiving File'
@@ -1004,6 +997,9 @@ class SideTabbedFrame:  # TODO
 
     def _open_PortStat(self):
         self._main_win.open_window('PortStat')
+
+    def _open_MHPlot(self):
+        self._main_win.open_window('ConnPathPlot')
 
     def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],

@@ -454,14 +454,11 @@ class PoPT_GUI_Main:
         self.set_noty_bell_active()
         self.set_tracer_icon()
         self.set_Beacon_icon(self.setting_bake.get())
+        self.chk_master_sprech_on()
 
     def _init_bw_plot(self, frame):
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 6)
-        """
-        self._bw_fig = Figure(figsize=(8, 5), dpi=80)
-        self._ax = self._bw_fig.add_subplot(111)
-        """
         self._bw_fig, self._ax = plt.subplots(dpi=100)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
         self._ax.axis([0, 10, 0, 100])  # TODO As Option
@@ -842,32 +839,32 @@ class PoPT_GUI_Main:
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=9, sticky="nsew")
         # Checkbox RX-BEEP
-        self.rx_beep_box = Checkbutton(status_frame,
-                                       text="RX-BEEP",
-                                       bg=STAT_BAR_CLR,
+        self._rx_beep_box = Checkbutton(status_frame,
+                                        text="RX-BEEP",
+                                        bg=STAT_BAR_CLR,
+                                        font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                                        activebackground=STAT_BAR_CLR,
+                                        borderwidth=0,
+                                        onvalue=1, offvalue=0,
+                                        foreground=STAT_BAR_TXT_CLR,
+                                        variable=self._rx_beep_var,
+                                        command=self._chk_rx_beep
+                                        )
+        self._rx_beep_box.grid(row=1, column=10, sticky="nsew")
+        # TODO Checkbox Time Stamp
+        self._ts_box_box = Checkbutton(status_frame,
+                                       text="T-S",
                                        font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                       activebackground=STAT_BAR_CLR,
+                                       bg=STAT_BAR_CLR,
                                        borderwidth=0,
+                                       activebackground=STAT_BAR_CLR,
                                        onvalue=1, offvalue=0,
                                        foreground=STAT_BAR_TXT_CLR,
-                                       variable=self._rx_beep_var,
-                                       command=self._chk_rx_beep
+                                       variable=self._ts_box_var,
+                                       command=self._chk_timestamp,
+                                       state='disabled'
                                        )
-        self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
-        # TODO Checkbox Time Stamp
-        self.ts_box_box = Checkbutton(status_frame,
-                                      text="T-S",
-                                      font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                      bg=STAT_BAR_CLR,
-                                      borderwidth=0,
-                                      activebackground=STAT_BAR_CLR,
-                                      onvalue=1, offvalue=0,
-                                      foreground=STAT_BAR_TXT_CLR,
-                                      variable=self._ts_box_var,
-                                      command=self._chk_timestamp,
-                                      state='disabled'
-                                      )
-        self.ts_box_box.grid(row=1, column=11, sticky="nsew")
+        self._ts_box_box.grid(row=1, column=11, sticky="nsew")
 
     def _init_TXT_frame_mid(self):
         self._TXT_mid_frame.rowconfigure(1, minsize=22, weight=1)
@@ -1626,18 +1623,18 @@ class PoPT_GUI_Main:
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if ch_vars.rx_beep_opt and self.channel_index:
-            self.rx_beep_box.select()
-            self.rx_beep_box.configure(bg='green')
+            self._rx_beep_box.select()
+            self._rx_beep_box.configure(bg='green')
         else:
-            self.rx_beep_box.deselect()
-            self.rx_beep_box.configure(bg=STAT_BAR_CLR)
+            self._rx_beep_box.deselect()
+            self._rx_beep_box.configure(bg=STAT_BAR_CLR)
 
         if ch_vars.timestamp_opt and self.channel_index:
-            self.ts_box_box.select()
-            self.ts_box_box.configure(bg='green')
+            self._ts_box_box.select()
+            self._ts_box_box.configure(bg='green')
         else:
-            self.ts_box_box.deselect()
-            self.ts_box_box.configure(bg=STAT_BAR_CLR)
+            self._ts_box_box.deselect()
+            self._ts_box_box.configure(bg=STAT_BAR_CLR)
 
     def sysMsg_to_qso(self, data, ch_index):
         if not data:
@@ -2340,6 +2337,7 @@ class PoPT_GUI_Main:
 
         if self.ft_duration_var.get() != dur_var:
             self.tabbed_sideFrame.ft_progress['value'] = prog_val
+            self.tabbed_sideFrame2.ft_progress['value'] = prog_val
             self.ft_progress_var.set(prog_var)
             self.ft_size_var.set(size_var)
             self.ft_duration_var.set(dur_var)
@@ -2434,21 +2432,21 @@ class PoPT_GUI_Main:
     def _chk_rx_beep(self):
         rx_beep_check = self._rx_beep_var.get()
         if rx_beep_check:
-            if self.rx_beep_box.cget('bg') != 'green':
-                self.rx_beep_box.configure(bg='green', activebackground='green')
+            if self._rx_beep_box.cget('bg') != 'green':
+                self._rx_beep_box.configure(bg='green', activebackground='green')
         else:
-            if self.rx_beep_box.cget('bg') != STAT_BAR_CLR:
-                self.rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+            if self._rx_beep_box.cget('bg') != STAT_BAR_CLR:
+                self._rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_var().rx_beep_opt = rx_beep_check
 
     def _chk_timestamp(self):
         ts_check = self._ts_box_var.get()
         if ts_check:
-            if self.ts_box_box.cget('bg') != 'green':
-                self.ts_box_box.configure(bg='green', activebackground='green')
+            if self._ts_box_box.cget('bg') != 'green':
+                self._ts_box_box.configure(bg='green', activebackground='green')
         else:
-            if self.ts_box_box.cget('bg') != STAT_BAR_CLR:
-                self.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+            if self._ts_box_box.cget('bg') != STAT_BAR_CLR:
+                self._ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_var().timestamp_opt = ts_check
 
     def _set_stat_typ(self, event=None):
@@ -2489,7 +2487,8 @@ class PoPT_GUI_Main:
             self.setting_tracer.set(False)
         self.set_auto_tracer()
         # FIXME
-        self.tabbed_sideFrame.set_auto_tracer_state()
+        # self.tabbed_sideFrame.set_auto_tracer_state()
+        # self.tabbed_sideFrame.set_auto_tracer_state()
         # self.set_tracer_icon()
 
     @staticmethod
@@ -2513,6 +2512,7 @@ class PoPT_GUI_Main:
         else:
             self.setting_tracer.set(False)
         self.tabbed_sideFrame.set_auto_tracer_state()
+        self.tabbed_sideFrame2.set_auto_tracer_state()
 
     def set_auto_tracer(self, event=None):
         ais_obj = PORT_HANDLER.get_aprs_ais()
@@ -2526,6 +2526,7 @@ class PoPT_GUI_Main:
             ais_obj.tracer_auto_tracer_set(set_to)
         self.setting_auto_tracer.set(set_to)
         self.tabbed_sideFrame.set_auto_tracer_state()
+        self.tabbed_sideFrame2.set_auto_tracer_state()
         # self.set_tracer_icon()
 
     @staticmethod
@@ -2619,3 +2620,15 @@ class PoPT_GUI_Main:
 
     def set_Beacon_icon(self, alarm_set=True):
         self._Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
+
+    def chk_master_sprech_on(self):
+        if self.setting_sprech.get():
+            SOUND.master_sprech_on = True
+            self.tabbed_sideFrame.t2speech.configure(state='normal')
+            self.tabbed_sideFrame2.t2speech.configure(state='normal')
+        else:
+            SOUND.master_sprech_on = False
+            self.tabbed_sideFrame.t2speech.configure(state='disabled')
+            self.tabbed_sideFrame2.t2speech.configure(state='disabled')
+        self.set_var_to_all_ch_param()
+
