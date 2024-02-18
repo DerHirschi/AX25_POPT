@@ -1,9 +1,11 @@
 import logging
 import tkinter as tk
+from tkinter import Menu
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.string_tab import STR_TABLE
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +14,7 @@ class BeaconTracer(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
+        self._lang = self._root_win.language
         # self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self.style = self._root_win.style
         self.geometry(f"1300x"
@@ -204,7 +207,15 @@ class BeaconTracer(tk.Toplevel):
 
         ##########################
         # self._chk_port()
+        self._init_menubar()
         self.update_tree_data()
+
+    def _init_menubar(self):
+        menubar = Menu(self, tearoff=False)
+        self.config(menu=menubar)
+        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._delete_all_data)
+        menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=MenuVerb, underline=0)
 
     def update_tree_data(self):
         self._format_tree_data()
@@ -221,32 +232,32 @@ class BeaconTracer(tk.Toplevel):
                 self._tree.insert('', tk.END, values=ret_ent[0], )
 
     def _format_tree_data(self):
-        _traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
+        traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
         self._tree_data = []
-        for k in _traces:
-            _pack = _traces[k][-1]
-            _rx_time = _pack.get('rx_time', '')
-            if _rx_time:
-                _rx_time = _rx_time.strftime('%d/%m/%y %H:%M:%S')
-            _path = _pack.get('path', [])
-            _call = _pack.get('call', '')
-            if _call:
-                _path = ', '.join(_path)
-                _port_id = _pack.get('port_id', -1)
-                _rtt = _pack.get('rtt', 0)
-                _loc = _pack.get('locator', '')
-                _dist = _pack.get('distance', 0)
+        for k in traces:
+            pack = traces[k][-1]
+            rx_time = pack.get('rx_time', '')
+            if rx_time:
+                rx_time = rx_time.strftime('%d/%m/%y %H:%M:%S')
+            path = pack.get('path', [])
+            call = pack.get('call', '')
+            if call:
+                path = ', '.join(path)
+                port_id = pack.get('port_id', -1)
+                rtt = pack.get('rtt', 0)
+                loc = pack.get('locator', '')
+                dist = pack.get('distance', 0)
 
                 self._tree_data.append(((
-                    _rx_time,
-                    _call,
-                    _port_id,
-                    _path,
-                    f'{_rtt:.2f}',
-                    _loc,
-                    _dist,
-                ), _pack.get('tr_alarm', False)))
-                _pack['tr_alarm'] = False
+                    rx_time,
+                    call,
+                    port_id,
+                    path,
+                    f'{rtt:.2f}',
+                    loc,
+                    dist,
+                ), pack.get('tr_alarm', False)))
+                pack['tr_alarm'] = False
 
     def _save_btn(self):
         self._save_vars()
@@ -292,6 +303,10 @@ class BeaconTracer(tk.Toplevel):
         self._save_vars()
         self._root_win.set_tracer_fm_aprs()
         # self._root_win.set_tracer_icon()
+
+    def _delete_all_data(self):
+        PORT_HANDLER.get_aprs_ais().tracer_traces_delete()
+        self.update_tree_data()
 
     def close(self):
         self._root_win.be_tracer_win = None

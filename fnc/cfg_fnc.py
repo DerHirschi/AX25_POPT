@@ -13,7 +13,7 @@ def cleanup_obj(class_obj: object):
     return class_obj
 
 
-def cleanup_obj_to_dict(class_obj: object):
+def convert_obj_to_dict(class_obj: object):
     out = {}
     for att in dir(class_obj):
         if '__' not in att and not callable(getattr(class_obj, att)):
@@ -42,7 +42,7 @@ def cleanup_obj_dict(inp_dict: dict):
     tmp = {}
     for k in inp_dict.keys():
         # tmp[k] = cleanup_obj(inp_dict[k])
-        tmp[k] = cleanup_obj_to_dict(inp_dict[k])
+        tmp[k] = convert_obj_to_dict(inp_dict[k])
     return tmp
 
 

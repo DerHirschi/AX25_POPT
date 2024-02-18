@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.105.12'
+VER = '2.106.17'
 """
 LANGUAGE:
 0 = German
@@ -222,3 +222,26 @@ DUALPORT_TX_MODE = {
     'First-RX': 0,
     'Last-RX': 1,
 }
+
+MH_BEACON_FILTER = [
+    'ALL',
+    'APDW19',   # TODO: build Filter
+    'APDW18',
+    'APDW17',
+    'APDW16',
+    'APDW15',
+    'APDW14',
+    'APRS',
+    'MAIL',
+    'DX',
+    'CQ',
+    'CQDX',
+    'STATUS',
+    'NODE',
+    'NODES',
+    'WX',
+    'WETTER',
+    'BAKE',
+    'BEACON',
+    'APZPOP',
+]

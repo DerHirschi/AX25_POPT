@@ -100,9 +100,9 @@ class LinkHolderSettings(tk.Toplevel):
             text = text.replace('\n', '\r')
             self.conn.link_holder_text = text
             if self.conn.link_holder_on:
-                self.root_win.tabbed_sideFrame.link_holder.select()
+                self.root_win.link_holder_var.set(True)
             else:
-                self.root_win.tabbed_sideFrame.link_holder.deselect()
+                self.root_win.link_holder_var.set(False)
         self.destroy_win()
 
     def destroy_win(self):

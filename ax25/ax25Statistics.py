@@ -33,24 +33,26 @@ def getNew_MyHeard():
 """
 
 
-class MyHeard(object):
-    own_call = ''
-    to_calls = []
-    route = []
-    all_routes = []
-    port = ''
-    port_id = 0  # Not used yet
-    first_seen_port = None
-    first_seen = datetime.now()
-    last_seen = datetime.now()
-    pac_n = 0  # N Packets
-    byte_n = 0  # N Bytes
-    h_byte_n = 0  # N Header Bytes
-    rej_n = 0  # N REJ
-    axip_add = '', 0  # IP, Port
-    axip_fail = 0  # Fail Counter
-    locator = ''
-    distance = -1
+class MyHeard:
+    def __init__(self):
+        self.own_call = ''
+        self.to_calls = {}
+        self.last_dest = ''
+        self.route = []
+        self.all_routes = []
+        self.port = ''
+        self.port_id = 0  # Not used yet
+        self.first_seen_port = None
+        self.first_seen = datetime.now()
+        self.last_seen = datetime.now()
+        self.pac_n = 0  # N Packets
+        self.byte_n = 0  # N Bytes
+        self.h_byte_n = 0  # N Header Bytes
+        self.rej_n = 0  # N REJ
+        self.axip_add = '', 0  # IP, Port
+        self.axip_fail = 0  # Fail Counter
+        self.locator = ''
+        self.distance = -1
 
 
 def get_dx_tx_alarm_his_pack(
@@ -179,8 +181,14 @@ class MH:
                 self._MH_db[port] = {}
             for call in list(mh_load[port].keys()):
                 if type(mh_load[port][call]) is dict:
+                    if type(mh_load[port][call]['to_calls']) is list:
+                        # FIX old MH
+                        mh_load[port][call]['to_calls'] = {}
                     self._MH_db[port][call] = set_obj_att_fm_dict(new_obj=MyHeard(), input_obj=mh_load[port][call])
                 else:
+                    if type(mh_load[port][call].to_calls) is list:
+                        # FIX old MH
+                        mh_load[port][call].to_calls = {}
                     self._MH_db[port][call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[port][call])
 
     def _load_MH_update_ent(self):
@@ -374,6 +382,7 @@ class MH:
         return
 
     def _mh_inp(self, data, digi=''):
+        # TODO Again !
         # inp
         org_port_id = data['port_id']
         primary_port_id = data['primary_port_id']
@@ -415,24 +424,32 @@ class MH:
         ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
         if ax25_frame.ctl_byte.flag == 'REJ':
             ent.rej_n += 1
-        # TO Calls
-        to_c_str = str(ax25_frame.to_call.call_str)
-        if to_c_str not in ent.to_calls:
-            ent.to_calls.append(to_c_str)
+
         # Routes
         ent.route = []  # Last Route
         last_digi = ''
-        if ax25_frame.via_calls:
+        # print(f"-----{bool(digi)}-- {len(ax25_frame.via_calls)}")
+        if not digi:
             for call in ax25_frame.via_calls:
                 if not call.c_bit:
                     break
                 else:
                     ent.route.append(str(call.call_str))
                     last_digi = str(call.call_str)
-        if ent.route and digi:
-            ent.route = ent.route[:-1]
+
         if ent.route not in ent.all_routes:
             ent.all_routes.append(list(ent.route))
+
+        # TO Calls
+        to_c_str = str(ax25_frame.to_call.call_str)
+        route_key = ','.join(ent.route)
+
+        if to_c_str not in ent.to_calls.keys():
+            ent.to_calls[to_c_str] = {route_key: ax25_frame.rx_time}
+        else:
+            ent.to_calls[to_c_str][route_key] = ax25_frame.rx_time
+        ent.last_dest = to_c_str
+        # ent.to_calls.append(to_c_str)
         # Update AXIP Address
         if ax25_frame.axip_add[0]:
             if ent.axip_add[0]:
@@ -532,6 +549,9 @@ class MH:
             self._short_MH.appendleft(temp[k])
             if len(self._short_MH) == 40:
                 break
+
+    def get_mh_db_by_port(self, port: int):
+        return self._MH_db.get(port, {})
 
     def get_sort_mh_entry(self, flag_str: str, reverse: bool):
         temp = {}

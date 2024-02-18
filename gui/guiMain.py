@@ -9,7 +9,7 @@ import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import cleanup_obj_to_dict, set_obj_att_fm_dict
+from fnc.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
 from gui.aprs.guiAISmon import AISmonitor
@@ -20,6 +20,7 @@ from gui.aprs.guiAPRS_wx_tree import WXWin
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.pms.guiBBS_PMS_Settings import PMS_Settings
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
@@ -145,6 +146,30 @@ class PoPT_GUI_Main:
         self.stat_info_timer_var = tk.StringVar(self.main_win)
         self.stat_info_encoding_var = tk.StringVar(self.main_win)
         self.stat_info_status_var = tk.StringVar(self.main_win)
+        # Tabbed SideFrame FT
+        self.ft_progress_var = tk.StringVar(self.main_win)
+        self.ft_size_var = tk.StringVar(self.main_win)
+        self.ft_duration_var = tk.StringVar(self.main_win)
+        self.ft_bps_var = tk.StringVar(self.main_win)
+        self.ft_next_tx_var = tk.StringVar(self.main_win)
+        # Tabbed SideFrame Channel
+        self.link_holder_var = tk.BooleanVar(self.main_win)
+        # Tabbed SideFrame Monitor
+        self.mon_to_add_var = tk.StringVar(self.main_win)       #
+        self.mon_cmd_var = tk.BooleanVar(self.main_win)          #
+        self.mon_poll_var = tk.BooleanVar(self.main_win)         #
+        self.mon_port_var = tk.StringVar(self.main_win)
+        self.mon_call_var = tk.StringVar(self.main_win)
+        self.mon_scroll_var = tk.BooleanVar(self.main_win)
+        self.mon_aprs_var = tk.BooleanVar(self.main_win)
+        self.mon_pid_var = tk.StringVar(self.main_win)
+        self.mon_port_on_vars = {}
+        all_ports = PORT_HANDLER.ax25_ports
+        for port_id in all_ports:
+            self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
+            self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
+        self.mon_port_var.set('0')
+        self.mon_aprs_var.set(True)
         ##############
         # Controlling
         self._ch_alarm = False
@@ -153,6 +178,7 @@ class PoPT_GUI_Main:
         self._is_closing = False
         self._init_state = 0
         self._tracer_alarm = False
+        self._flip05 = True
         ####################
         # GUI PARAM
         self._parm_btn_blink_time = 1  # s
@@ -188,6 +214,7 @@ class PoPT_GUI_Main:
         self.fwd_Path_plot_win = None
         self.dualPort_settings_win = None
         self.dualPortMon_win = None
+        self.conn_Path_plot_win = None
         ####################################
         self._init_GUI_vars_fm_CFG()
         ####################################
@@ -205,7 +232,7 @@ class PoPT_GUI_Main:
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
-        main_pw.add(l_frame, weight=100)
+        main_pw.add(l_frame, weight=10)
         main_pw.add(self._r_frame, weight=1)
         ###########################################
         # Channel Buttons
@@ -244,17 +271,30 @@ class PoPT_GUI_Main:
         self._Alarm_Frame = AlarmIconFrame(r_pack_frame)
         ##############
         # GUI Buttons
-        self._side_btn_frame_top = tk.Frame(r_pack_frame, )
-        self._side_btn_frame_top.pack(expand=True, pady=5)
-        self._init_btn()
+        conn_btn_frame = tk.Frame(r_pack_frame, )
+        conn_btn_frame.pack(expand=False, pady=5, fill=tk.X)
+        # conn_btn_frame.pack(anchor='w', fill=tk.X, expand=True)
+        self._init_btn(conn_btn_frame)
+        ##############
+        # Pane Tabbed Frame
+        side_frame_pw = ttk.PanedWindow(r_pack_frame, orient=tk.VERTICAL, )
+        side_frame_pw.pack(expand=True, pady=5, fill=tk.BOTH)
+        tabbedF_upper_frame = tk.Frame(side_frame_pw)
+        tabbedF_upper_frame.pack()
+        tabbedF_lower_frame = tk.Frame(side_frame_pw)
+        tabbedF_lower_frame.pack()
+        side_frame_pw.add(tabbedF_upper_frame, weight=1)
+        side_frame_pw.add(tabbedF_lower_frame, weight=1)
+        bw_plot_frame = tk.Frame(self.main_win)
         ##############
         # tabbed Frame
-        self.tabbed_sideFrame = SideTabbedFrame(self)
+        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame)
+        self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, bw_plot_frame)
         ############################
         # Canvas Plot
         self._bw_plot_x_scale = []
         self._bw_plot_lines = {}
-        self._init_bw_plot()
+        self._init_bw_plot(bw_plot_frame)
         ###########################
         # set KEY BINDS
         self._set_binds()
@@ -311,6 +351,7 @@ class PoPT_GUI_Main:
             self.fwd_Path_plot_win,
             self.dualPort_settings_win,
             self.dualPortMon_win,
+            self.conn_Path_plot_win,
         ]:
             if wn is not None:
                 wn.destroy()
@@ -354,7 +395,7 @@ class PoPT_GUI_Main:
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
         for ch_id in list(self._channel_vars.keys()):
-            ch_vars[ch_id] = cleanup_obj_to_dict(self._channel_vars[ch_id])
+            ch_vars[ch_id] = convert_obj_to_dict(self._channel_vars[ch_id])
             del ch_vars[ch_id]['t2speech_buf']
             del ch_vars[ch_id]['rx_beep_cooldown']
             del ch_vars[ch_id]['rx_beep_tr']
@@ -413,14 +454,11 @@ class PoPT_GUI_Main:
         self.set_noty_bell_active()
         self.set_tracer_icon()
         self.set_Beacon_icon(self.setting_bake.get())
+        self.chk_master_sprech_on()
 
-    def _init_bw_plot(self):
+    def _init_bw_plot(self, frame):
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 6)
-        """
-        self._bw_fig = Figure(figsize=(8, 5), dpi=80)
-        self._ax = self._bw_fig.add_subplot(111)
-        """
         self._bw_fig, self._ax = plt.subplots(dpi=100)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
         self._ax.axis([0, 10, 0, 100])  # TODO As Option
@@ -432,7 +470,8 @@ class PoPT_GUI_Main:
         self._ax.tick_params(axis='y', colors='black')
         self._ax.set_xlabel(STR_TABLE['minutes'][self.language])
         self._ax.set_ylabel(STR_TABLE['occup'][self.language])
-        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._r_frame)
+        # self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._r_frame)
+        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=frame)
         self._canvas.flush_events()
         self._canvas.draw()
         # self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
@@ -479,6 +518,9 @@ class PoPT_GUI_Main:
         # Menü 3 "Tools"
         MenuTools = Menu(menubar, tearoff=False)
         MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
+        MenuTools.add_command(label="MH-Graph",
+                              command=lambda: self.open_window('ConnPathPlot'),
+                              underline=0)
         MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
                               command=lambda: self.open_window('PortStat'),
                               underline=1)
@@ -615,20 +657,20 @@ class PoPT_GUI_Main:
                              underline=0)
         menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=MenuHelp, underline=0)
 
-    def _init_btn(self):
-        btn_upper_frame = tk.Frame(self._side_btn_frame_top)
-        btn_upper_frame.pack(anchor='w')
-        self._conn_btn = tk.Button(btn_upper_frame,
+    def _init_btn(self, frame):
+        # btn_upper_frame = tk.Frame(frame)
+        # btn_upper_frame.pack(anchor='w', fill=tk.X, expand=True)
+        self._conn_btn = tk.Button(frame,
                                    text="Connect",
                                    bg="green",
                                    width=8,
                                    command=self.open_new_conn_win)
         self._conn_btn.pack(side=tk.LEFT)
 
-        self._mon_btn = tk.Button(btn_upper_frame,
+        self._mon_btn = tk.Button(frame,
                                   text="Monitor",
                                   bg="yellow", width=8, command=lambda: self.switch_channel(0))
-        self._mon_btn.pack(padx=2)
+        self._mon_btn.pack(side=tk.LEFT, padx=2)
 
     def _init_ch_btn_frame(self, root_frame):
         btn_font = ("fixedsys", 8,)
@@ -797,32 +839,32 @@ class PoPT_GUI_Main:
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=9, sticky="nsew")
         # Checkbox RX-BEEP
-        self.rx_beep_box = Checkbutton(status_frame,
-                                       text="RX-BEEP",
-                                       bg=STAT_BAR_CLR,
+        self._rx_beep_box = Checkbutton(status_frame,
+                                        text="RX-BEEP",
+                                        bg=STAT_BAR_CLR,
+                                        font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                                        activebackground=STAT_BAR_CLR,
+                                        borderwidth=0,
+                                        onvalue=1, offvalue=0,
+                                        foreground=STAT_BAR_TXT_CLR,
+                                        variable=self._rx_beep_var,
+                                        command=self._chk_rx_beep
+                                        )
+        self._rx_beep_box.grid(row=1, column=10, sticky="nsew")
+        # TODO Checkbox Time Stamp
+        self._ts_box_box = Checkbutton(status_frame,
+                                       text="T-S",
                                        font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                       activebackground=STAT_BAR_CLR,
+                                       bg=STAT_BAR_CLR,
                                        borderwidth=0,
+                                       activebackground=STAT_BAR_CLR,
                                        onvalue=1, offvalue=0,
                                        foreground=STAT_BAR_TXT_CLR,
-                                       variable=self._rx_beep_var,
-                                       command=self._chk_rx_beep
+                                       variable=self._ts_box_var,
+                                       command=self._chk_timestamp,
+                                       state='disabled'
                                        )
-        self.rx_beep_box.grid(row=1, column=10, sticky="nsew")
-        # TODO Checkbox Time Stamp
-        self.ts_box_box = Checkbutton(status_frame,
-                                      text="T-S",
-                                      font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                      bg=STAT_BAR_CLR,
-                                      borderwidth=0,
-                                      activebackground=STAT_BAR_CLR,
-                                      onvalue=1, offvalue=0,
-                                      foreground=STAT_BAR_TXT_CLR,
-                                      variable=self._ts_box_var,
-                                      command=self._chk_timestamp,
-                                      state='disabled'
-                                      )
-        self.ts_box_box.grid(row=1, column=11, sticky="nsew")
+        self._ts_box_box.grid(row=1, column=11, sticky="nsew")
 
     def _init_TXT_frame_mid(self):
         self._TXT_mid_frame.rowconfigure(1, minsize=22, weight=1)
@@ -1357,9 +1399,11 @@ class PoPT_GUI_Main:
             self._monitor_task()
             self._dualPort_monitor_task()
             self._update_qso_win()
+            self._SideFrame_tasker()
             self._update_status_win()
             self._AlarmIcon_tasker05()
             #####################
+            self._flip05 = not self._flip05
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             return True
         return False
@@ -1370,7 +1414,6 @@ class PoPT_GUI_Main:
             #####################
             self._update_stat_info_conn_timer()
             self._update_ft_info()
-            self.tabbed_sideFrame.tasker()
             self._AlarmIcon_tasker1()
             if self._ch_alarm:
                 self._ch_btn_status_update()
@@ -1409,12 +1452,6 @@ class PoPT_GUI_Main:
             return True
         return False
 
-    def _tasker_tester(self):
-        """ 5 Sec """
-        if time.time() > self._test_task_timer:
-            self._test_task_timer = time.time() + self._parm_test_task_timer
-            #####################
-
     # END TASKER
     ######################################################################
     @staticmethod
@@ -1429,6 +1466,14 @@ class PoPT_GUI_Main:
     def _AlarmIcon_tasker1(self):
         if self._Alarm_Frame:
             self._Alarm_Frame.AlarmIcon_tasker1()
+
+    def _SideFrame_tasker(self):
+        if self._flip05:
+            self.tabbed_sideFrame.tasker()
+            self.tabbed_sideFrame.on_ch_stat_change()
+        else:
+            self.tabbed_sideFrame2.tasker()
+            self.tabbed_sideFrame2.on_ch_stat_change()
 
     ###############################################################
     # QSO WIN
@@ -1578,18 +1623,18 @@ class PoPT_GUI_Main:
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if ch_vars.rx_beep_opt and self.channel_index:
-            self.rx_beep_box.select()
-            self.rx_beep_box.configure(bg='green')
+            self._rx_beep_box.select()
+            self._rx_beep_box.configure(bg='green')
         else:
-            self.rx_beep_box.deselect()
-            self.rx_beep_box.configure(bg=STAT_BAR_CLR)
+            self._rx_beep_box.deselect()
+            self._rx_beep_box.configure(bg=STAT_BAR_CLR)
 
         if ch_vars.timestamp_opt and self.channel_index:
-            self.ts_box_box.select()
-            self.ts_box_box.configure(bg='green')
+            self._ts_box_box.select()
+            self._ts_box_box.configure(bg='green')
         else:
-            self.ts_box_box.deselect()
-            self.ts_box_box.configure(bg=STAT_BAR_CLR)
+            self._ts_box_box.deselect()
+            self._ts_box_box.configure(bg=STAT_BAR_CLR)
 
     def sysMsg_to_qso(self, data, ch_index):
         if not data:
@@ -1671,7 +1716,7 @@ class PoPT_GUI_Main:
                 port_id = conf.parm_PortNr
                 tx = el[2]
                 mon_out = monitor_frame_inp(el[0], conf, self.setting_mon_encoding.get())
-                if self.tabbed_sideFrame.mon_aprs_var.get():
+                if self.mon_aprs_var.get():
                     mon_str = mon_out[0] + mon_out[1]
                 else:
                     mon_str = mon_out[0]
@@ -1695,7 +1740,7 @@ class PoPT_GUI_Main:
             if cut_len > 0:
                 self._mon_txt.delete('1.0', f"{cut_len}.0")
             self._mon_txt.configure(state="disabled", exportselection=True)
-            if tr or self.tabbed_sideFrame.mon_scroll_var.get():
+            if tr or self.mon_scroll_var.get():
                 self._see_end_mon_win()
 
     def see_end_qso_win(self):
@@ -1769,6 +1814,7 @@ class PoPT_GUI_Main:
             'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
+            'ConnPathPlot': (self.conn_Path_plot_win, ConnPathsPlot),
             # TODO .......
 
         }.get(win_key, None)
@@ -1882,14 +1928,14 @@ class PoPT_GUI_Main:
             ind = '1.0'
         tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
         tmp_txt = tmp_txt.replace('\n', '\r')
-        port_id = int(self.tabbed_sideFrame.mon_port_var.get())
+        port_id = int(self.mon_port_var.get())
         if port_id in PORT_HANDLER.get_all_ports().keys():
             port = PORT_HANDLER.get_all_ports()[port_id]
-            add = self.tabbed_sideFrame.to_add_var.get()
-            own_call = str(self.tabbed_sideFrame.mon_call_var.get())
-            poll = bool(self.tabbed_sideFrame.poll_var.get())
-            cmd = bool(self.tabbed_sideFrame.cmd_var.get())
-            pid = self.tabbed_sideFrame.mon_pid_var.get()
+            add = self.mon_to_add_var.get()
+            own_call = str(self.mon_call_var.get())
+            poll = bool(self.mon_poll_var.get())
+            cmd = bool(self.mon_cmd_var.get())
+            pid = self.mon_pid_var.get()
             pid = pid.split('>')[0]
             pid = int(pid, 16)
             text = tmp_txt.encode()
@@ -1958,7 +2004,7 @@ class PoPT_GUI_Main:
         PORT_HANDLER.set_dxAlarm()
         PORT_HANDLER.set_tracerAlarm()
         self._Alarm_Frame.set_pmsMailAlarm()
-        self.set_noty_bell()
+        # self.set_noty_bell()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
 
@@ -2003,6 +2049,7 @@ class PoPT_GUI_Main:
                 self._switch_monitor_mode()
             else:
                 self._ch_btn_clk(ch_ind)
+        self.on_channel_status_change()
 
     #####################################################################
     #
@@ -2026,8 +2073,6 @@ class PoPT_GUI_Main:
         # TODO Call just if necessary
         """ Triggerd when Connection Status has changed """
         self._ch_btn_status_update()
-        # self.change_conn_btn()
-        # self._change_conn_btn()
         self.on_channel_status_change()
 
     def _ch_btn_clk(self, ind: int):
@@ -2049,8 +2094,11 @@ class PoPT_GUI_Main:
             return
         if conn.noty_bell:
             conn.noty_bell = False
-            self._Alarm_Frame.set_Bell_alarm(False)
-            self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
+            self.reset_noty_bell_alarm()
+
+    def reset_noty_bell_alarm(self):
+        self._Alarm_Frame.set_Bell_alarm(False)
+        self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
     def set_noty_bell(self, ch_id, msg=''):
         conn = self.get_conn(ch_id)
@@ -2077,6 +2125,12 @@ class PoPT_GUI_Main:
 
     def set_noty_bell_active(self):
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
+
+    def set_aprsMail_alarm(self):
+        self._Alarm_Frame.set_aprsMail_alarm(True)
+
+    def reset_aprsMail_alarm(self):
+        self._Alarm_Frame.set_aprsMail_alarm(False)
 
     def _ch_btn_status_update(self):
         # TODO Call just if necessary
@@ -2163,6 +2217,7 @@ class PoPT_GUI_Main:
     def on_channel_status_change(self):
         """ Triggerd when Connection Status has changed + additional Trigger"""
         self.tabbed_sideFrame.on_ch_stat_change()
+        self.tabbed_sideFrame2.on_ch_stat_change()
         self.update_station_info()
 
     def _update_stat_info_conn_timer(self):
@@ -2263,8 +2318,8 @@ class PoPT_GUI_Main:
         bps_var = 'BPS: ---.---'
         next_tx = 'TX in: --- s'
         conn = self.get_conn()
-        if conn is not None:
-            if conn.ft_obj is not None:
+        if conn:
+            if conn.ft_obj:
                 ft_obj = conn.ft_obj
                 percentage_completion, data_len, data_sendet, time_spend, time_remaining, baud_rate = ft_obj.get_ft_infos()
                 prog_val = percentage_completion
@@ -2277,16 +2332,17 @@ class PoPT_GUI_Main:
                 dur_var = f'Time: {t_spend} / {t_remaining}'
                 bps_var = f"BPS: {format_number(baud_rate)}"
                 if ft_obj.param_wait:
-                    _n_tx = ft_obj.last_tx - time.time()
-                    next_tx = f'TX in: {max(round(_n_tx), 0)} s'
+                    n_tx = ft_obj.last_tx - time.time()
+                    next_tx = f'TX in: {max(round(n_tx), 0)} s'
 
-        if self.tabbed_sideFrame.ft_duration_var.get() != dur_var:
+        if self.ft_duration_var.get() != dur_var:
             self.tabbed_sideFrame.ft_progress['value'] = prog_val
-            self.tabbed_sideFrame.ft_progress_var.set(prog_var)
-            self.tabbed_sideFrame.ft_size_var.set(size_var)
-            self.tabbed_sideFrame.ft_duration_var.set(dur_var)
-            self.tabbed_sideFrame.ft_bps_var.set(bps_var)
-            self.tabbed_sideFrame.ft_next_tx_var.set(next_tx)
+            self.tabbed_sideFrame2.ft_progress['value'] = prog_val
+            self.ft_progress_var.set(prog_var)
+            self.ft_size_var.set(size_var)
+            self.ft_duration_var.set(dur_var)
+            self.ft_bps_var.set(bps_var)
+            self.ft_next_tx_var.set(next_tx)
 
     #########################################
     # TxTframe FNCs
@@ -2376,21 +2432,21 @@ class PoPT_GUI_Main:
     def _chk_rx_beep(self):
         rx_beep_check = self._rx_beep_var.get()
         if rx_beep_check:
-            if self.rx_beep_box.cget('bg') != 'green':
-                self.rx_beep_box.configure(bg='green', activebackground='green')
+            if self._rx_beep_box.cget('bg') != 'green':
+                self._rx_beep_box.configure(bg='green', activebackground='green')
         else:
-            if self.rx_beep_box.cget('bg') != STAT_BAR_CLR:
-                self.rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+            if self._rx_beep_box.cget('bg') != STAT_BAR_CLR:
+                self._rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_var().rx_beep_opt = rx_beep_check
 
     def _chk_timestamp(self):
         ts_check = self._ts_box_var.get()
         if ts_check:
-            if self.ts_box_box.cget('bg') != 'green':
-                self.ts_box_box.configure(bg='green', activebackground='green')
+            if self._ts_box_box.cget('bg') != 'green':
+                self._ts_box_box.configure(bg='green', activebackground='green')
         else:
-            if self.ts_box_box.cget('bg') != STAT_BAR_CLR:
-                self.ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+            if self._ts_box_box.cget('bg') != STAT_BAR_CLR:
+                self._ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
         self.get_ch_var().timestamp_opt = ts_check
 
     def _set_stat_typ(self, event=None):
@@ -2431,7 +2487,8 @@ class PoPT_GUI_Main:
             self.setting_tracer.set(False)
         self.set_auto_tracer()
         # FIXME
-        self.tabbed_sideFrame.set_auto_tracer_state()
+        # self.tabbed_sideFrame.set_auto_tracer_state()
+        # self.tabbed_sideFrame.set_auto_tracer_state()
         # self.set_tracer_icon()
 
     @staticmethod
@@ -2455,6 +2512,7 @@ class PoPT_GUI_Main:
         else:
             self.setting_tracer.set(False)
         self.tabbed_sideFrame.set_auto_tracer_state()
+        self.tabbed_sideFrame2.set_auto_tracer_state()
 
     def set_auto_tracer(self, event=None):
         ais_obj = PORT_HANDLER.get_aprs_ais()
@@ -2468,6 +2526,7 @@ class PoPT_GUI_Main:
             ais_obj.tracer_auto_tracer_set(set_to)
         self.setting_auto_tracer.set(set_to)
         self.tabbed_sideFrame.set_auto_tracer_state()
+        self.tabbed_sideFrame2.set_auto_tracer_state()
         # self.set_tracer_icon()
 
     @staticmethod
@@ -2495,10 +2554,7 @@ class PoPT_GUI_Main:
     def get_dx_alarm(self):
         return bool(self.setting_dx_alarm.get())
 
-    def get_side_frame(self):
-        return self._side_btn_frame_top
-
-        ######################################################################
+    ######################################################################
 
     def dx_alarm(self):
         """ Alarm when new User in MH List """
@@ -2564,3 +2620,15 @@ class PoPT_GUI_Main:
 
     def set_Beacon_icon(self, alarm_set=True):
         self._Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
+
+    def chk_master_sprech_on(self):
+        if self.setting_sprech.get():
+            SOUND.master_sprech_on = True
+            self.tabbed_sideFrame.t2speech.configure(state='normal')
+            self.tabbed_sideFrame2.t2speech.configure(state='normal')
+        else:
+            SOUND.master_sprech_on = False
+            self.tabbed_sideFrame.t2speech.configure(state='disabled')
+            self.tabbed_sideFrame2.t2speech.configure(state='disabled')
+        self.set_var_to_all_ch_param()
+

@@ -888,7 +888,7 @@ class SQL_Database:
             if res is None:
                 return False
             """
-            self._insert_BBS_in_UserDB(to_bbs)      # TODO
+            self._insert_BBS_in_UserDB(to_bbs, address)      # TODO
         return True
 
     def fwd_node_get(self):
@@ -897,11 +897,12 @@ class SQL_Database:
 
     ############################################
     # USER-DB
-    def _insert_BBS_in_UserDB(self, call):
+    def _insert_BBS_in_UserDB(self, call, address=''):
         # TODO delete self._port_handler in __init__
         if self._port_handler:
             userDB = self._port_handler.get_userDB()
-            userDB.set_typ(call, 'BBS')
+            # userDB.set_typ(call, 'BBS')
+            userDB.set_pr_mail_add_for_BBS(address)
 
     ############################################
     # APRS - WX

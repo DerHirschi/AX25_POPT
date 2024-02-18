@@ -23,8 +23,8 @@ class AlarmIconFrame(tk.Frame):
                                   foreground='#18e002')
         self._mh_label.pack(side=tk.LEFT, padx=3)
 
-        self._tracer_label = tk.Label(self, text='⨂',
-                                      font=(None, 9),
+        self._tracer_label = tk.Label(self, text='☈',
+                                      font=(None, 11),
                                       background='#313336',
                                       state='disabled',
                                       foreground='#18e002')
@@ -44,6 +44,13 @@ class AlarmIconFrame(tk.Frame):
                                       foreground='#18e002')
         self._rxEcho_label.pack(side=tk.LEFT, padx=3)
 
+        self._pms_fwd_label = tk.Label(self, text='✉⇄',
+                                       font=(None, 15,),
+                                       background='#313336',
+                                       state='disabled',
+                                       foreground='#18e002')
+        self._pms_fwd_label.pack(side=tk.LEFT, padx=3)
+
         self._pms_mail_label = tk.Label(self, text='✉',
                                         font=(None, 15,),
                                         background='#313336',
@@ -51,12 +58,12 @@ class AlarmIconFrame(tk.Frame):
                                         foreground='#18e002')
         self._pms_mail_label.pack(side=tk.LEFT, padx=3)
 
-        self._pms_fwd_label = tk.Label(self, text='✉⇄',
-                                       font=(None, 15,),
-                                       background='#313336',
-                                       state='disabled',
-                                       foreground='#18e002')
-        self._pms_fwd_label.pack(side=tk.LEFT, padx=3)
+        self._aprs_mail_label = tk.Label(self, text='Ⓐ✉',
+                                         font=(None, 15,),
+                                         background='#313336',
+                                         state='disabled',
+                                         foreground='#18e002')
+        self._aprs_mail_label.pack(side=tk.LEFT, padx=3)
 
         self._bell_label = tk.Label(self, text='☎',
                                     font=(None, 11,),
@@ -65,12 +72,15 @@ class AlarmIconFrame(tk.Frame):
                                     foreground='#18e002')
         self._bell_label.pack(side=tk.LEFT, padx=3)
 
+
+
         self._05_blink = {
             'diesel': 0,
             'dx': 0,
             'tracer': 0,
             'beacon': 0,
             'rxecho': 0,
+            'aprsmail': 0,
             'pmsmail': 0,
             'pmsfwd': 0,
             'bell': 0,
@@ -81,6 +91,7 @@ class AlarmIconFrame(tk.Frame):
             'tracer': 0,
             'beacon': 0,
             'rxecho': 0,
+            'aprsmail': 0,
             'pmsmail': 0,
             'pmsfwd': 0,
             'bell': 0,
@@ -92,6 +103,7 @@ class AlarmIconFrame(tk.Frame):
             'tracer': self._tracer_label,
             'beacon': self._beacon_label,
             'rxecho': self._rxEcho_label,
+            'aprsmail': self._aprs_mail_label,
             'pmsmail': self._pms_mail_label,
             'pmsfwd': self._pms_fwd_label,
             'bell': self._bell_label,
@@ -203,6 +215,20 @@ class AlarmIconFrame(tk.Frame):
         if self._bell_label.cget('state') == 'normal':
             self.add_blink_task('bell', 3, sec05=True)
         return
+
+    def set_aprsMail_alarm(self, alarm_set=True):
+        if alarm_set:
+            if self._aprs_mail_label.cget('state') == 'disabled':
+                bl = 3
+            else:
+                bl = 2
+        else:
+            if self._aprs_mail_label.cget('state') == 'normal':
+                bl = 3
+            else:
+                bl = 2
+
+        self.add_blink_task('aprsmail', bl, sec05=True)
 
     def set_tracerAlarm(self, alarm_set=True):
         if alarm_set:
