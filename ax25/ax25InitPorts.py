@@ -342,7 +342,7 @@ class AX25PortHandler(object):
         all_conn = self.get_all_connections()
         # Check if Connection is already in all_conn...
         if is_service:
-            ind = 11
+            ind = SERVICE_CH_START
         for k in list(all_conn.keys()):
             if new_conn == all_conn[k]:
                 if new_conn.ch_index != k:
@@ -430,12 +430,13 @@ class AX25PortHandler(object):
     def new_outgoing_connection(self,  # NICE ..
                                 dest_call: str,
                                 own_call: str,
-                                via_calls=None,  # Auto lookup in MH if not exclusive Mode
-                                port_id=-1,  # -1 Auto lookup in MH list
-                                axip_add=('', 0),  # AXIP Adress
-                                exclusive=False,  # True = no lookup in MH list
-                                link_conn=None,  # Linked Connection AX25Conn
-                                channel=1  # Channel/Connection Index = Channel-ID
+                                via_calls=None,     # Auto lookup in MH if not exclusive Mode
+                                port_id=-1,         # -1 Auto lookup in MH list
+                                axip_add=('', 0),   # AXIP Adress
+                                exclusive=False,    # True = no lookup in MH list
+                                link_conn=None,     # Linked Connection AX25Conn
+                                channel=1,          # Channel/Connection Index = Channel-ID
+                                is_service=False
                                 ):
         """ Handels New Outgoing Connections for CLI and LINKS """
         # Incoming Parameter Check
@@ -480,8 +481,8 @@ class AX25PortHandler(object):
 
         if connection:
             if link_conn:
-                channel = SERVICE_CH_START
-            self.insert_new_connection_PH(new_conn=connection, ind=channel)
+                is_service = True
+            self.insert_new_connection_PH(new_conn=connection, ind=channel, is_service=is_service)
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
             user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
@@ -775,9 +776,12 @@ class AX25PortHandler(object):
 
     def reset_noty_bell_PH(self):
         if self.gui:
-            for conn in self.get_all_connections():
-                if conn.noty_bell:
-                    return
+            all_conn = self.get_all_connections()
+            for ch in all_conn.keys():
+                conn = all_conn[ch]
+                if conn:
+                    if conn.noty_bell:
+                        return
             self.gui.reset_noty_bell_alarm()
 
 

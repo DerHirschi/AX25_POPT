@@ -5,6 +5,7 @@ import threading
 import time
 import crcmod
 
+from ax25.ax25Digi import AX25DigiConnection
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25UI_Pipe import AX25Pipe
@@ -13,6 +14,7 @@ from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
+
 if is_linux():
     import termios
 
@@ -52,10 +54,11 @@ class AX25Port(threading.Thread):
         self.is_smart_digi = False
         self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
         self._digi_TXD = time.time()
-        self._digi_buf = []     # RX/TX
-        self._UI_buf = []       # TX
+        self._digi_buf = []  # RX/TX
+        self._UI_buf = []  # TX
         self.connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
+        self.digi_connections = {}
         """ APRS Stuff """
         # self.aprs_stat = self.port_cfg.parm_aprs_station
         # self.aprs_ais = PORT_HANDLER.get_aprs_ais()
@@ -70,8 +73,8 @@ class AX25Port(threading.Thread):
         # Dual Port
         self.dualPort_primaryPort = None
         self.dualPort_secondaryPort = None
-        self.dualPort_lastRX = b''      # Prim
-        self.dualPort_echoFilter = []   # Prim
+        self.dualPort_lastRX = b''  # Prim
+        self.dualPort_echoFilter = []  # Prim
         self.dualPort_cfg = {}
         self.dualPort_monitor_buf = []
         # PORT_HANDLER.dualPort_Monitor_buffer
@@ -239,9 +242,19 @@ class AX25Port(threading.Thread):
         for call in ax25_frame.via_calls:
             if call.call_str in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                    ax25_frame.short_via_calls(call.call_str)
-                    if ax25_frame.ctl_byte.flag == 'SABM':
-                        self._digi_buf.append(ax25_frame)
+                    if ax25_frame.addr_uid not in self.digi_connections.keys():
+                        digi_conf = dict(
+                                short_via_calls=True,
+                                max_buff=2000,  # bytes till RNR
+                                port=self,
+                                digi_call=str(call.call_str),
+                                ax25_conf=ax25_frame.get_frame_conf()
+                            )
+
+                        self.digi_connections[ax25_frame.addr_uid] = AX25DigiConnection(digi_conf)
+                    self.digi_connections[ax25_frame.addr_uid].digi_rx_handle(ax25_frame)
+                    return True
+
         return False
 
     def _rx_dualPort_handler(self, ax25_frame: AX25Frame):
@@ -676,10 +689,10 @@ class AX25Port(threading.Thread):
         if self.monitor_out:
             port_cfg = self.port_cfg
             self.port_handler.update_monitor(
-                    # monitor_frame_inp(ax25frame, self.port_cfg),
-                    ax25frame,
-                    port_conf=port_cfg,
-                    tx=tx)
+                # monitor_frame_inp(ax25frame, self.port_cfg),
+                ax25frame,
+                port_conf=port_cfg,
+                tx=tx)
 
     def _mh_input(self, ax25frame_conf, tx: bool):
         # MH / Port-Statistic

@@ -1,8 +1,11 @@
 ###########################################################################################################
 # 2.107.x
 Fixes:
+- Scripterror nach Auslösen des "bell" Befehls und Disconnect der jeweiligen Station
 
 Optimierung:
+- AX25Frame get Frame Parameters
+- MH/Statistic Input geändert auf neue AX25Frame Parameter
 
 Neue Implementierungen / Funktionen:
 
