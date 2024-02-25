@@ -435,6 +435,7 @@ class AX25PortHandler(object):
                                 axip_add=('', 0),   # AXIP Adress
                                 exclusive=False,    # True = no lookup in MH list
                                 link_conn=None,     # Linked Connection AX25Conn
+                                # digi_conn=None,     # DIGI Connection AX25Conn
                                 channel=1,          # Channel/Connection Index = Channel-ID
                                 is_service=False
                                 ):
@@ -446,6 +447,13 @@ class AX25PortHandler(object):
             via_calls = []
         if link_conn and not via_calls and exclusive:
             return False, 'Error: Link No Via Call'
+        """
+        if digi_conn and not via_calls and exclusive:
+            return False, 'Error: DIGI No Via Call'
+        if digi_conn:
+            if not digi_conn.digi_call:
+                return False, 'Error: DIGI No DIGI-CALL'
+        """
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
         mh_entry = self.mh.mh_get_data_fm_call(dest_call, port_id)
@@ -477,9 +485,12 @@ class AX25PortHandler(object):
                                                                    dest_call=dest_call,
                                                                    via_calls=via_calls,
                                                                    axip_add=axip_add,
-                                                                   link_conn=link_conn)
+                                                                   link_conn=link_conn,
+                                                                   # digi_conn=digi_conn
+                                                                   )
 
         if connection:
+            # if link_conn or digi_conn:
             if link_conn:
                 is_service = True
             self.insert_new_connection_PH(new_conn=connection, ind=channel, is_service=is_service)
@@ -519,13 +530,13 @@ class AX25PortHandler(object):
     def update_monitor(self, ax25frame, port_conf, tx=False):
         """ Called from AX25Conn """
         self._monitor_buffer.append((
-            ax25frame,
+            ax25frame.get_frame_conf(),
             port_conf,
             bool(tx)
         ))
 
     def get_monitor_data(self):
-        data = list(self._monitor_buffer)
+        data = list(self._monitor_buffer[:400])
         self._monitor_buffer = self._monitor_buffer[len(data):]
         return data
 
@@ -657,18 +668,16 @@ class AX25PortHandler(object):
     def get_all_connections(self, with_null=False):
         # TODO Need a better solution to get all connections
         ret = {}
-        for port_id in self.ax25_ports.keys():
-            port = self.ax25_ports[port_id]
+        for port_id, port in self.ax25_ports.items():
             if port:
                 all_port_conn = port.connections
-                for conn_key in all_port_conn.keys():
-                    conn = all_port_conn[conn_key]
-                    if conn:
-                        if conn.ch_index or with_null:    # Not Channel 0
-                            if conn.ch_index not in ret.keys():
-                                ret[conn.ch_index] = conn
-                            else:
-                                print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                for conn_key, conn in all_port_conn.items():
+                    if conn and (conn.ch_index or with_null):  # Not Channel 0 unless with_null is True
+                        if conn.ch_index not in ret:
+                            ret[conn.ch_index] = conn
+                        else:
+                            print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                            conn.ch_index += 1  # FIXME
         return ret
 
     def get_all_stat_cfg(self):

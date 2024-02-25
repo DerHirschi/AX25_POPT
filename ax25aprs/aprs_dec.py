@@ -3,15 +3,15 @@ from UserDB.UserDBmain import USER_DB
 from fnc.loc_fnc import coordinates_to_locator, locator_distance
 
 
-def parse_aprs_fm_ax25frame(ax25frame):
-    aprs_msg_input = f"{ax25frame.from_call.call_str}>{ax25frame.to_call.call_str}"
-    for via_call in ax25frame.via_calls:
-        aprs_msg_input += f",{via_call.call_str}"
-        if via_call.c_bit:
+def parse_aprs_fm_ax25frame(ax25frame_conf: dict):
+    aprs_msg_input = f"{ax25frame_conf.get('from_call_str', '')}>{ax25frame_conf.get('to_call_str', '')}"
+    for call_str, c_bit in ax25frame_conf.get('via_calls_str_c_bit', []):
+        aprs_msg_input += f",{call_str}"
+        if c_bit:
             aprs_msg_input += "*"
     # print(aprs_msg_input)
     try:
-        aprs_msg_input += f":{ax25frame.data.decode('UTF-8')}"
+        aprs_msg_input += f":{ax25frame_conf.get('payload', b'').decode('UTF-8')}"  # FIXME UTF-8 ??
     except UnicodeDecodeError:
         # print(f"APRS Data decoding error: {ax25frame.data}")
         return {}
@@ -46,12 +46,12 @@ def format_aprs_f_aprs_mon(aprs_frame, own_locator, add_new_user=False):
     return ret + msg + '\n'
 
 
-def format_aprs_f_monitor(ax25frame=None, own_locator='', aprs_pack=None, add_new_user=True):
-    if ax25frame is not None:
-        if ax25frame.ctl_byte.flag != 'UI':
+def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None, add_new_user=True):
+    if ax25frame_conf:
+        if ax25frame_conf.get('ctl_flag', '') != 'UI':
             return ''
-        aprs_msg = parse_aprs_fm_ax25frame(ax25frame)
-    elif aprs_pack is not None:
+        aprs_msg = parse_aprs_fm_ax25frame(ax25frame_conf)
+    elif aprs_pack:
         aprs_msg = aprs_pack
     else:
         return ''

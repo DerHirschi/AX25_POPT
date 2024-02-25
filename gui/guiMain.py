@@ -1366,10 +1366,10 @@ class PoPT_GUI_Main:
         if self._is_closing:
             self._tasker_quit()
         else:
-            # self._tasker_prio()
+            prio = self._tasker_prio()
             if not self._tasker_05_sec():
                 if not self._tasker_1_sec():
-                    if not self._tasker_5_sec():
+                    if not self._tasker_5_sec() and not prio:
                         self.main_win.update_idletasks()
             # self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
@@ -1382,7 +1382,6 @@ class PoPT_GUI_Main:
 
     def _tasker_prio(self):
         """ Prio Tasks every Irritation flip flop """
-        pass
         """
         if self._prio_task_flip:
             
@@ -1390,13 +1389,14 @@ class PoPT_GUI_Main:
            
         self._prio_task_flip = not self._prio_task_flip
         """
+        return self._monitor_task()
 
     def _tasker_05_sec(self):
         """ 0.5 Sec """
         if time.time() > self._non_prio_task_timer:
             #####################
             # self._aprs_task()
-            self._monitor_task()
+            # self._monitor_task()
             self._dualPort_monitor_task()
             self._update_qso_win()
             self._SideFrame_tasker()
@@ -1711,11 +1711,9 @@ class PoPT_GUI_Main:
         if mon_buff:
             tr = False
             self._mon_txt.configure(state="normal")
-            for el in mon_buff:
-                conf = el[1]
-                port_id = conf.parm_PortNr
-                tx = el[2]
-                mon_out = monitor_frame_inp(el[0], conf, self.setting_mon_encoding.get())
+            for axframe_conf, port_conf, tx in mon_buff:
+                port_id = port_conf.parm_PortNr
+                mon_out = monitor_frame_inp(axframe_conf, port_conf, self.setting_mon_encoding.get())
                 if self.mon_aprs_var.get():
                     mon_str = mon_out[0] + mon_out[1]
                 else:
@@ -1739,10 +1737,11 @@ class PoPT_GUI_Main:
             cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
             if cut_len > 0:
                 self._mon_txt.delete('1.0', f"{cut_len}.0")
-            self._mon_txt.configure(state="disabled", exportselection=True)
             if tr or self.mon_scroll_var.get():
                 self._see_end_mon_win()
-
+            self._mon_txt.configure(state="disabled", exportselection=True)
+            return True
+        return False
     def see_end_qso_win(self):
         self._out_txt.see("end")
 

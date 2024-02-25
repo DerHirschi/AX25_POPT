@@ -169,6 +169,7 @@ class AX25Conn(object):
         self.LINK_rx_buff: b'' = b''
         self.is_link = False
         self.is_link_remote = False
+        self.digi_call = ''
         """ Port Variablen"""
         self.vs = 0  # Sendefolgenummer     / N(S) = V(R)  TX
         self.vr = 0  # Empfangsfolgezählers / N(S) = V(R)  TX
@@ -518,7 +519,22 @@ class AX25Conn(object):
         self.LINK_Connection = conn
         self.is_link = True
         #   self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
+        return True
 
+    def new_digi_connection(self, conn):
+        conn: AX25Conn
+        if conn is None:
+            return False
+        if self.uid in self.port_handler.link_connections.keys():
+            self.zustand_exec.change_state(4)
+            self.zustand_exec.tx(None)
+            return False
+        self.ax25_out_frame.digi_call = str(conn.digi_call)
+        self.port_handler.link_connections[str(self.uid)] = self, conn.digi_call
+
+        self.LINK_Connection = conn
+        self.is_link = True
+        #   self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
         return True
 
     def link_disco(self, reconnect=True):
@@ -630,38 +646,6 @@ class AX25Conn(object):
             return True
         return False
 
-    ###############################################
-    # Channel ECHO  # TODO Again !
-    """
-    def ch_echo_add(self, ax25_connection):
-        if ax25_connection not in self.ch_echo:
-            self.ch_echo.append(ax25_connection)
-
-    def ch_echo_del(self, ax25_connection):
-        if ax25_connection in self.ch_echo:
-            self.ch_echo.remove(ax25_connection)
-
-    def ch_echo_frm_tx(self, inp: b''):
-        if inp:
-            tag = '\r<CH-ECHO> CH: '
-            if tag.encode(self.encoding, 'ignore') not in inp:
-                echo_str = '\r{}{} - {}>\r'.format(tag, self.ch_index, self.my_call_str)
-                inp = echo_str.encode(self.encoding, 'ignore') + inp
-                for conn in self.ch_echo:
-                    if conn.ch_index != self.ch_index:
-                        conn.tx_buf_rawData += inp
-
-    def ch_echo_frm_rx(self, inp: b''):
-        if inp:
-            tag = '\r<CH-ECHO> CH: '
-            if tag.encode(self.encoding, 'ignore') not in inp:
-                echo_str = '\r{}{} - {}>\r'.format(tag, self.ch_index, self.to_call_str)
-                inp = echo_str.encode(self.encoding, 'ignore') + inp
-                for conn in self.ch_echo:
-                    if conn.ch_index != self.ch_index:
-                        conn.tx_buf_rawData += inp
-    """
-    ###############################################
     ###############################################
     # Timer usw
     def set_RNR(self, link_remote=False):
@@ -1059,9 +1043,21 @@ class AX25Conn(object):
         self.port_handler.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
+            if self.digi_call:
+                self._accept_digi_connection()
+                return
             self.send_to_link(
                 f'\r*** Connected to {self.to_call_str}\r'.encode('ASCII', 'ignore')
             )
+
+    def _accept_digi_connection(self):
+        print('DIGI Conn accept..')
+        if not self.LINK_Connection:
+            return False
+        digi_uid = self.LINK_Connection.uid
+        digi_uid = reverse_uid(digi_uid)
+        link_conn_port = self.LINK_Connection.own_port
+        link_conn_port.accept_digi_conn(digi_uid)
 
     def insert_new_connection(self):
         """ Insert connection for handling """

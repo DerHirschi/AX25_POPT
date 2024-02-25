@@ -1398,6 +1398,13 @@ class NoneCLI(DefaultCLI):
     """ ? To Disable CLI / Remote ? """
     cli_name = 'NO-CLI'  # DON'T CHANGE !
     service_cli = True
+    c_text = ''
+    bye_text = ''
+    prompt = ''
+    prefix = b''
+
+    def cli_exec(self, inp=b''):
+        pass
 
     def _exec_cmd(self):
         pass

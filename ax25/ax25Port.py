@@ -58,7 +58,7 @@ class AX25Port(threading.Thread):
         self._UI_buf = []  # TX
         self.connections: {str: AX25Conn} = {}
         self.pipes: {str: AX25Pipe} = {}
-        self.digi_connections = {}
+        self._digi_connections = {}
         """ APRS Stuff """
         # self.aprs_stat = self.port_cfg.parm_aprs_station
         # self.aprs_ais = PORT_HANDLER.get_aprs_ais()
@@ -178,6 +178,7 @@ class AX25Port(threading.Thread):
 
     def _rx_link_handler(self, ax25_frame: AX25Frame):
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
+            print(f"Link-Conn RX: {ax25_frame.addr_uid}")
             conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
             link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
             if link_call:
@@ -200,7 +201,7 @@ class AX25Port(threading.Thread):
         if self.port_handler.get_aprs_ais():
             self.port_handler.get_aprs_ais().aprs_ax25frame_rx(
                 port_id=self.port_id,
-                ax25_frame=ax25_frame
+                ax25frame_conf=ax25_frame.get_frame_conf()
             )
             return True
         return False
@@ -222,6 +223,8 @@ class AX25Port(threading.Thread):
                 return True
         return False
 
+    ########################################################
+    # DIGI
     def _rx_digi_handler(self, ax25_frame: AX25Frame):
         if not self.stupid_digi_calls:
             return False
@@ -242,20 +245,32 @@ class AX25Port(threading.Thread):
         for call in ax25_frame.via_calls:
             if call.call_str in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                    if ax25_frame.addr_uid not in self.digi_connections.keys():
+                    if ax25_frame.addr_uid not in self._digi_connections.keys():
                         digi_conf = dict(
                                 short_via_calls=True,
-                                max_buff=2000,  # bytes till RNR
+                                max_buff=2000,     # bytes till RNR
+                                last_rx_fail_n=2,  # t1 * n fail when no SABM and Init state
                                 port=self,
                                 digi_call=str(call.call_str),
                                 ax25_conf=ax25_frame.get_frame_conf()
                             )
 
-                        self.digi_connections[ax25_frame.addr_uid] = AX25DigiConnection(digi_conf)
-                    self.digi_connections[ax25_frame.addr_uid].digi_rx_handle(ax25_frame)
+                        self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(digi_conf)
+                    self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
                     return True
 
         return False
+
+    def accept_digi_conn(self, uid: str):
+        if uid not in self._digi_connections.keys():
+            print('accept_digi_conn: UID ERROR')
+            print(f'accept_digi_conn uid: {uid}')
+            print(f'accept_digi_conn keys: {self._digi_connections.keys()}')
+            return False
+        print('accept_digi_conn')
+        self._digi_connections[uid].add_rx_conn_cron()
+
+    #################################################
 
     def _rx_dualPort_handler(self, ax25_frame: AX25Frame):
         if not self.dualPort_cfg:
@@ -577,12 +592,15 @@ class AX25Port(threading.Thread):
                              via_calls: [str],
                              axip_add: (str, int) = ('', 0),
                              link_conn=None,
+                             # digi_conn=None
                              ):
 
         if link_conn is None:
             link_conn = False
+        """ 
         if own_call not in self.my_stations and not link_conn:
             return False
+        """
         if link_conn and not via_calls:
             return False
         ax_frame = AX25Frame()
@@ -600,6 +618,17 @@ class AX25Port(threading.Thread):
                 if link_conn.new_link_connection(conn):
                     return conn
             return False
+        """
+        if digi_conn:
+            print('Digi-Conn')
+            conn.is_link_remote = True
+            # digi_conn.is_link_remote = True
+            conn.digi_call = digi_conn.digi_call
+            if conn.new_digi_connection(digi_conn):
+                if digi_conn.new_digi_connection(conn):
+                    return conn
+            return False
+        """
         return conn
 
     def new_connection(self, ax25_frame: AX25Frame):
