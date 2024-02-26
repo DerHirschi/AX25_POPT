@@ -178,7 +178,7 @@ class AX25Port(threading.Thread):
 
     def _rx_link_handler(self, ax25_frame: AX25Frame):
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
-            print(f"Link-Conn RX: {ax25_frame.addr_uid}")
+            # print(f"Link-Conn RX: {ax25_frame.addr_uid}")
             conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
             link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
             if link_call:
@@ -249,7 +249,7 @@ class AX25Port(threading.Thread):
                     if ax25_frame.addr_uid not in self._digi_connections.keys():
                         digi_conf = dict(
                                 short_via_calls=True,
-                                max_buff=2000,     # bytes till RNR
+                                max_buff=10,     # bytes till RNR
                                 last_rx_fail_sec=60,  # sec fail when no SABM and Init state
                                 port=self,
                                 digi_call=str(call.call_str),

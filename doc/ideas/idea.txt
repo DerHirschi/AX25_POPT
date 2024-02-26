@@ -43,7 +43,7 @@ Ideas/TODO's :
 
 ✓ "Managed-DIGI" - Digi übernimmt Flusskontrolle
   ✓ Via Pfad wird gekürzt, um Overhead zu sparen *optional
-  - RNR kann gesetzt werden, wenn Digi-Buffer eine bestimmte Größe erreicht hat
+  ✓ RNR kann gesetzt werden, wenn Digi-Buffer eine bestimmte Größe erreicht hat
   ✓ Pfad & Port wird automatisch aus der MH-Liste bezogen wenn bekannt
   - DIGI Port über DIGI SSID wählbar (Port 0: -0, Port 1: -1, ...)
 

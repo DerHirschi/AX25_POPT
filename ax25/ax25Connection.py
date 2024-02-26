@@ -156,14 +156,14 @@ class AX25Conn(object):
         """
         # print(self.my_path)
         """ IO Buffer Packet For Handling """
-        self.tx_buf_ctl: [AX25Frame] = []  # Buffer for CTL ( S ) Frame to send on next Cycle
-        self.tx_buf_2send: [AX25Frame] = []  # Buffer for Sending. Will be processed in ax25PortHandler
-        self.tx_buf_unACK: {int: AX25Frame} = {}  # Buffer for UNACK I-Frames
-        self._rx_buf_last_frame = ax25_frame  # Buffers for last Frame !?!
-        self.rx_buf_last_data = b''  # Buffers for last Frame !?!
+        self.tx_buf_ctl: [AX25Frame] = []           # Buffer for CTL (S) Frame to send on next Cycle
+        self.tx_buf_2send: [AX25Frame] = []         # Buffer for Sending. Will be processed in ax25PortHandler
+        self.tx_buf_unACK: {int: AX25Frame} = {}    # Buffer for UNACK I-Frames
+        self._rx_buf_last_frame = ax25_frame        # Buffers for last Frame !?!
+        self.rx_buf_last_data = b''                 # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
-        self.tx_buf_rawData: b'' = b''          # Buffer for TX RAW Data that will be packed into a Frame
-        self.rx_tx_buf_guiData: [('', b'')] = []   # Buffer for GUI QSO Window ('TX', data), ('RX', data)
+        self.tx_buf_rawData: b'' = b''              # Buffer for TX RAW Data that is not packed yet into a Frame
+        self.rx_tx_buf_guiData: [('', b'')] = []    # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection = None
         self.LINK_rx_buff: b'' = b''

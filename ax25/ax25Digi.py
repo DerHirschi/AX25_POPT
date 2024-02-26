@@ -116,10 +116,6 @@ class AX25DigiConnection:
         self._disco_rx_conn()
 
     def _state_1_rx(self, ax25_frame):
-        if self._rx_conn:
-            print(f"Digi: rx-conn: {self._rx_conn} - State: {self._rx_conn.zustand_exec.stat_index}")
-        else:
-            print(f"Digi: rx-conn: {self._rx_conn}")
         if ax25_frame.ctl_byte.flag == 'SABM':
             if not self._tx_conn_uid:
                 self._init_digi_conn(ax25_frame)
@@ -137,7 +133,7 @@ class AX25DigiConnection:
 
     def _state_2(self, ax25_frame=None):
         if ax25_frame.ctl_byte.flag == 'SABM':
-            print('DIGI INIT SABM RX')
+            # print('DIGI INIT SABM RX')
             self._last_rx = time.time()
         elif ax25_frame.ctl_byte.flag == 'DISC':
             self._abort_digi_conn(ax25_frame)
@@ -145,14 +141,14 @@ class AX25DigiConnection:
 
     def _state_3(self, ax25_frame=None):
         if ax25_frame:
-            print(f"DIGI S3: {ax25_frame.ctl_byte.flag}")
             if self._rx_conn:
                 self._rx_conn.handle_rx(ax25_frame=ax25_frame)
-            print(f"DIGI S3:----------------")
+            """
             if self._rx_conn:
                 print(f"RX-State: {self._rx_conn.zustand_exec.stat_index}")
             if self._tx_conn:
                 print(f"TX-State: {self._tx_conn.zustand_exec.stat_index}")
+            """
         if self.is_done():
             self._port_handler.delete_digi_conn(self._rx_conn_uid)
 
@@ -167,6 +163,16 @@ class AX25DigiConnection:
                 return False
         return True
 
+    def _is_running(self):
+        if any((not self._rx_conn, not self._tx_conn)):
+            return False
+        if self._rx_conn:
+            if self._rx_conn.zustand_exec.stat_index < 5:
+                return False
+        if self._tx_conn:
+            if self._tx_conn.zustand_exec.stat_index < 5:
+                return False
+        return True
     def _disco_tx_conn(self):
         if self._tx_conn:
             if self._tx_conn.zustand_exec.stat_index:
@@ -184,13 +190,6 @@ class AX25DigiConnection:
             return
         state_exec(ax25_frame=ax25_frame)
 
-    def _check_last_SABM(self):
-        if self._state != 2:
-            return False
-        if time.time() - self._last_rx > self._conf_last_rx_fail:
-            print(f'DIGI _check_last_SABM: ABORT')
-            self._abort_digi_conn()
-
     def _abort_digi_conn(self, ax25_frame=None):
         print(f"DIGI ABORT: {self._rx_conn_uid}")
         if ax25_frame and self._rx_conn:
@@ -200,17 +199,87 @@ class AX25DigiConnection:
         self._rx_conn = None
         self._state = 3
 
+    ################################################
+    # Crone Tasks
     def digi_crone(self):
-        self._check_last_SABM()
-        # self.debug_out()
+        """ !! called fm Port Tasker LOOP !! """
+        if self._state == 2:
+            self._check_last_SABM()
+            return
+        if self._state == 3:
+            if self._is_running():
+                self._check_RNR()
+                self._check_RNR_reset()
 
-    def debug_out(self):
-        print("DIGI-Debug")
-        print(f"RX-CONN-Debug: {self._rx_conn}")
-        if self._rx_conn:
-            print(f"RX-State-Debug: {self._rx_conn.zustand_exec.stat_index}")
-        print(f"TX-CONN-Debug: {self._tx_conn}")
-        if self._tx_conn:
-            print(f"TX-State-Debug: {self._tx_conn.zustand_exec.stat_index}")
+    def _check_last_SABM(self):
+        if self._state != 2:
+            return False
+        if time.time() - self._last_rx > self._conf_last_rx_fail:
+            print(f'DIGI _check_last_SABM: ABORT')
+            self._abort_digi_conn()
 
+    def _check_RNR_reset(self):
+        if not self._check_buffer_limit_RxConn():
+            self._unset_TxConn_RNR()
+        if not self._check_buffer_limit_TxConn():
+            self._unset_RxConn_RNR()
 
+    def _check_RNR(self):
+        if self._check_buffer_limit_RxConn():
+            self._set_TxConn_RNR()
+        if self._check_buffer_limit_TxConn():
+            self._set_RxConn_RNR()
+
+    def _set_TxConn_RNR(self):
+        if not self._tx_conn:
+            print("Digi-Error: _set_TxConn_RNR")
+            self._state_0_error()
+            return
+        if self._tx_conn.is_RNR:
+            return
+        self._tx_conn.set_RNR()
+
+    def _unset_TxConn_RNR(self):
+        if not self._tx_conn:
+            print("Digi-Error: _unset_TxConn_RNR")
+            self._state_0_error()
+            return
+        if not self._tx_conn.is_RNR:
+            return
+        self._tx_conn.unset_RNR()
+
+    def _set_RxConn_RNR(self):
+        if not self._rx_conn:
+            print("Digi-Error: _set_RxConn_RNR")
+            self._state_0_error()
+            return
+        if self._rx_conn.is_RNR:
+            return
+        self._rx_conn.set_RNR()
+
+    def _unset_RxConn_RNR(self):
+        if not self._rx_conn:
+            print("Digi-Error: _unset_RxConn_RNR")
+            self._state_0_error()
+            return
+        if not self._rx_conn.is_RNR:
+            return
+        self._rx_conn.unset_RNR()
+
+    def _check_buffer_limit_RxConn(self):
+        if self._rx_conn.n2 > 4:
+            return True
+        if not self._conf_max_buff:
+            return False
+        if len(self._rx_conn.tx_buf_rawData) > self._conf_max_buff:
+            return True
+        return False
+
+    def _check_buffer_limit_TxConn(self):
+        if self._tx_conn.n2 > 4:
+            return True
+        if not self._conf_max_buff:
+            return False
+        if len(self._tx_conn.tx_buf_rawData) > self._conf_max_buff:
+            return True
+        return False
