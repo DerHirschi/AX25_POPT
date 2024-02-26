@@ -30,7 +30,6 @@ Ideas/TODO's :
   - ax25Connection.py aufräumen
   ✓ ax25Statistics aufräumen
   - ax25Statistics überarbeiten
-  - "Managed-DIGI" - Digi übernimmt Flusskontrolle
 
 ✓ KISS
   - kompatibilität TNC nur teilweise
@@ -41,6 +40,12 @@ Ideas/TODO's :
   - Multicast Channels/Groups
   - Multicast CLI/NODE
   - Multicast Filter
+
+✓ "Managed-DIGI" - Digi übernimmt Flusskontrolle
+  ✓ Via Pfad wird gekürzt, um Overhead zu sparen *optional
+  - RNR kann gesetzt werden, wenn Digi-Buffer eine bestimmte Größe erreicht hat
+  ✓ Pfad & Port wird automatisch aus der MH-Liste bezogen wenn bekannt
+  - DIGI Port über DIGI SSID wählbar (Port 0: -0, Port 1: -1, ...)
 
 - Telnet Port
 - TCP-Listen/Kiss Device Port
@@ -60,7 +65,8 @@ Ideas/TODO's :
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
 - Logbuch
-- Channel-Echo überarbeiten (derzeit deaktiviert da Buggy)
+- Converse Mode intern
+  - Ping-Pong Converse
 - QSO Fenster/Tool
 - Debugging Tool
 ✓ PMS (S&F ohne Gedöns)

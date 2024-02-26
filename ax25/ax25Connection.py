@@ -177,6 +177,7 @@ class AX25Conn(object):
         self.t2 = 0  # Respond Delay
         self.t3 = 0  # Connection Hold
         self.n2 = 0  # Fail Counter / No Response Counter
+        self._await_disco = False
         """ Port Config Parameter """
         self.cfg = cfg
         self.parm_PacLen = self.cfg.parm_PacLen  # Max Pac len
@@ -357,9 +358,14 @@ class AX25Conn(object):
             self.conn_cleanup()
             # self.port_handler.delete_connection(self)
             # self.own_port.del_connections(conn=self)
+            return
         if self.zustand_exec.stat_index == 1:
             if not self.tx_buf_ctl:
                 self.zustand_exec.stat_index = 0
+            return
+        if self._await_disco:
+            self._wait_for_disco()
+            return
 
     def _app_cron(self):
         if self._link_crone():   # DIGI / LINK Connection / Node Funktion
@@ -554,14 +560,15 @@ class AX25Conn(object):
                     self.port_handler.del_link(self.LINK_Connection.uid)
                     # print(self.zustand_exec.stat_index)
                     # if self.zustand_exec.stat_index not in [0, 1]:
-                    if reconnect:
+                    if reconnect and not self.digi_call:
                         self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
                         self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
+                    if self.digi_call:
+                        self.LINK_Connection.conn_disco()
+                    else:
+                        self.LINK_Connection.cli.change_cli_state(state=1)
+                        self.LINK_Connection.cli.send_prompt()
                     self.LINK_Connection.del_link()
-                    # self.LINK_Connection.init_cli()
-                    self.LINK_Connection.cli.change_cli_state(state=1)
-                    self.LINK_Connection.cli.send_prompt()
-                    # self.LINK_Connection.cli.build_prompt()
 
     def send_to_link(self, inp: b''):
         if inp:
@@ -589,11 +596,23 @@ class AX25Conn(object):
             self._bbsFwd_disc()  # TODO return "is_"self.bbs_connection
             self.set_T1(stop=True)
             # self.zustand_exec.tx(None)
-            if self.zustand_exec.stat_index in [2, 4]:
+            if self.zustand_exec.stat_index in [2, 4] or self._await_disco:
                 self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
-                self.zustand_exec.change_state(4)
+                if self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK:
+                    self._await_disco = True
+                    print(f"DISCO and buff not NULL !! tx_buf_rawData: {self.tx_buf_rawData}")
+                    print(f"DISCO and buff not NULL !! tx_buf_2send: {self.tx_buf_2send}")
+                    print(f"DISCO and buff not NULL !! tx_buf_unACK: {self.tx_buf_unACK}")
+                else:
+                    self.zustand_exec.change_state(4)
+
+    def _wait_for_disco(self):
+        if self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK:
+            return
+        self._await_disco = False
+        self.zustand_exec.change_state(4)
 
     def conn_cleanup(self):
         # print(f"conn_cleanup: {self.uid}\n"

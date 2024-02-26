@@ -11,7 +11,9 @@ Optimierung:
 - Monitortask (Es empfiehlt sich den Monitor bei der Dateiübertragung via AXIP auf den jeweiligen Port abzuschalten)
 
 Neue Implementierungen / Funktionen:
-
+- "Managed-Digi/Smart-Digi/L3-Digi" Digi übernimmt Flusskontrolle anstatt alle Frames "Dumm" zu digipeaten.
+  - Via Pfad wird gekürzt *optional
+  - Pfad & Port wird automatisch aus der MH-Liste bezogen wenn bekannt
 ###########################################################################################################
 ###########################################################################################################
 # 2.106.x

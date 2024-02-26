@@ -51,7 +51,7 @@ class AX25Port(threading.Thread):
         """ DIGI """
         self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
         # self.is_smart_digi = self.port_cfg.parm_isSmartDigi
-        self.is_smart_digi = False
+        self.is_smart_digi = True
         self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
         self._digi_TXD = time.time()
         self._digi_buf = []  # RX/TX
@@ -242,6 +242,7 @@ class AX25Port(threading.Thread):
         return False
 
     def _rx_managed_digi(self, ax25_frame):
+        self._cleanup_digi_conn()
         for call in ax25_frame.via_calls:
             if call.call_str in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
@@ -249,7 +250,7 @@ class AX25Port(threading.Thread):
                         digi_conf = dict(
                                 short_via_calls=True,
                                 max_buff=2000,     # bytes till RNR
-                                last_rx_fail_n=2,  # t1 * n fail when no SABM and Init state
+                                last_rx_fail_sec=60,  # sec fail when no SABM and Init state
                                 port=self,
                                 digi_call=str(call.call_str),
                                 ax25_conf=ax25_frame.get_frame_conf()
@@ -258,7 +259,6 @@ class AX25Port(threading.Thread):
                         self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(digi_conf)
                     self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
                     return True
-
         return False
 
     def accept_digi_conn(self, uid: str):
@@ -270,6 +270,24 @@ class AX25Port(threading.Thread):
         print('accept_digi_conn')
         self._digi_connections[uid].add_rx_conn_cron()
 
+    def delete_digi_conn(self, uid: str):
+        if uid in self._digi_connections.keys():
+            print(f"DIGI-Conn DEL: {uid}")
+            del self._digi_connections[uid]
+
+    def _cleanup_digi_conn(self):
+        for uid, digi_conn in list(self._digi_connections.items()):
+            # print(f"DIGI-CONn: {uid}")
+            # digi_conn.debug_out()
+            if digi_conn.is_done():
+                print(f"DIGI-CONN Cleanup {uid}")
+                self.delete_digi_conn(uid)
+
+    def _digi_task(self):
+        self._cleanup_digi_conn()
+        for uid, digi_conn in list(self._digi_connections.items()):
+            # print(f"DIGI-CONN TASK: {uid}")
+            digi_conn.digi_crone()
     #################################################
 
     def _rx_dualPort_handler(self, ax25_frame: AX25Frame):
@@ -341,7 +359,8 @@ class AX25Port(threading.Thread):
                 conn.tx_buf_2send = []
                 conn.REJ_is_set = False
                 for el in snd_buf:
-                    if el.digi_call and conn.is_link:
+                    # if el.digi_call and conn.is_link:
+                    if el.digi_call:
                         # TODO Just check for digi_call while encoding
                         el.digi_check_and_encode(call=el.digi_call, h_bit_enc=True)
                     else:
@@ -507,7 +526,7 @@ class AX25Port(threading.Thread):
             return False
         data = dict(
             tx=bool(tx),
-            ax25frame=ax25frame,
+            ax25frame=ax25frame.get_frame_conf(),
             frame_rawData=bytes(ax25frame.data_bytes)
         )
         if not double:
@@ -550,6 +569,7 @@ class AX25Port(threading.Thread):
     def _task_Port(self):
         """ Execute Port related Cronjob like Beacon sending"""
         self._task_connections()
+        self._digi_task()
 
     def _task_connections(self):
         """ Execute Cronjob on all Connections"""
