@@ -673,11 +673,30 @@ class AX25PortHandler(object):
                 all_port_conn = port.connections
                 for conn_key, conn in all_port_conn.items():
                     if conn and (conn.ch_index or with_null):  # Not Channel 0 unless with_null is True
+                        while conn.ch_index in ret:
+                            print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                            conn.ch_index += 1  # FIXME
+                        ret[conn.ch_index] = conn
+                        """
                         if conn.ch_index not in ret:
                             ret[conn.ch_index] = conn
                         else:
                             print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
                             conn.ch_index += 1  # FIXME
+                        """
+        return ret
+
+    def get_all_digiConn(self):
+        ret = {}
+        for port_id, port in self.ax25_ports.items():
+            if port:
+                all_digi_conn = port.get_digi_conn()
+                for conn_key, conn in all_digi_conn.items():
+                    if conn_key not in ret:
+                        ret[conn_key] = conn
+                    else:
+                        print(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
+                        # conn.ch_index += 1
         return ret
 
     def get_all_stat_cfg(self):
@@ -792,6 +811,22 @@ class AX25PortHandler(object):
                     if conn.noty_bell:
                         return
             self.gui.reset_noty_bell_alarm()
+
+    ##############################################################
+    #
+    def debug_Connections(self):
+        all_conn = self.get_all_connections(with_null=True)
+        all_linkConn = self.link_connections
+        all_digiConn = self.get_all_digiConn()
+        print('ALL Conn ----------------------')
+        for ch_id, conn in all_conn.items():
+            print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state()}")
+        print('ALL LinkConn ------------------')
+        for link_uid, conn_tpl in all_linkConn.items():
+            print(f"LINK-UID: {link_uid} - UID: {conn_tpl[0].uid} - STATE: {conn_tpl[0].get_state()} - LINK: {conn_tpl[1]}")
+        print('ALL DIGIConn ------------------')
+        for digi_uid, conn in all_digiConn.items():
+            print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()}")
 
 
 PORT_HANDLER = AX25PortHandler()

@@ -178,7 +178,7 @@ class AX25Port(threading.Thread):
 
     def _rx_link_handler(self, ax25_frame: AX25Frame):
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
-            # print(f"Link-Conn RX: {ax25_frame.addr_uid}")
+            print(f"Link-Conn RX: {ax25_frame.addr_uid}")
             conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
             link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
             if link_call:
@@ -247,13 +247,14 @@ class AX25Port(threading.Thread):
             if call.call_str in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
                     if ax25_frame.addr_uid not in self._digi_connections.keys():
+                        ax25_conf = ax25_frame.get_frame_conf()
                         digi_conf = dict(
                                 short_via_calls=True,
                                 max_buff=10,     # bytes till RNR
                                 last_rx_fail_sec=60,  # sec fail when no SABM and Init state
                                 port=self,
                                 digi_call=str(call.call_str),
-                                ax25_conf=ax25_frame.get_frame_conf()
+                                ax25_conf=ax25_conf
                             )
 
                         self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(digi_conf)
@@ -288,6 +289,13 @@ class AX25Port(threading.Thread):
         for uid, digi_conn in list(self._digi_connections.items()):
             # print(f"DIGI-CONN TASK: {uid}")
             digi_conn.digi_crone()
+
+    def get_digi_conn(self):
+        return self._digi_connections
+
+    def add_frame_to_digiBuff(self, ax25frame: AX25Frame):
+        self._digi_buf.append(ax25frame)
+
     #################################################
 
     def _rx_dualPort_handler(self, ax25_frame: AX25Frame):
@@ -662,6 +670,7 @@ class AX25Port(threading.Thread):
                     (ax25_frame.from_call.call_str != ax25_frame.to_call.call_str):
                 break
 
+            print("Same UID !! {}".format(ax25_frame.addr_uid))
             logger.warning("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1

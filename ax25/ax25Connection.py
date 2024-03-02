@@ -528,6 +528,7 @@ class AX25Conn(object):
         return True
 
     def new_digi_connection(self, conn):
+        print(f"Conn newDIGIConn: UID: {conn.uid}")
         conn: AX25Conn
         if conn is None:
             return False
@@ -1085,6 +1086,9 @@ class AX25Conn(object):
 
     def _is_service_connection(self):
         return self.cli.service_cli
+
+    def get_state(self):
+        return self.zustand_exec.stat_index
 
 
 class DefaultStat(object):

@@ -2000,9 +2000,10 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
-        PORT_HANDLER.set_dxAlarm()
-        PORT_HANDLER.set_tracerAlarm()
-        self._Alarm_Frame.set_pmsMailAlarm()
+        # PORT_HANDLER.set_dxAlarm()
+        # PORT_HANDLER.set_tracerAlarm()
+        PORT_HANDLER.debug_Connections()
+        # self._Alarm_Frame.set_pmsMailAlarm()
         # self.set_noty_bell()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
