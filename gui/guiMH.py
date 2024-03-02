@@ -282,6 +282,9 @@ class MHWin(tk.Toplevel):
             # show a message
             call = record[3]
             vias = record[8]
+            vias = vias.split(' ')
+            vias.reverse()
+            vias = ' '.join(vias)
             port = record[2]
             if type(port) is str:
                 port = int(port.split(' ')[0])

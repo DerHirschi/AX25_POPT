@@ -45,7 +45,7 @@ Ideas/TODO's :
   ✓ Via Pfad wird gekürzt, um Overhead zu sparen *optional
   ✓ RNR kann gesetzt werden, wenn Digi-Buffer eine bestimmte Größe erreicht hat
   ✓ Pfad & Port wird automatisch aus der MH-Liste bezogen wenn bekannt
-  - DIGI Port über DIGI SSID wählbar (Port 0: -0, Port 1: -1, ...)
+  ✓ DIGI Port über DIGI SSID wählbar (Port 0: -0, Port 1: -1, ...)
 
 - Telnet Port
 - TCP-Listen/Kiss Device Port

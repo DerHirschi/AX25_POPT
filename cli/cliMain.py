@@ -479,7 +479,7 @@ class DefaultCLI(object):
         if conn[0]:
             self.state_index = 4
             return conn[1]
-        return '\r*** Link Busy\r'
+        return f'\r*** Link Busy: {conn[1]}\r'
 
     def _cmd_echo(self):  # Quit
         ret = ''

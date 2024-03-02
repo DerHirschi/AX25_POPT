@@ -39,7 +39,6 @@ class AX25Port(threading.Thread):
         # CONFIG
         self.port_cfg = port_cfg
         self.port_handler = port_handler
-        # self.beacons = self.port_handler.beacons
         self.kiss = Kiss(self.port_cfg)
         self.port_param = self.port_cfg.parm_PortParm
         self.portname = self.port_cfg.parm_PortName
@@ -244,16 +243,19 @@ class AX25Port(threading.Thread):
     def _rx_managed_digi(self, ax25_frame):
         self._cleanup_digi_conn()
         for call in ax25_frame.via_calls:
-            if call.call_str in self.stupid_digi_calls:
+            if call.call in self.stupid_digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
                     if ax25_frame.addr_uid not in self._digi_connections.keys():
                         ax25_conf = ax25_frame.get_frame_conf()
                         digi_conf = dict(
-                                short_via_calls=True,
-                                max_buff=10,     # bytes till RNR
-                                last_rx_fail_sec=60,  # sec fail when no SABM and Init state
-                                port=self,
+                                short_via_calls=True,           # Short VIA Call in AX25 Address
+                                max_buff=10,                    # bytes till RNR
+                                last_rx_fail_sec=60,            # sec fail when no SABM and Init state
+                                digi_ssid_port=True,            # DIGI SSID = TX-Port
+                                digi_auto_port=True,            # Get TX-Port fm MH-List
+                                rx_port=self,
                                 digi_call=str(call.call_str),
+                                digi_ssid=int(call.ssid),
                                 ax25_conf=ax25_conf
                             )
 

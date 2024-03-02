@@ -5,15 +5,17 @@ from ax25.ax25Connection import AX25Conn
 
 class AX25DigiConnection:
     def __init__(self, digi_conf: dict):
-        self._conf = digi_conf
         self._conf_max_buff = digi_conf.get('max_buff', 2000)
         self._conf_short_via = digi_conf.get('short_via_calls', True)
-        self._conf_last_rx_fail = self._conf.get('last_rx_fail_sec', 20)
+        self._conf_last_rx_fail = digi_conf.get('last_rx_fail_sec', 20)
+        self._conf_digi_ssid_port = digi_conf.get('digi_ssid_port', True)
+        self._conf_digi_auto_port = digi_conf.get('digi_auto_port', True)
         self._ax25_conf = digi_conf.get('ax25_conf', {})
         self._digi_call = digi_conf.get('digi_call', '')
+        self._digi_ssid = digi_conf.get('digi_ssid', 0)
         self._rx_conn_uid = self._ax25_conf.get('uid', '')
         self._tx_conn_uid = ''
-        self._rx_port = digi_conf.get('port', None)
+        self._rx_port = digi_conf.get('rx_port', None)
         self._tx_port = None
         self._rx_conn = None
         self._tx_conn = None
@@ -51,11 +53,18 @@ class AX25DigiConnection:
         self._rx_conn.digi_call = self._digi_call
         self._rx_conn_uid = self._rx_conn.uid
         if self._rx_conn_uid in self._rx_port.connections.keys():
-            self._state_0_error()
             print("ERROR DIGI - Connection ")
+            self._state_0_error()
             return
         if self._conf_short_via:
             ax25_frame.short_via_calls(self._digi_call)
+        if self._conf_digi_auto_port:
+            tx_port_id = -1
+        else:
+            tx_port_id = self._rx_port.port_id
+
+        if self._conf_digi_ssid_port:
+            tx_port_id = self._digi_ssid
 
         ax25_frame_conf = ax25_frame.get_frame_conf()
         print(f"DIGI INIT: axConf: {ax25_frame_conf}")
@@ -63,16 +72,16 @@ class AX25DigiConnection:
             dest_call=self._ax25_conf.get('to_call_str', ''),
             own_call=self._ax25_conf.get('from_call_str', ''),
             via_calls=ax25_frame_conf.get('via_calls_str', []),  # Auto lookup in MH if not exclusive Mode
-            port_id=self._rx_port.port_id,  # -1 Auto lookup in MH list
+            port_id=tx_port_id,  # -1 Auto lookup in MH list
             # axip_add=('', 0),   # AXIP Adress
-            exclusive=False,  # True = no lookup in MH list
+            exclusive=True,  # True = no lookup in MH list
             # digi_conn=self._rx_conn,  # Linked Connection AX25Conn
             # channel=1,          # Channel/Connection Index = Channel-ID
             is_service=True
         )
         if not tx_conn[0]:
-            self._state_0_error()
             print(f"Digi-Error Init: {tx_conn[1]}")
+            self._state_0_error()
             return
         self._tx_conn = tx_conn[0]
         self._tx_conn.is_link_remote = True
@@ -128,8 +137,8 @@ class AX25DigiConnection:
         return False
 
     def _state_0_error(self, ax25_frame=None):
+        print(f"Digi-Error: STATE: {self._state}")
         self._state = 0
-        print(f"Digi-Error")
         self._disco_tx_conn()
         self._disco_rx_conn()
 
@@ -138,8 +147,8 @@ class AX25DigiConnection:
             if not self._tx_conn_uid:
                 self._init_digi_conn(ax25_frame)
             else:
+                print('Digi-SABM-RX ERROR')
                 self._state_0_error()
-                print('Digi-SABM-RX')
                 # self.crone() # # SABM TX
         elif ax25_frame.ctl_byte.flag == 'DISC':
             # self._abort_digi_conn(ax25_frame)
@@ -152,7 +161,7 @@ class AX25DigiConnection:
                 self._abort_digi_conn(ax25_frame)
         else:
             # MAYBE Fallback to simple Digi Mode ?
-            print('DIGI Not Known Frame')
+            print(f'DIGI Not Known Frame: {ax25_frame.ctl_byte.flag}')
             print('DIGI Fallback')
             self._rx_port.add_frame_to_digiBuff(ax25_frame)
             self._state_0_error()
@@ -208,16 +217,17 @@ class AX25DigiConnection:
         print(f"DIGI-RX : STATE: {self._state}")
         if self._tx_conn and self._rx_conn:
             print(f"DIGI-RX : RX: {self._rx_conn.uid} - TX: {self._tx_conn.uid}")
-            print(f"DIGI-RX : RX: {self._rx_conn.get_state()} - TX: {self._tx_conn.get_state()}")
+            print(f"DIGI-RX : RX-State: {self._rx_conn.get_state()} - TX-State: {self._tx_conn.get_state()}")
         elif self._rx_conn:
             print(f"DIGI-RX : RX: {self._rx_conn.uid} ")
-            print(f"DIGI-RX : RX: {self._rx_conn.get_state()}")
+            print(f"DIGI-RX : RX-State: {self._rx_conn.get_state()}")
         elif self._tx_conn:
             print(f"DIGI-RX : TX: {self._tx_conn.uid} ")
-            print(f"DIGI-RX : TX: {self._tx_conn.get_state()}")
+            print(f"DIGI-RX : TX-State: {self._tx_conn.get_state()}")
         state_exec = self._state_tab.get(self._state, None)
         if not callable(state_exec):
             self._state_0_error()
+            print(f"DIGI-RX : ERROR: not callable(state_exec) - STATE: {self._state}")
             return
         state_exec(ax25_frame=ax25_frame)
 

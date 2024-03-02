@@ -2255,7 +2255,7 @@ class PoPT_GUI_Main:
                     sw = db_ent.Software
                 enc = db_ent.Encoding
             if conn.is_link:
-                status = 'LINK'
+                status = 'DIGI'
                 if self.stat_info_status_var.get() != status:
                     self.stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', )

@@ -4,6 +4,7 @@ Fixes:
 - Scripterror nach Auslösen des "bell" Befehls und Disconnect der jeweiligen Station
 - Programm hängt, wenn Monitor viele Daten (Dateiübertragung via AXIP) ausgeben muss
 - Monitor hat teilweise falsche Daten ausgegeben, wenn Daten von anderem Task weiterverarbeitet wurden (C-Bit/Digi-Flag, ...)
+- Beim Klicken auf MH-Liste wird VIA Pfad verkehrt herum vorausgefüllt in "Neu Verbindung" Maske
 
 Optimierung:
 - AX25Frame get Frame Parameters
@@ -13,8 +14,11 @@ Optimierung:
 Neue Implementierungen / Funktionen:
 - "Managed-Digi/Smart-Digi/L3-Digi" Digi übernimmt Flusskontrolle anstatt alle Frames "Dumm" zu digipeaten.
   - Via Pfad wird gekürzt *optional
-  - Pfad & Port wird automatisch aus der MH-Liste bezogen wenn bekannt
+  - Port wird automatisch aus der MH-Liste bezogen, wenn bekannt *optional
+    oder
+  - DIGI-SSID = TX-Port *optional
   - RNR wird gesetzt, wenn Digi-Buffer eine bestimmte Größe erreicht hat oder N2 > 5
+
 ###########################################################################################################
 ###########################################################################################################
 # 2.106.x

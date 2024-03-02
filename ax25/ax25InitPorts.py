@@ -461,7 +461,9 @@ class AX25PortHandler(object):
             if mh_entry:
                 if mh_entry.all_routes:
                     # port_id = int(mh_entry.port_id)
-                    via_calls += min(list(mh_entry.all_routes), key=len)
+                    mh_vias = list(mh_entry.route)
+                    mh_vias.reverse()
+                    via_calls += mh_vias
                     if not axip_add[0]:
                         axip_add = tuple(mh_entry.axip_add)
         if not axip_add[0] and mh_entry:
@@ -470,11 +472,13 @@ class AX25PortHandler(object):
             port_id = int(mh_entry.port_id)
         if port_id not in self.ax25_ports.keys():
             return False, 'Error: Invalid Port'
+        if self.ax25_ports[port_id].dualPort_primaryPort:
+            port_id = self.ax25_ports[port_id].dualPort_primaryPort.port_id
         if self.ax25_ports[port_id].port_typ == 'AXIP':
             if not axip_add:
-                return False, 'Error: No AXIP Address'
+                return False, f'Error: No AXIP Address - PORT-ID: {port_id}'
             if not axip_add[0]:
-                return False, 'Error: No AXIP Address'
+                return False, f'Error: No AXIP Address - PORT-ID: {port_id}'
         if link_conn and not via_calls:
             return False, 'Error: Link No Via Call'
         """
