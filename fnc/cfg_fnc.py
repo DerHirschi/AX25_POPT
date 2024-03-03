@@ -53,9 +53,13 @@ def save_to_file(filename: str, data):
     except FileNotFoundError:
         with open(CFG_data_path + filename, 'xb') as f:
             pickle.dump(data, f, 2)
-    except EOFError:
-        pass
+    except EOFError as e:
+        print(f"save_to_file Error: {e}")
+        logger.error(f"save_to_file Error: {e}")
+        logger.error(f"save_to_file Error: {data}")
+        print(f"save_to_file Error: {data}")
     except TypeError as e:
+        print(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {data}")
         print(f"save_to_file Error: {data}")

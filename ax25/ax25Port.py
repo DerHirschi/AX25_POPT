@@ -10,6 +10,7 @@ from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
+from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 from fnc.os_fnc import is_linux
@@ -48,7 +49,7 @@ class AX25Port(threading.Thread):
         self.parm_TXD = self.port_cfg.parm_TXD
         self.TXD = time.time()
         """ DIGI """
-        self.stupid_digi_calls = self.port_cfg.parm_StupidDigi_calls
+        self.digi_calls = self.port_cfg.parm_StupidDigi_calls
         # self.is_smart_digi = self.port_cfg.parm_isSmartDigi
         self.is_smart_digi = True
         self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
@@ -225,15 +226,15 @@ class AX25Port(threading.Thread):
     ########################################################
     # DIGI
     def _rx_digi_handler(self, ax25_frame: AX25Frame):
-        if not self.stupid_digi_calls:
+        if not self.digi_calls:
             return False
-        if self.is_smart_digi:
-            return self._rx_managed_digi(ax25_frame)
-        return self._rx_simple_digi(ax25_frame)
+        # if self.is_smart_digi:
+        return self._rx_managed_digi(ax25_frame)
+        # return self._rx_simple_digi(ax25_frame)
 
     def _rx_simple_digi(self, ax25_frame):
         for call in ax25_frame.via_calls:
-            if call.call_str in self.stupid_digi_calls:
+            if call.call_str in self.digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
                     self._digi_buf.append(ax25_frame)
                     # self.set_digi_TXD()
@@ -243,25 +244,25 @@ class AX25Port(threading.Thread):
     def _rx_managed_digi(self, ax25_frame):
         self._cleanup_digi_conn()
         for call in ax25_frame.via_calls:
-            if call.call in self.stupid_digi_calls:
+            if call.call in self.digi_calls:
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                    if ax25_frame.addr_uid not in self._digi_connections.keys():
-                        ax25_conf = ax25_frame.get_frame_conf()
-                        digi_conf = dict(
-                                short_via_calls=True,           # Short VIA Call in AX25 Address
-                                max_buff=10,                    # bytes till RNR
-                                last_rx_fail_sec=60,            # sec fail when no SABM and Init state
-                                digi_ssid_port=True,            # DIGI SSID = TX-Port
-                                digi_auto_port=True,            # Get TX-Port fm MH-List
-                                rx_port=self,
-                                digi_call=str(call.call_str),
-                                digi_ssid=int(call.ssid),
-                                ax25_conf=ax25_conf
-                            )
-
-                        self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(digi_conf)
-                    self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
+                    digi_conf = dict(POPT_CFG.get_digi_CFG_for_Call(call.call))
+                    if digi_conf.get('managed_digi', False):
+                        if ax25_frame.addr_uid not in self._digi_connections.keys():
+                            ax25_conf = ax25_frame.get_frame_conf()
+                            digi_conf.update(dict(
+                                    rx_port=self,
+                                    digi_call=str(call.call_str),
+                                    digi_ssid=int(call.ssid),
+                                    ax25_conf=ax25_conf
+                                ))
+                            # print(digi_conf)
+                            self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(digi_conf)
+                        self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
+                        return True
+                    self._digi_buf.append(ax25_frame)
                     return True
+                return False
         return False
 
     def accept_digi_conn(self, uid: str):
@@ -850,9 +851,16 @@ class KissTCP(AX25Port):
             else:
                 if self.kiss.is_enabled:
                     # self.device.sendall(self.kiss.device_kiss_start_1())
-                    self.device.sendall(self.kiss.device_jhost())
-                    # print(self.device.recv(999))
-                    self.set_kiss_parm()
+                    try:
+                        self.device.sendall(self.kiss.device_jhost())
+                        # print(self.device.recv(999))
+                    except BrokenPipeError as e:
+                        print('{}'.format(e))
+                        logger.error('{}'.format(e))
+                        # self.device.shutdown(socket.SHUT_RDWR)
+                        self.device.close()
+                    else:
+                        self.set_kiss_parm()
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)

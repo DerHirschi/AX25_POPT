@@ -28,6 +28,7 @@ from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
 from gui.pms.guiBBS_newMSG import BBS_newMSG
 from gui.ft.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
+from gui.settings.guiDigiSettings import DIGI_SettingsWin
 from gui.settings.guiDualPortSettings import DualPortSettingsWin
 from gui.settings.guiPipeToolSettings import PipeToolSettings
 from gui.plots.guiPlotPort import PlotWindow
@@ -578,6 +579,9 @@ class PoPT_GUI_Main:
                                  underline=0)
         MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
                                  command=lambda: self._open_settings_window('beacon_sett'),
+                                 underline=0)
+        MenuSettings.add_command(label='Digipeater',
+                                 command=lambda: self._open_settings_window('digi_setting'),
                                  underline=0)
 
         MenuSettings.add_separator()
@@ -1417,7 +1421,7 @@ class PoPT_GUI_Main:
             self._AlarmIcon_tasker1()
             if self._ch_alarm:
                 self._ch_btn_status_update()
-            if self.settings_win is not None:
+            if hasattr(self.settings_win, 'tasker'):
                 self.settings_win.tasker()
             if SOUND.master_sound_on:
                 # TODO Sound Task
@@ -1774,22 +1778,24 @@ class PoPT_GUI_Main:
         if not win_key:
             return
         if self.settings_win:
+            self.settings_win.lift()
             return
         settings_win = {
-            'priv_win': PrivilegWin,  # Priv Win
-            'keybinds': KeyBindsHelp,  # Keybinds Help WIN
-            'about': About,  # About WIN
-            'aprs_sett': APRSSettingsWin,  # APRS Settings
-            'ft_manager': FileTransferManager,  # FT Manager
-            'pipe_sett': PipeToolSettings,  # Pipe Tool
+            'priv_win': PrivilegWin,            # Priv Win              # TODO move to open_window
+            'keybinds': KeyBindsHelp,           # Keybinds Help WIN     # TODO move to open_window
+            'about': About,                     # About WIN             # TODO move to open_window
+            'aprs_sett': APRSSettingsWin,       # APRS Settings
+            'ft_manager': FileTransferManager,  # FT Manager            # TODO move to open_window
+            'pipe_sett': PipeToolSettings,      # Pipe Tool
             # 'user_db': UserDB,  # UserDB
-            'mcast_sett': MulticastSettings,  # Multicast Settings
-            'l_holder': LinkHolderSettings,  # Linkholder
-            'rx_echo_sett': RxEchoSettings,  # RX Echo
-            'beacon_sett': BeaconSettings,  # Beacon Settings
-            'port_sett': PortSettingsWin,  # Port Settings
-            'stat_sett': StationSettingsWin,  # Stat Settings
-            'pms_setting': PMS_Settings,  # PMS Settings
+            'mcast_sett': MulticastSettings,    # Multicast Settings
+            'l_holder': LinkHolderSettings,     # Linkholder
+            'rx_echo_sett': RxEchoSettings,     # RX Echo
+            'beacon_sett': BeaconSettings,      # Beacon Settings
+            'port_sett': PortSettingsWin,       # Port Settings
+            'stat_sett': StationSettingsWin,    # Stat Settings
+            'pms_setting': PMS_Settings,        # PMS Settings
+            'digi_setting': DIGI_SettingsWin,   # DIGI Settings
         }.get(win_key, '')
         if callable(settings_win):
             self.settings_win = settings_win(self)

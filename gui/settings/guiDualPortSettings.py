@@ -66,9 +66,9 @@ class DP_cfg_Tab(tk.Frame):
             return {}
 
         return dict(
-            tx_primary=bool(self._tx_prim_var.get()),                               # TX Primary/Secondary
-            auto_tx=bool(self._tx_auto_var.get()),                                  # Auto TX
-            auto_tx_mode=int(DUALPORT_TX_MODE.get(self._tx_auto_mode_var.get(), 0)),     # Auto TX Mode
+            tx_primary=bool(self._tx_prim_var.get()),  # TX Primary/Secondary
+            auto_tx=bool(self._tx_auto_var.get()),  # Auto TX
+            auto_tx_mode=int(DUALPORT_TX_MODE.get(self._tx_auto_mode_var.get(), 0)),  # Auto TX Mode
             primary_port_id=int(prim_port),
             secondary_port_id=int(sec_port)
         )
@@ -79,11 +79,11 @@ class DualPortSettingsWin(tk.Toplevel):
         tk.Toplevel.__init__(self)
         self._lang = root_win.language
         self._root_win = root_win
-        self.win_height = 330
-        self.win_width = 600
+        win_height = 330
+        win_width = 600
         self.style = root_win.style
-        self.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
+        self.geometry(f"{win_width}x"
+                      f"{win_height}+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
@@ -102,13 +102,11 @@ class DualPortSettingsWin(tk.Toplevel):
         self.tab_list: {int: DP_cfg_Tab} = {}
 
         all_dualPorts = POPT_CFG.get_dualPort_CFG()
-        for port_id in all_dualPorts.keys():
-            dp_cfg = all_dualPorts.get(port_id, {})
-            if dp_cfg:
-                tab = DP_cfg_Tab(self.tabControl, dp_cfg, )
-                self.tab_list[port_id] = tab
-                port_lable_text = 'Port {}'.format(port_id)
-                self.tabControl.add(tab, text=port_lable_text)
+        for port_id, dp_cfg in all_dualPorts.items():
+            tab = DP_cfg_Tab(self.tabControl, dp_cfg, )
+            self.tab_list[port_id] = tab
+            port_lable_text = 'Port {}'.format(port_id)
+            self.tabControl.add(tab, text=port_lable_text)
 
         ###########################################
         # BTN
@@ -132,8 +130,8 @@ class DualPortSettingsWin(tk.Toplevel):
         MenuVerb.add_command(label=STR_TABLE['new'][self._lang], command=self._new_dualPort_cfg)
         MenuVerb.add_separator()
         MenuVerb.add_command(label=STR_TABLE['delete'][self._lang],
-                              command=self._del_dualPort_cfg
-                              )
+                             command=self._del_dualPort_cfg
+                             )
         menubar.add_cascade(label="Dual-Port", menu=MenuVerb, underline=0)
 
     def _new_dualPort_cfg(self, event=None):
@@ -191,9 +189,9 @@ class DualPortSettingsWin(tk.Toplevel):
         if not cfg:
             return
         if any((
-            bool(cfg.get('primary_port_id', -1) == -1),
-            bool(cfg.get('secondary_port_id', -1) == -1),
-            bool(cfg.get('primary_port_id', -1) == cfg.get('secondary_port_id', -1))
+                bool(cfg.get('primary_port_id', -1) == -1),
+                bool(cfg.get('secondary_port_id', -1) == -1),
+                bool(cfg.get('primary_port_id', -1) == cfg.get('secondary_port_id', -1))
         )):
             return
         all_dualPorts = PORT_HANDLER.get_all_dualPorts_primary()

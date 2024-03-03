@@ -5,7 +5,8 @@ from ax25.ax25Connection import AX25Conn
 
 class AX25DigiConnection:
     def __init__(self, digi_conf: dict):
-        self._conf_max_buff = digi_conf.get('max_buff', 2000)
+        self._conf_max_buff = digi_conf.get('max_buff', 10)
+        self._conf_max_n2 = digi_conf.get('max_n2', 5)
         self._conf_short_via = digi_conf.get('short_via_calls', True)
         self._conf_last_rx_fail = digi_conf.get('last_rx_fail_sec', 20)
         self._conf_digi_ssid_port = digi_conf.get('digi_ssid_port', True)
@@ -308,8 +309,14 @@ class AX25DigiConnection:
         self._rx_conn.unset_RNR()
 
     def _check_buffer_limit_RxConn(self):
-        if self._rx_conn.n2 > 4:
-            return True
+        if all((
+            not self._conf_max_buff,
+            not self._conf_max_n2
+        )):
+            return False
+        if self._conf_max_n2:
+            if self._rx_conn.n2 > self._conf_max_n2:
+                return True
         if not self._conf_max_buff:
             return False
         if len(self._rx_conn.tx_buf_rawData) > self._conf_max_buff:
@@ -317,8 +324,14 @@ class AX25DigiConnection:
         return False
 
     def _check_buffer_limit_TxConn(self):
-        if self._tx_conn.n2 > 4:
-            return True
+        if all((
+            not self._conf_max_buff,
+            not self._conf_max_n2
+        )):
+            return False
+        if self._conf_max_n2:
+            if self._tx_conn.n2 > self._conf_max_n2:
+                return True
         if not self._conf_max_buff:
             return False
         if len(self._tx_conn.tx_buf_rawData) > self._conf_max_buff:

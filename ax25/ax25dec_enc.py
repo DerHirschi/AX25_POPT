@@ -70,7 +70,7 @@ def decode_FRMR(ifield):
     logger.warning("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
     logger.warning("PID: {}".format(pid))
     logger.warning("Data: {}".format("".join(data)))
-    return tmp
+    return tmp.encode('ASCII', 'ignore')
 
 
 class Call:

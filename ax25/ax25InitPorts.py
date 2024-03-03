@@ -180,15 +180,20 @@ class AX25PortHandler(object):
     # Setting/Parameter Updates
     def update_digi_setting(self):
         # TODO
-        for port_kk in self.ax25_ports.keys():
-            port = self.ax25_ports[port_kk]
+        digi_cfg = {}
+        for port_kk, port in self.ax25_ports.items():
+            # port = self.ax25_ports[port_kk]
             new_digi_calls = []
             for stat_key in port.my_stations:
                 if stat_key in self.ax25_stations_settings.keys():
                     if self.ax25_stations_settings[stat_key].stat_parm_is_StupidDigi:
                         new_digi_calls.append(stat_key)
+                        if stat_key not in digi_cfg:
+                            digi_cfg[stat_key] = POPT_CFG.get_digi_CFG_for_Call(stat_key)
             self.ax25_ports[port_kk].port_cfg.parm_StupidDigi_calls = new_digi_calls
-            self.ax25_ports[port_kk].stupid_digi_calls = new_digi_calls  # Same Object !!
+            self.ax25_ports[port_kk].digi_calls = new_digi_calls  # Same Object !!
+        POPT_CFG.set_digi_CFG(digi_cfg)
+        # print(POPT_CFG.get_digi_CFG())
 
     #######################################################################
     # Port Handling
