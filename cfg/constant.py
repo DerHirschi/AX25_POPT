@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.107.7'
+VER = '2.107.8'
 """
 LANGUAGE:
 0 = German
@@ -71,6 +71,14 @@ STATION_TYPS = [
     'APRS-WX',
     'GATEWAY',
     'OTHER',
+]
+
+NO_REMOTE_STATION_TYPE = [
+    'NODE',
+    'BBS',
+    'SYS-BBS',
+    'DIGI',
+    'CONVERS',
 ]
 
 STATION_ID_SYSOP = [

@@ -18,6 +18,16 @@ Neue Implementierungen / Funktionen:
     oder
   - DIGI-SSID = TX-Port *optional
   - RNR wird gesetzt, wenn Digi-Buffer eine bestimmte Größe erreicht hat oder N2 > 5
+  - Remote Befehle werden automatisch deaktiviert, wenn Typ der Gegenstation NODE, BBS, SYS-BBS, DIGI, CONVERS ist.
+    (Können jederzeit wieder aktiviert werden)
+- UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News
+  - $time = 20:39:00
+  - $date = 03-03-2024
+  - $channel = Kanal NR
+  - $portNr = Port NR
+  - $destName = Name der Gegenstation, wenn bekannte, ansonsten Call der Gegenstation
+  - $distance = Distanz zur Gegenstation
+  - $connNr = Connect Nr
 
 ###########################################################################################################
 ###########################################################################################################

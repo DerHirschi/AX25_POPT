@@ -5,6 +5,7 @@ import logging
 import ax25.ax25Connection
 from cfg import constant, config_station
 from cli.BaycomLogin import BaycomLogin
+from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
@@ -166,9 +167,15 @@ class DefaultCLI(object):
     def get_ts_prompt(self):
         return f"\r{self.my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
 
-    def send_output(self, ret):
+    def send_output(self, ret, env_vars=True):
         if ret:
             if type(ret) is str:
+                if env_vars:
+                    ret = replace_StringVARS(ret,
+                                             port=self.own_port,
+                                             port_handler=self.port_handler,
+                                             connection=self.connection,
+                                             user_db=self.user_db)
                 ret = ret.encode(self.encoding[0], self.encoding[1])
                 ret = ret.replace(b'\n', b'\r')
             self.connection.tx_buf_rawData += ret
@@ -258,7 +265,7 @@ class DefaultCLI(object):
                         sys_pw=self.user_db_ent.sys_pw,
                         login_cmd=login_cmd
                     )
-                    self.send_output(self.sys_login.start())
+                    self.send_output(self.sys_login.start(), env_vars=False)
                     self.change_cli_state(3)
 
     def _send_sw_id(self):
@@ -304,9 +311,9 @@ class DefaultCLI(object):
             if self.stat_identifier is not None:
                 if self.stat_identifier:
                     if self.stat_identifier.typ == 'SYSOP':
-                        self.send_output(f'\r//N {name}\r')
+                        self.send_output(f'\r//N {name}\r', env_vars=False)
                     else:
-                        self.send_output(f'\rN {name}\r')
+                        self.send_output(f'\rN {name}\r', env_vars=False)
 
     def _find_sw_identifier(self):
 
@@ -391,20 +398,20 @@ class DefaultCLI(object):
         inp_lines = self.last_line + self.raw_input
         inp_lines = inp_lines.replace(b'\n', b'\r')
         inp_lines = inp_lines.split(b'\r')
-        _ret = ''
+        ret = ''
         self.new_last_line = inp_lines[-1]
         for li in inp_lines:
             for str_cmd in list(self.str_cmd_exec.keys()):
                 if str_cmd in li:
                     self.cmd = str_cmd
                     self.parameter = [li[len(str_cmd):]]
-                    _ret = self.str_cmd_exec[str_cmd]()
+                    ret = self.str_cmd_exec[str_cmd]()
                     self.cmd = b''
-                    self.send_output(_ret)
+                    self.send_output(ret, env_vars=False)
                     self.last_line = b''
                     self.new_last_line = b''
-                    return _ret
-        return _ret
+                    return ret
+        return ret
 
     def send_prompt(self):
         self.send_output(self.get_ts_prompt())
@@ -495,7 +502,7 @@ class DefaultCLI(object):
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {STR_TABLE['time_connected'][self.connection.cli_language]}: {conn_dauer}\r\r"
         ret += self.bye_text + '\r'
-        self.send_output(ret)
+        self.send_output(ret, env_vars=False)
         self.crone_state_index = 100  # Quit State
         return ''
 

@@ -1,11 +1,19 @@
 Ideas/TODO's :
 
-- Sysopnachricht an alle Kanäle senden
+- Sysop-Nachricht an alle Kanäle senden
 ✓ Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
 - PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)
 - ESC Befehle
-- UmgebungVARS für C-Text und der gleichen
+✓ UmgebungVARS für C-Text und der gleichen
+  ✓ $time = 20:39:00
+  ✓ $date = 03-03-2024
+  ✓ $channel = Kanal NR
+  ✓ $portNr = Port NR
+  ✓ $destName = Name der Gegenstation, wenn bekannte, ansonsten Call der Gegenstation
+  ✓ $distance = Distanz zur Gegenstation
+  ✓ $connNr = Connect Nr.
+
 - Erweiterte C-Texte
   - Mehrere C-Texte
   - C-Texte umschaltbar in "global Settings (Seiten Frame)"
@@ -43,9 +51,11 @@ Ideas/TODO's :
 
 ✓ "Managed-DIGI" - Digi übernimmt Flusskontrolle
   ✓ Via Pfad wird gekürzt, um Overhead zu sparen *optional
-  ✓ RNR kann gesetzt werden, wenn Digi-Buffer eine bestimmte Größe erreicht hat
-  ✓ Pfad & Port wird automatisch aus der MH-Liste bezogen wenn bekannt
+  ✓ RNR kann gesetzt werden, wenn Digi-Buffer oder N2 eine bestimmte Größe erreicht hat
+  ✓ Port wird automatisch aus der MH-Liste bezogen wenn bekannt
   ✓ DIGI Port über DIGI SSID wählbar (Port 0: -0, Port 1: -1, ...)
+  ? Pfad von MH-Liste.
+  ? Pfad von Link-Liste.
 
 - Telnet Port
 - TCP-Listen/Kiss Device Port
@@ -87,6 +97,7 @@ Ideas/TODO's :
     ✓ PMS abfrage AutoFWD
     - Zeitgesteuerte connects und Kommando senden (MH Liste abfragen o.Ä.)
     ✓ Beacon System überarbeiten/umstellen auf PoPT-Scheduler
+    - Zeitgesteuertes Erstellen und exportieren von Plots (Port-Stat/FWD-Pfade/MH-Routen)
 
 - EAX25
 - NetROM

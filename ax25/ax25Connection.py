@@ -9,6 +9,7 @@ import cli.cliMain
 from cfg import config_station
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
+from cfg.constant import NO_REMOTE_STATION_TYPE
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
@@ -240,7 +241,8 @@ class AX25Conn(object):
         """ Encoding """
         self.encoding = 'CP437'     # 'UTF-8'
         """ User DB Entry """
-        self.user_db_ent = False
+        self.user_db_ent = None
+        self.cli_remote = True
         self.cli_language = 0
         self._set_user_db_ent()
         """ Station Individual Parameter """
@@ -248,7 +250,6 @@ class AX25Conn(object):
         """ Init CLI """
         self.noty_bell = False
         self.cli = cli.cliMain.NoneCLI(self)
-        self.cli_remote = True
         self.cli_type = ''
         if self.stat_cfg.stat_parm_pipe is None:
             self._init_cli()
@@ -697,6 +698,7 @@ class AX25Conn(object):
             self.send_RR()
             self.set_T1()
             # self.set_T3(stop=True)
+            # TODO DICT
             if self.zustand_exec.stat_index == 8:
                 self.zustand_exec.change_state(5)
             elif self.zustand_exec.stat_index == 10:
@@ -756,6 +758,7 @@ class AX25Conn(object):
                 self._set_user_db_ent()
                 self._set_packet_param()
                 self._reinit_cli()
+
                 if self.gui:
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
                     SOUND.sprech(speech)
@@ -777,6 +780,10 @@ class AX25Conn(object):
                     self.user_db_ent.Language = int(self.gui.language)
             self.cli_language = self.user_db_ent.Language
             self.set_distance()
+            if self.user_db_ent.TYP in NO_REMOTE_STATION_TYPE:
+                self.cli_remote = False
+            else:
+                self.cli_remote = True
 
     def set_user_db_language(self, lang_ind: int):
         self.user_db_ent.Language = int(lang_ind)
