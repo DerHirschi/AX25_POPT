@@ -28,6 +28,7 @@ from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
 from gui.pms.guiBBS_newMSG import BBS_newMSG
 from gui.ft.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
+from gui.settings.guiDigiSettings import DIGI_SettingsWin
 from gui.settings.guiDualPortSettings import DualPortSettingsWin
 from gui.settings.guiPipeToolSettings import PipeToolSettings
 from gui.plots.guiPlotPort import PlotWindow
@@ -578,6 +579,9 @@ class PoPT_GUI_Main:
                                  underline=0)
         MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
                                  command=lambda: self._open_settings_window('beacon_sett'),
+                                 underline=0)
+        MenuSettings.add_command(label='Digipeater',
+                                 command=lambda: self._open_settings_window('digi_setting'),
                                  underline=0)
 
         MenuSettings.add_separator()
@@ -1366,10 +1370,10 @@ class PoPT_GUI_Main:
         if self._is_closing:
             self._tasker_quit()
         else:
-            # self._tasker_prio()
+            prio = self._tasker_prio()
             if not self._tasker_05_sec():
                 if not self._tasker_1_sec():
-                    if not self._tasker_5_sec():
+                    if not self._tasker_5_sec() and not prio:
                         self.main_win.update_idletasks()
             # self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
@@ -1382,7 +1386,6 @@ class PoPT_GUI_Main:
 
     def _tasker_prio(self):
         """ Prio Tasks every Irritation flip flop """
-        pass
         """
         if self._prio_task_flip:
             
@@ -1390,13 +1393,14 @@ class PoPT_GUI_Main:
            
         self._prio_task_flip = not self._prio_task_flip
         """
+        return self._monitor_task()
 
     def _tasker_05_sec(self):
         """ 0.5 Sec """
         if time.time() > self._non_prio_task_timer:
             #####################
             # self._aprs_task()
-            self._monitor_task()
+            # self._monitor_task()
             self._dualPort_monitor_task()
             self._update_qso_win()
             self._SideFrame_tasker()
@@ -1417,7 +1421,7 @@ class PoPT_GUI_Main:
             self._AlarmIcon_tasker1()
             if self._ch_alarm:
                 self._ch_btn_status_update()
-            if self.settings_win is not None:
+            if hasattr(self.settings_win, 'tasker'):
                 self.settings_win.tasker()
             if SOUND.master_sound_on:
                 # TODO Sound Task
@@ -1711,11 +1715,9 @@ class PoPT_GUI_Main:
         if mon_buff:
             tr = False
             self._mon_txt.configure(state="normal")
-            for el in mon_buff:
-                conf = el[1]
-                port_id = conf.parm_PortNr
-                tx = el[2]
-                mon_out = monitor_frame_inp(el[0], conf, self.setting_mon_encoding.get())
+            for axframe_conf, port_conf, tx in mon_buff:
+                port_id = port_conf.parm_PortNr
+                mon_out = monitor_frame_inp(axframe_conf, port_conf, self.setting_mon_encoding.get())
                 if self.mon_aprs_var.get():
                     mon_str = mon_out[0] + mon_out[1]
                 else:
@@ -1739,10 +1741,11 @@ class PoPT_GUI_Main:
             cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
             if cut_len > 0:
                 self._mon_txt.delete('1.0', f"{cut_len}.0")
-            self._mon_txt.configure(state="disabled", exportselection=True)
             if tr or self.mon_scroll_var.get():
                 self._see_end_mon_win()
-
+            self._mon_txt.configure(state="disabled", exportselection=True)
+            return True
+        return False
     def see_end_qso_win(self):
         self._out_txt.see("end")
 
@@ -1775,22 +1778,24 @@ class PoPT_GUI_Main:
         if not win_key:
             return
         if self.settings_win:
+            self.settings_win.lift()
             return
         settings_win = {
-            'priv_win': PrivilegWin,  # Priv Win
-            'keybinds': KeyBindsHelp,  # Keybinds Help WIN
-            'about': About,  # About WIN
-            'aprs_sett': APRSSettingsWin,  # APRS Settings
-            'ft_manager': FileTransferManager,  # FT Manager
-            'pipe_sett': PipeToolSettings,  # Pipe Tool
+            'priv_win': PrivilegWin,            # Priv Win              # TODO move to open_window
+            'keybinds': KeyBindsHelp,           # Keybinds Help WIN     # TODO move to open_window
+            'about': About,                     # About WIN             # TODO move to open_window
+            'aprs_sett': APRSSettingsWin,       # APRS Settings
+            'ft_manager': FileTransferManager,  # FT Manager            # TODO move to open_window
+            'pipe_sett': PipeToolSettings,      # Pipe Tool
             # 'user_db': UserDB,  # UserDB
-            'mcast_sett': MulticastSettings,  # Multicast Settings
-            'l_holder': LinkHolderSettings,  # Linkholder
-            'rx_echo_sett': RxEchoSettings,  # RX Echo
-            'beacon_sett': BeaconSettings,  # Beacon Settings
-            'port_sett': PortSettingsWin,  # Port Settings
-            'stat_sett': StationSettingsWin,  # Stat Settings
-            'pms_setting': PMS_Settings,  # PMS Settings
+            'mcast_sett': MulticastSettings,    # Multicast Settings
+            'l_holder': LinkHolderSettings,     # Linkholder
+            'rx_echo_sett': RxEchoSettings,     # RX Echo
+            'beacon_sett': BeaconSettings,      # Beacon Settings
+            'port_sett': PortSettingsWin,       # Port Settings
+            'stat_sett': StationSettingsWin,    # Stat Settings
+            'pms_setting': PMS_Settings,        # PMS Settings
+            'digi_setting': DIGI_SettingsWin,   # DIGI Settings
         }.get(win_key, '')
         if callable(settings_win):
             self.settings_win = settings_win(self)
@@ -2001,9 +2006,10 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
-        PORT_HANDLER.set_dxAlarm()
-        PORT_HANDLER.set_tracerAlarm()
-        self._Alarm_Frame.set_pmsMailAlarm()
+        # PORT_HANDLER.set_dxAlarm()
+        # PORT_HANDLER.set_tracerAlarm()
+        PORT_HANDLER.debug_Connections()
+        # self._Alarm_Frame.set_pmsMailAlarm()
         # self.set_noty_bell()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
@@ -2255,7 +2261,7 @@ class PoPT_GUI_Main:
                     sw = db_ent.Software
                 enc = db_ent.Encoding
             if conn.is_link:
-                status = 'LINK'
+                status = 'DIGI'
                 if self.stat_info_status_var.get() != status:
                     self.stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', )

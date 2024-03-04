@@ -1,7 +1,7 @@
 import logging
 
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, getNew_APRS_Station_cfg, \
-    getNew_APRS_ais_cfg, getNew_MH_cfg
+    getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg
 from cfg.constant import CFG_MAIN_data_file
 from fnc.cfg_fnc import load_fm_file, save_to_file
 
@@ -34,6 +34,8 @@ class Main_CFG:
             # -- Beacon
             'beacon_tasks': [],
             'dualPort_cfg': {},
+            # -- DIGI
+            'digi_cfg': {},
         }
         self.load_CFG_fm_file()
         self._set_all_default_CFGs()
@@ -157,6 +159,21 @@ class Main_CFG:
 
     def set_dualPort_CFG(self, cfg: dict):
         self._config['dualPort_cfg'] = dict(cfg)
+
+    #################################################
+    # DIGI
+    def get_digi_CFG(self):
+        return self._config.get('digi_cfg', {})
+
+    def get_digi_CFG_for_Call(self, call: str):
+        return self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG())
+
+    @staticmethod
+    def get_digi_default_CFG():
+        return getNew_digi_cfg()
+
+    def set_digi_CFG(self, cfg: dict):
+        self._config['digi_cfg'] = dict(cfg)
 
 
 POPT_CFG = Main_CFG()

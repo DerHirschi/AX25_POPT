@@ -279,9 +279,9 @@ class APRS_ais(object):
         self._aprs_proces_rx(aprs_pack=packet)
         # print(packet)
 
-    def aprs_ax25frame_rx(self, port_id, ax25_frame):
+    def aprs_ax25frame_rx(self, port_id, ax25frame_conf):
         """ RX fm AX25Frame (HF/AXIP) """
-        aprs_pack = parse_aprs_fm_ax25frame(ax25_frame)
+        aprs_pack = parse_aprs_fm_ax25frame(ax25frame_conf)
         aprs_pack['port_id'] = str(port_id)
         aprs_pack['rx_time'] = datetime.now()
         self._aprs_proces_rx(aprs_pack=aprs_pack)

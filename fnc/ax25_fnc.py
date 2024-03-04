@@ -1,13 +1,9 @@
 def reverse_uid(inp=''):
     inp = inp.split(':')
-    addr, via, ret = inp[:2], inp[2:], ''
+    addr, via = inp[:2], inp[2:]
     addr.reverse()
     via.reverse()
-    for el in addr:
-        ret += el + ':'
-    for el in via:
-        ret += el + ':'
-    return ret[:-1]
+    return ':'.join(addr + via)
 
 
 def get_call_wo_ssid(call: str):

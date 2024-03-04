@@ -720,6 +720,9 @@ class SideTabbedFrame:  # TODO
             # show a message
             call = record[1]
             vias = record[5]
+            vias = vias.split(' ')
+            vias.reverse()
+            vias = ' '.join(vias)
             port = record[3]
             if type(port) is str:
                 port = int(port.split('-')[0])
@@ -808,9 +811,9 @@ class SideTabbedFrame:  # TODO
             bell = conn.noty_bell
             if conn.is_link:
                 if hasattr(conn.LINK_Connection, 'to_call_str'):
-                    typ = f'Link {conn.LINK_Connection.to_call_str}'
+                    typ = f'DIGI {conn.LINK_Connection.to_call_str}'
                 else:
-                    typ = 'Link'
+                    typ = 'DIGI'
             if conn.pipe:
                 typ = 'Pipe'
             ent = [

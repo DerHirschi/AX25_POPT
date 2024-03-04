@@ -3,7 +3,6 @@
 
 from ax25aprs.aprs_dec import format_aprs_f_monitor
 from cfg.constant import ENCODINGS
-from fnc.ax25_fnc import get_call_str
 from UserDB.UserDBmain import USER_DB
 from fnc.str_fnc import try_decode
 
@@ -11,49 +10,54 @@ from fnc.str_fnc import try_decode
 # logger = logging.getLogger(__name__)
 
 
-def monitor_frame_inp(ax25_frame, port_cfg, decoding='Auto'):
+def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
     port_name = port_cfg.parm_PortName
     aprs_loc = port_cfg.parm_aprs_station.get('aprs_parm_loc', '')
     aprs_data = ''
-    if ax25_frame.ctl_byte.flag == 'UI':
-        aprs_data = format_aprs_f_monitor(ax25_frame, own_locator=aprs_loc)
+    ctl_flag = ax25_frame_conf.get('ctl_flag', '')
+    ctl_cmd = ax25_frame_conf.get('ctl_cmd', '')
+    ctl_hex = ax25_frame_conf.get('ctl_hex', '')
+    ctl_mon_str = ax25_frame_conf.get('ctl_mon_str', '')
+    pid_flag = ax25_frame_conf.get('pid_flag', '')
+    pid_hex = ax25_frame_conf.get('pid_hex', '')
+    from_call = ax25_frame_conf.get('from_call_str', '')
+    to_call = ax25_frame_conf.get('to_call_str', '')
+    rx_time = ax25_frame_conf.get('rx_time')
+    payload_len = ax25_frame_conf.get('payload_len', 0)
+    payload = ax25_frame_conf.get('payload', b'')
+    if ctl_flag == 'UI':
+        aprs_data = format_aprs_f_monitor(ax25_frame_conf, own_locator=aprs_loc)
 
-    from_call = get_call_str(ax25_frame.from_call.call, ax25_frame.from_call.ssid)
     from_call_d = round(USER_DB.get_distance(from_call))
     if from_call_d:
         from_call += f"({from_call_d} km)"
-    to_call = get_call_str(ax25_frame.to_call.call, ax25_frame.to_call.ssid)
     to_call_d = round(USER_DB.get_distance(to_call))
     if to_call_d:
         to_call += f"({to_call_d} km)"
-    """
-    via_calls = [get_call_str(stat.call, stat.ssid) + '*' if stat.c_bit else get_call_str(stat.call, stat.ssid) for
-                 stat in ax25_frame.via_calls]
-    """
+
     via_calls = []
-    for stat in ax25_frame.via_calls:
-        dist = round(USER_DB.get_distance(get_call_str(stat.call, stat.ssid)))
+    for call_str, c_bit in ax25_frame_conf.get('via_calls_str_c_bit', []):
+        dist = round(USER_DB.get_distance(call_str))
         if dist:
             dist = f"({dist} km)"
         else:
             dist = ''
-        if stat.c_bit:
-            via_calls.append(get_call_str(stat.call, stat.ssid) + '*' + dist)
+        if c_bit:
+            via_calls.append(call_str + '*' + dist)
         else:
-            via_calls.append(get_call_str(stat.call, stat.ssid) + dist)
+            via_calls.append(call_str + dist)
 
-    out_str = f"{port_name} {ax25_frame.rx_time.strftime('%H:%M:%S')}: {from_call} to {to_call}"
+    out_str = f"{port_name} {rx_time.strftime('%H:%M:%S')}: {from_call} to {to_call}"
     out_str += ' via ' + ' '.join(via_calls) if via_calls else ''
-    out_str += ' cmd' if ax25_frame.ctl_byte.cmd else ' rpt'
+    out_str += ' cmd' if ctl_cmd else ' rpt'
     # out_str += f' ({ax25_frame.ctl_byte.hex}) {ax25_frame.ctl_byte.mon_str}'
-    out_str += f' {ax25_frame.ctl_byte.mon_str}'
-    out_str += f'\n   ├──────▶: ctl={ax25_frame.ctl_byte.hex} pid={hex(ax25_frame.pid_byte.hex)}({ax25_frame.pid_byte.flag})'\
-        if int(ax25_frame.pid_byte.hex) else ''
-    out_str += ' len={}\n'.format(ax25_frame.data_len) if ax25_frame.data_len else '\n'
+    out_str += f' {ctl_mon_str}'
+    out_str += f'\n   ├──────▶: ctl={ctl_hex} pid={pid_hex}({pid_flag})'\
+        if int(pid_hex, 16) else ''
+    out_str += ' len={}\n'.format(payload_len) if payload_len else '\n'
 
-    if ax25_frame.data:
-        data = ax25_frame.data
-        if type(ax25_frame.data) is bytes:
+    if payload:
+        if type(payload) is bytes:
             """
             if int(ax25_frame.pid_byte.hex) == 0xCF:     # Net-Rom
                 if ax25_frame.ctl_byte.flag == 'UI':
@@ -63,24 +67,24 @@ def monitor_frame_inp(ax25_frame, port_cfg, decoding='Auto'):
             else:
             """
             if decoding == 'Auto':
-                data = try_decode(ax25_frame.data)
+                payload = try_decode(payload)
             else:
                 if decoding in ENCODINGS:
                     try:
-                        data = ax25_frame.data.decode(decoding)
+                        payload = payload.decode(decoding)
                     except UnicodeDecodeError:
-                        data = f'<BIN> {len(ax25_frame.data)} Bytes'
+                        payload = f'<BIN> {payload_len} Bytes'
         else:
-            print(f"Monitor decode Data == STR: {data} - {ax25_frame.from_call.call_str} - {ax25_frame.ctl_byte.flag}")
-        data = data.replace('\r\n', '\n').replace('\n\r', '\n').replace('\r', '\n')
-        data = data.split('\n')
-        for da in data:
-            while len(da) > 80:
-                out_str += da[:80] + '\n'
-                da = da[80:]
-            if da:
-                if da[-1] != '\n' or da[-1] != '\r':
-                    out_str += da + '\n'
+            print(f"Monitor decode Data == STR: {payload} - {from_call} - {ctl_flag}")
+        payload = payload.replace('\r', '\n')
+        payload_lines = payload.split('\n')
+        for line in payload_lines:
+            while len(line) > 100:
+                out_str += str(line[:100]) + '\n'
+                line = line[100:]
+            if line:
+                if line[-1] != '\n':
+                    out_str += str(line) + '\n'
 
         # if ax25_frame.ctl_byte.flag == 'UI':
         # out_str += aprs_data

@@ -119,8 +119,8 @@ class DefaultStation:
     stat_parm_LOC: str = ''
     # stat_parm_TYP: str = ''
     ##########################
-    stat_parm_isSmartDigi = False
-    stat_parm_is_StupidDigi = False
+    # stat_parm_isSmartDigi = False
+    stat_parm_is_Digi = False
     # Parameter for CLI
     stat_parm_cli: '' = 'NO-CLI'
     stat_parm_pipe = None
@@ -287,7 +287,7 @@ class PortConfigInit(DefaultPort):
                         """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
                         self.parm_Stations.append(new_stat_cfg)
                         # Stupid Digi
-                        if new_stat_cfg.stat_parm_is_StupidDigi:
+                        if new_stat_cfg.stat_parm_is_Digi:
                             self.parm_StupidDigi_calls.append(call)
                 if self.parm_PortTyp == 'AXIP':
                     self.parm_full_duplex = True

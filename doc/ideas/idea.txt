@@ -1,10 +1,25 @@
 Ideas/TODO's :
 
+- Sysop-Nachricht an alle Kanäle senden
 ✓ Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
 - PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)
 - ESC Befehle
-- UmgebungVARS für C-Text und der gleichen
+✓ UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
+  ✓ $ver = PoPT 2.xxx.x                         - Bake
+  ✓ $time = 20:39:00                            - Bake
+  ✓ $date = 03-03-2024                          - Bake
+  ✓ $channel = Kanal NR
+  ✓ $portNr = Port NR                           - Bake
+  ✓ $destName = Name der Gegenstation, wenn bekannte, ansonsten Call der Gegenstation
+  ✓ $destCall = Call der Gegenstation
+  ✓ $ownCall = Eigener Call
+  ✓ $distance = Distanz zur Gegenstation
+  ✓ $connNr = Connect Nr.
+  ✓ $parmMaxFrame = Max Frame Einstellungen     - Bake
+  ✓ $parmPacLen = Pakete Länge Einstellungen    - Bake
+
+
 - Erweiterte C-Texte
   - Mehrere C-Texte
   - C-Texte umschaltbar in "global Settings (Seiten Frame)"
@@ -29,7 +44,6 @@ Ideas/TODO's :
   - ax25Connection.py aufräumen
   ✓ ax25Statistics aufräumen
   - ax25Statistics überarbeiten
-  - "Managed-DIGI" - Digi übernimmt Flusskontrolle
 
 ✓ KISS
   - kompatibilität TNC nur teilweise
@@ -40,6 +54,14 @@ Ideas/TODO's :
   - Multicast Channels/Groups
   - Multicast CLI/NODE
   - Multicast Filter
+
+✓ "Managed-DIGI" - Digi übernimmt Flusskontrolle
+  ✓ Via Pfad wird gekürzt, um Overhead zu sparen *optional
+  ✓ RNR kann gesetzt werden, wenn Digi-Buffer oder N2 eine bestimmte Größe erreicht hat
+  ✓ Port wird automatisch aus der MH-Liste bezogen wenn bekannt
+  ✓ DIGI Port über DIGI SSID wählbar (Port 0: -0, Port 1: -1, ...)
+  ? Pfad von MH-Liste.
+  ? Pfad von Link-Liste.
 
 - Telnet Port
 - TCP-Listen/Kiss Device Port
@@ -59,7 +81,8 @@ Ideas/TODO's :
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
 - Logbuch
-- Channel-Echo überarbeiten (derzeit deaktiviert da Buggy)
+- Converse Mode intern
+  - Ping-Pong Converse
 - QSO Fenster/Tool
 - Debugging Tool
 ✓ PMS (S&F ohne Gedöns)
@@ -80,6 +103,7 @@ Ideas/TODO's :
     ✓ PMS abfrage AutoFWD
     - Zeitgesteuerte connects und Kommando senden (MH Liste abfragen o.Ä.)
     ✓ Beacon System überarbeiten/umstellen auf PoPT-Scheduler
+    - Zeitgesteuertes Erstellen und exportieren von Plots (Port-Stat/FWD-Pfade/MH-Routen)
 
 - EAX25
 - NetROM

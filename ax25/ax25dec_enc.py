@@ -3,6 +3,8 @@
     AX.25 Packet enc-/decoding
     TODO: Cleanup/optimising
 """
+import datetime
+
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str
 
@@ -68,7 +70,7 @@ def decode_FRMR(ifield):
     logger.warning("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
     logger.warning("PID: {}".format(pid))
     logger.warning("Data: {}".format("".join(data)))
-    return tmp
+    return tmp.encode('ASCII', 'ignore')
 
 
 class Call:
@@ -531,6 +533,47 @@ class AX25Frame:
         self.data_len = 0
         self.addr_uid = ''          # Unique ID/Address String
         self.axip_add = '', 0       # For AXIP Handling
+        self.rx_time = datetime.datetime.now()
+
+    def get_frame_conf(self):
+        return dict(
+            uid=str(self.addr_uid),
+            axip_add=(str(self.axip_add[0]), int(self.axip_add[1])),
+            from_call=str(self.from_call.call),
+            from_call_str=str(self.from_call.call_str),
+            from_call_ssid=int(self.from_call.ssid),
+            to_call=str(self.to_call.call),
+            to_call_str=str(self.to_call.call_str),
+            to_call_ssid=int(self.to_call.ssid),
+            # Via
+            via_calls_str=[str(x.call_str) for x in self.via_calls],
+            via_calls_str_c_bit=[(str(x.call_str), bool(x.c_bit)) for x in self.via_calls],
+
+            # CTL
+            ctl_type=str(self.ctl_byte.type),
+            ctl_flag=str(self.ctl_byte.flag),
+            ctl_hex=str(self.ctl_byte.hex),
+            ctl_mon_str=str(self.ctl_byte.mon_str),
+            ctl_pf=bool(self.ctl_byte.pf),
+            ctl_cmd=bool(self.ctl_byte.cmd),
+            ctl_nr=int(self.ctl_byte.nr),
+            ctl_ns=int(self.ctl_byte.ns),
+            ctl_pid=bool(self.ctl_byte.pid),
+            ctl_info=bool(self.ctl_byte.info),
+
+            pid_hex=hex(self.pid_byte.hex),
+            pid_flag=str(self.pid_byte.flag),
+            pid_esc=bool(self.pid_byte.escape),
+
+            digi_call=str(self.digi_call),
+            is_digipeated=bool(self.is_digipeated),
+
+            payload=bytes(self.data),
+            payload_len=int(self.data_len),
+            ax25_raw=bytes(self.data_bytes),
+            rx_time=self.rx_time,
+        )
+
 
     def build_uid(self, dec=True):
         self.addr_uid = '{}:{}'.format(

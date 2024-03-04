@@ -180,15 +180,20 @@ class AX25PortHandler(object):
     # Setting/Parameter Updates
     def update_digi_setting(self):
         # TODO
-        for port_kk in self.ax25_ports.keys():
-            port = self.ax25_ports[port_kk]
+        digi_cfg = {}
+        for port_kk, port in self.ax25_ports.items():
+            # port = self.ax25_ports[port_kk]
             new_digi_calls = []
             for stat_key in port.my_stations:
                 if stat_key in self.ax25_stations_settings.keys():
-                    if self.ax25_stations_settings[stat_key].stat_parm_is_StupidDigi:
+                    if self.ax25_stations_settings[stat_key].stat_parm_is_Digi:
                         new_digi_calls.append(stat_key)
+                        if stat_key not in digi_cfg:
+                            digi_cfg[stat_key] = POPT_CFG.get_digi_CFG_for_Call(stat_key)
             self.ax25_ports[port_kk].port_cfg.parm_StupidDigi_calls = new_digi_calls
-            self.ax25_ports[port_kk].stupid_digi_calls = new_digi_calls  # Same Object !!
+            self.ax25_ports[port_kk].digi_calls = new_digi_calls  # Same Object !!
+        POPT_CFG.set_digi_CFG(digi_cfg)
+        # print(POPT_CFG.get_digi_CFG())
 
     #######################################################################
     # Port Handling
@@ -342,7 +347,7 @@ class AX25PortHandler(object):
         all_conn = self.get_all_connections()
         # Check if Connection is already in all_conn...
         if is_service:
-            ind = 11
+            ind = SERVICE_CH_START
         for k in list(all_conn.keys()):
             if new_conn == all_conn[k]:
                 if new_conn.ch_index != k:
@@ -430,12 +435,14 @@ class AX25PortHandler(object):
     def new_outgoing_connection(self,  # NICE ..
                                 dest_call: str,
                                 own_call: str,
-                                via_calls=None,  # Auto lookup in MH if not exclusive Mode
-                                port_id=-1,  # -1 Auto lookup in MH list
-                                axip_add=('', 0),  # AXIP Adress
-                                exclusive=False,  # True = no lookup in MH list
-                                link_conn=None,  # Linked Connection AX25Conn
-                                channel=1  # Channel/Connection Index = Channel-ID
+                                via_calls=None,     # Auto lookup in MH if not exclusive Mode
+                                port_id=-1,         # -1 Auto lookup in MH list
+                                axip_add=('', 0),   # AXIP Adress
+                                exclusive=False,    # True = no lookup in MH list
+                                link_conn=None,     # Linked Connection AX25Conn
+                                # digi_conn=None,     # DIGI Connection AX25Conn
+                                channel=1,          # Channel/Connection Index = Channel-ID
+                                is_service=False
                                 ):
         """ Handels New Outgoing Connections for CLI and LINKS """
         # Incoming Parameter Check
@@ -445,6 +452,13 @@ class AX25PortHandler(object):
             via_calls = []
         if link_conn and not via_calls and exclusive:
             return False, 'Error: Link No Via Call'
+        """
+        if digi_conn and not via_calls and exclusive:
+            return False, 'Error: DIGI No Via Call'
+        if digi_conn:
+            if not digi_conn.digi_call:
+                return False, 'Error: DIGI No DIGI-CALL'
+        """
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
         mh_entry = self.mh.mh_get_data_fm_call(dest_call, port_id)
@@ -452,7 +466,9 @@ class AX25PortHandler(object):
             if mh_entry:
                 if mh_entry.all_routes:
                     # port_id = int(mh_entry.port_id)
-                    via_calls += min(list(mh_entry.all_routes), key=len)
+                    mh_vias = list(mh_entry.route)
+                    mh_vias.reverse()
+                    via_calls += mh_vias
                     if not axip_add[0]:
                         axip_add = tuple(mh_entry.axip_add)
         if not axip_add[0] and mh_entry:
@@ -461,11 +477,13 @@ class AX25PortHandler(object):
             port_id = int(mh_entry.port_id)
         if port_id not in self.ax25_ports.keys():
             return False, 'Error: Invalid Port'
+        if self.ax25_ports[port_id].dualPort_primaryPort:
+            port_id = self.ax25_ports[port_id].dualPort_primaryPort.port_id
         if self.ax25_ports[port_id].port_typ == 'AXIP':
             if not axip_add:
-                return False, 'Error: No AXIP Address'
+                return False, f'Error: No AXIP Address - PORT-ID: {port_id}'
             if not axip_add[0]:
-                return False, 'Error: No AXIP Address'
+                return False, f'Error: No AXIP Address - PORT-ID: {port_id}'
         if link_conn and not via_calls:
             return False, 'Error: Link No Via Call'
         """
@@ -476,12 +494,15 @@ class AX25PortHandler(object):
                                                                    dest_call=dest_call,
                                                                    via_calls=via_calls,
                                                                    axip_add=axip_add,
-                                                                   link_conn=link_conn)
+                                                                   link_conn=link_conn,
+                                                                   # digi_conn=digi_conn
+                                                                   )
 
         if connection:
+            # if link_conn or digi_conn:
             if link_conn:
-                channel = SERVICE_CH_START
-            self.insert_new_connection_PH(new_conn=connection, ind=channel)
+                is_service = True
+            self.insert_new_connection_PH(new_conn=connection, ind=channel, is_service=is_service)
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
             user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
             if user_db_ent:
@@ -518,13 +539,13 @@ class AX25PortHandler(object):
     def update_monitor(self, ax25frame, port_conf, tx=False):
         """ Called from AX25Conn """
         self._monitor_buffer.append((
-            ax25frame,
+            ax25frame.get_frame_conf(),
             port_conf,
             bool(tx)
         ))
 
     def get_monitor_data(self):
-        data = list(self._monitor_buffer)
+        data = list(self._monitor_buffer[:400])
         self._monitor_buffer = self._monitor_buffer[len(data):]
         return data
 
@@ -596,6 +617,9 @@ class AX25PortHandler(object):
                     ret[port_id] = port
         return ret
 
+    def get_port_by_id(self, port_id: int):
+        return self.ax25_ports.get(port_id, None)
+
     ####################
     # Dual Port
     def set_dualPort_fm_cfg(self):
@@ -656,18 +680,35 @@ class AX25PortHandler(object):
     def get_all_connections(self, with_null=False):
         # TODO Need a better solution to get all connections
         ret = {}
-        for port_id in self.ax25_ports.keys():
-            port = self.ax25_ports[port_id]
+        for port_id, port in self.ax25_ports.items():
             if port:
                 all_port_conn = port.connections
-                for conn_key in all_port_conn.keys():
-                    conn = all_port_conn[conn_key]
-                    if conn:
-                        if conn.ch_index or with_null:    # Not Channel 0
-                            if conn.ch_index not in ret.keys():
-                                ret[conn.ch_index] = conn
-                            else:
-                                print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                for conn_key, conn in all_port_conn.items():
+                    if conn and (conn.ch_index or with_null):  # Not Channel 0 unless with_null is True
+                        while conn.ch_index in ret:
+                            print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                            conn.ch_index += 1  # FIXME
+                        ret[conn.ch_index] = conn
+                        """
+                        if conn.ch_index not in ret:
+                            ret[conn.ch_index] = conn
+                        else:
+                            print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                            conn.ch_index += 1  # FIXME
+                        """
+        return ret
+
+    def get_all_digiConn(self):
+        ret = {}
+        for port_id, port in self.ax25_ports.items():
+            if port:
+                all_digi_conn = port.get_digi_conn()
+                for conn_key, conn in all_digi_conn.items():
+                    if conn_key not in ret:
+                        ret[conn_key] = conn
+                    else:
+                        print(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
+                        # conn.ch_index += 1
         return ret
 
     def get_all_stat_cfg(self):
@@ -775,10 +816,29 @@ class AX25PortHandler(object):
 
     def reset_noty_bell_PH(self):
         if self.gui:
-            for conn in self.get_all_connections():
-                if conn.noty_bell:
-                    return
+            all_conn = self.get_all_connections()
+            for ch in all_conn.keys():
+                conn = all_conn[ch]
+                if conn:
+                    if conn.noty_bell:
+                        return
             self.gui.reset_noty_bell_alarm()
+
+    ##############################################################
+    #
+    def debug_Connections(self):
+        all_conn = self.get_all_connections(with_null=True)
+        all_linkConn = self.link_connections
+        all_digiConn = self.get_all_digiConn()
+        print('ALL Conn ----------------------')
+        for ch_id, conn in all_conn.items():
+            print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state()}")
+        print('ALL LinkConn ------------------')
+        for link_uid, conn_tpl in all_linkConn.items():
+            print(f"LINK-UID: {link_uid} - UID: {conn_tpl[0].uid} - STATE: {conn_tpl[0].get_state()} - LINK: {conn_tpl[1]}")
+        print('ALL DIGIConn ------------------')
+        for digi_uid, conn in all_digiConn.items():
+            print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()}")
 
 
 PORT_HANDLER = AX25PortHandler()

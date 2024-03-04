@@ -299,15 +299,15 @@ class MH:
         ax_frame = data['ax_frame']
         if port_id not in list(self._PortStat_buf.keys()):
             self._PortStat_buf[port_id] = get_port_stat_struct()
-        if ax_frame.ctl_byte.flag in self._PortStat_buf[port_id].keys():
-            flag = str(ax_frame.ctl_byte.flag)
+        if ax_frame.get('ctl_flag', '') in self._PortStat_buf[port_id].keys():
+            flag = ax_frame.get('ctl_flag', '')
             n_flag = f"n_{flag}"
-            self._PortStat_buf[port_id][flag] += len(ax_frame.data_bytes)
+            self._PortStat_buf[port_id][flag] += len(ax_frame.get('ax25_raw', b''))
             self._PortStat_buf[port_id][n_flag] += 1
 
         self._PortStat_buf[port_id]['N_pack'] += 1
-        self._PortStat_buf[port_id]['DATA_W_HEADER'] += len(ax_frame.data_bytes)
-        self._PortStat_buf[port_id]['DATA'] += int(ax_frame.data_len)
+        self._PortStat_buf[port_id]['DATA_W_HEADER'] += len(ax_frame.get('ax25_raw', b''))
+        self._PortStat_buf[port_id]['DATA'] += ax_frame.get('payload_len', 0)
 
     def PortStat_get_data_by_port(self, port_id: int):
         if not self._db:
@@ -327,7 +327,7 @@ class MH:
     def _input_bw_calc(self, data):
         port_id = data['port_id']
         ax_frame = data['ax_frame']
-        now = ax_frame.rx_time
+        now = ax_frame.get('rx_time', datetime.now())
         self._init_bw_struct(port_id=port_id)
         if self._now_10sec.strftime('%M:%S')[:-1] != now.strftime('%M:%S')[:-1]:
             dif: timedelta = now - self._now_10sec
@@ -336,7 +336,7 @@ class MH:
                 for i in range(dif_10):
                     self._bandwidth[port_ids].append(0)
             self._now_10sec = now
-        self._bandwidth[port_id][-1] += len(ax_frame.data_bytes)
+        self._bandwidth[port_id][-1] += len(ax_frame.get('ax25_raw', b''))
         return
 
     def _init_bw_struct(self, port_id):
@@ -368,12 +368,12 @@ class MH:
                 self._mh_inp(el)
             self._mh_inp_buffer = self._mh_inp_buffer[1:]
 
-    def mh_input(self, ax25frame, port_id: int, tx: bool, primary_port_id=-1):
+    def mh_input(self, ax25frame_conf, port_id: int, tx: bool, primary_port_id=-1):
         """ Main Input from ax25Port.gui_monitor()"""
         if tx:
             return
         self._mh_inp_buffer.append({
-            'ax_frame': ax25frame,
+            'ax_frame': ax25frame_conf,
             'port_id': int(port_id),
             'primary_port_id': int(primary_port_id),
             'tx': bool(tx),
@@ -400,15 +400,15 @@ class MH:
         if digi:
             call_str = digi
         else:
-            call_str = str(ax25_frame.from_call.call_str)
-
+            call_str = ax25_frame.get('from_call_str', '')
+        if not call_str:
+            return
         if call_str not in self._MH_db[port_id].keys():
-            ent = MyHeard()
+            self._MH_db[port_id][call_str] = MyHeard()
             if self.parm_new_call_alarm:
                 dx_alarm = True
-        else:
-            ent = self._MH_db[port_id][call_str]
-        ent.last_seen = ax25_frame.rx_time
+        ent = self._MH_db[port_id][call_str]
+        ent.last_seen = ax25_frame.get('rx_time', datetime.now())
         ent.own_call = call_str
         ent.pac_n += 1
         if primary_port_id != -1:
@@ -420,43 +420,38 @@ class MH:
             ent.first_seen_port = org_port_id
         elif ent.first_seen_port is None:
             ent.first_seen_port = org_port_id
-        ent.byte_n += int(ax25_frame.data_len)
-        ent.h_byte_n += len(ax25_frame.data_bytes) - ax25_frame.data_len
-        if ax25_frame.ctl_byte.flag == 'REJ':
+        ent.byte_n += ax25_frame.get('payload_len', 0)
+        ent.h_byte_n += len(ax25_frame.get('ax25_raw', b'')) - ax25_frame.get('payload_len', 0)
+        if ax25_frame.get('ctl_flag', '') == 'REJ':
             ent.rej_n += 1
-
         # Routes
         ent.route = []  # Last Route
         last_digi = ''
-        # print(f"-----{bool(digi)}-- {len(ax25_frame.via_calls)}")
         if not digi:
-            for call in ax25_frame.via_calls:
-                if not call.c_bit:
+            for call_str, c_bit in ax25_frame.get('via_calls_str_c_bit', []):
+                if not c_bit:
                     break
                 else:
-                    ent.route.append(str(call.call_str))
-                    last_digi = str(call.call_str)
+                    ent.route.append(call_str)
+                    last_digi = call_str
 
         if ent.route not in ent.all_routes:
             ent.all_routes.append(list(ent.route))
-
         # TO Calls
-        to_c_str = str(ax25_frame.to_call.call_str)
+        to_c_str = ax25_frame.get('to_call_str', '')
         route_key = ','.join(ent.route)
-
         if to_c_str not in ent.to_calls.keys():
-            ent.to_calls[to_c_str] = {route_key: ax25_frame.rx_time}
+            ent.to_calls[to_c_str] = {route_key: ax25_frame.get('rx_time', datetime.now())}
         else:
-            ent.to_calls[to_c_str][route_key] = ax25_frame.rx_time
+            ent.to_calls[to_c_str][route_key] = ax25_frame.get('rx_time', datetime.now())
         ent.last_dest = to_c_str
-        # ent.to_calls.append(to_c_str)
         # Update AXIP Address
-        if ax25_frame.axip_add[0]:
+        if ax25_frame.get('axip_add', ('', 0))[0]:
             if ent.axip_add[0]:
-                if check_ip_add_format(ax25_frame.axip_add[0]):
-                    ent.axip_add = tuple(ax25_frame.axip_add)
+                if check_ip_add_format(ax25_frame.get('axip_add', ('', 0))[0]):
+                    ent.axip_add = ax25_frame.get('axip_add', ('', 0))
             else:
-                ent.axip_add = tuple(ax25_frame.axip_add)
+                ent.axip_add = ax25_frame.get('axip_add', ('', 0))
         # Get Locator and Distance from User-DB
         db_ent = USER_DB.get_entry(call_str, add_new=True)
         if db_ent:
@@ -478,7 +473,7 @@ class MH:
 
         if dx_alarm:
             self._set_dx_alarm(ent=ent)
-        self._MH_db[port_id][call_str] = ent
+        # self._MH_db[port_id][call_str] = ent
         if ent in self._short_MH:
             self._short_MH.remove(ent)
         self._short_MH.append(ent)

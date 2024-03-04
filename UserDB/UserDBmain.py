@@ -275,25 +275,26 @@ class UserDB:
         return temp_ret
 
     def get_distance(self, call_str):
-        ret = self.db.get(call_str, False)
-        if ret:
-            return ret.Distance
-        return 0
+        ent = self.get_entry(call_str, add_new=False)
+        if not ent:
+            return 0
+        return ent.Distance
 
     def get_locator(self, call_str):
-        ret = self.db.get(call_str, False)
-        if ret:
-            return ret.LOC
-        return ''
+        ent = self.get_entry(call_str, add_new=False)
+        if not ent:
+            return ''
+        return ent.LOC
 
     def get_location(self, call_str):
-        ret = self.db.get(call_str, False)
-        if ret:
-            if ret.Lon or ret.Lon:
-                return ret.Lat, ret.Lon, ret.LOC
-            if ret.LOC:
-                lat, lon = locator_to_coordinates(ret.LOC)
-                return lat, lon, ret.LOC
+        ent = self.get_entry(call_str, add_new=False)
+        if not ent:
+            return ()
+        if ent.Lon or ent.Lon:
+            return ent.Lat, ent.Lon, ent.LOC
+        if ent.LOC:
+            lat, lon = locator_to_coordinates(ent.LOC)
+            return lat, lon, ent.LOC
         return ()
 
     def get_AXIP(self, call_str):
