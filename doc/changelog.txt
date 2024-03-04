@@ -1,4 +1,13 @@
 ###########################################################################################################
+# 2.108.x
+Fixes:
+
+Optimierung:
+
+Neue Implementierungen / Funktionen:
+
+###########################################################################################################
+###########################################################################################################
 # 2.107.x
 Fixes:
 - Scripterror nach Auslösen des "bell" Befehls und Disconnect der jeweiligen Station
@@ -18,8 +27,8 @@ Neue Implementierungen / Funktionen:
     oder
   - DIGI-SSID = TX-Port *optional
   - RNR wird gesetzt, wenn Digi-Buffer eine bestimmte Größe erreicht hat oder N2 > 5
-  - Remote Befehle werden automatisch deaktiviert, wenn Typ der Gegenstation NODE, BBS, SYS-BBS, DIGI, CONVERS ist.
-    (Können jederzeit wieder aktiviert werden)
+- Remote Befehle werden automatisch deaktiviert, wenn Typ der Gegenstation NODE, BBS, SYS-BBS, DIGI, CONVERS ist.
+  (Können jederzeit wieder aktiviert werden)
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   - $ver = PoPT 2.xxx.x                         - Bake
   - $time = 20:39:00                            - Bake
