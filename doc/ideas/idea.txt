@@ -5,14 +5,20 @@ Ideas/TODO's :
 - PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)
 - ESC Befehle
-✓ UmgebungVARS für C-Text und der gleichen
-  ✓ $time = 20:39:00
-  ✓ $date = 03-03-2024
+✓ UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
+  ✓ $ver = PoPT 2.xxx.x                         - Bake
+  ✓ $time = 20:39:00                            - Bake
+  ✓ $date = 03-03-2024                          - Bake
   ✓ $channel = Kanal NR
-  ✓ $portNr = Port NR
+  ✓ $portNr = Port NR                           - Bake
   ✓ $destName = Name der Gegenstation, wenn bekannte, ansonsten Call der Gegenstation
+  ✓ $destCall = Call der Gegenstation
+  ✓ $ownCall = Eigener Call
   ✓ $distance = Distanz zur Gegenstation
   ✓ $connNr = Connect Nr.
+  ✓ $parmMaxFrame = Max Frame Einstellungen     - Bake
+  ✓ $parmPacLen = Pakete Länge Einstellungen    - Bake
+
 
 - Erweiterte C-Texte
   - Mehrere C-Texte

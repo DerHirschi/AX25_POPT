@@ -72,16 +72,17 @@ class StatSetTab:
         # DIGI
         digi_x = 305
         digi_y = 500
-        self.digi_set_var = tk.BooleanVar()
-        self.digi = tk.Checkbutton(self.own_tab,
-                                   text='DIGI',
-                                   width=4,
-                                   variable=self.digi_set_var,
-                                   )
-        self.digi.place(x=digi_x, y=height - digi_y)
-        self.digi_set_var.set(self.station_setting.stat_parm_is_StupidDigi)
+        self._digi_set_var = tk.BooleanVar()
+        digi = tk.Checkbutton(self.own_tab,
+                              text='DIGI',
+                              width=4,
+                              variable=self._digi_set_var,
+                              )
+        digi.place(x=digi_x, y=height - digi_y)
+        self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
         ##################
-        # Smart DIGI TODO
+        # Smart DIGI
+        """
         digi_x = 390
         digi_y = 500
         self.smart_digi_set_var = tk.IntVar()
@@ -89,10 +90,10 @@ class StatSetTab:
                                          text='Managed-DIGI',
                                          width=12,
                                          variable=self.smart_digi_set_var,
-                                         state='disabled'  # TODO
+                                         state='disabled'  #
                                          )
         self.smart_digi.place(x=digi_x, y=height - digi_y)
-
+        """
         ###############################
         # Right Side ( Name, QTH, LOC )
         self.own_tab.rowconfigure(0, minsize=5, weight=0)
@@ -428,7 +429,7 @@ class StatSetTab:
         self.pac_len.delete(0, tk.END)
         self.pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
         # DIGI
-        self.digi_set_var.set(self.station_setting.stat_parm_is_StupidDigi)
+        self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
         # self.digi.select()
         # Smart DIGI
         # self.smart_digi_set_var.set(1)  # TODO
@@ -514,9 +515,9 @@ class StatSetTab:
                 PORT_HANDLER.ax25_port_settings[k].parm_stat_MaxFrame[call] = var_maxpac
 
         # DIGI
-        self.station_setting.stat_parm_is_StupidDigi = bool(self.digi_set_var.get())
+        self.station_setting.stat_parm_is_Digi = bool(self._digi_set_var.get())
         # Smart DIGI
-        self.station_setting.stat_parm_isSmartDigi = bool(self.smart_digi_set_var.get())
+        # self.station_setting.stat_parm_isSmartDigi = bool(self.smart_digi_set_var.get())
         # C-Text
         self.station_setting.stat_parm_cli_ctext = self.c_text_ent.get('1.0', tk.END)[:-1]
         # Bye Text

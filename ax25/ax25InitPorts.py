@@ -186,7 +186,7 @@ class AX25PortHandler(object):
             new_digi_calls = []
             for stat_key in port.my_stations:
                 if stat_key in self.ax25_stations_settings.keys():
-                    if self.ax25_stations_settings[stat_key].stat_parm_is_StupidDigi:
+                    if self.ax25_stations_settings[stat_key].stat_parm_is_Digi:
                         new_digi_calls.append(stat_key)
                         if stat_key not in digi_cfg:
                             digi_cfg[stat_key] = POPT_CFG.get_digi_CFG_for_Call(stat_key)
@@ -616,6 +616,9 @@ class AX25PortHandler(object):
                 if port_id not in ret.keys():
                     ret[port_id] = port
         return ret
+
+    def get_port_by_id(self, port_id: int):
+        return self.ax25_ports.get(port_id, None)
 
     ####################
     # Dual Port

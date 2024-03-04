@@ -20,14 +20,19 @@ Neue Implementierungen / Funktionen:
   - RNR wird gesetzt, wenn Digi-Buffer eine bestimmte Größe erreicht hat oder N2 > 5
   - Remote Befehle werden automatisch deaktiviert, wenn Typ der Gegenstation NODE, BBS, SYS-BBS, DIGI, CONVERS ist.
     (Können jederzeit wieder aktiviert werden)
-- UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News
-  - $time = 20:39:00
-  - $date = 03-03-2024
+- UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
+  - $ver = PoPT 2.xxx.x                         - Bake
+  - $time = 20:39:00                            - Bake
+  - $date = 03-03-2024                          - Bake
   - $channel = Kanal NR
-  - $portNr = Port NR
+  - $portNr = Port NR                           - Bake
   - $destName = Name der Gegenstation, wenn bekannte, ansonsten Call der Gegenstation
+  - $destCall = Call der Gegenstation
+  - $ownCall = Eigener Call
   - $distance = Distanz zur Gegenstation
-  - $connNr = Connect Nr
+  - $connNr = Connect Nr.
+  - $parmMaxFrame = Max Frame Einstellungen     - Bake
+  - $parmPacLen = Pakete Länge Einstellungen    - Bake
 
 ###########################################################################################################
 ###########################################################################################################
