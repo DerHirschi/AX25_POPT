@@ -18,6 +18,7 @@ class DIGI_cfg_Tab(tk.Frame):
         self._digi_auto_port = tk.BooleanVar(self, value=digi_settings.get('digi_auto_port', True))
 
         self._short_via_calls = tk.BooleanVar(self, value=digi_settings.get('short_via_calls', True))
+        self._UI_short_via_calls = tk.BooleanVar(self, value=digi_settings.get('UI_short_via', False))
         self._max_buff = tk.StringVar(self, value=str(digi_settings.get('max_buff', 10)))
         self._max_n2 = tk.StringVar(self, value=str(digi_settings.get('max_n2', 4)))
         self._last_rx_fail_sec = tk.StringVar(self, value=str(digi_settings.get('last_rx_fail_sec', 60)))
@@ -53,6 +54,10 @@ class DIGI_cfg_Tab(tk.Frame):
                                              text='Short VIAs ',
                                              variable=self._short_via_calls)
         self._short_via_ent.pack(side=tk.LEFT, padx=5, pady=5, anchor=tk.W)
+        self._UI_short_via_ent = tk.Checkbutton(opt_frame_2,
+                                                text='UI-Frames Short VIAs',
+                                                variable=self._UI_short_via_calls)
+        self._UI_short_via_ent.pack(side=tk.LEFT, padx=5, pady=5, anchor=tk.W)
         ##################################################################
         opt_frame_3 = tk.Frame(self)
         opt_frame_3.pack(fill=tk.X, padx=5, pady=5)
@@ -102,11 +107,13 @@ class DIGI_cfg_Tab(tk.Frame):
     def _set_l3_digi_entry_state(self, event=None):
         if self._managed_digi.get():
             self._short_via_ent.configure(state='normal')
+            self._UI_short_via_ent.configure(state='normal')
             self._max_buff_ent.configure(state='normal')
             self._max_n2_ent.configure(state='normal')
             self._max_SABM_ent.configure(state='normal')
         else:
             self._short_via_ent.configure(state='disabled')
+            self._UI_short_via_ent.configure(state='disabled')
             self._max_buff_ent.configure(state='disabled')
             self._max_n2_ent.configure(state='disabled')
             self._max_SABM_ent.configure(state='disabled')
@@ -133,12 +140,13 @@ class DIGI_cfg_Tab(tk.Frame):
         ret = POPT_CFG.get_digi_default_CFG()
         ret['managed_digi'] = bool(self._managed_digi.get())
         # Managed-DIGI Parameter ###############################################################################
-        ret['short_via_calls'] = bool(self._short_via_calls.get())      # Short VIA Call in AX25 Address
-        ret['max_buff'] = int(self._max_buff.get())                     # bytes till RNR
-        ret['max_n2'] = int(self._max_n2.get())                         # N2 till RNR
-        ret['last_rx_fail_sec'] = int(self._last_rx_fail_sec.get())     # sec fail when no SABM and Init state
-        ret['digi_ssid_port'] = bool(self._digi_ssid_port.get())        # DIGI SSID = TX-Port
-        ret['digi_auto_port'] = bool(self._digi_auto_port.get())        # Get TX-Port fm MH-List
+        ret['short_via_calls'] = bool(self._short_via_calls.get())  # Short VIA Call in AX25 Address
+        ret['UI_short_via'] = bool(self._UI_short_via_calls.get())  # UI-Frames: Short VIA Call in AX25 Address
+        ret['max_buff'] = int(self._max_buff.get())  # bytes till RNR
+        ret['max_n2'] = int(self._max_n2.get())  # N2 till RNR
+        ret['last_rx_fail_sec'] = int(self._last_rx_fail_sec.get())  # sec fail when no SABM and Init state
+        ret['digi_ssid_port'] = bool(self._digi_ssid_port.get())  # DIGI SSID = TX-Port
+        ret['digi_auto_port'] = bool(self._digi_auto_port.get())  # Get TX-Port fm MH-List
         return dict(ret)
 
 

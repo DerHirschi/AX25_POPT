@@ -228,8 +228,8 @@ class AX25Port(threading.Thread):
     def _rx_digi_handler(self, ax25_frame: AX25Frame):
         if not self.digi_calls:
             return False
-        if ax25_frame.ctl_byte.flag == 'UI':
-            return self._rx_simple_digi(ax25_frame)
+        # if ax25_frame.ctl_byte.flag == 'UI':
+        #     return self._rx_simple_digi(ax25_frame)
         # if self.is_smart_digi:
         return self._rx_managed_digi(ax25_frame)
 
@@ -258,10 +258,14 @@ class AX25Port(threading.Thread):
                                     ax25_conf=ax25_conf
                                 ))
                             # print(digi_conf)
+                            if ax25_frame.ctl_byte.flag == 'UI':
+                                AX25DigiConnection(digi_conf).digi_rx_handle(ax25_frame)
+                                return
+
                             self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(digi_conf)
                         self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
                         return True
-                    self._digi_buf.append(ax25_frame)
+                    self.add_frame_to_digiBuff(ax25_frame)
                     return True
                 return False
         return False
@@ -272,12 +276,12 @@ class AX25Port(threading.Thread):
             print(f'accept_digi_conn uid: {uid}')
             print(f'accept_digi_conn keys: {self._digi_connections.keys()}')
             return False
-        print('accept_digi_conn')
+        # print('accept_digi_conn')
         self._digi_connections[uid].add_rx_conn_cron()
 
     def delete_digi_conn(self, uid: str):
         if uid in self._digi_connections.keys():
-            print(f"DIGI-Conn DEL: {uid}")
+            # print(f"DIGI-Conn DEL: {uid}")
             del self._digi_connections[uid]
 
     def _cleanup_digi_conn(self):
@@ -285,7 +289,7 @@ class AX25Port(threading.Thread):
             # print(f"DIGI-CONn: {uid}")
             # digi_conn.debug_out()
             if digi_conn.is_done():
-                print(f"DIGI-CONN Cleanup {uid}")
+                # print(f"DIGI-CONN Cleanup {uid}")
                 self.delete_digi_conn(uid)
 
     def _digi_task(self):
@@ -298,6 +302,7 @@ class AX25Port(threading.Thread):
         return self._digi_connections
 
     def add_frame_to_digiBuff(self, ax25frame: AX25Frame):
+        # print(f"Add DIGI-BUFF: {ax25frame}")
         self._digi_buf.append(ax25frame)
 
     #################################################

@@ -8,6 +8,7 @@ class AX25DigiConnection:
         self._conf_max_buff = digi_conf.get('max_buff', 10)
         self._conf_max_n2 = digi_conf.get('max_n2', 5)
         self._conf_short_via = digi_conf.get('short_via_calls', True)
+        self._conf_UI_short_via = digi_conf.get('UI_short_via', True)
         self._conf_last_rx_fail = digi_conf.get('last_rx_fail_sec', 20)
         self._conf_digi_ssid_port = digi_conf.get('digi_ssid_port', True)
         self._conf_digi_auto_port = digi_conf.get('digi_auto_port', True)
@@ -48,7 +49,6 @@ class AX25DigiConnection:
             """
 
     def _init_digi_conn(self, ax25_frame):
-        # ax25_conf = ax25_frame.get_frame_conf()
         self._rx_conn = AX25Conn(ax25_frame, cfg=self._rx_port.port_cfg, port=self._rx_port)
         self._rx_conn.cli.change_cli_state(5)
         self._rx_conn.cli_remote = False
@@ -75,11 +75,8 @@ class AX25DigiConnection:
             dest_call=self._ax25_conf.get('to_call_str', ''),
             own_call=self._ax25_conf.get('from_call_str', ''),
             via_calls=ax25_frame_conf.get('via_calls_str', []),  # Auto lookup in MH if not exclusive Mode
-            port_id=tx_port_id,  # -1 Auto lookup in MH list
-            # axip_add=('', 0),   # AXIP Adress
-            exclusive=True,  # True = no lookup in MH list
-            # digi_conn=self._rx_conn,  # Linked Connection AX25Conn
-            # channel=1,          # Channel/Connection Index = Channel-ID
+            port_id=tx_port_id,                                  # -1 Auto lookup in MH list
+            exclusive=True,                                      # True = no lookup in MH list
             is_service=True
         )
         if not tx_conn[0]:
@@ -220,6 +217,23 @@ class AX25DigiConnection:
             if self._rx_conn.get_state():
                 self._rx_conn.conn_disco()
 
+    def _UI_digi(self, ax25_frame):
+        if self._conf_UI_short_via:
+            ax25_frame.short_via_calls(self._digi_call)
+        if self._conf_digi_auto_port:
+            tx_port_id = -1
+        else:
+            tx_port_id = self._rx_port.port_id
+
+        if self._conf_digi_ssid_port:
+            tx_port_id = self._digi_ssid
+
+        port = self._port_handler.get_port_by_id(tx_port_id)
+        if not port:
+            print(f"Error UI_digi: No Port: {tx_port_id} - DIGI: {self._digi_call} - SSID: {self._digi_ssid}")
+            return
+        port.add_frame_to_digiBuff(ax25_frame)
+
     def digi_rx_handle(self, ax25_frame):
         """"""
         # print(f"DIGI-RX : STATE: {self._state}")
@@ -234,6 +248,9 @@ class AX25DigiConnection:
             print(f"DIGI-RX : TX: {self._tx_conn.uid} ")
             print(f"DIGI-RX : TX-State: {self._tx_conn.get_state()}")
         """
+        if ax25_frame.ctl_byte.flag == 'UI':
+            self._UI_digi(ax25_frame)
+            return
         state_exec = self._state_tab.get(self._state, None)
         if not callable(state_exec):
             self._state_0_error()

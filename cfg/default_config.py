@@ -149,8 +149,9 @@ def getNew_digi_cfg():
         managed_digi=True,              # Managed-Digi/Smart-Digi/L3-Digi or Simple-DIGI
         # Managed-DIGI Parameter #######################################################
         short_via_calls=True,           # Short VIA Call in AX25 Address
+        UI_short_via=True,              # UI-Frames Short VIA Call in AX25 Address
         max_buff=10,                    # bytes till RNR
-        max_n2=4,                      # N2 till RNR
+        max_n2=4,                       # N2 till RNR
         last_rx_fail_sec=60,            # sec fail when no SABM and Init state
         digi_ssid_port=True,            # DIGI SSID = TX-Port
         # OR

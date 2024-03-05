@@ -10,6 +10,8 @@ Neue Implementierungen / Funktionen:
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   - $lastConnDate = Letzter Connect Datum
   - $lastConnTime = Letzter Connect Zeit
+- "Managed-Digi/Smart-Digi/L3-Digi"
+  - UI-Frames weiterleiten auf Port (DIGI SSID)
 
 ###########################################################################################################
 ###########################################################################################################

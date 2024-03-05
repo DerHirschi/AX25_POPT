@@ -36,7 +36,7 @@ Ideas/TODO's :
   - Port Configs/Inits aufräumen/optimieren
 
 - Soundsystem/Sprachausgabe überarbeiten
-- Haupt GUI überarbeiten
+✓ Haupt GUI überarbeiten
   - Individuelle Farben (Vorschreib Fenster)
 
 ✓ Loop Port oder einfach localhost via AXIP
@@ -64,6 +64,10 @@ Ideas/TODO's :
   ✓ DIGI Port über DIGI SSID wählbar (Port 0: -0, Port 1: -1, ...)
   ? Pfad von MH-Liste.
   ? Pfad von Link-Liste.
+  ✓ UI-Frames weiterleiten auf Port (DIGI SSID)
+  - UI-Frames digipeten, wenn DIGI im Pfad vorhanden aber Frame von vorherigen Stationen
+    noch nicht weitergeleitet wurde
+  - RNR Funktionalität auch für Node "Weiterconnect"
 
 - Telnet Port
 - TCP-Listen/Kiss Device Port
@@ -78,8 +82,8 @@ Ideas/TODO's :
   ✓ Auto-TX: Port nach First Seen wählbar
 
 ✓ UserDB
-  - UserDB auf SQL-DB Umstellen
-  - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
+  ? UserDB auf SQL-DB Umstellen
+  ? Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
 - Logbuch
@@ -136,7 +140,7 @@ Ideas/TODO's :
 ✓ ordentliches Noden System bzw CLI überarbeiten
 ✓ DX-Alarm überarbeiten
 ✓ Autoscrolling überarbeiten.
-- Optional nur als Konsolen Anwendung ohne GUI. (Ist bereits dafür vorbereitet)
+- Optional nur als Konsolen Anwendung ohne GUI.
 - Drucker Ausgabe vom QSO
   - kompatibel mit Nadeldrucker
 - Torrent ähnliches Filesharing via UI Frames (Siehe ?DMR/DRM?)
