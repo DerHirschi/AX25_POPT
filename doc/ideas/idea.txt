@@ -18,6 +18,8 @@ Ideas/TODO's :
   ✓ $connNr = Connect Nr.
   ✓ $parmMaxFrame = Max Frame Einstellungen     - Bake
   ✓ $parmPacLen = Pakete Länge Einstellungen    - Bake
+  ✓ $lastConnDate = Letzter Connect Datum
+  ✓ $lastConnTime = Letzter Connect Zeit
 
 
 - Erweiterte C-Texte

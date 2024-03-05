@@ -502,7 +502,7 @@ class DefaultCLI(object):
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {STR_TABLE['time_connected'][self.connection.cli_language]}: {conn_dauer}\r\r"
         ret += self.bye_text + '\r'
-        self.send_output(ret, env_vars=False)
+        self.send_output(ret, env_vars=True)
         self.crone_state_index = 100  # Quit State
         return ''
 

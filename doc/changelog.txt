@@ -1,10 +1,14 @@
 ###########################################################################################################
 # 2.108.x
 Fixes:
+- UmgebungsVARS in Quit-Text funktionieren nicht
 
 Optimierung:
 
 Neue Implementierungen / Funktionen:
+- UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
+  - $lastConnDate = Letzter Connect Datum
+  - $lastConnTime = Letzter Connect Zeit
 
 ###########################################################################################################
 ###########################################################################################################

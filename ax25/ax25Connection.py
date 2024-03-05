@@ -244,6 +244,7 @@ class AX25Conn(object):
         self.user_db_ent = None
         self.cli_remote = True
         self.cli_language = 0
+        self.last_connect = None
         self._set_user_db_ent()
         """ Station Individual Parameter """
         self._set_packet_param()
@@ -771,6 +772,7 @@ class AX25Conn(object):
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
         if self.user_db_ent:
             self.user_db_ent.Connects += 1  # TODO Count just when connected
+            self.last_connect = self.user_db_ent.last_seen
             self.user_db_ent.last_seen = datetime.now()
             self.encoding = self.user_db_ent.Encoding
             if self.user_db_ent.Language == -1:

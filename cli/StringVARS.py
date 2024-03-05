@@ -11,8 +11,8 @@ from cfg.constant import VER
     $destName = Name der Gegenstation wenn bekannte, ansonsten Call der Gegenstation
     $destCall = Call der Gegenstation
     $ownCall = Eigener Call
-#    $lastConnDate = Letzter Connect Datum
-#    $lastConnTime = Letzter Connect Zeit
+    $lastConnDate = Letzter Connect Datum
+    $lastConnTime = Letzter Connect Zeit
     $distance = Distanz zur Gegenstation
     $connNr = Connect Nr
     $parmMaxFrame = Max Frame Einstellungen     - Bake
@@ -109,7 +109,10 @@ def get_distance(port=None,
     destCall = connection.to_call_str
     if not destCall:
         return '-'
-    return str(user_db.get_distance(destCall))
+    dist = user_db.get_distance(destCall)
+    if not dist:
+        return '-'
+    return str(dist)
 
 
 def get_connNr(port=None,
@@ -149,36 +152,29 @@ def get_PacLen(port=None,
     return '-'
 
 
-"""
 def get_lastConnDate(port=None,
                      port_handler=None,
                      connection=None,
                      user_db=None):
-    if not connection or not user_db:
+    if not connection:
         return '---'
-    destCall = connection.to_call_str
-    if not destCall:
+    if not connection.last_connect:
         return '---'
-    db_entry = user_db.get_entry(destCall)
-    if not db_entry:
-        return '---'
-    return str(db_entry.last_seen.strftime('%d-%m-%Y'))
+    dt_time = connection.last_connect.strftime('%d/%m/%Y')
+    return str(dt_time)
 
 
 def get_lastConnTime(port=None,
                      port_handler=None,
                      connection=None,
                      user_db=None):
-    if not connection or not user_db:
+    if not connection:
         return '---'
-    destCall = connection.to_call_str
-    if not destCall:
+    if not connection.last_connect:
         return '---'
-    db_entry = user_db.get_entry(destCall)
-    if not db_entry:
-        return '---'
-    return str(db_entry.last_seen.strftime('%H:%M:%S'))
-"""
+    dt_time = connection.last_connect.strftime('%H:%M:%S')
+    return str(dt_time)
+
 
 STRING_VARS = {
     '$ver': get_ver,
@@ -189,8 +185,8 @@ STRING_VARS = {
     '$destName': get_destName,
     '$destCall': get_destCall,
     '$ownCall': get_ownCall,
-    # '$lastConnDate': get_lastConnDate,
-    # '$lastConnTime': get_lastConnTime,
+    '$lastConnDate': get_lastConnDate,
+    '$lastConnTime': get_lastConnTime,
     '$distance': get_distance,
     '$connNr': get_connNr,
     '$parmMaxFrame': get_MaxFrame,
