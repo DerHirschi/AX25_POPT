@@ -161,7 +161,7 @@ class AX25Port(threading.Thread):
                     # Link Connection Handler
                     return True
             if self._rx_digi_handler(ax25_frame=ax25_frame):
-                # Simple DIGI
+                # DIGI
                 return True
         elif ax25_frame.is_digipeated:
             if not isUI:
@@ -178,7 +178,7 @@ class AX25Port(threading.Thread):
 
     def _rx_link_handler(self, ax25_frame: AX25Frame):
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
-            print(f"Link-Conn RX: {ax25_frame.addr_uid}")
+            # print(f"Link-Conn RX: {ax25_frame.addr_uid}")
             conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
             link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
             if link_call:
@@ -228,9 +228,10 @@ class AX25Port(threading.Thread):
     def _rx_digi_handler(self, ax25_frame: AX25Frame):
         if not self.digi_calls:
             return False
+        if ax25_frame.ctl_byte.flag == 'UI':
+            return self._rx_simple_digi(ax25_frame)
         # if self.is_smart_digi:
         return self._rx_managed_digi(ax25_frame)
-        # return self._rx_simple_digi(ax25_frame)
 
     def _rx_simple_digi(self, ax25_frame):
         for call in ax25_frame.via_calls:

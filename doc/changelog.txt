@@ -2,6 +2,7 @@
 # 2.108.x
 Fixes:
 - UmgebungsVARS in Quit-Text funktionieren nicht
+- UI-Frames werden nicht mehr digipited
 
 Optimierung:
 
