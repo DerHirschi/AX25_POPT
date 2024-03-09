@@ -47,7 +47,7 @@ class AX25Pipe(object):
 
     def cron_exec(self):
         # self.save_rx_buff_to_file()
-        print('PIPR T')
+        print(f'PIPR T uid: {self.uid}')
         if self.tx_filename or self.rx_filename:
             self._tx_file_cron()
             self._tx_cron()

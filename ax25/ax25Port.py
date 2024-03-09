@@ -616,7 +616,13 @@ class AX25Port(threading.Thread):
         return False
 
     def del_pipe(self, pipe: AX25Pipe):
+        print('DEl PIPE')
+        print(f'DEl PIPE port_id: {self.port_id}')
+        print(f'DEl PIPE uid: {pipe.uid}')
+        print(f'DEl PIPE k: {self.pipes.keys()}')
         if pipe.uid in self.pipes.keys():
+            print('DEl PIPE TRUE')
+            self.pipes[pipe.uid] = None
             del self.pipes[pipe.uid]
             return True
         return False

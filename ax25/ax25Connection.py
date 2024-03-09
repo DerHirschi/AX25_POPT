@@ -288,13 +288,15 @@ class AX25Conn:
                 self.cli.change_cli_state(state=1)
         else:
             """ Init Pipe """
-            self.pipe = self.stat_cfg.stat_parm_pipe(
+            pipe = self.stat_cfg.stat_parm_pipe(
                 port_id=self.own_port.port_id,
                 own_call=self.my_call_str,
                 address_str='NOCALL',
             )
-            self.pipe.connection = self
-            self.pipe.change_settings()
+            self.set_pipe(pipe)
+            # self.pipe.connection = self
+            # pipe.change_settings()
+            # self.port_handler.add_pipe(pipe.port_id, pipe.uid, pipe)
         """ Init State Tab """
         if rx:
             self.set_T1()
@@ -472,10 +474,21 @@ class AX25Conn:
 
     def set_pipe(self, pipe):
         self.pipe = pipe
+        if not pipe:
+            return False
+        self.pipe.connection = self
         if self.pipe.parm_pac_len:
             self.parm_PacLen = int(self.pipe.parm_pac_len)
         if self.pipe.parm_max_pac:
             self.parm_MaxFrame = int(self.pipe.parm_max_pac)
+        self.pipe.change_settings()
+        self.port_handler.add_pipe(self.pipe.port_id, self.pipe.uid, self.pipe)
+
+    def _del_pipe(self):
+        if self.pipe:
+            print('Conn DEL PIPE')
+            self.own_port.del_pipe(self.pipe)
+            self.pipe = None
 
     ########################################
     # File Transfer
@@ -635,6 +648,7 @@ class AX25Conn:
     def conn_disco(self):
         """ 2'nd time called = HardDisco """
         if self.zustand_exec.stat_index:
+            self._del_pipe()
             self._bbsFwd_disc()  # TODO return "is_"self.bbs_connection
             self.set_T1(stop=True)
             # self.zustand_exec.tx(None)
@@ -648,6 +662,7 @@ class AX25Conn:
                     print(f"DISCO and buff not NULL !! tx_buf_2send: {self.tx_buf_2send}")
                     print(f"DISCO and buff not NULL !! tx_buf_unACK: {self.tx_buf_unACK}")
                 else:
+
                     self.zustand_exec.change_state(4)
 
     def _wait_for_disco(self):
@@ -671,6 +686,7 @@ class AX25Conn:
 
     def end_connection(self, reconn=True):
         # print(f"end_connection: {self.uid}")
+        self._del_pipe()
         self.ft_queue = []
         if self.ft_obj:
             self.ft_obj.ft_abort()
@@ -715,6 +731,7 @@ class AX25Conn:
             self.set_T1(stop=True)
             self.set_T3()
             self.is_RNR = True
+            """
             if self.zustand_exec.stat_index == 5:
                 self.zustand_exec.change_state(8)
             elif self.zustand_exec.stat_index == 6:
@@ -728,6 +745,17 @@ class AX25Conn:
             elif self.zustand_exec.stat_index == 15:
                 self.zustand_exec.change_state(16)
             """
+            new_state = {
+                5: 8,
+                6: 14,
+                7: 11,
+                9: 10,
+                12: 13,
+                15: 16
+            }.get(self.zustand_exec.stat_index, None)
+            if new_state:
+                self.zustand_exec.change_state(new_state)
+            """
             if self.LINK_Connection is not None and not link_remote:
                 self.LINK_Connection.set_RNR(link_remote=True)
             """
@@ -738,6 +766,7 @@ class AX25Conn:
             self.send_RR()
             self.set_T1()
             # self.set_T3(stop=True)
+            """
             # TODO DICT
             if self.zustand_exec.stat_index == 8:
                 self.zustand_exec.change_state(5)
@@ -751,6 +780,17 @@ class AX25Conn:
                 self.zustand_exec.change_state(6)
             elif self.zustand_exec.stat_index == 16:
                 self.zustand_exec.change_state(15)
+            """
+            new_state = {
+                8: 5,
+                10: 9,
+                11: 7,
+                13: 12,
+                14: 6,
+                16: 15
+            }.get(self.zustand_exec.stat_index, None)
+            if new_state:
+                self.zustand_exec.change_state(new_state)
             """
             if self.LINK_Connection is not None and not link_remote:
                 self.LINK_Connection.unset_RNR(link_remote=True)

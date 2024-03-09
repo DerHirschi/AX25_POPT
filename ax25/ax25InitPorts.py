@@ -577,8 +577,28 @@ class AX25PortHandler(object):
         ret = []
         for port_id in self.ax25_ports.keys():
             for pipe_uid in self.ax25_ports[port_id].pipes.keys():
-                ret.append(self.ax25_ports[port_id].pipes[pipe_uid])
+                if self.ax25_ports[port_id].pipes[pipe_uid]:
+                    print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
+                    ret.append(self.ax25_ports[port_id].pipes[pipe_uid])
         return ret
+
+    def add_pipe(self, port_id: int, pipe_uid: str, pipe):
+        if port_id not in self.ax25_ports.keys():
+            return False
+        if not pipe_uid:
+            print('NO PIPE UID')
+            return False
+        self.ax25_ports[port_id].pipes[pipe_uid] = pipe
+        return True
+    """
+    def del_pipe(self, port_id: int, pipe_uid: str):
+        if port_id not in self.ax25_ports.keys():
+            return
+        if pipe_uid not in self.ax25_ports[port_id].pipes.keys():
+            return
+        self.ax25_ports[port_id].pipes[pipe_uid] = None
+        del self.ax25_ports[port_id].pipes[pipe_uid]
+    """
 
     ######################
     # FT

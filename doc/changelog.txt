@@ -4,9 +4,11 @@ Fixes:
 - UmgebungVARS in Quit-Text funktionieren nicht
 - UI-Frames werden nicht mehr digipited
 - Im Monitor Modus wird ein neu ausgehender Connect auf Kanal 0 gelegt.
+- Pipe-Tool
 
 Optimierung:
 - Dev Konsolenausgaben aufgeräumt
+- ax25Connection.py aufgeräumt/optimiert
 
 Neue Implementierungen / Funktionen:
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
