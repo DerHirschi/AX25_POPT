@@ -74,15 +74,19 @@ def decode_FRMR(ifield):
 
 
 class Call:
-    def __init__(self):
+    def __init__(self, call_str=''):
         self.call = ''
-        self.call_str = ''
+        self.call_str = call_str
         self.hex_str = b''
         """Address > CRRSSID1    Digi > HRRSSID1"""
         self.s_bit = False   # Stop Bit      Bit 8
         self.c_bit = False   # C bzw H Bit   Bit 1
         self.ssid = 0        # SSID          Bit 4 - 7
         self.r_bits = '11'   # Bit 2 - 3 not used. Free to use for any application .?..
+        """
+        if self.call_str:
+            self.call, self.ssid = call_tuple_fm_call_str(self.call_str)
+        """
 
     def dec_call(self, inp: b''):
         self.call = ''
@@ -103,12 +107,11 @@ class Call:
         out_str += encode_ssid(dest_ssid, dest_c)
         out_str += encode_address_char(call)
         """
-        if self.call:
+
+        if self.call_str:
+            self.call, self.ssid = call_tuple_fm_call_str(self.call_str)
+        elif self.call:
             self.call_str = get_call_str(self.call, self.ssid)
-        elif self.call_str:
-            tmp = call_tuple_fm_call_str(self.call_str)
-            self.call = tmp[0]
-            self.ssid = tmp[1]
         else:
             logger.error('AX25EncodingERROR: No Call set !')
             logger.error('AX25EncodingERROR: Call: {}'.format(self.call) )
@@ -518,22 +521,26 @@ class PIDByte:
 
 
 class AX25Frame:
-    def __init__(self):
-        # self.kiss = b''
-        self.data_bytes = b''       # AX25-Frame decoded Raw-Data
-        self.from_call = Call()
-        self.to_call = Call()
-        self.via_calls: [Call] = []
-        self.is_digipeated = True   # Is running through all Digi's ?
-        self.digi_call = ''         # Own DIGI Call to set C-BIT
+    def __init__(self, conf=None):
+        if conf is None:
+            conf = {}
+        self.addr_uid = conf.get('uid', '')                 # Unique ID/Address String
+        self.from_call = Call(conf.get('from_call_str', ''))
+        self.to_call = Call(conf.get('to_call_str', ''))
+        self.via_calls = []
+        for via_call_str in conf.get('via_calls', []):
+            self.via_calls.append(Call(via_call_str))
+        self.digi_call = conf.get('digi_call', '')          # Own DIGI Call to set C-BIT
+        self.axip_add = conf.get('axip_add', ('', 0))       # For AXIP Handling
+
+        self.payload = b''                                  # Payload
+        self.data_len = 0
+
+        self.rx_time = datetime.datetime.now()
         self.ctl_byte = CByte()
         self.pid_byte = PIDByte()
-        self.data = b''             # Payload
-        # self.aprs_data = {}
-        self.data_len = 0
-        self.addr_uid = ''          # Unique ID/Address String
-        self.axip_add = '', 0       # For AXIP Handling
-        self.rx_time = datetime.datetime.now()
+        self.is_digipeated = True                           # Is running through all Digi's ?
+        self.data_bytes = b''                               # AX25-Frame decoded Raw-Data
 
     def get_frame_conf(self):
         return dict(
@@ -568,7 +575,7 @@ class AX25Frame:
             digi_call=str(self.digi_call),
             is_digipeated=bool(self.is_digipeated),
 
-            payload=bytes(self.data),
+            payload=bytes(self.payload),
             payload_len=int(self.data_len),
             ax25_raw=bytes(self.data_bytes),
             rx_time=self.rx_time,
@@ -676,10 +683,10 @@ class AX25Frame:
             if self.ctl_byte.info:
                 index += 1
                 if self.ctl_byte.flag == 'FRMR':
-                    self.data = decode_FRMR(self.data_bytes[index:])
+                    self.payload = decode_FRMR(self.data_bytes[index:])
                 else:
-                    self.data = self.data_bytes[index:]
-                self.data_len = len(self.data)
+                    self.payload = self.data_bytes[index:]
+                self.data_len = len(self.payload)
             # Check if all Digi s have repeated packet
             self.set_check_h_bits(dec=True)
             # Build address UID
@@ -759,8 +766,8 @@ class AX25Frame:
 
         # Data
         if self.ctl_byte.info:
-            self.data_len = len(self.data)
-            self.data_bytes += self.data
+            self.data_len = len(self.payload)
+            self.data_bytes += self.payload
         if not self.validate():
             logger.error('Encoding Error Validator')
             print('Encoding Error Validator')

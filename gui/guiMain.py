@@ -1524,8 +1524,8 @@ class PoPT_GUI_Main:
         if conn.my_call_str in self._all_tag_calls:
             tag_name_tx = 'TX-' + str(conn.my_call_str)
             Ch_var.last_tag_name = str(conn.my_call_str)
-        elif conn.my_call_obj.call in self._all_tag_calls:
-            tag_name_tx = 'TX-' + str(conn.my_call_obj.call)
+        elif conn.my_call in self._all_tag_calls:
+            tag_name_tx = 'TX-' + str(conn.my_call)
             Ch_var.last_tag_name = str(conn.my_call_str)
         else:
             tag_name_tx = 'TX-' + Ch_var.last_tag_name
@@ -1564,8 +1564,8 @@ class PoPT_GUI_Main:
         if conn.my_call_str in self._all_tag_calls:
             tag_name_rx = 'RX-' + str(conn.my_call_str)
             Ch_var.last_tag_name = str(conn.my_call_str)
-        elif conn.my_call_obj.call in self._all_tag_calls:
-            tag_name_rx = 'RX-' + str(conn.my_call_obj.call)
+        elif conn.my_call in self._all_tag_calls:
+            tag_name_rx = 'RX-' + str(conn.my_call)
             Ch_var.last_tag_name = str(conn.my_call_str)
         else:
             tag_name_rx = 'RX-' + Ch_var.last_tag_name
@@ -2355,7 +2355,7 @@ class PoPT_GUI_Main:
     def _update_status_win(self):
         station = self.get_conn(self.channel_index)
         if station is not None:
-            from_call = str(station.ax25_out_frame.from_call.call_str)
+            from_call = str(station.my_call_str)
             status = station.zustand_tab[station.get_state_index()][1]
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2

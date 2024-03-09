@@ -56,7 +56,7 @@ class AX25Port(threading.Thread):
         self._digi_TXD = time.time()
         self._digi_buf = []  # RX/TX
         self._UI_buf = []  # TX
-        self.connections: {str: AX25Conn} = {}
+        self.connections = {}
         self.pipes: {str: AX25Pipe} = {}
         self._digi_connections = {}
         """ APRS Stuff """
@@ -218,7 +218,7 @@ class AX25Port(threading.Thread):
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
             if uid not in self.connections.keys():
-                self.connections[uid] = AX25Conn(ax25_frame, cfg=self.port_cfg, port=self)
+                self.connections[uid] = AX25Conn(ax25_frame, port=self)
                 # self.connections[uid].handle_rx(ax25_frame=ax25_frame)
                 return True
         return False
@@ -694,12 +694,12 @@ class AX25Port(threading.Thread):
             except AX25EncodingERROR:
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
-        conn = AX25Conn(ax25_frame, self.port_cfg, rx=False, port=self)
+        conn = AX25Conn(ax25_frame, rx=False, port=self)
         # conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn
         return conn
 
-    def del_connections(self, conn: AX25Conn):
+    def del_connections(self, conn):
         self.port_handler.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
@@ -735,7 +735,7 @@ class AX25Port(threading.Thread):
         else:
             frame.pid_byte.text()
         frame.ctl_byte.cmd, frame.ctl_byte.pf = cmd_poll
-        frame.data = text
+        frame.payload = text
         frame.axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
         frame.from_call.call_str = own_call
         frame.to_call.call_str = dest_call

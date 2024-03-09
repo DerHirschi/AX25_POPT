@@ -701,7 +701,7 @@ class SideTabbedFrame:  # TODO
     def _set_t2(self, event):
         conn = self._main_win.get_conn()
         if conn is not None:
-            conn.cfg.parm_T2 = min(max(int(self.t2_var.get()), 500), 3000)
+            conn.port_cfg.parm_T2 = min(max(int(self.t2_var.get()), 500), 3000)
             conn.calc_irtt()
 
     def tasker(self):

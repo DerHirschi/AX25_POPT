@@ -47,7 +47,7 @@ class DefaultCLI(object):
             self.stat_cfg = config_station.DefaultStation()
             self.stat_cfg_index_call = self.stat_cfg.stat_parm_Call
 
-        self.connection: ax25.ax25Connection.AX25Conn = connection
+        self.connection = connection
         self.port_handler = self.connection.port_handler
         self.own_port = self.connection.own_port
         # self.channel_index = self.connection.ch_index

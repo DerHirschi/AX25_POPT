@@ -49,12 +49,13 @@ class AX25DigiConnection:
             """
 
     def _init_digi_conn(self, ax25_frame):
-        self._rx_conn = AX25Conn(ax25_frame, cfg=self._rx_port.port_cfg, port=self._rx_port)
+        self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)
         self._rx_conn.cli.change_cli_state(5)
         self._rx_conn.cli_remote = False
         self._rx_conn.my_call_str = self._digi_call
         self._rx_conn.digi_call = self._digi_call
         self._rx_conn_uid = self._rx_conn.uid
+        self._rx_conn.set_station_cfg()
         if self._rx_conn_uid in self._rx_port.connections.keys():
             print("ERROR DIGI - Connection ")
             self._state_0_error()
@@ -88,6 +89,7 @@ class AX25DigiConnection:
         self._tx_conn.cli_remote = False
         self._tx_conn.my_call_str = self._digi_call
         self._tx_conn.digi_call = self._digi_call
+        self._tx_conn.set_station_cfg()
         if not self._tx_conn.new_digi_connection(self._rx_conn):
             self._state_0_error()
             print("Digi-Error _tx_conn.new_digi_connection")
@@ -230,31 +232,18 @@ class AX25DigiConnection:
 
         port = self._port_handler.get_port_by_id(tx_port_id)
         if not port:
-            print(f"Error UI_digi: No Port: {tx_port_id} - DIGI: {self._digi_call} - SSID: {self._digi_ssid}")
+            print(f"UI-DIGI ERROR: No Port: {tx_port_id} - DIGI: {self._digi_call} - SSID: {self._digi_ssid}")
             return
         port.add_frame_to_digiBuff(ax25_frame)
 
     def digi_rx_handle(self, ax25_frame):
-        """"""
-        # print(f"DIGI-RX : STATE: {self._state}")
-        """
-        if self._tx_conn and self._rx_conn:
-            print(f"DIGI-RX : RX: {self._rx_conn.uid} - TX: {self._tx_conn.uid}")
-            print(f"DIGI-RX : RX-State: {self._rx_conn.get_state()} - TX-State: {self._tx_conn.get_state()}")
-        elif self._rx_conn:
-            print(f"DIGI-RX : RX: {self._rx_conn.uid} ")
-            print(f"DIGI-RX : RX-State: {self._rx_conn.get_state()}")
-        elif self._tx_conn:
-            print(f"DIGI-RX : TX: {self._tx_conn.uid} ")
-            print(f"DIGI-RX : TX-State: {self._tx_conn.get_state()}")
-        """
         if ax25_frame.ctl_byte.flag == 'UI':
             self._UI_digi(ax25_frame)
             return
         state_exec = self._state_tab.get(self._state, None)
         if not callable(state_exec):
             self._state_0_error()
-            print(f"DIGI-RX : ERROR: not callable(state_exec) - STATE: {self._state}")
+            print(f"DIGI-RX ERROR: not callable(state_exec) - STATE: {self._state}")
             return
         state_exec(ax25_frame=ax25_frame)
 

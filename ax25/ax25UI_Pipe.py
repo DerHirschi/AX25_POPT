@@ -38,28 +38,32 @@ class AX25Pipe(object):
         self._max_pac_timer = time.time()
         self._tx_file_check_timer = time.time()
         self.e_count = 0
-        """ Buffers buffers buffers. We have Ram, so we need more buffer. """
+        """ Buffers buffers buffers. We have Ram, so we need more buffer. !! TODO CLEANUP !! """
         self._tx_data = b''
         self._rx_data = b''
-        self.tx_frame_buf: [AX25Frame] = []
+        self.tx_frame_buf = []
         """ Protocoled Pipe """
         self.connection = None
 
     def cron_exec(self):
         # self.save_rx_buff_to_file()
+        print('PIPR T')
         if self.tx_filename or self.rx_filename:
             self._tx_file_cron()
             self._tx_cron()
 
     def _tx_file_cron(self):
         if self._tx_file_check_timer < time.time():
+            print('PIPR T-FILE')
             self._tx_file_check_timer = time.time() + self.parm_tx_file_check_timer
             """"""
             self._load_tx_buff_fm_file()
 
     def _tx_cron(self):
         if self._tx_data:
+            print('PIPR T1')
             if self._check_parm_max_pac_timer():
+                print('PIPR T2')
                 self._tx_unProto()
                 self._tx_Proto()
 
@@ -72,13 +76,14 @@ class AX25Pipe(object):
                 new_frame.via_calls = self.ax25_frame.via_calls
                 new_frame.pid_byte = self.ax25_frame.pid_byte
                 new_frame.ctl_byte = self.ax25_frame.ctl_byte
-                new_frame.data = self._tx_data[:min(len(self._tx_data), self.parm_pac_len)]
+                new_frame.payload = self._tx_data[:min(len(self._tx_data), self.parm_pac_len)]
                 self._tx_data = self._tx_data[min(len(self._tx_data), self.parm_pac_len):]
                 new_frame.encode_ax25frame()
                 self.tx_frame_buf.append(new_frame)
 
     def _tx_Proto(self):
         if self.connection:
+            print('PIPR T3')
             self.connection.tx_buf_rawData += bytes(self._tx_data)
             self._tx_data = b''
 
@@ -93,7 +98,14 @@ class AX25Pipe(object):
 
     def change_settings(self):
         if self.connection:
-            self.ax25_frame = self.connection.ax25_out_frame
+            self.ax25_frame = AX25Frame(dict(
+                uid=str(self.connection.uid),
+                from_call_str=str(self.connection.my_call_str_add),
+                to_call_str=str(self.connection.to_call_str_add),
+                via_calls=list(self.connection.via_calls),
+                axip_add=tuple(self.connection.axip_add),
+                digi_call=str(self.connection.digi_call),
+            ))
         if not self.ax25_frame.from_call.call_str:
             return False
         if not self.ax25_frame.to_call.call_str:
@@ -113,7 +125,7 @@ class AX25Pipe(object):
         return False
 
     def handle_rx(self, ax25_frame: AX25Frame):
-        self._rx_data += ax25_frame.data
+        self._rx_data += ax25_frame.payload
         return self._save_rx_buff_to_file()
 
     def handle_rx_rawdata(self, raw_data: b''):
@@ -159,4 +171,3 @@ class AX25Pipe(object):
                 self.e_count += 1
                 return False
         return True
-
