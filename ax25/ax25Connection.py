@@ -269,6 +269,7 @@ class AX25Conn:
             self.zustand_exec = S1Frei(self)
             self.handle_rx(ax25_frame)
         else:
+            # self.t2 = time.time() + 5
             self.zustand_exec = S2Aufbau(self)
             # self.cli.change_cli_state(state=1)
 
@@ -551,10 +552,12 @@ class AX25Conn:
     def new_digi_connection(self, conn):
         print(f"Conn newDIGIConn: UID: {conn.uid}")
         if conn is None:
+            print("Conn ERROR: newDIGIConn: not conn")
             return False
         if self.uid in self.port_handler.link_connections.keys():
             self.zustand_exec.change_state(4)
             self.zustand_exec.tx(None)
+            print("Conn ERROR: newDIGIConn: self.uid in self.port_handler.link_connections")
             return False
         self.digi_call = str(conn.digi_call)
         self.port_handler.link_connections[str(self.uid)] = self, conn.digi_call
@@ -562,6 +565,7 @@ class AX25Conn:
         self.LINK_Connection = conn
         self.is_link = True
         #   self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
+        print("new_digi TX CONN ")
         return True
 
     def link_disco(self, reconnect=True):
@@ -1071,21 +1075,28 @@ class AX25Conn:
         self.port_handler.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
-            if self.digi_call:
-                self._accept_digi_connection()
-                return
+            if self.digi_call in self.port_cfg.parm_Digi_calls:
+                if self.accept_digi_connection():
+                    return
+                """
+                print(f"Accept Conn UID: {self.uid}")
+                print(f"Accept Conn digi_call: {self.digi_call}")
+                print(f"Accept Conn parm_Digi_calls: {self.port_cfg.parm_Digi_calls}")
+                """
             self.send_to_link(
                 f'\r*** Connected to {self.to_call_str}\r'.encode('ASCII', 'ignore')
             )
 
-    def _accept_digi_connection(self):
-        print('DIGI Conn accept..')
+    def accept_digi_connection(self):
+        print(f'DIGI Conn accept..  {self.uid}  ?')
         if not self.LINK_Connection:
+            print(f'DIGI Conn accept: No LINK_Connection {self.uid}')
+            print(f'DIGI Conn accept: No LINK_Connection {self.LINK_Connection}')
             return False
         digi_uid = self.LINK_Connection.uid
         digi_uid = reverse_uid(digi_uid)
         link_conn_port = self.LINK_Connection.own_port
-        link_conn_port.accept_digi_conn(digi_uid)
+        return link_conn_port.accept_digi_conn(digi_uid)
 
     def insert_new_connection(self):
         """ Insert connection for handling """

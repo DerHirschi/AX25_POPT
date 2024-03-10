@@ -441,20 +441,7 @@ class StatSetTab:
         # CLI
         self.cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
         # Ports
-        """
-        for k in self.ports_sett.keys():
-            self.ports_sett: {int: DefaultPortConfig}
-            var = self.port_set_var[k][0]
-            var.set(0)
-            dev_check = self.port_set_var[k][1]
-            dev_check.deselect()
-            dev_check.configure(text=self.ports_sett[k].parm_PortName)
-            tmp_ports = self.ports_sett[k]
-            for el in tmp_ports.parm_StationCalls:
-                if el in self.station_setting.stat_parm_Call:
-                    var.set(1)
-                    dev_check.select()
-        """
+
         # MaxPac
         self.max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
         self.max_pac.update()

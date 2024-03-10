@@ -172,6 +172,10 @@ class AX25Port(threading.Thread):
         return False
 
     def _rx_link_handler(self, ax25_frame):
+        if reverse_uid(ax25_frame.addr_uid) in self.port_handler.link_connections.keys():
+            print(f"Port rx_link_handler reverse_uid: UID: {ax25_frame.addr_uid}")
+            print(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
+            return False
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
             # print(f"Link-Conn RX: {ax25_frame.addr_uid}")
             conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
@@ -182,7 +186,7 @@ class AX25Port(threading.Thread):
                     return True
             conn.handle_rx(ax25_frame=ax25_frame)
             return True
-        return False
+
 
     def _rx_pipe_handler(self, ax25_frame):
         uid = str(ax25_frame.addr_uid)
@@ -271,8 +275,9 @@ class AX25Port(threading.Thread):
             print(f'accept_digi_conn uid: {uid}')
             print(f'accept_digi_conn keys: {self._digi_connections.keys()}')
             return False
-        # print('accept_digi_conn')
+        print('PORT: accept_digi_conn')
         self._digi_connections[uid].add_rx_conn_cron()
+        return True
 
     def delete_digi_conn(self, uid: str):
         if uid in self._digi_connections.keys():
@@ -661,7 +666,13 @@ class AX25Port(threading.Thread):
     def new_connection(self, ax25_frame):
         """ New Outgoing Connection """
         ax25_frame.ctl_byte.SABMcByte()
-        ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
+        try:
+            ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
+        except AX25EncodingERROR as e:
+            print(f"new_connection ERROR {e}")
+            print(f"new_connection destCall {ax25_frame.to_call}")
+            print(f"new_connection via_calls {ax25_frame.via_calls}")
+            return False
 
         while True:
             if ax25_frame.addr_uid not in self.connections.keys() and \

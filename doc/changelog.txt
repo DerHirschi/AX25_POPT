@@ -7,6 +7,8 @@ Fixes:
 - Pipe-Tool
 - AXIP Lookup für UI Frames (Baken/Monitor) (UI Frames können auch an AXIP Stationen gesendet werden, wenn AXIP bekannt)
 - Monitor Adresscall/Pfad erlaubt auch Kleinbuchstaben
+- DIGI Timing probleme, wenn DIGI-Connection von HF-Port zu AXIP-Port geleitet wird
+- Node hat kein '*** Connected to' mehr gesendet bei Weiterconnect
 
 Optimierung:
 - Dev Konsolenausgaben aufgeräumt
