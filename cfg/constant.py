@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.108.4'
+VER = '2.108.5'
 """
 LANGUAGE:
 0 = German
@@ -40,15 +40,15 @@ CFG_sound_CONN = '//data//sound//conn_alarm.wav'
 CFG_sound_RX_BEEP = '//data//sound//rx_beep.wav'
 CFG_sound_BELL = '//data//sound//bell.wav'
 
-
+"""
 CFG_txt_save = {
-    'stat_parm_cli_ctext': 'ctx',
-    'stat_parm_cli_bye_text': 'btx',
-    'stat_parm_cli_itext': 'itx',
-    'stat_parm_cli_longitext': 'litx',
-    'stat_parm_cli_akttext': 'atx',
+    'cli_ctext': 'ctx',
+    'cli_bye_text': 'btx',
+    'cli_itext': 'itx',
+    'cli_longitext': 'litx',
+    'cli_akttext': 'atx',
 }
-
+"""
 ENCODINGS = (
     'CP437',
     'ASCII',

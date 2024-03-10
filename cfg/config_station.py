@@ -3,7 +3,8 @@ import os
 import logging
 
 from ax25.ax25UI_Pipe import AX25Pipe
-from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_txt_save, CFG_ft_downloads, VER
+from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, VER
+from cfg.default_config import getNew_CLI_cfg
 from cfg.popt_config import POPT_CFG
 from fnc.cfg_fnc import save_to_file, load_fm_file
 
@@ -67,19 +68,24 @@ def get_all_stat_cfg():
                     stat.stat_parm_pipe.tx_filename = stat.stat_parm_pipe_tx
                     stat.stat_parm_pipe.rx_filename = stat.stat_parm_pipe_rx
                     stat.stat_parm_pipe.parm_tx_file_check_timer = stat.stat_parm_pipe_loop_timer
+                """
                 if type(stat.stat_parm_cli) is not str:
                     if hasattr(stat.stat_parm_cli, 'cli_name'):
                         stat.stat_parm_cli = stat.stat_parm_cli.cli_name
+                """
+
                 ################################
                 # Gather Text Files (C-Text ...)
+                """
                 for att in CFG_txt_save.keys():
                     f_n = CFG_usertxt_path + \
                           '{0}/{0}.{1}'.format(stat.stat_parm_Call, CFG_txt_save[att])
 
                     val = load_fm_file(f_n)
                     if val:
-                        setattr(stat, att, val)
-
+                        stat.stat_parm_cli_cfg[att] = val
+                        # setattr(stat, att, val)
+                """
                 ret[call] = stat
     return ret
 
@@ -119,21 +125,24 @@ class DefaultStation:
     stat_parm_LOC: str = ''
     # stat_parm_TYP: str = ''
     ##########################
-    # stat_parm_isSmartDigi = False
     stat_parm_is_Digi = False
     # Parameter for CLI
-    stat_parm_cli: '' = 'NO-CLI'
     stat_parm_pipe = None
     stat_parm_pipe_tx = ''
     stat_parm_pipe_rx = ''
     stat_parm_pipe_loop_timer = 10
     # Optional Parameter. Can be deleted if not needed. Param will be get from cliMain.py
-    stat_parm_cli_ctext: str = ''
-    stat_parm_cli_itext: str = ''
-    stat_parm_cli_longitext: str = ''
-    stat_parm_cli_akttext: str = ''
-    stat_parm_cli_bye_text: str = ''
-    stat_parm_cli_prompt: str = ''
+    stat_parm_cli_cfg = getNew_CLI_cfg()
+
+    stat_parm_cli = 'NO-CLI'
+    # stat_parm_cli_ctext: str = ''
+    # stat_parm_cli_itext: str = ''
+    # stat_parm_cli_longitext: str = ''
+    # stat_parm_cli_akttext: str = ''
+    # stat_parm_cli_bye_text: str = ''
+    # stat_parm_cli_prompt: str = ''
+
+
     # Optional Parameter. Overrides Port Parameter
     stat_parm_PacLen: int = 0  # Max Pac len
     stat_parm_MaxFrame: int = 0  # Max (I) Frames
@@ -152,8 +161,7 @@ class DefaultPort(object):
     parm_PortTyp: '' = ''  # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIP' AXIP UDP
     parm_PortParm: (str, int) = ('', 0)
     # TODO DIGI is Station related
-    parm_isSmartDigi = False
-    parm_StupidDigi_calls = []  # Just if parm_isDigi is set to False
+    parm_Digi_calls = []  # Just if parm_isDigi is set to False
     parm_TXD = 400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
     """ Kiss Parameter """
     parm_kiss_is_on = True
@@ -234,6 +242,7 @@ class DefaultPort(object):
 
 
 class PortConfigInit(DefaultPort):
+    # TODO
     def __init__(self, loaded_stat: dict, port_id: int):
         # ReInit rest of this shit
         for att in dir(self):
@@ -288,7 +297,7 @@ class PortConfigInit(DefaultPort):
                         self.parm_Stations.append(new_stat_cfg)
                         # Stupid Digi
                         if new_stat_cfg.stat_parm_is_Digi:
-                            self.parm_StupidDigi_calls.append(call)
+                            self.parm_Digi_calls.append(call)
                 if self.parm_PortTyp == 'AXIP':
                     self.parm_full_duplex = True
                 else:
@@ -297,7 +306,9 @@ class PortConfigInit(DefaultPort):
             # stat: DefaultStation
             for stat in self.parm_Stations:
                 if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
-                    self.parm_cli[stat.stat_parm_Call] = stat.stat_parm_cli
+                    new_cli_cfg = getNew_CLI_cfg()
+                    new_cli_cfg.update(stat.stat_parm_cli_cfg)
+                    self.parm_cli[stat.stat_parm_Call] = new_cli_cfg
 
         self.parm_aprs_station['aprs_port_id'] = port_id
 
@@ -313,12 +324,15 @@ def save_station_to_file(conf: DefaultStation):
         save_station = {}
         for att in dir(conf):
             if '__' not in att and not callable(getattr(conf, att)):
+                """
                 if att in CFG_txt_save.keys():
                     f_n = CFG_usertxt_path + \
                           '{0}/{0}.{1}'.format(conf.stat_parm_Call, CFG_txt_save[att])
                     save_to_file(f_n, getattr(conf, att))
                 else:
                     save_station[att] = getattr(conf, att)
+                """
+                save_station[att] = getattr(conf, att)
         if conf.stat_parm_pipe:
             # save_station.stat_parm_pipe = True
             save_station['stat_parm_pipe_tx'] = conf.stat_parm_pipe.tx_filename

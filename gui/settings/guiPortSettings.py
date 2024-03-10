@@ -702,7 +702,7 @@ class PortSetTab:
                 stat = self.all_stat_cfgs[k]
                 self.port_setting.parm_stat_PacLen[k] = stat.stat_parm_PacLen
                 self.port_setting.parm_stat_MaxFrame[k] = stat.stat_parm_MaxFrame
-                self.port_setting.parm_cli[k] = stat.stat_parm_cli
+                self.port_setting.parm_cli[k] = stat.stat_parm_cli_cfg
                 self.port_setting.parm_StationCalls.append(k)
                 self.port_setting.parm_Stations.append(stat)
                 # station_save_files

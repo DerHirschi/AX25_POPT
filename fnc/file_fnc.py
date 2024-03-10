@@ -17,9 +17,20 @@ def get_bin_fm_file(filename: str):
 
 def get_str_fm_file(filename: str):
     if not filename:
-        return False
+        return ''
     try:
         with open(filename, 'r') as f:
             return f.read()
+    except (FileNotFoundError, EOFError, IsADirectoryError, UnicodeDecodeError):
+        return ''
+
+
+def save_str_fm_file(filename: str, data: str):
+    if not filename:
+        return False
+    try:
+        with open(filename, 'w') as f:
+            return f.write(data)
     except (FileNotFoundError, EOFError, IsADirectoryError):
         return False
+

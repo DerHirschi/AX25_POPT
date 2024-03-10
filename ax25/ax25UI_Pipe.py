@@ -47,23 +47,19 @@ class AX25Pipe(object):
 
     def cron_exec(self):
         # self.save_rx_buff_to_file()
-        print(f'PIPR T uid: {self.uid}')
         if self.tx_filename or self.rx_filename:
             self._tx_file_cron()
             self._tx_cron()
 
     def _tx_file_cron(self):
         if self._tx_file_check_timer < time.time():
-            print('PIPR T-FILE')
             self._tx_file_check_timer = time.time() + self.parm_tx_file_check_timer
             """"""
             self._load_tx_buff_fm_file()
 
     def _tx_cron(self):
         if self._tx_data:
-            print('PIPR T1')
             if self._check_parm_max_pac_timer():
-                print('PIPR T2')
                 self._tx_unProto()
                 self._tx_Proto()
 
@@ -83,7 +79,6 @@ class AX25Pipe(object):
 
     def _tx_Proto(self):
         if self.connection:
-            print('PIPR T3')
             self.connection.tx_buf_rawData += bytes(self._tx_data)
             self._tx_data = b''
 
@@ -124,7 +119,7 @@ class AX25Pipe(object):
             return True
         return False
 
-    def handle_rx(self, ax25_frame: AX25Frame):
+    def handle_rx(self, ax25_frame):
         self._rx_data += ax25_frame.payload
         return self._save_rx_buff_to_file()
 

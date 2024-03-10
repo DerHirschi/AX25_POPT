@@ -1,3 +1,4 @@
+import datetime
 import time
 import threading
 
@@ -44,6 +45,7 @@ class AX25PortHandler(object):
             print("Database Init Error !! Can't start PoPT !")
             raise SQLConnectionError
         #################
+        self._start_time = datetime.datetime.now()
         self.is_running = True
         self.ax25types = {
             'KISSTCP': KissTCP,
@@ -190,7 +192,7 @@ class AX25PortHandler(object):
                         new_digi_calls.append(stat_key)
                         if stat_key not in digi_cfg:
                             digi_cfg[stat_key] = POPT_CFG.get_digi_CFG_for_Call(stat_key)
-            self.ax25_ports[port_kk].port_cfg.parm_StupidDigi_calls = new_digi_calls
+            self.ax25_ports[port_kk].port_cfg.parm_Digi_calls = new_digi_calls
             self.ax25_ports[port_kk].digi_calls = new_digi_calls  # Same Object !!
         POPT_CFG.set_digi_CFG(digi_cfg)
         # print(POPT_CFG.get_digi_CFG())
@@ -578,7 +580,7 @@ class AX25PortHandler(object):
         for port_id in self.ax25_ports.keys():
             for pipe_uid in self.ax25_ports[port_id].pipes.keys():
                 if self.ax25_ports[port_id].pipes[pipe_uid]:
-                    print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
+                    # print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
                     ret.append(self.ax25_ports[port_id].pipes[pipe_uid])
         return ret
 
@@ -586,7 +588,6 @@ class AX25PortHandler(object):
         if port_id not in self.ax25_ports.keys():
             return False
         if not pipe_uid:
-            print('NO PIPE UID')
             return False
         self.ax25_ports[port_id].pipes[pipe_uid] = pipe
         return True
@@ -785,6 +786,8 @@ class AX25PortHandler(object):
     def get_MH(self):
         return self.mh
 
+    def get_stat_timer(self):
+        return self._start_time
     #################################################
     #
 

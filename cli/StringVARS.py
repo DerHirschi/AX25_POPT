@@ -1,11 +1,13 @@
 import datetime
 
 from cfg.constant import VER
+from fnc.str_fnc import get_timedelta_CLIstr
 
 """
     $ver = PoPT 2.xxx.x                         - Bake
     $time = 20:39:00                            - Bake
     $date = 03/03/2024                          - Bake
+    $uptime = Zeit seit Programmstart           - Bake
     $channel = Kanal NR
     $portNr = Port NR                           - Bake
     $destName = Name der Gegenstation wenn bekannte, ansonsten Call der Gegenstation
@@ -50,6 +52,16 @@ def get_time_str(port=None,
                  connection=None,
                  user_db=None):
     return str(datetime.datetime.now().strftime('%H:%M:%S'))
+
+
+def get_uptime_str(port=None,
+                   port_handler=None,
+                   connection=None,
+                   user_db=None):
+    if not port_handler:
+        return '---'
+    start_time = port_handler.get_stat_timer()
+    return get_timedelta_CLIstr(start_time, r_just=False)
 
 
 def get_date_str(port=None,
@@ -179,6 +191,7 @@ def get_lastConnTime(port=None,
 STRING_VARS = {
     '$ver': get_ver,
     '$time': get_time_str,
+    '$uptime': get_uptime_str,
     '$date': get_date_str,
     '$channel': get_channel_id,
     '$portNr': get_port_id,
@@ -202,9 +215,9 @@ def replace_StringVARS(input_string: str,
                        ):
     if connection:
         port = connection.own_port
-    if port:
+    if port and not port_handler:
         port_handler = port.port_handler
-    if port_handler:
+    if port_handler and not user_db:
         user_db = port_handler.get_userDB()
     for key, fnc in STRING_VARS.items():
         if callable(fnc):

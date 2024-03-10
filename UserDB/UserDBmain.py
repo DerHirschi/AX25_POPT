@@ -301,6 +301,10 @@ class UserDB:
         ret = self.db.get(call_str, None)
         if ret:
             return ret.AXIP
+        call = call_tuple_fm_call_str(call_str)[0]
+        ret = self.db.get(call, None)
+        if ret:
+            return ret.AXIP
         return '', 0
 
     def set_AXIP(self, call_str: str, axip: tuple):

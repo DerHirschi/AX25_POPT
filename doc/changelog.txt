@@ -5,15 +5,21 @@ Fixes:
 - UI-Frames werden nicht mehr digipited
 - Im Monitor Modus wird ein neu ausgehender Connect auf Kanal 0 gelegt.
 - Pipe-Tool
+- AXIP Lookup für UI Frames (Baken/Monitor) (UI Frames können auch an AXIP Stationen gesendet werden, wenn AXIP bekannt)
+- Monitor Adresscall/Pfad erlaubt auch Kleinbuchstaben
 
 Optimierung:
 - Dev Konsolenausgaben aufgeräumt
 - ax25Connection.py aufgeräumt/optimiert
+- Texte (C-Text, I-Text, ...) werden jetzt lesbar als Textdatei gespeichert. (Dachte, es wäre bereits der Fall)
+- Texte (C-Text, I-Text, ...) werden beim Abrufen direkt aus Datei geladen. Das ermöglicht das Editieren per Script
+  z.B. um aktuelle Wetterdaten o.Ä. einzufügen.
 
 Neue Implementierungen / Funktionen:
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   - $lastConnDate = Letzter Connect Datum
   - $lastConnTime = Letzter Connect Zeit
+  - $uptime = Zeit seit Programmstart       - Bake
 - "Managed-Digi/Smart-Digi/L3-Digi"
   - UI-Frames weiterleiten auf Port (DIGI SSID)
 

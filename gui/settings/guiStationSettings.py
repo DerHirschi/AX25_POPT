@@ -6,7 +6,10 @@ from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.config_station import save_station_to_file, del_user_data, DefaultStation
+from cfg.constant import CFG_data_path, CFG_usertxt_path
+from cfg.default_config import getNew_CLI_DIGI_cfg
 from cli.cliMain import CLI_OPT
+from fnc.file_fnc import get_str_fm_file, save_str_fm_file
 from gui.guiMsgBoxes import *
 from cfg.string_tab import STR_TABLE
 
@@ -22,6 +25,7 @@ class StatSetTab:
         self.style = main_stt_win.style
         self.own_tab = ttk.Frame(self.tab_clt)
         self.lang = main_stt_win.lang
+        self._stat_call = self.station_setting.stat_parm_Call
         #################
         # Call
         call_x = 20
@@ -30,7 +34,7 @@ class StatSetTab:
         call_label.place(x=call_x, y=height - call_y)
         self.call = tk.Entry(self.own_tab, width=10)
         self.call.place(x=call_x + 55, y=height - call_y)
-        self.call.insert(tk.END, self.station_setting.stat_parm_Call)
+        self.call.insert(tk.END, self._stat_call)
         #################
         # CLI
         cli_x = 280
@@ -152,7 +156,9 @@ class StatSetTab:
         self.c_text_ent.configure(width=80, height=11)
         # self.c_text_ent.place(x=5, y=15)
         self.c_text_ent.grid(row=1, column=1)
-        self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)
+        # self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)
+        self.c_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.ctx'))
+
         # Bye Text
         tab_byetext = ttk.Frame(self.textTab)
         tab_byetext.rowconfigure(0, minsize=2, weight=0)
@@ -166,7 +172,9 @@ class StatSetTab:
         self.bye_text_ent.configure(width=80, height=11)
         # self.bye_text_ent.place(x=5, y=15)
         self.bye_text_ent.grid(row=1, column=1)
-        self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
+        # self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
+        self.bye_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.btx'))
+
         # Info Text
         tab_infotext = ttk.Frame(self.textTab)
         tab_infotext.rowconfigure(0, minsize=2, weight=0)
@@ -180,7 +188,9 @@ class StatSetTab:
         self.info_text_ent.configure(width=80, height=11)
         # self.bye_text_ent.place(x=5, y=15)
         self.info_text_ent.grid(row=1, column=1)
-        self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
+        # self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
+        self.info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.itx'))
+
         # Info Text
         tab_loinfotext = ttk.Frame(self.textTab)
         tab_loinfotext.rowconfigure(0, minsize=2, weight=0)
@@ -194,7 +204,9 @@ class StatSetTab:
         self.long_info_text_ent.configure(width=80, height=11)
         # self.bye_text_ent.place(x=5, y=15)
         self.long_info_text_ent.grid(row=1, column=1)
-        self.long_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_longitext)
+        # self.long_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_longitext)
+        self.long_info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.litx'))
+
         # Status Text
         tab_akttext = ttk.Frame(self.textTab)
         tab_akttext.rowconfigure(0, minsize=2, weight=0)
@@ -208,7 +220,8 @@ class StatSetTab:
         self.akt_info_text_ent.configure(width=80, height=11)
         # self.bye_text_ent.place(x=5, y=15)
         self.akt_info_text_ent.grid(row=1, column=1)
-        self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
+        # self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
+        self.akt_info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.atx'))
         # ########################################################################################
         # ########################################################################################
         # Pipe
@@ -312,6 +325,26 @@ class StatSetTab:
 
         self.update_vars_fm_cfg()
 
+    def _load_fm_file(self, filename: str):
+        file_n = CFG_data_path + \
+                      CFG_usertxt_path + \
+                      self._stat_call + '/' + \
+                      filename
+        out = get_str_fm_file(file_n)
+        if out:
+            return out
+        return ''
+
+    def _save_fm_file(self, filename: str, data: str):
+        file_n = CFG_data_path + \
+                      CFG_usertxt_path + \
+                      self._stat_call + '/' + \
+                      filename
+        out = save_str_fm_file(file_n, data)
+        if out:
+            return out
+        return ''
+
     def _choose_color(self, fg_bg: str):
         self._main_cl.settings_win.attributes("-topmost", False)
 
@@ -406,7 +439,7 @@ class StatSetTab:
         self.call.delete(0, tk.END)
         self.call.insert(tk.END, self.station_setting.stat_parm_Call)
         # CLI
-        self.cli_select_var.set(self.station_setting.stat_parm_cli)
+        self.cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
         # Ports
         """
         for k in self.ports_sett.keys():
@@ -431,24 +464,21 @@ class StatSetTab:
         # DIGI
         self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
         # self.digi.select()
-        # Smart DIGI
-        # self.smart_digi_set_var.set(1)  # TODO
-        # self.smart_digi.select()
         # C-Text
         self.c_text_ent.delete('1.0', tk.END)
-        self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)
+        self.c_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.ctx'))
         # Bye Text
         self.bye_text_ent.delete('1.0', tk.END)
-        self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
+        self.bye_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.btx'))
         # Info Text
         self.info_text_ent.delete('1.0', tk.END)
-        self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
+        self.info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.itx'))
         # Long Info Text
         self.long_info_text_ent.delete('1.0', tk.END)
-        self.long_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_longitext)
+        self.long_info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.litx'))
         # News Text
         self.akt_info_text_ent.delete('1.0', tk.END)
-        self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
+        self.akt_info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.atx'))
         # Name
         self.name.delete(0, tk.END)
         self.name.insert(tk.END, self.station_setting.stat_parm_Name)
@@ -462,7 +492,7 @@ class StatSetTab:
             self.loop_timer.configure(state='disabled')
             self.tx_filename.configure(state='disabled')
             self.rx_filename.configure(state='disabled')
-            self.cli_select_var.set(self.station_setting.stat_parm_cli)
+            self.cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
         else:
             self.cli_select_var.set('PIPE')  # default value
             self.c_text_ent.configure(state='disabled')
@@ -483,15 +513,16 @@ class StatSetTab:
         self.call.delete(0, tk.END)
         self.call.insert(tk.END, call)
         self.station_setting.stat_parm_Call = call
+
         # CLI
         cli_key = self.cli_select_var.get()
-
         if cli_key not in ['PIPE']:
             # self.station_setting.stat_parm_cli = self.cli_opt[cli_key]
-            self.station_setting.stat_parm_cli = cli_key
 
+            # self.station_setting.stat_parm_cli = cli_key
+            pass
         else:
-            self.station_setting.stat_parm_cli = 'NO-CLI'
+            # self.station_setting.stat_parm_cli = 'NO-CLI'
             new_pipe = self.cli_opt[cli_key]
             new_pipe.tx_filename = self.tx_filename_var.get()
             new_pipe.rx_filename = self.rx_filename_var.get()
@@ -518,6 +549,32 @@ class StatSetTab:
         self.station_setting.stat_parm_is_Digi = bool(self._digi_set_var.get())
         # Smart DIGI
         # self.station_setting.stat_parm_isSmartDigi = bool(self.smart_digi_set_var.get())
+        stat_parm_cli_cfg: dict = self.station_setting.stat_parm_cli_cfg
+        digi_cfg: dict = self.station_setting.stat_parm_cli_cfg.get('cli_digi_cfg', getNew_CLI_DIGI_cfg())
+        digi_cfg.update(dict(
+                digi_enabled=True,
+                digi_allowed_ports=[],
+                digi_max_buff=10,  # bytes till RNR
+                digi_max_n2=4,  # N2 till RNR
+            ))
+
+        stat_parm_cli_cfg.update(dict(
+            cli_typ=str(cli_key),
+            # cli_ctext=str(self.c_text_ent.get('1.0', tk.END)[:-1]),
+            # cli_itext=str(self.info_text_ent.get('1.0', tk.END)[:-1]),
+            # cli_longitext=str(self.long_info_text_ent.get('1.0', tk.END)[:-1]),
+            # cli_akttext=str(self.akt_info_text_ent.get('1.0', tk.END)[:-1]),
+            # cli_bye_text=str(self.bye_text_ent.get('1.0', tk.END)[:-1]),
+            cli_prompt='',
+            cli_digi_cfg=digi_cfg,
+        ))
+        self.station_setting.stat_parm_cli_cfg = dict(stat_parm_cli_cfg)
+        self._save_fm_file(self._stat_call + '.ctx', self.c_text_ent.get('1.0', tk.END)[:-1])
+        self._save_fm_file(self._stat_call + '.btx', self.bye_text_ent.get('1.0', tk.END)[:-1])
+        self._save_fm_file(self._stat_call + '.itx', self.info_text_ent.get('1.0', tk.END)[:-1])
+        self._save_fm_file(self._stat_call + '.litx', self.long_info_text_ent.get('1.0', tk.END)[:-1])
+        self._save_fm_file(self._stat_call + '.atx', self.akt_info_text_ent.get('1.0', tk.END)[:-1])
+        """
         # C-Text
         self.station_setting.stat_parm_cli_ctext = self.c_text_ent.get('1.0', tk.END)[:-1]
         # Bye Text
@@ -528,6 +585,7 @@ class StatSetTab:
         self.station_setting.stat_parm_cli_longitext = self.long_info_text_ent.get('1.0', tk.END)[:-1]
         # News Text
         self.station_setting.stat_parm_cli_akttext = self.akt_info_text_ent.get('1.0', tk.END)[:-1]
+        """
         # Name
         self.station_setting.stat_parm_Name = self.name.get()
         # QTH
@@ -620,12 +678,12 @@ class StationSettingsWin:
         self._tabControl.place(x=20, y=self.win_height - 550)
         # Tab Vars
         # self.tab_index = 0
-        self.tab_list: [ttk.Frame] = []
+        self._tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
         for k in PORT_HANDLER.ax25_stations_settings.keys():
             sett = PORT_HANDLER.ax25_stations_settings[k]
             tab = StatSetTab(self, sett, self._tabControl)
-            self.tab_list.append(tab)
+            self._tab_list.append(tab)
             self._tabControl.add(tab.own_tab, text=k)
 
     def _set_all_vars_to_cfg(self):
@@ -634,11 +692,11 @@ class StationSettingsWin:
             self.all_port_settings[k].parm_Stations = []
         """
         dbl_calls = []
-        for el in self.tab_list:
+        for el in self._tab_list:
             call = el.call.get().upper()
             if call not in dbl_calls:
                 el.set_vars_to_cfg()
-                self._tabControl.tab(self.tab_list.index(el), text=call)
+                self._tabControl.tab(self._tab_list.index(el), text=call)
                 dbl_calls.append(call)
             else:
                 el.call.delete(0, tk.END)
@@ -647,7 +705,7 @@ class StationSettingsWin:
         PORT_HANDLER.update_digi_setting()
 
     def _save_cfg_to_file(self):
-        for conf in self.tab_list:
+        for conf in self._tab_list:
             stat_conf = conf.station_setting
             if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
                 PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
@@ -686,8 +744,8 @@ class StationSettingsWin:
         sett = DefaultStation()
         tab = StatSetTab(self, sett, self._tabControl)
         self._tabControl.add(tab.own_tab, text=sett.stat_parm_Call)
-        self._tabControl.select(len(self.tab_list))
-        self.tab_list.append(tab)
+        self._tabControl.select(len(self._tab_list))
+        self._tab_list.append(tab)
         # print(self._tabControl.index('current'))
 
     def destroy(self):
@@ -708,10 +766,10 @@ class StationSettingsWin:
             except tk.TclError:
                 pass
             else:
-                tab: StatSetTab = self.tab_list[ind]
+                tab: StatSetTab = self._tab_list[ind]
                 call = tab.call.get()
                 del_user_data(call)
-                del self.tab_list[ind]
+                del self._tab_list[ind]
                 self._tabControl.forget(ind)
 
                 WarningMsg('Station gelöscht', 'Laufwerk C: wurde erfolgreich formatiert.')

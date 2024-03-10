@@ -8,6 +8,7 @@ Ideas/TODO's :
 ✓ UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   ✓ $ver = PoPT 2.xxx.x                         - Bake
   ✓ $time = 20:39:00                            - Bake
+  ✓ $uptime = Zeit seit Programmstart           - Bake
   ✓ $date = 03-03-2024                          - Bake
   ✓ $channel = Kanal NR
   ✓ $portNr = Port NR                           - Bake

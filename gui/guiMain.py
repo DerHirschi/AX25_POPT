@@ -1936,7 +1936,7 @@ class PoPT_GUI_Main:
         port_id = int(self.mon_port_var.get())
         if port_id in PORT_HANDLER.get_all_ports().keys():
             port = PORT_HANDLER.get_all_ports()[port_id]
-            add = self.mon_to_add_var.get()
+            add = str(self.mon_to_add_var.get()).upper()
             own_call = str(self.mon_call_var.get())
             poll = bool(self.mon_poll_var.get())
             cmd = bool(self.mon_cmd_var.get())
