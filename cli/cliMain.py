@@ -476,7 +476,8 @@ class DefaultCLI(object):
 
         # port_id = self.own_port.port_id
         port_id = -1
-        vias = [self._connection.my_call_str]
+        # vias = [self._connection.my_call_str]
+        vias = []
         port_tr = False
         if len(self._parameter) > 1:
             if self._parameter[-1].isdigit():
@@ -1366,6 +1367,7 @@ class DefaultCLI(object):
     def s4(self):
         """ ry to connect other Station ( C CMD ) """
         if self._connection.LINK_Connection:
+            print(f'CLI LinkDisco : {self._connection.uid}')
             self._connection.link_disco()
         self.change_cli_state(1)
         return self.get_ts_prompt()

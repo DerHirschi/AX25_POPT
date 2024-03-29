@@ -437,6 +437,7 @@ class AX25PortHandler(object):
     def new_outgoing_connection(self,  # NICE ..
                                 dest_call: str,
                                 own_call: str,
+                                # digi_call='',       # For CLI C CMD
                                 via_calls=None,     # Auto lookup in MH if not exclusive Mode
                                 port_id=-1,         # -1 Auto lookup in MH list
                                 axip_add=('', 0),   # AXIP Adress
@@ -452,8 +453,10 @@ class AX25PortHandler(object):
             axip_add = USER_DB.get_AXIP(dest_call)
         if via_calls is None:
             via_calls = []
+        """
         if link_conn and not via_calls and exclusive:
             return False, 'Error: Link No Via Call'
+        """
         """
         if digi_conn and not via_calls and exclusive:
             return False, 'Error: DIGI No Via Call'
@@ -468,9 +471,20 @@ class AX25PortHandler(object):
             if mh_entry:
                 if mh_entry.all_routes:
                     # port_id = int(mh_entry.port_id)
-                    mh_vias = list(mh_entry.route)
-                    mh_vias.reverse()
-                    via_calls += mh_vias
+                    print(list(mh_entry.route))
+                    print(list(mh_entry.all_routes))
+                    print('----------')
+                    """
+                    for att in dir(mh_entry):
+                        print(f"{att}: {getattr(mh_entry, att)}")
+                    """
+                    print('----------')
+                    print(via_calls)
+                    if not via_calls:
+                        mh_vias = list(mh_entry.route)
+                        mh_vias.reverse()
+                        print(f"Via fm MH: {mh_vias}")
+                        via_calls = mh_vias
                     if not axip_add[0]:
                         axip_add = tuple(mh_entry.axip_add)
         if not axip_add[0] and mh_entry:
@@ -486,8 +500,15 @@ class AX25PortHandler(object):
                 return False, f'Error: No AXIP Address - PORT-ID: {port_id}'
             if not axip_add[0]:
                 return False, f'Error: No AXIP Address - PORT-ID: {port_id}'
-        if link_conn and not via_calls:
-            return False, 'Error: Link No Via Call'
+        """
+        if link_conn:
+            if port_id:
+                digi_call = f'{link_conn.my_call}-{port_id}'
+            else:
+                digi_call = link_conn.my_call_str
+            via_calls = [digi_call] + via_calls
+            # return False, 'Error: Link No Via Call'
+        """
         """
         if (own_call == dest_call) and not via_calls:
             return False, 'Error: Invalid Call. TX-CALL = RX-CALL'

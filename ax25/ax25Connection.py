@@ -149,6 +149,7 @@ class AX25Conn:
         self.is_link = False
         self.is_link_remote = False
         self.digi_call = ''
+        self.is_digi = False
         """ Connection Conf """
         """
         self.conf = dict(
@@ -538,8 +539,13 @@ class AX25Conn:
             return False
         if self.is_link_remote:
             self.my_call_str = str(conn.my_call_str)
+            if conn.port_id:
+                digi_call = f'{conn.my_call}-{conn.port_id}'
+            else:
+                digi_call = str(conn.my_call_str)
+            self.my_call_str = digi_call
             # self.ax25_out_frame.digi_call = str(conn.my_call_str)
-            self.digi_call = str(conn.my_call_str)
+            self.digi_call = digi_call
             self.port_handler.link_connections[str(conn.uid)] = conn, ''
         else:
             self.port_handler.link_connections[str(conn.uid)] = conn, self.my_call_str
@@ -565,32 +571,46 @@ class AX25Conn:
         self.LINK_Connection = conn
         self.is_link = True
         #   self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
-        print("new_digi TX CONN ")
+        # print("new_digi TX CONN ")
         return True
 
     def link_disco(self, reconnect=True):
+        print(f'LINK DISCO')
         if self.is_link and self.LINK_Connection is not None:
+            print(f'LINK DISCO : ownUID: {self.uid} - LinkUID: {self.LINK_Connection.uid}')
+            print(f'LINK DISCO : digiCall: {self.digi_call} - is_digi: {self.is_digi}')
+            print(f'LINK DISCO : is_link_remote: {self.is_link_remote} - reconn: {reconnect}')
             if self.LINK_Connection.zustand_exec.stat_index in [1, 2]:
                 # self.LINK_Connection.n2 = 100
                 self.LINK_Connection.set_T1(stop=True)
                 self.LINK_Connection.zustand_exec.change_state(0)
                 self.del_link()
             else:
+
                 if not self.is_link_remote:
-                    # print(f'LINK DISCO : {self.uid}')
+                    print("LINK DISCO Remote")
                     self.LINK_Connection.conn_disco()
                     # self.LINK_Connection.zustand_exec.tx(None)
                 else:
-
                     self.port_handler.del_link(self.LINK_Connection.uid)
                     # print(self.zustand_exec.stat_index)
                     # if self.zustand_exec.stat_index not in [0, 1]:
-                    if reconnect and not self.digi_call:
+                    # if reconnect and not self.digi_call:
+                    if self.is_digi:
+                        print("DIGI DISCO Remote")
+                        self.LINK_Connection.conn_disco()
+                    elif reconnect and self.is_link_remote and not self.is_digi:
+                        print('ReConn')
                         self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
                         self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
-                    if self.digi_call:
-                        self.LINK_Connection.conn_disco()
-                    else:
+                        """
+                        if self.digi_call:
+                            print("Link Disco ----")
+                            self.LINK_Connection.conn_disco()
+                        else:
+                            self.LINK_Connection.cli.change_cli_state(state=1)
+                            self.LINK_Connection.cli.send_prompt()
+                        """
                         self.LINK_Connection.cli.change_cli_state(state=1)
                         self.LINK_Connection.cli.send_prompt()
                     self.LINK_Connection.del_link()
@@ -626,7 +646,7 @@ class AX25Conn:
                 self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
-                if self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK:
+                if not self.is_buffer_empty():
                     self._await_disco = True
                     print("DISCO and buff not NULL !!")
                     """
@@ -638,6 +658,9 @@ class AX25Conn:
 
                     self.zustand_exec.change_state(4)
 
+    def is_buffer_empty(self):
+        return not bool(self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK)
+
     def _wait_for_disco(self):
         if self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK:
             return
@@ -645,8 +668,8 @@ class AX25Conn:
         self.zustand_exec.change_state(4)
 
     def conn_cleanup(self):
-        # print(f"conn_cleanup: {self.uid}\n"
-        #       f"state: {self.zustand_exec.stat_index}\n")
+        print(f"conn_cleanup: {self.uid}\n"
+              f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
         if self.tx_buf_ctl:
             return
@@ -658,7 +681,7 @@ class AX25Conn:
         # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self, reconn=True):
-        # print(f"end_connection: {self.uid}")
+        print(f"end_connection: {self.uid}")
         self._del_pipe()
         self.ft_queue = []
         if self.ft_obj:
@@ -784,10 +807,13 @@ class AX25Conn:
                 self.user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())
             self.cli_language = self.user_db_ent.Language
             self.set_distance()
+            # TODO disable CLI for node ect.
+            """
             if self.user_db_ent.TYP in NO_REMOTE_STATION_TYPE:
                 self.cli_remote = False
             else:
                 self.cli_remote = True
+            """
 
     def set_user_db_language(self, lang_ind: int):
         self.user_db_ent.Language = int(lang_ind)
@@ -1077,6 +1103,7 @@ class AX25Conn:
             self.LINK_Connection.cli.change_cli_state(5)
             if self.digi_call in self.port_cfg.parm_Digi_calls:
                 if self.accept_digi_connection():
+                    self.is_digi = True
                     return
                 """
                 print(f"Accept Conn UID: {self.uid}")
@@ -1092,6 +1119,7 @@ class AX25Conn:
         if not self.LINK_Connection:
             print(f'DIGI Conn accept: No LINK_Connection {self.uid}')
             print(f'DIGI Conn accept: No LINK_Connection {self.LINK_Connection}')
+
             return False
         digi_uid = self.LINK_Connection.uid
         digi_uid = reverse_uid(digi_uid)

@@ -186,7 +186,7 @@ class AX25Port(threading.Thread):
                     return True
             conn.handle_rx(ax25_frame=ax25_frame)
             return True
-
+        return False
 
     def _rx_pipe_handler(self, ax25_frame):
         uid = str(ax25_frame.addr_uid)
@@ -275,7 +275,6 @@ class AX25Port(threading.Thread):
             print(f'accept_digi_conn uid: {uid}')
             print(f'accept_digi_conn keys: {self._digi_connections.keys()}')
             return False
-        print('PORT: accept_digi_conn')
         self._digi_connections[uid].add_rx_conn_cron()
         return True
 
@@ -377,9 +376,10 @@ class AX25Port(threading.Thread):
                 conn.REJ_is_set = False
                 for el in snd_buf:
                     # if el.digi_call and conn.is_link:
-                    if el.digi_call:
+                    if conn.digi_call:
                         # TODO Just check for digi_call while encoding
-                        el.digi_check_and_encode(call=el.digi_call, h_bit_enc=True)
+                        print(conn.digi_call)
+                        el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
                     else:
                         el.encode_ax25frame()
                     try:
@@ -631,8 +631,12 @@ class AX25Port(threading.Thread):
                              # digi_conn=None
                              ):
 
-        if link_conn is None:
-            link_conn = False
+        if link_conn:
+            if link_conn.port_id:
+                digi_call = f'{link_conn.my_call}-{link_conn.port_id}'
+            else:
+                digi_call = link_conn.my_call_str
+            via_calls = [digi_call] + via_calls
         """ 
         if own_call not in self.my_stations and not link_conn:
             return False
@@ -696,6 +700,7 @@ class AX25Port(threading.Thread):
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
         conn = AX25Conn(ax25_frame, rx=False, port=self)
+        # conn.digi_call = digi_call
         # conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn
         return conn

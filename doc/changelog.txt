@@ -9,6 +9,9 @@ Fixes:
 - Monitor Adresscall/Pfad erlaubt auch Kleinbuchstaben
 - DIGI Timing probleme, wenn DIGI-Connection von HF-Port zu AXIP-Port geleitet wird
 - Node hat kein '*** Connected to' mehr gesendet bei Weiterconnect
+- CLI Autodeaktivierung Funktion bei Noden usw. erstmal deaktiviert da Software ID-Strings und Syslogin
+  nicht erkannt wird.
+- Weiterconnect Auto Routen Lookup
 
 Optimierung:
 - Dev Konsolenausgaben aufgeräumt
