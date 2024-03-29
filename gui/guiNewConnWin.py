@@ -258,7 +258,7 @@ class NewConnWin(tk.Toplevel):
                     axip_port = self.ax_ip_port[1].get('0.0', tk.END)[:-1]
                     axip_ip = get_ip_by_hostname(axip_ip_inp)
                     if not axip_ip and not check_ip_add_format(axip_ip_inp):
-                        mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(dest_call, port.port_cfg.parm_axip_fail)
+                        mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(dest_call)
                         if mh_ent[0]:
                             ip = mh_ent[0]
                             prt = str(mh_ent[1])

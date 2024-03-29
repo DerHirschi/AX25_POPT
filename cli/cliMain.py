@@ -37,29 +37,7 @@ class DefaultCLI(object):
 
             if hasattr(stat_cfg, 'stat_parm_cli_cfg'):
                 self._cli_cfg: dict = stat_cfg.stat_parm_cli_cfg
-                """
-                if cli_cfg.get('cli_ctext', ''):
-                    self.c_text = cli_cfg.get('cli_ctext', '')
-                """
-                """
-                if cli_cfg.get('cli_ctext', ''):
-                    self.bye_text = cli_cfg.get('cli_bye_text', '')
-                """
-                """
-                if cli_cfg.get('cli_prompt', ''):
-                    self.prompt = cli_cfg.get('cli_prompt', '')
-                """
-            """   
-            if hasattr(stat_cfg, 'stat_parm_cli_ctext'):
-                if stat_cfg.stat_parm_cli_ctext:
-                    self.c_text = stat_cfg.stat_parm_cli_ctext
-            if hasattr(stat_cfg, 'stat_parm_cli_bye_text'):
-                if stat_cfg.stat_parm_cli_bye_text:
-                    self.bye_text = stat_cfg.stat_parm_cli_bye_text
-            if hasattr(stat_cfg, 'stat_parm_cli_prompt'):
-                if stat_cfg.stat_parm_cli_prompt:
-                    self.prompt = stat_cfg.stat_parm_cli_prompt
-            """
+
             self.stat_cfg_index_call = stat_cfg.stat_parm_Call
             self.stat_cfg = stat_cfg
         else:
@@ -592,23 +570,27 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_axip_out_cli(self, max_ent=10):
-        _ent = self._port_handler.get_MH().get_sort_mh_entry('last', reverse=False)
-        if not _ent:
+        ent = self._port_handler.get_MH().get_sort_mh_entry('last', reverse=False)
+        dbl_ent = []
+        if not ent:
             return f'\r # {STR_TABLE["cli_no_data"][self._connection.cli_language]}\r'
         max_c = 0
         out = '\r'
         # out += '\r                       < AXIP - Clients >\r\r'
         out += '-Call------IP:Port---------------------------Last------------\r'
-        for k in _ent.keys():
-            if _ent[k].axip_add[0]:
-                max_c += 1
-                if max_c > max_ent:
-                    break
-                out += ' {:9} {:33} {:8}\r'.format(
-                    _ent[k].own_call,
-                    _ent[k].axip_add[0] + ':' + str(_ent[k].axip_add[1]),
-                    get_timedelta_CLIstr(_ent[k].last_seen, r_just=False)
-                )
+        for k in ent.keys():
+            if ent[k].own_call not in dbl_ent:
+                dbl_ent.append(ent[k].own_call)
+                axip_add = self._port_handler.get_MH().get_AXIP_fm_DB_MH(ent[k].own_call)
+                if axip_add[0]:
+                    max_c += 1
+                    if max_c > max_ent:
+                        break
+                    out += ' {:9} {:33} {:8}\r'.format(
+                        ent[k].own_call,
+                        axip_add[0] + ':' + str(axip_add[1]),
+                        get_timedelta_CLIstr(ent[k].last_seen, r_just=False)
+                    )
         return out
 
     def _cmd_mh(self):

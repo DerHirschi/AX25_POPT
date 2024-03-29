@@ -584,21 +584,25 @@ class MH:
         if not call_str:
             return '', 0
         userdb_axip = USER_DB.get_AXIP(call_str)
-        if not param_fail:
-            if userdb_axip:
-                if userdb_axip[0]:
-                    return userdb_axip
+        # if not param_fail:
+        if userdb_axip:
+            if userdb_axip[0]:
+                return userdb_axip
         for port in self._MH_db.keys():
             if call_str in self._MH_db[port].keys():
                 if call_str in self._MH_db[port].keys():
                     if self._MH_db[port][call_str].axip_add[0]:
-                        if self._MH_db[port][call_str].axip_fail < param_fail:
-                            if userdb_axip:
-                                if userdb_axip[0]:
-                                    return userdb_axip
-                            return self._MH_db[port][call_str].axip_add
+                        # if self._MH_db[port][call_str].axip_fail < param_fail:
+                        """
+                        if userdb_axip:
+                            if userdb_axip[0]:
+                                return userdb_axip
+                        """
+                        """
                         if not param_fail:
                             return self._MH_db[port][call_str].axip_add
+                        """
+                        return self._MH_db[port][call_str].axip_add
         return '', 0
 
     def get_unsort_entrys_fm_port(self, port_id: int):

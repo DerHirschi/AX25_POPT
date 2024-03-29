@@ -12,6 +12,7 @@ Fixes:
 - CLI Autodeaktivierung Funktion bei Noden usw. erstmal deaktiviert da Software ID-Strings und Syslogin
   nicht erkannt wird.
 - Weiterconnect Auto Routen Lookup
+- Weiterconnect AXIP Lookup für Zielcall oder 1. Call in der Route
 
 Optimierung:
 - Dev Konsolenausgaben aufgeräumt
