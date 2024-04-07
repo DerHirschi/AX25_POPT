@@ -56,33 +56,31 @@ def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
     out_str += f'\n   ├──────▶: ctl={ctl_hex} pid={pid_hex}({pid_flag})'\
         if int(pid_hex, 16) else ''
     out_str += ' len={}\n'.format(payload_len) if payload_len else '\n'
-
-    if payload:
-        if type(payload) is bytes:
-
-            if netrom_cfg:     # Net-Rom
-                if ctl_flag == 'UI':
-                    data = NetRom_decode_UI_mon(ax25_frame_conf)
-                    out_str += data
-                    return out_str, aprs_data
-                """
-                if ctl_flag == 'I':
-                    data = NetRom_decode_I(payload)
-                    out_str += data
-                    return out_str, aprs_data
-                """
-            else:
-
-                if decoding == 'Auto':
-                    payload = try_decode(payload)
-                else:
-                    if decoding in ENCODINGS:
-                        try:
-                            payload = payload.decode(decoding)
-                        except UnicodeDecodeError:
-                            payload = f'<BIN> {payload_len} Bytes'
+    if netrom_cfg:  # Net-Rom
+        if ctl_flag == 'UI':
+            data = NetRom_decode_UI_mon(ax25_frame_conf)
+            out_str += data
+            return out_str, aprs_data
+        """
+        if ctl_flag == 'I':
+            data = NetRom_decode_I(payload)
+            out_str += data
+            return out_str, aprs_data
+        """
+    # if payload:
+    if type(payload) is bytes:
+        if decoding == 'Auto':
+            payload = try_decode(payload)
+        else:
+            if decoding in ENCODINGS:
+                try:
+                    payload = payload.decode(decoding)
+                except UnicodeDecodeError:
+                    payload = f'<BIN> {payload_len} Bytes'
+        """
         else:
             print(f"Monitor decode Data == STR: {payload} - {from_call} - {ctl_flag}")
+        """
         payload = payload.replace('\r', '\n')
         payload_lines = payload.split('\n')
         for line in payload_lines:
