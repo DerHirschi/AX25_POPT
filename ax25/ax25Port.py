@@ -8,6 +8,7 @@ import crcmod
 from ax25.ax25Digi import AX25DigiConnection
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
+from ax25.ax25NetRom import NetRom_decode_UI
 from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
 from cfg.popt_config import POPT_CFG
@@ -113,7 +114,7 @@ class AX25Port(threading.Thread):
         return RxBuf()
 
     def tx(self, frame):
-        if self.tx_dualPort_handler(frame):
+        if self._tx_dualPort_handler(frame):
             return
         self.tx_out(frame)
 
@@ -197,10 +198,22 @@ class AX25Port(threading.Thread):
 
     def _rx_UI_handler(self, ax25_frame):
         # print(f"Port RX UI Handler - aprs_ais: {self.aprs_stat.aprs_ais}")
-        if self.port_handler.get_aprs_ais():
-            self.port_handler.get_aprs_ais().aprs_ax25frame_rx(
+        ax25_frame_conf = ax25_frame.get_frame_conf()
+        """
+        pid_hex = ax25_frame_conf.get('pid_hex', '')
+        try:
+            pid_hex = int(pid_hex, 16)
+        except ValueError:
+            return False
+        if pid_hex == 0xCF:     # Net-Rom
+            NetRom_decode_UI(ax25_frame_conf)
+            return True
+        """
+        aprs_ais = self.port_handler.get_aprs_ais()
+        if hasattr(aprs_ais, 'aprs_ax25frame_rx'):
+            aprs_ais.aprs_ax25frame_rx(
                 port_id=self.port_id,
-                ax25frame_conf=ax25_frame.get_frame_conf()
+                ax25frame_conf=ax25_frame_conf
             )
             return True
         return False
@@ -337,7 +350,7 @@ class AX25Port(threading.Thread):
 
     ###################################################
     # TX Stuff
-    def tx_dualPort_handler(self, frame):
+    def _tx_dualPort_handler(self, frame):
         if not self.check_dualPort():
             return False
         tx_port = self.get_dualPort_txPort(frame.to_call.call_str)
@@ -346,7 +359,7 @@ class AX25Port(threading.Thread):
         self.dualPort_echoFilter = self.dualPort_echoFilter[-7:]
         return True
 
-    def tx_handler(self):
+    def _tx_handler(self):
         """ Main TX-Handler """
         """All Connections"""
         if self._tx_connection_buf():
@@ -847,7 +860,7 @@ class AX25Port(threading.Thread):
             self._task_Port()
             if time.time() > self.TXD or self.port_cfg.parm_full_duplex:
                 # ######### TX #############
-                self.tx_handler()
+                self._tx_handler()
 
 
 class KissTCP(AX25Port):

@@ -13,6 +13,7 @@ Fixes:
   nicht erkannt wird.
 - Weiterconnect Auto Routen Lookup
 - Weiterconnect AXIP Lookup für Zielcall oder 1. Call in der Route
+- Python 3.10 "ModuleNotFoundError: No module named 'gui.guiMain'; 'gui' is not a package"
 
 Optimierung:
 - Dev Konsolenausgaben aufgeräumt
@@ -25,9 +26,10 @@ Neue Implementierungen / Funktionen:
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   - $lastConnDate = Letzter Connect Datum
   - $lastConnTime = Letzter Connect Zeit
-  - $uptime = Zeit seit Programmstart       - Bake
+  - $uptime = Zeit seit Programmstart - Bake
 - "Managed-Digi/Smart-Digi/L3-Digi"
   - UI-Frames weiterleiten auf Port (DIGI SSID)
+- NetRom UI Frames Dekodierung (Monitorausgabe)
 
 ###########################################################################################################
 ###########################################################################################################

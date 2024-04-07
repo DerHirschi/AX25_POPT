@@ -1,4 +1,19 @@
 from fnc.str_fnc import is_byte_ascii
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class NetRomDecodingERROR(Exception):
+    def __init__(self, ax25_frame_conf: dict, e_text=''):
+        payload = ax25_frame_conf.get('payload', b'')
+        node_call = ax25_frame_conf.get('from_call_str', '')
+        out_str = f"NetRomDecodingERROR: {e_text}\n"
+        out_str += f"node_call: {node_call}\n"
+        out_str += f"payload: {payload}\n"
+        out_str += f"payload hex: {payload.hex()}\n"
+        print(out_str)
+        logger.error(out_str)
 
 
 def decode_ax25call(inp: b''):
@@ -20,6 +35,69 @@ def decode_ax25call(inp: b''):
           f"r-bits:{r_bits}\n\n")
     """
     return call, ssid
+
+
+# ======================== UI ==========================================
+
+def NetRom_decode_UI(ax25_frame_conf: dict):
+    payload = ax25_frame_conf.get('payload', b'')
+    node_call = ax25_frame_conf.get('from_call_str', '')
+    if not payload or not node_call:
+        raise NetRomDecodingERROR(ax25_frame_conf, 'No Payload or NodeCall')
+    if len(payload) < 7:
+        # NetRom Minimum 20
+        raise NetRomDecodingERROR(ax25_frame_conf, 'Payload < 7')
+    if int(payload[0]) != 0xFF:
+        print(f"NetRom UI no valid Sig {hex(payload[0])} should be 0xFF ")
+        raise NetRomDecodingERROR(ax25_frame_conf, f'NetRom UI no valid Sig {hex(payload[0])} should be 0xFF')
+    print('Net-Rom UI')
+    id_of_sending_node = payload[1:7].decode('ASCII', 'ignore')
+    print(f"ID sending Node: {id_of_sending_node}")
+    dest_frames = payload[7:]
+    tmp = []
+    while dest_frames:
+        tmp.append(dest_frames[:21])
+        dest_frames = dest_frames[21:]
+
+    dec_neighbor_frames = {}
+    for el in tmp:
+        dest_call = decode_ax25call(el[:7])[0]
+        dest_id = el[7:13].decode('ASCII', 'ignore')
+        best_neighbor_call = decode_ax25call(el[13:20])[0]
+        qual = int(el[-1])
+        dec_neighbor_frames[dest_call] = \
+            dict(
+                dest_call=dest_call,
+                dest_id=dest_id,
+                best_neighbor_call=best_neighbor_call,
+                qual=qual
+            )
+    netrom_UI_cfg = dict(
+        node_call=str(node_call),
+        node_id=str(id_of_sending_node),
+        node_nb_list=dec_neighbor_frames,
+    )
+    return netrom_UI_cfg
+
+
+def NetRom_decode_UI_mon(ax25_frame_conf: dict):
+
+    netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
+    call_of_sending_node = netrom_cfg.get('node_call', '')
+    id_of_sending_node = netrom_cfg.get('node_id', '')
+    node_nb_list = netrom_cfg.get('node_nb_list', {})
+
+    monitor_str = f"NET/ROM Routing: {id_of_sending_node}:{call_of_sending_node}\n"
+    monitor_str += "Neighbors - Alias  - BestNeighbor - BestQual\n"
+
+    for de, item in node_nb_list.items():
+        de_id = item.get('dest_id', '')
+        best_nb = item.get('best_neighbor_call', '')
+        qaul = item.get('qual', '')
+        monitor_str += f"{de.ljust(9)} - {de_id.ljust(6)} - {best_nb.ljust(12)} - {qaul}\n"
+    return monitor_str
+
+# ==================== UI-END ==========================================
 
 
 def decode_opcode(opcode_byte):
@@ -197,39 +275,4 @@ def NetRom_decode_I(ax25_payload: bytes):
         return monitor_str
 
 
-def NetRom_decode_UI(ax25_payload: bytes):
-    if not ax25_payload:
-        return
-    if len(ax25_payload) < 7:
-        # NetRom Minimum 20
-        return
-    if int(ax25_payload[0]) != 0xFF:
-        print(f"NetRom UI no valid Sig {hex(ax25_payload[0])} should be 0xFF ")
-        return
-    print('Net-Rom UI')
-    id_of_sending_node = ax25_payload[1:7].decode('ASCII', 'ignore')
-    print(f"ID sending Node: {id_of_sending_node}")
-    dest_frames = ax25_payload[7:]
-    tmp = []
-    while dest_frames:
-        tmp.append(dest_frames[:21])
-        dest_frames = dest_frames[21:]
-    print(f"Dest_raw: {tmp}")
-    dec_neighbor_frames = []
-    for el in tmp:
-        dec_neighbor_frames.append(
-            dict(
-                dest_call=decode_ax25call(el[:7])[0],
-                dest_id=el[7:13].decode('ASCII', 'ignore'),
-                best_neighbor_call=decode_ax25call(el[13:20])[0],
-                qual=int(el[-1])
-            )
-        )
-    print(dec_neighbor_frames)
 
-    monitor_str = f"NET/ROM Routing: {id_of_sending_node}\r"
-    monitor_str += "Neighbors - Alias  - BestNeighbor - BestQual\r"
-
-    for neighbor in dec_neighbor_frames:
-        monitor_str += f"{neighbor['dest_call']}    - {neighbor['dest_id']} - {neighbor['best_neighbor_call']}       - {neighbor['qual']}\r"
-    return monitor_str
