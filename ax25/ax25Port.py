@@ -799,7 +799,7 @@ class AX25Port(threading.Thread):
         """ Main Loop """
         while self.loop_is_running:
             self._tasks()
-            time.sleep(0.05)
+            time.sleep(0.03)
         print(f"Loop Ends Port: {self.port_id}")
         logger.info(f"Loop Ends Port: {self.port_id}")
         self.close()
@@ -813,7 +813,7 @@ class AX25Port(threading.Thread):
                 buf: RxBuf = self.rx()
                 ##############################################
             except AX25DeviceERROR:
-                self.close()
+                # self.close()
                 break
             if not self.loop_is_running:
                 # self.close()
@@ -821,7 +821,7 @@ class AX25Port(threading.Thread):
             if buf is None:
                 break
             if not buf.raw_data:  # RX ############
-                time.sleep(0.05)
+                # time.sleep(0.05)
                 break
             self.set_TXD()
             self.set_digi_TXD()
@@ -860,7 +860,8 @@ class AX25Port(threading.Thread):
             #############################################
             # Crone
             self._task_Port()
-            if time.time() > self.TXD or self.port_cfg.parm_full_duplex:
+            # if time.time() > self.TXD or self.port_cfg.parm_full_duplex:
+            if time.time() > self.TXD:
                 # ######### TX #############
                 self._tx_handler()
 
@@ -882,7 +883,8 @@ class KissTCP(AX25Port):
                 logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
                 logger.error('{}'.format(e))
                 # self.device.shutdown(socket.SHUT_RDWR)
-                self.device.close()
+                # self.device.close()
+                self.close_device()
                 # raise AX25DeviceFAIL
 
             else:
@@ -895,7 +897,8 @@ class KissTCP(AX25Port):
                         print('{}'.format(e))
                         logger.error('{}'.format(e))
                         # self.device.shutdown(socket.SHUT_RDWR)
-                        self.device.close()
+                        # self.device.close()
+                        self.close_device()
                     else:
                         self.set_kiss_parm()
 
