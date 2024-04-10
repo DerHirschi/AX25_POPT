@@ -9,7 +9,7 @@ import cli.cliMain
 from cfg import config_station
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
-from cfg.constant import NO_REMOTE_STATION_TYPE
+# from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup

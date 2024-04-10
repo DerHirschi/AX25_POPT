@@ -14,6 +14,8 @@ Fixes:
 - Weiterconnect Auto Routen Lookup
 - Weiterconnect AXIP Lookup für Zielcall oder 1. Call in der Route
 - Python 3.10 "ModuleNotFoundError: No module named 'gui.guiMain'; 'gui' is not a package"
+- PoPT schließt KISS-TCP Gerät nicht ordentlich, wenn Gerät nicht erreichbar.
+  (Hohe CPU Auslastung und schlechte Ansprechverhalten der GUI)
 
 Optimierung:
 - Dev Konsolenausgaben aufgeräumt

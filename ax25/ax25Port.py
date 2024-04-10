@@ -149,7 +149,8 @@ class AX25Port(threading.Thread):
         # self._gui_monitor(ax25frame=ax25_frame, tx=False)
         isUI = False
         if ax25_frame.ctl_byte.flag == 'UI':
-            self._rx_UI_handler(ax25_frame=ax25_frame)
+            if self._rx_UI_handler(ax25_frame=ax25_frame):
+                return True
             isUI = True
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
             if not isUI:
@@ -199,23 +200,22 @@ class AX25Port(threading.Thread):
     def _rx_UI_handler(self, ax25_frame):
         # print(f"Port RX UI Handler - aprs_ais: {self.aprs_stat.aprs_ais}")
         ax25_frame_conf = ax25_frame.get_frame_conf()
-        """
-        pid_hex = ax25_frame_conf.get('pid_hex', '')
-        try:
-            pid_hex = int(pid_hex, 16)
-        except ValueError:
-            return False
-        if pid_hex == 0xCF:     # Net-Rom
-            NetRom_decode_UI(ax25_frame_conf)
+        netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
+        if netrom_cfg:     # Net-Rom
+            rTable = self.port_handler.get_RoutingTable()
+            if rTable is None:
+                return True
+            ax25_frame_conf['port_id'] = int(self.port_id)
+            rTable.NetRom_UI_rx(ax25_frame_conf)
+            # NetRom_decode_UI(ax25_frame_conf)
             return True
-        """
         aprs_ais = self.port_handler.get_aprs_ais()
         if hasattr(aprs_ais, 'aprs_ax25frame_rx'):
             aprs_ais.aprs_ax25frame_rx(
                 port_id=self.port_id,
                 ax25frame_conf=ax25_frame_conf
             )
-            return True
+            return False
         return False
 
     def _rx_conn_handler(self, ax25_frame):
@@ -799,7 +799,7 @@ class AX25Port(threading.Thread):
         """ Main Loop """
         while self.loop_is_running:
             self._tasks()
-        # time.sleep(0.05)
+            time.sleep(0.05)
         print(f"Loop Ends Port: {self.port_id}")
         logger.info(f"Loop Ends Port: {self.port_id}")
         self.close()
@@ -813,8 +813,10 @@ class AX25Port(threading.Thread):
                 buf: RxBuf = self.rx()
                 ##############################################
             except AX25DeviceERROR:
+                self.close()
                 break
             if not self.loop_is_running:
+                # self.close()
                 break
             if buf is None:
                 break

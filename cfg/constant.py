@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.108.9'
+VER = '2.108.9.2'
 """
 LANGUAGE:
 0 = German
@@ -87,11 +87,13 @@ STATION_ID_SYSOP = [
     'TOP',
     'PoPT',
     'HSGT',
+    'Paxon',
 ]
 
 STATION_ID_NODE = [
     'WinSTOPNode',
     'PoPTNode',
+    'TNN',
 
 ]
 
@@ -101,6 +103,8 @@ STATION_ID_BBS = [
     'WB',
     'BayCom',
     'OpenBCM',
+    'BPQ',
+    'THEBOX',
     'PoPTBOX',
 ]
 
