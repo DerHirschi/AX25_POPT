@@ -799,7 +799,7 @@ class AX25Port(threading.Thread):
         """ Main Loop """
         while self.loop_is_running:
             self._tasks()
-            time.sleep(0.03)
+            # time.sleep(0.03)
         print(f"Loop Ends Port: {self.port_id}")
         logger.info(f"Loop Ends Port: {self.port_id}")
         self.close()
@@ -812,7 +812,9 @@ class AX25Port(threading.Thread):
                 ##############################################
                 buf: RxBuf = self.rx()
                 ##############################################
-            except AX25DeviceERROR:
+            except AX25DeviceERROR as e:
+                # print(e)
+                # time.sleep(0.05)
                 # self.close()
                 break
             if not self.loop_is_running:
@@ -821,7 +823,7 @@ class AX25Port(threading.Thread):
             if buf is None:
                 break
             if not buf.raw_data:  # RX ############
-                # time.sleep(0.05)
+                time.sleep(0.05)
                 break
             self.set_TXD()
             self.set_digi_TXD()
