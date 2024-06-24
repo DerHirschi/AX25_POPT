@@ -2,6 +2,7 @@ import datetime
 import time
 import threading
 
+from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
@@ -56,6 +57,7 @@ class AX25PortHandler(object):
         # Moduls
         self.userDB = USER_DB
         self.mh = None
+        self.routingTable = None
         self.gui = None
         self.bbs = None
         self.aprs_ais = None
@@ -82,6 +84,9 @@ class AX25PortHandler(object):
         for port_id in range(MAX_PORTS):  # Max Ports
             self._init_port(port_id=port_id)
         self.set_dualPort_fm_cfg()
+        #######################################################
+        # Init Routing Table
+        self._init_RoutingTable()
         #######################################################
         # Scheduled Tasks
         self._init_SchedTasker()
@@ -151,6 +156,14 @@ class AX25PortHandler(object):
 
     def _mh_task(self):
         self.mh.mh_task()
+
+    #######################################################################
+    # Routing Table
+    def _init_RoutingTable(self):
+        self.routingTable = RoutingTable(self)
+
+    def get_RoutingTable(self):
+        return self.routingTable
 
     #######################################################################
     # scheduled Tasks

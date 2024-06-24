@@ -1,6 +1,6 @@
-from ax25.ax25NetRom import NetRom_decode_I, NetRom_decode_UI_mon
+#from ax25.ax25NetRom import NetRom_decode_I, NetRom_decode_UI_mon
 # import logging
-
+# from ax25.ax25NetRom import NetRom_decode_I
 from ax25aprs.aprs_dec import format_aprs_f_monitor
 from cfg.constant import ENCODINGS
 from UserDB.UserDBmain import USER_DB
@@ -56,17 +56,21 @@ def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
     out_str += f'\n   ├──────▶: ctl={ctl_hex} pid={pid_hex}({pid_flag})'\
         if int(pid_hex, 16) else ''
     out_str += ' len={}\n'.format(payload_len) if payload_len else '\n'
+    # ======= Old NetRom
+    """
     if netrom_cfg:  # Net-Rom
         if ctl_flag == 'UI':
             data = NetRom_decode_UI_mon(ax25_frame_conf)
             out_str += data
             return out_str, aprs_data
-        """
-        if ctl_flag == 'I':
-            data = NetRom_decode_I(payload)
-            out_str += data
-            return out_str, aprs_data
-        """
+    """
+    # ======= DEV Inp-NetRom/L3-NetRom TODO move decoding call to ax25ecn_dec
+    """
+    if ctl_flag == 'I' and pid_hex == '0xcf':
+        data = NetRom_decode_I(payload)
+        out_str += data
+        return out_str, aprs_data
+    """
     # if payload:
     if type(payload) is bytes:
         if decoding == 'Auto':

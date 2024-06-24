@@ -12,26 +12,6 @@ from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_for_key
 
-"""
-def getNew_MyHeard():
-    return {
-        "own_call": '',
-        "to_call": '',
-        "route": [],
-        "port_id": 0,
-        "byte": 0,                  # N Bytes
-        "h_byte": 0,                # N Header Bytes
-        "type": '',                 # Type: UI/U/RR
-        "pid": '',                  # Pack PID
-        "axip_add": '',             # IP, Port
-        "locator": '',
-        "distance": -1,
-        "TX": False,
-        "first_seen": str(datetime.now().strftime(SQL_TIME_FORMAT)),
-        "last_seen": str(datetime.now().strftime(SQL_TIME_FORMAT)),
-    }
-"""
-
 
 class MyHeard:
     def __init__(self):

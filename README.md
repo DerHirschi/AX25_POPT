@@ -29,6 +29,7 @@ Tested on Python Version:
 Install all dependencies:
 ``` sh
 $ sudo apt install python3-tk
+$ sudo apt install python3-pil python3-pil.imagetk
 $ sudo apt install python3-matplotlib
 $ pip install -r requirements.txt
 ```
