@@ -39,6 +39,7 @@ class Kiss(object):
         self.TFESC = b'\xDD'
         # KISS_ON = 'KISS $0B'
         self.KISS_OFF = b''.join([self.FEND, self.RETURN, self.FEND, self.FEND])
+        # ???? self.KISS_OFF = b''.join([self.FEND, self.RETURN, self.FEND]) ????
         # self.txd_frame = lambda: self.TX_DELAY + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:])
         self.txd_frame = lambda: b'\xC0\x01' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:].zfill(2)) + b'\xC0'
         # self.txd_frame_ch1 = lambda: b'\xC0\x11' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:]) + b'\xC0'
