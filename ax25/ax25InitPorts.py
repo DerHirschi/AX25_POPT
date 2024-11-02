@@ -57,7 +57,7 @@ class AX25PortHandler(object):
         # Moduls
         self.userDB = USER_DB
         self.mh = None
-        self.routingTable = None
+        # self.routingTable = None
         self.gui = None
         self.bbs = None
         self.aprs_ais = None
@@ -86,7 +86,7 @@ class AX25PortHandler(object):
         self.set_dualPort_fm_cfg()
         #######################################################
         # Init Routing Table
-        self._init_RoutingTable()
+        # self._init_RoutingTable()
         #######################################################
         # Scheduled Tasks
         self._init_SchedTasker()
@@ -159,12 +159,13 @@ class AX25PortHandler(object):
 
     #######################################################################
     # Routing Table
+    """
     def _init_RoutingTable(self):
         self.routingTable = RoutingTable(self)
 
     def get_RoutingTable(self):
         return self.routingTable
-
+    """
     #######################################################################
     # scheduled Tasks
     def _init_SchedTasker(self):
@@ -731,7 +732,7 @@ class AX25PortHandler(object):
                         # conn.ch_index += 1
         return ret
 
-    def get_all_stat_cfg(self):
+    def ph_get_all_stat_cfg(self):
         return self.ax25_stations_settings
 
     def get_stat_calls_fm_port(self, port_id=0):

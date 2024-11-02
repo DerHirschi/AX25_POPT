@@ -1016,7 +1016,7 @@ class PoPT_GUI_Main:
 
     def set_text_tags(self):
         self._all_tag_calls = []
-        all_stat_cfg = PORT_HANDLER.get_all_stat_cfg()
+        all_stat_cfg = PORT_HANDLER.ph_get_all_stat_cfg()
         for call in list(all_stat_cfg.keys()):
             stat_cfg = all_stat_cfg[call]
             tx_fg = stat_cfg.stat_parm_qso_col_text_tx
