@@ -3,24 +3,32 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.108.9.6'
+VER = '2.108.9.7'
 """
 LANGUAGE:
 0 = German
 1 = English
 2 = Dutch
 """
-LANGUAGE = 0    # QUICK FIX
-MAX_PORTS = 15  #
-SERVICE_CH_START = 11
+LANGUAGE = 0                # QUICK FIX
+""" TNC KISSMODE INIT """
+TNC_KISS_CMD = b'\x1b@K\r'             # Command for setting TNC to Kiss Mode
+# TNC_KISS_CMD = b'KISSM\r'             # Command for setting TNC to Kiss Mode
+# TNC_KISS_CMD = b'KISS ON\r'           # Command for setting TNC to Kiss Mode
+# TNC_KISS_CMD = b'KISS ON\rrestart\r'  # Command for setting TNC to Kiss Mode
 
-# doc/PoPT/mysql_setup.txt
+""""""
+MAX_PORTS = 15              #
+SERVICE_CH_START = 11       # Service Channels Start Channel
+
+""" doc/PoPT/mysql_setup.txt """
 MYSQL = False    # MYSQL/SQLITE
 MYSQL_USER = 'popt'
 MYSQL_PASS = '83g6u45908k91HG2jhj5jeGG'
 MYSQL_HOST = '127.0.0.1'
 MYSQL_DB = 'popt_db'
 
+""" CONST Stuff """
 LANG_IND = {
             'DE': 0,
             'EN': 1,

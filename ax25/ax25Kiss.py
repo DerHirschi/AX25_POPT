@@ -1,4 +1,5 @@
 # from config_station import DefaultPort
+from cfg.constant import TNC_KISS_CMD
 
 
 class Kiss(object):
@@ -28,7 +29,8 @@ class Kiss(object):
         # self.START_TNC_DEFAULT = bytes.fromhex('1B404B')  # TNC2 KISS MODE   b'\x1b@K'
         # self.START_TNC_DEFAULT = b'KISS ON\r\n'  # TNC2 KISS MODE   b'\x1b@K'
         # self.START_TNC_DEFAULT = b'KISS ON\r'  # TNC2 KISS MODE   b'\x1b@K'
-        self.START_TNC_DEFAULT = b'KISSM\r'  # TNC2 KISS MODE   b'\x1b@K'
+        ## self.START_TNC_DEFAULT = b'KISSM\r'  # TNC2 KISS MODE   b'\x1b@K'
+        self.START_TNC_DEFAULT = TNC_KISS_CMD  # TNC2 KISS MODE   b'\x1b@K'
         # self.START_TNC_DEFAULT = bytes.fromhex('11241B404B0D')  # TNC2 KISS MODE   b'\x1b@K'
         # KISS END self.START_TNC_DEFAULT = bytes.fromhex('C0FFC0')  # TNC2 KISS MODE   b'\x1b@K'
         # self.START_TNC_DEFAULT = b'KISSM\r\n '  # TNC2 KISS MODE   b'\x1b@K'

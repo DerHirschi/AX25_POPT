@@ -16,6 +16,8 @@ Fixes:
 - Python 3.10 "ModuleNotFoundError: No module named 'gui.guiMain'; 'gui' is not a package"
 - PoPT schließt KISS-TCP Gerät nicht ordentlich, wenn Gerät nicht erreichbar.
   (Hohe CPU Auslastung und schlechte Ansprechverhalten der GUI)
+- Sprache kann nicht mehr dynamisch eingestellt werden in constant.py
+
 
 Optimierung:
 - Dev Konsolenausgaben aufgeräumt
@@ -23,6 +25,7 @@ Optimierung:
 - Texte (C-Text, I-Text, ...) werden jetzt lesbar als Textdatei gespeichert. (Dachte, es wäre bereits der Fall)
 - Texte (C-Text, I-Text, ...) werden beim Abrufen direkt aus Datei geladen. Das ermöglicht das Editieren per Script
   z.B. um aktuelle Wetterdaten o.Ä. einzufügen.
+- ax25guiPortSettings.py einige Übersetzungen vervollständigt und Variablen Optimirungen
 
 Neue Implementierungen / Funktionen:
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
@@ -31,7 +34,7 @@ Neue Implementierungen / Funktionen:
   - $uptime = Zeit seit Programmstart - Bake
 - "Managed-Digi/Smart-Digi/L3-Digi"
   - UI-Frames weiterleiten auf Port (DIGI SSID)
-- NetRom UI Frames Dekodierung (Monitorausgabe)
+- NetRom UI Frames Dekodierung (Monitorausgabe) (experimentell)
 
 ###########################################################################################################
 ###########################################################################################################
