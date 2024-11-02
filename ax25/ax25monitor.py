@@ -25,7 +25,7 @@ def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
     rx_time = ax25_frame_conf.get('rx_time')
     payload_len = ax25_frame_conf.get('payload_len', 0)
     payload = ax25_frame_conf.get('payload', b'')
-    netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
+    # netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
     if ctl_flag == 'UI':
         aprs_data = format_aprs_f_monitor(ax25_frame_conf, own_locator=aprs_loc)
 

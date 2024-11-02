@@ -26,6 +26,7 @@ Optimierung:
 - Texte (C-Text, I-Text, ...) werden beim Abrufen direkt aus Datei geladen. Das ermöglicht das Editieren per Script
   z.B. um aktuelle Wetterdaten o.Ä. einzufügen.
 - ax25guiPortSettings.py einige Übersetzungen vervollständigt und Variablen Optimirungen
+- Erweiterte Error Log Ausgabe für ax25dec Call-Validator
 
 Neue Implementierungen / Funktionen:
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake

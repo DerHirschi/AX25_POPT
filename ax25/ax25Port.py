@@ -200,6 +200,7 @@ class AX25Port(threading.Thread):
     def _rx_UI_handler(self, ax25_frame):
         # print(f"Port RX UI Handler - aprs_ais: {self.aprs_stat.aprs_ais}")
         ax25_frame_conf = ax25_frame.get_frame_conf()
+        """
         netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
         if netrom_cfg:     # Net-Rom
             rTable = self.port_handler.get_RoutingTable()
@@ -209,6 +210,7 @@ class AX25Port(threading.Thread):
             rTable.NetRom_UI_rx(ax25_frame_conf)
             # NetRom_decode_UI(ax25_frame_conf)
             return True
+        """
         aprs_ais = self.port_handler.get_aprs_ais()
         if hasattr(aprs_ais, 'aprs_ax25frame_rx'):
             aprs_ais.aprs_ax25frame_rx(
