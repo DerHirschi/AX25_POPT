@@ -453,7 +453,10 @@ class UserDB(tk.Toplevel):
             self._name_var.set(self._db_ent.Name)
             self._qth_var.set(self._db_ent.QTH)
             self._loc_var.set(self._db_ent.LOC)
-            self._dist_var.set(f"{round(self._db_ent.Distance, 1)} km")
+            if self._db_ent.Distance < 0:
+                self._dist_var.set("---- km")
+            else:
+                self._dist_var.set(f"{round(self._db_ent.Distance, 1)} km")
             self._prmail_var.set(self._db_ent.PRmail)
             self._email_var.set(self._db_ent.Email)
             self._http_var.set(self._db_ent.HTTP)
@@ -550,6 +553,7 @@ class UserDB(tk.Toplevel):
         self._user_db.save_data()
         self._select_entry()
         self._root_win.update_station_info()
+        self._user_db.set_distance_for_all()
         if self._db_ent is None:
             return
         self._root_win.sysMsg_to_monitor(f'Info: User Daten für {self._db_ent.call_str} wurden gespeichert..')

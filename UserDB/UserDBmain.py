@@ -193,7 +193,14 @@ class UserDB:
         ent = self.get_entry(entry_call, False)
         if not ent:
             return False
+        if not ent.LOC:
+            ent.Distance = -1
+            return False
         ent.Distance = locator_distance(own_loc, ent.LOC)
+
+    def set_distance_for_all(self):
+        for k in list(self.db.keys()):
+            self.set_distance(k)
 
     def get_keys_by_typ(self, typ='SYSOP'):
         ret = []
