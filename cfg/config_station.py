@@ -121,8 +121,8 @@ class DefaultStation:
     ##########################
     # Not Implemented Yet
     stat_parm_Name: str = ''
-    stat_parm_QTH: str = ''
-    stat_parm_LOC: str = ''
+    # Global: stat_parm_QTH: str = ''
+    # Global: stat_parm_LOC: str = ''
     # stat_parm_TYP: str = ''
     ##########################
     stat_parm_is_Digi = False
@@ -153,7 +153,7 @@ class DefaultStation:
 
 
 class DefaultPort(object):
-    parm_Stations = []
+    # parm_Stations = []
     station_save_files: [str] = []
     """ Port Parameter """
     parm_PortNr: int = -1
@@ -249,7 +249,7 @@ class PortConfigInit(DefaultPort):
             if '__' not in att and att not in self.dont_save_this and not callable(getattr(self, att)):
                 setattr(self, att, getattr(self, att))
         self.parm_PortNr = int(port_id)
-        self.parm_Stations = []
+        parm_Stations = []     ################################
         self.station_save_files = []
         file = CFG_data_path + f'port{self.parm_PortNr}.popt'
         is_file = False
@@ -280,7 +280,7 @@ class PortConfigInit(DefaultPort):
                         self.parm_cli[k] = self.parm_cli[k].cli_name
 
             if self.parm_StationCalls:
-                self.parm_Stations = []
+                parm_Stations = []
                 ############
                 # Stations
                 for call in self.parm_StationCalls:
@@ -294,7 +294,7 @@ class PortConfigInit(DefaultPort):
                         if not hasattr(new_stat_cfg, 'parm_mon_clr_bg'):
                             new_stat_cfg.parm_mon_clr_bg = 'black'
                         """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
-                        self.parm_Stations.append(new_stat_cfg)
+                        parm_Stations.append(new_stat_cfg)
                         # Stupid Digi
                         if new_stat_cfg.stat_parm_is_Digi:
                             if call not in self.parm_Digi_calls:
@@ -309,7 +309,7 @@ class PortConfigInit(DefaultPort):
                     self.parm_full_duplex = False  # Maybe sometimes i ll implement it for HF
 
             # stat: DefaultStation
-            for stat in self.parm_Stations:
+            for stat in parm_Stations:
                 if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
                     new_cli_cfg = getNew_CLI_cfg()
                     new_cli_cfg.update(stat.stat_parm_cli_cfg)

@@ -138,6 +138,9 @@ class PoPT_GUI_Main:
         self._status_t3_var = tk.StringVar(self.main_win)
         self._rx_beep_var = tk.IntVar(self.main_win)
         self._ts_box_var = tk.IntVar(self.main_win)
+        # OWN Stat INFO (LOC, QTH)
+        self.own_loc = ''
+        self.own_qth = ''
         # Stat INFO (Name,QTH usw)
         self.stat_info_name_var = tk.StringVar(self.main_win)
         self.stat_info_qth_var = tk.StringVar(self.main_win)
@@ -233,7 +236,7 @@ class PoPT_GUI_Main:
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
-        main_pw.add(l_frame, weight=20)
+        main_pw.add(l_frame, weight=50)
         main_pw.add(self._r_frame, weight=1)
         ###########################################
         # Channel Buttons
@@ -330,7 +333,7 @@ class PoPT_GUI_Main:
         logging.info('Closing GUI')
         self._is_closing = True
         logging.info('Closing GUI: Save GUI Vars & Parameter.')
-        self._save_GUIvars()
+        self.save_GUIvars()
         self._save_parameter()
         self._save_Channel_Vars()
         logging.info('Closing GUI: Closing Ports.')
@@ -360,7 +363,7 @@ class PoPT_GUI_Main:
         self._loop_delay = 800
         logging.info('Closing GUI: Done')
 
-    def _save_GUIvars(self):
+    def save_GUIvars(self):
         #########################
         # GUI-Vars to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
@@ -375,6 +378,8 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_noty_bell'] = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
+        guiCfg['gui_cfg_locator'] = str(self.own_loc)
+        guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     def _save_parameter(self):
@@ -432,6 +437,9 @@ class PoPT_GUI_Main:
         self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
         self.setting_noty_bell.set(guiCfg.get('gui_cfg_noty_bell', False))
         self.setting_mon_encoding.set(guiCfg.get('gui_cfg_mon_encoding', 'Auto'))
+        # OWN Loc and QTH
+        self.own_loc = guiCfg.get('gui_cfg_locator', '')
+        self.own_qth = guiCfg.get('gui_cfg_qth', '')
 
     def _init_PARM_vars(self):
         #########################
@@ -1864,16 +1872,18 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame.reset_dx_alarm()
 
     #######################################################
-
+    """
     def gui_set_distance(self):
         self._set_distance_fm_conn()
-
+    """
+    """
     def _set_distance_fm_conn(self):
         conn = self.get_conn()
         if conn is not None:
             conn.set_distance()
             return True
         return False
+    """
 
     #######################################################################
     # DISCO

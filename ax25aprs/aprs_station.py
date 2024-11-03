@@ -9,7 +9,7 @@ from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
 from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from cfg.popt_config import POPT_CFG
-from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
+from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator, locator_to_coordinates
 from fnc.str_fnc import convert_umlaute_to_ascii
 from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
@@ -27,6 +27,12 @@ class APRS_ais(object):
         self.ais_loc = ais_cfg.get('ais_loc', '')
         self.ais_lat = ais_cfg.get('ais_lat', 0.0)
         self.ais_lon = ais_cfg.get('ais_lon', 0.0)
+        if not self.ais_loc:
+            guiCfg = POPT_CFG.load_guiPARM_main()
+            own_loc = guiCfg.get('gui_cfg_locator', '')
+            if own_loc:
+                self.ais_loc = own_loc
+                self._set_own_location()
         self.add_new_user = ais_cfg.get('add_new_user', False)
         # self.ais_host = "cbaprs.dyndns.org", 27234
         self.ais_aprs_stations = ais_cfg.get('ais_aprs_stations', {})
@@ -89,6 +95,19 @@ class APRS_ais(object):
     def set_port_handler(self, port_handler):
         self._port_handler = port_handler
 
+    def _set_own_location(self):
+        if not self.ais_loc:
+            if self.ais_lat and self.ais_lon:
+                loc = coordinates_to_locator(
+                    latitude=self.ais_lat,
+                    longitude=self.ais_lon,
+                )
+                self.ais_loc = loc
+        elif not self.ais_lat or not self.ais_lon:
+            lat, lon = locator_to_coordinates(self.ais_loc)
+            self.ais_lat = lat
+            self.ais_lon = lon
+
     def del_ais_rx_buff(self):
         self.ais_rx_buff = deque([] * 5000, maxlen=5000)
 
@@ -120,6 +139,12 @@ class APRS_ais(object):
         ais_cfg['ais_aprs_stations'] = dict(self.ais_aprs_stations)
         ais_cfg['aprs_msg_pool'] = dict(self.aprs_msg_pool)
         POPT_CFG.save_CFG_aprs_ais(ais_cfg)
+        if self._port_handler is None:
+            return
+        gui = self._port_handler.get_gui()
+        if gui is None:
+            return
+        gui.own_loc = self.ais_loc
 
     def login(self):
         self._watchdog_reset()
@@ -201,10 +226,11 @@ class APRS_ais(object):
             self._tracer_task()
             # update GUIs
             if self._port_handler is not None:
-                if self._port_handler.gui is not None:
+                gui = self._port_handler.get_gui()
+                if gui is not None:
                     # APRS PN-MSG GUI
-                    if self._port_handler.gui.aprs_pn_msg_win is not None:
-                        self._port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
+                    if gui.aprs_pn_msg_win is not None:
+                        gui.aprs_pn_msg_win.update_spooler_tree()
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
 
     def aprs_wx_tree_task(self):
@@ -450,12 +476,13 @@ class APRS_ais(object):
 
     def _update_pn_msg_gui(self, aprs_pack: dict):
         if self._port_handler is not None:
-            if self._port_handler.gui is not None:
+            gui = self._port_handler.get_gui()
+            if gui is not None:
                 if aprs_pack['addresse'] in self._port_handler.ax25_stations_settings \
                         or aprs_pack['from'] in self._port_handler.ax25_stations_settings:
-                    self._port_handler.gui.set_aprsMail_alarm()
-                if self._port_handler.gui.aprs_pn_msg_win is not None:
-                    self._port_handler.gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
+                    gui.set_aprsMail_alarm()
+                if gui.aprs_pn_msg_win is not None:
+                    gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
 
     def _aprs_msg_sys_new_pn(self, aprs_pack: dict):
         self._update_pn_msg_gui(aprs_pack)

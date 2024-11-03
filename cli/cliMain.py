@@ -994,7 +994,8 @@ class DefaultCLI(object):
                 replace('\n', ''). \
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
-            self._connection.set_distance()
+            # self._connection.set_distance()
+            self._user_db.set_distance(self._user_db_ent.call_str)
             if self._user_db_ent.Distance:
                 return "\r" \
                        f"{STR_TABLE['cli_loc_set'][self._connection.cli_language]}: {self._user_db_ent.LOC}" \
@@ -1225,8 +1226,10 @@ class DefaultCLI(object):
     ##############################################
     def str_cmd_req_name(self):
         name = self._connection.stat_cfg.stat_parm_Name
-        qth = self._connection.stat_cfg.stat_parm_QTH
-        loc = self._connection.stat_cfg.stat_parm_LOC
+        qth = self._gui.own_qth
+        # qth = self._connection.stat_cfg.stat_parm_QTH
+        loc = self._gui.own_loc
+        # loc = self._connection.stat_cfg.stat_parm_LOC
         if name:
             name = f'\r#NAM# {name}\r'
         if qth:

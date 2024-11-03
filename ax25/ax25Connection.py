@@ -110,7 +110,7 @@ class AX25Conn:
         self.ch_index: int = 0
         self.port_id: int = self.own_port.port_id
         self.port_name: str = self.own_port.portname
-        self.gui = self._port_handler.get_gui()
+        self._gui = self._port_handler.get_gui()
         # self.ChVars = None
         """ Config new Connection Address """
         #####################################
@@ -233,12 +233,13 @@ class AX25Conn:
         self.link_holder_timer = time.time()
         self.link_holder_text: str = '\r'
         """ Encoding """
-        self.encoding = 'CP437'     # 'UTF-8'
+        self._encoding = 'CP437'     # 'UTF-8'
         """ Station CFG Parameter """
         self.stat_cfg = config_station.DefaultStation()
-        self.my_call_alias = ''
-        self.to_call_alias = ''
-        self.my_locator = self.stat_cfg.stat_parm_LOC
+        self._my_call_alias = ''
+        self._to_call_alias = ''
+        # self._my_locator = self.stat_cfg.stat_parm_LOC
+        self._my_locator = self._gui.own_loc
         """ User DB Entry """
         self.user_db_ent = None
         self.cli_remote = True
@@ -300,7 +301,7 @@ class AX25Conn:
             self._init_cli()
             self.cli.change_cli_state(state=1)
 
-    def set_station_cfg(self):
+    def set_station_cfg(self):  # TODO New Station CFG
         if self.my_call_str in self._port_handler.ax25_stations_settings.keys():
             self.stat_cfg = self._port_handler.ax25_stations_settings[self.my_call_str]
         else:
@@ -474,8 +475,8 @@ class AX25Conn:
 
     def _ft_cron(self):
         if self._ft_queue_handling():
-            # if self.gui is not None:
-            #     self.gui.on_channel_status_change()
+            # if self._gui is not None:
+            #     self._gui.on_channel_status_change()
             return self.ft_obj.ft_crone()
         return False
 
@@ -517,7 +518,7 @@ class AX25Conn:
         if self.link_holder_on:
             if self.link_holder_timer < time.time():
                 self.link_holder_timer = time.time() + (self.link_holder_interval * 60)
-                self.tx_buf_rawData += self.link_holder_text.encode(self.encoding, 'ignore')
+                self.tx_buf_rawData += self.link_holder_text.encode(self._encoding, 'ignore')
 
     ###############################
     # LINKS Linked/DIGI Connections
@@ -777,21 +778,21 @@ class AX25Conn:
                 if ':' in tmp_data:
                     tmp_call = tmp_data.split(':')
                     self.to_call_str = tmp_call[1].replace(' ', '')
-                    self.to_call_alias = tmp_call[0].replace(' ', '')
+                    self._to_call_alias = tmp_call[0].replace(' ', '')
                 else:
                     self.to_call_str = tmp_data.replace(' ', '')
-                    self.to_call_alias = ''
+                    self._to_call_alias = ''
                 self.tx_byte_count = 0
                 self.rx_byte_count = 0
                 self._set_user_db_ent()
                 self._set_packet_param()
                 self._reinit_cli()
 
-                if self.gui:
+                if self._gui:
                     # TODO
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
                     SOUND.sprech(speech)
-                    self.gui.on_channel_status_change()
+                    self._gui.on_channel_status_change()
                 # Maybe it's better to look at the whole string (include last frame)?
                 return
         return
@@ -802,7 +803,7 @@ class AX25Conn:
             self.user_db_ent.Connects += 1  # TODO Count just when connected
             self.last_connect = self.user_db_ent.last_seen
             self.user_db_ent.last_seen = datetime.now()
-            self.encoding = self.user_db_ent.Encoding
+            self._encoding = self.user_db_ent.Encoding
             if self.user_db_ent.Language == -1:
                 self.user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())
             self.cli_language = self.user_db_ent.Language
@@ -821,8 +822,8 @@ class AX25Conn:
 
     def set_distance(self):
         if self.user_db_ent:
-            if self.my_locator and self.user_db_ent.LOC:
-                self.user_db_ent.Distance = locator_distance(self.my_locator, self.user_db_ent.LOC)
+            if self._my_locator and self.user_db_ent.LOC:
+                self.user_db_ent.Distance = locator_distance(self._my_locator, self.user_db_ent.LOC)
 
     def _set_packet_param(self):
         self.parm_PacLen = self.port_cfg.parm_PacLen  # Max Pac len

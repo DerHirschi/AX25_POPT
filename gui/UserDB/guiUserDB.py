@@ -144,24 +144,24 @@ class UserDB(tk.Toplevel):
         #################################################
         # Entry
         # Name
-        _x = 10
-        _y = 20
-        tk.Label(tab1, text='Name: ').place(x=_x, y=_y)
+        x = 10
+        y = 20
+        tk.Label(tab1, text='Name: ').place(x=x, y=y)
         name_ent = tk.Entry(tab1,
                             textvariable=self._name_var,
                             width=22)
-        name_ent.place(x=_x + 80, y=_y)
+        name_ent.place(x=x + 80, y=y)
         # Typ
-        _x = 375
-        _y = 20
-        tk.Label(tab1, text='Typ: ').place(x=_x, y=_y)
+        x = 375
+        y = 20
+        tk.Label(tab1, text='Typ: ').place(x=x, y=y)
         opt = STATION_TYPS
         typ_ent = tk.OptionMenu(tab1, self._typ_var, *opt)
-        typ_ent.place(x=_x + 80, y=_y - 2)
+        typ_ent.place(x=x + 80, y=y - 2)
         # SYSOP
-        _x = 625
-        _y = 20
-        tk.Label(tab1, text='Sysop: ').place(x=_x, y=_y)
+        x = 625
+        y = 20
+        tk.Label(tab1, text='Sysop: ').place(x=x, y=y)
         opt = sorted(self._user_db.get_keys_by_typ(typ='SYSOP'))
         if not opt:
             opt = ['']
@@ -171,92 +171,92 @@ class UserDB(tk.Toplevel):
                                         # command=lambda event: self.on_select_sysop(event)
                                         )
         # self.sysop_ent.bind()
-        self._sysop_ent.place(x=_x + 100, y=_y - 2)
+        self._sysop_ent.place(x=x + 100, y=y - 2)
 
         # QTH
-        _x = 10
-        _y = 50
-        tk.Label(tab1, text='QTH: ').place(x=_x, y=_y)
+        x = 10
+        y = 50
+        tk.Label(tab1, text='QTH: ').place(x=x, y=y)
         qth_ent = tk.Entry(tab1,
                            textvariable=self._qth_var,
                            width=22)
-        qth_ent.place(x=_x + 80, y=_y)
+        qth_ent.place(x=x + 80, y=y)
         # LOC
-        _x = 375
-        _y = 50
-        tk.Label(tab1, text='LOC: ').place(x=_x, y=_y)
+        x = 375
+        y = 50
+        tk.Label(tab1, text='LOC: ').place(x=x, y=y)
         loc_ent = tk.Entry(tab1,
                            textvariable=self._loc_var,
                            width=7)
-        loc_ent.place(x=_x + 80, y=_y)
+        loc_ent.place(x=x + 80, y=y)
         # ZIP
-        _x = 10
-        _y = 80
-        tk.Label(tab1, text='ZIP: ').place(x=_x, y=_y)
+        x = 10
+        y = 80
+        tk.Label(tab1, text='ZIP: ').place(x=x, y=y)
         zip_ent = tk.Entry(tab1,
                            textvariable=self._zip_var,
                            width=10)
-        zip_ent.place(x=_x + 80, y=_y)
+        zip_ent.place(x=x + 80, y=y)
         # LAND
-        _x = 375
-        _y = 80
-        tk.Label(tab1, text='LAND: ').place(x=_x, y=_y)
+        x = 375
+        y = 80
+        tk.Label(tab1, text='LAND: ').place(x=x, y=y)
         land_ent = tk.Entry(tab1,
                             textvariable=self._land_var,
                             width=8)
-        land_ent.place(x=_x + 80, y=_y)
+        land_ent.place(x=x + 80, y=y)
         # Ecoding
-        _x = 455
-        _y = 110
-        tk.Label(tab1, text=f"{STR_TABLE['txt_decoding'][self.lang]}: ").place(x=_x, y=_y)
+        x = 455
+        y = 110
+        tk.Label(tab1, text=f"{STR_TABLE['txt_decoding'][self.lang]}: ").place(x=x, y=y)
         opt = list(ENCODINGS)
         encoding_ent = tk.OptionMenu(tab1, self._encoding_var, *opt)
-        encoding_ent.place(x=_x + 185, y=_y - 2)
+        encoding_ent.place(x=x + 185, y=y - 2)
         # Software
-        _x = 455
-        _y = 140
-        tk.Label(tab1, textvariable=self._software_var).place(x=_x, y=_y)
+        x = 455
+        y = 140
+        tk.Label(tab1, textvariable=self._software_var).place(x=x, y=y)
 
         # PR-MAIL
-        _x = 10
-        _y = 110
-        tk.Label(tab1, text='PR-MAIL: ').place(x=_x, y=_y)
+        x = 10
+        y = 110
+        tk.Label(tab1, text='PR-MAIL: ').place(x=x, y=y)
         prmail_ent = tk.Entry(tab1,
                               textvariable=self._prmail_var,
                               width=32)
-        prmail_ent.place(x=_x + 80, y=_y)
+        prmail_ent.place(x=x + 80, y=y)
         # E-MAIL
-        _x = 10
-        _y = 140
-        tk.Label(tab1, text='E-MAIL: ').place(x=_x, y=_y)
+        x = 10
+        y = 140
+        tk.Label(tab1, text='E-MAIL: ').place(x=x, y=y)
         email_ent = tk.Entry(tab1,
                              textvariable=self._email_var,
                              width=32)
-        email_ent.place(x=_x + 80, y=_y)
+        email_ent.place(x=x + 80, y=y)
         # HTTP
-        _x = 10
-        _y = 170
-        tk.Label(tab1, text='WEB: ').place(x=_x, y=_y)
+        x = 10
+        y = 170
+        tk.Label(tab1, text='WEB: ').place(x=x, y=y)
         http_ent = tk.Entry(tab1,
                             textvariable=self._http_var,
                             width=32)
-        http_ent.place(x=_x + 80, y=_y)
+        http_ent.place(x=x + 80, y=y)
 
         # Stat Infos / Bemerkungen
-        _x = 10
-        _y = 200
-        tk.Label(tab1, text='Infos: ').place(x=_x, y=_y)
+        x = 10
+        y = 200
+        tk.Label(tab1, text='Infos: ').place(x=x, y=y)
         # self.info_var = tk.StringVar(self)
         self._info_ent = tk.Text(tab1,
                                  width=65,
                                  height=9
                                  )
-        self._info_ent.place(x=_x + 80, y=_y)
+        self._info_ent.place(x=x + 80, y=y)
 
         # CLI LANGUAGE   # TODO
-        _x = 10
-        _y = 400
-        tk.Label(tab1, text='Sprache: ').place(x=_x, y=_y)
+        x = 10
+        y = 400
+        tk.Label(tab1, text='Sprache: ').place(x=x, y=y)
         lang_opt = [
             'DEUTSCH',
             'ENGLSCH',
@@ -270,7 +270,7 @@ class UserDB(tk.Toplevel):
         self._lang_var.set('DEUTSCH')
         lang_ent = tk.OptionMenu(tab1, self._lang_var, *lang_opt)
         lang_ent.configure(state='disabled')  # TODO
-        lang_ent.place(x=_x + 80, y=_y - 2)
+        lang_ent.place(x=x + 80, y=y - 2)
 
         # Connection Counter
         tk.Label(tab1, text='Connections: ').place(x=240, y=393)
@@ -290,30 +290,30 @@ class UserDB(tk.Toplevel):
         #######################
         # TAB2
         # C-TEXT
-        _x = 10
-        _y = 10
-        tk.Label(tab2, text='C-Text: ').place(x=_x, y=_y)
+        x = 10
+        y = 10
+        tk.Label(tab2, text='C-Text: ').place(x=x, y=y)
         # self.info_var = tk.StringVar(self)
         self._ctext_ent = tk.Text(tab2,
                                   width=80,
                                   height=12
                                   )
-        self._ctext_ent.place(x=_x, y=_y + 30)
+        self._ctext_ent.place(x=x, y=y + 30)
 
         # Max-PAc
-        _x = 10
-        _y = 300
-        tk.Label(tab2, text='Max-Pac: ').place(x=_x, y=_y)
+        x = 10
+        y = 300
+        tk.Label(tab2, text='Max-Pac: ').place(x=x, y=y)
         max_pac_opt = list(range(8))
         max_pac_ent = tk.OptionMenu(tab2,
                                     self._max_pac_var,
                                     *max_pac_opt
                                     )
-        max_pac_ent.place(x=_x + 85, y=_y - 2)
+        max_pac_ent.place(x=x + 85, y=y - 2)
         # Pac-Len
-        _x = 200
-        _y = 300
-        tk.Label(tab2, text='Pac-Len: ').place(x=_x, y=_y)
+        x = 200
+        y = 300
+        tk.Label(tab2, text='Pac-Len: ').place(x=x, y=y)
         # max_pac_opt = list(range(8))
         pac_len_ent = tk.Spinbox(tab2,
                                  textvariable=self._pac_len_var,
@@ -322,46 +322,46 @@ class UserDB(tk.Toplevel):
                                  increment=10,
                                  width=4
                                  )
-        pac_len_ent.place(x=_x + 85, y=_y - 2)
+        pac_len_ent.place(x=x + 85, y=y - 2)
 
         # AXIP-ADD
-        _x = 10
-        _y = 340
-        tk.Label(tab2, text='AXIP-Address: ').place(x=_x, y=_y)
+        x = 10
+        y = 340
+        tk.Label(tab2, text='AXIP-Address: ').place(x=x, y=y)
         axip_add_ent = tk.Entry(tab2,
                                 textvariable=self._axip_add_var,
                                 width=40
                                 )
-        axip_add_ent.place(x=_x + 130, y=_y - 2)
+        axip_add_ent.place(x=x + 130, y=y - 2)
 
         # AXIP-Port
-        _x = 10
-        _y = 380
-        tk.Label(tab2, text='AXIP-Port: ').place(x=_x, y=_y)
+        x = 10
+        y = 380
+        tk.Label(tab2, text='AXIP-Port: ').place(x=x, y=y)
         axip_port_ent = tk.Entry(tab2,
                                  textvariable=self._axip_port_var,
                                  width=6
                                  )
-        axip_port_ent.place(x=_x + 130, y=_y - 2)
+        axip_port_ent.place(x=x + 130, y=y - 2)
 
         #######################
         # TAB3
         # Passwörter
         # Sys-PW
-        _x = 20
-        _y = 20
-        tk.Label(tab3, text=STR_TABLE['syspassword'][self.lang]).place(x=_x, y=_y)
+        x = 20
+        y = 20
+        tk.Label(tab3, text=STR_TABLE['syspassword'][self.lang]).place(x=x, y=y)
         # self.sys_password_var = tk.StringVar(self)
         self._sys_password_ent = tk.Text(tab3,
                                          height=5,
                                          width=80)
-        _x = 15
-        _y = 60
-        self._sys_password_ent.place(x=_x, y=_y)
+        x = 15
+        y = 60
+        self._sys_password_ent.place(x=x, y=y)
         # Fake-Attempts inclusive real attempt
-        _x = 20
-        _y = 200
-        tk.Label(tab3, text=STR_TABLE['trys'][self.lang]).place(x=_x, y=_y)
+        x = 20
+        y = 200
+        tk.Label(tab3, text=STR_TABLE['trys'][self.lang]).place(x=x, y=y)
 
         # max_pac_opt = list(range(8))
         fake_attempts_ent = tk.Spinbox(tab3,
@@ -371,11 +371,11 @@ class UserDB(tk.Toplevel):
                                        increment=1,
                                        width=3
                                        )
-        fake_attempts_ent.place(x=_x + 140, y=_y - 2)
+        fake_attempts_ent.place(x=x + 140, y=y - 2)
         # Fill Chars
-        _x = 300
-        _y = 200
-        tk.Label(tab3, text=STR_TABLE['fillchars'][self.lang]).place(x=_x, y=_y)
+        x = 300
+        y = 200
+        tk.Label(tab3, text=STR_TABLE['fillchars'][self.lang]).place(x=x, y=y)
 
         # max_pac_opt = list(range(8))
         fill_chars_ent = tk.Spinbox(tab3,
@@ -385,30 +385,30 @@ class UserDB(tk.Toplevel):
                                     increment=10,
                                     width=4
                                     )
-        fill_chars_ent.place(x=_x + 140, y=_y - 2)
+        fill_chars_ent.place(x=x + 140, y=y - 2)
         # Login CMD
-        _x = 20
-        _y = 240
-        tk.Label(tab3, text=STR_TABLE['login_cmd'][self.lang]).place(x=_x, y=_y)
+        x = 20
+        y = 240
+        tk.Label(tab3, text=STR_TABLE['login_cmd'][self.lang]).place(x=x, y=y)
 
-        tk.Entry(tab3, textvariable=self._login_cmd_var, width=20).place(x=_x + 170, y=_y)
+        tk.Entry(tab3, textvariable=self._login_cmd_var, width=20).place(x=x + 170, y=y)
         #######################
         # TAB4
         # Stationen
         # NODES
-        _x = 20
-        _y = 20
-        tk.Label(tab4, textvariable=self._stations_node_var).place(x=_x, y=_y)
+        x = 20
+        y = 20
+        tk.Label(tab4, textvariable=self._stations_node_var).place(x=x, y=y)
         # self.stations_node_var.set('NODES: ')
         # BBS
-        _x = 20
-        _y = 60
-        tk.Label(tab4, textvariable=self._stations_bbs_var).place(x=_x, y=_y)
+        x = 20
+        y = 60
+        tk.Label(tab4, textvariable=self._stations_bbs_var).place(x=x, y=y)
         # self.stations_bbs_var.set('BBS: ')
         # Other
-        _x = 20
-        _y = 100
-        tk.Label(tab4, textvariable=self._stations_other_var).place(x=_x, y=_y)
+        x = 20
+        y = 100
+        tk.Label(tab4, textvariable=self._stations_other_var).place(x=x, y=y)
         # self.stations_other_var.set('OTHER: ')
 
         if not ent_key:
@@ -599,7 +599,8 @@ class UserDB(tk.Toplevel):
                 axip_add,
                 axip_port
             )
-        self._root_win.gui_set_distance()
+            self._user_db.set_distance(self._db_ent.call_str)
+        # self._root_win.gui_set_distance()
 
     def _clean_ent(self):
         self._db_ent = None

@@ -17,9 +17,11 @@ Fixes:
 - PoPT schließt KISS-TCP Gerät nicht ordentlich, wenn Gerät nicht erreichbar.
   (Hohe CPU Auslastung und schlechte Ansprechverhalten der GUI)
 - Sprache kann nicht mehr dynamisch eingestellt werden in constant.py
+- Distanzen der Stationen werden erst berechnet, bei einem connect
 
 
 Optimierung:
+- Heimat Locator und QTH Angaben sind jetzt GLobal. (APRS-STATION Locator = Locator der Stationen)
 - Dev Konsolenausgaben aufgeräumt
 - ax25Connection.py aufgeräumt/optimiert
 - Texte (C-Text, I-Text, ...) werden jetzt lesbar als Textdatei gespeichert. (Dachte, es wäre bereits der Fall)

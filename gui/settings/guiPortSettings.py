@@ -688,7 +688,7 @@ class PortSetTab:
         self.port_setting.parm_stat_MaxFrame = {}
         self.port_setting.parm_cli = {}
         self.port_setting.parm_StationCalls = []
-        self.port_setting.parm_Stations = []
+        # self.port_setting.parm_Stations = []
 
         for k in self._stat_check_vars.keys():
             if k in self._all_stat_cfgs.keys() and \
@@ -704,7 +704,7 @@ class PortSetTab:
                 self.port_setting.parm_stat_MaxFrame[k] = stat.stat_parm_MaxFrame
                 self.port_setting.parm_cli[k] = stat.stat_parm_cli_cfg
                 self.port_setting.parm_StationCalls.append(k)
-                self.port_setting.parm_Stations.append(stat)
+                # self.port_setting.parm_Stations.append(stat)
                 # station_save_files
 
     def _t2_auto_check(self):

@@ -4,6 +4,7 @@
 from ax25aprs.aprs_dec import format_aprs_f_monitor
 from cfg.constant import ENCODINGS
 from UserDB.UserDBmain import USER_DB
+from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import try_decode
 
 
@@ -12,7 +13,10 @@ from fnc.str_fnc import try_decode
 
 def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
     port_name = port_cfg.parm_PortName
-    aprs_loc = port_cfg.parm_aprs_station.get('aprs_parm_loc', '')
+    guiCfg = POPT_CFG.load_guiPARM_main()
+    own_loc = guiCfg.get('gui_cfg_locator', '')
+
+    # own_loc = port_cfg.parm_aprs_station.get('aprs_parm_loc', '')
     aprs_data = ''
     ctl_flag = ax25_frame_conf.get('ctl_flag', '')
     ctl_cmd = ax25_frame_conf.get('ctl_cmd', '')
@@ -27,7 +31,7 @@ def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
     payload = ax25_frame_conf.get('payload', b'')
     # netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
     if ctl_flag == 'UI':
-        aprs_data = format_aprs_f_monitor(ax25_frame_conf, own_locator=aprs_loc)
+        aprs_data = format_aprs_f_monitor(ax25_frame_conf, own_locator=own_loc)
 
     from_call_d = round(USER_DB.get_distance(from_call))
     if from_call_d:

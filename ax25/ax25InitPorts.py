@@ -58,7 +58,7 @@ class AX25PortHandler(object):
         self.userDB = USER_DB
         self.mh = None
         # self.routingTable = None
-        self.gui = None
+        self._gui = None
         self.bbs = None
         self.aprs_ais = None
         self.scheduled_tasker = None
@@ -76,6 +76,9 @@ class AX25PortHandler(object):
         self._monitor_buffer = []
         self._dualPort_monitor_buffer = {}
         #######################################################
+        # Init UserDB
+        self.userDB.set_port_handler(self)
+        ########################################################
         # Init MH
         self._init_MH()
         #######################################################
@@ -203,7 +206,8 @@ class AX25PortHandler(object):
             for stat_key in port.my_stations:
                 if stat_key in self.ax25_stations_settings.keys():
                     if self.ax25_stations_settings[stat_key].stat_parm_is_Digi:
-                        new_digi_calls.append(stat_key)
+                        if stat_key not in new_digi_calls:
+                            new_digi_calls.append(stat_key)
                         if stat_key not in digi_cfg:
                             digi_cfg[stat_key] = POPT_CFG.get_digi_CFG_for_Call(stat_key)
             self.ax25_ports[port_kk].port_cfg.parm_Digi_calls = new_digi_calls
@@ -293,7 +297,7 @@ class AX25PortHandler(object):
                 temp.start()
                 ######################################
                 # Gather all Ports in dict: ax25_ports
-                # temp.gui = self.gui
+                # temp.gui = self._gui
                 self.ax25_ports[port_id] = temp
                 self.ax25_port_settings[port_id] = temp.port_cfg
                 self.rx_echo[port_id] = RxEchoVars(port_id)
@@ -341,17 +345,17 @@ class AX25PortHandler(object):
     def set_gui(self, gui=None):
         """ PreInit: Set GUI Var """
         if gui is not None:
-            self.gui = gui
+            self._gui = gui
 
     def sysmsg_to_gui(self, msg: str = ''):
-        if self.gui and self.is_running:
-            self.gui.sysMsg_to_monitor(msg)
+        if self._gui and self.is_running:
+            self._gui.sysMsg_to_monitor(msg)
 
     def close_gui(self):
         # self.close_all_ports()
-        if self.gui is not None:
-            tmp = self.gui
-            self.gui = None
+        if self._gui is not None:
+            tmp = self._gui
+            self._gui = None
             self.set_gui()
             tmp.main_win.quit()
             tmp.main_win.destroy()
@@ -371,8 +375,8 @@ class AX25PortHandler(object):
                     print("Channel Index != Real Index !!!")
                     logger.warning("Channel Index != Real Index !!!")
                     new_conn.ch_index = int(k)
-                    if self.gui:
-                        self.gui.conn_btn_update()
+                    if self._gui:
+                        self._gui.conn_btn_update()
                     return
 
         while True:
@@ -380,12 +384,12 @@ class AX25PortHandler(object):
                 ind += 1
             else:
                 new_conn.ch_index = int(ind)
-                if self.gui:
-                    self.gui.conn_btn_update()
+                if self._gui:
+                    self._gui.conn_btn_update()
                 return
 
     def accept_new_connection(self, connection):
-        if self.gui:
+        if self._gui:
             # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
                 # TODO: Trigger here, Logbook and UserDB-Conn C
@@ -393,7 +397,7 @@ class AX25PortHandler(object):
                     msg = f'*** Connected fm {connection.to_call_str}'
                 else:
                     msg = f'*** Connected to {connection.to_call_str}'
-                self.gui.sysMsg_to_qso(
+                self._gui.sysMsg_to_qso(
                     data=msg,
                     ch_index=connection.ch_index
                 )
@@ -402,20 +406,20 @@ class AX25PortHandler(object):
                     speech = ' '.join(connection.to_call_str.replace('-', ' '))
                     SOUND.sprech(speech)
 
-            self.gui.ch_status_update()
-            self.gui.conn_btn_update()
+            self._gui.ch_status_update()
+            self._gui.conn_btn_update()
 
     def end_connection(self, conn):
-        if self.gui:
+        if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, Logbook and UserDB-Conn C
-            self.gui.sysMsg_to_qso(
+            self._gui.sysMsg_to_qso(
                 data=f'*** Disconnected fm {str(conn.to_call_str)}',
                 ch_index=int(conn.ch_index))
             if 0 < conn.ch_index < SERVICE_CH_START:
                 SOUND.disco_sound()
-            self.gui.ch_status_update()
-            self.gui.conn_btn_update()
+            self._gui.ch_status_update()
+            self._gui.conn_btn_update()
             if conn.noty_bell:
                 self.reset_noty_bell_PH()
 
@@ -621,7 +625,7 @@ class AX25PortHandler(object):
     ######################
     # Returns
     def get_gui(self):
-        return self.gui
+        return self._gui
 
     def get_aprs_ais(self):
         return self.aprs_ais
@@ -801,55 +805,55 @@ class AX25PortHandler(object):
             if all((aprs_obj, self.mh)):
                 aprs_obj.tracer_reset_auto_timer(self.mh.last_dx_alarm)
 
-            if self.gui:
-                self.gui.dx_alarm()
+            if self._gui:
+                self._gui.dx_alarm()
         else:
             if self.mh:
                 self.mh.dx_alarm_trigger = False
-            if self.gui:
-                self.gui.reset_dx_alarm()
+            if self._gui:
+                self._gui.reset_dx_alarm()
 
     def set_tracerAlarm(self, set_alarm=True):
-        if self.gui:
+        if self._gui:
             if set_alarm:
-                self.gui.tracer_alarm()
+                self._gui.tracer_alarm()
             else:
-                self.gui.reset_tracer_alarm()
+                self._gui.reset_tracer_alarm()
 
     def set_pmsMailAlarm(self, set_alarm=True):
-        if self.gui:
+        if self._gui:
             if set_alarm:
-                self.gui.pmsMail_alarm()
+                self._gui.pmsMail_alarm()
             else:
-                self.gui.reset_pmsMail_alarm()
+                self._gui.reset_pmsMail_alarm()
 
     def set_pmsFwdAlarm(self, set_alarm=True):
-        if self.gui:
+        if self._gui:
             if set_alarm:
-                self.gui.pmsFwd_alarm()
+                self._gui.pmsFwd_alarm()
             else:
-                self.gui.reset_pmsFwd_alarm()
+                self._gui.reset_pmsFwd_alarm()
 
     def set_diesel(self, set_alarm=True):
-        if self.gui:
+        if self._gui:
             if set_alarm:
-                self.gui.set_diesel()
+                self._gui.set_diesel()
             else:
-                self.gui.reset_diesel()
+                self._gui.reset_diesel()
 
     def set_noty_bell_PH(self, ch_id, msg=''):
-        if self.gui:
-            self.gui.set_noty_bell(ch_id, msg)
+        if self._gui:
+            self._gui.set_noty_bell(ch_id, msg)
 
     def reset_noty_bell_PH(self):
-        if self.gui:
+        if self._gui:
             all_conn = self.get_all_connections()
             for ch in all_conn.keys():
                 conn = all_conn[ch]
                 if conn:
                     if conn.noty_bell:
                         return
-            self.gui.reset_noty_bell_alarm()
+            self._gui.reset_noty_bell_alarm()
 
     ##############################################################
     #
