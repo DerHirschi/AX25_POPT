@@ -199,7 +199,7 @@ class DefaultPort(object):
     # Port Parameter for Save to file
     ##########################
     # Globals
-    glb_gui = None
+    # glb_gui = None
     dont_save_this = ['dont_save_this',
                       'save_to_pickl',
                       'mh',
@@ -213,8 +213,8 @@ class DefaultPort(object):
 
         if self.parm_PortNr != -1:
             # ais = self.parm_aprs_station.aprs_ais
-            gui = self.glb_gui
-            self.glb_gui = None
+            # gui = self.glb_gui
+            # self.glb_gui = None
             # self.parm_aprs_station.aprs_ais = None
             ############
             # Port CFG
@@ -237,7 +237,7 @@ class DefaultPort(object):
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)
 
-            self.glb_gui = gui
+            # self.glb_gui = gui
             # self.parm_aprs_station.aprs_ais = ais
 
 
@@ -297,7 +297,12 @@ class PortConfigInit(DefaultPort):
                         self.parm_Stations.append(new_stat_cfg)
                         # Stupid Digi
                         if new_stat_cfg.stat_parm_is_Digi:
-                            self.parm_Digi_calls.append(call)
+                            if call not in self.parm_Digi_calls:
+                                self.parm_Digi_calls.append(call)
+                        else:
+                            while call in self.parm_Digi_calls:
+                                self.parm_Digi_calls.remove(call)
+
                 if self.parm_PortTyp == 'AXIP':
                     self.parm_full_duplex = True
                 else:

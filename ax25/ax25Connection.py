@@ -105,12 +105,12 @@ class AX25Conn:
         # TODO: Cleanup
         """ Global Stuff """
         self.own_port = port
-        self.port_handler = self.own_port.port_handler
+        self._port_handler = port.port_handler
         """ GUI Stuff"""
         self.ch_index: int = 0
         self.port_id: int = self.own_port.port_id
         self.port_name: str = self.own_port.portname
-        self.gui = self.port_handler.get_gui()
+        self.gui = self._port_handler.get_gui()
         # self.ChVars = None
         """ Config new Connection Address """
         #####################################
@@ -301,13 +301,13 @@ class AX25Conn:
             self.cli.change_cli_state(state=1)
 
     def set_station_cfg(self):
-        if self.my_call_str in self.port_handler.ax25_stations_settings.keys():
-            self.stat_cfg = self.port_handler.ax25_stations_settings[self.my_call_str]
+        if self.my_call_str in self._port_handler.ax25_stations_settings.keys():
+            self.stat_cfg = self._port_handler.ax25_stations_settings[self.my_call_str]
         else:
-            for call in list(self.port_handler.ax25_stations_settings.keys()):
+            for call in list(self._port_handler.ax25_stations_settings.keys()):
                 if self.my_call in call:
-                    if self.my_call in self.port_handler.ax25_stations_settings.keys():
-                        self.stat_cfg = self.port_handler.ax25_stations_settings[self.my_call]
+                    if self.my_call in self._port_handler.ax25_stations_settings.keys():
+                        self.stat_cfg = self._port_handler.ax25_stations_settings[self.my_call]
                         break
         self._set_packet_param()
 
@@ -404,7 +404,7 @@ class AX25Conn:
             print("E: cli.stat_identifier.e")
             print(f"{self.cli.stat_identifier.typ}")
             return False
-        bbs = self.port_handler.get_bbs()
+        bbs = self._port_handler.get_bbs()
         if bbs is None:
             print("E: _bbs is None")
             return False
@@ -451,7 +451,7 @@ class AX25Conn:
         if self.pipe.parm_max_pac:
             self.parm_MaxFrame = int(self.pipe.parm_max_pac)
         self.pipe.change_settings()
-        self.port_handler.add_pipe(self.pipe.port_id, self.pipe.uid, self.pipe)
+        self._port_handler.add_pipe(self.pipe.port_id, self.pipe.uid, self.pipe)
 
     def _del_pipe(self):
         if self.pipe:
@@ -533,7 +533,7 @@ class AX25Conn:
     def new_link_connection(self, conn):
         if conn is None:
             return False
-        if conn.uid in self.port_handler.link_connections.keys():
+        if conn.uid in self._port_handler.link_connections.keys():
             conn.zustand_exec.change_state(4)
             conn.zustand_exec.tx(None)
             return False
@@ -546,9 +546,9 @@ class AX25Conn:
             self.my_call_str = digi_call
             # self.ax25_out_frame.digi_call = str(conn.my_call_str)
             self.digi_call = digi_call
-            self.port_handler.link_connections[str(conn.uid)] = conn, ''
+            self._port_handler.link_connections[str(conn.uid)] = conn, ''
         else:
-            self.port_handler.link_connections[str(conn.uid)] = conn, self.my_call_str
+            self._port_handler.link_connections[str(conn.uid)] = conn, self.my_call_str
 
         self.LINK_Connection = conn
         self.is_link = True
@@ -560,13 +560,13 @@ class AX25Conn:
         if conn is None:
             print("Conn ERROR: newDIGIConn: not conn")
             return False
-        if self.uid in self.port_handler.link_connections.keys():
+        if self.uid in self._port_handler.link_connections.keys():
             self.zustand_exec.change_state(4)
             self.zustand_exec.tx(None)
-            print("Conn ERROR: newDIGIConn: self.uid in self.port_handler.link_connections")
+            print("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
             return False
         self.digi_call = str(conn.digi_call)
-        self.port_handler.link_connections[str(self.uid)] = self, conn.digi_call
+        self._port_handler.link_connections[str(self.uid)] = self, conn.digi_call
 
         self.LINK_Connection = conn
         self.is_link = True
@@ -592,7 +592,7 @@ class AX25Conn:
                     self.LINK_Connection.conn_disco()
                     # self.LINK_Connection.zustand_exec.tx(None)
                 else:
-                    self.port_handler.del_link(self.LINK_Connection.uid)
+                    self._port_handler.del_link(self.LINK_Connection.uid)
                     # print(self.zustand_exec.stat_index)
                     # if self.zustand_exec.stat_index not in [0, 1]:
                     # if reconnect and not self.digi_call:
@@ -623,15 +623,15 @@ class AX25Conn:
     def del_link(self):
         """ Called in State.link_cleanup() """
         if self.LINK_Connection is not None:
-            # print(f'LINK CLEANUP link_connections K : {self.port_handler.link_connections.keys()}')
+            # print(f'LINK CLEANUP link_connections K : {self._port_handler.link_connections.keys()}')
             self.LINK_Connection = None
             self.is_link = False
-        self.port_handler.del_link(self.uid)
+        self._port_handler.del_link(self.uid)
 
     def _link_cleanup(self):
         # self.link_disco()
         self.del_link()
-        # self.port_handler.del_link(self.uid)
+        # self._port_handler.del_link(self.uid)
 
     # ##############
     # DISCO
@@ -677,7 +677,7 @@ class AX25Conn:
             return
         self._link_cleanup()
         self.own_port.del_connections(conn=self)
-        self.port_handler.end_connection(self)   # Doppelt ..
+        self._port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self, reconn=True):
@@ -1092,13 +1092,13 @@ class AX25Conn:
     def send_sys_Msg_to_gui(self, data):
         if not data:
             return
-        gui = self.port_handler.get_gui()
+        gui = self._port_handler.get_gui()
         if not gui:
             return
         gui.sysMsg_to_qso(data, self.ch_index)
 
     def accept_connection(self):
-        self.port_handler.accept_new_connection(self)
+        self._port_handler.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
             if self.digi_call in self.port_cfg.parm_Digi_calls:
@@ -1129,7 +1129,7 @@ class AX25Conn:
     def insert_new_connection(self):
         """ Insert connection for handling """
         is_service = self._is_service_connection()
-        self.port_handler.insert_new_connection_PH(new_conn=self, is_service=is_service)
+        self._port_handler.insert_new_connection_PH(new_conn=self, is_service=is_service)
 
     def _is_service_connection(self):
         return self.cli.service_cli
@@ -1137,7 +1137,12 @@ class AX25Conn:
     def get_state(self):
         return self.zustand_exec.stat_index
 
+    def get_port_handler_CONN(self):
+        return self._port_handler
 
+###########################################################################
+###########################################################################
+###########################################################################
 class DefaultStat(object):
     stat_index = 0  # ENDE Verbindung wird gelöscht...
 

@@ -2,7 +2,7 @@ import datetime
 import time
 import threading
 
-from ax25.ax25RoutingTable import RoutingTable
+# from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
@@ -48,7 +48,7 @@ class AX25PortHandler(object):
         #################
         self._start_time = datetime.datetime.now()
         self.is_running = True
-        self.ax25types = {
+        self._ax25types = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
             'AXIP': AXIP,
@@ -284,7 +284,7 @@ class AX25PortHandler(object):
             if cfg.parm_PortTyp:
                 #########################
                 # Init Port/Device
-                temp = self.ax25types[cfg.parm_PortTyp](cfg, self)
+                temp = self._ax25types[cfg.parm_PortTyp](cfg, self)
                 if not temp.device_is_running:
                     logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
                     self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
@@ -314,7 +314,8 @@ class AX25PortHandler(object):
         else:
             self.aprs_ais = aprs_obj
         if self.aprs_ais is not None:
-            self.aprs_ais.port_handler = self
+            # self.aprs_ais.port_handler = self
+            self.aprs_ais.set_port_handler(self)
             if self.aprs_ais.ais is not None:
                 # self.aprs_ais.loop_is_running = True
                 threading.Thread(target=self.aprs_ais.ais_rx_task).start()
@@ -734,6 +735,9 @@ class AX25PortHandler(object):
 
     def ph_get_all_stat_cfg(self):
         return self.ax25_stations_settings
+
+    def get_ax25types_keys(self):
+        return list(self._ax25types.keys())
 
     def get_stat_calls_fm_port(self, port_id=0):
         if port_id in self.ax25_ports.keys():

@@ -22,7 +22,7 @@ class PortSetTab:
         self._width = main_stt_win.win_width
 
         self.port_setting = setting
-        port_types = list(PORT_HANDLER.ax25types.keys())
+        port_types = PORT_HANDLER.get_ax25types_keys()
         self.style = main_stt_win.style
         self.tab = ttk.Frame(self.tab_clt)
         #################

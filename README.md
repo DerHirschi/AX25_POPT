@@ -44,6 +44,11 @@ Run:
 $ python3 PoPT.py
 ```
 
+Install all dependencies for Python 3.11 (Thanks to Lars):
+``` sh
+$ sudo apt install python3-matplotlib python3-tk python3-crcmod python3-gtts python3-pip python3-networkx python3-minimal
+$ pip install --break-system-packages playsound pyserial aprslib
+```
 
 #### Supported AX.25 connection options:
 - KISS via TCP (e.g. Direwolf)

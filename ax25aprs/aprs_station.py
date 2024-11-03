@@ -79,12 +79,15 @@ class APRS_ais(object):
         self._parm_non_prio_task_timer = 1
         self._del_spooler_tr = False
         self._wx_update_tr = False
-        self.port_handler = None
+        self._port_handler = None
         """ Watchdog """
         self._parm_watchdog = 60  # Sec.
         self._watchdog_last = time.time() + self._parm_watchdog
         if self.ais_active:
             self.login()
+
+    def set_port_handler(self, port_handler):
+        self._port_handler = port_handler
 
     def del_ais_rx_buff(self):
         self.ais_rx_buff = deque([] * 5000, maxlen=5000)
@@ -169,7 +172,7 @@ class APRS_ais(object):
             self._watchdog_last = time.time() + 10
             return
         if self.login():
-            self.port_handler.init_aprs_ais(aprs_obj=self)
+            self._port_handler.init_aprs_ais(aprs_obj=self)
             self._watchdog_last = time.time() + self._parm_watchdog
             return
 
@@ -197,11 +200,11 @@ class APRS_ais(object):
             # Tracer
             self._tracer_task()
             # update GUIs
-            if self.port_handler is not None:
-                if self.port_handler.gui is not None:
+            if self._port_handler is not None:
+                if self._port_handler.gui is not None:
                     # APRS PN-MSG GUI
-                    if self.port_handler.gui.aprs_pn_msg_win is not None:
-                        self.port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
+                    if self._port_handler.gui.aprs_pn_msg_win is not None:
+                        self._port_handler.gui.aprs_pn_msg_win.update_spooler_tree()
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
 
     def aprs_wx_tree_task(self):
@@ -335,7 +338,7 @@ class APRS_ais(object):
         # print(aprs_pack)
 
     def _get_db(self):
-        return self.port_handler.get_database()
+        return self._port_handler.get_database()
 
     @staticmethod
     def _correct_wrong_wx_data(aprs_pack):
@@ -417,7 +420,7 @@ class APRS_ais(object):
                         # print(f"APRS-MSG: {aprs_pack}")
                         self.aprs_msg_pool['message'].append(aprs_pack)
                         self._aprs_msg_sys_new_pn(aprs_pack)
-                    if aprs_pack.get('addresse', '') in list(self.port_handler.ax25_stations_settings.keys()):
+                    if aprs_pack.get('addresse', '') in list(self._port_handler.ax25_stations_settings.keys()):
                         if aprs_pack.get('msgNo', None) is not None:
                             self._send_ack(aprs_pack)
                     self._reset_address_in_spooler(aprs_pack)
@@ -446,13 +449,13 @@ class APRS_ais(object):
     """
 
     def _update_pn_msg_gui(self, aprs_pack: dict):
-        if self.port_handler is not None:
-            if self.port_handler.gui is not None:
-                if aprs_pack['addresse'] in self.port_handler.ax25_stations_settings \
-                        or aprs_pack['from'] in self.port_handler.ax25_stations_settings:
-                    self.port_handler.gui.set_aprsMail_alarm()
-                if self.port_handler.gui.aprs_pn_msg_win is not None:
-                    self.port_handler.gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
+        if self._port_handler is not None:
+            if self._port_handler.gui is not None:
+                if aprs_pack['addresse'] in self._port_handler.ax25_stations_settings \
+                        or aprs_pack['from'] in self._port_handler.ax25_stations_settings:
+                    self._port_handler.gui.set_aprsMail_alarm()
+                if self._port_handler.gui.aprs_pn_msg_win is not None:
+                    self._port_handler.gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
 
     def _aprs_msg_sys_new_pn(self, aprs_pack: dict):
         self._update_pn_msg_gui(aprs_pack)
@@ -466,11 +469,11 @@ class APRS_ais(object):
         if answer_pack and msg:
             from_call = answer_pack.get('addresse', '')
             to_call = answer_pack.get('from', '')
-            if from_call in self.port_handler.ax25_stations_settings:
+            if from_call in self._port_handler.ax25_stations_settings:
                 # to_call = answer_pack.get('from', '')
                 path = answer_pack.get('path', [])
                 path.reverse()
-            elif to_call in self.port_handler.ax25_stations_settings:
+            elif to_call in self._port_handler.ax25_stations_settings:
                 tmp = from_call
                 from_call = to_call
                 to_call = tmp
@@ -595,7 +598,7 @@ class APRS_ais(object):
             port_id = int(port_id)
         except ValueError:
             return
-        ax_port = self.port_handler.get_all_ports().get(port_id, None)
+        ax_port = self._port_handler.get_all_ports().get(port_id, None)
         if ax_port:
             path = pack.get('path', [])
             msg_text = pack.get('raw_message_text', '').encode('ASCII', 'ignore')
@@ -664,7 +667,7 @@ class APRS_ais(object):
         wide = f'WIDE{self.be_tracer_wide}-{self.be_tracer_wide}'
         # dest = APRS_SW_ID
 
-        if station_call in self.port_handler.get_stat_calls_fm_port(port_id):
+        if station_call in self._port_handler.get_stat_calls_fm_port(port_id):
             add_str = f'{station_call}>{APRS_SW_ID},{wide}:'
             msg = self._tracer_build_msg()
             aprs_raw = add_str + msg
@@ -758,8 +761,8 @@ class APRS_ais(object):
         dist = pack.get('distance', 0)
         if dist >= self.be_tracer_alarm_range:
             # self._be_tracer_is_alarm = True
-            if self.port_handler:
-                self.port_handler.set_tracerAlarm(True)
+            if self._port_handler:
+                self._port_handler.set_tracerAlarm(True)
             self._tracer_add_alarm_hist(pack)
             return True
         return False
@@ -789,7 +792,7 @@ class APRS_ais(object):
         self.be_tracer_alarm_hist[str(hist_struc['key'])] = dict(hist_struc)
 
     def _tracer_update_gui(self):
-        root_gui = self.port_handler.get_gui()
+        root_gui = self._port_handler.get_gui()
         if root_gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
             if root_gui.be_tracer_win is not None:
@@ -798,7 +801,7 @@ class APRS_ais(object):
 
     """
     def _update_gui_icon(self):
-        root_gui = self.port_handler.get_gui()
+        root_gui = self._port_handler.get_gui()
         if not root_gui:
             return
         root_gui.tracer_icon_task()

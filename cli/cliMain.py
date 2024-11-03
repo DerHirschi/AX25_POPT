@@ -45,7 +45,7 @@ class DefaultCLI(object):
             self.stat_cfg_index_call = self.stat_cfg.stat_parm_Call
         self.c_text = self._load_fm_file(self.stat_cfg_index_call + '.ctx')
         self._connection = connection
-        self._port_handler = self._connection.port_handler
+        self._port_handler = self._connection.get_port_handler_CONN()
         self._own_port = self._connection.own_port
         # self.channel_index = self._connection.ch_index
         self._gui = self._port_handler.get_gui()
