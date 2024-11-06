@@ -153,8 +153,8 @@ class Call:
             return False
         for c in self.call:
             if not any([c.isupper(), c.isdigit()]):
-                print(f'Call validator: CAll-Format - {self.call}')
-                logger.error(f'Call validator: CAll-Format - {self.call}')
+                print(f'Call validator: CAll-Format - {self.call} -')
+                logger.error(f'Call validator: CAll-Format - {self.call} -')
                 return False
         return True
 

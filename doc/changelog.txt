@@ -2,7 +2,7 @@
 # 2.108.x
 Fixes:
 - UmgebungVARS in Quit-Text funktionieren nicht
-- UI-Frames werden nicht mehr digipited
+- UI-Frames werden nicht mehr gedigipited
 - Im Monitor Modus wird ein neu ausgehender Connect auf Kanal 0 gelegt.
 - Pipe-Tool
 - AXIP Lookup für UI Frames (Baken/Monitor) (UI Frames können auch an AXIP Stationen gesendet werden, wenn AXIP bekannt)
