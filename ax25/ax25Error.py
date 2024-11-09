@@ -12,8 +12,8 @@ class AX25EncodingERROR(Exception):
         if frame is not None:
             logger.warning('AX25 Packet Decoding Error !')
             if hasattr(frame, 'data'):
-                logger.warning(frame.data)
-                logger.warning(f'Data: {frame.data}')
+                logger.warning(frame.payload)
+                logger.warning(f'Data: {frame.payload}')
                 # logger.warning(f'Hex: {frame.data.hex()}')
 
 

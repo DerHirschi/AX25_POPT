@@ -1,4 +1,5 @@
 # from config_station import DefaultPort
+from cfg.constant import TNC_KISS_CMD
 
 
 class Kiss(object):
@@ -28,7 +29,8 @@ class Kiss(object):
         # self.START_TNC_DEFAULT = bytes.fromhex('1B404B')  # TNC2 KISS MODE   b'\x1b@K'
         # self.START_TNC_DEFAULT = b'KISS ON\r\n'  # TNC2 KISS MODE   b'\x1b@K'
         # self.START_TNC_DEFAULT = b'KISS ON\r'  # TNC2 KISS MODE   b'\x1b@K'
-        self.START_TNC_DEFAULT = b'KISSM\r'  # TNC2 KISS MODE   b'\x1b@K'
+        ## self.START_TNC_DEFAULT = b'KISSM\r'  # TNC2 KISS MODE   b'\x1b@K'
+        self.START_TNC_DEFAULT = TNC_KISS_CMD  # TNC2 KISS MODE   b'\x1b@K'
         # self.START_TNC_DEFAULT = bytes.fromhex('11241B404B0D')  # TNC2 KISS MODE   b'\x1b@K'
         # KISS END self.START_TNC_DEFAULT = bytes.fromhex('C0FFC0')  # TNC2 KISS MODE   b'\x1b@K'
         # self.START_TNC_DEFAULT = b'KISSM\r\n '  # TNC2 KISS MODE   b'\x1b@K'
@@ -39,6 +41,7 @@ class Kiss(object):
         self.TFESC = b'\xDD'
         # KISS_ON = 'KISS $0B'
         self.KISS_OFF = b''.join([self.FEND, self.RETURN, self.FEND, self.FEND])
+        # ???? self.KISS_OFF = b''.join([self.FEND, self.RETURN, self.FEND]) ????
         # self.txd_frame = lambda: self.TX_DELAY + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:])
         self.txd_frame = lambda: b'\xC0\x01' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:].zfill(2)) + b'\xC0'
         # self.txd_frame_ch1 = lambda: b'\xC0\x11' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:]) + b'\xC0'

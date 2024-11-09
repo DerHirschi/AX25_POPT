@@ -12,26 +12,6 @@ from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_for_key
 
-"""
-def getNew_MyHeard():
-    return {
-        "own_call": '',
-        "to_call": '',
-        "route": [],
-        "port_id": 0,
-        "byte": 0,                  # N Bytes
-        "h_byte": 0,                # N Header Bytes
-        "type": '',                 # Type: UI/U/RR
-        "pid": '',                  # Pack PID
-        "axip_add": '',             # IP, Port
-        "locator": '',
-        "distance": -1,
-        "TX": False,
-        "first_seen": str(datetime.now().strftime(SQL_TIME_FORMAT)),
-        "last_seen": str(datetime.now().strftime(SQL_TIME_FORMAT)),
-    }
-"""
-
 
 class MyHeard:
     def __init__(self):
@@ -584,21 +564,25 @@ class MH:
         if not call_str:
             return '', 0
         userdb_axip = USER_DB.get_AXIP(call_str)
-        if not param_fail:
-            if userdb_axip:
-                if userdb_axip[0]:
-                    return userdb_axip
+        # if not param_fail:
+        if userdb_axip:
+            if userdb_axip[0]:
+                return userdb_axip
         for port in self._MH_db.keys():
             if call_str in self._MH_db[port].keys():
                 if call_str in self._MH_db[port].keys():
                     if self._MH_db[port][call_str].axip_add[0]:
-                        if self._MH_db[port][call_str].axip_fail < param_fail:
-                            if userdb_axip:
-                                if userdb_axip[0]:
-                                    return userdb_axip
-                            return self._MH_db[port][call_str].axip_add
+                        # if self._MH_db[port][call_str].axip_fail < param_fail:
+                        """
+                        if userdb_axip:
+                            if userdb_axip[0]:
+                                return userdb_axip
+                        """
+                        """
                         if not param_fail:
                             return self._MH_db[port][call_str].axip_add
+                        """
+                        return self._MH_db[port][call_str].axip_add
         return '', 0
 
     def get_unsort_entrys_fm_port(self, port_id: int):

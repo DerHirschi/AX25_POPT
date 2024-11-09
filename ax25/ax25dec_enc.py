@@ -6,6 +6,7 @@
 import datetime
 
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
+from ax25.ax25NetRom import NetRom_decode_UI, NetRomDecodingERROR
 from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str
 
 
@@ -74,15 +75,19 @@ def decode_FRMR(ifield):
 
 
 class Call:
-    def __init__(self):
+    def __init__(self, call_str=''):
         self.call = ''
-        self.call_str = ''
+        self.call_str = call_str
         self.hex_str = b''
         """Address > CRRSSID1    Digi > HRRSSID1"""
         self.s_bit = False   # Stop Bit      Bit 8
         self.c_bit = False   # C bzw H Bit   Bit 1
         self.ssid = 0        # SSID          Bit 4 - 7
         self.r_bits = '11'   # Bit 2 - 3 not used. Free to use for any application .?..
+        """
+        if self.call_str:
+            self.call, self.ssid = call_tuple_fm_call_str(self.call_str)
+        """
 
     def dec_call(self, inp: b''):
         self.call = ''
@@ -103,12 +108,11 @@ class Call:
         out_str += encode_ssid(dest_ssid, dest_c)
         out_str += encode_address_char(call)
         """
-        if self.call:
+
+        if self.call_str:
+            self.call, self.ssid = call_tuple_fm_call_str(self.call_str)
+        elif self.call:
             self.call_str = get_call_str(self.call, self.ssid)
-        elif self.call_str:
-            tmp = call_tuple_fm_call_str(self.call_str)
-            self.call = tmp[0]
-            self.ssid = tmp[1]
         else:
             logger.error('AX25EncodingERROR: No Call set !')
             logger.error('AX25EncodingERROR: Call: {}'.format(self.call) )
@@ -135,7 +139,8 @@ class Call:
         :return: bool
         """
         if len(self.call) < 2 or len(self.call) > 6:    # Calls like CQ or ID
-            logger.error('Call validator: Call length')
+            print(f'Call validator: Call length - {self.call}')
+            logger.error(f'Call validator: Call length - {self.call}')
             return False
         """
         if not self.call.isascii():
@@ -143,12 +148,13 @@ class Call:
             return False
         """
         if self.ssid > 15 or self.ssid < 0:
-            logger.error('Call validator: SSID')
+            print(f'Call validator: SSID - {self.ssid}')
+            logger.error(f'Call validator: SSID - {self.ssid}')
             return False
         for c in self.call:
-            if c.isupper() or c.isdigit():
-                pass
-            else:
+            if not any([c.isupper(), c.isdigit()]):
+                print(f'Call validator: CAll-Format - {self.call} -')
+                logger.error(f'Call validator: CAll-Format - {self.call} -')
                 return False
         return True
 
@@ -518,22 +524,27 @@ class PIDByte:
 
 
 class AX25Frame:
-    def __init__(self):
-        # self.kiss = b''
-        self.data_bytes = b''       # AX25-Frame decoded Raw-Data
-        self.from_call = Call()
-        self.to_call = Call()
-        self.via_calls: [Call] = []
-        self.is_digipeated = True   # Is running through all Digi's ?
-        self.digi_call = ''         # Own DIGI Call to set C-BIT
+    def __init__(self, conf=None):
+        if conf is None:
+            conf = {}
+        self.addr_uid = conf.get('uid', '')                 # Unique ID/Address String
+        self.from_call = Call(conf.get('from_call_str', ''))
+        self.to_call = Call(conf.get('to_call_str', ''))
+        self.via_calls = []
+        for via_call_str in conf.get('via_calls', []):
+            self.via_calls.append(Call(via_call_str))
+        self.digi_call = conf.get('digi_call', '')          # Own DIGI Call to set C-BIT
+        self.axip_add = conf.get('axip_add', ('', 0))       # For AXIP Handling
+
+        self.payload = b''                                  # Payload
+        self.data_len = 0
+
+        self.rx_time = datetime.datetime.now()
         self.ctl_byte = CByte()
         self.pid_byte = PIDByte()
-        self.data = b''             # Payload
-        # self.aprs_data = {}
-        self.data_len = 0
-        self.addr_uid = ''          # Unique ID/Address String
-        self.axip_add = '', 0       # For AXIP Handling
-        self.rx_time = datetime.datetime.now()
+        self.is_digipeated = True                           # Is running through all Digi's ?
+        self.data_bytes = b''                               # AX25-Frame decoded Raw-Data
+        self._netrom_cfg = {}
 
     def get_frame_conf(self):
         return dict(
@@ -568,12 +579,14 @@ class AX25Frame:
             digi_call=str(self.digi_call),
             is_digipeated=bool(self.is_digipeated),
 
-            payload=bytes(self.data),
+            payload=bytes(self.payload),
             payload_len=int(self.data_len),
             ax25_raw=bytes(self.data_bytes),
+
+            netrom_cfg=self._netrom_cfg,
+
             rx_time=self.rx_time,
         )
-
 
     def build_uid(self, dec=True):
         self.addr_uid = '{}:{}'.format(
@@ -676,19 +689,35 @@ class AX25Frame:
             if self.ctl_byte.info:
                 index += 1
                 if self.ctl_byte.flag == 'FRMR':
-                    self.data = decode_FRMR(self.data_bytes[index:])
+                    self.payload = decode_FRMR(self.data_bytes[index:])
                 else:
-                    self.data = self.data_bytes[index:]
-                self.data_len = len(self.data)
-            # Check if all Digi s have repeated packet
+                    self.payload = self.data_bytes[index:]
+                self.data_len = len(self.payload)
+            # Check if all Digi s have repeated the packet
             self.set_check_h_bits(dec=True)
             # Build address UID
             self.build_uid(dec=True)
             if not self.validate():
                 raise AX25DecodingERROR(self)
-            # self.decode_aprs()
+
+            self._decode_netrom()
         else:
             raise AX25DecodingERROR(self)
+
+    def _decode_netrom(self):
+        if self.pid_byte.hex != 0xCF:
+            return
+        if self.ctl_byte.flag == 'UI':
+            try:
+                self._netrom_cfg = NetRom_decode_UI(
+                    dict(
+                        from_call_str=self.from_call.call_str,
+                        payload=self.payload
+                    )
+                )
+            except NetRomDecodingERROR:
+                return
+            return
 
     def encode_ax25frame(self, digi=False):
         # print(f'encode >>>>>> {self.digi_call}')
@@ -759,8 +788,8 @@ class AX25Frame:
 
         # Data
         if self.ctl_byte.info:
-            self.data_len = len(self.data)
-            self.data_bytes += self.data
+            self.data_len = len(self.payload)
+            self.data_bytes += self.payload
         if not self.validate():
             logger.error('Encoding Error Validator')
             print('Encoding Error Validator')

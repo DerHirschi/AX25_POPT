@@ -3,9 +3,10 @@ import datetime
 import os
 import pickle
 import logging
+
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
 from fnc.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
-from fnc.loc_fnc import locator_to_coordinates
+from fnc.loc_fnc import locator_to_coordinates, locator_distance
 from fnc.str_fnc import conv_time_for_sorting
 from cfg.constant import CFG_user_db
 
@@ -67,6 +68,7 @@ class UserDB:
     def __init__(self):
         print("User-DB INIT")
         logger.info("User-DB INIT")
+        self._port_handler = None
         self.not_public_vars = [
             'not_public_vars',
             'call_str',
@@ -124,6 +126,9 @@ class UserDB:
                     self.db[k].Call = str(k)
                     self.db[k].SSID = 0
 
+    def set_port_handler(self, port_handler):
+        self._port_handler = port_handler
+
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)
         if call_str:
@@ -131,7 +136,7 @@ class UserDB:
             if call_str not in self.db.keys():
                 if call_tup[0] not in self.db.keys():
                     if add_new:
-                        return self.new_entry(call_str)
+                        return self._new_entry(call_str)
                     else:
                         return False
                 else:
@@ -141,7 +146,7 @@ class UserDB:
             return self.db[call_str]
         return False
 
-    def new_entry(self, call_str):
+    def _new_entry(self, call_str):
         call_str = validate_call(call_str)
         if call_str:
             if call_str not in self.db.keys():
@@ -178,6 +183,24 @@ class UserDB:
         if not ent.TYP:
             ent.TYP = 'BBS'
         ent.PRmail = address
+
+    def set_distance(self, entry_call: str):
+        if self._port_handler is None:
+            return False
+        own_loc = self._port_handler.get_gui().own_loc
+        if not own_loc:
+            return False
+        ent = self.get_entry(entry_call, False)
+        if not ent:
+            return False
+        if not ent.LOC:
+            ent.Distance = -1
+            return False
+        ent.Distance = locator_distance(own_loc, ent.LOC)
+
+    def set_distance_for_all(self):
+        for k in list(self.db.keys()):
+            self.set_distance(k)
 
     def get_keys_by_typ(self, typ='SYSOP'):
         ret = []
@@ -299,6 +322,10 @@ class UserDB:
 
     def get_AXIP(self, call_str):
         ret = self.db.get(call_str, None)
+        if ret:
+            return ret.AXIP
+        call = call_tuple_fm_call_str(call_str)[0]
+        ret = self.db.get(call, None)
         if ret:
             return ret.AXIP
         return '', 0

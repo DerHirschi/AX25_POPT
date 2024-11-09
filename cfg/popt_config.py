@@ -2,7 +2,7 @@ import logging
 
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, getNew_APRS_Station_cfg, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg
-from cfg.constant import CFG_MAIN_data_file
+from cfg.constant import CFG_MAIN_data_file, LANGUAGE
 from fnc.cfg_fnc import load_fm_file, save_to_file
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,8 @@ class Main_CFG:
     ####################
     # GUI
     def get_guiCFG_language(self):
-        return self._config['gui_main_parm'].get('gui_lang', 0)
+        # return self._config['gui_main_parm'].get('gui_lang', 0)
+        return LANGUAGE
 
     # GUI PARM
     def load_guiPARM_main(self):

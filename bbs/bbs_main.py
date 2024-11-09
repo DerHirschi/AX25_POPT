@@ -586,10 +586,13 @@ class BBS:
         try:
             self.pms_flag = self.pms_flag.encode('ASCII')
         except UnicodeEncodeError:
+            print('BBS Init Error: UnicodeEncodeError')
             raise bbsInitError('UnicodeEncodeError')
         if self.my_stat_id is None:
+            print('BBS Init Error: my_stat_id is None')
             raise bbsInitError('my_stat_id is None')
         if self.my_stat_id.e:
+            print('BBS Init Error: my_stat_id.e Error')
             raise bbsInitError('my_stat_id.e Error')
         ###############
         # Init DB

@@ -183,7 +183,7 @@ class APRSSettingsWin(tk.Toplevel):
             self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_igate'] = self._vars[_ind]['ais'].get()
             self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_digi'] = self._vars[_ind]['digi'].get()
 
-            self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._vars[_ind]['digi'].get()
+            # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._vars[_ind]['digi'].get()
             if self._ais is not None:
                 # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
                 self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._ais.ais_loc

@@ -1,18 +1,20 @@
 import datetime
 
 from cfg.constant import VER
+from fnc.str_fnc import get_timedelta_CLIstr
 
 """
     $ver = PoPT 2.xxx.x                         - Bake
     $time = 20:39:00                            - Bake
     $date = 03/03/2024                          - Bake
+    $uptime = Zeit seit Programmstart           - Bake
     $channel = Kanal NR
     $portNr = Port NR                           - Bake
     $destName = Name der Gegenstation wenn bekannte, ansonsten Call der Gegenstation
     $destCall = Call der Gegenstation
     $ownCall = Eigener Call
-#    $lastConnDate = Letzter Connect Datum
-#    $lastConnTime = Letzter Connect Zeit
+    $lastConnDate = Letzter Connect Datum
+    $lastConnTime = Letzter Connect Zeit
     $distance = Distanz zur Gegenstation
     $connNr = Connect Nr
     $parmMaxFrame = Max Frame Einstellungen     - Bake
@@ -50,6 +52,16 @@ def get_time_str(port=None,
                  connection=None,
                  user_db=None):
     return str(datetime.datetime.now().strftime('%H:%M:%S'))
+
+
+def get_uptime_str(port=None,
+                   port_handler=None,
+                   connection=None,
+                   user_db=None):
+    if not port_handler:
+        return '---'
+    start_time = port_handler.get_stat_timer()
+    return get_timedelta_CLIstr(start_time, r_just=False)
 
 
 def get_date_str(port=None,
@@ -109,7 +121,10 @@ def get_distance(port=None,
     destCall = connection.to_call_str
     if not destCall:
         return '-'
-    return str(user_db.get_distance(destCall))
+    dist = user_db.get_distance(destCall)
+    if not dist:
+        return '-'
+    return str(dist)
 
 
 def get_connNr(port=None,
@@ -149,48 +164,42 @@ def get_PacLen(port=None,
     return '-'
 
 
-"""
 def get_lastConnDate(port=None,
                      port_handler=None,
                      connection=None,
                      user_db=None):
-    if not connection or not user_db:
+    if not connection:
         return '---'
-    destCall = connection.to_call_str
-    if not destCall:
+    if not connection.last_connect:
         return '---'
-    db_entry = user_db.get_entry(destCall)
-    if not db_entry:
-        return '---'
-    return str(db_entry.last_seen.strftime('%d-%m-%Y'))
+    dt_time = connection.last_connect.strftime('%d/%m/%Y')
+    return str(dt_time)
 
 
 def get_lastConnTime(port=None,
                      port_handler=None,
                      connection=None,
                      user_db=None):
-    if not connection or not user_db:
+    if not connection:
         return '---'
-    destCall = connection.to_call_str
-    if not destCall:
+    if not connection.last_connect:
         return '---'
-    db_entry = user_db.get_entry(destCall)
-    if not db_entry:
-        return '---'
-    return str(db_entry.last_seen.strftime('%H:%M:%S'))
-"""
+    dt_time = connection.last_connect.strftime('%H:%M:%S')
+    return str(dt_time)
+
 
 STRING_VARS = {
     '$ver': get_ver,
     '$time': get_time_str,
+    '$uptime': get_uptime_str,
     '$date': get_date_str,
     '$channel': get_channel_id,
     '$portNr': get_port_id,
     '$destName': get_destName,
     '$destCall': get_destCall,
     '$ownCall': get_ownCall,
-    # '$lastConnDate': get_lastConnDate,
-    # '$lastConnTime': get_lastConnTime,
+    '$lastConnDate': get_lastConnDate,
+    '$lastConnTime': get_lastConnTime,
     '$distance': get_distance,
     '$connNr': get_connNr,
     '$parmMaxFrame': get_MaxFrame,
@@ -206,9 +215,9 @@ def replace_StringVARS(input_string: str,
                        ):
     if connection:
         port = connection.own_port
-    if port:
+    if port and not port_handler:
         port_handler = port.port_handler
-    if port_handler:
+    if port_handler and not user_db:
         user_db = port_handler.get_userDB()
     for key, fnc in STRING_VARS.items():
         if callable(fnc):

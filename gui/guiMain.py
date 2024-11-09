@@ -138,6 +138,9 @@ class PoPT_GUI_Main:
         self._status_t3_var = tk.StringVar(self.main_win)
         self._rx_beep_var = tk.IntVar(self.main_win)
         self._ts_box_var = tk.IntVar(self.main_win)
+        # OWN Stat INFO (LOC, QTH)
+        self.own_loc = ''
+        self.own_qth = ''
         # Stat INFO (Name,QTH usw)
         self.stat_info_name_var = tk.StringVar(self.main_win)
         self.stat_info_qth_var = tk.StringVar(self.main_win)
@@ -233,7 +236,7 @@ class PoPT_GUI_Main:
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
-        main_pw.add(l_frame, weight=10)
+        main_pw.add(l_frame, weight=50)
         main_pw.add(self._r_frame, weight=1)
         ###########################################
         # Channel Buttons
@@ -330,7 +333,7 @@ class PoPT_GUI_Main:
         logging.info('Closing GUI')
         self._is_closing = True
         logging.info('Closing GUI: Save GUI Vars & Parameter.')
-        self._save_GUIvars()
+        self.save_GUIvars()
         self._save_parameter()
         self._save_Channel_Vars()
         logging.info('Closing GUI: Closing Ports.')
@@ -360,7 +363,7 @@ class PoPT_GUI_Main:
         self._loop_delay = 800
         logging.info('Closing GUI: Done')
 
-    def _save_GUIvars(self):
+    def save_GUIvars(self):
         #########################
         # GUI-Vars to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
@@ -375,6 +378,8 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_noty_bell'] = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
+        guiCfg['gui_cfg_locator'] = str(self.own_loc)
+        guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     def _save_parameter(self):
@@ -432,6 +437,9 @@ class PoPT_GUI_Main:
         self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
         self.setting_noty_bell.set(guiCfg.get('gui_cfg_noty_bell', False))
         self.setting_mon_encoding.set(guiCfg.get('gui_cfg_mon_encoding', 'Auto'))
+        # OWN Loc and QTH
+        self.own_loc = guiCfg.get('gui_cfg_locator', '')
+        self.own_qth = guiCfg.get('gui_cfg_qth', '')
 
     def _init_PARM_vars(self):
         #########################
@@ -1016,7 +1024,7 @@ class PoPT_GUI_Main:
 
     def set_text_tags(self):
         self._all_tag_calls = []
-        all_stat_cfg = PORT_HANDLER.get_all_stat_cfg()
+        all_stat_cfg = PORT_HANDLER.ph_get_all_stat_cfg()
         for call in list(all_stat_cfg.keys()):
             stat_cfg = all_stat_cfg[call]
             tx_fg = stat_cfg.stat_parm_qso_col_text_tx
@@ -1524,8 +1532,8 @@ class PoPT_GUI_Main:
         if conn.my_call_str in self._all_tag_calls:
             tag_name_tx = 'TX-' + str(conn.my_call_str)
             Ch_var.last_tag_name = str(conn.my_call_str)
-        elif conn.my_call_obj.call in self._all_tag_calls:
-            tag_name_tx = 'TX-' + str(conn.my_call_obj.call)
+        elif conn.my_call in self._all_tag_calls:
+            tag_name_tx = 'TX-' + str(conn.my_call)
             Ch_var.last_tag_name = str(conn.my_call_str)
         else:
             tag_name_tx = 'TX-' + Ch_var.last_tag_name
@@ -1564,8 +1572,8 @@ class PoPT_GUI_Main:
         if conn.my_call_str in self._all_tag_calls:
             tag_name_rx = 'RX-' + str(conn.my_call_str)
             Ch_var.last_tag_name = str(conn.my_call_str)
-        elif conn.my_call_obj.call in self._all_tag_calls:
-            tag_name_rx = 'RX-' + str(conn.my_call_obj.call)
+        elif conn.my_call in self._all_tag_calls:
+            tag_name_rx = 'RX-' + str(conn.my_call)
             Ch_var.last_tag_name = str(conn.my_call_str)
         else:
             tag_name_rx = 'RX-' + Ch_var.last_tag_name
@@ -1864,16 +1872,18 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame.reset_dx_alarm()
 
     #######################################################
-
+    """
     def gui_set_distance(self):
         self._set_distance_fm_conn()
-
+    """
+    """
     def _set_distance_fm_conn(self):
         conn = self.get_conn()
         if conn is not None:
             conn.set_distance()
             return True
         return False
+    """
 
     #######################################################################
     # DISCO
@@ -1936,7 +1946,7 @@ class PoPT_GUI_Main:
         port_id = int(self.mon_port_var.get())
         if port_id in PORT_HANDLER.get_all_ports().keys():
             port = PORT_HANDLER.get_all_ports()[port_id]
-            add = self.mon_to_add_var.get()
+            add = str(self.mon_to_add_var.get()).upper()
             own_call = str(self.mon_call_var.get())
             poll = bool(self.mon_poll_var.get())
             cmd = bool(self.mon_cmd_var.get())
@@ -2355,7 +2365,7 @@ class PoPT_GUI_Main:
     def _update_status_win(self):
         station = self.get_conn(self.channel_index)
         if station is not None:
-            from_call = str(station.ax25_out_frame.from_call.call_str)
+            from_call = str(station.my_call_str)
             status = station.zustand_tab[station.get_state_index()][1]
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2

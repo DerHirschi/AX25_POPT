@@ -216,6 +216,7 @@ class PlotWindow(tk.Toplevel):
                 last_ts = timestamt_dt
             min_dif = timestamt_dt - last_ts
             min_dif = int(min_dif.total_seconds() / 60) - 1
+            # TODO : min_dif = int(min_dif.total_seconds() / 60) #!!!!# - 1
             last_ts = timestamt_dt
             null_list = list(range(min_dif))
             null_list.reverse()
@@ -319,6 +320,7 @@ class PlotWindow(tk.Toplevel):
                 last_ts = timestamt_dt
             min_dif = timestamt_dt - last_ts
             min_dif = int(min_dif.total_seconds() / 60) - 1
+            # TODO : min_dif = int(min_dif.total_seconds() / 60) #!!!!# - 1
             last_ts = timestamt_dt
             null_list = list(range(min_dif))
             null_list.reverse()

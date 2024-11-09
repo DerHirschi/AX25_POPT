@@ -3,6 +3,30 @@ from schedule.popt_sched import getNew_schedule_config
 
 
 #######################################
+# Station CLI CFG
+def getNew_CLI_DIGI_cfg():
+    return dict(
+        digi_enabled=False,
+        digi_allowed_ports=[],
+        digi_max_buff=10,  # bytes till RNR
+        digi_max_n2=4,  # N2 till RNR
+    )
+
+
+def getNew_CLI_cfg():
+    return dict(
+        cli_typ='NO-CLI',
+        # cli_ctext='',
+        # cli_itext='',
+        # cli_longitext='',
+        # cli_akttext='',
+        # cli_bye_text='',
+        cli_prompt='',
+        cli_digi_cfg=getNew_CLI_DIGI_cfg(),
+    )
+
+
+#######################################
 # PMS
 def getNew_PMS_cfg():
     return {
@@ -88,7 +112,9 @@ def getNew_APRS_ais_cfg():
 # GUI Parameter
 def getNew_maniGUI_parm():
     return {
-        'gui_lang': LANGUAGE,  # TODO CFG GUI
+        'gui_lang': LANGUAGE,   # TODO CFG GUI
+        'gui_cfg_locator': '',  # TODO von GUI-Stat-CFG löschen und in GUI-Algem.-Einstellungen setzen
+        'gui_cfg_qth': '',      # TODO von GUI-Stat-CFG löschen und in GUI-Algem.-Einstellungen setzen
         'gui_cfg_sound': False,
         'gui_cfg_sprech': False,
         'gui_cfg_beacon': True,
@@ -118,7 +144,7 @@ def getNew_BEACON_cfg():
         'task_typ': 'BEACON',
         'port_id': 0,
         'is_enabled': True,
-        'typ': 'Text',      # "Text", "File", "MH"
+        'typ': 'Text',  # "Text", "File", "MH"
         'own_call': 'NOCALL',
         'dest_call': 'BEACON',
         'via_calls': [],
@@ -135,8 +161,8 @@ def getNew_BEACON_cfg():
 # Dual Port CFG
 def getNew_dualPort_cfg():
     return dict(
-        tx_primary=True,        # TX Primary/Secondary
-        auto_tx=False,          # Auto TX
+        tx_primary=True,  # TX Primary/Secondary
+        auto_tx=False,  # Auto TX
         primary_port_id=-1,
         secondary_port_id=-1
     )
@@ -146,13 +172,14 @@ def getNew_dualPort_cfg():
 # DIGI CFG
 def getNew_digi_cfg():
     return dict(
-        managed_digi=True,              # Managed-Digi/Smart-Digi/L3-Digi or Simple-DIGI
+        managed_digi=True,  # Managed-Digi/Smart-Digi/L3-Digi or Simple-DIGI
         # Managed-DIGI Parameter #######################################################
-        short_via_calls=True,           # Short VIA Call in AX25 Address
-        max_buff=10,                    # bytes till RNR
-        max_n2=4,                      # N2 till RNR
-        last_rx_fail_sec=60,            # sec fail when no SABM and Init state
-        digi_ssid_port=True,            # DIGI SSID = TX-Port
+        short_via_calls=True,  # Short VIA Call in AX25 Address
+        UI_short_via=True,  # UI-Frames Short VIA Call in AX25 Address
+        max_buff=10,  # bytes till RNR
+        max_n2=4,  # N2 till RNR
+        last_rx_fail_sec=60,  # sec fail when no SABM and Init state
+        digi_ssid_port=True,  # DIGI SSID = TX-Port
         # OR
-        digi_auto_port=True,            # Get TX-Port fm MH-List
+        digi_auto_port=True,  # Get TX-Port fm MH-List
     )
