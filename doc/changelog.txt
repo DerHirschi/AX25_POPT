@@ -29,6 +29,7 @@ Optimierung:
   z.B. um aktuelle Wetterdaten o.Ä. einzufügen.
 - ax25guiPortSettings.py einige Übersetzungen vervollständigt und Variablen Optimirungen
 - Erweiterte Error Log Ausgabe für ax25dec Call-Validator
+- string_tab / Holländische Übersetzung - Thanks to NL5VKL for the Dutch translation.
 
 Neue Implementierungen / Funktionen:
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
