@@ -3,7 +3,7 @@ import logging
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, getNew_APRS_Station_cfg, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg
 from cfg.constant import CFG_MAIN_data_file, LANGUAGE
-from fnc.cfg_fnc import load_fm_file, save_to_file
+from fnc.cfg_fnc import load_fm_file, save_to_file, get_all_pipe_cfg
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,8 @@ class Main_CFG:
             # -- MH
             'mh_cfg': getNew_MH_cfg,
             # -- APRS
-            'aprs_station': getNew_APRS_Station_cfg,
+            # 'aprs_station': getNew_APRS_Station_cfg,
+            'aprs_station': {},
             'aprs_ais': getNew_APRS_ais_cfg,
             # -- GUI
             # GUI Main
@@ -36,8 +37,11 @@ class Main_CFG:
             'dualPort_cfg': {},
             # -- DIGI
             'digi_cfg': {},
+            # -- PIPE CFGs
+            'pipe_cfg': self._load_PIPE_CFG_fm_file,
         }
-        self.load_CFG_fm_file()
+        self._load_CFG_fm_file()
+        # self._load_PIPE_CFG_fm_file()   # TODO cleanup wenn Station CFG implementiert ist
         self._set_all_default_CFGs()
         self._clean_old_CFGs()
 
@@ -56,7 +60,7 @@ class Main_CFG:
 
     ####################
     # File Fnc
-    def load_CFG_fm_file(self):
+    def _load_CFG_fm_file(self):
         logger.info(f'Main CFG: Load from {self._config_filename}')
         print(f'Main CFG: Load from {self._config_filename}')
         config = load_fm_file(self._config_filename)
@@ -69,12 +73,21 @@ class Main_CFG:
 
         # self._config.read(self._config_filename)
 
+    @staticmethod
+    def _load_PIPE_CFG_fm_file():
+        # self._config['pipe_cfg'] = get_all_pipe_cfg()
+        # print('-------------------------------')
+        # print(self._config['pipe_cfg'])
+        return get_all_pipe_cfg()
+    
     def save_CFG_to_file(self):
         logger.info(f'Main CFG: Config Saved to {self._config_filename}')
         print(f'Main CFG: Config Saved to {self._config_filename}')
+        self._config['pipe_cfg'] = {}
         for conf_k in self._config.keys():
             logger.debug(f'Main CFG: save {conf_k}')
         save_to_file(self._config_filename, dict(self._config))
+
 
     ####################
     # Global CFG by Key
@@ -103,13 +116,13 @@ class Main_CFG:
 
     ####################
     # APRS
-    def load_CFG_aprs_station(self):
+    def get_CFG_aprs_station(self):
         return self._config['aprs_station']
 
-    def load_CFG_aprs_ais(self):
+    def get_CFG_aprs_ais(self):
         return self._config['aprs_ais']
 
-    def save_CFG_aprs_ais(self, data: dict):
+    def set_CFG_aprs_ais(self, data: dict):
         self._config['aprs_ais'] = data
 
     ####################
@@ -176,5 +189,19 @@ class Main_CFG:
     def set_digi_CFG(self, cfg: dict):
         self._config['digi_cfg'] = dict(cfg)
 
+    ###########################################
+    # PIPE
+    def get_pipe_CFG(self):
+        return self._config.get('pipe_cfg', {})
+
+    def set_pipe_CFG(self, pipe_cfg):
+        call = pipe_cfg.get('pipe_parm_own_call', '')
+        if not call:
+            return
+        self._config['pipe_cfg'][call] = pipe_cfg
+
+    def del_pipe_CFG(self, call):
+        if call in self._config.get('pipe_cfg', {}):
+            del self._config['pipe_cfg'][call]
 
 POPT_CFG = Main_CFG()

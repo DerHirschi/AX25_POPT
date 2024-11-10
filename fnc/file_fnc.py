@@ -25,7 +25,7 @@ def get_str_fm_file(filename: str):
         return ''
 
 
-def save_str_fm_file(filename: str, data: str):
+def save_str_to_file(filename: str, data: str):
     if not filename:
         return False
     try:

@@ -8,9 +8,9 @@ import crcmod
 from ax25.ax25Digi import AX25DigiConnection
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
-from ax25.ax25NetRom import NetRom_decode_UI
+# from ax25.ax25NetRom import NetRom_decode_UI
 from ax25.ax25UI_Pipe import AX25Pipe
-from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr, via_calls_fm_str
+from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
@@ -149,8 +149,7 @@ class AX25Port(threading.Thread):
         # self._gui_monitor(ax25frame=ax25_frame, tx=False)
         isUI = False
         if ax25_frame.ctl_byte.flag == 'UI':
-            if self._rx_UI_handler(ax25_frame=ax25_frame):
-                return True
+            self._rx_UI_handler(ax25_frame=ax25_frame)  # just APRS-IGATE
             isUI = True
         if not ax25_frame.is_digipeated and ax25_frame.via_calls:
             if not isUI:
@@ -192,10 +191,12 @@ class AX25Port(threading.Thread):
 
     def _rx_pipe_handler(self, ax25_frame):
         uid = str(ax25_frame.addr_uid)
-        if uid in self.pipes.keys():
-            self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
-            return True
-        return False
+        if uid not in self.pipes.keys():
+            return False
+        if self.pipes[uid].connection is not None:
+            return False
+        self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
+        return True
 
     def _rx_UI_handler(self, ax25_frame):
         # print(f"Port RX UI Handler - aprs_ais: {self.aprs_stat.aprs_ais}")
@@ -611,11 +612,15 @@ class AX25Port(threading.Thread):
     ############################################################
     # Pipe-Tool
     def build_new_pipe(self,
-                       own_call,
-                       add_str,
+                       own_call='',
+                       add_str='',
                        cmd_pf=(False, False),
                        pid=0xf0
                        ):
+        if not add_str:
+            return False
+        if not own_call:
+            return False
         pipe = AX25Pipe(
             port_id=self.port_id,
             own_call=own_call,
@@ -628,8 +633,17 @@ class AX25Port(threading.Thread):
             return True
         return False
 
+    def add_pipe(self, pipe: AX25Pipe):
+        # if pipe.uid in self.pipes.keys():
+        #     return False
+        # if not self.port_handler.add_pipe_PH(pipe):
+        #     return False
+        self.pipes[pipe.uid] = pipe
+        return True
+
     def del_pipe(self, pipe: AX25Pipe):
         if pipe.uid in self.pipes.keys():
+            # self.port_handler.del_pipe_PH(pipe.uid)
             self.pipes[pipe.uid] = None
             del self.pipes[pipe.uid]
             return True
@@ -931,7 +945,7 @@ class KissTCP(AX25Port):
                 print("KISS TCP FINALLY")
 
     def set_kiss_parm(self):
-        if self.kiss.is_enabled and self.device is not None:
+        if self.kiss.is_enabled and self.device is not None and self.device_is_running:
             self.device.sendall(self.kiss.set_all_parameter())
 
     def rx(self):

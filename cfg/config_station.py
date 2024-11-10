@@ -2,11 +2,11 @@ import pickle
 import os
 import logging
 
-from ax25.ax25UI_Pipe import AX25Pipe
+# from ax25.ax25UI_Pipe import AX25Pipe
 from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, VER
 from cfg.default_config import getNew_CLI_cfg
-from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import save_to_file, load_fm_file
+# from cfg.popt_config import POPT_CFG
+from fnc.cfg_fnc import save_to_file
 
 
 if "dev" in VER:
@@ -63,39 +63,9 @@ def get_all_stat_cfg():
                     if hasattr(stat, att):
                         if not callable(getattr(stat, att)):
                             setattr(stat, att, temp[att])
-                if stat.stat_parm_pipe is not None:
-                    stat.stat_parm_pipe = AX25Pipe
-                    stat.stat_parm_pipe.tx_filename = stat.stat_parm_pipe_tx
-                    stat.stat_parm_pipe.rx_filename = stat.stat_parm_pipe_rx
-                    stat.stat_parm_pipe.parm_tx_file_check_timer = stat.stat_parm_pipe_loop_timer
-                """
-                if type(stat.stat_parm_cli) is not str:
-                    if hasattr(stat.stat_parm_cli, 'cli_name'):
-                        stat.stat_parm_cli = stat.stat_parm_cli.cli_name
-                """
 
-                ################################
-                # Gather Text Files (C-Text ...)
-                """
-                for att in CFG_txt_save.keys():
-                    f_n = CFG_usertxt_path + \
-                          '{0}/{0}.{1}'.format(stat.stat_parm_Call, CFG_txt_save[att])
-
-                    val = load_fm_file(f_n)
-                    if val:
-                        stat.stat_parm_cli_cfg[att] = val
-                        # setattr(stat, att, val)
-                """
                 ret[call] = stat
     return ret
-
-
-def exist_userpath(usercall: str):
-    if not os.path.exists(CFG_data_path + CFG_usertxt_path + usercall):
-        # print(CFG_data_path + CFG_usertxt_path + usercall)
-        os.makedirs(CFG_data_path + CFG_usertxt_path + usercall)
-        return False
-    return True
 
 
 def del_user_data(usercall: str):
@@ -121,32 +91,19 @@ class DefaultStation:
     ##########################
     # Not Implemented Yet
     stat_parm_Name: str = ''
-    # Global: stat_parm_QTH: str = ''
-    # Global: stat_parm_LOC: str = ''
     # stat_parm_TYP: str = ''
     ##########################
     stat_parm_is_Digi = False
     # Parameter for CLI
-    stat_parm_pipe = None
-    stat_parm_pipe_tx = ''
-    stat_parm_pipe_rx = ''
-    stat_parm_pipe_loop_timer = 10
+    stat_parm_pipe = False
+    pipe_cfg = {}
+
     # Optional Parameter. Can be deleted if not needed. Param will be get from cliMain.py
     stat_parm_cli_cfg = getNew_CLI_cfg()
-
     stat_parm_cli = 'NO-CLI'
-    # stat_parm_cli_ctext: str = ''
-    # stat_parm_cli_itext: str = ''
-    # stat_parm_cli_longitext: str = ''
-    # stat_parm_cli_akttext: str = ''
-    # stat_parm_cli_bye_text: str = ''
-    # stat_parm_cli_prompt: str = ''
-
-
     # Optional Parameter. Overrides Port Parameter
     stat_parm_PacLen: int = 0  # Max Pac len
     stat_parm_MaxFrame: int = 0  # Max (I) Frames
-    # stat_param_beacons: {int: [Beacon]} = {}
     stat_parm_qso_col_text_tx = 'white'
     stat_parm_qso_col_bg = 'black'
     stat_parm_qso_col_text_rx = '#25db04'
@@ -194,7 +151,7 @@ class DefaultPort(object):
     parm_mon_clr_tx = "medium violet red"
     parm_mon_clr_rx = "green"
     parm_mon_clr_bg = "black"
-    parm_aprs_station = POPT_CFG.load_CFG_aprs_station()
+    # parm_aprs_station = POPT_CFG.get_CFG_aprs_station()
     ##################################
     # Port Parameter for Save to file
     ##########################
@@ -290,7 +247,7 @@ class PortConfigInit(DefaultPort):
                         """ TODO: Need to find a better way.. The whole cfg Save is Bullshit """
                         """ Just need to save Parameter, not the whole class """
                         if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
-                            new_stat_cfg.stat_parm_pipe = None
+                            new_stat_cfg.stat_parm_pipe = False
                         if not hasattr(new_stat_cfg, 'parm_mon_clr_bg'):
                             new_stat_cfg.parm_mon_clr_bg = 'black'
                         """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
@@ -304,9 +261,9 @@ class PortConfigInit(DefaultPort):
                                 self.parm_Digi_calls.remove(call)
 
                 if self.parm_PortTyp == 'AXIP':
-                    self.parm_full_duplex = True
+                    self.parm_full_duplex = True    # Pseudo Full duplex
                 else:
-                    self.parm_full_duplex = False  # Maybe sometimes i ll implement it for HF
+                    self.parm_full_duplex = False   # Maybe sometimes i ll implement it for HF
 
             # stat: DefaultStation
             for stat in parm_Stations:
@@ -315,34 +272,10 @@ class PortConfigInit(DefaultPort):
                     new_cli_cfg.update(stat.stat_parm_cli_cfg)
                     self.parm_cli[stat.stat_parm_Call] = new_cli_cfg
 
-        self.parm_aprs_station['aprs_port_id'] = port_id
+        # self.parm_aprs_station['aprs_port_id'] = port_id
 
     def __del__(self):
         # self.save_to_pickl()
         pass
 
 
-def save_station_to_file(conf: DefaultStation):
-    if conf.stat_parm_Call != DefaultStation.stat_parm_Call:
-        exist_userpath(conf.stat_parm_Call)
-        file = '{1}{0}/stat{0}.popt'.format(conf.stat_parm_Call, CFG_usertxt_path)
-        save_station = {}
-        for att in dir(conf):
-            if '__' not in att and not callable(getattr(conf, att)):
-                """
-                if att in CFG_txt_save.keys():
-                    f_n = CFG_usertxt_path + \
-                          '{0}/{0}.{1}'.format(conf.stat_parm_Call, CFG_txt_save[att])
-                    save_to_file(f_n, getattr(conf, att))
-                else:
-                    save_station[att] = getattr(conf, att)
-                """
-                save_station[att] = getattr(conf, att)
-        if conf.stat_parm_pipe:
-            # save_station.stat_parm_pipe = True
-            save_station['stat_parm_pipe_tx'] = conf.stat_parm_pipe.tx_filename
-            save_station['stat_parm_pipe_rx'] = conf.stat_parm_pipe.rx_filename
-            save_station['stat_parm_pipe_loop_timer'] = conf.stat_parm_pipe.parm_tx_file_check_timer
-            save_station['stat_parm_pipe'] = True
-
-        save_to_file(file, save_station)

@@ -86,6 +86,8 @@ class AX25Pipe(object):
         self._max_pac_timer = self.parm_max_pac_timer + time.time()
 
     def set_dest_add(self, address_str):
+        if not address_str:
+            return False
         dest_add = via_calls_fm_str(address_str)
         self.ax25_frame.to_call.call_str = dest_add[0].call_str
         if len(dest_add) > 1:

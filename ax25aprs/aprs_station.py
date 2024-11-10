@@ -21,7 +21,7 @@ class APRS_ais(object):
         print("APRS-IS INIT")
         logger.info("APRS-IS INIT")
         """ APRS-Server Stuff """
-        ais_cfg = POPT_CFG.load_CFG_aprs_ais()
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         self.ais_call = ais_cfg.get('ais_call', '')
         self.ais_pass = ais_cfg.get('ais_pass', '')
         self.ais_loc = ais_cfg.get('ais_loc', '')
@@ -114,7 +114,7 @@ class APRS_ais(object):
     def save_conf_to_file(self):
         print("Save APRS Conf")
         logger.info("Save APRS Conf")
-        ais_cfg = POPT_CFG.load_CFG_aprs_ais()
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         ais_cfg['ais_call'] = str(self.ais_call)
         ais_cfg['ais_pass'] = str(self.ais_pass)
         ais_cfg['ais_loc'] = str(self.ais_loc)
@@ -138,7 +138,7 @@ class APRS_ais(object):
         ais_cfg['be_tracer_alarm_hist'] = dict(self.be_tracer_alarm_hist)
         ais_cfg['ais_aprs_stations'] = dict(self.ais_aprs_stations)
         ais_cfg['aprs_msg_pool'] = dict(self.aprs_msg_pool)
-        POPT_CFG.save_CFG_aprs_ais(ais_cfg)
+        POPT_CFG.set_CFG_aprs_ais(ais_cfg)
         if self._port_handler is None:
             return
         gui = self._port_handler.get_gui()

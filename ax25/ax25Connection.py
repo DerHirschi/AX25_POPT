@@ -6,9 +6,11 @@ import time
 from datetime import datetime
 
 import cli.cliMain
+from ax25.ax25UI_Pipe import AX25Pipe
 from cfg import config_station
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
+from cfg.default_config import getNew_pipe_cfg
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
@@ -252,13 +254,13 @@ class AX25Conn:
         self.noty_bell = False
         self.cli = cli.cliMain.NoneCLI(self)
         self.cli_type = ''
-        if self.stat_cfg.stat_parm_pipe is None:
+        if not self.stat_cfg.stat_parm_pipe:
             self._init_cli()
             if not rx:
                 self.cli.change_cli_state(state=1)
         else:
             """ Init Pipe """
-            pipe = self.stat_cfg.stat_parm_pipe(
+            pipe = AX25Pipe(
                 port_id=self.own_port.port_id,
                 own_call=self.my_call_str,
                 address_str='NOCALL',
@@ -297,7 +299,7 @@ class AX25Conn:
 
     def _reinit_cli(self):
         # print(f"CLI RE-INIT: {self.uid}")
-        if self.stat_cfg.stat_parm_pipe is None:
+        if not self.stat_cfg.stat_parm_pipe:
             self._init_cli()
             self.cli.change_cli_state(state=1)
 
@@ -439,20 +441,29 @@ class AX25Conn:
     def _pipe_rx(self, raw_data: b''):
         if self.pipe is None:
             return False
-        self.pipe.handle_rx_rawdata(raw_data)
+        res = self.pipe.handle_rx_rawdata(raw_data)
+        print(f"PIPE-RX: {res}")
         return True
 
     def set_pipe(self, pipe):
-        self.pipe = pipe
         if not pipe:
             return False
-        self.pipe.connection = self
-        if self.pipe.parm_pac_len:
-            self.parm_PacLen = int(self.pipe.parm_pac_len)
-        if self.pipe.parm_max_pac:
-            self.parm_MaxFrame = int(self.pipe.parm_max_pac)
-        self.pipe.change_settings()
-        self._port_handler.add_pipe(self.pipe.port_id, self.pipe.uid, self.pipe)
+
+        pipe_cfg = POPT_CFG.get_pipe_CFG().get(self.my_call_str, getNew_pipe_cfg())
+        pipe.tx_filename = pipe_cfg.get('pipe_parm_pipe_tx', '')
+        pipe.rx_filename = pipe_cfg.get('pipe_parm_pipe_rx', '')
+        pipe.parm_tx_file_check_timer = pipe_cfg.get('pipe_parm_pipe_loop_timer', 10)
+        pipe.parm_pac_len = pipe_cfg.get('pipe_parm_PacLen', 128)
+        pipe.parm_max_pac = pipe_cfg.get('pipe_parm_MaxFrame', 3)
+        pipe.connection = self
+        if pipe.parm_pac_len:
+            self.parm_PacLen = int(pipe.parm_pac_len)
+        if pipe.parm_max_pac:
+            self.parm_MaxFrame = int(pipe.parm_max_pac)
+        pipe.change_settings()
+        if not self.own_port.add_pipe(pipe):
+            return False
+        self.pipe = pipe
 
     def _del_pipe(self):
         if self.pipe:

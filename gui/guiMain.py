@@ -2263,7 +2263,7 @@ class PoPT_GUI_Main:
                     qth = db_ent.QTH
                 if db_ent.LOC:
                     loc = db_ent.LOC
-                if db_ent.Distance:
+                if db_ent.Distance > 0:
                     loc += f" ({db_ent.Distance} km)"
                 if db_ent.TYP:
                     typ = db_ent.TYP

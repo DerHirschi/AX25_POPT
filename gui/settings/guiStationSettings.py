@@ -5,11 +5,13 @@ from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.config_station import save_station_to_file, del_user_data, DefaultStation
+from cfg.config_station import del_user_data, DefaultStation
+from cfg.popt_config import POPT_CFG
+from fnc.cfg_fnc import save_station_to_file
 from cfg.constant import CFG_data_path, CFG_usertxt_path
-from cfg.default_config import getNew_CLI_DIGI_cfg
+from cfg.default_config import getNew_CLI_DIGI_cfg, getNew_pipe_cfg
 from cli.cliMain import CLI_OPT
-from fnc.file_fnc import get_str_fm_file, save_str_fm_file
+from fnc.file_fnc import get_str_fm_file, save_str_to_file
 from gui.guiMsgBoxes import *
 from cfg.string_tab import STR_TABLE
 
@@ -337,12 +339,12 @@ class StatSetTab:
             return out
         return ''
 
-    def _save_fm_file(self, filename: str, data: str):
+    def _save_to_file(self, filename: str, data: str):
         file_n = CFG_data_path + \
                       CFG_usertxt_path + \
                       self._stat_call + '/' + \
                       filename
-        out = save_str_fm_file(file_n, data)
+        out = save_str_to_file(file_n, data)
         if out:
             return out
         return ''
@@ -388,6 +390,7 @@ class StatSetTab:
         self._main_cl.settings_win.attributes("-topmost", True)
 
     def chk_CLI(self, event=None):
+        print(self._cli_select_var.get())
         if self._cli_select_var.get() != 'PIPE':
             self._loop_timer.configure(state='disabled')
             self._tx_filename.configure(state='disabled')
@@ -477,7 +480,9 @@ class StatSetTab:
         # LOC
         self._loc.delete(0, tk.END)
         self._loc.insert(tk.END, str(self._gui.own_loc))
-        if self.station_setting.stat_parm_pipe is None:
+        pipe_cfg = POPT_CFG.get_pipe_CFG().get(self.station_setting.stat_parm_Call, {})
+
+        if not pipe_cfg:
             self._loop_timer.configure(state='disabled')
             self._tx_filename.configure(state='disabled')
             self._rx_filename.configure(state='disabled')
@@ -490,10 +495,13 @@ class StatSetTab:
             self._long_info_text_ent.configure(state='disabled')
             self._akt_info_text_ent.configure(state='disabled')
 
-            pipe = self.station_setting.stat_parm_pipe
-            self._tx_filename_var.set(pipe.tx_filename)
-            self._rx_filename_var.set(pipe.rx_filename)
-            self._loop_timer_var.set(str(pipe.parm_tx_file_check_timer))
+            # pipe = pipe_cfg.get('stat_parm_pipe', None)
+            # self._tx_filename_var.set(pipe.tx_filename)
+            self._tx_filename_var.set(pipe_cfg.get('pipe_parm_pipe_tx', ''))
+            # self._rx_filename_var.set(pipe.rx_filename)
+            self._rx_filename_var.set(pipe_cfg.get('pipe_parm_pipe_rx', ''))
+            # self._loop_timer_var.set(str(pipe.parm_tx_file_check_timer))
+            self._loop_timer_var.set(str(pipe_cfg.get('pipe_parm_pipe_loop_timer', 10)))
             self._textTab.select(5)
 
     def set_vars_to_cfg(self):
@@ -502,27 +510,39 @@ class StatSetTab:
         self.call.delete(0, tk.END)
         self.call.insert(tk.END, call)
         self.station_setting.stat_parm_Call = call
-
-        # CLI
-        cli_key = self._cli_select_var.get()
-        if cli_key not in ['PIPE']:
-            # self.station_setting.stat_parm_cli = self.cli_opt[cli_key]
-
-            # self.station_setting.stat_parm_cli = cli_key
-            pass
-        else:
-            # self.station_setting.stat_parm_cli = 'NO-CLI'
-            new_pipe = self._cli_opt[cli_key]
-            new_pipe.tx_filename = self._tx_filename_var.get()
-            new_pipe.rx_filename = self._rx_filename_var.get()
-            new_pipe.parm_tx_file_check_timer = int(self._loop_timer_var.get())
-            self.station_setting.stat_parm_pipe = new_pipe
         # MaxPac
         var_maxpac = int(self._max_pac_select_var.get())
         self.station_setting.stat_parm_MaxFrame = var_maxpac
         # PacLen
         var_paclen = int(self._pac_len.get())
         self.station_setting.stat_parm_PacLen = var_paclen
+
+        # CLI
+        cli_key = self._cli_select_var.get()
+        if cli_key not in ['PIPE']:
+            self.station_setting.stat_parm_cli = self._cli_opt[cli_key]
+            self.station_setting.stat_parm_pipe = False
+            POPT_CFG.del_pipe_CFG(call)
+            # self.station_setting.stat_parm_cli = cli_key
+            # pass
+        else:
+            self.station_setting.stat_parm_pipe = True
+            # self.station_setting.stat_parm_cli = 'NO-CLI'
+            new_pipe_cfg = getNew_pipe_cfg()
+            # new_pipe_cfg = self._cli_opt[cli_key]
+            new_pipe_cfg['pipe_parm_own_call'] = call
+            new_pipe_cfg['pipe_parm_pipe_tx'] = self._tx_filename_var.get()
+            new_pipe_cfg['pipe_parm_pipe_rx'] = self._rx_filename_var.get()
+            new_pipe_cfg['pipe_parm_pipe_loop_timer'] = int(self._loop_timer_var.get())
+            new_pipe_cfg['pipe_parm_PacLen'] = var_paclen
+            new_pipe_cfg['pipe_parm_MaxFrame'] = var_maxpac
+            # new_pipe = self._cli_opt[cli_key]
+            # new_pipe.tx_filename = new_pipe_cfg['stat_parm_pipe_tx']
+            # new_pipe.rx_filename = new_pipe_cfg['stat_parm_pipe_rx']
+            # new_pipe.parm_tx_file_check_timer = new_pipe_cfg['stat_parm_pipe_loop_timer']
+            POPT_CFG.set_pipe_CFG(new_pipe_cfg)
+            # self.station_setting.stat_parm_pipe = new_pipe
+
 
         for k in PORT_HANDLER.ax25_port_settings.keys():
             """
@@ -558,29 +578,20 @@ class StatSetTab:
             cli_digi_cfg=digi_cfg,
         ))
         self.station_setting.stat_parm_cli_cfg = dict(stat_parm_cli_cfg)
-        self._save_fm_file(self._stat_call + '.ctx', self._c_text_ent.get('1.0', tk.END)[:-1])
-        self._save_fm_file(self._stat_call + '.btx', self._bye_text_ent.get('1.0', tk.END)[:-1])
-        self._save_fm_file(self._stat_call + '.itx', self._info_text_ent.get('1.0', tk.END)[:-1])
-        self._save_fm_file(self._stat_call + '.litx', self._long_info_text_ent.get('1.0', tk.END)[:-1])
-        self._save_fm_file(self._stat_call + '.atx', self._akt_info_text_ent.get('1.0', tk.END)[:-1])
-        """
-        # C-Text
-        self.station_setting.stat_parm_cli_ctext = self.c_text_ent.get('1.0', tk.END)[:-1]
-        # Bye Text
-        self.station_setting.stat_parm_cli_bye_text = self.bye_text_ent.get('1.0', tk.END)[:-1]
-        # Info Text
-        self.station_setting.stat_parm_cli_itext = self.info_text_ent.get('1.0', tk.END)[:-1]
-        # Long Info Text
-        self.station_setting.stat_parm_cli_longitext = self.long_info_text_ent.get('1.0', tk.END)[:-1]
-        # News Text
-        self.station_setting.stat_parm_cli_akttext = self.akt_info_text_ent.get('1.0', tk.END)[:-1]
-        """
+        self._save_to_file(self._stat_call + '.ctx', self._c_text_ent.get('1.0', tk.END)[:-1])
+        self._save_to_file(self._stat_call + '.btx', self._bye_text_ent.get('1.0', tk.END)[:-1])
+        self._save_to_file(self._stat_call + '.itx', self._info_text_ent.get('1.0', tk.END)[:-1])
+        self._save_to_file(self._stat_call + '.litx', self._long_info_text_ent.get('1.0', tk.END)[:-1])
+        self._save_to_file(self._stat_call + '.atx', self._akt_info_text_ent.get('1.0', tk.END)[:-1])
         # Name
         self.station_setting.stat_parm_Name = self._name.get()
+        #######################################################
+        # TODO: To Global CFGs
         # QTH
         self._gui.own_qth = str(self._qth.get())
         # LOC   TODO: Filter
         self._gui.own_loc = str(self._loc.get())
+        #######################################################
         # COLORS
         self.station_setting.stat_parm_qso_col_text_tx = self._qso_fg_tx
         self.station_setting.stat_parm_qso_col_bg = self._qso_bg_tx
@@ -698,7 +709,8 @@ class StationSettingsWin:
             stat_conf = conf.station_setting
             if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
                 PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
-                save_station_to_file(stat_conf)
+                pipe_cfgs = POPT_CFG.get_pipe_CFG().get(stat_conf.stat_parm_Call, {})
+                save_station_to_file(stat_conf, pipe_cfgs)
         self._root_win.save_GUIvars()
         self._root_win.sysMsg_to_monitor(STR_TABLE['suc_save'][self.lang])
 

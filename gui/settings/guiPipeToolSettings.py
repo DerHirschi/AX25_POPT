@@ -365,7 +365,10 @@ class PipeToolSettings(tk.Toplevel):
                 # pipe.connection.pipe = pipe
                 pipe.connection.set_pipe(pipe)
             else:
-                PORT_HANDLER.add_pipe(pipe.port_id, pipe.uid, pipe)
+                # PORT_HANDLER.add_pipe_PH(pipe)
+                port = PORT_HANDLER.get_port_by_id(pipe.port_id)
+                if port:
+                    port.add_pipe(pipe)
             """
             if pipe.port_id in PORT_HANDLER.get_all_ports().keys():
                 PORT_HANDLER.get_all_ports()[pipe.port_id].pipes[pipe.uid] = pipe

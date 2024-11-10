@@ -183,3 +183,30 @@ def getNew_digi_cfg():
         # OR
         digi_auto_port=True,  # Get TX-Port fm MH-List
     )
+
+#######################################
+# PIPE CFG
+def getNew_pipe_cfg():
+    return dict(
+        pipe_parm_ports=[],
+        pipe_parm_pipe_tx='',
+        pipe_parm_pipe_rx='',
+        pipe_parm_own_call='',
+        pipe_parm_address_str='',
+        pipe_parm_cmd_pf=(False, False),
+        pipe_parm_pid=0xf0,
+        pipe_parm_PacLen=128,
+        pipe_parm_MaxFrame=3,
+        pipe_parm_MaxPacDelay=30,
+        pipe_parm_pipe_loop_timer=10,
+
+    )
+
+#######################################
+# Station CFG übergang
+def getNew_station_cfg():
+    return dict(
+        stat_parm_Call='NOCALL',
+
+    )
+

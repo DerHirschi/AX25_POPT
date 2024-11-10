@@ -9,7 +9,7 @@
 7: 'it'
 8: 'zh'     # Not really ;-)
 
-Thanks to NL5VKL for the Dutch translation.
+Thanks to NL1NOD for the Dutch translation.
 """
 
 STR_TABLE = {
@@ -22,6 +22,75 @@ STR_TABLE = {
     #  PT
     #  IT
     #  ?
+    'close_port': ('Info: Versuche Port {} zu schließen.',
+           'Info: Try to close Port {}.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'port_closed': ('Info: Port {} erfolgreich geschlossen.',
+           'Info: Port {} closed successfully.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'send_kiss_parm': ('Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..',
+           'Note: Kiss parameters sent to TNC on port {}..',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'port_in_use': ('Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.',
+           'Error: Port {} could not be initialized. Port is already in use.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'no_port_typ': ('Error: Kein Port-Typ ausgewählt. Port {}',
+           'Error: No port type selected. port {}',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'port_not_init': ('Error: Port {} konnte nicht initialisiert werden.',
+           'Error: Port {} could not be initialized.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+    'port_init': ('Info: Port {} erfolgreich initialisiert.',
+           'Info: Port {} initialized successfully.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
     'OK': ('OK',
            'OK',
            'OK',

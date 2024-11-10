@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.default_config import getNew_APRS_Station_cfg
+from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import locator_to_coordinates, coordinates_to_locator
 from cfg.string_tab import STR_TABLE
 
@@ -112,7 +114,8 @@ class APRSSettingsWin(tk.Toplevel):
             notebook.add(port_tab, text=f"Port {port_id}")
 
             # Add content to the "Port 1" tab
-            self.create_settings_widgets(port_tab, self._all_ports[port_id].port_cfg.parm_aprs_station)
+            # self.create_settings_widgets(port_tab, self._all_ports[port_id].port_cfg.parm_aprs_station)
+            self.create_settings_widgets(port_tab, POPT_CFG.get_CFG_aprs_station().get(port_id, getNew_APRS_Station_cfg()))
 
 
         # Pack the Notebook widget
