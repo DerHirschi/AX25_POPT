@@ -312,6 +312,9 @@ class AX25PortHandler(object):
         #########################
         # Init Port/Device
         temp = self._ax25types[cfg.parm_PortTyp](cfg, self)
+        ##########################
+        # Start Port/Device Thread
+        temp.start()
         if not temp.device_is_running:
             self.ax25_ports[port_id] = temp
             self.ax25_port_settings[port_id] = temp.port_cfg
@@ -319,16 +322,13 @@ class AX25PortHandler(object):
             self.sysmsg_to_gui(STR_TABLE['port_not_init'][self._language].format(cfg.parm_PortNr))
             # self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
             return False
-        ##########################
-        # Start Port/Device Thread
-        temp.start()
         ######################################
         # Gather all Ports in dict: ax25_ports
         # temp.gui = self._gui
         self.ax25_ports[port_id] = temp
         self.ax25_port_settings[port_id] = temp.port_cfg
         self.rx_echo[port_id] = RxEchoVars(port_id)
-        self.sysmsg_to_gui(STR_TABLE['port_not_init'][self._language].format(cfg.parm_PortNr))
+        self.sysmsg_to_gui(STR_TABLE['port_init'][self._language].format(cfg.parm_PortNr))
         # self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
         logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
         return True

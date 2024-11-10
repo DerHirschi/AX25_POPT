@@ -62,8 +62,8 @@ STR_TABLE = {
            '',
            ''),
 
-    'no_port_typ': ('Error: Kein Port-Typ ausgewählt. Port {}',
-           'Error: No port type selected. port {}',
+    'no_port_typ': ('Hinweis: Kein Port-Typ ausgewählt. Port {}',
+           'Note: No port type selected. port {}',
            '-----------',
            '',
            '',
