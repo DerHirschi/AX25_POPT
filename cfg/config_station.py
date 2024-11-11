@@ -95,8 +95,8 @@ class DefaultStation:
     ##########################
     stat_parm_is_Digi = False
     # Parameter for CLI
-    stat_parm_pipe = False
-    pipe_cfg = {}
+    # stat_parm_pipe = False
+    # pipe_cfg = {}
 
     # Optional Parameter. Can be deleted if not needed. Param will be get from cliMain.py
     stat_parm_cli_cfg = getNew_CLI_cfg()
@@ -246,8 +246,8 @@ class PortConfigInit(DefaultPort):
                         """ Check for New Vars to hold cfg_files compatible """
                         """ TODO: Need to find a better way.. The whole cfg Save is Bullshit """
                         """ Just need to save Parameter, not the whole class """
-                        if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
-                            new_stat_cfg.stat_parm_pipe = False
+                        # if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
+                        #     new_stat_cfg.stat_parm_pipe = False
                         if not hasattr(new_stat_cfg, 'parm_mon_clr_bg'):
                             new_stat_cfg.parm_mon_clr_bg = 'black'
                         """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""

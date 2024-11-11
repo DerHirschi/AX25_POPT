@@ -6,6 +6,7 @@ Fixes:
 
 Optimierung:
 - Teile der alten Configs in neues System übertragen
+- Pipe-Tool teilweise überarbeitet
 
 Neue Implementierungen / Funktionen:
 - weitere Übersetzungen

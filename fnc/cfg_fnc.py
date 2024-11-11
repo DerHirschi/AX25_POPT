@@ -108,7 +108,7 @@ def get_all_pipe_cfg():
     return ret
 
 
-def save_station_to_file(conf, pipe_cfgs):
+def save_station_to_file(conf):
     if conf.stat_parm_Call != getNew_station_cfg().get('stat_parm_Call', ''):
         exist_userpath(conf.stat_parm_Call)
         file = '{1}{0}/stat{0}.popt'.format(conf.stat_parm_Call, CFG_usertxt_path)
@@ -122,7 +122,7 @@ def save_station_to_file(conf, pipe_cfgs):
         # if conf.stat_parm_Call in pipe_cfgs.keys():
         # pipecfg = pipe_cfgs[conf.stat_parm_Call]
         # save_station.stat_parm_pipe = True
-        save_station['pipe_cfg'] = pipe_cfgs
+        # save_station['pipe_cfg'] = pipe_cfgs
         """
         save_station['stat_parm_pipe_tx'] = pipecfg.stat_parm_pipe.tx_filename
         save_station['stat_parm_pipe_rx'] = pipecfg.stat_parm_pipe.rx_filename

@@ -480,7 +480,8 @@ class StatSetTab:
         # LOC
         self._loc.delete(0, tk.END)
         self._loc.insert(tk.END, str(self._gui.own_loc))
-        pipe_cfg = POPT_CFG.get_pipe_CFG().get(self.station_setting.stat_parm_Call, {})
+        pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(self.station_setting.stat_parm_Call, -1)
+        # get(self.station_setting.stat_parm_Call, {})
 
         if not pipe_cfg:
             self._loop_timer.configure(state='disabled')
@@ -506,42 +507,52 @@ class StatSetTab:
 
     def set_vars_to_cfg(self):
         # CALL
-        call = self.call.get().upper()
+        call = self.call.get().upper()  # TODO Call/Input vali
         self.call.delete(0, tk.END)
         self.call.insert(tk.END, call)
+        old_call = str(self.station_setting.stat_parm_Call)
         self.station_setting.stat_parm_Call = call
-        # MaxPac
-        var_maxpac = int(self._max_pac_select_var.get())
+        var_maxpac = 3
+        var_paclen = 128
+        try:
+            # MaxPac
+            var_maxpac = int(self._max_pac_select_var.get())
+            # PacLen
+            var_paclen = int(self._pac_len.get())
+        except ValueError:
+            pass
+
         self.station_setting.stat_parm_MaxFrame = var_maxpac
-        # PacLen
-        var_paclen = int(self._pac_len.get())
         self.station_setting.stat_parm_PacLen = var_paclen
 
         # CLI
         cli_key = self._cli_select_var.get()
         if cli_key not in ['PIPE']:
             self.station_setting.stat_parm_cli = self._cli_opt[cli_key]
-            self.station_setting.stat_parm_pipe = False
-            POPT_CFG.del_pipe_CFG(call)
+            # self.station_setting.stat_parm_pipe = False
+            POPT_CFG.del_pipe_CFG(f'{-1}-{old_call}')
             # self.station_setting.stat_parm_cli = cli_key
             # pass
         else:
-            self.station_setting.stat_parm_pipe = True
+            # self.station_setting.stat_parm_pipe = True
             # self.station_setting.stat_parm_cli = 'NO-CLI'
+            POPT_CFG.del_pipe_CFG(f'{-1}-{old_call}')
             new_pipe_cfg = getNew_pipe_cfg()
             # new_pipe_cfg = self._cli_opt[cli_key]
             new_pipe_cfg['pipe_parm_own_call'] = call
-            new_pipe_cfg['pipe_parm_pipe_tx'] = self._tx_filename_var.get()
-            new_pipe_cfg['pipe_parm_pipe_rx'] = self._rx_filename_var.get()
-            new_pipe_cfg['pipe_parm_pipe_loop_timer'] = int(self._loop_timer_var.get())
+            new_pipe_cfg['pipe_parm_pipe_tx'] = str(self._tx_filename_var.get())
+            new_pipe_cfg['pipe_parm_pipe_rx'] = str(self._rx_filename_var.get())
+            try:
+                new_pipe_cfg['pipe_parm_pipe_loop_timer'] = int(self._loop_timer_var.get())
+            except ValueError:
+                new_pipe_cfg['pipe_parm_pipe_loop_timer'] = 10
             new_pipe_cfg['pipe_parm_PacLen'] = var_paclen
             new_pipe_cfg['pipe_parm_MaxFrame'] = var_maxpac
-            # new_pipe = self._cli_opt[cli_key]
-            # new_pipe.tx_filename = new_pipe_cfg['stat_parm_pipe_tx']
-            # new_pipe.rx_filename = new_pipe_cfg['stat_parm_pipe_rx']
-            # new_pipe.parm_tx_file_check_timer = new_pipe_cfg['stat_parm_pipe_loop_timer']
+            new_pipe_cfg['pipe_parm_Proto'] = True
+            new_pipe_cfg['pipe_parm_permanent'] = True
+            new_pipe_cfg['pipe_parm_port'] = -1
+
             POPT_CFG.set_pipe_CFG(new_pipe_cfg)
-            # self.station_setting.stat_parm_pipe = new_pipe
 
 
         for k in PORT_HANDLER.ax25_port_settings.keys():
@@ -708,9 +719,9 @@ class StationSettingsWin:
         for conf in self._tab_list:
             stat_conf = conf.station_setting
             if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
-                PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
-                pipe_cfgs = POPT_CFG.get_pipe_CFG().get(stat_conf.stat_parm_Call, {})
-                save_station_to_file(stat_conf, pipe_cfgs)
+                # PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
+                # pipe_cfgs = POPT_CFG.get_pipe_CFG().get(f'{-1}-{stat_conf.stat_parm_Call}', {})
+                save_station_to_file(stat_conf)
         self._root_win.save_GUIvars()
         self._root_win.sysMsg_to_monitor(STR_TABLE['suc_save'][self.lang])
 
@@ -770,6 +781,7 @@ class StationSettingsWin:
             else:
                 tab: StatSetTab = self._tab_list[ind]
                 call = tab.call.get()
+                POPT_CFG.del_all_pipe_CFG_fm_call(call=call)   # Del Pipe-CFG
                 del_user_data(call)
                 del self._tab_list[ind]
                 self._tabControl.forget(ind)

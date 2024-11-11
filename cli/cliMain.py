@@ -1,5 +1,4 @@
 from datetime import datetime
-import pickle
 import logging
 
 from cfg import constant, config_station
@@ -12,8 +11,7 @@ from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec,
     convert_str_to_datetime
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
-from UserDB.UserDBmain import Client, USER_DB
-from ax25.ax25UI_Pipe import AX25Pipe
+from UserDB.UserDBmain import USER_DB
 
 logger = logging.getLogger(__name__)
 
@@ -1442,5 +1440,5 @@ CLI_OPT = {
     UserCLI.cli_name: UserCLI,
     NodeCLI.cli_name: NodeCLI,
     NoneCLI.cli_name: NoneCLI,
-    'PIPE': AX25Pipe
+    'PIPE': NoneCLI
 }

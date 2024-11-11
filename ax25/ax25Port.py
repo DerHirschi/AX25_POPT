@@ -5,11 +5,14 @@ import threading
 import time
 import crcmod
 
+from ax25.ax25UI_Pipe import AX25Pipe
+
+crc_x25 = crcmod.predefined.mkCrcFun('x-25')
+
 from ax25.ax25Digi import AX25DigiConnection
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 # from ax25.ax25NetRom import NetRom_decode_UI
-from ax25.ax25UI_Pipe import AX25Pipe
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
@@ -20,7 +23,6 @@ from fnc.socket_fnc import get_ip_by_hostname
 if is_linux():
     import termios
 
-crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
 
 class RxBuf:
@@ -191,10 +193,15 @@ class AX25Port(threading.Thread):
 
     def _rx_pipe_handler(self, ax25_frame):
         uid = str(ax25_frame.addr_uid)
+        print(uid)
+        print(self.pipes.keys())
         if uid not in self.pipes.keys():
+            print('UI-Pipe: No UID')
             return False
-        if self.pipes[uid].connection is not None:
+        if self.pipes[uid].get_pipe_connection() is not None:
+            print('UI-Pipe: connection')
             return False
+        print('UI-Pipe: OK')
         self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
         return True
 
@@ -420,8 +427,6 @@ class AX25Port(threading.Thread):
                     tr = True
                 except AX25DeviceFAIL as e:
                     raise e
-                # Monitor
-                # self._gui_monitor(ax25frame=frame, tx=True)
             pipe.tx_frame_buf = []
         return tr
 
@@ -611,6 +616,7 @@ class AX25Port(threading.Thread):
 
     ############################################################
     # Pipe-Tool
+    """
     def build_new_pipe(self,
                        own_call='',
                        add_str='',
@@ -632,20 +638,25 @@ class AX25Port(threading.Thread):
             self.pipes[str(pipe.uid)] = pipe
             return True
         return False
+    """
 
-    def add_pipe(self, pipe: AX25Pipe):
-        # if pipe.uid in self.pipes.keys():
-        #     return False
-        # if not self.port_handler.add_pipe_PH(pipe):
-        #     return False
-        self.pipes[pipe.uid] = pipe
+    def add_pipe(self, pipe_cfg=None, pipe=None):
+        if pipe is None and not pipe_cfg:
+            return False
+        print("port add_pipe")
+        if pipe is None:
+            pipe = AX25Pipe(pipe_cfg=pipe_cfg)
+        print(pipe.get_pipe_uid())
+        self.pipes[pipe.get_pipe_uid()] = pipe
         return True
 
-    def del_pipe(self, pipe: AX25Pipe):
-        if pipe.uid in self.pipes.keys():
+    def del_pipe(self, pipe):
+        if not pipe:
+            return False
+        if pipe.get_pipe_uid() in self.pipes.keys():
             # self.port_handler.del_pipe_PH(pipe.uid)
-            self.pipes[pipe.uid] = None
-            del self.pipes[pipe.uid]
+            self.pipes[pipe.get_pipe_uid()] = None
+            del self.pipes[pipe.get_pipe_uid()]
             return True
         return False
 

@@ -2,7 +2,6 @@ import datetime
 import time
 import threading
 
-from ax25.ax25UI_Pipe import AX25Pipe
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
@@ -95,8 +94,8 @@ class AX25PortHandler(object):
         ##########################
         # Pipe-Tool Init
         # self._all_pipe_cfgs = {}
-        self._all_pipes = {}
-        # self._pipeTool_init()
+        # self._all_pipes = {}
+        self._pipeTool_init()
         #######################################################
         # Init Routing Table
         # self._init_RoutingTable()
@@ -605,50 +604,29 @@ class AX25PortHandler(object):
     # Pipe-Tool
     def _pipeTool_init(self):
         all_pipe_cfgs = POPT_CFG.get_pipe_CFG()
-        for call, pipeCfg in all_pipe_cfgs.items():
-            # if pipeCfg.stat_parm_pipe:
-            pipe = AX25Pipe(
-                own_call=pipeCfg.get('pipe_parm_own_call', ''),
-                address_str=pipeCfg.get('pipe_parm_address_str', ''),
-                port_id=0
-            )
+        for uid, pipeCfg in all_pipe_cfgs.items():
+            if (not pipeCfg.get('pipe_parm_Proto', False) and
+                    pipeCfg.get('pipe_parm_permanent', False)):
+                # for port_id in pipeCfg.get('pipe_parm_ports', []):
+                if pipeCfg.get('pipe_parm_port', -1) == -1:
+                    for port_id, port in self.ax25_ports.items():
+                        if port is not None:
+                            port.add_pipe(pipe_cfg=pipeCfg)
+                else:
+                    port_id = pipeCfg.get('pipe_parm_port', -1)
+                    port = self.get_port_by_index(port_id)
+                    if port is not None:
+                        port.add_pipe(pipe_cfg=pipeCfg)
 
-            pipe.ax25_frame.from_call.call_str = pipeCfg.get('pipe_parm_own_call', '')
-            pipe.set_dest_add(pipeCfg.get('pipe_parm_address_str', ''))
-            # pipe.port_id = pipeCfg.get('pipe_parm_ports', [])
-            pipe.port_id = 0
-            pid = pipeCfg.get('pipe_parm_pid', 0xf0)
-            pipe.parm_max_pac_timer = pipeCfg.get('pipe_parm_MaxPacDelay', '')
-            pipe.parm_tx_file_check_timer = pipeCfg.get('pipe_parm_pipe_loop_timer', '')
-            pipe.parm_max_pac = pipeCfg.get('pipe_parm_MaxFrame', '')
-            pipe.parm_pac_len = pipeCfg.get('pipe_parm_PacLen', '')
-            # if pipe.connection is None:
-            pipe.ax25_frame.ctl_byte.UIcByte()
-            pipe.ax25_frame.pid_byte.pac_types[pid]()
-            pipe.ax25_frame.ctl_byte.pf = pipeCfg.get('pipe_parm_cmd_pf', False)[1]
-            pipe.ax25_frame.ctl_byte.cmd = pipeCfg.get('pipe_parm_cmd_pf', False)[0]
+                    # self._all_pipe_cfgs[call] = pipe
 
-            pipe.tx_filename = pipeCfg.get('pipe_parm_pipe_tx', '')
-            pipe.rx_filename = pipeCfg.get('pipe_parm_pipe_rx', '')
-            pipe.parm_tx_file_check_timer = pipeCfg.get('pipe_parm_pipe_loop_timer', 10)
-
-            # pipe.change_settings()
-
-            # for port_id in pipeCfg.get('pipe_parm_ports', []):
-            for port_id in [0]:
-                port = self.get_port_by_id(port_id)
-                if port is not None:
-                    pass
-                    # port.add_pipe(pipe)
-
-                # self._all_pipe_cfgs[call] = pipe
 
     def _pipeTool_task(self):
-        # TODO: Move to Port Tasker
         for port_id, port in self.ax25_ports.items():
             if port.device_is_running:
                 for pipe_uid, pipe in port.pipes.items():
                     if pipe:
+                        # print(f"PipeCron: {pipe_uid}")
                         pipe.cron_exec()
 
     def get_all_pipes(self):
@@ -657,7 +635,7 @@ class AX25PortHandler(object):
         for port_id, port in self.ax25_ports.items():
             if port.device_is_running:
                 for pipe_uid, pipe in port.pipes.items():
-                    # print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
+                    print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
                     ret.append(pipe)
         return ret
 

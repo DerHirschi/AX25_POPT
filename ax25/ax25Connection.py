@@ -119,6 +119,7 @@ class AX25Conn:
         ax25_conf = ax25_frame.get_frame_conf()
         self.axip_add = tuple(ax25_conf.get('axip_add', ()))
         if rx:
+            # TODO Clean up !!!
             self.uid = str(reverse_uid(ax25_conf.get('uid', '')))  # Unique ID for Connection
             self.to_call_str_add = str(ax25_conf.get('from_call_str', ''))
             self.to_call_str = str(ax25_conf.get('from_call_str', ''))
@@ -168,6 +169,7 @@ class AX25Conn:
         )
         """
         """ Port Variablen"""
+        # TODO Private / Clean Up / OPT
         self.vs = 0  # Sendefolgenummer     / N(S) = V(R)  TX
         self.vr = 0  # Empfangsfolgezählers / N(S) = V(R)  TX
         self.t1 = 0  # ACK
@@ -250,22 +252,24 @@ class AX25Conn:
         self._set_user_db_ent()
         """ Station Individual Parameter """
         self.set_station_cfg()
-        """ Init CLI """
+        """ CLI CFG """
         self.noty_bell = False
         self.cli = cli.cliMain.NoneCLI(self)
         self.cli_type = ''
-        if not self.stat_cfg.stat_parm_pipe:
+        """ Pipe CFG """
+        pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(call=str(self.my_call_str),
+                                                port_id=int(self.own_port.port_id))
+        # if not self.stat_cfg.stat_parm_pipe:
+        print(pipe_cfg)
+        if not all((pipe_cfg,
+                   pipe_cfg.get('pipe_parm_Proto', False))):
+            """ Init CLI """
             self._init_cli()
             if not rx:
                 self.cli.change_cli_state(state=1)
         else:
             """ Init Pipe """
-            pipe = AX25Pipe(
-                port_id=self.own_port.port_id,
-                own_call=self.my_call_str,
-                address_str='NOCALL',
-            )
-            self.set_pipe(pipe)
+            self.set_pipe(pipe_cfg)
         """ Init State Tab """
         if rx:
             self.set_T1()
@@ -299,7 +303,7 @@ class AX25Conn:
 
     def _reinit_cli(self):
         # print(f"CLI RE-INIT: {self.uid}")
-        if not self.stat_cfg.stat_parm_pipe:
+        if not self.pipe:
             self._init_cli()
             self.cli.change_cli_state(state=1)
 
@@ -445,30 +449,52 @@ class AX25Conn:
         print(f"PIPE-RX: {res}")
         return True
 
-    def set_pipe(self, pipe):
-        if not pipe:
+    def set_pipe(self, pipe_cfg=None):
+        if not pipe_cfg:
+            pipe_cfg = POPT_CFG.get_pipe_CFG().get(f'{self.own_port.port_id}-{self.my_call_str}', getNew_pipe_cfg())
+        """
+        if not pipe_cfg:
+            pipe_cfg = getNew_pipe_cfg()
+            pipe_cfg['pipe_parm_own_call'] = str(self.my_call_str)
+            pipe_cfg['pipe_parm_port'] = int(self.own_port.port_id)
+            pipe_cfg['pipe_parm_Proto'] = True
+            pipe_cfg['pipe_parm_permanent'] = False
+            pipe_cfg['pipe_parm_PacLen'] = 0
+            pipe_cfg['pipe_parm_MaxFrame'] = 0
+            pipe_cfg['pipe_parm_pipe_tx'] = f'{self.ch_index}-{self.my_call_str}-{self.to_call_str}-tx.txt'
+            pipe_cfg['pipe_parm_pipe_rx'] = f'{self.ch_index}-{self.my_call_str}-{self.to_call_str}-rx.txt'
+        """
+        pipe = AX25Pipe(
+            connection=self,
+            pipe_cfg=pipe_cfg
+        )
+        if pipe.e_count:
+            print("Pipe Error (AX25Conn-set_pipe())")
+            del pipe
             return False
-
-        pipe_cfg = POPT_CFG.get_pipe_CFG().get(self.my_call_str, getNew_pipe_cfg())
-        pipe.tx_filename = pipe_cfg.get('pipe_parm_pipe_tx', '')
-        pipe.rx_filename = pipe_cfg.get('pipe_parm_pipe_rx', '')
-        pipe.parm_tx_file_check_timer = pipe_cfg.get('pipe_parm_pipe_loop_timer', 10)
-        pipe.parm_pac_len = pipe_cfg.get('pipe_parm_PacLen', 128)
-        pipe.parm_max_pac = pipe_cfg.get('pipe_parm_MaxFrame', 3)
-        pipe.connection = self
-        if pipe.parm_pac_len:
-            self.parm_PacLen = int(pipe.parm_pac_len)
-        if pipe.parm_max_pac:
-            self.parm_MaxFrame = int(pipe.parm_max_pac)
-        pipe.change_settings()
-        if not self.own_port.add_pipe(pipe):
+        if pipe_cfg.get('pipe_parm_PacLen', 0):
+            self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', 128)
+        if pipe_cfg.get('pipe_parm_MaxFrame', 0):
+            self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', 3)
+        # TODO Port and Conn Thread ?
+        if not self.own_port.add_pipe(pipe=pipe):
+            print("Port no Pipe")
             return False
+        self.cli = cli.cliMain.NoneCLI(self)
+        self.cli_type = ''
         self.pipe = pipe
 
     def _del_pipe(self):
         if self.pipe:
             self.own_port.del_pipe(self.pipe)
             self.pipe = None
+            # self._reinit_cli()
+            return True
+        return False
+
+    def del_pipe_fm_conn(self):
+        if self._del_pipe():
+            self._reinit_cli()
 
     ########################################
     # File Transfer
