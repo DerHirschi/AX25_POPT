@@ -192,7 +192,7 @@ class AX25Port(threading.Thread):
         return False
 
     def _rx_pipe_handler(self, ax25_frame):
-        uid = str(ax25_frame.addr_uid)
+        uid = ax25_frame.get_frame_conf().get('uid', '')
         print(uid)
         print(self.pipes.keys())
         if uid not in self.pipes.keys():

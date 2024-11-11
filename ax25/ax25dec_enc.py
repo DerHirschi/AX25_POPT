@@ -7,7 +7,7 @@ import datetime
 
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 from ax25.ax25NetRom import NetRom_decode_UI, NetRomDecodingERROR
-from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str
+from fnc.ax25_fnc import get_call_str, call_tuple_fm_call_str, reverse_uid
 
 
 def bl2str(inp):
@@ -589,6 +589,7 @@ class AX25Frame:
         )
 
     def _build_uid(self, dec=True):
+
         self.addr_uid = '{}:{}'.format(
             self.from_call.call_str,
             self.to_call.call_str
@@ -597,6 +598,15 @@ class AX25Frame:
             self.addr_uid += f':{ca.call_str}'
         if not dec:
             self.addr_uid = reverse_uid(self.addr_uid)
+        """
+        self.addr_uid = build_ax25uid(
+            from_call_str=self.from_call.call_str,
+            to_call_str=self.to_call.call_str,
+            via_calls=self.via_calls,
+            dec=dec
+        )
+        """
+
 
     def _set_stop_bit(self):
         if not self.via_calls:

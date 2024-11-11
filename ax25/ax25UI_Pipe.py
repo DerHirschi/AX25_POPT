@@ -1,8 +1,10 @@
 import time
 
+from fontTools.misc.configTools import ConfigError
+
 from cfg.default_config import getNew_pipe_cfg
 from fnc.file_fnc import check_file
-from fnc.ax25_fnc import reverse_uid
+from fnc.ax25_fnc import reverse_uid, validate_ax25Call, build_ax25uid
 
 from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
@@ -15,19 +17,36 @@ class AX25Pipe(object):
                  ):
         self.e_count = 0
         if not connection and not pipe_cfg:
-            self.e_count = 1
+            raise AttributeError
 
         self._connection = connection
-        if pipe_cfg is None and connection:
+        if not pipe_cfg and connection:
             pipe_cfg = getNew_pipe_cfg()
+        if connection:
             pipe_cfg['pipe_parm_own_call'] = str(connection.my_call_str)
+            pipe_cfg['pipe_parm_address_str'] = f'{connection.to_call_str} ' + ' '.join(connection.via_calls)
             pipe_cfg['pipe_parm_port'] = int(connection.own_port.port_id)
             pipe_cfg['pipe_parm_Proto'] = True
             pipe_cfg['pipe_parm_permanent'] = False
             pipe_cfg['pipe_parm_PacLen'] = 0
             pipe_cfg['pipe_parm_MaxFrame'] = 0
-            pipe_cfg['pipe_parm_pipe_tx'] = f'{connection.ch_index}-{connection.my_call_str}-{connection.to_call_str}-tx.txt'
-            pipe_cfg['pipe_parm_pipe_rx'] = f'{connection.ch_index}-{connection.my_call_str}-{connection.to_call_str}-rx.txt'
+            # pipe_cfg['pipe_parm_pipe_tx'] = f'{connection.ch_index}-{connection.my_call_str}-{connection.to_call_str}-tx.txt'
+            # pipe_cfg['pipe_parm_pipe_rx'] = f'{connection.ch_index}-{connection.my_call_str}-{connection.to_call_str}-rx.txt'
+
+        if not all((
+                pipe_cfg.get('pipe_parm_own_call', ''),
+                pipe_cfg.get('pipe_parm_address_str', ''),
+                # pipe_cfg.get('pipe_parm_pipe_tx', ''),
+                # pipe_cfg.get('pipe_parm_pipe_rx', ''),
+        )):
+            print(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_own_call', '')}")
+            print(f"pipe_parm_address_str : {pipe_cfg.get('pipe_parm_address_str', '')}")
+            print(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_pipe_tx', '')}")
+            print(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_pipe_rx', '')}")
+            raise ConfigError
+
+        if not validate_ax25Call(pipe_cfg.get('pipe_parm_own_call', '')):
+            raise ConfigError
 
         print("New Pipe !")
         for p_name, param in pipe_cfg.items():
@@ -43,24 +62,29 @@ class AX25Pipe(object):
         self._parm_max_pac_timer = pipe_cfg.get('pipe_parm_MaxPacDelay', 30)
         self._isProto = pipe_cfg.get('pipe_parm_Proto', True)
         self._add_str = pipe_cfg.get('pipe_parm_address_str', '')
+        self._own_call = pipe_cfg.get('pipe_parm_own_call', '')
+        self._dest_call = self._add_str.split(' ')[0]
+        self._via_calls = self._add_str.split(' ')[1:]
+        for call in self._via_calls:
+            if not validate_ax25Call(call):
+                raise ConfigError
+        # self._ax25_frame = AX25Frame()
+        # self._ax25_frame.from_call.call_str = pipe_cfg.get('pipe_parm_own_call', '')
+        # self._ax25_frame.ctl_byte.UIcByte()
+        # self._ax25_frame.ctl_byte.cmd = pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0]
+        # self._ax25_frame.ctl_byte.pf = pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1]
+        # self._ax25_frame.pid_byte.pac_types[int(pipe_cfg.get('pipe_parm_pid', 0xf0))]()
 
-        self._ax25_frame = AX25Frame()
-        self._ax25_frame.from_call.call_str = pipe_cfg.get('pipe_parm_own_call', '')
-        dest_add = via_calls_fm_str(pipe_cfg.get('pipe_parm_address_str', ''))
-        if dest_add:
-            self._ax25_frame.to_call.call_str = dest_add[0].call_str
-            if len(dest_add) > 1:
-                self._ax25_frame.via_calls = dest_add[1:]
-
-        self._ax25_frame.ctl_byte.UIcByte()
-        self._ax25_frame.ctl_byte.cmd = pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0]
-        self._ax25_frame.ctl_byte.pf = pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1]
-        self._ax25_frame.pid_byte.pac_types[int(pipe_cfg.get('pipe_parm_pid', 0xf0))]()
         if self._connection:
             self._uid = self._connection.uid
             print(f"pipeUID fm Conn: {self._uid}")
         else:
-            self._uid = self._ax25_frame.addr_uid
+            self._uid = build_ax25uid(
+                from_call_str=self._own_call,
+                to_call_str=self._dest_call,
+                via_calls=self._via_calls,
+                dec = False
+            )
             print(f"pipeUID fm Frame: {self._uid}")
         self._max_pac_timer = time.time()
         self._tx_file_check_timer = time.time()
@@ -94,11 +118,14 @@ class AX25Pipe(object):
         if self._connection is None:
             while len(self.tx_frame_buf) < self._parm_max_pac and self._tx_data:
                 new_frame = AX25Frame()
-                new_frame.from_call = self._ax25_frame.from_call
-                new_frame.to_call = self._ax25_frame.to_call
-                new_frame.via_calls = self._ax25_frame.via_calls
-                new_frame.pid_byte = self._ax25_frame.pid_byte
-                new_frame.ctl_byte = self._ax25_frame.ctl_byte
+                new_frame.from_call.call_str = self._own_call
+                new_frame.to_call.call_str = self._dest_call
+                new_frame.via_calls = via_calls_fm_str(' '.join(self._via_calls))
+                new_frame.ctl_byte.UIcByte()
+                new_frame.pid_byte.pac_types[int(self._pipe_cfg.get('pipe_parm_pid', 0xf0))]()
+                # new_frame.ctl_byte = self._ax25_frame.ctl_byte
+                new_frame.ctl_byte.cmd = self._pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0]
+                new_frame.ctl_byte.pf = self._pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1]
                 new_frame.payload = self._tx_data[:min(len(self._tx_data), self._parm_pac_len)]
                 self._tx_data = self._tx_data[min(len(self._tx_data), self._parm_pac_len):]
                 new_frame.encode_ax25frame()

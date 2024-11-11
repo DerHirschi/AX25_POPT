@@ -132,6 +132,7 @@ class PipeTab:
             else:
                 self.call_var.set(_vals[0])
         """
+        self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', ''))
         self._call_ent = tk.ttk.Combobox(self.own_tab,
                                          width=9,
                                          textvariable=self.call_var,
@@ -235,9 +236,11 @@ class PipeTab:
             if port_id in PORT_HANDLER.get_all_ports().keys():
                 vals = PORT_HANDLER.get_all_ports()[port_id].my_stations
             if vals:
-                self.call_var.set(vals[0])
+                self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', vals[0]))
+                # self.call_var.set(vals[0])
             else:
-                self.call_var.set('')
+                # self.call_var.set('')
+                self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', ''))
 
         self._call_ent.config(values=vals)
 
@@ -336,12 +339,15 @@ class PipeToolSettings(tk.Toplevel):
         self.tab_list: [ttk.Frame] = []
         all_pipes = PORT_HANDLER.get_all_pipes()
         for pipe in all_pipes:
-            label_txt = f"{len(self.tab_list)}"
-            # label_txt = f"{len(self.tab_list)}-{pipe.}"
-            tab = PipeTab(self, pipe=pipe)
-            self.tabControl.add(tab.own_tab, text=label_txt)
-            self.tabControl.select(len(self.tab_list))
-            self.tab_list.append(tab)
+            pipe_cfg = pipe.get_cfg_fm_pipe()
+            if ((pipe_cfg.get('pipe_parm_permanent', False) and not pipe_cfg.get('pipe_parm_Proto', True)) or
+                not (pipe_cfg.get('pipe_parm_permanent', False) and pipe_cfg.get('pipe_parm_Proto', True))):
+                label_txt = f"{len(self.tab_list)}"
+                # label_txt = f"{len(self.tab_list)}-{pipe.}"
+                tab = PipeTab(self, pipe=pipe)
+                self.tabControl.add(tab.own_tab, text=label_txt)
+                self.tabControl.select(len(self.tab_list))
+                self.tab_list.append(tab)
 
     def _set_vars(self):
         for tab in self.tab_list:
@@ -434,7 +440,8 @@ class PipeToolSettings(tk.Toplevel):
                 conn.del_pipe_fm_conn()
             else:
                 conn = self._root.get_conn()
-                conn.del_pipe_fm_conn()
+                if conn:
+                    conn.del_pipe_fm_conn()
             port_id = pipe_cfg['pipe_parm_port']
             uid = dummy_pipe.get_pipe_uid()        # TODO uid_generator_fnc
             if port_id == -1:

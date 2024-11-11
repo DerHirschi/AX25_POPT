@@ -205,24 +205,15 @@ class Main_CFG:
     def get_pipe_CFG_fm_UID(self, call, port_id=-1):
         cfg_keys = list(self._config.get('pipe_cfg', {}).keys())
         lookup_k = f'{port_id}-{call}'
-        all_ports_lookup_k = f'{-1}-{call}'
         if lookup_k in cfg_keys:
             return self._config.get('pipe_cfg', {}).get(lookup_k, {})
-        if all_ports_lookup_k in cfg_keys:
-            # TODO wenn kein Result dann alle durchsuchen
-            return self._config.get('pipe_cfg', {}).get(all_ports_lookup_k, {})
         return {}
 
     def del_pipe_CFG_fm_CallPort(self, call, port_id=-1):
         cfg_keys = list(self._config.get('pipe_cfg', {}).keys())
         lookup_k = f'{port_id}-{call}'
-        all_ports_lookup_k = f'{-1}-{call}'
         if lookup_k in cfg_keys:
             del self._config['pipe_cfg'][lookup_k]
-            print(self._config['pipe_cfg'])
-            return True
-        if all_ports_lookup_k in cfg_keys:
-            del self._config['pipe_cfg'][all_ports_lookup_k]
             print(self._config['pipe_cfg'])
             return True
         return False

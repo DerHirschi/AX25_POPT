@@ -61,3 +61,51 @@ def get_list_fm_viaStr(via_str: str):
             else:
                 return []
     return vias
+
+
+def build_ax25uid(from_call_str,
+                  to_call_str,
+                  via_calls: [] = None,
+                  dec=True):
+    if via_calls is None:
+        via_calls = []
+    if not all((from_call_str, to_call_str)):
+        return ''
+    ax25_uid = f'{from_call_str}:{to_call_str}'
+    for call in via_calls:
+        ax25_uid += f':{call}'
+    if not dec:
+        ax25_uid = reverse_uid(ax25_uid)
+
+    return ax25_uid
+
+def validate_ax25Call(call_str: str):
+    """
+    :return: bool
+    """
+    if not call_str:
+        return False
+    if '-' in call_str:
+        call, ssid = call_str.split('-')
+    else:
+        call = call_str
+        ssid = '0'
+    # SSID
+    try:
+        ssid = int(ssid)
+    except ValueError:
+        return False
+
+    if ssid > 15 or ssid < 0:
+        print(f'Call validator ax25_fnc: SSID - {ssid}')
+        return False
+    # CALL
+    if len(call) < 2 or len(call) > 6:    # Calls like CQ or ID
+        print(f'Call validator ax25_fnc: Call length - {call}')
+        return False
+
+    for c in call:
+        if not any((c.isupper(), c.isdigit())):
+            print(f'Call validator ax25_fnc: CAll-Format - {call} -')
+            return False
+    return True

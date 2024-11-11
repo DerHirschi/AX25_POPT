@@ -5,6 +5,8 @@
 import time
 from datetime import datetime
 
+from fontTools.misc.configTools import ConfigError
+
 import cli.cliMain
 from ax25.ax25UI_Pipe import AX25Pipe
 from cfg import config_station
@@ -464,13 +466,13 @@ class AX25Conn:
             pipe_cfg['pipe_parm_pipe_tx'] = f'{self.ch_index}-{self.my_call_str}-{self.to_call_str}-tx.txt'
             pipe_cfg['pipe_parm_pipe_rx'] = f'{self.ch_index}-{self.my_call_str}-{self.to_call_str}-rx.txt'
         """
-        pipe = AX25Pipe(
-            connection=self,
-            pipe_cfg=pipe_cfg
-        )
-        if pipe.e_count:
+        try:
+            pipe = AX25Pipe(
+                connection=self,
+                pipe_cfg=pipe_cfg
+            )
+        except ConfigError:
             print("Pipe Error (AX25Conn-set_pipe())")
-            del pipe
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
             self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', 128)
