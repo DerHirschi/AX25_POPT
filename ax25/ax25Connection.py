@@ -5,8 +5,6 @@
 import time
 from datetime import datetime
 
-from fontTools.misc.configTools import ConfigError
-
 import cli.cliMain
 from ax25.ax25UI_Pipe import AX25Pipe
 from cfg import config_station
@@ -123,18 +121,14 @@ class AX25Conn:
         if rx:
             # TODO Clean up !!!
             self.uid = str(reverse_uid(ax25_conf.get('uid', '')))  # Unique ID for Connection
-            self.to_call_str_add = str(ax25_conf.get('from_call_str', ''))
             self.to_call_str = str(ax25_conf.get('from_call_str', ''))
-            self.my_call_str_add = str(ax25_conf.get('to_call_str', ''))
             self.my_call_str = str(ax25_conf.get('to_call_str', ''))
             self.my_call = str(ax25_conf.get('to_call', ''))
             self.via_calls = list(ax25_conf.get('via_calls_str', []))
             self.via_calls.reverse()
         else:
             self.uid = str(ax25_conf.get('uid', ''))  # Unique ID for Connection
-            self.to_call_str_add = str(ax25_conf.get('to_call_str', ''))
             self.to_call_str = str(ax25_conf.get('to_call_str', ''))
-            self.my_call_str_add = str(ax25_conf.get('from_call_str', ''))
             self.my_call_str = str(ax25_conf.get('from_call_str', ''))
             self.my_call = str(ax25_conf.get('from_call', ''))
             self.via_calls = list(ax25_conf.get('via_calls_str', []))
@@ -261,8 +255,6 @@ class AX25Conn:
         """ Pipe CFG """
         pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(call=str(self.my_call_str),
                                                 port_id=int(self.own_port.port_id))
-        # if not self.stat_cfg.stat_parm_pipe:
-        print(pipe_cfg)
         if not all((pipe_cfg,
                    pipe_cfg.get('pipe_parm_Proto', False))):
             """ Init CLI """
@@ -471,14 +463,13 @@ class AX25Conn:
                 connection=self,
                 pipe_cfg=pipe_cfg
             )
-        except ConfigError:
+        except AttributeError:
             print("Pipe Error (AX25Conn-set_pipe())")
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
             self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', 128)
         if pipe_cfg.get('pipe_parm_MaxFrame', 0):
             self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', 3)
-        # TODO Port and Conn Thread ?
         if not self.own_port.add_pipe(pipe=pipe):
             print("Port no Pipe")
             return False
@@ -1029,8 +1020,8 @@ class AX25Conn:
     def _get_new_ax25frame(self):
         pac = AX25Frame(dict(
             uid=str(self.uid),
-            from_call_str=str(self.my_call_str_add),
-            to_call_str=str(self.to_call_str_add),
+            from_call_str=str(self.my_call_str),
+            to_call_str=str(self.to_call_str),
             via_calls=list(self.via_calls),
             axip_add=tuple(self.axip_add),
             digi_call=str(self.digi_call)

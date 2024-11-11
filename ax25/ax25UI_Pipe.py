@@ -1,7 +1,5 @@
 import time
 
-from fontTools.misc.configTools import ConfigError
-
 from cfg.default_config import getNew_pipe_cfg
 from fnc.file_fnc import check_file
 from fnc.ax25_fnc import reverse_uid, validate_ax25Call, build_ax25uid
@@ -43,10 +41,10 @@ class AX25Pipe(object):
             print(f"pipe_parm_address_str : {pipe_cfg.get('pipe_parm_address_str', '')}")
             print(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_pipe_tx', '')}")
             print(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_pipe_rx', '')}")
-            raise ConfigError
+            raise AttributeError
 
         if not validate_ax25Call(pipe_cfg.get('pipe_parm_own_call', '')):
-            raise ConfigError
+            raise AttributeError
 
         print("New Pipe !")
         for p_name, param in pipe_cfg.items():
@@ -151,8 +149,8 @@ class AX25Pipe(object):
         if self._connection:
             self._ax25_frame = AX25Frame(dict(
                 uid=str(self._connection.uid),
-                from_call_str=str(self._connection.my_call_str_add),
-                to_call_str=str(self._connection.to_call_str_add),
+                from_call_str=str(self._connection.my_call_str),
+                to_call_str=str(self._connection.to_call_str),
                 via_calls=list(self._connection.via_calls),
                 axip_add=tuple(self._connection.axip_add),
                 digi_call=str(self._connection.digi_call),
