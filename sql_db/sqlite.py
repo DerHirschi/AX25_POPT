@@ -1,5 +1,5 @@
 import sqlite3
-from cfg.config_station import logger
+from cfg.logger_config import logger
 from cfg.constant import CFG_data_path
 from sql_db.sql_Error import SQLConnectionError
 

@@ -1,4 +1,3 @@
-import logging
 import tkinter as tk
 from tkinter import ttk
 
@@ -7,10 +6,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import validate_call, get_list_fm_viaStr
 from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
-
-# from string_tab import STR_TABLE
-
-logger = logging.getLogger(__name__)
+# from cfg.logger_config import logger
 
 
 class PMS_Settings(tk.Toplevel):

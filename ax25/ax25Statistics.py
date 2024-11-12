@@ -8,7 +8,7 @@ import pickle
 from UserDB.UserDBmain import USER_DB
 from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT
 from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
+from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_for_key
 

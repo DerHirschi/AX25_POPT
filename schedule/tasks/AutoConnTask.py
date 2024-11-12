@@ -1,8 +1,5 @@
-import logging
-
 from cfg.constant import SERVICE_CH_START
-
-logger = logging.getLogger(__name__)
+from cfg.logger_config import logger
 
 
 class AutoConnTask:

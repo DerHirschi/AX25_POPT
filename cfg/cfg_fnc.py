@@ -1,12 +1,9 @@
 import pickle
 import os
 
-import logging
-
-from cfg.constant import CFG_data_path, CFG_usertxt_path
-from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
-
-logger = logging.getLogger(__name__)
+from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads
+from cfg.default_config import getNew_station_cfg
+from cfg.logger_config import logger
 
 
 def cleanup_obj(class_obj: object):
@@ -79,7 +76,7 @@ def load_fm_file(filename: str):
             f"CFG: Falsche Version der CFG Datei. Bitte {CFG_data_path + filename} löschen und PoPT neu starten!")
         raise
 
-
+"""
 def get_all_pipe_cfg():
     stat_cfg_path = CFG_data_path + CFG_usertxt_path
     stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
@@ -105,6 +102,28 @@ def get_all_pipe_cfg():
                     for cfg_keys in list(loaded_pipe_cfg.keys()):
                         default_pipe_cfg[cfg_keys] = loaded_pipe_cfg[cfg_keys]
                     ret[call] = default_pipe_cfg
+    return ret
+"""
+
+def get_all_stat_CFGs():
+    stat_cfg_path = CFG_data_path + CFG_usertxt_path
+    stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
+    ret = {}
+
+    if len(stat_cfg) > 1:
+        stat_cfg = stat_cfg[1:]
+        for folder in stat_cfg:
+            call = folder.split('/')[-1]
+            # print(folder + '/stat' + call + '.popt')
+            try:
+                with open(folder + '/stat' + call + '.popt', 'rb') as inp:
+                    ret[call] = pickle.load(inp)
+            except (FileNotFoundError, EOFError):
+                pass
+            except ImportError:
+                logger.error(
+                    f"Station CFG: Falsche Version der CFG Datei. Bitte {folder + '/stat' + call + '.popt'} löschen und PoPT neu starten!")
+                raise
     return ret
 
 
@@ -140,3 +159,13 @@ def exist_userpath(usercall: str):
         os.makedirs(CFG_data_path + CFG_usertxt_path + usercall)
         return False
     return True
+
+
+def init_dir_struct():
+    if not os.path.exists(CFG_data_path):
+        os.makedirs(CFG_data_path)
+    if not os.path.exists(CFG_data_path + CFG_usertxt_path):
+        os.makedirs(CFG_data_path + CFG_usertxt_path)
+    # File Transfer
+    if not os.path.exists(CFG_ft_downloads):
+        os.makedirs(CFG_ft_downloads)

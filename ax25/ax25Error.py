@@ -1,9 +1,4 @@
-import logging
-
-# from ax25.ax25dec_enc import AX25Frame
-
-logger = logging.getLogger(__name__)
-
+from cfg.logger_config import logger
 
 class AX25EncodingERROR(Exception):
     # logger.error('AX25 Packet Encoding Error !')

@@ -1,8 +1,6 @@
 from cfg.constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STATION_ID_ENCODING, BBS_FEATURE_FLAGS, \
     BBS_REVERS_FWD_CMD
-import logging
-
-logger = logging.getLogger(__name__)
+from cfg.logger_config import logger
 
 
 def get_station_id_obj(inp_line: str):

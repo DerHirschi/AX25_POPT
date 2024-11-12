@@ -1,4 +1,3 @@
-import logging
 import tkinter as tk
 from tkinter import Menu
 from tkinter import ttk
@@ -6,8 +5,7 @@ from tkinter import ttk
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 from cfg.string_tab import STR_TABLE
-
-logger = logging.getLogger(__name__)
+# from cfg.logger_config import logger
 
 
 class BeaconTracer(tk.Toplevel):

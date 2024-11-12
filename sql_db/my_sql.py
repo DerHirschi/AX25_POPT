@@ -11,7 +11,7 @@ GRANT ALL PRIVILEGES ON popt_db.* TO 'popt'@'localhost';
 FLUSH PRIVILEGES;
 """
 import time
-from cfg.config_station import logger
+from cfg.logger_config import logger
 import mysql.connector
 
 from sql_db.sql_Error import SQLConnectionError

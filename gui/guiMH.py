@@ -1,4 +1,3 @@
-import logging
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 
@@ -7,8 +6,6 @@ from ax25.ax25Statistics import MyHeard
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import conv_time_DE_str
-
-logger = logging.getLogger(__name__)
 
 
 class MHWin(tk.Toplevel):

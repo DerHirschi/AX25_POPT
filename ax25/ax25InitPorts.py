@@ -4,6 +4,7 @@ import threading
 
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
+from cfg.logger_config import logger
 from cfg.string_tab import STR_TABLE
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
@@ -13,7 +14,8 @@ from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
-from cfg.config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
+from cfg.config_station import get_all_stat_cfg, PortConfigInit
+from cfg.cfg_fnc import init_dir_struct
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
 from cfg.constant import MAX_PORTS, SERVICE_CH_START
 from sql_db.sql_Error import SQLConnectionError
@@ -305,7 +307,6 @@ class AX25PortHandler(object):
         cfg = PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
         if not cfg.parm_PortTyp:
             logger.error('No Port-Typ selected for Port {}'.format(cfg.parm_PortNr))
-            # self.sysmsg_to_gui('Error: Kein Port-Typ ausgewählt. Port {}'.format(cfg.parm_PortNr))
             self.sysmsg_to_gui(STR_TABLE['no_port_typ'][self._language].format(cfg.parm_PortNr))
             return False
         #########################

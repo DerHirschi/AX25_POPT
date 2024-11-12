@@ -9,7 +9,7 @@ import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
+from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
 from gui.aprs.guiAISmon import AISmonitor

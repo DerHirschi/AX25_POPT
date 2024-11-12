@@ -2,7 +2,7 @@ import time
 from collections import deque
 
 import aprslib
-import logging
+from cfg.logger_config import logger
 from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
@@ -12,8 +12,6 @@ from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator, locator_to_coordinates
 from fnc.str_fnc import convert_umlaute_to_ascii
 from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
-
-logger = logging.getLogger(__name__)
 
 
 class APRS_ais(object):

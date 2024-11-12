@@ -1,9 +1,6 @@
-import logging
-
 from cli.StringVARS import replace_StringVARS
 from fnc.file_fnc import get_str_fm_file
-
-logger = logging.getLogger(__name__)
+from cfg.logger_config import logger
 
 
 class BeaconTask:

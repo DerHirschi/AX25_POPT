@@ -1,6 +1,5 @@
-import logging
+from cfg.logger_config import logger
 
-logger = logging.getLogger(__name__)
 
 
 def init_crctab():

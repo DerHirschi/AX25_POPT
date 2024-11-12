@@ -7,7 +7,7 @@ from tkinter.colorchooser import askcolor
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.config_station import del_user_data, DefaultStation
 from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import save_station_to_file
+from cfg.cfg_fnc import save_station_to_file
 from cfg.constant import CFG_data_path, CFG_usertxt_path
 from cfg.default_config import getNew_CLI_DIGI_cfg, getNew_pipe_cfg
 from cli.cliMain import CLI_OPT

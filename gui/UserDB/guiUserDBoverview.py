@@ -1,11 +1,9 @@
-import logging
 import tkinter as tk
 from tkinter import ttk
 
 from UserDB.UserDBmain import USER_DB
 from fnc.str_fnc import conv_time_DE_str
-
-logger = logging.getLogger(__name__)
+# from cfg.logger_config import logger
 
 
 class UserDBtreeview(tk.Toplevel):

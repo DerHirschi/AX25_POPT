@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 
-from cfg.config_station import logger
+from cfg.logger_config import logger
 from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
 from fnc.sql_fnc import search_sql_injections
 from fnc.str_fnc import convert_str_to_datetime

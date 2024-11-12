@@ -1,39 +1,10 @@
 import pickle
 import os
-import logging
 
-# from ax25.ax25UI_Pipe import AX25Pipe
-from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, VER
+from cfg.constant import CFG_data_path, CFG_usertxt_path
 from cfg.default_config import getNew_CLI_cfg
-# from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import save_to_file
-
-
-if "dev" in VER:
-    log_level = logging.DEBUG
-else:
-    log_level = logging.INFO
-
-
-# log_level = logging.INFO
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    filename='error.log',
-    filemode='w',
-    level=log_level
-)
-logger = logging.getLogger(__name__)
-
-
-def init_dir_struct():
-    if not os.path.exists(CFG_data_path):
-        os.makedirs(CFG_data_path)
-    if not os.path.exists(CFG_data_path + CFG_usertxt_path):
-        os.makedirs(CFG_data_path + CFG_usertxt_path)
-    # File Transfer
-    if not os.path.exists(CFG_ft_downloads):
-        os.makedirs(CFG_ft_downloads)
+from cfg.logger_config import logger
+from cfg.cfg_fnc import save_to_file
 
 
 def get_all_stat_cfg():

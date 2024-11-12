@@ -2,15 +2,13 @@ import sys
 import datetime
 import os
 import pickle
-import logging
+from cfg.logger_config import logger
 
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
-from fnc.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
+from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
 from fnc.loc_fnc import locator_to_coordinates, locator_distance
 from fnc.str_fnc import conv_time_for_sorting
 from cfg.constant import CFG_user_db
-
-logger = logging.getLogger(__name__)
 
 
 class Client(object):

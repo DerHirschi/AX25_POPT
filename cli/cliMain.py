@@ -1,5 +1,4 @@
 from datetime import datetime
-import logging
 
 from cfg import constant, config_station
 from cli.BaycomLogin import BaycomLogin
@@ -12,8 +11,7 @@ from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec,
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_call
 from UserDB.UserDBmain import USER_DB
-
-logger = logging.getLogger(__name__)
+from cfg.logger_config import logger
 
 
 class DefaultCLI(object):
