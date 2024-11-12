@@ -49,7 +49,7 @@ Ideas/TODO's :
   - ax25Statistics überarbeiten
 
 ✓ KISS
-  - kompatibilität TNC nur teilweise
+  - kompatibilität TNC nur teilweise (Custom KISS/TNC Init setzbar)
   - MultiPortKISS (Direwolf)
 
 - AXIP-Multicast überarbeiten
@@ -103,8 +103,12 @@ Ideas/TODO's :
   - APRS
   - BBS
 
-- ?Pipe-TOOL: GPIOs ansteuerbar / auslesbar ..? oder besser
+✓ Pipe-TOOL
+  - Optional Header in Datei schreiben für jeden Frame
+  - Optional Remote-CMD für Disco u.Ä.
+
 - Remote-GPIO Tool (Idee von Lars)
+
 ✓ PoPT-Scheduler
   ✓ Autoconnect
     ✓ PMS abfrage AutoFWD

@@ -26,14 +26,14 @@ class StatSetTab:
         self.station_setting = setting
         self.style = main_stt_win.style
         self.own_tab = ttk.Frame(self.tab_clt)
-        self.lang = main_stt_win.lang
+        self._lang = POPT_CFG.get_guiCFG_language()
         self._stat_call = self.station_setting.stat_parm_Call
         self._gui = PORT_HANDLER.get_gui()
         #################
         # Call
         call_x = 20
         call_y = 570
-        call_label = tk.Label(self.own_tab, text=f'{STR_TABLE["call"][self.lang]}:')
+        call_label = tk.Label(self.own_tab, text=f'{STR_TABLE["call"][self._lang]}:')
         call_label.place(x=call_x, y=height - call_y)
         self.call = tk.Entry(self.own_tab, width=10)
         self.call.place(x=call_x + 55, y=height - call_y)
@@ -114,7 +114,7 @@ class StatSetTab:
         # Name
         name_x = 10
         name_y = 120
-        name_label = tk.Label(r_side_frame, text=f'{STR_TABLE["name"][self.lang]}:')
+        name_label = tk.Label(r_side_frame, text=f'{STR_TABLE["name"][self._lang]}:')
         name_label.place(x=name_x, y=f_height - name_y)
         self._name = tk.Entry(r_side_frame, width=15)
         self._name.place(x=name_x + 75, y=f_height - name_y)
@@ -251,28 +251,28 @@ class StatSetTab:
         # TX FILE
         _x = 10
         _y = 60
-        tk.Label(tab_pipe, text=f"{STR_TABLE['tx_file'][self.lang]}:").place(x=_x, y=_y)
+        tk.Label(tab_pipe, text=f"{STR_TABLE['tx_file'][self._lang]}:").place(x=_x, y=_y)
         self._tx_filename_var = tk.StringVar(tab_pipe)
         # self._tx_filename_var.set(self.pipe.tx_filename)
         self._tx_filename = tk.Entry(tab_pipe, textvariable=self._tx_filename_var, width=50)
         # self._tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         self._tx_filename.place(x=_x + 140, y=_y)
         tk.Button(tab_pipe,
-                  text=f"{STR_TABLE['file_1'][self.lang]}",
+                  text=f"{STR_TABLE['file_1'][self._lang]}",
                   command=lambda: self.select_files(tx=True)
                   ).place(x=_x + 710, y=_y - 2)
         #################################
         # RX FILE
         _x = 10
         _y = 100
-        tk.Label(tab_pipe, text=f"{STR_TABLE['rx_file'][self.lang]}:").place(x=_x, y=_y)
+        tk.Label(tab_pipe, text=f"{STR_TABLE['rx_file'][self._lang]}:").place(x=_x, y=_y)
         self._rx_filename_var = tk.StringVar(tab_pipe)
         # self.rx_filename_var.set(self.pipe.rx_filename)
         self._rx_filename = tk.Entry(tab_pipe, textvariable=self._rx_filename_var, width=50)
         # self._tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         self._rx_filename.place(x=_x + 140, y=_y)
         tk.Button(tab_pipe,
-                  text=f"{STR_TABLE['file_1'][self.lang]}",
+                  text=f"{STR_TABLE['file_1'][self._lang]}",
                   command=lambda: self.select_files(tx=False)
                   ).place(x=_x + 710, y=_y - 2)
 
@@ -319,13 +319,13 @@ class StatSetTab:
         self._qso_bg_tx = self.station_setting.stat_parm_qso_col_bg
         self._qso_fg_rx = self.station_setting.stat_parm_qso_col_text_rx
 
-        self._textTab.add(tab_ctext, text=STR_TABLE['c_text'][self.lang])
-        self._textTab.add(tab_byetext, text=STR_TABLE['q_text'][self.lang])
-        self._textTab.add(tab_infotext, text=STR_TABLE['i_text'][self.lang])
-        self._textTab.add(tab_loinfotext, text=STR_TABLE['li_text'][self.lang])
-        self._textTab.add(tab_akttext, text=STR_TABLE['news_text'][self.lang])
+        self._textTab.add(tab_ctext, text=STR_TABLE['c_text'][self._lang])
+        self._textTab.add(tab_byetext, text=STR_TABLE['q_text'][self._lang])
+        self._textTab.add(tab_infotext, text=STR_TABLE['i_text'][self._lang])
+        self._textTab.add(tab_loinfotext, text=STR_TABLE['li_text'][self._lang])
+        self._textTab.add(tab_akttext, text=STR_TABLE['news_text'][self._lang])
         self._textTab.add(tab_pipe, text='Pipe')
-        self._textTab.add(tab_colors, text=STR_TABLE['qso_win_color'][self.lang])
+        self._textTab.add(tab_colors, text=STR_TABLE['qso_win_color'][self._lang])
 
         self._update_vars_fm_cfg()
 
@@ -354,7 +354,7 @@ class StatSetTab:
 
         if fg_bg == 'tx_fg':
             col = askcolor(self._qso_fg_tx,
-                           title=STR_TABLE['text_color'][self.lang])
+                           title=STR_TABLE['text_color'][self._lang])
             if not col:
                 self._main_cl.settings_win.attributes("-topmost", True)
                 return
@@ -365,7 +365,7 @@ class StatSetTab:
             self._color_example_text.configure(fg=str(col[1]))
         elif fg_bg == 'tx_bg':
             col = askcolor(self._qso_bg_tx,
-                           title=STR_TABLE['text_color'][self.lang])
+                           title=STR_TABLE['text_color'][self._lang])
             if not col:
                 self._main_cl.settings_win.attributes("-topmost", True)
                 return
@@ -377,7 +377,7 @@ class StatSetTab:
             self._color_example_text_rx.configure(bg=str(col[1]))
         elif fg_bg == 'rx_fg':
             col = askcolor(self._qso_fg_rx,
-                           title=STR_TABLE['text_color'][self.lang])
+                           title=STR_TABLE['text_color'][self._lang])
             if not col:
                 self._main_cl.settings_win.attributes("-topmost", True)
                 return
@@ -612,7 +612,7 @@ class StatSetTab:
 class StationSettingsWin:
     def __init__(self, main_cl):
         self._root_win = main_cl
-        self.lang = self._root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
 
         self.win_height = 600
         self.win_width = 1059
@@ -620,7 +620,7 @@ class StationSettingsWin:
         # self.settings_win = tk.Tk()
         self.settings_win = tk.Toplevel()
         # self.settings_win.option_add('*Dialog.msg.font', 'Helvetica 8')
-        self.settings_win.title(STR_TABLE['stat_settings'][self.lang])
+        self.settings_win.title(STR_TABLE['stat_settings'][self._lang])
         self.settings_win.geometry("{}x{}".format(self.win_width, self.win_height))
         self.settings_win.geometry(f"{self.win_width}x"
                                    f"{self.win_height}+"
@@ -637,7 +637,7 @@ class StationSettingsWin:
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self.settings_win,
-                          text=STR_TABLE['OK'][self.lang],
+                          text=STR_TABLE['OK'][self._lang],
                           # font=("TkFixedFont", 15),
                           # bg="green",
                           height=1,
@@ -645,7 +645,7 @@ class StationSettingsWin:
                           command=self._ok_btn_cmd)
 
         save_bt = tk.Button(self.settings_win,
-                            text=STR_TABLE['save'][self.lang],
+                            text=STR_TABLE['save'][self._lang],
                             # font=("TkFixedFont", 15),
                             # bg="green",
                             height=1,
@@ -653,7 +653,7 @@ class StationSettingsWin:
                             command=self._save_btn_cmd)
 
         cancel_bt = tk.Button(self.settings_win,
-                              text=STR_TABLE['cancel'][self.lang],
+                              text=STR_TABLE['cancel'][self._lang],
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               height=1,
@@ -665,14 +665,14 @@ class StationSettingsWin:
         ####################################
         # New Station, Del Station Buttons
         new_st_bt = tk.Button(self.settings_win,
-                              text=STR_TABLE['new_stat'][self.lang],
+                              text=STR_TABLE['new_stat'][self._lang],
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               height=1,
                               width=10,
                               command=self._new_stat_btn_cmd)
         del_st_bt = tk.Button(self.settings_win,
-                              text=STR_TABLE['delete'][self.lang],
+                              text=STR_TABLE['delete'][self._lang],
                               # font=("TkFixedFont", 15),
                               bg="red3",
                               height=1,
@@ -723,33 +723,33 @@ class StationSettingsWin:
                 # pipe_cfgs = POPT_CFG.get_pipe_CFG().get(f'{-1}-{stat_conf.stat_parm_Call}', {})
                 save_station_to_file(stat_conf)
         self._root_win.save_GUIvars()
-        self._root_win.sysMsg_to_monitor(STR_TABLE['suc_save'][self.lang])
+        self._root_win.sysMsg_to_monitor(STR_TABLE['suc_save'][self._lang])
 
     def _save_btn_cmd(self):
         # TODO Cleanup
         PORT_HANDLER.disco_all_Conn()
         self.settings_win.attributes("-topmost", False)
-        messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
+        messagebox.showinfo(STR_TABLE['all_station_get_disco_hint_1'][self._lang], STR_TABLE['all_station_get_disco_hint_2'][self._lang])
         self.settings_win.attributes("-topmost", True)
         time.sleep(1)  # TODO Quick fix
         # TODO PORT_HANDLER.is_all_disco()
         PORT_HANDLER.disco_all_Conn()
         self._set_all_vars_to_cfg()
         self._save_cfg_to_file()
-        self._root_win.sysMsg_to_monitor(STR_TABLE['lob1'][self.lang])
+        self._root_win.sysMsg_to_monitor(STR_TABLE['lob1'][self._lang])
 
     def _ok_btn_cmd(self):
         # TODO Cleanup
         if not PORT_HANDLER.is_all_disco():
             PORT_HANDLER.disco_all_Conn()
-            messagebox.showerror('Stationen nicht disconnected', 'Nicht alle Stationen disconnected!')
+            messagebox.showerror(STR_TABLE['not_all_station_disco_hint_1'][self._lang], STR_TABLE['not_all_station_disco_hint_2'][self._lang])
             self.settings_win.lift()
             return
         self._set_all_vars_to_cfg()
         self._save_cfg_to_file()
         self._root_win.set_text_tags()
-        self._root_win.sysMsg_to_monitor(STR_TABLE['hin1'][self.lang])
-        self._root_win.sysMsg_to_monitor(STR_TABLE['lob2'][self.lang])
+        self._root_win.sysMsg_to_monitor(STR_TABLE['hin1'][self._lang])
+        self._root_win.sysMsg_to_monitor(STR_TABLE['lob2'][self._lang])
 
         self.destroy()
 
@@ -770,8 +770,7 @@ class StationSettingsWin:
 
     def _del_station_btn(self):
         self.settings_win.attributes("-topmost", False)
-        msg = AskMsg(titel='lösche Station', message="Willst du diese Station wirklich löschen? \n"
-                                                     "Alle Einstellungen sowie Texte gehen verloren !")
+        msg = AskMsg(titel=STR_TABLE['del_station_hint_1'][self._lang], message=STR_TABLE['del_station_hint_2'][self._lang])
         # self.settings_win.lift()
         if msg:
             try:
@@ -786,11 +785,10 @@ class StationSettingsWin:
                 del self._tab_list[ind]
                 self._tabControl.forget(ind)
 
-                WarningMsg('Station gelöscht', 'Laufwerk C: wurde erfolgreich formatiert.')
-                self._root_win.sysMsg_to_monitor('Hinweis: Station erfolgreich gelöscht.')
+                WarningMsg(STR_TABLE['del_station_warning_1'][self._lang], STR_TABLE['del_station_warning_2'][self._lang])
+                self._root_win.sysMsg_to_monitor(STR_TABLE['del_station_hint'][self._lang])
         else:
-            InfoMsg('Abgebrochen', 'Das war eine gute Entscheidung. '
-                                   'Mach weiter so. Das hast du gut gemacht.')
-            self._root_win.sysMsg_to_monitor('Hinweis: Knack!! Abgebrochen..')
+            InfoMsg(STR_TABLE['aborted'][self._lang], STR_TABLE['lob3'][self._lang])
+            self._root_win.sysMsg_to_monitor(STR_TABLE['hin2'][self._lang])
         self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)

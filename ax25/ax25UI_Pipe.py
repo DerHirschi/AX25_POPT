@@ -2,13 +2,12 @@ import time
 
 from cfg.default_config import getNew_pipe_cfg
 from fnc.file_fnc import check_file
-from fnc.ax25_fnc import reverse_uid, validate_ax25Call, build_ax25uid
+from fnc.ax25_fnc import validate_ax25Call, build_ax25uid
 
 from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
 
 
 class AX25Pipe(object):
-    # TODO: Cleanup/Opt !!!
     def __init__(self,
                  connection=None,
                  pipe_cfg: dict=None,
@@ -45,37 +44,31 @@ class AX25Pipe(object):
 
         if not validate_ax25Call(pipe_cfg.get('pipe_parm_own_call', '')):
             raise AttributeError
-
+        """
         print("New Pipe !")
         for p_name, param in pipe_cfg.items():
             print(f"{p_name}: {param}")
         print(f"Conn: {connection}")
+        """
         self._pipe_cfg = pipe_cfg
         self._tx_filename = pipe_cfg.get('pipe_parm_pipe_tx', '')
         self._rx_filename = pipe_cfg.get('pipe_parm_pipe_rx', '')
         self._parm_tx_file_check_timer = pipe_cfg.get('pipe_parm_pipe_loop_timer', 10)
-        self._port_id = int(pipe_cfg.get('pipe_parm_port', -1))
+        # self._port_id = int(pipe_cfg.get('pipe_parm_port', -1))
         self._parm_pac_len = pipe_cfg.get('pipe_parm_PacLen', 128)
         self._parm_max_pac = pipe_cfg.get('pipe_parm_MaxFrame', 3)
         self._parm_max_pac_timer = pipe_cfg.get('pipe_parm_MaxPacDelay', 30)
-        self._isProto = pipe_cfg.get('pipe_parm_Proto', True)
+        # self._isProto = pipe_cfg.get('pipe_parm_Proto', True)
         self._add_str = pipe_cfg.get('pipe_parm_address_str', '')
         self._own_call = pipe_cfg.get('pipe_parm_own_call', '')
         self._dest_call = self._add_str.split(' ')[0]
         self._via_calls = self._add_str.split(' ')[1:]
         for call in self._via_calls:
             if not validate_ax25Call(call):
-                raise ConfigError
-        # self._ax25_frame = AX25Frame()
-        # self._ax25_frame.from_call.call_str = pipe_cfg.get('pipe_parm_own_call', '')
-        # self._ax25_frame.ctl_byte.UIcByte()
-        # self._ax25_frame.ctl_byte.cmd = pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0]
-        # self._ax25_frame.ctl_byte.pf = pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1]
-        # self._ax25_frame.pid_byte.pac_types[int(pipe_cfg.get('pipe_parm_pid', 0xf0))]()
+                raise AttributeError
 
         if self._connection:
             self._uid = self._connection.uid
-            print(f"pipeUID fm Conn: {self._uid}")
         else:
             self._uid = build_ax25uid(
                 from_call_str=self._own_call,
@@ -83,7 +76,6 @@ class AX25Pipe(object):
                 via_calls=self._via_calls,
                 dec = False
             )
-            print(f"pipeUID fm Frame: {self._uid}")
         self._max_pac_timer = time.time()
         self._tx_file_check_timer = time.time()
         """ Buffers buffers buffers. We have Ram, so we need more buffer. !! TODO CLEANUP !! """
@@ -92,10 +84,7 @@ class AX25Pipe(object):
         self.tx_frame_buf = []
         """ Protocoled Pipe """
 
-        # self.change_settings()
-
     def cron_exec(self):
-        # self.save_rx_buff_to_file()
         if self._tx_filename or self._rx_filename:
             self._tx_file_cron()
             self._tx_cron()
@@ -121,7 +110,6 @@ class AX25Pipe(object):
                 new_frame.via_calls = via_calls_fm_str(' '.join(self._via_calls))
                 new_frame.ctl_byte.UIcByte()
                 new_frame.pid_byte.pac_types[int(self._pipe_cfg.get('pipe_parm_pid', 0xf0))]()
-                # new_frame.ctl_byte = self._ax25_frame.ctl_byte
                 new_frame.ctl_byte.cmd = self._pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0]
                 new_frame.ctl_byte.pf = self._pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1]
                 new_frame.payload = self._tx_data[:min(len(self._tx_data), self._parm_pac_len)]
@@ -136,36 +124,6 @@ class AX25Pipe(object):
 
     def _set_parm_max_pac_timer(self):
         self._max_pac_timer = self._parm_max_pac_timer + time.time()
-
-    def set_dest_add(self, address_str):
-        if not address_str:
-            return False
-        dest_add = via_calls_fm_str(address_str)
-        self._ax25_frame.to_call.call_str = dest_add[0].call_str
-        if len(dest_add) > 1:
-            self._ax25_frame.via_calls = dest_add[1:]
-
-    def change_settings(self):
-        if self._connection:
-            self._ax25_frame = AX25Frame(dict(
-                uid=str(self._connection.uid),
-                from_call_str=str(self._connection.my_call_str),
-                to_call_str=str(self._connection.to_call_str),
-                via_calls=list(self._connection.via_calls),
-                axip_add=tuple(self._connection.axip_add),
-                digi_call=str(self._connection.digi_call),
-            ))
-        if not self._ax25_frame.from_call.call_str:
-            return False
-        if not self._ax25_frame.to_call.call_str:
-            return False
-        self._ax25_frame.encode_ax25frame()
-        self._uid = self._ax25_frame.addr_uid
-        self._add_str = ' '.join(reverse_uid(self._uid).split(':')[1:])
-
-        self._rx_data += self._ax25_frame.to_call.call_str.encode() + b' ' + self._uid.encode() + b'\r'  # Maybe optional
-        self._save_rx_buff_to_file()
-        return True
 
     def _check_parm_max_pac_timer(self):
         if self._max_pac_timer < time.time():

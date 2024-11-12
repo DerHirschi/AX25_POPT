@@ -439,39 +439,27 @@ class AX25Conn:
     def _pipe_rx(self, raw_data: b''):
         if self.pipe is None:
             return False
-        res = self.pipe.handle_rx_rawdata(raw_data)
-        print(f"PIPE-RX: {res}")
+        self.pipe.handle_rx_rawdata(raw_data)
         return True
 
     def set_pipe(self, pipe_cfg=None):
         if not pipe_cfg:
             pipe_cfg = POPT_CFG.get_pipe_CFG().get(f'{self.own_port.port_id}-{self.my_call_str}', getNew_pipe_cfg())
-        """
-        if not pipe_cfg:
-            pipe_cfg = getNew_pipe_cfg()
-            pipe_cfg['pipe_parm_own_call'] = str(self.my_call_str)
-            pipe_cfg['pipe_parm_port'] = int(self.own_port.port_id)
-            pipe_cfg['pipe_parm_Proto'] = True
-            pipe_cfg['pipe_parm_permanent'] = False
-            pipe_cfg['pipe_parm_PacLen'] = 0
-            pipe_cfg['pipe_parm_MaxFrame'] = 0
-            pipe_cfg['pipe_parm_pipe_tx'] = f'{self.ch_index}-{self.my_call_str}-{self.to_call_str}-tx.txt'
-            pipe_cfg['pipe_parm_pipe_rx'] = f'{self.ch_index}-{self.my_call_str}-{self.to_call_str}-rx.txt'
-        """
+
         try:
             pipe = AX25Pipe(
                 connection=self,
                 pipe_cfg=pipe_cfg
             )
         except AttributeError:
-            print("Pipe Error (AX25Conn-set_pipe())")
+            # print("Pipe Error (AX25Conn-set_pipe())")
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
-            self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', 128)
+            self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', self.parm_PacLen)
         if pipe_cfg.get('pipe_parm_MaxFrame', 0):
-            self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', 3)
+            self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', self.parm_MaxFrame)
         if not self.own_port.add_pipe(pipe=pipe):
-            print("Port no Pipe")
+            # print("Port no Pipe")
             return False
         self.cli = cli.cliMain.NoneCLI(self)
         self.cli_type = ''
