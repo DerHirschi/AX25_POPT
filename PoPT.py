@@ -8,7 +8,7 @@ import gui.guiMain
 
 
 if __name__ == '__main__':
-    logger.info(f"PoPT_{VER} erfolgreich start....")
+    logger.info(f"PoPT_{VER} erfolgreich gestartet....")
     #############
     # INIT GUI
     # TODO: if setting_gui (running without GUI option):

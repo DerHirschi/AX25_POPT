@@ -6,8 +6,6 @@ if DEBUG_LOG:
 else:
     log_level = logging.INFO
 
-
-# log_level = logging.INFO
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logging.getLogger("chardet").setLevel(logging.WARNING)
 logging.getLogger("aprslib").setLevel(logging.INFO)
@@ -15,7 +13,7 @@ logging.getLogger("aprslib").setLevel(logging.INFO)
 logger = logging.getLogger('PoPT')
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s: %(filename)s:%(funcName)s()> %(message)s",
+    format="%(asctime)s - %(levelname)s - %(name)s: %(filename)s:%(funcName)s()> %(message)s",
     filename='error.log',
     filemode='w',
     level=log_level

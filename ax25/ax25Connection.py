@@ -121,14 +121,18 @@ class AX25Conn:
         if rx:
             # TODO Clean up !!!
             self.uid = str(reverse_uid(ax25_conf.get('uid', '')))  # Unique ID for Connection
+            self.to_call_str_add = str(ax25_conf.get('from_call_str', ''))
             self.to_call_str = str(ax25_conf.get('from_call_str', ''))
+            self.my_call_str_add = str(ax25_conf.get('to_call_str', ''))
             self.my_call_str = str(ax25_conf.get('to_call_str', ''))
             self.my_call = str(ax25_conf.get('to_call', ''))
             self.via_calls = list(ax25_conf.get('via_calls_str', []))
             self.via_calls.reverse()
         else:
             self.uid = str(ax25_conf.get('uid', ''))  # Unique ID for Connection
+            self.to_call_str_add = str(ax25_conf.get('to_call_str', ''))
             self.to_call_str = str(ax25_conf.get('to_call_str', ''))
+            self.my_call_str_add = str(ax25_conf.get('from_call_str', ''))
             self.my_call_str = str(ax25_conf.get('from_call_str', ''))
             self.my_call = str(ax25_conf.get('from_call', ''))
             self.via_calls = list(ax25_conf.get('via_calls_str', []))
@@ -1008,8 +1012,8 @@ class AX25Conn:
     def _get_new_ax25frame(self):
         pac = AX25Frame(dict(
             uid=str(self.uid),
-            from_call_str=str(self.my_call_str),
-            to_call_str=str(self.to_call_str),
+            from_call_str=str(self.my_call_str_add),
+            to_call_str=str(self.to_call_str_add),
             via_calls=list(self.via_calls),
             axip_add=tuple(self.axip_add),
             digi_call=str(self.digi_call)
