@@ -82,8 +82,9 @@ class AX25Port(threading.Thread):
         # self.axip_anti_spam = {}
         try:
             self.init()
-        except AX25DeviceFAIL as e:
-            raise e
+        except AX25DeviceFAIL:
+            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
+            AX25DeviceFAIL(self)
 
     def init(self):
         pass
@@ -839,7 +840,7 @@ class AX25Port(threading.Thread):
                 ##############################################
                 buf: RxBuf = self.rx()
                 ##############################################
-            except AX25DeviceERROR as e:
+            except AX25DeviceERROR:
                 # print(e)
                 # time.sleep(0.05)
                 # self.close()
@@ -848,6 +849,7 @@ class AX25Port(threading.Thread):
                 # self.close()
                 break
             if buf is None:
+                time.sleep(0.05)
                 break
             if not buf.raw_data:  # RX ############
                 time.sleep(0.05)
@@ -914,7 +916,7 @@ class KissTCP(AX25Port):
                 # self.device.shutdown(socket.SHUT_RDWR)
                 # self.device.close()
                 self.close_device()
-                # raise AX25DeviceFAIL
+                raise AX25DeviceFAIL
 
             else:
                 if self.kiss.is_enabled:
@@ -962,11 +964,13 @@ class KissTCP(AX25Port):
     def rx(self):
         try:
             recv_buff = self.device.recv(999)
-        except socket.timeout:
+        except socket.timeout as e:
             # self.device.close()
-            raise AX25DeviceERROR
-        except OSError:
-            raise AX25DeviceERROR
+            # raise AX25DeviceERROR(e, self)
+            # raise AX25DeviceERROR
+            return None
+        except OSError as e:
+            raise AX25DeviceERROR(e, self)
         ret = RxBuf()
 
         if recv_buff:
@@ -1011,6 +1015,7 @@ class KISSSerial(AX25Port):
                 logger.error('{}'.format(e))
                 print('{}'.format(e))
                 self.close_device()
+                raise AX25DeviceFAIL
             else:
                 if self.kiss.is_enabled:
                     tnc_banner = self.device.readall().decode('UTF-8', 'ignore')
@@ -1029,7 +1034,10 @@ class KISSSerial(AX25Port):
 
     def _reinit(self):
         self._close_dev()
-        self.init()
+        try:
+            self.init()
+        except AX25DeviceFAIL:
+            raise AX25DeviceFAIL
 
     def close_device(self):
         self.loop_is_running = False
@@ -1078,8 +1086,9 @@ class KISSSerial(AX25Port):
                     # self.init()
                     self._reinit()
                 except AX25DeviceFAIL:
+                    self.close_device()
                     logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
-                    raise AX25DeviceFAIL
+                    raise AX25DeviceERROR
             else:
                 ret = RxBuf()
                 if recv_buff:
@@ -1098,13 +1107,11 @@ class KISSSerial(AX25Port):
             except AX25DeviceFAIL:
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
                 self.close_device()
-                # raise AX25DeviceFAIL
-                return
+                raise AX25DeviceERROR
         if self.device is None:
             logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
             self.close_device()
-            # raise AX25DeviceFAIL
-            return
+            raise AX25DeviceERROR
 
         try:
             self.device.write(self.kiss.kiss(frame.data_bytes))
@@ -1117,7 +1124,8 @@ class KISSSerial(AX25Port):
                 self._reinit()
             except AX25DeviceFAIL:
                 logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
-                raise AX25DeviceFAIL
+                self.close_device()
+                raise AX25DeviceERROR
         # else:
         #     self._mh.bw_mon_inp(frame, self.port_id)
 
@@ -1147,7 +1155,7 @@ class AXIP(AX25Port):
                 # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 self.device_is_running = False
-                # raise AX25DeviceFAIL
+                raise AX25DeviceFAIL
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)

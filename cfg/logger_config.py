@@ -13,7 +13,8 @@ logging.getLogger("aprslib").setLevel(logging.INFO)
 logger = logging.getLogger('PoPT')
 
 logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s: %(filename)s:%(funcName)s()> %(message)s",
+    # format="%(asctime)s - %(levelname)s - %(name)s: %(filename)s:%(funcName)s()> %(message)s",
+    format="%(asctime)s - %(levelname)s - %(name)s: %(filename)s> %(message)s",
     filename='error.log',
     filemode='w',
     level=log_level

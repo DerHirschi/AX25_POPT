@@ -2,6 +2,7 @@ import datetime
 import time
 import threading
 
+from ax25.ax25Error import AX25DeviceFAIL
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
@@ -306,12 +307,15 @@ class AX25PortHandler(object):
         # Init CFG
         cfg = PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
         if not cfg.parm_PortTyp:
-            logger.error('No Port-Typ selected for Port {}'.format(cfg.parm_PortNr))
-            self.sysmsg_to_gui(STR_TABLE['no_port_typ'][self._language].format(cfg.parm_PortNr))
+            logger.info('Port {} disabled.'.format(cfg.parm_PortNr))
+            # self.sysmsg_to_gui(STR_TABLE['no_port_typ'][self._language].format(cfg.parm_PortNr))
             return False
         #########################
         # Init Port/Device
-        temp = self._ax25types[cfg.parm_PortTyp](cfg, self)
+        try:
+            temp = self._ax25types[cfg.parm_PortTyp](cfg, self)
+        except AX25DeviceFAIL:
+            return False
         ##########################
         # Start Port/Device Thread
         temp.start()
