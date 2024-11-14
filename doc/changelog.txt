@@ -11,6 +11,8 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - weitere Übersetzungen
+- UI-Pipe-Einstellungen sind jetzt permanent (werden gespeichert)
+- Default C-Text als Vorgabe. (Kann natürlich gelöscht/geändert werden)
 
 ###########################################################################################################
 ###########################################################################################################

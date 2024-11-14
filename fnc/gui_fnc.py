@@ -86,4 +86,3 @@ def detect_pressed(event, entry):
     if len(key) == 1:
         pos = entry.index('insert')
         entry.delete(pos, 'end')
-

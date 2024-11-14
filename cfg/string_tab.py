@@ -22,6 +22,132 @@ STR_TABLE = {
     #  PT
     #  IT
     #  ?
+    'default_ctext': (
+        # GER
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # ENG
+        ('\n'
+       '-= Hello $destName, =-\n' 
+       '-= welcome to $ownCall ($distance km), =-\n'
+       '-= on Terminal-Channel $channel <> Port $portNr. =-\n'
+       "-= That's your connect No. $connNr. =-\n"
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Last Login at: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # NL
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # FR
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # FI
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # PL
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # PT
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # IT
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       'v'),
+        # ??????
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+    ),
+
+    'default_btext': (
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n'),
+
+    'call_vali_warning_1': (
+        'Call Format!',
+        'Call format!',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'call_vali_warning_2': (
+        'Max 6 Zeichen nur Großbuchstaben und Zahlen.',
+        'Max 6 characters only capital letters and numbers.',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'del_station_hint': (
         'Hinweis: Station erfolgreich gelöscht.',
         'Note: Station deleted successfully.',

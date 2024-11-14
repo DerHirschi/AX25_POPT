@@ -650,12 +650,14 @@ class AX25Frame:
                 self.to_call.dec_call(self.data_bytes[:7])
                 # print("ToCall > {}".format(self.hexstr[:7]))
             except IndexError:
-                print("Index ERROR To Call!!!!!!!!!!")
+                logger.error("DEC: Index ERROR To Call!!!!!!!!!!")
+                print("DEC: Index ERROR To Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             try:
                 self.from_call.dec_call(self.data_bytes[7:14])
                 # print("FromCall > {}".format(self.hexstr[7:14]))
             except IndexError:
+                logger.error("DEC: Index ERROR From Call!!!!!!!!!!")
                 print("Index ERROR From Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             n = 2
@@ -666,6 +668,7 @@ class AX25Frame:
                         tmp.dec_call(self.data_bytes[7 * n: 7 + 7 * n])
                         # print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
                     except IndexError:
+                        logger.error("DEC: Index ERROR Via Call!!!!!!!!!!")
                         print("Index ERROR Via Call!!!!!!!!!!")
                         raise AX25DecodingERROR(self)
                     self.via_calls.append(tmp)
@@ -710,7 +713,7 @@ class AX25Frame:
             if not self.validate():
                 raise AX25DecodingERROR(self)
 
-            self._decode_netrom()
+            # self._decode_netrom()
         else:
             raise AX25DecodingERROR(self)
 

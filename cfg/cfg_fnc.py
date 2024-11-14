@@ -127,6 +127,20 @@ def get_all_stat_CFGs():
     return ret
 
 
+def save_station_CFG_to_file(conf: dict):
+    if not conf:
+        return False
+    if not conf.get('stat_parm_Call', ''):
+        return False
+    if conf.get('stat_parm_Call', '') == getNew_station_cfg().get('stat_parm_Call', ''):
+        return False
+
+    exist_userpath(conf.get('stat_parm_Call', ''))
+    file = '{1}{0}/stat{0}.popt'.format(conf.get('stat_parm_Call', ''), CFG_usertxt_path)
+
+    save_to_file(file, conf)
+    return True
+
 def save_station_to_file(conf):
     if conf.stat_parm_Call != getNew_station_cfg().get('stat_parm_Call', ''):
         exist_userpath(conf.stat_parm_Call)
@@ -148,9 +162,23 @@ def save_station_to_file(conf):
         save_station['stat_parm_pipe_loop_timer'] = pipecfg.stat_parm_pipe.parm_tx_file_check_timer
         save_station['stat_parm_pipe'] = True
         """
-
-
         save_to_file(file, save_station)
+
+
+
+def del_user_data(call: str):
+    if not call:
+        return False
+    user_dir = '{0}{1}{2}'.format(CFG_data_path, CFG_usertxt_path, call)
+    if os.path.exists(user_dir):
+        files = [x[2] for x in os.walk(user_dir)][0]
+        for f in files:
+            f_dest = '{0}{1}{2}/{3}'.format(CFG_data_path, CFG_usertxt_path, call, f)
+            if os.path.exists(f_dest):
+                os.remove(f_dest)
+        os.rmdir(user_dir)
+        return True
+    return False
 
 
 def exist_userpath(usercall: str):

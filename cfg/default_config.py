@@ -209,6 +209,16 @@ def getNew_pipe_cfg():
 def getNew_station_cfg():
     return dict(
         stat_parm_Call='NOCALL',
+        stat_parm_Name='',
+        stat_parm_is_Digi=False,
+        stat_parm_cli_cfg=getNew_CLI_cfg(),
+        stat_parm_cli='NO-CLI',
+        # Optional Parameter. Overrides Port Parameter
+        stat_parm_PacLen=0,  # Max Pac len
+        stat_parm_MaxFrame=0,  # Max (I) Frames
+        stat_parm_qso_col_text_tx='white',
+        stat_parm_qso_col_bg='black',
+        stat_parm_qso_col_text_rx='#25db04',
 
     )
 

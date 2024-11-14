@@ -97,15 +97,12 @@ def validate_ax25Call(call_str: str):
         return False
 
     if ssid > 15 or ssid < 0:
-        print(f'Call validator ax25_fnc: SSID - {ssid}')
         return False
     # CALL
     if len(call) < 2 or len(call) > 6:    # Calls like CQ or ID
-        print(f'Call validator ax25_fnc: Call length - {call}')
         return False
 
     for c in call:
         if not any((c.isupper(), c.isdigit())):
-            print(f'Call validator ax25_fnc: CAll-Format - {call} -')
             return False
     return True

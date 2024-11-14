@@ -5,28 +5,30 @@ from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.config_station import del_user_data, DefaultStation
-from cfg.popt_config import POPT_CFG
-from cfg.cfg_fnc import save_station_to_file
+from cfg.config_station import del_user_data, DefaultStation, get_all_stat_cfg
+from cfg.cfg_fnc import save_station_to_file, save_station_CFG_to_file
 from cfg.constant import CFG_data_path, CFG_usertxt_path
-from cfg.default_config import getNew_CLI_DIGI_cfg, getNew_pipe_cfg
+from cfg.default_config import getNew_CLI_DIGI_cfg, getNew_pipe_cfg, getNew_station_cfg, getNew_CLI_cfg
 from cli.cliMain import CLI_OPT
+from fnc.ax25_fnc import validate_ax25Call
 from fnc.file_fnc import get_str_fm_file, save_str_to_file
 from gui.guiMsgBoxes import *
 from cfg.string_tab import STR_TABLE
 
 
 class StatSetTab:
-    def __init__(self, main_stt_win, setting, tabclt: ttk.Notebook):
-        self.tab_clt = tabclt
+    def __init__(self, main_stt_win, setting, new_setting, tabclt: ttk.Notebook):
         # self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
         height = main_stt_win.win_height
         width = main_stt_win.win_width
         self._main_cl = main_stt_win
-        self.station_setting = setting
         self.style = main_stt_win.style
-        self.own_tab = ttk.Frame(self.tab_clt)
+        self.own_tab = ttk.Frame(tabclt)
         self._lang = POPT_CFG.get_guiCFG_language()
+
+        self._new_station_setting = new_setting
+
+        self.station_setting = setting
         self._stat_call = self.station_setting.stat_parm_Call
         self._gui = PORT_HANDLER.get_gui()
         #################
@@ -155,13 +157,32 @@ class StatSetTab:
         tab_ctext.columnconfigure(0, minsize=2, weight=0)
         tab_ctext.columnconfigure(1, minsize=900, weight=1)
         tab_ctext.columnconfigure(2, minsize=2, weight=0)
+
+        c_text = self._load_fm_file(self._stat_call + '.ctx')
+        b_text = self._load_fm_file(self._stat_call + '.btx')
+        i_text = self._load_fm_file(self._stat_call + '.itx')
+        li_text = self._load_fm_file(self._stat_call + '.litx')
+        a_text = self._load_fm_file(self._stat_call + '.atx')
+        if c_text is None:
+            c_text = STR_TABLE['default_ctext'][self._lang]
+        if b_text is None:
+            b_text = ''
+        if i_text is None:
+            i_text = ''
+        if li_text is None:
+            li_text = ''
+        if a_text is None:
+            a_text = ''
+
+
+
         # self.c_text_ent = tk.Text(tab_ctext, bg='white', font=("Courier", 12))
         self._c_text_ent = tk.Text(tab_ctext, font=("Courier", 12))
         self._c_text_ent.configure(width=80, height=11)
         # self.c_text_ent.place(x=5, y=15)
         self._c_text_ent.grid(row=1, column=1)
         # self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)
-        self._c_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.ctx'))
+        self._c_text_ent.insert(tk.END, c_text)
 
         # Bye Text
         tab_byetext = ttk.Frame(self._textTab)
@@ -177,7 +198,7 @@ class StatSetTab:
         # self.bye_text_ent.place(x=5, y=15)
         self._bye_text_ent.grid(row=1, column=1)
         # self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
-        self._bye_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.btx'))
+        self._bye_text_ent.insert(tk.END, b_text)
 
         # Info Text
         tab_infotext = ttk.Frame(self._textTab)
@@ -193,7 +214,7 @@ class StatSetTab:
         # self.bye_text_ent.place(x=5, y=15)
         self._info_text_ent.grid(row=1, column=1)
         # self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
-        self._info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.itx'))
+        self._info_text_ent.insert(tk.END, i_text)
 
         # Info Text
         tab_loinfotext = ttk.Frame(self._textTab)
@@ -209,7 +230,7 @@ class StatSetTab:
         # self.bye_text_ent.place(x=5, y=15)
         self._long_info_text_ent.grid(row=1, column=1)
         # self.long_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_longitext)
-        self._long_info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.litx'))
+        self._long_info_text_ent.insert(tk.END, li_text)
 
         # Status Text
         tab_akttext = ttk.Frame(self._textTab)
@@ -225,7 +246,7 @@ class StatSetTab:
         # self.bye_text_ent.place(x=5, y=15)
         self._akt_info_text_ent.grid(row=1, column=1)
         # self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
-        self._akt_info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.atx'))
+        self._akt_info_text_ent.insert(tk.END, a_text)
         # ########################################################################################
         # ########################################################################################
         # Pipe
@@ -278,14 +299,11 @@ class StatSetTab:
 
         # Individual Colors for QSO Window
         tab_colors = ttk.Frame(self._textTab)
-        bg = self.station_setting.stat_parm_qso_col_bg
-        fg = self.station_setting.stat_parm_qso_col_text_tx
+
         self._color_example_text = tk.Text(tab_colors,
                                            height=5,
                                            width=50,
-                                           font=('Courier', 11),
-                                           fg=fg,
-                                           bg=bg)
+                                           font=('Courier', 11),)
         self._color_example_text.place(x=200, y=10)
         self._color_example_text.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
@@ -300,13 +318,11 @@ class StatSetTab:
                   command=lambda: self._choose_color('tx_bg')
                   ).place(x=20, y=100)
 
-        fg = self.station_setting.stat_parm_qso_col_text_rx
+
         self._color_example_text_rx = tk.Text(tab_colors,
                                               height=5,
                                               width=50,
-                                              font=('Courier', 11),
-                                              fg=fg,
-                                              bg=bg)
+                                              font=('Courier', 11),)
         self._color_example_text_rx.place(x=200, y=130)
         self._color_example_text_rx.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
@@ -314,10 +330,12 @@ class StatSetTab:
                   text='RX-Text',
                   command=lambda: self._choose_color('rx_fg')
                   ).place(x=20, y=140)
-
-        self._qso_fg_tx = self.station_setting.stat_parm_qso_col_text_tx
-        self._qso_bg_tx = self.station_setting.stat_parm_qso_col_bg
-        self._qso_fg_rx = self.station_setting.stat_parm_qso_col_text_rx
+        # stat_qso_col_tx = self._new_station_setting.get('stat_parm_qso_col_text_tx', 'white')
+        # stat_qso_col_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
+        # stat_qso_col_bg = self._new_station_setting.get('stat_parm_qso_col_bg', 'black')
+        self._qso_fg_tx = self._new_station_setting.get('stat_parm_qso_col_text_tx', 'white')
+        self._qso_bg_tx = self._new_station_setting.get('stat_parm_qso_col_bg', 'black')
+        self._qso_fg_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
 
         self._textTab.add(tab_ctext, text=STR_TABLE['c_text'][self._lang])
         self._textTab.add(tab_byetext, text=STR_TABLE['q_text'][self._lang])
@@ -334,10 +352,12 @@ class StatSetTab:
                       CFG_usertxt_path + \
                       self._stat_call + '/' + \
                       filename
-        out = get_str_fm_file(file_n)
+        """
         if out:
             return out
         return ''
+        """
+        return get_str_fm_file(file_n)
 
     def _save_to_file(self, filename: str, data: str):
         file_n = CFG_data_path + \
@@ -351,26 +371,28 @@ class StatSetTab:
 
     def _choose_color(self, fg_bg: str):
         self._main_cl.settings_win.attributes("-topmost", False)
-
+        self._main_cl.settings_win.lower()
         if fg_bg == 'tx_fg':
             col = askcolor(self._qso_fg_tx,
                            title=STR_TABLE['text_color'][self._lang])
+            self._main_cl.settings_win.lift()
             if not col:
-                self._main_cl.settings_win.attributes("-topmost", True)
+                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             if col[1] is None:
-                self._main_cl.settings_win.attributes("-topmost", True)
+                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             self._qso_fg_tx = str(col[1])
             self._color_example_text.configure(fg=str(col[1]))
         elif fg_bg == 'tx_bg':
             col = askcolor(self._qso_bg_tx,
                            title=STR_TABLE['text_color'][self._lang])
+            self._main_cl.settings_win.lift()
             if not col:
-                self._main_cl.settings_win.attributes("-topmost", True)
+                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             if col[1] is None:
-                self._main_cl.settings_win.attributes("-topmost", True)
+                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             self._qso_bg_tx = str(col[1])
             self._color_example_text.configure(bg=str(col[1]))
@@ -378,16 +400,17 @@ class StatSetTab:
         elif fg_bg == 'rx_fg':
             col = askcolor(self._qso_fg_rx,
                            title=STR_TABLE['text_color'][self._lang])
+            self._main_cl.settings_win.lift()
             if not col:
-                self._main_cl.settings_win.attributes("-topmost", True)
+                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             if col[1] is None:
-                self._main_cl.settings_win.attributes("-topmost", True)
+                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             self._qso_fg_rx = str(col[1])
             self._color_example_text_rx.configure(fg=str(col[1]))
-
-        self._main_cl.settings_win.attributes("-topmost", True)
+        self._main_cl.settings_win.lift()
+        # self._main_cl.settings_win.attributes("-topmost", True)
 
     def chk_CLI(self, event=None):
         print(self._cli_select_var.get())
@@ -427,12 +450,12 @@ class StatSetTab:
             ('text files', '*.txt'),
             ('All files', '*.*')
         )
-
+        self._main_cl.settings_win.lower()
         filenames = fd.askopenfilenames(
             title='Open files',
             initialdir='data/',
             filetypes=filetypes)
-
+        self._main_cl.settings_win.lift()
         if filenames:
             if tx:
                 self._tx_filename_var.set(filenames[0])
@@ -440,46 +463,89 @@ class StatSetTab:
                 self._rx_filename_var.set(filenames[0])
 
     def _update_vars_fm_cfg(self):
+        stat_call = self._new_station_setting.get('stat_parm_Call', '')
+        stat_name = self._new_station_setting.get('stat_name', '')
+        stat_is_digi = self._new_station_setting.get('stat_parm_is_Digi', False)
+        # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
+        stat_cli_typ = self._new_station_setting.get('stat_parm_cli', 'NO-CLI')
+        stat_paclen = self._new_station_setting.get('stat_parm_PacLen', 0)
+        stat_maxframe = self._new_station_setting.get('stat_parm_MaxFrame', 0)
+        stat_qso_col_tx = self._new_station_setting.get('stat_parm_qso_col_text_tx', 'white')
+        stat_qso_col_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
+        stat_qso_col_bg = self._new_station_setting.get('stat_parm_qso_col_bg', 'black')
+
+        self._qso_bg_tx = stat_qso_col_bg
+        self._qso_fg_tx = stat_qso_col_tx
+        self._qso_fg_rx = stat_qso_col_rx
+        self._color_example_text.configure(bg=stat_qso_col_bg)
+        self._color_example_text_rx.configure(bg=stat_qso_col_bg)
+
+        self._color_example_text.configure(fg=stat_qso_col_tx)
+        self._color_example_text_rx.configure(fg=stat_qso_col_rx)
+
         # CALL
         self.call.delete(0, tk.END)
-        self.call.insert(tk.END, self.station_setting.stat_parm_Call)
+        # self.call.insert(tk.END, self.station_setting.stat_parm_Call)
+        self.call.insert(tk.END, stat_call)
         # CLI
-        self._cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
+        # self._cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
+        self._cli_select_var.set(stat_cli_typ)
+        # Name
+        self._name.delete(0, tk.END)
+        # self._name.insert(tk.END, self.station_setting.stat_parm_Name)
+        self._name.insert(tk.END, stat_name)
+        # QTH TODO --- Global CFG
+        self._qth.delete(0, tk.END)
+        self._qth.insert(tk.END, str(self._gui.own_qth))
+        # LOC TODO --- Global CFG
+        self._loc.delete(0, tk.END)
+        self._loc.insert(tk.END, str(self._gui.own_loc))
         # Ports
 
         # MaxPac
-        self._max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
+        # self._max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
+        self._max_pac_select_var.set(str(stat_maxframe))  # default value
         self._max_pac.update()
         # PacLen
         self._pac_len.delete(0, tk.END)
-        self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
+        # self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
+        self._pac_len.insert(tk.END, str(stat_paclen))
         # DIGI
-        self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
+        # self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
+        self._digi_set_var.set(stat_is_digi)
         # self.digi.select()
+        c_text = self._load_fm_file(self._stat_call + '.ctx')
+        b_text = self._load_fm_file(self._stat_call + '.btx')
+        i_text = self._load_fm_file(self._stat_call + '.itx')
+        li_text = self._load_fm_file(self._stat_call + '.litx')
+        a_text = self._load_fm_file(self._stat_call + '.atx')
+        if c_text is None:
+            c_text = STR_TABLE['default_ctext'][self._lang]
+        if b_text is None:
+            b_text = STR_TABLE['default_btext'][self._lang]
+        if i_text is None:
+            i_text = ''
+        if li_text is None:
+            li_text = ''
+        if a_text is None:
+            a_text = ''
+
         # C-Text
         self._c_text_ent.delete('1.0', tk.END)
-        self._c_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.ctx'))
+        self._c_text_ent.insert(tk.END, c_text)
         # Bye Text
         self._bye_text_ent.delete('1.0', tk.END)
-        self._bye_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.btx'))
+        self._bye_text_ent.insert(tk.END, b_text)
         # Info Text
         self._info_text_ent.delete('1.0', tk.END)
-        self._info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.itx'))
+        self._info_text_ent.insert(tk.END,i_text)
         # Long Info Text
         self._long_info_text_ent.delete('1.0', tk.END)
-        self._long_info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.litx'))
+        self._long_info_text_ent.insert(tk.END, li_text)
         # News Text
         self._akt_info_text_ent.delete('1.0', tk.END)
-        self._akt_info_text_ent.insert(tk.END, self._load_fm_file(self._stat_call + '.atx'))
-        # Name
-        self._name.delete(0, tk.END)
-        self._name.insert(tk.END, self.station_setting.stat_parm_Name)
-        # QTH
-        self._qth.delete(0, tk.END)
-        self._qth.insert(tk.END, str(self._gui.own_qth))
-        # LOC
-        self._loc.delete(0, tk.END)
-        self._loc.insert(tk.END, str(self._gui.own_loc))
+        self._akt_info_text_ent.insert(tk.END, a_text)
+
         pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(self.station_setting.stat_parm_Call, -1)
         # get(self.station_setting.stat_parm_Call, {})
 
@@ -487,7 +553,8 @@ class StatSetTab:
             self._loop_timer.configure(state='disabled')
             self._tx_filename.configure(state='disabled')
             self._rx_filename.configure(state='disabled')
-            self._cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
+            # self._cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
+            self._cli_select_var.set(stat_cli_typ)
         else:
             self._cli_select_var.set('PIPE')  # default value
             self._c_text_ent.configure(state='disabled')
@@ -507,13 +574,15 @@ class StatSetTab:
 
     def set_vars_to_cfg(self):
         # CALL
-        call = self.call.get().upper()  # TODO Call/Input vali
+        call = self.call.get().upper()
+
         self.call.delete(0, tk.END)
         self.call.insert(tk.END, call)
         old_call = str(self.station_setting.stat_parm_Call)
         self.station_setting.stat_parm_Call = call
-        var_maxpac = 3
-        var_paclen = 128
+
+        var_maxpac = self._new_station_setting.get('stat_parm_MaxFrame', 0)
+        var_paclen = self._new_station_setting.get('stat_parm_PacLen', 0)
         try:
             # MaxPac
             var_maxpac = int(self._max_pac_select_var.get())
@@ -608,6 +677,38 @@ class StatSetTab:
         self.station_setting.stat_parm_qso_col_bg = self._qso_bg_tx
         self.station_setting.stat_parm_qso_col_text_rx = self._qso_fg_rx
 
+        #######################################################
+        #######################################################
+        # New CFG
+        self._new_station_setting['stat_parm_Call'] = str(call)
+        self._new_station_setting['stat_name'] = str(self._name.get())
+        self._new_station_setting['stat_parm_is_Digi'] = bool(self._digi_set_var.get())
+        self._new_station_setting['stat_parm_cli'] = str(cli_key)
+        self._new_station_setting['stat_parm_PacLen'] = int(var_paclen)
+        self._new_station_setting['stat_parm_MaxFrame'] = int(var_maxpac)
+        self._new_station_setting['stat_parm_qso_col_text_tx'] = str(self._qso_fg_tx)
+        self._new_station_setting['stat_parm_qso_col_text_rx'] = str(self._qso_fg_rx)
+        self._new_station_setting['stat_parm_qso_col_bg'] = str(self._qso_bg_tx)
+
+        # TODO Cleanup (dedicated digi CFG)
+        cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())
+        digi_cfg = cli_cfg.get('cli_digi_cfg', getNew_CLI_DIGI_cfg())
+        digi_cfg.update(dict(
+            digi_enabled=True,
+            digi_allowed_ports=[],
+            digi_max_buff=10,  # bytes till RNR
+            digi_max_n2=4,  # N2 till RNR
+        ))
+        cli_cfg = dict(
+            cli_typ=str(cli_key),
+            cli_prompt='',
+            cli_digi_cfg=digi_cfg,
+        )
+        self._new_station_setting['stat_parm_cli_cfg'] = dict(cli_cfg)
+        # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
+
+    def get_new_stat_sett(self):
+        return self._new_station_setting
 
 class StationSettingsWin:
     def __init__(self, main_cl):
@@ -691,17 +792,33 @@ class StationSettingsWin:
         # self.tab_index = 0
         self._tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
+        new_stat_settings = POPT_CFG.get_stat_CFGs()
         for k in PORT_HANDLER.ax25_stations_settings.keys():
             sett = PORT_HANDLER.ax25_stations_settings[k]
-            tab = StatSetTab(self, sett, self._tabControl)
+            new_sett = new_stat_settings.get(k, {})     # TODO
+            tab = StatSetTab(self, sett, new_sett, self._tabControl)
             self._tab_list.append(tab)
             self._tabControl.add(tab.own_tab, text=k)
+
+    def _call_vali(self):
+        for el in self._tab_list:
+            call = el.call.get().upper()
+            if not validate_ax25Call(call):
+                self.settings_win.lower()
+                call_vali_warning()
+                self.settings_win.lift()
+                el.call.select_range(0, 'end')
+                return False
+        return True
+
 
     def _set_all_vars_to_cfg(self):
         """
         for k in self.all_port_settings.keys():
             self.all_port_settings[k].parm_Stations = []
         """
+        if not self._call_vali():
+            return False
         dbl_calls = []
         for el in self._tab_list:
             call = el.call.get().upper()
@@ -717,20 +834,26 @@ class StationSettingsWin:
 
     def _save_cfg_to_file(self):
         for conf in self._tab_list:
-            stat_conf = conf.station_setting
-            if stat_conf.stat_parm_Call != DefaultStation.stat_parm_Call:
+            # stat_conf = conf.station_setting
+            new_stat_conf = conf.get_new_stat_sett()
+            if new_stat_conf.get('stat_parm_Call', '') != getNew_station_cfg().get('stat_parm_Call', ''):
                 # PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
                 # pipe_cfgs = POPT_CFG.get_pipe_CFG().get(f'{-1}-{stat_conf.stat_parm_Call}', {})
-                save_station_to_file(stat_conf)
+                # save_station_to_file(stat_conf)
+                save_station_CFG_to_file(new_stat_conf)
         self._root_win.save_GUIvars()
         self._root_win.sysMsg_to_monitor(STR_TABLE['suc_save'][self._lang])
 
     def _save_btn_cmd(self):
         # TODO Cleanup
         PORT_HANDLER.disco_all_Conn()
+
         self.settings_win.attributes("-topmost", False)
+        self.settings_win.lower()
         messagebox.showinfo(STR_TABLE['all_station_get_disco_hint_1'][self._lang], STR_TABLE['all_station_get_disco_hint_2'][self._lang])
-        self.settings_win.attributes("-topmost", True)
+        self.settings_win.lift()
+
+        # self.settings_win.attributes("-topmost", True)
         time.sleep(1)  # TODO Quick fix
         # TODO PORT_HANDLER.is_all_disco()
         PORT_HANDLER.disco_all_Conn()
@@ -755,7 +878,8 @@ class StationSettingsWin:
 
     def _new_stat_btn_cmd(self):
         sett = DefaultStation()
-        tab = StatSetTab(self, sett, self._tabControl)
+        new_sett = getNew_station_cfg()
+        tab = StatSetTab(self, sett, new_sett, self._tabControl)
         self._tabControl.add(tab.own_tab, text=sett.stat_parm_Call)
         self._tabControl.select(len(self._tab_list))
         self._tab_list.append(tab)

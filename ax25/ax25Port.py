@@ -193,15 +193,15 @@ class AX25Port(threading.Thread):
 
     def _rx_pipe_handler(self, ax25_frame):
         uid = ax25_frame.get_frame_conf().get('uid', '')
-        print(uid)
-        print(self.pipes.keys())
+        # logger.debug(uid)
+        # logger.debug(self.pipes.keys())
         if uid not in self.pipes.keys():
-            print('UI-Pipe: No UID')
+            # logger.debug('UI-Pipe: No UID')
             return False
         if self.pipes[uid].get_pipe_connection() is not None:
-            print('UI-Pipe: connection')
+            logger.debug('UI-Pipe: connection')
             return False
-        print('UI-Pipe: OK')
+        logger.debug('UI-Pipe: OK')
         self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
         return True
 

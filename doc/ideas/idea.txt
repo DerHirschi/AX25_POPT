@@ -4,6 +4,9 @@ Ideas/TODO's :
 ✓ Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
 - PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)
+- "Suspended" Filter
+  - Call/Station ablehnen
+  - Call/Station ignorieren
 - ESC Befehle
 ✓ UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   ✓ $ver = PoPT 2.xxx.x                         - Bake
@@ -28,7 +31,7 @@ Ideas/TODO's :
   - C-Texte umschaltbar in "global Settings (Seiten Frame)"
   - C-Texte umschaltbar nach PoPT-Scheduler
   - C-Texte automatisch umschaltbar je nach sysop aktivität (autom. AFK C-TEXT)
-  - UmgebungVARS
+  ✓ UmgebungVARS
 
 ✓ Config System überarbeiten
   - alle alten configs zu ins neue System übertragen ohne Datenverlust
