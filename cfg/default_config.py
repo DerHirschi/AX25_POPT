@@ -1,9 +1,10 @@
-from cfg.constant import LANGUAGE
+from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL
 from schedule.popt_sched import getNew_schedule_config
 
 
 #######################################
 # Station CLI CFG
+"""
 def getNew_CLI_DIGI_cfg():
     return dict(
         digi_enabled=False,
@@ -11,8 +12,8 @@ def getNew_CLI_DIGI_cfg():
         digi_max_buff=10,  # bytes till RNR
         digi_max_n2=4,  # N2 till RNR
     )
-
-
+"""
+"""
 def getNew_CLI_cfg():
     return dict(
         cli_typ='NO-CLI',
@@ -22,9 +23,9 @@ def getNew_CLI_cfg():
         # cli_akttext='',
         # cli_bye_text='',
         cli_prompt='',
-        cli_digi_cfg=getNew_CLI_DIGI_cfg(),
+        # cli_digi_cfg=getNew_CLI_DIGI_cfg(),
     )
-
+"""
 
 #######################################
 # PMS
@@ -172,16 +173,17 @@ def getNew_dualPort_cfg():
 # DIGI CFG
 def getNew_digi_cfg():
     return dict(
-        managed_digi=True,  # Managed-Digi/Smart-Digi/L3-Digi or Simple-DIGI
+        digi_enabled=False,     # Digi enabled
+        managed_digi=True,      # Managed-Digi/Smart-Digi/L3-Digi or Simple-DIGI
         # Managed-DIGI Parameter #######################################################
-        short_via_calls=True,  # Short VIA Call in AX25 Address
-        UI_short_via=True,  # UI-Frames Short VIA Call in AX25 Address
-        max_buff=10,  # bytes till RNR
-        max_n2=4,  # N2 till RNR
-        last_rx_fail_sec=60,  # sec fail when no SABM and Init state
-        digi_ssid_port=True,  # DIGI SSID = TX-Port
+        short_via_calls=True,   # Short VIA Call in AX25 Address
+        UI_short_via=True,      # UI-Frames Short VIA Call in AX25 Address
+        max_buff=10,            # bytes till RNR
+        max_n2=4,               # N2 till RNR
+        last_rx_fail_sec=60,    # sec fail when no SABM and Init state
+        digi_ssid_port=True,    # DIGI SSID = TX-Port
         # OR
-        digi_auto_port=True,  # Get TX-Port fm MH-List
+        digi_auto_port=True,    # Get TX-Port fm MH-List
     )
 
 #######################################
@@ -210,15 +212,16 @@ def getNew_station_cfg():
     return dict(
         stat_parm_Call='NOCALL',
         stat_parm_Name='',
-        stat_parm_is_Digi=False,
-        stat_parm_cli_cfg=getNew_CLI_cfg(),
+        # stat_parm_is_Digi=False,
+        # stat_parm_Digi_cfg=getNew_digi_cfg(),
+        # stat_parm_cli_cfg=getNew_CLI_cfg(),
         stat_parm_cli='NO-CLI',
         # Optional Parameter. Overrides Port Parameter
         stat_parm_PacLen=0,  # Max Pac len
         stat_parm_MaxFrame=0,  # Max (I) Frames
-        stat_parm_qso_col_text_tx='white',
-        stat_parm_qso_col_bg='black',
-        stat_parm_qso_col_text_rx='#25db04',
+        stat_parm_qso_col_text_tx=DEF_STAT_QSO_TX_COL,
+        stat_parm_qso_col_bg=DEF_STAT_QSO_RX_COL,
+        stat_parm_qso_col_text_rx=DEF_STAT_QSO_RX_COL,
 
     )
 

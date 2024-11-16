@@ -1,7 +1,8 @@
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg
 from cfg.constant import CFG_MAIN_data_file, LANGUAGE
-from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data  # , get_all_pipe_cfg
+from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
+    save_station_CFG_to_file  # , get_all_pipe_cfg
 from cfg.logger_config import logger
 
 
@@ -65,7 +66,6 @@ class Main_CFG:
             if cfg_key not in self._default_cfg_tab.keys():
                 del self._config[cfg_key]
             # TODO Clean Configs itself except gui_channel_vars
-        # self._config['pipe_cfg'] = {}
 
     ####################
     # File Fnc
@@ -112,12 +112,20 @@ class Main_CFG:
     def save_CFG_to_file(self):
         logger.info(f'Main CFG: Config Saved to {self._config_filename}')
         print(f'Main CFG: Config Saved to {self._config_filename}')
+        print('----------Stat CFG--------------')
+        print(self._config['stat_cfgs'])
+        tmp_stat_cfgs = dict(self._config['stat_cfgs'])
+        logger.debug(f'-------- Stat CFG --------')
+        for conf_k, conf in self._config.get('stat_cfgs', {}).items():
+            logger.debug(f'Station CFG: {conf_k}')
+            logger.debug(f'- {conf}')
         self._config['stat_cfgs'] = {}  # TODO just for DEBUGGING
         logger.info(f'-------- MAIN CFG Save --------')
         for conf_k, conf in self._config.items():
             logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
             logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
         save_to_file(self._config_filename, dict(self._config))
+        self._config['stat_cfgs'] = tmp_stat_cfgs
         logger.info(f'-------- MAIN CFG Save ENDE --------')
 
 
@@ -214,12 +222,33 @@ class Main_CFG:
     def get_digi_CFG_for_Call(self, call: str):
         return self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG())
 
+    def get_digi_is_enabled(self, call: str):
+        if not call:
+            return False
+        return self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG()).get('digi_enabled', False)
+
     @staticmethod
     def get_digi_default_CFG():
         return getNew_digi_cfg()
 
     def set_digi_CFG(self, cfg: dict):
         self._config['digi_cfg'] = dict(cfg)
+        return True
+
+    def set_digi_CFG_f_call(self, call: str, cfg: dict):
+        if not call:
+            return False
+        if call == 'NOCALL':
+            return False
+        self._config['digi_cfg'][call] = dict(cfg)
+        return True
+
+    def del_digi_CFG_fm_call(self, call: str):
+        if not call:
+            return False
+        if call not in self._config.get('digi_cfg', {}):
+            return False
+        del self._config['digi_cfg'][call]
 
     ###########################################
     # PIPE
@@ -256,7 +285,7 @@ class Main_CFG:
             print(f"Del Pipe-CFG: {uid}")
             del self._config['pipe_cfgs'][uid]
 
-    def del_all_pipe_CFG_fm_call(self, call: str):
+    def del_pipe_CFG_fm_call(self, call: str):
         if not call:
             return False
         for k in list(self.get_pipe_CFG().keys()):
@@ -275,12 +304,24 @@ class Main_CFG:
             return {}
         return self._config.get('stat_cfgs', {}).get(call, {})
 
+    def set_stat_CFG_fm_conf(self, conf: dict):
+        if not conf:
+            return False
+        stat_call = conf.get('stat_parm_Call', '')
+        if not stat_call:
+            return False
+        self._config['stat_cfgs'][stat_call] = dict(conf)
+        save_station_CFG_to_file(dict(conf))
+        return True
+
     def del_stat_CFG_fm_call(self, call):
         if not call:
             return False
         if call not in self._config.get('stat_cfgs', {}):
             return False
         del self._config['stat_cfgs'][call]
-        del_user_data(call)
+        self.del_pipe_CFG_fm_call(call=call)
+        self.del_digi_CFG_fm_call(call=call)
+        del_user_data(call=call)
 
 POPT_CFG = Main_CFG()

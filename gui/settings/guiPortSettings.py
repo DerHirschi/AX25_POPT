@@ -5,8 +5,10 @@ from tkinter import ttk as ttk, messagebox
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
-from cfg.config_station import get_all_stat_cfg, del_port_data, DefaultPort
+from cfg.config_station import DefaultPort
+from cfg.cfg_fnc import del_port_data
 from fnc.os_fnc import is_linux
 from cfg.string_tab import STR_TABLE
 
@@ -404,7 +406,8 @@ class PortSetTab:
         # Station CFGs
 
         self._stat_check_vars = {}
-        self._all_stat_cfgs = get_all_stat_cfg()
+        # self._all_stat_cfgs = get_all_stat_cfg()
+        self._all_stat_cfgs = POPT_CFG.get_stat_CFGs()
         x_f = 0
         y_f = 1
         if self.port_setting.parm_PortNr in PORT_HANDLER.get_all_ports().keys():
@@ -684,9 +687,9 @@ class PortSetTab:
         self.port_setting.parm_axip_Multicast = bool(self._axip_multicast_var.get())
         self.port_setting.parm_axip_fail = int(self._test_fail.get())
 
-        self.port_setting.parm_stat_PacLen = {}
-        self.port_setting.parm_stat_MaxFrame = {}
-        self.port_setting.parm_cli = {}
+        # self.port_setting.parm_stat_PacLen = {}
+        # self.port_setting.parm_stat_MaxFrame = {}
+        # self.port_setting.parm_cli = {}
         self.port_setting.parm_StationCalls = []
         # self.port_setting.parm_Stations = []
 
@@ -699,10 +702,10 @@ class PortSetTab:
                 """
                 # var = self.stat_check_vars[k]
                 # print(var.get())
-                stat = self._all_stat_cfgs[k]
-                self.port_setting.parm_stat_PacLen[k] = stat.stat_parm_PacLen
-                self.port_setting.parm_stat_MaxFrame[k] = stat.stat_parm_MaxFrame
-                self.port_setting.parm_cli[k] = stat.stat_parm_cli_cfg
+                # stat = self._all_stat_cfgs[k]
+                # self.port_setting.parm_stat_PacLen[k] = stat.stat_parm_PacLen
+                # self.port_setting.parm_stat_MaxFrame[k] = stat.stat_parm_MaxFrame
+                # self.port_setting.parm_cli[k] = stat.stat_parm_cli_cfg
                 self.port_setting.parm_StationCalls.append(k)
                 # self.port_setting.parm_Stations.append(stat)
                 # station_save_files

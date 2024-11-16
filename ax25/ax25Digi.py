@@ -1,6 +1,7 @@
 import time
 
 from ax25.ax25Connection import AX25Conn
+from ax25.ax25Error import AX25ConnectionERROR
 from cfg.logger_config import logger
 
 
@@ -53,7 +54,13 @@ class AX25DigiConnection:
     def _init_digi_conn(self, ax25_frame):
         print("!!!! _init_digi_conn !!!!")
         logger.debug("!!!! _init_digi_conn !!!!")
-        self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)
+        try:
+            self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)
+        except AX25ConnectionERROR:
+            print("!!!! _init_digi_conn ERROR!!!!")
+            logger.debug("!!!! _init_digi_conn ERROR!!!!")
+            self._state_0_error()
+            return
         self._rx_conn.cli.change_cli_state(5)
         self._rx_conn.is_link_remote = False
         self._rx_conn.cli_remote = False
@@ -62,6 +69,13 @@ class AX25DigiConnection:
         self._rx_conn.digi_call = self._digi_call
         self._rx_conn_uid = self._rx_conn.uid
         self._rx_conn.set_station_cfg()
+        """
+        try:
+            self._rx_conn.set_station_cfg()
+        except AX25ConnectionERROR:
+            self._state_0_error()
+            return
+        """
         if self._rx_conn_uid in self._rx_port.connections.keys():
             logger.warning("ERROR DIGI - Connection -  self._rx_conn_uid in self._rx_port.connections ")
             print("ERROR DIGI - Connection -  self._rx_conn_uid in self._rx_port.connections ")
@@ -97,12 +111,20 @@ class AX25DigiConnection:
             logger.error("Digi-Error: not self._tx_conn.new_digi_connection(self._rx_conn)")
             print("Digi-Error: not self._tx_conn.new_digi_connection(self._rx_conn)")
             self._state_0_error()
+            return
         self._tx_conn.is_link_remote = True
         self._tx_conn.cli_remote = False
         self._tx_conn.is_digi = True
         self._tx_conn.my_call_str = self._digi_call
         # self._tx_conn.digi_call = self._digi_call
         self._tx_conn.set_station_cfg()
+        """
+        try:
+            self._tx_conn.set_station_cfg()
+        except AX25ConnectionERROR:
+            self._state_0_error()
+            return
+        """
 
         self._tx_conn_uid = self._tx_conn.uid
         self._tx_port = self._tx_conn.own_port

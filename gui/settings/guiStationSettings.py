@@ -5,10 +5,9 @@ from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.config_station import del_user_data, DefaultStation, get_all_stat_cfg
-from cfg.cfg_fnc import save_station_to_file, save_station_CFG_to_file
+from cfg.cfg_fnc import del_user_data
 from cfg.constant import CFG_data_path, CFG_usertxt_path
-from cfg.default_config import getNew_CLI_DIGI_cfg, getNew_pipe_cfg, getNew_station_cfg, getNew_CLI_cfg
+from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cli.cliMain import CLI_OPT
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.file_fnc import get_str_fm_file, save_str_to_file
@@ -17,7 +16,7 @@ from cfg.string_tab import STR_TABLE
 
 
 class StatSetTab:
-    def __init__(self, main_stt_win, setting, new_setting, tabclt: ttk.Notebook):
+    def __init__(self, main_stt_win, new_setting, tabclt: ttk.Notebook):
         # self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
         height = main_stt_win.win_height
         width = main_stt_win.win_width
@@ -27,9 +26,8 @@ class StatSetTab:
         self._lang = POPT_CFG.get_guiCFG_language()
 
         self._new_station_setting = new_setting
-
-        self.station_setting = setting
-        self._stat_call = self.station_setting.stat_parm_Call
+        # self.station_setting = setting
+        self._stat_call = self._new_station_setting.get('stat_parm_Call', 'NOCALL')
         self._gui = PORT_HANDLER.get_gui()
         #################
         # Call
@@ -39,7 +37,7 @@ class StatSetTab:
         call_label.place(x=call_x, y=height - call_y)
         self.call = tk.Entry(self.own_tab, width=10)
         self.call.place(x=call_x + 55, y=height - call_y)
-        self.call.insert(tk.END, self._stat_call)
+        # self.call.insert(tk.END, self._stat_call)
         #################
         # CLI
         cli_x = 280
@@ -62,7 +60,7 @@ class StatSetTab:
         max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
         self._max_pac_select_var = tk.StringVar(self.own_tab)
         opt = range(8)
-        self._max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
+        # self._max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
         self._max_pac = tk.OptionMenu(self.own_tab, self._max_pac_select_var, *opt)
         self._max_pac.configure(width=4, height=1)
         self._max_pac.place(x=max_pac_x + 78, y=height - max_pac_y - 5)
@@ -75,7 +73,7 @@ class StatSetTab:
         pac_len_label.place(x=pac_len_x, y=height - pac_len_y)
         self._pac_len = tk.Entry(self.own_tab, width=3)
         self._pac_len.place(x=pac_len_x + 75, y=height - pac_len_y)
-        self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
+        # self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
 
         #################
         # DIGI
@@ -88,7 +86,7 @@ class StatSetTab:
                               variable=self._digi_set_var,
                               )
         digi.place(x=digi_x, y=height - digi_y)
-        self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
+        # self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
         ##################
         # Smart DIGI
         """
@@ -120,7 +118,7 @@ class StatSetTab:
         name_label.place(x=name_x, y=f_height - name_y)
         self._name = tk.Entry(r_side_frame, width=15)
         self._name.place(x=name_x + 75, y=f_height - name_y)
-        self._name.insert(tk.END, str(self.station_setting.stat_parm_Name))
+        # self._name.insert(tk.END, str(self.station_setting.stat_parm_Name))
         #################
         # QTH
         qth_x = 10
@@ -465,7 +463,8 @@ class StatSetTab:
     def _update_vars_fm_cfg(self):
         stat_call = self._new_station_setting.get('stat_parm_Call', '')
         stat_name = self._new_station_setting.get('stat_name', '')
-        stat_is_digi = self._new_station_setting.get('stat_parm_is_Digi', False)
+        stat_is_digi = POPT_CFG.get_digi_is_enabled(stat_call)
+        # stat_is_digi = self._new_station_setting.get('stat_parm_is_Digi', False)
         # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
         stat_cli_typ = self._new_station_setting.get('stat_parm_cli', 'NO-CLI')
         stat_paclen = self._new_station_setting.get('stat_parm_PacLen', 0)
@@ -512,6 +511,7 @@ class StatSetTab:
         self._pac_len.insert(tk.END, str(stat_paclen))
         # DIGI
         # self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
+
         self._digi_set_var.set(stat_is_digi)
         # self.digi.select()
         c_text = self._load_fm_file(self._stat_call + '.ctx')
@@ -546,7 +546,7 @@ class StatSetTab:
         self._akt_info_text_ent.delete('1.0', tk.END)
         self._akt_info_text_ent.insert(tk.END, a_text)
 
-        pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(self.station_setting.stat_parm_Call, -1)
+        pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(stat_call, -1)
         # get(self.station_setting.stat_parm_Call, {})
 
         if not pipe_cfg:
@@ -578,8 +578,8 @@ class StatSetTab:
 
         self.call.delete(0, tk.END)
         self.call.insert(tk.END, call)
-        old_call = str(self.station_setting.stat_parm_Call)
-        self.station_setting.stat_parm_Call = call
+        old_call = str(self._new_station_setting.get('stat_parm_Call', ''))
+        # self.station_setting.stat_parm_Call = call
 
         var_maxpac = self._new_station_setting.get('stat_parm_MaxFrame', 0)
         var_paclen = self._new_station_setting.get('stat_parm_PacLen', 0)
@@ -591,13 +591,13 @@ class StatSetTab:
         except ValueError:
             pass
 
-        self.station_setting.stat_parm_MaxFrame = var_maxpac
-        self.station_setting.stat_parm_PacLen = var_paclen
+        # self.station_setting.stat_parm_MaxFrame = var_maxpac
+        # self.station_setting.stat_parm_PacLen = var_paclen
 
         # CLI
         cli_key = self._cli_select_var.get()
         if cli_key not in ['PIPE']:
-            self.station_setting.stat_parm_cli = self._cli_opt[cli_key]
+            # self.station_setting.stat_parm_cli = self._cli_opt[cli_key]
             # self.station_setting.stat_parm_pipe = False
             POPT_CFG.del_pipe_CFG(f'{-1}-{old_call}')
             # self.station_setting.stat_parm_cli = cli_key
@@ -623,21 +623,23 @@ class StatSetTab:
 
             POPT_CFG.set_pipe_CFG(new_pipe_cfg)
 
-
+        """
         for k in PORT_HANDLER.ax25_port_settings.keys():
-            """
+            """"""
             print(self.ports_sett[k])
             for att in dir(self.ports_sett[k]):
                 print(att)
-            """
+            """"""
             if call in PORT_HANDLER.ax25_port_settings[k].parm_StationCalls:
                 PORT_HANDLER.ax25_port_settings[k].parm_stat_PacLen[call] = var_paclen
                 PORT_HANDLER.ax25_port_settings[k].parm_stat_MaxFrame[call] = var_maxpac
+        """
 
         # DIGI
-        self.station_setting.stat_parm_is_Digi = bool(self._digi_set_var.get())
+        # self.station_setting.stat_parm_is_Digi = bool(self._digi_set_var.get())
         # Smart DIGI
         # self.station_setting.stat_parm_isSmartDigi = bool(self.smart_digi_set_var.get())
+        """
         stat_parm_cli_cfg: dict = self.station_setting.stat_parm_cli_cfg
         digi_cfg: dict = self.station_setting.stat_parm_cli_cfg.get('cli_digi_cfg', getNew_CLI_DIGI_cfg())
         digi_cfg.update(dict(
@@ -657,14 +659,15 @@ class StatSetTab:
             cli_prompt='',
             cli_digi_cfg=digi_cfg,
         ))
-        self.station_setting.stat_parm_cli_cfg = dict(stat_parm_cli_cfg)
+        """
+        # self.station_setting.stat_parm_cli_cfg = dict(stat_parm_cli_cfg)
         self._save_to_file(self._stat_call + '.ctx', self._c_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.btx', self._bye_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.itx', self._info_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.litx', self._long_info_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.atx', self._akt_info_text_ent.get('1.0', tk.END)[:-1])
         # Name
-        self.station_setting.stat_parm_Name = self._name.get()
+        # self.station_setting.stat_parm_Name = self._name.get()
         #######################################################
         # TODO: To Global CFGs
         # QTH
@@ -673,16 +676,16 @@ class StatSetTab:
         self._gui.own_loc = str(self._loc.get())
         #######################################################
         # COLORS
-        self.station_setting.stat_parm_qso_col_text_tx = self._qso_fg_tx
-        self.station_setting.stat_parm_qso_col_bg = self._qso_bg_tx
-        self.station_setting.stat_parm_qso_col_text_rx = self._qso_fg_rx
+        # self.station_setting.stat_parm_qso_col_text_tx = self._qso_fg_tx
+        # self.station_setting.stat_parm_qso_col_bg = self._qso_bg_tx
+        # self.station_setting.stat_parm_qso_col_text_rx = self._qso_fg_rx
 
         #######################################################
         #######################################################
         # New CFG
         self._new_station_setting['stat_parm_Call'] = str(call)
         self._new_station_setting['stat_name'] = str(self._name.get())
-        self._new_station_setting['stat_parm_is_Digi'] = bool(self._digi_set_var.get())
+        # self._new_station_setting['stat_parm_is_Digi'] = bool(self._digi_set_var.get())
         self._new_station_setting['stat_parm_cli'] = str(cli_key)
         self._new_station_setting['stat_parm_PacLen'] = int(var_paclen)
         self._new_station_setting['stat_parm_MaxFrame'] = int(var_maxpac)
@@ -690,21 +693,17 @@ class StatSetTab:
         self._new_station_setting['stat_parm_qso_col_text_rx'] = str(self._qso_fg_rx)
         self._new_station_setting['stat_parm_qso_col_bg'] = str(self._qso_bg_tx)
 
-        # TODO Cleanup (dedicated digi CFG)
-        cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())
-        digi_cfg = cli_cfg.get('cli_digi_cfg', getNew_CLI_DIGI_cfg())
+        # cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())
+
+        digi_cfg = POPT_CFG.get_digi_CFG_for_Call(call)
         digi_cfg.update(dict(
-            digi_enabled=True,
-            digi_allowed_ports=[],
-            digi_max_buff=10,  # bytes till RNR
-            digi_max_n2=4,  # N2 till RNR
+            digi_enabled=bool(self._digi_set_var.get()),
         ))
-        cli_cfg = dict(
-            cli_typ=str(cli_key),
-            cli_prompt='',
-            cli_digi_cfg=digi_cfg,
-        )
-        self._new_station_setting['stat_parm_cli_cfg'] = dict(cli_cfg)
+        if old_call != call:
+            POPT_CFG.del_stat_CFG_fm_call(old_call)
+        POPT_CFG.set_digi_CFG_f_call(call, digi_cfg)
+        # self._new_station_setting['stat_parm_Digi_cfg'] = dict(digi_cfg)
+
         # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
 
     def get_new_stat_sett(self):
@@ -793,10 +792,8 @@ class StationSettingsWin:
         self._tab_list: [ttk.Frame] = []
         # Tab Frames ( Station Setting )
         new_stat_settings = POPT_CFG.get_stat_CFGs()
-        for k in PORT_HANDLER.ax25_stations_settings.keys():
-            sett = PORT_HANDLER.ax25_stations_settings[k]
-            new_sett = new_stat_settings.get(k, {})     # TODO
-            tab = StatSetTab(self, sett, new_sett, self._tabControl)
+        for k, cfg in new_stat_settings.items():
+            tab = StatSetTab(self, cfg, self._tabControl)
             self._tab_list.append(tab)
             self._tabControl.add(tab.own_tab, text=k)
 
@@ -828,9 +825,9 @@ class StationSettingsWin:
                 dbl_calls.append(call)
             else:
                 el.call.delete(0, tk.END)
-                el.call.insert(tk.END, DefaultStation.stat_parm_Call)
+                el.call.insert(tk.END, getNew_station_cfg().get('stat_parm_Call', 'NOCALL'))
 
-        PORT_HANDLER.update_digi_setting()
+        # PORT_HANDLER.update_digi_setting()
 
     def _save_cfg_to_file(self):
         for conf in self._tab_list:
@@ -840,7 +837,8 @@ class StationSettingsWin:
                 # PORT_HANDLER.ax25_stations_settings[stat_conf.stat_parm_Call] = stat_conf
                 # pipe_cfgs = POPT_CFG.get_pipe_CFG().get(f'{-1}-{stat_conf.stat_parm_Call}', {})
                 # save_station_to_file(stat_conf)
-                save_station_CFG_to_file(new_stat_conf)
+                # save_station_CFG_to_file(new_stat_conf)
+                POPT_CFG.set_stat_CFG_fm_conf(new_stat_conf)
         self._root_win.save_GUIvars()
         self._root_win.sysMsg_to_monitor(STR_TABLE['suc_save'][self._lang])
 
@@ -877,10 +875,10 @@ class StationSettingsWin:
         self.destroy()
 
     def _new_stat_btn_cmd(self):
-        sett = DefaultStation()
+        # sett = DefaultStation()
         new_sett = getNew_station_cfg()
-        tab = StatSetTab(self, sett, new_sett, self._tabControl)
-        self._tabControl.add(tab.own_tab, text=sett.stat_parm_Call)
+        tab = StatSetTab(self, new_sett, self._tabControl)
+        self._tabControl.add(tab.own_tab, text=new_sett.get('stat_parm_Call', 'NOCALL'))
         self._tabControl.select(len(self._tab_list))
         self._tab_list.append(tab)
         # print(self._tabControl.index('current'))
@@ -904,8 +902,8 @@ class StationSettingsWin:
             else:
                 tab: StatSetTab = self._tab_list[ind]
                 call = tab.call.get()
-                POPT_CFG.del_all_pipe_CFG_fm_call(call=call)   # Del Pipe-CFG
-                del_user_data(call)
+                POPT_CFG.del_stat_CFG_fm_call(call=call)   # Del Pipe-CFG
+                # del_user_data(call)
                 del self._tab_list[ind]
                 self._tabControl.forget(ind)
 

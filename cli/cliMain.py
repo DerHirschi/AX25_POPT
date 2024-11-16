@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from cfg import constant, config_station
+from cfg import constant
+from cfg.default_config import getNew_station_cfg
+from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
@@ -25,21 +27,10 @@ class DefaultCLI(object):
 
     def __init__(self, connection):
         # print("CLI-INIT")
-        stat_cfg = connection.stat_cfg
-        self._cli_cfg = {}
-        if stat_cfg is not None:
-            # Override with optional Station Config Param
-            # self.bye_text = self._load_fm_file(self.stat_cfg_index_call + '.btx')
+        stat_cfg: dict = connection.get_stat_cfg()
+        self._stat_cfg_index_call = stat_cfg.get('stat_parm_Call', 'NOCALL')
 
-            if hasattr(stat_cfg, 'stat_parm_cli_cfg'):
-                self._cli_cfg: dict = stat_cfg.stat_parm_cli_cfg
-
-            self.stat_cfg_index_call = stat_cfg.stat_parm_Call
-            self.stat_cfg = stat_cfg
-        else:
-            self.stat_cfg = config_station.DefaultStation()
-            self.stat_cfg_index_call = self.stat_cfg.stat_parm_Call
-        self.c_text = self._load_fm_file(self.stat_cfg_index_call + '.ctx')
+        self.c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._connection = connection
         self._port_handler = self._connection.get_port_handler_CONN()
         self._own_port = self._connection.own_port
@@ -244,9 +235,9 @@ class DefaultCLI(object):
 
     def _load_fm_file(self, filename: str):
         file_n = constant.CFG_data_path + \
-                      constant.CFG_usertxt_path + \
-                      self.stat_cfg_index_call + '/' + \
-                      filename
+                 constant.CFG_usertxt_path + \
+                 self._stat_cfg_index_call + '/' + \
+                 filename
         out = get_str_fm_file(file_n)
         if out:
             return out
@@ -503,7 +494,7 @@ class DefaultCLI(object):
         # self._connection.tx_buf_rawData += self.bye_text.encode(self.encoding[0], self.encoding[1])
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {STR_TABLE['time_connected'][self._connection.cli_language]}: {conn_dauer}\r\r"
-        ret += self._load_fm_file(self.stat_cfg_index_call + '.btx') + '\r'
+        ret += self._load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
         self.send_output(ret, env_vars=True)
         self._crone_state_index = 100  # Quit State
         return ''
@@ -874,28 +865,19 @@ class DefaultCLI(object):
         return ret
 
     def _cmd_i(self):
-        ret = self._load_fm_file(self.stat_cfg_index_call + '.itx')
-        if ret:
-            return ret.replace('\n', '\r')
-        else:
-            # return self.stat_cfg.stat_parm_cli_itext.replace('\n', '\r')
-            return self.stat_cfg.stat_parm_cli_cfg.get('cli_itext', '').replace('\n', '\r')
+        ret = self._load_fm_file(self._stat_cfg_index_call + '.itx')
+        return ret.replace('\n', '\r')
+
 
     def _cmd_li(self):
-        ret = self._load_fm_file(self.stat_cfg_index_call + '.litx')
-        if ret:
-            return ret.replace('\n', '\r')
-        else:
-            # return self.stat_cfg.stat_parm_cli_longitext.replace('\n', '\r')
-            return self.stat_cfg.stat_parm_cli_cfg.get('cli_longitext', '').replace('\n', '\r')
+        ret = self._load_fm_file(self._stat_cfg_index_call + '.litx')
+        return ret.replace('\n', '\r')
+
 
     def _cmd_news(self):
-        ret = self._load_fm_file(self.stat_cfg_index_call + '.atx')
-        if ret:
-            return ret.replace('\n', '\r')
-        else:
-            # return self.stat_cfg.stat_parm_cli_akttext.replace('\n', '\r')
-            return self.stat_cfg.stat_parm_cli_cfg.get('cli_akttext', '').replace('\n', '\r')
+        ret = self._load_fm_file(self._stat_cfg_index_call + '.atx')
+        return ret.replace('\n', '\r')
+
 
     def _cmd_user_db_detail(self):
         if not self._parameter:
@@ -1093,18 +1075,18 @@ class DefaultCLI(object):
                     stations = ['']
                 digi = ''
 
-                if stations[0] in port.digi_calls and stations[0]:
+                if POPT_CFG.get_digi_CFG_for_Call(stations[0]).get('digi_enabled', False) and stations[0]:
                     digi = '(DIGI)'
-                if stations[0] in port.port_cfg.parm_cli.keys():
-                    digi = f"{port.port_cfg.parm_cli[stations[0]].get('cli_typ', 'NO-CLI').ljust(7)} " + digi
+                if POPT_CFG.get_stat_CFG_fm_call(stations[0]):
+                    digi = f"{POPT_CFG.get_stat_CFG_fm_call(stations[0]).get('stat_parm_cli', 'NO-CLI').ljust(7)} " + digi
 
                 ret += f" {str(port_id).ljust(2)} {name} {typ}  {stations[0].ljust(9)} {digi}\r"
                 for stat in stations[1:]:
                     digi = ''
-                    if stat in port.digi_calls:
+                    if POPT_CFG.get_digi_CFG_for_Call(stat).get('digi_enabled', False):
                         digi = '(DIGI)'
-                    if stat in port.port_cfg.parm_cli.keys():
-                        digi = f"{port.port_cfg.parm_cli[stat].get('cli_typ', 'NO-CLI').ljust(7)} " + digi
+                    if POPT_CFG.get_stat_CFG_fm_call(stat):
+                        digi = f"{POPT_CFG.get_stat_CFG_fm_call(stat).get('stat_parm_cli', 'NO-CLI').ljust(7)} " + digi
                     ret += f"                     {stat.ljust(9)} {digi}\r"
             else:
                 if port.dualPort_primaryPort:
@@ -1431,6 +1413,9 @@ class NoneCLI(DefaultCLI):
         pass
 
     def cli_cron(self):
+        pass
+
+    def build_prompt(self):
         pass
 
 

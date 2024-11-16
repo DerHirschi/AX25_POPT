@@ -197,3 +197,9 @@ def init_dir_struct():
     # File Transfer
     if not os.path.exists(CFG_ft_downloads):
         os.makedirs(CFG_ft_downloads)
+
+
+def del_port_data(port_id):
+    port_file = '{0}port{1}.popt'.format(CFG_data_path, port_id)
+    if os.path.exists(port_file):
+        os.remove(port_file)

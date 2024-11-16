@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.109.9'
+VER = '2.109.10'
 DEBUG_LOG = True
 """
 LANGUAGE:
@@ -180,6 +180,10 @@ PARAM_MAX_MON_LEN = 100000
 CFG_clr_sys_msg = 'red'
 CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 GUI_DISABLED_CLR = '#b1b1b3'
+# Station Default
+DEF_STAT_QSO_TX_COL = 'white'
+DEF_STAT_QSO_RX_COL = 'black'
+DEF_STAT_QSO_BG_COL = '#25db04'
 
 
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \

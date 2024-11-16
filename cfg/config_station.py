@@ -1,14 +1,13 @@
 import pickle
-import os
+# import os
 
-from cfg.constant import CFG_data_path, CFG_usertxt_path
-from cfg.default_config import getNew_CLI_cfg
+from cfg.constant import CFG_data_path
+# from cfg.default_config import getNew_CLI_cfg
 from cfg.logger_config import logger
 from cfg.cfg_fnc import save_to_file
 
-
+"""
 def get_all_stat_cfg():
-    """ TODO Again !! Bullshit """
     stat_cfg_path = CFG_data_path + CFG_usertxt_path
     stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
     ret = {}
@@ -37,8 +36,8 @@ def get_all_stat_cfg():
 
                 ret[call] = stat
     return ret
-
-
+"""
+"""
 def del_user_data(usercall: str):
     user_dir = '{0}{1}{2}'.format(CFG_data_path, CFG_usertxt_path, usercall)
     if os.path.exists(user_dir):
@@ -48,14 +47,8 @@ def del_user_data(usercall: str):
             if os.path.exists(f_dest):
                 os.remove(f_dest)
         os.rmdir(user_dir)
-
-
-def del_port_data(port_id):
-    port_file = '{0}port{1}.popt'.format(CFG_data_path, port_id)
-    if os.path.exists(port_file):
-        os.remove(port_file)
-
-
+"""
+"""
 class DefaultStation:
     # parm_StationCalls: [''] = []
     stat_parm_Call: str = 'NOCALL'
@@ -64,13 +57,13 @@ class DefaultStation:
     stat_parm_Name: str = ''
     # stat_parm_TYP: str = ''
     ##########################
-    stat_parm_is_Digi = False
+    # stat_parm_is_Digi = False
     # Parameter for CLI
     # stat_parm_pipe = False
     # pipe_cfg = {}
 
     # Optional Parameter. Can be deleted if not needed. Param will be get from cliMain.py
-    stat_parm_cli_cfg = getNew_CLI_cfg()
+    # stat_parm_cli_cfg = getNew_CLI_cfg()
     stat_parm_cli = 'NO-CLI'
     # Optional Parameter. Overrides Port Parameter
     stat_parm_PacLen: int = 0  # Max Pac len
@@ -78,7 +71,7 @@ class DefaultStation:
     stat_parm_qso_col_text_tx = 'white'
     stat_parm_qso_col_bg = 'black'
     stat_parm_qso_col_text_rx = '#25db04'
-
+"""
 
 class DefaultPort(object):
     # parm_Stations = []
@@ -89,7 +82,7 @@ class DefaultPort(object):
     parm_PortTyp: '' = ''  # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIP' AXIP UDP
     parm_PortParm: (str, int) = ('', 0)
     # TODO DIGI is Station related
-    parm_Digi_calls = []  # Just if parm_isDigi is set to False
+    # parm_Digi_calls = []  # Just if parm_isDigi is set to False
     parm_TXD = 400  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
     """ Kiss Parameter """
     parm_kiss_is_on = True
@@ -102,10 +95,10 @@ class DefaultPort(object):
     parm_PacLen = 170  # Max Pac len
     parm_MaxFrame = 3  # Max (I) Frames
     # Station related Parameter
-    parm_stat_PacLen: {str: int} = {}
-    parm_stat_MaxFrame: {str: int} = {}
-    parm_cli: {str: ''} = {}
-    parm_StationCalls: [str] = []  # def in __init__    Keys for Station Parameter
+    # parm_stat_PacLen: {str: int} = {}       # TODO Bullshit
+    # parm_stat_MaxFrame: {str: int} = {}     # TODO Bullshit
+    # parm_cli: {str: ''} = {}                # TODO Bullshit
+    parm_StationCalls: [str] = []  # def in __init__    Keys for Station Parameter  # TODO ? Bullshit ?
     ####################################
     # parm_T1 = 1800      # T1 (Response Delay Timer) activated if data come in to prev resp to early
     parm_T2 = 1700  # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
@@ -177,7 +170,7 @@ class PortConfigInit(DefaultPort):
             if '__' not in att and att not in self.dont_save_this and not callable(getattr(self, att)):
                 setattr(self, att, getattr(self, att))
         self.parm_PortNr = int(port_id)
-        parm_Stations = []     ################################
+        # parm_Stations = []     ################################
         self.station_save_files = []
         file = CFG_data_path + f'port{self.parm_PortNr}.popt'
         is_file = False
@@ -201,35 +194,36 @@ class PortConfigInit(DefaultPort):
                 if att in port_cfg.keys():
                     if not callable(getattr(self, att)):
                         setattr(self, att, port_cfg[att])
-
+            """
             for k in self.parm_cli:
                 if type(self.parm_cli[k]) is not str:
                     if hasattr(self.parm_cli[k], 'cli_name'):
                         self.parm_cli[k] = self.parm_cli[k].cli_name
+            """
 
             if self.parm_StationCalls:
-                parm_Stations = []
+                # parm_Stations = []
                 ############
                 # Stations
-                for call in self.parm_StationCalls:
-                    if call in loaded_stat.keys():
-                        new_stat_cfg = loaded_stat[call]
-                        """ Check for New Vars to hold cfg_files compatible """
-                        """ TODO: Need to find a better way.. The whole cfg Save is Bullshit """
-                        """ Just need to save Parameter, not the whole class """
-                        # if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
-                        #     new_stat_cfg.stat_parm_pipe = False
-                        if not hasattr(new_stat_cfg, 'parm_mon_clr_bg'):
-                            new_stat_cfg.parm_mon_clr_bg = 'black'
-                        """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
-                        parm_Stations.append(new_stat_cfg)
-                        # Stupid Digi
-                        if new_stat_cfg.stat_parm_is_Digi:
-                            if call not in self.parm_Digi_calls:
-                                self.parm_Digi_calls.append(call)
-                        else:
-                            while call in self.parm_Digi_calls:
-                                self.parm_Digi_calls.remove(call)
+                # for call in self.parm_StationCalls:
+                #     if call in loaded_stat.keys():
+                #         new_stat_cfg = loaded_stat[call]
+                #         """ Check for New Vars to hold cfg_files compatible """
+                #         """ TODO: Need to find a better way.. The whole cfg Save is Bullshit """
+                #         """ Just need to save Parameter, not the whole class """
+                #         # if not hasattr(new_stat_cfg, 'stat_parm_pipe'):
+                #         #     new_stat_cfg.stat_parm_pipe = False
+                #         # if not hasattr(new_stat_cfg, 'parm_mon_clr_bg'):
+                #         #     new_stat_cfg.parm_mon_clr_bg = 'black'
+                #         """ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"""
+                #         parm_Stations.append(new_stat_cfg)
+                #         # Stupid Digi
+                #         # if new_stat_cfg.get('stat_parm_is_Digi', False):
+                #         #     if call not in self.parm_Digi_calls:
+                #         #         self.parm_Digi_calls.append(call)
+                #         # else:
+                #         #     while call in self.parm_Digi_calls:
+                #         #         self.parm_Digi_calls.remove(call)
 
                 if self.parm_PortTyp == 'AXIP':
                     self.parm_full_duplex = True    # Pseudo Full duplex
@@ -237,11 +231,13 @@ class PortConfigInit(DefaultPort):
                     self.parm_full_duplex = False   # Maybe sometimes i ll implement it for HF
 
             # stat: DefaultStation
+            """
             for stat in parm_Stations:
-                if stat.stat_parm_Call and stat.stat_parm_Call != DefaultStation.stat_parm_Call:
-                    new_cli_cfg = getNew_CLI_cfg()
-                    new_cli_cfg.update(stat.stat_parm_cli_cfg)
+                if stat.get('stat_parm_Call', '') and stat.get('stat_parm_Call', '') != 'NOCALL':
+                    # new_cli_cfg = getNew_CLI_cfg()
+                    # new_cli_cfg.update(stat.stat_parm_cli_cfg)
                     self.parm_cli[stat.stat_parm_Call] = new_cli_cfg
+            """
 
         # self.parm_aprs_station['aprs_port_id'] = port_id
 

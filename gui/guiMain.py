@@ -51,7 +51,7 @@ from gui.ft.guiFileTX import FileSend
 from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
-    SERVICE_CH_START
+    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -1024,13 +1024,13 @@ class PoPT_GUI_Main:
 
     def set_text_tags(self):
         self._all_tag_calls = []
-        all_stat_cfg = PORT_HANDLER.ph_get_all_stat_cfg()
+        all_stat_cfg = POPT_CFG.get_stat_CFGs()
         for call in list(all_stat_cfg.keys()):
             stat_cfg = all_stat_cfg[call]
-            tx_fg = stat_cfg.stat_parm_qso_col_text_tx
-            tx_bg = stat_cfg.stat_parm_qso_col_bg
+            tx_fg = stat_cfg.get('stat_parm_qso_col_text_tx', DEF_STAT_QSO_TX_COL)
+            tx_bg = stat_cfg.get('stat_parm_qso_col_bg', DEF_STAT_QSO_BG_COL)
 
-            rx_fg = stat_cfg.stat_parm_qso_col_text_rx
+            rx_fg = stat_cfg.get('stat_parm_qso_col_text_rx', DEF_STAT_QSO_RX_COL)
 
             tx_tag = 'TX-' + str(call)
             rx_tag = 'RX-' + str(call)
@@ -1159,7 +1159,7 @@ class PoPT_GUI_Main:
         for el in tmp:
             self.sysMsg_to_monitor(el)
         self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
-        for stat in PORT_HANDLER.ax25_stations_settings.keys():
+        for stat in list(PORT_HANDLER.ax25_stations_settings.keys()):
             self.sysMsg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         all_ports = PORT_HANDLER.ax25_ports
         for port_k in all_ports.keys():

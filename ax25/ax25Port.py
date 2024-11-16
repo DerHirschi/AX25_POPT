@@ -16,7 +16,8 @@ from ax25.ax25Connection import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
-from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
+from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger, \
+    AX25ConnectionERROR
 from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
 
@@ -54,7 +55,7 @@ class AX25Port(threading.Thread):
         # CONFIG ENDE
         #############
         """ DIGI """
-        self.digi_calls = self.port_cfg.parm_Digi_calls
+        # self.digi_calls = self.port_cfg.parm_Digi_calls
         self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
         self._digi_TXD = time.time()
         self._digi_buf = []         # RX/TX
@@ -100,6 +101,8 @@ class AX25Port(threading.Thread):
         pass
 
     def close(self):
+        # TODO Del all conn's and Port cfg .. etc ..
+
         """
         for k in self.connections.keys():
             conn: AX25Conn = self.connections[k]
@@ -126,7 +129,11 @@ class AX25Port(threading.Thread):
         # frame.rx_time = datetime.datetime.now()
         self._gui_monitor(ax25frame=frame, tx=True)
         self._dualPort_monitor_input(ax25frame=frame, tx=True)
-        self.tx_device(frame)
+        try:
+            self.tx_device(frame)
+        except AX25DeviceERROR:
+            logger.error(f"Error: tx_device() Port: {self.port_id}")
+            self.close()
 
     def tx_device(self, frame):
         pass
@@ -241,7 +248,10 @@ class AX25Port(threading.Thread):
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
             if uid not in self.connections.keys():
-                self.connections[uid] = AX25Conn(ax25_frame, port=self)
+                try:
+                    self.connections[uid] = AX25Conn(ax25_frame, port=self)
+                except AX25ConnectionERROR:
+                    return False
                 # self.connections[uid].handle_rx(ax25_frame=ax25_frame)
                 return True
         return False
@@ -249,7 +259,7 @@ class AX25Port(threading.Thread):
     ########################################################
     # DIGI
     def _rx_digi_handler(self, ax25_frame):
-        if not self.digi_calls:
+        if not POPT_CFG.get_digi_CFG():
             return False
         # if ax25_frame.ctl_byte.flag == 'UI':
         #     return self._rx_simple_digi(ax25_frame)
@@ -258,7 +268,9 @@ class AX25Port(threading.Thread):
 
     def _rx_simple_digi(self, ax25_frame):
         for call in ax25_frame.via_calls:
-            if call.call_str in self.digi_calls:
+            # digi_conf = dict(POPT_CFG.get_digi_CFG_for_Call(call.call_str))
+            # if call.call_str in self.digi_calls:
+            if POPT_CFG.get_digi_is_enabled(call.call_str):
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
                     self._digi_buf.append(ax25_frame)
                     # self.set_digi_TXD()
@@ -268,9 +280,9 @@ class AX25Port(threading.Thread):
     def _rx_managed_digi(self, ax25_frame):
         self._cleanup_digi_conn()
         for call in ax25_frame.via_calls:
-            if call.call in self.digi_calls:
+            digi_conf = dict(POPT_CFG.get_digi_CFG_for_Call(call.call_str))
+            if digi_conf.get('digi_enabled', False):
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                    digi_conf = dict(POPT_CFG.get_digi_CFG_for_Call(call.call))
                     if digi_conf.get('managed_digi', False):
                         if ax25_frame.addr_uid not in self._digi_connections.keys():
                             ax25_conf = ax25_frame.get_frame_conf()
@@ -740,7 +752,10 @@ class AX25Port(threading.Thread):
             except AX25EncodingERROR:
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
-        conn = AX25Conn(ax25_frame, rx=False, port=self)
+        try:
+            conn = AX25Conn(ax25_frame, rx=False, port=self)
+        except AX25ConnectionERROR:
+            return False
         # conn.digi_call = digi_call
         # conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn

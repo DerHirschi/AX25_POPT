@@ -15,7 +15,7 @@ from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
-from cfg.config_station import get_all_stat_cfg, PortConfigInit
+from cfg.config_station import PortConfigInit
 from cfg.cfg_fnc import init_dir_struct
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP
 from cfg.constant import MAX_PORTS, SERVICE_CH_START
@@ -68,7 +68,7 @@ class AX25PortHandler(object):
         ###########################
         # VARs
         self.ax25_ports = {}
-        self.ax25_stations_settings: dict = get_all_stat_cfg()
+        self.ax25_stations_settings: dict = POPT_CFG.get_stat_CFGs()
         self.ax25_port_settings = {}  # Port settings are in Port .. TODO Cleanup
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []  # [axip-addresses('ip', port)]
@@ -209,23 +209,25 @@ class AX25PortHandler(object):
 
     #######################################################################
     # Setting/Parameter Updates
+    """
     def update_digi_setting(self):
-        # TODO
+        # TODO Bullshit CFG ..
         digi_cfg = {}
         for port_kk, port in self.ax25_ports.items():
             # port = self.ax25_ports[port_kk]
             new_digi_calls = []
             for stat_key in port.my_stations:
                 if stat_key in self.ax25_stations_settings.keys():
-                    if self.ax25_stations_settings[stat_key].stat_parm_is_Digi:
+                    if self.ax25_stations_settings[stat_key].get('stat_parm_is_Digi', False):
                         if stat_key not in new_digi_calls:
                             new_digi_calls.append(stat_key)
                         if stat_key not in digi_cfg:
                             digi_cfg[stat_key] = POPT_CFG.get_digi_CFG_for_Call(stat_key)
-            self.ax25_ports[port_kk].port_cfg.parm_Digi_calls = new_digi_calls
-            self.ax25_ports[port_kk].digi_calls = new_digi_calls  # Same Object !!
+            # self.ax25_ports[port_kk].port_cfg.parm_Digi_calls = new_digi_calls
+            # self.ax25_ports[port_kk].digi_calls = new_digi_calls  # Same Object !!
         POPT_CFG.set_digi_CFG(digi_cfg)
         # print(POPT_CFG.get_digi_CFG())
+    """
 
     #######################################################################
     # Port Handling

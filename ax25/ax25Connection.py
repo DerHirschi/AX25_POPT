@@ -5,12 +5,14 @@
 import time
 from datetime import datetime
 
-import cli.cliMain
+from cli.cliMain import CLI_OPT, NoneCLI
+from ax25.ax25Error import AX25ConnectionERROR
 from ax25.ax25UI_Pipe import AX25Pipe
-from cfg import config_station
+# from cfg import config_station
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
-from cfg.default_config import getNew_pipe_cfg
+from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
+from cfg.logger_config import logger
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
@@ -108,12 +110,20 @@ class AX25Conn:
         """ Global Stuff """
         self.own_port = port
         self._port_handler = port.port_handler
-        """ GUI Stuff"""
-        self.ch_index: int = 0
-        self.port_id: int = self.own_port.port_id
-        self.port_name: str = self.own_port.portname
-        self._gui = self._port_handler.get_gui()
-        # self.ChVars = None
+        """ Port Config Parameter """
+        self.port_cfg = self.own_port.port_cfg
+        self.parm_PacLen = self.port_cfg.parm_PacLen  # Max Pac len
+        self.parm_MaxFrame = self.port_cfg.parm_MaxFrame  # Max (I) Frames
+        self.parm_TXD = self.port_cfg.parm_TXD  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        self._parm_Kiss_TXD = 0
+        self._parm_Kiss_Tail = 0
+        if self.own_port.kiss.is_enabled:
+            self._parm_Kiss_TXD = self.own_port.port_cfg.parm_kiss_TXD
+            self._parm_Kiss_Tail = self.own_port.port_cfg.parm_kiss_Tail
+        self.parm_T2 = int(self.port_cfg.parm_T2)  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self.parm_T3 = self.port_cfg.parm_T3  # T3 (Inactive Link Timer)
+        self.parm_N2 = self.port_cfg.parm_N2  # Max Try   Default 20
+        self.parm_baud = self.port_cfg.parm_baud  # Baud for calculating Timer
         """ Config new Connection Address """
         #####################################
         ax25_conf = ax25_frame.get_frame_conf()
@@ -136,6 +146,25 @@ class AX25Conn:
             self.my_call_str = str(ax25_conf.get('from_call_str', ''))
             self.my_call = str(ax25_conf.get('from_call', ''))
             self.via_calls = list(ax25_conf.get('via_calls_str', []))
+        """ GUI Stuff"""
+        self.ch_index: int = 0
+        self.port_id: int = self.own_port.port_id
+        self.port_name: str = self.own_port.portname
+        self._gui = self._port_handler.get_gui()
+        self._my_locator = self._gui.own_loc
+        # self.ChVars = None
+        """ Station CFG Parameter """
+        self._stat_cfg = {}
+        self.set_station_cfg()  # Station Individual Parameter
+        """
+        try:
+            self.set_station_cfg()  # Station Individual Parameter
+        except AX25ConnectionERROR as e:
+            raise e
+        """
+        self._my_call_alias = ''
+        self._to_call_alias = ''
+        # self._my_locator = self._stat_cfg.stat_parm_LOC
 
         """ IO Buffer Packet For Handling """
         self.tx_buf_ctl = []           # Buffer for CTL (S) Frame to send on next Cycle
@@ -177,20 +206,9 @@ class AX25Conn:
         self.t3 = 0  # Connection Hold
         self.n2 = 0  # Fail Counter / No Response Counter
         self._await_disco = False
-        """ Port Config Parameter """
-        self.port_cfg = self.own_port.port_cfg
-        self.parm_PacLen = self.port_cfg.parm_PacLen  # Max Pac len
-        self.parm_MaxFrame = self.port_cfg.parm_MaxFrame  # Max (I) Frames
-        self.parm_TXD = self.port_cfg.parm_TXD  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
-        self.parm_Kiss_TXD = 0
-        self.parm_Kiss_Tail = 0
-        if self.own_port.kiss.is_enabled:
-            self.parm_Kiss_TXD = self.own_port.port_cfg.parm_kiss_TXD
-            self.parm_Kiss_Tail = self.own_port.port_cfg.parm_kiss_Tail
-        self.parm_T2 = int(self.port_cfg.parm_T2)  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
-        self.parm_T3 = self.port_cfg.parm_T3  # T3 (Inactive Link Timer)
-        self.parm_N2 = self.port_cfg.parm_N2  # Max Try   Default 20
-        self.parm_baud = self.port_cfg.parm_baud  # Baud for calculating Timer
+        """ S-Packet / CTL Vars"""
+        self.REJ_is_set: bool = False
+        self.is_RNR: bool = False
         """ Timer Calculation & other Data for Statistics"""
         self.IRTT = 0
         # self.RTT = 0
@@ -221,9 +239,6 @@ class AX25Conn:
             15: (S15sendREJdestNotReady, 'DEST-RNR-REJ'),
             16: (S16sendREJbothNotReady, 'BOTH-RNR-REJ'),
         }
-        """ S-Packet / CTL Vars"""
-        self.REJ_is_set: bool = False
-        self.is_RNR: bool = False
         """ File Transfer Stuff """
         self.ft_queue: [FileTransport] = []
         self.ft_obj = None
@@ -238,23 +253,15 @@ class AX25Conn:
         self.link_holder_text: str = '\r'
         """ Encoding """
         self._encoding = 'CP437'     # 'UTF-8'
-        """ Station CFG Parameter """
-        self.stat_cfg = config_station.DefaultStation()
-        self._my_call_alias = ''
-        self._to_call_alias = ''
-        # self._my_locator = self.stat_cfg.stat_parm_LOC
-        self._my_locator = self._gui.own_loc
         """ User DB Entry """
         self.user_db_ent = None
         self.cli_remote = True
         self.cli_language = 0
         self.last_connect = None
         self._set_user_db_ent()
-        """ Station Individual Parameter """
-        self.set_station_cfg()
         """ CLI CFG """
         self.noty_bell = False
-        self.cli = cli.cliMain.NoneCLI(self)
+        self.cli = NoneCLI(self)
         self.cli_type = ''
         """ Pipe CFG """
         pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(call=str(self.my_call_str),
@@ -285,19 +292,11 @@ class AX25Conn:
     ##################
     # CLI INIT
     def _init_cli(self):
-        # TODO
-        if self.stat_cfg.stat_parm_Call in self.port_cfg.parm_cli.keys():
-            del self.cli
-            # self.cli = self.cfg.parm_cli[self.stat_cfg.stat_parm_Call](self)
-            # print(f"CLI INIT : {self.cfg.parm_cli[self.stat_cfg.stat_parm_Call]}")
-            self.cli = cli.cliMain.CLI_OPT[self.port_cfg.parm_cli[self.stat_cfg.stat_parm_Call].get('cli_typ', 'NO-CLI')](self)
-            self.cli_type = self.cli.cli_name
-            # print(f"CLI INIT typ: {self.cli.cli_name}")
-            self.cli.build_prompt()
-        """
-        else:
-            self.cli = cli.cli.NoneCLI(self)
-        """
+        del self.cli
+        cli_key = self._stat_cfg.get('stat_parm_cli', getNew_station_cfg().get('stat_parm_cli', 'NO-CLI'))
+        self.cli = CLI_OPT.get(cli_key, NoneCLI)(self)
+        self.cli_type = str(cli_key)
+        self.cli.build_prompt()
 
     def _reinit_cli(self):
         # print(f"CLI RE-INIT: {self.uid}")
@@ -305,18 +304,34 @@ class AX25Conn:
             self._init_cli()
             self.cli.change_cli_state(state=1)
 
-    def set_station_cfg(self):  # TODO New Station CFG
+    def set_station_cfg(self):
+        stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call_str)
+        if not stat_cfg:
+            stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call)
+        """
+        if not stat_cfg:
+            # stat_cfg = getNew_station_cfg()
+            # stat_cfg.setdefault('stat_parm_Call' , self.my_call_str)
+            raise AX25ConnectionERROR(self)
+        """
+        self._stat_cfg = stat_cfg
+        self._set_packet_param()
+
+        """
         if self.my_call_str in self._port_handler.ax25_stations_settings.keys():
-            self.stat_cfg = self._port_handler.ax25_stations_settings[self.my_call_str]
+            self._stat_cfg = self._port_handler.ax25_stations_settings[self.my_call_str]
         else:
             for call in list(self._port_handler.ax25_stations_settings.keys()):
                 if self.my_call in call:
                     if self.my_call in self._port_handler.ax25_stations_settings.keys():
-                        self.stat_cfg = self._port_handler.ax25_stations_settings[self.my_call]
+                        self._stat_cfg = self._port_handler.ax25_stations_settings[self.my_call]
                         break
         self._set_packet_param()
+        """
+        return True
 
-    ####################
+
+    ###################################################################
     # Zustand EXECs
     def handle_rx(self, ax25_frame):
         self._rx_buf_last_frame = ax25_frame
@@ -465,7 +480,7 @@ class AX25Conn:
         if not self.own_port.add_pipe(pipe=pipe):
             # print("Port no Pipe")
             return False
-        self.cli = cli.cliMain.NoneCLI(self)
+        self.cli = NoneCLI(self)
         self.cli_type = ''
         self.pipe = pipe
 
@@ -580,13 +595,16 @@ class AX25Conn:
 
     def new_digi_connection(self, conn):
         print(f"Conn newDIGIConn: UID: {conn.uid}")
+        logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
         if conn is None:
             print("Conn ERROR: newDIGIConn: not conn")
+            logger.error("Conn ERROR: newDIGIConn: not conn")
             return False
         if self.uid in self._port_handler.link_connections.keys():
             self.zustand_exec.change_state(4)
             self.zustand_exec.tx(None)
             print("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
+            logger.error("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
             return False
         self.digi_call = str(conn.digi_call)
         self._port_handler.link_connections[str(self.uid)] = self, conn.digi_call
@@ -848,36 +866,24 @@ class AX25Conn:
                 self.user_db_ent.Distance = locator_distance(self._my_locator, self.user_db_ent.LOC)
 
     def _set_packet_param(self):
-        self.parm_PacLen = self.port_cfg.parm_PacLen  # Max Pac len
-        self.parm_MaxFrame = self.port_cfg.parm_MaxFrame  # Max (I) Frames
+        if self._stat_cfg.get('stat_parm_PacLen', 0):
+            self.parm_PacLen = int(self._stat_cfg.get('stat_parm_PacLen', 0))
+        else:
+            self.parm_PacLen = int(self.port_cfg.parm_PacLen)
+
+        if self._stat_cfg.get('stat_parm_MaxFrame', 0):
+            self.parm_MaxFrame = int(self._stat_cfg.get('stat_parm_MaxFrame', 0))
+        else:
+            self.parm_MaxFrame = int(self.port_cfg.parm_MaxFrame)
+
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
-        stat_call = self.stat_cfg.stat_parm_Call
 
         if self.user_db_ent:
             if int(self.user_db_ent.pac_len):
                 self.parm_PacLen = int(self.user_db_ent.pac_len)
-            elif stat_call != config_station.DefaultStation.stat_parm_Call:
-                if stat_call in self.port_cfg.parm_stat_PacLen.keys():
-                    if self.port_cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                        self.parm_PacLen = self.port_cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-
             if int(self.user_db_ent.max_pac):
                 self.parm_MaxFrame = int(self.user_db_ent.max_pac)
-            elif stat_call != config_station.DefaultStation.stat_parm_Call:
-                if stat_call in self.port_cfg.parm_stat_MaxFrame.keys():
-                    if self.port_cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                        self.parm_MaxFrame = self.port_cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
 
-        else:
-            # TODO
-            stat_call = self.stat_cfg.stat_parm_Call
-            if stat_call != config_station.DefaultStation.stat_parm_Call:
-                if stat_call in self.port_cfg.parm_stat_PacLen.keys():
-                    if self.port_cfg.parm_stat_PacLen[stat_call]:  # If 0 then default port param
-                        self.parm_PacLen = self.port_cfg.parm_stat_PacLen[stat_call]  # Max Pac len
-                if stat_call in self.port_cfg.parm_stat_MaxFrame.keys():
-                    if self.port_cfg.parm_stat_MaxFrame[stat_call]:  # If 0 then default port param
-                        self.parm_MaxFrame = self.port_cfg.parm_stat_MaxFrame[stat_call]  # Max Pac
 
     def _get_rtt(self):
         auto = False  # TODO
@@ -892,8 +898,8 @@ class AX25Conn:
             init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
             self.IRTT = (init_t2 +
                          self.parm_TXD +
-                         (self.parm_Kiss_TXD * 10) +
-                         (self.parm_Kiss_Tail * 10)
+                         (self._parm_Kiss_TXD * 10) +
+                         (self._parm_Kiss_Tail * 10)
                          ) * 2
             # self.parm_T2 = (float(self.IRTT / 1000) / 2)
             # TXD    TAIL
@@ -902,8 +908,8 @@ class AX25Conn:
             self.parm_T2 = int(self.port_cfg.parm_T2) / 1000
             self.IRTT = ((self.parm_T2 * 1000) +
                          self.parm_TXD +
-                         (self.parm_Kiss_TXD * 10) +
-                         (self.parm_Kiss_Tail * 10)
+                         (self._parm_Kiss_TXD * 10) +
+                         (self._parm_Kiss_Tail * 10)
                          ) * 2
         # print('parm_T2: {}'.format(self.parm_T2))
         self.IRTT = max(self.IRTT, 300)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
@@ -1124,7 +1130,8 @@ class AX25Conn:
         self._port_handler.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
-            if self.digi_call in self.port_cfg.parm_Digi_calls:
+            # if self.digi_call in self.port_cfg.parm_Digi_calls:
+            if POPT_CFG.get_digi_is_enabled(self.digi_call):
                 if self.accept_digi_connection():
                     self.is_digi = True
                     return
@@ -1162,6 +1169,9 @@ class AX25Conn:
 
     def get_port_handler_CONN(self):
         return self._port_handler
+
+    def get_stat_cfg(self):
+        return dict(self._stat_cfg)
 
 ###########################################################################
 ###########################################################################
