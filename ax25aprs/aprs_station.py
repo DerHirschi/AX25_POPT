@@ -444,7 +444,7 @@ class APRS_ais(object):
                         # print(f"APRS-MSG: {aprs_pack}")
                         self.aprs_msg_pool['message'].append(aprs_pack)
                         self._aprs_msg_sys_new_pn(aprs_pack)
-                    if aprs_pack.get('addresse', '') in list(self._port_handler.ax25_stations_settings.keys()):
+                    if aprs_pack.get('addresse', '') in POPT_CFG.get_stat_CFG_keys():
                         if aprs_pack.get('msgNo', None) is not None:
                             self._send_ack(aprs_pack)
                     self._reset_address_in_spooler(aprs_pack)
@@ -476,8 +476,8 @@ class APRS_ais(object):
         if self._port_handler is not None:
             gui = self._port_handler.get_gui()
             if gui is not None:
-                if aprs_pack['addresse'] in self._port_handler.ax25_stations_settings \
-                        or aprs_pack['from'] in self._port_handler.ax25_stations_settings:
+                if aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
+                        or aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
                     gui.set_aprsMail_alarm()
                 if gui.aprs_pn_msg_win is not None:
                     gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
@@ -494,11 +494,11 @@ class APRS_ais(object):
         if answer_pack and msg:
             from_call = answer_pack.get('addresse', '')
             to_call = answer_pack.get('from', '')
-            if from_call in self._port_handler.ax25_stations_settings:
+            if from_call in POPT_CFG.get_stat_CFG_keys():
                 # to_call = answer_pack.get('from', '')
                 path = answer_pack.get('path', [])
                 path.reverse()
-            elif to_call in self._port_handler.ax25_stations_settings:
+            elif to_call in POPT_CFG.get_stat_CFG_keys():
                 tmp = from_call
                 from_call = to_call
                 to_call = tmp

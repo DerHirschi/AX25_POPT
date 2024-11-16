@@ -5,6 +5,7 @@ from tkinter import ttk
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
 from cfg.constant import APRS_SW_ID
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 
 
@@ -49,7 +50,7 @@ class NewMessageWindow(tk.Toplevel):
         label2 = ttk.Label(top_frame, text="     From:")
         label2.pack(side=tk.LEFT, padx=60)
 
-        from_vals = list(PORT_HANDLER.ax25_stations_settings.keys())
+        from_vals = POPT_CFG.get_stat_CFG_keys()
         self.from_var = tk.StringVar(self)
         dropdown2 = ttk.Combobox(top_frame,
                                  width=10,
@@ -102,7 +103,7 @@ class NewMessageWindow(tk.Toplevel):
         msg = self.msg_entry.get(0.0, tk.END)[:-1].replace('\n', '')
         from_call = self.from_var.get()
         port_id = self.port_var.get()
-        if from_call in PORT_HANDLER.ax25_stations_settings:
+        if from_call in POPT_CFG.get_stat_CFG_keys():
             add_str = self.to_call_ent.get().upper()
             if add_str:
                 # to_call = APRS_SW_ID

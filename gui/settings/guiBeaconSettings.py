@@ -33,9 +33,9 @@ class BeaconTab:
         call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['from'][self._lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.from_select_var = tk.StringVar(self.own_tab)
-        from_opt = dict(PORT_HANDLER.ax25_stations_settings)
+        # from_opt = dict(PORT_HANDLER.ax25_stations_settings)
         self.from_select_var.set(beacon.get('own_call', 'NOCALL'))  # default value
-        opt = list(from_opt.keys())
+        opt = list(POPT_CFG.get_stat_CFG_keys())
         if not opt:
             opt = ['NOCALL']
         from_call = tk.OptionMenu(self.own_tab, self.from_select_var, *opt, command=self._cmd_fm_call_set)

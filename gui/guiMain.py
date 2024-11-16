@@ -1159,7 +1159,7 @@ class PoPT_GUI_Main:
         for el in tmp:
             self.sysMsg_to_monitor(el)
         self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
-        for stat in list(PORT_HANDLER.ax25_stations_settings.keys()):
+        for stat in POPT_CFG.get_stat_CFG_keys():
             self.sysMsg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         all_ports = PORT_HANDLER.ax25_ports
         for port_k in all_ports.keys():

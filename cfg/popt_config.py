@@ -304,6 +304,9 @@ class Main_CFG:
             return {}
         return self._config.get('stat_cfgs', {}).get(call, {})
 
+    def get_stat_CFG_keys(self):
+        return list(self._config.get('stat_cfgs', {}))
+
     def set_stat_CFG_fm_conf(self, conf: dict):
         if not conf:
             return False

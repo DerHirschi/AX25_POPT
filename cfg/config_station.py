@@ -6,73 +6,6 @@ from cfg.constant import CFG_data_path
 from cfg.logger_config import logger
 from cfg.cfg_fnc import save_to_file
 
-"""
-def get_all_stat_cfg():
-    stat_cfg_path = CFG_data_path + CFG_usertxt_path
-    stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
-    ret = {}
-    if len(stat_cfg) > 1:
-        stat_cfg = stat_cfg[1:]
-        for folder in stat_cfg:
-            call = folder.split('/')[-1]
-            # print(folder + '/stat' + call + '.popt')
-            temp = {}
-            try:
-                with open(folder + '/stat' + call + '.popt', 'rb') as inp:
-                    temp = pickle.load(inp)
-            except (FileNotFoundError, EOFError):
-                pass
-            except ImportError:
-                logger.error(
-                    f"Station CFG: Falsche Version der CFG Datei. Bitte {folder + '/stat' + call + '.popt'} löschen und PoPT neu starten!")
-                raise
-
-            if temp:
-                stat = DefaultStation()
-                for att in list(temp.keys()):
-                    if hasattr(stat, att):
-                        if not callable(getattr(stat, att)):
-                            setattr(stat, att, temp[att])
-
-                ret[call] = stat
-    return ret
-"""
-"""
-def del_user_data(usercall: str):
-    user_dir = '{0}{1}{2}'.format(CFG_data_path, CFG_usertxt_path, usercall)
-    if os.path.exists(user_dir):
-        files = [x[2] for x in os.walk(user_dir)][0]
-        for f in files:
-            f_dest = '{0}{1}{2}/{3}'.format(CFG_data_path, CFG_usertxt_path, usercall, f)
-            if os.path.exists(f_dest):
-                os.remove(f_dest)
-        os.rmdir(user_dir)
-"""
-"""
-class DefaultStation:
-    # parm_StationCalls: [''] = []
-    stat_parm_Call: str = 'NOCALL'
-    ##########################
-    # Not Implemented Yet
-    stat_parm_Name: str = ''
-    # stat_parm_TYP: str = ''
-    ##########################
-    # stat_parm_is_Digi = False
-    # Parameter for CLI
-    # stat_parm_pipe = False
-    # pipe_cfg = {}
-
-    # Optional Parameter. Can be deleted if not needed. Param will be get from cliMain.py
-    # stat_parm_cli_cfg = getNew_CLI_cfg()
-    stat_parm_cli = 'NO-CLI'
-    # Optional Parameter. Overrides Port Parameter
-    stat_parm_PacLen: int = 0  # Max Pac len
-    stat_parm_MaxFrame: int = 0  # Max (I) Frames
-    stat_parm_qso_col_text_tx = 'white'
-    stat_parm_qso_col_bg = 'black'
-    stat_parm_qso_col_text_rx = '#25db04'
-"""
-
 class DefaultPort(object):
     # parm_Stations = []
     station_save_files: [str] = []
@@ -164,7 +97,7 @@ class DefaultPort(object):
 
 class PortConfigInit(DefaultPort):
     # TODO
-    def __init__(self, loaded_stat: dict, port_id: int):
+    def __init__(self, port_id: int):
         # ReInit rest of this shit
         for att in dir(self):
             if '__' not in att and att not in self.dont_save_this and not callable(getattr(self, att)):

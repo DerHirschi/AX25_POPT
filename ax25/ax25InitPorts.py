@@ -68,7 +68,7 @@ class AX25PortHandler(object):
         ###########################
         # VARs
         self.ax25_ports = {}
-        self.ax25_stations_settings: dict = POPT_CFG.get_stat_CFGs()
+        # self.ax25_stations_settings: dict = POPT_CFG.get_stat_CFGs()
         self.ax25_port_settings = {}  # Port settings are in Port .. TODO Cleanup
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []  # [axip-addresses('ip', port)]
@@ -307,7 +307,8 @@ class AX25PortHandler(object):
             return False
         ##########
         # Init CFG
-        cfg = PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
+        # cfg = PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
+        cfg = PortConfigInit(port_id=port_id)
         if not cfg.parm_PortTyp:
             logger.info('Port {} disabled.'.format(cfg.parm_PortNr))
             # self.sysmsg_to_gui(STR_TABLE['no_port_typ'][self._language].format(cfg.parm_PortNr))
@@ -798,9 +799,6 @@ class AX25PortHandler(object):
                         print(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
                         # conn.ch_index += 1
         return ret
-
-    def ph_get_all_stat_cfg(self):
-        return self.ax25_stations_settings
 
     def get_ax25types_keys(self):
         return list(self._ax25types.keys())
