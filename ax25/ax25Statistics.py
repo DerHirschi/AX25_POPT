@@ -202,7 +202,7 @@ class MH:
     ###############################
     # Main CFG/PARAM
     def _load_fm_cfg(self):
-        mh_cfg = POPT_CFG.load_CFG_MH()
+        mh_cfg = POPT_CFG.get_CFG_MH()
         self.dx_alarm_hist = mh_cfg.get('dx_alarm_hist', [])
         self.dx_alarm_perma_hist = mh_cfg.get('dx_alarm_perma_hist', {})
         self.parm_new_call_alarm = mh_cfg.get('parm_new_call_alarm', False)
@@ -211,14 +211,14 @@ class MH:
         self.parm_alarm_ports = mh_cfg.get('parm_alarm_ports', [])
 
     def _save_to_cfg(self):
-        mh_cfg = POPT_CFG.load_CFG_MH()
+        mh_cfg = POPT_CFG.get_CFG_MH()
         mh_cfg['dx_alarm_hist'] = list(self.dx_alarm_hist)
         mh_cfg['dx_alarm_perma_hist'] = dict(self.dx_alarm_perma_hist)
         mh_cfg['parm_new_call_alarm'] = bool(self.parm_new_call_alarm)
         mh_cfg['parm_distance_alarm'] = int(self.parm_distance_alarm)
         mh_cfg['parm_lastseen_alarm'] = int(self.parm_lastseen_alarm)
         mh_cfg['parm_alarm_ports'] = list(self.parm_alarm_ports)
-        POPT_CFG.save_CFG_MH(mh_cfg)
+        POPT_CFG.set_CFG_MH(mh_cfg)
 
     def set_DB(self, sql_db):
         """ called fm PORTHANDLER._init_MH() """

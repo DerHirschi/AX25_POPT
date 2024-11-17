@@ -1272,3 +1272,8 @@ class AXIP(AX25Port):
             if self.axip_anti_spam[k][1] < time.time():
                 del self.axip_anti_spam[k]
     """
+AX25DeviceTAB = {
+            'KISSTCP': KissTCP,
+            'KISSSER': KISSSerial,
+            'AXIP': AXIP,
+        }

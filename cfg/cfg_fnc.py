@@ -1,7 +1,7 @@
 import pickle
 import os
 
-from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads
+from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, MAX_PORTS
 from cfg.default_config import getNew_station_cfg
 from cfg.logger_config import logger
 
@@ -150,18 +150,6 @@ def save_station_to_file(conf):
             if '__' not in att and not callable(getattr(conf, att)):
                 save_station[att] = getattr(conf, att)
 
-        # if conf.stat_parm_pipe:
-        # pipe_cfgs = POPT_CFG.get_pipe_CFG()
-        # if conf.stat_parm_Call in pipe_cfgs.keys():
-        # pipecfg = pipe_cfgs[conf.stat_parm_Call]
-        # save_station.stat_parm_pipe = True
-        # save_station['pipe_cfg'] = pipe_cfgs
-        """
-        save_station['stat_parm_pipe_tx'] = pipecfg.stat_parm_pipe.tx_filename
-        save_station['stat_parm_pipe_rx'] = pipecfg.stat_parm_pipe.rx_filename
-        save_station['stat_parm_pipe_loop_timer'] = pipecfg.stat_parm_pipe.parm_tx_file_check_timer
-        save_station['stat_parm_pipe'] = True
-        """
         save_to_file(file, save_station)
 
 
@@ -198,6 +186,33 @@ def init_dir_struct():
     if not os.path.exists(CFG_ft_downloads):
         os.makedirs(CFG_ft_downloads)
 
+def load_port_cfg_fm_file(port_id: int):
+    file = CFG_data_path + f'port{port_id}.popt'
+    try:
+        with open(file, 'rb') as inp:
+            return pickle.load(inp)
+            # port_cfg = set_obj_att(D, port_cfg)
+    except (FileNotFoundError, EOFError):
+        return
+    except ImportError:
+        logger.error(
+            f"Port CFG: Falsche Version der CFG Datei. Bitte {file} löschen und PoPT neu starten!")
+        raise
+
+def load_all_port_cfg_fm_file():
+    ret = {}
+    for port_id in list(range(MAX_PORTS)):
+        file = CFG_data_path + f'port{port_id}.popt'
+        try:
+            with open(file, 'rb') as inp:
+                ret[port_id] = pickle.load(inp)
+        except (FileNotFoundError, EOFError):
+            pass
+        except ImportError:
+            logger.error(
+                f"Port CFG: Falsche Version der CFG Datei. Bitte {file} löschen und PoPT neu starten!")
+            raise
+    return ret
 
 def del_port_data(port_id):
     port_file = '{0}port{1}.popt'.format(CFG_data_path, port_id)
