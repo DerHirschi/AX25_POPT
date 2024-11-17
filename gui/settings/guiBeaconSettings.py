@@ -456,7 +456,7 @@ class BeaconSettings(tk.Toplevel):
 
     def _save_btn_cmd(self):
         self._set_vars()
-        POPT_CFG.save_CFG_to_file()
+        POPT_CFG.save_MAIN_CFG_to_file()
         self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
 
     def _ok_btn_cmd(self):

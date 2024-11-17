@@ -469,7 +469,7 @@ class PMS_Settings(tk.Toplevel):
 
     def _save_btn(self):
         self._save_pms_cfg()
-        POPT_CFG.save_CFG_to_file()
+        POPT_CFG.save_MAIN_CFG_to_file()
 
     def _ok_btn(self):
         self._save_pms_cfg()

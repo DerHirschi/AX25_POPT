@@ -186,6 +186,8 @@ def init_dir_struct():
     if not os.path.exists(CFG_ft_downloads):
         os.makedirs(CFG_ft_downloads)
 
+###############################
+# Port CFGs
 def load_port_cfg_fm_file(port_id: int):
     file = CFG_data_path + f'port{port_id}.popt'
     try:
@@ -213,6 +215,18 @@ def load_all_port_cfg_fm_file():
                 f"Port CFG: Falsche Version der CFG Datei. Bitte {file} löschen und PoPT neu starten!")
             raise
     return ret
+
+def save_all_port_cfg_to_file(configs: dict):
+    if not configs:
+        return False
+
+    for port_id, cfg in configs.items():
+        if any((0 > port_id > MAX_PORTS - 1,
+                 cfg.get('parm_PortNr', -1) != port_id)):
+            continue
+        file = f'port{port_id}.popt'
+        save_to_file(file, cfg)
+    return True
 
 def del_port_data(port_id):
     port_file = '{0}port{1}.popt'.format(CFG_data_path, port_id)

@@ -54,6 +54,7 @@ class AX25DigiConnection:
     def _init_digi_conn(self, ax25_frame):
         print("!!!! _init_digi_conn !!!!")
         logger.debug("!!!! _init_digi_conn !!!!")
+        """
         try:
             self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)
         except AX25ConnectionERROR:
@@ -61,6 +62,8 @@ class AX25DigiConnection:
             logger.debug("!!!! _init_digi_conn ERROR!!!!")
             self._state_0_error()
             return
+        """
+        self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)
         self._rx_conn.cli.change_cli_state(5)
         self._rx_conn.is_link_remote = False
         self._rx_conn.cli_remote = False
@@ -129,13 +132,11 @@ class AX25DigiConnection:
         self._tx_conn_uid = self._tx_conn.uid
         self._tx_port = self._tx_conn.own_port
 
-        """
-        print(f"LinkConn : {self._port_handler.link_connections.items()}")
-        print(f"LinkConn : txConns: {self._tx_port.connections}")
-        print(f"LinkConn : txConn UID: {self._tx_conn.uid}")
-        print(f"LinkConn : rxConns: {self._rx_port.connections}")
-        print(f"LinkConn : rxConn UID: {self._rx_conn.uid}")
-        """
+        logger.debug(f"LinkConn : {self._port_handler.link_connections.items()}")
+        logger.debug(f"LinkConn : txConns: {self._tx_port.connections}")
+        logger.debug(f"LinkConn : txConn UID: {self._tx_conn.uid}")
+        logger.debug(f"LinkConn : rxConns: {self._rx_port.connections}")
+        logger.debug(f"LinkConn : rxConn UID: {self._rx_conn.uid}")
         self._state = 2
 
     def add_rx_conn_cron(self):

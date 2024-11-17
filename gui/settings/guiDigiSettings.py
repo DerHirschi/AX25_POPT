@@ -242,7 +242,7 @@ class DIGI_SettingsWin(tk.Toplevel):
 
     def _save_cfg(self):
         self._set_cfg_to_port()
-        POPT_CFG.save_CFG_to_file()
+        POPT_CFG.save_MAIN_CFG_to_file()
 
     def destroy_win(self):
         self._root_win.settings_win = None

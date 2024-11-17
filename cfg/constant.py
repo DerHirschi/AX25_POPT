@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.109.12'
+VER = '2.109.13'
 DEBUG_LOG = True
 """
 LANGUAGE:
@@ -171,8 +171,6 @@ TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
 TXT_INP_CLR = 'yellow'
 TXT_INP_CURSOR_CLR = 'white'
-TXT_MON_CLR = 'green'
-TXT_MON_TX_CLR = 'medium violet red'
 STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = 'black'
 FONT_STAT_BAR = 'Arial'
@@ -182,8 +180,12 @@ CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 GUI_DISABLED_CLR = '#b1b1b3'
 # Station Default
 DEF_STAT_QSO_TX_COL = 'white'
-DEF_STAT_QSO_RX_COL = 'black'
-DEF_STAT_QSO_BG_COL = '#25db04'
+DEF_STAT_QSO_RX_COL = '#02faf2'
+DEF_STAT_QSO_BG_COL = 'black'
+# Port Default
+DEF_PORT_MON_TX_COL = 'medium violet red'
+DEF_PORT_MON_RX_COL = 'green'
+DEF_PORT_MON_BG_COL = 'black'
 
 
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \

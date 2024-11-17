@@ -16,8 +16,7 @@ from ax25.ax25Connection import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
-from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger, \
-    AX25ConnectionERROR
+from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
 from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
 
@@ -248,10 +247,11 @@ class AX25Port(threading.Thread):
         if ax25_frame.to_call.call_str in self.my_stations:
             uid = str(ax25_frame.addr_uid)
             if uid not in self.connections.keys():
-                try:
-                    self.connections[uid] = AX25Conn(ax25_frame, port=self)
-                except AX25ConnectionERROR:
-                    return False
+                self.connections[uid] = AX25Conn(ax25_frame, port=self)
+                # try:
+                #     self.connections[uid] = AX25Conn(ax25_frame, port=self)
+                # except AX25ConnectionERROR:
+                #     return False
                 # self.connections[uid].handle_rx(ax25_frame=ax25_frame)
                 return True
         return False
@@ -726,9 +726,12 @@ class AX25Port(threading.Thread):
         try:
             ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
         except AX25EncodingERROR as e:
+            logger.warning(f"new_connection ERROR {e}")
             print(f"new_connection ERROR {e}")
             print(f"new_connection destCall {ax25_frame.to_call}")
+            logger.warning(f"new_connection destCall {ax25_frame.to_call}")
             print(f"new_connection via_calls {ax25_frame.via_calls}")
+            logger.warning(f"new_connection via_calls {ax25_frame.via_calls}")
             return False
 
         while True:
@@ -746,16 +749,19 @@ class AX25Port(threading.Thread):
             except AX25EncodingERROR:
                 return False
             if ax25_frame.from_call.ssid > 15:
+                print("Same UID - No free SSID !! uid: {} - SSID: {}".format(ax25_frame.addr_uid, ax25_frame.from_call.ssid))
+                logger.warning("Same UID - No free SSID !! uid: {} - SSID: {}".format(ax25_frame.addr_uid, ax25_frame.from_call.ssid))
                 return False
             try:
                 ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
             except AX25EncodingERROR:
                 logger.error("AX25EncodingError: AX25Port Nr:({}): new_connection()".format(self.port_id))
                 raise AX25EncodingERROR(self)
-        try:
-            conn = AX25Conn(ax25_frame, rx=False, port=self)
-        except AX25ConnectionERROR:
-            return False
+        # try:
+        #     conn = AX25Conn(ax25_frame, rx=False, port=self)
+        # except AX25ConnectionERROR:
+        #     return False
+        conn = AX25Conn(ax25_frame, rx=False, port=self)
         # conn.digi_call = digi_call
         # conn.cli.change_cli_state(1)
         self.connections[ax25_frame.addr_uid] = conn

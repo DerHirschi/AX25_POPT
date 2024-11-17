@@ -233,7 +233,7 @@ class AX25PortHandler(object):
             self.mh.save_PortStat()
         USER_DB.save_data()
         self.close_DB()
-        POPT_CFG.save_CFG_to_file()
+        POPT_CFG.save_MAIN_CFG_to_file()
 
     def close_port(self, port_id: int):
         self.sysmsg_to_gui(STR_TABLE['close_port'][POPT_CFG.get_guiCFG_language()].format(port_id))
@@ -315,10 +315,12 @@ class AX25PortHandler(object):
         logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
         return True
 
+    """
     def save_all_port_cfgs(self):
-        """ TODO self.sysmsg_to_gui( bla + StringTab ) """
+        # TODO self.sysmsg_to_gui( bla + StringTab )
         for port_id in self.ax25_ports.keys():
             self.ax25_ports[port_id].port_cfg.save_to_pickl()
+    """
 
     ######################
     # APRS
@@ -676,6 +678,9 @@ class AX25PortHandler(object):
     def get_aprs_ais(self):
         return self.aprs_ais
 
+    def get_all_ports_f_cfg(self):
+        return dict(self.ax25_ports)
+
     def get_all_ports(self):
         ret = {}
         for port_id in list(self.ax25_ports.keys()):
@@ -690,6 +695,7 @@ class AX25PortHandler(object):
         return ret
 
     def get_port_by_id(self, port_id: int):
+        # TODO: Doppelte fnc cleanup
         return self.ax25_ports.get(port_id, None)
 
     ####################
@@ -783,7 +789,8 @@ class AX25PortHandler(object):
                         # conn.ch_index += 1
         return ret
 
-    def get_ax25types_keys(self):
+    @staticmethod
+    def get_ax25types_keys():
         return list(AX25DeviceTAB.keys())
 
     def get_stat_calls_fm_port(self, port_id=0):

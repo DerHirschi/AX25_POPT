@@ -120,8 +120,8 @@ class RxEchoSettings(tk.Toplevel):
 
     def _save_btn_cmd(self):
         # self.set_vars()
-        PORT_HANDLER.save_all_port_cfgs()
-        self._main_cl.sysMsg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
+        # PORT_HANDLER.save_all_port_cfgs()
+        # self._main_cl.sysMsg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
         self._main_cl.sysMsg_to_monitor('Lob: Eine sehr gute Entscheidung. Du bist großartig!')
 
     def _ok_btn_cmd(self):

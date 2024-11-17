@@ -49,9 +49,10 @@ from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
 from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
-    ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
+    ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
-    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL
+    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
+    DEF_PORT_MON_RX_COL
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -1008,8 +1009,8 @@ class PoPT_GUI_Main:
 
     def _init_TXT_frame_low(self):
         self._mon_txt = scrolledtext.ScrolledText(self._TXT_lower_frame,
-                                                  background=TXT_BACKGROUND_CLR,
-                                                  foreground=TXT_MON_CLR,
+                                                  background=DEF_PORT_MON_BG_COL,
+                                                  foreground=DEF_PORT_MON_RX_COL,
                                                   font=(FONT, self.text_size),
                                                   height=100,
                                                   width=300,

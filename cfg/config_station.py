@@ -4,7 +4,7 @@ import pickle
 from cfg.constant import CFG_data_path
 # from cfg.default_config import getNew_CLI_cfg
 from cfg.logger_config import logger
-from cfg.cfg_fnc import save_to_file
+# from cfg.cfg_fnc import save_to_file
 
 class DefaultPort(object):
     # parm_Stations = []
@@ -46,6 +46,7 @@ class DefaultPort(object):
     parm_mon_clr_bg = "black"
     #################################################
     #
+
     dont_save_this = ['dont_save_this',
                       'save_to_pickl',
                       'mh',
@@ -54,8 +55,10 @@ class DefaultPort(object):
                       'parm_aprs_station',
                       ]
 
+
+    """
     def save_to_pickl(self):
-        """ Such a BULLSHIT !! """
+        # Such a BULLSHIT !!
 
         if self.parm_PortNr != -1:
             ############
@@ -71,14 +74,15 @@ class DefaultPort(object):
                     if att == 'parm_beacons':
                         pass
                     elif att == 'parm_aprs_station':
-                        save_ports[att] = dict(self.parm_aprs_station)
+                        pass
+                        # save_ports[att] = dict(self.parm_aprs_station)
                     else:
                         save_ports[att] = getattr(self, att)
                     print("Save Port Param {} > {} - {}".format(self.parm_PortNr, att, save_ports[att]))
 
             file = 'port{}.popt'.format(self.parm_PortNr)
             save_to_file(file, save_ports)
-
+    """
 
 
 class PortConfigInit(DefaultPort):
