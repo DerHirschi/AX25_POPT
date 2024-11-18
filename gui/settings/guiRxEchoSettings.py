@@ -70,7 +70,7 @@ class RxEchoSettings(tk.Toplevel):
             k = list(PORT_HANDLER.get_all_ports().keys())[i]
             port = PORT_HANDLER.get_all_ports()[k]
             var_dict = {}
-            text = 'Port {}: {}'.format(port.port_id, port.port_cfg.parm_PortName)
+            text = 'Port {}: {}'.format(port.port_id, port.port_cfg.get('parm_PortName', ''))
             # Left
             _y = 60 + (280 * int(i % 2))
             if not i % 2 and i:

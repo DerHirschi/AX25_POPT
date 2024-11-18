@@ -15,8 +15,9 @@ from ax25.ax25Connection import AX25Conn
 # from ax25.ax25NetRom import NetRom_decode_UI
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
+from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid
-from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, logger
+from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL
 from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
 
@@ -41,15 +42,16 @@ class AX25Port(threading.Thread):
         """ self.ax25_port_handler will be set in AX25PortInit """
         ############
         # CONFIG
-        self.port_cfg = port_cfg
+        self.port_cfg = dict(port_cfg)
         self.port_handler = port_handler
-        self.kiss = Kiss(self.port_cfg)
-        self.port_param = self.port_cfg.parm_PortParm
-        self.portname = self.port_cfg.parm_PortName
-        self.port_typ = self.port_cfg.parm_PortTyp
-        self.port_id = self.port_cfg.parm_PortNr
-        self.my_stations = self.port_cfg.parm_StationCalls
-        self.parm_TXD = self.port_cfg.parm_TXD
+        self.kiss = Kiss(port_cfg)
+        self.port_param = port_cfg.get('parm_PortParm', ('', 0))
+        self.portname = port_cfg.get('parm_PortName', '')
+        self.port_typ = port_cfg.get('parm_PortTyp', '')
+        self.port_id = port_cfg.get('parm_PortNr', -1)
+        self.my_stations = port_cfg.get('parm_StationCalls', [])
+        self.parm_TXD = port_cfg.get('parm_TXD', 400)
+
         self.TXD = time.time()
         # CONFIG ENDE
         #############
@@ -902,10 +904,10 @@ class AX25Port(threading.Thread):
                 # RX-ECHO
                 self._rx_echo(ax25_frame=ax25frame)
                 # AXIP-Multicast
-                if self.port_cfg.parm_axip_Multicast:
+                if self.port_cfg.get('parm_axip_Multicast', False):
                     self.tx_multicast(frame=ax25frame)
 
-            if self.port_cfg.parm_full_duplex:
+            if self.port_cfg.get('parm_full_duplex', False):
                 break
 
         if self.loop_is_running:

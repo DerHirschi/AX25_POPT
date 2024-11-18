@@ -15,7 +15,6 @@ from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
-from cfg.config_station import PortConfigInit
 from cfg.cfg_fnc import init_dir_struct
 from ax25.ax25Port import AX25DeviceTAB
 from cfg.constant import MAX_PORTS, SERVICE_CH_START
@@ -62,8 +61,6 @@ class AX25PortHandler(object):
         ###########################
         # VARs
         self.ax25_ports = {}
-        # self.ax25_stations_settings: dict = POPT_CFG.get_stat_CFGs()
-        self.ax25_port_settings = {}  # Port settings are in Port .. TODO Cleanup
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []  # [axip-addresses('ip', port)]
         self.link_connections = {}  # {str: AX25Conn} UID Index
@@ -243,8 +240,8 @@ class AX25PortHandler(object):
             port = self.ax25_ports[port_id]
             port.close()
             del self.ax25_ports[port_id]
-        if port_id in self.ax25_port_settings.keys():
-            del self.ax25_port_settings[port_id]
+        # if port_id in self.ax25_port_settings.keys():
+        #     del self.ax25_port_settings[port_id]
         if port_id in self.rx_echo.keys():
             del self.rx_echo[port_id]
         del port
@@ -277,42 +274,40 @@ class AX25PortHandler(object):
         if port_id in self.ax25_ports.keys():
             logger.error('Could not initialise Port {}. Port already in use'.format(port_id))
             self.sysmsg_to_gui(STR_TABLE['port_in_use'][POPT_CFG.get_guiCFG_language()].format(port_id))
-            # self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.'
-            #                    .format(port_id))
             return False
         ##########
         # Init CFG
-        # cfg = PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
-        cfg = PortConfigInit(port_id=port_id)
-        if not cfg.parm_PortTyp:
-            logger.info('Port {} disabled.'.format(cfg.parm_PortNr))
-            # self.sysmsg_to_gui(STR_TABLE['no_port_typ'][POPT_CFG.get_guiCFG_language()].format(cfg.parm_PortNr))
+        new_cfg = POPT_CFG.get_port_CFG_fm_id(port_id=port_id)
+        if not new_cfg:
+            logger.info(f'Port {port_id} disabled.')
             return False
+        if not new_cfg.get('parm_PortTyp', ''):
+            logger.info(f'Port {port_id} disabled.')
+            return False
+        # cfg = PortConfigInit(port_id=port_id)
+        # cfg = dict(POPT_CFG.get_port_CFG_fm_id(port_id=port_id))
         #########################
         # Init Port/Device
         try:
-            temp = AX25DeviceTAB[cfg.parm_PortTyp](cfg, self)
+            temp = AX25DeviceTAB[new_cfg.get('parm_PortTyp', '')](new_cfg, self)
         except AX25DeviceFAIL:
             return False
         ##########################
         # Start Port/Device Thread
-        temp.start()
         if not temp.device_is_running:
-            self.ax25_ports[port_id] = temp
-            self.ax25_port_settings[port_id] = temp.port_cfg
-            logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
-            self.sysmsg_to_gui(STR_TABLE['port_not_init'][POPT_CFG.get_guiCFG_language()].format(cfg.parm_PortNr))
-            # self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
+            logger.error('Could not initialise Port {}'.format(port_id))
+            self.sysmsg_to_gui(STR_TABLE['port_not_init'][POPT_CFG.get_guiCFG_language()].format(port_id))
             return False
+        ##########################
+        # Start Port/Device Thread
+        temp.start()    # TODO AX25Port not as thread (build thread here)
         ######################################
         # Gather all Ports in dict: ax25_ports
-        # temp.gui = self._gui
         self.ax25_ports[port_id] = temp
-        self.ax25_port_settings[port_id] = temp.port_cfg
         self.rx_echo[port_id] = RxEchoVars(port_id)
-        self.sysmsg_to_gui(STR_TABLE['port_init'][POPT_CFG.get_guiCFG_language()].format(cfg.parm_PortNr))
+        self.sysmsg_to_gui(STR_TABLE['port_init'][POPT_CFG.get_guiCFG_language()].format(port_id))
         # self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
-        logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
+        logger.info(f"Port {port_id} Typ: {new_cfg.get('parm_PortTyp', '')} erfolgreich initialisiert.")
         return True
 
     """

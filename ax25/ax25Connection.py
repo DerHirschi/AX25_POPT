@@ -111,19 +111,19 @@ class AX25Conn:
         self.own_port = port
         self._port_handler = port.port_handler
         """ Port Config Parameter """
-        self.port_cfg = self.own_port.port_cfg
-        self.parm_PacLen = self.port_cfg.parm_PacLen  # Max Pac len
-        self.parm_MaxFrame = self.port_cfg.parm_MaxFrame  # Max (I) Frames
-        self.parm_TXD = self.port_cfg.parm_TXD  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        self.port_cfg = dict(self.own_port.port_cfg)
+        self.parm_PacLen = self.port_cfg.get('parm_PacLen', 160)  # Max Pac len
+        self.parm_MaxFrame = self.port_cfg.get('parm_MaxFrame', 3)  # Max (I) Frames
+        self.parm_TXD = self.port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
         self._parm_Kiss_TXD = 0
         self._parm_Kiss_Tail = 0
         if self.own_port.kiss.is_enabled:
-            self._parm_Kiss_TXD = self.own_port.port_cfg.parm_kiss_TXD
-            self._parm_Kiss_Tail = self.own_port.port_cfg.parm_kiss_Tail
-        self.parm_T2 = int(self.port_cfg.parm_T2)  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
-        self.parm_T3 = self.port_cfg.parm_T3  # T3 (Inactive Link Timer)
-        self.parm_N2 = self.port_cfg.parm_N2  # Max Try   Default 20
-        self.parm_baud = self.port_cfg.parm_baud  # Baud for calculating Timer
+            self._parm_Kiss_TXD = self.port_cfg.get('parm_kiss_TXD', 35)
+            self._parm_Kiss_Tail = self.port_cfg.get('parm_kiss_Tail', 15)
+        self.parm_T2 = int(self.port_cfg.get('parm_T2', 1700))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self.parm_T3 = self.port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
+        self.parm_N2 = self.port_cfg.get('parm_N2', 20)  # Max Try   Default 20
+        self.parm_baud = self.port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
         """ Config new Connection Address """
         #####################################
         ax25_conf = ax25_frame.get_frame_conf()
@@ -869,12 +869,12 @@ class AX25Conn:
         if self._stat_cfg.get('stat_parm_PacLen', 0):
             self.parm_PacLen = int(self._stat_cfg.get('stat_parm_PacLen', 0))
         else:
-            self.parm_PacLen = int(self.port_cfg.parm_PacLen)
+            self.parm_PacLen = int(self.port_cfg.get('parm_PacLen', 160))
 
         if self._stat_cfg.get('stat_parm_MaxFrame', 0):
             self.parm_MaxFrame = int(self._stat_cfg.get('stat_parm_MaxFrame', 0))
         else:
-            self.parm_MaxFrame = int(self.port_cfg.parm_MaxFrame)
+            self.parm_MaxFrame = int(self.port_cfg.get('parm_MaxFrame', 3))
 
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
 
@@ -894,7 +894,7 @@ class AX25Conn:
             return self.IRTT
 
     def calc_irtt(self):
-        if self.own_port.port_cfg.parm_T2_auto:
+        if self.port_cfg.get('parm_T2_auto', True):
             init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
             self.IRTT = (init_t2 +
                          self.parm_TXD +
@@ -905,7 +905,7 @@ class AX25Conn:
             # TXD    TAIL
             self.parm_T2 = float(init_t2 + 400 + 150) / 1000
         else:
-            self.parm_T2 = int(self.port_cfg.parm_T2) / 1000
+            self.parm_T2 = int(self.port_cfg.get('parm_T2', 1700)) / 1000
             self.IRTT = ((self.parm_T2 * 1000) +
                          self.parm_TXD +
                          (self._parm_Kiss_TXD * 10) +
@@ -923,7 +923,7 @@ class AX25Conn:
             self.calc_irtt()
             n2 = int(self.n2)
             srtt = float(self._get_rtt())
-            if not self.own_port.port_cfg.parm_T2_auto:
+            if not self.port_cfg.get('parm_T2_auto', True):
                 if self.via_calls:
                     srtt = int((len(self.via_calls) * 2 + 1) * srtt)
             if n2 > 3:
@@ -936,7 +936,7 @@ class AX25Conn:
         """
 
     def set_T2(self, stop=False, link_remote=False):
-        if self.port_cfg.parm_full_duplex:
+        if self.port_cfg.get('parm_full_duplex', False):
             self.t2 = 0
         else:
             if stop:

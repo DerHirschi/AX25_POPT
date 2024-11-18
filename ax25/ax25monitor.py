@@ -9,7 +9,7 @@ from fnc.str_fnc import try_decode
 
 
 def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
-    port_name = port_cfg.parm_PortName
+    port_name = port_cfg.get('parm_PortName', '')
     guiCfg = POPT_CFG.load_guiPARM_main()
     own_loc = guiCfg.get('gui_cfg_locator', '')
 

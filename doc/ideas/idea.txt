@@ -34,10 +34,11 @@ Ideas/TODO's :
   ✓ UmgebungVARS
 
 ✓ Config System überarbeiten
-  - alle alten configs zu ins neue System übertragen ohne Datenverlust
+  ✓ alle alten configs zu ins neue System übertragen ohne Datenverlust
   - nötigen configs lesbar machen
   - nötigen configs einheitlich in/exportierbar machen
-  - Port Configs/Inits aufräumen/optimieren
+  ✓ Port Configs/Inits aufräumen/optimieren
+    - Port Configs/Inits aufräumen/optimieren (Thrading)
 
 - Soundsystem/Sprachausgabe überarbeiten
 ✓ Haupt GUI überarbeiten

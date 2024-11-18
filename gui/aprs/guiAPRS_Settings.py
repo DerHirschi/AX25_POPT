@@ -178,43 +178,45 @@ class APRSSettingsWin(tk.Toplevel):
         # self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 
     def _set_vars(self):
-        _ind = 0
-        _aprs_station = {}
+        ind = 0
+        aprs_station = {}
+        # TODO New CFG
         for port_id in self._all_ports.keys():
             # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_call = self.vars[ind]['call'].get()
             # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
-            self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_igate'] = self._vars[_ind]['ais'].get()
-            self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_digi'] = self._vars[_ind]['digi'].get()
+            # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_igate'] = self._vars[_ind]['ais'].get()
+            # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_digi'] = self._vars[_ind]['digi'].get()
 
             # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._vars[_ind]['digi'].get()
             if self._ais is not None:
                 # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
-                self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._ais.ais_loc
-            _aprs_station[port_id] = self._all_ports[port_id].port_cfg.parm_aprs_station
-            _ind += 1
+                # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._ais.ais_loc
+                pass
+            # _aprs_station[port_id] = self._all_ports[port_id].port_cfg.parm_aprs_station
+            ind += 1
 
         try:
-            _lon = float(self.ais_lon_var.get())
+            lon = float(self.ais_lon_var.get())
         except ValueError:
-            _lon = 0
+            lon = 0
         try:
-            _lat = float(self.ais_lat_var.get())
+            lat = float(self.ais_lat_var.get())
         except ValueError:
-            _lat = 0
-        _loc = self.ais_loc_var.get()
+            lat = 0
+        loc = self.ais_loc_var.get()
 
-        if not _loc:
-            if _lat and _lon:
-                _loc = coordinates_to_locator(
-                    latitude=_lat,
-                    longitude=_lon,
+        if not loc:
+            if lat and lon:
+                loc = coordinates_to_locator(
+                    latitude=lat,
+                    longitude=lon,
                 )
-                self.ais_loc_var.set(_loc)
-        if not _lat or not _lon:
-            if _loc:
-                _lat, _lon = locator_to_coordinates(_loc)
-                self.ais_lat_var.set(str(_lat))
-                self.ais_lon_var.set(str(_lon))
+                self.ais_loc_var.set(loc)
+        if not lat or not lon:
+            if loc:
+                lat, lon = locator_to_coordinates(loc)
+                self.ais_lat_var.set(str(lat))
+                self.ais_lon_var.set(str(lon))
 
         if self._ais is not None:
             # self._ais.task_halt()
@@ -223,10 +225,10 @@ class APRSSettingsWin(tk.Toplevel):
             self._ais.ais_pass = self.ais_pass_var.get()
             self._ais.ais_active = self.ais_run_var.get()
             self._ais.add_new_user = self.ais_add_new_user_var.get()
-            self._ais.ais_loc = _loc
-            self._ais.ais_lat = float(_lat)
-            self._ais.ais_lon = float(_lon)
-            self._ais.ais_aprs_stations = _aprs_station
+            self._ais.ais_loc = loc
+            self._ais.ais_lat = float(lat)
+            self._ais.ais_lon = float(lon)
+            self._ais.ais_aprs_stations = aprs_station
 
             if self.ais_port_var.get().isdigit():
                 self._ais.ais_host = self.ais_host_var.get(), int(self.ais_port_var.get())

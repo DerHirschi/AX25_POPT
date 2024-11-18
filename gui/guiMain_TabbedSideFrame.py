@@ -666,17 +666,17 @@ class SideTabbedFrame:  # TODO
         conn.cli_remote = False
 
     def _chk_t2auto(self):
-        _conn = self._main_win.get_conn()
-        if _conn is not None:
+        conn = self._main_win.get_conn()
+        if conn is not None:
             if self.t2_auto_var.get():
-                _conn.own_port.port_cfg.parm_T2_auto = True
-                _conn.calc_irtt()
-                self.t2_var.set(str(_conn.parm_T2 * 1000))
+                conn.port_cfg['parm_T2_auto'] = True
+                conn.calc_irtt()
+                self.t2_var.set(str(conn.parm_T2 * 1000))
                 self.t2.configure(state='disabled')
             else:
-                _conn.own_port.port_cfg.parm_T2_auto = False
+                conn.port_cfg['parm_T2_auto'] = False
                 self.t2.configure(state='normal')
-            _conn.calc_irtt()
+            conn.calc_irtt()
 
     def _chk_sprech_on(self):
         self._main_win.chk_master_sprech_on()
@@ -701,7 +701,7 @@ class SideTabbedFrame:  # TODO
     def _set_t2(self, event):
         conn = self._main_win.get_conn()
         if conn is not None:
-            conn.port_cfg.parm_T2 = min(max(int(self.t2_var.get()), 500), 3000)
+            conn.port_cfg['parm_T2'] = min(max(int(self.t2_var.get()), 500), 3000)
             conn.calc_irtt()
 
     def tasker(self):
@@ -940,7 +940,7 @@ class SideTabbedFrame:  # TODO
             self._main_win.link_holder_var.set(conn.link_holder_on)
             self._cliRemote_var.set(conn.cli_remote)    # TODO CLI permissions
             self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
-            if conn.own_port.port_cfg.parm_T2_auto:  # FIXME var parm_T2_auto to connection
+            if conn.port_cfg.get('parm_T2_auto', True):  # FIXME var parm_T2_auto to connection
                 if not self.t2_auto_var.get():
                     self.t2_var.set(str(conn.parm_T2 * 1000))
                     self.t2.configure(state='disabled')
@@ -948,7 +948,7 @@ class SideTabbedFrame:  # TODO
                 if self.t2_auto_var.get():
                     self.t2.configure(state='normal')
                     self.t2_var.set(str(conn.parm_T2 * 1000))
-            self.t2_auto_var.set(conn.own_port.port_cfg.parm_T2_auto)
+            self.t2_auto_var.set(conn.port_cfg.get('parm_T2_auto', True))
 
         else:
             if not self._ch_is_disc:
