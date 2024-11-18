@@ -1,7 +1,6 @@
 import datetime
 import socket
 import serial
-import threading
 import time
 import crcmod
 
@@ -32,14 +31,13 @@ class RxBuf:
     kiss = b''
 
 
-class AX25Port(threading.Thread):
+class AX25Port(object):
     def __init__(self, port_cfg, port_handler):
-        super(AX25Port, self).__init__()
+        # super(AX25Port, self).__init__()
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
 
-        """ self.ax25_port_handler will be set in AX25PortInit """
         ############
         # CONFIG
         self.port_cfg = dict(port_cfg)
@@ -50,14 +48,13 @@ class AX25Port(threading.Thread):
         self.port_typ = port_cfg.get('parm_PortTyp', '')
         self.port_id = port_cfg.get('parm_PortNr', -1)
         self.my_stations = port_cfg.get('parm_StationCalls', [])
-        self.parm_TXD = port_cfg.get('parm_TXD', 400)
-
-        self.TXD = time.time()
+        # self.parm_TXD = port_cfg.get('parm_TXD', 400)
+        self._TXD = time.time()
         # CONFIG ENDE
         #############
         """ DIGI """
         # self.digi_calls = self.port_cfg.parm_Digi_calls
-        self.parm_digi_TXD = self.parm_TXD * 4  # TODO add to Settings GUI
+        self._parm_digi_TXD = port_cfg.get('parm_TXD', 400) * 4  # TODO add to Settings GUI
         self._digi_TXD = time.time()
         self._digi_buf = []         # RX/TX
         """ """
@@ -69,7 +66,7 @@ class AX25Port(threading.Thread):
         # VARS
         self.monitor_out = True
         self.device = None
-        self._mh = self.port_handler.get_MH()
+        self._mh = port_handler.get_MH()
         #############
         """ Dual Port """
         self.dualPort_primaryPort = None
@@ -144,11 +141,11 @@ class AX25Port(threading.Thread):
 
     def set_TXD(self):
         """ Internal TXD. Not Kiss TXD """
-        self.TXD = time.time() + self.parm_TXD / 1000
+        self._TXD = time.time() + self.port_cfg.get('parm_TXD', 400) / 1000
 
     def set_digi_TXD(self):
         """ Internal TXD. Not Kiss TXD """
-        self._digi_TXD = time.time() + self.parm_digi_TXD / 1000
+        self._digi_TXD = time.time() + self._parm_digi_TXD / 1000
 
     ###################################################
     # RX Stuff
@@ -846,7 +843,7 @@ class AX25Port(threading.Thread):
         primary_port_id = self.dualPort_cfg.get('primary_port_id', -1)
         self._mh.mh_input(ax25frame_conf, self.port_id, tx=tx, primary_port_id=primary_port_id)
 
-    def run(self):
+    def port_tasker(self):
         """ Main Loop """
         while self.loop_is_running:
             self._tasks()
@@ -915,7 +912,7 @@ class AX25Port(threading.Thread):
             # Crone
             self._task_Port()
             # if time.time() > self.TXD or self.port_cfg.parm_full_duplex:
-            if time.time() > self.TXD:
+            if time.time() > self._TXD:
                 # ######### TX #############
                 self._tx_handler()
 

@@ -669,12 +669,14 @@ class SideTabbedFrame:  # TODO
         conn = self._main_win.get_conn()
         if conn is not None:
             if self.t2_auto_var.get():
-                conn.port_cfg['parm_T2_auto'] = True
+                # conn.port_cfg['parm_T2_auto'] = True
+                conn.set_T2auto(True)
                 conn.calc_irtt()
                 self.t2_var.set(str(conn.parm_T2 * 1000))
                 self.t2.configure(state='disabled')
             else:
-                conn.port_cfg['parm_T2_auto'] = False
+                # conn.port_cfg['parm_T2_auto'] = False
+                conn.set_T2auto(False)
                 self.t2.configure(state='normal')
             conn.calc_irtt()
 

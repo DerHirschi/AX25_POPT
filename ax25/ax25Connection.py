@@ -749,6 +749,9 @@ class AX25Conn:
 
     ###############################################
     # Timer usw
+    def set_T2auto(self, t2_auto=True):
+        self.port_cfg['parm_T2_auto'] = bool(t2_auto)
+
     def set_RNR(self, link_remote=False):
         if not self.is_RNR:
             self.send_RNR()
@@ -936,6 +939,8 @@ class AX25Conn:
         """
 
     def set_T2(self, stop=False, link_remote=False):
+        # print(f"t2Auto conn: {self.port_cfg.get('parm_T2_auto', None)}")
+        # print(f"t2Auto port: {self.own_port.port_cfg.get('parm_T2_auto', None)}")
         if self.port_cfg.get('parm_full_duplex', False):
             self.t2 = 0
         else:

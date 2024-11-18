@@ -281,7 +281,7 @@ class AX25PortHandler(object):
         if not new_cfg:
             logger.info(f'Port {port_id} disabled.')
             return False
-        if not new_cfg.get('parm_PortTyp', ''):
+        if new_cfg.get('parm_PortTyp', '') not in AX25DeviceTAB.keys():
             logger.info(f'Port {port_id} disabled.')
             return False
         # cfg = PortConfigInit(port_id=port_id)
@@ -294,13 +294,14 @@ class AX25PortHandler(object):
             return False
         ##########################
         # Start Port/Device Thread
+        threading.Thread(target=temp.port_tasker).start()
+        # temp.start()
+        ##########################
+        # Start Port/Device Thread
         if not temp.device_is_running:
             logger.error('Could not initialise Port {}'.format(port_id))
             self.sysmsg_to_gui(STR_TABLE['port_not_init'][POPT_CFG.get_guiCFG_language()].format(port_id))
             return False
-        ##########################
-        # Start Port/Device Thread
-        temp.start()    # TODO AX25Port not as thread (build thread here)
         ######################################
         # Gather all Ports in dict: ax25_ports
         self.ax25_ports[port_id] = temp

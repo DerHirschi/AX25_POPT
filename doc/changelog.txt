@@ -3,9 +3,11 @@
 Fixes:
 - Wenn Station CLI-Typ als Pipe gesetzt ist, ist es nicht mehr möglich einen anderen CLI-Typ auszuwählen
 - Wenn keine Distanz bekannt wird "-1 km" in der unteren Statusleiste angezeigt
+- Kanal/Connection Parameter T2Auto wurde nicht korrekt gesetzt
 
 Optimierung:
-- Teile der alten Configs in neues System übertragen
+- Alten Configs in neues System übertragen
+- Port Init
 - Pipe-Tool teilweise überarbeitet
 - Error Logs/Log Config/Logger import
 - AX25Device Error-handling/logging
