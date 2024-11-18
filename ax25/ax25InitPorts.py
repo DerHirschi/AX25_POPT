@@ -264,7 +264,7 @@ class AX25PortHandler(object):
 
     def set_kiss_param_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
-            if self.ax25_ports[port_id].kiss.is_enabled:
+            if self.ax25_ports[port_id].port_cfg.get('parm_kiss_is_on', True):
                 self.ax25_ports[port_id].set_kiss_parm()
                 self.sysmsg_to_gui(STR_TABLE['send_kiss_parm'][POPT_CFG.get_guiCFG_language()].format(port_id))
                 # self.sysmsg_to_gui('Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..'.format(port_id))
@@ -305,7 +305,7 @@ class AX25PortHandler(object):
         ######################################
         # Gather all Ports in dict: ax25_ports
         self.ax25_ports[port_id] = temp
-        self.rx_echo[port_id] = RxEchoVars(port_id)
+        self.rx_echo[port_id] = RxEchoVars(port_id) # TODO Cleanup / OPT
         self.sysmsg_to_gui(STR_TABLE['port_init'][POPT_CFG.get_guiCFG_language()].format(port_id))
         # self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
         logger.info(f"Port {port_id} Typ: {new_cfg.get('parm_PortTyp', '')} erfolgreich initialisiert.")

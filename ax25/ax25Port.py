@@ -33,11 +33,9 @@ class RxBuf:
 
 class AX25Port(object):
     def __init__(self, port_cfg, port_handler):
-        # super(AX25Port, self).__init__()
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
-
         ############
         # CONFIG
         self.port_cfg = dict(port_cfg)

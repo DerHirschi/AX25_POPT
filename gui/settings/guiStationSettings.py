@@ -462,7 +462,7 @@ class StatSetTab:
 
     def _update_vars_fm_cfg(self):
         stat_call = self._new_station_setting.get('stat_parm_Call', '')
-        stat_name = self._new_station_setting.get('stat_name', '')
+        stat_name = self._new_station_setting.get('stat_parm_Name', '')
         stat_is_digi = POPT_CFG.get_digi_is_enabled(stat_call)
         # stat_is_digi = self._new_station_setting.get('stat_parm_is_Digi', False)
         # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
@@ -684,7 +684,7 @@ class StatSetTab:
         #######################################################
         # New CFG
         self._new_station_setting['stat_parm_Call'] = str(call)
-        self._new_station_setting['stat_name'] = str(self._name.get())
+        self._new_station_setting['stat_parm_Name'] = str(self._name.get())
         # self._new_station_setting['stat_parm_is_Digi'] = bool(self._digi_set_var.get())
         self._new_station_setting['stat_parm_cli'] = str(cli_key)
         self._new_station_setting['stat_parm_PacLen'] = int(var_paclen)

@@ -4,29 +4,59 @@ from schedule.popt_sched import getNew_schedule_config
 
 
 #######################################
-# Station CLI CFG
-"""
-def getNew_CLI_DIGI_cfg():
+# Station CFG
+def getNew_station_cfg():
     return dict(
-        digi_enabled=False,
-        digi_allowed_ports=[],
-        digi_max_buff=10,  # bytes till RNR
-        digi_max_n2=4,  # N2 till RNR
+        stat_parm_Call='NOCALL',
+        stat_parm_Name='',
+        stat_parm_cli='NO-CLI',
+        # Optional Parameter. Overrides Port Parameter
+        stat_parm_PacLen=0,  # Max Pac len
+        stat_parm_MaxFrame=0,  # Max (I) Frames
+        stat_parm_qso_col_text_tx=DEF_STAT_QSO_TX_COL,
+        stat_parm_qso_col_bg=DEF_STAT_QSO_RX_COL,
+        stat_parm_qso_col_text_rx=DEF_STAT_QSO_RX_COL,
     )
-"""
-"""
-def getNew_CLI_cfg():
+
+#######################################
+# Port CFG
+def getNew_port_cfg():
     return dict(
-        cli_typ='NO-CLI',
-        # cli_ctext='',
-        # cli_itext='',
-        # cli_longitext='',
-        # cli_akttext='',
-        # cli_bye_text='',
-        cli_prompt='',
-        # cli_digi_cfg=getNew_CLI_DIGI_cfg(),
+        parm_PortNr = -1,
+        parm_PortName = '',
+        parm_PortTyp = '',  # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIP' AXIP UDP
+        parm_PortParm = ('', 0),    # (IP, Port) | (Serial-Device, Baud)
+
+        parm_TXD = 400,  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        # Kiss Parameter
+        parm_kiss_is_on = True,
+        parm_kiss_TXD = 35,
+        parm_kiss_Pers = 160,
+        parm_kiss_Slot = 30,
+        parm_kiss_Tail = 15,
+        parm_kiss_F_Duplex = 0,
+        # Connection Parameter
+        parm_PacLen = 160,  # Max Pac len
+        parm_MaxFrame = 3,  # Max (I) Frames
+
+        parm_StationCalls = [],  # def in __init__    Keys for Station Parameter  # TODO ? Bullshit ?
+        ####################################
+        # parm_T1 = 1800        # T1 (Response Delay Timer) activated if data come in to prev resp to early
+        parm_T2 = 1700 ,        # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
+        parm_T2_auto = True,
+        parm_T3 = 180 ,         # T3 sek (Inactive Link Timer) Default:180 Sek
+        parm_N2 = 20,           # Max Try   Default 20
+        parm_baud = 1200,       # Baud for calculating Timer
+        parm_full_duplex = False,       # Pseudo Full duplex Mode (Just for AXIP)
+        parm_axip_Multicast = False,    # AXIP Multicast
+        parm_axip_fail = 30,            # AXIP Max Connection Fail
+        parm_Multicast_anti_spam = 2,   # AXIP Multicast Anti Spam Timer. ( Detects loops and duplicated msgs)
+        # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
+        # Monitor Text Color
+        parm_mon_clr_tx = DEF_PORT_MON_TX_COL,
+        parm_mon_clr_rx = DEF_PORT_MON_RX_COL,
+        parm_mon_clr_bg = DEF_PORT_MON_BG_COL,
     )
-"""
 
 #######################################
 # PMS
@@ -205,59 +235,4 @@ def getNew_pipe_cfg():
         pipe_parm_Proto=True,
         pipe_parm_permanent=False,
 
-    )
-
-#######################################
-# Station CFG
-def getNew_station_cfg():
-    return dict(
-        stat_parm_Call='NOCALL',
-        stat_parm_Name='',
-        stat_parm_cli='NO-CLI',
-        # Optional Parameter. Overrides Port Parameter
-        stat_parm_PacLen=0,  # Max Pac len
-        stat_parm_MaxFrame=0,  # Max (I) Frames
-        stat_parm_qso_col_text_tx=DEF_STAT_QSO_TX_COL,
-        stat_parm_qso_col_bg=DEF_STAT_QSO_RX_COL,
-        stat_parm_qso_col_text_rx=DEF_STAT_QSO_RX_COL,
-    )
-
-#######################################
-# Port CFG
-def getNew_port_cfg():
-    return dict(
-        parm_PortNr = -1,
-        parm_PortName = '',
-        parm_PortTyp = '',  # 'KISSTCP' (Direwolf), 'KISSSER' (Linux AX.25 Device (kissattach)), 'AXIP' AXIP UDP
-        parm_PortParm = ('', 0),    # (IP, Port) | (Serial-Device, Baud)
-
-        parm_TXD = 400,  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
-        # Kiss Parameter
-        parm_kiss_is_on = True,
-        parm_kiss_TXD = 35,
-        parm_kiss_Pers = 160,
-        parm_kiss_Slot = 30,
-        parm_kiss_Tail = 15,
-        parm_kiss_F_Duplex = 0,
-        # Connection Parameter
-        parm_PacLen = 160,  # Max Pac len
-        parm_MaxFrame = 3,  # Max (I) Frames
-
-        parm_StationCalls = [],  # def in __init__    Keys for Station Parameter  # TODO ? Bullshit ?
-        ####################################
-        # parm_T1 = 1800        # T1 (Response Delay Timer) activated if data come in to prev resp to early
-        parm_T2 = 1700 ,        # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
-        parm_T2_auto = True,
-        parm_T3 = 180 ,         # T3 sek (Inactive Link Timer) Default:180 Sek
-        parm_N2 = 20,           # Max Try   Default 20
-        parm_baud = 1200,       # Baud for calculating Timer
-        parm_full_duplex = False,       # Pseudo Full duplex Mode (Just for AXIP)
-        parm_axip_Multicast = False,    # AXIP Multicast
-        parm_axip_fail = 30,            # AXIP Max Connection Fail
-        parm_Multicast_anti_spam = 2,   # AXIP Multicast Anti Spam Timer. ( Detects loops and duplicated msgs)
-        # port_parm_MaxPac = 20 # Max Packets in TX Buffer (Non Prio Packets)
-        # Monitor Text Color
-        parm_mon_clr_tx = DEF_PORT_MON_TX_COL,
-        parm_mon_clr_rx = DEF_PORT_MON_RX_COL,
-        parm_mon_clr_bg = DEF_PORT_MON_BG_COL,
     )
