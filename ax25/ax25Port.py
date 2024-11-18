@@ -1257,7 +1257,7 @@ class AXIP(AX25Port):
             # else:
             #     self._mh.bw_mon_inp(frame, self.port_id)
 
-        if self.port_cfg.parm_axip_Multicast and not no_multicast:
+        if self.port_cfg.get('parm_axip_Multicast', False) and not no_multicast:
             self.tx_multicast(frame=frame)
 
     def tx_multicast(self, frame):
