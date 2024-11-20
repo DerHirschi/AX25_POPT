@@ -1,5 +1,5 @@
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
-    getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg
+    getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg
 from cfg.constant import CFG_MAIN_data_file, LANGUAGE, DEBUG_LOG, MAX_PORTS
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file  # , get_all_pipe_cfg
@@ -55,8 +55,7 @@ class Main_CFG:
         self._clean_old_STAT_CFGs()
         """ Port CFGs """
         self._load_PORT_CFG_fm_file()   # Port Configs
-
-        # TODO CleanupFNC for Port Configs
+        self._clean_old_PORT_CFGs()
         """
         print('---------- PIPE CFG -------------')
         for call, cfg in self._config['digi_cfg'].items():
@@ -181,7 +180,24 @@ class Main_CFG:
             logger.info(f'Port CFG: load {conf_k}')
             logger.debug(f'- {conf}')
 
-    def save_PORT_CFG_fm_file(self):
+    def _clean_old_PORT_CFGs(self):
+        new_port_cfgs = {}
+        for port_id, conf in self._config.get('port_cfgs', {}).items():
+            new_conf = getNew_port_cfg()
+            new_keys = list(new_conf.keys())
+            for k in new_keys:
+                new_conf[k] = conf.get(k, new_conf.get(k, None))
+            new_port_cfgs[port_id] = new_conf
+        self._config['port_cfgs'] = new_port_cfgs
+
+        print('---------- Port CFG Cleanup --------------')
+        print(self._config['port_cfgs'])
+        logger.info(f'-------- Port CFG Cleanup --------')
+        for conf_k, conf in self._config.get('port_cfgs', {}).items():
+            logger.info(f'Port CFG: Cleanup {conf_k}')
+            logger.debug(f'- {conf}')
+
+    def save_PORT_CFG_to_file(self):
         save_all_port_cfg_to_file(self._config.get('port_cfgs', {}))
         logger.info(f'-------- Port CFG Save --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():

@@ -940,7 +940,7 @@ class KissTCP(AX25Port):
                 if self.kiss.is_enabled:
                     # self.device.sendall(self.kiss.device_kiss_start_1())
                     try:
-                        self.device.sendall(self.kiss.device_jhost())
+                        self.device.sendall(self.kiss.device_kiss_start_1())
                         # print(self.device.recv(999))
                     except BrokenPipeError as e:
                         print('{}'.format(e))
@@ -1067,7 +1067,8 @@ class KISSSerial(AX25Port):
             try:
                 # Deactivate KISS Mode on TNC
                 if self.kiss.is_enabled:
-                    self.device.write(self.kiss.device_kiss_end())
+                    if self.kiss.device_kiss_end():
+                        self.device.write(self.kiss.device_kiss_end())
                 if is_linux():
                     try:
                         self.device.flush()

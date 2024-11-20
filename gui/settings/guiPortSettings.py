@@ -5,7 +5,8 @@ from tkinter import ttk as ttk, messagebox
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL
+from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, TNC_KISS_START_CMD, \
+    TNC_KISS_END_CMD
 from cfg.default_config import getNew_port_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -210,6 +211,7 @@ class PortSetTab:
             self._axip_multicast_dd.configure(state="disabled")
         self._axip_multicast_dd.place(x=axip_multicast_x + 20, y=height - axip_multicast_y)
         # TODO LinkTester
+        """
         axip_linktest_x = 650
         axip_linktest_y = 465
         self._axip_linktest_var = tk.IntVar(self.tab)
@@ -267,10 +269,60 @@ class PortSetTab:
             self._test_fail.configure(state="disabled")
         test_fail_label.place(x=test_fail_x, y=height - test_fail_y)
         self._test_fail.place(x=test_fail_x + 95, y=height - test_fail_y)
+        """
+        # KISS START / END
+        kiss_start_x = 630
+        kiss_start_y = 465
+        kiss_start_label = tk.Label(self.tab, text='KISSMODE START:')
+        kiss_start_label.place(x=kiss_start_x + 50, y=height - kiss_start_y)
+        self._kiss_start_cmd_tab = {}
+        opt = ['']
+        for cmd in TNC_KISS_START_CMD:
+            try:
+                self._kiss_start_cmd_tab[str(cmd)[2:-1]] = cmd
+                opt += [str(cmd)[2:-1]]
+            except IndexError:
+                pass
+        # opt = [''] + [str(x) for x in TNC_KISS_START_CMD] # + ['CUSTOM']
+        self._kiss_start_var = tk.StringVar(self.tab)
+        try:
+            self._kiss_start_var.set(
+                str(self._port_setting.get('parm_kiss_init_cmd', getNew_port_cfg().get('parm_kiss_init_cmd', '')))[2:-1]
+            )  # default value
+        except IndexError:
+            self._kiss_start_var.set('')
+
+        kiss_start_men = tk.OptionMenu(self.tab, self._kiss_start_var, *opt)
+        kiss_start_men.configure(width=10, height=1)
+        kiss_start_men.place(x=kiss_start_x + 220, y=height - kiss_start_y)
+
+        kiss_end_x = 630
+        kiss_end_y = 430
+        kiss_end_label = tk.Label(self.tab, text='KISSMODE END:')
+        kiss_end_label.place(x=kiss_end_x + 50, y=height - kiss_end_y)
+        self._kiss_end_cmd_tab = {}
+        opt = ['']
+        for cmd in TNC_KISS_END_CMD:
+            try:
+                self._kiss_end_cmd_tab[str(cmd)[2:-1]] = cmd
+                opt += [str(cmd)[2:-1]]
+            except IndexError:
+                pass
+        # opt = [''] + [str(x) for x in TNC_KISS_END_CMD]  # + ['CUSTOM']
+        self._kiss_end_var = tk.StringVar(self.tab)
+        try:
+            self._kiss_end_var.set(
+                str(self._port_setting.get('parm_kiss_end_cmd', getNew_port_cfg().get('parm_kiss_end_cmd', '')))[2:-1]
+            )  # default value
+        except IndexError:
+            self._kiss_end_var.set('')
+        kiss_end_men = tk.OptionMenu(self.tab, self._kiss_end_var, *opt)
+        kiss_end_men.configure(width=10, height=1)
+        kiss_end_men.place(x=kiss_end_x + 220, y=height - kiss_end_y)
 
         # T2 auto
-        _x = 120
-        _y = 430
+        x = 120
+        y = 430
         # t1_label = tk.Label(self.tab, text='T1:')
         self._t2_auto_var = tk.BooleanVar(self.tab)
         self._t2_auto = tk.Checkbutton(self.tab, text='T2Auto', variable=self._t2_auto_var, command=self._t2_auto_check)
@@ -278,7 +330,7 @@ class PortSetTab:
         self._default_bg_clr = self._t2_auto.cget('bg')
         # self.t1.insert(tk.END, self.port_setting.parm_T1)
         # t1_label.place(x=t1_x, y=height - t1_y)
-        self._t2_auto.place(x=_x, y=height - _y)
+        self._t2_auto.place(x=x, y=height - y)
         # T2
         t2_x = 20
         t2_y = 430
@@ -307,13 +359,13 @@ class PortSetTab:
         n2_label.place(x=n2_x, y=height - n2_y)
         self._n2.place(x=n2_x + 40, y=height - n2_y)
         # Kiss duplex
-        _x = 520
-        _y = 430
+        x = 520
+        y = 430
         self._kiss_duplex_var = tk.IntVar(self.tab)
         self._kiss_duplex_ent = tk.Checkbutton(self.tab, text='Full-Duplex', variable=self._kiss_duplex_var)
         # self._kiss_duplex_var.set(self._port_setting.parm_kiss_F_Duplex)
         self._kiss_duplex_var.set(self._port_setting.get('parm_kiss_F_Duplex', getNew_port_cfg().get('parm_kiss_F_Duplex', 0)))
-        self._kiss_duplex_ent.place(x=_x, y=height - _y)
+        self._kiss_duplex_ent.place(x=x, y=height - y)
         if self._port_setting.get('parm_kiss_is_on', getNew_port_cfg().get('parm_kiss_is_on', True)):
             # self._kiss_duplex_var.set(self._port_setting.parm_kiss_F_Duplex)
             self._kiss_duplex_var.set(self._port_setting.get('parm_kiss_F_Duplex', getNew_port_cfg().get('parm_kiss_F_Duplex', 0)))
@@ -528,10 +580,10 @@ class PortSetTab:
             self._kiss_slot.configure(state="normal")
             self._kiss_duplex_ent.configure(state='normal')
 
-            self._test_call.configure(state="disabled")
-            self._test_inter.configure(state="disabled")
-            self._test_fail.configure(state="disabled")
-            self._axip_linktest_dd.configure(state="disabled")
+            #self._test_call.configure(state="disabled")
+            #self._test_inter.configure(state="disabled")
+            #self._test_fail.configure(state="disabled")
+            #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
             self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
@@ -568,16 +620,18 @@ class PortSetTab:
 
         elif typ == 'AXIP':
             self._axip_multicast_dd.configure(state="normal")
-            self._axip_linktest_dd.configure(state="disabled")  # TODO state='normal
+            # self._axip_linktest_dd.configure(state="disabled")  # TODO state='normal
             """
             TODO
             self.test_call.configure(state="normal")
             self.test_inter.configure(state="normal")
             """
+            """
             if self._axip_multicast_var.get():
                 self._test_fail.configure(state="normal")
             else:
                 self._test_fail.configure(state="disabled")
+            """
             self._kiss_txd.configure(state="disabled")
             self._kiss_pers.configure(state="disabled")
             self._kiss_tail.configure(state="disabled")
@@ -626,11 +680,11 @@ class PortSetTab:
                 self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', getNew_port_cfg().get('parm_PortParm', ('', 0)))[1])
 
         elif typ == 'KISSSER':
-            self._axip_linktest_dd.configure(state="disabled")
+            #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
-            self._test_call.configure(state="disabled")
-            self._test_inter.configure(state="disabled")
-            self._test_fail.configure(state="disabled")
+            #self._test_call.configure(state="disabled")
+            #self._test_inter.configure(state="disabled")
+            #self._test_fail.configure(state="disabled")
 
             self._kiss_txd.configure(state="normal")
             self._kiss_pers.configure(state="normal")
@@ -710,6 +764,8 @@ class PortSetTab:
         else:
             self._port_setting['parm_kiss_is_on'] = False
 
+        self._port_setting['parm_kiss_init_cmd'] = self._kiss_start_cmd_tab.get(self._kiss_start_var.get(), b'')
+        self._port_setting['parm_kiss_end_cmd'] = self._kiss_end_cmd_tab.get(self._kiss_end_var.get(), b'')
         # Baud
         # if self.port_setting.parm_PortTyp == 'KISSSER':
         # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
@@ -737,7 +793,7 @@ class PortSetTab:
             self._port_setting['parm_full_duplex'] = False
 
         self._port_setting['parm_axip_Multicast'] = bool(self._axip_multicast_var.get())
-        self._port_setting['parm_axip_fail'] = int(self._test_fail.get())
+        # self._port_setting['parm_axip_fail'] = int(self._test_fail.get())
 
         # self._port_setting['parm_StationCalls'] = []
         # self.port_setting.parm_Stations = []
@@ -940,6 +996,7 @@ class PortSettingsWin:
         for port_id in self._tab_list.keys():
             self._tab_list[port_id].set_vars_to_cfg()
             # self._tab_list[port_id].port_setting.save_to_pickl()
+        POPT_CFG.save_PORT_CFG_to_file()
         self._main_class.sysMsg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
         # self._main_class.msg_to_monitor('Lob: Gute Entscheidung!')
         self._main_class.sysMsg_to_monitor('Info: Ports werden neu Initialisiert.')

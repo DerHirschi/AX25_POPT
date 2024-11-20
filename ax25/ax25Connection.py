@@ -111,19 +111,19 @@ class AX25Conn:
         self.own_port = port
         self._port_handler = port.port_handler
         """ Port Config Parameter """
-        self.port_cfg = dict(self.own_port.port_cfg)
-        self.parm_PacLen = self.port_cfg.get('parm_PacLen', 160)  # Max Pac len
-        self.parm_MaxFrame = self.port_cfg.get('parm_MaxFrame', 3)  # Max (I) Frames
-        self.parm_TXD = self.port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        self._port_cfg = dict(self.own_port.port_cfg)
+        self.parm_PacLen = self._port_cfg.get('parm_PacLen', 160)  # Max Pac len
+        self.parm_MaxFrame = self._port_cfg.get('parm_MaxFrame', 3)  # Max (I) Frames
+        self.parm_TXD = self._port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
         self._parm_Kiss_TXD = 0
         self._parm_Kiss_Tail = 0
         if self.own_port.kiss.is_enabled:
-            self._parm_Kiss_TXD = self.port_cfg.get('parm_kiss_TXD', 35)
-            self._parm_Kiss_Tail = self.port_cfg.get('parm_kiss_Tail', 15)
-        self.parm_T2 = int(self.port_cfg.get('parm_T2', 1700))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
-        self.parm_T3 = self.port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
-        self.parm_N2 = self.port_cfg.get('parm_N2', 20)  # Max Try   Default 20
-        self.parm_baud = self.port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
+            self._parm_Kiss_TXD = self._port_cfg.get('parm_kiss_TXD', 35)
+            self._parm_Kiss_Tail = self._port_cfg.get('parm_kiss_Tail', 15)
+        self.parm_T2 = int(self._port_cfg.get('parm_T2', 1700))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self.parm_T3 = self._port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
+        self.parm_N2 = self._port_cfg.get('parm_N2', 20)  # Max Try   Default 20
+        self.parm_baud = self._port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
         """ Config new Connection Address """
         #####################################
         ax25_conf = ax25_frame.get_frame_conf()
@@ -713,8 +713,10 @@ class AX25Conn:
               f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
         if self.tx_buf_ctl:
+            print(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
         if self.rx_tx_buf_guiData:
+            print(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
         self.own_port.del_connections(conn=self)
@@ -750,7 +752,11 @@ class AX25Conn:
     ###############################################
     # Timer usw
     def set_T2auto(self, t2_auto=True):
-        self.port_cfg['parm_T2_auto'] = bool(t2_auto)
+        self._port_cfg['parm_T2_auto'] = bool(t2_auto)
+
+    def set_T2(self, t2: int):
+        self._port_cfg['parm_T2'] = min(max(int(t2), 500), 3000)
+        self.calc_irtt()
 
     def set_RNR(self, link_remote=False):
         if not self.is_RNR:
@@ -872,12 +878,12 @@ class AX25Conn:
         if self._stat_cfg.get('stat_parm_PacLen', 0):
             self.parm_PacLen = int(self._stat_cfg.get('stat_parm_PacLen', 0))
         else:
-            self.parm_PacLen = int(self.port_cfg.get('parm_PacLen', 160))
+            self.parm_PacLen = int(self._port_cfg.get('parm_PacLen', 160))
 
         if self._stat_cfg.get('stat_parm_MaxFrame', 0):
             self.parm_MaxFrame = int(self._stat_cfg.get('stat_parm_MaxFrame', 0))
         else:
-            self.parm_MaxFrame = int(self.port_cfg.get('parm_MaxFrame', 3))
+            self.parm_MaxFrame = int(self._port_cfg.get('parm_MaxFrame', 3))
 
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
 
@@ -897,7 +903,7 @@ class AX25Conn:
             return self.IRTT
 
     def calc_irtt(self):
-        if self.port_cfg.get('parm_T2_auto', True):
+        if self._port_cfg.get('parm_T2_auto', True):
             init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
             self.IRTT = (init_t2 +
                          self.parm_TXD +
@@ -908,7 +914,7 @@ class AX25Conn:
             # TXD    TAIL
             self.parm_T2 = float(init_t2 + 400 + 150) / 1000
         else:
-            self.parm_T2 = int(self.port_cfg.get('parm_T2', 1700)) / 1000
+            self.parm_T2 = int(self._port_cfg.get('parm_T2', 1700)) / 1000
             self.IRTT = ((self.parm_T2 * 1000) +
                          self.parm_TXD +
                          (self._parm_Kiss_TXD * 10) +
@@ -926,7 +932,7 @@ class AX25Conn:
             self.calc_irtt()
             n2 = int(self.n2)
             srtt = float(self._get_rtt())
-            if not self.port_cfg.get('parm_T2_auto', True):
+            if not self._port_cfg.get('parm_T2_auto', True):
                 if self.via_calls:
                     srtt = int((len(self.via_calls) * 2 + 1) * srtt)
             if n2 > 3:
@@ -939,9 +945,9 @@ class AX25Conn:
         """
 
     def set_T2(self, stop=False, link_remote=False):
-        # print(f"t2Auto conn: {self.port_cfg.get('parm_T2_auto', None)}")
+        # print(f"t2Auto conn: {self._port_cfg.get('parm_T2_auto', None)}")
         # print(f"t2Auto port: {self.own_port.port_cfg.get('parm_T2_auto', None)}")
-        if self.port_cfg.get('parm_full_duplex', False):
+        if self._port_cfg.get('parm_full_duplex', False):
             self.t2 = 0
         else:
             if stop:
@@ -1135,7 +1141,7 @@ class AX25Conn:
         self._port_handler.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
-            # if self.digi_call in self.port_cfg.parm_Digi_calls:
+            # if self.digi_call in self._port_cfg.parm_Digi_calls:
             if POPT_CFG.get_digi_is_enabled(self.digi_call):
                 if self.accept_digi_connection():
                     self.is_digi = True
@@ -1143,7 +1149,7 @@ class AX25Conn:
                 """
                 print(f"Accept Conn UID: {self.uid}")
                 print(f"Accept Conn digi_call: {self.digi_call}")
-                print(f"Accept Conn parm_Digi_calls: {self.port_cfg.parm_Digi_calls}")
+                print(f"Accept Conn parm_Digi_calls: {self._port_cfg.parm_Digi_calls}")
                 """
             self.send_to_link(
                 f'\r*** Connected to {self.to_call_str}\r'.encode('ASCII', 'ignore')
@@ -1177,6 +1183,9 @@ class AX25Conn:
 
     def get_stat_cfg(self):
         return dict(self._stat_cfg)
+
+    def get_port_cfg(self):
+        return dict(self._port_cfg)
 
 ###########################################################################
 ###########################################################################

@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.109.17'
+VER = '2.109.18'
 DEBUG_LOG = True
 """
 LANGUAGE:
@@ -18,6 +18,18 @@ TNC_KISS_CMD = b'\x1b@K\r'             # Command for setting TNC to Kiss Mode
 # TNC_KISS_CMD = b'KISS ON\r'           # Command for setting TNC to Kiss Mode
 # TNC_KISS_CMD = b'KISS ON\rrestart\r'  # Command for setting TNC to Kiss Mode
 
+TNC_KISS_CMD_END = b'\xc0\xff\xc0'
+
+TNC_KISS_START_CMD = [
+    b'\x1b@K\r',
+    b'KISSM\r',
+    b'KISS ON\r',
+    b'KISS ON\rrestart\r'
+]
+
+TNC_KISS_END_CMD = [
+    b'\xc0\xff\xc0',
+    ]
 """"""
 MAX_PORTS = 15              #
 SERVICE_CH_START = 11       # Service Channels Start Channel

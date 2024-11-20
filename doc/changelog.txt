@@ -13,6 +13,7 @@ Optimierung:
 - AX25Device Error-handling/logging
 
 Neue Implementierungen / Funktionen:
+- TNC Kiss-Mode Start/Ende Kommandos sind jetzt in den Porteinstellungen konfigurierbar
 - weitere Übersetzungen
 - UI-Pipe-Einstellungen sind jetzt permanent (werden gespeichert)
 - Default C-Text als Vorgabe. (Kann natürlich gelöscht/geändert werden)

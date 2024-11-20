@@ -2376,7 +2376,7 @@ class PoPT_GUI_Main:
             t1_text = f"T1: {max(0, int(station.t1 - time.time()))}"
             rtt_text = 'RTT: {:.1f}/{:.1f}'.format(station.RTT_Timer.rtt_last, station.RTT_Timer.rtt_average)
             t3_text = f"T3: {max(0, int(station.t3 - time.time()))}"
-            if station.port_cfg.get('parm_T2_auto', True):
+            if station.get_port_cfg().get('parm_T2_auto', True):
                 t2_text = f"T2: {int(station.parm_T2 * 1000)}A"
             else:
                 t2_text = f"T2: {int(station.parm_T2 * 1000)}"

@@ -87,6 +87,8 @@ Ideas/TODO's :
   - Auto-TX: Port nach Station wählbar
   ✓ Auto-TX: Port nach First Seen wählbar
 
+- "Multi-TNC/Multi-Port/Mesh-TNC" mehrere TNC's via KISSTCP zusammenschalten. Siehe Dual-TNC
+
 ✓ UserDB
   ? UserDB auf SQL-DB Umstellen
   ? Infos / Ctext usw. in User-DB automatisch abfragen und speichern

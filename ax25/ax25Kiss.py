@@ -1,5 +1,5 @@
 # from config_station import DefaultPort
-from cfg.constant import TNC_KISS_CMD
+from cfg.constant import TNC_KISS_CMD, TNC_KISS_END_CMD
 
 
 class Kiss(object):
@@ -25,10 +25,11 @@ class Kiss(object):
         self._RETURN = b'\xFF'
         # self.START = b'$0'
         self._JHOST0 = bytes.fromhex('11241B404B0D')  # jhost0 - DC1+CAN+ESC+'@K'  Da fehlt aber noch CR
-        # self.START_TNC2 = bytes.fromhex('11241B404B0D')  # TNC2 KISS MODE
-        # self.START_TNC_DEFAULT = bytes.fromhex('1B404B')  # TNC2 KISS MODE   b'\x1b@K'
 
-        self._START_TNC_DEFAULT = TNC_KISS_CMD  # TNC2 KISS MODE   b'\x1b@K'
+        # self._START_TNC_DEFAULT = TNC_KISS_CMD  # TNC2 KISS MODE   b'\x1b@K'
+        self._START_TNC_DEFAULT = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)  # TNC2 KISS MODE   b'\x1b@K'
+        # self._END_TNC_DEFAULT = TNC_KISS_END_CMD  # TNC2 KISS MODE   b'\x1b@K'
+        self._END_TNC_DEFAULT = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_END_CMD)  # TNC2 KISS MODE   b'\x1b@K'
 
         # ESC & END Flags
         self._FEND = b'\xC0'
@@ -112,16 +113,9 @@ class Kiss(object):
             )
         return inp
 
-    @staticmethod
-    def device_kiss_end():
+    def device_kiss_end(self):
         # return b''.join([self.FEND, self.RETURN, self.FEND])
-        return bytes.fromhex('C0FFC0')
-
-    def device_jhost(self):
-        return self._JHOST0
+        return self._END_TNC_DEFAULT
 
     def device_kiss_start_1(self):
-        # return b''.join([self.FEND, self.DATA_FRAME, self.START, self.FEND])
-        # return b''.join([self.START_TNC_DEFAULT, self.START_TNC2])
-        # return b''.join([self.START_TNC2])
-        return b''.join([self._START_TNC_DEFAULT])
+        return self._START_TNC_DEFAULT
