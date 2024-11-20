@@ -7,6 +7,7 @@ import pickle
 
 from UserDB.UserDBmain import USER_DB
 from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
@@ -44,9 +45,9 @@ def get_dx_tx_alarm_his_pack(
         distance: float,
         typ: str,
 ):
-    _now = datetime.now()
+    now = datetime.now()
     return {
-        'ts': _now,
+        'ts': now,
         'port_id': port_id,
         'call_str': call_str,
         'via': via,
@@ -54,7 +55,7 @@ def get_dx_tx_alarm_his_pack(
         'loc': locator,
         'dist': distance,
         'typ': typ,
-        'key': f"{conv_time_for_key(_now)}{call_str}",
+        'key': f"{conv_time_for_key(now)}{call_str}",
 
     }
 
@@ -95,6 +96,7 @@ def get_port_stat_struct():
 class MH:
     def __init__(self, port_handler):
         print("MH Init")
+        logger.info("MH Init")
         self._port_handler = port_handler
         # self._db = None
         self._mh_inp_buffer = []
@@ -180,6 +182,7 @@ class MH:
 
     def save_mh_data(self):
         print('Save MH')
+        logger.info('Save MH')
         self._save_to_cfg()
         tmp_mh = self._MH_db
         for k in list(tmp_mh.keys()):
