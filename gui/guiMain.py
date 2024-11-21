@@ -1411,7 +1411,7 @@ class PoPT_GUI_Main:
             # self._aprs_task()
             # self._monitor_task()
             self._dualPort_monitor_task()
-            # self._update_qso_win()
+            self._update_qso_win()
             self._SideFrame_tasker()
             self._update_status_win()
             self._AlarmIcon_tasker05()
@@ -1490,7 +1490,7 @@ class PoPT_GUI_Main:
 
     ###############################################################
     # QSO WIN
-    """
+
     def _update_qso_win(self):
         all_conn = PORT_HANDLER.get_all_connections()
         all_conn_ch_index = list(all_conn.keys())
@@ -1498,21 +1498,20 @@ class PoPT_GUI_Main:
         for channel in all_conn_ch_index:
             conn = all_conn[channel]
             if conn:
-                if self.update_qso(conn):
+                if self._update_qso(conn):
                     tr = True
         if tr:
             self.ch_status_update()
-    """
 
-    def update_qso(self, conn):
+    def _update_qso(self, conn):
         if not conn:
             return False
         if conn.ft_obj:
-            self.ch_status_update()
+            # self.ch_status_update()
             return False
         if conn.rx_tx_buf_guiData:
             self._update_qso_spooler(conn)
-            self.ch_status_update()
+            # self.ch_status_update()
             return True
         return False
 
@@ -1539,7 +1538,7 @@ class PoPT_GUI_Main:
             Ch_var.last_tag_name = str(conn.my_call_str)
         elif conn.my_call in self._all_tag_calls:
             tag_name_tx = 'TX-' + str(conn.my_call)
-            Ch_var.last_tag_name = str(conn.my_call_str)
+            Ch_var.last_tag_name = str(conn.my_call)
         else:
             tag_name_tx = 'TX-' + Ch_var.last_tag_name
 
@@ -1579,7 +1578,7 @@ class PoPT_GUI_Main:
             Ch_var.last_tag_name = str(conn.my_call_str)
         elif conn.my_call in self._all_tag_calls:
             tag_name_rx = 'RX-' + str(conn.my_call)
-            Ch_var.last_tag_name = str(conn.my_call_str)
+            Ch_var.last_tag_name = str(conn.my_call)
         else:
             tag_name_rx = 'RX-' + Ch_var.last_tag_name
 

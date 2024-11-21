@@ -467,13 +467,14 @@ class AX25Conn:
     def set_pipe(self, pipe_cfg=None):
         if not pipe_cfg:
             pipe_cfg = POPT_CFG.get_pipe_CFG().get(f'{self.own_port.port_id}-{self.my_call_str}', getNew_pipe_cfg())
-        print(f"Set Pipe: {pipe_cfg}")
+        # print(f"Set Pipe: {pipe_cfg}")
         try:
             pipe = AX25Pipe(
                 connection=self,
                 pipe_cfg=pipe_cfg
             )
         except AttributeError:
+            logger.error("Pipe Error (AX25Conn-set_pipe())")
             print("Pipe Error (AX25Conn-set_pipe())")
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
@@ -481,6 +482,7 @@ class AX25Conn:
         if pipe_cfg.get('pipe_parm_MaxFrame', 0):
             self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', self.parm_MaxFrame)
         if not self.own_port.add_pipe(pipe=pipe):
+            logger.error("Port no Pipe")
             print("Port no Pipe")
             return False
         self.cli = NoneCLI(self)
@@ -806,11 +808,13 @@ class AX25Conn:
         self.rx_tx_buf_guiData.append(
             ('TX', data)
         )
+        """
         if not self._gui:
             return
         if not hasattr(self._gui, 'update_qso'):
             return
         self._gui.update_qso(self)     # TODO send to GUI Buffer
+        """
 
     def _send_gui_QSObuf_rx(self, data):
         # TODO send to GUI Buffer
@@ -821,11 +825,13 @@ class AX25Conn:
         self.rx_tx_buf_guiData.append(
             ('RX', data)
         )
+        """
         if not self._gui:
             return
         if not hasattr(self._gui, 'update_qso'):
             return
         self._gui.update_qso(self)      # TODO send to GUI Buffer
+        """
 
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
