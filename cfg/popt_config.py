@@ -58,11 +58,12 @@ class Main_CFG:
         self._clean_old_PORT_CFGs()
         """
         print('---------- PIPE CFG -------------')
-        for call, cfg in self._config['digi_cfg'].items():
+        for call, cfg in self._config['pipe_cfgs'].items():
             print(f'>> {call}')
             print(f'{cfg}')
             print('------------------------')
         """
+
         logger.info(f'--------Loaded CFGs --------')
         for conf_k, conf in self._config.items():
             logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
@@ -99,13 +100,11 @@ class Main_CFG:
         # self._config.read(self._config_filename)
 
     def save_MAIN_CFG_to_file(self):
-        # TODO save_StatCFG_to_file()
         logger.info(f'Main CFG: Config Saved to {self._config_filename}')
-        print(f'Main CFG: Config Saved to {self._config_filename}')
-        print('----------Stat CFG--------------')
-        print(self._config['stat_cfgs'])
-        print(self._config['port_cfgs'])
         if DEBUG_LOG:
+            logger.debug(self._config['stat_cfgs'])
+            logger.debug(self._config['port_cfgs'])
+            logger.debug(self._config['pipe_cfgs'])
             logger.debug(f'-------- Stat CFG --------')
             for conf_k, conf in self._config.get('stat_cfgs', {}).items():
                 logger.debug(f'Station CFG: {conf_k}')
@@ -126,7 +125,6 @@ class Main_CFG:
         self._config['stat_cfgs'] = tmp_stat_cfgs
         self._config['port_cfgs'] = tmp_port_cfgs
         logger.info(f'-------- MAIN CFG Save ENDE --------')
-
 
 
     """
@@ -175,7 +173,7 @@ class Main_CFG:
         self._config['port_cfgs'] = load_all_port_cfg_fm_file()
         print('---------- Port CFG--------------')
         print(self._config['port_cfgs'])
-        logger.info(f'-------- Port CFG Save --------')
+        logger.info(f'-------- Port CFG Load --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: load {conf_k}')
             logger.debug(f'- {conf}')

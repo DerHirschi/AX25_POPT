@@ -1,6 +1,7 @@
 import time
 
 from cfg.default_config import getNew_pipe_cfg
+from cfg.logger_config import logger
 from fnc.file_fnc import check_file
 from fnc.ax25_fnc import validate_ax25Call, build_ax25uid
 
@@ -36,20 +37,20 @@ class AX25Pipe(object):
                 # pipe_cfg.get('pipe_parm_pipe_tx', ''),
                 # pipe_cfg.get('pipe_parm_pipe_rx', ''),
         )):
-            print(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_own_call', '')}")
-            print(f"pipe_parm_address_str : {pipe_cfg.get('pipe_parm_address_str', '')}")
-            print(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_pipe_tx', '')}")
-            print(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_pipe_rx', '')}")
+            logger.error(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_own_call', '')}")
+            logger.error(f"pipe_parm_address_str : {pipe_cfg.get('pipe_parm_address_str', '')}")
+            logger.error(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_pipe_tx', '')}")
+            logger.error(f"pipe_parm_own_call : {pipe_cfg.get('pipe_parm_pipe_rx', '')}")
             raise AttributeError
 
         if not validate_ax25Call(pipe_cfg.get('pipe_parm_own_call', '')):
             raise AttributeError
-        """
-        print("New Pipe !")
+
+        logger.debug("New Pipe !")
         for p_name, param in pipe_cfg.items():
-            print(f"{p_name}: {param}")
-        print(f"Conn: {connection}")
-        """
+            logger.debug(f"{p_name}: {param}")
+        logger.debug(f"Conn: {connection}")
+
         self._pipe_cfg = pipe_cfg
         self._tx_filename = pipe_cfg.get('pipe_parm_pipe_tx', '')
         self._rx_filename = pipe_cfg.get('pipe_parm_pipe_rx', '')

@@ -1,7 +1,9 @@
-from cfg.constant import VER, DEBUG_LOG
+from cfg.constant import VER, DEBUG_LOG, POPT_BANNER
 from cfg.logger_config import logger
 
-logger.info(f"PoPT_{VER} wird gestartet.")
+for el in POPT_BANNER.split('\r')[1:-2]:
+    logger.info(el)
+logger.info(f"Version: {VER} wird gestartet.")
 logger.info(f"DEBUG_LOG: {DEBUG_LOG}")
 import gui.guiMain
 

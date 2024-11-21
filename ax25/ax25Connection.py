@@ -151,7 +151,10 @@ class AX25Conn:
         self.port_id: int = self.own_port.port_id
         self.port_name: str = self.own_port.portname
         self._gui = self._port_handler.get_gui()
-        self._my_locator = self._gui.own_loc
+        if self._gui:
+            self._my_locator = self._gui.own_loc
+        else:
+            self._my_locator = ''
         # self.ChVars = None
         """ Station CFG Parameter """
         self._stat_cfg = {}
@@ -265,7 +268,7 @@ class AX25Conn:
         self.cli_type = ''
         """ Pipe CFG """
         pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(call=str(self.my_call_str),
-                                                port_id=int(self.own_port.port_id))
+                                                port_id=-1)
         if not all((pipe_cfg,
                    pipe_cfg.get('pipe_parm_Proto', False))):
             """ Init CLI """
@@ -464,21 +467,21 @@ class AX25Conn:
     def set_pipe(self, pipe_cfg=None):
         if not pipe_cfg:
             pipe_cfg = POPT_CFG.get_pipe_CFG().get(f'{self.own_port.port_id}-{self.my_call_str}', getNew_pipe_cfg())
-
+        print(f"Set Pipe: {pipe_cfg}")
         try:
             pipe = AX25Pipe(
                 connection=self,
                 pipe_cfg=pipe_cfg
             )
         except AttributeError:
-            # print("Pipe Error (AX25Conn-set_pipe())")
+            print("Pipe Error (AX25Conn-set_pipe())")
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
             self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', self.parm_PacLen)
         if pipe_cfg.get('pipe_parm_MaxFrame', 0):
             self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', self.parm_MaxFrame)
         if not self.own_port.add_pipe(pipe=pipe):
-            # print("Port no Pipe")
+            print("Port no Pipe")
             return False
         self.cli = NoneCLI(self)
         self.cli_type = ''
@@ -807,7 +810,7 @@ class AX25Conn:
             return
         if not hasattr(self._gui, 'update_qso'):
             return
-        self._gui.update_qso(self)
+        self._gui.update_qso(self)     # TODO send to GUI Buffer
 
     def _send_gui_QSObuf_rx(self, data):
         # TODO send to GUI Buffer
@@ -822,7 +825,7 @@ class AX25Conn:
             return
         if not hasattr(self._gui, 'update_qso'):
             return
-        self._gui.update_qso(self)
+        self._gui.update_qso(self)      # TODO send to GUI Buffer
 
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!

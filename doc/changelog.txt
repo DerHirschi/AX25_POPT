@@ -12,6 +12,7 @@ Optimierung:
 - Pipe-Tool teilweise überarbeitet
 - Error Logs/Log Config/Logger import
 - AX25Device Error-handling/logging
+- Debug Konsolen Ausgaben entfernt
 
 Neue Implementierungen / Funktionen:
 - TNC Kiss-Mode Start/Ende Kommandos sind jetzt in den Porteinstellungen konfigurierbar
