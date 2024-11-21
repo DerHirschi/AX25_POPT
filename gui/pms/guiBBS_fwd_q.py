@@ -1,12 +1,9 @@
-import logging
 import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.string_tab import STR_TABLE
-
-logger = logging.getLogger(__name__)
-
+# from cfg.logger_config import logger
 
 class BBS_fwd_Q(tk.Toplevel):
     def __init__(self, root_win):

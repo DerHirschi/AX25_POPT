@@ -4,6 +4,9 @@ Ideas/TODO's :
 ✓ Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
 - PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)
+- "Suspended" Filter
+  - Call/Station ablehnen
+  - Call/Station ignorieren
 - ESC Befehle
 ✓ UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   ✓ $ver = PoPT 2.xxx.x                         - Bake
@@ -28,13 +31,15 @@ Ideas/TODO's :
   - C-Texte umschaltbar in "global Settings (Seiten Frame)"
   - C-Texte umschaltbar nach PoPT-Scheduler
   - C-Texte automatisch umschaltbar je nach sysop aktivität (autom. AFK C-TEXT)
-  - UmgebungVARS
+  ✓ UmgebungVARS
 
 ✓ Config System überarbeiten
-  - alle alten configs zu ins neue System übertragen ohne Datenverlust
-  - nötigen configs lesbar machen
-  - nötigen configs einheitlich in/exportierbar machen
-  - Port Configs/Inits aufräumen/optimieren
+✓ alle alten configs zu ins neue System übertragen ohne Datenverlust
+- nötigen configs lesbar machen
+- nötigen configs einheitlich in/exportierbar machen
+✓ Port Configs/Inits aufräumen/optimieren
+✓ Port Configs/Inits aufräumen/optimieren (Thrading)
+- Port Configs/Inits aufräumen/optimieren (Var OPT/ Code OPT)
 
 - Soundsystem/Sprachausgabe überarbeiten
 ✓ Haupt GUI überarbeiten
@@ -49,7 +54,7 @@ Ideas/TODO's :
   - ax25Statistics überarbeiten
 
 ✓ KISS
-  - kompatibilität TNC nur teilweise
+  - kompatibilität TNC nur teilweise (Custom KISS/TNC Init setzbar)
   - MultiPortKISS (Direwolf)
 
 - AXIP-Multicast überarbeiten
@@ -82,6 +87,8 @@ Ideas/TODO's :
   - Auto-TX: Port nach Station wählbar
   ✓ Auto-TX: Port nach First Seen wählbar
 
+- "Multi-TNC/Multi-Port/Mesh-TNC" mehrere TNC's via KISSTCP zusammenschalten. Siehe Dual-TNC
+
 ✓ UserDB
   ? UserDB auf SQL-DB Umstellen
   ? Infos / Ctext usw. in User-DB automatisch abfragen und speichern
@@ -103,8 +110,12 @@ Ideas/TODO's :
   - APRS
   - BBS
 
-- ?Pipe-TOOL: GPIOs ansteuerbar / auslesbar ..? oder besser
+✓ Pipe-TOOL
+  - Optional Header in Datei schreiben für jeden Frame
+  - Optional Remote-CMD für Disco u.Ä.
+
 - Remote-GPIO Tool (Idee von Lars)
+
 ✓ PoPT-Scheduler
   ✓ Autoconnect
     ✓ PMS abfrage AutoFWD

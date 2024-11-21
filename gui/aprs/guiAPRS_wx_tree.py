@@ -1,12 +1,10 @@
-import logging
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.string_tab import STR_TABLE
 from gui.plots.guiAPRS_wx_plot import WXPlotWindow
-
-logger = logging.getLogger(__name__)
+# from cfg.logger_config import logger
 
 
 class WXWin(tk.Toplevel):

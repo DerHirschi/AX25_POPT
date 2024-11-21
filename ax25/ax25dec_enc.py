@@ -7,7 +7,7 @@ import datetime
 
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
 from ax25.ax25NetRom import NetRom_decode_UI, NetRomDecodingERROR
-from fnc.ax25_fnc import reverse_uid, get_call_str, call_tuple_fm_call_str
+from fnc.ax25_fnc import get_call_str, call_tuple_fm_call_str, reverse_uid
 
 
 def bl2str(inp):
@@ -588,7 +588,8 @@ class AX25Frame:
             rx_time=self.rx_time,
         )
 
-    def build_uid(self, dec=True):
+    def _build_uid(self, dec=True):
+
         self.addr_uid = '{}:{}'.format(
             self.from_call.call_str,
             self.to_call.call_str
@@ -597,8 +598,17 @@ class AX25Frame:
             self.addr_uid += f':{ca.call_str}'
         if not dec:
             self.addr_uid = reverse_uid(self.addr_uid)
+        """
+        self.addr_uid = build_ax25uid(
+            from_call_str=self.from_call.call_str,
+            to_call_str=self.to_call.call_str,
+            via_calls=self.via_calls,
+            dec=dec
+        )
+        """
 
-    def set_stop_bit(self):
+
+    def _set_stop_bit(self):
         if not self.via_calls:
             self.to_call.s_bit = False
             self.from_call.s_bit = True
@@ -609,7 +619,7 @@ class AX25Frame:
                 el.s_bit = False
             self.via_calls[-1].s_bit = True
 
-    def set_check_h_bits(self, dec=True):
+    def _set_check_h_bits(self, dec=True):
         """
         Dec: Check if Packet runs through all Digi's
         Enc: Set all ViaCalls C-Bits to 0
@@ -623,7 +633,7 @@ class AX25Frame:
             for ca in self.via_calls:
                 ca.c_bit = False
 
-    def digi_set_h_bits(self):
+    def _digi_set_h_bits(self):
         if self.digi_call:
             tr = True
             for ca in self.via_calls:
@@ -640,12 +650,14 @@ class AX25Frame:
                 self.to_call.dec_call(self.data_bytes[:7])
                 # print("ToCall > {}".format(self.hexstr[:7]))
             except IndexError:
-                print("Index ERROR To Call!!!!!!!!!!")
+                logger.error("DEC: Index ERROR To Call!!!!!!!!!!")
+                print("DEC: Index ERROR To Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             try:
                 self.from_call.dec_call(self.data_bytes[7:14])
                 # print("FromCall > {}".format(self.hexstr[7:14]))
             except IndexError:
+                logger.error("DEC: Index ERROR From Call!!!!!!!!!!")
                 print("Index ERROR From Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             n = 2
@@ -656,6 +668,7 @@ class AX25Frame:
                         tmp.dec_call(self.data_bytes[7 * n: 7 + 7 * n])
                         # print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
                     except IndexError:
+                        logger.error("DEC: Index ERROR Via Call!!!!!!!!!!")
                         print("Index ERROR Via Call!!!!!!!!!!")
                         raise AX25DecodingERROR(self)
                     self.via_calls.append(tmp)
@@ -694,13 +707,13 @@ class AX25Frame:
                     self.payload = self.data_bytes[index:]
                 self.data_len = len(self.payload)
             # Check if all Digi s have repeated the packet
-            self.set_check_h_bits(dec=True)
+            self._set_check_h_bits(dec=True)
             # Build address UID
-            self.build_uid(dec=True)
+            self._build_uid(dec=True)
             if not self.validate():
                 raise AX25DecodingERROR(self)
 
-            self._decode_netrom()
+            # self._decode_netrom()
         else:
             raise AX25DecodingERROR(self)
 
@@ -731,7 +744,7 @@ class AX25Frame:
             self.to_call.c_bit = False
             self.from_call.c_bit = True
         # Set Stop Bit
-        self.set_stop_bit()
+        self._set_stop_bit()
         # Encode Address Fields
         try:
             self.to_call.enc_call()
@@ -748,14 +761,14 @@ class AX25Frame:
         # Set all H-Bits to 0
         if not digi:
             # TODO Crap
-            self.set_check_h_bits(dec=False)
+            self._set_check_h_bits(dec=False)
         for station in self.via_calls:
             try:
                 station.enc_call()
             except AX25EncodingERROR:
                 raise AX25EncodingERROR()
             self.data_bytes += station.hex_str
-        self.digi_set_h_bits()
+        self._digi_set_h_bits()
         # C Byte
         self.ctl_byte.enc_cbyte()
         self.data_bytes += format_hexstr(self.ctl_byte.hex).encode()
@@ -795,7 +808,7 @@ class AX25Frame:
             print('Encoding Error Validator')
             raise AX25EncodingERROR
         # Build address UID
-        self.build_uid(dec=False)
+        self._build_uid(dec=False)
         # Replace Kiss Flags with Kiss ESC ( C0 > DB DC )
         # self.hexstr = arschloch_kiss_frame(self.hexstr)
 
@@ -846,7 +859,7 @@ class AX25Frame:
         :return: bool:
         """
         if h_bit_enc:
-            self.set_check_h_bits(dec=False)
+            self._set_check_h_bits(dec=False)
         for ca in self.via_calls:
             """ C-Bit = H-Bit in Digi Address Space """
             if (not ca.c_bit and not ca.call_str == call) and h_bit_enc:

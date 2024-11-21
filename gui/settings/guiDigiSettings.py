@@ -11,6 +11,7 @@ class DIGI_cfg_Tab(tk.Frame):
         self.pack()
         ##################
         # Vars
+        self._digi_enabled = tk.BooleanVar(self, value=digi_settings.get('digi_enabled', False))
         self._managed_digi = tk.BooleanVar(self, value=digi_settings.get('managed_digi', False))
         # Managed-DIGI Parameter #######################################################
         self._digi_ssid_port = tk.BooleanVar(self, value=digi_settings.get('digi_ssid_port', True))
@@ -24,12 +25,21 @@ class DIGI_cfg_Tab(tk.Frame):
         self._last_rx_fail_sec = tk.StringVar(self, value=str(digi_settings.get('last_rx_fail_sec', 60)))
 
         ##################
+        # DIGI enbaled
+        opt_frame_0 = tk.Frame(self)
+        opt_frame_0.pack(fill=tk.X)
+        digi_chk = tk.Checkbutton(opt_frame_0,
+                                          text='DIGI',
+                                          variable=self._digi_enabled,
+                                          command=self._set_l3_digi_entry_state)
+        digi_chk.pack(side=tk.LEFT, anchor=tk.W, padx=5)
+        ##################
         # Managed DIGI
-        managed_digi_chk = tk.Checkbutton(self,
+        self._managed_digi_chk = tk.Checkbutton(opt_frame_0,
                                           text='L3-DIGI',
                                           variable=self._managed_digi,
                                           command=self._set_l3_digi_entry_state)
-        managed_digi_chk.pack(padx=5, pady=5, anchor=tk.W)
+        self._managed_digi_chk.pack(side=tk.LEFT, padx=5, pady=5)
         sep = ttk.Separator(self, orient=tk.HORIZONTAL)
         sep.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5, expand=False)
         ##################################################################
@@ -105,6 +115,17 @@ class DIGI_cfg_Tab(tk.Frame):
         self._set_l3_digi_entry_state()
 
     def _set_l3_digi_entry_state(self, event=None):
+        if not self._digi_enabled.get():
+            self._managed_digi_chk.configure(state='disabled')
+            self._short_via_ent.configure(state='disabled')
+            self._UI_short_via_ent.configure(state='disabled')
+            self._max_buff_ent.configure(state='disabled')
+            self._max_n2_ent.configure(state='disabled')
+            self._max_SABM_ent.configure(state='disabled')
+            self._ssid_port_ent.configure(state='disabled')
+            self._auto_port_ent.configure(state='disabled')
+            return
+        self._managed_digi_chk.configure(state='normal')
         if self._managed_digi.get():
             self._short_via_ent.configure(state='normal')
             self._UI_short_via_ent.configure(state='normal')
@@ -138,6 +159,7 @@ class DIGI_cfg_Tab(tk.Frame):
 
     def get_cfg_fm_vars(self):
         ret = POPT_CFG.get_digi_default_CFG()
+        ret['digi_enabled'] = bool(self._digi_enabled.get())
         ret['managed_digi'] = bool(self._managed_digi.get())
         # Managed-DIGI Parameter ###############################################################################
         ret['short_via_calls'] = bool(self._short_via_calls.get())  # Short VIA Call in AX25 Address
@@ -173,7 +195,7 @@ class DIGI_SettingsWin(tk.Toplevel):
         # self._root_win.DIGI_settings_win = self
         self._root_win.settings_win = self
         #####################################################################
-        PORT_HANDLER.update_digi_setting()
+        # PORT_HANDLER.update_digi_setting()
         #####################################################################
 
         self.tabControl = ttk.Notebook(self)
@@ -220,7 +242,7 @@ class DIGI_SettingsWin(tk.Toplevel):
 
     def _save_cfg(self):
         self._set_cfg_to_port()
-        POPT_CFG.save_CFG_to_file()
+        POPT_CFG.save_MAIN_CFG_to_file()
 
     def destroy_win(self):
         self._root_win.settings_win = None

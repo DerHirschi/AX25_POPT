@@ -2,8 +2,11 @@ import datetime
 import time
 import threading
 
+from ax25.ax25Error import AX25DeviceFAIL
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
+from cfg.logger_config import logger
+from cfg.string_tab import STR_TABLE
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
 from sql_db.db_main import SQL_Database
@@ -12,8 +15,8 @@ from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
-from cfg.config_station import init_dir_struct, get_all_stat_cfg, logger, PortConfigInit
-from ax25.ax25Port import KissTCP, KISSSerial, AXIP
+from cfg.cfg_fnc import init_dir_struct
+from ax25.ax25Port import AX25DeviceTAB
 from cfg.constant import MAX_PORTS, SERVICE_CH_START
 from sql_db.sql_Error import SQLConnectionError
 
@@ -48,15 +51,8 @@ class AX25PortHandler(object):
         #################
         self._start_time = datetime.datetime.now()
         self.is_running = True
-        self._ax25types = {
-            'KISSTCP': KissTCP,
-            'KISSSER': KISSSerial,
-            'AXIP': AXIP,
-        }
         ###########################
         # Moduls
-        self.userDB = USER_DB
-        self.mh = None
         # self.routingTable = None
         self._gui = None
         self.bbs = None
@@ -64,12 +60,10 @@ class AX25PortHandler(object):
         self.scheduled_tasker = None
         ###########################
         # VARs
-        self.ax25_stations_settings = get_all_stat_cfg()
-        self.ax25_port_settings = {}  # Port settings are in Port .. TODO Cleanup
+        self.ax25_ports = {}
         # self.ch_echo: {int:  [AX25Conn]} = {}
         self.multicast_ip_s = []  # [axip-addresses('ip', port)]
         self.link_connections = {}  # {str: AX25Conn} UID Index
-        self.ax25_ports = {}
         self.rx_echo = {}
         self.rx_echo_on = False
         ###########
@@ -77,16 +71,25 @@ class AX25PortHandler(object):
         self._dualPort_monitor_buffer = {}
         #######################################################
         # Init UserDB
+        self.userDB = USER_DB
         self.userDB.set_port_handler(self)
         ########################################################
         # Init MH
+        self.mh = None
         self._init_MH()
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"Port Init Max-Ports: {MAX_PORTS}")
         for port_id in range(MAX_PORTS):  # Max Ports
             self._init_port(port_id=port_id)
+        ##########################
+        # Dual Port Init
         self.set_dualPort_fm_cfg()
+        ##########################
+        # Pipe-Tool Init
+        # self._all_pipe_cfgs = {}
+        # self._all_pipes = {}
+        self._pipeTool_init()
         #######################################################
         # Init Routing Table
         # self._init_RoutingTable()
@@ -197,23 +200,6 @@ class AX25PortHandler(object):
 
     #######################################################################
     # Setting/Parameter Updates
-    def update_digi_setting(self):
-        # TODO
-        digi_cfg = {}
-        for port_kk, port in self.ax25_ports.items():
-            # port = self.ax25_ports[port_kk]
-            new_digi_calls = []
-            for stat_key in port.my_stations:
-                if stat_key in self.ax25_stations_settings.keys():
-                    if self.ax25_stations_settings[stat_key].stat_parm_is_Digi:
-                        if stat_key not in new_digi_calls:
-                            new_digi_calls.append(stat_key)
-                        if stat_key not in digi_cfg:
-                            digi_cfg[stat_key] = POPT_CFG.get_digi_CFG_for_Call(stat_key)
-            self.ax25_ports[port_kk].port_cfg.parm_Digi_calls = new_digi_calls
-            self.ax25_ports[port_kk].digi_calls = new_digi_calls  # Same Object !!
-        POPT_CFG.set_digi_CFG(digi_cfg)
-        # print(POPT_CFG.get_digi_CFG())
 
     #######################################################################
     # Port Handling
@@ -244,87 +230,118 @@ class AX25PortHandler(object):
             self.mh.save_PortStat()
         USER_DB.save_data()
         self.close_DB()
-        POPT_CFG.save_CFG_to_file()
+        POPT_CFG.save_MAIN_CFG_to_file()
 
     def close_port(self, port_id: int):
+        self.sysmsg_to_gui(STR_TABLE['close_port'][POPT_CFG.get_guiCFG_language()].format(port_id))
+        # self.sysmsg_to_gui('Info: Versuche Port {} zu schließen.'.format(port_id))
         logger.info('Info: Versuche Port {} zu schließen.'.format(port_id))
         if port_id in self.ax25_ports.keys():
             port = self.ax25_ports[port_id]
             port.close()
             del self.ax25_ports[port_id]
-        if port_id in self.ax25_port_settings.keys():
-            del self.ax25_port_settings[port_id]
+        # if port_id in self.ax25_port_settings.keys():
+        #     del self.ax25_port_settings[port_id]
         if port_id in self.rx_echo.keys():
             del self.rx_echo[port_id]
         del port
-        self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
+        self.sysmsg_to_gui(STR_TABLE['port_closed'][POPT_CFG.get_guiCFG_language()].format(port_id))
+        #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
         logger.info('Info: Port {} erfolgreich geschlossen.'.format(port_id))
 
     def reinit_all_ports(self):
+        self.sysmsg_to_gui("Reinit all Ports")
         logger.info("Reinit all Ports")
         for port_id in list(self.ax25_ports.keys()):
             self.close_port(port_id=port_id)
         time.sleep(1)  # Cooldown for Device
         for port_id in range(MAX_PORTS):  # Max Ports
             self._init_port(port_id=port_id)
+        ##########################
+        # Pipe-Tool Init
+        # self._pipeTool_init()
         self.set_diesel()
 
     def set_kiss_param_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
-            if self.ax25_ports[port_id].kiss.is_enabled:
+            if self.ax25_ports[port_id].port_cfg.get('parm_kiss_is_on', True):
                 self.ax25_ports[port_id].set_kiss_parm()
-                self.sysmsg_to_gui('Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..'.format(port_id))
+                self.sysmsg_to_gui(STR_TABLE['send_kiss_parm'][POPT_CFG.get_guiCFG_language()].format(port_id))
+                # self.sysmsg_to_gui('Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..'.format(port_id))
 
     def _init_port(self, port_id: int):
         logger.info("Initialisiere Port: {}".format(port_id))
         if port_id in self.ax25_ports.keys():
             logger.error('Could not initialise Port {}. Port already in use'.format(port_id))
-            self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.'
-                               .format(port_id))
-        else:
-            ##########
-            # Init CFG
-            cfg = PortConfigInit(loaded_stat=self.ax25_stations_settings, port_id=port_id)
-            if cfg.parm_PortTyp:
-                #########################
-                # Init Port/Device
-                temp = self._ax25types[cfg.parm_PortTyp](cfg, self)
-                if not temp.device_is_running:
-                    logger.error('Could not initialise Port {}'.format(cfg.parm_PortNr))
-                    self.sysmsg_to_gui('Error: Port {} konnte nicht initialisiert werden.'.format(cfg.parm_PortNr))
-                ##########################
-                # Start Port/Device Thread
-                temp.start()
-                ######################################
-                # Gather all Ports in dict: ax25_ports
-                # temp.gui = self._gui
-                self.ax25_ports[port_id] = temp
-                self.ax25_port_settings[port_id] = temp.port_cfg
-                self.rx_echo[port_id] = RxEchoVars(port_id)
-                self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
-                logger.info("Port {} Typ: {} erfolgreich initialisiert.".format(port_id, temp.port_typ))
+            self.sysmsg_to_gui(STR_TABLE['port_in_use'][POPT_CFG.get_guiCFG_language()].format(port_id))
+            return False
+        ##########
+        # Init CFG
+        new_cfg = POPT_CFG.get_port_CFG_fm_id(port_id=port_id)
+        if not new_cfg:
+            logger.info(f'Port {port_id} disabled.')
+            return False
+        if new_cfg.get('parm_PortTyp', '') not in AX25DeviceTAB.keys():
+            logger.info(f'Port {port_id} disabled.')
+            return False
+        # cfg = PortConfigInit(port_id=port_id)
+        # cfg = dict(POPT_CFG.get_port_CFG_fm_id(port_id=port_id))
+        #########################
+        # Init Port/Device
+        try:
+            temp = AX25DeviceTAB[new_cfg.get('parm_PortTyp', '')](new_cfg, self)
+        except AX25DeviceFAIL:
+            return False
+        ##########################
+        # Start Port/Device Thread
+        threading.Thread(target=temp.port_tasker).start()
+        # temp.start()
+        ##########################
+        # Start Port/Device Thread
+        if not temp.device_is_running:
+            logger.error('Could not initialise Port {}'.format(port_id))
+            self.sysmsg_to_gui(STR_TABLE['port_not_init'][POPT_CFG.get_guiCFG_language()].format(port_id))
+            return False
+        ######################################
+        # Gather all Ports in dict: ax25_ports
+        self.ax25_ports[port_id] = temp
+        self.rx_echo[port_id] = RxEchoVars(port_id) # TODO Cleanup / OPT
+        self.sysmsg_to_gui(STR_TABLE['port_init'][POPT_CFG.get_guiCFG_language()].format(port_id))
+        # self.sysmsg_to_gui('Info: Port {} erfolgreich initialisiert.'.format(cfg.parm_PortNr))
+        logger.info(f"Port {port_id} Typ: {new_cfg.get('parm_PortTyp', '')} erfolgreich initialisiert.")
+        return True
 
+    """
     def save_all_port_cfgs(self):
-        """ TODO self.sysmsg_to_gui( bla + StringTab ) """
+        # TODO self.sysmsg_to_gui( bla + StringTab )
         for port_id in self.ax25_ports.keys():
             self.ax25_ports[port_id].port_cfg.save_to_pickl()
+    """
 
     ######################
     # APRS
     def init_aprs_ais(self, aprs_obj=None):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         if aprs_obj is None:
+            logger.info("APRS-AIS Init")
             self.aprs_ais = APRS_ais()
         else:
+            logger.info("APRS-AIS ReInit")
             self.aprs_ais = aprs_obj
-        if self.aprs_ais is not None:
-            # self.aprs_ais.port_handler = self
-            self.aprs_ais.set_port_handler(self)
-            if self.aprs_ais.ais is not None:
-                # self.aprs_ais.loop_is_running = True
-                threading.Thread(target=self.aprs_ais.ais_rx_task).start()
-                if self.aprs_ais.ais_mon_gui is not None:
-                    self.aprs_ais.ais_mon_gui.set_ais_obj()
+        if self.aprs_ais is None:
+            logger.error("APRS-AIS Init Error! No aprs_ais !")
+            return False
+        # self.aprs_ais.port_handler = self
+        self.aprs_ais.set_port_handler(self)
+        if self.aprs_ais.ais is None:
+            logger.error("APRS-AIS Init Error! No aprs_ais.ais !")
+            return False
+        # self.aprs_ais.loop_is_running = True
+        threading.Thread(target=self.aprs_ais.ais_rx_task).start()
+        if self.aprs_ais.ais_mon_gui is not None:
+            self.aprs_ais.ais_mon_gui.set_ais_obj()
+        logger.info("APRS-AIS Init erfolgreich.")
+        return True
 
     def _aprs_task(self):
         if self.aprs_ais is not None:
@@ -572,38 +589,65 @@ class AX25PortHandler(object):
                         if k in self.rx_echo[port].tx_ports.keys():
                             rx_echo_var.tx_buff.append(ax_frame)
 
-    ######################
+    ###################################################
     # Pipe-Tool
+    def _pipeTool_init(self):
+        all_pipe_cfgs = POPT_CFG.get_pipe_CFG()
+        for uid, pipeCfg in all_pipe_cfgs.items():
+            if (not pipeCfg.get('pipe_parm_Proto', False) and
+                    pipeCfg.get('pipe_parm_permanent', False)):
+                # for port_id in pipeCfg.get('pipe_parm_ports', []):
+                if pipeCfg.get('pipe_parm_port', -1) == -1:
+                    for port_id, port in self.ax25_ports.items():
+                        if port is not None:
+                            port.add_pipe(pipe_cfg=pipeCfg)
+                else:
+                    port_id = pipeCfg.get('pipe_parm_port', -1)
+                    port = self.get_port_by_index(port_id)
+                    if port is not None:
+                        port.add_pipe(pipe_cfg=pipeCfg)
+
+                    # self._all_pipe_cfgs[call] = pipe
+
+
     def _pipeTool_task(self):
-        all_pipes = self.get_all_pipes()
-        for pipe in all_pipes:
-            if pipe:
-                pipe.cron_exec()
+        for port_id, port in self.ax25_ports.items():
+            if port.device_is_running:
+                for pipe_uid, pipe in port.pipes.items():
+                    if pipe:
+                        # print(f"PipeCron: {pipe_uid}")
+                        pipe.cron_exec()
 
     def get_all_pipes(self):
         ret = []
-        for port_id in self.ax25_ports.keys():
-            for pipe_uid in self.ax25_ports[port_id].pipes.keys():
-                if self.ax25_ports[port_id].pipes[pipe_uid]:
-                    # print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
-                    ret.append(self.ax25_ports[port_id].pipes[pipe_uid])
+        # for pipe_uid, pipe in self._all_pipes.items():
+        for port_id, port in self.ax25_ports.items():
+            if port.device_is_running:
+                for pipe_uid, pipe in port.pipes.items():
+                    print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
+                    ret.append(pipe)
         return ret
 
-    def add_pipe(self, port_id: int, pipe_uid: str, pipe):
+    """
+    def add_pipe_PH(self, pipe):
+        port_id = pipe.port_id
+        pipe_uid = pipe.uid
         if port_id not in self.ax25_ports.keys():
             return False
         if not pipe_uid:
             return False
-        self.ax25_ports[port_id].pipes[pipe_uid] = pipe
+        # self.ax25_ports[port_id].pipes[pipe_uid] = pipe
+        if pipe_uid in self._all_pipes.keys():
+            return False
+        self._all_pipes[pipe_uid] = pipe
         return True
-    """
-    def del_pipe(self, port_id: int, pipe_uid: str):
-        if port_id not in self.ax25_ports.keys():
-            return
-        if pipe_uid not in self.ax25_ports[port_id].pipes.keys():
-            return
-        self.ax25_ports[port_id].pipes[pipe_uid] = None
-        del self.ax25_ports[port_id].pipes[pipe_uid]
+
+    def del_pipe_PH(self, pipe_uid: str):
+        if pipe_uid not in self._all_pipes:
+            return False
+        self._all_pipes[pipe_uid] = None
+        del self._all_pipes[pipe_uid]
+        return True
     """
 
     ######################
@@ -630,6 +674,9 @@ class AX25PortHandler(object):
     def get_aprs_ais(self):
         return self.aprs_ais
 
+    def get_all_ports_f_cfg(self):
+        return dict(self.ax25_ports)
+
     def get_all_ports(self):
         ret = {}
         for port_id in list(self.ax25_ports.keys()):
@@ -644,6 +691,7 @@ class AX25PortHandler(object):
         return ret
 
     def get_port_by_id(self, port_id: int):
+        # TODO: Doppelte fnc cleanup
         return self.ax25_ports.get(port_id, None)
 
     ####################
@@ -737,11 +785,9 @@ class AX25PortHandler(object):
                         # conn.ch_index += 1
         return ret
 
-    def ph_get_all_stat_cfg(self):
-        return self.ax25_stations_settings
-
-    def get_ax25types_keys(self):
-        return list(self._ax25types.keys())
+    @staticmethod
+    def get_ax25types_keys():
+        return list(AX25DeviceTAB.keys())
 
     def get_stat_calls_fm_port(self, port_id=0):
         if port_id in self.ax25_ports.keys():

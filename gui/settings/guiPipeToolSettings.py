@@ -5,116 +5,118 @@ from tkinter import filedialog as fd
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25dec_enc import PIDByte
 from ax25.ax25UI_Pipe import AX25Pipe
+from cfg.default_config import getNew_pipe_cfg
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 
 
-class AX25PipeTab:
+class PipeTab:
     def __init__(self, root_win, pipe=None, connection=None):
         self._root_win = root_win
         self.tab_clt = root_win.tabControl
         self.lang = root_win.lang
         self.style = root_win.style
         self.own_tab = ttk.Frame(self.tab_clt)
+        self._connection = connection
         if pipe is None:
-            self.pipe = AX25Pipe(
-                port_id=0,
-                own_call='',
-                address_str='NOCALL',
-                cmd_pf=(False, False),
-                pid=0xf0
-            )
-            self.pipe.connection = connection
+            self.pipe_cfg = getNew_pipe_cfg()
+            self.pipe_cfg['pipe_parm_Proto'] = False
+            self.pipe_cfg['pipe_parm_permanent'] = True
         else:
-            self.pipe = pipe
+            self.pipe_cfg = pipe.get_cfg_fm_pipe()
+            if pipe.get_pipe_connection():
+                self._connection = pipe.get_pipe_connection()
+        del pipe
         #########################################################
         # Address
         x = 10
         y = 10
         self.to_add_var = tk.StringVar(self.own_tab)
         tk.Label(self.own_tab, text=f"{STR_TABLE['to'][self.lang]}:").place(x=x, y=y)
-        if self.pipe.add_str:
-            self.to_add_var.set(self.pipe.add_str)
-        self.to_add_ent = tk.Entry(self.own_tab,
-                                   textvariable=self.to_add_var,
-                                   width=50)
-        self.to_add_ent.place(x=x + 40, y=y)
+        # if self.pipe.add_str:
+        if self.pipe_cfg.get('pipe_parm_address_str', ''):
+            self.to_add_var.set(self.pipe_cfg.get('pipe_parm_address_str', ''))
+        self._to_add_ent = tk.Entry(self.own_tab,
+                                    textvariable=self.to_add_var,
+                                    width=50)
+        self._to_add_ent.place(x=x + 40, y=y)
 
         # CMD/RPT
         x = 10
         y = 80
         self.cmd_var = tk.BooleanVar(self.own_tab)
-        self.cmd_var.set(self.pipe.ax25_frame.ctl_byte.cmd)
-        self.cmd_ent = tk.Checkbutton(self.own_tab,
-                                      variable=self.cmd_var,
-                                      text='CMD/RPT')
-        self.cmd_ent.place(x=x, y=y)
+        self.cmd_var.set(self.pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0])
+        self._cmd_ent = tk.Checkbutton(self.own_tab,
+                                       variable=self.cmd_var,
+                                       text='CMD/RPT')
+        self._cmd_ent.place(x=x, y=y)
 
         # Poll
         x = 10
         y = 105
         self.poll_var = tk.BooleanVar(self.own_tab)
-        self.poll_var.set(self.pipe.ax25_frame.ctl_byte.pf)
-        self.poll_ent = tk.Checkbutton(self.own_tab,
-                                       variable=self.poll_var,
-                                       text='Poll')
-        self.poll_ent.place(x=x, y=y)
+        self.poll_var.set(self.pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1])
+        self._poll_ent = tk.Checkbutton(self.own_tab,
+                                        variable=self.poll_var,
+                                        text='Poll')
+        self._poll_ent.place(x=x, y=y)
 
         # Port
         x = 40
         y = 140
         tk.Label(self.own_tab, text=f"{STR_TABLE['port'][self.lang]}:").place(x=x, y=y)
         self.port_var = tk.StringVar(self.own_tab)
-        self.port_var.set(self.pipe.port_id)
-        _vals = ['0']
+        self.port_var.set(self.pipe_cfg.get('pipe_parm_port', -1))
+        vals = ['-1']
         if PORT_HANDLER.get_all_ports().keys():
-            _vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
-        self.port_ent = tk.ttk.Combobox(self.own_tab,
-                                        width=4,
-                                        textvariable=self.port_var,
-                                        values=_vals,
-                                        )
-        self.port_ent.bind("<KeyRelease>", self._chk_port_id)
-        self.port_ent.bind("<<ComboboxSelected>>", self._chk_port_id)
-        self.port_ent.place(x=x + 50, y=y)
+            vals += [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
+        self._port_ent = tk.ttk.Combobox(self.own_tab,
+                                         width=4,
+                                         textvariable=self.port_var,
+                                         values=vals,
+                                         )
+        self._port_ent.bind("<KeyRelease>", self._chk_port_id)
+        self._port_ent.bind("<<ComboboxSelected>>", self._chk_port_id)
+        self._port_ent.place(x=x + 50, y=y)
         # Max Pac
         x = 240
         y = 140
         tk.Label(self.own_tab, text="Max Pac:").place(x=x, y=y)
         self.max_pac_var = tk.StringVar(self.own_tab)
-        self.max_pac_var.set(self.pipe.parm_max_pac)
-        _vals = [str(x) for x in range(1, 8)]
-        self.max_pac_ent = tk.ttk.Spinbox(self.own_tab,
+        self.max_pac_var.set(self.pipe_cfg.get('pipe_parm_MaxFrame', 3))
+        vals = [str(x) for x in range(1, 8)]
+        max_pac_ent = tk.ttk.Spinbox(self.own_tab,
                                           width=2,
                                           textvariable=self.max_pac_var,
-                                          values=_vals,
+                                          values=vals,
                                           )
-        self.max_pac_ent.place(x=x + 160, y=y)
+        max_pac_ent.place(x=x + 160, y=y)
         # Pac len
         x = 490
         y = 140
         tk.Label(self.own_tab, text="Pac-len:").place(x=x, y=y)
         self.pac_len_var = tk.StringVar(self.own_tab)
-        self.pac_len_var.set(self.pipe.parm_pac_len)
-        _vals = [str(x) for x in range(1, 257)]
-        self.pac_len_ent = tk.ttk.Spinbox(self.own_tab,
+        self.pac_len_var.set(self.pipe_cfg.get('pipe_parm_PacLen', 128))
+        vals = [str(x) for x in range(1, 257)]
+        pac_len_ent = tk.ttk.Spinbox(self.own_tab,
                                           width=3,
                                           textvariable=self.pac_len_var,
-                                          values=_vals,
+                                          values=vals,
                                           )
-        self.pac_len_ent.place(x=x + 75, y=y)
+        pac_len_ent.place(x=x + 75, y=y)
         # Max Pac Delay
         x = 240
         y = 175
         tk.Label(self.own_tab, text="Max Pac Delay (s):").place(x=x, y=y)
         self.max_pac_delay_var = tk.StringVar(self.own_tab)
-        self.max_pac_delay_var.set(self.pipe.parm_max_pac_timer)
-        _vals = [str(x * 10) for x in range(1, 37)]
-        self.max_pac_delay = tk.ttk.Spinbox(self.own_tab,
+        self.max_pac_delay_var.set(self.pipe_cfg.get('pipe_parm_MaxPacDelay', 30))
+        vals = [str(x * 10) for x in range(1, 37)]
+        max_pac_delay = tk.ttk.Spinbox(self.own_tab,
                                             width=3,
                                             textvariable=self.max_pac_delay_var,
-                                            values=_vals,
+                                            values=vals,
                                             )
-        self.max_pac_delay.place(x=x + 160, y=y)
+        max_pac_delay.place(x=x + 160, y=y)
         # Calls
         x = 40
         y = 175
@@ -130,12 +132,13 @@ class AX25PipeTab:
             else:
                 self.call_var.set(_vals[0])
         """
-        self.call_ent = tk.ttk.Combobox(self.own_tab,
-                                        width=9,
-                                        textvariable=self.call_var,
-                                        # values=_vals,
-                                        )
-        self.call_ent.place(x=x, y=y)
+        self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', ''))
+        self._call_ent = tk.ttk.Combobox(self.own_tab,
+                                         width=9,
+                                         textvariable=self.call_var,
+                                         # values=_vals,
+                                         )
+        self._call_ent.place(x=x, y=y)
         self._chk_port_id()
 
         # PID
@@ -149,20 +152,20 @@ class AX25PipeTab:
         for x in list(pac_types.keys()):
             pid.pac_types[int(x)]()
             vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
-        self.pid_ent = tk.ttk.Combobox(self.own_tab,
-                                       width=30,
-                                       values=vals,
-                                       textvariable=self.pid_var)
-        pid = f"{str(hex(self.pipe.ax25_frame.pid_byte.hex))}>{self.pipe.ax25_frame.pid_byte.flag}"
+        self._pid_ent = tk.ttk.Combobox(self.own_tab,
+                                        width=30,
+                                        values=vals,
+                                        textvariable=self.pid_var)
+        pid = f"{str(hex(self.pipe_cfg.get('pipe_parm_pid', 0xf0)))}"
         self.pid_var.set(pid)
-        self.pid_ent.place(x=x + 40, y=y)
+        self._pid_ent.place(x=x + 40, y=y)
         # Loop Timer
         x = 10
         y = self._root_win.win_height - 255 - 80  # iam lazy
         tk.Label(self.own_tab, text='TX-File Check Timer (sek/sec):').place(x=x, y=y)
         self.loop_timer_var = tk.StringVar(self.own_tab)
-        self.loop_timer_var.set(self.pipe.parm_tx_file_check_timer)
-        self.loop_timer = tk.Spinbox(self.own_tab,
+        self.loop_timer_var.set(self.pipe_cfg.get('pipe_parm_pipe_loop_timer', 10))
+        loop_timer = tk.Spinbox(self.own_tab,
                                      from_=5,
                                      to=360,
                                      increment=5,
@@ -171,7 +174,7 @@ class AX25PipeTab:
                                      # command=self.set_max_frame,
                                      # state='disabled'
                                      )
-        self.loop_timer.place(x=x + 270, y=y)
+        loop_timer.place(x=x + 270, y=y)
 
         #################
         # TX FILE
@@ -179,10 +182,10 @@ class AX25PipeTab:
         y = self._root_win.win_height - 220 - 80  # iam lazy
         tk.Label(self.own_tab, text=f"{STR_TABLE['tx_file'][self.lang]}:").place(x=x, y=y)
         self.tx_filename_var = tk.StringVar(self.own_tab)
-        self.tx_filename_var.set(self.pipe.tx_filename)
-        self.tx_filename = tk.Entry(self.own_tab, textvariable=self.tx_filename_var, width=50)
+        self.tx_filename_var.set(self.pipe_cfg.get('pipe_parm_pipe_tx', ''))
+        tx_filename = tk.Entry(self.own_tab, textvariable=self.tx_filename_var, width=50)
         # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
-        self.tx_filename.place(x=x + 140, y=y)
+        tx_filename.place(x=x + 140, y=y)
         tk.Button(self.own_tab,
                   text=f"{STR_TABLE['file_1'][self.lang]}",
                   command=lambda: self._select_files(tx=True)
@@ -193,10 +196,10 @@ class AX25PipeTab:
         y = self._root_win.win_height - 180 - 80  # iam lazy
         tk.Label(self.own_tab, text=f"{STR_TABLE['rx_file'][self.lang]}:").place(x=x, y=y)
         self.rx_filename_var = tk.StringVar(self.own_tab)
-        self.rx_filename_var.set(self.pipe.rx_filename)
-        self.rx_filename = tk.Entry(self.own_tab, textvariable=self.rx_filename_var, width=50)
+        self.rx_filename_var.set(self.pipe_cfg.get('pipe_parm_pipe_rx', ''))
+        rx_filename = tk.Entry(self.own_tab, textvariable=self.rx_filename_var, width=50)
         # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
-        self.rx_filename.place(x=x + 140, y=y)
+        rx_filename.place(x=x + 140, y=y)
         tk.Button(self.own_tab,
                   text=f"{STR_TABLE['file_1'][self.lang]}",
                   command=lambda: self._select_files(tx=False)
@@ -224,44 +227,44 @@ class AX25PipeTab:
                 self.rx_filename_var.set(filenames[0])
 
     def _chk_port_id(self, event=None):
-        _vals = []
+        vals = []
         port_id = self.port_var.get()
         print(port_id)
 
         if port_id:
             port_id = int(port_id)
             if port_id in PORT_HANDLER.get_all_ports().keys():
-                _vals = PORT_HANDLER.get_all_ports()[port_id].my_stations
-            if _vals:
-                self.call_var.set(_vals[0])
+                vals = PORT_HANDLER.get_all_ports()[port_id].my_stations
+            if vals:
+                self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', vals[0]))
+                # self.call_var.set(vals[0])
             else:
-                self.call_var.set('')
+                # self.call_var.set('')
+                self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', ''))
 
-        self.call_ent.config(values=_vals)
+        self._call_ent.config(values=vals)
 
     def _is_unProt(self):
-        unProt = False
-        if self.pipe.connection is None:
-            unProt = True
-
-        if not unProt:
-
-            self.to_add_ent.config(state='disabled')
-            self.call_ent.config(state='disabled')
-            self.pid_ent.config(state='disabled')
-            self.cmd_ent.config(state='disabled')
-            self.poll_ent.config(state='disabled')
-            self.port_ent.config(state='disabled')
+        if self.pipe_cfg.get('pipe_parm_Proto', True):
+            self._to_add_ent.config(state='disabled')
+            self._call_ent.config(state='disabled')
+            self._pid_ent.config(state='disabled')
+            self._cmd_ent.config(state='disabled')
+            self._poll_ent.config(state='disabled')
+            self._port_ent.config(state='disabled')
             # self.max_pac_ent.config(state='disabled')
             # self.pac_len_ent.config(state='disabled')
         else:
-            self.to_add_ent.config(state='normal')
-            self.call_ent.config(state='normal')
-            self.pid_ent.config(state='normal')
-            self.cmd_ent.config(state='normal')
-            self.poll_ent.config(state='normal')
+            self._to_add_ent.config(state='normal')
+            self._call_ent.config(state='normal')
+            self._pid_ent.config(state='normal')
+            self._cmd_ent.config(state='normal')
+            self._poll_ent.config(state='normal')
             # self.max_pac_ent.config(state='normal')
             # self.pac_len_ent.config(state='normal')
+
+    def get_connection(self):
+        return self._connection
 
 
 class PipeToolSettings(tk.Toplevel):
@@ -334,38 +337,50 @@ class PipeToolSettings(tk.Toplevel):
         self.tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
         self.tab_list: [ttk.Frame] = []
-        self.all_pipes = PORT_HANDLER.get_all_pipes()
-        for pipe in self.all_pipes:
-            label_txt = f"{len(self.tab_list)}"
-            tab = AX25PipeTab(self, pipe=pipe)
-            self.tabControl.add(tab.own_tab, text=label_txt)
-            self.tabControl.select(len(self.tab_list))
-            self.tab_list.append(tab)
+        all_pipes = PORT_HANDLER.get_all_pipes()
+        for pipe in all_pipes:
+            pipe_cfg = pipe.get_cfg_fm_pipe()
+            if ((pipe_cfg.get('pipe_parm_permanent', False) and not pipe_cfg.get('pipe_parm_Proto', True)) or
+                not (pipe_cfg.get('pipe_parm_permanent', False) and pipe_cfg.get('pipe_parm_Proto', True))):
+                label_txt = f"{len(self.tab_list)}"
+                # label_txt = f"{len(self.tab_list)}-{pipe.}"
+                tab = PipeTab(self, pipe=pipe)
+                self.tabControl.add(tab.own_tab, text=label_txt)
+                self.tabControl.select(len(self.tab_list))
+                self.tab_list.append(tab)
 
     def _set_vars(self):
         for tab in self.tab_list:
-            pipe: AX25Pipe = tab.pipe
-            pipe.ax25_frame.from_call.call_str = tab.call_var.get().upper()
-            pipe.set_dest_add(tab.to_add_var.get().upper())
-            pipe.port_id = int(tab.port_var.get())
-            pid = int(tab.pid_var.get().split('>')[0], 16)
-            pipe.parm_max_pac_timer = int(tab.max_pac_delay_var.get())
-            pipe.parm_tx_file_check_timer = int(tab.loop_timer_var.get())
-            pipe.tx_filename = tab.tx_filename_var.get()
-            pipe.rx_filename = tab.rx_filename_var.get()
-            pipe.parm_max_pac = int(tab.max_pac_var.get())
-            pipe.parm_pac_len = int(tab.pac_len_var.get())
-            if pipe.connection is None:
-                pipe.ax25_frame.ctl_byte.UIcByte()
-                pipe.ax25_frame.pid_byte.pac_types[pid]()
-                pipe.ax25_frame.ctl_byte.pf = tab.poll_var.get()
-                pipe.ax25_frame.ctl_byte.cmd = tab.cmd_var.get()
-            pipe.change_settings()
-            if pipe.connection:
-                # pipe.connection.pipe = pipe
-                pipe.connection.set_pipe(pipe)
+            conn = tab.get_connection()
+            pipe_cfg = tab.pipe_cfg
+            old_portID = int(pipe_cfg['pipe_parm_port'])
+            old_call = str(pipe_cfg['pipe_parm_own_call'])
+            pipe_cfg['pipe_parm_own_call'] = str(tab.call_var.get().upper())        # TODO Call/Input Vali
+            pipe_cfg['pipe_parm_address_str'] = str(tab.to_add_var.get().upper())   # TODO Call/Input Vali
+            pipe_cfg['pipe_parm_port'] = int(tab.port_var.get())
+            pipe_cfg['pipe_parm_Proto'] = bool(conn)
+            pipe_cfg['pipe_parm_permanent'] = not bool(conn)
+            pipe_cfg['pipe_parm_PacLen'] = int(tab.pac_len_var.get())
+            pipe_cfg['pipe_parm_MaxFrame'] = int(tab.max_pac_var.get())
+            pipe_cfg['pipe_parm_pid'] = int(tab.pid_var.get().split('>')[0], 16)
+            pipe_cfg['pipe_parm_cmd_pf'] = (bool(tab.cmd_var.get()), bool(tab.poll_var.get()))
+            pipe_cfg['pipe_parm_pipe_tx'] = tab.tx_filename_var.get()
+            pipe_cfg['pipe_parm_pipe_rx'] = tab.rx_filename_var.get()
+            pipe_cfg['pipe_parm_MaxPacDelay'] = int(tab.max_pac_delay_var.get())
+            pipe_cfg['pipe_parm_pipe_loop_timer'] = int(tab.loop_timer_var.get())
+
+            if conn:
+                conn.set_pipe(pipe_cfg=pipe_cfg)
             else:
-                PORT_HANDLER.add_pipe(pipe.port_id, pipe.uid, pipe)
+                # PORT_HANDLER.add_pipe_PH(pipe)
+                port = PORT_HANDLER.get_port_by_id(pipe_cfg['pipe_parm_port'])
+                if port:
+                    port.add_pipe(pipe_cfg=pipe_cfg)
+
+                if pipe_cfg['pipe_parm_permanent']:
+
+                    POPT_CFG.del_pipe_CFG(f'{old_portID}-{old_call}')
+                    POPT_CFG.set_pipe_CFG(pipe_cfg)
             """
             if pipe.port_id in PORT_HANDLER.get_all_ports().keys():
                 PORT_HANDLER.get_all_ports()[pipe.port_id].pipes[pipe.uid] = pipe
@@ -395,7 +410,7 @@ class PipeToolSettings(tk.Toplevel):
 
     def _new_pipe_btn_cmd(self):
         label_txt = f"{len(self.tab_list)}"
-        tab = AX25PipeTab(self)
+        tab = PipeTab(self)
         self.tabControl.add(tab.own_tab, text=label_txt)
         self.tabControl.select(len(self.tab_list))
         self.tab_list.append(tab)
@@ -403,14 +418,11 @@ class PipeToolSettings(tk.Toplevel):
     def _new_pipe_on_conn(self):
         conn = self._root.get_conn()
         if conn is not None:
-            new_pipe = AX25Pipe(
-                port_id=conn.own_port.port_id,
+            dummy_pipe = AX25Pipe(
+                connection=conn
             )
-            new_pipe.connection = conn
-            new_pipe.change_settings()
-            # conn.pipe = new_pipe
             label_txt = f"{len(self.tab_list)}"
-            tab = AX25PipeTab(self, pipe=new_pipe)
+            tab = PipeTab(self, pipe=dummy_pipe, connection=conn)
             self.tabControl.add(tab.own_tab, text=label_txt)
             self.tabControl.select(len(self.tab_list))
             self.tab_list.append(tab)
@@ -421,14 +433,31 @@ class PipeToolSettings(tk.Toplevel):
         except tk.TclError:
             pass
         else:
-            pipe: AX25Pipe = self.tab_list[ind].pipe
-            if pipe.connection is not None:
-                pipe.connection.pipe = None
-            port_id = pipe.port_id
-            uid = pipe.uid
-            if port_id in PORT_HANDLER.get_all_ports().keys():
-                if uid in PORT_HANDLER.get_all_ports()[port_id].pipes.keys():
-                    del PORT_HANDLER.get_all_ports()[port_id].pipes[uid]
+            pipe_cfg = self.tab_list[ind].pipe_cfg
+            dummy_pipe = AX25Pipe(pipe_cfg=pipe_cfg)
+            conn = self.tab_list[ind].get_connection()
+            if conn is not None:
+                conn.del_pipe_fm_conn()
+            else:
+                conn = self._root.get_conn()
+                if conn:
+                    conn.del_pipe_fm_conn()
+            port_id = pipe_cfg['pipe_parm_port']
+            uid = dummy_pipe.get_pipe_uid()        # TODO uid_generator_fnc
+            if port_id == -1:
+                for port_id in PORT_HANDLER.get_all_ports().keys():
+                    if uid in PORT_HANDLER.get_all_ports()[port_id].pipes.keys():
+                        del PORT_HANDLER.get_all_ports()[port_id].pipes[uid]
+            else:
+                if port_id in PORT_HANDLER.get_all_ports().keys():
+                    if uid in PORT_HANDLER.get_all_ports()[port_id].pipes.keys():
+                        del PORT_HANDLER.get_all_ports()[port_id].pipes[uid]
+            if self.tab_list[ind].pipe_cfg.get('pipe_parm_permanent', False):
+                if not POPT_CFG.del_pipe_CFG_fm_CallPort(pipe_cfg.get('pipe_parm_own_call', ''),
+                                                     pipe_cfg.get('pipe_parm_port', -1)):
+
+                    print('Error DEL PIPE')
             del self.tab_list[ind]
             self.tabControl.forget(ind)
             self._root.ch_status_update()
+            del dummy_pipe

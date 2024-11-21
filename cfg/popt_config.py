@@ -1,11 +1,9 @@
-import logging
-
-from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, getNew_APRS_Station_cfg, \
-    getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg
-from cfg.constant import CFG_MAIN_data_file, LANGUAGE
-from fnc.cfg_fnc import load_fm_file, save_to_file
-
-logger = logging.getLogger(__name__)
+from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
+    getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg
+from cfg.constant import CFG_MAIN_data_file, LANGUAGE, DEBUG_LOG, MAX_PORTS
+from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
+    save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file  # , get_all_pipe_cfg
+from cfg.logger_config import logger
 
 
 def getNew_dict():
@@ -18,6 +16,7 @@ class Main_CFG:
         print('Main CFG: Init')
         self._config_filename = CFG_MAIN_data_file
         self._config = {}
+        # TODO RX-Echo CFG
         self._default_cfg_tab = {
             # -- PMS
             'pms_main': getNew_PMS_cfg,
@@ -25,7 +24,8 @@ class Main_CFG:
             # -- MH
             'mh_cfg': getNew_MH_cfg,
             # -- APRS
-            'aprs_station': getNew_APRS_Station_cfg,
+            # 'aprs_station': getNew_APRS_Station_cfg,
+            'aprs_station': {},
             'aprs_ais': getNew_APRS_ais_cfg,
             # -- GUI
             # GUI Main
@@ -36,10 +36,40 @@ class Main_CFG:
             'dualPort_cfg': {},
             # -- DIGI
             'digi_cfg': {},
+            # -- PIPE CFGs
+            # 'pipe_cfg': self._load_PIPE_CFG_fm_file,
+            'pipe_cfgs': {},
+            # -- STATION CFGs
+            'stat_cfgs': {},
+            # -- PORT CFGs
+            'port_cfgs': {},
         }
-        self.load_CFG_fm_file()
+        """ Main CFGs """
+        self._load_CFG_fm_file()        # Other Configs
         self._set_all_default_CFGs()
         self._clean_old_CFGs()
+        """"""
+        # self._load_PIPE_CFG_fm_file()
+        """ Station CFGs """
+        self._load_STAT_CFG_fm_file()   # Station Configs
+        self._clean_old_STAT_CFGs()
+        """ Port CFGs """
+        self._load_PORT_CFG_fm_file()   # Port Configs
+        self._clean_old_PORT_CFGs()
+        """
+        print('---------- PIPE CFG -------------')
+        for call, cfg in self._config['pipe_cfgs'].items():
+            print(f'>> {call}')
+            print(f'{cfg}')
+            print('------------------------')
+        """
+
+        logger.info(f'--------Loaded CFGs --------')
+        for conf_k, conf in self._config.items():
+            logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
+        logger.info(f'-------- Loaded CFGs ENDE --------')
+        logger.info('Main CFG: Init erfolgreich !')
+
 
     ####################
     # Init Stuff
@@ -56,7 +86,7 @@ class Main_CFG:
 
     ####################
     # File Fnc
-    def load_CFG_fm_file(self):
+    def _load_CFG_fm_file(self):
         logger.info(f'Main CFG: Load from {self._config_filename}')
         print(f'Main CFG: Load from {self._config_filename}')
         config = load_fm_file(self._config_filename)
@@ -69,12 +99,109 @@ class Main_CFG:
 
         # self._config.read(self._config_filename)
 
-    def save_CFG_to_file(self):
+    def save_MAIN_CFG_to_file(self):
         logger.info(f'Main CFG: Config Saved to {self._config_filename}')
-        print(f'Main CFG: Config Saved to {self._config_filename}')
-        for conf_k in self._config.keys():
-            logger.debug(f'Main CFG: save {conf_k}')
+        if DEBUG_LOG:
+            logger.debug(self._config['stat_cfgs'])
+            logger.debug(self._config['port_cfgs'])
+            logger.debug(self._config['pipe_cfgs'])
+            logger.debug(f'-------- Stat CFG --------')
+            for conf_k, conf in self._config.get('stat_cfgs', {}).items():
+                logger.debug(f'Station CFG: {conf_k}')
+                logger.debug(f'- {conf}')
+
+        tmp_stat_cfgs = dict(self._config['stat_cfgs'])
+        tmp_port_cfgs = dict(self._config['port_cfgs'])
+        self._config['stat_cfgs'] = {}  # Don't save Stat CFG in MainCFG
+        self._config['port_cfgs'] = {}  # Don't save Port CFG in MainCFG
+
+        logger.info(f'-------- MAIN CFG Save --------')
+        for conf_k, conf in self._config.items():
+            logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
+            logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
+
         save_to_file(self._config_filename, dict(self._config))
+
+        self._config['stat_cfgs'] = tmp_stat_cfgs
+        self._config['port_cfgs'] = tmp_port_cfgs
+        logger.info(f'-------- MAIN CFG Save ENDE --------')
+
+
+    """
+    # PIPE
+    @staticmethod
+    def _load_PIPE_CFG_fm_file():
+        # self._config['pipe_cfgs'] = get_all_pipe_cfg()
+        # print('-------------------------------')
+        # print(get_all_pipe_cfg())
+        # print(self._config['pipe_cfgs'])
+        return get_all_pipe_cfg()   # Get CFGs fm Station CFG
+    """
+    ###########################################
+    # STATIONs
+    def _load_STAT_CFG_fm_file(self):
+        self._config['stat_cfgs'] = get_all_stat_CFGs()
+        print('---------- Stat CFG--------------')
+        print(self._config['stat_cfgs'])
+        logger.info(f'-------- Stat CFG --------')
+        for conf_k, conf in self._config.get('stat_cfgs', {}).items():
+            logger.info(f'Station CFG: load {conf_k}')
+            logger.debug(f'- {conf}')
+        # return get_all_pipe_cfg()   # Get CFGs fm Station CFG
+
+    def _clean_old_STAT_CFGs(self):
+        new_stat_cfgs = {}
+        for call, conf in self._config.get('stat_cfgs', {}).items():
+            new_conf = getNew_station_cfg()
+            new_keys = list(new_conf.keys())
+            for k in new_keys:
+                new_conf[k] = conf.get(k, new_conf.get(k, None))
+            new_stat_cfgs[call] = new_conf
+        self._config['stat_cfgs'] = new_stat_cfgs
+
+        print('---------- Stat CFG Cleanup --------------')
+        print(self._config['stat_cfgs'])
+        logger.info(f'-------- Stat CFG Cleanup --------')
+        for conf_k, conf in self._config.get('stat_cfgs', {}).items():
+            logger.info(f'Station CFG: Cleanup {conf_k}')
+            logger.debug(f'- {conf}')
+
+
+    ###########################################
+    # PORTs
+    def _load_PORT_CFG_fm_file(self):
+        self._config['port_cfgs'] = load_all_port_cfg_fm_file()
+        print('---------- Port CFG--------------')
+        print(self._config['port_cfgs'])
+        logger.info(f'-------- Port CFG Load --------')
+        for conf_k, conf in self._config.get('port_cfgs', {}).items():
+            logger.info(f'Port CFG: load {conf_k}')
+            logger.debug(f'- {conf}')
+
+    def _clean_old_PORT_CFGs(self):
+        new_port_cfgs = {}
+        for port_id, conf in self._config.get('port_cfgs', {}).items():
+            new_conf = getNew_port_cfg()
+            new_keys = list(new_conf.keys())
+            for k in new_keys:
+                new_conf[k] = conf.get(k, new_conf.get(k, None))
+            new_port_cfgs[port_id] = new_conf
+        self._config['port_cfgs'] = new_port_cfgs
+
+        print('---------- Port CFG Cleanup --------------')
+        print(self._config['port_cfgs'])
+        logger.info(f'-------- Port CFG Cleanup --------')
+        for conf_k, conf in self._config.get('port_cfgs', {}).items():
+            logger.info(f'Port CFG: Cleanup {conf_k}')
+            logger.debug(f'- {conf}')
+
+    def save_PORT_CFG_to_file(self):
+        save_all_port_cfg_to_file(self._config.get('port_cfgs', {}))
+        logger.info(f'-------- Port CFG Save --------')
+        for conf_k, conf in self._config.get('port_cfgs', {}).items():
+            logger.info(f'Port CFG: save {conf_k}')
+            logger.debug(f'- {conf}')
+
 
     ####################
     # Global CFG by Key
@@ -95,21 +222,21 @@ class Main_CFG:
 
     ####################
     # MH
-    def load_CFG_MH(self):
+    def get_CFG_MH(self):
         return self._config['mh_cfg']
 
-    def save_CFG_MH(self, data: dict):
+    def set_CFG_MH(self, data: dict):
         self._config['mh_cfg'] = data
 
     ####################
     # APRS
-    def load_CFG_aprs_station(self):
+    def get_CFG_aprs_station(self):
         return self._config['aprs_station']
 
-    def load_CFG_aprs_ais(self):
+    def get_CFG_aprs_ais(self):
         return self._config['aprs_ais']
 
-    def save_CFG_aprs_ais(self, data: dict):
+    def set_CFG_aprs_ais(self, data: dict):
         self._config['aprs_ais'] = data
 
     ####################
@@ -169,12 +296,135 @@ class Main_CFG:
     def get_digi_CFG_for_Call(self, call: str):
         return self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG())
 
+    def get_digi_is_enabled(self, call: str):
+        if not call:
+            return False
+        return self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG()).get('digi_enabled', False)
+
     @staticmethod
     def get_digi_default_CFG():
         return getNew_digi_cfg()
 
     def set_digi_CFG(self, cfg: dict):
         self._config['digi_cfg'] = dict(cfg)
+        return True
 
+    def set_digi_CFG_f_call(self, call: str, cfg: dict):
+        if not call:
+            return False
+        if call == 'NOCALL':
+            return False
+        self._config['digi_cfg'][call] = dict(cfg)
+        return True
+
+    def del_digi_CFG_fm_call(self, call: str):
+        if not call:
+            return False
+        if call not in self._config.get('digi_cfg', {}):
+            return False
+        del self._config['digi_cfg'][call]
+
+    ###########################################
+    # PIPE
+    def get_pipe_CFG(self):
+        return self._config.get('pipe_cfgs', {})
+
+    def get_pipe_CFG_fm_UID(self, call, port_id=-1):
+        cfg_keys = list(self._config.get('pipe_cfgs', {}).keys())
+        lookup_k = f'{port_id}-{call}'
+        if lookup_k in cfg_keys:
+            return self._config.get('pipe_cfgs', {}).get(lookup_k, {})
+        return {}
+
+    def del_pipe_CFG_fm_CallPort(self, call, port_id=-1):
+        cfg_keys = list(self._config.get('pipe_cfgs', {}).keys())
+        lookup_k = f'{port_id}-{call}'
+        if lookup_k in cfg_keys:
+            del self._config['pipe_cfgs'][lookup_k]
+            print(self._config['pipe_cfgs'])
+            return True
+        return False
+
+    def set_pipe_CFG(self, pipe_cfg):
+        call = pipe_cfg.get('pipe_parm_own_call', '')
+        port = pipe_cfg.get('pipe_parm_port', -1)
+        if not call:
+            return
+        uid = f'{port}-{call}'
+        self._config['pipe_cfgs'][uid] = pipe_cfg
+
+    def del_pipe_CFG(self, uid):
+        # UID = f'{port}-{call}'
+        if uid in self._config.get('pipe_cfgs', {}):
+            print(f"Del Pipe-CFG: {uid}")
+            del self._config['pipe_cfgs'][uid]
+
+    def del_pipe_CFG_fm_call(self, call: str):
+        if not call:
+            return False
+        for k in list(self.get_pipe_CFG().keys()):
+            i = len(k) - len(call)
+            if call == k[i:]:
+                print(f"Del Pipe-CFG: {k}")
+                del self._config['pipe_cfgs'][k]
+
+    ###########################################
+    # Station
+    def get_stat_CFGs(self):
+        return self._config.get('stat_cfgs', {})
+
+    def get_stat_CFG_fm_call(self, call):
+        if not call:
+            return {}
+        return self._config.get('stat_cfgs', {}).get(call, {})
+
+    def get_stat_CFG_keys(self):
+        return list(self._config.get('stat_cfgs', {}))
+
+    def set_stat_CFG_fm_conf(self, conf: dict):
+        if not conf:
+            return False
+        stat_call = conf.get('stat_parm_Call', '')
+        if not stat_call:
+            return False
+        self._config['stat_cfgs'][stat_call] = dict(conf)
+        save_station_CFG_to_file(dict(conf))
+        return True
+
+    def del_stat_CFG_fm_call(self, call):
+        if not call:
+            return False
+        if call not in self._config.get('stat_cfgs', {}):
+            return False
+        del self._config['stat_cfgs'][call]
+        self.del_pipe_CFG_fm_call(call=call)
+        self.del_digi_CFG_fm_call(call=call)
+        del_user_data(call=call)
+
+    ###########################################
+    # Port
+    def get_port_CFGs(self):
+        return self._config.get('port_cfgs', {})
+
+    def get_port_CFG_fm_id(self, port_id: int):
+        if 0 > port_id > MAX_PORTS - 1:
+            return None
+        return self._config.get('port_cfgs', {}).get(port_id, None)
+
+    def set_port_CFG_fm_id(self, port_id: int, port_cfg: dict):
+        if 0 > port_id > MAX_PORTS - 1:
+            return False
+        if not dict:
+            return False
+        self._config['port_cfgs'][port_id] = dict(port_cfg)
+        return True
+
+    def del_port_CFG_fm_id(self, port_id: int):
+        if 0 > port_id > MAX_PORTS - 1:
+            return False
+        if port_id not in self._config.get('port_cfgs', {}):
+            return False
+        del self._config['port_cfgs'][port_id]
+        return True
 
 POPT_CFG = Main_CFG()

@@ -1,5 +1,5 @@
 # from config_station import DefaultPort
-from cfg.constant import TNC_KISS_CMD
+from cfg.constant import TNC_KISS_CMD, TNC_KISS_END_CMD
 
 
 class Kiss(object):
@@ -15,60 +15,57 @@ class Kiss(object):
 
     """
 
-    def __init__(self, port_cfg):
+    def __init__(self, port_cfg: dict):
         self.is_enabled = True
-        self.port_cfg = port_cfg
-        self.is_enabled = self.port_cfg.parm_kiss_is_on
+        # self.port_cfg = port_cfg
+        self.is_enabled = port_cfg.get('parm_kiss_is_on', True)
 
         # CFG Flags
-        self.DATA_FRAME = b'\x00'  # Channel 0
-        self.RETURN = b'\xFF'
+        self._DATA_FRAME = b'\x00'  # Channel 0
+        self._RETURN = b'\xFF'
         # self.START = b'$0'
-        self.JHOST0 = bytes.fromhex('11241B404B0D')  # jhost0 - DC1+CAN+ESC+'@K'  Da fehlt aber noch CR
-        # self.START_TNC2 = bytes.fromhex('11241B404B0D')  # TNC2 KISS MODE
-        # self.START_TNC_DEFAULT = bytes.fromhex('1B404B')  # TNC2 KISS MODE   b'\x1b@K'
-        # self.START_TNC_DEFAULT = b'KISS ON\r\n'  # TNC2 KISS MODE   b'\x1b@K'
-        # self.START_TNC_DEFAULT = b'KISS ON\r'  # TNC2 KISS MODE   b'\x1b@K'
-        ## self.START_TNC_DEFAULT = b'KISSM\r'  # TNC2 KISS MODE   b'\x1b@K'
-        self.START_TNC_DEFAULT = TNC_KISS_CMD  # TNC2 KISS MODE   b'\x1b@K'
-        # self.START_TNC_DEFAULT = bytes.fromhex('11241B404B0D')  # TNC2 KISS MODE   b'\x1b@K'
-        # KISS END self.START_TNC_DEFAULT = bytes.fromhex('C0FFC0')  # TNC2 KISS MODE   b'\x1b@K'
-        # self.START_TNC_DEFAULT = b'KISSM\r\n '  # TNC2 KISS MODE   b'\x1b@K'
+        self._JHOST0 = bytes.fromhex('11241B404B0D')  # jhost0 - DC1+CAN+ESC+'@K'  Da fehlt aber noch CR
+
+        # self._START_TNC_DEFAULT = TNC_KISS_CMD  # TNC2 KISS MODE   b'\x1b@K'
+        self._START_TNC_DEFAULT = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)  # TNC2 KISS MODE   b'\x1b@K'
+        # self._END_TNC_DEFAULT = TNC_KISS_END_CMD  # TNC2 KISS MODE   b'\x1b@K'
+        self._END_TNC_DEFAULT = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_END_CMD)  # TNC2 KISS MODE   b'\x1b@K'
+
         # ESC & END Flags
-        self.FEND = b'\xC0'
-        self.FESC = b'\xDB'
-        self.TFEND = b'\xDC'
-        self.TFESC = b'\xDD'
+        self._FEND = b'\xC0'
+        self._FESC = b'\xDB'
+        self._TFEND = b'\xDC'
+        self._TFESC = b'\xDD'
         # KISS_ON = 'KISS $0B'
-        self.KISS_OFF = b''.join([self.FEND, self.RETURN, self.FEND, self.FEND])
+        # self.KISS_OFF = b''.join([self._FEND, self._RETURN, self._FEND, self._FEND])
         # ???? self.KISS_OFF = b''.join([self.FEND, self.RETURN, self.FEND]) ????
         # self.txd_frame = lambda: self.TX_DELAY + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:])
-        self.txd_frame = lambda: b'\xC0\x01' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:].zfill(2)) + b'\xC0'
+        self._txd_frame = lambda: b'\xC0\x01' + bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + b'\xC0'
         # self.txd_frame_ch1 = lambda: b'\xC0\x11' + bytes.fromhex(hex(self.port_cfg.parm_kiss_TXD)[2:]) + b'\xC0'
-        self.pers_frame = lambda: b'\xC0\x02' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Pers)[2:].zfill(2)) + b'\xC0'
-        self.slot_frame = lambda: b'\xC0\x03' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Slot)[2:].zfill(2)) + b'\xC0'
-        self.tail_frame = lambda: b'\xC0\x04' + bytes.fromhex(hex(self.port_cfg.parm_kiss_Tail)[2:].zfill(2)) + b'\xC0'
-        self.duplex_frame = lambda: b'\xC0\x05' + bytes.fromhex(
-            str(self.port_cfg.parm_kiss_F_Duplex).zfill(2)) + b'\xC0'
+        self._pers_frame = lambda: b'\xC0\x02' + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + b'\xC0'
+        self._slot_frame = lambda: b'\xC0\x03' + bytes.fromhex(hex(port_cfg.get('parm_kiss_Slot', 30))[2:].zfill(2)) + b'\xC0'
+        self._tail_frame = lambda: b'\xC0\x04' + bytes.fromhex(hex(port_cfg.get('parm_kiss_Tail', 15))[2:].zfill(2)) + b'\xC0'
+        self._duplex_frame = lambda: b'\xC0\x05' + bytes.fromhex(
+            str(port_cfg.get('parm_kiss_F_Duplex', 0)).zfill(2)) + b'\xC0'
         # self.hw_frame = lambda: b'\x06' + bytes.fromhex(hex(20)[2:]) + b'\xC0'
-        self.kiss_data_frame = lambda inp: self.FEND + self.DATA_FRAME + inp + self.FEND
+        self._kiss_data_frame = lambda inp: self._FEND + self._DATA_FRAME + inp + self._FEND
         # "FEND is sent as FESC, TFEND"
         # 0xC0 is sent as 0xDB 0xDC
-        self.FESC_TFEND = b''.join([self.FESC, self.TFEND])
+        self._FESC_TFEND = b''.join([self._FESC, self._TFEND])
 
         # "FESC is sent as FESC, TFESC"
         # 0xDB is sent as 0xDB 0xDD
-        self.FESC_TFESC = b''.join([self.FESC, self.TFESC])
+        self._FESC_TFESC = b''.join([self._FESC, self._TFESC])
 
         # self.set_param = self.build_kiss_param_frame()
 
     def set_all_parameter(self):
         return b''.join([
-            self.txd_frame(),
-            self.pers_frame(),
-            self.slot_frame(),
-            self.tail_frame(),
-            self.duplex_frame(),
+            self._txd_frame(),
+            self._pers_frame(),
+            self._slot_frame(),
+            self._tail_frame(),
+            self._duplex_frame(),
         ])
 
     def de_kiss(self, inp: b''):
@@ -81,15 +78,15 @@ class Kiss(object):
         - http://en.wikipedia.org/wiki/KISS_(TNC)#Description
         """
         if self.is_enabled:
-            if inp[:2] == self.FEND + self.DATA_FRAME \
-                    and inp[-1:] == self.FEND \
+            if inp[:2] == self._FEND + self._DATA_FRAME \
+                    and inp[-1:] == self._FEND \
                     and len(inp) > 14:
                 return inp[2:-1].replace(
-                    self.FESC_TFESC,
-                    self.FESC
+                    self._FESC_TFESC,
+                    self._FESC
                 ).replace(
-                    self.FESC_TFEND,
-                    self.FEND
+                    self._FESC_TFEND,
+                    self._FEND
                 )
             else:
                 return b''
@@ -105,27 +102,20 @@ class Kiss(object):
         - http://en.wikipedia.org/wiki/KISS_(TNC)#Description
         """
         if self.is_enabled:
-            return self.kiss_data_frame(
+            return self._kiss_data_frame(
                 inp.replace(
-                    self.FESC,
-                    self.FESC_TFESC
+                    self._FESC,
+                    self._FESC_TFESC
                 ).replace(
-                    self.FEND,
-                    self.FESC_TFEND
+                    self._FEND,
+                    self._FESC_TFEND
                 )
             )
         return inp
 
-    @staticmethod
-    def device_kiss_end():
+    def device_kiss_end(self):
         # return b''.join([self.FEND, self.RETURN, self.FEND])
-        return bytes.fromhex('C0FFC0')
-
-    def device_jhost(self):
-        return self.JHOST0
+        return self._END_TNC_DEFAULT
 
     def device_kiss_start_1(self):
-        # return b''.join([self.FEND, self.DATA_FRAME, self.START, self.FEND])
-        # return b''.join([self.START_TNC_DEFAULT, self.START_TNC2])
-        # return b''.join([self.START_TNC2])
-        return b''.join([self.START_TNC_DEFAULT])
+        return self._START_TNC_DEFAULT

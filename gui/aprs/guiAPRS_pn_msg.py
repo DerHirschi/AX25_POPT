@@ -4,6 +4,7 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars
 from gui.aprs.guiAPRSnewMSG import NewMessageWindow
 from cfg.string_tab import STR_TABLE
@@ -178,8 +179,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.update()
         tree_data = []
         for form_msg in self._aprs_pn_msg:
-            if form_msg['addresse'] in PORT_HANDLER.ax25_stations_settings \
-                    or form_msg['from'] in PORT_HANDLER.ax25_stations_settings:
+            if form_msg['addresse'] in POPT_CFG.get_stat_CFG_keys() \
+                    or form_msg['from'] in POPT_CFG.get_stat_CFG_keys():
                 is_own = 'is_own'
             else:
                 is_own = 'not_own'
@@ -205,8 +206,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self._aprs_pn_msg.reverse()
             # print(form_aprs_pack)
 
-            if form_aprs_pack['addresse'] in PORT_HANDLER.ax25_stations_settings \
-                    or form_aprs_pack['from'] in PORT_HANDLER.ax25_stations_settings:
+            if form_aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
+                    or form_aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
                 is_own = 'is_own'
             else:
                 is_own = 'not_own'

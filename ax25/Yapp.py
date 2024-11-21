@@ -1,7 +1,7 @@
-import logging
+from cfg.logger_config import logger
 from fnc.crc_fnc import get_crc
 
-logger = logging.getLogger(__name__)
+
 NUL = b'\x00'
 """
 YAPP_HEADERS = [

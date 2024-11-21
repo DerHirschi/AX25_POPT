@@ -2,7 +2,7 @@ import time
 from collections import deque
 
 import aprslib
-import logging
+from cfg.logger_config import logger
 from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
@@ -13,15 +13,13 @@ from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_t
 from fnc.str_fnc import convert_umlaute_to_ascii
 from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
-logger = logging.getLogger(__name__)
-
 
 class APRS_ais(object):
     def __init__(self, load_cfg=True):
         print("APRS-IS INIT")
         logger.info("APRS-IS INIT")
         """ APRS-Server Stuff """
-        ais_cfg = POPT_CFG.load_CFG_aprs_ais()
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         self.ais_call = ais_cfg.get('ais_call', '')
         self.ais_pass = ais_cfg.get('ais_pass', '')
         self.ais_loc = ais_cfg.get('ais_loc', '')
@@ -114,7 +112,7 @@ class APRS_ais(object):
     def save_conf_to_file(self):
         print("Save APRS Conf")
         logger.info("Save APRS Conf")
-        ais_cfg = POPT_CFG.load_CFG_aprs_ais()
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         ais_cfg['ais_call'] = str(self.ais_call)
         ais_cfg['ais_pass'] = str(self.ais_pass)
         ais_cfg['ais_loc'] = str(self.ais_loc)
@@ -138,7 +136,7 @@ class APRS_ais(object):
         ais_cfg['be_tracer_alarm_hist'] = dict(self.be_tracer_alarm_hist)
         ais_cfg['ais_aprs_stations'] = dict(self.ais_aprs_stations)
         ais_cfg['aprs_msg_pool'] = dict(self.aprs_msg_pool)
-        POPT_CFG.save_CFG_aprs_ais(ais_cfg)
+        POPT_CFG.set_CFG_aprs_ais(ais_cfg)
         if self._port_handler is None:
             return
         gui = self._port_handler.get_gui()
@@ -446,7 +444,7 @@ class APRS_ais(object):
                         # print(f"APRS-MSG: {aprs_pack}")
                         self.aprs_msg_pool['message'].append(aprs_pack)
                         self._aprs_msg_sys_new_pn(aprs_pack)
-                    if aprs_pack.get('addresse', '') in list(self._port_handler.ax25_stations_settings.keys()):
+                    if aprs_pack.get('addresse', '') in POPT_CFG.get_stat_CFG_keys():
                         if aprs_pack.get('msgNo', None) is not None:
                             self._send_ack(aprs_pack)
                     self._reset_address_in_spooler(aprs_pack)
@@ -478,8 +476,8 @@ class APRS_ais(object):
         if self._port_handler is not None:
             gui = self._port_handler.get_gui()
             if gui is not None:
-                if aprs_pack['addresse'] in self._port_handler.ax25_stations_settings \
-                        or aprs_pack['from'] in self._port_handler.ax25_stations_settings:
+                if aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
+                        or aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
                     gui.set_aprsMail_alarm()
                 if gui.aprs_pn_msg_win is not None:
                     gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
@@ -496,11 +494,11 @@ class APRS_ais(object):
         if answer_pack and msg:
             from_call = answer_pack.get('addresse', '')
             to_call = answer_pack.get('from', '')
-            if from_call in self._port_handler.ax25_stations_settings:
+            if from_call in POPT_CFG.get_stat_CFG_keys():
                 # to_call = answer_pack.get('from', '')
                 path = answer_pack.get('path', [])
                 path.reverse()
-            elif to_call in self._port_handler.ax25_stations_settings:
+            elif to_call in POPT_CFG.get_stat_CFG_keys():
                 tmp = from_call
                 from_call = to_call
                 to_call = tmp

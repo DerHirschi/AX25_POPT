@@ -1,7 +1,6 @@
 from fnc.str_fnc import is_byte_ascii
-import logging
+from cfg.logger_config import logger
 
-logger = logging.getLogger(__name__)
 
 # ======================== Exception's ==========================================
 

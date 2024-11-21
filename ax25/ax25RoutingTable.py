@@ -1,7 +1,5 @@
 """ Ich hab absolut kein Plan was ich hier mache .. Aber wird schon .. :D"""
-import logging
-
-logger = logging.getLogger(__name__)
+from cfg.logger_config import logger
 
 
 def getNew_DE_list_entry(netrom_cfg: dict):

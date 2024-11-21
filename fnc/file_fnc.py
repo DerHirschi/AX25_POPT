@@ -17,15 +17,15 @@ def get_bin_fm_file(filename: str):
 
 def get_str_fm_file(filename: str):
     if not filename:
-        return ''
+        return None
     try:
         with open(filename, 'r') as f:
             return f.read()
     except (FileNotFoundError, EOFError, IsADirectoryError, UnicodeDecodeError):
-        return ''
+        return None
 
 
-def save_str_fm_file(filename: str, data: str):
+def save_str_to_file(filename: str, data: str):
     if not filename:
         return False
     try:

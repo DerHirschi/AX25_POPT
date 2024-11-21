@@ -15,6 +15,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 import matplotlib
 
 from cfg.constant import MH_BEACON_FILTER
+from cfg.popt_config import POPT_CFG
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -178,9 +179,10 @@ class ConnPathsPlot(tk.Toplevel):
         if not data:
             return
         self._own_calls = []
-        tmp = PORT_HANDLER.ax25_port_settings.get(port, None)
+        # tmp = PORT_HANDLER.ax25_port_settings.get(port, None)
+        tmp = POPT_CFG.get_stat_CFG_keys()
         if tmp:
-            self._own_calls = list(tmp.parm_StationCalls)
+            self._own_calls = list(tmp)
         last_route = self._show_last_route_var.get()
         for k in list(data.keys()):
             el = data[k]

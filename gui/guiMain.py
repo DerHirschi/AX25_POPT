@@ -9,7 +9,7 @@ import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.popt_config import POPT_CFG
-from fnc.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
+from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str
 from gui.aprs.guiAISmon import AISmonitor
@@ -49,9 +49,10 @@ from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
 from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
-    ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, TXT_MON_CLR, \
+    ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
-    SERVICE_CH_START
+    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
+    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -1008,8 +1009,8 @@ class PoPT_GUI_Main:
 
     def _init_TXT_frame_low(self):
         self._mon_txt = scrolledtext.ScrolledText(self._TXT_lower_frame,
-                                                  background=TXT_BACKGROUND_CLR,
-                                                  foreground=TXT_MON_CLR,
+                                                  background=DEF_PORT_MON_BG_COL,
+                                                  foreground=DEF_PORT_MON_RX_COL,
                                                   font=(FONT, self.text_size),
                                                   height=100,
                                                   width=300,
@@ -1024,13 +1025,13 @@ class PoPT_GUI_Main:
 
     def set_text_tags(self):
         self._all_tag_calls = []
-        all_stat_cfg = PORT_HANDLER.ph_get_all_stat_cfg()
+        all_stat_cfg = POPT_CFG.get_stat_CFGs()
         for call in list(all_stat_cfg.keys()):
             stat_cfg = all_stat_cfg[call]
-            tx_fg = stat_cfg.stat_parm_qso_col_text_tx
-            tx_bg = stat_cfg.stat_parm_qso_col_bg
+            tx_fg = stat_cfg.get('stat_parm_qso_col_text_tx', DEF_STAT_QSO_TX_COL)
+            tx_bg = stat_cfg.get('stat_parm_qso_col_bg', DEF_STAT_QSO_BG_COL)
 
-            rx_fg = stat_cfg.stat_parm_qso_col_text_rx
+            rx_fg = stat_cfg.get('stat_parm_qso_col_text_rx', DEF_STAT_QSO_RX_COL)
 
             tx_tag = 'TX-' + str(call)
             rx_tag = 'RX-' + str(call)
@@ -1076,9 +1077,9 @@ class PoPT_GUI_Main:
         for port_id in all_port.keys():
             tag_tx = f"tx{port_id}"
             tag_rx = f"rx{port_id}"
-            tx_fg = all_port[port_id].port_cfg.parm_mon_clr_tx
-            tx_bg = all_port[port_id].port_cfg.parm_mon_clr_bg
-            rx_fg = all_port[port_id].port_cfg.parm_mon_clr_rx
+            tx_fg = all_port[port_id].port_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)
+            tx_bg = all_port[port_id].port_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)
+            rx_fg = all_port[port_id].port_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)
             self._mon_txt.tag_config(tag_tx, foreground=tx_fg,
                                      background=tx_bg,
                                      selectbackground=tx_fg,
@@ -1159,7 +1160,7 @@ class PoPT_GUI_Main:
         for el in tmp:
             self.sysMsg_to_monitor(el)
         self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
-        for stat in PORT_HANDLER.ax25_stations_settings.keys():
+        for stat in POPT_CFG.get_stat_CFG_keys():
             self.sysMsg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
         all_ports = PORT_HANDLER.ax25_ports
         for port_k in all_ports.keys():
@@ -1168,14 +1169,14 @@ class PoPT_GUI_Main:
                 msg = 'erfolgreich initialisiert.'
             self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
                                    .format(port_k,
-                                           all_ports[port_k].port_cfg.parm_PortName,
-                                           all_ports[port_k].port_cfg.parm_PortTyp,
+                                           all_ports[port_k].port_cfg.get('parm_PortName', ''),
+                                           all_ports[port_k].port_cfg.get('parm_PortTyp', ''),
                                            msg
                                            ))
             self.sysMsg_to_monitor('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
-                                           all_ports[port_k].port_cfg.parm_PortParm[0],
-                                           all_ports[port_k].port_cfg.parm_PortParm[1]
+                                           all_ports[port_k].port_cfg.get('parm_PortParm', ('', 0))[0],
+                                           all_ports[port_k].port_cfg.get('parm_PortParm', ('', 0))[1],
                                            ))
 
     # END Init Stuff
@@ -1489,6 +1490,7 @@ class PoPT_GUI_Main:
 
     ###############################################################
     # QSO WIN
+
     def _update_qso_win(self):
         all_conn = PORT_HANDLER.get_all_connections()
         all_conn_ch_index = list(all_conn.keys())
@@ -1505,9 +1507,11 @@ class PoPT_GUI_Main:
         if not conn:
             return False
         if conn.ft_obj:
+            # self.ch_status_update()
             return False
         if conn.rx_tx_buf_guiData:
             self._update_qso_spooler(conn)
+            # self.ch_status_update()
             return True
         return False
 
@@ -1534,7 +1538,7 @@ class PoPT_GUI_Main:
             Ch_var.last_tag_name = str(conn.my_call_str)
         elif conn.my_call in self._all_tag_calls:
             tag_name_tx = 'TX-' + str(conn.my_call)
-            Ch_var.last_tag_name = str(conn.my_call_str)
+            Ch_var.last_tag_name = str(conn.my_call)
         else:
             tag_name_tx = 'TX-' + Ch_var.last_tag_name
 
@@ -1574,7 +1578,7 @@ class PoPT_GUI_Main:
             Ch_var.last_tag_name = str(conn.my_call_str)
         elif conn.my_call in self._all_tag_calls:
             tag_name_rx = 'RX-' + str(conn.my_call)
-            Ch_var.last_tag_name = str(conn.my_call_str)
+            Ch_var.last_tag_name = str(conn.my_call)
         else:
             tag_name_rx = 'RX-' + Ch_var.last_tag_name
 
@@ -1724,7 +1728,7 @@ class PoPT_GUI_Main:
             tr = False
             self._mon_txt.configure(state="normal")
             for axframe_conf, port_conf, tx in mon_buff:
-                port_id = port_conf.parm_PortNr
+                port_id = port_conf.get('parm_PortNr', -1)
                 mon_out = monitor_frame_inp(axframe_conf, port_conf, self.setting_mon_encoding.get())
                 if self.mon_aprs_var.get():
                     mon_str = mon_out[0] + mon_out[1]
@@ -1991,9 +1995,9 @@ class PoPT_GUI_Main:
         for port_id in list(PORT_HANDLER.ax25_ports.keys()):
             data = self.mh.get_bandwidth(
                 port_id,
-                PORT_HANDLER.ax25_ports[port_id].port_cfg.parm_baud,
+                PORT_HANDLER.ax25_ports[port_id].port_cfg.get('parm_baud', 1200),
             )
-            label = f'{PORT_HANDLER.ax25_ports[port_id].port_cfg.parm_PortName}'
+            label = f"{PORT_HANDLER.ax25_ports[port_id].port_cfg.get('parm_PortName', '')}"
             if port_id not in self._bw_plot_lines:
                 self._bw_plot_lines[int(port_id)], = self._ax.plot(self._bw_plot_x_scale, data, label=label)
                 self._ax.legend()
@@ -2263,7 +2267,7 @@ class PoPT_GUI_Main:
                     qth = db_ent.QTH
                 if db_ent.LOC:
                     loc = db_ent.LOC
-                if db_ent.Distance:
+                if db_ent.Distance > 0:
                     loc += f" ({db_ent.Distance} km)"
                 if db_ent.TYP:
                     typ = db_ent.TYP
@@ -2375,7 +2379,7 @@ class PoPT_GUI_Main:
             t1_text = f"T1: {max(0, int(station.t1 - time.time()))}"
             rtt_text = 'RTT: {:.1f}/{:.1f}'.format(station.RTT_Timer.rtt_last, station.RTT_Timer.rtt_average)
             t3_text = f"T3: {max(0, int(station.t3 - time.time()))}"
-            if station.own_port.port_cfg.parm_T2_auto:
+            if station.get_port_cfg().get('parm_T2_auto', True):
                 t2_text = f"T2: {int(station.parm_T2 * 1000)}A"
             else:
                 t2_text = f"T2: {int(station.parm_T2 * 1000)}"

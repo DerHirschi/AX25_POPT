@@ -33,9 +33,9 @@ class BeaconTab:
         call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['from'][self._lang]}:")
         call_label.place(x=call_x, y=call_y)
         self.from_select_var = tk.StringVar(self.own_tab)
-        self.from_opt = dict(PORT_HANDLER.ax25_stations_settings)
+        # from_opt = dict(PORT_HANDLER.ax25_stations_settings)
         self.from_select_var.set(beacon.get('own_call', 'NOCALL'))  # default value
-        opt = list(self.from_opt.keys())
+        opt = list(POPT_CFG.get_stat_CFG_keys())
         if not opt:
             opt = ['NOCALL']
         from_call = tk.OptionMenu(self.own_tab, self.from_select_var, *opt, command=self._cmd_fm_call_set)
@@ -456,7 +456,7 @@ class BeaconSettings(tk.Toplevel):
 
     def _save_btn_cmd(self):
         self._set_vars()
-        POPT_CFG.save_CFG_to_file()
+        POPT_CFG.save_MAIN_CFG_to_file()
         self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
 
     def _ok_btn_cmd(self):

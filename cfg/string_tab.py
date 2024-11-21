@@ -9,7 +9,7 @@
 7: 'it'
 8: 'zh'     # Not really ;-)
 
-Thanks to NL5VKL for the Dutch translation.
+Thanks to NL1NOD for the Dutch translation.
 """
 
 STR_TABLE = {
@@ -22,6 +22,300 @@ STR_TABLE = {
     #  PT
     #  IT
     #  ?
+    'default_ctext': (
+        # GER
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # ENG
+        ('\n'
+       '-= Hello $destName, =-\n' 
+       '-= welcome to $ownCall ($distance km), =-\n'
+       '-= on Terminal-Channel $channel <> Port $portNr. =-\n'
+       "-= That's your connect No. $connNr. =-\n"
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Last Login at: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # NL
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # FR
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # FI
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # PL
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # PT
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+        # IT
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       'v'),
+        # ??????
+        ('\n'
+       '-= Hallo $destName, =-\n' 
+       '-= willkommen bei $ownCall ($distance km), =-\n'
+       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+       '-= Das ist Connect Nr. $connNr. =-\n'
+       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+       '\n'
+       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+       '\n'),
+    ),
+
+    'default_btext': (
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n',
+        '\n73 de $ownCall ...\n'),
+
+    'call_vali_warning_1': (
+        'Call Format!',
+        'Call format!',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'call_vali_warning_2': (
+        'Max 6 Zeichen nur Großbuchstaben und Zahlen.',
+        'Max 6 characters only capital letters and numbers.',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_station_hint': (
+        'Hinweis: Station erfolgreich gelöscht.',
+        'Note: Station deleted successfully.',
+        'Opmerking: Zender is succesvol verwijderd.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_station_warning_1': (
+        'Station gelöscht',
+        'Station deleted',
+        'Zender verwijderd',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_station_warning_2': (
+        'Laufwerk C: wurde erfolgreich formatiert.',
+        'Drive C: was successfully formatted.',
+        'Schijf C: is succesvol geformatteerd.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_station_hint_1': (
+        'lösche Station',
+        'delete Station',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_station_hint_2': (
+        'Willst du diese Station wirklich löschen? \nAlle Einstellungen sowie Texte gehen verloren !',
+        'Do you really want to delete this station? \nAll settings and texts will be lost!',
+        'Wilt u deze zender echt verwijderen? \nAlle instellingen en teksten gaan verloren!',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'not_all_station_disco_hint_1': (
+        'Stationen nicht disconnected',
+        'Stations not disconnected',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'not_all_station_disco_hint_2': (
+        'Nicht alle Stationen disconnected!',
+        'Not all stations are disconnected!',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'all_station_get_disco_hint_1': (
+        'Stationen werden disconnected !',
+        'Stations getting disconnected!',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'all_station_get_disco_hint_2': (
+        'Es werden alle Stationen disconnected',
+        'All stations getting disconnected',
+        '-----------',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'close_port': ('Info: Versuche Port {} zu schließen.',
+           'Info: Try to close Port {}.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'port_closed': ('Info: Port {} erfolgreich geschlossen.',
+           'Info: Port {} closed successfully.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'send_kiss_parm': ('Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..',
+           'Note: Kiss parameters sent to TNC on port {}..',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'port_in_use': ('Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.',
+           'Error: Port {} could not be initialized. Port is already in use.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'no_port_typ': ('Hinweis: Kein Port-Typ ausgewählt. Port {}',
+           'Note: No port type selected. port {}',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'port_not_init': ('Error: Port {} konnte nicht initialisiert werden.',
+           'Error: Port {} could not be initialized.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+    'port_init': ('Info: Port {} erfolgreich initialisiert.',
+           'Info: Port {} initialized successfully.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
     'OK': ('OK',
            'OK',
            'OK',
@@ -35,6 +329,16 @@ STR_TABLE = {
     'cancel': ('Abbrechen',
                'Cancel',
                'Onderbreken',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+'aborted': ('Abgebrochen',
+               'Aborted',
+               'Onderbroken',
            '',
            '',
            '',
@@ -912,9 +1216,29 @@ STR_TABLE = {
            '',
            ''),
 
+    'lob3': ('Das war eine gute Entscheidung. Mach weiter so. Das hast du gut gemacht.',
+             'That was a good decision. Keep it up. You did well.',
+             'Dat was een goede beslissing. Ga zo door. Dat heb je goed gemaakt.',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
     'hin1': ('Hinweis: Der OK Button funktioniert noch !!',
              'Note: The OK button still works !!',
-             'De OK knop werkt nog ',
+             'De OK knop werkt nog !!',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'hin2': ('Hinweis: Knack!! Abgebrochen..',
+             'Note: Canceled !!',
+             'geannuleerd!',
            '',
            '',
            '',

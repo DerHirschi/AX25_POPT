@@ -3,7 +3,8 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.108.9.12'
+VER = '2.109.21'
+DEBUG_LOG = True
 """
 LANGUAGE:
 0 = German
@@ -17,6 +18,18 @@ TNC_KISS_CMD = b'\x1b@K\r'             # Command for setting TNC to Kiss Mode
 # TNC_KISS_CMD = b'KISS ON\r'           # Command for setting TNC to Kiss Mode
 # TNC_KISS_CMD = b'KISS ON\rrestart\r'  # Command for setting TNC to Kiss Mode
 
+TNC_KISS_CMD_END = b'\xc0\xff\xc0'
+
+TNC_KISS_START_CMD = [
+    b'\x1b@K\r',
+    b'KISSM\r',
+    b'KISS ON\r',
+    b'KISS ON\rrestart\r'
+]
+
+TNC_KISS_END_CMD = [
+    b'\xc0\xff\xc0',
+    ]
 """"""
 MAX_PORTS = 15              #
 SERVICE_CH_START = 11       # Service Channels Start Channel
@@ -170,8 +183,6 @@ TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
 TXT_INP_CLR = 'yellow'
 TXT_INP_CURSOR_CLR = 'white'
-TXT_MON_CLR = 'green'
-TXT_MON_TX_CLR = 'medium violet red'
 STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = 'black'
 FONT_STAT_BAR = 'Arial'
@@ -179,6 +190,14 @@ PARAM_MAX_MON_LEN = 100000
 CFG_clr_sys_msg = 'red'
 CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 GUI_DISABLED_CLR = '#b1b1b3'
+# Station Default
+DEF_STAT_QSO_TX_COL = 'white'
+DEF_STAT_QSO_RX_COL = '#02faf2'
+DEF_STAT_QSO_BG_COL = 'black'
+# Port Default
+DEF_PORT_MON_TX_COL = 'medium violet red'
+DEF_PORT_MON_RX_COL = 'green'
+DEF_PORT_MON_BG_COL = 'black'
 
 
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \

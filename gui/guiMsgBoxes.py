@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import messagebox, font, filedialog
 import sys
 
+from cfg.popt_config import POPT_CFG
+from cfg.string_tab import STR_TABLE
+
 
 def open_file_dialog():
     name = filedialog.askopenfilename()
@@ -20,6 +23,11 @@ def save_file_dialog(data):
         return
     f.write(data)
     f.close()
+
+def call_vali_warning():
+    mb = messagebox.showerror(STR_TABLE['call_vali_warning_1'][POPT_CFG.get_guiCFG_language()],
+                         STR_TABLE['call_vali_warning_2'][POPT_CFG.get_guiCFG_language()])
+    mb.upper()
 
 
 class ErrorMsg(tk.Toplevel):
