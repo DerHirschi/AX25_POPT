@@ -2243,10 +2243,11 @@ class PoPT_GUI_Main:
     def _update_stat_info_conn_timer(self):
         conn = self.get_conn()
         if conn is not None:
-            self.stat_info_timer_var.set(get_time_delta(conn.cli.time_start))
-        else:
-            if self.stat_info_timer_var.get() != '--:--:--':
-                self.stat_info_timer_var.set('--:--:--')
+            if hasattr(conn, 'cli'):
+                self.stat_info_timer_var.set(get_time_delta(conn.cli.time_start))
+                return
+        if self.stat_info_timer_var.get() != '--:--:--':
+            self.stat_info_timer_var.set('--:--:--')
 
     def update_station_info(self):
         name = '-------'

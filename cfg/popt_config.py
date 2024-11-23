@@ -48,14 +48,15 @@ class Main_CFG:
         self._load_CFG_fm_file()        # Other Configs
         self._set_all_default_CFGs()
         self._clean_old_CFGs()
+        self._update_old_CFGs()
         """"""
         # self._load_PIPE_CFG_fm_file()
         """ Station CFGs """
         self._load_STAT_CFG_fm_file()   # Station Configs
-        self._clean_old_STAT_CFGs()
+        self._update_old_STAT_CFGs()
         """ Port CFGs """
         self._load_PORT_CFG_fm_file()   # Port Configs
-        self._clean_old_PORT_CFGs()
+        self._update_old_PORT_CFGs()
         """
         print('---------- PIPE CFG -------------')
         for call, cfg in self._config['pipe_cfgs'].items():
@@ -82,7 +83,18 @@ class Main_CFG:
         for cfg_key in list(self._config.keys()):
             if cfg_key not in self._default_cfg_tab.keys():
                 del self._config[cfg_key]
-            # TODO Clean Configs itself except gui_channel_vars
+
+    def _update_old_CFGs(self):
+        # TODO Clean Configs aprs-cfg etc.
+        for cfg_key, cfg in self._config.items():
+            if cfg_key not in ['gui_channel_vars']:
+                new_cfg = self.get_default_CFG_by_key(cfg_key)
+                if new_cfg:
+                    for k in new_cfg.keys():
+                        new_cfg[k] = cfg.get(k, new_cfg[k])
+                    self._config[cfg_key] = new_cfg
+
+
 
     ####################
     # File Fnc
@@ -149,7 +161,7 @@ class Main_CFG:
             logger.debug(f'- {conf}')
         # return get_all_pipe_cfg()   # Get CFGs fm Station CFG
 
-    def _clean_old_STAT_CFGs(self):
+    def _update_old_STAT_CFGs(self):
         new_stat_cfgs = {}
         for call, conf in self._config.get('stat_cfgs', {}).items():
             new_conf = getNew_station_cfg()
@@ -178,7 +190,7 @@ class Main_CFG:
             logger.info(f'Port CFG: load {conf_k}')
             logger.debug(f'- {conf}')
 
-    def _clean_old_PORT_CFGs(self):
+    def _update_old_PORT_CFGs(self):
         new_port_cfgs = {}
         for port_id, conf in self._config.get('port_cfgs', {}).items():
             new_conf = getNew_port_cfg()

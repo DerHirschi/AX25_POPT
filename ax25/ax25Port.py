@@ -3,6 +3,7 @@ import socket
 import serial
 import time
 import crcmod
+# import threading
 
 from ax25.ax25UI_Pipe import AX25Pipe
 
@@ -36,6 +37,7 @@ class AX25Port(object):
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
+        self._tx_th = None
         ############
         # CONFIG
         self.port_cfg = dict(port_cfg)
@@ -118,6 +120,17 @@ class AX25Port(object):
     def tx(self, frame):
         if self._tx_dualPort_handler(frame):
             return
+        """
+        if self.port_cfg.get('parm_full_duplex', False):
+            # print('FD')
+            if self._tx_th:
+                if self._tx_th.is_alive():
+                    # print('FD alive')
+                    return
+            self._tx_th = threading.Thread(target=self.tx_out, args=(frame, ))
+            self._tx_th.start()
+            return
+        """
         self.tx_out(frame)
 
     def tx_out(self, frame):
@@ -203,9 +216,9 @@ class AX25Port(object):
             # logger.debug('UI-Pipe: No UID')
             return False
         if self.pipes[uid].get_pipe_connection() is not None:
-            logger.debug('UI-Pipe: connection')
+            # logger.debug('UI-Pipe: connection')
             return False
-        logger.debug('UI-Pipe: OK')
+        # logger.debug('UI-Pipe: OK')
         self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
         return True
 

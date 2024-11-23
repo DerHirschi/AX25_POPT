@@ -1,4 +1,14 @@
 ###########################################################################################################
+# 2.110.x
+Fixes:
+- Inkorrektes Handling wenn DM Frame (Connection Reset) empfangen wird. Verursacht FRMR
+
+Optimierung:
+
+Neue Implementierungen / Funktionen:
+
+###########################################################################################################
+###########################################################################################################
 # 2.109.x
 Fixes:
 - Wenn Station CLI-Typ als Pipe gesetzt ist, ist es nicht mehr möglich einen anderen CLI-Typ auszuwählen

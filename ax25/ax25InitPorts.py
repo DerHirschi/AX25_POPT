@@ -426,6 +426,24 @@ class AX25PortHandler(object):
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
 
+    def reset_connection(self, connection):
+        if self._gui:
+            # TODO GUI Stuff > guiMain
+            if not connection.LINK_Connection:
+                # TODO: Trigger here, Logbook and UserDB-Conn C
+                msg = f'*** Reset fm {connection.to_call_str}'
+                self._gui.sysMsg_to_qso(
+                    data=msg,
+                    ch_index=connection.ch_index
+                )
+                if 0 < connection.ch_index < SERVICE_CH_START:
+                    SOUND.new_conn_sound()
+                    speech = ' '.join(connection.to_call_str.replace('-', ' '))
+                    SOUND.sprech(speech)
+
+            self._gui.ch_status_update()
+            self._gui.conn_btn_update()
+
     def end_connection(self, conn):
         if self._gui:
             # TODO GUI Stuff > guiMain
