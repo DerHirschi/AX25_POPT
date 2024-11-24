@@ -379,7 +379,11 @@ class AX25Conn:
             return
         self._send_gui_QSObuf_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
-        self.rx_buf_last_data = self._set_dest_call_fm_data_inp(data)
+        # TODO !!!! Nicht sauber
+        if self._set_dest_call_fm_data_inp(data):
+            self.rx_buf_last_data = b''
+        else:
+            self.rx_buf_last_data = data
         """ CLI """
         self.exec_cli(data)
         return
@@ -849,12 +853,12 @@ class AX25Conn:
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
         data = self.rx_buf_last_data + raw_data
-        tmp_raw = bytes(raw_data)
+        # tmp_raw = bytes(raw_data)
         if b'\r' not in data:
-            return raw_data
+            return False
         data = data.split(b'\r')[:-1]
         for line in data:
-            tmp_raw = tmp_raw.replace(line + b'\r', b'')
+            # tmp_raw = tmp_raw.replace(line + b'\r', b'')
             if line.lower().startswith(b'*** connected to ') or\
                     line.lower().startswith(b'*** reconnected to '):
                 tmp_line = line.decode('ASCII', 'ignore')
@@ -883,8 +887,8 @@ class AX25Conn:
                     SOUND.sprech(speech)
                     self._gui.on_channel_status_change()
                 # Maybe it's better to look at the whole string (include last frame)?
-                return tmp_raw
-        return raw_data
+                return True
+        return False
 
     def _set_user_db_ent(self):
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)

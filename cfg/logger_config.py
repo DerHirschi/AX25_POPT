@@ -6,8 +6,10 @@ from cfg.constant import DEBUG_LOG, CFG_logging_path, CFG_data_path
 
 if DEBUG_LOG:
     log_level = logging.DEBUG
+    log_format = "%(asctime)s - %(levelname)s - %(name)s: %(filename)s:%(funcName)s()> %(message)s"
 else:
     log_level = logging.INFO
+    log_format = "%(asctime)s - %(levelname)s - %(name)s: %(filename)s> %(message)s"
 
 lg_msg = []
 # Data
@@ -27,7 +29,7 @@ logging.getLogger("chardet").setLevel(logging.WARNING)
 logging.getLogger("aprslib").setLevel(logging.INFO)
 logging.basicConfig(
     # format="%(asctime)s - %(levelname)s - %(name)s: %(filename)s:%(funcName)s()> %(message)s",
-    format="%(asctime)s - %(levelname)s - %(name)s: %(filename)s> %(message)s",
+    format=log_format,
     filename=f'{CFG_logging_path}popt{dt_str}.log',
     filemode='w',
     level=log_level
@@ -35,7 +37,7 @@ logging.basicConfig(
 
 # logger = logging.getLogger('PoPT')
 streamHandler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s: %(filename)s> %(message)s')
+formatter = logging.Formatter(log_format)
 streamHandler.setFormatter(formatter)
 logger = logging.getLogger('PoPT')
 logger.addHandler(streamHandler)

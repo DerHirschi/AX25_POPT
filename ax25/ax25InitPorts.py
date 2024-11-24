@@ -574,16 +574,25 @@ class AX25PortHandler(object):
             self.insert_new_connection_PH(new_conn=connection, ind=channel, is_service=is_service)
             # connection.link_connection(link_conn) # !!!!!!!!!!!!!!!!!
             user_db_ent = USER_DB.get_entry(dest_call, add_new=False)
+            lb_msg = f"CH {int(connection.ch_index)} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
             if user_db_ent:
                 if user_db_ent.Name:
-                    ret_msg = f'\r*** Link Setup to {dest_call} '
+                    ret_msg = f'*** Link Setup to {dest_call} '
                     if user_db_ent.Name:
                         ret_msg += f' - ({user_db_ent.Name})'
                     if user_db_ent.Distance:
                         ret_msg += f' - {round(user_db_ent.Distance)} km '
-                    ret_msg += f'> Port {port_id}\r'
-                    return connection, ret_msg
+                    ret_msg += f'> Port {port_id}'
+                    log_book.info(lb_msg)
+                    log_book.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: {ret_msg}')
+                    return connection , '\r' + ret_msg + '\r'
+            log_book.info(lb_msg)
+            log_book.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Link Setup to {dest_call} > Port {port_id}')
             return connection, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
+        lb_msg = f"CH {int(channel)} - {str(own_call)}: - {str(dest_call) + ' ' + '>'.join(via_calls)} - Port: {int(port_id)}"
+        log_book.info(lb_msg)
+        log_book.info(
+            f'CH {int(channel)} - {str(own_call)}: *** Busy. No free SSID available. > Port {int(port_id)}')
         return False, '\r*** Busy. No free SSID available.\r'
 
     def send_UI(self, conf: dict):
