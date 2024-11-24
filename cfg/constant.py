@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.110.1'
+VER = '2.110.2'
 DEBUG_LOG = True
 """
 LANGUAGE:
@@ -49,6 +49,7 @@ LANG_IND = {
         }
 
 CFG_data_path = 'data/'
+CFG_logging_path = 'data/logs/'
 CFG_usertxt_path = 'userdata/'
 CFG_ft_downloads = 'ft_downloads/'
 CFG_user_db = 'data/UserDB.popt'

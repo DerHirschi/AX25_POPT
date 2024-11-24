@@ -1,3 +1,4 @@
+from cfg.cfg_fnc import init_dir_struct
 from cfg.constant import VER, DEBUG_LOG, POPT_BANNER
 from cfg.logger_config import logger, log_book
 
@@ -5,9 +6,9 @@ for el in POPT_BANNER.split('\r')[1:-2]:
     logger.info(el)
 logger.info(f"Version: {VER} wird gestartet.")
 logger.info(f"DEBUG_LOG: {DEBUG_LOG}")
+init_dir_struct()  # Setting up Directory's
+#############################################
 import gui.guiMain
-
-
 
 if __name__ == '__main__':
     logger.info(f"PoPT_{VER} erfolgreich gestartet....")
@@ -20,4 +21,3 @@ if __name__ == '__main__':
 
     logger.info(f"PoPT_{VER} beendet.")
     log_book.info(f"PoPT_{VER} beendet.")
-    # print('ENDE')

@@ -38,7 +38,7 @@ def format_hexstr(inp):
 
 def decode_FRMR(ifield):
     if len(ifield) != 3:
-        print("Invalid I-Field length")
+        logger.error("decode_FRMR: Invalid I-Field length")
         return '\nInvalid I-Field length\n'
 
     control_byte = ifield[0]

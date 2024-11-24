@@ -1,7 +1,7 @@
 import pickle
 import os
 
-from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, MAX_PORTS
+from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, MAX_PORTS, CFG_logging_path
 from cfg.default_config import getNew_station_cfg
 from cfg.logger_config import logger
 
@@ -54,15 +54,15 @@ def save_to_file(filename: str, data):
         with open(CFG_data_path + filename, 'xb') as f:
             pickle.dump(data, f, 2)
     except EOFError as e:
-        print(f"save_to_file Error: {e}")
+        # print(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {data}")
-        print(f"save_to_file Error: {data}")
+        # print(f"save_to_file Error: {data}")
     except TypeError as e:
-        print(f"save_to_file Error: {e}")
+        # print(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {data}")
-        print(f"save_to_file Error: {data}")
+        # print(f"save_to_file Error: {data}")
 
 
 def load_fm_file(filename: str):
@@ -141,6 +141,7 @@ def save_station_CFG_to_file(conf: dict):
     save_to_file(file, conf)
     return True
 
+"""
 def save_station_to_file(conf):
     if conf.stat_parm_Call != getNew_station_cfg().get('stat_parm_Call', ''):
         exist_userpath(conf.stat_parm_Call)
@@ -151,7 +152,7 @@ def save_station_to_file(conf):
                 save_station[att] = getattr(conf, att)
 
         save_to_file(file, save_station)
-
+"""
 
 
 def del_user_data(call: str):
@@ -179,12 +180,20 @@ def exist_userpath(usercall: str):
 
 def init_dir_struct():
     if not os.path.exists(CFG_data_path):
+        logger.warning(f'Directory {CFG_data_path} not found ! Creating new Directory.')
         os.makedirs(CFG_data_path)
     if not os.path.exists(CFG_data_path + CFG_usertxt_path):
+        logger.warning(f'Directory {CFG_data_path + CFG_usertxt_path} not found ! Creating new Directory.')
         os.makedirs(CFG_data_path + CFG_usertxt_path)
     # File Transfer
     if not os.path.exists(CFG_ft_downloads):
+        logger.warning(f'Directory {CFG_ft_downloads} not found ! Creating new Directory.')
         os.makedirs(CFG_ft_downloads)
+    # Logging
+    if not os.path.exists(CFG_logging_path):
+        logger.warning(f'Directory {CFG_logging_path} not found ! Creating new Directory.')
+        os.makedirs(CFG_logging_path)
+
 
 ###############################
 # Port CFGs

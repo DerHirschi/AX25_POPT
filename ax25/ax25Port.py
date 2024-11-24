@@ -191,8 +191,8 @@ class AX25Port(object):
 
     def _rx_link_handler(self, ax25_frame):
         if reverse_uid(ax25_frame.addr_uid) in self.port_handler.link_connections.keys():
-            print(f"Port rx_link_handler reverse_uid: UID: {ax25_frame.addr_uid}")
-            print(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
+            logger.debug(f"Port rx_link_handler reverse_uid: UID: {ax25_frame.addr_uid}")
+            logger.debug(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
             return False
         if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
             # print(f"Link-Conn RX: {ax25_frame.addr_uid}")
@@ -315,9 +315,9 @@ class AX25Port(object):
 
     def accept_digi_conn(self, uid: str):
         if uid not in self._digi_connections.keys():
-            print('accept_digi_conn: UID ERROR')
-            print(f'accept_digi_conn uid: {uid}')
-            print(f'accept_digi_conn keys: {self._digi_connections.keys()}')
+            logger.debug('Port: accept_digi_conn: UID ERROR')
+            logger.debug(f'Port: accept_digi_conn uid: {uid}')
+            logger.debug(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
             return False
         self._digi_connections[uid].add_rx_conn_cron()
         return True
@@ -422,7 +422,7 @@ class AX25Port(object):
                     # if el.digi_call and conn.is_link:
                     if conn.digi_call:
                         # TODO Just check for digi_call while encoding
-                        print(conn.digi_call)
+                        # print(conn.digi_call)
                         el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
                     else:
                         el.encode_ax25frame()
@@ -664,10 +664,8 @@ class AX25Port(object):
     def add_pipe(self, pipe_cfg=None, pipe=None):
         if pipe is None and not pipe_cfg:
             return False
-        print("port add_pipe")
         if pipe is None:
             pipe = AX25Pipe(pipe_cfg=pipe_cfg)
-        print(pipe.get_pipe_uid())
         self.pipes[pipe.get_pipe_uid()] = pipe
         return True
 
@@ -735,10 +733,7 @@ class AX25Port(object):
             ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
         except AX25EncodingERROR as e:
             logger.warning(f"new_connection ERROR {e}")
-            print(f"new_connection ERROR {e}")
-            print(f"new_connection destCall {ax25_frame.to_call}")
             logger.warning(f"new_connection destCall {ax25_frame.to_call}")
-            print(f"new_connection via_calls {ax25_frame.via_calls}")
             logger.warning(f"new_connection via_calls {ax25_frame.via_calls}")
             return False
 
@@ -748,7 +743,6 @@ class AX25Port(object):
                     (ax25_frame.from_call.call_str != ax25_frame.to_call.call_str):
                 break
 
-            print("Same UID !! {}".format(ax25_frame.addr_uid))
             logger.warning("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
@@ -757,7 +751,6 @@ class AX25Port(object):
             except AX25EncodingERROR:
                 return False
             if ax25_frame.from_call.ssid > 15:
-                print("Same UID - No free SSID !! uid: {} - SSID: {}".format(ax25_frame.addr_uid, ax25_frame.from_call.ssid))
                 logger.warning("Same UID - No free SSID !! uid: {} - SSID: {}".format(ax25_frame.addr_uid, ax25_frame.from_call.ssid))
                 return False
             try:
@@ -857,7 +850,7 @@ class AX25Port(object):
         while self.loop_is_running:
             self._tasks()
             # time.sleep(0.03)
-        print(f"Loop Ends Port: {self.port_id}")
+        # print(f"Loop Ends Port: {self.port_id}")
         logger.info(f"Loop Ends Port: {self.port_id}")
         self.close()
         self.device = None

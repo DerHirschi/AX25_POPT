@@ -92,7 +92,6 @@ class RoutingTable:
     """
 
     def __init__(self, port_handler, max_nodes=100, max_peers=100):
-        print("RoutingTable Init")
         logger.info("RoutingTable Init")
         self._port_handler = port_handler
         self.nodetab = [Node() for n in range(max_nodes)]

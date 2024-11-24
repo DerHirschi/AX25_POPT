@@ -12,7 +12,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
-from cfg.logger_config import logger
+from cfg.logger_config import logger, log_book
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
@@ -379,10 +379,9 @@ class AX25Conn:
             return
         self._send_gui_QSObuf_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
-        self._set_dest_call_fm_data_inp(data)
+        self.rx_buf_last_data = self._set_dest_call_fm_data_inp(data)
         """ CLI """
         self.exec_cli(data)
-        self.rx_buf_last_data = data
         return
 
     def exec_cron(self):
@@ -850,14 +849,17 @@ class AX25Conn:
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
         data = self.rx_buf_last_data + raw_data
+        tmp_raw = bytes(raw_data)
         if b'\r' not in data:
-            return
+            return raw_data
         data = data.split(b'\r')[:-1]
         for line in data:
+            tmp_raw = tmp_raw.replace(line + b'\r', b'')
             if line.lower().startswith(b'*** connected to ') or\
                     line.lower().startswith(b'*** reconnected to '):
-                tmp_data = line.split(b' to ')[-1]
-                tmp_data = tmp_data.decode('ASCII', 'ignore')
+                tmp_line = line.decode('ASCII', 'ignore')
+                tmp_data = tmp_line.split(' to ')[-1]
+                # tmp_data = tmp_data.decode('ASCII', 'ignore')
                 # TODO Conn/reconn fnc
                 if ':' in tmp_data:
                     tmp_call = tmp_data.split(':')
@@ -871,15 +873,18 @@ class AX25Conn:
                 self._set_user_db_ent()
                 self._set_packet_param()
                 self._reinit_cli()
-
+                lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+                lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
+                log_book.info(lb_msg)
+                log_book.info(lb_msg_1)
                 if self._gui:
                     # TODO
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
                     SOUND.sprech(speech)
                     self._gui.on_channel_status_change()
                 # Maybe it's better to look at the whole string (include last frame)?
-                return
-        return
+                return tmp_raw
+        return raw_data
 
     def _set_user_db_ent(self):
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
@@ -1167,6 +1172,9 @@ class AX25Conn:
     def send_sys_Msg_to_gui(self, data):
         if not data:
             return
+        lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+        log_book.info(lb_msg)
+        log_book.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
         gui = self._port_handler.get_gui()
         if not gui:
             return

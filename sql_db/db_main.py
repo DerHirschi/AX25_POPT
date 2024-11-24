@@ -139,8 +139,8 @@ class SQL_Database:
                     }.get(tables, {})
                 for tab in tables.keys():
                     if tab not in ret:
-                        print(f"Database: WARNING Table {tab} not exists !!")
-                        logger.warning(f"Database: WARNING Table {tab} not exists !!")
+                        # print(f"Database: WARNING Table {tab} not exists !!")
+                        logger.warning(f"Database: WARNING Table {tab} not exists !! Creating new Table.")
                         self.create_db_tables(tables[tab])
                 # self.create_db_var()
 

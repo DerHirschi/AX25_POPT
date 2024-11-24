@@ -14,9 +14,9 @@ DL = Deleted MSG
 import time
 from datetime import datetime
 
-from bbs.bbs_Error import bbsInitError, logger
-from cfg.cfg_fnc import load_port_cfg_fm_file
+from bbs.bbs_Error import bbsInitError
 from cfg.popt_config import POPT_CFG
+from cfg.logger_config import logger
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 
@@ -53,13 +53,13 @@ def parse_forward_header(header):
     """
     hdr = header.split(' ')
     if len(hdr) != 7:
-        print(f"PH!!: {header}")
+        logger.debug(f"PH!!: {header}")
         return None
     if hdr[0] != 'FB':
-        print(f"PH!!: {header}")
+        logger.debug(f"PH!!: {header}")
         return None
     if hdr[1] not in ['P', 'B']:
-        print(f"PH!!: {header}")
+        logger.debug(f"PH!!: {header}")
         return None
 
     _tmp = hdr[5].split('-')
@@ -138,7 +138,7 @@ def parse_fwd_paths(path_list: list):
 
 def parse_header_timestamp(path_str: str):
     if path_str[:2] != 'R:':
-        print(f"TS-Parser R not FOUND: {path_str}")
+        logger.debug(f"TS-Parser R not FOUND: {path_str}")
         return ''
     path_str = path_str[2:].split(' ')[0]
     """
@@ -212,7 +212,7 @@ class BBSConnection:
             try:
                 data = data.encode('ASCII')
             except UnicodeEncodeError:
-                print("_get_lines_fm_rx_buff: UnicodeEncodeError")
+                logger.debug("_get_lines_fm_rx_buff: UnicodeEncodeError")
                 return []
 
         if data in self._rx_buff:

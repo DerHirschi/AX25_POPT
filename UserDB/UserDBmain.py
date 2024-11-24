@@ -155,7 +155,7 @@ class UserDB:
             if call_str not in self.db.keys():
                 call_tup = call_tuple_fm_call_str(call_str)
                 # if call_tup[0] not in self.db.keys():
-                print('# User DB: New User added > ' + call_str)
+                # print('# User DB: New User added > ' + call_str)
                 logger.info('User DB: New User added > ' + call_str)
                 self.db[call_str] = Client()
                 self.db[call_str].call_str = str(call_str)
@@ -352,15 +352,15 @@ class UserDB:
         return ret
 
     def save_data(self):
-        print('Save Client DB')
-        logger.info('Save Client DB')
+        # print('Save Client DB')
+        logger.info('User-DB: Save User-DB')
         tmp = cleanup_obj_dict(self.db)
         try:
             with open(CFG_user_db, 'wb') as outp:
                 pickle.dump(tmp, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError as e:
             # print("ERROR SAVE ClientDB: " + str(e))
-            logger.error("ERROR SAVE ClientDB: " + str(e))
+            logger.error("User-DB: Save User-DB > " + str(e))
 
 
 USER_DB = UserDB()

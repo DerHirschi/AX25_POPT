@@ -16,7 +16,6 @@ from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
-from cfg.cfg_fnc import init_dir_struct
 from ax25.ax25Port import AX25DeviceTAB
 from cfg.constant import MAX_PORTS, SERVICE_CH_START
 from sql_db.sql_Error import SQLConnectionError
@@ -39,7 +38,6 @@ class RxEchoVars(object):
 class AX25PortHandler(object):
     def __init__(self):
         logger.info("PH: Init")
-        init_dir_struct()  # Setting up Directory's
         #################
         # Init SQL-DB
         self.db = None
@@ -427,8 +425,8 @@ class AX25PortHandler(object):
             msg = f'*** Connected to {connection.to_call_str}'
             lb_msg_1 = f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Connected to {connection.to_call_str}'
         lb_msg = f"CH {int(connection.ch_index)} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
-        log_book.info(lb_msg_1)
         log_book.info(lb_msg)
+        log_book.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
@@ -450,8 +448,8 @@ class AX25PortHandler(object):
         msg = f'*** Reset fm {connection.to_call_str}'
         lb_msg_1 = f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Reset fm {connection.to_call_str}'
         lb_msg = f"CH {int(connection.ch_index)} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
-        log_book.info(lb_msg_1)
         log_book.info(lb_msg)
+        log_book.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
@@ -470,10 +468,10 @@ class AX25PortHandler(object):
 
     def end_connection(self, conn):
         msg = f'*** Disconnected fm {str(conn.to_call_str)}'
-        lb_msg_1 = f'CH {int(conn.ch_index)} - {str(conn.my_call_str)}: *** Disconnected fm {str(conn.to_call_str)}'
         lb_msg = f"CH {int(conn.ch_index)} - {str(conn.my_call_str)}: - {str(conn.uid)} - Port: {int(conn.port_id)}"
-        log_book.info(lb_msg_1)
+        lb_msg_1 = f"CH {int(conn.ch_index)} - {str(conn.my_call_str)}: *** Disconnected fm {str(conn.to_call_str)}"
         log_book.info(lb_msg)
+        log_book.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, UserDB-Conn C

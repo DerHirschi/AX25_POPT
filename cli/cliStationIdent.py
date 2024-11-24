@@ -38,7 +38,6 @@ def validate_id_str(inp: str):
                 logger.warning(f"Unbekannte SW-ID !! Bitte den Entwickler melden. : {inp}")
                 return tmp
         """
-        print(f"Unbekannte SW-ID !! Bitte den Entwickler melden. : {inp}")
         logger.warning(f"Unbekannte SW-ID !! Bitte den Entwickler melden. : {inp}")
         return tmp
     return []
@@ -106,10 +105,9 @@ class BBSid:
                     self.feat_flag.append(str(el))
             if '$' not in self.feat_flag:
                 self.e = True
-                print(f"SW-ID Flag $ Error: {self._flags} > inp: {inp} > temp: {temp}")
+                logger.error(f"SW-ID Flag $ Error: {self._flags} > inp: {inp} > temp: {temp}")
         else:
             self.e = True
-            print(f"SW-ID Flag Error: {self._flags} > inp: {inp} > temp: {temp}")
             logger.error(f"SW-ID Flag Error: {self._flags} > inp: {inp} > temp: {temp}")
 
         # print(f"IF flags: {self._flags}")

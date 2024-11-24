@@ -5,6 +5,7 @@ Fixes:
 
 Optimierung:
 - Error/popt-Log.
+- Logs werden jetzt im Ordner data/logs gespeichert.
 
 Neue Implementierungen / Funktionen:
 - Simples Logbuch. Monatlich wir eine neue Datei geschrieben, um Verbindungen zu erfassen.
