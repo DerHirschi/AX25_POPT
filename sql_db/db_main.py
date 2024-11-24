@@ -60,8 +60,8 @@ SQLITE_MH_TABLES = {
 
 class SQL_Database:
     def __init__(self, port_handler):
-        print("Database INIT!")
-        logger.info("Database INIT!")
+        # print("Database INIT!")
+        logger.info("Database: Init")
         # ##########
         self.error = False
         self._access = False
@@ -92,11 +92,11 @@ class SQL_Database:
         self.db = None
         try:
             self.db = SQL_DB(self.db_config)
-            print("Database: Init ok")
-            logger.info("Database: Init ok")
+            # print("Database: Init ok")
+            logger.info("Database: Init complete")
         except SQLConnectionError:
             self.error = True
-            print("Database: Init Error !")
+            # print("Database: Init Error !")
             logger.error("Database: Init Error !")
         # DEV
         """

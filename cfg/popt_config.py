@@ -13,7 +13,7 @@ def getNew_dict():
 class Main_CFG:
     def __init__(self):
         logger.info('Main CFG: Init')
-        print('Main CFG: Init')
+        # print('Main CFG: Init')
         self._config_filename = CFG_MAIN_data_file
         self._config = {}
         # TODO RX-Echo CFG
@@ -69,7 +69,7 @@ class Main_CFG:
         for conf_k, conf in self._config.items():
             logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
         logger.info(f'-------- Loaded CFGs ENDE --------')
-        logger.info('Main CFG: Init erfolgreich !')
+        logger.info('Main CFG: Init complete')
 
 
     ####################
@@ -100,12 +100,12 @@ class Main_CFG:
     # File Fnc
     def _load_CFG_fm_file(self):
         logger.info(f'Main CFG: Load from {self._config_filename}')
-        print(f'Main CFG: Load from {self._config_filename}')
+        # print(f'Main CFG: Load from {self._config_filename}')
         config = load_fm_file(self._config_filename)
         if config:
             self._config = dict(config)
         else:
-            print("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
+            # print("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
             logger.warning("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
             self._set_all_default_CFGs()
 
@@ -153,8 +153,8 @@ class Main_CFG:
     # STATIONs
     def _load_STAT_CFG_fm_file(self):
         self._config['stat_cfgs'] = get_all_stat_CFGs()
-        print('---------- Stat CFG--------------')
-        print(self._config['stat_cfgs'])
+        # print('---------- Stat CFG--------------')
+        # print(self._config['stat_cfgs'])
         logger.info(f'-------- Stat CFG --------')
         for conf_k, conf in self._config.get('stat_cfgs', {}).items():
             logger.info(f'Station CFG: load {conf_k}')
@@ -171,8 +171,8 @@ class Main_CFG:
             new_stat_cfgs[call] = new_conf
         self._config['stat_cfgs'] = new_stat_cfgs
 
-        print('---------- Stat CFG Cleanup --------------')
-        print(self._config['stat_cfgs'])
+        # print('---------- Stat CFG Cleanup --------------')
+        # print(self._config['stat_cfgs'])
         logger.info(f'-------- Stat CFG Cleanup --------')
         for conf_k, conf in self._config.get('stat_cfgs', {}).items():
             logger.info(f'Station CFG: Cleanup {conf_k}')
@@ -183,8 +183,8 @@ class Main_CFG:
     # PORTs
     def _load_PORT_CFG_fm_file(self):
         self._config['port_cfgs'] = load_all_port_cfg_fm_file()
-        print('---------- Port CFG--------------')
-        print(self._config['port_cfgs'])
+        # print('---------- Port CFG--------------')
+        # print(self._config['port_cfgs'])
         logger.info(f'-------- Port CFG Load --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: load {conf_k}')
@@ -200,8 +200,8 @@ class Main_CFG:
             new_port_cfgs[port_id] = new_conf
         self._config['port_cfgs'] = new_port_cfgs
 
-        print('---------- Port CFG Cleanup --------------')
-        print(self._config['port_cfgs'])
+        # print('---------- Port CFG Cleanup --------------')
+        # print(self._config['port_cfgs'])
         logger.info(f'-------- Port CFG Cleanup --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: Cleanup {conf_k}')
@@ -353,7 +353,7 @@ class Main_CFG:
         lookup_k = f'{port_id}-{call}'
         if lookup_k in cfg_keys:
             del self._config['pipe_cfgs'][lookup_k]
-            print(self._config['pipe_cfgs'])
+            # print(self._config['pipe_cfgs'])
             return True
         return False
 
@@ -377,7 +377,7 @@ class Main_CFG:
         for k in list(self.get_pipe_CFG().keys()):
             i = len(k) - len(call)
             if call == k[i:]:
-                print(f"Del Pipe-CFG: {k}")
+                # print(f"Del Pipe-CFG: {k}")
                 del self._config['pipe_cfgs'][k]
 
     ###########################################

@@ -1,5 +1,4 @@
 import datetime
-import logging
 import random
 import time
 import tkinter as tk
@@ -8,6 +7,7 @@ import threading
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
@@ -92,6 +92,7 @@ class PoPT_GUI_Main:
     def __init__(self):
         ######################################
         # GUI Stuff
+        logger.info('GUI: Init')
         self.main_win = tk.Tk()
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
         self.main_win.geometry("1400x850")  # TODO to/fm CFG
@@ -224,6 +225,7 @@ class PoPT_GUI_Main:
         self._init_GUI_vars_fm_CFG()
         ####################################
         # Window Text Buffers & Channel Vars
+        logger.info('GUI: Channel Vars Init')
         self._channel_vars = {}
         self._init_Channel_Vars()
         ######################################
@@ -297,6 +299,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, bw_plot_frame)
         ############################
         # Canvas Plot
+        logger.info('GUI: BW-Plot Init')
         self._bw_plot_x_scale = []
         self._bw_plot_lines = {}
         self._init_bw_plot(bw_plot_frame)
@@ -309,10 +312,12 @@ class PoPT_GUI_Main:
         # set Ch Btn Color
         self.ch_status_update()
         # Init Vars fm CFG
+        logger.info('GUI: Parm/CFG Init')
         self._init_PARM_vars()
         self._set_CFG()
         # Text Tags
         self._all_tag_calls = []
+        logger.info('GUI: Text-Tag Init')
         self.set_text_tags()
         # .....
         self._update_qso_Vars()
@@ -323,6 +328,8 @@ class PoPT_GUI_Main:
         #######################
         # LOOP LOOP LOOP
         self.main_win.after(self._loop_delay, self._tasker)
+        logger.info('GUI: Init Done')
+        logger.info('GUI: Start Tasker')
         self.main_win.mainloop()
 
     ##############################################################
@@ -331,16 +338,16 @@ class PoPT_GUI_Main:
 
     def _destroy_win(self):
         self.sysMsg_to_monitor("PoPT wird beendet.")
-        logging.info('Closing GUI')
+        logger.info('GUI: Closing GUI')
         self._is_closing = True
-        logging.info('Closing GUI: Save GUI Vars & Parameter.')
+        logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
         self.save_GUIvars()
         self._save_parameter()
         self._save_Channel_Vars()
-        logging.info('Closing GUI: Closing Ports.')
+        logger.info('GUI: Closing GUI: Closing Ports.')
         PORT_HANDLER.close_all_ports()
 
-        logging.info('Closing GUI: Destroying all Sub-Windows')
+        logger.info('GUI: Closing GUI: Destroying all Sub-Windows')
         for wn in [
             self.settings_win,
             self.mh_window,
@@ -362,7 +369,7 @@ class PoPT_GUI_Main:
                 wn.destroy()
         self.main_win.update_idletasks()
         self._loop_delay = 800
-        logging.info('Closing GUI: Done')
+        logger.info('GUI: Closing GUI: Done')
 
     def save_GUIvars(self):
         #########################
@@ -1224,7 +1231,7 @@ class PoPT_GUI_Main:
         try:
             clp_brd = self.main_win.clipboard_get()
         except tk.TclError:
-            logging.warning("TclError Clipboard no STR")
+            logger.warning("GUI: TclError Clipboard no STR")
             return
 
         if clp_brd:
@@ -1391,7 +1398,7 @@ class PoPT_GUI_Main:
     def _tasker_quit():
         if PORT_HANDLER.check_all_ports_closed():
             PORT_HANDLER.close_gui()
-            logging.info('Closing GUI: Done.')
+            logger.info('GUI: Closing GUI: _tasker_quit Done.')
 
     def _tasker_prio(self):
         """ Prio Tasks every Irritation flip flop """

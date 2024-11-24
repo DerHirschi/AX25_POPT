@@ -4,8 +4,10 @@ Fixes:
 - Inkorrektes Handling wenn DM Frame (Connection Reset) empfangen wird. Verursacht FRMR
 
 Optimierung:
+- Error/popt-Log.
 
 Neue Implementierungen / Funktionen:
+- Simples Logbuch. Monatlich wir eine neue Datei geschrieben, um Verbindungen zu erfassen.
 
 ###########################################################################################################
 ###########################################################################################################

@@ -95,8 +95,8 @@ def get_port_stat_struct():
 
 class MH:
     def __init__(self, port_handler):
-        print("MH Init")
-        logger.info("MH Init")
+        # print("MH Init")
+        logger.info("MH: Init")
         self._port_handler = port_handler
         # self._db = None
         self._mh_inp_buffer = []
@@ -111,17 +111,20 @@ class MH:
         ############################
         # MH
         mh_load = {}
+        logger.info(f"MH: loading MH fm {CFG_mh_data_file}")
         try:
             with open(CFG_mh_data_file, 'rb') as inp:
                 mh_load = pickle.load(inp)
         except (FileNotFoundError, EOFError):
-            pass
+            logger.warning(f"MH: {CFG_mh_data_file} not found. Creating new MH !")
 
         if mh_load:
             if type(list(mh_load.keys())[0]) is int:    # New (each Port own MH)
+                logger.info("MH: loading new MH")
                 self._load_MH_new(mh_load)
             else:
                 # Load old MH List Format VER < '2.101.4'
+                logger.info("MH: loading old MH")
                 self._load_MH_old(mh_load)
 
         self._load_MH_update_ent()
@@ -138,6 +141,7 @@ class MH:
         self.parm_lastseen_alarm = 1
         self.parm_alarm_ports = []
         self._load_fm_cfg()
+        logger.info("MH: Init Complete")
 
     def __del__(self):
         pass
@@ -182,7 +186,7 @@ class MH:
 
     def save_mh_data(self):
         print('Save MH')
-        logger.info('Save MH')
+        logger.info('MH: Save MH')
         self._save_to_cfg()
         tmp_mh = self._MH_db
         for k in list(tmp_mh.keys()):
@@ -193,6 +197,7 @@ class MH:
         except FileNotFoundError:
             with open(CFG_mh_data_file, 'xb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
+        logger.info('MH: Save MH complete')
 
     def save_PortStat(self):
         if not self._db:
@@ -228,6 +233,8 @@ class MH:
         if not sql_db:
             self._db = None
         self._db = sql_db
+        logger.info("MH: SQL-DB set")
+
 
     #########################
     # DX Alarm

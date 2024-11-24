@@ -64,8 +64,8 @@ class Client(object):
 
 class UserDB:
     def __init__(self):
-        print("User-DB INIT")
-        logger.info("User-DB INIT")
+        # print("User-DB Init")
+        logger.info("User-DB: Init")
         self._port_handler = None
         self.not_public_vars = [
             'not_public_vars',
@@ -81,6 +81,7 @@ class UserDB:
         ]
         self.db = {}
         db_load = {}
+        logger.info(f"User-DB: loading UserDB fm {CFG_user_db} ")
         try:
             with open(CFG_user_db, 'rb') as inp:
                 db_load = pickle.load(inp)
@@ -89,6 +90,7 @@ class UserDB:
                 print(ke)
             """
         except FileNotFoundError:
+            logger.warning(f"User-DB: {CFG_user_db} not found. Creating new User-DB !")
             if 'linux' in sys.platform:
                 os.system('touch {}'.format(CFG_user_db))
             default_client = Client()
@@ -102,9 +104,9 @@ class UserDB:
                 'ALL': default_client
             }
         except EOFError:
-            pass
+            logger.warning(f"User-DB: Can't open {CFG_user_db} !!!")
         except ImportError:
-            logger.error(f"User DB: Falsche Version der DB Datei. Bitte {CFG_user_db} löschen und PoPT neu starten!")
+            logger.error(f"User-DB: Falsche Version der DB Datei. Bitte {CFG_user_db} löschen und PoPT neu starten!")
             raise
 
         for k in list(db_load.keys()):
@@ -124,8 +126,11 @@ class UserDB:
                     self.db[k].Call = str(k)
                     self.db[k].SSID = 0
 
+        logger.info("User-DB: Init complete")
+
     def set_port_handler(self, port_handler):
         self._port_handler = port_handler
+        logger.info("User-DB: PH set")
 
     def get_entry(self, call_str, add_new=True):
         call_str = validate_call(call_str)

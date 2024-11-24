@@ -54,7 +54,8 @@ Ideas/TODO's :
   - ax25Statistics überarbeiten
 
 ✓ KISS
-  - kompatibilität TNC nur teilweise (Custom KISS/TNC Init setzbar)
+  ✓ kompatibilität TNC nur teilweise
+  - Custom KISS/TNC Init setzbar
   - MultiPortKISS (Direwolf)
 
 - AXIP-Multicast überarbeiten
@@ -94,7 +95,8 @@ Ideas/TODO's :
   ? Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
-- Logbuch
+✓ Logbuch
+  - GUI Ausgabe/Auswertung
 - Converse Mode intern
   - Ping-Pong Converse
 - QSO Fenster/Tool

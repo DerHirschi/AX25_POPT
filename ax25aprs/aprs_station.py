@@ -16,8 +16,9 @@ from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
 class APRS_ais(object):
     def __init__(self, load_cfg=True):
-        print("APRS-IS INIT")
-        logger.info("APRS-IS INIT")
+        # TODO Again !! Cleanup/OPT
+        # print("APRS-IS INIT")
+        logger.info("APRS-IS: Init")
         """ APRS-Server Stuff """
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         self.ais_call = ais_cfg.get('ais_call', '')
@@ -88,10 +89,14 @@ class APRS_ais(object):
         self._parm_watchdog = 60  # Sec.
         self._watchdog_last = time.time() + self._parm_watchdog
         if self.ais_active:
-            self.login()
+            self._login()
+        logger.info("APRS-IS: Init complete")
+
 
     def set_port_handler(self, port_handler):
         self._port_handler = port_handler
+        logger.info("APRS-IS: PH set")
+
 
     def _set_own_location(self):
         if not self.ais_loc:
@@ -110,7 +115,7 @@ class APRS_ais(object):
         self.ais_rx_buff = deque([] * 5000, maxlen=5000)
 
     def save_conf_to_file(self):
-        print("Save APRS Conf")
+        # print("Save APRS Conf")
         logger.info("Save APRS Conf")
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         ais_cfg['ais_call'] = str(self.ais_call)
@@ -144,17 +149,23 @@ class APRS_ais(object):
             return
         gui.own_loc = self.ais_loc
 
-    def login(self):
+    def _login(self):
+        logger.info("APRS-IS: Try connect to APRS-Server:")
+        logger.info(f"APRS-IS: {self.ais_host[0]} Port: {self.ais_host[1]}")
         self._watchdog_reset()
         if not self.ais_active:
+            logger.error("APRS-IS: Connecting to APRS-Server failed!")
             return False
         if not self.ais_call:
+            logger.error("APRS-IS: Connecting to APRS-Server failed! No APRS-Call set !")
             self.ais_active = False
             return False
         if self.ais_host == ('', 0):
+            logger.error("APRS-IS: Connecting to APRS-Server failed! No Server Address !")
             self.ais_active = False
             return False
         if not self.ais_host[0] or not self.ais_host[1]:
+            logger.error("APRS-IS: Connecting to APRS-Server failed! No Server Address !")
             self.ais_active = False
             return False
         self.ais = aprslib.IS(callsign=self.ais_call,
@@ -165,18 +176,21 @@ class APRS_ais(object):
         try:
             self.ais.connect()
         except aprslib.ConnectionError:
+            logger.error("APRS-IS: Connecting to APRS-Server failed! Connection Error !")
             self.ais = None
             return False
         except aprslib.LoginError:
+            logger.error("APRS-IS: Connecting to APRS-Server failed! Login Error !")
             self.ais = None
             return False
         except IndexError:
+            logger.error("APRS-IS: Connecting to APRS-Server failed! IndexError !")
             self.ais = None
             return False
         # finally:
         #     self.ais.close()
-        print("APRS-IS Login successful")
-        logger.info("APRS-IS Login successful")
+        # print("APRS-IS Login successful")
+        logger.info("APRS-IS: APRS-Server Login successful")
         # self.loop_is_running = True
         return True
 
@@ -188,16 +202,20 @@ class APRS_ais(object):
             return
         if time.time() < self._watchdog_last and not run_now:
             return
-        print("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
-        logger.warning("APRS-Server Watchdog: Try reconnecting to APRS-Server !")
+        # print("APRS-IS: Watchdog: No APRS-Server activity detected !")
+        logger.warning("APRS-IS: Watchdog: No APRS-Server activity detected! ")
         if self.loop_is_running:
+            logger.warning("APRS-IS: Watchdog: Try to close old connection!")
             self.ais_close()
             self._watchdog_last = time.time() + 10
             return
-        if self.login():
+        logger.info("APRS-IS: Watchdog: Try reconnecting to APRS-Server !")
+        if self._login():
+            logger.info("APRS-IS: Watchdog:  APRS-Server login successful!")
             self._port_handler.init_aprs_ais(aprs_obj=self)
             self._watchdog_last = time.time() + self._parm_watchdog
             return
+        logger.error("APRS-IS: Watchdog: Failed to reconnecting to APRS-Server!")
 
     def task(self):
         # self.prio_tasks()
@@ -248,8 +266,8 @@ class APRS_ais(object):
         """ Thread loop called fm Porthandler Init """
         if self.ais is not None:
             if self.ais_active:
-                print("APRS-Consumer start")
-                logger.info("APRS-Consumer start")
+                # print("APRS-Consumer start")
+                logger.info("APRS-IS: Consumer start")
                 # while self.loop_is_running:
                 self.loop_is_running = True
                 try:
@@ -258,21 +276,21 @@ class APRS_ais(object):
                                       immortal=False,
                                       raw=False)
                 except ValueError:
-                    print("APRS-Consumer ValueError")
-                    logger.error("APRS-Consumer ValueError")
+                    # print("APRS-Consumer ValueError")
+                    logger.error("APRS-IS: Consumer ValueError")
                 except aprslib.LoginError:
-                    print("APRS-Consumer LoginError")
-                    logger.warning("APRS-Consumer LoginError")
+                    # print("APRS-Consumer LoginError")
+                    logger.error("APRS-IS: Consumer LoginError")
                 except aprslib.ConnectionError:
-                    print("APRS-Consumer Connection Error")
-                    logger.warning("APRS-Consumer Connection Error")
+                    # print("APRS-Consumer Connection Error")
+                    logger.error("APRS-IS: Consumer Connection Error")
 
                 self.loop_is_running = False
 
                 if self.ais is not None:
                     self.ais.close()
-                print("APRS-Consumer ENDE")
-                logger.info("APRS-Consumer ENDE")
+                # print("APRS-Consumer ENDE")
+                logger.info("APRS-IS: Consumer ENDE")
 
     def _ais_tx(self, ais_pack):
         if self.ais is not None:
@@ -285,6 +303,7 @@ class APRS_ais(object):
                     self.ais = None
 
     def ais_close(self):
+        logger.info("APRS-IS: close")
         if self.ais is not None:
             self.loop_is_running = False
             try:
