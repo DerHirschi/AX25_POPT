@@ -74,6 +74,8 @@ class AX25Port(object):
         self.dualPort_echoFilter = []  # Prim
         self.dualPort_cfg = {}
         self.dualPort_monitor_buf = []
+        """ MCast Server """
+        self._mcast_server = None
         ##############
         # AXIP VARs
         self.own_ipAddr = ''
@@ -83,8 +85,7 @@ class AX25Port(object):
         except AX25DeviceFAIL:
             # raise AX25DeviceFAIL(self)  # TODO in PortINIT
             AX25DeviceFAIL(self)
-        """ MCast Server """
-        self._mcast_server = None
+
 
     def init(self):
         pass
@@ -110,6 +111,10 @@ class AX25Port(object):
             conn.zustand_exec.tx(None)
         time.sleep(1)
         """
+        # if self.port_cfg.get('parm_axip_Multicast', False):
+        if self._mcast_server:
+            self._mcast_server.set_port(None)
+            self._mcast_server = None
         self.loop_is_running = False
         self.close_device()
         # if self.device is not None:
@@ -784,7 +789,8 @@ class AX25Port(object):
                       add_str: str,
                       text: bytes,
                       cmd_poll=(False, False),
-                      pid=0xF0
+                      pid=0xF0,
+                      axip_add=None
                       ):
         if not own_call:
             return False
@@ -797,10 +803,11 @@ class AX25Port(object):
         via_calls = []
         if len(tmp) > 1:
             via_calls = tmp[1:]
-        if via_calls:
-            axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=via_calls[0])
-        else:
-            axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
+        if not axip_add:
+            if via_calls:
+                axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=via_calls[0])
+            else:
+                axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
         frame = AX25Frame(
             dict(
                 from_call_str=str(own_call),
@@ -851,7 +858,7 @@ class AX25Port(object):
             self._tasks()
             # time.sleep(0.03)
         # print(f"Loop Ends Port: {self.port_id}")
-        logger.info(f"Loop Ends Port: {self.port_id}")
+        logger.info(f"Port {self.port_id}: Loop End")
         self.close()
         self.device = None
         self.ende = True
@@ -1186,6 +1193,8 @@ class AXIP(AX25Port):
             """
             if self.port_cfg.get('parm_axip_Multicast', False):
                 self._mcast_server = self.port_handler.get_mcast_server()
+                if hasattr(self._mcast_server, 'set_port'):
+                    self._mcast_server.set_port(self)
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)
@@ -1269,7 +1278,7 @@ class AXIP(AX25Port):
             #     self._mh.bw_mon_inp(frame, self.port_id)
 
         if hasattr(self._mcast_server, 'mcast_tx'):
-            self._mcast_server.mcast_tx(ax25frame_conf=frame.get_frame_conf())
+            self._mcast_server.mcast_tx(ax25frame=frame)
 
         """
         if self.port_cfg.get('parm_axip_Multicast', False) and not no_multicast:

@@ -1,5 +1,5 @@
 from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
-    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END
+    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -14,7 +14,7 @@ def getNew_station_cfg():
         stat_parm_PacLen=0,  # Max Pac len
         stat_parm_MaxFrame=0,  # Max (I) Frames
         stat_parm_qso_col_text_tx=DEF_STAT_QSO_TX_COL,
-        stat_parm_qso_col_bg=DEF_STAT_QSO_RX_COL,
+        stat_parm_qso_col_bg=DEF_STAT_QSO_BG_COL,
         stat_parm_qso_col_text_rx=DEF_STAT_QSO_RX_COL,
     )
 

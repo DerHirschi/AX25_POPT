@@ -295,6 +295,7 @@ class AX25PortHandler(object):
         if new_cfg.get('parm_PortTyp', '') not in AX25DeviceTAB.keys():
             logger.info(f'PH: Port {port_id} disabled.')
             return False
+
         # cfg = PortConfigInit(port_id=port_id)
         # cfg = dict(POPT_CFG.get_port_CFG_fm_id(port_id=port_id))
         #########################
@@ -599,15 +600,16 @@ class AX25PortHandler(object):
         port_id = conf.get('port_id', 0)
         if port_id not in self.ax25_ports:
             return False
-        add_str = conf.get('add_str', '')
-        tx_call = conf.get('own_call', '')
-        text = conf.get('text', b'')[:256]
-        if not all((tx_call, add_str, text)):
+        if not all((
+                conf.get('own_call', ''),
+                conf.get('add_str', ''),
+                conf.get('text', b'')
+        )):
             return False
         self.ax25_ports[port_id].send_UI_frame(
-            own_call=tx_call,
-            add_str=add_str,
-            text=text,
+            own_call=conf.get('own_call', ''),
+            add_str=conf.get('add_str', ''),
+            text=conf.get('text', b'')[:256],
             cmd_poll=conf.get('cmd_poll', (False, False)),
             pid=conf.get('pid', 0xF0),
         )

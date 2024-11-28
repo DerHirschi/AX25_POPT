@@ -278,11 +278,12 @@ class PortSetTab:
         self._kiss_start_cmd_tab = {}
         opt = ['']
         for cmd in TNC_KISS_START_CMD:
-            try:
-                self._kiss_start_cmd_tab[str(cmd)[2:-1]] = cmd
-                opt += [str(cmd)[2:-1]]
-            except IndexError:
-                pass
+            if str(cmd)[2:-1] not in opt:
+                try:
+                    self._kiss_start_cmd_tab[str(cmd)[2:-1]] = cmd
+                    opt += [str(cmd)[2:-1]]
+                except IndexError:
+                    pass
         # opt = [''] + [str(x) for x in TNC_KISS_START_CMD] # + ['CUSTOM']
         self._kiss_start_var = tk.StringVar(self.tab)
         try:
@@ -303,11 +304,12 @@ class PortSetTab:
         self._kiss_end_cmd_tab = {}
         opt = ['']
         for cmd in TNC_KISS_END_CMD:
-            try:
-                self._kiss_end_cmd_tab[str(cmd)[2:-1]] = cmd
-                opt += [str(cmd)[2:-1]]
-            except IndexError:
-                pass
+            if str(cmd)[2:-1] not in opt:
+                try:
+                    self._kiss_end_cmd_tab[str(cmd)[2:-1]] = cmd
+                    opt += [str(cmd)[2:-1]]
+                except IndexError:
+                    pass
         # opt = [''] + [str(x) for x in TNC_KISS_END_CMD]  # + ['CUSTOM']
         self._kiss_end_var = tk.StringVar(self.tab)
         try:
@@ -489,41 +491,47 @@ class PortSetTab:
         x_f = 0
         y_f = 1
         # if self._port_setting.parm_PortNr in PORT_HANDLER.get_all_ports().keys():
-        if self._port_setting.get('parm_PortNr', getNew_port_cfg().get('parm_PortNr', -1)) in PORT_HANDLER.get_all_ports().keys():
+        # if self._port_setting.get('parm_PortNr', getNew_port_cfg().get('parm_PortNr', -1)) in PORT_HANDLER.get_all_ports().keys():
+        prim_port = PORT_HANDLER.get_dualPort_primary_PH(
+            self._port_setting.get('parm_PortNr', getNew_port_cfg().get('parm_PortNr', -1)))
 
-            for k in self._all_stat_cfgs.keys():
-                # stat = self.all_stat_cfgs[k]
-                cfg_x = 20 + x_f
-                cfg_y = 290 - (35 * y_f)  # Yeah X * 0
-                var = tk.IntVar(self.tab)
+        if prim_port:
+            prim_port_id = prim_port.port_id
+            if prim_port_id != self._port_setting.get('parm_PortNr', getNew_port_cfg().get('parm_PortNr', -1)):
+                cfg_x = 20
+                cfg_y = 290 - 35
+                # prim_port = PORT_HANDLER.get_dualPort_primary_PH(self._port_setting.get('parm_PortNr', getNew_port_cfg().get('parm_PortNr', -1)))
+                # prim_port_id = '! ERROR !'
+                # if prim_port:
+                tk.Label(self.tab,
+                         text=f"Dual Port: Secondary-P: {self._port_setting.get('parm_PortNr', getNew_port_cfg().get('parm_PortNr', -1))}. Primary-P:  {prim_port_id}"
+                         ).place(x=cfg_x, y=height - cfg_y)
 
-                cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=var, anchor='w', state='normal')
+                self._update_port_parameter()
+                return
 
-                # if k in self._port_setting.parm_StationCalls:
-                if k in self._port_setting.get('parm_StationCalls', getNew_port_cfg().get('parm_StationCalls', [])):
-                    var.set(1)
-                    cfg.select()
-                # cfg.var = var
-                self._stat_check_vars[k] = var
-                cfg.place(x=cfg_x, y=height - cfg_y)
-                cfg.var = var
-                if y_f == 3:
-                    y_f = 1
-                    x_f += 150
-                else:
-                    y_f += 1
-        else:
-            cfg_x = 20
-            cfg_y = 290 - 35
-            prim_port = PORT_HANDLER.get_dualPort_primary_PH(self._port_setting.get('parm_PortNr', getNew_port_cfg().get('parm_PortNr', -1)))
-            prim_port_id = '! ERROR !'
-            if prim_port:
-                prim_port_id = prim_port.port_id
-            tk.Label(self.tab,
-                     text=f"Dual Port: Secondary-P: {self._port_setting.get('parm_PortNr', getNew_port_cfg().get('parm_PortNr', -1))}. Primary-P:  {prim_port_id}"
-                     ).place(x=cfg_x, y=height - cfg_y)
+        for k in self._all_stat_cfgs.keys():
+            # stat = self.all_stat_cfgs[k]
+            cfg_x = 20 + x_f
+            cfg_y = 290 - (35 * y_f)  # Yeah X * 0
+            var = tk.IntVar(self.tab)
 
-        self._update_port_parameter()
+            cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=var, anchor='w', state='normal')
+
+            # if k in self._port_setting.parm_StationCalls:
+            if k in self._port_setting.get('parm_StationCalls', getNew_port_cfg().get('parm_StationCalls', [])):
+                var.set(1)
+                cfg.select()
+            # cfg.var = var
+            self._stat_check_vars[k] = var
+            cfg.place(x=cfg_x, y=height - cfg_y)
+            cfg.var = var
+            if y_f == 3:
+                y_f = 1
+                x_f += 150
+            else:
+                y_f += 1
+
 
     def win_tasker(self):
         # self.update_port_parameter()

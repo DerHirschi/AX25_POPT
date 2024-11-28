@@ -167,15 +167,19 @@ class MH:
                 self._MH_db[port] = {}
             for call in list(mh_load[port].keys()):
                 if type(mh_load[port][call]) is dict:
-                    if type(mh_load[port][call]['to_calls']) is list:
-                        # FIX old MH
-                        mh_load[port][call]['to_calls'] = {}
-                    self._MH_db[port][call] = set_obj_att_fm_dict(new_obj=MyHeard(), input_obj=mh_load[port][call])
+                    try:
+                        if type(mh_load[port][call]['to_calls']) is list:
+                            # FIX old MH
+                            mh_load[port][call]['to_calls'] = {}
+                        self._MH_db[port][call] = set_obj_att_fm_dict(new_obj=MyHeard(), input_obj=mh_load[port][call])
+                    except KeyError:
+                        pass
                 else:
-                    if type(mh_load[port][call].to_calls) is list:
-                        # FIX old MH
-                        mh_load[port][call].to_calls = {}
-                    self._MH_db[port][call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[port][call])
+                    if hasattr(mh_load[port][call], 'to_calls'):
+                        if type(mh_load[port][call].to_calls) is list:
+                            # FIX old MH
+                            mh_load[port][call].to_calls = {}
+                        self._MH_db[port][call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[port][call])
 
     def _load_MH_update_ent(self):
         for port in list(self._MH_db.keys()):

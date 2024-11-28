@@ -1,7 +1,11 @@
 ###########################################################################################################
 # 2.110.x
 Fixes:
-- Inkorrektes Handling wenn DM Frame (Connection Reset) empfangen wird. Verursacht FRMR
+- Inkorrektes Handling, wenn DM Frame (Connection Reset) empfangen wird. Verursacht FRMR
+- Default Farben für QSO Fenster (Text Farbe = Hintergrund Farbe)
+- Neu angelegte Stationen werden erst nach Programm neustart in den Porteinstellungen angezeigt
+- Programm Crash, wenn beschädigte MH-Liste geladen wird (ungetestet).
+
 
 Optimierung:
 - Error/popt-Log.
