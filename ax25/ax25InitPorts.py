@@ -233,15 +233,15 @@ class AX25PortHandler(object):
 
     def close_all_ports(self):
         self.is_running = False
-        self.close_aprs_ais()
-        for k in list(self.ax25_ports.keys()):
-            self.close_port(k)
         if self.mh:
             self.mh.save_mh_data()
             self.mh.save_PortStat()
         USER_DB.save_data()
         self.close_DB()
         POPT_CFG.save_MAIN_CFG_to_file()
+        self.close_aprs_ais()
+        for k in list(self.ax25_ports.keys()):
+            self.close_port(k)
 
     def close_port(self, port_id: int):
         self.sysmsg_to_gui(STR_TABLE['close_port'][POPT_CFG.get_guiCFG_language()].format(port_id))

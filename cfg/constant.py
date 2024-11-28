@@ -3,8 +3,8 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.110.4'
-DEBUG_LOG = False
+VER = '2.110.5'
+DEBUG_LOG = True
 CONSOLE_LOG = True
 """
 LANGUAGE:
