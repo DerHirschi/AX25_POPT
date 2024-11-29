@@ -38,26 +38,13 @@ def call_tuple_fm_call_str(call_str: str):
         return call_str.upper(), 0
 
 
-def validate_call(call_str: str):
-    call_str = call_str.replace(' ', '').replace('\r', '').replace('\n', '')
-    call_str = call_str.upper()
-    call_tuple = call_tuple_fm_call_str(call_str)
-    if 6 < len(call_tuple[0]) < 3:
-        if not all(c.isnumeric() or c.isalpha() for c in call_tuple[0]):
-            return ''
-    if 0 > call_tuple[1] > 15:
-        return ''
-    return call_str
-
-
 def get_list_fm_viaStr(via_str: str):
     via_list = via_str.split(' ')
     vias = []
     for call in via_list:
         if call:
-            tmp_call = validate_call(call)
-            if tmp_call:
-                vias.append(tmp_call)
+            if validate_ax25Call(call):
+                vias.append(call)
             else:
                 return []
     return vias

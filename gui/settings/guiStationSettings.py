@@ -411,7 +411,7 @@ class StatSetTab:
         # self._main_cl.settings_win.attributes("-topmost", True)
 
     def chk_CLI(self, event=None):
-        print(self._cli_select_var.get())
+        # print(self._cli_select_var.get())
         if self._cli_select_var.get() != 'PIPE':
             self._loop_timer.configure(state='disabled')
             self._tx_filename.configure(state='disabled')

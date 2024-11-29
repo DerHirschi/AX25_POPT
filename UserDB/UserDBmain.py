@@ -4,7 +4,7 @@ import os
 import pickle
 from cfg.logger_config import logger
 
-from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
+from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
 from fnc.loc_fnc import locator_to_coordinates, locator_distance
 from fnc.str_fnc import conv_time_for_sorting
@@ -133,8 +133,8 @@ class UserDB:
         logger.info("User-DB: PH set")
 
     def get_entry(self, call_str, add_new=True):
-        call_str = validate_call(call_str)
-        if call_str:
+        # call_str = validate_ax25Call(call_str)
+        if validate_ax25Call(call_str):
             call_tup = call_tuple_fm_call_str(call_str)
             if call_str not in self.db.keys():
                 if call_tup[0] not in self.db.keys():
@@ -150,8 +150,7 @@ class UserDB:
         return False
 
     def _new_entry(self, call_str):
-        call_str = validate_call(call_str)
-        if call_str:
+        if validate_ax25Call(call_str):
             if call_str not in self.db.keys():
                 call_tup = call_tuple_fm_call_str(call_str)
                 # if call_tup[0] not in self.db.keys():

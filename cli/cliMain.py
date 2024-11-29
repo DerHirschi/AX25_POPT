@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from cfg import constant
-from cfg.default_config import getNew_station_cfg
 from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
@@ -11,7 +10,7 @@ from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
     convert_str_to_datetime
 from cfg.string_tab import STR_TABLE
-from fnc.ax25_fnc import validate_call
+from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
 
@@ -434,8 +433,8 @@ class DefaultCLI(object):
             ret = '\r # Bitte Call eingeben..\r'
             return ret
 
-        dest_call = validate_call(self._parameter[0])
-        if not dest_call:
+        dest_call = str(self._parameter[0])
+        if not validate_ax25Call(dest_call.upper()):
             ret = '\r # Ungültiger Ziel Call..\r'
             return ret
 
@@ -462,9 +461,8 @@ class DefaultCLI(object):
                 parm = self._parameter[1:]
 
             for call in parm:
-                tmp_call = validate_call(call)
-                if tmp_call:
-                    vias.append(tmp_call)
+                if validate_ax25Call(call.upper()):
+                    vias.append(call)
                 else:
                     break
 
@@ -714,8 +712,8 @@ class DefaultCLI(object):
                     pass
                 ret = self._get_wx_cli_out(max_ent=parm)
             else:
-                call = validate_call(self._parameter[0])
-                if call:
+                call = str(self._parameter[0])
+                if validate_ax25Call(call):
                     le = parm
                     if len(self._parameter) == 2:
                         try:
@@ -898,9 +896,8 @@ class DefaultCLI(object):
             return header + ent_ret
         else:
             call_str = self._parameter[0].decode(self._encoding[0], self._encoding[1])
-            call_str = validate_call(call_str)
 
-            if call_str:
+            if validate_ax25Call(call_str):
                 if call_str in self._user_db.db.keys():
                     header = "\r" \
                              f"| USER-DB: {call_str}\r" \
@@ -1311,7 +1308,7 @@ class DefaultCLI(object):
             if self._sys_login.fail_counter > 1:
                 del self._sys_login
                 self._sys_login = None
-                print("Priv: Failed !")
+                # print("Priv: Failed !")
                 logger.warning("Priv: Failed !")
                 if self._gui:
                     self._gui.on_channel_status_change()
@@ -1330,7 +1327,7 @@ class DefaultCLI(object):
     def s4(self):
         """ ry to connect other Station ( C CMD ) """
         if self._connection.LINK_Connection:
-            print(f'CLI LinkDisco : {self._connection.uid}')
+            # print(f'CLI LinkDisco : {self._connection.uid}')
             self._connection.link_disco()
         self.change_cli_state(1)
         return self.get_ts_prompt()
