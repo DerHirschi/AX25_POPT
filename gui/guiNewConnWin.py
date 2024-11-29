@@ -272,6 +272,7 @@ class NewConnWin(tk.Toplevel):
                             else:
                                 axip_ip = get_ip_by_hostname(axip_ip)
                     else:
+
                         USER_DB.set_AXIP(str(dest_call), (axip_ip_inp, axip_port))
 
                     if axip_port.isdigit() and check_ip_add_format(axip_ip):

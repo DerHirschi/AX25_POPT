@@ -4,7 +4,7 @@ import os
 import pickle
 from cfg.logger_config import logger
 
-from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call
+from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call, validate_aprs_call
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
 from fnc.loc_fnc import locator_to_coordinates, locator_distance
 from fnc.str_fnc import conv_time_for_sorting
@@ -134,21 +134,21 @@ class UserDB:
 
     def get_entry(self, call_str, add_new=True):
         # call_str = validate_ax25Call(call_str)
-        call_str = call_str.upper()
-        if validate_ax25Call(call_str):
+        call_str = validate_aprs_call(call_str.upper())
+        if call_str:
             call_tup = call_tuple_fm_call_str(call_str)
             if call_str not in self.db.keys():
                 if call_tup[0] not in self.db.keys():
                     if add_new:
                         return self._new_entry(call_str)
                     else:
-                        return False
+                        return None
                 else:
                     # self.entry_var_upgrade(call_tup[0])
                     return self.db[call_tup[0]]
             # self.entry_var_upgrade(call_str)
             return self.db[call_str]
-        return False
+        return None
 
     def _new_entry(self, call_str):
         call_str = call_str.upper()
@@ -173,6 +173,8 @@ class UserDB:
 
     def set_typ(self, call_str: str, typ: str, add_new=True, overwrite=False):
         ent = self.get_entry(call_str, add_new)
+        if not ent:
+            return
         if overwrite:
             ent.TYP = typ
         else:
@@ -184,6 +186,8 @@ class UserDB:
         if not call_str:
             return
         ent = self.get_entry(call_str, True)
+        if not ent:
+            return
         if not ent.TYP:
             ent.TYP = 'BBS'
         ent.PRmail = address

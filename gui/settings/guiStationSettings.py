@@ -5,7 +5,6 @@ from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.cfg_fnc import del_user_data
 from cfg.constant import CFG_data_path, CFG_usertxt_path
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cli.cliMain import CLI_OPT
