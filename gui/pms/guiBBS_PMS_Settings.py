@@ -306,7 +306,7 @@ class PMS_Settings(tk.Toplevel):
         'single_auto_conn': True,
         'auto_conn': True,
         """
-        user = self._own_call_var.get()
+        user = self._own_call_var.get().upper()
         if user == 'NOCALL':
             return
         if not validate_ax25Call(user):
@@ -325,7 +325,7 @@ class PMS_Settings(tk.Toplevel):
                 port_id = int(nocall_vars['port_id_var'].get())
             except ValueError:
                 pass
-            dest_call = str(nocall_vars['dest_call_var'].get())
+            dest_call = str(nocall_vars['dest_call_var'].get()).upper()
             if not validate_ax25Call(dest_call):
                 dest_call = ''
             regio = str(nocall_vars['regio_var'].get()).upper()
@@ -365,7 +365,7 @@ class PMS_Settings(tk.Toplevel):
                     port_id = int(self._bbs_vars[k]['port_id_var'].get())
                 except ValueError:
                     pass
-                dest_call = str(self._bbs_vars[k]['dest_call_var'].get())
+                dest_call = str(self._bbs_vars[k]['dest_call_var'].get()).upper()
                 if not validate_ax25Call(dest_call):
                     dest_call = ''
                 regio = str(self._bbs_vars[k]['regio_var'].get()).upper()

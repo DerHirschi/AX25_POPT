@@ -5,7 +5,7 @@ Fixes:
 - Default Farben für QSO Fenster (Text Farbe = Hintergrund Farbe)
 - Neu angelegte Stationen werden erst nach Programm neustart in den Porteinstellungen angezeigt
 - Programm Crash, wenn beschädigte MH-Liste geladen wird (ungetestet).
-
+- Script-Error beim Ausführen des remote-CMD "WX CALL"
 
 Optimierung:
 - Error/popt-Log.

@@ -1071,6 +1071,8 @@ class SQL_Database:
                  "latitude, "
                  "longitude, "
                  "rx_time "
+                 "distance, "
+                 "port_id "
                  f"FROM APRSwx WHERE `from_call`='{call}';")
         ret = self.commit_query(query)
         if not ret:

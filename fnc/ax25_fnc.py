@@ -43,6 +43,7 @@ def get_list_fm_viaStr(via_str: str):
     vias = []
     for call in via_list:
         if call:
+            call = call.upper()
             if validate_ax25Call(call):
                 vias.append(call)
             else:

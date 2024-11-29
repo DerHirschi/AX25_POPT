@@ -433,8 +433,8 @@ class DefaultCLI(object):
             ret = '\r # Bitte Call eingeben..\r'
             return ret
 
-        dest_call = str(self._parameter[0])
-        if not validate_ax25Call(dest_call.upper()):
+        dest_call = str(self._parameter[0]).upper()
+        if not validate_ax25Call(dest_call):
             ret = '\r # Ungültiger Ziel Call..\r'
             return ret
 
@@ -462,7 +462,7 @@ class DefaultCLI(object):
 
             for call in parm:
                 if validate_ax25Call(call.upper()):
-                    vias.append(call)
+                    vias.append(call.upper())
                 else:
                     break
 
@@ -712,7 +712,7 @@ class DefaultCLI(object):
                     pass
                 ret = self._get_wx_cli_out(max_ent=parm)
             else:
-                call = str(self._parameter[0])
+                call = str(self._parameter[0]).upper()
                 if validate_ax25Call(call):
                     le = parm
                     if len(self._parameter) == 2:
@@ -728,33 +728,39 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_wx_fm_call_cli_out(self, call, max_ent=10):
-        data = list(self._port_handler.aprs_ais.get_wx_data().get(call, ''))
+        data = list(self._port_handler.aprs_ais.get_wx_data_f_call(call))
         if not data:
             return ''
         data.reverse()
+        data_len = len(data)
         max_c = 0
-        loc = f'{data[0].get("locator", "------")[:6]}({round(data[0].get("distance", -1))}km)'
+        loc = f'{data[0][12][:6]}({data[0][16]}km)'
         out = '\r'
         out += f'WX-Station: {call}\r'
         out += f'Locator   : {loc}\r'
-        out += f'Comment   : {data[0].get("comment", "")}\r'
-        out += f'Datapoints: {len(data)}\r\r'
+        out += f'Comment   : {data[0][11]}\r'
+        out += f'Datapoints: {data_len}\r\r'
         out += '-----Last-Port--Temp-Press---Hum-Lum-Rain(24h)-WindGust\r'
         for el in data:
             max_c += 1
             if max_c > max_ent:
                 break
             # _ent = self._port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
-            td = get_timedelta_CLIstr(el['rx_time'])
-            pres = f'{el["weather"].get("pressure", 0):.2f}'
-            rain = f'{el["weather"].get("rain_24h", 0):.3f}'
-            out += f'{td.rjust(9):10}{el.get("port_id", ""):6}'
-            out += f'{str(round(el["weather"].get("temperature", 0))):5}'
+            # td = get_timedelta_CLIstr(el[15].split(' ')[-1])
+            td = el[15].split(' ')[-1]
+            # pres = f'{el[0]:.2f}'
+            pres = f'{el[0]}'
+            # rain = f'{el[3]:.3f}'
+            rain = f'{el[3]}'
+            # out += f'{td.rjust(9):10}{"":6}'
+            out += f'{td.rjust(9):10}{el[-1]:6}'
+            out += f'{str(el[5]):5}'
             out += f'{pres:7} '
-            out += f'{el["weather"].get("humidity", 0):3} '
-            out += f'{el["weather"].get("luminosity", 0):3} '
+            out += f'{el[1]:3} '
+            out += f'{el[9]:3} '
             out += f'{rain:9} '
-            out += f'{el["weather"].get("wind_gust", 0):.3f}\r'
+            # out += f'{el[7]:.3f}\r'
+            out += f'{el[7]}\r'
         return out
 
     def _get_wx_cli_out(self, max_ent=10):
@@ -895,7 +901,7 @@ class DefaultCLI(object):
             ent_ret += "------------------------------------\r\r"
             return header + ent_ret
         else:
-            call_str = self._parameter[0].decode(self._encoding[0], self._encoding[1])
+            call_str = self._parameter[0].decode(self._encoding[0], self._encoding[1]).upper()
 
             if validate_ax25Call(call_str):
                 if call_str in self._user_db.db.keys():

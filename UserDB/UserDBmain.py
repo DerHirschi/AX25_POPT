@@ -134,6 +134,7 @@ class UserDB:
 
     def get_entry(self, call_str, add_new=True):
         # call_str = validate_ax25Call(call_str)
+        call_str = call_str.upper()
         if validate_ax25Call(call_str):
             call_tup = call_tuple_fm_call_str(call_str)
             if call_str not in self.db.keys():
@@ -150,6 +151,7 @@ class UserDB:
         return False
 
     def _new_entry(self, call_str):
+        call_str = call_str.upper()
         if validate_ax25Call(call_str):
             if call_str not in self.db.keys():
                 call_tup = call_tuple_fm_call_str(call_str)
