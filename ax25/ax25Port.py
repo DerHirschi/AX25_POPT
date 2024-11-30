@@ -1068,9 +1068,17 @@ class KISSSerial(AX25Port):
                     logger.info(f"Port {self.port_id}: TNC-Banner: {tnc_banner}")
                     # print(f"TNC-Banner: {tnc_banner}")
                     # self.device.flush()
-                    self.device.write(self.kiss.device_kiss_start_1())
-                    self.device.readall()
-                    self.set_kiss_parm()
+                    try:
+                        self.device.write(self.kiss.device_kiss_start_1())
+                        self.device.readall()
+                        self.set_kiss_parm()
+                    except (FileNotFoundError, serial.serialutil.SerialException, AX25DeviceFAIL) as e:
+                        logger.error(
+                            f"Port {self.port_id}: Can not set Serial Device into KISS MODE")
+                        logger.error(f"Port {self.port_id}: Device: {self.port_param}")
+                        logger.error('{}'.format(e))
+                        raise e
+
 
     def __del__(self):
         self.close_device()
