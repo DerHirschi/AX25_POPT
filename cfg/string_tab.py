@@ -1893,6 +1893,16 @@ STR_TABLE = {
     #####################################################
     # MCast
 
+    'cmd_help_mcast_move_ch': ('MCast Kanal wechseln',
+                               'Change MCast channel',
+                               'MCast kanaal wijzigen',
+                               '',
+                               '',
+                               '',
+                               '',
+                               '',
+                               ''),
+
     'mcast_new_user_beacon': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          '-= Willkommen auf dem AXIP-MCast Server. Registriere dich auf {} =-',
@@ -1906,7 +1916,8 @@ STR_TABLE = {
          ''),
 
     'mcast_new_user_reg_beacon': (
-        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars) per Line
+        # Max 256
         ('-= Du wurdest erfolgreich auf dem MCast-Server registriert =-\r'
          '-= Du befindest dich auf Kanal {} ({}) =-'),
         ('-= You have been successfully registered on the MCast server =-\r'
@@ -1923,5 +1934,17 @@ STR_TABLE = {
          ''),
         ('\r'
          ''),
+         ''),
+
+    'mcast_new_user_channel_beacon': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '-= {} hat den Kanal betreten =-',
+         '-= {} has entered the channel =-',
+         '-= {} is het kanaal binnengekomen =-',
+         '',
+         '',
+         '',
+         '',
+         '',
          ''),
 }

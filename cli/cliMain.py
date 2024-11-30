@@ -1433,10 +1433,12 @@ class MCastCLI(DefaultCLI):
             # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
             'QUIT': (1, self._cmd_q, 'Quit'),
             'BYE': (1, self._cmd_q, 'Bye'),
-            # 'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
-            # 'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
+            'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
+            'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
             'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
-
+            # MCAST ######################################################
+            'CH': (2, self._cmd_mcast_move_channel, STR_TABLE['cmd_help_mcast_move_ch'][self._connection.cli_language]),
+            ##############################################################
             'INFO': (1, self._cmd_i, 'Info'),
             'LINFO': (2, self._cmd_li, 'Long Info'),
             'NEWS': (2, self._cmd_news, 'NEWS'),
@@ -1499,10 +1501,24 @@ class MCastCLI(DefaultCLI):
     def _register_mcast_member(self):
         mcast_server = self._port_handler.get_mcast_server()
         if not hasattr(mcast_server, 'register_new_member'):
-            logger.error("CLI: Attribute Error Mcast-Server")
+            logger.error("CLI: Attribute Error Mcast-Server. _register_mcast_member()")
             return 'CLI: Attribute Error Mcast-Server'
         return mcast_server.register_new_member(self._to_call_str)
 
+    def _cmd_mcast_move_channel(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not hasattr(mcast_server, 'move_channel'):
+            logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_move_channel()")
+            return '\r # MCast: Attribute Error Mcast-Server\r'
+
+        if not self._parameter:
+            return "\r # MCast: Error ! Invalid Channel !\r"
+        try:
+            ch_id = int(self._parameter[0])
+        except (ValueError, IndexError):
+            return "\r # MCast: Error ! Invalid Channel !\r"
+
+        return mcast_server.move_channel(member_call=str(self._to_call_str), channel_id=ch_id)
 
 CLI_OPT = {
     UserCLI.cli_name: UserCLI,

@@ -238,3 +238,21 @@ def getNew_pipe_cfg():
         pipe_parm_permanent=False,
 
     )
+
+#######################################
+# MCast
+def getNew_mcast_cfg(server_call: str):
+    return dict(
+        mcast_server_call=str(server_call),
+        mcast_ch_conf={},
+        mcast_default_ch=0,
+        # New User has to register (connect to MCast Node/Station/CLI) first
+        mcast_new_user_reg=1,  # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
+    )
+
+def getNew_mcast_channel_cfg(channel_id: int):
+    return dict(
+        ch_id=int(channel_id),
+        ch_name='Lobby',
+        ch_members={},
+    )

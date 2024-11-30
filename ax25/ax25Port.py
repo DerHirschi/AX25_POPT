@@ -704,10 +704,7 @@ class AX25Port(object):
             else:
                 digi_call = link_conn.my_call_str
             via_calls = [digi_call] + via_calls
-        """ 
-        if own_call not in self.my_stations and not link_conn:
-            return False
-        """
+
         if link_conn and not via_calls:
             return False
         ax_frame = AX25Frame(dict(
@@ -716,12 +713,6 @@ class AX25Port(object):
             via_calls=list(via_calls),
             axip_add=tuple(axip_add),
         ))
-        """
-        ax_frame.from_call.call_str = own_call
-        ax_frame.to_call.call_str = dest_call
-        ax_frame.via_calls = list(via_calls_fm_str(' '.join(via_calls)))
-        ax_frame.axip_add = axip_add
-        """
 
         conn = self.new_connection(ax25_frame=ax_frame)
         if not conn:
@@ -908,11 +899,14 @@ class AX25Port(object):
                     self._gui_monitor(ax25frame=ax25frame, tx=False)
                     # MH / Port-Statistic
                     self._mh_input(ax25frame_conf, tx=False)
+                    # MCast IP Update
+                    if hasattr(self._mcast_server, 'mcast_update_member_ip'):
+                        self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
+                    # RX Handler
+                    self.rx_handler(ax25frame)
                     # MCast
                     if hasattr(self._mcast_server, 'mcast_rx'):
                         self._mcast_server.mcast_rx(ax25frame=ax25frame)
-                    # RX Handler
-                    self.rx_handler(ax25frame)
 
                 # RX-ECHO
                 self._rx_echo(ax25_frame=ax25frame)

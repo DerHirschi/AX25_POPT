@@ -1,7 +1,6 @@
 """
 Idea: "Multicast" Server handels all Connections in Virtual Channels and
       echos all Frames to other Clients in Virtual Channels
-
 """
 from ax25.ax25Error import AX25DeviceERROR, MCastInitError
 from cfg.logger_config import logger
@@ -12,16 +11,12 @@ from cfg.string_tab import STR_TABLE
 class MCastChannel:
     def __init__(self, ch_conf: dict):
         logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init")
+
         self._ch_conf = dict(ch_conf)
         self._ch_id = ch_conf.get('ch_id', -1)
         self._ch_member_add = ch_conf.get('ch_members', {})  # """CALL: (DomainName/IP, PORT)"""
-        # self._ch_members = list(self._ch_member_add.keys())
 
-        # TODO STRING-VARS
-        self._ch_new_user_msg = ch_conf.get('ch_new_user_msg', '').format(self._ch_id, ch_conf.get('ch_name', ''))
-
-        # self._ch_beacons = ch_conf.get('ch_beacons', [])
-        logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init Complete")
+        logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init complete")
 
     def get_ch_members(self):
         return list(self._ch_member_add.keys())
@@ -54,22 +49,21 @@ class MCastChannel:
     def is_member(self, member_call: str):
         if not member_call:
             return False
-        if member_call not in self.get_ch_members():
-            return False
-        return True
+        if member_call in self.get_ch_members():
+            return True
+        return False
 
     def get_channel_name(self):
         return str(self._ch_conf.get('ch_name', ''))
 
     """
-    def get_members_add(self):
+    def get_all_members_add(self):
         ret = []
         for call, add in self._ch_member_add.items():
             if add not in ret:
                 ret.append(tuple(add))
         return ret
     """
-
 
 class ax25Multicast:
     def __init__(self):
@@ -86,12 +80,19 @@ class ax25Multicast:
                 },          # """CALL: (DomainName/IP, PORT)"""
                 # ch_beacons=[],
                 # ch_private = False,     # Allow new User
-                # ch_new_user_msg = '-= Welcome to the AXIP-MCast Server on Vir-Ch #{} - {} =-',     # New User Beacon
+                ),
+                1: dict(
+                    ch_id=1,
+                    ch_name='NODE-CH',
+                    ch_members={},
+                ),
+                2: dict(
+                    ch_id=2,
+                    ch_name='BBS-CH',
+                    ch_members={},
                 ),
             },
-            # mcast_new_user_msg='-= Welcome to the AXIP-MCast Server. Please connect {} to register =-',  # New User Beacon
             mcast_default_ch=0,
-            # mcast_anti_spam_t=2,        # Sec.
             # New User has to register (connect to MCast Node/Station/CLI) first
             mcast_new_user_reg=1,       # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
         )
@@ -99,16 +100,14 @@ class ax25Multicast:
         self._mcast_ch_conf = self._mcast_conf.get('mcast_ch_conf', {})
         self._mcast_server_call = self._mcast_conf.get('mcast_server_call', '')
         ##########################
-        # self._mcast_anti_spam = []
-        self._mcast_member_add_list = {}
         self._mcast_port = None
         ##########################
         # Channel Init
+        self._mcast_member_add_list = {}
         self._mcast_channels = {}
         self._init_mcast_channels()
         ##########################
         self._ui_frame_cfg = dict(
-            port_id=0,
             own_call=str(self._mcast_server_call),
             add_str='ALL',
             text= b'',
@@ -118,6 +117,8 @@ class ax25Multicast:
         )
         logger.info('MCast: Init Complete')
 
+    #################################################################
+    # Init Stuff
     def _init_mcast_channels(self):
         logger.info('MCast: Channel Init..')
         for ch_id, conf in self._mcast_ch_conf.items():
@@ -133,6 +134,35 @@ class ax25Multicast:
             logger.debug(f'MCast: {member_call} > {member_ip}')
         logger.info('MCast: Channel Init Done!')
 
+    def set_mcast_port(self, port):
+        if self._mcast_port is not None:
+            logger.error(f"MCast: set_port ! Just one MCast possible !")
+            raise MCastInitError
+        if not hasattr(port, 'port_id'):
+            logger.error(f"MCast: set_port ! Attribut Error !")
+            raise MCastInitError
+        logger.info(f"MCast: Set Multicast to Port {port.port_id}")
+        self._mcast_port = port
+
+    def del_mcast_port(self):
+        logger.info(f"MCast: Delete Multicast Port ")
+        self._mcast_port = None
+
+    #################################################################
+    # RX/TX/Tasker Stuff
+    def mcast_update_member_ip(self, ax25frame):
+        if not all((
+                hasattr(ax25frame, 'from_call'),
+                hasattr(ax25frame, 'axip_add'),
+        )):
+            return
+        call = str(ax25frame.from_call.call)
+        call_str = str(ax25frame.from_call.call_str)
+        if call in self._mcast_member_add_list:
+            self._mcast_member_add_list[call] = tuple(ax25frame.axip_add)
+            return
+        self._mcast_member_add_list[call_str] = tuple(ax25frame.axip_add)
+
 
     def mcast_rx(self, ax25frame):
         """ Input from AXIP-RX """
@@ -143,12 +173,9 @@ class ax25Multicast:
                 hasattr(self._mcast_port, 'connections')
         )):
             return
-        call = str(ax25frame.from_call.call)
+        call = str(ax25frame.from_call.call_str)
         uid = str(ax25frame.addr_uid)
-        if call not in self._mcast_member_add_list:
-            logger.debug("MCast: Member not in List")
-            # TODO Update List
-            self._mcast_member_add_list[str(call)] = tuple(ax25frame.axip_add)
+
         if uid in self._mcast_port.connections.keys():
             return
         members = self._get_channel_members_fm_member_call(member_call=call)
@@ -159,7 +186,6 @@ class ax25Multicast:
             return
         logger.debug('MCast: RX')
         self._mcast_tx_to_members(frame=ax25frame, member_list=members)
-
 
     def mcast_tx(self, ax25frame):
         """ Input from AXIP-TX """
@@ -178,7 +204,6 @@ class ax25Multicast:
         if not ch_members:
             return
         self._mcast_tx_to_members(frame=ax25frame, member_list=ch_members)
-
 
     def _mcast_tx_to_members(self, frame, member_list: list):
         if not all((
@@ -212,32 +237,11 @@ class ax25Multicast:
     def tasker(self):
         pass
 
-    ########################################################
-    def set_mcast_port(self, port):
-        if self._mcast_port is not None:
-            logger.error(f"MCast: set_port ! Just one MCast possible !")
-            raise MCastInitError
-        if not hasattr(port, 'port_id'):
-            logger.error(f"MCast: set_port ! Attribut Error !")
-            raise MCastInitError
-        logger.info(f"MCast: Set Multicast to Port {port.port_id}")
-        self._mcast_port = port
-
-    def del_mcast_port(self):
-        logger.info(f"MCast: Delete Multicast Port ")
-        self._mcast_port = None
-
     #########################################################
-    # Member Stuff
-    def _handle_new_member(self, member_call: str):
-        lang = POPT_CFG.get_guiCFG_language()
-        text = STR_TABLE['mcast_new_user_beacon'][lang].format(self._mcast_server_call)
-        if not all((member_call, text)):
-            return
-        self._send_UI_to_user(member_call, text)
-
+    # Remote Stuff
     def register_new_member(self, member_call: str):
         """ Called from CLI """
+        member_call = self._get_member_call(member_call)
         if not member_call:
             logger.error("MCast: Error, No Call")
             return "MCast: Error, No Call"
@@ -265,29 +269,60 @@ class ax25Multicast:
 
         ch_name = self._get_channel_name(default_ch_id)
         lang = POPT_CFG.get_guiCFG_language()
+        # Send UI to New Member
         text = STR_TABLE['mcast_new_user_reg_beacon'][lang]
         text = text.format(default_ch_id, ch_name)
         if all((member_call, text)):
             self._send_UI_to_user(user_call=member_call, text=text)
 
+        # Send UI to all Channel Members
+        text = STR_TABLE['mcast_new_user_channel_beacon'][lang]
+        text = text.format(member_call)
+        if text:
+            self._send_UI_to_channel(channel_id=default_ch_id, text=text)
+
         return f"MCast: New Member {member_call} registered!"
 
+    def move_channel(self, member_call: str, channel_id: int):
+        if not all((member_call, channel_id is not None)):
+            return "\r # MCast: Error no Member-Call or Channel selected.\r"
+        if not self._move_member_to_channel(member_call, channel_id):
+            return (f"\r # MCast: Error while try to move to Channel {channel_id}.\r"
+                    f" # MCast: Please contact Sysop!\r")
+        return f"\r # MCast: You ar now in Channel {channel_id} ({self._get_channel_name(channel_id)})\r"
+
+
+    #########################################################
+    # Member Stuff
+    def _handle_new_member(self, member_call: str):
+        lang = POPT_CFG.get_guiCFG_language()
+        text = STR_TABLE['mcast_new_user_beacon'][lang].format(self._mcast_server_call)
+        if not all((member_call, text)):
+            return
+        self._send_UI_to_user(member_call, text)
+
     def _get_member_ip(self, member_call: str):
+        member_call = self._get_member_call(member_call)
         if not member_call:
             return ()
-        member_ip = self._mcast_member_add_list.get(member_call, ())
-        if member_ip:
-            return member_ip
-        member_call_tmp = member_call.split('-')[0]
-        return self._mcast_member_add_list.get(member_call_tmp, ())
+        return self._mcast_member_add_list.get(member_call, ())
+
+    def _get_member_call(self, member_call: str):
+        """ Is looking for Call's w or w/o SSID's"""
+        if member_call in self._mcast_member_add_list:
+            return member_call
+        member_call = member_call.split('-')[0]
+        if member_call in self._mcast_member_add_list:
+            return member_call
+        return ''
 
     #########################################################
     # Channel Stuff
     def _move_member_to_channel(self, member_call: str, ch_id: int):
         if not member_call:
             return False
-        member_ip = self._get_member_ip(member_call)
-        if not member_ip:
+        member_call = self._get_member_call(member_call)
+        if not member_call:
             logger.error(f"MCast: new Member not in Add-List !")
             return False
 
@@ -305,6 +340,7 @@ class ax25Multicast:
         return True
 
     def _add_member_to_channel(self, member_call: str, channel_id: int):
+        member_call = self._get_member_call(member_call)
         if not member_call:
             return False
         member_ip = self._get_member_ip(member_call)
@@ -319,6 +355,7 @@ class ax25Multicast:
         return False
 
     def _del_member_fm_channel(self, member_call: str):
+        member_call = self._get_member_call(member_call)
         if not member_call:
             return False
         for ch_id, mcast_channel in self._mcast_channels.items():
@@ -330,6 +367,7 @@ class ax25Multicast:
         return False
 
     def _get_channels_fm_member(self, member_call: str):
+        member_call = self._get_member_call(member_call)
         if not member_call:
             return []
         ret = []
@@ -342,6 +380,7 @@ class ax25Multicast:
         return ret
 
     def _get_channel_members_fm_member_call(self, member_call: str):
+        member_call = self._get_member_call(member_call)
         if not member_call:
             return None
         for ch_id, mcast_channel in self._mcast_channels.items():
@@ -381,6 +420,7 @@ class ax25Multicast:
             return False
         axip_add = self._get_member_ip(user_call)
         if not axip_add:
+            logger.error("MCast: No Member IP _send_UI_to_user()")
             return False
         data = text.encode('UTF-8', 'ignore')[:256]
 
@@ -392,6 +432,7 @@ class ax25Multicast:
         )):
             return False
         if not hasattr(self._mcast_port, 'send_UI_frame'):
+            logger.error("MCast: Attribut Error _send_UI_to_user()")
             return False
         logger.debug(f"MCast: Send UI to {user_call} - {axip_add}")
         logger.debug(f"MCast: {data}")
@@ -404,9 +445,23 @@ class ax25Multicast:
             cmd_poll=(False, True)
         )
 
-
-    def _send_UI_to_channel(self):
-        pass
+    def _send_UI_to_channel(self, channel_id: int, text: str):
+        if not all((
+                channel_id is not None,
+                text,
+        )):
+            return False
+        if channel_id not in self._mcast_channels:
+            return False
+        mcast_channel = self._mcast_channels[channel_id]
+        if not hasattr(mcast_channel, 'get_ch_members'):
+            logger.error("MCast: Attribut Error _send_UI_to_channel()")
+            return False
+        members = mcast_channel.get_ch_members()
+        for member_call in members:
+            # if member_call in self._mcast_member_add_list:
+            #     member_ip = self._mcast_member_add_list.get(member_call, ())
+            self._send_UI_to_user(member_call, text)
 
     def _send_UI_to_all(self):
         pass
