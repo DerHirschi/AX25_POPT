@@ -1,4 +1,3 @@
-from cfg.constant import DEBUG_LOG
 from cfg.logger_config import logger
 
 class AX25EncodingERROR(Exception):
@@ -10,17 +9,16 @@ class AX25EncodingERROR(Exception):
                 # logger.warning(frame.payload)
                 logger.error(f'Data: {frame.payload}')
                 # print(f'Data: {frame.payload}')
-            if DEBUG_LOG:
-                if hasattr(frame, 'get_frame_conf'):
-                    frame_cfg: dict = frame.get_frame_conf()
-                    logger.debug('----- AX25-Frame CFG ENC ------')
-                    # print('----- AX25-Frame CFG ENC ------')
-                    for k, data in frame_cfg.items():
-                        logger.debug(f'{k}: {data}')
-                        # print(f'{k}: {data}')
+            # if DEBUG_LOG:
+            if hasattr(frame, 'get_frame_conf'):
+                frame_cfg: dict = frame.get_frame_conf()
+                logger.error('----- AX25-Frame CFG ENC ------')
+                # print('----- AX25-Frame CFG ENC ------')
+                for k, data in frame_cfg.items():
+                    logger.error(f'{k}: {data}')
+                    # print(f'{k}: {data}')
 
                 # logger.warning(f'Hex: {frame.data.hex()}')
-
 
 class AX25DecodingERROR(Exception):
     def __init__(self, frame=None):
@@ -30,15 +28,14 @@ class AX25DecodingERROR(Exception):
                 # logger.warning(frame.payload)
                 logger.error(f'Data: {frame.payload}')
 
-            if DEBUG_LOG:
-                if hasattr(frame, 'get_frame_conf'):
-                    frame_cfg: dict = frame.get_frame_conf()
-                    logger.debug('----- AX25-Frame CFG DEC------')
-                    # print('----- AX25-Frame CFG DEC------')
-                    for k, data in frame_cfg.items():
-                        logger.debug(f'{k}: {data}')
-                        # print(f'{k}: {data}')
-
+            # if DEBUG_LOG:
+            if hasattr(frame, 'get_frame_conf'):
+                frame_cfg: dict = frame.get_frame_conf()
+                logger.error('----- AX25-Frame CFG DEC------')
+                # print('----- AX25-Frame CFG DEC------')
+                for k, data in frame_cfg.items():
+                    logger.error(f'{k}: {data}')
+                    # print(f'{k}: {data}')
 
 class AX25DeviceERROR(Exception):
     def __init__(self, e=None, port=None):
@@ -46,8 +43,6 @@ class AX25DeviceERROR(Exception):
             logger.error('AX25DeviceERROR Error !')
             logger.error(e)
         # TODO Port CFG
-
-
 
 class AX25DeviceFAIL(Exception):
     def __init__(self, port=None):
@@ -69,13 +64,18 @@ class AX25ConnectionERROR(Exception):
             if hasattr(conn, 'uid'):
                 logger.error(f'AX25ConnectionERROR uid: {conn.uid}')
                 # print(f'AX25ConnectionERROR uid: {conn.uid}')
-            if DEBUG_LOG:
-                if hasattr(conn, 'get_stat_cfg'):
-                    stat_cfg: dict = conn.get_stat_cfg()
-                    logger.debug('AX25ConnectionERROR --- stat_cfg ---')
-                    logger.debug(str(stat_cfg))
-                    # print('AX25ConnectionERROR --- stat_cfg ---')
-                    # print(str(stat_cfg))
-                    for k, data in stat_cfg.items():
-                        logger.debug(f'stat_cfg - {k}: {data}')
-                        # print(f'stat_cfg - {k}: {data}')
+            # if DEBUG_LOG:
+            if hasattr(conn, 'get_stat_cfg'):
+                stat_cfg: dict = conn.get_stat_cfg()
+                logger.error('AX25ConnectionERROR --- stat_cfg ---')
+                logger.error(str(stat_cfg))
+                # print('AX25ConnectionERROR --- stat_cfg ---')
+                # print(str(stat_cfg))
+                for k, data in stat_cfg.items():
+                    logger.error(f'stat_cfg - {k}: {data}')
+                    # print(f'stat_cfg - {k}: {data}')
+
+#####################################################
+# MCast
+class MCastInitError(Exception):
+    pass

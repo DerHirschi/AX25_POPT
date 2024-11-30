@@ -18,29 +18,25 @@ from cfg.logger_config import logger
 class DefaultCLI(object):
     cli_name = ''  # DON'T CHANGE!
     service_cli = True
-    c_text = '-= Test C-TEXT =-\r\r'
+    # c_text = '-= Test C-TEXT =-\r\r'
     # bye_text = '73 ...\r'
-    prompt = ''
+    # prompt = ''
     prefix = b'//'
     sw_id = ''
 
     def __init__(self, connection):
         # print("CLI-INIT")
+        logger.debug(f"CLI-{self.cli_name}: Init")
         stat_cfg: dict = connection.get_stat_cfg()
         self._stat_cfg_index_call = stat_cfg.get('stat_parm_Call', 'NOCALL')
 
-        self.c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
+        self._c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._connection = connection
         self._port_handler = self._connection.get_port_handler_CONN()
         self._own_port = self._connection.own_port
         # self.channel_index = self._connection.ch_index
         self._gui = self._port_handler.get_gui()
-        """
-        if self._connection.gui is None:
-            self._gui = False
-        else:
-            self._gui = self._connection.gui
-        """
+
         self._my_call_str = self._connection.my_call_str
         self._to_call_str = self._connection.to_call_str
         self._user_db = USER_DB
@@ -51,15 +47,13 @@ class DefaultCLI(object):
             self._encoding = self._user_db_ent.Encoding, 'ignore'
             self._stat_identifier_str = self._user_db_ent.software_str
             if self._user_db_ent.CText:
-                self.c_text = str(self._user_db_ent.CText)
+                self._c_text = str(self._user_db_ent.CText)
 
         self.stat_identifier = get_station_id_obj(self._stat_identifier_str)
         # print(f"CLI STST ID : {self.stat_identifier}")
         # print(f"CLI STST str : {self.stat_identifier_str}")
 
-        self.c_text = self.c_text.replace('\n', '\r')
-        # self.bye_text = self.bye_text.replace('\n', '\r')
-        # self.prompt = self.prompt.replace('\n', '').replace('\r', '')
+        self._c_text = self._c_text.replace('\n', '\r')
 
         self.time_start = datetime.now()
 
@@ -69,7 +63,7 @@ class DefaultCLI(object):
         self._raw_input = b''
         self._cmd = b''
         self._last_line = b''
-        self._new_last_line = b''
+        self._new_last_line = b''   # TODO ???????????????????????
         self._parameter = []
         self._sys_login = None
         self.sysop_priv = False
@@ -133,24 +127,24 @@ class DefaultCLI(object):
         self._cmd_exec_ext = {}  # Extern Command's ??
         self._cron_state_exec_ext = {}  # Extern Tasks ??
         self._state_exec_ext = {}  # Extern State Tab ??
-        # self.init()
+        self.init()
         self._cron_state_exec.update(self._cron_state_exec_ext)
         self._commands.update(self._cmd_exec_ext)
         self._state_exec.update(self._state_exec_ext)
+        """
         if type(self.prefix) is str:  # Fix for old CFG Files
             self.prefix = self.prefix.encode(self._encoding[0], self._encoding[1])
+        """
 
-    """
+
     def init(self):
+        """
         self._cmd_exec_ext = {}
         self.cron_state_exec_ext = {}
         self.state_exec_ext = {}
-    """
+        """
+        pass
 
-    def build_prompt(self):
-        # TODO Cleanup ..Not used ..
-        # self.prompt = f"\r<{self.prompt}>{self._my_call_str}>"
-        self.prompt = f"\r<{self.prompt}>{self._my_call_str}>"
 
     def get_ts_prompt(self):
         return f"\r{self._my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
@@ -1274,9 +1268,9 @@ class DefaultCLI(object):
     def s0(self):  # C-Text
         self._state_index = 1
         if self.prefix:
-            return self._send_sw_id() + self.c_text
+            return self._send_sw_id() + self._c_text
         else:
-            return self._send_sw_id() + self.c_text + self.get_ts_prompt()
+            return self._send_sw_id() + self._c_text + self.get_ts_prompt()
 
     def s1(self):
         self._software_identifier()
@@ -1359,20 +1353,23 @@ class DefaultCLI(object):
 class NodeCLI(DefaultCLI):
     cli_name = 'NODE'  # DON'T CHANGE !
     service_cli = True
-    c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
+    # _c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     # bye_text = '73 ...\r'
-    prompt = 'PoPT-NODE>'
+    # prompt = 'PoPT-NODE>'
     prefix = b''
     sw_id = 'PoPTNode'
 
     # Extra CMDs for this CLI
 
     def init(self):
+        """
         self._cmd_exec_ext = {}
         self._cron_state_exec_ext = {}
         self._state_exec_ext = {
             2: self.s2
         }
+        """
+        pass
 
     def s2(self):
         return self._cmd_q()
@@ -1381,32 +1378,33 @@ class NodeCLI(DefaultCLI):
 class UserCLI(DefaultCLI):
     cli_name = 'USER'  # DON'T CHANGE !
     service_cli = False
-    c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
+    # _c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     # bye_text = '73 ...\r'
-    prompt = 'TEST-STATION-User-CLI>'
+    # prompt = 'TEST-STATION-User-CLI>'
     prefix = b'//'
     sw_id = 'PoPT'
 
     # Extra CMDs for this CLI
 
     def init(self):
+        """
         self._cmd_exec_ext = {}
         self._cron_state_exec_ext = {}
         self._state_exec_ext = {
             2: self.s2
         }
+        """
+        pass
 
     def s2(self):
         return self._cmd_q()
 
-
 class NoneCLI(DefaultCLI):
     """ ? To Disable CLI / Remote ? """
     cli_name = 'NO-CLI'  # DON'T CHANGE !
-    service_cli = True
-    c_text = ''
+    service_cli = False
+    # _c_text = ''
     # bye_text = ''
-    prompt = ''
     prefix = b''
 
     def cli_exec(self, inp=b''):
@@ -1418,13 +1416,98 @@ class NoneCLI(DefaultCLI):
     def cli_cron(self):
         pass
 
-    def build_prompt(self):
-        pass
+class MCastCLI(DefaultCLI):
+    cli_name = 'MCAST'  # DON'T CHANGE !
+    service_cli = True
+    prefix = b''
+    sw_id = 'PoPTMCast'
+
+    # Extra CMDs for this CLI
+
+    def init(self):
+        # NO USER-DB Ctext
+        self._c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
+        self._c_text = self._c_text.replace('\n', '\r')
+        # Standard Commands ( GLOBAL )
+        self._commands = {
+            # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
+            'QUIT': (1, self._cmd_q, 'Quit'),
+            'BYE': (1, self._cmd_q, 'Bye'),
+            # 'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
+            # 'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
+            'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
+
+            'INFO': (1, self._cmd_i, 'Info'),
+            'LINFO': (2, self._cmd_li, 'Long Info'),
+            'NEWS': (2, self._cmd_news, 'NEWS'),
+            'VERSION': (3, self._cmd_ver, 'Version'),
+            'USER': (0, self._cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self._connection.cli_language]),
+            'NAME': (1, self._cmd_set_name, STR_TABLE['cmd_help_set_name'][self._connection.cli_language]),
+            'QTH': (0, self._cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self._connection.cli_language]),
+            'LOC': (0, self._cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self._connection.cli_language]),
+            'ZIP': (0, self._cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self._connection.cli_language]),
+            'PRMAIL': (0, self._cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self._connection.cli_language]),
+            'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
+            'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
+            'LANG': (0, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
+            'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
+            'HELP': (1, self._cmd_help, STR_TABLE['help'][self._connection.cli_language]),
+            '?': (0, self._cmd_shelp, STR_TABLE['cmd_shelp'][self._connection.cli_language]),
+
+        }
+        self._state_exec = {
+            0: self.s0,  # C-Text
+            1: self.s1,  # Cmd Handler
+        }
+
+    ###############################################
+
+    def cli_exec(self, inp=b''):
+        self._raw_input = bytes(inp)
+        ret = self._state_exec[self._state_index]()
+        self.send_output(ret)
+
+    def cli_cron(self):
+        """ Global Crone Tasks """
+        if not self._connection.is_link:
+            self.cli_state_crone()
+
+    def cli_state_crone(self):
+        """ State Crone Tasks """
+        ret = self._cron_state_exec[self._crone_state_index]()
+        self.send_output(ret)
+
+    def s0(self):  # C-Text
+        self._state_index = 1
+        out =  self._send_sw_id()
+        out += self._c_text
+        out += f"\r\r # {self._register_mcast_member()} \r" # TODO Extra CMD etc.
+        out += self.get_ts_prompt()
+        return out
+
+    def s1(self):
+        self._software_identifier()
+        ########################
+        # Check String Commands
+        if not self._exec_str_cmd():
+            self._input = self._raw_input
+            self.send_output(self._exec_cmd())
+        self._last_line = self._new_last_line
+        return ''
+
+    #############################################################
+    def _register_mcast_member(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not hasattr(mcast_server, 'register_new_member'):
+            logger.error("CLI: Attribute Error Mcast-Server")
+            return 'CLI: Attribute Error Mcast-Server'
+        return mcast_server.register_new_member(self._to_call_str)
 
 
 CLI_OPT = {
     UserCLI.cli_name: UserCLI,
     NodeCLI.cli_name: NodeCLI,
     NoneCLI.cli_name: NoneCLI,
-    'PIPE': NoneCLI
+    'PIPE': NoneCLI,
+    MCastCLI.cli_name: MCastCLI,
 }

@@ -368,7 +368,7 @@ class Main_CFG:
     def del_pipe_CFG(self, uid):
         # UID = f'{port}-{call}'
         if uid in self._config.get('pipe_cfgs', {}):
-            print(f"Del Pipe-CFG: {uid}")
+            # print(f"Del Pipe-CFG: {uid}")
             del self._config['pipe_cfgs'][uid]
 
     def del_pipe_CFG_fm_call(self, call: str):

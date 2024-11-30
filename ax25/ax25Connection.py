@@ -299,7 +299,6 @@ class AX25Conn:
         cli_key = self._stat_cfg.get('stat_parm_cli', getNew_station_cfg().get('stat_parm_cli', 'NO-CLI'))
         self.cli = CLI_OPT.get(cli_key, NoneCLI)(self)
         self.cli_type = str(cli_key)
-        self.cli.build_prompt()
 
     def _reinit_cli(self):
         # print(f"CLI RE-INIT: {self.uid}")

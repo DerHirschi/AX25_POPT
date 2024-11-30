@@ -16,7 +16,7 @@ from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid
-from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL
+from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, MCastInitError
 from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
 
@@ -113,7 +113,7 @@ class AX25Port(object):
         """
         # if self.port_cfg.get('parm_axip_Multicast', False):
         if self._mcast_server:
-            self._mcast_server.set_port(None)
+            self._mcast_server.del_mcast_port()
             self._mcast_server = None
         self.loop_is_running = False
         self.close_device()
@@ -893,9 +893,9 @@ class AX25Port(object):
                 # Decoding
                 ax25frame.decode_ax25frame(buf.raw_data)
             except AX25DecodingERROR:
-                logger.error('Port:{} decoding: '.format(self.portname))
-                logger.error('{}: org {}'.format(self.portname, buf.raw_data))
-                logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
+                logger.error(f'Port {self.port_id}: decoding: ')
+                logger.error(f'Port {self.port_id}: org {buf.raw_data}')
+                logger.error(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
                 break
             if ax25frame.validate():
                 ax25frame.axip_add = buf.axip_add
@@ -908,18 +908,14 @@ class AX25Port(object):
                     self._gui_monitor(ax25frame=ax25frame, tx=False)
                     # MH / Port-Statistic
                     self._mh_input(ax25frame_conf, tx=False)
+                    # MCast
+                    if hasattr(self._mcast_server, 'mcast_rx'):
+                        self._mcast_server.mcast_rx(ax25frame=ax25frame)
+                    # RX Handler
                     self.rx_handler(ax25frame)
 
                 # RX-ECHO
                 self._rx_echo(ax25_frame=ax25frame)
-                # AXIP-Multicast
-                """
-                if self.port_cfg.get('parm_axip_Multicast', False):
-                    self.tx_multicast(frame_conf=ax25frame_conf)
-                """
-                if hasattr(self._mcast_server, 'mcast_rx'):
-                    self._mcast_server.mcast_rx(ax25frame=ax25frame)
-
 
             if self.port_cfg.get('parm_full_duplex', False):
                 break
@@ -1210,14 +1206,16 @@ class AXIP(AX25Port):
                 raise AX25DeviceFAIL
 
             self.device_is_running = True
-            """
+            # MCast
             if self.port_cfg.get('parm_axip_Multicast', False):
-                self._mcast_server = ax25Multicast(self)
-            """
-            if self.port_cfg.get('parm_axip_Multicast', False):
+                logger.info(f"Port {self.port_id}: Set Multicast to Server !!")
                 self._mcast_server = self.port_handler.get_mcast_server()
-                if hasattr(self._mcast_server, 'set_port'):
-                    self._mcast_server.set_port(self)
+                if hasattr(self._mcast_server, 'set_mcast_port'):
+                    try:
+                        self._mcast_server.set_mcast_port(self)
+                    except MCastInitError:
+                        # self._mcast_server = None
+                        logger.error(f"Port {self.port_id}: Set Multicast Server failed !!")
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)

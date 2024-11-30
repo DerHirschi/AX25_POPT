@@ -1,5 +1,5 @@
 from cfg.constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STATION_ID_ENCODING, BBS_FEATURE_FLAGS, \
-    BBS_REVERS_FWD_CMD
+    BBS_REVERS_FWD_CMD, STATION_ID_MCAST
 from cfg.logger_config import logger
 
 
@@ -19,17 +19,17 @@ def get_station_id_obj(inp_line: str):
     if inp_line.startswith('[') and inp_line.endswith(']'):
         """ ? BBS ?"""
         if validate_id_str(inp_line):
-            _id = BBSid(inp_line)
-            if _id.e:
+            sid = BBSid(inp_line)
+            if sid.e:
                 return None
-            return _id
+            return sid
         return None
 
 
 def validate_id_str(inp: str):
     tmp = inp[1:-1].split('-')
     if len(tmp) == 3:
-        if tmp[0] in STATION_ID_SYSOP + STATION_ID_NODE + STATION_ID_BBS:
+        if tmp[0] in STATION_ID_SYSOP + STATION_ID_NODE + STATION_ID_BBS + STATION_ID_MCAST:
             return tmp
         """
         for el in ['NODE', 'BOX', 'BBS']:

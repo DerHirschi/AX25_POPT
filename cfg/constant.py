@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.110.10'
+VER = '2.110.11'
 DEBUG_LOG = True
 CONSOLE_LOG = True
 """
@@ -85,6 +85,7 @@ STATION_TYPS = [
     'APRS-TELEMETRIE',
     'APRS-WX',
     'GATEWAY',
+    'MCast-Server',
     'OTHER',
 ]
 
@@ -109,7 +110,6 @@ STATION_ID_NODE = [
     'WinSTOPNode',
     'PoPTNode',
     'TNN',
-
 ]
 
 STATION_ID_BBS = [
@@ -121,6 +121,10 @@ STATION_ID_BBS = [
     'BPQ',
     'THEBOX',
     'PoPTBOX',
+]
+
+STATION_ID_MCAST = [    # TODO Just Dummy yet
+    'PoPTMCast',
 ]
 
 STATION_ID_ENCODING = {
