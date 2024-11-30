@@ -1,7 +1,6 @@
 import datetime
 import socket
 import serial
-from serial.serialutil import PortNotOpenError
 import time
 import crcmod
 
@@ -1113,7 +1112,7 @@ class KISSSerial(AX25Port):
             try:
                 self.device.write(self.kiss.set_all_parameter())
             # except serial.portNotOpenError:
-            except PortNotOpenError as e:
+            except serial.PortNotOpenError as e:
                 logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
                 self.device_is_running = False
                 self.close_device()
