@@ -276,9 +276,12 @@ class AX25PortHandler(object):
     def set_kiss_param_all_ports(self):
         for port_id in list(self.ax25_ports.keys()):
             if self.ax25_ports[port_id].port_cfg.get('parm_kiss_is_on', True):
-                self.ax25_ports[port_id].set_kiss_parm()
                 self.sysmsg_to_gui(STR_TABLE['send_kiss_parm'][POPT_CFG.get_guiCFG_language()].format(port_id))
-                # self.sysmsg_to_gui('Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..'.format(port_id))
+                try:
+                    self.ax25_ports[port_id].set_kiss_parm()
+                except AX25DeviceFAIL as e:
+                    logger.error(f"PH: set_kiss_parm() Port: {port_id} - {e}")
+                    pass
 
     def _init_port(self, port_id: int):
         logger.info("PH: Initialisiere Port: {}".format(port_id))
@@ -302,7 +305,8 @@ class AX25PortHandler(object):
         # Init Port/Device
         try:
             temp = AX25DeviceTAB[new_cfg.get('parm_PortTyp', '')](new_cfg, self)
-        except AX25DeviceFAIL:
+        except AX25DeviceFAIL as e:
+            logger.error(f'PH: Could not initialise Port {port_id}. {e}')
             return False
         ##########################
         # Start Port/Device Thread
@@ -311,7 +315,7 @@ class AX25PortHandler(object):
         ##########################
         # Start Port/Device Thread
         if not temp.device_is_running:
-            logger.error('PH: Could not initialise Port {}'.format(port_id))
+            logger.error('PH: Could not initialise Port {}. Device not running.'.format(port_id))
             self.sysmsg_to_gui(STR_TABLE['port_not_init'][POPT_CFG.get_guiCFG_language()].format(port_id))
             return False
         ######################################

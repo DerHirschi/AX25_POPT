@@ -3,6 +3,7 @@ Idea: "Multicast" Server handels all Connections in Virtual Channels and
       echos all Frames to other Clients in Virtual Channels
 
 """
+from ax25.ax25Error import AX25DeviceERROR
 from cfg.logger_config import logger
 
 
@@ -97,22 +98,63 @@ class ax25Multicast:
             self._mcast_member_add_list[str(call)] = ax25frame.axip_add
         if uid in self._mcast_port.connections.keys():
             return
-        ch_id = self._get_ch_fm_member(call)
-        if ch_id is None:
-            return
-        if ch_id == -1:
+        members = self._get_channel_members_fm_member_call(member_call=call)
+        if members is None:
             # Send UI MSG to Member
             self._handle_new_member(str(call))
+            logger.info(f'MCast: New Member - {call} - {uid} - {ax25frame.axip_add}')
             return
-        members_add = self._get_member_add_fm_ch_id(ch_id=ch_id)
+        logger.debug('MCast: RX')
+        self._mcast_tx_to_members(frame=ax25frame, member_list=members)
+
 
     def mcast_tx(self, ax25frame):
         """ Input from AXIP-TX """
         if not all((
                 hasattr(ax25frame, 'from_call'),
-                hasattr(ax25frame, 'axip_add'),
+                hasattr(ax25frame, 'addr_uid'),
+                hasattr(self._mcast_port, 'connections')
         )):
             return
+        uid = str(ax25frame.addr_uid)   # TODO Check REVERSE ?????
+        if uid in self._mcast_port.connections.keys():
+            return
+        call = str(ax25frame.from_call.call)
+        ch_members = self._get_channel_members_fm_member_call(call)
+        logger.debug(f"MCast: mcast_tx ch_mem: {ch_members}")
+        if not ch_members:
+            return
+        self._mcast_tx_to_members(frame=ax25frame, member_list=ch_members)
+
+
+    def _mcast_tx_to_members(self, frame, member_list: list):
+        if not all((
+                hasattr(frame, 'axip_add'),
+                member_list,
+                hasattr(self._mcast_port, 'tx_multicast')
+        )):
+            return
+        logger.debug(f'MCast: TX mem: {member_list}')
+        ip = tuple(frame.axip_add)
+        ip_list = []
+        for member in member_list:
+            member_ip = self._mcast_member_add_list.get(member, ())
+            if all((
+                    member_ip,
+                    member_ip not in ip_list,
+                    member_ip != ip,
+                    hasattr(self._mcast_port, 'tx_multicast')
+            )):
+                frame.axip_add = tuple(member_ip)
+                ip_list.append(member)
+                try:
+                    self._mcast_port.tx_multicast(frame)
+                    logger.debug(f"MCast: Tx to: {member} - {member_ip}")
+                except AX25DeviceERROR:
+                    logger.error(f"MCast: AX25DeviceERROR - tx to {member_ip}")
+                    self._mcast_port = None
+                    return
+
 
     def tasker(self):
         pass
@@ -123,6 +165,7 @@ class ax25Multicast:
 
     ########################################################
     # Get Stuff fm Channels
+    """
     def _get_ch_fm_member(self, member_call: str):
         if not member_call:
             return None
@@ -130,12 +173,25 @@ class ax25Multicast:
             if member_call in channel.get_ch_members():
                 return ch_id
         return -1   # -1 = New Member
+    """
 
+    """
     def _get_member_add_fm_ch_id(self, ch_id: int):
         ret = self._mcast_channels.get(ch_id, None)
         if hasattr(ret, 'get_members_add'):
             return ret.get_members_add()
         return []
+    """
+
+    def _get_channel_members_fm_member_call(self, member_call: str):
+        if not member_call:
+            return None
+        for ch_id, channel in self._mcast_channels.items():
+            channel_members = channel.get_ch_members()
+            if member_call in channel_members:
+                return channel_members
+        return None
+
 
     #########################################################
     # New Member
@@ -143,8 +199,6 @@ class ax25Multicast:
         text =  self._mcast_conf.get('mcast_new_user_msg', '')
         if not all((member_call, text)):
             return
-        print("rx3")
-
         self._send_UI_to_user(member_call, text)
 
     #########################################################
@@ -180,13 +234,15 @@ class ax25Multicast:
             return False
         if not hasattr(self._mcast_port, 'send_UI_frame'):
             return False
-        print("rx5")
+        logger.debug(f"MCast: Send UI to {user_call} - {axip_add}")
+        logger.debug(f"MCast: {data}")
 
         self._mcast_port.send_UI_frame(
             own_call=self._mcast_conf.get('mcast_server_call', ''),
             add_str=str(user_call),
             text=data[:256],
-            axip_add=axip_add
+            axip_add=axip_add,
+            cmd_poll=(False, True)
         )
 
 
