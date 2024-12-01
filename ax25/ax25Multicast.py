@@ -70,6 +70,7 @@ class MCastChannel:
 class ax25Multicast:
     def __init__(self):
         logger.info('MCast: Init')
+        self._mcast_conf = POPT_CFG.get_MCast_CFG()
         self._mcast_conf = dict(
             mcast_server_call='MD2TES',
             mcast_ch_conf={
@@ -446,7 +447,7 @@ class ax25Multicast:
 
     #########################################################
     # TX/Build UI Frames
-    def _send_UI_to_user(self, user_call: str, text: str):
+    def _send_UI_to_user(self, user_call: str, text: str, to_call=''):
         """
         ui_frame_cfg = {
             'port_id': self._conf.get('port_id', 0),
@@ -481,10 +482,11 @@ class ax25Multicast:
             return False
         logger.debug(f"MCast: Send UI to {user_call} - {axip_add}")
         logger.debug(f"MCast: {data}")
-
+        if not to_call:
+            to_call = str(user_call)
         self._mcast_port.send_UI_frame(
             own_call=self._mcast_conf.get('mcast_server_call', ''),
-            add_str=str(user_call),
+            add_str=str(to_call),
             text=data[:256],
             axip_add=axip_add,
             cmd_poll=(False, True)
@@ -506,7 +508,7 @@ class ax25Multicast:
         for member_call in members:
             # if member_call in self._mcast_member_add_list:
             #     member_ip = self._mcast_member_add_list.get(member_call, ())
-            self._send_UI_to_user(member_call, text)
+            self._send_UI_to_user(member_call, text, to_call='CH2ALL')
 
     def _send_UI_to_all(self):
         pass

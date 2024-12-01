@@ -241,9 +241,9 @@ def getNew_pipe_cfg():
 
 #######################################
 # MCast
-def getNew_mcast_cfg(server_call: str):
+def getNew_mcast_cfg():
     return dict(
-        mcast_server_call=str(server_call),
+        mcast_server_call='',
         mcast_ch_conf={},
         mcast_default_ch=0,
         # New User has to register (connect to MCast Node/Station/CLI) first

@@ -1485,7 +1485,8 @@ class MCastCLI(DefaultCLI):
         self._state_index = 1
         out =  self._send_sw_id()
         out += self._c_text
-        out += f"\r\r # {self._register_mcast_member()} \r" # TODO Extra CMD etc.
+        out += f"\r{self._cmd_mcast_channels()}"
+        out += f"\r # {self._register_mcast_member()}\r" # TODO Extra CMD etc.
         out += self.get_ts_prompt()
         return out
 
