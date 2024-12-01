@@ -247,7 +247,8 @@ def getNew_mcast_cfg():
         mcast_ch_conf={},
         mcast_default_ch=0,
         # New User has to register (connect to MCast Node/Station/CLI) first
-        mcast_new_user_reg=1,  # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
+        mcast_new_user_reg=1,       # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
+        mcast_member_timeout=60     # Minutes
     )
 
 def getNew_mcast_channel_cfg(channel_id: int):

@@ -2,6 +2,8 @@
 Idea: "Multicast" Server handels all Connections in Virtual Channels and
       echos all Frames to other Clients in Virtual Channels
 """
+import time
+
 from ax25.ax25Error import AX25DeviceERROR, MCastInitError
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -78,11 +80,9 @@ class ax25Multicast:
                 ch_id=0,
                 ch_name='Lobby',
                 ch_members={
-                #    'AX1TES': ('192.168.255.50', 193),
-                #    'AX2TES': ('192.168.1.177', 93),
-                },          # """CALL: (DomainName/IP, PORT)"""
-                # ch_beacons=[],
-                # ch_private = False,     # Allow new User
+                    #    'AX1TES': ('192.168.255.50', 193),
+                    #    'AX2TES': ('192.168.1.177', 93),
+                    },          # """CALL: (DomainName/IP, PORT)"""
                 ),
                 1: dict(
                     ch_id=1,
@@ -94,10 +94,16 @@ class ax25Multicast:
                     ch_name='BBS-CH',
                     ch_members={},
                 ),
+                3: dict(
+                    ch_id=3,
+                    ch_name='APRS-CH',
+                    ch_members={},
+                ),
             },
             mcast_default_ch=0,
             # New User has to register (connect to MCast Node/Station/CLI) first
-            mcast_new_user_reg=1,       # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
+            mcast_new_user_reg=1,           # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
+            mcast_member_timeout=60,         # Minutes
         )
         self._mcast_default_ch = self._mcast_conf.get('mcast_default_ch', 0)
         self._mcast_ch_conf = self._mcast_conf.get('mcast_ch_conf', {})
@@ -107,6 +113,7 @@ class ax25Multicast:
         ##########################
         # Channel Init
         self._mcast_member_add_list = {}
+        self._mcast_member_timeout = {}
         self._mcast_channels = {}
         self._init_mcast_channels()
         ##########################
@@ -132,6 +139,8 @@ class ax25Multicast:
                 logger.info(f"MCast: {member_call} > {axip_add}")
                 if member_call not in self._mcast_member_add_list:
                     self._mcast_member_add_list[str(member_call)] = axip_add
+                    # TODO ?? Set Timeout after Re/INIT ??
+                    self._mcast_member_timeout[str(member_call)] = time.time()
         logger.debug('MCast: Member Address List: ')
         for member_call,  member_ip in self._mcast_member_add_list.items():
             logger.debug(f'MCast: {member_call} > {member_ip}')
@@ -163,9 +172,11 @@ class ax25Multicast:
         call_str = str(ax25frame.from_call.call_str)
         if call in self._mcast_member_add_list:
             self._mcast_member_add_list[call] = tuple(ax25frame.axip_add)
+            self._set_member_timeout(call)
             return
         self._mcast_member_add_list[call_str] = tuple(ax25frame.axip_add)
-
+        self._set_member_timeout(call_str)
+        return
 
     def mcast_rx(self, ax25frame):
         """ Input from AXIP-RX """
@@ -187,7 +198,6 @@ class ax25Multicast:
             self._handle_new_member(str(call))
             logger.info(f'MCast: New Member - {call} - {uid} - {ax25frame.axip_add}')
             return
-        logger.debug('MCast: RX')
         self._mcast_tx_to_members(frame=ax25frame, member_list=members)
 
     def mcast_tx(self, ax25frame):
@@ -337,7 +347,25 @@ class ax25Multicast:
         member_call = self._get_member_call(member_call)
         if not member_call:
             return ()
+        if self._is_member_timeout(member_call):
+            return ()
         return self._mcast_member_add_list.get(member_call, ())
+
+    def _is_member_timeout(self, member_call: str):
+        member_call = self._get_member_call(member_call)
+        if not member_call:
+            return True
+        last_seen = self._mcast_member_timeout.get(member_call, 0)
+        if time.time() - last_seen > (self._mcast_conf.get('mcast_member_timeout', 60) * 60):
+            logger.debug(f"MCast: Member Timeout: {member_call} - {round(time.time() - last_seen)}")
+            return True
+        return False
+
+    def _set_member_timeout(self, member_call: str):
+        member_call = self._get_member_call(member_call)
+        if not member_call:
+            return False
+        self._mcast_member_timeout[str(member_call)] = time.time()
 
     def _get_member_call(self, member_call: str):
         """ Is looking for Call's w or w/o SSID's"""
@@ -466,7 +494,7 @@ class ax25Multicast:
             return False
         axip_add = self._get_member_ip(user_call)
         if not axip_add:
-            logger.error("MCast: No Member IP _send_UI_to_user()")
+            logger.debug("MCast: No Member IP _send_UI_to_user() - Timeout ...")
             return False
         data = text.encode('UTF-8', 'ignore')[:256]
 
