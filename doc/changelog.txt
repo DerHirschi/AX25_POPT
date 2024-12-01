@@ -17,8 +17,9 @@ Neue Implementierungen / Funktionen:
 - Multicast-Server (MCast-Server)
 - MCast CLI
 - MCast CLI-CMD: CH - Kanal wechseln
-- MCast CLI-CMD: CHLIST - Liste der Kanäle
-- MCast CLI-CMD: CHINFO - Informationen des aktuellen Kanals
+- MCast CLI-CMD: CHLIST  - Liste der Kanäle
+- MCast CLI-CMD: CHINFO  - Informationen des aktuellen Kanals
+- MCast CLI-CMD: SETAXIP - Setzt eigene AXIP-Adresse bzw. Domainnamen
 - MCast virtuelle Kanäle
 
 ###########################################################################################################

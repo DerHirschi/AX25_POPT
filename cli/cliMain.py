@@ -1586,7 +1586,7 @@ class MCastCLI(DefaultCLI):
             if not hasattr(user_db, 'set_AXIP'):
                 logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_set_member_axip() - User-DB")
                 return '\r # MCast: Attribute Error Mcast-Server\r'
-            if not user_db.set_AXIP(self._to_call_str, (address, port)):
+            if not user_db.set_AXIP(self._to_call_str, (address, port), new_user=True):
                 logger.error(f"CLI: Error UserDB set_AXIP: {(address, port)}")
                 return f'\r # MCast: Error UserDB set_AXIP: {(address, port)}\r'
             if not mcast_server.set_member_ip(self._to_call_str, (address, port)):
