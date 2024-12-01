@@ -7,6 +7,7 @@ from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.file_fnc import get_str_fm_file
+from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
     convert_str_to_datetime
 from cfg.string_tab import STR_TABLE
@@ -1440,6 +1441,7 @@ class MCastCLI(DefaultCLI):
             'CH': (2, self._cmd_mcast_move_channel, STR_TABLE['cmd_help_mcast_move_ch'][self._connection.cli_language]),
             'CHLIST': (3, self._cmd_mcast_channels, STR_TABLE['cmd_help_mcast_channels'][self._connection.cli_language]),
             'CHINFO': (3, self._cmd_mcast_channel_info, STR_TABLE['cmd_help_mcast_ch_info'][self._connection.cli_language]),
+            'SETAXIP': (5, self._cmd_mcast_set_member_axip, STR_TABLE['cmd_help_mcast_set_axip'][self._connection.cli_language]),
             ##############################################################
             'INFO': (1, self._cmd_i, 'Info'),
             'LINFO': (2, self._cmd_li, 'Long Info'),
@@ -1535,8 +1537,68 @@ class MCastCLI(DefaultCLI):
         if not hasattr(mcast_server, 'get_channels'):
             logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_channels()")
             return '\r # MCast: Attribute Error Mcast-Server\r'
-        # if not self._parameter:
         return mcast_server.get_channels()
+
+    def _cmd_mcast_set_member_axip(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not all((
+                hasattr(mcast_server, 'get_member_ip'),
+                hasattr(mcast_server, 'set_member_ip'),
+                        )):
+            logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_set_member_axip()")
+            return '\r # MCast: Attribute Error Mcast-Server\r'
+        if not self._parameter:
+            mcast_member_ip = mcast_server.get_member_ip(self._to_call_str)
+            if len(mcast_member_ip) < 2:
+                logger.error(f"CLI: No Address found for {self._to_call_str} !")
+                return f"\r # MCast: No Address found for {self._to_call_str} !\r"
+            ret = f"\r # MCast: Current AXIP Address for {self._to_call_str}:\r"
+            ret +=  f" # Address: {mcast_member_ip[0]}\r"
+            ret +=  f" # Port: {mcast_member_ip[1]}\r\r"
+            return ret
+        else:
+            inv_param_msg = ('\r # MCast: Invalid Parameter / Invalid Address'
+                            '\r # SETAXIP xxxx.dyndns.com 8093'
+                            '\r # or'
+                            '\r # SETAXIP 11.11.11.11 8093\r\r')
+            if len(self._parameter) != 2:
+                return inv_param_msg
+            try:
+                address = bytes(self._parameter[0]).decode(self._encoding[0], 'ignore')
+                port = int(self._parameter[1])
+            except (IndexError, ValueError):
+                return inv_param_msg
+            mcast_member_ip = mcast_server.get_member_ip(self._to_call_str)
+            chk_ret = get_ip_by_hostname(address)
+            chk_ret_mcast = get_ip_by_hostname(mcast_member_ip[0])
+            if not chk_ret:
+                ret = '\r # MCast: Invalid IP-Address or Domain Name\r'
+                ret += inv_param_msg
+                return ret
+            if len(mcast_member_ip) < 2:
+                logger.error(f"CLI: No Address found for {self._to_call_str} !")
+                return f"\r # MCast: No Address found for {self._to_call_str} !\r"
+            if chk_ret_mcast != chk_ret:
+                return f"\r # MCast: The address you entered is not the same one you called from!\r"
+            if mcast_member_ip[1] != port:
+                return f"\r # MCast: The Port you entered is not the same one you called from!\r"
+            user_db = self._user_db
+            if not hasattr(user_db, 'set_AXIP'):
+                logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_set_member_axip() - User-DB")
+                return '\r # MCast: Attribute Error Mcast-Server\r'
+            if not user_db.set_AXIP(self._to_call_str, (address, port)):
+                logger.error(f"CLI: Error UserDB set_AXIP: {(address, port)}")
+                return f'\r # MCast: Error UserDB set_AXIP: {(address, port)}\r'
+            if not mcast_server.set_member_ip(self._to_call_str, (address, port)):
+                logger.error(f"CLI: Error MCast set_member_ip: {(address, port)}")
+                return f'\r # MCast: Error MCast set_member_ip: {(address, port)}\r'
+            ret = f"\r # MCast: New AXIP Address set successfully\r"
+
+            ret += f"\r # MCast: Current AXIP Address for {self._to_call_str}:\r"
+            ret += f" # Address: {address}\r"
+            ret += f" # Port: {port}\r\r"
+            return ret
+
 
 
 CLI_OPT = {

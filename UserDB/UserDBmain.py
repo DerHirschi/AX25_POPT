@@ -338,13 +338,15 @@ class UserDB:
             return ret.AXIP
         return '', 0
 
-    def set_AXIP(self, call_str: str, axip: tuple):
+    def set_AXIP(self, call_str: str, axip: tuple, new_user=False):
         if not all((call_str, axip)):
             return False
         if not axip[0]:
             return False
         if not self.db.get(call_str, None):
-            return False
+            if not new_user:
+                return False
+            self._new_entry(call_str)
         self.db[call_str].AXIP = tuple(axip)
         return True
 

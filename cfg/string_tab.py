@@ -1921,7 +1921,17 @@ STR_TABLE = {
                                '',
                                '',
                                '',
-                               ''),
+                               ''), #
+
+    'cmd_help_mcast_set_axip': ('Eigene AXIP Adresse eintragen / anzeigen lassen',
+                                'Enter/display your own AXIP address',
+                                'Voer/toon uw eigen AXIP-adres in',
+                                '',
+                                '',
+                                '',
+                                '',
+                                '',
+                                ''),
 
     'mcast_new_user_beacon': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)

@@ -8,6 +8,7 @@ from ax25.ax25Error import AX25DeviceERROR, MCastInitError
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
+from fnc.socket_fnc import check_ip_add_format, get_ip_by_hostname
 
 
 class MCastChannel:
@@ -72,10 +73,13 @@ class MCastChannel:
     """
 
 class ax25Multicast:
-    def __init__(self):
+    def __init__(self, port_handler):
         logger.info('MCast: Init')
-        self._mcast_conf = POPT_CFG.get_MCast_CFG()
-        self._mcast_conf = dict(
+        ##########################
+        self._mcast_port_handler = port_handler
+        self._mcast_port = None
+        self._mcast_conf: dict = POPT_CFG.get_MCast_CFG()
+        self._mcast_conf: dict = dict(
             mcast_server_call='MD2TES',
             mcast_ch_conf={
                 0: dict(
@@ -105,12 +109,10 @@ class ax25Multicast:
             mcast_new_user_reg=1,           # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
             mcast_member_timeout=60,        # Minutes
         )
-        self._mcast_default_ch = self._mcast_conf.get('mcast_default_ch', 0)
-        self._mcast_ch_conf = self._mcast_conf.get('mcast_ch_conf', {})
-        self._mcast_server_call = self._mcast_conf.get('mcast_server_call', '')
-        self._mcast_member_add_list = self._mcast_conf.get('mcast_axip_list', {})
-        ##########################
-        self._mcast_port = None
+        self._mcast_default_ch: int = self._mcast_conf.get('mcast_default_ch', 0)
+        self._mcast_ch_conf: dict = self._mcast_conf.get('mcast_ch_conf', {})
+        self._mcast_server_call: str = self._mcast_conf.get('mcast_server_call', '')
+        self._mcast_member_add_list: dict = self._mcast_conf.get('mcast_axip_list', {})
         ##########################
         # Channel Init
         self._mcast_member_timeout = {}
@@ -135,6 +137,7 @@ class ax25Multicast:
                    (self._mcast_conf.get('mcast_member_timeout', 60) * 60) +
                    (self._mcast_conf.get('mcast_member_init_timeout', 5) * 60))
         logger.debug(f'MCast: Member Init-Timeout: {round((init_to - time.time()) / 60)} Min.')
+        user_db = self._mcast_port_handler.get_userDB()
 
         for ch_id, conf in self._mcast_ch_conf.items():
             logger.info(f'MCast: Channel {ch_id} ({conf.get("ch_name", "")}) Init.')
@@ -143,11 +146,22 @@ class ax25Multicast:
             for member_call in conf.get('ch_members', []):
                 logger.info(f"MCast: {member_call} > {self._mcast_member_add_list.get(member_call, ())}")
                 self._mcast_member_timeout[str(member_call)] = init_to
-                """
-                if member_call not in self._mcast_member_add_list:
-                    # self._mcast_member_add_list[str(member_call)] = axip_add
-                    self._mcast_member_timeout[str(member_call)] = init_to
-                """
+                if member_call in self._mcast_member_add_list:
+                    # Updating AXIP Address from UserDB
+                    if hasattr(user_db, 'get_AXIP'):
+                        user_db_add: tuple = tuple(user_db.get_AXIP(member_call))
+                        if not user_db_add[0]:
+                            user_db_add = ()
+                        mcast_add = self._mcast_member_add_list.get(member_call, ())
+                        if not mcast_add:
+                            self._update_member_ip_list(member_call, user_db_add)
+                            continue
+                        if user_db_add == mcast_add:
+                            continue
+                        if all((not check_ip_add_format(mcast_add[0]),
+                                check_ip_add_format(user_db_add[0]))):
+                            self._update_member_ip_list(member_call, user_db_add)
+
         logger.debug('MCast: Member Address List: ')
         for member_call,  member_ip in self._mcast_member_add_list.items():
             logger.debug(f'MCast: {member_call} > {member_ip}')
@@ -181,12 +195,36 @@ class ax25Multicast:
         call = str(ax25frame.from_call.call)
         call_str = str(ax25frame.from_call.call_str)
         if call in self._mcast_member_add_list:
-            self._mcast_member_add_list[call] = tuple(ax25frame.axip_add)
+            self._update_member_ip_list(call, tuple(ax25frame.axip_add))
+            # self._mcast_member_add_list[call] = tuple(ax25frame.axip_add)
             self._set_member_timeout(call)
             return
-        self._mcast_member_add_list[call_str] = tuple(ax25frame.axip_add)
+        self._update_member_ip_list(call_str, tuple(ax25frame.axip_add))
+        # self._mcast_member_add_list[call_str] = tuple(ax25frame.axip_add)
         self._set_member_timeout(call_str)
         return
+
+    def _update_member_ip_list(self, member_call: str, axip_add: tuple):
+        if not all((member_call, axip_add)):
+            return False
+        if not member_call in self._mcast_member_add_list:
+            self._mcast_member_add_list[member_call] = tuple(axip_add)
+            return True
+        old_member_add = self._mcast_member_add_list.get(member_call, ())
+        if not old_member_add:
+            self._mcast_member_add_list[member_call] = tuple(axip_add)
+            return True
+        # Check Address Format DomainName | IP
+        if check_ip_add_format(old_member_add[0]):
+            # Keeping DomainName instead of IP
+            self._mcast_member_add_list[member_call] = tuple(axip_add)
+            return True
+        # Check if DomainName returns an IP
+        if not get_ip_by_hostname(old_member_add[0]):
+            # Replacing DomainName with IP
+            self._mcast_member_add_list[member_call] = tuple(axip_add)
+            return True
+        return False
 
     def mcast_rx(self, ax25frame):
         """ Input from AXIP-RX """
@@ -344,6 +382,15 @@ class ax25Multicast:
             ret += f" # Channel {ch_id} - {self._get_channel_name(ch_id).ljust(10)} - Members: {len(self._get_channel_members_fm_ch_id(ch_id))}\r"
         ret += '\r'
         return ret
+
+    def get_member_ip(self, member_call: str):
+        return tuple(self._get_member_ip(member_call))
+
+    def set_member_ip(self, member_call: str, axip_add: tuple):
+        if not all((member_call, axip_add)):
+            return False
+        return self._update_member_ip_list(member_call, axip_add)
+
     #########################################################
     # Member Stuff
     def _handle_new_member(self, member_call: str):

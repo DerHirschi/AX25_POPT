@@ -109,7 +109,7 @@ class AX25Conn:
         # TODO: Cleanup
         """ Global Stuff """
         self.own_port = port
-        self._port_handler = port.port_handler
+        self._port_handler = port.port_get_PH()
         """ Port Config Parameter """
         self._port_cfg = dict(self.own_port.port_cfg)
         self.parm_PacLen = self._port_cfg.get('parm_PacLen', 160)  # Max Pac len

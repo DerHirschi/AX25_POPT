@@ -36,11 +36,11 @@ class AX25Port(object):
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
-        self._tx_th = None
+        # self._tx_th = None
         ############
         # CONFIG
         self.port_cfg = dict(port_cfg)
-        self.port_handler = port_handler
+        self._port_handler = port_handler
         self.kiss = Kiss(port_cfg)
         self.port_param = port_cfg.get('parm_PortParm', ('', 0))
         self.portname = port_cfg.get('parm_PortName', '')
@@ -198,14 +198,14 @@ class AX25Port(object):
         return False
 
     def _rx_link_handler(self, ax25_frame):
-        if reverse_uid(ax25_frame.addr_uid) in self.port_handler.link_connections.keys():
+        if reverse_uid(ax25_frame.addr_uid) in self._port_handler.link_connections.keys():
             logger.debug(f"Port rx_link_handler reverse_uid: UID: {ax25_frame.addr_uid}")
             logger.debug(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
             return False
-        if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
+        if ax25_frame.addr_uid in self._port_handler.link_connections.keys():
             # print(f"Link-Conn RX: {ax25_frame.addr_uid}")
-            conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
-            link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
+            conn = self._port_handler.link_connections[ax25_frame.addr_uid][0]
+            link_call = self._port_handler.link_connections[ax25_frame.addr_uid][1]
             if link_call:
                 if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
                     conn.handle_rx(ax25_frame=ax25_frame)
@@ -234,7 +234,7 @@ class AX25Port(object):
         """
         netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
         if netrom_cfg:     # Net-Rom
-            rTable = self.port_handler.get_RoutingTable()
+            rTable = self.port_get_PH().get_RoutingTable()
             if rTable is None:
                 return True
             ax25_frame_conf['port_id'] = int(self.port_id)
@@ -242,7 +242,7 @@ class AX25Port(object):
             # NetRom_decode_UI(ax25_frame_conf)
             return True
         """
-        aprs_ais = self.port_handler.get_aprs_ais()
+        aprs_ais = self._port_handler.get_aprs_ais()
         if hasattr(aprs_ais, 'aprs_ax25frame_rx'):
             aprs_ais.aprs_ax25frame_rx(
                 port_id=self.port_id,
@@ -489,8 +489,8 @@ class AX25Port(object):
     def _tx_rxecho_buf(self):
         tr = False
         # RX-Echo
-        if self.port_id in self.port_handler.rx_echo.keys():
-            for fr in self.port_handler.rx_echo[self.port_id].tx_buff:
+        if self.port_id in self._port_handler.rx_echo.keys():
+            for fr in self._port_handler.rx_echo[self.port_id].tx_buff:
                 try:
                     self.tx(frame=fr)
                     tr = True
@@ -500,12 +500,12 @@ class AX25Port(object):
                     logger.error('Encoding Error: ! MSG to short !')
                 # Monitor
                 # self._gui_monitor(ax25frame=fr, tx=True)
-            self.port_handler.rx_echo[self.port_id].tx_buff = []
+            self._port_handler.rx_echo[self.port_id].tx_buff = []
         return tr
 
     def _rx_echo(self, ax25_frame):
-        if self.port_handler.rx_echo_on:
-            self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
+        if self._port_handler.rx_echo_on:
+            self._port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
     ##########################################################
     # DualPort
@@ -768,7 +768,7 @@ class AX25Port(object):
         return conn
 
     def del_connections(self, conn):
-        self.port_handler.del_link(conn.uid)
+        self._port_handler.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
         for conn_uid in list(self.connections.keys()):
@@ -835,7 +835,7 @@ class AX25Port(object):
     def _gui_monitor(self, ax25frame, tx: bool = True):
         if self.monitor_out:
             port_cfg = self.port_cfg
-            self.port_handler.update_monitor(
+            self._port_handler.update_monitor(
                 # monitor_frame_inp(ax25frame, self.port_cfg),
                 ax25frame,
                 port_conf=port_cfg,
@@ -922,6 +922,9 @@ class AX25Port(object):
             if time.time() > self._TXD:
                 # ######### TX #############
                 self._tx_handler()
+
+    def port_get_PH(self):
+        return self._port_handler
 
 
 class KissTCP(AX25Port):
@@ -1203,7 +1206,7 @@ class AXIP(AX25Port):
             # MCast
             if self.port_cfg.get('parm_axip_Multicast', False):
                 logger.info(f"Port {self.port_id}: Set Multicast to Server !!")
-                self._mcast_server = self.port_handler.get_mcast_server()
+                self._mcast_server = self._port_handler.get_mcast_server()
                 if hasattr(self._mcast_server, 'set_mcast_port'):
                     try:
                         self._mcast_server.set_mcast_port(self)

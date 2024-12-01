@@ -80,7 +80,7 @@ class AX25PortHandler(object):
         #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
-        self._mcast_server = ax25Multicast()
+        self._mcast_server = ax25Multicast(self)
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"PH: Port Init Max-Ports {MAX_PORTS}")
@@ -231,16 +231,27 @@ class AX25PortHandler(object):
                 ret = False
         return ret
 
-    def close_all_ports(self):
+    def close_popt(self):
+        # TODO Cleanup / OPT
+        logger.info("PH: Closing PoPT")
         self.is_running = False
         if self.mh:
+            logger.info("PH: Saving MH-Data")
             self.mh.save_mh_data()
+            logger.info("PH: Saving Port Statistic-Data")
             self.mh.save_PortStat()
+        logger.info("PH: Saving User-DB Data")
         USER_DB.save_data()
+        logger.info("PH: Closing User-DB")
         self.close_DB()
+        logger.info("PH: Saving MCast-Data")
+        self._mcast_server.mcast_save_cfgs()
+        logger.info("PH: Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
+        logger.info("PH: Closing APRS-Client")
         self.close_aprs_ais()
         for k in list(self.ax25_ports.keys()):
+            logger.info(f"PH: Closing Port {k}")
             self.close_port(k)
 
     def close_port(self, port_id: int):
