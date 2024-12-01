@@ -16,37 +16,39 @@ class MCastChannel:
 
         self._ch_conf = dict(ch_conf)
         self._ch_id = ch_conf.get('ch_id', -1)
-        self._ch_member_add = ch_conf.get('ch_members', {})  # """CALL: (DomainName/IP, PORT)"""
+        self._ch_member_add = ch_conf.get('ch_members', [])
 
         logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init complete")
 
     def get_ch_members(self):
-        return list(self._ch_member_add.keys())
+        return list(self._ch_member_add)
 
     def del_ch_member(self, member_call: str):
         if not member_call:
             return False
         if member_call not in self.get_ch_members():
             return False
-        del self._ch_member_add[member_call]
+        self._ch_member_add.remove(member_call)
         return True
 
-    def add_ch_member(self, member_call: str, member_ip: tuple):
-        if not all((member_call, member_ip)):
+    def add_ch_member(self, member_call: str):
+        if not member_call:
             return False
         if member_call in self.get_ch_members():
             logger.warning(f"MCast CH {self._ch_id}: add_ch_member() Member {member_call} already exists !")
             return False
-        self._ch_member_add[member_call] = member_ip
+        self._ch_member_add.append(member_call)
         logger.info(f"MCast CH {self._ch_id}: Add member {member_call} to Channel")
         return True
 
+    """
     def update_ch_member(self, member_call: str, member_ip: tuple):
         if not all((member_call, member_ip)):
             return False
         self._ch_member_add[member_call] = member_ip
         logger.info(f"MCast CH {self._ch_id}: Member {member_call} Address update > {member_ip}")
         return True
+    """
 
     def is_member(self, member_call: str):
         if not member_call:
@@ -77,42 +79,40 @@ class ax25Multicast:
             mcast_server_call='MD2TES',
             mcast_ch_conf={
                 0: dict(
-                ch_id=0,
-                ch_name='Lobby',
-                ch_members={
-                    #    'AX1TES': ('192.168.255.50', 193),
-                    #    'AX2TES': ('192.168.1.177', 93),
-                    },          # """CALL: (DomainName/IP, PORT)"""
+                    ch_id=0,
+                    ch_name='Lobby',
+                    ch_members=[],
                 ),
                 1: dict(
                     ch_id=1,
                     ch_name='NODE-CH',
-                    ch_members={},
+                    ch_members=[],
                 ),
                 2: dict(
                     ch_id=2,
                     ch_name='BBS-CH',
-                    ch_members={},
+                    ch_members=[],
                 ),
                 3: dict(
                     ch_id=3,
                     ch_name='APRS-CH',
-                    ch_members={},
+                    ch_members=[],
                 ),
             },
+            mcast_axip_list={},             # """CALL: (DomainName/IP, PORT)"""
             mcast_default_ch=0,
             # New User has to register (connect to MCast Node/Station/CLI) first
             mcast_new_user_reg=1,           # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
-            mcast_member_timeout=60,         # Minutes
+            mcast_member_timeout=60,        # Minutes
         )
         self._mcast_default_ch = self._mcast_conf.get('mcast_default_ch', 0)
         self._mcast_ch_conf = self._mcast_conf.get('mcast_ch_conf', {})
         self._mcast_server_call = self._mcast_conf.get('mcast_server_call', '')
+        self._mcast_member_add_list = self._mcast_conf.get('mcast_axip_list', {})
         ##########################
         self._mcast_port = None
         ##########################
         # Channel Init
-        self._mcast_member_add_list = {}
         self._mcast_member_timeout = {}
         self._mcast_channels = {}
         self._init_mcast_channels()
@@ -131,16 +131,23 @@ class ax25Multicast:
     # Init Stuff
     def _init_mcast_channels(self):
         logger.info('MCast: Channel Init..')
+        init_to = (time.time() -
+                   (self._mcast_conf.get('mcast_member_timeout', 60) * 60) +
+                   (self._mcast_conf.get('mcast_member_init_timeout', 5) * 60))
+        logger.debug(f'MCast: Member Init-Timeout: {round((init_to - time.time()) / 60)} Min.')
+
         for ch_id, conf in self._mcast_ch_conf.items():
             logger.info(f'MCast: Channel {ch_id} ({conf.get("ch_name", "")}) Init.')
             self._mcast_channels[ch_id] = MCastChannel(ch_conf=conf)
             logger.info(f'MCast: Channel {ch_id} ({conf.get("ch_name", "")}) Members:')
-            for member_call, axip_add in conf.get('ch_members', {}).items():
-                logger.info(f"MCast: {member_call} > {axip_add}")
+            for member_call in conf.get('ch_members', []):
+                logger.info(f"MCast: {member_call} > {self._mcast_member_add_list.get(member_call, ())}")
+                self._mcast_member_timeout[str(member_call)] = init_to
+                """
                 if member_call not in self._mcast_member_add_list:
-                    self._mcast_member_add_list[str(member_call)] = axip_add
-                    # TODO ?? Set Timeout after Re/INIT ??
-                    self._mcast_member_timeout[str(member_call)] = time.time()
+                    # self._mcast_member_add_list[str(member_call)] = axip_add
+                    self._mcast_member_timeout[str(member_call)] = init_to
+                """
         logger.debug('MCast: Member Address List: ')
         for member_call,  member_ip in self._mcast_member_add_list.items():
             logger.debug(f'MCast: {member_call} > {member_ip}')
@@ -159,6 +166,9 @@ class ax25Multicast:
     def del_mcast_port(self):
         logger.info(f"MCast: Delete Multicast Port ")
         self._mcast_port = None
+
+    def mcast_save_cfgs(self):
+        logger.info('MCast: Save MCast settings')
 
     #################################################################
     # RX/TX/Tasker Stuff
@@ -321,7 +331,7 @@ class ax25Multicast:
         for cfg_name, cfg_val in ch_conf.items():
             cfg_name = cfg_name.split('ch_')[1]
             if cfg_name == 'members':
-                members = ' '.join(list(cfg_val.keys()))
+                members = ' '.join(cfg_val)
                 ret += f" # {cfg_name}: {members}\r"
             else:
                 ret += f" # {cfg_name}: {cfg_val}\r"
@@ -403,13 +413,15 @@ class ax25Multicast:
         member_call = self._get_member_call(member_call)
         if not member_call:
             return False
+        """
         member_ip = self._get_member_ip(member_call)
         if not member_ip:
             logger.error(f"MCast: Member not in Add-List ! _add_member_to_channel()")
             return False
+        """
         mcast_channel = self._mcast_channels.get(channel_id, None)
         if hasattr(mcast_channel, 'add_ch_member'):
-            return mcast_channel.add_ch_member(member_call, member_ip)
+            return mcast_channel.add_ch_member(member_call)
 
         logger.error("MCast: Attribut Error _add_member_to_channel()")
         return False
@@ -451,7 +463,7 @@ class ax25Multicast:
 
     def _get_channel_members_fm_ch_id(self, channel_id: int):
         ch_conf = self._get_channel_conf(channel_id)
-        return list(ch_conf.get('ch_members', {}).keys())
+        return list(ch_conf.get('ch_members', []))
 
     def _get_channel_name(self, channel_id: int):
         if channel_id not in self._mcast_channels:
