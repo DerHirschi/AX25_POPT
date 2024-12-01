@@ -469,9 +469,17 @@ class Main_CFG:
 
     def get_MCast_CFG(self):
         return dict(self._config.get('mcast_cfg', getNew_mcast_cfg()))
+        # return getNew_mcast_cfg()
 
     def get_MCast_CH_CFGs(self):
         return dict(self._config.get('mcast_cfg', {}).get('mcast_ch_conf', {}))
+
+    def set_MCast_CFG(self, mcast_cfg: dict):
+        if not mcast_cfg:
+            logger.error('Main CFG: set_MCast_CFG no Config')
+            return False
+        self._config['mcast_cfg'] = dict(mcast_cfg)
+        return True
 
 
 POPT_CFG = Main_CFG()

@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.110.17'
+VER = '2.110.18'
 DEBUG_LOG = True
 CONSOLE_LOG = True
 LANGUAGE = 0   # QUICK FIX

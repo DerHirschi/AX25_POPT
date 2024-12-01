@@ -5,6 +5,7 @@ Idea: "Multicast" Server handels all Connections in Virtual Channels and
 import time
 
 from ax25.ax25Error import AX25DeviceERROR, MCastInitError
+from cfg.default_config import getNew_mcast_channel_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
@@ -78,40 +79,11 @@ class ax25Multicast:
         ##########################
         self._mcast_port_handler = port_handler
         self._mcast_port = None
+        ##########################
         self._mcast_conf: dict = POPT_CFG.get_MCast_CFG()
-        self._mcast_conf: dict = dict(
-            mcast_server_call='MD2TES',
-            mcast_ch_conf={
-                0: dict(
-                    ch_id=0,
-                    ch_name='Lobby',
-                    ch_members=[],
-                ),
-                1: dict(
-                    ch_id=1,
-                    ch_name='NODE-CH',
-                    ch_members=[],
-                ),
-                2: dict(
-                    ch_id=2,
-                    ch_name='BBS-CH',
-                    ch_members=[],
-                ),
-                3: dict(
-                    ch_id=3,
-                    ch_name='APRS-CH',
-                    ch_members=[],
-                ),
-            },
-            mcast_axip_list={},             # """CALL: (DomainName/IP, PORT)"""
-            mcast_default_ch=0,
-            # New User has to register (connect to MCast Node/Station/CLI) first
-            mcast_new_user_reg=1,           # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
-            mcast_member_timeout=60,        # Minutes
-        )
         self._mcast_default_ch: int = self._mcast_conf.get('mcast_default_ch', 0)
         self._mcast_ch_conf: dict = self._mcast_conf.get('mcast_ch_conf', {})
-        self._mcast_server_call: str = self._mcast_conf.get('mcast_server_call', '')
+        self._mcast_server_call: str = self._mcast_conf.get('mcast_server_call', 'MCAST0')
         self._mcast_member_add_list: dict = self._mcast_conf.get('mcast_axip_list', {})
         ##########################
         # Channel Init
@@ -137,8 +109,10 @@ class ax25Multicast:
                    (self._mcast_conf.get('mcast_member_timeout', 60) * 60) +
                    (self._mcast_conf.get('mcast_member_init_timeout', 5) * 60))
         logger.debug(f'MCast: Member Init-Timeout: {round((init_to - time.time()) / 60)} Min.')
+        if not self._mcast_ch_conf:
+            logger.warning("Mcast: No Channels configured. creating new Default Channel")
+            self._mcast_ch_conf[0] = getNew_mcast_channel_cfg(0)
         user_db = self._mcast_port_handler.get_userDB()
-
         for ch_id, conf in self._mcast_ch_conf.items():
             logger.info(f'MCast: Channel {ch_id} ({conf.get("ch_name", "")}) Init.')
             self._mcast_channels[ch_id] = MCastChannel(ch_conf=conf)
@@ -151,7 +125,7 @@ class ax25Multicast:
                     if hasattr(user_db, 'get_AXIP'):
                         user_db_add: tuple = tuple(user_db.get_AXIP(member_call))
                         if not user_db_add[0]:
-                            user_db_add = ()
+                            continue
                         mcast_add = self._mcast_member_add_list.get(member_call, ())
                         if not mcast_add:
                             self._update_member_ip_list(member_call, user_db_add)
@@ -162,9 +136,9 @@ class ax25Multicast:
                                 check_ip_add_format(user_db_add[0]))):
                             self._update_member_ip_list(member_call, user_db_add)
 
-        logger.debug('MCast: Member Address List: ')
+        logger.info('MCast: Updated Member Address List: ')
         for member_call,  member_ip in self._mcast_member_add_list.items():
-            logger.debug(f'MCast: {member_call} > {member_ip}')
+            logger.info(f'MCast: {member_call} > {member_ip}')
         logger.info('MCast: Channel Init Done!')
 
     def set_mcast_port(self, port):
@@ -183,6 +157,18 @@ class ax25Multicast:
 
     def mcast_save_cfgs(self):
         logger.info('MCast: Save MCast settings')
+        ch_conf = {}
+        for ch_id, channel in self._mcast_channels.items():
+            if hasattr(channel, 'get_channel_conf'):
+                ch_conf[ch_id] = dict(channel.get_channel_conf())
+            else:
+                logger.error(f"MCast: Attribut Error Channel: {ch_id}")
+
+        conf: dict = dict(self._mcast_conf)
+        conf['mcast_axip_list'] = dict(self._mcast_member_add_list)
+        conf['mcast_ch_conf'] = dict(ch_conf)
+        POPT_CFG.set_MCast_CFG(conf)
+        logger.info('MCast: Save MCast settings, Done !')
 
     #################################################################
     # RX/TX/Tasker Stuff
@@ -295,8 +281,10 @@ class ax25Multicast:
                     self._mcast_port = None
                     return
 
+    """
     def tasker(self):
         pass
+    """
 
     #########################################################
     # Remote Stuff
@@ -397,6 +385,8 @@ class ax25Multicast:
         lang = POPT_CFG.get_guiCFG_language()
         text = STR_TABLE['mcast_new_user_beacon'][lang].format(self._mcast_server_call)
         if not all((member_call, text)):
+            print(member_call)
+            print(text)
             return
         self._send_UI_to_user(member_call, text)
 
@@ -558,21 +548,21 @@ class ax25Multicast:
         data = text.encode('UTF-8', 'ignore')[:256]
 
         if not all((
-                self._mcast_conf.get('mcast_server_call', ''),
                 user_call,
                 data,
                 axip_add
         )):
+            logger.error("MCast: Attribut Error _send_UI_to_user() 1")
             return False
         if not hasattr(self._mcast_port, 'send_UI_frame'):
-            logger.error("MCast: Attribut Error _send_UI_to_user()")
+            logger.error("MCast: Attribut Error _send_UI_to_user() 2")
             return False
-        logger.debug(f"MCast: Send UI to {user_call} - {axip_add}")
-        logger.debug(f"MCast: {data}")
         if not to_call:
             to_call = str(user_call)
+        logger.debug(f"MCast: Send UI to {to_call} - {axip_add}")
+        logger.debug(f"MCast: {data}")
         self._mcast_port.send_UI_frame(
-            own_call=self._mcast_conf.get('mcast_server_call', ''),
+            own_call=str(self._mcast_server_call),
             add_str=str(to_call),
             text=data[:256],
             axip_add=axip_add,
