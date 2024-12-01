@@ -43,7 +43,12 @@ Ideas/TODO's :
 
 - Soundsystem/Sprachausgabe überarbeiten
 ✓ Haupt GUI überarbeiten
+  - Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
+- Einstellung GUI überarbeiten (OnePager)
   - Individuelle Farben (Vorschreib Fenster)
+  - Individuelle Farben (PMS)
+  - Individuelle Farben (APRS)
+  - Sprache auswählbar
 
 ✓ Loop Port oder einfach localhost via AXIP
   ✓ einfach 127.0.0.1 und eigenen AXIP Port die eigene Station/Node connecten)
@@ -55,13 +60,16 @@ Ideas/TODO's :
 
 ✓ KISS
   ✓ kompatibilität TNC nur teilweise
-  - Custom KISS/TNC Init setzbar
+  ✓ Custom KISS/TNC Init setzbar (constant.py)
+    - Custom KISS/TNC Init in GUI setzbar
   - MultiPortKISS (Direwolf)
 
-- AXIP-Multicast überarbeiten
+✓ AXIP-Multicast überarbeiten
   - ! LOOP-Preventer !
-  - Multicast Channels/Groups
-  - Multicast CLI/NODE
+  ✓ Multicast Channels/Groups
+  ✓ Multicast CLI/NODE
+  - Multicast Einstellung GUI
+  - Multicast Monitor GUI
   - Multicast Filter
 
 ✓ "Managed-DIGI" - Digi übernimmt Flusskontrolle
@@ -91,8 +99,8 @@ Ideas/TODO's :
 - "Multi-TNC/Multi-Port/Mesh-TNC" mehrere TNC's via KISSTCP zusammenschalten. Siehe Dual-TNC
 
 ✓ UserDB
-  ? UserDB auf SQL-DB Umstellen
-  ? Infos / Ctext usw. in User-DB automatisch abfragen und speichern
+  ? UserDB auf SQL-DB umstellen?
+  - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
 ✓ Logbuch
@@ -116,7 +124,7 @@ Ideas/TODO's :
   - Optional Header in Datei schreiben für jeden Frame
   - Optional Remote-CMD für Disco u.Ä.
 
-- Remote-GPIO Tool (Idee von Lars)
+- Remote-GPIO Tool für PI (Idee von Lars)
 
 ✓ PoPT-Scheduler
   ✓ Autoconnect

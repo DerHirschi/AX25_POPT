@@ -56,6 +56,8 @@ class MCastChannel:
     def get_channel_name(self):
         return str(self._ch_conf.get('ch_name', ''))
 
+    def get_channel_conf(self):
+        return dict(self._ch_conf)
     """
     def get_all_members_add(self):
         ret = []
@@ -291,7 +293,36 @@ class ax25Multicast:
                     f" # MCast: Please contact Sysop!\r")
         return f"\r # MCast: You ar now in Channel {channel_id} ({self._get_channel_name(channel_id)})\r"
 
+    def get_channel_info_fm_member(self, member_call: str):
+        member_call = self._get_member_call(member_call)
+        if not member_call:
+            return "\r # MCast: Error no Member-Call or Channel selected.\r"
+        ch_id = self._get_channels_fm_member(member_call)
+        if not ch_id:
+            logger.error(f"MCast: {member_call} is not in any channel")
+            return "\r # MCast: Error Member is not in any channel .\r"
+        ch_id = ch_id[0]
+        ch_conf = self._get_channel_conf(channel_id=ch_id)
+        if not ch_conf:
+            logger.error(f"MCast: No Config found for CH {ch_id}.")
+            return "\r # MCast: No Channel-Config found.\r"
+        ret = '\r'
+        for cfg_name, cfg_val in ch_conf.items():
+            cfg_name = cfg_name.split('ch_')[1]
+            if cfg_name == 'members':
+                members = ' '.join(list(cfg_val.keys()))
+                ret += f" # {cfg_name}: {members}\r"
+            else:
+                ret += f" # {cfg_name}: {cfg_val}\r"
+        ret += '\r'
+        return ret
 
+    def get_channels(self):
+        ret = f'\r ### Total Channels: {len(list(self._mcast_channels.keys()))}\r'
+        for ch_id, channel in self._mcast_channels.items():
+            ret += f" # Channel {ch_id} - {self._get_channel_name(ch_id).ljust(10)} - Members: {len(self._get_channel_members_fm_ch_id(ch_id))}\r"
+        ret += '\r'
+        return ret
     #########################################################
     # Member Stuff
     def _handle_new_member(self, member_call: str):
@@ -389,6 +420,10 @@ class ax25Multicast:
                 return channel_members
         return None
 
+    def _get_channel_members_fm_ch_id(self, channel_id: int):
+        ch_conf = self._get_channel_conf(channel_id)
+        return list(ch_conf.get('ch_members', {}).keys())
+
     def _get_channel_name(self, channel_id: int):
         if channel_id not in self._mcast_channels:
             logger.error(f"MCast: _get_channel_name() - Channel {channel_id} not found !")
@@ -398,6 +433,16 @@ class ax25Multicast:
             logger.error(f"MCast: _get_channel_name() - Attribut Error !")
             return ''
         return channel.get_channel_name()
+
+    def _get_channel_conf(self, channel_id: int):
+        if channel_id not in self._mcast_channels:
+            logger.error(f"MCast: _get_channel_conf() - Channel {channel_id} not found !")
+            return {}
+        channel = self._mcast_channels.get(channel_id)
+        if not hasattr(channel, 'get_channel_conf'):
+            logger.error(f"MCast: _get_channel_conf() - Attribut Error !")
+            return {}
+        return channel.get_channel_conf()
 
     #########################################################
     # TX/Build UI Frames

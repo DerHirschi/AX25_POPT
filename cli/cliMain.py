@@ -1438,6 +1438,8 @@ class MCastCLI(DefaultCLI):
             'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
             # MCAST ######################################################
             'CH': (2, self._cmd_mcast_move_channel, STR_TABLE['cmd_help_mcast_move_ch'][self._connection.cli_language]),
+            'CHLIST': (3, self._cmd_mcast_channels, STR_TABLE['cmd_help_mcast_channels'][self._connection.cli_language]),
+            'CHINFO': (3, self._cmd_mcast_channel_info, STR_TABLE['cmd_help_mcast_ch_info'][self._connection.cli_language]),
             ##############################################################
             'INFO': (1, self._cmd_i, 'Info'),
             'LINFO': (2, self._cmd_li, 'Long Info'),
@@ -1517,8 +1519,24 @@ class MCastCLI(DefaultCLI):
             ch_id = int(self._parameter[0])
         except (ValueError, IndexError):
             return "\r # MCast: Error ! Invalid Channel !\r"
-
         return mcast_server.move_channel(member_call=str(self._to_call_str), channel_id=ch_id)
+
+    def _cmd_mcast_channel_info(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not hasattr(mcast_server, 'get_channel_info_fm_member'):
+            logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_channel_info()")
+            return '\r # MCast: Attribute Error Mcast-Server\r'
+        # if not self._parameter:
+        return mcast_server.get_channel_info_fm_member(member_call=str(self._to_call_str))
+
+    def _cmd_mcast_channels(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not hasattr(mcast_server, 'get_channels'):
+            logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_channels()")
+            return '\r # MCast: Attribute Error Mcast-Server\r'
+        # if not self._parameter:
+        return mcast_server.get_channels()
+
 
 CLI_OPT = {
     UserCLI.cli_name: UserCLI,

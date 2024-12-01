@@ -1903,6 +1903,26 @@ STR_TABLE = {
                                '',
                                ''),
 
+    'cmd_help_mcast_ch_info': ('MCast Kanal Info',
+                               'MCast channel info',
+                               'MCast kanaalinformatie',
+                               '',
+                               '',
+                               '',
+                               '',
+                               '',
+                               ''),
+
+    'cmd_help_mcast_channels': ('MCast Kanal Übersicht',
+                               'MCast channel overview',
+                               'MCast kanaaloverzicht',
+                               '',
+                               '',
+                               '',
+                               '',
+                               '',
+                               ''),
+
     'mcast_new_user_beacon': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          '-= Willkommen auf dem AXIP-MCast Server. Registriere dich auf {} =-',
