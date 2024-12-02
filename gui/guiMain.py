@@ -2660,3 +2660,5 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame2.t2speech.configure(state='disabled')
         self.set_var_to_all_ch_param()
 
+    def get_PH_manGUI(self):
+        return PORT_HANDLER

@@ -39,6 +39,8 @@ class Main_CFG:
             ##########################
             # -- Beacon
             'beacon_tasks': [],
+            ##########################
+            # -- Dual Port
             'dualPort_cfg': {},
             ##########################
             # -- DIGI

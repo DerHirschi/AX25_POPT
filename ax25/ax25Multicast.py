@@ -15,11 +15,9 @@ from fnc.socket_fnc import check_ip_add_format, get_ip_by_hostname
 class MCastChannel:
     def __init__(self, ch_conf: dict):
         logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init")
-
         self._ch_conf = dict(ch_conf)
         self._ch_id = ch_conf.get('ch_id', -1)
         self._ch_member_add = ch_conf.get('ch_members', [])
-
         logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init complete")
 
     def get_ch_members(self):
@@ -43,15 +41,6 @@ class MCastChannel:
         logger.info(f"MCast CH {self._ch_id}: Add member {member_call} to Channel")
         return True
 
-    """
-    def update_ch_member(self, member_call: str, member_ip: tuple):
-        if not all((member_call, member_ip)):
-            return False
-        self._ch_member_add[member_call] = member_ip
-        logger.info(f"MCast CH {self._ch_id}: Member {member_call} Address update > {member_ip}")
-        return True
-    """
-
     def is_member(self, member_call: str):
         if not member_call:
             return False
@@ -64,14 +53,7 @@ class MCastChannel:
 
     def get_channel_conf(self):
         return dict(self._ch_conf)
-    """
-    def get_all_members_add(self):
-        ret = []
-        for call, add in self._ch_member_add.items():
-            if add not in ret:
-                ret.append(tuple(add))
-        return ret
-    """
+
 
 class ax25Multicast:
     def __init__(self, port_handler):
@@ -141,6 +123,30 @@ class ax25Multicast:
             logger.info(f'MCast: {member_call} > {member_ip}')
         logger.info('MCast: Channel Init Done!')
 
+    def reinit_mcast_cfgs(self):
+        logger.info('MCast: Reinit')
+        ##########################
+        self._mcast_conf: dict = POPT_CFG.get_MCast_CFG()
+        self._mcast_default_ch: int = self._mcast_conf.get('mcast_default_ch', 0)
+        self._mcast_ch_conf: dict = self._mcast_conf.get('mcast_ch_conf', {})
+        self._mcast_server_call: str = self._mcast_conf.get('mcast_server_call', 'MCAST0')
+        self._mcast_member_add_list: dict = self._mcast_conf.get('mcast_axip_list', {})
+        ##########################
+        # Channel Init
+        self._mcast_member_timeout = {}
+        self._mcast_channels = {}
+        self._init_mcast_channels()
+        ##########################
+        self._ui_frame_cfg = dict(
+            own_call=str(self._mcast_server_call),
+            add_str='ALL',
+            text=b'',
+            cmd_poll=(False, False),
+            pid=0xF0,
+            axip_add=()
+        )
+        logger.info('MCast: Reinit Complete')
+
     def set_mcast_port(self, port):
         if self._mcast_port is not None:
             logger.error(f"MCast: set_port ! Just one MCast possible !")
@@ -155,8 +161,15 @@ class ax25Multicast:
         logger.info(f"MCast: Delete Multicast Port ")
         self._mcast_port = None
 
+    #################################################################
+    # CFG Stuff
     def mcast_save_cfgs(self):
         logger.info('MCast: Save MCast settings')
+        conf = dict(self.get_mcast_cfgs())
+        POPT_CFG.set_MCast_CFG(conf)
+        logger.info('MCast: Save MCast settings, Done !')
+
+    def get_mcast_cfgs(self):
         ch_conf = {}
         for ch_id, channel in self._mcast_channels.items():
             if hasattr(channel, 'get_channel_conf'):
@@ -167,8 +180,10 @@ class ax25Multicast:
         conf: dict = dict(self._mcast_conf)
         conf['mcast_axip_list'] = dict(self._mcast_member_add_list)
         conf['mcast_ch_conf'] = dict(ch_conf)
-        POPT_CFG.set_MCast_CFG(conf)
-        logger.info('MCast: Save MCast settings, Done !')
+        return conf
+
+    def get_mcast_timeout_list(self):
+        return dict(self._mcast_member_timeout)
 
     #################################################################
     # RX/TX/Tasker Stuff
@@ -335,6 +350,8 @@ class ax25Multicast:
     def move_channel(self, member_call: str, channel_id: int):
         if not all((member_call, channel_id is not None)):
             return "\r # MCast: Error no Member-Call or Channel selected.\r"
+        if channel_id not in self._mcast_channels:
+            return f"\r # MCast: Error Channel {channel_id} not exists.\r"
         if not self._move_member_to_channel(member_call, channel_id):
             return (f"\r # MCast: Error while try to move to Channel {channel_id}.\r"
                     f" # MCast: Please contact Sysop!\r")
@@ -385,8 +402,6 @@ class ax25Multicast:
         lang = POPT_CFG.get_guiCFG_language()
         text = STR_TABLE['mcast_new_user_beacon'][lang].format(self._mcast_server_call)
         if not all((member_call, text)):
-            print(member_call)
-            print(text)
             return
         self._send_UI_to_user(member_call, text)
 
@@ -435,6 +450,7 @@ class ax25Multicast:
 
         member_channels = self._get_channels_fm_member(member_call)
         if len(member_channels) > 1:
+            # TODO Del multiple channel members
             logger.warning(f"MCast: !!! Member {member_call} in multiple Channels: {', '.join(member_channels)} !!!")
 
         if not self._del_member_fm_channel(member_call):
@@ -460,7 +476,7 @@ class ax25Multicast:
         if hasattr(mcast_channel, 'add_ch_member'):
             return mcast_channel.add_ch_member(member_call)
 
-        logger.error("MCast: Attribut Error _add_member_to_channel()")
+        logger.warning(f"MCast: Attribut Error _add_member_to_channel() - channel_id; {channel_id}")
         return False
 
     def _del_member_fm_channel(self, member_call: str):

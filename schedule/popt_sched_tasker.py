@@ -10,8 +10,8 @@ class PoPTSchedule_Tasker:
     def __init__(self, port_handler):
         self._port_handler = port_handler
         self._scheduled_tasks = {
-            'PMS': self.start_AutoConnTask,
-            'BEACON': self.start_BeaconTask,
+            'PMS': self._start_AutoConnTask,
+            'BEACON': self._start_BeaconTask,
         }
         self._scheduled_tasks_q = []
         self.auto_connections = {}      # [AutoConnTask()]
@@ -42,7 +42,7 @@ class PoPTSchedule_Tasker:
 
     ####################################
     # Auto Connection Tasker
-    def start_AutoConnTask(self, conf, sched_conf=None):
+    def _start_AutoConnTask(self, conf, sched_conf=None):
         if self._is_AutoConn_maxConn(conf):
             return None
         k = conf.get('dest_call', '')
@@ -91,7 +91,7 @@ class PoPTSchedule_Tasker:
             if sched_cfg:
                 self.insert_scheduler_Task(sched_cfg, beacon)
 
-    def start_BeaconTask(self, conf, sched_conf=None):
+    def _start_BeaconTask(self, conf, sched_conf=None):
         is_glb_beacon = POPT_CFG.get_guiPARM_main('gui_cfg_beacon')
         if not is_glb_beacon:
             return None
@@ -178,4 +178,4 @@ class PoPTSchedule_Tasker:
         for task in list(self._scheduled_tasks_q):
             if task[1] == conf:
                 task[0].manual_trigger()
-                self.start_AutoConnTask(task[1])
+                self._start_AutoConnTask(task[1])
