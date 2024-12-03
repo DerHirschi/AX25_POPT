@@ -2,6 +2,9 @@ import time
 import tkinter as tk
 from tkinter import ttk
 
+from OpenGL.images import returnFormat
+
+from cfg.constant import MAX_MCAST_CH
 from cfg.default_config import getNew_mcast_channel_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
@@ -9,6 +12,84 @@ from cfg.logger_config import logger
 from fnc.str_fnc import get_timedelta_str_fm_sec
 from gui.guiError import PoPTModulError
 
+
+class MCastMoveMember(tk.Toplevel):
+    def __init__(self, root_win, member_call: str):
+        tk.Toplevel.__init__(self)
+        self.style = root_win.style
+        self._root_win = root_win
+        self._member_call = member_call
+        self._mcast_cfg: dict = POPT_CFG.get_MCast_CFG()
+        self._mcast = root_win.get_mcast()
+        self._ackt_ch = self._mcast.get_member_channel(member_call)
+        if self._ackt_ch is None:
+            self.destroy_win()
+            return
+        self._lang = POPT_CFG.get_guiCFG_language()
+        win_width = 330
+        win_height = 130
+        self.geometry(f"{win_width}x"
+                      f"{win_height}+"
+                      f"{root_win.winfo_x()}+"
+                      f"{root_win.winfo_y()}")
+        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.lift()
+        self.attributes("-topmost", True)
+        self.title('Move to Channel')
+        ##################################
+        f1 = tk.Frame(self)
+        f1.pack()
+        tk.Label(f1, text='Channel').pack(side=tk.LEFT, pady=30)
+        #
+        channels = list(self._mcast_cfg.get('mcast_ch_conf', {}).keys())
+        self._ent_var = tk.StringVar(self, str(self._ackt_ch))
+        ent = tk.OptionMenu(f1, self._ent_var, *channels)
+        ent.pack(side=tk.LEFT, padx=5)
+        ###########################################
+        ###########################################
+        # BTN
+        btn_frame = tk.Frame(self)
+        btn_frame.pack(expand=True, fill=tk.X, padx=10, pady=5, anchor=tk.S)
+        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
+        ok_btn.pack(side=tk.LEFT)
+
+        abort_btn = tk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
+        abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
+
+    def _move_member_to_ch(self):
+        channels = list(self._mcast_cfg.get('mcast_ch_conf', {}).keys())
+        try:
+            sel_ch = int(self._ent_var.get())
+        except ValueError:
+            return False
+        if self._ackt_ch == sel_ch:
+            return False
+        if sel_ch not in channels:
+            return False
+        if not hasattr(self._mcast, 'move_member_to_channel'):
+            return False
+        return self._mcast.move_member_to_channel(member_call=self._member_call, channel_id=sel_ch)
+
+    def _ok_btn(self):
+        if self._move_member_to_ch():
+            # if hasattr(self._mcast, 'mcast_save_cfgs'):
+            #     self._mcast.mcast_save_cfgs()
+            if hasattr(self._root_win, 'reinit_MCastGui'):
+                self._root_win.reinit_MCastGui()
+        # self._root_win
+        self.destroy_win()
+
+    def _abort_btn(self):
+        self.destroy_win()
+
+    def destroy_win(self):
+        self._root_win.value_win = None
+        self.destroy()
 
 class MCAST_channel_cfg_Tab(tk.Frame):
     def __init__(self, root_tabctl, channel_cfg: dict, root_win):
@@ -22,6 +103,7 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         self._ch_name = tk.StringVar(self, value=channel_cfg.get('ch_name', ''))
         self._tree_data = []
         self._member_list = {}
+        self._selected_entry = ''
         ##################
         # Channel Name
         opt_frame_0 = tk.Frame(self)
@@ -31,7 +113,7 @@ class MCAST_channel_cfg_Tab(tk.Frame):
                                           # text='CH-ID',
                                           textvariable=self._ch_id,
                                           from_=0,
-                                          to=100,
+                                          to=MAX_MCAST_CH - 1,
                                           increment=1,
                                           width=4
                                   )
@@ -81,24 +163,32 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         opt_frame_3.pack(fill=tk.X)
         add_member_btn = tk.Button(
             opt_frame_3,
-            text="Add",
+            text="Add Member",
             # command=,
         )
         add_member_btn.pack(side=tk.LEFT)
+
+        move_member_btn = tk.Button(
+            opt_frame_3,
+            text="Move Member",
+            command=self._move_member,
+        )
+        move_member_btn.pack(side=tk.LEFT, padx=5)
+
         del_member_btn = tk.Button(
             opt_frame_3,
-            text="Del",
+            text="Del Member",
             # command=,
         )
-        del_member_btn.pack(side=tk.LEFT, padx=10)
+        del_member_btn.pack(side=tk.RIGHT, )
         ###################################################################
         # Init stuff
-        self._update_member_tree()
+        self.update_member_tree()
         ###################################################################
         ###################################################################
         # self._init_entry_state()
 
-    def _update_member_tree(self):
+    def update_member_tree(self):
         self._init_tree_data()
         self._update_tree()
 
@@ -126,11 +216,30 @@ class MCAST_channel_cfg_Tab(tk.Frame):
 
         for ret_ent in self._tree_data:
             self._tree.insert('', tk.END, values=ret_ent,)
-
+    ##########################################################
     def _entry_selected(self, event):
         for selected_item in self._tree.selection():
             item = self._tree.item(selected_item)
+            call = item.get('values', [])
+            if not call:
+                self._selected_entry = ''
+                return
+            try:
+                self._selected_entry = call[0]
+            except IndexError:
+                self._selected_entry = ''
+                return
 
+
+    ################################
+    # BTN CMDs
+    def _move_member(self):
+        if not self._selected_entry:
+            return
+        self._root_win.open_value_win(str(self._selected_entry))
+
+
+    ##########################################################
     def get_cfg_fm_vars(self):
         ch_id = self._ch_id.get()
         try:
@@ -153,8 +262,17 @@ class MCAST_channel_cfg_Tab(tk.Frame):
 class MulticastSettings(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
+        ph = root_win.get_PH_manGUI()
+        if not hasattr(ph, 'get_mcast_server'):
+            self.destroy_win()
+            raise PoPTModulError
+        self._mcast = ph.get_mcast_server()
+        if not hasattr(self._mcast, 'get_mcast_cfgs'):
+            self.destroy_win()
+            raise PoPTModulError
         self._lang = root_win.language
         self._root_win = root_win
+        self.value_win = None
         win_width = 800
         win_height = 580
         self.style = root_win.style
@@ -163,7 +281,7 @@ class MulticastSettings(tk.Toplevel):
                       f"{root_win.main_win.winfo_x()}+"
                       f"{root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
-        # self.resizable(False, False)
+        self.resizable(True, False)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -172,24 +290,49 @@ class MulticastSettings(tk.Toplevel):
         self.title('MCast-Settings')
         # self._root_win.DIGI_settings_win = self
         self._root_win.settings_win = self
-        ph = self._root_win.get_PH_manGUI()
-        if not hasattr(ph, 'get_mcast_server'):
-            self.destroy_win()
-            raise PoPTModulError
-        self._mcast = ph.get_mcast_server()
-        if not hasattr(self._mcast, 'get_mcast_cfgs'):
-            self.destroy_win()
-            raise PoPTModulError
         self._mcast_cfg: dict = self._mcast.get_mcast_cfgs()
         #####################################################################
-
+        # Vars
+        self._init_to_var = tk.StringVar(self, str(self._mcast_cfg.get('mcast_member_init_timeout', 5)))
+        self._member_to_var = tk.StringVar(self, str(self._mcast_cfg.get('mcast_member_timeout', 60)))
+        self._reg_new_user = tk.BooleanVar(self, bool(self._mcast_cfg.get('mcast_new_user_reg', True)))
+        #####################################################################
         upper_frame_1 = tk.Frame(self)
-        upper_frame_1.pack(fill=tk.X)
+        upper_frame_1.pack(fill=tk.X, pady=10)
         ##
-        label_1 = tk.Label(upper_frame_1, text='TEST')
-        label_1.pack(side=tk.LEFT, anchor=tk.W, padx=5)
-        label_2 = tk.Label(upper_frame_1, text='TEST1')
-        label_2.pack(side=tk.LEFT, padx=5, pady=5)
+        to_frame = tk.Frame(upper_frame_1)
+        to_frame.pack(side=tk.LEFT, anchor=tk.W, padx=5)
+        tk.Label(to_frame, text='Member Timeout').pack(side=tk.LEFT, anchor=tk.W, padx=5)
+        member_to = tk.Spinbox(to_frame,
+                           # text='CH-ID',
+                           textvariable=self._member_to_var,
+                           from_=5,
+                           to=120,
+                           increment=5,
+                           width=4
+                           )
+        member_to.pack(side=tk.LEFT, anchor=tk.W, padx=5)
+        ###
+        init_to_frame = tk.Frame(upper_frame_1)
+        init_to_frame.pack(side=tk.LEFT, anchor=tk.W, padx=80)
+        tk.Label(init_to_frame, text='Init Timeout').pack(side=tk.LEFT, padx=5)
+        init_to = tk.Spinbox(init_to_frame,
+                               # text='CH-ID',
+                               textvariable=self._init_to_var,
+                               from_=0,
+                               to=30,
+                               increment=1,
+                               width=4
+                               )
+        init_to.pack(side=tk.LEFT, anchor=tk.W, padx=5)
+        ###
+        # reg_new_user_frame = tk.Frame(upper_frame_1)
+        # reg_new_user_frame.pack(side=tk.LEFT, anchor=tk.W, padx=80)
+        reg_new_user = tk.Checkbutton(upper_frame_1,
+                             text='Allow new Members',
+                             variable=self._reg_new_user
+                             )
+        reg_new_user.pack(side=tk.LEFT, anchor=tk.W, )
         ##########
         upper_frame_2 = tk.Frame(self)
         upper_frame_2.pack(fill=tk.X)
@@ -200,6 +343,7 @@ class MulticastSettings(tk.Toplevel):
             command=self._new_ch_btn,
         )
         add_ch_btn.pack(side=tk.LEFT, anchor=tk.W, padx=10)
+
         del_ch_btn = tk.Button(
             upper_frame_2,
             text='Del Channel',
@@ -234,18 +378,30 @@ class MulticastSettings(tk.Toplevel):
         abort_btn = tk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
+    def reinit_MCastGui(self):
+        self._mcast_cfg: dict = self._mcast.get_mcast_cfgs()
+        self._init_to_var.set(str(self._mcast_cfg.get('mcast_member_init_timeout', 5)))
+        self._member_to_var.set(str(self._mcast_cfg.get('mcast_member_timeout', 60)))
+        self._reg_new_user.set(bool(self._mcast_cfg.get('mcast_new_user_reg', True)))
+        for ch_id, tab in self._tab_list.items():
+            if hasattr(tab, 'update_member_tree'):
+                tab.update_member_tree()
+
     ################################################
     def _new_ch_btn(self):
         last_ch_id = 0
         while last_ch_id in self._mcast_cfg.get('mcast_ch_conf', {}):
             last_ch_id += 1
-            if last_ch_id == 100:
-                break
-        tab = MCAST_channel_cfg_Tab(self._tabControl, getNew_mcast_channel_cfg(last_ch_id), self)
+            if last_ch_id == MAX_MCAST_CH:
+                return
+        ch_conf = getNew_mcast_channel_cfg(last_ch_id)
+        ch_lable_text = f'CH {last_ch_id}'
+        ch_conf['ch_name'] = ch_lable_text
+        tab = MCAST_channel_cfg_Tab(self._tabControl, ch_conf, self)
         self._tab_list[last_ch_id] = tab
-        port_lable_text = f'CH {last_ch_id}'
-        self._tabControl.add(tab, text=port_lable_text)
+        self._tabControl.add(tab, text=ch_lable_text)
         self._tabControl.select(last_ch_id)
+        self._mcast_cfg['mcast_ch_conf'][last_ch_id] = ch_conf
 
     def _del_ch_btn(self):
         try:
@@ -282,7 +438,6 @@ class MulticastSettings(tk.Toplevel):
         self.destroy_win()
 
     def _set_cfg_to_mcast(self):
-
         ch_configs = {}
         member_add_list = {}
         for tab_id, tab in sorted(self._tab_list.items()):
@@ -299,12 +454,20 @@ class MulticastSettings(tk.Toplevel):
             del ch_cfg['member_add_list']
             ch_configs[ch_id] = dict(ch_cfg)
 
-        # for new_ch_id in sorted(list(ch_configs.keys())):
-
-
         conf: dict = dict(self._mcast_cfg)
         conf['mcast_axip_list'] = member_add_list
         conf['mcast_ch_conf'] = dict(ch_configs)
+        conf['mcast_new_user_reg'] = bool(self._reg_new_user.get())
+        try:
+            conf['mcast_member_timeout'] = int(self._member_to_var.get())
+        except ValueError:
+            conf['mcast_member_timeout'] = int(self._mcast_cfg.get('mcast_member_timeout', 60))
+        try:
+            conf['mcast_member_init_timeout'] = int(self._init_to_var.get())
+        except ValueError:
+            conf['mcast_member_init_timeout'] = int(self._mcast_cfg.get('mcast_member_init_timeout', 5))
+
+
         POPT_CFG.set_MCast_CFG(conf)
 
 
@@ -319,6 +482,20 @@ class MulticastSettings(tk.Toplevel):
     def get_timeout_list(self):
         return self._mcast.get_mcast_timeout_list()
 
+    def get_mcast(self):
+        return self._mcast
+
+    def open_value_win(self, arg: str):
+        if not arg:
+            return
+        if self.value_win:
+            return
+        self.value_win = MCastMoveMember(self, member_call=arg)
+
+
     def destroy_win(self):
+        if hasattr(self.value_win, 'destroy_win'):
+            self.value_win.destroy_win()
+
         self._root_win.settings_win = None
         self.destroy()

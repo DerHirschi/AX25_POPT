@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.110.19'
+VER = '2.110.20'
 DEBUG_LOG = True
 CONSOLE_LOG = True
 LANGUAGE = 0   # QUICK FIX
@@ -19,6 +19,7 @@ TNC_KISS_CMD_END = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
 """"""
 MAX_PORTS = 10              #
 SERVICE_CH_START = 11       # Service Channels Start Channel
+MAX_MCAST_CH = 30           # Max Virtual MCast Channels
 
 """ doc/PoPT/mysql_setup.txt """
 MYSQL = False    # MYSQL/SQLITE

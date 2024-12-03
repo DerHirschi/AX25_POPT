@@ -1,10 +1,20 @@
 """
 Idea: "Multicast" Server handels all Connections in Virtual Channels and
       echos all Frames to other Clients in Virtual Channels
+TODO:
+    ✓ Timeout (Nicht mehr gehört seit) für Members, sonst Datenschleuder
+    - Remote CMDs Registrieren
+    ✓ Remote CMDs IP/DNS Eingeben
+    - StringVars
+    - Baken
+    ✓ Config GUI
+    ✓ Feste DN bevorzugen
+    ✓ save configs wenn MCast beendet
 """
 import time
 
 from ax25.ax25Error import AX25DeviceERROR, MCastInitError
+from ax25.ax25RoutingTable import RoutingTable
 from cfg.default_config import getNew_mcast_channel_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -143,7 +153,7 @@ class ax25Multicast:
             text=b'',
             cmd_poll=(False, False),
             pid=0xF0,
-            axip_add=()
+            axip_add=(),
         )
         logger.info('MCast: Reinit Complete')
 
@@ -184,6 +194,15 @@ class ax25Multicast:
 
     def get_mcast_timeout_list(self):
         return dict(self._mcast_member_timeout)
+
+    def move_member_to_channel(self, member_call: str, channel_id: int):
+        if not all((member_call, channel_id is not None)):
+            return False
+        if channel_id not in self._mcast_channels:
+            return False
+        if not self._move_member_to_channel(member_call, channel_id):
+            return False
+        return True
 
     #################################################################
     # RX/TX/Tasker Stuff
@@ -315,10 +334,8 @@ class ax25Multicast:
             return f"MCast: Error, new Member not in Add-List !"
         if self._get_channels_fm_member(member_call):
             return f"MCast: {member_call} already registered !"
-
-        # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
-        new_mem_reg_opt = self._mcast_conf.get('mcast_new_user_reg', 1)
-        if not new_mem_reg_opt:
+        # True = YES, False = NO JUST by SYSOP via GUI(Config)
+        if not self._mcast_conf.get('mcast_new_user_reg', True):
             logger.info(f"MCast: {member_call} tries to register to the server")
             return "MCast: Please contact Sysop to get registered to the MCast-Server"
 
@@ -395,6 +412,12 @@ class ax25Multicast:
         if not all((member_call, axip_add)):
             return False
         return self._update_member_ip_list(member_call, axip_add)
+
+    def get_member_channel(self, member_call: str ):
+        try:
+            return self._get_channels_fm_member(member_call)[0]
+        except IndexError:
+            return None
 
     #########################################################
     # Member Stuff

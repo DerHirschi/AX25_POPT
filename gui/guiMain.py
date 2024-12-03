@@ -35,7 +35,7 @@ from gui.plots.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 
 from gui.UserDB.guiUserDBoverview import UserDBtreeview
-from gui.settings.guiMulticastSettings import MulticastSettings
+from gui.settings.guiMCastSettings import MulticastSettings
 from gui.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
 from gui.settings.guiStationSettings import StationSettingsWin
