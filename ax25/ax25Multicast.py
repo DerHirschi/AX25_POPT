@@ -14,7 +14,6 @@ TODO:
 import time
 
 from ax25.ax25Error import AX25DeviceERROR, MCastInitError
-from ax25.ax25RoutingTable import RoutingTable
 from cfg.default_config import getNew_mcast_channel_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -203,6 +202,19 @@ class ax25Multicast:
         if not self._move_member_to_channel(member_call, channel_id):
             return False
         return True
+
+    def del_member(self, member_call: str):
+        if not member_call:
+            return False
+        channels = self._get_channels_fm_member(member_call)
+        for ch_id in channels:
+            channel = self._mcast_channels.get(ch_id, None)
+            if hasattr(channel, 'del_ch_member'):
+                channel.del_ch_member(member_call)
+        if member_call in self._mcast_member_add_list:
+            del self._mcast_member_add_list[member_call]
+        return True
+
 
     #################################################################
     # RX/TX/Tasker Stuff

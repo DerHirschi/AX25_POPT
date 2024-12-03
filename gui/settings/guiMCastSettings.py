@@ -171,14 +171,14 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         move_member_btn = tk.Button(
             opt_frame_3,
             text="Move Member",
-            command=self._move_member,
+            command=self._move_member_btn,
         )
         move_member_btn.pack(side=tk.LEFT, padx=5)
 
         del_member_btn = tk.Button(
             opt_frame_3,
             text="Del Member",
-            # command=,
+            command=self._del_member_btn,
         )
         del_member_btn.pack(side=tk.RIGHT, )
         ###################################################################
@@ -233,11 +233,17 @@ class MCAST_channel_cfg_Tab(tk.Frame):
 
     ################################
     # BTN CMDs
-    def _move_member(self):
+    def _move_member_btn(self):
         if not self._selected_entry:
             return
         self._root_win.open_value_win(str(self._selected_entry))
 
+    def _del_member_btn(self):
+        if not self._selected_entry:
+            return
+        if not hasattr(self._root_win, 'del_member'):
+            return
+        self._root_win.del_member(str(self._selected_entry))
 
     ##########################################################
     def get_cfg_fm_vars(self):
@@ -288,7 +294,6 @@ class MulticastSettings(tk.Toplevel):
             pass
         self.lift()
         self.title('MCast-Settings')
-        # self._root_win.DIGI_settings_win = self
         self._root_win.settings_win = self
         self._mcast_cfg: dict = self._mcast.get_mcast_cfgs()
         #####################################################################
@@ -354,6 +359,7 @@ class MulticastSettings(tk.Toplevel):
         #####################################################################
 
         self._tabControl = ttk.Notebook(self)
+        self._tabControl.bind('<<NotebookTabChanged>>', self._tab_change)
         self._tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=15)
         # Tab Vars
         self._tab_list: {int: MCAST_channel_cfg_Tab} = {}
@@ -436,7 +442,11 @@ class MulticastSettings(tk.Toplevel):
 
     def _abort_btn(self):
         self.destroy_win()
+    ################################################
+    def _tab_change(self, event=None):
+        self.reinit_MCastGui()
 
+    ################################################
     def _set_cfg_to_mcast(self):
         ch_configs = {}
         member_add_list = {}
@@ -470,7 +480,6 @@ class MulticastSettings(tk.Toplevel):
 
         POPT_CFG.set_MCast_CFG(conf)
 
-
     def _save_cfg(self):
         self._set_cfg_to_mcast()
         self._mcast.reinit_mcast_cfgs()
@@ -485,6 +494,14 @@ class MulticastSettings(tk.Toplevel):
     def get_mcast(self):
         return self._mcast
 
+    def del_member(self, member_call: str ):
+        if not member_call:
+            return
+        if not hasattr(self._mcast, 'del_member'):
+            return
+        self._mcast.del_member(member_call=member_call)
+        self.reinit_MCastGui()
+
     def open_value_win(self, arg: str):
         if not arg:
             return
@@ -496,6 +513,5 @@ class MulticastSettings(tk.Toplevel):
     def destroy_win(self):
         if hasattr(self.value_win, 'destroy_win'):
             self.value_win.destroy_win()
-
         self._root_win.settings_win = None
         self.destroy()
