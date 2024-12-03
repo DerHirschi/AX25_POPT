@@ -2,8 +2,6 @@ import time
 import tkinter as tk
 from tkinter import ttk
 
-from OpenGL.images import returnFormat
-
 from cfg.constant import MAX_MCAST_CH
 from cfg.default_config import getNew_mcast_channel_cfg
 from cfg.popt_config import POPT_CFG
