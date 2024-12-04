@@ -16,7 +16,7 @@ from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid
-from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL
+from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, MCastInitError
 from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
 
@@ -36,10 +36,11 @@ class AX25Port(object):
         self.ende = False
         self.device_is_running = False
         self.loop_is_running = port_handler.is_running
+        # self._tx_th = None
         ############
         # CONFIG
         self.port_cfg = dict(port_cfg)
-        self.port_handler = port_handler
+        self._port_handler = port_handler
         self.kiss = Kiss(port_cfg)
         self.port_param = port_cfg.get('parm_PortParm', ('', 0))
         self.portname = port_cfg.get('parm_PortName', '')
@@ -73,6 +74,8 @@ class AX25Port(object):
         self.dualPort_echoFilter = []  # Prim
         self.dualPort_cfg = {}
         self.dualPort_monitor_buf = []
+        """ MCast Server """
+        self._mcast_server = None
         ##############
         # AXIP VARs
         self.own_ipAddr = ''
@@ -82,6 +85,7 @@ class AX25Port(object):
         except AX25DeviceFAIL:
             # raise AX25DeviceFAIL(self)  # TODO in PortINIT
             AX25DeviceFAIL(self)
+
 
     def init(self):
         pass
@@ -107,6 +111,10 @@ class AX25Port(object):
             conn.zustand_exec.tx(None)
         time.sleep(1)
         """
+        # if self.port_cfg.get('parm_axip_Multicast', False):
+        if self._mcast_server:
+            self._mcast_server.del_mcast_port()
+            self._mcast_server = None
         self.loop_is_running = False
         self.close_device()
         # if self.device is not None:
@@ -118,6 +126,17 @@ class AX25Port(object):
     def tx(self, frame):
         if self._tx_dualPort_handler(frame):
             return
+        """
+        if self.port_cfg.get('parm_full_duplex', False):
+            # print('FD')
+            if self._tx_th:
+                if self._tx_th.is_alive():
+                    # print('FD alive')
+                    return
+            self._tx_th = threading.Thread(target=self.tx_out, args=(frame, ))
+            self._tx_th.start()
+            return
+        """
         self.tx_out(frame)
 
     def tx_out(self, frame):
@@ -179,14 +198,14 @@ class AX25Port(object):
         return False
 
     def _rx_link_handler(self, ax25_frame):
-        if reverse_uid(ax25_frame.addr_uid) in self.port_handler.link_connections.keys():
-            print(f"Port rx_link_handler reverse_uid: UID: {ax25_frame.addr_uid}")
-            print(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
+        if reverse_uid(ax25_frame.addr_uid) in self._port_handler.link_connections.keys():
+            logger.debug(f"Port rx_link_handler reverse_uid: UID: {ax25_frame.addr_uid}")
+            logger.debug(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
             return False
-        if ax25_frame.addr_uid in self.port_handler.link_connections.keys():
+        if ax25_frame.addr_uid in self._port_handler.link_connections.keys():
             # print(f"Link-Conn RX: {ax25_frame.addr_uid}")
-            conn = self.port_handler.link_connections[ax25_frame.addr_uid][0]
-            link_call = self.port_handler.link_connections[ax25_frame.addr_uid][1]
+            conn = self._port_handler.link_connections[ax25_frame.addr_uid][0]
+            link_call = self._port_handler.link_connections[ax25_frame.addr_uid][1]
             if link_call:
                 if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
                     conn.handle_rx(ax25_frame=ax25_frame)
@@ -203,9 +222,9 @@ class AX25Port(object):
             # logger.debug('UI-Pipe: No UID')
             return False
         if self.pipes[uid].get_pipe_connection() is not None:
-            logger.debug('UI-Pipe: connection')
+            # logger.debug('UI-Pipe: connection')
             return False
-        logger.debug('UI-Pipe: OK')
+        # logger.debug('UI-Pipe: OK')
         self.pipes[uid].handle_rx(ax25_frame=ax25_frame)
         return True
 
@@ -215,7 +234,7 @@ class AX25Port(object):
         """
         netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
         if netrom_cfg:     # Net-Rom
-            rTable = self.port_handler.get_RoutingTable()
+            rTable = self.port_get_PH().get_RoutingTable()
             if rTable is None:
                 return True
             ax25_frame_conf['port_id'] = int(self.port_id)
@@ -223,7 +242,7 @@ class AX25Port(object):
             # NetRom_decode_UI(ax25_frame_conf)
             return True
         """
-        aprs_ais = self.port_handler.get_aprs_ais()
+        aprs_ais = self._port_handler.get_aprs_ais()
         if hasattr(aprs_ais, 'aprs_ax25frame_rx'):
             aprs_ais.aprs_ax25frame_rx(
                 port_id=self.port_id,
@@ -304,9 +323,9 @@ class AX25Port(object):
 
     def accept_digi_conn(self, uid: str):
         if uid not in self._digi_connections.keys():
-            print('accept_digi_conn: UID ERROR')
-            print(f'accept_digi_conn uid: {uid}')
-            print(f'accept_digi_conn keys: {self._digi_connections.keys()}')
+            logger.debug('Port: accept_digi_conn: UID ERROR')
+            logger.debug(f'Port: accept_digi_conn uid: {uid}')
+            logger.debug(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
             return False
         self._digi_connections[uid].add_rx_conn_cron()
         return True
@@ -411,7 +430,7 @@ class AX25Port(object):
                     # if el.digi_call and conn.is_link:
                     if conn.digi_call:
                         # TODO Just check for digi_call while encoding
-                        print(conn.digi_call)
+                        # print(conn.digi_call)
                         el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
                     else:
                         el.encode_ax25frame()
@@ -470,8 +489,8 @@ class AX25Port(object):
     def _tx_rxecho_buf(self):
         tr = False
         # RX-Echo
-        if self.port_id in self.port_handler.rx_echo.keys():
-            for fr in self.port_handler.rx_echo[self.port_id].tx_buff:
+        if self.port_id in self._port_handler.rx_echo.keys():
+            for fr in self._port_handler.rx_echo[self.port_id].tx_buff:
                 try:
                     self.tx(frame=fr)
                     tr = True
@@ -481,12 +500,12 @@ class AX25Port(object):
                     logger.error('Encoding Error: ! MSG to short !')
                 # Monitor
                 # self._gui_monitor(ax25frame=fr, tx=True)
-            self.port_handler.rx_echo[self.port_id].tx_buff = []
+            self._port_handler.rx_echo[self.port_id].tx_buff = []
         return tr
 
     def _rx_echo(self, ax25_frame):
-        if self.port_handler.rx_echo_on:
-            self.port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
+        if self._port_handler.rx_echo_on:
+            self._port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
 
     ##########################################################
     # DualPort
@@ -653,10 +672,8 @@ class AX25Port(object):
     def add_pipe(self, pipe_cfg=None, pipe=None):
         if pipe is None and not pipe_cfg:
             return False
-        print("port add_pipe")
         if pipe is None:
             pipe = AX25Pipe(pipe_cfg=pipe_cfg)
-        print(pipe.get_pipe_uid())
         self.pipes[pipe.get_pipe_uid()] = pipe
         return True
 
@@ -687,10 +704,7 @@ class AX25Port(object):
             else:
                 digi_call = link_conn.my_call_str
             via_calls = [digi_call] + via_calls
-        """ 
-        if own_call not in self.my_stations and not link_conn:
-            return False
-        """
+
         if link_conn and not via_calls:
             return False
         ax_frame = AX25Frame(dict(
@@ -699,12 +713,6 @@ class AX25Port(object):
             via_calls=list(via_calls),
             axip_add=tuple(axip_add),
         ))
-        """
-        ax_frame.from_call.call_str = own_call
-        ax_frame.to_call.call_str = dest_call
-        ax_frame.via_calls = list(via_calls_fm_str(' '.join(via_calls)))
-        ax_frame.axip_add = axip_add
-        """
 
         conn = self.new_connection(ax25_frame=ax_frame)
         if not conn:
@@ -724,10 +732,7 @@ class AX25Port(object):
             ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
         except AX25EncodingERROR as e:
             logger.warning(f"new_connection ERROR {e}")
-            print(f"new_connection ERROR {e}")
-            print(f"new_connection destCall {ax25_frame.to_call}")
             logger.warning(f"new_connection destCall {ax25_frame.to_call}")
-            print(f"new_connection via_calls {ax25_frame.via_calls}")
             logger.warning(f"new_connection via_calls {ax25_frame.via_calls}")
             return False
 
@@ -737,7 +742,6 @@ class AX25Port(object):
                     (ax25_frame.from_call.call_str != ax25_frame.to_call.call_str):
                 break
 
-            print("Same UID !! {}".format(ax25_frame.addr_uid))
             logger.warning("Same UID !! {}".format(ax25_frame.addr_uid))
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
@@ -746,7 +750,6 @@ class AX25Port(object):
             except AX25EncodingERROR:
                 return False
             if ax25_frame.from_call.ssid > 15:
-                print("Same UID - No free SSID !! uid: {} - SSID: {}".format(ax25_frame.addr_uid, ax25_frame.from_call.ssid))
                 logger.warning("Same UID - No free SSID !! uid: {} - SSID: {}".format(ax25_frame.addr_uid, ax25_frame.from_call.ssid))
                 return False
             try:
@@ -765,7 +768,7 @@ class AX25Port(object):
         return conn
 
     def del_connections(self, conn):
-        self.port_handler.del_link(conn.uid)
+        self._port_handler.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
         for conn_uid in list(self.connections.keys()):
@@ -780,23 +783,28 @@ class AX25Port(object):
                       add_str: str,
                       text: bytes,
                       cmd_poll=(False, False),
-                      pid=0xF0
+                      pid=0xF0,
+                      axip_add=None
                       ):
         if not own_call:
+            print('own')
             return False
         if not add_str:
+            print('add')
             return False
         if not text:
+            print('text')
             return False
         tmp = add_str.upper().split(' ')
         dest_call = tmp[0].replace(' ', '')
         via_calls = []
         if len(tmp) > 1:
             via_calls = tmp[1:]
-        if via_calls:
-            axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=via_calls[0])
-        else:
-            axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
+        if not axip_add:
+            if via_calls:
+                axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=via_calls[0])
+            else:
+                axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
         frame = AX25Frame(
             dict(
                 from_call_str=str(own_call),
@@ -830,7 +838,7 @@ class AX25Port(object):
     def _gui_monitor(self, ax25frame, tx: bool = True):
         if self.monitor_out:
             port_cfg = self.port_cfg
-            self.port_handler.update_monitor(
+            self._port_handler.update_monitor(
                 # monitor_frame_inp(ax25frame, self.port_cfg),
                 ax25frame,
                 port_conf=port_cfg,
@@ -846,8 +854,8 @@ class AX25Port(object):
         while self.loop_is_running:
             self._tasks()
             # time.sleep(0.03)
-        print(f"Loop Ends Port: {self.port_id}")
-        logger.info(f"Loop Ends Port: {self.port_id}")
+        # print(f"Loop Ends Port: {self.port_id}")
+        logger.info(f"Port {self.port_id}: Loop End")
         self.close()
         self.device = None
         self.ende = True
@@ -879,9 +887,9 @@ class AX25Port(object):
                 # Decoding
                 ax25frame.decode_ax25frame(buf.raw_data)
             except AX25DecodingERROR:
-                logger.error('Port:{} decoding: '.format(self.portname))
-                logger.error('{}: org {}'.format(self.portname, buf.raw_data))
-                logger.error('{}: hex {}'.format(self.portname, bytearray2hexstr(buf.raw_data)))
+                logger.error(f'Port {self.port_id}: decoding: ')
+                logger.error(f'Port {self.port_id}: org {buf.raw_data}')
+                logger.error(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
                 break
             if ax25frame.validate():
                 ax25frame.axip_add = buf.axip_add
@@ -889,18 +897,22 @@ class AX25Port(object):
                 # setattr(ax25frame, 'rx_time', datetime.datetime.now())
                 # ######### RX #############
                 if not self._rx_dualPort_handler(ax25_frame=ax25frame):
-                    # Monitor
+                    ax25frame_conf = ax25frame.get_frame_conf()
+                    # Monitor # TODO handling via ax25frame_conf
                     self._gui_monitor(ax25frame=ax25frame, tx=False)
                     # MH / Port-Statistic
-                    ax25frame_conf = ax25frame.get_frame_conf()
                     self._mh_input(ax25frame_conf, tx=False)
+                    # MCast IP Update
+                    if hasattr(self._mcast_server, 'mcast_update_member_ip'):
+                        self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
+                    # RX Handler
                     self.rx_handler(ax25frame)
+                    # MCast
+                    if hasattr(self._mcast_server, 'mcast_rx'):
+                        self._mcast_server.mcast_rx(ax25frame=ax25frame)
 
                 # RX-ECHO
                 self._rx_echo(ax25_frame=ax25frame)
-                # AXIP-Multicast
-                if self.port_cfg.get('parm_axip_Multicast', False):
-                    self.tx_multicast(frame=ax25frame)
 
             if self.port_cfg.get('parm_full_duplex', False):
                 break
@@ -914,12 +926,15 @@ class AX25Port(object):
                 # ######### TX #############
                 self._tx_handler()
 
+    def port_get_PH(self):
+        return self._port_handler
+
 
 class KissTCP(AX25Port):
     def init(self):
         if self.loop_is_running:
-            print("KISS TCP INIT")
-            logger.info("KISS TCP INIT")
+            # print("KISS TCP INIT")
+            logger.info(f'Port {self.port_id}: KISS TCP INIT')
             sock_timeout = 0.2
             # self.kiss = b'\x00'
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
@@ -929,7 +944,7 @@ class KissTCP(AX25Port):
                 self.device_is_running = True
 
             except (OSError, ConnectionRefusedError, ConnectionError) as e:
-                logger.error('Error. Cant connect to KISS TCP Device {}'.format(self.port_param))
+                logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self.port_param}')
                 logger.error('{}'.format(e))
                 # self.device.shutdown(socket.SHUT_RDWR)
                 # self.device.close()
@@ -943,13 +958,17 @@ class KissTCP(AX25Port):
                         self.device.sendall(self.kiss.device_kiss_start_1())
                         # print(self.device.recv(999))
                     except BrokenPipeError as e:
-                        print('{}'.format(e))
-                        logger.error('{}'.format(e))
+                        # print('{}'.format(e))
+                        logger.error(f'Port {self.port_id}: {e}')
                         # self.device.shutdown(socket.SHUT_RDWR)
                         # self.device.close()
                         self.close_device()
+                        raise AX25DeviceFAIL
                     else:
-                        self.set_kiss_parm()
+                        try:
+                            self.set_kiss_parm()
+                        except AX25DeviceFAIL as e:
+                            raise e
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)
@@ -973,11 +992,16 @@ class KissTCP(AX25Port):
                 self.device_is_running = False
                 if self.device is not None:
                     self.device.close()
-                print("KISS TCP FINALLY")
+                # print("KISS TCP FINALLY")
 
     def set_kiss_parm(self):
         if self.kiss.is_enabled and self.device is not None and self.device_is_running:
-            self.device.sendall(self.kiss.set_all_parameter())
+            try:
+                self.device.sendall(self.kiss.set_all_parameter())
+            except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
+                logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
+                logger.error('{}'.format(e))
+                raise AX25DeviceFAIL
 
     def rx(self):
         try:
@@ -1004,12 +1028,12 @@ class KissTCP(AX25Port):
             self.device.sendall(self.kiss.kiss(frame.data_bytes))
             # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
-            logger.error('Error. Cant send Packet to KISS TCP Device. Try Reinit Device {}'.format(self.port_param))
+            logger.error(f'Port {self.port_id}: Error. Cant send Packet to KISS TCP Device. Try Reinit Device {self.port_param}')
             logger.error('{}'.format(e))
             try:
                 self.init()
             except AX25DeviceFAIL:
-                logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self.port_param}')
                 raise AX25DeviceFAIL
         # else:
         #     self._mh.bw_mon_inp(frame, self.port_id)
@@ -1021,31 +1045,36 @@ class KISSSerial(AX25Port):
 
     def init(self):
         if self.loop_is_running:
-            print("KISS Serial INIT")
+            # print("KISS Serial INIT")
             logger.info("KISS Serial INIT")
             # self.kiss = b'\x00'
             try:
                 self.device = serial.Serial(self.port_param[0], self.port_param[1], timeout=0.2)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
-                print('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
-                logger.error('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
+                # print('Error. Cant connect to KISS Serial Device {}'.format(self.port_param))
+                logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self.port_param}')
                 logger.error('{}'.format(e))
-                print('{}'.format(e))
+                # print('{}'.format(e))
                 self.close_device()
                 raise AX25DeviceFAIL
             else:
                 if self.kiss.is_enabled:
                     tnc_banner = self.device.readall().decode('UTF-8', 'ignore')
-                    logger.info(f"TNC-Banner: {tnc_banner}")
-                    print(f"TNC-Banner: {tnc_banner}")
+                    logger.info(f"Port {self.port_id}: TNC-Banner: {tnc_banner}")
+                    # print(f"TNC-Banner: {tnc_banner}")
                     # self.device.flush()
-                    self.device.write(self.kiss.device_kiss_start_1())
-                    self.device.readall()
-                    # print(self.device.read())
-                    # self.device.write(self.kiss.device_jhost())
-                    # self.device.write(b'\xc0\x10\x0c\xc0')
-                    self.set_kiss_parm()
+                    try:
+                        self.device.write(self.kiss.device_kiss_start_1())
+                        self.device.readall()
+                        self.set_kiss_parm()
+                    except (FileNotFoundError, serial.serialutil.SerialException, AX25DeviceFAIL) as e:
+                        logger.error(
+                            f"Port {self.port_id}: Can not set Serial Device into KISS MODE")
+                        logger.error(f"Port {self.port_id}: Device: {self.port_param}")
+                        logger.error('{}'.format(e))
+                        raise e
+
 
     def __del__(self):
         self.close_device()
@@ -1086,9 +1115,12 @@ class KISSSerial(AX25Port):
         if self.kiss.is_enabled and self.device is not None:
             try:
                 self.device.write(self.kiss.set_all_parameter())
-            except serial.portNotOpenError:
+            # except serial.portNotOpenError:
+            except serial.PortNotOpenError as e:
+                logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
                 self.device_is_running = False
                 self.close_device()
+                raise AX25DeviceFAIL
 
     def rx(self):
         recv_buff = b''
@@ -1100,13 +1132,13 @@ class KISSSerial(AX25Port):
                 # There is no new data from serial port
                 return RxBuf()
             except TypeError as e:
-                logger.warning('Serial Device Error {}'.format(e))
+                logger.warning(f'Port {self.port_id}: Serial Device Error {e}')
                 try:
                     # self.init()
                     self._reinit()
                 except AX25DeviceFAIL:
                     self.close_device()
-                    logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                    logger.error(f"Port {self.port_id}: Reinit Failed !! {self.port_param}")
                     raise AX25DeviceERROR
             else:
                 ret = RxBuf()
@@ -1124,11 +1156,11 @@ class KISSSerial(AX25Port):
                 # self.init()
                 self._reinit()
             except AX25DeviceFAIL:
-                logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self.port_param}')
                 self.close_device()
                 raise AX25DeviceERROR
         if self.device is None:
-            logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+            logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self.port_param}')
             self.close_device()
             raise AX25DeviceERROR
 
@@ -1136,63 +1168,76 @@ class KISSSerial(AX25Port):
             self.device.write(self.kiss.kiss(frame.data_bytes))
         except (FileNotFoundError, serial.serialutil.SerialException) as e:
             logger.warning(
-                'Error. Cant send Packet to KISS Serial Device. Try Reinit Device {}'.format(self.port_param))
+                f'Port {self.port_id}: Error. Cant send Packet to KISS Serial Device. Try Reinit Device {self.port_param}')
             logger.warning('{}'.format(e))
             try:
                 # self.init()
                 self._reinit()
             except AX25DeviceFAIL:
-                logger.error('Error. Reinit Failed !! {}'.format(self.port_param))
+                logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self.port_param}')
                 self.close_device()
                 raise AX25DeviceERROR
-        # else:
-        #     self._mh.bw_mon_inp(frame, self.port_id)
+
 
 
 class AXIP(AX25Port):
-
     def init(self):
+
         if self.loop_is_running:
-            print("AXIP Client INIT")
-            logger.info("AXIP Client INIT")
+            # print("AXIP Client INIT")
+            logger.info(f"Port {self.port_id}: AXIP Client INIT")
             if not self.port_param[0]:
                 hostname = socket.gethostname()
                 self.port_param = socket.gethostbyname(hostname), self.port_param[1]
             self.own_ipAddr = self.port_param[0]
-            logger.info('AXIP bind on IP: {}'.format(self.own_ipAddr))
+            logger.info(f"Port {self.port_id}: AXIP bind on IP: {self.own_ipAddr}")
             sock_timeout = 0.01
 
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             # self.device.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
             self.device.settimeout(sock_timeout)
             try:
                 self.device.bind(self.port_param)
-                self.device_is_running = True
             except OSError as e:
-                logger.error('AXIP 2 {}'.format(e))
+                logger.error(f"Port {self.port_id}: OSError {e}")
                 # self.device.shutdown(socket.SHUT_RDWR)
                 self.device.close()
                 self.device_is_running = False
                 raise AX25DeviceFAIL
+
+            self.device_is_running = True
+            # MCast
+            if self.port_cfg.get('parm_axip_Multicast', False):
+                logger.info(f"Port {self.port_id}: Set Multicast to Server !!")
+                self._mcast_server = self._port_handler.get_mcast_server()
+                if hasattr(self._mcast_server, 'set_mcast_port'):
+                    try:
+                        self._mcast_server.set_mcast_port(self)
+                    except MCastInitError:
+                        # self._mcast_server = None
+                        logger.error(f"Port {self.port_id}: Set Multicast Server failed !!")
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)
         self.close_device()
 
     def close_device(self):
+        # self._mcast_server = None
         self.loop_is_running = False
         if self.device is not None:
             try:
-                print("Try Close AXIP")
+                # print("Try Close AXIP")
+                logger.info(f"Port {self.port_id}: Try Close AXIP")
                 self.device.close()
             except (socket.error, AttributeError) as e:
-                print(f"Try Close AXIP except: {e}")
+                logger.error(f"Port {self.port_id}: Close AXIP except: {e}")
+                # print(f"Try Close AXIP except: {e}")
             finally:
                 self.device_is_running = False
                 if self.device is not None:
                     self.device.close()
-                print("AXIP FINALLY")
+                # print("AXIP FINALLY")
+                logger.info(f"Port {self.port_id}: Close AXIP done")
 
     def rx(self):
         try:
@@ -1218,58 +1263,55 @@ class AXIP(AX25Port):
                 ret.kiss = b''
             return ret
 
-    def tx_device(self, frame, no_multicast=False):
-        if frame.axip_add != ('', 0):
-            axip_add = get_ip_by_hostname(frame.axip_add[0])
-            if axip_add:
-                frame.axip_add = (axip_add, int(frame.axip_add[1]))
-            ###################################
-            # CRC
-            calc_crc = crc_x25(frame.data_bytes)
-            calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
-            ###################################
+    def tx_device(self, frame, multicast=True):
+        if not hasattr(frame, 'axip_add'):
+            return
+        if not frame.axip_add:
+            return
+        if frame.axip_add == ('', 0):
+            return
+        axip_add = get_ip_by_hostname(frame.axip_add[0])    # TODO Each Frame Hostname Request ?? Performance !!
+        if not axip_add:
+            return
+        if axip_add:
+            frame.axip_add = (axip_add, int(frame.axip_add[1]))
+        ###################################
+        # CRC
+        calc_crc = crc_x25(frame.data_bytes)
+        calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
+        ###################################
+        try:
+            self.device.sendto(frame.data_bytes + calc_crc, frame.axip_add)
+            # self.device.settimeout(0.1)
+        except (ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
+            logger.warning(f"Port {self.port_id}: Error. Cant send Packet to AXIP Device. Try Reinit Device {frame.axip_add}")
+            logger.warning('{}'.format(e))
             try:
-                self.device.sendto(frame.data_bytes + calc_crc, frame.axip_add)
-                # self.device.settimeout(0.1)
-            except (ConnectionRefusedError, ConnectionError, socket.timeout, socket.error) as e:
-                print('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
-                logger.warning('Error. Cant send Packet to AXIP Device. Try Reinit Device {}'.format(frame.axip_add))
-                print('{}'.format(e))
-                logger.warning('{}'.format(e))
-                try:
-                    self.init()
-                except AX25DeviceFAIL:
-                    logger.error('Error. Reinit AXIP Failed !! {}'.format(self.port_param))
-                    raise AX25DeviceFAIL
-            except OSError:
-                pass
-            except TypeError as e:
-                logger.error(f"TypeError AXIP Dev !!! \n {e}")
-                print(f"TypeError AXIP Dev !!! \n {e}")
-                logger.error(frame.axip_add)
-                print(frame.axip_add)
-                logger.error(frame.data_bytes + calc_crc)
-                print(frame.data_bytes + calc_crc)
-            # else:
-            #     self._mh.bw_mon_inp(frame, self.port_id)
+                self.init()
+            except AX25DeviceFAIL:
+                logger.error(f"Port {self.port_id}: Error. Reinit AXIP Failed !! {self.port_param}")
+                raise AX25DeviceFAIL
+        except OSError:
+            pass
+        except TypeError as e:
+            logger.error(f"Port {self.port_id}: TypeError AXIP Dev !!! \n {e}")
+            logger.error(frame.axip_add)
+            logger.error(frame.data_bytes + calc_crc)
 
-        if self.port_cfg.get('parm_axip_Multicast', False) and not no_multicast:
-            self.tx_multicast(frame=frame)
+        if all((
+                hasattr(self._mcast_server, 'mcast_tx'),
+                multicast
+               )):
+            self._mcast_server.mcast_tx(ax25frame=frame)
+
 
     def tx_multicast(self, frame):
-        for axip_add in self.port_handler.multicast_ip_s:
-            if axip_add != frame.axip_add:
-                frame.axip_add = axip_add
-                # TODO Failed IP
-                try:
-                    self.tx_device(frame, no_multicast=True)
-                except (ConnectionRefusedError, ConnectionError, socket.timeout):
-                    self._mh.mh_ip_failed(axip_add, self.port_id)
-                except (OSError, socket.error) as e:
-                    logger.error(
-                        'Error. Cant send Packet to AXIP Device MULTICAST {}'.format(frame.axip_add))
-                    logger.error('{}'.format(e))
-
+        try:
+            self.tx_device(frame, multicast=False)
+        except AX25DeviceERROR as e:
+            logger.error(f"Port {self.port_id}: AX25DeviceERROR tx_multicast()")
+            self.close()
+            raise e
     """
     def clean_anti_spam(self):
         for k in list(self.axip_anti_spam.keys()):

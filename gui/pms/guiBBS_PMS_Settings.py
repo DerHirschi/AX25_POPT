@@ -3,7 +3,7 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
-from fnc.ax25_fnc import validate_call, get_list_fm_viaStr
+from fnc.ax25_fnc import get_list_fm_viaStr, validate_ax25Call
 from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
 # from cfg.logger_config import logger
@@ -306,11 +306,10 @@ class PMS_Settings(tk.Toplevel):
         'single_auto_conn': True,
         'auto_conn': True,
         """
-        user = self._own_call_var.get()
+        user = self._own_call_var.get().upper()
         if user == 'NOCALL':
             return
-        user = validate_call(user)
-        if not user:
+        if not validate_ax25Call(user):
             return
         self._pms_cfg['user'] = user
         self._pms_cfg['regio'] = str(self._own_regio_var.get().upper())  # TODO Validator
@@ -326,7 +325,9 @@ class PMS_Settings(tk.Toplevel):
                 port_id = int(nocall_vars['port_id_var'].get())
             except ValueError:
                 pass
-            dest_call = validate_call(nocall_vars['dest_call_var'].get())
+            dest_call = str(nocall_vars['dest_call_var'].get()).upper()
+            if not validate_ax25Call(dest_call):
+                dest_call = ''
             regio = str(nocall_vars['regio_var'].get()).upper()
             via_calls = str(nocall_vars['via_calls_var'].get())
             axip_ip = str(nocall_vars['axip_var'].get())
@@ -364,7 +365,9 @@ class PMS_Settings(tk.Toplevel):
                     port_id = int(self._bbs_vars[k]['port_id_var'].get())
                 except ValueError:
                     pass
-                dest_call = validate_call(self._bbs_vars[k]['dest_call_var'].get())
+                dest_call = str(self._bbs_vars[k]['dest_call_var'].get()).upper()
+                if not validate_ax25Call(dest_call):
+                    dest_call = ''
                 regio = str(self._bbs_vars[k]['regio_var'].get()).upper()
                 via_calls = str(self._bbs_vars[k]['via_calls_var'].get())
                 axip_ip = str(self._bbs_vars[k]['axip_var'].get())

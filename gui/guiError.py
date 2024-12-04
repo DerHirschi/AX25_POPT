@@ -1,0 +1,2 @@
+class PoPTModulError(Exception):
+    pass

@@ -60,8 +60,8 @@ SQLITE_MH_TABLES = {
 
 class SQL_Database:
     def __init__(self, port_handler):
-        print("Database INIT!")
-        logger.info("Database INIT!")
+        # print("Database INIT!")
+        logger.info("Database: Init")
         # ##########
         self.error = False
         self._access = False
@@ -92,11 +92,11 @@ class SQL_Database:
         self.db = None
         try:
             self.db = SQL_DB(self.db_config)
-            print("Database: Init ok")
-            logger.info("Database: Init ok")
+            # print("Database: Init ok")
+            logger.info("Database: Init complete")
         except SQLConnectionError:
             self.error = True
-            print("Database: Init Error !")
+            # print("Database: Init Error !")
             logger.error("Database: Init Error !")
         # DEV
         """
@@ -139,8 +139,8 @@ class SQL_Database:
                     }.get(tables, {})
                 for tab in tables.keys():
                     if tab not in ret:
-                        print(f"Database: WARNING Table {tab} not exists !!")
-                        logger.warning(f"Database: WARNING Table {tab} not exists !!")
+                        # print(f"Database: WARNING Table {tab} not exists !!")
+                        logger.warning(f"Database: WARNING Table {tab} not exists !! Creating new Table.")
                         self.create_db_tables(tables[tab])
                 # self.create_db_var()
 
@@ -1071,6 +1071,8 @@ class SQL_Database:
                  "latitude, "
                  "longitude, "
                  "rx_time "
+                 "distance, "
+                 "port_id "
                  f"FROM APRSwx WHERE `from_call`='{call}';")
         ret = self.commit_query(query)
         if not ret:

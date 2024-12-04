@@ -1,17 +1,17 @@
 from datetime import datetime
 
 from cfg import constant
-from cfg.default_config import getNew_station_cfg
 from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.file_fnc import get_str_fm_file
+from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
     convert_str_to_datetime
 from cfg.string_tab import STR_TABLE
-from fnc.ax25_fnc import validate_call
+from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
 
@@ -19,29 +19,25 @@ from cfg.logger_config import logger
 class DefaultCLI(object):
     cli_name = ''  # DON'T CHANGE!
     service_cli = True
-    c_text = '-= Test C-TEXT =-\r\r'
+    # c_text = '-= Test C-TEXT =-\r\r'
     # bye_text = '73 ...\r'
-    prompt = ''
+    # prompt = ''
     prefix = b'//'
     sw_id = ''
 
     def __init__(self, connection):
         # print("CLI-INIT")
+        logger.debug(f"CLI-{self.cli_name}: Init")
         stat_cfg: dict = connection.get_stat_cfg()
         self._stat_cfg_index_call = stat_cfg.get('stat_parm_Call', 'NOCALL')
 
-        self.c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
+        self._c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._connection = connection
         self._port_handler = self._connection.get_port_handler_CONN()
         self._own_port = self._connection.own_port
         # self.channel_index = self._connection.ch_index
         self._gui = self._port_handler.get_gui()
-        """
-        if self._connection.gui is None:
-            self._gui = False
-        else:
-            self._gui = self._connection.gui
-        """
+
         self._my_call_str = self._connection.my_call_str
         self._to_call_str = self._connection.to_call_str
         self._user_db = USER_DB
@@ -52,15 +48,13 @@ class DefaultCLI(object):
             self._encoding = self._user_db_ent.Encoding, 'ignore'
             self._stat_identifier_str = self._user_db_ent.software_str
             if self._user_db_ent.CText:
-                self.c_text = str(self._user_db_ent.CText)
+                self._c_text = str(self._user_db_ent.CText)
 
         self.stat_identifier = get_station_id_obj(self._stat_identifier_str)
         # print(f"CLI STST ID : {self.stat_identifier}")
         # print(f"CLI STST str : {self.stat_identifier_str}")
 
-        self.c_text = self.c_text.replace('\n', '\r')
-        # self.bye_text = self.bye_text.replace('\n', '\r')
-        # self.prompt = self.prompt.replace('\n', '').replace('\r', '')
+        self._c_text = self._c_text.replace('\n', '\r')
 
         self.time_start = datetime.now()
 
@@ -70,7 +64,7 @@ class DefaultCLI(object):
         self._raw_input = b''
         self._cmd = b''
         self._last_line = b''
-        self._new_last_line = b''
+        self._new_last_line = b''   # TODO ???????????????????????
         self._parameter = []
         self._sys_login = None
         self.sysop_priv = False
@@ -134,24 +128,24 @@ class DefaultCLI(object):
         self._cmd_exec_ext = {}  # Extern Command's ??
         self._cron_state_exec_ext = {}  # Extern Tasks ??
         self._state_exec_ext = {}  # Extern State Tab ??
-        # self.init()
+        self.init()
         self._cron_state_exec.update(self._cron_state_exec_ext)
         self._commands.update(self._cmd_exec_ext)
         self._state_exec.update(self._state_exec_ext)
+        """
         if type(self.prefix) is str:  # Fix for old CFG Files
             self.prefix = self.prefix.encode(self._encoding[0], self._encoding[1])
+        """
 
-    """
+
     def init(self):
+        """
         self._cmd_exec_ext = {}
         self.cron_state_exec_ext = {}
         self.state_exec_ext = {}
-    """
+        """
+        pass
 
-    def build_prompt(self):
-        # TODO Cleanup ..Not used ..
-        # self.prompt = f"\r<{self.prompt}>{self._my_call_str}>"
-        self.prompt = f"\r<{self.prompt}>{self._my_call_str}>"
 
     def get_ts_prompt(self):
         return f"\r{self._my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
@@ -434,8 +428,8 @@ class DefaultCLI(object):
             ret = '\r # Bitte Call eingeben..\r'
             return ret
 
-        dest_call = validate_call(self._parameter[0])
-        if not dest_call:
+        dest_call = str(self._parameter[0]).upper()
+        if not validate_ax25Call(dest_call):
             ret = '\r # Ungültiger Ziel Call..\r'
             return ret
 
@@ -462,9 +456,8 @@ class DefaultCLI(object):
                 parm = self._parameter[1:]
 
             for call in parm:
-                tmp_call = validate_call(call)
-                if tmp_call:
-                    vias.append(tmp_call)
+                if validate_ax25Call(call.upper()):
+                    vias.append(call.upper())
                 else:
                     break
 
@@ -714,8 +707,8 @@ class DefaultCLI(object):
                     pass
                 ret = self._get_wx_cli_out(max_ent=parm)
             else:
-                call = validate_call(self._parameter[0])
-                if call:
+                call = str(self._parameter[0]).upper()
+                if validate_ax25Call(call):
                     le = parm
                     if len(self._parameter) == 2:
                         try:
@@ -730,33 +723,39 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_wx_fm_call_cli_out(self, call, max_ent=10):
-        data = list(self._port_handler.aprs_ais.get_wx_data().get(call, ''))
+        data = list(self._port_handler.aprs_ais.get_wx_data_f_call(call))
         if not data:
             return ''
         data.reverse()
+        data_len = len(data)
         max_c = 0
-        loc = f'{data[0].get("locator", "------")[:6]}({round(data[0].get("distance", -1))}km)'
+        loc = f'{data[0][12][:6]}({data[0][16]}km)'
         out = '\r'
         out += f'WX-Station: {call}\r'
         out += f'Locator   : {loc}\r'
-        out += f'Comment   : {data[0].get("comment", "")}\r'
-        out += f'Datapoints: {len(data)}\r\r'
+        out += f'Comment   : {data[0][11]}\r'
+        out += f'Datapoints: {data_len}\r\r'
         out += '-----Last-Port--Temp-Press---Hum-Lum-Rain(24h)-WindGust\r'
         for el in data:
             max_c += 1
             if max_c > max_ent:
                 break
             # _ent = self._port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
-            td = get_timedelta_CLIstr(el['rx_time'])
-            pres = f'{el["weather"].get("pressure", 0):.2f}'
-            rain = f'{el["weather"].get("rain_24h", 0):.3f}'
-            out += f'{td.rjust(9):10}{el.get("port_id", ""):6}'
-            out += f'{str(round(el["weather"].get("temperature", 0))):5}'
+            # td = get_timedelta_CLIstr(el[15].split(' ')[-1])
+            td = el[15].split(' ')[-1]
+            # pres = f'{el[0]:.2f}'
+            pres = f'{el[0]}'
+            # rain = f'{el[3]:.3f}'
+            rain = f'{el[3]}'
+            # out += f'{td.rjust(9):10}{"":6}'
+            out += f'{td.rjust(9):10}{el[-1]:6}'
+            out += f'{str(el[5]):5}'
             out += f'{pres:7} '
-            out += f'{el["weather"].get("humidity", 0):3} '
-            out += f'{el["weather"].get("luminosity", 0):3} '
+            out += f'{el[1]:3} '
+            out += f'{el[9]:3} '
             out += f'{rain:9} '
-            out += f'{el["weather"].get("wind_gust", 0):.3f}\r'
+            # out += f'{el[7]:.3f}\r'
+            out += f'{el[7]}\r'
         return out
 
     def _get_wx_cli_out(self, max_ent=10):
@@ -897,10 +896,9 @@ class DefaultCLI(object):
             ent_ret += "------------------------------------\r\r"
             return header + ent_ret
         else:
-            call_str = self._parameter[0].decode(self._encoding[0], self._encoding[1])
-            call_str = validate_call(call_str)
+            call_str = self._parameter[0].decode(self._encoding[0], self._encoding[1]).upper()
 
-            if call_str:
+            if validate_ax25Call(call_str):
                 if call_str in self._user_db.db.keys():
                     header = "\r" \
                              f"| USER-DB: {call_str}\r" \
@@ -1271,9 +1269,9 @@ class DefaultCLI(object):
     def s0(self):  # C-Text
         self._state_index = 1
         if self.prefix:
-            return self._send_sw_id() + self.c_text
+            return self._send_sw_id() + self._c_text
         else:
-            return self._send_sw_id() + self.c_text + self.get_ts_prompt()
+            return self._send_sw_id() + self._c_text + self.get_ts_prompt()
 
     def s1(self):
         self._software_identifier()
@@ -1311,7 +1309,7 @@ class DefaultCLI(object):
             if self._sys_login.fail_counter > 1:
                 del self._sys_login
                 self._sys_login = None
-                print("Priv: Failed !")
+                # print("Priv: Failed !")
                 logger.warning("Priv: Failed !")
                 if self._gui:
                     self._gui.on_channel_status_change()
@@ -1330,7 +1328,7 @@ class DefaultCLI(object):
     def s4(self):
         """ ry to connect other Station ( C CMD ) """
         if self._connection.LINK_Connection:
-            print(f'CLI LinkDisco : {self._connection.uid}')
+            # print(f'CLI LinkDisco : {self._connection.uid}')
             self._connection.link_disco()
         self.change_cli_state(1)
         return self.get_ts_prompt()
@@ -1356,20 +1354,23 @@ class DefaultCLI(object):
 class NodeCLI(DefaultCLI):
     cli_name = 'NODE'  # DON'T CHANGE !
     service_cli = True
-    c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
+    # _c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     # bye_text = '73 ...\r'
-    prompt = 'PoPT-NODE>'
+    # prompt = 'PoPT-NODE>'
     prefix = b''
     sw_id = 'PoPTNode'
 
     # Extra CMDs for this CLI
 
     def init(self):
+        """
         self._cmd_exec_ext = {}
         self._cron_state_exec_ext = {}
         self._state_exec_ext = {
             2: self.s2
         }
+        """
+        pass
 
     def s2(self):
         return self._cmd_q()
@@ -1378,32 +1379,33 @@ class NodeCLI(DefaultCLI):
 class UserCLI(DefaultCLI):
     cli_name = 'USER'  # DON'T CHANGE !
     service_cli = False
-    c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
+    # _c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     # bye_text = '73 ...\r'
-    prompt = 'TEST-STATION-User-CLI>'
+    # prompt = 'TEST-STATION-User-CLI>'
     prefix = b'//'
     sw_id = 'PoPT'
 
     # Extra CMDs for this CLI
 
     def init(self):
+        """
         self._cmd_exec_ext = {}
         self._cron_state_exec_ext = {}
         self._state_exec_ext = {
             2: self.s2
         }
+        """
+        pass
 
     def s2(self):
         return self._cmd_q()
 
-
 class NoneCLI(DefaultCLI):
     """ ? To Disable CLI / Remote ? """
     cli_name = 'NO-CLI'  # DON'T CHANGE !
-    service_cli = True
-    c_text = ''
+    service_cli = False
+    # _c_text = ''
     # bye_text = ''
-    prompt = ''
     prefix = b''
 
     def cli_exec(self, inp=b''):
@@ -1415,13 +1417,194 @@ class NoneCLI(DefaultCLI):
     def cli_cron(self):
         pass
 
-    def build_prompt(self):
-        pass
+class MCastCLI(DefaultCLI):
+    cli_name = 'MCAST'  # DON'T CHANGE !
+    service_cli = True
+    prefix = b''
+    sw_id = 'PoPTMCast'
+
+    # Extra CMDs for this CLI
+
+    def init(self):
+        # NO USER-DB Ctext
+        self._c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
+        self._c_text = self._c_text.replace('\n', '\r')
+        # Standard Commands ( GLOBAL )
+        self._commands = {
+            # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
+            'QUIT': (1, self._cmd_q, 'Quit'),
+            'BYE': (1, self._cmd_q, 'Bye'),
+            'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
+            'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
+            'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
+            # MCAST ######################################################
+            'CH': (2, self._cmd_mcast_move_channel, STR_TABLE['cmd_help_mcast_move_ch'][self._connection.cli_language]),
+            'CHLIST': (3, self._cmd_mcast_channels, STR_TABLE['cmd_help_mcast_channels'][self._connection.cli_language]),
+            'CHINFO': (3, self._cmd_mcast_channel_info, STR_TABLE['cmd_help_mcast_ch_info'][self._connection.cli_language]),
+            'SETAXIP': (5, self._cmd_mcast_set_member_axip, STR_TABLE['cmd_help_mcast_set_axip'][self._connection.cli_language]),
+            ##############################################################
+            'INFO': (1, self._cmd_i, 'Info'),
+            'LINFO': (2, self._cmd_li, 'Long Info'),
+            'NEWS': (2, self._cmd_news, 'NEWS'),
+            'VERSION': (3, self._cmd_ver, 'Version'),
+            'USER': (0, self._cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self._connection.cli_language]),
+            'NAME': (1, self._cmd_set_name, STR_TABLE['cmd_help_set_name'][self._connection.cli_language]),
+            'QTH': (0, self._cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self._connection.cli_language]),
+            'LOC': (0, self._cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self._connection.cli_language]),
+            'ZIP': (0, self._cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self._connection.cli_language]),
+            'PRMAIL': (0, self._cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self._connection.cli_language]),
+            'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
+            'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
+            'LANG': (0, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
+            'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
+            'HELP': (1, self._cmd_help, STR_TABLE['help'][self._connection.cli_language]),
+            '?': (0, self._cmd_shelp, STR_TABLE['cmd_shelp'][self._connection.cli_language]),
+
+        }
+        self._state_exec = {
+            0: self.s0,  # C-Text
+            1: self.s1,  # Cmd Handler
+        }
+
+    ###############################################
+
+    def cli_exec(self, inp=b''):
+        self._raw_input = bytes(inp)
+        ret = self._state_exec[self._state_index]()
+        self.send_output(ret)
+
+    def cli_cron(self):
+        """ Global Crone Tasks """
+        if not self._connection.is_link:
+            self.cli_state_crone()
+
+    def cli_state_crone(self):
+        """ State Crone Tasks """
+        ret = self._cron_state_exec[self._crone_state_index]()
+        self.send_output(ret)
+
+    def s0(self):  # C-Text
+        self._state_index = 1
+        out =  self._send_sw_id()
+        out += self._c_text
+        out += f"\r{self._cmd_mcast_channels()}"
+        out += f"\r # {self._register_mcast_member()}\r" # TODO Extra CMD etc.
+        out += self.get_ts_prompt()
+        return out
+
+    def s1(self):
+        self._software_identifier()
+        ########################
+        # Check String Commands
+        if not self._exec_str_cmd():
+            self._input = self._raw_input
+            self.send_output(self._exec_cmd())
+        self._last_line = self._new_last_line
+        return ''
+
+    #############################################################
+    def _register_mcast_member(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not hasattr(mcast_server, 'register_new_member'):
+            logger.error("CLI: Attribute Error Mcast-Server. _register_mcast_member()")
+            return 'CLI: Attribute Error Mcast-Server'
+        return mcast_server.register_new_member(self._to_call_str)
+
+    def _cmd_mcast_move_channel(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not hasattr(mcast_server, 'move_channel'):
+            logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_move_channel()")
+            return '\r # MCast: Attribute Error Mcast-Server\r'
+
+        if not self._parameter:
+            return "\r # MCast: Error ! Invalid Channel !\r"
+        try:
+            ch_id = int(self._parameter[0])
+        except (ValueError, IndexError):
+            return "\r # MCast: Error ! Invalid Channel !\r"
+        return mcast_server.move_channel(member_call=str(self._to_call_str), channel_id=ch_id)
+
+    def _cmd_mcast_channel_info(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not hasattr(mcast_server, 'get_channel_info_fm_member'):
+            logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_channel_info()")
+            return '\r # MCast: Attribute Error Mcast-Server\r'
+        # if not self._parameter:
+        return mcast_server.get_channel_info_fm_member(member_call=str(self._to_call_str))
+
+    def _cmd_mcast_channels(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not hasattr(mcast_server, 'get_channels'):
+            logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_channels()")
+            return '\r # MCast: Attribute Error Mcast-Server\r'
+        return mcast_server.get_channels()
+
+    def _cmd_mcast_set_member_axip(self):
+        mcast_server = self._port_handler.get_mcast_server()
+        if not all((
+                hasattr(mcast_server, 'get_member_ip'),
+                hasattr(mcast_server, 'set_member_ip'),
+                        )):
+            logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_set_member_axip()")
+            return '\r # MCast: Attribute Error Mcast-Server\r'
+        if not self._parameter:
+            mcast_member_ip = mcast_server.get_member_ip(self._to_call_str)
+            if len(mcast_member_ip) < 2:
+                logger.error(f"CLI: No Address found for {self._to_call_str} !")
+                return f"\r # MCast: No Address found for {self._to_call_str} !\r"
+            ret = f"\r # MCast: Current AXIP Address for {self._to_call_str}:\r"
+            ret +=  f" # Address: {mcast_member_ip[0]}\r"
+            ret +=  f" # Port: {mcast_member_ip[1]}\r\r"
+            return ret
+        else:
+            inv_param_msg = ('\r # MCast: Invalid Parameter / Invalid Address'
+                            '\r # SETAXIP xxxx.dyndns.com 8093'
+                            '\r # or'
+                            '\r # SETAXIP 11.11.11.11 8093\r\r')
+            if len(self._parameter) != 2:
+                return inv_param_msg
+            try:
+                address = bytes(self._parameter[0]).decode(self._encoding[0], 'ignore')
+                port = int(self._parameter[1])
+            except (IndexError, ValueError):
+                return inv_param_msg
+            mcast_member_ip = mcast_server.get_member_ip(self._to_call_str)
+            chk_ret = get_ip_by_hostname(address)
+            chk_ret_mcast = get_ip_by_hostname(mcast_member_ip[0])
+            if not chk_ret:
+                ret = '\r # MCast: Invalid IP-Address or Domain Name\r'
+                ret += inv_param_msg
+                return ret
+            if len(mcast_member_ip) < 2:
+                logger.error(f"CLI: No Address found for {self._to_call_str} !")
+                return f"\r # MCast: No Address found for {self._to_call_str} !\r"
+            if chk_ret_mcast != chk_ret:
+                return f"\r # MCast: The address you entered is not the same one you called from!\r"
+            if mcast_member_ip[1] != port:
+                return f"\r # MCast: The Port you entered is not the same one you called from!\r"
+            user_db = self._user_db
+            if not hasattr(user_db, 'set_AXIP'):
+                logger.error("CLI: Attribute Error Mcast-Server. _cmd_mcast_set_member_axip() - User-DB")
+                return '\r # MCast: Attribute Error Mcast-Server\r'
+            if not user_db.set_AXIP(self._to_call_str, (address, port), new_user=True):
+                logger.error(f"CLI: Error UserDB set_AXIP: {(address, port)}")
+                return f'\r # MCast: Error ! UserDB set_AXIP: {(address, port)}\r'
+            if not mcast_server.set_member_ip(self._to_call_str, (address, port)):
+                logger.error(f"CLI: Error MCast set_member_ip: {(address, port)}")
+                return f'\r # MCast: Error ! MCast set_member_ip: {(address, port)}\r'
+            ret = f"\r # MCast: New AXIP Address set successfully\r"
+
+            ret += f"\r # MCast: Current AXIP Address for {self._to_call_str}:\r"
+            ret += f" # Address: {address}\r"
+            ret += f" # Port: {port}\r\r"
+            return ret
+
 
 
 CLI_OPT = {
     UserCLI.cli_name: UserCLI,
     NodeCLI.cli_name: NodeCLI,
     NoneCLI.cli_name: NoneCLI,
-    'PIPE': NoneCLI
+    'PIPE': NoneCLI,
+    MCastCLI.cli_name: MCastCLI,
 }

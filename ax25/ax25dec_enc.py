@@ -38,7 +38,7 @@ def format_hexstr(inp):
 
 def decode_FRMR(ifield):
     if len(ifield) != 3:
-        print("Invalid I-Field length")
+        logger.error("decode_FRMR: Invalid I-Field length")
         return '\nInvalid I-Field length\n'
 
     control_byte = ifield[0]
@@ -63,10 +63,6 @@ def decode_FRMR(ifield):
           f"PID: {pid}\n" + \
           f"Data: {''.join(data)}\n"
 
-    print("Decoded FRMR Frame:")
-    print("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
-    print("PID: {}".format(pid))
-    print("Data: {}".format("".join(data)))
     logger.warning("Decoded FRMR Frame:")
     logger.warning("Control: NS={}, NR={}, PF={}".format(ns, nr, pf_bit))
     logger.warning("PID: {}".format(pid))
@@ -139,7 +135,7 @@ class Call:
         :return: bool
         """
         if len(self.call) < 2 or len(self.call) > 6:    # Calls like CQ or ID
-            print(f'Call validator: Call length - {self.call}')
+            # print(f'Call validator: Call length - {self.call}')
             logger.error(f'Call validator: Call length - {self.call}')
             return False
         """
@@ -148,12 +144,12 @@ class Call:
             return False
         """
         if self.ssid > 15 or self.ssid < 0:
-            print(f'Call validator: SSID - {self.ssid}')
+            # print(f'Call validator: SSID - {self.ssid}')
             logger.error(f'Call validator: SSID - {self.ssid}')
             return False
         for c in self.call:
             if not any([c.isupper(), c.isdigit()]):
-                print(f'Call validator: CAll-Format - {self.call} -')
+                # print(f'Call validator: CAll-Format - {self.call} -')
                 logger.error(f'Call validator: CAll-Format - {self.call} -')
                 return False
         return True
@@ -528,7 +524,7 @@ class AX25Frame:
         if conf is None:
             conf = {}
         self.addr_uid = conf.get('uid', '')                 # Unique ID/Address String
-        self.from_call = Call(conf.get('from_call_str', ''))
+        self.from_call = Call(conf.get('from_call_str'))
         self.to_call = Call(conf.get('to_call_str', ''))
         self.via_calls = []
         for via_call_str in conf.get('via_calls', []):
@@ -651,14 +647,14 @@ class AX25Frame:
                 # print("ToCall > {}".format(self.hexstr[:7]))
             except IndexError:
                 logger.error("DEC: Index ERROR To Call!!!!!!!!!!")
-                print("DEC: Index ERROR To Call!!!!!!!!!!")
+                # print("DEC: Index ERROR To Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             try:
                 self.from_call.dec_call(self.data_bytes[7:14])
                 # print("FromCall > {}".format(self.hexstr[7:14]))
             except IndexError:
                 logger.error("DEC: Index ERROR From Call!!!!!!!!!!")
-                print("Index ERROR From Call!!!!!!!!!!")
+                # print("Index ERROR From Call!!!!!!!!!!")
                 raise AX25DecodingERROR(self)
             n = 2
             if not self.from_call.s_bit:
@@ -669,7 +665,7 @@ class AX25Frame:
                         # print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
                     except IndexError:
                         logger.error("DEC: Index ERROR Via Call!!!!!!!!!!")
-                        print("Index ERROR Via Call!!!!!!!!!!")
+                        # print("Index ERROR Via Call!!!!!!!!!!")
                         raise AX25DecodingERROR(self)
                     self.via_calls.append(tmp)
                     n += 1
@@ -805,7 +801,7 @@ class AX25Frame:
             self.data_bytes += self.payload
         if not self.validate():
             logger.error('Encoding Error Validator')
-            print('Encoding Error Validator')
+            # print('Encoding Error Validator')
             raise AX25EncodingERROR
         # Build address UID
         self._build_uid(dec=False)
@@ -817,33 +813,33 @@ class AX25Frame:
         :return: bool
         """
         if 256 < len(self.data_bytes) < 15:
-            print(f'Validate Error: Pac length {len(self.data_bytes)}')
+            # print(f'Validate Error: Pac length {len(self.data_bytes)}')
             logger.error(f'Validate Error: Pac length {len(self.data_bytes)}')
             AX25EncodingERROR(self)
             return False
         if not self.from_call.validate():
-            print('Validate Error: From Call')
+            # print('Validate Error: From Call')
             logger.error('Validate Error: From Call')
             AX25EncodingERROR(self)
             return False
         if not self.to_call.validate():
-            print('Validate Error: TO Call')
+            # print('Validate Error: TO Call')
             logger.error('Validate Error: TO Call')
             AX25EncodingERROR(self)
             return False
         for ca in self.via_calls:
             if not ca.validate():
-                print('Validate Error: ca.validate')
+                # print('Validate Error: ca.validate')
                 AX25EncodingERROR(self)
                 return False
         if not self.ctl_byte.validate():
-            print('Validate Error: C_Byte')
+            # print('Validate Error: C_Byte')
             logger.error('Validate Error: C_Byte')
             AX25EncodingERROR(self)
             return False
         if self.ctl_byte.pid:
             if not self.pid_byte.validate():
-                print('Validate Error: PID_Byte')
+                # print('Validate Error: PID_Byte')
                 logger.error('Validate Error: PID_Byte')
                 AX25EncodingERROR(self)
                 return False

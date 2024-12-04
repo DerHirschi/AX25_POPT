@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 
@@ -198,17 +197,17 @@ class DIGI_SettingsWin(tk.Toplevel):
         # PORT_HANDLER.update_digi_setting()
         #####################################################################
 
-        self.tabControl = ttk.Notebook(self)
-        self.tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=15)
+        tabControl = ttk.Notebook(self)
+        tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=15)
         # Tab Vars
-        self.tab_list: {int: DIGI_cfg_Tab} = {}
+        self._tab_list: {int: DIGI_cfg_Tab} = {}
 
         all_DIGIs = POPT_CFG.get_digi_CFG()
         for digi_call, digi_cfg in all_DIGIs.items():
-            tab = DIGI_cfg_Tab(self.tabControl, digi_cfg, )
-            self.tab_list[digi_call] = tab
+            tab = DIGI_cfg_Tab(tabControl, digi_cfg, )
+            self._tab_list[digi_call] = tab
             port_lable_text = f'{digi_call}'
-            self.tabControl.add(tab, text=port_lable_text)
+            tabControl.add(tab, text=port_lable_text)
 
         ###########################################
         # BTN
@@ -237,7 +236,7 @@ class DIGI_SettingsWin(tk.Toplevel):
         all_DIGIs = POPT_CFG.get_digi_CFG()
         new_cfg = {}
         for digi_call, digi_cfg in all_DIGIs.items():
-            new_cfg[digi_call] = self.tab_list[digi_call].get_cfg_fm_vars()
+            new_cfg[digi_call] = self._tab_list[digi_call].get_cfg_fm_vars()
         POPT_CFG.set_digi_CFG(new_cfg)
 
     def _save_cfg(self):

@@ -1,5 +1,5 @@
 from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
-    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END
+    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -14,7 +14,7 @@ def getNew_station_cfg():
         stat_parm_PacLen=0,  # Max Pac len
         stat_parm_MaxFrame=0,  # Max (I) Frames
         stat_parm_qso_col_text_tx=DEF_STAT_QSO_TX_COL,
-        stat_parm_qso_col_bg=DEF_STAT_QSO_RX_COL,
+        stat_parm_qso_col_bg=DEF_STAT_QSO_BG_COL,
         stat_parm_qso_col_text_rx=DEF_STAT_QSO_RX_COL,
     )
 
@@ -237,4 +237,26 @@ def getNew_pipe_cfg():
         pipe_parm_Proto=True,
         pipe_parm_permanent=False,
 
+    )
+
+#######################################
+# MCast
+def getNew_mcast_cfg():
+    return dict(
+        mcast_server_call='',
+        mcast_ch_conf={0: getNew_mcast_channel_cfg(0)},
+        mcast_axip_list={},             # """CALL: (DomainName/IP, PORT)"""
+        mcast_default_ch=0,
+        # New User has to register (connect to MCast Node/Station/CLI) first
+        mcast_new_user_reg=True,           # 1 = YES, 0 = NO JUST by SYSOP via GUI(Config)
+        mcast_member_timeout=60,        # Minutes
+        mcast_member_init_timeout=5,    # Minutes - Member Timeout after MCast re/init
+    )
+
+def getNew_mcast_channel_cfg(channel_id: int):
+    return dict(
+        ch_id=int(channel_id),
+        ch_name='Lobby',
+        ch_private=False,
+        ch_members=[],
     )

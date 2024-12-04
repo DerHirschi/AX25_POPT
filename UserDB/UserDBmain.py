@@ -4,7 +4,7 @@ import os
 import pickle
 from cfg.logger_config import logger
 
-from fnc.ax25_fnc import call_tuple_fm_call_str, validate_call
+from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call, validate_aprs_call
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
 from fnc.loc_fnc import locator_to_coordinates, locator_distance
 from fnc.str_fnc import conv_time_for_sorting
@@ -64,8 +64,8 @@ class Client(object):
 
 class UserDB:
     def __init__(self):
-        print("User-DB INIT")
-        logger.info("User-DB INIT")
+        # print("User-DB Init")
+        logger.info("User-DB: Init")
         self._port_handler = None
         self.not_public_vars = [
             'not_public_vars',
@@ -81,6 +81,7 @@ class UserDB:
         ]
         self.db = {}
         db_load = {}
+        logger.info(f"User-DB: loading UserDB fm {CFG_user_db} ")
         try:
             with open(CFG_user_db, 'rb') as inp:
                 db_load = pickle.load(inp)
@@ -89,6 +90,7 @@ class UserDB:
                 print(ke)
             """
         except FileNotFoundError:
+            logger.warning(f"User-DB: {CFG_user_db} not found. Creating new User-DB !")
             if 'linux' in sys.platform:
                 os.system('touch {}'.format(CFG_user_db))
             default_client = Client()
@@ -102,9 +104,9 @@ class UserDB:
                 'ALL': default_client
             }
         except EOFError:
-            pass
+            logger.warning(f"User-DB: Can't open {CFG_user_db} !!!")
         except ImportError:
-            logger.error(f"User DB: Falsche Version der DB Datei. Bitte {CFG_user_db} löschen und PoPT neu starten!")
+            logger.error(f"User-DB: Falsche Version der DB Datei. Bitte {CFG_user_db} löschen und PoPT neu starten!")
             raise
 
         for k in list(db_load.keys()):
@@ -124,11 +126,15 @@ class UserDB:
                     self.db[k].Call = str(k)
                     self.db[k].SSID = 0
 
+        logger.info("User-DB: Init complete")
+
     def set_port_handler(self, port_handler):
         self._port_handler = port_handler
+        logger.info("User-DB: PH set")
 
     def get_entry(self, call_str, add_new=True):
-        call_str = validate_call(call_str)
+        # call_str = validate_ax25Call(call_str)
+        call_str = validate_aprs_call(call_str.upper())
         if call_str:
             call_tup = call_tuple_fm_call_str(call_str)
             if call_str not in self.db.keys():
@@ -136,21 +142,21 @@ class UserDB:
                     if add_new:
                         return self._new_entry(call_str)
                     else:
-                        return False
+                        return None
                 else:
                     # self.entry_var_upgrade(call_tup[0])
                     return self.db[call_tup[0]]
             # self.entry_var_upgrade(call_str)
             return self.db[call_str]
-        return False
+        return None
 
     def _new_entry(self, call_str):
-        call_str = validate_call(call_str)
-        if call_str:
+        call_str = call_str.upper()
+        if validate_ax25Call(call_str):
             if call_str not in self.db.keys():
                 call_tup = call_tuple_fm_call_str(call_str)
                 # if call_tup[0] not in self.db.keys():
-                print('# User DB: New User added > ' + call_str)
+                # print('# User DB: New User added > ' + call_str)
                 logger.info('User DB: New User added > ' + call_str)
                 self.db[call_str] = Client()
                 self.db[call_str].call_str = str(call_str)
@@ -167,6 +173,8 @@ class UserDB:
 
     def set_typ(self, call_str: str, typ: str, add_new=True, overwrite=False):
         ent = self.get_entry(call_str, add_new)
+        if not ent:
+            return
         if overwrite:
             ent.TYP = typ
         else:
@@ -178,6 +186,8 @@ class UserDB:
         if not call_str:
             return
         ent = self.get_entry(call_str, True)
+        if not ent:
+            return
         if not ent.TYP:
             ent.TYP = 'BBS'
         ent.PRmail = address
@@ -328,13 +338,15 @@ class UserDB:
             return ret.AXIP
         return '', 0
 
-    def set_AXIP(self, call_str: str, axip: tuple):
+    def set_AXIP(self, call_str: str, axip: tuple, new_user=False):
         if not all((call_str, axip)):
             return False
         if not axip[0]:
             return False
         if not self.db.get(call_str, None):
-            return False
+            if not new_user:
+                return False
+            self._new_entry(call_str)
         self.db[call_str].AXIP = tuple(axip)
         return True
 
@@ -347,15 +359,15 @@ class UserDB:
         return ret
 
     def save_data(self):
-        print('Save Client DB')
-        logger.info('Save Client DB')
+        # print('Save Client DB')
+        logger.info('User-DB: Save User-DB')
         tmp = cleanup_obj_dict(self.db)
         try:
             with open(CFG_user_db, 'wb') as outp:
                 pickle.dump(tmp, outp, pickle.HIGHEST_PROTOCOL)
         except FileNotFoundError as e:
             # print("ERROR SAVE ClientDB: " + str(e))
-            logger.error("ERROR SAVE ClientDB: " + str(e))
+            logger.error("User-DB: Save User-DB > " + str(e))
 
 
 USER_DB = UserDB()

@@ -3,36 +3,23 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.109.21'
-DEBUG_LOG = True
+VER = '2.110.24'
+DEBUG_LOG = False
+CONSOLE_LOG = True
+LANGUAGE = 0   # QUICK FIX
 """
 LANGUAGE:
 0 = German
 1 = English
 2 = Dutch
 """
-LANGUAGE = 0                # QUICK FIX
-""" TNC KISSMODE INIT """
-TNC_KISS_CMD = b'\x1b@K\r'             # Command for setting TNC to Kiss Mode
-# TNC_KISS_CMD = b'KISSM\r'             # Command for setting TNC to Kiss Mode
-# TNC_KISS_CMD = b'KISS ON\r'           # Command for setting TNC to Kiss Mode
-# TNC_KISS_CMD = b'KISS ON\rrestart\r'  # Command for setting TNC to Kiss Mode
-
-TNC_KISS_CMD_END = b'\xc0\xff\xc0'
-
-TNC_KISS_START_CMD = [
-    b'\x1b@K\r',
-    b'KISSM\r',
-    b'KISS ON\r',
-    b'KISS ON\rrestart\r'
-]
-
-TNC_KISS_END_CMD = [
-    b'\xc0\xff\xc0',
-    ]
+""" Custom TNC KISSMODE INIT """
+TNC_KISS_CMD = b'\x1b@K\r'             # Custom Command for setting TNC to Kiss Mode
+TNC_KISS_CMD_END = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
 """"""
-MAX_PORTS = 15              #
+MAX_PORTS = 10              #
 SERVICE_CH_START = 11       # Service Channels Start Channel
+MAX_MCAST_CH = 30           # Max Virtual MCast Channels
 
 """ doc/PoPT/mysql_setup.txt """
 MYSQL = False    # MYSQL/SQLITE
@@ -41,26 +28,34 @@ MYSQL_PASS = '83g6u45908k91HG2jhj5jeGG'
 MYSQL_HOST = '127.0.0.1'
 MYSQL_DB = 'popt_db'
 
-""" CONST Stuff """
-LANG_IND = {
-            'DE': 0,
-            'EN': 1,
-            'NL': 2,
-        }
-
+""" Directory's """
 CFG_data_path = 'data/'
+CFG_logging_path = 'data/logs/'
 CFG_usertxt_path = 'userdata/'
 CFG_ft_downloads = 'ft_downloads/'
 CFG_user_db = 'data/UserDB.popt'
 CFG_mh_data_file = 'data/mh_data.popt'
 CFG_port_stat_data_file = 'data/port_stat.popt'
-# CFG_aprs_data_file = 'aprs.popt'
 CFG_MAIN_data_file = 'popt_cfg.popt'    # New Global CFG
+""" Sound Files """
 CFG_sound_DICO = '//data//sound//disco_alarm.wav'
 CFG_sound_CONN = '//data//sound//conn_alarm.wav'
 CFG_sound_RX_BEEP = '//data//sound//rx_beep.wav'
 CFG_sound_BELL = '//data//sound//bell.wav'
 
+###################################################################################
+""" CONST Stuff """
+LANG_IND = {
+            'DE': 0,
+            'EN': 1,
+            'NL': 2,
+            # 'FR': 3,
+            # 'FI': 4,
+            # 'PL': 5,
+            # 'PT': 6,
+            # 'IT': 7,
+            # '': 8,
+        }
 """
 CFG_txt_save = {
     'cli_ctext': 'ctx',
@@ -91,6 +86,7 @@ STATION_TYPS = [
     'APRS-TELEMETRIE',
     'APRS-WX',
     'GATEWAY',
+    'MCast-Server',
     'OTHER',
 ]
 
@@ -115,7 +111,6 @@ STATION_ID_NODE = [
     'WinSTOPNode',
     'PoPTNode',
     'TNN',
-
 ]
 
 STATION_ID_BBS = [
@@ -127,6 +122,10 @@ STATION_ID_BBS = [
     'BPQ',
     'THEBOX',
     'PoPTBOX',
+]
+
+STATION_ID_MCAST = [    # TODO Just Dummy yet
+    'PoPTMCast',
 ]
 
 STATION_ID_ENCODING = {
@@ -192,13 +191,25 @@ CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 GUI_DISABLED_CLR = '#b1b1b3'
 # Station Default
 DEF_STAT_QSO_TX_COL = 'white'
-DEF_STAT_QSO_RX_COL = '#02faf2'
+DEF_STAT_QSO_RX_COL = '#00ff06'
 DEF_STAT_QSO_BG_COL = 'black'
 # Port Default
 DEF_PORT_MON_TX_COL = 'medium violet red'
 DEF_PORT_MON_RX_COL = 'green'
 DEF_PORT_MON_BG_COL = 'black'
+# Port TNC Settings
+TNC_KISS_START_CMD = [
+    b'\x1b@K\r',
+    b'KISSM\r',
+    b'KISS ON\r',
+    b'KISS ON\rrestart\r',
+    TNC_KISS_CMD
+]
 
+TNC_KISS_END_CMD = [
+    b'\xc0\xff\xc0',
+    TNC_KISS_CMD_END
+    ]
 
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \

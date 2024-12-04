@@ -1890,4 +1890,91 @@ STR_TABLE = {
            '',
            ''),
 
+    #####################################################
+    # MCast
+
+    'cmd_help_mcast_move_ch': ('MCast Kanal wechseln',
+                               'Change MCast channel',
+                               'MCast kanaal wijzigen',
+                               '',
+                               '',
+                               '',
+                               '',
+                               '',
+                               ''),
+
+    'cmd_help_mcast_ch_info': ('MCast Kanal Info',
+                               'MCast channel info',
+                               'MCast kanaalinformatie',
+                               '',
+                               '',
+                               '',
+                               '',
+                               '',
+                               ''),
+
+    'cmd_help_mcast_channels': ('MCast Kanal Übersicht',
+                               'MCast channel overview',
+                               'MCast kanaaloverzicht',
+                               '',
+                               '',
+                               '',
+                               '',
+                               '',
+                               ''), #
+
+    'cmd_help_mcast_set_axip': ('Eigene AXIP Adresse eintragen / anzeigen lassen',
+                                'Enter/display your own AXIP address',
+                                'Voer/toon uw eigen AXIP-adres in',
+                                '',
+                                '',
+                                '',
+                                '',
+                                '',
+                                ''),
+
+    'mcast_new_user_beacon': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '-= Willkommen auf dem AXIP-MCast Server. Registriere dich auf {} =-',
+         '-= Welcome to the AXIP-MCast Server. Please connect {} to register =-',
+         '-= Welcome to the AXIP-MCast Server. Please connect {} to register =-',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'mcast_new_user_reg_beacon': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars) per Line
+        # Max 256
+        ('-= Du wurdest erfolgreich auf dem MCast-Server registriert =-\r'
+         '-= Du befindest dich auf Kanal {} ({}) =-'),
+        ('-= You have been successfully registered on the MCast server =-\r'
+         '-= You are on channel {} ({}) =-'),
+        ('-= U bent succesvol geregistreerd op de MCast-server. =-\r'
+         '-= Je bevindt je op kanaal {} ({}) =-'),
+        ('\r'
+         ''),
+        ('\r'
+         ''),
+        ('\r'
+         ''),
+        ('\r'
+         ''),
+        ('\r'
+         ''),
+         ''),
+
+    'mcast_new_user_channel_beacon': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '-= {} hat den Kanal betreten =-',
+         '-= {} has entered the channel =-',
+         '-= {} is het kanaal binnengekomen =-',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
 }

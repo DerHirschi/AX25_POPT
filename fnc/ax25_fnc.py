@@ -37,8 +37,7 @@ def call_tuple_fm_call_str(call_str: str):
     else:
         return call_str.upper(), 0
 
-
-def validate_call(call_str: str):
+def validate_aprs_call(call_str: str):
     call_str = call_str.replace(' ', '').replace('\r', '').replace('\n', '')
     call_str = call_str.upper()
     call_tuple = call_tuple_fm_call_str(call_str)
@@ -49,15 +48,14 @@ def validate_call(call_str: str):
         return ''
     return call_str
 
-
 def get_list_fm_viaStr(via_str: str):
     via_list = via_str.split(' ')
     vias = []
     for call in via_list:
         if call:
-            tmp_call = validate_call(call)
-            if tmp_call:
-                vias.append(tmp_call)
+            call = call.upper()
+            if validate_ax25Call(call):
+                vias.append(call)
             else:
                 return []
     return vias
@@ -95,13 +93,11 @@ def validate_ax25Call(call_str: str):
         ssid = int(ssid)
     except ValueError:
         return False
-
     if ssid > 15 or ssid < 0:
         return False
     # CALL
     if len(call) < 2 or len(call) > 6:    # Calls like CQ or ID
         return False
-
     for c in call:
         if not any((c.isupper(), c.isdigit())):
             return False

@@ -44,12 +44,12 @@ class AutoConnTask:
         }.get(self._conf.get('task_typ', ''), {})
         if not self._state_tab:
             self.e = True
-            print(f"Error ConnTask no state_tab Typ: {self._conf}")
+            # print(f"Error ConnTask no state_tab Typ: {self._conf}")
             logger.error(f"Error ConnTask no state_tab Typ: {self._conf}")
             self._set_state_exec(0)
         if not connection[0]:
             self.e = True
-            print(f"Error ConnTask connection: {connection[1]}")
+            # print(f"Error ConnTask connection: {connection[1]}")
             logger.error(f"Error ConnTask connection: {connection[1]}")
             self._set_state_exec(0)
         else:

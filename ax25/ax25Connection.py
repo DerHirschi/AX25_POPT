@@ -12,7 +12,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
-from cfg.logger_config import logger
+from cfg.logger_config import logger, log_book
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
@@ -109,7 +109,7 @@ class AX25Conn:
         # TODO: Cleanup
         """ Global Stuff """
         self.own_port = port
-        self._port_handler = port.port_handler
+        self._port_handler = port.port_get_PH()
         """ Port Config Parameter """
         self._port_cfg = dict(self.own_port.port_cfg)
         self.parm_PacLen = self._port_cfg.get('parm_PacLen', 160)  # Max Pac len
@@ -299,7 +299,6 @@ class AX25Conn:
         cli_key = self._stat_cfg.get('stat_parm_cli', getNew_station_cfg().get('stat_parm_cli', 'NO-CLI'))
         self.cli = CLI_OPT.get(cli_key, NoneCLI)(self)
         self.cli_type = str(cli_key)
-        self.cli.build_prompt()
 
     def _reinit_cli(self):
         # print(f"CLI RE-INIT: {self.uid}")
@@ -379,10 +378,13 @@ class AX25Conn:
             return
         self._send_gui_QSObuf_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
-        self._set_dest_call_fm_data_inp(data)
+        # TODO !!!! Nicht sauber
+        if self._set_dest_call_fm_data_inp(data):
+            self.rx_buf_last_data = b''
+        else:
+            self.rx_buf_last_data = data
         """ CLI """
         self.exec_cli(data)
-        self.rx_buf_last_data = data
         return
 
     def exec_cron(self):
@@ -599,8 +601,8 @@ class AX25Conn:
         return True
 
     def new_digi_connection(self, conn):
-        print(f"Conn newDIGIConn: UID: {conn.uid}")
-        logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
+        # print(f"Conn newDIGIConn: UID: {conn.uid}")
+        # logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
         if conn is None:
             print("Conn ERROR: newDIGIConn: not conn")
             logger.error("Conn ERROR: newDIGIConn: not conn")
@@ -621,11 +623,11 @@ class AX25Conn:
         return True
 
     def link_disco(self, reconnect=True):
-        logger.debug(f'LINK DISCO')
+        # logger.debug(f'LINK DISCO')
         if self.is_link and self.LINK_Connection is not None:
-            logger.debug(f'LINK DISCO : ownUID: {self.uid} - LinkUID: {self.LINK_Connection.uid}')
-            logger.debug(f'LINK DISCO : digiCall: {self.digi_call} - is_digi: {self.is_digi}')
-            logger.debug(f'LINK DISCO : is_link_remote: {self.is_link_remote} - reconn: {reconnect}')
+            # logger.debug(f'LINK DISCO : ownUID: {self.uid} - LinkUID: {self.LINK_Connection.uid}')
+            # logger.debug(f'LINK DISCO : digiCall: {self.digi_call} - is_digi: {self.is_digi}')
+            # logger.debug(f'LINK DISCO : is_link_remote: {self.is_link_remote} - reconn: {reconnect}')
             if self.LINK_Connection.zustand_exec.stat_index in [1, 2]:
                 # self.LINK_Connection.n2 = 100
                 self.LINK_Connection.set_T1(stop=True)
@@ -634,7 +636,7 @@ class AX25Conn:
             else:
 
                 if not self.is_link_remote:
-                    logger.debug("LINK DISCO Remote")
+                    # logger.debug("LINK DISCO Remote")
                     self.LINK_Connection.conn_disco()
                     # self.LINK_Connection.zustand_exec.tx(None)
                 else:
@@ -643,11 +645,13 @@ class AX25Conn:
                     # if self.zustand_exec.stat_index not in [0, 1]:
                     # if reconnect and not self.digi_call:
                     if self.is_digi:
-                        logger.debug("DIGI DISCO Remote")
+                        # logger.debug("DIGI DISCO Remote")
                         self.LINK_Connection.conn_disco()
                     elif reconnect and self.is_link_remote and not self.is_digi:
-                        logger.debug('ReConn')
-                        self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
+                        # logger.debug('ReConn')
+                        if hasattr(self.LINK_Connection, 'send_sys_Msg_to_gui'):
+                            # TODO ?? Why to LINKCONN GUI ?  CHANNEL ?
+                            self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
                         self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
                         """
                         if self.digi_call:
@@ -694,7 +698,7 @@ class AX25Conn:
             else:
                 if not self.is_buffer_empty():
                     self._await_disco = True
-                    logger.debug("DISCO and buff not NULL !!")
+                    # logger.debug("DISCO and buff not NULL !!")
                     """
                     print(f"DISCO and buff not NULL !! tx_buf_rawData: {self.tx_buf_rawData}")
                     print(f"DISCO and buff not NULL !! tx_buf_2send: {self.tx_buf_2send}")
@@ -714,14 +718,14 @@ class AX25Conn:
         self.zustand_exec.change_state(4)
 
     def conn_cleanup(self):
-        logger.debug(f"conn_cleanup: {self.uid}\n"
-              f"state: {self.zustand_exec.stat_index}\n")
+        # logger.debug(f"conn_cleanup: {self.uid}\n"
+        #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
         if self.tx_buf_ctl:
-            logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
+            # logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
         if self.rx_tx_buf_guiData:
-            logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
+            # logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
         self.own_port.del_connections(conn=self)
@@ -729,7 +733,7 @@ class AX25Conn:
         # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self, reconn=True):
-        logger.debug(f"end_connection: {self.uid}")
+        # logger.debug(f"end_connection: {self.uid}")
         self._del_pipe()
         self.ft_queue = []
         if self.ft_obj:
@@ -739,6 +743,18 @@ class AX25Conn:
         self.set_T1()
         self.vr = 0
         self.vs = 0
+
+    def reset_conn(self):
+        # self._del_pipe()
+        self.ft_queue = []
+        if self.ft_obj:
+            self.ft_obj.ft_abort()
+        self.ft_obj = None
+        # self.link_disco(reconnect=reconn)
+        self.set_T1()
+        self.vr = 0
+        self.vs = 0
+        self._port_handler.reset_connection(connection=self)
 
     def is_dico(self):
         if not self.zustand_exec:
@@ -836,14 +852,17 @@ class AX25Conn:
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
         data = self.rx_buf_last_data + raw_data
+        # tmp_raw = bytes(raw_data)
         if b'\r' not in data:
-            return
+            return False
         data = data.split(b'\r')[:-1]
         for line in data:
+            # tmp_raw = tmp_raw.replace(line + b'\r', b'')
             if line.lower().startswith(b'*** connected to ') or\
                     line.lower().startswith(b'*** reconnected to '):
-                tmp_data = line.split(b' to ')[-1]
-                tmp_data = tmp_data.decode('ASCII', 'ignore')
+                tmp_line = line.decode('ASCII', 'ignore')
+                tmp_data = tmp_line.split(' to ')[-1]
+                # tmp_data = tmp_data.decode('ASCII', 'ignore')
                 # TODO Conn/reconn fnc
                 if ':' in tmp_data:
                     tmp_call = tmp_data.split(':')
@@ -857,15 +876,18 @@ class AX25Conn:
                 self._set_user_db_ent()
                 self._set_packet_param()
                 self._reinit_cli()
-
+                lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+                lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
+                log_book.info(lb_msg)
+                log_book.info(lb_msg_1)
                 if self._gui:
                     # TODO
                     speech = ' '.join(self.to_call_str.replace('-', ' '))
                     SOUND.sprech(speech)
                     self._gui.on_channel_status_change()
                 # Maybe it's better to look at the whole string (include last frame)?
-                return
-        return
+                return True
+        return False
 
     def _set_user_db_ent(self):
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
@@ -1153,6 +1175,9 @@ class AX25Conn:
     def send_sys_Msg_to_gui(self, data):
         if not data:
             return
+        lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+        log_book.info(lb_msg)
+        log_book.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
         gui = self._port_handler.get_gui()
         if not gui:
             return
@@ -1177,10 +1202,10 @@ class AX25Conn:
             )
 
     def accept_digi_connection(self):
-        print(f'DIGI Conn accept..  {self.uid}  ?')
+        # print(f'DIGI Conn accept..  {self.uid}  ?')
         if not self.LINK_Connection:
-            print(f'DIGI Conn accept: No LINK_Connection {self.uid}')
-            print(f'DIGI Conn accept: No LINK_Connection {self.LINK_Connection}')
+            # print(f'DIGI Conn accept: No LINK_Connection {self.uid}')
+            # print(f'DIGI Conn accept: No LINK_Connection {self.LINK_Connection}')
 
             return False
         digi_uid = self.LINK_Connection.uid
@@ -1274,7 +1299,9 @@ class DefaultStat(object):
             self.change_state(2)
 
     def _rx_DM(self):
+        # RESET
         if self.stat_index:
+            self._ax25conn.reset_conn()
             self._ax25conn.send_SABM()
             self._ax25conn.set_T1()
             self.change_state(2)

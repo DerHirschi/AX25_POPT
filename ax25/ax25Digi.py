@@ -25,7 +25,7 @@ class AX25DigiConnection:
         self._tx_conn = None
         self._port_handler = None
         if self._rx_port:
-            self._port_handler = self._rx_port.port_handler
+            self._port_handler = self._rx_port.port_get_PH()
 
         self._state = 1             # 1 INIT, 2 Aufbau, ..., 5 Bereit
         self._state_tab = {
@@ -42,7 +42,7 @@ class AX25DigiConnection:
                 self._rx_port,
                 self._port_handler
         )):
-            print("DIGI INIT Error !")
+            logger.warning("DIGI INIT Error !")
             self._state_0_error()
             """
             print(f"_ax25_conf: {self._ax25_conf}")
@@ -52,7 +52,7 @@ class AX25DigiConnection:
             """
 
     def _init_digi_conn(self, ax25_frame):
-        print("!!!! _init_digi_conn !!!!")
+        # print("!!!! _init_digi_conn !!!!")
         logger.debug("!!!! _init_digi_conn !!!!")
         """
         try:
@@ -81,7 +81,6 @@ class AX25DigiConnection:
         """
         if self._rx_conn_uid in self._rx_port.connections.keys():
             logger.warning("ERROR DIGI - Connection -  self._rx_conn_uid in self._rx_port.connections ")
-            print("ERROR DIGI - Connection -  self._rx_conn_uid in self._rx_port.connections ")
             self._state_0_error()
             return
         if self._conf_short_via:
@@ -106,13 +105,11 @@ class AX25DigiConnection:
         )
         if not tx_conn[0]:
             logger.error(f"Digi-Error _init_digi_conn: {tx_conn[1]}")
-            print(f"Digi-Error _init_digi_conn: {tx_conn[1]}")
             self._state_0_error()
             return
         self._tx_conn = tx_conn[0]
         if not self._tx_conn.new_digi_connection(self._rx_conn):
             logger.error("Digi-Error: not self._tx_conn.new_digi_connection(self._rx_conn)")
-            print("Digi-Error: not self._tx_conn.new_digi_connection(self._rx_conn)")
             self._state_0_error()
             return
         self._tx_conn.is_link_remote = True
@@ -170,18 +167,15 @@ class AX25DigiConnection:
         if not self._rx_conn or not self._tx_conn:
             self._state_0_error()
             logger.error('Digi-Conn_link Error: No tx or rx conn')
-            print('Digi-Conn_link Error: No tx or rx conn')
             return
 
         if self._rx_conn.new_digi_connection(self._tx_conn):
             logger.debug('Digi-Accept')
-            print('Digi-Accept')
             return True
         return False
 
     def _state_0_error(self, ax25_frame=None):
         logger.error(f"Digi-Error: STATE: {self._state}")
-        print(f"Digi-Error: STATE: {self._state}")
         self._state = 0
         self._disco_tx_conn()
         self._disco_rx_conn()
@@ -192,13 +186,11 @@ class AX25DigiConnection:
                 self._init_digi_conn(ax25_frame)
             else:
                 logger.error('Digi-SABM-RX ERROR')
-                print('Digi-SABM-RX ERROR')
                 self._state_0_error()
                 # self.crone() # # SABM TX
         elif ax25_frame.ctl_byte.flag == 'DISC':
             # self._abort_digi_conn(ax25_frame)
             logger.debug('DIGI S! DISC RX')
-            print('DIGI S! DISC RX')
             if self.is_done():
                 # self._rx_port.add_frame_to_digiBuff(ax25_frame)
                 self._digi_fallback(ax25_frame)
@@ -208,7 +200,6 @@ class AX25DigiConnection:
         else:
             # MAYBE Fallback to simple Digi Mode ?
             logger.warning(f'DIGI Not Known Frame: {ax25_frame.ctl_byte.flag}')
-            print(f'DIGI Not Known Frame: {ax25_frame.ctl_byte.flag}')
             self._digi_fallback(ax25_frame)
             self._state_0_error()
 

@@ -177,7 +177,7 @@ class WXPlotWindow(tk.Toplevel):
         y_lum = []
         ts_now = datetime.now()
         for data in self._wx_data:
-            timestamt_dt = data[-1]
+            timestamt_dt = data[15]
             timestamt_dt = convert_str_to_datetime(timestamt_dt)
             if timestamt_dt:
                 if data[0]:

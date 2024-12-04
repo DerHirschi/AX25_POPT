@@ -14,8 +14,9 @@ DL = Deleted MSG
 import time
 from datetime import datetime
 
-from bbs.bbs_Error import bbsInitError, logger
+from bbs.bbs_Error import bbsInitError
 from cfg.popt_config import POPT_CFG
+from cfg.logger_config import logger
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 
@@ -52,13 +53,13 @@ def parse_forward_header(header):
     """
     hdr = header.split(' ')
     if len(hdr) != 7:
-        print(f"PH!!: {header}")
+        logger.debug(f"PH!!: {header}")
         return None
     if hdr[0] != 'FB':
-        print(f"PH!!: {header}")
+        logger.debug(f"PH!!: {header}")
         return None
     if hdr[1] not in ['P', 'B']:
-        print(f"PH!!: {header}")
+        logger.debug(f"PH!!: {header}")
         return None
 
     _tmp = hdr[5].split('-')
@@ -137,7 +138,7 @@ def parse_fwd_paths(path_list: list):
 
 def parse_header_timestamp(path_str: str):
     if path_str[:2] != 'R:':
-        print(f"TS-Parser R not FOUND: {path_str}")
+        logger.debug(f"TS-Parser R not FOUND: {path_str}")
         return ''
     path_str = path_str[2:].split(' ')[0]
     """
@@ -211,7 +212,7 @@ class BBSConnection:
             try:
                 data = data.encode('ASCII')
             except UnicodeEncodeError:
-                print("_get_lines_fm_rx_buff: UnicodeEncodeError")
+                logger.debug("_get_lines_fm_rx_buff: UnicodeEncodeError")
                 return []
 
         if data in self._rx_buff:
@@ -577,8 +578,8 @@ class BBSConnection:
 
 class BBS:
     def __init__(self, port_handler):
-        logger.info('PMS INIT')
-        print('PMS INIT')
+        logger.info('PMS: Init')
+        # print('PMS INIT')
         self._port_handler = port_handler
         self.db = self._port_handler.get_database()
         self.pms_flag = generate_sid(features=("F", "M", "H"))
@@ -586,14 +587,18 @@ class BBS:
         try:
             self.pms_flag = self.pms_flag.encode('ASCII')
         except UnicodeEncodeError:
-            print('BBS Init Error: UnicodeEncodeError')
+            logger.error('PMS: Init Error: UnicodeEncodeError')
+            # print('PMS: Init Error: UnicodeEncodeError')
             raise bbsInitError('UnicodeEncodeError')
         if self.my_stat_id is None:
-            print('BBS Init Error: my_stat_id is None')
+            logger.error('PMS: Init Error: my_stat_id is None')
+            # print('PMS: Init Error: my_stat_id is None')
             raise bbsInitError('my_stat_id is None')
         if self.my_stat_id.e:
-            print('BBS Init Error: my_stat_id.e Error')
+            logger.error('PMS: Init Error: my_stat_id.e Error')
+            # print('PMS: Init Error: my_stat_id.e Error')
             raise bbsInitError('my_stat_id.e Error')
+        logger.info(f"PMS: Flag: {self.pms_flag}")
         ###############
         # Init DB
         # self.db.check_tables_exists('bbs')
@@ -636,6 +641,7 @@ class BBS:
         self._set_pms_home_bbs()
         ####################
         # Scheduler
+        logger.info('PMS: Set Scheduler')
         self._set_pms_fwd_schedule()
         ####################
         # New Msg Noty/Alarm
@@ -649,6 +655,7 @@ class BBS:
         # Tasker/crone
         # self._var_task_1sec = time.time()
         self._var_task_5sec = time.time()
+        logger.info('PMS: Init complete')
 
         ###############
         # DEBUG/DEV
@@ -666,10 +673,10 @@ class BBS:
         """
     def _reinit(self):
         if not self.pms_connections:
-            print("PMS reINIT")
-            logger.info("PMS reINIT")
-            print("PMS reINIT: Read new Config")
-            logger.info("PMS reINIT: Read new Config")
+            # print("PMS: reINIT")
+            logger.info("PMS: reINIT")
+            # print("PMS reINIT: Read new Config")
+            logger.info("PMS: reINIT: Read new Config")
             self._del_all_pms_fwd_schedule()
             self._pms_cfg = dict(POPT_CFG.get_CFG_by_key('pms_main'))
             self._reinit_stationID_pmsFlag()

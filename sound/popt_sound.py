@@ -93,7 +93,7 @@ class POPT_Sound:
                             8: 'zh',
                         }[self._lang]
                         try:
-                            print("GTTS")
+                            # print("GTTS")
                             tts = gTTS(text=text,
                                        lang=language,
                                        slow=False)

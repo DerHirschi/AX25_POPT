@@ -1,5 +1,6 @@
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
-    getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg
+    getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
+    getNew_mcast_channel_cfg
 from cfg.constant import CFG_MAIN_data_file, LANGUAGE, DEBUG_LOG, MAX_PORTS
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file  # , get_all_pipe_cfg
@@ -13,49 +14,66 @@ def getNew_dict():
 class Main_CFG:
     def __init__(self):
         logger.info('Main CFG: Init')
-        print('Main CFG: Init')
+        # print('Main CFG: Init')
         self._config_filename = CFG_MAIN_data_file
         self._config = {}
         # TODO RX-Echo CFG
         self._default_cfg_tab = {
+            ##########################
             # -- PMS
             'pms_main': getNew_PMS_cfg,
             'pms_home_bbs': getNew_homeBBS_cfg,
+            ##########################
             # -- MH
             'mh_cfg': getNew_MH_cfg,
+            ##########################
             # -- APRS
             # 'aprs_station': getNew_APRS_Station_cfg,
             'aprs_station': {},
             'aprs_ais': getNew_APRS_ais_cfg,
+            ##########################
             # -- GUI
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
             'gui_channel_vars': getNew_dict,
+            ##########################
             # -- Beacon
             'beacon_tasks': [],
+            ##########################
+            # -- Dual Port
             'dualPort_cfg': {},
+            ##########################
             # -- DIGI
             'digi_cfg': {},
+            ##########################
             # -- PIPE CFGs
             # 'pipe_cfg': self._load_PIPE_CFG_fm_file,
             'pipe_cfgs': {},
+            ##########################
             # -- STATION CFGs
             'stat_cfgs': {},
+            ##########################
             # -- PORT CFGs
             'port_cfgs': {},
+            ##########################
+            # -- MCast CFG
+            'mcast_cfg': getNew_mcast_cfg,
         }
         """ Main CFGs """
         self._load_CFG_fm_file()        # Other Configs
         self._set_all_default_CFGs()
         self._clean_old_CFGs()
+        self._update_old_CFGs()
         """"""
         # self._load_PIPE_CFG_fm_file()
         """ Station CFGs """
         self._load_STAT_CFG_fm_file()   # Station Configs
-        self._clean_old_STAT_CFGs()
+        self._update_old_STAT_CFGs()
         """ Port CFGs """
         self._load_PORT_CFG_fm_file()   # Port Configs
-        self._clean_old_PORT_CFGs()
+        self._update_old_PORT_CFGs()
+        """ MCast CFGs"""
+        self._update_old_MCast_ch_cfgs()
         """
         print('---------- PIPE CFG -------------')
         for call, cfg in self._config['pipe_cfgs'].items():
@@ -68,7 +86,7 @@ class Main_CFG:
         for conf_k, conf in self._config.items():
             logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
         logger.info(f'-------- Loaded CFGs ENDE --------')
-        logger.info('Main CFG: Init erfolgreich !')
+        logger.info('Main CFG: Init complete')
 
 
     ####################
@@ -82,18 +100,27 @@ class Main_CFG:
         for cfg_key in list(self._config.keys()):
             if cfg_key not in self._default_cfg_tab.keys():
                 del self._config[cfg_key]
-            # TODO Clean Configs itself except gui_channel_vars
+
+    def _update_old_CFGs(self):
+        # TODO Clean Configs aprs-cfg etc.
+        for cfg_key, cfg in self._config.items():
+            if cfg_key not in ['gui_channel_vars']:
+                new_cfg = self.get_default_CFG_by_key(cfg_key)
+                if new_cfg:
+                    for k in new_cfg.keys():
+                        new_cfg[k] = cfg.get(k, new_cfg[k])
+                    self._config[cfg_key] = new_cfg
 
     ####################
     # File Fnc
     def _load_CFG_fm_file(self):
         logger.info(f'Main CFG: Load from {self._config_filename}')
-        print(f'Main CFG: Load from {self._config_filename}')
+        # print(f'Main CFG: Load from {self._config_filename}')
         config = load_fm_file(self._config_filename)
         if config:
             self._config = dict(config)
         else:
-            print("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
+            # print("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
             logger.warning("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
             self._set_all_default_CFGs()
 
@@ -126,7 +153,6 @@ class Main_CFG:
         self._config['port_cfgs'] = tmp_port_cfgs
         logger.info(f'-------- MAIN CFG Save ENDE --------')
 
-
     """
     # PIPE
     @staticmethod
@@ -137,19 +163,19 @@ class Main_CFG:
         # print(self._config['pipe_cfgs'])
         return get_all_pipe_cfg()   # Get CFGs fm Station CFG
     """
-    ###########################################
+
     # STATIONs
     def _load_STAT_CFG_fm_file(self):
         self._config['stat_cfgs'] = get_all_stat_CFGs()
-        print('---------- Stat CFG--------------')
-        print(self._config['stat_cfgs'])
+        # print('---------- Stat CFG--------------')
+        # print(self._config['stat_cfgs'])
         logger.info(f'-------- Stat CFG --------')
         for conf_k, conf in self._config.get('stat_cfgs', {}).items():
             logger.info(f'Station CFG: load {conf_k}')
             logger.debug(f'- {conf}')
         # return get_all_pipe_cfg()   # Get CFGs fm Station CFG
 
-    def _clean_old_STAT_CFGs(self):
+    def _update_old_STAT_CFGs(self):
         new_stat_cfgs = {}
         for call, conf in self._config.get('stat_cfgs', {}).items():
             new_conf = getNew_station_cfg()
@@ -159,8 +185,8 @@ class Main_CFG:
             new_stat_cfgs[call] = new_conf
         self._config['stat_cfgs'] = new_stat_cfgs
 
-        print('---------- Stat CFG Cleanup --------------')
-        print(self._config['stat_cfgs'])
+        # print('---------- Stat CFG Cleanup --------------')
+        # print(self._config['stat_cfgs'])
         logger.info(f'-------- Stat CFG Cleanup --------')
         for conf_k, conf in self._config.get('stat_cfgs', {}).items():
             logger.info(f'Station CFG: Cleanup {conf_k}')
@@ -171,14 +197,14 @@ class Main_CFG:
     # PORTs
     def _load_PORT_CFG_fm_file(self):
         self._config['port_cfgs'] = load_all_port_cfg_fm_file()
-        print('---------- Port CFG--------------')
-        print(self._config['port_cfgs'])
+        # print('---------- Port CFG--------------')
+        # print(self._config['port_cfgs'])
         logger.info(f'-------- Port CFG Load --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: load {conf_k}')
             logger.debug(f'- {conf}')
 
-    def _clean_old_PORT_CFGs(self):
+    def _update_old_PORT_CFGs(self):
         new_port_cfgs = {}
         for port_id, conf in self._config.get('port_cfgs', {}).items():
             new_conf = getNew_port_cfg()
@@ -188,8 +214,8 @@ class Main_CFG:
             new_port_cfgs[port_id] = new_conf
         self._config['port_cfgs'] = new_port_cfgs
 
-        print('---------- Port CFG Cleanup --------------')
-        print(self._config['port_cfgs'])
+        # print('---------- Port CFG Cleanup --------------')
+        # print(self._config['port_cfgs'])
         logger.info(f'-------- Port CFG Cleanup --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: Cleanup {conf_k}')
@@ -341,7 +367,7 @@ class Main_CFG:
         lookup_k = f'{port_id}-{call}'
         if lookup_k in cfg_keys:
             del self._config['pipe_cfgs'][lookup_k]
-            print(self._config['pipe_cfgs'])
+            # print(self._config['pipe_cfgs'])
             return True
         return False
 
@@ -356,7 +382,7 @@ class Main_CFG:
     def del_pipe_CFG(self, uid):
         # UID = f'{port}-{call}'
         if uid in self._config.get('pipe_cfgs', {}):
-            print(f"Del Pipe-CFG: {uid}")
+            # print(f"Del Pipe-CFG: {uid}")
             del self._config['pipe_cfgs'][uid]
 
     def del_pipe_CFG_fm_call(self, call: str):
@@ -365,7 +391,7 @@ class Main_CFG:
         for k in list(self.get_pipe_CFG().keys()):
             i = len(k) - len(call)
             if call == k[i:]:
-                print(f"Del Pipe-CFG: {k}")
+                # print(f"Del Pipe-CFG: {k}")
                 del self._config['pipe_cfgs'][k]
 
     ###########################################
@@ -426,5 +452,43 @@ class Main_CFG:
             return False
         del self._config['port_cfgs'][port_id]
         return True
+
+    ###########################################
+    # MCAST
+    def _update_old_MCast_ch_cfgs(self):
+        logger.info('Main CFG: Update MCast Channel Configs')
+        new_ch_cfgs = {}
+        old_ch_cfgs = self._config.get('mcast_cfg', {}).get('mcast_ch_conf', {})
+        for ch_id, old_cfg in old_ch_cfgs.items():
+            new_cfg = getNew_mcast_channel_cfg(channel_id=ch_id)
+            for cfg_name, cfg_val in new_cfg.items():
+                new_cfg[cfg_name] = old_cfg.get(cfg_name, cfg_val)
+            new_ch_cfgs[ch_id] = new_cfg
+        if not self._config.get('mcast_cfg', {}):
+            logger.error(f"Main CFG: Error _update_old_MCAST_ch_cfgs()")
+            self._config['mcast_cfg'] = getNew_mcast_cfg()
+        self._config['mcast_cfg']['mcast_ch_conf'] = new_ch_cfgs
+
+    def get_MCast_CFG(self):
+        return dict(self._config.get('mcast_cfg', getNew_mcast_cfg()))
+        # return getNew_mcast_cfg()
+
+    def get_MCast_CH_CFGs(self):
+        return dict(self._config.get('mcast_cfg', {}).get('mcast_ch_conf', {}))
+
+    def get_MCast_server_call(self):
+        stat_cfgs = self.get_stat_CFGs()
+        for call, stat_cfg in stat_cfgs.items():
+            if stat_cfg.get('stat_parm_cli', '') == 'MCAST':
+                return call
+        return ''
+
+    def set_MCast_CFG(self, mcast_cfg: dict):
+        if not mcast_cfg:
+            logger.error('Main CFG: set_MCast_CFG no Config')
+            return False
+        self._config['mcast_cfg'] = dict(mcast_cfg)
+        return True
+
 
 POPT_CFG = Main_CFG()

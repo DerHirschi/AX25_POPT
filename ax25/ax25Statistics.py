@@ -7,7 +7,7 @@ import pickle
 
 from UserDB.UserDBmain import USER_DB
 from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT
-from cfg.logger_config import logger
+from cfg.logger_config import logger, log_book
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
@@ -95,8 +95,8 @@ def get_port_stat_struct():
 
 class MH:
     def __init__(self, port_handler):
-        print("MH Init")
-        logger.info("MH Init")
+        # print("MH Init")
+        logger.info("MH: Init")
         self._port_handler = port_handler
         # self._db = None
         self._mh_inp_buffer = []
@@ -111,17 +111,20 @@ class MH:
         ############################
         # MH
         mh_load = {}
+        logger.info(f"MH: loading MH fm {CFG_mh_data_file}")
         try:
             with open(CFG_mh_data_file, 'rb') as inp:
                 mh_load = pickle.load(inp)
         except (FileNotFoundError, EOFError):
-            pass
+            logger.warning(f"MH: {CFG_mh_data_file} not found. Creating new MH !")
 
         if mh_load:
             if type(list(mh_load.keys())[0]) is int:    # New (each Port own MH)
+                logger.info("MH: loading new MH")
                 self._load_MH_new(mh_load)
             else:
                 # Load old MH List Format VER < '2.101.4'
+                logger.info("MH: loading old MH")
                 self._load_MH_old(mh_load)
 
         self._load_MH_update_ent()
@@ -138,6 +141,7 @@ class MH:
         self.parm_lastseen_alarm = 1
         self.parm_alarm_ports = []
         self._load_fm_cfg()
+        logger.info("MH: Init Complete")
 
     def __del__(self):
         pass
@@ -163,15 +167,19 @@ class MH:
                 self._MH_db[port] = {}
             for call in list(mh_load[port].keys()):
                 if type(mh_load[port][call]) is dict:
-                    if type(mh_load[port][call]['to_calls']) is list:
-                        # FIX old MH
-                        mh_load[port][call]['to_calls'] = {}
-                    self._MH_db[port][call] = set_obj_att_fm_dict(new_obj=MyHeard(), input_obj=mh_load[port][call])
+                    try:
+                        if type(mh_load[port][call]['to_calls']) is list:
+                            # FIX old MH
+                            mh_load[port][call]['to_calls'] = {}
+                        self._MH_db[port][call] = set_obj_att_fm_dict(new_obj=MyHeard(), input_obj=mh_load[port][call])
+                    except KeyError:
+                        pass
                 else:
-                    if type(mh_load[port][call].to_calls) is list:
-                        # FIX old MH
-                        mh_load[port][call].to_calls = {}
-                    self._MH_db[port][call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[port][call])
+                    if hasattr(mh_load[port][call], 'to_calls'):
+                        if type(mh_load[port][call].to_calls) is list:
+                            # FIX old MH
+                            mh_load[port][call].to_calls = {}
+                        self._MH_db[port][call] = set_obj_att(new_obj=MyHeard(), input_obj=mh_load[port][call])
 
     def _load_MH_update_ent(self):
         for port in list(self._MH_db.keys()):
@@ -181,8 +189,8 @@ class MH:
                         setattr(self._MH_db[port][call], att, getattr(MyHeard, att))
 
     def save_mh_data(self):
-        print('Save MH')
-        logger.info('Save MH')
+        # print('Save MH')
+        logger.info('MH: Save MH')
         self._save_to_cfg()
         tmp_mh = self._MH_db
         for k in list(tmp_mh.keys()):
@@ -193,6 +201,7 @@ class MH:
         except FileNotFoundError:
             with open(CFG_mh_data_file, 'xb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
+        logger.info('MH: Save MH complete')
 
     def save_PortStat(self):
         if not self._db:
@@ -228,6 +237,8 @@ class MH:
         if not sql_db:
             self._db = None
         self._db = sql_db
+        logger.info("MH: SQL-DB set")
+
 
     #########################
     # DX Alarm
@@ -245,15 +256,20 @@ class MH:
         if ent.route:
             via = ent.route[-1]
         hist_struc = get_dx_tx_alarm_his_pack(
-            port_id=ent.port_id,
-            call_str=ent.own_call,
-            via=via,
-            path=ent.route,
-            locator=ent.locator,
-            distance=ent.distance,
+            port_id=int(ent.port_id),
+            call_str=str(ent.own_call),
+            via=str(via),
+            path=list(ent.route),
+            locator=str(ent.locator),
+            distance=int(ent.distance),
             typ='MHEARD',
         )
         self.dx_alarm_perma_hist[str(hist_struc['key'])] = dict(hist_struc)
+        lb_msg_1 = f"DX-ALARM: {ent.own_call} - Port: {int(ent.port_id)} - LOC: {str(ent.locator)} - Dist:{int(round(ent.distance))}"
+        log_book.info(lb_msg_1)
+        if ent.route:
+            lb_msg_2 = f"DX-ALARM: {ent.own_call} - Route: {'>'.join(ent.route)}"
+            log_book.info(lb_msg_2)
 
     def reset_dx_alarm_his(self):
         self.dx_alarm_hist = []

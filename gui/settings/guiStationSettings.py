@@ -5,7 +5,6 @@ from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.cfg_fnc import del_user_data
 from cfg.constant import CFG_data_path, CFG_usertxt_path
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cli.cliMain import CLI_OPT
@@ -411,7 +410,7 @@ class StatSetTab:
         # self._main_cl.settings_win.attributes("-topmost", True)
 
     def chk_CLI(self, event=None):
-        print(self._cli_select_var.get())
+        # print(self._cli_select_var.get())
         if self._cli_select_var.get() != 'PIPE':
             self._loop_timer.configure(state='disabled')
             self._tx_filename.configure(state='disabled')
@@ -579,6 +578,7 @@ class StatSetTab:
         self.call.delete(0, tk.END)
         self.call.insert(tk.END, call)
         old_call = str(self._new_station_setting.get('stat_parm_Call', ''))
+        self._stat_call = str(call)
         # self.station_setting.stat_parm_Call = call
 
         var_maxpac = self._new_station_setting.get('stat_parm_MaxFrame', 0)
@@ -623,43 +623,6 @@ class StatSetTab:
 
             POPT_CFG.set_pipe_CFG(new_pipe_cfg)
 
-        """
-        for k in PORT_HANDLER.ax25_port_settings.keys():
-            """"""
-            print(self.ports_sett[k])
-            for att in dir(self.ports_sett[k]):
-                print(att)
-            """"""
-            if call in PORT_HANDLER.ax25_port_settings[k].parm_StationCalls:
-                PORT_HANDLER.ax25_port_settings[k].parm_stat_PacLen[call] = var_paclen
-                PORT_HANDLER.ax25_port_settings[k].parm_stat_MaxFrame[call] = var_maxpac
-        """
-
-        # DIGI
-        # self.station_setting.stat_parm_is_Digi = bool(self._digi_set_var.get())
-        # Smart DIGI
-        # self.station_setting.stat_parm_isSmartDigi = bool(self.smart_digi_set_var.get())
-        """
-        stat_parm_cli_cfg: dict = self.station_setting.stat_parm_cli_cfg
-        digi_cfg: dict = self.station_setting.stat_parm_cli_cfg.get('cli_digi_cfg', getNew_CLI_DIGI_cfg())
-        digi_cfg.update(dict(
-                digi_enabled=True,
-                digi_allowed_ports=[],
-                digi_max_buff=10,  # bytes till RNR
-                digi_max_n2=4,  # N2 till RNR
-            ))
-
-        stat_parm_cli_cfg.update(dict(
-            cli_typ=str(cli_key),
-            # cli_ctext=str(self.c_text_ent.get('1.0', tk.END)[:-1]),
-            # cli_itext=str(self.info_text_ent.get('1.0', tk.END)[:-1]),
-            # cli_longitext=str(self.long_info_text_ent.get('1.0', tk.END)[:-1]),
-            # cli_akttext=str(self.akt_info_text_ent.get('1.0', tk.END)[:-1]),
-            # cli_bye_text=str(self.bye_text_ent.get('1.0', tk.END)[:-1]),
-            cli_prompt='',
-            cli_digi_cfg=digi_cfg,
-        ))
-        """
         # self.station_setting.stat_parm_cli_cfg = dict(stat_parm_cli_cfg)
         self._save_to_file(self._stat_call + '.ctx', self._c_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.btx', self._bye_text_ent.get('1.0', tk.END)[:-1])

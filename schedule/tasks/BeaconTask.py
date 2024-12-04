@@ -41,7 +41,7 @@ class BeaconTask:
         }
         """
         if not self._text:
-            print('Beacon: kein Text gesetzt!')
+            # print('Beacon: kein Text gesetzt!')
             logger.warning('Beacon: kein Text gesetzt!')
             return
         self._text = replace_StringVARS(self._text,

@@ -8,6 +8,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from cfg.default_config import getNew_pipe_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
+from cfg.logger_config import logger
 
 
 class PipeTab:
@@ -456,7 +457,7 @@ class PipeToolSettings(tk.Toplevel):
                 if not POPT_CFG.del_pipe_CFG_fm_CallPort(pipe_cfg.get('pipe_parm_own_call', ''),
                                                      pipe_cfg.get('pipe_parm_port', -1)):
 
-                    print('Error DEL PIPE')
+                    logger.debug('PipeGUI: Error DEL PIPE')
             del self.tab_list[ind]
             self.tabControl.forget(ind)
             self._root.ch_status_update()
