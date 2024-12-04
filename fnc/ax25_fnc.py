@@ -93,13 +93,11 @@ def validate_ax25Call(call_str: str):
         ssid = int(ssid)
     except ValueError:
         return False
-
     if ssid > 15 or ssid < 0:
         return False
     # CALL
     if len(call) < 2 or len(call) > 6:    # Calls like CQ or ID
         return False
-
     for c in call:
         if not any((c.isupper(), c.isdigit())):
             return False

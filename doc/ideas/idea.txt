@@ -7,6 +7,9 @@ Ideas/TODO's :
 - "Suspended" Filter
   - Call/Station ablehnen
   - Call/Station ignorieren
+  - MCast
+  - AXIP
+
 - ESC Befehle
 ✓ UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   ✓ $ver = PoPT 2.xxx.x                         - Bake
@@ -73,9 +76,16 @@ Ideas/TODO's :
   - ! LOOP-Preventer !
   ✓ Multicast Channels/Groups
   ✓ Multicast CLI/NODE
-  - Multicast Einstellung GUI
+  ✓ Multicast Einstellung GUI
   - Multicast Monitor GUI
-  - Multicast Filter
+  - Multicast Filter ??
+  - Remote CMDs Registrieren
+  ✓ Remote CMDs IP/DNS Eingeben
+  ✓ Feste DN bevorzugen
+  - StringVars
+  - Baken
+  - Private Channel
+  ✓ DNS bevorzugen
 
 ✓ "Managed-DIGI" - Digi übernimmt Flusskontrolle
   ✓ Via Pfad wird gekürzt, um Overhead zu sparen *optional
@@ -104,7 +114,7 @@ Ideas/TODO's :
 - "Multi-TNC/Multi-Port/Mesh-TNC" mehrere TNC's via KISSTCP zusammenschalten. Siehe Dual-TNC
 
 ✓ UserDB
-  ? UserDB auf SQL-DB umstellen?
+  - UserDB auf SQL-DB umstellen?
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 

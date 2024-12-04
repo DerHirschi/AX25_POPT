@@ -7,6 +7,8 @@ TODO:
     ✓ Remote CMDs IP/DNS Eingeben
     - StringVars
     - Baken
+    - Private Channel
+    - MCast-Server Call fm StatCFG
     ✓ Config GUI
     ✓ Feste DN bevorzugen
     ✓ save configs wenn MCast beendet
@@ -115,6 +117,8 @@ class ax25Multicast:
                     # Updating AXIP Address from UserDB
                     if hasattr(user_db, 'get_AXIP'):
                         user_db_add: tuple = tuple(user_db.get_AXIP(member_call))
+                        if not user_db_add:
+                            continue
                         if not user_db_add[0]:
                             continue
                         mcast_add = self._mcast_member_add_list.get(member_call, ())
@@ -215,7 +219,6 @@ class ax25Multicast:
             del self._mcast_member_add_list[member_call]
         return True
 
-
     #################################################################
     # RX/TX/Tasker Stuff
     def mcast_update_member_ip(self, ax25frame):
@@ -241,21 +244,26 @@ class ax25Multicast:
             return False
         if not member_call in self._mcast_member_add_list:
             self._mcast_member_add_list[member_call] = tuple(axip_add)
+            logger.debug(f"MCast: setAXIP for {member_call} - {axip_add} - 1")
             return True
         old_member_add = self._mcast_member_add_list.get(member_call, ())
         if not old_member_add:
             self._mcast_member_add_list[member_call] = tuple(axip_add)
+            logger.debug(f"MCast: setAXIP for {member_call} - {axip_add} - 2")
             return True
         # Check Address Format DomainName | IP
         if check_ip_add_format(old_member_add[0]):
             # Keeping DomainName instead of IP
             self._mcast_member_add_list[member_call] = tuple(axip_add)
+            logger.debug(f"MCast: setAXIP for {member_call} - {axip_add} - 3")
             return True
         # Check if DomainName returns an IP
         if not get_ip_by_hostname(old_member_add[0]):
             # Replacing DomainName with IP
             self._mcast_member_add_list[member_call] = tuple(axip_add)
+            logger.debug(f"MCast: setAXIP for {member_call} - {axip_add} - 4")
             return True
+        logger.warning(f"MCast: setAXIP for {member_call} - {axip_add} - Failed ")
         return False
 
     def mcast_rx(self, ax25frame):

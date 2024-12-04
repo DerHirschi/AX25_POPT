@@ -7,8 +7,106 @@ from cfg.default_config import getNew_mcast_channel_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from cfg.logger_config import logger
+from fnc.ax25_fnc import validate_ax25Call
+from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_timedelta_str_fm_sec
 from gui.guiError import PoPTModulError
+
+class MCastAddMember(tk.Toplevel):
+    def __init__(self, root_win):
+        tk.Toplevel.__init__(self)
+        self.style = root_win.style
+        self._root_win = root_win
+        self._mcast = root_win.get_mcast()
+
+        self._lang = POPT_CFG.get_guiCFG_language()
+        win_width = 550
+        win_height = 180
+        self.geometry(f"{win_width}x"
+                      f"{win_height}+"
+                      f"{root_win.winfo_x()}+"
+                      f"{root_win.winfo_y()}")
+        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.resizable(False, False)
+        try:
+            self.iconbitmap("favicon.ico")
+        except tk.TclError:
+            pass
+        self.lift()
+        self.attributes("-topmost", True)
+        self.title('Move to Channel')
+        ##################################
+        f0 = tk.Frame(self)
+        f0.pack()
+        tk.Label(f0, text='Call:').pack(side=tk.LEFT, pady=15)
+        #
+        self._call_ent_var = tk.StringVar(self)
+        ent = tk.Entry(f0, textvariable=self._call_ent_var, width=10)
+        ent.pack(side=tk.LEFT, padx=5)
+        ##################################
+        f1 = tk.Frame(self)
+        f1.pack()
+        tk.Label(f1, text='Adress:').pack(side=tk.LEFT, pady=15)
+        #
+        self._add_ent_var = tk.StringVar(self)
+        ent = tk.Entry(f1, textvariable=self._add_ent_var, width=30)
+        ent.pack(side=tk.LEFT, padx=5)
+        ##
+        tk.Label(f1, text='Port:').pack(side=tk.LEFT)
+        #
+        self._port_ent_var = tk.StringVar(self)
+        p_ent = tk.Entry(f1, textvariable=self._port_ent_var, width=6)
+        p_ent.pack(side=tk.LEFT, padx=5)
+
+        ###########################################
+        ###########################################
+        # BTN
+        btn_frame = tk.Frame(self)
+        btn_frame.pack(expand=True, fill=tk.X, padx=10, pady=5, anchor=tk.S)
+        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
+        ok_btn.pack(side=tk.LEFT)
+
+        abort_btn = tk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
+        abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
+
+    def _set_member_address(self):
+        call = self._call_ent_var.get().upper()
+        if not validate_ax25Call(call):
+            return False
+        address = self._add_ent_var.get()
+        if not get_ip_by_hostname(address):
+            return False
+        try:
+            port = int(self._port_ent_var.get())
+        except ValueError:
+            return False
+        mcast = self._root_win.get_mcast()
+        if not all((
+                hasattr(mcast, 'set_member_ip'),
+                hasattr(mcast, 'move_member_to_channel'),
+                hasattr(mcast, 'get_mcast_cfgs'),
+        )):
+            return False
+        if not mcast.set_member_ip(call, (address, port)):
+            return False
+        mcast_conf: dict = mcast.get_mcast_cfgs()
+        default_ch = mcast_conf.get('mcast_default_ch', None)
+        if default_ch is None:
+            return False
+        return mcast.move_member_to_channel(member_call=call, channel_id=default_ch)
+
+    def _ok_btn(self):
+        if self._set_member_address():
+            if hasattr(self._root_win, 'reinit_MCastGui'):
+                self._root_win.reinit_MCastGui()
+            self.destroy_win()
+
+    def _abort_btn(self):
+        self.destroy_win()
+
+    def destroy_win(self):
+        self._root_win.value_win = None
+        self.destroy()
 
 
 class MCastMoveMember(tk.Toplevel):
@@ -17,8 +115,10 @@ class MCastMoveMember(tk.Toplevel):
         self.style = root_win.style
         self._root_win = root_win
         self._member_call = member_call
-        self._mcast_cfg: dict = POPT_CFG.get_MCast_CFG()
         self._mcast = root_win.get_mcast()
+        if not hasattr(self._mcast, 'get_mcast_cfgs'):
+            raise PoPTModulError
+        self._mcast_cfg: dict = self._mcast.get_mcast_cfgs()
         self._ackt_ch = self._mcast.get_member_channel(member_call)
         if self._ackt_ch is None:
             self.destroy_win()
@@ -75,11 +175,8 @@ class MCastMoveMember(tk.Toplevel):
 
     def _ok_btn(self):
         if self._move_member_to_ch():
-            # if hasattr(self._mcast, 'mcast_save_cfgs'):
-            #     self._mcast.mcast_save_cfgs()
             if hasattr(self._root_win, 'reinit_MCastGui'):
                 self._root_win.reinit_MCastGui()
-        # self._root_win
         self.destroy_win()
 
     def _abort_btn(self):
@@ -162,7 +259,7 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         add_member_btn = tk.Button(
             opt_frame_3,
             text="Add Member",
-            # command=,
+            command=self._add_member_btn,
         )
         add_member_btn.pack(side=tk.LEFT)
 
@@ -242,6 +339,9 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         if not hasattr(self._root_win, 'del_member'):
             return
         self._root_win.del_member(str(self._selected_entry))
+
+    def _add_member_btn(self):
+        self._root_win.open_address_win()
 
     ##########################################################
     def get_cfg_fm_vars(self):
@@ -507,6 +607,10 @@ class MulticastSettings(tk.Toplevel):
             return
         self.value_win = MCastMoveMember(self, member_call=arg)
 
+    def open_address_win(self):
+        if self.value_win:
+            return
+        self.value_win = MCastAddMember(self)
 
     def destroy_win(self):
         if hasattr(self.value_win, 'destroy_win'):
