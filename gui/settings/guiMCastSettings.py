@@ -196,6 +196,7 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         self._ch_cfg = channel_cfg
         self._ch_id = tk.StringVar(self, value=channel_cfg.get('ch_id', '-1'))
         self._ch_name = tk.StringVar(self, value=channel_cfg.get('ch_name', ''))
+        self._ch_private = tk.BooleanVar(self, value=channel_cfg.get('ch_private', False))
         self._tree_data = []
         self._member_list = {}
         self._selected_entry = ''
@@ -214,6 +215,15 @@ class MCAST_channel_cfg_Tab(tk.Frame):
                                   )
 
         ch_id.pack(side=tk.LEFT, anchor=tk.W, padx=5)
+        #########
+        # Private
+        ch_private_chb = tk.Checkbutton(opt_frame_0, text='Private', variable=self._ch_private)
+        ch_private_chb.pack(side=tk.RIGHT, anchor=tk.E, padx=5)
+        mcast_cfg: dict = root_win.get_mcast().get_mcast_cfgs()
+        default_ch_id = str(mcast_cfg.get('mcast_default_ch', 0))
+        if self._ch_id.get() == default_ch_id:
+            self._ch_private.set(False)
+            ch_private_chb.configure(state='disabled')
         ##################
         # Channel Name
         opt_frame_1 = tk.Frame(self)
@@ -352,6 +362,7 @@ class MCAST_channel_cfg_Tab(tk.Frame):
             return {}
         ch_cfg: dict = getNew_mcast_channel_cfg(ch_id)
         ch_cfg['ch_name'] = str(self._ch_name.get())[:10]
+        ch_cfg['ch_private'] = bool(self._ch_private.get())
         member_list = []
         member_add_list = {}
         for member, axip in self._member_list.items():

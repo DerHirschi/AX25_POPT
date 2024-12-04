@@ -257,5 +257,6 @@ def getNew_mcast_channel_cfg(channel_id: int):
     return dict(
         ch_id=int(channel_id),
         ch_name='Lobby',
+        ch_private=False,
         ch_members=[],
     )

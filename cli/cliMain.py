@@ -1588,10 +1588,10 @@ class MCastCLI(DefaultCLI):
                 return '\r # MCast: Attribute Error Mcast-Server\r'
             if not user_db.set_AXIP(self._to_call_str, (address, port), new_user=True):
                 logger.error(f"CLI: Error UserDB set_AXIP: {(address, port)}")
-                return f'\r # MCast: Error UserDB set_AXIP: {(address, port)}\r'
+                return f'\r # MCast: Error ! UserDB set_AXIP: {(address, port)}\r'
             if not mcast_server.set_member_ip(self._to_call_str, (address, port)):
                 logger.error(f"CLI: Error MCast set_member_ip: {(address, port)}")
-                return f'\r # MCast: Error MCast set_member_ip: {(address, port)}\r'
+                return f'\r # MCast: Error ! MCast set_member_ip: {(address, port)}\r'
             ret = f"\r # MCast: New AXIP Address set successfully\r"
 
             ret += f"\r # MCast: Current AXIP Address for {self._to_call_str}:\r"

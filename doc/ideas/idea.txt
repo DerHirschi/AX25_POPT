@@ -84,7 +84,7 @@ Ideas/TODO's :
   ✓ Feste DN bevorzugen
   - StringVars
   - Baken
-  - Private Channel
+  ✓ Private Channel
   ✓ DNS bevorzugen
 
 ✓ "Managed-DIGI" - Digi übernimmt Flusskontrolle

@@ -7,7 +7,7 @@ TODO:
     ✓ Remote CMDs IP/DNS Eingeben
     - StringVars
     - Baken
-    - Private Channel
+    ✓ Private Channel
     - MCast-Server Call fm StatCFG
     ✓ Config GUI
     ✓ Feste DN bevorzugen
@@ -386,11 +386,13 @@ class ax25Multicast:
 
     def move_channel(self, member_call: str, channel_id: int):
         if not all((member_call, channel_id is not None)):
-            return "\r # MCast: Error no Member-Call or Channel selected.\r"
+            return "\r # MCast: Error ! no Member-Call or Channel selected.\r"
+        if self._is_channel_private(channel_id=channel_id):
+            return f"\r # MCast: Error ! Channel {channel_id} is Private.\r"
         if channel_id not in self._mcast_channels:
-            return f"\r # MCast: Error Channel {channel_id} not exists.\r"
+            return f"\r # MCast: Error ! Channel {channel_id} not exists.\r"
         if not self._move_member_to_channel(member_call, channel_id):
-            return (f"\r # MCast: Error while try to move to Channel {channel_id}.\r"
+            return (f"\r # MCast: Error ! while try to move to Channel {channel_id}.\r"
                     f" # MCast: Please contact Sysop!\r")
         return f"\r # MCast: You ar now in Channel {channel_id} ({self._get_channel_name(channel_id)})\r"
 
@@ -580,6 +582,12 @@ class ax25Multicast:
             logger.error(f"MCast: _get_channel_conf() - Attribut Error !")
             return {}
         return channel.get_channel_conf()
+
+    def _is_channel_private(self, channel_id: int):
+        ch_conf: dict = self._get_channel_conf(channel_id)
+        if not ch_conf:
+            return False
+        return ch_conf.get('ch_private', False)
 
     #########################################################
     # TX/Build UI Frames
