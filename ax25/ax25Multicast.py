@@ -8,7 +8,7 @@ TODO:
     - StringVars
     - Baken
     ✓ Private Channel
-    - MCast-Server Call fm StatCFG
+    ✓ MCast-Server Call fm StatCFG
     ✓ Config GUI
     ✓ Feste DN bevorzugen
     ✓ save configs wenn MCast beendet
@@ -28,18 +28,19 @@ class MCastChannel:
         logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init")
         self._ch_conf = dict(ch_conf)
         self._ch_id = ch_conf.get('ch_id', -1)
-        self._ch_member_add = ch_conf.get('ch_members', [])
+        self._ch_member_list = ch_conf.get('ch_members', [])
         logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init complete")
 
     def get_ch_members(self):
-        return list(self._ch_member_add)
+        return list(self._ch_member_list)
 
     def del_ch_member(self, member_call: str):
         if not member_call:
             return False
         if member_call not in self.get_ch_members():
             return False
-        self._ch_member_add.remove(member_call)
+        self._ch_member_list.remove(member_call)
+        self._ch_conf['ch_members'] = list(self._ch_member_list)
         return True
 
     def add_ch_member(self, member_call: str):
@@ -48,7 +49,7 @@ class MCastChannel:
         if member_call in self.get_ch_members():
             logger.warning(f"MCast CH {self._ch_id}: add_ch_member() Member {member_call} already exists !")
             return False
-        self._ch_member_add.append(member_call)
+        self._ch_member_list.append(member_call)
         logger.info(f"MCast CH {self._ch_id}: Add member {member_call} to Channel")
         return True
 
@@ -125,6 +126,9 @@ class ax25Multicast:
                         if not mcast_add:
                             self._update_member_ip_list(member_call, user_db_add)
                             continue
+                        if not mcast_add[0]:
+                            self._update_member_ip_list(member_call, user_db_add)
+                            continue
                         if user_db_add == mcast_add:
                             continue
                         if all((not check_ip_add_format(mcast_add[0]),
@@ -169,6 +173,9 @@ class ax25Multicast:
             raise MCastInitError
         logger.info(f"MCast: Set Multicast to Port {port.port_id}")
         self._mcast_port = port
+
+    def get_mcast_port(self):
+        return self._mcast_port
 
     def del_mcast_port(self):
         logger.info(f"MCast: Delete Multicast Port ")

@@ -505,7 +505,7 @@ class MulticastSettings(tk.Toplevel):
     ################################################
     def _new_ch_btn(self):
         last_ch_id = 0
-        while last_ch_id in self._mcast_cfg.get('mcast_ch_conf', {}):
+        while last_ch_id in self._mcast_cfg.get('mcast_ch_conf', {}).keys():
             last_ch_id += 1
             if last_ch_id == MAX_MCAST_CH:
                 return
@@ -515,8 +515,13 @@ class MulticastSettings(tk.Toplevel):
         tab = MCAST_channel_cfg_Tab(self._tabControl, ch_conf, self)
         self._tab_list[last_ch_id] = tab
         self._tabControl.add(tab, text=ch_lable_text)
-        self._tabControl.select(last_ch_id)
         self._mcast_cfg['mcast_ch_conf'][last_ch_id] = ch_conf
+        self._set_cfg_to_mcast()
+        self._mcast.reinit_mcast_cfgs()
+        try:
+            self._tabControl.select(last_ch_id)
+        except tk.TclError:
+            pass
 
     def _del_ch_btn(self):
         try:
@@ -540,6 +545,9 @@ class MulticastSettings(tk.Toplevel):
         self._mcast_cfg['mcast_ch_conf'] = dict(ch_cfgs)
         del self._tab_list[ch_id]
         self._tabControl.forget(tab_ind)
+        self._set_cfg_to_mcast()
+        self._mcast.reinit_mcast_cfgs()
+
 
     ################################################
     def _ok_btn(self):
@@ -585,8 +593,8 @@ class MulticastSettings(tk.Toplevel):
             conf['mcast_member_init_timeout'] = int(self._init_to_var.get())
         except ValueError:
             conf['mcast_member_init_timeout'] = int(self._mcast_cfg.get('mcast_member_init_timeout', 5))
-
-
+        conf['mcast_server_call'] = str(POPT_CFG.get_MCast_server_call())
+        logger.debug(conf)
         POPT_CFG.set_MCast_CFG(conf)
 
     def _save_cfg(self):

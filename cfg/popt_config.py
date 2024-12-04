@@ -476,6 +476,13 @@ class Main_CFG:
     def get_MCast_CH_CFGs(self):
         return dict(self._config.get('mcast_cfg', {}).get('mcast_ch_conf', {}))
 
+    def get_MCast_server_call(self):
+        stat_cfgs = self.get_stat_CFGs()
+        for call, stat_cfg in stat_cfgs.items():
+            if stat_cfg.get('stat_parm_cli', '') == 'MCAST':
+                return call
+        return ''
+
     def set_MCast_CFG(self, mcast_cfg: dict):
         if not mcast_cfg:
             logger.error('Main CFG: set_MCast_CFG no Config')

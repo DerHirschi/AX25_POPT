@@ -194,83 +194,36 @@ class PortSetTab:
         self._axip_multicast_dd = tk.Checkbutton(self.tab,
                                                  text='AXIP-Multicast',
                                                  variable=self._axip_multicast_var,
-                                                 command=self._update_port_parameter,
+                                                 command=self._update_Mcast_settings,
                                                  state='disabled')
         self._axip_multicast_dd.var = self._axip_multicast_var
         if self._port_setting.get('parm_PortTyp', '') == 'AXIP':
-            self._axip_multicast_dd.configure(state="normal")
-            # if self._port_setting.parm_axip_Multicast:
-            if self._port_setting.get('parm_axip_Multicast', new_cfg.get('parm_axip_Multicast', False)):
-                self._axip_multicast_var.set(1)
-                self._axip_multicast_dd.select()
+            mcast_port = PORT_HANDLER.get_mcast_server().get_mcast_port()
+            if not hasattr(mcast_port, 'port_id'):
+                self._axip_multicast_dd.configure(state="normal")
+                # if self._port_setting.parm_axip_Multicast:
+                if self._port_setting.get('parm_axip_Multicast', new_cfg.get('parm_axip_Multicast', False)):
+                    self._axip_multicast_var.set(1)
+                    self._axip_multicast_dd.select()
+                else:
+                    self._axip_multicast_var.set(0)
+                    self._axip_multicast_dd.deselect()
             else:
-                self._axip_multicast_var.set(0)
-                self._axip_multicast_dd.deselect()
+                mcast_port_id = int(mcast_port.port_id)
+                if self._port_setting.get('parm_PortNr', -1) == mcast_port_id:
+
+                    self._axip_multicast_dd.configure(state="normal")
+                    self._axip_multicast_var.set(1)
+                    self._axip_multicast_dd.select()
+                else:
+                    self._axip_multicast_dd.configure(state="disabled")
+                    self._axip_multicast_var.set(0)
+                    self._axip_multicast_dd.deselect()
         else:
             self._axip_multicast_var.set(0)
             self._axip_multicast_dd.deselect()
             self._axip_multicast_dd.configure(state="disabled")
         self._axip_multicast_dd.place(x=axip_multicast_x + 20, y=height - axip_multicast_y)
-        # TODO LinkTester
-        """
-        axip_linktest_x = 650
-        axip_linktest_y = 465
-        self._axip_linktest_var = tk.IntVar(self.tab)
-        # self.axip_multicast_var.set(0)
-        self._axip_linktest_dd = tk.Checkbutton(self.tab, text='Linktest', variable=self._axip_multicast_var)
-        if self._port_setting.get('parm_PortTyp', '') == 'AXIP':
-            # ins = self.port_setting.parm_PortParm[1]
-            # self.kiss_tail.insert(tk.END, '0')
-            self._axip_linktest_dd.configure(state="disabled")  # TODO state='normal
-        else:
-            # ins = self.port_setting.parm_baud
-            # self.kiss_tail.insert(tk.END, '0')
-            self._axip_linktest_dd.configure(state="disabled")
-        # kiss_tail_label.place(x=kiss_tail_x, y=height - kiss_tail_y)
-        self._axip_linktest_dd.place(x=axip_linktest_x + 50, y=height - axip_linktest_y)
-        # TODO linktest Call
-        test_call_x = 820
-        test_call_y = 395
-        test_call_label = tk.Label(self.tab, text='CALL:')
-        self._test_call = tk.Entry(self.tab, width=10)
-        if self._port_setting.get('parm_PortTyp', '') == 'AXIP':
-            # ins = self.port_setting.parm_PortParm[1]
-            self._test_call.insert(tk.END, 'NOCALL')
-            self._test_call.configure(state="disabled")  # TODO state='normal
-        else:
-            # ins = self.port_setting.parm_baud
-            self._test_call.insert(tk.END, '')
-            self._test_call.configure(state="disabled")
-        test_call_label.place(x=test_call_x, y=height - test_call_y)
-        self._test_call.place(x=test_call_x + 60, y=height - test_call_y)
-        # TODO linktest Intevall
-        test_inter_x = 820
-        test_inter_y = 430
-        test_inter_label = tk.Label(self.tab, text='Intervall:')
-        self._test_inter = tk.Entry(self.tab, width=4)
-        if self._port_setting.get('parm_PortTyp', '') == 'AXIP':
-            # ins = self.port_setting.parm_PortParm[1]
-            self._test_inter.insert(tk.END, '30')
-            self._test_inter.configure(state="disabled")  # TODO state='normal
-        else:
-            # ins = self.port_setting.parm_baud
-            self._test_inter.insert(tk.END, '')
-            self._test_inter.configure(state="disabled")
-        test_inter_label.place(x=test_inter_x, y=height - test_inter_y)
-        self._test_inter.place(x=test_inter_x + 95, y=height - test_inter_y)
-        test_fail_x = 820
-        test_fail_y = 465  # 395
-        test_fail_label = tk.Label(self.tab, text='Versuche:')
-        self._test_fail = tk.Entry(self.tab, width=4)
-        self._test_fail.insert(tk.END, str(self._port_setting.get('parm_axip_fail',
-                                                                  new_cfg.get('parm_axip_fail', 30))))
-        if self._port_setting.get('parm_PortTyp', '') == 'AXIP' and not self._axip_multicast_var.get():
-            self._test_fail.configure(state="normal")
-        else:
-            self._test_fail.configure(state="disabled")
-        test_fail_label.place(x=test_fail_x, y=height - test_fail_y)
-        self._test_fail.place(x=test_fail_x + 95, y=height - test_fail_y)
-        """
         # KISS START / END
         kiss_start_x = 630
         kiss_start_y = 465
@@ -548,7 +501,7 @@ class PortSetTab:
         new_cfg = getNew_port_cfg()
         if fg_bg == 'TX':
             # col = askcolor(self._port_setting.parm_mon_clr_tx, title='TX')
-            col = askcolor(self._port_setting.get('parm_mon_clr_tx',
+            col: tuple = askcolor(self._port_setting.get('parm_mon_clr_tx',
                                                   new_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)),
                            title='TX')
             if col[1] is not None:
@@ -578,6 +531,18 @@ class PortSetTab:
                     self._color_example_text_rx.configure(bg=col[1])
 
         self._main_cl.get_root_sett_win().attributes("-topmost", True)
+
+    def _update_Mcast_settings(self, event=None):
+        self._main_cl.switch_mcast_chb(self._axip_multicast_var.get(), self._port_setting.get('parm_PortNr', -1))
+
+    def disable_mcast(self, port_id, disable):
+        if self._port_select_var.get() != 'AXIP':
+            self._axip_multicast_dd.configure(state='disabled')
+        else:
+            if disable:
+                self._axip_multicast_dd.configure(state='disabled')
+            else:
+                self._axip_multicast_dd.configure(state='normal')
 
     def _update_port_parameter(self, dummy=None):
         height = self._height
@@ -633,19 +598,30 @@ class PortSetTab:
             self._t2.insert(tk.END, self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700)))
 
         elif typ == 'AXIP':
-            self._axip_multicast_dd.configure(state="normal")
-            # self._axip_linktest_dd.configure(state="disabled")  # TODO state='normal
-            """
-            TODO
-            self.test_call.configure(state="normal")
-            self.test_inter.configure(state="normal")
-            """
-            """
-            if self._axip_multicast_var.get():
-                self._test_fail.configure(state="normal")
+
+            mcast_port = PORT_HANDLER.get_mcast_server().get_mcast_port()
+            if not hasattr(mcast_port, 'port_id'):
+                self._axip_multicast_dd.configure(state="normal")
+                # if self._port_setting.parm_axip_Multicast:
+                if self._port_setting.get('parm_axip_Multicast',False):
+                    self._axip_multicast_var.set(1)
+                    self._axip_multicast_dd.select()
+                else:
+                    self._axip_multicast_var.set(0)
+                    self._axip_multicast_dd.deselect()
             else:
-                self._test_fail.configure(state="disabled")
-            """
+                mcast_port_id = int(mcast_port.port_id)
+                if self._port_setting.get('parm_PortNr', -1) == mcast_port_id:
+
+                    self._axip_multicast_dd.configure(state="normal")
+                    self._axip_multicast_var.set(1)
+                    self._axip_multicast_dd.select()
+                else:
+                    self._axip_multicast_dd.configure(state="disabled")
+                    self._axip_multicast_var.set(0)
+                    self._axip_multicast_dd.deselect()
+
+
             self._kiss_txd.configure(state="disabled")
             self._kiss_pers.configure(state="disabled")
             self._kiss_tail.configure(state="disabled")
@@ -923,21 +899,14 @@ class PortSettingsWin:
             elif not all_ports[port_id].device_is_running:
                 port_lable_text += ' (!)'
             self._tabControl.add(tab.tab, text=port_lable_text)
-        """
-        for k in list(all_ports.keys()):
-            # port.port_cfg: DefaultPortConfig
-            tmp = all_ports[k].port_cfg
-            new_settings = POPT_CFG.get_port_CFG_fm_id(port_id=k)
-            tab = PortSetTab(self, tmp, new_settings, self._tabControl)
-            self._tab_list[k] = tab
-            port_lable_text = 'Port {}'.format(k)
-            if not all_ports[k].device_is_running:
-                port_lable_text += ' (!)'
-            self._tabControl.add(tab.tab, text=port_lable_text)
-        """
 
     def get_root_sett_win(self):
         return self._settings_win
+
+    def switch_mcast_chb(self, disable: bool, port_nr: int):
+        for port_id, tab in self._tab_list.items():
+            if port_id != port_nr:
+                tab.disable_mcast(port_id, disable)
 
     def _new_port_btn_cmd(self):
         # port.port_cfg: DefaultPortConfig
