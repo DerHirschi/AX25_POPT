@@ -287,7 +287,9 @@ class DefaultCLI(object):
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
 
     def _send_name_cmd_back(self):
-        name = self._connection.stat_cfg.stat_parm_Name
+
+        stat_cfg: dict = self._connection.get_stat_cfg()
+        name = stat_cfg.get('stat_parm_Name', '')
         if name:
             if self.stat_identifier is not None:
                 if self.stat_identifier:

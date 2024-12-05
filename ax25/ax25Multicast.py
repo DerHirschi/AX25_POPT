@@ -61,6 +61,9 @@ class MCastChannel:
             return True
         return False
 
+    def is_private(self):
+        return self._ch_conf.get('ch_private', False)
+
     def get_channel_name(self):
         return str(self._ch_conf.get('ch_name', ''))
 
@@ -239,6 +242,7 @@ class ax25Multicast:
                 hasattr(ax25frame, 'from_call'),
                 hasattr(ax25frame, 'axip_add'),
         )):
+            logger.error(f"MCast: Attribut Error mcast_update_member_ip ")
             return
         call = str(ax25frame.from_call.call)
         call_str = str(ax25frame.from_call.call_str)
@@ -254,6 +258,7 @@ class ax25Multicast:
 
     def _update_member_ip_list(self, member_call: str, axip_add: tuple):
         if not all((member_call, axip_add)):
+            logger.error(f"MCast: Attribut Error _update_member_ip_list ")
             return False
         if member_call == self._mcast_conf.get('mcast_server_call', ''):
             logger.warning(f'MCast: Loop detected - _update_member_ip_list ! {member_call} - {axip_add}')
@@ -442,7 +447,12 @@ class ax25Multicast:
     def get_channels(self):
         ret = f'\r ### Total Channels: {len(list(self._mcast_channels.keys()))}\r'
         for ch_id, channel in self._mcast_channels.items():
-            ret += f" # Channel {ch_id} - {self._get_channel_name(ch_id).ljust(10)} - Members: {len(self._get_channel_members_fm_ch_id(ch_id))}\r"
+            ret += f" # Channel {str(ch_id).ljust(2)} "
+            if channel.is_private():
+                ret += 'P'
+            else:
+                ret += ' '
+            ret += f" - {self._get_channel_name(ch_id).ljust(10)} - Members: {len(self._get_channel_members_fm_ch_id(ch_id))}\r"
         ret += '\r'
         return ret
 
