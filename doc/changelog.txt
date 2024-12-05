@@ -1,6 +1,7 @@
 ###########################################################################################################
 # 2.111.x
 Fixes:
+- Scripterror wenn Stations Name angefordert wird.
 
 Optimierung:
 - MCast Loop-Preventer

@@ -287,7 +287,6 @@ class DefaultCLI(object):
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
 
     def _send_name_cmd_back(self):
-
         stat_cfg: dict = self._connection.get_stat_cfg()
         name = stat_cfg.get('stat_parm_Name', '')
         if name:
@@ -1203,7 +1202,8 @@ class DefaultCLI(object):
 
     ##############################################
     def str_cmd_req_name(self):
-        name = self._connection.stat_cfg.stat_parm_Name
+        stat_cfg: dict = self._connection.get_stat_cfg()
+        name = stat_cfg.get('stat_parm_Name', '')
         qth = self._gui.own_qth
         # qth = self._connection.stat_cfg.stat_parm_QTH
         loc = self._gui.own_loc
