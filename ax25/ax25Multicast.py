@@ -249,6 +249,9 @@ class ax25Multicast:
     def _update_member_ip_list(self, member_call: str, axip_add: tuple):
         if not all((member_call, axip_add)):
             return False
+        if member_call == self._mcast_conf.get('mcast_server_call', ''):
+            logger.warning(f'MCast: Loop detected - _update_member_ip_list ! {member_call} - {axip_add}')
+            return
         if not member_call in self._mcast_member_add_list:
             self._mcast_member_add_list[member_call] = tuple(axip_add)
             logger.debug(f"MCast: setAXIP for {member_call} - {axip_add} - 1")
@@ -284,6 +287,9 @@ class ax25Multicast:
             return
         call = str(ax25frame.from_call.call_str)
         uid = str(ax25frame.addr_uid)
+        if call == self._mcast_conf.get('mcast_server_call', ''):
+            logger.warning(f'MCast: Loop detected - mcast_rx ! {call} - {uid}')
+            return
 
         if uid in self._mcast_port.connections.keys():
             return

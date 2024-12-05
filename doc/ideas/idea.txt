@@ -73,7 +73,8 @@ Ideas/TODO's :
   - MultiPortKISS (Direwolf)
 
 ✓ AXIP-Multicast überarbeiten
-  - ! LOOP-Preventer !
+  ✓ ! LOOP-Preventer !
+    - erweiterter LOOP-Preventer wenn nötig
   ✓ Multicast Channels/Groups
   ✓ Multicast CLI/NODE
   ✓ Multicast Einstellung GUI
