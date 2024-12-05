@@ -84,7 +84,8 @@ Ideas/TODO's :
   ✓ Remote CMDs IP/DNS Eingeben
   ✓ Feste DN bevorzugen
   - StringVars
-  - Baken
+  ✓ Baken
+  - Baken an Kanal
   ✓ Private Channel
   ✓ DNS bevorzugen
 

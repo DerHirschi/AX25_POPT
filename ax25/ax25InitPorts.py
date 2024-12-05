@@ -621,6 +621,10 @@ class AX25PortHandler(object):
                 conf.get('text', b'')
         )):
             return False
+        if hasattr(self._mcast_server, 'get_mcast_port_id'):
+            if port_id == self._mcast_server.get_mcast_port_id():
+                self._mcast_server.send_UI_to_all(conf)
+                return True
         self.ax25_ports[port_id].send_UI_frame(
             own_call=conf.get('own_call', ''),
             add_str=conf.get('add_str', ''),
@@ -628,6 +632,7 @@ class AX25PortHandler(object):
             cmd_poll=conf.get('cmd_poll', (False, False)),
             pid=conf.get('pid', 0xF0),
         )
+        return True
 
     ######################
     # Monitor Buffer Stuff

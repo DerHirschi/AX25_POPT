@@ -6,7 +6,8 @@ TODO:
     - Remote CMDs Registrieren
     ✓ Remote CMDs IP/DNS Eingeben
     - StringVars
-    - Baken
+    ✓ Baken
+    - Baken an Kanal
     ✓ Private Channel
     ✓ MCast-Server Call fm StatCFG
     ✓ Config GUI
@@ -176,6 +177,11 @@ class ax25Multicast:
 
     def get_mcast_port(self):
         return self._mcast_port
+
+    def get_mcast_port_id(self):
+        if not hasattr(self._mcast_port, 'port_id'):
+            return None
+        return self._mcast_port.port_id
 
     def del_mcast_port(self):
         logger.info(f"MCast: Delete Multicast Port ")
@@ -667,6 +673,31 @@ class ax25Multicast:
             #     member_ip = self._mcast_member_add_list.get(member_call, ())
             self._send_UI_to_user(member_call, text, to_call='CH2ALL')
 
-    def _send_UI_to_all(self):
-        pass
+    def send_UI_to_all(self, ui_conf: dict):
+        if not all((
+                ui_conf.get('own_call', ''),
+                ui_conf.get('add_str', ''),
+                ui_conf.get('text', b'')
+        )):
+            return False
+        mem_list = []
+        for ch_id, channel in self._mcast_channels.items():
+            channel: MCastChannel
+            for member in channel.get_ch_members():
+                if member in mem_list:
+                    continue
+                axip_add = self._get_member_ip(member_call=member)
+                if not axip_add:
+                    logger.debug("MCast: No Member IP send_UI_to_all() - Timeout ...")
+                    continue
+                self._mcast_port.send_UI_frame(
+                    own_call=str(ui_conf.get('own_call', '')),
+                    add_str=str(ui_conf.get('add_str', '')),
+                    text=ui_conf.get('text', b'')[:256],
+                    axip_add=axip_add,
+                    cmd_poll=ui_conf.get('cmd_poll', (False, True))
+                )
+                mem_list.append(member)
+                logger.debug(f"MCast: Send UI to {ui_conf.get('add_str', '')} - {axip_add}")
+                logger.debug(f"MCast: {ui_conf.get('text', b'')}")
 
