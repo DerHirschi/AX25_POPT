@@ -29,28 +29,31 @@ class MCastChannel:
         logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init")
         self._ch_conf = dict(ch_conf)
         self._ch_id = ch_conf.get('ch_id', -1)
-        self._ch_member_list = ch_conf.get('ch_members', [])
+        # self._ch_member_list = ch_conf.get('ch_members', [])
         logger.info(f"MCast: CH {ch_conf.get('ch_id', -1)}: Init complete")
 
     def get_ch_members(self):
-        return list(self._ch_member_list)
+        return list(self._ch_conf.get('ch_members', []))
 
     def del_ch_member(self, member_call: str):
         if not member_call:
             return False
-        if member_call not in self.get_ch_members():
+        member_list = self.get_ch_members()
+        if member_call not in member_list:
             return False
-        self._ch_member_list.remove(member_call)
-        self._ch_conf['ch_members'] = list(self._ch_member_list)
+        member_list.remove(member_call)
+        self._ch_conf['ch_members'] = list(member_list)
         return True
 
     def add_ch_member(self, member_call: str):
         if not member_call:
             return False
-        if member_call in self.get_ch_members():
+        member_list = self.get_ch_members()
+        if member_call in member_list:
             logger.warning(f"MCast CH {self._ch_id}: add_ch_member() Member {member_call} already exists !")
             return False
-        self._ch_member_list.append(member_call)
+        member_list.append(member_call)
+        self._ch_conf['ch_members'] = member_list
         logger.info(f"MCast CH {self._ch_id}: Add member {member_call} to Channel")
         return True
 
@@ -606,7 +609,7 @@ class ax25Multicast:
         if channel_id not in self._mcast_channels:
             logger.error(f"MCast: _get_channel_conf() - Channel {channel_id} not found !")
             return {}
-        channel = self._mcast_channels.get(channel_id)
+        channel: MCastChannel = self._mcast_channels.get(channel_id)
         if not hasattr(channel, 'get_channel_conf'):
             logger.error(f"MCast: _get_channel_conf() - Attribut Error !")
             return {}
