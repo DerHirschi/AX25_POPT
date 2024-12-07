@@ -374,6 +374,11 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         ch_cfg['member_add_list'] = member_add_list
         return ch_cfg
 
+    def set_ch_conf(self, ch_conf: dict):
+        if not ch_conf:
+            return False
+        self._ch_cfg = ch_conf
+
 class MulticastSettings(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
@@ -499,6 +504,8 @@ class MulticastSettings(tk.Toplevel):
         self._member_to_var.set(str(self._mcast_cfg.get('mcast_member_timeout', 60)))
         self._reg_new_user.set(bool(self._mcast_cfg.get('mcast_new_user_reg', True)))
         for ch_id, tab in self._tab_list.items():
+            if hasattr(tab, 'set_ch_conf'):
+                tab.set_ch_conf(self._mcast_cfg.get('mcast_ch_conf', {}).get(ch_id, getNew_mcast_channel_cfg(ch_id)))
             if hasattr(tab, 'update_member_tree'):
                 tab.update_member_tree()
 
@@ -548,7 +555,6 @@ class MulticastSettings(tk.Toplevel):
         self._set_cfg_to_mcast()
         self._mcast.reinit_mcast_cfgs()
 
-
     ################################################
     def _ok_btn(self):
         self._set_cfg_to_mcast()
@@ -559,12 +565,14 @@ class MulticastSettings(tk.Toplevel):
 
     def _abort_btn(self):
         self.destroy_win()
+
     ################################################
     def _tab_change(self, event=None):
         self.reinit_MCastGui()
 
     ################################################
     def _set_cfg_to_mcast(self):
+        # TODO Check if CFG has changed.. (Members has moved to other Channel)
         ch_configs = {}
         member_add_list = {}
         for tab_id, tab in sorted(self._tab_list.items()):

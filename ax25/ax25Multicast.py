@@ -40,9 +40,12 @@ class MCastChannel:
             return False
         member_list = self.get_ch_members()
         if member_call not in member_list:
+            logger.warning(f"MCast CH {self._ch_id}: Del member: {member_call} not in Member list")
+            logger.debug(f"MCast CH {self._ch_id}: Del member: {member_list}")
             return False
         member_list.remove(member_call)
         self._ch_conf['ch_members'] = list(member_list)
+        logger.info(f"MCast CH {self._ch_id}: Del member {member_call} fm Channel")
         return True
 
     def add_ch_member(self, member_call: str):
@@ -53,7 +56,7 @@ class MCastChannel:
             logger.warning(f"MCast CH {self._ch_id}: add_ch_member() Member {member_call} already exists !")
             return False
         member_list.append(member_call)
-        self._ch_conf['ch_members'] = member_list
+        self._ch_conf['ch_members'] = list(member_list)
         logger.info(f"MCast CH {self._ch_id}: Add member {member_call} to Channel")
         return True
 
@@ -157,7 +160,7 @@ class ax25Multicast:
         self._mcast_member_add_list: dict = self._mcast_conf.get('mcast_axip_list', {})
         ##########################
         # Channel Init
-        self._mcast_member_timeout = {}
+        self._mcast_member_timeout = {} # TODO get old Timeouts and copy -- -
         self._mcast_channels = {}
         self._init_mcast_channels()
         ##########################
