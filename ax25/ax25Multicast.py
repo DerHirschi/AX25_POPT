@@ -401,12 +401,6 @@ class ax25Multicast:
         if all((member_call, text)):
             self._send_UI_to_user(user_call=member_call, text=text)
 
-        # Send UI to all Channel Members
-        text = STR_TABLE['mcast_new_user_channel_beacon'][lang]
-        text = text.format(member_call)
-        if text:
-            self._send_UI_to_channel(channel_id=default_ch_id, text=text)
-
         return f"MCast: New Member {member_call} registered!"
 
     def move_channel(self, member_call: str, channel_id: int):
@@ -535,7 +529,6 @@ class ax25Multicast:
         if not self._add_member_to_channel(member_call, ch_id):
             logger.error(f"MCast: CH-Move: Can not add {member_call} to Ch {ch_id}")
             return False
-        logger.info(f"MCast: CH-Move: {member_call} moved to Ch {ch_id}")
         return True
 
     def _add_member_to_channel(self, member_call: str, channel_id: int):
@@ -550,7 +543,15 @@ class ax25Multicast:
         """
         mcast_channel = self._mcast_channels.get(channel_id, None)
         if hasattr(mcast_channel, 'add_ch_member'):
-            return mcast_channel.add_ch_member(member_call)
+            if mcast_channel.add_ch_member(member_call):
+                logger.info(f"MCast: CH-ADD: {member_call} add to Ch {channel_id}")
+                # Send UI to all Channel Members
+                lang = POPT_CFG.get_guiCFG_language()
+                text = STR_TABLE['mcast_user_enters_channel_beacon'][lang]
+                text = text.format(member_call)
+                if text:
+                    self._send_UI_to_channel(channel_id=channel_id, text=text)
+                return True
 
         logger.warning(f"MCast: Attribut Error _add_member_to_channel() - channel_id; {channel_id}")
         return False
@@ -563,7 +564,16 @@ class ax25Multicast:
             if not hasattr(mcast_channel, 'del_ch_member'):
                 logger.error("MCast: Attribut Error _del_member_fm_channel()")
                 return False
+            ch_ids = list(self._get_channels_fm_member(member_call))
             if mcast_channel.del_ch_member(member_call=member_call):
+                if ch_ids:
+                    logger.info(f"MCast: CH-DEL: {member_call} deleted fm Ch {ch_id}")
+                    # Send UI to all Channel Members
+                    lang = POPT_CFG.get_guiCFG_language()
+                    text = STR_TABLE['mcast_user_left_channel_beacon'][lang]
+                    text = text.format(member_call)
+                    if text:
+                        self._send_UI_to_channel(channel_id=ch_ids[0], text=text)
                 return True
         return False
 

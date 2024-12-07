@@ -1966,11 +1966,23 @@ STR_TABLE = {
          ''),
          ''),
 
-    'mcast_new_user_channel_beacon': (
+    'mcast_user_enters_channel_beacon': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          '-= {} hat den Kanal betreten =-',
          '-= {} has entered the channel =-',
          '-= {} is het kanaal binnengekomen =-',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'mcast_user_left_channel_beacon': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '-= {} hat den Kanal verlassen =-',
+         '-= {} has left the channel =-',
+         '-= {} het kanaal verlaten =-',
          '',
          '',
          '',

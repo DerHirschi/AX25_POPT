@@ -10,6 +10,7 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - MCast Loop-Preventer
+- MCast: Bake an Kanalmitglieder wenn Mitglied den Kanal betritt/verlässt
 
 ###########################################################################################################
 ###########################################################################################################
