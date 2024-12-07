@@ -353,7 +353,7 @@ class ax25Multicast:
                     hasattr(self._mcast_port, 'tx_multicast')
             )):
                 frame.axip_add = tuple(member_ip)
-                ip_list.append(member)
+                ip_list.append(member_ip)
                 try:
                     self._mcast_port.tx_multicast(frame)
                     logger.debug(f"MCast: TX to: {member} - {member_ip}")
@@ -361,11 +361,6 @@ class ax25Multicast:
                     logger.error(f"MCast: AX25DeviceERROR - TX to {member_ip}")
                     self._mcast_port = None
                     return
-
-    """
-    def tasker(self):
-        pass
-    """
 
     #########################################################
     # Remote Stuff
@@ -440,8 +435,9 @@ class ax25Multicast:
         for cfg_name, cfg_val in ch_conf.items():
             cfg_name = cfg_name.split('ch_')[1]
             if cfg_name == 'members':
-                members = ' '.join(cfg_val)
-                ret += f" # {cfg_name}: {members}\r"
+                ret += f" # {cfg_name}:\r"
+                for el in cfg_val:
+                    ret += f" # > {el}\r"
             else:
                 ret += f" # {cfg_name}: {cfg_val}\r"
         ret += '\r'
@@ -681,10 +677,15 @@ class ax25Multicast:
             logger.error("MCast: Attribut Error _send_UI_to_channel()")
             return False
         members = mcast_channel.get_ch_members()
+        axip_list = []
         for member_call in members:
-            # if member_call in self._mcast_member_add_list:
-            #     member_ip = self._mcast_member_add_list.get(member_call, ())
-            self._send_UI_to_user(member_call, text, to_call='CH2ALL')
+            axip_add = self._get_member_ip(member_call)
+            if not axip_add:
+                logger.debug("MCast: No Member IP _send_UI_to_user() - Timeout ...")
+                continue
+            if axip_add not in axip_list:
+                self._send_UI_to_user(member_call, text, to_call='CH2ALL')
+                axip_list.append(axip_add)
 
     def send_UI_to_all(self, ui_conf: dict):
         if not all((
@@ -694,6 +695,7 @@ class ax25Multicast:
         )):
             return False
         mem_list = []
+        axip_list = []
         for ch_id, channel in self._mcast_channels.items():
             channel: MCastChannel
             for member in channel.get_ch_members():
@@ -703,6 +705,8 @@ class ax25Multicast:
                 if not axip_add:
                     logger.debug("MCast: No Member IP send_UI_to_all() - Timeout ...")
                     continue
+                if axip_add in axip_list:
+                    continue
                 self._mcast_port.send_UI_frame(
                     own_call=str(ui_conf.get('own_call', '')),
                     add_str=str(ui_conf.get('add_str', '')),
@@ -711,6 +715,7 @@ class ax25Multicast:
                     cmd_poll=ui_conf.get('cmd_poll', (False, True))
                 )
                 mem_list.append(member)
+                axip_list.append(axip_add)
                 logger.debug(f"MCast: Send UI to {ui_conf.get('add_str', '')} - {axip_add}")
                 logger.debug(f"MCast: {ui_conf.get('text', b'')}")
 

@@ -2,11 +2,13 @@
 # 2.111.x
 Fixes:
 - Scripterror wenn Stations Name angefordert wird.
+- Es wurden nicht alle MCast-Mitglieder in der CLI & GUI angezeigt
+- MCast Mitglieder mit selben IP u Port bekommen doppelte Frames
 
 Optimierung:
-- MCast Loop-Preventer
 
 Neue Implementierungen / Funktionen:
+- MCast Loop-Preventer
 
 ###########################################################################################################
 ###########################################################################################################
