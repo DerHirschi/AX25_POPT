@@ -1294,12 +1294,13 @@ class AXIP(AX25Port):
             logger.error(f"Port {self.port_id}: TypeError AXIP Dev !!! \n {e}")
             logger.error(frame.axip_add)
             logger.error(frame.data_bytes + calc_crc)
-
+        """
         if all((
                 hasattr(self._mcast_server, 'mcast_tx'),
                 multicast
                )):
             self._mcast_server.mcast_tx(ax25frame=frame)
+        """
 
 
     def tx_multicast(self, frame):

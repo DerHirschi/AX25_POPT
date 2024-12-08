@@ -5,6 +5,7 @@ Fixes:
 - Es wurden nicht alle MCast-Mitglieder in der CLI & GUI angezeigt
 - MCast Mitglieder mit selben IP u Port bekommen doppelte Frames
 - MCast Settings Fenster: Kanal-Mitglied Liest wurde nicht ordentlich geupdated
+- Baken-Text von Datei: falscher Zeilenumbruch
 
 Optimierung:
 

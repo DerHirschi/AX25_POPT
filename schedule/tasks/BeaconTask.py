@@ -82,7 +82,7 @@ class BeaconTask:
             return
         text = get_str_fm_file(file_n)
         if text:
-            self._text = text
+            self._text = text.replace('\n', '\r')
             return
         self._text = ''
 

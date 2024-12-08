@@ -318,8 +318,9 @@ class ax25Multicast:
             return
         self._mcast_tx_to_members(frame=ax25frame, member_list=members)
 
+    """
     def mcast_tx(self, ax25frame):
-        """ Input from AXIP-TX """
+        # Input from AXIP-TX
         if not all((
                 hasattr(ax25frame, 'from_call'),
                 hasattr(ax25frame, 'addr_uid'),
@@ -335,6 +336,7 @@ class ax25Multicast:
         if not ch_members:
             return
         self._mcast_tx_to_members(frame=ax25frame, member_list=ch_members)
+    """
 
     def _mcast_tx_to_members(self, frame, member_list: list):
         if not all((
