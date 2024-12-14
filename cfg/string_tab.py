@@ -316,6 +316,39 @@ STR_TABLE = {
            '',
            ''),
 
+    'setting_saved': (
+           'Info: {}-Einstellungen wurden gespeichert.',
+           'Info: {}-Settings saved.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'all_port_reinit': (
+           'Info: Ports werden reinitialisiert.',
+           'Info: Ports are reinitialized.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'port_reinit': (
+           'Info: Port {} wird reinitialisiert.',
+           'Info: Port {} is reinitialized.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
     'OK': ('OK',
            'OK',
            'OK',

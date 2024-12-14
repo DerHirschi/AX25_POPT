@@ -1,7 +1,7 @@
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg
-from cfg.constant import CFG_MAIN_data_file, LANGUAGE, DEBUG_LOG, MAX_PORTS
+from cfg.constant import CFG_MAIN_data_file, LANGUAGE, MAX_PORTS
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
@@ -127,6 +127,7 @@ class Main_CFG:
 
     def save_MAIN_CFG_to_file(self):
         logger.info(f'Main CFG: Config Saved to {self._config_filename}')
+        """
         if DEBUG_LOG:
             logger.debug(self._config['stat_cfgs'])
             logger.debug(self._config['port_cfgs'])
@@ -135,6 +136,7 @@ class Main_CFG:
             for conf_k, conf in self._config.get('stat_cfgs', {}).items():
                 logger.debug(f'Station CFG: {conf_k}')
                 logger.debug(f'- {conf}')
+        """
 
         tmp_stat_cfgs = dict(self._config['stat_cfgs'])
         tmp_port_cfgs = dict(self._config['port_cfgs'])
@@ -144,7 +146,7 @@ class Main_CFG:
         logger.info(f'-------- MAIN CFG Save --------')
         for conf_k, conf in self._config.items():
             logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
-            logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
+            # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
 
         save_to_file(self._config_filename, dict(self._config))
 
@@ -171,7 +173,7 @@ class Main_CFG:
         logger.info(f'-------- Stat CFG --------')
         for conf_k, conf in self._config.get('stat_cfgs', {}).items():
             logger.info(f'Station CFG: load {conf_k}')
-            logger.debug(f'- {conf}')
+            # logger.debug(f'- {conf}')
         # return get_all_pipe_cfg()   # Get CFGs fm Station CFG
 
     def _update_old_STAT_CFGs(self):
@@ -189,19 +191,17 @@ class Main_CFG:
         logger.info(f'-------- Stat CFG Cleanup --------')
         for conf_k, conf in self._config.get('stat_cfgs', {}).items():
             logger.info(f'Station CFG: Cleanup {conf_k}')
-            logger.debug(f'- {conf}')
+            # logger.debug(f'- {conf}')
 
 
     ###########################################
     # PORTs
     def _load_PORT_CFG_fm_file(self):
         self._config['port_cfgs'] = load_all_port_cfg_fm_file()
-        # print('---------- Port CFG--------------')
-        # print(self._config['port_cfgs'])
         logger.info(f'-------- Port CFG Load --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: load {conf_k}')
-            logger.debug(f'- {conf}')
+            # logger.debug(f'- {conf}')
 
     def _update_old_PORT_CFGs(self):
         new_port_cfgs = {}
@@ -216,14 +216,14 @@ class Main_CFG:
         logger.info(f'-------- Port CFG Cleanup --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: Cleanup {conf_k}')
-            logger.debug(f'- {conf}')
+            # logger.debug(f'- {conf}')
 
     def save_PORT_CFG_to_file(self):
         save_all_port_cfg_to_file(self._config.get('port_cfgs', {}))
         logger.info(f'-------- Port CFG Save --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: save {conf_k}')
-            logger.debug(f'- {conf}')
+            # logger.debug(f'- {conf}')
 
 
     ####################
@@ -434,7 +434,9 @@ class Main_CFG:
     def set_port_CFG_fm_id(self, port_id: int, port_cfg: dict):
         if 0 > port_id > MAX_PORTS - 1:
             return False
-        if not dict:
+        if not port_cfg:
+            return False
+        if not port_cfg.get('parm_PortTyp', ''):
             return False
         self._config['port_cfgs'][port_id] = dict(port_cfg)
         return True

@@ -631,4 +631,4 @@ class MulticastSettings(tk.Frame):
         if old_cfg == self._get_config():
             return False
         self._mcast.reinit_mcast_cfgs()
-        return False
+        return True

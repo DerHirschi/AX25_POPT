@@ -185,17 +185,20 @@ class RxEchoSettings(tk.Frame):
                     tr_k_kk = False
                     tr_kk_k = False
                     # RX
-                    if k in PORT_HANDLER.rx_echo[kk].tx_ports.keys():
-                        self.check_vars[kk][k][5].delete(0, tk.END)
+                    try:
+                        if k in PORT_HANDLER.rx_echo[kk].tx_ports.keys():
+                            self.check_vars[kk][k][5].delete(0, tk.END)
 
-                        call_list_kk_k = PORT_HANDLER.rx_echo[kk].tx_ports[k]
-                        call_st = ''
-                        for el in call_list_kk_k:
-                            call_st += el + ' '
-                        self.check_vars[kk][k][5].insert(tk.END, call_st)
-                        self.check_vars[kk][k][1].set(True)
-                        tr_kk_k = True
-                    else:
+                            call_list_kk_k = PORT_HANDLER.rx_echo[kk].tx_ports[k]
+                            call_st = ''
+                            for el in call_list_kk_k:
+                                call_st += el + ' '
+                            self.check_vars[kk][k][5].insert(tk.END, call_st)
+                            self.check_vars[kk][k][1].set(True)
+                            tr_kk_k = True
+                        else:
+                            self.check_vars[kk][k][1].set(False)
+                    except KeyError:
                         self.check_vars[kk][k][1].set(False)
 
                     if kk in PORT_HANDLER.rx_echo[k].rx_ports.keys():

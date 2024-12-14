@@ -1,8 +1,20 @@
+"""
+TODO:
+    - MsgBox lift wenn Port/Station gelöscht
+    - Port Reinit (Config Reinit) überarbeiten
+    - MainGUI Tabbed Side-Monitor: Station Calls updaten
+    - Allgemeine Einstellungen (Sprachen, Vorschreibfenster Farben)
+    - F-Texte
+
+FIXME:
+    - Keine sysMSG für änderung d Station-Settings.(Nur neue/gelöschte o geänderte Calls werden returned)
+    - Keine sysMSG für änderung d Port-Settings.(Nur neue o gelöschte Ports werden returned)
+"""
 import tkinter as tk
 from tkinter import ttk
 
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
+from fnc.str_fnc import get_strTab
 from gui.guiError import PoPTAttributError
 from gui.settings.guiBeaconSettings import BeaconSettings
 from gui.settings.guiDigiSettings import DIGI_SettingsWin
@@ -12,11 +24,12 @@ from gui.settings.guiRxEchoSettings import RxEchoSettings
 from gui.settings.guiStationSettings import StationSettingsWin
 
 
+
 class SettingsMain(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         win_width = 1200
-        win_height = 800
+        win_height = 640
         self.style = root_win.style
         self.geometry(f"{win_width}x"
                       f"{win_height}+"
@@ -24,14 +37,14 @@ class SettingsMain(tk.Toplevel):
                       f"{root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         # self.attributes("-topmost", True)
-        self.resizable(True, True)
+        self.resizable(True, False)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
             pass
         self.lift()
         self._lang = POPT_CFG.get_guiCFG_language()
-        self.title(STR_TABLE['settings'][self._lang])
+        self.title(get_strTab(str_key='settings', lang_index=self._lang))
         self._root_win = root_win
         self._root_win.settings_win = self
         ###############################################################
@@ -57,10 +70,7 @@ class SettingsMain(tk.Toplevel):
         for strTab_name, frame in self._win_tab.items():
             tab = frame(self._tabControl, self)
             self._tab_list[strTab_name] = tab
-            try:
-                port_lable_text = f'{str(STR_TABLE[strTab_name][self._lang]).ljust(12)}'
-            except (KeyError, IndexError):
-                port_lable_text = f'{strTab_name.ljust(12)}'
+            port_lable_text = f"{get_strTab(str_key=strTab_name, lang_index=self._lang).ljust(12)}"
             self._tabControl.add(tab, text=port_lable_text)
 
         ###########################################
@@ -70,10 +80,11 @@ class SettingsMain(tk.Toplevel):
         ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
 
-        save_btn = tk.Button(btn_frame, text=STR_TABLE['save'][self._lang], command=self._save_btn)
+
+        save_btn = tk.Button(btn_frame, text=get_strTab(str_key='save', lang_index=self._lang), command=self._save_btn)
         save_btn.pack(side=tk.LEFT)
 
-        abort_btn = tk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
+        abort_btn = tk.Button(btn_frame, text=get_strTab(str_key='cancel', lang_index=self._lang), command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     ################################################
@@ -88,10 +99,7 @@ class SettingsMain(tk.Toplevel):
         for strTab_name, frame in self._win_tab.items():
             tab = frame(self._tabControl, self)
             self._tab_list[strTab_name] = tab
-            try:
-                port_lable_text = f'{str(STR_TABLE[strTab_name][self._lang]).ljust(12)}'
-            except (KeyError, IndexError):
-                port_lable_text = f'{strTab_name.ljust(12)}'
+            port_lable_text = f"{get_strTab(str_key=strTab_name, lang_index=self._lang).ljust(12)}"
             self._tabControl.add(tab, text=port_lable_text)
 
     ################################################
@@ -106,20 +114,28 @@ class SettingsMain(tk.Toplevel):
             if not (hasattr(tab, 'save_config')):
                 raise PoPTAttributError
             if tab.save_config():
-                reinit_tr = True
-        if reinit_tr:
+                # FIXME: Keine sysMSG für änderung d. Station-Settings. (Nur neue o geänderte Calls werden returned)
+                self._root_win.sysMsg_to_monitor(
+                    get_strTab('setting_saved', self._lang).format(get_strTab(strTab_name, self._lang))
+                )
+                if strTab_name in ['stat_settings', 'port']:
+                    reinit_tr = True
+        if reinit_tr:   # New Station | Station deleted
             self._reinit_tabs()
+            self._root_win.set_text_tags()
+            # TODO Update Monitor Call selector
 
     ################################################
     def _ok_btn(self):
-        self._root_win.set_text_tags()
-        self._root_win.tabbed_sideFrame.update_mon_port_id()
+        # self._root_win.set_text_tags()
+        # self._root_win.tabbed_sideFrame.update_mon_port_id()
         self.destroy_win()
 
     def _save_btn(self):
         self._save_cfg()
         POPT_CFG.save_PORT_CFG_to_file()
         POPT_CFG.save_MAIN_CFG_to_file()
+        self._root_win.tabbed_sideFrame.update_mon_port_id()
 
     def _abort_btn(self):
         self.destroy_win()

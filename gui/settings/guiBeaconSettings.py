@@ -464,4 +464,4 @@ class BeaconSettings(tk.Frame):
             return False
         self._re_init_beacons()
         # self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
-        return False
+        return True

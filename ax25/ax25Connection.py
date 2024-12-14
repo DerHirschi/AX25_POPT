@@ -693,6 +693,7 @@ class AX25Conn:
             self.set_T1(stop=True)
             # self.zustand_exec.tx(None)
             if self.zustand_exec.stat_index in [2, 4] or self._await_disco:
+                print('End Conn')
                 self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
@@ -705,7 +706,6 @@ class AX25Conn:
                     print(f"DISCO and buff not NULL !! tx_buf_unACK: {self.tx_buf_unACK}")
                     """
                 else:
-
                     self.zustand_exec.change_state(4)
 
     def is_buffer_empty(self):

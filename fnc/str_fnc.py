@@ -1,7 +1,8 @@
 import time
 from datetime import datetime, timedelta
-import logging
+from cfg.logger_config import logger
 from cfg.constant import ENCODINGS, SQL_TIME_FORMAT
+from cfg.string_tab import STR_TABLE
 
 
 def get_kb_str_fm_bytes(len_: int):
@@ -206,7 +207,7 @@ def find_decoding(inp: b''):
     if not res:
         return False
     if len(res) > 1:
-        logging.warning(f"find_decoding() more then 1 Result: {res} inp: {inp}")
+        logger.warning(f"find_decoding() more then 1 Result: {res} inp: {inp}")
     return res[0]
 
 
@@ -227,3 +228,13 @@ def is_byte_ascii(s: int):
 def get_weekDay_fm_dt(now_weekday):
     return ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now_weekday]
 
+def get_strTab(str_key: str, lang_index: int):
+    if not str_key:
+        return str_key
+    if str_key not in STR_TABLE.keys():
+        return str_key
+    lang_tab = STR_TABLE.get(str_key, ())
+    try:
+        return lang_tab[lang_index]
+    except IndexError:
+        return str_key

@@ -341,7 +341,7 @@ class PoPT_GUI_Main:
         logger.info('GUI: Closing GUI: Closing Ports.')
         PORT_HANDLER.close_popt()
 
-        logger.info('GUI: Closing GUI: Destroying all Sub-Windows')
+        logger.debug('GUI: Closing GUI: Destroying all Sub-Windows')
         for wn in [
             self.settings_win,
             self.mh_window,

@@ -101,16 +101,7 @@ class AX25Port(object):
         pass
 
     def close(self):
-        # TODO Del all conn's and Port cfg .. etc ..
-
-        """
-        for k in self.connections.keys():
-            conn: AX25Conn = self.connections[k]
-            # Try to send a Disc
-            conn.zustand_exec.change_state(4)
-            conn.zustand_exec.tx(None)
-        time.sleep(1)
-        """
+        # self.disco_all_conns()
         # if self.port_cfg.get('parm_axip_Multicast', False):
         if self._mcast_server:
             self._mcast_server.del_mcast_port()
@@ -776,6 +767,20 @@ class AX25Port(object):
                 del self.connections[conn_uid]
                 return
 
+    def disco_all_conns(self):
+        for uid, conn in dict(self.connections).items():
+            conn: AX25Conn
+            conn.conn_disco()
+            conn.conn_disco()   # Force Disco
+        n = 0
+        while self.connections and n < 10:
+            time.sleep(0.5)
+            n += 1
+            if n > 9:
+                # Make sure that loop is ending in any case
+                logger.warning(f"Port {self.port_id}: Station Disco while Port closing failed.")
+                break
+
     ####################################################################
     # L2 AX25 Frame
     def send_UI_frame(self,
@@ -1198,8 +1203,9 @@ class AXIP(AX25Port):
             except OSError as e:
                 logger.error(f"Port {self.port_id}: OSError {e}")
                 # self.device.shutdown(socket.SHUT_RDWR)
-                self.device.close()
-                self.device_is_running = False
+                # self.device.close()
+                # self.device_is_running = False
+                self.close_device()
                 raise AX25DeviceFAIL
 
             self.device_is_running = True

@@ -212,4 +212,4 @@ class DIGI_SettingsWin(tk.Frame):
         if old_cfg == self._get_config():
             return False
         self._set_cfg_to_port()
-        return False
+        return True

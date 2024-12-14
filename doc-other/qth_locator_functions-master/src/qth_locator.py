@@ -64,7 +64,7 @@ def square_to_location(qth_locator):
     lon += 0.5 / 60 * lon_ext_sq
     lat += 0.25 / 60 * lat_ext_sq
 
-    return (lat, lon)
+    return lat, lon
 
 
 def location_to_square(lat, lon):
