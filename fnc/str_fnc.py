@@ -126,7 +126,7 @@ def convert_str_to_datetime(date_str, date_format=SQL_TIME_FORMAT):
     try:
         converted_date = datetime.strptime(date_str, date_format)
         return converted_date
-    except ValueError:
+    except (ValueError, TypeError):
         return 0
 
 

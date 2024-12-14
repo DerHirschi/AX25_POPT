@@ -28,20 +28,15 @@ from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
 from gui.pms.guiBBS_newMSG import BBS_newMSG
 from gui.ft.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
-from gui.settings.guiDigiSettings import DIGI_SettingsWin
 from gui.settings.guiDualPortSettings import DualPortSettingsWin
 from gui.settings.guiPipeToolSettings import PipeToolSettings
 from gui.plots.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 
 from gui.UserDB.guiUserDBoverview import UserDBtreeview
-from gui.settings.guiMCastSettings import MulticastSettings
 from gui.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
-from gui.settings.guiStationSettings import StationSettingsWin
-from gui.settings.guiPortSettings import PortSettingsWin
-from gui.settings.guiBeaconSettings import BeaconSettings
-from gui.settings.guiRxEchoSettings import RxEchoSettings
+from gui.settings.guiSettingsMain import SettingsMain
 from gui.settings.guiLinkholderSettings import LinkHolderSettings
 from gui.UserDB.guiUserDB import UserDB
 from gui.guiAbout import About
@@ -107,9 +102,8 @@ class PoPT_GUI_Main:
         # self.style.theme_use('clam')
         ######################################
         # Init Vars
-        # self.language = POPT_CFG.get_guiCFG_language()
         self.mh = PORT_HANDLER.get_MH()
-        self.language = LANGUAGE
+        self.language = POPT_CFG.get_guiCFG_language()
         self.text_size = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
         ###############################
         self._root_dir = get_root_dir()
@@ -469,7 +463,6 @@ class PoPT_GUI_Main:
         self.set_auto_tracer()
         self.set_dx_alarm()
         self.set_noty_bell_active()
-        self.set_tracer_icon()
         self.set_Beacon_icon(self.setting_bake.get())
         self.chk_master_sprech_on()
 
@@ -587,27 +580,33 @@ class PoPT_GUI_Main:
         ###################################################################
         # Menü 4 Einstellungen
         MenuSettings = Menu(menubar, tearoff=False)
-        MenuSettings.add_command(label=STR_TABLE['station'][self.language],
-                                 command=lambda: self._open_settings_window('stat_sett'),
-                                 underline=0)
-        MenuSettings.add_command(label=STR_TABLE['port'][self.language],
-                                 command=lambda: self._open_settings_window('port_sett'),
-                                 underline=0)
-        MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
-                                 command=lambda: self._open_settings_window('beacon_sett'),
-                                 underline=0)
-        MenuSettings.add_command(label='Digipeater',
-                                 command=lambda: self._open_settings_window('digi_setting'),
-                                 underline=0)
 
-        MenuSettings.add_separator()
-        MenuSettings.add_command(label='Multicast',
-                                 command=lambda: self._open_settings_window('mcast_sett'),
-                                 underline=0)
-        MenuSettings.add_command(label="RX-Echo",
-                                 command=lambda: self._open_settings_window('rx_echo_sett'),
+        MenuSettings.add_command(label=STR_TABLE['settings'][self.language],
+                                 command=lambda: self._open_settings_window('all_sett'),
                                  underline=0)
         MenuSettings.add_separator()
+
+        #MenuSettings.add_command(label=STR_TABLE['station'][self.language],
+        #                         command=lambda: self._open_settings_window('stat_sett'),
+        #                         underline=0)
+        #MenuSettings.add_command(label=STR_TABLE['port'][self.language],
+        #                         command=lambda: self._open_settings_window('port_sett'),
+        #                         underline=0)
+        #MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
+        #                         command=lambda: self._open_settings_window('beacon_sett'),
+        #                         underline=0)
+        #MenuSettings.add_command(label='Digipeater',
+        #                         command=lambda: self._open_settings_window('digi_setting'),
+        #                         underline=0)
+
+        #MenuSettings.add_separator()
+        #MenuSettings.add_command(label='Multicast',
+        #                         command=lambda: self._open_settings_window('mcast_sett'),
+        #                         underline=0)
+        #MenuSettings.add_command(label="RX-Echo",
+        #                         command=lambda: self._open_settings_window('rx_echo_sett'),
+        #                         underline=0)
+        #MenuSettings.add_separator()
         MenuSettings.add_command(label='Dual-Port',
                                  command=lambda: self.open_window('dualPort_settings'),
                                  underline=0)
@@ -1807,14 +1806,15 @@ class PoPT_GUI_Main:
             'ft_manager': FileTransferManager,  # FT Manager            # TODO move to open_window
             'pipe_sett': PipeToolSettings,      # Pipe Tool
             # 'user_db': UserDB,  # UserDB
-            'mcast_sett': MulticastSettings,    # Multicast Settings
+            #'mcast_sett': MulticastSettings,    # Multicast Settings
             'l_holder': LinkHolderSettings,     # Linkholder
-            'rx_echo_sett': RxEchoSettings,     # RX Echo
-            'beacon_sett': BeaconSettings,      # Beacon Settings
-            'port_sett': PortSettingsWin,       # Port Settings
-            'stat_sett': StationSettingsWin,    # Stat Settings
+            #'rx_echo_sett': RxEchoSettings,     # RX Echo
+            #'beacon_sett': BeaconSettings,      # Beacon Settings
+            #'port_sett': PortSettingsWin,       # Port Settings
+            #'stat_sett': StationSettingsWin,    # Stat Settings
             'pms_setting': PMS_Settings,        # PMS Settings
-            'digi_setting': DIGI_SettingsWin,   # DIGI Settings
+            #'digi_setting': DIGI_SettingsWin,   # DIGI Settings
+            'all_sett': SettingsMain,       # New All Settings
         }.get(win_key, '')
         if callable(settings_win):
             self.settings_win = settings_win(self)
@@ -2599,20 +2599,6 @@ class PoPT_GUI_Main:
         if self._tracer_alarm:
             self._Alarm_Frame.set_tracerAlarm(False)
             self._tracer_alarm = False
-            self.set_tracer_icon()
-
-    def set_tracer_icon(self):
-        pass
-        # self._Alarm_Frame.TracerIcon_tasker()
-        """
-        if self.get_auto_tracer():
-            self._Alarm_Frame.set_Tracer_icon(auto_tracer=True, set_icon=True)
-            return
-        if self.get_tracer():
-            self._Alarm_Frame.set_Tracer_icon(auto_tracer=False, set_icon=True)
-            return
-        self._Alarm_Frame.set_Tracer_icon(auto_tracer=False, set_icon=False)
-        """
 
     def reset_dx_alarm(self):
         dx_alarm = bool(self.setting_dx_alarm.get())
@@ -2660,5 +2646,6 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame2.t2speech.configure(state='disabled')
         self.set_var_to_all_ch_param()
 
-    def get_PH_manGUI(self):
+    @staticmethod
+    def get_PH_manGUI():
         return PORT_HANDLER

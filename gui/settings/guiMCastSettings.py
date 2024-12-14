@@ -15,7 +15,6 @@ from gui.guiError import PoPTModulError
 class MCastAddMember(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
-        self.style = root_win.style
         self._root_win = root_win
         self._mcast = root_win.get_mcast()
 
@@ -112,7 +111,6 @@ class MCastAddMember(tk.Toplevel):
 class MCastMoveMember(tk.Toplevel):
     def __init__(self, root_win, member_call: str):
         tk.Toplevel.__init__(self)
-        self.style = root_win.style
         self._root_win = root_win
         self._member_call = member_call
         self._mcast = root_win.get_mcast()
@@ -379,23 +377,24 @@ class MCAST_channel_cfg_Tab(tk.Frame):
             return False
         self._ch_cfg = ch_conf
 
-class MulticastSettings(tk.Toplevel):
-    def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
-        ph = root_win.get_PH_manGUI()
+class MulticastSettings(tk.Frame):
+    def __init__(self, tabctl , root_win):
+        tk.Frame.__init__(self, tabctl)
+        ph = root_win.get_PH()
         if not hasattr(ph, 'get_mcast_server'):
-            self.destroy_win()
+            # self.destroy_win()
             raise PoPTModulError
         self._mcast = ph.get_mcast_server()
         if not hasattr(self._mcast, 'get_mcast_cfgs'):
-            self.destroy_win()
+            # self.destroy_win()
             raise PoPTModulError
-        self._lang = root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self._root_win = root_win
         self.value_win = None
-        win_width = 800
-        win_height = 580
-        self.style = root_win.style
+        # win_width = 800
+        # win_height = 580
+        # self.style = root_win.style
+        """
         self.geometry(f"{win_width}x"
                       f"{win_height}+"
                       f"{root_win.main_win.winfo_x()}+"
@@ -408,7 +407,8 @@ class MulticastSettings(tk.Toplevel):
             pass
         self.lift()
         self.title('MCast-Settings')
-        self._root_win.settings_win = self
+        """
+        # self._root_win.settings_win = self
         self._mcast_cfg: dict = self._mcast.get_mcast_cfgs()
         #####################################################################
         # Vars
@@ -485,19 +485,6 @@ class MulticastSettings(tk.Toplevel):
             port_lable_text = f'CH {ch_id}'
             self._tabControl.add(tab, text=port_lable_text)
 
-        ###########################################
-        # BTN
-        btn_frame = tk.Frame(self, height=50)
-        btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=15)
-        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
-        ok_btn.pack(side=tk.LEFT)
-
-        save_btn = tk.Button(btn_frame, text=STR_TABLE['save'][self._lang], command=self._save_btn)
-        save_btn.pack(side=tk.LEFT)
-
-        abort_btn = tk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
-        abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
-
     def reinit_MCastGui(self):
         self._mcast_cfg: dict = self._mcast.get_mcast_cfgs()
         self._init_to_var.set(str(self._mcast_cfg.get('mcast_member_init_timeout', 5)))
@@ -556,16 +543,6 @@ class MulticastSettings(tk.Toplevel):
         self._mcast.reinit_mcast_cfgs()
 
     ################################################
-    def _ok_btn(self):
-        self._set_cfg_to_mcast()
-        self.destroy_win()
-
-    def _save_btn(self):
-        self._save_cfg()
-
-    def _abort_btn(self):
-        self.destroy_win()
-
     ################################################
     def _tab_change(self, event=None):
         self.reinit_MCastGui()
@@ -642,5 +619,16 @@ class MulticastSettings(tk.Toplevel):
     def destroy_win(self):
         if hasattr(self.value_win, 'destroy_win'):
             self.value_win.destroy_win()
-        self._root_win.settings_win = None
+        # self._root_win.settings_win = None
         self.destroy()
+
+    def _get_config(self):
+        return dict(self._mcast.get_mcast_cfgs())
+
+    def save_config(self):
+        old_cfg = self._get_config()
+        self._set_cfg_to_mcast()
+        if old_cfg == self._get_config():
+            return False
+        self._mcast.reinit_mcast_cfgs()
+        return False

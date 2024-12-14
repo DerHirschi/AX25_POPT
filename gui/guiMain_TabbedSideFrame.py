@@ -623,7 +623,6 @@ class SideTabbedFrame:  # TODO
 
     def _chk_tracer(self):
         self._main_win.set_tracer()
-        self._main_win.set_tracer_icon()
 
     def _chk_beacon(self):
         POPT_CFG.set_guiPARM_main({
@@ -633,7 +632,6 @@ class SideTabbedFrame:  # TODO
 
     def _chk_auto_tracer(self):
         self._main_win.set_auto_tracer()
-        self._main_win.set_tracer_icon()
 
     def _chk_rnr(self):
         conn = self._main_win.get_conn()

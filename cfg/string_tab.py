@@ -9,7 +9,7 @@
 7: 'it'
 8: 'zh'     # Not really ;-)
 
-Thanks to NL1NOD for the Dutch translation.
+Thanks to NL1NOD(Patrick) for the Dutch translations.
 """
 
 STR_TABLE = {
@@ -1156,9 +1156,9 @@ STR_TABLE = {
            '',
            ''),
 
-    'stat_settings': ('Station-Einstellungen',
-                      'Station-Settings',
-                      'Gebruiker-instellingen',
+    'stat_settings': ('Station',
+                      'Station',
+                      'Gebruiker',
            '',
            '',
            '',
@@ -1306,9 +1306,9 @@ STR_TABLE = {
            '',
            ''),
 
-    'beacon_settings': ('Baken-Einstellungen',
-                        'Beacon-Settings',
-                        'Baken Instellingen',
+    'beacon_settings': ('Baken',
+                        'Beacon',
+                        'Baken',
            '',
            '',
            '',

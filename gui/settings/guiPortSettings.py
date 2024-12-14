@@ -23,14 +23,13 @@ class PortSetTab:
         self._main_cl = main_stt_win
         self._lang = POPT_CFG.get_guiCFG_language()
         # self.ports_sett: {int: DefaultPortConfig} = main_stt_win.all_port_settings
-        self._height = main_stt_win.get_win_height()
+        self._height = 600
         height = self._height
-        self._width = main_stt_win.win_width
-
+        self._width = 1059
 
         self._port_setting = new_settings
         port_types = PORT_HANDLER.get_ax25types_keys()
-        self.style = main_stt_win.style
+        # self.style = main_stt_win.style
         self.tab = ttk.Frame(tabclt)
         #################
         # Port Name
@@ -489,15 +488,7 @@ class PortSetTab:
             else:
                 y_f += 1
 
-
-    def win_tasker(self):
-        # self.update_port_parameter()
-        pass
-
     def _choose_color(self, fg_bg: str):
-        self._main_cl.get_root_sett_win().attributes("-topmost", False)
-        # self._main_cl.settings_win.lower()
-        # self._main_cl.settings_win.lift()
         new_cfg = getNew_port_cfg()
         if fg_bg == 'TX':
             # col = askcolor(self._port_setting.parm_mon_clr_tx, title='TX')
@@ -530,7 +521,7 @@ class PortSetTab:
                     self._color_example_text_tx.configure(bg=col[1])
                     self._color_example_text_rx.configure(bg=col[1])
 
-        self._main_cl.get_root_sett_win().attributes("-topmost", True)
+        #self._main_cl.get_root_sett_win().attributes("-topmost", True)
 
     def _update_Mcast_settings(self, event=None):
         self._main_cl.switch_mcast_chb(self._axip_multicast_var.get(), self._port_setting.get('parm_PortNr', -1))
@@ -809,87 +800,41 @@ class PortSetTab:
             self._t2.configure(state='normal')
 
 
-class PortSettingsWin:
-    def __init__(self, main_cl):
-        self._main_class = main_cl
-        self._win_height = 600
-        self.win_width = 1059
-        self.style = main_cl.style
-        self._settings_win = tk.Toplevel()
-        # self.settings_win
-        self._settings_win.title("Port-Settings")
-        # self._settings_win.geometry("{}x{}".format(self.win_width, self._win_height))
-        self._settings_win.geometry(f"{self.win_width}x"
-                                   f"{self._win_height}+"
-                                   f"{self._main_class.main_win.winfo_x()}+"
-                                   f"{self._main_class.main_win.winfo_y()}")
-        self._settings_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
-        self._settings_win.resizable(False, False)
-        # self._settings_win.attributes("-topmost", True)
-        try:
-            self._settings_win.iconbitmap("favicon.ico")
-        except tk.TclError:
-            pass
-        self._settings_win.lift()
+class PortSettingsWin(tk.Frame):
+    def __init__(self, tabctl, root_win=None):
+        tk.Frame.__init__(self, tabctl)
+        win_height = 600
+        win_width = 1059
         self._lang = POPT_CFG.get_guiCFG_language()
         ##########################
-        # OK, Save, Cancel
-        ok_bt = tk.Button(self._settings_win,
-                          text="OK",
-                          # font=("TkFixedFont", 15),
-                          # bg="green",
-                          height=1,
-                          width=6,
-                          command=self._ok_btn_cmd)
-
-        save_bt = tk.Button(self._settings_win,
-                            text=STR_TABLE['save'][self._lang],
-                            # font=("TkFixedFont", 15),
-                            # bg="green",
-                            height=1,
-                            width=7,
-                            command=self._save_btn_cmd)
-
-        cancel_bt = tk.Button(self._settings_win,
-                              text=STR_TABLE['cancel'][self._lang],
-                              # font=("TkFixedFont", 15),
-                              # bg="green",
-                              height=1,
-                              width=8,
-                              command=self._destroy_win)
-        ok_bt.place(x=20, y=self._win_height - 50)
-        save_bt.place(x=110, y=self._win_height - 50)
-        cancel_bt.place(x=self.win_width - 120, y=self._win_height - 50)
         ####################################
         # New Station, Del Station Buttons
-        new_port_bt = tk.Button(self._settings_win,
+        new_port_bt = tk.Button(self,
                                 text=STR_TABLE['new_port'][self._lang],
                                 # font=("TkFixedFont", 15),
                                 # bg="green",
                                 height=1,
                                 width=10,
                                 command=self._new_port_btn_cmd)
-        del_st_bt = tk.Button(self._settings_win,
+        del_st_bt = tk.Button(self,
                               text=STR_TABLE['delete'][self._lang],
                               # font=("TkFixedFont", 15),
                               bg="red3",
                               height=1,
                               width=10,
                               command=self._del_port_btn_cmd)
-        new_port_bt.place(x=20, y=self._win_height - 590)
-        del_st_bt.place(x=self.win_width - 141, y=self._win_height - 590)
+        new_port_bt.place(x=20, y=win_height - 590)
+        del_st_bt.place(x=win_width - 141, y=win_height - 590)
 
         # Root Tab
-        self._tabControl = ttk.Notebook(self._settings_win, height=self._win_height - 140, width=self.win_width - 40)
-        self._tabControl.place(x=20, y=self._win_height - 550)
+        self._tabControl = ttk.Notebook(self, height=win_height - 140, width=win_width - 40)
+        self._tabControl.place(x=20, y=win_height - 550)
         # Tab Vars
         self._tab_list: {int: ttk.Frame} = {}
         # Tab Frames ( Port Settings )
         all_ports = PORT_HANDLER.get_all_ports_f_cfg()
         all_port_cfgs = POPT_CFG.get_port_CFGs()
         for port_id, port_cfg in all_port_cfgs.items():
-            # port.port_cfg: DefaultPortConfig
-            # tmp = all_ports[port_id].port_cfg
             # new_settings = POPT_CFG.get_port_CFG_fm_id(port_id=port_id)
             tab = PortSetTab(self, port_cfg, self._tabControl)
             self._tab_list[port_id] = tab
@@ -900,17 +845,12 @@ class PortSettingsWin:
                 port_lable_text += ' (!)'
             self._tabControl.add(tab.tab, text=port_lable_text)
 
-    def get_root_sett_win(self):
-        return self._settings_win
-
     def switch_mcast_chb(self, disable: bool, port_nr: int):
         for port_id, tab in self._tab_list.items():
             if port_id != port_nr:
                 tab.disable_mcast(port_id, disable)
 
     def _new_port_btn_cmd(self):
-        # port.port_cfg: DefaultPortConfig
-        # prtcfg = DefaultPort()
         new_prtcfg = getNew_port_cfg()
         prt_id = 0
         while prt_id in self._tab_list.keys():
@@ -922,95 +862,87 @@ class PortSettingsWin:
         self._tab_list[prt_id] = tab
 
     def _del_port_btn_cmd(self):
-        self._settings_win.attributes("-topmost", False)
-        self._settings_win.lower()
         msg = AskMsg(titel='lösche Port', message="Willst du diesen Port wirklich löschen? \n"
                                                   "Alle Einstellungen gehen verloren !")
-        # self.settings_win.lift()
         if msg:
             try:
-                # TODO Again ! Such a mess
                 tab_ind = self._tabControl.index('current')
                 ind = self._tabControl.tab('current')
             except tk.TclError:
                 pass
             else:
                 PORT_HANDLER.disco_all_Conn()
-                # self._settings_win.lower()
                 messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
-                # self._settings_win.lift()
                 ind = ind['text']
                 ind = int(ind.replace('Port ', '')[0])
-
                 del_port_data(ind)
                 # TODO ?? Del Port in Port_handler ?? or check Reinit ??
                 PORT_HANDLER.close_port(ind)
                 if POPT_CFG.del_port_CFG_fm_id(ind):
                     del self._tab_list[ind]
                     self._tabControl.forget(tab_ind)
-
                     WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
-                    self._main_class.sysMsg_to_monitor('Info: Port erfolgreich gelöscht.')
+                    #self._main_class.sysMsg_to_monitor('Info: Port erfolgreich gelöscht.')
                 else:
                     logger.error(f'Port {ind} konnte nicht gelöscht werden')
-                    self._main_class.sysMsg_to_monitor(f'Port {ind} konnte nicht gelöscht werden')
+                    #self._main_class.sysMsg_to_monitor(f'Port {ind} konnte nicht gelöscht werden')
         else:
             InfoMsg('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
                                    'Das hast du gut gemacht, mach weiter so. ')
-            self._main_class.sysMsg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
-        self._settings_win.lift()
-        # self._settings_win.attributes("-topmost", True)
+            #self._main_class.sysMsg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
 
-    def _destroy_win(self):
-        self._settings_win.destroy()
-        self._main_class.settings_win = None
-
+    """
     def _save_btn_cmd(self):
         # TODO Cleanup
         PORT_HANDLER.disco_all_Conn()
-        self._settings_win.lower()
         messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
-        self._settings_win.lift()
-        self._main_class.sysMsg_to_monitor('Info: Alle Stationen werden disconnected !')
+        #self._main_class.sysMsg_to_monitor('Info: Alle Stationen werden disconnected !')
         time.sleep(1)  # TODO Quick fix
         # TODO PORT_HANDLER.is_all_disco()
         PORT_HANDLER.disco_all_Conn()
-        self._main_class.sysMsg_to_monitor('Info: Port Einstellungen werden gespeichert.')
+        #self._main_class.sysMsg_to_monitor('Info: Port Einstellungen werden gespeichert.')
         for port_id in self._tab_list.keys():
             self._tab_list[port_id].set_vars_to_cfg()
             # self._tab_list[port_id].port_setting.save_to_pickl()
         POPT_CFG.save_PORT_CFG_to_file()
-        self._main_class.sysMsg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
+        #self._main_class.sysMsg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
         # self._main_class.msg_to_monitor('Lob: Gute Entscheidung!')
-        self._main_class.sysMsg_to_monitor('Info: Ports werden neu Initialisiert.')
+        #self._main_class.sysMsg_to_monitor('Info: Ports werden neu Initialisiert.')
         threading.Thread(target=PORT_HANDLER.reinit_all_ports).start()  # TODO extra Thread ??
         # self._main_class.ax25_port_handler.reinit_all_ports()
         # self._main_class.msg_to_monitor('Info: PortsInitialisierung beendet.')
-        self._main_class.sysMsg_to_monitor('Lob: Du bist stets bemüht..')
+        #self._main_class.sysMsg_to_monitor('Lob: Du bist stets bemüht..')
 
     def _ok_btn_cmd(self):
         # TODO Cleanup
         if not PORT_HANDLER.is_all_disco():
             PORT_HANDLER.disco_all_Conn()
             messagebox.showerror('Stationen nicht disconnected', 'Nicht alle Stationen disconnected!')
-            self._settings_win.lift()
+            #self._settings_win.lift()
             return
         for port_id in self._tab_list.keys():
             self._tab_list[port_id].set_vars_to_cfg()
             # self._tab_list[port_id].port_setting.save_to_pickl()
         PORT_HANDLER.set_kiss_param_all_ports()
-        self._main_class.sysMsg_to_monitor('Lob: Das war richtig. Mach weiter so.')
-        self._main_class.sysMsg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
-        self._main_class.tabbed_sideFrame.update_mon_port_id()
-        self._destroy_win()
-
-    def get_win_height(self):
-        return self._win_height
+        #self._main_class.sysMsg_to_monitor('Lob: Das war richtig. Mach weiter so.')
+        #self._main_class.sysMsg_to_monitor('Hinweis: Du hast auf OK gedrückt ohne zu wissen was passiert !!')
+        # self._destroy_win()
+    """
 
     @staticmethod
-    def tasker():
-        pass
-        """
-        for tab in self._tab_list:
-            tab.win_tasker()
-        """
+    def _get_config():
+        return dict(POPT_CFG.get_port_CFGs())
+
+    def save_config(self):
+        old_cfg = self._get_config()
+        for port_id in self._tab_list.keys():
+            self._tab_list[port_id].set_vars_to_cfg()
+        POPT_CFG.save_PORT_CFG_to_file()
+        # self._main_class.sysMsg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
+        # self._main_class.msg_to_monitor('Lob: Gute Entscheidung!')
+        # self._main_class.sysMsg_to_monitor('Info: Ports werden neu Initialisiert.')
+        if old_cfg == self._get_config():
+            return False
+        threading.Thread(target=PORT_HANDLER.reinit_all_ports).start()
+        # self._main_class.ax25_port_handler.reinit_all_ports()
+        return False

@@ -86,7 +86,7 @@ Choosing Language (Quick Fix): cfg/constant.py line 13
 
 1 = English
 
-2 = Dutch (I think it's Dutch ;-) )
+2 = Dutch (Thanks to Patrick for the Dutch translation)
 
 
 

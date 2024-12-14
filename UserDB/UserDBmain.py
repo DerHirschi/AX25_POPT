@@ -134,6 +134,8 @@ class UserDB:
 
     def get_entry(self, call_str, add_new=True):
         # call_str = validate_ax25Call(call_str)
+        if not hasattr(call_str, 'upper'):
+            call_str = str(call_str)
         call_str = validate_aprs_call(call_str.upper())
         if call_str:
             call_tup = call_tuple_fm_call_str(call_str)

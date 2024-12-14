@@ -17,13 +17,13 @@ class BeaconTab:
     def __init__(self, root, tabclt: ttk.Notebook, beacon: dict):
         self._tab_clt = tabclt
         self._root = root
-        self._lang = self._root.lang
-        self.style = root.style
+        self._lang = POPT_CFG.get_guiCFG_language()
+        # self.style = root.style
         self.own_tab = ttk.Frame(self._tab_clt)
         self.beacon: dict = beacon
         self.schedule_config = self.beacon.get('scheduler_cfg', getNew_schedule_config())
-        self.winfo_x = self._root.winfo_x
-        self.winfo_y = self._root.winfo_y
+        # self.winfo_x = self._root.winfo_x
+        # self.winfo_y = self._root.winfo_y
         # height = root.win_height
         # width = root.win_width
         #################
@@ -255,7 +255,7 @@ class BeaconTab:
         self._update_byte_c_var_fm_text()
 
     def _select_files(self):
-        self._root.attributes("-topmost", False)
+        # self._root.attributes("-topmost", False)
         # self.root.lower
         filetypes = (
             ('text files', '*.txt'),
@@ -266,7 +266,7 @@ class BeaconTab:
             title='Open files',
             initialdir='data/',
             filetypes=filetypes)
-        self._root.lift()
+        # self._root.lift()
         if filenames:
             self.be_txt_filename_var.set(filenames[0])
             self.beacon['text_filename'] = filenames[0]
@@ -332,28 +332,14 @@ class BeaconTab:
         self._disable_intervall()
 
 
-class BeaconSettings(tk.Toplevel):
-    def __init__(self, main_win):
-        tk.Toplevel.__init__(self)
-        self._main_cl = main_win
-        self.lang = self._main_cl.language
-        main_win.settings_win = self
+class BeaconSettings(tk.Frame):
+    def __init__(self, tabctl, main_win=None):
+        tk.Frame.__init__(self, tabctl)
+        # self._main_cl = main_win
+        self._lang = POPT_CFG.get_guiCFG_language()
         self.win_height = 540
         self.win_width = 1060
-        self.style = main_win.style
-        self.title(STR_TABLE['beacon_settings'][self.lang])
-        # self.geometry("{}x{}".format(self.win_width, self.win_height))
-        self.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
-                      f"{self._main_cl.main_win.winfo_x()}+"
-                      f"{self._main_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
-        self.resizable(False, False)
-        try:
-            self.iconbitmap("favicon.ico")
-        except tk.TclError:
-            pass
-        self.lift()
+
         self.schedule_win = None
         # self.attributes("-topmost", True)
         ###############
@@ -361,42 +347,17 @@ class BeaconSettings(tk.Toplevel):
         # self.port_handler = main_win.ax25_port_handler
         # self.all_beacons: {int: {str: [Beacon]}} = self.port_handler.beacons
         ##########################
-        # OK, Save, Cancel
-        tk.Button(self,
-                  text=STR_TABLE['OK'][self.lang],
-                  # font=("TkFixedFont", 15),
-                  # bg="green",
-                  height=1,
-                  width=6,
-                  command=self._ok_btn_cmd).place(x=20, y=495)
-
-        tk.Button(self,
-                  text=STR_TABLE['save'][self.lang],
-                  # font=("TkFixedFont", 15),
-                  # bg="green",
-                  height=1,
-                  width=7,
-                  command=self._save_btn_cmd).place(x=110, y=495)
-
-        tk.Button(self,
-                  text=STR_TABLE['cancel'][self.lang],
-                  # font=("TkFixedFont", 15),
-                  # bg="green",
-                  height=1,
-                  width=8,
-                  command=self._destroy_win).place(x=self.win_width - 120, y=495)
-
         ####################################
         # New Station, Del Station Buttons
         tk.Button(self,
-                  text=STR_TABLE['new_beacon'][self.lang],
+                  text=STR_TABLE['new_beacon'][self._lang],
                   # font=("TkFixedFont", 15),
                   # bg="green",
                   height=1,
                   width=10,
                   command=self._new_beacon_btn_cmd).place(x=20, y=self.win_height - 530)
         tk.Button(self,
-                  text=STR_TABLE['delete'][self.lang],
+                  text=STR_TABLE['delete'][self._lang],
                   # font=("TkFixedFont", 15),
                   bg="red3",
                   height=1,
@@ -442,10 +403,10 @@ class BeaconSettings(tk.Toplevel):
                 tab.beacon['text'] = tab.b_text_ent.get(0.0, tk.END)[:-1]
                 tab.beacon['text_filename'] = str(tab.be_txt_filename_var.get())
                 tab.beacon['typ'] = tab.beacon_type_var.get()
-                _port_id = tab.beacon['port_id']
-                _stat_call = tab.beacon['own_call']
-                _label_txt = f'{_stat_call} {_port_id}'
-                self.tabControl.tab(self.tab_list.index(tab), text=_label_txt)
+                port_id = tab.beacon['port_id']
+                stat_call = tab.beacon['own_call']
+                label_txt = f'{stat_call} {port_id}'
+                self.tabControl.tab(self.tab_list.index(tab), text=label_txt)
                 beacon_tasks.append(dict(tab.beacon))
 
         POPT_CFG.set_Beacon_tasks(beacon_tasks)
@@ -454,17 +415,19 @@ class BeaconSettings(tk.Toplevel):
     def _re_init_beacons():
         PORT_HANDLER.reinit_beacon_task()
 
+    """
     def _save_btn_cmd(self):
         self._set_vars()
         POPT_CFG.save_MAIN_CFG_to_file()
-        self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
+        # self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
 
     def _ok_btn_cmd(self):
         self._set_vars()
         self._re_init_beacons()
-        self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
-        self._main_cl.sysMsg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
+        # self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
+        # self._main_cl.sysMsg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self._destroy_win()
+    """
 
     def _new_beacon_btn_cmd(self):
         # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs_stuff: bool = False
@@ -486,9 +449,19 @@ class BeaconSettings(tk.Toplevel):
             del self.tab_list[ind]
             self.tabControl.forget(ind)
 
-    def _destroy_win(self):
-        self._main_cl.settings_win = None
+    def destroy_win(self):
         self.destroy()
 
-    def tasker(self):
-        pass
+    @staticmethod
+    def _get_config():
+        return list(POPT_CFG.get_Beacon_tasks())
+
+    def save_config(self):
+        old_cfg = self._get_config()
+        self._set_vars()
+        POPT_CFG.save_MAIN_CFG_to_file()
+        if old_cfg == self._get_config():
+            return False
+        self._re_init_beacons()
+        # self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
+        return False

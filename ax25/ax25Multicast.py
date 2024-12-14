@@ -415,7 +415,7 @@ class ax25Multicast:
         if not self._move_member_to_channel(member_call, channel_id):
             return (f"\r # MCast: Error ! while try to move to Channel {channel_id}.\r"
                     f" # MCast: Please contact Sysop!\r")
-        return f"\r # MCast: You ar now in Channel {channel_id} ({self._get_channel_name(channel_id)})\r"
+        return f"\r # MCast: You are now in Channel {channel_id} ({self._get_channel_name(channel_id)})\r"
 
     def get_channel_info_fm_member(self, member_call: str):
         member_call = self._get_member_call(member_call)

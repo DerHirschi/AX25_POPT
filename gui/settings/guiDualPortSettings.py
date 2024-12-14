@@ -77,7 +77,7 @@ class DP_cfg_Tab(tk.Frame):
 class DualPortSettingsWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
-        self._lang = root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self._root_win = root_win
         win_height = 330
         win_width = 600
