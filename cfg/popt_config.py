@@ -3,7 +3,7 @@ from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGU
     getNew_mcast_channel_cfg
 from cfg.constant import CFG_MAIN_data_file, LANGUAGE, DEBUG_LOG, MAX_PORTS
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
-    save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file  # , get_all_pipe_cfg
+    save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
 
 
@@ -14,7 +14,6 @@ def getNew_dict():
 class Main_CFG:
     def __init__(self):
         logger.info('Main CFG: Init')
-        # print('Main CFG: Init')
         self._config_filename = CFG_MAIN_data_file
         self._config = {}
         # TODO RX-Echo CFG
@@ -214,8 +213,6 @@ class Main_CFG:
             new_port_cfgs[port_id] = new_conf
         self._config['port_cfgs'] = new_port_cfgs
 
-        # print('---------- Port CFG Cleanup --------------')
-        # print(self._config['port_cfgs'])
         logger.info(f'-------- Port CFG Cleanup --------')
         for conf_k, conf in self._config.get('port_cfgs', {}).items():
             logger.info(f'Port CFG: Cleanup {conf_k}')
@@ -367,7 +364,6 @@ class Main_CFG:
         lookup_k = f'{port_id}-{call}'
         if lookup_k in cfg_keys:
             del self._config['pipe_cfgs'][lookup_k]
-            # print(self._config['pipe_cfgs'])
             return True
         return False
 
@@ -382,7 +378,6 @@ class Main_CFG:
     def del_pipe_CFG(self, uid):
         # UID = f'{port}-{call}'
         if uid in self._config.get('pipe_cfgs', {}):
-            # print(f"Del Pipe-CFG: {uid}")
             del self._config['pipe_cfgs'][uid]
 
     def del_pipe_CFG_fm_call(self, call: str):
@@ -391,7 +386,6 @@ class Main_CFG:
         for k in list(self.get_pipe_CFG().keys()):
             i = len(k) - len(call)
             if call == k[i:]:
-                # print(f"Del Pipe-CFG: {k}")
                 del self._config['pipe_cfgs'][k]
 
     ###########################################

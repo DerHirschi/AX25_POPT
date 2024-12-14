@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
 
 
 class DIGI_cfg_Tab(tk.Frame):
@@ -183,7 +182,6 @@ class DIGI_SettingsWin(tk.Frame):
         tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=15)
         # Tab Vars
         self._tab_list: {int: DIGI_cfg_Tab} = {}
-
         all_DIGIs = POPT_CFG.get_digi_CFG()
         for digi_call, digi_cfg in all_DIGIs.items():
             tab = DIGI_cfg_Tab(tabControl, digi_cfg, )
@@ -197,11 +195,12 @@ class DIGI_SettingsWin(tk.Frame):
         for digi_call, digi_cfg in all_DIGIs.items():
             if digi_call in self._tab_list:
                 new_cfg[digi_call] = self._tab_list[digi_call].get_cfg_fm_vars()
+            else:
+                new_cfg[digi_call] = digi_cfg
         POPT_CFG.set_digi_CFG(new_cfg)
 
     def _save_cfg(self):
         self._set_cfg_to_port()
-        POPT_CFG.save_MAIN_CFG_to_file()
 
     @staticmethod
     def _get_config():

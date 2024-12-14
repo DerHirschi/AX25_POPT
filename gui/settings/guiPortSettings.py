@@ -937,7 +937,7 @@ class PortSettingsWin(tk.Frame):
         old_cfg = self._get_config()
         for port_id in self._tab_list.keys():
             self._tab_list[port_id].set_vars_to_cfg()
-        POPT_CFG.save_PORT_CFG_to_file()
+        # POPT_CFG.save_PORT_CFG_to_file()
         # self._main_class.sysMsg_to_monitor('Info: Port Einstellungen erfolgreich gespeichert.')
         # self._main_class.msg_to_monitor('Lob: Gute Entscheidung!')
         # self._main_class.sysMsg_to_monitor('Info: Ports werden neu Initialisiert.')

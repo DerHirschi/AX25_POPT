@@ -75,6 +75,7 @@ class StatSetTab:
 
         #################
         # DIGI
+        """
         digi_x = 305
         digi_y = 500
         self._digi_set_var = tk.BooleanVar()
@@ -84,21 +85,10 @@ class StatSetTab:
                               variable=self._digi_set_var,
                               )
         digi.place(x=digi_x, y=height - digi_y)
+        """
         # self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
         ##################
         # Smart DIGI
-        """
-        digi_x = 390
-        digi_y = 500
-        self.smart_digi_set_var = tk.IntVar()
-        self.smart_digi = tk.Checkbutton(self.own_tab,
-                                         text='Managed-DIGI',
-                                         width=12,
-                                         variable=self.smart_digi_set_var,
-                                         state='disabled'  #
-                                         )
-        self.smart_digi.place(x=digi_x, y=height - digi_y)
-        """
         ###############################
         # Right Side ( Name, QTH, LOC )
         self.own_tab.rowconfigure(0, minsize=5, weight=0)
@@ -510,7 +500,7 @@ class StatSetTab:
         # DIGI
         # self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
 
-        self._digi_set_var.set(stat_is_digi)
+        # self._digi_set_var.set(stat_is_digi)
         # self.digi.select()
         c_text = self._load_fm_file(self._stat_call + '.ctx')
         b_text = self._load_fm_file(self._stat_call + '.btx')
@@ -656,16 +646,18 @@ class StatSetTab:
         self._new_station_setting['stat_parm_qso_col_bg'] = str(self._qso_bg_tx)
 
         # cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())
-
+        """
         digi_cfg = POPT_CFG.get_digi_CFG_for_Call(call)
         digi_cfg.update(dict(
             digi_enabled=bool(self._digi_set_var.get()),
         ))
+        POPT_CFG.set_digi_CFG_f_call(call, digi_cfg)
+        """
         if old_call != call:
             POPT_CFG.del_stat_CFG_fm_call(old_call)
-        POPT_CFG.set_digi_CFG_f_call(call, digi_cfg)
-        # self._new_station_setting['stat_parm_Digi_cfg'] = dict(digi_cfg)
 
+        POPT_CFG.set_digi_CFG_f_call(call, POPT_CFG.get_digi_CFG_for_Call(call))
+        # self._new_station_setting['stat_parm_Digi_cfg'] = dict(digi_cfg)
         # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
 
     def get_new_stat_sett(self):

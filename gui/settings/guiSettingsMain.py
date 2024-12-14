@@ -118,6 +118,8 @@ class SettingsMain(tk.Toplevel):
 
     def _save_btn(self):
         self._save_cfg()
+        POPT_CFG.save_PORT_CFG_to_file()
+        POPT_CFG.save_MAIN_CFG_to_file()
 
     def _abort_btn(self):
         self.destroy_win()
@@ -130,8 +132,8 @@ class SettingsMain(tk.Toplevel):
         self._root_win.settings_win = None
         self.destroy()
 
-    # TODO !! STAT-SETT: self._root_win.set_text_tags()
-    # TODO !! PORT-SETT:  self._main_class.tabbed_sideFrame.update_mon_port_id()
+    # STAT-SETT: self._root_win.set_text_tags()
+    # PORT-SETT: self._root_win.tabbed_sideFrame.update_mon_port_id()
 
     """
         def _save_btn_cmd(self):

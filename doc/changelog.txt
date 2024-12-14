@@ -8,6 +8,8 @@ Fixes:
 - Baken-Text von Datei: falscher Zeilenumbruch
 
 Optimierung:
+- Alle wichtigen Einstellungen zusammengefasst in ein Fenster
+- Kein Disconnect mehr nötig bei Änderung der Station Einstellungen
 
 Neue Implementierungen / Funktionen:
 - MCast Loop-Preventer
