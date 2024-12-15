@@ -37,8 +37,7 @@ class APRS_ais(object):
         self.ais_aprs_stations = ais_cfg.get('ais_aprs_stations', {})
         self.ais_host = ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))
         # self.ais_new_rx_buff = []
-        # self.ais_active = ais_cfg.get('ais_active', False)
-        self.ais_active = False # TODO BEBUG !!!!!!!!!!!!!!!!!
+        self.ais_active = ais_cfg.get('ais_active', False)
         """ Global APRS Stuff """
         self.aprs_msg_pool = ais_cfg.get('aprs_msg_pool',
                                          {  # TODO > DB ?

@@ -722,9 +722,9 @@ class AX25Port(object):
         try:
             ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
         except AX25EncodingERROR as e:
-            logger.warning(f"new_connection ERROR {e}")
-            logger.warning(f"new_connection destCall {ax25_frame.to_call}")
-            logger.warning(f"new_connection via_calls {ax25_frame.via_calls}")
+            logger.warning(f"Port {self.port_id}: new_connection ERROR {e}")
+            logger.warning(f"Port {self.port_id}: new_connection destCall {ax25_frame.to_call}")
+            logger.warning(f"Port {self.port_id}: new_connection via_calls {ax25_frame.via_calls}")
             return False
 
         while True:
@@ -733,7 +733,7 @@ class AX25Port(object):
                     (ax25_frame.from_call.call_str != ax25_frame.to_call.call_str):
                 break
 
-            logger.warning("Same UID !! {}".format(ax25_frame.addr_uid))
+            logger.warning(f"Port {self.port_id}: Same UID !! {ax25_frame.addr_uid}")
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
             try:
@@ -741,7 +741,7 @@ class AX25Port(object):
             except AX25EncodingERROR:
                 return False
             if ax25_frame.from_call.ssid > 15:
-                logger.warning("Same UID - No free SSID !! uid: {} - SSID: {}".format(ax25_frame.addr_uid, ax25_frame.from_call.ssid))
+                logger.warning("Port {}: Same UID - No free SSID !! uid: {} - SSID: {}".format(self.port_id, ax25_frame.addr_uid, ax25_frame.from_call.ssid))
                 return False
             try:
                 ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID

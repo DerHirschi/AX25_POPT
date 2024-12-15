@@ -2,6 +2,7 @@
 TODO:
     - MsgBox lift wenn Port/Station gelöscht
     - Port Reinit (Config Reinit) überarbeiten
+    - Nach reinit zurück in aktuellen Tab
     - MainGUI Tabbed Side-Monitor: Station Calls updaten
     - Allgemeine Einstellungen (Sprachen, Vorschreibfenster Farben)
     - F-Texte
@@ -89,6 +90,11 @@ class SettingsMain(tk.Toplevel):
 
     ################################################
     def _reinit_tabs(self):
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            ind = None
+
         for strTab_name, tab in self._tab_list.items():
             if hasattr(tab, 'destroy_win'):
                 tab.destroy_win()
@@ -101,6 +107,9 @@ class SettingsMain(tk.Toplevel):
             self._tab_list[strTab_name] = tab
             port_lable_text = f"{get_strTab(str_key=strTab_name, lang_index=self._lang).ljust(12)}"
             self._tabControl.add(tab, text=port_lable_text)
+
+        if ind is not None:
+            self._tabControl.select(ind)
 
     ################################################
 

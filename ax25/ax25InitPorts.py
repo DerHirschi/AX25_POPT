@@ -268,7 +268,6 @@ class AX25PortHandler(object):
 
             while not port.ende:
                 logger.debug(f"PH: Warte auf Port {port_id}")
-                print(f"PH: Warte auf Port {port_id}")
                 time.sleep(0.5)
                 port.close()
 
@@ -293,8 +292,8 @@ class AX25PortHandler(object):
         self.set_diesel()
 
     def reinit_port(self, port_id: int):
-        if not self.ax25_ports.get(port_id, False):
-            return False
+        # if not self.ax25_ports.get(port_id, False):
+        #     return False
         self.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
         logger.info(f"PH: Reinit Port {port_id}")
         #self.disco_conn_fm_port(port_id)

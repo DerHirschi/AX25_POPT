@@ -925,13 +925,15 @@ class PortSettingsWin(tk.Frame):
             self._tab_list[port_id].set_vars_to_cfg()
             if self._tab_list[port_id].need_reinit():
                 print(f"port {port_id} need reinit")
-                # PORT_HANDLER.reinit_port(port_id)
+                PORT_HANDLER.reinit_port(port_id)
                 self._need_GUI_reinit = True
         """        
         if old_cfg == self._get_config():
             return self._need_GUI_reinit
         """
+        """
         if self._need_GUI_reinit:
             threading.Thread(target=PORT_HANDLER.reinit_all_ports).start()
             # self._need_GUI_reinit = False
+        """
         return self._need_GUI_reinit
