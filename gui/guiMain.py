@@ -585,27 +585,6 @@ class PoPT_GUI_Main:
                                  underline=0)
         MenuSettings.add_separator()
 
-        #MenuSettings.add_command(label=STR_TABLE['station'][self.language],
-        #                         command=lambda: self._open_settings_window('stat_sett'),
-        #                         underline=0)
-        #MenuSettings.add_command(label=STR_TABLE['port'][self.language],
-        #                         command=lambda: self._open_settings_window('port_sett'),
-        #                         underline=0)
-        #MenuSettings.add_command(label=STR_TABLE['beacon'][self.language],
-        #                         command=lambda: self._open_settings_window('beacon_sett'),
-        #                         underline=0)
-        #MenuSettings.add_command(label='Digipeater',
-        #                         command=lambda: self._open_settings_window('digi_setting'),
-        #                         underline=0)
-
-        #MenuSettings.add_separator()
-        #MenuSettings.add_command(label='Multicast',
-        #                         command=lambda: self._open_settings_window('mcast_sett'),
-        #                         underline=0)
-        #MenuSettings.add_command(label="RX-Echo",
-        #                         command=lambda: self._open_settings_window('rx_echo_sett'),
-        #                         underline=0)
-        #MenuSettings.add_separator()
         MenuSettings.add_command(label='Dual-Port',
                                  command=lambda: self.open_window('dualPort_settings'),
                                  underline=0)
@@ -1916,6 +1895,7 @@ class PoPT_GUI_Main:
         if self.channel_index:
             station = self.get_conn(self.channel_index)
             if station:
+
                 ch_vars = self.get_ch_var(ch_index=self.channel_index)
                 ind = str(ch_vars.input_win_index)
                 if ind:
@@ -1924,10 +1904,12 @@ class PoPT_GUI_Main:
                     ind = str(int(float(ind))) + '.0'
                 else:
                     ind = '1.0'
+
                 txt_enc = 'UTF-8'
                 if station.user_db_ent:
                     txt_enc = station.user_db_ent.Encoding
-                tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
+                # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
+                tmp_txt = self._inp_txt.get(ind, tk.INSERT)
 
                 tmp_txt = tmp_txt.replace('\n', '\r')
                 station.send_data(tmp_txt.encode(txt_enc, 'ignore'))
@@ -1939,6 +1921,7 @@ class PoPT_GUI_Main:
 
                 if '.0' in self._inp_txt.index(tk.INSERT):
                     self._inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
+
 
         else:
             self._send_to_monitor()
@@ -1981,24 +1964,22 @@ class PoPT_GUI_Main:
             self._inp_txt.delete(tk.END, tk.END)
 
     def _on_click_inp_txt(self, event=None):
-
+        self._inp_txt.tag_add('send', 0.0, tk.END)
+        ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
+        self._inp_txt.tag_remove('send', ind, tk.INSERT)
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        ind = ch_vars.input_win_index
-        if ind:
-            self._inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
-            self._inp_txt.tag_remove('send', str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0',
-                                     self._inp_txt.index(tk.INSERT))
+        ch_vars.input_win_index = ind
 
-        ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-
-        self._inp_txt.tag_remove('send', ind2, self._inp_txt.index(tk.INSERT))
-        ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
 
     def _on_key_release_inp_txt(self, event=None):
-        ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._inp_txt.get(ind2,  self._inp_txt.index(tk.INSERT)))
-        self._inp_txt.delete(ind2,  self._inp_txt.index(tk.INSERT))
+        ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._inp_txt.get(ind,  self._inp_txt.index(tk.INSERT)))
+        self._inp_txt.delete(ind,  self._inp_txt.index(tk.INSERT))
         self._inp_txt.insert(tk.INSERT, text)
+        self._inp_txt.tag_remove('send', ind, tk.INSERT)
+
+
+
 
 
     # SEND TEXT OUT

@@ -15,17 +15,14 @@ from schedule.popt_sched import getNew_schedule_config
 
 class BeaconTab:
     def __init__(self, root, tabclt: ttk.Notebook, beacon: dict):
+        self._need_reinit = False
         self._tab_clt = tabclt
         self._root = root
         self._lang = POPT_CFG.get_guiCFG_language()
-        # self.style = root.style
         self.own_tab = ttk.Frame(self._tab_clt)
         self.beacon: dict = beacon
         self.schedule_config = self.beacon.get('scheduler_cfg', getNew_schedule_config())
-        # self.winfo_x = self._root.winfo_x
-        # self.winfo_y = self._root.winfo_y
-        # height = root.win_height
-        # width = root.win_width
+
         #################
         # Von
         call_x = 10
@@ -119,6 +116,7 @@ class BeaconTab:
         self.intervall_var.set(str(int(self.schedule_config.get('repeat_min', 30))))
         self._interv = tk.Entry(self.own_tab, width=4, textvariable=self.intervall_var)
         self._interv.place(x=call_x + 135, y=call_y)
+        self._interv.bind('<KeyRelease>', self._set_need_reinit)
         #################
         # Versatz
         call_x = 420
@@ -129,6 +127,8 @@ class BeaconTab:
         self.move_var.set(str(self.schedule_config.get('move', 0)))
         move = tk.Entry(self.own_tab, width=5, textvariable=self.move_var)
         move.place(x=call_x + 135, y=call_y)
+        move.bind('<KeyRelease>', self._set_need_reinit)
+
         #################
         #################
         # Active Checkbox
@@ -227,8 +227,10 @@ class BeaconTab:
         t_len = len(text)
         new_text = f"{t_len}/256 Bytes"
         self._byte_count_var.set(new_text)
+        self._need_reinit = True
 
     def _cmd_be_enabled(self):
+        self._need_reinit = True
         self.beacon['is_enabled'] = bool(self.active_check_var.get())
 
     def _cmd_fm_call_set(self, event):
@@ -236,6 +238,7 @@ class BeaconTab:
         _label_txt = '{} {}'.format(self.port_select_var.get(), self.from_select_var.get())
         self._root.tabControl.tab(self._root.tab_list.index(self), text=_label_txt)
         # self._root.change_port(None)
+        self._need_reinit = True
 
     def _on_key_press_filename_ent(self, event):
         # print(event)
@@ -257,6 +260,7 @@ class BeaconTab:
             # self.be_txt_filename_var.set('')
             self.beacon['text_filename'] = ''
             self.b_text_ent.configure(state='normal', background=self._b_text_bg_color)
+        self._need_reinit = True
         self._update_byte_c_var_fm_text()
 
     def _select_files(self):
@@ -335,11 +339,19 @@ class BeaconTab:
         self.move_var.set(str(int(self.schedule_config.get('move', 0))))
         self.intervall_var.set(str(int(self.schedule_config.get('repeat_min', 30))))
         self._disable_intervall()
+        self._need_reinit = True
+
+    def _set_need_reinit(self, event=None):
+        self._need_reinit = True
+
+    def need_reinit(self):
+        return self._need_reinit
 
 
 class BeaconSettings(tk.Frame):
     def __init__(self, tabctl, main_win=None):
         tk.Frame.__init__(self, tabctl)
+        self._need_reinit = False
         # self._main_cl = main_win
         self._lang = POPT_CFG.get_guiCFG_language()
         self.win_height = 540
@@ -386,6 +398,8 @@ class BeaconSettings(tk.Frame):
     def _set_vars(self):
         beacon_tasks = []
         for tab in self.tab_list:
+            if tab.need_reinit():
+                self._need_reinit = True
             tab.beacon['own_call'] = tab.from_select_var.get()
             tab.beacon['dest_call'] = tab.call.get()
             if tab.beacon['own_call'] != 'NOCALL':
@@ -413,7 +427,6 @@ class BeaconSettings(tk.Frame):
                 label_txt = f'{stat_call} {port_id}'
                 self.tabControl.tab(self.tab_list.index(tab), text=label_txt)
                 beacon_tasks.append(dict(tab.beacon))
-
         POPT_CFG.set_Beacon_tasks(beacon_tasks)
 
     @staticmethod
@@ -439,11 +452,11 @@ class BeaconSettings(tk.Frame):
         beacon = getNew_BEACON_cfg()
         own_call = beacon.get('own_call', 'NOCALL')
         port_id = beacon.get('port_id', 0)
-        _label_txt = '{} {} {}'.format(len(self.tab_list), own_call, port_id)
-        _tab = BeaconTab(self, self.tabControl, beacon)
-        self.tabControl.add(_tab.own_tab, text=_label_txt)
+        label_txt = '{} {} {}'.format(len(self.tab_list), own_call, port_id)
+        tab = BeaconTab(self, self.tabControl, beacon)
+        self.tabControl.add(tab.own_tab, text=label_txt)
         self.tabControl.select(len(self.tab_list))
-        self.tab_list.append(_tab)
+        self.tab_list.append(tab)
 
     def _del_beacon_btn_cmd(self):
         try:
@@ -454,19 +467,12 @@ class BeaconSettings(tk.Frame):
             del self.tab_list[ind]
             self.tabControl.forget(ind)
 
-    def destroy_win(self):
-        self.destroy()
-
-    @staticmethod
-    def _get_config():
-        return list(POPT_CFG.get_Beacon_tasks())
-
     def save_config(self):
-        old_cfg = self._get_config()
         self._set_vars()
         POPT_CFG.save_MAIN_CFG_to_file()
-        if old_cfg == self._get_config():
-            return False
-        self._re_init_beacons()
+        if self._need_reinit:
+            self._re_init_beacons()
+            self._need_reinit = False
+            return True
         # self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
-        return True
+        return False

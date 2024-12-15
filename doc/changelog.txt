@@ -7,6 +7,8 @@ Fixes:
 - MCast Settings Fenster: Kanal-Mitglied Liest wurde nicht ordentlich geupdated
 - Baken-Text von Datei: falscher Zeilenumbruch
 - APRS-Einstellungen werden nicht gespeichert bzw. APRS-Run Option
+- Tag-Farben Vorschreibfenster
+- Leere Zeile wird gesendet, wenn Cursor in Vorschreibfenster gesetzt wird
 
 Optimierung:
 - Alle wichtigen Einstellungen zusammengefasst in ein Fenster
