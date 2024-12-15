@@ -235,6 +235,11 @@ class AX25PortHandler(object):
         # TODO Cleanup / OPT
         logger.info("PH: Closing PoPT")
         self.is_running = False
+        logger.info("PH: Closing APRS-Client")
+        self.close_aprs_ais()
+        for k in list(self.ax25_ports.keys()):
+            logger.info(f"PH: Closing Port {k}")
+            self.close_port(k)
         if self.mh:
             logger.info("PH: Saving MH-Data")
             self.mh.save_mh_data()
@@ -248,11 +253,7 @@ class AX25PortHandler(object):
         self._mcast_server.mcast_save_cfgs()
         logger.info("PH: Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
-        logger.info("PH: Closing APRS-Client")
-        self.close_aprs_ais()
-        for k in list(self.ax25_ports.keys()):
-            logger.info(f"PH: Closing Port {k}")
-            self.close_port(k)
+
 
     def close_port(self, port_id: int):
         self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))

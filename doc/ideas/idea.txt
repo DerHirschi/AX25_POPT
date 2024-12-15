@@ -29,10 +29,13 @@ Ideas/TODO's :
   ✓ $lastConnTime = Letzter Connect Zeit
 
 - 79 Zeichen Zeilenumbruch (Dos-PRG kompatibilität)
-  - PMS
-  - QSO (optional)
-  - Monitor (optional)
-  - Baken (automatisch aber mit Hinweis auf Pac-Len)
+  ✓ PMS
+  ✓ QSO
+    - (optional)
+  ✓ Monitor
+    -(optional)
+  ✓ Baken (automatisch aber mit Hinweis auf Pac-Len)
+  - C-Text, I-Text, ...
 
 - Erweiterte C-Texte
   - Mehrere C-Texte

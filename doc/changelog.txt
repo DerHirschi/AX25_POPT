@@ -15,6 +15,9 @@ Optimierung:
 Neue Implementierungen / Funktionen:
 - MCast Loop-Preventer
 - MCast: Bake an Kanalmitglieder wenn Mitglied den Kanal betritt/verlässt
+- Zeilenumbruch bei 79 Zeichen im Vorschreibfenster/Monitor
+- Zeilenumbruch bei 79 Zeichen für PMS Nachrichten
+- Zeilenumbruch bei 79 Zeichen für Baken texte
 
 ###########################################################################################################
 ###########################################################################################################

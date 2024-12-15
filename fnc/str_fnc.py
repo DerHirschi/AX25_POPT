@@ -238,3 +238,20 @@ def get_strTab(str_key: str, lang_index: int):
         return lang_tab[lang_index]
     except IndexError:
         return str_key
+
+
+def zeilenumbruch(text, max_zeichen=79):
+    if len(text) <= max_zeichen:
+        return text
+
+    # Suche nach dem letzten Leerzeichen vor dem max_zeichen
+    letztes_leerzeichen = text.rfind(' ', 0, max_zeichen + 1)
+
+    if letztes_leerzeichen == -1:
+        # Kein Leerzeichen gefunden, harter Umbruch
+        return text[:max_zeichen] + '\n' + zeilenumbruch(text[max_zeichen:])
+    else:
+        return text[:letztes_leerzeichen] + '\n' + zeilenumbruch(text[letztes_leerzeichen + 1:])
+
+
+

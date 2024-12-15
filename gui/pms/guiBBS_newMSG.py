@@ -3,10 +3,11 @@ from tkinter import scrolledtext, messagebox
 
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
 from fnc.gui_fnc import get_typed, detect_pressed
-from fnc.str_fnc import format_number
+from fnc.str_fnc import format_number, zeilenumbruch
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
 from cfg.string_tab import STR_TABLE
 
@@ -19,7 +20,7 @@ class BBS_newMSG(tk.Toplevel):
         self._root_win = root_win
         self._bbs_obj = PORT_HANDLER.get_bbs()
         self.text_size = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-        self.language = root_win.language
+        self.language = POPT_CFG.get_guiCFG_language()
         ###################################
         self.title(STR_TABLE['new_pr_mail'][self.language])
         self.style = self._root_win.style
@@ -95,6 +96,12 @@ class BBS_newMSG(tk.Toplevel):
         self.bind('<Control-x>', lambda event: self._cut_select())
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
+
+    def _on_key_release_inp_txt(self, event=None):
+        ind2 = str(int(float(self._text.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._text.get(ind2,  self._text.index(tk.INSERT)))
+        self._text.delete(ind2,  self._text.index(tk.INSERT))
+        self._text.insert(tk.INSERT, text)
 
     def _init_Menu(self):
         menubar = tk.Menu(self, tearoff=False)
@@ -202,6 +209,7 @@ class BBS_newMSG(tk.Toplevel):
                                                # state="disabled",
                                                )
         self._text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self._text.bind("<KeyRelease>", self._on_key_release_inp_txt)
 
     def _init_footer_frame(self, root_frame):
         footer_frame = tk.Frame(root_frame, height=15)
@@ -313,15 +321,15 @@ class BBS_newMSG(tk.Toplevel):
     def _save_msg(self):
         sender = self._from_call_var.get()
         if not sender:
-            print("E: sender")
+            logger.error("PMS-newMSG: sender")
             return False
         regio_add = self._bbs_obj.get_pms_cfg().get('regio', '')
         if not regio_add:
-            print("E: regio_add")
+            logger.error("PMS-newMSG: regio_add")
             return False
         recv_call = self._to_call_var.get()
         if not recv_call:
-            print("E: recv_call")
+            logger.error("PMS-newMSG: recv_call")
             return False
         tmp = recv_call.split('@')
         if len(tmp) == 1:
@@ -329,20 +337,21 @@ class BBS_newMSG(tk.Toplevel):
         elif len(tmp) == 2:
             recv_call, recv_bbs = tmp[0], tmp[1]
         else:
-            print("E: len(recv_bbs)")
+            logger.error("PMS-newMSG: len(recv_bbs)")
             return False
 
         typ = self._msg_typ_var.get()
         if typ not in ['P', 'B']:
-            print("E: typ")
+            logger.error("PMS-newMSG: typ")
             return False
         subj = self._subject_var.get()
         if not subj:
-            print("E: subj")
+            logger.error("PMS-newMSG: subj")
             return False
         cc_add = self._to_cc_call_var.get()
         enc = self._var_encoding.get()
         msg_text = str(self._text.get('1.0', tk.END)[:-1])
+        msg_text = zeilenumbruch(msg_text)
         msg_text = msg_text.replace('\n', '\r')
         msg_text = msg_text.encode(enc, 'ignore')
         sender_bbs = sender + '.' + regio_add
@@ -364,7 +373,7 @@ class BBS_newMSG(tk.Toplevel):
         # Neue Nachrichten
         self._mid = self._bbs_obj.new_msg(self._msg_data)
         if not self._mid:
-            print("E: _mid")
+            logger.error("PMS-newMSG: _mid")
             return False
         return True
 
@@ -377,7 +386,7 @@ class BBS_newMSG(tk.Toplevel):
         elif len(tmp) == 2:
             recv_call, recv_bbs = tmp[0], tmp[1]
         else:
-            print("E: len(recv_bbs)")
+            logger.error("PMS-newMSG: len(recv_bbs)")
             return False
         self._msg_data['receiver'] = recv_call.upper()
         self._msg_data['recipient_bbs'] = recv_bbs.upper()
@@ -385,7 +394,7 @@ class BBS_newMSG(tk.Toplevel):
         self._msg_data['subject'] = 'CC: ' + self._msg_data['subject']
         self._mid = self._bbs_obj.new_msg(self._msg_data)
         if not self._mid:
-            print("E: _mid")
+            logger.error("PMS-newMSG: _mid")
             return False
         return self._send_msg()
 

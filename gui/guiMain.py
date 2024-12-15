@@ -11,7 +11,7 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
-    get_kb_str_fm_bytes, conv_time_DE_str
+    get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch
 from gui.aprs.guiAISmon import AISmonitor
 from gui.aprs.guiAPRS_Settings import APRSSettingsWin
 from gui.aprs.guiAPRS_be_tracer import BeaconTracer
@@ -1102,6 +1102,7 @@ class PoPT_GUI_Main:
     # KEYBIND Stuff
     def _set_binds(self):
         self._inp_txt.bind("<ButtonRelease-1>", self._on_click_inp_txt)
+        self._inp_txt.bind("<KeyRelease>", self._on_key_release_inp_txt)
 
     def _set_keybinds(self):
         self.main_win.unbind("<Key-F10>")
@@ -1532,7 +1533,7 @@ class PoPT_GUI_Main:
     def _update_qso_tx(self, conn, data):
         txt_enc = 'UTF-8'
         if conn.user_db_ent:
-            txt_enc = conn.user_db_ent.Encoding
+            txt_enc = str(conn.user_db_ent.Encoding)
         inp = data.decode(txt_enc, 'ignore').replace('\r', '\n')
         inp = tk_filter_bad_chars(inp)
 
@@ -1545,7 +1546,7 @@ class PoPT_GUI_Main:
             tag_name_tx = 'TX-' + str(conn.my_call)
             Ch_var.last_tag_name = str(conn.my_call)
         else:
-            tag_name_tx = 'TX-' + Ch_var.last_tag_name
+            tag_name_tx = 'TX-' + str(Ch_var.last_tag_name)
 
         if self.channel_index == conn.ch_index:
             self._out_txt.configure(state="normal")
@@ -1569,7 +1570,7 @@ class PoPT_GUI_Main:
     def _update_qso_rx(self, conn, data):
         txt_enc = 'UTF-8'
         if conn.user_db_ent:
-            txt_enc = conn.user_db_ent.Encoding
+            txt_enc = str(conn.user_db_ent.Encoding)
 
         out = data.decode(txt_enc, 'ignore')
         out = out.replace('\r', '\n')
@@ -1585,7 +1586,7 @@ class PoPT_GUI_Main:
             tag_name_rx = 'RX-' + str(conn.my_call)
             Ch_var.last_tag_name = str(conn.my_call)
         else:
-            tag_name_rx = 'RX-' + Ch_var.last_tag_name
+            tag_name_rx = 'RX-' + str(Ch_var.last_tag_name)
 
         if self.channel_index == conn.ch_index:
             if Ch_var.t2speech:
@@ -1980,18 +1981,25 @@ class PoPT_GUI_Main:
             self._inp_txt.delete(tk.END, tk.END)
 
     def _on_click_inp_txt(self, event=None):
+
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         ind = ch_vars.input_win_index
         if ind:
             self._inp_txt.tag_add('send', str(int(float(ind))) + '.0', ind)
-            # self.inp_txt.tag_remove('send', str(max(float(self.inp_txt.index(tk.INSERT)) - 0.1, 1.0)), self.inp_txt.index(tk.INSERT))
             self._inp_txt.tag_remove('send', str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0',
                                      self._inp_txt.index(tk.INSERT))
-        # self.inp_txt.tag_remove('send', tk.line.column, self.inp_txt.index(tk.INSERT))
+
         ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
 
         self._inp_txt.tag_remove('send', ind2, self._inp_txt.index(tk.INSERT))
         ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
+
+    def _on_key_release_inp_txt(self, event=None):
+        ind2 = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._inp_txt.get(ind2,  self._inp_txt.index(tk.INSERT)))
+        self._inp_txt.delete(ind2,  self._inp_txt.index(tk.INSERT))
+        self._inp_txt.insert(tk.INSERT, text)
+
 
     # SEND TEXT OUT
     #######################################################################

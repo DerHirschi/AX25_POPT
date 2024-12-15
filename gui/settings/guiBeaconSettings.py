@@ -7,7 +7,7 @@ from cfg.constant import GUI_DISABLED_CLR
 from cfg.default_config import getNew_BEACON_cfg
 from cfg.popt_config import POPT_CFG
 from fnc.file_fnc import get_bin_fm_file
-from fnc.str_fnc import tk_filter_bad_chars
+from fnc.str_fnc import tk_filter_bad_chars, zeilenumbruch
 from cfg.string_tab import STR_TABLE
 from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
@@ -213,13 +213,18 @@ class BeaconTab:
         self._byte_count_var.set(new_text)
 
     def _update_byte_c_var_bind(self, event=None):
+        ind2 = str(int(float(self.b_text_ent.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self.b_text_ent.get(ind2, self.b_text_ent.index(tk.INSERT)))
+        self.b_text_ent.delete(ind2, self.b_text_ent.index(tk.INSERT))
+        self.b_text_ent.insert(tk.INSERT, text)
         text = self.b_text_ent.get(0.0, tk.END)[:-1]
         t_len = len(text)
         if t_len > 256:
             ind = t_len - 256
             self.b_text_ent.delete(f'insert-{ind}c', tk.INSERT)
             text = self.b_text_ent.get(0.0, tk.END)[:-1]
-            t_len = len(text)
+
+        t_len = len(text)
         new_text = f"{t_len}/256 Bytes"
         self._byte_count_var.set(new_text)
 
