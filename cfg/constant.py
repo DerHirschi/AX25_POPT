@@ -3,9 +3,9 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.111.16'
+VER = '2.111.17'
 DEBUG_LOG = True
-CONSOLE_LOG = True
+CONSOLE_LOG = False
 LANGUAGE = 0   # QUICK FIX
 """
 LANGUAGE:
@@ -186,7 +186,8 @@ STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = 'black'
 FONT_STAT_BAR = 'Arial'
 PARAM_MAX_MON_LEN = 100000
-CFG_clr_sys_msg = 'red'
+MON_SYS_MSG_CLR_FG = 'red'
+MON_SYS_MSG_CLR_BG = 'black'
 CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 GUI_DISABLED_CLR = '#b1b1b3'
 # Station Default

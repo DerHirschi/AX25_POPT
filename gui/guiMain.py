@@ -43,11 +43,11 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
-from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
+from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL
+    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -1074,7 +1074,8 @@ class PoPT_GUI_Main:
                                      selectbackground=rx_fg,
                                      selectforeground=tx_bg,
                                      )
-
+        self._mon_txt.tag_config("sys-msg", foreground=MON_SYS_MSG_CLR_FG,
+                                 background=MON_SYS_MSG_CLR_BG)
         self._mon_txt.configure(state="disabled")
 
     #######################################
@@ -1680,17 +1681,15 @@ class PoPT_GUI_Main:
     def sysMsg_to_monitor(self, var: str):
         # var += bytes.fromhex('15').decode('UTF-8')+'\n'
         """ Called from AX25Conn """
-        ind = self._mon_txt.index(tk.INSERT)
+        ind = str(self._mon_txt.index(tk.INSERT))
 
         self._mon_txt.configure(state="normal")
         ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
         self._mon_txt.insert(tk.END, ins)
-        self._mon_txt.configure(state="disabled")
 
         ind2 = self._mon_txt.index(tk.INSERT)
         self._mon_txt.tag_add("sys-msg", ind, ind2)
-        self._mon_txt.tag_config("sys-msg", foreground=CFG_clr_sys_msg)
-
+        self._mon_txt.configure(state="disabled")
         self._see_end_mon_win()
         if 'Lob: ' in var:
             var = var.split('Lob: ')

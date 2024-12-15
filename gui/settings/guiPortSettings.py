@@ -1,4 +1,3 @@
-import threading
 import tkinter as tk
 from tkinter import ttk as ttk
 from tkinter.colorchooser import askcolor
@@ -80,6 +79,8 @@ class PortSetTab:
         self._param1_ent.place(x=param_sel_x + 80, y=height - param_sel_y + param_next_line)
         self._param2_label.place(x=param_sel_x + 500, y=height - param_sel_y + param_next_line)
         self._param2_ent.place(x=param_sel_x + 500 + 50, y=height - param_sel_y + param_next_line)
+        self._param1_ent.bind('<KeyRelease>', self.set_need_reinit)
+        self._param2_ent.bind('<KeyRelease>', self.set_need_reinit)
 
         #########################
         # Pseudo TXD
@@ -123,6 +124,7 @@ class PortSetTab:
             # ins = self.port_setting.parm_baud
             self._kiss_txd.insert(tk.END, '0')
             self._kiss_txd.configure(state="disabled")
+        self._kiss_txd.bind('<KeyRelease>', self.set_need_reinit)
         kiss_txd_label.place(x=kiss_txd_x, y=height - kiss_txd_y)
         self._kiss_txd.place(x=kiss_txd_x + 50, y=height - kiss_txd_y)
         # KISS PERS
@@ -140,6 +142,7 @@ class PortSetTab:
             # ins = self.port_setting.parm_baud
             self._kiss_pers.insert(tk.END, '0')
             self._kiss_pers.configure(state="disabled")
+        self._kiss_pers.bind('<KeyRelease>', self.set_need_reinit)
         kiss_pers_label.place(x=kiss_pers_x, y=height - kiss_pers_y)
         self._kiss_pers.place(x=kiss_pers_x + 60, y=height - kiss_pers_y)
         # KISS Slot
@@ -160,6 +163,7 @@ class PortSetTab:
             self._kiss_slot.insert(tk.END, '0')
             self._kiss_slot.configure(state="disabled")
         slot_label.place(x=slot_x, y=height - slot_y)
+        self._kiss_slot.bind('<KeyRelease>', self.set_need_reinit)
         self._kiss_slot.place(x=slot_x + 60, y=height - slot_y)
         # KISS TAIL
         kiss_tail_x = 560
@@ -178,6 +182,7 @@ class PortSetTab:
             self._kiss_tail.insert(tk.END, '0')
             self._kiss_tail.configure(state="disabled")
         kiss_tail_label.place(x=kiss_tail_x, y=height - kiss_tail_y)
+        self._kiss_tail.bind('<KeyRelease>', self.set_need_reinit)
         self._kiss_tail.place(x=kiss_tail_x + 50, y=height - kiss_tail_y)
         ########################
 
@@ -242,7 +247,7 @@ class PortSetTab:
         except IndexError:
             self._kiss_start_var.set('')
 
-        kiss_start_men = tk.OptionMenu(self.tab, self._kiss_start_var, *opt)
+        kiss_start_men = tk.OptionMenu(self.tab, self._kiss_start_var, *opt, command=self.set_need_reinit)
         kiss_start_men.configure(width=10, height=1)
         kiss_start_men.place(x=kiss_start_x + 220, y=height - kiss_start_y)
 
@@ -267,7 +272,7 @@ class PortSetTab:
             )  # default value
         except IndexError:
             self._kiss_end_var.set('')
-        kiss_end_men = tk.OptionMenu(self.tab, self._kiss_end_var, *opt)
+        kiss_end_men = tk.OptionMenu(self.tab, self._kiss_end_var, *opt, command=self.set_need_reinit)
         kiss_end_men.configure(width=10, height=1)
         kiss_end_men.place(x=kiss_end_x + 220, y=height - kiss_end_y)
 
@@ -719,7 +724,7 @@ class PortSetTab:
         self._t2_auto_check()
         # print(self.port_setting.parm_T2_auto)
 
-    def set_vars_to_cfg(self):
+    def set_vars_to_cfg(self, event=None):
         old_cfg = dict(self._port_setting)
         # Port Name
         self._port_setting['parm_PortName'] = self._prt_name.get()
@@ -802,7 +807,7 @@ class PortSetTab:
     def need_reinit(self):
         return self._need_reinit
 
-    def set_need_reinit(self):
+    def set_need_reinit(self, event=None):
         self._need_reinit = True
 
     def _save_cfg_to_poptCFG(self):
@@ -924,7 +929,6 @@ class PortSettingsWin(tk.Frame):
         for port_id in self._tab_list.keys():
             self._tab_list[port_id].set_vars_to_cfg()
             if self._tab_list[port_id].need_reinit():
-                print(f"port {port_id} need reinit")
                 PORT_HANDLER.reinit_port(port_id)
                 self._need_GUI_reinit = True
         """        
