@@ -35,7 +35,7 @@ Ideas/TODO's :
   ✓ Monitor
     -(optional)
   ✓ Baken (automatisch aber mit Hinweis auf Pac-Len)
-  - C-Text, I-Text, ...
+  ✓ C-Text, I-Text, ...
 
 - Erweiterte C-Texte
   - Mehrere C-Texte

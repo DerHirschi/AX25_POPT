@@ -9,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.file_fnc import get_str_fm_file
 from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime
+    convert_str_to_datetime, zeilenumbruch_lines
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
@@ -234,7 +234,7 @@ class DefaultCLI(object):
                  filename
         out = get_str_fm_file(file_n)
         if out:
-            return out
+            return zeilenumbruch_lines(out)
         return ''
 
     def start_baycom_login(self, login_cmd=''):

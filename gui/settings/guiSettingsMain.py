@@ -2,12 +2,13 @@
 TODO:
     - MsgBox lift wenn Port/Station gelöscht
     - Port Reinit (Config Reinit) überarbeiten
-    - Nach reinit zurück in aktuellen Tab
     - MainGUI Tabbed Side-Monitor: Station Calls updaten
     - Allgemeine Einstellungen (Sprachen, Vorschreibfenster Farben)
     - F-Texte
 
 FIXME:
+    - Port Einstellungen werden nicht gespeichert wenn port oder Add geändert wird
+    - Baken Einstellungen werden nicht gespeichert wenn Sched-CFG sich ändert
     - Keine sysMSG für änderung d Station-Settings.(Nur neue/gelöschte o geänderte Calls werden returned)
     - Keine sysMSG für änderung d Port-Settings.(Nur neue o gelöschte Ports werden returned)
 """

@@ -9,6 +9,7 @@ from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cli.cliMain import CLI_OPT
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.file_fnc import get_str_fm_file, save_str_to_file
+from fnc.str_fnc import zeilenumbruch_lines, zeilenumbruch
 from gui.guiMsgBoxes import *
 from cfg.string_tab import STR_TABLE
 
@@ -331,7 +332,43 @@ class StatSetTab:
         self._textTab.add(tab_pipe, text='Pipe')
         self._textTab.add(tab_colors, text=STR_TABLE['qso_win_color'][self._lang])
 
+        self._c_text_ent.bind("<KeyRelease>", self._chk_umbruch_ct)
+        self._info_text_ent.bind("<KeyRelease>", self._chk_umbruch_it)
+        self._long_info_text_ent.bind("<KeyRelease>", self._chk_umbruch_lit)
+        self._akt_info_text_ent.bind("<KeyRelease>", self._chk_umbruch_at)
+        self._bye_text_ent.bind("<KeyRelease>", self._chk_umbruch_bt)
+
         self._update_vars_fm_cfg()
+
+    def _chk_umbruch_ct(self, event=None):
+        ind2 = str(int(float(self._c_text_ent.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._c_text_ent.get(ind2,  self._c_text_ent.index(tk.INSERT)))
+        self._c_text_ent.delete(ind2,  self._c_text_ent.index(tk.INSERT))
+        self._c_text_ent.insert(tk.INSERT, text)
+
+    def _chk_umbruch_it(self, event=None):
+        ind2 = str(int(float(self._info_text_ent.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._info_text_ent.get(ind2,  self._info_text_ent.index(tk.INSERT)))
+        self._info_text_ent.delete(ind2,  self._info_text_ent.index(tk.INSERT))
+        self._info_text_ent.insert(tk.INSERT, text)
+
+    def _chk_umbruch_lit(self, event=None):
+        ind2 = str(int(float(self._long_info_text_ent.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._long_info_text_ent.get(ind2,  self._long_info_text_ent.index(tk.INSERT)))
+        self._long_info_text_ent.delete(ind2,  self._long_info_text_ent.index(tk.INSERT))
+        self._long_info_text_ent.insert(tk.INSERT, text)
+
+    def _chk_umbruch_at(self, event=None):
+        ind2 = str(int(float(self._akt_info_text_ent.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._akt_info_text_ent.get(ind2,  self._akt_info_text_ent.index(tk.INSERT)))
+        self._akt_info_text_ent.delete(ind2,  self._akt_info_text_ent.index(tk.INSERT))
+        self._akt_info_text_ent.insert(tk.INSERT, text)
+
+    def _chk_umbruch_bt(self, event=None):
+        ind2 = str(int(float(self._bye_text_ent.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._bye_text_ent.get(ind2,  self._bye_text_ent.index(tk.INSERT)))
+        self._bye_text_ent.delete(ind2,  self._bye_text_ent.index(tk.INSERT))
+        self._bye_text_ent.insert(tk.INSERT, text)
 
     def _load_fm_file(self, filename: str):
         file_n = CFG_data_path + \
@@ -502,15 +539,15 @@ class StatSetTab:
 
         # self._digi_set_var.set(stat_is_digi)
         # self.digi.select()
-        c_text = self._load_fm_file(self._stat_call + '.ctx')
-        b_text = self._load_fm_file(self._stat_call + '.btx')
-        i_text = self._load_fm_file(self._stat_call + '.itx')
-        li_text = self._load_fm_file(self._stat_call + '.litx')
-        a_text = self._load_fm_file(self._stat_call + '.atx')
+        c_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.ctx'))
+        b_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.btx'))
+        i_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.itx'))
+        li_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.litx'))
+        a_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.atx'))
         if c_text is None:
-            c_text = STR_TABLE['default_ctext'][self._lang]
+            c_text = zeilenumbruch_lines(STR_TABLE['default_ctext'][self._lang])
         if b_text is None:
-            b_text = STR_TABLE['default_btext'][self._lang]
+            b_text = zeilenumbruch_lines(STR_TABLE['default_btext'][self._lang])
         if i_text is None:
             i_text = ''
         if li_text is None:

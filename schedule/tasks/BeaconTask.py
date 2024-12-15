@@ -1,7 +1,7 @@
 from cli.StringVARS import replace_StringVARS
 from fnc.file_fnc import get_str_fm_file
 from cfg.logger_config import logger
-from fnc.str_fnc import zeilenumbruch
+from fnc.str_fnc import zeilenumbruch_lines
 
 
 class BeaconTask:
@@ -73,7 +73,9 @@ class BeaconTask:
             self._send_UI()
 
     def _set_text(self):
-        self._text = self._update_text_zeilenumbruch(self._conf.get('text', '')).replace('\n', '\r')
+        text = self._conf.get('text', '')
+        # self._text = self._conf.get('text', '').replace('\n', '\r')
+        self._text = zeilenumbruch_lines(text).replace('\n', '\r')
         # self._text = text.encode('UTF-8', 'ignore')
 
     def _set_text_fm_file(self):
@@ -83,7 +85,7 @@ class BeaconTask:
             return
         text = get_str_fm_file(file_n)
         if text:
-            text = self._update_text_zeilenumbruch(text)
+            text = zeilenumbruch_lines(text)
             self._text = text.replace('\n', '\r')
             return
         self._text = ''
@@ -94,7 +96,3 @@ class BeaconTask:
             self._text = ''
             return
         self._text = mh.mh_out_beacon(max_ent=12)
-
-    @staticmethod
-    def _update_text_zeilenumbruch(text: str):
-        return zeilenumbruch(text)[:256]
