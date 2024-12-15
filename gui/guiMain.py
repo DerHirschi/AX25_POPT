@@ -993,8 +993,8 @@ class PoPT_GUI_Main:
 
     def _init_TXT_frame_low(self):
         self._mon_txt = scrolledtext.ScrolledText(self._TXT_lower_frame,
-                                                  background=DEF_PORT_MON_BG_COL,
-                                                  foreground=DEF_PORT_MON_RX_COL,
+                                                  background=MON_SYS_MSG_CLR_BG,
+                                                  foreground=MON_SYS_MSG_CLR_BG,
                                                   font=(FONT, self.text_size),
                                                   height=100,
                                                   width=300,
@@ -1003,7 +1003,6 @@ class PoPT_GUI_Main:
                                                   state="disabled",
                                                   )
         self._mon_txt.pack(side=tk.TOP)
-
     #######################################
     # Text Tags
 
@@ -1682,11 +1681,10 @@ class PoPT_GUI_Main:
         # var += bytes.fromhex('15').decode('UTF-8')+'\n'
         """ Called from AX25Conn """
         ind = str(self._mon_txt.index(tk.INSERT))
+        ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
 
         self._mon_txt.configure(state="normal")
-        ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
-        self._mon_txt.insert(tk.END, ins)
-
+        self._mon_txt.insert(ind, ins)
         ind2 = self._mon_txt.index(tk.INSERT)
         self._mon_txt.tag_add("sys-msg", ind, ind2)
         self._mon_txt.configure(state="disabled")

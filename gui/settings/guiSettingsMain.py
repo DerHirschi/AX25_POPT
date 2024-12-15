@@ -131,19 +131,22 @@ class SettingsMain(tk.Toplevel):
         if reinit_tr:   # New Station | Station deleted
             self._reinit_tabs()
             self._root_win.set_text_tags()
+            self._root_win.tabbed_sideFrame.update_mon_port_id()
             # TODO Update Monitor Call selector
 
     ################################################
     def _ok_btn(self):
         # self._root_win.set_text_tags()
         # self._root_win.tabbed_sideFrame.update_mon_port_id()
+        self._root_win.sysMsg_to_monitor(get_strTab('hin1', self._lang))
+        self._root_win.sysMsg_to_monitor(get_strTab('lob2', self._lang))
         self.destroy_win()
 
     def _save_btn(self):
         self._save_cfg()
         POPT_CFG.save_PORT_CFG_to_file()
         POPT_CFG.save_MAIN_CFG_to_file()
-        self._root_win.tabbed_sideFrame.update_mon_port_id()
+        self._root_win.sysMsg_to_monitor(get_strTab('lob1', self._lang))
 
     def _abort_btn(self):
         self.destroy_win()
@@ -155,40 +158,3 @@ class SettingsMain(tk.Toplevel):
 
         self._root_win.settings_win = None
         self.destroy()
-
-    # STAT-SETT: self._root_win.set_text_tags()
-    # PORT-SETT: self._root_win.tabbed_sideFrame.update_mon_port_id()
-
-    """
-        def _save_btn_cmd(self):
-        # TODO Cleanup
-        PORT_HANDLER.disco_all_Conn()
-
-        #self.settings_win.attributes("-topmost", False)
-        #self.settings_win.lower()
-        messagebox.showinfo(STR_TABLE['all_station_get_disco_hint_1'][self._lang], STR_TABLE['all_station_get_disco_hint_2'][self._lang])
-        #self.settings_win.lift()
-
-        # self.settings_win.attributes("-topmost", True)
-        time.sleep(1)  # TODO Quick fix
-        # TODO PORT_HANDLER.is_all_disco()
-        PORT_HANDLER.disco_all_Conn()
-        self._set_all_vars_to_cfg()
-        self._save_cfg_to_file()
-        #self._root_win.sysMsg_to_monitor(STR_TABLE['lob1'][self._lang])
-
-    def _ok_btn_cmd(self):
-        # TODO Cleanup
-        if not PORT_HANDLER.is_all_disco():
-            PORT_HANDLER.disco_all_Conn()
-            messagebox.showerror(STR_TABLE['not_all_station_disco_hint_1'][self._lang], STR_TABLE['not_all_station_disco_hint_2'][self._lang])
-            #self.settings_win.lift()
-            return
-        self._set_all_vars_to_cfg()
-        self._save_cfg_to_file()
-        #self._root_win.sysMsg_to_monitor(STR_TABLE['hin1'][self._lang])
-        #self._root_win.sysMsg_to_monitor(STR_TABLE['lob2'][self._lang])
-
-        self.destroy()
-    
-    """

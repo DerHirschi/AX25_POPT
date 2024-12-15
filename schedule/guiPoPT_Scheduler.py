@@ -5,9 +5,6 @@ from cfg.constant import WEEK_DAYS_GE
 from schedule.popt_sched import getNew_schedule_config
 
 
-# from string_tab import STR_TABLE
-
-
 class PoPT_Set_Scheduler(tk.Toplevel):
     def __init__(self, root_win, sel_frames=None):
         """
@@ -56,9 +53,10 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         self.title('Scheduler-Set')
         # self.style = self._root_win.style
         self.geometry(f"800x"
-                      f"600+"
-                      f"{self._root_win.winfo_x()}+"
-                      f"{self._root_win.winfo_y()}")
+                      f"600"
+                      #f"+{self._root_win.winfo_x()}+" todo
+                      #f"{self._root_win.winfo_y()}"   todo
+                      )
         self.protocol("WM_DELETE_WINDOW", self._close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)

@@ -8,6 +8,7 @@ Fixes:
 - Baken-Text von Datei: falscher Zeilenumbruch
 - APRS-Einstellungen werden nicht gespeichert bzw. APRS-Run Option
 - Tag-Farben Vorschreibfenster
+- Tag-Farben Sys-Message Monitor
 - Leere Zeile wird gesendet, wenn Cursor in Vorschreibfenster gesetzt wird
 
 Optimierung:

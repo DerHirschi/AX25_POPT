@@ -1437,6 +1437,13 @@ class MCastCLI(DefaultCLI):
             'QUIT': (1, self._cmd_q, 'Quit'),
             'BYE': (1, self._cmd_q, 'Bye'),
             'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
+
+            # 'CONNECT': (1, self._cmd_connect, 'Connect'),
+            # 'ECHO': (1, self._cmd_echo, 'Echo'),
+            # 'PORT': (1, self._cmd_port, 'Ports'),
+            # 'MH': (0, self._cmd_mh, 'MYHeard List'),
+            # 'LMH': (0, self._cmd_mhl, 'Long MYHeard List'),
+
             'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
             'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
             # MCAST ######################################################

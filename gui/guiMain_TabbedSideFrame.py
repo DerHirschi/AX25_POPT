@@ -21,12 +21,6 @@ class SideTabbedFrame:  # TODO
         self._mh = self._main_win.mh
         self._ch_is_disc = True
 
-        """
-        s = ttk.Style()
-        s.theme_use('default')
-        s.configure('TNotebook.Tab', background="green3")
-        s.map("TNotebook", background=[("selected", "green3")])
-        """
         self._tabControl = ttk.Notebook(
             frame,
             height=300,
