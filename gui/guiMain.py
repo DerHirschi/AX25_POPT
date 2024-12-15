@@ -43,7 +43,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
-from cfg.constant import LANGUAGE, FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
+from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_clr_sys_msg, STATION_TYPS, \
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
@@ -333,15 +333,6 @@ class PoPT_GUI_Main:
     def _destroy_win(self):
         self.sysMsg_to_monitor("PoPT wird beendet.")
         logger.info('GUI: Closing GUI')
-        self._is_closing = True
-        logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
-        self.save_GUIvars()
-        self._save_parameter()
-        self._save_Channel_Vars()
-        logger.info('GUI: Closing GUI: Closing Ports.')
-        PORT_HANDLER.close_popt()
-
-        logger.debug('GUI: Closing GUI: Destroying all Sub-Windows')
         for wn in [
             self.settings_win,
             self.mh_window,
@@ -361,6 +352,14 @@ class PoPT_GUI_Main:
         ]:
             if wn is not None:
                 wn.destroy()
+        self._is_closing = True
+        logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
+        self.save_GUIvars()
+        self._save_parameter()
+        self._save_Channel_Vars()
+        logger.info('GUI: Closing GUI: Closing Ports.')
+        threading.Thread(target=PORT_HANDLER.close_popt).start()
+        logger.debug('GUI: Closing GUI: Destroying all Sub-Windows')
         self.main_win.update_idletasks()
         self._loop_delay = 800
         logger.info('GUI: Closing GUI: Done')
@@ -1746,9 +1745,9 @@ class PoPT_GUI_Main:
                 if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
                     tr = True
                 if tx:
-                    tag = "tx{}".format(port_id)
+                    tag = f"tx{port_id}"
                 else:
-                    tag = "rx{}".format(port_id)
+                    tag = f"rx{port_id}"
 
                 if tag in self._mon_txt.tag_names(None):
                     self._mon_txt.insert(tk.END, var, tag)
