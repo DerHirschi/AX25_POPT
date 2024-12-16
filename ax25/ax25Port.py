@@ -46,7 +46,7 @@ class AX25Port(object):
         self.portname = port_cfg.get('parm_PortName', '')
         self.port_typ = port_cfg.get('parm_PortTyp', '')
         self.port_id = port_cfg.get('parm_PortNr', -1)
-        self.my_stations = port_cfg.get('parm_StationCalls', [])
+        # self._my_stations = port_cfg.get('parm_StationCalls', [])
         # self.parm_TXD = port_cfg.get('parm_TXD', 400)
         self._TXD = time.time()
         # CONFIG ENDE
@@ -251,7 +251,7 @@ class AX25Port(object):
 
     def _rx_new_conn_handler(self, ax25_frame):
         # New Incoming Connection
-        if ax25_frame.to_call.call_str in self.my_stations:
+        if ax25_frame.to_call.call_str in POPT_CFG.get_stationCalls_fm_port(self.port_id):
             uid = str(ax25_frame.addr_uid)
             if uid not in self.connections.keys():
                 self.connections[uid] = AX25Conn(ax25_frame, port=self)

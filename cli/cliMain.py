@@ -1069,7 +1069,7 @@ class DefaultCLI(object):
             typ = port.port_typ.ljust(7)
             if port.dualPort_primaryPort in [port, None]:
 
-                stations = port.my_stations
+                stations = self._port_handler.get_stat_calls_fm_port(port_id)
                 if not stations:
                     stations = ['']
                 digi = ''

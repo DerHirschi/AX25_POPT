@@ -428,8 +428,15 @@ class Main_CFG:
 
     def get_port_CFG_fm_id(self, port_id: int):
         if 0 > port_id > MAX_PORTS - 1:
-            return None
-        return self._config.get('port_cfgs', {}).get(port_id, None)
+            return {}
+        return self._config.get('port_cfgs', {}).get(port_id, {})
+
+    def get_stationCalls_fm_port(self, port_id: int):
+        port_cfg = self.get_port_CFG_fm_id(port_id)
+        if not port_cfg:
+            return []
+        return port_cfg.get('parm_StationCalls', [])
+
 
     def set_port_CFG_fm_id(self, port_id: int, port_cfg: dict):
         if 0 > port_id > MAX_PORTS - 1:

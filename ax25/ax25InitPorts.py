@@ -901,9 +901,9 @@ class AX25PortHandler(object):
         return list(AX25DeviceTAB.keys())
 
     def get_stat_calls_fm_port(self, port_id=0):
-        if port_id in self.ax25_ports.keys():
-            return self.ax25_ports[port_id].my_stations
-        return []
+        if port_id not in self.ax25_ports.keys():
+            return []
+        return POPT_CFG.get_stationCalls_fm_port(port_id)
 
     def get_all_port_ids(self):
         return list(self.ax25_ports.keys())

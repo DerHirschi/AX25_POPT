@@ -1,8 +1,6 @@
 """
 TODO:
     - MsgBox lift wenn Port/Station gelöscht
-    - Port Reinit (Config Reinit) überarbeiten
-    - MainGUI Tabbed Side-Monitor: Station Calls updaten
     - Allgemeine Einstellungen (Sprachen, Vorschreibfenster Farben)
     - F-Texte
 
@@ -132,7 +130,6 @@ class SettingsMain(tk.Toplevel):
             self._reinit_tabs()
             self._root_win.set_text_tags()
             self._root_win.tabbed_sideFrame.update_mon_port_id()
-            # TODO Update Monitor Call selector
 
     ################################################
     def _ok_btn(self):

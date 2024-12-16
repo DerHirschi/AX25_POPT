@@ -100,7 +100,8 @@ class NewConnWin(tk.Toplevel):
         self._own_call_var = tk.StringVar(self)
         opt = ['NOCALL']
         if self._port_index in PORT_HANDLER.get_all_ports().keys():
-            opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
+            # opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
+            opt = PORT_HANDLER.get_stat_calls_fm_port(self._port_index)
             if not opt:
                 opt = ['NOCALL']
             self._own_call_var.set(opt[0])
@@ -198,7 +199,7 @@ class NewConnWin(tk.Toplevel):
                 if not port:
                     opt = ['']
                 else:
-                    opt = port.my_stations
+                    opt = PORT_HANDLER.get_stat_calls_fm_port(self._port_index)
                 if not opt:
                     opt = ['']
                 self._own_call_dd_men = tk.OptionMenu(self, self._own_call_var, *opt)
@@ -219,7 +220,7 @@ class NewConnWin(tk.Toplevel):
                 if not port:
                     opt = ['']
                 else:
-                    opt = port.my_stations
+                    opt = PORT_HANDLER.get_stat_calls_fm_port(self._port_index)
                 if not opt:
                     opt = ['']
                 self._own_call_dd_men = tk.OptionMenu(self, self._own_call_var, *opt)

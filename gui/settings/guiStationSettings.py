@@ -380,7 +380,10 @@ class StatSetTab:
             return out
         return ''
         """
-        return get_str_fm_file(file_n)
+        ret = get_str_fm_file(file_n)
+        if ret is None:
+            return ''
+        return ret
 
     def _save_to_file(self, filename: str, data: str):
         file_n = CFG_data_path + \
@@ -544,16 +547,10 @@ class StatSetTab:
         i_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.itx'))
         li_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.litx'))
         a_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.atx'))
-        if c_text is None:
+        if not c_text:
             c_text = zeilenumbruch_lines(STR_TABLE['default_ctext'][self._lang])
-        if b_text is None:
+        if not b_text:
             b_text = zeilenumbruch_lines(STR_TABLE['default_btext'][self._lang])
-        if i_text is None:
-            i_text = ''
-        if li_text is None:
-            li_text = ''
-        if a_text is None:
-            a_text = ''
 
         # C-Text
         self._c_text_ent.delete('1.0', tk.END)
