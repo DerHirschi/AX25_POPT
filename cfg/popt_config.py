@@ -265,8 +265,14 @@ class Main_CFG:
     ########################################################
     # GUI
     def get_guiCFG_language(self):
-        # return self._config['gui_main_parm'].get('gui_lang', 0)
-        return LANGUAGE
+        return self._config['gui_main_parm'].get('gui_lang', 0)
+        # return LANGUAGE gui_cfg_locator
+
+    def get_guiCFG_locator(self):
+        return self._config['gui_main_parm'].get('gui_cfg_locator', '')
+
+    def get_guiCFG_qth(self):
+        return self._config['gui_main_parm'].get('gui_cfg_qth', '')
 
     # GUI PARM
     def load_guiPARM_main(self):

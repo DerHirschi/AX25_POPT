@@ -59,7 +59,7 @@ Ideas/TODO's :
   ✓ Individuelle Farben (Vorschreib Fenster)
   - Individuelle Farben (PMS)
   - Individuelle Farben (APRS)
-  - Sprache auswählbar
+  ✓ Sprache auswählbar
   - F-Texte
 
 ✓ Loop Port oder einfach localhost via AXIP

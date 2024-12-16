@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter.colorchooser import askcolor
 
+from cfg.constant import LANG_IND, LANGUAGE
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
@@ -14,6 +15,7 @@ class GeneralSettings(tk.Frame):
         self._fg_rx = conf.get('gui_cfg_vor_col', 'white')
         self._fg_tx = conf.get('gui_cfg_vor_tx_col', '#25db04')
         self._bg_tx = conf.get('gui_cfg_vor_bg_col', 'black')
+
         #####################
         frame1 = tk.Frame(self)
         frame1.pack(fill=tk.BOTH, expand=True)
@@ -29,25 +31,30 @@ class GeneralSettings(tk.Frame):
         qth_loc_frame.pack(side=tk.LEFT, expand=True, padx=30)
         ############################################################
         self._lang_var = tk.StringVar(self)
-        self._lang_var.set('Deutsch')
+        for land, land_id in LANG_IND.items():
+            if land_id == self._lang:
+                self._lang_var.set(land)
+        opt = list(LANG_IND.keys())
         tk.Label(lang_frame, text='Sprache: ').pack(side=tk.LEFT)
         lang_ent = tk.OptionMenu(lang_frame,
                                  self._lang_var,
-                                       *['Deutsch'],
+                                       *opt,
                                  )
-        lang_ent.configure(state='disabled') # TODO !!!
         lang_ent.pack(side=tk.LEFT)
         ############################################################
+        self._qth_var = tk.StringVar(self, value=conf.get('gui_cfg_qth', ''))
         qth_frame = tk.Frame(qth_loc_frame)
         qth_frame.pack(fill=tk.X, pady=8)
         tk.Label(qth_frame, text='QTH: ').pack(side=tk.LEFT)
-        qth_ent = tk.Entry(qth_frame, width=25)
+        qth_ent = tk.Entry(qth_frame, width=25, textvariable=self._qth_var)
         qth_ent.pack(side=tk.LEFT)
         ############################################################
+
+        self._loc_var = tk.StringVar(self, value=conf.get('gui_cfg_locator', ''))
         loc_frame = tk.Frame(qth_loc_frame)
         loc_frame.pack(fill=tk.X, pady=8)
         tk.Label(loc_frame, text='Locator: ').pack(side=tk.LEFT)
-        loc_ent = tk.Entry(loc_frame, width=10)
+        loc_ent = tk.Entry(loc_frame, width=10, textvariable=self._loc_var)
         loc_ent.pack(side=tk.LEFT)
         ############################################################
         ############################################################
@@ -135,6 +142,12 @@ class GeneralSettings(tk.Frame):
         conf['gui_cfg_vor_col'] = str(self._fg_rx)
         conf['gui_cfg_vor_tx_col'] = str(self._fg_tx)
         conf['gui_cfg_vor_bg_col'] = str(self._bg_tx)
+        lang_ind = LANG_IND.get(self._lang_var.get(), LANGUAGE)
+        conf['gui_lang'] = int(lang_ind)
+        conf['gui_cfg_locator'] = str(self._loc_var.get())
+        conf['gui_cfg_qth'] = str(self._qth_var.get())
+
+
         POPT_CFG.set_guiPARM_main(conf)
         if old_conf == conf:
             return False

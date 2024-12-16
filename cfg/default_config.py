@@ -146,9 +146,9 @@ def getNew_APRS_ais_cfg():
 # GUI Parameter
 def getNew_maniGUI_parm():
     return {
-        'gui_lang': LANGUAGE,   # TODO CFG GUI
-        'gui_cfg_locator': '',  # TODO von GUI-Stat-CFG löschen und in GUI-Algem.-Einstellungen setzen
-        'gui_cfg_qth': '',      # TODO von GUI-Stat-CFG löschen und in GUI-Algem.-Einstellungen setzen
+        'gui_lang': int(LANGUAGE),
+        'gui_cfg_locator': '',
+        'gui_cfg_qth': '',
         'gui_cfg_sound': False,
         'gui_cfg_sprech': False,
         'gui_cfg_beacon': True,

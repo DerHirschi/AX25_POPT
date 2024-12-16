@@ -110,13 +110,15 @@ class StatSetTab:
         # self._name.insert(tk.END, str(self.station_setting.stat_parm_Name))
         #################
         # QTH
+        """
         qth_x = 10
         qth_y = 90
         qth_label = tk.Label(r_side_frame, text='QTH:')
         qth_label.place(x=qth_x, y=f_height - qth_y)
         self._qth = tk.Entry(r_side_frame, width=30)
         self._qth.place(x=qth_x + 75, y=f_height - qth_y)
-        self._qth.insert(tk.END, str(self._gui.own_qth))
+        self._qth.insert(tk.END, str(POPT_CFG.get_guiCFG_qth()))
+        self._qth.configure(state='disabled')
         #################
         # LOC
         loc_x = 10
@@ -125,9 +127,9 @@ class StatSetTab:
         loc_label.place(x=loc_x, y=f_height - loc_y)
         self._loc = tk.Entry(r_side_frame, width=6)
         self._loc.place(x=loc_x + 75, y=f_height - loc_y)
-        self._loc.insert(tk.END, str(self._gui.own_loc))
-
-
+        self._loc.insert(tk.END, str(POPT_CFG.get_guiCFG_locator()))
+        self._loc.configure(state='disabled')
+        """
         ############################
         # Tabs for C-Text and so on
         # Root Tab
@@ -521,12 +523,8 @@ class StatSetTab:
         self._name.delete(0, tk.END)
         # self._name.insert(tk.END, self.station_setting.stat_parm_Name)
         self._name.insert(tk.END, stat_name)
-        # QTH TODO --- Global CFG
-        self._qth.delete(0, tk.END)
-        self._qth.insert(tk.END, str(self._gui.own_qth))
-        # LOC TODO --- Global CFG
-        self._loc.delete(0, tk.END)
-        self._loc.insert(tk.END, str(self._gui.own_loc))
+        # QTH
+
         # Ports
 
         # MaxPac
@@ -655,11 +653,10 @@ class StatSetTab:
         # Name
         # self.station_setting.stat_parm_Name = self._name.get()
         #######################################################
-        # TODO: To Global CFGs
         # QTH
-        self._gui.own_qth = str(self._qth.get())
+        # self._gui.own_qth = str(self._qth.get())
         # LOC   TODO: Filter
-        self._gui.own_loc = str(self._loc.get())
+        # self._gui.own_loc = str(self._loc.get())
         #######################################################
         # COLORS
         # self.station_setting.stat_parm_qso_col_text_tx = self._qso_fg_tx

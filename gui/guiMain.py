@@ -379,8 +379,8 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_noty_bell'] = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
-        guiCfg['gui_cfg_locator'] = str(self.own_loc)
-        guiCfg['gui_cfg_qth'] = str(self.own_qth)
+        # guiCfg['gui_cfg_locator'] = str(self.own_loc)
+        # guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     def _save_parameter(self):
@@ -1081,6 +1081,9 @@ class PoPT_GUI_Main:
         self._inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self._inp_txt.tag_config("send", foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
+        self.own_qth = guiCFG.get('gui_cfg_qth', '')
+        self.own_loc = guiCFG.get('gui_cfg_locator', '')
+        self.language = POPT_CFG.get_guiCFG_language()
 
     #######################################
     # KEYBIND Stuff
