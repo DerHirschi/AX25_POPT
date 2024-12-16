@@ -157,6 +157,11 @@ def getNew_maniGUI_parm():
         'gui_cfg_auto_tracer': False,
         'gui_cfg_dx_alarm': True,
         'gui_cfg_mon_encoding': 'Auto',
+        #####################
+        # Vorschreib Col
+        'gui_cfg_vor_col': '#25db04',
+        'gui_cfg_vor_tx_col': 'white',
+        'gui_cfg_vor_bg_col': 'black',
         ###################################
         # 'gui_parm_new_call_alarm': False,
         'gui_parm_channel_index': 1,

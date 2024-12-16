@@ -262,7 +262,7 @@ class Main_CFG:
     def set_CFG_aprs_ais(self, data: dict):
         self._config['aprs_ais'] = data
 
-    ####################
+    ########################################################
     # GUI
     def get_guiCFG_language(self):
         # return self._config['gui_main_parm'].get('gui_lang', 0)
@@ -285,7 +285,7 @@ class Main_CFG:
                 conf_data[conf_k] = data[conf_k]
         self._config['gui_main_parm'] = conf_data
 
-    def get_guiPARM_main(self, conf_key: str):
+    def get_guiPARM_main_param_by_key(self, conf_key: str):
         return self._config.get('gui_main_parm', {}).get(conf_key, None)
 
     # Channel Vars

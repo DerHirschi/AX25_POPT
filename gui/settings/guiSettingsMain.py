@@ -16,6 +16,7 @@ from fnc.str_fnc import get_strTab
 from gui.guiError import PoPTAttributError
 from gui.settings.guiBeaconSettings import BeaconSettings
 from gui.settings.guiDigiSettings import DIGI_SettingsWin
+from gui.settings.guiGeneralSettings import GeneralSettings
 from gui.settings.guiMCastSettings import MulticastSettings
 from gui.settings.guiPortSettings import PortSettingsWin
 from gui.settings.guiRxEchoSettings import RxEchoSettings
@@ -47,6 +48,7 @@ class SettingsMain(tk.Toplevel):
         self._root_win.settings_win = self
         ###############################################################
         self._win_tab = {
+            'general_settings': GeneralSettings,
             'stat_settings': StationSettingsWin,
             'port': PortSettingsWin,
             'beacon_settings': BeaconSettings,
@@ -116,6 +118,7 @@ class SettingsMain(tk.Toplevel):
     ################################################
     def _save_cfg(self):
         reinit_tr = False
+        set_tag = False
         for strTab_name, tab in self._tab_list.items():
             if not (hasattr(tab, 'save_config')):
                 raise PoPTAttributError
@@ -125,11 +128,16 @@ class SettingsMain(tk.Toplevel):
                     get_strTab('setting_saved', self._lang).format(get_strTab(strTab_name, self._lang))
                 )
                 if strTab_name in ['stat_settings', 'port']:
+                    set_tag = True
                     reinit_tr = True
+                if strTab_name in ['general_settings']:
+                    set_tag = True
         if reinit_tr:   # New Station | Station deleted
             self._reinit_tabs()
-            self._root_win.set_text_tags()
             self._root_win.tabbed_sideFrame.update_mon_port_id()
+        if set_tag:
+            self._root_win.set_text_tags()
+
 
     ################################################
     def _ok_btn(self):

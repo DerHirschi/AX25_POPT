@@ -22,6 +22,7 @@ Neue Implementierungen / Funktionen:
 - Zeilenumbruch bei 79 Zeichen für PMS Nachrichten
 - Zeilenumbruch bei 79 Zeichen für Baken texte
 - Zeilenumbruch bei 79 Zeichen für Stations-Texte (C-Text usw.)
+- Allgemeine Einstellung: Farbe des Vorschreibfensters einstellbar (endlich)
 
 ###########################################################################################################
 ###########################################################################################################

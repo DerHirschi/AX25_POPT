@@ -1197,6 +1197,16 @@ STR_TABLE = {
            '',
            '',
            '',
+           ''), #
+
+    'general_settings': ('Allgemein',
+                      'General',
+                      'Algemeen',
+           '',
+           '',
+           '',
+           '',
+           '',
            ''),
 
     'new_stat': ('Neue Station',

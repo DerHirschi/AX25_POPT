@@ -737,6 +737,7 @@ class PoPT_GUI_Main:
         }
 
     def _init_TXT_frame_up(self):
+        guiCFG = POPT_CFG.load_guiPARM_main()
         status_frame = tk.Frame(self._TXT_upper_frame, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
         status_frame.pack(side=tk.BOTTOM, expand=1)
 
@@ -756,15 +757,15 @@ class PoPT_GUI_Main:
         status_frame.rowconfigure(1, minsize=20, weight=0)  # Out
 
         self._inp_txt = scrolledtext.ScrolledText(status_frame,
-                                                  background=TXT_BACKGROUND_CLR,
-                                                  foreground=TXT_INP_CLR,
+                                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
+                                                  foreground=guiCFG.get('gui_cfg_vor_col', 'white'),
                                                   font=(FONT, self.text_size),
                                                   insertbackground=TXT_INP_CURSOR_CLR,
                                                   height=100,
                                                   width=300,
                                                   bd=0,
                                                   )
-        self._inp_txt.tag_config("send", foreground="green2")
+        self._inp_txt.tag_config("send", foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         # self.in_txt_win.insert(tk.END, "Inp")
         self._inp_txt.grid(row=0, column=0, columnspan=13, sticky="nsew")
         ##############
@@ -1076,6 +1077,10 @@ class PoPT_GUI_Main:
         self._mon_txt.tag_config("sys-msg", foreground=MON_SYS_MSG_CLR_FG,
                                  background=MON_SYS_MSG_CLR_BG)
         self._mon_txt.configure(state="disabled")
+        guiCFG = POPT_CFG.load_guiPARM_main()
+        self._inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
+        self._inp_txt.tag_config("send", foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
+                                 background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
 
     #######################################
     # KEYBIND Stuff
