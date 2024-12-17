@@ -138,6 +138,7 @@ class StatSetTab:
         # Root Tab
         self._textTab = ttk.Notebook(self.own_tab, height=height - 330, width=width - (digi_x * 4))
         self._textTab.place(x=digi_x, y=height - digi_y)
+        self._textTab.place(x=digi_x, y=height - digi_y)
         # C-Text
         tab_ctext = ttk.Frame(self._textTab)
         tab_ctext.rowconfigure(0, minsize=2, weight=0)

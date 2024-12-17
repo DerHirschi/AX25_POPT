@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk as ttk
+from tkinter import ttk as ttk, messagebox
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
@@ -929,6 +929,10 @@ class PortSettingsWin(tk.Frame):
         for port_id in self._tab_list.keys():
             self._tab_list[port_id].set_vars_to_cfg()
             if self._tab_list[port_id].need_reinit():
+                if PORT_HANDLER.get_all_connections():
+                    PORT_HANDLER.disco_all_Conn()
+                    messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
+
                 PORT_HANDLER.reinit_port(port_id)
                 self._need_GUI_reinit = True
         """        

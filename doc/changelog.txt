@@ -1,15 +1,15 @@
 ###########################################################################################################
 # 2.111.x
 Fixes:
-- Scripterror wenn Stations Name angefordert wird.
+- Scripterror, wenn Stationsname angefordert wird.
 - Es wurden nicht alle MCast-Mitglieder in der CLI & GUI angezeigt
 - MCast Mitglieder mit selben IP u Port bekommen doppelte Frames
-- MCast Settings Fenster: Kanal-Mitglied Liest wurde nicht ordentlich geupdated
+- MCast Settings Fenster: Kanal-Mitglied Liste wurde nicht ordentlich geupdated
 - Baken-Text von Datei: falscher Zeilenumbruch
 - APRS-Einstellungen werden nicht gespeichert bzw. APRS-Run Option
 - Tag-Farben Vorschreibfenster
 - Tag-Farben Sys-Message Monitor
-- Leere Zeile wird gesendet, wenn Cursor in Vorschreibfenster gesetzt wird
+- Leere Zeile wird gesendet, wenn Cursor im Vorschreibfenster versetzt wird
 
 Optimierung:
 - Alle wichtigen Einstellungen zusammengefasst in ein Fenster
@@ -17,12 +17,13 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - MCast Loop-Preventer
-- MCast: Bake an Kanalmitglieder wenn Mitglied den Kanal betritt/verlässt
+- MCast: Bake an Kanalmitglieder, wenn Mitglied den Kanal betritt/verlässt
 - Zeilenumbruch bei 79 Zeichen im Vorschreibfenster/Monitor
 - Zeilenumbruch bei 79 Zeichen für PMS Nachrichten
 - Zeilenumbruch bei 79 Zeichen für Baken texte
 - Zeilenumbruch bei 79 Zeichen für Stations-Texte (C-Text usw.)
 - Allgemeine Einstellung: Sprache einstellbar (endlich). Neustart von PoPT erforderlich.
+  (!Die Übersetzungen sind noch nicht vollständig!)
 - Allgemeine Einstellung: Farbe des Vorschreibfensters einstellbar (endlich).
 
 ###########################################################################################################

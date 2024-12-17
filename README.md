@@ -79,9 +79,7 @@ $ pip install --break-system-packages playsound pyserial aprslib
 - Source: https://github.com/4x1md/qth_locator_functions
 - License location: doc-other/qth_locator_functions-master/LICENSE
 
-Choosing Language (Quick Fix): cfg/constant.py line 13
-
-
+#### Supported languages:
 0 = German
 
 1 = English

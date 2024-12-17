@@ -2,12 +2,15 @@
 TODO:
     - MsgBox lift wenn Port/Station gelöscht
     - F-Texte
+    - Disco wenn Port reinit
+    - Übersetzung in Allgemeine Einstellungen
 FIXME:
     - Keine sysMSG für änderung d Station-Settings.(Nur neue/gelöschte o geänderte Calls werden returned)
     - Keine sysMSG für änderung d Port-Settings.(Nur neue o gelöschte Ports werden returned)
 """
+import threading
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
@@ -125,11 +128,13 @@ class SettingsMain(tk.Toplevel):
                 self._root_win.sysMsg_to_monitor(
                     get_strTab('setting_saved', self._lang).format(get_strTab(strTab_name, self._lang))
                 )
+
                 if strTab_name in ['stat_settings', 'port']:
                     set_tag = True
                     reinit_tr = True
                 if strTab_name in ['general_settings']:
                     set_tag = True
+
         if reinit_tr:   # New Station | Station deleted
             self._reinit_tabs()
             self._root_win.tabbed_sideFrame.update_mon_port_id()
