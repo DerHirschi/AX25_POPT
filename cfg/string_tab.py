@@ -349,6 +349,27 @@ STR_TABLE = {
            '',
            ''),
 
+    'all_disco1': (
+           'Stationen werden disconnected !',
+           'Stations are disconnected!',
+           'Stations zijn losgekoppeld!',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+    'all_disco2': (
+           'Es werden alle Stationen disconnected',
+           'All stations are disconnected',
+           'Alle stations zijn losgekoppeld',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
     'OK': ('OK',
            'OK',
            'OK',
@@ -1259,8 +1280,8 @@ STR_TABLE = {
            '',
            ''),
 
-    'lob3': ('Das war eine gute Entscheidung. Mach weiter so. Das hast du gut gemacht.',
-             'That was a good decision. Keep it up. You did well.',
+    'lob3': ('Lob: Das war eine gute Entscheidung. Mach weiter so. Das hast du gut gemacht.',
+             'Praise: That was a good decision. Keep it up. You did well.',
              'Dat was een goede beslissing. Ga zo door. Dat heb je goed gemaakt.',
            '',
            '',

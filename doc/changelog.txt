@@ -10,6 +10,8 @@ Fixes:
 - Tag-Farben Vorschreibfenster
 - Tag-Farben Sys-Message Monitor
 - Leere Zeile wird gesendet, wenn Cursor im Vorschreibfenster versetzt wird
+- Linux: MessageBox (Hinweise, Fragen ob Port gelöscht werden soll usw.) verschwinden hinter
+  dem aktuellen Fenster
 
 Optimierung:
 - Alle wichtigen Einstellungen zusammengefasst in ein Fenster

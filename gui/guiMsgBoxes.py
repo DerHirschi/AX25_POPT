@@ -24,9 +24,9 @@ def save_file_dialog(data):
     f.write(data)
     f.close()
 
-def call_vali_warning():
+def call_vali_warning(root_win):
     mb = messagebox.showerror(STR_TABLE['call_vali_warning_1'][POPT_CFG.get_guiCFG_language()],
-                         STR_TABLE['call_vali_warning_2'][POPT_CFG.get_guiCFG_language()])
+                         STR_TABLE['call_vali_warning_2'][POPT_CFG.get_guiCFG_language()], parent=root_win)
     mb.upper()
 
 
@@ -96,6 +96,7 @@ class InfoMsg(ErrorMsg):
 
 class WarningMsg(ErrorMsg):
     def init(self):
+        self.lift()
         tk.Label(self, text=self.msg).grid(row=1, column=1)
         tk.Button(self, command=self.destroy, text="OK").grid(row=3, column=1)
 
@@ -104,7 +105,7 @@ class WarningMsg(ErrorMsg):
 
 
 # class AskMsg(tk.Toplevel):
-def AskMsg(titel, message):
+def AskMsg(titel, message, parent_win):
     # def __init__(self, titel, message):
     msg = message
     temp = []
@@ -120,7 +121,7 @@ def AskMsg(titel, message):
         font1 = font.Font(name='TkCaptionFont', exists=True)
         font1.config(family='courier new', size=8)
 
-    return messagebox.askokcancel(title=titel, message=msg)
+    return messagebox.askokcancel(title=titel, message=msg, parent=parent_win)
 
 
 

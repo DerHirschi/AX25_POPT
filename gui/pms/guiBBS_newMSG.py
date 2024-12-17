@@ -301,22 +301,22 @@ class BBS_newMSG(tk.Toplevel):
             self._close()
 
     def _btn_save_msg(self, event=None):
-        self.lower()
+        # self.lower()
         if self._save_msg():
-            messagebox.showinfo(title='Entwurf gespeichert! ', message='Nachricht wurde als Entwurf gespeichert.')
+            messagebox.showinfo(title='Entwurf gespeichert! ', message='Nachricht wurde als Entwurf gespeichert.', parent=self)
         else:
             messagebox.showerror(title='Entwurf nicht gespeichert! ',
-                                 message='Entwurf konnte nicht gespeichert werden.')
-        self.lift()
+                                 message='Entwurf konnte nicht gespeichert werden.', parent=self)
+        # self.lift()
 
     def _btn_delete_all(self, event=None):
-        self.lower()
-        if messagebox.askokcancel(title='Nachricht löschen? ', message='Nachricht wirklich verwerfen?'):
+        # self.lower()
+        if messagebox.askokcancel(title='Nachricht löschen? ', message='Nachricht wirklich verwerfen?', parent=self):
             self._text.delete('1.0', tk.END)
             self._subject_var.set('')
             self._to_cc_call_var.set('')
             self._to_call_var.set('')
-        self.lift()
+        # self.lift()
 
     def _save_msg(self):
         sender = self._from_call_var.get()

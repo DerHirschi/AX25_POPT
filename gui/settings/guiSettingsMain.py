@@ -1,19 +1,16 @@
 """
 TODO:
-    - MsgBox lift wenn Port/Station gelöscht
     - F-Texte
-    - Disco wenn Port reinit
     - Übersetzung in Allgemeine Einstellungen
 FIXME:
     - Keine sysMSG für änderung d Station-Settings.(Nur neue/gelöschte o geänderte Calls werden returned)
     - Keine sysMSG für änderung d Port-Settings.(Nur neue o gelöschte Ports werden returned)
 """
-import threading
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 
 from cfg.popt_config import POPT_CFG
-from fnc.str_fnc import get_strTab
+from fnc.str_fnc import get_strTab, lob_gen
 from gui.guiError import PoPTAttributError
 from gui.settings.guiBeaconSettings import BeaconSettings
 from gui.settings.guiDigiSettings import DIGI_SettingsWin
@@ -120,6 +117,9 @@ class SettingsMain(tk.Toplevel):
     def _save_cfg(self):
         reinit_tr = False
         set_tag = False
+        # self.attributes('-topmost', 1)
+        # self.attributes('-topmost', 0)
+        # self.lower()
         for strTab_name, tab in self._tab_list.items():
             if not (hasattr(tab, 'save_config')):
                 raise PoPTAttributError
@@ -147,16 +147,19 @@ class SettingsMain(tk.Toplevel):
         # self._root_win.set_text_tags()
         # self._root_win.tabbed_sideFrame.update_mon_port_id()
         self._root_win.sysMsg_to_monitor(get_strTab('hin1', self._lang))
-        self._root_win.sysMsg_to_monitor(get_strTab('lob2', self._lang))
+        lob = lob_gen(self._lang)
+        self._root_win.sysMsg_to_monitor(get_strTab(lob, self._lang))
         self.destroy_win()
 
     def _save_btn(self):
         self._save_cfg()
         POPT_CFG.save_PORT_CFG_to_file()
         POPT_CFG.save_MAIN_CFG_to_file()
-        self._root_win.sysMsg_to_monitor(get_strTab('lob1', self._lang))
+        lob = lob_gen(self._lang)
+        self._root_win.sysMsg_to_monitor(get_strTab(lob, self._lang))
 
     def _abort_btn(self):
+        self._root_win.sysMsg_to_monitor(get_strTab('hin2', self._lang))
         self.destroy_win()
 
     def destroy_win(self):

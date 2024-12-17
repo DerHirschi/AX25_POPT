@@ -743,7 +743,7 @@ class StationSettingsWin(tk.Frame):
             call = el.call.get().upper()
             if not validate_ax25Call(call):
                 #self.settings_win.lower()
-                call_vali_warning()
+                call_vali_warning(self)
                 #self.settings_win.lift()
                 el.call.select_range(0, 'end')
                 return False
@@ -786,7 +786,9 @@ class StationSettingsWin(tk.Frame):
 
     def _del_station_btn(self):
         #self.settings_win.attributes("-topmost", False)
-        msg = AskMsg(titel=STR_TABLE['del_station_hint_1'][self._lang], message=STR_TABLE['del_station_hint_2'][self._lang])
+        # self.lower()
+        msg = AskMsg(titel=STR_TABLE['del_station_hint_1'][self._lang], message=STR_TABLE['del_station_hint_2'][self._lang], parent_win=self)
+        # self.lift()
         # self.settings_win.lift()
         if msg:
             try:
@@ -801,10 +803,10 @@ class StationSettingsWin(tk.Frame):
                 del self._tab_list[ind]
                 self._tabControl.forget(ind)
 
-                WarningMsg(STR_TABLE['del_station_warning_1'][self._lang], STR_TABLE['del_station_warning_2'][self._lang])
+                messagebox.showwarning(STR_TABLE['del_station_warning_1'][self._lang], STR_TABLE['del_station_warning_2'][self._lang], parent=self)
                 #self._root_win.sysMsg_to_monitor(STR_TABLE['del_station_hint'][self._lang])
         else:
-            InfoMsg(STR_TABLE['aborted'][self._lang], STR_TABLE['lob3'][self._lang])
+            messagebox.showinfo(STR_TABLE['aborted'][self._lang], STR_TABLE['lob3'][self._lang], parent=self)
             #self._root_win.sysMsg_to_monitor(STR_TABLE['hin2'][self._lang])
         #self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)

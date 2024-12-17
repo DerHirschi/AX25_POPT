@@ -1,3 +1,4 @@
+import random
 import time
 from datetime import datetime, timedelta
 from cfg.logger_config import logger
@@ -252,11 +253,15 @@ def zeilenumbruch(text: str, max_zeichen=79, umbruch='\n'):
     else:
         return text[:letztes_leerzeichen] + umbruch + zeilenumbruch(text[letztes_leerzeichen + 1:])
 
-
-
 def zeilenumbruch_lines(text: str, max_zeichen=79, umbruch='\n'):
     line_list = text.split(umbruch)
     text = ''
     for line in line_list:
         text += zeilenumbruch(line, max_zeichen, umbruch) + umbruch
     return text[:-1]
+
+def lob_gen(lang: int):
+    bis = 3
+    lob = random.randint(1, bis)
+    lob_str = f"lob{lob}"
+    return get_strTab(lob_str, lang)

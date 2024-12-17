@@ -890,7 +890,7 @@ class PortSettingsWin(tk.Frame):
 
     def _del_port_btn_cmd(self):
         msg = AskMsg(titel='lösche Port', message="Willst du diesen Port wirklich löschen? \n"
-                                                  "Alle Einstellungen gehen verloren !")
+                                                  "Alle Einstellungen gehen verloren !", parent_win=self)
         if msg:
             try:
                 tab_ind = self._tabControl.index('current')
@@ -909,15 +909,15 @@ class PortSettingsWin(tk.Frame):
                 if POPT_CFG.del_port_CFG_fm_id(ind):
                     del self._tab_list[ind]
                     self._tabControl.forget(tab_ind)
-                    WarningMsg('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.')
+                    messagebox.showinfo('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.', parent=self)
                     #self._main_class.sysMsg_to_monitor('Info: Port erfolgreich gelöscht.')
                     self._need_GUI_reinit = True    # Reinit SettingsGUI Tabs
                 else:
                     logger.error(f'Port {ind} konnte nicht gelöscht werden')
                     #self._main_class.sysMsg_to_monitor(f'Port {ind} konnte nicht gelöscht werden')
         else:
-            InfoMsg('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
-                                   'Das hast du gut gemacht, mach weiter so. ')
+            messagebox.showinfo('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
+                                   'Das hast du gut gemacht, mach weiter so. ', parent=self)
             #self._main_class.sysMsg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
 
     @staticmethod
@@ -931,7 +931,10 @@ class PortSettingsWin(tk.Frame):
             if self._tab_list[port_id].need_reinit():
                 if PORT_HANDLER.get_all_connections():
                     PORT_HANDLER.disco_all_Conn()
-                    messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
+                    # messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
+                    messagebox.showinfo(get_strTab('all_disco1', self._lang),
+                                        get_strTab('all_disco2', self._lang),
+                                        parent=self)
 
                 PORT_HANDLER.reinit_port(port_id)
                 self._need_GUI_reinit = True

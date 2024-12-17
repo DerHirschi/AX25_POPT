@@ -1,6 +1,6 @@
 import tkinter as tk
 from datetime import datetime
-from tkinter import ttk, Checkbutton, TclError, messagebox
+from tkinter import ttk, TclError, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25dec_enc import PIDByte
@@ -29,8 +29,8 @@ class SideTabbedFrame:  # TODO
         self._tabControl.bind('<<NotebookTabChanged>>', self.on_ch_stat_change)
 
         tab1_kanal = ttk.Frame(self._tabControl)
-        tab_connects = tk.Frame(self._tabControl)
-        tab2_mh = tk.Frame(self._tabControl)
+        tab_connects = ttk.Frame(self._tabControl)
+        tab2_mh = ttk.Frame(self._tabControl)
         tab4_settings = ttk.Frame(self._tabControl)
         # self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
         tab6_monitor = ttk.Frame(self._tabControl)
@@ -94,7 +94,7 @@ class SideTabbedFrame:  # TODO
             # 500 - 3000
             val_list.append(str(i * 50))
 
-        self.t2 = tk.ttk.Combobox(tab1_kanal,
+        self.t2 = ttk.Combobox(tab1_kanal,
                                   width=4,
                                   textvariable=self.t2_var,
                                   values=val_list,
@@ -136,7 +136,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 225
         self.autoscroll_var = tk.BooleanVar(tab1_kanal)
 
-        self.autoscroll = tk.Checkbutton(tab1_kanal,
+        self.autoscroll = ttk.Checkbutton(tab1_kanal,
                                          text='Autoscroll',
                                          variable=self.autoscroll_var,
                                          command=self._chk_autoscroll
@@ -148,7 +148,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 250
         self._cliRemote_var = tk.BooleanVar(tab1_kanal, value=True)
 
-        self._cliRemote = tk.Checkbutton(tab1_kanal,
+        self._cliRemote = ttk.Checkbutton(tab1_kanal,
                                          text='CLI/Remote',
                                          variable=self._cliRemote_var,
                                          state='disabled',
@@ -159,7 +159,7 @@ class SideTabbedFrame:  # TODO
         # Link Holder
         parm_y = 175
         # self.link_holder_var = tk.BooleanVar(tab1_kanal)
-        self._link_holder = tk.Checkbutton(tab1_kanal,
+        self._link_holder = ttk.Checkbutton(tab1_kanal,
                                            text='Linkhalter',
                                            variable=self._main_win.link_holder_var,
                                            state='disabled',
@@ -167,13 +167,13 @@ class SideTabbedFrame:  # TODO
                                            )
         self._link_holder.place(x=10, y=parm_y)
 
-        clear_ch_data_btn = tk.Button(tab1_kanal,
+        clear_ch_data_btn = ttk.Button(tab1_kanal,
                                       text='Säubern',
                                       command=self._main_win.clear_channel_vars
                                       )
         clear_ch_data_btn.place(x=140, y=135)
 
-        link_holder_settings_btn = tk.Button(tab1_kanal,
+        link_holder_settings_btn = ttk.Button(tab1_kanal,
                                              text='Linkhalter',
                                              command=self._main_win.open_link_holder_sett
                                              )
@@ -232,7 +232,7 @@ class SideTabbedFrame:  # TODO
         # tk.Label(tab1_kanal, text='File Transfer').place(x=380, y=160)
         x = 300
         y = 170
-        self.ft_progress = tk.ttk.Progressbar(tab1_kanal,
+        self.ft_progress = ttk.Progressbar(tab1_kanal,
                                               orient=tk.HORIZONTAL,
                                               length=150,
                                               mode='determinate',
@@ -289,18 +289,18 @@ class SideTabbedFrame:  # TODO
         # self._update_side_mh()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
-        btn_frame = tk.Frame(tab2_mh)
+        btn_frame = ttk.Frame(tab2_mh)
         btn_frame.grid(row=1, column=0, columnspan=2)
-        tk.Button(btn_frame,
+        ttk.Button(btn_frame,
                   text="MH",
                   command=self._open_mh
                   ).pack(side=tk.LEFT, )
-        tk.Button(btn_frame,
+        ttk.Button(btn_frame,
                   # text="Statistik",
                   text='Plot',
                   command=self._open_MHPlot
                   ).pack(side=tk.LEFT, padx=20)
-        tk.Button(btn_frame,
+        ttk.Button(btn_frame,
                   # text="Statistik",
                   text=STR_TABLE['statistic'][self._lang],
                   command=self._open_PortStat
@@ -309,19 +309,19 @@ class SideTabbedFrame:  # TODO
         #############################################################################
         # Global Settings ################################
         # Global Sound
-        Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="Sound",
                     variable=self._main_win.setting_sound,
                     command=self._chk_sound
                     ).place(x=10, y=10)
         # Bell
-        Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="Bell",
                     variable=self._main_win.setting_noty_bell,
                     command=self._main_win.set_noty_bell_active
                     ).place(x=150, y=10)
         # Global Sprech
-        sprech_btn = Checkbutton(tab4_settings,
+        sprech_btn = ttk.Checkbutton(tab4_settings,
                                  text="Sprachausgabe",
                                  variable=self._main_win.setting_sprech,
                                  command=self._chk_sprech_on
@@ -330,13 +330,13 @@ class SideTabbedFrame:  # TODO
         if not is_linux():
             sprech_btn.configure(state='disabled')
         # Global Bake
-        Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="Baken",
                     variable=self._main_win.setting_bake,
                     command=self._chk_beacon,
                     ).place(x=10, y=60)
         # DX Alarm  > dx_alarm_on
-        Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="Tracer",
                     variable=self._main_win.setting_tracer,
                     command=self._chk_tracer,
@@ -346,21 +346,21 @@ class SideTabbedFrame:  # TODO
             True: 'disabled',
             False: 'normal'
         }.get(self._main_win.get_tracer(), 'disabled')
-        self._autotracer_chk_btn = Checkbutton(tab4_settings,
+        self._autotracer_chk_btn = ttk.Checkbutton(tab4_settings,
                                                text="Auto-Tracer",
                                                variable=self._main_win.setting_auto_tracer,
                                                command=self._chk_auto_tracer,
                                                state=auto_tracer_state
                                                )
         self._autotracer_chk_btn.place(x=10, y=110)
-        Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="DX-Alarm",
                     variable=self._main_win.setting_dx_alarm,
                     command=self._main_win.set_dx_alarm,
                     # state='disabled'
                     ).place(x=10, y=135)
         # RX ECHO
-        Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="RX-Echo",
                     variable=self._main_win.setting_rx_echo,
                     command=self._set_rx_echo
@@ -383,7 +383,7 @@ class SideTabbedFrame:  # TODO
         x = 10
         y = 80
         # self.cmd_var = tk.BooleanVar(tab6_monitor)
-        tk.Checkbutton(tab6_monitor,
+        ttk.Checkbutton(tab6_monitor,
                        variable=self._main_win.mon_cmd_var,
                        text='CMD/RPT').place(x=x, y=y)
 
@@ -1003,5 +1003,5 @@ class SideTabbedFrame:  # TODO
 
     def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang]):
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang], parent=self):
             PORT_HANDLER.disco_all_Conn()

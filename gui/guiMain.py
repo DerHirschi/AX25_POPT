@@ -2,9 +2,8 @@ import datetime
 import random
 import time
 import tkinter as tk
-from tkinter import ttk, Menu, Checkbutton, TclError, scrolledtext, Label, messagebox
+from tkinter import ttk, scrolledtext, messagebox
 import threading
-
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
@@ -44,7 +43,7 @@ from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
 from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, STATION_TYPS, \
-    ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CLR, TXT_INP_CURSOR_CLR, \
+    ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG
@@ -89,16 +88,18 @@ class PoPT_GUI_Main:
         # GUI Stuff
         logger.info('GUI: Init')
         self.main_win = tk.Tk()
+        self.style = ttk.Style(self.main_win)
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
         self.main_win.geometry("1400x850")  # TODO to/fm CFG
+        self.main_win.attributes('-topmost', 0)
         try:
             self.main_win.iconbitmap("favicon.ico")
-        except TclError:
+        except tk.TclError:
             pass
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ##########################
-        self.style = ttk.Style()
         # self.style.theme_use('classic')
+        # print(self.style.theme_names())
         # self.style.theme_use('clam')
         ######################################
         # Init Vars
@@ -227,9 +228,9 @@ class PoPT_GUI_Main:
         main_pw = ttk.PanedWindow(self.main_win, orient=tk.HORIZONTAL)
         main_pw.pack(fill=tk.BOTH, expand=True)
 
-        l_frame = tk.Frame(main_pw)
-        self._r_frame = tk.Frame(main_pw)
-        r_pack_frame = tk.Frame(self._r_frame)
+        l_frame = ttk.Frame(main_pw)
+        self._r_frame = ttk.Frame(main_pw)
+        r_pack_frame = ttk.Frame(self._r_frame)
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
@@ -239,7 +240,7 @@ class PoPT_GUI_Main:
         # Channel Buttons
         self._ch_btn_blink_timer = time.time()
         self._con_btn_dict = {}
-        ch_btn_frame = tk.Frame(l_frame)
+        ch_btn_frame = ttk.Frame(l_frame)
         ch_btn_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, )
         self._init_ch_btn_frame(ch_btn_frame)
         ###########################################
@@ -272,7 +273,7 @@ class PoPT_GUI_Main:
         self._Alarm_Frame = AlarmIconFrame(r_pack_frame)
         ##############
         # GUI Buttons
-        conn_btn_frame = tk.Frame(r_pack_frame, )
+        conn_btn_frame = ttk.Frame(r_pack_frame, )
         conn_btn_frame.pack(expand=False, pady=5, fill=tk.X)
         # conn_btn_frame.pack(anchor='w', fill=tk.X, expand=True)
         self._init_btn(conn_btn_frame)
@@ -280,13 +281,13 @@ class PoPT_GUI_Main:
         # Pane Tabbed Frame
         side_frame_pw = ttk.PanedWindow(r_pack_frame, orient=tk.VERTICAL, )
         side_frame_pw.pack(expand=True, pady=5, fill=tk.BOTH)
-        tabbedF_upper_frame = tk.Frame(side_frame_pw)
+        tabbedF_upper_frame = ttk.Frame(side_frame_pw)
         tabbedF_upper_frame.pack()
-        tabbedF_lower_frame = tk.Frame(side_frame_pw)
+        tabbedF_lower_frame = ttk.Frame(side_frame_pw)
         tabbedF_lower_frame.pack()
         side_frame_pw.add(tabbedF_upper_frame, weight=1)
         side_frame_pw.add(tabbedF_lower_frame, weight=1)
-        bw_plot_frame = tk.Frame(self.main_win)
+        bw_plot_frame = ttk.Frame(self.main_win)
         ##############
         # tabbed Frame
         self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame)
@@ -489,11 +490,11 @@ class PoPT_GUI_Main:
         self._bw_fig.canvas.flush_events()
 
     def _init_menubar(self):
-        menubar = Menu(self.main_win, tearoff=False)
+        menubar = tk.Menu(self.main_win, tearoff=False)
         self.main_win.config(menu=menubar)
         #########################################################################
         # Menü 1 "Verbindungen"
-        MenuVerb = Menu(menubar, tearoff=False)
+        MenuVerb = tk.Menu(menubar, tearoff=False)
         MenuVerb.add_command(label=STR_TABLE['new_conn'][self.language], command=self.open_new_conn_win)
         MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self._disco_conn)
         MenuVerb.add_separator()
@@ -503,7 +504,7 @@ class PoPT_GUI_Main:
         menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=MenuVerb, underline=0)
         #####################################################################
         # Menü 2 "Bearbeiten"
-        MenuEdit = Menu(menubar, tearoff=False)
+        MenuEdit = tk.Menu(menubar, tearoff=False)
         MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self._copy_select, underline=0)
         MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self._clipboard_past, underline=1)
         MenuEdit.add_separator()
@@ -525,7 +526,7 @@ class PoPT_GUI_Main:
         menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
         ####################################################################
         # Menü 3 "Tools"
-        MenuTools = Menu(menubar, tearoff=False)
+        MenuTools = tk.Menu(menubar, tearoff=False)
         MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
         MenuTools.add_command(label="MH-Graph",
                               command=lambda: self.open_window('ConnPathPlot'),
@@ -578,7 +579,7 @@ class PoPT_GUI_Main:
 
         ###################################################################
         # Menü 4 Einstellungen
-        MenuSettings = Menu(menubar, tearoff=False)
+        MenuSettings = tk.Menu(menubar, tearoff=False)
 
         MenuSettings.add_command(label=STR_TABLE['settings'][self.language],
                                  command=lambda: self._open_settings_window('all_sett'),
@@ -592,7 +593,7 @@ class PoPT_GUI_Main:
         menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=MenuSettings, underline=0)
         ########################################################################
         # APRS Menu
-        MenuAPRS = Menu(menubar, tearoff=False)
+        MenuAPRS = tk.Menu(menubar, tearoff=False)
         MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
                              command=lambda: self.open_window('aprs_mon'),
                              underline=0)
@@ -613,7 +614,7 @@ class PoPT_GUI_Main:
         menubar.add_cascade(label="APRS", menu=MenuAPRS, underline=0)
         ################################################################
         # BBS/PMS
-        MenuBBS = Menu(menubar, tearoff=False)
+        MenuBBS = tk.Menu(menubar, tearoff=False)
         MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
                             command=lambda: self.open_window('pms_new_msg'),
                             underline=0)
@@ -643,7 +644,7 @@ class PoPT_GUI_Main:
         menubar.add_cascade(label='PMS', menu=MenuBBS, underline=0)
         #########################################################################
         # Menü 5 Hilfe
-        MenuHelp = Menu(menubar, tearoff=False)
+        MenuHelp = tk.Menu(menubar, tearoff=False)
         # MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
         MenuHelp.add_command(label=STR_TABLE['keybind'][self.language],
                              command=lambda: self._open_settings_window('keybinds'),
@@ -671,7 +672,7 @@ class PoPT_GUI_Main:
 
     def _init_ch_btn_frame(self, root_frame):
         btn_font = ("fixedsys", 8,)
-        ch_btn_frame = tk.Frame(root_frame, )
+        ch_btn_frame = ttk.Frame(root_frame, )
         ch_btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
         ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
@@ -771,14 +772,14 @@ class PoPT_GUI_Main:
         ##############
         # Status Frame
 
-        Label(status_frame,
+        tk.Label(status_frame,
               textvariable=self._status_name_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               foreground=STAT_BAR_TXT_CLR,
               bg=STAT_BAR_CLR
               ).grid(row=1, column=1, sticky="nsew")
 
-        self._status_status = Label(status_frame,
+        self._status_status = tk.Label(status_frame,
                                     textvariable=self._status_status_var,
                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                     bg=STAT_BAR_CLR,
@@ -786,7 +787,7 @@ class PoPT_GUI_Main:
                                     )
         self._status_status.grid(row=1, column=2, sticky="nsew")
 
-        self._status_unack = Label(status_frame,
+        self._status_unack = tk.Label(status_frame,
                                    textvariable=self._status_unack_var,
                                    foreground=STAT_BAR_TXT_CLR,
                                    font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
@@ -794,14 +795,14 @@ class PoPT_GUI_Main:
                                    )
         self._status_unack.grid(row=1, column=3, sticky="nsew")
 
-        Label(status_frame,
+        tk.Label(status_frame,
               textvariable=self._status_vs_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=4, sticky="nsew")
 
-        self._status_n2 = Label(status_frame,
+        self._status_n2 = tk.Label(status_frame,
                                 textvariable=self._status_n2_var,
                                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                 bg=STAT_BAR_CLR,
@@ -809,35 +810,35 @@ class PoPT_GUI_Main:
                                 )
         self._status_n2.grid(row=1, column=7, sticky="nsew")
 
-        Label(status_frame,
+        tk.Label(status_frame,
               textvariable=self._status_t1_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=8, sticky="nsew")
         # PARM T2
-        Label(status_frame,
+        tk.Label(status_frame,
               textvariable=self._status_t2_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=5, sticky="nsew")
         # RTT
-        Label(status_frame,
+        tk.Label(status_frame,
               textvariable=self._status_rtt_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=6, sticky="nsew")
 
-        Label(status_frame,
+        tk.Label(status_frame,
               textvariable=self._status_t3_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=STAT_BAR_CLR,
               foreground=STAT_BAR_TXT_CLR
               ).grid(row=1, column=9, sticky="nsew")
         # Checkbox RX-BEEP
-        self._rx_beep_box = Checkbutton(status_frame,
+        self._rx_beep_box = tk.Checkbutton(status_frame,
                                         text="RX-BEEP",
                                         bg=STAT_BAR_CLR,
                                         font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
@@ -850,7 +851,7 @@ class PoPT_GUI_Main:
                                         )
         self._rx_beep_box.grid(row=1, column=10, sticky="nsew")
         # TODO Checkbox Time Stamp
-        self._ts_box_box = Checkbutton(status_frame,
+        self._ts_box_box = tk.Checkbutton(status_frame,
                                        text="T-S",
                                        font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                        bg=STAT_BAR_CLR,
@@ -1889,7 +1890,7 @@ class PoPT_GUI_Main:
 
     def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self.language],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language]):
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language], parent=self):
             PORT_HANDLER.disco_all_Conn()
 
     # DISCO ENDE
@@ -2139,7 +2140,7 @@ class PoPT_GUI_Main:
         if not msg:
             msg = f"{conn.to_call_str} {STR_TABLE['cmd_bell_gui_msg'][self.language]}"
         if messagebox.askokcancel(f"Bell {STR_TABLE['channel'][self.language]} {ch_id}",
-                                  msg):
+                                  msg, parent=self):
             if not self._is_closing:
                 self.switch_channel(ch_id)
 

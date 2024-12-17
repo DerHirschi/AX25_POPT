@@ -348,21 +348,21 @@ class MHWin(tk.Toplevel):
             ), dx_alarm))
 
     def _reset_mh_list(self):
-        self.lower()
+        # self.lower()
         if messagebox.askokcancel(title=STR_TABLE.get('msg_box_mh_delete', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('msg_box_mh_delete_msg', ('', '', ''))[self._lang]):
+                                  message=STR_TABLE.get('msg_box_mh_delete_msg', ('', '', ''))[self._lang], parent=self):
             mh = PORT_HANDLER.get_MH()
             mh.reset_mainMH()
             self._update_mh()
-        self.lift()
+        # self.lift()
 
     def _reset_dx_history(self):
-        self.lower()
+        # self.lower()
         if messagebox.askokcancel(title=STR_TABLE.get('msg_box_mh_delete', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('msg_box_mh_delete_msg', ('', '', ''))[self._lang]):
+                                  message=STR_TABLE.get('msg_box_mh_delete_msg', ('', '', ''))[self._lang], parent=self):
             mh = PORT_HANDLER.get_MH()
             mh.reset_dxHistory()
-        self.lift()
+        # self.lift()
 
     def __del__(self):
         self._root_win.mh_window = None

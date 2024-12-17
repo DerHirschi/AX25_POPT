@@ -3,7 +3,7 @@ IDEA:
 https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
 """
 
-VER = '2.111.22'
+VER = '2.111.23'
 DEBUG_LOG = True
 CONSOLE_LOG = False
 LANGUAGE = 0   # QUICK FIX
@@ -180,7 +180,6 @@ FONT = "Courier"
 TEXT_SIZE_STATUS = 10
 TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
-TXT_INP_CLR = 'yellow'
 TXT_INP_CURSOR_CLR = 'white'
 STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = 'black'

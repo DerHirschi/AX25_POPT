@@ -542,6 +542,7 @@ class AX25PortHandler(object):
         for k in list(all_conn.keys()):
             if all_conn[k]:
                 all_conn[k].conn_disco()
+                all_conn[k].conn_disco()    # Hard Disco
 
     @staticmethod
     def disco_Conn(conn):
