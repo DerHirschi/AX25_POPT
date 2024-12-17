@@ -206,12 +206,12 @@ class WXWin(tk.Toplevel):
     def _delete_all_data(self):
         if not self._ais_obj:
             return
-        self.lower()
+        # self.lower()
         if messagebox.askokcancel(title=STR_TABLE.get('msg_box_delete_data', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('msg_box_delete_data_msg', ('', '', ''))[self._lang]):
+                                  message=STR_TABLE.get('msg_box_delete_data_msg', ('', '', ''))[self._lang], parent=self):
             self._ais_obj.delete_wx_data()
             self.update_tree_data()
-        self.lift()
+        # self.lift()
 
     def _close(self):
         self._ais_obj.wx_tree_gui = None

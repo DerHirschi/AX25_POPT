@@ -9,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.file_fnc import get_str_fm_file
 from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime
+    convert_str_to_datetime, zeilenumbruch_lines
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
@@ -234,7 +234,7 @@ class DefaultCLI(object):
                  filename
         out = get_str_fm_file(file_n)
         if out:
-            return out
+            return zeilenumbruch_lines(out)
         return ''
 
     def start_baycom_login(self, login_cmd=''):
@@ -287,7 +287,8 @@ class DefaultCLI(object):
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
 
     def _send_name_cmd_back(self):
-        name = self._connection.stat_cfg.stat_parm_Name
+        stat_cfg: dict = self._connection.get_stat_cfg()
+        name = stat_cfg.get('stat_parm_Name', '')
         if name:
             if self.stat_identifier is not None:
                 if self.stat_identifier:
@@ -1068,7 +1069,7 @@ class DefaultCLI(object):
             typ = port.port_typ.ljust(7)
             if port.dualPort_primaryPort in [port, None]:
 
-                stations = port.my_stations
+                stations = self._port_handler.get_stat_calls_fm_port(port_id)
                 if not stations:
                     stations = ['']
                 digi = ''
@@ -1201,7 +1202,8 @@ class DefaultCLI(object):
 
     ##############################################
     def str_cmd_req_name(self):
-        name = self._connection.stat_cfg.stat_parm_Name
+        stat_cfg: dict = self._connection.get_stat_cfg()
+        name = stat_cfg.get('stat_parm_Name', '')
         qth = self._gui.own_qth
         # qth = self._connection.stat_cfg.stat_parm_QTH
         loc = self._gui.own_loc
@@ -1435,6 +1437,13 @@ class MCastCLI(DefaultCLI):
             'QUIT': (1, self._cmd_q, 'Quit'),
             'BYE': (1, self._cmd_q, 'Bye'),
             'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
+
+            # 'CONNECT': (1, self._cmd_connect, 'Connect'),
+            # 'ECHO': (1, self._cmd_echo, 'Echo'),
+            # 'PORT': (1, self._cmd_port, 'Ports'),
+            # 'MH': (0, self._cmd_mh, 'MYHeard List'),
+            # 'LMH': (0, self._cmd_mhl, 'Long MYHeard List'),
+
             'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
             'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
             # MCAST ######################################################

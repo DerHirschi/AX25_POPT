@@ -9,7 +9,7 @@
 7: 'it'
 8: 'zh'     # Not really ;-)
 
-Thanks to NL1NOD for the Dutch translation.
+Thanks to NL1NOD(Patrick) for the Dutch translations.
 """
 
 STR_TABLE = {
@@ -125,6 +125,28 @@ STR_TABLE = {
         '\n73 de $ownCall ...\n',
         '\n73 de $ownCall ...\n',
         '\n73 de $ownCall ...\n'),
+
+    'language': (
+        'Sprache',
+        'Language',
+        'Taal',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'prewritewin': (
+        'Vorschreibfenster',
+        'Prewriting window',
+        'Voorschrijfvenster',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 
     'call_vali_warning_1': (
         'Call Format!',
@@ -309,6 +331,60 @@ STR_TABLE = {
     'port_init': ('Info: Port {} erfolgreich initialisiert.',
            'Info: Port {} initialized successfully.',
            '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'setting_saved': (
+           'Info: {}-Einstellungen wurden gespeichert.',
+           'Info: {}-Settings saved.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'all_port_reinit': (
+           'Info: Ports werden reinitialisiert.',
+           'Info: Ports are reinitialized.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'port_reinit': (
+           'Info: Port {} wird reinitialisiert.',
+           'Info: Port {} is reinitialized.',
+           '-----------',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'all_disco1': (
+           'Stationen werden disconnected !',
+           'Stations are disconnected!',
+           'Stations zijn losgekoppeld!',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+    'all_disco2': (
+           'Es werden alle Stationen disconnected',
+           'All stations are disconnected',
+           'Alle stations zijn losgekoppeld',
            '',
            '',
            '',
@@ -1156,9 +1232,19 @@ STR_TABLE = {
            '',
            ''),
 
-    'stat_settings': ('Station-Einstellungen',
-                      'Station-Settings',
-                      'Gebruiker-instellingen',
+    'stat_settings': ('Station',
+                      'Station',
+                      'Gebruiker',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''), #
+
+    'general_settings': ('Allgemein',
+                      'General',
+                      'Algemeen',
            '',
            '',
            '',
@@ -1216,8 +1302,8 @@ STR_TABLE = {
            '',
            ''),
 
-    'lob3': ('Das war eine gute Entscheidung. Mach weiter so. Das hast du gut gemacht.',
-             'That was a good decision. Keep it up. You did well.',
+    'lob3': ('Lob: Das war eine gute Entscheidung. Mach weiter so. Das hast du gut gemacht.',
+             'Praise: That was a good decision. Keep it up. You did well.',
              'Dat was een goede beslissing. Ga zo door. Dat heb je goed gemaakt.',
            '',
            '',
@@ -1306,9 +1392,9 @@ STR_TABLE = {
            '',
            ''),
 
-    'beacon_settings': ('Baken-Einstellungen',
-                        'Beacon-Settings',
-                        'Baken Instellingen',
+    'beacon_settings': ('Baken',
+                        'Beacon',
+                        'Baken',
            '',
            '',
            '',
@@ -1966,11 +2052,23 @@ STR_TABLE = {
          ''),
          ''),
 
-    'mcast_new_user_channel_beacon': (
+    'mcast_user_enters_channel_beacon': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          '-= {} hat den Kanal betreten =-',
          '-= {} has entered the channel =-',
          '-= {} is het kanaal binnengekomen =-',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'mcast_user_left_channel_beacon': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '-= {} hat den Kanal verlassen =-',
+         '-= {} has left the channel =-',
+         '-= {} het kanaal verlaten =-',
          '',
          '',
          '',

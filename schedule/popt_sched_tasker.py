@@ -92,7 +92,7 @@ class PoPTSchedule_Tasker:
                 self.insert_scheduler_Task(sched_cfg, beacon)
 
     def _start_BeaconTask(self, conf, sched_conf=None):
-        is_glb_beacon = POPT_CFG.get_guiPARM_main('gui_cfg_beacon')
+        is_glb_beacon = POPT_CFG.get_guiPARM_main_param_by_key('gui_cfg_beacon')
         if not is_glb_beacon:
             return None
         if not conf.get('is_enabled', False):

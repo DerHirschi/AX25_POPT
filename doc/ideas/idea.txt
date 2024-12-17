@@ -29,10 +29,13 @@ Ideas/TODO's :
   ✓ $lastConnTime = Letzter Connect Zeit
 
 - 79 Zeichen Zeilenumbruch (Dos-PRG kompatibilität)
-  - PMS
-  - QSO (optional)
-  - Monitor (optional)
-  - Baken (automatisch aber mit Hinweis auf Pac-Len)
+  ✓ PMS
+  ✓ QSO
+    - (optional)
+  ✓ Monitor
+    -(optional)
+  ✓ Baken (automatisch aber mit Hinweis auf Pac-Len)
+  ✓ C-Text, I-Text, ...
 
 - Erweiterte C-Texte
   - Mehrere C-Texte
@@ -52,11 +55,12 @@ Ideas/TODO's :
 - Soundsystem/Sprachausgabe überarbeiten
 ✓ Haupt GUI überarbeiten
   - Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
-- Einstellung GUI überarbeiten (OnePager)
-  - Individuelle Farben (Vorschreib Fenster)
+✓ Einstellung GUI überarbeiten (OnePager)
+  ✓ Individuelle Farben (Vorschreib Fenster)
   - Individuelle Farben (PMS)
   - Individuelle Farben (APRS)
-  - Sprache auswählbar
+  ✓ Sprache auswählbar
+  - F-Texte
 
 ✓ Loop Port oder einfach localhost via AXIP
   ✓ einfach 127.0.0.1 und eigenen AXIP Port die eigene Station/Node connecten)
@@ -73,7 +77,8 @@ Ideas/TODO's :
   - MultiPortKISS (Direwolf)
 
 ✓ AXIP-Multicast überarbeiten
-  - ! LOOP-Preventer !
+  ✓ ! LOOP-Preventer !
+    - erweiterter LOOP-Preventer wenn nötig
   ✓ Multicast Channels/Groups
   ✓ Multicast CLI/NODE
   ✓ Multicast Einstellung GUI
@@ -83,7 +88,8 @@ Ideas/TODO's :
   ✓ Remote CMDs IP/DNS Eingeben
   ✓ Feste DN bevorzugen
   - StringVars
-  - Baken
+  ✓ Baken
+  - Baken an Kanal
   ✓ Private Channel
   ✓ DNS bevorzugen
 
@@ -115,6 +121,7 @@ Ideas/TODO's :
 
 ✓ UserDB
   - UserDB auf SQL-DB umstellen?
+  - Suchfunktion in UserDB GUI
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 

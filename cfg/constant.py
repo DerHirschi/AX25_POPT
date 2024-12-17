@@ -1,18 +1,11 @@
 """
-IDEA:
-https://stackoverflow.com/questions/2682745/how-do-i-create-a-constant-in-python
+Mach mit,
+mach nach,
+mach besser...
 """
-
-VER = '2.110.24'
-DEBUG_LOG = False
-CONSOLE_LOG = True
-LANGUAGE = 0   # QUICK FIX
-"""
-LANGUAGE:
-0 = German
-1 = English
-2 = Dutch
-"""
+VER = '2.111.24'
+DEBUG_LOG = True
+CONSOLE_LOG = False
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD = b'\x1b@K\r'             # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
@@ -20,7 +13,6 @@ TNC_KISS_CMD_END = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
 MAX_PORTS = 10              #
 SERVICE_CH_START = 11       # Service Channels Start Channel
 MAX_MCAST_CH = 30           # Max Virtual MCast Channels
-
 """ doc/PoPT/mysql_setup.txt """
 MYSQL = False    # MYSQL/SQLITE
 MYSQL_USER = 'popt'
@@ -45,6 +37,7 @@ CFG_sound_BELL = '//data//sound//bell.wav'
 
 ###################################################################################
 """ CONST Stuff """
+LANGUAGE = 0
 LANG_IND = {
             'DE': 0,
             'EN': 1,
@@ -86,7 +79,7 @@ STATION_TYPS = [
     'APRS-TELEMETRIE',
     'APRS-WX',
     'GATEWAY',
-    'MCast-Server',
+    'MCast',
     'OTHER',
 ]
 
@@ -120,7 +113,7 @@ STATION_ID_BBS = [
     'BayCom',
     'OpenBCM',
     'BPQ',
-    'THEBOX',
+    'THEBOX',   # TNN BOX ?
     'PoPTBOX',
 ]
 
@@ -180,13 +173,13 @@ FONT = "Courier"
 TEXT_SIZE_STATUS = 10
 TXT_BACKGROUND_CLR = 'black'
 TXT_OUT_CLR = 'red'
-TXT_INP_CLR = 'yellow'
 TXT_INP_CURSOR_CLR = 'white'
 STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = 'black'
 FONT_STAT_BAR = 'Arial'
 PARAM_MAX_MON_LEN = 100000
-CFG_clr_sys_msg = 'red'
+MON_SYS_MSG_CLR_FG = 'red'
+MON_SYS_MSG_CLR_BG = 'black'
 CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 GUI_DISABLED_CLR = '#b1b1b3'
 # Station Default

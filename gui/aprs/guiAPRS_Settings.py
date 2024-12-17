@@ -5,21 +5,21 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.default_config import getNew_APRS_Station_cfg
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import locator_to_coordinates, coordinates_to_locator
-from cfg.string_tab import STR_TABLE
+from fnc.str_fnc import get_strTab
 
 
 class APRSSettingsWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_cl = root_win
-        self.lang = self._root_cl.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self._root_cl.settings_win = self
-        self.win_width = 800
-        self.win_height = 620
+        win_width = 800
+        win_height = 620
         self.style = self._root_cl.style
-        self.title(STR_TABLE['aprs_settings'][self.lang])
-        self.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
+        self.title(get_strTab('aprs_settings', self._lang))
+        self.geometry(f"{win_width}x"
+                      f"{win_height}+"
                       f"{self._root_cl.main_win.winfo_x()}+"
                       f"{self._root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
@@ -178,22 +178,7 @@ class APRSSettingsWin(tk.Toplevel):
         # self.vars[-1]['text'].set(port_aprs.aprs_beacon_text)
 
     def _set_vars(self):
-        ind = 0
-        aprs_station = {}
-        # TODO New CFG
-        for port_id in self._all_ports.keys():
-            # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_parm_call = self.vars[ind]['call'].get()
-            # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_beacon_text = self.vars[ind]['text'].get()
-            # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_igate'] = self._vars[_ind]['ais'].get()
-            # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_digi'] = self._vars[_ind]['digi'].get()
-
-            # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._vars[_ind]['digi'].get()
-            if self._ais is not None:
-                # self.all_ports[port_id].port_cfg.parm_aprs_station.aprs_ais = self.ais
-                # self._all_ports[port_id].port_cfg.parm_aprs_station['aprs_parm_loc'] = self._ais.ais_loc
-                pass
-            # _aprs_station[port_id] = self._all_ports[port_id].port_cfg.parm_aprs_station
-            ind += 1
+        # aprs_station = {}
 
         try:
             lon = float(self.ais_lon_var.get())
@@ -228,17 +213,20 @@ class APRSSettingsWin(tk.Toplevel):
             self._ais.ais_loc = loc
             self._ais.ais_lat = float(lat)
             self._ais.ais_lon = float(lon)
-            self._ais.ais_aprs_stations = aprs_station
+            # self._ais.ais_aprs_stations = aprs_station
 
             if self.ais_port_var.get().isdigit():
                 self._ais.ais_host = self.ais_host_var.get(), int(self.ais_port_var.get())
-            # self._ais.save_conf_to_file()
+            self._ais.save_conf_to_file()
             self._ais.watchdog_task(run_now=True)
+            if not self._ais.ais_active:
+                self._ais.ais.close()
             """
             if self._ais.ais_active:
                 self._ais.login()
             PORT_HANDLER.init_aprs_ais()
             """
+
 
     def _on_ok_button(self):
         self._set_vars()
@@ -251,6 +239,3 @@ class APRSSettingsWin(tk.Toplevel):
     def _destroy_win(self):
         self._root_cl.settings_win = None
         self.destroy()
-
-    def tasker(self):
-        pass

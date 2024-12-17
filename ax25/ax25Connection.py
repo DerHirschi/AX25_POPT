@@ -8,7 +8,6 @@ from datetime import datetime
 from cli.cliMain import CLI_OPT, NoneCLI
 # from ax25.ax25Error import AX25ConnectionERROR
 from ax25.ax25UI_Pipe import AX25Pipe
-# from cfg import config_station
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
@@ -476,7 +475,7 @@ class AX25Conn:
                 pipe_cfg=pipe_cfg
             )
         except AttributeError:
-            logger.error("Pipe Error (AX25Conn-set_pipe())")
+            logger.error("Conn: Pipe Error (AX25Conn-set_pipe())")
             print("Pipe Error (AX25Conn-set_pipe())")
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
@@ -484,7 +483,7 @@ class AX25Conn:
         if pipe_cfg.get('pipe_parm_MaxFrame', 0):
             self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', self.parm_MaxFrame)
         if not self.own_port.add_pipe(pipe=pipe):
-            logger.error("Port no Pipe")
+            logger.error("Conn: Port no Pipe")
             print("Port no Pipe")
             return False
         self.cli = NoneCLI(self)
@@ -693,6 +692,7 @@ class AX25Conn:
             self.set_T1(stop=True)
             # self.zustand_exec.tx(None)
             if self.zustand_exec.stat_index in [2, 4] or self._await_disco:
+                print('End Conn')
                 self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
@@ -705,7 +705,6 @@ class AX25Conn:
                     print(f"DISCO and buff not NULL !! tx_buf_unACK: {self.tx_buf_unACK}")
                     """
                 else:
-
                     self.zustand_exec.change_state(4)
 
     def is_buffer_empty(self):

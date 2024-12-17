@@ -415,12 +415,12 @@ class PlotWindow(tk.Toplevel):
     def _reset_PortStat(self, event=None):
         if not self._mh:
             return
-        self.lower()
+        # self.lower()
         if messagebox.askokcancel(title=STR_TABLE.get('msg_box_delete_data', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('msg_box_delete_data_msg', ('', '', ''))[self._lang]):
+                                  message=STR_TABLE.get('msg_box_delete_data_msg', ('', '', ''))[self._lang], parent=self):
             self._mh.PortStat_reset()
             self._change_xlim()
-        self.lift()
+        # self.lift()
 
     def destroy_plot(self):
         self._plot1.clear()

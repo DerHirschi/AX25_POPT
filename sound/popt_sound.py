@@ -26,7 +26,7 @@ class POPT_Sound:
             self.master_sprech_on = guiCfg.get('gui_cfg_sprech', False)
         else:
             self.master_sprech_on = False
-        self._lang = LANGUAGE
+        self._lang = POPT_CFG.get_guiCFG_language()
 
     def sound_play(self, snd_file: str, wait=True):
         if self.master_sound_on:

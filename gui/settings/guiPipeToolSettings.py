@@ -230,12 +230,12 @@ class PipeTab:
     def _chk_port_id(self, event=None):
         vals = []
         port_id = self.port_var.get()
-        print(port_id)
 
         if port_id:
             port_id = int(port_id)
             if port_id in PORT_HANDLER.get_all_ports().keys():
-                vals = PORT_HANDLER.get_all_ports()[port_id].my_stations
+                # vals = PORT_HANDLER.get_all_ports()[port_id].my_stations
+                vals = PORT_HANDLER.get_stat_calls_fm_port(port_id)
             if vals:
                 self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', vals[0]))
                 # self.call_var.set(vals[0])

@@ -46,7 +46,7 @@ class AX25Port(object):
         self.portname = port_cfg.get('parm_PortName', '')
         self.port_typ = port_cfg.get('parm_PortTyp', '')
         self.port_id = port_cfg.get('parm_PortNr', -1)
-        self.my_stations = port_cfg.get('parm_StationCalls', [])
+        # self._my_stations = port_cfg.get('parm_StationCalls', [])
         # self.parm_TXD = port_cfg.get('parm_TXD', 400)
         self._TXD = time.time()
         # CONFIG ENDE
@@ -101,16 +101,7 @@ class AX25Port(object):
         pass
 
     def close(self):
-        # TODO Del all conn's and Port cfg .. etc ..
-
-        """
-        for k in self.connections.keys():
-            conn: AX25Conn = self.connections[k]
-            # Try to send a Disc
-            conn.zustand_exec.change_state(4)
-            conn.zustand_exec.tx(None)
-        time.sleep(1)
-        """
+        # self.disco_all_conns()
         # if self.port_cfg.get('parm_axip_Multicast', False):
         if self._mcast_server:
             self._mcast_server.del_mcast_port()
@@ -260,7 +251,7 @@ class AX25Port(object):
 
     def _rx_new_conn_handler(self, ax25_frame):
         # New Incoming Connection
-        if ax25_frame.to_call.call_str in self.my_stations:
+        if ax25_frame.to_call.call_str in POPT_CFG.get_stationCalls_fm_port(self.port_id):
             uid = str(ax25_frame.addr_uid)
             if uid not in self.connections.keys():
                 self.connections[uid] = AX25Conn(ax25_frame, port=self)
@@ -731,9 +722,9 @@ class AX25Port(object):
         try:
             ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
         except AX25EncodingERROR as e:
-            logger.warning(f"new_connection ERROR {e}")
-            logger.warning(f"new_connection destCall {ax25_frame.to_call}")
-            logger.warning(f"new_connection via_calls {ax25_frame.via_calls}")
+            logger.warning(f"Port {self.port_id}: new_connection ERROR {e}")
+            logger.warning(f"Port {self.port_id}: new_connection destCall {ax25_frame.to_call}")
+            logger.warning(f"Port {self.port_id}: new_connection via_calls {ax25_frame.via_calls}")
             return False
 
         while True:
@@ -742,7 +733,7 @@ class AX25Port(object):
                     (ax25_frame.from_call.call_str != ax25_frame.to_call.call_str):
                 break
 
-            logger.warning("Same UID !! {}".format(ax25_frame.addr_uid))
+            logger.warning(f"Port {self.port_id}: Same UID !! {ax25_frame.addr_uid}")
             ax25_frame.from_call.call_str = ''
             ax25_frame.from_call.ssid += 1
             try:
@@ -750,7 +741,7 @@ class AX25Port(object):
             except AX25EncodingERROR:
                 return False
             if ax25_frame.from_call.ssid > 15:
-                logger.warning("Same UID - No free SSID !! uid: {} - SSID: {}".format(ax25_frame.addr_uid, ax25_frame.from_call.ssid))
+                logger.warning("Port {}: Same UID - No free SSID !! uid: {} - SSID: {}".format(self.port_id, ax25_frame.addr_uid, ax25_frame.from_call.ssid))
                 return False
             try:
                 ax25_frame.encode_ax25frame()  # TODO Not using full encoding to get UID
@@ -776,6 +767,20 @@ class AX25Port(object):
                 del self.connections[conn_uid]
                 return
 
+    def disco_all_conns(self):
+        for uid, conn in dict(self.connections).items():
+            conn: AX25Conn
+            conn.conn_disco()
+            conn.conn_disco()   # Force Disco
+        n = 0
+        while self.connections and n < 10:
+            time.sleep(0.5)
+            n += 1
+            if n > 9:
+                # Make sure that loop is ending in any case
+                logger.warning(f"Port {self.port_id}: Station Disco while Port closing failed.")
+                break
+
     ####################################################################
     # L2 AX25 Frame
     def send_UI_frame(self,
@@ -787,13 +792,10 @@ class AX25Port(object):
                       axip_add=None
                       ):
         if not own_call:
-            print('own')
             return False
         if not add_str:
-            print('add')
             return False
         if not text:
-            print('text')
             return False
         tmp = add_str.upper().split(' ')
         dest_call = tmp[0].replace(' ', '')
@@ -1201,8 +1203,9 @@ class AXIP(AX25Port):
             except OSError as e:
                 logger.error(f"Port {self.port_id}: OSError {e}")
                 # self.device.shutdown(socket.SHUT_RDWR)
-                self.device.close()
-                self.device_is_running = False
+                # self.device.close()
+                # self.device_is_running = False
+                self.close_device()
                 raise AX25DeviceFAIL
 
             self.device_is_running = True
@@ -1297,12 +1300,13 @@ class AXIP(AX25Port):
             logger.error(f"Port {self.port_id}: TypeError AXIP Dev !!! \n {e}")
             logger.error(frame.axip_add)
             logger.error(frame.data_bytes + calc_crc)
-
+        """
         if all((
                 hasattr(self._mcast_server, 'mcast_tx'),
                 multicast
                )):
             self._mcast_server.mcast_tx(ax25frame=frame)
+        """
 
 
     def tx_multicast(self, frame):

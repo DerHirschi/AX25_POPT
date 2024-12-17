@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
 
 
 class DIGI_cfg_Tab(tk.Frame):
@@ -171,28 +170,10 @@ class DIGI_cfg_Tab(tk.Frame):
         return dict(ret)
 
 
-class DIGI_SettingsWin(tk.Toplevel):
-    def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
-        self._lang = root_win.language
-        self._root_win = root_win
-        win_width = 600
-        win_height = 350
-        self.style = root_win.style
-        self.geometry(f"{win_width}x"
-                      f"{win_height}+"
-                      f"{root_win.main_win.winfo_x()}+"
-                      f"{root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
-        # self.resizable(False, False)
-        try:
-            self.iconbitmap("favicon.ico")
-        except tk.TclError:
-            pass
-        self.lift()
-        self.title('Digipeater-Settings')
-        # self._root_win.DIGI_settings_win = self
-        self._root_win.settings_win = self
+class DIGI_SettingsWin(tk.Frame):
+    def __init__(self, tabctl, root_win=None):
+        tk.Frame.__init__(self, tabctl)
+        self._lang = POPT_CFG.get_guiCFG_language()
         #####################################################################
         # PORT_HANDLER.update_digi_setting()
         #####################################################################
@@ -201,7 +182,6 @@ class DIGI_SettingsWin(tk.Toplevel):
         tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=15)
         # Tab Vars
         self._tab_list: {int: DIGI_cfg_Tab} = {}
-
         all_DIGIs = POPT_CFG.get_digi_CFG()
         for digi_call, digi_cfg in all_DIGIs.items():
             tab = DIGI_cfg_Tab(tabControl, digi_cfg, )
@@ -209,40 +189,27 @@ class DIGI_SettingsWin(tk.Toplevel):
             port_lable_text = f'{digi_call}'
             tabControl.add(tab, text=port_lable_text)
 
-        ###########################################
-        # BTN
-        btn_frame = tk.Frame(self, height=50)
-        btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=15)
-        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
-        ok_btn.pack(side=tk.LEFT)
-
-        save_btn = tk.Button(btn_frame, text=STR_TABLE['save'][self._lang], command=self._save_btn)
-        save_btn.pack(side=tk.LEFT)
-
-        abort_btn = tk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
-        abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
-
-    def _ok_btn(self):
-        self._set_cfg_to_port()
-        self.destroy_win()
-
-    def _save_btn(self):
-        self._save_cfg()
-
-    def _abort_btn(self):
-        self.destroy_win()
-
     def _set_cfg_to_port(self):
         all_DIGIs = POPT_CFG.get_digi_CFG()
         new_cfg = {}
         for digi_call, digi_cfg in all_DIGIs.items():
-            new_cfg[digi_call] = self._tab_list[digi_call].get_cfg_fm_vars()
+            if digi_call in self._tab_list:
+                new_cfg[digi_call] = self._tab_list[digi_call].get_cfg_fm_vars()
+            else:
+                new_cfg[digi_call] = digi_cfg
         POPT_CFG.set_digi_CFG(new_cfg)
 
     def _save_cfg(self):
         self._set_cfg_to_port()
-        POPT_CFG.save_MAIN_CFG_to_file()
 
-    def destroy_win(self):
-        self._root_win.settings_win = None
-        self.destroy()
+    @staticmethod
+    def _get_config():
+        return dict(POPT_CFG.get_digi_CFG())
+
+    def save_config(self):
+        old_cfg = self._get_config()
+        self._save_cfg()
+        if old_cfg == self._get_config():
+            return False
+        self._set_cfg_to_port()
+        return True

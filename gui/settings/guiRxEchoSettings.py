@@ -4,106 +4,60 @@ import math
 from ax25.ax25InitPorts import PORT_HANDLER
 
 
-class RxEchoSettings(tk.Toplevel):
-    def __init__(self, main_win):
-        tk.Toplevel.__init__(self)
-        self._main_cl = main_win
-        main_win.settings_win = self
+class RxEchoSettings(tk.Frame):
+    def __init__(self, tabctl, root_win=None):
+        tk.Frame.__init__(self, tabctl)
         ###############
         # VARS
-        # self.port_handler = main_win.ax25_port_handler
         n_ports = len(PORT_HANDLER.get_all_ports().keys())
         self.win_height = 650
         self.win_width = 280 * max(math.ceil(n_ports / 2), 2)
-        self.style = main_win.style
-        self.title("RX-Echo Einstellungen")
-        # self.geometry("{}x{}".format(self.win_width, self.win_height))
-        self.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
-                      f"{self._main_cl.main_win.winfo_x()}+"
-                      f"{self._main_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
-        self.resizable(True, True)
-        try:
-            self.iconbitmap("favicon.ico")
-        except tk.TclError:
-            pass
-        self.lift()
+
         self.off_color = ''
         ##########################
-        # OK, Save, Cancel
-        ok_bt = tk.Button(self,
-                          text="Ok",
-                          # font=("TkFixedFont", 15),
-                          # bg="green",
-                          height=1,
-                          width=6,
-                          command=self._ok_btn_cmd)
-
-        save_bt = tk.Button(self,
-                            text="Speichern",
-                            # font=("TkFixedFont", 15),
-                            # bg="green",
-                            height=1,
-                            width=7,
-                            command=self._save_btn_cmd)
-
-        cancel_bt = tk.Button(self,
-                              text="Abbrechen",
-                              # font=("TkFixedFont", 15),
-                              # bg="green",
-                              height=1,
-                              width=8,
-                              command=self._destroy_win)
-
-        ok_bt.place(x=20, y=self.win_height - 50)
-        save_bt.place(x=110, y=self.win_height - 50)
-        cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
-
         ############################
         # Ports
         self.check_vars: {int: {int: [tk.BooleanVar, tk.BooleanVar, tk.Checkbutton, tk.Checkbutton, tk.Entry, tk.Entry]}} = {}
-        _label = tk.Label(self, text="Achtung! Diese Funktion ersetzt kein Digipeater!")
-        _label.place(x=30, y=10)
-        _x = 30
+        label = tk.Label(self, text="Achtung! Diese Funktion ersetzt kein Digipeater!")
+        label.place(x=30, y=10)
+        x = 30
         for i in range(len(list(PORT_HANDLER.get_all_ports().keys()))):
             k = list(PORT_HANDLER.get_all_ports().keys())[i]
             port = PORT_HANDLER.get_all_ports()[k]
             var_dict = {}
             text = 'Port {}: {}'.format(port.port_id, port.port_cfg.get('parm_PortName', ''))
             # Left
-            _y = 60 + (280 * int(i % 2))
+            y = 60 + (280 * int(i % 2))
             if not i % 2 and i:
-                _x += 250
-                _yy = _y + 20
-            _label = tk.Label(self, text=text)
-            _label.place(x=_x, y=_y)
+                x += 250
+            label = tk.Label(self, text=text)
+            label.place(x=x, y=y)
 
-            _yy = _y + 20
+            yy = y + 20
             for kk in list(PORT_HANDLER.get_all_ports().keys()):
                 if kk != k:
                     # tmp_port: AX25Port = PORT_HANDLER.get_all_ports()[kk]
-                    _rx_text = 'Port {} RX'.format(kk)
+                    rx_text = 'Port {} RX'.format(kk)
                     rx_check_var = tk.BooleanVar(self)
                     rx_check = tk.Checkbutton(self,
-                                               text=_rx_text,
+                                               text=rx_text,
                                                variable=rx_check_var)
                     #rx_check.var = rx_check_var
                     rx_call_ent = tk.Entry(self, width=9)
-                    rx_check.place(x=_x + 5, y=_yy)
-                    rx_call_ent.place(x=_x + 125, y=_yy)
+                    rx_check.place(x=x + 5, y=yy)
+                    rx_call_ent.place(x=x + 125, y=yy)
 
-                    _tx_text = 'Port {} TX'.format(kk)
+                    tx_text = 'Port {} TX'.format(kk)
                     tx_check_var = tk.BooleanVar(self)
                     tx_check = tk.Checkbutton(self,
-                                               text=_tx_text,
+                                               text=tx_text,
                                                variable=tx_check_var)
                     #tx_check.var = tx_check_var
                     tx_call_ent = tk.Entry(self, width=9)
-                    tx_check.place(x=_x + 5, y=_yy + 20)
-                    tx_call_ent.place(x=_x + 125, y=_yy + 20)
+                    tx_check.place(x=x + 5, y=yy + 20)
+                    tx_call_ent.place(x=x + 125, y=yy + 20)
 
-                    _yy += 40
+                    yy += 40
                     var_dict[kk] = [rx_check_var,
                                           tx_check_var,
                                           rx_check,
@@ -118,25 +72,26 @@ class RxEchoSettings(tk.Toplevel):
         self._update_settings()
         #print(self.check_vars)
 
+    """
     def _save_btn_cmd(self):
         # self.set_vars()
         # PORT_HANDLER.save_all_port_cfgs()
         # self._main_cl.sysMsg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
-        self._main_cl.sysMsg_to_monitor('Lob: Eine sehr gute Entscheidung. Du bist großartig!')
+        # self._main_cl.sysMsg_to_monitor('Lob: Eine sehr gute Entscheidung. Du bist großartig!')
+        pass
 
     def _ok_btn_cmd(self):
         # self.set_vars()
         # self.re_init_beacons()
-        self._main_cl.sysMsg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
-        self._main_cl.sysMsg_to_monitor('Lob: Du hast eine gute Einstellung. Mach weiter so!')
+        # self._main_cl.sysMsg_to_monitor('Info: RX-Echo Settings wurden gespeichert..')
+        # self._main_cl.sysMsg_to_monitor('Lob: Du hast eine gute Einstellung. Mach weiter so!')
         self._destroy_win()
 
     def _destroy_win(self):
         self.destroy()
-        self._main_cl.settings_win = None
+        # self._main_cl.settings_win = None
+    """
 
-    def tasker(self):
-        pass
 
     def _check_cmd(self):
         """
@@ -230,17 +185,20 @@ class RxEchoSettings(tk.Toplevel):
                     tr_k_kk = False
                     tr_kk_k = False
                     # RX
-                    if k in PORT_HANDLER.rx_echo[kk].tx_ports.keys():
-                        self.check_vars[kk][k][5].delete(0, tk.END)
+                    try:
+                        if k in PORT_HANDLER.rx_echo[kk].tx_ports.keys():
+                            self.check_vars[kk][k][5].delete(0, tk.END)
 
-                        call_list_kk_k = PORT_HANDLER.rx_echo[kk].tx_ports[k]
-                        call_st = ''
-                        for el in call_list_kk_k:
-                            call_st += el + ' '
-                        self.check_vars[kk][k][5].insert(tk.END, call_st)
-                        self.check_vars[kk][k][1].set(True)
-                        tr_kk_k = True
-                    else:
+                            call_list_kk_k = PORT_HANDLER.rx_echo[kk].tx_ports[k]
+                            call_st = ''
+                            for el in call_list_kk_k:
+                                call_st += el + ' '
+                            self.check_vars[kk][k][5].insert(tk.END, call_st)
+                            self.check_vars[kk][k][1].set(True)
+                            tr_kk_k = True
+                        else:
+                            self.check_vars[kk][k][1].set(False)
+                    except KeyError:
                         self.check_vars[kk][k][1].set(False)
 
                     if kk in PORT_HANDLER.rx_echo[k].rx_ports.keys():
@@ -265,3 +223,10 @@ class RxEchoSettings(tk.Toplevel):
                         self.check_vars[kk][k][3].configure(background=self.off_color[0],
                                                             activebackground=self.off_color[1])
 
+    @staticmethod
+    def get_config():
+        return None
+
+    @staticmethod
+    def save_config():
+        return False

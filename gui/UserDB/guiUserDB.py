@@ -439,7 +439,7 @@ class UserDB(tk.Toplevel):
 
     def _on_select_sysop(self, event=None):
         if self._db_ent is not None:
-            msg = AskMsg(titel=f'Einträge ergänzen?', message=f"Einträge vom Sysop ergänzen ?")
+            msg = AskMsg(titel=f'Einträge ergänzen?', message=f"Einträge vom Sysop ergänzen ?", parent_win=self)
             # self.settings_win.lift()
             if msg:
                 sysop_key = self._sysop_var.get()
@@ -646,7 +646,7 @@ class UserDB(tk.Toplevel):
 
     def _del_btn_cmd(self):
         if self._db_ent is not None:
-            msg = AskMsg(titel=f'lösche {self._db_ent.call_str} !', message=f"{self._db_ent.call_str} löschen ?")
+            msg = AskMsg(titel=f'lösche {self._db_ent.call_str} !', message=f"{self._db_ent.call_str} löschen ?", parent_win=self)
             # self.settings_win.lift()
             if msg:
                 self._user_db.del_entry(str(self._db_ent.call_str))
