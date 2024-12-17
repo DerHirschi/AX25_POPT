@@ -1890,7 +1890,7 @@ class PoPT_GUI_Main:
 
     def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self.language],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language], parent=self):
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language]):
             PORT_HANDLER.disco_all_Conn()
 
     # DISCO ENDE

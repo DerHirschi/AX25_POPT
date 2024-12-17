@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.111.24'
+VER = '2.112.0'
 DEBUG_LOG = True
 CONSOLE_LOG = False
 """ Custom TNC KISSMODE INIT """

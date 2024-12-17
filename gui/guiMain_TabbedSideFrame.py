@@ -1003,5 +1003,5 @@ class SideTabbedFrame:  # TODO
 
     def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang], parent=self):
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang]):
             PORT_HANDLER.disco_all_Conn()
