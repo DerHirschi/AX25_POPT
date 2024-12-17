@@ -91,7 +91,7 @@ class PoPT_GUI_Main:
         self.style = ttk.Style(self.main_win)
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
         self.main_win.geometry("1400x850")  # TODO to/fm CFG
-        self.main_win.attributes('-topmost', 0)
+        # self.main_win.attributes('-topmost', 0)
         try:
             self.main_win.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -99,8 +99,8 @@ class PoPT_GUI_Main:
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ##########################
         # self.style.theme_use('classic')
-        # print(self.style.theme_names())
-        # self.style.theme_use('clam')
+        #print(self.style.theme_names())
+        # self.style.theme_use('alt')
         ######################################
         # Init Vars
         self.mh = PORT_HANDLER.get_MH()

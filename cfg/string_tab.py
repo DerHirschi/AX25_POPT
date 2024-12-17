@@ -126,6 +126,28 @@ STR_TABLE = {
         '\n73 de $ownCall ...\n',
         '\n73 de $ownCall ...\n'),
 
+    'language': (
+        'Sprache',
+        'Language',
+        'Taal',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'prewritewin': (
+        'Vorschreibfenster',
+        'Prewriting window',
+        'Voorschrijfvenster',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'call_vali_warning_1': (
         'Call Format!',
         'Call format!',

@@ -35,7 +35,7 @@ class GeneralSettings(tk.Frame):
             if land_id == self._lang:
                 self._lang_var.set(land)
         opt = list(LANG_IND.keys())
-        tk.Label(lang_frame, text='Sprache: ').pack(side=tk.LEFT)
+        tk.Label(lang_frame, text=f'{get_strTab("language", self._lang)}: ').pack(side=tk.LEFT)
         lang_ent = tk.OptionMenu(lang_frame,
                                  self._lang_var,
                                        *opt,
@@ -61,7 +61,7 @@ class GeneralSettings(tk.Frame):
         vorsch_col_frame = tk.Frame(h_frame2_l, )
         vorsch_col_frame.pack()
         ################
-        tk.Label(h_frame2_l, text='Vorschreibfenster').pack(pady=15)
+        tk.Label(h_frame2_l, text=f"{get_strTab('prewritewin', self._lang)}:").pack(pady=15)
 
         self._color_example_text = tk.Text(h_frame2_l,
                                            height=5,

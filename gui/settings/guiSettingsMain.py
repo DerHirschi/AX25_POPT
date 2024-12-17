@@ -1,7 +1,6 @@
 """
 TODO:
     - F-Texte
-    - Übersetzung in Allgemeine Einstellungen
 FIXME:
     - Keine sysMSG für änderung d Station-Settings.(Nur neue/gelöschte o geänderte Calls werden returned)
     - Keine sysMSG für änderung d Port-Settings.(Nur neue o gelöschte Ports werden returned)
