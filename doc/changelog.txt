@@ -2,6 +2,8 @@
 # 2.112.x
 Fixes:
 - Scripterror (Crash) wenn "Alle Disconecten" Messagebox angezeigt wird
+- Kanal-Buttons(unten) zeigen noch connect an (bleiben grün) obwohl
+  Gegenstation bereits disconnected.
 
 Optimierung:
 

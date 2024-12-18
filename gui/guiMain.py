@@ -1890,7 +1890,7 @@ class PoPT_GUI_Main:
 
     def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self.language],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language]):
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language], parent=self.main_win):
             PORT_HANDLER.disco_all_Conn()
 
     # DISCO ENDE
@@ -2165,8 +2165,6 @@ class PoPT_GUI_Main:
                 btn_txt = all_conn[i].to_call_str
                 is_link = all_conn[i].is_link
                 is_pipe = all_conn[i].pipe
-                if is_pipe is None:
-                    is_pipe = False
                 if is_link:
                     btn_txt = 'L>' + btn_txt
                 elif is_pipe:
@@ -2183,6 +2181,7 @@ class PoPT_GUI_Main:
                     else:
                         if self._con_btn_dict[i][0].cget('bg') != 'green2':
                             self._con_btn_dict[i][0].configure(bg='green2')
+                        self.set_ch_new_data_tr(i, False)
                 else:
                     if self.get_ch_new_data_tr(i):
                         if is_link:
@@ -2221,9 +2220,14 @@ class PoPT_GUI_Main:
                         if self._con_btn_dict[i][0].cget('bg') != 'red4':
                             self._con_btn_dict[i][0].configure(bg='red4')
                 else:
-                    if i != self.channel_index:
+                    if i == self.channel_index:
+                        if self._con_btn_dict[i][0].cget('bg') != 'red2':
+                            self._con_btn_dict[i][0].configure(bg='red2')
+                        self.set_ch_new_data_tr(i, False)
+                    else:
                         if self._con_btn_dict[i][0].cget('bg') != 'yellow':
                             self._con_btn_dict[i][0].configure(bg='yellow')
+
 
         if self._ch_btn_blink_timer < time.time():
             self._ch_btn_blink_timer = time.time() + self._parm_btn_blink_time
@@ -2501,6 +2505,11 @@ class PoPT_GUI_Main:
     def get_ch_new_data_tr(self, ch_id):
         return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)
 
+    def set_ch_new_data_tr(self, ch_id, state: bool):
+        self.get_ch_var(ch_index=ch_id).new_data_tr = state
+
+    ##########################################
+    #
     def set_tracer(self, state=None):
         ais_obj = PORT_HANDLER.get_aprs_ais()
         if ais_obj is not None:

@@ -881,7 +881,7 @@ class AX25PortHandler(object):
                             print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
                             conn.ch_index += 1  # FIXME
                         """
-        return ret
+        return dict(ret)
 
     def get_all_digiConn(self):
         ret = {}
