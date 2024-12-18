@@ -242,7 +242,12 @@ class NewConnWin(tk.Toplevel):
     def _process_new_conn_win(self):
         axip_address = ('', 0)
         addrs_str = self._call_txt_inp_var.get().upper()
-        ch_id = max(self._main.get_free_channel(self._main.channel_index), 1)
+        ch_id = self._main.get_free_channel(self._main.channel_index)
+        if ch_id is None:
+            ch_id = self._main.get_free_channel(1)
+            if ch_id is None:
+                self._main.sysMsg_to_monitor('*** Error. No free Channel.')
+                return
         if addrs_str:
             own_call = self._own_call_var.get()
             call_list = get_list_fm_viaStr(addrs_str)

@@ -1,7 +1,11 @@
 ###########################################################################################################
 # 2.112.x
 Fixes:
-- Scripterror (Crash) wenn "Alle Disconecten" Messagebox angezeigt wird
+- Scripterror (Crash) wenn "Alle Disconnecten" Messagebox angezeigt wird
+- Scripterror (Crash) wenn versucht wird auf Kanal 11 zu connecten.
+  (Wenn Kanal 10 belegt und der neue Connect den nächsten Kanal belegen soll.
+  (Die Kanäle ab 11 sind für "Serviece Kanäle" vorgesehen. Noden,
+  Auto Connects, PMS, ...))
 - Kanal-Buttons(unten) zeigen noch connect an (bleiben grün) obwohl
   Gegenstation bereits disconnected.
 

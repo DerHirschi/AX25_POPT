@@ -1574,6 +1574,8 @@ class PoPT_GUI_Main:
             tag_name_rx = 'RX-' + str(conn.my_call)
             Ch_var.last_tag_name = str(conn.my_call)
         else:
+            print('------------')
+            print(Ch_var.last_tag_name)
             tag_name_rx = 'RX-' + str(Ch_var.last_tag_name)
 
         if self.channel_index == conn.ch_index:
@@ -1749,6 +1751,7 @@ class PoPT_GUI_Main:
             self._mon_txt.configure(state="disabled", exportselection=True)
             return True
         return False
+
     def see_end_qso_win(self):
         self._out_txt.see("end")
 
@@ -1890,7 +1893,8 @@ class PoPT_GUI_Main:
 
     def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self.language],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language], parent=self.main_win):
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language],
+                                  parent=self.main_win):
             PORT_HANDLER.disco_all_Conn()
 
     # DISCO ENDE
@@ -1901,7 +1905,6 @@ class PoPT_GUI_Main:
         if self.channel_index:
             station = self.get_conn(self.channel_index)
             if station:
-
                 ch_vars = self.get_ch_var(ch_index=self.channel_index)
                 ind = str(ch_vars.input_win_index)
                 if ind:
@@ -1927,7 +1930,6 @@ class PoPT_GUI_Main:
 
                 if '.0' in self._inp_txt.index(tk.INSERT):
                     self._inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
-
 
         else:
             self._send_to_monitor()
@@ -1976,17 +1978,12 @@ class PoPT_GUI_Main:
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         ch_vars.input_win_index = ind
 
-
     def _on_key_release_inp_txt(self, event=None):
         ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
         text = zeilenumbruch(self._inp_txt.get(ind,  self._inp_txt.index(tk.INSERT)))
         self._inp_txt.delete(ind,  self._inp_txt.index(tk.INSERT))
         self._inp_txt.insert(tk.INSERT, text)
         self._inp_txt.tag_remove('send', ind, tk.INSERT)
-
-
-
-
 
     # SEND TEXT OUT
     #######################################################################
@@ -2087,12 +2084,10 @@ class PoPT_GUI_Main:
                 self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
         elif self._conn_btn.cget('bg') != "green":
             self._conn_btn.configure(text="Connect", bg="green", command=self.open_new_conn_win)
-        # !! Loop !! ???
         self._ch_btn_status_update()
 
     def ch_status_update(self):
-        # TODO Call just if necessary
-        """ Triggerd when Connection Status has changed """
+        """ Triggerd when Connection Status has changed (Conn-accept, -end, -resset)"""
         self._ch_btn_status_update()
         self.on_channel_status_change()
 
@@ -2498,9 +2493,10 @@ class PoPT_GUI_Main:
     ##########################################
     #
     def get_free_channel(self, start_channel=1):
-        for ch_id in range(start_channel, 11):
+        for ch_id in range(start_channel, SERVICE_CH_START):
             if not self.get_conn(con_ind=ch_id):
                 return ch_id
+        return None
 
     def get_ch_new_data_tr(self, ch_id):
         return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)

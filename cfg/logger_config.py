@@ -59,7 +59,7 @@ for el in lg_msg:
     logger.warning(f'Directory {el} not found ! Creating new Directory.')
 
 ###########################################
-# Log Book
+# Log Book # TODO LogBook FNC
 dt_str = datetime.now().strftime('%y%m')
 log_book = logging.getLogger('Logbook')
 formatter = logging.Formatter('%(asctime)s - %(name)s: %(message)s')
