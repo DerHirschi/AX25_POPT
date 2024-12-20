@@ -146,10 +146,10 @@ def get_MaxFrame(port=None,
                  port_handler=None,
                  connection=None,
                  user_db=None):
-    if connection:
+    if hasattr(connection, 'parm_MaxFrame'):
         return str(connection.parm_MaxFrame)
-    if port:
-        return str(port.port_cfg.get('parm_MaxFrame', 0))
+    if hasattr(port, 'port_get_port_cfg'):
+        return str(port.port_get_port_cfg().get('parm_MaxFrame', 0))
     return '-'
 
 
@@ -157,10 +157,10 @@ def get_PacLen(port=None,
                port_handler=None,
                connection=None,
                user_db=None):
-    if connection:
+    if hasattr(connection, 'parm_PacLen'):
         return str(connection.parm_PacLen)
-    if port:
-        return str(port.port_cfg.get('parm_PacLen', 0))
+    if hasattr(port, 'port_get_port_cfg'):
+        return str(port.port_get_port_cfg().get('parm_PacLen', 0))
     return '-'
 
 

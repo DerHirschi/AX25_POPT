@@ -4,6 +4,7 @@ from tkinter import ttk, TclError, Menu
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import tk_filter_bad_chars
 
@@ -121,8 +122,10 @@ class DP_MonitorTab(tk.Frame):
         if not self._port.check_dualPort():
             return
         mon_buf = self._get_mon_buf()
-        prim_port_cfg = self._port.dualPort_primaryPort.port_cfg
-        sec_port_cfg = self._port.dualPort_secondaryPort.port_cfg
+        prim_port_cfg = POPT_CFG.get_port_CFG_fm_id(self._port.dualPort_primaryPort.port_id)
+        # prim_port_cfg = self._port.dualPort_primaryPort.port_cfg
+        sec_port_cfg = POPT_CFG.get_port_CFG_fm_id(self._port.dualPort_secondaryPort.port_id)
+        # sec_port_cfg = self._port.dualPort_secondaryPort.port_cfg
         scroll = False
         if mon_buf:
             self._primPort_text.configure(state='normal')

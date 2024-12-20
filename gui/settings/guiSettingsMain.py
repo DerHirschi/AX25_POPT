@@ -148,16 +148,14 @@ class SettingsMain(tk.Toplevel):
         # self._root_win.set_text_tags()
         # self._root_win.tabbed_sideFrame.update_mon_port_id()
         self._root_win.sysMsg_to_monitor(get_strTab('hin1', self._lang))
-        lob = lob_gen(self._lang)
-        self._root_win.sysMsg_to_monitor(get_strTab(lob, self._lang))
+        self._root_win.sysMsg_to_monitor(lob_gen(self._lang))
         self.destroy_win()
 
     def _save_btn(self):
         self._save_cfg()
         POPT_CFG.save_PORT_CFG_to_file()
         POPT_CFG.save_MAIN_CFG_to_file()
-        lob = lob_gen(self._lang)
-        self._root_win.sysMsg_to_monitor(get_strTab(lob, self._lang))
+        self._root_win.sysMsg_to_monitor(lob_gen(self._lang))
 
     def _abort_btn(self):
         self._root_win.sysMsg_to_monitor(get_strTab('hin2', self._lang))

@@ -1062,9 +1062,10 @@ class PoPT_GUI_Main:
         for port_id in all_port.keys():
             tag_tx = f"tx{port_id}"
             tag_rx = f"rx{port_id}"
-            tx_fg = all_port[port_id].port_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)
-            tx_bg = all_port[port_id].port_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)
-            rx_fg = all_port[port_id].port_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
+            tx_fg = port_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)
+            tx_bg = port_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)
+            rx_fg = port_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)
             self._mon_txt.tag_config(tag_tx, foreground=tx_fg,
                                      background=tx_bg,
                                      selectbackground=tx_fg,
@@ -1161,16 +1162,17 @@ class PoPT_GUI_Main:
             msg = 'konnte nicht initialisiert werden!'
             if all_ports[port_k].device_is_running:
                 msg = 'erfolgreich initialisiert.'
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
             self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
                                    .format(port_k,
-                                           all_ports[port_k].port_cfg.get('parm_PortName', ''),
-                                           all_ports[port_k].port_cfg.get('parm_PortTyp', ''),
+                                           port_cfg.get('parm_PortName', ''),
+                                           port_cfg.get('parm_PortTyp', ''),
                                            msg
                                            ))
             self.sysMsg_to_monitor('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
-                                           all_ports[port_k].port_cfg.get('parm_PortParm', ('', 0))[0],
-                                           all_ports[port_k].port_cfg.get('parm_PortParm', ('', 0))[1],
+                                           port_cfg.get('parm_PortParm', ('', 0))[0],
+                                           port_cfg.get('parm_PortParm', ('', 0))[1],
                                            ))
 
     # END Init Stuff
@@ -1997,11 +1999,12 @@ class PoPT_GUI_Main:
     def _update_bw_mon(self):
         tr = False
         for port_id in list(PORT_HANDLER.ax25_ports.keys()):
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
             data = self.mh.get_bandwidth(
                 port_id,
-                PORT_HANDLER.ax25_ports[port_id].port_cfg.get('parm_baud', 1200),
+                port_cfg.get('parm_baud', 1200),
             )
-            label = f"{PORT_HANDLER.ax25_ports[port_id].port_cfg.get('parm_PortName', '')}"
+            label = f"{port_cfg.get('parm_PortName', '')}"
             if port_id not in self._bw_plot_lines:
                 self._bw_plot_lines[int(port_id)], = self._ax.plot(self._bw_plot_x_scale, data, label=label)
                 self._ax.legend()

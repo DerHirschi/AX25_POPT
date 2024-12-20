@@ -13,6 +13,7 @@ Fixes:
    nicht übernommen)
 
 Optimierung:
+- Port-Config Initialisierung
 
 Neue Implementierungen / Funktionen:
 

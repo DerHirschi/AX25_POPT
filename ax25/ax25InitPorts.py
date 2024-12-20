@@ -40,7 +40,7 @@ class AX25PortHandler(object):
         logger.info("PH: Init")
         #################
         # Init SQL-DB
-        self.db = None
+        self._db = None
         logger.info("PH: Database Init")
         try:
             self._init_DB()
@@ -62,7 +62,6 @@ class AX25PortHandler(object):
         # VARs
         self.ax25_ports = {}
         # self.ch_echo: {int:  [AX25Conn]} = {}
-        self.multicast_ip_s = []  # [axip-addresses('ip', port)]
         self.link_connections = {}  # {str: AX25Conn} UID Index
         self.rx_echo = {}
         self.rx_echo_on = False
@@ -71,11 +70,11 @@ class AX25PortHandler(object):
         self._dualPort_monitor_buffer = {}
         #######################################################
         # Init UserDB
-        self.userDB = USER_DB
-        self.userDB.set_port_handler(self)
+        self._userDB = USER_DB
+        self._userDB.set_port_handler(self)
         ########################################################
         # Init MH
-        self.mh = None
+        self._mh = None
         self._init_MH()
         #######################################################
         # MCast Server Init
@@ -86,6 +85,7 @@ class AX25PortHandler(object):
         logger.info(f"PH: Port Init Max-Ports {MAX_PORTS}")
         for port_id in range(MAX_PORTS):  # Max Ports
             self._init_port(port_id=port_id)
+        logger.info(f"PH: Port Init complete...")
         #######################################################
         # Dual Port Init
         logger.info("PH: Dual-Port Init")
@@ -168,11 +168,11 @@ class AX25PortHandler(object):
     #######################################################################
     # MH
     def _init_MH(self):
-        self.mh = MH(self)
-        self.mh.set_DB(self.db)
+        self._mh = MH(self)
+        self._mh.set_DB(self._db)
 
     def _mh_task(self):
-        self.mh.mh_task()
+        self._mh.mh_task()
 
     #######################################################################
     # Routing Table
@@ -240,11 +240,11 @@ class AX25PortHandler(object):
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.close_port(k)
-        if self.mh:
+        if self._mh:
             logger.info("PH: Saving MH-Data")
-            self.mh.save_mh_data()
+            self._mh.save_mh_data()
             logger.info("PH: Saving Port Statistic-Data")
-            self.mh.save_PortStat()
+            self._mh.save_PortStat()
         logger.info("PH: Saving User-DB Data")
         USER_DB.save_data()
         logger.info("PH: Closing User-DB")
@@ -307,11 +307,12 @@ class AX25PortHandler(object):
         self.set_diesel()
 
     def set_kiss_param_all_ports(self):
-        for port_id in list(self.ax25_ports.keys()):
-            if self.ax25_ports[port_id].port_cfg.get('parm_kiss_is_on', True):
+        for port_id, port in self.ax25_ports.items():
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
+            if port_cfg.get('parm_kiss_is_on', True):
                 self.sysmsg_to_gui(get_strTab('send_kiss_parm', POPT_CFG.get_guiCFG_language()).format(port_id))
                 try:
-                    self.ax25_ports[port_id].set_kiss_parm()
+                    port.set_kiss_parm()
                 except AX25DeviceFAIL as e:
                     logger.error(f"PH: set_kiss_parm() Port: {port_id} - {e}")
                     pass
@@ -337,11 +338,10 @@ class AX25PortHandler(object):
         #########################
         # Init Port/Device
         try:
-            temp = AX25DeviceTAB[new_cfg.get('parm_PortTyp', '')](new_cfg, self)
+            temp = AX25DeviceTAB[new_cfg.get('parm_PortTyp', '')](int(port_id), self)
         except AX25DeviceFAIL as e:
             self.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
             logger.error(f'PH: Could not initialise Port {port_id}. {e}')
-            del temp
             return False
         ##########################
         # Start Port/Device Thread
@@ -583,7 +583,7 @@ class AX25PortHandler(object):
             via_calls = []
         if not dest_call or not own_call:
             return False, 'Error: Invalid Call'
-        mh_entry = self.mh.mh_get_data_fm_call(dest_call, port_id)
+        mh_entry = self._mh.mh_get_data_fm_call(dest_call, port_id)
         if not exclusive:
             if mh_entry:
                 if mh_entry.all_routes:
@@ -926,31 +926,31 @@ class AX25PortHandler(object):
     def _init_DB(self):
         ###############
         # Init DB
-        self.db = SQL_Database(self)
-        if not self.db.error:
+        self._db = SQL_Database(self)
+        if not self._db.error:
             # DB.check_tables_exists('bbs')
             # TODO optional Moduls for minimum config
-            self.db.check_tables_exists('bbs')
-            self.db.check_tables_exists('user_db')
-            self.db.check_tables_exists('aprs')
-            self.db.check_tables_exists('port_stat')
-            # self.db.check_tables_exists('mh')
-            if self.db.error:
+            self._db.check_tables_exists('bbs')
+            self._db.check_tables_exists('user_db')
+            self._db.check_tables_exists('aprs')
+            self._db.check_tables_exists('port_stat')
+            # self._db.check_tables_exists('mh')
+            if self._db.error:
                 raise SQLConnectionError
         else:
             raise SQLConnectionError
 
     def close_DB(self):
-        self.db.close_db()
+        self._db.close_db()
 
     def get_database(self):
-        return self.db
+        return self._db
 
     def get_userDB(self):
-        return self.userDB
+        return self._userDB
 
     def get_MH(self):
-        return self.mh
+        return self._mh
 
     def get_stat_timer(self):
         return self._start_time
@@ -960,14 +960,14 @@ class AX25PortHandler(object):
     def set_dxAlarm(self, set_alarm=True):
         if set_alarm:
             aprs_obj = self.get_aprs_ais()
-            if all((aprs_obj, self.mh)):
-                aprs_obj.tracer_reset_auto_timer(self.mh.last_dx_alarm)
+            if all((aprs_obj, self._mh)):
+                aprs_obj.tracer_reset_auto_timer(self._mh.last_dx_alarm)
 
             if self._gui:
                 self._gui.dx_alarm()
         else:
-            if self.mh:
-                self.mh.dx_alarm_trigger = False
+            if self._mh:
+                self._mh.dx_alarm_trigger = False
             if self._gui:
                 self._gui.reset_dx_alarm()
 

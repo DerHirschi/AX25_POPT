@@ -233,7 +233,7 @@ def get_strTab(str_key: str, lang_index: int):
     if not str_key:
         return str_key
     if str_key not in STR_TABLE.keys():
-        logger.error(f"get_strTab() str_key: {str_key}")
+        logger.warning(f"get_strTab() str_key: {str_key}")
         return str_key
     lang_tab = STR_TABLE.get(str_key, ())
     try:
