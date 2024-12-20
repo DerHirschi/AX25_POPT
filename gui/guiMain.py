@@ -1522,19 +1522,21 @@ class PoPT_GUI_Main:
         txt_enc = 'UTF-8'
         if conn.user_db_ent:
             txt_enc = str(conn.user_db_ent.Encoding)
+        my_call_str = str(conn.my_call_str)
+        my_call = str(conn.my_call)
         inp = data.decode(txt_enc, 'ignore').replace('\r', '\n')
         inp = tk_filter_bad_chars(inp)
 
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         Ch_var.output_win += inp
-        if conn.my_call_str in self._all_tag_calls:
-            tag_name_tx = 'TX-' + str(conn.my_call_str)
-            Ch_var.last_tag_name = str(conn.my_call_str)
-        elif conn.my_call in self._all_tag_calls:
-            tag_name_tx = 'TX-' + str(conn.my_call)
-            Ch_var.last_tag_name = str(conn.my_call)
+        if my_call_str in self._all_tag_calls:
+            tag_name_tx = f'TX-{my_call_str}'
+            Ch_var.last_tag_name = my_call_str
+        elif my_call in self._all_tag_calls:
+            tag_name_tx = f'TX-{my_call}'
+            Ch_var.last_tag_name = my_call
         else:
-            tag_name_tx = 'TX-' + str(Ch_var.last_tag_name)
+            tag_name_tx = f'TX-{Ch_var.last_tag_name}'
 
         if self.channel_index == conn.ch_index:
             self._out_txt.configure(state="normal")
@@ -1559,24 +1561,27 @@ class PoPT_GUI_Main:
         txt_enc = 'UTF-8'
         if conn.user_db_ent:
             txt_enc = str(conn.user_db_ent.Encoding)
-
+        my_call_str = str(conn.my_call_str)
+        my_call = str(conn.my_call)
+        Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         out = data.decode(txt_enc, 'ignore')
         out = out.replace('\r', '\n')
         out = tk_filter_bad_chars(out)
 
         # Write RX Date to Window/Channel Buffer
-        Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         Ch_var.output_win += out
-        if conn.my_call_str in self._all_tag_calls:
-            tag_name_rx = 'RX-' + str(conn.my_call_str)
-            Ch_var.last_tag_name = str(conn.my_call_str)
-        elif conn.my_call in self._all_tag_calls:
-            tag_name_rx = 'RX-' + str(conn.my_call)
-            Ch_var.last_tag_name = str(conn.my_call)
+        if my_call_str in self._all_tag_calls:
+            tag_name_rx = f'RX-{my_call_str}'
+            Ch_var.last_tag_name = my_call_str
+        elif my_call in self._all_tag_calls:
+            tag_name_rx = f'RX-{my_call}'
+            Ch_var.last_tag_name = my_call
         else:
-            print('------------')
-            print(Ch_var.last_tag_name)
-            tag_name_rx = 'RX-' + str(Ch_var.last_tag_name)
+            logger.error('Conn: _update_qso_rx: no Tagname')
+            print('Conn: _update_qso_rx: no Tagname')
+            print(f"Conn: last Tag: {Ch_var.last_tag_name}")
+            logger.error(f"Conn: last Tag: {Ch_var.last_tag_name}")
+            tag_name_rx = f'RX-{Ch_var.last_tag_name}'
 
         if self.channel_index == conn.ch_index:
             if Ch_var.t2speech:
@@ -1649,9 +1654,10 @@ class PoPT_GUI_Main:
             self._ts_box_box.configure(bg=STAT_BAR_CLR)
 
     def sysMsg_to_qso(self, data, ch_index):
+        # FIXME: Wait for spooler (async)
         if not data:
             return
-        if 1 > ch_index > 10:
+        if 1 > ch_index > SERVICE_CH_START - 1:
             return False
         data = data.replace('\r', '')
         data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
@@ -2371,7 +2377,7 @@ class PoPT_GUI_Main:
         station = self.get_conn(self.channel_index)
         if station is not None:
             from_call = str(station.my_call_str)
-            status = station.zustand_tab[station.get_state_index()][1]
+            status = station.zustand_tab[station.get_state()][1]
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
             unAck = f"unACK: {len(station.tx_buf_unACK.keys())}"
@@ -2381,9 +2387,9 @@ class PoPT_GUI_Main:
             rtt_text = 'RTT: {:.1f}/{:.1f}'.format(station.RTT_Timer.rtt_last, station.RTT_Timer.rtt_average)
             t3_text = f"T3: {max(0, int(station.t3 - time.time()))}"
             if station.get_port_cfg().get('parm_T2_auto', True):
-                t2_text = f"T2: {int(station.parm_T2 * 1000)}A"
+                t2_text = f"T2: {int(station.get_param_T2() * 1000)}A"
             else:
-                t2_text = f"T2: {int(station.parm_T2 * 1000)}"
+                t2_text = f"T2: {int(station.get_param_T2() * 1000)}"
             if self._status_name_var.get() != from_call:
                 self._status_name_var.set(from_call)
             if self._status_status_var.get() != status:
@@ -2493,7 +2499,9 @@ class PoPT_GUI_Main:
     ##########################################
     #
     def get_free_channel(self, start_channel=1):
-        for ch_id in range(start_channel, SERVICE_CH_START):
+        if not self.get_conn(con_ind=start_channel):
+            return start_channel
+        for ch_id in range(1, SERVICE_CH_START):
             if not self.get_conn(con_ind=ch_id):
                 return ch_id
         return None

@@ -8,6 +8,9 @@ Fixes:
   Auto Connects, PMS, ...))
 - Kanal-Buttons(unten) zeigen noch connect an (bleiben grün) obwohl
   Gegenstation bereits disconnected.
+- T2-Parameter für AXIP. (Einstellungen werden nicht überneommen,
+  "Schnell-Einstellungen" rechte Seite "Kanal" werden falsch angezeigt bzw.
+   nicht übernommen)
 
 Optimierung:
 

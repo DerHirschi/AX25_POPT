@@ -669,10 +669,10 @@ class AX25PortHandler(object):
 
     ######################
     # Monitor Buffer Stuff
-    def update_monitor(self, ax25frame, port_conf, tx=False):
+    def update_monitor(self, ax25frame_conf: dict, port_conf: dict, tx=False):
         """ Called from AX25Conn """
         self._monitor_buffer.append((
-            ax25frame.get_frame_conf(),
+            ax25frame_conf,
             port_conf,
             bool(tx)
         ))

@@ -126,16 +126,6 @@ class GeneralSettings(tk.Frame):
         self._color_example_text.tag_config('prewrite', foreground=self._fg_rx, background=self._bg_tx)
         self._color_example_text.configure(background=self._bg_tx)
 
-
-    def _save_cfg(self):
-        # self._set_cfg_to_port()
-        pass
-
-    @staticmethod
-    def _get_config():
-        return {}
-        # return dict(POPT_CFG.get_digi_CFG())
-
     def save_config(self):
         conf: dict = POPT_CFG.load_guiPARM_main()
         old_conf = dict(conf)

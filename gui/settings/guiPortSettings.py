@@ -291,9 +291,12 @@ class PortSetTab:
         t2_x = 20
         t2_y = 430
         t2_label = tk.Label(self.tab, text='T2:')
-        self._t2 = tk.Entry(self.tab, width=5)
+        self._t2_var = tk.StringVar(self.tab,
+                                    value=self._port_setting.get('parm_T2', new_cfg.get('parm_T2', 1700))
+                                    )
+        self._t2 = tk.Entry(self.tab, width=5, textvariable=self._t2_var)
         # self._t2.insert(tk.END, self._port_setting.parm_T2)
-        self._t2.insert(tk.END, self._port_setting.get('parm_T2', new_cfg.get('parm_T2', 1700)))
+        # self._t2.insert(tk.END, self._port_setting.get('parm_T2', new_cfg.get('parm_T2', 1700)))
         t2_label.place(x=t2_x, y=height - t2_y)
         self._t2.place(x=t2_x + 40, y=height - t2_y)
         # T3
@@ -579,15 +582,7 @@ class PortSetTab:
             # if self._port_setting.get('parm_PortParm', new_cfg.get('parm_PortParm', ('', 0)))[1]:
                 # self._param2_ent.insert(tk.END, self._port_setting.parm_PortParm[1])
             self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
-            """
-            self.t1.configure(state="normal")
-            self.t1.delete(0, tk.END)
-            self.t1.insert(tk.END, self.port_setting.parm_T1)
-            """
-            self._t2.configure(state="normal")
-            self._t2.delete(0, tk.END)
-            # self._t2.insert(tk.END, self._port_setting.parm_T2)
-            self._t2.insert(tk.END, self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700)))
+
 
         elif typ == 'AXIP':
 
@@ -629,17 +624,6 @@ class PortSetTab:
             self._calc_baud.delete(0, tk.END)
             self._calc_baud.insert(tk.END, '115200')
             self._calc_baud.configure(state="disabled")
-            """
-            self.t1.configure(state="normal")
-            self.t1.delete(0, tk.END)
-            self.t1.insert(tk.END, '1')
-            self.t1.configure(state="disabled")
-            """
-            self._t2.configure(state="normal")
-
-            self._t2.delete(0, tk.END)
-            self._t2.insert(tk.END, '1')
-            self._t2.configure(state="disabled")
 
             self._param1_label.configure(text='Adresse:')
             self._param1_ent.configure(width=28)
@@ -664,9 +648,6 @@ class PortSetTab:
         elif typ == 'KISSSER':
             #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
-            #self._test_call.configure(state="disabled")
-            #self._test_inter.configure(state="disabled")
-            #self._test_fail.configure(state="disabled")
 
             self._kiss_txd.configure(state="normal")
             self._kiss_pers.configure(state="normal")
@@ -704,16 +685,7 @@ class PortSetTab:
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
                 self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
 
-            """
-            self.t1.configure(state="normal")
-            self.t1.delete(0, tk.END)
-            self.t1.insert(tk.END, self.port_setting.parm_T1)
-            """
-            self._t2.configure(state="normal")
-            self._t2.delete(0, tk.END)
-            # self._t2.insert(tk.END, self._port_setting.parm_T2)
-            self._t2.insert(tk.END, self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700)))
-
+        self._t2_var.set(str(self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
         # if self._port_setting.parm_T2_auto:
         if self._port_setting.get('parm_T2_auto', new_port_cfg.get('parm_T2_auto', True)):
             self._t2_auto_var.set(True)
@@ -767,7 +739,10 @@ class PortSetTab:
         # T 2 auto
         self._port_setting['parm_T2_auto'] = bool(self._t2_auto_var.get())
         # T 2
-        self._port_setting['parm_T2'] = int(self._t2.get())
+        try:
+            self._port_setting['parm_T2'] = int(self._t2_var.get())
+        except ValueError:
+            pass
         # T 3
         self._port_setting['parm_T3'] = int(self._t3.get())
         # N 2

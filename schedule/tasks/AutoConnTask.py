@@ -83,7 +83,7 @@ class AutoConnTask:
         if not self.connection:
             self.e = True
             return False
-        state_index = self.connection.get_state_index()
+        state_index = self.connection.get_state()
         if not state_index:
             self.e = True
             return False

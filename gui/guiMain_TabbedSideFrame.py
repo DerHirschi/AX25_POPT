@@ -56,61 +56,61 @@ class SideTabbedFrame:  # TODO
         # Kanal
         parm_y = 20
         m_f_label = tk.Label(tab1_kanal, text='Max Pac:')
-        self.max_frame_var = tk.StringVar(tab1_kanal)
-        self.max_frame_var.set('1')
-        self.max_frame = tk.Spinbox(tab1_kanal,
-                                    from_=1,
-                                    to=7,
-                                    increment=1,
-                                    width=2,
-                                    textvariable=self.max_frame_var,
-                                    command=self._set_max_frame,
-                                    state='disabled')
+        self._max_frame_var = tk.StringVar(tab1_kanal)
+        self._max_frame_var.set('1')
+        self._max_frame = tk.Spinbox(tab1_kanal,
+                                     from_=1,
+                                     to=7,
+                                     increment=1,
+                                     width=2,
+                                     textvariable=self._max_frame_var,
+                                     command=self._set_max_frame,
+                                     state='disabled')
         m_f_label.place(x=10, y=parm_y)
-        self.max_frame.place(x=10 + 80, y=parm_y)
+        self._max_frame.place(x=10 + 80, y=parm_y)
         parm_y = 55
         p_l_label = tk.Label(tab1_kanal, text='Pac Len:')
-        self.pac_len_var = tk.IntVar(tab1_kanal)
-        self.pac_len_var.set(128)
+        self._pac_len_var = tk.IntVar(tab1_kanal)
+        self._pac_len_var.set(128)
         vals = []
         for i in range(256):
             vals.append(str(i + 1))
-        self.pac_len = tk.ttk.Combobox(tab1_kanal,
+        self._pac_len = tk.ttk.Combobox(tab1_kanal,
                                        width=4,
-                                       textvariable=self.pac_len_var,
+                                       textvariable=self._pac_len_var,
                                        values=vals,
                                        state='disabled')
-        self.pac_len.bind("<<ComboboxSelected>>", self._set_pac_len)
+        self._pac_len.bind("<<ComboboxSelected>>", self._set_pac_len)
         p_l_label.place(x=10, y=parm_y)
-        self.pac_len.place(x=10 + 80, y=parm_y)
+        self._pac_len.place(x=10 + 80, y=parm_y)
         # t2 Auto Checkbutton
         parm_y = 90
         label = tk.Label(tab1_kanal, text='T2:')
-        self.t2_var = tk.StringVar(tab1_kanal)
-        self.t2_var.set(str(1700))
+        self._t2_var = tk.StringVar(tab1_kanal)
+        self._t2_var.set(str(1700))
         val_list = []
 
-        for i in range(10, 60):
-            # 500 - 3000
-            val_list.append(str(i * 50))
+        for i in range(1, 500):
+            # 10 - 5000
+            val_list.append(str(i * 10))
 
-        self.t2 = ttk.Combobox(tab1_kanal,
-                                  width=4,
-                                  textvariable=self.t2_var,
-                                  values=val_list,
-                                  state='disabled')
-        self.t2.bind("<<ComboboxSelected>>", self._set_t2)
+        self._t2 = ttk.Combobox(tab1_kanal,
+                               width=4,
+                               textvariable=self._t2_var,
+                               values=val_list,
+                               state='disabled')
+        self._t2.bind("<<ComboboxSelected>>", self._set_t2)
         label.place(x=10, y=parm_y)
-        self.t2.place(x=50, y=parm_y)
+        self._t2.place(x=50, y=parm_y)
 
-        self.t2_auto_var = tk.BooleanVar(tab1_kanal)
-        self.t2_auto = tk.Checkbutton(tab1_kanal,
-                                      text='T2-Auto',
-                                      variable=self.t2_auto_var,
-                                      state='disabled',
-                                      command=self._chk_t2auto
-                                      )
-        self.t2_auto.place(x=10, y=parm_y + 35)
+        self._t2_auto_var = tk.BooleanVar(tab1_kanal)
+        self._t2_auto = tk.Checkbutton(tab1_kanal,
+                                       text='T2-Auto',
+                                       variable=self._t2_auto_var,
+                                       state='disabled',
+                                       command=self._chk_t2auto
+                                       )
+        self._t2_auto.place(x=10, y=parm_y + 35)
 
         # RNR Checkbutton
         parm_y = 150
@@ -124,25 +124,25 @@ class SideTabbedFrame:  # TODO
         self._rnr.place(x=10, y=parm_y)
         # Sprech
         parm_y = 200
-        self.t2speech_var = tk.BooleanVar(tab1_kanal)
+        self._t2speech_var = tk.BooleanVar(tab1_kanal)
 
         self.t2speech = tk.Checkbutton(tab1_kanal,
                                        text='Sprachausgabe',
-                                       variable=self.t2speech_var,
+                                       variable=self._t2speech_var,
                                        command=self._chk_t2speech)
         self.t2speech.place(x=10, y=parm_y)
-        self.t2speech_var.set(self._main_win.get_ch_var().t2speech)
+        self._t2speech_var.set(self._main_win.get_ch_var().t2speech)
         # Autoscroll
         parm_y = 225
-        self.autoscroll_var = tk.BooleanVar(tab1_kanal)
+        self._autoscroll_var = tk.BooleanVar(tab1_kanal)
 
-        self.autoscroll = ttk.Checkbutton(tab1_kanal,
-                                         text='Autoscroll',
-                                         variable=self.autoscroll_var,
-                                         command=self._chk_autoscroll
-                                         )
-        self.autoscroll.place(x=10, y=parm_y)
-        self.autoscroll_var.set(self._main_win.get_ch_var().autoscroll)
+        autoscroll = ttk.Checkbutton(tab1_kanal,
+                                          text='Autoscroll',
+                                          variable=self._autoscroll_var,
+                                          command=self._chk_autoscroll
+                                          )
+        autoscroll.place(x=10, y=parm_y)
+        self._autoscroll_var.set(self._main_win.get_ch_var().autoscroll)
 
         # Remote /CLI Remote
         parm_y = 250
@@ -418,12 +418,12 @@ class SideTabbedFrame:  # TODO
         # vals = []
         # if self.main_win.ax25_port_handler.ax25_ports.keys():
         #     _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
-        self.mon_call_ent = tk.ttk.Combobox(tab6_monitor,
-                                            width=9,
-                                            textvariable=self._main_win.mon_call_var,
-                                            values=[],
-                                            )
-        self.mon_call_ent.place(x=x, y=y)
+        self._mon_call_ent = tk.ttk.Combobox(tab6_monitor,
+                                             width=9,
+                                             textvariable=self._main_win.mon_call_var,
+                                             values=[],
+                                             )
+        self._mon_call_ent.place(x=x, y=y)
 
         # Auto Scrolling
         x = 10
@@ -660,16 +660,16 @@ class SideTabbedFrame:  # TODO
     def _chk_t2auto(self):
         conn = self._main_win.get_conn()
         if conn is not None:
-            if self.t2_auto_var.get():
+            if self._t2_auto_var.get():
                 # conn.port_cfg['parm_T2_auto'] = True
                 conn.set_T2auto(True)
                 conn.calc_irtt()
-                self.t2_var.set(str(conn.parm_T2 * 1000))
-                self.t2.configure(state='disabled')
+                self._t2_var.set(str(conn.get_port_cfg().get('parm_T2', 500)))
+                self._t2.configure(state='disabled')
             else:
                 # conn.port_cfg['parm_T2_auto'] = False
                 conn.set_T2auto(False)
-                self.t2.configure(state='normal')
+                self._t2.configure(state='normal')
             conn.calc_irtt()
 
     def _chk_sprech_on(self):
@@ -680,7 +680,7 @@ class SideTabbedFrame:  # TODO
         vals = PORT_HANDLER.get_stat_calls_fm_port(port_id)
         if vals:
             self._main_win.mon_call_var.set(vals[0])
-        self.mon_call_ent.configure(values=vals)
+        self._mon_call_ent.configure(values=vals)
 
     def _chk_mon_port_filter(self):
         all_ports = PORT_HANDLER.ax25_ports
@@ -690,14 +690,14 @@ class SideTabbedFrame:  # TODO
     def update_mon_port_id(self):
         if PORT_HANDLER.get_all_ports().keys():
             vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
-            self.mon_call_ent.configure(values=vals)
+            self._mon_call_ent.configure(values=vals)
 
     def _set_t2(self, event):
         conn = self._main_win.get_conn()
         if conn is not None:
             # conn.port_cfg['parm_T2'] = min(max(int(self.t2_var.get()), 500), 3000)
             try:
-                conn.set_T2(int(self.t2_var.get()))
+                conn.set_T2var(int(self._t2_var.get()))
             except ValueError:
                 pass
 
@@ -924,41 +924,38 @@ class SideTabbedFrame:  # TODO
         if conn:
             if self._ch_is_disc:
                 self._ch_is_disc = False
-                self.max_frame.configure(state='normal')
-                self.pac_len.configure(state='normal')
+                self._max_frame.configure(state='normal')
+                self._pac_len.configure(state='normal')
                 self._rnr.configure(state='normal')
                 self._cliRemote.configure(state='normal')
                 self._link_holder.configure(state='normal')
-                self.t2_auto.configure(state='normal')
+                self._t2_auto.configure(state='normal')
 
-            self.max_frame_var.set(str(conn.parm_MaxFrame))
-            self.pac_len_var.set(conn.parm_PacLen)
+            self._max_frame_var.set(str(conn.parm_MaxFrame))
+            self._pac_len_var.set(conn.parm_PacLen)
             self._rnr_var.set(conn.is_RNR)
             self._main_win.link_holder_var.set(conn.link_holder_on)
             self._cliRemote_var.set(conn.cli_remote)    # TODO CLI permissions
             self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
-            if conn.get_port_cfg().get('parm_T2_auto', True):
-                if not self.t2_auto_var.get():
-                    self.t2_var.set(str(conn.parm_T2 * 1000))
-                    self.t2.configure(state='disabled')
+            self._t2_var.set(str(conn.get_port_cfg().get('parm_T2', 500)))
+            self._t2_auto_var.set(conn.get_port_cfg().get('parm_T2_auto', True))
+            if self._t2_auto_var.get():
+                self._t2.configure(state='disabled')
             else:
-                if self.t2_auto_var.get():
-                    self.t2.configure(state='normal')
-                    self.t2_var.set(str(conn.parm_T2 * 1000))
-            self.t2_auto_var.set(conn.get_port_cfg().get('parm_T2_auto', True))
+                self._t2.configure(state='normal')
 
         else:
             if not self._ch_is_disc:
                 self._ch_is_disc = True
-                self.max_frame.configure(state='disabled')
-                self.pac_len.configure(state='disabled')
+                self._max_frame.configure(state='disabled')
+                self._pac_len.configure(state='disabled')
                 self._rnr_var.set(False)
                 # self.rnr.deselect()
                 self._rnr.configure(state='disabled')
-                self.t2_auto_var.set(False)
+                self._t2_auto_var.set(False)
                 # self.t2_auto.deselect()
-                self.t2_auto.configure(state='disabled')
-                self.t2.configure(state='disabled')
+                self._t2_auto.configure(state='disabled')
+                self._t2.configure(state='disabled')
                 self._main_win.link_holder_var.set(False)
                 self._link_holder.configure(state='disabled')
                 self._cliRemote.configure(state='disabled')
@@ -966,27 +963,27 @@ class SideTabbedFrame:  # TODO
                 self._tx_count_var.set('TX: --- kb')
                 self._rx_count_var.set('RX: --- kb')
 
-        self.t2speech_var.set(self._main_win.get_ch_var().t2speech)
+        self._t2speech_var.set(self._main_win.get_ch_var().t2speech)
         # self._update_ch_echo()
 
     def _set_max_frame(self):
         conn = self._main_win.get_conn()
         if conn is not None:
-            conn.parm_MaxFrame = int(self.max_frame_var.get())
+            conn.parm_MaxFrame = int(self._max_frame_var.get())
 
     def _set_pac_len(self, event):
         conn = self._main_win.get_conn()
         if conn is not None:
-            conn.parm_PacLen = min(max(self.pac_len_var.get(), 1), 256)
+            conn.parm_PacLen = min(max(self._pac_len_var.get(), 1), 256)
             conn.calc_irtt()
-            self.t2_var.set(str(conn.parm_T2 * 1000))
+            self._t2_var.set(str(conn.get_port_cfg().get('parm_T2', 500)))
 
     def _chk_t2speech(self):
-        self._main_win.get_ch_var().t2speech = bool(self.t2speech_var.get())
+        self._main_win.get_ch_var().t2speech = bool(self._t2speech_var.get())
 
     def _chk_autoscroll(self):
-        self._main_win.get_ch_var().autoscroll = bool(self.autoscroll_var.get())
-        if bool(self.autoscroll_var.get()):
+        self._main_win.get_ch_var().autoscroll = bool(self._autoscroll_var.get())
+        if bool(self._autoscroll_var.get()):
             self._main_win.see_end_qso_win()
 
     def _open_tracer(self):

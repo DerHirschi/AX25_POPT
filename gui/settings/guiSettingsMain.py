@@ -13,6 +13,7 @@ from fnc.str_fnc import get_strTab, lob_gen
 from gui.guiError import PoPTAttributError
 from gui.settings.guiBeaconSettings import BeaconSettings
 from gui.settings.guiDigiSettings import DIGI_SettingsWin
+from gui.settings.guiFTextSettings import FTextSettings
 from gui.settings.guiGeneralSettings import GeneralSettings
 from gui.settings.guiMCastSettings import MulticastSettings
 from gui.settings.guiPortSettings import PortSettingsWin
@@ -50,6 +51,7 @@ class SettingsMain(tk.Toplevel):
             'port': PortSettingsWin,
             'beacon_settings': BeaconSettings,
             'Digipeater': DIGI_SettingsWin,
+            'F-Text': FTextSettings,
             'MCast': MulticastSettings,
             'RX-Echo': RxEchoSettings,
         }

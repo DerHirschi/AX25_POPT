@@ -33,19 +33,18 @@ class RxBuf:
 
 class AX25Port(object):
     def __init__(self, port_cfg, port_handler):
+        self._port_handler = port_handler
+        self.loop_is_running = self._port_handler.is_running
         self.ende = False
         self.device_is_running = False
-        self.loop_is_running = port_handler.is_running
-        # self._tx_th = None
         ############
         # CONFIG
         self.port_cfg = dict(port_cfg)
-        self._port_handler = port_handler
-        self.kiss = Kiss(port_cfg)
-        self.port_param = port_cfg.get('parm_PortParm', ('', 0))
-        self.portname = port_cfg.get('parm_PortName', '')
-        self.port_typ = port_cfg.get('parm_PortTyp', '')
-        self.port_id = port_cfg.get('parm_PortNr', -1)
+        self.kiss = Kiss(self.port_cfg)
+        self.port_param = self.port_cfg.get('parm_PortParm', ('', 0))
+        self.portname = self.port_cfg.get('parm_PortName', '')
+        self.port_typ = self.port_cfg.get('parm_PortTyp', '')
+        self.port_id = self.port_cfg.get('parm_PortNr', -1)
         # self._my_stations = port_cfg.get('parm_StationCalls', [])
         # self.parm_TXD = port_cfg.get('parm_TXD', 400)
         self._TXD = time.time()
@@ -53,7 +52,7 @@ class AX25Port(object):
         #############
         """ DIGI """
         # self.digi_calls = self.port_cfg.parm_Digi_calls
-        self._parm_digi_TXD = port_cfg.get('parm_TXD', 400) * 4  # TODO add to Settings GUI
+        self._parm_digi_TXD = self.port_cfg.get('parm_TXD', 400) * 4  # TODO add to Settings GUI
         self._digi_TXD = time.time()
         self._digi_buf = []         # RX/TX
         """ """
@@ -65,7 +64,7 @@ class AX25Port(object):
         # VARS
         self.monitor_out = True
         self.device = None
-        self._mh = port_handler.get_MH()
+        self._mh = self._port_handler.get_MH()
         #############
         """ Dual Port """
         self.dualPort_primaryPort = None
@@ -839,11 +838,10 @@ class AX25Port(object):
 
     def _gui_monitor(self, ax25frame, tx: bool = True):
         if self.monitor_out:
-            port_cfg = self.port_cfg
             self._port_handler.update_monitor(
                 # monitor_frame_inp(ax25frame, self.port_cfg),
-                ax25frame,
-                port_conf=port_cfg,
+                ax25frame_conf=dict(ax25frame.get_frame_conf()),
+                port_conf=dict(self.port_cfg),
                 tx=tx)
 
     def _mh_input(self, ax25frame_conf, tx: bool):
@@ -1008,7 +1006,7 @@ class KissTCP(AX25Port):
     def rx(self):
         try:
             recv_buff = self.device.recv(999)
-        except socket.timeout as e:
+        except socket.timeout:
             # self.device.close()
             # raise AX25DeviceERROR(e, self)
             # raise AX25DeviceERROR
