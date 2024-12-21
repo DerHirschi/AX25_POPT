@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.112.4'
+VER = '2.112.5'
 DEBUG_LOG = False
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
@@ -49,21 +49,7 @@ LANG_IND = {
             # 'IT': 7,
             # '': 8,
         }
-"""
-CFG_txt_save = {
-    'cli_ctext': 'ctx',
-    'cli_bye_text': 'btx',
-    'cli_itext': 'itx',
-    'cli_longitext': 'litx',
-    'cli_akttext': 'atx',
-}
-"""
-ENCODINGS = (
-    'CP437',
-    'ASCII',
-    'LATIN_1',
-    'UTF-8',
-)
+
 STATION_TYPS = [
     'SYSOP',  # Don't change. Used as Key
     'NODE',
@@ -121,6 +107,13 @@ STATION_ID_MCAST = [    # TODO Just Dummy yet
     'PoPTMCast',
 ]
 
+ENCODINGS = (
+    'CP437',
+    'ASCII',
+    'LATIN_1',
+    'UTF-8',
+)
+
 STATION_ID_ENCODING = {
     0: 'CP437',
     1: 'ASCII',  # TODO Eigentlich ä > ae
@@ -128,6 +121,7 @@ STATION_ID_ENCODING = {
     3: 'LATIN_1',
     4: 'UTF-8'
 }
+
 STATION_ID_ENCODING_REV = {
     'CP437': 0,
     'ASCII': 1,  # TODO Eigentlich ä > ae
@@ -135,6 +129,7 @@ STATION_ID_ENCODING_REV = {
     'LATIN_1': 3,
     'UTF-8': 4
 }
+
 # FT Stuff
 FT_MODES = [
     'Text',
@@ -169,6 +164,7 @@ ASCII_A = 65
 ASCII_a = 97
 
 # GUI Stuff
+DEF_TEXTSIZE = 13
 FONT = "Courier"
 TEXT_SIZE_STATUS = 10
 TXT_BACKGROUND_CLR = 'black'
@@ -190,6 +186,22 @@ DEF_STAT_QSO_BG_COL = 'black'
 DEF_PORT_MON_TX_COL = 'medium violet red'
 DEF_PORT_MON_RX_COL = 'green'
 DEF_PORT_MON_BG_COL = 'black'
+# F Key Tab
+F_KEY_TAB = {
+    67: 1,  # F1
+    68: 2,  # ...
+    69: 3,
+    70: 4,
+    71: 5,
+    72: 6,
+    73: 7,
+    74: 8,
+    75: 9,
+    76: 10,
+    95: 11,
+    96: 12
+}
+#######################################################
 # Port TNC Settings
 TNC_KISS_START_CMD = [
     b'\x1b@K\r',

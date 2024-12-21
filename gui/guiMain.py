@@ -9,8 +9,9 @@ from ax25.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
+from cli.StringVARS import replace_StringVARS
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
-    get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch
+    get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines
 from gui.aprs.guiAISmon import AISmonitor
 from gui.aprs.guiAPRS_Settings import APRSSettingsWin
 from gui.aprs.guiAPRS_be_tracer import BeaconTracer
@@ -46,7 +47,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG
+    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -1097,6 +1098,12 @@ class PoPT_GUI_Main:
         self.main_win.unbind("<Key-F10>")
         self.main_win.unbind("<KeyPress-F10>")
         # self.main_win.bind("<KeyPress>",lambda event: self.callback(event))
+        # lambda event: print(f"{event.keysym} - {event.keycode}\n {type(event.keysym)} - {type(event.keycode)}
+        #####################
+        # F-TEXT
+        for fi in range(1, 13):
+            self.main_win.bind(f'<Shift-F{fi}>', self._insert_ftext)
+        #####################
         self.main_win.bind('<F1>', lambda event: self.switch_channel(1))
         self.main_win.bind('<F2>', lambda event: self.switch_channel(2))
         self.main_win.bind('<F3>', lambda event: self.switch_channel(3))
@@ -1142,6 +1149,32 @@ class PoPT_GUI_Main:
 
     def _release_return(self, event=None):
         pass
+
+    def _insert_ftext(self, event=None):
+        # if not hasattr(event, 'keysym'):
+        if not hasattr(event, 'keycode'):
+            return
+        try:
+            fi = int(F_KEY_TAB[event.keycode])
+        except (ValueError, KeyError):
+            return
+        try:
+            text, enc = POPT_CFG.get_f_text_fm_id(f_id=fi)
+        except ValueError:
+            return
+        if not text:
+            return
+        ch_enc = self.stat_info_encoding_var.get()
+        if any((ch_enc == enc, not ch_enc)):
+            text = text.decode(enc, 'ignore')
+        else:
+            text = text.decode(ch_enc, 'ignore')
+        conn = self.get_conn()
+        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_manGUI(), connection=conn)
+        text = zeilenumbruch_lines(text)
+        self._inp_txt.insert(tk.INSERT, text)
+        self.see_end_inp_win()
+        return
 
     ##########################
     # Start Message in Monitor
@@ -1231,20 +1264,50 @@ class PoPT_GUI_Main:
         self._inp_txt.mark_set(tk.INSERT, "1.0")
         self._inp_txt.see(tk.INSERT)
 
+    ##########################
+    # Pre-write Text Stuff
+    def _insert_fm_file(self):
+        data = open_file_dialog()
+        if not data:
+            return
+        ch_enc = self.stat_info_encoding_var.get()
+        if not ch_enc:
+            data = data.decode('UTF-8', 'ignore')
+        else:
+            data = data.decode(ch_enc, 'ignore')
+        data = zeilenumbruch_lines(data)
+        self._inp_txt.insert(tk.INSERT, data)
+        self.see_end_inp_win()
+        return
+
+    def _save_to_file(self):
+        data = self._out_txt.get('1.0', tk.END)
+        save_file_dialog(data)
+
+    ##########################
+    # Monitor Text Stuff
+    def _clear_monitor_data(self):
+        self._mon_txt.configure(state='normal')
+        self._mon_txt.delete('1.0', tk.END)
+        self._mon_txt.configure(state='disabled')
+
+    def _save_monitor_to_file(self):
+        data = self._mon_txt.get('1.0', tk.END)
+        save_file_dialog(data)
+
     # END GUI Sizing/Formatting Stuff
     ######################################################################
 
     ######################################################################
-    #
+    # Channel Vars
     def get_conn(self, con_ind: int = 0):
         # TODO Call just if necessary
         # TODO current Chanel.connection to var, prevent unnecessary calls
         if not con_ind:
-            con_ind = self.channel_index
+            con_ind = int(self.channel_index)
         all_conn = PORT_HANDLER.get_all_connections()
         if con_ind in all_conn.keys():
-            ret = all_conn[con_ind]
-            return ret
+            return all_conn[con_ind]
         return None
 
     def get_ch_var(self, ch_index=0):
@@ -1283,27 +1346,8 @@ class PoPT_GUI_Main:
             self._channel_vars[ch_id] = ChVars()
         self._update_qso_Vars()
 
-    def _clear_monitor_data(self):
-        self._mon_txt.configure(state='normal')
-        self._mon_txt.delete('1.0', tk.END)
-        self._mon_txt.configure(state='disabled')
-
-    def _insert_fm_file(self):
-        _data = open_file_dialog()
-        if _data:
-            # TODO Maybe Channel Decoding ?  ?
-            self._inp_txt.insert(tk.INSERT, try_decode(_data, ignore=True))
-
-    def _save_to_file(self):
-        data = self._out_txt.get('1.0', tk.END)
-        save_file_dialog(data)
-
-    def _save_monitor_to_file(self):
-        data = self._mon_txt.get('1.0', tk.END)
-        save_file_dialog(data)
-
     ######################################################################
-    # Sound
+    # Sound TODO !!!
     def _kanal_switch(self):
         """ Triggered on CH BTN Click """
         threading.Thread(target=self._kanal_switch_sprech_th).start()
@@ -1760,6 +1804,9 @@ class PoPT_GUI_Main:
             return True
         return False
 
+    def see_end_inp_win(self):
+        self._inp_txt.see("end")
+
     def see_end_qso_win(self):
         self._out_txt.see("end")
 
@@ -1922,7 +1969,7 @@ class PoPT_GUI_Main:
                 else:
                     ind = '1.0'
 
-                txt_enc = 'UTF-8'
+                txt_enc = self.stat_info_encoding_var.get()
                 if station.user_db_ent:
                     txt_enc = station.user_db_ent.Encoding
                 # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'

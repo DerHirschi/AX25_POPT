@@ -1,6 +1,4 @@
 """
-TODO:
-    - F-Texte
 FIXME:
     - Keine sysMSG für änderung d Station-Settings.(Nur neue/gelöschte o geänderte Calls werden returned)
     - Keine sysMSG für änderung d Port-Settings.(Nur neue o gelöschte Ports werden returned)
@@ -19,7 +17,6 @@ from gui.settings.guiMCastSettings import MulticastSettings
 from gui.settings.guiPortSettings import PortSettingsWin
 from gui.settings.guiRxEchoSettings import RxEchoSettings
 from gui.settings.guiStationSettings import StationSettingsWin
-
 
 
 class SettingsMain(tk.Toplevel):

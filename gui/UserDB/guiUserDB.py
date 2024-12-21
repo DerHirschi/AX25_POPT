@@ -4,7 +4,8 @@ from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from cfg.constant import ENCODINGS, STATION_TYPS
-from fnc.str_fnc import conv_time_DE_str
+from cfg.popt_config import POPT_CFG
+from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
 from cfg.string_tab import STR_TABLE
 from gui.guiMsgBoxes import AskMsg
 
@@ -256,7 +257,7 @@ class UserDB(tk.Toplevel):
         # CLI LANGUAGE   # TODO
         x = 10
         y = 400
-        tk.Label(tab1, text='Sprache: ').place(x=x, y=y)
+        tk.Label(tab1, text=f"{get_strTab('language', POPT_CFG.get_guiCFG_language())}: ").place(x=x, y=y)
         lang_opt = [
             'DEUTSCH',
             'ENGLSCH',
@@ -438,9 +439,11 @@ class UserDB(tk.Toplevel):
             self._set_var_to_ent()
 
     def _on_select_sysop(self, event=None):
+        lang = POPT_CFG.get_guiCFG_language()
         if self._db_ent is not None:
-            msg = AskMsg(titel=f'Einträge ergänzen?', message=f"Einträge vom Sysop ergänzen ?", parent_win=self)
-            # self.settings_win.lift()
+            msg = AskMsg(titel=get_strTab('userdb_add_sysop_ent1', lang),
+                         message=get_strTab('userdb_add_sysop_ent2', lang),
+                         parent_win=self)
             if msg:
                 sysop_key = self._sysop_var.get()
                 if sysop_key in self._user_db.db.keys():
@@ -556,7 +559,7 @@ class UserDB(tk.Toplevel):
         self._user_db.set_distance_for_all()
         if self._db_ent is None:
             return
-        self._root_win.sysMsg_to_monitor(f'Info: User Daten für {self._db_ent.call_str} wurden gespeichert..')
+        self._root_win.sysMsg_to_monitor(get_strTab('userdb_save_hint', POPT_CFG.get_guiCFG_language()).format(self._db_ent.call_str))
 
     def _save_vars(self):
         if self._db_ent is not None:
@@ -641,12 +644,14 @@ class UserDB(tk.Toplevel):
 
     def _ok_btn_cmd(self):
         self._save_vars()
-        self._root_win.sysMsg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
+        self._root_win.sysMsg_to_monitor(lob_gen(POPT_CFG.get_guiCFG_language()))
         self._destroy_win()
 
     def _del_btn_cmd(self):
         if self._db_ent is not None:
-            msg = AskMsg(titel=f'lösche {self._db_ent.call_str} !', message=f"{self._db_ent.call_str} löschen ?", parent_win=self)
+            msg = AskMsg(titel=f"{get_strTab('userdb_del_hint1', POPT_CFG.get_guiCFG_language())} {self._db_ent.call_str} !",
+                         message=f"{self._db_ent.call_str} {get_strTab('userdb_del_hint2', POPT_CFG.get_guiCFG_language())} ?",
+                         parent_win=self)
             # self.settings_win.lift()
             if msg:
                 self._user_db.del_entry(str(self._db_ent.call_str))

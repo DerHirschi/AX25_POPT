@@ -121,7 +121,7 @@ class BeaconTab:
         # Versatz
         call_x = 420
         call_y = 55
-        move_label = tk.Label(self.own_tab, text=f"{STR_TABLE['versatz'][self._lang]} (sek):")
+        move_label = tk.Label(self.own_tab, text=f"{STR_TABLE['versatz'][self._lang]} (s):")
         move_label.place(x=call_x, y=call_y)
         self.move_var = tk.StringVar(self.own_tab)
         self.move_var.set(str(self.schedule_config.get('move', 0)))
@@ -347,7 +347,6 @@ class BeaconTab:
     def need_reinit(self):
         return self._need_reinit
 
-
 class BeaconSettings(tk.Frame):
     def __init__(self, tabctl, main_win=None):
         tk.Frame.__init__(self, tabctl)
@@ -359,11 +358,6 @@ class BeaconSettings(tk.Frame):
 
         self.schedule_win = None
         # self.attributes("-topmost", True)
-        ###############
-        # VARS
-        # self.port_handler = main_win.ax25_port_handler
-        # self.all_beacons: {int: {str: [Beacon]}} = self.port_handler.beacons
-        ##########################
         ####################################
         # New Station, Del Station Buttons
         tk.Button(self,
@@ -433,20 +427,6 @@ class BeaconSettings(tk.Frame):
     def _re_init_beacons():
         PORT_HANDLER.reinit_beacon_task()
 
-    """
-    def _save_btn_cmd(self):
-        self._set_vars()
-        POPT_CFG.save_MAIN_CFG_to_file()
-        # self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
-
-    def _ok_btn_cmd(self):
-        self._set_vars()
-        self._re_init_beacons()
-        # self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
-        # self._main_cl.sysMsg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
-        self._destroy_win()
-    """
-
     def _new_beacon_btn_cmd(self):
         # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs_stuff: bool = False
         beacon = getNew_BEACON_cfg()
@@ -474,5 +454,4 @@ class BeaconSettings(tk.Frame):
             self._re_init_beacons()
             self._need_reinit = False
             return True
-        # self._main_cl.sysMsg_to_monitor('Info: Baken Settings wurden gespeichert..')
         return False

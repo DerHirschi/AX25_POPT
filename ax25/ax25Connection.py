@@ -477,7 +477,6 @@ class AX25Conn:
             )
         except AttributeError:
             logger.error("Conn: Pipe Error (AX25Conn-set_pipe())")
-            print("Pipe Error (AX25Conn-set_pipe())")
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
             self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', self.parm_PacLen)
@@ -485,7 +484,6 @@ class AX25Conn:
             self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', self.parm_MaxFrame)
         if not self.own_port.add_pipe(pipe=pipe):
             logger.error("Conn: Port no Pipe")
-            print("Port no Pipe")
             return False
         self.cli = NoneCLI(self)
         self.cli_type = ''
@@ -693,7 +691,7 @@ class AX25Conn:
             self.set_T1(stop=True)
             # self.zustand_exec.tx(None)
             if self.zustand_exec.stat_index in [2, 4] or self._await_disco:
-                print('End Conn')
+                logger.debug('End Conn')
                 self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
@@ -722,20 +720,20 @@ class AX25Conn:
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
         if self.tx_buf_ctl:
-            print(f'NO CLeanup: {self.uid}: tx_buf_ctl')
+            logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
         if all((self.rx_tx_buf_guiData, self._gui)):
-            print(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
+            logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
         self.own_port.del_connections(conn=self)
         self._port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
-        print(f'CLeanup {self.uid}: rx_tx_buf_guiData')
+        logger.debug(f'CLeanup {self.uid}: rx_tx_buf_guiData')
 
     def end_connection(self, reconn=True):
-        print(f"end_connection: {self.uid}")
+        logger.debug(f"end_connection: {self.uid}")
         self._del_pipe()
         self.ft_queue = []
         if self.ft_obj:
