@@ -7,7 +7,7 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
 from fnc.gui_fnc import get_typed, detect_pressed
-from fnc.str_fnc import format_number, zeilenumbruch
+from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
 from cfg.string_tab import STR_TABLE
 
@@ -351,7 +351,7 @@ class BBS_newMSG(tk.Toplevel):
         cc_add = self._to_cc_call_var.get()
         enc = self._var_encoding.get()
         msg_text = str(self._text.get('1.0', tk.END)[:-1])
-        msg_text = zeilenumbruch(msg_text)
+        msg_text = zeilenumbruch_lines(msg_text)
         msg_text = msg_text.replace('\n', '\r')
         msg_text = msg_text.encode(enc, 'ignore')
         sender_bbs = sender + '.' + regio_add

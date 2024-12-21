@@ -235,7 +235,10 @@ class PoPT_GUI_Main:
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
-        main_pw.add(l_frame, weight=50)
+        if is_linux():
+            main_pw.add(l_frame, weight=150)
+        else:
+            main_pw.add(l_frame, weight=3)
         main_pw.add(self._r_frame, weight=1)
         ###########################################
         # Channel Buttons

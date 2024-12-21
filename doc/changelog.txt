@@ -2,6 +2,8 @@
 # 2.113.x
 Fixes:
 - Windows: Keybindings für F-Texte
+- Skalierungsprobleme mit dem rechten Fenster bei Windows
+- Zeilenumbruch wenn PMS-Nachricht gesendet wird
 
 Optimierung:
 
