@@ -4,13 +4,14 @@ Fixes:
 - Scripterror (Crash) wenn "Alle Disconnecten" Messagebox angezeigt wird
 - Scripterror (Crash) wenn versucht wird auf Kanal 11 zu connecten.
   (Wenn Kanal 10 belegt und der neue Connect den nächsten Kanal belegen soll.
-  (Die Kanäle ab 11 sind für "Serviece Kanäle" vorgesehen. Noden,
+  (Die Kanäle ab 11 sind für "Service Kanäle" vorgesehen. Noden,
   Auto Connects, PMS, ...))
 - Kanal-Buttons(unten) zeigen noch connect an (bleiben grün) obwohl
   Gegenstation bereits disconnected.
-- T2-Parameter für AXIP. (Einstellungen werden nicht überneommen,
+- T2-Parameter für AXIP. (Einstellungen werden nicht übernommen,
   "Schnell-Einstellungen" rechte Seite "Kanal" werden falsch angezeigt bzw.
    nicht übernommen)
+  !!! Für AXIP Ports sollte eine T2 Einstellung um die 50 gewählt werden !!!
 
 Optimierung:
 - Port-Config Initialisierung
