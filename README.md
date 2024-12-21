@@ -63,6 +63,7 @@ $ pip install --break-system-packages playsound pyserial aprslib
 - F12 > Monitor Mode
 - CTRL + plus > increase Text size
 - CTRL + minus > decrease Text size
+- SHIFT+F1 – SHIFT+F12 > F-Text (Macro Text)
 
 
 #### File ext in Station Profile Folder (data/usertxt/<USER CALL>):

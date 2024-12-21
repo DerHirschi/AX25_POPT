@@ -9,8 +9,9 @@ from ax25.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
+from cli.StringVARS import replace_StringVARS
 from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
-    get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch
+    get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines
 from gui.aprs.guiAISmon import AISmonitor
 from gui.aprs.guiAPRS_Settings import APRSSettingsWin
 from gui.aprs.guiAPRS_be_tracer import BeaconTracer
@@ -46,7 +47,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG
+    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -1062,9 +1063,10 @@ class PoPT_GUI_Main:
         for port_id in all_port.keys():
             tag_tx = f"tx{port_id}"
             tag_rx = f"rx{port_id}"
-            tx_fg = all_port[port_id].port_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)
-            tx_bg = all_port[port_id].port_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)
-            rx_fg = all_port[port_id].port_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
+            tx_fg = port_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)
+            tx_bg = port_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)
+            rx_fg = port_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)
             self._mon_txt.tag_config(tag_tx, foreground=tx_fg,
                                      background=tx_bg,
                                      selectbackground=tx_fg,
@@ -1096,6 +1098,12 @@ class PoPT_GUI_Main:
         self.main_win.unbind("<Key-F10>")
         self.main_win.unbind("<KeyPress-F10>")
         # self.main_win.bind("<KeyPress>",lambda event: self.callback(event))
+        # lambda event: print(f"{event.keysym} - {event.keycode}\n {type(event.keysym)} - {type(event.keycode)}
+        #####################
+        # F-TEXT
+        for fi in range(1, 13):
+            self.main_win.bind(f'<Shift-F{fi}>', self._insert_ftext)
+        #####################
         self.main_win.bind('<F1>', lambda event: self.switch_channel(1))
         self.main_win.bind('<F2>', lambda event: self.switch_channel(2))
         self.main_win.bind('<F3>', lambda event: self.switch_channel(3))
@@ -1142,6 +1150,32 @@ class PoPT_GUI_Main:
     def _release_return(self, event=None):
         pass
 
+    def _insert_ftext(self, event=None):
+        # if not hasattr(event, 'keysym'):
+        if not hasattr(event, 'keycode'):
+            return
+        try:
+            fi = int(F_KEY_TAB[event.keycode])
+        except (ValueError, KeyError):
+            return
+        try:
+            text, enc = POPT_CFG.get_f_text_fm_id(f_id=fi)
+        except ValueError:
+            return
+        if not text:
+            return
+        ch_enc = self.stat_info_encoding_var.get()
+        if any((ch_enc == enc, not ch_enc)):
+            text = text.decode(enc, 'ignore')
+        else:
+            text = text.decode(ch_enc, 'ignore')
+        conn = self.get_conn()
+        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_manGUI(), connection=conn)
+        text = zeilenumbruch_lines(text)
+        self._inp_txt.insert(tk.INSERT, text)
+        self.see_end_inp_win()
+        return
+
     ##########################
     # Start Message in Monitor
     def _monitor_start_msg(self):
@@ -1161,16 +1195,17 @@ class PoPT_GUI_Main:
             msg = 'konnte nicht initialisiert werden!'
             if all_ports[port_k].device_is_running:
                 msg = 'erfolgreich initialisiert.'
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
             self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
                                    .format(port_k,
-                                           all_ports[port_k].port_cfg.get('parm_PortName', ''),
-                                           all_ports[port_k].port_cfg.get('parm_PortTyp', ''),
+                                           port_cfg.get('parm_PortName', ''),
+                                           port_cfg.get('parm_PortTyp', ''),
                                            msg
                                            ))
             self.sysMsg_to_monitor('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
-                                           all_ports[port_k].port_cfg.get('parm_PortParm', ('', 0))[0],
-                                           all_ports[port_k].port_cfg.get('parm_PortParm', ('', 0))[1],
+                                           port_cfg.get('parm_PortParm', ('', 0))[0],
+                                           port_cfg.get('parm_PortParm', ('', 0))[1],
                                            ))
 
     # END Init Stuff
@@ -1229,20 +1264,50 @@ class PoPT_GUI_Main:
         self._inp_txt.mark_set(tk.INSERT, "1.0")
         self._inp_txt.see(tk.INSERT)
 
+    ##########################
+    # Pre-write Text Stuff
+    def _insert_fm_file(self):
+        data = open_file_dialog()
+        if not data:
+            return
+        ch_enc = self.stat_info_encoding_var.get()
+        if not ch_enc:
+            data = data.decode('UTF-8', 'ignore')
+        else:
+            data = data.decode(ch_enc, 'ignore')
+        data = zeilenumbruch_lines(data)
+        self._inp_txt.insert(tk.INSERT, data)
+        self.see_end_inp_win()
+        return
+
+    def _save_to_file(self):
+        data = self._out_txt.get('1.0', tk.END)
+        save_file_dialog(data)
+
+    ##########################
+    # Monitor Text Stuff
+    def _clear_monitor_data(self):
+        self._mon_txt.configure(state='normal')
+        self._mon_txt.delete('1.0', tk.END)
+        self._mon_txt.configure(state='disabled')
+
+    def _save_monitor_to_file(self):
+        data = self._mon_txt.get('1.0', tk.END)
+        save_file_dialog(data)
+
     # END GUI Sizing/Formatting Stuff
     ######################################################################
 
     ######################################################################
-    #
+    # Channel Vars
     def get_conn(self, con_ind: int = 0):
         # TODO Call just if necessary
         # TODO current Chanel.connection to var, prevent unnecessary calls
         if not con_ind:
-            con_ind = self.channel_index
+            con_ind = int(self.channel_index)
         all_conn = PORT_HANDLER.get_all_connections()
         if con_ind in all_conn.keys():
-            ret = all_conn[con_ind]
-            return ret
+            return all_conn[con_ind]
         return None
 
     def get_ch_var(self, ch_index=0):
@@ -1281,27 +1346,8 @@ class PoPT_GUI_Main:
             self._channel_vars[ch_id] = ChVars()
         self._update_qso_Vars()
 
-    def _clear_monitor_data(self):
-        self._mon_txt.configure(state='normal')
-        self._mon_txt.delete('1.0', tk.END)
-        self._mon_txt.configure(state='disabled')
-
-    def _insert_fm_file(self):
-        _data = open_file_dialog()
-        if _data:
-            # TODO Maybe Channel Decoding ?  ?
-            self._inp_txt.insert(tk.INSERT, try_decode(_data, ignore=True))
-
-    def _save_to_file(self):
-        data = self._out_txt.get('1.0', tk.END)
-        save_file_dialog(data)
-
-    def _save_monitor_to_file(self):
-        data = self._mon_txt.get('1.0', tk.END)
-        save_file_dialog(data)
-
     ######################################################################
-    # Sound
+    # Sound TODO !!!
     def _kanal_switch(self):
         """ Triggered on CH BTN Click """
         threading.Thread(target=self._kanal_switch_sprech_th).start()
@@ -1522,19 +1568,21 @@ class PoPT_GUI_Main:
         txt_enc = 'UTF-8'
         if conn.user_db_ent:
             txt_enc = str(conn.user_db_ent.Encoding)
+        my_call_str = str(conn.my_call_str)
+        my_call = str(conn.my_call)
         inp = data.decode(txt_enc, 'ignore').replace('\r', '\n')
         inp = tk_filter_bad_chars(inp)
 
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         Ch_var.output_win += inp
-        if conn.my_call_str in self._all_tag_calls:
-            tag_name_tx = 'TX-' + str(conn.my_call_str)
-            Ch_var.last_tag_name = str(conn.my_call_str)
-        elif conn.my_call in self._all_tag_calls:
-            tag_name_tx = 'TX-' + str(conn.my_call)
-            Ch_var.last_tag_name = str(conn.my_call)
+        if my_call_str in self._all_tag_calls:
+            tag_name_tx = f'TX-{my_call_str}'
+            Ch_var.last_tag_name = my_call_str
+        elif my_call in self._all_tag_calls:
+            tag_name_tx = f'TX-{my_call}'
+            Ch_var.last_tag_name = my_call
         else:
-            tag_name_tx = 'TX-' + str(Ch_var.last_tag_name)
+            tag_name_tx = f'TX-{Ch_var.last_tag_name}'
 
         if self.channel_index == conn.ch_index:
             self._out_txt.configure(state="normal")
@@ -1559,22 +1607,27 @@ class PoPT_GUI_Main:
         txt_enc = 'UTF-8'
         if conn.user_db_ent:
             txt_enc = str(conn.user_db_ent.Encoding)
-
+        my_call_str = str(conn.my_call_str)
+        my_call = str(conn.my_call)
+        Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         out = data.decode(txt_enc, 'ignore')
         out = out.replace('\r', '\n')
         out = tk_filter_bad_chars(out)
 
         # Write RX Date to Window/Channel Buffer
-        Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         Ch_var.output_win += out
-        if conn.my_call_str in self._all_tag_calls:
-            tag_name_rx = 'RX-' + str(conn.my_call_str)
-            Ch_var.last_tag_name = str(conn.my_call_str)
-        elif conn.my_call in self._all_tag_calls:
-            tag_name_rx = 'RX-' + str(conn.my_call)
-            Ch_var.last_tag_name = str(conn.my_call)
+        if my_call_str in self._all_tag_calls:
+            tag_name_rx = f'RX-{my_call_str}'
+            Ch_var.last_tag_name = my_call_str
+        elif my_call in self._all_tag_calls:
+            tag_name_rx = f'RX-{my_call}'
+            Ch_var.last_tag_name = my_call
         else:
-            tag_name_rx = 'RX-' + str(Ch_var.last_tag_name)
+            logger.error('Conn: _update_qso_rx: no Tagname')
+            print('Conn: _update_qso_rx: no Tagname')
+            print(f"Conn: last Tag: {Ch_var.last_tag_name}")
+            logger.error(f"Conn: last Tag: {Ch_var.last_tag_name}")
+            tag_name_rx = f'RX-{Ch_var.last_tag_name}'
 
         if self.channel_index == conn.ch_index:
             if Ch_var.t2speech:
@@ -1647,9 +1700,10 @@ class PoPT_GUI_Main:
             self._ts_box_box.configure(bg=STAT_BAR_CLR)
 
     def sysMsg_to_qso(self, data, ch_index):
+        # FIXME: Wait for spooler (async)
         if not data:
             return
-        if 1 > ch_index > 10:
+        if 1 > ch_index > SERVICE_CH_START - 1:
             return False
         data = data.replace('\r', '')
         data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
@@ -1749,6 +1803,10 @@ class PoPT_GUI_Main:
             self._mon_txt.configure(state="disabled", exportselection=True)
             return True
         return False
+
+    def see_end_inp_win(self):
+        self._inp_txt.see("end")
+
     def see_end_qso_win(self):
         self._out_txt.see("end")
 
@@ -1890,7 +1948,8 @@ class PoPT_GUI_Main:
 
     def _disco_all(self):
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self.language],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language], parent=self):
+                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language],
+                                  parent=self.main_win):
             PORT_HANDLER.disco_all_Conn()
 
     # DISCO ENDE
@@ -1901,7 +1960,6 @@ class PoPT_GUI_Main:
         if self.channel_index:
             station = self.get_conn(self.channel_index)
             if station:
-
                 ch_vars = self.get_ch_var(ch_index=self.channel_index)
                 ind = str(ch_vars.input_win_index)
                 if ind:
@@ -1911,7 +1969,7 @@ class PoPT_GUI_Main:
                 else:
                     ind = '1.0'
 
-                txt_enc = 'UTF-8'
+                txt_enc = self.stat_info_encoding_var.get()
                 if station.user_db_ent:
                     txt_enc = station.user_db_ent.Encoding
                 # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
@@ -1927,7 +1985,6 @@ class PoPT_GUI_Main:
 
                 if '.0' in self._inp_txt.index(tk.INSERT):
                     self._inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
-
 
         else:
             self._send_to_monitor()
@@ -1976,7 +2033,6 @@ class PoPT_GUI_Main:
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         ch_vars.input_win_index = ind
 
-
     def _on_key_release_inp_txt(self, event=None):
         ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
         text = zeilenumbruch(self._inp_txt.get(ind,  self._inp_txt.index(tk.INSERT)))
@@ -1984,21 +2040,18 @@ class PoPT_GUI_Main:
         self._inp_txt.insert(tk.INSERT, text)
         self._inp_txt.tag_remove('send', ind, tk.INSERT)
 
-
-
-
-
     # SEND TEXT OUT
     #######################################################################
     # BW Plot
     def _update_bw_mon(self):
         tr = False
         for port_id in list(PORT_HANDLER.ax25_ports.keys()):
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
             data = self.mh.get_bandwidth(
                 port_id,
-                PORT_HANDLER.ax25_ports[port_id].port_cfg.get('parm_baud', 1200),
+                port_cfg.get('parm_baud', 1200),
             )
-            label = f"{PORT_HANDLER.ax25_ports[port_id].port_cfg.get('parm_PortName', '')}"
+            label = f"{port_cfg.get('parm_PortName', '')}"
             if port_id not in self._bw_plot_lines:
                 self._bw_plot_lines[int(port_id)], = self._ax.plot(self._bw_plot_x_scale, data, label=label)
                 self._ax.legend()
@@ -2087,12 +2140,10 @@ class PoPT_GUI_Main:
                 self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
         elif self._conn_btn.cget('bg') != "green":
             self._conn_btn.configure(text="Connect", bg="green", command=self.open_new_conn_win)
-        # !! Loop !! ???
         self._ch_btn_status_update()
 
     def ch_status_update(self):
-        # TODO Call just if necessary
-        """ Triggerd when Connection Status has changed """
+        """ Triggerd when Connection Status has changed (Conn-accept, -end, -resset)"""
         self._ch_btn_status_update()
         self.on_channel_status_change()
 
@@ -2165,8 +2216,6 @@ class PoPT_GUI_Main:
                 btn_txt = all_conn[i].to_call_str
                 is_link = all_conn[i].is_link
                 is_pipe = all_conn[i].pipe
-                if is_pipe is None:
-                    is_pipe = False
                 if is_link:
                     btn_txt = 'L>' + btn_txt
                 elif is_pipe:
@@ -2183,6 +2232,7 @@ class PoPT_GUI_Main:
                     else:
                         if self._con_btn_dict[i][0].cget('bg') != 'green2':
                             self._con_btn_dict[i][0].configure(bg='green2')
+                        self.set_ch_new_data_tr(i, False)
                 else:
                     if self.get_ch_new_data_tr(i):
                         if is_link:
@@ -2221,9 +2271,14 @@ class PoPT_GUI_Main:
                         if self._con_btn_dict[i][0].cget('bg') != 'red4':
                             self._con_btn_dict[i][0].configure(bg='red4')
                 else:
-                    if i != self.channel_index:
+                    if i == self.channel_index:
+                        if self._con_btn_dict[i][0].cget('bg') != 'red2':
+                            self._con_btn_dict[i][0].configure(bg='red2')
+                        self.set_ch_new_data_tr(i, False)
+                    else:
                         if self._con_btn_dict[i][0].cget('bg') != 'yellow':
                             self._con_btn_dict[i][0].configure(bg='yellow')
+
 
         if self._ch_btn_blink_timer < time.time():
             self._ch_btn_blink_timer = time.time() + self._parm_btn_blink_time
@@ -2372,7 +2427,7 @@ class PoPT_GUI_Main:
         station = self.get_conn(self.channel_index)
         if station is not None:
             from_call = str(station.my_call_str)
-            status = station.zustand_tab[station.get_state_index()][1]
+            status = station.zustand_tab[station.get_state()][1]
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
             unAck = f"unACK: {len(station.tx_buf_unACK.keys())}"
@@ -2382,9 +2437,9 @@ class PoPT_GUI_Main:
             rtt_text = 'RTT: {:.1f}/{:.1f}'.format(station.RTT_Timer.rtt_last, station.RTT_Timer.rtt_average)
             t3_text = f"T3: {max(0, int(station.t3 - time.time()))}"
             if station.get_port_cfg().get('parm_T2_auto', True):
-                t2_text = f"T2: {int(station.parm_T2 * 1000)}A"
+                t2_text = f"T2: {int(station.get_param_T2() * 1000)}A"
             else:
-                t2_text = f"T2: {int(station.parm_T2 * 1000)}"
+                t2_text = f"T2: {int(station.get_param_T2() * 1000)}"
             if self._status_name_var.get() != from_call:
                 self._status_name_var.set(from_call)
             if self._status_status_var.get() != status:
@@ -2494,13 +2549,21 @@ class PoPT_GUI_Main:
     ##########################################
     #
     def get_free_channel(self, start_channel=1):
-        for ch_id in range(start_channel, 11):
+        if not self.get_conn(con_ind=start_channel):
+            return start_channel
+        for ch_id in range(1, SERVICE_CH_START):
             if not self.get_conn(con_ind=ch_id):
                 return ch_id
+        return None
 
     def get_ch_new_data_tr(self, ch_id):
         return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)
 
+    def set_ch_new_data_tr(self, ch_id, state: bool):
+        self.get_ch_var(ch_index=ch_id).new_data_tr = state
+
+    ##########################################
+    #
     def set_tracer(self, state=None):
         ais_obj = PORT_HANDLER.get_aprs_ais()
         if ais_obj is not None:

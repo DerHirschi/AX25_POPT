@@ -137,6 +137,61 @@ STR_TABLE = {
         '',
         ''),
 
+    'userdb_add_sysop_ent1': (
+        'Informationen ergänzen?',
+        'Add information?',
+        'Informatie toevoegen?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_add_sysop_ent2': (
+        'Einträge vom Sysop ergänzen ?',
+        'Add information from the sysop?',
+        'Informatie uit de sysop toevoegen?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_save_hint': (
+        'Info: User Daten für {} wurden gespeichert..',
+        'Info: User data for {} has been saved.',
+        'Info: gebruikersgegevens voor {} zijn opgeslagen.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_del_hint1': (
+        'lösche',
+        'delete',
+        'verwijderen',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_del_hint2': (
+        'löschen',
+        'delete',
+        'verwijderen',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'prewritewin': (
         'Vorschreibfenster',
         'Prewriting window',
@@ -1305,6 +1360,26 @@ STR_TABLE = {
     'lob3': ('Lob: Das war eine gute Entscheidung. Mach weiter so. Das hast du gut gemacht.',
              'Praise: That was a good decision. Keep it up. You did well.',
              'Dat was een goede beslissing. Ga zo door. Dat heb je goed gemaakt.',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''), #
+
+    'lob4': ('Lob: Du hast dir heute noch kein Lob verdient.',
+             "Praise: You haven't earned any praise today.",
+             'Je hebt vandaag geen lof verdiend.',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
+    'lob5': ('Es tut mir leid, Dave. Ich fürchte, das kann ich nicht.',
+             "I'm sorry, Dave. I'm afraid I can't do that.",
+             'Het spijt me, Dave. Ik ben bang dat ik dat niet kan.',
            '',
            '',
            '',

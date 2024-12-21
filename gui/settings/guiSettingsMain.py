@@ -1,6 +1,4 @@
 """
-TODO:
-    - F-Texte
 FIXME:
     - Keine sysMSG für änderung d Station-Settings.(Nur neue/gelöschte o geänderte Calls werden returned)
     - Keine sysMSG für änderung d Port-Settings.(Nur neue o gelöschte Ports werden returned)
@@ -13,12 +11,12 @@ from fnc.str_fnc import get_strTab, lob_gen
 from gui.guiError import PoPTAttributError
 from gui.settings.guiBeaconSettings import BeaconSettings
 from gui.settings.guiDigiSettings import DIGI_SettingsWin
+from gui.settings.guiFTextSettings import FTextSettings
 from gui.settings.guiGeneralSettings import GeneralSettings
 from gui.settings.guiMCastSettings import MulticastSettings
 from gui.settings.guiPortSettings import PortSettingsWin
 from gui.settings.guiRxEchoSettings import RxEchoSettings
 from gui.settings.guiStationSettings import StationSettingsWin
-
 
 
 class SettingsMain(tk.Toplevel):
@@ -50,6 +48,7 @@ class SettingsMain(tk.Toplevel):
             'port': PortSettingsWin,
             'beacon_settings': BeaconSettings,
             'Digipeater': DIGI_SettingsWin,
+            'F-Text': FTextSettings,
             'MCast': MulticastSettings,
             'RX-Echo': RxEchoSettings,
         }
@@ -146,16 +145,14 @@ class SettingsMain(tk.Toplevel):
         # self._root_win.set_text_tags()
         # self._root_win.tabbed_sideFrame.update_mon_port_id()
         self._root_win.sysMsg_to_monitor(get_strTab('hin1', self._lang))
-        lob = lob_gen(self._lang)
-        self._root_win.sysMsg_to_monitor(get_strTab(lob, self._lang))
+        self._root_win.sysMsg_to_monitor(lob_gen(self._lang))
         self.destroy_win()
 
     def _save_btn(self):
         self._save_cfg()
         POPT_CFG.save_PORT_CFG_to_file()
         POPT_CFG.save_MAIN_CFG_to_file()
-        lob = lob_gen(self._lang)
-        self._root_win.sysMsg_to_monitor(get_strTab(lob, self._lang))
+        self._root_win.sysMsg_to_monitor(lob_gen(self._lang))
 
     def _abort_btn(self):
         self._root_win.sysMsg_to_monitor(get_strTab('hin2', self._lang))

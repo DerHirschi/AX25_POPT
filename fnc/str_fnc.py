@@ -233,7 +233,7 @@ def get_strTab(str_key: str, lang_index: int):
     if not str_key:
         return str_key
     if str_key not in STR_TABLE.keys():
-        logger.error(f"get_strTab() str_key: {str_key}")
+        logger.warning(f"get_strTab() str_key: {str_key}")
         return str_key
     lang_tab = STR_TABLE.get(str_key, ())
     try:
@@ -244,6 +244,7 @@ def get_strTab(str_key: str, lang_index: int):
 
 
 def zeilenumbruch(text: str, max_zeichen=79, umbruch='\n'):
+    # by GROK (x.com)
     if len(text) <= max_zeichen:
         return text
     letztes_leerzeichen = text.rfind(' ', 0, max_zeichen + 1)
@@ -261,7 +262,6 @@ def zeilenumbruch_lines(text: str, max_zeichen=79, umbruch='\n'):
     return text[:-1]
 
 def lob_gen(lang: int):
-    bis = 3
-    lob = random.randint(1, bis)
-    lob_str = f"lob{lob}"
+    bis = 5
+    lob_str = f"lob{random.randint(1, bis)}"
     return get_strTab(lob_str, lang)

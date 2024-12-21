@@ -110,19 +110,22 @@ class AX25Conn:
         self.own_port = port
         self._port_handler = port.port_get_PH()
         """ Port Config Parameter """
-        self._port_cfg = dict(self.own_port.port_cfg)
+        self.port_id: int = self.own_port.port_id
+        self._port_cfg :dict = POPT_CFG.get_port_CFG_fm_id(self.port_id)
+
+        self.port_name: str =  self._port_cfg.get('parm_PortName', '')
         self.parm_PacLen = self._port_cfg.get('parm_PacLen', 160)  # Max Pac len
         self.parm_MaxFrame = self._port_cfg.get('parm_MaxFrame', 3)  # Max (I) Frames
-        self.parm_TXD = self._port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        self._parm_TXD = self._port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation !! Need to be high on AXIP for T1 calculation
         self._parm_Kiss_TXD = 0
         self._parm_Kiss_Tail = 0
         if self.own_port.kiss.is_enabled:
             self._parm_Kiss_TXD = self._port_cfg.get('parm_kiss_TXD', 35)
             self._parm_Kiss_Tail = self._port_cfg.get('parm_kiss_Tail', 15)
-        self.parm_T2 = int(self._port_cfg.get('parm_T2', 1700))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
-        self.parm_T3 = self._port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
+        self._parm_T2 = int(self._port_cfg.get('parm_T2', 1700))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self._parm_T3 = self._port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
         self.parm_N2 = self._port_cfg.get('parm_N2', 20)  # Max Try   Default 20
-        self.parm_baud = self._port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
+        self._parm_baud = self._port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
         """ Config new Connection Address """
         #####################################
         ax25_conf = ax25_frame.get_frame_conf()
@@ -147,8 +150,6 @@ class AX25Conn:
             self.via_calls = list(ax25_conf.get('via_calls_str', []))
         """ GUI Stuff"""
         self.ch_index: int = 0
-        self.port_id: int = self.own_port.port_id
-        self.port_name: str = self.own_port.portname
         self._gui = self._port_handler.get_gui()
         if self._gui:
             self._my_locator = self._gui.own_loc
@@ -357,7 +358,7 @@ class AX25Conn:
                 return True
         return False
 
-    def _recv_data(self, data: b'', file_trans=False):
+    def _recv_data(self, data: bytes):
         # Statistic
         self.rx_byte_count += len(data)
         """ Link/Node-DIGI """
@@ -476,7 +477,6 @@ class AX25Conn:
             )
         except AttributeError:
             logger.error("Conn: Pipe Error (AX25Conn-set_pipe())")
-            print("Pipe Error (AX25Conn-set_pipe())")
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
             self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', self.parm_PacLen)
@@ -484,7 +484,6 @@ class AX25Conn:
             self.parm_MaxFrame = pipe_cfg.get('pipe_parm_MaxFrame', self.parm_MaxFrame)
         if not self.own_port.add_pipe(pipe=pipe):
             logger.error("Conn: Port no Pipe")
-            print("Port no Pipe")
             return False
         self.cli = NoneCLI(self)
         self.cli_type = ''
@@ -692,7 +691,7 @@ class AX25Conn:
             self.set_T1(stop=True)
             # self.zustand_exec.tx(None)
             if self.zustand_exec.stat_index in [2, 4] or self._await_disco:
-                print('End Conn')
+                logger.debug('End Conn')
                 self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
@@ -721,18 +720,20 @@ class AX25Conn:
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
         if self.tx_buf_ctl:
-            # logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
+            logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
-        if self.rx_tx_buf_guiData:
-            # logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
+        if all((self.rx_tx_buf_guiData, self._gui)):
+            logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
         self.own_port.del_connections(conn=self)
         self._port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
+        logger.debug(f'CLeanup {self.uid}: rx_tx_buf_guiData')
+
     def end_connection(self, reconn=True):
-        # logger.debug(f"end_connection: {self.uid}")
+        logger.debug(f"end_connection: {self.uid}")
         self._del_pipe()
         self.ft_queue = []
         if self.ft_obj:
@@ -773,12 +774,13 @@ class AX25Conn:
     # Timer usw
     def set_T2auto(self, t2_auto=True):
         self._port_cfg['parm_T2_auto'] = bool(t2_auto)
-
-    def set_T2(self, t2: int):
-        self._port_cfg['parm_T2'] = min(max(int(t2), 500), 3000)
         self.calc_irtt()
 
-    def set_RNR(self, link_remote=False):
+    def set_T2var(self, t2: int):
+        self._port_cfg['parm_T2'] = min(max(int(t2), 10), 5000)
+        self.calc_irtt()
+
+    def set_RNR(self):
         if not self.is_RNR:
             self.send_RNR()
             self.set_T1(stop=True)
@@ -796,7 +798,7 @@ class AX25Conn:
             if new_state:
                 self.zustand_exec.change_state(new_state)
 
-    def unset_RNR(self, link_remote=False):
+    def unset_RNR(self):
         if self.is_RNR:
             self.is_RNR = False
             self.send_RR()
@@ -946,24 +948,24 @@ class AX25Conn:
 
     def calc_irtt(self):
         if self._port_cfg.get('parm_T2_auto', True):
-            init_t2: float = (((self.parm_PacLen + 16) * 8) / self.parm_baud) * 1000
+            init_t2: float = (((self.parm_PacLen + 16) * 8) / self._parm_baud) * 1000
             self.IRTT = (init_t2 +
-                         self.parm_TXD +
+                         self._parm_TXD +
                          (self._parm_Kiss_TXD * 10) +
                          (self._parm_Kiss_Tail * 10)
                          ) * 2
             # self.parm_T2 = (float(self.IRTT / 1000) / 2)
             # TXD    TAIL
-            self.parm_T2 = float(init_t2 + 400 + 150) / 1000
+            self._parm_T2 = float(init_t2 + 400 + 150) / 1000
         else:
-            self.parm_T2 = int(self._port_cfg.get('parm_T2', 1700)) / 1000
-            self.IRTT = ((self.parm_T2 * 1000) +
-                         self.parm_TXD +
+            self._parm_T2 = float(self._port_cfg.get('parm_T2', 1700)) / 1000
+            self.IRTT = ((self._parm_T2 * 1000) +
+                         self._parm_TXD +
                          (self._parm_Kiss_TXD * 10) +
                          (self._parm_Kiss_Tail * 10)
                          ) * 2
         # print('parm_T2: {}'.format(self.parm_T2))
-        self.IRTT = max(self.IRTT, 300)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+        self.IRTT = max(self.IRTT, 10)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
         # print('IRTT: {}'.format(self.IRTT))
 
     def set_T1(self, stop=False):
@@ -987,24 +989,24 @@ class AX25Conn:
         """
 
     def set_T2(self, stop=False, link_remote=False):
-        # print(f"t2Auto conn: {self._port_cfg.get('parm_T2_auto', None)}")
-        # print(f"t2Auto port: {self.own_port.port_cfg.get('parm_T2_auto', None)}")
+        """
         if self._port_cfg.get('parm_full_duplex', False):
             self.t2 = 0
-        else:
-            if stop:
-                self.t2 = 0
-            else:
-                self.t2 = float(self.parm_T2 + time.time())
-                if self.is_link and not link_remote:
-                    if self.own_port == self.LINK_Connection.own_port:
-                        self.LINK_Connection.set_T2(link_remote=True)
+            return
+        """
+        if stop:
+            self.t2 = 0
+            return
+        self.t2 = float(self._parm_T2 + time.time())
+        if self.is_link and not link_remote:
+            if self.own_port == self.LINK_Connection.own_port:
+                self.LINK_Connection.set_T2(link_remote=True)
 
     def set_T3(self, stop=False):
         if stop:
             self.t3 = 0
         else:
-            self.t3 = float(self.parm_T3 + time.time())
+            self.t3 = float(self._parm_T3 + time.time())
 
     def prozess_I_frame(self):
         self.set_T2()
@@ -1168,9 +1170,6 @@ class AX25Conn:
         # ??? if not self.REJ_is_set:
         # self.REJ_is_set = True
 
-    def get_state_index(self):
-        return self.zustand_exec.stat_index
-
     def send_sys_Msg_to_gui(self, data):
         if not data:
             return
@@ -1178,7 +1177,7 @@ class AX25Conn:
         log_book.info(lb_msg)
         log_book.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
         gui = self._port_handler.get_gui()
-        if not gui:
+        if not hasattr(gui, 'sysMsg_to_qso'):
             return
         gui.sysMsg_to_qso(data, self.ch_index)
 
@@ -1231,6 +1230,9 @@ class AX25Conn:
 
     def get_port_cfg(self):
         return dict(self._port_cfg)
+
+    def get_param_T2(self):
+        return float(self._parm_T2)
 
 ###########################################################################
 ###########################################################################
@@ -1298,9 +1300,9 @@ class DefaultStat(object):
             self.change_state(2)
 
     def _rx_DM(self):
-        # RESET
+        # RESET !!!!!!!
         if self.stat_index:
-            self._ax25conn.reset_conn()
+            self._ax25conn.reset_conn() ####
             self._ax25conn.send_SABM()
             self._ax25conn.set_T1()
             self.change_state(2)
@@ -1535,7 +1537,6 @@ class S2Aufbau(DefaultStat):  # INIT TX
         self._ax25conn.send_sys_Msg_to_gui(to_qso_win)
         self._ax25conn.send_DISC_ctlBuf()
         self.S1_end_connection(reconn=False)
-
 
 class S3sendFRMR(DefaultStat):
     stat_index = 3  # Blockrückruf

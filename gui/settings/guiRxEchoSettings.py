@@ -2,6 +2,7 @@ import tkinter as tk
 import math
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 
 
 class RxEchoSettings(tk.Frame):
@@ -25,7 +26,8 @@ class RxEchoSettings(tk.Frame):
             k = list(PORT_HANDLER.get_all_ports().keys())[i]
             port = PORT_HANDLER.get_all_ports()[k]
             var_dict = {}
-            text = 'Port {}: {}'.format(port.port_id, port.port_cfg.get('parm_PortName', ''))
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port.port_id)
+            text = 'Port {}: {}'.format(port.port_id, port_cfg.get('parm_PortName', ''))
             # Left
             y = 60 + (280 * int(i % 2))
             if not i % 2 and i:

@@ -52,11 +52,15 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         # self.title(STR_TABLE['msg_center'][self._lang])
         self.title('Scheduler-Set')
         # self.style = self._root_win.style
-        self.geometry(f"800x"
-                      f"600"
-                      #f"+{self._root_win.winfo_x()}+" todo
-                      #f"{self._root_win.winfo_y()}"   todo
-                      )
+        if all((hasattr(self._root_win, 'winfo_x'), hasattr(self._root_win, 'winfo_y'))):
+            self.geometry(f"800x"
+                          f"600"
+                          f"+{self._root_win.winfo_x()}+" 
+                          f"{self._root_win.winfo_y()}"
+                          )
+        else:
+            self.geometry(f"800x"
+                          f"600")
         self.protocol("WM_DELETE_WINDOW", self._close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)

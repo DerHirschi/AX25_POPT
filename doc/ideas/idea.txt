@@ -60,7 +60,7 @@ Ideas/TODO's :
   - Individuelle Farben (PMS)
   - Individuelle Farben (APRS)
   ✓ Sprache auswählbar
-  - F-Texte
+  ✓ F-Texte
 
 ✓ Loop Port oder einfach localhost via AXIP
   ✓ einfach 127.0.0.1 und eigenen AXIP Port die eigene Station/Node connecten)

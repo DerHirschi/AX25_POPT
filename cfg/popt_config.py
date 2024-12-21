@@ -1,7 +1,7 @@
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg
-from cfg.constant import CFG_MAIN_data_file, LANGUAGE, MAX_PORTS
+from cfg.constant import CFG_MAIN_data_file, MAX_PORTS
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
@@ -119,7 +119,6 @@ class Main_CFG:
         if config:
             self._config = dict(config)
         else:
-            # print("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
             logger.warning("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
             self._set_all_default_CFGs()
 
@@ -296,10 +295,28 @@ class Main_CFG:
 
     # Channel Vars
     def load_guiCH_VARS(self):
-        return self._config['gui_channel_vars']
+        return self._config.get('gui_channel_vars', {})
 
     def save_guiCH_VARS(self, data: dict):
         self._config['gui_channel_vars'] = data
+
+    # F-Text
+    def get_f_text_fm_id(self, f_id: int):
+        return tuple(
+            self._config.get('gui_main_parm', {})
+            .get('gui_f_text_tab' , {})
+            .get(f_id, (b'', 'UTF-8'))
+        )
+
+    def set_f_text_f_id(self, f_id: int, text_and_enc: tuple):
+        if 1 > f_id > 12:
+            return False
+        if len(text_and_enc) != 2:
+            return False
+        ftext_dict = dict(self._config.get('gui_main_parm', {}).get('gui_f_text_tab' , {}))
+        ftext_dict[f_id] = text_and_enc
+        self._config['gui_main_parm']['gui_f_text_tab'] = ftext_dict
+        return True
 
     #################################################
     # Beacon
