@@ -3,6 +3,7 @@ from cfg.popt_config import POPT_CFG
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
+from fnc.os_fnc import is_linux
 from fnc.str_fnc import zeilenumbruch, tk_filter_bad_chars, zeilenumbruch_lines
 
 
@@ -85,7 +86,11 @@ class FTextSettings(tk.Frame):
         tabControl = ttk.Notebook(self)
         tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=15)
         self._tablist = {}
-        for i in range(1, 13):
+        if is_linux():
+            r = 13
+        else:
+            r = 11
+        for i in range(1, r):
             tab = FText_Tab(tabControl, i, )
             self._tablist[i] = tab
             port_lable_text = f'F {i}'

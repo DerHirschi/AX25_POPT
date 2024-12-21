@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.112.5'
+VER = '2.113.0'
 DEBUG_LOG = False
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
@@ -187,7 +187,7 @@ DEF_PORT_MON_TX_COL = 'medium violet red'
 DEF_PORT_MON_RX_COL = 'green'
 DEF_PORT_MON_BG_COL = 'black'
 # F Key Tab
-F_KEY_TAB = {
+F_KEY_TAB_LINUX = {
     67: 1,  # F1
     68: 2,  # ...
     69: 3,
@@ -200,6 +200,19 @@ F_KEY_TAB = {
     76: 10,
     95: 11,
     96: 12
+}
+F_KEY_TAB_WIN = {
+    112: 1,  # F1
+    113: 2,  # ...
+    114: 3,
+    115: 4,
+    116: 5,
+    117: 6,
+    118: 7,
+    119: 8,
+    120: 9,
+    121: 10,
+
 }
 #######################################################
 # Port TNC Settings

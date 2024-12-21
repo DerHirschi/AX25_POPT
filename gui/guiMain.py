@@ -47,7 +47,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB
+    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -1101,7 +1101,11 @@ class PoPT_GUI_Main:
         # lambda event: print(f"{event.keysym} - {event.keycode}\n {type(event.keysym)} - {type(event.keycode)}
         #####################
         # F-TEXT
-        for fi in range(1, 13):
+        if is_linux():
+            r = 13
+        else:
+            r = 11
+        for fi in range(1, r):
             self.main_win.bind(f'<Shift-F{fi}>', self._insert_ftext)
         #####################
         self.main_win.bind('<F1>', lambda event: self.switch_channel(1))
@@ -1155,7 +1159,10 @@ class PoPT_GUI_Main:
         if not hasattr(event, 'keycode'):
             return
         try:
-            fi = int(F_KEY_TAB[event.keycode])
+            if is_linux():
+                fi = int(F_KEY_TAB_LINUX[event.keycode])
+            else:
+                fi = int(F_KEY_TAB_WIN[event.keycode])
         except (ValueError, KeyError):
             return
         try:
