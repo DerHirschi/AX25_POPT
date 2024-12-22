@@ -119,7 +119,8 @@ class FileSend(tk.Toplevel):
         filenames = fd.askopenfilenames(
             title='Open files',
             initialdir='data/',
-            filetypes=filetypes)
+            filetypes=filetypes,
+            parent=self)
 
         if filenames:
             prot = self.protocol_var.get()

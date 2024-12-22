@@ -6,6 +6,7 @@ Fixes:
 - Zeilenumbruch, wenn PMS-Nachricht gesendet wird
 - Einstellungen-Fenster wird in Hintergrund geschoben, wenn
   Textfarben ausgewählt werden
+- Pipe-Tool: Scripterror beim Klicken auf "Pipe auf Verbindung"
 
 Optimierung:
 

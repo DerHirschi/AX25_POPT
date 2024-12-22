@@ -219,7 +219,8 @@ class PipeTab:
         filenames = fd.askopenfilenames(
             title='Open files',
             initialdir='data/',
-            filetypes=filetypes)
+            filetypes=filetypes,
+            parent=self._root_win)
 
         if filenames:
             if tx:

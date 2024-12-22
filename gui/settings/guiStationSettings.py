@@ -483,7 +483,8 @@ class StatSetTab:
         filenames = fd.askopenfilenames(
             title='Open files',
             initialdir='data/',
-            filetypes=filetypes)
+            filetypes=filetypes,
+            parent=self._root_win)
         # self._main_cl.settings_win.lift()
         if filenames:
             if tx:
