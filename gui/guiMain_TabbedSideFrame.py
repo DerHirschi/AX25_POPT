@@ -15,9 +15,9 @@ from sound.popt_sound import SOUND
 class SideTabbedFrame:  # TODO
     def __init__(self, main_cl, frame, plot_frame=None):
         self._main_win = main_cl
-        self._lang = int(main_cl.language)
+        self._lang = POPT_CFG.get_guiCFG_language()
         self.style = main_cl.style
-        self.ch_index = main_cl.channel_index
+        # self.ch_index = main_cl.channel_index
         self._mh = self._main_win.mh
         self._ch_is_disc = True
 
@@ -48,10 +48,12 @@ class SideTabbedFrame:  # TODO
             self._tabControl.add(plot_frame, text='BW-Plot')
 
         self._tabControl.pack(expand=1, fill="both")
+        """
         if plot_frame:
             self._tabControl.select(plot_frame)
         else:
             self._tabControl.select(tab2_mh)
+        """
         ################################################
         # Kanal
         parm_y = 20
@@ -1002,3 +1004,14 @@ class SideTabbedFrame:  # TODO
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],
                                   message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang], parent=self._main_win.main_win):
             PORT_HANDLER.disco_all_Conn()
+
+    def get_tab_index(self):
+        try:
+            return self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return None
+
+    def set_tab_index(self, tab_id):
+        if tab_id is None:
+            return
+        self._tabControl.select(tab_id)

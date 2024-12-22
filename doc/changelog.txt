@@ -6,11 +6,14 @@ Fixes:
 - Zeilenumbruch, wenn PMS-Nachricht gesendet wird
 - Einstellungen-Fenster wird in Hintergrund geschoben, wenn
   Textfarben ausgewählt werden
+- Fenster werden in Hintergrund geschoben, wenn
+  Datei ausgewählt wird
 - Pipe-Tool: Scripterror beim Klicken auf "Pipe auf Verbindung"
 
 Optimierung:
 
 Neue Implementierungen / Funktionen:
+- Ausgewählte Tabs (rechte Seite) werden gespeichert
 
 ###########################################################################################################
 ###########################################################################################################

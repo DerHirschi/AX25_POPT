@@ -10,7 +10,7 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from cli.StringVARS import replace_StringVARS
-from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
+from fnc.str_fnc import tk_filter_bad_chars, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines
 from gui.aprs.guiAISmon import AISmonitor
 from gui.aprs.guiAPRS_Settings import APRSSettingsWin
@@ -218,7 +218,6 @@ class PoPT_GUI_Main:
         self.dualPortMon_win = None
         self.conn_Path_plot_win = None
         ####################################
-        self._init_GUI_vars_fm_CFG()
         ####################################
         # Window Text Buffers & Channel Vars
         logger.info('GUI: Channel Vars Init')
@@ -312,6 +311,7 @@ class PoPT_GUI_Main:
         self.ch_status_update()
         # Init Vars fm CFG
         logger.info('GUI: Parm/CFG Init')
+        self._init_GUI_vars_fm_CFG()
         self._init_PARM_vars()
         self._set_CFG()
         # Text Tags
@@ -384,6 +384,7 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_noty_bell'] = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
+        guiCfg['gui_cfg_rtab_index'] = (self.tabbed_sideFrame.get_tab_index(), self.tabbed_sideFrame2.get_tab_index())
         # guiCfg['gui_cfg_locator'] = str(self.own_loc)
         # guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)
@@ -446,6 +447,9 @@ class PoPT_GUI_Main:
         # OWN Loc and QTH
         self.own_loc = guiCfg.get('gui_cfg_locator', '')
         self.own_qth = guiCfg.get('gui_cfg_qth', '')
+        tab1_index, tab2_index = guiCfg.get('gui_cfg_rtab_index', (None, None))
+        self.tabbed_sideFrame.set_tab_index(tab1_index)
+        self.tabbed_sideFrame2.set_tab_index(tab2_index)
 
     def _init_PARM_vars(self):
         #########################
@@ -1011,7 +1015,6 @@ class PoPT_GUI_Main:
         self._mon_txt.pack(side=tk.TOP)
     #######################################
     # Text Tags
-
     def set_text_tags(self):
         self._all_tag_calls = []
         all_stat_cfg = POPT_CFG.get_stat_CFGs()

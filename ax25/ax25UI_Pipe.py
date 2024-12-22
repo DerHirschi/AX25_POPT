@@ -67,7 +67,6 @@ class AX25Pipe(object):
         for call in self._via_calls:
             if call:
                 if not validate_ax25Call(call):
-                    print(self._via_calls)
                     raise AttributeError
 
         if self._connection:
