@@ -3,7 +3,9 @@
 Fixes:
 - Windows: Keybindings für F-Texte
 - Skalierungsprobleme mit dem rechten Fenster bei Windows
-- Zeilenumbruch wenn PMS-Nachricht gesendet wird
+- Zeilenumbruch, wenn PMS-Nachricht gesendet wird
+- Einstellungen-Fenster wird in Hintergrund geschoben, wenn
+  Textfarben ausgewählt werden
 
 Optimierung:
 

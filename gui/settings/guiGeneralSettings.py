@@ -10,6 +10,7 @@ class GeneralSettings(tk.Frame):
     def __init__(self, tabctl, root_win=None):
         tk.Frame.__init__(self, tabctl)
         ################################
+        self._root_win = root_win
         self._lang = POPT_CFG.get_guiCFG_language()
         conf: dict = POPT_CFG.load_guiPARM_main()
         self._fg_rx = conf.get('gui_cfg_vor_col', 'white')
@@ -100,7 +101,7 @@ class GeneralSettings(tk.Frame):
     def _choose_color(self, fg_bg: str):
         if fg_bg == 'tx_fg':
             col = askcolor(self._fg_tx,
-                           title=get_strTab('text_color', self._lang))
+                           title=get_strTab('text_color', self._lang), parent=self._root_win)
             if not col:
                 return
             if col[1] is None:
@@ -108,7 +109,7 @@ class GeneralSettings(tk.Frame):
             self._fg_tx = str(col[1])
         elif fg_bg == 'tx_bg':
             col = askcolor(self._bg_tx,
-                           title=get_strTab('text_color', self._lang))
+                           title=get_strTab('text_color', self._lang), parent=self._root_win)
             if not col:
                 return
             if col[1] is None:
@@ -116,7 +117,7 @@ class GeneralSettings(tk.Frame):
             self._bg_tx = str(col[1])
         elif fg_bg == 'rx_fg':
             col = askcolor(self._fg_rx,
-                           title=get_strTab('text_color', self._lang))
+                           title=get_strTab('text_color', self._lang), parent=self._root_win)
             if not col:
                 return
             if col[1] is None:
