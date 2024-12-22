@@ -9,6 +9,7 @@ Fixes:
 - Fenster werden in Hintergrund geschoben, wenn
   Datei ausgewählt wird
 - Pipe-Tool: Scripterror beim Klicken auf "Pipe auf Verbindung"
+- RX-Echo Icon wird nicht gesetzt bei Neustart
 
 Optimierung:
 

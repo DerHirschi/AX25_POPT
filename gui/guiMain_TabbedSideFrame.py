@@ -1014,4 +1014,7 @@ class SideTabbedFrame:  # TODO
     def set_tab_index(self, tab_id):
         if tab_id is None:
             return
-        self._tabControl.select(tab_id)
+        try:
+            self._tabControl.select(tab_id)
+        except tk.TclError:
+            return

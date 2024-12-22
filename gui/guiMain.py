@@ -434,6 +434,7 @@ class PoPT_GUI_Main:
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
+        self.set_rxEcho_icon(self.setting_rx_echo.get())
         PORT_HANDLER.rx_echo_on = bool(self.setting_rx_echo.get())
         if is_linux():
             self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
