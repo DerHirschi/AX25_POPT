@@ -8,7 +8,7 @@ from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux
-from fnc.str_fnc import conv_time_DE_str, get_time_delta, get_kb_str_fm_bytes
+from fnc.str_fnc import conv_time_DE_str, get_time_delta, get_kb_str_fm_bytes, get_strTab
 from sound.popt_sound import SOUND
 
 
@@ -36,7 +36,7 @@ class SideTabbedFrame:  # TODO
         tab6_monitor = ttk.Frame(self._tabControl)
         tab7_tracer = ttk.Frame(self._tabControl)
 
-        self._tabControl.add(tab1_kanal, text='Kanal')
+        self._tabControl.add(tab1_kanal, text=get_strTab('channel', self._lang))
         # tab3 = ttk.Frame(self._tabControl)                         # TODO
         # self._tabControl.add(tab3, text='Ports')                   # TODO
         self._tabControl.add(tab4_settings, text='Global')
@@ -162,7 +162,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 175
         # self.link_holder_var = tk.BooleanVar(tab1_kanal)
         self._link_holder = ttk.Checkbutton(tab1_kanal,
-                                           text='Linkhalter',
+                                           text=get_strTab('linkholder', self._lang),
                                            variable=self._main_win.link_holder_var,
                                            state='disabled',
                                            command=self._chk_link_holder
@@ -170,13 +170,13 @@ class SideTabbedFrame:  # TODO
         self._link_holder.place(x=10, y=parm_y)
 
         clear_ch_data_btn = ttk.Button(tab1_kanal,
-                                      text='Säubern',
+                                      text=get_strTab('clean_qso', self._lang),
                                       command=self._main_win.clear_channel_vars
                                       )
         clear_ch_data_btn.place(x=140, y=135)
 
         link_holder_settings_btn = ttk.Button(tab1_kanal,
-                                             text='Linkhalter',
+                                             text=get_strTab('linkholder', self._lang),
                                              command=self._main_win.open_link_holder_sett
                                              )
         link_holder_settings_btn.place(x=140, y=165)
@@ -272,7 +272,7 @@ class SideTabbedFrame:  # TODO
         self._tree = ttk.Treeview(tab2_mh, columns=columns, show='headings')
         self._tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
 
-        self._tree.heading('mh_last_seen', text='Zeit')
+        self._tree.heading('mh_last_seen', text='Time')
         self._tree.heading('mh_call', text='Call')
         self._tree.heading('mh_dist', text='km')
         self._tree.heading('mh_port', text='Port')
@@ -324,7 +324,7 @@ class SideTabbedFrame:  # TODO
                     ).place(x=150, y=10)
         # Global Sprech
         sprech_btn = ttk.Checkbutton(tab4_settings,
-                                 text="Sprachausgabe",
+                                 text=get_strTab('sprech', self._lang),
                                  variable=self._main_win.setting_sprech,
                                  command=self._chk_sprech_on
                                  )
@@ -333,7 +333,7 @@ class SideTabbedFrame:  # TODO
             sprech_btn.configure(state='disabled')
         # Global Bake
         ttk.Checkbutton(tab4_settings,
-                    text="Baken",
+                    text=get_strTab('beacon', self._lang),
                     variable=self._main_win.setting_bake,
                     command=self._chk_beacon,
                     ).place(x=10, y=60)
@@ -503,7 +503,7 @@ class SideTabbedFrame:  # TODO
         self._trace_tree = ttk.Treeview(tab7_tracer, columns=tracer_columns, show='headings')
         self._trace_tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
 
-        self._trace_tree.heading('rx_time', text='Zeit')
+        self._trace_tree.heading('rx_time', text='Time')
         self._trace_tree.heading('call', text='Call')
         self._trace_tree.heading('port', text='Port')
         self._trace_tree.heading('distance', text='km')
