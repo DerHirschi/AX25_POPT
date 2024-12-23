@@ -35,6 +35,7 @@ class Main_CFG:
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
             'gui_channel_vars': getNew_dict,
+            'gui_pacman': {},
             ##########################
             # -- Beacon
             'beacon_tasks': [],
@@ -317,6 +318,15 @@ class Main_CFG:
         ftext_dict[f_id] = text_and_enc
         self._config['gui_main_parm']['gui_f_text_tab'] = ftext_dict
         return True
+
+    # Pacman
+    def get_pacman_data(self):
+        return self._config.get('gui_pacman', {})
+
+    def set_pacman_data(self, data: dict):
+        if not data:
+            return
+        self._config['gui_pacman'] = dict(data)
 
     #################################################
     # Beacon

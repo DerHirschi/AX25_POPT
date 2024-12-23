@@ -295,10 +295,10 @@ class PoPT_GUI_Main:
         side_frame_pw.add(tabbedF_upper_frame, weight=1)
         side_frame_pw.add(tabbedF_lower_frame, weight=1)
         bw_plot_frame = ttk.Frame(self.main_win)
-        self._path_plot_frame = LiveConnPath(self.main_win)
+        self._Pacman = LiveConnPath(self.main_win)
         ##############
         # tabbed Frame
-        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._path_plot_frame)
+        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._Pacman)
         self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
         ############################
         # Canvas Plot
@@ -331,6 +331,7 @@ class PoPT_GUI_Main:
         ############################
         self._monitor_start_msg()
         ############################
+        self._Pacman.update_plot_f_ch(self.channel_index)
         #######################
         # LOOP LOOP LOOP
         self.main_win.after(self._loop_delay, self._tasker)
@@ -366,6 +367,7 @@ class PoPT_GUI_Main:
                 wn.destroy()
         self._quit = True
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
+        self._Pacman.save_path_data()
         self.save_GUIvars()
         self._save_parameter()
         self._save_Channel_Vars()
@@ -2098,16 +2100,16 @@ class PoPT_GUI_Main:
             path = []
         print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
         for digi in path:
-            self._path_plot_frame.change_node(node=digi, ch_id=ch_id)
-        self._path_plot_frame.change_node(node=node, ch_id=ch_id)
+            self._Pacman.change_node(node=digi, ch_id=ch_id)
+        self._Pacman.change_node(node=node, ch_id=ch_id)
         if ch_id == self.channel_index:
-            self._path_plot_frame.update_plot_f_ch(ch_id=ch_id)
+            self._Pacman.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot(self, ch_id: int, node='HOME'):
         print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
-        self._path_plot_frame.reset_last_hop(ch_id=ch_id, node=node)
+        self._Pacman.reset_last_hop(ch_id=ch_id, node=node)
         if ch_id == self.channel_index:
-            self._path_plot_frame.update_plot_f_ch(ch_id=ch_id)
+            self._Pacman.update_plot_f_ch(ch_id=ch_id)
     # ENDConn Path Plot
     #######################################################################
 
@@ -2198,7 +2200,7 @@ class PoPT_GUI_Main:
         self.ch_status_update()
         self.conn_btn_update()
         self.reset_noty_bell()
-        self._path_plot_frame.update_plot_f_ch(self.channel_index)
+        self._Pacman.update_plot_f_ch(self.channel_index)
         self._kanal_switch()  # Sprech
 
     def reset_noty_bell(self):

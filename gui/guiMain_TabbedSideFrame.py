@@ -49,7 +49,7 @@ class SideTabbedFrame:  # TODO
             self._tabControl.add(plot_frame, text='BW-Plot')
         elif path_frame:
             # self._path_plot = LiveConnPath(self._tabControl)
-            self._tabControl.add(path_frame, text='Path-Plot')
+            self._tabControl.add(path_frame, text='Pacman')
 
         self._tabControl.pack(expand=1, fill="both")
         """

@@ -5,9 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import networkx as nx
 import random
 import matplotlib
-from matplotlib.font_manager import font_scalings
 
-from cfg.constant import FONT
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
@@ -22,7 +20,7 @@ class LiveConnPath(tk.Frame):
         self._lang = POPT_CFG.get_guiCFG_language()
         self._pos = None
         self._channel_id = 1
-        self._path_data = {}
+        self._path_data = POPT_CFG.get_pacman_data()
         """
         test_data = {
             1: ({
@@ -137,6 +135,19 @@ class LiveConnPath(tk.Frame):
                              # alpha=0.7
                              )
 
+    def _add_edge(self, e1: str, e2: str, col='white', weight=1.1):
+        if not all((e1, e2)):
+            return
+        own_calls = POPT_CFG.get_stat_CFG_keys()
+        if e1 in own_calls:
+            e1 = 'HOME'
+        if e2 in own_calls:
+            e2 = 'HOME'
+        self._g.add_edge(e1, e2, color=col, weight=weight)
+
+    def _get_ch_data(self, ch_id: int):
+        return self._path_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000))))
+
     ###############################################
     #
     def change_node(self, ch_id: int, node: str):
@@ -161,15 +172,5 @@ class LiveConnPath(tk.Frame):
         self._channel_id = int(ch_id)
         self._update_Graph(ch_id)
 
-    def _get_ch_data(self, ch_id: int):
-        return self._path_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000))))
-
-    def _add_edge(self, e1: str, e2: str, col='white', weight=1.1):
-        if not all((e1, e2)):
-            return
-        own_calls = POPT_CFG.get_stat_CFG_keys()
-        if e1 in own_calls:
-            e1 = 'HOME'
-        if e2 in own_calls:
-            e2 = 'HOME'
-        self._g.add_edge(e1, e2, color=col, weight=weight)
+    def save_path_data(self):
+        POPT_CFG.set_pacman_data(self._path_data)
