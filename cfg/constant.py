@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.113.9'
+VER = '2.113.10'
 DEBUG_LOG = True
 CONSOLE_LOG = False
 """ Custom TNC KISSMODE INIT """
@@ -182,6 +182,9 @@ GUI_DISABLED_CLR = '#b1b1b3'
 DEF_STAT_QSO_TX_COL = 'white'
 DEF_STAT_QSO_RX_COL = '#00ff06'
 DEF_STAT_QSO_BG_COL = 'black'
+# QSO SysMSG
+DEF_QSO_SYSMSG_FG= '#fc7126'
+DEF_QSO_SYSMSG_BG= '#000000'
 # Port Default
 DEF_PORT_MON_TX_COL = 'medium violet red'
 DEF_PORT_MON_RX_COL = 'green'

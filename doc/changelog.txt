@@ -15,7 +15,7 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - Ausgewählte Tabs (rechte Seite) werden gespeichert
-- Live Netzwerk-Pfad-Plot (rechte Seite "Path-Plot")
+- Live Netzwerk-Pfad-Plot (rechte Seite "Pacman")
 
 ###########################################################################################################
 ###########################################################################################################

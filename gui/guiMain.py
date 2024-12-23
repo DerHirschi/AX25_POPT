@@ -48,7 +48,8 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN
+    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
+    DEF_QSO_SYSMSG_BG
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -897,8 +898,8 @@ class PoPT_GUI_Main:
         self._TXT_mid_frame.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
         self._TXT_mid_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
         self._out_txt = scrolledtext.ScrolledText(self._TXT_mid_frame,
-                                                  background=TXT_BACKGROUND_CLR,
-                                                  foreground=TXT_OUT_CLR,
+                                                  background=DEF_QSO_SYSMSG_BG,
+                                                  foreground=DEF_QSO_SYSMSG_FG,
                                                   font=(FONT, self.text_size),
                                                   height=100,
                                                   width=300,
@@ -906,7 +907,7 @@ class PoPT_GUI_Main:
                                                   borderwidth=0,
                                                   state="disabled",
                                                   )
-        self._out_txt.tag_config("input", foreground="white")
+        # self._out_txt.tag_config("input", foreground="white")
         self._out_txt.grid(row=0, column=0, columnspan=10, sticky="nsew")
 
         name_label = tk.Label(self._TXT_mid_frame,
@@ -1053,10 +1054,10 @@ class PoPT_GUI_Main:
                                      selectforeground=tx_bg,
                                      )
             self._out_txt.tag_config('SYS-MSG',
-                                     foreground='#fc7126',
-                                     background='#000000',
-                                     selectbackground='#fc7126',
-                                     selectforeground='#000000',
+                                     foreground=DEF_QSO_SYSMSG_FG,
+                                     background=DEF_QSO_SYSMSG_BG,
+                                     selectbackground=DEF_QSO_SYSMSG_FG,
+                                     selectforeground=DEF_QSO_SYSMSG_BG,
                                      )
             self._out_txt.tag_config('TX-NOCALL',
                                      foreground='#ffffff',
@@ -2098,7 +2099,7 @@ class PoPT_GUI_Main:
     def add_LivePath_plot(self, node: str, ch_id: int, path=None):
         if path is None:
             path = []
-        print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
+        # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
         for digi in path:
             self._Pacman.change_node(node=digi, ch_id=ch_id)
         self._Pacman.change_node(node=node, ch_id=ch_id)
@@ -2106,7 +2107,7 @@ class PoPT_GUI_Main:
             self._Pacman.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot(self, ch_id: int):
-        print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
+        # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
         self._Pacman.reset_last_hop(ch_id=ch_id)
         if ch_id == self.channel_index:
             self._Pacman.update_plot_f_ch(ch_id=ch_id)

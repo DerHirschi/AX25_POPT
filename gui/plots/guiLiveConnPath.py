@@ -173,6 +173,8 @@ class LiveConnPath(tk.Frame):
     #
     def change_node(self, ch_id: int, node: str):
         path_data, last_hop, seed = self._get_ch_data(ch_id)
+        if node == last_hop:
+            return
         node_path = list(path_data.get(last_hop, []))
         conn_path = list(self._connected_path.get(ch_id, ['HOME']))
         if node not in node_path:
