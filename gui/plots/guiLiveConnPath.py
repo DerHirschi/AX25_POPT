@@ -20,7 +20,13 @@ class LiveConnPath(tk.Frame):
         self._lang = POPT_CFG.get_guiCFG_language()
         self._pos = None
         self._channel_id = 1
-        self._path_data = POPT_CFG.get_pacman_data()
+        self._path_data = {}
+        path_data = POPT_CFG.get_pacman_data()
+        for ch_id, ch_data in path_data.items():
+            path_data, last_hop, seed = ch_data
+            self._path_data[ch_id] = path_data, 'HOME', seed
+        # self._path_data = POPT_CFG.get_pacman_data()
+        self._connected_path = {}
         """
         test_data = {
             1: ({
@@ -80,11 +86,15 @@ class LiveConnPath(tk.Frame):
     def _update_node_label(self):
         if not self._pos:
             return
+        path_data, last_hop, seed = self._get_ch_data(self._channel_id)
         tmp = []
         for node_name, l_pos in self._pos.items():
             if node_name not in tmp:
                 tmp.append(node_name)
-                node_color = 'black'
+                if node_name == last_hop:
+                    node_color = '#f70505'
+                else:
+                    node_color = 'black'
                 self._plot1.text(l_pos[0], l_pos[1] + 0.06,
                                  s=node_name,
                                  color='#ffffff',
@@ -98,12 +108,10 @@ class LiveConnPath(tk.Frame):
                                  )
 
     def _update_Node_pos(self, ch_id: int):
-        print(f"Update: {ch_id}")
         self._plot1.clear()
         self._g.clear()
         self._pos = None
         path_data, last_hop, seed = self._path_data.get(ch_id, self._get_ch_data(ch_id))
-        print(f"Update: {path_data}")
         if not path_data:
             return
         # self._pos = None
@@ -115,9 +123,10 @@ class LiveConnPath(tk.Frame):
                         (node2, node1) in filter_dbl,
                 )):
                     continue
-
-                print(f"{node1} - {node2}")
-                self._add_edge(node1, node2, 'white')
+                if self._is_conn_path(ch_id, (node1, node2)):
+                    self._add_edge(node1, node2, 'red', weight=1.7)
+                else:
+                    self._add_edge(node1, node2, 'white', weight=1.1)
                 filter_dbl.append((node1, node2))
 
         self._pos = nx.spring_layout(self._g, seed=seed)
@@ -135,7 +144,7 @@ class LiveConnPath(tk.Frame):
                              # alpha=0.7
                              )
 
-    def _add_edge(self, e1: str, e2: str, col='white', weight=1.1):
+    def _add_edge(self, e1: str, e2: str, col='white', weight=1.2):
         if not all((e1, e2)):
             return
         own_calls = POPT_CFG.get_stat_CFG_keys()
@@ -148,27 +157,48 @@ class LiveConnPath(tk.Frame):
     def _get_ch_data(self, ch_id: int):
         return self._path_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000))))
 
+    def _is_conn_path(self, ch_id: int, nodes: tuple):
+        conn_path = list(self._connected_path.get(ch_id, ['HOME']))
+        if not conn_path:
+            return False
+        if conn_path == list(nodes):
+            return True
+        for node1, node2 in zip(nodes, nodes[1:]):
+            for i in range(len(conn_path) - 1):
+                if [node1, node2] == conn_path[i:i + 2] or [node2, node1] == conn_path[i:i + 2]:
+                    return True
+        return False
+
     ###############################################
     #
     def change_node(self, ch_id: int, node: str):
         path_data, last_hop, seed = self._get_ch_data(ch_id)
         node_path = list(path_data.get(last_hop, []))
+        conn_path = list(self._connected_path.get(ch_id, ['HOME']))
         if node not in node_path:
             node_path.append(node)
+        if node not in conn_path:
+            conn_path.append(node)
+        else:
+            conn_path.reverse()
+            i = conn_path.index(node)
+            if i != -1:
+                conn_path = conn_path[i:]
+            conn_path.reverse()
+
         path_data[last_hop] = list(node_path)
         last_hop = str(node)
-        self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
-        # print(self._path_data)
-        # self._update_Graph(ch_id)
 
-    def reset_last_hop(self, ch_id: int, node='HOME'):
-        path_data, last_hop, seed = self._get_ch_data(ch_id)
-        last_hop = node
         self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
+        self._connected_path[ch_id] = list(conn_path)
+
+    def reset_last_hop(self, ch_id: int):
+        path_data, last_hop, seed = self._get_ch_data(ch_id)
+        last_hop = 'HOME'
+        self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
+        self._connected_path[ch_id] = ['HOME']
 
     def update_plot_f_ch(self, ch_id):
-        # path_data, last_hop, seed = self._path_data.get(ch_id, DEFAULT_PATH_DATA)
-        # self._pos = nx.spring_layout(self._g, seed=seed)
         self._channel_id = int(ch_id)
         self._update_Graph(ch_id)
 
