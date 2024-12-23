@@ -1,4 +1,24 @@
 ###########################################################################################################
+# 2.113.x
+Fixes:
+- Windows: Keybindings für F-Texte
+- Skalierungsprobleme mit dem rechten Fenster bei Windows
+- Zeilenumbruch, wenn PMS-Nachricht gesendet wird
+- Einstellungen-Fenster wird in Hintergrund geschoben, wenn
+  Textfarben ausgewählt werden
+- Fenster werden in Hintergrund geschoben, wenn
+  Datei ausgewählt wird
+- Pipe-Tool: Scripterror beim Klicken auf "Pipe auf Verbindung"
+- RX-Echo Icon wird nicht gesetzt bei Neustart
+
+Optimierung:
+
+Neue Implementierungen / Funktionen:
+- Ausgewählte Tabs (rechte Seite) werden gespeichert
+- Live Netzwerk-Pfad-Plot (rechte Seite "Pacman")
+
+###########################################################################################################
+###########################################################################################################
 # 2.112.x
 Fixes:
 - Scripterror (Crash) wenn "Alle Disconnecten" Messagebox angezeigt wird

@@ -65,8 +65,9 @@ class AX25Pipe(object):
         self._dest_call = self._add_str.split(' ')[0]
         self._via_calls = self._add_str.split(' ')[1:]
         for call in self._via_calls:
-            if not validate_ax25Call(call):
-                raise AttributeError
+            if call:
+                if not validate_ax25Call(call):
+                    raise AttributeError
 
         if self._connection:
             self._uid = self._connection.uid

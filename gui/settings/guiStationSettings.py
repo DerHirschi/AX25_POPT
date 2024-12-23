@@ -19,7 +19,7 @@ class StatSetTab:
         # self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
         height = 600
         width = 1059
-        # self._main_cl = main_stt_win
+        self._root_win = tabclt
         # self.style = main_stt_win.style
         self.own_tab = ttk.Frame(tabclt)
         self._lang = POPT_CFG.get_guiCFG_language()
@@ -403,7 +403,7 @@ class StatSetTab:
         # self._main_cl.settings_win.lower()
         if fg_bg == 'tx_fg':
             col = askcolor(self._qso_fg_tx,
-                           title=STR_TABLE['text_color'][self._lang])
+                           title=STR_TABLE['text_color'][self._lang], parent=self._root_win)
             # self._main_cl.settings_win.lift()
             if not col:
                 # self._main_cl.settings_win.attributes("-topmost", True)
@@ -415,7 +415,7 @@ class StatSetTab:
             self._color_example_text.configure(fg=str(col[1]))
         elif fg_bg == 'tx_bg':
             col = askcolor(self._qso_bg_tx,
-                           title=STR_TABLE['text_color'][self._lang])
+                           title=STR_TABLE['text_color'][self._lang], parent=self._root_win)
             # self._main_cl.settings_win.lift()
             if not col:
                 # self._main_cl.settings_win.attributes("-topmost", True)
@@ -428,7 +428,7 @@ class StatSetTab:
             self._color_example_text_rx.configure(bg=str(col[1]))
         elif fg_bg == 'rx_fg':
             col = askcolor(self._qso_fg_rx,
-                           title=STR_TABLE['text_color'][self._lang])
+                           title=STR_TABLE['text_color'][self._lang], parent=self._root_win)
             # self._main_cl.settings_win.lift()
             if not col:
                 # self._main_cl.settings_win.attributes("-topmost", True)
@@ -483,7 +483,8 @@ class StatSetTab:
         filenames = fd.askopenfilenames(
             title='Open files',
             initialdir='data/',
-            filetypes=filetypes)
+            filetypes=filetypes,
+            parent=self._root_win)
         # self._main_cl.settings_win.lift()
         if filenames:
             if tx:

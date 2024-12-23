@@ -31,7 +31,7 @@ class SettingsMain(tk.Toplevel):
                       f"{root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         # self.attributes("-topmost", True)
-        self.resizable(True, False)
+        self.resizable(True, True)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:

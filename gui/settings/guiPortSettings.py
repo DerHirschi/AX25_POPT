@@ -498,7 +498,8 @@ class PortSetTab:
             # col = askcolor(self._port_setting.parm_mon_clr_tx, title='TX')
             col: tuple = askcolor(self._port_setting.get('parm_mon_clr_tx',
                                                   new_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)),
-                           title='TX')
+                                                parent=self._main_cl,
+                                                title='TX')
             if col[1] is not None:
                 if col:
                     self._port_setting['parm_mon_clr_tx'] = col[1]
@@ -507,6 +508,7 @@ class PortSetTab:
             # col = askcolor(self._port_setting.parm_mon_clr_rx, title='RX')
             col = askcolor(self._port_setting.get('parm_mon_clr_rx',
                                                   new_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)),
+                           parent=self._main_cl,
                            title='RX')
             if col[1] is not None:
                 if col:
@@ -517,6 +519,7 @@ class PortSetTab:
             # col = askcolor(self._port_setting.parm_mon_clr_bg, title=STR_TABLE['bg_color'][self._lang])
             col = askcolor(self._port_setting.get('parm_mon_clr_bg',
                                                   new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
+                           parent=self._main_cl,
                            title=get_strTab('bg_color', self._lang))
             if col[1] is not None:
                 if col:

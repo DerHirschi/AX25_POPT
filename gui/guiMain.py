@@ -10,7 +10,7 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from cli.StringVARS import replace_StringVARS
-from fnc.str_fnc import tk_filter_bad_chars, try_decode, get_time_delta, format_number, conv_timestamp_delta, \
+from fnc.str_fnc import tk_filter_bad_chars, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines
 from gui.aprs.guiAISmon import AISmonitor
 from gui.aprs.guiAPRS_Settings import APRSSettingsWin
@@ -20,6 +20,7 @@ from gui.aprs.guiAPRS_wx_tree import WXWin
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.plots.guiLiveConnPath import LiveConnPath
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.pms.guiBBS_PMS_Settings import PMS_Settings
@@ -47,7 +48,8 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB
+    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
+    DEF_QSO_SYSMSG_BG
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -79,6 +81,8 @@ class ChVars(object):
     t2speech = False
     t2speech_buf = ''
     autoscroll = True
+    # live_path_plot_data = {}
+    # live_path_plot_last_node = 'HOME'
 
     # self.hex_output = True
 
@@ -177,7 +181,7 @@ class PoPT_GUI_Main:
         self._ch_alarm = False
         self.channel_index = 1
         self.mon_mode = 0
-        self._is_closing = False
+        self._quit = False
         self._init_state = 0
         self._tracer_alarm = False
         self._flip05 = True
@@ -190,11 +194,12 @@ class PoPT_GUI_Main:
         self._parm_non_prio_task_timer = 0.25  # s
         self._parm_non_non_prio_task_timer = 1  # s
         self._parm_non_non_non_prio_task_timer = 5  # s
-        self._parm_test_task_timer = 60  # 5        # s
         self._non_prio_task_timer = time.time()
         self._non_non_prio_task_timer = time.time()
         self._non_non_non_prio_task_timer = time.time()
-        self._test_task_timer = time.time()
+        # #### Tester
+        # self._parm_test_task_timer = 60  # 5        # s
+        # self._test_task_timer = time.time()
         ########################################
         ############################
         # Windows
@@ -218,7 +223,6 @@ class PoPT_GUI_Main:
         self.dualPortMon_win = None
         self.conn_Path_plot_win = None
         ####################################
-        self._init_GUI_vars_fm_CFG()
         ####################################
         # Window Text Buffers & Channel Vars
         logger.info('GUI: Channel Vars Init')
@@ -235,7 +239,10 @@ class PoPT_GUI_Main:
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack(fill=tk.BOTH, expand=True)
-        main_pw.add(l_frame, weight=50)
+        if is_linux():
+            main_pw.add(l_frame, weight=150)
+        else:
+            main_pw.add(l_frame, weight=3)
         main_pw.add(self._r_frame, weight=1)
         ###########################################
         # Channel Buttons
@@ -289,10 +296,11 @@ class PoPT_GUI_Main:
         side_frame_pw.add(tabbedF_upper_frame, weight=1)
         side_frame_pw.add(tabbedF_lower_frame, weight=1)
         bw_plot_frame = ttk.Frame(self.main_win)
+        self._Pacman = LiveConnPath(self.main_win)
         ##############
         # tabbed Frame
-        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame)
-        self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, bw_plot_frame)
+        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._Pacman)
+        self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
         ############################
         # Canvas Plot
         logger.info('GUI: BW-Plot Init')
@@ -309,6 +317,7 @@ class PoPT_GUI_Main:
         self.ch_status_update()
         # Init Vars fm CFG
         logger.info('GUI: Parm/CFG Init')
+        self._init_GUI_vars_fm_CFG()
         self._init_PARM_vars()
         self._set_CFG()
         # Text Tags
@@ -317,10 +326,13 @@ class PoPT_GUI_Main:
         self.set_text_tags()
         # .....
         self._update_qso_Vars()
-        self._monitor_start_msg()
         #############################
         # set GUI Var to Port Handler
         PORT_HANDLER.set_gui(self)
+        ############################
+        self._monitor_start_msg()
+        ############################
+        self._Pacman.update_plot_f_ch(self.channel_index)
         #######################
         # LOOP LOOP LOOP
         self.main_win.after(self._loop_delay, self._tasker)
@@ -354,8 +366,9 @@ class PoPT_GUI_Main:
         ]:
             if wn is not None:
                 wn.destroy()
-        self._is_closing = True
+        self._quit = True
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
+        self._Pacman.save_path_data()
         self.save_GUIvars()
         self._save_parameter()
         self._save_Channel_Vars()
@@ -381,6 +394,7 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_noty_bell'] = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
+        guiCfg['gui_cfg_rtab_index'] = (self.tabbed_sideFrame.get_tab_index(), self.tabbed_sideFrame2.get_tab_index())
         # guiCfg['gui_cfg_locator'] = str(self.own_loc)
         # guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)
@@ -430,6 +444,7 @@ class PoPT_GUI_Main:
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
+        self.set_rxEcho_icon(self.setting_rx_echo.get())
         PORT_HANDLER.rx_echo_on = bool(self.setting_rx_echo.get())
         if is_linux():
             self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
@@ -443,6 +458,9 @@ class PoPT_GUI_Main:
         # OWN Loc and QTH
         self.own_loc = guiCfg.get('gui_cfg_locator', '')
         self.own_qth = guiCfg.get('gui_cfg_qth', '')
+        tab1_index, tab2_index = guiCfg.get('gui_cfg_rtab_index', (None, None))
+        self.tabbed_sideFrame.set_tab_index(tab1_index)
+        self.tabbed_sideFrame2.set_tab_index(tab2_index)
 
     def _init_PARM_vars(self):
         #########################
@@ -880,8 +898,8 @@ class PoPT_GUI_Main:
         self._TXT_mid_frame.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
         self._TXT_mid_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
         self._out_txt = scrolledtext.ScrolledText(self._TXT_mid_frame,
-                                                  background=TXT_BACKGROUND_CLR,
-                                                  foreground=TXT_OUT_CLR,
+                                                  background=DEF_QSO_SYSMSG_BG,
+                                                  foreground=DEF_QSO_SYSMSG_FG,
                                                   font=(FONT, self.text_size),
                                                   height=100,
                                                   width=300,
@@ -889,7 +907,7 @@ class PoPT_GUI_Main:
                                                   borderwidth=0,
                                                   state="disabled",
                                                   )
-        self._out_txt.tag_config("input", foreground="white")
+        # self._out_txt.tag_config("input", foreground="white")
         self._out_txt.grid(row=0, column=0, columnspan=10, sticky="nsew")
 
         name_label = tk.Label(self._TXT_mid_frame,
@@ -1008,7 +1026,6 @@ class PoPT_GUI_Main:
         self._mon_txt.pack(side=tk.TOP)
     #######################################
     # Text Tags
-
     def set_text_tags(self):
         self._all_tag_calls = []
         all_stat_cfg = POPT_CFG.get_stat_CFGs()
@@ -1037,10 +1054,10 @@ class PoPT_GUI_Main:
                                      selectforeground=tx_bg,
                                      )
             self._out_txt.tag_config('SYS-MSG',
-                                     foreground='#fc7126',
-                                     background='#000000',
-                                     selectbackground='#fc7126',
-                                     selectforeground='#000000',
+                                     foreground=DEF_QSO_SYSMSG_FG,
+                                     background=DEF_QSO_SYSMSG_BG,
+                                     selectbackground=DEF_QSO_SYSMSG_FG,
+                                     selectforeground=DEF_QSO_SYSMSG_BG,
                                      )
             self._out_txt.tag_config('TX-NOCALL',
                                      foreground='#ffffff',
@@ -1101,7 +1118,11 @@ class PoPT_GUI_Main:
         # lambda event: print(f"{event.keysym} - {event.keycode}\n {type(event.keysym)} - {type(event.keycode)}
         #####################
         # F-TEXT
-        for fi in range(1, 13):
+        if is_linux():
+            r = 13
+        else:
+            r = 11
+        for fi in range(1, r):
             self.main_win.bind(f'<Shift-F{fi}>', self._insert_ftext)
         #####################
         self.main_win.bind('<F1>', lambda event: self.switch_channel(1))
@@ -1155,7 +1176,10 @@ class PoPT_GUI_Main:
         if not hasattr(event, 'keycode'):
             return
         try:
-            fi = int(F_KEY_TAB[event.keycode])
+            if is_linux():
+                fi = int(F_KEY_TAB_LINUX[event.keycode])
+            else:
+                fi = int(F_KEY_TAB_WIN[event.keycode])
         except (ValueError, KeyError):
             return
         try:
@@ -1416,7 +1440,7 @@ class PoPT_GUI_Main:
     ######################################################################
     # TASKER
     def _tasker(self):  # MAINLOOP
-        if self._is_closing:
+        if self._quit:
             self._tasker_quit()
         else:
             prio = self._tasker_prio()
@@ -2070,6 +2094,25 @@ class PoPT_GUI_Main:
 
     # END BW Plot
     #######################################################################
+    #######################################################################
+    # Conn Path Plot
+    def add_LivePath_plot(self, node: str, ch_id: int, path=None):
+        if path is None:
+            path = []
+        # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
+        for digi in path:
+            self._Pacman.change_node(node=digi, ch_id=ch_id)
+        self._Pacman.change_node(node=node, ch_id=ch_id)
+        if ch_id == self.channel_index:
+            self._Pacman.update_plot_f_ch(ch_id=ch_id)
+
+    def resetHome_LivePath_plot(self, ch_id: int):
+        # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
+        self._Pacman.reset_last_hop(ch_id=ch_id)
+        if ch_id == self.channel_index:
+            self._Pacman.update_plot_f_ch(ch_id=ch_id)
+    # ENDConn Path Plot
+    #######################################################################
 
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
@@ -2158,6 +2201,7 @@ class PoPT_GUI_Main:
         self.ch_status_update()
         self.conn_btn_update()
         self.reset_noty_bell()
+        self._Pacman.update_plot_f_ch(self.channel_index)
         self._kanal_switch()  # Sprech
 
     def reset_noty_bell(self):
@@ -2192,7 +2236,7 @@ class PoPT_GUI_Main:
             msg = f"{conn.to_call_str} {STR_TABLE['cmd_bell_gui_msg'][self.language]}"
         if messagebox.askokcancel(f"Bell {STR_TABLE['channel'][self.language]} {ch_id}",
                                   msg, parent=self):
-            if not self._is_closing:
+            if not self._quit:
                 self.switch_channel(ch_id)
 
     def set_noty_bell_active(self):

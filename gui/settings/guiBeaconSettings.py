@@ -274,7 +274,8 @@ class BeaconTab:
         filenames = fd.askopenfilenames(
             title='Open files',
             initialdir='data/',
-            filetypes=filetypes)
+            filetypes=filetypes,
+            parent=self._root)
         # self._root.lift()
         if filenames:
             self.be_txt_filename_var.set(filenames[0])

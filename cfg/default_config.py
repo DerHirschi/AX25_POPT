@@ -157,6 +157,7 @@ def getNew_maniGUI_parm():
         gui_cfg_auto_tracer = False,
         gui_cfg_dx_alarm = True,
         gui_cfg_mon_encoding = 'Auto',
+        gui_cfg_rtab_index = (None, None),
         #####################
         # Vorschreib Col
         gui_cfg_vor_col = '#25db04',

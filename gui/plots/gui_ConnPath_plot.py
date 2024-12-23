@@ -152,10 +152,10 @@ class ConnPathsPlot(tk.Toplevel):
 
     def _refresh_btn(self, event=None):
         self._pos = None
-        self._new_seed_()
+        self._new_seed()
         self._update_Graph()
 
-    def _new_seed_(self):
+    def _new_seed(self):
         self._seed = random.randint(1, 10000)
 
     def _update_Graph(self, event=None):

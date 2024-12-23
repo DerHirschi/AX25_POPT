@@ -3,9 +3,9 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.112.5'
-DEBUG_LOG = False
-CONSOLE_LOG = True
+VER = '2.113.10'
+DEBUG_LOG = True
+CONSOLE_LOG = False
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD = b'\x1b@K\r'             # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
@@ -182,12 +182,15 @@ GUI_DISABLED_CLR = '#b1b1b3'
 DEF_STAT_QSO_TX_COL = 'white'
 DEF_STAT_QSO_RX_COL = '#00ff06'
 DEF_STAT_QSO_BG_COL = 'black'
+# QSO SysMSG
+DEF_QSO_SYSMSG_FG= '#fc7126'
+DEF_QSO_SYSMSG_BG= '#000000'
 # Port Default
 DEF_PORT_MON_TX_COL = 'medium violet red'
 DEF_PORT_MON_RX_COL = 'green'
 DEF_PORT_MON_BG_COL = 'black'
 # F Key Tab
-F_KEY_TAB = {
+F_KEY_TAB_LINUX = {
     67: 1,  # F1
     68: 2,  # ...
     69: 3,
@@ -200,6 +203,19 @@ F_KEY_TAB = {
     76: 10,
     95: 11,
     96: 12
+}
+F_KEY_TAB_WIN = {
+    112: 1,  # F1
+    113: 2,  # ...
+    114: 3,
+    115: 4,
+    116: 5,
+    117: 6,
+    118: 7,
+    119: 8,
+    120: 9,
+    121: 10,
+
 }
 #######################################################
 # Port TNC Settings
