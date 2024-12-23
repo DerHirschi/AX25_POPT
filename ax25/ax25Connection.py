@@ -859,35 +859,39 @@ class AX25Conn:
         data = data.split(b'\r')[:-1]
         for line in data:
             # tmp_raw = tmp_raw.replace(line + b'\r', b'')
-            if line.lower().startswith(b'*** connected to ') or\
-                    line.lower().startswith(b'*** reconnected to '):
-                tmp_line = line.decode('ASCII', 'ignore')
-                tmp_data = tmp_line.split(' to ')[-1]
-                # tmp_data = tmp_data.decode('ASCII', 'ignore')
-                # TODO Conn/reconn fnc
-                if ':' in tmp_data:
-                    tmp_call = tmp_data.split(':')
-                    self.to_call_str = tmp_call[1].replace(' ', '')
-                    self._to_call_alias = tmp_call[0].replace(' ', '')
-                else:
-                    self.to_call_str = tmp_data.replace(' ', '')
-                    self._to_call_alias = ''
-                self.tx_byte_count = 0
-                self.rx_byte_count = 0
-                self._set_user_db_ent()
-                self._set_packet_param()
-                self._reinit_cli()
-                lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
-                lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
-                log_book.info(lb_msg)
-                log_book.info(lb_msg_1)
-                if self._gui:
-                    # TODO
-                    speech = ' '.join(self.to_call_str.replace('-', ' '))
-                    SOUND.sprech(speech)
-                    self._gui.on_channel_status_change()
-                # Maybe it's better to look at the whole string (include last frame)?
-                return True
+            if not any((line.lower().startswith(b'*** connected to '),
+                    line.lower().startswith(b'*** reconnected to '))):
+                continue
+            tmp_line = line.decode('ASCII', 'ignore')
+            tmp_data = tmp_line.split(' to ')[-1]
+            # tmp_data = tmp_data.decode('ASCII', 'ignore')
+            # TODO Conn/reconn fnc
+            if ':' in tmp_data:
+                tmp_call = tmp_data.split(':')
+                self.to_call_str = tmp_call[1].replace(' ', '')
+                self._to_call_alias = tmp_call[0].replace(' ', '')
+            else:
+                self.to_call_str = tmp_data.replace(' ', '')
+                self._to_call_alias = ''
+            self.tx_byte_count = 0
+            self.rx_byte_count = 0
+            self._set_user_db_ent()
+            self._set_packet_param()
+            self._reinit_cli()
+            lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+            lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
+            log_book.info(lb_msg)
+            log_book.info(lb_msg_1)
+            if self._gui:
+                # TODO
+                speech = ' '.join(self.to_call_str.replace('-', ' '))
+                SOUND.sprech(speech)
+
+                self._gui.add_LivePath_plot(node=str(self.to_call_str),
+                                            ch_id=int(self.ch_index))
+                self._gui.on_channel_status_change()
+            # Maybe it's better to look at the whole string (include last frame)?
+            return True
         return False
 
     def _set_user_db_ent(self):

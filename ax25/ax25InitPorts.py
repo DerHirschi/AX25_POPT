@@ -236,7 +236,7 @@ class AX25PortHandler(object):
         logger.info("PH: Closing PoPT")
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
-        self.close_aprs_ais()
+        self._close_aprs_ais()
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.close_port(k)
@@ -406,10 +406,11 @@ class AX25PortHandler(object):
         if self.aprs_ais is not None:
             self.aprs_ais.task()
 
-    def close_aprs_ais(self):
+    def _close_aprs_ais(self):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         if self.aprs_ais is None:
             return False
+        logger.info("PH: closing APRS-AIS ...")
         self.aprs_ais.ais_close()
         # self.aprs_ais.save_conf_to_file()
         del self.aprs_ais
@@ -466,13 +467,16 @@ class AX25PortHandler(object):
                 return
 
     def accept_new_connection(self, connection):
+        call_str = str(connection.to_call_str)
+        ch_id = int(connection.ch_index)
+        path = list(connection.via_calls)
         if connection.is_incoming_connection():
-            msg = f'*** Connected fm {connection.to_call_str}'
-            lb_msg_1 = f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Connected fm {connection.to_call_str}'
+            msg = f'*** Connected fm {call_str}'
+            lb_msg_1 = f'CH {ch_id} - {str(connection.my_call_str)}: *** Connected fm {call_str}'
         else:
-            msg = f'*** Connected to {connection.to_call_str}'
-            lb_msg_1 = f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Connected to {connection.to_call_str}'
-        lb_msg = f"CH {int(connection.ch_index)} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
+            msg = f'*** Connected to {call_str}'
+            lb_msg_1 = f'CH {ch_id} - {str(connection.my_call_str)}: *** Connected to {call_str}'
+        lb_msg = f"CH {ch_id} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
         log_book.info(lb_msg)
         log_book.info(lb_msg_1)
         if self._gui:
@@ -482,13 +486,15 @@ class AX25PortHandler(object):
 
                 self._gui.sysMsg_to_qso(
                     data=msg,
-                    ch_index=connection.ch_index
+                    ch_index=ch_id
                 )
-                if 0 < connection.ch_index < SERVICE_CH_START:
+                if 0 < ch_id < SERVICE_CH_START:
                     SOUND.new_conn_sound()
-                    speech = ' '.join(connection.to_call_str.replace('-', ' '))
+                    speech = ' '.join(call_str.replace('-', ' '))
                     SOUND.sprech(speech)
-
+            self._gui.add_LivePath_plot(node=call_str,
+                                        ch_id=ch_id,
+                                        path=path)
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
 
@@ -515,9 +521,11 @@ class AX25PortHandler(object):
             self._gui.conn_btn_update()
 
     def end_connection(self, conn):
-        msg = f'*** Disconnected fm {str(conn.to_call_str)}'
-        lb_msg = f"CH {int(conn.ch_index)} - {str(conn.my_call_str)}: - {str(conn.uid)} - Port: {int(conn.port_id)}"
-        lb_msg_1 = f"CH {int(conn.ch_index)} - {str(conn.my_call_str)}: *** Disconnected fm {str(conn.to_call_str)}"
+        call_str = str(conn.to_call_str)
+        ch_id = int(conn.ch_index)
+        msg = f'*** Disconnected fm {call_str}'
+        lb_msg = f"CH {ch_id} - {str(conn.my_call_str)}: - {str(conn.uid)} - Port: {int(conn.port_id)}"
+        lb_msg_1 = f"CH {ch_id} - {str(conn.my_call_str)}: *** Disconnected fm {call_str}"
         log_book.info(lb_msg)
         log_book.info(lb_msg_1)
         if self._gui:
@@ -525,9 +533,10 @@ class AX25PortHandler(object):
             # TODO: Trigger here, UserDB-Conn C
             self._gui.sysMsg_to_qso(
                 data=msg,
-                ch_index=int(conn.ch_index))
-            if 0 < conn.ch_index < SERVICE_CH_START:
+                ch_index=ch_id)
+            if 0 < ch_id < SERVICE_CH_START:
                 SOUND.disco_sound()
+            self._gui.resetHome_LivePath_plot(ch_id=ch_id)
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
             if conn.noty_bell:

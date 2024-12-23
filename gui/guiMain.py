@@ -20,6 +20,7 @@ from gui.aprs.guiAPRS_wx_tree import WXWin
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.plots.guiLiveConnPath import LiveConnPath
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.pms.guiBBS_PMS_Settings import PMS_Settings
@@ -79,6 +80,8 @@ class ChVars(object):
     t2speech = False
     t2speech_buf = ''
     autoscroll = True
+    # live_path_plot_data = {}
+    # live_path_plot_last_node = 'HOME'
 
     # self.hex_output = True
 
@@ -177,7 +180,7 @@ class PoPT_GUI_Main:
         self._ch_alarm = False
         self.channel_index = 1
         self.mon_mode = 0
-        self._is_closing = False
+        self._quit = False
         self._init_state = 0
         self._tracer_alarm = False
         self._flip05 = True
@@ -190,11 +193,12 @@ class PoPT_GUI_Main:
         self._parm_non_prio_task_timer = 0.25  # s
         self._parm_non_non_prio_task_timer = 1  # s
         self._parm_non_non_non_prio_task_timer = 5  # s
-        self._parm_test_task_timer = 60  # 5        # s
         self._non_prio_task_timer = time.time()
         self._non_non_prio_task_timer = time.time()
         self._non_non_non_prio_task_timer = time.time()
-        self._test_task_timer = time.time()
+        # #### Tester
+        # self._parm_test_task_timer = 60  # 5        # s
+        # self._test_task_timer = time.time()
         ########################################
         ############################
         # Windows
@@ -291,10 +295,11 @@ class PoPT_GUI_Main:
         side_frame_pw.add(tabbedF_upper_frame, weight=1)
         side_frame_pw.add(tabbedF_lower_frame, weight=1)
         bw_plot_frame = ttk.Frame(self.main_win)
+        self._path_plot_frame = LiveConnPath(self.main_win)
         ##############
         # tabbed Frame
-        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame)
-        self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, bw_plot_frame)
+        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._path_plot_frame)
+        self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
         ############################
         # Canvas Plot
         logger.info('GUI: BW-Plot Init')
@@ -320,10 +325,12 @@ class PoPT_GUI_Main:
         self.set_text_tags()
         # .....
         self._update_qso_Vars()
-        self._monitor_start_msg()
         #############################
         # set GUI Var to Port Handler
         PORT_HANDLER.set_gui(self)
+        ############################
+        self._monitor_start_msg()
+        ############################
         #######################
         # LOOP LOOP LOOP
         self.main_win.after(self._loop_delay, self._tasker)
@@ -357,7 +364,7 @@ class PoPT_GUI_Main:
         ]:
             if wn is not None:
                 wn.destroy()
-        self._is_closing = True
+        self._quit = True
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
         self.save_GUIvars()
         self._save_parameter()
@@ -1430,7 +1437,7 @@ class PoPT_GUI_Main:
     ######################################################################
     # TASKER
     def _tasker(self):  # MAINLOOP
-        if self._is_closing:
+        if self._quit:
             self._tasker_quit()
         else:
             prio = self._tasker_prio()
@@ -2084,6 +2091,25 @@ class PoPT_GUI_Main:
 
     # END BW Plot
     #######################################################################
+    #######################################################################
+    # Conn Path Plot
+    def add_LivePath_plot(self, node: str, ch_id: int, path=None):
+        if path is None:
+            path = []
+        print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
+        for digi in path:
+            self._path_plot_frame.change_node(node=digi, ch_id=ch_id)
+        self._path_plot_frame.change_node(node=node, ch_id=ch_id)
+        if ch_id == self.channel_index:
+            self._path_plot_frame.update_plot_f_ch(ch_id=ch_id)
+
+    def resetHome_LivePath_plot(self, ch_id: int, node='HOME'):
+        print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
+        self._path_plot_frame.reset_last_hop(ch_id=ch_id, node=node)
+        if ch_id == self.channel_index:
+            self._path_plot_frame.update_plot_f_ch(ch_id=ch_id)
+    # ENDConn Path Plot
+    #######################################################################
 
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
@@ -2172,6 +2198,7 @@ class PoPT_GUI_Main:
         self.ch_status_update()
         self.conn_btn_update()
         self.reset_noty_bell()
+        self._path_plot_frame.update_plot_f_ch(self.channel_index)
         self._kanal_switch()  # Sprech
 
     def reset_noty_bell(self):
@@ -2206,7 +2233,7 @@ class PoPT_GUI_Main:
             msg = f"{conn.to_call_str} {STR_TABLE['cmd_bell_gui_msg'][self.language]}"
         if messagebox.askokcancel(f"Bell {STR_TABLE['channel'][self.language]} {ch_id}",
                                   msg, parent=self):
-            if not self._is_closing:
+            if not self._quit:
                 self.switch_channel(ch_id)
 
     def set_noty_bell_active(self):

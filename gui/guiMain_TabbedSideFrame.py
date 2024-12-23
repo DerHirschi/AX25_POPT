@@ -13,7 +13,7 @@ from sound.popt_sound import SOUND
 
 
 class SideTabbedFrame:  # TODO
-    def __init__(self, main_cl, frame, plot_frame=None):
+    def __init__(self, main_cl, frame, plot_frame=None, path_frame=None):
         self._main_win = main_cl
         self._lang = POPT_CFG.get_guiCFG_language()
         self.style = main_cl.style
@@ -35,6 +35,7 @@ class SideTabbedFrame:  # TODO
         # self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
         tab6_monitor = ttk.Frame(self._tabControl)
         tab7_tracer = ttk.Frame(self._tabControl)
+        # self._path_plot = None
 
         self._tabControl.add(tab1_kanal, text=get_strTab('channel', self._lang))
         # tab3 = ttk.Frame(self._tabControl)                         # TODO
@@ -46,6 +47,9 @@ class SideTabbedFrame:  # TODO
         self._tabControl.add(tab7_tracer, text='Tracer')
         if plot_frame:
             self._tabControl.add(plot_frame, text='BW-Plot')
+        elif path_frame:
+            # self._path_plot = LiveConnPath(self._tabControl)
+            self._tabControl.add(path_frame, text='Path-Plot')
 
         self._tabControl.pack(expand=1, fill="both")
         """
@@ -545,7 +549,18 @@ class SideTabbedFrame:  # TODO
         # self._update_ch_echo()
         self._update_side_mh()
         self._update_side_trace()
+        # self.update_LivePath_plot()
         # self.on_ch_stat_change()
+
+    """
+    def update_LivePath_plot(self):
+        if hasattr(self._path_plot, 'update_Graph'):
+            self._path_plot.update_Graph()
+    
+    def addNode_LivePath_plot(self, node1: str, node2: str):
+        if hasattr(self._path_plot, 'add_node'):
+            self._path_plot.add_node(node1, node2)
+    """
 
     def _init_connects_tab(self, root_frame):
         # TREE
