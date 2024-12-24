@@ -4,7 +4,11 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
+from fnc.ax25_fnc import get_list_fm_viaStr
+
+
 # from cfg.logger_config import logger
 
 
@@ -12,7 +16,7 @@ class BeaconTracer(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
-        self._lang = self._root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         # self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self.style = self._root_win.style
         self.geometry(f"1300x"
@@ -47,10 +51,10 @@ class BeaconTracer(tk.Toplevel):
         frame_2 = tk.Frame(upper_frame)
         frame_2.pack(side=tk.TOP, fill=tk.BOTH)
         frame_2_port = tk.Frame(upper_frame)
-        frame_2_port.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
+        frame_2_port.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
 
         # Port
-        self._be_port_var = tk.StringVar(frame_2_port)
+        self._be_port_var = tk.StringVar(self)
         options = list(PORT_HANDLER.get_all_ports().keys())
         if len(options) > PORT_HANDLER.get_aprs_ais().be_tracer_port:
             self._be_port_var.set(options[PORT_HANDLER.get_aprs_ais().be_tracer_port])
@@ -61,8 +65,8 @@ class BeaconTracer(tk.Toplevel):
 
         # Station / Call
         frame_2_stat = tk.Frame(upper_frame)
-        frame_2_stat.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
-        self._be_stat_var = tk.StringVar(frame_2_stat)
+        frame_2_stat.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
+        self._be_stat_var = tk.StringVar(self)
         # options = list(PORT_HANDLER.ge)
         options = PORT_HANDLER.get_stat_calls_fm_port(PORT_HANDLER.get_aprs_ais().be_tracer_port)
 
@@ -74,10 +78,19 @@ class BeaconTracer(tk.Toplevel):
                                             values=options)
         self._be_stat_opt.pack(side=tk.LEFT, )
 
+        # VIA
+        frame_2_via = tk.Frame(upper_frame)
+        frame_2_via.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
+        self._be_via_var = tk.StringVar(self)
+        path = ' '.join(PORT_HANDLER.get_aprs_ais().be_tracer_via)
+        self._be_via_var.set(path)
+        tk.Label(frame_2_via, text='via ').pack(side=tk.LEFT, )
+        tk.Entry(frame_2_via, textvariable=self._be_via_var, width=25).pack(side=tk.LEFT, )
+
         # WIDE
         frame_2_wide = tk.Frame(upper_frame)
-        frame_2_wide.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
-        self._be_wide_var = tk.StringVar(frame_2_wide)
+        frame_2_wide.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
+        self._be_wide_var = tk.StringVar(self)
 
         self._be_wide_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_wide))
         tk.Label(frame_2_wide, text='via WIDE ').pack(side=tk.LEFT, )
@@ -92,8 +105,8 @@ class BeaconTracer(tk.Toplevel):
 
         # Interval
         frame_2_interval = tk.Frame(upper_frame)
-        frame_2_interval.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
-        self._be_interval_var = tk.StringVar(frame_2_interval)
+        frame_2_interval.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
+        self._be_interval_var = tk.StringVar(self)
 
         self._be_interval_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_interval))
         tk.Label(frame_2_interval, text='Interval ').pack(side=tk.LEFT, )
@@ -108,8 +121,8 @@ class BeaconTracer(tk.Toplevel):
 
         # activ Checkbox
         frame_2_active = tk.Frame(upper_frame)
-        frame_2_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
-        self._be_active_var = tk.BooleanVar(frame_2_active)
+        frame_2_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
+        self._be_active_var = tk.BooleanVar(self)
         self._be_active_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_active)
         tk.Label(frame_2_active, text='Activate ').pack(side=tk.LEFT, )
         tk.Checkbutton(frame_2_active,
@@ -123,7 +136,7 @@ class BeaconTracer(tk.Toplevel):
             upper_frame,
             text='SAVE',
             command=self._save_btn
-        ).pack(side=tk.LEFT, fill=tk.BOTH, padx=40)
+        ).pack(side=tk.LEFT, fill=tk.BOTH, padx=20)
 
         # Send Button
 
@@ -140,7 +153,7 @@ class BeaconTracer(tk.Toplevel):
         # activ Checkbox
         frame_21_active = tk.Frame(lower_frame)
         frame_21_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
-        self._alarm_active_var = tk.BooleanVar(frame_21_active)
+        self._alarm_active_var = tk.BooleanVar(self)
         self._alarm_active_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active)
         tk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
         tk.Checkbutton(frame_21_active,
@@ -151,7 +164,7 @@ class BeaconTracer(tk.Toplevel):
         # Alarm Distance
         frame_21_distance = tk.Frame(lower_frame)
         frame_21_distance.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
-        self._alarm_distance_var = tk.StringVar(frame_21_distance)
+        self._alarm_distance_var = tk.StringVar(self)
 
         self._alarm_distance_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range))
         tk.Label(frame_21_distance, text='Distance ').pack(side=tk.LEFT, )
@@ -265,6 +278,8 @@ class BeaconTracer(tk.Toplevel):
         PORT_HANDLER.get_aprs_ais().be_tracer_port = int(self._be_port_var.get())
         PORT_HANDLER.get_aprs_ais().be_tracer_station = self._be_stat_var.get()
         PORT_HANDLER.get_aprs_ais().be_tracer_wide = self._be_wide_var.get()
+        path = get_list_fm_viaStr(self._be_via_var.get())
+        PORT_HANDLER.get_aprs_ais().be_tracer_via = list(path)
         PORT_HANDLER.get_aprs_ais().be_tracer_interval = int(self._be_interval_var.get())
         PORT_HANDLER.get_aprs_ais().be_tracer_active = self._be_active_var.get()
         PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active = bool(self._alarm_active_var.get())

@@ -50,6 +50,7 @@ class APRS_ais(object):
         self.be_tracer_interval = ais_cfg.get('be_tracer_interval', 5)
         self.be_tracer_port = ais_cfg.get('be_tracer_port', 0)
         self.be_tracer_station = ais_cfg.get('be_tracer_station', 'NOCALL')
+        self.be_tracer_via = ais_cfg.get('be_tracer_via', [])
         self.be_tracer_wide = ais_cfg.get('be_tracer_wide', 1)
         self.be_tracer_alarm_active = ais_cfg.get('be_tracer_alarm_active', False)
         self.be_tracer_alarm_range = ais_cfg.get('be_tracer_alarm_range', 50)
@@ -709,10 +710,12 @@ class APRS_ais(object):
         port_id = int(self.be_tracer_port)
         station_call = str(self.be_tracer_station)
         wide = f'WIDE{self.be_tracer_wide}-{self.be_tracer_wide}'
+        path = ','.join(list(self.be_tracer_via) + [wide])
+
         # dest = APRS_SW_ID
 
         if station_call in self._port_handler.get_stat_calls_fm_port(port_id):
-            add_str = f'{station_call}>{APRS_SW_ID},{wide}:'
+            add_str = f'{station_call}>{APRS_SW_ID},{path}:'
             msg = self._tracer_build_msg()
             aprs_raw = add_str + msg
             aprs_pack = parse_aprs_fm_aprsframe(aprs_raw)

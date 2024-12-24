@@ -6,6 +6,7 @@ Fixes:
   und nicht der zu der man connected ist
 
 Optimierung:
+- APRS-Tracer: Möglichkeit ViaCalls einzugeben hinzugefügt
 
 Neue Implementierungen / Funktionen:
 - Remote Kommando "C!" - Exklusiv Connect ohne MH-Listen Lookup nach Pfad

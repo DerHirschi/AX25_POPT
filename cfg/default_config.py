@@ -127,6 +127,7 @@ def getNew_APRS_ais_cfg():
         'be_tracer_interval': 5,
         'be_tracer_port': 0,
         'be_tracer_station': 'NOCALL',
+        'be_tracer_via': [],
         'be_tracer_wide': 1,
         'be_tracer_alarm_active': False,
         'be_tracer_alarm_range': 50,
