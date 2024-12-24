@@ -9,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.file_fnc import get_str_fm_file
 from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
@@ -19,9 +19,6 @@ from cfg.logger_config import logger
 class DefaultCLI(object):
     cli_name = ''  # DON'T CHANGE!
     service_cli = True
-    # c_text = '-= Test C-TEXT =-\r\r'
-    # bye_text = '73 ...\r'
-    # prompt = ''
     prefix = b'//'
     sw_id = ''
 
@@ -176,55 +173,42 @@ class DefaultCLI(object):
         self._state_index = state
 
     def is_prefix(self):
-        # TODO Cleanup !!!!
-        if self.prefix:
-            self._input = self._input.replace(b'\n', b'\r')
-            # self.input = self.input.split(b'\r')[0]
-            self._input = self._input.split(b'\r')
-            while self._input:
-                if self._input[0]:
-                    break
-                else:
-                    self._input = self._input[1:]
-            if not self._input:
-                return False
-            self._input = self._input[0]
+        # Optimized by GROK (x.com)
+        if not self.prefix:
+            # Handle case where there is no prefix
+            self._parameter = []
+            cmd_parts = self._input.split(b' ')
+            self._input = cmd_parts[1:] if len(cmd_parts) > 1 else b''
+            self._parameter = self._input
+            self._cmd = cmd_parts[0].upper().replace(b'\r', b'').replace(b'//', b'')
+            return False
 
-            if self._input[:len(self.prefix)] == self.prefix:
-                self._parameter = []
-                cmd = self._input[len(self.prefix):]
-                cmd = cmd.split(b' ')
-                if len(cmd) > 1:
-                    self._input = cmd[1:]
-                    self._parameter = cmd[1:]
-                else:
-                    self._input = b''
+            # Remove newlines and split by '\r'
+        lines = self._input.replace(b'\n', b'\r').split(b'\r')
 
-                cmd = cmd[0]
-                self._cmd = cmd \
-                    .upper() \
-                    .replace(b' ', b'') \
-                    .replace(b'\r', b'')
-                # self.input = self.input[len(self.prefix):]
-                return True
-            else:
-                # Message is for User ( Text , Chat )
-                return False
-        # CMD Input for No User Terminals ( Node ... )
-        self._parameter = []
-        cmd = self._input
-        cmd = cmd.split(b' ')
-        if len(cmd) > 1:
-            self._input = cmd[1:]
-            self._parameter = cmd[1:]
+        # Find the first non-empty line
+        for line in lines:
+            if line:
+                self._input = line
+                break
         else:
-            self._input = b''
-        cmd = cmd[0]
-        self._cmd = cmd \
-            .upper() \
-            .replace(b'\r', b'') \
-            .replace(b'//', b'')
+            # If no non-empty lines found
+            return False
 
+        # Check if the input starts with the prefix
+        if self._input.startswith(self.prefix):
+            cmd_part = self._input[len(self.prefix):].split(b' ', 1)
+            self._cmd = cmd_part[0].upper().replace(b'\r', b'')
+            self._parameter = cmd_part[1:] if len(cmd_part) > 1 else []
+            self._input = self._parameter
+            return True
+
+        # If the prefix does not match, treat as user message
+        self._parameter = []
+        cmd_parts = self._input.split(b' ', 1)
+        self._cmd = cmd_parts[0].upper().replace(b'\r', b'')
+        self._parameter = cmd_parts[1:] if len(cmd_parts) > 1 else []
+        self._input = self._parameter
         return False
 
     def _load_fm_file(self, filename: str):
@@ -421,22 +405,16 @@ class DefaultCLI(object):
         self._parameter = list(tmp)
 
     def _cmd_connect(self):
-        # print(f'cmd_connect() param: {self.parameter}')
         self._decode_param()
-        # print(f'cmd_connect() param.decode: {self.parameter}')
-
+        lang = self._connection.cli_language
         if not self._parameter:
-            ret = '\r # Bitte Call eingeben..\r'
-            return ret
+            return f"\r {get_strTab('cmd_c_noCall', lang)}\r"
 
         dest_call = str(self._parameter[0]).upper()
         if not validate_ax25Call(dest_call):
-            ret = '\r # Ungültiger Ziel Call..\r'
-            return ret
+            return f"\r {get_strTab('cmd_c_badCall', lang)}\r"
 
-        # port_id = self.own_port.port_id
         port_id = -1
-        # vias = [self._connection.my_call_str]
         vias = []
         port_tr = False
         if len(self._parameter) > 1:
@@ -445,12 +423,10 @@ class DefaultCLI(object):
                 try:
                     port_id = int(self._parameter[-1])
                 except ValueError:
-                    ret = '\r # Ungültige Port angabe..\r'
-                    return ret
+                    return f"\r {get_strTab('cmd_c_badPort', lang)}\r"
 
                 if port_id not in self._port_handler.get_all_ports().keys():
-                    ret = '\r # Ungültiger Port..\r'
-                    return ret
+                    return f"\r {get_strTab('cmd_c_noPort', lang)}\r"
             if port_tr:
                 parm = self._parameter[1:-1]
             else:
@@ -477,10 +453,8 @@ class DefaultCLI(object):
 
     def _cmd_echo(self):  # Quit
         ret = ''
-        # print(f"Echo Param: {self.parameter}")
         for el in self._parameter:
             ret += el.decode(self._encoding[0], self._encoding[1]) + ' '
-        # print(f"Echo ret: {ret}")
         return ret[:-1] + '\r'
 
     def _cmd_q(self):  # Quit
