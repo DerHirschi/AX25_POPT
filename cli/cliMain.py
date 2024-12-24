@@ -76,6 +76,7 @@ class DefaultCLI(object):
             'QUIT': (1, self._cmd_q, 'Quit'),
             'BYE': (1, self._cmd_q, 'Bye'),
             'CONNECT': (1, self._cmd_connect, 'Connect'),
+            'C!': (2, self._cmd_connect_exclusive, 'Connect Exclusive (No MH-Path-Lookup)'),
             'ECHO': (1, self._cmd_echo, 'Echo'),
             'PORT': (1, self._cmd_port, 'Ports'),
             'MH': (0, self._cmd_mh, 'MYHeard List'),
@@ -404,7 +405,7 @@ class DefaultCLI(object):
                 tmp.append(tmp_parm)
         self._parameter = list(tmp)
 
-    def _cmd_connect(self):
+    def _cmd_connect(self, exclusive=False):
         self._decode_param()
         lang = self._connection.cli_language
         if not self._parameter:
@@ -422,34 +423,30 @@ class DefaultCLI(object):
                 port_tr = True
                 try:
                     port_id = int(self._parameter[-1])
+                    if port_id not in self._port_handler.get_all_ports().keys():
+                        return f"\r {get_strTab('cmd_c_noPort', lang)}\r"
                 except ValueError:
                     return f"\r {get_strTab('cmd_c_badPort', lang)}\r"
 
-                if port_id not in self._port_handler.get_all_ports().keys():
-                    return f"\r {get_strTab('cmd_c_noPort', lang)}\r"
-            if port_tr:
-                parm = self._parameter[1:-1]
-            else:
-                parm = self._parameter[1:]
-
-            for call in parm:
-                if validate_ax25Call(call.upper()):
-                    vias.append(call.upper())
-                else:
-                    break
+            via_params = self._parameter[1:-1] if port_tr else self._parameter[1:]
+            vias = [call.upper() for call in via_params if validate_ax25Call(call.upper())]
 
         conn = self._port_handler.new_outgoing_connection(
-            own_call=self._to_call_str,
-            dest_call=dest_call,
-            via_calls=vias,
-            port_id=port_id,
-            link_conn=self._connection,
-            # link_call=str(self._connection.my_call_str)
-        )
+                own_call=self._to_call_str,
+                dest_call=dest_call,
+                via_calls=vias,
+                port_id=port_id,
+                link_conn=self._connection,
+                exclusive=exclusive
+                # link_call=str(self._connection.my_call_str)
+            )
         if conn[0]:
             self._state_index = 4
             return conn[1]
         return f'\r*** Link Busy: {conn[1]}\r'
+
+    def _cmd_connect_exclusive(self):
+        return self._cmd_connect(exclusive=True)
 
     def _cmd_echo(self):  # Quit
         ret = ''

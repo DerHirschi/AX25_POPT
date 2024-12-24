@@ -6,6 +6,7 @@ Fixes:
 Optimierung:
 
 Neue Implementierungen / Funktionen:
+- Remote Kommando "C!" - Exklusiv Connect ohne MH-Listen Lookup nach Pfad
 
 ###########################################################################################################
 ###########################################################################################################
