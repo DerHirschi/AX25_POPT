@@ -131,6 +131,7 @@ class APRS_ais(object):
         ais_cfg['be_tracer_interval'] = int(self.be_tracer_interval)
         ais_cfg['be_tracer_port'] = int(self.be_tracer_port)
         ais_cfg['be_tracer_station'] = str(self.be_tracer_station)
+        ais_cfg['be_tracer_via'] = list(self.be_tracer_via)
         ais_cfg['be_tracer_wide'] = int(self.be_tracer_wide)
         ais_cfg['be_tracer_alarm_active'] = bool(self.be_tracer_alarm_active)
         ais_cfg['be_tracer_alarm_range'] = int(self.be_tracer_alarm_range)

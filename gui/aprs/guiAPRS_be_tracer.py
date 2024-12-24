@@ -39,7 +39,7 @@ class BeaconTracer(tk.Toplevel):
         lower_frame = tk.Frame(self)  # Selected Info
         upper_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
         # upper_frame2.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
-        middle_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
+        middle_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10, expand=True)
         lower_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
 
         ##########################
@@ -180,7 +180,7 @@ class BeaconTracer(tk.Toplevel):
         ##########################
         # Middle Frame ( Treeview )
         tree_Frame = tk.Frame(middle_frame)
-        tree_Frame.pack(fill=tk.BOTH)
+        tree_Frame.pack(fill=tk.BOTH, expand=True)
         tree_Frame.grid_rowconfigure(0, weight=1)
         tree_Frame.grid_columnconfigure(0, weight=1)
         self._tree_data = []
