@@ -647,10 +647,11 @@ class AX25Conn:
                         self.LINK_Connection.conn_disco()
                     elif reconnect and self.is_link_remote and not self.is_digi:
                         # logger.debug('ReConn')
-                        if hasattr(self.LINK_Connection, 'send_sys_Msg_to_gui'):
+                        if all((hasattr(self.LINK_Connection, 'send_sys_Msg_to_gui'),
+                           hasattr(self.LINK_Connection, 'my_call_str'))):
                             # TODO ?? Why to LINKCONN GUI ?  CHANNEL ?
-                            self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
-                        self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
+                            self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.LINK_Connection.my_call_str}')
+                            self.send_to_link(f'\r*** Reconnected to {self.LINK_Connection.my_call_str}\r'.encode('ASCII', 'ignore'))
                         """
                         if self.digi_call:
                             print("Link Disco ----")

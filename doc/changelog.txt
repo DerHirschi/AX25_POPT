@@ -2,6 +2,8 @@
 # 2.114.x
 Fixes:
 - Scripterror wenn "Messagebox" für Sysop Benachrichtigung erscheint
+- Bei ""*** Reconnected to" wird call(SSID) der ausgehenden Station angezeigt
+  und nicht der zu der man connected ist
 
 Optimierung:
 
