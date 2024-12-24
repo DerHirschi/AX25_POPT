@@ -1948,6 +1948,7 @@ class PoPT_GUI_Main:
         if self.mh_window is None:
             MHWin(self)
         self.tabbed_sideFrame.reset_dx_alarm()
+        self.tabbed_sideFrame2.reset_dx_alarm()
 
     #######################################################
     """
@@ -2235,7 +2236,7 @@ class PoPT_GUI_Main:
         if not msg:
             msg = f"{conn.to_call_str} {STR_TABLE['cmd_bell_gui_msg'][self.language]}"
         if messagebox.askokcancel(f"Bell {STR_TABLE['channel'][self.language]} {ch_id}",
-                                  msg, parent=self):
+                                  msg, parent=self.main_win):
             if not self._quit:
                 self.switch_channel(ch_id)
 
