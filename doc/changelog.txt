@@ -4,6 +4,10 @@ Fixes:
 - Scripterror wenn "Messagebox" für Sysop Benachrichtigung erscheint
 - Bei ""*** Reconnected to" wird call(SSID) der ausgehenden Station angezeigt
   und nicht der zu der man connected ist
+- AutoBin: Falscher Timestamp Check führt dazu das manche Dateinen nicht
+           angenommen werden.
+- AutoBin: Fehlender Zeilenumbruch bei Antwort Paket "#OK#".
+           !! Danke an Steffen und Ralph fürs Testen !!
 
 Optimierung:
 - APRS-Tracer: Möglichkeit ViaCalls einzugeben hinzugefügt
