@@ -7,7 +7,10 @@ Fixes:
 - AutoBin: Falscher Timestamp Check führt dazu das manche Dateinen nicht
            angenommen werden.
 - AutoBin: Fehlender Zeilenumbruch bei Antwort Paket "#OK#".
-           !! Danke an Steffen und Ralph fürs Testen !!
+           !! Danke an Steffen und Ralph fürs Testen und Melden !!
+- Port übergreifender weiterconnect über via Call hat für Probleme gesorgt.
+  (Digi-StopBit der vorherigen Digis wurde nicht korrekt gecheckt)
+  !! Danke an Lars und Benny fürs Testen und Melden !!
 
 Optimierung:
 - APRS-Tracer: Möglichkeit ViaCalls einzugeben hinzugefügt

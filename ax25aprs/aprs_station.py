@@ -277,6 +277,12 @@ class APRS_ais(object):
                                       blocking=True,
                                       immortal=False,
                                       raw=False)
+                    # TODO: LogSpam
+                    """
+                        2024-12-23 15:37:54,425 - ERROR - aprslib.inet.IS: socket error on recv(): [WinError 10054] Eine vorhandene Verbindung wurde vom Remotehost geschlossen
+                        2024-12-23 15:37:54,425 - ERROR - aprslib.inet.IS: socket error on recv(): [WinError 10054] Eine vorhandene Verbindung wurde vom Remotehost geschlossen
+                        2024-12-23 15:37:54,425 - ERROR - aprslib.inet.IS: socket error on recv(): [WinError 10054] Eine vorhandene Verbindung wurde vom Remotehost geschlossen
+                    """
                 except ValueError:
                     # print("APRS-Consumer ValueError")
                     logger.error("APRS-IS: Consumer ValueError")

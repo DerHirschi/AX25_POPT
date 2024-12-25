@@ -591,7 +591,7 @@ class AX25Conn:
             self.digi_call = digi_call
             self._port_handler.link_connections[str(conn.uid)] = conn, ''
         else:
-            self._port_handler.link_connections[str(conn.uid)] = conn, self.my_call_str
+            self._port_handler.link_connections[str(conn.uid)] = conn, conn.my_call_str
 
         self.LINK_Connection = conn
         self.is_link = True

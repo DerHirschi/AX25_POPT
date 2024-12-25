@@ -647,7 +647,7 @@ class AutoBinMODE(DefaultMODE):
 
     def _mode_init_rx(self):
         if self.ft_root.ft_rx_buf:
-            print(f'_mode_init_rx - {self.ft_root.ft_rx_buf}')
+            # print(f'_mode_init_rx - {self.ft_root.ft_rx_buf}')
             if check_autobin(self.ft_root.ft_rx_buf):
                 self.start = True
                 self.ft_root.ft_rx_buf = b''

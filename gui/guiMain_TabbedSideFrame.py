@@ -28,13 +28,13 @@ class SideTabbedFrame:  # TODO
         )
         self._tabControl.bind('<<NotebookTabChanged>>', self.on_ch_stat_change)
 
-        tab1_kanal = ttk.Frame(self._tabControl)
-        tab_connects = ttk.Frame(self._tabControl)
-        tab2_mh = ttk.Frame(self._tabControl)
-        tab4_settings = ttk.Frame(self._tabControl)
+        tab1_kanal = tk.Frame(self._tabControl)
+        tab_connects = tk.Frame(self._tabControl)
+        tab2_mh = tk.Frame(self._tabControl)
+        tab4_settings = tk.Frame(self._tabControl)
         # self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
-        tab6_monitor = ttk.Frame(self._tabControl)
-        tab7_tracer = ttk.Frame(self._tabControl)
+        tab6_monitor = tk.Frame(self._tabControl)
+        tab7_tracer = tk.Frame(self._tabControl)
         # self._path_plot = None
 
         self._tabControl.add(tab1_kanal, text=get_strTab('channel', self._lang))
@@ -142,7 +142,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 225
         self._autoscroll_var = tk.BooleanVar(tab1_kanal)
 
-        autoscroll = ttk.Checkbutton(tab1_kanal,
+        autoscroll = tk.Checkbutton(tab1_kanal,
                                           text='Autoscroll',
                                           variable=self._autoscroll_var,
                                           command=self._chk_autoscroll
@@ -154,7 +154,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 250
         self._cliRemote_var = tk.BooleanVar(tab1_kanal, value=True)
 
-        self._cliRemote = ttk.Checkbutton(tab1_kanal,
+        self._cliRemote = tk.Checkbutton(tab1_kanal,
                                          text='CLI/Remote',
                                          variable=self._cliRemote_var,
                                          state='disabled',
@@ -165,7 +165,7 @@ class SideTabbedFrame:  # TODO
         # Link Holder
         parm_y = 175
         # self.link_holder_var = tk.BooleanVar(tab1_kanal)
-        self._link_holder = ttk.Checkbutton(tab1_kanal,
+        self._link_holder = tk.Checkbutton(tab1_kanal,
                                            text=get_strTab('linkholder', self._lang),
                                            variable=self._main_win.link_holder_var,
                                            state='disabled',
@@ -295,7 +295,7 @@ class SideTabbedFrame:  # TODO
         # self._update_side_mh()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
-        btn_frame = ttk.Frame(tab2_mh)
+        btn_frame = tk.Frame(tab2_mh)
         btn_frame.grid(row=1, column=0, columnspan=2)
         ttk.Button(btn_frame,
                   text="MH",
@@ -315,19 +315,19 @@ class SideTabbedFrame:  # TODO
         #############################################################################
         # Global Settings ################################
         # Global Sound
-        ttk.Checkbutton(tab4_settings,
+        tk.Checkbutton(tab4_settings,
                     text="Sound",
                     variable=self._main_win.setting_sound,
                     command=self._chk_sound
                     ).place(x=10, y=10)
         # Bell
-        ttk.Checkbutton(tab4_settings,
+        tk.Checkbutton(tab4_settings,
                     text="Bell",
                     variable=self._main_win.setting_noty_bell,
                     command=self._main_win.set_noty_bell_active
                     ).place(x=150, y=10)
         # Global Sprech
-        sprech_btn = ttk.Checkbutton(tab4_settings,
+        sprech_btn = tk.Checkbutton(tab4_settings,
                                  text=get_strTab('sprech', self._lang),
                                  variable=self._main_win.setting_sprech,
                                  command=self._chk_sprech_on
@@ -336,13 +336,13 @@ class SideTabbedFrame:  # TODO
         if not is_linux():
             sprech_btn.configure(state='disabled')
         # Global Bake
-        ttk.Checkbutton(tab4_settings,
+        tk.Checkbutton(tab4_settings,
                     text=get_strTab('beacon', self._lang),
                     variable=self._main_win.setting_bake,
                     command=self._chk_beacon,
                     ).place(x=10, y=60)
         # DX Alarm  > dx_alarm_on
-        ttk.Checkbutton(tab4_settings,
+        tk.Checkbutton(tab4_settings,
                     text="Tracer",
                     variable=self._main_win.setting_tracer,
                     command=self._chk_tracer,
@@ -352,21 +352,21 @@ class SideTabbedFrame:  # TODO
             True: 'disabled',
             False: 'normal'
         }.get(self._main_win.get_tracer(), 'disabled')
-        self._autotracer_chk_btn = ttk.Checkbutton(tab4_settings,
+        self._autotracer_chk_btn = tk.Checkbutton(tab4_settings,
                                                text="Auto-Tracer",
                                                variable=self._main_win.setting_auto_tracer,
                                                command=self._chk_auto_tracer,
                                                state=auto_tracer_state
                                                )
         self._autotracer_chk_btn.place(x=10, y=110)
-        ttk.Checkbutton(tab4_settings,
+        tk.Checkbutton(tab4_settings,
                     text="DX-Alarm",
                     variable=self._main_win.setting_dx_alarm,
                     command=self._main_win.set_dx_alarm,
                     # state='disabled'
                     ).place(x=10, y=135)
         # RX ECHO
-        ttk.Checkbutton(tab4_settings,
+        tk.Checkbutton(tab4_settings,
                     text="RX-Echo",
                     variable=self._main_win.setting_rx_echo,
                     command=self._set_rx_echo
@@ -389,7 +389,7 @@ class SideTabbedFrame:  # TODO
         x = 10
         y = 80
         # self.cmd_var = tk.BooleanVar(tab6_monitor)
-        ttk.Checkbutton(tab6_monitor,
+        tk.Checkbutton(tab6_monitor,
                        variable=self._main_win.mon_cmd_var,
                        text='CMD/RPT').place(x=x, y=y)
 
