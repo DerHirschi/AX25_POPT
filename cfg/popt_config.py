@@ -116,8 +116,12 @@ class Main_CFG:
     def _load_CFG_fm_file(self):
         logger.info(f'Main CFG: Load from {self._config_filename}')
         # print(f'Main CFG: Load from {self._config_filename}')
-        config = load_fm_file(self._config_filename)
+        config: dict = load_fm_file(self._config_filename)
         if config:
+            """
+            for cfg_name, cfg in config.items():
+                logger.debug(f"Main CFG:{cfg_name}> {cfg}")
+            """
             self._config = dict(config)
         else:
             logger.warning("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")

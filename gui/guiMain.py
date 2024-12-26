@@ -346,6 +346,7 @@ class PoPT_GUI_Main:
 
     def _destroy_win(self):
         self.sysMsg_to_monitor("PoPT wird beendet.")
+        self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
         for wn in [
             self.settings_win,
@@ -368,7 +369,6 @@ class PoPT_GUI_Main:
                 wn.destroy()
         self._quit = True
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
-        self._Pacman.save_path_data()
         self.save_GUIvars()
         self._save_parameter()
         self._save_Channel_Vars()
@@ -383,7 +383,7 @@ class PoPT_GUI_Main:
         #########################
         # GUI-Vars to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
-        guiCfg['gui_lang'] = int(self.language)
+        # guiCfg['gui_lang'] = int(self.language)
         guiCfg['gui_cfg_sound'] = bool(self.setting_sound.get())
         guiCfg['gui_cfg_beacon'] = bool(self.setting_bake.get())
         guiCfg['gui_cfg_rx_echo'] = bool(self.setting_rx_echo.get())
@@ -394,7 +394,10 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_noty_bell'] = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
-        guiCfg['gui_cfg_rtab_index'] = (self.tabbed_sideFrame.get_tab_index(), self.tabbed_sideFrame2.get_tab_index())
+        try:
+            guiCfg['gui_cfg_rtab_index'] = (int(self.tabbed_sideFrame.get_tab_index()), int(self.tabbed_sideFrame2.get_tab_index()))
+        except (ValueError, tk.TclError):
+            pass
         # guiCfg['gui_cfg_locator'] = str(self.own_loc)
         # guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)

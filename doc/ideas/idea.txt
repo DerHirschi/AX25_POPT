@@ -163,7 +163,7 @@ Ideas/TODO's :
 
 ✓ Bin
 ✓ AutoBin
-  - Super-Packet ? \-SP anfängt und maximal 80 Zeichen lang ist
+  - Super-Packet ? SP\- anfängt und maximal 80 Zeichen lang ist
     (Eine Textzeile plus Umbruch)
 ✓ Yapp
 - Yapp Server Modes
