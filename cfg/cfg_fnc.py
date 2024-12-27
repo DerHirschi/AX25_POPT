@@ -50,12 +50,12 @@ def save_to_file(filename: str, data):
     old_cfg = load_fm_file(filename)
 
     try:
-        with open(CFG_data_path + filename, 'wb') as f:
-            pickle.dump(data, f, 2)
+        with open(CFG_data_path + filename, 'wb') as file:
+            pickle.dump(data, file, 2)
     except FileNotFoundError:
-        with open(CFG_data_path + filename, 'xb') as f:
-            pickle.dump(data, f, 2)
-    except EOFError as e:
+        with open(CFG_data_path + filename, 'xb') as file:
+            pickle.dump(data, file, 2)
+    except (EOFError, TypeError) as e:
         # print(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {data}")
@@ -63,14 +63,7 @@ def save_to_file(filename: str, data):
         if old_cfg:
             logger.info(f"save_to_file Error: Backup old CFG")
             save_to_file(filename, old_cfg)
-    except TypeError as e:
-        # print(f"save_to_file Error: {e}")
-        logger.error(f"save_to_file Error: {e}")
-        logger.error(f"save_to_file Error: {data}")
-        # print(f"save_to_file Error: {data}")
-        if old_cfg:
-            logger.info(f"save_to_file Error: Backup old CFG")
-            save_to_file(filename, old_cfg)
+
 
 
 def load_fm_file(filename: str):

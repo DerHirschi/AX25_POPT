@@ -40,7 +40,7 @@ class AX25DigiConnection:
                 self._rx_port,
                 self._port_handler
         )):
-            logger.warning("DIGI INIT Error !")
+            logger.error("DIGI INIT Error !")
             self._state_0_error()
             """
             print(f"_ax25_conf: {self._ax25_conf}")
@@ -52,6 +52,7 @@ class AX25DigiConnection:
     def _init_digi_conn(self, ax25_frame):
         # print("!!!! _init_digi_conn !!!!")
         logger.debug("!!!! _init_digi_conn !!!!")
+        logger.debug(ax25_frame.get_frame_conf())
         """
         try:
             self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)
@@ -66,9 +67,9 @@ class AX25DigiConnection:
         self._rx_conn.is_link_remote = False
         self._rx_conn.cli_remote = False
         self._rx_conn.is_digi = True
-        self._rx_conn.my_call_str = self._digi_call
-        self._rx_conn.digi_call = self._digi_call
-        self._rx_conn_uid = self._rx_conn.uid
+        self._rx_conn.my_call_str = str(self._digi_call)
+        self._rx_conn.digi_call = str(self._digi_call)
+        self._rx_conn_uid = str(self._rx_conn.uid)
         self._rx_conn.set_station_cfg()
         """
         try:
@@ -86,17 +87,16 @@ class AX25DigiConnection:
         if self._conf_digi_auto_port:
             tx_port_id = -1
         else:
-            tx_port_id = self._rx_port.port_id
+            tx_port_id = int(self._rx_port.port_id)
 
         if self._conf_digi_ssid_port:
-            tx_port_id = self._digi_ssid
+            tx_port_id = int(self._digi_ssid)
 
-        ax25_frame_conf = ax25_frame.get_frame_conf()
         # print(f"DIGI INIT: axConf: {ax25_frame_conf}")
         tx_conn = self._port_handler.new_outgoing_connection(
             dest_call=self._ax25_conf.get('to_call_str', ''),
             own_call=self._ax25_conf.get('from_call_str', ''),
-            via_calls=ax25_frame_conf.get('via_calls_str', []),  # Auto lookup in MH if not exclusive Mode
+            via_calls=self._ax25_conf.get('via_calls_str', []),  # Auto lookup in MH if not exclusive Mode
             port_id=tx_port_id,                                  # -1 Auto lookup in MH list
             exclusive=True,                                      # True = no lookup in MH list
             is_service=True
@@ -113,7 +113,7 @@ class AX25DigiConnection:
         self._tx_conn.is_link_remote = True
         self._tx_conn.cli_remote = False
         self._tx_conn.is_digi = True
-        self._tx_conn.my_call_str = self._digi_call
+        self._tx_conn.my_call_str = str(self._digi_call)
         # self._tx_conn.digi_call = self._digi_call
         self._tx_conn.set_station_cfg()
         """

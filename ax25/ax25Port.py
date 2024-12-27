@@ -202,17 +202,20 @@ class AX25Port(object):
             logger.debug(self._logTag + f"Link-Conn RX digi_call: {conn.digi_call}")
             logger.debug(self._logTag + f"Link-Conn RX my_call_str: {conn.my_call_str}")
             logger.debug(self._logTag + f"Link-Conn RX self._port_handler.link_connections: {self._port_handler.link_connections}")
+            logger.debug(self._logTag + f"Link-Conn RX ++: {ax25_frame.get_frame_conf()}")
             if link_call:
                 if link_call != ax25_frame.via_calls[-1].call_str:
                     return False
 
                 for call in ax25_frame.via_calls:
+                    if not ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                        return False
                     if call.call_str == link_call:
+                        logger.debug(self._logTag + f"Link-Conn RX --: {ax25_frame.get_frame_conf()}")
                         conn.handle_rx(ax25_frame=ax25_frame)
                         return True
                     # if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
-                    if not ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                        return False
+
 
             # conn.handle_rx(ax25_frame=ax25_frame)
             # return True
@@ -281,9 +284,6 @@ class AX25Port(object):
     def _rx_digi_handler(self, ax25_frame):
         if not POPT_CFG.get_digi_CFG():
             return False
-        # if ax25_frame.ctl_byte.flag == 'UI':
-        #     return self._rx_simple_digi(ax25_frame)
-        # if self.is_smart_digi:
         return self._rx_managed_digi(ax25_frame)
 
     def _rx_simple_digi(self, ax25_frame):
@@ -301,40 +301,47 @@ class AX25Port(object):
         self._cleanup_digi_conn()
         # get_digi_CFG
         digi_conf = dict(POPT_CFG.get_digi_CFG())
-        print(digi_conf)
+        ax25_conf = dict(ax25_frame.get_frame_conf())
+
         for call in ax25_frame.via_calls:
             if call.call not in digi_conf.keys():
-                print('ssssssssssssssss')
                 continue
-            tmp_cfg = digi_conf.get(call.call, {})
+            tmp_cfg = dict(digi_conf.get(call.call, {}))
             if not tmp_cfg.get('digi_enabled', False):
-                print('aaaaaaaaaaaaaaaaaaaaaa')
                 continue
             if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
                 if tmp_cfg.get('managed_digi', False):
                     if ax25_frame.addr_uid not in self._digi_connections.keys():
-                        ax25_conf = ax25_frame.get_frame_conf()
-                        tmp_cfg.update(dict(
-                                rx_port=self,
-                                digi_call=str(call.call_str),
-                                digi_ssid=int(call.ssid),
-                                ax25_conf=ax25_conf
-                            ))
                         # print(digi_conf)
                         if ax25_frame.ctl_byte.flag == 'UI':
                             logger.debug(self._logTag + "_rx_managed_digi NewUI")
                             AX25DigiConnection(tmp_cfg).digi_rx_handle(ax25_frame)
                             return False
+
+                        tmp_cfg.update(dict(
+                            rx_port=self,
+                            digi_call=str(call.call_str),
+                            digi_ssid=int(call.ssid),
+                            ax25_conf=dict(ax25_conf)
+                        ))
                         # New Digi Conn
                         logger.debug(self._logTag + f"_rx_managed_digi NewDigiConn: tmp_cfg {tmp_cfg}")
                         logger.debug(self._logTag + f"_rx_managed_digi NewDigiConn: digi_conn {self._digi_connections.keys()}")
                         logger.debug(self._logTag + f"_rx_managed_digi NewDigiConn: conn{self.connections.keys()}")
-                        self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(tmp_cfg)
+                        self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(dict(tmp_cfg))
+                        self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
+                        print(f"_rx_managed_digi DIGI-CONN rx !!!NEW!!! - {call.call_str}")
+                        print(ax25_conf)
+                        print(tmp_cfg)
+                        return True
+
                     logger.debug(self._logTag + f"_rx_managed_digi DigiConn: tmp_cfg {tmp_cfg}")
                     logger.debug(self._logTag + f"_rx_managed_digi DigiConn: digi_conn {self._digi_connections.keys()}")
                     logger.debug(self._logTag + f"_rx_managed_digi DigiConn: conn{self.connections.keys()}")
-
                     self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
+                    print("_rx_managed_digi DIGI-CONN rx")
+                    print(ax25_conf)
+                    print(tmp_cfg)
                     return True
                 logger.debug(self._logTag + f"_rx_managed_digi S-Digi: tmp_cfg {tmp_cfg}")
                 logger.debug(self._logTag + f"_rx_managed_digi S-Digi: digi_conn {self._digi_connections.keys()}")

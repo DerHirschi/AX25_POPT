@@ -11,6 +11,7 @@ Fixes:
 - Port übergreifender weiterconnect über via Call hat für Probleme gesorgt.
   (Digi-StopBit der vorherigen Digis wurde nicht korrekt gecheckt)
   !! Danke an Lars und Benny fürs Testen und Melden !!
+- Sporadischer Fehler beim Speichern der popt_main Config
 
 Optimierung:
 - APRS-Tracer: Möglichkeit ViaCalls einzugeben hinzugefügt

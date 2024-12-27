@@ -800,6 +800,7 @@ class StationSettingsWin(tk.Frame):
                 tab: StatSetTab = self._tab_list[ind]
                 call = tab.call.get()
                 POPT_CFG.del_stat_CFG_fm_call(call=call)   # Del Pipe-CFG
+                # POPT_CFG.del_stat_CFG_fm_call(call=call)   # Del Digi-CFG
                 # del_user_data(call)
                 del self._tab_list[ind]
                 self._tabControl.forget(ind)

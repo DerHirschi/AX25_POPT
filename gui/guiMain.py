@@ -395,7 +395,7 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
         try:
-            guiCfg['gui_cfg_rtab_index'] = (int(self.tabbed_sideFrame.get_tab_index()), int(self.tabbed_sideFrame2.get_tab_index()))
+            guiCfg['gui_cfg_rtab_index'] = int(self.tabbed_sideFrame.get_tab_index()), int(self.tabbed_sideFrame2.get_tab_index())
         except (ValueError, tk.TclError):
             pass
         # guiCfg['gui_cfg_locator'] = str(self.own_loc)
