@@ -1068,12 +1068,7 @@ class KissTCP(AX25Port):
             if de_kiss_fr:
                 ret.raw_data = de_kiss_fr
                 return ret
-            kissend = b'\xc0'
-            if all((recv_buff[:1] == kissend,
-                    recv_buff[-1:] == kissend,
-                    len(recv_buff) > 1)):
-                logger.debug('------RET KISS UNKNOWN FRAME--------')
-                logger.debug(recv_buff)
+            if self.kiss.unknown_kiss_frame(recv_buff):
                 return None
         else:
             return ret
@@ -1207,12 +1202,7 @@ class KISSSerial(AX25Port):
                         ret.raw_data = de_kiss_fr
                         return ret
 
-                    kissend = b'\xc0'
-                    if all((recv_buff[:1] == kissend,
-                            recv_buff[-1:] == kissend,
-                            len(recv_buff) > 1)):
-                        logger.debug('------RET KISS UNKNOWN FRAME--------')
-                        logger.debug(recv_buff)
+                    if self.kiss.unknown_kiss_frame(recv_buff):
                         return None
                 else:
                     return ret
