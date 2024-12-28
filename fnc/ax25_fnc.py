@@ -102,3 +102,15 @@ def validate_ax25Call(call_str: str):
         if not any((c.isupper(), c.isdigit())):
             return False
     return True
+
+def is_digipeated_pre_digi(ax25_conf: dict, call: str):
+    vias = ax25_conf.get('via_calls_str_c_bit', [])
+    if not vias:
+        return False
+    for el in vias:
+        if el == (call, False):
+            return True
+        if not el[1]:
+            return False
+    return False
+

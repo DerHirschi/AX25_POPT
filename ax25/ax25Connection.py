@@ -589,8 +589,10 @@ class AX25Conn:
             self.my_call_str = digi_call
             # self.ax25_out_frame.digi_call = str(conn.my_call_str)
             self.digi_call = digi_call
+            print("LC 1")
             self._port_handler.link_connections[str(conn.uid)] = conn, ''
         else:
+            print("LC 2")
             self._port_handler.link_connections[str(conn.uid)] = conn, conn.my_call_str
 
         self.LINK_Connection = conn
@@ -599,20 +601,21 @@ class AX25Conn:
         return True
 
     def new_digi_connection(self, conn):
-        # print(f"Conn newDIGIConn: UID: {conn.uid}")
-        # logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
+        print(f"Conn newDIGIConn: UID: {conn.uid}")
+        logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
         if conn is None:
             print("Conn ERROR: newDIGIConn: not conn")
             logger.error("Conn ERROR: newDIGIConn: not conn")
             return False
-        if self.uid in self._port_handler.link_connections.keys():
+        if self.uid in list(self._port_handler.link_connections.keys()):
             self.zustand_exec.change_state(4)
             self.zustand_exec.tx(None)
             print("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
+            print(f"{self.uid} - {self._port_handler.link_connections.keys()}")
             logger.error("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
             return False
         self.digi_call = str(conn.digi_call)
-        self._port_handler.link_connections[str(self.uid)] = self, conn.digi_call
+        self._port_handler.link_connections[str(self.uid)] = self, str(conn.digi_call)
 
         self.LINK_Connection = conn
         self.is_link = True

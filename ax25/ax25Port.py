@@ -15,7 +15,7 @@ from ax25.ax25Connection import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
-from fnc.ax25_fnc import reverse_uid
+from fnc.ax25_fnc import reverse_uid, is_digipeated_pre_digi
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, MCastInitError
 from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
@@ -189,34 +189,36 @@ class AX25Port(object):
         return False
 
     def _rx_link_handler(self, ax25_frame):
-        if reverse_uid(ax25_frame.addr_uid) in self._port_handler.link_connections.keys():
-            logger.debug(f"Port rx_link_handler reverse_uid: UID: {ax25_frame.addr_uid}")
+        ax25_frame_conf = dict(ax25_frame.get_frame_conf())
+        uid = str(ax25_frame_conf.get('uid', ''))
+        if reverse_uid(str(uid)) in self._port_handler.link_connections.keys():
+            logger.debug(f"Port rx_link_handler reverse_uid: UID: {uid}")
             logger.debug(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
             return False
-        if ax25_frame.addr_uid in self._port_handler.link_connections.keys():
-            logger.debug(self._logTag + f"Link-Conn RX: {ax25_frame.addr_uid}")
-            conn = self._port_handler.link_connections[ax25_frame.addr_uid][0]
-            link_call = self._port_handler.link_connections[ax25_frame.addr_uid][1]
+        if uid in self._port_handler.link_connections.keys():
+            logger.debug(self._logTag + f"Link-Conn RX: {uid}")
+            conn = self._port_handler.link_connections[uid][0]
+            link_call = str(self._port_handler.link_connections[uid][1])
             logger.debug(self._logTag + f"Link-Conn RX link_call: {link_call}")
             logger.debug(self._logTag + f"Link-Conn RX is_link_remote: {conn.is_link_remote}")
             logger.debug(self._logTag + f"Link-Conn RX digi_call: {conn.digi_call}")
             logger.debug(self._logTag + f"Link-Conn RX my_call_str: {conn.my_call_str}")
             logger.debug(self._logTag + f"Link-Conn RX self._port_handler.link_connections: {self._port_handler.link_connections}")
-            logger.debug(self._logTag + f"Link-Conn RX ++: {ax25_frame.get_frame_conf()}")
+            logger.debug(self._logTag + f"Link-Conn RX ++: {ax25_frame_conf}")
             if link_call:
-                if link_call != ax25_frame.via_calls[-1].call_str:
+                # if link_call != ax25_frame.via_calls[-1].call_str:
+                #     return False
+
+                # for call in ax25_frame.via_calls:
+                # if not ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=False):
+                if not is_digipeated_pre_digi(ax25_frame_conf, link_call):
+                    logger.debug(self._logTag + f"Link-Conn RX No DIGI chk --: {ax25_frame_conf}")
                     return False
-
-                for call in ax25_frame.via_calls:
-                    if not ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                        return False
-                    if call.call_str == link_call:
-                        logger.debug(self._logTag + f"Link-Conn RX --: {ax25_frame.get_frame_conf()}")
-                        conn.handle_rx(ax25_frame=ax25_frame)
-                        return True
-                    # if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
-
-
+                # if call.call_str == link_call:
+                logger.debug(self._logTag + f"Link-Conn RX --: {ax25_frame_conf}")
+                conn.handle_rx(ax25_frame=ax25_frame)
+                return True
+                # if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
             # conn.handle_rx(ax25_frame=ax25_frame)
             # return True
         return False
@@ -309,25 +311,26 @@ class AX25Port(object):
             tmp_cfg = dict(digi_conf.get(call.call, {}))
             if not tmp_cfg.get('digi_enabled', False):
                 continue
-            if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+            # if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+            if is_digipeated_pre_digi(ax25_conf=dict(ax25_conf), call=str(call.call_str)):
                 if tmp_cfg.get('managed_digi', False):
-                    if ax25_frame.addr_uid not in self._digi_connections.keys():
+                    if ax25_conf.get('uid', '') not in self._digi_connections.keys():
                         # print(digi_conf)
-                        if ax25_frame.ctl_byte.flag == 'UI':
-                            logger.debug(self._logTag + "_rx_managed_digi NewUI")
-                            AX25DigiConnection(tmp_cfg).digi_rx_handle(ax25_frame)
-                            return False
-
                         tmp_cfg.update(dict(
                             rx_port=self,
                             digi_call=str(call.call_str),
                             digi_ssid=int(call.ssid),
                             ax25_conf=dict(ax25_conf)
                         ))
+                        if ax25_frame.ctl_byte.flag == 'UI':
+                            logger.debug(self._logTag + "_rx_managed_digi NewUI")
+                            AX25DigiConnection(tmp_cfg).digi_rx_handle(ax25_frame)
+                            return True
                         # New Digi Conn
                         logger.debug(self._logTag + f"_rx_managed_digi NewDigiConn: tmp_cfg {tmp_cfg}")
                         logger.debug(self._logTag + f"_rx_managed_digi NewDigiConn: digi_conn {self._digi_connections.keys()}")
                         logger.debug(self._logTag + f"_rx_managed_digi NewDigiConn: conn{self.connections.keys()}")
+
                         self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(dict(tmp_cfg))
                         self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
                         print(f"_rx_managed_digi DIGI-CONN rx !!!NEW!!! - {call.call_str}")
@@ -358,8 +361,9 @@ class AX25Port(object):
             logger.debug(f'Port: accept_digi_conn uid: {uid}')
             logger.debug(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
             return False
-        self._digi_connections[uid].add_rx_conn_cron()
-        return True
+        logger.debug(f'Port: accept_digi_conn: {uid}')
+        return self._digi_connections[uid].add_rx_conn_cron()
+        # return True
 
     def delete_digi_conn(self, uid: str):
         if uid in self._digi_connections.keys():
@@ -1064,6 +1068,13 @@ class KissTCP(AX25Port):
             if de_kiss_fr:
                 ret.raw_data = de_kiss_fr
                 return ret
+            kissend = b'\xc0'
+            if all((recv_buff[:1] == kissend,
+                    recv_buff[-1:] == kissend,
+                    len(recv_buff) > 1)):
+                logger.debug('------RET KISS UNKNOWN FRAME--------')
+                logger.debug(recv_buff)
+                return None
         else:
             return ret
 
@@ -1144,6 +1155,7 @@ class KISSSerial(AX25Port):
             if self.kiss.is_enabled:
                 if self.kiss.device_kiss_end():
                     self.device.write(self.kiss.device_kiss_end())
+                    time.sleep(1)
             if is_linux():
                 try:
                     self.device.flush()
@@ -1151,6 +1163,7 @@ class KISSSerial(AX25Port):
                     pass
             else:
                 self.device.flush()
+            time.sleep(1)
             self.device.close()
             # self.device_is_running = False
         except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError):
@@ -1193,6 +1206,14 @@ class KISSSerial(AX25Port):
                     if de_kiss_fr:  # TODO !!!! flush buffer ?
                         ret.raw_data = de_kiss_fr
                         return ret
+
+                    kissend = b'\xc0'
+                    if all((recv_buff[:1] == kissend,
+                            recv_buff[-1:] == kissend,
+                            len(recv_buff) > 1)):
+                        logger.debug('------RET KISS UNKNOWN FRAME--------')
+                        logger.debug(recv_buff)
+                        return None
                 else:
                     return ret
 

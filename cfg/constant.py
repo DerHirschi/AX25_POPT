@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.114.9'
+VER = '2.114.10'
 DEBUG_LOG = True
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
@@ -167,8 +167,6 @@ ASCII_a = 97
 DEF_TEXTSIZE = 13
 FONT = "Courier"
 TEXT_SIZE_STATUS = 10
-TXT_BACKGROUND_CLR = 'black'
-TXT_OUT_CLR = 'red'
 TXT_INP_CURSOR_CLR = 'white'
 STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = 'black'

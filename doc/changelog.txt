@@ -12,6 +12,7 @@ Fixes:
   (Digi-StopBit der vorherigen Digis wurde nicht korrekt gecheckt)
   !! Danke an Lars und Benny fürs Testen und Melden !!
 - Sporadischer Fehler beim Speichern der popt_main Config
+- Unbekannte KissFrames werden nicht gefiltert
 
 Optimierung:
 - APRS-Tracer: Möglichkeit ViaCalls einzugeben hinzugefügt
