@@ -1,31 +1,31 @@
+"""
+Idea from:
+https://github.com/ampledata/kiss
+Doc:
+http://www.symek.com/pdf/extra.pdf
+
+TODO: MultiKiss ( Direwolf Channels / TNC PORTS)
+CH0 Data: \xc0\x00 <AX25-Frame> \x0c\xc0'
+CH1 Data: \xc0\x10 <AX25-Frame> \x0c\xc0'
+CH2 Data: \xc0\x20 <AX25-Frame> \x0c\xc0'
+SMACK:
+CH0 Data: \xc0\x80 <AX25-Frame>'  FEND 0x80 DATA DATA ... DATA CRCLOW CRCHIGH FEND
+CH1 Data: \xc0\x90 <AX25-Frame> '
+...
+NL5VKL-2
+"""
 from cfg.constant import TNC_KISS_CMD, TNC_KISS_CMD_END
 from cfg.logger_config import logger
 
 class Kiss(object):
-    """
-    Idea from:
-    https://github.com/ampledata/kiss
-
-    TODO: MultiKiss ( Direwolf Channels )
-    CH0 Data: \xc0\x00 <AX25-Frame> \x0c\xc0'
-    CH1 Data: \xc0\x10 <AX25-Frame> \x0c\xc0'
-    CH2 Data: \xc0\x20 <AX25-Frame> \x0c\xc0'
-    SMACK:
-    CH0 Data: \xc0\x80 <AX25-Frame>'  FEND 0x80 DATA DATA ... DATA CRCLOW CRCHIGH FEND
-    CH1 Data: \xc0\x90 <AX25-Frame> '
-    ...
-
-    """
-
     def __init__(self, port_cfg: dict):
-        self.is_enabled = True
         self.is_enabled = port_cfg.get('parm_kiss_is_on', True)
 
         # CFG Flags
         self._DATA_FRAME = b'\x00'   # Channel 0
         self._SMACK_FRAME = b'\x80'  # Channel 0
-        self._RETURN = b'\xFF'
-        self._JHOST0 = bytes.fromhex('11241B404B0D')  # jhost0 - DC1+CAN+ESC+'@K'  Da fehlt aber noch CR
+        # self._RETURN = b'\xFF'
+        # self._JHOST0 = bytes.fromhex('11241B404B0D')  # jhost0 - DC1+CAN+ESC+'@K'  Da fehlt aber noch CR
 
         self._START_TNC_DEFAULT = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)  # TNC2 KISS MODE   b'\x1b@K'
         self._END_TNC_DEFAULT = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)  # TNC2 KISS MODE   b'\x1b@K'
@@ -50,8 +50,6 @@ class Kiss(object):
         # "FESC is sent as FESC, TFESC"
         # 0xDB is sent as 0xDB 0xDD
         self._FESC_TFESC = b''.join([self._FESC, self._TFESC])
-
-        # self.set_param = self.build_kiss_param_frame()
 
     def set_all_parameter(self):
         return b''.join([
