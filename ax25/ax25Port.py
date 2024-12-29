@@ -1151,6 +1151,7 @@ class KISSSerial(AX25Port):
                 if self.kiss.device_kiss_end():
                     self.device.write(self.kiss.device_kiss_end())
                     time.sleep(1)
+            """
             if is_linux():
                 try:
                     self.device.flush()
@@ -1158,7 +1159,9 @@ class KISSSerial(AX25Port):
                     logger.warning(self._logTag + f"Error while closing/flushing: termios.error")
             else:
                 self.device.flush()
+            """
             time.sleep(1)
+            logger.info(self._logTag + f"TNC - REST: {self.device.readall()}")
             self.device.close()
             # self.device_is_running = False
         except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError) as e:
