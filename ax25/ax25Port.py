@@ -1116,7 +1116,7 @@ class KISSSerial(AX25Port):
                     # self.device.flush()
                     try:
                         self.device.write(self.kiss.device_kiss_start_1())
-                        self.device.readall()
+                        logger.info(f"Port {self.port_id}: TNC-MSG: {self.device.readall().decode('UTF-8', 'ignore')}")
                         self.set_kiss_parm()
                     except (FileNotFoundError, serial.serialutil.SerialException, AX25DeviceFAIL) as e:
                         logger.error(

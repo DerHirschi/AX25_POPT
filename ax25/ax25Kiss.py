@@ -10,6 +10,9 @@ class Kiss(object):
     CH0 Data: \xc0\x00 <AX25-Frame> \x0c\xc0'
     CH1 Data: \xc0\x10 <AX25-Frame> \x0c\xc0'
     CH2 Data: \xc0\x20 <AX25-Frame> \x0c\xc0'
+    SMACK:
+    CH0 Data: \xc0\x80 <AX25-Frame>'  FEND 0x80 DATA DATA ... DATA CRCLOW CRCHIGH FEND
+    CH1 Data: \xc0\x90 <AX25-Frame> '
     ...
 
     """
@@ -19,7 +22,8 @@ class Kiss(object):
         self.is_enabled = port_cfg.get('parm_kiss_is_on', True)
 
         # CFG Flags
-        self._DATA_FRAME = b'\x00'  # Channel 0
+        self._DATA_FRAME = b'\x00'   # Channel 0
+        self._SMACK_FRAME = b'\x80'  # Channel 0
         self._RETURN = b'\xFF'
         self._JHOST0 = bytes.fromhex('11241B404B0D')  # jhost0 - DC1+CAN+ESC+'@K'  Da fehlt aber noch CR
 
@@ -65,9 +69,22 @@ class Kiss(object):
             return False
         if inp[-1:] != self._FEND:
             return False
+        if inp[:2] == self._FEND + self._DATA_FRAME:
+            return False
         if inp[:1] != self._FEND:
             return False
-        logger.warning(f"Kiss: Unknown Kiss-Frame > {inp[1:-1]}")
+        if inp[:2] == self._FEND + self._SMACK_FRAME:
+            logger.warning(f"Kiss: SMACK-Frame > {inp}")
+            try:
+                logger.warning(f"Kiss: SMACK-Frame HEX> {inp.hex()}")
+            except SyntaxError:
+                pass
+            return True
+        logger.warning(f"Kiss: Unknown Kiss-Frame > {inp}")
+        try:
+            logger.warning(f"Kiss: Unknown Kiss-Frame HEX> {inp.hex()}")
+        except SyntaxError:
+            pass
         return True
 
     def de_kiss(self, inp: b''):
