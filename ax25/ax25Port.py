@@ -1155,14 +1155,14 @@ class KISSSerial(AX25Port):
                 try:
                     self.device.flush()
                 except termios.error:
-                    pass
+                    logger.warning(self._logTag + f"Error while closing/flushing: termios.error")
             else:
                 self.device.flush()
             time.sleep(1)
             self.device.close()
             # self.device_is_running = False
-        except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError):
-            pass
+        except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError) as e:
+            logger.warning(self._logTag + f"Error while closing: {e}")
         self.device_is_running = False
 
     def set_kiss_parm(self):
