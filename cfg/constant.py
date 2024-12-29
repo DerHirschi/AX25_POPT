@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.114.11'
+VER = '2.114.12'
 DEBUG_LOG = True
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
@@ -222,11 +222,16 @@ TNC_KISS_START_CMD = [
     b'KISSM\r',
     b'KISS ON\r',
     b'KISS ON\rrestart\r',
+    b'\x11\x18\x1bJHOST1\r',
     TNC_KISS_CMD
 ]
 
 TNC_KISS_END_CMD = [
     b'\xc0\xff\xc0',
+    b'\xc0\xff\xc0\rrestart\r',
+    b'KISS OFF\rrestart\r',
+    b'restart\r',
+    b'\x11\x18\x1bJHOST0\r',
     TNC_KISS_CMD_END
     ]
 
