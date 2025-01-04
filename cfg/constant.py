@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.114.13'
+VER = '2.114.14'
 DEBUG_LOG = True
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
@@ -83,6 +83,7 @@ STATION_ID_SYSOP = [
     'TOP',
     'PoPT',
     'HSGT',
+    'HSGTerm',
     'Paxon',
 ]
 

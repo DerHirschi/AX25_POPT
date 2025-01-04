@@ -9,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.file_fnc import get_str_fm_file
 from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines, get_strTab
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
@@ -852,39 +852,47 @@ class DefaultCLI(object):
 
     def _cmd_user_db_detail(self):
         if not self._parameter:
-            max_entry = 20  # TODO: from parameter
-            _db_list = list(self._user_db.db.keys())
+            # max_lines = 20  # TODO: from parameter
+            db_list = list(self._user_db.db.keys())
             header = "\r" \
-                     f" USER-DB - {len(_db_list)} Calls\r" \
-                     "------------------------------------\r"
+                     f" USER-DB - {len(db_list)} Calls\r" \
+                     "-------------------------------------------------------------------------------\r"
             ent_ret = ""
-            _db_list.sort()
-            c = 0
-            for call in _db_list:
-                ent_ret += f"{call}\r"
-                c += 1
-                if c >= max_entry:
+            db_list.sort()
+            # c = 0
+            # colum_c = 0
+            for call in db_list:
+                ent_ret += f"{call} "
+                """
+                colum_c += 1
+                if colum_c > 6:
+                    ent_ret += "\r"
+                    colum_c = 0
+                    c += 1
+                """
+                """
+                if c >= max_lines:
                     break
-            ent_ret += "------------------------------------\r\r"
+                """
+            ent_ret = zeilenumbruch(ent_ret)
+            ent_ret += "\r-------------------------------------------------------------------------------\r\r"
             return header + ent_ret
         else:
             call_str = self._parameter[0].decode(self._encoding[0], self._encoding[1]).upper()
-
-            if validate_ax25Call(call_str):
-                if call_str in self._user_db.db.keys():
-                    header = "\r" \
-                             f"| USER-DB: {call_str}\r" \
-                             "|-------------------\r"
-                    ent = self._user_db.db[call_str]
-                    ent_ret = ""
-                    for att in dir(ent):
-                        if '__' not in att and \
-                                att not in self._user_db.not_public_vars:
-                            if getattr(ent, att):
-                                ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\r"
-
-                    ent_ret += "|-------------------\r\r"
-                    return header + ent_ret
+            db_ent = self._user_db.get_entry(call_str, add_new=False)
+            if db_ent:
+                header = "\r" \
+                         f"| USER-DB: {call_str}\r" \
+                         "|-------------------\r"
+                ent = db_ent
+                ent_ret = ""
+                for att in dir(ent):
+                    if '__' not in att and \
+                            att not in self._user_db.not_public_vars:
+                        if getattr(ent, att):
+                            ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\r"
+                ent_ret += "|-------------------\r\r"
+                return header + ent_ret
 
             return "\r" \
                    f"{STR_TABLE['cli_no_user_db_ent'][self._connection.cli_language]}" \

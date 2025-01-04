@@ -610,9 +610,8 @@ class AX25Conn:
         if self.uid in list(self._port_handler.link_connections.keys()):
             self.zustand_exec.change_state(4)
             self.zustand_exec.tx(None)
-            print("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
-            print(f"{self.uid} - {self._port_handler.link_connections.keys()}")
             logger.error("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
+            logger.error(f"{self.uid} - {self._port_handler.link_connections.keys()}")
             return False
         self.digi_call = str(conn.digi_call)
         self._port_handler.link_connections[str(self.uid)] = self, str(conn.digi_call)

@@ -345,13 +345,23 @@ class AX25Port(object):
 
                     return True
                 if ax25_conf.get('uid', '') not in self._digi_connections.keys():
-                    logger.debug(self._logTag + f" S-Digi: tmp_cfg {tmp_cfg}")
-                    logger.debug(self._logTag + f" S-Digi: digi_conn {self._digi_connections.keys()}")
-                    logger.debug(self._logTag + f" S-Digi: conn {self.connections.keys()}")
-                    logger.debug(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
-
-                    self.add_frame_to_digiBuff(ax25_frame)
+                    # logger.debug(self._logTag + f" S-Digi: digi_check_and_encode {ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True)}")
+                    if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                        logger.debug(self._logTag + f" S-Digi: tmp_cfg {tmp_cfg}")
+                        logger.debug(self._logTag + f" S-Digi: digi_conn {self._digi_connections.keys()}")
+                        logger.debug(self._logTag + f" S-Digi: conn {self.connections.keys()}")
+                        logger.debug(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
+                        self.add_frame_to_digiBuff(ax25_frame)
+                        return True
+                    logger.error(self._logTag + f" S-Digi: not ax25_frame.digi_check_and_encode")
+                    logger.error(self._logTag + f" S-Digi: tmp_cfg {tmp_cfg}")
+                    logger.error(self._logTag + f" S-Digi: digi_conn {self._digi_connections.keys()}")
+                    logger.error(self._logTag + f" S-Digi: conn {self.connections.keys()}")
+                    logger.error(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
                     return True
+                print("---------------------------------------------------------")
+                print("---------------------------------------------------------")
+                print("---------------------------------------------------------")
             return False
         return False
 

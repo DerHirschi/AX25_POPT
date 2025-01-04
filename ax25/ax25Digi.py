@@ -122,7 +122,7 @@ class AX25DigiConnection:
             return
         """
 
-        self._tx_conn_uid = self._tx_conn.uid
+        self._tx_conn_uid = str(self._tx_conn.uid)
         self._tx_port = self._tx_conn.own_port
 
         logger.debug(f"LinkConn : {self._port_handler.link_connections.items()}")
@@ -189,7 +189,7 @@ class AX25DigiConnection:
                 logger.error('Digi-SABM-RX ERROR')
                 self._state_0_error()
                 # self.crone() # # SABM TX
-        elif ax25_frame.ctl_byte.flag == 'DISC':
+        elif ax25_frame.ctl_byte.flag in ['DISC', 'DM']:
             # self._abort_digi_conn(ax25_frame)
             logger.debug('DIGI S! DISC RX')
             if self.is_done():
@@ -206,7 +206,7 @@ class AX25DigiConnection:
 
     def _state_2(self, ax25_frame=None):
         if ax25_frame.ctl_byte.flag == 'SABM':
-            print('DIGI INIT SABM RX - state 2')
+            logger.debug('DIGI INIT SABM RX - state 2')
             self._last_rx = time.time()
             if self._check_txConn_state():
                 """ IF AXIP is Faster than other Port """
@@ -217,7 +217,7 @@ class AX25DigiConnection:
                 self._rx_conn.zustand_exec.change_state(5)
                 self._state = 3
 
-        elif ax25_frame.ctl_byte.flag == 'DISC':
+        elif ax25_frame.ctl_byte.flag in ['DISC', 'DM']:
             self._abort_digi_conn(ax25_frame)
             logger.debug('DIGI INIT DISC RX ')
 

@@ -1,10 +1,10 @@
 ###########################################################################################################
 # 2.114.x
 Fixes:
-- Scripterror wenn "Messagebox" für Sysop Benachrichtigung erscheint
+- Scripterror, wenn "Messagebox" für Sysop Benachrichtigung erscheint
 - Bei ""*** Reconnected to" wird call(SSID) der ausgehenden Station angezeigt
   und nicht der zu der man connected ist
-- AutoBin: Falscher Timestamp Check führt dazu das manche Dateinen nicht
+- AutoBin: Falscher Timestamp Check führt dazu das manche Dateien nicht
            angenommen werden.
 - AutoBin: Fehlender Zeilenumbruch bei Antwort Paket "#OK#".
            !! Danke an Steffen und Ralph fürs Testen und Melden !!
