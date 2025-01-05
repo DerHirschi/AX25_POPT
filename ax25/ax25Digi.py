@@ -15,7 +15,7 @@ class AX25DigiConnection:
         self._ax25_conf = digi_conf.get('ax25_conf', {})
         self._digi_call = digi_conf.get('digi_call', '')
         self._digi_ssid = digi_conf.get('digi_ssid', 0)
-        self._rx_conn_uid = self._ax25_conf.get('uid', '')
+        self._rx_conn_uid = str(self._ax25_conf.get('uid', ''))
         self._tx_conn_uid = ''
         self._rx_port = digi_conf.get('rx_port', None)
         self._tx_port = None
@@ -60,7 +60,7 @@ class AX25DigiConnection:
             self._state_0_error()
             return
         """
-        self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)
+        self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)  #########
         self._rx_conn.cli.change_cli_state(5)
         self._rx_conn.is_link_remote = False
         self._rx_conn.cli_remote = False
@@ -97,7 +97,8 @@ class AX25DigiConnection:
             via_calls=self._ax25_conf.get('via_calls_str', []),  # Auto lookup in MH if not exclusive Mode
             port_id=tx_port_id,                                  # -1 Auto lookup in MH list
             exclusive=True,                                      # True = no lookup in MH list
-            is_service=True
+            is_service=True,
+            # link_conn=self._rx_conn
         )
         if not tx_conn[0]:
             logger.error(f"Digi-Error _init_digi_conn: {tx_conn[1]}")
@@ -124,12 +125,14 @@ class AX25DigiConnection:
 
         self._tx_conn_uid = str(self._tx_conn.uid)
         self._tx_port = self._tx_conn.own_port
-
+        self._rx_port.add_digi_conn(self)
         logger.debug(f"LinkConn : {self._port_handler.link_connections.items()}")
         logger.debug(f"LinkConn : txConns: {self._tx_port.connections}")
         logger.debug(f"LinkConn : txConn UID: {self._tx_conn.uid}")
+        logger.debug(f"LinkConn : txConn_UID: {self._tx_conn_uid}")
         logger.debug(f"LinkConn : rxConns: {self._rx_port.connections}")
         logger.debug(f"LinkConn : rxConn UID: {self._rx_conn.uid}")
+        logger.debug(f"LinkConn : rxConn_UID: {self._rx_conn_uid}")
         self._state = 2
 
     def add_rx_conn_cron(self):
@@ -291,7 +294,7 @@ class AX25DigiConnection:
             self._UI_digi(ax25_frame)
             return
         state_exec = self._state_tab.get(self._state, None)
-        if not callable(state_exec):
+        if state_exec is None:
             self._state_0_error()
             logger.error(f"DIGI-RX ERROR: not callable(state_exec) - STATE: {self._state}")
             print(f"DIGI-RX ERROR: not callable(state_exec) - STATE: {self._state}")
@@ -410,6 +413,9 @@ class AX25DigiConnection:
 
     def get_state(self):
         return self._state
+
+    def get_tx_uid(self):
+        return str(self._tx_conn_uid)
 
     def _check_txConn_state(self):
         if not self._tx_conn:

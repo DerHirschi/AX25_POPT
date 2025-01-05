@@ -191,10 +191,12 @@ class AX25Port(object):
     def _rx_link_handler(self, ax25_frame):
         ax25_frame_conf = dict(ax25_frame.get_frame_conf())
         uid = str(ax25_frame_conf.get('uid', ''))
+        """
         if reverse_uid(str(uid)) in self._port_handler.link_connections.keys():
             logger.debug(f"Port rx_link_handler reverse_uid: UID: {uid}")
             logger.debug(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
             return False
+        """
         if uid in self._port_handler.link_connections.keys():
             logger.debug(self._logTag + f"Link-Conn RX: {uid}")
             conn = self._port_handler.link_connections[uid][0]
@@ -305,6 +307,10 @@ class AX25Port(object):
         # get_digi_CFG
         digi_conf = dict(POPT_CFG.get_digi_CFG())
         ax25_conf = dict(ax25_frame.get_frame_conf())
+        uid = ax25_conf.get('uid', '')
+        if not uid:
+            return False
+
 
         for call in ax25_frame.via_calls:
             if call.call not in digi_conf.keys():
@@ -315,8 +321,7 @@ class AX25Port(object):
             # if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
             if is_digipeated_pre_digi(ax25_conf=dict(ax25_conf), call=str(call.call_str)):
                 if tmp_cfg.get('managed_digi', False):
-                    if ax25_conf.get('uid', '') not in self._digi_connections.keys():
-                        # print(digi_conf)
+                    if uid not in self._digi_connections.keys():
                         tmp_cfg.update(dict(
                             rx_port=self,
                             digi_call=str(call.call_str),
@@ -328,22 +333,38 @@ class AX25Port(object):
                             AX25DigiConnection(tmp_cfg).digi_rx_handle(ax25_frame)
                             return True
                         # New Digi Conn
-                        logger.debug(self._logTag + f" NewDigiConn: tmp_cfg {tmp_cfg}")
-                        logger.debug(self._logTag + f" NewDigiConn: digi_conn {self._digi_connections.keys()}")
-                        logger.debug(self._logTag + f" NewDigiConn: conn {self.connections.keys()}")
-                        logger.debug(self._logTag + f" NewDigiConn: ax25_conf {ax25_conf}")
+                        if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                            logger.debug(self._logTag + f" NewDigiConn: tmp_cfg {tmp_cfg}")
+                            logger.debug(self._logTag + f" NewDigiConn: digi_conn {self._digi_connections.keys()}")
+                            logger.debug(self._logTag + f" NewDigiConn: conn {self.connections.keys()}")
+                            logger.debug(self._logTag + f" NewDigiConn: ax25_conf {ax25_conf}")
+                            digi_conn = AX25DigiConnection(dict(tmp_cfg))
+                            digi_conn.digi_rx_handle(ax25_frame)
+                            self._digi_connections[uid] = digi_conn
 
-                        self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(dict(tmp_cfg))
-                        self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
+                            return True
+                        logger.error(self._logTag + f" NewDigiConn: not ax25_frame.digi_check_and_encode")
+                        logger.error(self._logTag + f" NewDigiConn: tmp_cfg {tmp_cfg}")
+                        logger.error(self._logTag + f" NewDigiConn: digi_conn {self._digi_connections.keys()}")
+                        logger.error(self._logTag + f" NewDigiConn: conn {self.connections.keys()}")
+                        logger.error(self._logTag + f" NewDigiConn: ax25_conf {ax25_conf}")
                         return True
 
-                    logger.debug(self._logTag + f" DigiConn: tmp_cfg {tmp_cfg}")
-                    logger.debug(self._logTag + f" DigiConn: digi_conn {self._digi_connections.keys()}")
-                    logger.debug(self._logTag + f" DigiConn: conn {self.connections.keys()}")
-                    logger.debug(self._logTag + f" DigiConn: ax25_conf {ax25_conf}")
-                    self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
+                    if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                        logger.debug(self._logTag + f" DigiConn: tmp_cfg {tmp_cfg}")
+                        logger.debug(self._logTag + f" DigiConn: digi_conn {self._digi_connections.keys()}")
+                        logger.debug(self._logTag + f" DigiConn: conn {self.connections.keys()}")
+                        logger.debug(self._logTag + f" DigiConn: ax25_conf {ax25_conf}")
+                        self._digi_connections[uid].digi_rx_handle(ax25_frame)
+                        return True
 
+                    logger.error(self._logTag + f" DigiConn: not ax25_frame.digi_check_and_encode")
+                    logger.error(self._logTag + f" DigiConn: tmp_cfg {tmp_cfg}")
+                    logger.error(self._logTag + f" DigiConn: digi_conn {self._digi_connections.keys()}")
+                    logger.error(self._logTag + f" DigiConn: conn {self.connections.keys()}")
+                    logger.error(self._logTag + f" DigiConn: ax25_conf {ax25_conf}")
                     return True
+
                 if ax25_conf.get('uid', '') not in self._digi_connections.keys():
                     # logger.debug(self._logTag + f" S-Digi: digi_check_and_encode {ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True)}")
                     if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
@@ -359,17 +380,26 @@ class AX25Port(object):
                     logger.error(self._logTag + f" S-Digi: conn {self.connections.keys()}")
                     logger.error(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
                     return True
-                print("---------------------------------------------------------")
-                print("---------------------------------------------------------")
-                print("---------------------------------------------------------")
+
             return False
         return False
 
+    def add_digi_conn(self, digi_connection):
+        tx_uid = str(digi_connection.get_tx_uid())
+        if tx_uid in self._digi_connections:
+            logger.error(self._logTag + f"add_digi_conn - uid in _digi_connections")
+            logger.error(self._logTag + f"self._digi_connections {self._digi_connections}")
+            logger.error(self._logTag + f"rx_uid  {tx_uid}")
+            return False
+        logger.debug(self._logTag + f"add_digi_conn +++ tx_uid  {tx_uid}")
+        self._digi_connections[tx_uid] = digi_connection
+
+
     def accept_digi_conn(self, uid: str):
         if uid not in self._digi_connections.keys():
-            logger.debug('Port: accept_digi_conn: UID ERROR')
-            logger.debug(f'Port: accept_digi_conn uid: {uid}')
-            logger.debug(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
+            logger.error('Port: accept_digi_conn: UID ERROR')
+            logger.error(f'Port: accept_digi_conn uid: {uid}')
+            logger.error(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
             return False
         logger.debug(f'Port: accept_digi_conn: {uid}')
         return self._digi_connections[uid].add_rx_conn_cron()

@@ -1192,9 +1192,12 @@ class AX25Conn:
         self._port_handler.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
+            logger.debug(f"Conn {self.uid}: accept_digi_connection is LINK")
             # if self.digi_call in self._port_cfg.parm_Digi_calls:
             if POPT_CFG.get_digi_is_enabled(self.digi_call):
+                logger.debug(f"Conn {self.uid}: accept_digi_connection")
                 if self.accept_digi_connection():
+                    logger.debug(f"Conn {self.uid}: accept_digi_connection True")
                     self.is_digi = True
                     return
                 """
@@ -1207,13 +1210,13 @@ class AX25Conn:
             )
 
     def accept_digi_connection(self):
-        # print(f'DIGI Conn accept..  {self.uid}  ?')
+        logger.debug(f'DIGI Conn accept..  {self.uid}  ?')
         if not self.LINK_Connection:
-            # print(f'DIGI Conn accept: No LINK_Connection {self.uid}')
-            # print(f'DIGI Conn accept: No LINK_Connection {self.LINK_Connection}')
+            logger.debug(f'DIGI Conn accept: No LINK_Connection {self.uid}')
+            logger.debug(f'DIGI Conn accept: No LINK_Connection {self.LINK_Connection}')
 
             return False
-        digi_uid = self.LINK_Connection.uid
+        digi_uid = str(self.LINK_Connection.uid)
         digi_uid = reverse_uid(digi_uid)
         link_conn_port = self.LINK_Connection.own_port
         return link_conn_port.accept_digi_conn(digi_uid)
