@@ -19,6 +19,9 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - Remote Kommando "C!" - Exklusiv Connect ohne MH-Listen Lookup nach Pfad
+- Daten aus "1Wire-Sensoren (DS18B20-Temperatur Sensor)" können jetzt als
+  Textvariable in C-Text/Bake/usw. integriert werden.
+  (PoPT holt sich die Daten aus "/sys/devices/w1_bus_master1")
 
 ###########################################################################################################
 ###########################################################################################################

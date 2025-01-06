@@ -7,8 +7,10 @@ import tkinter as tk
 from tkinter import ttk
 
 from cfg.popt_config import POPT_CFG
+from fnc.one_wire_fnc import is_1wire_device
 from fnc.str_fnc import get_strTab, lob_gen
 from gui.guiError import PoPTAttributError
+from gui.settings.gui1WireSettings import OneWireSettings
 from gui.settings.guiBeaconSettings import BeaconSettings
 from gui.settings.guiDigiSettings import DIGI_SettingsWin
 from gui.settings.guiFTextSettings import FTextSettings
@@ -23,7 +25,7 @@ class SettingsMain(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         win_width = 1200
-        win_height = 640
+        win_height = 660
         self.style = root_win.style
         self.geometry(f"{win_width}x"
                       f"{win_height}+"
@@ -52,6 +54,10 @@ class SettingsMain(tk.Toplevel):
             'MCast': MulticastSettings,
             'RX-Echo': RxEchoSettings,
         }
+        if is_1wire_device():
+            self._win_tab.update({
+                '1-Wire' : OneWireSettings
+            })
         ###############################################################
 
         ###########################################

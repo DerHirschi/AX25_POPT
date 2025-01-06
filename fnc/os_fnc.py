@@ -1,9 +1,6 @@
 import sys
 import os
 
-from ax25.ax25RoutingTable import RoutingTable
-
-
 def is_linux():
     return 'linux' in sys.platform
 

@@ -1,14 +1,10 @@
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
-    getNew_mcast_channel_cfg
+    getNew_mcast_channel_cfg, getNew_1wire_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
-
-
-def getNew_dict():
-    return {}
 
 
 class Main_CFG:
@@ -34,7 +30,7 @@ class Main_CFG:
             # -- GUI
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
-            'gui_channel_vars': getNew_dict,
+            'gui_channel_vars': {},
             'gui_pacman': {},
             ##########################
             # -- Beacon
@@ -58,6 +54,9 @@ class Main_CFG:
             ##########################
             # -- MCast CFG
             'mcast_cfg': getNew_mcast_cfg,
+            ##########################
+            # -- 1Wire CFG
+            '1wire_cfg': getNew_1wire_cfg,
         }
         """ Main CFGs """
         self._load_CFG_fm_file()        # Other Configs
@@ -87,6 +86,8 @@ class Main_CFG:
             logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
         logger.info(f'-------- Loaded CFGs ENDE --------')
         logger.info('Main CFG: Init complete')
+        ### DEV ################################################
+        # self._config['1wire_cfg'] = getNew_1wire_cfg()
 
 
     ####################
@@ -529,6 +530,25 @@ class Main_CFG:
             return False
         self._config['mcast_cfg'] = dict(mcast_cfg)
         return True
+
+    ###########################################
+    # 1Wire
+    def get_1wire_sensor_cfg(self):
+        return dict(self._config.get('1wire_cfg', {}).get('sensor_cfg', {}))
+
+    def get_1wire_loop_timer(self):
+        return int(self._config.get('1wire_cfg', {}).get('loop_timer', 60))
+
+    def set_1wire_sensor_cfg(self, sensor_cfg: dict):
+        cfg = dict(self._config.get('1wire_cfg', getNew_1wire_cfg()))
+        cfg['sensor_cfg'] = dict(sensor_cfg)
+        self._config['1wire_cfg'] = dict(cfg)
+
+    def set_1wire_loop_timer(self, loop_timer: int):
+        loop_timer = max(30, loop_timer)
+        cfg = dict(self._config.get('1wire_cfg', getNew_1wire_cfg()))
+        cfg['loop_timer'] = int(loop_timer)
+        self._config['1wire_cfg'] = dict(cfg)
 
 
 POPT_CFG = Main_CFG()

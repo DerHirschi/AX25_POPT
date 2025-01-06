@@ -7,6 +7,7 @@ from ax25.ax25Multicast import ax25Multicast
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, log_book
+from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
 from fnc.str_fnc import get_strTab
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
@@ -112,6 +113,11 @@ class AX25PortHandler(object):
         self._init_bbs()
         #######################################################
         # Port Handler Tasker (threaded Loop)
+        logger.info("PH: Tasker Init")
+        # 1Wire Thread
+        self._update_1wire_th = None
+        self._1wire_timer = time.time() + 10    # + 10 Sec, give some time to Init the rest
+        #
         self._task_timer_05sec = time.time() + 0.5
         self._task_timer_1sec = time.time() + 1
         self._task_timer_2sec = time.time() + 2
@@ -156,6 +162,7 @@ class AX25PortHandler(object):
         if time.time() > self._task_timer_1sec:
             self._Sched_task()
             self._mh_task()
+            self._tasker_1wire()
             self._task_timer_1sec = time.time() + 1
 
     def _2sec_task(self):
@@ -1027,6 +1034,38 @@ class AX25PortHandler(object):
     def get_mcast_server(self):
         return self._mcast_server
 
+    ##############################################################
+    # 1Wire TextVars
+    def _tasker_1wire(self):
+        if time.time() < self._1wire_timer:
+            return
+        if self._update_1wire_th is None:
+            self._oneWire_thread_run()
+            return
+        if self._update_1wire_th.is_alive():
+            return
+        self._oneWire_thread_run()
+        return
+
+    def _oneWire_thread_run(self):
+        self._1wire_timer = time.time() + POPT_CFG.get_1wire_loop_timer()
+        self._update_1wire_th = threading.Thread(target=self._oneWire_task)
+        self._update_1wire_th.start()
+
+    @staticmethod
+    def _oneWire_task():
+        if not is_1wire_device():
+            return
+        sensor_cfg = POPT_CFG.get_1wire_sensor_cfg()
+        if not sensor_cfg:
+            return
+        for textVar, sens_cfg in sensor_cfg.items():
+            sens_cfg: dict
+            sens_id = sens_cfg.get('device_path', '')
+            if not sens_id:
+                continue
+            sens_cfg['device_value'] = str(get_1wire_temperature(sens_id)[0])
+        # POPT_CFG.set_1wire_sensor_cfg(dict(sensor_cfg))
     ##############################################################
     #
     def debug_Connections(self):

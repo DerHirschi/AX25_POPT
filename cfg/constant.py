@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.114.15'
+VER = '2.114.16'
 DEBUG_LOG = True
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
@@ -236,6 +236,7 @@ TNC_KISS_END_CMD = [
     TNC_KISS_CMD_END
     ]
 
+#########################################
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
               '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
@@ -322,3 +323,16 @@ MH_BEACON_FILTER = [
     'BEACON',
     'APZPOP',
 ]
+
+
+#######################################################
+# 1-Wirer
+ONE_WIRE_PATH = '/sys/devices/w1_bus_master1'
+ONE_WIRE_MAP = ("             PI 3/4 GPIO\n"
+                "GND(Pin 6/9) - 3.3V(Pin 1) - Data(Pin 7)\n"
+                "     |     ________|-- 4,7kOhm --|\n"
+                "     |    |                      |\n"    
+                "     |-DS18B20-------------------|\n"
+                "     |    |                      |\n"   
+                "     |-DS18B20-------------------|\n"
+                "     |    |                      |\n")

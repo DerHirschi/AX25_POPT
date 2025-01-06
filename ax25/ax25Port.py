@@ -396,13 +396,20 @@ class AX25Port(object):
 
 
     def accept_digi_conn(self, uid: str):
-        if uid not in self._digi_connections.keys():
-            logger.error('Port: accept_digi_conn: UID ERROR')
-            logger.error(f'Port: accept_digi_conn uid: {uid}')
-            logger.error(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
-            return False
-        logger.debug(f'Port: accept_digi_conn: {uid}')
-        return self._digi_connections[uid].add_rx_conn_cron()
+        """
+        if uid in self._digi_connections.keys():
+            logger.debug(f'Port: accept_digi_conn: {uid}')
+            return self._digi_connections[uid].add_rx_conn_cron()
+        """
+        uid = reverse_uid(uid)
+        if uid in self._digi_connections.keys():
+            logger.debug(f'Port: accept_digi_conn reverse: {uid}')
+            return self._digi_connections[uid].add_rx_conn_cron()
+
+        logger.error('Port: accept_digi_conn: UID ERROR')
+        logger.error(f'Port: accept_digi_conn uid: {uid}')
+        logger.error(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
+        return False
         # return True
 
     def delete_digi_conn(self, uid: str):

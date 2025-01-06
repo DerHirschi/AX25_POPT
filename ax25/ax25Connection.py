@@ -1200,11 +1200,7 @@ class AX25Conn:
                     logger.debug(f"Conn {self.uid}: accept_digi_connection True")
                     self.is_digi = True
                     return
-                """
-                print(f"Accept Conn UID: {self.uid}")
-                print(f"Accept Conn digi_call: {self.digi_call}")
-                print(f"Accept Conn parm_Digi_calls: {self._port_cfg.parm_Digi_calls}")
-                """
+
             self.send_to_link(
                 f'\r*** Connected to {self.to_call_str}\r'.encode('ASCII', 'ignore')
             )

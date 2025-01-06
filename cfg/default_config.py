@@ -270,3 +270,17 @@ def getNew_mcast_channel_cfg(channel_id: int):
         ch_private=False,
         ch_members=[],
     )
+#####################################################
+# 1Wire
+def getNew_1wire_cfg():
+    return dict(
+        loop_timer=60,
+        sensor_cfg={},
+    )
+
+def getNew_1wire_device_cfg(device_path: str):
+    return dict(
+        device_path=str(device_path),
+        device_value=None,
+        StringVar='',
+    )

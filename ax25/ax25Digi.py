@@ -125,7 +125,7 @@ class AX25DigiConnection:
 
         self._tx_conn_uid = str(self._tx_conn.uid)
         self._tx_port = self._tx_conn.own_port
-        self._rx_port.add_digi_conn(self)
+        self._rx_port.add_digi_conn(self)       #####################################################
         logger.debug(f"LinkConn : {self._port_handler.link_connections.items()}")
         logger.debug(f"LinkConn : txConns: {self._tx_port.connections}")
         logger.debug(f"LinkConn : txConn UID: {self._tx_conn.uid}")
@@ -173,7 +173,10 @@ class AX25DigiConnection:
             return False
 
         if self._rx_conn.new_digi_connection(self._tx_conn):
-            logger.debug('Digi-Accept')
+            logger.debug('Digi-Accept tX-CONN')
+            return True
+        if self._tx_conn.new_digi_connection(self._rx_conn):
+            logger.debug('Digi-Accept RX-CONN')
             return True
         logger.debug("Digi-Not Accept")
         return False
