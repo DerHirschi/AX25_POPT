@@ -30,6 +30,7 @@ Ideas/TODO's :
   ✓ Raspberry 1Wire Sensoren                    - Bake
   - Raspberry BME280-Wettersensor               - Bake
   - Raspberry GPIO Zustand                      - Bake
+  - CPU-Temp/System-Daten                       - Bake
 
 - 79 Zeichen Zeilenumbruch (Dos-PRG kompatibilität)
   ✓ PMS
