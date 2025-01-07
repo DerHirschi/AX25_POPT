@@ -1,4 +1,14 @@
+"""
+PoPT GPIO Functions..
+
+setup_gpio(pin)
+set_gpio_dir(pin, False)    Fasle = Output | True = Input
+set_gpio_val(pin, bool)
+get_gpio_val(pin) -> bool / None
+"""
+
 import os
+
 from cfg.constant import GPIO_PATH
 from cfg.logger_config import logger
 from fnc.os_fnc import is_linux, path_exists
@@ -54,7 +64,7 @@ def set_gpio_dir(gpio: int, gpio_dir_in: bool):
         return False
     return True
 
-def setup_gpio(gpio: int, gpio_input: bool):
+def setup_gpio(gpio: int):
     if not is_gpio_device():
         logger.warning(f"GPIO: setup_gpio No GPIO Device")
         return False
@@ -76,7 +86,7 @@ def setup_gpio(gpio: int, gpio_input: bool):
         # Init nicht erfolgreich ? gpio Pfad wurde nicht angelegt vom OS
         logger.error(f"GPIO: setup_gpio() 2 > Path doesn't exists {gpio_path}")
         return False
-    return set_gpio_dir(gpio, gpio_input)
+    return True
 
 def get_gpio_val(gpio: int):
     if not is_gpio_device():
@@ -98,7 +108,6 @@ def get_gpio_val(gpio: int):
         logger.error(f"GPIO: get_gpio_val ValueError os.popen: {ret}")
         return None
 
-
 def set_gpio_val(gpio: int, value: bool):
     if not is_gpio_device():
         logger.warning(f"GPIO: set_gpio_val No GPIO Device")
@@ -118,5 +127,26 @@ def set_gpio_val(gpio: int, value: bool):
         return False
     return True
 
-for pin in range(1, 30):
-    set_gpio_val(pin, True)
+"""
+for pin in range(1, 27):
+    set_gpio_val(pin, False)
+
+for pin in range(1, 27):
+    setup_gpio(pin)
+
+for pin in range(1, 27):
+    set_gpio_dir(pin, False)
+
+for pin in range(1, 27):
+    close_gpio(pin)
+
+klick = True
+while True:
+    try:
+        for pin in range(1, 27):
+            set_gpio_val(pin, klick)
+    except KeyboardInterrupt:
+        break
+    time.sleep(0.5)
+    klick = not klick
+"""
