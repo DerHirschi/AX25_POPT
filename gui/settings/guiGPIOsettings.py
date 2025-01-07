@@ -19,7 +19,7 @@ class GPIOSettings(tk.Frame):
         global_opt_frame = tk.Frame(upper_frame)
         global_opt_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        tk.Button(global_opt_frame, text='Update', ).pack(pady=15, padx=15)
+        tk.Button(global_opt_frame, text='Update', command=self._update_data).pack(pady=15, padx=15)
         ################################
         ################################
         lower_frame = tk.Frame(self)
@@ -58,7 +58,7 @@ class GPIOSettings(tk.Frame):
         for index, (val, k) in enumerate(tmp):
             self._tree.move(k, '', int(index))
 
-    def _update_data(self):
+    def _update_data(self, event=None):
         for i in self._tree.get_children():
             self._tree.delete(i)
 
