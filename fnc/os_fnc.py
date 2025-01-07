@@ -1,6 +1,7 @@
 import sys
 import os
 
+
 def is_linux():
     return 'linux' in sys.platform
 
@@ -23,3 +24,4 @@ def get_root_dir():
 
 def path_exists(path):
     return os.path.exists(path)
+

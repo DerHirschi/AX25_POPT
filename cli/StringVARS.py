@@ -225,6 +225,7 @@ def replace_StringVARS(input_string: str,
     if port_handler and not user_db:
         user_db = port_handler.get_userDB()
 
+    # PoPT System
     for key, fnc in STRING_VARS.items():
         if not key in input_string:
             continue
@@ -234,7 +235,7 @@ def replace_StringVARS(input_string: str,
                                                      port_handler=port_handler,
                                                      connection=connection,
                                                      user_db=user_db))
-    # 1Wire
+    # 1-Wire
     wire_cfg = POPT_CFG.get_1wire_sensor_cfg()
     for key, device_cfg in wire_cfg.items():
         device_cfg: dict

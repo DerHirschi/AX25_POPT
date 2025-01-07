@@ -8,9 +8,6 @@ from cfg.popt_config import POPT_CFG
 from fnc.one_wire_fnc import is_1wire_device, get_all_1wire_paths, get_1wire_temperature, get_max_1wire
 
 
-
-
-
 class OneWireSettings(tk.Frame):
     def __init__(self, tabctl, root_win=None):
         tk.Frame.__init__(self, tabctl)

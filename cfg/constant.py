@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser...
 """
-VER = '2.114.16'
+VER = '2.114.17'
 DEBUG_LOG = True
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
@@ -336,3 +336,8 @@ ONE_WIRE_MAP = ("             PI 3/4 GPIO\n"
                 "     |    |                      |\n"   
                 "     |-DS18B20-------------------|\n"
                 "     |    |                      |\n")
+
+#######################################################
+# GPIO
+GPIO_PATH = '/sys/class/gpio'
+

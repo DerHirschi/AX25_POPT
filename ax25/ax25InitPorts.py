@@ -239,7 +239,6 @@ class AX25PortHandler(object):
         return ret
 
     def close_popt(self):
-        # TODO Cleanup / OPT
         logger.info("PH: Closing PoPT")
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
@@ -253,8 +252,13 @@ class AX25PortHandler(object):
             logger.info("PH: Saving Port Statistic-Data")
             self._mh.save_PortStat()
         if self._update_1wire_th is not None:
+            n = 0
             while self._update_1wire_th.is_alive():
-                logger.debug("PH: Warte auf 1-Wire Thread")
+                logger.info("PH: Warte auf 1-Wire Thread")
+                n += 1
+                if n > 40:
+                    logger.error("PH: 1-Wire Thread nicht beendet !!")
+                    break
                 time.sleep(0.5)
         logger.info("PH: Saving User-DB Data")
         USER_DB.save_data()
@@ -1068,7 +1072,12 @@ class AX25PortHandler(object):
             sens_id = sens_cfg.get('device_path', '')
             if not sens_id:
                 continue
-            sens_cfg['device_value'] = str(get_1wire_temperature(sens_id)[0])
+            try:
+                sens_cfg['device_value'] = str(get_1wire_temperature(sens_id)[0])
+            except IndexError:
+                logger.warning(f"PH: _oneWire_task IndexError: {textVar}")
+                logger.warning(f"PH: _oneWire_task IndexError: {sens_cfg}")
+                continue
         # POPT_CFG.set_1wire_sensor_cfg(dict(sensor_cfg))
     ##############################################################
     #
