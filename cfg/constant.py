@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.114.20'
+VER = '2.114.21'
 
 DEBUG_LOG = True
 CONSOLE_LOG = True
@@ -49,6 +49,7 @@ LANG_IND = {
             # 'PT': 6,
             # 'IT': 7,
             # '': 8,
+            # '': 9,
         }
 
 STATION_TYPS = [
@@ -114,6 +115,8 @@ ENCODINGS = (
     'ASCII',
     'LATIN_1',
     'UTF-8',
+    'KOI8-R',
+    'KOI8-U',
 )
 
 STATION_ID_ENCODING = {
@@ -121,7 +124,9 @@ STATION_ID_ENCODING = {
     1: 'ASCII',  # TODO Eigentlich ä > ae
     2: 'ASCII',  # TODO Eigentlich c64 Zeichensatz
     3: 'LATIN_1',
-    4: 'UTF-8'
+    4: 'UTF-8',
+    5: 'KOI8-R',
+    6: 'KOI8-U',
 }
 
 STATION_ID_ENCODING_REV = {
@@ -129,7 +134,9 @@ STATION_ID_ENCODING_REV = {
     'ASCII': 1,  # TODO Eigentlich ä > ae
     # 'ASCII': 2,     # TODO Eigentlich c64 Zeichensatz
     'LATIN_1': 3,
-    'UTF-8': 4
+    'UTF-8': 4,
+    'KOI8-R': 5,
+    'KOI8-U': 6,
 }
 
 # FT Stuff

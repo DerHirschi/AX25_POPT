@@ -61,17 +61,25 @@ class GPIOSettings(tk.Frame):
     def _update_data(self, event=None):
         for i in self._tree.get_children():
             self._tree.delete(i)
-
+        # data = {}
         for gpio in range(GPIO_RANGE[0], GPIO_RANGE[1] + 1):
             if not is_gpio_init(gpio):
                 continue
             gpio_dir = get_gpio_dir(gpio)
             gpio_val = get_gpio_val(gpio)
-            val = (int(gpio),
+            textVar = f"$gpio-{gpio}"
+            val = (textVar,
                    int(gpio),
                    gpio_dir,
                    gpio_val)
             self._tree.insert('', tk.END, values=val, )
+            """
+            data[gpio] = dict(
+                gpio_id=int(gpio),
+                gpio_dir=str(gpio_dir),
+                gpio_val=gpio_val,
+            )
+            """
 
 
     def save_config(self):

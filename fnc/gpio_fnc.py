@@ -150,7 +150,7 @@ def set_gpio_val(gpio: int, value: bool):
 for pin in range(0, 27):
     set_gpio_val(pin, False)
 
-for pin in range(0, 35):
+for pin in range(0, 27):
     setup_gpio(pin)
 
 for pin in range(0, 27):
