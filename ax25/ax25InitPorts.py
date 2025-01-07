@@ -252,6 +252,10 @@ class AX25PortHandler(object):
             self._mh.save_mh_data()
             logger.info("PH: Saving Port Statistic-Data")
             self._mh.save_PortStat()
+        if self._update_1wire_th is not None:
+            while self._update_1wire_th.is_alive():
+                logger.debug("PH: Warte auf 1-Wire Thread")
+                time.sleep(0.5)
         logger.info("PH: Saving User-DB Data")
         USER_DB.save_data()
         logger.info("PH: Closing User-DB")

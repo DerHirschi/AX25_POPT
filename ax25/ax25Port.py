@@ -17,11 +17,13 @@ from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid, is_digipeated_pre_digi
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, MCastInitError
-from fnc.os_fnc import is_linux
+# from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
 
+"""
 if is_linux():
     import termios
+"""
 
 class RxBuf:
     axip_add = '', 0
@@ -1142,17 +1144,13 @@ class KISSSerial(AX25Port):
 
     def init(self):
         if self.loop_is_running:
-            # print("KISS Serial INIT")
             logger.info("KISS Serial INIT")
-            # self.kiss = b'\x00'
             try:
                 self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.2)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
-                # print('Error. Cant connect to KISS Serial Device {}'.format(self._port_param))
                 logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self._port_param}')
                 logger.error('{}'.format(e))
-                # print('{}'.format(e))
                 self.close_device()
                 raise AX25DeviceFAIL
             else:
