@@ -1,3 +1,4 @@
+from cfg.constant import DEBUG_LOG
 from cfg.logger_config import logger
 
 class AX25EncodingERROR(Exception):
@@ -23,19 +24,19 @@ class AX25EncodingERROR(Exception):
 class AX25DecodingERROR(Exception):
     def __init__(self, frame=None):
         if frame is not None:
-            logger.error('AX25 Packet Decoding Error !')
+            logger.warning('AX25 Packet Decoding Error !')
             if hasattr(frame, 'payload'):
                 # logger.warning(frame.payload)
-                logger.error(f'Data: {frame.payload}')
+                logger.warning(f'Data: {frame.payload}')
 
-            # if DEBUG_LOG:
-            if hasattr(frame, 'get_frame_conf'):
-                frame_cfg: dict = frame.get_frame_conf()
-                logger.error('----- AX25-Frame CFG DEC------')
-                # print('----- AX25-Frame CFG DEC------')
-                for k, data in frame_cfg.items():
-                    logger.error(f'{k}: {data}')
-                    # print(f'{k}: {data}')
+            if DEBUG_LOG:
+                if hasattr(frame, 'get_frame_conf'):
+                    frame_cfg: dict = frame.get_frame_conf()
+                    logger.debug('----- AX25-Frame CFG DEC------')
+                    # print('----- AX25-Frame CFG DEC------')
+                    for k, data in frame_cfg.items():
+                        logger.debug(f'{k}: {data}')
+                        # print(f'{k}: {data}')
 
 class AX25DeviceERROR(Exception):
     def __init__(self, e=None, port=None):

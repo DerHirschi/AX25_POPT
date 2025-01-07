@@ -1,9 +1,10 @@
 """
 Mach mit,
 mach nach,
-mach besser...
+mach besser.
 """
-VER = '2.114.18'
+VER = '2.114.19'
+
 DEBUG_LOG = True
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """

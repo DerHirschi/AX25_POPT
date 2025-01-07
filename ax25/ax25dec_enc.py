@@ -303,7 +303,7 @@ class CByte:
                     logger.error('C-Byte Error Decoding U Frame ! Unknown C-Byte> ' + str(bi) + ' ' + hex(in_byte))
                     raise AX25DecodingERROR
 
-    def validate(self):
+    def validate_c(self):
         if self.hex == 0xff:
             logger.error('C_Byte validator')
             return False
@@ -451,7 +451,7 @@ class PIDByte:
             if bi[2:5] in ['01', '10']:
                 self.ax25_l3(hex(int(in_byte)))
 
-    def validate(self):
+    def validate_pid(self):
         if self.hex == 0x00:
             logger.error('PID_Byte validator : {}'.format(self.hex))
             return False
@@ -832,13 +832,13 @@ class AX25Frame:
                 # print('Validate Error: ca.validate')
                 AX25EncodingERROR(self)
                 return False
-        if not self.ctl_byte.validate():
+        if not self.ctl_byte.validate_c():
             # print('Validate Error: C_Byte')
             logger.error('Validate Error: C_Byte')
             AX25EncodingERROR(self)
             return False
         if self.ctl_byte.pid:
-            if not self.pid_byte.validate():
+            if not self.pid_byte.validate_pid():
                 # print('Validate Error: PID_Byte')
                 logger.error('Validate Error: PID_Byte')
                 AX25EncodingERROR(self)

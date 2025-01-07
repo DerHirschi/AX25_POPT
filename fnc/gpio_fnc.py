@@ -1,8 +1,9 @@
 """
-PoPT GPIO Functions..
+PoPT GPIO Functions.
+Pi GPIO 0-26
 
 setup_gpio(pin)
-set_gpio_dir(pin, False)    Fasle = Output | True = Input
+set_gpio_dir(pin, False)  -  Fasle = Output | True = Input
 set_gpio_val(pin, bool)
 get_gpio_val(pin) -> bool / None
 """
@@ -88,6 +89,21 @@ def setup_gpio(gpio: int):
         return False
     return True
 
+def get_gpio_dir(gpio: int):
+    if not is_gpio_device():
+        logger.warning(f"GPIO: get_gpio_dir No GPIO Device")
+        return None
+    if not is_gpio_init(gpio):
+        logger.warning(f"GPIO: get_gpio_dir() 1 > GPIO {gpio} nicht initialisiert !")
+        return None
+    gpio_path = GPIO_PATH + f"/gpio{gpio}"
+    os_cmd = f"cat {gpio_path}/direction"
+    try:
+        return os.popen(os_cmd).read()[:-1]
+    except TypeError:
+        logger.error(f"GPIO: get_gpio_dir TypeError: {os_cmd}")
+        return None
+
 def get_gpio_val(gpio: int):
     if not is_gpio_device():
         logger.warning(f"GPIO: get_gpio_val No GPIO Device")
@@ -115,6 +131,9 @@ def set_gpio_val(gpio: int, value: bool):
     if not is_gpio_init(gpio):
         logger.warning(f"GPIO: set_gpio_val() 1 > GPIO {gpio} nicht initialisiert !")
         return False
+    if get_gpio_dir(gpio) == 'in':
+        logger.warning(f"GPIO: set_gpio_val() 1 > GPIO {gpio} ist nicht als Ausgang konfiguriert!")
+        return False
     gpio_path = GPIO_PATH + f"/gpio{gpio}"
     os_cmd = f"echo {int(value)} > {gpio_path}/value"
     try:
@@ -128,17 +147,20 @@ def set_gpio_val(gpio: int, value: bool):
     return True
 
 """
-for pin in range(1, 27):
+for pin in range(0, 27):
     set_gpio_val(pin, False)
 
-for pin in range(1, 27):
+for pin in range(0, 35):
     setup_gpio(pin)
 
-for pin in range(1, 27):
+for pin in range(0, 27):
     set_gpio_dir(pin, False)
 
-for pin in range(1, 27):
+for pin in range(0, 27):
     close_gpio(pin)
+    
+for pin in range(0, 27):
+    is_gpio_init(pin)
 
 klick = True
 while True:
@@ -149,4 +171,8 @@ while True:
         break
     time.sleep(0.5)
     klick = not klick
+        
 """
+
+
+

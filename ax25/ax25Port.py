@@ -981,9 +981,9 @@ class AX25Port(object):
                 # Decoding
                 ax25frame.decode_ax25frame(buf.raw_data)
             except AX25DecodingERROR:
-                logger.error(f'Port {self.port_id}: decoding: ')
-                logger.error(f'Port {self.port_id}: org {buf.raw_data}')
-                logger.error(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
+                logger.warning(f'Port {self.port_id}: decoding: ')
+                logger.warning(f'Port {self.port_id}: org {buf.raw_data}')
+                logger.warning(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
                 break
             if ax25frame.validate():
                 ax25frame.axip_add = buf.axip_add
