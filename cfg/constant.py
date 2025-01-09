@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.114.21'
+VER = '2.114.22'
 
 DEBUG_LOG = True
 CONSOLE_LOG = True
@@ -48,8 +48,8 @@ LANG_IND = {
             # 'PL': 5,
             # 'PT': 6,
             # 'IT': 7,
-            # '': 8,
-            # '': 9,
+            # 'RU': 8,
+            # 'UA': 9,
         }
 
 STATION_TYPS = [

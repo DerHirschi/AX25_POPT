@@ -1095,5 +1095,10 @@ class AX25PortHandler(object):
         for digi_uid, conn in all_digiConn.items():
             print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()}")
 
+        logger.debug("=================Port-Watch-Dog====================")
+        for port_id, port in self.get_all_ports().items():
+            logger.debug(f"Port {port_id}: {time.time() - port.port_w_dog}")
+        logger.debug("====================================================")
+
 
 PORT_HANDLER = AX25PortHandler()

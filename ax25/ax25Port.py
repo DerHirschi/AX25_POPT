@@ -34,6 +34,7 @@ class RxBuf:
 class AX25Port(object):
     def __init__(self, port_id: int, port_handler):
         self._logTag = f"Port {port_id}: "
+        self.port_w_dog = time.time()   # Debuging
         self._port_handler = port_handler
         self.loop_is_running = self._port_handler.is_running
         self.ende = False
@@ -1101,6 +1102,7 @@ class KissTCP(AX25Port):
                 raise AX25DeviceFAIL
 
     def rx(self):
+        self.port_w_dog = time.time()
         try:
             recv_buff = self.device.recv(999)
         except socket.timeout:
@@ -1229,15 +1231,16 @@ class KISSSerial(AX25Port):
         while self.loop_is_running and self.device_is_running:
             try:
                 recv_buff += self.device.read()
-
+                self.port_w_dog = time.time()
             except serial.SerialException:
                 # There is no new data from serial port
-                return RxBuf()
+                return None
             except TypeError as e:
                 logger.warning(f'Port {self.port_id}: Serial Device Error {e}')
                 try:
                     # self.init()
                     self._reinit()
+                    return None
                 except AX25DeviceFAIL:
                     self.close_device()
                     logger.error(f"Port {self.port_id}: Reinit Failed !! {self._port_param}")
@@ -1253,7 +1256,7 @@ class KISSSerial(AX25Port):
                     if self.kiss.unknown_kiss_frame(recv_buff):
                         return None
                 else:
-                    return ret
+                    return None
 
     def tx_device(self, frame):
         if self.device is None:
@@ -1348,8 +1351,10 @@ class AXIP(AX25Port):
             logger.info(f"Port {self.port_id}: Close AXIP done")
 
     def rx(self):
+        self.port_w_dog = time.time()
         try:
             udp_recv = self.device.recvfrom(800)
+
             # self.device.settimeout(0.1)
         # except socket.error:
         # raise AX25DeviceERROR
