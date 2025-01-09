@@ -1229,9 +1229,9 @@ class KISSSerial(AX25Port):
     def rx(self):
         recv_buff = b''
         while self.loop_is_running and self.device_is_running:
+            self.port_w_dog = time.time()
             try:
                 recv_buff += self.device.read()
-                self.port_w_dog = time.time()
             except serial.SerialException:
                 # There is no new data from serial port
                 return None

@@ -1097,7 +1097,10 @@ class AX25PortHandler(object):
 
         logger.debug("=================Port-Watch-Dog====================")
         for port_id, port in self.get_all_ports().items():
-            logger.debug(f"Port {port_id}: {time.time() - port.port_w_dog}")
+            logger.debug(f"Port {port_id}: WD > {time.time() - port.port_w_dog}")
+            logger.debug(f"Port {port_id}: Loop is running > {port.loop_is_running}")
+            logger.debug(f"Port {port_id}: Device is running > {port.device_is_running}")
+            logger.debug("")
         logger.debug("====================================================")
 
 
