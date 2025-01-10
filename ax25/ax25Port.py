@@ -3,6 +3,7 @@ import socket
 import serial
 import time
 import crcmod
+from osmosdr import device
 
 from ax25.ax25UI_Pipe import AX25Pipe
 

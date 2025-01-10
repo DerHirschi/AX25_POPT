@@ -1101,6 +1101,8 @@ class AX25PortHandler(object):
             logger.debug(f"Port {port_id}: Loop is running > {port.loop_is_running}")
             logger.debug(f"Port {port_id}: Device is running > {port.device_is_running}")
             logger.debug(f"Port {port_id}: Device > {port.device}")
+            if hasattr(port.device, 'readall'):
+                logger.debug(f"Port {port_id}: readall > {port.device.readall()}")
             logger.debug("")
         logger.debug("====================================================")
 
