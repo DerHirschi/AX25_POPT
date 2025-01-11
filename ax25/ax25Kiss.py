@@ -59,13 +59,14 @@ class Kiss(object):
             self._tail_frame(),
             self._duplex_frame(),
         ])
-
-    def unknown_kiss_frame(self, inp: b''):
+    ######################################################################
+    def unknown_kiss_frame(self, inp: bytes):
         if not self.is_enabled:
             return inp
+        if not inp.startswith(self._FEND):
+            logger.warning(f"Kiss: NO KISS Frame > {inp}")
+            return True
         if len(inp) < 2:
-            return False
-        if inp[-1:] != self._FEND:
             return False
         if inp[:2] == self._FEND + self._DATA_FRAME:
             return False
@@ -85,7 +86,9 @@ class Kiss(object):
             pass
         return True
 
-    def de_kiss(self, inp: b''):
+    #############################################################
+    #
+    def de_kiss(self, inp: bytes):
         """
         Code from: https://github.com/ampledata/kiss
         Escape special codes, per KISS spec.
@@ -98,10 +101,16 @@ class Kiss(object):
             return inp
         if len(inp) < 15:
             return None
+        if not inp.endswith(self._FEND):
+            return None
+        if not inp.startswith(self._FEND + self._DATA_FRAME):
+            return None
+        """
         if inp[-1:] != self._FEND:
             return None
         if inp[:2] != self._FEND + self._DATA_FRAME:
             return None
+        """
         return inp[2:-1].replace(
             self._FESC_TFESC,
             self._FESC
@@ -109,7 +118,6 @@ class Kiss(object):
             self._FESC_TFEND,
             self._FEND
         )
-
 
     def kiss(self, inp: b''):
         """
@@ -132,6 +140,7 @@ class Kiss(object):
             )
         return inp
 
+    #############################################################################
     def device_kiss_end(self):
         # return b''.join([self.FEND, self.RETURN, self.FEND])
         return self._END_TNC_DEFAULT

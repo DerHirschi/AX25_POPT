@@ -1253,12 +1253,13 @@ class KISSSerial(AX25Port):
                     if de_kiss_fr:
                         ret.raw_data = de_kiss_fr
                         return ret
-
                     if self.kiss.unknown_kiss_frame(recv_buff):
                         return None
+                    """
                     if not recv_buff.startswith(b'\xC0'):
                         logger.debug(self._logTag + f" RX not startwith C0 > {recv_buff}")
                         return None
+                    """
                 else:
                     return None
 
