@@ -1229,7 +1229,7 @@ class KISSSerial(AX25Port):
         while self.loop_is_running and self.device_is_running:
             self.port_w_dog = time.time()
             try:
-                recv_buff += self.device.read_all()
+                recv_buff += self.device.read()
             except serial.SerialException:
                 # There is no new data from serial port
                 return None
@@ -1251,7 +1251,7 @@ class KISSSerial(AX25Port):
                         ret.raw_data = de_kiss_fr
                         return ret
                     if self.kiss.unknown_kiss_frame(recv_buff):
-                        return None
+                        recv_buff = b''
 
                 else:
                     return None
