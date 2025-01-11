@@ -134,7 +134,7 @@ class Call:
         """
         :return: bool
         """
-        if len(self.call) < 2 or len(self.call) > 6:    # Calls like CQ or ID
+        if 2 > len(self.call) > 6:    # Calls like CQ or ID
             # print(f'Call validator: Call length - {self.call}')
             logger.error(f'Call validator: Call length - {self.call}')
             return False
@@ -143,12 +143,12 @@ class Call:
             logger.error('Call validator: Call.isascii()')
             return False
         """
-        if self.ssid > 15 or self.ssid < 0:
+        if 0 > self.ssid > 15:
             # print(f'Call validator: SSID - {self.ssid}')
             logger.error(f'Call validator: SSID - {self.ssid}')
             return False
         for c in self.call:
-            if not any([c.isupper(), c.isdigit()]):
+            if not any((c.isupper(), c.isdigit())):
                 # print(f'Call validator: CAll-Format - {self.call} -')
                 logger.error(f'Call validator: CAll-Format - {self.call} -')
                 return False

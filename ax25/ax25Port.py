@@ -115,7 +115,7 @@ class AX25Port(object):
         # if self.device is not None:
         # self.device.close()
 
-    def rx(self):
+    def _rx(self):
         return RxBuf()
 
     def tx(self, frame):
@@ -433,7 +433,8 @@ class AX25Port(object):
         self._cleanup_digi_conn()
         for uid, digi_conn in list(self._digi_connections.items()):
             # print(f"DIGI-CONN TASK: {uid}")
-            digi_conn.digi_crone()
+            if digi_conn:
+                digi_conn.digi_crone()
 
     def get_digi_conn(self):
         return self._digi_connections
@@ -724,8 +725,7 @@ class AX25Port(object):
 
     def _task_connections(self):
         """ Execute Cronjob on all Connections"""
-        for k in list(self.connections.keys()):
-            conn = self.connections.get(k, None)
+        for uid, conn in dict(self.connections).items():
             if conn:
                 conn.exec_cron()
 
@@ -960,7 +960,7 @@ class AX25Port(object):
         while self.loop_is_running:
             try:
                 ##############################################
-                buf: RxBuf = self.rx()
+                buf: RxBuf = self._rx()
                 ##############################################
             except AX25DeviceERROR:
                 # print(e)
@@ -971,10 +971,10 @@ class AX25Port(object):
                 # self.close()
                 break
             if buf is None:
-                time.sleep(0.05)
+                # time.sleep(0.05)
                 break
             if not buf.raw_data:  # RX ############
-                time.sleep(0.05)
+                # time.sleep(0.05)
                 break
             self.set_TXD()
             self.set_digi_TXD()
@@ -987,28 +987,28 @@ class AX25Port(object):
                 logger.warning(f'Port {self.port_id}: org {buf.raw_data}')
                 logger.warning(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
                 break
-            if ax25frame.validate():
-                ax25frame.axip_add = buf.axip_add
-                # ax25frame.rx_time = datetime.datetime.now()
-                # setattr(ax25frame, 'rx_time', datetime.datetime.now())
-                # ######### RX #############
-                if not self._rx_dualPort_handler(ax25_frame=ax25frame):
-                    ax25frame_conf = ax25frame.get_frame_conf()
-                    # Monitor # TODO handling via ax25frame_conf
-                    self._gui_monitor(ax25frame=ax25frame, tx=False)
-                    # MH / Port-Statistic
-                    self._mh_input(ax25frame_conf, tx=False)
-                    # MCast IP Update
-                    if hasattr(self._mcast_server, 'mcast_update_member_ip'):
-                        self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
-                    # RX Handler
-                    self.rx_handler(ax25frame)
-                    # MCast
-                    if hasattr(self._mcast_server, 'mcast_rx'):
-                        self._mcast_server.mcast_rx(ax25frame=ax25frame)
+            ######## if ax25frame.validate():
+            ax25frame.axip_add = buf.axip_add
+            # ax25frame.rx_time = datetime.datetime.now()
+            # setattr(ax25frame, 'rx_time', datetime.datetime.now())
+            # ######### RX #############
+            if not self._rx_dualPort_handler(ax25_frame=ax25frame):
+                ax25frame_conf = ax25frame.get_frame_conf()
+                # Monitor # TODO handling via ax25frame_conf
+                self._gui_monitor(ax25frame=ax25frame, tx=False)
+                # MH / Port-Statistic
+                self._mh_input(ax25frame_conf, tx=False)
+                # MCast IP Update
+                if hasattr(self._mcast_server, 'mcast_update_member_ip'):
+                    self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
+                # RX Handler
+                self.rx_handler(ax25frame)
+                # MCast
+                if hasattr(self._mcast_server, 'mcast_rx'):
+                    self._mcast_server.mcast_rx(ax25frame=ax25frame)
 
-                # RX-ECHO
-                self._rx_echo(ax25_frame=ax25frame)
+            # RX-ECHO
+            self._rx_echo(ax25_frame=ax25frame)
 
             if self._port_cfg.get('parm_full_duplex', False):
                 break
@@ -1102,14 +1102,11 @@ class KissTCP(AX25Port):
                 logger.error('{}'.format(e))
                 raise AX25DeviceFAIL
 
-    def rx(self):
+    def _rx(self):
         self.port_w_dog = time.time()
         try:
             recv_buff = self.device.recv(999)
         except socket.timeout:
-            # self.device.close()
-            # raise AX25DeviceERROR(e, self)
-            # raise AX25DeviceERROR
             return None
         except OSError as e:
             raise AX25DeviceERROR(e, self)
@@ -1227,12 +1224,12 @@ class KISSSerial(AX25Port):
                 self.close_device()
                 raise AX25DeviceFAIL
 
-    def rx(self):
+    def _rx(self):
         recv_buff = b''
         while self.loop_is_running and self.device_is_running:
             self.port_w_dog = time.time()
             try:
-                recv_buff += self.device.read()
+                recv_buff += self.device.read_all()
             except serial.SerialException:
                 # There is no new data from serial port
                 return None
@@ -1255,11 +1252,7 @@ class KISSSerial(AX25Port):
                         return ret
                     if self.kiss.unknown_kiss_frame(recv_buff):
                         return None
-                    """
-                    if not recv_buff.startswith(b'\xC0'):
-                        logger.debug(self._logTag + f" RX not startwith C0 > {recv_buff}")
-                        return None
-                    """
+
                 else:
                     return None
 
@@ -1355,7 +1348,7 @@ class AXIP(AX25Port):
             # print("AXIP FINALLY")
             logger.info(f"Port {self.port_id}: Close AXIP done")
 
-    def rx(self):
+    def _rx(self):
         self.port_w_dog = time.time()
         try:
             udp_recv = self.device.recvfrom(800)
