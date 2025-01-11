@@ -618,6 +618,12 @@ class AX25Conn:
 
         self.LINK_Connection = conn
         self.is_link = True
+        ###############################
+        # Del Digi Conn
+        # self.own_port.delete_digi_conn(conn.uid)
+        # conn.own_port.delete_digi_conn(self.uid)
+
+
         #   self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
         # print("new_digi TX CONN ")
         return True

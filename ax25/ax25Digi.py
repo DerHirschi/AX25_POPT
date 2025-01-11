@@ -125,7 +125,7 @@ class AX25DigiConnection:
 
         self._tx_conn_uid = str(self._tx_conn.uid)
         self._tx_port = self._tx_conn.own_port
-        self._rx_port.add_digi_conn(self)       #####################################################
+        # self._rx_port.add_digi_conn(self)       #####################################################
         logger.debug(f"LinkConn : {self._port_handler.link_connections.items()}")
         logger.debug(f"LinkConn : txConns: {self._tx_port.connections}")
         logger.debug(f"LinkConn : txConn UID: {self._tx_conn.uid}")
@@ -190,6 +190,7 @@ class AX25DigiConnection:
     def _state_1_rx(self, ax25_frame):
         if ax25_frame.ctl_byte.flag == 'SABM':
             if not self._tx_conn_uid:
+                print("_state_1_rx: not self._tx_conn_uid")
                 self._init_digi_conn(ax25_frame)
             else:
                 logger.error('Digi-SABM-RX ERROR')

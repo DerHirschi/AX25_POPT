@@ -29,7 +29,7 @@ if is_linux():
 class RxBuf:
     axip_add = '', 0
     raw_data = b''
-    kiss = b''
+    kiss_frame = b''
 
 
 class AX25Port(object):
@@ -205,12 +205,14 @@ class AX25Port(object):
             logger.debug(self._logTag + f"Link-Conn RX: {uid}")
             conn = self._port_handler.link_connections[uid][0]
             link_call = str(self._port_handler.link_connections[uid][1])
+            """
             logger.debug(self._logTag + f"Link-Conn RX link_call: {link_call}")
             logger.debug(self._logTag + f"Link-Conn RX is_link_remote: {conn.is_link_remote}")
             logger.debug(self._logTag + f"Link-Conn RX digi_call: {conn.digi_call}")
             logger.debug(self._logTag + f"Link-Conn RX my_call_str: {conn.my_call_str}")
             logger.debug(self._logTag + f"Link-Conn RX self._port_handler.link_connections: {self._port_handler.link_connections}")
             logger.debug(self._logTag + f"Link-Conn RX ++: {ax25_frame_conf}")
+            """
             if link_call:
                 # if link_call != ax25_frame.via_calls[-1].call_str:
                 #     return False
@@ -418,7 +420,7 @@ class AX25Port(object):
 
     def delete_digi_conn(self, uid: str):
         if uid in self._digi_connections.keys():
-            # print(f"DIGI-Conn DEL: {uid}")
+            print(f"DIGI-Conn DEL: {uid}")
             del self._digi_connections[uid]
 
     def _cleanup_digi_conn(self):
@@ -983,9 +985,13 @@ class AX25Port(object):
                 # Decoding
                 ax25frame.decode_ax25frame(buf.raw_data)
             except AX25DecodingERROR:
+                logger.warning("-------------------------------------------------------------------")
                 logger.warning(f'Port {self.port_id}: decoding: ')
                 logger.warning(f'Port {self.port_id}: org {buf.raw_data}')
                 logger.warning(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
+                logger.warning(f'Port {self.port_id}: kiss-org {buf.kiss_frame}')
+                logger.warning(f'Port {self.port_id}: kiss-hex {bytearray2hexstr(buf.kiss_frame)}')
+                logger.warning("-------------------------------------------------------------------")
                 break
             ######## if ax25frame.validate():
             ax25frame.axip_add = buf.axip_add
@@ -1243,18 +1249,19 @@ class KISSSerial(AX25Port):
                     self.close_device()
                     logger.error(f"Port {self.port_id}: Reinit Failed !! {self._port_param}")
                     raise AX25DeviceERROR
-            else:
-                ret = RxBuf()
-                if recv_buff:
-                    de_kiss_fr = self.kiss.de_kiss(recv_buff)
-                    if de_kiss_fr:
-                        ret.raw_data = de_kiss_fr
-                        return ret
-                    if self.kiss.unknown_kiss_frame(recv_buff):
-                        recv_buff = b''
 
-                else:
-                    return None
+            if recv_buff:
+                de_kiss_fr = self.kiss.de_kiss(recv_buff)
+                if de_kiss_fr:
+                    ret = RxBuf()
+                    ret.raw_data = bytes(de_kiss_fr)
+                    ret.kiss_frame = bytes(recv_buff)
+                    return ret
+                if self.kiss.unknown_kiss_frame(recv_buff):
+                    recv_buff = b''
+
+            else:
+                return None
 
     def tx_device(self, frame):
         if self.device is None:
@@ -1371,7 +1378,7 @@ class AXIP(AX25Port):
             ret.axip_add = to_call_ip_addr
             if calc_crc == crc:
                 ret.raw_data = pack
-                ret.kiss = b''
+                ret.kiss_frame = b''
             return ret
 
     def tx_device(self, frame, multicast=True):

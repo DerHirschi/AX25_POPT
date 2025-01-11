@@ -1089,12 +1089,15 @@ class AX25PortHandler(object):
         for ch_id, conn in all_conn.items():
             print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state()}")
         print('ALL LinkConn ------------------')
-        for link_uid, conn_tpl in all_linkConn.items():
-            print(f"LINK-UID: {link_uid} - UID: {conn_tpl[0].uid} - STATE: {conn_tpl[0].get_state()} - LINK: {conn_tpl[1]}")
+        for link_uid, (conn, link) in all_linkConn.items():
+            print(f"LINK-UID: {link_uid} - UID: {conn.uid} - STATE: {conn.get_state()} - LINK: {link}")
+            print(f"LINK: conn:           {conn}                            link_conn: {conn.LINK_Connection}")
+            print(f"LINK: link_conn.conn: {conn.LINK_Connection.LINK_Connection} conn: {conn.LINK_Connection.LINK_Connection.LINK_Connection}")
         print('ALL DIGIConn ------------------')
         for digi_uid, conn in all_digiConn.items():
-            print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()}")
+            print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()} conn: {conn}")
 
+        #######################################################################
         logger.debug("=================Port-Watch-Dog====================")
         for port_id, port in self.get_all_ports().items():
             logger.debug(f"Port {port_id}: WD > {time.time() - port.port_w_dog}")
