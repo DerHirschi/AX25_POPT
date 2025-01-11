@@ -66,25 +66,28 @@ class Kiss(object):
         if not inp.startswith(self._FEND):
             logger.warning(f"Kiss: NO KISS Frame > {inp}")
             return True
-        if len(inp) < 2:
+        if inp.startswith(self._FEND + self._DATA_FRAME):
             return False
-        if inp[:2] == self._FEND + self._DATA_FRAME:
-            return False
-        if inp[:1] != self._FEND:
-            return False
-        if inp[:2] == self._FEND + self._SMACK_FRAME:
+        if inp.startswith(self._FEND + self._DATA_FRAME + self._FEND):
+            logger.warning(f"Kiss: Empty KISS Frame > {inp}")
+            return True
+        if inp.startswith(self._FEND + self._SMACK_FRAME):
             logger.warning(f"Kiss: SMACK-Frame > {inp}")
             try:
                 logger.warning(f"Kiss: SMACK-Frame HEX> {inp.hex()}")
             except SyntaxError:
                 pass
             return True
+        """
         logger.warning(f"Kiss: Unknown Kiss-Frame > {inp}")
         try:
             logger.warning(f"Kiss: Unknown Kiss-Frame HEX> {inp.hex()}")
         except SyntaxError:
             pass
         return True
+        """
+        return False
+
 
     #############################################################
     #
@@ -119,7 +122,7 @@ class Kiss(object):
             self._FEND
         )
 
-    def kiss(self, inp: b''):
+    def kiss(self, inp: bytes):
         """
         Code from: https://github.com/ampledata/kiss
         Recover special codes, per KISS spec.
