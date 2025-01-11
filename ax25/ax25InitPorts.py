@@ -287,8 +287,8 @@ class AX25PortHandler(object):
                 time.sleep(0.5)
                 port.close()
 
-
-            del self.ax25_ports[port_id]
+            if port_id in self.ax25_ports:
+                del self.ax25_ports[port_id]
             del port
         self.sysmsg_to_gui(get_strTab('port_closed', POPT_CFG.get_guiCFG_language()).format(port_id))
         #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
