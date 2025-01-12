@@ -1116,17 +1116,18 @@ class KissTCP(AX25Port):
             return None
         except OSError as e:
             raise AX25DeviceERROR(e, self)
-        ret = RxBuf()
 
         if recv_buff:
             de_kiss_fr = self.kiss.de_kiss(recv_buff)
-            if de_kiss_fr:
-                ret.raw_data = de_kiss_fr
+            if de_kiss_fr is not None:
+                ret = RxBuf()
+                ret.raw_data = bytes(de_kiss_fr)
+                ret.kiss_frame = bytes(recv_buff)
                 return ret
             if self.kiss.unknown_kiss_frame(recv_buff):
                 return None
         else:
-            return ret
+            return None
 
     def tx_device(self, frame):
         try:
@@ -1252,7 +1253,7 @@ class KISSSerial(AX25Port):
 
             if recv_buff:
                 de_kiss_fr = self.kiss.de_kiss(recv_buff)
-                if de_kiss_fr:
+                if de_kiss_fr is not None:
                     ret = RxBuf()
                     ret.raw_data = bytes(de_kiss_fr)
                     ret.kiss_frame = bytes(recv_buff)

@@ -109,12 +109,6 @@ class Kiss(object):
             return None
         if not inp.startswith(self._FEND + self._DATA_FRAME):
             return None
-        """
-        if inp[-1:] != self._FEND:
-            return None
-        if inp[:2] != self._FEND + self._DATA_FRAME:
-            return None
-        """
         return inp[2:-1].replace(
             self._FESC_TFESC,
             self._FESC
