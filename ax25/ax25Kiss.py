@@ -66,11 +66,11 @@ class Kiss(object):
         if not inp.startswith(self._FEND):
             logger.warning(f"Kiss: NO KISS Frame > {inp}")
             return True
-        if inp.startswith(self._FEND + self._DATA_FRAME):
-            return False
         if inp.startswith(self._FEND + self._DATA_FRAME + self._FEND):
             logger.warning(f"Kiss: Empty KISS Frame > {inp}")
             return True
+        if inp.startswith(self._FEND + self._DATA_FRAME):
+            return False
         if inp.startswith(self._FEND + self._SMACK_FRAME):
             logger.warning(f"Kiss: SMACK-Frame > {inp}")
             try:
@@ -103,7 +103,7 @@ class Kiss(object):
         if not self.is_enabled:
             return inp
         # if len(inp) < 15:
-        if len(inp) < 2:
+        if len(inp) < 3:
             return None
         if not inp.endswith(self._FEND):
             return None
