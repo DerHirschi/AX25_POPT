@@ -103,7 +103,7 @@ class Kiss(object):
         if not self.is_enabled:
             return inp
         # if len(inp) < 15:
-        if len(inp) < 3:
+        if len(inp) < 2:
             return None
         if not inp.endswith(self._FEND):
             return None
