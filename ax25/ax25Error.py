@@ -1,4 +1,4 @@
-from cfg.constant import DEBUG_LOG
+# from cfg.constant import DEBUG_LOG
 from cfg.logger_config import logger
 
 class AX25EncodingERROR(Exception):
@@ -11,8 +11,12 @@ class AX25EncodingERROR(Exception):
                 logger.error(f'Data: {frame.payload}')
                 # print(f'Data: {frame.payload}')
             # if DEBUG_LOG:
+            """
             if hasattr(frame, 'get_frame_conf'):
-                frame_cfg: dict = frame.get_frame_conf()
+                try:
+                    frame_cfg: dict = frame.get_frame_conf()
+                except TypeError:
+                    return
                 logger.error('----- AX25-Frame CFG ENC ------')
                 # print('----- AX25-Frame CFG ENC ------')
                 for k, data in frame_cfg.items():
@@ -20,6 +24,7 @@ class AX25EncodingERROR(Exception):
                     # print(f'{k}: {data}')
 
                 # logger.warning(f'Hex: {frame.data.hex()}')
+            """
 
 class AX25DecodingERROR(Exception):
     def __init__(self, frame=None):
@@ -28,7 +33,7 @@ class AX25DecodingERROR(Exception):
             if hasattr(frame, 'payload'):
                 # logger.warning(frame.payload)
                 logger.warning(f'Data: {frame.payload}')
-
+            """
             if DEBUG_LOG:
                 if hasattr(frame, 'get_frame_conf'):
                     frame_cfg: dict = frame.get_frame_conf()
@@ -37,6 +42,7 @@ class AX25DecodingERROR(Exception):
                     for k, data in frame_cfg.items():
                         logger.debug(f'{k}: {data}')
                         # print(f'{k}: {data}')
+            """
 
 class AX25DeviceERROR(Exception):
     def __init__(self, e=None, port=None):

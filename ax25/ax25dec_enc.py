@@ -543,6 +543,7 @@ class AX25Frame:
         self._netrom_cfg = {}
 
     def get_frame_conf(self):
+
         return dict(
             uid=str(self.addr_uid),
             axip_add=(str(self.axip_add[0]), int(self.axip_add[1])),
