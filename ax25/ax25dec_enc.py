@@ -710,7 +710,7 @@ class AX25Frame:
             if not self.validate():
                 raise AX25DecodingERROR(self)
 
-            # self._decode_netrom()
+            self._decode_netrom()
         else:
             raise AX25DecodingERROR(self)
 
