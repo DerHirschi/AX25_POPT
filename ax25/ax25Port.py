@@ -931,8 +931,8 @@ class AX25Port(object):
 
     def _reset_ft_wait_timer(self, ax25_frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
-            for k in self.connections.keys():
-                self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
+            for uid, conn in self.connections.items():
+                conn.ft_reset_timer(ax25_frame.addr_uid)
 
     def _gui_monitor(self, ax25frame, tx: bool = True):
         if self.monitor_out:

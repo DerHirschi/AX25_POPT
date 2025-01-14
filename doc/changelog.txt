@@ -14,6 +14,7 @@ Fixes:
 - Sporadischer Fehler beim Speichern der popt_main Config
 - Unbekannte/Defekte KissFrames werden nicht gefiltert
   !! Danke an Patrik !!
+- File-Transfer Auto-RNR Mode
 
 Optimierung:
 - APRS-Tracer: Möglichkeit ViaCalls einzugeben hinzugefügt
@@ -23,6 +24,8 @@ Neue Implementierungen / Funktionen:
 - Daten aus "1Wire-Sensoren (DS18B20-Temperatur Sensor)" können jetzt als
   Textvariable in C-Text/Bake/usw. integriert werden.
   (PoPT holt sich die Daten aus "/sys/devices/w1_bus_master1")
+- NetRom-Decoder zu Testzwecken aktiviert (experimentell) (Noch nicht vollständig)
+
 
 ###########################################################################################################
 ###########################################################################################################

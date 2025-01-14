@@ -342,15 +342,36 @@ class FileTransport(object):
             if not self.param_wait:
                 if self.connection.is_RNR:
                     self.connection.unset_RNR()
+                return
+            if self.connection.is_RNR:
+                if self.last_tx < time.time():
+                    self.connection.unset_RNR()
+                    self.can_rnr = False
+                return
+
+            if self.can_rnr and self.last_tx > time.time():
+                self.connection.set_RNR()
+                self.ft_set_wait_timer()
+                return
+
+        """
+        if self.connection is not None:
+            if not self.param_wait:
+                if self.connection.is_RNR:
+                    self.connection.unset_RNR()
             else:
+
                 if not self.connection.is_RNR:
                     if self.can_rnr:
                         self.connection.set_RNR()
+                        print("Conn Set RNR")
                         self.ft_set_wait_timer()
                 else:
                     if self.last_tx < time.time():
                         self.connection.unset_RNR()
                         self.can_rnr = False
+        """
+
 
     def ft_switch_rnr(self):
         if self.connection is not None:
