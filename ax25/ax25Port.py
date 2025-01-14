@@ -995,8 +995,6 @@ class AX25Port(object):
                 break
             ######## if ax25frame.validate():
             ax25frame.axip_add = buf.axip_add
-            # ax25frame.rx_time = datetime.datetime.now()
-            # setattr(ax25frame, 'rx_time', datetime.datetime.now())
             # ######### RX #############
             if not self._rx_dualPort_handler(ax25_frame=ax25frame):
                 ax25frame_conf = ax25frame.get_frame_conf()

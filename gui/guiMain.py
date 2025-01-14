@@ -1806,6 +1806,8 @@ class PoPT_GUI_Main:
                     mon_str = mon_out[0] + mon_out[1]
                 else:
                     mon_str = mon_out[0]
+                if not mon_str.endswith('\n'):
+                    mon_str += '\n'
                 var = tk_filter_bad_chars(mon_str)
                 ind = self._mon_txt.index('end-1c')
                 # TODO Autoscroll
