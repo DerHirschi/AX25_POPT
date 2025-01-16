@@ -894,13 +894,13 @@ class SideTabbedFrame:  # TODO
         # self._update_trace_tree()
 
     def _format_trace_tree_data(self):
-        traces = dict(PORT_HANDLER.get_aprs_ais().tracer_traces_get())
+        traces: dict = dict(PORT_HANDLER.get_aprs_ais().tracer_traces_get())
         if self._trace_tree_data_old != len(str(traces)):
             self._trace_tree_data_old = len(str(traces))
             self._trace_tree_data = []
             for k in traces.keys():
-                pack = traces[k][-1]
-                rx_time = pack.get('rx_time', '')
+                pack: dict = traces[k][-1]
+                rx_time = pack.get('rx_time', datetime.now())
                 delta = datetime.now() - rx_time
                 if not delta.days:
                     if rx_time:
