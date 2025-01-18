@@ -5,6 +5,7 @@ import time
 import crcmod
 
 from ax25.ax25UI_Pipe import AX25Pipe
+from fnc.os_fnc import is_linux
 
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
@@ -1210,7 +1211,10 @@ class KISSSerial(AX25Port):
                 self.device.flush()
             """
             time.sleep(1)
-            logger.info(self._logTag + f"TNC - REST: {self.device.readall()}")
+            if is_linux():
+                logger.info(self._logTag + f"TNC - REST: {self.device.readall()}")
+            else:
+                self.device.flush()
             self.device.close()
             # self.device_is_running = False
         except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError) as e:

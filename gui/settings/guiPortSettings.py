@@ -9,7 +9,7 @@ from cfg.default_config import getNew_port_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
-from gui.guiMsgBoxes import AskMsg, WarningMsg, InfoMsg
+from gui.guiMsgBoxes import AskMsg
 from cfg.cfg_fnc import del_port_data
 from fnc.os_fnc import is_linux
 
@@ -71,12 +71,15 @@ class PortSetTab:
         param_next_line = 0
         # param_label = tk.Label(self.tab, text='Port-Parameter:')
         # param_label.place(x=param_sel_x, y=height - param_sel_y)
+        self._param1_var = tk.StringVar(self.tab)
         self._param1_label = tk.Label(self.tab)
-        self._param1_ent = tk.Entry(self.tab)
+        self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
         self._param2_label = tk.Label(self.tab)
         self._param2_ent = tk.Entry(self.tab)
+        self._param1_x = int(param_sel_x + 80)
+        self._param1_y = int(height - param_sel_y + param_next_line)
         self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
-        self._param1_ent.place(x=param_sel_x + 80, y=height - param_sel_y + param_next_line)
+        self._param1_ent.place(x=self._param1_x, y=self._param1_y)
         self._param2_label.place(x=param_sel_x + 500, y=height - param_sel_y + param_next_line)
         self._param2_ent.place(x=param_sel_x + 500 + 50, y=height - param_sel_y + param_next_line)
         self._param1_ent.bind('<KeyRelease>', self.set_need_reinit)
@@ -567,20 +570,25 @@ class PortSetTab:
             self._calc_baud.delete(0, tk.END)
             # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
             self._calc_baud.insert(tk.END, self._port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
+
             self._param1_label.configure(text='Adresse:')
+            self._param1_ent.destroy()
+            self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=28)
+            self._param1_ent.place(x=self._param1_x, y=self._param1_y)
+
             self._param2_label.configure(text='Port:')
             self._param2_ent.configure(width=7)
             self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
-            self._param1_ent.place(x=param_sel_x + 80, y=height - param_sel_y + param_next_line)
+            # self._param1_ent.place(x=param_sel_x + 80, y=height - param_sel_y + param_next_line)
             self._param2_label.place(x=param_sel_x + 500, y=height - param_sel_y + param_next_line)
             self._param2_ent.place(x=param_sel_x + 500 + 50, y=height - param_sel_y + param_next_line)
-            self._param1_ent.delete(0, tk.END)
+            # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
             # if self._port_setting.parm_PortParm[0]:
             # if self._port_setting.get('parm_PortParm', new_cfg.get('parm_PortParm', ('', 0)))[0]:
                 # self._param1_ent.insert(tk.END, self._port_setting.parm_PortParm[0])
-            self._param1_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+            self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
             # if self._port_setting.parm_PortParm[1]:
             # if self._port_setting.get('parm_PortParm', new_cfg.get('parm_PortParm', ('', 0)))[1]:
                 # self._param2_ent.insert(tk.END, self._port_setting.parm_PortParm[1])
@@ -629,21 +637,25 @@ class PortSetTab:
             self._calc_baud.configure(state="disabled")
 
             self._param1_label.configure(text='Adresse:')
+            self._param1_ent.destroy()
+            self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=28)
+            self._param1_ent.place(x=self._param1_x, y=self._param1_y)
+
             self._param2_label.configure(text='Port:')
             self._param2_ent.configure(width=7)
             self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
-            self._param1_ent.place(x=param_sel_x + 80, y=height - param_sel_y + param_next_line)
+            # self._param1_ent.place(x=param_sel_x + 80, y=height - param_sel_y + param_next_line)
             self._param2_label.place(x=param_sel_x + 500, y=height - param_sel_y + param_next_line)
             self._param2_ent.place(x=param_sel_x + 500 + 50, y=height - param_sel_y + param_next_line)
 
-            self._param1_ent.delete(0, tk.END)
+            # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
                 # self._param1_ent.insert(tk.END, self._port_setting.parm_PortParm[0])
-                self._param1_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+                self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
             else:
-                self._param1_ent.insert(tk.END, '0.0.0.0')
+                self._param1_var.set('0.0.0.0')
             # if self._port_setting.parm_PortParm[1]:
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
                 self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
@@ -665,26 +677,36 @@ class PortSetTab:
             # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
             self._calc_baud.insert(tk.END, self._port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
             # self.calc_baud.configure(state="normal")
-            self._param1_ent.configure(width=15)
 
             self._param1_label.configure(text='Port:')
+            if is_linux():
+                self._param1_ent.destroy()
+                self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
+                self._param1_ent.configure(width=15)
+                self._param1_ent.place(x=self._param1_x, y=self._param1_y)
+            else:
+                ser_ports = [f"COM{x}" for x in range(1, 100)]
+                self._param1_ent.destroy()
+                self._param1_ent = tk.OptionMenu(self.tab, self._param1_var, *ser_ports)
+                self._param1_ent.configure(width=7)
+                self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
             self._param2_label.configure(text='Baud:')
             self._param2_ent.configure(width=7)
             self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
-            self._param1_ent.place(x=param_sel_x + 50, y=height - param_sel_y + param_next_line)
+            # self._param1_ent.place(x=param_sel_x + 50, y=height - param_sel_y + param_next_line)
             self._param2_label.place(x=param_sel_x + 250, y=height - param_sel_y + param_next_line)
             self._param2_ent.place(x=param_sel_x + 250 + 60, y=height - param_sel_y + param_next_line)
 
-            self._param1_ent.delete(0, tk.END)
+            # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
-                self._param1_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+                self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
             else:
                 if is_linux():
-                    self._param1_ent.insert(tk.END, '/dev/ttyS1')
+                    self._param1_var.set('/dev/ttyS1')
                 else:
-                    self._param1_ent.insert(tk.END, 'com1')
+                    self._param1_var.set('COM1')
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
                 self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
 
@@ -704,16 +726,18 @@ class PortSetTab:
         # Port Name
         self._port_setting['parm_PortName'] = self._prt_name.get()
         # Port TYpe
-        old_typ = str(self._port_setting.get('parm_PortTyp', ''))
+        # old_typ = str(self._port_setting.get('parm_PortTyp', ''))
         self._port_setting['parm_PortTyp'] = self._port_select_var.get()
+        """
         if all((self._port_setting.get('parm_PortTyp', ''),
                 self._port_setting.get('parm_PortTyp', '') != old_typ)):
             self._need_reinit = True
+        """
         # Port Parameter
         try:
-            tmp_param = (self._param1_ent.get(), int(self._param2_ent.get()))
+            tmp_param = (self._param1_var.get(), int(self._param2_ent.get()))
         except ValueError:
-            tmp_param = (self._param1_ent.get(), 0)
+            tmp_param = (self._param1_var.get(), 0)
         self._port_setting['parm_PortParm'] = tmp_param
         # Pseudo TXD
         try:
@@ -777,9 +801,10 @@ class PortSetTab:
 
         self._port_setting['parm_StationCalls'] = stat_calls
         self._save_cfg_to_poptCFG()
-        if all((self._port_setting.get('arm_PortTyp', ''),
-                old_cfg != self._port_setting)):
-            self._need_reinit = True
+        for cfg_k, cfg_val in self._port_setting.items():
+            if old_cfg.get(cfg_k, None) != cfg_val:
+                self._need_reinit = True
+                return
         # self._need_reinit = False
 
     def need_reinit(self):
