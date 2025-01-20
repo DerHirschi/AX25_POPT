@@ -11,6 +11,7 @@ Fixes:
 - Port übergreifender weiterconnect über via Call hat für Probleme gesorgt.
   (Digi-StopBit der vorherigen Digis wurde nicht korrekt gecheckt)
   !! Danke an Lars und Benny fürs Testen und Melden !!
+  (Es gibt immer noch ein Problem mit dem L3-Digi.. Ich arbeite dran)
 - Sporadischer Fehler beim Speichern der popt_main Config
 - Unbekannte/Defekte KissFrames werden nicht gefiltert
   !! Danke an Patrik !!

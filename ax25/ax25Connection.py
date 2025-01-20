@@ -1226,7 +1226,8 @@ class AX25Conn:
         digi_uid = str(self.LINK_Connection.uid)
         digi_uid = reverse_uid(digi_uid)
         link_conn_port = self.LINK_Connection.own_port
-        return link_conn_port.accept_digi_conn(digi_uid)
+        digi_accept: bool = link_conn_port.accept_digi_conn(digi_uid)
+        return digi_accept
 
     def insert_new_connection(self):
         """ Insert connection for handling """
