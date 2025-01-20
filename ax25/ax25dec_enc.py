@@ -134,7 +134,7 @@ class Call:
         """
         :return: bool
         """
-        if len(self.call) < 2 or len(self.call) > 6:    # Calls like CQ or ID
+        if 2 > len(self.call) > 6:    # Calls like CQ or ID
             # print(f'Call validator: Call length - {self.call}')
             logger.error(f'Call validator: Call length - {self.call}')
             return False
@@ -143,12 +143,12 @@ class Call:
             logger.error('Call validator: Call.isascii()')
             return False
         """
-        if self.ssid > 15 or self.ssid < 0:
+        if 0 > self.ssid > 15:
             # print(f'Call validator: SSID - {self.ssid}')
             logger.error(f'Call validator: SSID - {self.ssid}')
             return False
         for c in self.call:
-            if not any([c.isupper(), c.isdigit()]):
+            if not any((c.isupper(), c.isdigit())):
                 # print(f'Call validator: CAll-Format - {self.call} -')
                 logger.error(f'Call validator: CAll-Format - {self.call} -')
                 return False
@@ -303,7 +303,7 @@ class CByte:
                     logger.error('C-Byte Error Decoding U Frame ! Unknown C-Byte> ' + str(bi) + ' ' + hex(in_byte))
                     raise AX25DecodingERROR
 
-    def validate(self):
+    def validate_c(self):
         if self.hex == 0xff:
             logger.error('C_Byte validator')
             return False
@@ -451,7 +451,7 @@ class PIDByte:
             if bi[2:5] in ['01', '10']:
                 self.ax25_l3(hex(int(in_byte)))
 
-    def validate(self):
+    def validate_pid(self):
         if self.hex == 0x00:
             logger.error('PID_Byte validator : {}'.format(self.hex))
             return False
@@ -543,6 +543,7 @@ class AX25Frame:
         self._netrom_cfg = {}
 
     def get_frame_conf(self):
+
         return dict(
             uid=str(self.addr_uid),
             axip_add=(str(self.axip_add[0]), int(self.axip_add[1])),
@@ -709,7 +710,7 @@ class AX25Frame:
             if not self.validate():
                 raise AX25DecodingERROR(self)
 
-            # self._decode_netrom()
+            self._decode_netrom()
         else:
             raise AX25DecodingERROR(self)
 
@@ -832,13 +833,13 @@ class AX25Frame:
                 # print('Validate Error: ca.validate')
                 AX25EncodingERROR(self)
                 return False
-        if not self.ctl_byte.validate():
+        if not self.ctl_byte.validate_c():
             # print('Validate Error: C_Byte')
             logger.error('Validate Error: C_Byte')
             AX25EncodingERROR(self)
             return False
         if self.ctl_byte.pid:
-            if not self.pid_byte.validate():
+            if not self.pid_byte.validate_pid():
                 # print('Validate Error: PID_Byte')
                 logger.error('Validate Error: PID_Byte')
                 AX25EncodingERROR(self)

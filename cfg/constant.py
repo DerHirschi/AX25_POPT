@@ -1,11 +1,12 @@
 """
 Mach mit,
 mach nach,
-mach besser...
+mach besser.
 """
-VER = '2.113.10'
+VER = '2.114.33'
+
 DEBUG_LOG = True
-CONSOLE_LOG = False
+CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD = b'\x1b@K\r'             # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
@@ -47,7 +48,8 @@ LANG_IND = {
             # 'PL': 5,
             # 'PT': 6,
             # 'IT': 7,
-            # '': 8,
+            # 'RU': 8,
+            # 'UA': 9,
         }
 
 STATION_TYPS = [
@@ -83,6 +85,7 @@ STATION_ID_SYSOP = [
     'TOP',
     'PoPT',
     'HSGT',
+    'HSGTerm',
     'Paxon',
 ]
 
@@ -112,6 +115,8 @@ ENCODINGS = (
     'ASCII',
     'LATIN_1',
     'UTF-8',
+    'KOI8-R',
+    'KOI8-U',
 )
 
 STATION_ID_ENCODING = {
@@ -119,7 +124,9 @@ STATION_ID_ENCODING = {
     1: 'ASCII',  # TODO Eigentlich ä > ae
     2: 'ASCII',  # TODO Eigentlich c64 Zeichensatz
     3: 'LATIN_1',
-    4: 'UTF-8'
+    4: 'UTF-8',
+    5: 'KOI8-R',
+    6: 'KOI8-U',
 }
 
 STATION_ID_ENCODING_REV = {
@@ -127,7 +134,9 @@ STATION_ID_ENCODING_REV = {
     'ASCII': 1,  # TODO Eigentlich ä > ae
     # 'ASCII': 2,     # TODO Eigentlich c64 Zeichensatz
     'LATIN_1': 3,
-    'UTF-8': 4
+    'UTF-8': 4,
+    'KOI8-R': 5,
+    'KOI8-U': 6,
 }
 
 # FT Stuff
@@ -167,8 +176,6 @@ ASCII_a = 97
 DEF_TEXTSIZE = 13
 FONT = "Courier"
 TEXT_SIZE_STATUS = 10
-TXT_BACKGROUND_CLR = 'black'
-TXT_OUT_CLR = 'red'
 TXT_INP_CURSOR_CLR = 'white'
 STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = 'black'
@@ -224,14 +231,20 @@ TNC_KISS_START_CMD = [
     b'KISSM\r',
     b'KISS ON\r',
     b'KISS ON\rrestart\r',
+    b'\x11\x18\x1bJHOST1\r',
     TNC_KISS_CMD
 ]
 
 TNC_KISS_END_CMD = [
     b'\xc0\xff\xc0',
+    b'\xc0\xff\xc0\rrestart\r',
+    b'KISS OFF\rrestart\r',
+    b'restart\r',
+    b'\x11\x18\x1bJHOST0\r',
     TNC_KISS_CMD_END
     ]
 
+#########################################
 POPT_BANNER = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
               '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
               '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
@@ -318,3 +331,22 @@ MH_BEACON_FILTER = [
     'BEACON',
     'APZPOP',
 ]
+
+
+#######################################################
+# 1-Wirer
+ONE_WIRE_PATH = '/sys/devices/w1_bus_master1'
+ONE_WIRE_MAP = ("             PI 3/4 GPIO\n"
+                "GND(Pin 6/9) - 3.3V(Pin 1) - Data(Pin 7)\n"
+                "     |     ________|-- 4,7kOhm --|\n"
+                "     |    |                      |\n"    
+                "     |-DS18B20-------------------|\n"
+                "     |    |                      |\n"   
+                "     |-DS18B20-------------------|\n"
+                "     |    |                      |\n")
+
+#######################################################
+# GPIO
+GPIO_PATH = '/sys/class/gpio'
+GPIO_RANGE = (0, 26)
+

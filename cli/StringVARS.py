@@ -1,6 +1,7 @@
 import datetime
 
 from cfg.constant import VER
+from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_timedelta_CLIstr
 
 """
@@ -19,6 +20,8 @@ from fnc.str_fnc import get_timedelta_CLIstr
     $connNr = Connect Nr
     $parmMaxFrame = Max Frame Einstellungen     - Bake
     $parmPacLen = Pakete Länge Einstellungen    - Bake
+    
+    - Raspberry 1Wire Sensoren                  - Bake
 """
 
 
@@ -213,17 +216,34 @@ def replace_StringVARS(input_string: str,
                        connection=None,
                        user_db=None,
                        ):
+    if not '$' in input_string:
+        return input_string
     if connection:
         port = connection.own_port
     if port and not port_handler:
         port_handler = port.port_get_PH()
     if port_handler and not user_db:
         user_db = port_handler.get_userDB()
+
+    # PoPT System
     for key, fnc in STRING_VARS.items():
-        if callable(fnc):
-            input_string = input_string.replace(key, fnc(port=port,
-                                                         port_handler=port_handler,
-                                                         connection=connection,
-                                                         user_db=user_db))
+        if not key in input_string:
+            continue
+        if not callable(fnc):
+            continue
+        input_string = input_string.replace(key, fnc(port=port,
+                                                     port_handler=port_handler,
+                                                     connection=connection,
+                                                     user_db=user_db))
+    # 1-Wire
+    wire_cfg = POPT_CFG.get_1wire_sensor_cfg()
+    for key, device_cfg in wire_cfg.items():
+        device_cfg: dict
+        if not key in input_string:
+            continue
+        val = device_cfg.get('device_value', 'n/a')
+        if val is None:
+            val = 'n/a'
+        input_string = input_string.replace(key, val)
 
     return input_string

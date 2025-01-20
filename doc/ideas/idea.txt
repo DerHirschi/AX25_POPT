@@ -27,6 +27,10 @@ Ideas/TODO's :
   ✓ $parmPacLen = Pakete Länge Einstellungen    - Bake
   ✓ $lastConnDate = Letzter Connect Datum
   ✓ $lastConnTime = Letzter Connect Zeit
+  ✓ Raspberry 1Wire Sensoren                    - Bake
+  - Raspberry BME280-Wettersensor               - Bake
+  - Raspberry GPIO Zustand                      - Bake
+  - CPU-Temp/System-Daten                       - Bake
 
 - 79 Zeichen Zeilenumbruch (Dos-PRG kompatibilität)
   ✓ PMS
@@ -52,15 +56,17 @@ Ideas/TODO's :
 ✓ Port Configs/Inits aufräumen/optimieren (Thrading)
 - Port Configs/Inits aufräumen/optimieren (Var OPT/ Code OPT)
 
-- Soundsystem/Sprachausgabe überarbeiten
+- Soundsystem überarbeiten
+  - Sprachausgabe überarbeiten
 ✓ Haupt GUI überarbeiten
   - Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
-✓ Einstellung GUI überarbeiten (OnePager)
-  ✓ Individuelle Farben (Vorschreib Fenster)
-  - Individuelle Farben (PMS)
-  - Individuelle Farben (APRS)
-  ✓ Sprache auswählbar
-  ✓ F-Texte
+  - ttk Styles (AW-Themes)
+  ✓ Einstellung GUI überarbeiten (OnePager)
+    ✓ Individuelle Farben (Vorschreib Fenster)
+    - Individuelle Farben (PMS)
+    - Individuelle Farben (APRS)
+    ✓ Sprache auswählbar
+    ✓ F-Texte
 
 ✓ Loop Port oder einfach localhost via AXIP
   ✓ einfach 127.0.0.1 und eigenen AXIP Port die eigene Station/Node connecten)
@@ -119,16 +125,26 @@ Ideas/TODO's :
 
 - "Multi-TNC/Multi-Port/Mesh-TNC" mehrere TNC's via KISSTCP zusammenschalten. Siehe Dual-TNC
 
+- SQL System
+  - Alternative SQL-Sys(MySQL-Server/SQLite) als Spiegelserver
+  - DB-Tool
+
 ✓ UserDB
   - UserDB auf SQL-DB umstellen?
   - Suchfunktion in UserDB GUI
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
+✓ Baycom Login verfahren
+  - AutoLogin z.B. BCM
+- MD5 Login verfahren
+
 ✓ Logbuch
   - GUI Ausgabe/Auswertung
+
 - Converse Mode intern
   - Ping-Pong Converse
+
 - QSO Fenster/Tool
 - Debugging Tool
 ✓ PMS (S&F ohne Gedöns)
@@ -147,6 +163,10 @@ Ideas/TODO's :
   - Optional Remote-CMD für Disco u.Ä.
 
 - Remote-GPIO Tool für PI (Idee von Lars)
+  - 1Wire Sensoren lesen
+  - BME280 Sensor lesen
+  - GPIO lesen
+  - GPIO setzen (High/Low, Timer, PWM?)
 
 ✓ PoPT-Scheduler
   ✓ Autoconnect
@@ -163,6 +183,9 @@ Ideas/TODO's :
 
 ✓ Bin
 ✓ AutoBin
+  - Super-Packet ? SP\- anfängt und maximal 80 Zeichen lang ist
+    (Eine Textzeile plus Umbruch)
+
 ✓ Yapp
 - Yapp Server Modes
 - Yapp Resume
@@ -179,6 +202,7 @@ Ideas/TODO's :
   ✓ PortFilter
   - Call-Filter
   - U/UI - Frame Filter
+
 - Daten Komprimierung
 - Daten Verschlüsselung (AES/RSA)
 ✓ ordentliches Noden System bzw CLI überarbeiten
@@ -187,6 +211,7 @@ Ideas/TODO's :
 - Optional nur als Konsolen Anwendung ohne GUI.
 - Drucker Ausgabe vom QSO
   - kompatibel mit Nadeldrucker
+
 - Torrent ähnliches Filesharing via UI Frames (Siehe ?DMR/DRM?)
   Oder:
   - BBS TSTHOST?

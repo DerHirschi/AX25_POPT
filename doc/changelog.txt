@@ -1,4 +1,41 @@
 ###########################################################################################################
+# 2.114.x
+Fixes:
+- Scripterror, wenn "Messagebox" für Sysop Benachrichtigung erscheint
+- Bei ""*** Reconnected to" wird call(SSID) der ausgehenden Station angezeigt
+  und nicht der zu der man connected ist
+- AutoBin: Falscher Timestamp Check führt dazu das manche Dateien nicht
+           angenommen werden.
+- AutoBin: Fehlender Zeilenumbruch bei Antwort Paket "#OK#".
+           !! Danke an Steffen und Ralph fürs Testen und Melden !!
+- Port übergreifender weiterconnect über via Call hat für Probleme gesorgt.
+  (Digi-StopBit der vorherigen Digis wurde nicht korrekt gecheckt)
+  !! Danke an Lars und Benny fürs Testen und Melden !!
+  (Es gibt immer noch ein Problem mit dem L3-Digi.. Ich arbeite dran)
+- Sporadischer Fehler beim Speichern der popt_main Config
+- Unbekannte/Defekte KissFrames werden nicht gefiltert
+  !! Danke an Patrik !!
+- File-Transfer Auto-RNR Mode
+- Windows: Probleme beim Schließen des seriellen Ports (PoPT friert ein)
+  !! Danke an Jan !!
+- Port Einstellungen: beim Ändern des COM-Ports wird kein reinit ausgelöst
+- Port Einstellungen: beim löschen des "letzten Ports" wird die GUI nicht aktualisiert
+
+Optimierung:
+- APRS-Tracer: Möglichkeit ViaCalls einzugeben hinzugefügt
+- Windows: Porteinstellungen: Auswahl der COM Ports zum Dropdown Menü geändert
+  (Mir war nicht bewusst, dass es Windows Nutzer so schwerfällt COM1, COM2, ..., einzugeben :D)
+
+Neue Implementierungen / Funktionen:
+- Remote Kommando "C!" - Exklusiv Connect ohne MH-Listen Lookup nach Pfad
+- Daten aus "1Wire-Sensoren (DS18B20-Temperatur Sensor)" können jetzt als
+  Textvariable in C-Text/Bake/usw. integriert werden.
+  (PoPT holt sich die Daten aus "/sys/devices/w1_bus_master1")
+- NetRom-Decoder zu Testzwecken aktiviert (experimentell) (Noch nicht vollständig)
+
+
+###########################################################################################################
+###########################################################################################################
 # 2.113.x
 Fixes:
 - Windows: Keybindings für F-Texte

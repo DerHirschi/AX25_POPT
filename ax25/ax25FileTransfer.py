@@ -11,27 +11,31 @@ from fnc.str_fnc import calculate_time_remaining, calculate_percentage, get_file
 
 def ft_rx_header_lookup(data: b'', last_pack: b''):
     data = last_pack + data
-    # print(f"ft lookup: {data}")
-    for mode in FT_RX_HEADERS:
-        if mode in data:
-            ret = {
-                FT_RX_HEADERS[0]: is_autobin(data[data.index(mode):]),
-                FT_RX_HEADERS[1]: is_yapp_SI(data[data.index(mode):]),  # SI
-                # FT_RX_HEADERS[2]: is_yapp_RI(data[data.index(FT_RX_HEADERS[2]):]),  # RI - Server Mode
-            }[mode]
-            if ret:
-                # print(f"ft lookup: True")
-                return ret
+    lines = data.split(b'\r')
+    for line in lines:
+        for mode in FT_RX_HEADERS:
+            if line.startswith(mode):
+                ret = {
+                    FT_RX_HEADERS[0]: is_autobin(line[line.index(mode):]),
+                    FT_RX_HEADERS[1]: is_yapp_SI(line[line.index(mode):]),  # SI
+                    # FT_RX_HEADERS[2]: is_yapp_RI(data[data.index(FT_RX_HEADERS[2]):]),  # RI - Server Mode
+                }[mode]
+                if ret:
+                    return ret
+
     return False
 
 
 def is_autobin(header):
     # if header[-1:] != b'\r':
     #     return False
-    parts = header[1:-1].split(b'#')
-    if parts[0] != b'BIN':
+    parts = header.split(b'#')
+    if not parts:
         return False
+    parts = parts[1:]
     if len(parts) < 2:
+        return False
+    if parts[0] != b'BIN':
         return False
     if not parts[1].isdigit():
         return False
@@ -46,17 +50,23 @@ def is_autobin(header):
         )
         # return parts[1], 0, 0, '', False
         new_ft_obj.raw_data_len = int(parts[1])
+
         return new_ft_obj
-    elif len(parts) != 5:
+    if len(parts) != 5:
         return False
     if parts[2][:1] != b'|':
         return False
+
     if not parts[2][1:].isdigit():
         return False
+
     if parts[3][:1] != b'$':
         return False
+    """
     if not parts[3][1:].isdigit():
+        print(f"not parts[3][1:].isdigit(): {parts}")
         return False
+    """
     size = int(parts[1])
     crc = int(parts[2][1:])
     # datetime_hex = parts[3][1:]
@@ -75,14 +85,20 @@ def is_autobin(header):
     return new_ft_obj
 
 
-def check_autobin(header):
+def check_autobin(header: bytes):
     # if header[-1:] != b'\r':
     #     return False
-    parts = header[1:-1].split(b'#')
-    if parts[0] != b'BIN':
+    # parts = header[1:-1].split(b'#')
+    header = header.replace(b'\r', b'')
+    parts = header.split(b'#')
+    if not parts:
         return False
+    parts = parts[1:]
     if len(parts) < 2:
         return False
+    if parts[0] != b'BIN':
+        return False
+    # len
     if not parts[1].isdigit():
         return False
     if len(parts) == 2:
@@ -96,8 +112,10 @@ def check_autobin(header):
         return False
     if parts[3][:1] != b'$':
         return False
+    """
     if not parts[3][1:].isdigit():
         return False
+    """
     return True
 
 
@@ -324,15 +342,36 @@ class FileTransport(object):
             if not self.param_wait:
                 if self.connection.is_RNR:
                     self.connection.unset_RNR()
+                return
+            if self.connection.is_RNR:
+                if self.last_tx < time.time():
+                    self.connection.unset_RNR()
+                    self.can_rnr = False
+                return
+
+            if self.can_rnr and self.last_tx > time.time():
+                self.connection.set_RNR()
+                self.ft_set_wait_timer()
+                return
+
+        """
+        if self.connection is not None:
+            if not self.param_wait:
+                if self.connection.is_RNR:
+                    self.connection.unset_RNR()
             else:
+
                 if not self.connection.is_RNR:
                     if self.can_rnr:
                         self.connection.set_RNR()
+                        print("Conn Set RNR")
                         self.ft_set_wait_timer()
                 else:
                     if self.last_tx < time.time():
                         self.connection.unset_RNR()
                         self.can_rnr = False
+        """
+
 
     def ft_switch_rnr(self):
         if self.connection is not None:
@@ -488,7 +527,7 @@ class DefaultMODE(object):
                 self.file = open(CFG_ft_downloads + self.filename, 'wb')
                 self.e = False
                 return True
-            except (PermissionError, ValueError):
+            except (PermissionError, ValueError, FileNotFoundError):
                 return False
         return False
 
@@ -602,8 +641,8 @@ class AutoBinMODE(DefaultMODE):
 
     def init_RX(self):
         self.state_tab = {
-            0: self.mode_init_rx,
-            1: self.mode_rx_data,
+            0: self._mode_init_rx,
+            1: self._mode_rx_data,
             8: self.exec_abort,
             9: self.ft_root.ft_mode_wait_for_end,
         }
@@ -612,6 +651,7 @@ class AutoBinMODE(DefaultMODE):
         self.parm_can_pause = True
         self.open_file()
         if self.e:
+
             self.state = 8
             self.e = False
             # self.exec_abort()
@@ -626,19 +666,20 @@ class AutoBinMODE(DefaultMODE):
         self.send_data(self.header)
         self.state = 2
 
-    def mode_init_rx(self):
+    def _mode_init_rx(self):
         if self.ft_root.ft_rx_buf:
+            # print(f'_mode_init_rx - {self.ft_root.ft_rx_buf}')
             if check_autobin(self.ft_root.ft_rx_buf):
                 self.start = True
                 self.ft_root.ft_rx_buf = b''
                 self.state = 1
-                self.send_data(b'#OK#')
+                self.send_data(b'#OK#\r')
                 self.start_ft()
             else:
                 self.e = True
                 self.state = 9
 
-    def mode_rx_data(self):
+    def _mode_rx_data(self):
         if not self.check_abort():
             if self.ft_root.ft_rx_buf:
                 self.ft_root.can_rnr = True

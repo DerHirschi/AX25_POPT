@@ -1,3 +1,8 @@
+"""
+TODO:
+    - Port 0 (Monitor) MH-Plot
+"""
+
 import tkinter as tk
 
 # from matplotlib.backends._backend_tk import NavigationToolbar2Tk
@@ -205,4 +210,4 @@ class LiveConnPath(tk.Frame):
         self._update_Graph(ch_id)
 
     def save_path_data(self):
-        POPT_CFG.set_pacman_data(self._path_data)
+        POPT_CFG.set_pacman_data(dict(self._path_data))

@@ -47,22 +47,23 @@ def cleanup_obj_dict(inp_dict: dict):
 
 
 def save_to_file(filename: str, data):
+    old_cfg = load_fm_file(filename)
+
     try:
-        with open(CFG_data_path + filename, 'wb') as f:
-            pickle.dump(data, f, 2)
+        with open(CFG_data_path + filename, 'wb') as file:
+            pickle.dump(data, file, 2)
     except FileNotFoundError:
-        with open(CFG_data_path + filename, 'xb') as f:
-            pickle.dump(data, f, 2)
-    except EOFError as e:
+        with open(CFG_data_path + filename, 'xb') as file:
+            pickle.dump(data, file, 2)
+    except (EOFError, TypeError) as e:
         # print(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {e}")
         logger.error(f"save_to_file Error: {data}")
         # print(f"save_to_file Error: {data}")
-    except TypeError as e:
-        # print(f"save_to_file Error: {e}")
-        logger.error(f"save_to_file Error: {e}")
-        logger.error(f"save_to_file Error: {data}")
-        # print(f"save_to_file Error: {data}")
+        if old_cfg:
+            logger.info(f"save_to_file Error: Backup old CFG")
+            save_to_file(filename, old_cfg)
+
 
 
 def load_fm_file(filename: str):
@@ -75,35 +76,6 @@ def load_fm_file(filename: str):
         logger.error(
             f"CFG: Falsche Version der CFG Datei. Bitte {CFG_data_path + filename} löschen und PoPT neu starten!")
         raise
-
-"""
-def get_all_pipe_cfg():
-    stat_cfg_path = CFG_data_path + CFG_usertxt_path
-    stat_cfg = [x[0] for x in os.walk(stat_cfg_path)]
-    ret = {}
-    if len(stat_cfg) > 1:
-        stat_cfg = stat_cfg[1:]
-        for folder in stat_cfg:
-            call = folder.split('/')[-1]
-            temp = {}
-            try:
-                with open(folder + '/stat' + call + '.popt', 'rb') as inp:
-                    temp = pickle.load(inp)
-            except (FileNotFoundError, EOFError):
-                pass
-            except ImportError:
-                logger.error(
-                    f"Pipe CFG: Falsche Version der CFG Datei. Bitte {folder + '/stat' + call + '.popt'} löschen und PoPT neu starten!")
-                pass
-            if temp and call:
-                loaded_pipe_cfg = temp.get('pipe_cfg', {})
-                if loaded_pipe_cfg:
-                    default_pipe_cfg = getNew_pipe_cfg()
-                    for cfg_keys in list(loaded_pipe_cfg.keys()):
-                        default_pipe_cfg[cfg_keys] = loaded_pipe_cfg[cfg_keys]
-                    ret[call] = default_pipe_cfg
-    return ret
-"""
 
 def get_all_stat_CFGs():
     stat_cfg_path = CFG_data_path + CFG_usertxt_path
@@ -140,19 +112,6 @@ def save_station_CFG_to_file(conf: dict):
 
     save_to_file(file, conf)
     return True
-
-"""
-def save_station_to_file(conf):
-    if conf.stat_parm_Call != getNew_station_cfg().get('stat_parm_Call', ''):
-        exist_userpath(conf.stat_parm_Call)
-        file = '{1}{0}/stat{0}.popt'.format(conf.stat_parm_Call, CFG_usertxt_path)
-        save_station = {}
-        for att in dir(conf):
-            if '__' not in att and not callable(getattr(conf, att)):
-                save_station[att] = getattr(conf, att)
-
-        save_to_file(file, save_station)
-"""
 
 
 def del_user_data(call: str):
@@ -197,6 +156,7 @@ def init_dir_struct():
 
 ###############################
 # Port CFGs
+"""
 def load_port_cfg_fm_file(port_id: int):
     file = CFG_data_path + f'port{port_id}.popt'
     try:
@@ -209,6 +169,7 @@ def load_port_cfg_fm_file(port_id: int):
         logger.error(
             f"Port CFG: Falsche Version der CFG Datei. Bitte {file} löschen und PoPT neu starten!")
         raise
+"""
 
 def load_all_port_cfg_fm_file():
     ret = {}

@@ -7,6 +7,7 @@ from ax25.ax25Multicast import ax25Multicast
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, log_book
+from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
 from fnc.str_fnc import get_strTab
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
@@ -112,6 +113,11 @@ class AX25PortHandler(object):
         self._init_bbs()
         #######################################################
         # Port Handler Tasker (threaded Loop)
+        logger.info("PH: Tasker Init")
+        # 1Wire Thread
+        self._update_1wire_th = None
+        self._1wire_timer = time.time() + 10    # + 10 Sec, give some time to Init the rest
+        #
         self._task_timer_05sec = time.time() + 0.5
         self._task_timer_1sec = time.time() + 1
         self._task_timer_2sec = time.time() + 2
@@ -156,6 +162,7 @@ class AX25PortHandler(object):
         if time.time() > self._task_timer_1sec:
             self._Sched_task()
             self._mh_task()
+            self._tasker_1wire()
             self._task_timer_1sec = time.time() + 1
 
     def _2sec_task(self):
@@ -232,7 +239,6 @@ class AX25PortHandler(object):
         return ret
 
     def close_popt(self):
-        # TODO Cleanup / OPT
         logger.info("PH: Closing PoPT")
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
@@ -245,6 +251,15 @@ class AX25PortHandler(object):
             self._mh.save_mh_data()
             logger.info("PH: Saving Port Statistic-Data")
             self._mh.save_PortStat()
+        if self._update_1wire_th is not None:
+            n = 0
+            while self._update_1wire_th.is_alive():
+                logger.info("PH: Warte auf 1-Wire Thread")
+                n += 1
+                if n > 40:
+                    logger.error("PH: 1-Wire Thread nicht beendet !!")
+                    break
+                time.sleep(0.5)
         logger.info("PH: Saving User-DB Data")
         USER_DB.save_data()
         logger.info("PH: Closing User-DB")
@@ -272,8 +287,8 @@ class AX25PortHandler(object):
                 time.sleep(0.5)
                 port.close()
 
-
-            del self.ax25_ports[port_id]
+            if port_id in self.ax25_ports:
+                del self.ax25_ports[port_id]
             del port
         self.sysmsg_to_gui(get_strTab('port_closed', POPT_CFG.get_guiCFG_language()).format(port_id))
         #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
@@ -1028,6 +1043,43 @@ class AX25PortHandler(object):
         return self._mcast_server
 
     ##############################################################
+    # 1Wire TextVars
+    def _tasker_1wire(self):
+        if time.time() < self._1wire_timer:
+            return
+        if self._update_1wire_th is None:
+            self._oneWire_thread_run()
+            return
+        if self._update_1wire_th.is_alive():
+            return
+        self._oneWire_thread_run()
+        return
+
+    def _oneWire_thread_run(self):
+        self._1wire_timer = time.time() + POPT_CFG.get_1wire_loop_timer()
+        self._update_1wire_th = threading.Thread(target=self._oneWire_task)
+        self._update_1wire_th.start()
+
+    @staticmethod
+    def _oneWire_task():
+        if not is_1wire_device():
+            return
+        sensor_cfg = POPT_CFG.get_1wire_sensor_cfg()
+        if not sensor_cfg:
+            return
+        for textVar, sens_cfg in sensor_cfg.items():
+            sens_cfg: dict
+            sens_id = sens_cfg.get('device_path', '')
+            if not sens_id:
+                continue
+            try:
+                sens_cfg['device_value'] = str(get_1wire_temperature(sens_id)[0])
+            except IndexError:
+                logger.warning(f"PH: _oneWire_task IndexError: {textVar}")
+                logger.warning(f"PH: _oneWire_task IndexError: {sens_cfg}")
+                continue
+        # POPT_CFG.set_1wire_sensor_cfg(dict(sensor_cfg))
+    ##############################################################
     #
     def debug_Connections(self):
         all_conn = self.get_all_connections(with_null=True)
@@ -1037,11 +1089,25 @@ class AX25PortHandler(object):
         for ch_id, conn in all_conn.items():
             print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state()}")
         print('ALL LinkConn ------------------')
-        for link_uid, conn_tpl in all_linkConn.items():
-            print(f"LINK-UID: {link_uid} - UID: {conn_tpl[0].uid} - STATE: {conn_tpl[0].get_state()} - LINK: {conn_tpl[1]}")
+        for link_uid, (conn, link) in all_linkConn.items():
+            print(f"LINK-UID: {link_uid} - UID: {conn.uid} - STATE: {conn.get_state()} - LINK: {link}")
+            print(f"LINK: conn:           {conn}                            link_conn: {conn.LINK_Connection}")
+            print(f"LINK: link_conn.conn: {conn.LINK_Connection.LINK_Connection} conn: {conn.LINK_Connection.LINK_Connection.LINK_Connection}")
         print('ALL DIGIConn ------------------')
         for digi_uid, conn in all_digiConn.items():
-            print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()}")
+            print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()} conn: {conn}")
+
+        #######################################################################
+        logger.debug("=================Port-Watch-Dog====================")
+        for port_id, port in self.get_all_ports().items():
+            logger.debug(f"Port {port_id}: WD > {time.time() - port.port_w_dog}")
+            logger.debug(f"Port {port_id}: Loop is running > {port.loop_is_running}")
+            logger.debug(f"Port {port_id}: Device is running > {port.device_is_running}")
+            logger.debug(f"Port {port_id}: Device > {port.device}")
+            if hasattr(port.device, 'readall'):
+                logger.debug(f"Port {port_id}: readall > {port.device.readall()}")
+            logger.debug("")
+        logger.debug("====================================================")
 
 
 PORT_HANDLER = AX25PortHandler()

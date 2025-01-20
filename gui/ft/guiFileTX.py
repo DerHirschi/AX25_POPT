@@ -112,8 +112,8 @@ class FileSend(tk.Toplevel):
         self.attributes("-topmost", False)
         # self.root.lower
         filetypes = (
+            ('All files', '*.*'),
             ('text files', '*.txt'),
-            ('All files', '*.*')
         )
 
         filenames = fd.askopenfilenames(

@@ -127,6 +127,7 @@ def getNew_APRS_ais_cfg():
         'be_tracer_interval': 5,
         'be_tracer_port': 0,
         'be_tracer_station': 'NOCALL',
+        'be_tracer_via': [],
         'be_tracer_wide': 1,
         'be_tracer_alarm_active': False,
         'be_tracer_alarm_range': 50,
@@ -268,4 +269,18 @@ def getNew_mcast_channel_cfg(channel_id: int):
         ch_name='Lobby',
         ch_private=False,
         ch_members=[],
+    )
+#####################################################
+# 1Wire
+def getNew_1wire_cfg():
+    return dict(
+        loop_timer=60,
+        sensor_cfg={},
+    )
+
+def getNew_1wire_device_cfg(device_path: str):
+    return dict(
+        device_path=str(device_path),
+        device_value=None,
+        StringVar='',
     )

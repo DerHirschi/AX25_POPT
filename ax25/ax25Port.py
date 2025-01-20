@@ -5,6 +5,7 @@ import time
 import crcmod
 
 from ax25.ax25UI_Pipe import AX25Pipe
+from fnc.os_fnc import is_linux
 
 crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
@@ -15,24 +16,26 @@ from ax25.ax25Connection import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
-from fnc.ax25_fnc import reverse_uid
+from fnc.ax25_fnc import reverse_uid, is_digipeated_pre_digi
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, MCastInitError
-from fnc.os_fnc import is_linux
+# from fnc.os_fnc import is_linux
 from fnc.socket_fnc import get_ip_by_hostname
 
+"""
 if is_linux():
     import termios
-
-
+"""
 
 class RxBuf:
     axip_add = '', 0
     raw_data = b''
-    kiss = b''
+    kiss_frame = b''
 
 
 class AX25Port(object):
     def __init__(self, port_id: int, port_handler):
+        self._logTag = f"Port {port_id}: "
+        self.port_w_dog = time.time()   # Debuging
         self._port_handler = port_handler
         self.loop_is_running = self._port_handler.is_running
         self.ende = False
@@ -42,7 +45,7 @@ class AX25Port(object):
         # CONFIG
         self._port_cfg = dict(POPT_CFG.get_port_CFG_fm_id(port_id))
         if not self._port_cfg:
-            logger.error(f"Port {port_id}: No Config !!!")
+            logger.error(f"{self._logTag}No Config !!!")
             raise AX25DeviceFAIL(self)
         self.kiss = Kiss(self._port_cfg)
         self._port_param = self._port_cfg.get('parm_PortParm', ('', 0))
@@ -112,7 +115,7 @@ class AX25Port(object):
         # if self.device is not None:
         # self.device.close()
 
-    def rx(self):
+    def _rx(self):
         return RxBuf()
 
     def tx(self, frame):
@@ -190,20 +193,42 @@ class AX25Port(object):
         return False
 
     def _rx_link_handler(self, ax25_frame):
-        if reverse_uid(ax25_frame.addr_uid) in self._port_handler.link_connections.keys():
-            logger.debug(f"Port rx_link_handler reverse_uid: UID: {ax25_frame.addr_uid}")
+        ax25_frame_conf = dict(ax25_frame.get_frame_conf())
+        uid = str(ax25_frame_conf.get('uid', ''))
+        """
+        if reverse_uid(str(uid)) in self._port_handler.link_connections.keys():
+            logger.debug(f"Port rx_link_handler reverse_uid: UID: {uid}")
             logger.debug(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
             return False
-        if ax25_frame.addr_uid in self._port_handler.link_connections.keys():
-            # print(f"Link-Conn RX: {ax25_frame.addr_uid}")
-            conn = self._port_handler.link_connections[ax25_frame.addr_uid][0]
-            link_call = self._port_handler.link_connections[ax25_frame.addr_uid][1]
+        """
+        if uid in self._port_handler.link_connections.keys():
+            logger.debug(self._logTag + f"Link-Conn RX: {uid}")
+            conn = self._port_handler.link_connections[uid][0]
+            link_call = str(self._port_handler.link_connections[uid][1])
+            """
+            logger.debug(self._logTag + f"Link-Conn RX link_call: {link_call}")
+            logger.debug(self._logTag + f"Link-Conn RX is_link_remote: {conn.is_link_remote}")
+            logger.debug(self._logTag + f"Link-Conn RX digi_call: {conn.digi_call}")
+            logger.debug(self._logTag + f"Link-Conn RX my_call_str: {conn.my_call_str}")
+            logger.debug(self._logTag + f"Link-Conn RX self._port_handler.link_connections: {self._port_handler.link_connections}")
+            logger.debug(self._logTag + f"Link-Conn RX ++: {ax25_frame_conf}")
+            """
             if link_call:
-                if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
-                    conn.handle_rx(ax25_frame=ax25_frame)
-                    return True
-            conn.handle_rx(ax25_frame=ax25_frame)
-            return True
+                # if link_call != ax25_frame.via_calls[-1].call_str:
+                #     return False
+
+                # for call in ax25_frame.via_calls:
+                # if not ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=False):
+                if not is_digipeated_pre_digi(ax25_frame_conf, link_call):
+                    logger.debug(self._logTag + f"Link-Conn RX No DIGI chk --: {ax25_frame_conf}")
+                    return False
+                # if call.call_str == link_call:
+                logger.debug(self._logTag + f"Link-Conn RX --: {ax25_frame_conf}")
+                conn.handle_rx(ax25_frame=ax25_frame)
+                return True
+                # if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
+            # conn.handle_rx(ax25_frame=ax25_frame)
+            # return True
         return False
 
     def _rx_pipe_handler(self, ax25_frame):
@@ -269,9 +294,6 @@ class AX25Port(object):
     def _rx_digi_handler(self, ax25_frame):
         if not POPT_CFG.get_digi_CFG():
             return False
-        # if ax25_frame.ctl_byte.flag == 'UI':
-        #     return self._rx_simple_digi(ax25_frame)
-        # if self.is_smart_digi:
         return self._rx_managed_digi(ax25_frame)
 
     def _rx_simple_digi(self, ax25_frame):
@@ -281,50 +303,124 @@ class AX25Port(object):
             if POPT_CFG.get_digi_is_enabled(call.call_str):
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
                     self._digi_buf.append(ax25_frame)
+                    logger.debug(f"Simple DIGI: {ax25_frame.get_frame_conf()}")
                     # self.set_digi_TXD()
                     return True
         return False
 
     def _rx_managed_digi(self, ax25_frame):
         self._cleanup_digi_conn()
-        for call in ax25_frame.via_calls:
-            digi_conf = dict(POPT_CFG.get_digi_CFG_for_Call(call.call_str))
-            if digi_conf.get('digi_enabled', False):
-                if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                    if digi_conf.get('managed_digi', False):
-                        if ax25_frame.addr_uid not in self._digi_connections.keys():
-                            ax25_conf = ax25_frame.get_frame_conf()
-                            digi_conf.update(dict(
-                                    rx_port=self,
-                                    digi_call=str(call.call_str),
-                                    digi_ssid=int(call.ssid),
-                                    ax25_conf=ax25_conf
-                                ))
-                            # print(digi_conf)
-                            if ax25_frame.ctl_byte.flag == 'UI':
-                                AX25DigiConnection(digi_conf).digi_rx_handle(ax25_frame)
-                                return
+        # get_digi_CFG
+        digi_conf = dict(POPT_CFG.get_digi_CFG())
+        ax25_conf = dict(ax25_frame.get_frame_conf())
+        uid = ax25_conf.get('uid', '')
+        if not uid:
+            return False
 
-                            self._digi_connections[str(ax25_frame.addr_uid)] = AX25DigiConnection(digi_conf)
-                        self._digi_connections[str(ax25_frame.addr_uid)].digi_rx_handle(ax25_frame)
+
+        for call in ax25_frame.via_calls:
+            if call.call not in digi_conf.keys():
+                continue
+            tmp_cfg = dict(digi_conf.get(call.call, {}))
+            if not tmp_cfg.get('digi_enabled', False):
+                continue
+            # if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+            if is_digipeated_pre_digi(ax25_conf=dict(ax25_conf), call=str(call.call_str)):
+                if tmp_cfg.get('managed_digi', False):
+                    if uid not in self._digi_connections.keys():
+                        tmp_cfg.update(dict(
+                            rx_port=self,
+                            digi_call=str(call.call_str),
+                            digi_ssid=int(call.ssid),
+                            ax25_conf=dict(ax25_conf)
+                        ))
+                        if ax25_frame.ctl_byte.flag == 'UI':
+                            logger.debug(self._logTag + "_rx_managed_digi NewUI")
+                            AX25DigiConnection(tmp_cfg).digi_rx_handle(ax25_frame)
+                            return True
+                        # New Digi Conn
+                        if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                            logger.debug(self._logTag + f" NewDigiConn: tmp_cfg {tmp_cfg}")
+                            logger.debug(self._logTag + f" NewDigiConn: digi_conn {self._digi_connections.keys()}")
+                            logger.debug(self._logTag + f" NewDigiConn: conn {self.connections.keys()}")
+                            logger.debug(self._logTag + f" NewDigiConn: ax25_conf {ax25_conf}")
+                            digi_conn = AX25DigiConnection(dict(tmp_cfg))
+                            digi_conn.digi_rx_handle(ax25_frame)
+                            self._digi_connections[uid] = digi_conn
+
+                            return True
+                        logger.error(self._logTag + f" NewDigiConn: not ax25_frame.digi_check_and_encode")
+                        logger.error(self._logTag + f" NewDigiConn: tmp_cfg {tmp_cfg}")
+                        logger.error(self._logTag + f" NewDigiConn: digi_conn {self._digi_connections.keys()}")
+                        logger.error(self._logTag + f" NewDigiConn: conn {self.connections.keys()}")
+                        logger.error(self._logTag + f" NewDigiConn: ax25_conf {ax25_conf}")
                         return True
-                    self.add_frame_to_digiBuff(ax25_frame)
+
+                    if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                        logger.debug(self._logTag + f" DigiConn: tmp_cfg {tmp_cfg}")
+                        logger.debug(self._logTag + f" DigiConn: digi_conn {self._digi_connections.keys()}")
+                        logger.debug(self._logTag + f" DigiConn: conn {self.connections.keys()}")
+                        logger.debug(self._logTag + f" DigiConn: ax25_conf {ax25_conf}")
+                        self._digi_connections[uid].digi_rx_handle(ax25_frame)
+                        return True
+
+                    logger.error(self._logTag + f" DigiConn: not ax25_frame.digi_check_and_encode")
+                    logger.error(self._logTag + f" DigiConn: tmp_cfg {tmp_cfg}")
+                    logger.error(self._logTag + f" DigiConn: digi_conn {self._digi_connections.keys()}")
+                    logger.error(self._logTag + f" DigiConn: conn {self.connections.keys()}")
+                    logger.error(self._logTag + f" DigiConn: ax25_conf {ax25_conf}")
                     return True
-                return False
+
+                if ax25_conf.get('uid', '') not in self._digi_connections.keys():
+                    # logger.debug(self._logTag + f" S-Digi: digi_check_and_encode {ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True)}")
+                    if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                        logger.debug(self._logTag + f" S-Digi: tmp_cfg {tmp_cfg}")
+                        logger.debug(self._logTag + f" S-Digi: digi_conn {self._digi_connections.keys()}")
+                        logger.debug(self._logTag + f" S-Digi: conn {self.connections.keys()}")
+                        logger.debug(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
+                        self.add_frame_to_digiBuff(ax25_frame)
+                        return True
+                    logger.error(self._logTag + f" S-Digi: not ax25_frame.digi_check_and_encode")
+                    logger.error(self._logTag + f" S-Digi: tmp_cfg {tmp_cfg}")
+                    logger.error(self._logTag + f" S-Digi: digi_conn {self._digi_connections.keys()}")
+                    logger.error(self._logTag + f" S-Digi: conn {self.connections.keys()}")
+                    logger.error(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
+                    return True
+
+            return False
         return False
 
-    def accept_digi_conn(self, uid: str):
-        if uid not in self._digi_connections.keys():
-            logger.debug('Port: accept_digi_conn: UID ERROR')
-            logger.debug(f'Port: accept_digi_conn uid: {uid}')
-            logger.debug(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
+    def add_digi_conn(self, digi_connection):
+        tx_uid = str(digi_connection.get_tx_uid())
+        if tx_uid in self._digi_connections:
+            logger.error(self._logTag + f"add_digi_conn - uid in _digi_connections")
+            logger.error(self._logTag + f"self._digi_connections {self._digi_connections}")
+            logger.error(self._logTag + f"rx_uid  {tx_uid}")
             return False
-        self._digi_connections[uid].add_rx_conn_cron()
-        return True
+        logger.debug(self._logTag + f"add_digi_conn +++ tx_uid  {tx_uid}")
+        self._digi_connections[tx_uid] = digi_connection
+
+
+    def accept_digi_conn(self, uid: str):
+        """
+        if uid in self._digi_connections.keys():
+            logger.debug(f'Port: accept_digi_conn: {uid}')
+            return self._digi_connections[uid].add_rx_conn_cron()
+        """
+        uid = reverse_uid(uid)
+        if uid in self._digi_connections.keys():
+            logger.debug(f'Port: accept_digi_conn reverse: {uid}')
+            return self._digi_connections[uid].add_rx_conn_cron()
+
+        logger.error('Port: accept_digi_conn: UID ERROR')
+        logger.error(f'Port: accept_digi_conn uid: {uid}')
+        logger.error(f'Port: accept_digi_conn keys: {self._digi_connections.keys()}')
+        return False
+        # return True
 
     def delete_digi_conn(self, uid: str):
         if uid in self._digi_connections.keys():
-            # print(f"DIGI-Conn DEL: {uid}")
+            print(f"DIGI-Conn DEL: {uid}")
             del self._digi_connections[uid]
 
     def _cleanup_digi_conn(self):
@@ -339,7 +435,8 @@ class AX25Port(object):
         self._cleanup_digi_conn()
         for uid, digi_conn in list(self._digi_connections.items()):
             # print(f"DIGI-CONN TASK: {uid}")
-            digi_conn.digi_crone()
+            if digi_conn:
+                digi_conn.digi_crone()
 
     def get_digi_conn(self):
         return self._digi_connections
@@ -630,8 +727,7 @@ class AX25Port(object):
 
     def _task_connections(self):
         """ Execute Cronjob on all Connections"""
-        for k in list(self.connections.keys()):
-            conn = self.connections.get(k, None)
+        for uid, conn in dict(self.connections).items():
             if conn:
                 conn.exec_cron()
 
@@ -835,8 +931,8 @@ class AX25Port(object):
 
     def _reset_ft_wait_timer(self, ax25_frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
-            for k in self.connections.keys():
-                self.connections[k].ft_reset_timer(ax25_frame.addr_uid)
+            for uid, conn in self.connections.items():
+                conn.ft_reset_timer(ax25_frame.addr_uid)
 
     def _gui_monitor(self, ax25frame, tx: bool = True):
         if self.monitor_out:
@@ -866,7 +962,7 @@ class AX25Port(object):
         while self.loop_is_running:
             try:
                 ##############################################
-                buf: RxBuf = self.rx()
+                buf: RxBuf = self._rx()
                 ##############################################
             except AX25DeviceERROR:
                 # print(e)
@@ -877,10 +973,10 @@ class AX25Port(object):
                 # self.close()
                 break
             if buf is None:
-                time.sleep(0.05)
+                # time.sleep(0.05)
                 break
             if not buf.raw_data:  # RX ############
-                time.sleep(0.05)
+                # time.sleep(0.05)
                 break
             self.set_TXD()
             self.set_digi_TXD()
@@ -889,32 +985,34 @@ class AX25Port(object):
                 # Decoding
                 ax25frame.decode_ax25frame(buf.raw_data)
             except AX25DecodingERROR:
-                logger.error(f'Port {self.port_id}: decoding: ')
-                logger.error(f'Port {self.port_id}: org {buf.raw_data}')
-                logger.error(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
+                logger.warning("-------------------------------------------------------------------")
+                logger.warning(f'Port {self.port_id}: decoding: ')
+                logger.warning(f'Port {self.port_id}: org {buf.raw_data}')
+                logger.warning(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
+                logger.warning(f'Port {self.port_id}: kiss-org {buf.kiss_frame}')
+                logger.warning(f'Port {self.port_id}: kiss-hex {bytearray2hexstr(buf.kiss_frame)}')
+                logger.warning("-------------------------------------------------------------------")
                 break
-            if ax25frame.validate():
-                ax25frame.axip_add = buf.axip_add
-                # ax25frame.rx_time = datetime.datetime.now()
-                # setattr(ax25frame, 'rx_time', datetime.datetime.now())
-                # ######### RX #############
-                if not self._rx_dualPort_handler(ax25_frame=ax25frame):
-                    ax25frame_conf = ax25frame.get_frame_conf()
-                    # Monitor # TODO handling via ax25frame_conf
-                    self._gui_monitor(ax25frame=ax25frame, tx=False)
-                    # MH / Port-Statistic
-                    self._mh_input(ax25frame_conf, tx=False)
-                    # MCast IP Update
-                    if hasattr(self._mcast_server, 'mcast_update_member_ip'):
-                        self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
-                    # RX Handler
-                    self.rx_handler(ax25frame)
-                    # MCast
-                    if hasattr(self._mcast_server, 'mcast_rx'):
-                        self._mcast_server.mcast_rx(ax25frame=ax25frame)
+            ######## if ax25frame.validate():
+            ax25frame.axip_add = buf.axip_add
+            # ######### RX #############
+            if not self._rx_dualPort_handler(ax25_frame=ax25frame):
+                ax25frame_conf = ax25frame.get_frame_conf()
+                # Monitor # TODO handling via ax25frame_conf
+                self._gui_monitor(ax25frame=ax25frame, tx=False)
+                # MH / Port-Statistic
+                self._mh_input(ax25frame_conf, tx=False)
+                # MCast IP Update
+                if hasattr(self._mcast_server, 'mcast_update_member_ip'):
+                    self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
+                # RX Handler
+                self.rx_handler(ax25frame)
+                # MCast
+                if hasattr(self._mcast_server, 'mcast_rx'):
+                    self._mcast_server.mcast_rx(ax25frame=ax25frame)
 
-                # RX-ECHO
-                self._rx_echo(ax25_frame=ax25frame)
+            # RX-ECHO
+            self._rx_echo(ax25_frame=ax25frame)
 
             if self._port_cfg.get('parm_full_duplex', False):
                 break
@@ -1008,25 +1106,26 @@ class KissTCP(AX25Port):
                 logger.error('{}'.format(e))
                 raise AX25DeviceFAIL
 
-    def rx(self):
+    def _rx(self):
+        self.port_w_dog = time.time()
         try:
             recv_buff = self.device.recv(999)
         except socket.timeout:
-            # self.device.close()
-            # raise AX25DeviceERROR(e, self)
-            # raise AX25DeviceERROR
             return None
         except OSError as e:
             raise AX25DeviceERROR(e, self)
-        ret = RxBuf()
 
         if recv_buff:
             de_kiss_fr = self.kiss.de_kiss(recv_buff)
-            if de_kiss_fr:
-                ret.raw_data = de_kiss_fr
+            if de_kiss_fr is not None:
+                ret = RxBuf()
+                ret.raw_data = bytes(de_kiss_fr)
+                ret.kiss_frame = bytes(recv_buff)
                 return ret
+            if self.kiss.unknown_kiss_frame(recv_buff):
+                return None
         else:
-            return ret
+            return None
 
     def tx_device(self, frame):
         try:
@@ -1050,17 +1149,13 @@ class KISSSerial(AX25Port):
 
     def init(self):
         if self.loop_is_running:
-            # print("KISS Serial INIT")
             logger.info("KISS Serial INIT")
-            # self.kiss = b'\x00'
             try:
                 self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.2)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
-                # print('Error. Cant connect to KISS Serial Device {}'.format(self._port_param))
                 logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self._port_param}')
                 logger.error('{}'.format(e))
-                # print('{}'.format(e))
                 self.close_device()
                 raise AX25DeviceFAIL
             else:
@@ -1071,7 +1166,7 @@ class KISSSerial(AX25Port):
                     # self.device.flush()
                     try:
                         self.device.write(self.kiss.device_kiss_start_1())
-                        self.device.readall()
+                        logger.info(f"Port {self.port_id}: TNC-MSG: {self.device.readall().decode('UTF-8', 'ignore')}")
                         self.set_kiss_parm()
                     except (FileNotFoundError, serial.serialutil.SerialException, AX25DeviceFAIL) as e:
                         logger.error(
@@ -1105,17 +1200,25 @@ class KISSSerial(AX25Port):
             if self.kiss.is_enabled:
                 if self.kiss.device_kiss_end():
                     self.device.write(self.kiss.device_kiss_end())
+                    time.sleep(1)
+            """
             if is_linux():
                 try:
                     self.device.flush()
                 except termios.error:
-                    pass
+                    logger.warning(self._logTag + f"Error while closing/flushing: termios.error")
+            else:
+                self.device.flush()
+            """
+            time.sleep(1)
+            if is_linux():
+                logger.info(self._logTag + f"TNC - REST: {self.device.readall()}")
             else:
                 self.device.flush()
             self.device.close()
             # self.device_is_running = False
-        except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError):
-            pass
+        except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError) as e:
+            logger.warning(self._logTag + f"Error while closing: {e}")
         self.device_is_running = False
 
     def set_kiss_parm(self):
@@ -1129,33 +1232,38 @@ class KISSSerial(AX25Port):
                 self.close_device()
                 raise AX25DeviceFAIL
 
-    def rx(self):
+    def _rx(self):
         recv_buff = b''
         while self.loop_is_running and self.device_is_running:
+            self.port_w_dog = time.time()
             try:
                 recv_buff += self.device.read()
-
             except serial.SerialException:
                 # There is no new data from serial port
-                return RxBuf()
+                return None
             except TypeError as e:
                 logger.warning(f'Port {self.port_id}: Serial Device Error {e}')
                 try:
                     # self.init()
                     self._reinit()
+                    return None
                 except AX25DeviceFAIL:
                     self.close_device()
                     logger.error(f"Port {self.port_id}: Reinit Failed !! {self._port_param}")
                     raise AX25DeviceERROR
-            else:
-                ret = RxBuf()
-                if recv_buff:
-                    de_kiss_fr = self.kiss.de_kiss(recv_buff)
-                    if de_kiss_fr:  # TODO !!!! flush buffer ?
-                        ret.raw_data = de_kiss_fr
-                        return ret
-                else:
+
+            if recv_buff:
+                de_kiss_fr = self.kiss.de_kiss(recv_buff)
+                if de_kiss_fr is not None:
+                    ret = RxBuf()
+                    ret.raw_data = bytes(de_kiss_fr)
+                    ret.kiss_frame = bytes(recv_buff)
                     return ret
+                if self.kiss.unknown_kiss_frame(recv_buff):
+                    recv_buff = b''
+
+            else:
+                return None
 
     def tx_device(self, frame):
         if self.device is None:
@@ -1249,9 +1357,11 @@ class AXIP(AX25Port):
             # print("AXIP FINALLY")
             logger.info(f"Port {self.port_id}: Close AXIP done")
 
-    def rx(self):
+    def _rx(self):
+        self.port_w_dog = time.time()
         try:
             udp_recv = self.device.recvfrom(800)
+
             # self.device.settimeout(0.1)
         # except socket.error:
         # raise AX25DeviceERROR
@@ -1270,7 +1380,7 @@ class AXIP(AX25Port):
             ret.axip_add = to_call_ip_addr
             if calc_crc == crc:
                 ret.raw_data = pack
-                ret.kiss = b''
+                ret.kiss_frame = b''
             return ret
 
     def tx_device(self, frame, multicast=True):

@@ -45,7 +45,7 @@ from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
 from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, STATION_TYPS, \
-    ENCODINGS, TEXT_SIZE_STATUS, TXT_BACKGROUND_CLR, TXT_OUT_CLR, TXT_INP_CURSOR_CLR, \
+    ENCODINGS, TEXT_SIZE_STATUS, TXT_INP_CURSOR_CLR, \
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
@@ -346,6 +346,7 @@ class PoPT_GUI_Main:
 
     def _destroy_win(self):
         self.sysMsg_to_monitor("PoPT wird beendet.")
+        self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
         for wn in [
             self.settings_win,
@@ -368,7 +369,6 @@ class PoPT_GUI_Main:
                 wn.destroy()
         self._quit = True
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
-        self._Pacman.save_path_data()
         self.save_GUIvars()
         self._save_parameter()
         self._save_Channel_Vars()
@@ -383,7 +383,7 @@ class PoPT_GUI_Main:
         #########################
         # GUI-Vars to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
-        guiCfg['gui_lang'] = int(self.language)
+        # guiCfg['gui_lang'] = int(self.language)
         guiCfg['gui_cfg_sound'] = bool(self.setting_sound.get())
         guiCfg['gui_cfg_beacon'] = bool(self.setting_bake.get())
         guiCfg['gui_cfg_rx_echo'] = bool(self.setting_rx_echo.get())
@@ -394,7 +394,10 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_noty_bell'] = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech'] = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding'] = str(self.setting_mon_encoding.get())
-        guiCfg['gui_cfg_rtab_index'] = (self.tabbed_sideFrame.get_tab_index(), self.tabbed_sideFrame2.get_tab_index())
+        try:
+            guiCfg['gui_cfg_rtab_index'] = int(self.tabbed_sideFrame.get_tab_index()), int(self.tabbed_sideFrame2.get_tab_index())
+        except (ValueError, tk.TclError):
+            pass
         # guiCfg['gui_cfg_locator'] = str(self.own_loc)
         # guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)
@@ -1803,6 +1806,8 @@ class PoPT_GUI_Main:
                     mon_str = mon_out[0] + mon_out[1]
                 else:
                     mon_str = mon_out[0]
+                if not mon_str.endswith('\n'):
+                    mon_str += '\n'
                 var = tk_filter_bad_chars(mon_str)
                 ind = self._mon_txt.index('end-1c')
                 # TODO Autoscroll
@@ -1948,6 +1953,7 @@ class PoPT_GUI_Main:
         if self.mh_window is None:
             MHWin(self)
         self.tabbed_sideFrame.reset_dx_alarm()
+        self.tabbed_sideFrame2.reset_dx_alarm()
 
     #######################################################
     """
@@ -2235,7 +2241,7 @@ class PoPT_GUI_Main:
         if not msg:
             msg = f"{conn.to_call_str} {STR_TABLE['cmd_bell_gui_msg'][self.language]}"
         if messagebox.askokcancel(f"Bell {STR_TABLE['channel'][self.language]} {ch_id}",
-                                  msg, parent=self):
+                                  msg, parent=self.main_win):
             if not self._quit:
                 self.switch_channel(ch_id)
 

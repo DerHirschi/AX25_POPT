@@ -547,7 +547,12 @@ class AX25Conn:
 
     def ft_reset_timer(self, conn_uid: str):
         if self.ft_obj is not None:
+            print(f"ft_resetRNR: conn_uid {conn_uid}")
+            print(f"ft_resetRNR: rev conn_uid {reverse_uid(conn_uid)}")
+            print(f"ft_resetRNR: self.uid {self.uid}")
             if conn_uid != self.uid and reverse_uid(conn_uid) != self.uid:
+                print(f"ft_resetRNR:SET! ")
+
                 self.ft_obj.ft_set_wait_timer()
 
     #######################
@@ -589,9 +594,11 @@ class AX25Conn:
             self.my_call_str = digi_call
             # self.ax25_out_frame.digi_call = str(conn.my_call_str)
             self.digi_call = digi_call
+            print("LC 1")
             self._port_handler.link_connections[str(conn.uid)] = conn, ''
         else:
-            self._port_handler.link_connections[str(conn.uid)] = conn, self.my_call_str
+            print("LC 2")
+            self._port_handler.link_connections[str(conn.uid)] = conn, conn.my_call_str
 
         self.LINK_Connection = conn
         self.is_link = True
@@ -599,23 +606,29 @@ class AX25Conn:
         return True
 
     def new_digi_connection(self, conn):
-        # print(f"Conn newDIGIConn: UID: {conn.uid}")
-        # logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
+        print(f"Conn newDIGIConn: UID: {conn.uid}")
+        logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
         if conn is None:
             print("Conn ERROR: newDIGIConn: not conn")
             logger.error("Conn ERROR: newDIGIConn: not conn")
             return False
-        if self.uid in self._port_handler.link_connections.keys():
+        if self.uid in list(self._port_handler.link_connections.keys()):
             self.zustand_exec.change_state(4)
             self.zustand_exec.tx(None)
-            print("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
             logger.error("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
+            logger.error(f"{self.uid} - {self._port_handler.link_connections.keys()}")
             return False
         self.digi_call = str(conn.digi_call)
-        self._port_handler.link_connections[str(self.uid)] = self, conn.digi_call
+        self._port_handler.link_connections[str(self.uid)] = self, str(conn.digi_call)
 
         self.LINK_Connection = conn
         self.is_link = True
+        ###############################
+        # Del Digi Conn
+        # self.own_port.delete_digi_conn(conn.uid)
+        # conn.own_port.delete_digi_conn(self.uid)
+
+
         #   self.cli = cli.cliMain.NoneCLI(self)  # Disable CLI
         # print("new_digi TX CONN ")
         return True
@@ -647,10 +660,11 @@ class AX25Conn:
                         self.LINK_Connection.conn_disco()
                     elif reconnect and self.is_link_remote and not self.is_digi:
                         # logger.debug('ReConn')
-                        if hasattr(self.LINK_Connection, 'send_sys_Msg_to_gui'):
+                        if all((hasattr(self.LINK_Connection, 'send_sys_Msg_to_gui'),
+                           hasattr(self.LINK_Connection, 'my_call_str'))):
                             # TODO ?? Why to LINKCONN GUI ?  CHANNEL ?
-                            self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.my_call_str}')
-                        self.send_to_link(f'\r*** Reconnected to {self.my_call_str}\r'.encode('ASCII', 'ignore'))
+                            self.LINK_Connection.send_sys_Msg_to_gui(f'*** Reconnected to {self.LINK_Connection.my_call_str}')
+                            self.send_to_link(f'\r*** Reconnected to {self.LINK_Connection.my_call_str}\r'.encode('ASCII', 'ignore'))
                         """
                         if self.digi_call:
                             print("Link Disco ----")
@@ -1189,31 +1203,31 @@ class AX25Conn:
         self._port_handler.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
+            logger.debug(f"Conn {self.uid}: accept_digi_connection is LINK")
             # if self.digi_call in self._port_cfg.parm_Digi_calls:
             if POPT_CFG.get_digi_is_enabled(self.digi_call):
+                logger.debug(f"Conn {self.uid}: accept_digi_connection")
                 if self.accept_digi_connection():
+                    logger.debug(f"Conn {self.uid}: accept_digi_connection True")
                     self.is_digi = True
                     return
-                """
-                print(f"Accept Conn UID: {self.uid}")
-                print(f"Accept Conn digi_call: {self.digi_call}")
-                print(f"Accept Conn parm_Digi_calls: {self._port_cfg.parm_Digi_calls}")
-                """
+
             self.send_to_link(
                 f'\r*** Connected to {self.to_call_str}\r'.encode('ASCII', 'ignore')
             )
 
     def accept_digi_connection(self):
-        # print(f'DIGI Conn accept..  {self.uid}  ?')
+        logger.debug(f'DIGI Conn accept..  {self.uid}  ?')
         if not self.LINK_Connection:
-            # print(f'DIGI Conn accept: No LINK_Connection {self.uid}')
-            # print(f'DIGI Conn accept: No LINK_Connection {self.LINK_Connection}')
+            logger.debug(f'DIGI Conn accept: No LINK_Connection {self.uid}')
+            logger.debug(f'DIGI Conn accept: No LINK_Connection {self.LINK_Connection}')
 
             return False
-        digi_uid = self.LINK_Connection.uid
+        digi_uid = str(self.LINK_Connection.uid)
         digi_uid = reverse_uid(digi_uid)
         link_conn_port = self.LINK_Connection.own_port
-        return link_conn_port.accept_digi_conn(digi_uid)
+        digi_accept: bool = link_conn_port.accept_digi_conn(digi_uid)
+        return digi_accept
 
     def insert_new_connection(self):
         """ Insert connection for handling """

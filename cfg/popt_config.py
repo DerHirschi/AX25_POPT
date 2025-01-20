@@ -1,14 +1,10 @@
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
-    getNew_mcast_channel_cfg
+    getNew_mcast_channel_cfg, getNew_1wire_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
-
-
-def getNew_dict():
-    return {}
 
 
 class Main_CFG:
@@ -34,7 +30,7 @@ class Main_CFG:
             # -- GUI
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
-            'gui_channel_vars': getNew_dict,
+            'gui_channel_vars': {},
             'gui_pacman': {},
             ##########################
             # -- Beacon
@@ -58,6 +54,9 @@ class Main_CFG:
             ##########################
             # -- MCast CFG
             'mcast_cfg': getNew_mcast_cfg,
+            ##########################
+            # -- 1Wire CFG
+            '1wire_cfg': getNew_1wire_cfg,
         }
         """ Main CFGs """
         self._load_CFG_fm_file()        # Other Configs
@@ -87,6 +86,8 @@ class Main_CFG:
             logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
         logger.info(f'-------- Loaded CFGs ENDE --------')
         logger.info('Main CFG: Init complete')
+        ### DEV ################################################
+        # self._config['1wire_cfg'] = getNew_1wire_cfg()
 
 
     ####################
@@ -116,8 +117,12 @@ class Main_CFG:
     def _load_CFG_fm_file(self):
         logger.info(f'Main CFG: Load from {self._config_filename}')
         # print(f'Main CFG: Load from {self._config_filename}')
-        config = load_fm_file(self._config_filename)
+        config: dict = load_fm_file(self._config_filename)
         if config:
+            """
+            for cfg_name, cfg in config.items():
+                logger.debug(f"Main CFG:{cfg_name}> {cfg}")
+            """
             self._config = dict(config)
         else:
             logger.warning("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
@@ -265,26 +270,26 @@ class Main_CFG:
     ########################################################
     # GUI
     def get_guiCFG_language(self):
-        return self._config['gui_main_parm'].get('gui_lang', 0)
+        return int(self._config['gui_main_parm'].get('gui_lang', 0))
         # return LANGUAGE gui_cfg_locator
 
     def get_guiCFG_locator(self):
-        return self._config['gui_main_parm'].get('gui_cfg_locator', '')
+        return str(self._config['gui_main_parm'].get('gui_cfg_locator', ''))
 
     def get_guiCFG_qth(self):
-        return self._config['gui_main_parm'].get('gui_cfg_qth', '')
+        return str(self._config['gui_main_parm'].get('gui_cfg_qth', ''))
 
     # GUI PARM
     def load_guiPARM_main(self):
-        return self._config['gui_main_parm']
+        return dict(self._config['gui_main_parm'])
 
     def save_guiPARM_main(self, data: dict):
-        self._config['gui_main_parm'] = data
+        self._config['gui_main_parm'] = dict(data)
 
     def set_guiPARM_main(self, data: dict):
         if not data:
             return False
-        conf_data = self._config.get('gui_main_parm', getNew_maniGUI_parm())
+        conf_data = dict(self._config.get('gui_main_parm', getNew_maniGUI_parm()))
         for conf_k in list(data.keys()):
             if conf_k in list(conf_data.keys()):
                 # if type(data[conf_k]) is type(conf_k[conf_k]):
@@ -296,10 +301,10 @@ class Main_CFG:
 
     # Channel Vars
     def load_guiCH_VARS(self):
-        return self._config.get('gui_channel_vars', {})
+        return dict(self._config.get('gui_channel_vars', {}))
 
     def save_guiCH_VARS(self, data: dict):
-        self._config['gui_channel_vars'] = data
+        self._config['gui_channel_vars'] = dict(data)
 
     # F-Text
     def get_f_text_fm_id(self, f_id: int):
@@ -321,7 +326,7 @@ class Main_CFG:
 
     # Pacman
     def get_pacman_data(self):
-        return self._config.get('gui_pacman', {})
+        return dict(self._config.get('gui_pacman', {}))
 
     def set_pacman_data(self, data: dict):
         if not data:
@@ -331,7 +336,7 @@ class Main_CFG:
     #################################################
     # Beacon
     def get_Beacon_tasks(self):
-        return self._config.get('beacon_tasks', [])
+        return list(self._config.get('beacon_tasks', []))
 
     def set_Beacon_tasks(self, data: list):
         self._config['beacon_tasks'] = list(data)
@@ -339,7 +344,7 @@ class Main_CFG:
     #################################################
     # Dual Port
     def get_dualPort_CFG(self):
-        return self._config.get('dualPort_cfg', {})
+        return dict(self._config.get('dualPort_cfg', {}))
 
     def set_dualPort_CFG(self, cfg: dict):
         self._config['dualPort_cfg'] = dict(cfg)
@@ -347,15 +352,15 @@ class Main_CFG:
     #################################################
     # DIGI
     def get_digi_CFG(self):
-        return self._config.get('digi_cfg', {})
+        return dict(self._config.get('digi_cfg', {}))
 
     def get_digi_CFG_for_Call(self, call: str):
-        return self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG())
+        return dict(self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG()))
 
     def get_digi_is_enabled(self, call: str):
         if not call:
             return False
-        return self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG()).get('digi_enabled', False)
+        return bool(self._config.get('digi_cfg', {}).get(call, self.get_digi_default_CFG()).get('digi_enabled', False))
 
     @staticmethod
     def get_digi_default_CFG():
@@ -383,13 +388,13 @@ class Main_CFG:
     ###########################################
     # PIPE
     def get_pipe_CFG(self):
-        return self._config.get('pipe_cfgs', {})
+        return dict(self._config.get('pipe_cfgs', {}))
 
     def get_pipe_CFG_fm_UID(self, call, port_id=-1):
         cfg_keys = list(self._config.get('pipe_cfgs', {}).keys())
         lookup_k = f'{port_id}-{call}'
         if lookup_k in cfg_keys:
-            return self._config.get('pipe_cfgs', {}).get(lookup_k, {})
+            return dict(self._config.get('pipe_cfgs', {}).get(lookup_k, {}))
         return {}
 
     def del_pipe_CFG_fm_CallPort(self, call, port_id=-1):
@@ -424,12 +429,12 @@ class Main_CFG:
     ###########################################
     # Station
     def get_stat_CFGs(self):
-        return self._config.get('stat_cfgs', {})
+        return dict(self._config.get('stat_cfgs', {}))
 
     def get_stat_CFG_fm_call(self, call):
         if not call:
             return {}
-        return self._config.get('stat_cfgs', {}).get(call, {})
+        return dict(self._config.get('stat_cfgs', {}).get(call, {}))
 
     def get_stat_CFG_keys(self):
         return list(self._config.get('stat_cfgs', {}))
@@ -457,18 +462,18 @@ class Main_CFG:
     ###########################################
     # Port
     def get_port_CFGs(self):
-        return self._config.get('port_cfgs', {})
+        return dict(self._config.get('port_cfgs', {}))
 
     def get_port_CFG_fm_id(self, port_id: int):
         if 0 > port_id > MAX_PORTS - 1:
             return {}
-        return self._config.get('port_cfgs', {}).get(port_id, {})
+        return dict(self._config.get('port_cfgs', {}).get(port_id, {}))
 
     def get_stationCalls_fm_port(self, port_id: int):
         port_cfg = self.get_port_CFG_fm_id(port_id)
         if not port_cfg:
             return []
-        return port_cfg.get('parm_StationCalls', [])
+        return list(port_cfg.get('parm_StationCalls', []))
 
 
     def set_port_CFG_fm_id(self, port_id: int, port_cfg: dict):
@@ -516,7 +521,7 @@ class Main_CFG:
         stat_cfgs = self.get_stat_CFGs()
         for call, stat_cfg in stat_cfgs.items():
             if stat_cfg.get('stat_parm_cli', '') == 'MCAST':
-                return call
+                return str(call)
         return ''
 
     def set_MCast_CFG(self, mcast_cfg: dict):
@@ -525,6 +530,25 @@ class Main_CFG:
             return False
         self._config['mcast_cfg'] = dict(mcast_cfg)
         return True
+
+    ###########################################
+    # 1Wire
+    def get_1wire_sensor_cfg(self):
+        return dict(self._config.get('1wire_cfg', {}).get('sensor_cfg', {}))
+
+    def get_1wire_loop_timer(self):
+        return int(self._config.get('1wire_cfg', {}).get('loop_timer', 60))
+
+    def set_1wire_sensor_cfg(self, sensor_cfg: dict):
+        cfg = dict(self._config.get('1wire_cfg', getNew_1wire_cfg()))
+        cfg['sensor_cfg'] = dict(sensor_cfg)
+        self._config['1wire_cfg'] = dict(cfg)
+
+    def set_1wire_loop_timer(self, loop_timer: int):
+        loop_timer = max(30, loop_timer)
+        cfg = dict(self._config.get('1wire_cfg', getNew_1wire_cfg()))
+        cfg['loop_timer'] = int(loop_timer)
+        self._config['1wire_cfg'] = dict(cfg)
 
 
 POPT_CFG = Main_CFG()

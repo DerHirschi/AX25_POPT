@@ -9,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.file_fnc import get_str_fm_file
 from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
@@ -19,9 +19,6 @@ from cfg.logger_config import logger
 class DefaultCLI(object):
     cli_name = ''  # DON'T CHANGE!
     service_cli = True
-    # c_text = '-= Test C-TEXT =-\r\r'
-    # bye_text = '73 ...\r'
-    # prompt = ''
     prefix = b'//'
     sw_id = ''
 
@@ -79,6 +76,7 @@ class DefaultCLI(object):
             'QUIT': (1, self._cmd_q, 'Quit'),
             'BYE': (1, self._cmd_q, 'Bye'),
             'CONNECT': (1, self._cmd_connect, 'Connect'),
+            'C!': (2, self._cmd_connect_exclusive, 'Connect Exclusive (No MH-Path-Lookup)'),
             'ECHO': (1, self._cmd_echo, 'Echo'),
             'PORT': (1, self._cmd_port, 'Ports'),
             'MH': (0, self._cmd_mh, 'MYHeard List'),
@@ -176,55 +174,42 @@ class DefaultCLI(object):
         self._state_index = state
 
     def is_prefix(self):
-        # TODO Cleanup !!!!
-        if self.prefix:
-            self._input = self._input.replace(b'\n', b'\r')
-            # self.input = self.input.split(b'\r')[0]
-            self._input = self._input.split(b'\r')
-            while self._input:
-                if self._input[0]:
-                    break
-                else:
-                    self._input = self._input[1:]
-            if not self._input:
-                return False
-            self._input = self._input[0]
+        # Optimized by GROK (x.com)
+        if not self.prefix:
+            # Handle case where there is no prefix
+            self._parameter = []
+            cmd_parts = self._input.split(b' ')
+            self._input = cmd_parts[1:] if len(cmd_parts) > 1 else b''
+            self._parameter = self._input
+            self._cmd = cmd_parts[0].upper().replace(b'\r', b'').replace(b'//', b'')
+            return False
 
-            if self._input[:len(self.prefix)] == self.prefix:
-                self._parameter = []
-                cmd = self._input[len(self.prefix):]
-                cmd = cmd.split(b' ')
-                if len(cmd) > 1:
-                    self._input = cmd[1:]
-                    self._parameter = cmd[1:]
-                else:
-                    self._input = b''
+            # Remove newlines and split by '\r'
+        lines = self._input.replace(b'\n', b'\r').split(b'\r')
 
-                cmd = cmd[0]
-                self._cmd = cmd \
-                    .upper() \
-                    .replace(b' ', b'') \
-                    .replace(b'\r', b'')
-                # self.input = self.input[len(self.prefix):]
-                return True
-            else:
-                # Message is for User ( Text , Chat )
-                return False
-        # CMD Input for No User Terminals ( Node ... )
-        self._parameter = []
-        cmd = self._input
-        cmd = cmd.split(b' ')
-        if len(cmd) > 1:
-            self._input = cmd[1:]
-            self._parameter = cmd[1:]
+        # Find the first non-empty line
+        for line in lines:
+            if line:
+                self._input = line
+                break
         else:
-            self._input = b''
-        cmd = cmd[0]
-        self._cmd = cmd \
-            .upper() \
-            .replace(b'\r', b'') \
-            .replace(b'//', b'')
+            # If no non-empty lines found
+            return False
 
+        # Check if the input starts with the prefix
+        if self._input.startswith(self.prefix):
+            cmd_part = self._input[len(self.prefix):].split(b' ', 1)
+            self._cmd = cmd_part[0].upper().replace(b'\r', b'')
+            self._parameter = cmd_part[1:] if len(cmd_part) > 1 else []
+            self._input = self._parameter
+            return True
+
+        # If the prefix does not match, treat as user message
+        self._parameter = []
+        cmd_parts = self._input.split(b' ', 1)
+        self._cmd = cmd_parts[0].upper().replace(b'\r', b'')
+        self._parameter = cmd_parts[1:] if len(cmd_parts) > 1 else []
+        self._input = self._parameter
         return False
 
     def _load_fm_file(self, filename: str):
@@ -420,23 +405,17 @@ class DefaultCLI(object):
                 tmp.append(tmp_parm)
         self._parameter = list(tmp)
 
-    def _cmd_connect(self):
-        # print(f'cmd_connect() param: {self.parameter}')
+    def _cmd_connect(self, exclusive=False):
         self._decode_param()
-        # print(f'cmd_connect() param.decode: {self.parameter}')
-
+        lang = self._connection.cli_language
         if not self._parameter:
-            ret = '\r # Bitte Call eingeben..\r'
-            return ret
+            return f"\r {get_strTab('cmd_c_noCall', lang)}\r"
 
         dest_call = str(self._parameter[0]).upper()
         if not validate_ax25Call(dest_call):
-            ret = '\r # Ungültiger Ziel Call..\r'
-            return ret
+            return f"\r {get_strTab('cmd_c_badCall', lang)}\r"
 
-        # port_id = self.own_port.port_id
         port_id = -1
-        # vias = [self._connection.my_call_str]
         vias = []
         port_tr = False
         if len(self._parameter) > 1:
@@ -444,43 +423,35 @@ class DefaultCLI(object):
                 port_tr = True
                 try:
                     port_id = int(self._parameter[-1])
+                    if port_id not in self._port_handler.get_all_ports().keys():
+                        return f"\r {get_strTab('cmd_c_noPort', lang)}\r"
                 except ValueError:
-                    ret = '\r # Ungültige Port angabe..\r'
-                    return ret
+                    return f"\r {get_strTab('cmd_c_badPort', lang)}\r"
 
-                if port_id not in self._port_handler.get_all_ports().keys():
-                    ret = '\r # Ungültiger Port..\r'
-                    return ret
-            if port_tr:
-                parm = self._parameter[1:-1]
-            else:
-                parm = self._parameter[1:]
-
-            for call in parm:
-                if validate_ax25Call(call.upper()):
-                    vias.append(call.upper())
-                else:
-                    break
+            via_params = self._parameter[1:-1] if port_tr else self._parameter[1:]
+            vias = [call.upper() for call in via_params if validate_ax25Call(call.upper())]
 
         conn = self._port_handler.new_outgoing_connection(
-            own_call=self._to_call_str,
-            dest_call=dest_call,
-            via_calls=vias,
-            port_id=port_id,
-            link_conn=self._connection,
-            # link_call=str(self._connection.my_call_str)
-        )
+                own_call=self._to_call_str,
+                dest_call=dest_call,
+                via_calls=vias,
+                port_id=port_id,
+                link_conn=self._connection,
+                exclusive=exclusive
+                # link_call=str(self._connection.my_call_str)
+            )
         if conn[0]:
             self._state_index = 4
             return conn[1]
         return f'\r*** Link Busy: {conn[1]}\r'
 
+    def _cmd_connect_exclusive(self):
+        return self._cmd_connect(exclusive=True)
+
     def _cmd_echo(self):  # Quit
         ret = ''
-        # print(f"Echo Param: {self.parameter}")
         for el in self._parameter:
             ret += el.decode(self._encoding[0], self._encoding[1]) + ' '
-        # print(f"Echo ret: {ret}")
         return ret[:-1] + '\r'
 
     def _cmd_q(self):  # Quit
@@ -881,39 +852,47 @@ class DefaultCLI(object):
 
     def _cmd_user_db_detail(self):
         if not self._parameter:
-            max_entry = 20  # TODO: from parameter
-            _db_list = list(self._user_db.db.keys())
+            # max_lines = 20  # TODO: from parameter
+            db_list = list(self._user_db.db.keys())
             header = "\r" \
-                     f" USER-DB - {len(_db_list)} Calls\r" \
-                     "------------------------------------\r"
+                     f" USER-DB - {len(db_list)} Calls\r" \
+                     "-------------------------------------------------------------------------------\r"
             ent_ret = ""
-            _db_list.sort()
-            c = 0
-            for call in _db_list:
-                ent_ret += f"{call}\r"
-                c += 1
-                if c >= max_entry:
+            db_list.sort()
+            # c = 0
+            # colum_c = 0
+            for call in db_list:
+                ent_ret += f"{call} "
+                """
+                colum_c += 1
+                if colum_c > 6:
+                    ent_ret += "\r"
+                    colum_c = 0
+                    c += 1
+                """
+                """
+                if c >= max_lines:
                     break
-            ent_ret += "------------------------------------\r\r"
+                """
+            ent_ret = zeilenumbruch(ent_ret)
+            ent_ret += "\r-------------------------------------------------------------------------------\r\r"
             return header + ent_ret
         else:
             call_str = self._parameter[0].decode(self._encoding[0], self._encoding[1]).upper()
-
-            if validate_ax25Call(call_str):
-                if call_str in self._user_db.db.keys():
-                    header = "\r" \
-                             f"| USER-DB: {call_str}\r" \
-                             "|-------------------\r"
-                    ent = self._user_db.db[call_str]
-                    ent_ret = ""
-                    for att in dir(ent):
-                        if '__' not in att and \
-                                att not in self._user_db.not_public_vars:
-                            if getattr(ent, att):
-                                ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\r"
-
-                    ent_ret += "|-------------------\r\r"
-                    return header + ent_ret
+            db_ent = self._user_db.get_entry(call_str, add_new=False)
+            if db_ent:
+                header = "\r" \
+                         f"| USER-DB: {call_str}\r" \
+                         "|-------------------\r"
+                ent = db_ent
+                ent_ret = ""
+                for att in dir(ent):
+                    if '__' not in att and \
+                            att not in self._user_db.not_public_vars:
+                        if getattr(ent, att):
+                            ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\r"
+                ent_ret += "|-------------------\r\r"
+                return header + ent_ret
 
             return "\r" \
                    f"{STR_TABLE['cli_no_user_db_ent'][self._connection.cli_language]}" \
