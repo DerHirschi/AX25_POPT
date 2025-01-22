@@ -121,9 +121,14 @@ class OneWireSettings(tk.Frame):
         if not sensors_paths:
             self._reset_tree_data()
             return
+        if not is_1wire_device():
+            return
         sens_data = {}
         for sens_id in sensors_paths:
-            sens_data[sens_id]: str = str(get_1wire_temperature(sens_id)[0])
+            try:
+                sens_data[sens_id]: str = str(get_1wire_temperature(sens_id)[0])
+            except IndexError:
+                continue
         sensors = list(sens_data.keys())
         # Update / Delete old Sensors
         for strVar, cfg in dict(self._sens_cfg).items():

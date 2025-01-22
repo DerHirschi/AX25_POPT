@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 
 from cfg.constant import GPIO_RANGE
-from fnc.gpio_fnc import is_gpio_init, get_gpio_dir, get_gpio_val
+from poptGPIO.gpio_fnc import is_gpio_init, get_gpio_dir, get_gpio_val, is_gpio_device
+from poptGPIO.pinctl_fnc import is_pinctrl_device, get_pinctrl_dir, get_pinctrl_val
 
 
 class GPIOSettings(tk.Frame):
@@ -62,11 +63,21 @@ class GPIOSettings(tk.Frame):
         for i in self._tree.get_children():
             self._tree.delete(i)
         # data = {}
+        if all((not is_pinctrl_device(), not is_gpio_device())):
+            print("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+            return
         for gpio in range(GPIO_RANGE[0], GPIO_RANGE[1] + 1):
-            if not is_gpio_init(gpio):
-                continue
-            gpio_dir = get_gpio_dir(gpio)
-            gpio_val = get_gpio_val(gpio)
+            gpio_dir = None
+            gpio_val = None
+            if is_pinctrl_device():
+                gpio_dir = get_pinctrl_dir(gpio)
+                gpio_val = get_pinctrl_val(gpio)
+            elif is_gpio_device():
+                if not is_gpio_init(gpio):
+                    continue
+                gpio_dir = get_gpio_dir(gpio)
+                gpio_val = get_gpio_val(gpio)
+
             textVar = f"$gpio-{gpio}"
             val = (textVar,
                    int(gpio),

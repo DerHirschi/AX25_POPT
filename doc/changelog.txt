@@ -1,4 +1,16 @@
 ###########################################################################################################
+# 2.115.x
+Fixes:
+- Script-Error beim Öffnen der Haupteinstellungen (Ausgelöst durch
+  die 1Wire Einstellungen)
+
+Optimierung:
+
+Neue Implementierungen / Funktionen:
+
+
+###########################################################################################################
+###########################################################################################################
 # 2.114.x
 Fixes:
 - Scripterror, wenn "Messagebox" für Sysop Benachrichtigung erscheint

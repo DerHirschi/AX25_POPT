@@ -7,7 +7,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from cfg.popt_config import POPT_CFG
-# from fnc.gpio_fnc import is_gpio_device
+from poptGPIO.pinctl_fnc import is_pinctrl_device
 from fnc.one_wire_fnc import is_1wire_device
 from fnc.str_fnc import get_strTab, lob_gen
 from gui.guiError import PoPTAttributError
@@ -15,7 +15,7 @@ from gui.settings.gui1WireSettings import OneWireSettings
 from gui.settings.guiBeaconSettings import BeaconSettings
 from gui.settings.guiDigiSettings import DIGI_SettingsWin
 from gui.settings.guiFTextSettings import FTextSettings
-# from gui.settings.guiGPIO_Settings import GPIOSettings
+from gui.settings.guiGPIO_Settings import GPIOSettings
 from gui.settings.guiGeneralSettings import GeneralSettings
 from gui.settings.guiMCastSettings import MulticastSettings
 from gui.settings.guiPortSettings import PortSettingsWin
@@ -63,12 +63,13 @@ class SettingsMain(tk.Toplevel):
             })
         # GPIO
         # if is_gpio_device():
-        """
+        # if is_pinctrl_device():
+
         if True:
             self._win_tab.update({
                 'GPIO': GPIOSettings
             })
-        """
+
         ###############################################################
 
         ###########################################

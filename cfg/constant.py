@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.114.33'
+VER = '2.115.0'
 
 DEBUG_LOG = True
 CONSOLE_LOG = True
@@ -348,5 +348,5 @@ ONE_WIRE_MAP = ("             PI 3/4 GPIO\n"
 #######################################################
 # GPIO
 GPIO_PATH = '/sys/class/gpio'
-GPIO_RANGE = (0, 26)
+GPIO_RANGE = (1, 26)
 

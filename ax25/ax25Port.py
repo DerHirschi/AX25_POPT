@@ -331,7 +331,7 @@ class AX25Port(object):
                         tmp_cfg.update(dict(
                             rx_port=self,
                             digi_call=str(call.call_str),
-                            digi_ssid=int(call.ssid),
+                            digi_ssid=int(call.ssid),       # As Port-ID
                             ax25_conf=dict(ax25_conf)
                         ))
                         if ax25_frame.ctl_byte.flag == 'UI':
