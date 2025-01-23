@@ -620,8 +620,10 @@ class AX25Conn:
             return False
         self.digi_call = str(conn.digi_call)
         self._port_handler.link_connections[str(self.uid)] = self, str(conn.digi_call)
+        # self._port_handler.link_connections[str(reverse_uid(self.uid))] = conn, str(conn.digi_call)
 
         self.LINK_Connection = conn
+        conn.LINK_Connection = self
         self.is_link = True
         ###############################
         # Del Digi Conn

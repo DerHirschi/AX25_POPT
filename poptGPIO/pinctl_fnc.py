@@ -32,9 +32,12 @@ def set_pinctrl_dir(gpio: int, gpio_dir_in: bool):
 
 def set_pinctrl_val(gpio: int, value: bool):
     if not is_pinctrl_device():
-        # logger.warning(LOGGER_TAG + f"set_pinctrl_val No PINCTRL Device")
+        logger.warning(LOGGER_TAG + f"set_pinctrl_val No PINCTRL Device")
         return False
-    # TODO Check Direction
+    tmp_dir = get_pinctrl_dir(gpio)
+    if tmp_dir != 'out':
+        # TODO Testing
+        return False
     gpio_direction = {True: 'dh', False: 'dl', }.get(value, 'dl')
     os_cmd = f"pinctrl set {gpio} {gpio_direction}"
     try:
@@ -48,7 +51,7 @@ def set_pinctrl_val(gpio: int, value: bool):
 
 def get_pinctrl_pin_info(gpio: int):
     if not is_pinctrl_device():
-        # logger.warning(LOGGER_TAG + f"set_pinctrl_val No PINCTRL Device")
+        logger.warning(LOGGER_TAG + f"set_pinctrl_val No PINCTRL Device")
         return None
     os_cmd = f"pinctrl get {gpio}"
     try:

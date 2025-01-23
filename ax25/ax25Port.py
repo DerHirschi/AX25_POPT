@@ -1089,8 +1089,17 @@ class KissTCP(AX25Port):
             """
             self.device.shutdown(socket.SHUT_RDWR)
             self.device.close()
-        except (OSError, ConnectionRefusedError, ConnectionError, AttributeError):
-            pass
+        except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+            logger.error(f"Port {self.port_id}: Error while closing Port !")
+            logger.error(f"Port {self.port_id}: {e}")
+            self.device_is_running = False
+            if self.device is not None:
+                try:
+                    self.device.close()
+                except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+                    logger.error(f"Port {self.port_id}: Error while closing Port !")
+                    logger.error(f"Port {self.port_id}: {e}")
+                    return
         finally:
             self.device_is_running = False
             if self.device is not None:

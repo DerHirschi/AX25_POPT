@@ -174,11 +174,18 @@ class AX25DigiConnection:
 
         if self._rx_conn.new_digi_connection(self._tx_conn):
             logger.debug('Digi-Accept tX-CONN')
+            print('Digi-Accept tX-CONN')
+            print('--------------------------')
+            print(f"TX-Conn: {self._tx_conn})")
+            print(f"RX-Conn: {self._rx_conn})")
+            print(f"TX-Conn LC: {self._tx_conn.LINK_Connection})")
+            print(f"RX-Conn LC: {self._rx_conn.LINK_Connection})")
+            print('--------------------------')
             return True
         if self._tx_conn.new_digi_connection(self._rx_conn):
             logger.debug('Digi-Accept RX-CONN')
             return True
-        logger.debug("Digi-Not Accept")
+        logger.debug("Digi-Not Accepted")
         return False
 
     def _state_0_error(self, ax25_frame=None):
@@ -283,7 +290,6 @@ class AX25DigiConnection:
         port = self._port_handler.get_port_by_id(tx_port_id)
         if not port:
             logger.warning(f"UI-DIGI ERROR: No Port: {tx_port_id} - DIGI: {self._digi_call} - SSID: {self._digi_ssid}")
-            print(f"UI-DIGI ERROR: No Port: {tx_port_id} - DIGI: {self._digi_call} - SSID: {self._digi_ssid}")
             return
         port.add_frame_to_digiBuff(ax25_frame)
 
@@ -301,8 +307,8 @@ class AX25DigiConnection:
         if state_exec is None:
             self._state_0_error()
             logger.error(f"DIGI-RX ERROR: not callable(state_exec) - STATE: {self._state}")
-            print(f"DIGI-RX ERROR: not callable(state_exec) - STATE: {self._state}")
             return
+
         state_exec(ax25_frame=ax25_frame)
 
     def _abort_digi_conn(self, ax25_frame=None):

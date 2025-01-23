@@ -64,7 +64,6 @@ class GPIOSettings(tk.Frame):
             self._tree.delete(i)
         # data = {}
         if all((not is_pinctrl_device(), not is_gpio_device())):
-            print("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
             return
         for gpio in range(GPIO_RANGE[0], GPIO_RANGE[1] + 1):
             gpio_dir = None
@@ -95,3 +94,4 @@ class GPIOSettings(tk.Frame):
 
     def save_config(self):
         return False
+
