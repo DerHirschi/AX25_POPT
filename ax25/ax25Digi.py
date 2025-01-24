@@ -61,6 +61,11 @@ class AX25DigiConnection:
             return
         """
         self._rx_conn = AX25Conn(ax25_frame, port=self._rx_port)  #########
+        all_conn =  self._port_handler.get_all_connections()
+        ch_id = 11
+        while ch_id in all_conn:
+            ch_id += 1
+        self._rx_conn.ch_index = ch_id
         self._rx_conn.cli.change_cli_state(5)
         self._rx_conn.is_link_remote = False
         self._rx_conn.cli_remote = False
