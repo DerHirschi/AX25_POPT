@@ -14,11 +14,11 @@ class UserDB(tk.Toplevel):
     def __init__(self, root, ent_key=''):
         tk.Toplevel.__init__(self)
         self._root_win = root
-        self.lang = self._root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self.win_height = 600
         self.win_width = 1060
         self.style = root.style
-        self.title(STR_TABLE['user_db'][self.lang])
+        self.title(STR_TABLE['user_db'][self._lang])
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
@@ -37,6 +37,7 @@ class UserDB(tk.Toplevel):
         # self.user_db = root.ax25_port_handler.user_db
         self._user_db = USER_DB
         self._db_ent = None
+        self._filter_var = tk.StringVar(self, value='')
         self._call_label_var = tk.StringVar(self)
         self._name_var = tk.StringVar(self)
         self._typ_var = tk.StringVar(self, value='SYSOP')
@@ -68,7 +69,7 @@ class UserDB(tk.Toplevel):
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
-                          text=STR_TABLE['OK'][self.lang],
+                          text=STR_TABLE['OK'][self._lang],
                           # font=("TkFixedFont", 15),
                           # bg="green",
                           height=1,
@@ -76,7 +77,7 @@ class UserDB(tk.Toplevel):
                           command=self._ok_btn_cmd)
 
         save_bt = tk.Button(self,
-                            text=STR_TABLE['save'][self.lang],
+                            text=STR_TABLE['save'][self._lang],
                             # font=("TkFixedFont", 15),
                             # bg="green",
                             height=1,
@@ -84,7 +85,7 @@ class UserDB(tk.Toplevel):
                             command=self._save_btn_cmd)
 
         cancel_bt = tk.Button(self,
-                              text=STR_TABLE['cancel'][self.lang],
+                              text=STR_TABLE['cancel'][self._lang],
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               height=1,
@@ -94,15 +95,25 @@ class UserDB(tk.Toplevel):
         save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
 
+        new_bt = tk.Button(self,
+                           text=STR_TABLE['new'][self._lang],
+                           # font=("TkFixedFont", 15),
+                           # bg="red",
+                           height=1,
+                           width=6,
+                           command=self._new_btn_cmd
+                           )
+        new_bt.place(x=10, y=10)
+
         del_bt = tk.Button(self,
-                           text=STR_TABLE['delete'][self.lang],
+                           text=STR_TABLE['delete'][self._lang],
                            # font=("TkFixedFont", 15),
                            bg="red",
                            height=1,
                            width=6,
                            command=self._del_btn_cmd
                            )
-        del_bt.place(x=10, y=10)
+        del_bt.place(x=120, y=10)
 
         self.grid_columnconfigure(0, weight=0, minsize=15)
         self.grid_columnconfigure(1, weight=0)
@@ -119,10 +130,19 @@ class UserDB(tk.Toplevel):
         self._tree.bind('<<TreeviewSelect>>', self._select_entry)
         self._tree.column("#0", width=0, minwidth=0)
         self._tree.column("call", anchor='w', stretch=tk.NO, width=150)
-
+        self._update_tree()
+        """
         ents = sorted(list(self._user_db.db.keys()))
         for ret_ent in ents:
             self._tree.insert('', tk.END, values=ret_ent)
+        """
+        ##################################
+
+        tk.Label(self, text='Filter').place(x=15, y=self.win_height - 140)
+        filter_ent = tk.Entry(self, textvariable=self._filter_var, width=12)
+        filter_ent.place(x=15, y=self.win_height - 115)
+        filter_ent.bind('<KeyRelease>', self._update_tree)
+
         ##################################
         # Selected Call Label
         tk.Label(self,
@@ -137,10 +157,10 @@ class UserDB(tk.Toplevel):
         tab2 = ttk.Frame(tabControl)
         tab3 = ttk.Frame(tabControl)
         tab4 = ttk.Frame(tabControl)
-        tabControl.add(tab1, text=STR_TABLE['main_page'][self.lang])
-        tabControl.add(tab2, text=STR_TABLE['settings'][self.lang])
-        tabControl.add(tab3, text=STR_TABLE['passwords'][self.lang])
-        tabControl.add(tab4, text=STR_TABLE['stations'][self.lang])
+        tabControl.add(tab1, text=STR_TABLE['main_page'][self._lang])
+        tabControl.add(tab2, text=STR_TABLE['settings'][self._lang])
+        tabControl.add(tab3, text=STR_TABLE['passwords'][self._lang])
+        tabControl.add(tab4, text=STR_TABLE['stations'][self._lang])
         # self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
         #################################################
         # Entry
@@ -209,7 +229,7 @@ class UserDB(tk.Toplevel):
         # Ecoding
         x = 455
         y = 110
-        tk.Label(tab1, text=f"{STR_TABLE['txt_decoding'][self.lang]}: ").place(x=x, y=y)
+        tk.Label(tab1, text=f"{STR_TABLE['txt_decoding'][self._lang]}: ").place(x=x, y=y)
         opt = list(ENCODINGS)
         encoding_ent = tk.OptionMenu(tab1, self._encoding_var, *opt)
         encoding_ent.place(x=x + 185, y=y - 2)
@@ -351,7 +371,7 @@ class UserDB(tk.Toplevel):
         # Sys-PW
         x = 20
         y = 20
-        tk.Label(tab3, text=STR_TABLE['syspassword'][self.lang]).place(x=x, y=y)
+        tk.Label(tab3, text=STR_TABLE['syspassword'][self._lang]).place(x=x, y=y)
         # self.sys_password_var = tk.StringVar(self)
         self._sys_password_ent = tk.Text(tab3,
                                          height=5,
@@ -362,7 +382,7 @@ class UserDB(tk.Toplevel):
         # Fake-Attempts inclusive real attempt
         x = 20
         y = 200
-        tk.Label(tab3, text=STR_TABLE['trys'][self.lang]).place(x=x, y=y)
+        tk.Label(tab3, text=STR_TABLE['trys'][self._lang]).place(x=x, y=y)
 
         # max_pac_opt = list(range(8))
         fake_attempts_ent = tk.Spinbox(tab3,
@@ -376,7 +396,7 @@ class UserDB(tk.Toplevel):
         # Fill Chars
         x = 300
         y = 200
-        tk.Label(tab3, text=STR_TABLE['fillchars'][self.lang]).place(x=x, y=y)
+        tk.Label(tab3, text=STR_TABLE['fillchars'][self._lang]).place(x=x, y=y)
 
         # max_pac_opt = list(range(8))
         fill_chars_ent = tk.Spinbox(tab3,
@@ -390,7 +410,7 @@ class UserDB(tk.Toplevel):
         # Login CMD
         x = 20
         y = 240
-        tk.Label(tab3, text=STR_TABLE['login_cmd'][self.lang]).place(x=x, y=y)
+        tk.Label(tab3, text=STR_TABLE['login_cmd'][self._lang]).place(x=x, y=y)
 
         tk.Entry(tab3, textvariable=self._login_cmd_var, width=20).place(x=x + 170, y=y)
         #######################
@@ -437,6 +457,15 @@ class UserDB(tk.Toplevel):
         if key in self._user_db.db.keys():
             self._db_ent = self._user_db.db[key]
             self._set_var_to_ent()
+
+    def _update_tree(self, event=None):
+        for i in self._tree.get_children():
+            self._tree.delete(i)
+        tree_filter = self._filter_var.get().upper()
+        ent = sorted(list(self._user_db.db.keys()))
+        for ret_ent in ent:
+            if tree_filter in ret_ent:
+                self._tree.insert('', tk.END, values=ret_ent)
 
     def _on_select_sysop(self, event=None):
         lang = POPT_CFG.get_guiCFG_language()
@@ -663,6 +692,10 @@ class UserDB(tk.Toplevel):
                 if ents:
                     self._db_ent = self._user_db.get_entry(ents[0])
                 self._clean_ent()
+
+    def _new_btn_cmd(self):
+        # TODO
+        pass
 
     def _destroy_win(self):
         self._root_win.userdb_win = None

@@ -131,7 +131,7 @@ Ideas/TODO's :
 
 ✓ UserDB
   - UserDB auf SQL-DB umstellen?
-  - Suchfunktion in UserDB GUI
+  ✓ Suchfunktion in UserDB GUI
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
