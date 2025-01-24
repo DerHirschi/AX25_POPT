@@ -8,6 +8,7 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - User-DB GUI: Filterfunktion für User Einträge
+- User-DB GUI: Neue Einträge können jetzt per Hand hinzugefügt werden
 
 ###########################################################################################################
 ###########################################################################################################

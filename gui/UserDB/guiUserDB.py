@@ -7,6 +7,7 @@ from cfg.constant import ENCODINGS, STATION_TYPS
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
 from cfg.string_tab import STR_TABLE
+from gui.UserDB.guiNewEntry import GUINewUserEntry
 from gui.guiMsgBoxes import AskMsg
 
 
@@ -37,6 +38,7 @@ class UserDB(tk.Toplevel):
         # self.user_db = root.ax25_port_handler.user_db
         self._user_db = USER_DB
         self._db_ent = None
+        self.NewUser_ent_win = None
         self._filter_var = tk.StringVar(self, value='')
         self._call_label_var = tk.StringVar(self)
         self._name_var = tk.StringVar(self)
@@ -694,12 +696,22 @@ class UserDB(tk.Toplevel):
                 self._clean_ent()
 
     def _new_btn_cmd(self):
-        # TODO
-        pass
+        if not self.NewUser_ent_win:
+            self.NewUser_ent_win = GUINewUserEntry(self)
+
+    def set_newUser_ent(self, db_entry):
+        self._db_ent = db_entry
+        self._set_var_to_ent()
+
+    def get_UserDB(self):
+        return self._user_db
 
     def _destroy_win(self):
+        if hasattr(self.NewUser_ent_win, 'destroy_win'):
+            self.NewUser_ent_win.destroy_win()
         self._root_win.userdb_win = None
         self.destroy()
+
 
     def tasker(self):
         pass
