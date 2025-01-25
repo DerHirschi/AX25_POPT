@@ -273,8 +273,12 @@ class AX25Conn:
                    pipe_cfg.get('pipe_parm_Proto', False))):
             """ Init CLI """
             self._init_cli()
-            if not rx:
-                self.cli.change_cli_state(state=1)
+            if hasattr(self.user_db_ent, 'sys_pw_autologin'):
+                if not self.user_db_ent.sys_pw_autologin and not rx:
+                    self.cli.change_cli_state(state=1)
+            else:
+                if not rx:
+                    self.cli.change_cli_state(state=1)
         else:
             """ Init Pipe """
             self.set_pipe(pipe_cfg)
@@ -301,7 +305,6 @@ class AX25Conn:
         self.cli_type = str(cli_key)
 
     def _reinit_cli(self):
-        # print(f"CLI RE-INIT: {self.uid}")
         if not self.pipe:
             self._init_cli()
             self.cli.change_cli_state(state=1)

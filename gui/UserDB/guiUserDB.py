@@ -65,6 +65,7 @@ class UserDB(tk.Toplevel):
         self._fake_attempts_var = tk.StringVar(self, value='5')
         self._fill_char_var = tk.StringVar(self, value='80')
         self._login_cmd_var = tk.StringVar(self, value='SYS')
+        self._autoLogin_var = tk.BooleanVar(self, value=False)
         self._stations_node_var = tk.StringVar(self)
         self._stations_bbs_var = tk.StringVar(self)
         self._stations_other_var = tk.StringVar(self)
@@ -415,6 +416,12 @@ class UserDB(tk.Toplevel):
         tk.Label(tab3, text=STR_TABLE['login_cmd'][self._lang]).place(x=x, y=y)
 
         tk.Entry(tab3, textvariable=self._login_cmd_var, width=20).place(x=x + 170, y=y)
+        # AutoLogin
+        x = 20
+        y = 280
+        tk.Label(tab3, text="Auto Login:").place(x=x, y=y)
+        ttk.Checkbutton(tab3, variable=self._autoLogin_var, ).place(x=x + 110, y=y)
+
         #######################
         # TAB4
         # Stationen
@@ -519,6 +526,10 @@ class UserDB(tk.Toplevel):
 
             # self.sys_password_ent.delete(0.0, tk.END)
             self._sys_password_ent.delete(0.0, tk.END)
+            if hasattr(self._db_ent, 'sys_pw_autologin'):
+                self._autoLogin_var.set(bool(self._db_ent.sys_pw_autologin))
+            else:
+                self._autoLogin_var.set(False)
             self._sys_password_ent.insert(tk.INSERT, str(self._db_ent.sys_pw))
             self._fake_attempts_var.set(str(self._db_ent.sys_pw_parm[0]))
             self._fill_char_var.set(str(self._db_ent.sys_pw_parm[1]))
@@ -616,6 +627,7 @@ class UserDB(tk.Toplevel):
                 int(self._fill_char_var.get()),
                 str(self._login_cmd_var.get()),
             ]
+            self._db_ent.sys_pw_autologin = bool(self._autoLogin_var.get())
 
             self._db_ent.last_edit = datetime.now()
             self._db_ent.TYP = str(self._typ_var.get())
@@ -672,6 +684,7 @@ class UserDB(tk.Toplevel):
         self._fill_char_var.set(str(0))
 
         self._login_cmd_var.set('')
+        self._autoLogin_var.set(False)
 
     def _ok_btn_cmd(self):
         self._save_vars()

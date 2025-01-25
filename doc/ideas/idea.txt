@@ -53,7 +53,7 @@ Ideas/TODO's :
 - nötigen configs lesbar machen
 - nötigen configs einheitlich in/exportierbar machen
 ✓ Port Configs/Inits aufräumen/optimieren
-✓ Port Configs/Inits aufräumen/optimieren (Thrading)
+✓ Port Configs/Inits aufräumen/optimieren (Threading)
 - Port Configs/Inits aufräumen/optimieren (Var OPT/ Code OPT)
 
 - Soundsystem überarbeiten
@@ -136,7 +136,7 @@ Ideas/TODO's :
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
 ✓ Baycom Login verfahren
-  - AutoLogin z.B. BCM
+  ✓ AutoLogin z.B. BCM
 - MD5 Login verfahren
 
 ✓ Logbuch

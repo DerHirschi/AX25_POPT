@@ -59,6 +59,7 @@ class Client(object):
     routes = []
     software_str = ''
     sys_pw = ''
+    sys_pw_autologin = False
     sys_pw_parm = [5, 80, 'SYS']
 
 

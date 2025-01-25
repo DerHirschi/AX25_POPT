@@ -2140,12 +2140,12 @@ class PoPT_GUI_Main:
         if conn is not None:
             conn.bbsFwd_start_reverse()
 
-    def do_priv(self, event=None, login_cmd=''):
+    def do_priv(self, event=None):
         conn = self.get_conn()
         if conn is not None:
             if conn.user_db_ent:
                 if conn.user_db_ent.sys_pw:
-                    conn.cli.start_baycom_login(login_cmd=login_cmd)
+                    conn.cli.start_baycom_login()
                 else:
                     self._open_settings_window('priv_win')
 

@@ -1,23 +1,23 @@
 import tkinter as tk
 
 from cfg.string_tab import STR_TABLE
-
+from cfg.popt_config import POPT_CFG
 
 class PrivilegWin(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self)
-        self.root = root
-        self.lang = self.root.language
+        self._root = root
+        self._lang = POPT_CFG.get_guiCFG_language()
         root.settings_win = self
         self.win_height = 350
         self.win_width = 840
         self.style = root.style
-        self.title(STR_TABLE['priv'][self.lang])
+        self.title(STR_TABLE['priv'][self._lang])
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self.root.main_win.winfo_x()}+"
-                      f"{self.root.main_win.winfo_y()}")
+                      f"{self._root.main_win.winfo_x()}+"
+                      f"{self._root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
         try:
@@ -39,7 +39,7 @@ class PrivilegWin(tk.Toplevel):
 
 
         cancel_bt = tk.Button(self,
-                              text=STR_TABLE['cancel'][self.lang],
+                              text=STR_TABLE['cancel'][self._lang],
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               height=1,
@@ -52,7 +52,7 @@ class PrivilegWin(tk.Toplevel):
         #
         _x = 20
         _y = 20
-        tk.Label(self, text=STR_TABLE['syspassword'][self.lang]).place(x=_x, y=_y)
+        tk.Label(self, text=STR_TABLE['syspassword'][self._lang]).place(x=_x, y=_y)
         # self.sys_password_var = tk.StringVar(self)
         self.sys_password_ent = tk.Text(self,
                                         height=5,
@@ -63,7 +63,7 @@ class PrivilegWin(tk.Toplevel):
         # Fake-Attempts inclusive real attempt
         _x = 20
         _y = 200
-        tk.Label(self, text=STR_TABLE['trys'][self.lang]).place(x=_x, y=_y)
+        tk.Label(self, text=STR_TABLE['trys'][self._lang]).place(x=_x, y=_y)
         self.fake_attempts_var = tk.StringVar(self)
         self.fake_attempts_var.set('5')
         # max_pac_opt = list(range(8))
@@ -78,7 +78,7 @@ class PrivilegWin(tk.Toplevel):
         # Fill Chars
         _x = 300
         _y = 200
-        tk.Label(self, text=STR_TABLE['fillchars'][self.lang]).place(x=_x, y=_y)
+        tk.Label(self, text=STR_TABLE['fillchars'][self._lang]).place(x=_x, y=_y)
         self.fill_char_var = tk.StringVar(self)
         self.fill_char_var.set('80')
         # max_pac_opt = list(range(8))
@@ -93,7 +93,7 @@ class PrivilegWin(tk.Toplevel):
         # Login CMD
         _x = 20
         _y = 240
-        tk.Label(self, text=STR_TABLE['login_cmd'][self.lang]).place(x=_x, y=_y)
+        tk.Label(self, text=STR_TABLE['login_cmd'][self._lang]).place(x=_x, y=_y)
         self.login_cmd_var = tk.StringVar(self)
         self.login_cmd_var.set('SYS')
         tk.Entry(self, textvariable=self.login_cmd_var, width=20).place(x=_x + 170, y=_y)
@@ -103,7 +103,7 @@ class PrivilegWin(tk.Toplevel):
         ###############
         # VARS
         self.db_ent = False
-        conn = self.root.get_conn()
+        conn = self._root.get_conn()
         if conn is None:
             ok_bt.configure(state='disabled')
         else:
@@ -117,8 +117,8 @@ class PrivilegWin(tk.Toplevel):
     def ok_btn_cmd(self):
         # self.root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.save_to_user_db()
-        sys_cmd = self.login_cmd_var.get()
-        self.root.do_priv(login_cmd=sys_cmd)
+        # sys_cmd = self.login_cmd_var.get()
+        self._root.do_priv()
         self.destroy_win()
 
     def save_to_user_db(self):
@@ -131,7 +131,7 @@ class PrivilegWin(tk.Toplevel):
 
     def destroy_win(self):
         self.destroy()
-        self.root.settings_win = None
+        self._root.settings_win = None
 
     def tasker(self):
         pass
