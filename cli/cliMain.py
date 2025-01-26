@@ -173,7 +173,6 @@ class DefaultCLI(object):
     """
 
     def change_cli_state(self, state: int):
-        print(f"Change CLI State: {state}")
         self._state_index = state
 
     def is_prefix(self):
