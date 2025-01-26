@@ -271,7 +271,6 @@ class Main_CFG:
     # GUI
     def get_guiCFG_language(self):
         return int(self._config['gui_main_parm'].get('gui_lang', 0))
-        # return LANGUAGE gui_cfg_locator
 
     def get_guiCFG_locator(self):
         return str(self._config['gui_main_parm'].get('gui_cfg_locator', ''))
@@ -332,6 +331,13 @@ class Main_CFG:
         if not data:
             return
         self._config['gui_pacman'] = dict(data)
+
+    def get_pacman_fix(self):
+        return bool(self._config['gui_main_parm'].get('gui_cfg_pacman_fix', False))
+    """
+    def set_pacman_fix(self, value: bool):
+        self._config['gui_main_parm']['gui_cfg_pacman_fix'] = bool(value)
+    """
 
     #################################################
     # Beacon

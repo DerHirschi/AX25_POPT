@@ -150,6 +150,8 @@ def getNew_maniGUI_parm():
         gui_lang = int(LANGUAGE),
         gui_cfg_locator = '',
         gui_cfg_qth = '',
+        # gui_cfg_pacman_fix = True = Disabling "Pacman-Autoupdate"-Function. Fix for "segmentation fault"/"Speicherzugriffsfehler" on Raspberry
+        gui_cfg_pacman_fix = False,
         gui_cfg_sound = False,
         gui_cfg_sprech = False,
         gui_cfg_beacon = True,
@@ -295,7 +297,7 @@ def getNew_gpio_pin_cfg(pin: int):
     return f"pin_{int(pin)}", dict(
                 pin=int(pin),
                 pin_dir_in=False,
-                polarity_high=0,  # Pull to LOW = 0 | Pull to HIGH = 1
+                polarity_high=1,  # Pull to LOW = 0 | Pull to HIGH = 1
                 value=False,             # True/False/None = no state set on init(pin setup)
                 function_cfg={},
             )
@@ -305,5 +307,5 @@ def getNew_gpio_fnc_cfg_dxAlarm():
         task_name='dx_alarm',
         task_timer=1,       # Sec
         blink=0,            # Sec / 0 = Off
-        hold_timer=20,       # Hold High | Low for value in sec. / None = Off / 0 = infinite till reset
+        hold_timer=0,       # Hold High | Low for value in sec. / None = Off / 0 = infinite till reset
     )

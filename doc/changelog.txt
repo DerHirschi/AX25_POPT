@@ -3,6 +3,13 @@
 Fixes:
 - Script-Error beim Öffnen der Haupteinstellungen (Ausgelöst durch
   die 1Wire Einstellungen)
+- Pacman-Funktion führt zu crashes (Speicherzugriffsfehler) auf dem
+  Raspberry-PI.
+  (0x0000007ff730a518 in Tk_GetImageMasterData () from /lib/aarch64-linux-gnu/libtk8.6.so)
+  Sollte der Fehler auftreten, dann kann die "Pacman"-Funktion eingeschränkt werden.
+  (Einstellungen>Allgemein>Pacman-FIX).
+  Die "Autoupdate-Funktion" wird eingeschränkt, der Plot kann aber nach wie vor
+  per Hand oder per Kanalwechsel aktualisiert werden.
 
 Optimierung:
 - SQLite WX-Daten: Schreibvorgänge auf Festspeicher optimiert

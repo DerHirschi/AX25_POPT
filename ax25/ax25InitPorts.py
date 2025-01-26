@@ -521,6 +521,7 @@ class AX25PortHandler(object):
                     SOUND.new_conn_sound()
                     speech = ' '.join(call_str.replace('-', ' '))
                     SOUND.sprech(speech)
+
             self._gui.add_LivePath_plot(node=call_str,
                                         ch_id=ch_id,
                                         path=path)
@@ -560,9 +561,11 @@ class AX25PortHandler(object):
         if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, UserDB-Conn C
+
             self._gui.sysMsg_to_qso(
                 data=msg,
                 ch_index=ch_id)
+
             if 0 < ch_id < SERVICE_CH_START:
                 SOUND.disco_sound()
             self._gui.resetHome_LivePath_plot(ch_id=ch_id)

@@ -20,7 +20,6 @@ from gui.aprs.guiAPRS_wx_tree import WXWin
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
-from gui.plots.guiLiveConnPath import LiveConnPath
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
 from gui.pms.guiBBS_PMS_Settings import PMS_Settings
@@ -54,6 +53,7 @@ from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
 from sound.popt_sound import SOUND
+from gui.plots.guiLiveConnPath import LiveConnPath
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
@@ -2110,13 +2110,15 @@ class PoPT_GUI_Main:
             self._Pacman.change_node(node=digi, ch_id=ch_id)
         self._Pacman.change_node(node=node, ch_id=ch_id)
         if ch_id == self.channel_index:
-            self._Pacman.update_plot_f_ch(ch_id=ch_id)
+            if not POPT_CFG.get_pacman_fix():
+                self._Pacman.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot(self, ch_id: int):
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
         self._Pacman.reset_last_hop(ch_id=ch_id)
         if ch_id == self.channel_index:
-            self._Pacman.update_plot_f_ch(ch_id=ch_id)
+            if not POPT_CFG.get_pacman_fix():
+                self._Pacman.update_plot_f_ch(ch_id=ch_id)
     # ENDConn Path Plot
     #######################################################################
 
