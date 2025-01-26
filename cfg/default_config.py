@@ -309,3 +309,11 @@ def getNew_gpio_fnc_cfg_dxAlarm():
         blink=0,            # Sec / 0 = Off
         hold_timer=0,       # Hold High | Low for value in sec. / None = Off / 0 = infinite till reset
     )
+
+def getNew_gpio_fnc_cfg_ConnAlarm():
+    return dict(
+        task_name='conn_alarm',
+        task_timer=1,       # Sec
+        blink=0,            # Sec / 0 = Off
+        hold_timer=0,       # Hold High | Low for value in sec. / None = Off / 0 = infinite till reset
+    )

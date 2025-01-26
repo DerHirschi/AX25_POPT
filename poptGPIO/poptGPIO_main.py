@@ -1,10 +1,10 @@
 import time
 
-from cfg.default_config import getNew_gpio_pin_cfg, getNew_gpio_fnc_cfg_dxAlarm
+from cfg.default_config import getNew_gpio_pin_cfg, getNew_gpio_fnc_cfg_dxAlarm, getNew_gpio_fnc_cfg_ConnAlarm
 from poptGPIO.gpio_fnc import is_gpio_device, set_gpio_dir, setup_gpio, set_gpio_val, close_gpio, get_gpio_val
 from poptGPIO.pinctl_fnc import is_pinctrl_device, set_pinctrl_dir, set_pinctrl_val, get_pinctrl_val
 from cfg.logger_config import logger
-from poptGPIO.poptGPIO_fnc import GPIO_DXAlarm
+from poptGPIO.poptGPIO_fnc import GPIO_DXAlarm, GPIO_ConnAlarm
 
 
 class poptGPIO_main:
@@ -20,9 +20,14 @@ class poptGPIO_main:
 
         self._gpio_conf = {}
         ##### DEV !!!!!!!! #############################
-        for pin in range(10, 17):
+        for pin in range(10, 15):
             pin_name, pin_cfg = getNew_gpio_pin_cfg(pin)
             test_fnc_cfg: dict = getNew_gpio_fnc_cfg_dxAlarm()
+            pin_cfg['function_cfg'] = test_fnc_cfg
+            self._gpio_conf[pin_name] = pin_cfg
+        for pin in range(15, 20):
+            pin_name, pin_cfg = getNew_gpio_pin_cfg(pin)
+            test_fnc_cfg: dict = getNew_gpio_fnc_cfg_ConnAlarm()
             pin_cfg['function_cfg'] = test_fnc_cfg
             self._gpio_conf[pin_name] = pin_cfg
         ##################################
@@ -31,6 +36,7 @@ class poptGPIO_main:
         ##################################
         self._FNC_TAB = dict(
             dx_alarm=GPIO_DXAlarm,
+            conn_alarm=GPIO_ConnAlarm,
         )
         self._gpio_tasks = {}
         self._init_tasker_fm_conf()
@@ -46,7 +52,7 @@ class poptGPIO_main:
                     logger.error(self._logTag + f"pinctrl: {self._is_pinctrl}")
                     logger.error(self._logTag + f"{att_name} > {value}")
                     continue
-                time.sleep(0.05)
+                # time.sleep(0.05)
                 self._pin_cfg[att_name] = value
                 logger.info(self._logTag + f"{att_name} init successful!  pinctrl: {self._is_pinctrl}")
         logger.info(self._logTag + "Init Pins fm Config.. Done !")
@@ -97,7 +103,7 @@ class poptGPIO_main:
         pin_dir_in = pin_conf.get('pin_dir_in', False)
         value = pin_conf.get('value', True)
         res = set_pinctrl_dir(pin, pin_dir_in)
-        time.sleep(0.05)
+        # time.sleep(0.05)
         if not res:
             logger.error(self._logTag + f"_setup_pinctrl_pin: {res}")
             return False
@@ -116,7 +122,7 @@ class poptGPIO_main:
             logger.error(self._logTag + f"_setup_gpio_pin, setup_gpio(): {res}")
             return False
         res = set_gpio_dir(pin, pin_dir_in)
-        time.sleep(0.05)
+        # time.sleep(0.05)
         if not res:
             logger.error(self._logTag + f"_setup_gpio_pin, set_gpio_dir(): {res}")
             return False
@@ -136,14 +142,14 @@ class poptGPIO_main:
         pin_conf = self._pin_cfg.get(pin_name, {})
         if self._is_pinctrl:
             ret = get_pinctrl_val(pin_id)
-            time.sleep(0.03)
+            # time.sleep(0.03)
             if ret is None:
                 return None
             if not pin_conf.get('polarity_high', 1):
                 return not ret
             return ret
         ret = get_gpio_val(pin_id)
-        time.sleep(0.03)
+        # time.sleep(0.03)
         if ret is None:
             return None
         if not pin_conf.get('polarity_high', 1):
@@ -163,7 +169,7 @@ class poptGPIO_main:
         if not pin_conf.get('polarity_high', 1):
             val = bool(not val)
         ret = set_gpio_val(gpio=pin_id, value=val)
-        time.sleep(0.03)
+        # time.sleep(0.03)
         return ret
 
     #####################################################################

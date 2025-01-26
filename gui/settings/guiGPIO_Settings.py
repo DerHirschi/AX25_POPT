@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from cfg.constant import GPIO_RANGE
+from cfg.default_config import getNew_gpio_pin_cfg, getNew_gpio_fnc_cfg_dxAlarm
 from poptGPIO.gpio_fnc import is_gpio_init, get_gpio_dir, get_gpio_val, is_gpio_device
 from poptGPIO.pinctl_fnc import is_pinctrl_device, get_pinctrl_dir, get_pinctrl_val
 
@@ -35,6 +36,7 @@ class GPIOSettings(tk.Frame):
             'gpio_id',
             'gpio_dir',
             'gpio_val',
+            'gpio_fnc',
             # 'sens_val_f',
         )
         self._tree = ttk.Treeview(lower_frame, columns=columns, show='headings')
@@ -42,46 +44,24 @@ class GPIOSettings(tk.Frame):
         self._tree.heading('gpio_id', text='GPIO ID', command=lambda: self._sort_entry('gpio_id'))
         self._tree.heading('gpio_dir', text='IN/OUT', command=lambda: self._sort_entry('gpio_dir'))
         self._tree.heading('gpio_val', text='Value', command=lambda: self._sort_entry('gpio_val'))
+        self._tree.heading('gpio_fnc', text='FNC', command=lambda: self._sort_entry('gpio_fnc'))
         self._tree.column("str_var", anchor=tk.W, stretch=tk.YES, width=100)
         self._tree.column("gpio_id", anchor=tk.W, stretch=tk.YES, width=100)
         self._tree.column("gpio_dir", anchor=tk.CENTER, stretch=tk.NO, width=100)
         self._tree.column("gpio_val", anchor=tk.CENTER, stretch=tk.NO, width=100)
+        self._tree.column("gpio_fnc", anchor=tk.CENTER, stretch=tk.NO, width=140)
 
         self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar = ttk.Scrollbar(lower_frame, orient=tk.VERTICAL, command=self._tree.yview)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._tree.configure(yscrollcommand=scrollbar.set)
-        self._gpio_conf = dict(
-
-            pin_10=dict(
-                pin=10,
-                pin_dir_in=False,
-                value=None,  # True/False/None = no state set on init(pin setup)
-                function='',
-                function_cfg={},
-            ),
-            pin_11=dict(
-                pin=11,
-                pin_dir_in=False,
-                value=True,  # True/False/None = no state set on init(pin setup)
-                function='',
-                function_cfg={},
-            ),
-            pin_12=dict(
-                pin=12,
-                pin_dir_in=False,
-                value=True,  # True/False/None = no state set on init(pin setup)
-                function='',
-                function_cfg={},
-            ),
-            pin_13=dict(
-                pin=13,
-                pin_dir_in=False,
-                value=True,  # True/False/None = no state set on init(pin setup)
-                function='',
-                function_cfg={},
-            ),
-        )
+        self._gpio_conf = dict()
+        ##### DEV !!!!!!!! #############################
+        for pin in range(10, 17):
+            pin_name, pin_cfg = getNew_gpio_pin_cfg(pin)
+            test_fnc_cfg: dict = getNew_gpio_fnc_cfg_dxAlarm()
+            pin_cfg['function_cfg'] = test_fnc_cfg
+            self._gpio_conf[pin_name] = pin_cfg
 
         self._update_data_fm_cfg()
 
