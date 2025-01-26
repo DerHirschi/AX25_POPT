@@ -9,6 +9,7 @@ from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, log_book
 from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
 from fnc.str_fnc import get_strTab
+from poptGPIO.poptGPIO_main import poptGPIO_main
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
 from sql_db.db_main import SQL_Database
@@ -112,6 +113,14 @@ class AX25PortHandler(object):
         logger.info("PH: PMS Init")
         self._init_bbs()
         #######################################################
+        # GPIO
+        logger.info("PH: PoPT-GPIO Init")
+        try:
+            self._gpio = poptGPIO_main(self)
+        except IOError as e:
+            logger.warning(f"PH: PoPT-GPIO Init: {e}")
+            self._gpio = None
+        #######################################################
         # Port Handler Tasker (threaded Loop)
         logger.info("PH: Tasker Init")
         # 1Wire Thread
@@ -155,6 +164,7 @@ class AX25PortHandler(object):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
             self._aprs_task()
+            self._gpio_task()
             self._task_timer_05sec = time.time() + 0.5
 
     def _1sec_task(self):
@@ -243,6 +253,10 @@ class AX25PortHandler(object):
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
         self._close_aprs_ais()
+        if hasattr(self._gpio, 'close_gpio_pins'):
+            logger.info("PH: Closing GPIO")
+            self._gpio.close_gpio_pins()
+
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.close_port(k)
@@ -980,6 +994,10 @@ class AX25PortHandler(object):
         return self._start_time
     #################################################
     #
+    def get_dxAlarm(self):
+        if self._mh:
+            return self._mh.dx_alarm_trigger
+        return False
 
     def set_dxAlarm(self, set_alarm=True):
         if set_alarm:
@@ -1079,6 +1097,18 @@ class AX25PortHandler(object):
                 logger.warning(f"PH: _oneWire_task IndexError: {sens_cfg}")
                 continue
         # POPT_CFG.set_1wire_sensor_cfg(dict(sensor_cfg))
+
+    ##############################################################
+    # GPIO
+    def get_GPIO(self):
+        return self._gpio
+
+    def _gpio_task(self):
+        if hasattr(self._gpio, 'gpio_tasker'):
+            self._gpio.gpio_tasker()
+            return
+        return
+
     ##############################################################
     #
     def debug_Connections(self):

@@ -72,7 +72,7 @@ def setup_gpio(gpio: int):
     if is_gpio_init(gpio):
         # Bereits aktiviert
         logger.warning(f"GPIO: setup_gpio() > {gpio} bereits initialisiert.")
-        return False
+        return True
     os_cmd = f"echo {gpio} > {GPIO_PATH}/export"
     try:
         ret = os.system(os_cmd)

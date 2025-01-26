@@ -284,3 +284,26 @@ def getNew_1wire_device_cfg(device_path: str):
         device_value=None,
         StringVar='',
     )
+
+#####################################################
+# GPIO
+def getNew_gpio_cfg():
+    return dict(
+    )
+
+def getNew_gpio_pin_cfg(pin: int):
+    return f"pin_{int(pin)}", dict(
+                pin=int(pin),
+                pin_dir_in=False,
+                polarity_high=0,  # Pull to LOW = 0 | Pull to HIGH = 1
+                value=False,             # True/False/None = no state set on init(pin setup)
+                function_cfg={},
+            )
+
+def getNew_gpio_fnc_cfg_dxAlarm():
+    return dict(
+        task_name='dx_alarm',
+        task_timer=1,       # Sec
+        blink=0,            # Sec / 0 = Off
+        hold_timer=20,       # Hold High | Low for value in sec. / None = Off / 0 = infinite till reset
+    )

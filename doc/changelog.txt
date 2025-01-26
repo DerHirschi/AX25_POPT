@@ -5,6 +5,7 @@ Fixes:
   die 1Wire Einstellungen)
 
 Optimierung:
+- SQLite WX-Daten: Schreibvorgänge auf Festspeicher optimiert
 
 Neue Implementierungen / Funktionen:
 - User-DB GUI: Filterfunktion für User Einträge

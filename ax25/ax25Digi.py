@@ -171,7 +171,7 @@ class AX25DigiConnection:
         return False
 
     def _link_connections(self):
-        print("_link_connections")
+        logger.debug("_link_connections")
         if not self._rx_conn or not self._tx_conn:
             self._state_0_error()
             logger.error('Digi-Conn_link Error: No tx or rx conn')
@@ -179,13 +179,13 @@ class AX25DigiConnection:
 
         if self._rx_conn.new_digi_connection(self._tx_conn):
             logger.debug('Digi-Accept tX-CONN')
-            print('Digi-Accept tX-CONN')
-            print('--------------------------')
-            print(f"TX-Conn: {self._tx_conn})")
-            print(f"RX-Conn: {self._rx_conn})")
-            print(f"TX-Conn LC: {self._tx_conn.LINK_Connection})")
-            print(f"RX-Conn LC: {self._rx_conn.LINK_Connection})")
-            print('--------------------------')
+            logger.debug('Digi-Accept tX-CONN')
+            logger.debug('--------------------------')
+            logger.debug(f"TX-Conn: {self._tx_conn})")
+            logger.debug(f"RX-Conn: {self._rx_conn})")
+            logger.debug(f"TX-Conn LC: {self._tx_conn.LINK_Connection})")
+            logger.debug(f"RX-Conn LC: {self._rx_conn.LINK_Connection})")
+            logger.debug('--------------------------')
             return True
         if self._tx_conn.new_digi_connection(self._rx_conn):
             logger.debug('Digi-Accept RX-CONN')
@@ -202,7 +202,7 @@ class AX25DigiConnection:
     def _state_1_rx(self, ax25_frame):
         if ax25_frame.ctl_byte.flag == 'SABM':
             if not self._tx_conn_uid:
-                print("_state_1_rx: not self._tx_conn_uid")
+                logger.debug("_state_1_rx: not self._tx_conn_uid")
                 self._init_digi_conn(ax25_frame)
             else:
                 logger.error('Digi-SABM-RX ERROR')
@@ -299,7 +299,6 @@ class AX25DigiConnection:
         port.add_frame_to_digiBuff(ax25_frame)
 
     def _digi_fallback(self, ax25_frame):
-        print('DIGI Fallback')
         logger.debug('DIGI Fallback')
         # self._rx_port.add_frame_to_digiBuff(ax25_frame)
         # self._UI_digi(ax25_frame)

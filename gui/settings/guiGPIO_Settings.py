@@ -12,6 +12,9 @@ class GPIOSettings(tk.Frame):
         ################################
         # self._lang = POPT_CFG.get_guiCFG_language()
         ################################
+        self._gpio = None
+        if hasattr(root_win, 'get_GPIOfmPH'):
+            self._gpio = root_win.get_GPIOfmPH()
         self._rev_ent = False
         ################################
         upper_frame = tk.Frame(self)
@@ -20,7 +23,7 @@ class GPIOSettings(tk.Frame):
         global_opt_frame = tk.Frame(upper_frame)
         global_opt_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        tk.Button(global_opt_frame, text='Update', command=self._update_data).pack(pady=15, padx=15)
+        tk.Button(global_opt_frame, text='Update', command=self._update_data_fm_cfg).pack(pady=15, padx=15)
         ################################
         ################################
         lower_frame = tk.Frame(self)
@@ -48,8 +51,39 @@ class GPIOSettings(tk.Frame):
         scrollbar = ttk.Scrollbar(lower_frame, orient=tk.VERTICAL, command=self._tree.yview)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._tree.configure(yscrollcommand=scrollbar.set)
+        self._gpio_conf = dict(
 
-        self._update_data()
+            pin_10=dict(
+                pin=10,
+                pin_dir_in=False,
+                value=None,  # True/False/None = no state set on init(pin setup)
+                function='',
+                function_cfg={},
+            ),
+            pin_11=dict(
+                pin=11,
+                pin_dir_in=False,
+                value=True,  # True/False/None = no state set on init(pin setup)
+                function='',
+                function_cfg={},
+            ),
+            pin_12=dict(
+                pin=12,
+                pin_dir_in=False,
+                value=True,  # True/False/None = no state set on init(pin setup)
+                function='',
+                function_cfg={},
+            ),
+            pin_13=dict(
+                pin=13,
+                pin_dir_in=False,
+                value=True,  # True/False/None = no state set on init(pin setup)
+                function='',
+                function_cfg={},
+            ),
+        )
+
+        self._update_data_fm_cfg()
 
     def _sort_entry(self, col):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
@@ -59,12 +93,19 @@ class GPIOSettings(tk.Frame):
         for index, (val, k) in enumerate(tmp):
             self._tree.move(k, '', int(index))
 
-    def _update_data(self, event=None):
+    def _update_data_fm_cfg(self, event=None):
         for i in self._tree.get_children():
             self._tree.delete(i)
         # data = {}
-        if all((not is_pinctrl_device(), not is_gpio_device())):
+        if self._gpio is None:
             return
+        """
+        pin_cfgs = {}
+        for att_name, value in self._gpio_conf.items():
+            if att_name.startswith('pin_') and type(value) == dict:
+                pin_cfgs[att_name] = dict(value)
+        """
+        # if self._gpio.is_pinctrl:
         for gpio in range(GPIO_RANGE[0], GPIO_RANGE[1] + 1):
             gpio_dir = None
             gpio_val = None
@@ -90,6 +131,7 @@ class GPIOSettings(tk.Frame):
                 gpio_val=gpio_val,
             )
             """
+            return
 
 
     def save_config(self):
