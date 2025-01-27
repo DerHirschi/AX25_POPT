@@ -6,6 +6,7 @@ Fixes:
 - Pacman-Funktion führt zu crashes (Speicherzugriffsfehler) auf dem
   Raspberry-PI.
   (0x0000007ff730a518 in Tk_GetImageMasterData () from /lib/aarch64-linux-gnu/libtk8.6.so)
+  (Betrifft bis jetzt nur libtk8.6.11-2 arm64)
   Sollte der Fehler auftreten, dann kann die "Pacman"-Funktion eingeschränkt werden.
   (Einstellungen>Allgemein>Pacman-FIX).
   Die "Autoupdate-Funktion" wird eingeschränkt, der Plot kann aber nach wie vor
@@ -18,6 +19,10 @@ Neue Implementierungen / Funktionen:
 - User-DB GUI: Filterfunktion für User Einträge
 - User-DB GUI: Neue Einträge können jetzt per Hand hinzugefügt werden
 - Autologin mittels Baycom Login Verfahren
+- GPIO-Funktion "DX-Alarm": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+- GPIO-Funktion "Conn-Alarm": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
 
 ###########################################################################################################
 ###########################################################################################################

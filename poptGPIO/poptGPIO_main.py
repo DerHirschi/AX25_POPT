@@ -1,6 +1,4 @@
-import time
-
-from cfg.default_config import getNew_gpio_pin_cfg, getNew_gpio_fnc_cfg_dxAlarm, getNew_gpio_fnc_cfg_ConnAlarm
+from cfg.popt_config import POPT_CFG
 from poptGPIO.gpio_fnc import is_gpio_device, set_gpio_dir, setup_gpio, set_gpio_val, close_gpio, get_gpio_val
 from poptGPIO.pinctl_fnc import is_pinctrl_device, set_pinctrl_dir, set_pinctrl_val, get_pinctrl_val
 from cfg.logger_config import logger
@@ -18,8 +16,9 @@ class poptGPIO_main:
             logger.warning(self._logTag + "Init failed !")
             raise IOError('No GPIO Device found !')
 
-        self._gpio_conf = {}
+        self._gpio_conf = POPT_CFG.get_gpio_cfg()
         ##### DEV !!!!!!!! #############################
+        """
         for pin in range(10, 15):
             pin_name, pin_cfg = getNew_gpio_pin_cfg(pin)
             test_fnc_cfg: dict = getNew_gpio_fnc_cfg_dxAlarm()
@@ -30,6 +29,7 @@ class poptGPIO_main:
             test_fnc_cfg: dict = getNew_gpio_fnc_cfg_ConnAlarm()
             pin_cfg['function_cfg'] = test_fnc_cfg
             self._gpio_conf[pin_name] = pin_cfg
+        """
         ##################################
         self._pin_cfg = {}
         self._init_fm_conf()
