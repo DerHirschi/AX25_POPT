@@ -1,5 +1,4 @@
 import time
-
 from cfg.logger_config import logger
 
 
@@ -134,6 +133,12 @@ class GPIO_DXAlarm(GPIO_DefaultFNC):
         )):
             self._set_hold_alarm(gpio_val)
             return
+        if all((
+            not self._is_blink,
+            self._cfg_hold is not None,
+            not dx_alarm
+        )):
+            self._hold_trigger = False, False
 
         if dx_alarm and not gpio_val:
             self._set_gpio_val(not gpio_val)
@@ -171,6 +176,12 @@ class GPIO_ConnAlarm(GPIO_DefaultFNC):
         )):
             self._set_hold_alarm(gpio_val)
             return
+        if all((
+            not self._is_blink,
+            self._cfg_hold is not None,
+            not conn_state
+        )):
+            self._hold_trigger = False, False
 
         if conn_state and not gpio_val:
             self._set_gpio_val(not gpio_val)

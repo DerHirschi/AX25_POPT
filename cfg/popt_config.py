@@ -563,7 +563,6 @@ class Main_CFG:
     ###########################################
     # GPIO
     def get_gpio_cfg(self):
-
         """
         default_cfg: dict =  getNew_gpio_cfg()
         return dict(self._config.get('gpio_cfg',default_cfg))

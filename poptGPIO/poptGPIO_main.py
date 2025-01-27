@@ -6,10 +6,10 @@ from poptGPIO.poptGPIO_fnc import GPIO_DXAlarm, GPIO_ConnAlarm
 
 
 class poptGPIO_main:
-    def __init__(self, portHandler):
+    def __init__(self, port_handler):
         self._logTag = 'poptGPIO: '
         logger.info(self._logTag + "Init")
-        self._portHandler = portHandler
+        self._portHandler = port_handler
         self._is_pinctrl = is_pinctrl_device()
         if not any((self._is_pinctrl, is_gpio_device())):
             logger.warning(self._logTag + f"No GPIO Device found !")
@@ -89,11 +89,27 @@ class poptGPIO_main:
                 continue
 
     #####################################################################
+    def add_pin(self, pin_conf:dict):
+        pin = pin_conf.get('pin', 0)
+        pin_name = f"pin_{pin}"
+        if not pin:
+            logger.error(self._logTag + "_setup_pin: No Pin (Pin = 0)")
+            return False
+        if pin_name in self._pin_cfg:
+            logger.warning(self._logTag + f"{pin_name} already in Config")
+            return
+        self._pin_cfg[pin_name] = pin_conf
+        if self._is_pinctrl:
+            return self._setup_pinctrl_pin(pin_conf)
+        return self._setup_gpio_pin(pin_conf)
+
+
     def _setup_pin(self, pin_conf: dict):
         pin = pin_conf.get('pin', 0)
         if not pin:
             logger.error(self._logTag + "_setup_pin: No Pin (Pin = 0)")
             return False
+
         if self._is_pinctrl:
             return self._setup_pinctrl_pin(pin_conf)
         return self._setup_gpio_pin(pin_conf)
@@ -178,6 +194,12 @@ class poptGPIO_main:
 
     def get_gpioPH(self):
         return self._portHandler
+
+    def get_gpio_conf(self):
+        return self._gpio_conf
+
+    def get_pin_conf(self):
+        return self._pin_cfg
 
     #####################################################################
     def close_gpio_pins(self):

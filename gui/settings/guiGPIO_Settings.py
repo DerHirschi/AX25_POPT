@@ -1,11 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 
-from cfg.constant import GPIO_RANGE
 from cfg.popt_config import POPT_CFG
 from gui.settings.guiGPIO_PinSetup import GPIO_pinSetup
-from poptGPIO.gpio_fnc import is_gpio_init, get_gpio_dir, get_gpio_val, is_gpio_device
-from poptGPIO.pinctl_fnc import is_pinctrl_device, get_pinctrl_dir, get_pinctrl_val
+from poptGPIO.gpio_fnc import is_gpio_init, get_gpio_val, is_gpio_device
+from poptGPIO.pinctl_fnc import is_pinctrl_device, get_pinctrl_val
 
 
 class GPIOSettings(tk.Frame):
@@ -17,6 +16,8 @@ class GPIOSettings(tk.Frame):
         self._gpio = None
         if hasattr(root_win, 'get_GPIOfmPH'):
             self._gpio = root_win.get_GPIOfmPH()
+        else:
+            raise AttributeError('GPIOSettings ')
         self._rev_ent = False
         self.pin_setup_win = None
         ################################
@@ -64,7 +65,7 @@ class GPIOSettings(tk.Frame):
         scrollbar = ttk.Scrollbar(lower_frame, orient=tk.VERTICAL, command=self._tree.yview)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._tree.configure(yscrollcommand=scrollbar.set)
-        self._gpio_conf = POPT_CFG.get_gpio_cfg()
+        self._gpio_conf = self._gpio.get_gpio_conf()
         ##### DEV !!!!!!!! #############################
         """
         for pin in range(10, 17):
@@ -112,7 +113,15 @@ class GPIOSettings(tk.Frame):
                    task_name)
             self._tree.insert('', tk.END, values=val, )
 
+    def destroy_win(self):
+        if hasattr(self.pin_setup_win, 'destroy_win'):
+            self.pin_setup_win.destroy_win()
 
+    def get_gpio(self):
+        return self._gpio
+
+    def get_gpio_conf(self):
+        return self._gpio.get_gpio_conf()
 
     def _open_pin_setup(self):
         if self.pin_setup_win is None:
