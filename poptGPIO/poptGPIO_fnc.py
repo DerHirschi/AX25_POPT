@@ -41,7 +41,38 @@ class GPIO_DefaultFNC:
         return
 
     def _gpioFNC_task(self):
-        pass
+        state_var = self._get_state_var()
+        gpio_val = self._get_gpio_val()
+        if any((gpio_val is None, self._e)):
+            return
+
+        if all((
+                self._is_blink,
+                state_var,
+        )):
+            self._set_blink_alarm(gpio_val)
+            return
+
+        if all((
+                not self._is_blink,
+                self._cfg_hold is not None,
+                state_var
+        )):
+            self._set_hold_alarm(gpio_val)
+            return
+        if all((
+                not self._is_blink,
+                self._cfg_hold is not None,
+                not state_var
+        )):
+            self._hold_trigger = False, False
+
+        if state_var and not gpio_val:
+            self._set_gpio_val(not gpio_val)
+            return
+        if not state_var and gpio_val:
+            self._set_gpio_val(not gpio_val)
+            return
 
     def gpioFNC_get_e_state(self):
         return bool(self._e)
@@ -107,48 +138,17 @@ class GPIO_DefaultFNC:
             return
         self._hold_trigger = True, True
 
+    def _get_state_var(self):
+        return
+
 
 class GPIO_DXAlarm(GPIO_DefaultFNC):
     def __init__(self, gpio, pin_cfg: dict):
         GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
         self._logTag = 'GPIO_DXAlarm: '
 
-    def _gpioFNC_task(self):
-        dx_alarm = self._get_dxAlarm_state()
-        gpio_val = self._get_gpio_val()
-        if any((gpio_val is None, self._e)):
-            return
-
-        if all((
-                self._is_blink,
-                dx_alarm,
-        )):
-            self._set_blink_alarm(gpio_val)
-            return
-
-        if all((
-            not self._is_blink,
-            self._cfg_hold is not None,
-            dx_alarm
-        )):
-            self._set_hold_alarm(gpio_val)
-            return
-        if all((
-            not self._is_blink,
-            self._cfg_hold is not None,
-            not dx_alarm
-        )):
-            self._hold_trigger = False, False
-
-        if dx_alarm and not gpio_val:
-            self._set_gpio_val(not gpio_val)
-            return
-        if not dx_alarm and gpio_val:
-            self._set_gpio_val(not gpio_val)
-            return
-
     #########################################################
-    def _get_dxAlarm_state(self):
+    def _get_state_var(self):
         return bool(self._port_handler.get_dxAlarm())
 
 class GPIO_ConnAlarm(GPIO_DefaultFNC):
@@ -156,39 +156,5 @@ class GPIO_ConnAlarm(GPIO_DefaultFNC):
         GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
         self._logTag = 'GPIO_ConnAlarm: '
 
-    def _gpioFNC_task(self):
-        conn_state = self._get_conn_state()
-        gpio_val = self._get_gpio_val()
-        if any((gpio_val is None, self._e)):
-            return
-
-        if all((
-                self._is_blink,
-                conn_state,
-        )):
-            self._set_blink_alarm(gpio_val)
-            return
-
-        if all((
-                not self._is_blink,
-                self._cfg_hold is not None,
-                conn_state
-        )):
-            self._set_hold_alarm(gpio_val)
-            return
-        if all((
-            not self._is_blink,
-            self._cfg_hold is not None,
-            not conn_state
-        )):
-            self._hold_trigger = False, False
-
-        if conn_state and not gpio_val:
-            self._set_gpio_val(not gpio_val)
-            return
-        if not conn_state and gpio_val:
-            self._set_gpio_val(not gpio_val)
-            return
-
-    def _get_conn_state(self):
+    def _get_state_var(self):
         return bool(self._port_handler.get_all_connections())
