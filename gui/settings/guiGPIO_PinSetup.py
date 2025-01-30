@@ -46,7 +46,8 @@ class GPIO_pinSetup(tk.Toplevel):
         self._pin_id_var = tk.StringVar(self, value=str(pin_id))
         self._pin_fnc_var = tk.StringVar(self)
         self._blink_var = tk.StringVar(self, value=str(1))
-        self._hold_var = tk.StringVar(self, value=str(0))
+        self._hold_var = tk.IntVar(self, value=0)
+        self._hold_off_var = tk.BooleanVar(self, value=True)
         self._pol_var = tk.StringVar(self, value='normal')
 
         self._init_lable_var = tk.StringVar(self, value='! Not initialised !')
@@ -128,8 +129,20 @@ class GPIO_pinSetup(tk.Toplevel):
         hold_t_frame.pack(fill=tk.X, pady=10)
         tk.Label(hold_t_frame, text='Hold Timer s').pack(side=tk.LEFT, padx=5)
         opt = ['OFF'] + list(range(0, 600))
-        self._hold_sel = tk.OptionMenu(hold_t_frame, self._hold_var, *opt)
+        # self._hold_sel = tk.OptionMenu(hold_t_frame, self._hold_var, *opt)
+        self._hold_sel = tk.Spinbox(hold_t_frame,
+                                     from_=0,
+                                     to=7200,
+                                     increment=10,
+                                     width=5,
+                                     textvariable=self._hold_var,
+                                     # command=self._set_max_frame,
+                                     state='normal')
+
         self._hold_sel.pack(side=tk.LEFT, padx=5)
+
+        self._hold_off_sel = tk.Checkbutton(hold_t_frame, text='On/Off', variable=self._hold_off_var)
+        self._hold_off_sel.pack(side=tk.LEFT, padx=15)
 
         ############ POL
         pol_t_frame = tk.Frame(param_frame_l)
@@ -257,9 +270,11 @@ class GPIO_pinSetup(tk.Toplevel):
             self._pol_var.set('inverted')
         self._blink_var.set(str(blink))
         if hold is None:
-            self._hold_var.set('OFF')
+            self._hold_off_var.set(False)
+            self._hold_var.set(0)
         else:
-            self._hold_var.set(str(hold))
+            self._hold_off_var.set(True)
+            self._hold_var.set(hold)
         self._init_lable_var.set(value='Init OK')
         self._is_pin_init = True
         self._dir_lable_var.set(value=f'Direction Input: {pin_dir}')
@@ -290,7 +305,8 @@ class GPIO_pinSetup(tk.Toplevel):
         except ValueError:
             return False
         hold_timer = self._hold_var.get()
-        if hold_timer == 'OFF':
+        hold_off = self._hold_off_var.get()
+        if not hold_off:
             hold_timer = None
         else:
             try:
