@@ -12,13 +12,13 @@ class GPIO_DefaultFNC:
             raise AttributeError("self._gpio can't find get_gpioPH()")
         self._port_handler = self._gpio.get_gpioPH()
         #######################################
-        self._pin_fnc_cfg = pin_cfg.get('function_cfg', {})
+        # self._pin_fnc_cfg = pin_cfg.get('function_cfg', {})
         self._pin = pin_cfg.get('pin', 0)
         self._task_timer = time.time()
-        self._parm_task_timer = self._pin_fnc_cfg.get('task_timer', 0)
-        self._cfg_blink = self._pin_fnc_cfg.get('blink', 0)
-        self._cfg_hold = self._pin_fnc_cfg.get('hold_timer', 0)
-        # self._cfg_pol = self._pin_fnc_cfg.get('polarity_high', 1)
+        self._parm_task_timer = self._pin_cfg.get('task_timer', 0)
+        self._cfg_blink = self._pin_cfg.get('blink', 0)
+        self._cfg_hold = self._pin_cfg.get('hold_timer', 0)
+        # self._cfg_pol = self._pin_cfg.get('polarity_high', 1)
         self._is_blink = bool(self._cfg_blink) and not bool(self._cfg_hold)
         self._hold_timer = time.time()
         self._hold_trigger = False, False
@@ -92,7 +92,7 @@ class GPIO_DefaultFNC:
         if ret is None:
             logger.error(self._logTag + f"_get_gpio_state: return None on pin {self._pin}")
             logger.error(self._logTag + f"pin_cfg: {self._pin_cfg}")
-            logger.error(self._logTag + f"pin_fnc_cfg: {self._pin_fnc_cfg}")
+            # logger.error(self._logTag + f"pin_fnc_cfg: {self._pin_fnc_cfg}")
             self._e = True
             return None
         return ret
@@ -112,7 +112,7 @@ class GPIO_DefaultFNC:
         if not ret:
             logger.error(self._logTag + f"_set_gpio_val: return is False on pin {self._pin}")
             logger.error(self._logTag + f"pin_cfg: {self._pin_cfg}")
-            logger.error(self._logTag + f"pin_fnc_cfg: {self._pin_fnc_cfg}")
+            # logger.error(self._logTag + f"pin_fnc_cfg: {self._pin_fnc_cfg}")
             self._e = True
             return None
         return True

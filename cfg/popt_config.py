@@ -1,7 +1,6 @@
 from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
-    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_gpio_pin_cfg, getNew_gpio_fnc_cfg_dxAlarm, \
-    getNew_gpio_fnc_cfg_ConnAlarm
+    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
@@ -564,9 +563,6 @@ class Main_CFG:
     # GPIO
     def get_gpio_cfg(self):
         """
-        default_cfg: dict =  getNew_gpio_cfg()
-        return dict(self._config.get('gpio_cfg',default_cfg))
-        """
         gpio_conf = {}
         for pin in range(10, 15):
             pin_name, pin_cfg = getNew_gpio_pin_cfg(pin)
@@ -579,7 +575,10 @@ class Main_CFG:
             pin_cfg['function_cfg'] = test_fnc_cfg
             gpio_conf[pin_name] = pin_cfg
         return dict(gpio_conf)
+        """
+        return dict(self._config.get('gpio_cfg', getNew_gpio_cfg()))
 
-
+    def set_gpio_cfg(self, gpio_cfg: dict):
+        self._config['gpio_cfg'] = dict(gpio_cfg)
 
 POPT_CFG = Main_CFG()

@@ -8,7 +8,7 @@ from fnc.str_fnc import get_strTab
 
 
 class GPIO_pinSetup(tk.Toplevel):
-    def __init__(self, root_win):
+    def __init__(self, root_win, pin_id=1):
         tk.Toplevel.__init__(self)
         win_width = 600
         win_height = 400
@@ -26,21 +26,24 @@ class GPIO_pinSetup(tk.Toplevel):
             pass
         self.lift()
         self._lang = POPT_CFG.get_guiCFG_language()
-        # TODO self.title(get_strTab(str_key='settings', lang_index=self._lang))
+        self.title('GPIO')
         #####################################################
         self._root_win = root_win
         self._gpio = root_win.get_gpio()
         ###############
+        self._gpio_cfg = POPT_CFG.get_gpio_cfg()
+        self._pin_cfg = '', {}
+        self._is_pin_init = False
         self._pin_fnc_opt = dict(
             dx_alarm=self._setup_dxalarm,
-            conn_alarm=self._setup_connalarm,
+            conn_alarm=self._setup_conn_alarm,
         )
         self._pol_opt = dict(
             normal=True,
             inverted=False
         )
         ###############
-        self._pin_id_var = tk.StringVar(self, value=str(1))
+        self._pin_id_var = tk.StringVar(self, value=str(pin_id))
         self._pin_fnc_var = tk.StringVar(self)
         self._blink_var = tk.StringVar(self, value=str(1))
         self._hold_var = tk.StringVar(self, value=str(0))
@@ -65,17 +68,26 @@ class GPIO_pinSetup(tk.Toplevel):
                                   increment=1,
                                   width=3,
                                   textvariable=self._pin_id_var,
-                                  # command=self._set_max_frame,
+                                  command=self._switch_pin_id,
                                   state='normal')
 
         pin_selector.pack(side=tk.LEFT, padx=10)
         # Init Btn
+
         setup_btn = tk.Button(
             upper_frame,
             text='Setup',
-            command=self._setup_pin_btn
+            command=self.setup_pin_btn
         )
         setup_btn.pack(side=tk.LEFT, padx=70,)
+
+        del_btn = tk.Button(
+            upper_frame,
+            text=get_strTab('delete', self._lang),
+            command=self._del_pin
+        )
+        del_btn.pack(side=tk.LEFT, )
+
         ###########################################
         # Parameter Frame
         param_frame = tk.Frame(self)
@@ -94,11 +106,12 @@ class GPIO_pinSetup(tk.Toplevel):
         fnc_sel_frame = tk.Frame(param_frame_l)
         fnc_sel_frame.pack(fill=tk.X, pady=15)
         tk.Label(fnc_sel_frame, text='Function: ').pack(side=tk.LEFT, padx=5)
+        opt = [''] + list(self._pin_fnc_opt.keys())
         fnc_selector = tk.OptionMenu(
             fnc_sel_frame,
             self._pin_fnc_var,
-            *self._pin_fnc_opt.keys(),
-            # command=
+            *opt,
+            command=self._select_pin_fnc,
         )
         fnc_selector.pack(side=tk.LEFT, padx=5)
 
@@ -106,17 +119,17 @@ class GPIO_pinSetup(tk.Toplevel):
         blink_t_frame = tk.Frame(param_frame_l)
         blink_t_frame.pack(fill=tk.X, pady=10)
         tk.Label(blink_t_frame, text='Blink Timer s').pack(side=tk.LEFT, padx=5)
-        opt = range(1,11)
-        blink_sel = tk.OptionMenu(blink_t_frame, self._blink_var, *opt)
-        blink_sel.pack(side=tk.LEFT, padx=5)
+        opt = range(11)
+        self._blink_sel = tk.OptionMenu(blink_t_frame, self._blink_var, *opt)
+        self._blink_sel.pack(side=tk.LEFT, padx=5)
 
         ############ Hold
         hold_t_frame = tk.Frame(param_frame_l)
         hold_t_frame.pack(fill=tk.X, pady=10)
         tk.Label(hold_t_frame, text='Hold Timer s').pack(side=tk.LEFT, padx=5)
-        opt = range(1, 600)
-        hold_sel = tk.OptionMenu(hold_t_frame, self._hold_var, *opt)
-        hold_sel.pack(side=tk.LEFT, padx=5)
+        opt = ['OFF'] + list(range(0, 600))
+        self._hold_sel = tk.OptionMenu(hold_t_frame, self._hold_var, *opt)
+        self._hold_sel.pack(side=tk.LEFT, padx=5)
 
         ############ POL
         pol_t_frame = tk.Frame(param_frame_l)
@@ -124,8 +137,8 @@ class GPIO_pinSetup(tk.Toplevel):
         tk.Label(pol_t_frame, text='Polarity').pack(side=tk.LEFT, padx=5)
 
         opt = self._pol_opt.keys()
-        pol_sel = tk.OptionMenu(pol_t_frame, self._pol_var, *opt)
-        pol_sel.pack(side=tk.LEFT, padx=5)
+        self._pol_sel = tk.OptionMenu(pol_t_frame, self._pol_var, *opt)
+        self._pol_sel.pack(side=tk.LEFT, padx=5)
 
         ###########################################
         # param_frame_r
@@ -154,18 +167,21 @@ class GPIO_pinSetup(tk.Toplevel):
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     ######################################################
-    def _setup_pin_btn(self):
+    def setup_pin_btn(self):
         try:
             pin_id = int(self._pin_id_var.get())
         except ValueError:
             return
-        pin_cfg = self._gpio.get_pin_conf()
-        
-        if f"pin_{pin_id}" in pin_cfg:
-            self._update_lable_fm_cfg(pin_cfg.get(f"pin_{pin_id}", {}))
+        if not pin_id:
             return
-        pin_cfg = getNew_gpio_pin_cfg(pin_id)
-        self._setup_pin(pin_cfg[1])
+        pin_name = f"pin_{pin_id}"
+        if pin_name in self._gpio_cfg:
+
+            self._pin_cfg = pin_name, dict(self._gpio_cfg[pin_name])
+            self._update_lable_fm_cfg(self._pin_cfg[1])
+            return
+        self._pin_cfg = getNew_gpio_pin_cfg(pin_id)
+        self._setup_pin(self._pin_cfg[1])
         """
         pin_fnc = self._pin_fnc_var.get()
         if pin_fnc not in self._pin_fnc_opt.keys():
@@ -179,39 +195,43 @@ class GPIO_pinSetup(tk.Toplevel):
         if not pin_cfg:
             self._reset_pin_lable()
             return
-        ret = self._gpio.add_pin(pin_conf=pin_cfg)
+        ret = self._gpio.init_pin(pin_conf=pin_cfg)
         if not ret:
             self._reset_pin_lable()
             return
+        self._update_lable_fm_cfg(pin_cfg)
 
-        pin_id = pin_cfg.get('pin', 0)
-        try:
-            pin_val = self._gpio.get_pin_val(pin_id=pin_id)
-        except IOError:
-            pin_val = None
-        pin_pol = pin_cfg.get('polarity_high', '')
-        pin_dir = pin_cfg.get('pin_dir_in', '')
-        pin_fnc_name = pin_cfg.get('function_cfg', {}).get('task_name', '')
-        if pin_val is None:
-            self._reset_pin_lable()
+    def _del_pin(self):
+        pin_name, pin_cfg = self._pin_cfg
+        gpio_cfg: dict = POPT_CFG.get_gpio_cfg()
+        if pin_name in gpio_cfg:
+            del gpio_cfg[pin_name]
+            POPT_CFG.set_gpio_cfg(gpio_cfg)
+            self._root_win.update_gpio_tree()
+            self.destroy_win()
+
+    #################################################################
+    def _switch_pin_id(self):
+        self._is_pin_init = False
+
+        # self._setup_pin_btn()
+
+    #################################################################
+    def _select_pin_fnc(self, event=None):
+        pin_fnc = self._pin_fnc_var.get()
+        if pin_fnc not in self._pin_fnc_opt:
             return
-        self._pin_fnc_var.set(value=pin_fnc_name)
-        self._init_lable_var.set(value='Init OK')
+        self._pin_fnc_opt[pin_fnc]()
 
-        self._dir_lable_var.set(value=f'Direction Input: {pin_dir}')
-        self._val_lable_var.set(value=f'Value: {pin_val}')
-        pol_str = 'n.a.'
-        for opt_str, val in self._pol_opt.items():
-            if val == bool(pin_pol):
-                pol_str = val
-                break
-        self._pol_lable_var.set(value=f'Polarity: {pol_str}')
+    def _setup_dxalarm(self):
+        self._pol_sel.configure(state='normal')
+        self._hold_sel.configure(state='normal')
+        self._blink_sel.configure(state='normal')
 
-    def _setup_dxalarm(self, pin_id: int):
-        pass
-
-    def _setup_connalarm(self, pin_id: int):
-        pass
+    def _setup_conn_alarm(self):
+        self._pol_sel.configure(state='normal')
+        self._hold_sel.configure(state='normal')
+        self._blink_sel.configure(state='normal')
 
     def _update_lable_fm_cfg(self, pin_cfg: dict):
         if not pin_cfg:
@@ -222,15 +242,26 @@ class GPIO_pinSetup(tk.Toplevel):
             pin_val = self._gpio.get_pin_val(pin_id=pin_id)
         except IOError:
             pin_val = None
-        pin_pol = pin_cfg.get('polarity_high', '')
+        pin_pol = pin_cfg.get('polarity_high', 1)
         pin_dir = pin_cfg.get('pin_dir_in', '')
-        pin_fnc_name = pin_cfg.get('function_cfg', {}).get('task_name', '')
+        blink = pin_cfg.get('blink', 1)
+        hold = pin_cfg.get('hold_timer', 1)
+        pin_fnc_name = pin_cfg.get('task_name', '')
         if pin_val is None:
             self._reset_pin_lable()
             return
         self._pin_fnc_var.set(value=pin_fnc_name)
+        if pin_pol:
+            self._pol_var.set('normal')
+        else:
+            self._pol_var.set('inverted')
+        self._blink_var.set(str(blink))
+        if hold is None:
+            self._hold_var.set('OFF')
+        else:
+            self._hold_var.set(str(hold))
         self._init_lable_var.set(value='Init OK')
-
+        self._is_pin_init = True
         self._dir_lable_var.set(value=f'Direction Input: {pin_dir}')
         self._val_lable_var.set(value=f'Value: {pin_val}')
         pol_str = 'n.a.'
@@ -250,11 +281,48 @@ class GPIO_pinSetup(tk.Toplevel):
 
     ######################################################
     def _save_cfg(self):
-        pass
+        if not self._is_pin_init:
+            return False
+        try:
+            # pin_id = int(self._pin_id_var.get())
+            blink_timer = int(self._blink_var.get())
+            pin_fnc = self._pin_fnc_var.get()
+        except ValueError:
+            return False
+        hold_timer = self._hold_var.get()
+        if hold_timer == 'OFF':
+            hold_timer = None
+        else:
+            try:
+                hold_timer = int(hold_timer)
+            except ValueError:
+                return False
+        if not pin_fnc:
+            return False
+
+        pol_high = dict(
+            normal=1,
+            inverted=0
+        ).get(self._pol_var.get(), 1)
+        pin_name, pin_cfg = self._pin_cfg
+        if pin_fnc in ['dx_alarm', 'conn_alarm']:
+            pin_cfg['pin_dir_in'] = False
+        else:
+            pin_cfg['pin_dir_in'] = True
+        pin_cfg['value'] = False
+        pin_cfg['task_name'] = pin_fnc
+        pin_cfg['blink'] = blink_timer
+        pin_cfg['hold_timer'] = hold_timer
+        pin_cfg['polarity_high'] = int(pol_high)
+        gpio_cfg: dict = POPT_CFG.get_gpio_cfg()
+        gpio_cfg[pin_name] = dict(pin_cfg)
+        POPT_CFG.set_gpio_cfg(gpio_cfg)
 
     ######################################################
     def _save_btn(self):
         self._save_cfg()
+        self._root_win.update_gpio_tree()
+        self.destroy_win()
 
     def _abort_btn(self):
         self.destroy_win()
@@ -262,3 +330,4 @@ class GPIO_pinSetup(tk.Toplevel):
     def destroy_win(self):
         self._root_win.pin_setup_win = None
         self.destroy()
+

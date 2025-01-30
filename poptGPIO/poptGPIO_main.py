@@ -60,8 +60,8 @@ class poptGPIO_main:
     def _init_tasker_fm_conf(self):
         logger.info(self._logTag + "Init Tasker fm Config..")
         for pin_name, pin_cfg in self._pin_cfg.items():
-            pin_fnc_cfg: dict = pin_cfg.get('function_cfg', {})
-            pin_fnc_name = pin_fnc_cfg.get('task_name', '')
+            # pin_fnc_cfg: dict = pin_cfg.get('function_cfg', {})
+            pin_fnc_name = pin_cfg.get('task_name', '')
             pin_fnc = self._FNC_TAB.get(pin_fnc_name, None)
             if pin_fnc is not None:
                 try:
@@ -70,6 +70,19 @@ class poptGPIO_main:
                     logger.error(self._logTag + f"{e}")
                     continue
         logger.info(self._logTag + "Init Tasker fm Config..Done !")
+
+    def reinit_gpio(self):
+        logger.info(self._logTag + "ReInit..")
+        self.close_gpio_pins()
+
+        self._gpio_conf = POPT_CFG.get_gpio_cfg()
+        ##################################
+        self._pin_cfg = {}
+        self._init_fm_conf()
+        ##################################
+        self._gpio_tasks = {}
+        self._init_tasker_fm_conf()
+        logger.info(self._logTag + "ReInit done..")
 
     #####################################################################
     def gpio_tasker(self):
@@ -89,7 +102,7 @@ class poptGPIO_main:
                 continue
 
     #####################################################################
-    def add_pin(self, pin_conf:dict):
+    def init_pin(self, pin_conf:dict):
         pin = pin_conf.get('pin', 0)
         pin_name = f"pin_{pin}"
         if not pin:

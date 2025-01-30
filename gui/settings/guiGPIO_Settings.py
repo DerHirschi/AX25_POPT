@@ -18,6 +18,7 @@ class GPIOSettings(tk.Frame):
             self._gpio = root_win.get_GPIOfmPH()
         else:
             raise AttributeError('GPIOSettings ')
+        self._need_reinit_gpio = True
         self._rev_ent = False
         self.pin_setup_win = None
         ################################
@@ -42,6 +43,8 @@ class GPIOSettings(tk.Frame):
             'gpio_pol',
             'gpio_initval',
             'gpio_val',
+            'gpio_blink',
+            'gpio_hold',
             'gpio_fnc',
             # 'sens_val_f',
         )
@@ -52,6 +55,8 @@ class GPIOSettings(tk.Frame):
         self._tree.heading('gpio_pol', text='Polarity', command=lambda: self._sort_entry('gpio_pol'))
         self._tree.heading('gpio_initval', text='Init-Value', command=lambda: self._sort_entry('gpio_initval'))
         self._tree.heading('gpio_val', text='Value', command=lambda: self._sort_entry('gpio_val'))
+        self._tree.heading('gpio_blink', text='Blink', command=lambda: self._sort_entry('gpio_blink'))
+        self._tree.heading('gpio_hold', text='Hold', command=lambda: self._sort_entry('gpio_hold'))
         self._tree.heading('gpio_fnc', text='FNC', command=lambda: self._sort_entry('gpio_fnc'))
         # self._tree.column("str_var", anchor=tk.W, stretch=tk.YES, width=100)
         self._tree.column("gpio_id", anchor=tk.W, stretch=tk.NO, width=100)
@@ -59,13 +64,17 @@ class GPIOSettings(tk.Frame):
         self._tree.column("gpio_pol", anchor=tk.CENTER, stretch=tk.NO, width=100)
         self._tree.column("gpio_initval", anchor=tk.CENTER, stretch=tk.NO, width=100)
         self._tree.column("gpio_val", anchor=tk.CENTER, stretch=tk.NO, width=100)
+        self._tree.column("gpio_blink", anchor=tk.CENTER, stretch=tk.NO, width=100)
+        self._tree.column("gpio_hold", anchor=tk.CENTER, stretch=tk.NO, width=100)
         self._tree.column("gpio_fnc", anchor=tk.CENTER, stretch=tk.YES, width=140)
 
         self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar = ttk.Scrollbar(lower_frame, orient=tk.VERTICAL, command=self._tree.yview)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._tree.configure(yscrollcommand=scrollbar.set)
-        self._gpio_conf = self._gpio.get_gpio_conf()
+        self._tree.bind('<<TreeviewSelect>>', self._select_entry)
+        # self._gpio_conf = self._gpio.get_gpio_conf()
+        self._gpio_conf = POPT_CFG.get_gpio_cfg()
         ##### DEV !!!!!!!! #############################
         """
         for pin in range(10, 17):
@@ -76,6 +85,19 @@ class GPIOSettings(tk.Frame):
         """
 
         self._update_data_fm_cfg()
+
+    def _select_entry(self, event):
+        for selected_item in self._tree.selection():
+            item = self._tree.item(selected_item)
+            record = item['values']
+            # show a message
+            try:
+                pin_id = int(record[0])
+            except ValueError:
+                return
+            if self.pin_setup_win is None:
+                self.pin_setup_win = GPIO_pinSetup(self, pin_id)
+                self.pin_setup_win.setup_pin_btn()
 
     def _sort_entry(self, col):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
@@ -97,8 +119,10 @@ class GPIOSettings(tk.Frame):
             pin_dir_in = bool(pin_conf.get('pin_dir_in', False))
             polarity_high = bool(pin_conf.get('polarity_high', 1))
             init_value = bool(pin_conf.get('value', False))
-            function_cfg = dict(pin_conf.get('function_cfg', {}))
-            task_name = str(function_cfg.get('task_name', ''))
+            blink_value = str(pin_conf.get('blink', 1))
+            hold_value = str(pin_conf.get('hold_timer', None))
+            # function_cfg = dict(pin_conf.get('function_cfg', {}))
+            task_name = str(pin_conf.get('task_name', ''))
             gpio_val = '!Init!'
             if is_pinctrl_device():
                 gpio_val = get_pinctrl_val(pin_id)
@@ -110,6 +134,8 @@ class GPIOSettings(tk.Frame):
                    polarity_high,
                    init_value,
                    gpio_val,
+                   blink_value,
+                   hold_value,
                    task_name)
             self._tree.insert('', tk.END, values=val, )
 
@@ -120,14 +146,21 @@ class GPIOSettings(tk.Frame):
     def get_gpio(self):
         return self._gpio
 
-    def get_gpio_conf(self):
+    def get_gpio_conf_fm_gpio(self):
         return self._gpio.get_gpio_conf()
 
     def _open_pin_setup(self):
         if self.pin_setup_win is None:
             self.pin_setup_win = GPIO_pinSetup(self)
 
+    def update_gpio_tree(self):
+        self._gpio_conf = POPT_CFG.get_gpio_cfg()
+        self._update_data_fm_cfg()
+        self._need_reinit_gpio = True
 
     def save_config(self):
-        return False
+        if self._need_reinit_gpio:
+            if hasattr(self._gpio, 'reinit_gpio'):
+                self._gpio.reinit_gpio()
+        return self._need_reinit_gpio
 

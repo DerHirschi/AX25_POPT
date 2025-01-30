@@ -297,23 +297,10 @@ def getNew_gpio_pin_cfg(pin: int):
     return f"pin_{int(pin)}", dict(
                 pin=int(pin),
                 pin_dir_in=False,
-                polarity_high=1,  # Pull to LOW = 0 | Pull to HIGH = 1
-                value=False,             # True/False/None = no state set on init(pin setup)
-                function_cfg={},
-            )
-
-def getNew_gpio_fnc_cfg_dxAlarm():
-    return dict(
-        task_name='dx_alarm',
-        task_timer=1,       # Sec
-        blink=1,            # Sec / 0 = Off
-        hold_timer=0,       # Hold High | Low for value in sec. / None = Off / 0 = infinite till reset
-    )
-
-def getNew_gpio_fnc_cfg_ConnAlarm():
-    return dict(
-        task_name='conn_alarm',
-        task_timer=1,       # Sec
-        blink=1,            # Sec / 0 = Off
-        hold_timer=0,       # Hold High | Low for value in sec. / None = Off / 0 = infinite till reset
+                polarity_high=1,    # Pull to LOW = 0 | Pull to HIGH = 1
+                value=False,        # True/False/None = no state set on init(pin setup)
+                task_name='',
+                task_timer=1,       # Sec
+                blink=1,            # Sec / 0 = Off
+                hold_timer=0,       # 0 = until Alarm reset
     )

@@ -9,7 +9,6 @@ from tkinter import ttk
 from cfg.popt_config import POPT_CFG
 from fnc.one_wire_fnc import is_1wire_device
 from fnc.str_fnc import get_strTab, lob_gen
-from gui.guiError import PoPTAttributError
 from gui.settings.gui1WireSettings import OneWireSettings
 from gui.settings.guiBeaconSettings import BeaconSettings
 from gui.settings.guiDigiSettings import DIGI_SettingsWin
@@ -140,13 +139,12 @@ class SettingsMain(tk.Toplevel):
         # self.lower()
         for strTab_name, tab in self._tab_list.items():
             if not (hasattr(tab, 'save_config')):
-                raise PoPTAttributError
+                continue
             if tab.save_config():
                 # FIXME: Keine sysMSG für änderung d. Station-Settings. (Nur neue o geänderte Calls werden returned)
                 self._root_win.sysMsg_to_monitor(
                     get_strTab('setting_saved', self._lang).format(get_strTab(strTab_name, self._lang))
                 )
-
                 if strTab_name in ['stat_settings', 'port']:
                     set_tag = True
                     reinit_tr = True
