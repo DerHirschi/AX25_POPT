@@ -23,6 +23,12 @@ Neue Implementierungen / Funktionen:
   in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
 - GPIO-Funktion "Conn-Alarm": Schaltet GPIO high/low(einstellbar)
   in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+- GPIO-Funktion "PMS-Neue-Mail-Alarm": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+- GPIO-Funktion "APRS-Neue-Mail-Alarm": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+- GPIO-Funktion "Sysop-Alarm(//BELL)": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
 
 ###########################################################################################################
 ###########################################################################################################

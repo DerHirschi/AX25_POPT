@@ -1023,12 +1023,25 @@ class AX25PortHandler(object):
             else:
                 self._gui.reset_tracer_alarm()
 
+    def set_aprsMailAlarm_PH(self, set_alarm=True):
+        if self._gui:
+            if set_alarm:
+                self._gui.set_aprsMail_alarm()
+            else:
+                self._gui.reset_aprsMail_alarm()
+
+        if hasattr(self._gpio, 'set_aprs_alarm'):
+            self._gpio.set_aprs_alarm(set_alarm)
+
     def set_pmsMailAlarm(self, set_alarm=True):
         if self._gui:
             if set_alarm:
                 self._gui.pmsMail_alarm()
             else:
                 self._gui.reset_pmsMail_alarm()
+
+        if hasattr(self._gpio, 'set_pms_alarm'):
+            self._gpio.set_pms_alarm(set_alarm)
 
     def set_pmsFwdAlarm(self, set_alarm=True):
         if self._gui:
@@ -1048,6 +1061,9 @@ class AX25PortHandler(object):
         if self._gui:
             self._gui.set_noty_bell(ch_id, msg)
 
+        if hasattr(self._gpio, 'set_sysop_alarm'):
+            self._gpio.set_sysop_alarm(True)
+
     def reset_noty_bell_PH(self):
         if self._gui:
             all_conn = self.get_all_connections()
@@ -1057,6 +1073,9 @@ class AX25PortHandler(object):
                     if conn.noty_bell:
                         return
             self._gui.reset_noty_bell_alarm()
+
+        if hasattr(self._gpio, 'set_sysop_alarm'):
+            self._gpio.set_sysop_alarm(False)
 
     ##############################################################
     # MCast
@@ -1118,6 +1137,9 @@ class AX25PortHandler(object):
         all_conn = self.get_all_connections(with_null=True)
         all_linkConn = self.link_connections
         all_digiConn = self.get_all_digiConn()
+        self.set_pmsMailAlarm(True)
+        self.set_aprsMailAlarm_PH(True)
+        self.set_noty_bell_PH(True)
         print('ALL Conn ----------------------')
         for ch_id, conn in all_conn.items():
             print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state()}")

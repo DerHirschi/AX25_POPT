@@ -141,7 +141,8 @@ class GPIO_DefaultFNC:
     def _get_state_var(self):
         return
 
-
+#############################################################
+# DX-Alarm
 class GPIO_DXAlarm(GPIO_DefaultFNC):
     def __init__(self, gpio, pin_cfg: dict):
         GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
@@ -151,6 +152,8 @@ class GPIO_DXAlarm(GPIO_DefaultFNC):
     def _get_state_var(self):
         return bool(self._port_handler.get_dxAlarm())
 
+#############################################################
+# Connection-Alarm
 class GPIO_ConnAlarm(GPIO_DefaultFNC):
     def __init__(self, gpio, pin_cfg: dict):
         GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
@@ -158,3 +161,43 @@ class GPIO_ConnAlarm(GPIO_DefaultFNC):
 
     def _get_state_var(self):
         return bool(self._port_handler.get_all_connections())
+
+#############################################################
+# PMS-Alarm (New Mail)
+class GPIO_PMSAlarm(GPIO_DefaultFNC):
+    def __init__(self, gpio, pin_cfg: dict):
+        GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        self._logTag = 'GPIO_PMSAlarm: '
+
+    def _get_state_var(self):
+        if not hasattr(self._gpio, 'get_pms_alarm'):
+            self._e = True
+            return False
+        return bool(self._gpio.get_pms_alarm())
+
+#############################################################
+# APRS-Alarm (New Private-Mail)
+class GPIO_APRS_PMAlarm(GPIO_DefaultFNC):
+    def __init__(self, gpio, pin_cfg: dict):
+        GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        self._logTag = 'GPIO_APRS_PMAlarm: '
+
+    def _get_state_var(self):
+        if not hasattr(self._gpio, 'get_aprs_alarm'):
+            self._e = True
+            return False
+        return bool(self._gpio.get_aprs_alarm())
+
+#############################################################
+# SYSOP-Alarm //BELL
+class GPIO_SYSOP_Alarm(GPIO_DefaultFNC):
+    def __init__(self, gpio, pin_cfg: dict):
+        GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        self._logTag = 'GPIO_SYSOP_Alarm: '
+
+    def _get_state_var(self):
+        if not hasattr(self._gpio, 'get_sysop_alarm'):
+            self._e = True
+            return False
+        return bool(self._gpio.get_sysop_alarm())
+

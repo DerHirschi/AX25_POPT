@@ -168,6 +168,13 @@ Ideas/TODO's :
   - GPIO lesen
   - GPIO setzen (High/Low, Timer, PWM?)
 
+- GPIO-Tool
+  ✓ GPIO setzen bei DX-Alarm
+  ✓ GPIO setzen bei bestehenden Connect
+  ✓ GPIO setzen wenn neue Mail im PMS
+  ✓ GPIO setzen wenn neue APRS-Mail
+  ✓ GPIO setzen wenn Sysop gerufen wird (//BELL)
+
 ✓ PoPT-Scheduler
   ✓ Autoconnect
     ✓ PMS abfrage AutoFWD

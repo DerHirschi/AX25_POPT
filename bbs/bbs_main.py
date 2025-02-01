@@ -44,13 +44,11 @@ def generate_sid(features=("F", "M", "H")):
 
 
 def parse_forward_header(header):
-    """
-    FB P MD2BBS MD2SAW MD2SAW 18243-MD2BBS 502
-    FB P MD2BBS MD2SAW MD2SAW 18245-MD2BBS 502
-    FB P MD2BBS MD2SAW MD2SAW 18248-MD2BBS 502
-    FB B DBO527 SAW STATUS 4CWDBO527004 109836
-    FB B MD2SAW SAW TEST 11139-MD2BBS 5
-    """
+    # FB P MD2BBS MD2SAW MD2SAW 18243-MD2BBS 502
+    # FB P MD2BBS MD2SAW MD2SAW 18245-MD2BBS 502
+    # FB P MD2BBS MD2SAW MD2SAW 18248-MD2BBS 502
+    # FB B DBO527 SAW STATUS 4CWDBO527004 109836
+    # FB B MD2SAW SAW TEST 11139-MD2BBS 5
     hdr = header.split(' ')
     if len(hdr) != 7:
         logger.debug(f"PH!!: {header}")
@@ -62,11 +60,11 @@ def parse_forward_header(header):
         logger.debug(f"PH!!: {header}")
         return None
 
-    _tmp = hdr[5].split('-')
-    mid = _tmp[0]
+    tmp = hdr[5].split('-')
+    mid = tmp[0]
     recipient = ''
-    if len(_tmp) == 2:
-        recipient = _tmp[1]
+    if len(tmp) == 2:
+        recipient = tmp[1]
 
     return {
         "message_type": hdr[1],
@@ -82,30 +80,30 @@ def parse_forward_header(header):
 
 def build_new_msg_header(msg_struc: dict):
     # print("build_new_msg_header -------------")
-    _bbs_call = msg_struc['sender_bbs'].split('.')[0]
-    _mid = msg_struc['mid']
-    _bid = f"{str(_mid).rjust(6, '0')}{_bbs_call}"
+    bbs_call = msg_struc['sender_bbs'].split('.')[0]
+    mid = msg_struc['mid']
+    bid = f"{str(mid).rjust(6, '0')}{bbs_call}"
     msg_struc['tx-time'] = datetime.now().strftime(SQL_TIME_FORMAT)
-    _utc = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
-    msg_struc['mid'] = _mid
-    msg_struc['bid_mid'] = _bid
+    utc = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
+    msg_struc['mid'] = mid
+    msg_struc['bid_mid'] = bid
     # _utc = datetime.utcnow()
     # msg_struc['utctime'] = _utc.strftime(SQL_TIME_FORMAT)
     # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
     # R:231101/0520z @:MD2SAW.#SAW.SAA.DEU.EU #:000003 $:000003MD2SAW
-    _header = (f"R:{str(_utc.year)[2:].rjust(2, '0')}"
-               f'{str(_utc.month).rjust(2, "0")}'
-               f'{str(_utc.day).rjust(2, "0")}/'
-               f'{str(_utc.hour).rjust(2, "0")}'
-               f'{str(_utc.minute).rjust(2, "0")}z '
+    header = (f"R:{str(utc.year)[2:].rjust(2, '0')}"
+               f'{str(utc.month).rjust(2, "0")}'
+               f'{str(utc.day).rjust(2, "0")}/'
+               f'{str(utc.hour).rjust(2, "0")}'
+               f'{str(utc.minute).rjust(2, "0")}z '
                f'@:{msg_struc["sender_bbs"]} '
-               f'#:{str(_mid).rjust(6, "0")} '
-               f'$:{_bid}\r')
+               f'#:{str(mid).rjust(6, "0")} '
+               f'$:{bid}\r')
     # _header += '\r'
     # _header += f'From: {msg_struc["sender"]}@{msg_struc["sender_bbs"]}\r'
     # _header += f'To  : {msg_struc["receiver"]}@{msg_struc["recipient_bbs"]}\r'
     # _header += '\r'
-    msg_struc['header'] = _header.encode('ASCII', 'ignore')
+    msg_struc['header'] = header.encode('ASCII', 'ignore')
 
     return msg_struc
 
@@ -216,18 +214,18 @@ class BBSConnection:
                 return []
 
         if data in self._rx_buff:
-            _tmp = self._rx_buff.split(b'\r')
-            _ret = []
-            _cut_index = 0
-            for line in list(_tmp):
-                _ret.append(line)
-                _cut_index += len(line) + 1
+            tmp = self._rx_buff.split(b'\r')
+            ret = []
+            cut_index = 0
+            for line in list(tmp):
+                ret.append(line)
+                cut_index += len(line) + 1
                 if data in line:
                     break
             # if len(_tmp) > len(_ret):
             if cut_rx_buff:
-                self._rx_buff = bytes(self._rx_buff[_cut_index:])
-            return _ret
+                self._rx_buff = bytes(self._rx_buff[cut_index:])
+            return ret
         return []
 
     def _get_data_fm_rx_buff(self, data, cut_rx_buff=False):
@@ -238,14 +236,14 @@ class BBSConnection:
                 return b''
 
         if data in self._rx_buff:
-            _index = self._rx_buff.index(data) + 1
-            _ret = bytes(self._rx_buff[:_index])
+            index = self._rx_buff.index(data) + 1
+            ret = bytes(self._rx_buff[:index])
             if cut_rx_buff:
-                if self._rx_buff[_index:_index + 1] == b'\r':
-                    _index += 1
-                self._rx_buff = bytes(self._rx_buff[_index:])
+                if self._rx_buff[index:index + 1] == b'\r':
+                    index += 1
+                self._rx_buff = bytes(self._rx_buff[index:])
 
-            return _ret
+            return ret
         return b''
 
     def _connection_tx(self, raw_data: b''):
@@ -300,10 +298,10 @@ class BBSConnection:
 
     def _wait_f_new_msg_header(self):
         # 3
-        _rx_lines = self._get_lines_fm_rx_buff('F>', cut_rx_buff=True)
-        if _rx_lines:
+        rx_lines = self._get_lines_fm_rx_buff('F>', cut_rx_buff=True)
+        if rx_lines:
             self._act_out_msg()
-            ret = self._parse_header(_rx_lines)
+            ret = self._parse_header(rx_lines)
             self._connection_tx(b'FS ' + ret[0].encode('ASCII', 'ignore') + b'\r')
             if ret[1]:
                 self._state = 4
@@ -313,8 +311,8 @@ class BBSConnection:
             # print('FF')
             self._act_out_msg()
             if self._is_fwd_q():
-                _tx = self._tx_msg_header + b'F>\r'
-                self._connection_tx(_tx)
+                tx = self._tx_msg_header + b'F>\r'
+                self._connection_tx(tx)
                 self._state = 5
             else:
                 self._state = 10
@@ -332,36 +330,36 @@ class BBSConnection:
     def _parse_header(self, header_lines):
         # print(header_lines)
         self._rx_msg_header = {}
-        _pn_check = ''
-        _trigger = False
+        pn_check = ''
+        trigger = False
         for el in header_lines:
             try:
                 el = el.decode('ASCII')
             except UnicodeDecodeError:
-                _pn_check += 'E'
+                pn_check += 'E'
             else:
                 if el[:2] == 'FB':
-                    _ret = parse_forward_header(el)
+                    ret = parse_forward_header(el)
                     # print(_ret)
-                    if _ret:
-                        _key = str(_ret.get('bid_mid', ''))
-                        _db_ret = {
+                    if ret:
+                        key = str(ret.get('bid_mid', ''))
+                        db_ret = {
                             'P': self._bbs.is_pn_in_db,
                             'B': self._bbs.is_bl_in_db,
                             'T': self._header_reject,  # NTP
                             '': self._header_error
-                        }[_ret.get('message_type', '')](_key)
-                        if _db_ret == '+':
-                            self._rx_msg_header[str(_ret['bid_mid'])] = _ret
+                        }[ret.get('message_type', '')](key)
+                        if db_ret == '+':
+                            self._rx_msg_header[str(ret['bid_mid'])] = ret
 
-                            _trigger = True
-                        _pn_check += _db_ret
+                            trigger = True
+                        pn_check += db_ret
                     else:
-                        _pn_check += FWD_RESP_ERR
+                        pn_check += FWD_RESP_ERR
 
         # print(_pn_check)
         # print(f"_msg_header.keys: {self._rx_msg_header.keys()}")
-        return _pn_check, _trigger
+        return pn_check, trigger
 
     @staticmethod
     def _header_error(inp=None):
@@ -373,10 +371,10 @@ class BBSConnection:
 
     def _get_msg(self):
         # 4
-        _rx_bytes = self._get_data_fm_rx_buff(b'\x1a', cut_rx_buff=True)
-        if _rx_bytes:
+        rx_bytes = self._get_data_fm_rx_buff(b'\x1a', cut_rx_buff=True)
+        if rx_bytes:
             # print(_rx_bytes)
-            self._parse_msg(_rx_bytes[:-1])
+            self._parse_msg(rx_bytes[:-1])
         if not self._rx_msg_header:
             self._state = 2
 
@@ -394,50 +392,50 @@ class BBSConnection:
         E : There is an error in the line
         !offset or Aoffset : Yes, message accepted from (Offset)
         """
-        _rx_bytes = self._get_lines_fm_rx_buff('FS', cut_rx_buff=True)
-        if not _rx_bytes:
+        rx_bytes = self._get_lines_fm_rx_buff('FS', cut_rx_buff=True)
+        if not rx_bytes:
             return False
-        _fs_line = ''
-        for el in _rx_bytes:
+        fs_line = ''
+        for el in rx_bytes:
             if b'FS' in el:
-                _fs_line = el.decode('ASCII', 'ignore')
+                fs_line = el.decode('ASCII', 'ignore')
                 break
-        self._tx_fs_list = _fs_line.replace('FS', '').replace(' ', '')
-        _bids = list(self._tx_msg_BIDs)
-        _i = 0
+        self._tx_fs_list = fs_line.replace('FS', '').replace(' ', '')
+        bids = list(self._tx_msg_BIDs)
+        i = 0
         for flag in self._tx_fs_list:
-            _fwd_id = self._get_fwd_id(_bids[_i])
+            fwd_id = self._get_fwd_id(bids[i])
             if flag in ['+', 'Y']:
-                self._tx_out_msg_by_bid(_bids[_i])
+                self._tx_out_msg_by_bid(bids[i])
             elif flag in ['-', 'N']:
-                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S-')
+                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S-')
             elif flag in ['=', 'L']:
-                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S=')
+                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S=')
             elif flag == 'H':
-                self._tx_out_msg_by_bid(_bids[_i])
+                self._tx_out_msg_by_bid(bids[i])
             elif flag == 'R':
-                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'R')
+                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'R')
             elif flag == 'E':
-                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'EE')
+                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EE')
             # TODO
             elif flag in ['!', '']:  # Offset
-                print("BBS FWD Prot Error! OFFSET Error not implemented yet")
+                # print("BBS FWD Prot Error! OFFSET Error not implemented yet")
                 logger.error("BBS FWD Prot Error! OFFSET Error not implemented yet")
-                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'EO')
+                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EO')
                 # ABORT ?
-            _i += 1
+            i += 1
             # self._tx_msg_BIDs = self._tx_msg_BIDs[1:]
         self._tx_msg_header = b''
         self._state = 3
         return True
 
     def _tx_out_msg_by_bid(self, bid: str):
-        _msg = self._db.bbs_get_outMsg_by_BID(bid)
-        if not _msg:
+        msg = self._db.bbs_get_outMsg_by_BID(bid)
+        if not msg:
             return False
         # print(f"tx_out- 0: {_msg[0][0]}  1: {_msg[0][1]}  3: {_msg[0][2]}  len3: {len(_msg[0][2])}")
-        _tx_msg = _msg[0][0].encode('ASCII', 'ignore') + b'\r' + _msg[0][2] + b'\x1a\r'
-        self._connection_tx(_tx_msg)
+        tx_msg = msg[0][0].encode('ASCII', 'ignore') + b'\r' + msg[0][2] + b'\x1a\r'
+        self._connection_tx(tx_msg)
 
     def _check_msg_to_fwd(self):
         tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
@@ -447,63 +445,63 @@ class BBSConnection:
         # print(f"_check_msg_to_fwd {self._tx_msg_header}")
 
     def _act_out_msg(self):
-        _bids = list(self._tx_msg_BIDs)
+        bids = list(self._tx_msg_BIDs)
         # for bid in _bids:
-        for bid in _bids:
-            _fwd_id = self._get_fwd_id(bid)
+        for bid in bids:
+            fwd_id = self._get_fwd_id(bid)
             flag = self._tx_fs_list[0]
             if flag in ['+', 'Y']:
-                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'S+')
+                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S+')
 
             elif flag == 'H':
-                self._db.bbs_act_outMsg_by_FWD_ID(_fwd_id, 'H')
+                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'H')
 
             self._tx_msg_BIDs = self._tx_msg_BIDs[1:]
             self._tx_fs_list = self._tx_fs_list[1:]
         self._tx_fs_list = ''
 
     def _parse_msg(self, msg: bytes):
-        _lines = msg.split(b'\r')
+        lines = msg.split(b'\r')
         start_found = False
-        if b'$:' in _lines[1]:
-            _tmp = bytes(_lines[1]).split(b'$:')
-            _k = _tmp[1].decode('UTF-8', 'ignore')
+        if b'$:' in lines[1]:
+            tmp = bytes(lines[1]).split(b'$:')
+            k = tmp[1].decode('UTF-8', 'ignore')
         else:
-            _k = ''
-            _temp_k = str(list(self._rx_msg_header.keys())[0])
-            _sender = self._rx_msg_header[_temp_k]['sender'].encode('ASCII', 'ignore')
-            for _l in list(_lines):
-                print(f"NoKeyFound _l: {_l}")
-                if _l[:2] == b'R:':
+            k = ''
+            temp_k = str(list(self._rx_msg_header.keys())[0])
+            sender = self._rx_msg_header[temp_k]['sender'].encode('ASCII', 'ignore')
+            for l in list(lines):
+                logger.warning(f"NoKeyFound l: {l}")
+                if l[:2] == b'R:':
                     if not start_found:
                         start_found = True
 
-                    if '_' in _temp_k:
-                        _tmp = _temp_k.split('_')
-                    elif '-' in _temp_k:
-                        _tmp = _temp_k.split('-')
+                    if '_' in temp_k:
+                        tmp = temp_k.split('_')
+                    elif '-' in temp_k:
+                        tmp = temp_k.split('-')
                     else:
-                        _tmp = [_temp_k]
-                    if str(_tmp[0] + '@').encode('ASCII', 'ignore') + _sender in _l:
-                        _k = str(_temp_k)
-                        print(f"Replaced Key Found msg: {_k}")
+                        tmp = [temp_k]
+                    if str(tmp[0] + '@').encode('ASCII', 'ignore') + sender in l:
+                        k = str(temp_k)
+                        logger.info(f"Replaced Key Found msg: {k}")
                         break
                 else:
-                    print(f"No Header Key Found: {_temp_k}")
-                    print(f"No Header Key Found msg: {msg}")
+                    logger.warning(f"No Header Key Found: {temp_k}")
+                    logger.warning(f"No Header Key Found msg: {msg}")
                     if start_found:
                         break
 
-        if _k in self._rx_msg_header.keys():
-            subject = bytes(_lines[0]).decode('UTF-8', 'ignore')
+        if k in self._rx_msg_header.keys():
+            subject = bytes(lines[0]).decode('UTF-8', 'ignore')
             path = []
             from_call = ''
-            _msg_index = len(_lines[0]) + 1
+            msg_index = len(lines[0]) + 1
             trigger = False
             #  _len_msg = len(b'\r'.join(msg))
-            for line in list(_lines[1:]):
+            for line in list(lines[1:]):
                 # print(f"Line msgParser: {line}")
-                _msg_index += len(line) + 1
+                msg_index += len(line) + 1
                 if line[:2] == b'R:':
                     # _trigger = False
                     path.append(bytes(line).decode('UTF-8', 'ignore'))
@@ -528,7 +526,7 @@ class BBSConnection:
                             if len(tmp) == 2:
                                 to_bbs = str(tmp[1])
                     else:
-                        print(f"Error INDEX: {line}")
+                        # print(f"Error INDEX: {line}")
                         logger.error(f"Error INDEX: {line}")
                     break
                 elif not line:
@@ -536,33 +534,33 @@ class BBSConnection:
                     trigger = True
                 elif trigger:
                     # print("Line msgParser BREAK")
-                    _msg_index -= len(line) + 2
+                    msg_index -= len(line) + 2
                     break
 
             # _msg = b'\r'.join(msg[_msg_index:-1])
-            _msg = bytes(msg[_msg_index + 1:])
-            _header = bytes(msg[len(_lines[0]) + 1:_msg_index])
-            self._rx_msg_header[_k]['msg'] = _msg
-            self._rx_msg_header[_k]['header'] = _header
-            self._rx_msg_header[_k]['path'] = path
-            self._rx_msg_header[_k]['fwd_path'] = parse_fwd_paths(path) # TODO: get Time from Header timecode
+            msg = bytes(msg[msg_index + 1:])
+            header = bytes(msg[len(lines[0]) + 1:msg_index])
+            self._rx_msg_header[k]['msg'] = msg
+            self._rx_msg_header[k]['header'] = header
+            self._rx_msg_header[k]['path'] = path
+            self._rx_msg_header[k]['fwd_path'] = parse_fwd_paths(path) # TODO: get Time from Header timecode
             # 'R:230513/2210z @:CB0ESN.#E.W.DLNET.DEU.EU [E|JO31MK] obcm1.07b5 LT:007'
-            self._rx_msg_header[_k]['time'] = parse_header_timestamp(path[-1])
-            self._rx_msg_header[_k]['subject'] = subject
-            res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[_k]))
+            self._rx_msg_header[k]['time'] = parse_header_timestamp(path[-1])
+            self._rx_msg_header[k]['subject'] = subject
+            res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[k]))
             # self._bbs.new_msg_alarm[str(self._rx_msg_header[_k]['typ'])] = True
             if not res:
-                logger.error(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
-                print(f"Nachricht BID: {_k} fm {from_call} konnte nicht in die DB geschrieben werden.")
+                logger.error(f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
+                # print(f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
             else:
                 ph = self._bbs.get_port_handler()
                 ph.set_pmsMailAlarm(True)
 
-            del self._rx_msg_header[_k]
+            del self._rx_msg_header[k]
 
         else:
-            print(f"!!! _parse_msg Header Key not Found: {_k}")
-            print(f"msg_header_keys: {self._rx_msg_header.keys()}")
+            logger.warning(f"!!! _parse_msg Header Key not Found: {k}")
+            logger.warning(f"msg_header_keys: {self._rx_msg_header.keys()}")
             del self._rx_msg_header[list(self._rx_msg_header.keys())[0]]
 
     def _send_ff(self):
@@ -798,14 +796,14 @@ class BBS:
     def is_pn_in_db(self, bid_mid: str):
         if not bid_mid:
             return 'E'
-        _ret = self.db.bbs_check_pn_mid_exists(bid_mid)
-        return FWD_RESP_TAB[_ret]
+        ret = self.db.bbs_check_pn_mid_exists(bid_mid)
+        return FWD_RESP_TAB[ret]
 
     def is_bl_in_db(self, bid_mid: str):
         if not bid_mid:
             return 'E'
-        _ret = self.db.bbs_check_bl_mid_exists(bid_mid)
-        return FWD_RESP_TAB[_ret]
+        ret = self.db.bbs_check_bl_mid_exists(bid_mid)
+        return FWD_RESP_TAB[ret]
 
     def new_msg(self, msg_struc: dict):
         msg_struc['message_size'] = int(len(msg_struc['msg']))
@@ -820,13 +818,13 @@ class BBS:
         return self.db.bbs_update_out_msg(msg_struc)
 
     def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call: str):
-        _msg_fm_db = self.db.bbs_get_msg_fm_outTab_by_mid(mid)
-        if _msg_fm_db:
+        msg_fm_db = self.db.bbs_get_msg_fm_outTab_by_mid(mid)
+        if msg_fm_db:
             # print(_msg_fm_db)
-            _new_msg = build_new_msg_header(_msg_fm_db)
-            _new_msg['fwd_bbs_call'] = fwd_bbs_call
+            new_msg = build_new_msg_header(msg_fm_db)
+            new_msg['fwd_bbs_call'] = fwd_bbs_call
             # print(_new_msg)
-            return self.db.bbs_insert_msg_to_fwd(_new_msg)
+            return self.db.bbs_insert_msg_to_fwd(new_msg)
         return False
 
     def get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
@@ -834,14 +832,14 @@ class BBS:
 
     def build_fwd_header(self, bbs_call: str):
         fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
-        _ret = ""
-        _ret_bids = []
+        ret = ""
+        ret_bids = []
         if not fwd_q_data:
-            return b'', _ret_bids
+            return b'', ret_bids
         for el in fwd_q_data:
             if el[3] and el[7] and el[6]:
-                _ret += f"FB {el[12]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
-                _ret_bids.append(el[1])
+                ret += f"FB {el[12]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
+                ret_bids.append(el[1])
             """
             else:
                 print("BBS: build_fwd_header No BBS in Address")
@@ -849,11 +847,11 @@ class BBS:
                 return b'', _ret_bids
             """
         try:
-            return _ret.encode('ASCII'), _ret_bids
+            return ret.encode('ASCII'), ret_bids
         except UnicodeEncodeError:
             print("BBS: build_fwd_header UnicodeEncodeError")
             logger.error("BBS: build_fwd_header UnicodeEncodeError")
-            return b'', _ret_bids
+            return b'', ret_bids
 
     def get_fwd_q_tab(self):
         return self.db.bbs_get_fwd_q_Tab_for_GUI()

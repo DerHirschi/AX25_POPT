@@ -35,9 +35,17 @@ class GPIO_pinSetup(tk.Toplevel):
         self._pin_cfg = '', {}
         self._is_pin_init = False
         self._pin_fnc_opt = dict(
-            dx_alarm=self._setup_dxalarm,
-            conn_alarm=self._setup_conn_alarm,
+            dx_alarm=self._setup_output_pins,
+            conn_alarm=self._setup_output_pins,
+            pms_alarm=self._setup_output_pins,
+            aprs_alarm=self._setup_output_pins,
+            sysop_alarm=self._setup_output_pins,
         )
+        self._output_task_names = []
+        for el_k, el_fnc in self._pin_fnc_opt.items():
+            if el_fnc.__name__ == '_setup_output_pins':
+                self._output_task_names.append(str(el_k))
+
         self._pol_opt = dict(
             normal=True,
             inverted=False
@@ -128,7 +136,7 @@ class GPIO_pinSetup(tk.Toplevel):
         hold_t_frame = tk.Frame(param_frame_l)
         hold_t_frame.pack(fill=tk.X, pady=10)
         tk.Label(hold_t_frame, text='Hold Timer s').pack(side=tk.LEFT, padx=5)
-        opt = ['OFF'] + list(range(0, 600))
+        # opt = ['OFF'] + list(range(0, 600))
         # self._hold_sel = tk.OptionMenu(hold_t_frame, self._hold_var, *opt)
         self._hold_sel = tk.Spinbox(hold_t_frame,
                                      from_=0,
@@ -236,12 +244,7 @@ class GPIO_pinSetup(tk.Toplevel):
             return
         self._pin_fnc_opt[pin_fnc]()
 
-    def _setup_dxalarm(self):
-        self._pol_sel.configure(state='normal')
-        self._hold_sel.configure(state='normal')
-        self._blink_sel.configure(state='normal')
-
-    def _setup_conn_alarm(self):
+    def _setup_output_pins(self):
         self._pol_sel.configure(state='normal')
         self._hold_sel.configure(state='normal')
         self._blink_sel.configure(state='normal')
@@ -321,7 +324,7 @@ class GPIO_pinSetup(tk.Toplevel):
             inverted=0
         ).get(self._pol_var.get(), 1)
         pin_name, pin_cfg = self._pin_cfg
-        if pin_fnc in ['dx_alarm', 'conn_alarm']:
+        if pin_fnc in self._output_task_names:
             pin_cfg['pin_dir_in'] = False
         else:
             pin_cfg['pin_dir_in'] = True
