@@ -339,6 +339,7 @@ class AX25PortHandler(object):
         for port_id, port in self.ax25_ports.items():
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
             if port_cfg.get('parm_kiss_is_on', True):
+                # time.sleep(1)
                 self.sysmsg_to_gui(get_strTab('send_kiss_parm', POPT_CFG.get_guiCFG_language()).format(port_id))
                 try:
                     port.set_kiss_parm()
@@ -1137,9 +1138,11 @@ class AX25PortHandler(object):
         all_conn = self.get_all_connections(with_null=True)
         all_linkConn = self.link_connections
         all_digiConn = self.get_all_digiConn()
+        """
         self.set_pmsMailAlarm(True)
         self.set_aprsMailAlarm_PH(True)
         self.set_noty_bell_PH(True)
+        """
         print('ALL Conn ----------------------')
         for ch_id, conn in all_conn.items():
             print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state()}")
@@ -1150,9 +1153,10 @@ class AX25PortHandler(object):
             print(f"LINK: link_conn.conn: {conn.LINK_Connection.LINK_Connection} conn: {conn.LINK_Connection.LINK_Connection.LINK_Connection}")
         print('ALL DIGIConn ------------------')
         for digi_uid, conn in all_digiConn.items():
-            print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()} conn: {conn}")
+            print(f"digi-UID: {digi_uid} - STATE: {conn.get_state()} - rx-conn: {conn.get_rx_conn()} - tx-conn: {conn.get_tx_conn()}")
 
         #######################################################################
+        """
         logger.debug("=================Port-Watch-Dog====================")
         for port_id, port in self.get_all_ports().items():
             logger.debug(f"Port {port_id}: WD > {time.time() - port.port_w_dog}")
@@ -1163,6 +1167,7 @@ class AX25PortHandler(object):
                 logger.debug(f"Port {port_id}: readall > {port.device.readall()}")
             logger.debug("")
         logger.debug("====================================================")
+        """
 
 
 PORT_HANDLER = AX25PortHandler()

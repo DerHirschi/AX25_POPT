@@ -328,13 +328,23 @@ class AX25DigiConnection:
     # Crone Tasks
     def digi_crone(self):
         """ !! called fm Port Tasker LOOP !! """
+        # logger.debug('--------Digi-Crone--------- #########')
+        # print("Digi-Crone")
         if self._state == 2:
             self._check_last_SABM()
             return
         if self._state == 3:
             if self._is_running():
+                """
+                logger.debug('--------Digi-Crone---------')
+                logger.debug(f"TX-Conn: {self._tx_conn})")
+                logger.debug(f"RX-Conn: {self._rx_conn})")
+                logger.debug(f"TX-Conn LC: {self._tx_conn.LINK_Connection})")
+                logger.debug(f"RX-Conn LC: {self._rx_conn.LINK_Connection})")
+                logger.debug('--------------------------')
+                """
                 self._check_RNR()
-                self._check_RNR_reset()
+                # self._check_RNR_reset()
 
     def _check_last_SABM(self):
         if self._state != 2:
@@ -343,17 +353,24 @@ class AX25DigiConnection:
             logger.debug(f'DIGI _check_last_SABM: ABORT')
             self._abort_digi_conn()
 
+    """
     def _check_RNR_reset(self):
         if not self._check_buffer_limit_RxConn():
             self._unset_TxConn_RNR()
         if not self._check_buffer_limit_TxConn():
             self._unset_RxConn_RNR()
+    """
 
     def _check_RNR(self):
         if self._check_buffer_limit_RxConn():
             self._set_TxConn_RNR()
+        else:
+            self._unset_TxConn_RNR()
+
         if self._check_buffer_limit_TxConn():
             self._set_RxConn_RNR()
+        else:
+            self._unset_RxConn_RNR()
 
     def _set_TxConn_RNR(self):
         if not self._tx_conn:
@@ -418,10 +435,12 @@ class AX25DigiConnection:
             return False
         if self._conf_max_n2:
             if self._tx_conn.n2 > self._conf_max_n2:
+                print(f"RNR n2: {self._tx_conn.n2}")
                 return True
         if not self._conf_max_buff:
             return False
         if len(self._tx_conn.tx_buf_rawData) > self._conf_max_buff:
+            print(f"RNR buff: {len(self._tx_conn.tx_buf_rawData)}")
             return True
         return False
 
@@ -430,6 +449,12 @@ class AX25DigiConnection:
 
     def get_tx_uid(self):
         return str(self._tx_conn_uid)
+
+    def get_tx_conn(self):
+        return self._tx_conn
+
+    def get_rx_conn(self):
+        return self._rx_conn
 
     def _check_txConn_state(self):
         if not self._tx_conn:

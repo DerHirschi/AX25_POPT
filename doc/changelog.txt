@@ -47,7 +47,7 @@ Fixes:
   (Es gibt immer noch ein Problem mit dem L3-Digi.. Ich arbeite dran)
 - Sporadischer Fehler beim Speichern der popt_main Config
 - Unbekannte/Defekte KissFrames werden nicht gefiltert
-  !! Danke an Patrik !!
+  !! Danke an Patrick !!
 - File-Transfer Auto-RNR Mode
 - Windows: Probleme beim Schließen des seriellen Ports (PoPT friert ein)
   !! Danke an Jan !!

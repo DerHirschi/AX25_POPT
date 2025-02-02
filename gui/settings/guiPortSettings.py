@@ -4,7 +4,7 @@ from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, TNC_KISS_START_CMD, \
-    TNC_KISS_END_CMD
+    TNC_KISS_END_CMD, KISSDEVICES
 from cfg.default_config import getNew_port_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -709,6 +709,48 @@ class PortSetTab:
                     self._param1_var.set('COM1')
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
                 self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
+        elif typ == 'AX25KERNEL':
+            #self._axip_linktest_dd.configure(state="disabled")
+            self._axip_multicast_dd.configure(state="disabled")
+
+            self._kiss_txd.configure(state="normal")
+            self._kiss_pers.configure(state="normal")
+            self._kiss_tail.configure(state="normal")
+            self._kiss_slot.configure(state="normal")
+            self._kiss_duplex_ent.configure(state='normal')
+
+            self._ptxd.configure(state="normal")
+            self._calc_baud.configure(state="normal")
+            self._calc_baud.delete(0, tk.END)
+            # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
+            # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
+            self._calc_baud.insert(tk.END, self._port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
+            # self.calc_baud.configure(state="normal")
+
+            self._param1_label.configure(text='Interface')
+
+            self._param1_ent.destroy()
+            self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
+            self._param1_ent.configure(width=15)
+            self._param1_ent.place(x=self._param1_x, y=self._param1_y)
+
+
+            self._param2_label.configure(text='')
+            self._param2_ent.configure(width=7)
+            self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
+            # self._param1_ent.place(x=param_sel_x + 50, y=height - param_sel_y + param_next_line)
+            self._param2_label.place(x=param_sel_x + 280, y=height - param_sel_y + param_next_line)
+            self._param2_ent.place(x=param_sel_x + 280 + 60, y=height - param_sel_y + param_next_line)
+
+            # self._param1_ent.delete(0, tk.END)
+            self._param2_ent.delete(0, tk.END)
+            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
+                self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+            else:
+                self._param1_var.set('ax0')
+
+            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1]:
+                self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
 
         self._t2_var.set(str(self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
         # if self._port_setting.parm_T2_auto:
@@ -720,6 +762,19 @@ class PortSetTab:
             self._t2_auto.deselect()
         self._t2_auto_check()
         # print(self.port_setting.parm_T2_auto)
+
+
+        self._t2_var.set(str(self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
+        # if self._port_setting.parm_T2_auto:
+        if self._port_setting.get('parm_T2_auto', new_port_cfg.get('parm_T2_auto', True)):
+            self._t2_auto_var.set(True)
+            self._t2_auto.select()
+        else:
+            self._t2_auto_var.set(False)
+            self._t2_auto.deselect()
+        self._t2_auto_check()
+        # print(self.port_setting.parm_T2_auto)
+
 
     def set_vars_to_cfg(self, event=None):
         old_cfg = dict(self._port_setting)
@@ -738,6 +793,9 @@ class PortSetTab:
             tmp_param = (self._param1_var.get(), int(self._param2_ent.get()))
         except ValueError:
             tmp_param = (self._param1_var.get(), 0)
+        if self._port_select_var.get() == 'AX25KERNEL':
+            tmp_param = (self._param1_var.get(), 0)
+
         self._port_setting['parm_PortParm'] = tmp_param
         # Pseudo TXD
         try:
@@ -747,7 +805,7 @@ class PortSetTab:
 
         #############
         # KISS
-        if self._port_select_var.get() in ['KISSSER', 'KISSTCP']:
+        if self._port_select_var.get() in KISSDEVICES:
             self._port_setting['parm_kiss_is_on'] = True
             self._port_setting['parm_kiss_TXD'] = int(self._kiss_txd.get())
             self._port_setting['parm_kiss_Pers'] = int(self._kiss_pers.get())
