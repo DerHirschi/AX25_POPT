@@ -16,6 +16,7 @@ Optimierung:
 - SQLite WX-Daten: Schreibvorgänge auf Festspeicher optimiert
 
 Neue Implementierungen / Funktionen:
+- Support für Linux AX25-Kernel Devices
 - User-DB GUI: Filterfunktion für User Einträge
 - User-DB GUI: Neue Einträge können jetzt per Hand hinzugefügt werden
 - Autologin mittels Baycom Login Verfahren

@@ -25,6 +25,8 @@ class PortSetTab:
         self._need_reinit = False
         self._port_setting: dict = new_settings
         port_types = PORT_HANDLER.get_ax25types_keys()
+        if not is_linux():
+            port_types.remove('AX25KERNEL')
         self.tab = ttk.Frame(tabclt)
         #################
         # Port Name
