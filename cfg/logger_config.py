@@ -67,9 +67,10 @@ formatter = logging.Formatter('%(asctime)s - %(name)s: %(message)s')
 fileHandler = logging.FileHandler(f'{CFG_logging_path}log_book{dt_str}.log', mode='a')
 fileHandler.setFormatter(formatter)
 log_book.setLevel(logging.INFO)
-log_book.addHandler(fileHandler)
+# log_book.addHandler(fileHandler)
 if CONSOLE_LOG:
     streamHandler = logging.StreamHandler()
     streamHandler.setFormatter(formatter)
     log_book.addHandler(streamHandler)
 
+# log_book.disabled = True

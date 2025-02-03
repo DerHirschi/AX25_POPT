@@ -54,6 +54,7 @@ $ pip install --break-system-packages playsound pyserial aprslib
 - KISS via TCP (e.g. Direwolf)
 - KISS via Serail (e.g. Linux AX.25 Device (kissattach). Not tested on TNCs or Modems yet)
 - AXIP via UDP (AXIP Client)
+- AX25KERNEL (Linux AX.25 Device - experimental)
 
 #### Keybindings:
 - ESC > New Connection

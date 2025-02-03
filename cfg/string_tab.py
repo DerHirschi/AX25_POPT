@@ -211,6 +211,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'userdb_newUser': (
+        'Neuer Eintrag',
+        'New entry',
+        'Nieuwe invoer',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'prewritewin': (
         'Vorschreibfenster',
         'Prewriting window',

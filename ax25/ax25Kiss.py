@@ -43,6 +43,7 @@ class Kiss(object):
         self._duplex_frame = lambda: b'\xC0\x05' + bytes.fromhex(
             str(port_cfg.get('parm_kiss_F_Duplex', 0)).zfill(2)) + b'\xC0'
         self._kiss_data_frame = lambda inp: self._FEND + self._DATA_FRAME + inp + self._FEND
+        self._ax25kernel_kiss_data_frame = lambda inp: self._DATA_FRAME + inp
         # "FEND is sent as FESC, TFEND"
         # 0xC0 is sent as 0xDB 0xDC
         self._FESC_TFEND = b''.join([self._FESC, self._TFEND])
@@ -59,6 +60,15 @@ class Kiss(object):
             self._tail_frame(),
             self._duplex_frame(),
         ])
+
+    def set_all_parameter_ax25kernel(self):
+        return [
+            self._txd_frame()[1:-1],
+            self._pers_frame()[1:-1],
+            self._slot_frame()[1:-1],
+            self._tail_frame()[1:-1],
+            self._duplex_frame()[1:-1],
+        ]
     ######################################################################
     def unknown_kiss_frame(self, inp: bytes):
         if not self.is_enabled:
@@ -117,6 +127,41 @@ class Kiss(object):
             self._FEND
         )
 
+    def de_kiss_ax25kernel(self, inp: bytes):
+        """
+        Code from: https://github.com/ampledata/kiss
+        Escape special codes, per KISS spec.
+        "If the FEND or FESC codes appear in the data to be transferred, they
+        need to be escaped. The FEND code is then sent as FESC, TFEND and the
+        FESC is then sent as FESC, TFESC."
+        - http://en.wikipedia.org/wiki/KISS_(TNC)#Description
+        """
+        if not self.is_enabled:
+            return inp
+        # if len(inp) < 15:
+        if len(inp) < 2:
+            return None
+        """
+        if not inp.endswith(self._FEND):
+            return None
+        """
+        """
+        if not inp.startswith(self._FEND + self._DATA_FRAME):
+            return None
+        """
+        if not inp.startswith(self._DATA_FRAME):
+            return None
+        """
+        return inp[1:].replace(
+            self._FESC_TFESC,
+            self._FESC
+        ).replace(
+            self._FESC_TFEND,
+            self._FEND
+        )
+        """
+        return inp[1:]
+
     def kiss(self, inp: bytes):
         """
         Code from: https://github.com/ampledata/kiss
@@ -137,6 +182,28 @@ class Kiss(object):
                 )
             )
         return inp
+
+    def kiss_ax25kernel(self, inp: bytes):
+        """
+        Code from: https://github.com/ampledata/kiss
+        Recover special codes, per KISS spec.
+        "If the FESC_TFESC or FESC_TFEND escaped codes appear in the data received,
+        they need to be recovered to the original codes. The FESC_TFESC code is
+        replaced by FESC code and FESC_TFEND is replaced by FEND code."
+        - http://en.wikipedia.org/wiki/KISS_(TNC)#Description
+        """
+        if self.is_enabled:
+            return self._ax25kernel_kiss_data_frame(
+                inp.replace(
+                    self._FESC,
+                    self._FESC_TFESC
+                ).replace(
+                    self._FEND,
+                    self._FESC_TFEND
+                )
+            )
+        return inp
+
 
     #############################################################################
     def device_kiss_end(self):

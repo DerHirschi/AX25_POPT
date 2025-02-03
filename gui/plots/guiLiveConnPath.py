@@ -85,8 +85,11 @@ class LiveConnPath(tk.Frame):
         self._update_Node_pos(ch_id)
         self._update_node_label()
         self._plot1.axis('off')
-        self._fig.set_facecolor('#191621')
-        self._canvas.draw()
+        # self._fig.set_facecolor('#191621')
+        ## self._canvas.draw()
+        self._fig.canvas.draw()
+        self._fig.canvas.flush_events()
+        self._canvas.flush_events()
 
     def _update_node_label(self):
         if not self._pos:

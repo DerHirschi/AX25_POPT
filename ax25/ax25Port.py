@@ -141,7 +141,7 @@ class AX25Port(object):
         self._dualPort_monitor_input(ax25frame=frame, tx=True)
         try:
             self.tx_device(frame)
-        except AX25DeviceERROR:
+        except (AX25DeviceERROR, AX25DeviceFAIL):
             logger.error(f"Error: tx_device() Port: {self.port_id}")
             self.close()
 
@@ -223,7 +223,7 @@ class AX25Port(object):
                     logger.debug(self._logTag + f"Link-Conn RX No DIGI chk --: {ax25_frame_conf}")
                     return False
                 # if call.call_str == link_call:
-                logger.debug(self._logTag + f"Link-Conn RX --: {ax25_frame_conf}")
+                # logger.debug(self._logTag + f"Link-Conn RX --: {ax25_frame_conf}")
                 conn.handle_rx(ax25_frame=ax25_frame)
                 return True
                 # if ax25_frame.digi_check_and_encode(call=link_call, h_bit_enc=True):
@@ -331,7 +331,7 @@ class AX25Port(object):
                         tmp_cfg.update(dict(
                             rx_port=self,
                             digi_call=str(call.call_str),
-                            digi_ssid=int(call.ssid),
+                            digi_ssid=int(call.ssid),       # As Port-ID
                             ax25_conf=dict(ax25_conf)
                         ))
                         if ax25_frame.ctl_byte.flag == 'UI':
@@ -964,7 +964,7 @@ class AX25Port(object):
                 ##############################################
                 buf: RxBuf = self._rx()
                 ##############################################
-            except AX25DeviceERROR:
+            except (AX25DeviceERROR, AX25DeviceFAIL):
                 # print(e)
                 # time.sleep(0.05)
                 # self.close()
@@ -1089,8 +1089,17 @@ class KissTCP(AX25Port):
             """
             self.device.shutdown(socket.SHUT_RDWR)
             self.device.close()
-        except (OSError, ConnectionRefusedError, ConnectionError, AttributeError):
-            pass
+        except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+            logger.error(f"Port {self.port_id}: Error while closing Port !")
+            logger.error(f"Port {self.port_id}: {e}")
+            self.device_is_running = False
+            if self.device is not None:
+                try:
+                    self.device.close()
+                except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+                    logger.error(f"Port {self.port_id}: Error while closing Port !")
+                    logger.error(f"Port {self.port_id}: {e}")
+                    return
         finally:
             self.device_is_running = False
             if self.device is not None:
@@ -1151,7 +1160,7 @@ class KISSSerial(AX25Port):
         if self.loop_is_running:
             logger.info("KISS Serial INIT")
             try:
-                self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.2)
+                self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.4)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
                 logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self._port_param}')
@@ -1292,7 +1301,6 @@ class KISSSerial(AX25Port):
                 logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
                 self.close_device()
                 raise AX25DeviceERROR
-
 
 
 class AXIP(AX25Port):
@@ -1439,8 +1447,162 @@ class AXIP(AX25Port):
             if self.axip_anti_spam[k][1] < time.time():
                 del self.axip_anti_spam[k]
     """
+
+class AX25KernelDEV(AX25Port):
+    def init(self):
+        if self.loop_is_running:
+            # print("KISS TCP INIT")
+            logger.info(f'Port {self.port_id}: AX25-Kernel INIT')
+            sock_timeout = 0.2
+            ETH_P_ALL = 3
+            # self.kiss = b'\x00'
+            """
+            s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
+            s.bind((interface, 0))
+
+            """
+            try:
+                self.device = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
+            except PermissionError as e:
+                logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
+                logger.error('{}'.format(e))
+                # self.device.shutdown(socket.SHUT_RDWR)
+                # self.device.close()
+                self.loop_is_running = False
+                self.device = None
+                raise AX25DeviceFAIL
+            try:
+                self.device.settimeout(sock_timeout)
+                # self.device.bind(self._port_param)
+                self.device.bind((self._port_param[0], 0))
+                # self.device.bind(('ax0', 0))
+                self.device_is_running = True
+
+            except (OSError, ConnectionRefusedError, ConnectionError) as e:
+                logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
+                logger.error('{}'.format(e))
+                # self.device.shutdown(socket.SHUT_RDWR)
+                # self.device.close()
+                self.close_device()
+                raise AX25DeviceFAIL
+
+            else:
+                if self.kiss.is_enabled:
+                    self.set_kiss_parm()
+                """
+                if self.kiss.is_enabled:
+                    # self.device.sendall(self.kiss.device_kiss_start_1())
+                    try:
+                        self.device.sendall(self.kiss.device_kiss_start_1())
+                        # print(self.device.recv(999))
+                    except BrokenPipeError as e:
+                        # print('{}'.format(e))
+                        logger.error(f'Port {self.port_id}: {e}')
+                        # self.device.shutdown(socket.SHUT_RDWR)
+                        # self.device.close()
+                        self.close_device()
+                        raise AX25DeviceFAIL
+                    else:
+                        try:
+                            self.set_kiss_parm()
+                        except AX25DeviceFAIL as e:
+                            raise e
+                """
+                return
+
+
+    def __del__(self):
+        # self.device.shutdown(socket.SHUT_RDWR)
+        self.close_device()
+
+    def close_device(self):
+        self.loop_is_running = False
+        if self.device is None:
+            self.device_is_running = False
+            return
+        try:
+            # Deactivate KISS Mode on TNC
+            """
+            if self.kiss.is_enabled:
+                self.device.sendall(self.kiss.device_kiss_end())
+            """
+            # self.device.shutdown(socket.SHUT_RDWR)
+            self.device.close()
+        except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+            logger.error(f"Port {self.port_id}: Error while closing Port !")
+            logger.error(f"Port {self.port_id}: {e}")
+            self.device_is_running = False
+            if self.device is not None:
+                try:
+                    self.device.close()
+                except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+                    logger.error(f"Port {self.port_id}: Error while closing Port !")
+                    logger.error(f"Port {self.port_id}: {e}")
+                    return
+        finally:
+            self.device_is_running = False
+            if self.device is not None:
+                self.device.close()
+            # print("KISS TCP FINALLY")
+
+    def set_kiss_parm(self):
+        if self.kiss.is_enabled and self.device is not None and self.device_is_running:
+            try:
+                frame = self.kiss.set_all_parameter_ax25kernel()
+                for el in frame:
+                    self.device.sendall(el)
+            except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
+                logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
+                logger.error('{}'.format(e))
+                raise AX25DeviceFAIL
+
+    def _rx(self):
+        self.port_w_dog = time.time()
+        try:
+            recv_buff = self.device.recv(999)
+        except socket.timeout:
+            return None
+        except OSError as e:
+            raise AX25DeviceERROR(e, self)
+
+        if recv_buff:
+            de_kiss_fr = self.kiss.de_kiss_ax25kernel(recv_buff)
+            if de_kiss_fr is not None:
+                ret = RxBuf()
+                ret.raw_data = bytes(de_kiss_fr)
+                ret.kiss_frame = bytes(recv_buff)
+                return ret
+            if self.kiss.unknown_kiss_frame(recv_buff):
+                return None
+        else:
+            return None
+
+    def tx_device(self, frame):
+        ###################################
+        # CRC
+        # calc_crc = crc_x25(frame.data_bytes)
+        # calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
+        try:
+            self.device.sendall(self.kiss.kiss_ax25kernel(frame.data_bytes))
+            # self.device.sendall(b'\xC0' +  b'\x00' + frame.data_bytes + b'\xC0')
+            # self.device.sendall(b'\xC0' + frame.data_bytes + b'\xC0')
+            # self.device.sendall(b'\x00' + frame.data_bytes )
+        except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
+            logger.error(f'Port {self.port_id}: Error. Cant send Packet to KISS TCP Device. Try Reinit Device {self._port_param}')
+            logger.error('{}'.format(e))
+            try:
+                self.init()
+            except AX25DeviceFAIL:
+                logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
+                raise AX25DeviceFAIL
+        # else:
+        #     self._mh.bw_mon_inp(frame, self.port_id)
+
+        ############################################
+
 AX25DeviceTAB = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
             'AXIP': AXIP,
+            'AX25KERNEL': AX25KernelDEV,
         }

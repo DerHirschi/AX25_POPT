@@ -273,8 +273,14 @@ class AX25Conn:
                    pipe_cfg.get('pipe_parm_Proto', False))):
             """ Init CLI """
             self._init_cli()
-            if not rx:
-                self.cli.change_cli_state(state=1)
+            if hasattr(self.user_db_ent, 'sys_pw_autologin'):
+                if not self.user_db_ent.sys_pw_autologin and not rx:
+                    self.cli.change_cli_state(state=1)
+                elif self.user_db_ent.sys_pw_autologin and not rx:
+                    self.cli.change_cli_state(state=6)
+            else:
+                if not rx:
+                    self.cli.change_cli_state(state=1)
         else:
             """ Init Pipe """
             self.set_pipe(pipe_cfg)
@@ -301,9 +307,12 @@ class AX25Conn:
         self.cli_type = str(cli_key)
 
     def _reinit_cli(self):
-        # print(f"CLI RE-INIT: {self.uid}")
         if not self.pipe:
             self._init_cli()
+            if hasattr(self.user_db_ent, 'sys_pw_autologin'):
+                if self.user_db_ent.sys_pw_autologin :
+                    self.cli.change_cli_state(state=6)
+                    return
             self.cli.change_cli_state(state=1)
 
     def set_station_cfg(self):
@@ -620,8 +629,10 @@ class AX25Conn:
             return False
         self.digi_call = str(conn.digi_call)
         self._port_handler.link_connections[str(self.uid)] = self, str(conn.digi_call)
+        # self._port_handler.link_connections[str(reverse_uid(self.uid))] = conn, str(conn.digi_call)
 
         self.LINK_Connection = conn
+        conn.LINK_Connection = self
         self.is_link = True
         ###############################
         # Del Digi Conn

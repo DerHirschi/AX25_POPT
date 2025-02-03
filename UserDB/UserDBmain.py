@@ -59,6 +59,7 @@ class Client(object):
     routes = []
     software_str = ''
     sys_pw = ''
+    sys_pw_autologin = False
     sys_pw_parm = [5, 80, 'SYS']
 
 
@@ -132,7 +133,7 @@ class UserDB:
         self._port_handler = port_handler
         logger.info("User-DB: PH set")
 
-    def get_entry(self, call_str, add_new=True):
+    def get_entry(self, call_str: str, add_new=True):
         # call_str = validate_ax25Call(call_str)
         if not hasattr(call_str, 'upper'):
             call_str = str(call_str)

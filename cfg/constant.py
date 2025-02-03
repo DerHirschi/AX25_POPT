@@ -3,13 +3,14 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.114.33'
+VER = '2.115.16'
 
 DEBUG_LOG = True
 CONSOLE_LOG = True
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD = b'\x1b@K\r'             # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
+KISSDEVICES = ['KISSSER', 'KISSTCP', 'AX25KERNEL']
 """"""
 MAX_PORTS = 10              #
 SERVICE_CH_START = 11       # Service Channels Start Channel
@@ -348,5 +349,5 @@ ONE_WIRE_MAP = ("             PI 3/4 GPIO\n"
 #######################################################
 # GPIO
 GPIO_PATH = '/sys/class/gpio'
-GPIO_RANGE = (0, 26)
+GPIO_RANGE = (1, 26)
 

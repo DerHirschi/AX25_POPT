@@ -500,14 +500,19 @@ class APRS_ais(object):
     """
 
     def _update_pn_msg_gui(self, aprs_pack: dict):
-        if self._port_handler is not None:
-            gui = self._port_handler.get_gui()
-            if gui is not None:
-                if aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
-                        or aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
-                    gui.set_aprsMail_alarm()
-                if gui.aprs_pn_msg_win is not None:
-                    gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
+        if self._port_handler is None:
+            return
+        # ALARM / NOTY
+        if aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
+                or aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
+            self._port_handler.set_aprsMailAlarm_PH(True)
+
+        gui = self._port_handler.get_gui()
+        if not hasattr(gui, 'aprs_pn_msg_win'):
+            return
+        if not hasattr(gui.aprs_pn_msg_win, 'update_tree_single_pack'):
+            return
+        gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
 
     def _aprs_msg_sys_new_pn(self, aprs_pack: dict):
         self._update_pn_msg_gui(aprs_pack)

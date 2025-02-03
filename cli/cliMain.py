@@ -122,6 +122,7 @@ class DefaultCLI(object):
             3: self.s3,  # Baycom Login Shit
             4: self.s4,  # Try to connect other Station ( C CMD )
             5: self.s5,  # Nothing / no remote
+            6: self.s6,  # Auto Baycom Login Shit
         }
         self._cmd_exec_ext = {}  # Extern Command's ??
         self._cron_state_exec_ext = {}  # Extern Tasks ??
@@ -130,6 +131,7 @@ class DefaultCLI(object):
         self._cron_state_exec.update(self._cron_state_exec_ext)
         self._commands.update(self._cmd_exec_ext)
         self._state_exec.update(self._state_exec_ext)
+        self._baycom_auto_login()
         """
         if type(self.prefix) is str:  # Fix for old CFG Files
             self.prefix = self.prefix.encode(self._encoding[0], self._encoding[1])
@@ -222,17 +224,36 @@ class DefaultCLI(object):
             return zeilenumbruch_lines(out)
         return ''
 
-    def start_baycom_login(self, login_cmd=''):
+    def start_baycom_login(self):
         if self._sys_login is None:
             if self._user_db_ent:
                 if self._user_db_ent.sys_pw:
+                    login_cmd = self._user_db_ent.sys_pw_parm[-1]
                     self._sys_login = BaycomLogin(
                         sys_pw_parm=self._user_db_ent.sys_pw_parm,
                         sys_pw=self._user_db_ent.sys_pw,
-                        login_cmd=login_cmd
+                        login_cmd=login_cmd,
                     )
                     self.send_output(self._sys_login.start(), env_vars=False)
                     self.change_cli_state(3)
+
+    def _baycom_auto_login(self):
+        if self._sys_login:
+            return False
+        if not self._user_db_ent:
+            return False
+        if not hasattr(self._user_db_ent, 'sys_pw_autologin'):
+            return False
+        if not self._user_db_ent.sys_pw_autologin:
+            return False
+        self._sys_login = BaycomLogin(
+            sys_pw_parm=self._user_db_ent.sys_pw_parm,
+            sys_pw=self._user_db_ent.sys_pw,
+        )
+        self._sys_login.attempts = 1
+        self.change_cli_state(6)
+        return True
+
 
     def _send_sw_id(self):
         if not self.sw_id:
@@ -1314,9 +1335,53 @@ class DefaultCLI(object):
         self.change_cli_state(1)
         return self.get_ts_prompt()
 
-    def s5(self):
+    @staticmethod
+    def s5():
         """ Do nothing / No Remote"""
         return ""
+
+    def s6(self):
+        """ Auto Sys Login """
+        if self._sys_login is None:
+            print(1)
+            self.change_cli_state(1)
+            return ""
+
+        inp = self._raw_input.decode(self._encoding[0], 'ignore')
+        if 'OK\r' in inp:
+            del self._sys_login
+            self._sys_login = None
+            # print("END")
+            self.sysop_priv = True
+            if self._gui:
+                self._gui.on_channel_status_change()
+            self.change_cli_state(1)
+            return ''
+        res = self._sys_login.step(inp)
+        if not res:
+
+            if self._sys_login.fail_counter > 20:
+                del self._sys_login
+                self._sys_login = None
+                # print("Priv: Failed !")
+                logger.warning("Priv: Failed !")
+                if self._gui:
+                    self._gui.on_channel_status_change()
+                self.change_cli_state(1)
+
+            # print("----")
+            # self._sys_login.attempts += 1
+            return ""
+        if self._sys_login.attempt_count == self._sys_login.attempts:
+            del self._sys_login
+            self._sys_login = None
+            print("END")
+            self.sysop_priv = True
+            if self._gui:
+                self._gui.on_channel_status_change()
+            self.change_cli_state(1)
+        return res
+
 
     @staticmethod
     def cron_s0():

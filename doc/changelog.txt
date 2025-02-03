@@ -1,4 +1,38 @@
 ###########################################################################################################
+# 2.115.x
+Fixes:
+- Script-Error beim Öffnen der Haupteinstellungen (Ausgelöst durch
+  die 1Wire Einstellungen)
+- Pacman-Funktion führt zu crashes (Speicherzugriffsfehler) auf dem
+  Raspberry-PI.
+  (0x0000007ff730a518 in Tk_GetImageMasterData () from /lib/aarch64-linux-gnu/libtk8.6.so)
+  (Betrifft bis jetzt nur libtk8.6.11-2 arm64)
+  Sollte der Fehler auftreten, dann kann die "Pacman"-Funktion eingeschränkt werden.
+  (Einstellungen>Allgemein>Pacman-FIX).
+  Die "Autoupdate-Funktion" wird eingeschränkt, der Plot kann aber nach wie vor
+  per Hand oder per Kanalwechsel aktualisiert werden.
+
+Optimierung:
+- SQLite WX-Daten: Schreibvorgänge auf Festspeicher optimiert
+
+Neue Implementierungen / Funktionen:
+- Support für Linux AX25-Kernel Devices
+- User-DB GUI: Filterfunktion für User Einträge
+- User-DB GUI: Neue Einträge können jetzt per Hand hinzugefügt werden
+- Autologin mittels Baycom Login Verfahren
+- GPIO-Funktion "DX-Alarm": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+- GPIO-Funktion "Conn-Alarm": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+- GPIO-Funktion "PMS-Neue-Mail-Alarm": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+- GPIO-Funktion "APRS-Neue-Mail-Alarm": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+- GPIO-Funktion "Sysop-Alarm(//BELL)": Schaltet GPIO high/low(einstellbar)
+  in Mode (Blink, Hold(für Zeit X oder bis Alarm resetet(einstellbar))
+
+###########################################################################################################
+###########################################################################################################
 # 2.114.x
 Fixes:
 - Scripterror, wenn "Messagebox" für Sysop Benachrichtigung erscheint
@@ -14,7 +48,7 @@ Fixes:
   (Es gibt immer noch ein Problem mit dem L3-Digi.. Ich arbeite dran)
 - Sporadischer Fehler beim Speichern der popt_main Config
 - Unbekannte/Defekte KissFrames werden nicht gefiltert
-  !! Danke an Patrik !!
+  !! Danke an Patrick !!
 - File-Transfer Auto-RNR Mode
 - Windows: Probleme beim Schließen des seriellen Ports (PoPT friert ein)
   !! Danke an Jan !!

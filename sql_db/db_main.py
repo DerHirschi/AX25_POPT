@@ -111,6 +111,8 @@ class SQL_Database:
 
     def close_db(self):
         if self.db:
+            self._db_commit()
+            time.sleep(0.1)
             self.db.close()
 
     def check_tables_exists(self, tables: str):
@@ -153,6 +155,9 @@ class SQL_Database:
             query = f"DROP TABLE PortStatistik;"
             self.commit_query(query)
 
+    def _db_commit(self):
+        self.db.commit_query()
+
     def send_query(self, query):
         # print(f"Query: {query}")
         while self._access:
@@ -166,6 +171,23 @@ class SQL_Database:
                 self.db = None
                 self._access = False
                 return
+            self._access = False
+            return ret
+
+    def send_query_bin(self, query, data: tuple):
+        # print("Query <<BIN>>")
+        # print(query)
+        while self._access:
+            time.sleep(0.1)
+        if self.db:
+            self._access = True
+            try:
+                ret = self.db.execute_query_bin(query, data)
+            except SQLConnectionError:
+                self.error = True
+                self.db = None
+                self._access = False
+                return None
             self._access = False
             return ret
 
@@ -232,69 +254,69 @@ class SQL_Database:
 
     def bbs_insert_msg_fm_fwd(self, msg_struc: dict):
         # print("bbs_insert_msg_fm_fwd -------------")
-        _bid = msg_struc.get('bid_mid', '')
-        _from_call = msg_struc.get('sender', '')
-        _from_bbs = msg_struc.get('sender_bbs', '')
-        _typ = msg_struc.get('message_type', '')
-        if _typ == 'B':
-            _to_call = msg_struc.get('recipient_bbs', '')
-            _to_bbs = msg_struc.get('receiver', '')
+        bid = msg_struc.get('bid_mid', '')
+        from_call = msg_struc.get('sender', '')
+        from_bbs = msg_struc.get('sender_bbs', '')
+        typ = msg_struc.get('message_type', '')
+        if typ == 'B':
+            to_call = msg_struc.get('recipient_bbs', '')
+            to_bbs = msg_struc.get('receiver', '')
         else:
-            _to_call = msg_struc.get('receiver', '')
-            _to_bbs = msg_struc.get('recipient_bbs', '')
-        _subject = msg_struc.get('subject', '')
-        _path = str(msg_struc.get('path', []))
-        _msg = msg_struc.get('msg', b'')
-        _header = msg_struc.get('header', b'')
-        _msg_size = msg_struc.get('message_size', '')
-        _time = msg_struc.get('time', '')
-        _rx_time = datetime.now().strftime(SQL_TIME_FORMAT)
+            to_call = msg_struc.get('receiver', '')
+            to_bbs = msg_struc.get('recipient_bbs', '')
+        subject = msg_struc.get('subject', '')
+        path = str(msg_struc.get('path', []))
+        msg = msg_struc.get('msg', b'')
+        header = msg_struc.get('header', b'')
+        msg_size = msg_struc.get('message_size', '')
+        time = msg_struc.get('time', '')
+        rx_time = datetime.now().strftime(SQL_TIME_FORMAT)
         try:
-            _msg_size = int(_msg_size)
+            msg_size = int(msg_size)
         except ValueError:
-            _msg_size = 0
+            msg_size = 0
 
-        if not _bid or \
-                not _from_call or \
-                not _to_call or \
-                not _msg_size or \
-                _typ not in ['B', 'P']:
+        if not bid or \
+                not from_call or \
+                not to_call or \
+                not msg_size or \
+                typ not in ['B', 'P']:
             print(f"bbs_insert_msg_fm_fwd 1: {msg_struc}")
             return False
-        for el in [_from_call, _from_bbs, _to_call, _to_bbs, _subject]:
+        for el in [from_call, from_bbs, to_call, to_bbs, subject]:
             if search_sql_injections(el):
                 print(f"bbs_insert_msg_fm_fwd 2: {msg_struc}")
                 return False
-        if search_sql_injections(_msg.decode('UTF-8', 'ignore')):
-            print(f"SQL-Injection erkannt in Nachricht {_bid} von {_from_call}@{_from_bbs}")
-            logger.warning(f"SQL-Injection erkannt in Nachricht {_bid} von {_from_call}@{_from_bbs}")
+        if search_sql_injections(msg.decode('UTF-8', 'ignore')):
+            print(f"SQL-Injection erkannt in Nachricht {bid} von {from_call}@{from_bbs}")
+            logger.warning(f"SQL-Injection erkannt in Nachricht {bid} von {from_call}@{from_bbs}")
             return False
-        if search_sql_injections(_subject):
-            print(f"SQL-Injection erkannt in Betreff {_bid} von {_from_call}@{_from_bbs}")
-            logger.warning(f"SQL-Injection erkannt in Betreff {_bid} von {_from_call}@{_from_bbs}")
+        if search_sql_injections(subject):
+            print(f"SQL-Injection erkannt in Betreff {bid} von {from_call}@{from_bbs}")
+            logger.warning(f"SQL-Injection erkannt in Betreff {bid} von {from_call}@{from_bbs}")
             return False
 
-        _table = {
+        table = {
             'P': 'pms_pn_msg',
             'B': 'pms_bl_msg',
             'T': 'pms_bl_msg'  # TODO
-        }[_typ]
-        _query = (f"INSERT INTO {_table} "
+        }[typ]
+        query = (f"INSERT INTO {table} "
                   "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time, rx_time)"
                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
-        _query_data = (_bid,
-                       _from_call,
-                       _from_bbs,
-                       _to_call,
-                       _to_bbs,
-                       _msg_size,
-                       _subject,
-                       _path,
-                       _msg,
-                       _header,
-                       _time,
-                       _rx_time)
-        res = self.commit_query_bin(_query, _query_data)
+        query_data = (bid,
+                       from_call,
+                       from_bbs,
+                       to_call,
+                       to_bbs,
+                       msg_size,
+                       subject,
+                       path,
+                       msg,
+                       header,
+                       time,
+                       rx_time)
+        res = self.commit_query_bin(query, query_data)
         if res is None:
             return False
         self._fwd_paths_insert(msg_struc.get('fwd_path', []))   # TODO don't like accessing DB so many times
@@ -966,7 +988,7 @@ class SQL_Database:
             data_struc['weather']['luminosity'] = round(float(data_struc['weather']['luminosity']), 1)
 
         now = datetime.now().strftime(SQL_TIME_FORMAT)
-        _query = ("INSERT INTO `APRSwx` "
+        query = ("INSERT INTO `APRSwx` "
                   "(`from_call`, "
                   "`to_call`, "
                   "`via`, "
@@ -992,7 +1014,7 @@ class SQL_Database:
                   "`rx_time`, "
                   "`comment`) "
                   f"VALUES ({', '.join(['%s'] * 24)});")
-        _query_data = (
+        query_data = (
             str(data_struc.get('from', ''))[:9],
             str(data_struc.get('to', ''))[:9],
             str(data_struc.get('via', ''))[:9],
@@ -1018,7 +1040,7 @@ class SQL_Database:
             str(now)[:19],
             str(data_struc.get('comment', ''))[:200],
         )
-        return self.commit_query_bin(_query, _query_data)
+        return self.send_query_bin(query, query_data)
 
     def aprsWX_get_data_f_wxTree(self, last_rx_days=0):
         ids = self._aprsWX_get_ids_fm_last_ent(last_rx_days)

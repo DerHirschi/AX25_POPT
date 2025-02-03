@@ -53,7 +53,7 @@ Ideas/TODO's :
 - nötigen configs lesbar machen
 - nötigen configs einheitlich in/exportierbar machen
 ✓ Port Configs/Inits aufräumen/optimieren
-✓ Port Configs/Inits aufräumen/optimieren (Thrading)
+✓ Port Configs/Inits aufräumen/optimieren (Threading)
 - Port Configs/Inits aufräumen/optimieren (Var OPT/ Code OPT)
 
 - Soundsystem überarbeiten
@@ -124,6 +124,7 @@ Ideas/TODO's :
   ✓ Auto-TX: Port nach First Seen wählbar
 
 - "Multi-TNC/Multi-Port/Mesh-TNC" mehrere TNC's via KISSTCP zusammenschalten. Siehe Dual-TNC
+✓ Linux AX25-Kernel Device
 
 - SQL System
   - Alternative SQL-Sys(MySQL-Server/SQLite) als Spiegelserver
@@ -131,12 +132,12 @@ Ideas/TODO's :
 
 ✓ UserDB
   - UserDB auf SQL-DB umstellen?
-  - Suchfunktion in UserDB GUI
+  ✓ Suchfunktion in UserDB GUI
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)
 
 ✓ Baycom Login verfahren
-  - AutoLogin z.B. BCM
+  ✓ AutoLogin z.B. BCM
 - MD5 Login verfahren
 
 ✓ Logbuch
@@ -167,6 +168,22 @@ Ideas/TODO's :
   - BME280 Sensor lesen
   - GPIO lesen
   - GPIO setzen (High/Low, Timer, PWM?)
+
+- GPIO-Tool
+  ✓ GPIO setzen bei DX-Alarm
+  ✓ GPIO setzen bei bestehenden Connect
+  ✓ GPIO setzen wenn neue Mail im PMS
+  ✓ GPIO setzen wenn neue APRS-Mail
+  ✓ GPIO setzen wenn Sysop gerufen wird (//BELL)
+
+  - GPIO pinctrl Übersicht GUI
+  - GPIO pinctrl Übersicht CLI (!Rechter!)
+  - GPIO Übersicht CLI (!Rechter!)
+  - GPIO (high/low) lesen und als $textVar setzen
+  - Bake senden wenn GPIO (high/low) gesetzt ist
+  - Auto-Connect und Befehl senden wenn GPIO (high/low) gesetzt ist
+  - PMS senden wenn GPIO (high/low) gesetzt ist
+  - APRS-Bake senden wenn GPIO (high/low) gesetzt ist
 
 ✓ PoPT-Scheduler
   ✓ Autoconnect

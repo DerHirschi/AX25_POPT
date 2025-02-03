@@ -9,6 +9,7 @@ from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, log_book
 from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
 from fnc.str_fnc import get_strTab
+from poptGPIO.poptGPIO_main import poptGPIO_main
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
 from sql_db.db_main import SQL_Database
@@ -112,6 +113,14 @@ class AX25PortHandler(object):
         logger.info("PH: PMS Init")
         self._init_bbs()
         #######################################################
+        # GPIO
+        logger.info("PH: PoPT-GPIO Init")
+        try:
+            self._gpio = poptGPIO_main(self)
+        except IOError as e:
+            logger.warning(f"PH: PoPT-GPIO Init: {e}")
+            self._gpio = None
+        #######################################################
         # Port Handler Tasker (threaded Loop)
         logger.info("PH: Tasker Init")
         # 1Wire Thread
@@ -155,6 +164,7 @@ class AX25PortHandler(object):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
             self._aprs_task()
+            self._gpio_task()
             self._task_timer_05sec = time.time() + 0.5
 
     def _1sec_task(self):
@@ -243,6 +253,10 @@ class AX25PortHandler(object):
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
         self._close_aprs_ais()
+        if hasattr(self._gpio, 'close_gpio_pins'):
+            logger.info("PH: Closing GPIO")
+            self._gpio.close_gpio_pins()
+
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.close_port(k)
@@ -325,6 +339,7 @@ class AX25PortHandler(object):
         for port_id, port in self.ax25_ports.items():
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
             if port_cfg.get('parm_kiss_is_on', True):
+                # time.sleep(1)
                 self.sysmsg_to_gui(get_strTab('send_kiss_parm', POPT_CFG.get_guiCFG_language()).format(port_id))
                 try:
                     port.set_kiss_parm()
@@ -507,6 +522,7 @@ class AX25PortHandler(object):
                     SOUND.new_conn_sound()
                     speech = ' '.join(call_str.replace('-', ' '))
                     SOUND.sprech(speech)
+
             self._gui.add_LivePath_plot(node=call_str,
                                         ch_id=ch_id,
                                         path=path)
@@ -546,9 +562,11 @@ class AX25PortHandler(object):
         if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, UserDB-Conn C
+
             self._gui.sysMsg_to_qso(
                 data=msg,
                 ch_index=ch_id)
+
             if 0 < ch_id < SERVICE_CH_START:
                 SOUND.disco_sound()
             self._gui.resetHome_LivePath_plot(ch_id=ch_id)
@@ -980,6 +998,10 @@ class AX25PortHandler(object):
         return self._start_time
     #################################################
     #
+    def get_dxAlarm(self):
+        if self._mh:
+            return self._mh.dx_alarm_trigger
+        return False
 
     def set_dxAlarm(self, set_alarm=True):
         if set_alarm:
@@ -1002,12 +1024,25 @@ class AX25PortHandler(object):
             else:
                 self._gui.reset_tracer_alarm()
 
+    def set_aprsMailAlarm_PH(self, set_alarm=True):
+        if self._gui:
+            if set_alarm:
+                self._gui.set_aprsMail_alarm()
+            else:
+                self._gui.reset_aprsMail_alarm()
+
+        if hasattr(self._gpio, 'set_aprs_alarm'):
+            self._gpio.set_aprs_alarm(set_alarm)
+
     def set_pmsMailAlarm(self, set_alarm=True):
         if self._gui:
             if set_alarm:
                 self._gui.pmsMail_alarm()
             else:
                 self._gui.reset_pmsMail_alarm()
+
+        if hasattr(self._gpio, 'set_pms_alarm'):
+            self._gpio.set_pms_alarm(set_alarm)
 
     def set_pmsFwdAlarm(self, set_alarm=True):
         if self._gui:
@@ -1027,6 +1062,9 @@ class AX25PortHandler(object):
         if self._gui:
             self._gui.set_noty_bell(ch_id, msg)
 
+        if hasattr(self._gpio, 'set_sysop_alarm'):
+            self._gpio.set_sysop_alarm(True)
+
     def reset_noty_bell_PH(self):
         if self._gui:
             all_conn = self.get_all_connections()
@@ -1036,6 +1074,9 @@ class AX25PortHandler(object):
                     if conn.noty_bell:
                         return
             self._gui.reset_noty_bell_alarm()
+
+        if hasattr(self._gpio, 'set_sysop_alarm'):
+            self._gpio.set_sysop_alarm(False)
 
     ##############################################################
     # MCast
@@ -1079,12 +1120,29 @@ class AX25PortHandler(object):
                 logger.warning(f"PH: _oneWire_task IndexError: {sens_cfg}")
                 continue
         # POPT_CFG.set_1wire_sensor_cfg(dict(sensor_cfg))
+
+    ##############################################################
+    # GPIO
+    def get_GPIO(self):
+        return self._gpio
+
+    def _gpio_task(self):
+        if hasattr(self._gpio, 'gpio_tasker'):
+            self._gpio.gpio_tasker()
+            return
+        return
+
     ##############################################################
     #
     def debug_Connections(self):
         all_conn = self.get_all_connections(with_null=True)
         all_linkConn = self.link_connections
         all_digiConn = self.get_all_digiConn()
+        """
+        self.set_pmsMailAlarm(True)
+        self.set_aprsMailAlarm_PH(True)
+        self.set_noty_bell_PH(True)
+        """
         print('ALL Conn ----------------------')
         for ch_id, conn in all_conn.items():
             print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state()}")
@@ -1095,9 +1153,10 @@ class AX25PortHandler(object):
             print(f"LINK: link_conn.conn: {conn.LINK_Connection.LINK_Connection} conn: {conn.LINK_Connection.LINK_Connection.LINK_Connection}")
         print('ALL DIGIConn ------------------')
         for digi_uid, conn in all_digiConn.items():
-            print(f"LINK-UID: {digi_uid} - STATE: {conn.get_state()} conn: {conn}")
+            print(f"digi-UID: {digi_uid} - STATE: {conn.get_state()} - rx-conn: {conn.get_rx_conn()} - tx-conn: {conn.get_tx_conn()}")
 
         #######################################################################
+        """
         logger.debug("=================Port-Watch-Dog====================")
         for port_id, port in self.get_all_ports().items():
             logger.debug(f"Port {port_id}: WD > {time.time() - port.port_w_dog}")
@@ -1108,6 +1167,7 @@ class AX25PortHandler(object):
                 logger.debug(f"Port {port_id}: readall > {port.device.readall()}")
             logger.debug("")
         logger.debug("====================================================")
+        """
 
 
 PORT_HANDLER = AX25PortHandler()
