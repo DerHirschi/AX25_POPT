@@ -2,7 +2,7 @@ from cfg.popt_config import POPT_CFG
 from poptGPIO.gpio_fnc import is_gpio_device, set_gpio_dir, setup_gpio, set_gpio_val, close_gpio, get_gpio_val
 from poptGPIO.pinctl_fnc import is_pinctrl_device, set_pinctrl_dir, set_pinctrl_val, get_pinctrl_val
 from cfg.logger_config import logger
-from poptGPIO.poptGPIO_fnc import GPIO_DXAlarm, GPIO_ConnAlarm, GPIO_PMSAlarm, GPIO_APRS_PMAlarm, GPIO_SYSOP_Alarm
+from poptGPIO.poptGPIO_fnc import GPIO_DXAlarmOUT, GPIO_ConnAlarmOUT, GPIO_PMSAlarmOUT, GPIO_APRS_PMAlarmOUT, GPIO_SYSOP_AlarmOUT
 
 
 class poptGPIO_main:
@@ -27,11 +27,11 @@ class poptGPIO_main:
         self._init_fm_conf()
         ##################################
         self._FNC_TAB = dict(
-            dx_alarm=GPIO_DXAlarm,
-            conn_alarm=GPIO_ConnAlarm,
-            pms_alarm=GPIO_PMSAlarm,
-            aprs_alarm=GPIO_APRS_PMAlarm,
-            sysop_alarm=GPIO_SYSOP_Alarm,
+            dx_alarm=GPIO_DXAlarmOUT,
+            conn_alarm=GPIO_ConnAlarmOUT,
+            pms_alarm=GPIO_PMSAlarmOUT,
+            aprs_alarm=GPIO_APRS_PMAlarmOUT,
+            sysop_alarm=GPIO_SYSOP_AlarmOUT,
         )
         self._gpio_tasks = {}
         self._init_tasker_fm_conf()

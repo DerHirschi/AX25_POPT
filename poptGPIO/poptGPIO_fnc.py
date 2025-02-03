@@ -2,9 +2,9 @@ import time
 from cfg.logger_config import logger
 
 
-class GPIO_DefaultFNC:
+class GPIO_DefaultFNC_OUT:
     def __init__(self, gpio, pin_cfg: dict):
-        self._logTag = 'GPIO_DefaultFNC: '
+        self._logTag = 'GPIO_DefaultFNC_OUT: '
         self._pin_cfg = pin_cfg
         self._gpio = gpio
         if not hasattr(self._gpio, 'get_gpioPH'):
@@ -143,9 +143,9 @@ class GPIO_DefaultFNC:
 
 #############################################################
 # DX-Alarm
-class GPIO_DXAlarm(GPIO_DefaultFNC):
+class GPIO_DXAlarmOUT(GPIO_DefaultFNC_OUT):
     def __init__(self, gpio, pin_cfg: dict):
-        GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        GPIO_DefaultFNC_OUT.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
         self._logTag = 'GPIO_DXAlarm: '
 
     #########################################################
@@ -154,9 +154,9 @@ class GPIO_DXAlarm(GPIO_DefaultFNC):
 
 #############################################################
 # Connection-Alarm
-class GPIO_ConnAlarm(GPIO_DefaultFNC):
+class GPIO_ConnAlarmOUT(GPIO_DefaultFNC_OUT):
     def __init__(self, gpio, pin_cfg: dict):
-        GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        GPIO_DefaultFNC_OUT.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
         self._logTag = 'GPIO_ConnAlarm: '
 
     def _get_state_var(self):
@@ -164,9 +164,9 @@ class GPIO_ConnAlarm(GPIO_DefaultFNC):
 
 #############################################################
 # PMS-Alarm (New Mail)
-class GPIO_PMSAlarm(GPIO_DefaultFNC):
+class GPIO_PMSAlarmOUT(GPIO_DefaultFNC_OUT):
     def __init__(self, gpio, pin_cfg: dict):
-        GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        GPIO_DefaultFNC_OUT.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
         self._logTag = 'GPIO_PMSAlarm: '
 
     def _get_state_var(self):
@@ -177,9 +177,9 @@ class GPIO_PMSAlarm(GPIO_DefaultFNC):
 
 #############################################################
 # APRS-Alarm (New Private-Mail)
-class GPIO_APRS_PMAlarm(GPIO_DefaultFNC):
+class GPIO_APRS_PMAlarmOUT(GPIO_DefaultFNC_OUT):
     def __init__(self, gpio, pin_cfg: dict):
-        GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        GPIO_DefaultFNC_OUT.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
         self._logTag = 'GPIO_APRS_PMAlarm: '
 
     def _get_state_var(self):
@@ -190,9 +190,9 @@ class GPIO_APRS_PMAlarm(GPIO_DefaultFNC):
 
 #############################################################
 # SYSOP-Alarm //BELL
-class GPIO_SYSOP_Alarm(GPIO_DefaultFNC):
+class GPIO_SYSOP_AlarmOUT(GPIO_DefaultFNC_OUT):
     def __init__(self, gpio, pin_cfg: dict):
-        GPIO_DefaultFNC.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        GPIO_DefaultFNC_OUT.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
         self._logTag = 'GPIO_SYSOP_Alarm: '
 
     def _get_state_var(self):
@@ -201,3 +201,65 @@ class GPIO_SYSOP_Alarm(GPIO_DefaultFNC):
             return False
         return bool(self._gpio.get_sysop_alarm())
 
+#############################################################
+# INPUT
+"""
+class GPIO_DefaultFNC_IN:
+    def __init__(self, gpio, pin_cfg: dict):
+        self._logTag = 'GPIO_DefaultFNC_IN: '
+        self._pin_cfg = pin_cfg
+        self._gpio = gpio
+        if not hasattr(self._gpio, 'get_gpioPH'):
+            logger.error(self._logTag + "self._gpio can't find get_gpioPH()")
+            raise AttributeError("self._gpio can't find get_gpioPH()")
+        self._port_handler = self._gpio.get_gpioPH()
+        #######################################
+        # self._pin_fnc_cfg = pin_cfg.get('function_cfg', {})
+        self._pin = pin_cfg.get('pin', 0)
+        self._task_timer = time.time()
+        self._parm_task_timer = self._pin_cfg.get('task_timer', 0)
+        # self._cfg_blink = self._pin_cfg.get('blink', 0)
+        # self._cfg_hold = self._pin_cfg.get('hold_timer', 0)
+        # self._is_blink = bool(self._cfg_blink) and not bool(self._cfg_hold)
+        # self._hold_timer = time.time()
+        # self._hold_trigger = False, False
+        self._e = False
+
+    def gpioFNC_tasker(self):
+        if self._e:
+            return
+        if not self._parm_task_timer:
+            self._gpioFNC_task()
+            return
+        if time.time() > self._task_timer:
+            self._gpioFNC_task()
+            self._task_timer = time.time() + self._parm_task_timer
+            return
+        return
+
+    def _gpioFNC_task(self):
+       pass
+
+    def gpioFNC_get_e_state(self):
+        return bool(self._e)
+
+
+    def _get_gpio_val(self):
+        if not hasattr(self._gpio, 'get_pin_val'):
+            logger.error(self._logTag + "_get_gpio_val: AttributeError")
+            self._e = True
+            return None
+        try:
+            ret = self._gpio.get_pin_val(self._pin)
+        except IOError as e:
+            logger.error(self._logTag + e)
+            self._e = True
+            return None
+        if ret is None:
+            logger.error(self._logTag + f"_get_gpio_state: return None on pin {self._pin}")
+            logger.error(self._logTag + f"pin_cfg: {self._pin_cfg}")
+            # logger.error(self._logTag + f"pin_fnc_cfg: {self._pin_fnc_cfg}")
+            self._e = True
+            return None
+        return ret
+"""
