@@ -122,7 +122,7 @@ class AX25PortHandler(object):
             self._gpio = None
         #######################################################
         # Port Handler Tasker (threaded Loop)
-        logger.info("PH: Tasker Init")
+        # logger.info("PH: Tasker Init")
         # 1Wire Thread
         self._update_1wire_th = None
         self._1wire_timer = time.time() + 10    # + 10 Sec, give some time to Init the rest
