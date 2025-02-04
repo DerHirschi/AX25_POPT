@@ -6,7 +6,9 @@ Optimierung:
 - imports für matplotlib in guiLiveConnPath.py (Pacman)
 
 Neue Implementierungen / Funktionen:
-
+- "TNC-EMU" Port (TCP-Server). (Pseudo TNC Emulator Port)
+  Zum direkten Verbinden von z.B. Dos-Box oder Amiga-Emulator
+  mit PoPT. (Derzeit nur ein "Client" pro Port)
 
 ###########################################################################################################
 ###########################################################################################################

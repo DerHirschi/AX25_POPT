@@ -41,6 +41,7 @@ class AX25Port(object):
         self.ende = False
         self.device = None
         self.device_is_running = False
+        self._tnc_emu_connection, self._tnc_emu_client_address = None, None
         ############
         # CONFIG
         self._port_cfg = dict(POPT_CFG.get_port_CFG_fm_id(port_id))
@@ -1489,25 +1490,7 @@ class AX25KernelDEV(AX25Port):
             else:
                 if self.kiss.is_enabled:
                     self.set_kiss_parm()
-                """
-                if self.kiss.is_enabled:
-                    # self.device.sendall(self.kiss.device_kiss_start_1())
-                    try:
-                        self.device.sendall(self.kiss.device_kiss_start_1())
-                        # print(self.device.recv(999))
-                    except BrokenPipeError as e:
-                        # print('{}'.format(e))
-                        logger.error(f'Port {self.port_id}: {e}')
-                        # self.device.shutdown(socket.SHUT_RDWR)
-                        # self.device.close()
-                        self.close_device()
-                        raise AX25DeviceFAIL
-                    else:
-                        try:
-                            self.set_kiss_parm()
-                        except AX25DeviceFAIL as e:
-                            raise e
-                """
+
                 return
 
 
@@ -1595,14 +1578,153 @@ class AX25KernelDEV(AX25Port):
             except AX25DeviceFAIL:
                 logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
                 raise AX25DeviceFAIL
-        # else:
-        #     self._mh.bw_mon_inp(frame, self.port_id)
 
-        ############################################
+
+class TNC_EMU_TCP(AX25Port):
+    def init(self):
+        if self.loop_is_running:
+            logger.info(f'Port {self.port_id}: TNC-EMU-TCP INIT')
+            sock_timeout = 1
+            self.kiss.is_enabled = True
+
+            try:
+                self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            except PermissionError as e:
+                logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
+                logger.error('{}'.format(e))
+                # self.device.shutdown(socket.SHUT_RDWR)
+                # self.device.close()
+                self.loop_is_running = False
+                self.device = None
+                raise AX25DeviceFAIL
+            try:
+                self.device.settimeout(sock_timeout)
+                self.device.bind(self._port_param)
+                # self.device.bind(('0.0.0.0', 19800))
+                self.device.listen(1)
+                # self.device.bind(('ax0', 0))
+                self.device_is_running = True
+
+            except (OSError, ConnectionRefusedError, ConnectionError) as e:
+                logger.error(f'Port {self.port_id}: Error. Cant open TNC-EMU Device {self._port_param}')
+                logger.error('{}'.format(e))
+                # self.device.shutdown(socket.SHUT_RDWR)
+                # self.device.close()
+                self.close_device()
+                raise AX25DeviceFAIL
+
+
+    def __del__(self):
+        # self.device.shutdown(socket.SHUT_RDWR)
+        self.close_device()
+
+    def close_device(self):
+        self.loop_is_running = False
+        if self.device is None:
+            self.device_is_running = False
+            return
+        try:
+            # Deactivate KISS Mode on TNC
+            """
+            if self.kiss.is_enabled:
+                self.device.sendall(self.kiss.device_kiss_end())
+            """
+            # self.device.shutdown(socket.SHUT_RDWR)
+            if self._tnc_emu_connection is not None:
+                self._tnc_emu_connection.close()
+            self.device.close()
+        except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+            logger.error(f"Port {self.port_id}: Error while closing Port !")
+            logger.error(f"Port {self.port_id}: {e}")
+            self.device_is_running = False
+            if self.device is not None:
+                try:
+                    self.device.close()
+                except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+                    logger.error(f"Port {self.port_id}: Error while closing Port !")
+                    logger.error(f"Port {self.port_id}: {e}")
+                    return
+        finally:
+            self.device_is_running = False
+            if self.device is not None:
+                self.device.close()
+            # print("KISS TCP FINALLY")
+
+    def set_kiss_parm(self):
+        pass
+
+    def _rx(self):
+        self.port_w_dog = time.time()
+        recv_buff = b''
+        if self._tnc_emu_connection is None:
+            print("Wait for client")
+            try:
+                self._tnc_emu_connection, self._tnc_emu_client_address = self.device.accept()
+            except OSError as e:
+                # self._tnc_emu_connection, self._tnc_emu_client_address = None, None
+                # logger.error(f"Port {self.port_id}: TNC-EMU: {e}")
+                return None
+            self._tnc_emu_connection.settimeout(0.2)
+
+        else:
+            while self.loop_is_running and self.device_is_running:
+                try:
+                    recv_buff += self._tnc_emu_connection.recv(999)
+                except socket.timeout:
+                    return None
+                except OSError as e:
+                    print('OS-E')
+                    self._tnc_emu_connection, self._tnc_emu_client_address = None, None
+                    raise AX25DeviceERROR(e, self)
+
+                if recv_buff:
+                    print(recv_buff)
+                    de_kiss_fr = self.kiss.de_kiss(recv_buff)
+                    if de_kiss_fr is not None:
+                        print(f"DeKISS - {de_kiss_fr}")
+                        ret = RxBuf()
+                        ret.raw_data = bytes(de_kiss_fr)
+                        ret.kiss_frame = bytes(recv_buff)
+                        return ret
+                    if self.kiss.unknown_kiss_frame(recv_buff):
+                        print('Unknown-KISS')
+                        recv_buff = b''
+
+                else:
+                    return None
+
+    def tx_device(self, frame):
+        if self._tnc_emu_connection is None:
+            return
+        ###################################
+        # CRC
+        # calc_crc = crc_x25(frame.data_bytes)
+        # calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
+        try:
+            self._tnc_emu_connection.sendall(self.kiss.kiss(frame.data_bytes))
+            # self.device.sendall(b'\xC0' +  b'\x00' + frame.data_bytes + b'\xC0')
+            # self.device.sendall(b'\xC0' + frame.data_bytes + b'\xC0')
+            # self.device.sendall(b'\x00' + frame.data_bytes )
+        except (ConnectionRefusedError, ConnectionError, BrokenPipeError) as e:
+            logger.warning(
+                f'Port {self.port_id}: Error. TNC-EMU Device. Try Reinit Device {self._port_param}')
+            logger.warning('{}'.format(e))
+            self._tnc_emu_connection, self._tnc_emu_client_address = None, None
+
+        except (OSError, socket.timeout) as e:
+            logger.error(
+                f'Port {self.port_id}: Error. Cant send Packet to TNC-EMU Device. Try Reinit Device {self._port_param}')
+            logger.error('{}'.format(e))
+            try:
+                self.init()
+            except AX25DeviceFAIL:
+                logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
+                raise AX25DeviceFAIL
 
 AX25DeviceTAB = {
             'KISSTCP': KissTCP,
             'KISSSER': KISSSerial,
             'AXIP': AXIP,
             'AX25KERNEL': AX25KernelDEV,
+            'TNC-EMU-TCP': TNC_EMU_TCP,
         }
