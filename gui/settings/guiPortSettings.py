@@ -753,7 +753,7 @@ class PortSetTab:
 
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1]:
                 self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
-        elif typ == 'TNC-EMU-TCP':
+        elif typ in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
             #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
 
@@ -858,7 +858,7 @@ class PortSetTab:
             self._port_setting['parm_kiss_Slot'] = int(self._kiss_slot.get())
             self._port_setting['parm_kiss_Tail'] = int(self._kiss_tail.get())
             self._port_setting['parm_kiss_F_Duplex'] = self._kiss_duplex_var.get()
-        elif self._port_select_var.get() == 'TNC-EMU-TCP':
+        elif self._port_select_var.get() in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
             self._port_setting['parm_kiss_is_on'] = True
         else:
             self._port_setting['parm_kiss_is_on'] = False

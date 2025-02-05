@@ -88,7 +88,7 @@ class Kiss(object):
             except SyntaxError:
                 pass
             return True
-        if inp.startswith(self._FEND) and inp.endswith(self._FEND):
+        if inp.startswith(self._FEND) and inp.endswith(self._FEND) and len(inp) > 3:
             logger.warning(f"Kiss: TNC KISS Frames ? > {inp}")
             return True
         """
