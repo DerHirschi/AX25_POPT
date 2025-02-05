@@ -1669,7 +1669,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
         else:
             while self.loop_is_running and self.device_is_running:
                 try:
-                    recv_buff += self._tnc_emu_connection.recv(999)
+                    recv_buff += self._tnc_emu_connection.recv(1)
                 except socket.timeout:
                     return None
                 except OSError as e:
@@ -1687,8 +1687,6 @@ class TNC_EMU_TCP_SRV(AX25Port):
                         ret.kiss_frame = bytes(recv_buff)
                         return ret
                     if self.kiss.unknown_kiss_frame(recv_buff):
-                        print('Unknown-KISS')
-                        print(recv_buff)
                         recv_buff = b''
 
                 else:
@@ -1815,7 +1813,7 @@ class TNC_EMU_TCP_CL(AX25Port):
         """
         while self.loop_is_running and self.device_is_running:
             try:
-                recv_buff += self.device.recv(999)
+                recv_buff += self.device.recv(1)
             except socket.timeout:
                 return None
             except OSError as e:
@@ -1835,8 +1833,6 @@ class TNC_EMU_TCP_CL(AX25Port):
                     ret.kiss_frame = bytes(recv_buff)
                     return ret
                 if self.kiss.unknown_kiss_frame(recv_buff):
-                    print('Unknown-KISS')
-                    print(recv_buff)
                     recv_buff = b''
 
             else:
