@@ -103,12 +103,13 @@ FESC  = b'\xDB'
 TFEND = b'\xDC'
 TFESC = b'\xDD'
 # TNC-EMU / RX-CMDs
-TNC_EMU_DC1_CMD         = b'\x11'      # <- DC1 (prevents XOFF lockup)
-TNC_EMU_CAN_CMD         = b'\x18'      # <- CAN (clears out the garbage)
-TNC_EMU_ESC_CMD         = b'\x1b'      # <- ESC (command mode)
-TNC_EMU_KISS_CMD        = b'@K\r'      # <- change to KISS-MODE
-TNC_EMU_KISS_END_CMD    = b'\xff\x00'  # <- ends KISS-MODE
-TNC_EMU_KISS_END_CMD_03 = b'\xff\x03'  # <- ends KISS-MODE ???
+TNC_EMU_DC1_CMD         = b'\x11'           # <- DC1 (prevents XOFF lockup)
+TNC_EMU_CAN_CMD         = b'\x18'           # <- CAN (clears out the garbage)
+TNC_EMU_ESC_CMD         = b'\x1b'           # <- ESC (command mode)
+TNC_EMU_KISS_CMD        = b'@K\r'           # <- change to KISS-MODE
+TNC_EMU_KISS_CMD_03     = b'\xff\x03'       # <- ends KISS-MODE ???
+TNC_EMU_KISS_END_CMD    = b'\xff\x00'       # <- ends KISS-MODE
+TNC_EMU_KISS_END_CMD_C0 = b'\xc0\xff\xc0'   # <- ends KISS-MODE
 
 
 class Kiss(object):
@@ -189,13 +190,13 @@ class Kiss(object):
             self._is_tnc_emu_esc = True
             self._is_tnc_emu_kiss = False
             return True
-        if any((inp.startswith(TNC_EMU_KISS_END_CMD), inp.startswith(TNC_EMU_KISS_END_CMD_03))):
+        if any((inp.startswith(TNC_EMU_KISS_END_CMD), inp.startswith(TNC_EMU_KISS_END_CMD_C0))):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) KISS-MODE-END> {inp}")
             self._is_tnc_emu = True
             self._is_tnc_emu_esc = False
             self._is_tnc_emu_kiss = False
             return True
-        if inp.startswith(TNC_EMU_KISS_CMD):
+        if any((inp.startswith(TNC_EMU_KISS_CMD), inp.startswith(TNC_EMU_KISS_CMD_03))):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) KISS-MODE-START> {inp}")
             if not self._is_tnc_emu_esc:
                 logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) KISS-MODE-START missing TNC-ESC-CMD> {inp}")
