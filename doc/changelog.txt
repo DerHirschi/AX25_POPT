@@ -9,6 +9,9 @@ Neue Implementierungen / Funktionen:
 - "TNC-EMU" Port (TCP-Server). (Pseudo TNC Emulator Port)
   Zum direkten Verbinden von z.B. Dos-Box oder Amiga-Emulator
   mit PoPT. (Derzeit nur ein "Client" pro Port)
+- "TNC-EMU" Port (TCP-Client). (Pseudo TNC Emulator Port)
+  Zum direkten Verbinden von z.B. Dos-Box oder Amiga-Emulator
+  mit PoPT. (Derzeit nur ein "Server" pro Port)
 
 ###########################################################################################################
 ###########################################################################################################
