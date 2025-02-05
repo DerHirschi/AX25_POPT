@@ -1678,16 +1678,17 @@ class TNC_EMU_TCP_SRV(AX25Port):
                     raise AX25DeviceERROR(e, self)
 
                 if recv_buff:
-                    print(recv_buff)
+                    # print(recv_buff)
                     de_kiss_fr = self.kiss.de_kiss(recv_buff)
                     if de_kiss_fr is not None:
-                        print(f"DeKISS - {de_kiss_fr}")
+                        # print(f"DeKISS - {de_kiss_fr}")
                         ret = RxBuf()
                         ret.raw_data = bytes(de_kiss_fr)
                         ret.kiss_frame = bytes(recv_buff)
                         return ret
                     if self.kiss.unknown_kiss_frame(recv_buff):
                         print('Unknown-KISS')
+                        print(recv_buff)
                         recv_buff = b''
 
                 else:
@@ -1825,16 +1826,17 @@ class TNC_EMU_TCP_CL(AX25Port):
                     raise AX25DeviceERROR(e, self)
 
             if recv_buff:
-                print(recv_buff)
+                # print(recv_buff)
                 de_kiss_fr = self.kiss.de_kiss(recv_buff)
                 if de_kiss_fr is not None:
-                    print(f"DeKISS - {de_kiss_fr}")
+                    # print(f"DeKISS - {de_kiss_fr}")
                     ret = RxBuf()
                     ret.raw_data = bytes(de_kiss_fr)
                     ret.kiss_frame = bytes(recv_buff)
                     return ret
                 if self.kiss.unknown_kiss_frame(recv_buff):
                     print('Unknown-KISS')
+                    print(recv_buff)
                     recv_buff = b''
 
             else:
