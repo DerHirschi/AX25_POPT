@@ -76,8 +76,8 @@ b'\xc0\x02\xbe\xc0'
 SMACK-Frame:
 b'\xc0\x80\x9a\x88b\xa8\x8a\xa6\xe0\x88\x9ad\xa6\x82\xaea?\xa3\x17\xc0'
 Unknown-KISS:
-b'\xc0 \x9a\x88b\xa8\x8a\xa6\xe0\x88\x9ad\xa6\x82\xaea?\x94\x83\xc0'
-Data:
+b'\xc0     \x9a\x88b\xa8\x8a\xa6\xe0\x88\x9ad\xa6\x82\xaea?\x94\x83\xc0'
+KISS:
 ....
 
 STOP-END:
@@ -95,42 +95,57 @@ KISS_SLOT = b'\xC0\x03'
 KISS_TAIL = b'\xC0\x04'
 KISS_DUPL = b'\xC0\x05'
 #
-DATA_FRAME  = b'\x00'   # Channel 0
-SMACK_FRAME = b'\x80'  # SMACK Channel 0
-# ESC & END Flags
-FEND  = b'\xC0'
-FESC  = b'\xDB'
-TFEND = b'\xDC'
-TFESC = b'\xDD'
+DATA_FRAME_0  = b'\x00'     # Channel 0
+# DATA_FRAME_1  = b'\x01'     # Channel 1
+# DATA_FRAME_2  = b'\x02'     # Channel 2
+# DATA_FRAME_3  = b'\x03'     # Channel 3
+# DATA_FRAME_4  = b'\x04'     # Channel 4
+# DATA_FRAME_5  = b'\x05'     # Channel 5
+# DATA_FRAME_6  = b'\x06'     # Channel 6
+# DATA_FRAME_7  = b'\x07'     # Channel 7
+# SMACK
+# SMACK_FRAME_0 = b'\x80'       # SMACK Channel 0
+# SMACK_FRAME_1 = b'\x81'       # SMACK Channel 1
+# SMACK_FRAME_2 = b'\x82'       # SMACK Channel 2
+# SMACK_FRAME_3 = b'\x83'       # SMACK Channel 3
+# SMACK_FRAME_4 = b'\x84'       # SMACK Channel 4
+# SMACK_FRAME_5 = b'\x85'       # SMACK Channel 5
+# SMACK_FRAME_6 = b'\x86'       # SMACK Channel 6
+# SMACK_FRAME_7 = b'\x87'       # SMACK Channel 7
 # TNC-EMU / RX-CMDs
 TNC_EMU_DC1_CMD         = b'\x11'           # <- DC1 (prevents XOFF lockup)
 TNC_EMU_CAN_CMD         = b'\x18'           # <- CAN (clears out the garbage)
 TNC_EMU_ESC_CMD         = b'\x1b'           # <- ESC (command mode)
 TNC_EMU_KISS_CMD        = b'@K\r'           # <- change to KISS-MODE
-TNC_EMU_KISS_CMD_03     = b'\xff\x03'       # <- ends KISS-MODE ???
-TNC_EMU_KISS_END_CMD    = b'\xff\x00'       # <- ends KISS-MODE
+TNC_EMU_KISS_CMD_03     = b'\xff\x03'       # <- change to KISS-MODE ???
+TNC_EMU_KISS_END_CMD    = b'\xff\x00'       # <- ends KISS-MODE ???
 TNC_EMU_KISS_END_CMD_C0 = b'\xc0\xff\xc0'   # <- ends KISS-MODE
+# ESC & END Flags
+FEND  = b'\xC0'
+FESC  = b'\xDB'
+TFEND = b'\xDC'
+TFESC = b'\xDD'
 
 
 class Kiss(object):
     def __init__(self, port_cfg: dict):
         self.is_enabled = port_cfg.get('parm_kiss_is_on', True)
-        self._is_tnc_emu = False
-        self._is_tnc_emu_esc = False
+        self._is_tnc_emu      = False
+        self._is_tnc_emu_esc  = False
         self._is_tnc_emu_kiss = False
         # CFG Flags
         self._START_TNC_DEFAULT = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)  # TNC2 KISS MODE   b'\x1b@K'
-        self._END_TNC_DEFAULT = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)  # TNC2 KISS MODE   b'\x1b@K'
+        self._END_TNC_DEFAULT   = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)  # TNC2 KISS MODE   b'\x1b@K'
         # SET TNC-Parameter
-        self._txd_frame = FEND + KISS_TXD + bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + FEND
-        self._pers_frame = FEND + KISS_PERS + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + FEND
-        self._slot_frame = FEND + KISS_SLOT + bytes.fromhex(hex(port_cfg.get('parm_kiss_Slot', 30))[2:].zfill(2)) + FEND
-        self._tail_frame = FEND + KISS_TAIL + bytes.fromhex(hex(port_cfg.get('parm_kiss_Tail', 15))[2:].zfill(2)) + FEND
+        self._txd_frame    = FEND + KISS_TXD + bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + FEND
+        self._pers_frame   = FEND + KISS_PERS + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + FEND
+        self._slot_frame   = FEND + KISS_SLOT + bytes.fromhex(hex(port_cfg.get('parm_kiss_Slot', 30))[2:].zfill(2)) + FEND
+        self._tail_frame   = FEND + KISS_TAIL + bytes.fromhex(hex(port_cfg.get('parm_kiss_Tail', 15))[2:].zfill(2)) + FEND
         self._duplex_frame = FEND + KISS_DUPL + bytes.fromhex(str(port_cfg.get('parm_kiss_F_Duplex', 0)).zfill(2)) + FEND
         # KISS Data Frame CH 0
-        self._kiss_data_frame = lambda inp: FEND + DATA_FRAME + inp + FEND
+        self._kiss_data_frame            = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
         # Linux ax25Kernel-DEV Data Frame CH 0
-        self._ax25kernel_kiss_data_frame = lambda inp: DATA_FRAME + inp
+        self._ax25kernel_kiss_data_frame = lambda inp: DATA_FRAME_0 + inp
         # "FEND is sent as FESC, TFEND"  /  0xC0 is sent as 0xDB 0xDC
         self._FESC_TFEND = b''.join([FESC, TFEND])
         # "FESC is sent as FESC, TFESC"  /  0xDB is sent as 0xDB 0xDD
@@ -155,20 +170,49 @@ class Kiss(object):
         ]
 
     ######################################################################
+    def _dec_tnc_emu_parameter(self, inp: bytes):
+        if not self._is_tnc_emu:
+            logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) but not in TNC-EMU-MODE> {inp}")
+        if not all((self._is_tnc_emu, self._is_tnc_emu_kiss)):
+            logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) but not in KISS-MODE> {inp}")
+
+        if inp.startswith(KISS_TXD):
+            logger.info(f"Kiss: TNC-CMD received (TNC-EMU) TXD > {inp}")
+            try:
+                logger.info(f"Kiss: TNC-CMD received (TNC-EMU) TXD: {inp[2]}")
+            except (SyntaxError, IndexError):
+                pass
+        elif inp.startswith(KISS_PERS):
+            logger.info(f"Kiss: TNC-CMD received (TNC-EMU) PERS > {inp}")
+            try:
+                logger.info(f"Kiss: TNC-CMD received (TNC-EMU) PERS: {inp[2]}")
+            except (SyntaxError, IndexError):
+                pass
+        elif inp.startswith(KISS_SLOT):
+            logger.info(f"Kiss: TNC-CMD received (TNC-EMU) SLOT > {inp}")
+            try:
+                logger.info(f"Kiss: TNC-CMD received (TNC-EMU) SLOT: {inp[2]}")
+            except (SyntaxError, IndexError):
+                pass
+        elif inp.startswith(KISS_TAIL):
+            logger.info(f"Kiss: TNC-CMD received (TNC-EMU) TAIL > {inp}")
+            try:
+                logger.info(f"Kiss: TNC-CMD received (TNC-EMU) TAIL: {inp[2]}")
+            except (SyntaxError, IndexError):
+                pass
+        elif inp.startswith(KISS_DUPL):
+            logger.info(f"Kiss: TNC-CMD received (TNC-EMU) F-Duplex > {inp}")
+            try:
+                logger.info(f"Kiss: TNC-CMD received (TNC-EMU) F-Duplex: {inp[2]}")
+            except (SyntaxError, IndexError):
+                pass
+
+    ######################################################################
     def unknown_kiss_frame(self, inp: bytes):
         if not self.is_enabled:
             return inp
-        if inp.startswith(FEND + DATA_FRAME):
+        if inp.startswith(FEND + DATA_FRAME_0):
             return False
-        if inp.startswith(FEND + SMACK_FRAME):
-            return False
-        if inp.startswith(FEND + SMACK_FRAME) and inp.endswith(FEND):
-            logger.warning(f"Kiss: SMACK-Frame > {inp}")
-            try:
-                logger.warning(f"Kiss: SMACK-Frame HEX> {inp.hex()}")
-            except SyntaxError:
-                pass
-            return True
         if not inp.startswith(FEND) and len(inp) > 3:
             logger.warning(f"Kiss: NO KISS Frame > {inp}")
             return True
@@ -198,13 +242,13 @@ class Kiss(object):
             return True
         if any((inp.startswith(TNC_EMU_KISS_CMD), inp.startswith(TNC_EMU_KISS_CMD_03))):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) KISS-MODE-START> {inp}")
-            if not self._is_tnc_emu_esc:
+            if not self._is_tnc_emu_esc and not inp.startswith(TNC_EMU_KISS_CMD_03):
                 logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) KISS-MODE-START missing TNC-ESC-CMD> {inp}")
             self._is_tnc_emu = True
             self._is_tnc_emu_esc = False
             self._is_tnc_emu_kiss = True
             return True
-        if inp.startswith(FEND + DATA_FRAME + FEND):
+        if inp.startswith(FEND + DATA_FRAME_0 + FEND):
             logger.warning(f"Kiss: Empty KISS Frame > {inp}")
             return True
         if any((
@@ -214,17 +258,20 @@ class Kiss(object):
                 inp.startswith(KISS_TAIL),
                 inp.startswith(KISS_DUPL),
         )) and inp.endswith(FEND):
-            if not self._is_tnc_emu:
-                logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) but not in TNC-EMU-MODE> {inp}")
-            if not all((self._is_tnc_emu, self._is_tnc_emu_kiss)):
-                logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) but not in KISS-MODE> {inp}")
-            logger.info(f"Kiss: TNC-CMD received (TNC-EMU) > {inp}")
-            try:
-                logger.info(f"Kiss: TNC-CMD received (TNC-EMU) > {inp[2]}")
-            except (SyntaxError, IndexError):
-                pass
+            self._dec_tnc_emu_parameter(inp)
             return True
         if inp.startswith(FEND) and inp.endswith(FEND) and len(inp) > 2:
+            # if inp.startswith(FEND + DATA_FRAME_1):
+            if inp[1] in range(1, 8):
+                logger.warning(f"Kiss: Received Frame for TNC-CH {inp[1]}. Multi-Channel TNCs are not supported yet.")
+                logger.warning(f"Kiss: {inp}")
+                return True
+            # if inp.startswith(FEND + SMACK_FRAME_0):
+            if inp[1] in range(128, 136):
+                logger.warning(f"Kiss: Received Frame for TNC-SMACK-CH {inp[1] - 128}. Multi-Channel TNCs are not supported yet.")
+                logger.warning(f"Kiss: SMACK is not supported yet.")
+                logger.warning(f"Kiss: {inp}")
+                return True
             logger.warning(f"Kiss: TNC KISS Frames ? > {inp}")
             return True
         return False
@@ -247,7 +294,7 @@ class Kiss(object):
             return None
         if not inp.endswith(FEND):
             return None
-        if not inp.startswith(FEND + DATA_FRAME):
+        if not inp.startswith(FEND + DATA_FRAME_0):
             return None
         return inp[2:-1].replace(
             self._FESC_TFESC,
@@ -271,7 +318,7 @@ class Kiss(object):
         # if len(inp) < 15:
         if len(inp) < 2:
             return None
-        if not inp.startswith(DATA_FRAME):
+        if not inp.startswith(DATA_FRAME_0):
             return None
         # return inp[1:]
         return inp[1:].replace(
