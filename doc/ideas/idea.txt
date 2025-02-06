@@ -58,6 +58,7 @@ Ideas/TODO's :
 
 - Soundsystem überarbeiten
   - Sprachausgabe überarbeiten
+
 ✓ Haupt GUI überarbeiten
   - Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
   - ttk Styles (AW-Themes)
@@ -81,6 +82,25 @@ Ideas/TODO's :
   ✓ Custom KISS/TNC Init setzbar (constant.py)
     - Custom KISS/TNC Init in GUI setzbar
   - MultiPortKISS (Direwolf)
+    ✓ RX/Decoding
+    - TX/Decoding
+    - Config / TX usw.
+
+- Telnet Port
+✓ TCP-Listen/Kiss Device Port (Pseudo TNC-EMU)
+✓ TCP-Client/Kiss Device Port (Pseudo TNC-EMU)
+✓ Linux AX25-Kernel Device
+✓ "Dual-TNC/Dual-Port" 2 Ports zu einem zusammenfassen um z.B. RTX+SDR o. 2xRTX gleichzeitig auf einem Kanal betreiben zu können.
+  ** Anwendung Beispiel-- Antenne1(klein) Nordseite vertikal, Antenne2(groß) Südseite horizontal.
+  ** Und zweimal PI als SW TNC(Direwolf) via WIFI an PoPT
+  ✓ TX Port manuell wählbar oder automode.
+    ** "Automode" sendet Paket an über den Port über den der Call zuletzt empfangen wurde.
+  ✓ Dual-Port Monitor
+  - Auto-TX: Port nach Entfernung wählbar
+  - Auto-TX: Port nach Station wählbar
+  ✓ Auto-TX: Port nach First Seen wählbar
+
+- "Multi-TNC/Multi-Port/Mesh-TNC" mehrere TNC's via KISSTCP zusammenschalten. Siehe Dual-TNC
 
 ✓ AXIP-Multicast überarbeiten
   ✓ ! LOOP-Preventer !
@@ -110,22 +130,6 @@ Ideas/TODO's :
   - UI-Frames digipeten, wenn DIGI im Pfad vorhanden aber Frame von vorherigen Stationen
     noch nicht weitergeleitet wurde
   - RNR Funktionalität auch für Node "Weiterconnect"
-
-- Telnet Port
-✓ TCP-Listen/Kiss Device Port (Pseudo TNC-EMU)
-✓ TCP-Client/Kiss Device Port (Pseudo TNC-EMU)
-✓ Linux AX25-Kernel Device
-✓ "Dual-TNC/Dual-Port" 2 Ports zu einem zusammenfassen um z.B. RTX+SDR o. 2xRTX gleichzeitig auf einem Kanal betreiben zu können.
-  ** Anwendung Beispiel-- Antenne1(klein) Nordseite vertikal, Antenne2(groß) Südseite horizontal.
-  ** Und zweimal PI als SW TNC(Direwolf) via WIFI an PoPT
-  ✓ TX Port manuell wählbar oder automode.
-    ** "Automode" sendet Paket an über den Port über den der Call zuletzt empfangen wurde.
-  ✓ Dual-Port Monitor
-  - Auto-TX: Port nach Entfernung wählbar
-  - Auto-TX: Port nach Station wählbar
-  ✓ Auto-TX: Port nach First Seen wählbar
-
-- "Multi-TNC/Multi-Port/Mesh-TNC" mehrere TNC's via KISSTCP zusammenschalten. Siehe Dual-TNC
 
 - SQL System
   - Alternative SQL-Sys(MySQL-Server/SQLite) als Spiegelserver

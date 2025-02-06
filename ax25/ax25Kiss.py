@@ -94,7 +94,8 @@ KISS_PERS = b'\xC0\x02'
 KISS_SLOT = b'\xC0\x03'
 KISS_TAIL = b'\xC0\x04'
 KISS_DUPL = b'\xC0\x05'
-#
+##############################################
+# KISS
 DATA_FRAME_0  = b'\x00'     # Channel 0
 # DATA_FRAME_1  = b'\x01'     # Channel 1
 # DATA_FRAME_2  = b'\x02'     # Channel 2
@@ -103,6 +104,7 @@ DATA_FRAME_0  = b'\x00'     # Channel 0
 # DATA_FRAME_5  = b'\x05'     # Channel 5
 # DATA_FRAME_6  = b'\x06'     # Channel 6
 # DATA_FRAME_7  = b'\x07'     # Channel 7
+##############################################
 # SMACK
 # SMACK_FRAME_0 = b'\x80'       # SMACK Channel 0
 # SMACK_FRAME_1 = b'\x81'       # SMACK Channel 1
@@ -112,6 +114,7 @@ DATA_FRAME_0  = b'\x00'     # Channel 0
 # SMACK_FRAME_5 = b'\x85'       # SMACK Channel 5
 # SMACK_FRAME_6 = b'\x86'       # SMACK Channel 6
 # SMACK_FRAME_7 = b'\x87'       # SMACK Channel 7
+##############################################
 # TNC-EMU / RX-CMDs
 TNC_EMU_DC1_CMD         = b'\x11'           # <- DC1 (prevents XOFF lockup)
 TNC_EMU_CAN_CMD         = b'\x18'           # <- CAN (clears out the garbage)
@@ -120,6 +123,7 @@ TNC_EMU_KISS_CMD        = b'@K\r'           # <- change to KISS-MODE
 TNC_EMU_KISS_CMD_03     = b'\xff\x03'       # <- change to KISS-MODE ???
 TNC_EMU_KISS_END_CMD    = b'\xff\x00'       # <- ends KISS-MODE ???
 TNC_EMU_KISS_END_CMD_C0 = b'\xc0\xff\xc0'   # <- ends KISS-MODE
+##############################################
 # ESC & END Flags
 FEND  = b'\xC0'
 FESC  = b'\xDB'
@@ -289,13 +293,17 @@ class Kiss(object):
         """
         if not self.is_enabled:
             return inp
-        # if len(inp) < 15:
         if len(inp) < 3:
             return None
         if not inp.endswith(FEND):
             return None
-        if not inp.startswith(FEND + DATA_FRAME_0):
+        if not inp.startswith(FEND):
             return None
+        if inp[1] not in range(0, 8):
+            return None
+        if inp[1] in range(1, 8):
+            logger.warning(f"Kiss: Receiving packet on TNC Channel: {inp[1]} ")
+
         return inp[2:-1].replace(
             self._FESC_TFESC,
             FESC
@@ -315,11 +323,15 @@ class Kiss(object):
         """
         if not self.is_enabled:
             return inp
-        # if len(inp) < 15:
         if len(inp) < 2:
             return None
-        if not inp.startswith(DATA_FRAME_0):
+        if not inp.startswith(FEND):
             return None
+        if inp[0] not in range(0, 8):
+            return None
+        if inp[0] in range(1, 8):
+            logger.warning(f"Kiss: Receiving packet on TNC Channel: {inp[0]} ")
+
         # return inp[1:]
         return inp[1:].replace(
             self._FESC_TFESC,
