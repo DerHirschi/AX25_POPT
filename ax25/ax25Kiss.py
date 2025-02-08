@@ -307,7 +307,6 @@ class Kiss(object):
         if not inp.startswith(FEND):
             return None
         if inp[1] / 16 not in range(0, 8):
-            # print(f"de_kiss: {inp} - {int(inp[1] / 16)}")
             # No KISS-Data Frames 00, 10, 20, ...
             return None
         if inp[1] / 16 in range(1, 8):
@@ -336,7 +335,7 @@ class Kiss(object):
             return None
         if not inp.startswith(FEND):
             return None
-        if inp[0] not in range(0, 8):
+        if inp[0] / 16 not in range(0, 8):
             return None
         if int(inp[0] / 16) in range(1, 8):
             logger.warning(f"Kiss: Receiving packet on TNC Channel: {int(inp[0] / 16)} ")
