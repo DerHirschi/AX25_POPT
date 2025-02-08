@@ -333,8 +333,6 @@ class Kiss(object):
             return inp
         if len(inp) < 2:
             return None
-        if not inp.startswith(FEND):
-            return None
         if inp[0] / 16 not in range(0, 8):
             return None
         if int(inp[0] / 16) in range(1, 8):
