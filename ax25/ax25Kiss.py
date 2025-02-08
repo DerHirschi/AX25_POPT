@@ -133,13 +133,14 @@ TFESC = b'\xDD'
 
 class Kiss(object):
     def __init__(self, port_cfg: dict):
-        self.is_enabled = port_cfg.get('parm_kiss_is_on', True)
-        self._is_tnc_emu      = False
-        self._is_tnc_emu_esc  = False
-        self._is_tnc_emu_kiss = False
+        self.is_enabled         = port_cfg.get('parm_kiss_is_on', True)
+        self.set_kiss_param     = port_cfg.get('parm_set_kiss_param', True)
+        self._is_tnc_emu        = False
+        self._is_tnc_emu_esc    = False
+        self._is_tnc_emu_kiss   = False
         # CFG Flags
-        self._START_TNC_DEFAULT = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)  # TNC2 KISS MODE   b'\x1b@K'
-        self._END_TNC_DEFAULT   = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)  # TNC2 KISS MODE   b'\x1b@K'
+        self._START_TNC_DEFAULT = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)
+        self._END_TNC_DEFAULT   = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)
         # SET TNC-Parameter
         self._txd_frame    = FEND + KISS_TXD + bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + FEND
         self._pers_frame   = FEND + KISS_PERS + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + FEND
@@ -156,6 +157,9 @@ class Kiss(object):
         self._FESC_TFESC = b''.join([FESC, TFESC])
 
     def set_all_parameter(self):
+        if not self.set_kiss_param:
+            logger.info(f"Kiss: Set TNC-Parameter disabled !")
+            return
         return b''.join([
             self._txd_frame,
             self._pers_frame,
@@ -165,6 +169,9 @@ class Kiss(object):
         ])
 
     def set_all_parameter_ax25kernel(self):
+        if not self.set_kiss_param:
+            logger.info(f"Kiss: Set TNC-Parameter disabled !")
+            return
         return [
             self._txd_frame[1:-1],
             self._pers_frame[1:-1],
@@ -343,7 +350,6 @@ class Kiss(object):
             FEND
         )
 
-
     def kiss(self, inp: bytes):
         """
         Code from: https://github.com/ampledata/kiss
@@ -353,17 +359,18 @@ class Kiss(object):
         replaced by FESC code and FESC_TFEND is replaced by FEND code."
         - http://en.wikipedia.org/wiki/KISS_(TNC)#Description
         """
-        if self.is_enabled:
-            return self._kiss_data_frame(
-                inp.replace(
-                    FESC,
-                    self._FESC_TFESC
-                ).replace(
-                    FEND,
-                    self._FESC_TFEND
-                )
+        if not self.is_enabled:
+            return inp
+
+        return self._kiss_data_frame(
+            inp.replace(
+                FESC,
+                self._FESC_TFESC
+            ).replace(
+                FEND,
+                self._FESC_TFEND
             )
-        return inp
+        )
 
     def kiss_ax25kernel(self, inp: bytes):
         """
@@ -374,25 +381,32 @@ class Kiss(object):
         replaced by FESC code and FESC_TFEND is replaced by FEND code."
         - http://en.wikipedia.org/wiki/KISS_(TNC)#Description
         """
-        if self.is_enabled:
-            return self._ax25kernel_kiss_data_frame(
-                inp.replace(
-                    FESC,
-                    self._FESC_TFESC
-                ).replace(
-                    FEND,
-                    self._FESC_TFEND
-                )
+        if not self.is_enabled:
+            return inp
+
+        return self._ax25kernel_kiss_data_frame(
+            inp.replace(
+                FESC,
+                self._FESC_TFESC
+            ).replace(
+                FEND,
+                self._FESC_TFEND
             )
-        return inp
+        )
 
 
     #############################################################################
     def device_kiss_end(self):
+        if not self.set_kiss_param:
+            logger.info(f"Kiss: KISS-END: Set TNC-Parameter disabled !")
+            return
         # return b''.join([self.FEND, self.RETURN, self.FEND])
         return self._END_TNC_DEFAULT
 
     def device_kiss_start_1(self):
+        if not self.set_kiss_param:
+            logger.info(f"Kiss: KISS-Start: Set TNC-Parameter disabled !")
+            return
         return self._START_TNC_DEFAULT
     #############################################################################
     def get_tnc_emu_status(self):
