@@ -1885,7 +1885,7 @@ class TNC_EMU_TCP_CL(AX25Port):
             logger.warning('{}'.format(e))
             try:
                 self.device.connect(self._port_param)
-            except ConnectionAbortedError:
+            except (ConnectionAbortedError, ConnectionRefusedError):
                 self.init()
             except AX25DeviceFAIL:
                 logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
