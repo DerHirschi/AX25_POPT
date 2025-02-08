@@ -97,23 +97,23 @@ KISS_DUPL = b'\xC0\x05'
 ##############################################
 # KISS
 DATA_FRAME_0  = b'\x00'     # Channel 0
-# DATA_FRAME_1  = b'\x01'     # Channel 1
-# DATA_FRAME_2  = b'\x02'     # Channel 2
-# DATA_FRAME_3  = b'\x03'     # Channel 3
-# DATA_FRAME_4  = b'\x04'     # Channel 4
-# DATA_FRAME_5  = b'\x05'     # Channel 5
-# DATA_FRAME_6  = b'\x06'     # Channel 6
-# DATA_FRAME_7  = b'\x07'     # Channel 7
+# DATA_FRAME_1  = b'\x10'     # Channel 1
+# DATA_FRAME_2  = b'\x20'     # Channel 2
+# DATA_FRAME_3  = b'\x30'     # Channel 3
+# DATA_FRAME_4  = b'\x40'     # Channel 4
+# DATA_FRAME_5  = b'\x50'     # Channel 5
+# DATA_FRAME_6  = b'\x60'     # Channel 6
+# DATA_FRAME_7  = b'\x70'     # Channel 7
 ##############################################
 # SMACK
-# SMACK_FRAME_0 = b'\x80'       # SMACK Channel 0
-# SMACK_FRAME_1 = b'\x81'       # SMACK Channel 1
-# SMACK_FRAME_2 = b'\x82'       # SMACK Channel 2
-# SMACK_FRAME_3 = b'\x83'       # SMACK Channel 3
-# SMACK_FRAME_4 = b'\x84'       # SMACK Channel 4
-# SMACK_FRAME_5 = b'\x85'       # SMACK Channel 5
-# SMACK_FRAME_6 = b'\x86'       # SMACK Channel 6
-# SMACK_FRAME_7 = b'\x87'       # SMACK Channel 7
+SMACK_FRAME_0 = b'\x80'       # SMACK Channel 0
+# SMACK_FRAME_1 = b'\x90'       # SMACK Channel 1
+# SMACK_FRAME_2 = b'\xa0'       # SMACK Channel 2
+# SMACK_FRAME_3 = b'\xb0'       # SMACK Channel 3
+# SMACK_FRAME_4 = b'\xc0'       # SMACK Channel 4
+# SMACK_FRAME_5 = b'\xd0'       # SMACK Channel 5
+# SMACK_FRAME_6 = b'\xe0'       # SMACK Channel 6
+# SMACK_FRAME_7 = b'\xf0'       # SMACK Channel 7
 ##############################################
 # TNC-EMU / RX-CMDs
 TNC_EMU_DC1_CMD         = b'\x11'           # <- DC1 (prevents XOFF lockup)
@@ -266,12 +266,12 @@ class Kiss(object):
             return True
         if inp.startswith(FEND) and inp.endswith(FEND) and len(inp) > 2:
             # if inp.startswith(FEND + DATA_FRAME_1):
-            if inp[1] in range(1, 8):
-                logger.warning(f"Kiss: Received Frame for TNC-CH {inp[1]}. Multi-Channel TNCs are not supported yet.")
+            if int(inp[1] / 16) in range(1, 8):
+                logger.warning(f"Kiss: Received Frame for TNC-CH {int(inp[1] / 16)}. Multi-Channel TNCs are not supported yet.")
                 logger.warning(f"Kiss: {inp}")
                 return True
             # if inp.startswith(FEND + SMACK_FRAME_0):
-            if inp[1] in range(128, 136):
+            if int(inp[1] / 16) in range(8, 16):
                 logger.warning(f"Kiss: Received Frame for TNC-SMACK-CH {inp[1] - 128}. Multi-Channel TNCs are not supported yet.")
                 logger.warning(f"Kiss: SMACK is not supported yet.")
                 logger.warning(f"Kiss: {inp}")
@@ -299,10 +299,12 @@ class Kiss(object):
             return None
         if not inp.startswith(FEND):
             return None
-        if inp[1] not in range(0, 8):
+        if inp[1] / 16 not in range(0, 8):
+            # print(f"de_kiss: {inp} - {int(inp[1] / 16)}")
+            # No KISS-Data Frames 00, 10, 20, ...
             return None
-        if inp[1] in range(1, 8):
-            logger.warning(f"Kiss: Receiving packet on TNC Channel: {inp[1]} ")
+        if inp[1] / 16 in range(1, 8):
+            logger.warning(f"Kiss: Receiving packet on TNC Channel: {int(inp[1] / 16)} ")
 
         return inp[2:-1].replace(
             self._FESC_TFESC,
@@ -329,8 +331,8 @@ class Kiss(object):
             return None
         if inp[0] not in range(0, 8):
             return None
-        if inp[0] in range(1, 8):
-            logger.warning(f"Kiss: Receiving packet on TNC Channel: {inp[0]} ")
+        if int(inp[0] / 16) in range(1, 8):
+            logger.warning(f"Kiss: Receiving packet on TNC Channel: {int(inp[0] / 16)} ")
 
         # return inp[1:]
         return inp[1:].replace(
@@ -392,3 +394,6 @@ class Kiss(object):
 
     def device_kiss_start_1(self):
         return self._START_TNC_DEFAULT
+    #############################################################################
+    def get_tnc_emu_status(self):
+        return self._is_tnc_emu, self._is_tnc_emu_kiss

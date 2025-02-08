@@ -133,30 +133,30 @@ class AX25Port(object):
             self._tx_th.start()
             return
         """
-        self.tx_out(frame)
+        self._tx_out(frame)
 
-    def tx_out(self, frame):
+    def _tx_out(self, frame):
         setattr(frame, 'rx_time', datetime.datetime.now())
         # frame.rx_time = datetime.datetime.now()
         self._gui_monitor(ax25frame=frame, tx=True)
         self._dualPort_monitor_input(ax25frame=frame, tx=True)
         try:
-            self.tx_device(frame)
+            self._tx_device(frame)
         except (AX25DeviceERROR, AX25DeviceFAIL):
             logger.error(f"Error: tx_device() Port: {self.port_id}")
             self.close()
 
-    def tx_device(self, frame):
+    def _tx_device(self, frame):
         pass
 
     def tx_multicast(self, frame):
         pass
 
-    def set_TXD(self):
+    def _set_TXD(self):
         """ Internal TXD. Not Kiss TXD """
         self._TXD = time.time() + self._port_cfg.get('parm_TXD', 400) / 1000
 
-    def set_digi_TXD(self):
+    def _set_digi_TXD(self):
         """ Internal TXD. Not Kiss TXD """
         self._digi_TXD = time.time() + self._parm_digi_TXD / 1000
 
@@ -483,7 +483,7 @@ class AX25Port(object):
         if not self.check_dualPort():
             return False
         tx_port = self.get_dualPort_txPort(frame.to_call.call_str)
-        tx_port.tx_out(frame)
+        tx_port._tx_out(frame)
         self.dualPort_echoFilter.append(bytes(frame.data_bytes))
         self.dualPort_echoFilter = self.dualPort_echoFilter[-7:]
         return True
@@ -979,8 +979,8 @@ class AX25Port(object):
             if not buf.raw_data:  # RX ############
                 # time.sleep(0.05)
                 break
-            self.set_TXD()
-            self.set_digi_TXD()
+            self._set_TXD()
+            self._set_digi_TXD()
             ax25frame = AX25Frame()
             try:
                 # Decoding
@@ -1137,7 +1137,7 @@ class KissTCP(AX25Port):
         else:
             return None
 
-    def tx_device(self, frame):
+    def _tx_device(self, frame):
         try:
             self.device.sendall(self.kiss.kiss(frame.data_bytes))
             # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
@@ -1161,7 +1161,7 @@ class KISSSerial(AX25Port):
         if self.loop_is_running:
             logger.info("KISS Serial INIT")
             try:
-                self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.4)
+                self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.3)
                 self.device_is_running = True
             except (FileNotFoundError, serial.serialutil.SerialException) as e:
                 logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self._port_param}')
@@ -1250,7 +1250,8 @@ class KISSSerial(AX25Port):
                 recv_buff += self.device.read()
             except serial.SerialException:
                 # There is no new data from serial port
-                return None
+                if not recv_buff:
+                    return None
             except TypeError as e:
                 logger.warning(f'Port {self.port_id}: Serial Device Error {e}')
                 try:
@@ -1275,7 +1276,7 @@ class KISSSerial(AX25Port):
             else:
                 return None
 
-    def tx_device(self, frame):
+    def _tx_device(self, frame):
         if self.device is None:
             try:
                 # self.init()
@@ -1392,7 +1393,7 @@ class AXIP(AX25Port):
                 ret.kiss_frame = b''
             return ret
 
-    def tx_device(self, frame, multicast=True):
+    def _tx_device(self, frame, multicast=True):
         if not hasattr(frame, 'axip_add'):
             return
         if not frame.axip_add:
@@ -1437,7 +1438,7 @@ class AXIP(AX25Port):
 
     def tx_multicast(self, frame):
         try:
-            self.tx_device(frame, multicast=False)
+            self._tx_device(frame, multicast=False)
         except AX25DeviceERROR as e:
             logger.error(f"Port {self.port_id}: AX25DeviceERROR tx_multicast()")
             self.close()
@@ -1560,7 +1561,7 @@ class AX25KernelDEV(AX25Port):
         else:
             return None
 
-    def tx_device(self, frame):
+    def _tx_device(self, frame):
         ###################################
         # CRC
         # calc_crc = crc_x25(frame.data_bytes)
@@ -1657,12 +1658,14 @@ class TNC_EMU_TCP_SRV(AX25Port):
         self.port_w_dog = time.time()
         recv_buff = b''
         if self._tnc_emu_connection is None:
-            print("Wait for client")
+            # print("Waiting for client")
             try:
                 self._tnc_emu_connection, self._tnc_emu_client_address = self.device.accept()
-            except OSError as e:
+                logger.info(f'Port {self.port_id}: TNC-EMU Device: Client connection accepted. {self._tnc_emu_client_address}')
+
+            except OSError:
                 # self._tnc_emu_connection, self._tnc_emu_client_address = None, None
-                # logger.error(f"Port {self.port_id}: TNC-EMU: {e}")
+                # logger.error(f"Port {self.port_id}: TNC-EMU._rx: {e}")
                 return None
             self._tnc_emu_connection.settimeout(0.2)
 
@@ -1671,9 +1674,10 @@ class TNC_EMU_TCP_SRV(AX25Port):
                 try:
                     recv_buff += self._tnc_emu_connection.recv(1)
                 except socket.timeout:
-                    return None
+                    if not recv_buff:
+                        # self._check_connection()
+                        return None
                 except OSError as e:
-                    print('OS-E')
                     self._tnc_emu_connection, self._tnc_emu_client_address = None, None
                     raise AX25DeviceERROR(e, self)
 
@@ -1690,20 +1694,18 @@ class TNC_EMU_TCP_SRV(AX25Port):
                         recv_buff = b''
 
                 else:
+                    if self._tnc_emu_connection is not None:
+                        logger.info(f'Port {self.port_id}: TNC-EMU Device: Closing Client connection')
+                        self._tnc_emu_connection.close()
+                        self._tnc_emu_connection, self._tnc_emu_client_address = None, None
                     return None
 
-    def tx_device(self, frame):
+    def _tx_device(self, frame):
         if self._tnc_emu_connection is None:
             return
         ###################################
-        # CRC
-        # calc_crc = crc_x25(frame.data_bytes)
-        # calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
         try:
             self._tnc_emu_connection.sendall(self.kiss.kiss(frame.data_bytes))
-            # self.device.sendall(b'\xC0' +  b'\x00' + frame.data_bytes + b'\xC0')
-            # self.device.sendall(b'\xC0' + frame.data_bytes + b'\xC0')
-            # self.device.sendall(b'\x00' + frame.data_bytes )
         except (ConnectionRefusedError, ConnectionError, BrokenPipeError) as e:
             logger.warning(
                 f'Port {self.port_id}: Error. TNC-EMU Device. Try Reinit Device {self._port_param}')
@@ -1798,24 +1800,12 @@ class TNC_EMU_TCP_CL(AX25Port):
     def _rx(self):
         self.port_w_dog = time.time()
         recv_buff = b''
-        """
-        if self._tnc_emu_connection is None:
-            print("Wait for client")
-            try:
-                self._tnc_emu_connection, self._tnc_emu_client_address = self.device.accept()
-            except OSError as e:
-                # self._tnc_emu_connection, self._tnc_emu_client_address = None, None
-                # logger.error(f"Port {self.port_id}: TNC-EMU: {e}")
-                return None
-            self._tnc_emu_connection.settimeout(0.2)
-
-        else:
-        """
         while self.loop_is_running and self.device_is_running:
             try:
                 recv_buff += self.device.recv(1)
             except socket.timeout:
-                return None
+                if not recv_buff:
+                    return None
             except OSError as e:
                 print('OS-E')
                 try:
@@ -1838,7 +1828,7 @@ class TNC_EMU_TCP_CL(AX25Port):
             else:
                 return None
 
-    def tx_device(self, frame):
+    def _tx_device(self, frame):
         ###################################
         # CRC
         # calc_crc = crc_x25(frame.data_bytes)
