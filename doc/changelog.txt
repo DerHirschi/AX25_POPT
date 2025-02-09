@@ -1,6 +1,9 @@
 ###########################################################################################################
 # 2.116.x
 Fixes:
+- Alle CLI-Modes gehen in den Baycom-Autologin Zustand,
+  wenn Option in User-DB hinterlegt. Baycom-Autologin nur
+  für Sysop-CLI.
 
 Optimierung:
 - imports für matplotlib in guiLiveConnPath.py (Pacman)

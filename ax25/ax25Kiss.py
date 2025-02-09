@@ -338,7 +338,6 @@ class Kiss(object):
         if int(inp[0] / 16) in range(1, 8):
             logger.warning(f"Kiss: Receiving packet on TNC Channel: {int(inp[0] / 16)} ")
 
-        # return inp[1:]
         return inp[1:].replace(
             self._FESC_TFESC,
             FESC

@@ -1251,11 +1251,14 @@ class DefaultCLI(object):
 
     ##############################################
     def cli_exec(self, inp=b''):
+        print(f"CLI: inp: {inp}")
+        print(f"CLI: state: {self._state_index}")
         # print(f"cli_exec {self.cli_name}: {self._connection.uid} - SI: {self.state_index} - CSI: {self.crone_state_index}")
         # print(f"cli_exec {self.cli_name}: {self._connection.uid} - raw-input: {inp}")
         # if not self._connection.is_link:
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
+        print(f"CLI: ret: {ret}")
         self.send_output(ret)
 
     def cli_cron(self):
@@ -1276,6 +1279,7 @@ class DefaultCLI(object):
             return self._send_sw_id() + self._c_text + self.get_ts_prompt()
 
     def s1(self):
+        print("CMD-Handler S1")
         self._software_identifier()
         ########################
         # Check String Commands
@@ -1421,6 +1425,9 @@ class NodeCLI(DefaultCLI):
     def s2(self):
         return self._cmd_q()
 
+    def _baycom_auto_login(self):
+        return False
+
 
 class UserCLI(DefaultCLI):
     cli_name = 'USER'  # DON'T CHANGE !
@@ -1462,6 +1469,9 @@ class NoneCLI(DefaultCLI):
 
     def cli_cron(self):
         pass
+
+    def _baycom_auto_login(self):
+        return False
 
 class MCastCLI(DefaultCLI):
     cli_name = 'MCAST'  # DON'T CHANGE !
@@ -1519,6 +1529,9 @@ class MCastCLI(DefaultCLI):
             1: self.s1,  # Cmd Handler
         }
 
+    ###############################################
+    def _baycom_auto_login(self):
+        return False
     ###############################################
 
     def cli_exec(self, inp=b''):
