@@ -1077,20 +1077,14 @@ class AX25Conn:
 
     def exec_cli(self, inp=b''):
         """ CLI Processing like sending C-Text ... """
-        print("CLI-EXE")
         if self.ft_obj:
-            print("FT")
             return False
         # if self.is_link:
         #     return False
         if self.pipe:
-            print("PIPE")
             return False
         if not self.cli_remote:
-            print("N REMOTE")
             return False
-        print(f"CLI-NAME: {self.cli.cli_name}")
-        print(f"CLI-inp: {inp}")
         self.cli.cli_exec(inp)
         return True
 
