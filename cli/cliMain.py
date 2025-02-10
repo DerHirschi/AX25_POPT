@@ -1062,11 +1062,11 @@ class DefaultCLI(object):
 
     def _cmd_port(self):  # TODO Pipe
         ret = f"\r      < {STR_TABLE['port_overview'][self._connection.cli_language]} >\r\r"
-        ret += "-#--Name----PortTyp--Stations--Typ------Digi-\r"
+        ret += "-#--Name----PortTyp----------Stations--Typ------Digi-\r"
         for port_id in self._port_handler.ax25_ports.keys():
             port = self._port_handler.ax25_ports[port_id]
             name = str(port.portname).ljust(7)
-            typ = port.port_typ.ljust(7)
+            typ = port.port_typ.ljust(15)
             if port.dualPort_primaryPort in [port, None]:
 
                 stations = self._port_handler.get_stat_calls_fm_port(port_id)
@@ -1086,7 +1086,7 @@ class DefaultCLI(object):
                         digi = '(DIGI)'
                     if POPT_CFG.get_stat_CFG_fm_call(stat):
                         digi = f"{POPT_CFG.get_stat_CFG_fm_call(stat).get('stat_parm_cli', 'NO-CLI').ljust(7)} " + digi
-                    ret += f"                     {stat.ljust(9)} {digi}\r"
+                    ret += f"                             {stat.ljust(9)} {digi}\r"
             else:
                 if port.dualPort_primaryPort:
                     ret += f" {str(port_id).ljust(2)} {name} {typ}  Dual-Port: Secondary from Port {port.dualPort_primaryPort.port_id} \r"
@@ -1127,37 +1127,11 @@ class DefaultCLI(object):
                    f"{qth.ljust(13)[:13]} " \
                    f"{time_start.strftime('%H:%M:%S')}\r"
 
-        return ret
+        return ret + "\r"
 
     def _cmd_help(self):
         # ret = f"\r   < {STR_TABLE['help'][self._connection.cli_language]} >\r"
         ret = "\r"
-        """
-        c = 1
-        new_cmd = {}
-
-        treffer = list(self.commands.keys())
-        tmp = []
-        old_cmds = list(self.commands.keys())
-        while treffer:
-            print(treffer)
-            for cmd in list(treffer):
-                if cmd[:c] not in tmp:
-                    treffer.remove(cmd)
-                    tmp.append(cmd[:c])
-                else:
-                    treffer.append(cmd)
-                    tmp.remove(cmd[:c])
-            for el in list(old_cmds):
-                if el not in treffer:
-                    new_cmd[el] = f"({el[:c].decode('UTF-8')}){el[c:].decode('UTF-8')}"
-                    old_cmds.remove(el)
-
-            # treffer = []
-            tmp = []
-            c += 1
-        """
-        # for k in new_cmd.keys():
         for k in list(self._commands.keys()):
             if self._commands[k][2]:
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
@@ -1256,6 +1230,7 @@ class DefaultCLI(object):
         # if not self._connection.is_link:
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
+        # print(f"CLI: ret: {ret}")
         self.send_output(ret)
 
     def cli_cron(self):
@@ -1276,6 +1251,7 @@ class DefaultCLI(object):
             return self._send_sw_id() + self._c_text + self.get_ts_prompt()
 
     def s1(self):
+        # print("CMD-Handler S1")
         self._software_identifier()
         ########################
         # Check String Commands
@@ -1343,7 +1319,7 @@ class DefaultCLI(object):
     def s6(self):
         """ Auto Sys Login """
         if self._sys_login is None:
-            print(1)
+            # print(1)
             self.change_cli_state(1)
             return ""
 
@@ -1375,7 +1351,7 @@ class DefaultCLI(object):
         if self._sys_login.attempt_count == self._sys_login.attempts:
             del self._sys_login
             self._sys_login = None
-            print("END")
+            # print("END")
             self.sysop_priv = True
             if self._gui:
                 self._gui.on_channel_status_change()
@@ -1421,6 +1397,9 @@ class NodeCLI(DefaultCLI):
     def s2(self):
         return self._cmd_q()
 
+    def _baycom_auto_login(self):
+        return False
+
 
 class UserCLI(DefaultCLI):
     cli_name = 'USER'  # DON'T CHANGE !
@@ -1462,6 +1441,9 @@ class NoneCLI(DefaultCLI):
 
     def cli_cron(self):
         pass
+
+    def _baycom_auto_login(self):
+        return False
 
 class MCastCLI(DefaultCLI):
     cli_name = 'MCAST'  # DON'T CHANGE !
@@ -1519,6 +1501,9 @@ class MCastCLI(DefaultCLI):
             1: self.s1,  # Cmd Handler
         }
 
+    ###############################################
+    def _baycom_auto_login(self):
+        return False
     ###############################################
 
     def cli_exec(self, inp=b''):

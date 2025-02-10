@@ -1,4 +1,24 @@
 ###########################################################################################################
+# 2.116.x
+Fixes:
+- Alle CLI-Modes gehen in den Baycom-Autologin Zustand,
+  wenn Option in User-DB hinterlegt. Baycom-Autologin nur
+  für Sysop-CLI.
+
+Optimierung:
+- imports für matplotlib in guiLiveConnPath.py (Pacman)
+
+Neue Implementierungen / Funktionen:
+- "TNC-EMU" Port (TCP-Server). (Pseudo TNC Emulator Port)
+  Zum direkten Verbinden von z.B. Dos-Box oder Amiga-Emulator
+  mit PoPT. (Derzeit nur ein "Client" pro Port)
+- "TNC-EMU" Port (TCP-Client). (Pseudo TNC Emulator Port)
+  Zum direkten Verbinden von z.B. Dos-Box oder Amiga-Emulator
+  mit PoPT. (Derzeit nur ein "Server" pro Port)
+- Dekodieren von Paketen von Multichannel-TNCs (Nur RX für Kanal 1-7)
+
+###########################################################################################################
+###########################################################################################################
 # 2.115.x
 Fixes:
 - Script-Error beim Öffnen der Haupteinstellungen (Ausgelöst durch

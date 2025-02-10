@@ -280,6 +280,13 @@ class PortSetTab:
         kiss_end_men = tk.OptionMenu(self.tab, self._kiss_end_var, *opt, command=self.set_need_reinit)
         kiss_end_men.configure(width=10, height=1)
         kiss_end_men.place(x=kiss_end_x + 220, y=height - kiss_end_y)
+        ####################################################################
+        kiss_send_x = 850
+        kiss_send_y = 400
+        self._tnc_emu_var = tk.BooleanVar(self.tab, value=not self._port_setting.get('parm_set_kiss_param', new_cfg.get('parm_set_kiss_param', True)))
+        self._kiss_send = tk.Checkbutton(self.tab, text='TNC-EMU', variable=self._tnc_emu_var, command=self.set_need_reinit)
+        self._kiss_send.place(x=kiss_send_x, y=height - kiss_send_y)
+        ####################################################################
 
         # T2 auto
         x = 120
@@ -555,17 +562,14 @@ class PortSetTab:
         typ = self._port_select_var.get()
         new_port_cfg = getNew_port_cfg()
         if typ == 'KISSTCP':
-
             self._kiss_txd.configure(state="normal")
             self._kiss_pers.configure(state="normal")
             self._kiss_tail.configure(state="normal")
             self._kiss_slot.configure(state="normal")
             self._kiss_duplex_ent.configure(state='normal')
+            self._kiss_send.configure(state='normal')
+            self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
 
-            #self._test_call.configure(state="disabled")
-            #self._test_inter.configure(state="disabled")
-            #self._test_fail.configure(state="disabled")
-            #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
             self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
@@ -587,18 +591,11 @@ class PortSetTab:
             self._param2_ent.place(x=param_sel_x + 500 + 50, y=height - param_sel_y + param_next_line)
             # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
-            # if self._port_setting.parm_PortParm[0]:
-            # if self._port_setting.get('parm_PortParm', new_cfg.get('parm_PortParm', ('', 0)))[0]:
-                # self._param1_ent.insert(tk.END, self._port_setting.parm_PortParm[0])
             self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
-            # if self._port_setting.parm_PortParm[1]:
-            # if self._port_setting.get('parm_PortParm', new_cfg.get('parm_PortParm', ('', 0)))[1]:
-                # self._param2_ent.insert(tk.END, self._port_setting.parm_PortParm[1])
             self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
 
 
         elif typ == 'AXIP':
-
             mcast_port = PORT_HANDLER.get_mcast_server().get_mcast_port()
             if not hasattr(mcast_port, 'port_id'):
                 self._axip_multicast_dd.configure(state="normal")
@@ -627,6 +624,8 @@ class PortSetTab:
             self._kiss_tail.configure(state="disabled")
             self._kiss_slot.configure(state="disabled")
             self._kiss_duplex_ent.configure(state='disabled')
+            self._kiss_send.configure(state='disabled')
+            self._tnc_emu_var.set(value=True)
 
             self._ptxd.configure(state="normal")
             self._ptxd.delete(0, tk.END)
@@ -671,6 +670,8 @@ class PortSetTab:
             self._kiss_tail.configure(state="normal")
             self._kiss_slot.configure(state="normal")
             self._kiss_duplex_ent.configure(state='normal')
+            self._kiss_send.configure(state='normal')
+            self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
 
             self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
@@ -720,6 +721,8 @@ class PortSetTab:
             self._kiss_tail.configure(state="normal")
             self._kiss_slot.configure(state="normal")
             self._kiss_duplex_ent.configure(state='normal')
+            self._kiss_send.configure(state='normal')
+            self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
 
             self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
@@ -753,6 +756,51 @@ class PortSetTab:
 
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1]:
                 self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
+        elif typ in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
+            #self._axip_linktest_dd.configure(state="disabled")
+            self._axip_multicast_dd.configure(state="disabled")
+
+            self._kiss_txd.configure(state="disabled")
+            self._kiss_pers.configure(state="disabled")
+            self._kiss_tail.configure(state="disabled")
+            self._kiss_slot.configure(state="disabled")
+            self._kiss_duplex_ent.configure(state='disabled')
+            self._kiss_send.configure(state='normal')
+            self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', False))
+
+            self._ptxd.configure(state="normal")
+            self._calc_baud.configure(state="normal")
+            self._calc_baud.delete(0, tk.END)
+            # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
+            # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
+            self._calc_baud.insert(tk.END, self._port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
+            # self.calc_baud.configure(state="normal")
+
+            self._param1_label.configure(text='Address:')
+
+            self._param1_ent.destroy()
+            self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
+            self._param1_ent.configure(width=15)
+            self._param1_ent.place(x=self._param1_x, y=self._param1_y)
+
+
+            self._param2_label.configure(text='Port:')
+            self._param2_ent.configure(width=7)
+            self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
+            # self._param1_ent.place(x=param_sel_x + 50, y=height - param_sel_y + param_next_line)
+            self._param2_label.place(x=param_sel_x + 280, y=height - param_sel_y + param_next_line)
+            self._param2_ent.place(x=param_sel_x + 280 + 60, y=height - param_sel_y + param_next_line)
+
+            # self._param1_ent.delete(0, tk.END)
+            self._param2_ent.delete(0, tk.END)
+            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('0.0.0.0', 19800)))[0]:
+                self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+            else:
+                self._param1_var.set('0.0.0.0')
+
+            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('0.0.0.0', 19800)))[1]:
+                self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
+
 
         self._t2_var.set(str(self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
         # if self._port_setting.parm_T2_auto:
@@ -814,6 +862,8 @@ class PortSetTab:
             self._port_setting['parm_kiss_Slot'] = int(self._kiss_slot.get())
             self._port_setting['parm_kiss_Tail'] = int(self._kiss_tail.get())
             self._port_setting['parm_kiss_F_Duplex'] = self._kiss_duplex_var.get()
+        elif self._port_select_var.get() in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
+            self._port_setting['parm_kiss_is_on'] = True
         else:
             self._port_setting['parm_kiss_is_on'] = False
 
@@ -847,6 +897,8 @@ class PortSetTab:
             self._port_setting['parm_full_duplex'] = True   # FIXME: Alte Programme bekommen Probleme damit.
         else:
             self._port_setting['parm_full_duplex'] = False
+
+        self._port_setting['parm_set_kiss_param'] = not bool(self._tnc_emu_var.get())
 
         self._port_setting['parm_axip_Multicast'] = bool(self._axip_multicast_var.get())
         # self._port_setting['parm_axip_fail'] = int(self._test_fail.get())
