@@ -1670,8 +1670,8 @@ class TNC_EMU_TCP_SRV(AX25Port):
                 try:
                     recv_buff += self._tnc_emu_connection.recv(1)
                 except socket.timeout:
-                    if not recv_buff:
-                        return None
+                    # if not recv_buff:
+                    return None
                 except OSError as e:
                     self._tnc_emu_connection, self._tnc_emu_client_address = None, None
                     raise AX25DeviceERROR(e, self)
@@ -1842,8 +1842,8 @@ class TNC_EMU_TCP_CL(AX25Port):
             try:
                 recv_buff += self.device.recv(1)
             except socket.timeout:
-                if not recv_buff:
-                    return None
+                # if not recv_buff:
+                return None
             except ConnectionError as e:
                 print(f"TNC CL : ConnectionError: {e}")
                 return None

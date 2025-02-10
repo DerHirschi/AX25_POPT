@@ -1132,32 +1132,6 @@ class DefaultCLI(object):
     def _cmd_help(self):
         # ret = f"\r   < {STR_TABLE['help'][self._connection.cli_language]} >\r"
         ret = "\r"
-        """
-        c = 1
-        new_cmd = {}
-
-        treffer = list(self.commands.keys())
-        tmp = []
-        old_cmds = list(self.commands.keys())
-        while treffer:
-            print(treffer)
-            for cmd in list(treffer):
-                if cmd[:c] not in tmp:
-                    treffer.remove(cmd)
-                    tmp.append(cmd[:c])
-                else:
-                    treffer.append(cmd)
-                    tmp.remove(cmd[:c])
-            for el in list(old_cmds):
-                if el not in treffer:
-                    new_cmd[el] = f"({el[:c].decode('UTF-8')}){el[c:].decode('UTF-8')}"
-                    old_cmds.remove(el)
-
-            # treffer = []
-            tmp = []
-            c += 1
-        """
-        # for k in new_cmd.keys():
         for k in list(self._commands.keys()):
             if self._commands[k][2]:
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),

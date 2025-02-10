@@ -104,6 +104,7 @@ STATION_ID_BBS = [
     'OpenBCM',
     'BPQ',
     'THEBOX',   # TNN BOX ?
+    'ProfiPacket',
     'PoPTBOX',
 ]
 
