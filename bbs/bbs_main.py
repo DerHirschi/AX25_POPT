@@ -859,6 +859,9 @@ class BBS:
     def get_active_fwd_q_tab(self):
         return self.db.pms_get_active_fwd_q_for_GUI()
 
+    def get_pn_msg_tab_by_call(self, call: str):
+        return self.db.bbs_get_pn_msg_Tab_by_call(call)
+
     def get_pn_msg_tab(self):
         return self.db.bbs_get_pn_msg_Tab_for_GUI()
 

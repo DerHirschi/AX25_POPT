@@ -79,6 +79,7 @@ class UserDB:
             'software_str',
             'sys_pw',
             'sys_pw_parm',
+            'sys_pw_autologin',
         ]
         self.db = {}
         db_load = {}

@@ -6,14 +6,15 @@ from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_H
 from fnc.sql_fnc import search_sql_injections
 from fnc.str_fnc import convert_str_to_datetime
 from sql_db.sql_Error import SQLConnectionError
-from sql_db.sql_str import SQL_CREATE_PMS_PN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
+from sql_db.sql_str import SQL_CREATE_PMS_IN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
     SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB, SQL_CREATE_PORT_STATISTIK_TAB, \
-    SQLITE_CREATE_PORT_STATISTIK_TAB, SQL_CREATE_FWD_NODES_TAB
+    SQLITE_CREATE_PORT_STATISTIK_TAB, SQL_CREATE_FWD_NODES_TAB, SQLITE_CREATE_PMS_IN_MAIL_TAB, \
+    SQLITE_CREATE_PMS_BL_MAIL_TAB
 
 SQL_BBS_TABLES = {
-    "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
-    "pms_pn_msg": SQL_CREATE_PMS_PN_MAIL_TAB,
+    # "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
+    "pms_in_msg": SQL_CREATE_PMS_IN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
     "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
     "pms_out_msg": SQL_CREATE_PMS_OUT_MAIL_TAB,
@@ -21,15 +22,18 @@ SQL_BBS_TABLES = {
 }
 
 SQLITE_BBS_TABLES = {
-    "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
-    "pms_pn_msg": SQL_CREATE_PMS_PN_MAIL_TAB,
+    # "pms_bl_msg": SQLITE_CREATE_PMS_BL_MAIL_TAB,
+    "pms_in_msg": SQLITE_CREATE_PMS_IN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
     "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
     "pms_out_msg": SQLITE_CREATE_PMS_OUT_MAIL_TAB,
     "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
 }
 USERDB_TABLES = {
-
+    # "user_db": SQL_CREATE_USERDB_TAB,
+}
+SQLITE_USERDB_TABLES = {
+    # "user_db": SQLITE_CREATE_USERDB_TAB,
 }
 
 APRS_TABLES = {
@@ -82,7 +86,7 @@ class SQL_Database:
             logger.info("Database: set to SQLite")
             from sql_db.sqlite import SQL_DB
 
-        self.db_config = {  # TODO GUI and DB-TOOLs
+        self._db_config = {  # TODO GUI and DB-TOOLs
             'user': MYSQL_USER,
             'password': MYSQL_PASS,  # OMG, my super secret password
             'host': MYSQL_HOST,
@@ -91,12 +95,10 @@ class SQL_Database:
         }
         self.db = None
         try:
-            self.db = SQL_DB(self.db_config)
-            # print("Database: Init ok")
+            self.db = SQL_DB(self._db_config)
             logger.info("Database: Init complete")
         except SQLConnectionError:
             self.error = True
-            # print("Database: Init Error !")
             logger.error("Database: Init Error !")
         # DEV
         """
@@ -134,7 +136,7 @@ class SQL_Database:
                 else:
                     tables = {
                         'bbs': SQLITE_BBS_TABLES,
-                        'user_db': USERDB_TABLES,
+                        'user_db': SQLITE_USERDB_TABLES,
                         'aprs': SQLITE_APRS_TABLES,
                         'port_stat': SQLITE_PORT_STATISTIK_TAB,
                         # 'mh': SQLITE_MH_TABLES,
@@ -150,9 +152,90 @@ class SQL_Database:
         if self.db:
             self.commit_query(query)
 
+    def update_db_tables(self):
+        if not self.db:
+            return
+
+        if self.MYSQL:
+            # query = "SHOW KEYS FROM pms_pn_msg WHERE Key_name = 'PRIMARY';"
+            query = "SHOW TABLES;"
+        else:
+            query = "SELECT name FROM sqlite_master WHERE type ='table' AND  name NOT LIKE 'sqlite_%';"
+
+        ret = self.commit_query(query)
+        need_update = False
+        for i, tab in enumerate(ret):
+            if any((tab[0] == 'pms_pn_msg',
+                    tab[0] == 'pms_bl_msg')):
+                need_update = True
+
+        if not need_update:
+            return
+
+        logger.info("Database: Table pms_pn_msg and pms_bl_msg get modified")
+
+        query = "SELECT * FROM pms_pn_msg;"
+        ret = self.commit_query(query)
+        tmp = []
+        for el in list(ret):
+            new = list(el)
+            new.append('P')
+            tmp.append(new)
+        query = "SELECT * FROM pms_bl_msg;"
+        ret = self.commit_query(query)
+        for el in list(ret):
+            new = list(el)
+            new.append('B')
+            tmp.append(new)
+
+        tmp = sorted(tmp, key=lambda x: x[12], reverse=False)
+
+        for el in tmp:
+            query = ("INSERT INTO pms_in_msg (BID, "
+                                 "from_call, "
+                                 "from_bbs, "
+                                 "to_call, "
+                                 "to_bbs, "
+                                 "size, "
+                                 "subject, "
+                                 "header, "
+                                 "msg, "
+                                 "path,"
+                                 "time, "
+                                 "rx_time,"
+                                 "new,"
+                                 "flag, "
+                                 "typ)"
+                                 
+                                f"VALUES ({', '.join(['%s'] * 15)});")
+            query_data = (el[1],
+                          el[2],
+                          el[3],
+                          el[4],
+                          el[5],
+                          el[6],
+                          el[7],
+                          el[8],
+                          el[9],
+                          el[10],
+                          el[11],
+                          el[12],
+                          el[13],
+                          el[14],
+                          el[15],
+                          )
+            self.commit_query_bin(query, query_data)
+
+        query = "DROP TABLE pms_pn_msg;"
+        self.commit_query(query)
+        query = "DROP TABLE pms_bl_msg;"
+        self.commit_query(query)
+        logger.info("Database: Table pms_pn_msg and pms_bl_msg get modified. Done !")
+
+
     def _drope_tabel(self):
         if self.db:
-            query = f"DROP TABLE PortStatistik;"
+            query = "DROP TABLE PortStatistik;"
             self.commit_query(query)
 
     def _db_commit(self):
@@ -232,20 +315,16 @@ class SQL_Database:
     ############################################
     # BBS - PMS
     def bbs_check_pn_mid_exists(self, bid_mid: str):
+
         if search_sql_injections(bid_mid):
             logger.warning(f"BBS BID_MID SQL Injection Warning. !!")
             return False
         # query = f"SELECT EXISTS(SELECT pms_pn_msg.BID FROM pms_pn_msg WHERE BID = 'MD2SAW');"
-        query = f"SELECT EXISTS(SELECT pms_pn_msg.BID FROM pms_pn_msg WHERE BID = '{bid_mid}');"
+        query = f"SELECT EXISTS(SELECT pms_in_msg.BID FROM pms_in_msg WHERE BID = '{bid_mid}');"
         return bool(self.send_query(query)[0][0])
 
     def bbs_check_bl_mid_exists(self, bid_mid: str):
-        if search_sql_injections(bid_mid):
-            logger.warning(f"BBS BID_MID SQL Injection Warning. !!")
-            return False
-        query = f"SELECT EXISTS(SELECT pms_bl_msg.BID FROM pms_bl_msg WHERE BID = '{bid_mid}');"
-        ret = self.send_query(query)[0][0]
-        return bool(ret)  #
+        return self.bbs_check_pn_mid_exists(bid_mid=bid_mid)
 
     def bbs_check_fwdID_exists(self, fwd_id: str):
         query = f"SELECT EXISTS(SELECT FWDID FROM pms_fwd_q WHERE FWDID = '{fwd_id}');"
@@ -295,15 +374,16 @@ class SQL_Database:
             print(f"SQL-Injection erkannt in Betreff {bid} von {from_call}@{from_bbs}")
             logger.warning(f"SQL-Injection erkannt in Betreff {bid} von {from_call}@{from_bbs}")
             return False
-
+        """
         table = {
-            'P': 'pms_pn_msg',
-            'B': 'pms_bl_msg',
-            'T': 'pms_bl_msg'  # TODO
+            'P': 'pms_in_msg',
+            'B': 'pms_in_msg',
+            'T': 'pms_in_msg'  # TODO
         }[typ]
-        query = (f"INSERT INTO {table} "
-                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time, rx_time)"
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
+        """
+        query = ("INSERT INTO pms_in_msg "
+                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time, rx_time, typ)"
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
         query_data = (bid,
                        from_call,
                        from_bbs,
@@ -315,7 +395,8 @@ class SQL_Database:
                        msg,
                        header,
                        time,
-                       rx_time)
+                       rx_time,
+                      typ)
         res = self.commit_query_bin(query, query_data)
         if res is None:
             return False
@@ -334,7 +415,7 @@ class SQL_Database:
         # print("bbs_new_msg -------------")
         # _bid = msg_struc.get('bid_mid', '')
         # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
-        _query = ("INSERT INTO `pms_out_msg` "
+        query = ("INSERT INTO `pms_out_msg` "
                   "(from_call, "
                   "from_bbs, "
                   "from_bbs_call, "
@@ -348,7 +429,7 @@ class SQL_Database:
                   "utctime, "
                   "type) "
                   f"VALUES ({', '.join(['%s'] * 12)});")
-        _query_data = (
+        query_data = (
             msg_struc.get('sender', ''),
             msg_struc.get('sender_bbs', ''),
             msg_struc.get('sender_bbs', '').split('.')[0],
@@ -362,24 +443,24 @@ class SQL_Database:
             datetime.utcnow().strftime(SQL_TIME_FORMAT),
             msg_struc.get('message_type', ''),
         )
-        self.commit_query_bin(_query, _query_data)
+        self.commit_query_bin(query, query_data)
         return self.bbs_get_MID()
 
     def bbs_update_out_msg(self, msg_struc: dict):
-        _mid = msg_struc.get('mid', '')
-        _from_call = msg_struc.get('sender', '')
-        _from_bbs = msg_struc.get('sender_bbs', '')
-        _from_bbs_call = msg_struc.get('sender_bbs', '').split('.')[0]
-        _to_call = msg_struc.get('receiver', '')
-        _to_bbs = msg_struc.get('recipient_bbs', '')
-        _to_bbs_call = msg_struc.get('recipient_bbs', '').split('.')[0]
-        _subject = msg_struc.get('subject', '')
-        _msg = msg_struc.get('msg', b'')
-        _typ = msg_struc.get('message_type', '')
-        _msg_size = msg_struc.get('message_size', 0)
-        _time = datetime.now().strftime(SQL_TIME_FORMAT)
-        _utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
-        _query = ("UPDATE pms_out_msg SET "
+        mid = msg_struc.get('mid', '')
+        from_call = msg_struc.get('sender', '')
+        from_bbs = msg_struc.get('sender_bbs', '')
+        from_bbs_call = msg_struc.get('sender_bbs', '').split('.')[0]
+        to_call = msg_struc.get('receiver', '')
+        to_bbs = msg_struc.get('recipient_bbs', '')
+        to_bbs_call = msg_struc.get('recipient_bbs', '').split('.')[0]
+        subject = msg_struc.get('subject', '')
+        msg = msg_struc.get('msg', b'')
+        typ = msg_struc.get('message_type', '')
+        msg_size = msg_struc.get('message_size', 0)
+        time = datetime.now().strftime(SQL_TIME_FORMAT)
+        utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
+        query = ("UPDATE pms_out_msg SET "
                   "from_call=%s, "
                   "from_bbs=%s, "
                   "from_bbs_call=%s, "
@@ -393,64 +474,64 @@ class SQL_Database:
                   "utctime=%s, "
                   "type=%s WHERE MID=%s;"
                   )
-        _query_data = (_from_call,
-                       _from_bbs,
-                       _from_bbs_call,
-                       _to_call,
-                       _to_bbs,
-                       _to_bbs_call,
-                       _msg_size,
-                       _subject,
-                       _msg,
-                       _time,
-                       _utctime,
-                       _typ,
-                       _mid)
-        self.commit_query_bin(_query, _query_data)
+        query_data = (from_call,
+                       from_bbs,
+                       from_bbs_call,
+                       to_call,
+                       to_bbs,
+                       to_bbs_call,
+                       msg_size,
+                       subject,
+                       msg,
+                       time,
+                       utctime,
+                       typ,
+                       mid)
+        self.commit_query_bin(query, query_data)
         return True
 
     def bbs_insert_msg_to_fwd(self, msg_struc: dict):
         # print("bbs_add_msg_to_fwd -------------")
-        _bid = msg_struc.get('bid_mid', '')
-        if not _bid:
+        bid = msg_struc.get('bid_mid', '')
+        if not bid:
             return False
-        _mid = msg_struc.get('mid', 0)
-        if not _mid:
+        mid = msg_struc.get('mid', 0)
+        if not mid:
             return False
-        _flag = msg_struc.get('flag', '')
-        if _flag != 'E':
+        flag = msg_struc.get('flag', '')
+        if flag != 'E':
             return False
-        _flag = 'F'  # MSG flagged for forward
-        _type = msg_struc.get('message_type', '')
-        if not _type:
+        flag = 'F'  # MSG flagged for forward
+        type = msg_struc.get('message_type', '')
+        if not type:
             return False
-        _fwd_id = _bid + '-' + msg_struc.get('fwd_bbs_call', '')
-        if self.bbs_check_fwdID_exists(_fwd_id):
-            print(f"BBS Warning: FWD-ID {_fwd_id} exists!")
-            logger.warning(f"BBS Warning: FWD-ID {_fwd_id} exists!")
+        fwd_id = bid + '-' + msg_struc.get('fwd_bbs_call', '')
+        if self.bbs_check_fwdID_exists(fwd_id):
+            print(f"BBS Warning: FWD-ID {fwd_id} exists!")
+            logger.warning(f"BBS Warning: FWD-ID {fwd_id} exists!")
             return False
         # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
         # _path = str(msg_struc.get('path', []))
-        _header = msg_struc.get('header', b'')
-        _time = msg_struc.get('tx-time', '')
+        header = msg_struc.get('header', b'')
+        rx_time = msg_struc.get('tx-time', '')
         # _utctime = msg_struc.get('utctime', '')
 
-        _query = ("UPDATE pms_out_msg SET "
+        query = ("UPDATE pms_out_msg SET "
                   "BID=%s, "
                   "header=%s, "
                   "tx_time=%s, "
                   "flag=%s WHERE MID=%s;"
                   )
-        _query_data = (
-            _bid,
-            _header,
-            _time,
-            _flag,
-            _mid,
+        query_data = (
+            bid,
+            header,
+            rx_time,
+            flag,
+            mid,
         )
-        self.commit_query_bin(_query, _query_data)
+        self.commit_query_bin(query, query_data)
 
-        _query = ("INSERT INTO `pms_fwd_q` "
+        query = ("INSERT INTO `pms_fwd_q` "
                   "(FWDID, "
                   "BID, "
                   "MID, "
@@ -465,9 +546,9 @@ class SQL_Database:
                   "size, "
                   "type) "
                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
-        _query_data = (_fwd_id,
-                       _bid,
-                       _mid,
+        query_data = (fwd_id,
+                       bid,
+                       mid,
                        msg_struc.get('sender'),
                        msg_struc.get('sender_bbs'),
                        msg_struc.get('sender_bbs_call'),
@@ -477,15 +558,15 @@ class SQL_Database:
                        msg_struc.get('fwd_bbs_call'),
                        msg_struc.get('subject'),
                        msg_struc.get('message_size'),
-                       _type,
+                       type,
                        )
-        self.commit_query_bin(_query, _query_data)
+        self.commit_query_bin(query, query_data)
         return True
 
     def bbs_get_msg_fm_outTab_by_mid(self, mid: int):
-        _query = "SELECT * FROM pms_out_msg WHERE MID=%s;"
-        _query_data = (mid,)
-        res = self.commit_query_bin(_query, _query_data)
+        query = "SELECT * FROM pms_out_msg WHERE MID=%s;"
+        query_data = (mid,)
+        res = self.commit_query_bin(query, query_data)
         if not res:
             return {}
         res = res[0]
@@ -511,45 +592,66 @@ class SQL_Database:
         }
 
     def bbs_get_fwd_q_Tab_for_BBS(self, bbs_call: str):
-        _query = "SELECT * FROM pms_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
-        _query_data = (bbs_call,)
-        res = self.commit_query_bin(_query, _query_data)
+        query = "SELECT * FROM pms_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
+        query_data = (bbs_call,)
+        res = self.commit_query_bin(query, query_data)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
+    # PN #######################
+    def bbs_get_pn_msg_Tab_by_call(self, call: str):
+
+        query = ("SELECT MSGID, "
+                  "size, "
+                  "to_call, "
+                  "to_bbs, "
+                  "from_call, "
+                  "time, "
+                  "subject, "
+                  "new, "
+                  "BID "
+                  "FROM pms_in_msg "
+                  f"WHERE flag='IN' and to_call='{call}' and typ='P';")
+        res = self.commit_query(query)
+        # print(f"bbs_get_pn_msg_Tab_by_call res: {res}")
+        return res
+
     def bbs_get_pn_msg_Tab_for_GUI(self):
-        _query = ("SELECT BID, "
+
+        query = ("SELECT BID, "
                   "from_call, "
                   "from_bbs, "
                   "to_call, "
                   "subject, "
                   "time, "
                   "new "
-                  "FROM pms_pn_msg "
-                  "WHERE flag='IN';")
-        res = self.commit_query(_query)
+                  "FROM pms_in_msg "
+                  "WHERE flag='IN' and typ='P';")
+        res = self.commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
     def bbs_get_pn_msg_for_GUI(self, bid: str):
         if not bid:
             return []
-        _query = ("SELECT * "
-                  "FROM pms_pn_msg "
+        query = ("SELECT * "
+                  "FROM pms_in_msg "
                   f"WHERE BID='{bid}';")
-        return self.commit_query(_query)
+        return self.commit_query(query)
 
     def bbs_set_pn_msg_notNew(self, bid: str):
-        _query = ("UPDATE pms_pn_msg SET new=0 "
+        query = ("UPDATE pms_in_msg SET new=0 "
                   f"WHERE BID='{bid}';")
-        self.commit_query(_query)
+        self.commit_query(query)
 
     def bbs_set_all_pn_msg_notNew(self):
-        _query = "UPDATE pms_pn_msg SET new=0;"
-        self.commit_query(_query)
+        query = "UPDATE pms_in_msg SET new=0;"
+        self.commit_query(query)
 
+    # BL #############################
     def bbs_get_bl_msg_Tab_for_GUI(self):
-        _query = ("SELECT BID, "
+
+        query = ("SELECT BID, "
                   "from_call, "
                   "from_bbs, "
                   "to_call, "
@@ -557,31 +659,40 @@ class SQL_Database:
                   "subject, "
                   "time, "
                   "new "
-                  "FROM pms_bl_msg "
-                  "WHERE flag='IN';")
-        res = self.commit_query(_query)
+                  "FROM pms_in_msg "
+                  "WHERE flag='IN' and typ='B';")
+        res = self.commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
     def bbs_get_bl_msg_for_GUI(self, bid: str):
+        """
         if not bid:
             return []
-        _query = ("SELECT * "
-                  "FROM pms_bl_msg "
+        query = ("SELECT * "
+                  "FROM pms_in_msg "
                   f"WHERE BID='{bid}';")
-        return self.commit_query(_query)
+        return self.commit_query(query)
+        """
+        return self.bbs_get_pn_msg_for_GUI(bid=bid)
 
     def bbs_set_bl_msg_notNew(self, bid: str):
+        """
         _query = ("UPDATE pms_bl_msg SET new=0 "
                   f"WHERE BID='{bid}';")
         self.commit_query(_query)
+        """
+        self.bbs_set_pn_msg_notNew(bid=bid)
 
     def bbs_set_all_bl_msg_notNew(self):
-        _query = "UPDATE pms_bl_msg SET new=0;"
-        self.commit_query(_query)
+        """
+        query = "UPDATE pms_bl_msg SET new=0;"
+        self.commit_query(query)
+        """
+        self.bbs_set_all_pn_msg_notNew()
 
     def bbs_get_fwd_q_Tab_for_GUI(self):
-        _query = ("SELECT BID, "
+        query = ("SELECT BID, "
                   "from_call, "
                   "from_bbs_call, "
                   "to_call, "
@@ -593,12 +704,12 @@ class SQL_Database:
                   "flag, "
                   "tx_time "
                   "FROM pms_fwd_q WHERE NOT flag='DL';")
-        res = self.commit_query(_query)
+        res = self.commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
     def pms_get_active_fwd_q_for_GUI(self):
-        _query = ("SELECT BID, "
+        query = ("SELECT BID, "
                   "from_call, "
                   "from_bbs_call, "
                   "to_call, "
@@ -608,19 +719,19 @@ class SQL_Database:
                   "subject, "
                   "size "
                   "FROM pms_fwd_q WHERE flag='F';")
-        res = self.commit_query(_query)
+        res = self.commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
     def bbs_get_outMsg_by_BID(self, bid: str):
-        _query = "SELECT subject, header, msg FROM pms_out_msg WHERE BID=%s LIMIT 5;"
-        _query_data = (bid,)
-        res = self.commit_query_bin(_query, _query_data)
+        query = "SELECT subject, header, msg FROM pms_out_msg WHERE BID=%s LIMIT 5;"
+        query_data = (bid,)
+        res = self.commit_query_bin(query, query_data)
         # print(f"bbs_get_outMsg_by_BID res: {res}")
         return res
 
     def bbs_get_sv_msg_Tab_for_GUI(self):
-        _query = ("SELECT MID, "
+        query = ("SELECT MID, "
                   "from_call, "
                   "from_bbs, "
                   "to_call, "
@@ -630,7 +741,7 @@ class SQL_Database:
                   "type "
                   "FROM pms_out_msg "
                   "WHERE flag='E';")
-        res = self.commit_query(_query)
+        res = self.commit_query(query)
         # print(f"bbs_get_sv_msg_Tab_for_GUI res: {res}")
         return res
 
@@ -643,25 +754,25 @@ class SQL_Database:
         return self.commit_query(_query)
 
     def bbs_get_out_msg_for_GUI(self, bid: str):
-        _query = "SELECT * FROM pms_out_msg WHERE BID=%s;"
-        return self.commit_query_bin(_query, (bid,))
+        query = "SELECT * FROM pms_out_msg WHERE BID=%s;"
+        return self.commit_query_bin(query, (bid,))
 
     def bbs_act_outMsg_by_FWD_ID(self, fwd_id: str, flag: str):
-        _query = "SELECT BID FROM pms_fwd_q WHERE FWDID=%s;"
-        _query_data = (fwd_id,)
-        res = self.commit_query_bin(_query, _query_data)
+        query = "SELECT BID FROM pms_fwd_q WHERE FWDID=%s;"
+        query_data = (fwd_id,)
+        res = self.commit_query_bin(query, query_data)
         # print(f"bbs_act_outMsg_by_FWDID res: {res}")
         if not res:
             print("Error bbs_act_outMsg_by_BID. No BID")
         bid = res[0][0]
         # print(f"bbs_act_outMsg_by_FWDID bid: {bid}")
-        _tx_time = datetime.now().strftime(SQL_TIME_FORMAT)
-        _query = "UPDATE pms_fwd_q SET flag=%s, tx_time=%s WHERE FWDID=%s;"
-        _query_data = (flag, _tx_time, fwd_id)
-        self.commit_query_bin(_query, _query_data)
-        _query = "UPDATE pms_out_msg SET flag=%s WHERE BID=%s;"
-        _query_data = (flag, bid)
-        self.commit_query_bin(_query, _query_data)
+        tx_time = datetime.now().strftime(SQL_TIME_FORMAT)
+        query = "UPDATE pms_fwd_q SET flag=%s, tx_time=%s WHERE FWDID=%s;"
+        query_data = (flag, tx_time, fwd_id)
+        self.commit_query_bin(query, query_data)
+        query = "UPDATE pms_out_msg SET flag=%s WHERE BID=%s;"
+        query_data = (flag, bid)
+        self.commit_query_bin(query, query_data)
 
     def pms_save_outMsg_by_MID(self, mid: str):
         if not mid:
@@ -689,22 +800,22 @@ class SQL_Database:
         return True
 
     def pms_setFlag_outMsg_by_MID(self, mid: str, flag: str):
-        _query = ("UPDATE pms_out_msg "
+        query = ("UPDATE pms_out_msg "
                   f"SET flag='{flag}' "
                   f"WHERE MID='{mid}';")
-        self.commit_query(_query)
+        self.commit_query(query)
         return True
 
     def pms_setFlag_fwdQ_by_MID(self, mid: str, flag: str):
-        _query = ("UPDATE pms_fwd_q "
+        query = ("UPDATE pms_fwd_q "
                   f"SET flag='{flag}' "
                   f"WHERE MID='{mid}';")
-        self.commit_query(_query)
+        self.commit_query(query)
 
     def pms_copy_outMsg_by_MID(self, mid: str):
         if not mid:
             return []
-        _q = ("INSERT INTO `pms_out_msg` "
+        q = ("INSERT INTO `pms_out_msg` "
               "(from_call, "
               "from_bbs, "
               "from_bbs_call, "
@@ -735,33 +846,37 @@ class SQL_Database:
               "FROM pms_out_msg "
               f"WHERE MID='{mid}';")
 
-        return self.commit_query(_q)
+        return self.commit_query(q)
 
     def bbs_del_pn_msg_by_BID(self, bid: str):
-        _query = ("UPDATE pms_pn_msg SET flag='DL' "
+
+        query = ("UPDATE pms_in_msg SET flag='DL' "
                   f"WHERE BID='{bid}';")
-        self.commit_query(_query)
+        self.commit_query(query)
         return True
 
     def bbs_del_bl_msg_by_BID(self, bid: str):
-        _query = ("UPDATE pms_bl_msg SET flag='DL' "
+        """
+        query = ("UPDATE pms_bl_msg SET flag='DL' "
                   f"WHERE BID='{bid}';")
-        self.commit_query(_query)
+        self.commit_query(query)
         return True
+        """
+        return self.bbs_del_pn_msg_by_BID(bid=bid)
 
     def bbs_del_out_msg_by_BID(self, bid: str):
-        _query = ("UPDATE pms_fwd_q SET flag='DL' "
+        query = ("UPDATE pms_fwd_q SET flag='DL' "
                   f"WHERE BID='{bid}';")
-        self.commit_query(_query)
-        _query = ("UPDATE pms_out_msg SET flag='DL' "
+        self.commit_query(query)
+        query = ("UPDATE pms_out_msg SET flag='DL' "
                   f"WHERE BID='{bid}';")
-        self.commit_query(_query)
+        self.commit_query(query)
         return True
 
     def bbs_del_sv_msg_by_MID(self, mid: str):
-        _query = ("UPDATE pms_out_msg SET flag='DL' "
+        query = ("UPDATE pms_out_msg SET flag='DL' "
                   f"WHERE MID='{mid}';")
-        self.commit_query(_query)
+        self.commit_query(query)
         return True
 
     def pms_set_bid(self, bid: int):
@@ -794,18 +909,18 @@ class SQL_Database:
         # print(f"- path in: {path}")
         if not path:
             return False
-        _path_k = '>'.join([a[0].split('.')[0] for a in path])
-        # print(f"- _path_k in: {_path_k}")
-        _temp = str(path[-1][0]).split('.')
-        _from_bbs = str(path[0][0]).split('.')[0]
-        _to_bbs = str(_temp[0])
-        _time_stamp = datetime.now().strftime(SQL_TIME_FORMAT)
-        if _temp[-1] == 'WW':
-            _temp = list(_temp[:-1])
-        _regions = list(_temp[1:-2] + ([''] * (6 - len(_temp[1:]))) + _temp[-2:])
-        # print(f"Regions: 1: {_regions}")
+        path_k = '>'.join([a[0].split('.')[0] for a in path])
+        # print(f"- path_k in: {path_k}")
+        temp = str(path[-1][0]).split('.')
+        from_bbs = str(path[0][0]).split('.')[0]
+        to_bbs = str(temp[0])
+        time_stamp = datetime.now().strftime(SQL_TIME_FORMAT)
+        if temp[-1] == 'WW':
+            temp = list(temp[:-1])
+        regions = list(temp[1:-2] + ([''] * (6 - len(temp[1:]))) + temp[-2:])
+        # print(f"Regions: 1: {regions}")
         if self.MYSQL:
-            _query = ("INSERT INTO `fwdPaths` "
+            query = ("INSERT INTO `fwdPaths` "
                       "(`path`, "
                       "`destBBS`, "
                       "`fromBBS`, "
@@ -820,7 +935,7 @@ class SQL_Database:
                       "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n"
                       " ON DUPLICATE KEY UPDATE `lastUpdate` = %s;")
         else:
-            _query = ("INSERT INTO `fwdPaths` "
+            query = ("INSERT INTO `fwdPaths` "
                       "(`path`, "
                       "`destBBS`, "
                       "`fromBBS`, "
@@ -834,20 +949,20 @@ class SQL_Database:
                       "`lastUpdate`)"
                       "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n"
                       " ON CONFLICT(path) DO UPDATE SET `lastUpdate` = %s;")
-        _query_data = (_path_k,
-                       _to_bbs,
-                       _from_bbs,
+        query_data = (path_k,
+                       to_bbs,
+                       from_bbs,
                        len(path),
-                       _regions[0],
-                       _regions[1],
-                       _regions[2],
-                       _regions[3],
-                       _regions[4],  # F*** DLNET
-                       _regions[5],
-                       _time_stamp,
-                       _time_stamp,
+                       regions[0],
+                       regions[1],
+                       regions[2],
+                       regions[3],
+                       regions[4],  # F*** DLNET
+                       regions[5],
+                       time_stamp,
+                       time_stamp,
                        )
-        res = self.commit_query_bin(_query, _query_data)
+        res = self.commit_query_bin(query, query_data)
         if res is None:
             return False
         return True
@@ -866,7 +981,7 @@ class SQL_Database:
             regions = list(temp[1:-2] + ([''] * (6 - len(temp[1:]))) + temp[-2:])
 
             if self.MYSQL:
-                _query = ("INSERT INTO `fwdNodes` "
+                query = ("INSERT INTO `fwdNodes` "
                           "(`node`, "
                           "`Address`, "
                           "`destR1`, "
@@ -880,7 +995,7 @@ class SQL_Database:
                           f"VALUES ({', '.join(['%s'] * 10)})\n"
                           " ON DUPLICATE KEY UPDATE `lastUpdate` = %s;")
             else:
-                _query = ("INSERT INTO `fwdNodes` "
+                query = ("INSERT INTO `fwdNodes` "
                           "(`node`, "
                           "`Address`, "
                           "`destR1`, "
@@ -893,7 +1008,7 @@ class SQL_Database:
                           "`lastUpdate`)"
                           f"VALUES ({', '.join(['%s'] * 10)})\n"
                           " ON CONFLICT(node) DO UPDATE SET `lastUpdate` = %s;")
-            _query_data = (to_bbs,
+            query_data = (to_bbs,
                            address,
                            regions[0],
                            regions[1],
@@ -905,7 +1020,7 @@ class SQL_Database:
                            time_stamp,
                            time_stamp,
                            )
-            res = self.commit_query_bin(_query, _query_data)
+            res = self.commit_query_bin(query, query_data)
             """
             if res is None:
                 return False
@@ -920,7 +1035,6 @@ class SQL_Database:
     ############################################
     # USER-DB
     def _insert_BBS_in_UserDB(self, call, address=''):
-        # TODO delete self._port_handler in __init__
         if self._port_handler:
             userDB = self._port_handler.get_userDB()
             # userDB.set_typ(call, 'BBS')
@@ -1194,7 +1308,7 @@ class SQL_Database:
                   "`DATA_W_HEADER`, "
                   "`DATA`) "
                   f"VALUES ({', '.join(['%s'] * 27)});")
-        _query_data = (
+        query_data = (
             data_struc.get('time', ''),
             data_struc.get('port_id', 0),
             data_struc.get('N_pack', 0),
@@ -1225,7 +1339,7 @@ class SQL_Database:
             data_struc.get('DATA_W_HEADER', 0),
             data_struc.get('DATA', 0),
         )
-        return self.commit_query_bin(_query, _query_data)
+        return self.commit_query_bin(_query, query_data)
 
     def PortStat_get_data_f_port(self, port_id=None):
         if port_id is None:

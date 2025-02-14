@@ -93,7 +93,16 @@ class PoPT_GUI_Main:
         # GUI Stuff
         logger.info('GUI: Init')
         self.main_win = tk.Tk()
+        ###########################################
         self.style = ttk.Style(self.main_win)
+        """
+        self.style.tk.call('lappend', 'auto_path', '../awthemes-10.4.0')
+        self.style.tk.call('package', 'require', 'awthemes')
+        self.style.tk.call('::themeutils::setHighlightColor', 'awdark', '#007000')
+        self.style.tk.call('package', 'require', 'awdark')
+        self.style.theme_use('awdark')
+        """
+        ###########################################
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
         self.main_win.geometry("1400x850")  # TODO to/fm CFG
         # self.main_win.attributes('-topmost', 0)
@@ -102,10 +111,6 @@ class PoPT_GUI_Main:
         except tk.TclError:
             pass
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
-        ##########################
-        # self.style.theme_use('classic')
-        #print(self.style.theme_names())
-        # self.style.theme_use('alt')
         ######################################
         # Init Vars
         self.mh = PORT_HANDLER.get_MH()

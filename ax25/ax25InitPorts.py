@@ -57,9 +57,9 @@ class AX25PortHandler(object):
         # Moduls
         # self.routingTable = None
         self._gui = None
-        self.bbs = None
+        self._bbs = None
         self.aprs_ais = None
-        self.scheduled_tasker = None
+        self._scheduled_tasker = None
         ###########################
         # VARs
         self.ax25_ports = {}
@@ -178,7 +178,7 @@ class AX25PortHandler(object):
     def _2sec_task(self):
         """ 2 Sec """
         if time.time() > self._task_timer_2sec:
-            self.bbs.main_cron()
+            self._bbs.main_cron()
             self._pipeTool_task()
             self._task_timer_2sec = time.time() + 2
 
@@ -203,28 +203,28 @@ class AX25PortHandler(object):
     #######################################################################
     # scheduled Tasks
     def _init_SchedTasker(self):
-        self.scheduled_tasker = PoPTSchedule_Tasker(self)
+        self._scheduled_tasker = PoPTSchedule_Tasker(self)
 
     def insert_SchedTask(self, sched_cfg, conf):
-        if self.scheduled_tasker:
-            self.scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
+        if self._scheduled_tasker:
+            self._scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
 
     def del_SchedTask(self, conf):
-        if self.scheduled_tasker:
-            self.scheduled_tasker.del_scheduler_Task(conf)
+        if self._scheduled_tasker:
+            self._scheduled_tasker.del_scheduler_Task(conf)
 
     def start_SchedTask_man(self, conf):
-        if self.scheduled_tasker:
-            self.scheduled_tasker.start_scheduler_Task_manual(conf)
+        if self._scheduled_tasker:
+            self._scheduled_tasker.start_scheduler_Task_manual(conf)
 
     def _Sched_task(self):
-        if self.scheduled_tasker:
+        if self._scheduled_tasker:
             # Scheduler & AutoConn Tasker
-            self.scheduled_tasker.tasker()
+            self._scheduled_tasker.tasker()
 
     def reinit_beacon_task(self):
-        if self.scheduled_tasker:
-            self.scheduled_tasker.reinit_beacon_tasks()
+        if self._scheduled_tasker:
+            self._scheduled_tasker.reinit_beacon_tasks()
 
     #######################################################################
     # Setting/Parameter Updates
@@ -952,16 +952,16 @@ class AX25PortHandler(object):
         return list(self.ax25_ports.keys())
 
     def get_bbs(self):
-        return self.bbs
+        return self._bbs
 
     ###############################
     # BBS
     def _init_bbs(self):
-        if self.bbs is None:
+        if self._bbs is None:
             try:
-                self.bbs = BBS(self)
+                self._bbs = BBS(self)
             except bbsInitError:
-                self.bbs = None
+                self._bbs = None
 
     ###############################
     # SQL-DB
@@ -977,6 +977,7 @@ class AX25PortHandler(object):
             self._db.check_tables_exists('aprs')
             self._db.check_tables_exists('port_stat')
             # self._db.check_tables_exists('mh')
+            self._db.update_db_tables()
             if self._db.error:
                 raise SQLConnectionError
         else:

@@ -1,4 +1,16 @@
 ###########################################################################################################
+# 2.117.x
+Fixes:
+
+Optimierung:
+- SQL-DB: Tabellen pms_pn_msg und pms_BL_msg
+  zusammengefasst zu pms_in_msg
+
+Neue Implementierungen / Funktionen:
+- CLI-CMD: LM (List Mails)
+
+###########################################################################################################
+###########################################################################################################
 # 2.116.x
 Fixes:
 - Alle CLI-Modes gehen in den Baycom-Autologin Zustand,
