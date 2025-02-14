@@ -873,21 +873,21 @@ class BBS:
         if not data:
             return {}
         return {
-            'typ': 'B',
-            'bid': data[0][0],
-            'from_call': data[0][1],
-            'from_bbs': data[0][2],
-            'to_call': data[0][3],
-            'to_bbs': data[0][4],
-            'size': data[0][5],
-            'subject': data[0][6],
-            'header': data[0][7],
-            'msg': data[0][8],
-            'path': data[0][9],
-            'time': data[0][10],
-            'rx-time': data[0][11],
-            'new': data[0][12],
-            'flag': data[0][13],
+            'typ': data[0][15],
+            'bid': data[0][1],
+            'from_call': data[0][2],
+            'from_bbs': data[0][3],
+            'to_call': data[0][4],
+            'to_bbs': data[0][5],
+            'size': data[0][6],
+            'subject': data[0][7],
+            'header': data[0][8],
+            'msg': data[0][9],
+            'path': data[0][10],
+            'time': data[0][11],
+            'rx-time': data[0][12],
+            'new': data[0][13],
+            'flag': data[0][14],
         }
 
     def set_bl_msg_notNew(self, bid):
@@ -901,21 +901,21 @@ class BBS:
         if not data:
             return {}
         return {
-            'typ': 'P',
-            'bid': data[0][0],
-            'from_call': data[0][1],
-            'from_bbs': data[0][2],
-            'to_call': data[0][3],
-            'to_bbs': data[0][4],
-            'size': data[0][5],
-            'subject': data[0][6],
-            'header': data[0][7],
-            'msg': data[0][8],
-            'path': data[0][9],
-            'time': data[0][10],
-            'rx-time': data[0][11],
-            'new': data[0][12],
-            'flag': data[0][13],
+            'typ': data[0][15],
+            'bid': data[0][1],
+            'from_call': data[0][2],
+            'from_bbs': data[0][3],
+            'to_call': data[0][4],
+            'to_bbs': data[0][5],
+            'size': data[0][6],
+            'subject': data[0][7],
+            'header': data[0][8],
+            'msg': data[0][9],
+            'path': data[0][10],
+            'time': data[0][11],
+            'rx-time': data[0][12],
+            'new': data[0][13],
+            'flag': data[0][14],
         }
 
     def set_pn_msg_notNew(self, bid):
