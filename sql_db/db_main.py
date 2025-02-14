@@ -6,14 +6,12 @@ from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_H
 from fnc.sql_fnc import search_sql_injections
 from fnc.str_fnc import convert_str_to_datetime
 from sql_db.sql_Error import SQLConnectionError
-from sql_db.sql_str import SQL_CREATE_PMS_IN_MAIL_TAB, SQL_CREATE_PMS_BL_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
+from sql_db.sql_str import SQL_CREATE_PMS_IN_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
     SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB, SQL_CREATE_PORT_STATISTIK_TAB, \
-    SQLITE_CREATE_PORT_STATISTIK_TAB, SQL_CREATE_FWD_NODES_TAB, SQLITE_CREATE_PMS_IN_MAIL_TAB, \
-    SQLITE_CREATE_PMS_BL_MAIL_TAB
+    SQLITE_CREATE_PORT_STATISTIK_TAB, SQL_CREATE_FWD_NODES_TAB, SQLITE_CREATE_PMS_IN_MAIL_TAB
 
 SQL_BBS_TABLES = {
-    # "pms_bl_msg": SQL_CREATE_PMS_BL_MAIL_TAB,
     "pms_in_msg": SQL_CREATE_PMS_IN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
     "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
@@ -22,7 +20,6 @@ SQL_BBS_TABLES = {
 }
 
 SQLITE_BBS_TABLES = {
-    # "pms_bl_msg": SQLITE_CREATE_PMS_BL_MAIL_TAB,
     "pms_in_msg": SQLITE_CREATE_PMS_IN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
     "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
@@ -348,7 +345,7 @@ class SQL_Database:
         msg = msg_struc.get('msg', b'')
         header = msg_struc.get('header', b'')
         msg_size = msg_struc.get('message_size', '')
-        time = msg_struc.get('time', '')
+        msg_time = msg_struc.get('time', '')
         rx_time = datetime.now().strftime(SQL_TIME_FORMAT)
         try:
             msg_size = int(msg_size)
@@ -394,7 +391,7 @@ class SQL_Database:
                        path,
                        msg,
                        header,
-                       time,
+                       msg_time,
                        rx_time,
                       typ)
         res = self.commit_query_bin(query, query_data)
@@ -458,7 +455,7 @@ class SQL_Database:
         msg = msg_struc.get('msg', b'')
         typ = msg_struc.get('message_type', '')
         msg_size = msg_struc.get('message_size', 0)
-        time = datetime.now().strftime(SQL_TIME_FORMAT)
+        msg_time = datetime.now().strftime(SQL_TIME_FORMAT)
         utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
         query = ("UPDATE pms_out_msg SET "
                   "from_call=%s, "
@@ -483,7 +480,7 @@ class SQL_Database:
                        msg_size,
                        subject,
                        msg,
-                       time,
+                       msg_time,
                        utctime,
                        typ,
                        mid)
@@ -502,8 +499,8 @@ class SQL_Database:
         if flag != 'E':
             return False
         flag = 'F'  # MSG flagged for forward
-        type = msg_struc.get('message_type', '')
-        if not type:
+        typ = msg_struc.get('message_type', '')
+        if not typ:
             return False
         fwd_id = bid + '-' + msg_struc.get('fwd_bbs_call', '')
         if self.bbs_check_fwdID_exists(fwd_id):
@@ -558,7 +555,7 @@ class SQL_Database:
                        msg_struc.get('fwd_bbs_call'),
                        msg_struc.get('subject'),
                        msg_struc.get('message_size'),
-                       type,
+                       typ,
                        )
         self.commit_query_bin(query, query_data)
         return True
