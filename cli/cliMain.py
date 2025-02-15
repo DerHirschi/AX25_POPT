@@ -21,10 +21,12 @@ class DefaultCLI(object):
     service_cli = True
     prefix = b'//'
     sw_id = ''
+    can_sidestop = True
+    new_mail_noty = False
 
     def __init__(self, connection):
-        # print("CLI-INIT")
-        logger.debug(f"CLI-{self.cli_name}: Init")
+        self._logTag = f"CLI-{self.cli_name}: "
+        logger.debug(self._logTag + "Init")
         stat_cfg: dict = connection.get_stat_cfg()
         self._stat_cfg_index_call = stat_cfg.get('stat_parm_Call', 'NOCALL')
 
@@ -66,7 +68,6 @@ class DefaultCLI(object):
         self._parameter = []
         self._sys_login = None
         self.sysop_priv = False
-        self._can_sidestop = True
         self._tx_buffer = b''
 
         # self._user_db_ent.boxopt_sidestop = 20
@@ -106,6 +107,7 @@ class DefaultCLI(object):
             'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
             'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
 
+            'R': (1, self._cmd_box_r, get_strTab('cmd_r', self._connection.cli_language)),
             'LM': (2, self._cmd_box_lm, get_strTab('cmd_lm', self._connection.cli_language)),
             'OP': (2, self._cmd_op, get_strTab('cmd_op', self._connection.cli_language)),
 
@@ -141,7 +143,7 @@ class DefaultCLI(object):
         self._cron_state_exec.update(self._cron_state_exec_ext)
         self._commands.update(self._cmd_exec_ext)
         self._state_exec.update(self._state_exec_ext)
-        if not self._can_sidestop:
+        if not self.can_sidestop:
             if 'OP' in self._commands:
                 del self._commands['OP']
         self._baycom_auto_login()
@@ -175,7 +177,7 @@ class DefaultCLI(object):
                 # ret = zeilenumbruch_lines(ret)
                 ret = ret.encode(self._encoding[0], self._encoding[1])
                 ret = ret.replace(b'\n', b'\r')
-            if all((self._can_sidestop, self._user_db_ent.boxopt_sidestop)):
+            if all((self.can_sidestop, self._user_db_ent.boxopt_sidestop)):
                 self._send_out_sidestop(ret)
                 return
             self._connection.tx_buf_rawData += ret
@@ -188,12 +190,11 @@ class DefaultCLI(object):
         tmp = cli_out.split(b'\r')
         out_lines = b'\r'.join(tmp[:self._user_db_ent.boxopt_sidestop])
         self._tx_buffer = b'\r'.join(tmp[self._user_db_ent.boxopt_sidestop:])
-        # TODO Translation
         if not self._tx_buffer:
             self._connection.tx_buf_rawData += cli_out
             self.change_cli_state(1)
             return
-        out_lines += "\r (A)=Abbruch, (R)=Lesen, (Return)=weiter -->".encode(self._encoding[0], self._encoding[1])
+        out_lines += get_strTab('op_prompt', self._connection.cli_language).encode(self._encoding[0], self._encoding[1])
         self._connection.tx_buf_rawData += out_lines
         self.change_cli_state(7)
 
@@ -1234,6 +1235,75 @@ class DefaultCLI(object):
             ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
         return ret + '\r'
 
+    def _cmd_box_r(self):
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
+            logger.error(self._logTag + "_cmd_box_r: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+        try:
+            msg_id = int(self._parameter[0])
+        except (ValueError, IndexError):
+            return get_strTab('box_parameter_error', self._connection.cli_language)
+        msg = bbs.get_pn_msg_by_id(msg_id=msg_id, call=self._to_call)
+        if msg:
+            return self._fnc_box_r(msg)
+        msg = bbs.get_bl_msg_by_id(msg_id=msg_id)
+        if msg:
+            return self._fnc_box_r(msg)
+        return get_strTab('box_r_no_msg_found', self._connection.cli_language).format(msg_id)
+
+    def _fnc_box_r(self, raw_msg: list):
+        try:
+            msg_tpl = raw_msg[0]
+        except IndexError as e:
+            logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
+            logger.error(self._logTag + f"{e}")
+            return get_strTab('box_msg_error', self._connection.cli_language)
+        try:
+            MSGID, \
+            BID, \
+            from_call, \
+            from_bbs, \
+            to_call, \
+            to_bbs, \
+            size, \
+            subject, \
+            header, \
+            msg, \
+            path, \
+            msg_time, \
+            rx_time, \
+            new, \
+            flag, \
+                typ = msg_tpl
+        except (TypeError, ValueError) as e:
+            logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
+            logger.error(self._logTag + f"{e}")
+            return get_strTab('box_msg_error', self._connection.cli_language)
+        stat = str(typ)
+        if new:
+            stat += 'N'
+        ret = '\r'
+        ret += f"{str(get_strTab('from', self._connection.cli_language)).ljust(13)}: {from_call}@{from_bbs}\r"
+        ret += f"{str(get_strTab('to', self._connection.cli_language)).ljust(13)}: {to_call}@{to_bbs}\r"
+        ret += f"{'Typ/Status'.ljust(13)}: {stat}\r"
+        ret += f"{str(get_strTab('date_time', self._connection.cli_language)).ljust(13)}: {msg_time}\r"
+        ret += f"RX {str(get_strTab('date_time', self._connection.cli_language)).ljust(10)}: {rx_time[2:]}\r"
+        ret += f"{'BID'.ljust(13)}: {BID}\r"
+        ret += f"{str(get_strTab('message', self._connection.cli_language) + ' #').ljust(13)}: {MSGID}\r"
+        ret += zeilenumbruch(f"{str(get_strTab('titel', self._connection.cli_language)).ljust(13)}: {subject}\r\r")
+        ret += msg.decode(self._encoding[0], self._encoding[1])
+        ret += get_strTab('box_msg_foter', self._connection.cli_language).format(
+            MSGID, to_call, from_call, BID
+        )
+        if all((new, typ == 'P')):
+            bbs = self._port_handler.get_bbs()
+            if not hasattr(bbs, 'set_in_msg_notNew'):
+                logger.error(self._logTag + "_fnc_box_r: No BBS available")
+                return ret
+            bbs.set_in_msg_notNew(bid=BID)
+        return ret
+
     def _cmd_op(self):
         if not self._parameter:
             self._user_db_ent.boxopt_sidestop = 0
@@ -1315,10 +1385,15 @@ class DefaultCLI(object):
 
     def _s0(self):  # C-Text
         self._state_index = 1
-        if self.prefix:
-            return self._send_sw_id() + self._c_text
-        else:
-            return self._send_sw_id() + self._c_text + self.get_ts_prompt()
+        ret = self._send_sw_id() + self._c_text
+        bbs = self._port_handler.get_bbs()
+        if hasattr(bbs, 'get_new_pn_count_by_call'):
+            new_mail = bbs.get_new_pn_count_by_call(self._to_call)
+            if new_mail:
+                ret += get_strTab('box_new_mail_ctext', self._connection.cli_language).format(new_mail)
+        if self.cli_name == 'USER':
+            return ret
+        return ret + self.get_ts_prompt()
 
     def _s1(self):
         # print("CMD-Handler S1")
@@ -1475,6 +1550,8 @@ class NodeCLI(DefaultCLI):
     # prompt = 'PoPT-NODE>'
     prefix = b''
     sw_id = 'PoPTNode'
+    can_sidestop = True
+    new_mail_noty = True
 
     # Extra CMDs for this CLI
 
@@ -1486,7 +1563,6 @@ class NodeCLI(DefaultCLI):
             2: self.s2
         }
         """
-        self._can_sidestop = True
 
     def _s2(self):
         return self._cmd_q()
@@ -1503,7 +1579,8 @@ class UserCLI(DefaultCLI):
     # prompt = 'TEST-STATION-User-CLI>'
     prefix = b'//'
     sw_id = 'PoPT'
-
+    can_sidestop = False
+    new_mail_noty = True
     # Extra CMDs for this CLI
 
     def init(self):
@@ -1514,7 +1591,6 @@ class UserCLI(DefaultCLI):
             2: self.s2
         }
         """
-        self._can_sidestop = False
 
     def _s2(self):
         return self._cmd_q()
@@ -1526,8 +1602,11 @@ class NoneCLI(DefaultCLI):
     # _c_text = ''
     # bye_text = ''
     prefix = b''
+    can_sidestop = False
+    new_mail_noty = False
+
     def init(self):
-        self._can_sidestop = False
+        pass
 
     def cli_exec(self, inp=b''):
         pass
@@ -1546,6 +1625,8 @@ class MCastCLI(DefaultCLI):
     service_cli = True
     prefix = b''
     sw_id = 'PoPTMCast'
+    can_sidestop = True
+    new_mail_noty = False
 
     # Extra CMDs for this CLI
 
@@ -1602,7 +1683,6 @@ class MCastCLI(DefaultCLI):
             6: self._state_error,  #
             7: self._s7,  # Box Side Stop / Paging | Wait for input
         }
-        self._can_sidestop = True
 
     def _state_error(self):
         logger.error(f"CLI: McastCLI: State Error: State {self._state_index}")
@@ -1752,11 +1832,12 @@ class BoxCLI(DefaultCLI):
     # prompt = 'PoPT-NODE>'
     prefix = b''
     sw_id = BBS_SW_ID
+    can_sidestop = True
+    new_mail_noty = True
 
     # Extra CMDs for this CLI
 
     def init(self):
-        self._can_sidestop = True
         self._commands = {
             # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
             'QUIT': (1, self._cmd_q, 'Quit'),

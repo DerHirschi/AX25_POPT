@@ -770,7 +770,7 @@ class MSG_Center(tk.Toplevel):
         return self._bbs_obj.get_pn_msg_fm_BID(bid)
 
     def _set_PN_MSG_notNew(self, bid: str):
-        self._bbs_obj.set_pn_msg_notNew(bid)
+        self._bbs_obj.set_in_msg_notNew(bid)
 
     def _format_PN_tree_data(self):
         self._pn_tree_data = []
@@ -881,7 +881,7 @@ class MSG_Center(tk.Toplevel):
         return self._bbs_obj.get_bl_msg_fm_BID(bid)
 
     def _set_BL_MSG_notNew(self, bid: str):
-        self._bbs_obj.set_bl_msg_notNew(bid)
+        self._bbs_obj.set_in_msg_notNew(bid)
 
     def _format_BL_tree_data(self):
         self._bl_tree_data = []

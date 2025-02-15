@@ -7,9 +7,10 @@ Optimierung:
   zusammengefasst zu pms_in_msg
 
 Neue Implementierungen / Funktionen:
-- CLI-CMD: LM (List Mails)
-- CLI Seiten-Stops/Paging für MCast, NODE, BOX
 - CLI Typ: BOX
+- CLI-CMD: LM (List Mails / Listet alle Mails (P&B))
+- CLI-CMD: R (Read Mail / Mail lesen)
+- CLI Seiten-Stops/Paging für MCast, NODE, BOX
 
 ###########################################################################################################
 ###########################################################################################################

@@ -97,6 +97,7 @@ class SQL_Database:
             self.error = True
             logger.error("Database: Init Error !")
         # DEV
+        # print(self.bbs_get_new_pn_msg_for_Call('MD2SAW'))
         """
         if self.db:
             # self._drope_tabel()
@@ -594,7 +595,6 @@ class SQL_Database:
 
     # PN #######################
     def bbs_get_pn_msg_Tab_by_call(self, call: str):
-
         query = ("SELECT MSGID, "
                   "size, "
                   "to_call, "
@@ -611,7 +611,6 @@ class SQL_Database:
         return res
 
     def bbs_get_pn_msg_Tab_for_GUI(self):
-
         query = ("SELECT BID, "
                   "from_call, "
                   "from_bbs, "
@@ -633,7 +632,7 @@ class SQL_Database:
                   f"WHERE BID='{bid}';")
         return self.commit_query(query)
 
-    def bbs_set_pn_msg_notNew(self, bid: str):
+    def bbs_set_in_msg_notNew(self, bid: str):
         query = ("UPDATE pms_in_msg SET new=0 "
                   f"WHERE BID='{bid}';")
         self.commit_query(query)
@@ -642,7 +641,41 @@ class SQL_Database:
         query = "UPDATE pms_in_msg SET new=0 WHERE typ='P';"
         self.commit_query(query)
 
+    def bbs_get_new_pn_msgCount_for_Call(self, call: str):
+        query = ("SELECT MSGID, "
+                 "COUNT(*) "
+                 "FROM pms_in_msg "
+                 f"WHERE flag='IN' and to_call='{call}' and typ='P' and new=1;")
+        res = self.commit_query(query)
+        try:
+            return int(res[0][1])
+        except (IndexError, ValueError):
+            return 0
+
+        # return self.commit_query(query)
+
+    def bbs_get_pn_msg_by_msg_id(self, msg_id: int, call: str):
+        query = ("SELECT * "
+                 "FROM pms_in_msg "
+                 "WHERE flag='IN' and "
+                 "typ='P' and "
+                 f"MSGID='{msg_id}' and "
+                 f"to_call='{call}';")
+        res = self.commit_query(query)
+        print(f"PN res: {res}")
+        return res
+
     # BL #############################
+    def bbs_get_bl_msg_by_msg_id(self, msg_id: int):
+        query = ("SELECT * "
+                 "FROM pms_in_msg "
+                 "WHERE flag='IN' and "
+                 "typ='B' and "
+                 f"MSGID='{msg_id}';")
+        res = self.commit_query(query)
+        print(f"BL res: {res}")
+        return res
+
     def bbs_get_bl_msg_Tab_for_GUI(self):
         query = ("SELECT BID, "
                   "from_call, "

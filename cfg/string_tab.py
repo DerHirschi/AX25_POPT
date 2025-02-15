@@ -1579,6 +1579,39 @@ STR_TABLE = {
            '',
            ''),
 
+    'date_time': ('Datum/Zeit',
+             'Date/Time',
+             'Datum/tijd',
+             '',
+             '',
+             '',
+             '',
+             '',
+             '',
+             ''),
+
+    'message': ('Nachricht',
+             'Message',
+             'Nieuws',
+             '',
+             '',
+             '',
+             '',
+             '',
+             '',
+             ''),
+
+    'titel': ('Titel',
+                'Title',
+                'Titel',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                ''),
+
     'from': ('Von',
              'From',
              'van ',
@@ -2441,6 +2474,18 @@ STR_TABLE = {
 
     #####################################################
     # BOX
+    'cmd_r': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '<MSG#> Liest die Nachricht mit der entspr. Nummer aus.',
+         '<MSG#> Reads the message with the corresponding number.',
+         '<MSG#> Leest het bericht met het bijbehorende nummer.',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
     'cmd_lm': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          'Listet alle eigenen Nachrichten.',
@@ -2459,6 +2504,32 @@ STR_TABLE = {
          'Anzahl der Zeilen pro Seite. Nur OP aus.',
          'Number of lines per page. Just OP = off.',
          'Aantal regels per pagina. OP alleen = uit',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'op_prompt': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r # (A)=Abbruch, (R)=Lesen, (Return)=weiter -->',
+         '\r # (A)=Cancel, (R)=Read, (Return)=continue -->',
+         '\r # (A)=Annuleren, (R)=Lezen, (Terug)=doorgaan -->',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'box_new_mail_ctext': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r\r # BOX: Du hast {} neu Mails.\r\r',
+         '\r\r # BOX : You have {} new mails.\r\r',
+         '\r\r # BOX: Je hebt {} nieuwe mails.\r\r',
          '',
          '',
          '',
@@ -2518,4 +2589,57 @@ STR_TABLE = {
          '',
          '',
          ''),
+
+    'box_r_no_msg_found': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r\r # Nachricht {} nicht gefunden ! \r\r',
+         '\r\r # Message {} not found! \r\r',
+         '\r\r # Bericht {} niet gevonden! \r\r',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'box_parameter_error': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r # Fehler, ungültiger Parameter.\r',
+         '\r # Error, Invalid Parameter.\r',
+         '\r # Fout, ongeldige parameter.\r',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'box_msg_error': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r # Interner Fehler, kann Nachricht nicht lesen.\r',
+         '\r # Internal error, cannot read message.\r',
+         '\r # Interne fout, kan bericht niet lezen.\r',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'box_msg_foter': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r\r--- Ende der Nachricht #{} an {} von {} BID:{} ---\r\r',
+         '\r\r--- End of message #{} to {} from {} BID:{} ---\r\r',
+         '\r\r--- Einde van bericht #{} tot {} van {} BID:{} ---\r\r',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
 }

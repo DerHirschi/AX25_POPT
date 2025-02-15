@@ -890,8 +890,8 @@ class BBS:
             'flag': data[0][14],
         }
 
-    def set_bl_msg_notNew(self, bid):
-        self.db.bbs_set_pn_msg_notNew(bid)
+    def set_in_msg_notNew(self, bid):
+        self.db.bbs_set_in_msg_notNew(bid)
 
     def set_all_bl_msg_notNew(self):
         self.db.bbs_set_all_bl_msg_notNew()
@@ -918,11 +918,17 @@ class BBS:
             'flag': data[0][14],
         }
 
-    def set_pn_msg_notNew(self, bid):
-        self.db.bbs_set_pn_msg_notNew(bid)
-
     def set_all_pn_msg_notNew(self):
         self.db.bbs_set_all_pn_msg_notNew()
+
+    def get_new_pn_count_by_call(self, call: str):
+        return self.db.bbs_get_new_pn_msgCount_for_Call(call)
+
+    def get_pn_msg_by_id(self, msg_id: int, call: str):
+        return self.db.bbs_get_pn_msg_by_msg_id(msg_id=msg_id, call=call)
+
+    def get_bl_msg_by_id(self, msg_id: int):
+        return self.db.bbs_get_bl_msg_by_msg_id(msg_id=msg_id)
 
     def get_out_msg_fm_BID(self, bid):
         data = self.db.bbs_get_out_msg_for_GUI(bid)
