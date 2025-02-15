@@ -42,6 +42,7 @@ class DefaultCLI(object):
         self._to_call = self._connection.to_call_str.split('-')[0]
         self._user_db = USER_DB
         self._user_db_ent = self._connection.user_db_ent
+        self._cli_lang = self._connection.cli_language
         self._encoding = 'UTF-8', 'ignore'
         self._stat_identifier_str = ''
         if self._user_db_ent:
@@ -70,57 +71,109 @@ class DefaultCLI(object):
         self.sysop_priv = False
         self._tx_buffer = b''
 
-        # self._user_db_ent.boxopt_sidestop = 20
+        self._getTabStr = lambda str_k: get_strTab(str_k, self._cli_lang)
+        # self._user_db_ent.cli_sidestop = 20
         # Crone
         self._cron_state_exec = {
             0: self._cron_s0,  # No CMDs / Doing nothing
             100: self._cron_s_quit  # QUIT
         }
         # Standard Commands ( GLOBAL )
-        self._commands = {
+        self._command_set = {
             # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
-            'QUIT': (1, self._cmd_q, 'Quit'),
-            'BYE': (1, self._cmd_q, 'Bye'),
-            'CONNECT': (1, self._cmd_connect, 'Connect'),
-            'C!': (2, self._cmd_connect_exclusive, 'Connect Exclusive (No MH-Path-Lookup)'),
-            'ECHO': (1, self._cmd_echo, 'Echo'),
-            'PORT': (1, self._cmd_port, 'Ports'),
-            'MH': (0, self._cmd_mh, 'MYHeard List'),
-            'LMH': (0, self._cmd_mhl, 'Long MYHeard List'),
-            'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
-            'ATR': (2, self._cmd_aprs_trace, 'APRS-Tracer'),
-            'DXLIST': (2, self._cmd_dxlist, 'DX/Tracer Alarm List'),
-            'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
-            'WX': (0, self._cmd_wx, STR_TABLE['cmd_help_wx'][self._connection.cli_language]),
-            'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
+            'QUIT':     (1, self._cmd_q, 'Quit'),
+            'BYE':      (1, self._cmd_q, 'Bye'),
+            'ECHO':     (1, self._cmd_echo, 'Echo'),
+            # NODE Stuff
+            'CONNECT':  (1, self._cmd_connect, 'Connect'),
+            'C!':       (2, self._cmd_connect_exclusive, 'Connect Exclusive (No MH-Path-Lookup)'),
+            'PORT':     (1, self._cmd_port, 'Ports'),
+            'MH':       (0, self._cmd_mh, 'MYHeard List'),
+            'LMH':      (0, self._cmd_mhl, 'Long MYHeard List'),
+            'AXIP':     (2, self._cmd_axip, 'AXIP-MH List'),
+            'DXLIST':   (2, self._cmd_dxlist, 'DX/Tracer Alarm List'),
+            'LCSTATUS': (2, self._cmd_lcstatus, self._getTabStr('cmd_help_lcstatus')),
+            # APRS Stuff
+            'ATR':      (2, self._cmd_aprs_trace, 'APRS-Tracer'),
+            'WX':       (0, self._cmd_wx, self._getTabStr('cmd_help_wx')),
+            # User/Station Info
+            'BELL':     (2, self._cmd_bell, self._getTabStr('cmd_help_bell')),
+            'INFO':     (1, self._cmd_i, 'Info'),
+            'LINFO':    (2, self._cmd_li, 'Long Info'),
+            'NEWS':     (2, self._cmd_news, 'NEWS'),
+            # USER DB
+            'USER':     (0, self._cmd_user_db_detail, self._getTabStr('cmd_help_user_db')),
+            'NAME':     (1, self._cmd_set_name, self._getTabStr('cmd_help_set_name')),
+            'QTH':      (0, self._cmd_set_qth, self._getTabStr('cmd_help_set_qth')),
+            'LOC':      (0, self._cmd_set_loc, self._getTabStr('cmd_help_set_loc')),
+            'ZIP':      (0, self._cmd_set_zip, self._getTabStr('cmd_help_set_zip')),
+            'PRMAIL':   (0, self._cmd_set_pr_mail, self._getTabStr('cmd_help_set_prmail')),
+            'EMAIL':    (0, self._cmd_set_e_mail, self._getTabStr('cmd_help_set_email')),
+            'WEB':      (3, self._cmd_set_http, self._getTabStr('cmd_help_set_http')),
+            # BOX
+            'LB':       (2, self._cmd_box_lb, self._getTabStr('cmd_ln')),
 
-            'INFO': (1, self._cmd_i, 'Info'),
-            'LINFO': (2, self._cmd_li, 'Long Info'),
-            'NEWS': (2, self._cmd_news, 'NEWS'),
-            'VERSION': (3, self._cmd_ver, 'Version'),
-            'USER': (0, self._cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self._connection.cli_language]),
-            'NAME': (1, self._cmd_set_name, STR_TABLE['cmd_help_set_name'][self._connection.cli_language]),
-            'QTH': (0, self._cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self._connection.cli_language]),
-            'LOC': (0, self._cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self._connection.cli_language]),
-            'ZIP': (0, self._cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self._connection.cli_language]),
-            'PRMAIL': (0, self._cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self._connection.cli_language]),
-            'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
-            'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
-
-            'R': (1, self._cmd_box_r, get_strTab('cmd_r', self._connection.cli_language)),
-            'LN': (2, self._cmd_box_ln, get_strTab('cmd_ln', self._connection.cli_language)),
-            'LM': (2, self._cmd_box_lm, get_strTab('cmd_lm', self._connection.cli_language)),
-            'KM': (2, self._cmd_box_km, get_strTab('cmd_km', self._connection.cli_language)),
-
-            'OP': (2, self._cmd_op, get_strTab('cmd_op', self._connection.cli_language)),
-            'LANG': (4, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
-            'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
-
-            'POPT': (0, self._cmd_popt_banner, 'PoPT Banner'),
-            'HELP': (1, self._cmd_help, STR_TABLE['help'][self._connection.cli_language]),
-            '?': (0, self._cmd_shelp, STR_TABLE['cmd_shelp'][self._connection.cli_language]),
-
+            'LN':       (2, self._cmd_box_ln, self._getTabStr('cmd_ln')),
+            'LM':       (2, self._cmd_box_lm, self._getTabStr('cmd_lm')),
+            'R':        (1, self._cmd_box_r, self._getTabStr('cmd_r')),
+            'KM':       (2, self._cmd_box_km, self._getTabStr('cmd_km')),
+            # CLI OPT
+            'OP':       (2, self._cmd_op, self._getTabStr('cmd_op')),
+            'LANG':     (4, self._cmd_lang, self._getTabStr('cli_change_language')),
+            'UMLAUT':   (2, self._cmd_umlaut, self._getTabStr('auto_text_encoding')),
+            #
+            'VERSION':  (3, self._cmd_ver, 'Version'),
+            'POPT':     (0, self._cmd_popt_banner, 'PoPT Banner'),
+            'HELP':     (1, self._cmd_help, self._getTabStr('help')),
+            '?':        (0, self._cmd_shelp, self._getTabStr('cmd_shelp')),
         }
+        # self._commands_cfg  = list(self._command_set.keys())
+        self._commands_cfg  = ['QUIT',
+                               'BYE',
+                               # NODE
+                               'ECHO',
+                               'CONNECT',
+                               'C!',
+                               'PORT',
+                               'MH',
+                               'LMH',
+                               'AXIP',
+                               'DXLIST',
+                               'LCSTATUS',
+                               # APRS
+                               'ATR',
+                               'WX',
+                               # User Info
+                               'BELL',
+                               'INFO',
+                               'LINFO',
+                               'NEWS',
+                               # UserDB
+                               'USER',
+                               'NAME',
+                               'QTH',
+                               'LOC',
+                               'ZIP',
+                               'PRMAIL',
+                               'EMAIL',
+                               'WEB',
+                               # BOX
+                               'LB',
+                               'LN',
+                               'LM',
+                               'R',
+                               'KM',
+                               # CLI OPT
+                               'OP',
+                               'LANG',
+                               'UMLAUT',
+                               #
+                               'VERSION',
+                               'POPT',
+                               'HELP',
+                               '?']
+        self._commands      = {}
+        # print(self._commands_cfg)
 
         self._str_cmd_exec = {
             b'#REQUESTNAME:': self.str_cmd_req_name,
@@ -139,13 +192,18 @@ class DefaultCLI(object):
             6: self._s6,  # Auto Baycom Login Shit
             7: self._s7,  # Box Side Stop / Paging | Wait for input
         }
-        self._cmd_exec_ext = {}         # Extern Command's ??
-        self._cron_state_exec_ext = {}  # Extern Tasks ??
-        self._state_exec_ext = {}       # Extern State Tab ??
+
         self.init()
-        self._cron_state_exec.update(self._cron_state_exec_ext)
-        self._commands.update(self._cmd_exec_ext)
-        self._state_exec.update(self._state_exec_ext)
+
+        for cmd_key in self._commands_cfg:
+            if cmd_key not in self._command_set:
+                logger.error(self._logTag + f"__init__: cmd_key {cmd_key} not in _command_set")
+                continue
+            self._commands[cmd_key] = self._command_set.get(cmd_key,
+                                                            (0,
+                                                            lambda : logger.error(self._logTag + f'cmd_kexError: {cmd_key}'),
+                                                            'CLI-Error'))
+
         if not self.can_sidestop:
             if 'OP' in self._commands:
                 del self._commands['OP']
@@ -157,11 +215,6 @@ class DefaultCLI(object):
 
 
     def init(self):
-        """
-        self._cmd_exec_ext = {}
-        self.cron_state_exec_ext = {}
-        self.state_exec_ext = {}
-        """
         pass
 
 
@@ -180,24 +233,24 @@ class DefaultCLI(object):
                 # ret = zeilenumbruch_lines(ret)
                 ret = ret.encode(self._encoding[0], self._encoding[1])
                 ret = ret.replace(b'\n', b'\r')
-            if all((self.can_sidestop, self._user_db_ent.boxopt_sidestop)):
+            if all((self.can_sidestop, self._user_db_ent.cli_sidestop)):
                 self._send_out_sidestop(ret)
                 return
             self._connection.tx_buf_rawData += ret
 
     def _send_out_sidestop(self, cli_out: bytes):
-        if not self._user_db_ent.boxopt_sidestop:
+        if not self._user_db_ent.cli_sidestop:
             self._connection.tx_buf_rawData += cli_out
             self.change_cli_state(1)
             return
         tmp = cli_out.split(b'\r')
-        out_lines = b'\r'.join(tmp[:self._user_db_ent.boxopt_sidestop])
-        self._tx_buffer = b'\r'.join(tmp[self._user_db_ent.boxopt_sidestop:])
+        out_lines = b'\r'.join(tmp[:self._user_db_ent.cli_sidestop])
+        self._tx_buffer = b'\r'.join(tmp[self._user_db_ent.cli_sidestop:])
         if not self._tx_buffer:
             self._connection.tx_buf_rawData += cli_out
             self.change_cli_state(1)
             return
-        out_lines += get_strTab('op_prompt', self._connection.cli_language).encode(self._encoding[0], self._encoding[1])
+        out_lines += get_strTab('op_prompt', self._cli_lang).encode(self._encoding[0], self._encoding[1])
         self._connection.tx_buf_rawData += out_lines
         self.change_cli_state(7)
 
@@ -389,9 +442,9 @@ class DefaultCLI(object):
                 if inp_cmd == cmd[:len(inp_cmd)]:
                     treffer.append(cmd)
             if not treffer:
-                return f"\r # {STR_TABLE['cmd_not_known'][self._connection.cli_language]}\r"
+                return f"\r # {STR_TABLE['cmd_not_known'][self._cli_lang]}\r"
             if len(treffer) > 1:
-                return (f"\r # {STR_TABLE['cmd_not_known'][self._connection.cli_language]}"
+                return (f"\r # {STR_TABLE['cmd_not_known'][self._cli_lang]}"
                         f"\r # {(' '.join(treffer))} ?\r")
             self._cmd = b''
             if not callable(self._commands[treffer[0]][1]):
@@ -403,7 +456,7 @@ class DefaultCLI(object):
                 return ret
             return ''
 
-        return f"\r # {STR_TABLE['cmd_not_known'][self._connection.cli_language]}\r"
+        return f"\r # {STR_TABLE['cmd_not_known'][self._cli_lang]}\r"
 
     def _exec_cmd(self):
         self._input = self._last_line + self._input
@@ -465,7 +518,7 @@ class DefaultCLI(object):
     #########################################################
     def _cmd_connect(self, exclusive=False):
         self._decode_param()
-        lang = self._connection.cli_language
+        lang = self._cli_lang
         if not self._parameter:
             return f"\r {get_strTab('cmd_c_noCall', lang)}\r"
 
@@ -516,7 +569,7 @@ class DefaultCLI(object):
         # self._connection: AX25Conn
         # self._connection.tx_buf_rawData += self.bye_text.encode(self.encoding[0], self.encoding[1])
         conn_dauer = get_time_delta(self.time_start)
-        ret = f"\r # {STR_TABLE['time_connected'][self._connection.cli_language]}: {conn_dauer}\r\r"
+        ret = f"\r # {STR_TABLE['time_connected'][self._cli_lang]}: {conn_dauer}\r\r"
         ret += self._load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
         self._send_output(ret, env_vars=True)
         self._crone_state_index = 100  # Quit State
@@ -524,12 +577,12 @@ class DefaultCLI(object):
 
     def _cmd_lang(self):
         if not self._parameter:
-            return f'\r # {STR_TABLE["cli_no_lang_param"][self._connection.cli_language]}{" ".join(list(constant.LANG_IND.keys()))}\r'
+            return f'\r # {STR_TABLE["cli_no_lang_param"][self._cli_lang]}{" ".join(list(constant.LANG_IND.keys()))}\r'
         self._decode_param()
         if self._parameter[0].upper() in constant.LANG_IND.keys():
             self._connection.set_user_db_language(constant.LANG_IND[self._parameter[0].upper()])
-            return f'\r # {STR_TABLE["cli_lang_set"][self._connection.cli_language]}\r'
-        return f'\r # {STR_TABLE["cli_no_lang_param"][self._connection.cli_language]}{" ".join(list(constant.LANG_IND.keys()))}\r'
+            return f'\r # {STR_TABLE["cli_lang_set"][self._cli_lang]}\r'
+        return f'\r # {STR_TABLE["cli_no_lang_param"][self._cli_lang]}{" ".join(list(constant.LANG_IND.keys()))}\r'
 
     def _cmd_dxlist(self):
         parm = 10
@@ -546,7 +599,7 @@ class DefaultCLI(object):
         alarm_his = dict(self._port_handler.get_MH().dx_alarm_perma_hist)
         alarm_his.update(dict(self._port_handler.get_aprs_ais().be_tracer_alarm_hist))
         if not alarm_his:
-            return f'\r # {STR_TABLE["cli_no_data"][self._connection.cli_language]}\r'
+            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
         out = '\r'
         out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---\r"
         max_c = 0
@@ -583,7 +636,7 @@ class DefaultCLI(object):
         ent = self._port_handler.get_MH().get_sort_mh_entry('last', reverse=False)
         dbl_ent = []
         if not ent:
-            return f'\r # {STR_TABLE["cli_no_data"][self._connection.cli_language]}\r'
+            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
         max_c = 0
         out = '\r'
         # out += '\r                       < AXIP - Clients >\r\r'
@@ -632,7 +685,7 @@ class DefaultCLI(object):
     def _get_mh_out_cli(self, max_ent=20, port_id=-1):
         sort_list = self._port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
-            return f'\r # {STR_TABLE["cli_no_data"][self._connection.cli_language]}\r'
+            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
         out = ''
         c = 0
         max_c = 0
@@ -653,7 +706,7 @@ class DefaultCLI(object):
                     c = 0
                     out += '\r'
         if not out:
-            return f'\r # {STR_TABLE["cli_no_data"][self._connection.cli_language]}\r'
+            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
         return '\r' + out
 
     def _cmd_mhl(self):
@@ -684,7 +737,7 @@ class DefaultCLI(object):
     def _get_mh_long_out_cli(self, max_ent=10, port_id=-1):
         sort_list = self._port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
-            return f'\r # {STR_TABLE["cli_no_data"][self._connection.cli_language]}\r'
+            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
         out = ''
         max_c = 0
         """
@@ -719,13 +772,13 @@ class DefaultCLI(object):
 
                 out += '\r'
         if not out:
-            return f'\r # {STR_TABLE["cli_no_data"][self._connection.cli_language]}\r'
+            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
         return "\r-----Time-Port-Call------via-------LOC------Dist(km)--Type---Packets\r" + out
 
     def _cmd_wx(self):
         """ WX Stations """
         if self._port_handler.aprs_ais is None:
-            return f'\r # {STR_TABLE["cli_no_wx_data"][self._connection.cli_language]}\r\r'
+            return f'\r # {STR_TABLE["cli_no_wx_data"][self._cli_lang]}\r\r'
         parm = 10
         ret = ''
         self._decode_param()
@@ -749,7 +802,7 @@ class DefaultCLI(object):
         else:
             ret = self._get_wx_cli_out(max_ent=parm)
         if not ret:
-            return f'\r # {STR_TABLE["cli_no_wx_data"][self._connection.cli_language]}\r\r'
+            return f'\r # {STR_TABLE["cli_no_wx_data"][self._cli_lang]}\r\r'
         return ret + '\r'
 
     def _get_wx_fm_call_cli_out(self, call, max_ent=10):
@@ -820,7 +873,7 @@ class DefaultCLI(object):
     def _cmd_aprs_trace(self):
         """APRS Tracer"""
         if self._port_handler.aprs_ais is None:
-            return f'\r # {STR_TABLE["cli_no_tracer_data"][self._connection.cli_language]}\r\r'
+            return f'\r # {STR_TABLE["cli_no_tracer_data"][self._cli_lang]}\r\r'
         parm = 10
         if self._parameter:
             try:
@@ -829,7 +882,7 @@ class DefaultCLI(object):
                 pass
         data = self._port_handler.aprs_ais.tracer_traces_get()
         if not data:
-            return f'\r # {STR_TABLE["cli_no_tracer_data"][self._connection.cli_language]}\r\r'
+            return f'\r # {STR_TABLE["cli_no_tracer_data"][self._cli_lang]}\r\r'
         intervall = self._port_handler.aprs_ais.be_tracer_interval
         active = self._port_handler.aprs_ais.be_tracer_active
         last_send = self._port_handler.aprs_ais.tracer_get_last_send()
@@ -950,7 +1003,7 @@ class DefaultCLI(object):
                 return header + ent_ret
 
             return "\r" \
-                   f"{STR_TABLE['cli_no_user_db_ent'][self._connection.cli_language]}" \
+                   f"{STR_TABLE['cli_no_user_db_ent'][self._cli_lang]}" \
                    "\r"
 
     def _cmd_set_name(self):
@@ -966,7 +1019,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_name_set'][self._connection.cli_language]}: {self._user_db_ent.Name}" \
+                   f"{STR_TABLE['cli_name_set'][self._cli_lang]}: {self._user_db_ent.Name}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_name NO ENTRY FOUND !")
@@ -985,7 +1038,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_qth_set'][self._connection.cli_language]}: {self._user_db_ent.QTH}" \
+                   f"{STR_TABLE['cli_qth_set'][self._cli_lang]}: {self._user_db_ent.QTH}" \
                    "\r"
 
         logger.error("User-DB Error. cli_qth_set NO ENTRY FOUND !")
@@ -1009,10 +1062,10 @@ class DefaultCLI(object):
             self._user_db.set_distance(self._user_db_ent.call_str)
             if self._user_db_ent.Distance:
                 return "\r" \
-                       f"{STR_TABLE['cli_loc_set'][self._connection.cli_language]}: {self._user_db_ent.LOC}" \
+                       f"{STR_TABLE['cli_loc_set'][self._cli_lang]}: {self._user_db_ent.LOC}" \
                        "\r"
             return "\r" \
-                   f"{STR_TABLE['cli_loc_set'][self._connection.cli_language]}: {self._user_db_ent.LOC} > {round(self._user_db_ent.Distance)} km" \
+                   f"{STR_TABLE['cli_loc_set'][self._cli_lang]}: {self._user_db_ent.LOC} > {round(self._user_db_ent.Distance)} km" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_loc NO ENTRY FOUND !")
@@ -1031,7 +1084,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_zip_set'][self._connection.cli_language]}: {self._user_db_ent.ZIP}" \
+                   f"{STR_TABLE['cli_zip_set'][self._cli_lang]}: {self._user_db_ent.ZIP}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_zip NO ENTRY FOUND !")
@@ -1050,7 +1103,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_prmail_set'][self._connection.cli_language]}: {self._user_db_ent.PRmail}" \
+                   f"{STR_TABLE['cli_prmail_set'][self._cli_lang]}: {self._user_db_ent.PRmail}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_pr_mail NO ENTRY FOUND !")
@@ -1069,7 +1122,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_email_set'][self._connection.cli_language]}: {self._user_db_ent.Email}" \
+                   f"{STR_TABLE['cli_email_set'][self._cli_lang]}: {self._user_db_ent.Email}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_e_mail NO ENTRY FOUND !")
@@ -1088,14 +1141,14 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_http_set'][self._connection.cli_language]}: {self._user_db_ent.HTTP}" \
+                   f"{STR_TABLE['cli_http_set'][self._cli_lang]}: {self._user_db_ent.HTTP}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_http NO ENTRY FOUND !")
         return "\r # USER-DB Error !\r"
 
     def _cmd_port(self):  # TODO Pipe
-        ret = f"\r      < {STR_TABLE['port_overview'][self._connection.cli_language]} >\r\r"
+        ret = f"\r      < {STR_TABLE['port_overview'][self._cli_lang]} >\r\r"
         ret += "-#--Name----PortTyp----------Stations--Typ------Digi-\r"
         for port_id in self._port_handler.ax25_ports.keys():
             port = self._port_handler.ax25_ports[port_id]
@@ -1164,7 +1217,7 @@ class DefaultCLI(object):
         return ret + "\r"
 
     def _cmd_help(self):
-        # ret = f"\r   < {STR_TABLE['help'][self._connection.cli_language]} >\r"
+        # ret = f"\r   < {STR_TABLE['help'][self._cli_lang]} >\r"
         ret = "\r"
         for k in list(self._commands.keys()):
             if self._commands[k][2]:
@@ -1190,14 +1243,14 @@ class DefaultCLI(object):
     def _cmd_umlaut(self):
         # print(self.parameter)
         if not self._parameter:
-            return f"\r{STR_TABLE['cli_text_encoding_no_param'][self._connection.cli_language]}: {self._encoding[0]}\r"
+            return f"\r{STR_TABLE['cli_text_encoding_no_param'][self._cli_lang]}: {self._encoding[0]}\r"
         res = find_decoding(self._parameter[0].replace(b'\r', b''))
         if not res:
-            return f"\r{STR_TABLE['cli_text_encoding_error_not_found'][self._connection.cli_language]}\r"
+            return f"\r{STR_TABLE['cli_text_encoding_error_not_found'][self._cli_lang]}\r"
         self._encoding = res, self._encoding[1]
         if self._user_db_ent:
             self._user_db_ent.Encoding = str(res)
-        return f"\r{STR_TABLE['cli_text_encoding_set'][self._connection.cli_language]} {res}\r"
+        return f"\r{STR_TABLE['cli_text_encoding_set'][self._cli_lang]} {res}\r"
 
     def _cmd_bell(self):
         if not self._connection.noty_bell:
@@ -1205,18 +1258,21 @@ class DefaultCLI(object):
             msg = b' '.join(self._parameter)
             msg = msg.decode(self._encoding[0], self._encoding[1])
             self._port_handler.set_noty_bell_PH(self._connection.ch_index, msg)
-            return f'\r # {STR_TABLE["cmd_bell"][self._connection.cli_language]}\r'
-        return f'\r # {STR_TABLE["cmd_bell_again"][self._connection.cli_language]}\r'
+            return f'\r # {STR_TABLE["cmd_bell"][self._cli_lang]}\r'
+        return f'\r # {STR_TABLE["cmd_bell_again"][self._cli_lang]}\r'
 
     ##############################################
     # BOX
+    def _cmd_box_lb(self):
+        pass
+
     def _cmd_box_ln(self):
         bbs = self._port_handler.get_bbs()
         if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._connection.cli_language) +
+        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._cli_lang) +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -1244,7 +1300,7 @@ class DefaultCLI(object):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._connection.cli_language) +
+        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._cli_lang) +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -1272,7 +1328,7 @@ class DefaultCLI(object):
             logger.error(self._logTag + "_cmd_box_km: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = bbs.del_old_pn_msg_by_call(self._to_call)
-        return get_strTab('box_msg_del', self._connection.cli_language).format(len(ret))
+        return get_strTab('box_msg_del', self._cli_lang).format(len(ret))
 
     def _cmd_box_r(self):
         bbs = self._port_handler.get_bbs()
@@ -1282,14 +1338,14 @@ class DefaultCLI(object):
         try:
             msg_id = int(self._parameter[0])
         except (ValueError, IndexError):
-            return get_strTab('box_parameter_error', self._connection.cli_language)
+            return get_strTab('box_parameter_error', self._cli_lang)
         msg = bbs.get_pn_msg_by_id(msg_id=msg_id, call=self._to_call)
         if msg:
             return self._fnc_box_r(msg)
         msg = bbs.get_bl_msg_by_id(msg_id=msg_id)
         if msg:
             return self._fnc_box_r(msg)
-        return get_strTab('box_r_no_msg_found', self._connection.cli_language).format(msg_id)
+        return get_strTab('box_r_no_msg_found', self._cli_lang).format(msg_id)
 
     def _fnc_box_r(self, raw_msg: list):
         try:
@@ -1297,7 +1353,7 @@ class DefaultCLI(object):
         except IndexError as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
             logger.error(self._logTag + f"{e}")
-            return get_strTab('box_msg_error', self._connection.cli_language)
+            return get_strTab('box_msg_error', self._cli_lang)
         try:
             MSGID, \
             BID, \
@@ -1318,21 +1374,21 @@ class DefaultCLI(object):
         except (TypeError, ValueError) as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
             logger.error(self._logTag + f"{e}")
-            return get_strTab('box_msg_error', self._connection.cli_language)
+            return get_strTab('box_msg_error', self._cli_lang)
         stat = str(typ)
         if new:
             stat += 'N'
         ret = '\r'
-        ret += f"{str(get_strTab('from', self._connection.cli_language)).ljust(13)}: {from_call}@{from_bbs}\r"
-        ret += f"{str(get_strTab('to', self._connection.cli_language)).ljust(13)}: {to_call}@{to_bbs}\r"
+        ret += f"{str(get_strTab('from', self._cli_lang)).ljust(13)}: {from_call}@{from_bbs}\r"
+        ret += f"{str(get_strTab('to', self._cli_lang)).ljust(13)}: {to_call}@{to_bbs}\r"
         ret += f"{'Typ/Status'.ljust(13)}: {stat}\r"
-        ret += f"{str(get_strTab('date_time', self._connection.cli_language)).ljust(13)}: {msg_time}\r"
-        ret += f"RX {str(get_strTab('date_time', self._connection.cli_language)).ljust(10)}: {rx_time[2:]}\r"
+        ret += f"{str(get_strTab('date_time', self._cli_lang)).ljust(13)}: {msg_time}\r"
+        ret += f"RX {str(get_strTab('date_time', self._cli_lang)).ljust(10)}: {rx_time[2:]}\r"
         ret += f"{'BID'.ljust(13)}: {BID}\r"
-        ret += f"{str(get_strTab('message', self._connection.cli_language) + ' #').ljust(13)}: {MSGID}\r"
-        ret += zeilenumbruch(f"{str(get_strTab('titel', self._connection.cli_language)).ljust(13)}: {subject}\r\r")
+        ret += f"{str(get_strTab('message', self._cli_lang) + ' #').ljust(13)}: {MSGID}\r"
+        ret += zeilenumbruch(f"{str(get_strTab('titel', self._cli_lang)).ljust(13)}: {subject}\r\r")
         ret += msg.decode(self._encoding[0], self._encoding[1])
-        ret += get_strTab('box_msg_foter', self._connection.cli_language).format(
+        ret += get_strTab('box_msg_foter', self._cli_lang).format(
             MSGID, to_call, from_call, BID
         )
         if all((new, typ == 'P')):
@@ -1345,14 +1401,14 @@ class DefaultCLI(object):
 
     def _cmd_op(self):
         if not self._parameter:
-            self._user_db_ent.boxopt_sidestop = 0
+            self._user_db_ent.cli_sidestop = 0
             ""
-            return get_strTab('box_cmd_op1', self._connection.cli_language)
+            return get_strTab('box_cmd_op1', self._cli_lang)
         try:
-            self._user_db_ent.boxopt_sidestop = int(self._parameter[0])
+            self._user_db_ent.cli_sidestop = int(self._parameter[0])
         except ValueError:
-            return get_strTab('box_cmd_op2', self._connection.cli_language)
-        return get_strTab('box_cmd_op3', self._connection.cli_language).format(self._user_db_ent.boxopt_sidestop)
+            return get_strTab('box_cmd_op2', self._cli_lang)
+        return get_strTab('box_cmd_op3', self._cli_lang).format(self._user_db_ent.cli_sidestop)
     ##############################################
     def str_cmd_req_name(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
@@ -1429,7 +1485,7 @@ class DefaultCLI(object):
         if hasattr(bbs, 'get_new_pn_count_by_call'):
             new_mail = bbs.get_new_pn_count_by_call(self._to_call)
             if new_mail:
-                ret += get_strTab('box_new_mail_ctext', self._connection.cli_language).format(new_mail)
+                ret += get_strTab('box_new_mail_ctext', self._cli_lang).format(new_mail)
         if self.cli_name == 'USER':
             return ret
         return ret + self.get_ts_prompt()
@@ -1548,7 +1604,7 @@ class DefaultCLI(object):
             logger.warning(f"CLI: _s7: No tx_buffer but in S7 !!")
             self.change_cli_state(1)
             return
-        if not self._user_db_ent.boxopt_sidestop:
+        if not self._user_db_ent.cli_sidestop:
             logger.warning(f"CLI: _s7: No UserOpt but in S7 !!")
             self.change_cli_state(1)
             return
@@ -1563,7 +1619,7 @@ class DefaultCLI(object):
             self.change_cli_state(1)
             return
         if self._raw_input in [b'r\r', b'R\r', b'r\n', b'R\n']:
-            self._user_db_ent.boxopt_sidestop = 0
+            self._user_db_ent.cli_sidestop = 0
             self._send_out_sidestop(self._tx_buffer)
             return
 
@@ -1579,7 +1635,6 @@ class DefaultCLI(object):
                 not self._connection.tx_buf_2send:
             if self._connection.zustand_exec.stat_index not in [0, 1, 4]:
                 self._connection.zustand_exec.change_state(4)
-
 
 class NodeCLI(DefaultCLI):
     cli_name = 'NODE'  # DON'T CHANGE !
@@ -1603,12 +1658,12 @@ class NodeCLI(DefaultCLI):
         }
         """
 
+
     def _s2(self):
         return self._cmd_q()
 
     def _baycom_auto_login(self):
         return False
-
 
 class UserCLI(DefaultCLI):
     cli_name = 'USER'  # DON'T CHANGE !
@@ -1645,7 +1700,7 @@ class NoneCLI(DefaultCLI):
     new_mail_noty = False
 
     def init(self):
-        pass
+        self._commands_cfg = []
 
     def cli_exec(self, inp=b''):
         pass
@@ -1674,44 +1729,64 @@ class MCastCLI(DefaultCLI):
         self._c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._c_text = self._c_text.replace('\n', '\r')
         # Standard Commands ( GLOBAL )
-        self._commands = {
+        self._command_set.update( {
             # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
-            'QUIT': (1, self._cmd_q, 'Quit'),
-            'BYE': (1, self._cmd_q, 'Bye'),
-            'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
-
-            # 'CONNECT': (1, self._cmd_connect, 'Connect'),
-            # 'ECHO': (1, self._cmd_echo, 'Echo'),
-            # 'PORT': (1, self._cmd_port, 'Ports'),
-            # 'MH': (0, self._cmd_mh, 'MYHeard List'),
-            # 'LMH': (0, self._cmd_mhl, 'Long MYHeard List'),
-
-            'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
-            'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
             # MCAST ######################################################
-            'CH': (2, self._cmd_mcast_move_channel, STR_TABLE['cmd_help_mcast_move_ch'][self._connection.cli_language]),
-            'CHLIST': (3, self._cmd_mcast_channels, STR_TABLE['cmd_help_mcast_channels'][self._connection.cli_language]),
-            'CHINFO': (3, self._cmd_mcast_channel_info, STR_TABLE['cmd_help_mcast_ch_info'][self._connection.cli_language]),
-            'SETAXIP': (5, self._cmd_mcast_set_member_axip, STR_TABLE['cmd_help_mcast_set_axip'][self._connection.cli_language]),
+            'CH':       (2, self._cmd_mcast_move_channel, self._getTabStr('cmd_help_mcast_move_ch')),
+            'CHLIST':   (3, self._cmd_mcast_channels, self._getTabStr('cmd_help_mcast_channels')),
+            'CHINFO':   (3, self._cmd_mcast_channel_info, self._getTabStr('cmd_help_mcast_ch_info')),
+            'SETAXIP':  (5, self._cmd_mcast_set_member_axip, self._getTabStr('cmd_help_mcast_set_axip')),
             ##############################################################
-            'INFO': (1, self._cmd_i, 'Info'),
-            'LINFO': (2, self._cmd_li, 'Long Info'),
-            'NEWS': (2, self._cmd_news, 'NEWS'),
-            'VERSION': (3, self._cmd_ver, 'Version'),
-            'USER': (0, self._cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self._connection.cli_language]),
-            'NAME': (1, self._cmd_set_name, STR_TABLE['cmd_help_set_name'][self._connection.cli_language]),
-            'QTH': (0, self._cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self._connection.cli_language]),
-            'LOC': (0, self._cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self._connection.cli_language]),
-            'ZIP': (0, self._cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self._connection.cli_language]),
-            'PRMAIL': (0, self._cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self._connection.cli_language]),
-            'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
-            'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
-            'LANG': (0, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
-            'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
-            'HELP': (1, self._cmd_help, STR_TABLE['help'][self._connection.cli_language]),
-            '?': (0, self._cmd_shelp, STR_TABLE['cmd_shelp'][self._connection.cli_language]),
-
-        }
+        })
+        self._commands_cfg = ['QUIT',
+                              'BYE',
+                              ## MCAST
+                              'CH',
+                              'CHLIST',
+                              'CHINFO',
+                              'SETAXIP',
+                              ## NODE
+                              # 'ECHO',
+                              # 'CONNECT',
+                              # 'C!',
+                              # 'PORT',
+                              # 'MH',
+                              # 'LMH',
+                              # 'AXIP',
+                              # 'DXLIST',
+                              # 'LCSTATUS',
+                              ## APRS
+                              # 'ATR',
+                              # 'WX',
+                              ## User Info
+                              'BELL',
+                              'INFO',
+                              'LINFO',
+                              'NEWS',
+                              # UserDB
+                              'USER',
+                              'NAME',
+                              'QTH',
+                              'LOC',
+                              'ZIP',
+                              'PRMAIL',
+                              'EMAIL',
+                              'WEB',
+                              # BOX
+                              # 'LB',
+                              # 'LN',
+                              # 'LM',
+                              # 'R',
+                              # 'KM',
+                              # CLI OPT
+                              'OP',
+                              'LANG',
+                              'UMLAUT',
+                              #
+                              'VERSION',
+                              'POPT',
+                              'HELP',
+                              '?']
         self._state_exec = {
             0: self._s0,  # C-Text
             1: self._s1,  # Cmd Handler
@@ -1877,50 +1952,44 @@ class BoxCLI(DefaultCLI):
     # Extra CMDs for this CLI
 
     def init(self):
-        self._commands = {
-            # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
-            'QUIT': (1, self._cmd_q, 'Quit'),
-            'BYE': (1, self._cmd_q, 'Bye'),
-            # 'CONNECT': (1, self._cmd_connect, 'Connect'),
-            # 'C!': (2, self._cmd_connect_exclusive, 'Connect Exclusive (No MH-Path-Lookup)'),
-            # 'ECHO': (1, self._cmd_echo, 'Echo'),
-            # 'PORT': (1, self._cmd_port, 'Ports'),
-            # 'MH': (0, self._cmd_mh, 'MYHeard List'),
-            # 'LMH': (0, self._cmd_mhl, 'Long MYHeard List'),
-            # 'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
-            # 'ATR': (2, self._cmd_aprs_trace, 'APRS-Tracer'),
-            # 'DXLIST': (2, self._cmd_dxlist, 'DX/Tracer Alarm List'),
-            'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
-            'WX': (0, self._cmd_wx, STR_TABLE['cmd_help_wx'][self._connection.cli_language]),
-            'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
 
-            'INFO': (1, self._cmd_i, 'Info'),
-            'LINFO': (2, self._cmd_li, 'Long Info'),
-            'NEWS': (2, self._cmd_news, 'NEWS'),
-            'VERSION': (3, self._cmd_ver, 'Version'),
-            'USER': (0, self._cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self._connection.cli_language]),
-            'NAME': (1, self._cmd_set_name, STR_TABLE['cmd_help_set_name'][self._connection.cli_language]),
-            'QTH': (0, self._cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self._connection.cli_language]),
-            'LOC': (0, self._cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self._connection.cli_language]),
-            'ZIP': (0, self._cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self._connection.cli_language]),
-            'PRMAIL': (0, self._cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self._connection.cli_language]),
-            'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
-            'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
+        self._commands_cfg = ['QUIT',
+                              'BYE',
 
-            'R': (1, self._cmd_box_r, get_strTab('cmd_r', self._connection.cli_language)),
-            'LN': (2, self._cmd_box_ln, get_strTab('cmd_ln', self._connection.cli_language)),
-            'LM': (2, self._cmd_box_lm, get_strTab('cmd_lm', self._connection.cli_language)),
-            'KM': (2, self._cmd_box_km, get_strTab('cmd_km', self._connection.cli_language)),
 
-            'OP': (2, self._cmd_op, get_strTab('cmd_op', self._connection.cli_language)),
-            'LANG': (4, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
-            'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
-
-            'POPT': (0, self._cmd_popt_banner, 'PoPT Banner'),
-            'HELP': (1, self._cmd_help, STR_TABLE['help'][self._connection.cli_language]),
-            '?': (0, self._cmd_shelp, STR_TABLE['cmd_shelp'][self._connection.cli_language]),
-
-        }
+                              'LCSTATUS',
+                              ## APRS
+                              # 'ATR',
+                              'WX',
+                              ## User Info
+                              'BELL',
+                              'INFO',
+                              'LINFO',
+                              'NEWS',
+                              # UserDB
+                              'USER',
+                              'NAME',
+                              'QTH',
+                              'LOC',
+                              'ZIP',
+                              'PRMAIL',
+                              'EMAIL',
+                              'WEB',
+                              # BOX
+                              'LB',
+                              'LN',
+                              'LM',
+                              'R',
+                              'KM',
+                              # CLI OPT
+                              'OP',
+                              'LANG',
+                              'UMLAUT',
+                              #
+                              'VERSION',
+                              'POPT',
+                              'HELP',
+                              '?']
 
     def _s2(self):
         return self._cmd_q()

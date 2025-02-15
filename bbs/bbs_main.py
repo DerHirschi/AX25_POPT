@@ -632,7 +632,7 @@ class BBS:
             'auto_conn': True,
         }
         """
-        self._pms_cfg = dict(POPT_CFG.get_CFG_by_key('pms_main'))
+        self._pms_cfg: dict = dict(POPT_CFG.get_CFG_by_key('pms_main'))
         self._pms_cfg_hasChanged = False
         ####################
         # Set Vars
@@ -645,6 +645,9 @@ class BBS:
         # New Msg Noty/Alarm
         # self.new_pn_msg = False
         # self.new_bl_msg = False
+        ####################
+        # Local User
+        self._local_user = []   # TODO fm UserDB
         ####################
         # CTL & Auto Connection
         self.pms_connections = []   # Outgoing Conns using FWG Prot
@@ -669,6 +672,7 @@ class BBS:
         })
         self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
         """
+
     def _reinit(self):
         if not self.pms_connections:
             # print("PMS: reINIT")
@@ -713,12 +717,14 @@ class BBS:
     # CFG Stuff
     def _set_pms_home_bbs(self):
         home_bbs = []
-        for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
-            regio = self._pms_cfg['home_bbs_cfg'][h_bbs_k].get('regio', '')
+        for h_bbs_k, h_bbs_cfg in self._pms_cfg.get('home_bbs_cfg', {}).items():
+            h_bbs_cfg: dict
+            regio = h_bbs_cfg.get('regio', '')
             if regio:
                 home_bbs.append((h_bbs_k + '.' + regio))
-            self._pms_cfg['home_bbs_cfg'][h_bbs_k]['own_call'] = self._pms_cfg['user']
+            h_bbs_cfg['own_call'] = self._pms_cfg.get('user', 'NOCALL')
         self._pms_cfg['home_bbs'] = home_bbs
+
 
     def _set_pms_fwd_schedule(self):
         for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):

@@ -27,7 +27,6 @@ class Client(object):
     Lat = 0
     Lon = 0
     Distance = 0
-    Language = -1
     PRmail = ''
     Email = ''
     HTTP = ''
@@ -47,12 +46,12 @@ class Client(object):
     QRG4 = ''
     QRG5 = ''
     Software = ''
-    Encoding = 'CP437'    # 'UTF-8'
 
     last_edit = datetime.datetime.now()
     last_seen = datetime.datetime.now()
     Connects = 0
-
+    # GUI OPT
+    Encoding = 'CP437'    # 'UTF-8'
     pac_len = 0
     max_pac = 0
     CText = ''
@@ -61,9 +60,11 @@ class Client(object):
     sys_pw = ''
     sys_pw_autologin = False
     sys_pw_parm = [5, 80, 'SYS']
+    # CLI
+    cli_sidestop = 20
+    Language = -1
     # BOX
-    boxopt_sidestop = 20
-
+    # box_user_cfg = {}
 
 class UserDB:
     def __init__(self):
@@ -82,6 +83,16 @@ class UserDB:
             'sys_pw',
             'sys_pw_parm',
             'sys_pw_autologin',
+            'boxopt_sidestop',
+            'cli_sidestop',
+            'Language',
+            'Encoding',
+            'QRG1',
+            'QRG2',
+            'QRG3',
+            'QRG4',
+            'QRG5',
+            'box_user_cfg',
         ]
         self.db = {}
         db_load = {}
