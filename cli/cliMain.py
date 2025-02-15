@@ -16,17 +16,6 @@ from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
 
 
-BOX_MAIL_TAB_HEADER = ("Msg#  TSLD Byte   An    @ BBS   Von    Dat./Zeit Titel\r"
-                       "===== ==== ====== ====== ====== ====== ====/==== ======\r")
-BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
-                                  f"{'P'.ljust(4)} "
-                                  f"{str(data[1]).ljust(6)} "
-                                  f"{data[2]}@{str(data[3]).ljust(6)} "
-                                  f"{str(data[4]).ljust(6)} "
-                                  f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
-                                  f"{str(data[6])}"
-                                  )
-
 class DefaultCLI(object):
     cli_name = ''  # DON'T CHANGE!
     service_cli = True
@@ -117,8 +106,8 @@ class DefaultCLI(object):
             'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
             'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
 
-            'LM': (2, self._cmd_box_lm, "Listet alle eigenen Nachrichten."),
-            'OP': (2, self._cmd_box_lm, "Anzahl der Zeilen pro Seite. Nur OP aus."),
+            'LM': (2, self._cmd_box_lm, get_strTab('cmd_lm', self._connection.cli_language)),
+            'OP': (2, self._cmd_op, get_strTab('cmd_op', self._connection.cli_language)),
 
             'LANG': (4, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
             'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
@@ -1215,21 +1204,41 @@ class DefaultCLI(object):
             return f'\r # {STR_TABLE["cmd_bell"][self._connection.cli_language]}\r'
         return f'\r # {STR_TABLE["cmd_bell_again"][self._connection.cli_language]}\r'
 
+    ##############################################
+    # BOX
     def _cmd_box_lm(self):
         bbs = self._port_handler.get_bbs()
         if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = '\r'
+        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._connection.cli_language) +
+                               "===== ==== ====== ====== ====== ====== ====/==== ======\r")
+        BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
+                                          f"{'P'.ljust(4)} "
+                                          f"{str(data[1]).ljust(6)} "
+                                          f"{data[2]}@{str(data[3]).ljust(6)} "
+                                          f"{str(data[4]).ljust(6)} "
+                                          f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
+                                          f"{str(data[6])}"
+                                          )
         ret += BOX_MAIL_TAB_HEADER
-        # print(ret)
-        # print(bbs.get_pn_msg_tab_by_call(self._to_call))
         msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
         msg_list.reverse()
         for el in msg_list:
             ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
         return ret + '\r'
 
+    def _cmd_op(self):
+        if not self._parameter:
+            self._user_db_ent.boxopt_sidestop = 0
+            ""
+            return get_strTab('box_cmd_op1', self._connection.cli_language)
+        try:
+            self._user_db_ent.boxopt_sidestop = int(self._parameter[0])
+        except ValueError:
+            return get_strTab('box_cmd_op2', self._connection.cli_language)
+        return get_strTab('box_cmd_op3', self._connection.cli_language).format(self._user_db_ent.boxopt_sidestop)
     ##############################################
     def str_cmd_req_name(self):
         stat_cfg: dict = self._connection.get_stat_cfg()

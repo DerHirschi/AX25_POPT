@@ -2438,4 +2438,84 @@ STR_TABLE = {
          '',
          '',
          ''),
+
+    #####################################################
+    # BOX
+    'cmd_lm': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         'Listet alle eigenen Nachrichten.',
+         'Lists all of your own messages.',
+         'Geeft al uw eigen berichten weer.',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'cmd_op': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         'Anzahl der Zeilen pro Seite. Nur OP aus.',
+         'Number of lines per page. Just OP = off.',
+         'Aantal regels per pagina. OP alleen = uit',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'box_cmd_op2': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r # OP: Fehler, ungültiger Parameter.\r',
+         '\r # OP : Error, Invalid Parameter.\r',
+         '\r # OP: Fout, ongeldige parameter.\r',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'box_cmd_op1': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r # OP : Kein Seitenstop.\r',
+         '\r # OP : No side stop.\r',
+         '\r # OP: Geen zijstop.\r',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'box_cmd_op3': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '\r # OP : Seitenstop auf {} Zeilen eingestellt.\r',
+         '\r # OP : Page stop set to {} lines.\r',
+         '\r # OP: Paginastop ingesteld op {} regels.\r',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
+    'box_lm_header': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         '"Msg#  TSLD Byte   An    @ BBS   Von    Dat./Zeit Titel\r',
+         '"Msg#  TSLD Byte   To    @ BBS   From   Dat./Time Head\r',
+         '"Msg#  TSLD Byte   Naar  @ BBS   Van    Dat./Tijd Titel\r',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
 }
