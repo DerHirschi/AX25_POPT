@@ -694,6 +694,22 @@ class SQL_Database:
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
+    def bbs_get_bl_msg_Tab_for_CLI(self):
+        query = ("SELECT MSGID, "
+                  "size, "
+                  "to_call, "
+                  "to_bbs, "
+                  "from_call, "
+                  "time, "
+                  "subject, "
+                  "new, "
+                  "BID "
+                 "FROM pms_in_msg "
+                 "WHERE flag='IN' and typ='B';")
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
     def bbs_get_bl_msg_for_GUI(self, bid: str):
         return self.bbs_get_pn_msg_for_GUI(bid=bid)
 

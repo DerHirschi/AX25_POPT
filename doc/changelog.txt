@@ -5,9 +5,11 @@ Fixes:
 Optimierung:
 - SQL-DB: Tabellen pms_pn_msg und pms_BL_msg
   zusammengefasst zu pms_in_msg
+- Interne CLI-CMD config
 
 Neue Implementierungen / Funktionen:
 - CLI Typ: BOX
+- CLI-CMD: LB (List Bulletin/ Listet alle Bulletin Mails)
 - CLI-CMD: LM (List Mails / Listet alle eigenen Mails)
 - CLI-CMD: LN (List New Mails / Listet alle eigenen neuen Mails)
 - CLI-CMD: KM (Löscht alle pers. Nachrichten, die man bereits gelesen hat.)

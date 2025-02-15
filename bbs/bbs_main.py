@@ -874,6 +874,9 @@ class BBS:
     def get_bl_msg_tab(self):
         return self._db.bbs_get_bl_msg_Tab_for_GUI()
 
+    def get_bl_msg_tabCLI(self):
+        return self._db.bbs_get_bl_msg_Tab_for_CLI()
+
     def get_bl_msg_fm_BID(self, bid):
         data = self._db.bbs_get_bl_msg_for_GUI(bid)
         if not data:

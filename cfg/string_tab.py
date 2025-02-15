@@ -2513,6 +2513,19 @@ STR_TABLE = {
          '',
          ''),
 
+    'cmd_lb': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         'Listet alle Bulletin Nachrichten.',
+         'Lists all bulletin messages.',
+         'Geeft een overzicht van alle bulletinberichten.',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
     'cmd_km': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         'Loescht alle pers. Nachrichten, die man bereits gelesen hat.',

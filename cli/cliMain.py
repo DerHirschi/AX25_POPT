@@ -111,7 +111,7 @@ class DefaultCLI(object):
             'EMAIL':    (0, self._cmd_set_e_mail, self._getTabStr('cmd_help_set_email')),
             'WEB':      (3, self._cmd_set_http, self._getTabStr('cmd_help_set_http')),
             # BOX
-            'LB':       (2, self._cmd_box_lb, self._getTabStr('cmd_ln')),
+            'LB':       (2, self._cmd_box_lb, self._getTabStr('cmd_lb')),
 
             'LN':       (2, self._cmd_box_ln, self._getTabStr('cmd_ln')),
             'LM':       (2, self._cmd_box_lm, self._getTabStr('cmd_lm')),
@@ -1264,7 +1264,33 @@ class DefaultCLI(object):
     ##############################################
     # BOX
     def _cmd_box_lb(self):
-        pass
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'get_bl_msg_tabCLI'):
+            logger.error("CLI: _cmd_box_lb: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+        ret = '\r'
+        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._cli_lang) +
+                               "===== ==== ====== ====== ====== ====== ====/==== ======\r")
+        BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
+                                          f"{data[-1].ljust(4)} "
+                                          f"{str(data[1]).ljust(6)} "
+                                          f"{data[2]}@{str(data[3]).ljust(6)} "
+                                          f"{str(data[4]).ljust(6)} "
+                                          f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
+                                          f"{str(data[6])}"
+                                          )
+        ret += BOX_MAIL_TAB_HEADER
+        msg_list = list(bbs.get_bl_msg_tabCLI())
+        msg_list.reverse()
+        for el in msg_list:
+            flag = 'B'
+            # if el[7]:
+            #     flag += 'N'
+            el = list(el)
+            el.append(flag)
+            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+        return ret + '\r'
+
 
     def _cmd_box_ln(self):
         bbs = self._port_handler.get_bbs()
