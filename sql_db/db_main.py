@@ -147,7 +147,7 @@ class SQL_Database:
 
     def create_db_tables(self, query):
         if self.db:
-            self.commit_query(query)
+            self._commit_query(query)
 
     def update_db_tables(self):
         if not self.db:
@@ -158,7 +158,7 @@ class SQL_Database:
         else:
             query = "SELECT name FROM sqlite_master WHERE type ='table' AND  name NOT LIKE 'sqlite_%';"
 
-        ret = self.commit_query(query)
+        ret = self._commit_query(query)
         need_update = False
         for i, tab in enumerate(ret):
             if any((tab[0] == 'pms_pn_msg',
@@ -171,14 +171,14 @@ class SQL_Database:
         logger.info("Database: Table pms_pn_msg and pms_bl_msg get modified")
 
         query = "SELECT * FROM pms_pn_msg;"
-        ret = self.commit_query(query)
+        ret = self._commit_query(query)
         tmp = []
         for el in list(ret):
             new = list(el)
             new.append('P')
             tmp.append(new)
         query = "SELECT * FROM pms_bl_msg;"
-        ret = self.commit_query(query)
+        ret = self._commit_query(query)
         for el in list(ret):
             new = list(el)
             new.append('B')
@@ -220,23 +220,26 @@ class SQL_Database:
                           el[14],
                           el[15],
                           )
-            self.commit_query_bin(query, query_data)
+            self._commit_query_bin(query, query_data)
 
         query = "DROP TABLE pms_pn_msg;"
-        self.commit_query(query)
+        self._commit_query(query)
         query = "DROP TABLE pms_bl_msg;"
-        self.commit_query(query)
+        self._commit_query(query)
         logger.info("Database: Table pms_pn_msg and pms_bl_msg get modified. Done !")
 
     def _drope_tabel(self):
         if self.db:
             query = "DROP TABLE PortStatistik;"
-            self.commit_query(query)
+            self._commit_query(query)
+
+    def db_commit(self):
+        self._db_commit()
 
     def _db_commit(self):
         self.db.commit_query()
 
-    def send_query(self, query):
+    def _send_query(self, query):
         # print(f"Query: {query}")
         while self._access:
             time.sleep(0.1)
@@ -252,7 +255,7 @@ class SQL_Database:
             self._access = False
             return ret
 
-    def send_query_bin(self, query, data: tuple):
+    def _send_query_bin(self, query, data: tuple):
         # print("Query <<BIN>>")
         # print(query)
         while self._access:
@@ -269,7 +272,7 @@ class SQL_Database:
             self._access = False
             return ret
 
-    def commit_query(self, query):
+    def _commit_query(self, query):
         # print(f"Query commit: {query}")
         while self._access:
             time.sleep(0.1)
@@ -288,7 +291,7 @@ class SQL_Database:
                 self._access = False
                 return ret
 
-    def commit_query_bin(self, query, data: tuple):
+    def _commit_query_bin(self, query, data: tuple):
         # print("Query <<BIN>>")
         # print(query)
         while self._access:
@@ -316,14 +319,14 @@ class SQL_Database:
             return False
         # query = f"SELECT EXISTS(SELECT pms_pn_msg.BID FROM pms_pn_msg WHERE BID = 'MD2SAW');"
         query = f"SELECT EXISTS(SELECT pms_in_msg.BID FROM pms_in_msg WHERE BID = '{bid_mid}');"
-        return bool(self.send_query(query)[0][0])
+        return bool(self._send_query(query)[0][0])
 
     def bbs_check_bl_mid_exists(self, bid_mid: str):
         return self.bbs_check_pn_mid_exists(bid_mid=bid_mid)
 
     def bbs_check_fwdID_exists(self, fwd_id: str):
         query = f"SELECT EXISTS(SELECT FWDID FROM pms_fwd_q WHERE FWDID = '{fwd_id}');"
-        ret = self.send_query(query)[0][0]
+        ret = self._send_query(query)[0][0]
         return bool(ret)
 
     def bbs_insert_msg_fm_fwd(self, msg_struc: dict):
@@ -392,7 +395,7 @@ class SQL_Database:
                        msg_time,
                        rx_time,
                       typ)
-        res = self.commit_query_bin(query, query_data)
+        res = self._commit_query_bin(query, query_data)
         if res is None:
             return False
         self._fwd_paths_insert(msg_struc.get('fwd_path', []))   # TODO don't like accessing DB so many times
@@ -400,10 +403,10 @@ class SQL_Database:
         return True
 
     def bbs_get_MID(self):
-        ret = self.send_query(SQL_BBS_OUT_MAIL_TAB_IS_EMPTY)[0][0]
+        ret = self._send_query(SQL_BBS_OUT_MAIL_TAB_IS_EMPTY)[0][0]
         if ret:
             return 0
-        ret = self.send_query(SQL_GET_LAST_MSG_ID)[0][0]
+        ret = self._send_query(SQL_GET_LAST_MSG_ID)[0][0]
         return ret
 
     def bbs_insert_new_msg(self, msg_struc: dict):
@@ -438,7 +441,7 @@ class SQL_Database:
             datetime.utcnow().strftime(SQL_TIME_FORMAT),
             msg_struc.get('message_type', ''),
         )
-        self.commit_query_bin(query, query_data)
+        self._commit_query_bin(query, query_data)
         return self.bbs_get_MID()
 
     def bbs_update_out_msg(self, msg_struc: dict):
@@ -482,7 +485,7 @@ class SQL_Database:
                        utctime,
                        typ,
                        mid)
-        self.commit_query_bin(query, query_data)
+        self._commit_query_bin(query, query_data)
         return True
 
     def bbs_insert_msg_to_fwd(self, msg_struc: dict):
@@ -524,7 +527,7 @@ class SQL_Database:
             flag,
             mid,
         )
-        self.commit_query_bin(query, query_data)
+        self._commit_query_bin(query, query_data)
 
         query = ("INSERT INTO `pms_fwd_q` "
                   "(FWDID, "
@@ -555,13 +558,13 @@ class SQL_Database:
                        msg_struc.get('message_size'),
                        typ,
                        )
-        self.commit_query_bin(query, query_data)
+        self._commit_query_bin(query, query_data)
         return True
 
     def bbs_get_msg_fm_outTab_by_mid(self, mid: int):
         query = "SELECT * FROM pms_out_msg WHERE MID=%s;"
         query_data = (mid,)
-        res = self.commit_query_bin(query, query_data)
+        res = self._commit_query_bin(query, query_data)
         if not res:
             return {}
         res = res[0]
@@ -589,7 +592,7 @@ class SQL_Database:
     def bbs_get_fwd_q_Tab_for_BBS(self, bbs_call: str):
         query = "SELECT * FROM pms_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
         query_data = (bbs_call,)
-        res = self.commit_query_bin(query, query_data)
+        res = self._commit_query_bin(query, query_data)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -606,7 +609,7 @@ class SQL_Database:
                   "BID "
                   "FROM pms_in_msg "
                   f"WHERE flag='IN' and to_call='{call}' and typ='P';")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"bbs_get_pn_msg_Tab_by_call res: {res}")
         return res
 
@@ -620,7 +623,7 @@ class SQL_Database:
                   "new "
                   "FROM pms_in_msg "
                   "WHERE flag='IN' and typ='P';")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -630,23 +633,23 @@ class SQL_Database:
         query = ("SELECT * "
                   "FROM pms_in_msg "
                   f"WHERE BID='{bid}';")
-        return self.commit_query(query)
+        return self._commit_query(query)
 
     def bbs_set_in_msg_notNew(self, bid: str):
         query = ("UPDATE pms_in_msg SET new=0 "
                   f"WHERE BID='{bid}';")
-        self.commit_query(query)
+        self._commit_query(query)
 
     def bbs_set_all_pn_msg_notNew(self):
         query = "UPDATE pms_in_msg SET new=0 WHERE typ='P';"
-        self.commit_query(query)
+        self._commit_query(query)
 
     def bbs_get_new_pn_msgCount_for_Call(self, call: str):
         query = ("SELECT MSGID, "
                  "COUNT(*) "
                  "FROM pms_in_msg "
                  f"WHERE flag='IN' and to_call='{call}' and typ='P' and new=1;")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         try:
             return int(res[0][1])
         except (IndexError, ValueError):
@@ -661,7 +664,7 @@ class SQL_Database:
                  "typ='P' and "
                  f"MSGID='{msg_id}' and "
                  f"to_call='{call}';")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"PN res: {res}")
         return res
 
@@ -672,7 +675,7 @@ class SQL_Database:
                  "WHERE flag='IN' and "
                  "typ='B' and "
                  f"MSGID='{msg_id}';")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"BL res: {res}")
         return res
 
@@ -687,7 +690,7 @@ class SQL_Database:
                   "new "
                   "FROM pms_in_msg "
                   "WHERE flag='IN' and typ='B';")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -696,7 +699,7 @@ class SQL_Database:
 
     def bbs_set_all_bl_msg_notNew(self):
         query = "UPDATE pms_in_msg SET new=0 WHERE typ='B';"
-        self.commit_query(query)
+        self._commit_query(query)
 
     def bbs_get_fwd_q_Tab_for_GUI(self):
         query = ("SELECT BID, "
@@ -711,7 +714,7 @@ class SQL_Database:
                   "flag, "
                   "tx_time "
                   "FROM pms_fwd_q WHERE NOT flag='DL';")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -726,14 +729,14 @@ class SQL_Database:
                   "subject, "
                   "size "
                   "FROM pms_fwd_q WHERE flag='F';")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
     def bbs_get_outMsg_by_BID(self, bid: str):
         query = "SELECT subject, header, msg FROM pms_out_msg WHERE BID=%s LIMIT 5;"
         query_data = (bid,)
-        res = self.commit_query_bin(query, query_data)
+        res = self._commit_query_bin(query, query_data)
         # print(f"bbs_get_outMsg_by_BID res: {res}")
         return res
 
@@ -748,7 +751,7 @@ class SQL_Database:
                   "type "
                   "FROM pms_out_msg "
                   "WHERE flag='E';")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"bbs_get_sv_msg_Tab_for_GUI res: {res}")
         return res
 
@@ -758,16 +761,16 @@ class SQL_Database:
         _query = ("SELECT * "
                   "FROM pms_out_msg "
                   f"WHERE MID='{mid}';")
-        return self.commit_query(_query)
+        return self._commit_query(_query)
 
     def bbs_get_out_msg_for_GUI(self, bid: str):
         query = "SELECT * FROM pms_out_msg WHERE BID=%s;"
-        return self.commit_query_bin(query, (bid,))
+        return self._commit_query_bin(query, (bid,))
 
     def bbs_act_outMsg_by_FWD_ID(self, fwd_id: str, flag: str):
         query = "SELECT BID FROM pms_fwd_q WHERE FWDID=%s;"
         query_data = (fwd_id,)
-        res = self.commit_query_bin(query, query_data)
+        res = self._commit_query_bin(query, query_data)
         # print(f"bbs_act_outMsg_by_FWDID res: {res}")
         if not res:
             print("Error bbs_act_outMsg_by_BID. No BID")
@@ -776,10 +779,10 @@ class SQL_Database:
         tx_time = datetime.now().strftime(SQL_TIME_FORMAT)
         query = "UPDATE pms_fwd_q SET flag=%s, tx_time=%s WHERE FWDID=%s;"
         query_data = (flag, tx_time, fwd_id)
-        self.commit_query_bin(query, query_data)
+        self._commit_query_bin(query, query_data)
         query = "UPDATE pms_out_msg SET flag=%s WHERE BID=%s;"
         query_data = (flag, bid)
-        self.commit_query_bin(query, query_data)
+        self._commit_query_bin(query, query_data)
 
     def pms_save_outMsg_by_MID(self, mid: str):
         if not mid:
@@ -810,14 +813,14 @@ class SQL_Database:
         query = ("UPDATE pms_out_msg "
                   f"SET flag='{flag}' "
                   f"WHERE MID='{mid}';")
-        self.commit_query(query)
+        self._commit_query(query)
         return True
 
     def pms_setFlag_fwdQ_by_MID(self, mid: str, flag: str):
         query = ("UPDATE pms_fwd_q "
                   f"SET flag='{flag}' "
                   f"WHERE MID='{mid}';")
-        self.commit_query(query)
+        self._commit_query(query)
 
     def pms_copy_outMsg_by_MID(self, mid: str):
         if not mid:
@@ -853,28 +856,49 @@ class SQL_Database:
               "FROM pms_out_msg "
               f"WHERE MID='{mid}';")
 
-        return self.commit_query(q)
+        return self._commit_query(q)
 
-    def bbs_del_pn_msg_by_BID(self, bid: str):
+    def bbs_del_old_pn_msg_by_call(self, call: str):
+        query = ("SELECT MSGID "
+                 "FROM pms_in_msg "
+                 f"WHERE flag='IN' and to_call='{call}' and typ='P' and new=0;")
+        res = self._commit_query(query)
+        if not res:
+            return []
+
+        id_list = [str(x[0]) for x in res]
+        id_str = '(' + ','.join(id_list) + ')'
 
         query = ("UPDATE pms_in_msg SET flag='DL' "
+                 f"WHERE MSGID in {id_str};")
+        self._commit_query(query)
+        return id_list
+
+    def bbs_del_in_msg_by_BID(self, bid: str):
+        query = ("UPDATE pms_in_msg SET flag='DL' "
                   f"WHERE BID='{bid}';")
-        self.commit_query(query)
+        self._commit_query(query)
+        return True
+
+    def bbs_del_in_msg_by_ID(self, msg_id: int):
+        query = ("UPDATE pms_in_msg SET flag='DL' "
+                  f"WHERE MSGID='{msg_id}';")
+        self._commit_query(query)
         return True
 
     def bbs_del_out_msg_by_BID(self, bid: str):
         query = ("UPDATE pms_fwd_q SET flag='DL' "
                   f"WHERE BID='{bid}';")
-        self.commit_query(query)
+        self._commit_query(query)
         query = ("UPDATE pms_out_msg SET flag='DL' "
                   f"WHERE BID='{bid}';")
-        self.commit_query(query)
+        self._commit_query(query)
         return True
 
     def bbs_del_sv_msg_by_MID(self, mid: str):
         query = ("UPDATE pms_out_msg SET flag='DL' "
                   f"WHERE MID='{mid}';")
-        self.commit_query(query)
+        self._commit_query(query)
         return True
 
     def pms_set_bid(self, bid: int):
@@ -896,7 +920,7 @@ class SQL_Database:
     # BBS/PMS Forward Path Ana
     def bbs_get_fwdPaths(self):
         q = "SELECT * FROM fwdPaths;"
-        return self.commit_query(q)
+        return self._commit_query(q)
 
     def _fwd_paths_insert(self, path: list):
         """
@@ -960,7 +984,7 @@ class SQL_Database:
                        time_stamp,
                        time_stamp,
                        )
-        res = self.commit_query_bin(query, query_data)
+        res = self._commit_query_bin(query, query_data)
         if res is None:
             return False
         return True
@@ -1018,7 +1042,7 @@ class SQL_Database:
                            time_stamp,
                            time_stamp,
                            )
-            res = self.commit_query_bin(query, query_data)
+            res = self._commit_query_bin(query, query_data)
             """
             if res is None:
                 return False
@@ -1028,7 +1052,7 @@ class SQL_Database:
 
     def fwd_node_get(self):
         q = f"SELECT * FROM `fwdNodes`;"
-        return self.send_query(q)
+        return self._send_query(q)
 
     ############################################
     # USER-DB
@@ -1152,7 +1176,7 @@ class SQL_Database:
             str(now)[:19],
             str(data_struc.get('comment', ''))[:200],
         )
-        return self.send_query_bin(query, query_data)
+        return self._send_query_bin(query, query_data)
 
     def aprsWX_get_data_f_wxTree(self, last_rx_days=0):
         ids = self._aprsWX_get_ids_fm_last_ent(last_rx_days)
@@ -1178,7 +1202,7 @@ class SQL_Database:
                  "`comment` "
                  "FROM APRSwx "
                  f"WHERE `ID` in ({', '.join(ids)});")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         # print(f"WX-RES {res}")
         if not res:
             return []
@@ -1208,7 +1232,7 @@ class SQL_Database:
                  "distance, "
                  "port_id "
                  f"FROM APRSwx WHERE `from_call`='{call}';")
-        ret = self.commit_query(query)
+        ret = self._commit_query(query)
         if not ret:
             return []
         return ret
@@ -1232,7 +1256,7 @@ class SQL_Database:
                  "FROM APRSwx "
                  f"WHERE `ID` in ({', '.join(ids)}) "
                  f"ORDER BY CAST(distance as FLOAT) ASC;")
-        res = self.commit_query(query)
+        res = self._commit_query(query)
         if not res:
             return []
         return res
@@ -1247,7 +1271,7 @@ class SQL_Database:
 
         # query = "SELECT `ID`,MAX(rx_time) FROM APRSwx GROUP BY `from_call`;"
         query = "SELECT MAX(`ID`),MAX(rx_time) FROM APRSwx GROUP BY `from_call`;"
-        ent_list = self.commit_query(query)
+        ent_list = self._commit_query(query)
         if not ent_list:
             return []
         if not last_rx_days:
@@ -1263,9 +1287,9 @@ class SQL_Database:
 
     def aprsWX_delete_data(self):
         if self.MYSQL:
-            self.commit_query("TRUNCATE TABLE APRSwx;")
+            self._commit_query("TRUNCATE TABLE APRSwx;")
         else:
-            self.commit_query("DELETE FROM APRSwx;")
+            self._commit_query("DELETE FROM APRSwx;")
 
     ############################################
     # Port Statistic
@@ -1337,7 +1361,7 @@ class SQL_Database:
             data_struc.get('DATA_W_HEADER', 0),
             data_struc.get('DATA', 0),
         )
-        return self.commit_query_bin(_query, query_data)
+        return self._commit_query_bin(_query, query_data)
 
     def PortStat_get_data_f_port(self, port_id=None):
         if port_id is None:
@@ -1345,16 +1369,16 @@ class SQL_Database:
         query = ("SELECT * "
                  "FROM PortStatistic "
                  f"WHERE port_id={port_id};")
-        ret = self.commit_query(query)
+        ret = self._commit_query(query)
         if not ret:
             return []
         return ret
 
     def PortStat_delete_data(self):
         if self.MYSQL:
-            self.commit_query("TRUNCATE TABLE PortStatistic;")
+            self._commit_query("TRUNCATE TABLE PortStatistic;")
         else:
-            self.commit_query("DELETE FROM PortStatistic;")
+            self._commit_query("DELETE FROM PortStatistic;")
 
     ############################################
     # MH

@@ -10,6 +10,7 @@ Neue Implementierungen / Funktionen:
 - CLI Typ: BOX
 - CLI-CMD: LM (List Mails / Listet alle eigenen Mails)
 - CLI-CMD: LN (List New Mails / Listet alle eigenen neuen Mails)
+- CLI-CMD: KM (Löscht alle pers. Nachrichten, die man bereits gelesen hat.)
 - CLI-CMD: R (Read Mail / Mail lesen)
 - CLI Seiten-Stops/Paging für MCast, NODE, BOX
 

@@ -2513,6 +2513,19 @@ STR_TABLE = {
          '',
          ''),
 
+    'cmd_km': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Loescht alle pers. Nachrichten, die man bereits gelesen hat.',
+        'Deletes all personal messages that you have already read.',
+        'Verwijdert alle persoonlijke berichten die u al hebt gelezen.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_op': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          'Anzahl der Zeilen pro Seite. Nur OP aus.',
@@ -2655,5 +2668,18 @@ STR_TABLE = {
          '',
          '',
          ''),
+
+    'box_msg_del': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Es wurden {} Nachrichten gelöscht.\r',
+        '\r # {} messages have been deleted.\r',
+        '\r # {} berichten zijn verwijderd.\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 
 }

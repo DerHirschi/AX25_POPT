@@ -579,7 +579,7 @@ class BBS:
         logger.info('PMS: Init')
         # print('PMS INIT')
         self._port_handler = port_handler
-        self.db = self._port_handler.get_database()
+        self._db = self._port_handler.get_database()
         self.pms_flag = generate_sid(features=("F", "M", "H"))
         self.my_stat_id = get_station_id_obj(str(self.pms_flag))
         try:
@@ -599,7 +599,7 @@ class BBS:
         logger.info(f"PMS: Flag: {self.pms_flag}")
         ###############
         # Init DB
-        # self.db.check_tables_exists('bbs')
+        # self._db.check_tables_exists('bbs')
         ###############
         # Config's
         """
@@ -796,39 +796,39 @@ class BBS:
     def is_pn_in_db(self, bid_mid: str):
         if not bid_mid:
             return 'E'
-        ret = self.db.bbs_check_pn_mid_exists(bid_mid)
+        ret = self._db.bbs_check_pn_mid_exists(bid_mid)
         return FWD_RESP_TAB[ret]
 
     def is_bl_in_db(self, bid_mid: str):
         if not bid_mid:
             return 'E'
-        ret = self.db.bbs_check_bl_mid_exists(bid_mid)
+        ret = self._db.bbs_check_bl_mid_exists(bid_mid)
         return FWD_RESP_TAB[ret]
 
     def new_msg(self, msg_struc: dict):
         msg_struc['message_size'] = int(len(msg_struc['msg']))
 
-        return self.db.bbs_insert_new_msg(msg_struc)
+        return self._db.bbs_insert_new_msg(msg_struc)
 
     def update_msg(self, msg_struc: dict):
         if not msg_struc.get('mid', ''):
             return False
         msg_struc['message_size'] = int(len(msg_struc['msg']))
 
-        return self.db.bbs_update_out_msg(msg_struc)
+        return self._db.bbs_update_out_msg(msg_struc)
 
     def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call: str):
-        msg_fm_db = self.db.bbs_get_msg_fm_outTab_by_mid(mid)
+        msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if msg_fm_db:
             # print(_msg_fm_db)
             new_msg = build_new_msg_header(msg_fm_db)
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             # print(_new_msg)
-            return self.db.bbs_insert_msg_to_fwd(new_msg)
+            return self._db.bbs_insert_msg_to_fwd(new_msg)
         return False
 
     def get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
-        return self.db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
+        return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
 
     def build_fwd_header(self, bbs_call: str):
         fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
@@ -854,22 +854,22 @@ class BBS:
             return b'', ret_bids
 
     def get_fwd_q_tab(self):
-        return self.db.bbs_get_fwd_q_Tab_for_GUI()
+        return self._db.bbs_get_fwd_q_Tab_for_GUI()
 
     def get_active_fwd_q_tab(self):
-        return self.db.pms_get_active_fwd_q_for_GUI()
+        return self._db.pms_get_active_fwd_q_for_GUI()
 
     def get_pn_msg_tab_by_call(self, call: str):
-        return self.db.bbs_get_pn_msg_Tab_by_call(call)
+        return self._db.bbs_get_pn_msg_Tab_by_call(call)
 
     def get_pn_msg_tab(self):
-        return self.db.bbs_get_pn_msg_Tab_for_GUI()
+        return self._db.bbs_get_pn_msg_Tab_for_GUI()
 
     def get_bl_msg_tab(self):
-        return self.db.bbs_get_bl_msg_Tab_for_GUI()
+        return self._db.bbs_get_bl_msg_Tab_for_GUI()
 
     def get_bl_msg_fm_BID(self, bid):
-        data = self.db.bbs_get_bl_msg_for_GUI(bid)
+        data = self._db.bbs_get_bl_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -891,13 +891,13 @@ class BBS:
         }
 
     def set_in_msg_notNew(self, bid):
-        self.db.bbs_set_in_msg_notNew(bid)
+        self._db.bbs_set_in_msg_notNew(bid)
 
     def set_all_bl_msg_notNew(self):
-        self.db.bbs_set_all_bl_msg_notNew()
+        self._db.bbs_set_all_bl_msg_notNew()
 
     def get_pn_msg_fm_BID(self, bid):
-        data = self.db.bbs_get_pn_msg_for_GUI(bid)
+        data = self._db.bbs_get_pn_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -919,19 +919,19 @@ class BBS:
         }
 
     def set_all_pn_msg_notNew(self):
-        self.db.bbs_set_all_pn_msg_notNew()
+        self._db.bbs_set_all_pn_msg_notNew()
 
     def get_new_pn_count_by_call(self, call: str):
-        return self.db.bbs_get_new_pn_msgCount_for_Call(call)
+        return self._db.bbs_get_new_pn_msgCount_for_Call(call)
 
     def get_pn_msg_by_id(self, msg_id: int, call: str):
-        return self.db.bbs_get_pn_msg_by_msg_id(msg_id=msg_id, call=call)
+        return self._db.bbs_get_pn_msg_by_msg_id(msg_id=msg_id, call=call)
 
     def get_bl_msg_by_id(self, msg_id: int):
-        return self.db.bbs_get_bl_msg_by_msg_id(msg_id=msg_id)
+        return self._db.bbs_get_bl_msg_by_msg_id(msg_id=msg_id)
 
     def get_out_msg_fm_BID(self, bid):
-        data = self.db.bbs_get_out_msg_for_GUI(bid)
+        data = self._db.bbs_get_out_msg_for_GUI(bid)
         if not data:
             return {}
         return {
@@ -964,10 +964,10 @@ class BBS:
             POPT_CFG.set_CFG_by_key('pms_main', pms_cfg)
 
     def get_sv_msg_tab(self):
-        return self.db.bbs_get_sv_msg_Tab_for_GUI()
+        return self._db.bbs_get_sv_msg_Tab_for_GUI()
 
     def get_sv_msg_fm_BID(self, mid):
-        data = self.db.bbs_get_sv_msg_for_GUI(mid)
+        data = self._db.bbs_get_sv_msg_for_GUI(mid)
         if not data:
             return {}
         return {
@@ -990,26 +990,33 @@ class BBS:
             'flag': data[0][16],
         }
 
-    def del_pn_by_BID(self, bid):
-        return self.db.bbs_del_pn_msg_by_BID(bid)
+    def del_old_pn_msg_by_call(self, call: str):
+        return self._db.bbs_del_old_pn_msg_by_call(call)
 
-    def del_bl_by_BID(self, bid):
-        return self.db.bbs_del_pn_msg_by_BID(bid)
+    def del_in_by_ID(self, msg_id: int):
+        # TODO
+        return self._db.bbs_del_in_msg_by_ID(msg_id)
+
+    def del_in_by_BID(self, bid):
+        return self._db.bbs_del_in_msg_by_BID(bid)
 
     def del_out_by_BID(self, bid):
-        return self.db.bbs_del_out_msg_by_BID(bid)
+        return self._db.bbs_del_out_msg_by_BID(bid)
 
     def del_sv_by_MID(self, mid):
-        return self.db.bbs_del_sv_msg_by_MID(mid)
+        return self._db.bbs_del_sv_msg_by_MID(mid)
 
     def set_bid(self, bid):
-        return self.db.pms_set_bid(bid)
+        return self._db.pms_set_bid(bid)
 
     def get_bid(self):
-        return self.db.pms_get_bid()
+        return self._db.pms_get_bid()
 
     def get_db(self):
-        return self.db
+        return self._db
+
+    def commit_db(self):
+        self._db.db_commit()
 
     def get_port_handler(self):
         return self._port_handler

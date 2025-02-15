@@ -110,10 +110,12 @@ class DefaultCLI(object):
             'R': (1, self._cmd_box_r, get_strTab('cmd_r', self._connection.cli_language)),
             'LN': (2, self._cmd_box_ln, get_strTab('cmd_ln', self._connection.cli_language)),
             'LM': (2, self._cmd_box_lm, get_strTab('cmd_lm', self._connection.cli_language)),
-            'OP': (2, self._cmd_op, get_strTab('cmd_op', self._connection.cli_language)),
+            'KM': (2, self._cmd_box_km, get_strTab('cmd_km', self._connection.cli_language)),
 
+            'OP': (2, self._cmd_op, get_strTab('cmd_op', self._connection.cli_language)),
             'LANG': (4, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
             'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
+
             'POPT': (0, self._cmd_popt_banner, 'PoPT Banner'),
             'HELP': (1, self._cmd_help, STR_TABLE['help'][self._connection.cli_language]),
             '?': (0, self._cmd_shelp, STR_TABLE['cmd_shelp'][self._connection.cli_language]),
@@ -1264,6 +1266,14 @@ class DefaultCLI(object):
             ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
         return ret + '\r'
 
+    def _cmd_box_km(self):
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'del_old_pn_msg_by_call'):
+            logger.error(self._logTag + "_cmd_box_km: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+        ret = bbs.del_old_pn_msg_by_call(self._to_call)
+        return get_strTab('box_msg_del', self._connection.cli_language).format(len(ret))
+
     def _cmd_box_r(self):
         bbs = self._port_handler.get_bbs()
         if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
@@ -1873,7 +1883,7 @@ class BoxCLI(DefaultCLI):
             'BYE': (1, self._cmd_q, 'Bye'),
             # 'CONNECT': (1, self._cmd_connect, 'Connect'),
             # 'C!': (2, self._cmd_connect_exclusive, 'Connect Exclusive (No MH-Path-Lookup)'),
-            'ECHO': (1, self._cmd_echo, 'Echo'),
+            # 'ECHO': (1, self._cmd_echo, 'Echo'),
             # 'PORT': (1, self._cmd_port, 'Ports'),
             # 'MH': (0, self._cmd_mh, 'MYHeard List'),
             # 'LMH': (0, self._cmd_mhl, 'Long MYHeard List'),
@@ -1897,10 +1907,15 @@ class BoxCLI(DefaultCLI):
             'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
             'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
 
-            'LM': (2, self._cmd_box_lm, "Listet alle eigenen Nachrichten."),
+            'R': (1, self._cmd_box_r, get_strTab('cmd_r', self._connection.cli_language)),
+            'LN': (2, self._cmd_box_ln, get_strTab('cmd_ln', self._connection.cli_language)),
+            'LM': (2, self._cmd_box_lm, get_strTab('cmd_lm', self._connection.cli_language)),
+            'KM': (2, self._cmd_box_km, get_strTab('cmd_km', self._connection.cli_language)),
 
+            'OP': (2, self._cmd_op, get_strTab('cmd_op', self._connection.cli_language)),
             'LANG': (4, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
             'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
+
             'POPT': (0, self._cmd_popt_banner, 'PoPT Banner'),
             'HELP': (1, self._cmd_help, STR_TABLE['help'][self._connection.cli_language]),
             '?': (0, self._cmd_shelp, STR_TABLE['cmd_shelp'][self._connection.cli_language]),

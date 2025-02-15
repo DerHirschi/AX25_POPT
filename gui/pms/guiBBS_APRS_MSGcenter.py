@@ -864,7 +864,7 @@ class MSG_Center(tk.Toplevel):
 
     def _delete_PN(self, bid: str):
         if bid:
-            return self._bbs_obj.del_pn_by_BID(bid)
+            return self._bbs_obj.del_in_by_BID(bid)
 
     ###########
     # Bulletin
@@ -989,7 +989,7 @@ class MSG_Center(tk.Toplevel):
 
     def _delete_BL(self, bid: str):
         if bid:
-            return self._bbs_obj.del_bl_by_BID(bid)
+            return self._bbs_obj.del_in_by_BID(bid)
 
     ###################
     # Bulletin Category
@@ -1336,7 +1336,7 @@ class MSG_Center(tk.Toplevel):
         if bid:
             mid = int(bid[:6])
             # print(mid)
-            self._bbs_obj.db.pms_save_outMsg_by_MID(mid)
+            self._bbs_obj.get_db().pms_save_outMsg_by_MID(mid)
 
     def _copy_select(self):
         try:
