@@ -891,7 +891,7 @@ class BBS:
         }
 
     def set_bl_msg_notNew(self, bid):
-        self.db.bbs_set_bl_msg_notNew(bid)
+        self.db.bbs_set_pn_msg_notNew(bid)
 
     def set_all_bl_msg_notNew(self):
         self.db.bbs_set_all_bl_msg_notNew()
@@ -988,7 +988,7 @@ class BBS:
         return self.db.bbs_del_pn_msg_by_BID(bid)
 
     def del_bl_by_BID(self, bid):
-        return self.db.bbs_del_bl_msg_by_BID(bid)
+        return self.db.bbs_del_pn_msg_by_BID(bid)
 
     def del_out_by_BID(self, bid):
         return self.db.bbs_del_out_msg_by_BID(bid)

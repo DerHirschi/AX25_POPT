@@ -61,7 +61,6 @@ SQLITE_MH_TABLES = {
 
 class SQL_Database:
     def __init__(self, port_handler):
-        # print("Database INIT!")
         logger.info("Database: Init")
         # ##########
         self.error = False
@@ -154,7 +153,6 @@ class SQL_Database:
             return
 
         if self.MYSQL:
-            # query = "SHOW KEYS FROM pms_pn_msg WHERE Key_name = 'PRIMARY';"
             query = "SHOW TABLES;"
         else:
             query = "SELECT name FROM sqlite_master WHERE type ='table' AND  name NOT LIKE 'sqlite_%';"
@@ -228,7 +226,6 @@ class SQL_Database:
         query = "DROP TABLE pms_bl_msg;"
         self.commit_query(query)
         logger.info("Database: Table pms_pn_msg and pms_bl_msg get modified. Done !")
-
 
     def _drope_tabel(self):
         if self.db:
@@ -642,12 +639,11 @@ class SQL_Database:
         self.commit_query(query)
 
     def bbs_set_all_pn_msg_notNew(self):
-        query = "UPDATE pms_in_msg SET new=0;"
+        query = "UPDATE pms_in_msg SET new=0 WHERE typ='P';"
         self.commit_query(query)
 
     # BL #############################
     def bbs_get_bl_msg_Tab_for_GUI(self):
-
         query = ("SELECT BID, "
                   "from_call, "
                   "from_bbs, "
@@ -663,30 +659,11 @@ class SQL_Database:
         return res
 
     def bbs_get_bl_msg_for_GUI(self, bid: str):
-        """
-        if not bid:
-            return []
-        query = ("SELECT * "
-                  "FROM pms_in_msg "
-                  f"WHERE BID='{bid}';")
-        return self.commit_query(query)
-        """
         return self.bbs_get_pn_msg_for_GUI(bid=bid)
 
-    def bbs_set_bl_msg_notNew(self, bid: str):
-        """
-        _query = ("UPDATE pms_bl_msg SET new=0 "
-                  f"WHERE BID='{bid}';")
-        self.commit_query(_query)
-        """
-        self.bbs_set_pn_msg_notNew(bid=bid)
-
     def bbs_set_all_bl_msg_notNew(self):
-        """
-        query = "UPDATE pms_bl_msg SET new=0;"
+        query = "UPDATE pms_in_msg SET new=0 WHERE typ='B';"
         self.commit_query(query)
-        """
-        self.bbs_set_all_pn_msg_notNew()
 
     def bbs_get_fwd_q_Tab_for_GUI(self):
         query = ("SELECT BID, "
@@ -851,15 +828,6 @@ class SQL_Database:
                   f"WHERE BID='{bid}';")
         self.commit_query(query)
         return True
-
-    def bbs_del_bl_msg_by_BID(self, bid: str):
-        """
-        query = ("UPDATE pms_bl_msg SET flag='DL' "
-                  f"WHERE BID='{bid}';")
-        self.commit_query(query)
-        return True
-        """
-        return self.bbs_del_pn_msg_by_BID(bid=bid)
 
     def bbs_del_out_msg_by_BID(self, bid: str):
         query = ("UPDATE pms_fwd_q SET flag='DL' "

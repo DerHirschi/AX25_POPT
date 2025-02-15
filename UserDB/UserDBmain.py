@@ -61,6 +61,8 @@ class Client(object):
     sys_pw = ''
     sys_pw_autologin = False
     sys_pw_parm = [5, 80, 'SYS']
+    # BOX
+    boxopt_sidestop = 20
 
 
 class UserDB:

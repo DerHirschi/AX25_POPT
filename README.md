@@ -54,7 +54,7 @@ $ pip install --break-system-packages playsound pyserial aprslib
 - KISS via TCP (e.g. Direwolf)
 - KISS via Serail (e.g. Linux AX.25 Device (kissattach). Not tested on TNCs or Modems yet)
 - AXIP via UDP (AXIP Client)
-- AX25KERNEL (Linux AX.25 Device - experimental)
+- AX25KERNEL (Linux AX.25 Device)
 - TNC-EMU-TCP-SERVER (Pseudo TNC-Emulator Device to connect e.g. DOS-BOX)
 - TNC-EMU-TCP-CLIENT (Pseudo TNC-Emulator Device to connect e.g. Amiberry (AMIGA-Emulator))
 

@@ -5,7 +5,7 @@ from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
-from cfg.constant import STATION_ID_ENCODING_REV
+from cfg.constant import STATION_ID_ENCODING_REV, BBS_SW_ID
 from fnc.file_fnc import get_str_fm_file
 from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
@@ -77,10 +77,14 @@ class DefaultCLI(object):
         self._parameter = []
         self._sys_login = None
         self.sysop_priv = False
+        self._can_sidestop = True
+        self._tx_buffer = b''
+
+        # self._user_db_ent.boxopt_sidestop = 20
         # Crone
         self._cron_state_exec = {
-            0: self.cron_s0,  # No CMDs / Doing nothing
-            100: self.cron_s_quit  # QUIT
+            0: self._cron_s0,  # No CMDs / Doing nothing
+            100: self._cron_s_quit  # QUIT
         }
         # Standard Commands ( GLOBAL )
         self._commands = {
@@ -114,6 +118,7 @@ class DefaultCLI(object):
             'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
 
             'LM': (2, self._cmd_box_lm, "Listet alle eigenen Nachrichten."),
+            'OP': (2, self._cmd_box_lm, "Anzahl der Zeilen pro Seite. Nur OP aus."),
 
             'LANG': (4, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
             'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
@@ -131,21 +136,25 @@ class DefaultCLI(object):
         }
 
         self._state_exec = {
-            0: self.s0,  # C-Text
-            1: self.s1,  # Cmd Handler
-            2: self.s2,  # Nothing / no remote !!! Override in NODECLI ...
-            3: self.s3,  # Baycom Login Shit
-            4: self.s4,  # Try to connect other Station ( C CMD )
-            5: self.s5,  # Nothing / no remote
-            6: self.s6,  # Auto Baycom Login Shit
+            0: self._s0,  # C-Text
+            1: self._s1,  # Cmd Handler
+            2: self._s2,  # Nothing / no remote !!! Override in NODECLI ...
+            3: self._s3,  # Baycom Login Shit
+            4: self._s4,  # Try to connect other Station ( C CMD )
+            5: self._s5,  # Nothing / no remote
+            6: self._s6,  # Auto Baycom Login Shit
+            7: self._s7,  # Box Side Stop / Paging | Wait for input
         }
-        self._cmd_exec_ext = {}  # Extern Command's ??
+        self._cmd_exec_ext = {}         # Extern Command's ??
         self._cron_state_exec_ext = {}  # Extern Tasks ??
-        self._state_exec_ext = {}  # Extern State Tab ??
+        self._state_exec_ext = {}       # Extern State Tab ??
         self.init()
         self._cron_state_exec.update(self._cron_state_exec_ext)
         self._commands.update(self._cmd_exec_ext)
         self._state_exec.update(self._state_exec_ext)
+        if not self._can_sidestop:
+            if 'OP' in self._commands:
+                del self._commands['OP']
         self._baycom_auto_login()
         """
         if type(self.prefix) is str:  # Fix for old CFG Files
@@ -165,7 +174,7 @@ class DefaultCLI(object):
     def get_ts_prompt(self):
         return f"\r{self._my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
 
-    def send_output(self, ret, env_vars=True):
+    def _send_output(self, ret, env_vars=True):
         if ret:
             if type(ret) is str:
                 if env_vars:
@@ -174,9 +183,30 @@ class DefaultCLI(object):
                                              port_handler=self._port_handler,
                                              connection=self._connection,
                                              user_db=self._user_db)
+                # ret = zeilenumbruch_lines(ret)
                 ret = ret.encode(self._encoding[0], self._encoding[1])
                 ret = ret.replace(b'\n', b'\r')
+            if all((self._can_sidestop, self._user_db_ent.boxopt_sidestop)):
+                self._send_out_sidestop(ret)
+                return
             self._connection.tx_buf_rawData += ret
+
+    def _send_out_sidestop(self, cli_out: bytes):
+        if not self._user_db_ent.boxopt_sidestop:
+            self._connection.tx_buf_rawData += cli_out
+            self.change_cli_state(1)
+            return
+        tmp = cli_out.split(b'\r')
+        out_lines = b'\r'.join(tmp[:self._user_db_ent.boxopt_sidestop])
+        self._tx_buffer = b'\r'.join(tmp[self._user_db_ent.boxopt_sidestop:])
+        # TODO Translation
+        if not self._tx_buffer:
+            self._connection.tx_buf_rawData += cli_out
+            self.change_cli_state(1)
+            return
+        out_lines += "\r (A)=Abbruch, (R)=Lesen, (Return)=weiter -->".encode(self._encoding[0], self._encoding[1])
+        self._connection.tx_buf_rawData += out_lines
+        self.change_cli_state(7)
 
     """
     def send_2_gui(self, data):  
@@ -249,7 +279,7 @@ class DefaultCLI(object):
                         sys_pw=self._user_db_ent.sys_pw,
                         login_cmd=login_cmd,
                     )
-                    self.send_output(self._sys_login.start(), env_vars=False)
+                    self._send_output(self._sys_login.start(), env_vars=False)
                     self.change_cli_state(3)
 
     def _baycom_auto_login(self):
@@ -268,7 +298,6 @@ class DefaultCLI(object):
         self._sys_login.attempts = 1
         self.change_cli_state(6)
         return True
-
 
     def _send_sw_id(self):
         if not self.sw_id:
@@ -314,9 +343,9 @@ class DefaultCLI(object):
             if self.stat_identifier is not None:
                 if self.stat_identifier:
                     if self.stat_identifier.typ == 'SYSOP':
-                        self.send_output(f'\r//N {name}\r', env_vars=False)
+                        self._send_output(f'\r//N {name}\r', env_vars=False)
                     else:
-                        self.send_output(f'\rN {name}\r', env_vars=False)
+                        self._send_output(f'\rN {name}\r', env_vars=False)
 
     def _find_sw_identifier(self):
 
@@ -410,14 +439,14 @@ class DefaultCLI(object):
                     self._parameter = [li[len(str_cmd):]]
                     ret = self._str_cmd_exec[str_cmd]()
                     self._cmd = b''
-                    self.send_output(ret, env_vars=False)
+                    self._send_output(ret, env_vars=False)
                     self._last_line = b''
                     self._new_last_line = b''
                     return ret
         return ret
 
     def send_prompt(self):
-        self.send_output(self.get_ts_prompt())
+        self._send_output(self.get_ts_prompt())
 
     def _decode_param(self, defaults=None):
         if defaults is None:
@@ -496,7 +525,7 @@ class DefaultCLI(object):
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {STR_TABLE['time_connected'][self._connection.cli_language]}: {conn_dauer}\r\r"
         ret += self._load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
-        self.send_output(ret, env_vars=True)
+        self._send_output(ret, env_vars=True)
         self._crone_state_index = 100  # Quit State
         return ''
 
@@ -1258,7 +1287,7 @@ class DefaultCLI(object):
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
         # print(f"CLI: ret: {ret}")
-        self.send_output(ret)
+        self._send_output(ret)
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -1268,32 +1297,32 @@ class DefaultCLI(object):
     def cli_state_crone(self):
         """ State Crone Tasks """
         ret = self._cron_state_exec[self._crone_state_index]()
-        self.send_output(ret)
+        self._send_output(ret)
 
-    def s0(self):  # C-Text
+    def _s0(self):  # C-Text
         self._state_index = 1
         if self.prefix:
             return self._send_sw_id() + self._c_text
         else:
             return self._send_sw_id() + self._c_text + self.get_ts_prompt()
 
-    def s1(self):
+    def _s1(self):
         # print("CMD-Handler S1")
         self._software_identifier()
         ########################
         # Check String Commands
         if not self._exec_str_cmd():
             self._input = self._raw_input
-            self.send_output(self._exec_cmd())
+            self._send_output(self._exec_cmd())
         self._last_line = self._new_last_line
         return ''
 
-    def s2(self):
+    def _s2(self):
         """ Do nothing / No Remote"""
         """ !!! Override in NODECLI"""
         return ""
 
-    def s3(self):
+    def _s3(self):
         """ Sys Login """
         if self._sys_login is None:
             self.change_cli_state(1)
@@ -1330,7 +1359,7 @@ class DefaultCLI(object):
             self.change_cli_state(1)
         return res
 
-    def s4(self):
+    def _s4(self):
         """ ry to connect other Station ( C CMD ) """
         if self._connection.LINK_Connection:
             # print(f'CLI LinkDisco : {self._connection.uid}')
@@ -1339,11 +1368,11 @@ class DefaultCLI(object):
         return self.get_ts_prompt()
 
     @staticmethod
-    def s5():
+    def _s5():
         """ Do nothing / No Remote"""
         return ""
 
-    def s6(self):
+    def _s6(self):
         """ Auto Sys Login """
         if self._sys_login is None:
             # print(1)
@@ -1385,13 +1414,37 @@ class DefaultCLI(object):
             self.change_cli_state(1)
         return res
 
+    def _s7(self):
+        """ Side Stop / Paging"""
+        if not self._tx_buffer:
+            logger.warning(f"CLI: _s7: No tx_buffer but in S7 !!")
+            self.change_cli_state(1)
+            return
+        if not self._user_db_ent.boxopt_sidestop:
+            logger.warning(f"CLI: _s7: No UserOpt but in S7 !!")
+            self.change_cli_state(1)
+            return
+        if not self._raw_input:
+            return
+        if self._raw_input in [b'\r', b'\n']:
+            self._send_out_sidestop(self._tx_buffer)
+            return
+        if self._raw_input in [b'a\r', b'A\r', b'a\n', b'A\n']:
+            self._tx_buffer = b''
+            self.send_prompt()
+            self.change_cli_state(1)
+            return
+        if self._raw_input in [b'r\r', b'R\r', b'r\n', b'R\n']:
+            self._user_db_ent.boxopt_sidestop = 0
+            self._send_out_sidestop(self._tx_buffer)
+            return
 
     @staticmethod
-    def cron_s0():
+    def _cron_s0():
         """ Dummy for doing nothing """
         return ''
 
-    def cron_s_quit(self):
+    def _cron_s_quit(self):
         # self._connection: AX25Conn
         if not self._connection.tx_buf_rawData and \
                 not self._connection.tx_buf_unACK and \
@@ -1419,9 +1472,9 @@ class NodeCLI(DefaultCLI):
             2: self.s2
         }
         """
-        pass
+        self._can_sidestop = True
 
-    def s2(self):
+    def _s2(self):
         return self._cmd_q()
 
     def _baycom_auto_login(self):
@@ -1447,9 +1500,9 @@ class UserCLI(DefaultCLI):
             2: self.s2
         }
         """
-        pass
+        self._can_sidestop = False
 
-    def s2(self):
+    def _s2(self):
         return self._cmd_q()
 
 class NoneCLI(DefaultCLI):
@@ -1459,6 +1512,8 @@ class NoneCLI(DefaultCLI):
     # _c_text = ''
     # bye_text = ''
     prefix = b''
+    def init(self):
+        self._can_sidestop = False
 
     def cli_exec(self, inp=b''):
         pass
@@ -1524,10 +1579,21 @@ class MCastCLI(DefaultCLI):
 
         }
         self._state_exec = {
-            0: self.s0,  # C-Text
-            1: self.s1,  # Cmd Handler
+            0: self._s0,  # C-Text
+            1: self._s1,  # Cmd Handler
+            2: self._state_error,  #
+            3: self._state_error,  #
+            4: self._state_error,  #
+            5: self._state_error,  #
+            6: self._state_error,  #
+            7: self._s7,  # Box Side Stop / Paging | Wait for input
         }
+        self._can_sidestop = True
 
+    def _state_error(self):
+        logger.error(f"CLI: McastCLI: State Error: State {self._state_index}")
+        self.change_cli_state(1
+                              )
     ###############################################
     def _baycom_auto_login(self):
         return False
@@ -1536,7 +1602,7 @@ class MCastCLI(DefaultCLI):
     def cli_exec(self, inp=b''):
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
-        self.send_output(ret)
+        self._send_output(ret)
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -1546,9 +1612,9 @@ class MCastCLI(DefaultCLI):
     def cli_state_crone(self):
         """ State Crone Tasks """
         ret = self._cron_state_exec[self._crone_state_index]()
-        self.send_output(ret)
+        self._send_output(ret)
 
-    def s0(self):  # C-Text
+    def _s0(self):  # C-Text
         self._state_index = 1
         out =  self._send_sw_id()
         out += self._c_text
@@ -1557,13 +1623,13 @@ class MCastCLI(DefaultCLI):
         out += self.get_ts_prompt()
         return out
 
-    def s1(self):
+    def _s1(self):
         self._software_identifier()
         ########################
         # Check String Commands
         if not self._exec_str_cmd():
             self._input = self._raw_input
-            self.send_output(self._exec_cmd())
+            self._send_output(self._exec_cmd())
         self._last_line = self._new_last_line
         return ''
 
@@ -1664,6 +1730,64 @@ class MCastCLI(DefaultCLI):
             ret += f" # Port: {port}\r\r"
             return ret
 
+class BoxCLI(DefaultCLI):
+    cli_name = 'BOX'  # DON'T CHANGE !
+    service_cli = True
+    # _c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
+    # bye_text = '73 ...\r'
+    # prompt = 'PoPT-NODE>'
+    prefix = b''
+    sw_id = BBS_SW_ID
+
+    # Extra CMDs for this CLI
+
+    def init(self):
+        self._can_sidestop = True
+        self._commands = {
+            # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
+            'QUIT': (1, self._cmd_q, 'Quit'),
+            'BYE': (1, self._cmd_q, 'Bye'),
+            # 'CONNECT': (1, self._cmd_connect, 'Connect'),
+            # 'C!': (2, self._cmd_connect_exclusive, 'Connect Exclusive (No MH-Path-Lookup)'),
+            'ECHO': (1, self._cmd_echo, 'Echo'),
+            # 'PORT': (1, self._cmd_port, 'Ports'),
+            # 'MH': (0, self._cmd_mh, 'MYHeard List'),
+            # 'LMH': (0, self._cmd_mhl, 'Long MYHeard List'),
+            # 'AXIP': (2, self._cmd_axip, 'AXIP-MH List'),
+            # 'ATR': (2, self._cmd_aprs_trace, 'APRS-Tracer'),
+            # 'DXLIST': (2, self._cmd_dxlist, 'DX/Tracer Alarm List'),
+            'LCSTATUS': (2, self._cmd_lcstatus, STR_TABLE['cmd_help_lcstatus'][self._connection.cli_language]),
+            'WX': (0, self._cmd_wx, STR_TABLE['cmd_help_wx'][self._connection.cli_language]),
+            'BELL': (2, self._cmd_bell, STR_TABLE['cmd_help_bell'][self._connection.cli_language]),
+
+            'INFO': (1, self._cmd_i, 'Info'),
+            'LINFO': (2, self._cmd_li, 'Long Info'),
+            'NEWS': (2, self._cmd_news, 'NEWS'),
+            'VERSION': (3, self._cmd_ver, 'Version'),
+            'USER': (0, self._cmd_user_db_detail, STR_TABLE['cmd_help_user_db'][self._connection.cli_language]),
+            'NAME': (1, self._cmd_set_name, STR_TABLE['cmd_help_set_name'][self._connection.cli_language]),
+            'QTH': (0, self._cmd_set_qth, STR_TABLE['cmd_help_set_qth'][self._connection.cli_language]),
+            'LOC': (0, self._cmd_set_loc, STR_TABLE['cmd_help_set_loc'][self._connection.cli_language]),
+            'ZIP': (0, self._cmd_set_zip, STR_TABLE['cmd_help_set_zip'][self._connection.cli_language]),
+            'PRMAIL': (0, self._cmd_set_pr_mail, STR_TABLE['cmd_help_set_prmail'][self._connection.cli_language]),
+            'EMAIL': (0, self._cmd_set_e_mail, STR_TABLE['cmd_help_set_email'][self._connection.cli_language]),
+            'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
+
+            'LM': (2, self._cmd_box_lm, "Listet alle eigenen Nachrichten."),
+
+            'LANG': (4, self._cmd_lang, STR_TABLE['cli_change_language'][self._connection.cli_language]),
+            'UMLAUT': (2, self._cmd_umlaut, STR_TABLE['auto_text_encoding'][self._connection.cli_language]),
+            'POPT': (0, self._cmd_popt_banner, 'PoPT Banner'),
+            'HELP': (1, self._cmd_help, STR_TABLE['help'][self._connection.cli_language]),
+            '?': (0, self._cmd_shelp, STR_TABLE['cmd_shelp'][self._connection.cli_language]),
+
+        }
+
+    def _s2(self):
+        return self._cmd_q()
+
+    def _baycom_auto_login(self):
+        return False
 
 
 CLI_OPT = {
@@ -1672,4 +1796,5 @@ CLI_OPT = {
     NoneCLI.cli_name: NoneCLI,
     'PIPE': NoneCLI,
     MCastCLI.cli_name: MCastCLI,
+    BoxCLI.cli_name: BoxCLI,
 }
