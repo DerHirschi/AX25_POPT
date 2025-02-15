@@ -108,6 +108,7 @@ class DefaultCLI(object):
             'WEB': (3, self._cmd_set_http, STR_TABLE['cmd_help_set_http'][self._connection.cli_language]),
 
             'R': (1, self._cmd_box_r, get_strTab('cmd_r', self._connection.cli_language)),
+            'LN': (2, self._cmd_box_ln, get_strTab('cmd_ln', self._connection.cli_language)),
             'LM': (2, self._cmd_box_lm, get_strTab('cmd_lm', self._connection.cli_language)),
             'OP': (2, self._cmd_op, get_strTab('cmd_op', self._connection.cli_language)),
 
@@ -1207,6 +1208,34 @@ class DefaultCLI(object):
 
     ##############################################
     # BOX
+    def _cmd_box_ln(self):
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
+            logger.error("CLI: _cmd_box_lm: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+        ret = '\r'
+        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._connection.cli_language) +
+                               "===== ==== ====== ====== ====== ====== ====/==== ======\r")
+        BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
+                                          f"{data[-1].ljust(4)} "
+                                          f"{str(data[1]).ljust(6)} "
+                                          f"{data[2]}@{str(data[3]).ljust(6)} "
+                                          f"{str(data[4]).ljust(6)} "
+                                          f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
+                                          f"{str(data[6])}"
+                                          )
+        ret += BOX_MAIL_TAB_HEADER
+        msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
+        msg_list.reverse()
+        for el in msg_list:
+            flag = 'P'
+            if el[7]:
+                flag += 'N'
+                el = list(el)
+                el.append(flag)
+                ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+        return ret + '\r'
+
     def _cmd_box_lm(self):
         bbs = self._port_handler.get_bbs()
         if not hasattr(bbs, 'get_pn_msg_tab_by_call'):

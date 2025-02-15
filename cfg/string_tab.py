@@ -2486,6 +2486,20 @@ STR_TABLE = {
          '',
          '',
          ''),
+
+    'cmd_ln': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+         'Listet alle eigenen neuen Nachrichten auf.',
+         'Lists all of your own new messages.',
+         'Geeft al uw eigen nieuwe berichten weer.',
+         '',
+         '',
+         '',
+         '',
+         '',
+         '',
+         ''),
+
     'cmd_lm': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          'Listet alle eigenen Nachrichten.',

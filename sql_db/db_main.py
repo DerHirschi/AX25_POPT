@@ -662,7 +662,7 @@ class SQL_Database:
                  f"MSGID='{msg_id}' and "
                  f"to_call='{call}';")
         res = self.commit_query(query)
-        print(f"PN res: {res}")
+        # print(f"PN res: {res}")
         return res
 
     # BL #############################
@@ -673,7 +673,7 @@ class SQL_Database:
                  "typ='B' and "
                  f"MSGID='{msg_id}';")
         res = self.commit_query(query)
-        print(f"BL res: {res}")
+        # print(f"BL res: {res}")
         return res
 
     def bbs_get_bl_msg_Tab_for_GUI(self):
