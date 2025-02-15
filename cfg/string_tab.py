@@ -2508,9 +2508,9 @@ STR_TABLE = {
 
     'box_lm_header': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-         '"Msg#  TSLD Byte   An    @ BBS   Von    Dat./Zeit Titel\r',
-         '"Msg#  TSLD Byte   To    @ BBS   From   Dat./Time Head\r',
-         '"Msg#  TSLD Byte   Naar  @ BBS   Van    Dat./Tijd Titel\r',
+         'Msg#  TSLD Byte   An    @ BBS   Von    Dat./Zeit Titel\r',
+         'Msg#  TSLD Byte   To    @ BBS   From   Dat./Time Head\r',
+         'Msg#  TSLD Byte   Naar  @ BBS   Van    Dat./Tijd Titel\r',
          '',
          '',
          '',

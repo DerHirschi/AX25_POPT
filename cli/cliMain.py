@@ -1215,7 +1215,7 @@ class DefaultCLI(object):
         BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._connection.cli_language) +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
-                                          f"{'P'.ljust(4)} "
+                                          f"{data[-1].ljust(4)} "
                                           f"{str(data[1]).ljust(6)} "
                                           f"{data[2]}@{str(data[3]).ljust(6)} "
                                           f"{str(data[4]).ljust(6)} "
@@ -1226,6 +1226,11 @@ class DefaultCLI(object):
         msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
         msg_list.reverse()
         for el in msg_list:
+            flag = 'P'
+            if el[7]:
+                flag += 'N'
+            el = list(el)
+            el.append(flag)
             ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
         return ret + '\r'
 
