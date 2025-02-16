@@ -10,6 +10,7 @@ Optimierung:
 - Neue PMS/BBS Config GUI
 - PMS/BBS Strukturen
 - CLI Strukturen
+- Cleanup Stingtabelle in CLI-Funktionen
 
 Neue Implementierungen / Funktionen:
 - CLI Typ: BOX
@@ -17,6 +18,7 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD: LM (List Mails / Listet alle eigenen Mails)
 - CLI-CMD: LN (List New Mails / Listet alle eigenen neuen Mails)
 - CLI-CMD: KM (Löscht alle pers. Nachrichten, die man bereits gelesen hat.)
+- CLI-CMD: K (Löscht pers. Nachrichte(n), Bsp: K 123 124 128)
 - CLI-CMD: R (Read Mail / Mail lesen)
 - CLI Seiten-Stops/Paging für MCast, NODE, BOX
 - PMS-Setting "Reverse-FWD" (nach Zeitplan connecten) für jeweiligen BBS-FWD

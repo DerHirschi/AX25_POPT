@@ -5,7 +5,7 @@ from cfg.logger_config import logger
 from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
 from fnc.sql_fnc import search_sql_injections
 from fnc.str_fnc import convert_str_to_datetime
-from sql_db.sql_Error import SQLConnectionError
+from sql_db.sql_Error import SQLConnectionError, SQLSyntaxError
 from sql_db.sql_str import SQL_CREATE_PMS_IN_MAIL_TAB, SQL_CREATE_FWD_PATHS_TAB, \
     SQL_CREATE_PMS_FWD_TASK_TAB, SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_CREATE_PMS_OUT_MAIL_TAB, \
     SQLITE_CREATE_PMS_OUT_MAIL_TAB, SQL_CREATE_APRS_WX_TAB, SQLITE_CREATE_APRS_WX_TAB, SQL_CREATE_PORT_STATISTIK_TAB, \
@@ -285,7 +285,8 @@ class SQL_Database:
                 self.db = None
                 self._access = False
                 return None
-            # TODO sqlite3.OperationalError
+            except SQLSyntaxError:
+                raise SQLSyntaxError
             else:
                 self.db.commit_query()
                 self._access = False
@@ -896,11 +897,25 @@ class SQL_Database:
         self._commit_query(query)
         return True
 
-    def bbs_del_in_msg_by_ID(self, msg_id: int):
+    def bbs_del_pn_in_msg_by_IDs(self, msg_ids: list, call: str):
+        id_list = [str(x) for x in msg_ids]
+        id_str = '(' + ','.join(id_list) + ')'
+
+        query = ("SELECT MSGID FROM pms_in_msg "
+                 f"WHERE MSGID in {id_str} "
+                 f"and typ='P' "
+                 f"and flag='IN' "
+                 f"and to_call='{call}' "
+                 f";")
+        ret = self._commit_query(query)
         query = ("UPDATE pms_in_msg SET flag='DL' "
-                  f"WHERE MSGID='{msg_id}';")
+                 f"WHERE MSGID in {id_str} "
+                 f"and typ='P' "
+                 f"and flag='IN' "
+                 f"and to_call='{call}' "
+                 f";")
         self._commit_query(query)
-        return True
+        return ret
 
     def bbs_del_out_msg_by_BID(self, bid: str):
         query = ("UPDATE pms_fwd_q SET flag='DL' "

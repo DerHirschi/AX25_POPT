@@ -463,9 +463,9 @@ class DefaultCLI(object):
                     try:
                         tmp_parm = type(el)(tmp_parm)
                     except ValueError:
-                        tmp_parm = defaults[len(tmp)]
+                        tmp_parm = el
                 else:
-                    tmp_parm = defaults[len(tmp)]
+                    tmp_parm = el
                 tmp.append(tmp_parm)
         self._parameter = list(tmp)
     #########################################################
@@ -618,8 +618,7 @@ class DefaultCLI(object):
             max_ent,  # Entry's
             -1,  # Port
         ])
-        # print(self.parameter)
-        # print(max_ent)
+
         parm = self._parameter[0]
         if parm < last_port_id:
             port = self._parameter[0]
@@ -629,9 +628,7 @@ class DefaultCLI(object):
                 parm = self._parameter[1]
         else:
             port = self._parameter[1]
-
         ret = self._get_mh_out_cli(max_ent=parm, port_id=port)
-
         return ret + '\r'
 
     def _get_mh_out_cli(self, max_ent=20, port_id=-1):
@@ -648,10 +645,10 @@ class DefaultCLI(object):
                 if max_c > max_ent:
                     break
                 time_delta_str = get_timedelta_CLIstr(sort_list[call].last_seen)
-                _call_str = sort_list[call].own_call
+                call_str = sort_list[call].own_call
                 if sort_list[call].route:
-                    _call_str += '*'
-                out += f'{time_delta_str} P:{sort_list[call].port_id:2} {_call_str:10}'.ljust(27, " ")
+                    call_str += '*'
+                out += f'{time_delta_str} P:{sort_list[call].port_id:2} {call_str:10}'.ljust(27, " ")
 
                 c += 1
                 if c == 2:  # Breite
@@ -1310,11 +1307,20 @@ class DefaultCLI(object):
 
     def _cmd_box_k(self):
         bbs = self._port_handler.get_bbs()
-        if not hasattr(bbs, 'del_old_pn_msg_by_call'):
+        if not hasattr(bbs, 'del_pn_in_by_IDs'):
             logger.error(self._logTag + "_cmd_box_km: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
-        ret = bbs.del_old_pn_msg_by_call(self._to_call)
-        return self._getTabStr('box_msg_del').format(len(ret))
+        self._parameter = self._parameter[:5]
+        default_types = [-1 for x in self._parameter]
+        self._decode_param(defaults=default_types)
+
+        ret = bbs.del_pn_in_by_IDs(self._parameter, self._to_call)
+        if not ret:
+            return self._getTabStr('box_parameter_error')
+        ret = [str(x[0]) for x in ret]
+        msg_id_str = ' '.join(ret)
+        return self._getTabStr('box_msg_del_k').format(msg_id_str)
+
 
     def _cmd_box_r(self):
         bbs = self._port_handler.get_bbs()

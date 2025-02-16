@@ -434,9 +434,8 @@ class BBS:
     def del_old_pn_msg_by_call(self, call: str):
         return self._db.bbs_del_old_pn_msg_by_call(call)
 
-    def del_in_by_ID(self, msg_id: int):
-        # TODO
-        return self._db.bbs_del_in_msg_by_ID(msg_id)
+    def del_pn_in_by_IDs(self, msg_ids: list, call: str):
+        return self._db.bbs_del_pn_in_msg_by_IDs(msg_ids, call)
 
     def del_in_by_BID(self, bid):
         return self._db.bbs_del_in_msg_by_BID(bid)

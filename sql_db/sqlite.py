@@ -1,7 +1,8 @@
 import sqlite3
+from sqlite3 import OperationalError
 from cfg.logger_config import logger
 from cfg.constant import CFG_data_path
-from sql_db.sql_Error import SQLConnectionError
+from sql_db.sql_Error import SQLConnectionError, SQLSyntaxError
 
 
 class SQL_DB:
@@ -24,7 +25,10 @@ class SQL_DB:
     def execute_query(self, query_str: str):
         if self.conn:
             cursor = self.conn.cursor()
-            res = cursor.execute(query_str)
+            try:
+                res = cursor.execute(query_str)
+            except OperationalError as e:
+                raise SQLSyntaxError(e)
             rows = res.fetchall()
             return rows
         raise SQLConnectionError

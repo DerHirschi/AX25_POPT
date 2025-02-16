@@ -2708,6 +2708,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'box_msg_del_k': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Nachrichte(n) {} wurde(n) gelöscht.\r',
+        '\r # Message(s) {} have been deleted.\r',
+        '\r # Berichte(n) {} zijn verwijderd.\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
     #####################################################
     # BOX GUI
     'own_station': (
