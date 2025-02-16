@@ -1,6 +1,7 @@
 ###########################################################################################################
 # 2.117.x
 Fixes:
+- PMS-Setting "AutoFWD" war ohne Funktion
 
 Optimierung:
 - SQL-DB: Tabellen pms_pn_msg und pms_BL_msg
@@ -16,6 +17,8 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD: KM (Löscht alle pers. Nachrichten, die man bereits gelesen hat.)
 - CLI-CMD: R (Read Mail / Mail lesen)
 - CLI Seiten-Stops/Paging für MCast, NODE, BOX
+- PMS-Setting "Reverse-FWD" (nach Zeitplan connecten) für jeweiligen BBS-FWD
+  setzbar
 
 ###########################################################################################################
 ###########################################################################################################

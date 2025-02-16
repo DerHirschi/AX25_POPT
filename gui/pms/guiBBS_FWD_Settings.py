@@ -169,7 +169,7 @@ class BBS_FWD_Settings(tk.Frame):
         # rev_fwd_frame
         tk.Checkbutton(rev_fwd_frame,
                        variable=rev_fwd_var,
-                       text='Revers-FWD').pack(side=tk.LEFT, expand=False)
+                       text='Reverse-FWD').pack(side=tk.LEFT, expand=False)
 
         tk.Button(rev_fwd_frame,
                   text='Schedule',
@@ -214,7 +214,6 @@ class BBS_FWD_Settings(tk.Frame):
                 fwd_cfg = getNew_BBS_FWD_cfg()
             self._bbs_vars[fwd_cfg.get('dest_call', 'NOCALL')] = self._add_homeBBS_tab(fwd_cfg)
 
-
     def _set_NOCALL_tab(self):
         nocall_vars = self._bbs_vars.get('NOCALL', {})
         if nocall_vars:
@@ -253,14 +252,14 @@ class BBS_FWD_Settings(tk.Frame):
             if k == 'NOCALL':
                 continue
             try:
-                port_id = int(self._bbs_vars[k]['port_id_var'].get())
+                port_id     = int(self._bbs_vars[k]['port_id_var'].get())
             except ValueError:
                 continue
-            dest_call = str(self._bbs_vars[k]['dest_call_var'].get()).upper()
+            dest_call       = str(self._bbs_vars[k]['dest_call_var'].get()).upper()
             if not validate_ax25Call(dest_call):
                 continue
             try:
-                axip_port = int(self._bbs_vars[k]['axip_port_var'].get())
+                axip_port   = int(self._bbs_vars[k]['axip_port_var'].get())
             except ValueError:
                 continue
             regio           = str(self._bbs_vars[k]['regio_var'].get()).upper()
@@ -367,5 +366,7 @@ class BBS_FWD_Settings(tk.Frame):
                 if k not in self._bbs_vars.keys():
                     del self._pms_cfg['home_bbs_cfg'][k]
 
+    """
     def _set_homeBBS_list(self):
         self._pms_cfg['home_bbs'] = list(self._pms_cfg.get('home_bbs_cfg', {}).keys())
+    """

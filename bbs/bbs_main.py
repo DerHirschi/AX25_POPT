@@ -603,36 +603,6 @@ class BBS:
         # self._db.check_tables_exists('bbs')
         ###############
         # Config's
-        """
-        sched1 = dict(getNew_schedule_config(intervall=10, move_time=20, set_interval=False))
-        sched2 = dict(getNew_schedule_config(intervall=60, move_time=20, set_interval=True))
-        self._pms_cfg: dict = {
-            'user': 'MD2SAW',
-            'regio': '#SAW.SAA.DEU.EU',
-            # 'home_bbs': [],
-            'home_bbs_cfg': dict({
-                'MD2BBS': {
-                    'port_id': 1,
-                    'regio': '#SAW.SAA.DEU.EU',
-                    # 'own_call': user,
-                    'dest_call': 'MD2BBS',
-                    'via_calls': ['CB0SAW'],
-                    'axip_add': ('', 0),
-                    'scheduler_cfg': sched1,
-                },
-                'DBO527': {
-                    'port_id': 0,
-                    'regio': '#SAW.SAA.DEU.EU',
-                    # 'own_call': user,
-                    'dest_call': 'DBO527',
-                    'via_calls': ['DNX527-1'],
-                    'scheduler_cfg': sched2,
-                },
-            }),
-            'single_auto_conn': True,
-            'auto_conn': True,
-        }
-        """
         self._pms_cfg: dict = dict(POPT_CFG.get_CFG_by_key('pms_main'))
         self._pms_cfg_hasChanged = False
         ####################
@@ -648,7 +618,7 @@ class BBS:
         # self.new_bl_msg = False
         ####################
         # Local User
-        self._local_user = []   # TODO fm UserDB
+        # self._local_user = []   # TODO fm UserDB
         ####################
         # CTL & Auto Connection
         self.pms_connections = []   # Outgoing Conns using FWG Prot
@@ -728,20 +698,23 @@ class BBS:
 
 
     def _set_pms_fwd_schedule(self):
-        for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
-            cfg = self._pms_cfg.get('home_bbs_cfg', {}).get(h_bbs_k, {})
-            sched_cfg = cfg.get('scheduler_cfg', None)
-            if sched_cfg:
-                autoconn_cfg = {
-                    'task_typ': 'PMS',
-                    'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
-                    'port_id': cfg.get('port_id'),
-                    'own_call': cfg.get('own_call'),
-                    'dest_call': cfg.get('dest_call'),
-                    'via_calls': cfg.get('via_calls'),
-                    'axip_add': cfg.get('axip_add'),
-                }
-                self._port_handler.insert_SchedTask(sched_cfg, autoconn_cfg)
+        if not self._pms_cfg.get('auto_conn', True):
+            return False
+        for h_bbs_k, cfg in dict(self._pms_cfg.get('home_bbs_cfg', {}).items()):
+            sched_cfg  = cfg.get('scheduler_cfg', None)
+            revers_fwd = cfg.get('reverseFWD', False)
+            if not all((sched_cfg, revers_fwd)):
+                continue
+            autoconn_cfg = {
+                'task_typ': 'PMS',
+                'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
+                'port_id': cfg.get('port_id'),
+                'own_call': cfg.get('own_call'),
+                'dest_call': cfg.get('dest_call'),
+                'via_calls': cfg.get('via_calls'),
+                'axip_add': cfg.get('axip_add'),
+            }
+            self._port_handler.insert_SchedTask(sched_cfg, autoconn_cfg)
 
     def _del_all_pms_fwd_schedule(self):
         for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
@@ -814,14 +787,12 @@ class BBS:
 
     def new_msg(self, msg_struc: dict):
         msg_struc['message_size'] = int(len(msg_struc['msg']))
-
         return self._db.bbs_insert_new_msg(msg_struc)
 
     def update_msg(self, msg_struc: dict):
         if not msg_struc.get('mid', ''):
             return False
         msg_struc['message_size'] = int(len(msg_struc['msg']))
-
         return self._db.bbs_update_out_msg(msg_struc)
 
     def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call: str):
@@ -968,12 +939,9 @@ class BBS:
             self._pms_cfg = POPT_CFG.get_CFG_by_key('pms_main')
         return dict(self._pms_cfg)
 
-    def set_pms_cfg(self, pms_cfg=None):
-        # if pms_cfg:
+    def set_pms_cfg(self):
         self._pms_cfg_hasChanged = True
         logger.info(self._logTag + "Config has changed, awaiting reinit.")
-
-        # POPT_CFG.set_CFG_by_key('pms_main', pms_cfg)
 
     def get_sv_msg_tab(self):
         return self._db.bbs_get_sv_msg_Tab_for_GUI()
