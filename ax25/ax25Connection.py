@@ -442,6 +442,28 @@ class AX25Conn:
         if bbs is None:
             logger.error("PMS: _bbs is None")
             return False
+        self.bbs_connection = bbs.init_rev_fwd_conn(self)
+        if self.bbs_connection is None:
+            logger.error("PMS: bbs_connection is None")
+            return False
+        # print("Done: bbsFwd_start_reverse")
+        return True
+
+    def bbsFwd_start(self):
+        if self.cli.stat_identifier is None:
+            logger.error("PMS: cli.stat_identifier is None")
+            return False
+        if self.cli.stat_identifier.typ != 'BBS':
+            logger.error("PMS: cli.stat_identifier.typ != 'BBS'")
+            return False
+        if self.cli.stat_identifier.e:
+            logger.error("PMS: cli.stat_identifier.e")
+            logger.error(f"{self.cli.stat_identifier.typ}")
+            return False
+        bbs = self._port_handler.get_bbs()
+        if bbs is None:
+            logger.error("PMS: _bbs is None")
+            return False
         self.bbs_connection = bbs.init_fwd_conn(self)
         if self.bbs_connection is None:
             logger.error("PMS: bbs_connection is None")

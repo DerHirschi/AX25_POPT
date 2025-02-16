@@ -1,3 +1,4 @@
+import tkinter
 from tkinter import ttk as ttk
 from tkinter import filedialog as fd
 from tkinter import scrolledtext
@@ -340,8 +341,10 @@ class StatSetTab:
         self._long_info_text_ent.bind("<KeyRelease>", self._chk_umbruch_lit)
         self._akt_info_text_ent.bind("<KeyRelease>", self._chk_umbruch_at)
         self._bye_text_ent.bind("<KeyRelease>", self._chk_umbruch_bt)
-
-        self._update_vars_fm_cfg()
+        try:
+            self._update_vars_fm_cfg()
+        except tk.TclError:
+            return
 
     def _chk_umbruch_ct(self, event=None):
         ind2 = str(int(float(self._c_text_ent.index(tk.INSERT)))) + '.0'
@@ -534,7 +537,10 @@ class StatSetTab:
         self._max_pac_select_var.set(str(stat_maxframe))  # default value
         self._max_pac.update()
         # PacLen
-        self._pac_len.delete(0, tk.END)
+        try:
+            self._pac_len.delete(0, tk.END)
+        except tkinter.TclError:
+            raise tkinter.TclError
         # self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
         self._pac_len.insert(tk.END, str(stat_paclen))
         # DIGI

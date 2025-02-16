@@ -5,7 +5,7 @@ from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
-from cfg.constant import STATION_ID_ENCODING_REV, BBS_SW_ID
+from cfg.constant import STATION_ID_ENCODING_REV, BBS_SW_ID, NO_REMOTE_STATION_TYPE
 from fnc.file_fnc import get_str_fm_file
 from fnc.socket_fnc import get_ip_by_hostname
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
@@ -70,12 +70,11 @@ class DefaultCLI(object):
         self._sys_login = None
         self.sysop_priv = False
         self._tx_buffer = b''
-
         self._getTabStr = lambda str_k: get_strTab(str_k, self._cli_lang)
         # self._user_db_ent.cli_sidestop = 20
         # Crone
         self._cron_state_exec = {
-            0: self._cron_s0,  # No CMDs / Do nothing
+            0: self._cron_s0,       # No CMDs / Do nothing
             100: self._cron_s_quit  # QUIT
         }
         # Standard Commands ( GLOBAL )
@@ -384,6 +383,7 @@ class DefaultCLI(object):
                 if self._user_db_ent:
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
 
+
     def _send_name_cmd_back(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
         name = stat_cfg.get('stat_parm_Name', '')
@@ -396,7 +396,6 @@ class DefaultCLI(object):
                         self._send_output(f'\rN {name}\r', env_vars=False)
 
     def _find_sw_identifier(self):
-
         # print(f"find_stat_identifier self.stat_identifier: {self.stat_identifier}")
         if self.stat_identifier is None:
             inp_lines = self._last_line + self._raw_input
@@ -1508,7 +1507,8 @@ class DefaultCLI(object):
 
     def _s0(self):  # C-Text
         self._state_index = 1
-        ret = self._send_sw_id() + self._c_text
+        ret = self._send_sw_id()
+        ret += self._c_text
         bbs = self._port_handler.get_bbs()
         if hasattr(bbs, 'get_new_pn_count_by_call'):
             new_mail = bbs.get_new_pn_count_by_call(self._to_call)
@@ -1520,7 +1520,17 @@ class DefaultCLI(object):
 
     def _s1(self):
         # print("CMD-Handler S1")
-        self._software_identifier()
+        if not self.stat_identifier:
+            self._software_identifier()
+        """
+        BBS / evtl. NODE, MCAST
+        if any((
+                self.stat_identifier.typ in ['BBS', 'NODE'],
+                self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
+                self._connection.bbs_connection,
+        )):
+            return 
+        """
         ########################
         # Check String Commands
         if not self._exec_str_cmd():
@@ -2018,10 +2028,73 @@ class BoxCLI(DefaultCLI):
                               'POPT',
                               'HELP',
                               '?']
+    ###########################################################
+    def _s0(self):  # C-Text
+        bbs = self._port_handler.get_bbs()
+        if any((
+                not hasattr(bbs, 'get_new_pn_count_by_call'),
+                not hasattr(bbs, 'get_pms_cfg'),
+        )):
+            logger.error(self._logTag + "_s0: No BBS !!")
+            self.change_cli_state(2)
+            return "\r\r # BBS Error !! \r\r"
+
+        ret = bbs.pms_flag.decode('ASCII', 'ignore') + '\r'
+        pms_cfg: dict = bbs.get_pms_cfg()
+        self.change_cli_state(1)
+        if any((
+                self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
+                self._connection.bbs_connection,
+                self._to_call in pms_cfg.get('home_bbs_cfg', {}).keys()
+        )):
+            logger.debug(self._logTag + "No CLI-CMD Mode. No C-Text")
+            return ret + self.get_ts_prompt()
+
+        ret += self._c_text
+        new_mail = bbs.get_new_pn_count_by_call(self._to_call)
+        if new_mail:
+            ret += get_strTab('box_new_mail_ctext', self._cli_lang).format(new_mail)
+
+        return ret + self.get_ts_prompt()
+
+    def _s1(self):
+        bbs = self._port_handler.get_bbs()
+        if any((
+                not hasattr(bbs, 'get_new_pn_count_by_call'),
+                not hasattr(bbs, 'get_pms_cfg'),
+        )):
+            logger.error(self._logTag + "_s1: No BBS !!")
+            self.change_cli_state(2)
+            return "\r\r # BBS Error !! \r\r"
+        # print("CMD-Handler S1")
+        if not self.stat_identifier:
+            self._software_identifier()
+        ########################
+        if self._connection.bbs_connection:
+            return
+        pms_cfg: dict = bbs.get_pms_cfg()
+        if self._to_call in pms_cfg.get('home_bbs_cfg', {}).keys():
+            self._connection.bbsFwd_start()
+        if any((
+                self.stat_identifier.typ in ['BBS', 'NODE'],
+                self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
+        )):
+            return
+        ########################
+        # Check String Commands
+        if not self._exec_str_cmd():
+            self._input = self._raw_input
+            self._send_output(self._exec_cmd())
+        self._last_line = self._new_last_line
+        return ''
 
     def _s2(self):
         return self._cmd_q()
+    ########################################################################
 
+    def get_ts_prompt(self):
+        return f"\r({datetime.now().strftime('%H:%M:%S')}) {self._my_call_str}>\r"
+    ########################################################################
     def _baycom_auto_login(self):
         return False
 

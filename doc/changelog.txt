@@ -19,6 +19,7 @@ Neue Implementierungen / Funktionen:
 - CLI Seiten-Stops/Paging für MCast, NODE, BOX
 - PMS-Setting "Reverse-FWD" (nach Zeitplan connecten) für jeweiligen BBS-FWD
   setzbar
+- BOX nimmt jetzt auch FWD Connections von BBS an
 
 ###########################################################################################################
 ###########################################################################################################
