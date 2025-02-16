@@ -75,7 +75,7 @@ class DefaultCLI(object):
         # self._user_db_ent.cli_sidestop = 20
         # Crone
         self._cron_state_exec = {
-            0: self._cron_s0,  # No CMDs / Doing nothing
+            0: self._cron_s0,  # No CMDs / Do nothing
             100: self._cron_s_quit  # QUIT
         }
         # Standard Commands ( GLOBAL )
@@ -127,7 +127,8 @@ class DefaultCLI(object):
             'HELP':     (1, self._cmd_help, self._getTabStr('help')),
             '?':        (0, self._cmd_shelp, self._getTabStr('cmd_shelp')),
         }
-        # self._commands_cfg  = list(self._command_set.keys())
+        self._commands_cfg  = list(self._command_set.keys())
+        """
         self._commands_cfg  = ['QUIT',
                                'BYE',
                                # NODE
@@ -172,6 +173,7 @@ class DefaultCLI(object):
                                'POPT',
                                'HELP',
                                '?']
+        """
         self._commands      = {}
         # print(self._commands_cfg)
 

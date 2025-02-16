@@ -22,8 +22,8 @@ from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
-from gui.pms.guiBBS_PMS_Settings import PMS_Settings
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
+from gui.pms.guiBBS_Settings_Main import BBSSettingsMain
 from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
 from gui.pms.guiBBS_newMSG import BBS_newMSG
 from gui.ft.guiFT_Manager import FileTransferManager
@@ -665,8 +665,13 @@ class PoPT_GUI_Main:
                             command=self._do_pms_autoFWD,
                             underline=0)
         MenuBBS.add_separator()
-        MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
+        """
+        MenuBBS.add_command(label='Old Settings',
                             command=lambda: self._open_settings_window('pms_setting'),
+                            underline=0) # pms_all_sett
+        """
+        MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
+                            command=lambda: self._open_settings_window('pms_all_sett'),
                             underline=0)
         menubar.add_cascade(label='PMS', menu=MenuBBS, underline=0)
         #########################################################################
@@ -1883,15 +1888,9 @@ class PoPT_GUI_Main:
             'ft_manager': FileTransferManager,  # FT Manager            # TODO move to open_window
             'pipe_sett': PipeToolSettings,      # Pipe Tool
             # 'user_db': UserDB,  # UserDB
-            #'mcast_sett': MulticastSettings,    # Multicast Settings
             'l_holder': LinkHolderSettings,     # Linkholder
-            #'rx_echo_sett': RxEchoSettings,     # RX Echo
-            #'beacon_sett': BeaconSettings,      # Beacon Settings
-            #'port_sett': PortSettingsWin,       # Port Settings
-            #'stat_sett': StationSettingsWin,    # Stat Settings
-            'pms_setting': PMS_Settings,        # PMS Settings
-            #'digi_setting': DIGI_SettingsWin,   # DIGI Settings
-            'all_sett': SettingsMain,       # New All Settings
+            'pms_all_sett': BBSSettingsMain,    # New PMS Settings
+            'all_sett': SettingsMain,           # New All Settings
         }.get(win_key, '')
         if callable(settings_win):
             self.settings_win = settings_win(self)

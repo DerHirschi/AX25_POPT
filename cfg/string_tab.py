@@ -2473,7 +2473,7 @@ STR_TABLE = {
          ''),
 
     #####################################################
-    # BOX
+    # BOX CLI
     'cmd_r': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          '<MSG#> Liest die Nachricht mit der entspr. Nummer aus.',
@@ -2695,4 +2695,55 @@ STR_TABLE = {
         '',
         ''),
 
+    #####################################################
+    # BOX GUI
+    'own_station': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Eigene Station',
+        'Own station',
+        'Eigen station',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'region': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Region',
+        'Region',
+        'Regio',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'fwd_settings': (
+        'Forward',
+        'Forward',
+        'Forward',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'allowRevFWD': (
+        'Erlaube Reverse-FWD',
+        'Allow Reverse-FWD',
+        'Sta Reverse-FWD toe',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 }

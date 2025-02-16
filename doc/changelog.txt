@@ -6,6 +6,7 @@ Optimierung:
 - SQL-DB: Tabellen pms_pn_msg und pms_BL_msg
   zusammengefasst zu pms_in_msg
 - Interne CLI-CMD config
+- Neue PMS/BBS Config GUI
 
 Neue Implementierungen / Funktionen:
 - CLI Typ: BOX

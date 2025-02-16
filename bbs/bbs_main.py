@@ -576,7 +576,8 @@ class BBSConnection:
 
 class BBS:
     def __init__(self, port_handler):
-        logger.info('PMS: Init')
+        self._logTag = "PMS: "
+        logger.info(self._logTag + ' Init')
         # print('PMS INIT')
         self._port_handler = port_handler
         self._db = self._port_handler.get_database()
@@ -585,18 +586,18 @@ class BBS:
         try:
             self.pms_flag = self.pms_flag.encode('ASCII')
         except UnicodeEncodeError:
-            logger.error('PMS: Init Error: UnicodeEncodeError')
+            logger.error(self._logTag + 'Init Error: UnicodeEncodeError')
             # print('PMS: Init Error: UnicodeEncodeError')
             raise bbsInitError('UnicodeEncodeError')
         if self.my_stat_id is None:
-            logger.error('PMS: Init Error: my_stat_id is None')
+            logger.error(self._logTag + 'Init Error: my_stat_id is None')
             # print('PMS: Init Error: my_stat_id is None')
             raise bbsInitError('my_stat_id is None')
         if self.my_stat_id.e:
-            logger.error('PMS: Init Error: my_stat_id.e Error')
+            logger.error(self._logTag + 'Init Error: my_stat_id.e Error')
             # print('PMS: Init Error: my_stat_id.e Error')
             raise bbsInitError('my_stat_id.e Error')
-        logger.info(f"PMS: Flag: {self.pms_flag}")
+        logger.info(self._logTag + f"Flag: {self.pms_flag}")
         ###############
         # Init DB
         # self._db.check_tables_exists('bbs')
@@ -639,7 +640,7 @@ class BBS:
         self._set_pms_home_bbs()
         ####################
         # Scheduler
-        logger.info('PMS: Set Scheduler')
+        logger.info(self._logTag + 'Set Scheduler')
         self._set_pms_fwd_schedule()
         ####################
         # New Msg Noty/Alarm
@@ -656,7 +657,7 @@ class BBS:
         # Tasker/crone
         # self._var_task_1sec = time.time()
         self._var_task_5sec = time.time()
-        logger.info('PMS: Init complete')
+        logger.info(self._logTag + 'Init complete')
 
         ###############
         # DEBUG/DEV
@@ -676,9 +677,9 @@ class BBS:
     def _reinit(self):
         if not self.pms_connections:
             # print("PMS: reINIT")
-            logger.info("PMS: reINIT")
+            logger.info(self._logTag + "reINIT")
             # print("PMS reINIT: Read new Config")
-            logger.info("PMS: reINIT: Read new Config")
+            logger.info(self._logTag + "reINIT: Read new Config")
             self._del_all_pms_fwd_schedule()
             self._pms_cfg = dict(POPT_CFG.get_CFG_by_key('pms_main'))
             self._reinit_stationID_pmsFlag()
@@ -967,10 +968,12 @@ class BBS:
             self._pms_cfg = POPT_CFG.get_CFG_by_key('pms_main')
         return dict(self._pms_cfg)
 
-    def set_pms_cfg(self, pms_cfg: dict):
-        if pms_cfg:
-            self._pms_cfg_hasChanged = True
-            POPT_CFG.set_CFG_by_key('pms_main', pms_cfg)
+    def set_pms_cfg(self, pms_cfg=None):
+        # if pms_cfg:
+        self._pms_cfg_hasChanged = True
+        logger.info(self._logTag + "Config has changed, awaiting reinit.")
+
+        # POPT_CFG.set_CFG_by_key('pms_main', pms_cfg)
 
     def get_sv_msg_tab(self):
         return self._db.bbs_get_sv_msg_Tab_for_GUI()

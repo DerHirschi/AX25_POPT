@@ -45,24 +45,24 @@ class SettingsMain(tk.Toplevel):
         self._root_win.settings_win = self
         ###############################################################
         self._win_tab = {
-            'general_settings': GeneralSettings,
-            'stat_settings': StationSettingsWin,
-            'port': PortSettingsWin,
-            'beacon_settings': BeaconSettings,
-            'Digipeater': DIGI_SettingsWin,
-            'F-Text': FTextSettings,
-            'MCast': MulticastSettings,
-            'RX-Echo': RxEchoSettings,
+            'general_settings'  : GeneralSettings,
+            'stat_settings'     : StationSettingsWin,
+            'port'              : PortSettingsWin,
+            'beacon_settings'   : BeaconSettings,
+            'Digipeater'        : DIGI_SettingsWin,
+            'F-Text'            : FTextSettings,
+            'MCast'             : MulticastSettings,
+            'RX-Echo'           : RxEchoSettings,
         }
         # 1-Wire
         if is_1wire_device():
             self._win_tab.update({
-                '1-Wire' : OneWireSettings
+                '1-Wire'        : OneWireSettings
             })
         # GPIO
         if self.get_GPIOfmPH():
             self._win_tab.update({
-                'GPIO': GPIOSettings
+                'GPIO'          : GPIOSettings
             })
 
         ###############################################################

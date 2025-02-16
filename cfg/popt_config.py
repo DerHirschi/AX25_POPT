@@ -1,4 +1,4 @@
-from cfg.default_config import getNew_PMS_cfg, getNew_homeBBS_cfg, getNew_maniGUI_parm, \
+from cfg.default_config import getNew_PMS_cfg, getNew_BBS_FWD_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS
@@ -17,7 +17,7 @@ class Main_CFG:
             ##########################
             # -- PMS
             'pms_main': getNew_PMS_cfg,
-            'pms_home_bbs': getNew_homeBBS_cfg,
+            'pms_home_bbs': getNew_BBS_FWD_cfg,
             ##########################
             # -- MH
             'mh_cfg': getNew_MH_cfg,

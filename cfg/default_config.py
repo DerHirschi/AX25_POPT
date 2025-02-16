@@ -65,17 +65,16 @@ def getNew_port_cfg():
 # PMS
 def getNew_PMS_cfg():
     return dict(
-        user            = 'NOCALL',
+        user            = 'NOCALL', # BOX CALL
         regio           = '',
         home_bbs_cfg    = {},
         home_bbs        = [],
         single_auto_conn= True,
         auto_conn       = False,
-        # TODO 'auto_conn_silent': True,
     )
 
 
-def getNew_homeBBS_cfg():
+def getNew_BBS_FWD_cfg():
     return dict(
         port_id         = 0,
         regio           = '',
@@ -83,6 +82,9 @@ def getNew_homeBBS_cfg():
         via_calls       = [],
         axip_add        = ('', 0),
         scheduler_cfg   = dict(getNew_schedule_config()),
+        reverseFWD      = True,
+        allowRevFWD     = True,
+
     )
 """
 def getNew_BBS_User_cfg():
