@@ -7,7 +7,7 @@ from tkinter.colorchooser import askcolor
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_data_path, CFG_usertxt_path
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
-from cli.cliMain import CLI_OPT
+from cli import CLI_OPT
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.file_fnc import get_str_fm_file, save_str_to_file
 from fnc.str_fnc import zeilenumbruch_lines, zeilenumbruch

@@ -5,7 +5,8 @@
 import time
 from datetime import datetime
 
-from cli.cliMain import CLI_OPT, NoneCLI
+from cli.cliMain import NoneCLI
+from cli import CLI_OPT
 # from ax25.ax25Error import AX25ConnectionERROR
 from ax25.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB

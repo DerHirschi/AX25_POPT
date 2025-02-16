@@ -8,6 +8,8 @@ Optimierung:
   zusammengefasst zu pms_in_msg
 - Interne CLI-CMD config
 - Neue PMS/BBS Config GUI
+- PMS/BBS Strukturen
+- CLI Strukturen
 
 Neue Implementierungen / Funktionen:
 - CLI Typ: BOX
