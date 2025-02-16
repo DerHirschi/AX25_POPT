@@ -700,7 +700,7 @@ class BBS:
     def _set_pms_fwd_schedule(self):
         if not self._pms_cfg.get('auto_conn', True):
             return False
-        for h_bbs_k, cfg in dict(self._pms_cfg.get('home_bbs_cfg', {}).items()):
+        for h_bbs_k, cfg in dict(self._pms_cfg.get('home_bbs_cfg', {})).items():
             sched_cfg  = cfg.get('scheduler_cfg', None)
             revers_fwd = cfg.get('reverseFWD', False)
             if not all((sched_cfg, revers_fwd)):
