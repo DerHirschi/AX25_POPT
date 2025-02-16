@@ -14,13 +14,50 @@ class UserCLI(DefaultCLI):
     # Extra CMDs for this CLI
 
     def init(self):
-        """
-        self._cmd_exec_ext = {}
-        self._cron_state_exec_ext = {}
-        self._state_exec_ext = {
-            2: self.s2
-        }
-        """
+        self._commands_cfg  = ['QUIT',
+                               'BYE',
+                               # NODE
+                               'ECHO',
+                               'CONNECT',
+                               'C!',
+                               'PORT',
+                               'MH',
+                               'LMH',
+                               'AXIP',
+                               'DXLIST',
+                               'LCSTATUS',
+                               # APRS
+                               'ATR',
+                               'WX',
+                               # User Info
+                               'BELL',
+                               'INFO',
+                               'LINFO',
+                               'NEWS',
+                               # UserDB
+                               'USER',
+                               'NAME',
+                               'QTH',
+                               'LOC',
+                               'ZIP',
+                               'PRMAIL',
+                               'EMAIL',
+                               'WEB',
+                               # BOX
+                               #'LB',
+                               #'LN',
+                               #'LM',
+                               #'R',
+                               #'KM',
+                               # CLI OPT
+                               'OP',
+                               'LANG',
+                               'UMLAUT',
+                               #
+                               'VERSION',
+                               'POPT',
+                               'HELP',
+                               '?']
 
     def _s2(self):
         return self._cmd_q()

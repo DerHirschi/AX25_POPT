@@ -2539,6 +2539,19 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_k': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '<MSG#> Loescht die Nachricht mit der entspr. Nummer.',
+        '<MSG#> Deletes the message with the corresponding number.',
+        '<MSG#> Verwijdert het bericht met het bijbehorende nummer.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_op': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          'Anzahl der Zeilen pro Seite. Nur OP aus.',

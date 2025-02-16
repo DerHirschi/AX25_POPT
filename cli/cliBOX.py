@@ -49,6 +49,7 @@ class BoxCLI(DefaultCLI):
                               'LM',
                               'R',
                               'KM',
+                              'K',
                               # CLI OPT
                               'OP',
                               'LANG',

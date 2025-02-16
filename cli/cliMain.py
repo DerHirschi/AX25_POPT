@@ -9,7 +9,6 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
     convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch
-from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
@@ -115,6 +114,7 @@ class DefaultCLI(object):
             'LM':       (2, self._cmd_box_lm, self._getTabStr('cmd_lm')),
             'R':        (1, self._cmd_box_r, self._getTabStr('cmd_r')),
             'KM':       (2, self._cmd_box_km, self._getTabStr('cmd_km')),
+            'K':        (1, self._cmd_box_k, self._getTabStr('cmd_k')),
             # CLI OPT
             'OP':       (2, self._cmd_op, self._getTabStr('cmd_op')),
             'LANG':     (4, self._cmd_lang, self._getTabStr('cli_change_language')),
@@ -126,54 +126,7 @@ class DefaultCLI(object):
             '?':        (0, self._cmd_shelp, self._getTabStr('cmd_shelp')),
         }
         self._commands_cfg  = list(self._command_set.keys())
-        """
-        self._commands_cfg  = ['QUIT',
-                               'BYE',
-                               # NODE
-                               'ECHO',
-                               'CONNECT',
-                               'C!',
-                               'PORT',
-                               'MH',
-                               'LMH',
-                               'AXIP',
-                               'DXLIST',
-                               'LCSTATUS',
-                               # APRS
-                               'ATR',
-                               'WX',
-                               # User Info
-                               'BELL',
-                               'INFO',
-                               'LINFO',
-                               'NEWS',
-                               # UserDB
-                               'USER',
-                               'NAME',
-                               'QTH',
-                               'LOC',
-                               'ZIP',
-                               'PRMAIL',
-                               'EMAIL',
-                               'WEB',
-                               # BOX
-                               'LB',
-                               'LN',
-                               'LM',
-                               'R',
-                               'KM',
-                               # CLI OPT
-                               'OP',
-                               'LANG',
-                               'UMLAUT',
-                               #
-                               'VERSION',
-                               'POPT',
-                               'HELP',
-                               '?']
-        """
         self._commands      = {}
-        # print(self._commands_cfg)
 
         self._str_cmd_exec = {
             b'#REQUESTNAME:': self.str_cmd_req_name,
@@ -250,7 +203,7 @@ class DefaultCLI(object):
             self._connection.tx_buf_rawData += cli_out
             self.change_cli_state(1)
             return
-        out_lines += get_strTab('op_prompt', self._cli_lang).encode(self._encoding[0], self._encoding[1])
+        out_lines += self._getTabStr('op_prompt').encode(self._encoding[0], self._encoding[1])
         self._connection.tx_buf_rawData += out_lines
         self.change_cli_state(7)
 
@@ -442,9 +395,9 @@ class DefaultCLI(object):
                 if inp_cmd == cmd[:len(inp_cmd)]:
                     treffer.append(cmd)
             if not treffer:
-                return f"\r # {STR_TABLE['cmd_not_known'][self._cli_lang]}\r"
+                return f"\r # {self._getTabStr('cmd_not_known')}\r"
             if len(treffer) > 1:
-                return (f"\r # {STR_TABLE['cmd_not_known'][self._cli_lang]}"
+                return (f"\r # {self._getTabStr('cmd_not_known')}"
                         f"\r # {(' '.join(treffer))} ?\r")
             self._cmd = b''
             if not callable(self._commands[treffer[0]][1]):
@@ -456,7 +409,7 @@ class DefaultCLI(object):
                 return ret
             return ''
 
-        return f"\r # {STR_TABLE['cmd_not_known'][self._cli_lang]}\r"
+        return f"\r # {self._getTabStr('cmd_not_known')}\r"
 
     def _exec_cmd(self):
         self._input = self._last_line + self._input
@@ -518,13 +471,12 @@ class DefaultCLI(object):
     #########################################################
     def _cmd_connect(self, exclusive=False):
         self._decode_param()
-        lang = self._cli_lang
         if not self._parameter:
-            return f"\r {get_strTab('cmd_c_noCall', lang)}\r"
+            return f"\r {self._getTabStr('cmd_c_noCall')}\r"
 
         dest_call = str(self._parameter[0]).upper()
         if not validate_ax25Call(dest_call):
-            return f"\r {get_strTab('cmd_c_badCall', lang)}\r"
+            return f"\r {self._getTabStr('cmd_c_badCall')}\r"
 
         port_id = -1
         vias = []
@@ -535,9 +487,9 @@ class DefaultCLI(object):
                 try:
                     port_id = int(self._parameter[-1])
                     if port_id not in self._port_handler.get_all_ports().keys():
-                        return f"\r {get_strTab('cmd_c_noPort', lang)}\r"
+                        return f"\r {self._getTabStr('cmd_c_noPort')}\r"
                 except ValueError:
-                    return f"\r {get_strTab('cmd_c_badPort', lang)}\r"
+                    return f"\r {self._getTabStr('cmd_c_badPort')}\r"
 
             via_params = self._parameter[1:-1] if port_tr else self._parameter[1:]
             vias = [call.upper() for call in via_params if validate_ax25Call(call.upper())]
@@ -569,7 +521,7 @@ class DefaultCLI(object):
         # self._connection: AX25Conn
         # self._connection.tx_buf_rawData += self.bye_text.encode(self.encoding[0], self.encoding[1])
         conn_dauer = get_time_delta(self.time_start)
-        ret = f"\r # {STR_TABLE['time_connected'][self._cli_lang]}: {conn_dauer}\r\r"
+        ret = f"\r # {self._getTabStr('time_connected')}: {conn_dauer}\r\r"
         ret += self._load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
         self._send_output(ret, env_vars=True)
         self._crone_state_index = 100  # Quit State
@@ -577,12 +529,12 @@ class DefaultCLI(object):
 
     def _cmd_lang(self):
         if not self._parameter:
-            return f'\r # {STR_TABLE["cli_no_lang_param"][self._cli_lang]}{" ".join(list(constant.LANG_IND.keys()))}\r'
+            return f'\r # {self._getTabStr("cli_no_lang_param")}{" ".join(list(constant.LANG_IND.keys()))}\r'
         self._decode_param()
         if self._parameter[0].upper() in constant.LANG_IND.keys():
             self._connection.set_user_db_language(constant.LANG_IND[self._parameter[0].upper()])
-            return f'\r # {STR_TABLE["cli_lang_set"][self._cli_lang]}\r'
-        return f'\r # {STR_TABLE["cli_no_lang_param"][self._cli_lang]}{" ".join(list(constant.LANG_IND.keys()))}\r'
+            return f'\r # {self._getTabStr("cli_lang_set")}\r'
+        return f'\r # {self._getTabStr("cli_no_lang_param")}{" ".join(list(constant.LANG_IND.keys()))}\r'
 
     def _cmd_dxlist(self):
         parm = 10
@@ -599,7 +551,7 @@ class DefaultCLI(object):
         alarm_his = dict(self._port_handler.get_MH().dx_alarm_perma_hist)
         alarm_his.update(dict(self._port_handler.get_aprs_ais().be_tracer_alarm_hist))
         if not alarm_his:
-            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
+            return f'\r # {self._getTabStr("cli_no_data")}\r'
         out = '\r'
         out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---\r"
         max_c = 0
@@ -636,7 +588,7 @@ class DefaultCLI(object):
         ent = self._port_handler.get_MH().get_sort_mh_entry('last', reverse=False)
         dbl_ent = []
         if not ent:
-            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
+            return f'\r # {self._getTabStr("cli_no_data")}\r'
         max_c = 0
         out = '\r'
         # out += '\r                       < AXIP - Clients >\r\r'
@@ -685,7 +637,7 @@ class DefaultCLI(object):
     def _get_mh_out_cli(self, max_ent=20, port_id=-1):
         sort_list = self._port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
-            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
+            return f'\r # {self._getTabStr("cli_no_data")}\r'
         out = ''
         c = 0
         max_c = 0
@@ -706,7 +658,7 @@ class DefaultCLI(object):
                     c = 0
                     out += '\r'
         if not out:
-            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
+            return f'\r # {self._getTabStr("cli_no_data")}\r'
         return '\r' + out
 
     def _cmd_mhl(self):
@@ -737,7 +689,7 @@ class DefaultCLI(object):
     def _get_mh_long_out_cli(self, max_ent=10, port_id=-1):
         sort_list = self._port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
-            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
+            return f'\r # {self._getTabStr("cli_no_data")}\r'
         out = ''
         max_c = 0
         """
@@ -772,13 +724,13 @@ class DefaultCLI(object):
 
                 out += '\r'
         if not out:
-            return f'\r # {STR_TABLE["cli_no_data"][self._cli_lang]}\r'
+            return f'\r # {self._getTabStr("cli_no_data")}\r'
         return "\r-----Time-Port-Call------via-------LOC------Dist(km)--Type---Packets\r" + out
 
     def _cmd_wx(self):
         """ WX Stations """
         if self._port_handler.aprs_ais is None:
-            return f'\r # {STR_TABLE["cli_no_wx_data"][self._cli_lang]}\r\r'
+            return f'\r # {self._getTabStr("cli_no_wx_data")}\r\r'
         parm = 10
         ret = ''
         self._decode_param()
@@ -802,7 +754,7 @@ class DefaultCLI(object):
         else:
             ret = self._get_wx_cli_out(max_ent=parm)
         if not ret:
-            return f'\r # {STR_TABLE["cli_no_wx_data"][self._cli_lang]}\r\r'
+            return f'\r # {self._getTabStr("cli_no_wx_data")}\r\r'
         return ret + '\r'
 
     def _get_wx_fm_call_cli_out(self, call, max_ent=10):
@@ -873,7 +825,7 @@ class DefaultCLI(object):
     def _cmd_aprs_trace(self):
         """APRS Tracer"""
         if self._port_handler.aprs_ais is None:
-            return f'\r # {STR_TABLE["cli_no_tracer_data"][self._cli_lang]}\r\r'
+            return f'\r # {self._getTabStr("cli_no_tracer_data")}\r\r'
         parm = 10
         if self._parameter:
             try:
@@ -882,7 +834,7 @@ class DefaultCLI(object):
                 pass
         data = self._port_handler.aprs_ais.tracer_traces_get()
         if not data:
-            return f'\r # {STR_TABLE["cli_no_tracer_data"][self._cli_lang]}\r\r'
+            return f'\r # {self._getTabStr("cli_no_tracer_data")}\r\r'
         intervall = self._port_handler.aprs_ais.be_tracer_interval
         active = self._port_handler.aprs_ais.be_tracer_active
         last_send = self._port_handler.aprs_ais.tracer_get_last_send()
@@ -1003,7 +955,7 @@ class DefaultCLI(object):
                 return header + ent_ret
 
             return "\r" \
-                   f"{STR_TABLE['cli_no_user_db_ent'][self._cli_lang]}" \
+                   f"{self._getTabStr('cli_no_user_db_ent')}" \
                    "\r"
 
     def _cmd_set_name(self):
@@ -1019,7 +971,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_name_set'][self._cli_lang]}: {self._user_db_ent.Name}" \
+                   f"{self._getTabStr('cli_name_set')}: {self._user_db_ent.Name}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_name NO ENTRY FOUND !")
@@ -1038,7 +990,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_qth_set'][self._cli_lang]}: {self._user_db_ent.QTH}" \
+                   f"{self._getTabStr('cli_qth_set')}: {self._user_db_ent.QTH}" \
                    "\r"
 
         logger.error("User-DB Error. cli_qth_set NO ENTRY FOUND !")
@@ -1062,10 +1014,10 @@ class DefaultCLI(object):
             self._user_db.set_distance(self._user_db_ent.call_str)
             if self._user_db_ent.Distance:
                 return "\r" \
-                       f"{STR_TABLE['cli_loc_set'][self._cli_lang]}: {self._user_db_ent.LOC}" \
+                       f"{self._getTabStr('cli_loc_set')}: {self._user_db_ent.LOC}" \
                        "\r"
             return "\r" \
-                   f"{STR_TABLE['cli_loc_set'][self._cli_lang]}: {self._user_db_ent.LOC} > {round(self._user_db_ent.Distance)} km" \
+                   f"{self._getTabStr('cli_loc_set')}: {self._user_db_ent.LOC} > {round(self._user_db_ent.Distance)} km" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_loc NO ENTRY FOUND !")
@@ -1084,7 +1036,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_zip_set'][self._cli_lang]}: {self._user_db_ent.ZIP}" \
+                   f"{self._getTabStr('cli_zip_set')}: {self._user_db_ent.ZIP}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_zip NO ENTRY FOUND !")
@@ -1103,7 +1055,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_prmail_set'][self._cli_lang]}: {self._user_db_ent.PRmail}" \
+                   f"{self._getTabStr('cli_prmail_set')}: {self._user_db_ent.PRmail}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_pr_mail NO ENTRY FOUND !")
@@ -1122,7 +1074,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_email_set'][self._cli_lang]}: {self._user_db_ent.Email}" \
+                   f"{self._getTabStr('cli_email_set')}: {self._user_db_ent.Email}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_e_mail NO ENTRY FOUND !")
@@ -1141,14 +1093,14 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = datetime.now()
             return "\r" \
-                   f"{STR_TABLE['cli_http_set'][self._cli_lang]}: {self._user_db_ent.HTTP}" \
+                   f"{self._getTabStr('cli_http_set')}: {self._user_db_ent.HTTP}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_http NO ENTRY FOUND !")
         return "\r # USER-DB Error !\r"
 
     def _cmd_port(self):  # TODO Pipe
-        ret = f"\r      < {STR_TABLE['port_overview'][self._cli_lang]} >\r\r"
+        ret = f"\r      < {self._getTabStr('port_overview')} >\r\r"
         ret += "-#--Name----PortTyp----------Stations--Typ------Digi-\r"
         for port_id in self._port_handler.ax25_ports.keys():
             port = self._port_handler.ax25_ports[port_id]
@@ -1217,7 +1169,7 @@ class DefaultCLI(object):
         return ret + "\r"
 
     def _cmd_help(self):
-        # ret = f"\r   < {STR_TABLE['help'][self._cli_lang]} >\r"
+        # ret = f"\r   < {self._getTabStr('help')} >\r"
         ret = "\r"
         for k in list(self._commands.keys()):
             if self._commands[k][2]:
@@ -1243,14 +1195,14 @@ class DefaultCLI(object):
     def _cmd_umlaut(self):
         # print(self.parameter)
         if not self._parameter:
-            return f"\r{STR_TABLE['cli_text_encoding_no_param'][self._cli_lang]}: {self._encoding[0]}\r"
+            return f"\r{self._getTabStr('cli_text_encoding_no_param')}: {self._encoding[0]}\r"
         res = find_decoding(self._parameter[0].replace(b'\r', b''))
         if not res:
-            return f"\r{STR_TABLE['cli_text_encoding_error_not_found'][self._cli_lang]}\r"
+            return f"\r{self._getTabStr('cli_text_encoding_error_not_found')}\r"
         self._encoding = res, self._encoding[1]
         if self._user_db_ent:
             self._user_db_ent.Encoding = str(res)
-        return f"\r{STR_TABLE['cli_text_encoding_set'][self._cli_lang]} {res}\r"
+        return f"\r{self._getTabStr('cli_text_encoding_set')} {res}\r"
 
     def _cmd_bell(self):
         if not self._connection.noty_bell:
@@ -1258,8 +1210,8 @@ class DefaultCLI(object):
             msg = b' '.join(self._parameter)
             msg = msg.decode(self._encoding[0], self._encoding[1])
             self._port_handler.set_noty_bell_PH(self._connection.ch_index, msg)
-            return f'\r # {STR_TABLE["cmd_bell"][self._cli_lang]}\r'
-        return f'\r # {STR_TABLE["cmd_bell_again"][self._cli_lang]}\r'
+            return f'\r # {self._getTabStr("cmd_bell")}\r'
+        return f'\r # {self._getTabStr("cmd_bell_again")}\r'
 
     ##############################################
     # BOX
@@ -1269,7 +1221,7 @@ class DefaultCLI(object):
             logger.error("CLI: _cmd_box_lb: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._cli_lang) +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -1298,7 +1250,7 @@ class DefaultCLI(object):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._cli_lang) +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -1326,7 +1278,7 @@ class DefaultCLI(object):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (get_strTab('box_lm_header', self._cli_lang) +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -1354,7 +1306,15 @@ class DefaultCLI(object):
             logger.error(self._logTag + "_cmd_box_km: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = bbs.del_old_pn_msg_by_call(self._to_call)
-        return get_strTab('box_msg_del', self._cli_lang).format(len(ret))
+        return self._getTabStr('box_msg_del').format(len(ret))
+
+    def _cmd_box_k(self):
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'del_old_pn_msg_by_call'):
+            logger.error(self._logTag + "_cmd_box_km: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+        ret = bbs.del_old_pn_msg_by_call(self._to_call)
+        return self._getTabStr('box_msg_del').format(len(ret))
 
     def _cmd_box_r(self):
         bbs = self._port_handler.get_bbs()
@@ -1364,14 +1324,14 @@ class DefaultCLI(object):
         try:
             msg_id = int(self._parameter[0])
         except (ValueError, IndexError):
-            return get_strTab('box_parameter_error', self._cli_lang)
+            return self._getTabStr('box_parameter_error')
         msg = bbs.get_pn_msg_by_id(msg_id=msg_id, call=self._to_call)
         if msg:
             return self._fnc_box_r(msg)
         msg = bbs.get_bl_msg_by_id(msg_id=msg_id)
         if msg:
             return self._fnc_box_r(msg)
-        return get_strTab('box_r_no_msg_found', self._cli_lang).format(msg_id)
+        return self._getTabStr('box_r_no_msg_found').format(msg_id)
 
     def _fnc_box_r(self, raw_msg: list):
         try:
@@ -1379,7 +1339,7 @@ class DefaultCLI(object):
         except IndexError as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
             logger.error(self._logTag + f"{e}")
-            return get_strTab('box_msg_error', self._cli_lang)
+            return self._getTabStr('box_msg_error')
         try:
             MSGID, \
             BID, \
@@ -1400,21 +1360,21 @@ class DefaultCLI(object):
         except (TypeError, ValueError) as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
             logger.error(self._logTag + f"{e}")
-            return get_strTab('box_msg_error', self._cli_lang)
+            return self._getTabStr('box_msg_error')
         stat = str(typ)
         if new:
             stat += 'N'
         ret = '\r'
-        ret += f"{str(get_strTab('from', self._cli_lang)).ljust(13)}: {from_call}@{from_bbs}\r"
-        ret += f"{str(get_strTab('to', self._cli_lang)).ljust(13)}: {to_call}@{to_bbs}\r"
+        ret += f"{str(self._getTabStr('from')).ljust(13)}: {from_call}@{from_bbs}\r"
+        ret += f"{str(self._getTabStr('to')).ljust(13)}: {to_call}@{to_bbs}\r"
         ret += f"{'Typ/Status'.ljust(13)}: {stat}\r"
-        ret += f"{str(get_strTab('date_time', self._cli_lang)).ljust(13)}: {msg_time}\r"
-        ret += f"RX {str(get_strTab('date_time', self._cli_lang)).ljust(10)}: {rx_time[2:]}\r"
+        ret += f"{str(self._getTabStr('date_time')).ljust(13)}: {msg_time}\r"
+        ret += f"RX {str(self._getTabStr('date_time')).ljust(10)}: {rx_time[2:]}\r"
         ret += f"{'BID'.ljust(13)}: {BID}\r"
-        ret += f"{str(get_strTab('message', self._cli_lang) + ' #').ljust(13)}: {MSGID}\r"
-        ret += zeilenumbruch(f"{str(get_strTab('titel', self._cli_lang)).ljust(13)}: {subject}\r\r")
+        ret += f"{str(self._getTabStr('message') + ' #').ljust(13)}: {MSGID}\r"
+        ret += zeilenumbruch(f"{str(self._getTabStr('titel')).ljust(13)}: {subject}\r\r")
         ret += msg.decode(self._encoding[0], self._encoding[1])
-        ret += get_strTab('box_msg_foter', self._cli_lang).format(
+        ret += self._getTabStr('box_msg_foter').format(
             MSGID, to_call, from_call, BID
         )
         if all((new, typ == 'P')):
@@ -1429,12 +1389,12 @@ class DefaultCLI(object):
         if not self._parameter:
             self._user_db_ent.cli_sidestop = 0
             ""
-            return get_strTab('box_cmd_op1', self._cli_lang)
+            return self._getTabStr('box_cmd_op1')
         try:
             self._user_db_ent.cli_sidestop = int(self._parameter[0])
         except ValueError:
-            return get_strTab('box_cmd_op2', self._cli_lang)
-        return get_strTab('box_cmd_op3', self._cli_lang).format(self._user_db_ent.cli_sidestop)
+            return self._getTabStr('box_cmd_op2')
+        return self._getTabStr('box_cmd_op3').format(self._user_db_ent.cli_sidestop)
     ##############################################
     def str_cmd_req_name(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
@@ -1512,7 +1472,7 @@ class DefaultCLI(object):
         if hasattr(bbs, 'get_new_pn_count_by_call'):
             new_mail = bbs.get_new_pn_count_by_call(self._to_call)
             if new_mail:
-                ret += get_strTab('box_new_mail_ctext', self._cli_lang).format(new_mail)
+                ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
         if self.cli_name == 'USER':
             return ret
         return ret + self.get_ts_prompt()
