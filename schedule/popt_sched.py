@@ -90,6 +90,8 @@ class PoPTSchedule:
         self._set_intervall()
 
     def _is_enabled(self, conf_k):
+        if not self.conf.get(conf_k):
+            return False
         for k in self.conf.get(conf_k).keys():
             if self.conf.get(conf_k)[k]:
                 return True

@@ -215,7 +215,6 @@ class AX25PortHandler(object):
 
     def start_SchedTask_man(self, conf):
         if self._scheduled_tasker:
-            print('Ddd')
             self._scheduled_tasker.start_scheduler_Task_manual(conf)
 
     def _Sched_task(self):

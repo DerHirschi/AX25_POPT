@@ -114,7 +114,9 @@ class BBSConnection:
     def end_conn(self):
         if self._state in [0, 1, 2, 3, 4, 5]:
             self._send_abort()
-        self._bbs.end_fwd_conn(self)
+        logger.debug(self._logTag + 'end_conn: try to remove bbsConn')
+        if not self._bbs.end_fwd_conn(self):
+            logger.error(self._logTag + 'end_conn Error')
         # self._ax25_conn.cli.change_cli_state(state=1)
         self._ax25_conn.bbs_connection = None
 

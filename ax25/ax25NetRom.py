@@ -13,7 +13,7 @@ class NetRomDecodingERROR(Exception):
         out_str += f"node_call: {node_call}\n"
         out_str += f"payload: {payload}\n"
         out_str += f"payload hex: {payload.hex()}\n"
-        print(out_str)
+        # print(out_str)
         logger.error(out_str)
 
 # ======================== Exception's End ==========================================
@@ -49,9 +49,9 @@ def NetRom_decode_UI(ax25_frame_conf: dict):
     if int(payload[0]) != 0xFF:
         print(f"NetRom UI no valid Sig {hex(payload[0])} should be 0xFF ")
         raise NetRomDecodingERROR(ax25_frame_conf, f'NetRom UI no valid Sig {hex(payload[0])} should be 0xFF')
-    print('Net-Rom UI')
+    #print('Net-Rom UI')
     id_of_sending_node = payload[1:7].decode('ASCII', 'ignore')
-    print(f"ID sending Node: {id_of_sending_node}")
+    #print(f"ID sending Node: {id_of_sending_node}")
     dest_frames = payload[7:]
     tmp = []
     while dest_frames:

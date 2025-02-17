@@ -24,15 +24,14 @@ from cli.cliStationIdent import get_station_id_obj
 
 class BBS:
     def __init__(self, port_handler):
-        self._logTag = "BBS: "
+        self._logTag        = "BBS: "
         logger.info(self._logTag + ' Init')
-        # print('PMS INIT')
-        self._port_handler = port_handler
-        self._db = self._port_handler.get_database()
-        self.pms_flag = generate_sid(features=("F", "M", "H"))
-        self.my_stat_id = get_station_id_obj(str(self.pms_flag))
+        self._port_handler  = port_handler
+        self._db            = self._port_handler.get_database()
+        self.pms_flag       = generate_sid(features=("F", "M", "H"))
+        self.my_stat_id     = get_station_id_obj(str(self.pms_flag))
         try:
-            self.pms_flag = self.pms_flag.encode('ASCII')
+            self.pms_flag   = self.pms_flag.encode('ASCII')
         except UnicodeEncodeError:
             logger.error(self._logTag + 'Init Error: UnicodeEncodeError')
             # print('PMS: Init Error: UnicodeEncodeError')
@@ -47,12 +46,9 @@ class BBS:
             raise bbsInitError('my_stat_id.e Error')
         logger.info(self._logTag + f"Flag: {self.pms_flag}")
         ###############
-        # Init DB
-        # self._db.check_tables_exists('bbs')
-        ###############
         # Config's
-        self._pms_cfg: dict = dict(POPT_CFG.get_CFG_by_key('pms_main'))
-        self._pms_cfg_hasChanged = False
+        self._pms_cfg: dict         = dict(POPT_CFG.get_CFG_by_key('pms_main'))
+        self._pms_cfg_hasChanged    = False
         ####################
         # Set Vars
         self._set_pms_home_bbs()
@@ -62,19 +58,18 @@ class BBS:
         self._set_pms_fwd_schedule()
         ####################
         # New Msg Noty/Alarm
-        # self.new_pn_msg = False
-        # self.new_bl_msg = False
         ####################
         # Local User
-        # self._local_user = []   # TODO fm UserDB
+        # self._local_user          = []   # TODO fm UserDB
         ####################
         # CTL & Auto Connection
-        self.pms_connections = []   # Outgoing Conns using FWG Prot
-        self._new_man_FWD_wait_t = time.time()
+        self.pms_connections        = []   # Outgoing Conns using FWG Prot
+        self._new_man_FWD_wait_t    = time.time()
         ####################
         # Tasker/crone
         # self._var_task_1sec = time.time()
-        self._var_task_5sec = time.time()
+        self._var_task_5sec         = time.time()
+        self._var_task_60sec        = time.time()
         logger.info(self._logTag + 'Init complete')
 
         ###############
@@ -105,6 +100,7 @@ class BBS:
             self._set_pms_fwd_schedule()
             self._pms_cfg_hasChanged = False
             return True
+        print('renit waiting forPMS Conn')
         return False
 
     def _reinit_stationID_pmsFlag(self):
@@ -120,17 +116,29 @@ class BBS:
             raise bbsInitError('my_stat_id.e Error')
 
     def main_cron(self):
+        """ 2 Sec. called fm PortInit Loop """
+        print(self.pms_connections)
         if self._pms_cfg_hasChanged:
             if self._reinit():
                 return
-
         # self._5sec_task()
+        self._60sec_task()
 
     ###################################
     # Tasks
     def _5sec_task(self):
         if time.time() > self._var_task_5sec:
             self._var_task_5sec = time.time() + 5
+
+    def _60sec_task(self):
+        if time.time() > self._var_task_60sec:
+            self._check_fwd_q()
+            self._var_task_60sec = time.time() + 60
+
+    ###################################
+    # Check FWD TX Q Task
+    def _check_fwd_q(self):
+        pass
 
     ###################################
     # CFG Stuff
@@ -144,15 +152,15 @@ class BBS:
             h_bbs_cfg['own_call'] = self._pms_cfg.get('user', 'NOCALL')
         self._pms_cfg['home_bbs'] = home_bbs
 
-
     def _set_pms_fwd_schedule(self):
-        if not self._pms_cfg.get('auto_conn', True):
-            return False
+        #if not self._pms_cfg.get('auto_conn', True):
+        #    return False
         for h_bbs_k, cfg in dict(self._pms_cfg.get('home_bbs_cfg', {})).items():
-            sched_cfg  = cfg.get('scheduler_cfg', None)
-            revers_fwd = cfg.get('reverseFWD', False)
-            if not all((sched_cfg, revers_fwd)):
-                continue
+            sched_cfg      = {}
+            revers_fwd     = cfg.get('reverseFWD', False)
+            outgoing_fwd   = cfg.get('auto_conn', True)
+            if all((revers_fwd, outgoing_fwd)):
+                sched_cfg  = cfg.get('scheduler_cfg', {})
             autoconn_cfg = {
                 'task_typ': 'PMS',
                 'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
@@ -188,6 +196,7 @@ class BBS:
         conn = BBSConnection(self, ax25_conn)
         if conn.e:
             return None
+        print(f"init rev fwd: {ax25_conn.uid}")
         self.pms_connections.append(conn)
         self._port_handler.set_pmsFwdAlarm(True)
         return conn
@@ -201,6 +210,7 @@ class BBS:
         conn.connection_rx(ax25_conn.rx_buf_last_data)
         if conn.e:
             return None
+        print(f"init fwd: {ax25_conn.uid}")
         self.pms_connections.append(conn)
         self._port_handler.set_pmsFwdAlarm(True)
         return conn
@@ -216,6 +226,10 @@ class BBS:
     # Auto FWD
 
     def start_man_autoFwd(self):
+        """
+        if not self._pms_cfg.get('auto_conn', True):
+            return
+        """
         if time.time() > self._new_man_FWD_wait_t:
             self._new_man_FWD_wait_t = time.time() + 10
             for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):

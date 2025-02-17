@@ -465,6 +465,9 @@ class AX25Conn:
         if bbs is None:
             logger.error("PMS: _bbs is None")
             return False
+        if self.bbs_connection:
+            logger.warning("PMS: bbs_connection not None. Manual Rev FWD Triggered ?")
+            return False
         self.bbs_connection = bbs.init_fwd_conn(self)
         if self.bbs_connection is None:
             logger.error("PMS: bbs_connection is None")

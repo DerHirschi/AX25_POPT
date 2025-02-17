@@ -70,7 +70,7 @@ def getNew_PMS_cfg():
         home_bbs_cfg    = {},
         home_bbs        = [],
         single_auto_conn= True,
-        auto_conn       = False,
+        auto_conn       = False,    # Allow Outgoing Connects
     )
 
 

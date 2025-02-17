@@ -1,5 +1,6 @@
 from cfg.constant import SERVICE_CH_START
 from cfg.logger_config import logger
+from cli import NoneCLI
 
 
 class AutoConnTask:
@@ -54,6 +55,8 @@ class AutoConnTask:
             self._set_state_exec(0)
         else:
             self.connection = connection[0]
+            #self.connection.autoTask = True
+            self.connection.cli = NoneCLI(self.connection)
             self.connection.cli_type = f"Task: {self._conf.get('task_typ', '-')}"
             # self.dest_station_id = self.connection.cli.stat_identifier
             self._set_state_exec(1)
@@ -129,6 +132,11 @@ class AutoConnTask:
 
     def _PMS_start_rev_fwd(self):
         # 3
+        """
+        if self.connection.bbs_connection:
+            self._set_state_exec(4)
+            return
+        """
         if self.connection.bbsFwd_start_reverse():
             self._set_state_exec(4)
         else:

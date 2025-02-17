@@ -67,7 +67,7 @@ class BBSGeneralSettings(tk.Frame):
         # r1
         tk.Checkbutton(chk_fr,
                        variable=self._autoConn_var,
-                       text='AutoFWD').pack(side=tk.LEFT, expand=False)
+                       text='Outgoing FWD').pack(side=tk.LEFT, expand=False)
         tk.Checkbutton(chk_fr,
                        variable=self._singleConn_var,
                        text='Single Conn').pack(side=tk.LEFT, expand=False)

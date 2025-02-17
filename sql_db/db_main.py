@@ -332,19 +332,19 @@ class SQL_Database:
 
     def bbs_insert_msg_fm_fwd(self, msg_struc: dict):
         # print("bbs_insert_msg_fm_fwd -------------")
-        bid = msg_struc.get('bid_mid', '')
-        from_call = msg_struc.get('sender', '')
-        from_bbs = msg_struc.get('sender_bbs', '')
-        typ = msg_struc.get('message_type', '')
-        to_bbs = msg_struc.get('recipient_bbs', '')
-        to_call = msg_struc.get('receiver', '')
-        subject = msg_struc.get('subject', '')
-        path = str(msg_struc.get('path', []))
-        msg = msg_struc.get('msg', b'')
-        header = msg_struc.get('header', b'')
-        msg_size = msg_struc.get('message_size', '')
-        msg_time = msg_struc.get('time', '')
-        rx_time = datetime.now().strftime(SQL_TIME_FORMAT)
+        bid         = msg_struc.get('bid_mid', '')
+        from_call   = msg_struc.get('sender', '')
+        from_bbs    = msg_struc.get('sender_bbs', '')
+        typ         = msg_struc.get('message_type', '')
+        to_bbs      = msg_struc.get('recipient_bbs', '')
+        to_call     = msg_struc.get('receiver', '')
+        subject     = msg_struc.get('subject', '')
+        path        = str(msg_struc.get('path', []))
+        msg         = msg_struc.get('msg', b'')
+        header      = msg_struc.get('header', b'')
+        msg_size    = msg_struc.get('message_size', '')
+        msg_time    = msg_struc.get('time', '')
+        rx_time     = datetime.now().strftime(SQL_TIME_FORMAT)
         try:
             msg_size = int(msg_size)
         except ValueError:
@@ -355,18 +355,18 @@ class SQL_Database:
                 not to_call or \
                 not msg_size or \
                 typ not in ['B', 'P']:
-            print(f"bbs_insert_msg_fm_fwd 1: {msg_struc}")
+            # print(f"bbs_insert_msg_fm_fwd 1: {msg_struc}")
             return False
         for el in [from_call, from_bbs, to_call, to_bbs, subject]:
             if search_sql_injections(el):
-                print(f"bbs_insert_msg_fm_fwd 2: {msg_struc}")
+                # print(f"bbs_insert_msg_fm_fwd 2: {msg_struc}")
                 return False
         if search_sql_injections(msg.decode('UTF-8', 'ignore')):
-            print(f"SQL-Injection erkannt in Nachricht {bid} von {from_call}@{from_bbs}")
+            # print(f"SQL-Injection erkannt in Nachricht {bid} von {from_call}@{from_bbs}")
             logger.warning(f"SQL-Injection erkannt in Nachricht {bid} von {from_call}@{from_bbs}")
             return False
         if search_sql_injections(subject):
-            print(f"SQL-Injection erkannt in Betreff {bid} von {from_call}@{from_bbs}")
+            # print(f"SQL-Injection erkannt in Betreff {bid} von {from_call}@{from_bbs}")
             logger.warning(f"SQL-Injection erkannt in Betreff {bid} von {from_call}@{from_bbs}")
             return False
         """
