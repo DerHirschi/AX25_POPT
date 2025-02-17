@@ -42,8 +42,8 @@ def parse_forward_header(header):
     return {
         "message_type": hdr[1],
         "sender": hdr[2],
-        "receiver": hdr[3],
-        "recipient_bbs": hdr[4],
+        "recipient_bbs": hdr[3],
+        "receiver": hdr[4],
         "mid": mid,
         "bid_mid": hdr[5],
         "sender_bbs": recipient,

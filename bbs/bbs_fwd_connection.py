@@ -392,7 +392,6 @@ class BBSConnection:
                     # print("Line msgParser BREAK")
                     msg_index -= len(line) + 2
                     break
-
             # _msg = b'\r'.join(msg[_msg_index:-1])
             msg = bytes(msg[msg_index + 1:])
             header = bytes(msg[len(lines[0]) + 1:msg_index])

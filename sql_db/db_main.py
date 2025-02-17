@@ -336,12 +336,8 @@ class SQL_Database:
         from_call = msg_struc.get('sender', '')
         from_bbs = msg_struc.get('sender_bbs', '')
         typ = msg_struc.get('message_type', '')
-        if typ == 'B':
-            to_call = msg_struc.get('recipient_bbs', '')
-            to_bbs = msg_struc.get('receiver', '')
-        else:
-            to_call = msg_struc.get('receiver', '')
-            to_bbs = msg_struc.get('recipient_bbs', '')
+        to_bbs = msg_struc.get('recipient_bbs', '')
+        to_call = msg_struc.get('receiver', '')
         subject = msg_struc.get('subject', '')
         path = str(msg_struc.get('path', []))
         msg = msg_struc.get('msg', b'')
