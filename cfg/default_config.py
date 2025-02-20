@@ -63,14 +63,16 @@ def getNew_port_cfg():
 
 #######################################
 # PMS
-def getNew_PMS_cfg():
+def getNew_BBS_cfg():
     return dict(
         user            = 'NOCALL', # BOX CALL
         regio           = '',
-        home_bbs_cfg    = {},
+        fwd_bbs_cfg    = {},       # FWD CFGs
         home_bbs        = [],
         single_auto_conn= True,
         auto_conn       = False,    # Allow Outgoing Connects
+        # Path/Routing
+        pn_auto_path    = True      # Find BBS to FWD with lowes hops
     )
 
 

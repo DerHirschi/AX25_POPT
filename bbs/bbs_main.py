@@ -47,7 +47,7 @@ class BBS:
         logger.info(self._logTag + f"Flag: {self.pms_flag}")
         ###############
         # Config's
-        self._pms_cfg: dict         = dict(POPT_CFG.get_CFG_by_key('pms_main'))
+        self._pms_cfg: dict         = POPT_CFG.get_BBS_cfg()
         self._pms_cfg_hasChanged    = False
         ####################
         # Set Vars
@@ -74,8 +74,11 @@ class BBS:
 
         ###############
         # DEBUG/DEV
+        # self._pms_cfg[]
+
+
         """
-        _mid = self.new_msg({
+        mid = self.new_msg({
             'sender': 'MD2SAW',
             'sender_bbs': 'MD2SAW.#SAW.SAA.DEU.EU',
             'receiver': 'MD3SAW',
@@ -84,23 +87,20 @@ class BBS:
             'msg': b'TEST 1234\r',
             'message_type': 'P',
         })
-        self.add_msg_to_fwd_by_id(_mid, 'MD2BBS')  # ADD MSG-ID to BBS
+        self.add_msg_to_fwd_by_id(mid, 'MD2BBS')  # ADD MSG-ID to BBS
         """
 
     def _reinit(self):
         if not self.pms_connections:
-            # print("PMS: reINIT")
             logger.info(self._logTag + "reINIT")
-            # print("PMS reINIT: Read new Config")
             logger.info(self._logTag + "reINIT: Read new Config")
             self._del_all_pms_fwd_schedule()
-            self._pms_cfg = dict(POPT_CFG.get_CFG_by_key('pms_main'))
+            self._pms_cfg = POPT_CFG.get_BBS_cfg()
             self._reinit_stationID_pmsFlag()
             self._set_pms_home_bbs()
             self._set_pms_fwd_schedule()
             self._pms_cfg_hasChanged = False
             return True
-        print('renit waiting forPMS Conn')
         return False
 
     def _reinit_stationID_pmsFlag(self):
@@ -117,7 +117,6 @@ class BBS:
 
     def main_cron(self):
         """ 2 Sec. called fm PortInit Loop """
-        print(self.pms_connections)
         if self._pms_cfg_hasChanged:
             if self._reinit():
                 return
@@ -132,19 +131,66 @@ class BBS:
 
     def _60sec_task(self):
         if time.time() > self._var_task_60sec:
-            self._check_fwd_q()
+            # self._check_outgoing_fwd()     # Evtl 120 Sec ?
             self._var_task_60sec = time.time() + 60
 
     ###################################
     # Check FWD TX Q Task
-    def _check_fwd_q(self):
-        pass
+    def _check_outgoing_fwd(self):
+        # TODO .. Not check incoming MSG
+        # TODO .. out MSG triggered when sending
+        out_msg: list = self._get_fwd_out_tab()
+
+        for el in out_msg:
+            mid             = el[0]
+            bid             = el[1]
+            from_call       = el[2]
+            from_bbs_add    = el[3]
+            from_bbs_call   = el[4]
+            to_call         = el[5]
+            to_bbs_add      = el[6]
+            to_bbs_call     = el[7]
+            flag            = el[-1]
+            typ             = el[-2]
+            if flag != 'F':
+                return
+            if typ == 'P':
+                bbs_on_route = self._find_1stHop_BBS_fm_PNroute(to_bbs_call)
+
+    def _find_1stHop_BBS_fm_PNroute(self, bbs_call: str):
+        """
+        From Local BBS !!
+        Prevent sending back from RX-BBS when using for S&F !!
+        """
+        # TODO filtering out old Paths
+        if not bbs_call:
+            return ''
+        h_bbs = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs_call, {})
+        if h_bbs:
+            print(f"_find_1stHop_BBS_fm_route: Treffer, direkt FWD zu {bbs_call}")
+            return bbs_call
+        ret = self._db.bbs_get_fwdPaths_1stHop(bbs_call)
+        for bbs, hops, path in ret:
+            h_bbs = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs, {})
+            if h_bbs:
+                print(f"_find_1stHop_BBS_fm_route: Treffer, FWD via {bbs}")
+                print(f"HOPS: {hops}")
+                print(f"PATH: {path}")
+                return bbs
+            else:
+                print(f"_find_1stHop_BBS_fm_route: SUCHE: {bbs}")
+                print(f"HOPS: {hops}")
+                print(f"PATH: {path}")
+
+        print(f"_find_1stHop_BBS_fm_route: Kein Treffer !!: {bbs_call}")
+        return ''
+
 
     ###################################
     # CFG Stuff
     def _set_pms_home_bbs(self):
         home_bbs = []
-        for h_bbs_k, h_bbs_cfg in self._pms_cfg.get('home_bbs_cfg', {}).items():
+        for h_bbs_k, h_bbs_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
             h_bbs_cfg: dict
             regio = h_bbs_cfg.get('regio', '')
             if regio:
@@ -155,7 +201,7 @@ class BBS:
     def _set_pms_fwd_schedule(self):
         #if not self._pms_cfg.get('auto_conn', True):
         #    return False
-        for h_bbs_k, cfg in dict(self._pms_cfg.get('home_bbs_cfg', {})).items():
+        for h_bbs_k, cfg in dict(self._pms_cfg.get('fwd_bbs_cfg', {})).items():
             sched_cfg      = {}
             revers_fwd     = cfg.get('reverseFWD', False)
             outgoing_fwd   = cfg.get('auto_conn', True)
@@ -173,8 +219,8 @@ class BBS:
             self._port_handler.insert_SchedTask(sched_cfg, autoconn_cfg)
 
     def _del_all_pms_fwd_schedule(self):
-        for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
-            cfg = self._pms_cfg.get('home_bbs_cfg', {}).get(h_bbs_k, {})
+        for h_bbs_k in list(self._pms_cfg.get('fwd_bbs_cfg', {}).keys()):
+            cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(h_bbs_k, {})
             if cfg:
                 autoconn_cfg = {
                     'task_typ': 'PMS',
@@ -196,7 +242,6 @@ class BBS:
         conn = BBSConnection(self, ax25_conn)
         if conn.e:
             return None
-        print(f"init rev fwd: {ax25_conn.uid}")
         self.pms_connections.append(conn)
         self._port_handler.set_pmsFwdAlarm(True)
         return conn
@@ -210,7 +255,6 @@ class BBS:
         conn.connection_rx(ax25_conn.rx_buf_last_data)
         if conn.e:
             return None
-        print(f"init fwd: {ax25_conn.uid}")
         self.pms_connections.append(conn)
         self._port_handler.set_pmsFwdAlarm(True)
         return conn
@@ -232,8 +276,8 @@ class BBS:
         """
         if time.time() > self._new_man_FWD_wait_t:
             self._new_man_FWD_wait_t = time.time() + 10
-            for h_bbs_k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
-                cfg = self._pms_cfg.get('home_bbs_cfg', {}).get(h_bbs_k, {})
+            for h_bbs_k in list(self._pms_cfg.get('fwd_bbs_cfg', {}).keys()):
+                cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(h_bbs_k, {})
                 if cfg:
                     autoconn_cfg = {
                         'task_typ': 'PMS',
@@ -275,6 +319,11 @@ class BBS:
         if msg_fm_db:
             # print(_msg_fm_db)
             new_msg = build_new_msg_header(msg_fm_db)
+            if self._pms_cfg.get('pn_auto_path', True):
+                to_bbs_call = msg_fm_db.get('recipient_bbs_call', '')
+                auto_bbs = self._find_1stHop_BBS_fm_PNroute(to_bbs_call)
+                if auto_bbs:
+                    fwd_bbs_call = auto_bbs
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             # print(_new_msg)
             return self._db.bbs_insert_msg_to_fwd(new_msg)
@@ -282,6 +331,9 @@ class BBS:
 
     def get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
         return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
+
+    def _get_fwd_out_tab(self):
+        return self._db.bbs_get_fwd_out_Tab()
 
     def build_fwd_header(self, bbs_call: str):
         fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
@@ -302,8 +354,8 @@ class BBS:
         try:
             return ret.encode('ASCII'), ret_bids
         except UnicodeEncodeError:
-            print("BBS: build_fwd_header UnicodeEncodeError")
-            logger.error("BBS: build_fwd_header UnicodeEncodeError")
+            print(self._logTag + "build_fwd_header UnicodeEncodeError")
+            logger.error(self._logTag + "build_fwd_header UnicodeEncodeError")
             return b'', ret_bids
 
     def get_fwd_q_tab(self):
@@ -411,7 +463,7 @@ class BBS:
 
     def get_pms_cfg(self):
         if not self._pms_cfg:
-            self._pms_cfg = POPT_CFG.get_CFG_by_key('pms_main')
+            self._pms_cfg = POPT_CFG.get_BBS_cfg()
         return dict(self._pms_cfg)
 
     def set_pms_cfg(self):

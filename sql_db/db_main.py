@@ -396,7 +396,7 @@ class SQL_Database:
         if res is None:
             return False
         self._fwd_paths_insert(msg_struc.get('fwd_path', []))   # TODO don't like accessing DB so many times
-        self._fwd_node_insert(msg_struc.get('fwd_path', []))    # TODO don't like accessing DB so many times
+        self._fwd_path_node_insert(msg_struc.get('fwd_path', []))    # TODO don't like accessing DB so many times
         return True
 
     def bbs_get_MID(self):
@@ -567,24 +567,30 @@ class SQL_Database:
         res = res[0]
         # [(12, None, 'MD2SAW', '', 'MD2SAW', 'MD2BBS', 9, 'TEST-MAIL', None, b'TEST 1234', None, None, 'P', 'E')]
         return {
-            'mid': res[0],
-            'bid_mid': res[1],
-            'sender': res[2],
-            'sender_bbs': res[3],
-            'sender_bbs_call': res[4],
-            'receiver': res[5],
-            'recipient_bbs': res[6],
+            'mid'               : res[0],
+            'bid_mid'           : res[1],
+            'sender'            : res[2],
+            'sender_bbs'        : res[3],
+            'sender_bbs_call'   : res[4],
+            'receiver'          : res[5],
+            'recipient_bbs'     : res[6],
             'recipient_bbs_call': res[7],
-            'message_size': res[8],
-            'subject': res[9],
-            'header': res[10],
-            'msg': res[11],
-            'time': res[12],
-            'tx-time': res[13],
-            'utctime': res[14],
-            'message_type': res[15],
-            'flag': res[16],
+            'message_size'      : res[8],
+            'subject'           : res[9],
+            'header'            : res[10],
+            'msg'               : res[11],
+            'time'              : res[12],
+            'tx-time'           : res[13],
+            'utctime'           : res[14],
+            'message_type'      : res[15],
+            'flag'              : res[16],
         }
+
+    def bbs_get_fwd_out_Tab(self):
+        query = "SELECT * FROM pms_out_msg WHERE flag='F';"
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
 
     def bbs_get_fwd_q_Tab_for_BBS(self, bbs_call: str):
         query = "SELECT * FROM pms_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
@@ -949,6 +955,13 @@ class SQL_Database:
         q = "SELECT * FROM fwdPaths;"
         return self._commit_query(q)
 
+    def bbs_get_fwdPaths_1stHop(self, destBBS: str):
+        q = ("SELECT fromBBS, hops, path "
+             "FROM fwdPaths "
+             f"WHERE destBBS='{destBBS}' "
+             f"ORDER BY hops ;")
+        return self._commit_query(q)
+
     def _fwd_paths_insert(self, path: list):
         """
         :param path: [(BBS-ADD, WP-Infos), ]
@@ -1016,7 +1029,7 @@ class SQL_Database:
             return False
         return True
 
-    def _fwd_node_insert(self, path: list):
+    def _fwd_path_node_insert(self, path: list):
         if not path:
             return False
         path_add_list = [a[0] for a in path]

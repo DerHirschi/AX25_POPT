@@ -24,6 +24,7 @@ class BBSGeneralSettings(tk.Frame):
         self._own_call_var      = tk.StringVar(self,  value=str(self._pms_cfg.get('user', '')))
         self._singleConn_var    = tk.BooleanVar(self, value=bool(self._pms_cfg.get('single_auto_conn', True)))
         self._autoConn_var      = tk.BooleanVar(self, value=bool(self._pms_cfg.get('auto_conn', False)))
+        self._pnAutoPath_var    = tk.BooleanVar(self, value=bool(self._pms_cfg.get('pn_auto_path', True)))
         ###################################
         # GUI Stuff
         own_call_fr     = tk.Frame(self, borderwidth=5)
@@ -33,6 +34,7 @@ class BBSGeneralSettings(tk.Frame):
         bid_btn_fr      = tk.Frame(self, borderwidth=5)
         btn_fr          = tk.Frame(self, borderwidth=5)
         chk_fr          = tk.Frame(self, borderwidth=5)
+        chk_f2          = tk.Frame(self, borderwidth=5)
         #############
         tk.Label(self, text=self._getTabStr('own_station')).pack(side=tk.TOP, expand=False)
 
@@ -41,6 +43,7 @@ class BBSGeneralSettings(tk.Frame):
         bid_fr.pack(side=tk.TOP, fill=tk.X, expand=False)
         btn_fr.pack(side=tk.TOP, fill=tk.X, expand=False)
         chk_fr.pack(side=tk.TOP, fill=tk.X, expand=False)
+        chk_f2.pack(side=tk.TOP, fill=tk.X, expand=False)
 
         tk.Label(own_call_fr, text='CALL: ', width=10).pack(side=tk.LEFT, expand=False)
         tk.Entry(own_call_fr,
@@ -64,13 +67,19 @@ class BBSGeneralSettings(tk.Frame):
                  ).pack(side=tk.LEFT, fill=tk.X, expand=False)
 
         ###################
-        # r1
+        # chk_fr
         tk.Checkbutton(chk_fr,
                        variable=self._autoConn_var,
                        text='Outgoing FWD').pack(side=tk.LEFT, expand=False)
         tk.Checkbutton(chk_fr,
                        variable=self._singleConn_var,
                        text='Single Conn').pack(side=tk.LEFT, expand=False)
+        ###################
+        # chk_f2
+        tk.Checkbutton(chk_f2,
+                       variable=self._pnAutoPath_var,
+                       text='PM Auto-Path').pack(side=tk.LEFT, expand=False)
+
 
         ###################################
         # INIT Stuff
@@ -102,6 +111,7 @@ class BBSGeneralSettings(tk.Frame):
         self._pms_cfg['regio']              = str(self._own_regio_var.get().upper())  # TODO Validator
         self._pms_cfg['single_auto_conn']   = bool(self._singleConn_var.get())
         self._pms_cfg['auto_conn']          = bool(self._autoConn_var.get())
+        self._pms_cfg['pn_auto_path']       = bool(self._pnAutoPath_var.get())
 
     ####################################
     def save_config(self):

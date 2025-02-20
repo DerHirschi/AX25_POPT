@@ -33,7 +33,7 @@ class BBSSettingsMain(tk.Toplevel):
         self._root_win.settings_win = self
         self.title(self._getTabStr('settings'))
         ###############################################################
-        self._pms_cfg   = POPT_CFG.get_CFG_by_key('pms_main')
+        self._pms_cfg   = POPT_CFG.get_BBS_cfg()
         ###############################################################
         self._win_tab   = {
             'general_settings'  : BBSGeneralSettings,
@@ -87,7 +87,7 @@ class BBSSettingsMain(tk.Toplevel):
                 self._root_win.sysMsg_to_monitor(
                     self._getTabStr('setting_saved').format(self._getTabStr(strTab_name))
                 )
-        POPT_CFG.set_CFG_by_key('pms_main', dict(self._pms_cfg))
+        POPT_CFG.set_BBS_cfg(self._pms_cfg)
         if not self._bbs_obj:
             return False
         self._bbs_obj.set_pms_cfg()

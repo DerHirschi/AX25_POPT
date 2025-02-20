@@ -1,4 +1,4 @@
-from cfg.default_config import getNew_PMS_cfg, getNew_BBS_FWD_cfg, getNew_maniGUI_parm, \
+from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS
@@ -15,9 +15,9 @@ class Main_CFG:
         # TODO RX-Echo CFG
         self._default_cfg_tab = {
             ##########################
-            # -- PMS
-            'pms_main': getNew_PMS_cfg,
-            'pms_home_bbs': getNew_BBS_FWD_cfg,
+            # -- BBS
+            'bbs_main': getNew_BBS_cfg,
+            # 'pms_home_bbs': getNew_BBS_FWD_cfg,
             ##########################
             # -- MH
             'mh_cfg': getNew_MH_cfg,
@@ -76,6 +76,8 @@ class Main_CFG:
         self._update_old_PORT_CFGs()
         """ MCast CFGs"""
         self._update_old_MCast_ch_cfgs()
+        """ BBS CFGs"""
+        self._update_BBS_cfg()
         """
         print('---------- PIPE CFG -------------')
         for call, cfg in self._config['pipe_cfgs'].items():
@@ -580,5 +582,23 @@ class Main_CFG:
 
     def set_gpio_cfg(self, gpio_cfg: dict):
         self._config['gpio_cfg'] = dict(gpio_cfg)
+
+    ###########################################
+    # BBS
+    def _update_BBS_cfg(self):
+        if 'pms_main' in  self._config:
+            self._config['bbs_main'] = dict(self._config['pms_main'])
+            del self._config['pms_main']
+
+        if 'home_bbs_cfg' in self._config['bbs_main']:
+            self._config['bbs_main']['fwd_bbs_cfg'] = dict(self._config['bbs_main']['home_bbs_cfg'])
+            del self._config['bbs_main']['home_bbs_cfg']
+
+    def get_BBS_cfg(self):
+        return dict(self._config.get('bbs_main', getNew_BBS_cfg()))
+
+    def set_BBS_cfg(self, bbs_cfg: dict):
+        self._config['bbs_main'] = dict(bbs_cfg)
+
 
 POPT_CFG = Main_CFG()

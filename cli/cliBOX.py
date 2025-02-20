@@ -76,7 +76,7 @@ class BoxCLI(DefaultCLI):
         if any((
                 self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
                 self._connection.bbs_connection,
-                self._to_call in pms_cfg.get('home_bbs_cfg', {}).keys()
+                self._to_call in pms_cfg.get('fwd_bbs_cfg', {}).keys()
         )):
             logger.debug(self._logTag + "No CLI-CMD Mode. No C-Text")
             return ret + self.get_ts_prompt()
@@ -104,7 +104,7 @@ class BoxCLI(DefaultCLI):
         if self._connection.bbs_connection:
             return
         pms_cfg: dict = bbs.get_pms_cfg()
-        if self._to_call in pms_cfg.get('home_bbs_cfg', {}).keys():
+        if self._to_call in pms_cfg.get('fwd_bbs_cfg', {}).keys():
             self._connection.bbsFwd_start()
         if any((
                 self.stat_identifier.typ in ['BBS', 'NODE'],

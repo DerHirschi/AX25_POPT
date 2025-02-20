@@ -61,13 +61,13 @@ class BBS_FWD_Settings(tk.Frame):
         #################
         # Var Init
         # self._get_user_data_fm_cfg()
-        if not self._pms_cfg.get('home_bbs_cfg', {}):
+        if not self._pms_cfg.get('fwd_bbs_cfg', {}):
             self._add_new_homeBBS_tab()
         else:
             self._get_hBBS_vars_fm_cfg()
 
     def _add_new_homeBBS_tab(self):
-        if 'NOCALL' in self._pms_cfg.get('home_bbs_cfg', {}).keys():
+        if 'NOCALL' in self._pms_cfg.get('fwd_bbs_cfg', {}).keys():
             return
         self._bbs_vars['NOCALL'] = self._add_homeBBS_tab()
         self._select_new_tab()
@@ -76,7 +76,7 @@ class BBS_FWD_Settings(tk.Frame):
         if not cfg:
             if 'NOCALL' in self._bbs_vars.keys():
                 return
-            cfg = POPT_CFG.get_default_CFG_by_key('pms_home_bbs')
+            cfg = getNew_BBS_FWD_cfg()
         ###########################################
         # VARs
         port_id_var         = tk.StringVar(self, value=cfg.get('port_id', '0'))
@@ -208,7 +208,7 @@ class BBS_FWD_Settings(tk.Frame):
             self._tabctl.forget(self._tabctl.select())
 
     def _get_hBBS_vars_fm_cfg(self):
-        for k, fwd_cfg in self._pms_cfg.get('home_bbs_cfg', {}).items():
+        for k, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
             if not fwd_cfg:
                 logger.warning(self._logTag + f"Empty FWD-CFG for {k}")
                 fwd_cfg = getNew_BBS_FWD_cfg()
@@ -232,7 +232,7 @@ class BBS_FWD_Settings(tk.Frame):
                 axip_port = int(nocall_vars['axip_port_var'].get())
             except ValueError:
                 axip_port = 0
-            home_bbs_cfg = POPT_CFG.get_default_CFG_by_key('pms_home_bbs')
+            home_bbs_cfg = getNew_BBS_FWD_cfg()
             home_bbs_cfg['port_id'] = port_id
             home_bbs_cfg['regio'] = regio
             home_bbs_cfg['dest_call'] = dest_call
@@ -305,24 +305,24 @@ class BBS_FWD_Settings(tk.Frame):
     def _save_scheCfg(self, pms_cfg_k: str):
         bbs_cfg = self._get_homeBBS_cfg(pms_cfg_k)
         bbs_cfg['scheduler_cfg'] = dict(self.schedule_config)
-        # self._pms_cfg['home_bbs_cfg'][pms_cfg_k] = bbs_cfg
+        # self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = bbs_cfg
         self._set_homeBBS_cfg(pms_cfg_k, bbs_cfg)
 
     def _get_homeBBS_cfg(self, pms_cfg_k: str):
-        all_bbs_cfgs = dict(self._pms_cfg.get('home_bbs_cfg', {}))
-        return dict(all_bbs_cfgs.get(pms_cfg_k, POPT_CFG.get_default_CFG_by_key('pms_home_bbs')))
+        all_bbs_cfgs = dict(self._pms_cfg.get('fwd_bbs_cfg', {}))
+        return dict(all_bbs_cfgs.get(pms_cfg_k, getNew_BBS_FWD_cfg()))
 
     def _set_homeBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
-        self._pms_cfg['home_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
+        self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
 
     def _del_NOCALL_homeBBS_cfg(self):
-        if 'NOCALL' in self._pms_cfg.get('home_bbs_cfg', {}).keys():
-            del self._pms_cfg['home_bbs_cfg']['NOCALL']
+        if 'NOCALL' in self._pms_cfg.get('fwd_bbs_cfg', {}).keys():
+            del self._pms_cfg['fwd_bbs_cfg']['NOCALL']
 
     def _del_homeBBS_cfg(self, pms_cfg_k: str):
-        if pms_cfg_k in self._pms_cfg['home_bbs_cfg'].keys():
-            self._pms_cfg['home_bbs_cfg'][pms_cfg_k] = None
-            del self._pms_cfg['home_bbs_cfg'][pms_cfg_k]
+        if pms_cfg_k in self._pms_cfg['fwd_bbs_cfg'].keys():
+            self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = None
+            del self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k]
 
     def scheduler_config_save_task(self):
         """ Task fm PoPT-Scheduler_win"""
@@ -360,11 +360,11 @@ class BBS_FWD_Settings(tk.Frame):
 
     def _cleanup_hBBS_cfg(self):
         if self._pms_cfg:
-            if self._pms_cfg.get('home_bbs_cfg', {}).get('NOCALL', None):
-                del self._pms_cfg['home_bbs_cfg']['NOCALL']
-            for k in list(self._pms_cfg.get('home_bbs_cfg', {}).keys()):
+            if self._pms_cfg.get('fwd_bbs_cfg', {}).get('NOCALL', None):
+                del self._pms_cfg['fwd_bbs_cfg']['NOCALL']
+            for k in list(self._pms_cfg.get('fwd_bbs_cfg', {}).keys()):
                 if k not in self._bbs_vars.keys():
-                    del self._pms_cfg['home_bbs_cfg'][k]
+                    del self._pms_cfg['fwd_bbs_cfg'][k]
 
     """
     def _set_homeBBS_list(self):

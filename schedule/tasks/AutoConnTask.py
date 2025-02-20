@@ -55,7 +55,6 @@ class AutoConnTask:
             self._set_state_exec(0)
         else:
             self.connection = connection[0]
-            #self.connection.autoTask = True
             self.connection.cli = NoneCLI(self.connection)
             self.connection.cli_type = f"Task: {self._conf.get('task_typ', '-')}"
             # self.dest_station_id = self.connection.cli.stat_identifier
@@ -137,6 +136,7 @@ class AutoConnTask:
             self._set_state_exec(4)
             return
         """
+        # TODO if connection.rx:
         if self.connection.bbsFwd_start_reverse():
             self._set_state_exec(4)
         else:
