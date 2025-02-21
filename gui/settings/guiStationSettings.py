@@ -674,15 +674,15 @@ class StatSetTab:
         #######################################################
         #######################################################
         # New CFG
-        self._new_station_setting['stat_parm_Call'] = str(call)
-        self._new_station_setting['stat_parm_Name'] = str(self._name.get())
+        self._new_station_setting['stat_parm_Call']             = str(call)
+        self._new_station_setting['stat_parm_Name']             = str(self._name.get())
         # self._new_station_setting['stat_parm_is_Digi'] = bool(self._digi_set_var.get())
-        self._new_station_setting['stat_parm_cli'] = str(cli_key)
-        self._new_station_setting['stat_parm_PacLen'] = int(var_paclen)
-        self._new_station_setting['stat_parm_MaxFrame'] = int(var_maxpac)
-        self._new_station_setting['stat_parm_qso_col_text_tx'] = str(self._qso_fg_tx)
-        self._new_station_setting['stat_parm_qso_col_text_rx'] = str(self._qso_fg_rx)
-        self._new_station_setting['stat_parm_qso_col_bg'] = str(self._qso_bg_tx)
+        self._new_station_setting['stat_parm_cli']              = str(cli_key)
+        self._new_station_setting['stat_parm_PacLen']           = int(var_paclen)
+        self._new_station_setting['stat_parm_MaxFrame']         = int(var_maxpac)
+        self._new_station_setting['stat_parm_qso_col_text_tx']  = str(self._qso_fg_tx)
+        self._new_station_setting['stat_parm_qso_col_text_rx']  = str(self._qso_fg_rx)
+        self._new_station_setting['stat_parm_qso_col_bg']       = str(self._qso_bg_tx)
 
         # cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())
         """

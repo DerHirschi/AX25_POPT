@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from gui.plots.guiAPRS_wx_plot import WXPlotWindow
 # from cfg.logger_config import logger
@@ -12,7 +13,7 @@ class WXWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
-        self._lang = root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self._ais_obj.wx_tree_gui = self
         ###################################

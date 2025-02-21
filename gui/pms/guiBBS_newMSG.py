@@ -7,22 +7,22 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
 from fnc.gui_fnc import get_typed, detect_pressed
-from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines
+from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
-from cfg.string_tab import STR_TABLE
 
 
 class BBS_newMSG(tk.Toplevel):
     def __init__(self, root_win, reply_msg=None):
         tk.Toplevel.__init__(self)
         if reply_msg is None:
-            reply_msg = {}
-        self._root_win = root_win
-        self._bbs_obj = PORT_HANDLER.get_bbs()
-        self.text_size = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-        self.language = POPT_CFG.get_guiCFG_language()
+            reply_msg   = {}
+        self._root_win  = root_win
+        self._bbs_obj   = PORT_HANDLER.get_bbs()
+        self.text_size  = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
+        self._lang      = POPT_CFG.get_guiCFG_language()
+        self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
         ###################################
-        self.title(STR_TABLE['new_pr_mail'][self.language])
+        self.title(self._getTabStr('new_pr_mail'))
         self.style = self._root_win.style
         if hasattr(self._root_win, 'main_win'):
             win = self._root_win.main_win
@@ -44,17 +44,17 @@ class BBS_newMSG(tk.Toplevel):
         self._init_Menu()
         ####################
         # VARS
-        self._reply_msg = reply_msg
-        self._mid = 0
-        self._msg_data = {}
-        self._msg_typ_var = tk.StringVar(self, 'P')
-        self._home_bbs_var = tk.StringVar(self)
-        self._from_call_var = tk.StringVar(self)
-        self._to_call_var = tk.StringVar(self)
-        self._to_cc_call_var = tk.StringVar(self)
-        self._subject_var = tk.StringVar(self)
-        self._var_encoding = tk.StringVar(self, 'UTF-8')
-        self._var_msg_size = tk.StringVar(self, ' Size: 0 Bytes')
+        self._reply_msg         = reply_msg
+        self._mid               = 0
+        self._msg_data          = {}
+        self._msg_typ_var       = tk.StringVar(self, 'P')
+        self._home_bbs_var      = tk.StringVar(self)
+        self._from_call_var     = tk.StringVar(self)
+        self._to_call_var       = tk.StringVar(self)
+        self._to_cc_call_var    = tk.StringVar(self)
+        self._subject_var       = tk.StringVar(self)
+        self._var_encoding      = tk.StringVar(self, 'UTF-8')
+        self._var_msg_size      = tk.StringVar(self, ' Size: 0 Bytes')
 
         prmail_list = USER_DB.get_all_PRmail()
         if DEV_PRMAIL_ADD not in prmail_list:
@@ -63,10 +63,10 @@ class BBS_newMSG(tk.Toplevel):
 
         ####################
         # Frames
-        frame_btn_oben = tk.Frame(self, height=30)
-        frame_oben = tk.Frame(self, height=200)
-        frame_unten = tk.Frame(self)
-        footer_frame = tk.Frame(self, height=20)
+        frame_btn_oben  = tk.Frame(self, height=30)
+        frame_oben      = tk.Frame(self, height=200)
+        frame_unten     = tk.Frame(self)
+        footer_frame    = tk.Frame(self, height=20)
 
         frame_btn_oben.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         frame_oben.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
@@ -91,10 +91,10 @@ class BBS_newMSG(tk.Toplevel):
         self._root_win.newPMS_MSG_win = self
         if self._reply_msg:
             self._init_data_f_reply()
-        self.bind('<Key>', self._update_msg_size)
-        self.bind('<Control-c>', lambda event: self._copy_select())
-        self.bind('<Control-x>', lambda event: self._cut_select())
-        self.bind('<Control-plus>', lambda event: self._increase_textsize())
+        self.bind('<Key>',           self._update_msg_size)
+        self.bind('<Control-c>',     lambda event: self._copy_select())
+        self.bind('<Control-x>',     lambda event: self._cut_select())
+        self.bind('<Control-plus>',  lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
 
     def _on_key_release_inp_txt(self, event=None):
@@ -115,13 +115,13 @@ class BBS_newMSG(tk.Toplevel):
         menubar.add_cascade(label='Mail', menu=MenuVerb, underline=0)
         # ### Bearbeiten
         MenuEdit = tk.Menu(menubar, tearoff=False)
-        MenuEdit.add_command(label=STR_TABLE['past_f_file'][self.language],
+        MenuEdit.add_command(label=self._getTabStr('past_f_file'),
                               command=self._insert_fm_file,
                               underline=0)
-        MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
+        MenuEdit.add_command(label=self._getTabStr('save_to_file'),
                               command=self._save_to_file,
                               underline=0)
-        menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
+        menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
 
     def _init_upper_btn_frame(self, root_frame):
         tk.Button(root_frame,
@@ -138,20 +138,22 @@ class BBS_newMSG(tk.Toplevel):
                   ).pack(side=tk.RIGHT, expand=False, anchor='e')
 
     def _init_header_frame(self, root_frame):
-        from_frame = tk.Frame(root_frame)
-        to_frame = tk.Frame(root_frame)
-        subj_frame = tk.Frame(root_frame)
+        from_frame  = tk.Frame(root_frame)
+        to_frame    = tk.Frame(root_frame)
+        subj_frame  = tk.Frame(root_frame)
         from_frame.pack(side=tk.TOP, expand=True, anchor='w', padx=10, pady=10)
-        to_frame.pack(side=tk.TOP, expand=True, fill=tk.X, anchor='w', padx=10, pady=5)
+        to_frame.pack(side=tk.TOP,   expand=True, anchor='w', padx=10, pady=5, fill=tk.X)
         subj_frame.pack(side=tk.TOP, expand=True, anchor='w', padx=10, pady=5)
 
-        tk.Label(from_frame, text='Von: ').pack(side=tk.LEFT, expand=False)
-        _user_call = self._bbs_obj.get_pms_cfg().get('user', '')
-        if _user_call:
-            self._from_call_var.set(_user_call)
-        tk.Entry(from_frame,
-                 textvariable=self._from_call_var,
-                 state='disabled'
+        tk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
+
+        stat_cfg = POPT_CFG.get_stat_CFGs_by_typ('USER')
+        opt = list(stat_cfg.keys())
+        if opt:
+            self._from_call_var.set(opt[0])
+        tk.OptionMenu(from_frame,
+                 self._from_call_var,
+                 *opt
                  ).pack(side=tk.LEFT, fill=tk.X, expand=False, padx=25)
 
         typ_frame = tk.Frame(from_frame)
@@ -162,15 +164,17 @@ class BBS_newMSG(tk.Toplevel):
                       self._msg_typ_var,
                       *opt, ).pack(side=tk.LEFT, expand=False, )
 
-        tk.Label(from_frame, text='HomeBBS: ').pack(side=tk.LEFT, expand=False, padx=25)
-        opt = self._bbs_obj.get_pms_cfg().get('home_bbs', [])
+
+        tk.Label(from_frame, text='FWD-BBS: ').pack(side=tk.LEFT, expand=False, padx=25)
+        opt = ['AUTO'] + self._bbs_obj.get_pms_cfg().get('home_bbs', [])
         if opt:
             self._home_bbs_var.set(opt[0])
         tk.OptionMenu(from_frame,
                       self._home_bbs_var,
                       *opt, ).pack(side=tk.LEFT, expand=False)
 
-        tk.Label(to_frame, text='An: ').pack(side=tk.LEFT, expand=False)
+
+        tk.Label(to_frame, text=f"{self._getTabStr('to')}: ").pack(side=tk.LEFT, expand=False)
         self._to_call_ent = tk.Entry(to_frame,
                                      textvariable=self._to_call_var,
                                      # highlightcolor='blue',
@@ -190,7 +194,7 @@ class BBS_newMSG(tk.Toplevel):
                             lambda event: get_typed(event, self._chiefs, self._to_cc_call_var, self._cc_entry))
         self._cc_entry.bind('<Key>', lambda event: detect_pressed(event, self._cc_entry))
 
-        tk.Label(subj_frame, text='Betreff: ').pack(side=tk.LEFT, expand=False)
+        tk.Label(subj_frame, text=f"{self._getTabStr('subject')}: ").pack(side=tk.LEFT, expand=False)
         tk.Entry(subj_frame,
                  textvariable=self._subject_var,
                  width=91).pack(side=tk.LEFT, expand=False)
@@ -324,8 +328,9 @@ class BBS_newMSG(tk.Toplevel):
             logger.error("PMS-newMSG: sender")
             return False
         regio_add = self._bbs_obj.get_pms_cfg().get('regio', '')
-        if not regio_add:
-            logger.error("PMS-newMSG: regio_add")
+        bbs_call  = self._bbs_obj.get_pms_cfg().get('user', '')
+        if any((not regio_add, not bbs_call)):
+            logger.error(f"PMS-newMSG: regio_add/bbs_call: {regio_add}/{bbs_call}")
             return False
         recv_call = self._to_call_var.get()
         if not recv_call:
@@ -348,22 +353,23 @@ class BBS_newMSG(tk.Toplevel):
         if not subj:
             logger.error("PMS-newMSG: subj")
             return False
-        cc_add = self._to_cc_call_var.get()
-        enc = self._var_encoding.get()
-        msg_text = str(self._text.get('1.0', tk.END)[:-1])
-        msg_text = zeilenumbruch_lines(msg_text)
-        msg_text = msg_text.replace('\n', '\r')
-        msg_text = msg_text.encode(enc, 'ignore')
-        sender_bbs = sender + '.' + regio_add
+        cc_add      = self._to_cc_call_var.get()
+        enc         = self._var_encoding.get()
+        msg_text    = str(self._text.get('1.0', tk.END)[:-1])
+        msg_text    = zeilenumbruch_lines(msg_text)
+        msg_text    = msg_text.replace('\n', '\r')
+        msg_text    = msg_text.encode(enc, 'ignore')
+
+        sender_bbs = bbs_call + '.' + regio_add
         self._msg_data = {
-            'sender': sender.upper(),
-            'sender_bbs': sender_bbs.upper(),
-            'receiver': recv_call.upper(),
+            'sender':        sender.upper(),
+            'sender_bbs':    sender_bbs.upper(),
+            'receiver':      recv_call.upper(),
             'recipient_bbs': recv_bbs.upper(),
-            'subject': subj,
-            'msg': msg_text,
-            'message_type': typ,
-            'cc_add': cc_add,
+            'subject':       subj,
+            'msg':           msg_text,
+            'message_type':  typ,
+            'cc_add':        cc_add,
         }
         # Entwurf Nachrichten
         if self._reply_msg.get('mid', ''):
@@ -407,6 +413,8 @@ class BBS_newMSG(tk.Toplevel):
         home_bbs = self._home_bbs_var.get()
         if not home_bbs:
             return False
+        if home_bbs == 'AUTO':
+            return self._bbs_obj.add_msg_to_fwd_by_id(self._mid)
         home_bbs = home_bbs.split('.')[0]
         return self._bbs_obj.add_msg_to_fwd_by_id(self._mid, home_bbs)
 

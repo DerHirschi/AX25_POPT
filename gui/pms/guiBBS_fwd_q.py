@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 # from cfg.logger_config import logger
 
@@ -15,7 +16,8 @@ class BBS_fwd_Q(tk.Toplevel):
         # Vars
         self._rev_ent = False
 
-        self.title(STR_TABLE['fwd_list'][self._root_win.language])
+        self._lang = POPT_CFG.get_guiCFG_language()
+        self.title(STR_TABLE['fwd_list'][self._lang])
         self.style = self._root_win.style
         # self.geometry("1250x700")
         self.geometry(f"1000x"

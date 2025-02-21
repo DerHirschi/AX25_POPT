@@ -5,6 +5,7 @@ from tkinter.scrolledtext import ScrolledText
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import format_aprs_f_aprs_mon
 from cfg.constant import FONT
+from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars
 from cfg.string_tab import STR_TABLE
 
@@ -13,7 +14,7 @@ class AISmonitor(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_cl = root_win
-        self._lang = self._root_cl.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self._text_size = int(self._root_cl.text_size)
         self._win_height = 700
         self._win_width = 1500

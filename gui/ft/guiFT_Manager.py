@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk, Menu
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number
 
@@ -15,7 +16,7 @@ class FileTransferManager(tk.Toplevel):
         self.overview_frame = None
         self._root_win = root
         # self.port_handler = self.root.ax25_port_handler
-        self._lang = self._root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self.win_height = 600
         self.win_width = 1050
         self.style = root.style

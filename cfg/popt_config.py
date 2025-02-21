@@ -439,6 +439,14 @@ class Main_CFG:
 
     ###########################################
     # Station
+    def get_stat_CFGs_by_typ(self, typ='USER'):
+        stat_cfg = dict(self._config.get('stat_cfgs', {}))
+        ret = {}
+        for call, stat_cfg in stat_cfg.items():
+            if stat_cfg.get('stat_parm_cli', 'NO-CLI') == typ:
+                ret[str(call)] = dict(stat_cfg)
+        return ret
+
     def get_stat_CFGs(self):
         return dict(self._config.get('stat_cfgs', {}))
 

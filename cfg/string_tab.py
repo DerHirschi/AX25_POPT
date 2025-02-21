@@ -1634,6 +1634,17 @@ STR_TABLE = {
            '',
            ''),
 
+    'subject': ('Betreff',
+           'Subject',
+           'Onderwerp ',
+           '',
+           '',
+           '',
+           '',
+           '',
+           '',
+           ''),
+
     'versatz': ('Versatz',
                 'Offset',
                 'Verzet',

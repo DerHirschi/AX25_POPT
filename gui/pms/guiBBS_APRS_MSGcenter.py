@@ -14,7 +14,7 @@ class MSG_Center(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._root_win = root_win
-        self.language = root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         ###################################
         # Vars
         self._bbs_obj = PORT_HANDLER.get_bbs()
@@ -32,7 +32,7 @@ class MSG_Center(tk.Toplevel):
         self._text_size_tabs = 10
         self.newPMS_MSG_win = self._root_win.newPMS_MSG_win
         ###################################
-        self.title(STR_TABLE['msg_center'][self.language])
+        self.title(STR_TABLE['msg_center'][self._lang])
         self.style = self._root_win.style
         # self.geometry("1250x700")
         self.geometry(f"1250x"
@@ -190,19 +190,19 @@ class MSG_Center(tk.Toplevel):
         out_pan_frame = tk.Frame(tab_OUT)
         out_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        _pw_out = ttk.PanedWindow(out_pan_frame, orient=tk.VERTICAL)
+        pw_out = ttk.PanedWindow(out_pan_frame, orient=tk.VERTICAL)
 
-        top_f = tk.Frame(_pw_out)
-        lower_f_main = tk.Frame(_pw_out)
+        top_f = tk.Frame(pw_out)
+        lower_f_main = tk.Frame(pw_out)
         lower_f_top = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         lower_f_top.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        _pw_out.add(top_f, weight=1)
-        _pw_out.add(lower_f_main, weight=1)
-        _pw_out.pack(fill=tk.BOTH, expand=True)
+        pw_out.add(top_f, weight=1)
+        pw_out.add(lower_f_main, weight=1)
+        pw_out.pack(fill=tk.BOTH, expand=True)
         ########################
         # ## top_f / Msg Table
         self._out_tree = None
@@ -284,10 +284,10 @@ class MSG_Center(tk.Toplevel):
                               command=self._set_all_to_oldMSG,
                               underline=0)
         MenuVerb.add_separator()
-        MenuEdit.add_command(label=STR_TABLE['save_to_file'][self.language],
+        MenuEdit.add_command(label=STR_TABLE['save_to_file'][self._lang],
                               command=self._save_msg_to_file,
                               underline=0)
-        menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
+        menubar.add_cascade(label=STR_TABLE['edit'][self._lang], menu=MenuEdit, underline=0)
 
     def _init_Vars_fm_Cfg(self):
         pass

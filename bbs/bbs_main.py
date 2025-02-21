@@ -314,16 +314,19 @@ class BBS:
         msg_struc['message_size'] = int(len(msg_struc['msg']))
         return self._db.bbs_update_out_msg(msg_struc)
 
-    def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call: str):
+    def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call=''):
         msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if msg_fm_db:
             # print(_msg_fm_db)
             new_msg = build_new_msg_header(msg_fm_db)
-            if self._pms_cfg.get('pn_auto_path', True):
+            if self._pms_cfg.get('pn_auto_path', True) or not fwd_bbs_call:
                 to_bbs_call = msg_fm_db.get('recipient_bbs_call', '')
                 auto_bbs = self._find_1stHop_BBS_fm_PNroute(to_bbs_call)
                 if auto_bbs:
                     fwd_bbs_call = auto_bbs
+            if not fwd_bbs_call:
+                logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id")
+                return False
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             # print(_new_msg)
             return self._db.bbs_insert_msg_to_fwd(new_msg)

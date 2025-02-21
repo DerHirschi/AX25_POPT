@@ -67,7 +67,7 @@ def getNew_BBS_cfg():
     return dict(
         user            = 'NOCALL', # BOX CALL
         regio           = '',
-        fwd_bbs_cfg    = {},       # FWD CFGs
+        fwd_bbs_cfg     = {},       # FWD CFGs
         home_bbs        = [],
         single_auto_conn= True,
         auto_conn       = False,    # Allow Outgoing Connects

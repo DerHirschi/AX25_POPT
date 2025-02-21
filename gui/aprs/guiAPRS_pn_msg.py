@@ -17,12 +17,12 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._root_cl = root_win
         PORT_HANDLER.set_aprsMailAlarm_PH(False)
         # self._root_cl.reset_aprsMail_alarm()
-        self.lang = self._root_cl.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self.text_size = self._root_cl.text_size
         self.win_height = 700
         self.win_width = 1450
         self.style = self._root_cl.style
-        self.title(STR_TABLE['aprs_pn_msg'][self.lang])
+        self.title(STR_TABLE['aprs_pn_msg'][self._lang])
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
                       f"{self._root_cl.main_win.winfo_x()}+"
@@ -41,10 +41,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         top_frame = ttk.Frame(self)
         top_frame.pack(side=tk.TOP, padx=10, pady=10)
 
-        button4 = ttk.Button(top_frame, text=STR_TABLE['new_msg'][self.lang], command=self._btn_new_msg)
+        button4 = ttk.Button(top_frame, text=STR_TABLE['new_msg'][self._lang], command=self._btn_new_msg)
         button4.pack(side=tk.LEFT, padx=5)
 
-        button5 = ttk.Button(top_frame, text=STR_TABLE['del_all'][self.lang], command=self._btn_del_all_msg)
+        button5 = ttk.Button(top_frame, text=STR_TABLE['del_all'][self._lang], command=self._btn_del_all_msg)
         button5.pack(side=tk.LEFT, padx=5)
         """"
         button6 = ttk.Button(top_frame, text="Button 6", command=self.button6_clicked)
@@ -69,8 +69,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         )
         self._messages_treeview.heading("time", text="Datum")
         self._messages_treeview.heading("port_id", text="Port")
-        self._messages_treeview.heading("from", text=f"{STR_TABLE['from'][self.lang]}")
-        self._messages_treeview.heading("to", text=f"{STR_TABLE['to'][self.lang]}")
+        self._messages_treeview.heading("from", text=f"{STR_TABLE['from'][self._lang]}")
+        self._messages_treeview.heading("to", text=f"{STR_TABLE['to'][self._lang]}")
         self._messages_treeview.heading("via", text="VIA")
         self._messages_treeview.heading("msgno", text="#")
         self._messages_treeview.column("time", stretch=tk.NO, width=170)
@@ -91,7 +91,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         middle_frame = ttk.Frame(mid_frame)
         middle_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=False)
 
-        selected_message_label = ttk.Label(middle_frame, text=f"{STR_TABLE['msg'][self.lang]}:")
+        selected_message_label = ttk.Label(middle_frame, text=f"{STR_TABLE['msg'][self._lang]}:")
         selected_message_label.pack(anchor=tk.W, padx=5, pady=5)
 
         self.selected_message_text = ScrolledText(middle_frame,
@@ -142,14 +142,14 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.spooler_treeview.pack(fill=tk.BOTH, expand=True)
         but = ttk.Button(right_frame, text="Reset", command=self._btn_reset_spooler)
         but.pack(side=tk.LEFT, padx=5)
-        but = ttk.Button(right_frame, text=STR_TABLE['delete'][self.lang], command=self._btn_del_spooler)
+        but = ttk.Button(right_frame, text=STR_TABLE['delete'][self._lang], command=self._btn_del_spooler)
         but.pack(side=tk.RIGHT, padx=5)
 
         # Unterer Bereich: Rahmen für Buttons
         bottom_frame = ttk.Frame(self)
         bottom_frame.pack(side=tk.BOTTOM, padx=10, pady=10)
 
-        button1 = ttk.Button(bottom_frame, text=STR_TABLE['close'][self.lang], command=self._btn_close)
+        button1 = ttk.Button(bottom_frame, text=STR_TABLE['close'][self._lang], command=self._btn_close)
         button1.pack(side=tk.LEFT, padx=5)
         """
         button2 = ttk.Button(bottom_frame, text="Button 2", command=self.button2_clicked)

@@ -15,7 +15,7 @@ class PipeTab:
     def __init__(self, root_win, pipe=None, connection=None):
         self._root_win = root_win
         self.tab_clt = root_win.tabControl
-        self.lang = root_win.lang
+        self._lang = POPT_CFG.get_guiCFG_language()
         self.style = root_win.style
         self.own_tab = ttk.Frame(self.tab_clt)
         self._connection = connection
@@ -33,7 +33,7 @@ class PipeTab:
         x = 10
         y = 10
         self.to_add_var = tk.StringVar(self.own_tab)
-        tk.Label(self.own_tab, text=f"{STR_TABLE['to'][self.lang]}:").place(x=x, y=y)
+        tk.Label(self.own_tab, text=f"{STR_TABLE['to'][self._lang]}:").place(x=x, y=y)
         # if self.pipe.add_str:
         if self.pipe_cfg.get('pipe_parm_address_str', ''):
             self.to_add_var.set(self.pipe_cfg.get('pipe_parm_address_str', ''))
@@ -65,7 +65,7 @@ class PipeTab:
         # Port
         x = 40
         y = 140
-        tk.Label(self.own_tab, text=f"{STR_TABLE['port'][self.lang]}:").place(x=x, y=y)
+        tk.Label(self.own_tab, text=f"{STR_TABLE['port'][self._lang]}:").place(x=x, y=y)
         self.port_var = tk.StringVar(self.own_tab)
         self.port_var.set(self.pipe_cfg.get('pipe_parm_port', -1))
         vals = ['-1']
@@ -181,28 +181,28 @@ class PipeTab:
         # TX FILE
         x = 10
         y = self._root_win.win_height - 220 - 80  # iam lazy
-        tk.Label(self.own_tab, text=f"{STR_TABLE['tx_file'][self.lang]}:").place(x=x, y=y)
+        tk.Label(self.own_tab, text=f"{STR_TABLE['tx_file'][self._lang]}:").place(x=x, y=y)
         self.tx_filename_var = tk.StringVar(self.own_tab)
         self.tx_filename_var.set(self.pipe_cfg.get('pipe_parm_pipe_tx', ''))
         tx_filename = tk.Entry(self.own_tab, textvariable=self.tx_filename_var, width=50)
         # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         tx_filename.place(x=x + 140, y=y)
         tk.Button(self.own_tab,
-                  text=f"{STR_TABLE['file_1'][self.lang]}",
+                  text=f"{STR_TABLE['file_1'][self._lang]}",
                   command=lambda: self._select_files(tx=True)
                   ).place(x=x + 710, y=y - 2)
         #################
         # RX FILE
         x = 10
         y = self._root_win.win_height - 180 - 80  # iam lazy
-        tk.Label(self.own_tab, text=f"{STR_TABLE['rx_file'][self.lang]}:").place(x=x, y=y)
+        tk.Label(self.own_tab, text=f"{STR_TABLE['rx_file'][self._lang]}:").place(x=x, y=y)
         self.rx_filename_var = tk.StringVar(self.own_tab)
         self.rx_filename_var.set(self.pipe_cfg.get('pipe_parm_pipe_rx', ''))
         rx_filename = tk.Entry(self.own_tab, textvariable=self.rx_filename_var, width=50)
         # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         rx_filename.place(x=x + 140, y=y)
         tk.Button(self.own_tab,
-                  text=f"{STR_TABLE['file_1'][self.lang]}",
+                  text=f"{STR_TABLE['file_1'][self._lang]}",
                   command=lambda: self._select_files(tx=False)
                   ).place(x=x + 710, y=y - 2)
 
@@ -273,12 +273,12 @@ class PipeToolSettings(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self)
         self._root = root
-        self.lang = self._root.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         root.settings_win = self
         self.win_height = 600
         self.win_width = 860
         self.style = root.style
-        self.title(STR_TABLE['pipetool_settings'][self.lang])
+        self.title(STR_TABLE['pipetool_settings'][self._lang])
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
                       f"{self._root.main_win.winfo_x()}+"
@@ -294,7 +294,7 @@ class PipeToolSettings(tk.Toplevel):
         ##########################
         # OK, Save, Cancel
         ok_bt = tk.Button(self,
-                          text=STR_TABLE['OK'][self.lang],
+                          text=STR_TABLE['OK'][self._lang],
                           height=1,
                           width=6,
                           command=self._ok_btn_cmd)
@@ -307,7 +307,7 @@ class PipeToolSettings(tk.Toplevel):
         """
 
         cancel_bt = tk.Button(self,
-                              text=STR_TABLE['cancel'][self.lang],
+                              text=STR_TABLE['cancel'][self._lang],
                               height=1,
                               width=8,
                               command=self._destroy_win)
@@ -317,19 +317,19 @@ class PipeToolSettings(tk.Toplevel):
         ####################################
         # New Station, Del Station Buttons
         tk.Button(self,
-                  text=STR_TABLE['new_pipe'][self.lang],
+                  text=STR_TABLE['new_pipe'][self._lang],
                   height=1,
                   width=10,
                   command=self._new_pipe_btn_cmd). \
             place(x=20, y=self.win_height - 590)
         tk.Button(self,
-                  text=STR_TABLE['new_pipe_fm_connection'][self.lang],
+                  text=STR_TABLE['new_pipe_fm_connection'][self._lang],
                   height=1,
                   width=17,
                   command=self._new_pipe_on_conn). \
             place(x=220, y=self.win_height - 590)
         tk.Button(self,
-                  text=STR_TABLE['delete'][self.lang],
+                  text=STR_TABLE['delete'][self._lang],
                   bg="red3",
                   height=1,
                   width=10,
