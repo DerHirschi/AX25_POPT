@@ -174,13 +174,13 @@ class MSG_Center(tk.Toplevel):
         self._update_BL_tree_data()
         ##############
         # ## lower_f_top / MSG Header ect.
-        self._var_bl_from_label = tk.StringVar(self, '')
-        self._var_bl_to_label = tk.StringVar(self, '')
-        self._var_bl_subj_label = tk.StringVar(self, '')
-        self._var_bl_time_label = tk.StringVar(self, '')
-        self._var_bl_bid_label = tk.StringVar(self, '')
-        # self._var_bl_encoding = tk.StringVar(self, 'UTF-8')
-        self._var_bl_msg_size = tk.StringVar(self, ' Size: --- Bytes')
+        self._var_bl_from_label     = tk.StringVar(self, '')
+        self._var_bl_to_label       = tk.StringVar(self, '')
+        self._var_bl_subj_label     = tk.StringVar(self, '')
+        self._var_bl_time_label     = tk.StringVar(self, '')
+        self._var_bl_bid_label      = tk.StringVar(self, '')
+        # self._var_bl_encoding     = tk.StringVar(self, 'UTF-8')
+        self._var_bl_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
         # ## lower_f_lower / Msg Text
         self._bl_text = None
         self._init_bl_lower_frame(lower_f_lower)
@@ -212,13 +212,13 @@ class MSG_Center(tk.Toplevel):
         self._out_data = []
         self._update_OUT_tree_data()
         ########################
-        self._var_out_from_label = tk.StringVar(self, '')
-        self._var_out_to_label = tk.StringVar(self, '')
-        self._var_out_subj_label = tk.StringVar(self, '')
-        self._var_out_time_label = tk.StringVar(self, '')
-        self._var_out_bid_label = tk.StringVar(self, '')
-        # self._var_out_encoding = tk.StringVar(self, 'UTF-8')
-        self._var_out_msg_size = tk.StringVar(self, ' Size: --- Bytes')
+        self._var_out_from_label    = tk.StringVar(self, '')
+        self._var_out_to_label      = tk.StringVar(self, '')
+        self._var_out_subj_label    = tk.StringVar(self, '')
+        self._var_out_time_label    = tk.StringVar(self, '')
+        self._var_out_bid_label     = tk.StringVar(self, '')
+        # self._var_out_encoding    = tk.StringVar(self, 'UTF-8')
+        self._var_out_msg_size      = tk.StringVar(self, ' Size: --- Bytes')
         # ## lower_f_top / MSG Header ect.
         self._out_text = None
         self._init_out_lower_frame(lower_f_top)
@@ -249,12 +249,12 @@ class MSG_Center(tk.Toplevel):
         self._sv_data = []
         self._update_SV_tree_data()
         ########################
-        self._var_sv_from_label = tk.StringVar(self, '')
-        self._var_sv_to_label = tk.StringVar(self, '')
-        self._var_sv_subj_label = tk.StringVar(self, '')
-        self._var_sv_time_label = tk.StringVar(self, '')
-        self._var_sv_bid_label = tk.StringVar(self, '')
-        self._var_sv_msg_size = tk.StringVar(self, ' Size: --- Bytes')
+        self._var_sv_from_label     = tk.StringVar(self, '')
+        self._var_sv_to_label       = tk.StringVar(self, '')
+        self._var_sv_subj_label     = tk.StringVar(self, '')
+        self._var_sv_time_label     = tk.StringVar(self, '')
+        self._var_sv_bid_label      = tk.StringVar(self, '')
+        self._var_sv_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
 
         # ## lower_f_top / MSG Header ect.
         self._sv_text = None
@@ -275,20 +275,20 @@ class MSG_Center(tk.Toplevel):
         menubar = tk.Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = tk.Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label='Neu', command=lambda: self._open_newMSG_win())
+        MenuVerb.add_command(label=self._getTabStr('new'), command=lambda: self._open_newMSG_win())
         MenuVerb.add_separator()
-        MenuVerb.add_command(label='Alles sofort senden', command=lambda: self._do_pms_autoFWD())
-        menubar.add_cascade(label='Nachricht', menu=MenuVerb, underline=0)
+        MenuVerb.add_command(label=self._getTabStr('send_all_now'), command=lambda: self._do_pms_autoFWD())
+        menubar.add_cascade(label=self._getTabStr('msg'), menu=MenuVerb, underline=0)
         # ### Bearbeiten
         MenuEdit = tk.Menu(menubar, tearoff=False)
-        MenuEdit.add_command(label='Alle als gelesen markieren',
+        MenuEdit.add_command(label=self._getTabStr('mark_all_read'),
                               command=self._set_all_to_oldMSG,
                               underline=0)
         MenuVerb.add_separator()
-        MenuEdit.add_command(label=STR_TABLE['save_to_file'][self._lang],
+        MenuEdit.add_command(label=self._getTabStr('save_to_file'),
                               command=self._save_msg_to_file,
                               underline=0)
-        menubar.add_cascade(label=STR_TABLE['edit'][self._lang], menu=MenuEdit, underline=0)
+        menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
 
     def _init_Vars_fm_Cfg(self):
         pass
@@ -788,12 +788,18 @@ class MSG_Center(tk.Toplevel):
             new = ''
             if int(el[6]):
                 new = '✉'
+            date = el[5]
+            tmp = str(date).split('-')[0]
+            if len(tmp) == 2:
+                # FIX for old TimeStamps
+                date = '20' + date
+
             self._pn_tree_data.append((
                 f'{new}',
                 f'{el[4]}',
                 f'{from_call}',
-                f'{el[7]}',
-                f'{el[5]}',
+                f'{el[7]}',  # FLAG
+                f'{date}',   # DATE
                 f'{el[0]}',  # BID
             ))
 
@@ -903,6 +909,11 @@ class MSG_Center(tk.Toplevel):
             if int(el[7]):
                 new = '✉'
                 new_tr[el[3]] = True
+            date = el[6]
+            tmp = str(date).split('-')[0]
+            if len(tmp) == 2:
+                # FIX for old TimeStamps
+                date = '20' + date
             if not self._bl_cat_filter or self._bl_cat_filter == el[3]:
                 self._bl_tree_data.append((
                     f'{new}',
@@ -911,7 +922,7 @@ class MSG_Center(tk.Toplevel):
                     f'{el[3]}',  # Cat
                     f'{el[4]}',
                     f'{el[8]}',  # Flag
-                    f'{el[6]}',  # Date
+                    f'{date}',   # Date
                     f'{el[0]}',  # BID
                 ))
         # Category Tab
