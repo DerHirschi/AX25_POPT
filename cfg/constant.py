@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.19'
+VER = '2.117.20'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -16,7 +16,7 @@ MAX_PORTS           = 10       #
 SERVICE_CH_START    = 11       # Service Channels Start Channel
 MAX_MCAST_CH        = 30       # Max Virtual MCast Channels
 """ doc/PoPT/mysql_setup.txt """
-MYSQL       = True    # MYSQL/SQLITE
+MYSQL       = False    # MYSQL/SQLITE
 MYSQL_USER  = 'popt'
 MYSQL_PASS  = '83g6u45908k91HG2jhj5jeGG'
 MYSQL_HOST  = '127.0.0.1'

@@ -12,7 +12,7 @@ from ax25.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
-from cfg.logger_config import logger, log_book
+from cfg.logger_config import logger, LOG_BOOK
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
@@ -931,8 +931,8 @@ class AX25Conn:
             self._reinit_cli()
             lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
             lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
-            log_book.info(lb_msg)
-            log_book.info(lb_msg_1)
+            LOG_BOOK.info(lb_msg)
+            LOG_BOOK.info(lb_msg_1)
             if self._gui:
                 # TODO
                 speech = ' '.join(self.to_call_str.replace('-', ' '))
@@ -1229,8 +1229,8 @@ class AX25Conn:
         if not data:
             return
         lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
-        log_book.info(lb_msg)
-        log_book.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
         gui = self._port_handler.get_gui()
         if not hasattr(gui, 'sysMsg_to_qso'):
             return

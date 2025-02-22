@@ -10,7 +10,7 @@ class PoPTSchedule_Tasker:
     def __init__(self, port_handler):
         self._port_handler = port_handler
         self._scheduled_tasks = {
-            'PMS': self._start_AutoConnTask,
+            'FWD': self._start_AutoConnTask,
             'BEACON': self._start_BeaconTask,
         }
         self._scheduled_tasks_q = []

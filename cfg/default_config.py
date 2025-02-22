@@ -65,14 +65,21 @@ def getNew_port_cfg():
 # PMS
 def getNew_BBS_cfg():
     return dict(
-        user            = 'NOCALL', # BOX CALL
+        user            = 'NOCALL',     # BOX CALL
         regio           = '',
-        fwd_bbs_cfg     = {},       # FWD CFGs
+        fwd_bbs_cfg     = {},           # FWD CFGs
         home_bbs        = [],
         single_auto_conn= True,
-        auto_conn       = False,    # Allow Outgoing Connects
+        auto_conn       = False,        # Allow Outgoing Connects
         # Path/Routing
-        pn_auto_path    = True      # Find BBS to FWD with lowes hops
+        block_bbs       = [],           # Global BBS/Recipient Rejecting
+        block_call      = [],           # Global Call/Topic Rejecting
+        pn_auto_path    = 2,            # Find BBS to FWD
+        # 0 = disabled (Use strict configs)
+        # 1 = most current
+        # 2 = best (low hops)
+        # 1 & 2 (Use Auto Path lookup as alternative)
+        pn_auto_send_to_regio = True    # Try to find a BBS in the Region when can't find Route
     )
 
 
@@ -84,8 +91,35 @@ def getNew_BBS_FWD_cfg():
         via_calls       = [],
         axip_add        = ('', 0),
         scheduler_cfg   = dict(getNew_schedule_config()),
-        reverseFWD      = True,
-        allowRevFWD     = True,
+        reverseFWD      = True,     # Scheduled FWD
+        allowRevFWD     = True,     # TODO
+        t_o_after_fail  = 30,       # Timeout Minutes                       # TODO GUI / Check Function
+        t_o_increment   = True,     # Increment Timeout after Fail attempt  # TODO GUI / Check Function
+        # Routing
+        pn_fwd_auto_path    = False,# Allow AutoPath
+        pn_fwd_alter_path   = False,# Allow Alternative Route               # TODO GUI / after x attempt's
+        # PN Outgoing Routing   # TODO GUI
+        pn_fwd_bbs_out      = [],   # Known BBS behind this BBS
+        pn_fwd_h_out        = [],   # Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
+        pn_fwd_not_h_out    = [],   # Rejected Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
+        pn_fwd_call_out     = [],   # Outgoing CALLs (['MD2SAW', 'CB0SAW']) - [] = all
+        pn_fwd_not_call_out = [],   # Rejected Outgoing CALLs ([MD2SAW', 'CB0SAW'])
+        # PN Incoming Routing   # TODO GUI
+        pn_fwd_bbs_in       = [],   # Reject PN from listed BBS
+        pn_fwd_h_in         = [],   # Incoming H-Routing (If specified, rejects all other PN)
+        pn_fwd_not_h_in     = [],   # Rejected Incoming H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
+        pn_fwd_call_in      = [],   # Incoming CALLs (['MD2SAW', 'CB0SAW']) - [] = all
+        pn_fwd_not_call_in  = [],   # Rejected Incoming CALLs ([MD2SAW', 'CB0SAW'])
+        # BL Outgoing Routing   # TODO GUI
+        bl_dist_out         = [],   # Outgoing distributor (['*', 'EU']) - [] = all
+        bl_dist_not_out     = [],   # Rejected Outgoing distributor (['SAW', 'DEU'])
+        bl_top_out          = [],   # Outgoing Topic (['PR'])  - [] = all
+        bl_top_not_out      = [],   # Rejected Outgoing Topic (['PR', 'POPT'])
+        # BL Incoming Routing   # TODO GUI
+        bl_dist_in          = [],   # Incoming distributor (['*', 'EU'])
+        bl_dist_not_in      = [],   # Rejected Incoming distributor (['SAW', 'DEU'])
+        bl_top_in           = [],   # Incoming Topic (['PR'])  - [] = all
+        bl_top_not_ib       = [],   # Rejected Incoming Topic (['PR', 'POPT'])
 
     )
 """

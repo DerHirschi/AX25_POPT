@@ -15,17 +15,18 @@ import time
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import FWD_RESP_TAB
-from bbs.bbs_fnc import generate_sid, build_new_msg_header
+from bbs.bbs_fnc import generate_sid, build_new_msg_header, spilt_regio
 from bbs.bbs_fwd_connection import BBSConnection
 from cfg.popt_config import POPT_CFG
-from cfg.logger_config import logger
+from cfg.logger_config import logger, BBS_LOG
 from cli.cliStationIdent import get_station_id_obj
 
 
 class BBS:
     def __init__(self, port_handler):
         self._logTag        = "BBS: "
-        logger.info(self._logTag + ' Init')
+        logger.info(self._logTag + 'Init')
+        BBS_LOG.info('Init')
         self._port_handler  = port_handler
         self._db            = self._port_handler.get_database()
         self.pms_flag       = generate_sid(features=("F", "M", "H"))
@@ -33,18 +34,12 @@ class BBS:
         try:
             self.pms_flag   = self.pms_flag.encode('ASCII')
         except UnicodeEncodeError:
-            logger.error(self._logTag + 'Init Error: UnicodeEncodeError')
-            # print('PMS: Init Error: UnicodeEncodeError')
             raise bbsInitError('UnicodeEncodeError')
         if self.my_stat_id is None:
-            logger.error(self._logTag + 'Init Error: my_stat_id is None')
-            # print('PMS: Init Error: my_stat_id is None')
             raise bbsInitError('my_stat_id is None')
         if self.my_stat_id.e:
-            logger.error(self._logTag + 'Init Error: my_stat_id.e Error')
-            # print('PMS: Init Error: my_stat_id.e Error')
             raise bbsInitError('my_stat_id.e Error')
-        logger.info(self._logTag + f"Flag: {self.pms_flag}")
+        BBS_LOG.info(f"Flag: {self.pms_flag}")
         ###############
         # Config's
         self._pms_cfg: dict         = POPT_CFG.get_BBS_cfg()
@@ -54,7 +49,7 @@ class BBS:
         self._set_pms_home_bbs()
         ####################
         # Scheduler
-        logger.info(self._logTag + 'Set Scheduler')
+        BBS_LOG.info('Set Scheduler')
         self._set_pms_fwd_schedule()
         ####################
         # New Msg Noty/Alarm
@@ -71,11 +66,13 @@ class BBS:
         self._var_task_5sec         = time.time()
         self._var_task_60sec        = time.time()
         logger.info(self._logTag + 'Init complete')
+        BBS_LOG.info('Init complete')
 
         ###############
         # DEBUG/DEV
         # self._pms_cfg[]
-
+        # ret = self._db.bbs_get_fwdPaths_mostCurrent('FRB024')
+        # BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
 
         """
         mid = self.new_msg({
@@ -92,8 +89,10 @@ class BBS:
 
     def _reinit(self):
         if not self.pms_connections:
-            logger.info(self._logTag + "reINIT")
-            logger.info(self._logTag + "reINIT: Read new Config")
+            logger.info(self._logTag + "ReInit")
+            logger.info(self._logTag + "ReInit: Read new Config")
+            BBS_LOG.info("ReInit")
+            BBS_LOG.info("ReInit: Read new Config")
             self._del_all_pms_fwd_schedule()
             self._pms_cfg = POPT_CFG.get_BBS_cfg()
             self._reinit_stationID_pmsFlag()
@@ -155,36 +154,7 @@ class BBS:
             if flag != 'F':
                 return
             if typ == 'P':
-                bbs_on_route = self._find_1stHop_BBS_fm_PNroute(to_bbs_call)
-
-    def _find_1stHop_BBS_fm_PNroute(self, bbs_call: str):
-        """
-        From Local BBS !!
-        Prevent sending back from RX-BBS when using for S&F !!
-        """
-        # TODO filtering out old Paths
-        if not bbs_call:
-            return ''
-        h_bbs = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs_call, {})
-        if h_bbs:
-            print(f"_find_1stHop_BBS_fm_route: Treffer, direkt FWD zu {bbs_call}")
-            return bbs_call
-        ret = self._db.bbs_get_fwdPaths_1stHop(bbs_call)
-        for bbs, hops, path in ret:
-            h_bbs = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs, {})
-            if h_bbs:
-                print(f"_find_1stHop_BBS_fm_route: Treffer, FWD via {bbs}")
-                print(f"HOPS: {hops}")
-                print(f"PATH: {path}")
-                return bbs
-            else:
-                print(f"_find_1stHop_BBS_fm_route: SUCHE: {bbs}")
-                print(f"HOPS: {hops}")
-                print(f"PATH: {path}")
-
-        print(f"_find_1stHop_BBS_fm_route: Kein Treffer !!: {bbs_call}")
-        return ''
-
+                bbs_on_route = self._find_lowHop_PN_route(to_bbs_call)
 
     ###################################
     # CFG Stuff
@@ -208,7 +178,7 @@ class BBS:
             if all((revers_fwd, outgoing_fwd)):
                 sched_cfg  = cfg.get('scheduler_cfg', {})
             autoconn_cfg = {
-                'task_typ': 'PMS',
+                'task_typ': 'FWD',
                 'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
                 'port_id':  cfg.get('port_id'),
                 'own_call': cfg.get('own_call'),
@@ -223,7 +193,7 @@ class BBS:
             cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(h_bbs_k, {})
             if cfg:
                 autoconn_cfg = {
-                    'task_typ': 'PMS',
+                    'task_typ': 'FWD',
                     'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
                     'port_id': cfg.get('port_id'),
                     'own_call': cfg.get('own_call'),
@@ -280,7 +250,7 @@ class BBS:
                 cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(h_bbs_k, {})
                 if cfg:
                     autoconn_cfg = {
-                        'task_typ': 'PMS',
+                        'task_typ': 'FWD',
                         'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
                         'port_id': cfg.get('port_id'),
                         'own_call': cfg.get('own_call'),
@@ -314,24 +284,231 @@ class BBS:
         msg_struc['message_size'] = int(len(msg_struc['msg']))
         return self._db.bbs_update_out_msg(msg_struc)
 
+    ########################################################################
+    # Routing
     def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call=''):
         msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
-        if msg_fm_db:
-            # print(_msg_fm_db)
-            new_msg = build_new_msg_header(msg_fm_db)
-            if self._pms_cfg.get('pn_auto_path', True) or not fwd_bbs_call:
-                to_bbs_call = msg_fm_db.get('recipient_bbs_call', '')
-                auto_bbs = self._find_1stHop_BBS_fm_PNroute(to_bbs_call)
-                if auto_bbs:
-                    fwd_bbs_call = auto_bbs
+        if not msg_fm_db:
+            logger.error(self._logTag + 'add_msg_to_fwd_by_id: not msg_fm_db')
+            BBS_LOG.error('add_msg_to_fwd_by_id: not msg_fm_db')
+            return False
+        new_msg = build_new_msg_header(msg_fm_db)
+
+        # Overwrite all FWD Settings.
+        if fwd_bbs_call:
+            new_msg['fwd_bbs_call'] = fwd_bbs_call
+            return self._db.bbs_insert_msg_to_fwd(new_msg)
+
+        msg_typ = new_msg.get('message_type', '')
+        if not msg_typ:
+            logger.error(self._logTag + 'add_msg_to_fwd_by_id: not msg_typ')
+            BBS_LOG.error('add_msg_to_fwd_by_id: not msg_typ')
+            return False
+
+        # Private Mails
+        if msg_typ == 'P':
+            fwd_bbs_call = self._get_fwd_bbs_pn(msg=new_msg)
+            logger.debug(self._logTag + f"res: _get_fwd_bbs_pn: {fwd_bbs_call}")
+            BBS_LOG.debug(f"res: _get_fwd_bbs_pn: {fwd_bbs_call}")
             if not fwd_bbs_call:
-                logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id")
+                logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
+                BBS_LOG.error("Error no BBS to FWD: add_msg_to_fwd_by_id 0")
                 return False
             new_msg['fwd_bbs_call'] = fwd_bbs_call
-            # print(_new_msg)
             return self._db.bbs_insert_msg_to_fwd(new_msg)
+
+        # Bulletins
+        if msg_typ == 'B':
+            fwd_bbs_list: list = self._get_fwd_bbs_bl(msg=new_msg)
+            if not fwd_bbs_list:
+                logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id BL")
+                BBS_LOG.error("Error no BBS to FWD: add_msg_to_fwd_by_id 1")
+                return False
+            for fwd_call in fwd_bbs_list:
+                new_msg['fwd_bbs_call'] = fwd_call
+                ret = self._db.bbs_insert_msg_to_fwd(new_msg)
+                if not ret:
+                    BBS_LOG.error(f"Can't insert Msg into FWD-Q: {new_msg}")
+            return True
+
+        logger.error(self._logTag + f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
+        BBS_LOG.error(f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
         return False
 
+    # PN #######################################################
+    def _get_fwd_bbs_pn(self, msg: dict):
+        mid             = msg.get('mid', 0)
+        recv_call       = msg.get('receiver', '')
+        recv_bbs        = msg.get('recipient_bbs', '')
+        recv_bbs_call   = msg.get('recipient_bbs_call', '')
+        recv_bbs_regio  = spilt_regio(recv_bbs)
+        BBS_LOG.info(f"Msg: {mid} - Forward Lookup PN - {recv_call}@{recv_bbs}")
+        if not recv_bbs_regio:
+            BBS_LOG.error(f"Msg: {mid} Regio-Error: {recv_bbs} - {recv_bbs_regio} - Maybe Bulletin as PN ?")
+            return ''
+        rej_bbs, rej_call =  self._pms_cfg.get('block_bbs', ''),  self._pms_cfg.get('block_call', '')
+        if recv_bbs_call in rej_bbs:
+            BBS_LOG.warning(f"Msg: {mid} BBS-Rejected/Blocked: {recv_bbs_call} global")
+            return ''
+        if recv_call in rej_call:
+            BBS_LOG.warning(f"Msg: {mid} CALL-Rejected/Blocked: {recv_call} global")
+            return ''
+
+        # FWD Config Lookup
+        for fwd_bbs, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
+            fwd_cfg: dict
+            h_route     = fwd_cfg.get('pn_fwd_h_out', [])
+            h_block     = fwd_cfg.get('pn_fwd_not_h_out', [])
+            call_block  = fwd_cfg.get('pn_fwd_not_call_out', [])
+            call_fwd    = fwd_cfg.get('pn_fwd_call_out', [])
+            bbs_fwd     = fwd_cfg.get('pn_fwd_bbs_out', [])
+            alt_route   = fwd_cfg.get('pn_fwd_alter_path', False)
+
+            # Call Block
+            if recv_call in call_block:
+                BBS_LOG.warning(f"Msg: {mid} - Call-Rejected/Blocked: {recv_call} for {fwd_bbs}.")
+                continue
+            # Regio Block H-Route
+            for el in recv_bbs_regio:
+                # Regio Block
+                if any((el in h_block, '#' + el in h_block)):
+                    BBS_LOG.warning(f"Msg: {mid} - BBS/REGIO-Rejected/Blocked: {el} ({recv_bbs_regio}) for {fwd_bbs}.")
+                    continue
+            if fwd_bbs == recv_bbs:
+                return fwd_bbs
+
+            # Call Check
+            if all((
+                recv_call in call_fwd,
+                not alt_route
+            )):
+                return fwd_bbs
+            # BBS Check
+            if all((
+                    recv_bbs_call in bbs_fwd,
+                    not alt_route
+            )):
+                return fwd_bbs
+
+            # Regio Check H-Route
+            for el in recv_bbs_regio:
+                if any((el in h_route , '#' + el in h_route)) \
+                        and not alt_route:
+                    return fwd_bbs
+
+        # Auto Path Lookup
+        if self._pms_cfg.get('pn_auto_path', 0) == 0:
+            # Disabled
+            BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}. AutoPath disabled")
+            return ''
+        if self._pms_cfg.get('pn_auto_path', 0) == 1:
+            # most current
+            fwd_bbs = self._find_most_current_PN_route(recv_bbs_call)
+            if not fwd_bbs:
+                BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}. AutoPath best (low hops)")
+                return ''
+            return fwd_bbs
+        if self._pms_cfg.get('pn_auto_path', 0) == 2:
+            # best (low hops)
+            fwd_bbs = self._find_lowHop_PN_route(recv_bbs_call)
+            if not fwd_bbs:
+                BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}. AutoPath best (low hops)")
+                return ''
+            return fwd_bbs
+
+        BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}")
+        return ''
+
+    def _find_lowHop_PN_route(self, bbs_address: str):
+        if not bbs_address:
+            return ''
+        ret = self._db.bbs_get_fwdPaths_lowHop(bbs_address)
+        BBS_LOG.debug(f"_find_lowHop_PN_route res: {ret}")
+        for bbs, hops, path in ret:
+            fwd_bbs_cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs, {})
+            if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
+                BBS_LOG.debug(f"_find_lowHop_PN_route: Treffer, FWD via {bbs}")
+                BBS_LOG.debug(f"HOPS: {hops}")
+                BBS_LOG.debug(f"PATH: {path}")
+                return bbs
+            BBS_LOG.debug(f"_find_lowHop_PN_route: SUCHE: {bbs}")
+            BBS_LOG.debug(f"HOPS: {hops}")
+            BBS_LOG.debug(f"PATH: {path}")
+
+        BBS_LOG.debug(f"_find_lowHop_PN_route: Kein Treffer !!: {bbs_address}")
+        return ''
+
+    def _find_most_current_PN_route(self, bbs_address: str):
+        if not bbs_address:
+            return ''
+        ret = self._db.bbs_get_fwdPaths_mostCurrent(bbs_address)
+        BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
+        for bbs, hops, path in ret:
+            fwd_bbs_cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs, {})
+            if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
+                BBS_LOG.debug(f"_find_most_current_PN_route: Treffer, FWD via {bbs}")
+                BBS_LOG.debug(f"HOPS: {hops}")
+                BBS_LOG.debug(f"PATH: {path}")
+                return bbs
+            BBS_LOG.debug(f"_find_most_current_PN_route: SUCHE: {bbs}")
+            BBS_LOG.debug(f"HOPS: {hops}")
+            BBS_LOG.debug(f"PATH: {path}")
+
+        BBS_LOG.debug(f"_find_most_current_PN_route: Kein Treffer !!: {bbs_address}")
+        return ''
+
+    # BL #######################################################
+    def _get_fwd_bbs_bl(self, msg: dict):
+        mid         = msg.get('mid', 0)
+        topic       = msg.get('receiver', '')
+        distributor = msg.get('recipient_bbs', '')
+        rej_dist, rej_topic =  self._pms_cfg.get('reject_bbs', ''),  self._pms_cfg.get('reject_call', '')
+        BBS_LOG.info(f"Msg: {mid} - Forward Lookup BL - {topic}@{distributor}")
+        if distributor in rej_dist:
+            BBS_LOG.warning(f"Msg: {mid} Distributor-Rejected/Blocked: {distributor} global")
+            return []
+        if topic in rej_topic:
+            BBS_LOG.warning(f"Msg: {mid} Topic-Rejected/Blocked: {topic} global")
+            return []
+
+        ret = []
+        # FWD Config Lookup
+        for fwd_bbs, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
+            fwd_cfg: dict
+            cfg_dist        = fwd_cfg.get('bl_dist_out', [])
+            cfg_dist_block  = fwd_cfg.get('bl_dist_not_out', [])
+            cfg_topic       = fwd_cfg.get('bl_top_out', [])
+            cfg_topic_block = fwd_cfg.get('bl_top_not_out', [])
+
+            # Topic BLock
+            if topic in cfg_topic_block:
+                BBS_LOG.warning(f"Msg: {mid} - Topic-Rejected/Blocked: {topic} for {fwd_bbs}.")
+                continue
+            # Distributor BLock
+            if distributor in cfg_dist_block:
+                BBS_LOG.warning(f"Msg: {mid} - Distributor-Rejected/Blocked: {distributor} for {fwd_bbs}.")
+                continue
+            # Distributor Check
+            if any((
+                    not cfg_dist,
+                distributor in cfg_dist
+            )):
+                if fwd_bbs not in ret:
+                    BBS_LOG.info(f"Msg: {mid} - Distributor-Check: {distributor} forward to {fwd_bbs}.")
+                    ret.append(fwd_bbs)
+            # Topic Check
+            if any((
+                    not cfg_topic,
+                topic in cfg_topic
+            )):
+                if fwd_bbs not in ret:
+                    BBS_LOG.info(f"Msg: {mid} - Topic-Check: {topic} forward to {fwd_bbs}.")
+                    ret.append(fwd_bbs)
+
+        return ret
+
+    ########################################################################
+    # FWD
     def get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
         return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
 
@@ -359,6 +536,7 @@ class BBS:
         except UnicodeEncodeError:
             print(self._logTag + "build_fwd_header UnicodeEncodeError")
             logger.error(self._logTag + "build_fwd_header UnicodeEncodeError")
+            BBS_LOG.error("build_fwd_header UnicodeEncodeError")
             return b'', ret_bids
 
     def get_fwd_q_tab(self):
@@ -472,6 +650,7 @@ class BBS:
     def set_pms_cfg(self):
         self._pms_cfg_hasChanged = True
         logger.info(self._logTag + "Config has changed, awaiting reinit.")
+        BBS_LOG.info("Config has changed, awaiting reinit.")
 
     def get_sv_msg_tab(self):
         return self._db.bbs_get_sv_msg_Tab_for_GUI()

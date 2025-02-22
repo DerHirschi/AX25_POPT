@@ -673,7 +673,7 @@ class PoPT_GUI_Main:
         MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
                             command=lambda: self._open_settings_window('pms_all_sett'),
                             underline=0)
-        menubar.add_cascade(label='PMS', menu=MenuBBS, underline=0)
+        menubar.add_cascade(label='PMS/BBS', menu=MenuBBS, underline=0)
         #########################################################################
         # Menü 5 Hilfe
         MenuHelp = tk.Menu(menubar, tearoff=False)

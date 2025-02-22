@@ -53,13 +53,13 @@ def parse_forward_header(header):
 
 def build_new_msg_header(msg_struc: dict):
     # print("build_new_msg_header -------------")
-    bbs_call = msg_struc['sender_bbs'].split('.')[0]
-    mid = msg_struc['mid']
-    bid = f"{str(mid).rjust(6, '0')}{bbs_call}"
-    msg_struc['tx-time'] = datetime.now().strftime(SQL_TIME_FORMAT)
-    utc = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
-    msg_struc['mid'] = mid
-    msg_struc['bid_mid'] = bid
+    bbs_call                = msg_struc['sender_bbs'].split('.')[0]
+    mid                     = msg_struc['mid']
+    bid                     = f"{str(mid).rjust(6, '0')}{bbs_call}"
+    msg_struc['tx-time']    = datetime.now().strftime(SQL_TIME_FORMAT)
+    utc                     = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
+    msg_struc['mid']        = mid
+    msg_struc['bid_mid']    = bid
     # _utc = datetime.utcnow()
     # msg_struc['utctime'] = _utc.strftime(SQL_TIME_FORMAT)
     # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
@@ -72,10 +72,6 @@ def build_new_msg_header(msg_struc: dict):
                f'@:{msg_struc["sender_bbs"]} '
                f'#:{str(mid).rjust(6, "0")} '
                f'$:{bid}\r')
-    # _header += '\r'
-    # _header += f'From: {msg_struc["sender"]}@{msg_struc["sender_bbs"]}\r'
-    # _header += f'To  : {msg_struc["receiver"]}@{msg_struc["recipient_bbs"]}\r'
-    # _header += '\r'
     msg_struc['header'] = header.encode('ASCII', 'ignore')
 
     return msg_struc
@@ -124,3 +120,14 @@ def parse_header_timestamp(path_str: str):
         f"{path_str[7:9]}:"
         f"{path_str[9:11]}:"
         "00")
+
+def spilt_regio(bbs_address: str):
+    temp = bbs_address.split('.')
+    ret = []
+    for el in temp:
+        if el.startswith('#'):
+            ret.append(el[1:])
+        else:
+            ret.append(el)
+    return ret[1:]
+

@@ -35,7 +35,7 @@ class AutoConnTask:
         self._state_exec = None
         self.state_id = 1
         self._state_tab = {
-            'PMS': {
+            'FWD': {
                 0: self._end_connection,
                 1: self._PMS_send_fwd_cmd,
                 2: self._PMS_is_last_chars_in_rxbuff,

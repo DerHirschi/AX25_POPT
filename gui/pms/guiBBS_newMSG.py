@@ -405,7 +405,6 @@ class BBS_newMSG(tk.Toplevel):
         return self._send_msg()
 
     def _send_msg(self):
-        # TODO Extern by fwd_q_checker.. .
         if not self._mid:
             return False
         if not self._dest_call_check():

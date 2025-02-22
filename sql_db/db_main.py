@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 
-from cfg.logger_config import logger
+from cfg.logger_config import logger, BBS_LOG
 from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
 from fnc.sql_fnc import search_sql_injections
 from fnc.str_fnc import convert_str_to_datetime
@@ -504,6 +504,7 @@ class SQL_Database:
         if self.bbs_check_fwdID_exists(fwd_id):
             print(f"BBS Warning: FWD-ID {fwd_id} exists!")
             logger.warning(f"BBS Warning: FWD-ID {fwd_id} exists!")
+            BBS_LOG.warning(f"BBS Warning: FWD-ID {fwd_id} exists!")
             return False
         # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
         # _path = str(msg_struc.get('path', []))
@@ -955,11 +956,18 @@ class SQL_Database:
         q = "SELECT * FROM fwdPaths;"
         return self._commit_query(q)
 
-    def bbs_get_fwdPaths_1stHop(self, destBBS: str):
+    def bbs_get_fwdPaths_lowHop(self, destBBS: str):
         q = ("SELECT fromBBS, hops, path "
              "FROM fwdPaths "
              f"WHERE destBBS='{destBBS}' "
              f"ORDER BY hops ;")
+        return self._commit_query(q)
+
+    def bbs_get_fwdPaths_mostCurrent(self, destBBS: str):
+        q = ("SELECT fromBBS, hops, path "
+             "FROM fwdPaths "
+             f"WHERE destBBS='{destBBS}' "
+             f"ORDER BY lastUpdate DESC;")
         return self._commit_query(q)
 
     def _fwd_paths_insert(self, path: list):
@@ -967,20 +975,16 @@ class SQL_Database:
         :param path: [(BBS-ADD, WP-Infos), ]
         :return:
         """
-        # print("------------------")
-        # print(f"- path in: {path}")
         if not path:
             return False
         path_k = '>'.join([a[0].split('.')[0] for a in path])
-        # print(f"- path_k in: {path_k}")
-        temp = str(path[-1][0]).split('.')
-        from_bbs = str(path[0][0]).split('.')[0]
-        to_bbs = str(temp[0])
-        time_stamp = datetime.now().strftime(SQL_TIME_FORMAT)
+        temp        = str(path[-1][0]).split('.')
+        from_bbs    = str(path[0][0]).split('.')[0]
+        to_bbs      = str(temp[0])
+        time_stamp  = datetime.now().strftime(SQL_TIME_FORMAT)
         if temp[-1] == 'WW':
             temp = list(temp[:-1])
-        regions = list(temp[1:-2] + ([''] * (6 - len(temp[1:]))) + temp[-2:])
-        # print(f"Regions: 1: {regions}")
+        regions     = list(temp[1:-2] + ([''] * (6 - len(temp[1:]))) + temp[-2:])
         if self.MYSQL:
             query = ("INSERT INTO `fwdPaths` "
                       "(`path`, "
@@ -994,8 +998,8 @@ class SQL_Database:
                       "`destR5`, "
                       "`destR6`, "
                       "`lastUpdate`)"
-                      "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n"
-                      " ON DUPLICATE KEY UPDATE `lastUpdate` = %s;")
+                      "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                      "ON DUPLICATE KEY UPDATE `lastUpdate` = %s;")
         else:
             query = ("INSERT INTO `fwdPaths` "
                       "(`path`, "
@@ -1009,8 +1013,8 @@ class SQL_Database:
                       "`destR5`, "
                       "`destR6`, "
                       "`lastUpdate`)"
-                      "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n"
-                      " ON CONFLICT(path) DO UPDATE SET `lastUpdate` = %s;")
+                      "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                      "ON CONFLICT(path) DO UPDATE SET `lastUpdate` = %s;")
         query_data = (path_k,
                        to_bbs,
                        from_bbs,

@@ -6,7 +6,7 @@ from ax25.ax25Error import AX25DeviceFAIL
 from ax25.ax25Multicast import ax25Multicast
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
-from cfg.logger_config import logger, log_book
+from cfg.logger_config import logger, LOG_BOOK
 from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
 from fnc.str_fnc import get_strTab
 from poptGPIO.poptGPIO_main import poptGPIO_main
@@ -507,8 +507,8 @@ class AX25PortHandler(object):
             msg = f'*** Connected to {call_str}'
             lb_msg_1 = f'CH {ch_id} - {str(connection.my_call_str)}: *** Connected to {call_str}'
         lb_msg = f"CH {ch_id} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
-        log_book.info(lb_msg)
-        log_book.info(lb_msg_1)
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
@@ -533,8 +533,8 @@ class AX25PortHandler(object):
         msg = f'*** Reset fm {connection.to_call_str}'
         lb_msg_1 = f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Reset fm {connection.to_call_str}'
         lb_msg = f"CH {int(connection.ch_index)} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
-        log_book.info(lb_msg)
-        log_book.info(lb_msg_1)
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
@@ -557,8 +557,8 @@ class AX25PortHandler(object):
         msg = f'*** Disconnected fm {call_str}'
         lb_msg = f"CH {ch_id} - {str(conn.my_call_str)}: - {str(conn.uid)} - Port: {int(conn.port_id)}"
         lb_msg_1 = f"CH {ch_id} - {str(conn.my_call_str)}: *** Disconnected fm {call_str}"
-        log_book.info(lb_msg)
-        log_book.info(lb_msg_1)
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, UserDB-Conn C
@@ -674,15 +674,15 @@ class AX25PortHandler(object):
                     if user_db_ent.Distance:
                         ret_msg += f' - {round(user_db_ent.Distance)} km '
                     ret_msg += f'> Port {port_id}'
-                    log_book.info(lb_msg)
-                    log_book.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: {ret_msg}')
+                    LOG_BOOK.info(lb_msg)
+                    LOG_BOOK.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: {ret_msg}')
                     return connection , '\r' + ret_msg + '\r'
-            log_book.info(lb_msg)
-            log_book.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Link Setup to {dest_call} > Port {port_id}')
+            LOG_BOOK.info(lb_msg)
+            LOG_BOOK.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Link Setup to {dest_call} > Port {port_id}')
             return connection, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
         lb_msg = f"CH {int(channel)} - {str(own_call)}: - {str(dest_call) + ' ' + '>'.join(via_calls)} - Port: {int(port_id)}"
-        log_book.info(lb_msg)
-        log_book.info(
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(
             f'CH {int(channel)} - {str(own_call)}: *** Busy. No free SSID available. > Port {int(port_id)}')
         return False, '\r*** Busy. No free SSID available.\r'
 

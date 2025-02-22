@@ -7,7 +7,7 @@ import pickle
 
 from UserDB.UserDBmain import USER_DB
 from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT
-from cfg.logger_config import logger, log_book
+from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
 from fnc.socket_fnc import check_ip_add_format
@@ -266,10 +266,10 @@ class MH:
         )
         self.dx_alarm_perma_hist[str(hist_struc['key'])] = dict(hist_struc)
         lb_msg_1 = f"DX-ALARM: {ent.own_call} - Port: {int(ent.port_id)} - LOC: {str(ent.locator)} - Dist:{int(round(ent.distance))}"
-        log_book.info(lb_msg_1)
+        LOG_BOOK.info(lb_msg_1)
         if ent.route:
             lb_msg_2 = f"DX-ALARM: {ent.own_call} - Route: {'>'.join(ent.route)}"
-            log_book.info(lb_msg_2)
+            LOG_BOOK.info(lb_msg_2)
 
     def reset_dx_alarm_his(self):
         self.dx_alarm_hist = []

@@ -58,19 +58,32 @@ if CONSOLE_LOG:
 for el in lg_msg:
     logger.warning(f'Directory {el} not found ! Creating new Directory.')
 
+dt_str  = datetime.now().strftime('%y%m')
 ###########################################
 # Log Book # TODO LogBook FNC
-dt_str = datetime.now().strftime('%y%m')
-log_book = logging.getLogger('Logbook')
-formatter = logging.Formatter('%(asctime)s - %(name)s: %(message)s')
-# formatter = logging.Formatter(log_format)
-fileHandler = logging.FileHandler(f'{CFG_logging_path}log_book{dt_str}.log', mode='a')
+LOG_BOOK        = logging.getLogger('Logbook')
+formatter       = logging.Formatter('%(asctime)s - %(name)s: %(message)s')
+fileHandler     = logging.FileHandler(f'{CFG_logging_path}log_book{dt_str}.log', mode='a')
 fileHandler.setFormatter(formatter)
-log_book.setLevel(logging.INFO)
-# log_book.addHandler(fileHandler)
+LOG_BOOK.setLevel(logging.INFO)
+LOG_BOOK.addHandler(fileHandler)
 if CONSOLE_LOG:
     streamHandler = logging.StreamHandler()
     streamHandler.setFormatter(formatter)
-    log_book.addHandler(streamHandler)
+    LOG_BOOK.addHandler(streamHandler)
+
+###########################################
+# BBS Log #
+BBS_LOG         = logging.getLogger('BBS')
+# formatter       = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s: %(message)s")
+fileHandler_bbs = logging.FileHandler(f'{CFG_logging_path}bbs{dt_str}.log', mode='a')
+fileHandler_bbs.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s: %(message)s"))
+# BBS_LOG.setLevel(logging.INFO)
+BBS_LOG.setLevel(log_level)
+BBS_LOG.addHandler(fileHandler_bbs)
+if CONSOLE_LOG:
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(name)s: %(message)s"))
+    BBS_LOG.addHandler(streamHandler)
 
 # log_book.disabled = True
