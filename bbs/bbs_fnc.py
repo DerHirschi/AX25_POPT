@@ -108,13 +108,9 @@ def parse_header_timestamp(path_str: str):
         logger.debug(f"TS-Parser R not FOUND: {path_str}")
         return ''
     path_str = path_str[2:].split(' ')[0]
-    """
-    if path_str[-1].upper() != 'Z':
-        print(f"TS-Parser Z not FOUND: {path_str}")
-        return ''
-    """
+    dt_year = str(datetime.now().year)
     return (
-        f"{path_str[:2]}-"
+        f"{dt_year[:2]}{path_str[:2]}-"
         f"{path_str[2:4]}-"
         f"{path_str[4:6]} "
         f"{path_str[7:9]}:"

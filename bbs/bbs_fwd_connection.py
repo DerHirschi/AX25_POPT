@@ -161,6 +161,7 @@ class BBSConnection:
         # 3
         rx_lines = self._get_lines_fm_rx_buff('F>', cut_rx_buff=True)
         if rx_lines:
+            # print('FS')
             self._act_out_msg()
             ret = self._parse_header(rx_lines)
             self._connection_tx(b'FS ' + ret[0].encode('ASCII', 'ignore') + b'\r')
@@ -301,13 +302,19 @@ class BBSConnection:
 
     def _check_msg_to_fwd(self):
         tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
-        self._tx_msg_header = tmp[0]
-        self._tx_msg_BIDs = tmp[1]
-        # print(f"_check_msg_to_fwd {self._tx_msg_BIDs}")
-        # print(f"_check_msg_to_fwd {self._tx_msg_header}")
+        if tmp[1] not in self._tx_msg_BIDs:
+            self._tx_msg_header = tmp[0]
+            self._tx_msg_BIDs   = tmp[1]
 
     def _act_out_msg(self):
         # for bid in _bids:
+        if not self._tx_fs_list:
+            BBS_LOG.debug('No _tx_fs_list on _act_out_msg call')
+            return
+        if len(self._tx_fs_list) != len(self._tx_msg_BIDs):
+            BBS_LOG.error('_act_out_msg: len(self._tx_fs_list) != len(self._tx_msg_BIDs)')
+            BBS_LOG.error(f'_act_out_msg: {len(self._tx_fs_list)} != {len(self._tx_msg_BIDs)}')
+            return
         for bid in list(self._tx_msg_BIDs):
             fwd_id  = self._get_fwd_id(bid)
             flag    = self._tx_fs_list[0]

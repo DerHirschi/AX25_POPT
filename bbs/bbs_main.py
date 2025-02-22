@@ -297,22 +297,26 @@ class BBS:
             BBS_LOG.error('add_msg_to_fwd_by_id: not msg_fm_db')
             return False
         new_msg = build_new_msg_header(msg_fm_db)
+        msg_typ = new_msg.get('message_type', '')
+
+        if not msg_typ:
+            logger.error(self._logTag + 'add_msg_to_fwd_by_id: not msg_typ')
+            BBS_LOG.error('add_msg_to_fwd_by_id: not msg_typ')
+            return False
 
         # Overwrite all FWD Settings.
         if fwd_bbs_call:
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             return self._db.bbs_insert_msg_to_fwd(new_msg)
 
-        msg_typ = new_msg.get('message_type', '')
-        if not msg_typ:
-            logger.error(self._logTag + 'add_msg_to_fwd_by_id: not msg_typ')
-            BBS_LOG.error('add_msg_to_fwd_by_id: not msg_typ')
-            return False
+        # Local BBS
+        if self._is_fwd_local(msg=new_msg):
+            BBS_LOG.info(f"Msg: {mid} is Local. No Forwarding needed")
+            self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
+            return True
 
         # Private Mails
         if msg_typ == 'P':
-            # Local BBS
-            # TODO
             # Forwarding BBS
             fwd_bbs_call = self._get_fwd_bbs_pn(msg=new_msg)
             logger.debug(self._logTag + f"res: _get_fwd_bbs_pn: {fwd_bbs_call}")
@@ -340,6 +344,38 @@ class BBS:
 
         logger.error(self._logTag + f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
         BBS_LOG.error(f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
+        return False
+
+    # LOCAL ####################################################
+    def _is_fwd_local(self, msg: dict):
+        mid             = msg.get('mid', 0)
+        msg_typ         = msg.get('message_type', 'P')
+        recv_call       = msg.get('receiver', '')
+        recv_bbs        = msg.get('recipient_bbs', '')
+        recv_bbs_call   = msg.get('recipient_bbs_call', '')
+        # CFGs
+        local_theme     = self._pms_cfg.get('local_theme', [])
+        local_dist      = [self._pms_cfg.get('user', '')] + self._pms_cfg.get('local_dist', [])
+        local_user      = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
+        local_user     += ['SYSOP']     # TODO Swap
+        # TODO local_user     += list(user_db.bla......)
+        BBS_LOG.info(f"Msg: {mid} - Forward Lookup LOCAL - {recv_call}@{recv_bbs}")
+
+        if msg_typ == 'B':
+            if not recv_bbs_call:
+                BBS_LOG.debug(f"Msg: {mid} - Fwd Lookup LOCAL - {recv_call}@{recv_bbs} - IS Local Dist 1")
+                return True
+            if recv_call in local_theme:
+                BBS_LOG.debug(f"Msg: {mid} - Fwd Lookup LOCAL - {recv_call}@{recv_bbs} - IS Local Dist 2")
+                return True
+
+        if recv_bbs_call in local_dist:
+            BBS_LOG.debug(f"Msg: {mid} - Fwd Lookup LOCAL - {recv_call}@{recv_bbs} - IS Local Dist 3")
+            return True
+        if recv_call in local_user:
+            BBS_LOG.debug(f"Msg: {mid} - Fwd Lookup LOCAL - {recv_call}@{recv_bbs} - IS Local User")
+            return True
+
         return False
 
     # PN #######################################################
@@ -527,6 +563,7 @@ class BBS:
 
     def build_fwd_header(self, bbs_call: str):
         fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
+        print(fwd_q_data)
         ret = ""
         ret_bids = []
         if not fwd_q_data:

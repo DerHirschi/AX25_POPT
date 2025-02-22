@@ -72,6 +72,9 @@ def getNew_BBS_cfg():
         single_auto_conn= True,
         auto_conn       = False,        # Allow Outgoing Connects
         # Path/Routing
+        # TODO: local_user    = [] # Get from User-DB ?
+        local_theme     = [],           # Local Bulletin Theme (['TEST'])
+        local_dist      = [],           # Local Distributor (['LOCAL']) - Default ['<OWN-BBS-CALL>']
         block_bbs       = [],           # Global BBS/Recipient Rejecting
         block_call      = [],           # Global Call/Topic Rejecting
         pn_auto_path    = 2,            # Find BBS to FWD

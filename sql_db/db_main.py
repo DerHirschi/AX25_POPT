@@ -443,19 +443,19 @@ class SQL_Database:
         return self.bbs_get_MID()
 
     def bbs_update_out_msg(self, msg_struc: dict):
-        mid = msg_struc.get('mid', '')
-        from_call = msg_struc.get('sender', '')
-        from_bbs = msg_struc.get('sender_bbs', '')
-        from_bbs_call = msg_struc.get('sender_bbs', '').split('.')[0]
-        to_call = msg_struc.get('receiver', '')
-        to_bbs = msg_struc.get('recipient_bbs', '')
-        to_bbs_call = msg_struc.get('recipient_bbs', '').split('.')[0]
-        subject = msg_struc.get('subject', '')
-        msg = msg_struc.get('msg', b'')
-        typ = msg_struc.get('message_type', '')
-        msg_size = msg_struc.get('message_size', 0)
-        msg_time = datetime.now().strftime(SQL_TIME_FORMAT)
-        utctime = datetime.utcnow().strftime(SQL_TIME_FORMAT)
+        mid             = msg_struc.get('mid', '')
+        from_call       = msg_struc.get('sender', '')
+        from_bbs        = msg_struc.get('sender_bbs', '')
+        from_bbs_call   = msg_struc.get('sender_bbs', '').split('.')[0]
+        to_call         = msg_struc.get('receiver', '')
+        to_bbs          = msg_struc.get('recipient_bbs', '')
+        to_bbs_call     = msg_struc.get('recipient_bbs', '').split('.')[0]
+        subject         = msg_struc.get('subject', '')
+        msg             = msg_struc.get('msg', b'')
+        typ             = msg_struc.get('message_type', '')
+        msg_size        = msg_struc.get('message_size', 0)
+        msg_time        = datetime.now().strftime(SQL_TIME_FORMAT)
+        utctime         = datetime.utcnow().strftime(SQL_TIME_FORMAT)
         query = ("UPDATE pms_out_msg SET "
                   "from_call=%s, "
                   "from_bbs=%s, "
@@ -509,7 +509,7 @@ class SQL_Database:
         # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
         # path = str(msg_struc.get('path', []))
         header  = msg_struc.get('header', b'')
-        rx_time = msg_struc.get('tx-time', '')
+        tx_time = msg_struc.get('tx-time', '')
         # utctime = msg_struc.get('utctime', '')
 
         query = ("UPDATE pms_out_msg SET "
@@ -521,7 +521,7 @@ class SQL_Database:
         query_data = (
             bid,
             header,
-            rx_time,
+            tx_time,
             flag,
             mid,
         )

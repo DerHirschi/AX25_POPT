@@ -362,7 +362,7 @@ class MSG_Center(tk.Toplevel):
                   command=lambda: self._open_newMSG_win_forward('P')
                   ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
-                  text=self._getTabStr('Answer'),
+                  text=self._getTabStr('answer'),
                   command=lambda: self._open_newMSG_win_reply('P'),
                   ).pack(side=tk.RIGHT, expand=False)
 
