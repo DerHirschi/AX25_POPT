@@ -21,7 +21,7 @@ from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
-from gui.pms.guiBBS_APRS_MSGcenter import MSG_Center
+from gui.pms.guiBBS_MSG_center import MSG_Center
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
 from gui.pms.guiBBS_Settings_Main import BBSSettingsMain
 from gui.pms.guiBBS_fwd_q import BBS_fwd_Q

@@ -1,6 +1,6 @@
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_ERR
 from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_header_timestamp
-from cfg.logger_config import logger
+from cfg.logger_config import logger, BBS_LOG
 
 
 class BBSConnection:
@@ -65,7 +65,8 @@ class BBSConnection:
             try:
                 data = data.encode('ASCII')
             except UnicodeEncodeError:
-                logger.debug("_get_lines_fm_rx_buff: UnicodeEncodeError")
+                logger.debug(self._logTag + "_get_lines_fm_rx_buff: UnicodeEncodeError")
+                BBS_LOG.debug(self._logTag + "_get_lines_fm_rx_buff: UnicodeEncodeError")
                 return []
 
         if data in self._rx_buff:
@@ -115,8 +116,10 @@ class BBSConnection:
         if self._state in [0, 1, 2, 3, 4, 5]:
             self._send_abort()
         logger.debug(self._logTag + 'end_conn: try to remove bbsConn')
+        BBS_LOG.debug(self._logTag + 'end_conn: try to remove bbsConn')
         if not self._bbs.end_fwd_conn(self):
             logger.error(self._logTag + 'end_conn Error')
+            BBS_LOG.error(self._logTag + 'end_conn Error')
         # self._ax25_conn.cli.change_cli_state(state=1)
         self._ax25_conn.bbs_connection = None
 
@@ -278,7 +281,8 @@ class BBSConnection:
             # TODO
             elif flag in ['!', '']:  # Offset
                 # print("BBS FWD Prot Error! OFFSET Error not implemented yet")
-                logger.error("BBS FWD Prot Error! OFFSET Error not implemented yet")
+                logger.error(self._logTag + "BBS FWD Prot Error! OFFSET Error not implemented yet")
+                BBS_LOG.error(self._logTag + "BBS FWD Prot Error! OFFSET Error not implemented yet")
                 self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EO')
                 # ABORT ?
             i += 1
@@ -303,19 +307,18 @@ class BBSConnection:
         # print(f"_check_msg_to_fwd {self._tx_msg_header}")
 
     def _act_out_msg(self):
-        bids = list(self._tx_msg_BIDs)
         # for bid in _bids:
-        for bid in bids:
-            fwd_id = self._get_fwd_id(bid)
-            flag = self._tx_fs_list[0]
+        for bid in list(self._tx_msg_BIDs):
+            fwd_id  = self._get_fwd_id(bid)
+            flag    = self._tx_fs_list[0]
             if flag in ['+', 'Y']:
                 self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S+')
 
             elif flag == 'H':
                 self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'H')
 
-            self._tx_msg_BIDs = self._tx_msg_BIDs[1:]
-            self._tx_fs_list = self._tx_fs_list[1:]
+            self._tx_msg_BIDs   = self._tx_msg_BIDs[1:]
+            self._tx_fs_list    = self._tx_fs_list[1:]
         self._tx_fs_list = ''
 
     def _parse_msg(self, msg: bytes):
@@ -329,7 +332,7 @@ class BBSConnection:
             temp_k = str(list(self._rx_msg_header.keys())[0])
             sender = self._rx_msg_header[temp_k]['sender'].encode('ASCII', 'ignore')
             for l in list(lines):
-                logger.warning(f"NoKeyFound l: {l}")
+                BBS_LOG.warning(self._logTag + f"NoKeyFound l: {l}")
                 if l[:2] == b'R:':
                     if not start_found:
                         start_found = True
@@ -342,11 +345,11 @@ class BBSConnection:
                         tmp = [temp_k]
                     if str(tmp[0] + '@').encode('ASCII', 'ignore') + sender in l:
                         k = str(temp_k)
-                        logger.info(f"Replaced Key Found msg: {k}")
+                        BBS_LOG.info(self._logTag + f"Replaced Key Found msg: {k}")
                         break
                 else:
-                    logger.warning(f"No Header Key Found: {temp_k}")
-                    logger.warning(f"No Header Key Found msg: {msg}")
+                    BBS_LOG.warning(self._logTag + f"No Header Key Found: {temp_k}")
+                    BBS_LOG.warning(self._logTag + f"No Header Key Found msg: {msg}")
                     if start_found:
                         break
 
@@ -385,7 +388,7 @@ class BBSConnection:
                                 to_bbs = str(tmp[1])
                     else:
                         # print(f"Error INDEX: {line}")
-                        logger.error(f"Error INDEX: {line}")
+                        BBS_LOG.error(self._logTag + f"Error INDEX: {line}")
                     break
                 elif not line:
                     # print("Line msgParser TRIGGER")
@@ -407,7 +410,8 @@ class BBSConnection:
             res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[k]))
             # self._bbs.new_msg_alarm[str(self._rx_msg_header[_k]['typ'])] = True
             if not res:
-                logger.error(f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
+                logger.error(self._logTag + f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
+                BBS_LOG.error(self._logTag + f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
                 # print(f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
             else:
                 ph = self._bbs.get_port_handler()
@@ -416,8 +420,8 @@ class BBSConnection:
             del self._rx_msg_header[k]
 
         else:
-            logger.warning(f"!!! _parse_msg Header Key not Found: {k}")
-            logger.warning(f"msg_header_keys: {self._rx_msg_header.keys()}")
+            BBS_LOG.warning(self._logTag + f"!!! _parse_msg Header Key not Found: {k}")
+            BBS_LOG.warning(self._logTag + f"msg_header_keys: {self._rx_msg_header.keys()}")
             del self._rx_msg_header[list(self._rx_msg_header.keys())[0]]
 
     def _send_ff(self):

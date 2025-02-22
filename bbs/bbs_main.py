@@ -10,6 +10,10 @@ R  = Reject (Message is rejected)
 EE = There is an error in the line
 EO = OFFSET Error not implemented yet TODO
 DL = Deleted MSG
+
+flags MSG IN TAB :
+IN  = Default (New Incoming)
+DL  = Deleted MSG
 """
 import time
 
@@ -73,7 +77,7 @@ class BBS:
         # self._pms_cfg[]
         # ret = self._db.bbs_get_fwdPaths_mostCurrent('FRB024')
         # BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
-
+        self._pms_cfg['pn_auto_path'] = 1
         """
         mid = self.new_msg({
             'sender': 'MD2SAW',
@@ -307,12 +311,15 @@ class BBS:
 
         # Private Mails
         if msg_typ == 'P':
+            # Local BBS
+            # TODO
+            # Forwarding BBS
             fwd_bbs_call = self._get_fwd_bbs_pn(msg=new_msg)
             logger.debug(self._logTag + f"res: _get_fwd_bbs_pn: {fwd_bbs_call}")
             BBS_LOG.debug(f"res: _get_fwd_bbs_pn: {fwd_bbs_call}")
             if not fwd_bbs_call:
                 logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
-                BBS_LOG.error("Error no BBS to FWD: add_msg_to_fwd_by_id 0")
+                BBS_LOG.error("Error no BBS to FWD: add_msg_to_fwd_by_id PN")
                 return False
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             return self._db.bbs_insert_msg_to_fwd(new_msg)
@@ -322,7 +329,7 @@ class BBS:
             fwd_bbs_list: list = self._get_fwd_bbs_bl(msg=new_msg)
             if not fwd_bbs_list:
                 logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id BL")
-                BBS_LOG.error("Error no BBS to FWD: add_msg_to_fwd_by_id 1")
+                BBS_LOG.error("Error no BBS to FWD: add_msg_to_fwd_by_id BL")
                 return False
             for fwd_call in fwd_bbs_list:
                 new_msg['fwd_bbs_call'] = fwd_call
@@ -399,24 +406,24 @@ class BBS:
         # Auto Path Lookup
         if self._pms_cfg.get('pn_auto_path', 0) == 0:
             # Disabled
-            BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}. AutoPath disabled")
+            BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath disabled")
             return ''
         if self._pms_cfg.get('pn_auto_path', 0) == 1:
             # most current
             fwd_bbs = self._find_most_current_PN_route(recv_bbs_call)
             if not fwd_bbs:
-                BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}. AutoPath best (low hops)")
+                BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath most current")
                 return ''
             return fwd_bbs
         if self._pms_cfg.get('pn_auto_path', 0) == 2:
             # best (low hops)
             fwd_bbs = self._find_lowHop_PN_route(recv_bbs_call)
             if not fwd_bbs:
-                BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}. AutoPath best (low hops)")
+                BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath best (low hops)")
                 return ''
             return fwd_bbs
 
-        BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}")
+        BBS_LOG.warning(f"Msg: {mid} No FWD-Path found: {recv_call}@{recv_bbs}")
         return ''
 
     def _find_lowHop_PN_route(self, bbs_address: str):
@@ -441,18 +448,21 @@ class BBS:
     def _find_most_current_PN_route(self, bbs_address: str):
         if not bbs_address:
             return ''
+
         ret = self._db.bbs_get_fwdPaths_mostCurrent(bbs_address)
         BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
         for bbs, hops, path in ret:
             fwd_bbs_cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs, {})
+            BBS_LOG.debug(f"_find_most_current_PN_route: SUCHE: {bbs}")
+            BBS_LOG.debug(f"HOPS: {hops}")
+            BBS_LOG.debug(f"PATH: {path}")
+            BBS_LOG.debug(f"fwd_bbs_cfg: {fwd_bbs_cfg}")
+            # if True:    # FIXME DEBUG !!!
             if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
                 BBS_LOG.debug(f"_find_most_current_PN_route: Treffer, FWD via {bbs}")
                 BBS_LOG.debug(f"HOPS: {hops}")
                 BBS_LOG.debug(f"PATH: {path}")
                 return bbs
-            BBS_LOG.debug(f"_find_most_current_PN_route: SUCHE: {bbs}")
-            BBS_LOG.debug(f"HOPS: {hops}")
-            BBS_LOG.debug(f"PATH: {path}")
 
         BBS_LOG.debug(f"_find_most_current_PN_route: Kein Treffer !!: {bbs_address}")
         return ''
