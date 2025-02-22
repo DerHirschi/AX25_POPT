@@ -4,8 +4,8 @@ from tkinter import ttk
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
-from gui.pms.guiBBS_Gereral_Settings import BBSGeneralSettings
-from gui.pms.guiBBS_FWD_Settings import BBS_FWD_Settings
+from gui.bbs_gui.bbs_settings.guiBBS_Gereral_Settings import BBSGeneralSettings
+from gui.bbs_gui.bbs_settings.guiBBS_FWD_Settings import BBS_FWD_Settings
 
 
 class BBSSettingsMain(tk.Toplevel):

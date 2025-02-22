@@ -136,6 +136,8 @@ Ideas/TODO's :
   - DB-Tool
 
 ✓ UserDB
+  - Sync mit https://info.packetradio-freital.de/calldb/json
+  - Sync mit FBB WP via FBB WP-Request Server
   - UserDB auf SQL-DB umstellen?
   ✓ Suchfunktion in UserDB GUI
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
@@ -153,16 +155,19 @@ Ideas/TODO's :
 
 - QSO Fenster/Tool
 - Debugging Tool
+
 ✓ PMS (S&F ohne Gedöns)
-- Simple Mailbox (CLI übers PMS)
 - PMS (TST-HOST)
-- BBS (S&F und all den Gedöns)
-- BBS Tool.
 ✓ "Nachrichten-Center" fasst alle Nachrichtenkanäle (APRS Bulletin/PN, BBS) übersichtlich zusammen.
   ✓ PMS
     - Papierkorb usw
   - APRS
   - BBS
+
+- BBS
+  - BBS (S&F und all den Gedöns)
+  - BBS Tool.
+  - CLI
 
 ✓ Pipe-TOOL
   - Optional Header in Datei schreiben für jeden Frame
@@ -199,7 +204,12 @@ Ideas/TODO's :
 
 - EAX25
 - NetROM
-  - decoding
+  ✓ decoding (experimentel (nicht ausreichend getestet)) (INP-Protokoll nicht vollständig)
+  - grafische & tabellarische Auswertung der Routen/Routingtabellen (Siehe FWD Route)
+  - encoding/handling und gedöns
+
+- Flexnet(Routing Protokoll)
+  - decoding (experimentel (nicht ausreichend getestet)) (INP-Protokoll nicht vollständig)
   - grafische & tabellarische Auswertung der Routen/Routingtabellen (Siehe FWD Route)
   - encoding/handling und gedöns
 
@@ -225,7 +235,7 @@ Ideas/TODO's :
   - Call-Filter
   - U/UI - Frame Filter
 
-- Daten Komprimierung
+- Daten Komprimierung (Hufman ??)
 - Daten Verschlüsselung (AES/RSA)
 ✓ ordentliches Noden System bzw CLI überarbeiten
 ✓ DX-Alarm überarbeiten

@@ -5,7 +5,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
 from cfg.constant import FONT, ENCODINGS
 from fnc.str_fnc import format_number, get_strTab
-from gui.pms.guiBBS_newMSG import BBS_newMSG
+from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
 from gui.guiMsgBoxes import save_file_dialog
 from cfg.string_tab import STR_TABLE
 

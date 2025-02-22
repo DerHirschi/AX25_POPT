@@ -2,6 +2,7 @@
 # 2.117.x
 Fixes:
 - PMS-Setting "AutoFWD" war ohne Funktion
+- Unterschiedliche Timestamps im "Message-Center"
 
 Optimierung:
 - SQL-DB: Tabellen pms_pn_msg und pms_BL_msg
@@ -11,6 +12,8 @@ Optimierung:
 - PMS/BBS Strukturen
 - CLI Strukturen
 - Cleanup Stingtabelle in CLI-Funktionen
+- Übersetzungen im "Message-Center" vervollständigt
+- Spalte für "Flag" im "Message-Center" für PN und BL
 
 Neue Implementierungen / Funktionen:
 - CLI Typ: BOX
@@ -18,12 +21,14 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD: LM (List Mails / Listet alle eigenen Mails)
 - CLI-CMD: LN (List New Mails / Listet alle eigenen neuen Mails)
 - CLI-CMD: KM (Löscht alle pers. Nachrichten, die man bereits gelesen hat.)
-- CLI-CMD: K (Löscht pers. Nachrichte(n), Bsp: K 123 124 128)
+- CLI-CMD: K (Löscht pers. Nachricht(en), Bsp: K 123 124 128)
 - CLI-CMD: R (Read Mail / Mail lesen)
 - CLI Seiten-Stops/Paging für MCast, NODE, BOX
 - PMS-Setting "Reverse-FWD" (nach Zeitplan connecten) für jeweiligen BBS-FWD
   setzbar
 - BOX nimmt jetzt auch FWD Connections von BBS an
+- Forward-Lookup Funktionen für das Routing von ausgehenden Mails
+  - Lokales Mail-System (PoPT-BBS erkennt, wenn Mails lokal bleiben sollen)
 
 ###########################################################################################################
 ###########################################################################################################

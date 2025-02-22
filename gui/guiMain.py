@@ -21,11 +21,11 @@ from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
-from gui.pms.guiBBS_MSG_center import MSG_Center
+from gui.bbs_gui.guiBBS_MSG_center import MSG_Center
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
-from gui.pms.guiBBS_Settings_Main import BBSSettingsMain
-from gui.pms.guiBBS_fwd_q import BBS_fwd_Q
-from gui.pms.guiBBS_newMSG import BBS_newMSG
+from gui.bbs_gui.bbs_settings.guiBBS_Settings_Main import BBSSettingsMain
+from gui.bbs_gui.guiBBS_fwd_q import BBS_fwd_Q
+from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
 from gui.ft.guiFT_Manager import FileTransferManager
 from gui.guiLocatorCalc import LocatorCalculator
 from gui.settings.guiDualPortSettings import DualPortSettingsWin
