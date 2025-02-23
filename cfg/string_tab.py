@@ -2826,6 +2826,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'routing_settings': (
+        'Routing',
+        'Routing',
+        'Routing',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'allowRevFWD': (
         'Erlaube Reverse-FWD',
         'Allow Reverse-FWD',

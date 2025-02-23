@@ -178,4 +178,5 @@ class PoPTSchedule_Tasker:
         for task in list(self._scheduled_tasks_q):
             if task[1] == conf:
                 task[0].manual_trigger()
-                self._start_AutoConnTask(task[1])
+                return self._start_AutoConnTask(task[1])
+        return None

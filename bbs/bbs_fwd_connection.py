@@ -5,27 +5,27 @@ from cfg.logger_config import logger, BBS_LOG
 
 class BBSConnection:
     def __init__(self, bbs_obj, ax25_connection):
-        # print('BBSConnection INIT')
-        self._logTag = "BBS-Conn: "
-        self._ax25_conn = ax25_connection
-        self._bbs = bbs_obj
-        self._db = bbs_obj.get_db()
+        self._logTag        = "BBS-Conn: "
+        self._ax25_conn     = ax25_connection
+        self._bbs           = bbs_obj
+        self._db            = bbs_obj.get_db()
         ###########
-        self.e = False
-        self._mybbs_flag = self._bbs.pms_flag
-        self._dest_stat_id = self._ax25_conn.cli.stat_identifier
+        self.e              = False
+        self._mybbs_flag    = self._bbs.pms_flag
+        self._dest_stat_id  = self._ax25_conn.cli.stat_identifier
         # print(f"BBS-Conn : {self._dest_stat_id}")
         # self._bbs_fwd_cmd = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         self._dest_bbs_call = str(self._ax25_conn.to_call_str).split('-')[0]
-        self._my_stat_id = self._bbs.my_stat_id
-        self._feat_flag = []
+        self._my_stat_id    = self._bbs.my_stat_id
+        self._feat_flag     = []
         ###########
-        self._rx_buff = b''
+        self._rx_buff       = b''
         self._rx_msg_header = {}
         # tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
         self._tx_msg_header = b''
-        self._tx_msg_BIDs = []
-        self._tx_fs_list = ''
+        self._tx_msg_BIDs   = []
+        self._tx_fs_list    = ''    # '++-='
+        BBS_LOG.info(self._logTag + f'New FWD Connection > {self._dest_bbs_call} > {self._dest_stat_id.feat_flag}')
 
         self._state_tab = {
             0: self._init_rev_fwd,
@@ -40,12 +40,15 @@ class BBSConnection:
         self._state = 0
         self.e = self._check_feature_flags()
         if self._dest_stat_id is None:
+            logger.error(self._logTag + f'Error Dest State Identy > {self._dest_bbs_call} > {self._dest_stat_id}')
+            BBS_LOG.error(self._logTag + f'Error Dest State Identy > {self._dest_bbs_call} > {self._dest_stat_id}')
             self.e = True
         if not self.e:
             # self._ax25_conn.cli.change_cli_state(state=5)
             self._check_msg_to_fwd()
 
     def init_incoming_conn(self):
+        BBS_LOG.info(self._logTag + f'Incoming Connection > {self._dest_bbs_call}')
         self._state = 3
 
     def _check_feature_flags(self):
@@ -115,11 +118,11 @@ class BBSConnection:
     def end_conn(self):
         if self._state in [0, 1, 2, 3, 4, 5]:
             self._send_abort()
-        logger.debug(self._logTag + 'end_conn: try to remove bbsConn')
-        BBS_LOG.debug(self._logTag + 'end_conn: try to remove bbsConn')
+        logger.info(self._logTag + 'end_conn: try to remove bbsConn > {self._dest_bbs_call}')
+        BBS_LOG.info(self._logTag + f'end_conn: try to remove bbsConn > {self._dest_bbs_call}')
         if not self._bbs.end_fwd_conn(self):
-            logger.error(self._logTag + 'end_conn Error')
-            BBS_LOG.error(self._logTag + 'end_conn Error')
+            logger.error(self._logTag + f'end_conn Error > {self._dest_bbs_call}')
+            BBS_LOG.error(self._logTag + f'end_conn Error > {self._dest_bbs_call}')
         # self._ax25_conn.cli.change_cli_state(state=1)
         self._ax25_conn.bbs_connection = None
 
@@ -302,18 +305,22 @@ class BBSConnection:
 
     def _check_msg_to_fwd(self):
         tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
-        if tmp[1] not in self._tx_msg_BIDs:
-            self._tx_msg_header = tmp[0]
-            self._tx_msg_BIDs   = tmp[1]
+        for el in tmp[1]:
+            if el in self._tx_msg_BIDs:
+                return
+        self._tx_msg_header = tmp[0]
+        self._tx_msg_BIDs   = tmp[1]
+        BBS_LOG.info(self._logTag + f'FWD {self._tx_msg_BIDs} > {self._dest_bbs_call}')
+        BBS_LOG.debug(self._logTag + f'FWD-HEADER: {self._tx_msg_header}')
 
     def _act_out_msg(self):
         # for bid in _bids:
         if not self._tx_fs_list:
-            BBS_LOG.debug('No _tx_fs_list on _act_out_msg call')
+            BBS_LOG.debug(self._logTag + 'No _tx_fs_list on _act_out_msg call')
             return
         if len(self._tx_fs_list) != len(self._tx_msg_BIDs):
-            BBS_LOG.error('_act_out_msg: len(self._tx_fs_list) != len(self._tx_msg_BIDs)')
-            BBS_LOG.error(f'_act_out_msg: {len(self._tx_fs_list)} != {len(self._tx_msg_BIDs)}')
+            BBS_LOG.error(self._logTag + '_act_out_msg: len(self._tx_fs_list) != len(self._tx_msg_BIDs)')
+            BBS_LOG.error(self._logTag + f'_act_out_msg: {len(self._tx_fs_list)} != {len(self._tx_msg_BIDs)}')
             return
         for bid in list(self._tx_msg_BIDs):
             fwd_id  = self._get_fwd_id(bid)

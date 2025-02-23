@@ -6,6 +6,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
 from gui.bbs_gui.bbs_settings.guiBBS_Gereral_Settings import BBSGeneralSettings
 from gui.bbs_gui.bbs_settings.guiBBS_FWD_Settings import BBS_FWD_Settings
+from gui.bbs_gui.bbs_settings.guiBBS_Routing_Settings import BBSRoutingSettings
 
 
 class BBSSettingsMain(tk.Toplevel):
@@ -38,6 +39,7 @@ class BBSSettingsMain(tk.Toplevel):
         self._win_tab   = {
             'general_settings'  : BBSGeneralSettings,
             'fwd_settings'      : BBS_FWD_Settings,
+            'routing_settings'  : BBSRoutingSettings,
         }
         ###############################################################
 
@@ -94,8 +96,6 @@ class BBSSettingsMain(tk.Toplevel):
 
     ################################################
     def _ok_btn(self):
-        # self._root_win.set_text_tags()
-        # self._root_win.tabbed_sideFrame.update_mon_port_id()
         self._root_win.sysMsg_to_monitor(self._getTabStr('hin1'))
         self._root_win.sysMsg_to_monitor(lob_gen(self._lang))
         self.destroy_win()

@@ -69,10 +69,10 @@ class BBS_FWD_Settings(tk.Frame):
     def _add_new_homeBBS_tab(self):
         if 'NOCALL' in self._pms_cfg.get('fwd_bbs_cfg', {}).keys():
             return
-        self._bbs_vars['NOCALL'] = self._add_homeBBS_tab()
+        self._bbs_vars['NOCALL'] = self._add_fwdBBS_tab()
         self._select_new_tab()
 
-    def _add_homeBBS_tab(self, cfg=None):
+    def _add_fwdBBS_tab(self, cfg=None):
         if not cfg:
             if 'NOCALL' in self._bbs_vars.keys():
                 return
@@ -255,7 +255,7 @@ class BBS_FWD_Settings(tk.Frame):
             if not fwd_cfg:
                 logger.warning(self._logTag + f"Empty FWD-CFG for {k}")
                 fwd_cfg = getNew_BBS_FWD_cfg()
-            self._bbs_vars[fwd_cfg.get('dest_call', 'NOCALL')] = self._add_homeBBS_tab(fwd_cfg)
+            self._bbs_vars[fwd_cfg.get('dest_call', 'NOCALL')] = self._add_fwdBBS_tab(fwd_cfg)
 
     def _set_NOCALL_tab(self):
         nocall_vars = self._bbs_vars.get('NOCALL', {})

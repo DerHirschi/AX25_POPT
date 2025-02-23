@@ -41,17 +41,17 @@ class BBS_fwd_Q(tk.Toplevel):
         # tk.Label(_frame, text='sags').grid(row=0, column=1)
         ##########################################################################################
         # TREE
-        _tree_frame = tk.Frame(self, )
-        _tree_frame.rowconfigure(0, weight=1, )
-        _tree_frame.columnconfigure(0, weight=1)
-        _tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        _btn_frame = tk.Frame(self, width=150)
-        _btn_frame.rowconfigure(0, weight=1, )
-        _btn_frame.rowconfigure(1, weight=1, )
-        _btn_frame.rowconfigure(2, weight=1, )
-        _btn_frame.columnconfigure(0, weight=1, minsize=150)
-        _btn_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
-        tk.Button(_btn_frame,
+        tree_frame = tk.Frame(self, )
+        tree_frame.rowconfigure(0, weight=1, )
+        tree_frame.columnconfigure(0, weight=1)
+        tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        btn_frame = tk.Frame(self, width=150)
+        btn_frame.rowconfigure(0, weight=1, )
+        btn_frame.rowconfigure(1, weight=1, )
+        btn_frame.rowconfigure(2, weight=1, )
+        btn_frame.columnconfigure(0, weight=1, minsize=150)
+        btn_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+        tk.Button(btn_frame,
                   text="FWD Starten",
                   command=self._do_fwd
                   ).grid(row=0, column=0)
@@ -65,10 +65,10 @@ class BBS_fwd_Q(tk.Toplevel):
             'size',
         )
 
-        self._tree = ttk.Treeview(_tree_frame, columns=columns, show='headings')
+        self._tree = ttk.Treeview(tree_frame, columns=columns, show='headings')
         self._tree.grid(row=0, column=0, sticky='nsew')
         # add a scrollbar
-        scrollbar = ttk.Scrollbar(_tree_frame, orient=tk.VERTICAL, command=self._tree.yview)
+        scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
@@ -110,12 +110,12 @@ class BBS_fwd_Q(tk.Toplevel):
     def _format_tree_data(self):
         self._tree_data = []
         for el in self._data:
-            _from_call = f"{el[1]}@{el[2]}"
-            _to_call = f"{el[3]}@{el[4]}"
+            from_call = f"{el[1]}@{el[2]}"
+            to_call = f"{el[3]}@{el[4]}"
             self._tree_data.append((
                 f'{el[0]}',
-                f'{_from_call}',
-                f'{_to_call}',
+                f'{from_call}',
+                f'{to_call}',
                 f'{el[5]}',  # to BBS
                 f'{el[6]}',  # typ
                 f'{el[7]}',  # sub

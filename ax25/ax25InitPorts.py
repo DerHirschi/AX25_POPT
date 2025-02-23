@@ -215,7 +215,8 @@ class AX25PortHandler(object):
 
     def start_SchedTask_man(self, conf):
         if self._scheduled_tasker:
-            self._scheduled_tasker.start_scheduler_Task_manual(conf)
+            return self._scheduled_tasker.start_scheduler_Task_manual(conf)
+        return None
 
     def _Sched_task(self):
         if self._scheduled_tasker:

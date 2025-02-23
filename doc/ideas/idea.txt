@@ -168,6 +168,9 @@ Ideas/TODO's :
   - BBS (S&F und all den Gedöns)
   - BBS Tool.
   - CLI
+  - Automatesierte Routingmails (Scheduler)
+  - Automatesierte WP-Requests an FBB-BBS
+  - Auswertung und senden von WP-Mails (Siehe User-DB)
 
 ✓ Pipe-TOOL
   - Optional Header in Datei schreiben für jeden Frame
