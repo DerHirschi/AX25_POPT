@@ -77,7 +77,7 @@ class BBS:
         # self._pms_cfg[]
         # ret = self._db.bbs_get_fwdPaths_mostCurrent('FRB024')
         # BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
-        self._pms_cfg['pn_auto_path'] = 1
+        # self._pms_cfg['pn_auto_path'] = 1
         """
         mid = self.new_msg({
             'sender': 'MD2SAW',
@@ -163,6 +163,8 @@ class BBS:
     ###################################
     # CFG Stuff
     def _set_pms_home_bbs(self):
+        # TODO: Check if needed
+        #  self._pms_cfg['home_bbs'] unused ??
         home_bbs = []
         for h_bbs_k, h_bbs_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
             h_bbs_cfg: dict
@@ -176,19 +178,19 @@ class BBS:
         #if not self._pms_cfg.get('auto_conn', True):
         #    return False
         for h_bbs_k, cfg in dict(self._pms_cfg.get('fwd_bbs_cfg', {})).items():
-            sched_cfg      = {}
-            revers_fwd     = cfg.get('reverseFWD', False)
-            outgoing_fwd   = cfg.get('auto_conn', True)
+            sched_cfg           = {}
+            revers_fwd          = cfg.get('reverseFWD', False)
+            outgoing_fwd        = cfg.get('auto_conn', True)
             if all((revers_fwd, outgoing_fwd)):
-                sched_cfg  = cfg.get('scheduler_cfg', {})
+                sched_cfg       = cfg.get('scheduler_cfg', {})
             autoconn_cfg = {
-                'task_typ': 'FWD',
-                'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
-                'port_id':  cfg.get('port_id'),
-                'own_call': cfg.get('own_call'),
-                'dest_call': cfg.get('dest_call'),
-                'via_calls': cfg.get('via_calls'),
-                'axip_add': cfg.get('axip_add'),
+                'task_typ':     'FWD',
+                'max_conn':     int(self._pms_cfg.get('single_auto_conn', True)),
+                'port_id':      cfg.get('port_id'),
+                'own_call':     cfg.get('own_call'),
+                'dest_call':    cfg.get('dest_call'),
+                'via_calls':    cfg.get('via_calls'),
+                'axip_add':     cfg.get('axip_add'),
             }
             self._port_handler.insert_SchedTask(sched_cfg, autoconn_cfg)
 
@@ -197,13 +199,13 @@ class BBS:
             cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(h_bbs_k, {})
             if cfg:
                 autoconn_cfg = {
-                    'task_typ': 'FWD',
-                    'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
-                    'port_id': cfg.get('port_id'),
-                    'own_call': cfg.get('own_call'),
-                    'dest_call': cfg.get('dest_call'),
-                    'via_calls': cfg.get('via_calls'),
-                    'axip_add': cfg.get('axip_add'),
+                    'task_typ':     'FWD',
+                    'max_conn':     int(self._pms_cfg.get('single_auto_conn', True)),
+                    'port_id':      cfg.get('port_id'),
+                    'own_call':     cfg.get('own_call'),
+                    'dest_call':    cfg.get('dest_call'),
+                    'via_calls':    cfg.get('via_calls'),
+                    'axip_add':     cfg.get('axip_add'),
                 }
                 self._port_handler.del_SchedTask(autoconn_cfg)
 
@@ -254,13 +256,13 @@ class BBS:
                 cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(h_bbs_k, {})
                 if cfg:
                     autoconn_cfg = {
-                        'task_typ': 'FWD',
-                        'max_conn': int(self._pms_cfg.get('single_auto_conn', True)),
-                        'port_id': cfg.get('port_id'),
-                        'own_call': cfg.get('own_call'),
-                        'dest_call': cfg.get('dest_call'),
-                        'via_calls': cfg.get('via_calls'),
-                        'axip_add': cfg.get('axip_add'),
+                        'task_typ':     'FWD',
+                        'max_conn':     int(self._pms_cfg.get('single_auto_conn', True)),
+                        'port_id':      cfg.get('port_id'),
+                        'own_call':     cfg.get('own_call'),
+                        'dest_call':    cfg.get('dest_call'),
+                        'via_calls':    cfg.get('via_calls'),
+                        'axip_add':     cfg.get('axip_add'),
                     }
                     self._port_handler.start_SchedTask_man(autoconn_cfg)
 
@@ -380,9 +382,9 @@ class BBS:
 
     # PN #######################################################
     def _get_fwd_bbs_pn(self, msg: dict):
-        mid             = msg.get('mid', 0)
-        recv_call       = msg.get('receiver', '')
-        recv_bbs        = msg.get('recipient_bbs', '')
+        mid             = msg.get('mid',                0)
+        recv_call       = msg.get('receiver',           '')
+        recv_bbs        = msg.get('recipient_bbs',      '')
         recv_bbs_call   = msg.get('recipient_bbs_call', '')
         recv_bbs_regio  = spilt_regio(recv_bbs)
         BBS_LOG.info(f"Msg: {mid} - Forward Lookup PN - {recv_call}@{recv_bbs}")
@@ -400,13 +402,18 @@ class BBS:
         # FWD Config Lookup
         for fwd_bbs, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
             fwd_cfg: dict
-            h_route     = fwd_cfg.get('pn_fwd_h_out', [])
-            h_block     = fwd_cfg.get('pn_fwd_not_h_out', [])
-            call_block  = fwd_cfg.get('pn_fwd_not_call_out', [])
-            call_fwd    = fwd_cfg.get('pn_fwd_call_out', [])
-            bbs_fwd     = fwd_cfg.get('pn_fwd_bbs_out', [])
-            alt_route   = fwd_cfg.get('pn_fwd_alter_path', False)
+            h_route     = fwd_cfg.get('pn_fwd_h_out',           [])
+            h_block     = fwd_cfg.get('pn_fwd_not_h_out',       [])
+            call_block  = fwd_cfg.get('pn_fwd_not_call_out',    [])
+            call_fwd    = fwd_cfg.get('pn_fwd_call_out',        [])
+            bbs_fwd     = fwd_cfg.get('pn_fwd_bbs_out',         [])
+            alt_route   = fwd_cfg.get('pn_fwd_alter_path',      False)
+            pn_fwd      = fwd_cfg.get('pn_fwd',                 True)
 
+            # BL FWD is not allowed to this BBS
+            if not pn_fwd:
+                BBS_LOG.warning(f"Msg: {mid} - Private Mail Forward not enabled for {fwd_bbs}.")
+                continue
             # Call Block
             if recv_call in call_block:
                 BBS_LOG.warning(f"Msg: {mid} - Call-Rejected/Blocked: {recv_call} for {fwd_bbs}.")
@@ -505,9 +512,9 @@ class BBS:
 
     # BL #######################################################
     def _get_fwd_bbs_bl(self, msg: dict):
-        mid         = msg.get('mid', 0)
-        topic       = msg.get('receiver', '')
-        distributor = msg.get('recipient_bbs', '')
+        mid         = msg.get('mid',            0)
+        topic       = msg.get('receiver',       '')
+        distributor = msg.get('recipient_bbs',  '')
         rej_dist, rej_topic =  self._pms_cfg.get('reject_bbs', ''),  self._pms_cfg.get('reject_call', '')
         BBS_LOG.info(f"Msg: {mid} - Forward Lookup BL - {topic}@{distributor}")
         if distributor in rej_dist:
@@ -521,11 +528,16 @@ class BBS:
         # FWD Config Lookup
         for fwd_bbs, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
             fwd_cfg: dict
-            cfg_dist        = fwd_cfg.get('bl_dist_out', [])
-            cfg_dist_block  = fwd_cfg.get('bl_dist_not_out', [])
-            cfg_topic       = fwd_cfg.get('bl_top_out', [])
-            cfg_topic_block = fwd_cfg.get('bl_top_not_out', [])
+            cfg_dist        = fwd_cfg.get('bl_dist_out',        [])
+            cfg_dist_block  = fwd_cfg.get('bl_dist_not_out',    [])
+            cfg_topic       = fwd_cfg.get('bl_top_out',         [])
+            cfg_topic_block = fwd_cfg.get('bl_top_not_out',     [])
+            cfg_bl_allowed  = fwd_cfg.get('bl_fwd',             True)
 
+            # BL FWD is not allowed to this BBS
+            if not cfg_bl_allowed:
+                BBS_LOG.warning(f"Msg: {mid} - Bulletin Forward not enabled for {fwd_bbs}.")
+                continue
             # Topic BLock
             if topic in cfg_topic_block:
                 BBS_LOG.warning(f"Msg: {mid} - Topic-Rejected/Blocked: {topic} for {fwd_bbs}.")
@@ -563,7 +575,6 @@ class BBS:
 
     def build_fwd_header(self, bbs_call: str):
         fwd_q_data = self.get_fwd_q_tab_forBBS(bbs_call)
-        print(fwd_q_data)
         ret = ""
         ret_bids = []
         if not fwd_q_data:

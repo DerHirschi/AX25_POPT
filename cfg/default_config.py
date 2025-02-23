@@ -66,23 +66,25 @@ def getNew_port_cfg():
 def getNew_BBS_cfg():
     return dict(
         user            = 'NOCALL',     # BOX CALL
-        regio           = '',
+        regio           = '',           # Own Regio
         fwd_bbs_cfg     = {},           # FWD CFGs
-        home_bbs        = [],
-        single_auto_conn= True,
+        home_bbs        = [],           # TODO: Check if used
+        single_auto_conn= True,         # Only one outgoing connection at a time
         auto_conn       = False,        # Allow Outgoing Connects
         # Path/Routing
-        # TODO: local_user    = [] # Get from User-DB ?
-        local_theme     = [],           # Local Bulletin Theme (['TEST'])
-        local_dist      = [],           # Local Distributor (['LOCAL']) - Default ['<OWN-BBS-CALL>']
+        # TODO:
+        #  local_user    = [] # Get from User-DB ?
+        local_theme     = ['TEST'],                              # Local Bulletin Theme
+        local_dist      = ['LOCAL', 'LOKAL', 'HOME', 'SYSOP'],   # Local Distributor - Default ['<OWN-BBS-CALL>']
         block_bbs       = [],           # Global BBS/Recipient Rejecting
         block_call      = [],           # Global Call/Topic Rejecting
-        pn_auto_path    = 2,            # Find BBS to FWD
+        pn_auto_path    = 1,            # Find BBS to FWD
         # 0 = disabled (Use strict configs)
         # 1 = most current
         # 2 = best (low hops)
         # 1 & 2 (Use Auto Path lookup as alternative)
-        pn_auto_send_to_regio = True    # Try to find a BBS in the Region when can't find Route
+        # TODO:
+        #  pn_auto_send_to_regio = True    # Try to find a BBS in the Region when can't find Route
     )
 
 
@@ -99,6 +101,8 @@ def getNew_BBS_FWD_cfg():
         t_o_after_fail  = 30,       # Timeout Minutes                       # TODO GUI / Check Function
         t_o_increment   = True,     # Increment Timeout after Fail attempt  # TODO GUI / Check Function
         # Routing
+        pn_fwd              = True, # Allow PN FWD
+        bl_fwd              = True, # Allow BL FWD
         pn_fwd_auto_path    = False,# Allow AutoPath
         pn_fwd_alter_path   = False,# Allow Alternative Route               # TODO GUI / after x attempt's
         # PN Outgoing Routing   # TODO GUI

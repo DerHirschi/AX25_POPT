@@ -2837,4 +2837,130 @@ STR_TABLE = {
         '',
         '',
         ''),
+
+    'allowPN_AutoPath': (
+        'Erlaube PN AutoPath',
+        'Allow PN AutoPath',
+        'PN AutoPath toestaan',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'allowPN_AlterPath': (
+        'PN-Alternativroute zulassen',
+        'Allow PN alternative route',
+        'Alternatieve PN-route toestaan',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'allow_PN_FWD': (
+        'Privat Mail FWD zulassen',
+        'Allow private mail FWD',
+        'Sta het doorsturen van privémail toe',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'allow_BL_FWD': (
+        'Bulletin Mail FWD zulassen',
+        'Allow Bulletin mail FWD',
+        'Doorsturen van bulletinmail toestaan',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'fwd_autoPath_help': (
+        ('0  = deaktiviert\n'
+         '1  = am aktuellsten\n'
+         '2  = am besten (geringe Sprünge)'),
+        ('0 = disabled\n'
+         '1 = most recent\n'
+         '2 = best (lowes hops)'),
+        ('0 = uitgeschakeld\n'
+         '1 = meest recente\n'
+         '2 = beste (kleine sprongen)'),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_sett_fwd_global': (
+        'Forwarding Global',
+        'Forwarding Global',
+        'Forwarding globaal',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_sett_local_dist': (
+        'Lokale Verteiler',
+        'Local distributors',
+        'Lokale distributeurs',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_sett_local_theme': (
+        'Lokale Bulletin Themen',
+        'Local Bulletin Themes',
+        'Lokale Bulletin thema s',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_sett_block_bbs': (
+        'BBS blockieren',
+        'Block BBS',
+        'BBS blokkeren',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_sett_block_call': (
+        'CALL blockieren',
+        'Block CALL',
+        'CALL blokkeren',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 }
