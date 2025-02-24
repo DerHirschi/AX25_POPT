@@ -413,9 +413,9 @@ class BBS_newMSG(tk.Toplevel):
         if not home_bbs:
             return False
         if home_bbs == 'AUTO':
-            return self._bbs_obj.add_msg_to_fwd_by_id(self._mid)
+            return self._bbs_obj.add_local_msg_to_fwd_by_id(self._mid)
         home_bbs = home_bbs.split('.')[0]
-        return self._bbs_obj.add_msg_to_fwd_by_id(self._mid, home_bbs)
+        return self._bbs_obj.add_local_msg_to_fwd_by_id(self._mid, home_bbs)
 
     def _dest_call_check(self):
         to_call = str(self._to_call_var.get())

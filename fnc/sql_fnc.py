@@ -19,3 +19,11 @@ def search_sql_injections(code):
             logger.warning(f"{code}")
             return True
     return False
+
+def convert_sql_list(str_list: str):
+    tmp = str_list[1:-1].split(', ')
+    ret = []
+    for el in tmp:
+        ret.append(el.replace("'", ""))
+    return ret
+

@@ -13,14 +13,22 @@ DL = Deleted MSG
 
 flags MSG IN TAB :
 IN  = Default (New Incoming)
+$   = New Incoming - Markt for Forward Check
 DL  = Deleted MSG
+
+TODO:
+ - Loop Check !!
+
 """
+
 import time
+from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import FWD_RESP_TAB
-from bbs.bbs_fnc import generate_sid, build_new_msg_header, spilt_regio
+from bbs.bbs_fnc import generate_sid, spilt_regio, build_fwd_msg_header
 from bbs.bbs_fwd_connection import BBSConnection
+from cfg.constant import SQL_TIME_FORMAT
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, BBS_LOG
 from cli.cliStationIdent import get_station_id_obj
@@ -48,6 +56,8 @@ class BBS:
         # Config's
         self._pms_cfg: dict         = POPT_CFG.get_BBS_cfg()
         self._pms_cfg_hasChanged    = False
+        if not self._pms_cfg.get('enable_fwd', True):
+            BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
         ####################
         # Set Vars
         self._set_pms_home_bbs()
@@ -69,6 +79,7 @@ class BBS:
         # Tasker/crone
         # self._var_task_1sec = time.time()
         self._var_task_5sec         = time.time()
+        self._var_task_60sec        = time.time()
         self._var_task_fwdQ_timer   = time.time()
         logger.info(self._logTag + 'Init complete')
         BBS_LOG.info('Init complete')
@@ -104,6 +115,8 @@ class BBS:
             self._set_pms_home_bbs()
             self._set_pms_fwd_schedule()
             self._pms_cfg_hasChanged = False
+            if not self._pms_cfg.get('enable_fwd', True):
+                BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
             return True
         return False
 
@@ -124,8 +137,8 @@ class BBS:
         if self._pms_cfg_hasChanged:
             if self._reinit():
                 return
-        # self._5sec_task()
         self._60sec_task()
+        self._fwdQ_task()
 
     ###################################
     # Tasks
@@ -134,6 +147,12 @@ class BBS:
             self._var_task_5sec = time.time() + 5
 
     def _60sec_task(self):
+        if time.time() > self._var_task_60sec:
+            self._var_task_60sec = time.time() + 60
+            self._in_msg_fwd_check()
+
+    def _fwdQ_task(self):
+        """ Dynamic Timing """
         if time.time() > self._var_task_fwdQ_timer:
             self._var_task_fwdQ_timer = time.time() + 60  # Maybe 120 ?
             self._check_outgoing_fwd()
@@ -174,6 +193,98 @@ class BBS:
             self._var_task_fwdQ_timer = time.time() + 20  #
             return
         return
+
+    def _in_msg_fwd_check(self):
+        msg_fm_db = self._db.bbs_get_msg_fwd_check()
+        for raw_msg in msg_fm_db:
+            print('_in_msg_fwd_check')
+            print(raw_msg)
+
+            if not raw_msg:
+                BBS_LOG.debug(' - FWD-CHK - _in_msg_fwd_check: no msg')
+                continue
+            sender_bbs_call   = raw_msg[3].split('.')[0]
+            receiver_bbs_call = raw_msg[7].split('.')[0]
+            msg = {
+                'mid':                  raw_msg[0],
+                'bid_mid':              raw_msg[1],
+                'sender':               raw_msg[2],
+                'sender_bbs':           raw_msg[3],
+                'sender_bbs_call':      sender_bbs_call,
+                'receiver':             raw_msg[4],
+                'recipient_bbs':        raw_msg[5],
+                'recipient_bbs_call':   receiver_bbs_call,
+                'message_size':         raw_msg[6],
+                'subject':              raw_msg[7],
+                'header':               raw_msg[8],
+                'msg':                  raw_msg[9],
+                'path':                 raw_msg[10],
+                'time':                 raw_msg[11],
+                'tx-time':              datetime.now().strftime(SQL_TIME_FORMAT),
+                'utctime':              raw_msg[12],
+                'flag':                 'E',
+                'message_type':         raw_msg[15],
+            }
+            msg_id  = msg.get('mid', '')
+            bid     = msg.get('bid_mid', '')
+            msg_typ = msg.get('message_type', '')
+
+            BBS_LOG.debug(f"Msg: {msg_id} - FWD-CHK - BID: {bid} - Typ: {msg.get('message_type', '')} - Flag: {msg.get('flag', '')}")
+            BBS_LOG.debug(f"Msg: {msg_id} - FWD-CHK - Header: {msg.get('header', '')}")
+            if not msg_typ:
+                logger.error(self._logTag + ' - FWD-CHK - _in_msg_fwd_check: no msg_typ')
+                BBS_LOG.error(' - FWD-CHK - _in_msg_fwd_check: no msg_typ')
+                continue
+
+            # Local BBS
+            if self._is_fwd_local(msg=msg):
+                BBS_LOG.info(f"Msg: {msg_id} - FWD-CHK - {bid} is Local. No Forwarding needed")
+                # self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
+                continue
+
+            own_bbs_address = self._pms_cfg.get('user', '') + self._pms_cfg.get('regio', '')
+            msg = build_fwd_msg_header(msg, own_bbs_address)
+
+            # Private Mails
+            if msg_typ == 'P':
+                # Forwarding BBS
+                fwd_bbs_call = self._get_fwd_bbs_pn(msg=msg)
+                if not fwd_bbs_call:
+                    # logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
+                    BBS_LOG.error(" - FWD-CHK - Error no BBS to FWD: _in_msg_fwd_check PN")
+                    BBS_LOG.error(f"Msg: {msg_id} - FWD-CHK - {bid}: Error no BBS to FWD - PN")
+                    continue
+                # new_msg['flag'] = 'E'
+                mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
+                msg['fwd_bbs_call'] = fwd_bbs_call
+                msg['mid'] = mid
+                BBS_LOG.info(f"Msg: {msg_id} - FWD-CHK - {bid}: PN FWD to {fwd_bbs_call} - MID: {mid}")
+                self._db.bbs_insert_msg_to_fwd(msg)
+                continue
+
+            # Bulletins
+            if msg_typ == 'B':
+                fwd_bbs_list: list = self._get_fwd_bbs_bl(msg=msg)
+                if not fwd_bbs_list:
+                    BBS_LOG.error(" - FWD-CHK - Error no BBS to FWD: _in_msg_fwd_check BL")
+                    BBS_LOG.error(f"Msg: {msg_id} - FWD-CHK - {bid}: Error no BBS to FWD - BL")
+                    continue
+                BBS_LOG.info(f"Msg: {msg_id} - FWD-CHK - {bid}: BL FWD to {fwd_bbs_list}")
+                mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
+                msg['mid'] = mid
+                for fwd_call in fwd_bbs_list:
+
+                    # new_msg['flag'] = 'E'
+                    msg['fwd_bbs_call'] = fwd_call
+                    BBS_LOG.info(f"Msg: {msg_id} - FWD-CHK - {bid}: PN FWD to {fwd_call} - MID: {mid}")
+                    ret = self._db.bbs_insert_msg_to_fwd(msg)
+                    if not ret:
+                        BBS_LOG.error(f" - FWD-CHK - Can't insert Msg into FWD-Q: {msg}")
+
+                continue
+
+            logger.error(self._logTag + f" - FWD-CHK - Error no BBS msgType: {msg_typ} - _in_msg_fwd_check")
+            BBS_LOG.error(f" - FWD-CHK - Error no BBS msgType: {msg_typ} - _in_msg_fwd_check")
 
 
     ###################################
@@ -276,8 +387,6 @@ class BBS:
         }
         return self._port_handler.start_SchedTask_man(autoconn_cfg)
 
-
-
     def start_man_autoFwd(self):
         """
         if not self._pms_cfg.get('auto_conn', True):
@@ -299,7 +408,6 @@ class BBS:
                     'axip_add':     fwd_bbs_cfg.get('axip_add'),
                 }
                 self._port_handler.start_SchedTask_man(autoconn_cfg)
-
 
     ########################################################################
     #
@@ -327,13 +435,15 @@ class BBS:
 
     ########################################################################
     # Routing
-    def add_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call=''):
+
+    def add_local_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call=''):
         msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if not msg_fm_db:
             logger.error(self._logTag + 'add_msg_to_fwd_by_id: not msg_fm_db')
             BBS_LOG.error('add_msg_to_fwd_by_id: not msg_fm_db')
             return False
-        new_msg = build_new_msg_header(msg_fm_db)
+        own_bbs_address = self._pms_cfg.get('user', '') + self._pms_cfg.get('regio', '')
+        new_msg = build_fwd_msg_header(msg_fm_db, own_bbs_address)
         msg_typ = new_msg.get('message_type', '')
 
         if not msg_typ:
@@ -344,7 +454,7 @@ class BBS:
         # Overwrite all FWD Settings.
         if fwd_bbs_call:
             new_msg['fwd_bbs_call'] = fwd_bbs_call
-            return self._db.bbs_insert_msg_to_fwd(new_msg)
+            return self._db.bbs_insert_local_msg_to_fwd(new_msg)
 
         # Local BBS
         if self._is_fwd_local(msg=new_msg):
@@ -363,7 +473,7 @@ class BBS:
                 return False
             BBS_LOG.info(f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
             new_msg['fwd_bbs_call'] = fwd_bbs_call
-            return self._db.bbs_insert_msg_to_fwd(new_msg)
+            return self._db.bbs_insert_local_msg_to_fwd(new_msg)
 
         # Bulletins
         if msg_typ == 'B':
@@ -375,7 +485,7 @@ class BBS:
             BBS_LOG.info(f"Msg: {mid}  BL FWD to {fwd_bbs_call}")
             for fwd_call in fwd_bbs_list:
                 new_msg['fwd_bbs_call'] = fwd_call
-                ret = self._db.bbs_insert_msg_to_fwd(new_msg)
+                ret = self._db.bbs_insert_local_msg_to_fwd(new_msg)
                 if not ret:
                     BBS_LOG.error(f"Can't insert Msg into FWD-Q: {new_msg}")
             return True
@@ -606,14 +716,14 @@ class BBS:
 
     ########################################################################
     # FWD
-    def get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
+    def _get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
         return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
 
     def _get_fwd_out_tab(self):
         return self._db.bbs_get_fwd_out_Tab()
 
     def build_fwd_header(self, bbs_call: str):
-        fwd_q_data  = self.get_fwd_q_tab_forBBS(bbs_call)
+        fwd_q_data  = self._get_fwd_q_tab_forBBS(bbs_call)
         ret         = ""
         ret_bids    = []
         if not fwd_q_data:

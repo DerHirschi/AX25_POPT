@@ -62,13 +62,14 @@ def getNew_port_cfg():
     )
 
 #######################################
-# PMS
+# BBS
 def getNew_BBS_cfg():
     return dict(
         user            = 'NOCALL',     # BOX CALL
         regio           = '',           # Own Regio
         fwd_bbs_cfg     = {},           # FWD CFGs
         home_bbs        = [],           # TODO: Check if used
+        enable_fwd      = True,         # False = PMS-Mode (No Forwarding) TODO: GUI option
         single_auto_conn= True,         # Only one outgoing connection at a time
         auto_conn       = False,        # Allow Outgoing Connects
         # Path/Routing

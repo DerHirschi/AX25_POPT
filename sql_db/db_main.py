@@ -1,4 +1,13 @@
+"""
+TODO
+ - datetime.UTC
+   ImportError: cannot import name 'UTC' from 'datetime' (/usr/lib/python3.8/datetime.py)
+   if sys.version_info >= (3, 11):
+    UTC: timezone
+"""
+
 import time
+# from datetime import datetime, UTC
 from datetime import datetime
 
 from cfg.logger_config import logger, BBS_LOG
@@ -15,7 +24,7 @@ SQL_BBS_TABLES = {
     "pms_in_msg": SQL_CREATE_PMS_IN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
     "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
-    "pms_out_msg": SQL_CREATE_PMS_OUT_MAIL_TAB,         # TODO Del
+    "pms_out_msg": SQL_CREATE_PMS_OUT_MAIL_TAB,
     "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
 }
 
@@ -23,7 +32,7 @@ SQLITE_BBS_TABLES = {
     "pms_in_msg": SQLITE_CREATE_PMS_IN_MAIL_TAB,
     "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
     "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
-    "pms_out_msg": SQLITE_CREATE_PMS_OUT_MAIL_TAB,      # TODO Del
+    "pms_out_msg": SQLITE_CREATE_PMS_OUT_MAIL_TAB,
     "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
 }
 USERDB_TABLES = {
@@ -336,6 +345,7 @@ class SQL_Database:
         bid         = msg_struc.get('bid_mid', '')
         from_call   = msg_struc.get('sender', '')
         from_bbs    = msg_struc.get('sender_bbs', '')
+        flag        = msg_struc.get('flag', '')
         typ         = msg_struc.get('message_type', '')
         to_bbs      = msg_struc.get('recipient_bbs', '')
         to_call     = msg_struc.get('receiver', '')
@@ -378,8 +388,8 @@ class SQL_Database:
         }[typ]
         """
         query = ("INSERT INTO pms_in_msg "
-                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time, rx_time, typ)"
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
+                  "(BID, from_call, from_bbs, to_call, to_bbs, size, subject, path, msg, header, time, rx_time, flag, typ)"
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
         query_data = (bid,
                        from_call,
                        from_bbs,
@@ -392,12 +402,13 @@ class SQL_Database:
                        header,
                        msg_time,
                        rx_time,
+                       flag,
                       typ)
         res = self._commit_query_bin(query, query_data)
         if res is None:
             return False
-        self._fwd_paths_insert(msg_struc.get('fwd_path', []))   # TODO don't like accessing DB so many times
-        self._fwd_path_node_insert(msg_struc.get('fwd_path', []))    # TODO don't like accessing DB so many times
+        self._fwd_paths_insert(msg_struc.get('fwd_path', []))       # TODO don't like accessing DB so many times
+        self._fwd_path_node_insert(msg_struc.get('fwd_path', []))   # TODO don't like accessing DB so many times
         return True
 
     def bbs_get_MID(self):
@@ -441,6 +452,50 @@ class SQL_Database:
         )
         self._commit_query_bin(query, query_data)
         return self.bbs_get_MID()
+
+
+    def bbs_insert_incoming_msg_to_fwd(self, msg_struc: dict):
+        print("bbs_insert_incoming_msg_to_fwd -------------")
+        print(msg_struc)
+        # _bid = msg_struc.get('bid_mid', '')
+        # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
+        query = ("INSERT INTO `pms_out_msg` "
+                  "(BID, "
+                  "from_call, "
+                  "from_bbs, "
+                  "from_bbs_call, "
+                  "to_call, "
+                  "to_bbs, "
+                  "to_bbs_call, "
+                  "size, "
+                  "subject, "
+                  "header, "
+                  "msg, "
+                  "time, "
+                  "utctime, "
+                  "flag, "
+                  "type) "
+                  f"VALUES ({', '.join(['%s'] * 15)});")
+        query_data = (
+            msg_struc.get('bid', ''),
+            msg_struc.get('sender', ''),
+            msg_struc.get('sender_bbs', ''),
+            msg_struc.get('sender_bbs', '').split('.')[0],
+            msg_struc.get('receiver', ''),
+            msg_struc.get('recipient_bbs', ''),
+            msg_struc.get('recipient_bbs', '').split('.')[0],
+            msg_struc.get('message_size', 0),
+            msg_struc.get('subject', ''),
+            msg_struc.get('header', b''),
+            msg_struc.get('msg', b''),
+            datetime.now().strftime(SQL_TIME_FORMAT),
+            datetime.utcnow().strftime(SQL_TIME_FORMAT),
+            msg_struc.get('flag', 'E'),
+            msg_struc.get('message_type', ''),
+        )
+        self._commit_query_bin(query, query_data)
+        return self.bbs_get_MID()
+    
 
     def bbs_update_out_msg(self, msg_struc: dict):
         mid             = msg_struc.get('mid', '')
@@ -486,7 +541,7 @@ class SQL_Database:
         self._commit_query_bin(query, query_data)
         return True
 
-    def bbs_insert_msg_to_fwd(self, msg_struc: dict):
+    def bbs_insert_local_msg_to_fwd(self, msg_struc: dict):
         # print("bbs_add_msg_to_fwd -------------")
         bid  = msg_struc.get('bid_mid', '')
         mid  = msg_struc.get('mid', 0)
@@ -496,11 +551,11 @@ class SQL_Database:
                 not bid,
                 not mid,
                 not typ,
-                flag != 'E',
+                flag not in ['E', 'F'],
         )):
             return False
-        flag                = 'F'  # MSG flagged for forward
-        msg_struc['flag']   = flag
+        flag                = str(msg_struc['flag'])
+        msg_struc['flag']   = 'F' # MSG flagged for forward
         fwd_id              = bid + '-' + msg_struc.get('fwd_bbs_call', '')
         if self.bbs_check_fwdID_exists(fwd_id):
             logger.error(f"BBS Warning: FWD-ID {fwd_id} exists!")
@@ -560,6 +615,79 @@ class SQL_Database:
         self.bbs_insert_msg_fm_fwd(msg_struc=msg_struc)
         return True
 
+    def bbs_insert_msg_to_fwd(self, msg_struc: dict):
+        # print("bbs_add_msg_to_fwd -------------")
+        bid  = msg_struc.get('bid_mid', '')
+        mid  = msg_struc.get('mid', 0)
+        typ  = msg_struc.get('message_type', '')
+        flag = msg_struc.get('flag', '')
+        if any((
+                not bid,
+                not mid,
+                not typ,
+                flag not in ['E', 'F'],
+        )):
+            return False
+        flag                = str(msg_struc['flag'])
+        msg_struc['flag']   = 'F' # MSG flagged for forward
+        fwd_id              = bid + '-' + msg_struc.get('fwd_bbs_call', '')
+        if self.bbs_check_fwdID_exists(fwd_id):
+            logger.error(f"BBS Warning: FWD-ID {fwd_id} exists!")
+            BBS_LOG.error(f"BBS Warning: FWD-ID {fwd_id} exists!")
+            return False
+        # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
+        # path = str(msg_struc.get('path', []))
+        header  = msg_struc.get('header', b'')
+        tx_time = msg_struc.get('tx-time', '')
+        # utctime = msg_struc.get('utctime', '')
+
+        query = ("UPDATE pms_out_msg SET "
+                  "BID=%s, "
+                  "header=%s, "
+                  "tx_time=%s, "
+                  "flag=%s WHERE MID=%s;"
+                  )
+        query_data = (
+            bid,
+            header,
+            tx_time,
+            flag,
+            mid,
+        )
+        self._commit_query_bin(query, query_data)
+
+        query = ("INSERT INTO `pms_fwd_q` "
+                  "(FWDID, "
+                  "BID, "
+                  "MID, "
+                  "from_call, "
+                  "from_bbs, "
+                  "from_bbs_call, "
+                  "to_call, "
+                  "to_bbs, "
+                  "to_bbs_call, "
+                  "fwd_bbs_call, "
+                  "subject, "
+                  "size, "
+                  "type) "
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);")
+        query_data = (fwd_id,
+                       bid,
+                       mid,
+                       msg_struc.get('sender'),
+                       msg_struc.get('sender_bbs'),
+                       msg_struc.get('sender_bbs_call'),
+                       msg_struc.get('receiver'),
+                       msg_struc.get('recipient_bbs'),
+                       msg_struc.get('recipient_bbs_call'),
+                       msg_struc.get('fwd_bbs_call'),
+                       msg_struc.get('subject'),
+                       msg_struc.get('message_size'),
+                       typ,
+                       )
+        self._commit_query_bin(query, query_data)
+        return True
+
     def bbs_get_msg_fm_outTab_by_mid(self, mid: int):
         query = "SELECT * FROM pms_out_msg WHERE MID=%s;"
         query_data = (mid,)
@@ -600,6 +728,19 @@ class SQL_Database:
         res = self._commit_query_bin(query, query_data)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
+
+    def bbs_get_msg_fwd_check(self):
+        query = ("SELECT * "
+                 "FROM pms_in_msg "
+                 "WHERE flag='$';")
+        res = self._commit_query_bin(query, ())
+        # print(f"res: {res}")
+
+        query = ("UPDATE pms_in_msg SET flag='F' "
+                 "WHERE flag='$';")
+        self._commit_query(query)
+        return res
+
 
     # PN #######################
     def bbs_get_pn_msg_Tab_by_call(self, call: str):

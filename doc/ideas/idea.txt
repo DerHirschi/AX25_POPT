@@ -161,16 +161,24 @@ Ideas/TODO's :
 ✓ "Nachrichten-Center" fasst alle Nachrichtenkanäle (APRS Bulletin/PN, BBS) übersichtlich zusammen.
   ✓ PMS
     - Papierkorb usw
+    - Signatur
   - APRS
   - BBS
 
 - BBS
   - BBS (S&F und all den Gedöns)
-  - BBS Tool.
+    ✓ eingehender FWD
+      - auswerten eingehender Mails zur Weiterleitung
+    ✓ ausgehender FWD
+    ✓ automatisiertes abarbeiten der FWD-Q
+    - !Kompremierung (Hufman??)
+  - User-DB (User-DB Erweiterung für die BBS)
+  - BBS Tool (Hold, Filter, Ban, Man-Routing, ...)
   - CLI
   - Automatesierte Routingmails (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS
   - Auswertung und senden von WP-Mails (Siehe User-DB)
+  - Mail inport/export (SB TEST@TEST .... ..)
 
 ✓ Pipe-TOOL
   - Optional Header in Datei schreiben für jeden Frame

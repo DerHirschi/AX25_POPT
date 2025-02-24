@@ -1,6 +1,7 @@
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_ERR
 from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_header_timestamp
 from cfg.logger_config import logger, BBS_LOG
+from cfg.popt_config import POPT_CFG
 
 
 class BBSConnection:
@@ -299,8 +300,8 @@ class BBSConnection:
         msg = self._db.bbs_get_outMsg_by_BID(bid)
         if not msg:
             return False
-        # print(f"tx_out- 0: {_msg[0][0]}  1: {_msg[0][1]}  3: {_msg[0][2]}  len3: {len(_msg[0][2])}")
-        tx_msg = msg[0][0].encode('ASCII', 'ignore') + b'\r' + msg[0][2] + b'\x1a\r'
+        # print(f"tx_out- 0: {msg[0][0]}  1: {msg[0][1]}  3: {msg[0][2]}  len3: {len(msg[0][2])}")
+        tx_msg = msg[0][0].encode('ASCII', 'ignore') + b'\r' + msg[0][1]+ msg[0][2] + b'\x1a\r'
         self._connection_tx(tx_msg)
 
     def _check_msg_to_fwd(self):
@@ -412,25 +413,28 @@ class BBSConnection:
                     msg_index -= len(line) + 2
                     break
             # _msg = b'\r'.join(msg[_msg_index:-1])
-            msg = bytes(msg[msg_index + 1:])
-            header = bytes(msg[len(lines[0]) + 1:msg_index])
-            self._rx_msg_header[k]['msg'] = msg
-            self._rx_msg_header[k]['header'] = header
-            self._rx_msg_header[k]['path'] = path
-            self._rx_msg_header[k]['fwd_path'] = parse_fwd_paths(path) # TODO: get Time from Header timecode
+            msg     = bytes(msg[msg_index + 1:])
+            header  = bytes(msg[len(lines[0]) + 1:msg_index])
+            self._rx_msg_header[k]['msg']       = msg
+            self._rx_msg_header[k]['header']    = header
+            self._rx_msg_header[k]['path']      = path
+            self._rx_msg_header[k]['fwd_path']  = parse_fwd_paths(path) # TODO: get Time from Header timecode
             # 'R:230513/2210z @:CB0ESN.#E.W.DLNET.DEU.EU [E|JO31MK] obcm1.07b5 LT:007'
-            self._rx_msg_header[k]['time'] = parse_header_timestamp(path[-1])
-            self._rx_msg_header[k]['subject'] = subject
+            self._rx_msg_header[k]['time']      = parse_header_timestamp(path[-1])
+            self._rx_msg_header[k]['subject']   = subject
+            self._rx_msg_header[k]['bid']       = k
+            if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):
+                self._rx_msg_header[k]['flag']      = '$'
             res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[k]))
             # self._bbs.new_msg_alarm[str(self._rx_msg_header[_k]['typ'])] = True
             if not res:
                 logger.error(self._logTag + f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
                 BBS_LOG.error(self._logTag + f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
                 # print(f"Nachricht BID: {k} fm {from_call} konnte nicht in die DB geschrieben werden.")
-            else:
-                ph = self._bbs.get_port_handler()
-                ph.set_pmsMailAlarm(True)
-
+                del self._rx_msg_header[k]
+                return
+            # self._bbs.handle_incoming_fwd(self._rx_msg_header[k]['bid_mid'])
+            self._bbs.get_port_handler().set_pmsMailAlarm(True)
             del self._rx_msg_header[k]
 
         else:

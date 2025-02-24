@@ -2,6 +2,7 @@ from datetime import datetime
 
 from cfg.constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 from cfg.logger_config import logger
+from fnc.sql_fnc import convert_sql_list
 
 
 def generate_sid(features=("F", "M", "H")):
@@ -52,30 +53,78 @@ def parse_forward_header(header):
 
 
 def build_new_msg_header(msg_struc: dict):
-    # print("build_new_msg_header -------------")
-    bbs_call                = msg_struc['sender_bbs'].split('.')[0]
-    mid                     = msg_struc['mid']
-    bid                     = f"{str(mid).rjust(6, '0')}{bbs_call}"
-    msg_struc['tx-time']    = datetime.now().strftime(SQL_TIME_FORMAT)
-    utc                     = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
-    msg_struc['mid']        = mid
-    msg_struc['bid_mid']    = bid
-    # _utc = datetime.utcnow()
+    print("build_new_msg_header -------------")
+    print(msg_struc)
+    bbs_call                 = msg_struc.get('sender_bbs', '').split('.')[0]
+    bid                      = msg_struc.get('bid_mid', '')
+    msg_struc['tx-time']     = datetime.now().strftime(SQL_TIME_FORMAT)
+    utc                      = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
+    old_header               = msg_struc.get('header', b'')
+    old_path                 = msg_struc.get('path', "")
+    fwd_bbs_address = msg_struc["sender_bbs"]
+    if type(old_path) == str:
+        old_path             = convert_sql_list(old_path)
+    if not bid:
+        msg_struc['bid_mid'] = f"{str(msg_struc['mid']).rjust(6, '0')}{bbs_call}"
+
+    # _utc = datetime.utcnow()  TODO
     # msg_struc['utctime'] = _utc.strftime(SQL_TIME_FORMAT)
     # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
     # R:231101/0520z @:MD2SAW.#SAW.SAA.DEU.EU #:000003 $:000003MD2SAW
+
     header = (f"R:{str(utc.year)[2:].rjust(2, '0')}"
                f'{str(utc.month).rjust(2, "0")}'
                f'{str(utc.day).rjust(2, "0")}/'
                f'{str(utc.hour).rjust(2, "0")}'
                f'{str(utc.minute).rjust(2, "0")}z '
-               f'@:{msg_struc["sender_bbs"]} '
-               f'#:{str(mid).rjust(6, "0")} '
-               f'$:{bid}\r')
-    msg_struc['header'] = header.encode('ASCII', 'ignore')
-
+               f'@:{fwd_bbs_address} '  
+               f'#:{str(msg_struc["mid"]).rjust(6, "0")} '
+               f'$:{msg_struc["bid_mid"]}')
+    msg_struc['header'] = old_header + header.encode('ASCII', 'ignore') + b'\r'
+    old_path.append(header)
+    msg_struc['path']   = old_path
+    print("build_new_msg_header ---RES------")
+    print(msg_struc)
     return msg_struc
 
+def build_fwd_msg_header(msg_struc: dict, fwd_bbs_address: str):
+    print("build_fwd_msg_header -------------")
+    print(msg_struc)
+    bbs_address              = fwd_bbs_address
+    bbs_call                 = bbs_address.split('.')[0]
+    bid                      = msg_struc.get('bid_mid', '')
+    msg_struc['tx-time']     = datetime.now().strftime(SQL_TIME_FORMAT)
+    utc                      = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
+    # old_header               = msg_struc.get('header', b'')
+    old_path                 = msg_struc.get('path', "")
+    if type(old_path) == str:
+        old_path             = convert_sql_list(old_path)
+    if not bid:
+        msg_struc['bid_mid'] = f"{str(msg_struc['mid']).rjust(6, '0')}{bbs_call}"
+
+    # _utc = datetime.datetime.now(datetime.UTC)
+    # msg_struc['utctime'] = _utc.strftime(SQL_TIME_FORMAT)
+    # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
+    # R:231101/0520z @:MD2SAW.#SAW.SAA.DEU.EU #:000003 $:000003MD2SAW
+
+    header = (f"R:{str(utc.year)[2:].rjust(2, '0')}"
+               f'{str(utc.month).rjust(2, "0")}'
+               f'{str(utc.day).rjust(2, "0")}/'
+               f'{str(utc.hour).rjust(2, "0")}'
+               f'{str(utc.minute).rjust(2, "0")}z '
+               f'@:{bbs_address} '  
+               f'#:{str(msg_struc["mid"]).rjust(6, "0")} '
+               f'$:{msg_struc["bid_mid"]}')
+    # msg_struc['header'] = old_header + header.encode('ASCII', 'ignore') + b'\r'
+    old_path.append(header)
+    new_header = b''
+    for line in old_path:
+        new_header += line.encode('ASCII', 'ignore') + b'\r'
+    msg_struc['path']   = old_path
+    msg_struc['header'] = new_header
+    print("build_fwd_msg_header ---RES------")
+    print(msg_struc)
+    return msg_struc
 
 def parse_fwd_paths(path_list: list):
     # TODO: get Time from Header timecode
