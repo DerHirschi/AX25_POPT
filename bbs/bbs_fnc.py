@@ -53,8 +53,9 @@ def parse_forward_header(header):
 
 
 def build_new_msg_header(msg_struc: dict):
-    print("build_new_msg_header -------------")
-    print(msg_struc)
+    """ Not used """
+    # print("build_new_msg_header -------------")
+    # print(msg_struc)
     bbs_call                 = msg_struc.get('sender_bbs', '').split('.')[0]
     bid                      = msg_struc.get('bid_mid', '')
     msg_struc['tx-time']     = datetime.now().strftime(SQL_TIME_FORMAT)
@@ -83,13 +84,13 @@ def build_new_msg_header(msg_struc: dict):
     msg_struc['header'] = old_header + header.encode('ASCII', 'ignore') + b'\r'
     old_path.append(header)
     msg_struc['path']   = old_path
-    print("build_new_msg_header ---RES------")
-    print(msg_struc)
+    # print("build_new_msg_header ---RES------")
+    # print(msg_struc)
     return msg_struc
 
 def build_fwd_msg_header(msg_struc: dict, fwd_bbs_address: str):
-    print("build_fwd_msg_header -------------")
-    print(msg_struc)
+    # print("build_fwd_msg_header -------------")
+    # print(msg_struc)
     bbs_address              = fwd_bbs_address
     bbs_call                 = bbs_address.split('.')[0]
     bid                      = msg_struc.get('bid_mid', '')
@@ -122,8 +123,8 @@ def build_fwd_msg_header(msg_struc: dict, fwd_bbs_address: str):
         new_header += line.encode('ASCII', 'ignore') + b'\r'
     msg_struc['path']   = old_path
     msg_struc['header'] = new_header
-    print("build_fwd_msg_header ---RES------")
-    print(msg_struc)
+    # print("build_fwd_msg_header ---RES------")
+    # print(msg_struc)
     return msg_struc
 
 def parse_fwd_paths(path_list: list):
@@ -131,7 +132,7 @@ def parse_fwd_paths(path_list: list):
     """
     R:231004/1739Z @:MD2BBS.#SAW.SAA.DEU.EU #:18122 [Salzwedel] $:2620_KE2BBS
     R:231004/1112Z 2620@KE2BBS.#KEH.BAY.DEU.EU BPQK6.0.23
-    [['MD2BBS.#SAW.SAA.DEU.EU', 'Salzwedel] $:2620_KE2BBS'], ['KE2BBS.#KEH.BAY.DEU.EU', 'KE2BBS.#KEH.BAY.DEU.EU BPQK6.0.23']]
+    :return [['MD2BBS.#SAW.SAA.DEU.EU', 'Salzwedel] $:2620_KE2BBS'], ['KE2BBS.#KEH.BAY.DEU.EU', 'KE2BBS.#KEH.BAY.DEU.EU BPQK6.0.23']]
     """
     path = []
     for line in path_list:
@@ -165,6 +166,17 @@ def parse_header_timestamp(path_str: str):
         f"{path_str[7:9]}:"
         f"{path_str[9:11]}:"
         "00")
+
+def get_pathlist_fm_header(path_header: list):
+    print(path_header)
+    path_list = parse_fwd_paths(path_header)
+    print(path_list)
+    ret = []
+    for path in path_list:
+        bbs_address = path[0]
+        bbc_call    = bbs_address.split('.')[0]
+        ret.append(bbc_call)
+    return ret
 
 def spilt_regio(bbs_address: str):
     temp = bbs_address.split('.')

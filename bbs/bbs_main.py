@@ -26,7 +26,7 @@ from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import FWD_RESP_TAB
-from bbs.bbs_fnc import generate_sid, spilt_regio, build_fwd_msg_header
+from bbs.bbs_fnc import generate_sid, spilt_regio, build_fwd_msg_header, get_pathlist_fm_header
 from bbs.bbs_fwd_connection import BBSConnection
 from cfg.constant import SQL_TIME_FORMAT
 from cfg.popt_config import POPT_CFG
@@ -36,7 +36,7 @@ from cli.cliStationIdent import get_station_id_obj
 
 class BBS:
     def __init__(self, port_handler):
-        self._logTag        = "BBS: "
+        self._logTag        = "BBS-Main: "
         logger.info(self._logTag + 'Init')
         BBS_LOG.info('Init')
         self._port_handler  = port_handler
@@ -196,12 +196,10 @@ class BBS:
 
     def _in_msg_fwd_check(self):
         msg_fm_db = self._db.bbs_get_msg_fwd_check()
+        log_tag = self._logTag + 'Forward Check> '
         for raw_msg in msg_fm_db:
-            print('_in_msg_fwd_check')
-            print(raw_msg)
-
             if not raw_msg:
-                BBS_LOG.debug(' - FWD-CHK - _in_msg_fwd_check: no msg')
+                BBS_LOG.error(log_tag + 'No msg')
                 continue
             sender_bbs_call   = raw_msg[3].split('.')[0]
             receiver_bbs_call = raw_msg[7].split('.')[0]
@@ -229,20 +227,19 @@ class BBS:
             bid     = msg.get('bid_mid', '')
             msg_typ = msg.get('message_type', '')
 
-            BBS_LOG.debug(f"Msg: {msg_id} - FWD-CHK - BID: {bid} - Typ: {msg.get('message_type', '')} - Flag: {msg.get('flag', '')}")
-            BBS_LOG.debug(f"Msg: {msg_id} - FWD-CHK - Header: {msg.get('header', '')}")
+            BBS_LOG.debug(log_tag + f"Msg: {msg_id} - BID: {bid} - Typ: {msg.get('message_type', '')} - Flag: {msg.get('flag', '')}")
+            BBS_LOG.debug(log_tag + f"Msg: {msg_id} - Header: {msg.get('header', '')}")
             if not msg_typ:
-                logger.error(self._logTag + ' - FWD-CHK - _in_msg_fwd_check: no msg_typ')
-                BBS_LOG.error(' - FWD-CHK - _in_msg_fwd_check: no msg_typ')
+                BBS_LOG.error(log_tag + 'no msg_typ')
                 continue
 
             # Local BBS
             if self._is_fwd_local(msg=msg):
-                BBS_LOG.info(f"Msg: {msg_id} - FWD-CHK - {bid} is Local. No Forwarding needed")
+                BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid} is Local. No Forwarding needed")
                 # self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
                 continue
 
-            own_bbs_address = self._pms_cfg.get('user', '') + self._pms_cfg.get('regio', '')
+            own_bbs_address = self._pms_cfg.get('user', '') + '.' + self._pms_cfg.get('regio', '')
             msg = build_fwd_msg_header(msg, own_bbs_address)
 
             # Private Mails
@@ -251,14 +248,14 @@ class BBS:
                 fwd_bbs_call = self._get_fwd_bbs_pn(msg=msg)
                 if not fwd_bbs_call:
                     # logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
-                    BBS_LOG.error(" - FWD-CHK - Error no BBS to FWD: _in_msg_fwd_check PN")
-                    BBS_LOG.error(f"Msg: {msg_id} - FWD-CHK - {bid}: Error no BBS to FWD - PN")
+                    BBS_LOG.error(log_tag + "Error no BBS to FWD: _in_msg_fwd_check PN")
+                    BBS_LOG.error(log_tag + f"Msg: {msg_id} - {bid}: Error no BBS to FWD - PN")
                     continue
                 # new_msg['flag'] = 'E'
                 mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
                 msg['fwd_bbs_call'] = fwd_bbs_call
                 msg['mid'] = mid
-                BBS_LOG.info(f"Msg: {msg_id} - FWD-CHK - {bid}: PN FWD to {fwd_bbs_call} - MID: {mid}")
+                BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid}: PN FWD to {fwd_bbs_call} - MID: {mid}")
                 self._db.bbs_insert_msg_to_fwd(msg)
                 continue
 
@@ -266,25 +263,24 @@ class BBS:
             if msg_typ == 'B':
                 fwd_bbs_list: list = self._get_fwd_bbs_bl(msg=msg)
                 if not fwd_bbs_list:
-                    BBS_LOG.error(" - FWD-CHK - Error no BBS to FWD: _in_msg_fwd_check BL")
-                    BBS_LOG.error(f"Msg: {msg_id} - FWD-CHK - {bid}: Error no BBS to FWD - BL")
+                    BBS_LOG.error(log_tag + "Error no BBS to FWD: _in_msg_fwd_check BL")
+                    BBS_LOG.error(log_tag + f"Msg: {msg_id} - {bid}: Error no BBS to FWD - BL")
                     continue
-                BBS_LOG.info(f"Msg: {msg_id} - FWD-CHK - {bid}: BL FWD to {fwd_bbs_list}")
+                BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid}: BL FWD to {fwd_bbs_list}")
                 mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
                 msg['mid'] = mid
                 for fwd_call in fwd_bbs_list:
 
                     # new_msg['flag'] = 'E'
                     msg['fwd_bbs_call'] = fwd_call
-                    BBS_LOG.info(f"Msg: {msg_id} - FWD-CHK - {bid}: PN FWD to {fwd_call} - MID: {mid}")
+                    BBS_LOG.info(log_tag + f"Msg: {msg_id}  - {bid}: PN FWD to {fwd_call} - MID: {mid}")
                     ret = self._db.bbs_insert_msg_to_fwd(msg)
                     if not ret:
-                        BBS_LOG.error(f" - FWD-CHK - Can't insert Msg into FWD-Q: {msg}")
+                        BBS_LOG.error(log_tag + f"Can't insert Msg into FWD-Q: {msg}")
 
                 continue
 
-            logger.error(self._logTag + f" - FWD-CHK - Error no BBS msgType: {msg_typ} - _in_msg_fwd_check")
-            BBS_LOG.error(f" - FWD-CHK - Error no BBS msgType: {msg_typ} - _in_msg_fwd_check")
+            BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ} - _in_msg_fwd_check")
 
 
     ###################################
@@ -437,18 +433,17 @@ class BBS:
     # Routing
 
     def add_local_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call=''):
+        log_tag = self._logTag + 'Forward Check - Local > '
         msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if not msg_fm_db:
-            logger.error(self._logTag + 'add_msg_to_fwd_by_id: not msg_fm_db')
-            BBS_LOG.error('add_msg_to_fwd_by_id: not msg_fm_db')
+            BBS_LOG.error(log_tag + 'No msg_fm_db')
             return False
-        own_bbs_address = self._pms_cfg.get('user', '') + self._pms_cfg.get('regio', '')
+        own_bbs_address = self._pms_cfg.get('user', '') + '.' + self._pms_cfg.get('regio', '')
         new_msg = build_fwd_msg_header(msg_fm_db, own_bbs_address)
         msg_typ = new_msg.get('message_type', '')
 
         if not msg_typ:
-            logger.error(self._logTag + 'add_msg_to_fwd_by_id: not msg_typ')
-            BBS_LOG.error('add_msg_to_fwd_by_id: not msg_typ')
+            BBS_LOG.error(log_tag + 'No msg_typ')
             return False
 
         # Overwrite all FWD Settings.
@@ -458,7 +453,7 @@ class BBS:
 
         # Local BBS
         if self._is_fwd_local(msg=new_msg):
-            BBS_LOG.info(f"Msg: {mid} is Local. No Forwarding needed")
+            BBS_LOG.info(log_tag + f"Msg: {mid} is Local. No Forwarding needed")
             self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
             return True
 
@@ -468,10 +463,10 @@ class BBS:
             fwd_bbs_call = self._get_fwd_bbs_pn(msg=new_msg)
             if not fwd_bbs_call:
                 # logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
-                BBS_LOG.error("Error no BBS to FWD: add_msg_to_fwd_by_id PN")
-                BBS_LOG.error(f"Msg: {mid}: Error no BBS to FWD - PN")
+                BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
+                BBS_LOG.error(log_tag + f"Msg: {mid}: Error no BBS to FWD - PN")
                 return False
-            BBS_LOG.info(f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
+            BBS_LOG.info(log_tag + f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             return self._db.bbs_insert_local_msg_to_fwd(new_msg)
 
@@ -479,23 +474,23 @@ class BBS:
         if msg_typ == 'B':
             fwd_bbs_list: list = self._get_fwd_bbs_bl(msg=new_msg)
             if not fwd_bbs_list:
-                BBS_LOG.error("Error no BBS to FWD: add_msg_to_fwd_by_id BL")
-                BBS_LOG.error(f"Msg: {mid}: Error no BBS to FWD - BL")
+                BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id BL")
+                BBS_LOG.error(log_tag + f"Msg: {mid}: Error no BBS to FWD - BL")
                 return False
-            BBS_LOG.info(f"Msg: {mid}  BL FWD to {fwd_bbs_call}")
+            BBS_LOG.info(log_tag + f"Msg: {mid}  BL FWD to {fwd_bbs_call}")
             for fwd_call in fwd_bbs_list:
                 new_msg['fwd_bbs_call'] = fwd_call
                 ret = self._db.bbs_insert_local_msg_to_fwd(new_msg)
                 if not ret:
-                    BBS_LOG.error(f"Can't insert Msg into FWD-Q: {new_msg}")
+                    BBS_LOG.error(log_tag + f"Can't insert Msg into FWD-Q: {new_msg}")
             return True
 
-        logger.error(self._logTag + f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
-        BBS_LOG.error(f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
+        BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
         return False
 
     # LOCAL ####################################################
     def _is_fwd_local(self, msg: dict):
+        log_tag = self._logTag + 'Forward Lookup LOCAL> '
         mid             = msg.get('mid', 0)
         msg_typ         = msg.get('message_type', 'P')
         recv_call       = msg.get('receiver', '')
@@ -507,44 +502,47 @@ class BBS:
         local_user      = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
         local_user     += ['SYSOP']     # TODO Swap
         # TODO local_user     += list(user_db.bla......)
-        BBS_LOG.info(f"Msg: {mid} - Forward Lookup LOCAL - {recv_call}@{recv_bbs}")
+        BBS_LOG.info(log_tag + f"Msg: {mid} - Forward Lookup LOCAL - {recv_call}@{recv_bbs}")
 
         if msg_typ == 'B':
             if not recv_bbs_call:
-                BBS_LOG.debug(f"Msg: {mid} - Fwd Lookup LOCAL - {recv_call}@{recv_bbs} - IS Local Dist 1")
+                BBS_LOG.debug(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs} - IS Local Dist - No Distributor")
                 return True
             if recv_call in local_theme:
-                BBS_LOG.debug(f"Msg: {mid} - Fwd Lookup LOCAL - {recv_call}@{recv_bbs} - IS Local Dist 2")
+                BBS_LOG.debug(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs} - IS Local Theme")
                 return True
 
         if recv_bbs_call in local_dist:
-            BBS_LOG.debug(f"Msg: {mid} - Fwd Lookup LOCAL - {recv_call}@{recv_bbs} - IS Local Dist 3")
+            BBS_LOG.debug(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs} - IS Local Dist - Local Distributor")
             return True
         if recv_call in local_user:
-            BBS_LOG.debug(f"Msg: {mid} - Fwd Lookup LOCAL - {recv_call}@{recv_bbs} - IS Local User")
+            BBS_LOG.debug(log_tag + f"Msg: {mid}  - {recv_call}@{recv_bbs} - IS Local User")
             return True
 
         return False
 
     # PN #######################################################
     def _get_fwd_bbs_pn(self, msg: dict):
+        log_tag = self._logTag + 'Forward Lookup PN> '
         mid             = msg.get('mid',                0)
+        path            = msg.get('path',               [])
         recv_call       = msg.get('receiver',           '')
         recv_bbs        = msg.get('recipient_bbs',      '')
         recv_bbs_call   = msg.get('recipient_bbs_call', '')
         recv_bbs_regio  = spilt_regio(recv_bbs)
-        BBS_LOG.info(f"Msg: {mid} - Forward Lookup PN - {recv_call}@{recv_bbs}")
+        BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs}")
         if not recv_bbs_regio:
-            BBS_LOG.error(f"Msg: {mid} - Forward Lookup PN - Regio-Error: {recv_bbs} - {recv_bbs_regio} - Maybe Bulletin as PN ?")
+            BBS_LOG.error(log_tag + f"Msg: {mid} - Regio-Error: {recv_bbs} - {recv_bbs_regio} - Maybe Bulletin as PN ?")
             return ''
         rej_bbs, rej_call =  self._pms_cfg.get('block_bbs', ''),  self._pms_cfg.get('block_call', '')
         if recv_bbs_call in rej_bbs:
-            BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - BBS-Rejected/Blocked: {recv_bbs_call} global")
+            BBS_LOG.warning(log_tag + f"Msg: {mid} - BBS-Rejected/Blocked: {recv_bbs_call} global")
             return ''
         if recv_call in rej_call:
-            BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - CALL-Rejected/Blocked: {recv_call} global")
+            BBS_LOG.warning(log_tag + f"Msg: {mid} - CALL-Rejected/Blocked: {recv_call} global")
             return ''
 
+        path_list = get_pathlist_fm_header(path)
         # FWD Config Lookup
         for fwd_bbs, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
             fwd_cfg: dict
@@ -558,20 +556,25 @@ class BBS:
 
             # BL FWD is not allowed to this BBS
             if not pn_fwd:
-                BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - Private Mail Forward not enabled for {fwd_bbs}.")
+                BBS_LOG.warning(log_tag + f"Msg: {mid} - Private Mail Forward not enabled for {fwd_bbs}.")
+                continue
+            # PL Loop Check
+            if fwd_bbs in path_list:
+                # TODO set Hold
+                BBS_LOG.error(log_tag + f"Msg: {mid} - No FWD to {fwd_bbs}. BBS already on Path !!??!!")
                 continue
             # Call Block
             if recv_call in call_block:
-                BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - Call-Rejected/Blocked: {recv_call} for {fwd_bbs}.")
+                BBS_LOG.warning(log_tag + f"Msg: {mid} - Call-Rejected/Blocked: {recv_call} for {fwd_bbs}.")
                 continue
             # Regio Block H-Route
             for el in recv_bbs_regio:
                 # Regio Block
                 if any((el in h_block, '#' + el in h_block)):
-                    BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - BBS/REGIO-Rejected/Blocked: {el} ({recv_bbs_regio}) for {fwd_bbs}.")
+                    BBS_LOG.warning(log_tag + f"Msg: {mid} - BBS/REGIO-Rejected/Blocked: {el} ({recv_bbs_regio}) for {fwd_bbs}.")
                     continue
             if fwd_bbs == recv_bbs_call:
-                BBS_LOG.debug(f"Msg: {mid} - Forward Lookup PN - Direct FWD to {fwd_bbs}.")
+                BBS_LOG.debug(log_tag + f"Msg: {mid} - Direct FWD to {fwd_bbs}.")
                 return fwd_bbs
 
             # Call Check
@@ -596,26 +599,26 @@ class BBS:
         # Auto Path Lookup
         if self._pms_cfg.get('pn_auto_path', 0) == 0:
             # Disabled
-            BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath disabled")
+            BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath disabled")
             return ''
         if self._pms_cfg.get('pn_auto_path', 0) == 1:
             # most current
             fwd_bbs = self._find_most_current_PN_route(recv_bbs_call)
             if not fwd_bbs:
-                BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath most current")
+                BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath most current")
                 return ''
             return fwd_bbs
         if self._pms_cfg.get('pn_auto_path', 0) == 2:
             # best (low hops)
             fwd_bbs = self._find_lowHop_PN_route(recv_bbs_call)
             if not fwd_bbs:
-                BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath best (low hops)")
+                BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath best (low hops)")
                 return ''
             return fwd_bbs
 
         # TODO Regio Lookup to send Msg to Regional BBS (optional)
 
-        BBS_LOG.warning(f"Msg: {mid} - Forward Lookup PN - No FWD-Path found: {recv_call}@{recv_bbs}")
+        BBS_LOG.warning(f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}")
         return ''
 
     def _find_lowHop_PN_route(self, bbs_address: str):
@@ -661,19 +664,22 @@ class BBS:
 
     # BL #######################################################
     def _get_fwd_bbs_bl(self, msg: dict):
+        log_tag     = self._logTag + 'Forward Lookup BL> '
         mid         = msg.get('mid',            0)
+        path        = msg.get('path',           [])
         topic       = msg.get('receiver',       '')
         distributor = msg.get('recipient_bbs',  '')
         rej_dist, rej_topic =  self._pms_cfg.get('reject_bbs', ''),  self._pms_cfg.get('reject_call', '')
-        BBS_LOG.info(f"Msg: {mid} - Forward Lookup BL - {topic}@{distributor}")
+        BBS_LOG.info(log_tag + f"Msg: {mid} - {topic}@{distributor}")
         if distributor in rej_dist:
-            BBS_LOG.warning(f"Msg: {mid} - Forward Lookup BL - Distributor-Rejected/Blocked: {distributor} global")
+            BBS_LOG.warning(log_tag +f"Msg: {mid} - Distributor-Rejected/Blocked: {distributor} global")
             return []
         if topic in rej_topic:
-            BBS_LOG.warning(f"MMsg: {mid} - Forward Lookup BL - Topic-Rejected/Blocked: {topic} global")
+            BBS_LOG.warning(log_tag + f"Msg: {mid} - Topic-Rejected/Blocked: {topic} global")
             return []
 
-        ret = []
+        path_list   = get_pathlist_fm_header(path)
+        ret         = []
         # FWD Config Lookup
         for fwd_bbs, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
             fwd_cfg: dict
@@ -685,15 +691,20 @@ class BBS:
 
             # BL FWD is not allowed to this BBS
             if not cfg_bl_allowed:
-                BBS_LOG.warning(f"Msg: {mid} - Forward Lookup BL - Bulletin Forward not enabled for {fwd_bbs}.")
+                BBS_LOG.warning(log_tag + f"Msg: {mid} - Bulletin Forward not enabled for {fwd_bbs}.")
+                continue
+            # BL Loop Check
+            if fwd_bbs in path_list:
+                # TODO set Hold ?
+                BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD to {fwd_bbs}. BBS already on Path.")
                 continue
             # Topic BLock
             if topic in cfg_topic_block:
-                BBS_LOG.warning(f"Msg: {mid} - Forward Lookup BL - Topic-Rejected/Blocked: {topic} for {fwd_bbs}.")
+                BBS_LOG.warning(log_tag + f"Msg: {mid} - Topic-Rejected/Blocked: {topic} for {fwd_bbs}.")
                 continue
             # Distributor BLock
             if distributor in cfg_dist_block:
-                BBS_LOG.warning(f"Msg: {mid} - Forward Lookup BL - Distributor-Rejected/Blocked: {distributor} for {fwd_bbs}.")
+                BBS_LOG.warning(log_tag + f"Msg: {mid} - Distributor-Rejected/Blocked: {distributor} for {fwd_bbs}.")
                 continue
             # Distributor Check
             if any((
@@ -701,7 +712,7 @@ class BBS:
                 distributor in cfg_dist
             )):
                 if fwd_bbs not in ret:
-                    BBS_LOG.info(f"Msg: {mid} - Forward Lookup BL - Distributor-Check: {distributor} forward to {fwd_bbs}.")
+                    BBS_LOG.info(log_tag + f"Msg: {mid} - Distributor-Check: {distributor} forward to {fwd_bbs}.")
                     ret.append(fwd_bbs)
             # Topic Check
             if any((
@@ -709,7 +720,7 @@ class BBS:
                 topic in cfg_topic
             )):
                 if fwd_bbs not in ret:
-                    BBS_LOG.info(f"Msg: {mid} - Forward Lookup BL - Topic-Check: {topic} forward to {fwd_bbs}.")
+                    BBS_LOG.info(log_tag + f"Msg: {mid} - Topic-Check: {topic} forward to {fwd_bbs}.")
                     ret.append(fwd_bbs)
 
         return ret

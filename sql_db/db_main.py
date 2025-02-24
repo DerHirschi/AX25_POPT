@@ -455,8 +455,8 @@ class SQL_Database:
 
 
     def bbs_insert_incoming_msg_to_fwd(self, msg_struc: dict):
-        print("bbs_insert_incoming_msg_to_fwd -------------")
-        print(msg_struc)
+        # print("bbs_insert_incoming_msg_to_fwd -------------")
+        # print(msg_struc)
         # _bid = msg_struc.get('bid_mid', '')
         # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
         query = ("INSERT INTO `pms_out_msg` "
@@ -551,7 +551,7 @@ class SQL_Database:
                 not bid,
                 not mid,
                 not typ,
-                flag not in ['E', 'F'],
+                flag not in ['E', 'F'], # TODO just 'E' for local ??
         )):
             return False
         flag                = str(msg_struc['flag'])
