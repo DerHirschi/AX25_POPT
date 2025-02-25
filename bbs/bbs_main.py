@@ -293,7 +293,8 @@ class BBS:
                 continue
             if to_bbs_call not in res:
                 res.append(to_bbs_call)
-        BBS_LOG.info(log_tag + f"New FWD-Q: {res}")
+        if res:
+            BBS_LOG.info(log_tag + f"New FWD-Q: {res}")
         return res
 
     ###################################
@@ -609,21 +610,23 @@ class BBS:
                         and not alt_route:
                     return fwd_bbs
 
+        ###################
         # Auto Path Lookup
+        #
         if self._pms_cfg.get('pn_auto_path', 0) == 0:
             # Disabled
             BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath disabled")
             return ''
         if self._pms_cfg.get('pn_auto_path', 0) == 1:
             # most current
-            fwd_bbs = self._find_most_current_PN_route(recv_bbs_call)
+            fwd_bbs = self._find_most_current_PN_route(recv_bbs_call, path_list)
             if not fwd_bbs:
                 BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath most current")
                 return ''
             return fwd_bbs
         if self._pms_cfg.get('pn_auto_path', 0) == 2:
             # best (low hops)
-            fwd_bbs = self._find_lowHop_PN_route(recv_bbs_call)
+            fwd_bbs = self._find_lowHop_PN_route(recv_bbs_call, path_list)
             if not fwd_bbs:
                 BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath best (low hops)")
                 return ''
@@ -634,28 +637,35 @@ class BBS:
         BBS_LOG.warning(f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}")
         return ''
 
-    def _find_lowHop_PN_route(self, bbs_address: str):
+    def _find_lowHop_PN_route(self, bbs_address: str, excluded_bbs=None):
         if not bbs_address:
             return ''
+        if excluded_bbs is None:
+            excluded_bbs = []
         ret = self._db.bbs_get_fwdPaths_lowHop(bbs_address)
         BBS_LOG.debug(f"_find_lowHop_PN_route res: {ret}")
         for bbs, hops, path in ret:
             fwd_bbs_cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs, {})
+            BBS_LOG.debug(f"_find_lowHop_PN_route: SUCHE: {bbs}")
+            BBS_LOG.debug(f"HOPS: {hops}")
+            BBS_LOG.debug(f"PATH: {path}")
+            if bbs in excluded_bbs:
+                continue
             if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
                 BBS_LOG.debug(f"_find_lowHop_PN_route: Treffer, FWD via {bbs}")
                 BBS_LOG.debug(f"HOPS: {hops}")
                 BBS_LOG.debug(f"PATH: {path}")
                 return bbs
-            BBS_LOG.debug(f"_find_lowHop_PN_route: SUCHE: {bbs}")
-            BBS_LOG.debug(f"HOPS: {hops}")
-            BBS_LOG.debug(f"PATH: {path}")
+
 
         BBS_LOG.debug(f"_find_lowHop_PN_route: Kein Treffer !!: {bbs_address}")
         return ''
 
-    def _find_most_current_PN_route(self, bbs_address: str):
+    def _find_most_current_PN_route(self, bbs_address: str, excluded_bbs=None):
         if not bbs_address:
             return ''
+        if excluded_bbs is None:
+            excluded_bbs = []
 
         ret = self._db.bbs_get_fwdPaths_mostCurrent(bbs_address)
         BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
@@ -665,6 +675,8 @@ class BBS:
             BBS_LOG.debug(f"HOPS: {hops}")
             BBS_LOG.debug(f"PATH: {path}")
             BBS_LOG.debug(f"fwd_bbs_cfg: {fwd_bbs_cfg}")
+            if bbs in excluded_bbs:
+                continue
             # if True:    # FIXME DEBUG !!!
             if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
                 BBS_LOG.debug(f"_find_most_current_PN_route: Treffer, FWD via {bbs}")
