@@ -202,7 +202,7 @@ class BBS:
                 BBS_LOG.error(log_tag + 'No msg')
                 continue
             sender_bbs_call   = raw_msg[3].split('.')[0]
-            receiver_bbs_call = raw_msg[7].split('.')[0]
+            receiver_bbs_call = raw_msg[5].split('.')[0]
             msg = {
                 'mid':                  raw_msg[0],
                 'bid_mid':              raw_msg[1],

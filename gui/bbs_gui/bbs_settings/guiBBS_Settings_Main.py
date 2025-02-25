@@ -81,6 +81,14 @@ class BBSSettingsMain(tk.Toplevel):
         return self._bbs_obj
 
     ################################################
+    def set_homeBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
+        self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
+
+    def del_homeBBS_cfg(self, pms_cfg_k: str):
+        if pms_cfg_k in self._pms_cfg['fwd_bbs_cfg'].keys():
+            self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = None
+            del self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k]
+
     def _save_cfg(self):
         for strTab_name, tab in self._tab_list.items():
             if not (hasattr(tab, 'save_config')):
@@ -89,6 +97,8 @@ class BBSSettingsMain(tk.Toplevel):
                 self._root_win.sysMsg_to_monitor(
                     self._getTabStr('setting_saved').format(self._getTabStr(strTab_name))
                 )
+        if 'NOCALL' in self._pms_cfg.get('fwd_bbs_cfg', {}).keys():
+            del self._pms_cfg['fwd_bbs_cfg']['NOCALL']
         POPT_CFG.set_BBS_cfg(self._pms_cfg)
         if not self._bbs_obj:
             return False

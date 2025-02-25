@@ -2486,7 +2486,7 @@ class PoPT_GUI_Main:
             status = station.zustand_tab[station.get_state()][1]
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
-            unAck = f"unACK: {len(station.tx_buf_unACK.keys())}"
+            unAck = f"nACK: {len(station.tx_buf_unACK.keys())}"
             vs_vr = f"VS/VR: {station.vr}/{station.vs}"
             n2_text = f"N2: {n2}"
             t1_text = f"T1: {max(0, int(station.t1 - time.time()))}"

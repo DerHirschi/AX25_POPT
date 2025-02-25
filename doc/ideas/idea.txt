@@ -214,11 +214,11 @@ Ideas/TODO's :
     - Zeitgesteuertes Erstellen und exportieren von Plots (Port-Stat/FWD-Pfade/MH-Routen)
 
 - EAX25
+- DAMA
 - NetROM
   ✓ decoding (experimentel (nicht ausreichend getestet)) (INP-Protokoll nicht vollständig)
   - grafische & tabellarische Auswertung der Routen/Routingtabellen (Siehe FWD Route)
   - encoding/handling und gedöns
-
 - Flexnet(Routing Protokoll)
   - decoding (experimentel (nicht ausreichend getestet)) (INP-Protokoll nicht vollständig)
   - grafische & tabellarische Auswertung der Routen/Routingtabellen (Siehe FWD Route)

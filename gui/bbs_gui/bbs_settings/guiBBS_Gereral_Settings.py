@@ -225,3 +225,4 @@ class BBSGeneralSettings(tk.Frame):
     ####################################
     def save_config(self):
         self._get_user_data_fm_vars()
+        return True

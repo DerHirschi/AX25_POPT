@@ -299,11 +299,12 @@ def decode_INP_DHLC(ax25_payload: bytes):
     op_code = transportHeader[4]
 
     if call_to == 'L3RTT':
-        print(f"Net-Rom Inter-Node HDLC Frame - L3RTT RTT Frame")
+        #print(f"Net-Rom Inter-Node HDLC Frame - L3RTT RTT Frame")
         monitor_str = "Net-Rom Inter-Node HDLC Frame - L3RTT RTT Frame\n"
     else:
-        print("Net-Rom Inter-Node HDLC Frame")
+        #print("Net-Rom Inter-Node HDLC Frame")
         monitor_str = "Net-Rom Inter-Node HDLC Frame\n"
+    """
     print(f"{call_from} > {call_to}")
     print(f"TTL: {time_to_live} ")
     print(f"Transport: {transportHeader} ")
@@ -312,9 +313,12 @@ def decode_INP_DHLC(ax25_payload: bytes):
     print(f"TX Seq: {tx_seq} ")
     print(f"RX Seq: {rx_seq} ")
     print(f"Opt: {op_code} - {hex(op_code)} ")
+    """
     dec_opt = decode_opcode(op_code)
+    """
     for k in dec_opt.keys():
         print(f"{k}: {dec_opt[k]}")
+    """
 
     opcodes = {
         0x01: 'Connect Request',
@@ -324,6 +328,7 @@ def decode_INP_DHLC(ax25_payload: bytes):
         0x05: 'Information',
         0x06: 'Information acknowledg',
     }.get(op_code, None)
+    """
     if opcodes:
         print(f"OPT: {opcodes}")
     else:
@@ -333,7 +338,7 @@ def decode_INP_DHLC(ax25_payload: bytes):
     print("Info: ")
     print(information)
     print(f"RAW in: {ax25_payload.hex()}")
-
+    """
     monitor_str += f"{call_from} > {call_to}\n"
     # monitor_str += f"Transport: {transportHeader}\r"
     monitor_str += f"TTL: {time_to_live}\n"
@@ -355,29 +360,31 @@ def NetRom_decode_I(ax25_payload: bytes):
     if len(ax25_payload) < 20:
         # NetRom Minimum 20
         return ''
-    print('')
-    print('==============================NEU========================================')
+    #print('')
+    #print('==============================NEU========================================')
     opcodes = {
         0x00: 'EOP (End of Packet)',
         0x01: 'IP (Information Packet)',
         0x02: 'L3RTT (Layer 3 Round-Trip Time)',
         0xff: 'RIF',
     }.get(ax25_payload[0], None)
+    """
     if opcodes:
         print(f"OPT1: {opcodes}")
     else:
         print(f"OPT1-no Opt: {ax25_payload[0]}")
+    """
 
     if int(ax25_payload[0]) == 0xFF:
         # Routing Information Frame
-        print(f"RoutingFrame_raw: {ax25_payload}")
-        print(f"RoutingFrame_raw.hex: {ax25_payload.hex()}")
+        #print(f"RoutingFrame_raw: {ax25_payload}")
+        #print(f"RoutingFrame_raw.hex: {ax25_payload.hex()}")
         # Decodieren der Rohdaten-Payload
         decoded_routes = decode_RIF(ax25_payload)
 
         # Ausgabe der decodierten Routeninformationen
-        print("INP Route Information Frame:")
-        print("{:<15s} {:<8s} {:<8s}".format("Call", "Quality", "RTT"))
+        #print("INP Route Information Frame:")
+        #print("{:<15s} {:<8s} {:<8s}".format("Call", "Quality", "RTT"))
         """
         for route in decoded_routes:
             print("{:<15s} {:<8d} {:<8d}".format(route[0], route[1], route[2]))

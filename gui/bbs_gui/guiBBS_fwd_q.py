@@ -116,7 +116,7 @@ class BBS_fwd_Q(tk.Toplevel):
                 f'{el[0]}',
                 f'{from_call}',
                 f'{to_call}',
-                f'{el[5]}',  # to BBS
+                f'{el[5]}',  # fwd BBS
                 f'{el[6]}',  # typ
                 f'{el[7]}',  # sub
                 f'{el[8]}',  # size

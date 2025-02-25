@@ -285,7 +285,7 @@ class BBS_FWD_Settings(tk.Frame):
             self._bbs_vars[dest_call]   = dict(self._bbs_vars['NOCALL'])
             self._set_tab_name(dest_call)
             self._bbs_vars['NOCALL']    = {}
-            self._del_NOCALL_homeBBS_cfg()
+            # self._del_NOCALL_homeBBS_cfg()
 
     def _set_tab_name(self, name):
         self._tabctl.tab(self._tabctl.select(), text=name)
@@ -316,24 +316,24 @@ class BBS_FWD_Settings(tk.Frame):
             pn_fwd_auto_path    = bool(self._bbs_vars[k]['pn_fwd_auto_path'].get())
             pn_fwd_alter_path   = bool(self._bbs_vars[k]['pn_fwd_alter_path'].get())
 
-            home_bbs_cfg = self._get_homeBBS_cfg(k)
-            home_bbs_cfg['port_id']     = port_id
-            home_bbs_cfg['regio']       = regio
-            home_bbs_cfg['dest_call']   = dest_call  # # # #
-            home_bbs_cfg['via_calls']   = get_list_fm_viaStr(via_calls)
-            home_bbs_cfg['axip_add']    = axip_ip, axip_port
-            home_bbs_cfg['reverseFWD']  = rev_fwd
-            home_bbs_cfg['allowRevFWD'] = allow_rev_fwd
+            fwd_bbs_cfg = self._get_fwdBBS_cfg(k)
+            fwd_bbs_cfg['port_id']     = port_id
+            fwd_bbs_cfg['regio']       = regio
+            fwd_bbs_cfg['dest_call']   = dest_call  # # # #
+            fwd_bbs_cfg['via_calls']   = get_list_fm_viaStr(via_calls)
+            fwd_bbs_cfg['axip_add']    = axip_ip, axip_port
+            fwd_bbs_cfg['reverseFWD']  = rev_fwd
+            fwd_bbs_cfg['allowRevFWD'] = allow_rev_fwd
 
-            home_bbs_cfg['bl_fwd']              = allow_bl_fwd
-            home_bbs_cfg['pn_fwd']              = allow_pn_fwd
-            home_bbs_cfg['pn_fwd_auto_path']    = pn_fwd_auto_path
-            home_bbs_cfg['pn_fwd_alter_path']   = pn_fwd_alter_path
+            fwd_bbs_cfg['bl_fwd']              = allow_bl_fwd
+            fwd_bbs_cfg['pn_fwd']              = allow_pn_fwd
+            fwd_bbs_cfg['pn_fwd_auto_path']    = pn_fwd_auto_path
+            fwd_bbs_cfg['pn_fwd_alter_path']   = pn_fwd_alter_path
             if k != dest_call:
                 self._bbs_vars[dest_call] = dict(self._bbs_vars[k])
                 self._set_tab_name(dest_call)
                 del self._bbs_vars[k]
-            self._set_homeBBS_cfg(k, home_bbs_cfg)
+            self._set_homeBBS_cfg(k, fwd_bbs_cfg)
         self._cleanup_hBBS_cfg()
 
     def _del_homeBBS_vars(self, cfg_key):
@@ -352,30 +352,36 @@ class BBS_FWD_Settings(tk.Frame):
                 PoPT_Set_Scheduler(self)
 
     def _select_scheCfg(self, pms_cfg_k: str):
-        bbs_cfg = self._get_homeBBS_cfg(pms_cfg_k)
+        bbs_cfg = self._get_fwdBBS_cfg(pms_cfg_k)
         self.schedule_config = dict(bbs_cfg.get('scheduler_cfg', dict(getNew_schedule_config())))
 
     def _save_scheCfg(self, pms_cfg_k: str):
-        bbs_cfg = self._get_homeBBS_cfg(pms_cfg_k)
+        bbs_cfg = self._get_fwdBBS_cfg(pms_cfg_k)
         bbs_cfg['scheduler_cfg'] = dict(self.schedule_config)
         # self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = bbs_cfg
         self._set_homeBBS_cfg(pms_cfg_k, bbs_cfg)
 
-    def _get_homeBBS_cfg(self, pms_cfg_k: str):
+    def _get_fwdBBS_cfg(self, pms_cfg_k: str):
         all_bbs_cfgs = dict(self._pms_cfg.get('fwd_bbs_cfg', {}))
         return dict(all_bbs_cfgs.get(pms_cfg_k, getNew_BBS_FWD_cfg()))
 
     def _set_homeBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
-        self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
+        self._root_win.set_homeBBS_cfg(pms_cfg_k, bbs_cfg)
+        # self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
 
+    """
     def _del_NOCALL_homeBBS_cfg(self):
         if 'NOCALL' in self._pms_cfg.get('fwd_bbs_cfg', {}).keys():
             del self._pms_cfg['fwd_bbs_cfg']['NOCALL']
+    """
 
     def _del_homeBBS_cfg(self, pms_cfg_k: str):
+        self._root_win.del_homeBBS_cfg(pms_cfg_k)
+        """
         if pms_cfg_k in self._pms_cfg['fwd_bbs_cfg'].keys():
             self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = None
             del self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k]
+        """
 
     def scheduler_config_save_task(self):
         """ Task fm PoPT-Scheduler_win"""
@@ -402,7 +408,6 @@ class BBS_FWD_Settings(tk.Frame):
             self._get_hBBS_data_fm_vars()
 
     def save_config(self):
-        self._get_hBBS_data_fm_vars()
         """
         if self._pms_cfg:
             # self._cleanup_hBBS_cfg()
@@ -410,6 +415,9 @@ class BBS_FWD_Settings(tk.Frame):
             if self._bbs_obj:
                 self._bbs_obj.set_pms_cfg(self._pms_cfg)
         """
+        self._get_hBBS_data_fm_vars()
+        return True
+
 
     def _cleanup_hBBS_cfg(self):
         if self._pms_cfg:
