@@ -160,9 +160,11 @@ class BBS:
     ###################################
     # Check FWD TX Q Task
     def _check_outgoing_fwd(self):
-        """ all 60 Secs. or 20 Secs. when tasks in fwd_q """
-        # TODO .. check incoming MSG
-        # TODO .. out MSG triggered when sending
+        """
+        All 60 secs or 20 secs, when tasks in fwd_q
+        Check Forward-Q for Outgoing Forwards
+        """
+        log_tag = self._logTag + 'Check FWD-Q > '
         if not self._pms_cfg.get('auto_conn', True):
             return
 
@@ -172,19 +174,12 @@ class BBS:
             return
 
         if not self._fwd_q:
-            self._fwd_q: list = self.get_active_fwd_q_tab()
+            self._fwd_q: list = self._build_new_fwd_Q()
         if not self._fwd_q:
             return
-
-        next_fwd = list(self._fwd_q[0])
+        to_bbs_call = list(self._fwd_q)[0]
         self._fwd_q = list(self._fwd_q[1:])
-        try:
-            to_bbs_call = next_fwd[5]
-        except IndexError:
-            BBS_LOG.error(f"FWD-Q: IndexError(IndexError): {next_fwd}")
-            BBS_LOG.debug(f"FWD-Q: IndexError(self._fwd_q): {self._fwd_q}")
-            self._var_task_fwdQ_timer = time.time() + 20  #
-            return
+        BBS_LOG.info(log_tag + f"Next Fwd to: {to_bbs_call}")
         fwd_conn = self._start_autoFwd(to_bbs_call)
         if not fwd_conn:
             BBS_LOG.error(f"FWD-Q: fwd_conn Error: {to_bbs_call}")
@@ -195,6 +190,7 @@ class BBS:
         return
 
     def _in_msg_fwd_check(self):
+        """ All 60 Secs. Check Incoming MSG to need forwarded """
         msg_fm_db = self._db.bbs_get_msg_fwd_check()
         log_tag = self._logTag + 'Forward Check> '
         for raw_msg in msg_fm_db:
@@ -273,7 +269,7 @@ class BBS:
 
                     # new_msg['flag'] = 'E'
                     msg['fwd_bbs_call'] = fwd_call
-                    BBS_LOG.info(log_tag + f"Msg: {msg_id}  - {bid}: PN FWD to {fwd_call} - MID: {mid}")
+                    BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid}: BL FWD to {fwd_call} - MID: {mid}")
                     ret = self._db.bbs_insert_msg_to_fwd(msg)
                     if not ret:
                         BBS_LOG.error(log_tag + f"Can't insert Msg into FWD-Q: {msg}")
@@ -282,6 +278,23 @@ class BBS:
 
             BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ} - _in_msg_fwd_check")
 
+    def _build_new_fwd_Q(self):
+        log_tag = self._logTag + 'Build FWD-Q > '
+        if self._fwd_q:
+            BBS_LOG.error(log_tag + "Error: Local FWQ-Q (self._fwd_q) not empty ! ")
+            return []
+        db_fwd_q: list = self.get_active_fwd_q_tab()
+        res = []
+        for fwd_task in db_fwd_q:
+            try:
+                to_bbs_call = fwd_task[5]
+            except IndexError:
+                BBS_LOG.error(log_tag + f"IndexError: fwd_task: {fwd_task} ")
+                continue
+            if to_bbs_call not in res:
+                res.append(to_bbs_call)
+        BBS_LOG.info(log_tag + f"New FWD-Q: {res}")
+        return res
 
     ###################################
     # CFG Stuff

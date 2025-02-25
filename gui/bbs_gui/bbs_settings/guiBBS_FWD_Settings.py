@@ -281,7 +281,7 @@ class BBS_FWD_Settings(tk.Frame):
             home_bbs_cfg['dest_call']   = dest_call
             home_bbs_cfg['via_calls']   = get_list_fm_viaStr(via_calls)
             home_bbs_cfg['axip_add']    = axip_ip, axip_port
-            self._set_homeBBS_cfg(dest_call, home_bbs_cfg)
+            # self._set_homeBBS_cfg(dest_call, home_bbs_cfg)
             self._bbs_vars[dest_call]   = dict(self._bbs_vars['NOCALL'])
             self._set_tab_name(dest_call)
             self._bbs_vars['NOCALL']    = {}
@@ -425,7 +425,8 @@ class BBS_FWD_Settings(tk.Frame):
                 del self._pms_cfg['fwd_bbs_cfg']['NOCALL']
             for k in list(self._pms_cfg.get('fwd_bbs_cfg', {}).keys()):
                 if k not in self._bbs_vars.keys():
-                    del self._pms_cfg['fwd_bbs_cfg'][k]
+                    self._del_homeBBS_cfg(k)
+                    # del self._pms_cfg['fwd_bbs_cfg'][k]
 
     """
     def _set_homeBBS_list(self):
