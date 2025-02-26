@@ -70,7 +70,7 @@ class BoxCLI(DefaultCLI):
             self.change_cli_state(2)
             return "\r\r # BBS Error !! \r\r"
 
-        ret = bbs.pms_flag.decode('ASCII', 'ignore') + '\r'
+        ret = bbs.bbs_id_flag.decode('ASCII', 'ignore') + '\r'
         pms_cfg: dict = bbs.get_pms_cfg()
         self.change_cli_state(1)
         if any((

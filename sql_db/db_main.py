@@ -341,7 +341,7 @@ class SQL_Database:
         return bool(ret)
 
     def bbs_insert_msg_fm_fwd(self, msg_struc: dict):
-        # print("bbs_insert_msg_fm_fwd -------------")
+        print("bbs_insert_msg_fm_fwd -------------")
         bid         = msg_struc.get('bid_mid', '')
         from_call   = msg_struc.get('sender', '')
         from_bbs    = msg_struc.get('sender_bbs', '')
@@ -612,6 +612,7 @@ class SQL_Database:
                        typ,
                        )
         self._commit_query_bin(query, query_data)
+        print("SQL")
         self.bbs_insert_msg_fm_fwd(msg_struc=msg_struc)
         return True
 
@@ -733,11 +734,13 @@ class SQL_Database:
         query = ("SELECT * "
                  "FROM pms_in_msg "
                  "WHERE flag='$';")
+                 # "WHERE flag='$' OR flag='S=';")
         res = self._commit_query_bin(query, ())
         # print(f"res: {res}")
 
         query = ("UPDATE pms_in_msg SET flag='F' "
                  "WHERE flag='$';")
+                 # "WHERE flag='$' OR flag='S=';")
         self._commit_query(query)
         return res
 
@@ -764,6 +767,7 @@ class SQL_Database:
                   "from_call, "
                   "from_bbs, "
                   "to_call, "
+                  "to_bbs, "
                   "subject, "
                   "time, "
                   "new, "

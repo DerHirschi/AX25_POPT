@@ -12,7 +12,7 @@ class BBSConnection:
         self._db            = bbs_obj.get_db()
         ###########
         self.e              = False
-        self._mybbs_flag    = self._bbs.pms_flag
+        self._mybbs_flag    = self._bbs.bbs_id_flag
         self._dest_stat_id  = self._ax25_conn.cli.stat_identifier
         # print(f"BBS-Conn : {self._dest_stat_id}")
         # self._bbs_fwd_cmd = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
@@ -425,6 +425,7 @@ class BBSConnection:
             self._rx_msg_header[k]['bid']       = k
             if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):
                 self._rx_msg_header[k]['flag']      = '$'
+            print("FWD Conn")
             res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[k]))
             # self._bbs.new_msg_alarm[str(self._rx_msg_header[_k]['typ'])] = True
             if not res:

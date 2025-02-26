@@ -60,11 +60,14 @@ class MSG_Center(tk.Toplevel):
         )
         self._tabControl_type.pack(side=tk.TOP, fill=tk.BOTH, expand=True, )
 
-        BBS_tab_frame = tk.Frame(self)
-        APRS_tab_frame = tk.Frame(self)
-        BBS_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        PMS_tab_frame   = tk.Frame(self)
+        BBS_tab_frame   = tk.Frame(self)
+        APRS_tab_frame  = tk.Frame(self)
+        PMS_tab_frame.pack( side=tk.TOP, fill=tk.BOTH, expand=True)
+        BBS_tab_frame.pack( side=tk.TOP, fill=tk.BOTH, expand=True)
         APRS_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self._tabControl_type.add(BBS_tab_frame, text='PMS', padding=8)
+        self._tabControl_type.add(PMS_tab_frame,  text='PMS',  padding=8, state='disabled') # TODO
+        self._tabControl_type.add(BBS_tab_frame,  text='BBS',  padding=8)
         self._tabControl_type.add(APRS_tab_frame, text='APRS', padding=8, state='disabled') # TODO
         ################################################
         # APRS-TAB
@@ -73,14 +76,32 @@ class MSG_Center(tk.Toplevel):
         )
         self._tabControl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        tab_PN  = ttk.Frame(self._tabControl)
-        tab_BL  = ttk.Frame(self._tabControl)
-        tab_OUT = ttk.Frame(self._tabControl)
-        self._tabControl.add(tab_PN, text='Private')
-        self._tabControl.add(tab_BL, text='Bulletin')
-        self._tabControl.add(tab_OUT, text='Gesendet')
+        tab_PN_APRS  = ttk.Frame(self._tabControl)
+        tab_BL_APRS  = ttk.Frame(self._tabControl)
+        tab_OUT_APRS = ttk.Frame(self._tabControl)
+        self._tabControl.add(tab_PN_APRS,  text='Private')
+        self._tabControl.add(tab_BL_APRS,  text='Bulletin')
+        self._tabControl.add(tab_OUT_APRS, text='Gesendet')
         # TODO APRS
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ################################################
+        # PMS-TAB
+        self._tabControl = ttk.Notebook(
+            PMS_tab_frame,
+        )
+        self._tabControl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self._tabControl.bind("<<NotebookTabChanged>>", self.on_bbsTab_select)
+        tab_PN_PMS      = ttk.Frame(self._tabControl)
+        tab_BL_PMS      = ttk.Frame(self._tabControl)
+        tab_OUT_PMS     = ttk.Frame(self._tabControl)
+        tab_SAVE_PMS    = ttk.Frame(self._tabControl)
+        self._tabControl.add(tab_PN_PMS,    text='Private')
+        self._tabControl.add(tab_BL_PMS,    text='Bulletin')
+        self._tabControl.add(tab_OUT_PMS,   text='Gesendet')
+        self._tabControl.add(tab_SAVE_PMS,  text='Gespeichert')
+        # TODO PMS
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ################################################
         ################################################
         # BBS-TAB
         self._tabControl = ttk.Notebook(
@@ -88,18 +109,19 @@ class MSG_Center(tk.Toplevel):
         )
         self._tabControl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabControl.bind("<<NotebookTabChanged>>", self.on_bbsTab_select)
-        tab_PN      = ttk.Frame(self._tabControl)
-        tab_BL      = ttk.Frame(self._tabControl)
-        tab_OUT     = ttk.Frame(self._tabControl)
-        tab_SAVE    = ttk.Frame(self._tabControl)
-        self._tabControl.add(tab_PN, text='Private')
-        self._tabControl.add(tab_BL, text='Bulletin')
-        self._tabControl.add(tab_OUT, text='Gesendet')
-        self._tabControl.add(tab_SAVE, text='Gespeichert')
-
+        tab_PN_BBS      = ttk.Frame(self._tabControl)
+        tab_BL_BBS      = ttk.Frame(self._tabControl)
+        tab_OUT_BBS     = ttk.Frame(self._tabControl)
+        tab_SAVE_BBS    = ttk.Frame(self._tabControl)
+        self._tabControl.add(tab_PN_BBS,   text='Private')
+        self._tabControl.add(tab_BL_BBS,   text='Bulletin')
+        self._tabControl.add(tab_OUT_BBS,  text='Gesendet')
+        self._tabControl.add(tab_SAVE_BBS, text='Gespeichert')
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ################################################
         ######################################################
         # ######### BBS/PN
-        pn_pan_frame = tk.Frame(tab_PN)
+        pn_pan_frame = tk.Frame(tab_PN_BBS)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
@@ -138,27 +160,27 @@ class MSG_Center(tk.Toplevel):
 
         #################################################
         # ######### BBS/BL
-        _pw_bl_hor = tk.PanedWindow(tab_BL, orient=tk.HORIZONTAL)
-        _pw_bl_hor.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        pw_bl_hor = tk.PanedWindow(tab_BL_BBS, orient=tk.HORIZONTAL)
+        pw_bl_hor.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        left_frame = tk.Frame(_pw_bl_hor)
-        bl_pan_frame = tk.Frame(_pw_bl_hor)
+        left_frame = tk.Frame(pw_bl_hor)
+        bl_pan_frame = tk.Frame(pw_bl_hor)
 
-        _pw_bl_hor.add(left_frame, width=140)
-        _pw_bl_hor.add(bl_pan_frame, )
+        pw_bl_hor.add(left_frame, width=140)
+        pw_bl_hor.add(bl_pan_frame, )
         ###################
-        _pw_bl = ttk.PanedWindow(bl_pan_frame, orient=tk.VERTICAL)
-        top_f = tk.Frame(_pw_bl)
-        lower_f_main = tk.Frame(_pw_bl)
+        pw_bl = ttk.PanedWindow(bl_pan_frame, orient=tk.VERTICAL)
+        top_f = tk.Frame(pw_bl)
+        lower_f_main = tk.Frame(pw_bl)
         lower_f_lower = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         lower_f_lower.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        _pw_bl.add(top_f, weight=1)
-        _pw_bl.add(lower_f_main, weight=1)
-        _pw_bl.pack(fill=tk.BOTH, expand=True)
+        pw_bl.add(top_f, weight=1)
+        pw_bl.add(lower_f_main, weight=1)
+        pw_bl.pack(fill=tk.BOTH, expand=True)
         ########################
         # LEFT TAB Category's
         self._bl_cat_tree = None
@@ -188,7 +210,7 @@ class MSG_Center(tk.Toplevel):
 
         ######################################################
         # ######### BBS/OUT
-        out_pan_frame = tk.Frame(tab_OUT)
+        out_pan_frame = tk.Frame(tab_OUT_BBS)
         out_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         pw_out = ttk.PanedWindow(out_pan_frame, orient=tk.VERTICAL)
@@ -225,7 +247,7 @@ class MSG_Center(tk.Toplevel):
         self._init_out_footer_frame(lower_f_top)
         ######################################################
         # ######### BBS/Drafts/Saved Msg
-        pn_pan_frame = tk.Frame(tab_SAVE)
+        pn_pan_frame = tk.Frame(tab_SAVE_BBS)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
@@ -306,6 +328,7 @@ class MSG_Center(tk.Toplevel):
             'Neu',
             'Betreff',
             'Von',
+            'An',
             'flag',
             'Datum',
         )
@@ -317,16 +340,18 @@ class MSG_Center(tk.Toplevel):
         self._pn_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        self._pn_tree.heading('Neu',        text=self._getTabStr('new'), command=lambda: self._sort_entry('Neu', self._pn_tree))
-        self._pn_tree.heading('Betreff',    text=self._getTabStr('subject'), command=lambda: self._sort_entry('Betreff', self._pn_tree))
-        self._pn_tree.heading('Von',        text=self._getTabStr('from'), command=lambda: self._sort_entry('Von', self._pn_tree))
+        self._pn_tree.heading('Neu',       text=self._getTabStr('new'), command=lambda: self._sort_entry('Neu', self._pn_tree))
+        self._pn_tree.heading('Betreff',   text=self._getTabStr('subject'), command=lambda: self._sort_entry('Betreff', self._pn_tree))
+        self._pn_tree.heading('Von',       text=self._getTabStr('from'), command=lambda: self._sort_entry('Von', self._pn_tree))
+        self._pn_tree.heading('An',        text=self._getTabStr('to'), command=lambda: self._sort_entry('An', self._pn_tree))
         self._pn_tree.heading('flag',      text='Flag', command=lambda: self._sort_entry('flag', self._pn_tree))
-        self._pn_tree.heading('Datum',      text=self._getTabStr('date_time'), command=lambda: self._sort_entry('Datum', self._pn_tree))
-        self._pn_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
-        self._pn_tree.column("Betreff", anchor='w', stretch=tk.YES, width=190)
-        self._pn_tree.column("Von", anchor='w', stretch=tk.YES, width=190)
-        self._pn_tree.column("flag", anchor='w', stretch=tk.NO, width=60)
-        self._pn_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
+        self._pn_tree.heading('Datum',     text=self._getTabStr('date_time'), command=lambda: self._sort_entry('Datum', self._pn_tree))
+        self._pn_tree.column("Neu",     anchor=tk.CENTER,   stretch=tk.NO,  width=40)
+        self._pn_tree.column("Betreff", anchor='w',         stretch=tk.YES, width=190)
+        self._pn_tree.column("Von",     anchor='w',         stretch=tk.YES, width=130)
+        self._pn_tree.column("An",      anchor='w',         stretch=tk.YES, width=130)
+        self._pn_tree.column("flag",    anchor='w',         stretch=tk.NO,  width=60)
+        self._pn_tree.column("Datum",   anchor='w',         stretch=tk.NO,  width=220)
 
         self._pn_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
@@ -335,8 +360,8 @@ class MSG_Center(tk.Toplevel):
         # self._pn_tree.get_children()
 
     def _init_pn_lower_frame(self, root_frame):
-        btn_frame = tk.Frame(root_frame, height=30)
-        header_frame = tk.Frame(root_frame, height=80)
+        btn_frame       = tk.Frame(root_frame, height=30)
+        header_frame    = tk.Frame(root_frame, height=80)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
@@ -550,6 +575,7 @@ class MSG_Center(tk.Toplevel):
         columns = (
             'gesendet',
             'Betreff',
+            'Von',
             'An',
             'fwd_bbs',
             'typ',
@@ -566,6 +592,7 @@ class MSG_Center(tk.Toplevel):
 
         self._out_tree.heading('gesendet', text='  ', command=lambda: self._sort_entry('gesendet', self._out_tree))
         self._out_tree.heading('Betreff', text=self._getTabStr('subject'), command=lambda: self._sort_entry('Betreff', self._out_tree))
+        self._out_tree.heading('Von', text=self._getTabStr('from'), command=lambda: self._sort_entry('Von', self._out_tree))
         self._out_tree.heading('An', text=self._getTabStr('to'), command=lambda: self._sort_entry('An', self._out_tree))
         self._out_tree.heading('fwd_bbs', text=f"{self._getTabStr('to')} BBS", command=lambda: self._sort_entry('fwd_bbs', self._out_tree))
         self._out_tree.heading('typ', text='TYP', command=lambda: self._sort_entry('typ', self._out_tree))
@@ -573,6 +600,7 @@ class MSG_Center(tk.Toplevel):
         self._out_tree.heading('Datum', text='TX-Time', command=lambda: self._sort_entry('Datum', self._out_tree))
         self._out_tree.column("gesendet", anchor=tk.CENTER, stretch=tk.NO, width=40)
         self._out_tree.column("Betreff", anchor='w', stretch=tk.YES, width=230)
+        self._out_tree.column("Von", anchor='w', stretch=tk.YES, width=100)
         self._out_tree.column("An", anchor='w', stretch=tk.YES, width=100)
         self._out_tree.column("fwd_bbs", anchor='w', stretch=tk.YES, width=60)
         self._out_tree.column("typ", anchor='w', stretch=tk.NO, width=45)
@@ -785,10 +813,14 @@ class MSG_Center(tk.Toplevel):
             from_call = f"{el[1]}"
             if el[2]:
                 from_call += f"@{el[2]}"
+            to_call = f"{el[3]}"
+            if el[4]:
+                to_call += f"@{el[4]}"
+
             new = ''
-            if int(el[6]):
+            if int(el[7]):
                 new = '✉'
-            date = el[5]
+            date = el[6]
             tmp = str(date).split('-')[0]
             if len(tmp) == 2:
                 # FIX for old TimeStamps
@@ -796,9 +828,10 @@ class MSG_Center(tk.Toplevel):
 
             self._pn_tree_data.append((
                 f'{new}',
-                f'{el[4]}',
+                f'{el[5]}',
                 f'{from_call}',
-                f'{el[7]}',  # FLAG
+                f'{to_call}',
+                f'{el[8]}',  # FLAG
                 f'{date}',   # DATE
                 f'{el[0]}',  # BID
             ))
@@ -1052,6 +1085,9 @@ class MSG_Center(tk.Toplevel):
             to_call = f"{el[3]}"
             if el[4]:
                 to_call += f"@{el[4]}"
+            from_call = f"{el[1]}"
+            if el[2]:
+                from_call += f"@{el[2]}"
             fwd_done = ''
             if el[9] != 'F':
                 fwd_done = '✔'
@@ -1061,6 +1097,7 @@ class MSG_Center(tk.Toplevel):
             """
             'gesendet',
             'Betreff',
+            'Von',
             'An',
             'fwd_bbs',
             'typ',
@@ -1070,6 +1107,7 @@ class MSG_Center(tk.Toplevel):
             self._out_tree_data.append((
                 f'{fwd_done}',
                 f'{el[6]}',
+                f'{from_call}',
                 f'{to_call}',
                 f'{el[5]}',
                 f'{el[8]}',

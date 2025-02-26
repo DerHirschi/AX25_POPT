@@ -171,7 +171,8 @@ Ideas/TODO's :
       - auswerten eingehender Mails zur Weiterleitung
     ✓ ausgehender FWD
     ✓ automatisiertes abarbeiten der FWD-Q
-    - !Kompremierung (Hufman??)
+    - Scheduled BL/PN FWD (z.B. nur Nachts)
+    - !Kompremierung (Hufman??) (lzh??)
   - User-DB (User-DB Erweiterung für die BBS)
   - BBS Tool (Hold, Filter, Ban, Man-Routing, ...)
   - CLI
