@@ -801,7 +801,6 @@ class MSG_Center_BBS(MSG_Center_base):
         self._out_data = self._bbs_obj.get_fwd_q_tab()
 
     def _get_OUT_MSG_data(self, bid):
-        # TODO by PMS User-Call
         return self._bbs_obj.get_out_msg_fm_BID(bid)
 
     def _format_OUT_tree_data(self):
@@ -916,15 +915,3 @@ class MSG_Center_BBS(MSG_Center_base):
             self._out_text.configure(state='disabled')
 
     ####################
-    def _set_all_to_oldMSG(self):   # Set all Msg to read Status
-        try:
-            ind = self._tabControl.index(self._tabControl.select())
-        except tk.TclError:
-            return
-        fnc = {
-            0: self._bbs_obj.set_all_pn_msg_notNew,
-            1: self._bbs_obj.set_all_bl_msg_notNew,
-        }.get(ind, None)
-        if fnc:
-            fnc()
-            self.on_bbsTab_select()

@@ -675,7 +675,7 @@ class MSG_Center_PMS(MSG_Center_base):
         self._update_PN_tree()
 
     def _get_PN_data(self):
-        self._pn_data = self._bbs_obj.get_pn_msg_tab()
+        self._pn_data = self._bbs_obj.get_pn_msg_tab_pms_user()
 
     def _get_PN_MSG_data(self, bid):
         return self._bbs_obj.get_pn_msg_fm_BID(bid)
@@ -713,10 +713,6 @@ class MSG_Center_PMS(MSG_Center_base):
             ))
 
     def _update_PN_tree(self):
-        # curItem = self._pn_tree.selection()
-        # curItem = self._pn_tree.selection_get()
-        # print(curItem)
-        # print(self._pn_tree.item(curItem))
         for i in self._pn_tree.get_children():
             self._pn_tree.delete(i)
         for ret_ent in self._pn_tree_data:
@@ -942,10 +938,9 @@ class MSG_Center_PMS(MSG_Center_base):
         self._update_OUT_tree()
 
     def _get_OUT_data(self):
-        self._out_data = self._bbs_obj.get_fwd_q_tab()
+        self._out_data = self._bbs_obj.get_fwd_q_tab_pms()
 
     def _get_OUT_MSG_data(self, bid):
-        # TODO by PMS User-Call
         return self._bbs_obj.get_out_msg_fm_BID(bid)
 
     def _format_OUT_tree_data(self):
@@ -1070,6 +1065,7 @@ class MSG_Center_PMS(MSG_Center_base):
         self._sv_data = self._bbs_obj.get_sv_msg_tab()
 
     def _get_SV_MSG_data(self, mid):
+        # TODO by PMS User-Call
         return self._bbs_obj.get_sv_msg_fm_BID(mid)
 
     def _format_SV_tree_data(self):
@@ -1155,15 +1151,3 @@ class MSG_Center_PMS(MSG_Center_base):
             self._sv_text.configure(state='disabled')
 
     ####################
-    def _set_all_to_oldMSG(self):   # Set all Msg to read Status
-        try:
-            ind = self._tabControl.index(self._tabControl.select())
-        except tk.TclError:
-            return
-        fnc = {
-            0: self._bbs_obj.set_all_pn_msg_notNew,
-            1: self._bbs_obj.set_all_bl_msg_notNew,
-        }.get(ind, None)
-        if fnc:
-            fnc()
-            self.on_bbsTab_select()

@@ -133,6 +133,20 @@ class MSG_Center_base(tk.Frame):
         self.tree_update_task()
         # self._pn_tree.selection_toggle(self._pn_tree.focus())
 
+    def _set_all_to_oldMSG(self):   # Set all Msg to read Status
+        # TODO
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return
+        fnc = {
+            0: self._bbs_obj.set_all_pn_msg_notNew,
+            1: self._bbs_obj.set_all_bl_msg_notNew,
+        }.get(ind, None)
+        if fnc:
+            fnc()
+            self.on_bbsTab_select()
+
     def _save_outMSG(self):
         bid = self._selected_msg['O'].get('bid', '')
         if bid:
@@ -241,7 +255,6 @@ class MSG_Center_base(tk.Frame):
     def _delete_SV(self, bid: str):
         if bid:
             return self._bbs_obj.del_sv_by_MID(bid)
-
 
     def _PN_show_msg_fm_BID(self, mid):
         pass

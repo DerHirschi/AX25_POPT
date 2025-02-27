@@ -118,6 +118,7 @@ class MSG_Center(tk.Toplevel):
     #####################################
     # GUI
     def _set_all_to_oldMSG(self):
+        # TODO
         pass
 
     def _increase_textsize(self):

@@ -771,6 +771,10 @@ class BBS:
     def get_fwd_q_tab(self):
         return self._db.bbs_get_fwd_q_Tab_for_GUI()
 
+    def get_fwd_q_tab_pms(self):
+        local_user = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
+        return self._db.bbs_get_fwd_q_Tab_for_PMS(pms_user=local_user)
+
     def get_active_fwd_q_tab(self):
         return self._db.pms_get_active_fwd_q_for_GUI()
 
@@ -779,6 +783,10 @@ class BBS:
 
     def get_pn_msg_tab(self):
         return self._db.bbs_get_pn_msg_Tab_for_GUI()
+
+    def get_pn_msg_tab_pms_user(self):
+        local_user = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
+        return self._db.bbs_get_pn_msg_Tab_for_PMS(pms_user=local_user)
 
     def get_bl_msg_tab(self):
         return self._db.bbs_get_bl_msg_Tab_for_GUI()
@@ -791,21 +799,21 @@ class BBS:
         if not data:
             return {}
         return {
-            'typ': data[0][15],
-            'bid': data[0][1],
-            'from_call': data[0][2],
-            'from_bbs': data[0][3],
-            'to_call': data[0][4],
-            'to_bbs': data[0][5],
-            'size': data[0][6],
-            'subject': data[0][7],
-            'header': data[0][8],
-            'msg': data[0][9],
-            'path': data[0][10],
-            'time': data[0][11],
-            'rx-time': data[0][12],
-            'new': data[0][13],
-            'flag': data[0][14],
+            'typ':          data[0][15],
+            'bid':          data[0][1],
+            'from_call':    data[0][2],
+            'from_bbs':     data[0][3],
+            'to_call':      data[0][4],
+            'to_bbs':       data[0][5],
+            'size':         data[0][6],
+            'subject':      data[0][7],
+            'header':       data[0][8],
+            'msg':          data[0][9],
+            'path':         data[0][10],
+            'time':         data[0][11],
+            'rx-time':      data[0][12],
+            'new':          data[0][13],
+            'flag':         data[0][14],
         }
 
     def set_in_msg_notNew(self, bid):

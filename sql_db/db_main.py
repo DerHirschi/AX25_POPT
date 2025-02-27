@@ -777,6 +777,25 @@ class SQL_Database:
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
+    def bbs_get_pn_msg_Tab_for_PMS(self, pms_user: list):
+        user_str = '("' + '","'.join([str(str(x)) for x in pms_user]) + '")'
+        query = ("SELECT BID, "
+                  "from_call, "
+                  "from_bbs, "
+                  "to_call, "
+                  "to_bbs, "
+                  "subject, "
+                  "time, "
+                  "new, "
+                  "flag "
+                  "FROM pms_in_msg "
+                  f"WHERE to_call IN {user_str} "
+                  "AND NOT flag='DL' "
+                  "AND typ='P' ;")
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
     def bbs_get_pn_msg_for_GUI(self, bid: str):
         if not bid:
             return []
@@ -879,6 +898,26 @@ class SQL_Database:
                   "flag, "
                   "tx_time "
                   "FROM pms_fwd_q WHERE NOT flag='DL';")
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_fwd_q_Tab_for_PMS(self, pms_user: list):
+        user_str = '("' + '","'.join([str(str(x)) for x in pms_user]) + '")'
+        query = ("SELECT BID, "
+                 "from_call, "
+                 "from_bbs_call, "
+                 "to_call, "
+                 "to_bbs_call, "
+                 "fwd_bbs_call, "
+                 "subject, "
+                 "size, "
+                 "type, "
+                 "flag, "
+                 "tx_time "
+                 "FROM pms_fwd_q "
+                 f"WHERE from_call in {user_str} "
+                 "AND NOT flag='DL';")
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
