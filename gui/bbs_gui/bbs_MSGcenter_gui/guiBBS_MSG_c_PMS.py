@@ -1,134 +1,66 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
-from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.popt_config import POPT_CFG
 from cfg.constant import FONT, ENCODINGS
-from fnc.str_fnc import format_number, get_strTab
-from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
-from gui.guiMsgBoxes import save_file_dialog
-from cfg.string_tab import STR_TABLE
+from fnc.str_fnc import format_number
+from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_c_base import MSG_Center_base
 
 
-class MSG_Center(tk.Toplevel):
+class MSG_Center_PMS(MSG_Center_base):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
-        self._root_win  = root_win
-        self._lang      = POPT_CFG.get_guiCFG_language()
-        self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
-        ###################################
-        # Vars
-        PORT_HANDLER.set_pmsMailAlarm(False)
-        self._bbs_obj       = PORT_HANDLER.get_bbs()
-        self._sort_rev      = False
-        self._last_sort_col = {}
-        self._selected_msg  = {
-            'P': {},
-            'B': {},
-            'O': {},
-            'S': {},
-        }
-        self._var_encoding      = tk.StringVar(self, 'UTF-8')
-        self.text_size          = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-        self._text_size_tabs    = 10
-        self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
-        ###################################
-        self.title(STR_TABLE['msg_center'][self._lang])
-        self.style = self._root_win.style
-        # self.geometry("1250x700")
-        self.geometry(f"1250x"
-                      f"700+"
-                      f"{self._root_win.main_win.winfo_x()}+"
-                      f"{self._root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self._close)
-        self.attributes("-topmost", True)
-        self.attributes("-topmost", False)
-        try:
-            self.iconbitmap("favicon.ico")
-        except tk.TclError:
-            pass
-        self.lift()
-        ####################
-        self._init_Menu()
-        ######################################################################
-        # APRS/BBS TABS
-        upper_frame = tk.Frame(self, )
-        upper_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self._tabControl_type = ttk.Notebook(
-            upper_frame,
-            padding=5,
-        )
-        self._tabControl_type.pack(side=tk.TOP, fill=tk.BOTH, expand=True, )
+        MSG_Center_base.__init__(self, root_win)
+        # ## lower_f_top / MSG Header ect.
+        # PN
+        self._var_pn_from_label     = tk.StringVar(self, '')
+        self._var_pn_to_label       = tk.StringVar(self, '')
+        self._var_pn_subj_label     = tk.StringVar(self, '')
+        self._var_pn_time_label     = tk.StringVar(self, '')
+        self._var_pn_bid_label      = tk.StringVar(self, '')
+        self._var_pn_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
+        # BL
+        self._var_bl_from_label     = tk.StringVar(self, '')
+        self._var_bl_to_label       = tk.StringVar(self, '')
+        self._var_bl_subj_label     = tk.StringVar(self, '')
+        self._var_bl_time_label     = tk.StringVar(self, '')
+        self._var_bl_bid_label      = tk.StringVar(self, '')
+        self._var_bl_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
+        # Out
+        self._var_out_from_label    = tk.StringVar(self, '')
+        self._var_out_to_label      = tk.StringVar(self, '')
+        self._var_out_subj_label    = tk.StringVar(self, '')
+        self._var_out_time_label    = tk.StringVar(self, '')
+        self._var_out_bid_label     = tk.StringVar(self, '')
+        self._var_out_msg_size      = tk.StringVar(self, ' Size: --- Bytes')
+        # SV
+        self._var_sv_from_label     = tk.StringVar(self, '')
+        self._var_sv_to_label       = tk.StringVar(self, '')
+        self._var_sv_subj_label     = tk.StringVar(self, '')
+        self._var_sv_time_label     = tk.StringVar(self, '')
+        self._var_sv_bid_label      = tk.StringVar(self, '')
+        self._var_sv_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
 
-        PMS_tab_frame   = tk.Frame(self)
-        BBS_tab_frame   = tk.Frame(self)
-        APRS_tab_frame  = tk.Frame(self)
-        PMS_tab_frame.pack( side=tk.TOP, fill=tk.BOTH, expand=True)
-        BBS_tab_frame.pack( side=tk.TOP, fill=tk.BOTH, expand=True)
-        APRS_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self._tabControl_type.add(PMS_tab_frame,  text='PMS',  padding=8, state='disabled') # TODO
-        self._tabControl_type.add(BBS_tab_frame,  text='BBS',  padding=8)
-        self._tabControl_type.add(APRS_tab_frame, text='APRS', padding=8, state='disabled') # TODO
-        ################################################
-        # APRS-TAB
-        self._tabControl = ttk.Notebook(
-            APRS_tab_frame,
-        )
-        self._tabControl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-        tab_PN_APRS  = ttk.Frame(self._tabControl)
-        tab_BL_APRS  = ttk.Frame(self._tabControl)
-        tab_OUT_APRS = ttk.Frame(self._tabControl)
-        self._tabControl.add(tab_PN_APRS,  text='Private')
-        self._tabControl.add(tab_BL_APRS,  text='Bulletin')
-        self._tabControl.add(tab_OUT_APRS, text='Gesendet')
-        # TODO APRS
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ################################################
+        ###################################
         # PMS-TAB
-        self._tabControl = ttk.Notebook(
-            PMS_tab_frame,
-        )
-        self._tabControl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabControl.bind("<<NotebookTabChanged>>", self.on_bbsTab_select)
-        tab_PN_PMS      = ttk.Frame(self._tabControl)
-        tab_BL_PMS      = ttk.Frame(self._tabControl)
-        tab_OUT_PMS     = ttk.Frame(self._tabControl)
-        tab_SAVE_PMS    = ttk.Frame(self._tabControl)
-        self._tabControl.add(tab_PN_PMS,    text='Private')
+        tab_PN_PMS       = ttk.Frame(self._tabControl)
+        tab_BL_PMS       = ttk.Frame(self._tabControl)
+        tab_OUT_PMS      = ttk.Frame(self._tabControl)
+        tab_SAVE_PMS     = ttk.Frame(self._tabControl)
+        self._tabControl.add(tab_PN_PMS,    text=self._getTabStr('private'))
         self._tabControl.add(tab_BL_PMS,    text='Bulletin')
-        self._tabControl.add(tab_OUT_PMS,   text='Gesendet')
-        self._tabControl.add(tab_SAVE_PMS,  text='Gespeichert')
-        # TODO PMS
+        self._tabControl.add(tab_OUT_PMS,   text=self._getTabStr('msgC_sendet_msg'))
+        self._tabControl.add(tab_SAVE_PMS,  text=self._getTabStr('saved'))
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ################################################
-        ################################################
-        # BBS-TAB
-        self._tabControl = ttk.Notebook(
-            BBS_tab_frame,
-        )
-        self._tabControl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self._tabControl.bind("<<NotebookTabChanged>>", self.on_bbsTab_select)
-        tab_PN_BBS      = ttk.Frame(self._tabControl)
-        tab_BL_BBS      = ttk.Frame(self._tabControl)
-        tab_OUT_BBS     = ttk.Frame(self._tabControl)
-        tab_SAVE_BBS    = ttk.Frame(self._tabControl)
-        self._tabControl.add(tab_PN_BBS,   text='Private')
-        self._tabControl.add(tab_BL_BBS,   text='Bulletin')
-        self._tabControl.add(tab_OUT_BBS,  text='Gesendet')
-        self._tabControl.add(tab_SAVE_BBS, text='Gespeichert')
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        ################################################
-        ######################################################
-        # ######### BBS/PN
-        pn_pan_frame = tk.Frame(tab_PN_BBS)
+        # ######### PMS/PN -----------------------------------
+        pn_pan_frame = tk.Frame(tab_PN_PMS)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
+        pw_pn        = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
 
-        top_f = tk.Frame(pw_pn)
+        top_f        = tk.Frame(pw_pn)
         lower_f_main = tk.Frame(pw_pn)
-        lower_f_top = tk.Frame(lower_f_main)
+        lower_f_top  = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -139,40 +71,30 @@ class MSG_Center(tk.Toplevel):
         pw_pn.pack(fill=tk.BOTH, expand=True)
         ########################
         # ## top_f / Msg Table
-        self._pn_tree       = None
         self._init_pn_tree(top_f)
         self._pn_tree_data  = []
         self._pn_data       = []
         self._update_PN_tree_data()
         ########################
-        self._var_pn_from_label     = tk.StringVar(self, '')
-        self._var_pn_to_label       = tk.StringVar(self, '')
-        self._var_pn_subj_label     = tk.StringVar(self, '')
-        self._var_pn_time_label     = tk.StringVar(self, '')
-        self._var_pn_bid_label      = tk.StringVar(self, '')
-        # self._var_pn_encoding     = tk.StringVar(self, 'UTF-8')
-        self._var_pn_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
-
         # ## lower_f_top / MSG Header ect.
-        self._pn_text   = None
         self._init_pn_lower_frame(lower_f_top)
         self._init_pn_footer_frame(lower_f_top)
 
         #################################################
-        # ######### BBS/BL
-        pw_bl_hor = tk.PanedWindow(tab_BL_BBS, orient=tk.HORIZONTAL)
+        # ######### PMS/BL
+        pw_bl_hor       = tk.PanedWindow(tab_BL_PMS, orient=tk.HORIZONTAL)
         pw_bl_hor.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        left_frame = tk.Frame(pw_bl_hor)
-        bl_pan_frame = tk.Frame(pw_bl_hor)
+        left_frame      = tk.Frame(pw_bl_hor)
+        bl_pan_frame    = tk.Frame(pw_bl_hor)
 
         pw_bl_hor.add(left_frame, width=140)
         pw_bl_hor.add(bl_pan_frame, )
         ###################
-        pw_bl = ttk.PanedWindow(bl_pan_frame, orient=tk.VERTICAL)
-        top_f = tk.Frame(pw_bl)
-        lower_f_main = tk.Frame(pw_bl)
-        lower_f_lower = tk.Frame(lower_f_main)
+        pw_bl           = ttk.PanedWindow(bl_pan_frame, orient=tk.VERTICAL)
+        top_f           = tk.Frame(pw_bl)
+        lower_f_main    = tk.Frame(pw_bl)
+        lower_f_lower   = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -183,41 +105,29 @@ class MSG_Center(tk.Toplevel):
         pw_bl.pack(fill=tk.BOTH, expand=True)
         ########################
         # LEFT TAB Category's
-        self._bl_cat_tree = None
-        self._bl_cat_filter = ''
-        self._bl_cat_tree_data = []
+        self._bl_cat_filter     = ''
+        self._bl_cat_tree_data  = []
         self._init_bl_left_cat_tab(left_frame)
         ########################
         # ## top_f / Msg Table
-        self._bl_tree = None
         self._init_bl_tree(top_f)
-        self._bl_tree_data = []
-        self._bl_data = []
+        self._bl_tree_data      = []
+        self._bl_data           = []
         self._update_BL_tree_data()
         ##############
-        # ## lower_f_top / MSG Header ect.
-        self._var_bl_from_label     = tk.StringVar(self, '')
-        self._var_bl_to_label       = tk.StringVar(self, '')
-        self._var_bl_subj_label     = tk.StringVar(self, '')
-        self._var_bl_time_label     = tk.StringVar(self, '')
-        self._var_bl_bid_label      = tk.StringVar(self, '')
-        # self._var_bl_encoding     = tk.StringVar(self, 'UTF-8')
-        self._var_bl_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
         # ## lower_f_lower / Msg Text
-        self._bl_text = None
         self._init_bl_lower_frame(lower_f_lower)
         self._init_bl_footer_frame(lower_f_lower)
 
         ######################################################
-        # ######### BBS/OUT
-        out_pan_frame = tk.Frame(tab_OUT_BBS)
+        # ######### PMS/OUT
+        out_pan_frame       = tk.Frame(tab_OUT_PMS)
         out_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        pw_out = ttk.PanedWindow(out_pan_frame, orient=tk.VERTICAL)
-
-        top_f = tk.Frame(pw_out)
-        lower_f_main = tk.Frame(pw_out)
-        lower_f_top = tk.Frame(lower_f_main)
+        pw_out              = ttk.PanedWindow(out_pan_frame, orient=tk.VERTICAL)
+        top_f               = tk.Frame(pw_out)
+        lower_f_main        = tk.Frame(pw_out)
+        lower_f_top         = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -228,33 +138,23 @@ class MSG_Center(tk.Toplevel):
         pw_out.pack(fill=tk.BOTH, expand=True)
         ########################
         # ## top_f / Msg Table
-        self._out_tree = None
         self._init_out_tree(top_f)
-        self._out_tree_data = []
-        self._out_data = []
+        self._out_tree_data     = []
+        self._out_data          = []
         self._update_OUT_tree_data()
         ########################
-        self._var_out_from_label    = tk.StringVar(self, '')
-        self._var_out_to_label      = tk.StringVar(self, '')
-        self._var_out_subj_label    = tk.StringVar(self, '')
-        self._var_out_time_label    = tk.StringVar(self, '')
-        self._var_out_bid_label     = tk.StringVar(self, '')
-        # self._var_out_encoding    = tk.StringVar(self, 'UTF-8')
-        self._var_out_msg_size      = tk.StringVar(self, ' Size: --- Bytes')
         # ## lower_f_top / MSG Header ect.
-        self._out_text = None
         self._init_out_lower_frame(lower_f_top)
         self._init_out_footer_frame(lower_f_top)
         ######################################################
         # ######### BBS/Drafts/Saved Msg
-        pn_pan_frame = tk.Frame(tab_SAVE_BBS)
+        pn_pan_frame        = tk.Frame(tab_SAVE_PMS)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        pw_pn = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
-
-        top_f = tk.Frame(pw_pn)
-        lower_f_main = tk.Frame(pw_pn)
-        lower_f_top = tk.Frame(lower_f_main)
+        pw_pn               = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
+        top_f               = tk.Frame(pw_pn)
+        lower_f_main        = tk.Frame(pw_pn)
+        lower_f_top         = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -265,63 +165,19 @@ class MSG_Center(tk.Toplevel):
         pw_pn.pack(fill=tk.BOTH, expand=True)
         ########################
         # ## top_f / Msg Table
-        self._sv_tree = None
         self._init_sv_tree(top_f)
-        self._sv_tree_data = []
-        self._sv_data = []
+        self._sv_tree_data      = []
+        self._sv_data           = []
         self._update_SV_tree_data()
         ########################
-        self._var_sv_from_label     = tk.StringVar(self, '')
-        self._var_sv_to_label       = tk.StringVar(self, '')
-        self._var_sv_subj_label     = tk.StringVar(self, '')
-        self._var_sv_time_label     = tk.StringVar(self, '')
-        self._var_sv_bid_label      = tk.StringVar(self, '')
-        self._var_sv_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
-
         # ## lower_f_top / MSG Header ect.
-        self._sv_text = None
         self._init_sv_lower_frame(lower_f_top)
         self._init_sv_footer_frame(lower_f_top)
-
+        # ---------------------------------------------
         ###############################################
-        # Keybindings
-        self.bind('<Control-plus>', lambda event: self._increase_textsize())
-        self.bind('<Control-minus>', lambda event: self._decrease_textsize())
-        self.bind('<Control-c>', lambda event: self._copy_select())
-        #####################
-        # Get Settings fm CFG
-        self._root_win.MSG_Center_win = self
-        self._init_Vars_fm_Cfg()
 
-    def _init_Menu(self):
-        menubar = tk.Menu(self, tearoff=False)
-        self.config(menu=menubar)
-        MenuVerb = tk.Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=self._getTabStr('new'), command=lambda: self._open_newMSG_win())
-        MenuVerb.add_separator()
-        MenuVerb.add_command(label=self._getTabStr('send_all_now'), command=lambda: self._do_pms_autoFWD())
-        menubar.add_cascade(label=self._getTabStr('msg'), menu=MenuVerb, underline=0)
-        # ### Bearbeiten
-        MenuEdit = tk.Menu(menubar, tearoff=False)
-        MenuEdit.add_command(label=self._getTabStr('mark_all_read'),
-                              command=self._set_all_to_oldMSG,
-                              underline=0)
-        MenuVerb.add_separator()
-        MenuEdit.add_command(label=self._getTabStr('save_to_file'),
-                              command=self._save_msg_to_file,
-                              underline=0)
-        menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
-
-    def _init_Vars_fm_Cfg(self):
-        pass
-        # self.text_size = int(POPT_CFG.get_guiCFG_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-
-    def _save_Vars_to_Cfg(self):
-        cfg = POPT_CFG.load_guiPARM_main()
-        cfg['guiMsgC_parm_text_size'] = self.text_size
-
-        POPT_CFG.save_guiPARM_main(cfg)
-
+    #################################################
+    # Tab Init PMS
     # PN TAB
     def _init_pn_tree(self, root_frame):
         columns = (
@@ -340,18 +196,23 @@ class MSG_Center(tk.Toplevel):
         self._pn_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        self._pn_tree.heading('Neu',       text=self._getTabStr('new'), command=lambda: self._sort_entry('Neu', self._pn_tree))
-        self._pn_tree.heading('Betreff',   text=self._getTabStr('subject'), command=lambda: self._sort_entry('Betreff', self._pn_tree))
-        self._pn_tree.heading('Von',       text=self._getTabStr('from'), command=lambda: self._sort_entry('Von', self._pn_tree))
-        self._pn_tree.heading('An',        text=self._getTabStr('to'), command=lambda: self._sort_entry('An', self._pn_tree))
-        self._pn_tree.heading('flag',      text='Flag', command=lambda: self._sort_entry('flag', self._pn_tree))
-        self._pn_tree.heading('Datum',     text=self._getTabStr('date_time'), command=lambda: self._sort_entry('Datum', self._pn_tree))
-        self._pn_tree.column("Neu",     anchor=tk.CENTER,   stretch=tk.NO,  width=40)
-        self._pn_tree.column("Betreff", anchor='w',         stretch=tk.YES, width=190)
-        self._pn_tree.column("Von",     anchor='w',         stretch=tk.YES, width=130)
-        self._pn_tree.column("An",      anchor='w',         stretch=tk.YES, width=130)
-        self._pn_tree.column("flag",    anchor='w',         stretch=tk.NO,  width=60)
-        self._pn_tree.column("Datum",   anchor='w',         stretch=tk.NO,  width=220)
+        self._pn_tree.heading('Neu', text=self._getTabStr('new'),
+                              command=lambda: self._sort_entry('Neu', self._pn_tree))
+        self._pn_tree.heading('Betreff', text=self._getTabStr('subject'),
+                              command=lambda: self._sort_entry('Betreff', self._pn_tree))
+        self._pn_tree.heading('Von', text=self._getTabStr('from'),
+                              command=lambda: self._sort_entry('Von', self._pn_tree))
+        self._pn_tree.heading('An', text=self._getTabStr('to'),
+                              command=lambda: self._sort_entry('An', self._pn_tree))
+        self._pn_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._pn_tree))
+        self._pn_tree.heading('Datum', text=self._getTabStr('date_time'),
+                              command=lambda: self._sort_entry('Datum', self._pn_tree))
+        self._pn_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
+        self._pn_tree.column("Betreff", anchor='w', stretch=tk.YES, width=190)
+        self._pn_tree.column("Von", anchor='w', stretch=tk.YES, width=130)
+        self._pn_tree.column("An", anchor='w', stretch=tk.YES, width=130)
+        self._pn_tree.column("flag", anchor='w', stretch=tk.NO, width=60)
+        self._pn_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
 
         self._pn_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
@@ -365,8 +226,8 @@ class MSG_Center(tk.Toplevel):
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
-        btn_frame_r = tk.Frame(btn_frame)
-        btn_frame_l = tk.Frame(btn_frame)
+        btn_frame_r     = tk.Frame(btn_frame)
+        btn_frame_l     = tk.Frame(btn_frame)
         btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
@@ -404,7 +265,7 @@ class MSG_Center(tk.Toplevel):
 
         # ## lower_f_lower / Msg Text
         self._pn_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self.text_size),
+                                                  font=(FONT, self._text_size),
                                                   bd=0,
                                                   height=3,
                                                   borderwidth=0,
@@ -455,13 +316,18 @@ class MSG_Center(tk.Toplevel):
         self._bl_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        self._bl_tree.heading('Neu', text=self._getTabStr('new'), command=lambda: self._sort_entry('Neu', self._bl_tree))
-        self._bl_tree.heading('Betreff', text=self._getTabStr('subject'), command=lambda: self._sort_entry('Betreff', self._bl_tree))
-        self._bl_tree.heading('Von', text=self._getTabStr('from'), command=lambda: self._sort_entry('Von', self._bl_tree))
-        self._bl_tree.heading('An', text=self._getTabStr('to'), command=lambda: self._sort_entry('An', self._bl_tree))
+        self._bl_tree.heading('Neu', text=self._getTabStr('new'),
+                              command=lambda: self._sort_entry('Neu', self._bl_tree))
+        self._bl_tree.heading('Betreff', text=self._getTabStr('subject'),
+                              command=lambda: self._sort_entry('Betreff', self._bl_tree))
+        self._bl_tree.heading('Von', text=self._getTabStr('from'),
+                              command=lambda: self._sort_entry('Von', self._bl_tree))
+        self._bl_tree.heading('An', text=self._getTabStr('to'),
+                              command=lambda: self._sort_entry('An', self._bl_tree))
         self._bl_tree.heading('vert', text='@', command=lambda: self._sort_entry('vert', self._bl_tree))
         self._bl_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._bl_tree))
-        self._bl_tree.heading('Datum', text=self._getTabStr('date_time'), command=lambda: self._sort_entry('Datum', self._bl_tree))
+        self._bl_tree.heading('Datum', text=self._getTabStr('date_time'),
+                              command=lambda: self._sort_entry('Datum', self._bl_tree))
         self._bl_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
         self._bl_tree.column("Betreff", anchor='w', stretch=tk.YES, width=270)
         self._bl_tree.column("Von", anchor='w', stretch=tk.YES, width=180)
@@ -526,11 +392,11 @@ class MSG_Center(tk.Toplevel):
                   ).pack(side=tk.RIGHT, expand=False)
 
         # Header Frame
-        from_label      = tk.Label(header_frame, textvariable=self._var_bl_from_label)
-        to_label        = tk.Label(header_frame, textvariable=self._var_bl_to_label)
-        subject_label   = tk.Label(header_frame, textvariable=self._var_bl_subj_label)
-        time_label      = tk.Label(header_frame, textvariable=self._var_bl_time_label)
-        bid_label       = tk.Label(header_frame, textvariable=self._var_bl_bid_label)
+        from_label = tk.Label(header_frame, textvariable=self._var_bl_from_label)
+        to_label = tk.Label(header_frame, textvariable=self._var_bl_to_label)
+        subject_label = tk.Label(header_frame, textvariable=self._var_bl_subj_label)
+        time_label = tk.Label(header_frame, textvariable=self._var_bl_time_label)
+        bid_label = tk.Label(header_frame, textvariable=self._var_bl_bid_label)
         from_label.place(x=2, y=0)
         to_label.place(x=2, y=25)
         subject_label.place(x=2, y=50)
@@ -538,7 +404,7 @@ class MSG_Center(tk.Toplevel):
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
 
         self._bl_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self.text_size),
+                                                  font=(FONT, self._text_size),
                                                   bd=0,
                                                   height=3,
                                                   background='black',
@@ -591,10 +457,14 @@ class MSG_Center(tk.Toplevel):
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
         self._out_tree.heading('gesendet', text='  ', command=lambda: self._sort_entry('gesendet', self._out_tree))
-        self._out_tree.heading('Betreff', text=self._getTabStr('subject'), command=lambda: self._sort_entry('Betreff', self._out_tree))
-        self._out_tree.heading('Von', text=self._getTabStr('from'), command=lambda: self._sort_entry('Von', self._out_tree))
-        self._out_tree.heading('An', text=self._getTabStr('to'), command=lambda: self._sort_entry('An', self._out_tree))
-        self._out_tree.heading('fwd_bbs', text=f"{self._getTabStr('to')} BBS", command=lambda: self._sort_entry('fwd_bbs', self._out_tree))
+        self._out_tree.heading('Betreff', text=self._getTabStr('subject'),
+                               command=lambda: self._sort_entry('Betreff', self._out_tree))
+        self._out_tree.heading('Von', text=self._getTabStr('from'),
+                               command=lambda: self._sort_entry('Von', self._out_tree))
+        self._out_tree.heading('An', text=self._getTabStr('to'),
+                               command=lambda: self._sort_entry('An', self._out_tree))
+        self._out_tree.heading('fwd_bbs', text=f"{self._getTabStr('to')} BBS",
+                               command=lambda: self._sort_entry('fwd_bbs', self._out_tree))
         self._out_tree.heading('typ', text='TYP', command=lambda: self._sort_entry('typ', self._out_tree))
         self._out_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._out_tree))
         self._out_tree.heading('Datum', text='TX-Time', command=lambda: self._sort_entry('Datum', self._out_tree))
@@ -655,7 +525,7 @@ class MSG_Center(tk.Toplevel):
 
         # ## lower_f_lower / Msg Text
         self._out_text = scrolledtext.ScrolledText(root_frame,
-                                                   font=(FONT, self.text_size),
+                                                   font=(FONT, self._text_size),
                                                    bd=0,
                                                    height=3,
                                                    borderwidth=0,
@@ -705,10 +575,14 @@ class MSG_Center(tk.Toplevel):
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
         self._sv_tree.heading('Typ', text='Typ', command=lambda: self._sort_entry('Typ', self._sv_tree))
-        self._sv_tree.heading('Betreff', text=self._getTabStr('subject'), command=lambda: self._sort_entry('Betreff', self._sv_tree))
-        self._sv_tree.heading('Von', text=self._getTabStr('from'), command=lambda: self._sort_entry('Von', self._sv_tree))
-        self._sv_tree.heading('An', text=self._getTabStr('to'), command=lambda: self._sort_entry('An', self._sv_tree))
-        self._sv_tree.heading('Datum', text=self._getTabStr('date_time'), command=lambda: self._sort_entry('Datum', self._sv_tree))
+        self._sv_tree.heading('Betreff', text=self._getTabStr('subject'),
+                              command=lambda: self._sort_entry('Betreff', self._sv_tree))
+        self._sv_tree.heading('Von', text=self._getTabStr('from'),
+                              command=lambda: self._sort_entry('Von', self._sv_tree))
+        self._sv_tree.heading('An', text=self._getTabStr('to'),
+                              command=lambda: self._sort_entry('An', self._sv_tree))
+        self._sv_tree.heading('Datum', text=self._getTabStr('date_time'),
+                              command=lambda: self._sort_entry('Datum', self._sv_tree))
         self._sv_tree.column("Typ", anchor='w', stretch=tk.NO, width=50)
         self._sv_tree.column("Betreff", anchor='w', stretch=tk.YES, width=190)
         self._sv_tree.column("Von", anchor='w', stretch=tk.YES, width=190)
@@ -721,13 +595,13 @@ class MSG_Center(tk.Toplevel):
         self._sv_tree.bind('<<TreeviewSelect>>', self._SV_entry_selected)
 
     def _init_sv_lower_frame(self, root_frame):
-        btn_frame = tk.Frame(root_frame, height=30)
-        header_frame = tk.Frame(root_frame, height=80)
+        btn_frame       = tk.Frame(root_frame, height=30)
+        header_frame    = tk.Frame(root_frame, height=80)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
-        btn_frame_r = tk.Frame(btn_frame)
-        btn_frame_l = tk.Frame(btn_frame)
+        btn_frame_r     = tk.Frame(btn_frame)
+        btn_frame_l     = tk.Frame(btn_frame)
         btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
@@ -746,11 +620,11 @@ class MSG_Center(tk.Toplevel):
                   command=lambda: self._open_newMSG_win_reply('S'),
                   ).pack(side=tk.RIGHT, expand=False)
 
-        from_label = tk.Label(header_frame, textvariable=self._var_sv_from_label)
-        to_label = tk.Label(header_frame, textvariable=self._var_sv_to_label)
-        subject_label = tk.Label(header_frame, textvariable=self._var_sv_subj_label)
-        time_label = tk.Label(header_frame, textvariable=self._var_sv_time_label)
-        bid_label = tk.Label(header_frame, textvariable=self._var_sv_bid_label)
+        from_label      = tk.Label(header_frame, textvariable=self._var_sv_from_label)
+        to_label        = tk.Label(header_frame, textvariable=self._var_sv_to_label)
+        subject_label   = tk.Label(header_frame, textvariable=self._var_sv_subj_label)
+        time_label      = tk.Label(header_frame, textvariable=self._var_sv_time_label)
+        bid_label       = tk.Label(header_frame, textvariable=self._var_sv_bid_label)
         from_label.place(x=2, y=0)
         to_label.place(x=2, y=25)
         subject_label.place(x=2, y=50)
@@ -759,7 +633,7 @@ class MSG_Center(tk.Toplevel):
 
         # ## lower_f_lower / Msg Text
         self._sv_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self.text_size),
+                                                  font=(FONT, self._text_size),
                                                   bd=0,
                                                   height=3,
                                                   borderwidth=0,
@@ -790,9 +664,11 @@ class MSG_Center(tk.Toplevel):
                  textvariable=self._var_sv_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+    # -----------------------------------------------
+    #################################################
 
     ################################
-    # PN
+    # PN PMS
     def _update_PN_tree_data(self):
         self._get_PN_data()
         self._format_PN_tree_data()
@@ -882,7 +758,7 @@ class MSG_Center(tk.Toplevel):
                 enc = self._var_encoding.get()
                 db_data['enc'] = enc
                 self._selected_msg['P'] = db_data
-                bid = db_data['bid']
+                bid         = db_data['bid']
                 from_call   = db_data['from_call']
                 from_bbs    = db_data['from_bbs']
                 to_call     = db_data['to_call']  # Cat
@@ -909,12 +785,8 @@ class MSG_Center(tk.Toplevel):
 
             self._pn_text.configure(state='disabled')
 
-    def _delete_PN(self, bid: str):
-        if bid:
-            return self._bbs_obj.del_in_by_BID(bid)
-
-    ###########
-    # Bulletin
+    ################################
+    # Bulletin PMS
     def _update_BL_tree_data(self):
         self._get_BL_data()
         self._format_BL_tree_data()
@@ -924,14 +796,8 @@ class MSG_Center(tk.Toplevel):
     def _get_BL_data(self):
         self._bl_data = self._bbs_obj.get_bl_msg_tab()
 
-    def _get_BL_MSG_data(self, bid):
-        return self._bbs_obj.get_bl_msg_fm_BID(bid)
-
-    def _set_BL_MSG_notNew(self, bid: str):
-        self._bbs_obj.set_in_msg_notNew(bid)
-
     def _format_BL_tree_data(self):
-        self._bl_tree_data = []
+        self._bl_tree_data     = []
         self._bl_cat_tree_data = []
         new_tr = {}
         for el in self._bl_data:
@@ -1040,12 +906,14 @@ class MSG_Center(tk.Toplevel):
                 self._bl_text.insert('1.0', msg)
             self._bl_text.configure(state='disabled')
 
-    def _delete_BL(self, bid: str):
-        if bid:
-            return self._bbs_obj.del_in_by_BID(bid)
+    def _get_BL_MSG_data(self, bid):
+        return self._bbs_obj.get_bl_msg_fm_BID(bid)
 
-    ###################
-    # Bulletin Category
+    def _set_BL_MSG_notNew(self, bid: str):
+        self._bbs_obj.set_in_msg_notNew(bid)
+
+    ################################
+    # Bulletin Category PMS
     def _update_CAT_tree(self):
         for i in self._bl_cat_tree.get_children():
             self._bl_cat_tree.delete(i)
@@ -1067,7 +935,7 @@ class MSG_Center(tk.Toplevel):
         self._update_BL_tree_data()
 
     ################################
-    # OUT TAB
+    # OUT TAB PMS
     def _update_OUT_tree_data(self):
         self._get_OUT_data()
         self._format_OUT_tree_data()
@@ -1077,6 +945,7 @@ class MSG_Center(tk.Toplevel):
         self._out_data = self._bbs_obj.get_fwd_q_tab()
 
     def _get_OUT_MSG_data(self, bid):
+        # TODO by PMS User-Call
         return self._bbs_obj.get_out_msg_fm_BID(bid)
 
     def _format_OUT_tree_data(self):
@@ -1156,46 +1025,42 @@ class MSG_Center(tk.Toplevel):
             self._out_text.delete('1.0', tk.END)
             db_data = self._get_OUT_MSG_data(bid)
             if db_data:
-                _enc = self._var_encoding.get()
-                db_data['enc'] = _enc
+                enc             = self._var_encoding.get()
+                db_data['enc']  = enc
                 self._selected_msg['O'] = db_data
-                _bid = db_data['bid']
-                _from = db_data['from_call']
-                _from_bbs = db_data['from_bbs_call']
-                _to = db_data['to_call']  # Cat
-                _to_bbs = db_data['to_bbs']  # Verteiler
-                _to_bbs_fwd = db_data['fwd_bbs']  # Verteiler
-                _subj = db_data['subject']
-                _msg = db_data['msg']
+                bid             = db_data['bid']
+                from_call       = db_data['from_call']
+                from_bbs        = db_data['from_bbs_call']
+                to              = db_data['to_call']  # Cat
+                to_bbs          = db_data['to_bbs']  # Verteiler
+                to_bbs_fwd      = db_data['fwd_bbs']  # Verteiler
+                subj            = db_data['subject']
+                msg             = db_data['msg']
                 # _path = _db_data[9]
-                _time = db_data['tx-time']
-                _size = format_number(len(_msg))
-                _msg = _msg.decode(_enc, 'ignore')
-                _msg = str(_msg).replace('\r', '\n')
-                if _from_bbs:
-                    _from = _from + ' @ ' + _from_bbs
-                if _to_bbs:
-                    _to = _to + ' @ ' + _to_bbs
+                msg_time        = db_data['tx-time']
+                size            = format_number(len(msg))
+                msg             = msg.decode(enc, 'ignore')
+                msg             = str(msg).replace('\r', '\n')
+                if from_bbs:
+                    from_call   = from_call + ' @ ' + from_bbs
+                if to_bbs:
+                    to = to + ' @ ' + to_bbs
 
-                _to += f' > {_to_bbs_fwd}'
+                to += f' > {to_bbs_fwd}'
 
-                self._var_out_from_label.set(f"From     : {_from}")
-                self._var_out_to_label.set(f"To          : {_to}")
-                self._var_out_subj_label.set(f"Subject : {_subj}")
-                self._var_out_time_label.set(f"{_time}")
-                self._var_out_bid_label.set(f"BID: {_bid}")
-                self._var_out_msg_size.set(f' Size: {_size} Bytes')
+                self._var_out_from_label.set(f"From     : {from_call}")
+                self._var_out_to_label.set(f"To          : {to}")
+                self._var_out_subj_label.set(f"Subject : {subj}")
+                self._var_out_time_label.set(f"{msg_time}")
+                self._var_out_bid_label.set(f"BID: {bid}")
+                self._var_out_msg_size.set(f' Size: {size} Bytes')
 
-                self._out_text.insert('1.0', _msg)
+                self._out_text.insert('1.0', msg)
 
             self._out_text.configure(state='disabled')
 
-    def _delete_OUT(self, bid: str):
-        if bid:
-            return self._bbs_obj.del_out_by_BID(bid)
-
     ################################
-    # OUT Tab
+    # Save Tab PMS
     def _update_SV_tree_data(self):
         self._get_SV_data()
         self._format_SV_tree_data()
@@ -1259,232 +1124,37 @@ class MSG_Center(tk.Toplevel):
             self._sv_text.delete('1.0', tk.END)
             db_data = self._get_SV_MSG_data(mid)
             if db_data:
-                _enc = self._var_encoding.get()
-                db_data['enc'] = _enc
+                enc            = self._var_encoding.get()
+                db_data['enc'] = enc
                 self._selected_msg['S'] = db_data
-                _mid = db_data['mid']
-                _from = db_data['from_call']
-                _from_bbs = db_data['from_bbs']
-                _to = db_data['to_call']  # Cat
-                _to_bbs = db_data['to_bbs']  # Verteiler
-                _subj = db_data['subject']
-                _msg = db_data['msg']
-                _time = db_data['time']
-                _size = format_number(len(_msg))
-                _msg = _msg.decode(_enc, 'ignore')
-                _msg = str(_msg).replace('\r', '\n')
-                if _from_bbs:
-                    _from = _from + ' @ ' + _from_bbs
-                if _to_bbs:
-                    _to = _to + ' @ ' + _to_bbs
+                mid             = db_data['mid']
+                from_call       = db_data['from_call']
+                from_bbs        = db_data['from_bbs']
+                to_call         = db_data['to_call']  # Cat
+                to_bbs          = db_data['to_bbs']  # Verteiler
+                subj            = db_data['subject']
+                msg             = db_data['msg']
+                msg_time        = db_data['time']
+                size            = format_number(len(msg))
+                msg             = msg.decode(enc, 'ignore')
+                msg             = str(msg).replace('\r', '\n')
+                if from_bbs:
+                    from_call = from_call + ' @ ' + from_bbs
+                if to_bbs:
+                    to_call = to_call + ' @ ' + to_bbs
 
-                self._var_sv_from_label.set(f"From     : {_from}")
-                self._var_sv_to_label.set(f"To          : {_to}")
-                self._var_sv_subj_label.set(f"Subject : {_subj}")
-                self._var_sv_time_label.set(f"{_time}")
-                self._var_sv_bid_label.set(f"MID : {_mid}")
-                self._var_sv_msg_size.set(f' Size: {_size} Bytes')
+                self._var_sv_from_label.set(f"From     : {from_call}")
+                self._var_sv_to_label.set(f"To          : {to_call}")
+                self._var_sv_subj_label.set(f"Subject : {subj}")
+                self._var_sv_time_label.set(f"{msg_time}")
+                self._var_sv_bid_label.set(f"MID : {mid}")
+                self._var_sv_msg_size.set(f' Size: {size} Bytes')
 
-                self._sv_text.insert('1.0', _msg)
+                self._sv_text.insert('1.0', msg)
 
             self._sv_text.configure(state='disabled')
 
-    def _delete_SV(self, mid: str):
-        if mid:
-            return self._bbs_obj.del_sv_by_MID(mid)
-
-    #####################################
-    # Global
-    def _sort_entry(self, col, tree):
-        """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
-        _tmp = [(tree.set(k, col), k) for k in tree.get_children('')]
-        _tmp.sort(reverse=self._sort_rev)
-        self._sort_rev = not self._sort_rev
-        self._last_sort_col[tree] = col
-        for index, (val, k) in enumerate(_tmp):
-            tree.move(k, '', int(index))
-
-    def _update_sort_entry(self, tree):
-        """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
-        col = self._last_sort_col.get(tree, 'Datum')
-        _tmp = [(tree.set(k, col), k) for k in tree.get_children('')]
-        _tmp.sort(reverse=not self._sort_rev)
-        for index, (val, k) in enumerate(_tmp):
-            tree.move(k, '', int(index))
-
-    #####################################
-    # GUI
-    def _increase_textsize(self):
-        self.text_size += 1
-        self.text_size = max(self.text_size, 3)
-        self._bl_text.configure(font=(FONT, self.text_size))
-        self._pn_text.configure(font=(FONT, self.text_size))
-        self._out_text.configure(font=(FONT, self.text_size))
-        self._sv_text.configure(font=(FONT, self.text_size))
-
-    def _decrease_textsize(self):
-        self.text_size -= 1
-        self.text_size = max(self.text_size, 3)
-        self._bl_text.configure(font=(FONT, self.text_size))
-        self._pn_text.configure(font=(FONT, self.text_size))
-        self._out_text.configure(font=(FONT, self.text_size))
-        self._sv_text.configure(font=(FONT, self.text_size))
-
-    def _update_textsize_trees(self):
-        # TODO
-        self._bl_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
-        self._bl_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
-        self._pn_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
-        self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
-        self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
-        self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
-
-    def _delete_msg(self):
-        try:
-            ind = self._tabControl.index(self._tabControl.select())
-        except tk.TclError:
-            return
-
-        bid_mid = {
-            0: self._selected_msg['P'].get('bid', ''),
-            1: self._selected_msg['B'].get('bid', ''),
-            2: self._selected_msg['O'].get('bid', ''),
-            3: self._selected_msg['S'].get('mid', ''),
-        }.get(ind, '')
-        del_fnc = {
-            0: self._delete_PN,
-            1: self._delete_BL,
-            2: self._delete_OUT,
-            3: self._delete_SV,
-        }.get(ind, None)
-        if del_fnc is not None:
-            tree = {
-                0: self._pn_tree,
-                1: self._bl_tree,
-                2: self._out_tree,
-                3: self._sv_tree,
-            }[ind]
-            bid_next_msg = ''
-            ind_ex = 0
-            for i in tree.get_children():
-                ind_ex += 1
-                if tree.item(i)['tags'][1] == bid_mid:
-                    try:
-                        bid_next_msg = tree.item(tree.get_children()[ind_ex]).get('tags', [])
-                        if len(bid_next_msg) == 2:
-                            bid_next_msg = bid_next_msg[1]
-                    except IndexError:
-                        pass
-                    # print(bid_next_msg)
-                    break
-            if del_fnc(bid_mid):
-                self.on_bbsTab_select()
-                if bid_next_msg:
-                    fnc = {
-                        0: self._PN_show_msg_fm_BID,
-                        1: self._BL_show_msg_fm_BID,
-                        2: self._OUT_show_msg_fm_BID,
-                        3: self._SV_show_msg_fm_MID,
-                    }.get(ind)
-                    fnc(bid_next_msg)
-                    self.tree_update_task()
-
-    def _save_outMSG(self):
-        bid = self._selected_msg['O'].get('bid', '')
-        if bid:
-            mid = int(bid[:6])
-            # print(mid)
-            self._bbs_obj.get_db().pms_save_outMsg_by_MID(mid)
-
-    def _copy_select(self):
-        try:
-            ind = self._tabControl.index(self._tabControl.select())
-        except tk.TclError:
-            return
-        text = {
-            0: self._pn_text,
-            1: self._bl_text,
-            2: self._out_text,
-            3: self._sv_text,
-        }[ind]
-        if text.tag_ranges("sel"):
-            self.clipboard_clear()
-            self.clipboard_append(text.selection_get())
-            text.tag_remove(tk.SEL, "1.0", tk.END)
-
-    def _open_newMSG_win_reply(self, typ: str):
-        if self.newPMS_MSG_win is None:
-            if self._selected_msg.get(typ, None):
-                msg = dict(self._selected_msg[typ])
-                msg['subject'] = ('Re: ' + msg.get('subject', ''))
-                self.newPMS_MSG_win = BBS_newMSG(self, msg)
-
-    def _open_newMSG_win_forward(self, typ: str):
-        if self.newPMS_MSG_win is None:
-            if self._selected_msg.get(typ, None):
-                msg: dict = dict(self._selected_msg[typ])
-                msg['flag'] = 'E'
-                msg['typ'] = 'P'
-                msg['to_call'] = ''
-                msg['to_bbs'] = ''
-                msg['subject'] = ('Fwd: ' + msg['subject'])
-                self.newPMS_MSG_win = BBS_newMSG(self, msg)
-
-    def _open_newMSG_win(self):
-        if self.newPMS_MSG_win:
-            return
-        self.newPMS_MSG_win = BBS_newMSG(self)
-
-    def on_bbsTab_select(self, event=None):
-        try:
-            ind = self._tabControl.index(self._tabControl.select())
-        except tk.TclError:
-            return
-        enc = {
-            0: self._selected_msg['P'].get('enc', 'UTF-8'),
-            1: self._selected_msg['B'].get('enc', 'UTF-8'),
-            2: self._selected_msg['O'].get('enc', 'UTF-8'),
-            3: self._selected_msg['S'].get('enc', 'UTF-8'),
-        }.get(ind, 'UTF-8')
-        self._var_encoding.set(enc)
-        self.tree_update_task()
-        # self._pn_tree.selection_toggle(self._pn_tree.focus())
-        # print(f'>>> {self._pn_tree.selection()}')
-
-    def tree_update_task(self):
-        try:
-            ind = self._tabControl.index(self._tabControl.select())
-        except tk.TclError:
-            return
-        update_task = {
-            0: self._update_PN_tree_data,
-            1: self._update_BL_tree_data,
-            2: self._update_OUT_tree_data,
-            3: self._update_SV_tree_data,
-        }.get(ind, None)
-        if update_task:
-            update_task()
-        # self._pn_tree.selection_set('"Row 0"')
-
     ####################
-    def _save_msg_to_file(self, event=None):
-        try:
-            ind = self._tabControl.index(self._tabControl.select())
-        except tk.TclError:
-            return
-        msg_text = {
-            0: self._pn_text,
-            1: self._bl_text,
-            2: self._out_text,
-            3: self._sv_text,
-        }.get(ind, None)
-        if msg_text:
-            data = msg_text.get('1.0', tk.END)
-            save_file_dialog(data)
-
-    def _do_pms_autoFWD(self):
-        self._bbs_obj.start_man_autoFwd()
-
     def _set_all_to_oldMSG(self):   # Set all Msg to read Status
         try:
             ind = self._tabControl.index(self._tabControl.select())
@@ -1497,9 +1167,3 @@ class MSG_Center(tk.Toplevel):
         if fnc:
             fnc()
             self.on_bbsTab_select()
-
-    def _close(self):
-        self._save_Vars_to_Cfg()
-        self._bbs_obj = None
-        self._root_win.MSG_Center_win = None
-        self.destroy()

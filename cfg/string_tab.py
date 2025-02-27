@@ -2975,4 +2975,41 @@ STR_TABLE = {
         '',
         '',
         ''),
+
+    'msgC_sendet_msg': (
+        'Gesendet',
+        'Sendet',
+        'Verstuurd',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'saved': (
+        'Gespeichert',
+        'Saved',
+        'Opgeslagen',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'private': (
+        'Privat',
+        'Private',
+        'Privé',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
 }

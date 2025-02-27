@@ -446,7 +446,6 @@ class BBS:
             return False
 
         # Overwrite all FWD Settings.
-        print(f"BBS FWD_bbs_call: {fwd_bbs_call}")
         if fwd_bbs_call:
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             return self._db.bbs_insert_local_msg_to_fwd(new_msg)
@@ -454,7 +453,6 @@ class BBS:
         # Local BBS
         if self._is_fwd_local(msg=new_msg):
             BBS_LOG.info(log_tag + f"Msg: {mid} is Local. No Forwarding needed")
-            print("BBS")
             self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
             return True
 

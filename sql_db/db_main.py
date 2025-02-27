@@ -341,7 +341,7 @@ class SQL_Database:
         return bool(ret)
 
     def bbs_insert_msg_fm_fwd(self, msg_struc: dict):
-        print("bbs_insert_msg_fm_fwd -------------")
+        # print("bbs_insert_msg_fm_fwd -------------")
         bid         = msg_struc.get('bid_mid', '')
         from_call   = msg_struc.get('sender', '')
         from_bbs    = msg_struc.get('sender_bbs', '')
@@ -612,7 +612,6 @@ class SQL_Database:
                        typ,
                        )
         self._commit_query_bin(query, query_data)
-        print("SQL")
         self.bbs_insert_msg_fm_fwd(msg_struc=msg_struc)
         return True
 

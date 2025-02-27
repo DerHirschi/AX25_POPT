@@ -425,7 +425,7 @@ class BBSConnection:
             self._rx_msg_header[k]['bid']       = k
             if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):
                 self._rx_msg_header[k]['flag']      = '$'
-            print("FWD Conn")
+            # print("FWD Conn")
             res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[k]))
             # self._bbs.new_msg_alarm[str(self._rx_msg_header[_k]['typ'])] = True
             if not res:
