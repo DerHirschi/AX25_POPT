@@ -17,7 +17,7 @@ class MSG_Center_base(tk.Frame):
         self._root_win          = root_win
         self._bbs_obj           = PORT_HANDLER.get_bbs()
         self._newPMS_MSG_win    = self._root_win.newPMS_MSG_win
-        self._text_size         = root_win.text_size
+        self.text_size          = root_win.text_size
         self._text_size_tabs    = 10
         self._sort_rev          = False
         self._last_sort_col     = {}
@@ -258,20 +258,20 @@ class MSG_Center_base(tk.Frame):
     ############################################
     # GUI
     def increase_textsize(self):
-        self._text_size += 1
-        self._text_size = max(self._text_size, 3)
-        self._bl_text.configure(font=(FONT, self._text_size))
-        self._pn_text.configure(font=(FONT, self._text_size))
-        self._out_text.configure(font=(FONT, self._text_size))
-        self._sv_text.configure(font=(FONT, self._text_size))
+        self.text_size += 1
+        self.text_size = max(self.text_size, 3)
+        self._bl_text.configure(font=(FONT, self.text_size))
+        self._pn_text.configure(font=(FONT, self.text_size))
+        self._out_text.configure(font=(FONT, self.text_size))
+        self._sv_text.configure(font=(FONT, self.text_size))
 
     def decrease_textsize(self):
-        self._text_size -= 1
-        self._text_size = max(self._text_size, 3)
-        self._bl_text.configure(font=(FONT, self._text_size))
-        self._pn_text.configure(font=(FONT, self._text_size))
-        self._out_text.configure(font=(FONT, self._text_size))
-        self._sv_text.configure(font=(FONT, self._text_size))
+        self.text_size -= 1
+        self.text_size = max(self.text_size, 3)
+        self._bl_text.configure(font=(FONT, self.text_size))
+        self._pn_text.configure(font=(FONT, self.text_size))
+        self._out_text.configure(font=(FONT, self.text_size))
+        self._sv_text.configure(font=(FONT, self.text_size))
 
     def update_textsize_trees(self):
         self._bl_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))

@@ -265,7 +265,7 @@ class MSG_Center_PMS(MSG_Center_base):
 
         # ## lower_f_lower / Msg Text
         self._pn_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self._text_size),
+                                                  font=(FONT, self.text_size),
                                                   bd=0,
                                                   height=3,
                                                   borderwidth=0,
@@ -404,7 +404,7 @@ class MSG_Center_PMS(MSG_Center_base):
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
 
         self._bl_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self._text_size),
+                                                  font=(FONT, self.text_size),
                                                   bd=0,
                                                   height=3,
                                                   background='black',
@@ -525,7 +525,7 @@ class MSG_Center_PMS(MSG_Center_base):
 
         # ## lower_f_lower / Msg Text
         self._out_text = scrolledtext.ScrolledText(root_frame,
-                                                   font=(FONT, self._text_size),
+                                                   font=(FONT, self.text_size),
                                                    bd=0,
                                                    height=3,
                                                    borderwidth=0,
@@ -633,7 +633,7 @@ class MSG_Center_PMS(MSG_Center_base):
 
         # ## lower_f_lower / Msg Text
         self._sv_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self._text_size),
+                                                  font=(FONT, self.text_size),
                                                   bd=0,
                                                   height=3,
                                                   borderwidth=0,
