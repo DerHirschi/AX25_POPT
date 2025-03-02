@@ -45,7 +45,7 @@ def getNew_port_cfg():
         parm_StationCalls = [],  # def in __init__    Keys for Station Parameter  # TODO ? Bullshit ?
         ####################################
         # parm_T1 = 1800        # T1 (Response Delay Timer) activated if data come in to prev resp to early
-        parm_T2 = 1700 ,        # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
+        parm_T2 = 2888 ,        # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
         parm_T2_auto = True,
         parm_T3 = 180 ,         # T3 sek (Inactive Link Timer) Default:180 Sek
         parm_N2 = 20,           # Max Try   Default 20

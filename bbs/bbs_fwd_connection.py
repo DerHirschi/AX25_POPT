@@ -446,7 +446,7 @@ class BBSConnection:
                     BBS_LOG.debug(logTag + f"MSG: {msg}")
                     bid_found_e = True
 
-            if stamp_bid in self._rx_msg_header and not bid_found:
+            if stamp_bid == list(self._rx_msg_header.keys())[0] and not bid_found:
                 BBS_LOG.info(logTag + f"BID found in MSG Header: {bid}")
                 BBS_LOG.debug(logTag + f"Path-Line: {path_line}")
                 bid         = str(stamp_bid)
@@ -477,16 +477,23 @@ class BBSConnection:
         if not all((from_address, to_address)):
             BBS_LOG.warning(logTag + f" From:/To: not Found: {(from_address, to_address)}")
 
+        ####################################
+        # BID Checks
         if bid_found_e:
             BBS_LOG.warning(logTag + "BID parsing Error")
             BBS_LOG.warning(logTag + f"Unsure BID: {bid}")
             bid = list(self._rx_msg_header.keys())[0]
-            BBS_LOG.warning(logTag + f"Fallback to next BID in FWD-Header: {bid} ")
+            BBS_LOG.info(logTag + f"Fallback to next BID in FWD-Header: {bid} ")
+
+        if not bid_found:
+            BBS_LOG.warning(logTag + "BID not found in Stamps !")
+            bid = list(self._rx_msg_header.keys())[0]
+            BBS_LOG.info(logTag + f"Fallback to next BID in FWD-Header: {bid} ")
 
         if bid not in self._rx_msg_header.keys():
             BBS_LOG.warning(logTag + f"Header BID not Found: {bid}")
             bid = list(self._rx_msg_header.keys())[0]
-            BBS_LOG.warning(logTag + f"Fallback to next BID in FWD-Header: {bid} ")
+            BBS_LOG.info(logTag + f"Fallback to next BID in FWD-Header: {bid} ")
         #########################################
         # TODO: make something from path_data
         """

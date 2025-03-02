@@ -3,8 +3,13 @@
 Fixes:
 - PMS-Setting "AutoFWD" war ohne Funktion
 - Unterschiedliche Timestamps im "Message-Center"
+- FWD: BID wurde nicht ordentlich aus Nachrichten-Header extrahiert
 
 Optimierung:
+- T2-Auto Berechnung
+- T1 Berechnung
+- IRTT Berechnung
+- T2 Default Wert auf von 1700 auf 2888 geändert
 - SQL-DB: Tabellen pms_pn_msg und pms_BL_msg
   zusammengefasst zu pms_in_msg
 - Interne CLI-CMD config
@@ -16,6 +21,7 @@ Optimierung:
 - Spalte für "Flag" im "Message-Center" für PN und BL
 
 Neue Implementierungen / Funktionen:
+- Neuer Tab "BBS" im "Message-Center"
 - CLI Typ: BOX
 - CLI-CMD: LB (List Bulletin/ Listet alle Bulletin Mails)
 - CLI-CMD: LM (List Mails / Listet alle eigenen Mails)

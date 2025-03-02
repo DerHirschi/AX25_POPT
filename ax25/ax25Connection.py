@@ -123,7 +123,7 @@ class AX25Conn:
         if self.own_port.kiss.is_enabled:
             self._parm_Kiss_TXD = self._port_cfg.get('parm_kiss_TXD', 35)
             self._parm_Kiss_Tail = self._port_cfg.get('parm_kiss_Tail', 15)
-        self._parm_T2 = int(self._port_cfg.get('parm_T2', 1700))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self._parm_T2 = int(self._port_cfg.get('parm_T2', 2888))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
         self._parm_T3 = self._port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
         self.parm_N2 = self._port_cfg.get('parm_N2', 20)  # Max Try   Default 20
         self._parm_baud = self._port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
@@ -1002,25 +1002,33 @@ class AX25Conn:
             return self.IRTT
 
     def calc_irtt(self):
+
+        header_len      = 16 + len(self.via_calls) * 7
+        init_t2: float  = (((self.parm_PacLen + header_len) * 8) / self._parm_baud) * 1000
+        irit = (init_t2 +
+                self._parm_TXD +
+                (self._parm_Kiss_TXD * 10) +
+                (self._parm_Kiss_Tail * 10)
+                )
         if self._port_cfg.get('parm_T2_auto', True):
-            init_t2: float = (((self.parm_PacLen + 16) * 8) / self._parm_baud) * 1000
-            self.IRTT = (init_t2 +
-                         self._parm_TXD +
-                         (self._parm_Kiss_TXD * 10) +
-                         (self._parm_Kiss_Tail * 10)
-                         ) * 2
-            # self.parm_T2 = (float(self.IRTT / 1000) / 2)
-            # TXD    TAIL
-            self._parm_T2 = float(init_t2 + 400 + 150) / 1000
+            self._parm_T2   = float(irit / 1000)
         else:
-            self._parm_T2 = float(self._port_cfg.get('parm_T2', 1700)) / 1000
-            self.IRTT = ((self._parm_T2 * 1000) +
-                         self._parm_TXD +
-                         (self._parm_Kiss_TXD * 10) +
-                         (self._parm_Kiss_Tail * 10)
-                         ) * 2
-        # print('parm_T2: {}'.format(self.parm_T2))
+            self._parm_T2   = float(self._port_cfg.get('parm_T2', 2888)) / 1000
+
+        if self.via_calls:
+            hops = (len(self.via_calls) + 1) * 2
+            self.IRTT: float = max((irit * hops), 50)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+        else:
+            self.IRTT: float = max((irit * 2), 50)     # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+
+        # print(f"IRIT    : {self.IRTT}")
+        # print(f"parm_T2 : {self._parm_T2}")
+        """
         self.IRTT = max(self.IRTT, 10)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+        self.IRTT       = irit * 2
+        """
+
+        # print('parm_T2: {}'.format(self.parm_T2))
         # print('IRTT: {}'.format(self.IRTT))
 
     def set_T1(self, stop=False):
@@ -1028,16 +1036,15 @@ class AX25Conn:
             self.n2 = 0
             self.t1 = 0
         else:
-            self.calc_irtt()
+            # self.calc_irtt()
             n2 = int(self.n2)
             srtt = float(self._get_rtt())
-            if not self._port_cfg.get('parm_T2_auto', True):
-                if self.via_calls:
-                    srtt = int((len(self.via_calls) * 2 + 1) * srtt)
+            # if not self._port_cfg.get('parm_T2_auto', True):
+
             if n2 > 3:
-                self.t1 = float(((srtt * (n2 + 4)) / 1000) + time.time())
+                self.t1 = float(((srtt * (n2 + 4))  / 1000) + time.time())
             else:
-                self.t1 = float(((srtt * 3) / 1000) + time.time())
+                self.t1 = float(((srtt * 3)         / 1000) + time.time())
         """
         if self.t1 > 0:
             print('t1 > {}'.format(self.t1 - time.time()))
