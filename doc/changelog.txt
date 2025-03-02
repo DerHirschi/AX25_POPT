@@ -25,6 +25,9 @@ Optimierung:
 - Spalte für "Flag" im "Message-Center" für PN und BL
 
 Neue Implementierungen / Funktionen:
+- Beacon-Call Filter für User-DB
+- PR-Mail Adresse (Sysop- und BBS-Adressen) werden automatisch
+  aus empfangenen PR-Mails in der User-DB erfasst.
 - Neuer Tab "BBS" im "Message-Center"
 - CLI Typ: BOX
 - CLI-CMD: LB (List Bulletin/ Listet alle Bulletin Mails)

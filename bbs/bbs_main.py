@@ -16,10 +16,6 @@ IN  = Default (New Incoming)
 $   = New Incoming - Markt for Forward Check
 DL  = Deleted MSG
 
-TODO:
- - S=  - Testen
-
-
 """
 
 import time

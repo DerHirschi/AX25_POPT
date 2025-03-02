@@ -8,7 +8,7 @@ from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call, validate_apr
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
 from fnc.loc_fnc import locator_to_coordinates, locator_distance
 from fnc.str_fnc import conv_time_for_sorting
-from cfg.constant import CFG_user_db
+from cfg.constant import CFG_user_db, MH_BEACON_FILTER
 
 
 class Client(object):
@@ -69,6 +69,7 @@ class Client(object):
 class UserDB:
     def __init__(self):
         # print("User-DB Init")
+        self._logTag = "User-DB: "
         logger.info("User-DB: Init")
         self._port_handler = None
         self.not_public_vars = [
@@ -169,18 +170,21 @@ class UserDB:
 
     def _new_entry(self, call_str):
         call_str = call_str.upper()
-        if validate_ax25Call(call_str):
-            if call_str not in self.db.keys():
-                call_tup = call_tuple_fm_call_str(call_str)
-                # if call_tup[0] not in self.db.keys():
-                # print('# User DB: New User added > ' + call_str)
-                logger.info('User DB: New User added > ' + call_str)
-                self.db[call_str] = Client()
-                self.db[call_str].call_str = str(call_str)
-                self.db[call_str].Call = str(call_tup[0])
-                self.db[call_str].SSID = int(call_tup[1])
-                return self.db[call_str]
-        return False
+        if call_str in MH_BEACON_FILTER:
+            return False
+        if not validate_ax25Call(call_str):
+            return False
+        if call_str in self.db.keys():
+            return self.db[call_str]
+        call_tup = call_tuple_fm_call_str(call_str)
+        # if call_tup[0] not in self.db.keys():
+        # print('# User DB: New User added > ' + call_str)
+        logger.info('User DB: New User added > ' + call_str)
+        self.db[call_str] = Client()
+        self.db[call_str].call_str = str(call_str)
+        self.db[call_str].Call = str(call_tup[0])
+        self.db[call_str].SSID = int(call_tup[1])
+        return self.db[call_str]
 
     def del_entry(self, call_str: str):
         if call_str in self.db.keys():
@@ -197,17 +201,6 @@ class UserDB:
         else:
             if not ent.TYP:
                 ent.TYP = typ
-
-    def set_pr_mail_add_for_BBS(self, address: str, ):
-        call_str = address.split('.')[0]
-        if not call_str:
-            return
-        ent = self.get_entry(call_str, True)
-        if not ent:
-            return
-        if not ent.TYP:
-            ent.TYP = 'BBS'
-        ent.PRmail = address
 
     def set_distance(self, entry_call: str):
         if self._port_handler is None:
@@ -366,6 +359,32 @@ class UserDB:
             self._new_entry(call_str)
         self.db[call_str].AXIP = tuple(axip)
         return True
+
+    def set_PRmail_BBS_address(self, address: str, ):
+        call_str = address.split('.')[0]
+        if not call_str:
+            return
+        ent = self.get_entry(call_str, True)
+        if not ent:
+            return
+        if not ent.TYP:
+            ent.TYP = 'BBS'
+        ent.PRmail = address
+
+    def set_PRmail_address(self, address: str, ):
+        if not address:
+            return
+        call = address.split('@')[0].split('.')[0]
+        ent = self.get_entry(call, True)
+        if not ent:
+            return
+        if ent.TYP == 'BBS':
+            bbs_address = address.split('@')[-1]
+            if '.' in bbs_address:
+                ent.PRmail  = bbs_address
+            return
+        if '@' in address:
+            ent.PRmail = address
 
     def get_all_PRmail(self):
         ret = []

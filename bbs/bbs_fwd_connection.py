@@ -1,3 +1,4 @@
+from UserDB.UserDBmain import USER_DB
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_ERR, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, EOL, MSG_H_FROM, MSG_H_TO, STAMP
 from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line
@@ -504,16 +505,7 @@ class BBSConnection:
             BBS_LOG.warning(logTag + f"Header BID not Found: {bid}")
             bid = list(self._rx_msg_header.keys())[0]
             BBS_LOG.info(logTag + f"Fallback to next BID in FWD-Header: {bid} ")
-        #########################################
-        # TODO: make something from path_data
-        """
-        path_str        = path_str,
-        time_stamp      = time_stamp,
-        bid             = bid,
-        mid             = mid,
-        bbs_call        = bbs_call,
-        bbs_address     = bbs_address,
-        """
+
         sender_call, sender_bbs = from_address.split('@')
         receiver_call, receiver_bbs = to_address.split('@')
         if sender_call != self._rx_msg_header[bid]['sender']:
@@ -544,9 +536,29 @@ class BBSConnection:
         self._rx_msg_header[bid]['bid']           = bid
         if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):
             self._rx_msg_header[bid]['flag']      = '$'
+        #########################################
+        # TODO: make something from path_data
+        """
+        path_str        = path_str,
+        time_stamp      = time_stamp,
+        bid             = bid,
+        mid             = mid,
+        bbs_call        = bbs_call,
+        bbs_address     = bbs_address,
+        """
+        #########################
+        # User DB
+        userDB = USER_DB
+        for stamp_ent in path_data:
+            bbs_address = stamp_ent.get('bbs_address', '')
+            if not bbs_address:
+                continue
+            userDB.set_PRmail_BBS_address(bbs_address)
+        userDB.set_PRmail_address(from_address)
+        #########################
+        # SQL
         res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[bid]))
         # self._bbs.new_msg_alarm[str(self._rx_msg_header[_k]['typ'])] = True
-
         if not res:
             BBS_LOG.error(logTag + f"Nachricht BID: {bid} fm {from_address} konnte nicht in die DB geschrieben werden.")
             del self._rx_msg_header[bid]

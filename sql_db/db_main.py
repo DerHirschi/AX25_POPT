@@ -1282,7 +1282,7 @@ class SQL_Database:
             if res is None:
                 return False
             """
-            self._insert_BBS_in_UserDB(to_bbs, address)      # TODO
+            self._insert_BBS_in_UserDB(address)      # TODO
         return True
 
     def fwd_node_get(self):
@@ -1291,11 +1291,11 @@ class SQL_Database:
 
     ############################################
     # USER-DB
-    def _insert_BBS_in_UserDB(self, call, address=''):
+    def _insert_BBS_in_UserDB(self, address=''):
         if self._port_handler:
             userDB = self._port_handler.get_userDB()
             # userDB.set_typ(call, 'BBS')
-            userDB.set_pr_mail_add_for_BBS(address)
+            userDB.set_PRmail_BBS_address(address)
 
     ############################################
     # APRS - WX
