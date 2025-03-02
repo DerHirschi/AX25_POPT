@@ -16,7 +16,7 @@ class MSG_Center_base(tk.Frame):
         self.style              = root_win.style
         self._root_win          = root_win
         self._bbs_obj           = PORT_HANDLER.get_bbs()
-        self._newPMS_MSG_win    = self._root_win.newPMS_MSG_win
+        self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
         self.text_size          = root_win.text_size
         self._text_size_tabs    = 10
         self._sort_rev          = False
@@ -67,14 +67,14 @@ class MSG_Center_base(tk.Frame):
             tree.move(k, '', int(index))
 
     def _open_newMSG_win_reply(self, typ: str):
-        if self._newPMS_MSG_win is None:
+        if self.newPMS_MSG_win is None:
             if self._selected_msg.get(typ, None):
                 msg = dict(self._selected_msg[typ])
                 msg['subject'] = ('Re: ' + msg.get('subject', ''))
-                self._newPMS_MSG_win = BBS_newMSG(self, msg)
+                self.newPMS_MSG_win = BBS_newMSG(self, msg)
 
     def _open_newMSG_win_forward(self, typ: str):
-        if self._newPMS_MSG_win is None:
+        if self.newPMS_MSG_win is None:
             if self._selected_msg.get(typ, None):
                 msg: dict = dict(self._selected_msg[typ])
                 msg['flag']         = 'E'
@@ -82,12 +82,12 @@ class MSG_Center_base(tk.Frame):
                 msg['to_call']      = ''
                 msg['to_bbs']       = ''
                 msg['subject'] = ('Fwd: ' + msg['subject'])
-                self._newPMS_MSG_win = BBS_newMSG(self, msg)
+                self.newPMS_MSG_win = BBS_newMSG(self, msg)
 
     def _open_newMSG_win(self):
-        if self._newPMS_MSG_win:
+        if self.newPMS_MSG_win:
             return
-        self._newPMS_MSG_win = BBS_newMSG(self)
+        self.newPMS_MSG_win = BBS_newMSG(self)
 
     def _do_pms_autoFWD(self):
         self._bbs_obj.start_man_autoFwd()

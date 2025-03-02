@@ -332,7 +332,7 @@ class BBS_newMSG(tk.Toplevel):
         if any((not regio_add, not bbs_call)):
             logger.error(f"PMS-newMSG: regio_add/bbs_call: {regio_add}/{bbs_call}")
             return False
-        recv_call = self._to_call_var.get()
+        recv_call = self._to_call_var.get().upper()
         if not recv_call:
             logger.error("PMS-newMSG: recv_call")
             return False
@@ -354,11 +354,17 @@ class BBS_newMSG(tk.Toplevel):
             logger.error("PMS-newMSG: subj")
             return False
         if typ == 'P':
-            if not '.' in recv_bbs:
+            if not recv_bbs:
                 pr_mail_add = USER_DB.get_PRmail(sender)
                 bbs_add = pr_mail_add.split('@')[-1]
                 if '.' in bbs_add:
                     recv_bbs = bbs_add
+            if not '.' in recv_bbs:
+                print('No----')
+                print(f'No: {recv_bbs}')
+                recv_bbs = USER_DB.get_PRmail(recv_bbs)
+                print(f'No: {recv_bbs}')
+
 
         cc_add      = self._to_cc_call_var.get()
         enc         = self._var_encoding.get()
@@ -479,7 +485,7 @@ class BBS_newMSG(tk.Toplevel):
         self.lift()
 
     def _close(self):
-        self._bbs_obj = None
+        # self._bbs_obj = None
         if hasattr(self._root_win, 'on_bbsTab_select'):
             self._root_win.on_bbsTab_select()
         self._root_win.newPMS_MSG_win = None
