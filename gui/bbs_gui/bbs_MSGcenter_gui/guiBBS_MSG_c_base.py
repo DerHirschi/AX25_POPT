@@ -77,10 +77,10 @@ class MSG_Center_base(tk.Frame):
         if self._newPMS_MSG_win is None:
             if self._selected_msg.get(typ, None):
                 msg: dict = dict(self._selected_msg[typ])
-                msg['flag'] = 'E'
-                msg['typ'] = 'P'
-                msg['to_call'] = ''
-                msg['to_bbs'] = ''
+                msg['flag']         = 'E'
+                msg['typ']          = 'P'
+                msg['to_call']      = ''
+                msg['to_bbs']       = ''
                 msg['subject'] = ('Fwd: ' + msg['subject'])
                 self._newPMS_MSG_win = BBS_newMSG(self, msg)
 

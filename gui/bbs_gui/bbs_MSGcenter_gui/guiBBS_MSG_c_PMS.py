@@ -757,8 +757,8 @@ class MSG_Center_PMS(MSG_Center_base):
                 bid         = db_data['bid']
                 from_call   = db_data['from_call']
                 from_bbs    = db_data['from_bbs']
-                to_call     = db_data['to_call']  # Cat
-                to_bbs      = db_data['to_bbs']  # Verteiler
+                to_call     = db_data['to_call']        # Cat
+                to_bbs      = db_data['to_bbs']         # Verteiler
                 subj        = db_data['subject']
                 msg         = db_data['msg']
                 msg_time    = db_data['time']

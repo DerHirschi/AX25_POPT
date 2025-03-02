@@ -203,14 +203,6 @@ class BBSConnection:
             return True
         return False
 
-    @staticmethod
-    def _header_error(inp=None):
-        return FWD_RESP_ERR
-
-    @staticmethod
-    def _header_reject(inp=None):
-        return FWD_RESP_REJ
-
     def _get_msg(self):
         # 4
         next_mail = self._get_next_mail_fm_rx_buff()
@@ -219,9 +211,6 @@ class BBSConnection:
             self._parse_msg(next_mail)
         if not self._rx_msg_header:
             self._state = 2
-
-    def _get_fwd_id(self, bid: str):
-        return bid + '-' + self._dest_bbs_call
 
     def _wait_f_accept_msg(self):
         # 5
@@ -271,6 +260,38 @@ class BBSConnection:
         self._state = 3
         return True
 
+    def _send_ff(self):
+        # 10
+        self._connection_tx(b'FF\r')
+        self._state = 11
+
+    def _wait_fq(self):
+        # 11
+        if self._get_lines_fm_rx_buff('FQ', cut_rx_buff=True):
+            self.end_conn()
+            return
+        if self._get_lines_fm_rx_buff('F>', cut_rx_buff=False):
+            self._state = 3
+            return
+
+
+        # TODO IF New Msg  (FB)
+
+    ########################################################
+    #
+    def _get_fwd_id(self, bid: str):
+        return bid + '-' + self._dest_bbs_call
+
+    @staticmethod
+    def _header_error(inp=None):
+        return FWD_RESP_ERR
+
+    @staticmethod
+    def _header_reject(inp=None):
+        return FWD_RESP_REJ
+
+    ########################################################
+    # 5
     def _tx_out_msg_by_bid(self, bid: str):
         msg = self._db.bbs_get_outMsg_by_BID(bid)
         if not msg:
@@ -310,17 +331,6 @@ class BBSConnection:
             self._tx_msg_BIDs   = self._tx_msg_BIDs[1:]
             self._tx_fs_list    = self._tx_fs_list[1:]
         self._tx_fs_list = ''
-
-    def _send_ff(self):
-        # 10
-        self._connection_tx(b'FF\r')
-        self._state = 11
-
-    def _wait_fq(self):
-        # 11
-        if self._get_lines_fm_rx_buff('FQ', cut_rx_buff=True):
-            self.end_conn()
-        # TODO IF New Msg  (FB)
 
     ########################################################
     #

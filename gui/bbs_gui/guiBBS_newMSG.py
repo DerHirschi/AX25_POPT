@@ -427,6 +427,7 @@ class BBS_newMSG(tk.Toplevel):
             return False
         return True
 
+
     def _to_call_warning(self):
         self._to_call_ent.focus_set()
         WarningMsg('Adresse nicht korrekt', 'Die Adresse des Empfängers ist nicht korrekt.   Keine BBS')

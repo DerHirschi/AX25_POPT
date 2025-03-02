@@ -4,6 +4,9 @@ Fixes:
 - PMS-Setting "AutoFWD" war ohne Funktion
 - Unterschiedliche Timestamps im "Message-Center"
 - FWD: BID wurde nicht ordentlich aus Nachrichten-Header extrahiert
+- FWD-Protokoll: "F>" wird nicht erkannt wenn im Zustand "Warte auf FQ"
+  - Führt dazu das PoPT-BOX nicht auf weitere Nachrichten reagiert und
+    die Verbindung "hängt".
 
 Optimierung:
 - T2-Auto Berechnung
