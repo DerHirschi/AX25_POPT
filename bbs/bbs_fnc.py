@@ -43,14 +43,14 @@ def parse_forward_header(header):
         recipient = tmp[1]
     msg_struc = GET_MSG_STRUC()
     msg_struc.update({
-        "message_type": hdr[1],
-        "sender": hdr[2],
-        "recipient_bbs": hdr[3],
-        "receiver": hdr[4],
-        "mid": mid,
-        "bid_mid": hdr[5],
-        "sender_bbs": recipient,
-        "message_size": hdr[6]
+        "message_type":     hdr[1],
+        "sender":           hdr[2],
+        "recipient_bbs":    hdr[3],
+        "receiver":         hdr[4],
+        "mid":              mid,
+        "bid_mid":          hdr[5],
+        "sender_bbs":       recipient,
+        "message_size":     hdr[6]
     })
     return msg_struc
 

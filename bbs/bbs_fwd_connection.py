@@ -514,6 +514,26 @@ class BBSConnection:
         bbs_call        = bbs_call,
         bbs_address     = bbs_address,
         """
+        sender_call, sender_bbs = from_address.split('@')
+        receiver_call, receiver_bbs = to_address.split('@')
+        if sender_call != self._rx_msg_header[bid]['sender']:
+            BBS_LOG.error(logTag + "Error: Sender Call != Header Sender Call")
+            BBS_LOG.error(logTag + f"{sender_call} != {self._rx_msg_header[bid]['sender']}")
+            sender_call = self._rx_msg_header[bid]['sender']
+        if receiver_call != self._rx_msg_header[bid]['receiver']:
+            BBS_LOG.error(logTag + "Error: Receiver Call != Header Receiver Call")
+            BBS_LOG.error(logTag + f"{receiver_call} != {self._rx_msg_header[bid]['receiver']}")
+            receiver_call = self._rx_msg_header[bid]['receiver']
+        if not '.' in sender_bbs and '.' in self._rx_msg_header[bid]['sender_bbs']:
+            sender_bbs = self._rx_msg_header[bid]['sender_bbs']
+        if not '.' in receiver_bbs and '.' in self._rx_msg_header[bid]['recipient_bbs']:
+            receiver_bbs = self._rx_msg_header[bid]['recipient_bbs']
+
+        self._rx_msg_header[bid]['sender_bbs']    = sender_bbs
+        self._rx_msg_header[bid]['recipient_bbs'] = receiver_bbs
+        self._rx_msg_header[bid]['sender']        = sender_call
+        self._rx_msg_header[bid]['receiver']      = receiver_call
+
         self._rx_msg_header[bid]['msg']           = msg
         self._rx_msg_header[bid]['header']        = header
         self._rx_msg_header[bid]['path']          = path
