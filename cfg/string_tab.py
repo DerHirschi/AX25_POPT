@@ -2976,6 +2976,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'bbs_sett_pn_bbs_out': (
+        'Privat Mail > ausgehend',
+        'Private mail > outgoing',
+        'Privémail > uitgaand',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'msgC_sendet_msg': (
         'Gesendet',
         'Sendet',

@@ -145,7 +145,7 @@ class MSG_Center_BBS(MSG_Center_base):
     # PN TAB
     def _init_pn_tree(self, root_frame):
         columns = (
-            'Neu',
+            #'Neu',
             'Betreff',
             'Von',
             'An',
@@ -160,8 +160,8 @@ class MSG_Center_BBS(MSG_Center_base):
         self._pn_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        self._pn_tree.heading('Neu', text=self._getTabStr('new'),
-                              command=lambda: self._sort_entry('Neu', self._pn_tree))
+        #self._pn_tree.heading('Neu', text=self._getTabStr('new'),
+        #                      command=lambda: self._sort_entry('Neu', self._pn_tree))
         self._pn_tree.heading('Betreff', text=self._getTabStr('subject'),
                               command=lambda: self._sort_entry('Betreff', self._pn_tree))
         self._pn_tree.heading('Von', text=self._getTabStr('from'),
@@ -171,7 +171,7 @@ class MSG_Center_BBS(MSG_Center_base):
         self._pn_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._pn_tree))
         self._pn_tree.heading('Datum', text=self._getTabStr('date_time'),
                               command=lambda: self._sort_entry('Datum', self._pn_tree))
-        self._pn_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
+        #self._pn_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
         self._pn_tree.column("Betreff", anchor='w', stretch=tk.YES, width=190)
         self._pn_tree.column("Von", anchor='w', stretch=tk.YES, width=130)
         self._pn_tree.column("An", anchor='w', stretch=tk.YES, width=130)
@@ -264,7 +264,7 @@ class MSG_Center_BBS(MSG_Center_base):
     # BL TAB
     def _init_bl_tree(self, root_frame):
         columns = (
-            'Neu',
+            #'Neu',
             'Betreff',
             'Von',
             'An',
@@ -280,8 +280,8 @@ class MSG_Center_BBS(MSG_Center_base):
         self._bl_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        self._bl_tree.heading('Neu', text=self._getTabStr('new'),
-                              command=lambda: self._sort_entry('Neu', self._bl_tree))
+        #self._bl_tree.heading('Neu', text=self._getTabStr('new'),
+        #                      command=lambda: self._sort_entry('Neu', self._bl_tree))
         self._bl_tree.heading('Betreff', text=self._getTabStr('subject'),
                               command=lambda: self._sort_entry('Betreff', self._bl_tree))
         self._bl_tree.heading('Von', text=self._getTabStr('from'),
@@ -292,7 +292,7 @@ class MSG_Center_BBS(MSG_Center_base):
         self._bl_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._bl_tree))
         self._bl_tree.heading('Datum', text=self._getTabStr('date_time'),
                               command=lambda: self._sort_entry('Datum', self._bl_tree))
-        self._bl_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
+        #self._bl_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
         self._bl_tree.column("Betreff", anchor='w', stretch=tk.YES, width=270)
         self._bl_tree.column("Von", anchor='w', stretch=tk.YES, width=180)
         self._bl_tree.column("An", anchor='w', stretch=tk.YES, width=100)
@@ -549,9 +549,9 @@ class MSG_Center_BBS(MSG_Center_base):
             if el[4]:
                 to_call += f"@{el[4]}"
 
-            new = ''
-            if int(el[7]):
-                new = '✉'
+            #new = ''
+            #if int(el[7]):
+            #    new = '✉'
             date = el[6]
             tmp = str(date).split('-')[0]
             if len(tmp) == 2:
@@ -559,7 +559,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 date = '20' + date
 
             self._pn_tree_data.append((
-                f'{new}',
+                #f'{new}',
                 f'{el[5]}',
                 f'{from_call}',
                 f'{to_call}',
@@ -569,10 +569,6 @@ class MSG_Center_BBS(MSG_Center_base):
             ))
 
     def _update_PN_tree(self):
-        # curItem = self._pn_tree.selection()
-        # curItem = self._pn_tree.selection_get()
-        # print(curItem)
-        # print(self._pn_tree.item(curItem))
         for i in self._pn_tree.get_children():
             self._pn_tree.delete(i)
         for ret_ent in self._pn_tree_data:
@@ -655,15 +651,15 @@ class MSG_Center_BBS(MSG_Center_base):
     def _format_BL_tree_data(self):
         self._bl_tree_data     = []
         self._bl_cat_tree_data = []
-        new_tr = {}
+        #new_tr = {}
         for el in self._bl_data:
             from_call = f"{el[1]}"
             if el[2]:
                 from_call += f"@{el[2]}"
-            new = ''
-            if int(el[7]):
-                new = '✉'
-                new_tr[el[3]] = True
+            #new = ''
+            #if int(el[7]):
+            #    new = '✉'
+            #    new_tr[el[3]] = True
             date = el[6]
             tmp = str(date).split('-')[0]
             if len(tmp) == 2:
@@ -671,7 +667,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 date = '20' + date
             if not self._bl_cat_filter or self._bl_cat_filter == el[3]:
                 self._bl_tree_data.append((
-                    f'{new}',
+                    #f'{new}',
                     f'{el[5]}',
                     f'{from_call}',
                     f'{el[3]}',  # Cat
@@ -681,16 +677,14 @@ class MSG_Center_BBS(MSG_Center_base):
                     f'{el[0]}',  # BID
                 ))
         # Category Tab
-        any_tr = False
+
         for el in self._bl_data:
-            tr = new_tr.get(el[3], False)
-            if tr:
-                any_tr = True
-            if (tr, el[3]) not in self._bl_cat_tree_data:
-                self._bl_cat_tree_data.append((tr, el[3]))
+           if (False, el[3]) not in self._bl_cat_tree_data:
+                self._bl_cat_tree_data.append((False, el[3]))
+
 
         self._bl_cat_tree_data.sort(key=lambda x: x[1])
-        self._bl_cat_tree_data = [(any_tr, 'ALL*')] + self._bl_cat_tree_data
+        self._bl_cat_tree_data = [(False, 'ALL*')] + self._bl_cat_tree_data
 
     def _update_BL_tree(self):
         for i in self._bl_tree.get_children():

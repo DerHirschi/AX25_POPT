@@ -185,7 +185,7 @@ class MSG_Center_PMS(MSG_Center_base):
             'Betreff',
             'Von',
             'An',
-            'flag',
+            #'flag',
             'Datum',
         )
 
@@ -204,14 +204,14 @@ class MSG_Center_PMS(MSG_Center_base):
                               command=lambda: self._sort_entry('Von', self._pn_tree))
         self._pn_tree.heading('An', text=self._getTabStr('to'),
                               command=lambda: self._sort_entry('An', self._pn_tree))
-        self._pn_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._pn_tree))
+        # self._pn_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._pn_tree))
         self._pn_tree.heading('Datum', text=self._getTabStr('date_time'),
                               command=lambda: self._sort_entry('Datum', self._pn_tree))
         self._pn_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
         self._pn_tree.column("Betreff", anchor='w', stretch=tk.YES, width=190)
         self._pn_tree.column("Von", anchor='w', stretch=tk.YES, width=130)
         self._pn_tree.column("An", anchor='w', stretch=tk.YES, width=130)
-        self._pn_tree.column("flag", anchor='w', stretch=tk.NO, width=60)
+        # self._pn_tree.column("flag", anchor='w', stretch=tk.NO, width=60)
         self._pn_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
 
         self._pn_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
@@ -707,7 +707,7 @@ class MSG_Center_PMS(MSG_Center_base):
                 f'{el[5]}',
                 f'{from_call}',
                 f'{to_call}',
-                f'{el[8]}',  # FLAG
+                # f'{el[8]}',  # FLAG
                 f'{date}',   # DATE
                 f'{el[0]}',  # BID
             ))

@@ -17,7 +17,7 @@ $   = New Incoming - Markt for Forward Check
 DL  = Deleted MSG
 
 TODO:
- - S=
+ - S=  - Testen
 
 
 """
@@ -26,7 +26,7 @@ import time
 from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
-from bbs.bbs_constant import FWD_RESP_TAB
+from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR
 from bbs.bbs_fnc import generate_sid, spilt_regio, build_fwd_msg_header, get_pathlist_fm_header
 from bbs.bbs_fwd_connection import BBSConnection
 from cfg.constant import SQL_TIME_FORMAT
@@ -75,6 +75,7 @@ class BBS:
         # CTL & Auto Connection
         self._fwd_q                 = []   # Local FWD Q
         self._fwd_connections       = []   # Connects using FWD Port
+        self._incoming_fwd_bids     = []   # Incoming FWD BIDs
         self._new_man_FWD_wait_t    = time.time()   + 40
         ####################
         # Tasker/crone
@@ -355,7 +356,14 @@ class BBS:
         return conn
 
     def end_fwd_conn(self, bbs_conn):
+        logTag = self._logTag + "End FED-Conn > "
         if bbs_conn in self._fwd_connections:
+            fwd_header_bids = bbs_conn.get_fwd_header()
+            bbs_call        = bbs_conn.get_dest_bbs_call()
+            # Cleanup Global FWD Headers
+            for bid in fwd_header_bids:
+                if not self.delete_incoming_fwd_bid(bid):
+                    BBS_LOG.error(logTag + f'Error, delete_incoming_fwd_bid() - {bbs_call} - BID: {bid}')
             self._fwd_connections.remove(bbs_conn)
             self._port_handler.set_pmsFwdAlarm(False)
             return True
@@ -401,17 +409,34 @@ class BBS:
                 }
                 self._port_handler.start_SchedTask_man(autoconn_cfg)
 
+    ####################################
+    # Incoming FWD Headers
+    def get_incoming_fwd_bids(self):
+        return self._incoming_fwd_bids
+
+    def insert_incoming_fwd_bid(self, bid: str):
+        if bid in self._incoming_fwd_bids:
+            return False
+        self._incoming_fwd_bids.append(bid)
+        return True
+
+    def delete_incoming_fwd_bid(self, bid: str):
+        if bid not in self._incoming_fwd_bids:
+            return False
+        self._incoming_fwd_bids.remove(bid)
+        return True
+
     ########################################################################
     #
     def is_pn_in_db(self, bid_mid: str):
         if not bid_mid:
-            return 'E'
+            return FWD_RESP_ERR
         ret = self._db.bbs_check_pn_mid_exists(bid_mid)
         return FWD_RESP_TAB[ret]
 
     def is_bl_in_db(self, bid_mid: str):
         if not bid_mid:
-            return 'E'
+            return FWD_RESP_ERR
         ret = self._db.bbs_check_bl_mid_exists(bid_mid)
         return FWD_RESP_TAB[ret]
 
@@ -937,6 +962,7 @@ class BBS:
     def get_bid(self):
         return self._db.pms_get_bid()
 
+    ##########################################
     def get_db(self):
         return self._db
 
@@ -945,5 +971,3 @@ class BBS:
 
     def get_port_handler(self):
         return self._port_handler
-
-

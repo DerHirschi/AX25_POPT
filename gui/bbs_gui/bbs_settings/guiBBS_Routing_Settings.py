@@ -19,7 +19,7 @@ class BBSRoutingSettings(tk.Frame):
         self._pms_cfg: dict     = self._root_win.get_root_pms_cfg()
         ###################################
         # Vars
-        self._bbs_vars = {}
+        self._bbs_vars      = {}
         ###################################
         # Tabctl
         self._tabctl = ttk.Notebook(self)
@@ -55,14 +55,67 @@ class BBSRoutingSettings(tk.Frame):
         self._tabctl.add(tab_frame, text=cfg.get('dest_call', 'NOCALL'))
         #################################################################
         # Frames
-        pn_bbs_out_f       = tk.Frame(self, borderwidth=10)
+        pn_bbs_out_f        = tk.Frame(tab_frame, borderwidth=10)
+        pn_h_out_f          = tk.Frame(tab_frame, borderwidth=10)
+        pn_not_h_out_f      = tk.Frame(tab_frame, borderwidth=10)
+        pn_call_out_f       = tk.Frame(tab_frame, borderwidth=10)
+        pn_not_call_out_f   = tk.Frame(tab_frame, borderwidth=10)
 
         # Pack it
-        pn_bbs_out_f.pack(     side=tk.TOP, expand=False, fill=tk.X)
+        tk.Label(tab_frame,
+                 text=self._getTabStr('bbs_sett_pn_bbs_out')
+                 ).pack(         side=tk.TOP, expand=False, fill=tk.X)
+        pn_bbs_out_f.pack(       side=tk.TOP, expand=False, fill=tk.X)
+        pn_h_out_f.pack(         side=tk.TOP, expand=False, fill=tk.X)
+        pn_not_h_out_f.pack(     side=tk.TOP, expand=False, fill=tk.X)
+        pn_call_out_f.pack(      side=tk.TOP, expand=False, fill=tk.X)
+        pn_not_call_out_f.pack(  side=tk.TOP, expand=False, fill=tk.X)
 
         #################
         # pn_bbs_out_f
-
+        tk.Label(pn_bbs_out_f,
+                 text='BBS  '
+                 ).pack(side=tk.LEFT, expand=False)
+        tk.Entry(pn_bbs_out_f,
+                 textvariable=pn_fwd_bbs_out_var,
+                 width=70
+                 ).pack(side=tk.LEFT, expand=False, padx=7)
+        #################
+        # pn_h_out_f
+        tk.Label(pn_h_out_f,
+                 text='H     '
+                 ).pack(side=tk.LEFT, expand=False)
+        tk.Entry(pn_h_out_f,
+                 textvariable=pn_fwd_h_out_var,
+                 width=70
+                 ).pack(side=tk.LEFT, expand=False, padx=12)
+        #################
+        # pn_not_h_out_f
+        tk.Label(pn_not_h_out_f,
+                 text='!H    '
+                 ).pack(side=tk.LEFT, expand=False)
+        tk.Entry(pn_not_h_out_f,
+                 textvariable=pn_fwd_not_h_out_var,
+                 width=70
+                 ).pack(side=tk.LEFT, expand=False, padx=11)
+        #################
+        # pn_call_out_f
+        tk.Label(pn_call_out_f,
+                 text='CALL '
+                 ).pack(side=tk.LEFT, expand=False)
+        tk.Entry(pn_call_out_f,
+                 textvariable=pn_fwd_call_out_var,
+                 width=70
+                 ).pack(side=tk.LEFT, expand=False, padx=6)
+        #################
+        # pn_not_call_out_f
+        tk.Label(pn_not_call_out_f,
+                 text='!CALL'
+                 ).pack(side=tk.LEFT, expand=False)
+        tk.Entry(pn_not_call_out_f,
+                 textvariable=pn_fwd_not_call_out_var,
+                 width=70
+                 ).pack(side=tk.LEFT, expand=False, padx=5)
 
         return {
             'pn_fwd_bbs_out_var'        : pn_fwd_bbs_out_var,
