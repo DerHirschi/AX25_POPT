@@ -31,6 +31,13 @@ class MSG_Center_BBS(MSG_Center_base):
         self._var_out_time_label    = tk.StringVar(self, '')
         self._var_out_bid_label     = tk.StringVar(self, '')
         self._var_out_msg_size      = tk.StringVar(self, ' Size: --- Bytes')
+        # FWD-Q
+        self._var_fwdQ_from_label    = tk.StringVar(self, '')
+        self._var_fwdQ_to_label      = tk.StringVar(self, '')
+        self._var_fwdQ_subj_label    = tk.StringVar(self, '')
+        self._var_fwdQ_time_label    = tk.StringVar(self, '')
+        self._var_fwdQ_bid_label     = tk.StringVar(self, '')
+        self._var_fwdQ_msg_size      = tk.StringVar(self, ' Size: --- Bytes')
 
         ###################################
         # PMS-TAB
@@ -38,9 +45,11 @@ class MSG_Center_BBS(MSG_Center_base):
         tab_PN_PMS       = ttk.Frame(self._tabControl)
         tab_BL_PMS       = ttk.Frame(self._tabControl)
         tab_OUT_PMS      = ttk.Frame(self._tabControl)
+        tab_FWD_Q_PMS    = ttk.Frame(self._tabControl)
         self._tabControl.add(tab_PN_PMS,    text=self._getTabStr('private'))
         self._tabControl.add(tab_BL_PMS,    text='Bulletin')
         self._tabControl.add(tab_OUT_PMS,   text=self._getTabStr('msgC_sendet_msg'))
+        self._tabControl.add(tab_FWD_Q_PMS, text=self._getTabStr('fwd_list'))
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ################################################
         # ######### PMS/PN -----------------------------------
@@ -137,6 +146,34 @@ class MSG_Center_BBS(MSG_Center_base):
         # ## lower_f_top / MSG Header ect.
         self._init_out_lower_frame(lower_f_top)
         self._init_out_footer_frame(lower_f_top)
+
+        ######################################################
+        # ######### FWD-Q
+        fwd_pan_frame = tk.Frame(tab_FWD_Q_PMS)
+        fwd_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        pw_fwd = ttk.PanedWindow(fwd_pan_frame, orient=tk.VERTICAL)
+        top_f = tk.Frame(pw_fwd)
+        lower_f_main = tk.Frame(pw_fwd)
+        lower_f_top = tk.Frame(lower_f_main)
+
+        top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        lower_f_top.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        pw_fwd.add(top_f, weight=1)
+        pw_fwd.add(lower_f_main, weight=1)
+        pw_fwd.pack(fill=tk.BOTH, expand=True)
+        ########################
+        # ## top_f / Msg Table
+        self._init_fwdQ_tree(top_f)
+        self._fwdQ_tree_data = []
+        self._fwdQ_data = []
+        self._update_fwdQ_tree_data()
+        ########################
+        # ## lower_f_top / MSG Header ect.
+        self._init_fwdQ_lower_frame(lower_f_top)
+        self._init_fwdQ_footer_frame(lower_f_top)
         # ---------------------------------------------
         ###############################################
 
@@ -194,11 +231,12 @@ class MSG_Center_BBS(MSG_Center_base):
         btn_frame_l     = tk.Frame(btn_frame)
         btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
-
+        """
         tk.Button(btn_frame_l,
                   text=self._getTabStr('new'),
                   command=lambda: self._open_newMSG_win()
                   ).pack(side=tk.LEFT, expand=False)
+        """
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_msg()
@@ -333,11 +371,12 @@ class MSG_Center_BBS(MSG_Center_base):
         btn_frame_l = tk.Frame(btn_frame)
         btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
-
+        """
         tk.Button(btn_frame_l,
                   text=self._getTabStr('new'),
                   command=lambda: self._open_newMSG_win()
                   ).pack(side=tk.LEFT, expand=False)
+        """
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_msg()
@@ -520,6 +559,137 @@ class MSG_Center_BBS(MSG_Center_base):
                  textvariable=self._var_out_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+
+    # FWD-Q TAB
+    def _init_fwdQ_tree(self, root_frame):
+        columns = (
+            'bid',
+            'Betreff',
+            'Von',
+            'An',
+            'fwd_bbs',
+            'typ',
+            'size',
+        )
+        """
+               f'{el[0]}',         # BID
+                f'{el[7]}',         # Subject
+                f'{from_call}',     # From  
+                f'{to_call}',       # To
+                f'{el[5]}',         # FWD BBS
+                f'{el[6]}',         # Typ
+                f'{el[8]}',         # Size
+        
+        """
+
+        self._fwdQ_tree = ttk.Treeview(root_frame, columns=columns, show='headings')
+        self._fwdQ_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # add a scrollbar
+        scrollbar = ttk.Scrollbar(root_frame, orient=tk.VERTICAL, command=self._fwdQ_tree.yview)
+        self._fwdQ_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+
+        self._fwdQ_tree.heading('bid', text='BID', command=lambda: self._sort_entry('bid', self._fwdQ_tree))
+        self._fwdQ_tree.heading('Betreff', text=self._getTabStr('subject'),
+                               command=lambda: self._sort_entry('Betreff', self._fwdQ_tree))
+        self._fwdQ_tree.heading('Von', text=self._getTabStr('from'),
+                               command=lambda: self._sort_entry('Von', self._fwdQ_tree))
+        self._fwdQ_tree.heading('An', text=self._getTabStr('to'),
+                               command=lambda: self._sort_entry('An', self._fwdQ_tree))
+        self._fwdQ_tree.heading('fwd_bbs', text=f"{self._getTabStr('to')} BBS",
+                               command=lambda: self._sort_entry('fwd_bbs', self._fwdQ_tree))
+        self._fwdQ_tree.heading('typ', text='TYP', command=lambda: self._sort_entry('typ', self._fwdQ_tree))
+        self._fwdQ_tree.heading('size', text='Size', command=lambda: self._sort_entry('size', self._fwdQ_tree))
+        self._fwdQ_tree.column("bid", anchor='w', stretch=tk.NO, width=80)
+        self._fwdQ_tree.column("Betreff", anchor='w', stretch=tk.YES, width=230)
+        self._fwdQ_tree.column("Von", anchor='w', stretch=tk.YES, width=100)
+        self._fwdQ_tree.column("An", anchor='w', stretch=tk.YES, width=100)
+        self._fwdQ_tree.column("fwd_bbs", anchor='w', stretch=tk.YES, width=60)
+        self._fwdQ_tree.column("typ", anchor='w', stretch=tk.NO, width=45)
+        self._fwdQ_tree.column("size", anchor='w', stretch=tk.NO, width=80)
+
+        # self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
+        # self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+
+        self._out_tree.bind('<<TreeviewSelect>>', self._fwdQ_entry_selected)
+
+    def _init_fwdQ_lower_frame(self, root_frame):
+        btn_frame       = tk.Frame(root_frame, height=30)
+        header_frame    = tk.Frame(root_frame, height=80)
+        btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+
+        btn_frame_r     = tk.Frame(btn_frame)
+        btn_frame_l     = tk.Frame(btn_frame)
+        btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
+        btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
+
+        # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_l,
+                  text='Start FWD',
+                  command=lambda: self._do_pms_autoFWD()
+                  ).pack(side=tk.LEFT, expand=False)
+        tk.Button(btn_frame_r,
+                  text=self._getTabStr('delete'),
+                  command=lambda: self._delete_msg()
+                  ).pack(side=tk.RIGHT, expand=False)
+        """
+        tk.Button(btn_frame_r,
+                  text=self._getTabStr('save'),
+                  command=lambda: self._save_outMSG()
+                  ).pack(side=tk.RIGHT, expand=False)
+        tk.Button(btn_frame_r,
+                  text=self._getTabStr('forward'),
+                  command=lambda: self._open_newMSG_win_forward('O')
+                  ).pack(side=tk.RIGHT, expand=False)
+        """
+        # tk.Button(btn_frame, text='Antworten').pack(side=tk.RIGHT, expand=False)
+
+        from_label      = tk.Label(header_frame, textvariable=self._var_fwdQ_from_label)
+        to_label        = tk.Label(header_frame, textvariable=self._var_fwdQ_to_label)
+        subject_label   = tk.Label(header_frame, textvariable=self._var_fwdQ_subj_label)
+        time_label      = tk.Label(header_frame, textvariable=self._var_fwdQ_time_label)
+        bid_label       = tk.Label(header_frame, textvariable=self._var_fwdQ_bid_label)
+        from_label.place(x=2, y=0)
+        to_label.place(x=2, y=25)
+        subject_label.place(x=2, y=50)
+        time_label.place(relx=0.98, y=36, anchor=tk.E)
+        bid_label.place(relx=0.98, y=61, anchor=tk.E)
+
+        # ## lower_f_lower / Msg Text
+        self._fwdQ_text = scrolledtext.ScrolledText(root_frame,
+                                                   font=(FONT, self.text_size),
+                                                   bd=0,
+                                                   height=3,
+                                                   borderwidth=0,
+                                                   background='black',
+                                                   foreground='white',
+                                                   state="disabled",
+                                                   )
+        self._fwdQ_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    def _init_fwdQ_footer_frame(self, root_frame):
+        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        txt_encoding_ent = tk.OptionMenu(
+            footer_frame,
+            self._var_encoding,
+            *ENCODINGS,
+            command=self._update_fwdQ_msg
+        )
+        txt_encoding_ent.configure(
+            font=(None, 6),
+            border=0,
+            borderwidth=0,
+            height=1
+        )
+        txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
+
+        tk.Label(footer_frame,
+                 textvariable=self._var_fwdQ_msg_size,
+                 font=(None, 7),
+                 ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+
     # -----------------------------------------------
     #################################################
 
@@ -636,7 +806,6 @@ class MSG_Center_BBS(MSG_Center_base):
                 self._pn_text.insert('1.0', msg)
 
             self._pn_text.configure(state='disabled')
-
     ################################
     # Bulletin PMS
     def _update_BL_tree_data(self):
@@ -907,5 +1076,120 @@ class MSG_Center_BBS(MSG_Center_base):
                 self._out_text.insert('1.0', msg)
 
             self._out_text.configure(state='disabled')
+
+    ####################
+    ################################
+    # OUT TAB PMS
+    def _update_fwdQ_tree_data(self):
+        self._get_fwdQ_data()
+        self._format_fwdQ_tree_data()
+        self._update_fwdQ_tree()
+
+    def _get_fwdQ_data(self):
+        # TODO
+        self._fwdQ_data = self._bbs_obj.get_active_fwd_q_tab()
+
+    def _get_fwdQ_MSG_data(self, bid):
+        return self._bbs_obj.get_out_msg_fm_BID(bid)
+
+    def _format_fwdQ_tree_data(self):
+        self._fwdQ_tree_data = []
+        for el in self._fwdQ_data:
+            to_call = f"{el[3]}"
+            if el[4]:
+                to_call += f"@{el[4]}"
+            from_call = f"{el[1]}"
+            if el[2]:
+                from_call += f"@{el[2]}"
+
+            """
+            'bid',
+            'Betreff',
+            'Von',
+            'An',
+            'fwd_bbs',
+            'typ',
+            'size',
+            
+            """
+            self._fwdQ_tree_data.append((
+                f'{el[0]}',         # BID
+                f'{el[7]}',         # Subject
+                f'{from_call}',     # From
+                f'{to_call}',       # To
+                f'{el[5]}',         # FWD BBS
+                f'{el[6]}',         # Typ
+                f'{el[8]}',         # Size
+            ))
+
+    def _update_fwdQ_tree(self):
+        for i in self._fwdQ_tree.get_children():
+            self._fwdQ_tree.delete(i)
+        for ret_ent in self._fwdQ_tree_data:
+            self._fwdQ_tree.insert('', tk.END, values=ret_ent[:-1],)
+        self._update_sort_entry(self._fwdQ_tree)
+
+    def _fwdQ_entry_selected(self, event=None):
+        bid = ''
+        for selected_item in self._fwdQ_tree.selection():
+            item = self._fwdQ_tree.item(selected_item)
+            bid = item['tags'][1]
+        if bid:
+            self._fwdQ_show_msg_fm_BID(bid)
+            # self._update_OUT_tree_data()
+            # self._update_sort_entry(self._out_tree)
+
+    def _update_fwdQ_msg(self, event=None):
+        # self._OUT_show_msg_fm_BID(self._selected_out_BID)
+        msg = self._selected_msg['F'].get('msg', b'')
+        if msg:
+            enc = self._var_encoding.get()
+            self._selected_msg['F']['enc'] = enc
+            msg = msg.decode(enc, 'ignore')
+            msg = str(msg).replace('\r', '\n')
+            self._fwdQ_text.configure(state='normal')
+            self._fwdQ_text.delete('1.0', tk.END)
+            self._fwdQ_text.insert('1.0', msg)
+            self._fwdQ_text.configure(state='disabled')
+
+    def _fwdQ_show_msg_fm_BID(self, bid):
+        if bid:
+            self._fwdQ_text.configure(state='normal')
+            self._fwdQ_text.delete('1.0', tk.END)
+            db_data = self._get_fwdQ_MSG_data(bid)
+            if db_data:
+                enc     = self._var_encoding.get()
+                db_data['enc']          = enc
+                self._selected_msg['F'] = db_data
+                bid                     = db_data['bid']
+                from_call               = db_data['from_call']
+                from_bbs                = db_data['from_bbs_call']
+                to                      = db_data['to_call']  # Cat
+                to_bbs                  = db_data['to_bbs']  # Verteiler
+                to_bbs_fwd              = db_data['fwd_bbs']  # Verteiler
+                subj                    = db_data['subject']
+                msg                     = db_data['msg']
+                # _path = _db_data[9]
+                msg_time                = db_data['tx-time']
+                size                    = format_number(len(msg))
+                msg                     = msg.decode(enc, 'ignore')
+                msg                     = str(msg).replace('\r', '\n')
+                if from_bbs:
+                    from_call = from_call + ' @ ' + from_bbs
+                if to_bbs:
+                    to = to + ' @ ' + to_bbs
+
+                to += f' > {to_bbs_fwd}'
+
+                self._var_fwdQ_from_label.set(f"From     : {from_call}")
+                self._var_fwdQ_to_label.set(f"To          : {to}")
+                self._var_fwdQ_subj_label.set(f"Subject : {subj}")
+                self._var_fwdQ_time_label.set(f"{msg_time}")
+                self._var_fwdQ_bid_label.set(f"BID: {bid}")
+                self._var_fwdQ_msg_size.set(f' Size: {size} Bytes')
+
+                self._fwdQ_text.insert('1.0', msg)
+
+            self._fwdQ_text.configure(state='disabled')
 
     ####################

@@ -1,6 +1,6 @@
 from UserDB.UserDBmain import USER_DB
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_ERR, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
-    FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, EOL, MSG_H_FROM, MSG_H_TO, STAMP
+    FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, EOL, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL
 from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
@@ -396,7 +396,7 @@ class BBSConnection:
         return pn_check, trigger
 
     def _parse_msg(self, msg: bytes):
-        # print(msg)
+        print(msg)
         logTag  = self._logTag + f"MSG-Parser> "
         eol     = CR
         # Find EOL Syntax
@@ -406,19 +406,33 @@ class BBSConnection:
                 break
         header_eol  = eol + eol
         lines       = msg.split(header_eol)
+        short       = False
         if len(lines) < 3:
-            BBS_LOG.error(logTag + f"Error: len(lines) < 3: {lines}")
-            return
-        try:
-            h1_lines        = lines[0].split(eol)
-            h2_lines        = lines[1].split(eol)
-            header          = header_eol.join((lines[0], lines[1]))
-            msg             = header_eol.join(lines[2:])
-            subject         = h1_lines[0].decode("ASCII", 'ignore')
-            raw_stamps      = h1_lines[1:]
-        except IndexError:
-            BBS_LOG.error(logTag + f"IndexError: {lines}")
-            return
+            BBS_LOG.debug(logTag + f"Error: len(lines) < 3: {lines}")
+            short = True
+
+        if not short:
+            try:
+                h1_lines        = lines[0].split(eol)
+                h2_lines        = lines[1].split(eol)
+                header          = header_eol.join((lines[0], lines[1]))
+                msg             = header_eol.join(lines[2:])
+                subject         = h1_lines[0].decode("ASCII", 'ignore')
+                raw_stamps      = h1_lines[1:]
+            except IndexError:
+                BBS_LOG.error(logTag + f"IndexError: {lines}")
+                return
+        else:
+            try:
+                h1_lines    = lines[0].split(eol)
+                h2_lines    = []
+                header      = lines[0]
+                msg         = header_eol.join(lines[1:])
+                subject     = h1_lines[0].decode("ASCII", 'ignore')
+                raw_stamps  = h1_lines[1:]
+            except IndexError:
+                BBS_LOG.error(logTag + f"IndexError: {lines}")
+                return
         ####################################
         # Stamps   > R:
         bid         = ''
@@ -426,15 +440,30 @@ class BBSConnection:
         bid_found_e = False
         path        = []
         path_data   = []
-        for stamp_line in raw_stamps:
+        for stamp_line in list(raw_stamps):
             stamp_bid = ''
             if not stamp_line:
                 BBS_LOG.debug(logTag + f"Empty Stamp-Line: {raw_stamps}")
+                raw_stamps = raw_stamps[1:]
                 continue
             if not stamp_line.startswith(STAMP):
                 BBS_LOG.error(logTag + f"No Flag found in Stamp-Line: {stamp_line}")
+                tr = False
+                for msg_h in MSG_HEADER_ALL:
+                    if stamp_line.startswith(msg_h):
+                        BBS_LOG.info(logTag + f"Header Flag found in Stamp-Line: {stamp_line}")
+                        header      = lines[0]
+                        h2_lines    = raw_stamps
+                        BBS_LOG.debug(logTag + f"New Header  : {header}")
+                        BBS_LOG.debug(logTag + f"New h2_lines: {h2_lines}")
+                        tr = True
+                        break
+                if tr:
+                    break
+                raw_stamps = raw_stamps[1:]
                 continue
 
+            raw_stamps = raw_stamps[1:]
             stamp_data = parse_path_line(stamp_line)
             if not stamp_data:
                 BBS_LOG.warning(logTag + f"No StampData - Stamp-Line: {stamp_line}")
@@ -476,12 +505,12 @@ class BBSConnection:
                 break
             for h_from in MSG_H_FROM:
                 if h2_line.startswith(h_from):
-                    from_address = h2_line.replace(h_from, b'').replace(b' ', b'')
+                    from_address = h2_line.replace(h_from, b'')
                     from_address = from_address.decode('ASCII', 'ignore')
                     continue
             for h_to in MSG_H_TO:
                 if h2_line.startswith(h_to):
-                    to_address = h2_line.replace(h_to, b'').replace(b' ', b'')
+                    to_address = h2_line.replace(h_to, b'')
                     to_address = to_address.decode('ASCII', 'ignore')
                     continue
 
@@ -506,8 +535,26 @@ class BBSConnection:
             bid = list(self._rx_msg_header.keys())[0]
             BBS_LOG.info(logTag + f"Fallback to next BID in FWD-Header: {bid} ")
 
-        sender_call, sender_bbs = from_address.split('@')
-        receiver_call, receiver_bbs = to_address.split('@')
+        from_address = from_address.split(' ')
+        while '' in from_address:
+            from_address.remove('')
+        from_address = ''.join(from_address[:3]).replace(' ', '')
+        to_address = to_address.split(' ')
+        while '' in to_address:
+            to_address.remove('')
+        to_address   = ''.join(to_address[:3]).replace(' ', '')
+
+        try:
+            sender_call, sender_bbs     = from_address.split('@')
+        except ValueError:
+            BBS_LOG.warning(logTag + f"ValueError: from_address split @: {from_address}")
+            sender_call, sender_bbs = from_address, ''
+        try:
+            receiver_call, receiver_bbs = to_address.split('@')
+        except ValueError:
+            BBS_LOG.warning(logTag + f"ValueError: to_address split @: {to_address}")
+            receiver_call, receiver_bbs = to_address, ''
+
         if sender_call != self._rx_msg_header[bid]['sender']:
             BBS_LOG.error(logTag + "Error: Sender Call != Header Sender Call")
             BBS_LOG.error(logTag + f"{sender_call} != {self._rx_msg_header[bid]['sender']}")

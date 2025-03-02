@@ -70,6 +70,16 @@ MSG_XH_J_MSG_TYP  = b'X-BBS-Msg-Type:'
 MSG_XH_J_HOLD     = b'X-BBS-Hold:'
 MSG_XH_J_FWD_TO   = b'X-Forwarded-To:'
 
+MSG_HEADER_ALL    = MSG_H_TO + MSG_H_FROM + (
+    MSG_H_SUBJ,
+    MSG_H_MSG_ID,
+    MSG_H_CC,
+    MSG_XH_W_MSG_TYP,
+    MSG_XH_W_BID,
+    MSG_XH_J_MSG_TYP,
+    MSG_XH_J_HOLD,
+    MSG_XH_J_FWD_TO
+)
 ##############################################
 
 def GET_MSG_STRUC():
