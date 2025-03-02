@@ -371,12 +371,14 @@ class UserDB:
             ent.TYP = 'BBS'
         ent.PRmail = address
 
-    def set_PRmail_address(self, address: str, ):
+    def set_PRmail_address(self, address: str, overwrite = False):
         if not address:
             return
         call = address.split('@')[0].split('.')[0]
         ent = self.get_entry(call, True)
         if not ent:
+            return
+        if ent.PRmail and not overwrite:
             return
         if ent.TYP == 'BBS':
             bbs_address = address.split('@')[-1]

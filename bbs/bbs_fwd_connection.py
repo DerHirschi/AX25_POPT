@@ -390,7 +390,6 @@ class BBSConnection:
                 pn_check += db_ret
                 continue
 
-
         # print(_pn_check)
         # print(f"_msg_header.keys: {self._rx_msg_header.keys()}")
         return pn_check, trigger
