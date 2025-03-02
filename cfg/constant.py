@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.40'
+VER = '2.117.41'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -328,6 +328,7 @@ MH_BEACON_FILTER = [
     'NODE',
     'NODES',
     'WX',
+    'WP',
     'WETTER',
     'BAKE',
     'BEACON',

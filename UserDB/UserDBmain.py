@@ -394,6 +394,10 @@ class UserDB:
                     ret.append(self.db[k].PRmail)
         return ret
 
+    def get_PRmail(self, call: str):
+        return self.db.get(call, Client).PRmail
+
+
     def save_data(self):
         # print('Save Client DB')
         logger.info('User-DB: Save User-DB')

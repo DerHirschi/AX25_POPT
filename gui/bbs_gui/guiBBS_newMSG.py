@@ -323,12 +323,12 @@ class BBS_newMSG(tk.Toplevel):
         # self.lift()
 
     def _save_msg(self):
-        sender = self._from_call_var.get()
+        sender = self._from_call_var.get().upper()
         if not sender:
             logger.error("PMS-newMSG: sender")
             return False
-        regio_add = self._bbs_obj.get_pms_cfg().get('regio', '')
-        bbs_call  = self._bbs_obj.get_pms_cfg().get('user', '')
+        regio_add = self._bbs_obj.get_pms_cfg().get('regio', '').upper()
+        bbs_call  = self._bbs_obj.get_pms_cfg().get('user', '').upper()
         if any((not regio_add, not bbs_call)):
             logger.error(f"PMS-newMSG: regio_add/bbs_call: {regio_add}/{bbs_call}")
             return False
@@ -338,7 +338,7 @@ class BBS_newMSG(tk.Toplevel):
             return False
         tmp = recv_call.split('@')
         if len(tmp) == 1:
-            recv_bbs = ''
+            recv_call, recv_bbs = tmp[0], ''
         elif len(tmp) == 2:
             recv_call, recv_bbs = tmp[0], tmp[1]
         else:
@@ -353,6 +353,13 @@ class BBS_newMSG(tk.Toplevel):
         if not subj:
             logger.error("PMS-newMSG: subj")
             return False
+        if typ == 'P':
+            if not '.' in recv_bbs:
+                pr_mail_add = USER_DB.get_PRmail(sender)
+                bbs_add = pr_mail_add.split('@')[-1]
+                if '.' in bbs_add:
+                    recv_bbs = bbs_add
+
         cc_add      = self._to_cc_call_var.get()
         enc         = self._var_encoding.get()
         msg_text    = str(self._text.get('1.0', tk.END)[:-1])
@@ -362,8 +369,8 @@ class BBS_newMSG(tk.Toplevel):
 
         sender_bbs = bbs_call + '.' + regio_add
         self._msg_data = {
-            'sender':        sender.upper(),
-            'sender_bbs':    sender_bbs.upper(),
+            'sender':        sender,
+            'sender_bbs':    sender_bbs,
             'receiver':      recv_call.upper(),
             'recipient_bbs': recv_bbs.upper(),
             'subject':       subj,
@@ -418,13 +425,20 @@ class BBS_newMSG(tk.Toplevel):
         return self._bbs_obj.add_local_msg_to_fwd_by_id(self._mid, home_bbs)
 
     def _dest_call_check(self):
-        to_call = str(self._to_call_var.get())
-        if '@' not in to_call:
+        to_call = str(self._msg_data.get('receiver', ''))
+        to_bbs  = str(self._msg_data.get('recipient_bbs', ''))
+        msg_typ = str(self._msg_data.get('message_type', ''))
+        # to_address = f"{to_call}@{to_bbs}"
+        if not to_call:
             self._to_call_warning()
             return False
-        if not to_call.split('@')[1]:
-            self._to_call_warning()
-            return False
+        if to_bbs:
+            if msg_typ == 'B':
+                self._to_call_warning()
+                return False
+            if not '.' in to_bbs:
+                self._to_call_warning()
+                return False
         return True
 
 
