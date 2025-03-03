@@ -165,6 +165,7 @@ class BBS:
         if not self._fwd_q:
             return
 
+
         to_bbs_call = list(self._fwd_q)[0]
         self._fwd_q = list(self._fwd_q[1:])
         BBS_LOG.info(log_tag + f"Next Fwd to: {to_bbs_call}")
@@ -176,6 +177,13 @@ class BBS:
             self._var_task_fwdQ_timer = time.time() + 20  #
             return
         return
+
+    def _is_bbs_connected(self, bbs_call: str):
+        for bbs_conn in self._fwd_connections:
+            if bbs_call == bbs_conn.get_dest_bbs_call():
+                return True
+        return False
+
 
     def _build_new_fwd_Q(self):
         log_tag = self._logTag + 'Build FWD-Q > '
@@ -189,6 +197,9 @@ class BBS:
                 to_bbs_call = fwd_task[5]
             except IndexError:
                 BBS_LOG.error(log_tag + f"IndexError: fwd_task: {fwd_task} ")
+                continue
+            if self._is_bbs_connected(to_bbs_call):
+                BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
                 continue
             if to_bbs_call not in res:
                 res.append(to_bbs_call)

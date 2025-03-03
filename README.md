@@ -94,3 +94,14 @@ $ pip install --break-system-packages playsound pyserial aprslib
 [Further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
 
 [Telegram Group](https://t.me/poptsupport)
+    
+    8b   d8 888b. d88b .d88b.    db  Yb        dP  Sysop: Manuel
+    8YbmdP8 8   8 " dP YPwww.   dPYb  Yb  db  dP  QTH: Salzwedel - JO52NU
+    8  "  8 8   8  dP      d8  dPwwYb  YbdPYbdP  BBS: MD2BBS.#SAW.SAA.DEU.EU
+    8     8 888P' d888 `Y88P' dP    Yb  YP  YP  QRV: 27.235 MHz / LoRa 868
+                                               Web: packetradio-salzwedel.de
+    PR-Mail:  MD2SAW@MD2BBS.#SAW.SAA.DEU.EU
+    E-Mail:   cb0saw@e-mail.de
+    Terminal: MD2SAW via CB0SAW
+    CB0SAW Teamspeak3-/I-Net-/HF-Gateway/I-Gate AXIP: cb0saw-ddnss.de U 8093
+    
