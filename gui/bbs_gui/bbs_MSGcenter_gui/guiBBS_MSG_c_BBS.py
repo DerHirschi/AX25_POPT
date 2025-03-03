@@ -177,6 +177,35 @@ class MSG_Center_BBS(MSG_Center_base):
         # ---------------------------------------------
         ###############################################
 
+    def on_bbsTab_select(self, event=None):
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except (tk.TclError, AttributeError):
+            return
+        enc = {
+            0: self._selected_msg['P'].get('enc', 'UTF-8'),
+            1: self._selected_msg['B'].get('enc', 'UTF-8'),
+            2: self._selected_msg['O'].get('enc', 'UTF-8'),
+            3: self._selected_msg['F'].get('enc', 'UTF-8'),
+        }.get(ind, 'UTF-8')
+        self._var_encoding.set(enc)
+        self.tree_update_task()
+        # self._pn_tree.selection_toggle(self._pn_tree.focus())
+
+    def tree_update_task(self):
+        try:
+            ind = self._tabControl.index(self._tabControl.select())
+        except tk.TclError:
+            return
+        update_task = {
+            0: self._update_PN_tree_data,
+            1: self._update_BL_tree_data,
+            2: self._update_OUT_tree_data,
+            3: self._update_fwdQ_tree_data,
+        }.get(ind, None)
+        if update_task:
+            update_task()
+
     #################################################
     # Tab Init PMS
     # PN TAB
@@ -1079,7 +1108,7 @@ class MSG_Center_BBS(MSG_Center_base):
 
     ####################
     ################################
-    # OUT TAB PMS
+    # FWD q TAB PMS
     def _update_fwdQ_tree_data(self):
         self._get_fwdQ_data()
         self._format_fwdQ_tree_data()
@@ -1127,7 +1156,7 @@ class MSG_Center_BBS(MSG_Center_base):
             self._fwdQ_tree.delete(i)
         for ret_ent in self._fwdQ_tree_data:
             self._fwdQ_tree.insert('', tk.END, values=ret_ent[:-1],)
-        self._update_sort_entry(self._fwdQ_tree)
+        # self._update_sort_entry(self._fwdQ_tree)
 
     def _fwdQ_entry_selected(self, event=None):
         bid = ''

@@ -438,13 +438,11 @@ class BBS_newMSG(tk.Toplevel):
         if not to_call:
             self._to_call_warning()
             return False
-        if to_bbs:
-            if msg_typ == 'B':
-                self._to_call_warning()
-                return False
-            if not '.' in to_bbs:
-                self._to_call_warning()
-                return False
+        if not to_bbs:
+            self._to_call_warning()
+        if not '.' in to_bbs and msg_typ == 'P':
+            self._to_call_warning()
+            return False
         return True
 
 
