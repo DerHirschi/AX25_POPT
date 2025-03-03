@@ -23,7 +23,7 @@ from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR
-from bbs.bbs_fnc import generate_sid, spilt_regio, build_fwd_msg_header, get_pathlist_fm_header
+from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlist_fm_header
 from bbs.bbs_fwd_connection import BBSConnection
 from cfg.constant import SQL_TIME_FORMAT
 from cfg.popt_config import POPT_CFG
@@ -253,7 +253,7 @@ class BBS:
                 continue
 
             own_bbs_address = self._pms_cfg.get('user', '') + '.' + self._pms_cfg.get('regio', '')
-            msg = build_fwd_msg_header(msg, own_bbs_address)
+            msg = build_msg_header(msg, own_bbs_address)
 
             # Private Mails
             if msg_typ == 'P':
@@ -466,7 +466,7 @@ class BBS:
             BBS_LOG.error(log_tag + 'No msg_fm_db')
             return False
         own_bbs_address = self._pms_cfg.get('user', '') + '.' + self._pms_cfg.get('regio', '')
-        new_msg     = build_fwd_msg_header(msg_fm_db, own_bbs_address)
+        new_msg     = build_msg_header(msg_fm_db, own_bbs_address)
 
         bid         = new_msg.get('bid_mid', '')
         msg_typ     = new_msg.get('message_type', '')
@@ -795,8 +795,8 @@ class BBS:
         try:
             return ret.encode('ASCII'), ret_bids
         except UnicodeEncodeError:
-            print(self._logTag + "build_fwd_header UnicodeEncodeError")
-            logger.error(self._logTag + "build_fwd_header UnicodeEncodeError")
+            # print(self._logTag + "build_fwd_header UnicodeEncodeError")
+            # logger.error(self._logTag + "build_fwd_header UnicodeEncodeError")
             BBS_LOG.error("build_fwd_header UnicodeEncodeError")
             return b'', ret_bids
 

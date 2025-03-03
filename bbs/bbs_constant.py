@@ -60,6 +60,7 @@ MSG_H_FROM      = (b'From:',        )
 MSG_H_SUBJ      = b'Subject:'
 MSG_H_MSG_ID    = b'Message-ID:'
 MSG_H_CC        = b'cc:'
+MSG_H_REPLY     = b'Reply-To:'
 #------------------------------------------
 # Extension Keys produced by W0RLI Systems
 MSG_XH_W_MSG_TYP  = b'X-msgtype:'
@@ -69,16 +70,22 @@ MSG_XH_W_BID      = b'X-BID:'
 MSG_XH_J_MSG_TYP  = b'X-BBS-Msg-Type:'
 MSG_XH_J_HOLD     = b'X-BBS-Hold:'
 MSG_XH_J_FWD_TO   = b'X-Forwarded-To:'
+# ???
+MSG_XH_INFO       = b'X-Info:'
+#------------------------------------------
+
 
 MSG_HEADER_ALL    = MSG_H_TO + MSG_H_FROM + (
     MSG_H_SUBJ,
     MSG_H_MSG_ID,
     MSG_H_CC,
+    MSG_H_REPLY,
     MSG_XH_W_MSG_TYP,
     MSG_XH_W_BID,
     MSG_XH_J_MSG_TYP,
     MSG_XH_J_HOLD,
-    MSG_XH_J_FWD_TO
+    MSG_XH_J_FWD_TO,
+    MSG_XH_INFO
 )
 ##############################################
 

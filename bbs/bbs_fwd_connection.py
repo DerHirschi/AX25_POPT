@@ -1,7 +1,8 @@
 from UserDB.UserDBmain import USER_DB
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_ERR, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
-    FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, EOL, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL
-from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line
+    FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, EOL, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
+    CNTRL_Z
+from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
 
@@ -298,7 +299,8 @@ class BBSConnection:
         if not msg:
             return False
         # print(f"tx_out- 0: {msg[0][0]}  1: {msg[0][1]}  3: {msg[0][2]}  len3: {len(msg[0][2])}")
-        tx_msg = msg[0][0].encode('ASCII', 'ignore') + b'\r' + msg[0][1]+ msg[0][2] + b'\x1a\r'
+        # tx_msg = msg[0][0].encode('ASCII', 'ignore') + b'\r' + msg[0][1]+ msg[0][2] + b'\x1a\r'
+        tx_msg = msg[0][1]+ msg[0][2] + CNTRL_Z + CR
         self._connection_tx(tx_msg)
 
     def _check_msg_to_fwd(self):
@@ -397,12 +399,8 @@ class BBSConnection:
     def _parse_msg(self, msg: bytes):
         print(msg)
         logTag  = self._logTag + f"MSG-Parser> "
-        eol     = CR
         # Find EOL Syntax
-        for tmp_eol in EOL:
-            if tmp_eol in msg:
-                eol = tmp_eol
-                break
+        eol         = find_eol(msg)
         header_eol  = eol + eol
         lines       = msg.split(header_eol)
         short       = False

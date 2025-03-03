@@ -244,8 +244,8 @@ class MSG_Center_BBS(MSG_Center_base):
         self._pn_tree.column("flag", anchor='w', stretch=tk.NO, width=60)
         self._pn_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
 
-        self._pn_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
-        self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+        #self._pn_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
+        #self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
         self._pn_tree.bind('<<TreeviewSelect>>', self._PN_entry_selected)
         # self._pn_tree.get_children()
@@ -367,8 +367,8 @@ class MSG_Center_BBS(MSG_Center_base):
         self._bl_tree.column("flag", anchor='w', stretch=tk.NO, width=60)
         self._bl_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
 
-        self._bl_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
-        self._bl_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+        #self._bl_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
+        #self._bl_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
         self._bl_tree.bind('<<TreeviewSelect>>', self._BL_entry_selected)
 
@@ -385,8 +385,8 @@ class MSG_Center_BBS(MSG_Center_base):
         self._bl_cat_tree.column("#0", width=0, stretch=False)
         self._bl_cat_tree.column("cat", anchor='w', stretch=True, width=0)
 
-        self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
-        self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+        #self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
+        #self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
         self._bl_cat_tree.bind('<<TreeviewSelect>>', self._CAT_entry_selected)
 
@@ -509,8 +509,8 @@ class MSG_Center_BBS(MSG_Center_base):
         self._out_tree.column("flag", anchor='w', stretch=tk.NO, width=45)
         self._out_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
 
-        self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
-        self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+        #self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
+        #self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
         self._out_tree.bind('<<TreeviewSelect>>', self._OUT_entry_selected)
 
@@ -629,10 +629,10 @@ class MSG_Center_BBS(MSG_Center_base):
                                command=lambda: self._sort_entry('fwd_bbs', self._fwdQ_tree))
         self._fwdQ_tree.heading('typ', text='TYP', command=lambda: self._sort_entry('typ', self._fwdQ_tree))
         self._fwdQ_tree.heading('size', text='Size', command=lambda: self._sort_entry('size', self._fwdQ_tree))
-        self._fwdQ_tree.column("bid", anchor='w', stretch=tk.NO, width=80)
+        self._fwdQ_tree.column("bid", anchor='w', stretch=tk.NO, width=120)
         self._fwdQ_tree.column("Betreff", anchor='w', stretch=tk.YES, width=230)
-        self._fwdQ_tree.column("Von", anchor='w', stretch=tk.YES, width=100)
-        self._fwdQ_tree.column("An", anchor='w', stretch=tk.YES, width=100)
+        self._fwdQ_tree.column("Von", anchor='w', stretch=tk.YES, width=120)
+        self._fwdQ_tree.column("An", anchor='w', stretch=tk.YES, width=120)
         self._fwdQ_tree.column("fwd_bbs", anchor='w', stretch=tk.YES, width=60)
         self._fwdQ_tree.column("typ", anchor='w', stretch=tk.NO, width=45)
         self._fwdQ_tree.column("size", anchor='w', stretch=tk.NO, width=80)
