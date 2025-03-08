@@ -67,7 +67,6 @@ SQLITE_MH_TABLES = {
 }
 """
 
-
 class SQL_Database:
     def __init__(self, port_handler):
         self._logTag = "Database: "
@@ -113,6 +112,7 @@ class SQL_Database:
             # self._drope_tabel()
             self.bbs_get_fwdPaths()
         """
+        self.bbs_outMsg_release_wait_by_list([])
 
     def __del__(self):
         if self.db:
@@ -716,14 +716,18 @@ class SQL_Database:
             'flag'              : res[16],
         }
 
+    """
     def bbs_get_fwd_out_Tab(self):
         query = "SELECT * FROM pms_out_msg WHERE flag='F';"
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
+    """
 
     def bbs_get_fwd_q_Tab_for_BBS(self, bbs_call: str):
-        query = "SELECT * FROM pms_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
+        # TODO Fail Counter after S= and set Hold if Fail counter has reach threshold
+        query = "SELECT * FROM pms_fwd_q WHERE fwd_bbs_call=%s AND (flag='F' OR flag='S=') LIMIT 5;"
+        # query = "SELECT * FROM pms_fwd_q WHERE fwd_bbs_call=%s AND flag='F' LIMIT 5;"
         query_data = (bbs_call,)
         res = self._commit_query_bin(query, query_data)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
@@ -932,7 +936,8 @@ class SQL_Database:
                   "type, "
                   "subject, "
                   "size "
-                  "FROM pms_fwd_q WHERE flag='F';")
+                  # "FROM pms_fwd_q WHERE flag='F';")
+                  "FROM pms_fwd_q WHERE flag='F' or flag='S=';")
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
@@ -994,6 +999,23 @@ class SQL_Database:
         query = "UPDATE pms_in_msg SET flag=%s WHERE BID=%s;"
         query_data = (flag, bid)
         self._commit_query_bin(query, query_data)
+
+    def bbs_outMsg_wait_by_FWD_ID(self, fwd_id: str):
+        query = "UPDATE pms_fwd_q SET flag='SW', try = try + 1 WHERE FWDID=%s;"
+        query_data = (fwd_id, )
+        self._commit_query_bin(query, query_data)
+
+    def bbs_outMsg_release_wait_by_list(self, fwd_id_list: list):
+        # fwd_id_list = ['000784MD2BOX-DBO527', '000784MD2BOX-MD2BBS']
+        id_list = [str(x) for x in fwd_id_list]
+        id_str = "('" + "','".join(id_list) + "')"
+        query = f"UPDATE pms_fwd_q SET flag='S=' WHERE FWDID in {id_str};"
+        self._commit_query(query)
+
+    def bbs_outMsg_release_all_wait(self):
+        query = f"UPDATE pms_fwd_q SET flag='S=' WHERE flag='SW';"
+        self._commit_query(query)
+
 
     def pms_save_outMsg_by_MID(self, mid: str):
         if not mid:
@@ -1092,6 +1114,7 @@ class SQL_Database:
         return True
 
     def bbs_del_pn_in_msg_by_IDs(self, msg_ids: list, call: str):
+        # id_str = convert_list(msg_ids)
         id_list = [str(x) for x in msg_ids]
         id_str = '(' + ','.join(id_list) + ')'
 

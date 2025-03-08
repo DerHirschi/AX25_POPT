@@ -71,10 +71,10 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
     subject                  = msg_struc.get('subject', '')
     old_header               = msg_struc.get('header', b'')
     old_path                 = msg_struc.get('path', "")
-    from_call               = msg_struc.get('sender', "")
-    from_bbs                = msg_struc.get('sender_bbs', "")
-    to_call                 = msg_struc.get('receiver', "")
-    to_bbs                  = msg_struc.get('recipient_bbs', "")
+    from_call                = msg_struc.get('sender', "")
+    from_bbs                 = msg_struc.get('sender_bbs', "")
+    to_call                  = msg_struc.get('receiver', "")
+    to_bbs                   = msg_struc.get('recipient_bbs', "")
 
     from_address    = f"{from_call}@{from_bbs}"
     to_address      = f"{to_call}@{to_bbs}"
@@ -113,7 +113,7 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
             new_header += line.encode('ASCII', 'ignore') + CR
         new_header += CR
         new_header += MSG_H_FROM[0] + SP + from_address.encode('ASCII', 'ignore') + CR
-        new_header += MSG_H_TO[0]   + SP + to_address.encode('ASCII', 'ignore') + CR
+        new_header += MSG_H_TO[1]   + SP + to_address.encode('ASCII', 'ignore') + CR
         new_header += CR
 
     else:

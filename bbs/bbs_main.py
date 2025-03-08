@@ -16,6 +16,9 @@ IN  = Default (New Incoming)
 $   = New Incoming - Markt for Forward Check
 DL  = Deleted MSG
 
+flags in FWD Q Tab
+SW  = (BBS is already receiving MSG fm other BBS) Try again on next connect. Still connected
+S=  = Send (BBS is already receiving MSG fm other BBS) Try again on next connect.
 """
 
 import time
@@ -55,6 +58,9 @@ class BBS:
         self._pms_cfg_hasChanged    = False
         if not self._pms_cfg.get('enable_fwd', True):
             BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
+        #######################################
+        # Set flag in FWD-Q  'SW' > 'S='
+        self._db.bbs_outMsg_release_all_wait()
         ####################
         # Set Vars
         self._set_pms_home_bbs()
@@ -72,7 +78,7 @@ class BBS:
         self._fwd_q                 = []   # Local FWD Q
         self._fwd_connections       = []   # Connects using FWD Port
         self._incoming_fwd_bids     = []   # Incoming FWD BIDs
-        self._new_man_FWD_wait_t    = time.time()   + 40
+        self._new_man_FWD_wait_t    = time.time()   + 5
         ####################
         # Tasker/crone
         # self._var_task_1sec = time.time()
@@ -772,9 +778,10 @@ class BBS:
     # FWD
     def _get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
         return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
-
+    """
     def _get_fwd_out_tab(self):
         return self._db.bbs_get_fwd_out_Tab()
+    """
 
     def build_fwd_header(self, bbs_call: str):
         fwd_q_data  = self._get_fwd_q_tab_forBBS(bbs_call)

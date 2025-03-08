@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.47'
+VER = '2.117.48'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -39,7 +39,7 @@ CFG_sound_BELL      = '//data//sound//bell.wav'
 
 ###################################################################################
 """ CONST Stuff """
-LANGUAGE = 0
+LANGUAGE = 1
 LANG_IND = {
             'DE': 0,
             'EN': 1,

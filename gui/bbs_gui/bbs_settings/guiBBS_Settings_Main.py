@@ -32,7 +32,7 @@ class BBSSettingsMain(tk.Toplevel):
         self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win  = root_win
         self._root_win.settings_win = self
-        self.title(self._getTabStr('settings'))
+        self.title("PMS/BBS-" + self._getTabStr('settings'))
         ###############################################################
         self._pms_cfg   = POPT_CFG.get_BBS_cfg()
         ###############################################################

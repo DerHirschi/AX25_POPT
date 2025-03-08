@@ -1,6 +1,6 @@
 from UserDB.UserDBmain import USER_DB
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_ERR, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
-    FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, EOL, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
+    FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
     CNTRL_Z
 from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol
 from cfg.logger_config import logger, BBS_LOG
@@ -9,26 +9,27 @@ from cfg.popt_config import POPT_CFG
 
 class BBSConnection:
     def __init__(self, bbs_obj, ax25_connection):
-        self._ax25_conn     = ax25_connection
-        self._bbs           = bbs_obj
-        self._db            = bbs_obj.get_db()
+        self._ax25_conn      = ax25_connection
+        self._bbs            = bbs_obj
+        self._db             = bbs_obj.get_db()
         ###########
-        self.e              = False
-        self._mybbs_flag    = self._bbs.bbs_id_flag
-        self._dest_stat_id  = self._ax25_conn.cli.stat_identifier
+        self.e               = False
+        self._mybbs_flag     = self._bbs.bbs_id_flag
+        self._dest_stat_id   = self._ax25_conn.cli.stat_identifier
         # print(f"BBS-Conn : {self._dest_stat_id}")
-        # self._bbs_fwd_cmd = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
-        self._dest_bbs_call = str(self._ax25_conn.to_call_str).split('-')[0]
-        self._my_stat_id    = self._bbs.my_stat_id
-        self._feat_flag     = []
-        self._logTag        = f"BBS-Conn ({self._dest_bbs_call}): "
+        # self._bbs_fwd_cmd  = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
+        self._dest_bbs_call  = str(self._ax25_conn.to_call_str).split('-')[0]
+        self._my_stat_id     = self._bbs.my_stat_id
+        self._feat_flag      = []
+        self._logTag         = f"BBS-Conn ({self._dest_bbs_call}): "
         ###########
-        self._rx_buff       = b''
-        self._rx_msg_header = {}
+        self._rx_buff        = b''
+        self._rx_msg_header  = {}
         # tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
-        self._tx_msg_header = b''
-        self._tx_msg_BIDs   = []
-        self._tx_fs_list    = ''    # '++-='
+        self._tx_msg_header  = b''
+        self._tx_msg_BIDs    = []
+        self._tx_fs_list     = ''    # '++-='
+        self._send_next_time = []
         BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_stat_id.feat_flag}')
 
         self._state_tab = {
@@ -110,7 +111,6 @@ class BBSConnection:
         self._rx_buff   = bytes(self._rx_buff[index2:     ])
         return ret
 
-
     def _connection_tx(self, raw_data: b''):
         # print(f"_connection_tx: {raw_data}")
         self._ax25_conn.send_data(data=raw_data)
@@ -130,7 +130,9 @@ class BBSConnection:
             BBS_LOG.error(logTag + f'Error, end_fwd_conn() - {self._dest_bbs_call}')
         # self._ax25_conn.cli.change_cli_state(state=1)
         self._ax25_conn.bbs_connection = None
-        # Cleanup Global FWD Headers
+        # Cleanup Wait MSG.
+        self._db.bbs_outMsg_release_wait_by_list(list(self._send_next_time))
+        self._send_next_time = []
         """
         called in self._bbs.end_fwd_conn(self)
         for bid in list(self._rx_msg_header.keys()):
@@ -157,7 +159,8 @@ class BBSConnection:
         else:
             self._state = 1
         return True
-
+    ##################################################
+    # States
     def _wait_f_prompt(self):
         # 1
         if self._get_lines_fm_rx_buff('>', cut_rx_buff=True):
@@ -243,7 +246,8 @@ class BBSConnection:
             elif flag in FWD_N_OK:
                 self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S-')
             elif flag in FWD_LATER:
-                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S=')
+                self._db.bbs_outMsg_wait_by_FWD_ID(fwd_id,)
+                self._send_next_time.append(fwd_id)
             elif flag == FWD_HLD:
                 self._tx_out_msg_by_bid(bids[i])
             elif flag == FWD_REJ:
@@ -275,9 +279,6 @@ class BBSConnection:
         if self._get_lines_fm_rx_buff('F>', cut_rx_buff=False):
             self._state = 3
             return
-
-
-        # TODO IF New Msg  (FB)
 
     ########################################################
     #
@@ -397,8 +398,9 @@ class BBSConnection:
         return pn_check, trigger
 
     def _parse_msg(self, msg: bytes):
-        print(msg)
+        # TODO: Again ..
         logTag  = self._logTag + f"MSG-Parser> "
+        BBS_LOG.debug(logTag + f"msg: {msg}")
         # Find EOL Syntax
         eol         = find_eol(msg)
         header_eol  = eol + eol
