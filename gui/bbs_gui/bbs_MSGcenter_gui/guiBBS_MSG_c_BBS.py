@@ -125,9 +125,9 @@ class MSG_Center_BBS(MSG_Center_base):
         out_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         pw_out              = ttk.PanedWindow(out_pan_frame, orient=tk.VERTICAL)
-        top_f               = tk.Frame(pw_out)
-        lower_f_main        = tk.Frame(pw_out)
-        lower_f_top         = tk.Frame(lower_f_main)
+        top_f               = ttk.Frame(pw_out)
+        lower_f_main        = ttk.Frame(pw_out)
+        lower_f_top         = ttk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -190,6 +190,7 @@ class MSG_Center_BBS(MSG_Center_base):
         }.get(ind, 'UTF-8')
         self._var_encoding.set(enc)
         self.tree_update_task()
+
         # self._pn_tree.selection_toggle(self._pn_tree.focus())
 
     def tree_update_task(self):
@@ -219,7 +220,7 @@ class MSG_Center_BBS(MSG_Center_base):
             'Datum',
         )
 
-        self._pn_tree = ttk.Treeview(root_frame, columns=columns, show='headings')
+        self._pn_tree = ttk.Treeview(root_frame, columns=columns, show='headings', selectmode="extended")
         self._pn_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # add a scrollbar
         scrollbar = ttk.Scrollbar(root_frame, orient=tk.VERTICAL, command=self._pn_tree.yview)
@@ -248,6 +249,8 @@ class MSG_Center_BBS(MSG_Center_base):
         #self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
         self._pn_tree.bind('<<TreeviewSelect>>', self._PN_entry_selected)
+        # self._pn_tree.configure(selectmode='extended')
+
         # self._pn_tree.get_children()
 
     def _init_pn_lower_frame(self, root_frame):
@@ -501,18 +504,19 @@ class MSG_Center_BBS(MSG_Center_base):
         self._out_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._out_tree))
         self._out_tree.heading('Datum', text='TX-Time', command=lambda: self._sort_entry('Datum', self._out_tree))
         self._out_tree.column("gesendet", anchor=tk.CENTER, stretch=tk.NO, width=40)
-        self._out_tree.column("Betreff", anchor='w', stretch=tk.YES, width=230)
-        self._out_tree.column("Von", anchor='w', stretch=tk.YES, width=100)
-        self._out_tree.column("An", anchor='w', stretch=tk.YES, width=100)
+        self._out_tree.column("Betreff",  anchor='w', stretch=tk.YES, width=230)
+        self._out_tree.column("Von",      anchor='w', stretch=tk.YES, width=100)
+        self._out_tree.column("An",  anchor='w', stretch=tk.YES, width=100)
         self._out_tree.column("fwd_bbs", anchor='w', stretch=tk.YES, width=60)
         self._out_tree.column("typ", anchor='w', stretch=tk.NO, width=45)
         self._out_tree.column("flag", anchor='w', stretch=tk.NO, width=45)
         self._out_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
 
-        #self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
-        #self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+        # self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
+        # self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
         self._out_tree.bind('<<TreeviewSelect>>', self._OUT_entry_selected)
+
 
     def _init_out_lower_frame(self, root_frame):
         btn_frame = tk.Frame(root_frame, height=30)
@@ -785,7 +789,7 @@ class MSG_Center_BBS(MSG_Center_base):
             bid = item['tags'][1]
         if bid:
             self._PN_show_msg_fm_BID(bid)
-            self._update_PN_tree_data()
+            # self._update_PN_tree_data()
 
     def _update_PN_msg(self, event=None):
         msg = self._selected_msg['P'].get('msg', b'')
@@ -888,11 +892,8 @@ class MSG_Center_BBS(MSG_Center_base):
         for i in self._bl_tree.get_children():
             self._bl_tree.delete(i)
         for ret_ent in self._bl_tree_data:
-            if ret_ent[0]:
-                tag = 'neu'
-            else:
-                tag = 'alt'
-            self._bl_tree.insert('', tk.END, values=ret_ent[:-1], tags=(tag, ret_ent[-1]))
+
+            self._bl_tree.insert('', tk.END, values=ret_ent[:-1], tags=('dummy', ret_ent[-1]))
         self._update_sort_entry(self._bl_tree)
 
     def _BL_entry_selected(self, event=None):
@@ -902,7 +903,7 @@ class MSG_Center_BBS(MSG_Center_base):
             bid = item['tags'][1]
         if bid:
             self._BL_show_msg_fm_BID(bid)
-            self._update_BL_tree_data()
+            # self._update_BL_tree_data()
 
     def _update_BL_msg(self, event=None):
         msg = self._selected_msg['B'].get('msg', b'')
@@ -1036,11 +1037,14 @@ class MSG_Center_BBS(MSG_Center_base):
         for i in self._out_tree.get_children():
             self._out_tree.delete(i)
         for ret_ent in self._out_tree_data:
+            """
             if not ret_ent[0]:
                 tag = 'neu'
             else:
                 tag = 'alt'
-            self._out_tree.insert('', tk.END, values=ret_ent[:-1], tags=(tag, ret_ent[-1]))
+            """
+            self._out_tree.insert('', tk.END, values=ret_ent[:-1], tags=('dummy', ret_ent[-1]))
+            # self._out_tree.insert('', tk.END, values=ret_ent[:-1], tags=(tag, ret_ent[-1]))
         self._update_sort_entry(self._out_tree)
 
     def _OUT_entry_selected(self, event=None):

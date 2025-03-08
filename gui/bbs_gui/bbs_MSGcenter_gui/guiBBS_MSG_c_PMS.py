@@ -509,6 +509,7 @@ class MSG_Center_PMS(MSG_Center_base):
         self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
         self._out_tree.bind('<<TreeviewSelect>>', self._OUT_entry_selected)
+        # self._out_tree.bind('<<TreeviewSelect>>', lambda event: print(event))
 
     def _init_out_lower_frame(self, root_frame):
         btn_frame = tk.Frame(root_frame, height=30)
@@ -758,7 +759,7 @@ class MSG_Center_PMS(MSG_Center_base):
             bid = item['tags'][1]
         if bid:
             self._PN_show_msg_fm_BID(bid)
-            self._update_PN_tree_data()
+            # self._update_PN_tree_data()
 
     def _update_PN_msg(self, event=None):
         msg = self._selected_msg['P'].get('msg', b'')
@@ -878,7 +879,7 @@ class MSG_Center_PMS(MSG_Center_base):
             bid = item['tags'][1]
         if bid:
             self._BL_show_msg_fm_BID(bid)
-            self._update_BL_tree_data()
+            # self._update_BL_tree_data()
 
     def _update_BL_msg(self, event=None):
         msg = self._selected_msg['B'].get('msg', b'')
@@ -1128,7 +1129,7 @@ class MSG_Center_PMS(MSG_Center_base):
             mid = item['tags'][1]
         if mid:
             self._SV_show_msg_fm_MID(mid)
-            self._update_SV_tree_data()
+            # self._update_SV_tree_data()
 
     def _update_SV_msg(self, event=None):
         msg = self._selected_msg['S'].get('msg', b'')

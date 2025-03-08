@@ -8,6 +8,7 @@ Fixes:
   - Führt dazu das PoPT-BOX nicht auf weitere Nachrichten reagiert und
     die Verbindung "hängt".
 - FWD: Sender BBS-Adresse wir teilweise ohne Verteiler gespeichert
+- Unvollständiger PR-Mail Header. (From:, To:)
 
 Optimierung:
 - T2-Auto Berechnung
