@@ -31,6 +31,7 @@ class BBSSettingsMain(tk.Toplevel):
         self._bbs_obj   = PORT_HANDLER.get_bbs()
         self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win  = root_win
+        self.add_win    = None
         self._root_win.settings_win = self
         self.title("PMS/BBS-" + self._getTabStr('settings'))
         ###############################################################
@@ -120,9 +121,17 @@ class BBSSettingsMain(tk.Toplevel):
         self._root_win.sysMsg_to_monitor(self._getTabStr('hin2'))
         self.destroy_win()
 
+    def update_tabs(self):
+        for strTab_name, tab in self._tab_list.items():
+            if hasattr(tab, 'update_win'):
+                tab.update_win()
+
     def destroy_win(self):
+        if hasattr(self.add_win, 'destroy'):
+            self.add_win.destroy()
         for strTab_name, tab in self._tab_list.items():
             if hasattr(tab, 'destroy_win'):
                 tab.destroy_win()
         self._root_win.settings_win = None
         self.destroy()
+

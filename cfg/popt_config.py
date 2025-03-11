@@ -1,3 +1,5 @@
+import copy
+
 from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
@@ -603,7 +605,7 @@ class Main_CFG:
             del self._config['bbs_main']['home_bbs_cfg']
 
     def get_BBS_cfg(self):
-        return dict(self._config.get('bbs_main', getNew_BBS_cfg()))
+        return copy.deepcopy(self._config.get('bbs_main', getNew_BBS_cfg()))
 
     def set_BBS_cfg(self, bbs_cfg: dict):
         self._config['bbs_main'] = dict(bbs_cfg)

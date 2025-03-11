@@ -370,7 +370,9 @@ class PoPT_GUI_Main:
             self.dualPortMon_win,
             self.conn_Path_plot_win,
         ]:
-            if wn is not None:
+            if hasattr(wn, 'destroy_win'):
+                wn.destroy_win()
+            if hasattr(wn, 'destroy'):
                 wn.destroy()
         self._quit = True
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')

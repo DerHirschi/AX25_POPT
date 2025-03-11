@@ -2988,6 +2988,42 @@ STR_TABLE = {
         '',
         ''),
 
+    'bbs_sett_pn_bbs_in': (
+        'Privat Mail > eingehend',
+        'Private mail > incoming',
+        'Privémail > inkomend',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_sett_bl_bbs_in': (
+        'Bulletin Mail > eingehend',
+        'Bulletin mail > incoming',
+        'Bulletin mail > inkomend',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_sett_bl_bbs_out': (
+        'Bulletin Mail > ausgehend',
+        'Bulletin mail > outgoing',
+        'Bulletin mail > uitgaand',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'msgC_sendet_msg': (
         'Gesendet',
         'Sendet',

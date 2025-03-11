@@ -106,29 +106,30 @@ def getNew_BBS_FWD_cfg():
         bl_fwd              = True, # Allow BL FWD
         pn_fwd_auto_path    = False,# Allow AutoPath
         pn_fwd_alter_path   = False,# Allow Alternative Route               # TODO GUI / after x attempt's
-        # PN Outgoing Routing   # TODO GUI
+        # PN Outgoing Routing
         pn_fwd_bbs_out      = [],   # Known BBS behind this BBS
         pn_fwd_not_bbs_out  = [],   # Not FWD to BBS # TODO: add to Routing-Fnc
         pn_fwd_h_out        = [],   # Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
         pn_fwd_not_h_out    = [],   # Rejected Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
         pn_fwd_call_out     = [],   # Outgoing CALLs (['MD2SAW', 'CB0SAW']) - [] = all
         pn_fwd_not_call_out = [],   # Rejected Outgoing CALLs ([MD2SAW', 'CB0SAW'])
-        # PN Incoming Routing   # TODO GUI
+        # PN Incoming Routing
         pn_fwd_bbs_in       = [],   # Reject PN from listed BBS
+        pn_fwd_not_bbs_in   = [],   # Not FWD to BBS # TODO: add to Routing-Fnc
         pn_fwd_h_in         = [],   # Incoming H-Routing (If specified, rejects all other PN)
         pn_fwd_not_h_in     = [],   # Rejected Incoming H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
         pn_fwd_call_in      = [],   # Incoming CALLs (['MD2SAW', 'CB0SAW']) - [] = all
         pn_fwd_not_call_in  = [],   # Rejected Incoming CALLs ([MD2SAW', 'CB0SAW'])
-        # BL Outgoing Routing   # TODO GUI
+        # BL Outgoing Routing
         bl_dist_out         = [],   # Outgoing distributor (['*', 'EU']) - [] = all
         bl_dist_not_out     = [],   # Rejected Outgoing distributor (['SAW', 'DEU'])
         bl_top_out          = [],   # Outgoing Topic (['PR'])  - [] = all
         bl_top_not_out      = [],   # Rejected Outgoing Topic (['PR', 'POPT'])
-        # BL Incoming Routing   # TODO GUI
+        # BL Incoming Routing
         bl_dist_in          = [],   # Incoming distributor (['*', 'EU'])
         bl_dist_not_in      = [],   # Rejected Incoming distributor (['SAW', 'DEU'])
         bl_top_in           = [],   # Incoming Topic (['PR'])  - [] = all
-        bl_top_not_ib       = [],   # Rejected Incoming Topic (['PR', 'POPT'])
+        bl_top_not_in       = [],   # Rejected Incoming Topic (['PR', 'POPT'])
 
     )
 """
