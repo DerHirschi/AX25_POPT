@@ -636,9 +636,9 @@ class AX25PortHandler(object):
                         via_calls = mh_vias
         if not axip_add[0]:
             if via_calls:
-                axip_add = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(via_calls[0])
+                axip_add = self.get_MH().get_AXIP_fm_DB_MH(via_calls[0])
             else:
-                axip_add = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(dest_call)
+                axip_add = self.get_MH().get_AXIP_fm_DB_MH(dest_call)
             # axip_add = tuple(mh_entry.axip_add)
         if port_id == -1 and mh_entry:
             port_id = int(mh_entry.port_id)

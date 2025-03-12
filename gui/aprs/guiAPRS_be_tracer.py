@@ -14,7 +14,7 @@ from fnc.ax25_fnc import get_list_fm_viaStr
 
 class BeaconTracer(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win = root_win
         self._lang = POPT_CFG.get_guiCFG_language()
         # self._ais_obj = PORT_HANDLER.get_aprs_ais()

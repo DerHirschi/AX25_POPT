@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 class PlotWindow(tk.Toplevel):
     def __init__(self, root_cl):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_cl.main_win)
         self.wm_title("Port Statistik")
         # self.root_cl = root_cl
         self.geometry(f"800x"

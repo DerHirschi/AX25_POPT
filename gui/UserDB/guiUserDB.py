@@ -13,7 +13,7 @@ from gui.guiMsgBoxes import AskMsg
 
 class UserDB(tk.Toplevel):
     def __init__(self, root, ent_key=''):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root.main_win)
         self._root_win = root
         self._lang = POPT_CFG.get_guiCFG_language()
         self.win_height = 600

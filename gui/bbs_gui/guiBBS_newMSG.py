@@ -13,7 +13,7 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
 
 class BBS_newMSG(tk.Toplevel):
     def __init__(self, root_win, reply_msg=None):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         if reply_msg is None:
             reply_msg   = {}
         self._root_win  = root_win

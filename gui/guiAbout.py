@@ -4,7 +4,7 @@ from cfg.constant import VER
 
 class About(tk.Toplevel):
     def __init__(self, main_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=main_win.main_win)
         self.main_cl = main_win
         self.style = main_win.style
         self.win_height = 200

@@ -14,7 +14,7 @@ from gui.guiError import PoPTModulError
 
 class MCastAddMember(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win)
         self._root_win = root_win
         self._mcast = root_win.get_mcast()
 
@@ -110,7 +110,7 @@ class MCastAddMember(tk.Toplevel):
 
 class MCastMoveMember(tk.Toplevel):
     def __init__(self, root_win, member_call: str):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win)
         self._root_win = root_win
         self._member_call = member_call
         self._mcast = root_win.get_mcast()

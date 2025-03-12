@@ -5,8 +5,8 @@ from cfg.popt_config import POPT_CFG
 
 class PrivilegWin(tk.Toplevel):
     def __init__(self, root):
-        tk.Toplevel.__init__(self)
-        self._root = root
+        tk.Toplevel.__init__(self, master=root.main_win)
+        self._root_cl = root
         self._lang = POPT_CFG.get_guiCFG_language()
         root.settings_win = self
         self.win_height = 350
@@ -16,8 +16,8 @@ class PrivilegWin(tk.Toplevel):
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
-                      f"{self._root.main_win.winfo_x()}+"
-                      f"{self._root.main_win.winfo_y()}")
+                      f"{self._root_cl.main_win.winfo_x()}+"
+                      f"{self._root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
         try:
@@ -103,7 +103,7 @@ class PrivilegWin(tk.Toplevel):
         ###############
         # VARS
         self.db_ent = False
-        conn = self._root.get_conn()
+        conn = self._root_cl.get_conn()
         if conn is None:
             ok_bt.configure(state='disabled')
         else:
@@ -118,7 +118,7 @@ class PrivilegWin(tk.Toplevel):
         # self.root.msg_to_monitor('Lob: Du hast dir heute noch kein Lob verdient.')
         self.save_to_user_db()
         # sys_cmd = self.login_cmd_var.get()
-        self._root.do_priv()
+        self._root_cl.do_priv()
         self.destroy_win()
 
     def save_to_user_db(self):
@@ -131,7 +131,7 @@ class PrivilegWin(tk.Toplevel):
 
     def destroy_win(self):
         self.destroy()
-        self._root.settings_win = None
+        self._root_cl.settings_win = None
 
     def tasker(self):
         pass

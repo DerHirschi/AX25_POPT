@@ -23,7 +23,7 @@ def getNew_ConnHistory(own_call: str,
 class NewConnWin(tk.Toplevel):
     # TODO Again . . .
     def __init__(self, main_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=main_win.main_win)
         self._main = main_win
         self._lang = self._main.language
         self.style = self._main.style

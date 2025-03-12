@@ -271,7 +271,7 @@ class PipeTab:
 
 class PipeToolSettings(tk.Toplevel):
     def __init__(self, root):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root.main_win)
         self._root = root
         self._lang = POPT_CFG.get_guiCFG_language()
         root.settings_win = self

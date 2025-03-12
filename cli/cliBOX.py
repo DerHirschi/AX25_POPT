@@ -106,11 +106,12 @@ class BoxCLI(DefaultCLI):
         pms_cfg: dict = bbs.get_pms_cfg()
         if self._to_call in pms_cfg.get('fwd_bbs_cfg', {}).keys():
             self._connection.bbsFwd_start()
-        if any((
-                self.stat_identifier.typ in ['BBS', 'NODE'],
-                self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
-        )):
-            return
+        if hasattr(self.stat_identifier, 'typ'):
+            if any((
+                    self.stat_identifier.typ in ['BBS', 'NODE'],
+                    self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
+            )):
+                return
         ########################
         # Check String Commands
         if not self._exec_str_cmd():

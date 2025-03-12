@@ -4,7 +4,7 @@ from tkinter import ttk
 
 class LinkHolderSettings(tk.Toplevel):
     def __init__(self, root):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root.main_win)
         self.root_win = root
         self.root_win.settings_win = self
         self.win_height = 285

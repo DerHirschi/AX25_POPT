@@ -213,10 +213,13 @@ class MSG_Center_BBS(MSG_Center_base):
     def _init_pn_tree(self, root_frame):
         columns = (
             #'Neu',
+            'msgid',
+            'bid',
             'Betreff',
             'Von',
             'An',
             'flag',
+            'notnew',
             'Datum',
         )
 
@@ -229,6 +232,10 @@ class MSG_Center_BBS(MSG_Center_base):
 
         #self._pn_tree.heading('Neu', text=self._getTabStr('new'),
         #                      command=lambda: self._sort_entry('Neu', self._pn_tree))
+        self._pn_tree.heading('msgid', text='MSG-ID',
+                              command=lambda: self._sort_entry('msgid', self._pn_tree))
+        self._pn_tree.heading('bid', text='BID',
+                              command=lambda: self._sort_entry('bid', self._pn_tree))
         self._pn_tree.heading('Betreff', text=self._getTabStr('subject'),
                               command=lambda: self._sort_entry('Betreff', self._pn_tree))
         self._pn_tree.heading('Von', text=self._getTabStr('from'),
@@ -236,13 +243,18 @@ class MSG_Center_BBS(MSG_Center_base):
         self._pn_tree.heading('An', text=self._getTabStr('to'),
                               command=lambda: self._sort_entry('An', self._pn_tree))
         self._pn_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._pn_tree))
+        self._pn_tree.heading('notnew', text=self._getTabStr('read_ed'),
+                              command=lambda: self._sort_entry('notnew', self._pn_tree))
         self._pn_tree.heading('Datum', text=self._getTabStr('date_time'),
                               command=lambda: self._sort_entry('Datum', self._pn_tree))
         #self._pn_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
+        self._pn_tree.column("msgid", anchor='w', stretch=tk.NO, width=60)
+        self._pn_tree.column("bid", anchor='w', stretch=tk.NO, width=150)
         self._pn_tree.column("Betreff", anchor='w', stretch=tk.YES, width=190)
         self._pn_tree.column("Von", anchor='w', stretch=tk.YES, width=130)
         self._pn_tree.column("An", anchor='w', stretch=tk.YES, width=130)
         self._pn_tree.column("flag", anchor='w', stretch=tk.NO, width=60)
+        self._pn_tree.column("notnew", anchor='w', stretch=tk.NO, width=40)
         self._pn_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
 
         #self._pn_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
@@ -515,7 +527,8 @@ class MSG_Center_BBS(MSG_Center_base):
         # self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         # self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
-        self._out_tree.bind('<<TreeviewSelect>>', self._OUT_entry_selected)
+        # self._out_tree.bind('<<TreeviewSelect>>', self._OUT_entry_selected)
+        self._out_tree.bind('<<TreeviewSelect>>', lambda x: print(f'Test: {x}'))
 
 
     def _init_out_lower_frame(self, root_frame):
@@ -739,47 +752,47 @@ class MSG_Center_BBS(MSG_Center_base):
     def _get_PN_MSG_data(self, bid):
         return self._bbs_obj.get_pn_msg_fm_BID(bid)
 
-    def _set_PN_MSG_notNew(self, bid: str):
-        self._bbs_obj.set_in_msg_notNew(bid)
-
     def _format_PN_tree_data(self):
         self._pn_tree_data = []
         for el in self._pn_data:
-            from_call = f"{el[1]}"
-            if el[2]:
-                from_call += f"@{el[2]}"
-            to_call = f"{el[3]}"
-            if el[4]:
-                to_call += f"@{el[4]}"
-
-            #new = ''
-            #if int(el[7]):
-            #    new = '✉'
-            date = el[6]
-            tmp = str(date).split('-')[0]
+            from_call = f"{el[2]}"
+            if el[3]:
+                from_call += f"@{el[3]}"
+            to_call = f"{el[4]}"
+            if el[5]:
+                to_call += f"@{el[5]}"
+            new = '✓'
+            if int(el[8]):
+                new = ''
+            date = el[7]
+            tmp  = str(date).split('-')[0]
             if len(tmp) == 2:
                 # FIX for old TimeStamps
                 date = '20' + date
 
             self._pn_tree_data.append((
                 #f'{new}',
-                f'{el[5]}',
+                f'{el[0]}',  # MSD-ID
+                f'{el[1]}',  # BID
+                f'{el[6]}',
                 f'{from_call}',
                 f'{to_call}',
-                f'{el[8]}',  # FLAG
+                f'{el[9]}',  # FLAG
+                f'{new}',    # Not NEW
                 f'{date}',   # DATE
-                f'{el[0]}',  # BID
             ))
 
     def _update_PN_tree(self):
         for i in self._pn_tree.get_children():
             self._pn_tree.delete(i)
         for ret_ent in self._pn_tree_data:
+            """
             if ret_ent[0]:
                 tag = 'neu'
             else:
                 tag = 'alt'
-            self._pn_tree.insert('', tk.END, values=ret_ent[:-1], tags=(tag, ret_ent[-1]))
+            """
+            self._pn_tree.insert('', tk.END, values=ret_ent, tags=('dummy', ret_ent[1]))
         self._update_sort_entry(self._pn_tree)
 
     def _PN_entry_selected(self, event=None):
@@ -808,7 +821,7 @@ class MSG_Center_BBS(MSG_Center_base):
             self._pn_text.configure(state='normal')
             self._pn_text.delete('1.0', tk.END)
             db_data = self._get_PN_MSG_data(bid)
-            self._set_PN_MSG_notNew(bid)
+            # self._set_PN_MSG_notNew(bid)
             if db_data:
                 enc = self._var_encoding.get()
                 db_data['enc'] = enc
@@ -922,7 +935,7 @@ class MSG_Center_BBS(MSG_Center_base):
             self._bl_text.configure(state='normal')
             self._bl_text.delete('1.0', tk.END)
             db_data = self._get_BL_MSG_data(bid)
-            self._set_BL_MSG_notNew(bid)
+            # self._set_BL_MSG_notNew(bid)
             if db_data:
                 enc         = self._var_encoding.get()
                 db_data['enc']   = enc
@@ -957,9 +970,6 @@ class MSG_Center_BBS(MSG_Center_base):
 
     def _get_BL_MSG_data(self, bid):
         return self._bbs_obj.get_bl_msg_fm_BID(bid)
-
-    def _set_BL_MSG_notNew(self, bid: str):
-        self._bbs_obj.set_in_msg_notNew(bid)
 
     ################################
     # Bulletin Category PMS

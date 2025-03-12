@@ -12,7 +12,7 @@ from cfg.string_tab import STR_TABLE
 
 class MSG_Center(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win  = root_win
         self._lang      = POPT_CFG.get_guiCFG_language()
         self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)

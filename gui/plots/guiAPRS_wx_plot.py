@@ -1,8 +1,10 @@
 from datetime import datetime
 import tkinter as tk
 from fnc.str_fnc import convert_str_to_datetime
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.backends._backend_tk import NavigationToolbar2Tk
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
+                                               NavigationToolbar2Tk)
+
+# from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 import matplotlib
@@ -18,7 +20,7 @@ def adjust_list_len(target_list: list, compare_list: list):
 
 class WXPlotWindow(tk.Toplevel):
     def __init__(self, root_cl, wx_data):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_cl.main_win)
         # self.root_cl = root_cl
         self.geometry(f"800x"
                       f"640+"
@@ -64,7 +66,8 @@ class WXPlotWindow(tk.Toplevel):
         self._canvas = FigureCanvasTkAgg(self._fig, master=plot_frame)
         self._canvas.draw()
         # Werkzeugleisten für die plots erstellen
-        toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame, pack_toolbar=False)
+        # toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame, pack_toolbar=False)
+        toolbar1 = NavigationToolbar2Tk(self._canvas, plot_frame, )
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, )
         self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)

@@ -3024,6 +3024,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'read_ed': (
+        'gelesen',
+        'read',
+        'lezen',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'msgC_sendet_msg': (
         'Gesendet',
         'Sendet',

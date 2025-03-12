@@ -16,7 +16,7 @@ from gui.aprs.guiAISmon import AISmonitor
 from gui.aprs.guiAPRS_Settings import APRSSettingsWin
 from gui.aprs.guiAPRS_be_tracer import BeaconTracer
 from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
-from gui.aprs.guiAPRS_wx_tree import WXWin
+from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
@@ -88,7 +88,7 @@ class ChVars(object):
 
 
 class PoPT_GUI_Main:
-    def __init__(self):
+    def __init__(self, port_handler: PORT_HANDLER):
         ######################################
         # GUI Stuff
         logger.info('GUI: Init')
@@ -112,8 +112,10 @@ class PoPT_GUI_Main:
             pass
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ######################################
+        self._port_handler = port_handler
+        ######################################
         # Init Vars
-        self.mh = PORT_HANDLER.get_MH()
+        self.mh = self._port_handler.get_MH()
         self.language = POPT_CFG.get_guiCFG_language()
         self.text_size = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
         ###############################
@@ -175,7 +177,7 @@ class PoPT_GUI_Main:
         self.mon_aprs_var = tk.BooleanVar(self.main_win)
         self.mon_pid_var = tk.StringVar(self.main_win)
         self.mon_port_on_vars = {}
-        all_ports = PORT_HANDLER.ax25_ports
+        all_ports = self._port_handler.ax25_ports
         for port_id in all_ports:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
             self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
@@ -333,7 +335,7 @@ class PoPT_GUI_Main:
         self._update_qso_Vars()
         #############################
         # set GUI Var to Port Handler
-        PORT_HANDLER.set_gui(self)
+        self._port_handler.set_gui(self)
         ############################
         self._monitor_start_msg()
         ############################
@@ -380,7 +382,7 @@ class PoPT_GUI_Main:
         self._save_parameter()
         self._save_Channel_Vars()
         logger.info('GUI: Closing GUI: Closing Ports.')
-        threading.Thread(target=PORT_HANDLER.close_popt).start()
+        threading.Thread(target=self._port_handler.close_popt).start()
         logger.debug('GUI: Closing GUI: Destroying all Sub-Windows')
         self.main_win.update_idletasks()
         self._loop_delay = 800
@@ -455,7 +457,7 @@ class PoPT_GUI_Main:
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
         self.set_rxEcho_icon(self.setting_rx_echo.get())
-        PORT_HANDLER.rx_echo_on = bool(self.setting_rx_echo.get())
+        self._port_handler.rx_echo_on = bool(self.setting_rx_echo.get())
         if is_linux():
             self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
         else:
@@ -476,7 +478,7 @@ class PoPT_GUI_Main:
         #########################
         # Parameter fm cfg
         # ## guiCfg = POPT_CFG.load_guiPARM_main()
-        # PORT_HANDLER.get_MH().parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
+        # self._port_handler.get_MH().parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
         # self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
         # ## self.text_size = guiCfg.get('gui_parm_text_size', 13)
         # self.connect_history: {str: ConnHistory}
@@ -1091,7 +1093,7 @@ class PoPT_GUI_Main:
             self._mon_txt.configure(state="normal")
 
         # Monitor Tags
-        all_port = PORT_HANDLER.ax25_ports
+        all_port = self._port_handler.ax25_ports
         for port_id in all_port.keys():
             tag_tx = f"tx{port_id}"
             tag_rx = f"rx{port_id}"
@@ -1229,7 +1231,7 @@ class PoPT_GUI_Main:
         self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
         for stat in POPT_CFG.get_stat_CFG_keys():
             self.sysMsg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
-        all_ports = PORT_HANDLER.ax25_ports
+        all_ports = self._port_handler.ax25_ports
         for port_k in all_ports.keys():
             msg = 'konnte nicht initialisiert werden!'
             if all_ports[port_k].device_is_running:
@@ -1344,7 +1346,7 @@ class PoPT_GUI_Main:
         # TODO current Chanel.connection to var, prevent unnecessary calls
         if not con_ind:
             con_ind = int(self.channel_index)
-        all_conn = PORT_HANDLER.get_all_connections()
+        all_conn = self._port_handler.get_all_connections()
         if con_ind in all_conn.keys():
             return all_conn[con_ind]
         return None
@@ -1466,10 +1468,9 @@ class PoPT_GUI_Main:
             # self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
 
-    @staticmethod
-    def _tasker_quit():
-        if PORT_HANDLER.check_all_ports_closed():
-            PORT_HANDLER.close_gui()
+    def _tasker_quit(self):
+        if self._port_handler.check_all_ports_closed():
+            self._port_handler.close_gui()
             logger.info('GUI: Closing GUI: _tasker_quit Done.')
 
     def _tasker_prio(self):
@@ -1546,10 +1547,9 @@ class PoPT_GUI_Main:
 
     # END TASKER
     ######################################################################
-    @staticmethod
-    def _aprs_wx_tree_task():
-        if PORT_HANDLER.get_aprs_ais() is not None:
-            PORT_HANDLER.get_aprs_ais().aprs_wx_tree_task()
+    def _aprs_wx_tree_task(self):
+        if self._port_handler.get_aprs_ais() is not None:
+            self._port_handler.get_aprs_ais().aprs_wx_tree_task()
 
     def _AlarmIcon_tasker05(self):
         if self._Alarm_Frame:
@@ -1571,7 +1571,7 @@ class PoPT_GUI_Main:
     # QSO WIN
 
     def _update_qso_win(self):
-        all_conn = PORT_HANDLER.get_all_connections()
+        all_conn = self._port_handler.get_all_connections()
         all_conn_ch_index = list(all_conn.keys())
         tr = False
         for channel in all_conn_ch_index:
@@ -1807,7 +1807,7 @@ class PoPT_GUI_Main:
     """
 
     def _monitor_task(self):
-        mon_buff = PORT_HANDLER.get_monitor_data()
+        mon_buff = self._port_handler.get_monitor_data()
         if mon_buff:
             tr = False
             self._mon_txt.configure(state="normal")
@@ -1955,7 +1955,7 @@ class PoPT_GUI_Main:
     # MH WIN
     def open_MH_win(self):
         """MH WIN"""
-        PORT_HANDLER.set_dxAlarm(False)
+        self._port_handler.set_dxAlarm(False)
         if self.mh_window is None:
             MHWin(self)
         self.tabbed_sideFrame.reset_dx_alarm()
@@ -1986,7 +1986,7 @@ class PoPT_GUI_Main:
         if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self.language],
                                   message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language],
                                   parent=self.main_win):
-            PORT_HANDLER.disco_all_Conn()
+            self._port_handler.disco_all_Conn()
 
     # DISCO ENDE
     #######################################################################
@@ -2037,8 +2037,8 @@ class PoPT_GUI_Main:
         tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
         tmp_txt = tmp_txt.replace('\n', '\r')
         port_id = int(self.mon_port_var.get())
-        if port_id in PORT_HANDLER.get_all_ports().keys():
-            port = PORT_HANDLER.get_all_ports()[port_id]
+        if port_id in self._port_handler.get_all_ports().keys():
+            port = self._port_handler.get_all_ports()[port_id]
             add = str(self.mon_to_add_var.get()).upper()
             own_call = str(self.mon_call_var.get())
             poll = bool(self.mon_poll_var.get())
@@ -2081,7 +2081,7 @@ class PoPT_GUI_Main:
     # BW Plot
     def _update_bw_mon(self):
         tr = False
-        for port_id in list(PORT_HANDLER.ax25_ports.keys()):
+        for port_id in list(self._port_handler.ax25_ports.keys()):
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
             data = self.mh.get_bandwidth(
                 port_id,
@@ -2131,17 +2131,16 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
-        # PORT_HANDLER.set_dxAlarm()
-        # PORT_HANDLER.set_tracerAlarm()
-        PORT_HANDLER.debug_Connections()
+        # self._port_handler.set_dxAlarm()
+        # self._port_handler.set_tracerAlarm()
+        self._port_handler.debug_Connections()
         # self._Alarm_Frame.set_pmsMailAlarm()
         # self.set_noty_bell()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
 
-    @staticmethod
-    def _do_pms_autoFWD():
-        PORT_HANDLER.get_bbs().start_man_autoFwd()
+    def _do_pms_autoFWD(self):
+        self._port_handler.get_bbs().start_man_autoFwd()
 
     def _do_pms_fwd(self):
         conn = self.get_conn()
@@ -2188,8 +2187,8 @@ class PoPT_GUI_Main:
         """
         Called fm:
         self._ch_btn_clk
-        PORT_HANDLER.accept_new_connection
-        PORT_HANDLER.end_connection
+        self._port_handler.accept_new_connection
+        self._port_handler.end_connection
         """
         conn = self.get_conn(self.channel_index)
         if conn:
@@ -2239,7 +2238,6 @@ class PoPT_GUI_Main:
         if self.setting_noty_bell.get():
             if self.setting_sound.get():
                 SOUND.bell_sound()
-
             threading.Thread(target=self._noty_bell, args=(ch_id, msg)).start()
 
     def _noty_bell(self, ch_id, msg=''):
@@ -2267,9 +2265,9 @@ class PoPT_GUI_Main:
         # TODO not calling in Tasker Loop for Channel Alarm (change BTN Color)
         # self.main_class.on_channel_status_change()
         ch_alarm = False
-        # if PORT_HANDLER.get_all_connections().keys():
+        # if self._port_handler.get_all_connections().keys():
         for i in list(self._con_btn_dict.keys()):
-            all_conn = PORT_HANDLER.get_all_connections()
+            all_conn = self._port_handler.get_all_connections()
             if i in list(all_conn.keys()):
                 btn_txt = all_conn[i].to_call_str
                 is_link = all_conn[i].is_link
@@ -2623,7 +2621,7 @@ class PoPT_GUI_Main:
     ##########################################
     #
     def set_tracer(self, state=None):
-        ais_obj = PORT_HANDLER.get_aprs_ais()
+        ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
             ais_obj.be_tracer_active = bool(self.setting_tracer.get())
         else:
@@ -2634,22 +2632,20 @@ class PoPT_GUI_Main:
         # self.tabbed_sideFrame.set_auto_tracer_state()
         # self.set_tracer_icon()
 
-    @staticmethod
-    def get_tracer():
-        ais_obj = PORT_HANDLER.get_aprs_ais()
+    def get_tracer(self):
+        ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
             return bool(ais_obj.be_tracer_active)
         return False
 
-    @staticmethod
-    def get_auto_tracer():
-        ais_obj = PORT_HANDLER.get_aprs_ais()
+    def get_auto_tracer(self):
+        ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
             return bool(ais_obj.be_auto_tracer_active)
         return False
 
     def set_tracer_fm_aprs(self):
-        ais_obj = PORT_HANDLER.get_aprs_ais()
+        ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
             self.setting_tracer.set(ais_obj.be_tracer_active)
         else:
@@ -2658,7 +2654,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2.set_auto_tracer_state()
 
     def set_auto_tracer(self, event=None):
-        ais_obj = PORT_HANDLER.get_aprs_ais()
+        ais_obj = self._port_handler.get_aprs_ais()
         set_to = False
         if ais_obj is not None:
             self.set_tracer_fm_aprs()
@@ -2672,15 +2668,14 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2.set_auto_tracer_state()
         # self.set_tracer_icon()
 
-    @staticmethod
-    def get_auto_tracer_duration():
-        ais_obj = PORT_HANDLER.get_aprs_ais()
+    def get_auto_tracer_duration(self):
+        ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is None:
             return 0
         return ais_obj.be_auto_tracer_duration
 
     def set_auto_tracer_duration(self, dur):
-        ais_obj = PORT_HANDLER.get_aprs_ais()
+        ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
             if type(dur) is int:
                 ais_obj.tracer_auto_tracer_duration_set(dur)
@@ -2761,6 +2756,6 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame2.t2speech.configure(state='disabled')
         self.set_var_to_all_ch_param()
 
-    @staticmethod
-    def get_PH_manGUI():
-        return PORT_HANDLER
+
+    def get_PH_manGUI(self):
+        return self._port_handler

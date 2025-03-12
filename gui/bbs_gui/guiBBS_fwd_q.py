@@ -8,7 +8,7 @@ from cfg.string_tab import STR_TABLE
 
 class BBS_fwd_Q(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win = root_win
         self._bbs_obj = PORT_HANDLER.get_bbs()
         # self._ais_obj.wx_tree_gui = self

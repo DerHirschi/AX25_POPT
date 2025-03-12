@@ -10,7 +10,7 @@ from fnc.str_fnc import conv_time_DE_str
 
 class MHWin(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win = root_win
         self._lang = root_win.language
         self.title("MyHEARD")

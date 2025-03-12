@@ -12,7 +12,7 @@ from cfg.string_tab import STR_TABLE
 
 class AISmonitor(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_cl = root_win
         self._lang = POPT_CFG.get_guiCFG_language()
         self._text_size = int(self._root_cl.text_size)

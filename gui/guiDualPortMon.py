@@ -210,7 +210,7 @@ class DP_MonitorTab(tk.Frame):
 
 class DualPort_Monitor(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win = root_win
         self._lang = root_win.language
         self.text_size = root_win.text_size

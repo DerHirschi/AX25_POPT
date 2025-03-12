@@ -12,7 +12,7 @@ from cfg.string_tab import STR_TABLE
 
 class APRS_msg_SYS_PN(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._init_done = False
         self._root_cl = root_win
         PORT_HANDLER.set_aprsMailAlarm_PH(False)

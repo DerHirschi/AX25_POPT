@@ -11,7 +11,7 @@ from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number
 
 class FileTransferManager(tk.Toplevel):
     def __init__(self, root):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root.main_win)
 
         self.overview_frame = None
         self._root_win = root

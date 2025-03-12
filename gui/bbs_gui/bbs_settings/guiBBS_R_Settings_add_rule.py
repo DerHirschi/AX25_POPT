@@ -8,7 +8,7 @@ from fnc.str_fnc import get_strTab
 
 class BBS_addRuleWin(tk.Toplevel):
     def __init__(self, root_win, dest_call:str, opt_index: int):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win)
         self._logTag = "BBS_addRuleWin> "
         win_width = 430
         win_height = 170

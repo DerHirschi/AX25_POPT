@@ -11,7 +11,7 @@ from gui.bbs_gui.bbs_settings.guiBBS_Routing_Settings import BBSRoutingSettings
 
 class BBSSettingsMain(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         win_width = 1200
         win_height = 660
         self.style = root_win.style

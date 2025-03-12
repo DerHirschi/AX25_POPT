@@ -8,7 +8,7 @@ from fnc.str_fnc import conv_time_DE_str
 
 class UserDBtreeview(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self.root = root_win
         # self.user_db = USER_DB
         ###################################

@@ -766,7 +766,8 @@ class SQL_Database:
         return res
 
     def bbs_get_pn_msg_Tab_for_GUI(self):
-        query = ("SELECT BID, "
+        query = ("SELECT MSGID, "
+                  "BID, "
                   "from_call, "
                   "from_bbs, "
                   "to_call, "

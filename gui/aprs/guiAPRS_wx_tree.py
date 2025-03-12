@@ -1,17 +1,24 @@
+print("a1")
 import tkinter as tk
+print("a2")
 from tkinter import ttk, Menu, messagebox
 
+print("a3")
 from ax25.ax25InitPorts import PORT_HANDLER
+print("a4")
 from cfg.popt_config import POPT_CFG
+print("a5")
 from cfg.string_tab import STR_TABLE
+print("a6")
 from gui.plots.guiAPRS_wx_plot import WXPlotWindow
 # from cfg.logger_config import logger
+print("a7")
 
 
 class WXWin(tk.Toplevel):
     # TODO all Delete WX-DATA
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win = root_win
         self._lang = POPT_CFG.get_guiCFG_language()
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
