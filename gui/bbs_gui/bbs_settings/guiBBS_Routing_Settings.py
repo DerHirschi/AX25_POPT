@@ -82,14 +82,15 @@ class BBSRoutingSettings(tk.Frame):
         ##########
         tabctl = ttk.Notebook(tab_frame)
         tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        p_incoming_frame  = tk.Frame(tabctl)
+        # p_incoming_frame  = tk.Frame(tabctl)
         p_outgoing_frame  = tk.Frame(tabctl)
-        bl_incoming_frame = tk.Frame(tabctl)
+        # bl_incoming_frame = tk.Frame(tabctl)
         bl_outgoing_frame = tk.Frame(tabctl)
-        tabctl.add(p_incoming_frame,  text='P-Incoming')
+        # tabctl.add(p_incoming_frame,  text='P-Incoming')
         tabctl.add(p_outgoing_frame,  text='P-Outgoing')
-        tabctl.add(bl_incoming_frame, text='BL-Incoming')
+        # tabctl.add(bl_incoming_frame, text='BL-Incoming')
         tabctl.add(bl_outgoing_frame, text='BL-Outgoing')
+        """
         #################################################################
         # PN In
         #################################################################
@@ -186,6 +187,7 @@ class BBSRoutingSettings(tk.Frame):
             dest_call=dest_call,
             tree=pn_ncall_in_tree
         ))
+        """
         #################################################################
         # PN Out
         #################################################################
@@ -281,6 +283,8 @@ class BBSRoutingSettings(tk.Frame):
             dest_call=dest_call,
             tree=pn_ncall_out_tree
         ))
+
+        """
         #################################################################
         # BL In
         #################################################################
@@ -341,7 +345,7 @@ class BBSRoutingSettings(tk.Frame):
             dest_call=dest_call,
             tree=bl_dist_in_tree
         ))
-
+        
         #################
         # pn_not_call_out_f
         bl_n_dist_in_tree = ttk.Treeview(bl_not_dist_in_f, columns=('c1',), show='headings')
@@ -352,7 +356,7 @@ class BBSRoutingSettings(tk.Frame):
             conf_name='bl_dist_not_in',
             dest_call=dest_call,
             tree=bl_n_dist_in_tree
-        ))
+        ))"""
         #################################################################
         # BL OUT
         #################################################################
@@ -428,12 +432,14 @@ class BBSRoutingSettings(tk.Frame):
         return {
             'tab_clt':                  tabctl,
             # PN IN
+            """
             'pn_bbs_in_tree':           pn_bbs_in_tree,
             'pn_nbbs_in_tree':          pn_nbbs_in_tree,
             'pn_h_in_tree':             pn_h_in_tree,
             'pn_nh_in_tree':            pn_nh_in_tree,
             'pn_call_in_tree':          pn_call_in_tree,
             'pn_ncall_in_tree':         pn_ncall_in_tree,
+            """
             # PN Out
             'pn_bbs_out_tree':          pn_bbs_out_tree,
             'pn_nbbs_out_tree':         pn_nbbs_out_tree,
@@ -442,10 +448,12 @@ class BBSRoutingSettings(tk.Frame):
             'pn_call_out_tree':         pn_call_out_tree,
             'pn_ncall_out_tree':        pn_ncall_out_tree,
             # BL IN
+            """
             'bl_th_in_tree':            bl_th_in_tree,
             'bl_nth_in_tree':           bl_nth_in_tree,
             'bl_dist_in_tree':          bl_dist_in_tree,
             'bl_n_dist_in_tree':        bl_n_dist_in_tree,
+            """
             # BL OUT
             'bl_th_out_tree':           bl_th_out_tree,
             'bl_nth_out_tree':          bl_nth_out_tree,
@@ -458,6 +466,7 @@ class BBSRoutingSettings(tk.Frame):
             tree_cfg: dict
             for tree_name, tree in tree_cfg.items():
                 tree_data_fm_cfg = {
+                    """
                     # PN In
                     'pn_bbs_in_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
                         'pn_fwd_bbs_in', []),
@@ -471,6 +480,7 @@ class BBSRoutingSettings(tk.Frame):
                         'pn_fwd_call_in', []),
                     'pn_ncall_in_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
                         'pn_fwd_not_call_in', []),
+                    """
                     # PN Out
                     'pn_bbs_out_tree':      self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
                         'pn_fwd_bbs_out', []),
@@ -485,6 +495,7 @@ class BBSRoutingSettings(tk.Frame):
                     'pn_ncall_out_tree':    self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
                         'pn_fwd_not_call_out', []),
                     # BL In
+                    """
                     'bl_th_in_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
                         'bl_top_in', []),
                     'bl_nth_in_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
@@ -493,6 +504,7 @@ class BBSRoutingSettings(tk.Frame):
                         'bl_dist_in', []),
                     'bl_n_dist_in_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
                         'bl_dist_not_in', []),
+                    """
                     # BL Out
                     'bl_th_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
                         'bl_top_out', []),

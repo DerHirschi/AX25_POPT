@@ -285,6 +285,7 @@ class MSG_Center_BBS(MSG_Center_base):
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_msg()
                   ).pack(side=tk.RIGHT, expand=False)
+        """
         tk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
                   # TODO cmd
@@ -297,6 +298,7 @@ class MSG_Center_BBS(MSG_Center_base):
                   text=self._getTabStr('answer'),
                   command=lambda: self._open_newMSG_win_reply('P'),
                   ).pack(side=tk.RIGHT, expand=False)
+        """
 
         from_label      = tk.Label(header_frame, textvariable=self._var_pn_from_label)
         to_label        = tk.Label(header_frame, textvariable=self._var_pn_to_label)
@@ -432,6 +434,8 @@ class MSG_Center_BBS(MSG_Center_base):
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_msg()
                   ).pack(side=tk.RIGHT, expand=False)
+
+        """
         tk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
                   # TODO cmd
@@ -444,6 +448,7 @@ class MSG_Center_BBS(MSG_Center_base):
                   text=self._getTabStr('answer'),
                   command=lambda: self._open_newMSG_win_reply('B'),
                   ).pack(side=tk.RIGHT, expand=False)
+         """
 
         # Header Frame
         from_label = tk.Label(header_frame, textvariable=self._var_bl_from_label)
@@ -558,6 +563,7 @@ class MSG_Center_BBS(MSG_Center_base):
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_msg()
                   ).pack(side=tk.RIGHT, expand=False)
+        """
         tk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
                   command=lambda: self._save_outMSG()
@@ -566,6 +572,7 @@ class MSG_Center_BBS(MSG_Center_base):
                   text=self._getTabStr('forward'),
                   command=lambda: self._open_newMSG_win_forward('O')
                   ).pack(side=tk.RIGHT, expand=False)
+        """
         # tk.Button(btn_frame, text='Antworten').pack(side=tk.RIGHT, expand=False)
 
         from_label      = tk.Label(header_frame, textvariable=self._var_out_from_label)
