@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
+from orca.messages import selectedItemsCount
+
 from cfg.constant import FONT, ENCODINGS
 from fnc.str_fnc import format_number
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_c_base import MSG_Center_base
@@ -753,13 +755,16 @@ class MSG_Center_PMS(MSG_Center_base):
         self._update_sort_entry(self._pn_tree)
 
     def _PN_entry_selected(self, event=None):
-        bid = ''
+        bid         = ''
+        tag_name    = ''
         for selected_item in self._pn_tree.selection():
             item = self._pn_tree.item(selected_item)
-            bid = item['tags'][1]
+            tag_name, bid = item['tags']
         if bid:
             self._PN_show_msg_fm_BID(bid)
-            # self._update_PN_tree_data()
+            if tag_name == 'neu':
+                self._update_PN_tree_data()
+                #self._pn_tree.focus()
 
     def _update_PN_msg(self, event=None):
         msg = self._selected_msg['P'].get('msg', b'')
@@ -826,14 +831,14 @@ class MSG_Center_PMS(MSG_Center_base):
         self._bl_cat_tree_data = []
         new_tr = {}
         for el in self._bl_data:
-            from_call = f"{el[1]}"
-            if el[2]:
-                from_call += f"@{el[2]}"
+            from_call = f"{el[2]}"
+            if el[3]:
+                from_call += f"@{el[3]}"
             new = ''
-            if int(el[7]):
+            if int(el[8]):
                 new = '✉'
-                new_tr[el[3]] = True
-            date = el[6]
+                new_tr[el[4]] = True
+            date = el[7]
             tmp = str(date).split('-')[0]
             if len(tmp) == 2:
                 # FIX for old TimeStamps
@@ -841,22 +846,22 @@ class MSG_Center_PMS(MSG_Center_base):
             if not self._bl_cat_filter or self._bl_cat_filter == el[3]:
                 self._bl_tree_data.append((
                     f'{new}',
-                    f'{el[5]}',
+                    f'{el[6]}',
                     f'{from_call}',
-                    f'{el[3]}',  # Cat
-                    f'{el[4]}',
-                    f'{el[8]}',  # Flag
+                    f'{el[4]}',  # Cat
+                    f'{el[5]}',
+                    f'{el[9]}',  # Flag
                     f'{date}',   # Date
-                    f'{el[0]}',  # BID
+                    f'{el[1]}',  # BID
                 ))
         # Category Tab
         any_tr = False
         for el in self._bl_data:
-            tr = new_tr.get(el[3], False)
+            tr = new_tr.get(el[4], False)
             if tr:
                 any_tr = True
-            if (tr, el[3]) not in self._bl_cat_tree_data:
-                self._bl_cat_tree_data.append((tr, el[3]))
+            if (tr, el[4]) not in self._bl_cat_tree_data:
+                self._bl_cat_tree_data.append((tr, el[4]))
 
         self._bl_cat_tree_data.sort(key=lambda x: x[1])
         self._bl_cat_tree_data = [(any_tr, 'ALL*')] + self._bl_cat_tree_data
@@ -873,13 +878,15 @@ class MSG_Center_PMS(MSG_Center_base):
         self._update_sort_entry(self._bl_tree)
 
     def _BL_entry_selected(self, event=None):
-        bid = ''
+        bid      = ''
+        tag_name = ''
         for selected_item in self._bl_tree.selection():
             item = self._bl_tree.item(selected_item)
-            bid = item['tags'][1]
+            tag_name, bid = item['tags']
         if bid:
             self._BL_show_msg_fm_BID(bid)
-            # self._update_BL_tree_data()
+            if tag_name == 'neu':
+                self._update_BL_tree_data()
 
     def _update_BL_msg(self, event=None):
         msg = self._selected_msg['B'].get('msg', b'')

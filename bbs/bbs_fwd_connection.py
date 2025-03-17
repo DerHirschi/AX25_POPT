@@ -1,5 +1,5 @@
 from UserDB.UserDBmain import USER_DB
-from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_ERR, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
+from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
     CNTRL_Z
 from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol
@@ -24,6 +24,7 @@ class BBSConnection:
         self._logTag         = f"BBS-Conn ({self._dest_bbs_call}): "
         ###########
         self._rx_buff        = b''
+        self._debug_rx_buff  = b''
         self._rx_msg_header  = {}
         # tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
         self._tx_msg_header  = b''
@@ -95,6 +96,7 @@ class BBSConnection:
     def _get_next_mail_fm_rx_buff(self):
         tmp_eom     = b''
         index       = 0
+        # print(self._rx_buff)
         for flag in EOM:
             try:
                 index = self._rx_buff.index(flag)
@@ -116,12 +118,15 @@ class BBSConnection:
         self._ax25_conn.send_data(data=raw_data)
 
     def connection_rx(self, raw_data: b''):
+        self._debug_rx_buff += bytes(raw_data)
         self._rx_buff += bytes(raw_data)
         if self._state in [11]:
             return False
         return True
 
     def end_conn(self):
+        print(self._debug_rx_buff)
+        print(self._debug_rx_buff.hex())
         logTag = self._logTag + 'End-Conn > '
         if self._state in [0, 1, 2, 3, 4, 5]:
             self._send_abort()
@@ -287,7 +292,7 @@ class BBSConnection:
 
     @staticmethod
     def _header_error(inp=None):
-        return FWD_RESP_ERR
+        return FWD_RESP_REJ
 
     @staticmethod
     def _header_reject(inp=None):
@@ -351,22 +356,24 @@ class BBSConnection:
             except UnicodeDecodeError as e:
                 # Error
                 BBS_LOG.error(logTag + f"Decoding Error: {e} - Header-Line: {el}")
-                pn_check += FWD_RESP_ERR
+                pn_check += FWD_RESP_REJ
                 continue
-            if el[:2] == 'FB':
+            if el[:2] in ['FB', 'FA']:
+                #if el[:2] == 'FB':
                 ret = parse_forward_header(el)
                 if not ret:
                     # Error
                     BBS_LOG.error(logTag + f"Can't parse Header: ret: {ret} - Header-Line: {el}")
                     BBS_LOG.debug(logTag + f"Header-Lines: {header_lines}")
-                    pn_check += FWD_RESP_ERR
+                    # pn_check += FWD_RESP_ERR
+                    pn_check += FWD_RESP_REJ
                     continue
                 bid = str(ret.get('bid_mid', ''))
                 if not bid:
                     # Error
                     BBS_LOG.error(logTag + f"No BID-MID found: ret: {ret} - Header-Line: {el}")
                     BBS_LOG.debug(logTag + f"Header-Lines: {header_lines}")
-                    pn_check += FWD_RESP_ERR
+                    pn_check += FWD_RESP_REJ
                     continue
                 db_ret = {
                     'P': self._bbs.is_pn_in_db,
@@ -378,7 +385,7 @@ class BBSConnection:
                     # Error
                     BBS_LOG.error(logTag + f"No db_ret: ret: {ret} - Header-Line: {el}")
                     BBS_LOG.error(logTag + f"Msg-Typ: {ret.get('message_type', '')}  BID-MID: {bid}")
-                    pn_check += FWD_RESP_ERR
+                    pn_check += FWD_RESP_REJ
                     continue
                 if db_ret == FWD_RESP_OK:
                     if not self._bbs.insert_incoming_fwd_bid(bid):
@@ -400,7 +407,7 @@ class BBSConnection:
     def _parse_msg(self, msg: bytes):
         # TODO: Again ..
         logTag  = self._logTag + f"MSG-Parser> "
-        BBS_LOG.debug(logTag + f"msg: {msg}")
+        # BBS_LOG.debug(logTag + f"msg: {msg}")
         # Find EOL Syntax
         eol         = find_eol(msg)
         header_eol  = eol + eol

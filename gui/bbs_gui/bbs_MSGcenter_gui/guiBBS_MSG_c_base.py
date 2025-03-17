@@ -193,11 +193,24 @@ class MSG_Center_base(tk.Frame):
             }.get(ind, None)
             if tree is None:
                 return
+
+            tr = False
+            for selected_item in tree.selection():
+                item = tree.item(selected_item)
+                tag_name, bid = item['tags']
+                if del_fnc(bid):
+                    tr = True
+            if tr:
+                self.on_bbsTab_select()
+                self.tree_update_task()
+
             bid_next_msg = ''
             ind_ex = 0
+
+
             for i in tree.get_children():
                 ind_ex += 1
-                if tree.item(i)['tags'][1] == bid_mid:
+                if tree.item(i)['tags'][1] in bid_mid:
                     try:
                         bid_next_msg = tree.item(tree.get_children()[ind_ex]).get('tags', [])
                         if len(bid_next_msg) == 2:
@@ -206,6 +219,7 @@ class MSG_Center_base(tk.Frame):
                         pass
                     # print(bid_next_msg)
                     break
+
             if del_fnc(bid_mid):
                 self.on_bbsTab_select()
                 if bid_next_msg:

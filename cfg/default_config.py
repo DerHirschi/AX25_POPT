@@ -108,7 +108,7 @@ def getNew_BBS_FWD_cfg():
         pn_fwd_alter_path   = False,# Allow Alternative Route               # TODO GUI / after x attempt's
         # PN Outgoing Routing
         pn_fwd_bbs_out      = [],   # Known BBS behind this BBS
-        pn_fwd_not_bbs_out  = [],   # Not FWD to BBS # TODO: add to Routing-Fnc
+        pn_fwd_not_bbs_out  = [],   # Not FWD to BBS
         pn_fwd_h_out        = [],   # Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
         pn_fwd_not_h_out    = [],   # Rejected Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
         pn_fwd_call_out     = [],   # Outgoing CALLs (['MD2SAW', 'CB0SAW']) - [] = all

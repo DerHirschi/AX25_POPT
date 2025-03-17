@@ -2553,6 +2553,19 @@ STR_TABLE = {
          '',
          ''),
 
+    'cmd_sp': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'SP <Call> @ <BBS> : Sendet eine persoenliche Nachricht an Rufzeichen'
+        'SP <Call> @ <BBS> : Sends a personal message to call sign',
+        'SP <Call> @ <BBS>: Stuurt een persoonlijk bericht naar roepnamen',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_ln': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
          'Listet alle eigenen neuen Nachrichten auf.',
@@ -2786,6 +2799,123 @@ STR_TABLE = {
         '',
         '',
         ''),
+
+    'box_error_no_address': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Kein Empfänger angegeben. SP XX0XX oder SP XX0XX@XBBS0\r',
+        '\r # No recipient specified. SP XX0XX or SP XX0XX@XBBS0.\r',
+        '\r # Geen ontvanger opgegeven. SP XX0XX of SP XX0XX@XBBS0.\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_error_invalid_dist': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Kein Verteiler in BBS-Adresse {}\r',
+        '\r # No distribution list in BBS address {}\r',
+        '\r # Geen distributeur in BBS-adres {}\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_sp_routing_to': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        ('\r # Routing: {}\r'
+         'Titel der Nachricht an {}:\r'),
+        ('\r # Routing: {}\r'
+         'Title of message to {}:\r'),
+        ('\r # Routing: {}\r'
+         'Berichttitel aan {}:\r'),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_sp_local': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        ('\r # Lokale Nachricht.\r'
+         'Titel der Nachricht an {}:\r'),
+        ('\r # Local message.\r'
+         'Title of message to {}:\r'),
+        ('\r # Lokaal bericht.\r'
+         'Berichttitel aan {}:\r'),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_sp_enter_msg': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Text eingeben ... (Ende mit /EX oder Strg-Z):\r',
+        'Enter text ... (End with /EX or Ctrl-Z):\r',
+        'Tekst invoeren... (eindigen met /EX of Ctrl-Z):\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_sp_abort_msg': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Nachricht fuer {} anulliert\r',
+        '\r # Message for {} canceled\r',
+        '\r # Bericht voor {} geannuleerd\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_sp_msg_accepted': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        ('\r # Ok. Nachricht an Adresse {} @ {} wird geforwardet.\r'
+           '   via: {} MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Bericht wordt doorgestuurd naar adres {} @ {}\r'
+           '   via: {} MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Message to address {} @ {} is being forwarded\r'
+           '   via: {} Mid: {} Bytes: {}\r\r'),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_sp_msg_accepted_local': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        ('\r # Ok. Nachricht an Adresse {} bleibt lokal.\r'
+         '   MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Message to address {} remains local.\r'
+         '   MID: {} Bytes: {}\r\r'),
+        ('\r# Oké. Bericht aan adres {} blijft lokaal.\r'
+         '   Mid: {} Bytes: {}\r\r'),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     #####################################################
     # BOX GUI
     'own_station': (

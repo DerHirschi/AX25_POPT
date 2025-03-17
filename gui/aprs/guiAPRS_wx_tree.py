@@ -1,18 +1,11 @@
-print("a1")
 import tkinter as tk
-print("a2")
 from tkinter import ttk, Menu, messagebox
 
-print("a3")
 from ax25.ax25InitPorts import PORT_HANDLER
-print("a4")
 from cfg.popt_config import POPT_CFG
-print("a5")
 from cfg.string_tab import STR_TABLE
-print("a6")
-from gui.plots.guiAPRS_wx_plot import WXPlotWindow
+from gui.plots.guiAPRS_wx_plot import WXPlotWindow    # !!!!!!!
 # from cfg.logger_config import logger
-print("a7")
 
 
 class WXWin(tk.Toplevel):

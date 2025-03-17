@@ -5,6 +5,6 @@ class bbsInitError(Exception):
 
     def __init__(self, er=''):
         if er:
-            logger.error(f'PMS Init Error: {er}')
-            BBS_LOG.error(f'PMS Init Error: {er}')
+            logger.error(f'BBS Init Error: {er}')
+            BBS_LOG.error(f'BBS Init Error: {er}')
             print(f'PMS Init Error: {er}')

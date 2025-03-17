@@ -853,7 +853,8 @@ class SQL_Database:
         return res
 
     def bbs_get_bl_msg_Tab_for_GUI(self):
-        query = ("SELECT BID, "
+        query = ("SELECT MSGID, "
+                  "BID, "
                   "from_call, "
                   "from_bbs, "
                   "to_call, "
@@ -923,6 +924,25 @@ class SQL_Database:
                  "FROM pms_fwd_q "
                  f"WHERE from_call in {user_str} "
                  "AND NOT flag='DL';")
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_fwd_q_Tab_for_BBS_gui(self):
+        query = ("SELECT MID, "
+                  "BID, "
+                  "from_call, "
+                  "from_bbs_call, "
+                  "to_call, "
+                  "to_bbs_call, "
+                  "fwd_bbs_call, "
+                  "type, "
+                  "subject, "
+                  "size, "
+                  "flag, "
+                  "try "
+                  # "FROM pms_fwd_q WHERE flag='F';")
+                  "FROM pms_fwd_q WHERE flag!='DL';")
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res

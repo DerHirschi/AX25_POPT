@@ -3,7 +3,8 @@ from tkinter import scrolledtext, messagebox
 
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.logger_config import logger
+from bbs.bbs_constant import GET_MSG_STRUC
+from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
 from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
 from fnc.gui_fnc import get_typed, detect_pressed
@@ -13,7 +14,7 @@ from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
 
 class BBS_newMSG(tk.Toplevel):
     def __init__(self, root_win, reply_msg=None):
-        tk.Toplevel.__init__(self, master=root_win.main_win)
+        tk.Toplevel.__init__(self, )
         if reply_msg is None:
             reply_msg   = {}
         self._root_win  = root_win
@@ -360,10 +361,10 @@ class BBS_newMSG(tk.Toplevel):
                 if '.' in bbs_add:
                     recv_bbs = bbs_add
             if not '.' in recv_bbs:
-                print('No----')
-                print(f'No: {recv_bbs}')
+                #print('No----')
+                #print(f'No: {recv_bbs}')
                 recv_bbs = USER_DB.get_PRmail(recv_bbs)
-                print(f'No: {recv_bbs}')
+                #print(f'No: {recv_bbs}')
 
 
         cc_add      = self._to_cc_call_var.get()
@@ -374,7 +375,8 @@ class BBS_newMSG(tk.Toplevel):
         msg_text    = msg_text.encode(enc, 'ignore')
 
         sender_bbs = bbs_call + '.' + regio_add
-        self._msg_data = {
+        self._msg_data = GET_MSG_STRUC()
+        self._msg_data.update({
             'sender':        sender,
             'sender_bbs':    sender_bbs,
             'receiver':      recv_call.upper(),
@@ -383,7 +385,7 @@ class BBS_newMSG(tk.Toplevel):
             'msg':           msg_text,
             'message_type':  typ,
             'cc_add':        cc_add,
-        }
+        })
         # Entwurf Nachrichten
         if self._reply_msg.get('mid', ''):
             self._mid = self._reply_msg.get('mid')
@@ -392,7 +394,7 @@ class BBS_newMSG(tk.Toplevel):
         # Neue Nachrichten
         self._mid = self._bbs_obj.new_msg(self._msg_data)
         if not self._mid:
-            logger.error("PMS-newMSG: _mid")
+            BBS_LOG.error("PMS-newMSG: _mid")
             return False
         return True
 

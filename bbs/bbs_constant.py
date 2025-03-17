@@ -41,10 +41,10 @@ TAB             = b'\x09'       # b'\t'
 EOL             = (CR + LF, CR)
 EOMA            = (CNTRL_Z + CR, CNTRL_Z + CR + LF)
 EOMB            = (
-    CR + b'/EX' + CR,
-    CR + b'/ex' + CR,
-    CR + LF + b'/EX' + CR + LF,
-    CR + LF + b'/ex' + CR + LF
+    b'/EX' + CR,
+    b'/ex' + CR,
+    b'/EX' + CR + LF,
+    b'/ex' + CR + LF
 )
 EOM             = tuple([x for x in EOMA + EOMB])
 #------------------------
@@ -93,11 +93,12 @@ def GET_MSG_STRUC():
     return dict(
         message_type=   '',
         sender=         '',
-        recipient_bbs=  '',
+        sender_bbs=     '',
         receiver=       '',
+        recipient_bbs=  '',
+        cc_add=         '',
         mid=            '',
         bid_mid=        '',
-        sender_bbs=     '',
         message_size=   0,
         #
         msg=            b'',

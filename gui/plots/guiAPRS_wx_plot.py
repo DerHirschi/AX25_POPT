@@ -1,6 +1,7 @@
 from datetime import datetime
 import tkinter as tk
 from fnc.str_fnc import convert_str_to_datetime
+# Fixme: FigureCanvasTkAgg causing 10 or more threads
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
                                                NavigationToolbar2Tk)
 

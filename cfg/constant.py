@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.50'
+VER = '2.117.51'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -321,6 +321,7 @@ MH_BEACON_FILTER = [
     'APDW14',
     'APRS',
     'MAIL',
+    'MAILS',
     'DX',
     'CQ',
     'CQDX',
@@ -333,6 +334,16 @@ MH_BEACON_FILTER = [
     'BAKE',
     'BEACON',
     'APZPOP',
+    'WIDE1',
+    'WIDE2',
+    'WIDE3',
+    'WIDE4',
+    'WIDE5',
+    'WIDE6',
+    'WIDE7',
+    'WIDE8',
+    'WIDE9',
+    'WIDE0',
 ]
 
 

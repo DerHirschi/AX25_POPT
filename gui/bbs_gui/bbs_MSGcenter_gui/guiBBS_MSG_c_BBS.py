@@ -125,9 +125,9 @@ class MSG_Center_BBS(MSG_Center_base):
         out_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         pw_out              = ttk.PanedWindow(out_pan_frame, orient=tk.VERTICAL)
-        top_f               = ttk.Frame(pw_out)
-        lower_f_main        = ttk.Frame(pw_out)
-        lower_f_top         = ttk.Frame(lower_f_main)
+        top_f               = tk.Frame(pw_out)
+        lower_f_main        = tk.Frame(pw_out)
+        lower_f_top         = tk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -346,7 +346,8 @@ class MSG_Center_BBS(MSG_Center_base):
     # BL TAB
     def _init_bl_tree(self, root_frame):
         columns = (
-            #'Neu',
+            'msgid',
+            'bid',
             'Betreff',
             'Von',
             'An',
@@ -364,6 +365,10 @@ class MSG_Center_BBS(MSG_Center_base):
 
         #self._bl_tree.heading('Neu', text=self._getTabStr('new'),
         #                      command=lambda: self._sort_entry('Neu', self._bl_tree))
+        self._bl_tree.heading('msgid', text='MSG-ID',
+                              command=lambda: self._sort_entry('msgid', self._bl_tree))
+        self._bl_tree.heading('bid', text='BID',
+                              command=lambda: self._sort_entry('bid', self._bl_tree))
         self._bl_tree.heading('Betreff', text=self._getTabStr('subject'),
                               command=lambda: self._sort_entry('Betreff', self._bl_tree))
         self._bl_tree.heading('Von', text=self._getTabStr('from'),
@@ -375,6 +380,8 @@ class MSG_Center_BBS(MSG_Center_base):
         self._bl_tree.heading('Datum', text=self._getTabStr('date_time'),
                               command=lambda: self._sort_entry('Datum', self._bl_tree))
         #self._bl_tree.column("Neu", anchor=tk.CENTER, stretch=tk.NO, width=40)
+        self._bl_tree.column("msgid", anchor='w', stretch=tk.NO, width=60)
+        self._bl_tree.column("bid", anchor='w', stretch=tk.NO, width=150)
         self._bl_tree.column("Betreff", anchor='w', stretch=tk.YES, width=270)
         self._bl_tree.column("Von", anchor='w', stretch=tk.YES, width=180)
         self._bl_tree.column("An", anchor='w', stretch=tk.YES, width=100)
@@ -527,8 +534,8 @@ class MSG_Center_BBS(MSG_Center_base):
         # self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         # self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
-        # self._out_tree.bind('<<TreeviewSelect>>', self._OUT_entry_selected)
-        self._out_tree.bind('<<TreeviewSelect>>', lambda x: print(f'Test: {x}'))
+        self._out_tree.bind('<ButtonRelease-1>', self._OUT_entry_selected)
+        # self._out_tree.bind('<Button-1>', lambda x: print(f'Test: {x}'))
 
 
     def _init_out_lower_frame(self, root_frame):
@@ -609,6 +616,7 @@ class MSG_Center_BBS(MSG_Center_base):
     # FWD-Q TAB
     def _init_fwdQ_tree(self, root_frame):
         columns = (
+            'mid',
             'bid',
             'Betreff',
             'Von',
@@ -616,6 +624,8 @@ class MSG_Center_BBS(MSG_Center_base):
             'fwd_bbs',
             'typ',
             'size',
+            'flag',
+            'trys',
         )
         """
                f'{el[0]}',         # BID
@@ -635,6 +645,7 @@ class MSG_Center_BBS(MSG_Center_base):
         self._fwdQ_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
+        self._fwdQ_tree.heading('mid', text='MID', command=lambda: self._sort_entry('mid', self._fwdQ_tree))
         self._fwdQ_tree.heading('bid', text='BID', command=lambda: self._sort_entry('bid', self._fwdQ_tree))
         self._fwdQ_tree.heading('Betreff', text=self._getTabStr('subject'),
                                command=lambda: self._sort_entry('Betreff', self._fwdQ_tree))
@@ -646,6 +657,9 @@ class MSG_Center_BBS(MSG_Center_base):
                                command=lambda: self._sort_entry('fwd_bbs', self._fwdQ_tree))
         self._fwdQ_tree.heading('typ', text='TYP', command=lambda: self._sort_entry('typ', self._fwdQ_tree))
         self._fwdQ_tree.heading('size', text='Size', command=lambda: self._sort_entry('size', self._fwdQ_tree))
+        self._fwdQ_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._fwdQ_tree))
+        self._fwdQ_tree.heading('trys', text='Try s', command=lambda: self._sort_entry('trys', self._fwdQ_tree))
+        self._fwdQ_tree.column("mid", anchor='w', stretch=tk.NO, width=65)
         self._fwdQ_tree.column("bid", anchor='w', stretch=tk.NO, width=120)
         self._fwdQ_tree.column("Betreff", anchor='w', stretch=tk.YES, width=230)
         self._fwdQ_tree.column("Von", anchor='w', stretch=tk.YES, width=120)
@@ -653,6 +667,8 @@ class MSG_Center_BBS(MSG_Center_base):
         self._fwdQ_tree.column("fwd_bbs", anchor='w', stretch=tk.YES, width=60)
         self._fwdQ_tree.column("typ", anchor='w', stretch=tk.NO, width=45)
         self._fwdQ_tree.column("size", anchor='w', stretch=tk.NO, width=80)
+        self._fwdQ_tree.column("flag", anchor='w', stretch=tk.NO, width=60)
+        self._fwdQ_tree.column("trys", anchor='w', stretch=tk.NO, width=80)
 
         # self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         # self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
@@ -868,14 +884,14 @@ class MSG_Center_BBS(MSG_Center_base):
         self._bl_cat_tree_data = []
         #new_tr = {}
         for el in self._bl_data:
-            from_call = f"{el[1]}"
-            if el[2]:
-                from_call += f"@{el[2]}"
+            from_call = f"{el[2]}"
+            if el[3]:
+                from_call += f"@{el[3]}"
             #new = ''
             #if int(el[7]):
             #    new = '✉'
             #    new_tr[el[3]] = True
-            date = el[6]
+            date = el[7]
             tmp = str(date).split('-')[0]
             if len(tmp) == 2:
                 # FIX for old TimeStamps
@@ -883,19 +899,20 @@ class MSG_Center_BBS(MSG_Center_base):
             if not self._bl_cat_filter or self._bl_cat_filter == el[3]:
                 self._bl_tree_data.append((
                     #f'{new}',
-                    f'{el[5]}',
+                    f'{el[0]}',
+                    f'{el[1]}',  # BID
+                    f'{el[6]}',
                     f'{from_call}',
-                    f'{el[3]}',  # Cat
-                    f'{el[4]}',
-                    f'{el[8]}',  # Flag
+                    f'{el[4]}',  # Cat
+                    f'{el[5]}',
+                    f'{el[9]}',  # Flag
                     f'{date}',   # Date
-                    f'{el[0]}',  # BID
                 ))
         # Category Tab
 
         for el in self._bl_data:
-           if (False, el[3]) not in self._bl_cat_tree_data:
-                self._bl_cat_tree_data.append((False, el[3]))
+           if (False, el[4]) not in self._bl_cat_tree_data:
+                self._bl_cat_tree_data.append((False, el[4]))
 
 
         self._bl_cat_tree_data.sort(key=lambda x: x[1])
@@ -906,7 +923,7 @@ class MSG_Center_BBS(MSG_Center_base):
             self._bl_tree.delete(i)
         for ret_ent in self._bl_tree_data:
 
-            self._bl_tree.insert('', tk.END, values=ret_ent[:-1], tags=('dummy', ret_ent[-1]))
+            self._bl_tree.insert('', tk.END, values=ret_ent, tags=('dummy', ret_ent[1]))
         self._update_sort_entry(self._bl_tree)
 
     def _BL_entry_selected(self, event=None):
@@ -1129,8 +1146,7 @@ class MSG_Center_BBS(MSG_Center_base):
         self._update_fwdQ_tree()
 
     def _get_fwdQ_data(self):
-        # TODO
-        self._fwdQ_data = self._bbs_obj.get_active_fwd_q_tab()
+        self._fwdQ_data = self._bbs_obj.get_fwd_q_tab_bbs()
 
     def _get_fwdQ_MSG_data(self, bid):
         return self._bbs_obj.get_out_msg_fm_BID(bid)
@@ -1138,38 +1154,46 @@ class MSG_Center_BBS(MSG_Center_base):
     def _format_fwdQ_tree_data(self):
         self._fwdQ_tree_data = []
         for el in self._fwdQ_data:
-            to_call = f"{el[3]}"
-            if el[4]:
-                to_call += f"@{el[4]}"
-            from_call = f"{el[1]}"
-            if el[2]:
-                from_call += f"@{el[2]}"
+            to_call = f"{el[4]}"
+            if el[5]:
+                to_call += f"@{el[5]}"
+            from_call = f"{el[2]}"
+            if el[3]:
+                from_call += f"@{el[3]}"
 
             """
-            'bid',
-            'Betreff',
-            'Von',
-            'An',
-            'fwd_bbs',
-            'typ',
-            'size',
+              "MID, "
+              "BID, "
+              "from_call, "
+              "from_bbs_call, "
+              "to_call, "
+              "to_bbs_call, "
+              "fwd_bbs_call, "
+              "type, "
+              "subject, "
+              "size, "
+              "flag, "
+              "try "
             
             """
             self._fwdQ_tree_data.append((
-                f'{el[0]}',         # BID
-                f'{el[7]}',         # Subject
+                f'{el[0]}',         # MID
+                f'{el[1]}',         # BID
+                f'{el[8]}',         # Subject
                 f'{from_call}',     # From
                 f'{to_call}',       # To
-                f'{el[5]}',         # FWD BBS
-                f'{el[6]}',         # Typ
-                f'{el[8]}',         # Size
+                f'{el[6]}',         # FWD BBS
+                f'{el[7]}',         # Typ
+                f'{el[9]}',         # Size
+                f'{el[10]}',        # Flag
+                f'{el[11]}',        # Try's
             ))
 
     def _update_fwdQ_tree(self):
         for i in self._fwdQ_tree.get_children():
             self._fwdQ_tree.delete(i)
         for ret_ent in self._fwdQ_tree_data:
-            self._fwdQ_tree.insert('', tk.END, values=ret_ent[:-1],)
+            self._fwdQ_tree.insert('', tk.END, values=ret_ent, tags=('dummy', ret_ent[1]))
         # self._update_sort_entry(self._fwdQ_tree)
 
     def _fwdQ_entry_selected(self, event=None):
