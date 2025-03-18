@@ -55,19 +55,23 @@ class DefaultCLI(object):
 
         self._c_text = self._c_text.replace('\n', '\r')
 
-        self.time_start = datetime.now()
+        self.time_start         = datetime.now()
 
-        self._state_index = 0
+        self._state_index       = 0
         self._crone_state_index = 0
-        self._input = b''
-        self._raw_input = b''
-        self._cmd = b''
-        self._last_line = b''
-        self._new_last_line = b''   # TODO ???????????????????????
-        self._parameter = []
-        self._sys_login = None
-        self.sysop_priv = False
-        self._tx_buffer = b''
+        self._ss_state          = 0
+
+        self._input             = b''
+        self._raw_input         = b''
+        self._cmd               = b''
+        self._last_line         = b''
+        self._new_last_line     = b''   # TODO ???????????????????????
+        self._parameter         = []
+
+        self._sys_login         = None
+        self.sysop_priv         = False
+
+        self._tx_buffer         = b''
         self._getTabStr = lambda str_k: get_strTab(str_k, self._cli_lang)
         # self._user_db_ent.cli_sidestop = 20
         # Crone
@@ -198,7 +202,10 @@ class DefaultCLI(object):
             self._connection.tx_buf_rawData += cli_out
             self.change_cli_state(1)
             return
-        out_lines += self._getTabStr('op_prompt').encode(self._encoding[0], self._encoding[1])
+        if self._ss_state == 0:
+            out_lines += self._getTabStr('op_prompt_0').encode(self._encoding[0], self._encoding[1])
+        elif self._ss_state == 1:
+            out_lines += self._getTabStr('op_prompt_1').encode(self._encoding[0], self._encoding[1])
         self._connection.tx_buf_rawData += out_lines
         self.change_cli_state(7)
 
@@ -413,6 +420,7 @@ class DefaultCLI(object):
         # Message is for User ( Text , Chat )
         if self.prefix:
             return ''
+        self._ss_state = 0  # Reset Side Stop State to default
         # CMD Input for No User Terminals ( Node ... )
         ret = self._find_cmd()
         if self._crone_state_index not in [100] and \
@@ -1402,7 +1410,7 @@ class DefaultCLI(object):
                 del self._sys_login
                 self._sys_login = None
                 # print("Priv: Failed !")
-                logger.warning("Priv: Failed !")
+                logger.warning(self._logTag + "Priv: Failed !")
                 if self._gui:
                     self._gui.on_channel_status_change()
                 self.change_cli_state(1)
@@ -1423,11 +1431,11 @@ class DefaultCLI(object):
     def _s7(self):
         """ Side Stop / Paging"""
         if not self._tx_buffer:
-            logger.warning(f"CLI: _s7: No tx_buffer but in S7 !!")
+            logger.warning(self._logTag + f"CLI: _s7: No tx_buffer but in S7 !!")
             self.change_cli_state(1)
             return
         if not self._user_db_ent.cli_sidestop:
-            logger.warning(f"CLI: _s7: No UserOpt but in S7 !!")
+            logger.warning(self._logTag + f"CLI: _s7: No UserOpt but in S7 !!")
             self.change_cli_state(1)
             return
         if not self._raw_input:
@@ -1440,10 +1448,12 @@ class DefaultCLI(object):
             self.send_prompt()
             self.change_cli_state(1)
             return
-        if self._raw_input in [b'r\r', b'R\r', b'r\n', b'R\n']:
-            self._user_db_ent.cli_sidestop = 0
-            self._send_out_sidestop(self._tx_buffer)
+        if self._raw_input in [b'o\r', b'O\r', b'o\n', b'O\n']:
+            self._connection.tx_buf_rawData += bytearray(self._tx_buffer)
+            self._tx_buffer = b''
+            self.change_cli_state(1)
             return
+
 
     @staticmethod
     def _cron_s0():

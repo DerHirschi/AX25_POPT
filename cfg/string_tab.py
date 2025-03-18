@@ -2660,11 +2660,11 @@ STR_TABLE = {
          '',
          ''),
 
-    'op_prompt': (
+    'op_prompt_0': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-         '\r # (A)=Abbruch, (R)=Lesen, (Return)=weiter -->',
-         '\r # (A)=Cancel, (R)=Read, (Return)=continue -->',
-         '\r # (A)=Annuleren, (R)=Lezen, (Terug)=doorgaan -->',
+         '\r # (A)=Abbruch, (O)=weiter ohne Stop, (Return)=weiter -->',
+         '\r # (A)=Cancel, (O)=continue without stopping, (Return)=continue -->',
+         '\r # (A)=Annuleren, (O)=doorgaan zonder te stoppen, (Terug)=doorgaan -->',
          '',
          '',
          '',
@@ -2672,6 +2672,19 @@ STR_TABLE = {
          '',
          '',
          ''),
+
+    'op_prompt_1': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # (A)=Abbruch, (R)=Lesen, (Return)=weiter -->',
+        '\r # (A)=Cancel, (R)=Read, (Return)=continue -->',
+        '\r # (A)=Annuleren, (R)=Lezen, (Terug)=doorgaan -->',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)

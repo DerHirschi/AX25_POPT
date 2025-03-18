@@ -165,6 +165,48 @@ class BoxCLI(DefaultCLI):
     def _s2(self):
         return self._cmd_q()
 
+    def _s7(self):
+        """ Side Stop / Paging"""
+        if not self._tx_buffer:
+            logger.warning(self._logTag + f"CLI: _s7: No tx_buffer but in S7 !!")
+            self.change_cli_state(1)
+            return
+        if not self._user_db_ent.cli_sidestop:
+            logger.warning(self._logTag + f"CLI: _s7: No UserOpt but in S7 !!")
+            self.change_cli_state(1)
+            return
+        if not self._raw_input:
+            return
+        if self._raw_input in [b'\r', b'\n']:
+            self._send_out_sidestop(self._tx_buffer)
+            return
+        if self._ss_state == 0:
+            if self._raw_input in [b'a\r', b'A\r', b'a\n', b'A\n']:
+                self._tx_buffer = b''
+                self.send_prompt()
+                self.change_cli_state(1)
+                return
+            if self._raw_input in [b'o\r', b'O\r', b'o\n', b'O\n']:
+                self._connection.tx_buf_rawData += bytearray(self._tx_buffer)
+                self._tx_buffer = b''
+                self.change_cli_state(1)
+                return
+        if self._ss_state == 1:
+            if self._raw_input in [b'a\r', b'A\r', b'a\n', b'A\n']:
+                self._tx_buffer = b''
+                self.send_prompt()
+                self.change_cli_state(1)
+                return
+
+            if self._raw_input.startswith(b'r') or self._raw_input.startswith(b'R'):
+                self._tx_buffer = b''
+                self.change_cli_state(1)
+                self._last_line = b''
+                self._input = self._raw_input
+                self._send_output(self._exec_cmd())
+                self._last_line = self._new_last_line
+                return
+
     def _s8(self):
         self._input += self._raw_input
         eol = find_eol(self._input)
@@ -307,6 +349,7 @@ class BoxCLI(DefaultCLI):
         if not hasattr(bbs, 'get_bl_msg_tabCLI'):
             logger.error("CLI: _cmd_box_lb: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
+        self._ss_state = 1
         ret = '\r'
         BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
@@ -335,6 +378,7 @@ class BoxCLI(DefaultCLI):
         if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
+        self._ss_state = 1
         ret = '\r'
         BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
@@ -363,6 +407,7 @@ class BoxCLI(DefaultCLI):
         if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
+        self._ss_state = 1
         ret = '\r'
         BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
