@@ -116,15 +116,8 @@ class BBS_addRuleWin(tk.Toplevel):
         3: ('THEME', '!THEME', 'DIST', '!DIST'),
         """
         rule_cfg_name = {
-            0: {    # P-IN
-                'BBS':      'pn_fwd_bbs_in',
-                '!BBS':     'pn_fwd_not_bbs_in',
-                'H':        'pn_fwd_h_in',
-                '!H':       'pn_fwd_not_h_in',
-                'CALL':     'pn_fwd_call_in',
-                '!CALL':    'pn_fwd_not_call_in',
-            },
-            1: {    # P-OUT
+
+            0: {    # P-OUT
                 'BBS':      'pn_fwd_bbs_out',
                 '!BBS':     'pn_fwd_not_bbs_out',
                 'H':        'pn_fwd_h_out',
@@ -132,13 +125,8 @@ class BBS_addRuleWin(tk.Toplevel):
                 'CALL':     'pn_fwd_call_out',
                 '!CALL':    'pn_fwd_not_call_out',
             },
-            2: {    # BL-IN
-                'THEME':    'bl_top_in',
-                '!THEME':   'bl_top_not_in',
-                'DIST':     'bl_dist_in',
-                '!DIST':    'bl_dist_not_in',
-            },
-            3: {  # BL-OUT
+
+            1: {  # BL-OUT
                 'THEME':    'bl_top_out',
                 '!THEME':   'bl_top_not_out',
                 'DIST':     'bl_dist_out',
