@@ -39,6 +39,7 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD: K (Löscht pers. Nachricht(en), Bsp: K 123 124 128)
 - CLI-CMD: R (Read Mail / Mail lesen)
 - CLI-CMD: SP (Send Private Mail / Sende Private Mail)
+- CLI-CMD: SB (Send Bulletin Mail / Sende Bulletin Mail)
 - CLI Seiten-Stops/Paging für MCast, NODE, BOX
 - PMS-Setting "Reverse-FWD" (nach Zeitplan connecten) für jeweiligen BBS-FWD
   setzbar

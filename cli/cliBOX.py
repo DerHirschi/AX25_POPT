@@ -53,6 +53,7 @@ class BoxCLI(DefaultCLI):
             'LM': (2, self._cmd_box_lm, self._getTabStr('cmd_lm')),
             'R':  (1, self._cmd_box_r,  self._getTabStr('cmd_r')),
             'SP': (2, self._cmd_box_sp, self._getTabStr('cmd_sp')),
+            'SB': (2, self._cmd_box_sb, self._getTabStr('cmd_sb')),
             'KM': (2, self._cmd_box_km, self._getTabStr('cmd_km')),
             'K':  (1, self._cmd_box_k,  self._getTabStr('cmd_k')),
         })
@@ -83,6 +84,7 @@ class BoxCLI(DefaultCLI):
                               'LM',
                               'R',
                               'SP',
+                              'SB',
                               'KM',
                               'K',
                               # CLI OPT
@@ -541,7 +543,73 @@ class BoxCLI(DefaultCLI):
         ret = self._getTabStr('box_cmd_sp_local').format(call)
         return ret
 
+    def _cmd_box_sb(self):
+        self._decode_param(defaults=[''])
+        if not self._parameter:
+            return self._getTabStr('box_error_no_address')
 
+        # if not hasattr(bbs, 'del_pn_in_by_IDs'):
+        if not self._bbs:
+            logger.error(self._logTag + "_cmd_box_sb: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+        if not self._user_db:
+            logger.error(self._logTag + "_cmd_box_sb: User-DB available")
+            return "\r # Error: No User-DB available !\r\r"
+        print(self._parameter)
+        parameter: str  = self._parameter[0]
+        to_address      = parameter.replace(' ', '').split('@')
+        call            = to_address[0].upper()
+        try:
+            bbs_addr  = to_address[1].upper()
+            bbs_call  = bbs_addr.split('.')[0].upper()
+        except IndexError:
+            bbs_addr = ''
+            bbs_call = ''
+
+        if not validate_ax25Call(call):
+            return f"\r # Error: Invalid Call > {call} !\r\r"
+        if bbs_call and not validate_ax25Call(bbs_call):
+            return f"\r # Error: Invalid BBS-Call > {bbs_call} !\r\r"
+
+        self._input   = b''
+        self._out_msg = GET_MSG_STRUC()
+        self._out_msg.update(dict(
+            message_type=   'B',
+            sender=         str(self._to_call),
+            sender_bbs=     str(self._bbs_address),
+            receiver=       str(call),
+            recipient_bbs=  str(bbs_addr),
+        ))
+        user_db_address = self._user_db.get_PRmail(call)
+        if user_db_address and '@' in user_db_address:
+            if self._bbs_call in user_db_address:
+                # Local
+                self.change_cli_state(8)
+                ret = self._getTabStr('box_cmd_sp_local').format(user_db_address, call)
+                return ret
+            userdb_bbs_add = user_db_address.split('@')[1]
+            self._out_msg.update(dict(recipient_bbs=userdb_bbs_add))
+            self.change_cli_state(8)
+            ret  = self._getTabStr('box_cmd_sp_routing_to').format(userdb_bbs_add, call)
+            return ret
+        userdb_bbs_add = self._user_db.get_PRmail(bbs_call)
+        if '@' in userdb_bbs_add:
+            userdb_bbs_add = userdb_bbs_add.split('@')[1]
+        if userdb_bbs_add:
+            self.change_cli_state(8)
+            ret  = self._getTabStr('box_cmd_sp_routing_to').format(f"{call}@{userdb_bbs_add}", call)
+            self._out_msg.update(dict(recipient_bbs=userdb_bbs_add))
+            return ret
+        """
+        if bbs_addr and not '.' in bbs_addr:
+            ret = self._getTabStr('box_error_invalid_dist').format(bbs_addr)
+            self._out_msg = GET_MSG_STRUC()
+            return ret
+        """
+        # Local
+        self.change_cli_state(8)
+        ret = self._getTabStr('box_cmd_sp_local').format(call)
+        return ret
 
     ########################################################################
 

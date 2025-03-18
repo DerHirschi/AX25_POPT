@@ -2555,9 +2555,25 @@ STR_TABLE = {
 
     'cmd_sp': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        'SP <Call> @ <BBS> : Sendet eine persoenliche Nachricht an Rufzeichen'
+        'SP <Call> @ <BBS> : Sendet eine persoenliche Nachricht an Rufzeichen',
         'SP <Call> @ <BBS> : Sends a personal message to call sign',
         'SP <Call> @ <BBS>: Stuurt een persoonlijk bericht naar roepnamen',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_sb': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        ('SB <Rubrik> @ <Verteiler> Sendet ein Bulletin in eine Rubrik \r'
+        '              fuer mehrere Boxen in einer Region.'),
+        ('SB <Category> @ <Distribution> Sends a bulletin to a category \r'
+        '              for multiple boxes in a region.'),
+        ('SB <categorie> @ <distributie> Stuurt een bulletin naar een categorie \r'
+        '              voor meerdere dozen in een regio.'),
         '',
         '',
         '',
