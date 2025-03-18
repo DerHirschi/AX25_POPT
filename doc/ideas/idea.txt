@@ -163,23 +163,41 @@ Ideas/TODO's :
     - Papierkorb usw
     - Signatur
   - APRS
-  - BBS
+  ✓ BBS (Grundlegend)
+    - FWD-Q (Tasker) mehr Steuer/Monitoring-Möglichkeiten (GUI)
+    - Hold
+    - Reject
 
 - BBS
   - BBS (S&F und all den Gedöns)
     ✓ eingehender FWD
-      - auswerten eingehender Mails zur Weiterleitung
+      ✓ auswerten eingehender Mails zur Weiterleitung
     ✓ ausgehender FWD
     ✓ automatisiertes abarbeiten der FWD-Q
+      - überarbeiten
+      - mehr Steuer/Monitoring-Möglichkeiten (GUI)
     - Scheduled BL/PN FWD (z.B. nur Nachts)
     - !Kompremierung (Hufman??) (lzh??)
+    - Hold   (Config u Handling)
+    - Reject (Config u Handling)
   - User-DB (User-DB Erweiterung für die BBS)
   - BBS Tool (Hold, Filter, Ban, Man-Routing, ...)
-  - CLI
+  ✓ CLI (Grundlegend)
+    ✓ Side Stops
+    ✓ S.. -CMDs
+    ✓ R.. -CMDs
+    ✓ L.. -CMDs
+      - Erweiterte L.. CMDs (Filter)
   - Automatesierte Routingmails (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS
   - Auswertung und senden von WP-Mails (Siehe User-DB)
   - Mail inport/export (SB TEST@TEST .... ..)
+  - Baken Noty
+  - System-Mail (Sysop Noty)
+
+  - Gästebuch
+  - News-Feed von Webseiten (z.B. WX-Daten, Wetterwarnungen)
+  - FWD-Net-Plot Übersicht für jeweiligen FWD-Routen
 
 ✓ Pipe-TOOL
   - Optional Header in Datei schreiben für jeden Frame

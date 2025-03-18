@@ -974,7 +974,7 @@ class AX25PortHandler(object):
             # DB.check_tables_exists('bbs')
             # TODO optional Moduls for minimum config
             self._db.check_tables_exists('bbs')
-            self._db.check_tables_exists('user_db')
+            # self._db.check_tables_exists('user_db')
             self._db.check_tables_exists('aprs')
             self._db.check_tables_exists('port_stat')
             # self._db.check_tables_exists('mh')

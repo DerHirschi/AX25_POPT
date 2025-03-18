@@ -92,9 +92,9 @@ class SQL_Database:
             from sql_db.sqlite import SQL_DB
 
         self._db_config = {  # TODO GUI and DB-TOOLs
-            'user': MYSQL_USER,
+            'user':     MYSQL_USER,
             'password': MYSQL_PASS,  # OMG, my super secret password
-            'host': MYSQL_HOST,
+            'host':     MYSQL_HOST,
             'database': MYSQL_DB,
             'raise_on_warnings': True
         }
@@ -112,7 +112,6 @@ class SQL_Database:
             # self._drope_tabel()
             self.bbs_get_fwdPaths()
         """
-        self.bbs_outMsg_release_wait_by_list([])
 
     def __del__(self):
         if self.db:

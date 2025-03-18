@@ -66,6 +66,7 @@ class BBS:
         #######################################
         # Set flag in FWD-Q  'SW' > 'S='
         self._db.bbs_outMsg_release_all_wait()
+        # self._db.bbs_outMsg_release_wait_by_list([])
         ####################
         # Set Vars
         self._set_pms_home_bbs()
