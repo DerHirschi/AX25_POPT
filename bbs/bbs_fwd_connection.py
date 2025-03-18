@@ -125,8 +125,8 @@ class BBSConnection:
         return True
 
     def end_conn(self):
-        print(self._debug_rx_buff)
-        print(self._debug_rx_buff.hex())
+        # print(self._debug_rx_buff)
+        # print(self._debug_rx_buff.hex())
         logTag = self._logTag + 'End-Conn > '
         if self._state in [0, 1, 2, 3, 4, 5]:
             self._send_abort()

@@ -608,16 +608,21 @@ class BBS:
         local_user      = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
         local_user     += ['SYSOP']     # TODO Swap
         # TODO local_user     += list(user_db.bla......)
-        BBS_LOG.info(log_tag + f"Msg: {mid} - Forward Lookup LOCAL - {recv_call}@{recv_bbs}")
+        BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs}")
+
 
         if msg_typ == 'B':
             if not recv_bbs_call:
                 BBS_LOG.debug(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs} - IS Local - No Distributor")
                 return True
+            if recv_bbs_call in local_dist:
+                BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs} - IS Local - Local Distributor")
+                return True
             if recv_call in local_theme:
                 BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs} - IS Local - Local Theme")
                 return True
             return False
+
 
         if not recv_bbs_call:
             BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs} - IS Local - No Distributor BBS")

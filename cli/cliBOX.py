@@ -190,6 +190,7 @@ class BoxCLI(DefaultCLI):
             # Save Msg Text
             msg_lines = self._input.split(eol)
             msg       = self._out_msg.get('msg', b'')
+            """
             if all((not msg_lines[0], not msg)):
                 # Nachricht fuer {} anulliert.
                 self._send_msg_state = 0
@@ -197,6 +198,7 @@ class BoxCLI(DefaultCLI):
                 self._send_output(self._getTabStr('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', )))
                 self._out_msg = GET_MSG_STRUC()
                 return
+            """
             eom_found = False
             while msg_lines:
                 line: bytes = msg_lines[0]
@@ -489,7 +491,7 @@ class BoxCLI(DefaultCLI):
         if not self._user_db:
             logger.error(self._logTag + "_cmd_box_sp: User-DB available")
             return "\r # Error: No User-DB available !\r\r"
-        print(self._parameter)
+        # print(self._parameter)
         parameter: str  = self._parameter[0]
         to_address      = parameter.replace(' ', '').split('@')
         call            = to_address[0].upper()
@@ -552,10 +554,7 @@ class BoxCLI(DefaultCLI):
         if not self._bbs:
             logger.error(self._logTag + "_cmd_box_sb: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
-        if not self._user_db:
-            logger.error(self._logTag + "_cmd_box_sb: User-DB available")
-            return "\r # Error: No User-DB available !\r\r"
-        print(self._parameter)
+
         parameter: str  = self._parameter[0]
         to_address      = parameter.replace(' ', '').split('@')
         call            = to_address[0].upper()
@@ -580,35 +579,16 @@ class BoxCLI(DefaultCLI):
             receiver=       str(call),
             recipient_bbs=  str(bbs_addr),
         ))
-        user_db_address = self._user_db.get_PRmail(call)
-        if user_db_address and '@' in user_db_address:
-            if self._bbs_call in user_db_address:
-                # Local
-                self.change_cli_state(8)
-                ret = self._getTabStr('box_cmd_sp_local').format(user_db_address, call)
-                return ret
-            userdb_bbs_add = user_db_address.split('@')[1]
-            self._out_msg.update(dict(recipient_bbs=userdb_bbs_add))
-            self.change_cli_state(8)
-            ret  = self._getTabStr('box_cmd_sp_routing_to').format(userdb_bbs_add, call)
-            return ret
-        userdb_bbs_add = self._user_db.get_PRmail(bbs_call)
-        if '@' in userdb_bbs_add:
-            userdb_bbs_add = userdb_bbs_add.split('@')[1]
-        if userdb_bbs_add:
-            self.change_cli_state(8)
-            ret  = self._getTabStr('box_cmd_sp_routing_to').format(f"{call}@{userdb_bbs_add}", call)
-            self._out_msg.update(dict(recipient_bbs=userdb_bbs_add))
-            return ret
-        """
-        if bbs_addr and not '.' in bbs_addr:
-            ret = self._getTabStr('box_error_invalid_dist').format(bbs_addr)
-            self._out_msg = GET_MSG_STRUC()
-            return ret
-        """
+
         # Local
         self.change_cli_state(8)
-        ret = self._getTabStr('box_cmd_sp_local').format(call)
+        bbs_cfg = self._bbs.get_pms_cfg()
+        local_theme = bbs_cfg.get('local_theme', [])
+        local_dist  = bbs_cfg.get('local_dist',  [])
+        if any((not bbs_addr, bbs_addr in local_dist, call in local_theme)):
+            ret = self._getTabStr('box_cmd_sp_local').format(call)
+        else:
+            ret  = self._getTabStr('box_cmd_sp_routing_to').format(bbs_addr, call)
         return ret
 
     ########################################################################
