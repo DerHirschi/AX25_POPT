@@ -1,8 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
-from orca.messages import selectedItemsCount
-
 from cfg.constant import FONT, ENCODINGS
 from fnc.str_fnc import format_number
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_c_base import MSG_Center_base
