@@ -95,6 +95,7 @@ class Main_CFG:
         logger.info('Main CFG: Init complete')
         ### DEV ################################################
         # self._config['1wire_cfg'] = getNew_1wire_cfg()
+        # print(getNew_BBS_cfg())
 
 
     ####################

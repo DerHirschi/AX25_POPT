@@ -788,6 +788,7 @@ class BBS:
             BBS_LOG.debug(f"HOPS: {hops}")
             BBS_LOG.debug(f"PATH: {path}")
             if bbs in excluded_bbs:
+                BBS_LOG.debug(f"BBS in exclude list: {bbs_address} - {excluded_bbs}")
                 continue
             if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
                 BBS_LOG.debug(f"_find_lowHop_PN_route: Treffer, FWD via {bbs}")
@@ -814,8 +815,8 @@ class BBS:
             BBS_LOG.debug(f"PATH: {path}")
             BBS_LOG.debug(f"fwd_bbs_cfg: {fwd_bbs_cfg}")
             if bbs in excluded_bbs:
+                BBS_LOG.debug(f"BBS in exclude list: {bbs_address} - {excluded_bbs}")
                 continue
-            # if True:    # FIXME DEBUG !!!
             if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
                 BBS_LOG.debug(f"_find_most_current_PN_route: Treffer, FWD via {bbs}")
                 BBS_LOG.debug(f"HOPS: {hops}")

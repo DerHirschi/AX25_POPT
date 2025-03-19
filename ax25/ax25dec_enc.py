@@ -3,6 +3,7 @@
     AX.25 Packet enc-/decoding
     TODO: Cleanup/optimising
 """
+import copy
 import datetime
 
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
@@ -544,7 +545,7 @@ class AX25Frame:
 
     def get_frame_conf(self):
 
-        return dict(
+        return copy.deepcopy(dict(
             uid=str(self.addr_uid),
             axip_add=(str(self.axip_add[0]), int(self.axip_add[1])),
             from_call=str(self.from_call.call),
@@ -583,7 +584,7 @@ class AX25Frame:
             netrom_cfg=self._netrom_cfg,
 
             rx_time=self.rx_time,
-        )
+        ))
 
     def _build_uid(self, dec=True):
 

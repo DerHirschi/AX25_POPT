@@ -161,17 +161,17 @@ class WXWin(tk.Toplevel):
                    'temperature', 'wind_gust', 'wind_speed', 'luminosity']:
             # _tmp = [(float(self._tree.set(k, col)), k) for k in self._tree.get_children()]
             _tmp = []
-            _rest = []
+            rest = []
             for k in self._tree.get_children():
                 try:
                     _tmp.append((float(self._tree.set(k, col)), k))
                 except ValueError:
-                    _rest.append((self._tree.set(k, col), k))
+                    rest.append((self._tree.set(k, col), k))
             _tmp.sort(reverse=self._rev_ent)
             if self._rev_ent:
-                _tmp = _tmp + _rest
+                _tmp = _tmp + rest
             else:
-                _tmp = _rest + _tmp
+                _tmp = rest + _tmp
         else:
             _tmp = [(self._tree.set(k, col), k) for k in self._tree.get_children('')]
             _tmp.sort(reverse=self._rev_ent)

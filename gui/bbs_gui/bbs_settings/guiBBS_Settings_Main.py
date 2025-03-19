@@ -6,6 +6,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
 from gui.bbs_gui.bbs_settings.guiBBS_Gereral_Settings import BBSGeneralSettings
 from gui.bbs_gui.bbs_settings.guiBBS_FWD_Settings import BBS_FWD_Settings
+from gui.bbs_gui.bbs_settings.guiBBS_Reject_Settings import BBSRejectSettings
 from gui.bbs_gui.bbs_settings.guiBBS_Routing_Settings import BBSRoutingSettings
 
 
@@ -41,6 +42,7 @@ class BBSSettingsMain(tk.Toplevel):
             'general_settings'  : BBSGeneralSettings,
             'fwd_settings'      : BBS_FWD_Settings,
             'routing_settings'  : BBSRoutingSettings,
+            'reject_settings'  : BBSRejectSettings,
         }
         ###############################################################
 

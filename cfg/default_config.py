@@ -75,11 +75,12 @@ def getNew_BBS_cfg():
         # Path/Routing
         # TODO:
         #  local_user    = [] # Get from User-DB ?
-        local_theme     = ['TEST'],                              # Local Bulletin Theme
-        local_dist      = ['LOCAL', 'LOKAL', 'HOME', 'SYSOP'],   # Local Distributor - Default ['<OWN-BBS-CALL>']
+        local_theme     = ['TEST'],                     # Local Bulletin Theme
+        local_dist      = ['LOCAL', 'LOKAL', 'HOME'],   # Local Distributor - Default ['<OWN-BBS-CALL>']
         block_bbs       = [],           # Global BBS/Recipient Rejecting
         block_call      = [],           # Global Call/Topic Rejecting
         pn_auto_path    = 1,            # Find BBS to FWD
+        reject_tab      = []            # Reject/Hold Tab
         # 0 = disabled (Use strict configs)
         # 1 = most current
         # 2 = best (low hops)
@@ -113,25 +114,26 @@ def getNew_BBS_FWD_cfg():
         pn_fwd_not_h_out    = [],   # Rejected Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
         pn_fwd_call_out     = [],   # Outgoing CALLs (['MD2SAW', 'CB0SAW']) - [] = all
         pn_fwd_not_call_out = [],   # Rejected Outgoing CALLs ([MD2SAW', 'CB0SAW'])
-        # PN Incoming Routing
-        pn_fwd_bbs_in       = [],   # Reject PN from listed BBS
-        pn_fwd_not_bbs_in   = [],   # Not FWD to BBS # TODO: add to Routing-Fnc
-        pn_fwd_h_in         = [],   # Incoming H-Routing (If specified, rejects all other PN)
-        pn_fwd_not_h_in     = [],   # Rejected Incoming H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
-        pn_fwd_call_in      = [],   # Incoming CALLs (['MD2SAW', 'CB0SAW']) - [] = all
-        pn_fwd_not_call_in  = [],   # Rejected Incoming CALLs ([MD2SAW', 'CB0SAW'])
         # BL Outgoing Routing
         bl_dist_out         = [],   # Outgoing distributor (['*', 'EU']) - [] = all
         bl_dist_not_out     = [],   # Rejected Outgoing distributor (['SAW', 'DEU'])
         bl_top_out          = [],   # Outgoing Topic (['PR'])  - [] = all
         bl_top_not_out      = [],   # Rejected Outgoing Topic (['PR', 'POPT'])
         # BL Incoming Routing
-        bl_dist_in          = [],   # Incoming distributor (['*', 'EU'])
-        bl_dist_not_in      = [],   # Rejected Incoming distributor (['SAW', 'DEU'])
-        bl_top_in           = [],   # Incoming Topic (['PR'])  - [] = all
-        bl_top_not_in       = [],   # Rejected Incoming Topic (['PR', 'POPT'])
 
     )
+
+def getNew_BBS_REJ_cfg():
+    return dict(
+        msg_typ         = 'B',
+        from_call       = '',
+        via             = '',
+        to_call         = '',
+        bid             = '',
+        msg_len         = 0,
+        r_h             = 'H',
+    )
+
 """
 def getNew_BBS_User_cfg():
     # UserDB Entry

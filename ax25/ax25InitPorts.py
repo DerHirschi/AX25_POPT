@@ -53,6 +53,7 @@ class AX25PortHandler(object):
         #################
         self._start_time = datetime.datetime.now()
         self.is_running = True
+        self._ph_end    = False
         ###########################
         # Moduls
         # self.routingTable = None
@@ -242,6 +243,8 @@ class AX25PortHandler(object):
         return False
 
     def check_all_ports_closed(self):
+        if not self._ph_end:
+            return False
         ret = True
         for port_id in self.ax25_ports.keys():
             port = self.ax25_ports[port_id]
@@ -283,10 +286,11 @@ class AX25PortHandler(object):
         self._mcast_server.mcast_save_cfgs()
         logger.info("PH: Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
+        self._ph_end = True
 
 
     def close_port(self, port_id: int):
-        self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
+        # self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
         # self.sysmsg_to_gui('Info: Versuche Port {} zu schließen.'.format(port_id))
         logger.info('PH: Versuche Port {} zu schließen.'.format(port_id))
         if port_id in self.rx_echo.keys():
@@ -305,7 +309,7 @@ class AX25PortHandler(object):
             if port_id in self.ax25_ports:
                 del self.ax25_ports[port_id]
             del port
-        self.sysmsg_to_gui(get_strTab('port_closed', POPT_CFG.get_guiCFG_language()).format(port_id))
+        # self.sysmsg_to_gui(get_strTab('port_closed', POPT_CFG.get_guiCFG_language()).format(port_id))
         #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
         logger.info('PH: Port {} erfolgreich geschlossen.'.format(port_id))
 

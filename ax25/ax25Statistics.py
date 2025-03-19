@@ -108,6 +108,8 @@ class MH:
         self._short_MH = deque([], maxlen=40)
         self._PortStat_buf = {}
         self._bandwidth = {}
+        self._lock = False
+
         ############################
         # MH
         mh_load = {}
@@ -191,6 +193,10 @@ class MH:
     def save_mh_data(self):
         # print('Save MH')
         logger.info('MH: Save MH')
+        while self._lock:
+            logger.info('MH: Save MH, wait for Lock')
+            time.sleep(0.5)
+        self._lock = True
         self._save_to_cfg()
         tmp_mh = self._MH_db
         for k in list(tmp_mh.keys()):
@@ -202,6 +208,7 @@ class MH:
             with open(CFG_mh_data_file, 'xb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
         logger.info('MH: Save MH complete')
+        self._lock = False
 
     def save_PortStat(self):
         if not self._db:
@@ -359,13 +366,18 @@ class MH:
     #########################
     # MH Stuff
     def mh_task(self):  # TASKER
-        """ Called fm Porthandler Tasker"""
+        """ Called fm Porthandler Tasker """
+        while self._lock:
+            logger.info('MH: Tasker, wait for Lock')
+            time.sleep(0.5)
+        self._lock = True
         for el in list(self._mh_inp_buffer):
             if not el.get('tx', False):
                 self._PortStat_input(el)
                 self._input_bw_calc(el)
                 self._mh_inp(el)
             self._mh_inp_buffer = self._mh_inp_buffer[1:]
+        self._lock = False
 
     def mh_input(self, ax25frame_conf, port_id: int, tx: bool, primary_port_id=-1):
         """ Main Input from ax25Port.gui_monitor()"""

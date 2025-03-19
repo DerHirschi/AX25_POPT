@@ -376,7 +376,6 @@ class PoPT_GUI_Main:
                 wn.destroy_win()
             if hasattr(wn, 'destroy'):
                 wn.destroy()
-        self._quit = True
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
         self.save_GUIvars()
         self._save_parameter()
@@ -384,6 +383,7 @@ class PoPT_GUI_Main:
         logger.info('GUI: Closing GUI: Closing Ports.')
         threading.Thread(target=self._port_handler.close_popt).start()
         logger.debug('GUI: Closing GUI: Destroying all Sub-Windows')
+        self._quit = True
         self.main_win.update_idletasks()
         self._loop_delay = 800
         logger.info('GUI: Closing GUI: Done')
