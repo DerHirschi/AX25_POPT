@@ -1222,8 +1222,10 @@ class KISSSerial(AX25Port):
             if is_linux():
                 logger.info(self._logTag + f"TNC - REST: {self.device.readall()}")
             else:
-                self.device.flush()
-            self.device.close()
+                if hasattr(self.device, 'flush'):
+                    self.device.flush()
+            if hasattr(self.device, 'close'):
+                self.device.close()
             # self.device_is_running = False
         except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError) as e:
             logger.warning(self._logTag + f"Error while closing: {e}")
