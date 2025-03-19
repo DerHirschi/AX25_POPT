@@ -189,15 +189,24 @@ Ideas/TODO's :
     ✓ L.. -CMDs
       - Erweiterte L.. CMDs (Filter)
   - Automatesierte Routingmails (Scheduler)
+  - Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS
   - Auswertung und senden von WP-Mails (Siehe User-DB)
   - Mail inport/export (SB TEST@TEST .... ..)
   - Baken Noty
-  - System-Mail (Sysop Noty)
+  ✓ System-Mail (Sysop Noty) - bbs.send_sysop_msg(topic, msg)
+    ✓ Keine FWD-Route gefunden
+    ✓ Mail Held by
+    ✓ Mail Rejected by
+    ✓ FWD Error by
+  - SWAP
 
+  - POP3/SMTP evtl. IMAP
+  - NNTP
   - Gästebuch
   - News-Feed von Webseiten (z.B. WX-Daten, Wetterwarnungen)
   - FWD-Net-Plot Übersicht für jeweiligen FWD-Routen
+  - Standalone BBS GUI (PoPT "Nur BBS Modus")
 
 ✓ Pipe-TOOL
   - Optional Header in Datei schreiben für jeden Frame

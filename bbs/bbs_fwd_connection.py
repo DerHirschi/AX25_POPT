@@ -254,10 +254,13 @@ class BBSConnection:
                 self._db.bbs_outMsg_wait_by_FWD_ID(fwd_id,)
                 self._send_next_time.append(fwd_id)
             elif flag == FWD_HLD:
+                self._bbs.send_sysop_msg(topic='HELD MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rHeld by {self._dest_bbs_call}')
                 self._tx_out_msg_by_bid(bids[i])
             elif flag == FWD_REJ:
+                self._bbs.send_sysop_msg(topic='Rejected MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rRejected by {self._dest_bbs_call}')
                 self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'R')
             elif flag == FWD_ERR:
+                self._bbs.send_sysop_msg(topic='ERROR MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rError by {self._dest_bbs_call}')
                 self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EE')
             # TODO
             elif flag in FWD_ERR_OFFSET:  # Offset

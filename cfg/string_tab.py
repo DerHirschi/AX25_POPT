@@ -2997,6 +2997,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'reject_settings': (
+        'Reject/Hold',
+        'Reject/Hold',
+        'Reject/Hold',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'allowRevFWD': (
         'Erlaube Reverse-FWD',
         'Allow Reverse-FWD',

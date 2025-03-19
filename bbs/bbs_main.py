@@ -25,7 +25,7 @@ import time
 from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
-from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR
+from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR, GET_MSG_STRUC, LF, CR
 from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlist_fm_header
 from bbs.bbs_fwd_connection import BBSConnection
 from cfg.constant import SQL_TIME_FORMAT
@@ -63,6 +63,7 @@ class BBS:
         self._pms_cfg_hasChanged    = False
         if not self._pms_cfg.get('enable_fwd', True):
             BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
+        self._own_bbs_address       = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
         #######################################
         # Set flag in FWD-Q  'SW' > 'S='
         self._db.bbs_outMsg_release_all_wait()
@@ -100,6 +101,7 @@ class BBS:
         # ret = self._db.bbs_get_fwdPaths_mostCurrent('FRB024')
         # BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
         # self._pms_cfg['pn_auto_path'] = 1
+        # self.send_sysop_msg(topic='Test', msg='Test MSG\r')
 
 
     def _reinit(self):
@@ -157,6 +159,30 @@ class BBS:
             self._check_outgoing_fwd()
 
     ###################################
+    # Add SYSOP-Msg (Noty) to system
+    def send_sysop_msg(self, topic: str , msg: str):
+        log_tag = self._logTag + 'Send SYSOP MSG> '
+        top     = f"*** {topic} ***"
+        BBS_LOG.info(log_tag + f"Topic: {topic}")
+        BBS_LOG.info(log_tag + f"Msg: {msg}")
+
+        msg     = msg.encode('UTF-8', 'ignore')
+        msg     = msg.replace(LF, CR)
+        out_msg = GET_MSG_STRUC()
+        out_msg.update(dict(
+            message_type    = 'P',
+            sender          = str(self._pms_cfg.get('user', '')),
+            sender_bbs      = str(self._own_bbs_address),
+            receiver        = 'SYSOP',
+            recipient_bbs   = '',
+            subject         = top,
+            msg             = msg,
+
+        ))
+        mid = self.new_msg(out_msg)
+        self.add_local_msg_to_fwd_by_id(mid=mid)
+
+    ###################################
     # Add Msg to system
     def add_local_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call=''):
         log_tag = self._logTag + 'Forward Check - Local > '
@@ -164,8 +190,7 @@ class BBS:
         if not msg_fm_db:
             BBS_LOG.error(log_tag + 'No msg_fm_db')
             return False
-        own_bbs_address = self._pms_cfg.get('user', '') + '.' + self._pms_cfg.get('regio', '')
-        new_msg = build_msg_header(msg_fm_db, own_bbs_address)
+        new_msg = build_msg_header(msg_fm_db, self._own_bbs_address)
 
         bid = new_msg.get('bid_mid', '')
         msg_typ = new_msg.get('message_type', '')
@@ -195,6 +220,7 @@ class BBS:
                 # logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
                 # BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
                 BBS_LOG.info(log_tag + f"Msg: {mid}: No BBS to FWD - PN")
+                self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - PN")
                 return False
             BBS_LOG.info(log_tag + f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
             new_msg['fwd_bbs_call'] = fwd_bbs_call
@@ -206,6 +232,7 @@ class BBS:
             if not fwd_bbs_list:
                 # BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id BL")
                 BBS_LOG.error(log_tag + f"Msg: {mid}: No BBS to FWD - BL")
+                self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - BL")
                 return False
             BBS_LOG.info(log_tag + f"Msg: {mid}  BL FWD to {fwd_bbs_list}")
             self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
@@ -220,13 +247,12 @@ class BBS:
         return False
 
     def add_cli_msg_to_fwd_by_id(self, mid: int):
-        log_tag   = self._logTag + 'Forward Check - BOX-CLI > '
+        log_tag   = self._logTag + 'Forward Check - BOX-CLI> '
         msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if not msg_fm_db:
             BBS_LOG.error(log_tag + 'No msg_fm_db')
             return None
-        own_bbs_address = self._pms_cfg.get('user', '') + '.' + self._pms_cfg.get('regio', '')
-        new_msg     = build_msg_header(msg_fm_db, own_bbs_address)
+        new_msg     = build_msg_header(msg_fm_db, self._own_bbs_address)
 
         bid         = new_msg.get('bid_mid', '')
         msg_typ     = new_msg.get('message_type', '')
@@ -252,6 +278,7 @@ class BBS:
                 # logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
                 # BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
                 BBS_LOG.info(log_tag + f"Msg: {mid}: No BBS to FWD - PN")
+                self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - PN")
                 return None
             BBS_LOG.info(log_tag + f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
             new_msg['fwd_bbs_call'] = fwd_bbs_call
@@ -265,6 +292,7 @@ class BBS:
             if not fwd_bbs_list:
                 # BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id BL")
                 BBS_LOG.error(log_tag + f"Msg: {mid}: No BBS to FWD - BL")
+                self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - BL")
                 return None
             BBS_LOG.info(log_tag + f"Msg: {mid}  BL FWD to {fwd_bbs_list}")
             self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
@@ -279,70 +307,6 @@ class BBS:
         return None
     ###################################
     # Check FWD TX Q Task
-    def _check_outgoing_fwd(self):
-        """
-        All 60 secs or 20 secs, when tasks in fwd_q
-        Check Forward-Q for Outgoing Forwards
-        """
-        log_tag = self._logTag + 'Check FWD-Q > '
-        if not self._pms_cfg.get('auto_conn', True):
-            return
-
-        if self._pms_cfg.get('single_auto_conn', True) and self._fwd_connections:
-            # FWD in progress
-            self._var_task_fwdQ_timer = time.time() + 20  #
-            return
-
-        if not self._fwd_q:
-            self._fwd_q: list = self._build_new_fwd_Q()
-        if not self._fwd_q:
-            return
-
-
-        to_bbs_call = list(self._fwd_q)[0]
-        self._fwd_q = list(self._fwd_q[1:])
-        BBS_LOG.info(log_tag + f"Next Fwd to: {to_bbs_call}")
-        if self._is_bbs_connected(to_bbs_call):
-            BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
-            # self._var_task_fwdQ_timer = time.time() + 60
-            return
-        fwd_conn = self._start_autoFwd(to_bbs_call)
-        if not fwd_conn:
-            BBS_LOG.error(f"FWD-Q: fwd_conn Error: {to_bbs_call}")
-
-        if self._fwd_q:
-            # self._var_task_fwdQ_timer = time.time() + 20  #
-            return
-        return
-
-    def _is_bbs_connected(self, bbs_call: str):
-        for bbs_conn in self._fwd_connections:
-            if bbs_call == bbs_conn.get_dest_bbs_call():
-                return True
-        return False
-
-    def _build_new_fwd_Q(self):
-        log_tag = self._logTag + 'Build FWD-Q > '
-        if self._fwd_q:
-            BBS_LOG.error(log_tag + "Error: Local FWQ-Q (self._fwd_q) not empty ! ")
-            return []
-        db_fwd_q: list = self.get_active_fwd_q_tab()
-        res = []
-        for fwd_task in db_fwd_q:
-            try:
-                to_bbs_call = fwd_task[5]
-            except IndexError:
-                BBS_LOG.error(log_tag + f"IndexError: fwd_task: {fwd_task} ")
-                continue
-            if self._is_bbs_connected(to_bbs_call):
-                BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
-                continue
-            if to_bbs_call not in res:
-                res.append(to_bbs_call)
-        if res:
-            BBS_LOG.info(log_tag + f"New FWD-Q: {res}")
-        return res
-
     def _in_msg_fwd_check(self):
         """ All 60 Secs. Check Incoming MSG to need forwarded """
         msg_fm_db = self._db.bbs_get_msg_fwd_check()
@@ -388,8 +352,7 @@ class BBS:
                 BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid} is Local. No Forwarding needed")
                 continue
 
-            own_bbs_address = self._pms_cfg.get('user', '') + '.' + self._pms_cfg.get('regio', '')
-            msg = build_msg_header(msg, own_bbs_address)
+            msg = build_msg_header(msg, self._own_bbs_address)
 
             # Private Mails
             if msg_typ == 'P':
@@ -397,6 +360,7 @@ class BBS:
                 fwd_bbs_call = self._get_fwd_bbs_pn(msg=msg)
                 if not fwd_bbs_call:
                     BBS_LOG.error(log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - PN")
+                    self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - PN")
                     continue
                 mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
                 msg['fwd_bbs_call'] = fwd_bbs_call
@@ -410,6 +374,7 @@ class BBS:
                 fwd_bbs_list: list = self._get_fwd_bbs_bl(msg=msg)
                 if not fwd_bbs_list:
                     BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - BL")
+                    self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - BL")
                     continue
                 BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid}: BL FWD to {fwd_bbs_list}")
                 mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
@@ -422,6 +387,70 @@ class BBS:
                         BBS_LOG.error(log_tag + f"Can't insert Msg into FWD-Q: {msg}")
                 continue
             BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ}")
+
+    def _check_outgoing_fwd(self):
+        """
+        All 60 secs or 20 secs, when tasks in fwd_q
+        Check Forward-Q for Outgoing Forwards
+        """
+        log_tag = self._logTag + 'Check FWD-Q> '
+        if not self._pms_cfg.get('auto_conn', True):
+            return
+
+        if self._pms_cfg.get('single_auto_conn', True) and self._fwd_connections:
+            # FWD in progress
+            self._var_task_fwdQ_timer = time.time() + 20  #
+            return
+
+        if not self._fwd_q:
+            self._fwd_q: list = self._build_new_fwd_Q()
+        if not self._fwd_q:
+            return
+
+
+        to_bbs_call = list(self._fwd_q)[0]
+        self._fwd_q = list(self._fwd_q[1:])
+        BBS_LOG.info(log_tag + f"Next Fwd to: {to_bbs_call}")
+        if self._is_bbs_connected(to_bbs_call):
+            BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
+            # self._var_task_fwdQ_timer = time.time() + 60
+            return
+        fwd_conn = self._start_autoFwd(to_bbs_call)
+        if not fwd_conn:
+            BBS_LOG.error(f"FWD-Q: fwd_conn Error: {to_bbs_call}")
+
+        if self._fwd_q:
+            # self._var_task_fwdQ_timer = time.time() + 20  #
+            return
+        return
+
+    def _is_bbs_connected(self, bbs_call: str):
+        for bbs_conn in self._fwd_connections:
+            if bbs_call == bbs_conn.get_dest_bbs_call():
+                return True
+        return False
+
+    def _build_new_fwd_Q(self):
+        log_tag = self._logTag + 'Build FWD-Q> '
+        if self._fwd_q:
+            BBS_LOG.error(log_tag + "Error: Local FWQ-Q (self._fwd_q) not empty ! ")
+            return []
+        db_fwd_q: list = self.get_active_fwd_q_tab()
+        res = []
+        for fwd_task in db_fwd_q:
+            try:
+                to_bbs_call = fwd_task[5]
+            except IndexError:
+                BBS_LOG.error(log_tag + f"IndexError: fwd_task: {fwd_task} ")
+                continue
+            if self._is_bbs_connected(to_bbs_call):
+                BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
+                continue
+            if to_bbs_call not in res:
+                res.append(to_bbs_call)
+        if res:
+            BBS_LOG.info(log_tag + f"New FWD-Q: {res}")
+        return res
 
     ###################################
     # CFG Stuff
