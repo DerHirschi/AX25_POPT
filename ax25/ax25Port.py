@@ -1272,6 +1272,7 @@ class KISSSerial(AX25Port):
                     return ret
                 if self.kiss.unknown_kiss_frame(recv_buff):
                     recv_buff = b''
+                    return None
 
             else:
                 return None

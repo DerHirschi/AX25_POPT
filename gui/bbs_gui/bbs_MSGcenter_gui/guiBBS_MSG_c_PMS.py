@@ -841,7 +841,7 @@ class MSG_Center_PMS(MSG_Center_base):
             if len(tmp) == 2:
                 # FIX for old TimeStamps
                 date = '20' + date
-            if not self._bl_cat_filter or self._bl_cat_filter == el[3]:
+            if not self._bl_cat_filter or self._bl_cat_filter == el[4]:
                 self._bl_tree_data.append((
                     f'{new}',
                     f'{el[6]}',

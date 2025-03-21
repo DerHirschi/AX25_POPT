@@ -94,6 +94,7 @@ class BBSRejectSettings(tk.Frame):
     def _format_tree_data(self):
         self._tree_data = []
         # for el in [getNew_BBS_REJ_cfg()]:
+        self._rej_tab = []  # FIXME: Debugging
         for el in self._rej_tab:
             ent = []
             for k, val in el.items():

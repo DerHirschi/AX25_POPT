@@ -205,37 +205,38 @@ def getNew_APRS_ais_cfg():
 # GUI Parameter
 def getNew_maniGUI_parm():
     return dict(
-        gui_lang = int(LANGUAGE),
-        gui_cfg_locator = '',
-        gui_cfg_qth = '',
+        gui_lang                    = int(LANGUAGE),
+        gui_cfg_locator             = '',
+        gui_cfg_qth                 = '',
         # gui_cfg_pacman_fix = True = Disabling "Pacman-Autoupdate"-Function. Fix for "segmentation fault"/"Speicherzugriffsfehler" on Raspberry
-        gui_cfg_pacman_fix = False,
-        gui_cfg_sound = False,
-        gui_cfg_sprech = False,
-        gui_cfg_beacon = True,
-        gui_cfg_rx_echo = False,
-        gui_cfg_tracer = False,
-        gui_cfg_auto_tracer = False,
-        gui_cfg_dx_alarm = True,
-        gui_cfg_mon_encoding = 'Auto',
-        gui_cfg_rtab_index = (None, None),
+        gui_cfg_pacman_fix          = False,
+        gui_cfg_sound               = False,
+        gui_cfg_sprech              = False,
+        gui_cfg_beacon              = True,
+        gui_cfg_rx_echo             = False,
+        gui_cfg_tracer              = False,
+        gui_cfg_auto_tracer         = False,
+        gui_cfg_dx_alarm            = True,
+        gui_cfg_noty_bell           = False,
+        gui_cfg_mon_encoding        = 'Auto',
+        gui_cfg_rtab_index          = (None, None),
         #####################
         # Vorschreib Col
-        gui_cfg_vor_col = '#25db04',
-        gui_cfg_vor_tx_col = 'white',
-        gui_cfg_vor_bg_col = 'black',
+        gui_cfg_vor_col             = '#25db04',
+        gui_cfg_vor_tx_col          = 'white',
+        gui_cfg_vor_bg_col          = 'black',
         ###################################
         # 'gui_parm_new_call_alarm': False,
-        gui_parm_channel_index = 1,
-        gui_parm_text_size = int(DEF_TEXTSIZE),
-        gui_parm_connect_history = {},
+        gui_parm_channel_index      = 1,
+        gui_parm_text_size          = int(DEF_TEXTSIZE),
+        gui_parm_connect_history    = {},
         # 'gui_parm__mon_buff': [],
         #################
         # MSG Center
-        guiMsgC_parm_text_size = int(DEF_TEXTSIZE),
+        guiMsgC_parm_text_size      = int(DEF_TEXTSIZE),
         #################
         # F-Texte
-        gui_f_text_tab = {k: (b'', 'UTF-8') for k in range(1, 13)}
+        gui_f_text_tab              = {k: (b'', 'UTF-8') for k in range(1, 13)}
 
     )
 

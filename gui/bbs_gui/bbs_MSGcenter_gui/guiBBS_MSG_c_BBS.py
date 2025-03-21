@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
+from bbs.bbs_constant import CR
 from cfg.constant import FONT, ENCODINGS
 from fnc.str_fnc import format_number
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_c_base import MSG_Center_base
@@ -538,8 +539,8 @@ class MSG_Center_BBS(MSG_Center_base):
 
         # self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         # self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
-
-        self._out_tree.bind('<ButtonRelease-1>', self._OUT_entry_selected)
+        self._out_tree.bind('<<TreeviewSelect>>', self._OUT_entry_selected)
+        # self._out_tree.bind('<ButtonRelease-1>', self._OUT_entry_selected)
         # self._out_tree.bind('<Button-1>', lambda x: print(f'Test: {x}'))
 
 
@@ -680,7 +681,8 @@ class MSG_Center_BBS(MSG_Center_base):
         # self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         # self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
 
-        self._out_tree.bind('<<TreeviewSelect>>', self._fwdQ_entry_selected)
+        self._fwdQ_tree.bind('<<TreeviewSelect>>', self._fwdQ_entry_selected)
+        # self._fwdQ_tree.bind('<ButtonRelease-1>', self._fwdQ_entry_selected)
 
     def _init_fwdQ_lower_frame(self, root_frame):
         btn_frame       = tk.Frame(root_frame, height=30)
@@ -855,7 +857,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 to_call     = db_data['to_call']  # Cat
                 to_bbs      = db_data['to_bbs']  # Verteiler
                 subj        = db_data['subject']
-                msg         = db_data['msg']
+                msg         = db_data['header'] + CR + CR + db_data['msg']
                 msg_time    = db_data['time']
                 size        = format_number(len(msg))
                 msg         = msg.decode(enc, 'ignore')
@@ -903,7 +905,7 @@ class MSG_Center_BBS(MSG_Center_base):
             if len(tmp) == 2:
                 # FIX for old TimeStamps
                 date = '20' + date
-            if not self._bl_cat_filter or self._bl_cat_filter == el[3]:
+            if not self._bl_cat_filter or self._bl_cat_filter == el[4]:
                 self._bl_tree_data.append((
                     #f'{new}',
                     f'{el[0]}',
@@ -970,7 +972,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 to_call     = db_data['to_call']  # Cat
                 to_bbs      = db_data['to_bbs']  # Verteiler
                 subj        = db_data['subject']
-                msg         = db_data['msg']
+                msg         = db_data['header'] + CR + CR + db_data['msg']
                 # _path = _db_data[9]
                 msg_time    = db_data['time']
                 size        = format_number(len(msg))
@@ -1080,6 +1082,10 @@ class MSG_Center_BBS(MSG_Center_base):
             self._out_tree.insert('', tk.END, values=ret_ent[:-1], tags=('dummy', ret_ent[-1]))
             # self._out_tree.insert('', tk.END, values=ret_ent[:-1], tags=(tag, ret_ent[-1]))
         self._update_sort_entry(self._out_tree)
+        #self._sort_entry('Datum',    self._out_tree)
+        # self._sort_rev = not self._sort_rev
+        #self._sort_entry('gesendet', self._out_tree)
+        # self._sort_entry('gesendet', self._out_tree)
 
     def _OUT_entry_selected(self, event=None):
         bid = ''
@@ -1120,7 +1126,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 to_bbs          = db_data['to_bbs']  # Verteiler
                 to_bbs_fwd      = db_data['fwd_bbs']  # Verteiler
                 subj            = db_data['subject']
-                msg             = db_data['msg']
+                msg             = db_data['header'] + CR + CR + db_data['msg']
                 # _path = _db_data[9]
                 msg_time        = db_data['tx-time']
                 size            = format_number(len(msg))
@@ -1201,13 +1207,13 @@ class MSG_Center_BBS(MSG_Center_base):
             self._fwdQ_tree.delete(i)
         for ret_ent in self._fwdQ_tree_data:
             self._fwdQ_tree.insert('', tk.END, values=ret_ent, tags=('dummy', ret_ent[1]))
-        # self._update_sort_entry(self._fwdQ_tree)
+        self._update_sort_entry(self._fwdQ_tree, 'mid')
 
     def _fwdQ_entry_selected(self, event=None):
         bid = ''
         for selected_item in self._fwdQ_tree.selection():
             item = self._fwdQ_tree.item(selected_item)
-            bid = item['tags'][1]
+            bid  = item['tags'][1]
         if bid:
             self._fwdQ_show_msg_fm_BID(bid)
             # self._update_OUT_tree_data()
@@ -1242,7 +1248,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 to_bbs                  = db_data['to_bbs']  # Verteiler
                 to_bbs_fwd              = db_data['fwd_bbs']  # Verteiler
                 subj                    = db_data['subject']
-                msg                     = db_data['msg']
+                msg                     = db_data['header'] + CR + CR + db_data['msg']
                 # _path = _db_data[9]
                 msg_time                = db_data['tx-time']
                 size                    = format_number(len(msg))

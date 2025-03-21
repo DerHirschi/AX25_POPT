@@ -59,9 +59,9 @@ class MSG_Center_base(tk.Frame):
         for index, (val, k) in enumerate(tmp):
             tree.move(k, '', int(index))
 
-    def _update_sort_entry(self, tree):
+    def _update_sort_entry(self, tree, col='Datum'):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
-        col = self._last_sort_col.get(tree, 'Datum')
+        col = self._last_sort_col.get(tree, col)
         tmp = [(tree.set(k, col), k) for k in tree.get_children('')]
         tmp.sort(reverse=not self._sort_rev)
         for index, (val, k) in enumerate(tmp):

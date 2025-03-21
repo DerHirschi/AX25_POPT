@@ -219,8 +219,9 @@ class BBS:
             if not fwd_bbs_call:
                 # logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
                 # BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
-                BBS_LOG.info(log_tag + f"Msg: {mid}: No BBS to FWD - PN")
-                self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - PN")
+                if fwd_bbs_call is not None:
+                    BBS_LOG.info(log_tag + f"Msg: {mid}: No BBS to FWD - PN")
+                    self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - PN")
                 return False
             BBS_LOG.info(log_tag + f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
             new_msg['fwd_bbs_call'] = fwd_bbs_call
@@ -277,8 +278,9 @@ class BBS:
             if not fwd_bbs_call:
                 # logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
                 # BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
-                BBS_LOG.info(log_tag + f"Msg: {mid}: No BBS to FWD - PN")
-                self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - PN")
+                if fwd_bbs_call is not None:
+                    BBS_LOG.info(log_tag + f"Msg: {mid}: No BBS to FWD - PN")
+                    self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - PN")
                 return None
             BBS_LOG.info(log_tag + f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
             new_msg['fwd_bbs_call'] = fwd_bbs_call
@@ -359,8 +361,9 @@ class BBS:
                 # Forwarding BBS
                 fwd_bbs_call = self._get_fwd_bbs_pn(msg=msg)
                 if not fwd_bbs_call:
-                    BBS_LOG.error(log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - PN")
-                    self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - PN")
+                    if fwd_bbs_call is not None:
+                        BBS_LOG.error(log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - PN")
+                        self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - PN")
                     continue
                 mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
                 msg['fwd_bbs_call'] = fwd_bbs_call
@@ -636,7 +639,7 @@ class BBS:
         local_theme     = self._pms_cfg.get('local_theme', [])
         local_dist      = [self._pms_cfg.get('user', '')] + self._pms_cfg.get('local_dist', [])
         local_user      = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
-        local_user     += ['SYSOP']     # TODO Swap
+        # local_user     += ['SYSOP']     # TODO Swap
         # TODO local_user     += list(user_db.bla......)
         BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs}")
 
@@ -760,14 +763,14 @@ class BBS:
             fwd_bbs = self._find_most_current_PN_route(recv_bbs_call, path_list)
             if not fwd_bbs:
                 BBS_LOG.warning(log_tag + f"Msg: {mid} - AutoPath - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath most current")
-                return ''
+                return fwd_bbs
             return fwd_bbs
         if self._pms_cfg.get('pn_auto_path', 0) == 2:
             # best (low hops)
             fwd_bbs = self._find_lowHop_PN_route(recv_bbs_call, path_list)
             if not fwd_bbs:
                 BBS_LOG.warning(log_tag + f"Msg: {mid} - AutoPath - No FWD-Path found: {recv_call}@{recv_bbs}. AutoPath best (low hops)")
-                return ''
+                return fwd_bbs
             return fwd_bbs
 
         # TODO Regio Lookup to send Msg to Regional BBS (optional)
@@ -780,6 +783,7 @@ class BBS:
             return ''
         if excluded_bbs is None:
             excluded_bbs = []
+        is_excluded = False
         ret = self._db.bbs_get_fwdPaths_lowHop(bbs_address)
         BBS_LOG.debug(f"_find_lowHop_PN_route res: {ret}")
         for bbs, hops, path in ret:
@@ -789,6 +793,7 @@ class BBS:
             BBS_LOG.debug(f"PATH: {path}")
             if bbs in excluded_bbs:
                 BBS_LOG.debug(f"BBS in exclude list: {bbs_address} - {excluded_bbs}")
+                is_excluded = True
                 continue
             if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
                 BBS_LOG.debug(f"_find_lowHop_PN_route: Treffer, FWD via {bbs}")
@@ -796,15 +801,18 @@ class BBS:
                 BBS_LOG.debug(f"PATH: {path}")
                 return bbs
 
-
-        BBS_LOG.debug(f"_find_lowHop_PN_route: Kein Treffer !!: {bbs_address}")
-        return ''
+        if not is_excluded:
+            BBS_LOG.debug(f"_find_lowHop_PN_route: Kein Treffer !!: {bbs_address}")
+            return ''
+        BBS_LOG.debug(f"_find_lowHop_PN_route: Excluded ..: {bbs_address}")
+        return None
 
     def _find_most_current_PN_route(self, bbs_address: str, excluded_bbs=None):
         if not bbs_address:
             return ''
         if excluded_bbs is None:
             excluded_bbs = []
+        is_excluded = False
 
         ret = self._db.bbs_get_fwdPaths_mostCurrent(bbs_address)
         BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
@@ -816,6 +824,7 @@ class BBS:
             BBS_LOG.debug(f"fwd_bbs_cfg: {fwd_bbs_cfg}")
             if bbs in excluded_bbs:
                 BBS_LOG.debug(f"BBS in exclude list: {bbs_address} - {excluded_bbs}")
+                is_excluded = True
                 continue
             if fwd_bbs_cfg.get('pn_fwd_auto_path', False):
                 BBS_LOG.debug(f"_find_most_current_PN_route: Treffer, FWD via {bbs}")
@@ -823,8 +832,11 @@ class BBS:
                 BBS_LOG.debug(f"PATH: {path}")
                 return bbs
 
-        BBS_LOG.debug(f"_find_most_current_PN_route: Kein Treffer !!: {bbs_address}")
-        return ''
+        if not is_excluded:
+            BBS_LOG.debug(f"_find_most_current_PN_route: Kein Treffer !!: {bbs_address}")
+            return ''
+        BBS_LOG.debug(f"_find_most_current_PN_route: Excluded ..: {bbs_address}")
+        return None
 
     # BL #######################################################
     def _get_fwd_bbs_bl(self, msg: dict):
