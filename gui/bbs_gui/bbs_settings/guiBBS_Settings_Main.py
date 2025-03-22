@@ -42,7 +42,7 @@ class BBSSettingsMain(tk.Toplevel):
             'general_settings'  : BBSGeneralSettings,
             'fwd_settings'      : BBS_FWD_Settings,
             'routing_settings'  : BBSRoutingSettings,
-            'reject_settings'  : BBSRejectSettings,
+            'reject_settings'   : BBSRejectSettings,
         }
         ###############################################################
 

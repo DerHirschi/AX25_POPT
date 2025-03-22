@@ -2,7 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 
 from cfg.popt_config import POPT_CFG
+from cfg.logger_config import logger
 from fnc.str_fnc import get_strTab
+from gui.bbs_gui.bbs_settings.guiBBS_H_Settings_add_rule import BBS_addRuleWinHold
 
 
 class BBSRejectSettings(tk.Frame):
@@ -21,6 +23,7 @@ class BBSRejectSettings(tk.Frame):
         self._sort_rev          = False
         self._last_sort_col     = {}
         self._tree_data         = []
+        self._selected_items    = []
         ###########################################
         ###########################################
         # Local
@@ -66,21 +69,19 @@ class BBSRejectSettings(tk.Frame):
         self._rej_tree.heading('c5', text='BID',   command=lambda: self._sort_entry('c5', self._rej_tree))
         self._rej_tree.heading('c6', text='MaxLg', command=lambda: self._sort_entry('c6', self._rej_tree))
         self._rej_tree.heading('c7', text='R/H',   command=lambda: self._sort_entry('c7', self._rej_tree))
-        self._rej_tree.column("c1", anchor=tk.CENTER, stretch=tk.NO, width=60)
+        self._rej_tree.column("c1", anchor=tk.CENTER, stretch=tk.NO,  width=60)
         self._rej_tree.column("c2", anchor=tk.CENTER, stretch=tk.YES, width=120)
         self._rej_tree.column("c3", anchor=tk.CENTER, stretch=tk.YES, width=120)
         self._rej_tree.column("c4", anchor=tk.CENTER, stretch=tk.YES, width=120)
         self._rej_tree.column("c5", anchor=tk.CENTER, stretch=tk.YES, width=120)
         self._rej_tree.column("c6", anchor=tk.CENTER, stretch=tk.YES, width=120)
-        self._rej_tree.column("c7", anchor=tk.CENTER, stretch=tk.NO, width=60)
-        """
-        pn_bbs_out_tree.bind('<<TreeviewSelect>>', lambda event: self._tree_select(
-            conf_name='pn_fwd_bbs_out',
-            dest_call=dest_call,
-            tree=pn_bbs_out_tree
-        ))
-        """
+        self._rej_tree.column("c7", anchor=tk.CENTER, stretch=tk.NO,  width=60)
+        self._rej_tree.bind('<<TreeviewSelect>>', lambda event: self._tree_select())
+        self._update_tree()
 
+    ####################################
+    def update_win(self):
+        self._rej_tab: list = self._pms_cfg.get('reject_tab', [])
         self._update_tree()
 
     ####################################
@@ -94,12 +95,20 @@ class BBSRejectSettings(tk.Frame):
     def _format_tree_data(self):
         self._tree_data = []
         # for el in [getNew_BBS_REJ_cfg()]:
-        self._rej_tab = []  # FIXME: Debugging
+        if type(self._rej_tab) != list:
+            return
         for el in self._rej_tab:
             ent = []
             for k, val in el.items():
                 ent.append(val)
             self._tree_data.append(ent)
+
+    ####################################
+    def _tree_select(self):
+        self._selected_items = []
+        for selected_item in self._rej_tree.selection():
+            item = self._rej_tree.item(selected_item)['values']
+            self._selected_items.append(item)
 
     ####################################
     def _sort_entry(self, col, tree):
@@ -113,7 +122,33 @@ class BBSRejectSettings(tk.Frame):
 
     ####################################
     def _add_rule_btn(self):
-        pass
+        if hasattr(self._root_win.add_win, 'lift'):
+            self._root_win.add_win.lift()
+            return
+
+
+        if self._root_win.add_win is not None:
+            return
+        BBS_addRuleWinHold(self._root_win)
 
     def _del_btn(self):
-        pass
+        need_update = False
+        for el in self._selected_items:
+            tmp = dict(
+                msg_typ=        el[0],
+                from_call=      el[1],
+                via=            el[2],
+                to_call=        el[3],
+                bid=            el[4],
+                msg_len=        el[5],
+                r_h=            el[6],
+            )
+            if tmp not in self._rej_tab:
+                logger.error(self._logTag + f'_del_btn() Entry not Found: {tmp}')
+                continue
+            need_update = True
+            self._rej_tab.remove(tmp)
+
+        if need_update:
+            self.update_win()
+
