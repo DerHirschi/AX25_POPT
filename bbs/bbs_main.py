@@ -14,6 +14,7 @@ DL = Deleted MSG
 flags MSG IN TAB :
 IN  = Default (New Incoming)
 $   = New Incoming - Markt for Forward Check
+H  = New Incoming - Set Hold
 DL  = Deleted MSG
 
 flags in FWD Q Tab
@@ -778,6 +779,7 @@ class BBS:
         BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD-Path found: {recv_call}@{recv_bbs}")
         return ''
 
+    # PN-Auto Routing ##########################################
     def _find_lowHop_PN_route(self, bbs_address: str, excluded_bbs=None):
         if not bbs_address:
             return ''
@@ -901,6 +903,59 @@ class BBS:
         if not ret:
             BBS_LOG.info(log_tag + f"Msg: {mid} - BBS to FWD found: {topic}@{distributor}")
         return ret
+
+    ########################################################################
+    # Reject/Hold - Tab
+    def check_reject_tab(self, msg: dict):
+        message_type =   msg.get('message_type', '')
+        sender =         msg.get('sender', '')
+        sender_bbs =     msg.get('sender_bbs', '')
+        receiver =       msg.get('receiver', '')
+        recipient_bbs =  msg.get('recipient_bbs', '')
+        bid_mid =        msg.get('bid_mid', '')
+        try:
+            message_size=   int(msg.get('message_size', '0'))
+        except ValueError:
+            message_size = 0
+        # FB P MD2BBS MD2SAW MD2SAW 18248-MD2BBS 502
+        # FB B DBO527 SAW STATUS 4CWDBO527004 109836
+        # FB B MD2SAW SAW TEST 11139-MD2BBS 5
+        for rule in self._pms_cfg.get('reject_tab', []):
+            rule: dict
+            if message_type != rule.get('msg_typ', ''):
+                continue
+            tmp_from = [sender, sender_bbs]
+            rule_bid = rule.get('bid', '').split('*')
+            res_bid = False
+            index = 0
+            for el in rule_bid:
+                if not el:
+                    continue
+                if el in bid_mid[index:]:
+                    res_bid = True
+                    index = bid_mid.index(el) + len(el)
+                else:
+                    res_bid = False
+
+            if all((
+                    (not rule.get('from_call', '') or rule.get('from_call', '') in tmp_from),
+                    (not rule.get('to_call', '')   or receiver == rule.get('to_call', '')),
+                    (not rule.get('via', '')       or recipient_bbs == rule.get('via', '')),
+                    (not rule.get('bid', '')       or res_bid),
+                    (not message_size              or message_size > rule.get('msg_len', 0))
+            )):
+                BBS_LOG.info(self._logTag + f"Rej-Tab: Rule found for BID: {bid_mid} ")
+                BBS_LOG.info(self._logTag + f"Rej-Tab: {rule} ")
+                """
+                return {
+                    FWD_RESP_REJ: FWD_RESP_N_OK,
+                    FWD_RESP_HLD: FWD_RESP_HLD,
+                    '': ''
+                }.get(rule.get('r_h', ''))
+                """
+                return rule.get('r_h', '')
+
+        return ''
 
     ########################################################################
     # FWD

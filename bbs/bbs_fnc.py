@@ -35,8 +35,8 @@ def parse_forward_header(header):
     if len(hdr) != 7:
         logger.debug(f"PH!!: {header}")
         return None
-    if hdr[0] not in ['FB', 'FA']:
-        #if hdr[0] != 'FB':
+    # if hdr[0] not in ['FB', 'FA']:
+    if hdr[0] != 'FB':
         logger.debug(f"PH!!: {header}")
         return None
     if hdr[1] not in ['P', 'B']:

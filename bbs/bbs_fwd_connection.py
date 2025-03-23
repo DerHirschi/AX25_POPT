@@ -1,7 +1,7 @@
 from UserDB.UserDBmain import USER_DB
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
-    CNTRL_Z
+    CNTRL_Z, FWD_RESP_HLD
 from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
@@ -24,7 +24,7 @@ class BBSConnection:
         self._logTag         = f"BBS-Conn ({self._dest_bbs_call}): "
         ###########
         self._rx_buff        = b''
-        self._debug_rx_buff  = b''
+        # self._debug_rx_buff  = b''
         self._rx_msg_header  = {}
         # tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
         self._tx_msg_header  = b''
@@ -79,7 +79,7 @@ class BBSConnection:
                 return []
 
         if data in self._rx_buff:
-            tmp = self._rx_buff.split(b'\r')
+            tmp = self._rx_buff.split(CR)
             ret = []
             cut_index = 0
             for line in list(tmp):
@@ -118,7 +118,7 @@ class BBSConnection:
         self._ax25_conn.send_data(data=raw_data)
 
     def connection_rx(self, raw_data: b''):
-        self._debug_rx_buff += bytes(raw_data)
+        # self._debug_rx_buff += bytes(raw_data)
         self._rx_buff += bytes(raw_data)
         if self._state in [11]:
             return False
@@ -151,7 +151,7 @@ class BBSConnection:
 
     def _send_my_bbs_flag(self):
         # print(f"_send_my_bbs_flag: {self._mybbs_flag}")
-        self._connection_tx(self._mybbs_flag + b'\r')
+        self._connection_tx(self._mybbs_flag + CR)
 
     def exec_state(self):
         # print(f"BBS-Conn Stat-Exec: {self._state}")
@@ -334,10 +334,9 @@ class BBSConnection:
         for bid in list(self._tx_msg_BIDs):
             fwd_id  = self._get_fwd_id(bid)
             flag    = self._tx_fs_list[0]
-            if flag in ['+', 'Y']:
+            if flag in FWD_OK:
                 self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S+')
-
-            elif flag == 'H':
+            elif flag == FWD_HLD:
                 self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'H')
 
             self._tx_msg_BIDs   = self._tx_msg_BIDs[1:]
@@ -361,20 +360,33 @@ class BBSConnection:
                 BBS_LOG.error(logTag + f"Decoding Error: {e} - Header-Line: {el}")
                 pn_check += FWD_RESP_REJ
                 continue
-            if el[:2] in ['FB', 'FA']:
-                #if el[:2] == 'FB':
-                ret = parse_forward_header(el)
-                if not ret:
+            # if el[:2] in ['FB', 'FA']:
+            if el[:2] == 'FB':
+                msg = parse_forward_header(el)
+                if not msg:
                     # Error
-                    BBS_LOG.error(logTag + f"Can't parse Header: ret: {ret} - Header-Line: {el}")
+                    BBS_LOG.error(logTag + f"Can't parse Header: msg: {msg} - Header-Line: {el}")
                     BBS_LOG.debug(logTag + f"Header-Lines: {header_lines}")
                     # pn_check += FWD_RESP_ERR
                     pn_check += FWD_RESP_REJ
                     continue
-                bid = str(ret.get('bid_mid', ''))
+                bid = str(msg.get('bid_mid', ''))
+                hold = False
+                # REJ_Tab
+                res_rej_tab = self._bbs.check_reject_tab(msg)
+                if res_rej_tab:
+                    if res_rej_tab == FWD_RESP_HLD:
+                        BBS_LOG.info(logTag + f"Hold : BID-MID: {bid}")
+                        hold = True
+                    else:
+                        pn_check += res_rej_tab
+                        BBS_LOG.info(logTag + f"Rejected : BID-MID: {bid}")
+                        for k, val in msg.items():
+                            BBS_LOG.info(logTag + f"{k} : {val}")
+                        continue
                 if not bid:
                     # Error
-                    BBS_LOG.error(logTag + f"No BID-MID found: ret: {ret} - Header-Line: {el}")
+                    BBS_LOG.error(logTag + f"No BID-MID found: msg: {msg} - Header-Line: {el}")
                     BBS_LOG.debug(logTag + f"Header-Lines: {header_lines}")
                     pn_check += FWD_RESP_REJ
                     continue
@@ -383,22 +395,34 @@ class BBSConnection:
                     'B': self._bbs.is_bl_in_db,
                     'T': self._header_reject,       # NTP
                     '':  self._header_error
-                }[ret.get('message_type', '')](bid)
+                }[msg.get('message_type', '')](bid)
                 if not db_ret:
                     # Error
-                    BBS_LOG.error(logTag + f"No db_ret: ret: {ret} - Header-Line: {el}")
-                    BBS_LOG.error(logTag + f"Msg-Typ: {ret.get('message_type', '')}  BID-MID: {bid}")
+                    BBS_LOG.error(logTag + f"No db_ret: msg: {msg} - Header-Line: {el}")
+                    BBS_LOG.error(logTag + f"Msg-Typ: {msg.get('message_type', '')}  BID-MID: {bid}")
                     pn_check += FWD_RESP_REJ
                     continue
                 if db_ret == FWD_RESP_OK:
                     if not self._bbs.insert_incoming_fwd_bid(bid):
                         # Receiving MSG from another BBS
                         BBS_LOG.info(logTag + f"Receiving MSG from another BBS: BID-MID: {bid}")
+                        for k, val in msg.items():
+                            BBS_LOG.info(logTag + f"{k} : {val}")
                         pn_check += FWD_RESP_LATER
                         continue
                     BBS_LOG.info(logTag + f"Add : BID-MID: {bid}")
-                    self._rx_msg_header[str(bid)] = ret
+                    for k, val in msg.items():
+                        BBS_LOG.info(logTag + f"{k} : {val}")
+                    msg['hold']                   = bool(hold)
+                    self._rx_msg_header[str(bid)] = msg
                     trigger = True
+                    if hold:
+                        # db_ret == 'H'
+                        pn_check += FWD_RESP_HLD
+                        continue
+                    # db_ret == '+'
+                    pn_check += db_ret
+                    continue
                 # db_ret == '-'
                 pn_check += db_ret
                 continue
@@ -590,8 +614,11 @@ class BBSConnection:
         self._rx_msg_header[bid]['time']          = path_data[-1].get('time_stamp', '')
         self._rx_msg_header[bid]['subject']       = subject
         self._rx_msg_header[bid]['bid']           = bid
-        if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):
-            self._rx_msg_header[bid]['flag']      = '$'
+        if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):  # PMS Opt TODO GUI
+            if self._rx_msg_header[bid]['hold']:
+                self._rx_msg_header[bid]['flag']      = 'H'
+            else:
+                self._rx_msg_header[bid]['flag']      = '$'
         #########################################
         # TODO: make something from path_data
         """
