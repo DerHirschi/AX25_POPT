@@ -7,7 +7,7 @@ from fnc.str_fnc import get_strTab
 
 class GUINewUserEntry(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self, master=root_win.main_win)
+        tk.Toplevel.__init__(self)
         win_width = 380
         win_height = 110
         self.style = root_win.style

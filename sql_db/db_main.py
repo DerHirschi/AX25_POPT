@@ -759,7 +759,9 @@ class SQL_Database:
                   "new, "
                   "BID "
                   "FROM pms_in_msg "
-                  f"WHERE NOT flag='DL' and to_call='{call}' and typ='P';")
+                  f"WHERE NOT flag='DL' "
+                  f"and NOT flag='H' "
+                  f"and to_call='{call}' and typ='P';")
         res = self._commit_query(query)
         # print(f"bbs_get_pn_msg_Tab_by_call res: {res}")
         return res
@@ -878,7 +880,9 @@ class SQL_Database:
                   "new, "
                   "BID "
                  "FROM pms_in_msg "
-                 "WHERE NOT flag='DL' and typ='B';")
+                 "WHERE NOT flag='DL' "
+                 "and NOT flag='H' "
+                 "and typ='B';")
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
@@ -958,6 +962,25 @@ class SQL_Database:
                   "size "
                   # "FROM pms_fwd_q WHERE flag='F';")
                   "FROM pms_fwd_q WHERE flag='F' or flag='S=';")
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_hold_Tab_for_BBS_gui(self):
+        query = ("SELECT MSGID, "
+                 "BID, "
+                 "from_call, "
+                 "from_bbs, "
+                 "to_call, "
+                 "to_bbs, "
+                 # "from_bbs, "   # fwd bbs
+                 "typ, "
+                 "subject, "
+                 "size, "
+                 "flag "
+                 "FROM pms_in_msg "
+                 "WHERE flag='H';")
+
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res

@@ -1003,6 +1003,9 @@ class BBS:
     def get_active_fwd_q_tab(self):
         return self._db.pms_get_active_fwd_q_for_GUI()
 
+    def get_hold_tab_bbs(self):
+        return self._db.bbs_get_hold_Tab_for_BBS_gui()
+
     def get_pn_msg_tab_by_call(self, call: str):
         return self._db.bbs_get_pn_msg_Tab_by_call(call)
 
@@ -1103,6 +1106,29 @@ class BBS:
             'typ': data[0][15],
             'flag': data[0][16],
         }
+
+    def get_hold_msg_fm_BID(self, bid):
+        data = self._db.bbs_get_pn_msg_for_GUI(bid)
+        if not data:
+            return {}
+        return {
+            'typ':          data[0][15],
+            'bid':          data[0][1],
+            'from_call':    data[0][2],
+            'from_bbs':     data[0][3],
+            'to_call':      data[0][4],
+            'to_bbs':       data[0][5],
+            'size':         data[0][6],
+            'subject':      data[0][7],
+            'header':       data[0][8],
+            'msg':          data[0][9],
+            'path':         data[0][10],
+            'time':         data[0][11],
+            'rx-time':      data[0][12],
+            'new':          data[0][13],
+            'flag':         data[0][14],
+        }
+
 
     def get_pms_cfg(self):
         if not self._pms_cfg:

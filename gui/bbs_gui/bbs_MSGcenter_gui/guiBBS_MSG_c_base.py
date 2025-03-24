@@ -27,6 +27,7 @@ class MSG_Center_base(tk.Frame):
             'O': {},
             'S': {},
             'F': {},
+            'H': {},
         }
         ###################################
         # Vars
@@ -44,11 +45,13 @@ class MSG_Center_base(tk.Frame):
         self._bl_cat_tree   = None
         self._out_tree      = None
         self._sv_tree       = None
+        self._hold_tree     = None
         #
         self._pn_text       = None
         self._bl_text       = None
         self._out_text      = None
         self._sv_text       = None
+        self._hold_text     = None
 
     def _sort_entry(self, col, tree):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
@@ -106,6 +109,9 @@ class MSG_Center_base(tk.Frame):
         pass
 
     def _update_SV_tree_data(self):
+        pass
+
+    def _update_hold_tree_data(self):
         pass
 
     def on_bbsTab_select(self, event=None):

@@ -382,7 +382,8 @@ class BBSConnection:
                         pn_check += res_rej_tab
                         BBS_LOG.info(logTag + f"Rejected : BID-MID: {bid}")
                         for k, val in msg.items():
-                            BBS_LOG.info(logTag + f"{k} : {val}")
+                            if val:
+                                BBS_LOG.info(logTag + f"{k} : {val}")
                         continue
                 if not bid:
                     # Error
@@ -410,10 +411,11 @@ class BBSConnection:
                             BBS_LOG.info(logTag + f"{k} : {val}")
                         pn_check += FWD_RESP_LATER
                         continue
+                    msg['hold']                   = bool(hold)
                     BBS_LOG.info(logTag + f"Add : BID-MID: {bid}")
                     for k, val in msg.items():
-                        BBS_LOG.info(logTag + f"{k} : {val}")
-                    msg['hold']                   = bool(hold)
+                        if val:
+                            BBS_LOG.info(logTag + f"{k} : {val}")
                     self._rx_msg_header[str(bid)] = msg
                     trigger = True
                     if hold:
