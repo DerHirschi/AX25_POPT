@@ -56,12 +56,12 @@ from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# from gui import FigureCanvasTkAgg
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-import matplotlib
 
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
+from gui import plt
 
 
 class ChVars(object):

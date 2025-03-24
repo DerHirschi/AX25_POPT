@@ -2,16 +2,15 @@ from datetime import datetime
 import tkinter as tk
 from fnc.str_fnc import convert_str_to_datetime
 # Fixme: FigureCanvasTkAgg causing 10 or more threads
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
-                                               NavigationToolbar2Tk)
-
-# from matplotlib.backends._backend_tk import NavigationToolbar2Tk
+#from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from gui import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+#from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-import matplotlib
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
-
+#import matplotlib
+#matplotlib.use('Agg')
+# from matplotlib import pyplot as plt
+from gui import plt
 
 def adjust_list_len(target_list: list, compare_list: list):
     if len(target_list) < len(compare_list):
