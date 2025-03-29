@@ -43,8 +43,8 @@ class BBS:
         self._port_handler  = port_handler
         self._db            = self._port_handler.get_database()
         # self._pms_cfg.get('bin_mode', False)
-        #features_flag = ("F", "M", "H")
-        features_flag = ("B", "F", "M", "H")
+        features_flag = ("F", "M", "H")
+        #features_flag = ("B", "F", "M", "H")
         self.bbs_id_flag    = generate_sid(features=features_flag)
         # AB1FHMRX$
         # self.bbs_id_flag    = generate_sid(features=("A", "B", "1", "F", "M", "H", "R", "X"))
