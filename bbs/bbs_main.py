@@ -42,10 +42,11 @@ class BBS:
         BBS_LOG.info('Init')
         self._port_handler  = port_handler
         self._db            = self._port_handler.get_database()
-        # FB P MD2SAW MD2BOX MD2SAW 24127-MD2BBS 5
-        self.bbs_id_flag    = generate_sid(features=("F", "M", "H"))
+        # self._pms_cfg.get('bin_mode', False)
+        #features_flag = ("F", "M", "H")
+        features_flag = ("B", "F", "M", "H")
+        self.bbs_id_flag    = generate_sid(features=features_flag)
         # AB1FHMRX$
-        # FA P MD2SAW MD2BOX MD2SAW 24127-MD2BBS 5
         # self.bbs_id_flag    = generate_sid(features=("A", "B", "1", "F", "M", "H", "R", "X"))
         # self.bbs_id_flag    = generate_sid(features=("B", "1", "F", "M", "H", "R", "X"))
         self.my_stat_id     = get_station_id_obj(str(self.bbs_id_flag))

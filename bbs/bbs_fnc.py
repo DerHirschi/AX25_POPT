@@ -1,9 +1,12 @@
 import re
 from datetime import datetime
 
-from bbs.bbs_constant import GET_MSG_STRUC, STAMP, MSG_ID, STAMP_BID, STAMP_MSG_NUM, CR, EOL, MSG_H_TO, SP, MSG_H_FROM
+from bbs.bbs_constant import GET_MSG_STRUC, STAMP, MSG_ID, STAMP_BID, STAMP_MSG_NUM, CR, EOL, MSG_H_TO, SP, MSG_H_FROM, \
+    SOH, NUL, EOT, STX
 from cfg.constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 from cfg.logger_config import logger
+from cfg.logger_config import BBS_LOG
+from fnc.lzhuf import LZHUF_Comp
 from fnc.sql_fnc import convert_sql_list
 
 
@@ -32,16 +35,20 @@ def parse_forward_header(header):
     # FB B DBO527 SAW STATUS 4CWDBO527004 109836
     # FB B MD2SAW SAW TEST 11139-MD2BBS 5
     hdr = header.split(' ')
+    bin_mode = False
     if len(hdr) != 7:
         logger.debug(f"PH!!: {header}")
         return None
-    # if hdr[0] not in ['FB', 'FA']:
-    if hdr[0] != 'FB':
+    # if hdr[0] != 'FB':
+    if hdr[0] not in ['FB', 'FA']:
         logger.debug(f"PH!!: {header}")
         return None
     if hdr[1] not in ['P', 'B']:
         logger.debug(f"PH!!: {header}")
         return None
+    if hdr[0] == 'FA':
+        bin_mode = True
+
     tmp = hdr[5].split('-')
     mid = tmp[0]
     recipient = ''
@@ -56,7 +63,8 @@ def parse_forward_header(header):
         "mid":              mid,
         "bid_mid":          hdr[5],
         "sender_bbs":       recipient,
-        "message_size":     hdr[6]
+        "message_size":     hdr[6],
+        "bin_mode":         bin_mode
     })
     return msg_struc
 
@@ -361,234 +369,137 @@ def extract_wp_data(wp_data: str):
     return entries
 
 
-class LZHDecoder:
-    """ By Grok 3 beta (x.com) """
-    def __init__(self, data):
-        self.data = data
-        self.pos = 0
-        self.getbuf = 0
-        self.getlen = 0
-        self.N = 2048
-        self.F = 60
-        self.THRESHOLD = 2
-        self.text_buf = bytearray(b' ' * (self.N - self.F))
-        self.r = self.N - self.F
+def decode_fa_header(data: bytearray) -> dict:
+    """ By Grok3-Beta (AI by X.com)"""
+    logTag = "decode_fa_header()> "
+    pos = 0
 
-        self.d_code = bytearray([
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
-            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
-            0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-            0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
-            0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09,
-            0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0B, 0x0B, 0x0B, 0x0B, 0x0B, 0x0B, 0x0B, 0x0B,
-            0x0C, 0x0C, 0x0C, 0x0C, 0x0D, 0x0D, 0x0D, 0x0D, 0x0E, 0x0E, 0x0E, 0x0E, 0x0F, 0x0F, 0x0F, 0x0F,
-            0x10, 0x10, 0x10, 0x10, 0x11, 0x11, 0x11, 0x11, 0x12, 0x12, 0x12, 0x12, 0x13, 0x13, 0x13, 0x13,
-            0x14, 0x14, 0x14, 0x14, 0x15, 0x15, 0x15, 0x15, 0x16, 0x16, 0x16, 0x16, 0x17, 0x17, 0x17, 0x17,
-            0x18, 0x18, 0x19, 0x19, 0x1A, 0x1A, 0x1B, 0x1B, 0x1C, 0x1C, 0x1D, 0x1D, 0x1E, 0x1E, 0x1F, 0x1F,
-            0x20, 0x20, 0x21, 0x21, 0x22, 0x22, 0x23, 0x23, 0x24, 0x24, 0x25, 0x25, 0x26, 0x26, 0x27, 0x27,
-            0x28, 0x28, 0x29, 0x29, 0x2A, 0x2A, 0x2B, 0x2B, 0x2C, 0x2C, 0x2D, 0x2D, 0x2E, 0x2E, 0x2F, 0x2F,
-            0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
-        ])
-        self.d_len = bytearray([
-            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
-            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
-            0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-            0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-            0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-            0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
-            0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
-            0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
-            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
-            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
-            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
-            0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08
-        ])
-
-        self.start_huff()
-
-    def get_bit(self):
-        while self.getlen <= 8:
-            if self.pos < len(self.data):
-                i = self.data[self.pos]
-                print(f"Reading byte at pos={self.pos}: 0x{i:02x}")
-                self.pos += 1
-            else:
-                i = 0
-            self.getbuf |= i << self.getlen
-            self.getlen += 8
-        i = self.getbuf & 1
-        self.getbuf >>= 1
-        self.getlen -= 1
-        return i
-
-    def get_byte(self):
-        while self.getlen <= 8:
-            if self.pos < len(self.data):
-                i = self.data[self.pos]
-                print(f"Reading byte at pos={self.pos}: 0x{i:02x}")
-                self.pos += 1
-            else:
-                i = 0
-            self.getbuf |= i << self.getlen
-            self.getlen += 8
-        i = self.getbuf & 0xff
-        self.getbuf >>= 8
-        self.getlen -= 8
-        return i
-
-    def start_huff(self):
-        N_CHAR = 256 - self.THRESHOLD + self.F  # 314
-        T = N_CHAR * 2 - 1  # 627
-        R = T - 1  # 626
-        self.freq = [1] * N_CHAR + [0] * (T - N_CHAR + 1)
-        self.fils = list(range(N_CHAR, N_CHAR + T + 1)) + [0] * (T - N_CHAR)
-        self.prnt = [0] * N_CHAR + list(range(N_CHAR)) + [0] * (T - N_CHAR + 1)
-
-        i, j = 0, N_CHAR
-        while j <= R:
-            self.freq[j] = self.freq[i] + self.freq[i + 1]
-            self.fils[j] = i
-            self.prnt[i] = self.prnt[i + 1] = j
-            i += 2
-            j += 1
-        self.freq[T] = 0xffff
-        self.prnt[R] = 0
-
-    def update(self, c):
-        MAX_FREQ = 0x8000
-        if self.freq[626] >= MAX_FREQ:
-            pass  # Vereinfacht
-        c = self.prnt[c + 627]
-        while c != 0:
-            self.freq[c] += 1
-            c = self.prnt[c]
-
-    def decode_char(self):
-        c = self.fils[626]  # R
-        while c < 627:  # T
-            bit = self.get_bit()
-            if c + bit >= len(self.fils):
-                raise ValueError(f"Ungültiger Huffman-Code: c={c}, bit={bit}, fils_len={len(self.fils)}")
-            c = self.fils[c + bit]
-        c -= 627
-        self.update(c)
-        return c
-
-    def decode_position(self):
-        i = self.get_byte()
-        c = self.d_code[i] << 6
-        j = self.d_len[i] - 2
-        while j > 0:
-            i = (i << 1) | self.get_bit()
-            j -= 1
-        return c | (i & 0x3f)
-
-    def decode(self):
-        output = bytearray()
-        count = 0
-        while self.pos < len(self.data):
-            count += 1
-            c = self.decode_char()
-            char_display = chr(c) if 32 <= c < 127 else f"0x{c:02x}"
-            print(
-                f"[{count}] Char: {char_display} (pos={self.pos}, r={self.r}, getbuf={self.getbuf:08x}, getlen={self.getlen})")
-            if c < 256:
-                output.append(c)
-                self.text_buf[self.r % (self.N - self.F)] = c
-                self.r += 1
-            else:
-                i = (self.r - self.decode_position() - 1) % self.N
-                j = c - 255 + self.THRESHOLD
-                print(f"[{count}] LZSS: pos={i}, len={j}")
-                for k in range(j):
-                    c = self.text_buf[(i + k) % (self.N - self.F)]
-                    output.append(c)
-                    self.text_buf[self.r % (self.N - self.F)] = c
-                    self.r += 1
-                    char_display = chr(c) if 32 <= c < 127 else f"0x{c:02x}"
-                    print(f"[{count}]   Ref: {char_display} (r={self.r})")
-        return bytes(output)
-
-
-def decode_fbb_message(data):
-    prefix_len = len(b'[FBB-7.0.10-AB1FHMR$]\rFA P MD2SAW MD2BOX MD2SAW 24196-MD2BBS 113\rF> F2\r')
-    print(f"Prefix length: {prefix_len}")
-    if len(data) < prefix_len or data[prefix_len] != 0x01:
+    if pos >= len(data) or data[pos] != SOH:
         raise ValueError("Ungültiger Header: <SOH> erwartet")
+    pos += 1
 
-    header_start = prefix_len
-    header_len = data[header_start + 1]
-    print(f"Header start: {header_start}, Header length: {header_len}")
-    header_end = header_start + 2 + header_len
+    if pos >= len(data):
+        raise ValueError("Unerwartetes Ende vor Header-Länge")
+    header_length = data[pos]
+    pos += 1
 
-    if header_end > len(data):
-        raise ValueError("Header-Länge überschreitet Daten")
+    if header_length < 3:
+        raise ValueError(f"Ungültige Header-Länge: {header_length}")
+    if pos + header_length > len(data):
+        raise ValueError("Unerwartetes Ende im Header-Bereich")
 
-    nul1_pos = data.find(b'\x00', header_start + 2)
-    print(f"NUL1 position: {nul1_pos}")
-    if nul1_pos == -1 or nul1_pos >= header_end:
-        raise ValueError("Erster <NUL> nicht gefunden")
-    title = data[header_start + 2:nul1_pos]
-    offset_data = data[nul1_pos + 1:header_end - 1]
-    offset = int(offset_data.strip() or 0)
-    print(f"Title: {title}, Offset: {offset}")
+    header_data = data[pos:pos + header_length]
+    pos += header_length
 
-    if data[header_end - 1] != 0x00 or data[header_end] != 0x02:
-        raise ValueError("Ungültiger Datenblock-Start: <NUL> <STX> erwartet")
+    nul_positions = [i for i, byte in enumerate(header_data) if byte == NUL]
+    if len(nul_positions) != 2:
+        raise ValueError("Ungültiger Header: Genau zwei <NUL> erwartet")
 
-    compressed_full = data[header_end + 1:]
-    eot_pos = compressed_full.rfind(b'\x04')
-    if eot_pos == -1:
-        raise ValueError("Kein <EOT> (0x04) in den komprimierten Daten gefunden")
+    title_end = nul_positions[0]
+    offset_start = nul_positions[0] + 1
+    offset_end = nul_positions[1]
 
-    compressed_data = compressed_full[:eot_pos]
-    checksum = compressed_full[eot_pos + 1] if eot_pos + 1 < len(compressed_full) else 0
-    print(
-        f"Compressed data start: {header_end + 1}, compressed_full length: {len(compressed_full)}, eot_pos in compressed_full: {eot_pos}")
-    print(f"Compressed data length: {len(compressed_data)}, data: {compressed_data.hex()}")
-    print(f"Checksum: 0x{checksum:02x}")
+    title = header_data[:title_end]
+    offset = int(header_data[offset_start:offset_end].decode('ascii'))
 
-    decoder = LZHDecoder(compressed_data)
-    decoded_data = decoder.decode()
+    compressed_data = bytearray()
+    checksum = 0
+    block_count = 0
+    received_checksum = 0
 
-    return decoded_data
+    while pos < len(data):
+        if data[pos] == EOT:
+            pos += 1
+            if pos >= len(data):
+                raise ValueError("Unerwartetes Ende vor Prüfsumme")
+            received_checksum = data[pos]
+            break
+        elif data[pos] != STX:
+            raise ValueError(f"Ungültiger Blockstart: <STX> erwartet, erhalten {data[pos]:02x}")
+
+        pos += 1
+        if pos >= len(data):
+            raise ValueError("Unerwartetes Ende vor Blockgröße")
+
+        block_size = data[pos]
+        if block_size == 0:
+            block_size = 256
+        pos += 1
+
+        if pos + block_size > len(data):
+            raise ValueError(f"Blockgröße {block_size} überschreitet Datenlänge bei Position {pos} und kein <EOT> gefunden")
+
+        block_data = data[pos:pos + block_size]
+        compressed_data.extend(block_data)
+        for byte in block_data:
+            checksum = (checksum + byte) & 0xFF
+        pos += len(block_data)
+        block_count += 1
+
+    if (checksum + received_checksum) & 0xFF != 0:
+        raise ValueError(f"Checksum-Fehler: Berechnet {checksum:02x}, Empfangen {received_checksum:02x}")
+
+    result = {
+        'title': title,
+        'offset': offset,
+        'compressed_data': compressed_data,
+        'checksum': received_checksum
+    }
+
+    BBS_LOG.debug(logTag + f"Header erfolgreich dekodiert:")
+    BBS_LOG.debug(logTag + f"  Titel: {title}")
+    BBS_LOG.debug(logTag + f"  Offset: {offset}")
+    BBS_LOG.debug(logTag + f"  Datenblöcke: {block_count}")
+    BBS_LOG.debug(logTag + f"  Gesamtdatengröße: {len(compressed_data)} Bytes")
+    BBS_LOG.debug(logTag + f"  Prüfsumme: {received_checksum:02x} (verifiziert)")
+
+    return result
 
 
-# Testdaten aus deiner Ausgabe (angepasst an 258 Bytes)
-binary_data = (
-    b'[FBB-7.0.10-AB1FHMR$]\rFA P MD2SAW MD2BOX MD2SAW 24196-MD2BBS 113\rF> F2\r'
-    b'\x01\x16test1234567890\x00     0\x00\x02'
-    b'\x9e\xed\xb1\x02\x01\x00\x00\xef\x71\xb7\xdc\x1d\xe6\xff\x7b\xc2\xdd\xdf\xe1\xdc\xc1\xf3\x6b'
-    b'\x39\x98\x9d\x9e\x85\xee\x75\x5f\x7f\x75\xaf\xb4\xe6\xf8\xec\xea\x58\xcf\xa5\x6d\xd1\xf0\xd5'
-    b'\xa9\xa8\xb9\xb2\xa5\x27\x02\x7f\x16\xfa\x67\x9e\xbf\xb7\xf0\x0c\x07\xf1\xf8\x4d\x4e\xfa\x68'
-    b'\x6c\x2f\xe1\x3d\xcc\xb0\xcb\x33\x96\x94\x7b\xe9\x7f\xbf\x7f\x9a\x6d\x5a\x08\x28\xe1\xed\xc7'
-    b'\xf8\x89\x78\xef\xc1\x20\xe4\x36\x41\x27\x6f\xc9\x69\x1d\x80\x33\x34\xff\xbe\xd2\x73\x02\x8f'
-    b'\x09\xcf\x0f\x89\x44\xe2\x34\x57\x3c\x40\x67\x90\x17\x3d\xee\xf7\xcc\xbf\xf9\x7c\xfe\x9f\x5f'
-    b'\xb7\xdd\x94\x7f\xe9\x97\xf3\xfb\x22\xf8\xbc\x04\x0a\x6c\x10\x16\x73\xe0\x1b\xcb\x11\xe0\x04'
-    b'\x79'
-    b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-    b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-    b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-)  # 258 Bytes
-
-expected_output = (
-    b'test1234567890\rR:250316/1220Z @:MD2BBS.#SAW.SAA.DEU.EU #:24196 [Salzwedel] $:24196-MD2BBS\r\r'
-    b'From: MD2SAW@MD2BBS.#SAW.SAA.DEU.EU\rTo  : MD2SAW@MD2BOX\r\rtest1234567890\r0123456789\r'
-    b'0123456789\rabcdefghijklmnopqrstuvwxyz\rabcdefghijklmnopqrstuvwxyz\r0123456789\r0123456789\r\x1a\r'
-)
-
-# Test
-if __name__ == "__main__":
+def decode_bin_mail(data: b''):
+    """ By Grok3-Beta (AI by X.com)"""
+    logTag = "decode_bin_mail()> "
+    BBS_LOG.debug(logTag + f"Decoding binary mail: {len(data)} bytes, data: {data[:50].hex()}...")
     try:
-        decoded = decode_fbb_message(binary_data)
-        print("Dekodierte Nachricht:", decoded)
-        print("Erfolg:", decoded == expected_output)
-        print("Länge der dekodierten Nachricht:", len(decoded))
+        # Eingabedatei als Bytearray lesen
+
+        #data = bytearray.fromhex(
+        #    "010d74657374330020202020203000026f9f000000ef71b7dc1de6ff0f0b77bdbebb77cdace662767a17b9d69dfdd6becf9be3b2a9613e95af47c356a27ee2c6a827a5c5e1ccf3d7f6fe0180fe3f09a9df4d0d859c27b996196672d2903d2ff7eff309aa620998f6dffc44bf7de090760b1093b7e4c48ec01e7fdf21c481224104ed")
+
+        # Header dekodieren
+        result = decode_fa_header(data)
+
+        # Mit textsize (angenommen 256 Bytes als Beispiel)
+
     except ValueError as e:
-        print(f"Fehler: {e}")
+        BBS_LOG.error(logTag + f"Fehler beim Dekodieren: {e}")
+        return {}
+    except Exception as e:
+        BBS_LOG.error(logTag + f"Unbekannter Fehler: {e}")
+        return {}
+
+    for k, val in result.items():
+        if k == 'compressed_data':
+            BBS_LOG.debug(logTag + f"{k}: {val}")
+
+        else:
+            BBS_LOG.debug(logTag + f"{k}: {val}")
+    lzhuf = LZHUF_Comp()
+
+    i = 0
+    block = result.get('compressed_data', b'')
+    BBS_LOG.debug(logTag + f"{i}: {block[:50].hex()}...")
+    BBS_LOG.debug(logTag + f"{i}: {block.hex()}")
+    BBS_LOG.debug(logTag + f"{i}: {block}")
+    BBS_LOG.debug(logTag + f"len {i}: {len(block)}")
+    de_block      = lzhuf.decode(block)
+    decompressed  = de_block
+    BBS_LOG.debug(logTag + f"Dekomprimierter Block: {de_block}")
+    BBS_LOG.debug(logTag + f"Dekomprimierte: {decompressed}")
+    result['decompressed'] = decompressed
+    return result
+
+
+
+if __name__ == '__main__':
+    decode_bin_mail(b"\x01\x16test lzhuff 44\x00     0\x00\x02}\xcc\x00\x00\x00\xefq\xb7\xdc\x1d\xe6\xff\x0f\x89\xbb\xc1\xde\xe0p\xbc\xda\xcef'g\xa1g\x9di\xdf\xddk\xec\xf9\xbe;*v\x14(\xda\xf4|5j'n\xacc\x04\xf6")

@@ -1,8 +1,8 @@
 from UserDB.UserDBmain import USER_DB
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
-    CNTRL_Z, FWD_RESP_HLD
-from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol
+    CNTRL_Z, FWD_RESP_HLD, EOT, SOH, LF, STX
+from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol, decode_bin_mail
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
 
@@ -21,6 +21,7 @@ class BBSConnection:
         self._dest_bbs_call  = str(self._ax25_conn.to_call_str).split('-')[0]
         self._my_stat_id     = self._bbs.my_stat_id
         self._feat_flag      = []
+        self._is_bin_mode    = False
         self._logTag         = f"BBS-Conn ({self._dest_bbs_call}): "
         ###########
         self._rx_buff        = b''
@@ -64,6 +65,8 @@ class BBSConnection:
         # print(self._feat_flag)
         if '$' in self._feat_flag:
             return False
+        if 'B' in self._feat_flag:
+            self._is_bin_mode = True
         return True
 
     def connection_cron(self):
@@ -93,25 +96,83 @@ class BBSConnection:
             return ret
         return []
 
-    def _get_next_mail_fm_rx_buff(self):
-        tmp_eom     = b''
-        index       = 0
-        # print(self._rx_buff)
-        for flag in EOM:
-            try:
-                index = self._rx_buff.index(flag)
-            except ValueError:
-                continue
-            if index:
-                tmp_eom = flag
-                break
-        if not index:
+    def _get_next_mail_fm_rx_buff(self, bin_mode=False):
+        """
+        Extrahiert die nächste Nachricht aus dem RX-Buffer.
+
+        Args:
+            bin_mode (bool): True für Binärnachrichten (FBB-Protokoll), False für Textnachrichten.
+
+        Returns:
+            bytes: Die extrahierte Nachricht oder b'' wenn keine vollständige Nachricht vorhanden ist.
+        """
+        if not self._rx_buff:
             return b''
 
-        index2          = index + len(tmp_eom)
-        ret             = bytes(self._rx_buff[      :index])
-        self._rx_buff   = bytes(self._rx_buff[index2:     ])
-        return ret
+        if not bin_mode:
+            # Textmodus: Suche nach EOM (z. B. b'\r\n.\r\n')
+            for eom in EOM:
+                try:
+                    index         = self._rx_buff.index(eom)
+                    ret           = bytes(self._rx_buff[:index])
+                    self._rx_buff = bytes(self._rx_buff[index + len(eom):])
+                    return ret
+                except ValueError:
+                    continue
+            return b''
+
+        # Binärmodus: FBB-Protokoll
+        if SOH not in self._rx_buff:
+            return b''
+
+        start_idx = self._rx_buff.index(SOH)
+        if start_idx > 0:
+            self._rx_buff = self._rx_buff[start_idx:]
+
+        # Header lesen
+        if len(self._rx_buff) < 2:
+            return b''  # Mindestens SOH + Länge benötigt
+        if self._rx_buff[0] != SOH:
+            return b''
+
+        header_length = self._rx_buff[1]
+        header_end    = 2 + header_length
+        if len(self._rx_buff) < header_end:
+            return b''  # Nicht genug Daten für Header
+
+        # Datenblöcke verarbeiten
+        pos = header_end
+        total_data_size = 0
+        while pos < len(self._rx_buff):
+            if self._rx_buff[pos] == EOT:
+                if pos + 1 >= len(self._rx_buff):
+                    return b''  # Keine Prüfsumme
+                # Vollständige Nachricht gefunden
+                end_idx = pos + 2  # EOT + Prüfsumme
+                ret = bytes(self._rx_buff[:end_idx])
+                self._rx_buff = bytes(self._rx_buff[end_idx:])
+                return ret
+            elif self._rx_buff[pos] != STX:
+                # Ungültiger Blockstart, warte auf mehr Daten oder Fehler
+                return b''
+
+            pos += 1
+            if pos >= len(self._rx_buff):
+                return b''  # Keine Blockgröße
+
+            block_size = self._rx_buff[pos]
+            if block_size == 0:
+                block_size = 256  # 0 bedeutet 256 Bytes gemäß Protokoll
+            pos += 1
+
+            block_end = pos + block_size
+            if block_end > len(self._rx_buff):
+                return b''  # Nicht genug Daten für Block
+            total_data_size += block_size
+            pos = block_end
+
+        # Kein EOT gefunden, warte auf mehr Daten
+        return b''
 
     def _connection_tx(self, raw_data: b''):
         # print(f"_connection_tx: {raw_data}")
@@ -215,10 +276,21 @@ class BBSConnection:
 
     def _get_msg(self):
         # 4
-        next_mail = self._get_next_mail_fm_rx_buff()
+        bid        = list(self._rx_msg_header.keys())[0]
+        bin_mode   = self._rx_msg_header.get(bid, {}).get('bin_mode', False)
+        next_mail  = self._get_next_mail_fm_rx_buff(bin_mode=bin_mode)
         if next_mail:
-            # print(_rx_bytes)
-            self._parse_msg(next_mail)
+            if bin_mode:
+
+                result = decode_bin_mail(next_mail)
+                if not result:
+                    BBS_LOG.error(self._logTag + f"Fehler beim Dekodieren der Binärnachricht für BID: {bid}")
+                    # TODO Error handling (Disco, ect.)
+                    return
+                self._rx_msg_header[bid]['subject'] = result.get('title', b'')
+                self._parse_msg(result.get('decompressed', b''))
+            else:
+                self._parse_msg(next_mail)
         if not self._rx_msg_header:
             self._state = 2
 
@@ -360,8 +432,8 @@ class BBSConnection:
                 BBS_LOG.error(logTag + f"Decoding Error: {e} - Header-Line: {el}")
                 pn_check += FWD_RESP_REJ
                 continue
-            # if el[:2] in ['FB', 'FA']:
-            if el[:2] == 'FB':
+            # if el[:2] == 'FB':
+            if el[:2] in ['FB', 'FA']:
                 msg = parse_forward_header(el)
                 if not msg:
                     # Error
@@ -436,15 +508,19 @@ class BBSConnection:
     def _parse_msg(self, msg: bytes):
         # TODO: Again ..
         logTag  = self._logTag + f"MSG-Parser> "
-        # BBS_LOG.debug(logTag + f"msg: {msg}")
+        BBS_LOG.debug(logTag + f"msg: {msg}")
         # Find EOL Syntax
-        eol         = find_eol(msg)
-        header_eol  = eol + eol
+        eol = find_eol(msg)
+        header_eol = eol + eol
+        # BID und Binärmodus bestimmen
+        bid = list(self._rx_msg_header.keys())[0]
+        bin_mode = self._rx_msg_header.get(bid, {}).get('bin_mode', False)
+        if bin_mode:
+            subject = self._rx_msg_header.get(bid, {}).get('subject', b'')
+            msg = subject + eol + msg
+
         lines       = msg.split(header_eol)
-        short       = False
-        if len(lines) < 3:
-            BBS_LOG.debug(logTag + f"Error: len(lines) < 3: {lines}")
-            short = True
+        short = len(lines) < 3
 
         if not short:
             try:
@@ -475,6 +551,7 @@ class BBSConnection:
         bid_found_e = False
         path        = []
         path_data   = []
+
         for stamp_line in list(raw_stamps):
             stamp_bid = ''
             if not stamp_line:
@@ -527,6 +604,7 @@ class BBSConnection:
                 bid         = str(stamp_bid)
                 bid_found   = True
             # Path
+
             if not path_line:
                 BBS_LOG.warning(logTag + f"No path_line in StampData - StampData: {stamp_data}")
                 continue
@@ -608,8 +686,8 @@ class BBSConnection:
         self._rx_msg_header[bid]['sender']        = sender_call
         self._rx_msg_header[bid]['receiver']      = receiver_call
 
-        self._rx_msg_header[bid]['msg']           = msg
-        self._rx_msg_header[bid]['header']        = header
+        self._rx_msg_header[bid]['msg']           = msg.replace(eol, LF)
+        self._rx_msg_header[bid]['header']        = header.replace(eol, LF)
         self._rx_msg_header[bid]['path']          = path
         self._rx_msg_header[bid]['fwd_path']      = parse_fwd_paths(path) # TODO: get Time from Header timecode
         # 'R:230513/2210z @:CB0ESN.#E.W.DLNET.DEU.EU [E|JO31MK] obcm1.07b5 LT:007'

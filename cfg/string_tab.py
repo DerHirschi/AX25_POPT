@@ -3009,6 +3009,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'swap_settings': (
+        'SWAP',
+        'SWAP',
+        'SWAP',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'allowRevFWD': (
         'Erlaube Reverse-FWD',
         'Allow Reverse-FWD',
