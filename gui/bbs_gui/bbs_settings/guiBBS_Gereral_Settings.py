@@ -26,6 +26,7 @@ class BBSGeneralSettings(tk.Frame):
         self._singleConn_var    = tk.BooleanVar(self, value=bool(self._pms_cfg.get('single_auto_conn',  True)))
         self._autoConn_var      = tk.BooleanVar(self, value=bool(self._pms_cfg.get('auto_conn',         False)))
         self._pnAutoPath_var    = tk.StringVar(self,  value=str(self._pms_cfg.get('pn_auto_path',       1)))
+        self._bin_mode_var      = tk.BooleanVar(self,  value=bool(self._pms_cfg.get('bin_mode',         True)))
         local_distr_cfg         = ' '.join(self._pms_cfg.get('local_dist',  []))
         local_theme_cfg         = ' '.join(self._pms_cfg.get('local_theme', []))
         block_bbs_cfg           = ' '.join(self._pms_cfg.get('block_bbs',   []))
@@ -55,6 +56,7 @@ class BBSGeneralSettings(tk.Frame):
         bid_btn_fr      = tk.Frame(l_frame, borderwidth=5)
         btn_fr          = tk.Frame(l_frame, borderwidth=5)
         chk_fr          = tk.Frame(l_frame, borderwidth=5)
+        binM_f          = tk.Frame(l_frame, borderwidth=5)
         chk_f2          = tk.Frame(l_frame, borderwidth=5)
         help_f          = tk.Frame(l_frame, borderwidth=5)
         #############
@@ -66,6 +68,7 @@ class BBSGeneralSettings(tk.Frame):
         bid_btn_fr.pack(    side=tk.TOP, fill=tk.X, expand=False)
         btn_fr.pack(        side=tk.TOP, fill=tk.X, expand=False)
         chk_fr.pack(        side=tk.TOP, fill=tk.X, expand=False)
+        binM_f.pack(        side=tk.TOP, fill=tk.X, expand=False)
         chk_f2.pack(        side=tk.TOP, fill=tk.X, expand=False)
         help_f.pack(        side=tk.TOP, fill=tk.X, expand=False)
 
@@ -99,6 +102,11 @@ class BBSGeneralSettings(tk.Frame):
                        variable=self._singleConn_var,
                        text='Single Conn').pack(side=tk.LEFT, expand=False)
         ###################
+        # binM_f
+        tk.Checkbutton(binM_f,
+                       variable=self._bin_mode_var,
+                       text='BIN Mode').pack(side=tk.LEFT, expand=False)
+        ###################
         # chk_f2
         tk.Spinbox(chk_f2,
                     from_=0,
@@ -113,7 +121,6 @@ class BBSGeneralSettings(tk.Frame):
         help_text  = self._getTabStr('fwd_autoPath_help').split('\n')
         for line in help_text:
             tk.Label(help_f, text=line).pack(side=tk.TOP, expand=False, padx=20, anchor='w')
-
         ##############################d#############
         # R Frames
         local_dist_ent_f         = tk.Frame(r_frame, borderwidth=5)
@@ -191,6 +198,7 @@ class BBSGeneralSettings(tk.Frame):
         self._pms_cfg['regio']              = str(self._own_regio_var.get().upper())  # TODO Validator
         self._pms_cfg['single_auto_conn']   = bool(self._singleConn_var.get())
         self._pms_cfg['auto_conn']          = bool(self._autoConn_var.get())
+        self._pms_cfg['bin_mode']           = bool(self._bin_mode_var.get())
         try:
             self._pms_cfg['pn_auto_path']   = int(self._pnAutoPath_var.get())
         except ValueError:

@@ -545,7 +545,6 @@ class LZHUF_Comp:
 if __name__ == "__main__":
     comp = LZHUF_Comp()
     data = b"Hello, World!"
-    # data2 = bytearray.fromhex("9f000000ef71b7dc1de6ff0f0b77bdbebb77cdace662767a17b9d69dfdd6becf9be3b2a9613e95af47c356a27ee2c6a827a5c5e1ccf3d7f6fe0180fe3f09a9df4d0d859c27b996196672d2903d2ff7eff309aa620998f6dffc44bf7de090760b1093b7e4c48ec01e7fdf21c4812241")
     compressed   = comp.encode(data)
     decompressed = comp.decode(compressed)
     print(f"Compressed:   {compressed}")

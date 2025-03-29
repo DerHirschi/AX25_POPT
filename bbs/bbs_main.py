@@ -39,12 +39,22 @@ class BBS:
     def __init__(self, port_handler):
         self._logTag        = "BBS-Main: "
         logger.info(self._logTag + 'Init')
-        BBS_LOG.info('Init')
+        BBS_LOG.info(self._logTag + 'Init')
         self._port_handler  = port_handler
         self._db            = self._port_handler.get_database()
-        # self._pms_cfg.get('bin_mode', False)
-        features_flag = ("F", "M", "H")
-        #features_flag = ("B", "F", "M", "H")
+        ###############
+        # Config's
+        self._pms_cfg: dict = POPT_CFG.get_BBS_cfg()
+        self._pms_cfg_hasChanged = False
+        if not self._pms_cfg.get('enable_fwd', True):
+            BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
+        self._own_bbs_address = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
+        ##########################
+        # BBS ID Flag ID(Header)
+        if self._pms_cfg.get('bin_mode', True):
+            features_flag = ("B", "F", "M", "H")
+        else:
+            features_flag = ("F", "M", "H")
         self.bbs_id_flag    = generate_sid(features=features_flag)
         # AB1FHMRX$
         # self.bbs_id_flag    = generate_sid(features=("A", "B", "1", "F", "M", "H", "R", "X"))
@@ -58,14 +68,7 @@ class BBS:
             raise bbsInitError('my_stat_id is None')
         if self.my_stat_id.e:
             raise bbsInitError('my_stat_id.e Error')
-        BBS_LOG.info(f"Flag: {self.bbs_id_flag}")
-        ###############
-        # Config's
-        self._pms_cfg: dict         = POPT_CFG.get_BBS_cfg()
-        self._pms_cfg_hasChanged    = False
-        if not self._pms_cfg.get('enable_fwd', True):
-            BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
-        self._own_bbs_address       = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
+        BBS_LOG.info(self._logTag + f"Flag: {self.bbs_id_flag}")
         #######################################
         # Set flag in FWD-Q  'SW' > 'S='
         self._db.bbs_outMsg_release_all_wait()
@@ -75,7 +78,7 @@ class BBS:
         self._set_pms_home_bbs()
         ####################
         # Scheduler
-        BBS_LOG.info('Set Scheduler')
+        BBS_LOG.info(self._logTag + 'Set Scheduler')
         self._set_pms_fwd_schedule()
         ####################
         # New Msg Noty/Alarm
@@ -95,7 +98,7 @@ class BBS:
         self._var_task_60sec        = time.time()   + 30
         self._var_task_fwdQ_timer   = time.time()   + 30
         logger.info(self._logTag + 'Init complete')
-        BBS_LOG.info('Init complete')
+        BBS_LOG.info(self._logTag + 'Init complete')
 
         ###############
         # DEBUG/DEV
@@ -110,8 +113,8 @@ class BBS:
         if not self._fwd_connections:
             logger.info(self._logTag + "ReInit")
             logger.info(self._logTag + "ReInit: Read new Config")
-            BBS_LOG.info("ReInit")
-            BBS_LOG.info("ReInit: Read new Config")
+            BBS_LOG.info(self._logTag + "ReInit")
+            BBS_LOG.info(self._logTag + "ReInit: Read new Config")
             self._del_all_pms_fwd_schedule()
             self._pms_cfg = POPT_CFG.get_BBS_cfg()
             self._reinit_stationID_pmsFlag()
@@ -119,12 +122,16 @@ class BBS:
             self._set_pms_fwd_schedule()
             self._pms_cfg_hasChanged = False
             if not self._pms_cfg.get('enable_fwd', True):
-                BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
+                BBS_LOG.info(self._logTag + "FWD is disabled. BBS is in PMS Mode")
             return True
         return False
 
     def _reinit_stationID_pmsFlag(self):
-        self.bbs_id_flag = generate_sid(features=("F", "M", "H"))
+        if self._pms_cfg.get('bin_mode', True):
+            features_flag = ("B", "F", "M", "H")
+        else:
+            features_flag = ("F", "M", "H")
+        self.bbs_id_flag = generate_sid(features=features_flag)
         self.my_stat_id = get_station_id_obj(str(self.bbs_id_flag))
         try:
             self.bbs_id_flag = self.bbs_id_flag.encode('ASCII')
