@@ -2,7 +2,8 @@ from UserDB.UserDBmain import USER_DB
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
     CNTRL_Z, FWD_RESP_HLD, EOT, SOH, LF, STX
-from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol, decode_bin_mail
+from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol, decode_bin_mail, \
+    encode_fa_header
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
 
@@ -45,7 +46,7 @@ class BBSConnection:
             11: self._wait_fq,
         }
         self._state = 0
-        self.e = self._check_feature_flags()
+        self.e = not self._check_feature_flags()
         if self._dest_stat_id is None:
             logger.error(self._logTag + f'Error Dest State Identy> {self._dest_stat_id}')
             BBS_LOG.error(self._logTag + f'Error Dest State Identy> {self._dest_stat_id}')
@@ -62,11 +63,12 @@ class BBSConnection:
         for el in self._dest_stat_id.feat_flag:
             if el in self._my_stat_id.feat_flag:
                 self._feat_flag.append(str(el))
-        # print(self._feat_flag)
-        if '$' in self._feat_flag:
+        BBS_LOG.info(self._logTag + f'Features> {self._feat_flag}')
+        if '$' not in self._feat_flag:
             return False
         if 'B' in self._feat_flag:
             self._is_bin_mode = True
+        BBS_LOG.info(self._logTag + f'Bin Mode> {self._is_bin_mode}')
         return True
 
     def connection_cron(self):
@@ -98,6 +100,7 @@ class BBSConnection:
 
     def _get_next_mail_fm_rx_buff(self, bin_mode=False):
         """
+        Opt: by Grok3-beta (AI by x.com)
         Extrahiert die nächste Nachricht aus dem RX-Buffer.
 
         Args:
@@ -379,13 +382,21 @@ class BBSConnection:
         msg = self._db.bbs_get_outMsg_by_BID(bid)
         if not msg:
             return False
-        # print(f"tx_out- 0: {msg[0][0]}  1: {msg[0][1]}  3: {msg[0][2]}  len3: {len(msg[0][2])}")
-        # tx_msg = msg[0][0].encode('ASCII', 'ignore') + b'\r' + msg[0][1]+ msg[0][2] + b'\x1a\r'
-        tx_msg = msg[0][1]+ msg[0][2] + CNTRL_Z + CR
+        subject     = msg[0][0]
+        mail_header = msg[0][1]
+        raw_msg     = msg[0][2]
+        if not self._is_bin_mode:
+            # print(f"tx_out- 0: {msg[0][0]}  1: {msg[0][1]}  3: {msg[0][2]}  len3: {len(msg[0][2])}")
+            # tx_msg = msg[0][0].encode('ASCII', 'ignore') + b'\r' + msg[0][1]+ msg[0][2] + b'\x1a\r'
+            tx_msg = mail_header + raw_msg + CNTRL_Z + CR
+            self._connection_tx(tx_msg)
+            return True
+        tx_msg = bytes(encode_fa_header(mail_content=raw_msg, title=subject))
         self._connection_tx(tx_msg)
+        return True
 
     def _check_msg_to_fwd(self):
-        tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
+        tmp = self._bbs.build_fwd_header(self._dest_bbs_call, bin_mode=self._is_bin_mode)
         for el in tmp[1]:
             if el in self._tx_msg_BIDs:
                 return

@@ -177,7 +177,7 @@ Ideas/TODO's :
       - überarbeiten
       - mehr Steuer/Monitoring-Möglichkeiten (GUI)
     - Scheduled BL/PN FWD (z.B. nur Nachts)
-    - !Kompremierung (Hufman??) (lzh??)
+    ✓ !Kompremierung (Hufman??) (lzh??) (lzhuf !!)
     ✓ Hold   (Config u Handling)
     ✓ Reject (Config u Handling)
   - User-DB (User-DB Erweiterung für die BBS)

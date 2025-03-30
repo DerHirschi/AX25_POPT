@@ -28,6 +28,7 @@ Optimierung:
 - Spalte für "Flag" im "Message-Center" für PN und BL
 
 Neue Implementierungen / Funktionen:
+- Forward-Protokoll BinMail (Bin Mode) lzhuf Komprimierung
 - Auto-Lookup für PR-Mail Adressen, beim Senden neuer P-Mails
 - Beacon-Call Filter für User-DB
 - PR-Mail Adresse (Sysop- und BBS-Adressen) werden automatisch

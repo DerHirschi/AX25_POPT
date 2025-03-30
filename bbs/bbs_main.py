@@ -974,15 +974,20 @@ class BBS:
         return self._db.bbs_get_fwd_out_Tab()
     """
 
-    def build_fwd_header(self, bbs_call: str):
+    def build_fwd_header(self, bbs_call: str, bin_mode=False):
         fwd_q_data  = self._get_fwd_q_tab_forBBS(bbs_call)
         ret         = ""
         ret_bids    = []
+        if bin_mode:
+            st_flag = 'FA'
+        else:
+            st_flag = 'FB'
+
         if not fwd_q_data:
             return b'', ret_bids
         for el in fwd_q_data:
             if el[3] and el[7] and el[6]:
-                ret += f"FB {el[12]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
+                ret += f"{st_flag} {el[12]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
                 ret_bids.append(el[1])
             """
             else:

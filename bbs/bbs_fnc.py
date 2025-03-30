@@ -368,7 +368,8 @@ def extract_wp_data(wp_data: str):
 
     return entries
 
-
+##################################################
+# Decoding Bin Mail
 def decode_fa_header(data: bytearray) -> dict:
     """ By Grok3-Beta (AI by X.com)"""
     logTag = "decode_fa_header()> "
@@ -457,20 +458,12 @@ def decode_fa_header(data: bytearray) -> dict:
 
 
 def decode_bin_mail(data: b''):
-    """ By Grok3-Beta (AI by X.com)"""
+    """ By Grok3-Beta (AI by X.com) """
     logTag = "decode_bin_mail()> "
     BBS_LOG.debug(logTag + f"Decoding binary mail: {len(data)} bytes, data: {data[:50].hex()}...")
     try:
-        # Eingabedatei als Bytearray lesen
-
-        #data = bytearray.fromhex(
-        #    "010d74657374330020202020203000026f9f000000ef71b7dc1de6ff0f0b77bdbebb77cdace662767a17b9d69dfdd6becf9be3b2a9613e95af47c356a27ee2c6a827a5c5e1ccf3d7f6fe0180fe3f09a9df4d0d859c27b996196672d2903d2ff7eff309aa620998f6dffc44bf7de090760b1093b7e4c48ec01e7fdf21c481224104ed")
-
         # Header dekodieren
         result = decode_fa_header(data)
-
-        # Mit textsize (angenommen 256 Bytes als Beispiel)
-
     except ValueError as e:
         BBS_LOG.error(logTag + f"Fehler beim Dekodieren: {e}")
         return {}
@@ -478,27 +471,117 @@ def decode_bin_mail(data: b''):
         BBS_LOG.error(logTag + f"Unbekannter Fehler: {e}")
         return {}
 
-    for k, val in result.items():
-        if k == 'compressed_data':
-            BBS_LOG.debug(logTag + f"{k}: {val}")
-
-        else:
-            BBS_LOG.debug(logTag + f"{k}: {val}")
+    if not result.get('compressed_data', b''):
+        BBS_LOG.error(logTag + f"Keine Daten(compressed_data): {result}")
+        return {}
     lzhuf = LZHUF_Comp()
-
-    i = 0
-    block = result.get('compressed_data', b'')
-    BBS_LOG.debug(logTag + f"{i}: {block[:50].hex()}...")
-    BBS_LOG.debug(logTag + f"{i}: {block.hex()}")
-    BBS_LOG.debug(logTag + f"{i}: {block}")
-    BBS_LOG.debug(logTag + f"len {i}: {len(block)}")
-    de_block      = lzhuf.decode(block)
-    decompressed  = de_block
-    BBS_LOG.debug(logTag + f"Dekomprimierter Block: {de_block}")
-    BBS_LOG.debug(logTag + f"Dekomprimierte: {decompressed}")
+    compressed             = result.get('compressed_data', b'')
+    decompressed           = lzhuf.decode(compressed)
     result['decompressed'] = decompressed
+
+    compressed_size        = len(compressed)
+    decompressed_size      = len(decompressed)
+    compression_ratio      = decompressed_size / compressed_size
+    BBS_LOG.debug(logTag + f"Komprimierte:   {compressed_size} Bytes")
+    BBS_LOG.debug(logTag + f"Dekomprimierte: {decompressed_size} Bytes")
+    BBS_LOG.debug(logTag + f"Rate:           {compression_ratio:.2f}:1")
     return result
 
+##################################################
+# Encoding Bin Mail
+def calculate_checksum(data):
+    """
+    By Grok3-Beta (AI by X.com)
+    Berechnet die Checksumme als two's complement der Summe aller Datenbytes modulo 256.
+    """
+    total    = sum(data) & 0xFF  # Summe modulo 256
+    checksum = (-total) & 0xFF  # Two's complement
+    return checksum
+
+
+def create_bin_mail_header(title, offset="0"):
+    """
+    By Grok3-Beta (AI by X.com)
+    Erstellt den Bin-Mail-Header gemäß FBB-Spezifikation.
+    """
+    # Titel/Filename auf 80 Bytes begrenzen und in ASCII kodieren
+    title_bytes = title.encode('ascii')[:80]
+    # title_bytes = title[:80]
+    # Offset auf 6 Bytes begrenzen und in ASCII kodieren
+    offset_bytes = str(offset).encode('ascii')[:6]
+
+    # Header-Länge: Länge von title + <NUL> + offset + <NUL>
+    header_length = len(title_bytes) + 1 + len(offset_bytes) + 1
+
+    header = bytearray()
+    header.append(SOH)  # <SOH>
+    header.append(header_length)  # Länge des Headers (inkl. beider <NUL>)
+    header.extend(title_bytes)  # Titel/Filename
+    header.append(NUL)  # <NUL>
+    header.extend(offset_bytes)  # Offset
+    header.append(NUL)  # <NUL>
+    return header
+
+
+def split_into_blocks(compressed_data, max_block_size=256):
+    """
+    By Grok3-Beta (AI by X.com)
+    Teilt die komprimierten Daten in Blöcke mit STX und Größe.
+    """
+    blocks = bytearray()
+    pos = 0
+    while pos < len(compressed_data):
+        remaining = len(compressed_data) - pos
+        block_size = min(max_block_size, remaining)
+        blocks.append(STX)  # <STX>
+        blocks.append(block_size if block_size < 256 else 0)  # Größe (0 = 256)
+        blocks.extend(compressed_data[pos:pos + block_size])
+        pos += block_size
+    return blocks
+
+
+def encode_fa_header(mail_content, title, offset="0"):
+    """
+    By Grok3-Beta (AI by X.com)
+    Wandelt eine Mail in Bin-Mail-Format um (FA-Typ).
+    """
+    logTag = "encode_fa_header()> "
+    BBS_LOG.debug(logTag + f"Encoding binary mail: {len(mail_content)} bytes, Title: {title}, Offset; {offset} ")
+    # 1. Mail-Inhalt als Bytes (ASCII)
+    # mail_bytes = mail_content.encode('ascii', errors='ignore')
+    print("Komprimierung")
+    # 2. Komprimierung mit LZHUF (Platzhalter)
+    lzhuf = LZHUF_Comp()
+    compressed_data = lzhuf.encode(mail_content)
+    print("Header erstellen")
+    # 3. Header erstellen
+    header = create_bin_mail_header(title, offset)
+    print("Daten in Blöcke aufteilen")
+    # 4. Daten in Blöcke aufteilen
+    blocks = split_into_blocks(compressed_data)
+
+    print("Checksumme")
+    # 5. Checksumme über komprimierte Daten berechnen
+    checksum = calculate_checksum(compressed_data)
+
+    print("Alles zusammenfügen")
+    # 6. Alles zusammenfügen: Header + Blöcke + EOT + Checksum
+    bin_mail = bytearray()
+    bin_mail.extend(header)
+    bin_mail.extend(blocks)
+    bin_mail.append(0x04)  # <EOT>
+    bin_mail.append(checksum)  # Checksum
+    compressed_size   = len(compressed_data)
+    decompressed_size = len(mail_content)
+    compression_ratio = decompressed_size / compressed_size
+    BBS_LOG.debug(logTag + f"  Komprimierte:   {compressed_size} Bytes")
+    BBS_LOG.debug(logTag + f"  Dekomprimierte: {decompressed_size} Bytes")
+    BBS_LOG.debug(logTag + f"  Rate:           {compression_ratio:.2f}:1")
+    BBS_LOG.debug(logTag + f"  Checksum:       HEX {hex(checksum)} / INT {checksum}")
+    BBS_LOG.debug(logTag + f"  Blöcke:         {len(blocks)}")
+    BBS_LOG.debug(logTag + f"  Gesamtlänge:    {len(bin_mail)} Bytes")
+    print(bin_mail)
+    return bin_mail
 
 
 if __name__ == '__main__':
