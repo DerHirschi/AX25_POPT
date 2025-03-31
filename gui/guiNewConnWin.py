@@ -29,8 +29,8 @@ class NewConnWin(tk.Toplevel):
         self.style = self._main.style
         self._conn_hist = self._main.connect_history
         # self._new_conn_win = tk.Tk()
-        self.title("New Connection")
-        self.geometry(f"700x285+{self._main.main_win.winfo_x()}+{self._main.main_win.winfo_y()}")
+        self.title(STR_TABLE['newcon_title'][self._lang])
+        self.geometry(f"640x200+{self._main.main_win.winfo_x()}+{self._main.main_win.winfo_y()}")
         # self.geometry("700x285")
         self.protocol("WM_DELETE_WINDOW", self._destroy_new_conn_win)
         self.resizable(False, False)
@@ -62,20 +62,20 @@ class NewConnWin(tk.Toplevel):
                             command=lambda l_port=port: self._set_port_index(l_port)
                             )
             if port:
-                tmp.place(x=10 + (80 * port), y=1)
+                tmp.place(x=10 + (80 * port), y=5)
             else:
-                tmp.place(x=10, y=1)
+                tmp.place(x=10, y=5)
             self._port_btn[port] = tmp
 
         self._set_port_btn()
 
         call_label = tk.Label(self,
-                              text='Ziel:',
+                              text=STR_TABLE['newcon_ziel'][self._lang],
                               foreground='black',
                               font=("TkFixedFont", 11),
                               height=1,
                               width=5)
-        call_label.place(x=2, y=40)
+        call_label.place(x=10, y=40)
 
         vals = list(self._conn_hist.keys())
         vals.reverse()
@@ -92,7 +92,7 @@ class NewConnWin(tk.Toplevel):
         # self._call_txt_inp.bind('<KeyRelease>',
         #                         lambda event: get_typed(event, self._chiefs, self.call_txt_inp_var, self._call_txt_inp))
         # self._call_txt_inp.bind('<Key>', lambda event: detect_pressed(event, self._call_txt_inp))
-        self._call_txt_inp.place(x=80, y=40)
+        self._call_txt_inp.place(x=100, y=40)
         self._ax_ip_ip = None
         self._ax_ip_port = None
         ############
@@ -110,13 +110,13 @@ class NewConnWin(tk.Toplevel):
         ############
         # BTN
         conn_btn = tk.Button(self,
-                             text="Los",
+                             text=STR_TABLE['go'][self._lang],
                              font=("TkFixedFont", 13),
                              bg="green",
                              height=1,
                              width=4,
                              command=self._process_new_conn_win)
-        conn_btn.place(x=10, y=220)
+        conn_btn.place(x=10, y=130)
         self._call_txt_inp.focus_set()
         self._set_port_index(self._port_index)
         ##############
@@ -134,7 +134,7 @@ class NewConnWin(tk.Toplevel):
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
         MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._reset_conn_history)
-        menubar.add_cascade(label='History', menu=MenuVerb, underline=0)
+        menubar.add_cascade(label=STR_TABLE['newcon_history'][self._lang], menu=MenuVerb, underline=0)
 
     def _set_port_index(self, index: int):
         port = PORT_HANDLER.get_port_by_index(index)
@@ -224,7 +224,7 @@ class NewConnWin(tk.Toplevel):
                 if not opt:
                     opt = ['']
                 self._own_call_dd_men = tk.OptionMenu(self, self._own_call_var, *opt)
-                self._own_call_dd_men.place(x=80, y=80)
+                self._own_call_dd_men.place(x=100, y=80)
                 self._own_call_dd_men.configure()
                 if opt:
                     self._own_call_var.set(opt[0])

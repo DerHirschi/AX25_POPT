@@ -3449,7 +3449,7 @@ STR_TABLE = {
         ''),
 
     #####################################################
-    # HELP KEY
+    # guiHelpKeybinds.py
     'key_title': (
         'Tastaturbelegung',
         'Keyboard layout',
@@ -3462,6 +3462,7 @@ STR_TABLE = {
         '',
         '',
         ''),
+
     'key_esc': (
         'ESC > Neue Verbindung',
         'ESC > New connection',
@@ -3474,6 +3475,7 @@ STR_TABLE = {
         '',
         '',
         ''),
+
     'key_altc': (
         'ALT + C > Neue Verbindung',
         'ALT + C > New connection',
@@ -3564,4 +3566,47 @@ STR_TABLE = {
         '',
         '',
         ''),
+
+    #####################################################
+    # guiNewConnWin.py
+
+    'newcon_title': (
+        'Neue Verbindung',
+        'New Connection',
+        'Nieuwe verbinding',
+        'Nouvelle connexion',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'newcon_ziel': (
+        'Ziel:',
+        'Target:',
+        'streefcijfer:',
+        'Cible :',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'newcon_history': (
+        'Geschichte',
+        'History:',
+        'Geschiedenis:',
+        'Historique',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
 }
