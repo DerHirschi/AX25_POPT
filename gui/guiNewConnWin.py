@@ -30,7 +30,7 @@ class NewConnWin(tk.Toplevel):
         self._conn_hist = self._main.connect_history
         # self._new_conn_win = tk.Tk()
         self.title(STR_TABLE['newcon_title'][self._lang])
-        self.geometry(f"640x200+{self._main.main_win.winfo_x()}+{self._main.main_win.winfo_y()}")
+        self.geometry(f"640x250+{self._main.main_win.winfo_x()}+{self._main.main_win.winfo_y()}")
         # self.geometry("700x285")
         self.protocol("WM_DELETE_WINDOW", self._destroy_new_conn_win)
         self.resizable(False, False)
@@ -85,7 +85,7 @@ class NewConnWin(tk.Toplevel):
                                              font=("TkFixedFont", 11),
                                              # height=1,
                                              values=vals,
-                                             width=45,
+                                             width=40,
                                              textvariable=self._call_txt_inp_var
                                              )
         self._call_txt_inp.bind("<<ComboboxSelected>>", self._set_conn_hist)
@@ -116,7 +116,7 @@ class NewConnWin(tk.Toplevel):
                              height=1,
                              width=4,
                              command=self._process_new_conn_win)
-        conn_btn.place(x=10, y=130)
+        conn_btn.place(x=10, y=190)
         self._call_txt_inp.focus_set()
         self._set_port_index(self._port_index)
         ##############
