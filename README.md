@@ -86,7 +86,8 @@ $ pip install --break-system-packages playsound pyserial aprslib
 #### Supported languages:
 - German
 - English
-- Dutch (Thanks to Patrick for the Dutch translation)
+- Dutch  (Thanks to Patrick for the Dutch translation)
+- French (Thanks to ClaudeMa)
 
 
 
