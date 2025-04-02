@@ -49,6 +49,7 @@ Neue Implementierungen / Funktionen:
 - BOX nimmt jetzt auch FWD Connections von BBS an
 - Forward-Lookup Funktionen für das Routing von ausgehenden Mails
   - Lokales Mail-System (PoPT-BBS erkennt, wenn Mails lokal bleiben sollen)
+- Französische Übersetzung by ClaudeMa
 
 ###########################################################################################################
 ###########################################################################################################

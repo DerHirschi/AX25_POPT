@@ -447,12 +447,12 @@ def decode_fa_header(data: bytearray) -> dict:
         'checksum': received_checksum
     }
 
-    BBS_LOG.debug(logTag + f"Header erfolgreich dekodiert:")
-    BBS_LOG.debug(logTag + f"  Titel: {title}")
-    BBS_LOG.debug(logTag + f"  Offset: {offset}")
-    BBS_LOG.debug(logTag + f"  Datenblöcke: {block_count}")
-    BBS_LOG.debug(logTag + f"  Gesamtdatengröße: {len(compressed_data)} Bytes")
-    BBS_LOG.debug(logTag + f"  Prüfsumme: {received_checksum:02x} (verifiziert)")
+    BBS_LOG.info(logTag + f"Header erfolgreich dekodiert:")
+    BBS_LOG.info(logTag + f"  Titel: {title}")
+    BBS_LOG.info(logTag + f"  Offset: {offset}")
+    BBS_LOG.info(logTag + f"  Datenblöcke: {block_count}")
+    BBS_LOG.info(logTag + f"  Gesamtdatengröße: {len(compressed_data)} Bytes")
+    BBS_LOG.info(logTag + f"  Prüfsumme: {received_checksum:02x} (verifiziert)")
 
     return result
 
@@ -460,7 +460,7 @@ def decode_fa_header(data: bytearray) -> dict:
 def decode_bin_mail(data: b''):
     """ By Grok3-Beta (AI by X.com) """
     logTag = "decode_bin_mail()> "
-    BBS_LOG.debug(logTag + f"Decoding binary mail: {len(data)} bytes, data: {data[:50].hex()}...")
+    BBS_LOG.info(logTag + f"Decoding binary mail: {len(data)} bytes, data: {data[:50].hex()}...")
     try:
         # Header dekodieren
         result = decode_fa_header(data)
@@ -482,9 +482,9 @@ def decode_bin_mail(data: b''):
     compressed_size        = len(compressed)
     decompressed_size      = len(decompressed)
     compression_ratio      = decompressed_size / compressed_size
-    BBS_LOG.debug(logTag + f"Komprimierte:   {compressed_size} Bytes")
-    BBS_LOG.debug(logTag + f"Dekomprimierte: {decompressed_size} Bytes")
-    BBS_LOG.debug(logTag + f"Rate:           {compression_ratio:.2f}:1")
+    BBS_LOG.info(logTag + f"Komprimierte:   {compressed_size} Bytes")
+    BBS_LOG.info(logTag + f"Dekomprimierte: {decompressed_size} Bytes")
+    BBS_LOG.info(logTag + f"Rate:           {compression_ratio:.2f}:1")
     return result
 
 ##################################################
@@ -546,25 +546,25 @@ def encode_fa_header(mail_content, title, offset="0"):
     Wandelt eine Mail in Bin-Mail-Format um (FA-Typ).
     """
     logTag = "encode_fa_header()> "
-    BBS_LOG.debug(logTag + f"Encoding binary mail: {len(mail_content)} bytes, Title: {title}, Offset; {offset} ")
+    BBS_LOG.info(logTag + f"Encoding binary mail: {len(mail_content)} bytes, Title: {title}, Offset; {offset} ")
     # 1. Mail-Inhalt als Bytes (ASCII)
     # mail_bytes = mail_content.encode('ascii', errors='ignore')
-    print("Komprimierung")
+    BBS_LOG.debug(logTag + "Komprimierung")
     # 2. Komprimierung mit LZHUF (Platzhalter)
     lzhuf = LZHUF_Comp()
     compressed_data = lzhuf.encode(mail_content)
-    print("Header erstellen")
+    BBS_LOG.debug(logTag + "Header erstellen")
     # 3. Header erstellen
     header = create_bin_mail_header(title, offset)
-    print("Daten in Blöcke aufteilen")
+    BBS_LOG.debug(logTag + "Daten in Blöcke aufteilen")
     # 4. Daten in Blöcke aufteilen
     blocks = split_into_blocks(compressed_data)
 
-    print("Checksumme")
+    BBS_LOG.debug(logTag + "Checksumme")
     # 5. Checksumme über komprimierte Daten berechnen
     checksum = calculate_checksum(compressed_data)
 
-    print("Alles zusammenfügen")
+    BBS_LOG.debug(logTag + "Alles zusammenfügen")
     # 6. Alles zusammenfügen: Header + Blöcke + EOT + Checksum
     bin_mail = bytearray()
     bin_mail.extend(header)
@@ -574,13 +574,12 @@ def encode_fa_header(mail_content, title, offset="0"):
     compressed_size   = len(compressed_data)
     decompressed_size = len(mail_content)
     compression_ratio = decompressed_size / compressed_size
-    BBS_LOG.debug(logTag + f"  Komprimierte:   {compressed_size} Bytes")
-    BBS_LOG.debug(logTag + f"  Dekomprimierte: {decompressed_size} Bytes")
-    BBS_LOG.debug(logTag + f"  Rate:           {compression_ratio:.2f}:1")
-    BBS_LOG.debug(logTag + f"  Checksum:       HEX {hex(checksum)} / INT {checksum}")
-    BBS_LOG.debug(logTag + f"  Blöcke:         {len(blocks)}")
-    BBS_LOG.debug(logTag + f"  Gesamtlänge:    {len(bin_mail)} Bytes")
-    print(bin_mail)
+    BBS_LOG.info(logTag + f"  Komprimierte:   {compressed_size} Bytes")
+    BBS_LOG.info(logTag + f"  Dekomprimierte: {decompressed_size} Bytes")
+    BBS_LOG.info(logTag + f"  Rate:           {compression_ratio:.2f}:1")
+    BBS_LOG.info(logTag + f"  Checksum:       HEX {hex(checksum)} / INT {checksum}")
+    BBS_LOG.info(logTag + f"  Blöcke:         {len(blocks)}")
+    BBS_LOG.info(logTag + f"  Gesamtlänge:    {len(bin_mail)} Bytes")
     return bin_mail
 
 
