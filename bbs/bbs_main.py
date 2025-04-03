@@ -33,6 +33,7 @@ from cfg.constant import SQL_TIME_FORMAT
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, BBS_LOG
 from cli.cliStationIdent import get_station_id_obj
+from UserDB.UserDBmain import USER_DB
 
 
 class BBS:
@@ -42,11 +43,13 @@ class BBS:
         BBS_LOG.info(self._logTag + 'Init')
         self._port_handler  = port_handler
         self._db            = self._port_handler.get_database()
+        self._userDB        = USER_DB
         ###############
         # Config's
         self._pms_cfg: dict = POPT_CFG.get_BBS_cfg()
         self._pms_cfg_hasChanged = False
         if not self._pms_cfg.get('enable_fwd', True):
+            # TODO PMS Mode
             BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
         self._own_bbs_address = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
         ##########################
@@ -122,6 +125,7 @@ class BBS:
             self._set_pms_fwd_schedule()
             self._pms_cfg_hasChanged = False
             if not self._pms_cfg.get('enable_fwd', True):
+                # TODO PMS Mode
                 BBS_LOG.info(self._logTag + "FWD is disabled. BBS is in PMS Mode")
             return True
         return False
@@ -357,6 +361,9 @@ class BBS:
             if not msg_typ:
                 BBS_LOG.error(log_tag + 'no msg_typ')
                 continue
+
+            # Local CC-List
+            self._check_cc_tab(msg)
 
             # Local BBS
             if self._is_fwd_local(msg=msg):
@@ -966,6 +973,81 @@ class BBS:
         return ''
 
     ########################################################################
+    # CC - Tab
+    def _check_cc_tab(self, msg: dict):
+        cc_tab_cfg = self._pms_cfg.get('cc_tab', {})
+        """
+        cc_tab_cfg = {
+            'SYSOP'    : ['MD2SAW',],
+            'TEST@SAW' : ['MD2SAW', 'DAC527'],
+        }
+        """
+        receiver            = msg.get('receiver', '')
+        recipient_bbs       = msg.get('recipient_bbs', '')
+
+        if receiver == 'SYSOP':
+            sysop_call = self._pms_cfg.get('sysop', '')
+            if sysop_call:
+                self._cc_msg(msg, sysop_call)
+
+        for k, cc_s in cc_tab_cfg.items():
+            if '@' in k:
+                if k in f"{receiver}@{recipient_bbs}":
+                    for recv_call in cc_s:
+                        self._cc_msg(msg, recv_call)
+                    return
+            if k in receiver:
+                for recv_call in cc_s:
+                    self._cc_msg(msg, recv_call)
+                return
+
+    def _cc_msg(self, msg: dict, receiver_call: str):
+        logTag = self._logTag + '_cc_msg()> '
+        receiver_address = self._userDB.get_PRmail(receiver_call)
+        if not receiver_address:
+            return False
+        if not '@' in receiver_address:
+            return False
+        receiver_bbs       = receiver_address.split('@')[-1]
+        recipient_bbs_call = receiver_bbs.split('.')[0]
+        new_subject        = f"CP {msg.get('receiver', '')}: " + msg.get('subject', '')
+
+        new_text           = f"Original to {msg.get('receiver', '')}@{msg.get('recipient_bbs', '')}".encode('ASCII', 'ignore')
+        new_text           = CR + CR + new_text + CR + CR + msg.get('msg', b'')
+
+        new_msg = GET_MSG_STRUC()
+        new_msg.update(msg)
+        new_msg['bid_mid']              = receiver_call
+        new_msg['receiver']             = receiver_call
+        new_msg['recipient_bbs']        = receiver_bbs
+        new_msg['recipient_bbs_call']   = recipient_bbs_call
+        new_msg['tx-time']              = datetime.now().strftime(SQL_TIME_FORMAT)
+        new_msg['subject']              = new_subject[:80]
+        new_msg['msg']                  = new_text
+        new_msg['message_type']         = 'P'
+        new_msg['flag']                 = '$'
+        #
+        #########################
+        # SQL
+        mid = self.new_msg(new_msg)
+        if not mid:
+            BBS_LOG.error(logTag + f"Nachricht BID: {msg.get('bid_mid', '')}")
+            BBS_LOG.error(logTag + f"fm {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
+            BBS_LOG.error(logTag + "konnte nicht in die DB geschrieben werden. Keine MID")
+            return
+
+        res = self.add_cli_msg_to_fwd_by_id(mid)
+        if not res:
+            BBS_LOG.error(logTag + f"Nachricht BID: {msg.get('bid_mid', '')}")
+            BBS_LOG.error(logTag + f"fm {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
+            BBS_LOG.error(logTag + f"konnte nicht in die DB geschrieben werden. Keine BID: {res}")
+            return
+        bid = res[0]
+        BBS_LOG.debug(logTag + f"Nachricht BID: {bid}")
+        BBS_LOG.debug(logTag + f"fm {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
+        BBS_LOG.debug(logTag + f"CC an: {receiver_address}")
+
+    ########################################################################
     # FWD
     def _get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
         return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
@@ -1204,6 +1286,9 @@ class BBS:
     ##########################################
     def get_db(self):
         return self._db
+
+    def get_userDB(self):
+        return self._userDB
 
     def commit_db(self):
         self._db.db_commit()

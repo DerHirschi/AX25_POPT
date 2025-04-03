@@ -30,11 +30,11 @@ class BBSRejectSettings(tk.Frame):
         btn_frame = tk.Frame(self)
         btn_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
         add_btn = tk.Button(btn_frame,
-                            text='ADD',
+                            text=self._getTabStr('new'),
                             command=lambda :self._add_rule_btn()
                             )
         del_btn = tk.Button(btn_frame,
-                            text='DEL',
+                            text=self._getTabStr('delete'),
                             command=self._del_btn
                             )
         add_btn.pack(side=tk.LEFT, padx=30, pady=15)

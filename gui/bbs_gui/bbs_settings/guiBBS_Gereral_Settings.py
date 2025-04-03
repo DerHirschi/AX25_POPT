@@ -21,12 +21,13 @@ class BBSGeneralSettings(tk.Frame):
         # Vars
         self._bid_var           = tk.StringVar(self)
         self._bid_ent_var       = tk.StringVar(self)
+        self._sysop_call_var    = tk.StringVar(self,  value=str(self._pms_cfg.get('sysop',              '')))
         self._own_regio_var     = tk.StringVar(self,  value=str(self._pms_cfg.get('regio',              '')))
         self._own_call_var      = tk.StringVar(self,  value=str(self._pms_cfg.get('user',               '')))
         self._singleConn_var    = tk.BooleanVar(self, value=bool(self._pms_cfg.get('single_auto_conn',  True)))
         self._autoConn_var      = tk.BooleanVar(self, value=bool(self._pms_cfg.get('auto_conn',         False)))
         self._pnAutoPath_var    = tk.StringVar(self,  value=str(self._pms_cfg.get('pn_auto_path',       1)))
-        self._bin_mode_var      = tk.BooleanVar(self,  value=bool(self._pms_cfg.get('bin_mode',         True)))
+        self._bin_mode_var      = tk.BooleanVar(self, value=bool(self._pms_cfg.get('bin_mode',          True)))
         local_distr_cfg         = ' '.join(self._pms_cfg.get('local_dist',  []))
         local_theme_cfg         = ' '.join(self._pms_cfg.get('local_theme', []))
         block_bbs_cfg           = ' '.join(self._pms_cfg.get('block_bbs',   []))
@@ -49,6 +50,7 @@ class BBSGeneralSettings(tk.Frame):
 
         ###########################################
         # L Frames
+        sysop_call_fr   = tk.Frame(l_frame, borderwidth=5)
         own_call_fr     = tk.Frame(l_frame, borderwidth=5)
         own_regio_fr    = tk.Frame(l_frame, borderwidth=5)
 
@@ -62,7 +64,8 @@ class BBSGeneralSettings(tk.Frame):
         #############
         tk.Label(l_frame, text=self._getTabStr('own_station')).pack(side=tk.TOP, expand=False)
 
-        own_call_fr.pack(   side=tk.TOP, fill=tk.X, expand=False, pady=12)
+        sysop_call_fr.pack( side=tk.TOP, fill=tk.X, expand=False, pady=12)
+        own_call_fr.pack(   side=tk.TOP, fill=tk.X, expand=False)
         own_regio_fr.pack(  side=tk.TOP, fill=tk.X, expand=False)
         bid_fr.pack(        side=tk.TOP, fill=tk.X, expand=False)
         bid_btn_fr.pack(    side=tk.TOP, fill=tk.X, expand=False)
@@ -72,10 +75,19 @@ class BBSGeneralSettings(tk.Frame):
         chk_f2.pack(        side=tk.TOP, fill=tk.X, expand=False)
         help_f.pack(        side=tk.TOP, fill=tk.X, expand=False)
 
-        tk.Label(own_call_fr, text='CALL: ', width=10).pack(side=tk.LEFT, expand=False)
-        tk.Entry(own_call_fr,
-                 textvariable=self._own_call_var,
-                 width=7).pack(side=tk.LEFT, expand=False)
+        tk.Label(sysop_call_fr, text='Sysop-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
+        opt = list(POPT_CFG.get_stat_CFGs_by_typ().keys())
+        tk.OptionMenu(sysop_call_fr,
+                 self._sysop_call_var,
+                 *opt,
+                 ).pack(side=tk.LEFT, expand=False)
+
+        tk.Label(own_call_fr, text='BBS-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
+        opt = list(POPT_CFG.get_stat_CFGs_by_typ('BOX').keys())
+        tk.OptionMenu(own_call_fr,
+                self._own_call_var,
+                 *opt
+                 ).pack(side=tk.LEFT, expand=False)
 
         tk.Label(own_regio_fr, text=f"{self._getTabStr('region')}: ", width=10).pack(side=tk.LEFT, expand=False)
         tk.Entry(own_regio_fr,
@@ -196,6 +208,7 @@ class BBSGeneralSettings(tk.Frame):
             return
         self._pms_cfg['user']               = user
         self._pms_cfg['regio']              = str(self._own_regio_var.get().upper())  # TODO Validator
+        self._pms_cfg['sysop']              = str(self._sysop_call_var.get())
         self._pms_cfg['single_auto_conn']   = bool(self._singleConn_var.get())
         self._pms_cfg['auto_conn']          = bool(self._autoConn_var.get())
         self._pms_cfg['bin_mode']           = bool(self._bin_mode_var.get())

@@ -1,4 +1,3 @@
-from UserDB.UserDBmain import USER_DB
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
     CNTRL_Z, FWD_RESP_HLD, EOT, SOH, LF, STX
@@ -13,6 +12,7 @@ class BBSConnection:
         self._ax25_conn      = ax25_connection
         self._bbs            = bbs_obj
         self._db             = bbs_obj.get_db()
+        self._userDB         = bbs_obj.get_userDB()
         ###########
         self.e               = False
         self._mybbs_flag     = self._bbs.bbs_id_flag
@@ -288,7 +288,8 @@ class BBSConnection:
                 result = decode_bin_mail(next_mail)
                 if not result:
                     BBS_LOG.error(self._logTag + f"Fehler beim Dekodieren der Binärnachricht für BID: {bid}")
-                    # TODO Error handling (Disco, ect.)
+                    # TODO Error handling ( *** Checksum Error .. FBB-Docs))
+                    self.end_conn()
                     return
                 self._rx_msg_header[bid]['subject'] = result.get('title', b'')
                 self._parse_msg(result.get('decompressed', b''))
@@ -722,13 +723,12 @@ class BBSConnection:
         """
         #########################
         # User DB
-        userDB = USER_DB
         for stamp_ent in path_data:
             bbs_address = stamp_ent.get('bbs_address', '')
             if not bbs_address:
                 continue
-            userDB.set_PRmail_BBS_address(bbs_address)
-        userDB.set_PRmail_address(from_address)
+            self._userDB.set_PRmail_BBS_address(bbs_address)
+        self._userDB.set_PRmail_address(from_address)
         #########################
         # SQL
         res = self._db.bbs_insert_msg_fm_fwd(dict(self._rx_msg_header[bid]))

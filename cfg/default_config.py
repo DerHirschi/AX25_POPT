@@ -67,6 +67,7 @@ def getNew_BBS_cfg():
     return dict(
         user            = 'NOCALL',     # BOX CALL
         regio           = '',           # Own Regio
+        sysop           = '',           # Sysop Call
         fwd_bbs_cfg     = {},           # FWD CFGs
         home_bbs        = [],           # TODO: Check if used
         bin_mode        = True,         # Binary Mails (compressed)
@@ -81,7 +82,8 @@ def getNew_BBS_cfg():
         block_bbs       = [],           # Global BBS/Recipient Rejecting
         block_call      = [],           # Global Call/Topic Rejecting
         pn_auto_path    = 1,            # Find BBS to FWD
-        reject_tab      = []            # Reject/Hold Tab
+        reject_tab      = [],           # Reject/Hold Tab
+        cc_tab          = {},           # CC Tab
         # 0 = disabled (Use strict configs)
         # 1 = most current
         # 2 = best (low hops)

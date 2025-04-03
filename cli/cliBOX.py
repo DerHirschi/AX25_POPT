@@ -640,6 +640,7 @@ class BoxCLI(DefaultCLI):
 
     def get_ts_prompt(self):
         return f"\r({datetime.now().strftime('%H:%M:%S')}) {self._my_call_str}>\r"
+
     ########################################################################
     def _baycom_auto_login(self):
         return False

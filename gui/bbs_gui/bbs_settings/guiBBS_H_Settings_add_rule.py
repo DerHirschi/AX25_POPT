@@ -28,7 +28,8 @@ class BBS_addRuleWinHold(tk.Toplevel):
         self._getTabStr     = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win      = root_win
         self._root_win.add_win = self
-        self.title(f"Add Reject Hold")
+        # self.title(f"Add Reject Hold")
+        self.title(f"{self._getTabStr('new')} Reject/Hold")
         ##################################################
         self._RH_opt_var    = tk.StringVar(self, value='H')
         self._msg_typ_var   = tk.StringVar(self, value='B')
@@ -120,7 +121,7 @@ class BBS_addRuleWinHold(tk.Toplevel):
         if rej_hold_ent in reject_tab:
             return
         reject_tab.append(rej_hold_ent)
-        print(reject_tab)
+        # print(reject_tab)
         pms_cfg['reject_tab'] = reject_tab
 
         if hasattr(self._root_win, 'update_tabs'):

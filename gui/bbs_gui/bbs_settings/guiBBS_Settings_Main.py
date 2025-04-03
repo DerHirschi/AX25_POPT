@@ -4,11 +4,12 @@ from tkinter import ttk
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
+from gui.bbs_gui.bbs_settings.guiBBS_CC_Settings import BBSccSettings
 from gui.bbs_gui.bbs_settings.guiBBS_Gereral_Settings import BBSGeneralSettings
 from gui.bbs_gui.bbs_settings.guiBBS_FWD_Settings import BBS_FWD_Settings
 from gui.bbs_gui.bbs_settings.guiBBS_Reject_Settings import BBSRejectSettings
 from gui.bbs_gui.bbs_settings.guiBBS_Routing_Settings import BBSRoutingSettings
-from gui.bbs_gui.bbs_settings.guiBBS_Swap_Settings import BBSSwapSettings
+# from gui.bbs_gui.bbs_settings.guiBBS_Swap_Settings import BBSSwapSettings
 
 
 class BBSSettingsMain(tk.Toplevel):
@@ -44,7 +45,8 @@ class BBSSettingsMain(tk.Toplevel):
             'fwd_settings'      : BBS_FWD_Settings,
             'routing_settings'  : BBSRoutingSettings,
             'reject_settings'   : BBSRejectSettings,
-            'swap_settings'     : BBSSwapSettings,
+            'cc_settings'       : BBSccSettings,
+            #'swap_settings'     : BBSSwapSettings,
         }
         ###############################################################
 
