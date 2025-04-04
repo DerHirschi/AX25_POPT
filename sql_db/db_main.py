@@ -986,6 +986,13 @@ class SQL_Database:
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
+    def bbs_unhold_msg_by_BID(self, bid_list: list):
+        id_str = "('" + "','".join(bid_list) + "')"
+        query = ("UPDATE pms_in_msg SET flag='$' "
+                 f"WHERE BID in {id_str};")
+        self._commit_query(query)
+        return True
+
     def bbs_get_outMsg_by_BID(self, bid: str):
         query = "SELECT subject, header, msg FROM pms_out_msg WHERE BID=%s LIMIT 5;"
         query_data = (bid,)

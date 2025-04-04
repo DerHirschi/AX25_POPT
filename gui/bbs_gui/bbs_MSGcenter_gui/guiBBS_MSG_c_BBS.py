@@ -206,8 +206,9 @@ class MSG_Center_BBS(MSG_Center_base):
         ########################
         # ## top_f / Msg Table
         self._init_hold_tree(top_f)
-        self._hold_tree_data = []
-        self._hold_data = []
+        self._hold_tree_data    = []
+        self._hold_data         = []
+        self._hold_selected     = []
         self._update_hold_tree_data()
         ########################
         # ## lower_f_top / MSG Header ect.
@@ -226,6 +227,7 @@ class MSG_Center_BBS(MSG_Center_base):
             1: self._selected_msg['B'].get('enc', 'UTF-8'),
             2: self._selected_msg['O'].get('enc', 'UTF-8'),
             3: self._selected_msg['F'].get('enc', 'UTF-8'),
+            4: self._selected_msg['H'].get('enc', 'UTF-8'),
         }.get(ind, 'UTF-8')
         self._var_encoding.set(enc)
         self.tree_update_task()
@@ -242,6 +244,7 @@ class MSG_Center_BBS(MSG_Center_base):
             1: self._update_BL_tree_data,
             2: self._update_OUT_tree_data,
             3: self._update_fwdQ_tree_data,
+            4: self._update_hold_tree_data,
         }.get(ind, None)
         if update_task:
             update_task()
@@ -875,15 +878,15 @@ class MSG_Center_BBS(MSG_Center_base):
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        """
+
         tk.Button(btn_frame_l,
-                  text='Start FWD',
-                  command=lambda: self._do_pms_autoFWD()
+                  text='UNHOLD',
+                  command=lambda: self._unhold_btn()
                   ).pack(side=tk.LEFT, expand=False)
-        """
+
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_hold_btn()
                   ).pack(side=tk.RIGHT, expand=False)
         """
         tk.Button(btn_frame_r,
@@ -1522,9 +1525,11 @@ class MSG_Center_BBS(MSG_Center_base):
 
     def _hold_entry_selected(self, event=None):
         bid = ''
+        self._hold_selected = []
         for selected_item in self._hold_tree.selection():
             item = self._hold_tree.item(selected_item)
             bid = item['tags'][1]
+            self._hold_selected.append(bid)
         if bid:
             self._hold_show_msg_fm_BID(bid)
             # self._update_hold_tree_data()
@@ -1582,5 +1587,18 @@ class MSG_Center_BBS(MSG_Center_base):
                 self._hold_text.insert('1.0', msg)
 
             self._hold_text.configure(state='disabled')
+
+    def _delete_hold_btn(self):
+        for bid in self._hold_selected:
+            self._bbs_obj.del_in_by_BID(bid)
+        self._hold_selected = []
+        self._update_hold_tree_data()
+
+    def _unhold_btn(self):
+        if not self._hold_selected:
+            return
+        self._bbs_obj.unhold_msg_by_BID(self._hold_selected)
+        self._hold_selected = []
+        self._update_hold_tree_data()
 
     ####################

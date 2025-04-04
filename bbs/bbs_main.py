@@ -1280,6 +1280,9 @@ class BBS:
     def del_fwd_q_by_MID(self, fwdid):
         return self._db.bbs_del_fwdQ_by_FWDID(fwdid)
 
+    def unhold_msg_by_BID(self, bid_list: list):
+        return self._db.bbs_unhold_msg_by_BID(bid_list)
+
     def set_bid(self, bid):
         return self._db.pms_set_bid(bid)
 
