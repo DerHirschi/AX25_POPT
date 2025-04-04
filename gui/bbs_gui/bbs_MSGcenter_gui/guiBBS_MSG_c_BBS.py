@@ -177,8 +177,9 @@ class MSG_Center_BBS(MSG_Center_base):
         ########################
         # ## top_f / Msg Table
         self._init_fwdQ_tree(top_f)
-        self._fwdQ_tree_data = []
-        self._fwdQ_data = []
+        self._fwdQ_tree_data    = []
+        self._fwdQ_data         = []
+        self._fwdQ_selected     = []
         self._update_fwdQ_tree_data()
         ########################
         # ## lower_f_top / MSG Header ect.
@@ -739,7 +740,7 @@ class MSG_Center_BBS(MSG_Center_base):
                   ).pack(side=tk.LEFT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_fwdQ()
                   ).pack(side=tk.RIGHT, expand=False)
         """
         tk.Button(btn_frame_r,
@@ -1366,7 +1367,8 @@ class MSG_Center_BBS(MSG_Center_base):
               "subject, "
               "size, "
               "flag, "
-              "try "
+              "try, "
+              "FWDID "
             
             """
             self._fwdQ_tree_data.append((
@@ -1380,20 +1382,23 @@ class MSG_Center_BBS(MSG_Center_base):
                 f'{el[9]}',         # Size
                 f'{el[10]}',        # Flag
                 f'{el[11]}',        # Try's
+                f'{el[12]}',        # FWDID
             ))
 
     def _update_fwdQ_tree(self):
         for i in self._fwdQ_tree.get_children():
             self._fwdQ_tree.delete(i)
         for ret_ent in self._fwdQ_tree_data:
-            self._fwdQ_tree.insert('', tk.END, values=ret_ent, tags=('dummy', ret_ent[1]))
-        self._update_sort_entry(self._fwdQ_tree, 'mid')
+            self._fwdQ_tree.insert('', tk.END, values=ret_ent[:-1], tags=('dummy', ret_ent[-1], ret_ent[1]))
+        #self._update_sort_entry(self._fwdQ_tree, 'mid')
 
     def _fwdQ_entry_selected(self, event=None):
         bid = ''
+        self._fwdQ_selected = []
         for selected_item in self._fwdQ_tree.selection():
             item = self._fwdQ_tree.item(selected_item)
-            bid  = item['tags'][1]
+            self._fwdQ_selected.append(item['tags'][1])
+            bid  = item['tags'][2]
         if bid:
             self._fwdQ_show_msg_fm_BID(bid)
             # self._update_OUT_tree_data()
@@ -1451,6 +1456,12 @@ class MSG_Center_BBS(MSG_Center_base):
                 self._fwdQ_text.insert('1.0', msg)
 
             self._fwdQ_text.configure(state='disabled')
+
+    def _delete_fwdQ(self):
+        for fwdid in self._fwdQ_selected:
+            self._bbs_obj.del_fwd_q_by_MID(fwdid)
+        self._fwdQ_selected = []
+        self._update_fwdQ_tree_data()
 
     ####################
     ################################

@@ -168,6 +168,7 @@ class MSG_Center_PMS(MSG_Center_base):
         self._init_sv_tree(top_f)
         self._sv_tree_data      = []
         self._sv_data           = []
+        self._sv_selected       = []
         self._update_SV_tree_data()
         ########################
         # ## lower_f_top / MSG Header ect.
@@ -641,7 +642,7 @@ class MSG_Center_PMS(MSG_Center_base):
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_SV_btn()
                   ).pack(side=tk.RIGHT, expand=False)
         # TODO ? tk.Button(btn_frame_r, text='Als Vorlage').pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
@@ -1129,9 +1130,11 @@ class MSG_Center_PMS(MSG_Center_base):
 
     def _SV_entry_selected(self, event=None):
         mid = ''
+        self._sv_selected = []
         for selected_item in self._sv_tree.selection():
             item = self._sv_tree.item(selected_item)
             mid = item['tags'][1]
+            self._sv_selected.append(mid)
         if mid:
             self._SV_show_msg_fm_MID(mid)
             # self._update_SV_tree_data()
@@ -1184,4 +1187,9 @@ class MSG_Center_PMS(MSG_Center_base):
 
             self._sv_text.configure(state='disabled')
 
+    def _delete_SV_btn(self):
+        for mid in self._sv_selected:
+            self._bbs_obj.del_sv_by_MID(mid)
+        self._sv_selected = []
+        self._update_SV_tree_data()
     ####################

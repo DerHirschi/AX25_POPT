@@ -943,7 +943,8 @@ class SQL_Database:
                   "subject, "
                   "size, "
                   "flag, "
-                  "try "
+                  "try, "
+                  "FWDID "
                   # "FROM pms_fwd_q WHERE flag='F';")
                   "FROM pms_fwd_q WHERE flag!='DL';")
         res = self._commit_query(query)
@@ -1189,6 +1190,12 @@ class SQL_Database:
     def bbs_del_sv_msg_by_MID(self, mid: str):
         query = ("UPDATE pms_out_msg SET flag='DL' "
                   f"WHERE MID='{mid}';")
+        self._commit_query(query)
+        return True
+
+    def bbs_del_fwdQ_by_FWDID(self, fdwid: str):
+        query = ("UPDATE pms_fwd_q SET flag='DL' "
+                 f"WHERE FWDID='{fdwid}';")
         self._commit_query(query)
         return True
 
