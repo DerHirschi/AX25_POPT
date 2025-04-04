@@ -26,6 +26,7 @@ Optimierung:
 - Cleanup Stingtabelle in CLI-Funktionen
 - Übersetzungen im "Message-Center" vervollständigt
 - Spalte für "Flag" im "Message-Center" für PN und BL
+- SQL-Querys fürs Handeln großer Datenmengen beim Löschen
 
 Neue Implementierungen / Funktionen:
 - Forward-Protokoll BinMail (Bin Mode) lzhuf Komprimierung

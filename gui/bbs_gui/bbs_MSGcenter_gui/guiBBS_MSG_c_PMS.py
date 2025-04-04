@@ -266,7 +266,7 @@ class MSG_Center_PMS(MSG_Center_base):
                   ).pack(side=tk.LEFT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_PN_btn()
                   ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
@@ -405,7 +405,7 @@ class MSG_Center_PMS(MSG_Center_base):
                   ).pack(side=tk.LEFT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_BL_btn()
                   ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
@@ -530,7 +530,7 @@ class MSG_Center_PMS(MSG_Center_base):
                   ).pack(side=tk.LEFT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_OUT_btn()
                   ).pack(side=tk.RIGHT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
@@ -756,9 +756,11 @@ class MSG_Center_PMS(MSG_Center_base):
     def _PN_entry_selected(self, event=None):
         bid         = ''
         tag_name    = ''
+        self._PN_selected = []
         for selected_item in self._pn_tree.selection():
             item = self._pn_tree.item(selected_item)
             tag_name, bid = item['tags']
+            self._PN_selected.append(bid)
         if bid:
             self._PN_show_msg_fm_BID(bid)
             if tag_name == 'neu':
@@ -879,9 +881,11 @@ class MSG_Center_PMS(MSG_Center_base):
     def _BL_entry_selected(self, event=None):
         bid      = ''
         tag_name = ''
+        self._BL_selected = []
         for selected_item in self._bl_tree.selection():
             item = self._bl_tree.item(selected_item)
             tag_name, bid = item['tags']
+            self._BL_selected.append(bid)
         if bid:
             self._BL_show_msg_fm_BID(bid)
             if tag_name == 'neu':
@@ -1028,9 +1032,11 @@ class MSG_Center_PMS(MSG_Center_base):
 
     def _OUT_entry_selected(self, event=None):
         bid = ''
+        self._OUT_selected = []
         for selected_item in self._out_tree.selection():
             item = self._out_tree.item(selected_item)
             bid = item['tags'][1]
+            self._OUT_selected.append(bid)
         if bid:
             self._OUT_show_msg_fm_BID(bid)
             # self._update_OUT_tree_data()

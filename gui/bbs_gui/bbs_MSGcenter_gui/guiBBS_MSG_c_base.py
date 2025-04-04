@@ -55,6 +55,10 @@ class MSG_Center_base(tk.Frame):
         self._sv_text       = None
         self._hold_text     = None
         self._trash_text    = None
+        #
+        self._BL_selected  = []
+        self._PN_selected  = []
+        self._OUT_selected = []
 
     def _sort_entry(self, col, tree):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
@@ -248,13 +252,40 @@ class MSG_Center_base(tk.Frame):
         if bid:
             return self._bbs_obj.del_in_by_BID(bid)
 
+    def _delete_PN_btn(self):
+        # for bid in self._hold_selected:
+        if not self._PN_selected:
+            return
+        self._bbs_obj.del_in_by_BID_list(self._PN_selected)
+        self._PN_selected = []
+        self._update_PN_tree_data()
+        self._update_trash_tree_data()
+
     def _delete_BL(self, bid: str):
         if bid:
             return self._bbs_obj.del_in_by_BID(bid)
 
+    def _delete_BL_btn(self):
+        # for bid in self._hold_selected:
+        if not self._BL_selected:
+            return
+        self._bbs_obj.del_in_by_BID_list(self._BL_selected)
+        self._BL_selected = []
+        self._update_BL_tree_data()
+        self._update_trash_tree_data()
+
     def _delete_OUT(self, bid: str):
         if bid:
             return self._bbs_obj.del_out_by_BID(bid)
+
+    def _delete_OUT_btn(self):
+        # for bid in self._hold_selected:
+        if not self._OUT_selected:
+            return
+        self._bbs_obj.del_out_by_BID_list(self._OUT_selected)
+        self._OUT_selected = []
+        self._update_OUT_tree_data()
+        self._update_trash_tree_data()
 
     def _delete_SV(self, bid: str):
         if bid:

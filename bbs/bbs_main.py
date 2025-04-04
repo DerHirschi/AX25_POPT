@@ -1319,6 +1319,12 @@ class BBS:
     def del_in_by_BID(self, bid):
         return self._db.bbs_del_in_msg_by_BID(bid)
 
+    def del_in_by_BID_list(self, bid_list: list):
+        return self._db.bbs_del_in_msg_by_BID_list(bid_list)
+
+    def del_out_by_BID_list(self, bid_list: list):
+        return self._db.bbs_del_out_msg_by_BID_list(bid_list)
+
     def del_trash_in_by_BID(self, mid: list):
         return self._db.bbs_trash_in_msg_by_MID(mid)
 

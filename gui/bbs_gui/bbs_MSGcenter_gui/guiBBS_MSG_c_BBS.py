@@ -363,7 +363,7 @@ class MSG_Center_BBS(MSG_Center_base):
         """
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_PN_btn()
                   ).pack(side=tk.RIGHT, expand=False)
         """
         tk.Button(btn_frame_r,
@@ -512,7 +512,7 @@ class MSG_Center_BBS(MSG_Center_base):
         """
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_BL_btn()
                   ).pack(side=tk.RIGHT, expand=False)
 
         """
@@ -641,7 +641,7 @@ class MSG_Center_BBS(MSG_Center_base):
                   ).pack(side=tk.LEFT, expand=False)
         tk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
-                  command=lambda: self._delete_msg()
+                  command=lambda: self._delete_OUT_btn()
                   ).pack(side=tk.RIGHT, expand=False)
         """
         tk.Button(btn_frame_r,
@@ -1194,9 +1194,11 @@ class MSG_Center_BBS(MSG_Center_base):
 
     def _PN_entry_selected(self, event=None):
         bid = ''
+        self._PN_selected = []
         for selected_item in self._pn_tree.selection():
             item = self._pn_tree.item(selected_item)
             bid = item['tags'][1]
+            self._PN_selected.append(bid)
         if bid:
             self._PN_show_msg_fm_BID(bid)
             # self._update_PN_tree_data()
@@ -1249,6 +1251,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 self._pn_text.insert('1.0', msg)
 
             self._pn_text.configure(state='disabled')
+
     ################################
     # Bulletin PMS
     def _update_BL_tree_data(self):
@@ -1309,9 +1312,11 @@ class MSG_Center_BBS(MSG_Center_base):
 
     def _BL_entry_selected(self, event=None):
         bid = ''
+        self._BL_selected = []
         for selected_item in self._bl_tree.selection():
             item = self._bl_tree.item(selected_item)
             bid = item['tags'][1]
+            self._BL_selected.append(bid)
         if bid:
             self._BL_show_msg_fm_BID(bid)
             # self._update_BL_tree_data()
@@ -1461,9 +1466,11 @@ class MSG_Center_BBS(MSG_Center_base):
 
     def _OUT_entry_selected(self, event=None):
         bid = ''
+        self._OUT_selected = []
         for selected_item in self._out_tree.selection():
             item = self._out_tree.item(selected_item)
             bid = item['tags'][1]
+            self._OUT_selected.append(bid)
         if bid:
             self._OUT_show_msg_fm_BID(bid)
             # self._update_OUT_tree_data()
@@ -1777,8 +1784,10 @@ class MSG_Center_BBS(MSG_Center_base):
             self._hold_text.configure(state='disabled')
 
     def _delete_hold_btn(self):
-        for bid in self._hold_selected:
-            self._bbs_obj.del_in_by_BID(bid)
+        # for bid in self._hold_selected:
+        if not self._hold_selected:
+            return
+        self._bbs_obj.del_in_by_BID_list(self._hold_selected)
         self._hold_selected = []
         self._update_hold_tree_data()
 

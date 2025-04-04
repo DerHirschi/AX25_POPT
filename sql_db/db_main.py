@@ -117,19 +117,30 @@ class SQL_Database:
         if self.db:
             self.db.close()
 
+    def _db_cleanup(self):
+        logger.info(self._logTag + 'wird aufgeräumt')
+        self._bbs_trash_fwdQ()
+
     def close_db(self):
         if self.db:
+            logger.info(self._logTag + 'wird beendet')
             self._db_commit()
             time.sleep(0.1)
+            self._db_cleanup()
+            time.sleep(0.1)
+            logger.info(self._logTag + 'wird geschlossen')
             self.db.close()
+            logger.info(self._logTag + 'geschlossen')
 
     def check_tables_exists(self, tables: str):
         if not self.error:
+            logger.info(self._logTag + 'überprüfe Tabellen')
             try:
                 ret = self.db.get_all_tables()
-            except SQLConnectionError:
+            except SQLConnectionError as e:
                 self.error = True
                 self.db = None
+                logger.error(self._logTag + f'check_tables_exists() > {e}')
             else:
                 if self.MYSQL:
                     tables = {
@@ -150,7 +161,7 @@ class SQL_Database:
                 for tab in tables.keys():
                     if tab not in ret:
                         # print(f"Database: WARNING Table {tab} not exists !!")
-                        logger.warning(f"Database: WARNING Table {tab} not exists !! Creating new Table.")
+                        logger.warning(self._logTag + f"Table {tab} not exists !! Creating new Table.")
                         self.create_db_tables(tables[tab])
                 # self.create_db_var()
 
@@ -320,7 +331,7 @@ class SQL_Database:
                 self._access = False
                 return ret
 
-    ############################################
+    ############################################################
     # BBS - PMS
     def bbs_check_pn_mid_exists(self, bid_mid: str):
 
@@ -1046,7 +1057,6 @@ class SQL_Database:
                  "WHERE flag='DL';")
 
         res = self._commit_query(query)
-        # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
     def bbs_get_trash_outTab_for_BBS_gui(self):
@@ -1246,6 +1256,23 @@ class SQL_Database:
         self._commit_query(query)
         return True
 
+    def bbs_del_in_msg_by_BID_list(self, bid_list: list):
+        id_str = "('" + "','".join(bid_list) + "')"
+        query = ("UPDATE pms_in_msg SET flag='DL' "
+                  f"WHERE BID IN {id_str};")
+        self._commit_query(query)
+        return True
+
+    def bbs_del_out_msg_by_BID_list(self, bid_list: list):
+        id_str = "('" + "','".join(bid_list) + "')"
+        query = ("UPDATE pms_fwd_q SET flag='DL' "
+                  f"WHERE BID IN {id_str};")
+        self._commit_query(query)
+        query = ("UPDATE pms_out_msg SET flag='DL' "
+                 f"WHERE BID IN {id_str};")
+        self._commit_query(query)
+        return True
+
     def bbs_trash_in_msg_by_MID(self, msg_ids: list):
         id_list = [str(x) for x in msg_ids]
         id_str = '(' + ','.join(id_list) + ')'
@@ -1259,6 +1286,12 @@ class SQL_Database:
         id_str = '(' + ','.join(id_list) + ')'
         query = ("DELETE FROM pms_out_msg "
                   f"WHERE MID IN {id_str};")
+        self._commit_query(query)
+        return True
+
+    def _bbs_trash_fwdQ(self):
+        query = ("DELETE FROM pms_fwd_q "
+                  f"WHERE flag='DL';")
         self._commit_query(query)
         return True
 
