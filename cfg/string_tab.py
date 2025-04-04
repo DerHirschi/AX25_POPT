@@ -151,6 +151,42 @@ STR_TABLE = {
         '',
         ''),
 
+    'temperature': (
+        'Temperatur',
+        'Temperature',
+        'Temperatuur',
+        'Température',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'wx_press': (
+        'Luftdruck',
+        'Pressure',
+        'Luchtdruk',
+        'Pression',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'wx_hum': (
+        'Luftfeuchtigkeit',
+        'Humidity',
+        'Vochtigheid',
+        'Humidité',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'userdb_add_sysop_ent1': (
         'Informationen ergänzen?',
         'Add information?',

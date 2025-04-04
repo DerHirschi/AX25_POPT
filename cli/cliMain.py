@@ -6,6 +6,7 @@ from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV
+from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
     convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch
@@ -758,7 +759,7 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_wx_fm_call_cli_out(self, call, max_ent=10):
-        data = list(self._port_handler.aprs_ais.get_wx_data_f_call(call))
+        data       = list(self._port_handler.aprs_ais.get_wx_data_f_call(call))
         if not data:
             return ''
         data.reverse()
@@ -775,6 +776,7 @@ class DefaultCLI(object):
             max_c += 1
             if max_c > max_ent:
                 break
+            #graph_data.append({'temp': float(el[5])})
             # _ent = self._port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
             # td = get_timedelta_CLIstr(el[15].split(' ')[-1])
             td = el[15].split(' ')[-1]
@@ -791,6 +793,92 @@ class DefaultCLI(object):
             out += f'{rain:9} '
             # out += f'{el[7]:.3f}\r'
             out += f'{el[7]}\r'
+
+        time_range = 72
+        init_time  = data[0][15].split(' ')[-1].split(':')[0]
+        init_dict  = {}
+        if data[0][5]:
+            try:
+                init_dict['temp'] = float(data[0][5])
+            except ValueError:
+                pass
+        if  data[0][0]:
+            try:
+                init_dict['pres'] = float(data[0][0])
+            except ValueError:
+                pass
+        if  data[0][1]:
+            try:
+                init_dict['hum'] = float(data[0][1])
+            except ValueError:
+                pass
+
+        temp_graph_data = [init_dict]
+        for el in data:
+            time_st = el[15].split(' ')[-1].split(':')[0]
+            if  str(time_st) != str(init_time):
+                temp_dict = {}
+                if 'temp' in init_dict:
+                    try:
+                        temp_dict['temp'] = float(el[5])
+                    except ValueError:
+                        pass
+                if 'pres' in init_dict:
+                    try:
+                        temp_dict['pres'] = float(el[0])
+                    except ValueError:
+                        pass
+                if 'hum' in init_dict:
+                    try:
+                        temp_dict['hum'] = float(el[1])
+                    except ValueError:
+                        pass
+                temp_graph_data.append(temp_dict)
+                init_time = time_st
+            if len(temp_graph_data) >= time_range + 1:
+                break
+
+        if 'temp' in init_dict:
+            datasets = {'temp': '+'}
+            temp_graph = generate_ascii_graph(temp_graph_data,
+                                         f"{self._getTabStr('temperature')}(C) - {call} - {time_range} {self._getTabStr('hours')}",
+                                         datasets,
+                                         chart_type='line',
+                                         graph_height=12,
+                                         graph_width=time_range + 1,
+                                         expand=True )
+            out += '\r'
+            out += '\r'
+            out += temp_graph
+
+        if 'pres' in init_dict:
+            datasets = {'pres': '+'}
+            press_graph = generate_ascii_graph(temp_graph_data,
+                                              f"{self._getTabStr('wx_press')}(hPa) - {call} - {time_range} {self._getTabStr('hours')}",
+                                              datasets,
+                                              chart_type='line',
+                                              graph_height=12,
+                                              graph_width=time_range + 1,
+                                              expand=True)
+            out += '\r'
+            out += '\r'
+            out += press_graph
+
+        if 'hum' in init_dict:
+            datasets = {'hum': '+'}
+            hum_graph = generate_ascii_graph(temp_graph_data,
+                                              f"{self._getTabStr('wx_hum')}(%) - {call} - {time_range} {self._getTabStr('hours')}",
+                                              datasets,
+                                              chart_type='line',
+                                              graph_height=12,
+                                              graph_width=time_range + 1,
+                                              expand=True)
+
+            out += '\r'
+            out += '\r'
+            out += hum_graph
+
+        out += '\r'
         return out
 
     def _get_wx_cli_out(self, max_ent=10):

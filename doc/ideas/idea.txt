@@ -177,9 +177,11 @@ Ideas/TODO's :
       - überarbeiten
       - mehr Steuer/Monitoring-Möglichkeiten (GUI)
     - Scheduled BL/PN FWD (z.B. nur Nachts)
-    ✓ !Kompremierung (Hufman??) (lzh??) (lzhuf !!)
+    ✓ !Komprimierung (Hufman??) (lzh??) (lzhuf !!)
     ✓ Hold   (Config u Handling)
     ✓ Reject (Config u Handling)
+    ✓ CC     (Config u Handling)
+    - SWAP   (Config u Handling)
   - User-DB (User-DB Erweiterung für die BBS)
   - BBS Tool (Hold, Filter, Ban, Man-Routing, ...)
   ✓ CLI (Grundlegend)
@@ -199,7 +201,6 @@ Ideas/TODO's :
     ✓ Mail Held by
     ✓ Mail Rejected by
     ✓ FWD Error by
-  - SWAP
   - BBS-Monitor
 
   - POP3/SMTP evtl. IMAP

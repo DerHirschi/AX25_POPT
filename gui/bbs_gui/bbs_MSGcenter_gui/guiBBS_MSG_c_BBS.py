@@ -1393,7 +1393,7 @@ class MSG_Center_BBS(MSG_Center_base):
             self._fwdQ_tree.delete(i)
         for ret_ent in self._fwdQ_tree_data:
             self._fwdQ_tree.insert('', tk.END, values=ret_ent[:-1], tags=('dummy', ret_ent[-1], ret_ent[1]))
-        #self._update_sort_entry(self._fwdQ_tree, 'mid')
+        self._update_sort_entry(self._fwdQ_tree, 'mid')
 
     def _fwdQ_entry_selected(self, event=None):
         bid = ''

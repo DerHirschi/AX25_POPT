@@ -50,6 +50,8 @@ Neue Implementierungen / Funktionen:
 - Forward-Lookup Funktionen für das Routing von ausgehenden Mails
   - Lokales Mail-System (PoPT-BBS erkennt, wenn Mails lokal bleiben sollen)
 - Französische Übersetzung by ClaudeMa
+- CLI-CMD "WX" gibt ASCII-Diagram aus für Temperatur, Luftdruck und
+  Luftfeuchtigkeit, wenn Daten vorhanden sind.
 
 ###########################################################################################################
 ###########################################################################################################
