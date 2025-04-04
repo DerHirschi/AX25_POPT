@@ -3472,6 +3472,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'msgC_trash_bin': (
+        'Papierkorb',
+        'Trash',
+        'Afval',
+        'Poubelle',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'saved': (
         'Gespeichert',
         'Saved',

@@ -160,13 +160,13 @@ Ideas/TODO's :
 - PMS (TST-HOST)
 ✓ "Nachrichten-Center" fasst alle Nachrichtenkanäle (APRS Bulletin/PN, BBS) übersichtlich zusammen.
   ✓ PMS
-    - Papierkorb usw
+    ✓ Papierkorb usw
     - Signatur
   - APRS
   ✓ BBS (Grundlegend)
     - FWD-Q (Tasker) mehr Steuer/Monitoring-Möglichkeiten (GUI)
-    - Hold
-    - Reject
+    ✓ Hold
+    ✓ Reject
 
 - BBS
   - BBS (S&F und all den Gedöns)

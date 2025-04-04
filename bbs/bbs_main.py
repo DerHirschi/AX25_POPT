@@ -1101,6 +1101,11 @@ class BBS:
     def get_hold_tab_bbs(self):
         return self._db.bbs_get_hold_Tab_for_BBS_gui()
 
+    def get_trash_tab_bbs(self):
+        return  (self._db.bbs_get_trash_inTab_for_BBS_gui(),
+                 self._db.bbs_get_trash_outTab_for_BBS_gui())
+
+
     def get_pn_msg_tab_by_call(self, call: str):
         return self._db.bbs_get_pn_msg_Tab_by_call(call)
 
@@ -1146,7 +1151,7 @@ class BBS:
         self._db.bbs_set_all_bl_msg_notNew()
 
     def get_pn_msg_fm_BID(self, bid):
-        data = self._db.bbs_get_pn_msg_for_GUI(bid)
+        data = self._db.bbs_get_in_msg_by_BID(bid)
         if not data:
             return {}
         return {
@@ -1203,7 +1208,7 @@ class BBS:
         }
 
     def get_hold_msg_fm_BID(self, bid):
-        data = self._db.bbs_get_pn_msg_for_GUI(bid)
+        data = self._db.bbs_get_in_msg_by_BID(bid)
         if not data:
             return {}
         return {
@@ -1222,6 +1227,49 @@ class BBS:
             'rx-time':      data[0][12],
             'new':          data[0][13],
             'flag':         data[0][14],
+        }
+
+    def get_trash_msg_fm_BID(self, mid, tag='IN'):
+        if tag == 'IN':
+            data = self._db.bbs_get_in_msg_by_MID(mid)
+        else:
+            data = self._db.bbs_get_out_msg_by_MID(mid)
+        if not data:
+            return {}
+        if tag == 'IN':
+            return {
+                'typ':          data[0][0],
+                'bid':          data[0][1],
+                'from_call':    data[0][2],
+                'from_bbs':     data[0][3],
+                'to_call':      data[0][4],
+                'to_bbs':       data[0][5],
+                'size':         data[0][6],
+                'subject':      data[0][7],
+                'header':       data[0][8],
+                'msg':          data[0][9],
+                'path':         data[0][10],
+                'time':         data[0][11],
+                'rx-time':      data[0][12],
+                'new':          data[0][13],
+                'flag':         data[0][14],
+            }
+        return {
+            'typ':          data[0][0],
+            'bid':          data[0][1],
+            'from_call':    data[0][2],
+            'from_bbs':     data[0][3],
+            'to_call':      data[0][4],
+            'to_bbs':       data[0][5],
+            'size':         data[0][6],
+            'subject':      data[0][7],
+            'header':       data[0][8],
+            'msg':          data[0][9],
+            'path':         '',
+            'time':         data[0][10],
+            'rx-time':      data[0][11],
+            'new':          '',
+            'flag':         data[0][12],
         }
 
 
@@ -1270,6 +1318,12 @@ class BBS:
 
     def del_in_by_BID(self, bid):
         return self._db.bbs_del_in_msg_by_BID(bid)
+
+    def del_trash_in_by_BID(self, mid: list):
+        return self._db.bbs_trash_in_msg_by_MID(mid)
+
+    def del_trash_out_by_BID(self, mid: list):
+        return self._db.bbs_trash_out_msg_by_MID(mid)
 
     def del_out_by_BID(self, bid):
         return self._db.bbs_del_out_msg_by_BID(bid)

@@ -802,12 +802,56 @@ class SQL_Database:
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
-    def bbs_get_pn_msg_for_GUI(self, bid: str):
+    def bbs_get_in_msg_by_BID(self, bid: str):
         if not bid:
             return []
         query = ("SELECT * "
                   "FROM pms_in_msg "
                   f"WHERE BID='{bid}';")
+        return self._commit_query(query)
+
+    def bbs_get_in_msg_by_MID(self, mid: str):
+        if not mid:
+            return []
+        query = ("SELECT typ, "
+                  "BID, "
+                  "from_call, "
+                  "from_bbs, "
+                  "to_call, "
+                  "to_bbs, "
+                  "size, "
+                  "subject, "
+                  "header, "
+                  "msg, "
+                  "path, "  #####
+                  "time, "
+                  "rx_time, " ##
+                  "new, "   ##
+                  "flag "
+                  "FROM pms_in_msg "
+                  f"WHERE MSGID='{mid}';")
+        return self._commit_query(query)
+
+    def bbs_get_out_msg_by_MID(self, mid: str):
+        if not mid:
+            return []
+        query = ("SELECT type, "
+                  "BID, "
+                  "from_call, "
+                  "from_bbs, "
+                  "to_call, "
+                  "to_bbs, "
+                  "size, "
+                  "subject, "
+                  "header, "
+                  "msg, "
+                  #"path, "  #####
+                  "time, "
+                  "tx_time, " ##
+                  #"new, "   ##
+                  "flag "
+                  "FROM pms_out_msg "
+                  f"WHERE MID='{mid}';")
         return self._commit_query(query)
 
     def bbs_set_in_msg_notNew(self, bid: str):
@@ -888,7 +932,7 @@ class SQL_Database:
         return res
 
     def bbs_get_bl_msg_for_GUI(self, bid: str):
-        return self.bbs_get_pn_msg_for_GUI(bid=bid)
+        return self.bbs_get_in_msg_by_BID(bid=bid)
 
     def bbs_set_all_bl_msg_notNew(self):
         query = "UPDATE pms_in_msg SET new=0 WHERE typ='B';"
@@ -981,6 +1025,44 @@ class SQL_Database:
                  "flag "
                  "FROM pms_in_msg "
                  "WHERE flag='H';")
+
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_trash_inTab_for_BBS_gui(self):
+        query = ("SELECT MSGID, "
+                 "BID, "
+                 "from_call, "
+                 "from_bbs, "
+                 "to_call, "
+                 "to_bbs, "
+                 # "from_bbs, "   # fwd bbs
+                 "typ, "
+                 "subject, "
+                 "size, "
+                 "flag "
+                 "FROM pms_in_msg "
+                 "WHERE flag='DL';")
+
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
+    def bbs_get_trash_outTab_for_BBS_gui(self):
+        query = ("SELECT MID, "
+                 "BID, "
+                 "from_call, "
+                 "from_bbs, "
+                 "to_call, "
+                 "to_bbs, "
+                 # "from_bbs, "   # fwd bbs
+                 "type, "
+                 "subject, "
+                 "size, "
+                 "flag "
+                 "FROM pms_out_msg "
+                 "WHERE flag='DL';")
 
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
@@ -1161,6 +1243,22 @@ class SQL_Database:
     def bbs_del_in_msg_by_BID(self, bid: str):
         query = ("UPDATE pms_in_msg SET flag='DL' "
                   f"WHERE BID='{bid}';")
+        self._commit_query(query)
+        return True
+
+    def bbs_trash_in_msg_by_MID(self, msg_ids: list):
+        id_list = [str(x) for x in msg_ids]
+        id_str = '(' + ','.join(id_list) + ')'
+        query = ("DELETE FROM pms_in_msg "
+                  f"WHERE MSGID IN {id_str};")
+        self._commit_query(query)
+        return True
+
+    def bbs_trash_out_msg_by_MID(self, msg_ids: list):
+        id_list = [str(x) for x in msg_ids]
+        id_str = '(' + ','.join(id_list) + ')'
+        query = ("DELETE FROM pms_out_msg "
+                  f"WHERE MID IN {id_str};")
         self._commit_query(query)
         return True
 
