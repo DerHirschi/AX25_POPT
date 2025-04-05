@@ -77,6 +77,7 @@ $ python3 PoPT.py
 - Comprehensive statistics for data traffic and AX-25network/BBS-network structures
 - NetRom decoder
 - Node/Digi Functions (No NetRom Routing)
+- MCast Server (Multicast Server for AXIP)
 - Remote Commands
 - GPIO Functions (capable to reade and switch GPIO's on PI and other GPIO-Devices) (root rights needed)
 - 1-Wirer Temperatur Sensors (Sensor data can be embedded in C-Text/I-Text/Beacon)
