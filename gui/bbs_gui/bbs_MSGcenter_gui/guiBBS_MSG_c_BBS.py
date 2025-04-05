@@ -1854,6 +1854,10 @@ class MSG_Center_BBS(MSG_Center_base):
                 to_bbs = db_data['to_bbs']  # Verteiler
                 # to_bbs_fwd = db_data['fwd_bbs']  # Verteiler
                 subj = db_data['subject']
+                if not db_data['header']:
+                    db_data['header'] = b''
+                if not db_data['msg']:
+                    db_data['msg'] = b''
                 msg = db_data['header'] + CR + CR + db_data['msg']
                 # _path = _db_data[9]
                 msg_time = db_data['rx-time']
