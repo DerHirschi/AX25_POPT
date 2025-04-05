@@ -772,28 +772,6 @@ class DefaultCLI(object):
         out += f'Comment   : {data[0][11]}\r'
         out += f'Datapoints: {data_len}\r\r'
         out += '-----Last-Port--Temp-Press---Hum-Lum-Rain(24h)-WindGust\r'
-        for el in data:
-            max_c += 1
-            if max_c > max_ent:
-                break
-            #graph_data.append({'temp': float(el[5])})
-            # _ent = self._port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
-            # td = get_timedelta_CLIstr(el[15].split(' ')[-1])
-            td = el[15].split(' ')[-1]
-            # pres = f'{el[0]:.2f}'
-            pres = f'{el[0]}'
-            # rain = f'{el[3]:.3f}'
-            rain = f'{el[3]}'
-            # out += f'{td.rjust(9):10}{"":6}'
-            out += f'{td.rjust(9):10}{el[-1]:6}'
-            out += f'{str(el[5]):5}'
-            out += f'{pres:7} '
-            out += f'{el[1]:3} '
-            out += f'{el[9]:3} '
-            out += f'{rain:9} '
-            # out += f'{el[7]:.3f}\r'
-            out += f'{el[7]}\r'
-
         time_range = 72
         init_time  = data[0][15].split(' ')[-1].split(':')[0]
         init_dict  = {}
@@ -817,6 +795,27 @@ class DefaultCLI(object):
         for el in data:
             time_st = el[15].split(' ')[-1].split(':')[0]
             if  str(time_st) != str(init_time):
+                max_c += 1
+                if max_c <= max_ent:
+                    # graph_data.append({'temp': float(el[5])})
+                    # _ent = self._port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
+                    # td = get_timedelta_CLIstr(el[15].split(' ')[-1])
+                    td = el[15].split(' ')[-1]
+                    # pres = f'{el[0]:.2f}'
+                    pres = f'{el[0]}'
+                    # rain = f'{el[3]:.3f}'
+                    rain = f'{el[3]}'
+                    # out += f'{td.rjust(9):10}{"":6}'
+                    out += f'{td.rjust(9):10}{el[-1]:6}'
+                    out += f'{str(el[5]):5}'
+                    out += f'{pres:7} '
+                    out += f'{el[1]:3} '
+                    out += f'{el[9]:3} '
+                    out += f'{rain:9} '
+                    # out += f'{el[7]:.3f}\r'
+                    out += f'{el[7]}\r'
+
+
                 temp_dict = {}
                 if 'temp' in init_dict:
                     try:
@@ -835,7 +834,7 @@ class DefaultCLI(object):
                         pass
                 temp_graph_data.append(temp_dict)
                 init_time = time_st
-            if len(temp_graph_data) >= time_range + 1:
+            if len(temp_graph_data) >= time_range :
                 break
 
         if 'temp' in init_dict:
@@ -845,7 +844,7 @@ class DefaultCLI(object):
                                          datasets,
                                          chart_type='line',
                                          graph_height=12,
-                                         graph_width=time_range + 1,
+                                         graph_width=time_range,
                                          expand=True )
             out += '\r'
             out += '\r'
@@ -858,7 +857,7 @@ class DefaultCLI(object):
                                               datasets,
                                               chart_type='line',
                                               graph_height=12,
-                                              graph_width=time_range + 1,
+                                              graph_width=time_range,
                                               expand=True)
             out += '\r'
             out += '\r'
@@ -871,7 +870,7 @@ class DefaultCLI(object):
                                               datasets,
                                               chart_type='line',
                                               graph_height=12,
-                                              graph_width=time_range + 1,
+                                              graph_width=time_range,
                                               expand=True)
 
             out += '\r'
