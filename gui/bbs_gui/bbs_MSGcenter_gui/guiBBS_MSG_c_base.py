@@ -113,7 +113,55 @@ class MSG_Center_base(tk.Frame):
         pass
 
     def _update_OUT_tree_data(self):
+        self._get_OUT_data()
+        self._format_OUT_tree_data()
+        self._update_OUT_tree()
+
+    def _format_OUT_tree_data(self):
+        self._out_tree_data = []
+        for el in self._out_data:
+            to_call = f"{el[3]}"
+            if el[4]:
+                to_call += f"@{el[4]}"
+            from_call = f"{el[1]}"
+            if el[2]:
+                from_call += f"@{el[2]}"
+            fwd_done = ''
+            if el[8] != 'F':
+                fwd_done = '✔'
+            tx_time = ''
+            if el[9]:
+                tx_time = el[9]
+            """
+            'gesendet',
+            'Betreff',
+            'Von',
+            'An',
+            #'fwd_bbs',
+            'typ',
+            'flag',
+            'Datum',
+            """
+            self._out_tree_data.append((
+                f'{fwd_done}',
+                f'{el[5]}',
+                f'{from_call}',
+                f'{to_call}',
+                # f'{el[5]}',
+                f'{el[7]}',
+                f'{el[8]}',
+                f'{tx_time}',
+                f'{el[0]}',  # BID
+            ))
+
+    def _update_OUT_tree(self):
         pass
+
+    def _get_OUT_data(self):
+        self._out_data = self._bbs_obj.get_out_tab()
+
+    def _get_OUT_MSG_data(self, bid):
+        return self._bbs_obj.get_out_msg_fm_BID(bid)
 
     def _update_SV_tree_data(self):
         pass

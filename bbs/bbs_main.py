@@ -186,7 +186,7 @@ class BBS:
             message_type    = 'P',
             sender          = str(self._pms_cfg.get('user', '')),
             sender_bbs      = str(self._own_bbs_address),
-            receiver        = 'SYSOP',
+            receiver        = str(self._pms_cfg.get('sysop', '')),
             recipient_bbs   = '',
             subject         = top,
             msg             = msg,
@@ -1084,9 +1084,13 @@ class BBS:
             # logger.error(self._logTag + "build_fwd_header UnicodeEncodeError")
             BBS_LOG.error("build_fwd_header UnicodeEncodeError")
             return b'', ret_bids
-
+    ####################################################################################
+    # Get it
     def get_fwd_q_tab(self):
         return self._db.bbs_get_fwd_q_Tab_for_GUI()
+
+    def get_out_tab(self):
+        return self._db.bbs_get_out_Tab_for_GUI()
 
     def get_fwd_q_tab_pms(self):
         local_user = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
@@ -1337,8 +1341,8 @@ class BBS:
     def del_sv_by_MID(self, mid):
         return self._db.bbs_del_sv_msg_by_MID(mid)
 
-    def del_fwd_q_by_MID(self, fwdid):
-        return self._db.bbs_del_fwdQ_by_FWDID(fwdid)
+    def del_fwd_q_by_MID(self, fwdid_list: list):
+        return self._db.bbs_del_fwdQ_by_FWDID(fwdid_list)
 
     def unhold_msg_by_BID(self, bid_list: list):
         return self._db.bbs_unhold_msg_by_BID(bid_list)

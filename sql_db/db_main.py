@@ -72,11 +72,11 @@ class SQL_Database:
         self._logTag = "Database: "
         logger.info("Database: Init")
         # ##########
-        self.error = False
-        self._access = False
-        self._port_handler = port_handler   # TODO delete when UserDB is SQL
+        self.error          = False
+        self._access        = False
+        self._port_handler  = port_handler   # TODO delete when UserDB is SQL
         # self.cfg_mysql = True
-        self.MYSQL = bool(MYSQL)
+        self.MYSQL          = bool(MYSQL)
         if self.MYSQL:
             logger.info("Database: set to MYSQL-Server")
             try:
@@ -105,6 +105,9 @@ class SQL_Database:
         except SQLConnectionError:
             self.error = True
             logger.error("Database: Init Error !")
+
+        self._convert_str_list = lambda str_list: "('" + "','".join(str_list) + "')"
+
         # DEV
         # print(self.bbs_get_new_pn_msg_for_Call('MD2SAW'))
         """
@@ -966,6 +969,23 @@ class SQL_Database:
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
+    def bbs_get_out_Tab_for_GUI(self):
+        query = ("SELECT BID, "
+                  "from_call, "
+                  "from_bbs_call, "
+                  "to_call, "
+                  "to_bbs_call, "
+                  #"fwd_bbs_call, "
+                  "subject, "
+                  "size, "
+                  "type, "
+                  "flag, "
+                  "tx_time "
+                  "FROM pms_out_msg WHERE NOT flag='DL';")
+        res = self._commit_query(query)
+        # print(f"bbs_get_fwd_q_Tab res: {res}")
+        return res
+
     def bbs_get_fwd_q_Tab_for_PMS(self, pms_user: list):
         user_str = '("' + '","'.join([str(str(x)) for x in pms_user]) + '")'
         query = ("SELECT BID, "
@@ -1331,9 +1351,10 @@ class SQL_Database:
         self._commit_query(query)
         return True
 
-    def bbs_del_fwdQ_by_FWDID(self, fdwid: str):
+    def bbs_del_fwdQ_by_FWDID(self, fdwid_list: list):
+        temp = self._convert_str_list(fdwid_list)
         query = ("UPDATE pms_fwd_q SET flag='DL' "
-                 f"WHERE FWDID='{fdwid}';")
+                 f"WHERE FWDID IN {temp};")
         self._commit_query(query)
         return True
 

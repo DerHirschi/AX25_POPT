@@ -582,7 +582,7 @@ class MSG_Center_BBS(MSG_Center_base):
             'Betreff',
             'Von',
             'An',
-            'fwd_bbs',
+            #'fwd_bbs',
             'typ',
             'flag',
             'Datum',
@@ -602,8 +602,8 @@ class MSG_Center_BBS(MSG_Center_base):
                                command=lambda: self._sort_entry('Von', self._out_tree))
         self._out_tree.heading('An', text=self._getTabStr('to'),
                                command=lambda: self._sort_entry('An', self._out_tree))
-        self._out_tree.heading('fwd_bbs', text=f"{self._getTabStr('to')} BBS",
-                               command=lambda: self._sort_entry('fwd_bbs', self._out_tree))
+        #self._out_tree.heading('fwd_bbs', text=f"{self._getTabStr('to')} BBS",
+        #                       command=lambda: self._sort_entry('fwd_bbs', self._out_tree))
         self._out_tree.heading('typ', text='TYP', command=lambda: self._sort_entry('typ', self._out_tree))
         self._out_tree.heading('flag', text='Flag', command=lambda: self._sort_entry('flag', self._out_tree))
         self._out_tree.heading('Datum', text='TX-Time', command=lambda: self._sort_entry('Datum', self._out_tree))
@@ -611,7 +611,7 @@ class MSG_Center_BBS(MSG_Center_base):
         self._out_tree.column("Betreff",  anchor='w', stretch=tk.YES, width=230)
         self._out_tree.column("Von",      anchor='w', stretch=tk.YES, width=100)
         self._out_tree.column("An",  anchor='w', stretch=tk.YES, width=100)
-        self._out_tree.column("fwd_bbs", anchor='w', stretch=tk.YES, width=60)
+        #self._out_tree.column("fwd_bbs", anchor='w', stretch=tk.YES, width=60)
         self._out_tree.column("typ", anchor='w', stretch=tk.NO, width=45)
         self._out_tree.column("flag", anchor='w', stretch=tk.NO, width=45)
         self._out_tree.column("Datum", anchor='w', stretch=tk.NO, width=220)
@@ -619,9 +619,6 @@ class MSG_Center_BBS(MSG_Center_base):
         # self._out_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         # self._out_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
         self._out_tree.bind('<<TreeviewSelect>>', self._OUT_entry_selected)
-        # self._out_tree.bind('<ButtonRelease-1>', self._OUT_entry_selected)
-        # self._out_tree.bind('<Button-1>', lambda x: print(f'Test: {x}'))
-
 
     def _init_out_lower_frame(self, root_frame):
         btn_frame = tk.Frame(root_frame, height=30)
@@ -1398,54 +1395,6 @@ class MSG_Center_BBS(MSG_Center_base):
 
     ################################
     # OUT TAB PMS
-    def _update_OUT_tree_data(self):
-        self._get_OUT_data()
-        self._format_OUT_tree_data()
-        self._update_OUT_tree()
-
-    def _get_OUT_data(self):
-        self._out_data = self._bbs_obj.get_fwd_q_tab()
-
-    def _get_OUT_MSG_data(self, bid):
-        return self._bbs_obj.get_out_msg_fm_BID(bid)
-
-    def _format_OUT_tree_data(self):
-        self._out_tree_data = []
-        for el in self._out_data:
-            to_call = f"{el[3]}"
-            if el[4]:
-                to_call += f"@{el[4]}"
-            from_call = f"{el[1]}"
-            if el[2]:
-                from_call += f"@{el[2]}"
-            fwd_done = ''
-            if el[9] != 'F':
-                fwd_done = '✔'
-            tx_time = ''
-            if el[10]:
-                tx_time = el[10]
-            """
-            'gesendet',
-            'Betreff',
-            'Von',
-            'An',
-            'fwd_bbs',
-            'typ',
-            'flag',
-            'Datum',
-            """
-            self._out_tree_data.append((
-                f'{fwd_done}',
-                f'{el[6]}',
-                f'{from_call}',
-                f'{to_call}',
-                f'{el[5]}',
-                f'{el[8]}',
-                f'{el[9]}',
-                f'{tx_time}',
-                f'{el[0]}',  # BID
-            ))
-
     def _update_OUT_tree(self):
         for i in self._out_tree.get_children():
             self._out_tree.delete(i)
@@ -1656,8 +1605,9 @@ class MSG_Center_BBS(MSG_Center_base):
             self._fwdQ_text.configure(state='disabled')
 
     def _delete_fwdQ(self):
-        for fwdid in self._fwdQ_selected:
-            self._bbs_obj.del_fwd_q_by_MID(fwdid)
+        if not self._fwdQ_selected:
+            return
+        self._bbs_obj.del_fwd_q_by_MID(self._fwdQ_selected)
         self._fwdQ_selected = []
         self._update_fwdQ_tree_data()
 
