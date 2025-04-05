@@ -26,7 +26,7 @@ Raspberry Pi.
 ### Requirements
 - Python 3.6 or 3.8 (other versions such as 3.11 see below)
 - Supported Platforms: Windows, Linux, Raspberry Pi
-- 
+
 ## Installation
 Install all dependencies:
 ``` sh
@@ -58,9 +58,9 @@ $ python3 PoPT.py
 - KISS via TCP (e.g. Direwolf)
 - KISS via Serail (e.g. Linux AX.25 Device (kissattach). Not tested on TNCs or Modems yet)
 - AXIP via UDP (AXIP Client)
-- AX25KERNEL (Linux AX.25 Device)
-- TNC-EMU-TCP-SERVER (Pseudo TNC-Emulator Device to connect e.g. DOS-BOX)
-- TNC-EMU-TCP-CLIENT (Pseudo TNC-Emulator Device to connect e.g. Amiberry (AMIGA-Emulator))
+- AX25KERNEL (Linux AX.25 Device) (root rights needed)
+- TNC-EMU-TCP-SERVER (Pseudo TNC-Emulator Device to connect e.g. DOS-BOX (TFPCX).)
+- TNC-EMU-TCP-CLIENT (Pseudo TNC-Emulator Device to connect e.g. Amiberry (AMIGA-Emulator) (AmigaTNC))
 
 #### Tools / Functions / Buildins
 - APRS
@@ -71,16 +71,22 @@ $ python3 PoPT.py
   - APRS Decoder for Monitor
 - Dual Port (for two TNC's on same Frequency e.g. a SDR on a different Antenna)
 - RX-Echo (Packet echoing to another Port/Device)
-- PMS/BBS (S&F cable) (BIN-Mail cable (compressed Mails))
+- PMS/BBS (S&F capable) (BIN-Mail capable (compressed Mails))
 - UserDB
   - Priv Tool for Baycom login procedure
 - Comprehensive statistics for data traffic and AX-25network/BBS-network structures
 - NetRom decoder
+- Node/Digi Functions (No NetRom Routing)
+- Remote Commands
+- GPIO Functions (capable to reade and switch GPIO's on PI and other GPIO-Devices) (root rights needed)
+- 1-Wirer Temperatur Sensors (Sensor data can be embedded in C-Text/I-Text/Beacon)
+- Pipe-Tool (Certain traffic or connections can be redirected to a file)
 - Filetransfer
   - YAPP
   - AutoBin
   - Bin
   - Textmode
+  - Auto RNR-Mode (File transfer is paused by RNR state when other radio traffic is detected)
 
 #### QTH Locator Functions:
 - Author: 4X5DM
