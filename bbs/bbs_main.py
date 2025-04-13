@@ -812,7 +812,6 @@ class BBS:
             return True
         return False
 
-
     def _reset_port_block(self, port_id: int):
         BBS_LOG.debug(self._logTag + "Block Reset")
         BBS_LOG.debug(self._logTag + f"  port        : {port_id}")
@@ -882,7 +881,6 @@ class BBS:
             BBS_LOG.debug(f"ack_fwd_q> BID: {bid} - Flag: {bid_flag}")
             self._db.bbs_ack_outMsg_by_BID(bid, bid_flag)
 
-
     def _exec_fwdQ(self):
         log_tag = self._logTag + 'Exec FWD-Q> '
 
@@ -934,7 +932,6 @@ class BBS:
             if self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', []):
                 BBS_LOG.debug(log_tag + f"Port: {port_id}")
                 BBS_LOG.debug(log_tag + f"  New-Tasks: {self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', [])}")
-
 
     def _is_bbs_connected(self, bbs_call: str):
         for bbs_conn in self._fwd_connections:
@@ -1562,7 +1559,6 @@ class BBS:
             return msg2fwd.get('comp_msg', b'')
         return msg2fwd.get('text_msg', b'')
 
-
     def is_bid_in_db(self, bid_mid: str):
         if not bid_mid:
             return FWD_RESP_ERR
@@ -1578,6 +1574,9 @@ class BBS:
 
     ####################################################################################
     # Get it
+    def get_fwdPort_vars(self):
+        return self._fwd_ports
+
     def get_active_fwd_q_tab(self):
         # GUI
         return self._db.pms_get_active_fwd_q_for_GUI()

@@ -1537,6 +1537,8 @@ class PoPT_GUI_Main:
                 self._init_state += 1
                 if self._init_state == 2:
                     self.reset_diesel()
+            if hasattr(self.BBS_fwd_q_list, 'tasker'):
+                self.BBS_fwd_q_list.tasker()
             #####################
             self._update_bw_mon()
             self._aprs_wx_tree_task()
@@ -2729,8 +2731,6 @@ class PoPT_GUI_Main:
         self._Alarm_Frame.set_pms_fwd_alarm(False)
         if self.MSG_Center_win:
             self.MSG_Center_win.tree_update_task()
-        if self.BBS_fwd_q_list:
-            self.BBS_fwd_q_list.init_tree_data()
 
     def set_diesel(self):
         self._Alarm_Frame.set_diesel(True)

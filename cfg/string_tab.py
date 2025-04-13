@@ -1385,7 +1385,7 @@ STR_TABLE = {
         ''),
 
     'start_fwd': (
-        'FWD Start',
+        'FWD Starten',
         'FWD start',
         'Start FWD',
         'Début FWD',

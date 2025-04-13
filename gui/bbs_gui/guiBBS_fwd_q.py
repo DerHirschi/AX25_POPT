@@ -1,23 +1,21 @@
+import time
 import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
+from fnc.str_fnc import get_strTab
+
 # from cfg.logger_config import logger
 
 class BBS_fwd_Q(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._root_win = root_win
-        self._bbs_obj = PORT_HANDLER.get_bbs()
-        # self._ais_obj.wx_tree_gui = self
+        self._root_win  = root_win
+        self._bbs_obj   = PORT_HANDLER.get_bbs()
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
-        # Vars
-        self._rev_ent = False
-
-        self._lang = POPT_CFG.get_guiCFG_language()
-        self.title(STR_TABLE['fwd_list'][self._lang])
+        self.title(self._getTabStr('fwd_list'))
         self.style = self._root_win.style
         # self.geometry("1250x700")
         self.geometry(f"1000x"
@@ -32,6 +30,13 @@ class BBS_fwd_Q(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        #########################################
+        # Vars
+        self._port_vars = {}
+        self._tree_data = []
+        self._data      = []
+        self._rev_ent   = False
+
         # ############################### Columns ############################
         # _frame = tk.Frame(self, background='red')
         # _frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -40,21 +45,22 @@ class BBS_fwd_Q(tk.Toplevel):
         # _frame.rowconfigure(0, weight=0)
         # tk.Label(_frame, text='sags').grid(row=0, column=1)
         ##########################################################################################
+        # Tab-ctl
+        root_frame   = tk.Frame(self, borderwidth=10)
+        root_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self._tabctl = ttk.Notebook(root_frame)
+        self._tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        tree_frame = tk.Frame(self._tabctl)
+        port_frame = tk.Frame(self._tabctl)
+        self._tabctl.add(tree_frame, text=self._getTabStr('fwd_list'))
+        self._tabctl.add(port_frame, text="FWD-Ports")
+        #tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        #port_frame.pack(side=tk.TOP,  fill=tk.BOTH, expand=True)
+
+        ##########################################################################################
         # TREE
-        tree_frame = tk.Frame(self, )
-        tree_frame.rowconfigure(0, weight=1, )
-        tree_frame.columnconfigure(0, weight=1)
-        tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        btn_frame = tk.Frame(self, width=150)
-        btn_frame.rowconfigure(0, weight=1, )
-        btn_frame.rowconfigure(1, weight=1, )
-        btn_frame.rowconfigure(2, weight=1, )
-        btn_frame.columnconfigure(0, weight=1, minsize=150)
-        btn_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
-        tk.Button(btn_frame,
-                  text="FWD Starten",
-                  command=self._do_fwd
-                  ).grid(row=0, column=0)
+
         columns = (
             'BID',
             'from',
@@ -66,18 +72,18 @@ class BBS_fwd_Q(tk.Toplevel):
         )
 
         self._tree = ttk.Treeview(tree_frame, columns=columns, show='headings')
-        self._tree.grid(row=0, column=0, sticky='nsew')
+        self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # add a scrollbar
         scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.grid(row=0, column=1, sticky='ns')
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
         self._tree.heading('BID', text='BID', command=lambda: self._sort_entry('BID'))
-        self._tree.heading('from', text='From', command=lambda: self._sort_entry('from'))
-        self._tree.heading('to', text='To', command=lambda: self._sort_entry('to'))
-        self._tree.heading('fwd_bbs_call', text='To BBS', command=lambda: self._sort_entry('fwd_bbs_call'))
+        self._tree.heading('from', text=self._getTabStr('from'), command=lambda: self._sort_entry('from'))
+        self._tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry('to'))
+        self._tree.heading('fwd_bbs_call', text=f"{self._getTabStr('to')} BBS", command=lambda: self._sort_entry('fwd_bbs_call'))
         self._tree.heading('type', text='Type', command=lambda: self._sort_entry('type'))
-        self._tree.heading('sub', text='Subject', command=lambda: self._sort_entry('sub'))
+        self._tree.heading('sub', text=self._getTabStr('subject'), command=lambda: self._sort_entry('sub'))
         self._tree.heading('size', text='Size', command=lambda: self._sort_entry('size'))
         self._tree.column("BID", anchor=tk.CENTER, stretch=tk.YES, width=100)
         self._tree.column("from", anchor=tk.CENTER, stretch=tk.YES, width=190)
@@ -86,17 +92,91 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.column("type", anchor=tk.CENTER, stretch=tk.YES, width=60)
         self._tree.column("sub", anchor=tk.CENTER, stretch=tk.YES, width=150)
         self._tree.column("size", anchor=tk.CENTER, stretch=tk.YES, width=60)
-
-        self._tree_data = []
-        self._data = []
-        self._root_win.BBS_fwd_q_list = self
-        self.init_tree_data()
         # self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
+        ###
+        btn_frame = tk.Frame(tree_frame, width=150)
+        btn_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        tk.Button(btn_frame,
+                  text=self._getTabStr('start_fwd'),
+                  command=self._do_fwd
+                  ).pack()
+        ##########################################################################################
+        # port_frame
+        # port_m_f = tk.Frame(port_frame)
+        # port_m_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-    def init_tree_data(self):
+        self._port_tabctl = ttk.Notebook(port_frame)
+        self._port_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        for fwd_port_id, fwd_port_vars in self._bbs_obj.get_fwdPort_vars().items():
+            port_tab_f = tk.Frame(self._port_tabctl)
+            self._port_tabctl.add(port_tab_f, text=f"FWD-Port {fwd_port_id}")
+            ###############
+            # L/R Frames
+            l_frame = tk.Frame(port_tab_f, borderwidth=10)
+            r_frame = tk.Frame(port_tab_f, borderwidth=10)
+
+            l_frame.pack(side=tk.LEFT, expand=False, fill=tk.Y, padx=10, pady=10)
+            ttk.Separator(port_tab_f, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, expand=False, padx=10)
+            r_frame.pack(side=tk.LEFT, expand=False, fill=tk.Y, padx=10, pady=10)
+            ###############
+            # l_frame
+            block_timer_var     = tk.StringVar(self)
+            block_byte_c_var    = tk.StringVar(self)
+            block_fwd_tasks_var = tk.StringVar(self)
+
+            block_timer_f       = tk.Frame(l_frame)
+            block_byte_c_f      = tk.Frame(l_frame)
+            block_fwd_tasks_f   = tk.Frame(l_frame)
+            block_timer_f.pack(    side=tk.TOP, expand=False, fill=tk.Y)
+            block_byte_c_f.pack(   side=tk.TOP, expand=False, fill=tk.Y)
+            block_fwd_tasks_f.pack(side=tk.TOP, expand=False, fill=tk.Y)
+
+            tk.Label(block_timer_f,     textvariable=block_timer_var).pack()
+            tk.Label(block_byte_c_f,    textvariable=block_byte_c_var).pack()
+            tk.Label(block_fwd_tasks_f, textvariable=block_fwd_tasks_var).pack()
+            self._port_vars[fwd_port_id] = dict(
+                block_timer_var     = block_timer_var,
+                block_byte_c_var    = block_byte_c_var,
+                block_fwd_tasks_var = block_fwd_tasks_var,
+            )
+
+        self._root_win.BBS_fwd_q_list = self
+        self.tasker()
+
+    def tasker(self):
         self._get_data()
         self._format_tree_data()
         self._update_tree()
+        self._update_port_vars()
+
+    def _update_port_vars(self):
+        fwd_port_cfgs = POPT_CFG.get_BBS_cfg().get('fwd_port_cfg', {})
+        for port_id, fwd_port_var in self._bbs_obj.get_fwdPort_vars().items():
+            gui_vars     = self._port_vars.get(port_id, {})
+            fwd_port_cfg = fwd_port_cfgs.get(port_id, {})
+            if not gui_vars:
+                continue
+            try:
+                block_timer     = int(fwd_port_var.get('block_timer', '0'))
+                block_byte_c    = int(fwd_port_var.get('block_byte_c', '0'))
+                block_fwd_tasks = list(fwd_port_var.get('block_fwd_tasks', []))
+            except ValueError:
+                continue
+            try:
+                block_timer_var     = f"Block Timer: {round(((time.time() - block_timer) / 60), 1)}/{fwd_port_cfg.get('block_time', 3)} Min"
+            except ZeroDivisionError:
+                block_timer_var = f"Block Timer: 0/{fwd_port_cfg.get('block_time', 3)} Min"
+            try:
+                block_byte_c_var    = f"Block Limit: {round((block_byte_c / 1024), 2)}/{fwd_port_cfg.get('send_limit', 1)} kB"
+            except ZeroDivisionError:
+                block_byte_c_var    = f"Block Limit: 0/{fwd_port_cfg.get('send_limit', 1)} kB"
+            block_fwd_tasks_var = f"Block Tasks: {', '.join(block_fwd_tasks)}"
+
+            gui_vars['block_timer_var'].set(block_timer_var)
+            gui_vars['block_byte_c_var'].set(block_byte_c_var)
+            gui_vars['block_fwd_tasks_var'].set(block_fwd_tasks_var)
+
 
     def _update_tree(self):
         for i in self._tree.get_children():
@@ -134,6 +214,6 @@ class BBS_fwd_Q(tk.Toplevel):
         self._bbs_obj.start_man_autoFwd()
 
     def _close(self):
-        self._bbs_obj = None
+        # self._bbs_obj = None
         self._root_win.BBS_fwd_q_list = None
         self.destroy()
