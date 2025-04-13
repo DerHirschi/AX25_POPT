@@ -3318,7 +3318,19 @@ STR_TABLE = {
         '',
         '',
         '',
-        ''),
+        ''), #
+
+    'conn_intervall': (
+        'Abstände zwischen Connects (Minuten): ',
+        'Intervals between connects (minutes): ',
+        'Intervallen tussen verbindingen (minuten): ',
+        'Intervalles entre les connexions (minutes): ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  #
 
     'fwd_autoPath_help': (
         ('0  = deaktiviert\n'

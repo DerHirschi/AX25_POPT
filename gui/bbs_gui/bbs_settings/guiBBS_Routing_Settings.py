@@ -46,33 +46,59 @@ class BBSRoutingSettings(tk.Frame):
         dest_call = cfg.get('dest_call', '')
 
         ###########################################
+        # Vars
+        pn_fwd_var            = tk.BooleanVar(self, value=cfg.get('pn_fwd',               True))
+        bl_fwd_var            = tk.BooleanVar(self, value=cfg.get('bl_fwd',               True))
+        pn_fwd_auto_path_var  = tk.BooleanVar(self, value=cfg.get('pn_fwd_auto_path',     True))
+
+        ###########################################
         # Root Frame
         tab_frame   = tk.Frame(self._tabctl)
         self._tabctl.add(tab_frame, text=cfg.get('dest_call', 'NOCALL'))
         ###########################################
         # Local TabCtrl
-        btn_frame = tk.Frame(tab_frame)
-        btn_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
-        add_btn = tk.Button(btn_frame,
-                            text='ADD',
+        btn_m_frame = tk.Frame(tab_frame)
+        btn_m_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
+        btn_frame_l = tk.Frame(btn_m_frame)
+        btn_frame_r = tk.Frame(btn_m_frame)
+        btn_frame_l.pack(side=tk.LEFT, expand=False)
+        btn_frame_r.pack(side=tk.LEFT, expand=False)
+        ##############
+        # btn_frame_l
+        add_btn = tk.Button(btn_frame_l,
+                            text=self._getTabStr('new'),
                             command=lambda :self._add_rule_btn(cfg.get('dest_call', 'NOCALL'))
                             )
-        del_btn = tk.Button(btn_frame,
-                            text='DEL',
+        del_btn = tk.Button(btn_frame_l,
+                            text=self._getTabStr('delete'),
                             command=self._del_btn
                             )
         add_btn.pack(side=tk.LEFT, padx=30, pady=15)
         del_btn.pack(side=tk.LEFT, padx=30)
+        ##############
+        # btn_frame_r
+        #################
+        # allow_pn_fwd
+        tk.Checkbutton(btn_frame_r,
+                       variable=pn_fwd_var,
+                       text=self._getTabStr('allow_PN_FWD')).pack(side=tk.TOP, expand=False)
+        #################
+        # allow_bl_fwd
+        tk.Checkbutton(btn_frame_r,
+                       variable=bl_fwd_var,
+                       text=self._getTabStr('allow_BL_FWD')).pack(side=tk.TOP, expand=False)
+        #################
+        # allow_pn_auto_path
+        tk.Checkbutton(btn_frame_r,
+                       variable=pn_fwd_auto_path_var,
+                       text=self._getTabStr('allowPN_AutoPath')).pack(side=tk.TOP, expand=False)
+
         ##########
         tabctl = ttk.Notebook(tab_frame)
         tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        # p_incoming_frame  = tk.Frame(tabctl)
         p_outgoing_frame  = tk.Frame(tabctl)
-        # bl_incoming_frame = tk.Frame(tabctl)
         bl_outgoing_frame = tk.Frame(tabctl)
-        # tabctl.add(p_incoming_frame,  text='P-Incoming')
         tabctl.add(p_outgoing_frame,  text='P-Outgoing')
-        # tabctl.add(bl_incoming_frame, text='BL-Incoming')
         tabctl.add(bl_outgoing_frame, text='BL-Outgoing')
 
         #################################################################
@@ -346,6 +372,10 @@ class BBSRoutingSettings(tk.Frame):
             'bl_nth_out_tree':          bl_nth_out_tree,
             'bl_dist_out_tree':         bl_dist_out_tree,
             'bl_n_dist_out_tree':       bl_n_dist_out_tree,
+            # Vars
+            'pn_fwd_var':               pn_fwd_var,
+            'bl_fwd_var':               bl_fwd_var,
+            'pn_fwd_auto_path_var':     pn_fwd_auto_path_var,
         }
 
     def _update_all_trees(self):
@@ -467,8 +497,23 @@ class BBSRoutingSettings(tk.Frame):
             tree.move(k, '', int(index))
     ####################################
     def save_config(self):
-        # self._get_user_data_fm_vars()
-        pass
+        for k, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
+            if not fwd_cfg:
+                logger.warning(self._logTag + f"Empty FWD-CFG for {k}")
+                fwd_cfg = getNew_BBS_FWD_cfg()
+            if k not in self._routing_trees:
+                logger.error(self._logTag + f"{k} not in self._routing_trees")
+                logger.error(self._logTag + f"  self._routing_trees: {self._routing_trees}")
+                return
+            gui_cfg  = self._routing_trees[k]
+            allow_pn_fwd        = bool(gui_cfg['pn_fwd_var'].get())
+            allow_bl_fwd        = bool(gui_cfg['bl_fwd_var'].get())
+            allow_pn_auto       = bool(gui_cfg['pn_fwd_auto_path_var'].get())
+
+            fwd_cfg['pn_fwd'] = allow_pn_fwd
+            fwd_cfg['bl_fwd'] = allow_bl_fwd
+            fwd_cfg['pn_fwd_auto_path'] = allow_pn_auto
+
 
     def update_win(self):
         self._update_all_trees()

@@ -84,10 +84,11 @@ class BBS_FWD_Settings(tk.Frame):
         regio_var             = tk.StringVar(self, value=cfg.get('regio',                 ''))
         rev_fwd_var           = tk.BooleanVar(self, value=cfg.get('reverseFWD',           True))
         allow_rev_fwd_var     = tk.BooleanVar(self, value=cfg.get('allowRevFWD',          True))
+        conn_timeout_var      = tk.StringVar(self, value=cfg.get('t_o_after_fail',        '5'))
 
-        pn_fwd_var            = tk.BooleanVar(self, value=cfg.get('pn_fwd',               True))
-        bl_fwd_var            = tk.BooleanVar(self, value=cfg.get('bl_fwd',               True))
-        pn_fwd_auto_path_var  = tk.BooleanVar(self, value=cfg.get('pn_fwd_auto_path',     True))
+        #pn_fwd_var            = tk.BooleanVar(self, value=cfg.get('pn_fwd',               True))
+        #bl_fwd_var            = tk.BooleanVar(self, value=cfg.get('bl_fwd',               True))
+        #pn_fwd_auto_path_var  = tk.BooleanVar(self, value=cfg.get('pn_fwd_auto_path',     True))
         pn_fwd_alter_path_var = tk.BooleanVar(self, value=cfg.get('pn_fwd_alter_path',    True))
 
         viacalls            = ' '.join(cfg.get('via_calls',                             []))
@@ -168,17 +169,19 @@ class BBS_FWD_Settings(tk.Frame):
         # R Frame
         rev_fwd_frame       = tk.Frame(r_frame, borderwidth=10)
         allow_rev_fwd       = tk.Frame(r_frame, borderwidth=10)
-        allow_pn_fwd        = tk.Frame(r_frame, borderwidth=10)
-        allow_bl_fwd        = tk.Frame(r_frame, borderwidth=10)
+        #allow_pn_fwd        = tk.Frame(r_frame, borderwidth=10)
+        #allow_bl_fwd        = tk.Frame(r_frame, borderwidth=10)
         allow_pn_auto_path  = tk.Frame(r_frame, borderwidth=10)
         allow_pn_alt_path   = tk.Frame(r_frame, borderwidth=10)
+        conn_timeout_f      = tk.Frame(r_frame, borderwidth=10)
         # Pack it
         rev_fwd_frame.pack(     side=tk.TOP, expand=False, fill=tk.X)
         allow_rev_fwd.pack(     side=tk.TOP, expand=False, fill=tk.X)
-        allow_pn_fwd.pack(      side=tk.TOP, expand=False, fill=tk.X)
-        allow_bl_fwd.pack(      side=tk.TOP, expand=False, fill=tk.X)
+        #allow_pn_fwd.pack(      side=tk.TOP, expand=False, fill=tk.X)
+        #allow_bl_fwd.pack(      side=tk.TOP, expand=False, fill=tk.X)
         allow_pn_auto_path.pack(side=tk.TOP, expand=False, fill=tk.X)
         allow_pn_alt_path.pack( side=tk.TOP, expand=False, fill=tk.X)
+        conn_timeout_f.pack(    side=tk.TOP, expand=False, fill=tk.X)
         #################
         # rev_fwd_frame
         tk.Checkbutton(rev_fwd_frame,
@@ -199,15 +202,16 @@ class BBS_FWD_Settings(tk.Frame):
         #################
         #################
         # allow_pn_auto_path
-        tk.Checkbutton(allow_pn_auto_path,
-                       variable=pn_fwd_auto_path_var,
-                       text=self._getTabStr('allowPN_AutoPath')).pack(side=tk.LEFT, expand=False)
+        #tk.Checkbutton(allow_pn_auto_path,
+        #               variable=pn_fwd_auto_path_var,
+        #               text=self._getTabStr('allowPN_AutoPath')).pack(side=tk.LEFT, expand=False)
         #################
         # allow_pn_alt_path
         tk.Checkbutton(allow_pn_alt_path,
                        variable=pn_fwd_alter_path_var,
                        state='disabled',    # TODO
                        text=self._getTabStr('allowPN_AlterPath')).pack(side=tk.LEFT, expand=False)
+        """
         #################
         # allow_pn_fwd
         tk.Checkbutton(allow_pn_fwd,
@@ -218,6 +222,18 @@ class BBS_FWD_Settings(tk.Frame):
         tk.Checkbutton(allow_bl_fwd,
                        variable=bl_fwd_var,
                        text=self._getTabStr('allow_BL_FWD')).pack(side=tk.LEFT, expand=False)
+        
+        """
+        #################
+        # conn_timeout_f
+        tk.Label(conn_timeout_f, text=self._getTabStr('conn_intervall')).pack(side=tk.LEFT, expand=False)
+        tk.Spinbox(conn_timeout_f,
+                   textvariable=conn_timeout_var,
+                   from_=1,
+                   to=240,
+                   increment=1,
+                   width=3
+                   ).pack(side=tk.LEFT, expand=False)
 
 
         return {
@@ -230,10 +246,11 @@ class BBS_FWD_Settings(tk.Frame):
             'rev_fwd_var'           : rev_fwd_var,
             'allow_rev_fwd_var'     : allow_rev_fwd_var,
 
-            'bl_fwd'                : bl_fwd_var,
-            'pn_fwd'                : pn_fwd_var,
-            'pn_fwd_auto_path'      : pn_fwd_auto_path_var,
+            #'bl_fwd'                : bl_fwd_var,
+            #'pn_fwd'                : pn_fwd_var,
+            #'pn_fwd_auto_path'      : pn_fwd_auto_path_var,
             'pn_fwd_alter_path'     : pn_fwd_alter_path_var,
+            'conn_timeout_var'      : conn_timeout_var,
         }
 
     def _del_homeBBS_tab(self):
@@ -311,11 +328,14 @@ class BBS_FWD_Settings(tk.Frame):
             rev_fwd             = bool(self._bbs_vars[k]['rev_fwd_var'].get())
             allow_rev_fwd       = bool(self._bbs_vars[k]['allow_rev_fwd_var'].get())
 
-            allow_bl_fwd        = bool(self._bbs_vars[k]['bl_fwd'].get())
-            allow_pn_fwd        = bool(self._bbs_vars[k]['pn_fwd'].get())
-            pn_fwd_auto_path    = bool(self._bbs_vars[k]['pn_fwd_auto_path'].get())
+            #allow_bl_fwd        = bool(self._bbs_vars[k]['bl_fwd'].get())
+            #allow_pn_fwd        = bool(self._bbs_vars[k]['pn_fwd'].get())
+            # pn_fwd_auto_path    = bool(self._bbs_vars[k]['pn_fwd_auto_path'].get())
             pn_fwd_alter_path   = bool(self._bbs_vars[k]['pn_fwd_alter_path'].get())
-
+            try:
+                conn_timeout        = int(self._bbs_vars[k]['conn_timeout_var'].get())
+            except ValueError:
+                conn_timeout        = 5
             fwd_bbs_cfg = self._get_fwdBBS_cfg(k)
             fwd_bbs_cfg['port_id']     = port_id
             fwd_bbs_cfg['regio']       = regio
@@ -325,10 +345,11 @@ class BBS_FWD_Settings(tk.Frame):
             fwd_bbs_cfg['reverseFWD']  = rev_fwd
             fwd_bbs_cfg['allowRevFWD'] = allow_rev_fwd
 
-            fwd_bbs_cfg['bl_fwd']              = allow_bl_fwd
-            fwd_bbs_cfg['pn_fwd']              = allow_pn_fwd
-            fwd_bbs_cfg['pn_fwd_auto_path']    = pn_fwd_auto_path
+            #fwd_bbs_cfg['bl_fwd']              = allow_bl_fwd
+            #fwd_bbs_cfg['pn_fwd']              = allow_pn_fwd
+            # fwd_bbs_cfg['pn_fwd_auto_path']    = pn_fwd_auto_path
             fwd_bbs_cfg['pn_fwd_alter_path']   = pn_fwd_alter_path
+            fwd_bbs_cfg['t_o_after_fail']      = conn_timeout
             if k != dest_call:
                 self._bbs_vars[dest_call] = dict(self._bbs_vars[k])
                 self._set_tab_name(dest_call)

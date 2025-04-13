@@ -771,7 +771,6 @@ class BBS:
             log_tag + f"next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
         return bbs_fwd_next_q
 
-
     def _set_bbs_byte_c(self, bbs_call: str, bid: str):
         # TODO Statistics
         log_tag = self._logTag + f"Set BBS Byte C - BBS:({bbs_call}) - BID:({bid})> "
