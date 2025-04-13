@@ -3210,7 +3210,19 @@ STR_TABLE = {
         '',
         '',
         '',
-        ''),
+        ''), #
+
+    'fwd_port_settings': (
+        'FWD-Port',
+        'FWD-Port',
+        'FWD-Port',
+        'FWD-Port',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  # fwd_port_settings
 
     'routing_settings': (
         'Routing',
