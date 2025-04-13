@@ -1,5 +1,5 @@
 from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
-    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE
+    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -69,10 +69,11 @@ def getNew_BBS_cfg():
         regio           = '',           # Own Regio
         sysop           = '',           # Sysop Call
         fwd_bbs_cfg     = {},           # FWD CFGs
+        fwd_port_cfg    = {},           # FWD CFGs
         home_bbs        = [],           # TODO: Check if used
         bin_mode        = True,         # Binary Mails (compressed)
         enable_fwd      = True,         # False = PMS-Mode (No Forwarding) TODO: GUI option
-        single_auto_conn= True,         # Only one outgoing connection at a time
+        single_auto_conn= True,         # TODO: delete .. We have port_conn_limit Only one outgoing connection at a time
         auto_conn       = False,        # Allow Outgoing Connects
         # Path/Routing
         # TODO:
@@ -92,6 +93,15 @@ def getNew_BBS_cfg():
         #  pn_auto_send_to_regio = True    # Try to find a BBS in the Region when can't find Route
     )
 
+def getNew_BBS_Port_cfg():
+    return dict(
+            block_time=3,  # Minutes
+            send_limit=1,  # kb
+            conn_limit=1,  # Max Connections
+            # TODO in fwd_cfg
+            #  sched_bl      = 1,  # Scheduler for BL
+            #  sched_pn      = 1,  # Scheduler for BL
+        )
 
 def getNew_BBS_FWD_cfg():
     return dict(
@@ -101,15 +111,17 @@ def getNew_BBS_FWD_cfg():
         via_calls       = [],
         axip_add        = ('', 0),
         scheduler_cfg   = dict(getNew_schedule_config()),
+        bin_mode        = True,     # Bin Mail (compressed Mail)            # TODO GUI
         reverseFWD      = True,     # Scheduled FWD
         allowRevFWD     = True,     # TODO
-        t_o_after_fail  = 30,       # Timeout Minutes                       # TODO GUI / Check Function
+        t_o_after_fail  = 5,        # Timeout Minutes                       # TODO GUI / Check Function
         t_o_increment   = True,     # Increment Timeout after Fail attempt  # TODO GUI / Check Function
         # Routing
         pn_fwd              = True, # Allow PN FWD
         bl_fwd              = True, # Allow BL FWD
         pn_fwd_auto_path    = False,# Allow AutoPath
         pn_fwd_alter_path   = False,# Allow Alternative Route               # TODO GUI / after x attempt's
+        pn_prio             = True, # PN first                              # TODO GUI
         # PN Outgoing Routing
         pn_fwd_bbs_out      = [],   # Known BBS behind this BBS
         pn_fwd_not_bbs_out  = [],   # Not FWD to BBS
@@ -249,7 +261,7 @@ def getNew_maniGUI_parm():
 
 def getNew_BEACON_cfg():
     return {
-        'task_typ': 'BEACON',
+        'task_typ': TASK_TYP_BEACON,
         'port_id': 0,
         'is_enabled': True,
         'typ': 'Text',  # "Text", "File", "MH"

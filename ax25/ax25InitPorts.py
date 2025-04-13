@@ -836,15 +836,15 @@ class AX25PortHandler(object):
 
     def get_all_ports(self):
         ret = {}
-        for port_id in list(self.ax25_ports.keys()):
-            port = self.ax25_ports.get(port_id, None)
-            if port:
-                prim_port = port.get_dualPort_primary()
-                if prim_port:
-                    port = prim_port
-                    port_id = port.port_id
-                if port_id not in ret.keys():
-                    ret[port_id] = port
+        for port_id, port in self.ax25_ports.items():
+            if not port:
+                continue
+            prim_port = port.get_dualPort_primary()
+            if prim_port:
+                port = prim_port
+                port_id = port.port_id
+            if port_id not in ret.keys():
+                ret[port_id] = port
         return ret
 
     def get_port_by_id(self, port_id: int):

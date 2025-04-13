@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 from bbs.bbs_constant import GET_MSG_STRUC, STAMP, MSG_ID, STAMP_BID, STAMP_MSG_NUM, CR, EOL, MSG_H_TO, SP, MSG_H_FROM, \
     SOH, NUL, EOT, STX
@@ -68,14 +68,16 @@ def parse_forward_header(header):
     })
     return msg_struc
 
+
+
 def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
-    # print("build_fwd_msg_header -------------")
-    # print(msg_struc)
+    print(f"build_fwd_msg_header - BID: {msg_struc.get('bid_mid', '')}")
+    print(msg_struc)
     bbs_address              = fwd_bbs_address
     bbs_call                 = bbs_address.split('.')[0]
     bid                      = msg_struc.get('bid_mid', '')
     msg_struc['tx-time']     = datetime.now().strftime(SQL_TIME_FORMAT)
-    utc                      = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
+    #utc                      = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
     subject                  = msg_struc.get('subject', '')
     old_header               = msg_struc.get('header', b'')
     old_path                 = msg_struc.get('path', "")
@@ -90,8 +92,9 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
         old_path             = convert_sql_list(old_path)
     if not bid:
         msg_struc['bid_mid'] = f"{str(msg_struc['mid']).rjust(6, '0')}{bbs_call}"
+        print(f"No BID.. New BID: {msg_struc['bid_mid']}")
 
-    # _utc = datetime.datetime.now(datetime.UTC)
+    utc = datetime.now(timezone.utc)
     # msg_struc['utctime'] = _utc.strftime(SQL_TIME_FORMAT)
     # R:231101/0101Z @:MD2BBS.#SAW.SAA.DEU.EU #:18445 [Salzwedel] $:18445-MD2BBS
     # R:231101/0520z @:MD2SAW.#SAW.SAA.DEU.EU #:000003 $:000003MD2SAW
@@ -127,17 +130,21 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
     else:
         eol = find_eol(old_header)
         header_lines = old_header.split(eol)
+        #print(f"header_lines : {header_lines}")
         new_header = header_lines[0] + eol
         new_header += stamp.encode('ASCII', 'ignore') + eol
         new_header += eol.join(header_lines[1:])
 
+
+
     msg_struc['path']   = old_path
     msg_struc['header'] = new_header
-    """
-    print("build_fwd_msg_header ---RES------")
-    print(f"Old Header : {old_header}")
-    print(f"New Header : {new_header}")
-    """
+
+    #print("build_fwd_msg_header ---RES------")
+    #print(f"eol : {eol}")
+    #print(f"Old Header : {old_header}")
+    #print(f"New Header : {new_header}")
+
     return msg_struc
 
 def parse_fwd_paths(path_list: list):
@@ -549,22 +556,22 @@ def encode_fa_header(mail_content, title, offset="0"):
     BBS_LOG.info(logTag + f"Encoding binary mail: {len(mail_content)} bytes, Title: {title}, Offset; {offset} ")
     # 1. Mail-Inhalt als Bytes (ASCII)
     # mail_bytes = mail_content.encode('ascii', errors='ignore')
-    BBS_LOG.debug(logTag + "Komprimierung")
+    #BBS_LOG.debug(logTag + "Komprimierung")
     # 2. Komprimierung mit LZHUF (Platzhalter)
     lzhuf = LZHUF_Comp()
     compressed_data = lzhuf.encode(mail_content)
-    BBS_LOG.debug(logTag + "Header erstellen")
+    #BBS_LOG.debug(logTag + "Header erstellen")
     # 3. Header erstellen
     header = create_bin_mail_header(title, offset)
-    BBS_LOG.debug(logTag + "Daten in Blöcke aufteilen")
+    #BBS_LOG.debug(logTag + "Daten in Blöcke aufteilen")
     # 4. Daten in Blöcke aufteilen
     blocks = split_into_blocks(compressed_data)
 
-    BBS_LOG.debug(logTag + "Checksumme")
+    #BBS_LOG.debug(logTag + "Checksumme")
     # 5. Checksumme über komprimierte Daten berechnen
     checksum = calculate_checksum(compressed_data)
 
-    BBS_LOG.debug(logTag + "Alles zusammenfügen")
+    #BBS_LOG.debug(logTag + "Alles zusammenfügen")
     # 6. Alles zusammenfügen: Header + Blöcke + EOT + Checksum
     bin_mail = bytearray()
     bin_mail.extend(header)
@@ -573,7 +580,10 @@ def encode_fa_header(mail_content, title, offset="0"):
     bin_mail.append(checksum)  # Checksum
     compressed_size   = len(compressed_data)
     decompressed_size = len(mail_content)
-    compression_ratio = decompressed_size / compressed_size
+    try:
+        compression_ratio = decompressed_size / compressed_size
+    except ZeroDivisionError:
+        compression_ratio = 0
     BBS_LOG.info(logTag + f"  Komprimierte:   {compressed_size} Bytes")
     BBS_LOG.info(logTag + f"  Dekomprimierte: {decompressed_size} Bytes")
     BBS_LOG.info(logTag + f"  Rate:           {compression_ratio:.2f}:1")
@@ -581,7 +591,3 @@ def encode_fa_header(mail_content, title, offset="0"):
     BBS_LOG.info(logTag + f"  Blöcke:         {len(blocks)}")
     BBS_LOG.info(logTag + f"  Gesamtlänge:    {len(bin_mail)} Bytes")
     return bin_mail
-
-
-if __name__ == '__main__':
-    decode_bin_mail(b"\x01\x16test lzhuff 44\x00     0\x00\x02}\xcc\x00\x00\x00\xefq\xb7\xdc\x1d\xe6\xff\x0f\x89\xbb\xc1\xde\xe0p\xbc\xda\xcef'g\xa1g\x9di\xdf\xddk\xec\xf9\xbe;*v\x14(\xda\xf4|5j'n\xacc\x04\xf6")

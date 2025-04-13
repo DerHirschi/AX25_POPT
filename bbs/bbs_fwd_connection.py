@@ -1,8 +1,7 @@
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
-    CNTRL_Z, FWD_RESP_HLD, EOT, SOH, LF, STX
-from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol, decode_bin_mail, \
-    encode_fa_header
+    FWD_RESP_HLD, EOT, SOH, LF, STX
+from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol, decode_bin_mail
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
 
@@ -10,6 +9,7 @@ from cfg.popt_config import POPT_CFG
 class BBSConnection:
     def __init__(self, bbs_obj, ax25_connection):
         self._ax25_conn      = ax25_connection
+        self._ax25_port_id   = ax25_connection.port_id
         self._bbs            = bbs_obj
         self._db             = bbs_obj.get_db()
         self._userDB         = bbs_obj.get_userDB()
@@ -68,6 +68,7 @@ class BBSConnection:
             return False
         if 'B' in self._feat_flag:
             self._is_bin_mode = True
+        # self._is_bin_mode = False
         BBS_LOG.info(self._logTag + f'Bin Mode> {self._is_bin_mode}')
         return True
 
@@ -250,7 +251,7 @@ class BBSConnection:
         rx_lines = self._get_lines_fm_rx_buff('F>', cut_rx_buff=True)
         if rx_lines:
             # print('FS')
-            self._act_out_msg()
+            self._ack_out_msg()
             ret = self._parse_header(rx_lines)
             self._connection_tx(b'FS ' + ret[0].encode('ASCII', 'ignore') + b'\r')
             if ret[1]:
@@ -259,7 +260,7 @@ class BBSConnection:
                 self._state = 2
         elif self._get_lines_fm_rx_buff('FF', cut_rx_buff=True):
             # print('FF')
-            self._act_out_msg()
+            self._ack_out_msg()
             if self._is_fwd_q():
                 tx = self._tx_msg_header + b'F>\r'
                 self._connection_tx(tx)
@@ -325,7 +326,8 @@ class BBSConnection:
             if flag in FWD_OK:
                 self._tx_out_msg_by_bid(bids[i])
             elif flag in FWD_N_OK:
-                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S-')
+                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S-')
+                self._bbs.ack_next_fwd_q(fwd_id, 'S-')
             elif flag in FWD_LATER:
                 self._db.bbs_outMsg_wait_by_FWD_ID(fwd_id,)
                 self._send_next_time.append(fwd_id)
@@ -334,15 +336,18 @@ class BBSConnection:
                 self._tx_out_msg_by_bid(bids[i])
             elif flag == FWD_REJ:
                 self._bbs.send_sysop_msg(topic='REJECTED MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rRejected by {self._dest_bbs_call}')
-                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'R')
+                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'R')
+                self._bbs.ack_next_fwd_q(fwd_id, 'R')
             elif flag == FWD_ERR:
                 self._bbs.send_sysop_msg(topic='ERROR MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rError by {self._dest_bbs_call}')
-                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EE')
+                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EE')
+                self._bbs.ack_next_fwd_q(fwd_id, 'EE')
             # TODO
             elif flag in FWD_ERR_OFFSET:  # Offset
                 # print("BBS FWD Prot Error! OFFSET Error not implemented yet")
                 BBS_LOG.error(self._logTag + "BBS FWD Prot Error! OFFSET Error not implemented yet")
-                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EO')
+                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EO')
+                self._bbs.ack_next_fwd_q(fwd_id, 'EO')
                 # ABORT ?
             i += 1
             # self._tx_msg_BIDs = self._tx_msg_BIDs[1:]
@@ -380,24 +385,14 @@ class BBSConnection:
     ########################################################
     # 5
     def _tx_out_msg_by_bid(self, bid: str):
-        msg = self._db.bbs_get_outMsg_by_BID(bid)
-        if not msg:
+        tx_msg: bytes = self._bbs.bbs_get_msg2fwd_by_BID(self._dest_bbs_call, bid)
+        if not tx_msg:
             return False
-        subject     = msg[0][0]
-        mail_header = msg[0][1]
-        raw_msg     = msg[0][2]
-        if not self._is_bin_mode:
-            # print(f"tx_out- 0: {msg[0][0]}  1: {msg[0][1]}  3: {msg[0][2]}  len3: {len(msg[0][2])}")
-            # tx_msg = msg[0][0].encode('ASCII', 'ignore') + b'\r' + msg[0][1]+ msg[0][2] + b'\x1a\r'
-            tx_msg = mail_header + raw_msg + CNTRL_Z + CR
-            self._connection_tx(tx_msg)
-            return True
-        tx_msg = bytes(encode_fa_header(mail_content=raw_msg, title=subject))
         self._connection_tx(tx_msg)
         return True
 
     def _check_msg_to_fwd(self):
-        tmp = self._bbs.build_fwd_header(self._dest_bbs_call, bin_mode=self._is_bin_mode)
+        tmp = self._bbs.get_bbs_next_fwd_header_fm_next_q(self._dest_bbs_call, bin_mode=self._is_bin_mode)
         for el in tmp[1]:
             if el in self._tx_msg_BIDs:
                 return
@@ -406,32 +401,34 @@ class BBSConnection:
         BBS_LOG.info(self._logTag + f'FWD {self._tx_msg_BIDs} > {self._dest_bbs_call}')
         BBS_LOG.debug(self._logTag + f'FWD-HEADER: {self._tx_msg_header}')
 
-    def _act_out_msg(self):
+    def _ack_out_msg(self):
         # for bid in _bids:
         if not self._tx_fs_list:
-            BBS_LOG.debug(self._logTag + 'No _tx_fs_list on _act_out_msg call')
+            BBS_LOG.debug(self._logTag + 'No _tx_fs_list on _ack_out_msg call')
             return
         if len(self._tx_fs_list) != len(self._tx_msg_BIDs):
-            BBS_LOG.error(self._logTag + '_act_out_msg: len(self._tx_fs_list) != len(self._tx_msg_BIDs)')
-            BBS_LOG.error(self._logTag + f'_act_out_msg: {len(self._tx_fs_list)} != {len(self._tx_msg_BIDs)}')
+            BBS_LOG.error(self._logTag + '_ack_out_msg: len(self._tx_fs_list) != len(self._tx_msg_BIDs)')
+            BBS_LOG.error(self._logTag + f'_ack_out_msg: {len(self._tx_fs_list)} != {len(self._tx_msg_BIDs)}')
             return
         for bid in list(self._tx_msg_BIDs):
             fwd_id  = self._get_fwd_id(bid)
             flag    = self._tx_fs_list[0]
             if flag in FWD_OK:
-                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S+')
+                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S+')
+                self._bbs.ack_next_fwd_q(fwd_id, 'S+')
             elif flag == FWD_HLD:
-                self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'H')
+                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'H')
+                self._bbs.ack_next_fwd_q(fwd_id, 'H')
 
             self._tx_msg_BIDs   = self._tx_msg_BIDs[1:]
             self._tx_fs_list    = self._tx_fs_list[1:]
         self._tx_fs_list = ''
+        self._bbs.ack_fwd_q()
 
     ########################################################
     #
     def _parse_header(self, header_lines):
-        # print(header_lines)
-        logTag = self._logTag + 'Header-Parser> '
+        logTag = self._logTag + 'RX-Header-Parser> '
         # self._rx_msg_header = self._bbs.get_fwd_headers()
         self._rx_msg_header = {}
         pn_check = ''
@@ -476,11 +473,11 @@ class BBSConnection:
                     pn_check += FWD_RESP_REJ
                     continue
                 db_ret = {
-                    'P': self._bbs.is_pn_in_db,
-                    'B': self._bbs.is_bl_in_db,
+                    'P': self._bbs.is_bid_in_db,
+                    'B': self._bbs.is_bid_in_db,
                     'T': self._header_reject,       # NTP
                     '':  self._header_error
-                }[msg.get('message_type', '')](bid)
+                }[msg.get('message_type', self._header_error)](bid)
                 if not db_ret:
                     # Error
                     BBS_LOG.error(logTag + f"No db_ret: msg: {msg} - Header-Line: {el}")
@@ -499,7 +496,7 @@ class BBSConnection:
                     BBS_LOG.info(logTag + f"Add : BID-MID: {bid}")
                     for k, val in msg.items():
                         if val:
-                            BBS_LOG.info(logTag + f"{k} : {val}")
+                            BBS_LOG.info(logTag + f"  {k} : {val}")
                     self._rx_msg_header[str(bid)] = msg
                     trigger = True
                     if hold:
@@ -520,7 +517,7 @@ class BBSConnection:
     def _parse_msg(self, msg: bytes):
         # TODO: Again ..
         logTag  = self._logTag + f"MSG-Parser> "
-        BBS_LOG.debug(logTag + f"msg: {msg}")
+        # BBS_LOG.debug(logTag + f"msg: {msg}")
         # Find EOL Syntax
         eol = find_eol(msg)
         header_eol = eol + eol
@@ -611,7 +608,7 @@ class BBSConnection:
                     bid_found_e = True
 
             if stamp_bid == list(self._rx_msg_header.keys())[0] and not bid_found:
-                BBS_LOG.info(logTag + f"BID found in MSG Header: {bid}")
+                BBS_LOG.info(logTag + f"BID found in MSG Header: {stamp_bid}")
                 BBS_LOG.debug(logTag + f"Path-Line: {path_line}")
                 bid         = str(stamp_bid)
                 bid_found   = True
@@ -749,3 +746,6 @@ class BBSConnection:
 
     def get_dest_bbs_call(self):
         return str(self._dest_bbs_call)
+
+    def get_port_id(self):
+        return int(self._ax25_port_id)

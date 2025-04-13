@@ -375,3 +375,44 @@ SQLITE_CREATE_MH_TAB = SQL_CREATE_MH_TAB.replace(
     ""
 )
 """
+########################################################################
+SQL_BBS_TABLES = {
+    "pms_in_msg": SQL_CREATE_PMS_IN_MAIL_TAB,
+    "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
+    "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
+    "pms_out_msg": SQL_CREATE_PMS_OUT_MAIL_TAB,
+    "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
+}
+SQLITE_BBS_TABLES = {
+    "pms_in_msg": SQLITE_CREATE_PMS_IN_MAIL_TAB,
+    "fwdPaths": SQL_CREATE_FWD_PATHS_TAB,
+    "fwdNodes": SQL_CREATE_FWD_NODES_TAB,
+    "pms_out_msg": SQLITE_CREATE_PMS_OUT_MAIL_TAB,
+    "pms_fwd_q": SQL_CREATE_PMS_FWD_TASK_TAB,
+}
+USERDB_TABLES = {
+    # "user_db": SQL_CREATE_USERDB_TAB,
+}
+SQLITE_USERDB_TABLES = {
+    # "user_db": SQLITE_CREATE_USERDB_TAB,
+}
+APRS_TABLES = {
+    'APRSwx': SQL_CREATE_APRS_WX_TAB
+}
+SQLITE_APRS_TABLES = {
+    'APRSwx': SQLITE_CREATE_APRS_WX_TAB
+}
+PORT_STATISTIK_TAB = {
+    'PortStatistic': SQL_CREATE_PORT_STATISTIK_TAB
+}
+SQLITE_PORT_STATISTIK_TAB = {
+    'PortStatistic': SQLITE_CREATE_PORT_STATISTIK_TAB
+}
+"""
+MH_TABLES = {
+    'MH': SQL_CREATE_MH_TAB
+}
+SQLITE_MH_TABLES = {
+    'MH': SQLITE_CREATE_MH_TAB
+}
+"""

@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.79'
+VER = '2.117.80'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -363,4 +363,7 @@ ONE_WIRE_MAP = ("             PI 3/4 GPIO\n"
 # GPIO
 GPIO_PATH = '/sys/class/gpio'
 GPIO_RANGE = (1, 26)
-
+#######################################################
+# Tasker
+TASK_TYP_FWD    = 'FWD'
+TASK_TYP_BEACON = 'BEACON'

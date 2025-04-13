@@ -37,13 +37,13 @@ class SQL_DB:
         if self.conn:
             query_str = query_str.replace('%s', '?').replace('%d', '?')
             cursor = self.conn.cursor()
-            _new_data = []
+            new_data = []
             for el in tuple(binary_data):
                 if type(el) is bytes:
-                    _new_data.append(sqlite3.Binary(el))
+                    new_data.append(sqlite3.Binary(el))
                 else:
-                    _new_data.append(el)
-            res = cursor.execute(query_str, tuple(_new_data))
+                    new_data.append(el)
+            res = cursor.execute(query_str, tuple(new_data))
             rows = res.fetchall()
             return rows
         raise SQLConnectionError

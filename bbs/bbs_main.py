@@ -26,10 +26,11 @@ import time
 from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
-from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR, GET_MSG_STRUC, LF, CR
-from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlist_fm_header
+from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR, GET_MSG_STRUC, LF, CR, CNTRL_Z
+from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlist_fm_header, encode_fa_header
 from bbs.bbs_fwd_connection import BBSConnection
-from cfg.constant import SQL_TIME_FORMAT
+from cfg.constant import SQL_TIME_FORMAT, TASK_TYP_FWD
+from cfg.default_config import getNew_BBS_Port_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, BBS_LOG
 from cli.cliStationIdent import get_station_id_obj
@@ -46,7 +47,9 @@ class BBS:
         self._userDB        = USER_DB
         ###############
         # Config's
-        self._pms_cfg: dict = POPT_CFG.get_BBS_cfg()
+        self._pms_cfg: dict      = POPT_CFG.get_BBS_cfg()
+        self._fwd_cfg            = self._pms_cfg.get('fwd_bbs_cfg',  {})
+        self._fwd_port_cfg       = self._pms_cfg.get('fwd_port_cfg', {})
         self._pms_cfg_hasChanged = False
         if not self._pms_cfg.get('enable_fwd', True):
             # TODO PMS Mode
@@ -90,12 +93,18 @@ class BBS:
         # self._local_user          = []   # TODO fm UserDB
         ####################
         # CTL & Auto Connection
-        self._fwd_q                 = []   # Local FWD Q
+
+        self._fwd_conn_task_q       = []   # Local FWD Q ## OLD TODO Cleanup/Check
         self._fwd_connections       = []   # Connects using FWD Port
         self._incoming_fwd_bids     = []   # Incoming FWD BIDs
-        self._new_man_FWD_wait_t    = time.time()   + 5
+
+        self._fwd_BBS_q             = {}   # BBS FWD Q
+        self._fwd_ports             = {}   # Ports equivalent to port handler ports
+        self._build_fwd_BBSq_vars()
+        self._build_fwd_port_vars()
         ####################
         # Tasker/crone
+        self._new_man_FWD_wait_t    = time.time()   + 5
         # self._var_task_1sec = time.time()
         self._var_task_5sec         = time.time()   + 5
         self._var_task_60sec        = time.time()   + 30
@@ -115,18 +124,27 @@ class BBS:
     def _reinit(self):
         if not self._fwd_connections:
             logger.info(self._logTag + "ReInit")
-            logger.info(self._logTag + "ReInit: Read new Config")
             BBS_LOG.info(self._logTag + "ReInit")
-            BBS_LOG.info(self._logTag + "ReInit: Read new Config")
+            BBS_LOG.info(self._logTag + "ReInit: Delete Scheduler")
             self._del_all_pms_fwd_schedule()
-            self._pms_cfg = POPT_CFG.get_BBS_cfg()
+            BBS_LOG.info(self._logTag + "ReInit: Read new Config")
+            self._pms_cfg       = POPT_CFG.get_BBS_cfg()
+            self._fwd_cfg       = self._pms_cfg.get('fwd_bbs_cfg', {})
+            self._fwd_port_cfg  = self._pms_cfg.get('fwd_port_cfg', {})
+
+            BBS_LOG.info(self._logTag + "ReInit: Bulding Station-ID")
             self._reinit_stationID_pmsFlag()
             self._set_pms_home_bbs()
+            BBS_LOG.info(self._logTag + "ReInit: Init Scheduler")
             self._set_pms_fwd_schedule()
+            BBS_LOG.info(self._logTag + "ReInit: Init Vars")
+            self._build_fwd_port_vars()
+            self._build_fwd_BBSq_vars()
             self._pms_cfg_hasChanged = False
             if not self._pms_cfg.get('enable_fwd', True):
                 # TODO PMS Mode
-                BBS_LOG.info(self._logTag + "FWD is disabled. BBS is in PMS Mode")
+                BBS_LOG.info(self._logTag + "ReInit: FWD is disabled. BBS is in PMS Mode")
+            BBS_LOG.info(self._logTag + "ReInit: Done !")
             return True
         return False
 
@@ -136,7 +154,7 @@ class BBS:
         else:
             features_flag = ("F", "M", "H")
         self.bbs_id_flag = generate_sid(features=features_flag)
-        self.my_stat_id = get_station_id_obj(str(self.bbs_id_flag))
+        self.my_stat_id  = get_station_id_obj(str(self.bbs_id_flag))
         try:
             self.bbs_id_flag = self.bbs_id_flag.encode('ASCII')
         except UnicodeEncodeError:
@@ -146,12 +164,37 @@ class BBS:
         if self.my_stat_id.e:
             raise bbsInitError('my_stat_id.e Error')
 
+    def _build_fwd_port_vars(self):
+        self._fwd_ports = {}  # Ports equivalent to port handler ports
+        ports: dict = self._port_handler.get_all_ports()
+        for port_id, port in ports.items():
+            self._fwd_ports[port_id] = dict(
+            block_timer = time.time(),
+            block_byte_c = 0,
+            block_fwd_tasks  = [],
+        )
+
+    def _build_fwd_BBSq_vars(self):
+        self._fwd_BBS_q = {}  # Ports equivalent to port handler ports
+        for bbs_call, fwd_cfg in self._fwd_cfg.items():
+            self._fwd_BBS_q[bbs_call] = dict(
+            # bbs_fwd_cfg     = fwd_cfg,
+            bbs_fwd_byte_c  = 0,
+            bbs_fwd_error_c = 0,
+            bbs_fwd_timeout = time.time(),
+            bbs_fwd_q={
+                # 'BID' : dict(out_msg)
+            },
+            bbs_fwd_next_q=[],  # ['FWD-ID', ...][:5]
+        )
+
+    #################################################
     def main_cron(self):
         """ 2 Sec. called fm PortInit Loop """
         if self._pms_cfg_hasChanged:
             if self._reinit():
                 return
-        self._60sec_task()
+        # self._60sec_task()
         self._fwdQ_task()
 
     ###################################
@@ -163,13 +206,17 @@ class BBS:
     def _60sec_task(self):
         if time.time() > self._var_task_60sec:
             self._var_task_60sec = time.time() + 60
-            self._in_msg_fwd_check()
+
 
     def _fwdQ_task(self):
         """ Dynamic Timing """
         if time.time() > self._var_task_fwdQ_timer:
             self._var_task_fwdQ_timer = time.time() + 60  # Maybe 120 ?
-            self._check_outgoing_fwd()
+            self._in_msg_fwd_check()
+            self._fwd_port_tasks()          # Checks Block Timer / Resets Block timer
+            self._build_new_fwd_Q()
+            self._check_new_port_tasks()    # Check for new Port-Tasks
+            self._exec_fwdQ()
 
     ###################################
     # Add SYSOP-Msg (Noty) to system
@@ -190,6 +237,7 @@ class BBS:
             recipient_bbs   = '',
             subject         = top,
             msg             = msg,
+            flag            = 'S+'  # TODO
 
         ))
         mid = self.new_msg(out_msg)
@@ -407,41 +455,487 @@ class BBS:
                 continue
             BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ}")
 
-    def _check_outgoing_fwd(self):
+    def _build_new_fwd_Q(self):
         """
-        All 60 secs or 20 secs, when tasks in fwd_q
-        Check Forward-Q for Outgoing Forwards
+        Get active Fwd-Msg fm DB and prepare them for BBS-FWD-Q (self._fwd_cfg[bbs_call])
         """
-        log_tag = self._logTag + 'Check FWD-Q> '
-        if not self._pms_cfg.get('auto_conn', True):
+        log_tag = self._logTag + 'Build FWD-Q> '
+        db_fwd_q: list = self._db.pms_get_active_fwd_q()
+        bid_list       = [x[1] for x in db_fwd_q]
+        out_msg_list   = self._db.bbs_get_outMsg_by_BID(bid_list)
+        if len(db_fwd_q) != len(out_msg_list):
+            BBS_LOG.warning(log_tag + "len(db_fwd_q) != len(out_msg_list)")
+            BBS_LOG.warning(log_tag + f"  db_fwd_q    : {len(db_fwd_q)}")
+            BBS_LOG.warning(log_tag + f"  out_msg_list: {len(out_msg_list)}")
+            BBS_LOG.warning(log_tag + f"  bid_list    : {', '.join(bid_list)}")
+            BBS_LOG.warning(log_tag + f"  out_msg_list: {', '.join([x[0] for x in out_msg_list])}")
+
+        msg_tab = {}
+        for x in out_msg_list:
+            msg_tab[x[0]] = x
+        BBS_LOG.debug(log_tag + f"msg_tab  : {msg_tab}")
+        new_bid_s   = []
+        for fwd_task in db_fwd_q:
+            q_bid           = fwd_task[1]
+            fwd_bbs_call    = fwd_task[9]
+            fwd_cfg         = self._fwd_cfg.get(fwd_bbs_call, {})
+            fwd_bbs         = fwd_cfg.get('dest_call', '')
+            bbs_fwd_q_cfg   = self._fwd_BBS_q.get(fwd_bbs_call, {})
+            bbs_fwd_q       = bbs_fwd_q_cfg.get('bbs_fwd_q', {})
+            out_msg         = msg_tab.get(q_bid, [])
+            if not out_msg:
+                BBS_LOG.error(log_tag + "Msg not found in DB Out-Tab")
+                BBS_LOG.error(log_tag + f"  q_bid  : {q_bid}")
+                BBS_LOG.error(log_tag + f"  msg_tab.K: {', '.join(list(msg_tab.keys()))}")
+                BBS_LOG.error(log_tag + f"  skipping BID: {q_bid}") # TODO Delete/Mark BID in db.fwd_q_tab
+                continue
+            if not bbs_fwd_q_cfg:
+                BBS_LOG.error(log_tag + f"No BBS FWD-Q-CFG for: {fwd_bbs_call}")
+                # TODO Flag in BBS ?'EE'?
+                continue
+            if not fwd_bbs:
+                BBS_LOG.error(log_tag + f"Error FWD-CFG ID for ({q_bid})")
+                for k, val in fwd_cfg.items():
+                    BBS_LOG.error(log_tag + f"fwd_cfg ({k}): {val}")
+                continue
+            if not fwd_cfg:
+                BBS_LOG.warning(log_tag + f"No Forward Config for {fwd_bbs_call}")
+                BBS_LOG.warning(log_tag + f"  skipping BID: {q_bid}")  # TODO Delete/Mark BID in db.fwd_q_tab
+                continue
+            if q_bid in bbs_fwd_q:
+                BBS_LOG.debug(log_tag + f"BID ({q_bid}) already in ({fwd_bbs_call})BBS-FWD-Q")
+                continue
+
+            msg_sub      = out_msg[1]
+            msg_header   = out_msg[2]
+            msg_raw      = out_msg[3]
+            bin_mode     = False
+
+            text_msg = msg_header + msg_raw + CNTRL_Z + CR
+            if all((
+               self._pms_cfg.get('bin_mode', True),
+               fwd_cfg.get('bin_mode', True),
+            )):
+                # Bin Mode
+                bin_mode = True
+                comp_msg = bytes(encode_fa_header(mail_content=msg_raw, title=msg_sub))
+            else:
+                comp_msg = text_msg
+            to_send_len = len(comp_msg)
+            try:
+                comp_ratio  = len(text_msg) / to_send_len
+            except ZeroDivisionError:
+                comp_ratio = 0
+
+            try:
+                msg_size = int(fwd_task[10])
+            except ValueError:
+                msg_size = len(msg_raw)
+
+            try:
+                trys = fwd_task[14]
+            except ValueError:
+                trys = 0
+
+            bid        = fwd_task[1]
+            from_call  = fwd_task[3]
+            to_call    = fwd_task[6]
+            to_bbs     = fwd_task[7]
+            typ        = fwd_task[12]
+            fwd_header = f"{typ} {from_call} {to_bbs} {to_call} {bid} {msg_size}"
+            msg_to_fwd = dict(
+                fwd_id=         fwd_task[0],
+                bid=            bid,
+                mid=            fwd_task[2],
+                from_call=      from_call,
+                from_bbs=       fwd_task[4],
+                from_bbs_call=  fwd_task[5],
+                to_call=        to_call,
+                to_bbs=         to_bbs,
+                to_bbs_call=    fwd_task[8],
+                fwd_bbs_call=   fwd_task[9],
+                msg_size=       msg_size,
+                bytes_to_send=  to_send_len,
+                comp_rate    =  comp_ratio,
+                q_subject=      fwd_task[11],
+                typ=            typ,
+                flag=           fwd_task[13],
+                trys=           trys,
+                tx_time=        fwd_task[15],
+                # fwd_cfg=        fwd_cfg,
+                msg_subject=    msg_sub,
+                comp_msg=       comp_msg,
+                text_msg=       text_msg,
+                bin_mode=       bin_mode,
+                fwd_header=     fwd_header,
+            )
+            BBS_LOG.info(log_tag + f"Add Msg to FWD-Q for: {msg_to_fwd.get('fwd_bbs_call', '')}")
+            BBS_LOG.info(log_tag + f"  From   : {msg_to_fwd.get('from_call', '')}@{msg_to_fwd.get('from_bbs', '')}")
+            BBS_LOG.info(log_tag + f"  To     : {msg_to_fwd.get('to_call', '')}@{msg_to_fwd.get('to_bbs', '')}")
+            BBS_LOG.info(log_tag + f"  BID    : {msg_to_fwd.get('bid', '')}")
+            BBS_LOG.info(log_tag + f"  Typ    : {msg_to_fwd.get('typ', '')}")
+            BBS_LOG.info(log_tag + f"  toSend : {to_send_len} Bytes")
+            BBS_LOG.info(log_tag + f"  CompRat: {comp_ratio:.2f}:1")
+            BBS_LOG.info(log_tag + f"  BinMode: {bin_mode}")
+            BBS_LOG.info(log_tag + f"  Try's  : {msg_to_fwd.get('trys', '')}")
+            BBS_LOG.info(log_tag + f"  LastTry: {msg_to_fwd.get('tx_time', '')}")
+            BBS_LOG.debug(log_tag + f"  Subj.  : {msg_to_fwd.get('q_subject', '')[:30]}")
+            BBS_LOG.debug(log_tag + f"  FWD-ID : {msg_to_fwd.get('fwd_id', '')}")
+            BBS_LOG.debug(log_tag + f"  FWD_HEA: {fwd_header}")
+            BBS_LOG.debug(log_tag + f"  Flag   : {msg_to_fwd.get('flag', '')}")  # F
+            BBS_LOG.debug(log_tag + f"  Size   : {msg_to_fwd.get('msg_size', '')} Bytes")
+            BBS_LOG.debug(log_tag + f"  MID    : {msg_to_fwd.get('mid', '')}")
+
+            bbs_fwd_q[bid] = msg_to_fwd
+            if bid not in new_bid_s:
+                new_bid_s.append(bid)
+
+        if new_bid_s:
+            # Set Flag in DB
+            BBS_LOG.debug(log_tag + f"DB set_fwd_q_fwdActive")
+            self._db.bbs_set_fwd_q_fwdActive(fwd_id_list=new_bid_s)
+
+    def _fwd_port_tasks(self):
+        log_tag = self._logTag + 'FWD-Port-Task> '
+        # Check Block Timer
+        for fwd_port_id, fwd_port_vars in self._fwd_ports.items():
+            fwd_port_cfg = self._fwd_port_cfg.get(fwd_port_id, getNew_BBS_Port_cfg())
+            # Reset Port Block Timer
+            if ((fwd_port_cfg.get('block_time', 30) * 60) <
+                    (time.time() - fwd_port_vars.get('block_timer', time.time()))):
+                self._reset_port_block(fwd_port_id)
+
+        #######################################
+        # Debugging
+        for bbs_call, bbs_q_cfg in self._fwd_BBS_q.items():
+            if  bbs_q_cfg.get('bbs_fwd_q', {}):
+                BBS_LOG.debug(f"BBS-FWD-Q ({bbs_call})")
+                BBS_LOG.debug(f"  BID's: ({', '.join(list(bbs_q_cfg.get('bbs_fwd_q', {}).keys()))})")
+            if bbs_q_cfg.get('bbs_fwd_next_q', {}):
+                BBS_LOG.debug(f"BBS-FWD-NEXT-Q ({bbs_call})")
+                BBS_LOG.debug(f"  BID's: ({', '.join(bbs_q_cfg.get('bbs_fwd_next_q', []))})")
+
+            if bbs_q_cfg.get('bbs_fwd_byte_c', 0):
+                BBS_LOG.debug(f"BBS-Byte-C ({bbs_call})")
+                BBS_LOG.debug(f"  BBS-Byte-C - total: {round((bbs_q_cfg.get('bbs_fwd_byte_c', 1) / 1024), 1)} kB")
+            if bbs_q_cfg.get('bbs_fwd_error_c', 0):
+                BBS_LOG.debug(f"BBS-Error-C ({bbs_call})")
+                BBS_LOG.debug(f"  BBS-Error-C: {(bbs_q_cfg.get('bbs_fwd_error_c', 0))}")
+            try:
+                timeout = round(self._fwd_cfg.get('t_o_after_fail', 5) - ((time.time() - bbs_q_cfg.get('bbs_fwd_timeout', 0)) / 60), 1)
+            except ZeroDivisionError:
+                timeout = 0
+            if timeout:
+                BBS_LOG.debug(f"BBS-Timeout ({bbs_call})")
+                BBS_LOG.debug(f"  BBS-Timeout: {timeout} Min")
+
+        for port_id, fwd_port in self._fwd_ports.items():
+            BBS_LOG.debug(f"BBS-FWD-Port ({port_id})")
+            BBS_LOG.debug(f"  Block-C: {fwd_port.get('block_byte_c', -1)}")
+            BBS_LOG.debug(f"  Block-T: {int((time.time() - fwd_port.get('block_timer', 0)) / 60)} min")
+
+    def _check_new_port_tasks(self):
+        log_tag = self._logTag + "Check new Port-Tasks> "
+        updated = []
+        for bbs_call, fwd_q_vars in self._fwd_BBS_q.items():
+            fwd_cfg         = self._fwd_cfg.get(bbs_call, {})
+            port_id         = fwd_cfg.get('port_id', -1)
+            bbs_fwd_q       = fwd_q_vars.get('bbs_fwd_q', {})
+            next_q          = fwd_q_vars.get('bbs_fwd_next_q', [])
+            # bbs_fwd_error_c = fwd_q_vars.get('bbs_fwd_error_c', 0)
+            bbs_fwd_timeout = fwd_q_vars.get('bbs_fwd_timeout', 0)
+            if self._is_block_limit(port_id):
+                BBS_LOG.debug(log_tag + f"Block limit Port {port_id}.. Skipping.")
+                continue
+            if self._is_bbs_connected(bbs_call):
+                BBS_LOG.debug(log_tag + f"{bbs_call} is connected.. Skipping.")
+                self._set_bbs_timeout(bbs_call)
+                continue
+            # Updating Next Q
+            if all((
+                not next_q,
+                bbs_fwd_q,
+                not bbs_call in updated,
+            )):
+                self._process_bbs_next_fwd_q(bbs_call)
+            if not next_q:
+                BBS_LOG.debug(log_tag + f"{bbs_call} No new Tasks.. Skipping.")
+                continue
+
+            if bbs_fwd_timeout > time.time():
+                # Timeout Check ..
+                BBS_LOG.debug(log_tag + f"{bbs_call} wait for Timeout. Skipping.")
+                BBS_LOG.debug(
+                    log_tag + f"  {bbs_call} Timeout: {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")
+                continue
+            p_tasks = self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', [])
+            if bbs_call not in p_tasks:
+                p_tasks.append(bbs_call)
+                updated.append(bbs_call)
+                BBS_LOG.debug(log_tag + f"{bbs_call} added to FWD-Port Tasks.")
+                BBS_LOG.debug(log_tag + f"  {self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', [])}")
+
+            self._fwd_ports[port_id]['block_fwd_tasks'] = p_tasks
+
+    def _process_bbs_next_fwd_q(self, bbs_call: str):
+        log_tag         = self._logTag + f'Process BBS-FWD-Next-Q({bbs_call})> '
+        bbs_fwd_q_cfg   = self._fwd_BBS_q.get(bbs_call, {})
+        if not bbs_fwd_q_cfg:
+            BBS_LOG.error(log_tag + "No bbs_fwd_q_cfg")
+            return
+        bbs_fwd_q       = bbs_fwd_q_cfg.get('bbs_fwd_q',      {})
+        if not bbs_fwd_q:
+            BBS_LOG.debug(log_tag + "No Msg in BBS-FWD-Q")
+            return
+        bbs_fwd_next_q  = bbs_fwd_q_cfg.get('bbs_fwd_next_q', [])
+        if len(bbs_fwd_next_q) >= 5:
+            if len(bbs_fwd_next_q) == 5:
+                # Good Girl
+                BBS_LOG.debug(log_tag + "Next-Q full")
+                return
+            # Bad Girl
+            BBS_LOG.warning(log_tag + f"Next-Q len > 5: len({len(bbs_fwd_next_q)})")
+            return
+        fwd_cfg         = self._fwd_cfg.get(bbs_call, {})
+        fwd_port_id     = fwd_cfg.get('port_id', -1)
+        if fwd_port_id == -1:
+            BBS_LOG.error(log_tag + "No Port-ID or no fwd_cfg")
+            return
+        fwd_ports       = self._fwd_ports.get(fwd_port_id, {})
+
+
+        # Block limit reached
+        # block_b_c  = fwd_ports.get('block_byte_c', 0)
+        # send_limit = fwd_port_cfg.get('send_limit', 1) * 1024
+        if self._is_block_limit(fwd_port_id):
+            BBS_LOG.debug(log_tag + f"Block-limit Port({fwd_port_id}) reached: {fwd_ports.get('block_byte_c', 0)} bytes")
             return
 
-        if self._pms_cfg.get('single_auto_conn', True) and self._fwd_connections:
-            # FWD in progress
-            self._var_task_fwdQ_timer = time.time() + 20  #
+        pn_bid_s = []
+        bl_bid_s = []
+        for bid, msg_to_fwd in bbs_fwd_q.items():
+            typ  = msg_to_fwd.get('typ', '')
+            flag = msg_to_fwd.get('flag', 'F')
+            if flag != 'F':
+                continue
+            if typ == 'P':
+                pn_bid_s.append(bid)
+            elif typ == 'B':
+                bl_bid_s.append(bid)
+
+        # PN-Prio FWD
+        if fwd_cfg.get('pn_prio', True):
+            for bid in pn_bid_s + bl_bid_s:
+                msg_to_fwd = bbs_fwd_q.get(bid, {})
+                if not msg_to_fwd:
+                    BBS_LOG.error(log_tag + "PN-Prio: No msg_to_fwd")
+                    continue
+                msg_to_fwd['flag'] = '$'
+                bytes_to_send = msg_to_fwd.get('bytes_to_send', 0)
+                bbs_fwd_next_q.append(bid)
+                self._fwd_ports[fwd_port_id]['block_byte_c'] += bytes_to_send
+                if self._is_block_limit(fwd_port_id):
+                    BBS_LOG.debug(log_tag + f"PN-Prio Block limit")
+                    # Block Limit
+                    break
+                if len(bbs_fwd_next_q) == 5:
+                    # Next-Q full
+                    BBS_LOG.debug(log_tag + f"PN-Prio next-q full")
+                    break
+
+            BBS_LOG.debug(
+                log_tag + f"PN-Prio next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
+            return bbs_fwd_next_q
+
+        for bid, msg_to_fwd in bbs_fwd_q.items():
+            if not msg_to_fwd:
+                BBS_LOG.error(log_tag + "No msg_to_fwd")
+                continue
+            bytes_to_send = msg_to_fwd.get('bytes_to_send', 0)
+            flag          = msg_to_fwd.get('flag', 'F')
+            if flag != 'F':
+                continue
+            msg_to_fwd['flag'] = '$'
+            bbs_fwd_next_q.append(bid)
+            self._fwd_ports[fwd_port_id]['block_byte_c'] += bytes_to_send
+            if self._is_block_limit(fwd_port_id):
+                BBS_LOG.debug(log_tag + f"Block limit")
+                # Block Limit
+                break
+            if len(bbs_fwd_next_q) == 5:
+                # Next-Q full
+                BBS_LOG.debug(log_tag + f"next-q full")
+                break
+
+        BBS_LOG.debug(
+            log_tag + f"next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
+        return bbs_fwd_next_q
+
+
+    def _set_bbs_byte_c(self, bbs_call: str, bid: str):
+        # TODO Statistics
+        log_tag = self._logTag + f"Set BBS Byte C - BBS:({bbs_call}) - BID:({bid})> "
+        if bbs_call not in self._fwd_BBS_q:
+            BBS_LOG.error(log_tag + f"bbs_call not in ..")
+            return False
+        if bid not in self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}):
+            BBS_LOG.error(log_tag + f"bid not in ..")
+            return False
+        bytes_send = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('bytes_to_send', 0)
+        self._fwd_BBS_q[bbs_call]['bbs_fwd_byte_c'] += bytes_send
+        BBS_LOG.debug(log_tag)
+        BBS_LOG.debug(self._logTag + f"Set BBS Byte C - added:{bytes_send} Bytes")
+        BBS_LOG.debug(self._logTag + f"Set BBS Byte C - total:{round((self._fwd_BBS_q[bbs_call]['bbs_fwd_byte_c'] / 1024), 1)} kB")
+        return True
+
+    def _set_bbs_timeout(self, bbs_call: str):
+        log_tag = self._logTag + "Set BBS-TO> "
+        if bbs_call not in self._fwd_BBS_q:
+            BBS_LOG.error(log_tag + f"{bbs_call} not in  self._fwd_BBS_q")
+            return False
+        if bbs_call not in self._fwd_cfg:
+            BBS_LOG.error(log_tag + f"{bbs_call} not in  self._fwd_cfg")
+            return False
+        self._fwd_BBS_q[bbs_call]['bbs_fwd_timeout'] = time.time() + (self._fwd_cfg.get(bbs_call,{}).get('t_o_after_fail', 30) * 60)
+        BBS_LOG.debug(
+            log_tag + f"New Timeout({bbs_call}): {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")
+
+    def _is_block_limit(self, port_id: int):
+        fwd_port_cfg = self._fwd_port_cfg.get(port_id, getNew_BBS_Port_cfg())
+        send_limit   = fwd_port_cfg.get('send_limit', 1)
+        if send_limit:
+            send_limit = send_limit  * 1024
+        #print(f"Send L: {send_limit}")
+        #print(f"Bloc C: {self._fwd_ports[port_id].get('block_byte_c', 0)}")
+        if self._fwd_ports[port_id].get('block_byte_c', 0) > send_limit and send_limit:
+            BBS_LOG.debug(self._logTag + f"Block limit reached Port({port_id}): {self._fwd_ports[port_id].get('block_byte_c', 0)} Bytes")
+            BBS_LOG.debug(self._logTag + f"  Block-T: {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)} min")
+            return True
+        return False
+
+
+    def _reset_port_block(self, port_id: int):
+        BBS_LOG.debug(self._logTag + "Block Reset")
+        BBS_LOG.debug(self._logTag + f"  port        : {port_id}")
+        BBS_LOG.debug(self._logTag + f"  block_byte_c: {self._fwd_ports[port_id]['block_byte_c']}")
+        BBS_LOG.debug(self._logTag + f"  block_timer : {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)}")
+        self._fwd_ports[port_id]['block_timer']     = time.time()
+        self._fwd_ports[port_id]['block_byte_c']    = 0
+
+    def ack_next_fwd_q(self, fwd_id: str , flag: str):
+        log_tag = self._logTag + f'ACK BBS-FWD-Next-Q({fwd_id})> '
+        res     = self._db.bbs_ack_fwdQ_by_FWD_ID(fwd_id, flag)
+        if not res:
+            BBS_LOG.error(log_tag + f"No result fm DB for fwd_id: {fwd_id} - res: {res}")
+            return
+        try:
+            bid, bbs_call = res[0]
+        except (ValueError, IndexError) as e:
+            BBS_LOG.error(log_tag + f"{e} - fwd_id: {fwd_id} - res: {res}")
             return
 
-        if not self._fwd_q:
-            self._fwd_q: list = self._build_new_fwd_Q()
-        if not self._fwd_q:
+        if not all((bid, bbs_call)):
+            BBS_LOG.error(log_tag + f"No bid or bbs_call - bid: {bid} - bbs_call: {bbs_call}")
             return
+        bbs_fwd_q_cfg = self._fwd_BBS_q.get(bbs_call, {})
+        if not bbs_fwd_q_cfg:
+            BBS_LOG.error(log_tag + "No bbs_fwd_q_cfg")
+            return
+        bbs_fwd_q = bbs_fwd_q_cfg.get('bbs_fwd_q', {})
+        if not bbs_fwd_q:
+            BBS_LOG.debug(log_tag + "No Msg in BBS-FWD-Q")
+            return
+        bbs_fwd_next_q = bbs_fwd_q_cfg.get('bbs_fwd_next_q', [])
+        if any((
+            bid not in bbs_fwd_q,
+            bid not in bbs_fwd_next_q
+        )):
+            BBS_LOG.error(log_tag + f"BID({bid}) not in bbs_fwd_q or bbs_fwd_next_q")
+            BBS_LOG.error(log_tag + f"  bbs_fwd_q: {bbs_fwd_q}")
+            BBS_LOG.error(log_tag + f"  bbs_fwd_next_q: {bbs_fwd_next_q}")
+            return
+        self._set_bbs_byte_c(bbs_call, bid)
+        bbs_fwd_next_q.remove(bid)
+        bbs_fwd_q[bid]['flag'] = flag
 
 
-        to_bbs_call = list(self._fwd_q)[0]
-        self._fwd_q = list(self._fwd_q[1:])
-        BBS_LOG.info(log_tag + f"Next Fwd to: {to_bbs_call}")
-        if self._is_bbs_connected(to_bbs_call):
-            BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
-            # self._var_task_fwdQ_timer = time.time() + 60
-            return
-        fwd_conn = self._start_autoFwd(to_bbs_call)
-        if not fwd_conn:
-            BBS_LOG.error(f"FWD-Q: fwd_conn Error: {to_bbs_call}")
-
-        if self._fwd_q:
-            # self._var_task_fwdQ_timer = time.time() + 20  #
-            return
+        BBS_LOG.debug(
+            log_tag + f"bbs-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {})}")
+        BBS_LOG.debug(
+            log_tag + f"next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
+        # self._process_bbs_next_fwd_q(bbs_call)
         return
+
+    def ack_fwd_q(self):
+        to_ack_flags = ['S+', 'S-', 'H', 'R', 'EE', 'EO']
+        prio_flag    = 'S+'
+        all_bid_s = {}
+        for bbs_call, bbs_q_cfg in self._fwd_BBS_q.items():
+            bbs_q = bbs_q_cfg.get('bbs_fwd_q', {})
+            for bid, msg2fwd in bbs_q.items():
+                msg_flag = msg2fwd.get('flag', '')
+                flag     = all_bid_s.get(bid, '')
+                if msg_flag in to_ack_flags:
+                    if flag == prio_flag:
+                        continue
+                    all_bid_s[bid] = flag
+        for bid, bid_flag in all_bid_s.items():
+            BBS_LOG.debug(f"ack_fwd_q> BID: {bid} - Flag: {bid_flag}")
+            self._db.bbs_ack_outMsg_by_BID(bid, bid_flag)
+
+
+    def _exec_fwdQ(self):
+        log_tag = self._logTag + 'Exec FWD-Q> '
+
+        for port_id, fwd_port in self._fwd_ports.items():
+            fwd_port_cfg       = self._fwd_port_cfg.get(port_id, getNew_BBS_Port_cfg())
+            conn_limit: int    = fwd_port_cfg.get('conn_limit', 1)
+            port_tasks: list   = fwd_port.get('block_fwd_tasks', [])
+            port_conn_c        = len(self._get_port_connections(port_id))
+            if self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', []):
+                BBS_LOG.debug(log_tag + f"Port: {port_id}")
+                BBS_LOG.debug(log_tag + f"  Old-Tasks: {self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', [])}")
+
+            for to_bbs_call in list(port_tasks):
+                if port_conn_c >= conn_limit:
+                    BBS_LOG.debug(log_tag + f"Port{port_id} connect limit: {port_conn_c} >= {conn_limit}")
+                    break
+
+                bbs_fwd_q_vars  = self._fwd_BBS_q.get(to_bbs_call, {})
+                fwd_bbs_cfg     = self._fwd_cfg.get(to_bbs_call, {})
+                bbs_fwd_error_c = bbs_fwd_q_vars.get('bbs_fwd_error_c', 0)
+                bbs_fwd_timeout = bbs_fwd_q_vars.get('bbs_fwd_timeout', 0)
+                if bbs_fwd_timeout > time.time():
+                    # Timeout Check ..
+                    BBS_LOG.debug(log_tag + f"{to_bbs_call} wait for Timeout.")
+                    continue
+                if self._is_bbs_connected(to_bbs_call):
+                    self._set_bbs_timeout(to_bbs_call)
+                    BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
+                    continue
+
+                # port_id = fwd_bbs_cfg.get('port_id'),
+                # own_call    = fwd_bbs_cfg.get('own_call'),
+                # dest_call   = fwd_bbs_cfg.get('dest_call'),
+                via_calls = fwd_bbs_cfg.get('via_calls'),
+                axip_add  = fwd_bbs_cfg.get('axip_add'),
+                fwd_conn  = self._start_autoFwd(to_bbs_call)
+                self._set_bbs_timeout(to_bbs_call)
+                if not fwd_conn:
+                    bbs_fwd_error_c += 1
+                    BBS_LOG.error(log_tag + f"fwd_conn Error: {to_bbs_call}")
+                    continue
+                BBS_LOG.info(log_tag + f"Next Fwd to: {to_bbs_call}")
+                BBS_LOG.info(log_tag + f"  Port     : {port_id}")
+                BBS_LOG.info(log_tag + f"  via      : {via_calls}")
+                BBS_LOG.info(log_tag + f"  AXIP-Addr: {axip_add}")
+                port_tasks.remove(to_bbs_call)
+                port_conn_c += 1
+
+            if self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', []):
+                BBS_LOG.debug(log_tag + f"Port: {port_id}")
+                BBS_LOG.debug(log_tag + f"  New-Tasks: {self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', [])}")
+
 
     def _is_bbs_connected(self, bbs_call: str):
         for bbs_conn in self._fwd_connections:
@@ -449,56 +943,39 @@ class BBS:
                 return True
         return False
 
-    def _build_new_fwd_Q(self):
-        log_tag = self._logTag + 'Build FWD-Q> '
-        if self._fwd_q:
-            BBS_LOG.error(log_tag + "Error: Local FWQ-Q (self._fwd_q) not empty ! ")
-            return []
-        db_fwd_q: list = self.get_active_fwd_q_tab()
-        res = []
-        for fwd_task in db_fwd_q:
-            try:
-                to_bbs_call = fwd_task[5]
-            except IndexError:
-                BBS_LOG.error(log_tag + f"IndexError: fwd_task: {fwd_task} ")
-                continue
-            if self._is_bbs_connected(to_bbs_call):
-                BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
-                continue
-            if to_bbs_call not in res:
-                res.append(to_bbs_call)
-        if res:
-            BBS_LOG.info(log_tag + f"New FWD-Q: {res}")
-        return res
+    def _get_port_connections(self, port_id: int):
+        ret = []
+        for bbs_conn in self._fwd_connections:
+            if port_id == bbs_conn.get_port_id():
+                ret.append(bbs_conn.get_dest_bbs_call())
+        return ret
 
     ###################################
     # CFG Stuff
     def _set_pms_home_bbs(self):
-        # TODO: Check if needed
-        #  self._pms_cfg['home_bbs'] unused ??
+        # Used in guiBBS_newMSG
         home_bbs = []
-        for h_bbs_k, h_bbs_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
+        for h_bbs_k, h_bbs_cfg in self._fwd_cfg.items():
             h_bbs_cfg: dict
             regio = h_bbs_cfg.get('regio', '')
             if regio:
                 home_bbs.append((h_bbs_k + '.' + regio))
-            h_bbs_cfg['own_call'] = self._pms_cfg.get('user', 'NOCALL')
         self._pms_cfg['home_bbs'] = home_bbs
 
     def _set_pms_fwd_schedule(self):
         #if not self._pms_cfg.get('auto_conn', True):
         #    return False
-        for h_bbs_k, cfg in dict(self._pms_cfg.get('fwd_bbs_cfg', {})).items():
+        for h_bbs_k, cfg in self._fwd_cfg.items():
             sched_cfg           = {}
             revers_fwd          = cfg.get('reverseFWD', False)
             outgoing_fwd        = cfg.get('auto_conn', True)
             if all((revers_fwd, outgoing_fwd)):
                 sched_cfg       = cfg.get('scheduler_cfg', {})
             autoconn_cfg = {
-                'task_typ':     'FWD',
+                'task_typ':     TASK_TYP_FWD,
                 'max_conn':     int(self._pms_cfg.get('single_auto_conn', True)),
                 'port_id':      cfg.get('port_id'),
-                'own_call':     cfg.get('own_call'),
+                'own_call':     self._pms_cfg.get('user', ''),
                 'dest_call':    cfg.get('dest_call'),
                 'via_calls':    cfg.get('via_calls'),
                 'axip_add':     cfg.get('axip_add'),
@@ -506,14 +983,13 @@ class BBS:
             self._port_handler.insert_SchedTask(sched_cfg, autoconn_cfg)
 
     def _del_all_pms_fwd_schedule(self):
-        for h_bbs_k in list(self._pms_cfg.get('fwd_bbs_cfg', {}).keys()):
-            cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(h_bbs_k, {})
+        for h_bbs_k, cfg in self._fwd_cfg.items():
             if cfg:
                 autoconn_cfg = {
-                    'task_typ':     'FWD',
+                    'task_typ':     TASK_TYP_FWD,
                     'max_conn':     int(self._pms_cfg.get('single_auto_conn', True)),
                     'port_id':      cfg.get('port_id'),
-                    'own_call':     cfg.get('own_call'),
+                    'own_call':     self._pms_cfg.get('user', ''),
                     'dest_call':    cfg.get('dest_call'),
                     'via_calls':    cfg.get('via_calls'),
                     'axip_add':     cfg.get('axip_add'),
@@ -563,15 +1039,15 @@ class BBS:
     ###################################
     # Auto FWD
     def _start_autoFwd(self, fwd_bbs: str):
-        fwd_bbs_cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(fwd_bbs, {})
+        fwd_bbs_cfg = self._fwd_cfg.get(fwd_bbs, {})
         if not fwd_bbs_cfg:
             BBS_LOG.error(f"AutoFWD start: No cfg for {fwd_bbs}")
             return None
         autoconn_cfg = {
-            'task_typ':     'FWD',
+            'task_typ':     TASK_TYP_FWD,
             'max_conn':     int(self._pms_cfg.get('single_auto_conn', True)),
             'port_id':      fwd_bbs_cfg.get('port_id'),
-            'own_call':     fwd_bbs_cfg.get('own_call'),
+            'own_call':     self._pms_cfg.get('user', ''),
             'dest_call':    fwd_bbs_cfg.get('dest_call'),
             'via_calls':    fwd_bbs_cfg.get('via_calls'),
             'axip_add':     fwd_bbs_cfg.get('axip_add'),
@@ -587,13 +1063,13 @@ class BBS:
             return
         self._new_man_FWD_wait_t = time.time() + 10
 
-        for fwd_bbs_call, fwd_bbs_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
+        for fwd_bbs_call, fwd_bbs_cfg in self._fwd_cfg.items():
             if fwd_bbs_cfg:
                 autoconn_cfg = {
-                    'task_typ':     'FWD',
+                    'task_typ':     TASK_TYP_FWD,
                     'max_conn':     int(self._pms_cfg.get('single_auto_conn', True)),
                     'port_id':      fwd_bbs_cfg.get('port_id'),
-                    'own_call':     fwd_bbs_cfg.get('own_call'),
+                    'own_call':     self._pms_cfg.get('user', ''),
                     'dest_call':    fwd_bbs_cfg.get('dest_call'),
                     'via_calls':    fwd_bbs_cfg.get('via_calls'),
                     'axip_add':     fwd_bbs_cfg.get('axip_add'),
@@ -619,27 +1095,9 @@ class BBS:
 
     ########################################################################
     #
-    def is_pn_in_db(self, bid_mid: str):
-        if not bid_mid:
-            return FWD_RESP_ERR
-        ret = self._db.bbs_check_pn_mid_exists(bid_mid)
-        return FWD_RESP_TAB[ret]
-
-    def is_bl_in_db(self, bid_mid: str):
-        if not bid_mid:
-            return FWD_RESP_ERR
-        ret = self._db.bbs_check_bl_mid_exists(bid_mid)
-        return FWD_RESP_TAB[ret]
-
     def new_msg(self, msg_struc: dict):
         msg_struc['message_size'] = int(len(msg_struc['msg']))
         return self._db.bbs_insert_new_msg(msg_struc)
-
-    def update_msg(self, msg_struc: dict):
-        if not msg_struc.get('mid', ''):
-            return False
-        msg_struc['message_size'] = int(len(msg_struc['msg']))
-        return self._db.bbs_update_out_msg(msg_struc)
 
     ########################################################################
     # Routing
@@ -707,7 +1165,7 @@ class BBS:
 
         path_list = get_pathlist_fm_header(path)
         # FWD Config Lookup
-        for fwd_bbs, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
+        for fwd_bbs, fwd_cfg in self._fwd_cfg.items():
             fwd_cfg: dict
             h_route     = fwd_cfg.get('pn_fwd_h_out',           [])
             h_block     = fwd_cfg.get('pn_fwd_not_h_out',       [])
@@ -804,7 +1262,7 @@ class BBS:
         ret = self._db.bbs_get_fwdPaths_lowHop(bbs_address)
         BBS_LOG.debug(f"_find_lowHop_PN_route res: {ret}")
         for bbs, hops, path in ret:
-            fwd_bbs_cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs, {})
+            fwd_bbs_cfg = self._fwd_cfg.get(bbs, {})
             BBS_LOG.debug(f"_find_lowHop_PN_route: SUCHE: {bbs}")
             BBS_LOG.debug(f"HOPS: {hops}")
             BBS_LOG.debug(f"PATH: {path}")
@@ -834,7 +1292,7 @@ class BBS:
         ret = self._db.bbs_get_fwdPaths_mostCurrent(bbs_address)
         BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
         for bbs, hops, path in ret:
-            fwd_bbs_cfg = self._pms_cfg.get('fwd_bbs_cfg', {}).get(bbs, {})
+            fwd_bbs_cfg = self._fwd_cfg.get(bbs, {})
             BBS_LOG.debug(f"_find_most_current_PN_route: SUCHE: {bbs}")
             BBS_LOG.debug(f"HOPS: {hops}")
             BBS_LOG.debug(f"PATH: {path}")
@@ -874,7 +1332,7 @@ class BBS:
         path_list   = get_pathlist_fm_header(path)
         ret         = []
         # FWD Config Lookup
-        for fwd_bbs, fwd_cfg in self._pms_cfg.get('fwd_bbs_cfg', {}).items():
+        for fwd_bbs, fwd_cfg in self._fwd_cfg.items():
             fwd_cfg: dict
             cfg_dist        = fwd_cfg.get('bl_dist_out',        [])
             cfg_dist_block  = fwd_cfg.get('bl_dist_not_out',    [])
@@ -1048,44 +1506,83 @@ class BBS:
         BBS_LOG.debug(logTag + f"CC an: {receiver_address}")
 
     ########################################################################
-    # FWD
-    def _get_fwd_q_tab_forBBS(self, fwd_bbs_call: str):
-        return self._db.bbs_get_fwd_q_Tab_for_BBS(fwd_bbs_call)
-    """
-    def _get_fwd_out_tab(self):
-        return self._db.bbs_get_fwd_out_Tab()
-    """
+    # FWD handling
+    def get_bbs_next_fwd_header_fm_next_q(self, bbs_call: str, bin_mode=False):
+        log_tag = self._logTag + f'Next FW-Header fm Next-Q({bbs_call})> '
+        self._process_bbs_next_fwd_q(bbs_call)
+        bbs_q_cfg = self._fwd_BBS_q.get(bbs_call, {})
+        bbs_q     = bbs_q_cfg.get('bbs_fwd_q', {})
+        next_q    = bbs_q_cfg.get('bbs_fwd_next_q', [])
+        BBS_LOG.debug(log_tag + f"bbs_q:  ({bbs_q.keys()}) ")
+        BBS_LOG.debug(log_tag + f"next_q: ({next_q}) ")
+        if not next_q:
+            BBS_LOG.debug(log_tag + "Empty Next-Q")
+            return b'', []
 
-    def build_fwd_header(self, bbs_call: str, bin_mode=False):
-        fwd_q_data  = self._get_fwd_q_tab_forBBS(bbs_call)
-        ret         = ""
-        ret_bids    = []
-        if bin_mode:
-            st_flag = 'FA'
-        else:
-            st_flag = 'FB'
-
-        if not fwd_q_data:
-            return b'', ret_bids
-        for el in fwd_q_data:
-            if el[3] and el[7] and el[6]:
-                ret += f"{st_flag} {el[12]} {el[3]} {el[7]} {el[6]} {el[1]} {el[10]}\r"
-                ret_bids.append(el[1])
-            """
+        ret      = ""
+        ret_bids = []
+        for bid in next_q:
+            msg2fwd = bbs_q.get(bid, {})
+            if bin_mode != msg2fwd.get('bin_mode', True):
+                BBS_LOG.warning(log_tag + f"Pre configured Bin-Mode ({bid}) ")
+                BBS_LOG.warning(log_tag + f"  {bbs_call} is using Bin-Mode: {bin_mode}")
+                BBS_LOG.warning(log_tag + f"  msg2fwd configured Bin-Mode: {msg2fwd.get('bin_mode', True)}")
+            msgCfg_binMode = msg2fwd.get('bin_mode', True)
+            if not all((bin_mode, msgCfg_binMode)):
+                bin_mode = False
+            if bin_mode:
+                st_flag = 'FA'
             else:
-                print("BBS: build_fwd_header No BBS in Address")
-                logger.error("BBS: build_fwd_header No BBS in Address")
-                return b'', _ret_bids
-            """
+                st_flag = 'FB'
+            msg2fwd['bin_mode'] = bool(bin_mode)
+            fwd_header          = msg2fwd.get('fwd_header', '')
+            if not fwd_header:
+                BBS_LOG.error(log_tag + f"No Fwd Header for BID({bid})")
+                msg2fwd['flag'] = 'IE'  # Internal Error
+                continue
+            ret_bids.append(bid)
+            ret += f"{st_flag} {fwd_header}\r"
+
         try:
+            BBS_LOG.debug(log_tag + f"ret     : {ret})")
+            BBS_LOG.debug(log_tag + f"ret_bids: {ret_bids})")
             return ret.encode('ASCII'), ret_bids
-        except UnicodeEncodeError:
+        except UnicodeEncodeError as e:
             # print(self._logTag + "build_fwd_header UnicodeEncodeError")
             # logger.error(self._logTag + "build_fwd_header UnicodeEncodeError")
-            BBS_LOG.error("build_fwd_header UnicodeEncodeError")
+            BBS_LOG.error(log_tag + f"{e}")
+            BBS_LOG.error(log_tag + f"  ret:  {ret}")
             return b'', ret_bids
+
+    def bbs_get_msg2fwd_by_BID(self, bbs_call: str, bid: str):
+        msg2fwd = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {})
+        if not msg2fwd:
+            return b''
+        bin_mode = msg2fwd.get('bin_mode')
+        if bin_mode:
+            return msg2fwd.get('comp_msg', b'')
+        return msg2fwd.get('text_msg', b'')
+
+
+    def is_bid_in_db(self, bid_mid: str):
+        if not bid_mid:
+            return FWD_RESP_ERR
+        ret = self._db.bbs_check_mid_exists(bid_mid)
+        return FWD_RESP_TAB[ret]    # +/-
+
+    def update_msg(self, msg_struc: dict):
+        # Called fm guiBBS_newMSG._save_msg()
+        if not msg_struc.get('mid', ''):
+            return False
+        msg_struc['message_size'] = int(len(msg_struc['msg']))
+        return self._db.bbs_update_out_msg(msg_struc)
+
     ####################################################################################
     # Get it
+    def get_active_fwd_q_tab(self):
+        # GUI
+        return self._db.pms_get_active_fwd_q_for_GUI()
+
     def get_fwd_q_tab(self):
         return self._db.bbs_get_fwd_q_Tab_for_GUI()
 
@@ -1098,9 +1595,6 @@ class BBS:
 
     def get_fwd_q_tab_bbs(self):
         return self._db.bbs_get_fwd_q_Tab_for_BBS_gui()
-
-    def get_active_fwd_q_tab(self):
-        return self._db.pms_get_active_fwd_q_for_GUI()
 
     def get_hold_tab_bbs(self):
         return self._db.bbs_get_hold_Tab_for_BBS_gui()

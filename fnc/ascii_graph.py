@@ -212,37 +212,3 @@ def generate_ascii_graph(data, titel, datasets, expand=False, x_scale=True, bar_
 
     return output.rstrip()  # Remove any trailing newlines at the end
 
-# Example Usage
-if __name__ == "__main__":
-    custom_data = [{'low': i, 'high': i * i} for i in range(70)]
-    datasets_custom = {'low': '#', 'high': '+'}
-    test_data = [{'min': i, 'ave': i + 0.5, 'max': i + 1} for i in range(60)]
-    datasets_test = {'min': '#', 'ave': '*', 'max': '+'}
-    custom_data2 = [
-        {'temp': 8}, {'temp': 9}, {'temp': 12}, {'temp': 14}, {'temp': 16}, {'temp': 21},
-        {'temp': 23}, {'temp': 24}, {'temp': 24.5}, {'temp': 25}, {'temp': 23}, {'temp': 21},
-        {'temp': 18}, {'temp': 17}, {'temp': 14}, {'temp': 12}, {'temp': 8}, {'temp': 5},
-        {'temp': 6}, {'temp': 8}, {'temp': 10}, {'temp': 12}, {'temp': 13}, {'temp': 15},
-        {'temp': 18}, {'temp': 20}, {'temp': 22}, {'temp': 24}, {'temp': 26}, {'temp': 27}
-    ]
-    datasets_custom2 = {'temp': '+'}
-
-    # Pie Chart Example
-    graph_test_pie = generate_ascii_graph(test_data, "Test Graph (Pie, Default)", datasets_test, chart_type='pie', fill_pie=False)
-    print(graph_test_pie)
-
-    # Line Graph with Default Scaling
-    graph_test_line = generate_ascii_graph(test_data, "Test Graph (Line, Default)", datasets_test, chart_type='line')
-    print(graph_test_line)
-
-    # Line Graph with Custom Scaling (Height=15, Width=20)
-    graph_test_line_scaled = generate_ascii_graph(test_data, "Test Graph (Line, Scaled H15 W20)", datasets_test, chart_type='line', graph_height=15, graph_width=20)
-    print(graph_test_line_scaled)
-
-    # Line Graph with Custom Scaling (Height=10, Width=50)
-    graph_custom_line_scaled = generate_ascii_graph(custom_data, "Custom Graph (Line, Scaled H10 W50)", datasets_custom, chart_type='line', graph_height=10, graph_width=50)
-    print(graph_custom_line_scaled)
-
-    # Line Graph with Custom Scaling for custom_data2
-    graph_custom2_line_scaled = generate_ascii_graph(custom_data2, "Custom Graph 2 (Line, Scaled H12 W70)", datasets_custom2, chart_type='line', graph_height=12, graph_width=70)
-    print(graph_custom2_line_scaled)

@@ -42,7 +42,7 @@ SOH             = 0x01  # Start of Header
 STX             = 0x02  # Start of Text
 EOT             = 0x04  # End of Transmission
 NUL             = 0x00  # Null
-EOL             = (CR + LF, CR)
+EOL             = (CR + LF, CR, LF)
 EOMA            = (CNTRL_Z + CR, CNTRL_Z + CR + LF)
 EOMB            = (
     b'/EX' + CR,
@@ -114,3 +114,4 @@ def GET_MSG_STRUC():
         bid=            '',
         flag=           '',
     )
+

@@ -1,5 +1,6 @@
 import time
 
+from cfg.constant import TASK_TYP_FWD, TASK_TYP_BEACON
 from cfg.popt_config import POPT_CFG
 from schedule.tasks.AutoConnTask import AutoConnTask
 from schedule.popt_sched import PoPTSchedule
@@ -10,8 +11,8 @@ class PoPTSchedule_Tasker:
     def __init__(self, port_handler):
         self._port_handler = port_handler
         self._scheduled_tasks = {
-            'FWD': self._start_AutoConnTask,
-            'BEACON': self._start_BeaconTask,
+            TASK_TYP_FWD:    self._start_AutoConnTask,
+            TASK_TYP_BEACON: self._start_BeaconTask,
         }
         self._scheduled_tasks_q = []
         self.auto_connections = {}      # [AutoConnTask()]
