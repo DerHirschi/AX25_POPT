@@ -30,6 +30,8 @@ Optimierung:
 
 Neue Implementierungen / Funktionen:
 - Forward-Protokoll BinMail (Bin Mode) lzhuf Komprimierung
+- Forward-Warteschlangen Tasker
+- Parameter Monitor für Forward-Warteschlangen
 - Auto-Lookup für PR-Mail Adressen, beim Senden neuer P-Mails
 - Beacon-Call Filter für User-DB
 - PR-Mail Adresse (Sysop- und BBS-Adressen) werden automatisch

@@ -50,6 +50,7 @@ class BBSRoutingSettings(tk.Frame):
         pn_fwd_var            = tk.BooleanVar(self, value=cfg.get('pn_fwd',               True))
         bl_fwd_var            = tk.BooleanVar(self, value=cfg.get('bl_fwd',               True))
         pn_fwd_auto_path_var  = tk.BooleanVar(self, value=cfg.get('pn_fwd_auto_path',     True))
+        pn_fwd_prio_var       = tk.BooleanVar(self, value=cfg.get('pn_prio',              True))
 
         ###########################################
         # Root Frame
@@ -60,8 +61,10 @@ class BBSRoutingSettings(tk.Frame):
         btn_m_frame = tk.Frame(tab_frame)
         btn_m_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
         btn_frame_l = tk.Frame(btn_m_frame)
+        btn_frame_m = tk.Frame(btn_m_frame)
         btn_frame_r = tk.Frame(btn_m_frame)
         btn_frame_l.pack(side=tk.LEFT, expand=False)
+        btn_frame_m.pack(side=tk.LEFT, expand=False)
         btn_frame_r.pack(side=tk.LEFT, expand=False)
         ##############
         # btn_frame_l
@@ -76,22 +79,29 @@ class BBSRoutingSettings(tk.Frame):
         add_btn.pack(side=tk.LEFT, padx=30, pady=15)
         del_btn.pack(side=tk.LEFT, padx=30)
         ##############
-        # btn_frame_r
+        # btn_frame_m
         #################
         # allow_pn_fwd
-        tk.Checkbutton(btn_frame_r,
+        tk.Checkbutton(btn_frame_m,
                        variable=pn_fwd_var,
-                       text=self._getTabStr('allow_PN_FWD')).pack(side=tk.TOP, expand=False)
+                       text=self._getTabStr('allow_PN_FWD')).pack(side=tk.TOP, expand=False, anchor=tk.W)
         #################
         # allow_bl_fwd
-        tk.Checkbutton(btn_frame_r,
+        tk.Checkbutton(btn_frame_m,
                        variable=bl_fwd_var,
-                       text=self._getTabStr('allow_BL_FWD')).pack(side=tk.TOP, expand=False)
+                       text=self._getTabStr('allow_BL_FWD')).pack(side=tk.TOP, expand=False, anchor=tk.W)
+        ##############
+        # btn_frame_r
         #################
         # allow_pn_auto_path
         tk.Checkbutton(btn_frame_r,
                        variable=pn_fwd_auto_path_var,
-                       text=self._getTabStr('allowPN_AutoPath')).pack(side=tk.TOP, expand=False)
+                       text=self._getTabStr('allowPN_AutoPath')).pack(side=tk.TOP, expand=False, anchor=tk.W)
+        #################
+        # allow_pn_auto_path
+        tk.Checkbutton(btn_frame_r,
+                       variable=pn_fwd_prio_var,
+                       text="PN-Mail Prio").pack(side=tk.TOP, expand=False, anchor=tk.W)
 
         ##########
         tabctl = ttk.Notebook(tab_frame)
@@ -376,6 +386,7 @@ class BBSRoutingSettings(tk.Frame):
             'pn_fwd_var':               pn_fwd_var,
             'bl_fwd_var':               bl_fwd_var,
             'pn_fwd_auto_path_var':     pn_fwd_auto_path_var,
+            'pn_fwd_prio_var':          pn_fwd_prio_var,
         }
 
     def _update_all_trees(self):
@@ -509,10 +520,12 @@ class BBSRoutingSettings(tk.Frame):
             allow_pn_fwd        = bool(gui_cfg['pn_fwd_var'].get())
             allow_bl_fwd        = bool(gui_cfg['bl_fwd_var'].get())
             allow_pn_auto       = bool(gui_cfg['pn_fwd_auto_path_var'].get())
+            pn_prio             = bool(gui_cfg['pn_fwd_prio_var'].get())
 
-            fwd_cfg['pn_fwd'] = allow_pn_fwd
-            fwd_cfg['bl_fwd'] = allow_bl_fwd
+            fwd_cfg['pn_fwd']           = allow_pn_fwd
+            fwd_cfg['bl_fwd']           = allow_bl_fwd
             fwd_cfg['pn_fwd_auto_path'] = allow_pn_auto
+            fwd_cfg['pn_prio']          = pn_prio
 
 
     def update_win(self):

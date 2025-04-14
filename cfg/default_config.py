@@ -121,7 +121,7 @@ def getNew_BBS_FWD_cfg():
         bl_fwd              = True, # Allow BL FWD
         pn_fwd_auto_path    = False,# Allow AutoPath
         pn_fwd_alter_path   = False,# Allow Alternative Route               # TODO GUI / after x attempt's
-        pn_prio             = True, # PN first                              # TODO GUI
+        pn_prio             = True, # PN first
         # PN Outgoing Routing
         pn_fwd_bbs_out      = [],   # Known BBS behind this BBS
         pn_fwd_not_bbs_out  = [],   # Not FWD to BBS

@@ -129,13 +129,13 @@ class BBS_fwd_Q(tk.Toplevel):
             block_timer_f       = tk.Frame(l_frame)
             block_byte_c_f      = tk.Frame(l_frame)
             block_fwd_tasks_f   = tk.Frame(l_frame)
-            block_timer_f.pack(    side=tk.TOP, expand=False, fill=tk.Y)
-            block_byte_c_f.pack(   side=tk.TOP, expand=False, fill=tk.Y)
-            block_fwd_tasks_f.pack(side=tk.TOP, expand=False, fill=tk.Y)
+            block_timer_f.pack(    side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+            block_byte_c_f.pack(   side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+            block_fwd_tasks_f.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
 
-            tk.Label(block_timer_f,     textvariable=block_timer_var).pack()
-            tk.Label(block_byte_c_f,    textvariable=block_byte_c_var).pack()
-            tk.Label(block_fwd_tasks_f, textvariable=block_fwd_tasks_var).pack()
+            tk.Label(block_timer_f,     textvariable=block_timer_var).pack(    anchor=tk.W)
+            tk.Label(block_byte_c_f,    textvariable=block_byte_c_var).pack(   anchor=tk.W)
+            tk.Label(block_fwd_tasks_f, textvariable=block_fwd_tasks_var).pack(anchor=tk.W)
             self._port_vars[fwd_port_id] = dict(
                 block_timer_var     = block_timer_var,
                 block_byte_c_var    = block_byte_c_var,
@@ -163,17 +163,17 @@ class BBS_fwd_Q(tk.Toplevel):
                 bbs_timeout_f   = tk.Frame(bbs_tab_f)
                 bbs_q_f         = tk.Frame(bbs_tab_f)
                 bbs_next_q_f    = tk.Frame(bbs_tab_f)
-                bbs_byte_c_f.pack(  side=tk.TOP, expand=False, fill=tk.Y)
-                bbs_error_c_f.pack( side=tk.TOP, expand=False, fill=tk.Y)
-                bbs_timeout_f.pack( side=tk.TOP, expand=False, fill=tk.Y)
-                bbs_q_f.pack(       side=tk.TOP, expand=False, fill=tk.Y)
-                bbs_next_q_f.pack(  side=tk.TOP, expand=False, fill=tk.Y)
+                bbs_byte_c_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+                bbs_error_c_f.pack( side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+                bbs_timeout_f.pack( side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+                bbs_q_f.pack(       side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+                bbs_next_q_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
 
-                tk.Label(bbs_byte_c_f,  textvariable=bbs_byte_c_var ).pack()
-                tk.Label(bbs_error_c_f, textvariable=bbs_error_c_var).pack()
-                tk.Label(bbs_timeout_f, textvariable=bbs_timeout_var).pack()
-                tk.Label(bbs_q_f,       textvariable=bbs_q_var      ).pack()
-                tk.Label(bbs_next_q_f,  textvariable=bbs_next_q_var ).pack()
+                tk.Label(bbs_byte_c_f,  textvariable=bbs_byte_c_var ).pack(anchor=tk.W)
+                tk.Label(bbs_error_c_f, textvariable=bbs_error_c_var).pack(anchor=tk.W)
+                tk.Label(bbs_timeout_f, textvariable=bbs_timeout_var).pack(anchor=tk.W)
+                tk.Label(bbs_q_f,       textvariable=bbs_q_var      ).pack(anchor=tk.W)
+                tk.Label(bbs_next_q_f,  textvariable=bbs_next_q_var ).pack(anchor=tk.W)
 
 
                 self._bbs_vars[bbs_call] = dict(

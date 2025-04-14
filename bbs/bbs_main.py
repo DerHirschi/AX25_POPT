@@ -21,6 +21,7 @@ flags in FWD Q Tab
 SW  = (BBS is already receiving MSG fm other BBS) Try again on next connect. Still connected
 S=  = Send (BBS is already receiving MSG fm other BBS) Try again on next connect.
 """
+# Fixme: End-Connection trigger
 
 import time
 from datetime import datetime
@@ -201,13 +202,13 @@ class BBS:
     # Tasks
     def _5sec_task(self):
         if time.time() > self._var_task_5sec:
+            self._fwd_port_tasks()  # Checks Block Timer / Resets Block timer
             self._var_task_5sec = time.time() + 5
 
     def _60sec_task(self):
         if time.time() > self._var_task_60sec:
             self._var_task_60sec = time.time() + 60
             # self._in_msg_fwd_check()
-            self._fwd_port_tasks()  # Checks Block Timer / Resets Block timer
             # self._build_new_fwd_Q()
             self._check_new_port_tasks()  # Check for new Port-Tasks
             self._exec_fwdQ()
@@ -624,6 +625,7 @@ class BBS:
 
         #######################################
         # Debugging
+        """
         for bbs_call, bbs_q_cfg in self._fwd_BBS_q.items():
             if  bbs_q_cfg.get('bbs_fwd_q', {}):
                 BBS_LOG.debug(f"BBS-FWD-Q ({bbs_call})")
@@ -631,14 +633,12 @@ class BBS:
             if bbs_q_cfg.get('bbs_fwd_next_q', {}):
                 BBS_LOG.debug(f"BBS-FWD-NEXT-Q ({bbs_call})")
                 BBS_LOG.debug(f"  BID's: ({', '.join(bbs_q_cfg.get('bbs_fwd_next_q', []))})")
-            """
             if bbs_q_cfg.get('bbs_fwd_byte_c', 0):
                 BBS_LOG.debug(f"BBS-Byte-C ({bbs_call})")
                 BBS_LOG.debug(f"  BBS-Byte-C - total: {round((bbs_q_cfg.get('bbs_fwd_byte_c', 1) / 1024), 1)} kB")
             if bbs_q_cfg.get('bbs_fwd_error_c', 0):
                 BBS_LOG.debug(f"BBS-Error-C ({bbs_call})")
                 BBS_LOG.debug(f"  BBS-Error-C: {(bbs_q_cfg.get('bbs_fwd_error_c', 0))}")
-            """
             try:
                 timeout = round(((bbs_q_cfg.get('bbs_fwd_timeout', 0) - time.time()) / 60), 1)
             except ZeroDivisionError:
@@ -646,7 +646,6 @@ class BBS:
             if timeout > 0:
                 BBS_LOG.debug(f"BBS-Timeout ({bbs_call})")
                 BBS_LOG.debug(f"  BBS-Timeout: {timeout} Min")
-        """
         for port_id, fwd_port in self._fwd_ports.items():
             BBS_LOG.debug(f"BBS-FWD-Port ({port_id})")
             BBS_LOG.debug(f"  Block-C: {fwd_port.get('block_byte_c', -1)}")
@@ -666,6 +665,12 @@ class BBS:
             if self._is_block_limit(port_id):
                 BBS_LOG.debug(log_tag + f"Block limit Port {port_id}.. Skipping.")
                 continue
+            if bbs_fwd_timeout > time.time():
+                # Timeout Check ..
+                BBS_LOG.debug(log_tag + f"{bbs_call} wait for Timeout. Skipping.")
+                BBS_LOG.debug(
+                    log_tag + f"  {bbs_call} Timeout: {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")
+                continue
             if self._is_bbs_connected(bbs_call):
                 BBS_LOG.debug(log_tag + f"{bbs_call} is connected.. Skipping.")
                 self._set_bbs_timeout(bbs_call)
@@ -679,13 +684,6 @@ class BBS:
                 self._process_bbs_next_fwd_q(bbs_call)
             if not next_q:
                 # BBS_LOG.debug(log_tag + f"{bbs_call} No new Tasks.. Skipping.")
-                continue
-
-            if bbs_fwd_timeout > time.time():
-                # Timeout Check ..
-                BBS_LOG.debug(log_tag + f"{bbs_call} wait for Timeout. Skipping.")
-                BBS_LOG.debug(
-                    log_tag + f"  {bbs_call} Timeout: {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")
                 continue
             p_tasks = self._fwd_ports.get(port_id, {}).get('block_fwd_tasks', [])
             if bbs_call not in p_tasks:
@@ -923,7 +921,7 @@ class BBS:
                 bbs_fwd_timeout = bbs_fwd_q_vars.get('bbs_fwd_timeout', 0)
                 if bbs_fwd_timeout > time.time():
                     # Timeout Check ..
-                    BBS_LOG.debug(log_tag + f"{to_bbs_call} wait for Timeout.")
+                    BBS_LOG.debug(log_tag + f"{to_bbs_call} wait for BBS-Timeout.")
                     continue
                 if self._is_bbs_connected(to_bbs_call):
                     self._set_bbs_timeout(to_bbs_call)
