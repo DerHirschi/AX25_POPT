@@ -152,27 +152,31 @@ class BBS_fwd_Q(tk.Toplevel):
                 bbs_tab_f = tk.Frame(bbs_tabctl)
                 bbs_tabctl.add(bbs_tab_f, text=bbs_call)
 
-                bbs_byte_c_var  = tk.StringVar(self, value='test')
-                bbs_error_c_var = tk.StringVar(self, value='test')
-                bbs_timeout_var = tk.StringVar(self, value='test')
-                bbs_q_var       = tk.StringVar(self, value='test')
-                bbs_next_q_var  = tk.StringVar(self, value='test')
+                bbs_byte_c_var  = tk.StringVar(self)
+                bbs_error_c_var = tk.StringVar(self)
+                bbs_timeout_var = tk.StringVar(self)
+                bbs_q_var       = tk.StringVar(self)
+                bbs_q_done_var  = tk.StringVar(self)
+                bbs_next_q_var  = tk.StringVar(self)
 
                 bbs_byte_c_f    = tk.Frame(bbs_tab_f)
                 bbs_error_c_f   = tk.Frame(bbs_tab_f)
                 bbs_timeout_f   = tk.Frame(bbs_tab_f)
                 bbs_q_f         = tk.Frame(bbs_tab_f)
+                bbs_q_done_f    = tk.Frame(bbs_tab_f)
                 bbs_next_q_f    = tk.Frame(bbs_tab_f)
                 bbs_byte_c_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_error_c_f.pack( side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_timeout_f.pack( side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_q_f.pack(       side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+                bbs_q_done_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_next_q_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
 
                 tk.Label(bbs_byte_c_f,  textvariable=bbs_byte_c_var ).pack(anchor=tk.W)
                 tk.Label(bbs_error_c_f, textvariable=bbs_error_c_var).pack(anchor=tk.W)
                 tk.Label(bbs_timeout_f, textvariable=bbs_timeout_var).pack(anchor=tk.W)
                 tk.Label(bbs_q_f,       textvariable=bbs_q_var      ).pack(anchor=tk.W)
+                tk.Label(bbs_q_done_f,  textvariable=bbs_q_done_var ).pack(anchor=tk.W)
                 tk.Label(bbs_next_q_f,  textvariable=bbs_next_q_var ).pack(anchor=tk.W)
 
 
@@ -181,6 +185,7 @@ class BBS_fwd_Q(tk.Toplevel):
                     bbs_error_c_var =bbs_error_c_var,
                     bbs_timeout_var =bbs_timeout_var,
                     bbs_q_var       =bbs_q_var,
+                    bbs_q_done_var  =bbs_q_done_var,
                     bbs_next_q_var  =bbs_next_q_var,
                 )
 
@@ -235,6 +240,7 @@ class BBS_fwd_Q(tk.Toplevel):
                 gui_vars['bbs_error_c_var'].set(e_msg)
                 gui_vars['bbs_timeout_var'].set(e_msg)
                 gui_vars['bbs_q_var'].set(e_msg)
+                gui_vars['bbs_q_done_var'].set(e_msg)
                 gui_vars['bbs_next_q_var'].set(e_msg)
                 continue
             bbs_byte_c  = bbs_var.get('bbs_fwd_byte_c',  0)
@@ -257,12 +263,24 @@ class BBS_fwd_Q(tk.Toplevel):
                 timeout = 0
 
             bbs_timeout  = f"Timeout: {timeout} Min"
-            bbs_q        = f"FWD-Q: {', '.join(list(bbs_q.keys()))}"
+            msg_in_q  = 0
+            msg_done  = 0
+            for bid, msg2fwd in bbs_q.items():
+                flag = msg2fwd.get('flag', '')
+                if flag == 'F':
+                    msg_in_q +=1
+                else:
+                    msg_done += 1
+
+
+            bbs_q        = f"FWD-Q: {msg_in_q}"
+            bbs_q_done   = f"FWD-Q Done: {msg_done}"
             bbs_next_q   = f"Next-Q: {', '.join(bbs_next_q)}"
             gui_vars['bbs_byte_c_var'].set(bbs_byte_c)
             gui_vars['bbs_error_c_var'].set(bbs_error_c)
             gui_vars['bbs_timeout_var'].set(bbs_timeout)
             gui_vars['bbs_q_var'].set(bbs_q)
+            gui_vars['bbs_q_done_var'].set(bbs_q_done)
             gui_vars['bbs_next_q_var'].set(bbs_next_q)
 
 
