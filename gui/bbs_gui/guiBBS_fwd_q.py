@@ -33,6 +33,7 @@ class BBS_fwd_Q(tk.Toplevel):
         #########################################
         # Vars
         self._port_vars = {}
+        self._bbs_vars  = {}
         self._tree_data = []
         self._data      = []
         self._rev_ent   = False
@@ -105,12 +106,12 @@ class BBS_fwd_Q(tk.Toplevel):
         # port_m_f = tk.Frame(port_frame)
         # port_m_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self._port_tabctl = ttk.Notebook(port_frame)
-        self._port_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        port_tabctl = ttk.Notebook(port_frame)
+        port_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         for fwd_port_id, fwd_port_vars in self._bbs_obj.get_fwdPort_vars().items():
-            port_tab_f = tk.Frame(self._port_tabctl)
-            self._port_tabctl.add(port_tab_f, text=f"FWD-Port {fwd_port_id}")
+            port_tab_f = tk.Frame(port_tabctl)
+            port_tabctl.add(port_tab_f, text=f"FWD-Port {fwd_port_id}")
             ###############
             # L/R Frames
             l_frame = tk.Frame(port_tab_f, borderwidth=10)
@@ -140,6 +141,49 @@ class BBS_fwd_Q(tk.Toplevel):
                 block_byte_c_var    = block_byte_c_var,
                 block_fwd_tasks_var = block_fwd_tasks_var,
             )
+            ###############
+            # r_frame BBS VARS
+            bbs_tabctl = ttk.Notebook(r_frame)
+            bbs_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+            for bbs_call, bbs_vars in self._bbs_obj.get_bbsQ_vars().items():
+                bbs_var_port_id = POPT_CFG.get_BBS_cfg().get('fwd_bbs_cfg', {}).get(bbs_call, {}).get('port_id', -1)
+                if bbs_var_port_id != fwd_port_id:
+                    continue
+                bbs_tab_f = tk.Frame(bbs_tabctl)
+                bbs_tabctl.add(bbs_tab_f, text=bbs_call)
+
+                bbs_byte_c_var  = tk.StringVar(self, value='test')
+                bbs_error_c_var = tk.StringVar(self, value='test')
+                bbs_timeout_var = tk.StringVar(self, value='test')
+                bbs_q_var       = tk.StringVar(self, value='test')
+                bbs_next_q_var  = tk.StringVar(self, value='test')
+
+                bbs_byte_c_f    = tk.Frame(bbs_tab_f)
+                bbs_error_c_f   = tk.Frame(bbs_tab_f)
+                bbs_timeout_f   = tk.Frame(bbs_tab_f)
+                bbs_q_f         = tk.Frame(bbs_tab_f)
+                bbs_next_q_f    = tk.Frame(bbs_tab_f)
+                bbs_byte_c_f.pack(  side=tk.TOP, expand=False, fill=tk.Y)
+                bbs_error_c_f.pack( side=tk.TOP, expand=False, fill=tk.Y)
+                bbs_timeout_f.pack( side=tk.TOP, expand=False, fill=tk.Y)
+                bbs_q_f.pack(       side=tk.TOP, expand=False, fill=tk.Y)
+                bbs_next_q_f.pack(  side=tk.TOP, expand=False, fill=tk.Y)
+
+                tk.Label(bbs_byte_c_f,  textvariable=bbs_byte_c_var ).pack()
+                tk.Label(bbs_error_c_f, textvariable=bbs_error_c_var).pack()
+                tk.Label(bbs_timeout_f, textvariable=bbs_timeout_var).pack()
+                tk.Label(bbs_q_f,       textvariable=bbs_q_var      ).pack()
+                tk.Label(bbs_next_q_f,  textvariable=bbs_next_q_var ).pack()
+
+
+                self._bbs_vars[bbs_call] = dict(
+                    bbs_byte_c_var  =bbs_byte_c_var,
+                    bbs_error_c_var =bbs_error_c_var,
+                    bbs_timeout_var =bbs_timeout_var,
+                    bbs_q_var       =bbs_q_var,
+                    bbs_next_q_var  =bbs_next_q_var,
+                )
+
 
         self._root_win.BBS_fwd_q_list = self
         self.tasker()
@@ -149,6 +193,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self._format_tree_data()
         self._update_tree()
         self._update_port_vars()
+        self._update_bbs_vars()
 
     def _update_port_vars(self):
         fwd_port_cfgs = POPT_CFG.get_BBS_cfg().get('fwd_port_cfg', {})
@@ -176,6 +221,50 @@ class BBS_fwd_Q(tk.Toplevel):
             gui_vars['block_timer_var'].set(block_timer_var)
             gui_vars['block_byte_c_var'].set(block_byte_c_var)
             gui_vars['block_fwd_tasks_var'].set(block_fwd_tasks_var)
+
+    def _update_bbs_vars(self):
+        bbs_fwd_cfg     = POPT_CFG.get_BBS_cfg().get('fwd_bbs_cfg', {})
+        bbs_Qvars: dict = self._bbs_obj.get_bbsQ_vars()
+
+        for bbs_call, gui_vars in self._bbs_vars.items():
+            bbs_var = bbs_Qvars.get(bbs_call, {})
+            bbs_cfg = bbs_fwd_cfg.get(bbs_call, {})
+            if not bbs_var:
+                e_msg = "ERROR"
+                gui_vars['bbs_byte_c_var'].set(e_msg)
+                gui_vars['bbs_error_c_var'].set(e_msg)
+                gui_vars['bbs_timeout_var'].set(e_msg)
+                gui_vars['bbs_q_var'].set(e_msg)
+                gui_vars['bbs_next_q_var'].set(e_msg)
+                continue
+            bbs_byte_c  = bbs_var.get('bbs_fwd_byte_c',  0)
+            bbs_error_c = bbs_var.get('bbs_fwd_error_c', 0)
+            bbs_timeout = bbs_var.get('bbs_fwd_timeout', 0)
+            bbs_q       = bbs_var.get('bbs_fwd_q',      {})
+            bbs_next_q  = bbs_var.get('bbs_fwd_next_q', [])
+
+            try:
+                bbs_byte_c  = f"Mail sent: {round(float(bbs_byte_c / 1024), 2)} kB"
+            except ZeroDivisionError:
+                bbs_byte_c  = "Mail sent: 0.00 kB"
+
+            bbs_error_c  = f"Errors: {bbs_error_c}"
+            try:
+                timeout = round(((bbs_timeout - time.time()) / 60), 1)
+            except ZeroDivisionError:
+                timeout = 0
+            if timeout < 0:
+                timeout = 0
+
+            bbs_timeout  = f"Timeout: {timeout} Min"
+            bbs_q        = f"FWD-Q: {', '.join(list(bbs_q.keys()))}"
+            bbs_next_q   = f"Next-Q: {', '.join(bbs_next_q)}"
+            gui_vars['bbs_byte_c_var'].set(bbs_byte_c)
+            gui_vars['bbs_error_c_var'].set(bbs_error_c)
+            gui_vars['bbs_timeout_var'].set(bbs_timeout)
+            gui_vars['bbs_q_var'].set(bbs_q)
+            gui_vars['bbs_next_q_var'].set(bbs_next_q)
+
 
 
     def _update_tree(self):

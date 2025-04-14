@@ -209,35 +209,35 @@ class SQL_Database:
 
     def _send_query(self, query):
         # print(f"Query: {query}")
-        #while self._access:
-        #    time.sleep(0.1)
+        while self._access:
+            time.sleep(0.1)
         if self.db:
-            #self._access = True
+            self._access = True
             try:
                 ret = self.db.execute_query(query)
             except SQLConnectionError:
                 self.error = True
                 self.db = None
-                #self._access = False
+                self._access = False
                 return
-            #self._access = False
+            self._access = False
             return ret
 
     def _send_query_bin(self, query, data: tuple):
         # print("Query <<BIN>>")
         # print(query)
-        #while self._access:
-        #    time.sleep(0.1)
+        while self._access:
+            time.sleep(0.1)
         if self.db:
-            #self._access = True
+            self._access = True
             try:
                 ret = self.db.execute_query_bin(query, data)
             except SQLConnectionError:
                 self.error = True
                 self.db = None
-                #self._access = False
+                self._access = False
                 return None
-            #self._access = False
+            self._access = False
             return ret
 
     def _commit_query(self, query):
