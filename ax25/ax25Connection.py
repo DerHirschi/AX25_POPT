@@ -778,15 +778,16 @@ class AX25Conn:
             logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
+        self._bbsFwd_disc()
         self.own_port.del_connections(conn=self)
         self._port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
-        self._bbsFwd_disc()
         logger.debug(f'CLeanup {self.uid}: rx_tx_buf_guiData')
 
     def end_connection(self, reconn=True):
         logger.debug(f"end_connection: {self.uid}")
         self._del_pipe()
+        self._bbsFwd_disc()
         self.ft_queue = []
         if self.ft_obj:
             self.ft_obj.ft_abort()
@@ -798,6 +799,7 @@ class AX25Conn:
 
     def reset_conn(self):
         # self._del_pipe()
+        self._bbsFwd_disc()
         self.ft_queue = []
         if self.ft_obj:
             self.ft_obj.ft_abort()

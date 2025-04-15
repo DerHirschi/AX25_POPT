@@ -18,8 +18,8 @@ class BBS_fwd_Q(tk.Toplevel):
         self.title(self._getTabStr('fwd_list'))
         self.style = self._root_win.style
         # self.geometry("1250x700")
-        self.geometry(f"1000x"
-                      f"300+"
+        self.geometry(f"1050x"
+                      f"400+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._close)
@@ -86,7 +86,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.heading('type', text='Type', command=lambda: self._sort_entry('type'))
         self._tree.heading('sub', text=self._getTabStr('subject'), command=lambda: self._sort_entry('sub'))
         self._tree.heading('size', text='Size', command=lambda: self._sort_entry('size'))
-        self._tree.column("BID", anchor=tk.CENTER, stretch=tk.YES, width=100)
+        self._tree.column("BID", anchor=tk.CENTER, stretch=tk.YES, width=130)
         self._tree.column("from", anchor=tk.CENTER, stretch=tk.YES, width=190)
         self._tree.column("to", anchor=tk.CENTER, stretch=tk.YES, width=190)
         self._tree.column("fwd_bbs_call", anchor=tk.CENTER, stretch=tk.YES, width=90)
@@ -106,12 +106,12 @@ class BBS_fwd_Q(tk.Toplevel):
         # port_m_f = tk.Frame(port_frame)
         # port_m_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        port_tabctl = ttk.Notebook(port_frame)
-        port_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self._port_tabctl = ttk.Notebook(port_frame)
+        self._port_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         for fwd_port_id, fwd_port_vars in self._bbs_obj.get_fwdPort_vars().items():
-            port_tab_f = tk.Frame(port_tabctl)
-            port_tabctl.add(port_tab_f, text=f"FWD-Port {fwd_port_id}")
+            port_tab_f = tk.Frame(self._port_tabctl)
+            self._port_tabctl.add(port_tab_f, text=f"FWD-Port {fwd_port_id}")
             ###############
             # L/R Frames
             l_frame = tk.Frame(port_tab_f, borderwidth=10)
@@ -129,21 +129,30 @@ class BBS_fwd_Q(tk.Toplevel):
             block_timer_f       = tk.Frame(l_frame)
             block_byte_c_f      = tk.Frame(l_frame)
             block_fwd_tasks_f   = tk.Frame(l_frame)
+            reset_btn_f         = tk.Frame(l_frame, borderwidth=10)
             block_timer_f.pack(    side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
             block_byte_c_f.pack(   side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
             block_fwd_tasks_f.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+            reset_btn_f.pack(      side=tk.TOP, expand=False, fill=tk.Y, )
 
             tk.Label(block_timer_f,     textvariable=block_timer_var).pack(    anchor=tk.W)
             tk.Label(block_byte_c_f,    textvariable=block_byte_c_var).pack(   anchor=tk.W)
             tk.Label(block_fwd_tasks_f, textvariable=block_fwd_tasks_var).pack(anchor=tk.W)
+
+            tk.Button(reset_btn_f,
+                      text="Reset Block",
+                      command=lambda: self._do_block_reset(),
+                      ).pack()
+
+            bbs_tabctl = ttk.Notebook(r_frame)
             self._port_vars[fwd_port_id] = dict(
                 block_timer_var     = block_timer_var,
                 block_byte_c_var    = block_byte_c_var,
                 block_fwd_tasks_var = block_fwd_tasks_var,
+                bbs_tabctl          = bbs_tabctl
             )
-            ###############
+            ##########################
             # r_frame BBS VARS
-            bbs_tabctl = ttk.Notebook(r_frame)
             bbs_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
             for bbs_call, bbs_vars in self._bbs_obj.get_bbsQ_vars().items():
                 bbs_var_port_id = POPT_CFG.get_BBS_cfg().get('fwd_bbs_cfg', {}).get(bbs_call, {}).get('port_id', -1)
@@ -159,18 +168,31 @@ class BBS_fwd_Q(tk.Toplevel):
                 bbs_q_done_var  = tk.StringVar(self)
                 bbs_next_q_var  = tk.StringVar(self)
 
-                bbs_byte_c_f    = tk.Frame(bbs_tab_f)
-                bbs_error_c_f   = tk.Frame(bbs_tab_f)
-                bbs_timeout_f   = tk.Frame(bbs_tab_f)
-                bbs_q_f         = tk.Frame(bbs_tab_f)
-                bbs_q_done_f    = tk.Frame(bbs_tab_f)
-                bbs_next_q_f    = tk.Frame(bbs_tab_f)
+                frame_l  = tk.Frame(bbs_tab_f, borderwidth=5)
+                frame_m  = tk.Frame(bbs_tab_f, borderwidth=5)
+                frame_r  = tk.Frame(bbs_tab_f, borderwidth=5)
+
+                frame_l.pack(side=tk.LEFT)
+                frame_m.pack(side=tk.LEFT)
+                frame_r.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+
+                ###########
+                # frame_l
+                bbs_byte_c_f    = tk.Frame(frame_l)
+                bbs_error_c_f   = tk.Frame(frame_l)
+                bbs_timeout_f   = tk.Frame(frame_l)
+                bbs_q_f         = tk.Frame(frame_l)
+                bbs_q_done_f    = tk.Frame(frame_l)
+                bbs_next_q_f    = tk.Frame(frame_l)
+                fwd_btn_f       = tk.Frame(frame_l, borderwidth=10)
+
                 bbs_byte_c_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_error_c_f.pack( side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_timeout_f.pack( side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
-                bbs_q_f.pack(       side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_q_done_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+                bbs_q_f.pack(       side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_next_q_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
+                fwd_btn_f.pack(     side=tk.TOP, expand=False, fill=tk.Y, )
 
                 tk.Label(bbs_byte_c_f,  textvariable=bbs_byte_c_var ).pack(anchor=tk.W)
                 tk.Label(bbs_error_c_f, textvariable=bbs_error_c_var).pack(anchor=tk.W)
@@ -179,6 +201,31 @@ class BBS_fwd_Q(tk.Toplevel):
                 tk.Label(bbs_q_done_f,  textvariable=bbs_q_done_var ).pack(anchor=tk.W)
                 tk.Label(bbs_next_q_f,  textvariable=bbs_next_q_var ).pack(anchor=tk.W)
 
+                tk.Button(fwd_btn_f,
+                          # text=self._getTabStr('start_fwd'),
+                          text="Reset Timeout",
+                          command=lambda: self._do_timeout_reset(),
+                          ).pack()
+
+                ###########
+                # frame_m
+                tk.Label(frame_m, text='Next-Q').pack(pady=10)
+                next_q_tree = ttk.Treeview(frame_m, columns=('bid',), show='headings', height=5)
+                next_q_tree.heading('bid', text='BID')
+                next_q_tree.column("bid", anchor=tk.W, stretch=tk.YES, width=130)
+                next_q_tree.pack()
+
+                ###########
+                # frame_r
+                tk.Label(frame_r, text='FWD-Q').pack(pady=5)
+                fwd_q_tree = ttk.Treeview(frame_r, columns=('bid', 'typ', 'tosend'), show='headings')
+                fwd_q_tree.heading('bid',    text='BID')
+                fwd_q_tree.heading('typ',    text='Typ')
+                fwd_q_tree.heading('tosend', text='Bytes to send')
+                fwd_q_tree.column("bid",    anchor=tk.W,      stretch=tk.YES, width=130)
+                fwd_q_tree.column("typ",    anchor=tk.CENTER, stretch=tk.NO,  width=60)
+                fwd_q_tree.column("tosend", anchor=tk.W,      stretch=tk.YES, width=140)
+                fwd_q_tree.pack(expand=True, fill=tk.BOTH)
 
                 self._bbs_vars[bbs_call] = dict(
                     bbs_byte_c_var  =bbs_byte_c_var,
@@ -187,6 +234,8 @@ class BBS_fwd_Q(tk.Toplevel):
                     bbs_q_var       =bbs_q_var,
                     bbs_q_done_var  =bbs_q_done_var,
                     bbs_next_q_var  =bbs_next_q_var,
+                    next_q_tree     =next_q_tree,
+                    fwd_q_tree      =fwd_q_tree,
                 )
 
 
@@ -221,7 +270,7 @@ class BBS_fwd_Q(tk.Toplevel):
                 block_byte_c_var    = f"Block Limit: {round((block_byte_c / 1024), 2)}/{fwd_port_cfg.get('send_limit', 1)} kB"
             except ZeroDivisionError:
                 block_byte_c_var    = f"Block Limit: 0/{fwd_port_cfg.get('send_limit', 1)} kB"
-            block_fwd_tasks_var = f"Block Tasks: {', '.join(block_fwd_tasks)}"
+            block_fwd_tasks_var = f"Block Tasks: {len(block_fwd_tasks)}"
 
             gui_vars['block_timer_var'].set(block_timer_var)
             gui_vars['block_byte_c_var'].set(block_byte_c_var)
@@ -263,27 +312,45 @@ class BBS_fwd_Q(tk.Toplevel):
                 timeout = 0
 
             bbs_timeout  = f"Timeout: {timeout} Min"
-            msg_in_q  = 0
-            msg_done  = 0
+            msg_in_q    = 0
+            msg_done    = 0
+            q_tree_data = []
             for bid, msg2fwd in bbs_q.items():
                 flag = msg2fwd.get('flag', '')
                 if flag == 'F':
-                    msg_in_q +=1
+                    msg_in_q += 1
+                    q_tree_data.append((
+                        msg2fwd.get('bid', ''),
+                        msg2fwd.get('typ', ''),
+                        msg2fwd.get('bytes_to_send', 0),
+                    ))
                 else:
                     msg_done += 1
 
 
-            bbs_q        = f"FWD-Q: {msg_in_q}"
-            bbs_q_done   = f"FWD-Q Done: {msg_done}"
-            bbs_next_q   = f"Next-Q: {', '.join(bbs_next_q)}"
+            bbs_q            = f"FWD-Q: {msg_in_q}"
+            bbs_q_done       = f"FWD-Q Done: {msg_done}"
+            bbs_next_q_str   = f"Next-Q: {len(bbs_next_q)}"
             gui_vars['bbs_byte_c_var'].set(bbs_byte_c)
             gui_vars['bbs_error_c_var'].set(bbs_error_c)
             gui_vars['bbs_timeout_var'].set(bbs_timeout)
             gui_vars['bbs_q_var'].set(bbs_q)
             gui_vars['bbs_q_done_var'].set(bbs_q_done)
-            gui_vars['bbs_next_q_var'].set(bbs_next_q)
+            gui_vars['bbs_next_q_var'].set(bbs_next_q_str)
 
+            # Next Q
+            bbs_tree = gui_vars.get('next_q_tree')
+            for i in bbs_tree.get_children():
+                bbs_tree.delete(i)
+            for ret_ent in bbs_next_q:
+                bbs_tree.insert('', tk.END, values=ret_ent)
 
+            # FWD-q
+            fwd_q_tree = gui_vars.get('fwd_q_tree')
+            for i in fwd_q_tree.get_children():
+                fwd_q_tree.delete(i)
+            for ret_ent in q_tree_data:
+                fwd_q_tree.insert('', tk.END, values=ret_ent)
 
     def _update_tree(self):
         for i in self._tree.get_children():
@@ -319,6 +386,44 @@ class BBS_fwd_Q(tk.Toplevel):
 
     def _do_fwd(self):
         self._bbs_obj.start_man_autoFwd()
+
+    def _do_timeout_reset(self):
+        try:
+            ind = self._port_tabctl.tab('current')
+        except tk.TclError:
+            return
+        ind = str(ind['text']).replace('FWD-Port ', '')
+        try:
+            current_port_id = int(ind)
+        except ValueError:
+            return
+
+        gui_port_var = self._port_vars.get(current_port_id, {})
+        if not gui_port_var:
+            return
+        bbs_tabctl = gui_port_var.get('bbs_tabctl', None)
+        if not hasattr(bbs_tabctl, 'tab'):
+            return
+        try:
+            bbs_ind = bbs_tabctl.tab('current')
+        except tk.TclError:
+            return
+        bbs_call = bbs_ind['text']
+        if bbs_call not in self._bbs_vars:
+            return
+        self._bbs_obj.reset_bbs_timeout_fnc(bbs_call)
+
+    def _do_block_reset(self):
+        try:
+            ind = self._port_tabctl.tab('current')
+        except tk.TclError:
+            return
+        ind = str(ind['text']).replace('FWD-Port ', '')
+        try:
+            current_port_id = int(ind)
+        except ValueError:
+            return
+        self._bbs_obj.reset_port_block_fnc(current_port_id)
 
     def _close(self):
         # self._bbs_obj = None

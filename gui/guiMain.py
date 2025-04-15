@@ -1512,6 +1512,9 @@ class PoPT_GUI_Main:
                 self._ch_btn_status_update()
             if hasattr(self.settings_win, 'tasker'):
                 self.settings_win.tasker()
+            if hasattr(self.BBS_fwd_q_list, 'tasker'):
+                # TODO 2 Sec Tasker
+                self.BBS_fwd_q_list.tasker()
             if SOUND.master_sound_on:
                 # TODO Sound Task
                 self._rx_beep_sound()
@@ -1537,8 +1540,6 @@ class PoPT_GUI_Main:
                 self._init_state += 1
                 if self._init_state == 2:
                     self.reset_diesel()
-            if hasattr(self.BBS_fwd_q_list, 'tasker'):
-                self.BBS_fwd_q_list.tasker()
             #####################
             self._update_bw_mon()
             self._aprs_wx_tree_task()

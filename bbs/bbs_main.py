@@ -208,10 +208,7 @@ class BBS:
     def _60sec_task(self):
         if time.time() > self._var_task_60sec:
             self._var_task_60sec = time.time() + 60
-            # self._in_msg_fwd_check()
-            # self._build_new_fwd_Q()
-            self._check_new_port_tasks()  # Check for new Port-Tasks
-            self._exec_fwdQ()
+            self._check_msg2fwd()
 
     def _30sec_task(self):
         """ Dynamic Timing """
@@ -219,7 +216,7 @@ class BBS:
             self._var_task_fwdQ_timer = time.time() + 30  # Maybe 120 ?
 
 
-    def _check_received_fwdMsg(self):
+    def _check_msg2fwd(self):
         self._in_msg_fwd_check()
         self._fwd_port_tasks()          # Checks Block Timer / Resets Block timer
         self._build_new_fwd_Q()
@@ -488,7 +485,8 @@ class BBS:
         msg_tab = {}
         for x in out_msg_list:
             msg_tab[x[0]] = x
-        BBS_LOG.debug(log_tag + f"msg_tab  : {msg_tab}")
+        if msg_tab:
+            BBS_LOG.debug(log_tag + f"msg_tab.keys()  : {msg_tab.keys()}")
         new_bid_s   = []
         for fwd_task in db_fwd_q:
             q_bid           = fwd_task[1]
@@ -662,14 +660,16 @@ class BBS:
             next_q          = fwd_q_vars.get('bbs_fwd_next_q', [])
             # bbs_fwd_error_c = fwd_q_vars.get('bbs_fwd_error_c', 0)
             bbs_fwd_timeout = fwd_q_vars.get('bbs_fwd_timeout', 0)
+            #print(f"check - {(bbs_fwd_timeout - time.time()) / 60}")
+            #print(f"check - {bbs_fwd_timeout} - {time.time()}")
             if self._is_block_limit(port_id):
                 BBS_LOG.debug(log_tag + f"Block limit Port {port_id}.. Skipping.")
                 continue
             if bbs_fwd_timeout > time.time():
                 # Timeout Check ..
-                BBS_LOG.debug(log_tag + f"{bbs_call} wait for Timeout. Skipping.")
-                BBS_LOG.debug(
-                    log_tag + f"  {bbs_call} Timeout: {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")
+                #BBS_LOG.debug(log_tag + f"{bbs_call} wait for Timeout. Skipping.")
+                #BBS_LOG.debug(
+                #    log_tag + f"  {bbs_call} Timeout: {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")
                 continue
             if self._is_bbs_connected(bbs_call):
                 BBS_LOG.debug(log_tag + f"{bbs_call} is connected.. Skipping.")
@@ -759,9 +759,9 @@ class BBS:
                     # Next-Q full
                     BBS_LOG.debug(log_tag + f"PN-Prio next-q full")
                     break
-
-            BBS_LOG.debug(
-                log_tag + f"PN-Prio next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
+            if bbs_fwd_next_q:
+                BBS_LOG.debug(
+                    log_tag + f"PN-Prio next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
             return bbs_fwd_next_q
 
         for bid, msg_to_fwd in bbs_fwd_q.items():
@@ -784,8 +784,9 @@ class BBS:
                 BBS_LOG.debug(log_tag + f"next-q full")
                 break
 
-        BBS_LOG.debug(
-            log_tag + f"next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
+        if bbs_fwd_next_q:
+            BBS_LOG.debug(
+                log_tag + f"next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
         return bbs_fwd_next_q
 
     def _set_bbs_byte_c(self, bbs_call: str, bid: str):
@@ -816,24 +817,39 @@ class BBS:
         BBS_LOG.debug(
             log_tag + f"New Timeout({bbs_call}): {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")
 
+    def reset_bbs_timeout_fnc(self, bbs_call: str):
+        if bbs_call not in self._fwd_BBS_q:
+            BBS_LOG.error(self._logTag + f"reset_bbs_timeout_fnc> bbs_call:{bbs_call} not in self._fwd_BBS_q")
+            return
+        self._fwd_BBS_q[bbs_call]['bbs_fwd_timeout'] = time.time()
+        self._check_msg2fwd()
+
     def _is_block_limit(self, port_id: int):
         fwd_port_cfg = self._fwd_port_cfg.get(port_id, getNew_BBS_Port_cfg())
         send_limit   = fwd_port_cfg.get('send_limit', 1)
         if send_limit:
             send_limit = send_limit  * 1024
-        #print(f"Send L: {send_limit}")
-        #print(f"Bloc C: {self._fwd_ports[port_id].get('block_byte_c', 0)}")
         if self._fwd_ports[port_id].get('block_byte_c', 0) > send_limit and send_limit:
-            BBS_LOG.debug(self._logTag + f"Block limit reached Port({port_id}): {self._fwd_ports[port_id].get('block_byte_c', 0)} Bytes")
-            BBS_LOG.debug(self._logTag + f"  Block-T: {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)} min")
+            # BBS_LOG.debug(self._logTag + f"Block limit reached Port({port_id}): {self._fwd_ports[port_id].get('block_byte_c', 0)} Bytes")
+            # BBS_LOG.debug(self._logTag + f"  Block-T: {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)} min")
             return True
         return False
 
+    def reset_port_block_fnc(self, port_id: int):
+        if port_id not in self._fwd_ports:
+            BBS_LOG.error(self._logTag + f"reset_port_block_fnc> Port:{port_id} not in self._fwd_ports")
+            return
+        self._reset_port_block(port_id)
+        self._check_msg2fwd()
+
     def _reset_port_block(self, port_id: int):
-        #BBS_LOG.debug(self._logTag + "Block Reset")
-        #BBS_LOG.debug(self._logTag + f"  port        : {port_id}")
-        #BBS_LOG.debug(self._logTag + f"  block_byte_c: {self._fwd_ports[port_id]['block_byte_c']}")
-        #BBS_LOG.debug(self._logTag + f"  block_timer : {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)}")
+        if port_id not in self._fwd_ports:
+            BBS_LOG.error(self._logTag + f"_reset_port_block> Port:{port_id} not in self._fwd_ports")
+            return
+        # BBS_LOG.debug(self._logTag + "Block Reset")
+        # BBS_LOG.debug(self._logTag + f"  port        : {port_id}")
+        # BBS_LOG.debug(self._logTag + f"  block_byte_c: {self._fwd_ports[port_id]['block_byte_c']}")
+        # BBS_LOG.debug(self._logTag + f"  block_timer : {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)}")
         self._fwd_ports[port_id]['block_timer']     = time.time()
         self._fwd_ports[port_id]['block_byte_c']    = 0
 
@@ -872,11 +888,12 @@ class BBS:
         self._set_bbs_byte_c(bbs_call, bid)
         bbs_fwd_next_q.remove(bid)
         bbs_fwd_q[bid]['flag'] = flag
-
+        """
         BBS_LOG.debug(
             log_tag + f"bbs-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {})}")
         BBS_LOG.debug(
             log_tag + f"next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
+        """
         # self._process_bbs_next_fwd_q(bbs_call)
         return
 
@@ -919,6 +936,9 @@ class BBS:
                 fwd_bbs_cfg     = self._fwd_cfg.get(to_bbs_call, {})
                 bbs_fwd_error_c = bbs_fwd_q_vars.get('bbs_fwd_error_c', 0)
                 bbs_fwd_timeout = bbs_fwd_q_vars.get('bbs_fwd_timeout', 0)
+                #print(f"exec - {(bbs_fwd_timeout - time.time()) / 60}")
+                #print(f"exec - {bbs_fwd_timeout} - {time.time()}")
+
                 if bbs_fwd_timeout > time.time():
                     # Timeout Check ..
                     BBS_LOG.debug(log_tag + f"{to_bbs_call} wait for BBS-Timeout.")
@@ -1046,7 +1066,7 @@ class BBS:
                     BBS_LOG.error(logTag + f'Error, delete_incoming_fwd_bid() - {bbs_call} - BID: {bid}')
             self._fwd_connections.remove(bbs_conn)
             self._port_handler.set_pmsFwdAlarm(False)
-            self._check_received_fwdMsg()
+            self._check_msg2fwd()
             return True
         return False
 
@@ -1078,6 +1098,7 @@ class BBS:
         self._new_man_FWD_wait_t = time.time() + 10
 
         for fwd_bbs_call, fwd_bbs_cfg in self._fwd_cfg.items():
+
             if fwd_bbs_cfg:
                 autoconn_cfg = {
                     'task_typ':     TASK_TYP_FWD,
