@@ -18,7 +18,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self.title(self._getTabStr('fwd_list'))
         self.style = self._root_win.style
         # self.geometry("1250x700")
-        self.geometry(f"1050x"
+        self.geometry(f"1150x"
                       f"400+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
@@ -85,7 +85,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.heading('fwd_bbs_call', text=f"{self._getTabStr('to')} BBS", command=lambda: self._sort_entry('fwd_bbs_call'))
         self._tree.heading('type', text='Type', command=lambda: self._sort_entry('type'))
         self._tree.heading('sub', text=self._getTabStr('subject'), command=lambda: self._sort_entry('sub'))
-        self._tree.heading('size', text='Size', command=lambda: self._sort_entry('size'))
+        self._tree.heading('size', text='Msg-Size', command=lambda: self._sort_entry('size'))
         self._tree.column("BID", anchor=tk.CENTER, stretch=tk.YES, width=130)
         self._tree.column("from", anchor=tk.CENTER, stretch=tk.YES, width=190)
         self._tree.column("to", anchor=tk.CENTER, stretch=tk.YES, width=190)
@@ -212,18 +212,20 @@ class BBS_fwd_Q(tk.Toplevel):
                 tk.Label(frame_m, text='Next-Q').pack(pady=10)
                 next_q_tree = ttk.Treeview(frame_m, columns=('bid',), show='headings', height=5)
                 next_q_tree.heading('bid', text='BID')
-                next_q_tree.column("bid", anchor=tk.W, stretch=tk.YES, width=130)
+                next_q_tree.column("bid", anchor=tk.W, stretch=tk.YES, width=160)
                 next_q_tree.pack()
 
                 ###########
                 # frame_r
                 tk.Label(frame_r, text='FWD-Q').pack(pady=5)
-                fwd_q_tree = ttk.Treeview(frame_r, columns=('bid', 'typ', 'tosend'), show='headings')
+                fwd_q_tree = ttk.Treeview(frame_r, columns=('bid', 'typ', 'msgsize', 'tosend'), show='headings')
                 fwd_q_tree.heading('bid',    text='BID')
                 fwd_q_tree.heading('typ',    text='Typ')
+                fwd_q_tree.heading('msgsize',text='Msg Size(B)')
                 fwd_q_tree.heading('tosend', text='Bytes to send')
-                fwd_q_tree.column("bid",    anchor=tk.W,      stretch=tk.YES, width=130)
+                fwd_q_tree.column("bid",    anchor=tk.W,      stretch=tk.YES, width=160)
                 fwd_q_tree.column("typ",    anchor=tk.CENTER, stretch=tk.NO,  width=60)
+                fwd_q_tree.column("msgsize", anchor=tk.W,     stretch=tk.YES, width=140)
                 fwd_q_tree.column("tosend", anchor=tk.W,      stretch=tk.YES, width=140)
                 fwd_q_tree.pack(expand=True, fill=tk.BOTH)
 
@@ -277,12 +279,12 @@ class BBS_fwd_Q(tk.Toplevel):
             gui_vars['block_fwd_tasks_var'].set(block_fwd_tasks_var)
 
     def _update_bbs_vars(self):
-        bbs_fwd_cfg     = POPT_CFG.get_BBS_cfg().get('fwd_bbs_cfg', {})
+        # bbs_fwd_cfg     = POPT_CFG.get_BBS_cfg().get('fwd_bbs_cfg', {})
         bbs_Qvars: dict = self._bbs_obj.get_bbsQ_vars()
 
         for bbs_call, gui_vars in self._bbs_vars.items():
             bbs_var = bbs_Qvars.get(bbs_call, {})
-            bbs_cfg = bbs_fwd_cfg.get(bbs_call, {})
+            # bbs_cfg = bbs_fwd_cfg.get(bbs_call, {})
             if not bbs_var:
                 e_msg = "ERROR"
                 gui_vars['bbs_byte_c_var'].set(e_msg)
@@ -320,8 +322,9 @@ class BBS_fwd_Q(tk.Toplevel):
                 if flag == 'F':
                     msg_in_q += 1
                     q_tree_data.append((
-                        msg2fwd.get('bid', ''),
-                        msg2fwd.get('typ', ''),
+                        msg2fwd.get('bid'          , ''),
+                        msg2fwd.get('typ'          , ''),
+                        msg2fwd.get('msg_size'     , 0),
                         msg2fwd.get('bytes_to_send', 0),
                     ))
                 else:

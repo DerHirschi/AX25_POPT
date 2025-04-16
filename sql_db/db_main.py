@@ -51,7 +51,7 @@ class SQL_Database:
             self.error = True
             logger.error("Database: Init Error !")
 
-        self._convert_str_list = lambda str_list: "('" + "','".join(str_list) + "')"
+        self._convert_str_list = lambda str_list: "('" + "','".join([str(x) for x in str_list]) + "')"
 
         # DEV
         # print(self.bbs_get_new_pn_msg_for_Call('MD2SAW'))
@@ -1046,7 +1046,8 @@ class SQL_Database:
         return res
 
     def bbs_unhold_msg_by_BID(self, bid_list: list):
-        id_str = "('" + "','".join(bid_list) + "')"
+        # id_str = "('" + "','".join(bid_list) + "')"
+        id_str = self._convert_str_list(bid_list)
         query = ("UPDATE pms_in_msg SET flag='$' "
                  f"WHERE BID in {id_str};")
         self._commit_query(query)
@@ -1134,8 +1135,9 @@ class SQL_Database:
 
     def bbs_outMsg_release_wait_by_list(self, fwd_id_list: list):
         # fwd_id_list = ['000784MD2BOX-DBO527', '000784MD2BOX-MD2BBS']
-        id_list = [str(x) for x in fwd_id_list]
-        id_str = "('" + "','".join(id_list) + "')"
+        # id_list = [str(x) for x in fwd_id_list]
+        #id_str = "('" + "','".join(id_list) + "')"
+        id_str = self._convert_str_list(fwd_id_list)
         query = f"UPDATE pms_fwd_q SET flag='S=' WHERE FWDID in {id_str};"
         self._commit_query(query)
 
@@ -1241,14 +1243,16 @@ class SQL_Database:
         return True
 
     def bbs_del_in_msg_by_BID_list(self, bid_list: list):
-        id_str = "('" + "','".join(bid_list) + "')"
+        # id_str = "('" + "','".join(bid_list) + "')"
+        id_str = self._convert_str_list(bid_list)
         query = ("UPDATE pms_in_msg SET flag='DL' "
                   f"WHERE BID IN {id_str};")
         self._commit_query(query)
         return True
 
     def bbs_del_out_msg_by_BID_list(self, bid_list: list):
-        id_str = "('" + "','".join(bid_list) + "')"
+        # id_str = "('" + "','".join(bid_list) + "')"
+        id_str = self._convert_str_list(bid_list)
         query = ("UPDATE pms_fwd_q SET flag='DL' "
                   f"WHERE BID IN {id_str};")
         self._commit_query(query)

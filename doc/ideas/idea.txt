@@ -175,9 +175,10 @@ Ideas/TODO's :
     ✓ ausgehender FWD
     ✓ automatisiertes abarbeiten der FWD-Q
       ✓ überarbeiten
-      - mehr Steuer/Monitoring-Möglichkeiten (GUI)
+      ✓ mehr Steuer/Monitoring-Möglichkeiten (GUI)
+        - noch mehr
     - Scheduled BL/PN FWD (z.B. nur Nachts)
-    ✓ !Komprimierung (Hufman??) (lzh??) (lzhuf !!)
+    ✓ !Komprimierung (lzhuf)
     ✓ Hold   (Config u Handling)
     ✓ Reject (Config u Handling)
     ✓ CC     (Config u Handling)
