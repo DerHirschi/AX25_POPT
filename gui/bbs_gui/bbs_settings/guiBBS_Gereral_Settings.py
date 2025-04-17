@@ -77,6 +77,8 @@ class BBSGeneralSettings(tk.Frame):
 
         tk.Label(sysop_call_fr, text='Sysop-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
         opt = list(POPT_CFG.get_stat_CFGs_by_typ().keys())
+        if not opt:
+            opt = ['']
         tk.OptionMenu(sysop_call_fr,
                  self._sysop_call_var,
                  *opt,
