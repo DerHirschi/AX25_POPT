@@ -47,15 +47,15 @@ class BoxCLI(DefaultCLI):
     def init(self):
         self._command_set.update({
             # BOX
-            'LB': (2, self._cmd_box_lb, self._getTabStr('cmd_lb')),
+            'LB': (2, self._cmd_box_lb, self._getTabStr('cmd_lb'), False),
 
-            'LN': (2, self._cmd_box_ln, self._getTabStr('cmd_ln')),
-            'LM': (2, self._cmd_box_lm, self._getTabStr('cmd_lm')),
-            'R':  (1, self._cmd_box_r,  self._getTabStr('cmd_r')),
-            'SP': (2, self._cmd_box_sp, self._getTabStr('cmd_sp')),
-            'SB': (2, self._cmd_box_sb, self._getTabStr('cmd_sb')),
-            'KM': (2, self._cmd_box_km, self._getTabStr('cmd_km')),
-            'K':  (1, self._cmd_box_k,  self._getTabStr('cmd_k')),
+            'LN': (2, self._cmd_box_ln, self._getTabStr('cmd_ln'), False),
+            'LM': (2, self._cmd_box_lm, self._getTabStr('cmd_lm'), False),
+            'R':  (1, self._cmd_box_r,  self._getTabStr('cmd_r'),  False),
+            'SP': (2, self._cmd_box_sp, self._getTabStr('cmd_sp'), False),
+            'SB': (2, self._cmd_box_sb, self._getTabStr('cmd_sb'), False),
+            'KM': (2, self._cmd_box_km, self._getTabStr('cmd_km'), False),
+            'K':  (1, self._cmd_box_k,  self._getTabStr('cmd_k'),  False),
         })
         self._commands_cfg = ['QUIT',
                               'BYE',
@@ -121,14 +121,15 @@ class BoxCLI(DefaultCLI):
                 self._to_call in pms_cfg.get('fwd_bbs_cfg', {}).keys()
         )):
             logger.debug(self._logTag + "No CLI-CMD Mode. No C-Text")
-            return ret + self.get_ts_prompt()
+            self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+            return ''
 
         ret += self._c_text
         new_mail = bbs.get_new_pn_count_by_call(self._to_call)
         if new_mail:
             ret += get_strTab('box_new_mail_ctext', self._cli_lang).format(new_mail)
-
-        return ret + self.get_ts_prompt()
+        self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+        return ''
 
     def _s1(self):
         bbs = self._port_handler.get_bbs()
@@ -158,7 +159,7 @@ class BoxCLI(DefaultCLI):
         # Check String Commands
         if not self._exec_str_cmd():
             self._input = self._raw_input
-            self._send_output(self._exec_cmd())
+            self._send_output(self._exec_cmd(), self._env_var_cmd)
         self._last_line = self._new_last_line
         return ''
 
@@ -203,7 +204,7 @@ class BoxCLI(DefaultCLI):
                 self.change_cli_state(1)
                 self._last_line = b''
                 self._input = self._raw_input
-                self._send_output(self._exec_cmd())
+                self._send_output(self._exec_cmd(), env_vars=False)
                 self._last_line = self._new_last_line
                 return
 
@@ -218,14 +219,14 @@ class BoxCLI(DefaultCLI):
                 # Nachricht fuer {} anulliert.
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output(self._getTabStr('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', )))
+                self._send_output(self._getTabStr('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', )), env_vars=False)
                 self._out_msg = GET_MSG_STRUC()
                 return
             self._input = eol.join(lines[1:])
 
             self._out_msg.update(dict(subject=subject))
             # Text eingeben ... (Ende mit /EX oder Ctrl-Z) :
-            self._send_output(self._getTabStr('box_cmd_sp_enter_msg'))
+            self._send_output(self._getTabStr('box_cmd_sp_enter_msg'), env_vars=False)
             self._send_msg_state = 1
             return
         if self._send_msg_state == 1:
@@ -273,7 +274,7 @@ class BoxCLI(DefaultCLI):
                 self._out_msg = GET_MSG_STRUC()
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt())
+                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
                 return False
 
             ret = self._bbs.add_cli_msg_to_fwd_by_id(mid)
@@ -283,7 +284,7 @@ class BoxCLI(DefaultCLI):
                 self._out_msg = GET_MSG_STRUC()
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt())
+                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
                 return False
             bid, fwd_bbs_list = ret
             # Ok. Nachricht an Adresse MD2SAW @ wird geforwardet
@@ -304,7 +305,7 @@ class BoxCLI(DefaultCLI):
                 )
 
             ret_text += self.get_ts_prompt()
-            self._send_output(ret_text)
+            self._send_output(ret_text, env_vars=False)
 
             self._out_msg = GET_MSG_STRUC()
             self._send_msg_state = 0

@@ -26,35 +26,35 @@ class DefaultCLI(object):
     def __init__(self, connection):
         self._logTag = f"CLI-{self.cli_name}: "
         logger.debug(self._logTag + "Init")
-        stat_cfg: dict = connection.get_stat_cfg()
-        self._stat_cfg_index_call = stat_cfg.get('stat_parm_Call', 'NOCALL')
+        stat_cfg: dict              = connection.get_stat_cfg()
+        self._stat_cfg_index_call   = stat_cfg.get('stat_parm_Call', 'NOCALL')
 
-        self._c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
-        self._connection = connection
-        self._port_handler = self._connection.get_port_handler_CONN()
-        self._own_port = self._connection.own_port
+        self._c_text                = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
+        self._connection            = connection
+        self._port_handler          = self._connection.get_port_handler_CONN()
+        self._own_port              = self._connection.own_port
         # self.channel_index = self._connection.ch_index
-        self._gui = self._port_handler.get_gui()
+        self._gui                   = self._port_handler.get_gui()
 
-        self._my_call_str = self._connection.my_call_str
-        self._to_call_str = self._connection.to_call_str
-        self._to_call = self._connection.to_call_str.split('-')[0]
-        self._user_db = USER_DB
-        self._user_db_ent = self._connection.user_db_ent
-        self._cli_lang = self._connection.cli_language
-        self._encoding = 'UTF-8', 'ignore'
-        self._stat_identifier_str = ''
+        self._my_call_str           = self._connection.my_call_str
+        self._to_call_str           = self._connection.to_call_str
+        self._to_call               = self._connection.to_call_str.split('-')[0]
+        self._user_db               = USER_DB
+        self._user_db_ent           = self._connection.user_db_ent
+        self._cli_lang              = self._connection.cli_language
+        self._encoding              = 'UTF-8', 'ignore'
+        self._stat_identifier_str   = ''
         if self._user_db_ent:
-            self._encoding = self._user_db_ent.Encoding, 'ignore'
+            self._encoding            = self._user_db_ent.Encoding, 'ignore'
             self._stat_identifier_str = self._user_db_ent.software_str
             if self._user_db_ent.CText:
-                self._c_text = str(self._user_db_ent.CText)
+                self._c_text          = str(self._user_db_ent.CText)
 
-        self.stat_identifier = get_station_id_obj(self._stat_identifier_str)
+        self.stat_identifier    = get_station_id_obj(self._stat_identifier_str)
         # print(f"CLI STST ID : {self.stat_identifier}")
         # print(f"CLI STST str : {self.stat_identifier_str}")
 
-        self._c_text = self._c_text.replace('\n', '\r')
+        self._c_text            = self._c_text.replace('\n', '\r')
 
         self.time_start         = datetime.now()
 
@@ -68,6 +68,7 @@ class DefaultCLI(object):
         self._last_line         = b''
         self._new_last_line     = b''   # TODO ???????????????????????
         self._parameter         = []
+        self._env_var_cmd       = False
 
         self._sys_login         = None
         self.sysop_priv         = False
@@ -77,51 +78,51 @@ class DefaultCLI(object):
         # self._user_db_ent.cli_sidestop = 20
         # Crone
         self._cron_state_exec = {
-            0: self._cron_s0,       # No CMDs / Do nothing
+            0:   self._cron_s0,     # No CMDs / Do nothing
             100: self._cron_s_quit  # QUIT
         }
         # Standard Commands ( GLOBAL )
         self._command_set = {
-            # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
-            'QUIT':     (1, self._cmd_q, 'Quit'),
-            'BYE':      (1, self._cmd_q, 'Bye'),
-            'ECHO':     (1, self._cmd_echo, 'Echo'),
+            # CMD: (needed lookup len(cmd), cmd_fnc, Help-Str, Str-Vars)
+            'QUIT':     (1, self._cmd_q,                    'Quit',             True),
+            'BYE':      (1, self._cmd_q,                    'Bye',              True),
+            'ECHO':     (1, self._cmd_echo,                 'Echo',             False),
             # NODE Stuff
-            'CONNECT':  (1, self._cmd_connect, 'Connect'),
-            'C!':       (2, self._cmd_connect_exclusive, 'Connect Exclusive (No MH-Path-Lookup)'),
-            'PORT':     (1, self._cmd_port, 'Ports'),
-            'MH':       (0, self._cmd_mh, 'MYHeard List'),
-            'LMH':      (0, self._cmd_mhl, 'Long MYHeard List'),
-            'AXIP':     (2, self._cmd_axip, 'AXIP-MH List'),
-            'DXLIST':   (2, self._cmd_dxlist, 'DX/Tracer Alarm List'),
-            'LCSTATUS': (2, self._cmd_lcstatus, self._getTabStr('cmd_help_lcstatus')),
+            'CONNECT':  (1, self._cmd_connect,              'Connect',           False),
+            'C!':       (2, self._cmd_connect_exclusive,    'Connect Exclusive (No MH-Path-Lookup)', False),
+            'PORT':     (1, self._cmd_port,                 'Ports',             False),
+            'MH':       (0, self._cmd_mh,                   'MYHeard List',      False),
+            'LMH':      (0, self._cmd_mhl,                  'Long MYHeard List', False),
+            'AXIP':     (2, self._cmd_axip,                 'AXIP-MH List',      False),
+            'DXLIST':   (2, self._cmd_dxlist,               'DX/Tracer Alarm List', False),
+            'LCSTATUS': (2, self._cmd_lcstatus,             self._getTabStr('cmd_help_lcstatus'), False),
             # APRS Stuff
-            'ATR':      (2, self._cmd_aprs_trace, 'APRS-Tracer'),
-            'WX':       (0, self._cmd_wx, self._getTabStr('cmd_help_wx')),
+            'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
+            'WX':       (0, self._cmd_wx,                   self._getTabStr('cmd_help_wx'), False),
             # User/Station Info
-            'BELL':     (2, self._cmd_bell, self._getTabStr('cmd_help_bell')),
-            'INFO':     (1, self._cmd_i, 'Info'),
-            'LINFO':    (2, self._cmd_li, 'Long Info'),
-            'NEWS':     (2, self._cmd_news, 'NEWS'),
+            'BELL':     (2, self._cmd_bell,                 self._getTabStr('cmd_help_bell'), False),
+            'INFO':     (1, self._cmd_i,                    'Info', True),
+            'LINFO':    (2, self._cmd_li,                   'Long Info', True),
+            'NEWS':     (2, self._cmd_news,                 'NEWS', True),
             # USER DB
-            'USER':     (0, self._cmd_user_db_detail, self._getTabStr('cmd_help_user_db')),
-            'NAME':     (1, self._cmd_set_name, self._getTabStr('cmd_help_set_name')),
-            'QTH':      (0, self._cmd_set_qth, self._getTabStr('cmd_help_set_qth')),
-            'LOC':      (0, self._cmd_set_loc, self._getTabStr('cmd_help_set_loc')),
-            'ZIP':      (0, self._cmd_set_zip, self._getTabStr('cmd_help_set_zip')),
-            'PRMAIL':   (0, self._cmd_set_pr_mail, self._getTabStr('cmd_help_set_prmail')),
-            'EMAIL':    (0, self._cmd_set_e_mail, self._getTabStr('cmd_help_set_email')),
-            'WEB':      (3, self._cmd_set_http, self._getTabStr('cmd_help_set_http')),
+            'USER':     (0, self._cmd_user_db_detail,       self._getTabStr('cmd_help_user_db'), False),
+            'NAME':     (1, self._cmd_set_name,             self._getTabStr('cmd_help_set_name'), False),
+            'QTH':      (0, self._cmd_set_qth,              self._getTabStr('cmd_help_set_qth'), False),
+            'LOC':      (0, self._cmd_set_loc,              self._getTabStr('cmd_help_set_loc'), False),
+            'ZIP':      (0, self._cmd_set_zip,              self._getTabStr('cmd_help_set_zip'), False),
+            'PRMAIL':   (0, self._cmd_set_pr_mail,          self._getTabStr('cmd_help_set_prmail'), False),
+            'EMAIL':    (0, self._cmd_set_e_mail,           self._getTabStr('cmd_help_set_email'), False),
+            'WEB':      (3, self._cmd_set_http,             self._getTabStr('cmd_help_set_http'),  False),
 
             # CLI OPT
-            'OP':       (2, self._cmd_op, self._getTabStr('cmd_op')),
-            'LANG':     (4, self._cmd_lang, self._getTabStr('cli_change_language')),
-            'UMLAUT':   (2, self._cmd_umlaut, self._getTabStr('auto_text_encoding')),
+            'OP':       (2, self._cmd_op,                   self._getTabStr('cmd_op'), False),
+            'LANG':     (4, self._cmd_lang,                 self._getTabStr('cli_change_language'), False),
+            'UMLAUT':   (2, self._cmd_umlaut,               self._getTabStr('auto_text_encoding'), False),
             #
-            'VERSION':  (3, self._cmd_ver, 'Version'),
-            'POPT':     (0, self._cmd_popt_banner, 'PoPT Banner'),
-            'HELP':     (1, self._cmd_help, self._getTabStr('help')),
-            '?':        (0, self._cmd_shelp, self._getTabStr('cmd_shelp')),
+            'VERSION':  (3, self._cmd_ver,                  'Version', False),
+            'POPT':     (0, self._cmd_popt_banner,          'PoPT Banner', False),
+            'HELP':     (1, self._cmd_help,                 self._getTabStr('help'), False),
+            '?':        (0, self._cmd_shelp,                self._getTabStr('cmd_shelp'), False),
         }
         self._commands_cfg  = list(self._command_set.keys())
         self._commands      = {}
@@ -153,7 +154,9 @@ class DefaultCLI(object):
             self._commands[cmd_key] = self._command_set.get(cmd_key,
                                                             (0,
                                                             lambda : logger.error(self._logTag + f'cmd_kexError: {cmd_key}'),
-                                                            'CLI-Error'))
+                                                            'CLI-Error',
+                                                             False)
+                                                            )
 
         if not self.can_sidestop:
             if 'OP' in self._commands:
@@ -323,8 +326,8 @@ class DefaultCLI(object):
         if self._user_db_ent:
             self._user_db_ent.software_str = str(self.stat_identifier.id_str)
             self._user_db_ent.Software = str(self.stat_identifier.software) + '-' + str(self.stat_identifier.version)
-            # if not self._user_db_ent.TYP:
-            self._user_db_ent.TYP = str(self.stat_identifier.typ)
+            if not self._user_db_ent.TYP:
+                self._user_db_ent.TYP = str(self.stat_identifier.typ)
 
     def _software_identifier(self):
         res = self._find_sw_identifier()
@@ -382,6 +385,7 @@ class DefaultCLI(object):
     def _find_cmd(self):
         # TODO AGAIN
         if self._cmd:
+            self._env_var_cmd = False
             inp_cmd = str(self._cmd.decode(self._encoding[0], 'ignore'))
             inp_cmd = inp_cmd.replace(' ', '')
             cmds = list(self._commands.keys())
@@ -393,6 +397,7 @@ class DefaultCLI(object):
                         ret = tuple(self._commands[cmd])[1]()
                         self._new_last_line = b''
                         if ret:
+                            self._env_var_cmd = self._commands[cmd][3]
                             return ret
                         return ''
                 if inp_cmd == cmd[:len(inp_cmd)]:
@@ -409,6 +414,7 @@ class DefaultCLI(object):
             # self.last_line = b''
             self._new_last_line = b''
             if ret:
+                self._env_var_cmd = self._commands[treffer[0]][3]
                 return ret
             return ''
 
@@ -449,7 +455,7 @@ class DefaultCLI(object):
         return ret
 
     def send_prompt(self):
-        self._send_output(self.get_ts_prompt())
+        self._send_output(self.get_ts_prompt(), env_vars=False)
 
     def _decode_param(self, defaults=None):
         if defaults is None:
@@ -1370,7 +1376,8 @@ class DefaultCLI(object):
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
         # print(f"CLI: ret: {ret}")
-        self._send_output(ret)
+        if ret:
+            self._send_output(ret, env_vars=False)
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -1380,13 +1387,14 @@ class DefaultCLI(object):
     def cli_state_crone(self):
         """ State Crone Tasks """
         ret = self._cron_state_exec[self._crone_state_index]()
-        self._send_output(ret)
+        if ret:
+            self._send_output(ret, env_vars=False)
 
     def _s0(self):  # C-Text
         self._state_index = 1
         ret = self._send_sw_id()
         ret += self._c_text
-        bbs = self._port_handler.get_bbs()
+        # bbs = self._port_handler.get_bbs()
         """
         if hasattr(bbs, 'get_new_pn_count_by_call'):
             new_mail = bbs.get_new_pn_count_by_call(self._to_call)
@@ -1394,8 +1402,10 @@ class DefaultCLI(object):
                 ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
         """
         if self.cli_name == 'USER':
-            return ret
-        return ret + self.get_ts_prompt()
+            self._send_output(ret, env_vars=True)
+            return ''
+        self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+        return ''
 
     def _s1(self):
         # print("CMD-Handler S1")
@@ -1414,7 +1424,7 @@ class DefaultCLI(object):
         # Check String Commands
         if not self._exec_str_cmd():
             self._input = self._raw_input
-            self._send_output(self._exec_cmd())
+            self._send_output(self._exec_cmd(), self._env_var_cmd)
         self._last_line = self._new_last_line
         return ''
 
@@ -1461,7 +1471,7 @@ class DefaultCLI(object):
         return res
 
     def _s4(self):
-        """ ry to connect other Station ( C CMD ) """
+        """ try to connect other Station ( C CMD ) """
         if self._connection.LINK_Connection:
             # print(f'CLI LinkDisco : {self._connection.uid}')
             self._connection.link_disco()
@@ -1572,7 +1582,7 @@ class NoneCLI(DefaultCLI):
         pass
 
     def _exec_cmd(self):
-        pass
+        return ''
 
     def cli_cron(self):
         pass

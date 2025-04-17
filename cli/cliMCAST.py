@@ -21,10 +21,10 @@ class MCastCLI(DefaultCLI):
         self._command_set.update( {
             # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
             # MCAST ######################################################
-            'CH':       (2, self._cmd_mcast_move_channel, self._getTabStr('cmd_help_mcast_move_ch')),
-            'CHLIST':   (3, self._cmd_mcast_channels, self._getTabStr('cmd_help_mcast_channels')),
-            'CHINFO':   (3, self._cmd_mcast_channel_info, self._getTabStr('cmd_help_mcast_ch_info')),
-            'SETAXIP':  (5, self._cmd_mcast_set_member_axip, self._getTabStr('cmd_help_mcast_set_axip')),
+            'CH':       (2, self._cmd_mcast_move_channel, self._getTabStr('cmd_help_mcast_move_ch'),     False),
+            'CHLIST':   (3, self._cmd_mcast_channels, self._getTabStr('cmd_help_mcast_channels'),        False),
+            'CHINFO':   (3, self._cmd_mcast_channel_info, self._getTabStr('cmd_help_mcast_ch_info'),     False),
+            'SETAXIP':  (5, self._cmd_mcast_set_member_axip, self._getTabStr('cmd_help_mcast_set_axip'), False),
             ##############################################################
         })
         self._commands_cfg = ['QUIT',
@@ -99,7 +99,8 @@ class MCastCLI(DefaultCLI):
     def cli_exec(self, inp=b''):
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
-        self._send_output(ret)
+        if ret:
+            self._send_output(ret, env_vars=False)
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -109,7 +110,8 @@ class MCastCLI(DefaultCLI):
     def cli_state_crone(self):
         """ State Crone Tasks """
         ret = self._cron_state_exec[self._crone_state_index]()
-        self._send_output(ret)
+        if ret:
+            self._send_output(ret, env_vars=False)
 
     def _s0(self):  # C-Text
         self._state_index = 1
@@ -118,7 +120,8 @@ class MCastCLI(DefaultCLI):
         out += f"\r{self._cmd_mcast_channels()}"
         out += f"\r # {self._register_mcast_member()}\r" # TODO Extra CMD etc.
         out += self.get_ts_prompt()
-        return out
+        self._send_output(out, env_vars=True)
+        return ''
 
     def _s1(self):
         self._software_identifier()
@@ -126,7 +129,7 @@ class MCastCLI(DefaultCLI):
         # Check String Commands
         if not self._exec_str_cmd():
             self._input = self._raw_input
-            self._send_output(self._exec_cmd())
+            self._send_output(self._exec_cmd(), self._env_var_cmd)
         self._last_line = self._new_last_line
         return ''
 
