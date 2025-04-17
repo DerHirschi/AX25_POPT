@@ -41,6 +41,7 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD: LB (List Bulletin/ Listet alle Bulletin Mails)
 - CLI-CMD: LM (List Mails / Listet alle eigenen Mails)
 - CLI-CMD: LN (List New Mails / Listet alle eigenen neuen Mails)
+- CLI-CMD: LL (List all Mails / Listet alle Mails)
 - CLI-CMD: KM (Löscht alle pers. Nachrichten, die man bereits gelesen hat.)
 - CLI-CMD: K (Löscht pers. Nachricht(en), Bsp: K 123 124 128)
 - CLI-CMD: R (Read Mail / Mail lesen)

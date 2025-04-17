@@ -723,6 +723,26 @@ class SQL_Database:
         self._commit_query(query)
         return res
 
+    # LL #######################
+    def bbs_get_ll(self, call: str):
+        query = ("SELECT MSGID, "
+                 "size, "
+                 "to_call, "
+                 "to_bbs, "
+                 "from_call, "
+                 "time, "
+                 "subject, "
+                 "new, "
+                 "BID,"
+                 "typ "
+                 "FROM pms_in_msg "
+                 f"WHERE NOT flag='DL' "
+                 f"and NOT flag='H' "
+                 f"and to_call='{call}' or typ='B' "
+                 f"ORDER BY MSGID DESC ;")
+        res = self._commit_query(query)
+        # print(f"bbs_get_pn_msg_Tab_by_call res: {res}")
+        return res
 
     # PN #######################
     def bbs_get_pn_msg_Tab_by_call(self, call: str):

@@ -1619,6 +1619,9 @@ class BBS:
     def get_fwdPort_vars(self):
         return self._fwd_ports
 
+    def get_ll(self, numbers: int ,call: str):
+        return self._db.bbs_get_ll(call)[:numbers]
+
     def get_active_fwd_q_tab(self):
         # GUI
         return self._db.pms_get_active_fwd_q_for_GUI()
@@ -1642,7 +1645,6 @@ class BBS:
     def get_trash_tab_bbs(self):
         return  (self._db.bbs_get_trash_inTab_for_BBS_gui(),
                  self._db.bbs_get_trash_outTab_for_BBS_gui())
-
 
     def get_pn_msg_tab_by_call(self, call: str):
         return self._db.bbs_get_pn_msg_Tab_by_call(call)

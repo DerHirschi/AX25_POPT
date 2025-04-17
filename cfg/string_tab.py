@@ -2828,6 +2828,19 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_ll': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '<Anzahl> Listet die neuesten Nachrichten in der ang. Zahl.',
+        '<Number> Lists the latest news in the specified number.',
+        '<nummer> Geeft de laatste berichten in het opgegeven nummer weer.',
+        '<number> Répertorie les derniers messages dans le numéro spécifié.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_lb': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         'Listet alle Bulletin Nachrichten.',
