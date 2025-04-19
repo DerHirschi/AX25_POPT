@@ -267,6 +267,8 @@ class BBS:
             BBS_LOG.error(log_tag + f'Msg: {mid} - BID: {bid} - Typ: {msg_typ} - No msg_typ')
             return False
 
+        # Local CC-List
+        self._check_cc_tab(new_msg)
         # Overwrite all FWD Settings.
         if fwd_bbs_call:
             new_msg['fwd_bbs_call'] = fwd_bbs_call
@@ -318,7 +320,7 @@ class BBS:
         BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
         return False
 
-    def add_cli_msg_to_fwd_by_id(self, mid: int):
+    def add_cli_msg_to_fwd_by_id(self, mid: int, cc_check=True):
         log_tag   = self._logTag + 'Forward Check - BOX-CLI> '
         msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if not msg_fm_db:
@@ -335,7 +337,10 @@ class BBS:
             BBS_LOG.error(log_tag + f'Msg: {mid} - BID: {bid} - Typ: {msg_typ} - No msg_typ')
             return None
 
-
+        # Local CC-List
+        if cc_check:
+            print("cc-check add_cli")
+            self._check_cc_tab(new_msg)
         # Local BBS
         if self._is_fwd_local(msg=new_msg):
             BBS_LOG.info(log_tag + f"Msg: {mid} is Local. No Forwarding needed")
@@ -1468,6 +1473,8 @@ class BBS:
     ########################################################################
     # CC - Tab
     def _check_cc_tab(self, msg: dict):
+        print(f"cc_check")
+
         cc_tab_cfg = self._pms_cfg.get('cc_tab', {})
         """
         cc_tab_cfg = {
@@ -1482,16 +1489,19 @@ class BBS:
             sysop_call = self._pms_cfg.get('sysop', '')
             if sysop_call:
                 self._cc_msg(msg, sysop_call)
-
+                return
+        # print(cc_tab_cfg)
         for k, cc_s in cc_tab_cfg.items():
             if '@' in k:
                 if k in f"{receiver}@{recipient_bbs}":
                     for recv_call in cc_s:
+                        #print(recv_call)
                         self._cc_msg(msg, recv_call)
                     return
             if k in receiver:
                 for recv_call in cc_s:
                     self._cc_msg(msg, recv_call)
+                    #print(recv_call)
                 return
 
     def _cc_msg(self, msg: dict, receiver_call: str):
@@ -1528,8 +1538,7 @@ class BBS:
             BBS_LOG.error(logTag + f"fm {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
             BBS_LOG.error(logTag + "konnte nicht in die DB geschrieben werden. Keine MID")
             return
-
-        res = self.add_cli_msg_to_fwd_by_id(mid)
+        res = self.add_cli_msg_to_fwd_by_id(mid, cc_check=False)
         if not res:
             BBS_LOG.error(logTag + f"Nachricht BID: {msg.get('bid_mid', '')}")
             BBS_LOG.error(logTag + f"fm {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
