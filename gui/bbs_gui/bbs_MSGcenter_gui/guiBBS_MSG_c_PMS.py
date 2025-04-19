@@ -15,6 +15,7 @@ class MSG_Center_PMS(MSG_Center_base):
         self._var_pn_to_label       = tk.StringVar(self, '')
         self._var_pn_subj_label     = tk.StringVar(self, '')
         self._var_pn_time_label     = tk.StringVar(self, '')
+        self._var_pn_rx_time_label  = tk.StringVar(self, '')
         self._var_pn_bid_label      = tk.StringVar(self, '')
         self._var_pn_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
         # BL
@@ -22,6 +23,7 @@ class MSG_Center_PMS(MSG_Center_base):
         self._var_bl_to_label       = tk.StringVar(self, '')
         self._var_bl_subj_label     = tk.StringVar(self, '')
         self._var_bl_time_label     = tk.StringVar(self, '')
+        self._var_bl_rx_time_label  = tk.StringVar(self, '')
         self._var_bl_bid_label      = tk.StringVar(self, '')
         self._var_bl_msg_size       = tk.StringVar(self, ' Size: --- Bytes')
         # Out
@@ -285,11 +287,13 @@ class MSG_Center_PMS(MSG_Center_base):
         to_label        = tk.Label(header_frame, textvariable=self._var_pn_to_label)
         subject_label   = tk.Label(header_frame, textvariable=self._var_pn_subj_label)
         time_label      = tk.Label(header_frame, textvariable=self._var_pn_time_label)
+        rx_time_label   = tk.Label(header_frame, textvariable=self._var_pn_rx_time_label)
         bid_label       = tk.Label(header_frame, textvariable=self._var_pn_bid_label)
         from_label.place(x=2, y=0)
         to_label.place(x=2, y=25)
         subject_label.place(x=2, y=50)
-        time_label.place(relx=0.98, y=36, anchor=tk.E)
+        time_label.place(relx=0.98, y=11, anchor=tk.E)
+        rx_time_label.place(relx=0.98, y=36, anchor=tk.E)
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
 
         # ## lower_f_lower / Msg Text
@@ -421,15 +425,17 @@ class MSG_Center_PMS(MSG_Center_base):
                   ).pack(side=tk.RIGHT, expand=False)
 
         # Header Frame
-        from_label = tk.Label(header_frame, textvariable=self._var_bl_from_label)
-        to_label = tk.Label(header_frame, textvariable=self._var_bl_to_label)
-        subject_label = tk.Label(header_frame, textvariable=self._var_bl_subj_label)
-        time_label = tk.Label(header_frame, textvariable=self._var_bl_time_label)
-        bid_label = tk.Label(header_frame, textvariable=self._var_bl_bid_label)
+        from_label      = tk.Label(header_frame, textvariable=self._var_bl_from_label)
+        to_label        = tk.Label(header_frame, textvariable=self._var_bl_to_label)
+        subject_label   = tk.Label(header_frame, textvariable=self._var_bl_subj_label)
+        time_label      = tk.Label(header_frame, textvariable=self._var_bl_time_label)
+        rx_time_label   = tk.Label(header_frame, textvariable=self._var_bl_rx_time_label)
+        bid_label       = tk.Label(header_frame, textvariable=self._var_bl_bid_label)
         from_label.place(x=2, y=0)
         to_label.place(x=2, y=25)
         subject_label.place(x=2, y=50)
-        time_label.place(relx=0.98, y=36, anchor=tk.E)
+        time_label.place(relx=0.98, y=11, anchor=tk.E)
+        rx_time_label.place(relx=0.98, y=36, anchor=tk.E)
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
 
         self._bl_text = scrolledtext.ScrolledText(root_frame,
@@ -797,6 +803,7 @@ class MSG_Center_PMS(MSG_Center_base):
                 subj        = db_data['subject']
                 msg         = db_data['msg']
                 msg_time    = db_data['time']
+                rx_time     = db_data['rx-time']
                 size        = format_number(len(msg))
                 msg         = msg.decode(enc, 'ignore')
                 msg         = str(msg).replace('\r', '\n')
@@ -808,7 +815,8 @@ class MSG_Center_PMS(MSG_Center_base):
                 self._var_pn_from_label.set(f"From     : {from_call}")
                 self._var_pn_to_label.set(f"To          : {to_call}")
                 self._var_pn_subj_label.set(f"Subject : {subj}")
-                self._var_pn_time_label.set(f"{msg_time}")
+                self._var_pn_time_label.set(f"TX-Time: {msg_time} (utc)")
+                self._var_pn_rx_time_label.set(f"RX-Time: {rx_time}         ")
                 self._var_pn_bid_label.set(f"BID : {bid}")
                 self._var_pn_msg_size.set(f' Size: {size} Bytes')
 
@@ -922,6 +930,7 @@ class MSG_Center_PMS(MSG_Center_base):
                 msg         = db_data['msg']
                 # _path = _db_data[9]
                 msg_time    = db_data['time']
+                rx_time     = db_data['rx-time']
                 size        = format_number(len(msg))
                 msg         = msg.decode(enc, 'ignore')
                 msg         = str(msg).replace('\r', '\n')
@@ -933,7 +942,8 @@ class MSG_Center_PMS(MSG_Center_base):
                 self._var_bl_from_label.set(f"From     : {from_call}")
                 self._var_bl_to_label.set(f"To          : {to_call}")
                 self._var_bl_subj_label.set(f"Subject : {subj}")
-                self._var_bl_time_label.set(f"{msg_time}")
+                self._var_bl_time_label.set(f"TX-Time: {msg_time} (utc)")
+                self._var_bl_rx_time_label.set(f"RX-Time: {rx_time}         ")
                 self._var_bl_bid_label.set(f"BID: {bid}")
                 self._var_bl_msg_size.set(f' Size: {size} Bytes')
 
