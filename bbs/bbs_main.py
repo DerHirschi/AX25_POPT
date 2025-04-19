@@ -217,7 +217,9 @@ class BBS:
 
 
     def _check_msg2fwd(self):
-        self._in_msg_fwd_check()
+        if self._pms_cfg.get('enable_fwd', True):
+            # BBS-Mode (S&F enabled)
+            self._in_msg_fwd_check()
         self._fwd_port_tasks()          # Checks Block Timer / Resets Block timer
         self._build_new_fwd_Q()
         self._check_new_port_tasks()    # Check for new Port-Tasks

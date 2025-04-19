@@ -70,7 +70,7 @@ def getNew_BBS_cfg():
         sysop           = '',           # Sysop Call
         fwd_bbs_cfg     = {},           # FWD CFGs
         fwd_port_cfg    = {},           # Port CFGs
-        home_bbs        = [],           # TODO: Check if used
+        home_bbs        = [],           # Used by GUI (newMSG)
         bin_mode        = True,         # Binary Mails (compressed)
         enable_fwd      = True,         # False = PMS-Mode (No Forwarding) TODO: GUI option
         single_auto_conn= True,         # TODO: delete .. We have port_conn_limit Only one outgoing connection at a time
@@ -111,10 +111,9 @@ def getNew_BBS_FWD_cfg():
         via_calls       = [],
         axip_add        = ('', 0),
         scheduler_cfg   = dict(getNew_schedule_config()),
-        # bin_mode        = True,     # Bin Mail (compressed Mail)      # TODO GUI
         reverseFWD      = True,     # Scheduled FWD
         allowRevFWD     = True,     # TODO
-        t_o_after_fail  = 5,        # Timeout Minutes                       # TODO GUI / Check Function
+        t_o_after_fail  = 5,        # Timeout Minutes
         t_o_increment   = True,     # Increment Timeout after Fail attempt  # TODO GUI / Check Function
         # Routing
         pn_fwd              = True, # Allow PN FWD

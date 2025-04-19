@@ -58,7 +58,7 @@ if CONSOLE_LOG:
 for el in lg_msg:
     logger.warning(f'Directory {el} not found ! Creating new Directory.')
 
-dt_str  = datetime.now().strftime('%y%m')
+dt_str  = datetime.now().strftime('%y%m%d')
 ###########################################
 # Log Book # TODO LogBook FNC
 LOG_BOOK        = logging.getLogger('Logbook')
