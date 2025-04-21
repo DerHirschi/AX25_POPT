@@ -1648,6 +1648,66 @@ STR_TABLE = {
         '',
         ''),
 
+'GPIO': (
+        'GPIO',
+        'GPIO',
+        'GPIO',
+        'GPIO',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'Digipeater': (
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'F-Text': (
+        'F-Text',
+        'F-Text',
+        'F-Text',
+        'F-Text',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'MCast': (
+        'MCast',
+        'MCast',
+        'MCast',
+        'MCast',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'RX-Echo': (
+        'RX-Echo',
+        'RX-Echo',
+        'RX-Echo',
+        'RX-Echo',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'new_stat': (
         'Neue Station',
         'New Station',
@@ -1659,6 +1719,7 @@ STR_TABLE = {
         '',
         '',
         ''),
+
 
     'txt_decoding': (
         'Umlautumwandlung',
