@@ -661,9 +661,11 @@ class PoPT_GUI_Main:
                             command=lambda: self.open_window('fwdPath'),
                             underline=0)
         MenuBBS.add_separator()
+        """
         MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
                             command=self._do_pms_fwd,
                             underline=0)
+        """
 
         MenuBBS.add_command(label=STR_TABLE['start_auto_fwd'][self.language],
                             command=self._do_pms_autoFWD,

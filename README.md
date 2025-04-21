@@ -76,12 +76,13 @@ $ python3 PoPT.py
   - Scheduled Auto PR-Mail
   - C-Text, Info-Text, ...
   - Additional Vars from:
-    - GPIO Tool 
     - 1-wire Sensors 
 - PMS/BBS
   - S&F capable
   - BIN-Mail capable (compressed Mails (lzhuf))
   - Mail import
+  - Remote Commands / CLI
+  - Generates a network diagram of the forward routes 
   - Scheduled Auto Mail e.g.: Routingmails
     - Optional env-var replacement (e.g.: $uptime) 
 - UserDB
@@ -90,8 +91,8 @@ $ python3 PoPT.py
 - NetRom decoder
 - Node/Digi Functions (No NetRom Routing)
 - MCast Server (Multicast Server for AXIP)
-- Remote Commands
-- GPIO Functions (capable to reade and switch GPIO's on PI and other GPIO-Devices) (root rights needed)
+- Remote Commands / CLI
+- GPIO Functions (capable switch GPIO's on PI and other GPIO-Devices) (root rights needed)
 - 1-Wirer Temperatur Sensors (Sensor data can be embedded in C-Text/I-Text/Beacon)
 - Pipe-Tool (Certain traffic or connections can be redirected to a file)
 - Filetransfer

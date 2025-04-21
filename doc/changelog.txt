@@ -12,6 +12,7 @@ Fixes:
 - MH-Liste und User-DB werden beim Beenden von PoPT gelegentlich zerstört.
 - "Sysop-Bell" Einstellungen werden nicht gespeichert
 - Scripterror beim Öffnen des Pin-Setups in den GPIO-Einstellungen
+- Bei Eingabe des CLI-CMD "QTH" wird der "Q" Befehl ausgeführt
 
 Optimierung:
 - T2-Auto Berechnung

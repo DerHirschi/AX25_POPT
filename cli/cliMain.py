@@ -107,7 +107,7 @@ class DefaultCLI(object):
             # USER DB
             'USER':     (0, self._cmd_user_db_detail,       self._getTabStr('cmd_help_user_db'), False),
             'NAME':     (1, self._cmd_set_name,             self._getTabStr('cmd_help_set_name'), False),
-            'QTH':      (0, self._cmd_set_qth,              self._getTabStr('cmd_help_set_qth'), False),
+            'QTH':      (3, self._cmd_set_qth,              self._getTabStr('cmd_help_set_qth'), False),
             'LOC':      (0, self._cmd_set_loc,              self._getTabStr('cmd_help_set_loc'), False),
             'ZIP':      (0, self._cmd_set_zip,              self._getTabStr('cmd_help_set_zip'), False),
             'PRMAIL':   (0, self._cmd_set_pr_mail,          self._getTabStr('cmd_help_set_prmail'), False),
