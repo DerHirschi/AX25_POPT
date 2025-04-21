@@ -2893,6 +2893,19 @@ STR_TABLE = {
         '',
         ''),  #
 
+    'cmd_l_at': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '<CALL>: Listet Bulletins VIA Verteiler.',
+        '<CALL>: Lists bulletins VIA distribution.',
+        '<CALL>: Geeft bulletins weer VIA distributielijst.',
+        "<CALL>: Répertorie les bulletins VIA de distribution.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  #
+
     'cmd_lb': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         'Listet alle Bulletin Nachrichten.',

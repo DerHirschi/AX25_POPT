@@ -54,6 +54,7 @@ class BoxCLI(DefaultCLI):
             'LL': (2, self._cmd_box_ll,     self._getTabStr('cmd_ll'),      False),
             'L<': (2, self._cmd_box_l_from, self._getTabStr('cmd_l_from'),  False),
             'L>': (2, self._cmd_box_l_to,   self._getTabStr('cmd_l_to'),    False),
+            'L@': (2, self._cmd_box_l_at,   self._getTabStr('cmd_l_at'),    False),
             'R':  (1, self._cmd_box_r,      self._getTabStr('cmd_r'),       False),
             'SP': (2, self._cmd_box_sp,     self._getTabStr('cmd_sp'),      False),
             'SB': (2, self._cmd_box_sb,     self._getTabStr('cmd_sb'),      False),
@@ -87,6 +88,7 @@ class BoxCLI(DefaultCLI):
                               'LL',
                               'L<',
                               'L>',
+                              'L@',
                               'R',
                               'SP',
                               'SB',
@@ -440,6 +442,48 @@ class BoxCLI(DefaultCLI):
             ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
 
         return ret + '\r'
+
+    def _cmd_box_l_at(self):
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'get_bl_msg_tabCLI'):
+            logger.error("CLI: _cmd_box_lb: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+
+        self._decode_param(defaults=[''])
+        if not self._parameter:
+            return self._getTabStr('box_parameter_error')
+        if not self._parameter[0]:
+            return self._getTabStr('box_parameter_error')
+        param = self._parameter[0].upper()
+        msg_list = bbs.get_l_at(param, self._to_call)
+
+        if not msg_list:
+            return f"{self._getTabStr('hint_no_mail_for').format(param)}\r"
+
+        self._ss_state = 1
+        ret = '\r'
+        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+                               "===== ==== ====== ====== ====== ====== ====/==== ======\r")
+        BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
+                                          f"{data[-1].ljust(4)} "
+                                          f"{str(data[1]).ljust(6)} "
+                                          f"{str(data[2]).ljust(6)}@{str(data[3].split('.')[0]).ljust(6)} "
+                                          f"{str(data[4]).ljust(6)} "
+                                          f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
+                                          f"{str(data[6])}"
+                                          )
+        ret += BOX_MAIL_TAB_HEADER
+
+        for el in msg_list:
+            flag = el[-1]
+            # if el[7]:
+            #     flag += 'N'
+            el = list(el)
+            el.append(flag)
+            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+
+        return ret + '\r'
+
 
     def _cmd_box_lb(self):
         bbs = self._port_handler.get_bbs()
