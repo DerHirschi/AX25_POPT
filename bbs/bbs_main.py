@@ -264,7 +264,7 @@ class BBS:
         env_vars = conf.get('env_vars', False)
 
 
-        raw_msg = msg_conf.get('msg', '')
+        raw_msg = str(msg_conf.get('raw_msg', ''))
         subject = msg_conf.get('subject', '')
         if any((not raw_msg, not subject)):
             return
@@ -1199,7 +1199,6 @@ class BBS:
         # local_user     += ['SYSOP']     # TODO Swap
         # TODO local_user     += list(user_db.bla......)
         BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs}")
-
 
         if msg_typ == 'B':
             if not recv_bbs_call:

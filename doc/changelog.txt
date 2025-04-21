@@ -56,6 +56,7 @@ Neue Implementierungen / Funktionen:
 - Französische Übersetzung by ClaudeMa
 - CLI-CMD "WX" gibt ASCII-Diagram aus für Temperatur, Luftdruck und
   Luftfeuchtigkeit, wenn Daten vorhanden sind.
+- BBS/PMS AutoMail. Vordefinierte Mails können nach Zeitplan gesendet werden.
 
 ###########################################################################################################
 ###########################################################################################################

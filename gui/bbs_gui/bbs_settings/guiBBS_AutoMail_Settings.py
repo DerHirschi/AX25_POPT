@@ -67,16 +67,16 @@ class BBSAutoMailSettings(tk.Frame):
         var_index += 1
 
         msg_conf    = cfg.get('msg_conf', GET_MSG_STRUC())
-        if type(msg_conf.get('msg', b'')) != str:
-            if msg_conf.get('msg', b''):
+        if type(msg_conf.get('raw_msg', b'')) != str:
+            if msg_conf.get('raw_msg', b''):
                 logger.warning(self._logTag + "msg_conf msg is not empty and bytes !")
-                logger.warning(self._logTag + f"msg: {msg_conf.get('msg', b'')}")
-            msg_conf['msg'] = ''
+                logger.warning(self._logTag + f"raw_msg: {msg_conf.get('raw_msg', b'')}")
+            msg_conf['raw_msg'] = ''
         msg_typ     = msg_conf.get('message_type', 'B')
         subject     = msg_conf.get('subject', '')
         sender      = msg_conf.get('sender', '')
         # sender_bbs  = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
-        raw_msg     = msg_conf.get('msg', '')
+        raw_msg     = msg_conf.get('raw_msg', '')
         if msg_conf.get('receiver', '') and msg_conf.get('recipient_bbs', ''):
             receiver    = f"{msg_conf.get('receiver', '')}@{msg_conf.get('recipient_bbs', '')}"
         elif msg_conf.get('receiver', '') and not msg_conf.get('recipient_bbs', ''):
@@ -172,7 +172,7 @@ class BBSAutoMailSettings(tk.Frame):
                                                # state="disabled",
                                                )
         text_ent.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=5)
-        text_ent.insert(tk.END, msg_conf.get('msg', ''))
+        text_ent.insert(tk.END, msg_conf.get('raw_msg', ''))
         text_ent.bind("<KeyRelease>", lambda event: self._on_key_release_inp_txt())
         ########################################
         # footer_frame
@@ -298,7 +298,7 @@ class BBSAutoMailSettings(tk.Frame):
             task_cfg['msg_conf']['message_type']    = msg_typ
 
             msg = gui_var.get('text_ent').get('1.0', tk.END)[:-1]
-            task_cfg['msg_conf']['msg'] = msg
+            task_cfg['msg_conf']['raw_msg'] = msg
 
             task_cfg['conf_enc'] = gui_var.get('conf_enc_var').get()
             task_cfg['env_vars'] = gui_var.get('env_vars_var').get()
