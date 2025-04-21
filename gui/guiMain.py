@@ -2138,11 +2138,12 @@ class PoPT_GUI_Main:
         SOUND.sprech('Gluck gluck gluck blubber blubber')
         # self._port_handler.set_dxAlarm()
         # self._port_handler.set_tracerAlarm()
-        self._port_handler.debug_Connections()
+        # ## self._port_handler.debug_Connections()
         # self._Alarm_Frame.set_pmsMailAlarm()
         # self.set_noty_bell()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
+        # print(get_mail_import())
 
     def _do_pms_autoFWD(self):
         self._port_handler.get_bbs().start_man_autoFwd()

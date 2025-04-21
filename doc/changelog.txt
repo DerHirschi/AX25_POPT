@@ -57,6 +57,7 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD "WX" gibt ASCII-Diagram aus für Temperatur, Luftdruck und
   Luftfeuchtigkeit, wenn Daten vorhanden sind.
 - BBS/PMS AutoMail. Vordefinierte Mails können nach Zeitplan gesendet werden.
+- BBS Mail Import. Mails werden aus DAtei data/bbs/import/import.poxt importiert.
 
 ###########################################################################################################
 ###########################################################################################################

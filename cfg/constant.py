@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.95'
+VER = '2.117.96'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -30,6 +30,11 @@ CFG_ft_downloads        = 'ft_downloads/'
 CFG_user_db             = 'data/UserDB.popt'
 CFG_mh_data_file        = 'data/mh_data.popt'
 CFG_port_stat_data_file = 'data/port_stat.popt'
+# BBS
+CFG_bbs_data_path       = 'data/bbs/'
+CFG_bbs_import_path     = 'data/bbs/import/'
+CFG_bbs_import_file     = 'import.poxt'
+# Main Cfg-File
 CFG_MAIN_data_file      = 'popt_cfg.popt'    # New Global CFG
 """ Sound Files """
 CFG_sound_DICO      = '//data//sound//disco_alarm.wav'

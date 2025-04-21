@@ -195,7 +195,8 @@ Ideas/TODO's :
   ✓ Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS
   - Auswertung und senden von WP-Mails (Siehe User-DB)
-  - Mail inport/export (SB TEST@TEST .... ..)
+  ✓ Mail inport (SB TEST@TEST .... ..)
+  - Mail export (SB TEST@TEST .... ..)
   - Baken Noty
   ✓ System-Mail (Sysop Noty) - bbs.send_sysop_msg(topic, msg)
     ✓ Keine FWD-Route gefunden

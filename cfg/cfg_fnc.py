@@ -1,9 +1,10 @@
 import pickle
 import os
 
-from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, MAX_PORTS, CFG_logging_path
+from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, MAX_PORTS, CFG_logging_path, \
+    CFG_bbs_data_path, CFG_bbs_import_path
 from cfg.default_config import getNew_station_cfg
-from cfg.logger_config import logger
+from cfg.logger_config import logger, BBS_LOG
 
 
 def cleanup_obj(class_obj: object):
@@ -153,6 +154,13 @@ def init_dir_struct():
         logger.warning(f'Directory {CFG_logging_path} not found ! Creating new Directory.')
         os.makedirs(CFG_logging_path)
 
+def init_bbs_dir():
+    if not os.path.exists(CFG_bbs_data_path):
+        BBS_LOG.warning(f'Directory {CFG_bbs_data_path} not found ! Creating new Directory.')
+        os.makedirs(CFG_bbs_data_path)
+    if not os.path.exists(CFG_bbs_import_path):
+        BBS_LOG.warning(f'Directory {CFG_bbs_import_path} not found ! Creating new Directory.')
+        os.makedirs(CFG_bbs_import_path)
 
 ###############################
 # Port CFGs

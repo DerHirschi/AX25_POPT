@@ -30,6 +30,8 @@ from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR, GET_MSG_STRUC, LF, CR, CNTRL_Z
 from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlist_fm_header, encode_fa_header
 from bbs.bbs_fwd_connection import BBSConnection
+from bbs.bbs_mail_import import get_mail_import
+from cfg.cfg_fnc import init_bbs_dir
 from cfg.constant import SQL_TIME_FORMAT, TASK_TYP_FWD
 from cfg.default_config import getNew_BBS_Port_cfg
 from cfg.popt_config import POPT_CFG
@@ -37,6 +39,7 @@ from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from UserDB.UserDBmain import USER_DB
+from fnc.str_fnc import format_number
 
 
 class BBS:
@@ -44,6 +47,8 @@ class BBS:
         self._logTag        = "BBS-Main: "
         logger.info(self._logTag + 'Init')
         BBS_LOG.info(self._logTag + 'Init')
+        BBS_LOG.info(self._logTag + 'Checking Directory Structure')
+        init_bbs_dir()
         self._port_handler  = port_handler
         self._db            = self._port_handler.get_database()
         self._userDB        = USER_DB
@@ -54,7 +59,6 @@ class BBS:
         self._fwd_port_cfg       = self._pms_cfg.get('fwd_port_cfg', {})
         self._pms_cfg_hasChanged = False
         if not self._pms_cfg.get('enable_fwd', True):
-            # TODO PMS Mode
             BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
         self._own_bbs_address = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
         ##########################
@@ -213,6 +217,7 @@ class BBS:
     def _60sec_task(self):
         if time.time() > self._var_task_60sec:
             self._var_task_60sec = time.time() + 60
+            self._mail_import_task()
             self._check_msg2fwd()
 
     def _30sec_task(self):
@@ -279,9 +284,10 @@ class BBS:
 
         mid = self.new_msg(msg_conf)
         self.add_local_msg_to_fwd_by_id(mid=mid)
-        BBS_LOG.info(log_tag + f"To: {msg_conf.get('receiver', '')} @ {msg_conf.get('recipient_bbs', '')}")
-        BBS_LOG.info(log_tag + f"MID: {mid}")
-        BBS_LOG.info(log_tag + f"Topic: {msg_conf.get('subject')}")
+        BBS_LOG.info(log_tag + "Exec Task")
+        BBS_LOG.info(log_tag + f"  To   : {msg_conf.get('receiver', '')} @ {msg_conf.get('recipient_bbs', '')}")
+        BBS_LOG.info(log_tag + f"  MID  : {mid}")
+        BBS_LOG.info(log_tag + f"  Topic: {msg_conf.get('subject')}")
 
     def _init_scheduled_tasks(self):
         if hasattr(self._port_handler, 'init_AutoMail_tasks'):
@@ -292,9 +298,27 @@ class BBS:
             self._port_handler.reinit_AutoMail_tasks()
 
     ###################################
+    # Mail Import system
+    def _mail_import_task(self):
+        log_tag   = self._logTag + 'Mail Import Task> '
+        new_mails = get_mail_import()
+        for mail in new_mails:
+            mail['sender_bbs'] = self._pms_cfg.get('user', '') + f".{self._pms_cfg.get('regio', '')}"
+
+            BBS_LOG.info(log_tag + f"Import Mail: {format_number(mail.get('message_size', 0))} Bytes")
+            BBS_LOG.info(log_tag + f"  From: {mail.get('sender', '')}")
+            BBS_LOG.info(log_tag + f"  To  : {mail.get('receiver', '')} @ {mail.get('recipient_bbs', '')}")
+            BBS_LOG.info(log_tag + f"  Subj: {mail.get('subject', '')[:20]}..")
+            BBS_LOG.info(log_tag + f"  Typ : {mail.get('message_type', '')}")
+            BBS_LOG.info(log_tag + f"  BID : {mail.get('bid', '')}")
+            mid = self.new_msg(mail)
+            self.add_local_msg_to_fwd_by_id(mid=mid)
+
+
+    ###################################
     # Add Msg to system
     def add_local_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call=''):
-        log_tag   = self._logTag + 'Forward Check - Local > '
+        log_tag   = self._logTag + 'Forward Check - Local> '
         msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if not msg_fm_db:
             BBS_LOG.error(log_tag + 'No msg_fm_db')
