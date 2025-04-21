@@ -224,7 +224,7 @@ class BBSGeneralSettings(tk.Frame):
         self._pms_cfg['single_auto_conn']   = bool(self._singleConn_var.get())
         self._pms_cfg['auto_conn']          = bool(self._autoConn_var.get())
         self._pms_cfg['bin_mode']           = bool(self._bin_mode_var.get())
-        self._pms_cfg['enable_fwd']         = not bool(self._bin_mode_var.get())
+        self._pms_cfg['enable_fwd']         = not bool(self._bbs_mode_var.get())
         try:
             self._pms_cfg['pn_auto_path']   = int(self._pnAutoPath_var.get())
         except ValueError:

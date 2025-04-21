@@ -1323,6 +1323,7 @@ class PoPT_GUI_Main:
 
     def _save_to_file(self):
         data = self._out_txt.get('1.0', tk.END)
+        # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         save_file_dialog(data)
 
     ##########################
@@ -1334,6 +1335,7 @@ class PoPT_GUI_Main:
 
     def _save_monitor_to_file(self):
         data = self._mon_txt.get('1.0', tk.END)
+        # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         save_file_dialog(data)
 
     # END GUI Sizing/Formatting Stuff

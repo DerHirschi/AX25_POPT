@@ -275,7 +275,6 @@ class BoxCLI(DefaultCLI):
                 self.change_cli_state(1)
                 self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
                 return False
-            print(f"cc_check add_cli - S8")
 
             ret = self._bbs.add_cli_msg_to_fwd_by_id(mid)
             if ret is None:

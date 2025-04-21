@@ -191,8 +191,8 @@ Ideas/TODO's :
     ✓ R.. -CMDs
     ✓ L.. -CMDs
       - Erweiterte L.. CMDs (Filter)
-  - Automatesierte Routingmails (Scheduler)
-  - Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
+  ✓ Automatesierte Routingmails (Scheduler)
+  ✓ Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS
   - Auswertung und senden von WP-Mails (Siehe User-DB)
   - Mail inport/export (SB TEST@TEST .... ..)

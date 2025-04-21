@@ -3273,6 +3273,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'AutoMail_settings': (
+        'Auto Mails',
+        'Auto Mails',
+        'Auto Mails',
+        'Auto Mails',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'swap_settings': (
         'SWAP',
         'SWAP',

@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.93'
+VER = '2.117.94'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -367,3 +367,4 @@ GPIO_RANGE = (1, 26)
 # Tasker
 TASK_TYP_FWD    = 'FWD'
 TASK_TYP_BEACON = 'BEACON'
+TASK_TYP_MAIL   = 'AUTOMAIL'

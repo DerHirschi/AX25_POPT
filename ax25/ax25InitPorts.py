@@ -207,26 +207,34 @@ class AX25PortHandler(object):
         self._scheduled_tasker = PoPTSchedule_Tasker(self)
 
     def insert_SchedTask(self, sched_cfg, conf):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
             self._scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
 
     def del_SchedTask(self, conf):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'del_scheduler_Task'):
             self._scheduled_tasker.del_scheduler_Task(conf)
 
     def start_SchedTask_man(self, conf):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'start_scheduler_Task_manual'):
             return self._scheduled_tasker.start_scheduler_Task_manual(conf)
         return None
 
     def _Sched_task(self):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'tasker'):
             # Scheduler & AutoConn Tasker
             self._scheduled_tasker.tasker()
 
     def reinit_beacon_task(self):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'reinit_beacon_tasks'):
             self._scheduled_tasker.reinit_beacon_tasks()
+
+    def init_AutoMail_tasks(self):
+        if hasattr(self._scheduled_tasker, 'init_SchedMail_tasks'):
+            self._scheduled_tasker.init_SchedMail_tasks()
+
+    def reinit_AutoMail_tasks(self):
+        if hasattr(self._scheduled_tasker, 'reinit_SchedMail_tasks'):
+            self._scheduled_tasker.reinit_SchedMail_tasks()
 
     #######################################################################
     # Setting/Parameter Updates

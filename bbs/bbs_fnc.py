@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 
 from bbs.bbs_constant import GET_MSG_STRUC, STAMP, MSG_ID, STAMP_BID, STAMP_MSG_NUM, CR, EOL, MSG_H_TO, SP, MSG_H_FROM, \
-    SOH, NUL, EOT, STX
+    SOH, NUL, EOT, STX, MSG_XH_INFO
 from cfg.constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 from cfg.logger_config import logger
 from cfg.logger_config import BBS_LOG
@@ -71,8 +71,8 @@ def parse_forward_header(header):
 
 
 def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
-    print(f"build_fwd_msg_header - BID: {msg_struc.get('bid_mid', '')}")
-    print(msg_struc)
+    #print(f"build_fwd_msg_header - BID: {msg_struc.get('bid_mid', '')}")
+    #print(msg_struc)
     bbs_address              = fwd_bbs_address
     bbs_call                 = bbs_address.split('.')[0]
     bid                      = msg_struc.get('bid_mid', '')
@@ -80,6 +80,7 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
     #utc                      = datetime.strptime(msg_struc['utctime'], SQL_TIME_FORMAT)
     subject                  = msg_struc.get('subject', '')
     old_header               = msg_struc.get('header', b'')
+    x_info                   = msg_struc.get('x_info', '')
     old_path                 = msg_struc.get('path', "")
     from_call                = msg_struc.get('sender', "")
     from_bbs                 = msg_struc.get('sender_bbs', "")
@@ -92,7 +93,7 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
         old_path             = convert_sql_list(old_path)
     if not bid:
         msg_struc['bid_mid'] = f"{str(msg_struc['mid']).rjust(6, '0')}{bbs_call}"
-        print(f"No BID.. New BID: {msg_struc['bid_mid']}")
+        BBS_LOG.debug(f"No BID.. New BID: {msg_struc['bid_mid']}")
 
     utc = datetime.now(timezone.utc)
     # msg_struc['utctime'] = _utc.strftime(SQL_TIME_FORMAT)
@@ -125,6 +126,8 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
         new_header += CR
         new_header += MSG_H_FROM[0] + SP + from_address.encode('ASCII', 'ignore') + CR
         new_header += MSG_H_TO[1]   + SP + to_address.encode('ASCII', 'ignore') + CR
+        if x_info:
+            new_header += MSG_XH_INFO + SP + x_info.encode('ASCII', 'ignore') + CR
         new_header += CR
 
     else:

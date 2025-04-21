@@ -95,7 +95,7 @@ MSG_HEADER_ALL    = MSG_H_TO + MSG_H_FROM + (
 
 def GET_MSG_STRUC():
     return dict(
-        message_type=   '',
+        message_type=   'P',
         sender=         '',
         sender_bbs=     '',
         receiver=       '',
@@ -107,6 +107,7 @@ def GET_MSG_STRUC():
         #
         msg=            b'',
         header=         b'',
+        x_info=         '',
         path=           [],
         fwd_path=       [],
         msg_time=       '',
