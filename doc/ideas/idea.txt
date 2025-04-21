@@ -190,7 +190,7 @@ Ideas/TODO's :
     ✓ S.. -CMDs
     ✓ R.. -CMDs
     ✓ L.. -CMDs
-      - Erweiterte L.. CMDs (Filter)
+      ✓ Erweiterte L.. CMDs (Filter)
   ✓ Automatesierte Routingmails (Scheduler)
   ✓ Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS

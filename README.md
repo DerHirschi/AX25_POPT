@@ -71,7 +71,19 @@ $ python3 PoPT.py
   - APRS Decoder for Monitor
 - Dual Port (for two TNC's on same Frequency e.g. a SDR on a different Antenna)
 - RX-Echo (Packet echoing to another Port/Device)
-- PMS/BBS (S&F capable) (BIN-Mail capable (compressed Mails))
+- Environment variablen replacement for:
+  - Beacon
+  - Scheduled Auto PR-Mail
+  - C-Text, Info-Text, ...
+  - Additional Vars from:
+    - GPIO Tool 
+    - 1-wire Sensors 
+- PMS/BBS
+  - S&F capable
+  - BIN-Mail capable (compressed Mails (lzhuf))
+  - Mail import
+  - Scheduled Auto Mail e.g.: Routingmails
+    - Optional env-var replacement (e.g.: $uptime) 
 - UserDB
   - Priv Tool for Baycom login procedure
 - Comprehensive statistics for data traffic and AX-25network/BBS-network structures

@@ -11,6 +11,7 @@ Fixes:
 - Unvollständiger PR-Mail Header. (From:, To:)
 - MH-Liste und User-DB werden beim Beenden von PoPT gelegentlich zerstört.
 - "Sysop-Bell" Einstellungen werden nicht gespeichert
+- Scripterror beim Öffnen des Pin-Setups in den GPIO-Einstellungen
 
 Optimierung:
 - T2-Auto Berechnung

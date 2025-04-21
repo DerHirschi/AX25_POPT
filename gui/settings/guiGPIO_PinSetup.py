@@ -9,7 +9,7 @@ from fnc.str_fnc import get_strTab
 
 class GPIO_pinSetup(tk.Toplevel):
     def __init__(self, root_win, pin_id=1):
-        tk.Toplevel.__init__(self, master=root_win.main_win)
+        tk.Toplevel.__init__(self)
         win_width = 600
         win_height = 400
         # self.style = root_win.style
