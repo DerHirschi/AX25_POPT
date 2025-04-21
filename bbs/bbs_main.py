@@ -1695,6 +1695,12 @@ class BBS:
     def get_ll(self, numbers: int ,call: str):
         return self._db.bbs_get_ll(call)[:numbers]
 
+    def get_l_from(self, from_call: str):
+        return self._db.bbs_get_l_from(from_call)
+
+    def get_l_to(self, to_call: str, own_call: str):
+        return self._db.bbs_get_l_to(to_call, own_call)
+
     def get_active_fwd_q_tab(self):
         # GUI
         return self._db.pms_get_active_fwd_q_for_GUI()

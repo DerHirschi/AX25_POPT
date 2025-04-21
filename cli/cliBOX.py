@@ -39,25 +39,29 @@ class BoxCLI(DefaultCLI):
             self._bbs = None
         self._bbs_address       = f"{self._bbs_call}.{regio}"
         self._out_msg           = GET_MSG_STRUC()
+        ##################################
+        #
         self._send_msg_state    = 0
+        self._s9_state          = 0
 
     def init(self):
         self._command_set.update({
             # BOX
-            'LB': (2, self._cmd_box_lb, self._getTabStr('cmd_lb'), False),
+            'LB': (2, self._cmd_box_lb,     self._getTabStr('cmd_lb'),      False),
 
-            'LN': (2, self._cmd_box_ln, self._getTabStr('cmd_ln'), False),
-            'LM': (2, self._cmd_box_lm, self._getTabStr('cmd_lm'), False),
-            'LL': (2, self._cmd_box_ll, self._getTabStr('cmd_ll'), False),
-            'R':  (1, self._cmd_box_r,  self._getTabStr('cmd_r'),  False),
-            'SP': (2, self._cmd_box_sp, self._getTabStr('cmd_sp'), False),
-            'SB': (2, self._cmd_box_sb, self._getTabStr('cmd_sb'), False),
-            'KM': (2, self._cmd_box_km, self._getTabStr('cmd_km'), False),
-            'K':  (1, self._cmd_box_k,  self._getTabStr('cmd_k'),  False),
+            'LN': (2, self._cmd_box_ln,     self._getTabStr('cmd_ln'),      False),
+            'LM': (2, self._cmd_box_lm,     self._getTabStr('cmd_lm'),      False),
+            'LL': (2, self._cmd_box_ll,     self._getTabStr('cmd_ll'),      False),
+            'L<': (2, self._cmd_box_l_from, self._getTabStr('cmd_l_from'),  False),
+            'L>': (2, self._cmd_box_l_to,   self._getTabStr('cmd_l_to'),    False),
+            'R':  (1, self._cmd_box_r,      self._getTabStr('cmd_r'),       False),
+            'SP': (2, self._cmd_box_sp,     self._getTabStr('cmd_sp'),      False),
+            'SB': (2, self._cmd_box_sb,     self._getTabStr('cmd_sb'),      False),
+            'KM': (2, self._cmd_box_km,     self._getTabStr('cmd_km'),      False),
+            'K':  (1, self._cmd_box_k,      self._getTabStr('cmd_k'),       False),
         })
         self._commands_cfg = ['QUIT',
                               'BYE',
-
                               'LCSTATUS',
                               ## APRS
                               # 'ATR',
@@ -81,6 +85,8 @@ class BoxCLI(DefaultCLI):
                               'LN',
                               'LM',
                               'LL',
+                              'L<',
+                              'L>',
                               'R',
                               'SP',
                               'SB',
@@ -95,12 +101,14 @@ class BoxCLI(DefaultCLI):
                               'POPT',
                               'HELP',
                               '?']
+
         self._state_exec.update({
             8: self._s8,  # Send Msg
-
+            9: self._s9   # Unknown User
         })
 
     ###########################################################
+    # States
     def _s0(self):  # C-Text
         bbs = self._port_handler.get_bbs()
         if any((
@@ -131,6 +139,7 @@ class BoxCLI(DefaultCLI):
         return ''
 
     def _s1(self):
+        """ Exec Cmds """
         bbs = self._port_handler.get_bbs()
         if any((
                 not hasattr(bbs, 'get_new_pn_count_by_call'),
@@ -163,6 +172,7 @@ class BoxCLI(DefaultCLI):
         return ''
 
     def _s2(self):
+        """ Quit """
         return self._cmd_q()
 
     def _s7(self):
@@ -208,6 +218,7 @@ class BoxCLI(DefaultCLI):
                 return
 
     def _s8(self):
+        """ Send Message """
         self._input += self._raw_input
         eol = find_eol(self._input)
         if self._send_msg_state == 0:
@@ -314,6 +325,10 @@ class BoxCLI(DefaultCLI):
         self._send_msg_state = 0
         self.change_cli_state(1)
 
+    def _s9(self):
+        """ Unknown User """
+        pass
+
     ##############################################
     #
     def _send_output(self, ret, env_vars=True):
@@ -344,11 +359,23 @@ class BoxCLI(DefaultCLI):
             self._connection.tx_buf_rawData += ret
     ##############################################
     # BOX
-    def _cmd_box_lb(self):
+    def _cmd_box_l_from(self):
         bbs = self._port_handler.get_bbs()
         if not hasattr(bbs, 'get_bl_msg_tabCLI'):
             logger.error("CLI: _cmd_box_lb: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
+
+        self._decode_param(defaults=[''])
+        if not self._parameter:
+            return self._getTabStr('box_parameter_error')
+        if not self._parameter[0]:
+            return self._getTabStr('box_parameter_error')
+        param    = self._parameter[0].upper()
+        msg_list = bbs.get_l_from(param)
+
+        if not msg_list:
+            return f"{self._getTabStr('hint_no_mail_for').format(param)}\r"
+
         self._ss_state = 1
         ret = '\r'
         BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
@@ -362,7 +389,81 @@ class BoxCLI(DefaultCLI):
                                           f"{str(data[6])}"
                                           )
         ret += BOX_MAIL_TAB_HEADER
+        #msg_list = list(bbs.get_bl_msg_tabCLI())
+        #msg_list.reverse()
+        for el in msg_list:
+            #flag = 'B'
+            # if el[7]:
+            #     flag += 'N'
+            #el = list(el)
+            #el.append(flag)
+            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+        return ret + '\r'
+
+    def _cmd_box_l_to(self):
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'get_bl_msg_tabCLI'):
+            logger.error("CLI: _cmd_box_lb: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+
+        self._decode_param(defaults=[''])
+        if not self._parameter:
+            return self._getTabStr('box_parameter_error')
+        if not self._parameter[0]:
+            return self._getTabStr('box_parameter_error')
+        param    = self._parameter[0].upper()
+        msg_list = bbs.get_l_to(param, self._to_call)
+
+        if not msg_list:
+            return f"{self._getTabStr('hint_no_mail_for').format(param)}\r"
+
+        self._ss_state = 1
+        ret = '\r'
+        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+                               "===== ==== ====== ====== ====== ====== ====/==== ======\r")
+        BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
+                                          f"{data[-1].ljust(4)} "
+                                          f"{str(data[1]).ljust(6)} "
+                                          f"{str(data[2]).ljust(6)}@{str(data[3].split('.')[0]).ljust(6)} "
+                                          f"{str(data[4]).ljust(6)} "
+                                          f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
+                                          f"{str(data[6])}"
+                                          )
+        ret += BOX_MAIL_TAB_HEADER
+
+        for el in msg_list:
+            flag = el[-1]
+            # if el[7]:
+            #     flag += 'N'
+            el = list(el)
+            el.append(flag)
+            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+
+        return ret + '\r'
+
+    def _cmd_box_lb(self):
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'get_bl_msg_tabCLI'):
+            logger.error("CLI: _cmd_box_lb: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+
         msg_list = list(bbs.get_bl_msg_tabCLI())
+        if not msg_list:
+            return f"{self._getTabStr('hint_no_mail')}\r"
+
+        self._ss_state = 1
+        ret = '\r'
+        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+                               "===== ==== ====== ====== ====== ====== ====/==== ======\r")
+        BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
+                                          f"{data[-1].ljust(4)} "
+                                          f"{str(data[1]).ljust(6)} "
+                                          f"{str(data[2]).ljust(6)}@{str(data[3]).ljust(6)} "
+                                          f"{str(data[4]).ljust(6)} "
+                                          f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
+                                          f"{str(data[6])}"
+                                          )
+        ret += BOX_MAIL_TAB_HEADER
         msg_list.reverse()
         for el in msg_list:
             flag = 'B'
@@ -378,6 +479,10 @@ class BoxCLI(DefaultCLI):
         if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
+
+        msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
+        if not msg_list:
+            return f"{self._getTabStr('hint_no_mail')}\r"
         self._ss_state = 1
         ret = '\r'
         BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
@@ -391,7 +496,6 @@ class BoxCLI(DefaultCLI):
                                           f"{str(data[6])}"
                                           )
         ret += BOX_MAIL_TAB_HEADER
-        msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
         msg_list.reverse()
         for el in msg_list:
             flag = 'P'
@@ -407,6 +511,10 @@ class BoxCLI(DefaultCLI):
         if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
             logger.error("CLI: _cmd_box_lm: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
+
+        msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
+        if not msg_list:
+            return f"{self._getTabStr('hint_no_mail')}\r"
         self._ss_state = 1
         ret = '\r'
         BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
@@ -420,7 +528,6 @@ class BoxCLI(DefaultCLI):
                                           f"{str(data[6])}"
                                           )
         ret += BOX_MAIL_TAB_HEADER
-        msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
         msg_list.reverse()
         for el in msg_list:
             flag = 'P'
@@ -436,13 +543,15 @@ class BoxCLI(DefaultCLI):
         if not hasattr(bbs, 'del_pn_in_by_IDs'):
             logger.error(self._logTag + "_cmd_box_km: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
+
         # self._parameter = self._parameter[0]
         self._decode_param(defaults=[-1])
 
         if not self._parameter:
             return self._getTabStr('box_parameter_error')
         msg_list = bbs.get_ll(self._parameter[0], self._to_call)
-
+        if not msg_list:
+            return f"{self._getTabStr('hint_no_mail')}\r"
         self._ss_state = 1
         ret = '\r'
         BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +

@@ -2759,12 +2759,38 @@ STR_TABLE = {
 
     #####################################################
     # BOX CLI
+    'hint_no_mail_for': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Keine Mails vorhanden: {}',
+        '\r # No mails available: {}',
+        '\r # Geen mails beschikbaar: {}',
+        '\r # Aucun mail disponible: {}',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'hint_no_mail': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Keine Mails vorhanden',
+        '\r # No mails available',
+        '\r # Geen mails beschikbaar',
+        '\r # Aucun mail disponible',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_r': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '<MSG#> Liest die Nachricht mit der entspr. Nummer aus.',
-        '<MSG#> Reads the message with the corresponding number.',
-        '<MSG#> Leest het bericht met het bijbehorende nummer.',
-        '<MSG#> lecture du message correspondant au numéro de message.',
+        '<MSG#>: Liest die Nachricht mit der entspr. Nummer aus.',
+        '<MSG#>: Reads the message with the corresponding number.',
+        '<MSG#>: Leest het bericht met het bijbehorende nummer.',
+        '<MSG#>: lecture du message correspondant au numéro de message.',
         '',
         '',
         '',
@@ -2774,10 +2800,10 @@ STR_TABLE = {
 
     'cmd_sp': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        'SP <Call> @ <BBS> : Sendet eine persoenliche Nachricht an Rufzeichen',
-        'SP <Call> @ <BBS> : Sends a personal message to call sign',
+        'SP <Call> @ <BBS>: Sendet eine persoenliche Nachricht an Rufzeichen',
+        'SP <Call> @ <BBS>: Sends a personal message to call sign',
         'SP <Call> @ <BBS>: Stuurt een persoonlijk bericht naar roepnamen',
-        'SP <Call> @ <BBS> : Envoie un message personnel à l\'indicatid',
+        'SP <Call> @ <BBS>: Envoie un message personnel à l\'indicatid',
         '',
         '',
         '',
@@ -2787,13 +2813,13 @@ STR_TABLE = {
 
     'cmd_sb': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        ('SB <Rubrik> @ <Verteiler> Sendet ein Bulletin in eine Rubrik \r'
+        ('SB <Rubrik> @ <Verteiler>: Sendet ein Bulletin in eine Rubrik \r'
          '              fuer mehrere Boxen in einer Region.'),
-        ('SB <Category> @ <Distribution> Sends a bulletin to a category \r'
+        ('SB <Category> @ <Distribution>: Sends a bulletin to a category \r'
          '              for multiple boxes in a region.'),
-        ('SB <categorie> @ <distributie> Stuurt een bulletin naar een categorie \r'
+        ('SB <categorie> @ <distributie>: Stuurt een bulletin naar een categorie \r'
          '              voor meerdere dozen in een regio.'),
-        ('SB <Catégorie> @ <Distribution> Envoie un bulletin a la categorie \r'
+        ('SB <Catégorie> @ <Distribution>: Envoie un bulletin a la categorie \r'
          '              pour plusieurs boites dans une région.'),
         '',
         '',
@@ -2830,16 +2856,42 @@ STR_TABLE = {
 
     'cmd_ll': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '<Anzahl> Listet die neuesten Nachrichten in der ang. Zahl.',
-        '<Number> Lists the latest news in the specified number.',
-        '<nummer> Geeft de laatste berichten in het opgegeven nummer weer.',
-        '<number> Répertorie les derniers messages dans le numéro spécifié.',
+        '<Anzahl>: Listet die neuesten Nachrichten in der ang. Zahl.',
+        '<Number>: Lists the latest news in the specified number.',
+        '<nummer>: Geeft de laatste berichten in het opgegeven nummer weer.',
+        '<number>: Répertorie les derniers messages dans le numéro spécifié.',
         '',
         '',
         '',
         '',
         '',
-        ''),
+        ''), #
+
+    'cmd_l_from': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '<CALL>: Listet Bulletins VON einem Rufzeichen.',
+        '<CALL>: Lists bulletins FROM a callsign.',
+        '<CALL>: Geeft een lijst met bulletins VAN een roepnaam.',
+        "<CALL>: Répertorie les bulletins À PARTIR d'un indicatif d'appel.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  #
+
+    'cmd_l_to': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '<CALL/RUBRIK>: Listet Nachrichten AN ein Rufzeichen oder Rubrik.',
+        '<CALL/RUBRIK>: Lists messages TO a call sign or heading.',
+        '<CALL/RUBRIK>: Geeft een lijst weer van berichten NAAR een roepnaam of kop.',
+        "<CALL/RUBRIK>: répertorie les messages VERS un indicatif d'appel ou un titre.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  #
 
     'cmd_lb': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -2869,10 +2921,10 @@ STR_TABLE = {
 
     'cmd_k': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '<MSG#> Loescht die Nachricht mit der entspr. Nummer.',
-        '<MSG#> Deletes the message with the corresponding number.',
-        '<MSG#> Verwijdert het bericht met het bijbehorende nummer.',
-        '<MSG#> Supprime le message portant ce numéro',
+        '<MSG#>: Loescht die Nachricht mit der entspr. Nummer.',
+        '<MSG#>: Deletes the message with the corresponding number.',
+        '<MSG#>: Verwijdert het bericht met het bijbehorende nummer.',
+        '<MSG#>: Supprime le message portant ce numéro',
         '',
         '',
         '',

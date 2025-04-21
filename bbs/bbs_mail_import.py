@@ -12,6 +12,9 @@ def get_mail_import():
             import_data = inp.read()
             inp.close()
     except (FileNotFoundError, EOFError) as e:
+        # BBS_LOG.error(log_tag + f"read from Import File: {e}")
+        return []
+    except PermissionError as e:
         BBS_LOG.error(log_tag + f"read from Import File: {e}")
         return []
     if not import_data:
@@ -23,7 +26,7 @@ def get_mail_import():
         BBS_LOG.warning(log_tag + f"write to Import File - File not Found: {e} ")
         with open(import_file, 'xb') as file:
             file.write(b'')
-    except (FileNotFoundError, EOFError) as e:
+    except (FileNotFoundError, EOFError, PermissionError) as e:
         BBS_LOG.error(log_tag + f"write to Import File: {e}")
         return []
 
