@@ -136,8 +136,16 @@ class BoxCLI(DefaultCLI):
         ret += self._c_text
         new_mail = bbs.get_new_pn_count_by_call(self._to_call)
         if new_mail:
-            ret += get_strTab('box_new_mail_ctext', self._cli_lang).format(new_mail)
+            ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
+
+        """
+        if new_user:
+            ret += self._getTabStr('')
+            self.change_cli_state(9)
+        """
+
         self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+
         return ''
 
     def _s1(self):
@@ -161,6 +169,7 @@ class BoxCLI(DefaultCLI):
             self._connection.bbsFwd_start()
         if hasattr(self.stat_identifier, 'typ'):
             if any((
+                # Disabling Remote CMDs for non Sysop Stations
                     self.stat_identifier.typ in ['BBS', 'NODE'],
                     self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
             )):
@@ -329,7 +338,13 @@ class BoxCLI(DefaultCLI):
 
     def _s9(self):
         """ Unknown User """
-        pass
+        if self._s9_state == 0:
+            self._s9_state = 1
+            self._send_output('-...................-...........................', env_vars=False)
+        else:
+            self._s9_state = 0
+            self.change_cli_state(1)
+
 
     ##############################################
     #
@@ -391,14 +406,7 @@ class BoxCLI(DefaultCLI):
                                           f"{str(data[6])}"
                                           )
         ret += BOX_MAIL_TAB_HEADER
-        #msg_list = list(bbs.get_bl_msg_tabCLI())
-        #msg_list.reverse()
         for el in msg_list:
-            #flag = 'B'
-            # if el[7]:
-            #     flag += 'N'
-            #el = list(el)
-            #el.append(flag)
             ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
         return ret + '\r'
 

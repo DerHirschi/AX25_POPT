@@ -13,6 +13,7 @@ Fixes:
 - "Sysop-Bell" Einstellungen werden nicht gespeichert
 - Scripterror beim Öffnen des Pin-Setups in den GPIO-Einstellungen
 - Bei Eingabe des CLI-CMD "QTH" wird der "Q" Befehl ausgeführt
+- User-DB: Zeit für "Letzer Connect" wurde als "zuletzt gelesen" gesetzt
 
 Optimierung:
 - T2-Auto Berechnung
@@ -45,8 +46,8 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD: LN (List New Mails / Listet alle eigenen neuen Mails)
 - CLI-CMD: LL (List all Mails / Listet alle Mails)
 - CLI-CMD: L< (<CALL> Listet Bulletins VON einem Rufzeichen)
-- CLI-CMD: L> (<CALL/RUBRIK>: Listet Nachrichten AN ein Rufzeichen oder Rubrik.)
-- CLI-CMD: L@ (<CALL>: Listet Bulletins VIA Verteiler.)
+- CLI-CMD: L> (<CALL/RUBRIK> Listet Nachrichten AN ein Rufzeichen oder Rubrik.)
+- CLI-CMD: L@ (<CALL> Listet Bulletins VIA Verteiler.)
 - CLI-CMD: KM (Löscht alle pers. Nachrichten, die man bereits gelesen hat.)
 - CLI-CMD: K  (Löscht pers. Nachricht(en), Bsp: K 123 124 128)
 - CLI-CMD: R  (Read Mail / Mail lesen)
@@ -62,7 +63,7 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD "WX" gibt ASCII-Diagram aus für Temperatur, Luftdruck und
   Luftfeuchtigkeit, wenn Daten vorhanden sind.
 - BBS/PMS AutoMail. Vordefinierte Mails können nach Zeitplan gesendet werden.
-- BBS Mail Import. Mails werden aus DAtei data/bbs/import/import.poxt importiert.
+- BBS Mail Import. Mails werden aus Datei data/bbs/import/import.poxt importiert.
 
 ###########################################################################################################
 ###########################################################################################################

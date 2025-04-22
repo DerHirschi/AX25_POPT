@@ -3,6 +3,7 @@ import datetime
 import os
 import pickle
 from cfg.logger_config import logger
+from cfg.popt_config import POPT_CFG
 
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call, validate_aprs_call
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
@@ -49,6 +50,7 @@ class Client(object):
 
     last_edit = datetime.datetime.now()
     last_seen = datetime.datetime.now()
+    last_conn = None
     Connects = 0
     # GUI OPT
     Encoding = 'CP437'    # 'UTF-8'
@@ -71,8 +73,7 @@ class UserDB:
         # print("User-DB Init")
         self._logTag = "User-DB: "
         logger.info("User-DB: Init")
-        self._port_handler = None
-        self.not_public_vars = [
+        self.not_public_vars = [    # TODO public Vars or new CLI CMD / CLI-Tab
             'not_public_vars',
             'call_str',
             'is_new',
@@ -144,10 +145,6 @@ class UserDB:
 
         logger.info("User-DB: Init complete")
 
-    def set_port_handler(self, port_handler):
-        self._port_handler = port_handler
-        logger.info("User-DB: PH set")
-
     def get_entry(self, call_str: str, add_new=True):
         # call_str = validate_ax25Call(call_str)
         if not hasattr(call_str, 'upper'):
@@ -203,9 +200,7 @@ class UserDB:
                 ent.TYP = typ
 
     def set_distance(self, entry_call: str):
-        if self._port_handler is None:
-            return False
-        own_loc = self._port_handler.get_gui().own_loc
+        own_loc = POPT_CFG.get_guiCFG_locator()
         if not own_loc:
             return False
         ent = self.get_entry(entry_call, False)
@@ -298,6 +293,7 @@ class UserDB:
                 'qth': str(flag.QTH),
                 'dist': flag.Distance,
                 'land': str(flag.Land),
+                'last_conn': '---' if flag.last_conn is None else conv_time_for_sorting(flag.last_conn),
                 'last_seen': conv_time_for_sorting(flag.last_seen),
             }[flag_str]
             while key in temp.keys():

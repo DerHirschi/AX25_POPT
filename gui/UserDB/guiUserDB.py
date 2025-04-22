@@ -515,7 +515,7 @@ class UserDB(tk.Toplevel):
                 f"{self.db_ent.last_edit.time().minute}"
             )"""
             self._last_edit_var.set(conv_time_DE_str(self._db_ent.last_edit))
-            self._last_conn_var.set(conv_time_DE_str(self._db_ent.last_seen))
+            self._last_conn_var.set('---' if self._db_ent.last_conn is None else conv_time_DE_str(self._db_ent.last_conn))
             self._conn_count_var.set(str(self._db_ent.Connects))
 
             self._info_ent.delete(0.0, tk.END)

@@ -18,7 +18,7 @@ class UserDBtreeview(tk.Toplevel):
         self.title("User-DB")
         self.style = self.root.style
         # self.geometry("1250x700")
-        self.geometry(f"1090x"
+        self.geometry(f"1250x"
                       f"700+"
                       f"{self.root.main_win.winfo_x()}+"
                       f"{self.root.main_win.winfo_y()}")
@@ -43,6 +43,7 @@ class UserDBtreeview(tk.Toplevel):
             'uDB_dist',
             'uDB_qth',
             'uDB_land',
+            'uDB_lastconn',
             'uDB_lastseen',
         )
         self.tree = ttk.Treeview(self, columns=columns, show='headings')
@@ -59,7 +60,8 @@ class UserDBtreeview(tk.Toplevel):
         self.tree.heading('uDB_dist', text='Distance', command=lambda: self.sort_entry('dist'))
         self.tree.heading('uDB_qth', text='QTH', command=lambda: self.sort_entry('qth'))
         self.tree.heading('uDB_land', text='Land', command=lambda: self.sort_entry('land'))
-        self.tree.heading('uDB_lastseen', text='Last Conn', command=lambda: self.sort_entry('last_seen'))
+        self.tree.heading('uDB_lastconn', text='Last Conn', command=lambda: self.sort_entry('last_conn'))
+        self.tree.heading('uDB_lastseen', text='Last seen', command=lambda: self.sort_entry('last_seen'))
 
         self.tree.column("uDB_call", anchor=tk.W, stretch=tk.NO, width=130)
         self.tree.column("uDB_sysop", anchor=tk.W, stretch=tk.NO, width=130)
@@ -68,6 +70,7 @@ class UserDBtreeview(tk.Toplevel):
         self.tree.column("uDB_dist", anchor=tk.W, stretch=tk.NO, width=90)
         self.tree.column("uDB_qth", anchor=tk.W, stretch=tk.YES, width=190)
         self.tree.column("uDB_land", anchor=tk.W, stretch=tk.NO, width=60)
+        self.tree.column("uDB_lastconn", anchor=tk.W, stretch=tk.NO, width=190)
         self.tree.column("uDB_lastseen", anchor=tk.W, stretch=tk.NO, width=190)
         # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
         # tree.column(1, stretch=True)
@@ -118,6 +121,7 @@ class UserDBtreeview(tk.Toplevel):
                 f'{round(ent.Distance)}',
                 f'{ent.QTH}',
                 f'{ent.Land}',
+                f"{'' if ent.last_conn is None else conv_time_DE_str(ent.last_conn)}",
                 f'{conv_time_DE_str(ent.last_seen)}',
 
             ))

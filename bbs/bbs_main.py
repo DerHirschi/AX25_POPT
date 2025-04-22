@@ -21,13 +21,12 @@ flags in FWD Q Tab
 SW  = (BBS is already receiving MSG fm other BBS) Try again on next connect. Still connected
 S=  = Send (BBS is already receiving MSG fm other BBS) Try again on next connect.
 """
-# Fixme: End-Connection trigger
-
 import time
 from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR, GET_MSG_STRUC, LF, CR, CNTRL_Z
+# from bbs.bbs_email_server import BBSMailServer
 from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlist_fm_header, encode_fa_header
 from bbs.bbs_fwd_connection import BBSConnection
 from bbs.bbs_mail_import import get_mail_import
@@ -117,6 +116,9 @@ class BBS:
         self._var_task_fwdQ_timer   = time.time()   + 30
         BBS_LOG.info(self._logTag + 'Init Auto Mail Tasks')
         self._init_scheduled_tasks()
+
+        #self._email_server = BBSMailServer(self, use_ssl=False)
+        #self._email_server.start()
         logger.info(self._logTag + 'Init complete')
         BBS_LOG.info(self._logTag + 'Init complete')
 
@@ -197,6 +199,10 @@ class BBS:
             },
             bbs_fwd_next_q=[],  # ['FWD-ID', ...][:5]
         )
+
+    def close(self):
+        # self._email_server.stop()
+        pass
 
     #################################################
     def main_cron(self):

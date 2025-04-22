@@ -74,7 +74,6 @@ class AX25PortHandler(object):
         #######################################################
         # Init UserDB
         self._userDB = USER_DB
-        self._userDB.set_port_handler(self)
         ########################################################
         # Init MH
         self._mh = None
@@ -272,6 +271,9 @@ class AX25PortHandler(object):
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.close_port(k)
+        if hasattr(self._bbs, 'close'):
+            logger.info("PH: Closing BBS")
+            self._bbs.close()
         if self._mh:
             logger.info("PH: Saving MH-Data")
             self._mh.save_mh_data()
