@@ -8,7 +8,7 @@ from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
 from cli.cliMain import DefaultCLI
 from fnc.ax25_fnc import validate_ax25Call
-from fnc.str_fnc import get_strTab, zeilenumbruch
+from fnc.str_fnc import zeilenumbruch
 
 
 class BoxCLI(DefaultCLI):
@@ -138,11 +138,20 @@ class BoxCLI(DefaultCLI):
         if new_mail:
             ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
 
-        """
-        if new_user:
-            ret += self._getTabStr('')
+        # New User # TODO If no Home-BBS in UserDB ?
+        if self._connection.last_connect is None:
+            ret += self._getTabStr('bbs_new_user_reg1')
             self.change_cli_state(9)
-        """
+            self.can_sidestop = False
+            self._send_output(ret, env_vars=True)
+            self._bbs.send_sysop_msg(
+                topic=self._getTabStr('bbs_new_user_sysopMsg_top'),
+                msg=self._getTabStr('bbs_new_user_sysopMsg_msg').format(self._to_call,
+                                                                        bbs.get_pms_cfg().get('user', ''),
+                                                                        datetime.now().strftime('%d/%m/%y %H:%M:%S')
+                                                                        )
+            )
+            return ''
 
         self._send_output(ret + self.get_ts_prompt(), env_vars=True)
 
@@ -337,20 +346,103 @@ class BoxCLI(DefaultCLI):
         self.change_cli_state(1)
 
     def _s9(self):
-        """ Unknown User """
+        """ New User """
+        eol = find_eol(self._raw_input)
         if self._s9_state == 0:
-            self._s9_state = 1
-            self._send_output('-...................-...........................', env_vars=False)
+            if self._raw_input.endswith(eol):
+                name = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore')
+                self._user_db_ent.Name = str(name)
+            self._send_output('QTH                :', env_vars=False)
+            self._s9_state   = 1
+        elif self._s9_state == 1:
+            if self._raw_input.endswith(eol):
+                qth = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore')
+                self._user_db_ent.QTH = str(qth)
+            self._send_output('Locator            :', env_vars=False)
+            self._s9_state   = 2
+        elif self._s9_state == 2:
+            if self._raw_input.endswith(eol):
+                loc = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore').upper()
+                self._user_db_ent.LOC = str(loc)
+            self._send_output(self._getTabStr('bbs_new_user_reg2'), env_vars=False)
+            self._s9_state   = 3
+        elif self._s9_state == 3:
+            if self._raw_input.endswith(eol):
+                anw = self._raw_input.replace(eol, b'').upper().replace(b' ', b'')
+                if anw in [b'N']:
+                    self._send_output(self._getTabStr('bbs_new_user_reg3'), env_vars=False)
+                    self._s9_state = 4
+                else:
+                    pms_cfg  = self._bbs.get_pms_cfg()
+                    bbs_call = pms_cfg.get('user', '')
+                    regio    = pms_cfg.get('regio', '')
+                    if not all((bbs_call, regio)):
+                        BBS_LOG.error(self._logTag + f"S9-2: no bbs_call({bbs_call}) or regio({regio})")
+                        self._send_output("\r # Error: BBS-Error !\r\r")
+                    else:
+                        self._user_db_ent.PRmail = f"{self._to_call}@{bbs_call}.{regio}"
+                        ret = self._getTabStr('bbs_new_user_reg4').format(self._user_db_ent.Name,
+                                                                          self._user_db_ent.PRmail,
+                                                                          self._user_db_ent.QTH,
+                                                                          self._user_db_ent.LOC,
+                                                                          )
+                        ret += self.get_ts_prompt()
+                        self._send_output(ret, env_vars=True)
+                    self._s9_state = 10
+                    self.can_sidestop = True
+                    self.change_cli_state(1)
+        elif self._s9_state == 4:
+            if self._raw_input.endswith(eol):
+                PRmail = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore').upper()
+                # TODO Mail Address check
+                tmp = PRmail.split('.')
+                bbs_call = tmp[0]
+                db_ent = self._user_db.get_entry(bbs_call, add_new=False)
+                if not db_ent:
+                    self._user_db_ent.PRmail = str(PRmail)
+                elif not db_ent.TYP:
+                    # TODO Set ent to BBS and add Mail Address or Noty Sysop
+                    self._user_db_ent.PRmail = str(PRmail)
+                elif db_ent.TYP != 'BBS':
+                    ret = self._getTabStr('bbs_new_user_error_hbbs_add').format(
+                        bbs_call,
+                        db_ent.TYP
+                    )
+                    ret += self._getTabStr('bbs_new_user_reg2')
+                    self._send_output(ret)
+                    self._s9_state = 3
+                    return
+                elif not db_ent.PRmail:
+                    self._user_db_ent.PRmail = str(PRmail)
+                else:
+                    bbs_add = str(db_ent.PRmail).split('@')[-1]
+                    self._user_db_ent.PRmail = f"{self._to_call}@{bbs_add}"
+
+
+                ret = self._getTabStr('bbs_new_user_reg4').format(self._user_db_ent.Name,
+                                                                              self._user_db_ent.PRmail,
+                                                                              self._user_db_ent.QTH,
+                                                                              self._user_db_ent.LOC,
+                                                                              )
+                ret += self.get_ts_prompt()
+                self._send_output(ret, env_vars=True)
+                self._s9_state = 10
+                self.can_sidestop = True
+                self.change_cli_state(1)
         else:
-            self._s9_state = 0
+            BBS_LOG.error(self._logTag + f"S9-?: self._s9_state = {self._s9_state}")
+            self._send_output("\r # Error: BBS-Error S9 !\r\r")
+            self._s9_state = 10
+            self.can_sidestop = True
             self.change_cli_state(1)
 
 
     ##############################################
     #
-    def _send_output(self, ret, env_vars=True):
+    def _send_output(self, ret, env_vars=False):
         if ret:
             if self._state_index in [8]:
+                # Send Msg
                 if type(ret) is str:
                     ret = ret.encode(self._encoding[0], self._encoding[1])
                     ret = ret.replace(b'\n', b'\r')

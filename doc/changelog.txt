@@ -64,6 +64,7 @@ Neue Implementierungen / Funktionen:
   Luftfeuchtigkeit, wenn Daten vorhanden sind.
 - BBS/PMS AutoMail. Vordefinierte Mails können nach Zeitplan gesendet werden.
 - BBS Mail Import. Mails werden aus Datei data/bbs/import/import.poxt importiert.
+- BBS Erst Benutzer Registrierung.
 
 ###########################################################################################################
 ###########################################################################################################

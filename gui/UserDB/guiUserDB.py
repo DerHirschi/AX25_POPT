@@ -572,8 +572,8 @@ class UserDB(tk.Toplevel):
             else:
                 sysop_key = self._db_ent.Sysop_Call
 
-        node_str = 'NODES: '
-        bbs_str = 'BBS: '
+        node_str  = 'NODES: '
+        bbs_str   = 'BBS: '
         other_str = 'OTHER: '
 
         if sysop_key:

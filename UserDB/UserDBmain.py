@@ -49,22 +49,22 @@ class Client(object):
     Software = ''
 
     last_edit = datetime.datetime.now()
-    last_seen = datetime.datetime.now()
+    # last_seen = datetime.datetime.now() # TODO Get from MH
     last_conn = None
-    Connects = 0
+    Connects  = 0
     # GUI OPT
-    Encoding = 'CP437'    # 'UTF-8'
-    pac_len = 0
-    max_pac = 0
-    CText = ''
-    routes = []
+    Encoding     = 'CP437'    # 'UTF-8'
+    pac_len      = 0
+    max_pac      = 0
+    CText        = ''
+    routes       = []
     software_str = ''
-    sys_pw = ''
+    sys_pw       = ''
     sys_pw_autologin = False
-    sys_pw_parm = [5, 80, 'SYS']
+    sys_pw_parm  = [5, 80, 'SYS']
     # CLI
     cli_sidestop = 20
-    Language = -1
+    Language     = -1
     # BOX
     # box_user_cfg = {}
 
@@ -277,6 +277,7 @@ class UserDB:
         # self.db[to_key] = new_obj
 
     def get_sort_entr(self, flag_str: str, reverse: bool):
+        # TODO Move to UserDBtreeview
         temp = {}
         self.db: {str: Client}
         for k in list(self.db.keys()):
@@ -294,7 +295,7 @@ class UserDB:
                 'dist': flag.Distance,
                 'land': str(flag.Land),
                 'last_conn': '---' if flag.last_conn is None else conv_time_for_sorting(flag.last_conn),
-                'last_seen': conv_time_for_sorting(flag.last_seen),
+                # 'last_seen': conv_time_for_sorting(flag.last_seen), # TODO Get from MH
             }[flag_str]
             while key in temp.keys():
                 if type(key) is not str:

@@ -44,7 +44,7 @@ class UserDBtreeview(tk.Toplevel):
             'uDB_qth',
             'uDB_land',
             'uDB_lastconn',
-            'uDB_lastseen',
+            # 'uDB_lastseen', # TODO Get from MH
         )
         self.tree = ttk.Treeview(self, columns=columns, show='headings')
         self.tree.grid(row=0, column=0, sticky='nsew')
@@ -61,7 +61,7 @@ class UserDBtreeview(tk.Toplevel):
         self.tree.heading('uDB_qth', text='QTH', command=lambda: self.sort_entry('qth'))
         self.tree.heading('uDB_land', text='Land', command=lambda: self.sort_entry('land'))
         self.tree.heading('uDB_lastconn', text='Last Conn', command=lambda: self.sort_entry('last_conn'))
-        self.tree.heading('uDB_lastseen', text='Last seen', command=lambda: self.sort_entry('last_seen'))
+        # self.tree.heading('uDB_lastseen', text='Last seen', command=lambda: self.sort_entry('last_seen')) # TODO Get from MH
 
         self.tree.column("uDB_call", anchor=tk.W, stretch=tk.NO, width=130)
         self.tree.column("uDB_sysop", anchor=tk.W, stretch=tk.NO, width=130)
@@ -71,7 +71,7 @@ class UserDBtreeview(tk.Toplevel):
         self.tree.column("uDB_qth", anchor=tk.W, stretch=tk.YES, width=190)
         self.tree.column("uDB_land", anchor=tk.W, stretch=tk.NO, width=60)
         self.tree.column("uDB_lastconn", anchor=tk.W, stretch=tk.NO, width=190)
-        self.tree.column("uDB_lastseen", anchor=tk.W, stretch=tk.NO, width=190)
+        # self.tree.column("uDB_lastseen", anchor=tk.W, stretch=tk.NO, width=190) # TODO Get from MH
         # self.tree.column("# 2", anchor=tk.CENTER, stretch=tk.YES)
         # tree.column(1, stretch=True)
 
@@ -122,7 +122,7 @@ class UserDBtreeview(tk.Toplevel):
                 f'{ent.QTH}',
                 f'{ent.Land}',
                 f"{'' if ent.last_conn is None else conv_time_DE_str(ent.last_conn)}",
-                f'{conv_time_DE_str(ent.last_seen)}',
+                # f'{conv_time_DE_str(ent.last_seen)}',   # TODO Get from MH
 
             ))
 

@@ -264,6 +264,7 @@ class BBS:
         BBS_LOG.info(log_tag + f"Topic: {topic}")
         BBS_LOG.info(log_tag + f"MID: {mid}")
         BBS_LOG.info(log_tag + f"Msg: {msg}")
+        self._port_handler.set_pmsMailAlarm()
 
     #############################################
     # Add preconfigured Mail to the system

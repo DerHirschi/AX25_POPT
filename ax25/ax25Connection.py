@@ -258,13 +258,13 @@ class AX25Conn:
         """ Encoding """
         self._encoding = 'CP437'     # 'UTF-8'
         """ User DB Entry """
-        self.user_db_ent = None
-        self.cli_remote = True
-        self.cli_language = 0
-        self.last_connect = None
+        self.user_db_ent    = None
+        self.cli_remote     = True
+        self.cli_language   = 0
+        self.last_connect   = None
         self._set_user_db_ent()
         """ CLI CFG """
-        self.noty_bell = False
+        self.noty_bell      = False
         self.cli = NoneCLI(self)
         self.cli_type = ''
         """ Pipe CFG """
