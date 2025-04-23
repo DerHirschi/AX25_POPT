@@ -50,21 +50,22 @@ class Client(object):
 
     last_edit = datetime.datetime.now()
     # last_seen = datetime.datetime.now() # TODO Get from MH
-    last_conn = None
-    Connects  = 0
+    last_conn       = None
+    Connects        = 0
     # GUI OPT
-    Encoding     = 'CP437'    # 'UTF-8'
-    pac_len      = 0
-    max_pac      = 0
-    CText        = ''
-    routes       = []
-    software_str = ''
-    sys_pw       = ''
+    Encoding        = 'CP437'    # 'UTF-8'
+    pac_len         = 0
+    max_pac         = 0
+    CText           = ''
+    routes          = []
+    software_str    = ''
+    sys_pw          = ''
     sys_pw_autologin = False
-    sys_pw_parm  = [5, 80, 'SYS']
+    sys_pw_parm     = [5, 80, 'SYS']
     # CLI
-    cli_sidestop = 20
-    Language     = -1
+    cli_sidestop    = 20
+    Language        = -1
+    bbs_newUser     = True
     # BOX
     # box_user_cfg = {}
 

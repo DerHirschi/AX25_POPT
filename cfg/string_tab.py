@@ -141,6 +141,30 @@ STR_TABLE = {
 
     #################
     # BBS First user
+    'bbs_new_user_reg0': (
+        'Bitte Sprache wählen.\r',
+        'Use this BBS as your home BBS? Y/N> ',
+        'Deze BBS gebruiken als thuis-BBS? J/N> ',
+        'Utiliser ce BBS comme BBS domestique ? O/N> ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_reg_confirm': (
+        'Mit <Enter> bestätigen oder neu eingeben um zu ändern.\r> ',
+        'Press <Enter> to confirm or re-enter to change.\r>',
+        'Druk op <Enter> om te bevestigen of druk nogmaals op enter om te wijzigen.\r>',
+        'Appuyez sur <Entrée> pour confirmer ou appuyez à nouveau pour modifier.\r>',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'bbs_new_user_reg1': (
         ('\r'
          'Das ist die 1. Verbindung mit diesem System.\r'
@@ -177,7 +201,19 @@ STR_TABLE = {
         '',
         ''),
 
-    'bbs_new_user_reg2': (
+    'bbs_new_user_reg2_1': (
+        'Ist {}\rnoch deine aktuelle Heimat-BBS ? J/N> ',
+        'Is {}\rstill your current home BBS? Y/N> ',
+        'Is {}\rnog steeds uw huidige thuis-BBS? J/N> ',
+        'Est-ce que {}\rest toujours votre BBS personnel actuel? O/N> ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_reg2_2': (
         'Dies BBS als Heimat-BBS Nutzen ? J/N> ',
         'Use this BBS as your home BBS? Y/N> ',
         'Deze BBS gebruiken als thuis-BBS? J/N> ',
@@ -3116,10 +3152,23 @@ STR_TABLE = {
 
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r\r # BOX: Du hast {} neu Mails.\r\r',
-        '\r\r # BOX : You have {} new mails.\r\r',
-        '\r\r # BOX: Je hebt {} nieuwe mails.\r\r',
-        '\r\r # BOX : Vous avez {} nouveaux mails.\r\r',
+        '\r # BOX: Du hast {} neu Mails.\r\r',
+        '\r # BOX : You have {} new mails.\r\r',
+        '\r # BOX: Je hebt {} nieuwe mails.\r\r',
+        '\r # BOX : Vous avez {} nouveaux mails.\r\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_no_hbbs_address': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Du hast noch keine Heimat-BBS eingetragen. PR <CALL.Verteiler>\r\r',
+        "\r # You haven't entered a home BBS yet. PR <CALL.Distribution>>\r\r",
+        '\r # U hebt nog geen thuis-BBS ingevoerd. PR <CALL.Distributie>\r\r',
+        "\r # Vous n'avez pas encore entré de BBS personnel. PR <CALL.Distribution>\r\r",
         '',
         '',
         '',

@@ -3,7 +3,7 @@ from datetime import datetime
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import GET_MSG_STRUC, EOM
 from bbs.bbs_fnc import find_eol
-from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE
+from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
 from cli.cliMain import DefaultCLI
@@ -134,13 +134,19 @@ class BoxCLI(DefaultCLI):
             return ''
 
         ret += self._c_text
-        new_mail = bbs.get_new_pn_count_by_call(self._to_call)
-        if new_mail:
-            ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
 
-        # New User # TODO If no Home-BBS in UserDB ?
-        if self._connection.last_connect is None:
-            ret += self._getTabStr('bbs_new_user_reg1')
+        # New User
+
+        if self._user_db_ent.bbs_newUser:
+            ret += self._getTabStr('bbs_new_user_reg0')
+            for lang, k in LANG_IND.items():
+                if self._cli_lang == k:
+                    ret += f"{lang}*> {k}\r"
+                else:
+                    ret += f"{lang} > {k}\r"
+            ret += '>'
+            #ret += self._getTabStr('bbs_new_user_reg1')
+            self._user_db_ent.bbs_newUser = False
             self.change_cli_state(9)
             self.can_sidestop = False
             self._send_output(ret, env_vars=True)
@@ -153,6 +159,12 @@ class BoxCLI(DefaultCLI):
             )
             return ''
 
+        new_mail = bbs.get_new_pn_count_by_call(self._to_call)
+        if new_mail:
+            ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
+
+        if not self._user_db_ent.PRmail:
+            ret += self._getTabStr('box_no_hbbs_address')
         self._send_output(ret + self.get_ts_prompt(), env_vars=True)
 
         return ''
@@ -349,29 +361,111 @@ class BoxCLI(DefaultCLI):
         """ New User """
         eol = find_eol(self._raw_input)
         if self._s9_state == 0:
+            # Language
             if self._raw_input.endswith(eol):
-                name = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore')
-                self._user_db_ent.Name = str(name)
-            self._send_output('QTH                :', env_vars=False)
+                inp = self._raw_input.replace(eol, b'')
+                if not inp:
+                    ret = self._getTabStr('bbs_new_user_reg1')
+                    if self._user_db_ent.Name:
+                        ret += f" {self._user_db_ent.Name} ?\r"
+                        ret += self._getTabStr('bbs_new_user_reg_confirm')
+                    self._send_output(ret, env_vars=False)
+                    self._s9_state = 1
+                    return
+                try:
+                    lang_opt = int(inp.replace(b' ', b''))
+                except ValueError:
+                    ret = self._getTabStr('box_parameter_error')
+                    ret += '\r'
+                    ret += self._getTabStr('bbs_new_user_reg0')
+                    for lang, k in LANG_IND.items():
+                        if self._cli_lang == k:
+                            ret += f"{lang}*> {k}\r"
+                        else:
+                            ret += f"{lang} > {k}\r"
+                    ret += '>'
+                    self._send_output(ret)
+                    return
+                if lang_opt not in LANG_IND.values():
+                    ret = self._getTabStr('box_parameter_error')
+                    ret += '\r'
+                    ret += self._getTabStr('bbs_new_user_reg0')
+                    for lang, k in LANG_IND.items():
+                        if self._cli_lang == k:
+                            ret += f"{lang}*> {k}\r"
+                        else:
+                            ret += f"{lang} > {k}\r"
+                    ret += '>'
+                    self._send_output(ret)
+                    return
+                self._connection.set_user_db_language(lang_opt)
+            ret = self._getTabStr('bbs_new_user_reg1')
+            if self._user_db_ent.Name:
+                ret += f" {self._user_db_ent.Name} ?\r"
+                ret += self._getTabStr('bbs_new_user_reg_confirm')
+            self._send_output(ret, env_vars=False)
+
             self._s9_state   = 1
         elif self._s9_state == 1:
-            if self._raw_input.endswith(eol):
+            # Name
+            if self._raw_input == eol and self._user_db_ent.Name:
+                pass
+            elif self._raw_input.endswith(eol):
+                name = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore')
+                self._user_db_ent.Name = str(name)
+            ret = 'QTH                :'
+            if self._user_db_ent.QTH:
+                ret += f" {self._user_db_ent.QTH} ?\r"
+                ret += self._getTabStr('bbs_new_user_reg_confirm')
+            self._send_output(ret)
+            self._s9_state = 2
+        elif self._s9_state == 2:
+            if self._raw_input == eol and self._user_db_ent.QTH:
+                pass
+            elif self._raw_input.endswith(eol):
                 qth = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore')
                 self._user_db_ent.QTH = str(qth)
-            self._send_output('Locator            :', env_vars=False)
-            self._s9_state   = 2
-        elif self._s9_state == 2:
+            ret = 'Locator            :'
+            if self._user_db_ent.LOC:
+                ret += f" {self._user_db_ent.LOC} ?\r"
+                ret += self._getTabStr('bbs_new_user_reg_confirm')
+            self._send_output(ret)
+            self._s9_state   = 3
+        elif self._s9_state == 3:
+            if self._raw_input == eol and self._user_db_ent.LOC:
+                pass
             if self._raw_input.endswith(eol):
                 loc = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore').upper()
                 self._user_db_ent.LOC = str(loc)
-            self._send_output(self._getTabStr('bbs_new_user_reg2'), env_vars=False)
-            self._s9_state   = 3
-        elif self._s9_state == 3:
+            if self._user_db_ent.PRmail:
+                self._send_output(self._getTabStr('bbs_new_user_reg2_1').format(self._user_db_ent.PRmail.split('@')[-1]))
+                self._s9_state = 41
+            else:
+                self._send_output(self._getTabStr('bbs_new_user_reg2_2'), env_vars=False)
+                self._s9_state   = 4
+        elif self._s9_state == 41:
+            if self._raw_input.endswith(eol):
+                anw = self._raw_input.replace(eol, b'').upper().replace(b' ', b'')
+                if anw in [b'N']:
+                    self._send_output(self._getTabStr('bbs_new_user_reg2_2'), env_vars=False)
+                    self._s9_state = 4
+                else:
+                    ret = self._getTabStr('bbs_new_user_reg4').format(self._user_db_ent.Name,
+                                                                      self._user_db_ent.PRmail,
+                                                                      self._user_db_ent.QTH,
+                                                                      self._user_db_ent.LOC,
+                                                                      )
+                    ret += self.get_ts_prompt()
+                    self._send_output(ret, env_vars=True)
+                    self._s9_state = 10
+                    self.can_sidestop = True
+                    self.change_cli_state(1)
+        elif self._s9_state == 4:
             if self._raw_input.endswith(eol):
                 anw = self._raw_input.replace(eol, b'').upper().replace(b' ', b'')
                 if anw in [b'N']:
                     self._send_output(self._getTabStr('bbs_new_user_reg3'), env_vars=False)
-                    self._s9_state = 4
+                    self._s9_state = 5
                 else:
                     pms_cfg  = self._bbs.get_pms_cfg()
                     bbs_call = pms_cfg.get('user', '')
@@ -386,12 +480,15 @@ class BoxCLI(DefaultCLI):
                                                                           self._user_db_ent.QTH,
                                                                           self._user_db_ent.LOC,
                                                                           )
+                        new_mail = self._bbs.get_new_pn_count_by_call(self._to_call)
+                        if new_mail:
+                            ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
                         ret += self.get_ts_prompt()
                         self._send_output(ret, env_vars=True)
                     self._s9_state = 10
                     self.can_sidestop = True
                     self.change_cli_state(1)
-        elif self._s9_state == 4:
+        elif self._s9_state == 5:
             if self._raw_input.endswith(eol):
                 PRmail = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore').upper()
                 # TODO Mail Address check
@@ -408,9 +505,9 @@ class BoxCLI(DefaultCLI):
                         bbs_call,
                         db_ent.TYP
                     )
-                    ret += self._getTabStr('bbs_new_user_reg2')
+                    ret += self._getTabStr('bbs_new_user_reg2_2')
                     self._send_output(ret)
-                    self._s9_state = 3
+                    self._s9_state = 4
                     return
                 elif not db_ent.PRmail:
                     self._user_db_ent.PRmail = str(PRmail)
@@ -424,6 +521,9 @@ class BoxCLI(DefaultCLI):
                                                                               self._user_db_ent.QTH,
                                                                               self._user_db_ent.LOC,
                                                                               )
+                new_mail = self._bbs.get_new_pn_count_by_call(self._to_call)
+                if new_mail:
+                    ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
                 ret += self.get_ts_prompt()
                 self._send_output(ret, env_vars=True)
                 self._s9_state = 10
