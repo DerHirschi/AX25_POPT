@@ -5,7 +5,7 @@ mach besser.
 """
 VER = '2.117.105'
 
-DEBUG_LOG       = True
+DEBUG_LOG       = False
 CONSOLE_LOG     = True
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
