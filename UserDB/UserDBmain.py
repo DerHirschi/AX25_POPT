@@ -96,6 +96,9 @@ class UserDB:
             'QRG4',
             'QRG5',
             'box_user_cfg',
+            'bbs_newUser',
+            'last_conn',
+
         ]
         self.db = {}
         db_load = {}
