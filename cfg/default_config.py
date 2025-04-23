@@ -1,5 +1,7 @@
+from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
-    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE
+    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON, \
+    TASK_TYP_MAIL
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -45,7 +47,7 @@ def getNew_port_cfg():
         parm_StationCalls = [],  # def in __init__    Keys for Station Parameter  # TODO ? Bullshit ?
         ####################################
         # parm_T1 = 1800        # T1 (Response Delay Timer) activated if data come in to prev resp to early
-        parm_T2 = 1700 ,        # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
+        parm_T2 = 2888 ,        # T2 sek (Response Delay Timer) Default: 2888 / parm_baud
         parm_T2_auto = True,
         parm_T3 = 180 ,         # T3 sek (Inactive Link Timer) Default:180 Sek
         parm_N2 = 20,           # Max Try   Default 20
@@ -62,30 +64,112 @@ def getNew_port_cfg():
     )
 
 #######################################
-# PMS
-def getNew_PMS_cfg():
-    return {
-        'user': 'NOCALL',
-        'regio': '',
-        'home_bbs_cfg': {},
-        'home_bbs': [],
-        'single_auto_conn': True,
-        'auto_conn': False,
-        # TODO 'auto_conn_silent': True,
-    }
+# BBS
+def getNew_BBS_cfg():
+    return dict(
+        user            = 'NOCALL',     # BOX CALL
+        regio           = '',           # Own Regio
+        sysop           = '',           # Sysop Call
+        fwd_bbs_cfg     = {},           # FWD CFGs
+        fwd_port_cfg    = {},           # Port CFGs
+        home_bbs        = [],           # Used by GUI (newMSG)
+        bin_mode        = True,         # Binary Mails (compressed)
+        enable_fwd      = True,         # False = PMS-Mode (No Forwarding) TODO: GUI option
+        single_auto_conn= True,         # TODO: delete .. We have port_conn_limit Only one outgoing connection at a time
+        auto_conn       = False,        # Allow Outgoing Connects
+        # Path/Routing
+        # TODO:
+        #  local_user    = [] # Get from User-DB ?
+        local_theme     = ['TEST'],                     # Local Bulletin Theme
+        local_dist      = ['LOCAL', 'LOKAL', 'HOME'],   # Local Distributor - Default ['<OWN-BBS-CALL>']
+        block_bbs       = [],           # Global BBS/Recipient Rejecting
+        block_call      = [],           # Global Call/Topic Rejecting
+        pn_auto_path    = 1,            # Find BBS to FWD
+        reject_tab      = [],           # Reject/Hold Tab
+        cc_tab          = {},           # CC Tab
+        auto_mail_tasks = [],           # Auto-Mails like Routingmails
+        # 0 = disabled (Use strict configs)
+        # 1 = most current
+        # 2 = best (low hops)
+        # 1 & 2 (Use Auto Path lookup as alternative)
+        # TODO:
+        #  pn_auto_send_to_regio = True    # Try to find a BBS in the Region when can't find Route
+    )
 
+def getNew_BBS_Port_cfg():
+    return dict(
+            block_time=3,  # Minutes
+            send_limit=1,  # kb
+            conn_limit=1,  # Max Connections
+            # TODO in fwd_cfg
+            #  sched_bl      = 1,  # Scheduler for BL
+            #  sched_pn      = 1,  # Scheduler for BL
+        )
 
-def getNew_homeBBS_cfg():
-    return {
-        'port_id': 0,
-        'regio': '',
-        'dest_call': 'NOCALL',
-        'via_calls': [],
-        'axip_add': ('', 0),
-        'scheduler_cfg': dict(getNew_schedule_config()),
-    }
+def getNew_BBS_FWD_cfg():
+    return dict(
+        port_id         = 0,
+        regio           = '',
+        dest_call       = 'NOCALL',
+        via_calls       = [],
+        axip_add        = ('', 0),
+        scheduler_cfg   = dict(getNew_schedule_config()),
+        reverseFWD      = True,     # Scheduled FWD
+        allowRevFWD     = True,     # TODO
+        t_o_after_fail  = 5,        # Timeout Minutes
+        t_o_increment   = True,     # Increment Timeout after Fail attempt  # TODO GUI / Check Function
+        # Routing
+        pn_fwd              = True, # Allow PN FWD
+        bl_fwd              = True, # Allow BL FWD
+        pn_fwd_auto_path    = False,# Allow AutoPath
+        pn_fwd_alter_path   = False,# Allow Alternative Route               # TODO GUI / after x attempt's
+        pn_prio             = True, # PN first
+        # PN Outgoing Routing
+        pn_fwd_bbs_out      = [],   # Known BBS behind this BBS
+        pn_fwd_not_bbs_out  = [],   # Not FWD to BBS
+        pn_fwd_h_out        = [],   # Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
+        pn_fwd_not_h_out    = [],   # Rejected Outgoing H-Routing (['#HH', 'BAY', '#SAW.SAA', 'DEU'])
+        pn_fwd_call_out     = [],   # Outgoing CALLs (['MD2SAW', 'CB0SAW']) - [] = all
+        pn_fwd_not_call_out = [],   # Rejected Outgoing CALLs ([MD2SAW', 'CB0SAW'])
+        # BL Outgoing Routing
+        bl_dist_out         = [],   # Outgoing distributor (['*', 'EU']) - [] = all
+        bl_dist_not_out     = [],   # Rejected Outgoing distributor (['SAW', 'DEU'])
+        bl_top_out          = [],   # Outgoing Topic (['PR'])  - [] = all
+        bl_top_not_out      = [],   # Rejected Outgoing Topic (['PR', 'POPT'])
+        # BL Incoming Routing
 
+    )
 
+def getNew_BBS_REJ_cfg():
+    return dict(
+        msg_typ         = 'B',
+        from_call       = '',
+        via             = '',
+        to_call         = '',
+        bid             = '',
+        msg_len         = 0,
+        r_h             = 'H',
+    )
+
+def getNew_AUTOMAIL_task():
+    msg_conf        = GET_MSG_STRUC()
+    msg_conf['msg'] = ''
+    return dict(
+        task_typ        = TASK_TYP_MAIL,
+        msg_conf        = dict(msg_conf),
+        conf_enc        = 'UTF-8',
+        env_vars        = False,
+        scheduler_cfg   = dict(getNew_schedule_config()),
+    )
+"""
+def getNew_BBS_User_cfg():
+    # UserDB Entry
+    return dict(
+        call            = '',
+        regio           = '',
+        homeBBS         = '',
+    )
+"""
 #######################################
 # MH / Port-Stat
 def getNew_MH_cfg():
@@ -148,37 +232,38 @@ def getNew_APRS_ais_cfg():
 # GUI Parameter
 def getNew_maniGUI_parm():
     return dict(
-        gui_lang = int(LANGUAGE),
-        gui_cfg_locator = '',
-        gui_cfg_qth = '',
+        gui_lang                    = int(LANGUAGE),
+        gui_cfg_locator             = '',
+        gui_cfg_qth                 = '',
         # gui_cfg_pacman_fix = True = Disabling "Pacman-Autoupdate"-Function. Fix for "segmentation fault"/"Speicherzugriffsfehler" on Raspberry
-        gui_cfg_pacman_fix = False,
-        gui_cfg_sound = False,
-        gui_cfg_sprech = False,
-        gui_cfg_beacon = True,
-        gui_cfg_rx_echo = False,
-        gui_cfg_tracer = False,
-        gui_cfg_auto_tracer = False,
-        gui_cfg_dx_alarm = True,
-        gui_cfg_mon_encoding = 'Auto',
-        gui_cfg_rtab_index = (None, None),
+        gui_cfg_pacman_fix          = False,
+        gui_cfg_sound               = False,
+        gui_cfg_sprech              = False,
+        gui_cfg_beacon              = True,
+        gui_cfg_rx_echo             = False,
+        gui_cfg_tracer              = False,
+        gui_cfg_auto_tracer         = False,
+        gui_cfg_dx_alarm            = True,
+        gui_cfg_noty_bell           = False,
+        gui_cfg_mon_encoding        = 'Auto',
+        gui_cfg_rtab_index          = (None, None),
         #####################
         # Vorschreib Col
-        gui_cfg_vor_col = '#25db04',
-        gui_cfg_vor_tx_col = 'white',
-        gui_cfg_vor_bg_col = 'black',
+        gui_cfg_vor_col             = '#25db04',
+        gui_cfg_vor_tx_col          = 'white',
+        gui_cfg_vor_bg_col          = 'black',
         ###################################
         # 'gui_parm_new_call_alarm': False,
-        gui_parm_channel_index = 1,
-        gui_parm_text_size = int(DEF_TEXTSIZE),
-        gui_parm_connect_history = {},
+        gui_parm_channel_index      = 1,
+        gui_parm_text_size          = int(DEF_TEXTSIZE),
+        gui_parm_connect_history    = {},
         # 'gui_parm__mon_buff': [],
         #################
         # MSG Center
-        guiMsgC_parm_text_size = int(DEF_TEXTSIZE),
+        guiMsgC_parm_text_size      = int(DEF_TEXTSIZE),
         #################
         # F-Texte
-        gui_f_text_tab = {k: (b'', 'UTF-8') for k in range(1, 13)}
+        gui_f_text_tab              = {k: (b'', 'UTF-8') for k in range(1, 13)}
 
     )
 
@@ -188,7 +273,7 @@ def getNew_maniGUI_parm():
 
 def getNew_BEACON_cfg():
     return {
-        'task_typ': 'BEACON',
+        'task_typ': TASK_TYP_BEACON,
         'port_id': 0,
         'is_enabled': True,
         'typ': 'Text',  # "Text", "File", "MH"

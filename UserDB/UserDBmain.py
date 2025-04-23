@@ -3,12 +3,13 @@ import datetime
 import os
 import pickle
 from cfg.logger_config import logger
+from cfg.popt_config import POPT_CFG
 
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call, validate_aprs_call
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
 from fnc.loc_fnc import locator_to_coordinates, locator_distance
 from fnc.str_fnc import conv_time_for_sorting
-from cfg.constant import CFG_user_db
+from cfg.constant import CFG_user_db, MH_BEACON_FILTER
 
 
 class Client(object):
@@ -27,7 +28,6 @@ class Client(object):
     Lat = 0
     Lon = 0
     Distance = 0
-    Language = -1
     PRmail = ''
     Email = ''
     HTTP = ''
@@ -47,28 +47,34 @@ class Client(object):
     QRG4 = ''
     QRG5 = ''
     Software = ''
-    Encoding = 'CP437'    # 'UTF-8'
 
     last_edit = datetime.datetime.now()
-    last_seen = datetime.datetime.now()
-    Connects = 0
-
-    pac_len = 0
-    max_pac = 0
-    CText = ''
-    routes = []
-    software_str = ''
-    sys_pw = ''
+    # last_seen = datetime.datetime.now() # TODO Get from MH
+    last_conn       = None
+    Connects        = 0
+    # GUI OPT
+    Encoding        = 'CP437'    # 'UTF-8'
+    pac_len         = 0
+    max_pac         = 0
+    CText           = ''
+    routes          = []
+    software_str    = ''
+    sys_pw          = ''
     sys_pw_autologin = False
-    sys_pw_parm = [5, 80, 'SYS']
-
+    sys_pw_parm     = [5, 80, 'SYS']
+    # CLI
+    cli_sidestop    = 20
+    Language        = -1
+    bbs_newUser     = True
+    # BOX
+    # box_user_cfg = {}
 
 class UserDB:
     def __init__(self):
         # print("User-DB Init")
+        self._logTag = "User-DB: "
         logger.info("User-DB: Init")
-        self._port_handler = None
-        self.not_public_vars = [
+        self.not_public_vars = [    # TODO public Vars or new CLI CMD / CLI-Tab
             'not_public_vars',
             'call_str',
             'is_new',
@@ -79,6 +85,20 @@ class UserDB:
             'software_str',
             'sys_pw',
             'sys_pw_parm',
+            'sys_pw_autologin',
+            'boxopt_sidestop',
+            'cli_sidestop',
+            'Language',
+            'Encoding',
+            'QRG1',
+            'QRG2',
+            'QRG3',
+            'QRG4',
+            'QRG5',
+            'box_user_cfg',
+            'bbs_newUser',
+            'last_conn',
+
         ]
         self.db = {}
         db_load = {}
@@ -129,10 +149,6 @@ class UserDB:
 
         logger.info("User-DB: Init complete")
 
-    def set_port_handler(self, port_handler):
-        self._port_handler = port_handler
-        logger.info("User-DB: PH set")
-
     def get_entry(self, call_str: str, add_new=True):
         # call_str = validate_ax25Call(call_str)
         if not hasattr(call_str, 'upper'):
@@ -155,18 +171,21 @@ class UserDB:
 
     def _new_entry(self, call_str):
         call_str = call_str.upper()
-        if validate_ax25Call(call_str):
-            if call_str not in self.db.keys():
-                call_tup = call_tuple_fm_call_str(call_str)
-                # if call_tup[0] not in self.db.keys():
-                # print('# User DB: New User added > ' + call_str)
-                logger.info('User DB: New User added > ' + call_str)
-                self.db[call_str] = Client()
-                self.db[call_str].call_str = str(call_str)
-                self.db[call_str].Call = str(call_tup[0])
-                self.db[call_str].SSID = int(call_tup[1])
-                return self.db[call_str]
-        return False
+        if call_str in MH_BEACON_FILTER:
+            return False
+        if not validate_ax25Call(call_str):
+            return False
+        if call_str in self.db.keys():
+            return self.db[call_str]
+        call_tup = call_tuple_fm_call_str(call_str)
+        # if call_tup[0] not in self.db.keys():
+        # print('# User DB: New User added > ' + call_str)
+        logger.info('User DB: New User added > ' + call_str)
+        self.db[call_str] = Client()
+        self.db[call_str].call_str = str(call_str)
+        self.db[call_str].Call = str(call_tup[0])
+        self.db[call_str].SSID = int(call_tup[1])
+        return self.db[call_str]
 
     def del_entry(self, call_str: str):
         if call_str in self.db.keys():
@@ -184,21 +203,8 @@ class UserDB:
             if not ent.TYP:
                 ent.TYP = typ
 
-    def set_pr_mail_add_for_BBS(self, address: str, ):
-        call_str = address.split('.')[0]
-        if not call_str:
-            return
-        ent = self.get_entry(call_str, True)
-        if not ent:
-            return
-        if not ent.TYP:
-            ent.TYP = 'BBS'
-        ent.PRmail = address
-
     def set_distance(self, entry_call: str):
-        if self._port_handler is None:
-            return False
-        own_loc = self._port_handler.get_gui().own_loc
+        own_loc = POPT_CFG.get_guiCFG_locator()
         if not own_loc:
             return False
         ent = self.get_entry(entry_call, False)
@@ -275,6 +281,7 @@ class UserDB:
         # self.db[to_key] = new_obj
 
     def get_sort_entr(self, flag_str: str, reverse: bool):
+        # TODO Move to UserDBtreeview
         temp = {}
         self.db: {str: Client}
         for k in list(self.db.keys()):
@@ -291,7 +298,8 @@ class UserDB:
                 'qth': str(flag.QTH),
                 'dist': flag.Distance,
                 'land': str(flag.Land),
-                'last_seen': conv_time_for_sorting(flag.last_seen),
+                'last_conn': '---' if flag.last_conn is None else conv_time_for_sorting(flag.last_conn),
+                # 'last_seen': conv_time_for_sorting(flag.last_seen), # TODO Get from MH
             }[flag_str]
             while key in temp.keys():
                 if type(key) is not str:
@@ -353,6 +361,34 @@ class UserDB:
         self.db[call_str].AXIP = tuple(axip)
         return True
 
+    def set_PRmail_BBS_address(self, address: str, ):
+        call_str = address.split('.')[0]
+        if not call_str:
+            return
+        ent = self.get_entry(call_str, True)
+        if not ent:
+            return
+        if not ent.TYP:
+            ent.TYP = 'BBS'
+        ent.PRmail = address
+
+    def set_PRmail_address(self, address: str, overwrite = False):
+        if not address:
+            return
+        call = address.split('@')[0].split('.')[0]
+        ent = self.get_entry(call, True)
+        if not ent:
+            return
+        if ent.PRmail and not overwrite:
+            return
+        if ent.TYP == 'BBS':
+            bbs_address = address.split('@')[-1]
+            if '.' in bbs_address:
+                ent.PRmail  = bbs_address
+            return
+        if '@' in address:
+            ent.PRmail = address
+
     def get_all_PRmail(self):
         ret = []
         for k in list(self.db.keys()):
@@ -360,6 +396,10 @@ class UserDB:
                 if self.db[k].PRmail:
                     ret.append(self.db[k].PRmail)
         return ret
+
+    def get_PRmail(self, call: str):
+        return self.db.get(call, Client).PRmail
+
 
     def save_data(self):
         # print('Save Client DB')

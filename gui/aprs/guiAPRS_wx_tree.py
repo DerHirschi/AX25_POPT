@@ -2,17 +2,18 @@ import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
-from gui.plots.guiAPRS_wx_plot import WXPlotWindow
+from gui.plots.guiAPRS_wx_plot import WXPlotWindow    # !!!!!!!
 # from cfg.logger_config import logger
 
 
 class WXWin(tk.Toplevel):
     # TODO all Delete WX-DATA
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win = root_win
-        self._lang = root_win.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self._ais_obj.wx_tree_gui = self
         ###################################
@@ -160,17 +161,17 @@ class WXWin(tk.Toplevel):
                    'temperature', 'wind_gust', 'wind_speed', 'luminosity']:
             # _tmp = [(float(self._tree.set(k, col)), k) for k in self._tree.get_children()]
             _tmp = []
-            _rest = []
+            rest = []
             for k in self._tree.get_children():
                 try:
                     _tmp.append((float(self._tree.set(k, col)), k))
                 except ValueError:
-                    _rest.append((self._tree.set(k, col), k))
+                    rest.append((self._tree.set(k, col), k))
             _tmp.sort(reverse=self._rev_ent)
             if self._rev_ent:
-                _tmp = _tmp + _rest
+                _tmp = _tmp + rest
             else:
-                _tmp = _rest + _tmp
+                _tmp = rest + _tmp
         else:
             _tmp = [(self._tree.set(k, col), k) for k in self._tree.get_children('')]
             _tmp.sort(reverse=self._rev_ent)

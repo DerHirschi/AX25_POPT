@@ -6,7 +6,7 @@ from fnc.loc_fnc import coordinates_to_locator, locator_to_coordinates, locator_
 
 class LocatorCalculator(tk.Toplevel):
     def __init__(self, main_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=main_win.main_win)
         self.root = main_win
         self.lang = main_win.language
         self.title(STR_TABLE['locator_calc'][self.lang])

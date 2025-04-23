@@ -11,10 +11,13 @@ GRANT ALL PRIVILEGES ON popt_db.* TO 'popt'@'localhost';
 FLUSH PRIVILEGES;
 """
 import time
+
+from cfg.constant import DEBUG_LOG
 from cfg.logger_config import logger
 import mysql.connector
+from mysql.connector.errors import ProgrammingError
 
-from sql_db.sql_Error import SQLConnectionError
+from sql_db.sql_Error import SQLConnectionError, SQLSyntaxError
 
 MYSQL_CONN_ATTEMPTS = 3
 
@@ -75,6 +78,9 @@ class SQL_DB:
                     logger.warning("MySQL: ReferenceError !")
                     time.sleep(0.3)
                     return self.execute_query(query)
+                except ProgrammingError as e:
+                    raise SQLSyntaxError(e)
+
         self.conn = None
         print("MYSQL (execute_query): Could not connect")
         logger.error("MYSQL (execute_query): Could not connect")

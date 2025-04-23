@@ -1,4 +1,74 @@
 ###########################################################################################################
+# 2.117.x
+Fixes:
+- PMS-Setting "AutoFWD" war ohne Funktion
+- Unterschiedliche Timestamps im "Message-Center"
+- FWD: BID wurde nicht ordentlich aus Nachrichten-Header extrahiert
+- FWD-Protokoll: "F>" wird nicht erkannt wenn im Zustand "Warte auf FQ"
+  - Führt dazu das PoPT-BOX nicht auf weitere Nachrichten reagiert und
+    die Verbindung "hängt".
+- FWD: Sender BBS-Adresse wir teilweise ohne Verteiler gespeichert
+- Unvollständiger PR-Mail Header. (From:, To:)
+- MH-Liste und User-DB werden beim Beenden von PoPT gelegentlich zerstört.
+- "Sysop-Bell" Einstellungen werden nicht gespeichert
+- Scripterror beim Öffnen des Pin-Setups in den GPIO-Einstellungen
+- Bei Eingabe des CLI-CMD "QTH" wird der "Q" Befehl ausgeführt
+- User-DB: Zeit für "Letzer Connect" wurde als "zuletzt gelesen" gesetzt
+- Linkhalter Timer wird nicht zurückgesetzt, wenn sich Einstellungen geändert haben
+
+Optimierung:
+- T2-Auto Berechnung
+- T1 Berechnung
+- IRTT Berechnung
+- T2 Default Wert auf von 1700 auf 2888 geändert
+- SQL-DB: Tabellen pms_pn_msg und pms_BL_msg
+  zusammengefasst zu pms_in_msg
+- Interne CLI-CMD config
+- Neue PMS/BBS Config GUI
+- PMS/BBS Strukturen
+- CLI Strukturen
+- Cleanup Stingtabelle in CLI-Funktionen
+- Übersetzungen im "Message-Center" vervollständigt
+- Spalte für "Flag" im "Message-Center" für PN und BL
+- SQL-Querys fürs Handeln großer Datenmengen beim Löschen
+
+Neue Implementierungen / Funktionen:
+- Forward-Protokoll BinMail (Bin Mode) lzhuf Komprimierung
+- Forward-Warteschlangen Tasker
+- Parameter Monitor für Forward-Warteschlangen
+- Auto-Lookup für PR-Mail Adressen, beim Senden neuer P-Mails
+- Beacon-Call Filter für User-DB
+- PR-Mail Adresse (Sysop- und BBS-Adressen) werden automatisch
+  aus empfangenen PR-Mails in der User-DB erfasst.
+- Neuer Tab "BBS" im "Message-Center"
+- CLI Typ: BOX
+- CLI-CMD: LB (List Bulletin/ Listet alle Bulletin Mails)
+- CLI-CMD: LM (List Mails / Listet alle eigenen Mails)
+- CLI-CMD: LN (List New Mails / Listet alle eigenen neuen Mails)
+- CLI-CMD: LL (List all Mails / Listet alle Mails)
+- CLI-CMD: L< (<CALL> Listet Bulletins VON einem Rufzeichen)
+- CLI-CMD: L> (<CALL/RUBRIK> Listet Nachrichten AN ein Rufzeichen oder Rubrik.)
+- CLI-CMD: L@ (<CALL> Listet Bulletins VIA Verteiler.)
+- CLI-CMD: KM (Löscht alle pers. Nachrichten, die man bereits gelesen hat.)
+- CLI-CMD: K  (Löscht pers. Nachricht(en), Bsp: K 123 124 128)
+- CLI-CMD: R  (Read Mail / Mail lesen)
+- CLI-CMD: SP (Send Private Mail / Sende Private Mail)
+- CLI-CMD: SB (Send Bulletin Mail / Sende Bulletin Mail)
+- CLI Seiten-Stops/Paging für MCast, NODE, BOX
+- PMS-Setting "Reverse-FWD" (nach Zeitplan connecten) für jeweiligen BBS-FWD
+  setzbar
+- BOX nimmt jetzt auch FWD Connections von BBS an
+- Forward-Lookup Funktionen für das Routing von ausgehenden Mails
+  - Lokales Mail-System (PoPT-BBS erkennt, wenn Mails lokal bleiben sollen)
+- Französische Übersetzung by ClaudeMa
+- CLI-CMD "WX" gibt ASCII-Diagram aus für Temperatur, Luftdruck und
+  Luftfeuchtigkeit, wenn Daten vorhanden sind.
+- BBS/PMS AutoMail. Vordefinierte Mails können nach Zeitplan gesendet werden.
+- BBS Mail Import. Mails werden aus Datei data/bbs/import/import.poxt importiert.
+- BBS Erst Benutzer Registrierung.
+
+###########################################################################################################
+###########################################################################################################
 # 2.116.x
 Fixes:
 - Alle CLI-Modes gehen in den Baycom-Autologin Zustand,

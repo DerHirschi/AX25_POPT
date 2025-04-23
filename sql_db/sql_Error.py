@@ -6,3 +6,9 @@ class SQLConnectionError(Exception):
         if er:
             logger.error(f'SQL Init Error: {er}')
             print(f'SQL Init Error: {er}')
+
+class SQLSyntaxError(Exception):
+    def __init__(self, er=''):
+        if er:
+            logger.error(f'SQL Syntax Error: {er}')
+

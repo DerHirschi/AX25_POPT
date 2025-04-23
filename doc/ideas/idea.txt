@@ -136,6 +136,8 @@ Ideas/TODO's :
   - DB-Tool
 
 ✓ UserDB
+  - Sync mit https://info.packetradio-freital.de/calldb/json
+  - Sync mit FBB WP via FBB WP-Request Server
   - UserDB auf SQL-DB umstellen?
   ✓ Suchfunktion in UserDB GUI
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
@@ -153,20 +155,74 @@ Ideas/TODO's :
 
 - QSO Fenster/Tool
 - Debugging Tool
+
 ✓ PMS (S&F ohne Gedöns)
-- Simple Mailbox (CLI übers PMS)
 - PMS (TST-HOST)
-- BBS (S&F und all den Gedöns)
-- BBS Tool.
 ✓ "Nachrichten-Center" fasst alle Nachrichtenkanäle (APRS Bulletin/PN, BBS) übersichtlich zusammen.
   ✓ PMS
-    - Papierkorb usw
+    ✓ Papierkorb usw
+    - Signatur
   - APRS
-  - BBS
+  ✓ BBS (Grundlegend)
+    - FWD-Q (Tasker) mehr Steuer/Monitoring-Möglichkeiten (GUI)
+    ✓ Hold
+    ✓ Reject
+
+- BBS
+  - BBS (S&F und all den Gedöns)
+    ✓ eingehender FWD
+      ✓ auswerten eingehender Mails zur Weiterleitung
+    ✓ ausgehender FWD
+    ✓ automatisiertes abarbeiten der FWD-Q
+      ✓ überarbeiten
+      ✓ mehr Steuer/Monitoring-Möglichkeiten (GUI)
+        - noch mehr
+    - Scheduled BL/PN FWD (z.B. nur Nachts)
+    ✓ !Komprimierung (lzhuf)
+    ✓ Hold   (Config u Handling)
+    ✓ Reject (Config u Handling)
+    ✓ CC     (Config u Handling)
+    - SWAP   (Config u Handling)
+  ✓ User-DB
+    - User-DB Erweiterung für die BBS?
+  - BBS Tool (Hold, Filter, Ban, Man-Routing, ...)
+  ✓ CLI (Grundlegend)
+    ✓ Side Stops
+    ✓ S.. -CMDs
+    ✓ R.. -CMDs
+    ✓ L.. -CMDs
+      ✓ Erweiterte L.. CMDs (Filter)
+  ✓ Automatesierte Routingmails (Scheduler)
+  ✓ Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
+  - Automatesierte WP-Requests an FBB-BBS
+  - Auswertung und senden von WP-Mails (Siehe User-DB)
+  ✓ Mail inport (SB TEST@TEST .... ..)
+  - Mail export (SB TEST@TEST .... ..)
+  - Baken Noty
+  ✓ System-Mail (Sysop Noty) - bbs.send_sysop_msg(topic, msg)
+    ✓ Keine FWD-Route gefunden
+    ✓ Mail Held by
+    ✓ Mail Rejected by
+    ✓ FWD Error by
+  - BBS-Monitor
+
+  - POP3/SMTP evtl. IMAP
+  - NNTP
+  - Gästebuch
+  - News-Feed von Webseiten (z.B. WX-Daten, Wetterwarnungen)
+  - FWD-Net-Plot Übersicht für jeweiligen FWD-Routen
+  - Standalone BBS GUI (PoPT "Nur BBS Modus")
 
 ✓ Pipe-TOOL
   - Optional Header in Datei schreiben für jeden Frame
   - Optional Remote-CMD für Disco u.Ä.
+
+- Remote Steuerung für andere PoPT-Terms (z.B. PoPT ohne GUI)
+  - Host GUI zeigt/manipuliert Daten der Remotestation
+  - Effektives Protokoll (HF) (Komp u. Crypto ?)
+  - IT-Sicherheit (Syspw, Token o.Ä.)
+  - Remote Config    (Von Host GUI aus)
+  - Remote Steuerung (Von Host GUI aus)
 
 - Remote-GPIO Tool für PI (Idee von Lars)
   - 1Wire Sensoren lesen
@@ -198,8 +254,13 @@ Ideas/TODO's :
     - Zeitgesteuertes Erstellen und exportieren von Plots (Port-Stat/FWD-Pfade/MH-Routen)
 
 - EAX25
+- DAMA
 - NetROM
-  - decoding
+  ✓ decoding (experimentel (nicht ausreichend getestet)) (INP-Protokoll nicht vollständig)
+  - grafische & tabellarische Auswertung der Routen/Routingtabellen (Siehe FWD Route)
+  - encoding/handling und gedöns
+- Flexnet(Routing Protokoll)
+  - decoding (experimentel (nicht ausreichend getestet)) (INP-Protokoll nicht vollständig)
   - grafische & tabellarische Auswertung der Routen/Routingtabellen (Siehe FWD Route)
   - encoding/handling und gedöns
 
@@ -225,7 +286,7 @@ Ideas/TODO's :
   - Call-Filter
   - U/UI - Frame Filter
 
-- Daten Komprimierung
+- Daten Komprimierung (Hufman ??)
 - Daten Verschlüsselung (AES/RSA)
 ✓ ordentliches Noden System bzw CLI überarbeiten
 ✓ DX-Alarm überarbeiten

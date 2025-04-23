@@ -6,16 +6,18 @@ TODO:
 import tkinter as tk
 
 # from matplotlib.backends._backend_tk import NavigationToolbar2Tk
-import matplotlib as mpl
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FIGc
+#import matplotlib as mpl
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FIGc
+from gui import FigureCanvasTkAgg as FIGc
 import networkx as nx
 import random
 
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
-mpl.use('Agg')
-from matplotlib import pyplot as plt2
+#mpl.use('Agg')
+#from matplotlib import pyplot as plt2
+from gui import plt
 
 class LiveConnPath(tk.Frame):
     def __init__(self, tabctl):
@@ -46,7 +48,7 @@ class LiveConnPath(tk.Frame):
         g_frame = tk.Frame(self)
         g_frame.pack(fill=tk.BOTH, expand=True)
 
-        self._fig, self._plot1 = plt2.subplots(dpi=50)
+        self._fig, self._plot1 = plt.subplots(dpi=50)
         # self._plot2 = self._plot1.twinx()
         self._fig.subplots_adjust(top=1.00, bottom=0.00, left=0.00, right=1.00, hspace=0.00)
         self._canvas = FIGc(self._fig, master=g_frame)

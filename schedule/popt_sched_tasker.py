@@ -1,5 +1,6 @@
 import time
 
+from cfg.constant import TASK_TYP_FWD, TASK_TYP_BEACON, TASK_TYP_MAIL
 from cfg.popt_config import POPT_CFG
 from schedule.tasks.AutoConnTask import AutoConnTask
 from schedule.popt_sched import PoPTSchedule
@@ -10,8 +11,9 @@ class PoPTSchedule_Tasker:
     def __init__(self, port_handler):
         self._port_handler = port_handler
         self._scheduled_tasks = {
-            'PMS': self._start_AutoConnTask,
-            'BEACON': self._start_BeaconTask,
+            TASK_TYP_FWD:    self._start_AutoConnTask,
+            TASK_TYP_BEACON: self._start_BeaconTask,
+            TASK_TYP_MAIL:   self._start_SchedMail_Task,
         }
         self._scheduled_tasks_q = []
         self.auto_connections = {}      # [AutoConnTask()]
@@ -81,7 +83,7 @@ class PoPTSchedule_Tasker:
     ####################################
     # Beacon Tasker
     def reinit_beacon_tasks(self):
-        self.del_scheduler_Task_by_Typ('BEACON')
+        self.del_scheduler_Task_by_Typ(TASK_TYP_BEACON)
         self._init_beacon_tasks()
                 
     def _init_beacon_tasks(self):
@@ -108,9 +110,33 @@ class PoPTSchedule_Tasker:
         beacon.send_it()
 
     ####################################
+    # BBS/PMS Scheduled-Mail Tasker
+    def reinit_SchedMail_tasks(self):
+        self.del_scheduler_Task_by_Typ(TASK_TYP_MAIL)
+        self.init_SchedMail_tasks()
+
+    def init_SchedMail_tasks(self):
+        autoMail_tasks: list = POPT_CFG.get_BBS_AutoMail_cfg()
+        for task in autoMail_tasks:
+            sched_cfg = task.get('scheduler_cfg', None)
+            if sched_cfg:
+                self.insert_scheduler_Task(sched_cfg, task)
+
+    def _start_SchedMail_Task(self, conf, sched_conf=None):
+        #if not conf.get('is_enabled', False):
+        #    return None
+        if sched_conf:
+            if not sched_conf.is_schedule():
+                return None
+        bbs = self._port_handler.get_bbs()
+        if hasattr(bbs, 'send_scheduled_mail'):
+            bbs.send_scheduled_mail(conf=conf)
+
+    ####################################
     # Scheduler Q
     def insert_scheduler_Task(self, sched_cfg, conf: dict):
         """
+        :param sched_cfg:
         :param conf: {}  # PMS
             'task_typ': 'PMS',
             'max_conn': 0,
@@ -130,6 +156,7 @@ class PoPTSchedule_Tasker:
             'text': b'TEST',
             'cmd_poll': (False, False),
             'pid': 0xF0
+
 
         """
         poptSched = PoPTSchedule(sched_cfg)
@@ -177,5 +204,7 @@ class PoPTSchedule_Tasker:
 
         for task in list(self._scheduled_tasks_q):
             if task[1] == conf:
-                task[0].manual_trigger()
-                self._start_AutoConnTask(task[1])
+                if hasattr(task[0], 'manual_trigger'):
+                    task[0].manual_trigger()
+                return self._start_AutoConnTask(task[1])
+        return None

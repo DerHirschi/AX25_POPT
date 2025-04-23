@@ -1,3 +1,4 @@
+import tkinter
 from tkinter import ttk as ttk
 from tkinter import filedialog as fd
 from tkinter import scrolledtext
@@ -6,7 +7,7 @@ from tkinter.colorchooser import askcolor
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_data_path, CFG_usertxt_path
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
-from cli.cliMain import CLI_OPT
+from cli import CLI_OPT
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.file_fnc import get_str_fm_file, save_str_to_file
 from fnc.str_fnc import zeilenumbruch_lines, zeilenumbruch
@@ -340,8 +341,10 @@ class StatSetTab:
         self._long_info_text_ent.bind("<KeyRelease>", self._chk_umbruch_lit)
         self._akt_info_text_ent.bind("<KeyRelease>", self._chk_umbruch_at)
         self._bye_text_ent.bind("<KeyRelease>", self._chk_umbruch_bt)
-
-        self._update_vars_fm_cfg()
+        try:
+            self._update_vars_fm_cfg()
+        except tk.TclError:
+            return
 
     def _chk_umbruch_ct(self, event=None):
         ind2 = str(int(float(self._c_text_ent.index(tk.INSERT)))) + '.0'
@@ -534,7 +537,10 @@ class StatSetTab:
         self._max_pac_select_var.set(str(stat_maxframe))  # default value
         self._max_pac.update()
         # PacLen
-        self._pac_len.delete(0, tk.END)
+        try:
+            self._pac_len.delete(0, tk.END)
+        except tkinter.TclError:
+            raise tkinter.TclError
         # self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
         self._pac_len.insert(tk.END, str(stat_paclen))
         # DIGI
@@ -668,15 +674,15 @@ class StatSetTab:
         #######################################################
         #######################################################
         # New CFG
-        self._new_station_setting['stat_parm_Call'] = str(call)
-        self._new_station_setting['stat_parm_Name'] = str(self._name.get())
+        self._new_station_setting['stat_parm_Call']             = str(call)
+        self._new_station_setting['stat_parm_Name']             = str(self._name.get())
         # self._new_station_setting['stat_parm_is_Digi'] = bool(self._digi_set_var.get())
-        self._new_station_setting['stat_parm_cli'] = str(cli_key)
-        self._new_station_setting['stat_parm_PacLen'] = int(var_paclen)
-        self._new_station_setting['stat_parm_MaxFrame'] = int(var_maxpac)
-        self._new_station_setting['stat_parm_qso_col_text_tx'] = str(self._qso_fg_tx)
-        self._new_station_setting['stat_parm_qso_col_text_rx'] = str(self._qso_fg_rx)
-        self._new_station_setting['stat_parm_qso_col_bg'] = str(self._qso_bg_tx)
+        self._new_station_setting['stat_parm_cli']              = str(cli_key)
+        self._new_station_setting['stat_parm_PacLen']           = int(var_paclen)
+        self._new_station_setting['stat_parm_MaxFrame']         = int(var_maxpac)
+        self._new_station_setting['stat_parm_qso_col_text_tx']  = str(self._qso_fg_tx)
+        self._new_station_setting['stat_parm_qso_col_text_rx']  = str(self._qso_fg_rx)
+        self._new_station_setting['stat_parm_qso_col_bg']       = str(self._qso_bg_tx)
 
         # cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())
         """

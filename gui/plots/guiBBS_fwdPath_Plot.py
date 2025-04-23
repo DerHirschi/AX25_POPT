@@ -3,8 +3,9 @@ from tkinter import ttk
 import random
 from datetime import datetime
 import networkx as nx
-from matplotlib.backends._backend_tk import NavigationToolbar2Tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+#from matplotlib.backends._backend_tk import NavigationToolbar2Tk
+#from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
 from matplotlib.lines import Line2D
 from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.gui_fnc import generate_random_hex_color
@@ -12,10 +13,11 @@ from fnc.str_fnc import convert_str_to_datetime
 
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-import matplotlib
+#import matplotlib
 
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
+#matplotlib.use('Agg')
+#from matplotlib import pyplot as plt
+from gui import plt
 
 DEFAULT_COUNTRY_CFG = {
     'DEU': ((51.0, 9.6), 1.2, 'red'),
@@ -24,6 +26,7 @@ DEFAULT_COUNTRY_CFG = {
     'NLD': ((52.4, 5.5), 0.3, 'orange'),
     'CH': ((46.7, 8), 0.3, 'yellow'),
     'AT': ((47.5, 14.5), 0.4, 'brown'),
+    'AUT': ((47.5, 14.5), 0.4, 'brown'),
     'GBR': ((53.8, -2.3), 0.7, 'purple'),
     'FIN': ((63.7, 27.1), 0.7, 'grey'),
 }
@@ -35,7 +38,7 @@ DEFAULT_REGIO_DEU_CFG = {
 
 class FwdGraph(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self.wm_title("Forward Routes")
         self._root_win = root_win
         self.geometry(f"800x"

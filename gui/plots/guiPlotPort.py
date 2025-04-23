@@ -4,19 +4,21 @@ from datetime import datetime
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import convert_str_to_datetime
-from matplotlib.backends._backend_tk import NavigationToolbar2Tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# from matplotlib.backends._backend_tk import NavigationToolbar2Tk
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-import matplotlib
+#import matplotlib
 
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
+#matplotlib.use('Agg')
+#from matplotlib import pyplot as plt
+from gui import plt
 
 
 class PlotWindow(tk.Toplevel):
     def __init__(self, root_cl):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_cl.main_win)
         self.wm_title("Port Statistik")
         # self.root_cl = root_cl
         self.geometry(f"800x"

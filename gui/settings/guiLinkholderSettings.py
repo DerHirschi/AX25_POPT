@@ -1,10 +1,11 @@
+import time
 import tkinter as tk
 from tkinter import ttk
 
 
 class LinkHolderSettings(tk.Toplevel):
     def __init__(self, root):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root.main_win)
         self.root_win = root
         self.root_win.settings_win = self
         self.win_height = 285
@@ -94,12 +95,13 @@ class LinkHolderSettings(tk.Toplevel):
 
     def ok_btn_cmd(self):
         if self.conn:
-            self.conn.link_holder_on = self.l_holder_chk_var.get()
-            self.conn.link_holder_interval = self.intervall_var.get()
+            self.conn.link_holder_on        = bool(self.l_holder_chk_var.get())
+            self.conn.link_holder_interval  = int(self.intervall_var.get())
             text = self.text.get('1.0', tk.END)[:-1]
             text = text.replace('\n', '\r')
             self.conn.link_holder_text = text
             if self.conn.link_holder_on:
+                self.conn.link_holder_timer = time.time()
                 self.root_win.link_holder_var.set(True)
             else:
                 self.root_win.link_holder_var.set(False)

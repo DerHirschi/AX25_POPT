@@ -5,13 +5,14 @@
 import time
 from datetime import datetime
 
-from cli.cliMain import CLI_OPT, NoneCLI
+from cli.cliMain import NoneCLI
+from cli import CLI_OPT
 # from ax25.ax25Error import AX25ConnectionERROR
 from ax25.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
-from cfg.logger_config import logger, log_book
+from cfg.logger_config import logger, LOG_BOOK
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
@@ -122,7 +123,7 @@ class AX25Conn:
         if self.own_port.kiss.is_enabled:
             self._parm_Kiss_TXD = self._port_cfg.get('parm_kiss_TXD', 35)
             self._parm_Kiss_Tail = self._port_cfg.get('parm_kiss_Tail', 15)
-        self._parm_T2 = int(self._port_cfg.get('parm_T2', 1700))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self._parm_T2 = int(self._port_cfg.get('parm_T2', 2888))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
         self._parm_T3 = self._port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
         self.parm_N2 = self._port_cfg.get('parm_N2', 20)  # Max Try   Default 20
         self._parm_baud = self._port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
@@ -257,13 +258,13 @@ class AX25Conn:
         """ Encoding """
         self._encoding = 'CP437'     # 'UTF-8'
         """ User DB Entry """
-        self.user_db_ent = None
-        self.cli_remote = True
-        self.cli_language = 0
-        self.last_connect = None
+        self.user_db_ent    = None
+        self.cli_remote     = True
+        self.cli_language   = 0
+        self.last_connect   = None
         self._set_user_db_ent()
         """ CLI CFG """
-        self.noty_bell = False
+        self.noty_bell      = False
         self.cli = NoneCLI(self)
         self.cli_type = ''
         """ Pipe CFG """
@@ -441,6 +442,31 @@ class AX25Conn:
         bbs = self._port_handler.get_bbs()
         if bbs is None:
             logger.error("PMS: _bbs is None")
+            return False
+        self.bbs_connection = bbs.init_rev_fwd_conn(self)
+        if self.bbs_connection is None:
+            logger.error("PMS: bbs_connection is None")
+            return False
+        # print("Done: bbsFwd_start_reverse")
+        return True
+
+    def bbsFwd_start(self):
+        if self.cli.stat_identifier is None:
+            logger.error("PMS: cli.stat_identifier is None")
+            return False
+        if self.cli.stat_identifier.typ != 'BBS':
+            logger.error("PMS: cli.stat_identifier.typ != 'BBS'")
+            return False
+        if self.cli.stat_identifier.e:
+            logger.error("PMS: cli.stat_identifier.e")
+            logger.error(f"{self.cli.stat_identifier.typ}")
+            return False
+        bbs = self._port_handler.get_bbs()
+        if bbs is None:
+            logger.error("PMS: _bbs is None")
+            return False
+        if self.bbs_connection:
+            logger.warning("PMS: bbs_connection not None. Manual Rev FWD Triggered ?")
             return False
         self.bbs_connection = bbs.init_fwd_conn(self)
         if self.bbs_connection is None:
@@ -744,6 +770,7 @@ class AX25Conn:
         # logger.debug(f"conn_cleanup: {self.uid}\n"
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
+
         if self.tx_buf_ctl:
             logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
@@ -751,15 +778,16 @@ class AX25Conn:
             logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
+        self._bbsFwd_disc()
         self.own_port.del_connections(conn=self)
         self._port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
-
         logger.debug(f'CLeanup {self.uid}: rx_tx_buf_guiData')
 
     def end_connection(self, reconn=True):
         logger.debug(f"end_connection: {self.uid}")
         self._del_pipe()
+        self._bbsFwd_disc()
         self.ft_queue = []
         if self.ft_obj:
             self.ft_obj.ft_abort()
@@ -771,6 +799,7 @@ class AX25Conn:
 
     def reset_conn(self):
         # self._del_pipe()
+        self._bbsFwd_disc()
         self.ft_queue = []
         if self.ft_obj:
             self.ft_obj.ft_abort()
@@ -905,8 +934,8 @@ class AX25Conn:
             self._reinit_cli()
             lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
             lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
-            log_book.info(lb_msg)
-            log_book.info(lb_msg_1)
+            LOG_BOOK.info(lb_msg)
+            LOG_BOOK.info(lb_msg_1)
             if self._gui:
                 # TODO
                 speech = ' '.join(self.to_call_str.replace('-', ' '))
@@ -923,9 +952,9 @@ class AX25Conn:
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
         if self.user_db_ent:
             self.user_db_ent.Connects += 1  # TODO Count just when connected
-            self.last_connect = self.user_db_ent.last_seen
-            self.user_db_ent.last_seen = datetime.now()
-            self._encoding = self.user_db_ent.Encoding
+            self.last_connect = self.user_db_ent.last_conn
+            self.user_db_ent.last_conn = datetime.now()
+            self._encoding    = self.user_db_ent.Encoding
             if self.user_db_ent.Language == -1:
                 self.user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())
             self.cli_language = self.user_db_ent.Language
@@ -976,25 +1005,33 @@ class AX25Conn:
             return self.IRTT
 
     def calc_irtt(self):
+
+        header_len      = 16 + len(self.via_calls) * 7
+        init_t2: float  = (((self.parm_PacLen + header_len) * 8) / self._parm_baud) * 1000
+        irit = (init_t2 +
+                self._parm_TXD +
+                (self._parm_Kiss_TXD * 10) +
+                (self._parm_Kiss_Tail * 10)
+                )
         if self._port_cfg.get('parm_T2_auto', True):
-            init_t2: float = (((self.parm_PacLen + 16) * 8) / self._parm_baud) * 1000
-            self.IRTT = (init_t2 +
-                         self._parm_TXD +
-                         (self._parm_Kiss_TXD * 10) +
-                         (self._parm_Kiss_Tail * 10)
-                         ) * 2
-            # self.parm_T2 = (float(self.IRTT / 1000) / 2)
-            # TXD    TAIL
-            self._parm_T2 = float(init_t2 + 400 + 150) / 1000
+            self._parm_T2   = float(irit / 1000)
         else:
-            self._parm_T2 = float(self._port_cfg.get('parm_T2', 1700)) / 1000
-            self.IRTT = ((self._parm_T2 * 1000) +
-                         self._parm_TXD +
-                         (self._parm_Kiss_TXD * 10) +
-                         (self._parm_Kiss_Tail * 10)
-                         ) * 2
-        # print('parm_T2: {}'.format(self.parm_T2))
+            self._parm_T2   = float(self._port_cfg.get('parm_T2', 2888)) / 1000
+
+        if self.via_calls:
+            hops = (len(self.via_calls) + 1) * 2
+            self.IRTT: float = max((irit * hops), 50)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+        else:
+            self.IRTT: float = max((irit * 2), 50)     # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+
+        # print(f"IRIT    : {self.IRTT}")
+        # print(f"parm_T2 : {self._parm_T2}")
+        """
         self.IRTT = max(self.IRTT, 10)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+        self.IRTT       = irit * 2
+        """
+
+        # print('parm_T2: {}'.format(self.parm_T2))
         # print('IRTT: {}'.format(self.IRTT))
 
     def set_T1(self, stop=False):
@@ -1002,16 +1039,15 @@ class AX25Conn:
             self.n2 = 0
             self.t1 = 0
         else:
-            self.calc_irtt()
+            # self.calc_irtt()
             n2 = int(self.n2)
             srtt = float(self._get_rtt())
-            if not self._port_cfg.get('parm_T2_auto', True):
-                if self.via_calls:
-                    srtt = int((len(self.via_calls) * 2 + 1) * srtt)
+            # if not self._port_cfg.get('parm_T2_auto', True):
+
             if n2 > 3:
-                self.t1 = float(((srtt * (n2 + 4)) / 1000) + time.time())
+                self.t1 = float(((srtt * (n2 + 4))  / 1000) + time.time())
             else:
-                self.t1 = float(((srtt * 3) / 1000) + time.time())
+                self.t1 = float(((srtt * 3)         / 1000) + time.time())
         """
         if self.t1 > 0:
             print('t1 > {}'.format(self.t1 - time.time()))
@@ -1203,8 +1239,8 @@ class AX25Conn:
         if not data:
             return
         lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
-        log_book.info(lb_msg)
-        log_book.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
         gui = self._port_handler.get_gui()
         if not hasattr(gui, 'sysMsg_to_qso'):
             return

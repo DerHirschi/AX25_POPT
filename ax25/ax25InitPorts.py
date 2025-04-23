@@ -6,7 +6,7 @@ from ax25.ax25Error import AX25DeviceFAIL
 from ax25.ax25Multicast import ax25Multicast
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
-from cfg.logger_config import logger, log_book
+from cfg.logger_config import logger, LOG_BOOK
 from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
 from fnc.str_fnc import get_strTab
 from poptGPIO.poptGPIO_main import poptGPIO_main
@@ -53,13 +53,14 @@ class AX25PortHandler(object):
         #################
         self._start_time = datetime.datetime.now()
         self.is_running = True
+        self._ph_end    = False
         ###########################
         # Moduls
         # self.routingTable = None
         self._gui = None
-        self.bbs = None
+        self._bbs = None
         self.aprs_ais = None
-        self.scheduled_tasker = None
+        self._scheduled_tasker = None
         ###########################
         # VARs
         self.ax25_ports = {}
@@ -73,7 +74,6 @@ class AX25PortHandler(object):
         #######################################################
         # Init UserDB
         self._userDB = USER_DB
-        self._userDB.set_port_handler(self)
         ########################################################
         # Init MH
         self._mh = None
@@ -178,7 +178,7 @@ class AX25PortHandler(object):
     def _2sec_task(self):
         """ 2 Sec """
         if time.time() > self._task_timer_2sec:
-            self.bbs.main_cron()
+            self._bbs.main_cron()
             self._pipeTool_task()
             self._task_timer_2sec = time.time() + 2
 
@@ -203,28 +203,37 @@ class AX25PortHandler(object):
     #######################################################################
     # scheduled Tasks
     def _init_SchedTasker(self):
-        self.scheduled_tasker = PoPTSchedule_Tasker(self)
+        self._scheduled_tasker = PoPTSchedule_Tasker(self)
 
     def insert_SchedTask(self, sched_cfg, conf):
-        if self.scheduled_tasker:
-            self.scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
+        if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
+            self._scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
 
     def del_SchedTask(self, conf):
-        if self.scheduled_tasker:
-            self.scheduled_tasker.del_scheduler_Task(conf)
+        if hasattr(self._scheduled_tasker, 'del_scheduler_Task'):
+            self._scheduled_tasker.del_scheduler_Task(conf)
 
     def start_SchedTask_man(self, conf):
-        if self.scheduled_tasker:
-            self.scheduled_tasker.start_scheduler_Task_manual(conf)
+        if hasattr(self._scheduled_tasker, 'start_scheduler_Task_manual'):
+            return self._scheduled_tasker.start_scheduler_Task_manual(conf)
+        return None
 
     def _Sched_task(self):
-        if self.scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'tasker'):
             # Scheduler & AutoConn Tasker
-            self.scheduled_tasker.tasker()
+            self._scheduled_tasker.tasker()
 
     def reinit_beacon_task(self):
-        if self.scheduled_tasker:
-            self.scheduled_tasker.reinit_beacon_tasks()
+        if hasattr(self._scheduled_tasker, 'reinit_beacon_tasks'):
+            self._scheduled_tasker.reinit_beacon_tasks()
+
+    def init_AutoMail_tasks(self):
+        if hasattr(self._scheduled_tasker, 'init_SchedMail_tasks'):
+            self._scheduled_tasker.init_SchedMail_tasks()
+
+    def reinit_AutoMail_tasks(self):
+        if hasattr(self._scheduled_tasker, 'reinit_SchedMail_tasks'):
+            self._scheduled_tasker.reinit_SchedMail_tasks()
 
     #######################################################################
     # Setting/Parameter Updates
@@ -241,6 +250,8 @@ class AX25PortHandler(object):
         return False
 
     def check_all_ports_closed(self):
+        if not self._ph_end:
+            return False
         ret = True
         for port_id in self.ax25_ports.keys():
             port = self.ax25_ports[port_id]
@@ -260,6 +271,9 @@ class AX25PortHandler(object):
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.close_port(k)
+        if hasattr(self._bbs, 'close'):
+            logger.info("PH: Closing BBS")
+            self._bbs.close()
         if self._mh:
             logger.info("PH: Saving MH-Data")
             self._mh.save_mh_data()
@@ -282,10 +296,11 @@ class AX25PortHandler(object):
         self._mcast_server.mcast_save_cfgs()
         logger.info("PH: Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
+        self._ph_end = True
 
 
     def close_port(self, port_id: int):
-        self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
+        # self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
         # self.sysmsg_to_gui('Info: Versuche Port {} zu schließen.'.format(port_id))
         logger.info('PH: Versuche Port {} zu schließen.'.format(port_id))
         if port_id in self.rx_echo.keys():
@@ -304,7 +319,7 @@ class AX25PortHandler(object):
             if port_id in self.ax25_ports:
                 del self.ax25_ports[port_id]
             del port
-        self.sysmsg_to_gui(get_strTab('port_closed', POPT_CFG.get_guiCFG_language()).format(port_id))
+        # self.sysmsg_to_gui(get_strTab('port_closed', POPT_CFG.get_guiCFG_language()).format(port_id))
         #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
         logger.info('PH: Port {} erfolgreich geschlossen.'.format(port_id))
 
@@ -507,8 +522,8 @@ class AX25PortHandler(object):
             msg = f'*** Connected to {call_str}'
             lb_msg_1 = f'CH {ch_id} - {str(connection.my_call_str)}: *** Connected to {call_str}'
         lb_msg = f"CH {ch_id} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
-        log_book.info(lb_msg)
-        log_book.info(lb_msg_1)
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
@@ -533,8 +548,8 @@ class AX25PortHandler(object):
         msg = f'*** Reset fm {connection.to_call_str}'
         lb_msg_1 = f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Reset fm {connection.to_call_str}'
         lb_msg = f"CH {int(connection.ch_index)} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
-        log_book.info(lb_msg)
-        log_book.info(lb_msg_1)
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
@@ -557,8 +572,8 @@ class AX25PortHandler(object):
         msg = f'*** Disconnected fm {call_str}'
         lb_msg = f"CH {ch_id} - {str(conn.my_call_str)}: - {str(conn.uid)} - Port: {int(conn.port_id)}"
         lb_msg_1 = f"CH {ch_id} - {str(conn.my_call_str)}: *** Disconnected fm {call_str}"
-        log_book.info(lb_msg)
-        log_book.info(lb_msg_1)
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, UserDB-Conn C
@@ -635,9 +650,9 @@ class AX25PortHandler(object):
                         via_calls = mh_vias
         if not axip_add[0]:
             if via_calls:
-                axip_add = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(via_calls[0])
+                axip_add = self.get_MH().get_AXIP_fm_DB_MH(via_calls[0])
             else:
-                axip_add = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(dest_call)
+                axip_add = self.get_MH().get_AXIP_fm_DB_MH(dest_call)
             # axip_add = tuple(mh_entry.axip_add)
         if port_id == -1 and mh_entry:
             port_id = int(mh_entry.port_id)
@@ -674,15 +689,15 @@ class AX25PortHandler(object):
                     if user_db_ent.Distance:
                         ret_msg += f' - {round(user_db_ent.Distance)} km '
                     ret_msg += f'> Port {port_id}'
-                    log_book.info(lb_msg)
-                    log_book.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: {ret_msg}')
+                    LOG_BOOK.info(lb_msg)
+                    LOG_BOOK.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: {ret_msg}')
                     return connection , '\r' + ret_msg + '\r'
-            log_book.info(lb_msg)
-            log_book.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Link Setup to {dest_call} > Port {port_id}')
+            LOG_BOOK.info(lb_msg)
+            LOG_BOOK.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Link Setup to {dest_call} > Port {port_id}')
             return connection, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
         lb_msg = f"CH {int(channel)} - {str(own_call)}: - {str(dest_call) + ' ' + '>'.join(via_calls)} - Port: {int(port_id)}"
-        log_book.info(lb_msg)
-        log_book.info(
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(
             f'CH {int(channel)} - {str(own_call)}: *** Busy. No free SSID available. > Port {int(port_id)}')
         return False, '\r*** Busy. No free SSID available.\r'
 
@@ -831,15 +846,15 @@ class AX25PortHandler(object):
 
     def get_all_ports(self):
         ret = {}
-        for port_id in list(self.ax25_ports.keys()):
-            port = self.ax25_ports.get(port_id, None)
-            if port:
-                prim_port = port.get_dualPort_primary()
-                if prim_port:
-                    port = prim_port
-                    port_id = port.port_id
-                if port_id not in ret.keys():
-                    ret[port_id] = port
+        for port_id, port in self.ax25_ports.items():
+            if not port:
+                continue
+            prim_port = port.get_dualPort_primary()
+            if prim_port:
+                port = prim_port
+                port_id = port.port_id
+            if port_id not in ret.keys():
+                ret[port_id] = port
         return ret
 
     def get_port_by_id(self, port_id: int):
@@ -952,16 +967,16 @@ class AX25PortHandler(object):
         return list(self.ax25_ports.keys())
 
     def get_bbs(self):
-        return self.bbs
+        return self._bbs
 
     ###############################
     # BBS
     def _init_bbs(self):
-        if self.bbs is None:
+        if self._bbs is None:
             try:
-                self.bbs = BBS(self)
+                self._bbs = BBS(self)
             except bbsInitError:
-                self.bbs = None
+                self._bbs = None
 
     ###############################
     # SQL-DB
@@ -973,10 +988,11 @@ class AX25PortHandler(object):
             # DB.check_tables_exists('bbs')
             # TODO optional Moduls for minimum config
             self._db.check_tables_exists('bbs')
-            self._db.check_tables_exists('user_db')
+            # self._db.check_tables_exists('user_db')
             self._db.check_tables_exists('aprs')
             self._db.check_tables_exists('port_stat')
             # self._db.check_tables_exists('mh')
+            self._db.update_db_tables()
             if self._db.error:
                 raise SQLConnectionError
         else:

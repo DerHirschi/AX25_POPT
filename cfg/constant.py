@@ -3,48 +3,53 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.116.12'
+VER = '2.117.105'
 
-DEBUG_LOG = True
-CONSOLE_LOG = True
+DEBUG_LOG       = False
+CONSOLE_LOG     = True
 """ Custom TNC KISSMODE INIT """
-TNC_KISS_CMD = b'\x1b@K\r'             # Custom Command for setting TNC to Kiss Mode
-TNC_KISS_CMD_END = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
+TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
+TNC_KISS_CMD_END    = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
 KISSDEVICES = ['KISSSER', 'KISSTCP', 'AX25KERNEL']
 """"""
-MAX_PORTS = 10              #
-SERVICE_CH_START = 11       # Service Channels Start Channel
-MAX_MCAST_CH = 30           # Max Virtual MCast Channels
+MAX_PORTS           = 10       #
+SERVICE_CH_START    = 11       # Service Channels Start Channel
+MAX_MCAST_CH        = 30       # Max Virtual MCast Channels
 """ doc/PoPT/mysql_setup.txt """
-MYSQL = False    # MYSQL/SQLITE
-MYSQL_USER = 'popt'
-MYSQL_PASS = '83g6u45908k91HG2jhj5jeGG'
-MYSQL_HOST = '127.0.0.1'
-MYSQL_DB = 'popt_db'
+MYSQL       = False    # MYSQL/SQLITE
+MYSQL_USER  = 'popt'
+MYSQL_PASS  = '83g6u45908k91HG2jhj5jeGG'
+MYSQL_HOST  = '127.0.0.1'
+MYSQL_DB    = 'popt_db'
 
 """ Directory's """
-CFG_data_path = 'data/'
-CFG_logging_path = 'data/logs/'
-CFG_usertxt_path = 'userdata/'
-CFG_ft_downloads = 'ft_downloads/'
-CFG_user_db = 'data/UserDB.popt'
-CFG_mh_data_file = 'data/mh_data.popt'
+CFG_data_path           = 'data/'
+CFG_logging_path        = 'data/logs/'
+CFG_usertxt_path        = 'userdata/'
+CFG_ft_downloads        = 'ft_downloads/'
+CFG_user_db             = 'data/UserDB.popt'
+CFG_mh_data_file        = 'data/mh_data.popt'
 CFG_port_stat_data_file = 'data/port_stat.popt'
-CFG_MAIN_data_file = 'popt_cfg.popt'    # New Global CFG
+# BBS
+CFG_bbs_data_path       = 'data/bbs/'
+CFG_bbs_import_path     = 'data/bbs/import/'
+CFG_bbs_import_file     = 'import.poxt'
+# Main Cfg-File
+CFG_MAIN_data_file      = 'popt_cfg.popt'    # New Global CFG
 """ Sound Files """
-CFG_sound_DICO = '//data//sound//disco_alarm.wav'
-CFG_sound_CONN = '//data//sound//conn_alarm.wav'
-CFG_sound_RX_BEEP = '//data//sound//rx_beep.wav'
-CFG_sound_BELL = '//data//sound//bell.wav'
+CFG_sound_DICO      = '//data//sound//disco_alarm.wav'
+CFG_sound_CONN      = '//data//sound//conn_alarm.wav'
+CFG_sound_RX_BEEP   = '//data//sound//rx_beep.wav'
+CFG_sound_BELL      = '//data//sound//bell.wav'
 
 ###################################################################################
 """ CONST Stuff """
-LANGUAGE = 0
+LANGUAGE = 1
 LANG_IND = {
             'DE': 0,
             'EN': 1,
             'NL': 2,
-            # 'FR': 3,
+            'FR': 3,
             # 'FI': 4,
             # 'PL': 5,
             # 'PT': 6,
@@ -279,23 +284,23 @@ WELCOME_SPEECH = (
 
 
 STATUS_BG = {
-    'ENDE': 'red',  # 0
-    'FREI': 'orange',  # 1
-    'AUFBAU': 'CadetBlue1',  # 2
-    'FRMR': 'red',  # 3
-    'ABBAU': 'OrangeRed',  # 4
-    'BEREIT': 'green',  # 5
-    'REJ': 'yellow',  # 6
-    'FINAL': 'LightYellow',  # 7
-    'RNR': 'PeachPuff4',  # 8
-    'DEST-RNR': 'PeachPuff2',  # 9
-    'BOTH-RNR': 'PeachPuff3',  # 10
-    'RNR-F': 'LightYellow',  # 11
-    'DEST-RNR-F': 'LightYellow',  # 12
-    'BOTH-RNR-F': 'LightYellow',  # 13
-    'RNR-REJ': 'light sky blue',  # 14
-    'DEST-RNR-REJ': 'sky blue',  # 15
-    'BOTH-RNR-REJ': 'deep sky blue',  # 16
+    'ENDE'          : 'red',            # 0
+    'FREI'          : 'orange',         # 1
+    'AUFBAU'        : 'CadetBlue1',     # 2
+    'FRMR'          : 'red',            # 3
+    'ABBAU'         : 'OrangeRed',      # 4
+    'BEREIT'        : 'green',          # 5
+    'REJ'           : 'yellow',         # 6
+    'FINAL'         : 'LightYellow',    # 7
+    'RNR'           : 'PeachPuff4',     # 8
+    'DEST-RNR'      : 'PeachPuff2',     # 9
+    'BOTH-RNR'      : 'PeachPuff3',     # 10
+    'RNR-F'         : 'LightYellow',    # 11
+    'DEST-RNR-F'    : 'LightYellow',    # 12
+    'BOTH-RNR-F'    : 'LightYellow',    # 13
+    'RNR-REJ'       : 'light sky blue', # 14
+    'DEST-RNR-REJ'  : 'sky blue',       # 15
+    'BOTH-RNR-REJ'  : 'deep sky blue',  # 16
 }
 
 BOOL_ON_OFF = {
@@ -321,6 +326,7 @@ MH_BEACON_FILTER = [
     'APDW14',
     'APRS',
     'MAIL',
+    'MAILS',
     'DX',
     'CQ',
     'CQDX',
@@ -328,10 +334,21 @@ MH_BEACON_FILTER = [
     'NODE',
     'NODES',
     'WX',
+    'WP',
     'WETTER',
     'BAKE',
     'BEACON',
     'APZPOP',
+    'WIDE1',
+    'WIDE2',
+    'WIDE3',
+    'WIDE4',
+    'WIDE5',
+    'WIDE6',
+    'WIDE7',
+    'WIDE8',
+    'WIDE9',
+    'WIDE0',
 ]
 
 
@@ -351,4 +368,8 @@ ONE_WIRE_MAP = ("             PI 3/4 GPIO\n"
 # GPIO
 GPIO_PATH = '/sys/class/gpio'
 GPIO_RANGE = (1, 26)
-
+#######################################################
+# Tasker
+TASK_TYP_FWD    = 'FWD'
+TASK_TYP_BEACON = 'BEACON'
+TASK_TYP_MAIL   = 'AUTOMAIL'

@@ -13,7 +13,7 @@ from gui.guiMsgBoxes import AskMsg
 
 class UserDB(tk.Toplevel):
     def __init__(self, root, ent_key=''):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root.main_win)
         self._root_win = root
         self._lang = POPT_CFG.get_guiCFG_language()
         self.win_height = 600
@@ -515,7 +515,7 @@ class UserDB(tk.Toplevel):
                 f"{self.db_ent.last_edit.time().minute}"
             )"""
             self._last_edit_var.set(conv_time_DE_str(self._db_ent.last_edit))
-            self._last_conn_var.set(conv_time_DE_str(self._db_ent.last_seen))
+            self._last_conn_var.set('---' if self._db_ent.last_conn is None else conv_time_DE_str(self._db_ent.last_conn))
             self._conn_count_var.set(str(self._db_ent.Connects))
 
             self._info_ent.delete(0.0, tk.END)
@@ -572,8 +572,8 @@ class UserDB(tk.Toplevel):
             else:
                 sysop_key = self._db_ent.Sysop_Call
 
-        node_str = 'NODES: '
-        bbs_str = 'BBS: '
+        node_str  = 'NODES: '
+        bbs_str   = 'BBS: '
         other_str = 'OTHER: '
 
         if sysop_key:

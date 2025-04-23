@@ -11,10 +11,10 @@ from cfg.string_tab import STR_TABLE
 
 class NewMessageWindow(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self._aprs_root = root_win
         self._aprs_root._new_msg_win = self
-        self.lang = root_win.lang
+        self.lang = POPT_CFG.get_guiCFG_language()
         self.win_height = 250
         self.win_width = 700
         self.style = root_win.style

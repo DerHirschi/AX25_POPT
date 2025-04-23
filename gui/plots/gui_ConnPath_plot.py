@@ -2,8 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 
-from matplotlib.backends._backend_tk import NavigationToolbar2Tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+#from matplotlib.backends._backend_tk import NavigationToolbar2Tk
+#from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
 import networkx as nx
 import random
 from ax25.ax25InitPorts import PORT_HANDLER
@@ -12,18 +13,19 @@ from ax25.ax25InitPorts import PORT_HANDLER
 
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-import matplotlib
+#import matplotlib
 
 from cfg.constant import MH_BEACON_FILTER
 from cfg.popt_config import POPT_CFG
 
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
+#matplotlib.use('Agg')
+# from matplotlib import pyplot as plt
+from gui import plt
 
 
 class ConnPathsPlot(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
+        tk.Toplevel.__init__(self, master=root_win.main_win)
         self.wm_title("MH Routes")
         self._root_win = root_win
         self.geometry(f"800x"
