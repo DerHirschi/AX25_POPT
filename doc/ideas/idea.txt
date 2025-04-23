@@ -183,7 +183,8 @@ Ideas/TODO's :
     ✓ Reject (Config u Handling)
     ✓ CC     (Config u Handling)
     - SWAP   (Config u Handling)
-  - User-DB (User-DB Erweiterung für die BBS)
+  ✓ User-DB
+    - User-DB Erweiterung für die BBS?
   - BBS Tool (Hold, Filter, Ban, Man-Routing, ...)
   ✓ CLI (Grundlegend)
     ✓ Side Stops

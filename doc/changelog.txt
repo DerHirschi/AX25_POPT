@@ -14,6 +14,7 @@ Fixes:
 - Scripterror beim Öffnen des Pin-Setups in den GPIO-Einstellungen
 - Bei Eingabe des CLI-CMD "QTH" wird der "Q" Befehl ausgeführt
 - User-DB: Zeit für "Letzer Connect" wurde als "zuletzt gelesen" gesetzt
+- Linkhalter Timer wird nicht zurückgesetzt, wenn sich Einstellungen geändert haben
 
 Optimierung:
 - T2-Auto Berechnung
