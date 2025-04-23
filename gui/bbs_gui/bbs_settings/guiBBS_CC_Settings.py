@@ -28,7 +28,7 @@ class BBSccSettings(tk.Frame):
         ###########################################
         ###################################
         # GUI Stuff
-        tk.Label(self, text='CC').pack(side=tk.TOP, expand=False)
+        tk.Label(self, text=self._getTabStr('cc_settings')).pack(side=tk.TOP, expand=False)
         r_btn_fr    = tk.Frame(self, borderwidth=10)
         r_tab_frame = tk.Frame(self, borderwidth=10)
 

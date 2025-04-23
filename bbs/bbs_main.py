@@ -21,21 +21,24 @@ flags in FWD Q Tab
 SW  = (BBS is already receiving MSG fm other BBS) Try again on next connect. Still connected
 S=  = Send (BBS is already receiving MSG fm other BBS) Try again on next connect.
 """
-# Fixme: End-Connection trigger
-
 import time
 from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import FWD_RESP_TAB, FWD_RESP_ERR, GET_MSG_STRUC, LF, CR, CNTRL_Z
+# from bbs.bbs_email_server import BBSMailServer
 from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlist_fm_header, encode_fa_header
 from bbs.bbs_fwd_connection import BBSConnection
+from bbs.bbs_mail_import import get_mail_import
+from cfg.cfg_fnc import init_bbs_dir
 from cfg.constant import SQL_TIME_FORMAT, TASK_TYP_FWD
 from cfg.default_config import getNew_BBS_Port_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, BBS_LOG
+from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from UserDB.UserDBmain import USER_DB
+from fnc.str_fnc import format_number
 
 
 class BBS:
@@ -43,6 +46,8 @@ class BBS:
         self._logTag        = "BBS-Main: "
         logger.info(self._logTag + 'Init')
         BBS_LOG.info(self._logTag + 'Init')
+        BBS_LOG.info(self._logTag + 'Checking Directory Structure')
+        init_bbs_dir()
         self._port_handler  = port_handler
         self._db            = self._port_handler.get_database()
         self._userDB        = USER_DB
@@ -53,7 +58,6 @@ class BBS:
         self._fwd_port_cfg       = self._pms_cfg.get('fwd_port_cfg', {})
         self._pms_cfg_hasChanged = False
         if not self._pms_cfg.get('enable_fwd', True):
-            # TODO PMS Mode
             BBS_LOG.info("FWD is disabled. BBS is in PMS Mode")
         self._own_bbs_address = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
         ##########################
@@ -110,6 +114,11 @@ class BBS:
         self._var_task_5sec         = time.time()   + 5
         self._var_task_60sec        = time.time()   + 30
         self._var_task_fwdQ_timer   = time.time()   + 30
+        BBS_LOG.info(self._logTag + 'Init Auto Mail Tasks')
+        self._init_scheduled_tasks()
+
+        #self._email_server = BBSMailServer(self, use_ssl=False)
+        #self._email_server.start()
         logger.info(self._logTag + 'Init complete')
         BBS_LOG.info(self._logTag + 'Init complete')
 
@@ -145,6 +154,8 @@ class BBS:
             if not self._pms_cfg.get('enable_fwd', True):
                 # TODO PMS Mode
                 BBS_LOG.info(self._logTag + "ReInit: FWD is disabled. BBS is in PMS Mode")
+            BBS_LOG.info(self._logTag + 'ReInit: Auto Mail Tasks')
+            self._reinit_scheduled_tasks()
             BBS_LOG.info(self._logTag + "ReInit: Done !")
             return True
         return False
@@ -189,6 +200,10 @@ class BBS:
             bbs_fwd_next_q=[],  # ['FWD-ID', ...][:5]
         )
 
+    def close(self):
+        # self._email_server.stop()
+        pass
+
     #################################################
     def main_cron(self):
         """ 2 Sec. called fm PortInit Loop """
@@ -208,13 +223,13 @@ class BBS:
     def _60sec_task(self):
         if time.time() > self._var_task_60sec:
             self._var_task_60sec = time.time() + 60
+            self._mail_import_task()
             self._check_msg2fwd()
 
     def _30sec_task(self):
         """ Dynamic Timing """
         if time.time() > self._var_task_fwdQ_timer:
             self._var_task_fwdQ_timer = time.time() + 30  # Maybe 120 ?
-
 
     def _check_msg2fwd(self):
         if self._pms_cfg.get('enable_fwd', True):
@@ -225,14 +240,11 @@ class BBS:
         self._check_new_port_tasks()    # Check for new Port-Tasks
         self._exec_fwdQ()
 
-    ###################################
-    # Add SYSOP-Msg (Noty) to system
+    ######################################
+    # Add SYSOP-Msg (Noty) to the system
     def send_sysop_msg(self, topic: str , msg: str):
         log_tag = self._logTag + 'Send SYSOP MSG> '
         top     = f"*** {topic} ***"
-        BBS_LOG.info(log_tag + f"Topic: {topic}")
-        BBS_LOG.info(log_tag + f"Msg: {msg}")
-
         msg     = msg.encode('UTF-8', 'ignore')
         msg     = msg.replace(LF, CR)
         out_msg = GET_MSG_STRUC()
@@ -249,18 +261,76 @@ class BBS:
         ))
         mid = self.new_msg(out_msg)
         self.add_local_msg_to_fwd_by_id(mid=mid)
+        BBS_LOG.info(log_tag + f"Topic: {topic}")
+        BBS_LOG.info(log_tag + f"MID: {mid}")
+        BBS_LOG.info(log_tag + f"Msg: {msg}")
+        self._port_handler.set_pmsMailAlarm()
 
+    #############################################
+    # Add preconfigured Mail to the system
+    def send_scheduled_mail(self, conf: dict):
+        log_tag = self._logTag + 'Send Scheduled MSG> '
+
+        msg_conf = conf.get('msg_conf', GET_MSG_STRUC())
+        conf_enc = conf.get('encoding', 'ASCII')
+        env_vars = conf.get('env_vars', False)
+
+
+        raw_msg = str(msg_conf.get('raw_msg', ''))
+        subject = msg_conf.get('subject', '')
+        if any((not raw_msg, not subject)):
+            return
+
+        raw_msg = "\n*** This message was generated automatically ***\n\n" + raw_msg
+
+        if env_vars:
+            raw_msg = replace_StringVARS(raw_msg, port_handler=self._port_handler)
+        raw_msg = raw_msg.encode(conf_enc, 'ignore')
+        msg_conf['msg']    = raw_msg.replace(LF, CR)
+        msg_conf['x_info'] = "This message was generated automatically"
+
+        mid = self.new_msg(msg_conf)
+        self.add_local_msg_to_fwd_by_id(mid=mid)
+        BBS_LOG.info(log_tag + "Exec Task")
+        BBS_LOG.info(log_tag + f"  To   : {msg_conf.get('receiver', '')} @ {msg_conf.get('recipient_bbs', '')}")
+        BBS_LOG.info(log_tag + f"  MID  : {mid}")
+        BBS_LOG.info(log_tag + f"  Topic: {msg_conf.get('subject')}")
+
+    def _init_scheduled_tasks(self):
+        if hasattr(self._port_handler, 'init_AutoMail_tasks'):
+            self._port_handler.init_AutoMail_tasks()
+
+    def _reinit_scheduled_tasks(self):
+        if hasattr(self._port_handler, 'reinit_AutoMail_tasks'):
+            self._port_handler.reinit_AutoMail_tasks()
+
+    ###################################
+    # Mail Import system
+    def _mail_import_task(self):
+        log_tag   = self._logTag + 'Mail Import Task> '
+        new_mails = get_mail_import()
+        for mail in new_mails:
+            mail['sender_bbs'] = self._pms_cfg.get('user', '') + f".{self._pms_cfg.get('regio', '')}"
+
+            BBS_LOG.info(log_tag + f"Import Mail: {format_number(mail.get('message_size', 0))} Bytes")
+            BBS_LOG.info(log_tag + f"  From: {mail.get('sender', '')}")
+            BBS_LOG.info(log_tag + f"  To  : {mail.get('receiver', '')} @ {mail.get('recipient_bbs', '')}")
+            BBS_LOG.info(log_tag + f"  Subj: {mail.get('subject', '')[:20]}..")
+            BBS_LOG.info(log_tag + f"  Typ : {mail.get('message_type', '')}")
+            BBS_LOG.info(log_tag + f"  BID : {mail.get('bid', '')}")
+            mid = self.new_msg(mail)
+            self.add_local_msg_to_fwd_by_id(mid=mid)
     ###################################
     # Add Msg to system
     def add_local_msg_to_fwd_by_id(self, mid: int, fwd_bbs_call=''):
-        log_tag = self._logTag + 'Forward Check - Local > '
+        log_tag   = self._logTag + 'Forward Check - Local> '
         msg_fm_db = self._db.bbs_get_msg_fm_outTab_by_mid(mid)
         if not msg_fm_db:
             BBS_LOG.error(log_tag + 'No msg_fm_db')
             return False
         new_msg = build_msg_header(msg_fm_db, self._own_bbs_address)
 
-        bid = new_msg.get('bid_mid', '')
+        bid     = new_msg.get('bid_mid', '')
         msg_typ = new_msg.get('message_type', '')
 
         BBS_LOG.info(log_tag + f"Msg: {mid} - BID: {bid} - Typ: {msg_typ} - Flag: {new_msg.get('flag', '')}")
@@ -831,6 +901,7 @@ class BBS:
         self._fwd_BBS_q[bbs_call]['bbs_fwd_timeout'] = time.time()
         self._check_msg2fwd()
 
+    # Block
     def _is_block_limit(self, port_id: int):
         fwd_port_cfg = self._fwd_port_cfg.get(port_id, getNew_BBS_Port_cfg())
         send_limit   = fwd_port_cfg.get('send_limit', 1)
@@ -841,6 +912,21 @@ class BBS:
             # BBS_LOG.debug(self._logTag + f"  Block-T: {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)} min")
             return True
         return False
+
+    def _sub_block_c(self, bbs_call: str, bid: str):
+        log_tag = self._logTag + f"Sub Block Byte C - BBS:({bbs_call}) - BID:({bid})> "
+        port_id = self._fwd_cfg.get(bbs_call, {}).get('port_id', -1)
+        if port_id not in self._fwd_ports:
+            BBS_LOG.error(log_tag + f"No cfg for {bbs_call}")
+            return
+        if bbs_call not in self._fwd_BBS_q:
+            BBS_LOG.error(log_tag + f"bbs_call not in self._fwd_BBS_q")
+            return False
+        if bid not in self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}):
+            BBS_LOG.error(log_tag + f"bid not in ..")
+            return False
+        bytes_send = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('bytes_to_send', 0)
+        self._fwd_ports[port_id]['block_byte_c'] = max(0, (self._fwd_ports[port_id]['block_byte_c'] - int(bytes_send)))
 
     def reset_port_block_fnc(self, port_id: int):
         if port_id not in self._fwd_ports:
@@ -859,7 +945,7 @@ class BBS:
         # BBS_LOG.debug(self._logTag + f"  block_timer : {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)}")
         self._fwd_ports[port_id]['block_timer']     = time.time()
         self._fwd_ports[port_id]['block_byte_c']    = 0
-
+    # FWD-Q
     def ack_next_fwd_q(self, fwd_id: str , flag: str):
         log_tag = self._logTag + f'ACK BBS-FWD-Next-Q({fwd_id})> '
         res     = self._db.bbs_ack_fwdQ_by_FWD_ID(fwd_id, flag)
@@ -892,7 +978,10 @@ class BBS:
             BBS_LOG.error(log_tag + f"  bbs_fwd_q: {bbs_fwd_q}")
             BBS_LOG.error(log_tag + f"  bbs_fwd_next_q: {bbs_fwd_next_q}")
             return
-        self._set_bbs_byte_c(bbs_call, bid)
+        if flag in ['S+', 'H']:
+            self._set_bbs_byte_c(bbs_call, bid)
+        else:
+            self._sub_block_c(bbs_call, bid)
         bbs_fwd_next_q.remove(bid)
         bbs_fwd_q[bid]['flag'] = flag
         """
@@ -1072,7 +1161,8 @@ class BBS:
                 if not self.delete_incoming_fwd_bid(bid):
                     BBS_LOG.error(logTag + f'Error, delete_incoming_fwd_bid() - {bbs_call} - BID: {bid}')
             self._fwd_connections.remove(bbs_conn)
-            self._port_handler.set_pmsFwdAlarm(False)
+            if not self._fwd_connections:
+                self._port_handler.set_pmsFwdAlarm(False)
             self._check_msg2fwd()
             return True
         return False
@@ -1158,7 +1248,6 @@ class BBS:
         # local_user     += ['SYSOP']     # TODO Swap
         # TODO local_user     += list(user_db.bla......)
         BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs}")
-
 
         if msg_typ == 'B':
             if not recv_bbs_call:
@@ -1475,8 +1564,6 @@ class BBS:
     ########################################################################
     # CC - Tab
     def _check_cc_tab(self, msg: dict):
-        print(f"cc_check")
-
         cc_tab_cfg = self._pms_cfg.get('cc_tab', {})
         """
         cc_tab_cfg = {
@@ -1632,6 +1719,15 @@ class BBS:
 
     def get_ll(self, numbers: int ,call: str):
         return self._db.bbs_get_ll(call)[:numbers]
+
+    def get_l_from(self, from_call: str):
+        return self._db.bbs_get_l_from(from_call)
+
+    def get_l_to(self, to_call: str, own_call: str):
+        return self._db.bbs_get_l_to(to_call, own_call)
+
+    def get_l_at(self, to_bbs: str, own_call: str):
+        return self._db.bbs_get_l_at(to_bbs, own_call)
 
     def get_active_fwd_q_tab(self):
         # GUI

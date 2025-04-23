@@ -3,9 +3,9 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.93'
+VER = '2.117.105'
 
-DEBUG_LOG       = True
+DEBUG_LOG       = False
 CONSOLE_LOG     = True
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
@@ -30,6 +30,11 @@ CFG_ft_downloads        = 'ft_downloads/'
 CFG_user_db             = 'data/UserDB.popt'
 CFG_mh_data_file        = 'data/mh_data.popt'
 CFG_port_stat_data_file = 'data/port_stat.popt'
+# BBS
+CFG_bbs_data_path       = 'data/bbs/'
+CFG_bbs_import_path     = 'data/bbs/import/'
+CFG_bbs_import_file     = 'import.poxt'
+# Main Cfg-File
 CFG_MAIN_data_file      = 'popt_cfg.popt'    # New Global CFG
 """ Sound Files """
 CFG_sound_DICO      = '//data//sound//disco_alarm.wav'
@@ -367,3 +372,4 @@ GPIO_RANGE = (1, 26)
 # Tasker
 TASK_TYP_FWD    = 'FWD'
 TASK_TYP_BEACON = 'BEACON'
+TASK_TYP_MAIL   = 'AUTOMAIL'

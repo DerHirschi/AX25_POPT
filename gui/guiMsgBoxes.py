@@ -21,7 +21,11 @@ def save_file_dialog(data):
         return False
     if f is None:
         return
-    f.write(data)
+    try:
+        f.write(data)
+    except UnicodeEncodeError:
+        # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
+        pass
     f.close()
 
 def call_vali_warning(root_win):

@@ -1,5 +1,7 @@
+from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
-    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON
+    DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON, \
+    TASK_TYP_MAIL
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -85,6 +87,7 @@ def getNew_BBS_cfg():
         pn_auto_path    = 1,            # Find BBS to FWD
         reject_tab      = [],           # Reject/Hold Tab
         cc_tab          = {},           # CC Tab
+        auto_mail_tasks = [],           # Auto-Mails like Routingmails
         # 0 = disabled (Use strict configs)
         # 1 = most current
         # 2 = best (low hops)
@@ -148,6 +151,16 @@ def getNew_BBS_REJ_cfg():
         r_h             = 'H',
     )
 
+def getNew_AUTOMAIL_task():
+    msg_conf        = GET_MSG_STRUC()
+    msg_conf['msg'] = ''
+    return dict(
+        task_typ        = TASK_TYP_MAIL,
+        msg_conf        = dict(msg_conf),
+        conf_enc        = 'UTF-8',
+        env_vars        = False,
+        scheduler_cfg   = dict(getNew_schedule_config()),
+    )
 """
 def getNew_BBS_User_cfg():
     # UserDB Entry

@@ -74,7 +74,6 @@ class AX25PortHandler(object):
         #######################################################
         # Init UserDB
         self._userDB = USER_DB
-        self._userDB.set_port_handler(self)
         ########################################################
         # Init MH
         self._mh = None
@@ -207,26 +206,34 @@ class AX25PortHandler(object):
         self._scheduled_tasker = PoPTSchedule_Tasker(self)
 
     def insert_SchedTask(self, sched_cfg, conf):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
             self._scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
 
     def del_SchedTask(self, conf):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'del_scheduler_Task'):
             self._scheduled_tasker.del_scheduler_Task(conf)
 
     def start_SchedTask_man(self, conf):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'start_scheduler_Task_manual'):
             return self._scheduled_tasker.start_scheduler_Task_manual(conf)
         return None
 
     def _Sched_task(self):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'tasker'):
             # Scheduler & AutoConn Tasker
             self._scheduled_tasker.tasker()
 
     def reinit_beacon_task(self):
-        if self._scheduled_tasker:
+        if hasattr(self._scheduled_tasker, 'reinit_beacon_tasks'):
             self._scheduled_tasker.reinit_beacon_tasks()
+
+    def init_AutoMail_tasks(self):
+        if hasattr(self._scheduled_tasker, 'init_SchedMail_tasks'):
+            self._scheduled_tasker.init_SchedMail_tasks()
+
+    def reinit_AutoMail_tasks(self):
+        if hasattr(self._scheduled_tasker, 'reinit_SchedMail_tasks'):
+            self._scheduled_tasker.reinit_SchedMail_tasks()
 
     #######################################################################
     # Setting/Parameter Updates
@@ -264,6 +271,9 @@ class AX25PortHandler(object):
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.close_port(k)
+        if hasattr(self._bbs, 'close'):
+            logger.info("PH: Closing BBS")
+            self._bbs.close()
         if self._mh:
             logger.info("PH: Saving MH-Data")
             self._mh.save_mh_data()

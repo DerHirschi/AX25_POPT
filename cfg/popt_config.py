@@ -611,5 +611,8 @@ class Main_CFG:
     def set_BBS_cfg(self, bbs_cfg: dict):
         self._config['bbs_main'] = dict(bbs_cfg)
 
+    def get_BBS_AutoMail_cfg(self):
+        return copy.deepcopy(self._config.get('bbs_main', getNew_BBS_cfg()).get('auto_mail_tasks', []))
+
 
 POPT_CFG = Main_CFG()

@@ -139,6 +139,172 @@ STR_TABLE = {
         '\n73 de $ownCall ...\n',
         '\n73 de $ownCall ...\n'),
 
+    #################
+    # BBS First user
+    'bbs_new_user_reg0': (
+        'Bitte Sprache wählen.\r',
+        'Use this BBS as your home BBS? Y/N> ',
+        'Deze BBS gebruiken als thuis-BBS? J/N> ',
+        'Utiliser ce BBS comme BBS domestique ? O/N> ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_reg_confirm': (
+        'Mit <Enter> bestätigen oder neu eingeben um zu ändern.\r> ',
+        'Press <Enter> to confirm or re-enter to change.\r>',
+        'Druk op <Enter> om te bevestigen of druk nogmaals op enter om te wijzigen.\r>',
+        'Appuyez sur <Entrée> pour confirmer ou appuyez à nouveau pour modifier.\r>',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_reg1': (
+        ('\r'
+         'Das ist die 1. Verbindung mit diesem System.\r'
+         'Bevor es weitergeht, bitte die Fragen beantworten. DANKE !\r'
+         'Tip: Du musst dir das hier nicht antun, es gibt etwas dass\r'
+         'nennt sich Internet.\r'
+         '\r'
+         'Vorname            :'),
+        ('\r'
+        'This is the first connection to this system.\r'
+        'Before we continue, please answer the questions. THANK YOU!\r'
+        "Tip: You don't have to put yourself through this, there's something called\r"
+        'the Internet.\r'
+        '\r'
+        'First Name:'),
+        ('\r'
+         'Dit is de eerste verbinding met dit systeem.\r'
+         'Voordat we verdergaan, wilt u alstublieft de vragen beantwoorden? BEDANKT!\r'
+         'Tip: Je hoeft dit niet zelf te doen, er is iets dat\r'
+         'wordt het internet genoemd.\r'
+         '\r'
+         'Voornaam :'),
+        ('\r'
+         "Il s'agit de la première connexion à ce système.\r"
+         "Avant de continuer, veuillez répondre aux questions. MERCI!\r"
+         "Conseil : vous n’êtes pas obligé de vous infliger cela, il y a quelque chose qui\r"
+         "s'appelle Internet.\r"
+         '\r'
+         'Prénom            :'),
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_reg2_1': (
+        'Ist {}\rnoch deine aktuelle Heimat-BBS ? J/N> ',
+        'Is {}\rstill your current home BBS? Y/N> ',
+        'Is {}\rnog steeds uw huidige thuis-BBS? J/N> ',
+        'Est-ce que {}\rest toujours votre BBS personnel actuel? O/N> ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_reg2_2': (
+        'Dies BBS als Heimat-BBS Nutzen ? J/N> ',
+        'Use this BBS as your home BBS? Y/N> ',
+        'Deze BBS gebruiken als thuis-BBS? J/N> ',
+        'Utiliser ce BBS comme BBS domestique ? O/N> ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_reg3': (
+        'Heimat-BBS         :',
+        'Home-BBS           :',
+        'Thuis BBS          :',
+        'Accueil BBS        :',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_reg4': (
+        ('\rDas hast du gut gemacht!\r\r'
+         'Benutzerdaten von $destCall:\r'
+         'Vorname   : {}\r'
+         'Heimat-BBS: {}\r'
+         'QTH       : {}\r'
+         'Locator   : {}\r\r'),
+        ('\rYou did well!\r\r'
+            'User data of $destCall:\r'
+            'First name: {}\r'
+            'Home BBS  : {}\r'
+            'QTH       : {}\r'
+            'Locator   : {}\r\r'),
+        ('Je hebt het goed gedaan!'
+         'Gebruikersgegevens van $destCall:\r'
+         'Voornaam: {}\r'
+         'Home BBS: {}\r'
+         'QTH     : {}\r'
+         'Locator : {}\r\r'),
+        ('\rTu as bien fait !\r\r'
+         "Données utilisateur de $destCall:\r"
+         'Prénom      : {}\r'
+         'Accueil BBS : {}\r'
+         'QTH         : {}\r'
+         'Localisateur: {}\r\r'),
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_error_hbbs_add': (
+        '\r # Error, eingegebener Call ist keine BBS.\r # {} Typ ist als {} bekannt.\r # Bitte nochmal versuchen.\r\r',
+        '\r # Error, entered call is not a BBS.\r # {} Type is known as {}.\r # Please try again.\r\r',
+        '\r # Fout, ingevoerde oproep is geen BBS.\r # {} Type staat bekend als {}.\r # Probeer het opnieuw.\r\r',
+        "\r # Erreur, l'appel saisi n'est pas un BBS.\r # {} Le type est connu comme {}.\r # Veuillez réessayer.\r\r",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_sysopMsg_top': (
+        'Neue Benutzeranmeldung',
+        'New user registration',
+        'Registratie nieuwe gebruiker',
+        "Inscription d'un nouvel utilisateur",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'bbs_new_user_sysopMsg_msg': (
+        '{} hat sich soeben zum ersten mal auf {} connected.\nZeit: {}\n',
+        '{} has just connected to {} for the first time.\nTime: {}\n',
+        '{} heeft zojuist voor de eerste keer verbinding gemaakt met {}.\nTijd: {}\n',
+        '{} vient de se connecter à {} pour la première fois.\nHeure: {}\n',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'language': (
         'Sprache',
         'Language',
@@ -2820,12 +2986,38 @@ STR_TABLE = {
 
     #####################################################
     # BOX CLI
+    'hint_no_mail_for': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Keine Mails vorhanden: {}',
+        '\r # No mails available: {}',
+        '\r # Geen mails beschikbaar: {}',
+        '\r # Aucun mail disponible: {}',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'hint_no_mail': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Keine Mails vorhanden',
+        '\r # No mails available',
+        '\r # Geen mails beschikbaar',
+        '\r # Aucun mail disponible',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_r': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '<MSG#> Liest die Nachricht mit der entspr. Nummer aus.',
-        '<MSG#> Reads the message with the corresponding number.',
-        '<MSG#> Leest het bericht met het bijbehorende nummer.',
-        '<MSG#> lecture du message correspondant au numéro de message.',
+        '<MSG#>: Liest die Nachricht mit der entspr. Nummer aus.',
+        '<MSG#>: Reads the message with the corresponding number.',
+        '<MSG#>: Leest het bericht met het bijbehorende nummer.',
+        '<MSG#>: lecture du message correspondant au numéro de message.',
         '',
         '',
         '',
@@ -2835,10 +3027,10 @@ STR_TABLE = {
 
     'cmd_sp': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        'SP <Call> @ <BBS> : Sendet eine persoenliche Nachricht an Rufzeichen',
-        'SP <Call> @ <BBS> : Sends a personal message to call sign',
+        'SP <Call> @ <BBS>: Sendet eine persoenliche Nachricht an Rufzeichen',
+        'SP <Call> @ <BBS>: Sends a personal message to call sign',
         'SP <Call> @ <BBS>: Stuurt een persoonlijk bericht naar roepnamen',
-        'SP <Call> @ <BBS> : Envoie un message personnel à l\'indicatid',
+        'SP <Call> @ <BBS>: Envoie un message personnel à l\'indicatid',
         '',
         '',
         '',
@@ -2848,13 +3040,13 @@ STR_TABLE = {
 
     'cmd_sb': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        ('SB <Rubrik> @ <Verteiler> Sendet ein Bulletin in eine Rubrik \r'
+        ('SB <Rubrik> @ <Verteiler>: Sendet ein Bulletin in eine Rubrik \r'
          '              fuer mehrere Boxen in einer Region.'),
-        ('SB <Category> @ <Distribution> Sends a bulletin to a category \r'
+        ('SB <Category> @ <Distribution>: Sends a bulletin to a category \r'
          '              for multiple boxes in a region.'),
-        ('SB <categorie> @ <distributie> Stuurt een bulletin naar een categorie \r'
+        ('SB <categorie> @ <distributie>: Stuurt een bulletin naar een categorie \r'
          '              voor meerdere dozen in een regio.'),
-        ('SB <Catégorie> @ <Distribution> Envoie un bulletin a la categorie \r'
+        ('SB <Catégorie> @ <Distribution>: Envoie un bulletin a la categorie \r'
          '              pour plusieurs boites dans une région.'),
         '',
         '',
@@ -2891,16 +3083,55 @@ STR_TABLE = {
 
     'cmd_ll': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '<Anzahl> Listet die neuesten Nachrichten in der ang. Zahl.',
-        '<Number> Lists the latest news in the specified number.',
-        '<nummer> Geeft de laatste berichten in het opgegeven nummer weer.',
-        '<number> Répertorie les derniers messages dans le numéro spécifié.',
+        '<Anzahl>: Listet die neuesten Nachrichten in der ang. Zahl.',
+        '<Number>: Lists the latest news in the specified number.',
+        '<nummer>: Geeft de laatste berichten in het opgegeven nummer weer.',
+        '<number>: Répertorie les derniers messages dans le numéro spécifié.',
         '',
         '',
         '',
         '',
         '',
-        ''),
+        ''), #
+
+    'cmd_l_from': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '<CALL>: Listet Bulletins VON einem Rufzeichen.',
+        '<CALL>: Lists bulletins FROM a callsign.',
+        '<CALL>: Geeft een lijst met bulletins VAN een roepnaam.',
+        "<CALL>: Répertorie les bulletins À PARTIR d'un indicatif d'appel.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  #
+
+    'cmd_l_to': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '<CALL/RUBRIK>: Listet Nachrichten AN ein Rufzeichen oder Rubrik.',
+        '<CALL/RUBRIK>: Lists messages TO a call sign or heading.',
+        '<CALL/RUBRIK>: Geeft een lijst weer van berichten NAAR een roepnaam of kop.',
+        "<CALL/RUBRIK>: répertorie les messages VERS un indicatif d'appel ou un titre.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  #
+
+    'cmd_l_at': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '<CALL>: Listet Bulletins VIA Verteiler.',
+        '<CALL>: Lists bulletins VIA distribution.',
+        '<CALL>: Geeft bulletins weer VIA distributielijst.',
+        "<CALL>: Répertorie les bulletins VIA de distribution.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  #
 
     'cmd_lb': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -2930,10 +3161,10 @@ STR_TABLE = {
 
     'cmd_k': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '<MSG#> Loescht die Nachricht mit der entspr. Nummer.',
-        '<MSG#> Deletes the message with the corresponding number.',
-        '<MSG#> Verwijdert het bericht met het bijbehorende nummer.',
-        '<MSG#> Supprime le message portant ce numéro',
+        '<MSG#>: Loescht die Nachricht mit der entspr. Nummer.',
+        '<MSG#>: Deletes the message with the corresponding number.',
+        '<MSG#>: Verwijdert het bericht met het bijbehorende nummer.',
+        '<MSG#>: Supprime le message portant ce numéro',
         '',
         '',
         '',
@@ -2982,10 +3213,23 @@ STR_TABLE = {
 
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r\r # BOX: Du hast {} neu Mails.\r\r',
-        '\r\r # BOX : You have {} new mails.\r\r',
-        '\r\r # BOX: Je hebt {} nieuwe mails.\r\r',
-        '\r\r # BOX : Vous avez {} nouveaux mails.\r\r',
+        '\r # BOX: Du hast {} neu Mails.\r\r',
+        '\r # BOX : You have {} new mails.\r\r',
+        '\r # BOX: Je hebt {} nieuwe mails.\r\r',
+        '\r # BOX : Vous avez {} nouveaux mails.\r\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_no_hbbs_address': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # Du hast noch keine Heimat-BBS eingetragen. PR <CALL.Verteiler>\r\r',
+        "\r # You haven't entered a home BBS yet. PR <CALL.Distribution>>\r\r",
+        '\r # U hebt nog geen thuis-BBS ingevoerd. PR <CALL.Distributie>\r\r',
+        "\r # Vous n'avez pas encore entré de BBS personnel. PR <CALL.Distribution>\r\r",
         '',
         '',
         '',
@@ -3327,6 +3571,18 @@ STR_TABLE = {
         'CC',
         'CC',
         'CC',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'AutoMail_settings': (
+        'Auto Mails',
+        'Auto Mails',
+        'Auto Mails',
+        'Auto Mails',
         '',
         '',
         '',

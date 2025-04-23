@@ -183,19 +183,21 @@ Ideas/TODO's :
     ✓ Reject (Config u Handling)
     ✓ CC     (Config u Handling)
     - SWAP   (Config u Handling)
-  - User-DB (User-DB Erweiterung für die BBS)
+  ✓ User-DB
+    - User-DB Erweiterung für die BBS?
   - BBS Tool (Hold, Filter, Ban, Man-Routing, ...)
   ✓ CLI (Grundlegend)
     ✓ Side Stops
     ✓ S.. -CMDs
     ✓ R.. -CMDs
     ✓ L.. -CMDs
-      - Erweiterte L.. CMDs (Filter)
-  - Automatesierte Routingmails (Scheduler)
-  - Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
+      ✓ Erweiterte L.. CMDs (Filter)
+  ✓ Automatesierte Routingmails (Scheduler)
+  ✓ Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS
   - Auswertung und senden von WP-Mails (Siehe User-DB)
-  - Mail inport/export (SB TEST@TEST .... ..)
+  ✓ Mail inport (SB TEST@TEST .... ..)
+  - Mail export (SB TEST@TEST .... ..)
   - Baken Noty
   ✓ System-Mail (Sysop Noty) - bbs.send_sysop_msg(topic, msg)
     ✓ Keine FWD-Route gefunden

@@ -661,9 +661,11 @@ class PoPT_GUI_Main:
                             command=lambda: self.open_window('fwdPath'),
                             underline=0)
         MenuBBS.add_separator()
+        """
         MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
                             command=self._do_pms_fwd,
                             underline=0)
+        """
 
         MenuBBS.add_command(label=STR_TABLE['start_auto_fwd'][self.language],
                             command=self._do_pms_autoFWD,
@@ -1323,6 +1325,7 @@ class PoPT_GUI_Main:
 
     def _save_to_file(self):
         data = self._out_txt.get('1.0', tk.END)
+        # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         save_file_dialog(data)
 
     ##########################
@@ -1334,6 +1337,7 @@ class PoPT_GUI_Main:
 
     def _save_monitor_to_file(self):
         data = self._mon_txt.get('1.0', tk.END)
+        # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         save_file_dialog(data)
 
     # END GUI Sizing/Formatting Stuff
@@ -2136,11 +2140,12 @@ class PoPT_GUI_Main:
         SOUND.sprech('Gluck gluck gluck blubber blubber')
         # self._port_handler.set_dxAlarm()
         # self._port_handler.set_tracerAlarm()
-        self._port_handler.debug_Connections()
+        # ## self._port_handler.debug_Connections()
         # self._Alarm_Frame.set_pmsMailAlarm()
         # self.set_noty_bell()
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
+        # print(get_mail_import())
 
     def _do_pms_autoFWD(self):
         self._port_handler.get_bbs().start_man_autoFwd()

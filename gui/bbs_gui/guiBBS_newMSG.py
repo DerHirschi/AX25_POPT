@@ -149,7 +149,7 @@ class BBS_newMSG(tk.Toplevel):
         tk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
 
         stat_cfg = POPT_CFG.get_stat_CFGs_by_typ('USER')
-        opt = list(stat_cfg.keys())
+        opt      = list(stat_cfg.keys())
         if opt:
             self._from_call_var.set(opt[0])
         tk.OptionMenu(from_frame,

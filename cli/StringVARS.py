@@ -172,9 +172,9 @@ def get_lastConnDate(port=None,
                      connection=None,
                      user_db=None):
     if not connection:
-        return '---'
+        return '--/--'
     if not connection.last_connect:
-        return '---'
+        return '--/--'
     dt_time = connection.last_connect.strftime('%d/%m/%Y')
     return str(dt_time)
 
@@ -184,9 +184,9 @@ def get_lastConnTime(port=None,
                      connection=None,
                      user_db=None):
     if not connection:
-        return '---'
+        return '--:--'
     if not connection.last_connect:
-        return '---'
+        return '--:--'
     dt_time = connection.last_connect.strftime('%H:%M:%S')
     return str(dt_time)
 

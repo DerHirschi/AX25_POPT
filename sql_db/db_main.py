@@ -744,6 +744,76 @@ class SQL_Database:
         # print(f"bbs_get_pn_msg_Tab_by_call res: {res}")
         return res
 
+    # L< #######################
+    def bbs_get_l_from(self, from_call: str):
+        query = ("SELECT MSGID, "
+                 "size, "
+                 "to_call, "
+                 "to_bbs, "
+                 "from_call, "
+                 "time, "
+                 "subject, "
+                 "new, "
+                 "BID,"
+                 "typ "
+                 "FROM pms_in_msg "
+                 f"WHERE NOT flag='DL' "
+                 f"and NOT flag='H' "
+                 f"and from_call='{from_call}' AND typ='B' "
+                 f"ORDER BY MSGID DESC ;")
+        res = self._commit_query(query)
+        # print(f"bbs_get_pn_msg_Tab_by_call res: {res}")
+        return res
+
+    # L> #######################
+    def bbs_get_l_to(self, to_call: str, own_call: str):
+        query = ("SELECT MSGID, "
+                 "size, "
+                 "to_call, "
+                 "to_bbs, "
+                 "from_call, "
+                 "time, "
+                 "subject, "
+                 "new, "
+                 "BID,"
+                 "typ "
+                 "FROM pms_in_msg "
+                 f"WHERE NOT flag='DL' "
+                 f"and NOT flag='H' "
+                 f"and ("
+                 f"(to_call='{to_call}' AND from_call='{own_call}' AND typ='P') or "
+                 f"(to_call='{to_call}' AND typ='B')"
+                 f") "
+                 f"ORDER BY MSGID DESC ;")
+        res = self._commit_query(query)
+        #print(f"bbs_get_pn_msg_Tab_by_call res: {res}")
+        return res
+
+    # L@ #######################
+    def bbs_get_l_at(self, to_bbs: str, own_call: str):
+        query = ("SELECT MSGID, "
+                 "size, "
+                 "to_call, "
+                 "to_bbs, "
+                 "from_call, "
+                 "time, "
+                 "subject, "
+                 "new, "
+                 "BID,"
+                 "typ "
+                 "FROM pms_in_msg "
+                 f"WHERE NOT flag='DL' "
+                 f"and NOT flag='H' "
+                 f"and "
+                 # f"and ("
+                 # f"(to_bbs LIKE '%{to_bbs}%' AND from_call='{own_call}' AND typ='P') or "
+                 f"to_bbs='{to_bbs}' AND typ='B' "
+                 # f") "
+                 f"ORDER BY MSGID DESC ;")
+        res = self._commit_query(query)
+        # print(f"bbs_get_pn_msg_Tab_by_call res: {res}")
+        return res
+
     # PN #######################
     def bbs_get_pn_msg_Tab_by_call(self, call: str):
         query = ("SELECT MSGID, "

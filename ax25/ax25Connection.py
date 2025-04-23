@@ -258,13 +258,13 @@ class AX25Conn:
         """ Encoding """
         self._encoding = 'CP437'     # 'UTF-8'
         """ User DB Entry """
-        self.user_db_ent = None
-        self.cli_remote = True
-        self.cli_language = 0
-        self.last_connect = None
+        self.user_db_ent    = None
+        self.cli_remote     = True
+        self.cli_language   = 0
+        self.last_connect   = None
         self._set_user_db_ent()
         """ CLI CFG """
-        self.noty_bell = False
+        self.noty_bell      = False
         self.cli = NoneCLI(self)
         self.cli_type = ''
         """ Pipe CFG """
@@ -952,9 +952,9 @@ class AX25Conn:
         self.user_db_ent = USER_DB.get_entry(self.to_call_str)
         if self.user_db_ent:
             self.user_db_ent.Connects += 1  # TODO Count just when connected
-            self.last_connect = self.user_db_ent.last_seen
-            self.user_db_ent.last_seen = datetime.now()
-            self._encoding = self.user_db_ent.Encoding
+            self.last_connect = self.user_db_ent.last_conn
+            self.user_db_ent.last_conn = datetime.now()
+            self._encoding    = self.user_db_ent.Encoding
             if self.user_db_ent.Language == -1:
                 self.user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())
             self.cli_language = self.user_db_ent.Language
