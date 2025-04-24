@@ -21,7 +21,6 @@ def getNew_ConnHistory(own_call: str,
 
 
 class NewConnWin(tk.Toplevel):
-    # TODO Again . . .
     def __init__(self, main_win):
         tk.Toplevel.__init__(self, master=main_win.main_win)
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
@@ -64,8 +63,9 @@ class NewConnWin(tk.Toplevel):
         own_call_frame.pack(  side=tk.TOP,    fill=tk.X, padx=62)
         lower_btn_frame.pack( side=tk.BOTTOM, fill=tk.X)
 
-
-        for port in PORT_HANDLER.get_all_ports().keys():
+        port_list = list(PORT_HANDLER.get_all_ports().keys())
+        port_list.sort()
+        for port in port_list:
             btn = tk.Button(port_btn_frame,
                             text=PORT_HANDLER.get_all_ports()[port].portname,
                             bg="red",
