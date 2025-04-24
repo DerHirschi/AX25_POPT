@@ -164,7 +164,7 @@ class BeaconTab:
         call_x = 600
         call_y = 55
         tk.Button(self.own_tab,
-                  text="Scheduler",
+                  text=f"{STR_TABLE['scheduler'][self._lang]}",
                   command=self._open_schedWin
                   ).place(x=call_x + 55, y=call_y)
 

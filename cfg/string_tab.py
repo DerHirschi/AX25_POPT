@@ -1814,6 +1814,66 @@ STR_TABLE = {
         '',
         ''),
 
+'GPIO': (
+        'GPIO',
+        'GPIO',
+        'GPIO',
+        'GPIO',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'Digipeater': (
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'F-Text': (
+        'F-Text',
+        'F-Text',
+        'F-Text',
+        'F-Text',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'MCast': (
+        'MCast',
+        'MCast',
+        'MCast',
+        'MCast',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'RX-Echo': (
+        'RX-Echo',
+        'RX-Echo',
+        'RX-Echo',
+        'RX-Echo',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'new_stat': (
         'Neue Station',
         'New Station',
@@ -1825,6 +1885,7 @@ STR_TABLE = {
         '',
         '',
         ''),
+
 
     'txt_decoding': (
         'Umlautumwandlung',
@@ -2022,7 +2083,7 @@ STR_TABLE = {
         'Versatz',
         'Offset',
         'Verzet',
-        'offset',
+        'Offset',
         '',
         '',
         '',
@@ -3936,7 +3997,7 @@ STR_TABLE = {
         '',
         ''),
 
-'newcon_ziel': (
+    'newcon_ziel': (
         'Ziel:',
         'Target:',
         'streefcijfer:',
@@ -3954,6 +4015,130 @@ STR_TABLE = {
         'History:',
         'Geschiedenis:',
         'Historique',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    #####################################################
+    # guiBeaconSettings.py
+
+    'scheduler': (
+        'Scheduler',
+        'Scheduler',
+        'Scheduler',
+        'Planificateur',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'type': (
+        'Typ:',
+        'Type:',
+        'Typ:',
+        'Type : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    #####################################################
+    # guiPoPT_Scheduler.py
+
+    'week_day': (
+        'Wochen tage',
+        'Week days',
+        'Week dagen:',
+        'Jour de la semaine',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'month_day': (
+        'Monats Tage',
+        'Month days',
+        'Maand dagen:',
+        'Jour du mois',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    'intervall_mn': (
+        'Interval (mn): ',
+        'Intervall (mn): ',
+        'Interval (mn): ',
+        'Intervalle (mn) : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'offset_sec': (
+        'Versatz (sek): ',
+        'Offset (sec): ',
+        'Offset (sec): ',
+        'Décalage (sec) : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'reset': (
+        'Reset',
+        'Reset',
+        'Reset',
+        'Reset',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'scheduler_set': (
+        'Scheduler-Set',
+        'Scheduler set',
+        'Scheduler ingesteld',
+        'Planificateur',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    #####################################################
+    # guiRxEchoSettings.py
+
+    'echo_warning': (
+        'Achtung! Diese Funktion ersetzt kein Digipeater!',
+        'Attention! This function does not replace a digipeater!',
+        'Let op! Deze functie vervangt geen digipeater!',
+        'Attention ! Cette fonction ne remplace pas un digipeater !',
         '',
         '',
         '',

@@ -3,6 +3,8 @@ from tkinter import ttk
 
 from cfg.constant import WEEK_DAYS_GE
 from schedule.popt_sched import getNew_schedule_config
+from fnc.str_fnc import get_strTab
+from cfg.popt_config import POPT_CFG
 
 
 class PoPT_Set_Scheduler(tk.Toplevel):
@@ -19,6 +21,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         # :param schedule_conf:   getNew_schedule_config()
         :param sel_frames:      ['min', 'h', 'wd', 'm', 'md']
         """
+        self._lang = POPT_CFG.get_guiCFG_language()
         tk.Toplevel.__init__(self)
         self._root_win = root_win
         self._root_win.schedule_win = self
@@ -50,7 +53,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             # sel_frames = ['wd', 'm', 'md']
         ###################################
         # self.title(STR_TABLE['msg_center'][self._lang])
-        self.title('Scheduler-Set')
+        self.title(get_strTab('scheduler_set', self._lang))
         # self.style = self._root_win.style
         if all((hasattr(self._root_win, 'winfo_x'), hasattr(self._root_win, 'winfo_y'))):
             self.geometry(f"800x"
@@ -91,7 +94,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             min_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
             ttk.Separator(r_frame, orient=tk.HORIZONTAL).pack(side=tk.TOP, fill=tk.X, expand=False)
 
-            tk.Label(min_frame, text='Minuten').pack(side=tk.TOP, fill=tk.X, expand=False)
+            tk.Label(min_frame, text=get_strTab('minutes', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(min_frame,
                                      [(x - 1) * 5 for x in range(1, 13)],
                                      'minutes'
@@ -101,7 +104,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             h_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
             ttk.Separator(r_frame, orient=tk.HORIZONTAL).pack(side=tk.TOP, fill=tk.X, expand=False)
 
-            tk.Label(h_frame, text='Stunden').pack(side=tk.TOP, fill=tk.X, expand=False)
+            tk.Label(h_frame, text=get_strTab('hours', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(h_frame,
                                      list(range(24)),
                                      'hours'
@@ -111,7 +114,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             weekDay_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
             ttk.Separator(r_frame, orient=tk.HORIZONTAL).pack(side=tk.TOP, fill=tk.X, expand=False)
 
-            tk.Label(weekDay_frame, text='Wochentage').pack(side=tk.TOP, fill=tk.X, expand=False)
+            tk.Label(weekDay_frame, text=get_strTab('week_day', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(weekDay_frame,
                                      WEEK_DAYS_GE,
                                      'week_days'
@@ -122,7 +125,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             month_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
             ttk.Separator(r_frame, orient=tk.HORIZONTAL).pack(side=tk.TOP, fill=tk.X, expand=False)
 
-            tk.Label(month_frame, text='Monate').pack(side=tk.TOP, fill=tk.X, expand=False)
+            tk.Label(month_frame, text=get_strTab('month', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(month_frame,
                                      list(range(1, 13)),
                                      'month'
@@ -133,7 +136,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             monthDay_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
             ttk.Separator(r_frame, orient=tk.HORIZONTAL).pack(side=tk.TOP, fill=tk.X, expand=False)
 
-            tk.Label(monthDay_frame, text='Monats Tage').pack(side=tk.TOP, fill=tk.X, expand=False)
+            tk.Label(monthDay_frame, text=get_strTab('month_day', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(monthDay_frame,
                                      list(range(1, 32)),
                                      'month_day'
@@ -143,12 +146,12 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         self._state_min_frame()
 
     def _init_interval_frame(self, frame: tk.Frame):
-        tk.Label(frame, text='Intervall').pack(side=tk.TOP, fill=tk.X, expand=True)
+        tk.Label(frame, text=get_strTab('intervall', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=True)
         f1 = tk.Frame(frame, borderwidth=3)
         f2 = tk.Frame(frame, borderwidth=3)
         f1.pack(side=tk.TOP, expand=False, anchor='w')
         f2.pack(side=tk.TOP, expand=False, anchor='w')
-        tk.Label(f1, text='Intervall (min): ', width=15).pack(side=tk.LEFT, expand=False)
+        tk.Label(f1, text=get_strTab('intervall_mn', self._lang), width=15).pack(side=tk.LEFT, expand=False)
         tk.Spinbox(f1,
                    from_=0,
                    to=1440,
@@ -157,7 +160,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
                    width=5,
                    command=self._state_min_frame
                    ).pack(side=tk.LEFT, expand=False)
-        tk.Label(f2, text='Versatz (sek): ', width=15).pack(side=tk.LEFT, expand=False)
+        tk.Label(f2, text=get_strTab('offset_sec', self._lang), width=15).pack(side=tk.LEFT, expand=False)
         tk.Spinbox(f2,
                    from_=0,
                    to=59,
@@ -168,15 +171,15 @@ class PoPT_Set_Scheduler(tk.Toplevel):
 
     def _init_btn_frame(self, frame: tk.Frame):
         tk.Button(frame,
-                  text='Ok',
+                  text=get_strTab('Ok', self._lang),
                   command=self._ok
                   ).pack(side=tk.LEFT, expand=False)
         tk.Button(frame,
-                  text='Abbrechen',
+                  text=get_strTab('cancel', self._lang),
                   command=self._close
                   ).pack(side=tk.RIGHT, expand=False)
         tk.Button(frame,
-                  text='RESET',
+                  text=get_strTab('reset', self._lang),
                   command=self._reset_all_selVars
                   ).pack(side=tk.RIGHT, expand=False)
 
@@ -191,7 +194,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         intern_frame = tk.Frame(frame)
         intern_frame.pack(side=tk.LEFT, expand=False)
         tk.Button(intern_frame,
-                  text='Reset',
+                  text=get_strTab('reset', self._lang),
                   command=lambda: self._reset_selVars(var_k)
                   ).pack(side=tk.TOP, expand=False)
         for el in sel_list:
