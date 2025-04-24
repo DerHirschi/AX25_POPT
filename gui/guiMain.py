@@ -48,7 +48,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
-    DEF_QSO_SYSMSG_BG
+    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -2615,10 +2615,17 @@ class PoPT_GUI_Main:
     def get_free_channel(self, start_channel=1):
         if not self.get_conn(con_ind=start_channel):
             return start_channel
-        for ch_id in range(1, SERVICE_CH_START):
+        for ch_id in range(1, MAX_SYSOP_CH):
             if not self.get_conn(con_ind=ch_id):
                 return ch_id
         return None
+
+    def get_all_free_channels(self):
+        ret = []
+        for ch_id in range(1, MAX_SYSOP_CH):
+            if not self.get_conn(con_ind=ch_id):
+                ret.append(ch_id)
+        return ret
 
     def get_ch_new_data_tr(self, ch_id):
         return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)

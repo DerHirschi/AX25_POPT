@@ -18,7 +18,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self.title(self._getTabStr('fwd_list'))
         self.style = self._root_win.style
         # self.geometry("1250x700")
-        self.geometry(f"1150x"
+        self.geometry(f"1190x"
                       f"400+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")

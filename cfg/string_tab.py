@@ -4011,9 +4011,9 @@ STR_TABLE = {
         ''),
 
     'newcon_history': (
-        'Geschichte',
-        'History:',
-        'Geschiedenis:',
+        'History',
+        'History',
+        'Geschiedenis',
         'Historique',
         '',
         '',

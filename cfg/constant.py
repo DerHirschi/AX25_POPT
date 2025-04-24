@@ -3,9 +3,9 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.105'
+VER = '2.118.0'
 
-DEBUG_LOG       = False
+DEBUG_LOG       = True
 CONSOLE_LOG     = True
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
@@ -13,6 +13,7 @@ TNC_KISS_CMD_END    = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mod
 KISSDEVICES = ['KISSSER', 'KISSTCP', 'AX25KERNEL']
 """"""
 MAX_PORTS           = 10       #
+MAX_SYSOP_CH        = 30       #
 SERVICE_CH_START    = 11       # Service Channels Start Channel
 MAX_MCAST_CH        = 30       # Max Virtual MCast Channels
 """ doc/PoPT/mysql_setup.txt """
