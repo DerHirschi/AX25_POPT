@@ -16,11 +16,11 @@ from fnc.os_fnc import is_linux
 
 class PortSetTab:
     def __init__(self, main_stt_win, new_settings, tabclt: ttk.Notebook):
-        self._main_cl = main_stt_win
-        self._lang = POPT_CFG.get_guiCFG_language()
-        self._height = 600
+        self._main_cl   = main_stt_win
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._height    = 600
+        self._width     = 1059
         height = self._height
-        self._width = 1059
 
         self._need_reinit = False
         self._port_setting: dict = new_settings
@@ -32,7 +32,7 @@ class PortSetTab:
         # Port Name
         name_x = 20
         name_y = 570
-        name_label = tk.Label(self.tab, text=get_strTab('port_cfg_port_name', self._lang))
+        name_label = tk.Label(self.tab, text=self._getTabStr('port_cfg_port_name'))
         name_label.place(x=name_x, y=height - name_y)
         self._prt_name = tk.Entry(self.tab, width=5)
         self._prt_name.place(x=name_x + 420, y=height - name_y)
@@ -46,12 +46,12 @@ class PortSetTab:
             if not all_ports[self._port_setting.get('parm_PortNr', -1)].device_is_running:
                 x = 520
                 y = 570
-                label = tk.Label(self.tab, text=get_strTab('port_cfg_not_init', self._lang), fg='red')
+                label = tk.Label(self.tab, text=self._getTabStr('port_cfg_not_init'), fg='red')
                 label.place(x=x, y=height - y)
         else:
             x = 520
             y = 570
-            label = tk.Label(self.tab, text=get_strTab('port_cfg_not_init', self._lang), fg='red')
+            label = tk.Label(self.tab, text=self._getTabStr('port_cfg_not_init'), fg='red')
             label.place(x=x, y=height - y)
         #################
         # Port Typ
@@ -73,13 +73,15 @@ class PortSetTab:
         param_next_line = 0
         # param_label = tk.Label(self.tab, text='Port-Parameter:')
         # param_label.place(x=param_sel_x, y=height - param_sel_y)
-        self._param1_var = tk.StringVar(self.tab)
-        self._param1_label = tk.Label(self.tab)
-        self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
-        self._param2_label = tk.Label(self.tab)
-        self._param2_ent = tk.Entry(self.tab)
-        self._param1_x = int(param_sel_x + 80)
-        self._param1_y = int(height - param_sel_y + param_next_line)
+        self._p_txd_var     = tk.StringVar(self.tab)
+        self._kiss_txd_var  = tk.StringVar(self.tab)
+        self._param1_var    = tk.StringVar(self.tab)
+        self._param1_label  = tk.Label(self.tab)
+        self._param1_ent    = tk.Entry(self.tab, textvariable=self._param1_var)
+        self._param2_label  = tk.Label(self.tab)
+        self._param2_ent    = tk.Entry(self.tab)
+        self._param1_x      = int(param_sel_x + 80)
+        self._param1_y      = int(height - param_sel_y + param_next_line)
         self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
         self._param1_ent.place(x=self._param1_x, y=self._param1_y)
         self._param2_label.place(x=param_sel_x + 500, y=height - param_sel_y + param_next_line)
@@ -92,9 +94,10 @@ class PortSetTab:
         ptxd_x = 20
         ptxd_y = 500
         ptxd_label = tk.Label(self.tab, text='P-TXD:')
-        self._ptxd = tk.Entry(self.tab, width=5)
-        self._ptxd.insert(tk.END, self._port_setting.get('parm_TXD', new_cfg.get('parm_TXD', 400)))
-        ptxd_help = tk.Label(self.tab, text=get_strTab('port_cfg_psd_txd', self._lang))
+        self._ptxd = tk.Entry(self.tab, width=5, textvariable=self._p_txd_var)
+        self._p_txd_var.set(self._port_setting.get('parm_TXD', new_cfg.get('parm_TXD', 400)))
+        # self._ptxd.insert(tk.END, self._port_setting.get('parm_TXD', new_cfg.get('parm_TXD', 400)))
+        ptxd_help = tk.Label(self.tab, text=self._getTabStr('port_cfg_psd_txd'))
 
         ptxd_label.place(x=ptxd_x, y=height - ptxd_y)
         self._ptxd.place(x=ptxd_x + 80, y=height - ptxd_y)
@@ -120,14 +123,17 @@ class PortSetTab:
         kiss_txd_x = 210
         kiss_txd_y = 465
         kiss_txd_label = tk.Label(self.tab, text='TXD:')
-        self._kiss_txd = tk.Entry(self.tab, width=3)
+        self._kiss_txd = tk.Entry(self.tab, width=3, textvariable=self._kiss_txd_var)
+        self._kiss_txd_var.set(str(self._port_setting.get('parm_kiss_TXD', new_cfg.get('parm_kiss_TXD', 35))))
+        # self._kiss_txd.insert(tk.END, str(self._port_setting.get('parm_kiss_TXD', new_cfg.get('parm_kiss_TXD', 35))))
+        self._kiss_txd.configure(state="normal")
         if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
             # ins = self.port_setting.parm_PortParm[1]
-            self._kiss_txd.insert(tk.END, str(self._port_setting.get('parm_kiss_TXD',new_cfg.get('parm_kiss_TXD', 35))))
+            self._kiss_txd_var.set(str(self._port_setting.get('parm_kiss_TXD',new_cfg.get('parm_kiss_TXD', 35))))
             self._kiss_txd.configure(state="normal")
         else:
             # ins = self.port_setting.parm_baud
-            self._kiss_txd.insert(tk.END, '0')
+            self._kiss_txd_var.set('0')
             self._kiss_txd.configure(state="disabled")
         self._kiss_txd.bind('<KeyRelease>', self.set_need_reinit)
         kiss_txd_label.place(x=kiss_txd_x, y=height - kiss_txd_y)
@@ -348,7 +354,7 @@ class PortSetTab:
         # LAbel
         stdp_x = 20
         stdp_y = 375
-        std_pam_label = tk.Label(self.tab, text=get_strTab('port_cfg_std_parm', self._lang))
+        std_pam_label = tk.Label(self.tab, text=self._getTabStr('port_cfg_std_parm'))
 
         std_pam_label.place(x=stdp_x, y=height - stdp_y)
 
@@ -360,7 +366,7 @@ class PortSetTab:
         self._pac_len = tk.Entry(self.tab, width=5)
         # self._pac_len.insert(tk.END, str(self._port_setting.parm_PacLen))
         self._pac_len.insert(tk.END, str(self._port_setting.get('parm_PacLen', new_cfg.get('parm_PacLen', 160))))
-        pac_len_help = tk.Label(self.tab, text=get_strTab('port_cfg_pac_len', self._lang))
+        pac_len_help = tk.Label(self.tab, text=self._getTabStr('port_cfg_pac_len'))
         pac_len_label.place(x=pac_len_x, y=height - pac_len)
         self._pac_len.place(x=pac_len_x + 80, y=height - pac_len)
         pac_len_help.place(x=pac_len_x + 80 + 70, y=height - pac_len)
@@ -377,7 +383,7 @@ class PortSetTab:
         self._max_pac_var.set(str(self._port_setting.get('parm_MaxFrame', new_cfg.get('parm_MaxFrame', 3))))  # default value
         max_pac = tk.OptionMenu(self.tab, self._max_pac_var, *opt_max_pac)
         max_pac.configure(width=4, height=1)
-        max_pac_help = tk.Label(self.tab, text=get_strTab('port_cfg_pac_max', self._lang))
+        max_pac_help = tk.Label(self.tab, text=self._getTabStr('port_cfg_pac_max'))
         max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
         max_pac.place(x=max_pac_x + 80, y=height - max_pac_y)
         max_pac_help.place(x=max_pac_x + 80 + 70, y=height - max_pac_y)
@@ -394,7 +400,7 @@ class PortSetTab:
         # Label
         mon_col_la_x = 160
         mon_col_la_y = 15
-        mon_col_label = tk.Label(mon_col_frame, text=get_strTab('mon_color', self._lang), bg=bg_cl)
+        mon_col_label = tk.Label(mon_col_frame, text=self._getTabStr('mon_color'), bg=bg_cl)
         mon_col_label.place(x=mon_col_la_x, y=mon_col_la_y)
         #################
         # preview win TX
@@ -532,7 +538,7 @@ class PortSetTab:
             col = askcolor(self._port_setting.get('parm_mon_clr_bg',
                                                   new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
                            parent=self._main_cl,
-                           title=get_strTab('bg_color', self._lang))
+                           title=self._getTabStr('bg_color'))
             if col[1] is not None:
                 if col:
                     # self._port_setting.parm_mon_clr_bg = col[1]
@@ -571,7 +577,7 @@ class PortSetTab:
             self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
 
             self._axip_multicast_dd.configure(state="disabled")
-            self._ptxd.configure(state="normal")
+            # self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
             # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
@@ -627,10 +633,10 @@ class PortSetTab:
             self._kiss_send.configure(state='disabled')
             self._tnc_emu_var.set(value=True)
 
-            self._ptxd.configure(state="normal")
-            self._ptxd.delete(0, tk.END)
-            self._ptxd.insert(tk.END, '1')
-            self._ptxd.configure(state="disabled")
+            #self._ptxd.configure(state="normal")
+            #self._ptxd.delete(0, tk.END)
+            #self._ptxd.insert(tk.END, '1')
+            #self._ptxd.configure(state="disabled")
 
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
@@ -673,7 +679,7 @@ class PortSetTab:
             self._kiss_send.configure(state='normal')
             self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
 
-            self._ptxd.configure(state="normal")
+            #self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
@@ -724,7 +730,7 @@ class PortSetTab:
             self._kiss_send.configure(state='normal')
             self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
 
-            self._ptxd.configure(state="normal")
+            #self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
@@ -849,18 +855,18 @@ class PortSetTab:
         self._port_setting['parm_PortParm'] = tmp_param
         # Pseudo TXD
         try:
-            self._port_setting['parm_TXD'] = int(self._ptxd.get())
+            self._port_setting['parm_TXD'] = int(self._p_txd_var.get())
         except ValueError:
-            self._port_setting['parm_TXD'] = 30
+            self._port_setting['parm_TXD'] = 300
 
         #############
         # KISS
         if self._port_select_var.get() in KISSDEVICES:
             self._port_setting['parm_kiss_is_on'] = True
-            self._port_setting['parm_kiss_TXD'] = int(self._kiss_txd.get())
-            self._port_setting['parm_kiss_Pers'] = int(self._kiss_pers.get())
-            self._port_setting['parm_kiss_Slot'] = int(self._kiss_slot.get())
-            self._port_setting['parm_kiss_Tail'] = int(self._kiss_tail.get())
+            self._port_setting['parm_kiss_TXD']   = int(self._kiss_txd_var.get())
+            self._port_setting['parm_kiss_Pers']  = int(self._kiss_pers.get())
+            self._port_setting['parm_kiss_Slot']  = int(self._kiss_slot.get())
+            self._port_setting['parm_kiss_Tail']  = int(self._kiss_tail.get())
             self._port_setting['parm_kiss_F_Duplex'] = self._kiss_duplex_var.get()
         elif self._port_select_var.get() in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
             self._port_setting['parm_kiss_is_on'] = True
@@ -1046,7 +1052,7 @@ class PortSettingsWin(tk.Frame):
             if self._tab_list[port_id].need_reinit():
                 if PORT_HANDLER.get_all_connections():
                     PORT_HANDLER.disco_all_Conn()
-                    # messagebox.showinfo('Stationen werden disconnected !', 'Es werden alle Stationen disconnected')
+                    # messagebox.showinfo('Stationen werden disconnected!', 'Es werden alle Stationen disconnected')
                     messagebox.showinfo(get_strTab('all_disco1', self._lang),
                                         get_strTab('all_disco2', self._lang),
                                         parent=self)

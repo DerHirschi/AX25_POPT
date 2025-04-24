@@ -4,6 +4,7 @@ Fixes:
 
 Optimierung:
 - GUI: "Neue Verbindung" Fenster überarbeitet.
+- Pseudo TX-Delay für AXIP-Port aktiviert. (Bei Probleme mit BPQ)
 
 Neue Implementierungen / Funktionen:
 

@@ -1,4 +1,3 @@
-# TODO AGAIN
 import tkinter as tk
 from tkinter import ttk, Menu
 from UserDB.UserDBmain import USER_DB
@@ -198,8 +197,6 @@ class NewConnWin(tk.Toplevel):
 
     def _set_port_index(self, index: int):
         port = PORT_HANDLER.get_port_by_index(index)
-
-        # port = PORT_HANDLER.get_port_by_index(index)
         if port:
             index = port.port_id
             self._port_index = index
@@ -346,8 +343,8 @@ class NewConnWin(tk.Toplevel):
                     self._destroy_new_conn_win()
 
     def _set_conn_hist(self, event):
-        ent_key = self._call_txt_inp_var.get().upper()
-        port_id = self._conn_hist.get(ent_key, {}).get('port_id', None)
+        ent_key  = self._call_txt_inp_var.get().upper()
+        port_id  = self._conn_hist.get(ent_key, {}).get('port_id', None)
         own_call = self._conn_hist.get(ent_key, {}).get('own_call', '')
         if port_id is not None:
             self._set_port_index(port_id)
@@ -355,7 +352,7 @@ class NewConnWin(tk.Toplevel):
             self._own_call_var.set(own_call)
 
     def _set_ownCall_fm_hist(self):
-        ent_key = self._call_txt_inp_var.get().upper()
+        ent_key  = self._call_txt_inp_var.get().upper()
         own_call = self._conn_hist.get(ent_key, {}).get('own_call', '')
         if own_call:
             self._own_call_var.set(own_call)
@@ -368,7 +365,7 @@ class NewConnWin(tk.Toplevel):
         self._set_ownCall_fm_hist()
 
     def _reset_conn_history(self, event=None):
-        self._conn_hist = {}
+        self._conn_hist            = {}
         self._main.connect_history = {}
         vals = list(self._conn_hist.keys())
         vals.reverse()
