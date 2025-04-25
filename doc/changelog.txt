@@ -10,6 +10,7 @@ Optimierung/Änderungen:
 
 Neue Implementierungen / Funktionen:
 - CLI CMD "A". Bricht alle aktuellen Aussendungen ab.
+- Mausklick bindings für "Alarm Leiste" (rechts oben)
 
 ###########################################################################################################
 ###########################################################################################################

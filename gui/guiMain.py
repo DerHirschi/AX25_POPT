@@ -285,7 +285,7 @@ class PoPT_GUI_Main:
         #########################
         #########################
         # RIGHT Pane
-        self._Alarm_Frame = AlarmIconFrame(r_pack_frame)
+        self._Alarm_Frame = AlarmIconFrame(r_pack_frame, self)
         ##############
         # GUI Buttons
         conn_btn_frame = ttk.Frame(r_pack_frame, )

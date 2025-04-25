@@ -6,7 +6,6 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25dec_enc import PIDByte
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux
 from fnc.str_fnc import conv_time_DE_str, get_time_delta, get_kb_str_fm_bytes, get_strTab
 from sound.popt_sound import SOUND
@@ -14,8 +13,8 @@ from sound.popt_sound import SOUND
 
 class SideTabbedFrame:  # TODO
     def __init__(self, main_cl, frame, plot_frame=None, path_frame=None):
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._main_win = main_cl
-        self._lang = POPT_CFG.get_guiCFG_language()
         self.style = main_cl.style
         # self.ch_index = main_cl.channel_index
         self._mh = self._main_win.mh
@@ -28,16 +27,16 @@ class SideTabbedFrame:  # TODO
         )
         self._tabControl.bind('<<NotebookTabChanged>>', self.on_ch_stat_change)
 
-        tab1_kanal = tk.Frame(self._tabControl)
-        tab_connects = tk.Frame(self._tabControl)
-        tab2_mh = tk.Frame(self._tabControl)
-        tab4_settings = tk.Frame(self._tabControl)
+        tab1_kanal      = tk.Frame(self._tabControl)
+        tab_connects    = tk.Frame(self._tabControl)
+        tab2_mh         = tk.Frame(self._tabControl)
+        tab4_settings   = tk.Frame(self._tabControl)
         # self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
-        tab6_monitor = tk.Frame(self._tabControl)
-        tab7_tracer = tk.Frame(self._tabControl)
+        tab6_monitor    = tk.Frame(self._tabControl)
+        tab7_tracer     = tk.Frame(self._tabControl)
         # self._path_plot = None
 
-        self._tabControl.add(tab1_kanal, text=get_strTab('channel', self._lang))
+        self._tabControl.add(tab1_kanal, text=self._getTabStr('channel'))
         # tab3 = ttk.Frame(self._tabControl)                         # TODO
         # self._tabControl.add(tab3, text='Ports')                   # TODO
         self._tabControl.add(tab4_settings, text='Global')
@@ -166,7 +165,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 175
         # self.link_holder_var = tk.BooleanVar(tab1_kanal)
         self._link_holder = tk.Checkbutton(tab1_kanal,
-                                           text=get_strTab('linkholder', self._lang),
+                                           text=self._getTabStr('linkholder'),
                                            variable=self._main_win.link_holder_var,
                                            state='disabled',
                                            command=self._chk_link_holder
@@ -174,13 +173,13 @@ class SideTabbedFrame:  # TODO
         self._link_holder.place(x=10, y=parm_y)
 
         clear_ch_data_btn = ttk.Button(tab1_kanal,
-                                      text=get_strTab('clean_qso', self._lang),
+                                      text=self._getTabStr('clean_qso'),
                                       command=self._main_win.clear_channel_vars
                                       )
         clear_ch_data_btn.place(x=140, y=135)
 
         link_holder_settings_btn = ttk.Button(tab1_kanal,
-                                             text=get_strTab('linkholder', self._lang),
+                                             text=self._getTabStr('linkholder'),
                                              command=self._main_win.open_link_holder_sett
                                              )
         link_holder_settings_btn.place(x=140, y=165)
@@ -308,7 +307,7 @@ class SideTabbedFrame:  # TODO
                   ).pack(side=tk.LEFT, padx=20)
         ttk.Button(btn_frame,
                   # text="Statistik",
-                  text=STR_TABLE['statistic'][self._lang],
+                  text=self._getTabStr('statistic'),
                   command=self._open_PortStat
                   ).pack(side=tk.LEFT, )
 
@@ -328,7 +327,7 @@ class SideTabbedFrame:  # TODO
                     ).place(x=150, y=10)
         # Global Sprech
         sprech_btn = tk.Checkbutton(tab4_settings,
-                                 text=get_strTab('sprech', self._lang),
+                                 text=self._getTabStr('sprech'),
                                  variable=self._main_win.setting_sprech,
                                  command=self._chk_sprech_on
                                  )
@@ -337,7 +336,7 @@ class SideTabbedFrame:  # TODO
             sprech_btn.configure(state='disabled')
         # Global Bake
         tk.Checkbutton(tab4_settings,
-                    text=get_strTab('beacon', self._lang),
+                    text=self._getTabStr('beacon'),
                     variable=self._main_win.setting_bake,
                     command=self._chk_beacon,
                     ).place(x=10, y=60)
@@ -382,7 +381,7 @@ class SideTabbedFrame:  # TODO
         x = 10
         y = 10
         # self.to_add_var = tk.StringVar(tab6_monitor)
-        tk.Label(tab6_monitor, text=f"{STR_TABLE['to'][self._lang]}:").place(x=x, y=y)
+        tk.Label(tab6_monitor, text=f"{self._getTabStr('to')}:").place(x=x, y=y)
         tk.Entry(tab6_monitor, textvariable=self._main_win.mon_to_add_var).place(x=x + 40, y=y)
 
         # CMD/RPT
@@ -404,7 +403,7 @@ class SideTabbedFrame:  # TODO
         # Port
         x = 40
         y = 140
-        tk.Label(tab6_monitor, text=f"{STR_TABLE['port'][self._lang]}:").place(x=x, y=y)
+        tk.Label(tab6_monitor, text=f"{self._getTabStr('port')}:").place(x=x, y=y)
         # self.mon_port_var = tk.StringVar(tab6_monitor)
         # self._main_win.mon_port_var.set('0')
         vals = ['0']
@@ -437,7 +436,7 @@ class SideTabbedFrame:  # TODO
         # self.mon_scroll_var = tk.BooleanVar(tab6_monitor)
         tk.Checkbutton(tab6_monitor,
                        variable=self._main_win.mon_scroll_var,
-                       text=STR_TABLE['scrolling'][self._lang]).place(x=x, y=y)
+                       text=self._getTabStr('scrolling')).place(x=x, y=y)
 
         # Monitor APRS Decoding Output
         x = 10
@@ -532,6 +531,12 @@ class SideTabbedFrame:  # TODO
                   text="Tracer",
                   command=self._open_tracer
                   ).pack(side=tk.LEFT, padx=20)
+        """
+        tk.Button(btn_frame_tr,
+                  text=self._getTabStr('delete'),
+                  command=self._delete_tracer
+                  ).pack(side=tk.LEFT, padx=20)
+        """
 
         # tk.Button(tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
         #################################
@@ -603,7 +608,7 @@ class SideTabbedFrame:  # TODO
         btn_frame3 = tk.Frame(root_frame)
         btn_frame3.grid(row=1, column=0, columnspan=2)
         tk.Button(btn_frame3,
-                  text=STR_TABLE['disconnect_all'][self._lang],
+                  text=self._getTabStr('disconnect_all'),
                   command=self._disco_all
                   ).pack(side=tk.LEFT)
         """
@@ -772,7 +777,7 @@ class SideTabbedFrame:  # TODO
         avg = ''
         last = ''
         status_text = ''
-        duration = f"{STR_TABLE['time_connected'][self._lang]}: --:--:--"
+        duration = f"{self._getTabStr('time_connected')}: --:--:--"
         tx_buff = 'TX-Buffer: --- kb'
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
@@ -785,7 +790,7 @@ class SideTabbedFrame:  # TODO
             worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
             avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
             last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
-            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(station.time_start)}"
+            duration = f"{self._getTabStr('time_connected')}: {get_time_delta(station.time_start)}"
             tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
             tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
             rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
@@ -1005,6 +1010,10 @@ class SideTabbedFrame:  # TODO
 
     def _open_tracer(self):
         self._main_win.open_be_tracer_win()
+    """
+    def _delete_tracer(self):
+        pass
+    """
 
     def _open_mh(self):
         self._main_win.open_MH_win()
@@ -1016,8 +1025,8 @@ class SideTabbedFrame:  # TODO
         self._main_win.open_window('ConnPathPlot')
 
     def _disco_all(self):
-        if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang], parent=self._main_win.main_win):
+        if messagebox.askokcancel(title=self._getTabStr('disconnect_all'),
+                                  message=self._getTabStr('disconnect_all_ask'), parent=self._main_win.main_win):
             PORT_HANDLER.disco_all_Conn()
 
     def get_tab_index(self):
