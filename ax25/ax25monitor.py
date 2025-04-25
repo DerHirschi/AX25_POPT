@@ -67,8 +67,8 @@ def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
 
     # ======= DEV Inp-NetRom/L3-NetRom TODO move decoding call to ax25ecn_dec
 
-    if ctl_flag == 'I' and pid_hex == '0xcf':
-        data = NetRom_decode_I(payload)
+    if ctl_flag == 'I' and pid_hex == '0xcf':   # TODO Optional
+        data    = NetRom_decode_I(payload)
         out_str += data
         return out_str, aprs_data
 

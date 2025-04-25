@@ -198,6 +198,8 @@ class BoxCLI(DefaultCLI):
         ########################
         # Check String Commands
         if not self._exec_str_cmd():
+            if self._check_abort_cmd():
+                return ''
             self._input = self._raw_input
             self._send_output(self._exec_cmd(), self._env_var_cmd)
         self._last_line = self._new_last_line
@@ -209,6 +211,9 @@ class BoxCLI(DefaultCLI):
 
     def _s7(self):
         """ Side Stop / Paging"""
+        if self._check_abort_cmd():
+            self.change_cli_state(1)
+            return
         if not self._tx_buffer:
             logger.warning(self._logTag + f"CLI: _s7: No tx_buffer but in S7 !!")
             self.change_cli_state(1)
