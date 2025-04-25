@@ -209,51 +209,6 @@ class BoxCLI(DefaultCLI):
         """ Quit """
         return self._cmd_q()
 
-    def _s7(self):
-        """ Side Stop / Paging"""
-        if self._check_abort_cmd():
-            self.change_cli_state(1)
-            return
-        if not self._tx_buffer:
-            logger.warning(self._logTag + f"CLI: _s7: No tx_buffer but in S7 !!")
-            self.change_cli_state(1)
-            return
-        if not self._user_db_ent.cli_sidestop:
-            logger.warning(self._logTag + f"CLI: _s7: No UserOpt but in S7 !!")
-            self.change_cli_state(1)
-            return
-        if not self._raw_input:
-            return
-        if self._raw_input in [b'\r', b'\n']:
-            self._send_out_sidestop(self._tx_buffer)
-            return
-        if self._ss_state == 0:
-            if self._raw_input in [b'a\r', b'A\r', b'a\n', b'A\n']:
-                self._tx_buffer = b''
-                self.send_prompt()
-                self.change_cli_state(1)
-                return
-            if self._raw_input in [b'o\r', b'O\r', b'o\n', b'O\n']:
-                self._connection.tx_buf_rawData += bytearray(self._tx_buffer)
-                self._tx_buffer = b''
-                self.change_cli_state(1)
-                return
-        if self._ss_state == 1:
-            if self._raw_input in [b'a\r', b'A\r', b'a\n', b'A\n']:
-                self._tx_buffer = b''
-                self.send_prompt()
-                self.change_cli_state(1)
-                return
-
-            if self._raw_input.startswith(b'r') or self._raw_input.startswith(b'R'):
-                self._tx_buffer = b''
-                self.change_cli_state(1)
-                self._last_line = b''
-                self._input = self._raw_input
-                self._send_output(self._exec_cmd(), env_vars=False)
-                self._last_line = self._new_last_line
-                return
-
     def _s8(self):
         """ Send Message """
         self._input += self._raw_input
