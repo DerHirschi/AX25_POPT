@@ -273,6 +273,9 @@ def getNew_maniGUI_parm():
         # MAin GUI width and height
         gui_parm_main_width        = 1400,
         gui_parm_main_height       = 850,
+        #################
+        # Style name
+        gui_parm_style_name         = "classic"
     )
 
 

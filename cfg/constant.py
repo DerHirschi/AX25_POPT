@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.118.6'
+VER = '2.118.7'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -204,14 +204,51 @@ DEF_QSO_SYSMSG_BG= '#000000'
 DEF_PORT_MON_TX_COL = 'medium violet red'
 DEF_PORT_MON_RX_COL = 'green'
 DEF_PORT_MON_BG_COL = 'black'
-# Style Clolor MAP
+
+# Built-in Styles
+STYLES_BULD_IN = [
+            'default',
+            'alt',
+            'aqua',             # Not with Linux
+            'clam',
+            'classic',
+            'vista',            # Not with Linux
+            'winnative',        # Not with Linux
+            'xpnative',         # Not with Linux
+        ]
+# awthems Styles
+STYLES_AWTHEMES_PATH = "data/awthemes-10.4.0"
+STYLES_AWTHEMES = [
+            'awarc',            # Not with Linux
+            'awdark',
+            'awlight',
+            'awbreeze',         # Not with Linux
+            'awbreezedark',     # Not with Linux
+            'awblack',          # Not with Linux
+            'awclearlooks',     # Not with Linux
+            'awwinxpblue',      # Not with Linux
+        ]
+# Style Color MAP
 COLOR_MAP = {
-            'default': ('#000000',  '#d9d9d9'),
-            'awdark':  ('#ffffff',  '#33393B'),
-
+            'default':  ('#000000',  '#d9d9d9'),
+            'alt':      ('#000000',  '#d9d9d9'),
+            'aqua':     ('#000000',  '#d9d9d9'),    # Not with Linux
+            'clam':     ('#000000',  '#d9d9d9'),
+            'classic':  ('#000000',  '#d9d9d9'),
+            'vista':    ('#000000',  '#d9d9d9'),    # Not with Linux
+            'winnative':('#000000',  '#d9d9d9'),    # Not with Linux
+            'xpnative': ('#000000',  '#d9d9d9'),    # Not with Linux
+            # AW
+            'awdark':        ('#ffffff',  '#33393B'),
+            'awlight':       ('#000000',  '#e8e8e7'),
+            # In Win ??
+            'awarc':  ('#ffffff',  '#33393B'),
+            'awbreeze':  ('#ffffff',  '#33393B'),
+            'awbreezedark':  ('#ffffff',  '#33393B'),
+            'awblack':  ('#ffffff',  '#33393B'),
+            'awclearlooks':  ('#ffffff',  '#33393B'),
+            'awwinxpblue':  ('#ffffff',  '#33393B'),
         }
-
-
 # F Key Tab
 F_KEY_TAB_LINUX = {
     67: 1,  # F1

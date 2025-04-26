@@ -2,7 +2,7 @@ import pickle
 import os
 
 from cfg.constant import CFG_data_path, CFG_usertxt_path, CFG_ft_downloads, MAX_PORTS, CFG_logging_path, \
-    CFG_bbs_data_path, CFG_bbs_import_path
+    CFG_bbs_data_path, CFG_bbs_import_path, STYLES_AWTHEMES_PATH
 from cfg.default_config import getNew_station_cfg
 from cfg.logger_config import logger, BBS_LOG
 
@@ -137,6 +137,10 @@ def exist_userpath(usercall: str):
         return False
     return True
 
+def exist_awthemes_path():
+    if os.path.exists(STYLES_AWTHEMES_PATH):
+        return True
+    return False
 
 def init_dir_struct():
     if not os.path.exists(CFG_data_path):

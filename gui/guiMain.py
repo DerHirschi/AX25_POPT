@@ -48,7 +48,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
-    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP
+    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -99,29 +99,17 @@ class PoPT_GUI_Main:
         ###########################################
         self.main_win = tk.Tk()
         ###########################################
-        logger.info(logTag + 'loading Styles')
+        self.style_name = guiCfg.get('gui_parm_style_name', 'default')
+        logger.info(logTag + f'loading Style: {self.style_name}')
         self.style = ttk.Style(self.main_win)
-        """
-        [
-            'default',
-            'awdark',
-            'alt',
-            'aqua',
-            'clam',
-            'classic',
-            'vista',
-            'winnative',
-            'xpnative',
-        ]
-        """
-        self.style_name = 'awdark' # TODO get fm CFG
-        if self.style_name in ['awdark']:
+
+        if self.style_name in STYLES_AWTHEMES:
             try:
-                self.style.tk.call('lappend', 'auto_path', 'data/awthemes-10.4.0')
+                self.style.tk.call('lappend', 'auto_path', STYLES_AWTHEMES_PATH)
                 self.style.tk.call('package', 'require', 'awthemes')
-                self.style.tk.call('::themeutils::setHighlightColor', 'awdark', '#007000')
-                self.style.tk.call('package', 'require', 'awdark')
-                self.style.theme_use('awdark')
+                self.style.tk.call('::themeutils::setHighlightColor', self.style_name, '#007000') # TODO
+                self.style.tk.call('package', 'require', self.style_name)
+                self.style.theme_use(self.style_name)
             except tk.TclError:
                 logger.warning(logTag + 'awthemes-10.4.0 not found in folder data')
                 logger.warning(logTag + '  1. If you want to use awthemes, download:')
@@ -225,13 +213,13 @@ class PoPT_GUI_Main:
         self.mon_aprs_var.set(True)
         ##############
         # Controlling
-        self._ch_alarm = False
-        self.channel_index = 1
-        self.mon_mode = 0
-        self._quit = False
-        self._init_state = 0
-        self._tracer_alarm = False
-        self._flip05 = True
+        self._ch_alarm      = False
+        self.channel_index  = 1
+        self.mon_mode       = 0
+        self._quit          = False
+        self._init_state    = 0
+        self._tracer_alarm  = False
+        self._flip05        = True
         ####################
         # GUI PARAM
         self._parm_btn_blink_time               = 1  # s
@@ -292,8 +280,8 @@ class PoPT_GUI_Main:
         else:
             self._main_pw.add(l_frame, weight=3)
         """
-        self._main_pw.add(l_frame,       )
-        self._main_pw.add(self._r_frame, weight=1)
+        self._main_pw.add(l_frame,       weight=1)
+        self._main_pw.add(self._r_frame, weight=0)
         ###########################################
         # Channel Buttons
         self._ch_btn_blink_timer    = time.time()
