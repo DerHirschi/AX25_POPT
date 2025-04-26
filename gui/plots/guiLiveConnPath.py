@@ -4,7 +4,7 @@ TODO:
 """
 
 import tkinter as tk
-
+from tkinter import ttk
 # from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 #import matplotlib as mpl
 # from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FIGc
@@ -19,9 +19,9 @@ from fnc.str_fnc import get_strTab
 #from matplotlib import pyplot as plt2
 from gui import plt
 
-class LiveConnPath(tk.Frame):
+class LiveConnPath(ttk.Frame):
     def __init__(self, tabctl):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self.pack(fill=tk.BOTH, expand=True)
         # self._root_win = root_win
         self._lang = POPT_CFG.get_guiCFG_language()
@@ -45,7 +45,7 @@ class LiveConnPath(tk.Frame):
         """
         ##########################
         # Plot Frame
-        g_frame = tk.Frame(self)
+        g_frame = ttk.Frame(self)
         g_frame.pack(fill=tk.BOTH, expand=True)
 
         self._fig, self._plot1 = plt.subplots(dpi=50)
@@ -59,10 +59,10 @@ class LiveConnPath(tk.Frame):
         # toolbar1.pack(side=tk.TOP, fill=tk.X)
         ####################################
         # BTN Fram
-        btn_frame = tk.Frame(self)
+        btn_frame = ttk.Frame(self)
         btn_frame.pack()
-        tk.Button(btn_frame, text='Refresh', command=self._refresh_btn).pack(side=tk.LEFT, padx=20)
-        tk.Button(btn_frame, text=get_strTab('delete', self._lang), command=self._reset_btn).pack(side=tk.LEFT, padx=20)
+        ttk.Button(btn_frame, text='Refresh', command=self._refresh_btn).pack(side=tk.LEFT, padx=20)
+        ttk.Button(btn_frame, text=get_strTab('delete', self._lang), command=self._reset_btn).pack(side=tk.LEFT, padx=20)
 
         self._g = nx.Graph()
         self._plot1.axis('off')

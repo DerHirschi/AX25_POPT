@@ -116,6 +116,7 @@ class BoxCLI(DefaultCLI):
         if any((
                 not hasattr(bbs, 'get_new_pn_count_by_call'),
                 not hasattr(bbs, 'get_pms_cfg'),
+                not hasattr(bbs, 'send_sysop_msg'),
         )):
             logger.error(self._logTag + "_s0: No BBS !!")
             self.change_cli_state(2)

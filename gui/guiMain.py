@@ -2,7 +2,7 @@ import datetime
 import random
 import time
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, messagebox
 import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
@@ -11,7 +11,7 @@ from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from cli.StringVARS import replace_StringVARS
 from fnc.str_fnc import tk_filter_bad_chars, get_time_delta, format_number, conv_timestamp_delta, \
-    get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines
+    get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.aprs.guiAISmon import AISmonitor
 from gui.aprs.guiAPRS_Settings import APRSSettingsWin
 from gui.aprs.guiAPRS_be_tracer import BeaconTracer
@@ -48,7 +48,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
-    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH
+    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP
 from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
@@ -91,18 +91,48 @@ class PoPT_GUI_Main:
     def __init__(self, port_handler: PORT_HANDLER):
         ######################################
         # GUI Stuff
-        logger.info('GUI: Init')
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._logTag = 'GUI-Main> '
+        logTag = self._logTag + 'Init: '
+        logger.info(logTag + 'start..')
         self.main_win = tk.Tk()
         ###########################################
         self.style = ttk.Style(self.main_win)
         """
-        self.style.tk.call('lappend', 'auto_path', '../awthemes-10.4.0')
-        self.style.tk.call('package', 'require', 'awthemes')
-        self.style.tk.call('::themeutils::setHighlightColor', 'awdark', '#007000')
-        self.style.tk.call('package', 'require', 'awdark')
-        self.style.theme_use('awdark')
+        [
+            'default',
+            'awdark',
+            'alt',
+            'aqua',
+            'clam',
+            'classic',
+            'vista',
+            'winnative',
+            'xpnative',
+        ]
         """
-        ###########################################
+        self.style_name = 'awdark' # TODO get fm CFG
+        if self.style_name in ['awdark']:
+            try:
+                self.style.tk.call('lappend', 'auto_path', 'data/awthemes-10.4.0')
+                self.style.tk.call('package', 'require', 'awthemes')
+                self.style.tk.call('::themeutils::setHighlightColor', 'awdark', '#007000')
+                self.style.tk.call('package', 'require', 'awdark')
+                self.style.theme_use('awdark')
+            except tk.TclError:
+                logger.warning(logTag + 'awthemes-10.4.0 not found in folder data')
+                self.style_name = 'default'
+                self.style.theme_use(self.style_name)
+        else:
+            try:
+                self.style.theme_use(self.style_name)
+            except tk.TclError:
+                logger.warning(logTag + f'TclError Style{self.style_name}')
+                self.style_name = 'default'
+                self.style.theme_use(self.style_name)
+
+        self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('black', '#d9d9d9'))
+        #################################################################
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
         self.main_win.geometry("1400x850")  # TODO to/fm CFG
         # self.main_win.attributes('-topmost', 0)
@@ -123,60 +153,60 @@ class PoPT_GUI_Main:
         self._root_dir = self._root_dir.replace('/', '//')
         #####################
         # GUI VARS
-        self.connect_history = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
+        self.connect_history    = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
         # GLb Setting Vars
-        self.setting_sound = tk.BooleanVar(self.main_win)
-        self.setting_sprech = tk.BooleanVar(self.main_win)
-        self.setting_bake = tk.BooleanVar(self.main_win)
-        self.setting_rx_echo = tk.BooleanVar(self.main_win)
-        self.setting_tracer = tk.BooleanVar(self.main_win)
-        self.setting_auto_tracer = tk.BooleanVar(self.main_win)
-        self.setting_dx_alarm = tk.BooleanVar(self.main_win)
-        self.setting_noty_bell = tk.BooleanVar(self.main_win)
-        self.setting_mon_encoding = tk.StringVar(self.main_win)
+        self.setting_sound          = tk.BooleanVar(self.main_win)
+        self.setting_sprech         = tk.BooleanVar(self.main_win)
+        self.setting_bake           = tk.BooleanVar(self.main_win)
+        self.setting_rx_echo        = tk.BooleanVar(self.main_win)
+        self.setting_tracer         = tk.BooleanVar(self.main_win)
+        self.setting_auto_tracer    = tk.BooleanVar(self.main_win)
+        self.setting_dx_alarm       = tk.BooleanVar(self.main_win)
+        self.setting_noty_bell      = tk.BooleanVar(self.main_win)
+        self.setting_mon_encoding   = tk.StringVar( self.main_win)
         ###################
         # Status Frame Vars
-        self._status_name_var = tk.StringVar(self.main_win)
-        self._status_status_var = tk.StringVar(self.main_win)
-        self._status_unack_var = tk.StringVar(self.main_win)
-        self._status_vs_var = tk.StringVar(self.main_win)
-        self._status_n2_var = tk.StringVar(self.main_win)
-        self._status_t1_var = tk.StringVar(self.main_win)
-        self._status_t2_var = tk.StringVar(self.main_win)
-        self._status_rtt_var = tk.StringVar(self.main_win)
-        self._status_t3_var = tk.StringVar(self.main_win)
-        self._rx_beep_var = tk.IntVar(self.main_win)
-        self._ts_box_var = tk.IntVar(self.main_win)
+        self._status_name_var       = tk.StringVar(self.main_win)
+        self._status_status_var     = tk.StringVar(self.main_win)
+        self._status_unack_var      = tk.StringVar(self.main_win)
+        self._status_vs_var         = tk.StringVar(self.main_win)
+        self._status_n2_var         = tk.StringVar(self.main_win)
+        self._status_t1_var         = tk.StringVar(self.main_win)
+        self._status_t2_var         = tk.StringVar(self.main_win)
+        self._status_rtt_var        = tk.StringVar(self.main_win)
+        self._status_t3_var         = tk.StringVar(self.main_win)
+        self._rx_beep_var           = tk.IntVar(self.main_win)
+        self._ts_box_var            = tk.IntVar(self.main_win)
         # OWN Stat INFO (LOC, QTH)
         self.own_loc = ''
         self.own_qth = ''
         # Stat INFO (Name,QTH usw)
-        self.stat_info_name_var = tk.StringVar(self.main_win)
-        self.stat_info_qth_var = tk.StringVar(self.main_win)
-        self.stat_info_loc_var = tk.StringVar(self.main_win)
-        self.stat_info_typ_var = tk.StringVar(self.main_win)
-        self.stat_info_sw_var = tk.StringVar(self.main_win)
-        self.stat_info_timer_var = tk.StringVar(self.main_win)
+        self.stat_info_name_var     = tk.StringVar(self.main_win)
+        self.stat_info_qth_var      = tk.StringVar(self.main_win)
+        self.stat_info_loc_var      = tk.StringVar(self.main_win)
+        self.stat_info_typ_var      = tk.StringVar(self.main_win)
+        self.stat_info_sw_var       = tk.StringVar(self.main_win)
+        self.stat_info_timer_var    = tk.StringVar(self.main_win)
         self.stat_info_encoding_var = tk.StringVar(self.main_win)
-        self.stat_info_status_var = tk.StringVar(self.main_win)
+        self.stat_info_status_var   = tk.StringVar(self.main_win)
         # Tabbed SideFrame FT
-        self.ft_progress_var = tk.StringVar(self.main_win)
-        self.ft_size_var = tk.StringVar(self.main_win)
-        self.ft_duration_var = tk.StringVar(self.main_win)
-        self.ft_bps_var = tk.StringVar(self.main_win)
-        self.ft_next_tx_var = tk.StringVar(self.main_win)
+        self.ft_progress_var        = tk.StringVar(self.main_win)
+        self.ft_size_var            = tk.StringVar(self.main_win)
+        self.ft_duration_var        = tk.StringVar(self.main_win)
+        self.ft_bps_var             = tk.StringVar(self.main_win)
+        self.ft_next_tx_var         = tk.StringVar(self.main_win)
         # Tabbed SideFrame Channel
-        self.link_holder_var = tk.BooleanVar(self.main_win)
+        self.link_holder_var        = tk.BooleanVar(self.main_win)
         # Tabbed SideFrame Monitor
-        self.mon_to_add_var = tk.StringVar(self.main_win)       #
-        self.mon_cmd_var = tk.BooleanVar(self.main_win)          #
-        self.mon_poll_var = tk.BooleanVar(self.main_win)         #
-        self.mon_port_var = tk.StringVar(self.main_win)
-        self.mon_call_var = tk.StringVar(self.main_win)
-        self.mon_scroll_var = tk.BooleanVar(self.main_win)
-        self.mon_aprs_var = tk.BooleanVar(self.main_win)
-        self.mon_pid_var = tk.StringVar(self.main_win)
-        self.mon_port_on_vars = {}
+        self.mon_to_add_var         = tk.StringVar(self.main_win)       #
+        self.mon_cmd_var            = tk.BooleanVar(self.main_win)          #
+        self.mon_poll_var           = tk.BooleanVar(self.main_win)         #
+        self.mon_port_var           = tk.StringVar(self.main_win)
+        self.mon_call_var           = tk.StringVar(self.main_win)
+        self.mon_scroll_var         = tk.BooleanVar(self.main_win)
+        self.mon_aprs_var           = tk.BooleanVar(self.main_win)
+        self.mon_pid_var            = tk.StringVar(self.main_win)
+        self.mon_port_on_vars       = {}
         all_ports = self._port_handler.ax25_ports
         for port_id in all_ports:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
@@ -261,16 +291,16 @@ class PoPT_GUI_Main:
         ###########################################
         # Input Output TXT Frames and Status Bar
         self._pw = ttk.PanedWindow(l_frame, orient=tk.VERTICAL, )
-        self._pw.pack(side=tk.BOTTOM, expand=1)
+        self._pw.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         # Input
-        self._TXT_upper_frame = tk.Frame(self._pw, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
-        self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1)
+        self._TXT_upper_frame = ttk.Frame(self._pw, borderwidth=0, height=20)
+        self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         # QSO
-        self._TXT_mid_frame = tk.Frame(self._pw, bd=0, borderwidth=0, )
-        self._TXT_mid_frame.pack(side=tk.BOTTOM, expand=1)
+        self._TXT_mid_frame = ttk.Frame(self._pw, borderwidth=0, )
+        self._TXT_mid_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         # Mon
-        self._TXT_lower_frame = tk.Frame(self._pw, bd=0, borderwidth=0, )
-        self._TXT_lower_frame.pack(side=tk.BOTTOM, expand=1)
+        self._TXT_lower_frame = ttk.Frame(self._pw, borderwidth=0, )
+        self._TXT_lower_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
 
         self._inp_txt = None
         self._out_txt = None
@@ -280,7 +310,7 @@ class PoPT_GUI_Main:
         self._init_TXT_frame_low()
 
         self._pw.add(self._TXT_upper_frame, weight=1)
-        self._pw.add(self._TXT_mid_frame, weight=1)
+        self._pw.add(self._TXT_mid_frame,   weight=1)
         self._pw.add(self._TXT_lower_frame, weight=1)
         #########################
         #########################
@@ -303,16 +333,16 @@ class PoPT_GUI_Main:
         side_frame_pw.add(tabbedF_upper_frame, weight=1)
         side_frame_pw.add(tabbedF_lower_frame, weight=1)
         bw_plot_frame = ttk.Frame(self.main_win)
-        self._Pacman = LiveConnPath(self.main_win)
+        self._Pacman  = LiveConnPath(self.main_win)
         ##############
         # tabbed Frame
-        self.tabbed_sideFrame = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._Pacman)
+        self.tabbed_sideFrame  = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._Pacman)
         self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
         ############################
         # Canvas Plot
-        logger.info('GUI: BW-Plot Init')
-        self._bw_plot_x_scale = []
-        self._bw_plot_lines = {}
+        logger.info(logTag + 'BW-Plot Init')
+        self._bw_plot_x_scale   = []
+        self._bw_plot_lines     = {}
         self._init_bw_plot(bw_plot_frame)
         ###########################
         # set KEY BINDS
@@ -501,22 +531,27 @@ class PoPT_GUI_Main:
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 6)
         self._bw_fig, self._ax = plt.subplots(dpi=100)
-        self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.1)
+        self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.15)
         self._ax.axis([0, 10, 0, 100])  # TODO As Option
-        self._bw_fig.set_facecolor('xkcd:light grey')
-        self._ax.set_facecolor('#000000')
-        self._ax.xaxis.label.set_color('black')
-        self._ax.yaxis.label.set_color('black')
-        self._ax.tick_params(axis='x', colors='black')
-        self._ax.tick_params(axis='y', colors='black')
-        self._ax.set_xlabel(STR_TABLE['minutes'][self.language])
-        self._ax.set_ylabel(STR_TABLE['occup'][self.language])
+        fg, bg = COLOR_MAP.get(self.style_name, ('black', 'light grey'))
+        #self._bw_fig.set_facecolor('xkcd:light grey')
+        self._bw_fig.set_facecolor(bg)
+        # self._bw_fig.set_color('#FFFFFF')
+        self._ax.set_facecolor('#191621')
+        #self._ax.xaxis.label.set_color('black')
+        #self._ax.yaxis.label.set_color('black')
+        self._ax.xaxis.label.set_color(fg)
+        self._ax.yaxis.label.set_color(fg)
+        self._ax.tick_params(axis='x', colors=fg)
+        self._ax.tick_params(axis='y', colors=fg)
+        self._ax.set_xlabel(self._getTabStr('minutes'))
+        self._ax.set_ylabel(self._getTabStr('occup'))
         # self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._r_frame)
         self._canvas = FigureCanvasTkAgg(self._bw_fig, master=frame)
         self._canvas.flush_events()
         self._canvas.draw()
         # self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
-        self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True)
+        self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
         # self._canvas.get_tk_widget().config(cursor="none")
         self._bw_fig.canvas.flush_events()
 
@@ -700,86 +735,108 @@ class PoPT_GUI_Main:
                                    text="Connect",
                                    bg="green",
                                    width=8,
-                                   command=self.open_new_conn_win)
+                                   command=self.open_new_conn_win,
+                                   relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                   highlightthickness=0,
+                                   )
         self._conn_btn.pack(side=tk.LEFT)
 
         self._mon_btn = tk.Button(frame,
                                   text="Monitor",
-                                  bg="yellow", width=8, command=lambda: self.switch_channel(0))
+                                  bg="yellow",
+                                  width=8,
+                                  command=lambda: self.switch_channel(0),
+                                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                  highlightthickness=0,
+                                  )
         self._mon_btn.pack(side=tk.LEFT, padx=2)
 
     def _init_ch_btn_frame(self, root_frame):
         btn_font = ("fixedsys", 8,)
         ch_btn_frame = ttk.Frame(root_frame, )
         ch_btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        ch_btn_frame.columnconfigure(1, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(2, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(3, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(4, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(5, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(6, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(7, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(8, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(9, minsize=50, weight=1)
-        ch_btn_frame.columnconfigure(10, minsize=50, weight=1)
-        ch_1_var = tk.StringVar(self.main_win, value='1')
-        ch_2_var = tk.StringVar(self.main_win, value='2')
-        ch_3_var = tk.StringVar(self.main_win, value='3')
-        ch_4_var = tk.StringVar(self.main_win, value='4')
-        ch_5_var = tk.StringVar(self.main_win, value='5')
-        ch_6_var = tk.StringVar(self.main_win, value='6')
-        ch_7_var = tk.StringVar(self.main_win, value='7')
-        ch_8_var = tk.StringVar(self.main_win, value='8')
-        ch_9_var = tk.StringVar(self.main_win, value='9')
-        ch_10_var = tk.StringVar(self.main_win, value='10')
-        ch_button1 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_1_var, bg="red",
-                               command=lambda: self.switch_channel(1))
-        ch_button2 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_2_var, bg="red",
-                               command=lambda: self.switch_channel(2))
-        ch_button3 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_3_var, bg="red",
-                               command=lambda: self.switch_channel(3))
-        ch_button4 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_4_var, bg="red",
-                               command=lambda: self.switch_channel(4))
-        ch_button5 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_5_var, bg="red",
-                               command=lambda: self.switch_channel(5))
-        ch_button6 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_6_var, bg="red",
-                               command=lambda: self.switch_channel(6))
-        ch_button7 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_7_var, bg="red",
-                               command=lambda: self.switch_channel(7))
-        ch_button8 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_8_var, bg="red",
-                               command=lambda: self.switch_channel(8))
-        ch_button9 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_9_var, bg="red",
-                               command=lambda: self.switch_channel(9))
-        ch_button10 = tk.Button(ch_btn_frame, font=btn_font, textvariable=ch_10_var, bg="red",
-                                command=lambda: self.switch_channel(10))
-        ch_button1.grid(row=0, column=1, sticky="nsew")
-        ch_button2.grid(row=0, column=2, sticky="nsew")
-        ch_button3.grid(row=0, column=3, sticky="nsew")
-        ch_button4.grid(row=0, column=4, sticky="nsew")
-        ch_button5.grid(row=0, column=5, sticky="nsew")
-        ch_button6.grid(row=0, column=6, sticky="nsew")
-        ch_button7.grid(row=0, column=7, sticky="nsew")
-        ch_button8.grid(row=0, column=8, sticky="nsew")
-        ch_button9.grid(row=0, column=9, sticky="nsew")
-        ch_button10.grid(row=0, column=10, sticky="nsew")
-        self._con_btn_dict = {
-            1: (ch_button1, ch_1_var),
-            2: (ch_button2, ch_2_var),
-            3: (ch_button3, ch_3_var),
-            4: (ch_button4, ch_4_var),
-            5: (ch_button5, ch_5_var),
-            6: (ch_button6, ch_6_var),
-            7: (ch_button7, ch_7_var),
-            8: (ch_button8, ch_8_var),
-            9: (ch_button9, ch_9_var),
-            10: (ch_button10, ch_10_var),
-        }
+
+        for ch_nr in list(range(1,11)):
+            ch_text_var = tk.StringVar(self.main_win, value=str(ch_nr))
+            ch_btn      = tk.Button(ch_btn_frame,
+                               font=btn_font,
+                               textvariable=ch_text_var,
+                               bg="red",
+                               #command=lambda: self.switch_channel(int(f"{ch_nr}")),
+                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                               highlightthickness=0,
+                               )
+            ch_btn.pack( side=tk.LEFT, anchor="center", expand=True, fill=tk.X)
+            self._con_btn_dict[ch_nr] = ch_btn, ch_text_var
+
+        self._con_btn_dict[1][0].configure(command=lambda: self.switch_channel(1))
+        self._con_btn_dict[2][0].configure(command=lambda: self.switch_channel(2))
+        self._con_btn_dict[3][0].configure(command=lambda: self.switch_channel(3))
+        self._con_btn_dict[4][0].configure(command=lambda: self.switch_channel(4))
+        self._con_btn_dict[5][0].configure(command=lambda: self.switch_channel(5))
+        self._con_btn_dict[6][0].configure(command=lambda: self.switch_channel(6))
+        self._con_btn_dict[7][0].configure(command=lambda: self.switch_channel(7))
+        self._con_btn_dict[8][0].configure(command=lambda: self.switch_channel(8))
+        self._con_btn_dict[9][0].configure(command=lambda: self.switch_channel(9))
+        self._con_btn_dict[10][0].configure(command=lambda: self.switch_channel(10))
 
     def _init_TXT_frame_up(self):
-        guiCFG = POPT_CFG.load_guiPARM_main()
-        status_frame = tk.Frame(self._TXT_upper_frame, bd=0, borderwidth=0, bg=STAT_BAR_CLR)
-        status_frame.pack(side=tk.BOTTOM, expand=1)
+        guiCFG        = POPT_CFG.load_guiPARM_main()
+        text_frame    = ttk.Frame(self._TXT_upper_frame)
+        self._inp_txt = tk.Text(text_frame,
+                                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
+                                                  foreground=guiCFG.get('gui_cfg_vor_col', 'white'),
+                                                  font=(FONT, self.text_size),
+                                                  insertbackground=TXT_INP_CURSOR_CLR,
+                                                  height=30,
+                                                  width=5,
+                                                  bd=0,
+                                                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                                  highlightthickness=0,
+                                                  )
+        self._inp_txt.tag_config("send",
+                                 foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
+                                 background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
+        inp_scrollbar = ttk.Scrollbar(
+            text_frame,
+            orient=tk.VERTICAL,
+            command=self._inp_txt.yview
+        )
+        self._inp_txt.pack(side=tk.LEFT, fill=tk.BOTH,  expand=True)
+        inp_scrollbar.pack(side=tk.LEFT, fill=tk.Y,     expand=False)
+        self._inp_txt.config(yscrollcommand=inp_scrollbar.set)
+        # self.in_txt_win.insert(tk.END, "Inp")
+        ##############
+        # Status Frame
+        status_frame = ttk.Frame(self._TXT_upper_frame, height=18)
+        status_frame.pack( side=tk.BOTTOM, fill=tk.X   , expand=False)
+        text_frame.pack(   side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
+        name_f      = ttk.Frame(status_frame, width=60)
+        stat_f      = ttk.Frame(status_frame, width=40)
+        nack_f      = ttk.Frame(status_frame, width=40)
+        vsvr_f      = ttk.Frame(status_frame, width=40)
+        n2_f        = ttk.Frame(status_frame, width=20)
+        t1_f        = ttk.Frame(status_frame, width=20)
+        t2_f        = ttk.Frame(status_frame, width=20)
+        rtt_f       = ttk.Frame(status_frame, width=20)
+        t3_f        = ttk.Frame(status_frame, width=20)
+        rx_beep_f   = ttk.Frame(status_frame, width=50)
+        ts_f        = ttk.Frame(status_frame, width=20)
+
+        name_f.pack(side=tk.LEFT, expand=True)
+        stat_f.pack(side=tk.LEFT, expand=False)
+        nack_f.pack(side=tk.LEFT, expand=False)
+        vsvr_f.pack(side=tk.LEFT, expand=True)
+        n2_f.pack(side=tk.LEFT, expand=True)
+        t1_f.pack(side=tk.LEFT, expand=True)
+        t2_f.pack(side=tk.LEFT, expand=True)
+        rtt_f.pack(side=tk.LEFT, expand=True)
+        t3_f.pack(side=tk.LEFT, expand=True)
+        rx_beep_f.pack(side=tk.LEFT, expand=False)
+        ts_f.pack(side=tk.LEFT, expand=False)
+
+        """
         status_frame.columnconfigure(1, minsize=60, weight=2)  # Name
         status_frame.columnconfigure(2, minsize=40, weight=3)  # Status
         status_frame.columnconfigure(3, minsize=40, weight=4)  # unACK
@@ -792,231 +849,256 @@ class PoPT_GUI_Main:
         status_frame.columnconfigure(10, minsize=50, weight=1)  # RX Beep
         status_frame.columnconfigure(11, minsize=20, weight=1)  # TimeStamp
         status_frame.columnconfigure(12, minsize=1, weight=0)  # TimeStamp
-        status_frame.rowconfigure(0, weight=1)  # Stat
-        status_frame.rowconfigure(1, minsize=20, weight=0)  # Out
+        # status_frame.rowconfigure(0, weight=1)  # Stat
+        status_frame.rowconfigure(0, minsize=20, weight=1)  # Out
+        """
+        fg, bg = self._get_colorMap()
+        tk.Label(name_f,
+                textvariable=self._status_name_var,
+                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                foreground=fg,
+                bg=bg,
+                width=10
+              ).pack(side=tk.LEFT, anchor='w')
 
-        self._inp_txt = scrolledtext.ScrolledText(status_frame,
-                                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
-                                                  foreground=guiCFG.get('gui_cfg_vor_col', 'white'),
-                                                  font=(FONT, self.text_size),
-                                                  insertbackground=TXT_INP_CURSOR_CLR,
-                                                  height=100,
-                                                  width=300,
-                                                  bd=0,
-                                                  )
-        self._inp_txt.tag_config("send", foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
-        # self.in_txt_win.insert(tk.END, "Inp")
-        self._inp_txt.grid(row=0, column=0, columnspan=13, sticky="nsew")
-        ##############
-        # Status Frame
-
-        tk.Label(status_frame,
-              textvariable=self._status_name_var,
-              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              foreground=STAT_BAR_TXT_CLR,
-              bg=STAT_BAR_CLR
-              ).grid(row=1, column=1, sticky="nsew")
-
-        self._status_status = tk.Label(status_frame,
+        self._status_status = tk.Label(stat_f,
                                     textvariable=self._status_status_var,
                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                    bg=STAT_BAR_CLR,
-                                    foreground=STAT_BAR_TXT_CLR
+                                    bg=bg,
+                                    foreground=STAT_BAR_TXT_CLR,
+                                    width=8
                                     )
-        self._status_status.grid(row=1, column=2, sticky="nsew")
+        self._status_status.pack(side=tk.LEFT, anchor='w', expand=True)
 
-        self._status_unack = tk.Label(status_frame,
-                                   textvariable=self._status_unack_var,
-                                   foreground=STAT_BAR_TXT_CLR,
-                                   font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                   bg=STAT_BAR_CLR
+        self._status_unack = tk.Label(nack_f,
+                                    textvariable=self._status_unack_var,
+                                    foreground=STAT_BAR_TXT_CLR,
+                                    font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                                    bg=bg,
+                                    width=8
                                    )
-        self._status_unack.grid(row=1, column=3, sticky="nsew")
+        self._status_unack.pack(side=tk.LEFT, anchor='w', expand=True)
 
-        tk.Label(status_frame,
+        tk.Label(vsvr_f,
               textvariable=self._status_vs_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=STAT_BAR_CLR,
-              foreground=STAT_BAR_TXT_CLR
-              ).grid(row=1, column=4, sticky="nsew")
+              bg=bg,
+              foreground=fg
+              ).pack(side=tk.LEFT, anchor='w')
 
-        self._status_n2 = tk.Label(status_frame,
+        self._status_n2 = tk.Label(n2_f,
                                 textvariable=self._status_n2_var,
                                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                bg=STAT_BAR_CLR,
-                                foreground=STAT_BAR_TXT_CLR
+                                bg=bg,
+                                foreground=fg,
+                                width=5
                                 )
-        self._status_n2.grid(row=1, column=7, sticky="nsew")
+        self._status_n2.pack(side=tk.LEFT, anchor='w')
 
-        tk.Label(status_frame,
+        tk.Label(t1_f,
               textvariable=self._status_t1_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=STAT_BAR_CLR,
-              foreground=STAT_BAR_TXT_CLR
-              ).grid(row=1, column=8, sticky="nsew")
+              bg=bg,
+              foreground=fg
+              ).pack(side=tk.LEFT, anchor='w')
         # PARM T2
-        tk.Label(status_frame,
+        tk.Label(t2_f,
               textvariable=self._status_t2_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=STAT_BAR_CLR,
-              foreground=STAT_BAR_TXT_CLR
-              ).grid(row=1, column=5, sticky="nsew")
+              bg=bg,
+              foreground=fg
+              ).pack(side=tk.LEFT, anchor='w')
         # RTT
-        tk.Label(status_frame,
+        tk.Label(rtt_f,
               textvariable=self._status_rtt_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=STAT_BAR_CLR,
-              foreground=STAT_BAR_TXT_CLR
-              ).grid(row=1, column=6, sticky="nsew")
+              bg=bg,
+              foreground=fg
+              ).pack(side=tk.LEFT, anchor='w')
 
-        tk.Label(status_frame,
+        tk.Label(t3_f,
               textvariable=self._status_t3_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=STAT_BAR_CLR,
-              foreground=STAT_BAR_TXT_CLR
-              ).grid(row=1, column=9, sticky="nsew")
+              bg=bg,
+              foreground=fg
+              ).pack(side=tk.LEFT, anchor='w')
         # Checkbox RX-BEEP
-        self._rx_beep_box = tk.Checkbutton(status_frame,
+        self._rx_beep_box = tk.Checkbutton(rx_beep_f,
                                         text="RX-BEEP",
-                                        bg=STAT_BAR_CLR,
+                                        bg=bg,
                                         font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                        activebackground=STAT_BAR_CLR,
+                                        activebackground=bg,
+                                        background=bg,
                                         borderwidth=0,
                                         onvalue=1, offvalue=0,
-                                        foreground=STAT_BAR_TXT_CLR,
+                                        foreground=fg,
                                         variable=self._rx_beep_var,
-                                        command=self._chk_rx_beep
+                                        command=self._chk_rx_beep,
+                                           border=False,
+                                           relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                           highlightthickness=0,
                                         )
-        self._rx_beep_box.grid(row=1, column=10, sticky="nsew")
+        self._rx_beep_box.pack(side=tk.LEFT, anchor='w')
         # TODO Checkbox Time Stamp
-        self._ts_box_box = tk.Checkbutton(status_frame,
+        self._ts_box_box = ttk.Checkbutton(ts_f,
                                        text="T-S",
-                                       font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                       bg=STAT_BAR_CLR,
-                                       borderwidth=0,
-                                       activebackground=STAT_BAR_CLR,
+                                       #font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                                       #bg=bg,
+                                       #borderwidth=0,
+                                       #activebackground=bg,
                                        onvalue=1, offvalue=0,
-                                       foreground=STAT_BAR_TXT_CLR,
+                                       #foreground=fg,
                                        variable=self._ts_box_var,
                                        command=self._chk_timestamp,
                                        state='disabled'
                                        )
-        self._ts_box_box.grid(row=1, column=11, sticky="nsew")
+        # self._ts_box_box.pack(side=tk.LEFT, anchor='w') # TODO
 
     def _init_TXT_frame_mid(self):
-        self._TXT_mid_frame.rowconfigure(1, minsize=22, weight=1)
-        self._TXT_mid_frame.rowconfigure(0, weight=1)
-        self._TXT_mid_frame.columnconfigure(0, minsize=3, weight=0)  # Spacer
-        self._TXT_mid_frame.columnconfigure(1, minsize=80, weight=2)  # Name
-        self._TXT_mid_frame.columnconfigure(2, minsize=60, weight=3)  # QTH
-        self._TXT_mid_frame.columnconfigure(3, minsize=20, weight=4)  # LOC
-        self._TXT_mid_frame.columnconfigure(4, minsize=20, weight=5)  # Typ
-        self._TXT_mid_frame.columnconfigure(5, minsize=80, weight=4)  # Software
-        self._TXT_mid_frame.columnconfigure(6, minsize=28, weight=4)  # Status (PIPE/FT)
-        self._TXT_mid_frame.columnconfigure(7, minsize=30, weight=4)  # Conn Timer
-        self._TXT_mid_frame.columnconfigure(8, minsize=30, weight=4)  # Text Encoding
-        self._TXT_mid_frame.columnconfigure(9, minsize=3, weight=0)  # Spacer
-        self._out_txt = scrolledtext.ScrolledText(self._TXT_mid_frame,
-                                                  background=DEF_QSO_SYSMSG_BG,
-                                                  foreground=DEF_QSO_SYSMSG_FG,
-                                                  font=(FONT, self.text_size),
-                                                  height=100,
-                                                  width=300,
-                                                  bd=0,
-                                                  borderwidth=0,
-                                                  state="disabled",
-                                                  )
-        # self._out_txt.tag_config("input", foreground="white")
-        self._out_txt.grid(row=0, column=0, columnspan=10, sticky="nsew")
+        text_frame = ttk.Frame(self._TXT_mid_frame)
+        stat_frame = ttk.Frame(self._TXT_mid_frame)
+        stat_frame.pack(side=tk.BOTTOM, fill=tk.X,    expand=False)
+        text_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self._out_txt = tk.Text(text_frame,
+                              background=DEF_QSO_SYSMSG_BG,
+                              foreground=DEF_QSO_SYSMSG_FG,
+                              font=(FONT, self.text_size),
+                              height=30,
+                              width=5,
+                              bd=0,
+                              borderwidth=0,
+                              state="disabled",
+                                relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                highlightthickness=0,
 
-        name_label = tk.Label(self._TXT_mid_frame,
+                                )
+        # self._out_txt.tag_config("input", foreground="white")
+        out_scrollbar = ttk.Scrollbar(
+            text_frame,
+            orient=tk.VERTICAL,
+            command=self._out_txt.yview
+        )
+        self._out_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        out_scrollbar.pack(side=tk.LEFT, fill=tk.Y,    expand=False)
+        self._out_txt.config(yscrollcommand=out_scrollbar.set)
+        # Status bar
+        name_f = ttk.Frame(stat_frame)
+        qth_f  = ttk.Frame(stat_frame)
+        loc_f  = ttk.Frame(stat_frame)
+        typ_f  =  tk.Frame(stat_frame, bg="#0ed8c3")
+        sw_f   =  tk.Frame(stat_frame, bg="#ffd444")
+        stat_f = ttk.Frame(stat_frame)
+        time_f = ttk.Frame(stat_frame)
+        enc_f  = ttk.Frame(stat_frame)
+
+        name_f.pack(side=tk.LEFT, expand=True,  anchor="center")
+        qth_f.pack( side=tk.LEFT, expand=True,  anchor="center")
+        loc_f.pack( side=tk.LEFT, expand=True,  anchor="center", padx=5)
+        typ_f.pack( side=tk.LEFT, expand=True,  anchor="center", fill=tk.X)
+        sw_f.pack(  side=tk.LEFT, expand=True,  anchor="center", fill=tk.X)
+        stat_f.pack(side=tk.LEFT, expand=False, anchor="center")
+        time_f.pack(side=tk.LEFT, expand=False, anchor="center", padx=7)
+        enc_f.pack( side=tk.LEFT, expand=True,  anchor="center", fill=tk.X)
+
+        fg, bg = self._get_colorMap()
+
+        name_label = ttk.Label(name_f,
                               textvariable=self.stat_info_name_var,
                               # bg=STAT_BAR_CLR,
-                              height=1,
+                              #height=1,
                               borderwidth=0,
                               border=0,
-                              fg=STAT_BAR_TXT_CLR,
+                              #fg=fg,
+                              #bg=bg,
                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS, 'bold')
+
                               )
-        name_label.grid(row=1, column=1, sticky="nsew")
+        name_label.pack()
         name_label.bind('<Button-1>', self.open_user_db_win)
-        qth_label = tk.Label(self._TXT_mid_frame,
+        qth_label = tk.Label(qth_f,
                              textvariable=self.stat_info_qth_var,
-                             bg=STAT_BAR_CLR,
-                             fg=STAT_BAR_TXT_CLR,
+                             bg=bg,
+                             fg=fg,
                              height=1,
                              borderwidth=0,
                              border=0,
                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
                              )
         qth_label.bind('<Button-1>', self.open_user_db_win)
-        qth_label.grid(row=1, column=2, sticky="nsew")
-        loc_label = tk.Label(self._TXT_mid_frame,
+        qth_label.pack()
+        loc_label = tk.Label(loc_f,
                              textvariable=self.stat_info_loc_var,
-                             bg=STAT_BAR_CLR,
-                             fg=STAT_BAR_TXT_CLR,
+                             bg=bg,
+                             fg=fg,
                              height=1,
                              borderwidth=0,
                              border=0,
                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
                              )
         loc_label.bind('<Button-1>', self.open_user_db_win)
-        loc_label.grid(row=1, column=3, sticky="nsew")
+        loc_label.pack()
 
         opt = list(STATION_TYPS)
         stat_typ = tk.OptionMenu(
-            self._TXT_mid_frame,
+            typ_f,
             self.stat_info_typ_var,
             *opt,
-            command=self._set_stat_typ
+            command=self._set_stat_typ,
         )
         stat_typ.configure(
             background="#0ed8c3",
             fg=STAT_BAR_TXT_CLR,
-            width=10,
+            #width=8,
             height=1,
             borderwidth=0,
             border=0,
-            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,),
+            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness=0,
         )
-        stat_typ.grid(row=1, column=4, sticky="nsew")
+        stat_typ.pack(fill=tk.X, expand=True, padx=6)
 
-        tk.Label(self._TXT_mid_frame,
+        tk.Label(sw_f,
                  textvariable=self.stat_info_sw_var,
-                 width=20,
+                 #width=18,
                  bg="#ffd444",
                  # fg="red3",
                  height=1,
                  borderwidth=0,
                  border=0,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
-                 ).grid(row=1, column=5, sticky="nsew")
+                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
+                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                 highlightthickness=0,
+                 ).pack(fill=tk.X, expand=True, padx=6)
 
-        self.status_label = tk.Label(self._TXT_mid_frame,
+        self.status_label = tk.Label(stat_f,
                                      textvariable=self.stat_info_status_var,
                                      bg=STAT_BAR_CLR,
                                      fg="red3",
                                      height=1,
                                      borderwidth=0,
                                      border=0,
-                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,),
+                                     relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                     highlightthickness=0,
+                                     width=7
                                      )
-        self.status_label.grid(row=1, column=6, sticky="nsew")
+        self.status_label.pack()
         self.status_label.bind('<Button-1>', self.do_priv)
 
-        tk.Label(self._TXT_mid_frame,
+        ttk.Label(time_f,
                  textvariable=self.stat_info_timer_var,
-                 width=10,
-                 height=1,
+                 #width=6,
+                 # height=1,
                  borderwidth=0,
                  border=0,
                  # bg="steel blue",
                  # fg="red3",
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
-                 ).grid(row=1, column=7, sticky="nsew")
+                 ).pack(fill=tk.X, expand=True)
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
-            self._TXT_mid_frame,
+            enc_f,
             self.stat_info_encoding_var,
             *opt,
             command=self._change_txt_encoding
@@ -1027,22 +1109,35 @@ class PoPT_GUI_Main:
             width=8,
             borderwidth=0,
             border=0,
-            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - 1,)
+            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - 1,),
+            relief = "flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness = 0,
         )
-        txt_encoding_ent.grid(row=1, column=8, sticky="nsew", )
+        txt_encoding_ent.pack(fill=tk.X, expand=True)
 
     def _init_TXT_frame_low(self):
-        self._mon_txt = scrolledtext.ScrolledText(self._TXT_lower_frame,
-                                                  background=MON_SYS_MSG_CLR_BG,
-                                                  foreground=MON_SYS_MSG_CLR_BG,
-                                                  font=(FONT, self.text_size),
-                                                  height=100,
-                                                  width=300,
-                                                  bd=0,
-                                                  borderwidth=0,
-                                                  state="disabled",
-                                                  )
-        self._mon_txt.pack(side=tk.TOP)
+        mon_frame = ttk.Frame(self._TXT_lower_frame)
+        mon_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self._mon_txt = tk.Text(mon_frame,
+                              background=MON_SYS_MSG_CLR_BG,
+                              foreground=MON_SYS_MSG_CLR_BG,
+                              font=(FONT, self.text_size),
+                              height=30,
+                              width=5,
+                              bd=0,
+                              borderwidth=0,
+                              state="disabled",
+                              relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                              highlightthickness=0,
+                              )
+        mon_scrollbar = ttk.Scrollbar(
+            mon_frame,
+            orient=tk.VERTICAL,
+            command=self._mon_txt.yview
+        )
+        self._mon_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        mon_scrollbar.pack(side=tk.LEFT, fill=tk.Y,    expand=False)
+        self._mon_txt.config(yscrollcommand=mon_scrollbar.set)
     #######################################
     # Text Tags
     def set_text_tags(self):
@@ -1711,8 +1806,9 @@ class PoPT_GUI_Main:
 
     def _update_qso_Vars(self):
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
+        bg = self._get_colorMap()[1]
         ch_vars.new_data_tr = False
-        ch_vars.rx_beep_tr = False
+        ch_vars.rx_beep_tr  = False
 
         self._out_txt.configure(state="normal")
 
@@ -1736,14 +1832,14 @@ class PoPT_GUI_Main:
             self._rx_beep_box.configure(bg='green')
         else:
             self._rx_beep_box.deselect()
-            self._rx_beep_box.configure(bg=STAT_BAR_CLR)
+            self._rx_beep_box.configure(bg=bg)
 
         if ch_vars.timestamp_opt and self.channel_index:
-            self._ts_box_box.select()
-            self._ts_box_box.configure(bg='green')
+            self._ts_box_var.set(True)
+            #self._ts_box_box.configure(bg='green')
         else:
-            self._ts_box_box.deselect()
-            self._ts_box_box.configure(bg=STAT_BAR_CLR)
+            self._ts_box_var.set(False)
+            #self._ts_box_box.configure(bg=bg)
 
     def sysMsg_to_qso(self, data, ch_index):
         # FIXME: Wait for spooler (async)
@@ -2138,6 +2234,10 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
+        #print(self._inp_txt.cget('height'))
+        #print(self._pw.sashpos(0))
+        #self._pw.sashpos(0, 20)
+        # self._inp_txt.configure(height= 200)
         # self._port_handler.set_dxAlarm()
         # self._port_handler.set_tracerAlarm()
         # ## self._port_handler.debug_Connections()
@@ -2489,6 +2589,7 @@ class PoPT_GUI_Main:
     # TxTframe FNCs
     def _update_status_win(self):
         station = self.get_conn(self.channel_index)
+        fg, bg = self._get_colorMap()
         if station is not None:
             from_call = str(station.my_call_str)
             status = station.zustand_tab[station.get_state()][1]
@@ -2524,13 +2625,16 @@ class PoPT_GUI_Main:
                 self._status_n2_var.set(n2_text)
                 if n2 > 4:
                     if self._status_n2.cget('bg') != 'yellow':
+                        self._status_n2.configure(fg='black')
                         self._status_n2.configure(bg='yellow')
                 elif n2 > 10:
                     if self._status_n2.cget('bg') != 'orange':
+                        self._status_n2.configure(fg='black')
                         self._status_n2.configure(bg='orange')
                 else:
-                    if self._status_n2.cget('bg') != STAT_BAR_CLR:
-                        self._status_n2.configure(bg=STAT_BAR_CLR)
+                    if self._status_n2.cget('bg') != bg:
+                        self._status_n2.configure(bg=bg)
+                        self._status_n2.configure(fg=fg)
             if self._status_t1_var.get() != t1_text:
                 self._status_t1_var.set(t1_text)
             if self._status_t2_var.get() != t2_text:
@@ -2541,15 +2645,17 @@ class PoPT_GUI_Main:
                 self._status_t3_var.set(t3_text)
 
         else:
-            if self._status_status.cget('bg') != STAT_BAR_CLR:
+
+            if self._status_status.cget('bg') != bg:
                 # self.status_name.configure(text="", bg=STAT_BAR_CLR)
                 self._status_name_var.set('')
-                self._status_status.configure(bg=STAT_BAR_CLR)
+                self._status_status.configure(bg=bg)
                 self._status_status_var.set('')
-                self._status_unack.configure(bg=STAT_BAR_CLR)
+                self._status_unack.configure(bg=bg)
                 self._status_unack_var.set('')
                 self._status_vs_var.set('')
-                self._status_n2.configure(bg=STAT_BAR_CLR)
+                self._status_n2.configure(bg=bg)
+                self._status_n2.configure(fg=fg)
                 self._status_n2_var.set('')
                 self._status_t1_var.set('')
                 self._status_t2_var.set('')
@@ -2572,23 +2678,30 @@ class PoPT_GUI_Main:
 
     def _chk_rx_beep(self):
         rx_beep_check = self._rx_beep_var.get()
+        bg = self._get_colorMap()[1]
         if rx_beep_check:
             if self._rx_beep_box.cget('bg') != 'green':
                 self._rx_beep_box.configure(bg='green', activebackground='green')
         else:
-            if self._rx_beep_box.cget('bg') != STAT_BAR_CLR:
-                self._rx_beep_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+            if self._rx_beep_box.cget('bg') != bg:
+                self._rx_beep_box.configure(bg=bg, activebackground=bg, background=bg)
         self.get_ch_var().rx_beep_opt = rx_beep_check
 
     def _chk_timestamp(self):
+        """
         ts_check = self._ts_box_var.get()
+        bg = self._get_colorMap()[1]
         if ts_check:
             if self._ts_box_box.cget('bg') != 'green':
                 self._ts_box_box.configure(bg='green', activebackground='green')
         else:
-            if self._ts_box_box.cget('bg') != STAT_BAR_CLR:
-                self._ts_box_box.configure(bg=STAT_BAR_CLR, activebackground=STAT_BAR_CLR)
+            if self._ts_box_box.cget('bg') != bg:
+                self._ts_box_box.configure(bg=bg, activebackground=bg)
+
         self.get_ch_var().timestamp_opt = ts_check
+        """
+        pass
+
 
     def _set_stat_typ(self, event=None):
         conn = self.get_conn()

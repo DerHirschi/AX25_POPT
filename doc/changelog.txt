@@ -1,16 +1,19 @@
 ###########################################################################################################
 # 2.118.x
 Fixes:
+- Scripterror in cliBOX.py
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.
 - Pseudo TX-Delay für AXIP-Port aktiviert. (Bei Probleme mit BPQ)
 - AX25 Protokoll: Handling beim Empfangen eines DM-Frames bei
   bestehender Verbindung.(Connection reset)
+- Main-GUI Statusleisten und Textfenster
 
 Neue Implementierungen / Funktionen:
 - CLI CMD "A". Bricht alle aktuellen Aussendungen ab.
 - Mausklick bindings für "Alarm Leiste" (rechts oben)
+- awthemes support. Download: https://sourceforge.net/projects/tcl-awthemes/
 
 ###########################################################################################################
 ###########################################################################################################

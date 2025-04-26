@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.118.4'
+VER = '2.118.5'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -204,6 +204,14 @@ DEF_QSO_SYSMSG_BG= '#000000'
 DEF_PORT_MON_TX_COL = 'medium violet red'
 DEF_PORT_MON_RX_COL = 'green'
 DEF_PORT_MON_BG_COL = 'black'
+# Style Clolor MAP
+COLOR_MAP = {
+            'default': ('#000000',  '#d9d9d9'),
+            'awdark':  ('#ffffff',  '#33393B'),
+
+        }
+
+
 # F Key Tab
 F_KEY_TAB_LINUX = {
     67: 1,  # F1

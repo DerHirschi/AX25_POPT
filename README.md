@@ -24,7 +24,7 @@ Currently under development, tested on Python 3.6 and 3.8, it runs on Windows, L
 Raspberry Pi.
 
 ### Requirements
-- Python 3.6 or 3.8 (other versions such as 3.11 see below)
+- Python 3.6 or higher (other versions such as 3.11 see below)
 - Supported Platforms: Windows, Linux, Raspberry Pi
 
 ## Installation
