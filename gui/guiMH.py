@@ -32,11 +32,11 @@ class MHWin(tk.Toplevel):
         self._mh = PORT_HANDLER.get_MH()
         self._rev_ent = False
         # self._alarm_active_var = self._root_win.setting_dx_alarm
-        self._alarm_newCall_var = tk.BooleanVar(self)
-        self._alarm_seenSince_var = tk.StringVar(self)
-        self._alarm_distance_var = tk.StringVar(self)
-        # self._tracer_active_var = tk.BooleanVar(self)
-        self._tracer_duration_var = tk.StringVar(self)
+        self._alarm_newCall_var     = tk.BooleanVar(self)
+        self._alarm_seenSince_var   = tk.StringVar(self)
+        self._alarm_distance_var    = tk.StringVar(self)
+        # self._tracer_active_var   = tk.BooleanVar(self)
+        self._tracer_duration_var   = tk.StringVar(self)
         self._alarm_ports = []
         _ports = list(PORT_HANDLER.get_all_ports().keys())
         for _por_id in _ports:

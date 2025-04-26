@@ -14,6 +14,8 @@ Neue Implementierungen / Funktionen:
 - CLI CMD "A". Bricht alle aktuellen Aussendungen ab.
 - Mausklick bindings für "Alarm Leiste" (rechts oben)
 - awthemes support. Download: https://sourceforge.net/projects/tcl-awthemes/
+- Größe des Hauptfensters wird jetzt gespeichert
+- Größe der verschiedenen verschiebbaren Fenster wird jetzt gespeichert
 
 ###########################################################################################################
 ###########################################################################################################

@@ -95,8 +95,11 @@ class PoPT_GUI_Main:
         self._logTag = 'GUI-Main> '
         logTag = self._logTag + 'Init: '
         logger.info(logTag + 'start..')
+        guiCfg = POPT_CFG.load_guiPARM_main()
+        ###########################################
         self.main_win = tk.Tk()
         ###########################################
+        logger.info(logTag + 'loading Styles')
         self.style = ttk.Style(self.main_win)
         """
         [
@@ -121,6 +124,11 @@ class PoPT_GUI_Main:
                 self.style.theme_use('awdark')
             except tk.TclError:
                 logger.warning(logTag + 'awthemes-10.4.0 not found in folder data')
+                logger.warning(logTag + '  1. If you want to use awthemes, download:')
+                logger.warning(logTag + '     https://sourceforge.net/projects/tcl-awthemes/')
+                logger.warning(logTag + '  2. Extract the contents of the file awthemes-10.4.0.zip')
+                logger.warning(logTag + '     into the data/ folder')
+                logger.warning(logTag + '')
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
         else:
@@ -131,26 +139,28 @@ class PoPT_GUI_Main:
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
 
+        logger.info(logTag + f'Using style_name: {self.style_name}')
         self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('black', '#d9d9d9'))
         #################################################################
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
-        self.main_win.geometry("1400x850")  # TODO to/fm CFG
+        self.main_win.geometry(f"{guiCfg.get('gui_parm_main_width', 1400)}x{guiCfg.get('gui_parm_main_height', 850)}")
         # self.main_win.attributes('-topmost', 0)
         try:
             self.main_win.iconbitmap("favicon.ico")
         except tk.TclError:
+            logger.warning(logTag + f"Couldn't load favicon.ico ")
             pass
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ######################################
         self._port_handler = port_handler
         ######################################
         # Init Vars
-        self.mh = self._port_handler.get_MH()
-        self.language = POPT_CFG.get_guiCFG_language()
-        self.text_size = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
+        self.mh         = self._port_handler.get_MH()
+        self.language   = POPT_CFG.get_guiCFG_language()
+        self.text_size  = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
         ###############################
-        self._root_dir = get_root_dir()
-        self._root_dir = self._root_dir.replace('/', '//')
+        self._root_dir  = get_root_dir()
+        self._root_dir  = self._root_dir.replace('/', '//')
         #####################
         # GUI VARS
         self.connect_history    = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
@@ -198,9 +208,9 @@ class PoPT_GUI_Main:
         # Tabbed SideFrame Channel
         self.link_holder_var        = tk.BooleanVar(self.main_win)
         # Tabbed SideFrame Monitor
-        self.mon_to_add_var         = tk.StringVar(self.main_win)       #
-        self.mon_cmd_var            = tk.BooleanVar(self.main_win)          #
-        self.mon_poll_var           = tk.BooleanVar(self.main_win)         #
+        self.mon_to_add_var         = tk.StringVar(self.main_win)
+        self.mon_cmd_var            = tk.BooleanVar(self.main_win)
+        self.mon_poll_var           = tk.BooleanVar(self.main_win)
         self.mon_port_var           = tk.StringVar(self.main_win)
         self.mon_call_var           = tk.StringVar(self.main_win)
         self.mon_scroll_var         = tk.BooleanVar(self.main_win)
@@ -224,41 +234,41 @@ class PoPT_GUI_Main:
         self._flip05 = True
         ####################
         # GUI PARAM
-        self._parm_btn_blink_time = 1  # s
-        self._parm_rx_beep_cooldown = 2  # s
+        self._parm_btn_blink_time               = 1  # s
+        self._parm_rx_beep_cooldown             = 2  # s
         # Tasker Timings
-        self._loop_delay = 60  # ms
-        self._parm_non_prio_task_timer = 0.25  # s
-        self._parm_non_non_prio_task_timer = 1  # s
-        self._parm_non_non_non_prio_task_timer = 5  # s
-        self._non_prio_task_timer = time.time()
-        self._non_non_prio_task_timer = time.time()
-        self._non_non_non_prio_task_timer = time.time()
+        self._loop_delay                        = 60  # ms
+        self._parm_non_prio_task_timer          = 0.25  # s
+        self._parm_non_non_prio_task_timer      = 1  # s
+        self._parm_non_non_non_prio_task_timer  = 5  # s
+        self._non_prio_task_timer               = time.time()
+        self._non_non_prio_task_timer           = time.time()
+        self._non_non_non_prio_task_timer       = time.time()
         # #### Tester
         # self._parm_test_task_timer = 60  # 5        # s
         # self._test_task_timer = time.time()
         ########################################
         ############################
         # Windows
-        self.new_conn_win = None
-        self.settings_win = None
-        self.mh_window = None
-        self.wx_window = None
-        self.port_stat_win = None
-        self.be_tracer_win = None
-        self.locator_calc_window = None
-        self.aprs_mon_win = None
-        self.aprs_pn_msg_win = None
-        self.userdb_win = None
-        self.userDB_tree_win = None
-        self.FileSend_win = None
-        self.BBS_fwd_q_list = None
-        self.MSG_Center_win = None
-        self.newPMS_MSG_win = None
-        self.fwd_Path_plot_win = None
-        self.dualPort_settings_win = None
-        self.dualPortMon_win = None
-        self.conn_Path_plot_win = None
+        self.new_conn_win           = None
+        self.settings_win           = None
+        self.mh_window              = None
+        self.wx_window              = None
+        self.port_stat_win          = None
+        self.be_tracer_win          = None
+        self.locator_calc_window    = None
+        self.aprs_mon_win           = None
+        self.aprs_pn_msg_win        = None
+        self.userdb_win             = None
+        self.userDB_tree_win        = None
+        self.FileSend_win           = None
+        self.BBS_fwd_q_list         = None
+        self.MSG_Center_win         = None
+        self.newPMS_MSG_win         = None
+        self.fwd_Path_plot_win      = None
+        self.dualPort_settings_win  = None
+        self.dualPortMon_win        = None
+        self.conn_Path_plot_win     = None
         ####################################
         ####################################
         # Window Text Buffers & Channel Vars
@@ -267,25 +277,28 @@ class PoPT_GUI_Main:
         self._init_Channel_Vars()
         ######################################
         # ....
-        main_pw = ttk.PanedWindow(self.main_win, orient=tk.HORIZONTAL)
-        main_pw.pack(fill=tk.BOTH, expand=True)
+        self._main_pw       = ttk.PanedWindow(self.main_win, orient=tk.HORIZONTAL)
+        self._main_pw.pack(fill=tk.BOTH, expand=True)
 
-        l_frame = ttk.Frame(main_pw)
-        self._r_frame = ttk.Frame(main_pw)
-        r_pack_frame = ttk.Frame(self._r_frame)
+        l_frame             = ttk.Frame(self._main_pw)
+        self._r_frame       = ttk.Frame(self._main_pw)
+        r_pack_frame        = ttk.Frame(self._r_frame)
         l_frame.pack(fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
-        r_pack_frame.pack(fill=tk.BOTH, expand=True)
+        r_pack_frame.pack( fill=tk.BOTH, expand=True)
+        """
         if is_linux():
-            main_pw.add(l_frame, weight=150)
+            self._main_pw.add(l_frame, weight=150)
         else:
-            main_pw.add(l_frame, weight=3)
-        main_pw.add(self._r_frame, weight=1)
+            self._main_pw.add(l_frame, weight=3)
+        """
+        self._main_pw.add(l_frame,       )
+        self._main_pw.add(self._r_frame, weight=1)
         ###########################################
         # Channel Buttons
-        self._ch_btn_blink_timer = time.time()
-        self._con_btn_dict = {}
-        ch_btn_frame = ttk.Frame(l_frame)
+        self._ch_btn_blink_timer    = time.time()
+        self._con_btn_dict          = {}
+        ch_btn_frame                = ttk.Frame(l_frame)
         ch_btn_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, )
         self._init_ch_btn_frame(ch_btn_frame)
         ###########################################
@@ -294,12 +307,13 @@ class PoPT_GUI_Main:
         self._pw.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         # Input
         self._TXT_upper_frame = ttk.Frame(self._pw, borderwidth=0, height=20)
-        self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         # QSO
         self._TXT_mid_frame = ttk.Frame(self._pw, borderwidth=0, )
-        self._TXT_mid_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         # Mon
         self._TXT_lower_frame = ttk.Frame(self._pw, borderwidth=0, )
+        # Pack it
+        self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
+        self._TXT_mid_frame.pack(  side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         self._TXT_lower_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
 
         self._inp_txt = None
@@ -312,32 +326,33 @@ class PoPT_GUI_Main:
         self._pw.add(self._TXT_upper_frame, weight=1)
         self._pw.add(self._TXT_mid_frame,   weight=1)
         self._pw.add(self._TXT_lower_frame, weight=1)
-        #########################
-        #########################
+        ######################################################################
+        ######################################################################
         # RIGHT Pane
         self._Alarm_Frame = AlarmIconFrame(r_pack_frame, self)
-        ##############
+        ######################################################################
         # GUI Buttons
         conn_btn_frame = ttk.Frame(r_pack_frame, )
         conn_btn_frame.pack(expand=False, pady=5, fill=tk.X)
         # conn_btn_frame.pack(anchor='w', fill=tk.X, expand=True)
         self._init_btn(conn_btn_frame)
-        ##############
+        ######################################################################
         # Pane Tabbed Frame
-        side_frame_pw = ttk.PanedWindow(r_pack_frame, orient=tk.VERTICAL, )
-        side_frame_pw.pack(expand=True, pady=5, fill=tk.BOTH)
-        tabbedF_upper_frame = ttk.Frame(side_frame_pw)
+        self._side_pw = ttk.PanedWindow(r_pack_frame, orient=tk.VERTICAL, )
+        self._side_pw.pack(expand=True, pady=5, fill=tk.BOTH)
+        #
+        tabbedF_upper_frame = ttk.Frame(self._side_pw)
+        tabbedF_lower_frame = ttk.Frame(self._side_pw)
         tabbedF_upper_frame.pack()
-        tabbedF_lower_frame = ttk.Frame(side_frame_pw)
         tabbedF_lower_frame.pack()
-        side_frame_pw.add(tabbedF_upper_frame, weight=1)
-        side_frame_pw.add(tabbedF_lower_frame, weight=1)
-        bw_plot_frame = ttk.Frame(self.main_win)
-        self._Pacman  = LiveConnPath(self.main_win)
+        self._side_pw.add(tabbedF_upper_frame, weight=1)
+        self._side_pw.add(tabbedF_lower_frame, weight=1)
         ##############
         # tabbed Frame
-        self.tabbed_sideFrame  = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._Pacman)
-        self.tabbed_sideFrame2 = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
+        bw_plot_frame           = ttk.Frame(self.main_win)
+        self._Pacman            = LiveConnPath(self.main_win)
+        self.tabbed_sideFrame   = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._Pacman)
+        self.tabbed_sideFrame2  = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
         ############################
         # Canvas Plot
         logger.info(logTag + 'BW-Plot Init')
@@ -356,6 +371,7 @@ class PoPT_GUI_Main:
         logger.info('GUI: Parm/CFG Init')
         self._init_GUI_vars_fm_CFG()
         self._init_PARM_vars()
+        self._load_pw_pos()
         self._set_CFG()
         # Text Tags
         self._all_tag_calls = []
@@ -409,6 +425,7 @@ class PoPT_GUI_Main:
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
         self.save_GUIvars()
         self._save_parameter()
+        self._save_pw_pos()
         self._save_Channel_Vars()
         logger.info('GUI: Closing GUI: Closing Ports.')
         threading.Thread(target=self._port_handler.close_popt).start()
@@ -445,10 +462,10 @@ class PoPT_GUI_Main:
         #########################
         # Parameter to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
-        guiCfg['gui_parm_new_call_alarm'] = bool(self.mh.parm_new_call_alarm)
-        guiCfg['gui_parm_channel_index'] = int(self.channel_index)
-        guiCfg['gui_parm_text_size'] = int(self.text_size)
-        guiCfg['gui_parm_connect_history'] = dict(self.connect_history)
+        guiCfg['gui_parm_new_call_alarm']   = bool(self.mh.parm_new_call_alarm)
+        guiCfg['gui_parm_channel_index']    = int(self.channel_index)
+        guiCfg['gui_parm_text_size']        = int(self.text_size)
+        guiCfg['gui_parm_connect_history']  = dict(self.connect_history)
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     def _save_Channel_Vars(self):
@@ -527,6 +544,38 @@ class PoPT_GUI_Main:
         self.set_Beacon_icon(self.setting_bake.get())
         self.chk_master_sprech_on()
 
+    ###############################################################
+    # Panned Win size load/save
+    def _load_pw_pos(self):
+        # self._main_pw     # Main Pan l/r
+        # self._pw          # Text Pan 0/1/2
+        # self._side_pw     # Side Frame Pan u/l
+        guiCfg      = POPT_CFG.load_guiPARM_main()
+        main_hight  = self.main_win.winfo_height()
+        self._main_pw.sashpos(0, guiCfg.get('gui_parm_main_pan_pos', 100))
+        self._side_pw.sashpos(0, guiCfg.get('gui_parm_side_pan_pos', int(main_hight/ 2)))
+
+        text_pan_pos_cfg = guiCfg.get('gui_parm_text_pan_pos', [300, 300])
+        i = 0
+        for pan_pos in text_pan_pos_cfg:
+            self._pw.sashpos(i, pan_pos)
+            i += 1
+
+    def _save_pw_pos(self):
+        text_pan_pos_cfg = []
+        for pan_id in range(2):
+            text_pan_pos_cfg.append(self._pw.sashpos(pan_id))
+
+        guiCfg = POPT_CFG.load_guiPARM_main()
+        guiCfg['gui_parm_main_pan_pos'] = int(self._main_pw.sashpos(0))
+        guiCfg['gui_parm_side_pan_pos'] = int(self._side_pw.sashpos(0))
+        guiCfg['gui_parm_text_pan_pos'] = tuple(text_pan_pos_cfg)
+        guiCfg['gui_parm_main_height']  = int(self.main_win.winfo_height())
+        guiCfg['gui_parm_main_width']   = int(self.main_win.winfo_width())
+        POPT_CFG.save_guiPARM_main(guiCfg)
+
+    ###############################################################
+    # GUI Init Stuff
     def _init_bw_plot(self, frame):
         for _i in list(range(60)):
             self._bw_plot_x_scale.append(_i / 6)
@@ -836,22 +885,6 @@ class PoPT_GUI_Main:
         rx_beep_f.pack(side=tk.LEFT, expand=False)
         ts_f.pack(side=tk.LEFT, expand=False)
 
-        """
-        status_frame.columnconfigure(1, minsize=60, weight=2)  # Name
-        status_frame.columnconfigure(2, minsize=40, weight=3)  # Status
-        status_frame.columnconfigure(3, minsize=40, weight=4)  # unACK
-        status_frame.columnconfigure(4, minsize=40, weight=4)  # VS VR
-        status_frame.columnconfigure(5, minsize=20, weight=5)  # N2
-        status_frame.columnconfigure(6, minsize=20, weight=5)  # T1
-        status_frame.columnconfigure(7, minsize=20, weight=5)  # T1
-        status_frame.columnconfigure(8, minsize=20, weight=5)  # T2
-        status_frame.columnconfigure(9, minsize=20, weight=5)  # T3
-        status_frame.columnconfigure(10, minsize=50, weight=1)  # RX Beep
-        status_frame.columnconfigure(11, minsize=20, weight=1)  # TimeStamp
-        status_frame.columnconfigure(12, minsize=1, weight=0)  # TimeStamp
-        # status_frame.rowconfigure(0, weight=1)  # Stat
-        status_frame.rowconfigure(0, minsize=20, weight=1)  # Out
-        """
         fg, bg = self._get_colorMap()
         tk.Label(name_f,
                 textvariable=self._status_name_var,
@@ -2246,6 +2279,8 @@ class PoPT_GUI_Main:
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
         # print(get_mail_import())
+        self._save_pw_pos()
+        self._load_pw_pos()
 
     def _do_pms_autoFWD(self):
         self._port_handler.get_bbs().start_man_autoFwd()

@@ -263,8 +263,16 @@ def getNew_maniGUI_parm():
         guiMsgC_parm_text_size      = int(DEF_TEXTSIZE),
         #################
         # F-Texte
-        gui_f_text_tab              = {k: (b'', 'UTF-8') for k in range(1, 13)}
-
+        gui_f_text_tab              = {k: (b'', 'UTF-8') for k in range(1, 13)},
+        #################
+        # Pan Pos
+        gui_parm_main_pan_pos       = 400,
+        gui_parm_side_pan_pos       = 300,
+        gui_parm_text_pan_pos       = (300, 300),
+        #################
+        # MAin GUI width and height
+        gui_parm_main_width        = 1400,
+        gui_parm_main_height       = 850,
     )
 
 
