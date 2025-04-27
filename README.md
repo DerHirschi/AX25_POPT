@@ -47,6 +47,17 @@ $ pip install --break-system-packages playsound pyserial aprslib
 $ sudo apt install python3-gst-1.0
 ```
 
+Optional: Install awthemes
+
+To enhance the visual appearance of PoPT, you can optionally install awthemes. Follow these steps:
+
+1. Download the awthemes-10.4.0 package from:
+   https://sourceforge.net/projects/tcl-awthemes/
+
+2. Extract the contents of awthemes-10.4.0.zip into the data/ folder of your PoPT installation.
+
+Note: Ensure the extracted files are placed directly in the data/ directory to be recognized by PoPT.
+
 ## Run
 ``` sh
 $ python3 PoPT.py
