@@ -2267,8 +2267,8 @@ class PoPT_GUI_Main:
         # self._do_bbs_fwd()
         # self.conn_task = AutoConnTask()
         # print(get_mail_import())
-        self._save_pw_pos()
-        self._load_pw_pos()
+        #self._save_pw_pos()
+        #self._load_pw_pos()
 
     def _do_pms_autoFWD(self):
         self._port_handler.get_bbs().start_man_autoFwd()
@@ -2294,10 +2294,13 @@ class PoPT_GUI_Main:
             self._ch_btn_clk(int(self.mon_mode))
             self.mon_mode = 0
             self._mon_btn.configure(bg='yellow')
-        else:
-            self.mon_mode = int(self.channel_index)
-            self._ch_btn_clk(0)
-            self._mon_btn.configure(bg='green')
+            self.ch_status_update()
+            self._load_pw_pos()
+            return
+
+        self.mon_mode = int(self.channel_index)
+        self._ch_btn_clk(0)
+        self._mon_btn.configure(bg='green')
         self.ch_status_update()
 
     def switch_channel(self, ch_ind: int = 0):
@@ -2686,7 +2689,6 @@ class PoPT_GUI_Main:
                 self._status_rtt_var.set('')
 
     def _switch_mon_mode(self):
-        # TODO Save Stretched Positions
         if self.mon_mode:
             try:
                 self._pw.remove(self._TXT_upper_frame)
@@ -2694,9 +2696,12 @@ class PoPT_GUI_Main:
             except tk.TclError:
                 pass
             self._pw.add(self._TXT_upper_frame, weight=1)
-            self._pw.add(self._TXT_mid_frame, weight=1)
+            self._pw.add(self._TXT_mid_frame,   weight=1)
             self._pw.add(self._TXT_lower_frame, weight=1)
+            #self._load_pw_pos()
+
         else:
+            self._save_pw_pos()
             self._pw.remove(self._TXT_mid_frame)
 
     def _chk_rx_beep(self):

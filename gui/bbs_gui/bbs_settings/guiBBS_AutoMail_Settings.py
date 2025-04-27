@@ -3,7 +3,7 @@ from copy import deepcopy
 from tkinter import ttk, scrolledtext
 
 from bbs.bbs_constant import GET_MSG_STRUC
-from cfg.constant import ENCODINGS, FONT
+from cfg.constant import ENCODINGS, FONT, COLOR_MAP
 from cfg.default_config import getNew_AUTOMAIL_task
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -12,13 +12,14 @@ from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
 
 
-class BBSAutoMailSettings(tk.Frame):
+class BBSAutoMailSettings(ttk.Frame):
     def __init__(self, tabctl, root_win):
-        tk.Frame.__init__(self, tabctl)
-        self.style      = root_win.style
-        self._logTag    = 'BBS_AutoMail_Settings: '
-        self._root_win  = root_win
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        ttk.Frame.__init__(self, tabctl)
+        self.style          = root_win.style
+        self._get_colorMap  = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
+        self._logTag        = 'BBS_AutoMail_Settings: '
+        self._root_win      = root_win
+        self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # CFG
         self._pms_cfg: dict         = deepcopy(self._root_win.get_root_pms_cfg())
@@ -34,20 +35,20 @@ class BBSAutoMailSettings(tk.Frame):
         self._gui_vars = {}
         ###################################
         # GUI Stuff
-        tk.Label(self, text=self._getTabStr('AutoMail_settings')).pack(side=tk.TOP, expand=False)
-        r_btn_fr    = tk.Frame(self, borderwidth=10)
-        r_tab_frame = tk.Frame(self, borderwidth=10)
+        ttk.Label(self, text=self._getTabStr('AutoMail_settings')).pack(side=tk.TOP, expand=False)
+        r_btn_fr    = ttk.Frame(self, borderwidth=10)
+        r_tab_frame = ttk.Frame(self, borderwidth=10)
 
         r_btn_fr.pack(side=tk.TOP, fill=tk.X, expand=False)
         r_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # r2
-        tk.Button(r_btn_fr,
+        ttk.Button(r_btn_fr,
                   text=self._getTabStr('new'),
                   command=lambda: self._add_btn()
                   ).pack(side=tk.LEFT, fill=tk.X, expand=False)
 
-        tk.Button(r_btn_fr,
+        ttk.Button(r_btn_fr,
                   text=self._getTabStr('delete'),
                   command=lambda: self._del_btn()
                   ).pack(side=tk.RIGHT, expand=False)
@@ -88,7 +89,7 @@ class BBSAutoMailSettings(tk.Frame):
         msg_size = f" Size: {format_number(size)} Bytes"
         ###########################################
         # Root Frame
-        tab_frame = tk.Frame(self._tabctl)
+        tab_frame = ttk.Frame(self._tabctl)
         self._tabctl.add(tab_frame, text=f"{var_index}")
 
         ###########################################
@@ -105,61 +106,61 @@ class BBSAutoMailSettings(tk.Frame):
 
         ###########################################
         #
-        mail_frame      = tk.Frame(tab_frame, borderwidth=10)
+        mail_frame      = ttk.Frame(tab_frame, borderwidth=10)
         mail_frame.pack( side=tk.TOP, fill=tk.BOTH, expand=True)
         ###############
         # mail_frame
-        frame_oben   = tk.Frame(mail_frame, height=200)
-        frame_unten  = tk.Frame(mail_frame)
-        footer_frame = tk.Frame(mail_frame, height=20)
+        frame_oben   = ttk.Frame(mail_frame, height=200)
+        frame_unten  = ttk.Frame(mail_frame)
+        footer_frame = ttk.Frame(mail_frame, height=20)
         frame_oben.pack(  side=tk.TOP, fill=tk.X,    expand=False)
         frame_unten.pack( side=tk.TOP, fill=tk.BOTH, expand=True)
         footer_frame.pack(side=tk.TOP, fill=tk.X,    expand=False)
         ####################
         # frame_oben
-        from_frame  = tk.Frame(frame_oben)
-        to_frame    = tk.Frame(frame_oben)
-        subj_frame  = tk.Frame(frame_oben)
+        from_frame  = ttk.Frame(frame_oben)
+        to_frame    = ttk.Frame(frame_oben)
+        subj_frame  = ttk.Frame(frame_oben)
         from_frame.pack(side=tk.TOP, expand=True, anchor='w', padx=10)
         to_frame.pack(  side=tk.TOP, expand=True, anchor='w', padx=10, pady=5, fill=tk.X)
         subj_frame.pack(side=tk.TOP, expand=True, anchor='w', padx=10, pady=5)
 
 
-        tk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
+        ttk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
 
         stat_cfg = POPT_CFG.get_stat_CFGs_by_typ('USER')
         opt      = [self._pms_cfg.get('user', '')] + list(stat_cfg.keys())
         if not opt:
             opt = ['']
-        tk.OptionMenu(from_frame,
+        ttk.OptionMenu(from_frame,
                       from_var,
                       *opt
                       ).pack(side=tk.LEFT, fill=tk.X, expand=False, padx=25)
-
-        typ_frame = tk.Frame(from_frame)
+        from_var.set(sender)
+        typ_frame = ttk.Frame(from_frame)
         typ_frame.pack(side=tk.LEFT, expand=True, padx=130)
 
-        tk.Label(typ_frame, text='Typ: ').pack(side=tk.LEFT, expand=False, )
-        tk.OptionMenu(typ_frame,
+        ttk.Label(typ_frame, text='Typ: ').pack(side=tk.LEFT, expand=False, )
+        ttk.OptionMenu(typ_frame,
                       msg_typ_var,
                       *['P', 'B'], ).pack(side=tk.LEFT, expand=False, )
-
-        tk.Button(typ_frame, text='Schedule', command=self._open_schedWin).pack(side=tk.LEFT, padx=50)
-        tk.Checkbutton(typ_frame, text='ENV-Vars', variable=env_vars_var).pack(side=tk.LEFT, padx=20)
-        tk.Label(to_frame, text=f"{self._getTabStr('to')}: ").pack(side=tk.LEFT, expand=False)
-        self._to_call_ent = tk.Entry(to_frame,
+        msg_typ_var.set(msg_typ)
+        ttk.Button(typ_frame, text='Schedule', command=self._open_schedWin).pack(side=tk.LEFT, padx=50)
+        ttk.Checkbutton(typ_frame, text='ENV-Vars', variable=env_vars_var).pack(side=tk.LEFT, padx=20)
+        ttk.Label(to_frame, text=f"{self._getTabStr('to')}: ").pack(side=tk.LEFT, expand=False)
+        self._to_call_ent = ttk.Entry(to_frame,
                                      textvariable=to_var,
                                      width=40)
         self._to_call_ent.pack(side=tk.LEFT, expand=False, padx=35)
 
-        tk.Label(subj_frame, text=f"{self._getTabStr('subject')}: ").pack(side=tk.LEFT, expand=False)
-        tk.Entry(subj_frame,
+        ttk.Label(subj_frame, text=f"{self._getTabStr('subject')}: ").pack(side=tk.LEFT, expand=False)
+        ttk.Entry(subj_frame,
                  textvariable=subject_var,
                  width=91).pack(side=tk.LEFT, expand=False)
 
         ####################
         # frame_unten
-        frame = tk.Frame(frame_unten)
+        frame = ttk.Frame(frame_unten)
         frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         text_ent = scrolledtext.ScrolledText(frame,
                                                font=(FONT, POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)),
@@ -176,7 +177,7 @@ class BBSAutoMailSettings(tk.Frame):
         text_ent.bind("<KeyRelease>", lambda event: self._on_key_release_inp_txt())
         ########################################
         # footer_frame
-        footer_frame = tk.Frame(footer_frame, height=15)
+        footer_frame = ttk.Frame(footer_frame, height=15)
         footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
@@ -184,15 +185,20 @@ class BBSAutoMailSettings(tk.Frame):
             conf_enc_var,
             *opt,
         )
+        fg, bg = self._get_colorMap()
         txt_encoding_ent.configure(
             font=(None, 6),
             border=0,
             borderwidth=0,
-            height=1
+            height=1,
+            fg=fg,
+            bg=bg,
+            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness=0,
         )
         txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
 
-        tk.Label(footer_frame,
+        ttk.Label(footer_frame,
                  textvariable=msg_size_var,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)

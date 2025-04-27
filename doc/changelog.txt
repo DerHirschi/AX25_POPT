@@ -2,6 +2,9 @@
 # 2.118.x
 Fixes:
 - Scripterror in cliBOX.py
+- Scripterror in guiAPRSnewMSG.py beim Aufrufen
+- Scripterror in guiPipeToolSettings.py wenn versucht wird leere
+  Config zu löschen
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.

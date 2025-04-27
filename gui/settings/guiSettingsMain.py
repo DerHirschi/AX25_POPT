@@ -26,7 +26,8 @@ class SettingsMain(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         win_width = 1200
         win_height = 660
-        self.style = root_win.style
+        self.style      = root_win.style
+        self.style_name = root_win.style_name
         self.geometry(f"{win_width}x"
                       f"{win_height}+"
                       f"{root_win.main_win.winfo_x()}+"

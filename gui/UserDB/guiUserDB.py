@@ -6,7 +6,6 @@ from UserDB.UserDBmain import USER_DB
 from cfg.constant import ENCODINGS, STATION_TYPS
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
-from cfg.string_tab import STR_TABLE
 from gui.UserDB.guiNewEntry import GUINewUserEntry
 from gui.guiMsgBoxes import AskMsg
 
@@ -15,11 +14,11 @@ class UserDB(tk.Toplevel):
     def __init__(self, root, ent_key=''):
         tk.Toplevel.__init__(self, master=root.main_win)
         self._root_win = root
-        self._lang = POPT_CFG.get_guiCFG_language()
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.win_height = 600
         self.win_width = 1060
         self.style = root.style
-        self.title(STR_TABLE['user_db'][self._lang])
+        self.title(self._getTabStr('user_db'))
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
@@ -33,6 +32,9 @@ class UserDB(tk.Toplevel):
             pass
         self.lift()
         # self.attributes("-topmost", True)
+        ###############
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
         ###############
         # VARS
         # self.user_db = root.ax25_port_handler.user_db
@@ -71,52 +73,56 @@ class UserDB(tk.Toplevel):
         self._stations_other_var = tk.StringVar(self)
         ##########################
         # OK, Save, Cancel
-        ok_bt = tk.Button(self,
-                          text=STR_TABLE['OK'][self._lang],
+        ok_bt = ttk.Button(main_f,
+                          text=self._getTabStr('OK'),
                           # font=("TkFixedFont", 15),
                           # bg="green",
-                          height=1,
+                          #height=1,
                           width=6,
                           command=self._ok_btn_cmd)
 
-        save_bt = tk.Button(self,
-                            text=STR_TABLE['save'][self._lang],
+        save_bt = ttk.Button(main_f,
+                            text=self._getTabStr('save'),
                             # font=("TkFixedFont", 15),
                             # bg="green",
-                            height=1,
+                            #height=1,
                             width=7,
                             command=self._save_btn_cmd)
 
-        cancel_bt = tk.Button(self,
-                              text=STR_TABLE['cancel'][self._lang],
+        cancel_bt = ttk.Button(main_f,
+                              text=self._getTabStr('cancel'),
                               # font=("TkFixedFont", 15),
                               # bg="green",
-                              height=1,
+                              #height=1,
                               width=8,
                               command=self._destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
         save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
 
-        new_bt = tk.Button(self,
-                           text=STR_TABLE['new'][self._lang],
+        upper_btn_f = ttk.Frame(main_f)
+        upper_btn_f.place(x=200, y=10)
+        new_bt = ttk.Button(upper_btn_f,
+                           text=self._getTabStr('new'),
                            # font=("TkFixedFont", 15),
                            # bg="red",
-                           height=1,
+                           #height=1,
                            width=6,
                            command=self._new_btn_cmd
                            )
-        new_bt.place(x=10, y=10)
+        new_bt.pack(side=tk.LEFT)
 
-        del_bt = tk.Button(self,
-                           text=STR_TABLE['delete'][self._lang],
+        del_bt = tk.Button(upper_btn_f,
+                           text=self._getTabStr('delete'),
                            # font=("TkFixedFont", 15),
                            bg="red",
                            height=1,
                            width=6,
-                           command=self._del_btn_cmd
+                           command=self._del_btn_cmd,
+                           relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                           highlightthickness=0,
                            )
-        del_bt.place(x=120, y=10)
+        del_bt.pack(side=tk.LEFT, padx=50)
 
         self.grid_columnconfigure(0, weight=0, minsize=15)
         self.grid_columnconfigure(1, weight=0)
@@ -124,9 +130,9 @@ class UserDB(tk.Toplevel):
         self.grid_columnconfigure(3, weight=1, minsize=400)
         self.grid_rowconfigure(0, weight=0, minsize=50)
 
-        self._tree = ttk.Treeview(self, columns=('call',), show='tree', height=20)
+        self._tree = ttk.Treeview(main_f, columns=('call',), show='tree', height=20)
         self._tree.grid(row=1, column=1, sticky='nw')
-        scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._tree.yview)
+        scrollbar = ttk.Scrollbar(main_f, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=1, column=2, sticky='wns')
 
@@ -141,55 +147,55 @@ class UserDB(tk.Toplevel):
         """
         ##################################
 
-        tk.Label(self, text='Filter').place(x=15, y=self.win_height - 140)
-        filter_ent = tk.Entry(self, textvariable=self._filter_var, width=12)
+        ttk.Label(main_f, text='Filter').place(x=15, y=self.win_height - 140)
+        filter_ent = ttk.Entry(main_f, textvariable=self._filter_var, width=12)
         filter_ent.place(x=15, y=self.win_height - 115)
         filter_ent.bind('<KeyRelease>', self._update_tree)
 
         ##################################
         # Selected Call Label
-        tk.Label(self,
+        ttk.Label(main_f,
                  textvariable=self._call_label_var,
                  font=("Courier", 14, 'bold')
                  ).place(x=int(self.win_width / 2), y=10)
         ##################################
         # tabs
-        tabControl = ttk.Notebook(self, height=self.win_height - 150, width=self.win_width - 220)
+        tabControl = ttk.Notebook(main_f, height=self.win_height - 150, width=self.win_width - 220)
         tabControl.place(x=200, y=50)
         tab1 = ttk.Frame(tabControl)
         tab2 = ttk.Frame(tabControl)
         tab3 = ttk.Frame(tabControl)
         tab4 = ttk.Frame(tabControl)
-        tabControl.add(tab1, text=STR_TABLE['main_page'][self._lang])
-        tabControl.add(tab2, text=STR_TABLE['settings'][self._lang])
-        tabControl.add(tab3, text=STR_TABLE['passwords'][self._lang])
-        tabControl.add(tab4, text=STR_TABLE['stations'][self._lang])
+        tabControl.add(tab1, text=self._getTabStr('main_page'))
+        tabControl.add(tab2, text=self._getTabStr('settings'))
+        tabControl.add(tab3, text=self._getTabStr('passwords'))
+        tabControl.add(tab4, text=self._getTabStr('stations'))
         # self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
         #################################################
         # Entry
         # Name
         x = 10
         y = 20
-        tk.Label(tab1, text='Name: ').place(x=x, y=y)
-        name_ent = tk.Entry(tab1,
+        ttk.Label(tab1, text='Name: ').place(x=x, y=y)
+        name_ent = ttk.Entry(tab1,
                             textvariable=self._name_var,
                             width=22)
         name_ent.place(x=x + 80, y=y)
         # Typ
         x = 375
         y = 20
-        tk.Label(tab1, text='Typ: ').place(x=x, y=y)
+        ttk.Label(tab1, text='Typ: ').place(x=x, y=y)
         opt = STATION_TYPS
-        typ_ent = tk.OptionMenu(tab1, self._typ_var, *opt)
+        typ_ent = ttk.OptionMenu(tab1, self._typ_var, *opt)
         typ_ent.place(x=x + 80, y=y - 2)
         # SYSOP
         x = 625
         y = 20
-        tk.Label(tab1, text='Sysop: ').place(x=x, y=y)
+        ttk.Label(tab1, text='Sysop: ').place(x=x, y=y)
         opt = sorted(self._user_db.get_keys_by_typ(typ='SYSOP'))
         if not opt:
             opt = ['']
-        self._sysop_ent = tk.OptionMenu(tab1,
+        self._sysop_ent = ttk.OptionMenu(tab1,
                                         self._sysop_var,
                                         *opt,
                                         # command=lambda event: self.on_select_sysop(event)
@@ -200,68 +206,68 @@ class UserDB(tk.Toplevel):
         # QTH
         x = 10
         y = 50
-        tk.Label(tab1, text='QTH: ').place(x=x, y=y)
-        qth_ent = tk.Entry(tab1,
+        ttk.Label(tab1, text='QTH: ').place(x=x, y=y)
+        qth_ent = ttk.Entry(tab1,
                            textvariable=self._qth_var,
                            width=22)
         qth_ent.place(x=x + 80, y=y)
         # LOC
         x = 375
         y = 50
-        tk.Label(tab1, text='LOC: ').place(x=x, y=y)
-        loc_ent = tk.Entry(tab1,
+        ttk.Label(tab1, text='LOC: ').place(x=x, y=y)
+        loc_ent = ttk.Entry(tab1,
                            textvariable=self._loc_var,
                            width=7)
         loc_ent.place(x=x + 80, y=y)
         # ZIP
         x = 10
         y = 80
-        tk.Label(tab1, text='ZIP: ').place(x=x, y=y)
-        zip_ent = tk.Entry(tab1,
+        ttk.Label(tab1, text='ZIP: ').place(x=x, y=y)
+        zip_ent = ttk.Entry(tab1,
                            textvariable=self._zip_var,
                            width=10)
         zip_ent.place(x=x + 80, y=y)
         # LAND
         x = 375
         y = 80
-        tk.Label(tab1, text='LAND: ').place(x=x, y=y)
-        land_ent = tk.Entry(tab1,
+        ttk.Label(tab1, text='LAND: ').place(x=x, y=y)
+        land_ent = ttk.Entry(tab1,
                             textvariable=self._land_var,
                             width=8)
         land_ent.place(x=x + 80, y=y)
         # Ecoding
         x = 455
         y = 110
-        tk.Label(tab1, text=f"{STR_TABLE['txt_decoding'][self._lang]}: ").place(x=x, y=y)
+        ttk.Label(tab1, text=f"{self._getTabStr('txt_decoding')}: ").place(x=x, y=y)
         opt = list(ENCODINGS)
-        encoding_ent = tk.OptionMenu(tab1, self._encoding_var, *opt)
+        encoding_ent = ttk.OptionMenu(tab1, self._encoding_var, *opt)
         encoding_ent.place(x=x + 185, y=y - 2)
         # Software
         x = 455
         y = 140
-        tk.Label(tab1, textvariable=self._software_var).place(x=x, y=y)
+        ttk.Label(tab1, textvariable=self._software_var).place(x=x, y=y)
 
         # PR-MAIL
         x = 10
         y = 110
-        tk.Label(tab1, text='PR-MAIL: ').place(x=x, y=y)
-        prmail_ent = tk.Entry(tab1,
+        ttk.Label(tab1, text='PR-MAIL: ').place(x=x, y=y)
+        prmail_ent = ttk.Entry(tab1,
                               textvariable=self._prmail_var,
                               width=32)
         prmail_ent.place(x=x + 80, y=y)
         # E-MAIL
         x = 10
         y = 140
-        tk.Label(tab1, text='E-MAIL: ').place(x=x, y=y)
-        email_ent = tk.Entry(tab1,
+        ttk.Label(tab1, text='E-MAIL: ').place(x=x, y=y)
+        email_ent = ttk.Entry(tab1,
                              textvariable=self._email_var,
                              width=32)
         email_ent.place(x=x + 80, y=y)
         # HTTP
         x = 10
         y = 170
-        tk.Label(tab1, text='WEB: ').place(x=x, y=y)
-        http_ent = tk.Entry(tab1,
+        ttk.Label(tab1, text='WEB: ').place(x=x, y=y)
+        http_ent = ttk.Entry(tab1,
                             textvariable=self._http_var,
                             width=32)
         http_ent.place(x=x + 80, y=y)
@@ -269,18 +275,20 @@ class UserDB(tk.Toplevel):
         # Stat Infos / Bemerkungen
         x = 10
         y = 200
-        tk.Label(tab1, text='Infos: ').place(x=x, y=y)
+        ttk.Label(tab1, text='Infos: ').place(x=x, y=y)
         # self.info_var = tk.StringVar(self)
         self._info_ent = tk.Text(tab1,
                                  width=65,
-                                 height=9
+                                 height=9,
+                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                 highlightthickness=0,
                                  )
         self._info_ent.place(x=x + 80, y=y)
 
         # CLI LANGUAGE   # TODO
         x = 10
         y = 400
-        tk.Label(tab1, text=f"{get_strTab('language', POPT_CFG.get_guiCFG_language())}: ").place(x=x, y=y)
+        ttk.Label(tab1, text=f"{self._getTabStr('language')}: ").place(x=x, y=y)
         lang_opt = [
             'DEUTSCH',
             'ENGLSCH',
@@ -292,23 +300,23 @@ class UserDB(tk.Toplevel):
             'ITALIENISCH',
         ]
         self._lang_var.set('DEUTSCH')
-        lang_ent = tk.OptionMenu(tab1, self._lang_var, *lang_opt)
+        lang_ent = ttk.OptionMenu(tab1, self._lang_var, *lang_opt)
         lang_ent.configure(state='disabled')  # TODO
         lang_ent.place(x=x + 80, y=y - 2)
 
         # Connection Counter
-        tk.Label(tab1, text='Connections: ').place(x=240, y=393)
-        tk.Label(tab1, textvariable=self._conn_count_var).place(x=357, y=393)
+        ttk.Label(tab1, text='Connections: ').place(x=240, y=393)
+        ttk.Label(tab1, textvariable=self._conn_count_var).place(x=357, y=393)
         # Distance
-        tk.Label(tab1, text='Distance: ').place(x=240, y=417)
-        tk.Label(tab1, textvariable=self._dist_var).place(x=357, y=417)
+        ttk.Label(tab1, text='Distance: ').place(x=240, y=417)
+        ttk.Label(tab1, textvariable=self._dist_var).place(x=357, y=417)
 
         # Last Connection
-        tk.Label(tab1, text='Last Conn: ').place(x=460, y=393)
-        tk.Label(tab1, textvariable=self._last_conn_var).place(x=560, y=393)
+        ttk.Label(tab1, text='Last Conn: ').place(x=460, y=393)
+        ttk.Label(tab1, textvariable=self._last_conn_var).place(x=560, y=393)
         # Last Edit
-        tk.Label(tab1, text='Last Edit: ').place(x=460, y=417)
-        tk.Label(tab1, textvariable=self._last_edit_var).place(x=560, y=417)
+        ttk.Label(tab1, text='Last Edit: ').place(x=460, y=417)
+        ttk.Label(tab1, textvariable=self._last_edit_var).place(x=560, y=417)
         # self.last_conn_var.set('2023-05-08 13:12:12')
 
         #######################
@@ -316,20 +324,22 @@ class UserDB(tk.Toplevel):
         # C-TEXT
         x = 10
         y = 10
-        tk.Label(tab2, text='C-Text: ').place(x=x, y=y)
+        ttk.Label(tab2, text='C-Text: ').place(x=x, y=y)
         # self.info_var = tk.StringVar(self)
         self._ctext_ent = tk.Text(tab2,
                                   width=80,
-                                  height=12
+                                  height=12,
+                                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                  highlightthickness=0,
                                   )
         self._ctext_ent.place(x=x, y=y + 30)
 
         # Max-PAc
         x = 10
         y = 300
-        tk.Label(tab2, text='Max-Pac: ').place(x=x, y=y)
+        ttk.Label(tab2, text='Max-Pac: ').place(x=x, y=y)
         max_pac_opt = list(range(8))
-        max_pac_ent = tk.OptionMenu(tab2,
+        max_pac_ent = ttk.OptionMenu(tab2,
                                     self._max_pac_var,
                                     *max_pac_opt
                                     )
@@ -337,9 +347,9 @@ class UserDB(tk.Toplevel):
         # Pac-Len
         x = 200
         y = 300
-        tk.Label(tab2, text='Pac-Len: ').place(x=x, y=y)
+        ttk.Label(tab2, text='Pac-Len: ').place(x=x, y=y)
         # max_pac_opt = list(range(8))
-        pac_len_ent = tk.Spinbox(tab2,
+        pac_len_ent = ttk.Spinbox(tab2,
                                  textvariable=self._pac_len_var,
                                  from_=0,
                                  to=256,
@@ -351,8 +361,8 @@ class UserDB(tk.Toplevel):
         # AXIP-ADD
         x = 10
         y = 340
-        tk.Label(tab2, text='AXIP-Address: ').place(x=x, y=y)
-        axip_add_ent = tk.Entry(tab2,
+        ttk.Label(tab2, text='AXIP-Address: ').place(x=x, y=y)
+        axip_add_ent = ttk.Entry(tab2,
                                 textvariable=self._axip_add_var,
                                 width=40
                                 )
@@ -361,8 +371,8 @@ class UserDB(tk.Toplevel):
         # AXIP-Port
         x = 10
         y = 380
-        tk.Label(tab2, text='AXIP-Port: ').place(x=x, y=y)
-        axip_port_ent = tk.Entry(tab2,
+        ttk.Label(tab2, text='AXIP-Port: ').place(x=x, y=y)
+        axip_port_ent = ttk.Entry(tab2,
                                  textvariable=self._axip_port_var,
                                  width=6
                                  )
@@ -374,21 +384,24 @@ class UserDB(tk.Toplevel):
         # Sys-PW
         x = 20
         y = 20
-        tk.Label(tab3, text=STR_TABLE['syspassword'][self._lang]).place(x=x, y=y)
+        ttk.Label(tab3, text=self._getTabStr('syspassword')).place(x=x, y=y)
         # self.sys_password_var = tk.StringVar(self)
         self._sys_password_ent = tk.Text(tab3,
                                          height=5,
-                                         width=80)
+                                         width=80,
+                                         relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                         highlightthickness=0,
+                                         )
         x = 15
         y = 60
         self._sys_password_ent.place(x=x, y=y)
         # Fake-Attempts inclusive real attempt
         x = 20
         y = 200
-        tk.Label(tab3, text=STR_TABLE['trys'][self._lang]).place(x=x, y=y)
+        ttk.Label(tab3, text=self._getTabStr('trys')).place(x=x, y=y)
 
         # max_pac_opt = list(range(8))
-        fake_attempts_ent = tk.Spinbox(tab3,
+        fake_attempts_ent = ttk.Spinbox(tab3,
                                        textvariable=self._fake_attempts_var,
                                        from_=1,
                                        to=10,
@@ -399,10 +412,10 @@ class UserDB(tk.Toplevel):
         # Fill Chars
         x = 300
         y = 200
-        tk.Label(tab3, text=STR_TABLE['fillchars'][self._lang]).place(x=x, y=y)
+        ttk.Label(tab3, text=self._getTabStr('fillchars')).place(x=x, y=y)
 
         # max_pac_opt = list(range(8))
-        fill_chars_ent = tk.Spinbox(tab3,
+        fill_chars_ent = ttk.Spinbox(tab3,
                                     textvariable=self._fill_char_var,
                                     from_=0,
                                     to=120,
@@ -413,13 +426,13 @@ class UserDB(tk.Toplevel):
         # Login CMD
         x = 20
         y = 240
-        tk.Label(tab3, text=STR_TABLE['login_cmd'][self._lang]).place(x=x, y=y)
+        ttk.Label(tab3, text=self._getTabStr('login_cmd')).place(x=x, y=y)
 
-        tk.Entry(tab3, textvariable=self._login_cmd_var, width=20).place(x=x + 170, y=y)
+        ttk.Entry(tab3, textvariable=self._login_cmd_var, width=20).place(x=x + 170, y=y)
         # AutoLogin
         x = 20
         y = 280
-        tk.Label(tab3, text="Auto Login:").place(x=x, y=y)
+        ttk.Label(tab3, text="Auto Login:").place(x=x, y=y)
         ttk.Checkbutton(tab3, variable=self._autoLogin_var, ).place(x=x + 110, y=y)
 
         #######################
@@ -428,17 +441,17 @@ class UserDB(tk.Toplevel):
         # NODES
         x = 20
         y = 20
-        tk.Label(tab4, textvariable=self._stations_node_var).place(x=x, y=y)
+        ttk.Label(tab4, textvariable=self._stations_node_var).place(x=x, y=y)
         # self.stations_node_var.set('NODES: ')
         # BBS
         x = 20
         y = 60
-        tk.Label(tab4, textvariable=self._stations_bbs_var).place(x=x, y=y)
+        ttk.Label(tab4, textvariable=self._stations_bbs_var).place(x=x, y=y)
         # self.stations_bbs_var.set('BBS: ')
         # Other
         x = 20
         y = 100
-        tk.Label(tab4, textvariable=self._stations_other_var).place(x=x, y=y)
+        ttk.Label(tab4, textvariable=self._stations_other_var).place(x=x, y=y)
         # self.stations_other_var.set('OTHER: ')
 
         if not ent_key:

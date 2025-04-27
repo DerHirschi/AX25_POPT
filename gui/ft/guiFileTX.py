@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog as fd
 from ax25.ax25FileTransfer import FileTransport
 from cfg.constant import FT_MODES
@@ -10,8 +11,8 @@ class FileSend(tk.Toplevel):
         tk.Toplevel.__init__(self, master=main_win.main_win)
         self._root_win = main_win
         main_win.FileSend_win = self
-        self.win_height = 600
-        self.win_width = 900
+        self.win_height = 200
+        self.win_width  = 780
         self.style = main_win.style
         self.title(STR_TABLE['send_file'][self._root_win.language])
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
@@ -27,20 +28,23 @@ class FileSend(tk.Toplevel):
             pass
         self.lift()
         ###############
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ###############
         # VARS
         # self.port_handler = main_win.ax25_port_handler
         self.FileOBJ = None
         ##########################
         # OK, Save, Cancel
-        ok_bt = tk.Button(self,
+        ok_bt = ttk.Button(main_f,
                           text=STR_TABLE['OK'][self._root_win.language],
-                          height=1,
+                          # height=1,
                           width=6,
                           command=self._ok_btn_cmd)
 
-        cancel_bt = tk.Button(self,
+        cancel_bt = ttk.Button(main_f,
                               text=STR_TABLE['cancel'][self._root_win.language],
-                              height=1,
+                              #height=1,
                               width=8,
                               command=self._chancel_btn_cmd)
         ok_bt.place(x=20, y=self.win_height - 50)
@@ -51,11 +55,11 @@ class FileSend(tk.Toplevel):
         _x = 20
         _y = 20
         # call_y = 100
-        _label = tk.Label(self, text=STR_TABLE['file_2'][self._root_win.language])
+        _label = ttk.Label(main_f, text=STR_TABLE['file_2'][self._root_win.language])
         self.filename_var = tk.StringVar(self)
-        self.filename = tk.Entry(self, textvariable=self.filename_var, width=50)
+        self.filename = ttk.Entry(main_f, textvariable=self.filename_var, width=50)
         # self.filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
-        openfile_btn = tk.Button(self, text=STR_TABLE['file_1'][self._root_win.language], command=self._select_files)
+        openfile_btn = ttk.Button(main_f, text=STR_TABLE['file_1'][self._root_win.language], command=self._select_files)
 
         _label.place(x=_x, y=_y)
         self.filename.place(x=_x + 70, y=_y)
@@ -65,12 +69,12 @@ class FileSend(tk.Toplevel):
         # Protokoll
         _x = 20
         _y = 80
-        _label = tk.Label(self, text=STR_TABLE['protocol'][self._root_win.language])
+        _label = ttk.Label(main_f, text=STR_TABLE['protocol'][self._root_win.language])
         self.protocol_var = tk.StringVar(self)
         opt = FT_MODES
         self.protocol_var.set(opt[0])
-        prot = tk.OptionMenu(self, self.protocol_var, *opt, command=self._change_settings)
-        prot.configure(width=8, height=1)
+        prot = ttk.OptionMenu(main_f, self.protocol_var, *opt, command=self._change_settings)
+        # prot.configure(width=8, height=1)
 
         _label.place(x=_x, y=_y)
         prot.place(x=_x + 100, y=_y - 5)
@@ -79,10 +83,10 @@ class FileSend(tk.Toplevel):
         #
         _x = 340
         _y = 80
-        _label = tk.Label(self, text=STR_TABLE['send_if_free'][self._root_win.language])
+        _label = ttk.Label(main_f, text=STR_TABLE['send_if_free'][self._root_win.language])
         self.wait_tx_var = tk.IntVar(self)
         self.wait_tx_var.set(0)
-        wait_tx = tk.Spinbox(self,
+        wait_tx = ttk.Spinbox(main_f,
                              from_=0,
                              to=60,
                              increment=2,
@@ -104,7 +108,7 @@ class FileSend(tk.Toplevel):
         #
         _x = 20
         _y = 120
-        self.file_size = tk.Label(self, text='')
+        self.file_size = ttk.Label(main_f, text='')
         self.file_size.place(x=_x, y=_y)
 
     def _select_files(self):

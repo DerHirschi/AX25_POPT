@@ -8,9 +8,9 @@ from fnc.str_fnc import get_strTab
 from gui.bbs_gui.bbs_settings.guiBBS_R_Settings_add_rule import BBS_addRuleWin
 
 
-class BBSRoutingSettings(tk.Frame):
+class BBSRoutingSettings(ttk.Frame):
     def __init__(self, tabctl, root_win):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self.style      = root_win.style
         self._logTag    = 'BBSRoutingSettings: '
         self._root_win  = root_win
@@ -54,25 +54,25 @@ class BBSRoutingSettings(tk.Frame):
 
         ###########################################
         # Root Frame
-        tab_frame   = tk.Frame(self._tabctl)
+        tab_frame   = ttk.Frame(self._tabctl)
         self._tabctl.add(tab_frame, text=cfg.get('dest_call', 'NOCALL'))
         ###########################################
         # Local TabCtrl
-        btn_m_frame = tk.Frame(tab_frame)
+        btn_m_frame = ttk.Frame(tab_frame)
         btn_m_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
-        btn_frame_l = tk.Frame(btn_m_frame)
-        btn_frame_m = tk.Frame(btn_m_frame)
-        btn_frame_r = tk.Frame(btn_m_frame)
+        btn_frame_l = ttk.Frame(btn_m_frame)
+        btn_frame_m = ttk.Frame(btn_m_frame)
+        btn_frame_r = ttk.Frame(btn_m_frame)
         btn_frame_l.pack(side=tk.LEFT, expand=False)
         btn_frame_m.pack(side=tk.LEFT, expand=False)
         btn_frame_r.pack(side=tk.LEFT, expand=False)
         ##############
         # btn_frame_l
-        add_btn = tk.Button(btn_frame_l,
+        add_btn = ttk.Button(btn_frame_l,
                             text=self._getTabStr('new'),
                             command=lambda :self._add_rule_btn(cfg.get('dest_call', 'NOCALL'))
                             )
-        del_btn = tk.Button(btn_frame_l,
+        del_btn = ttk.Button(btn_frame_l,
                             text=self._getTabStr('delete'),
                             command=self._del_btn
                             )
@@ -82,32 +82,32 @@ class BBSRoutingSettings(tk.Frame):
         # btn_frame_m
         #################
         # allow_pn_fwd
-        tk.Checkbutton(btn_frame_m,
+        ttk.Checkbutton(btn_frame_m,
                        variable=pn_fwd_var,
                        text=self._getTabStr('allow_PN_FWD')).pack(side=tk.TOP, expand=False, anchor=tk.W)
         #################
         # allow_bl_fwd
-        tk.Checkbutton(btn_frame_m,
+        ttk.Checkbutton(btn_frame_m,
                        variable=bl_fwd_var,
                        text=self._getTabStr('allow_BL_FWD')).pack(side=tk.TOP, expand=False, anchor=tk.W)
         ##############
         # btn_frame_r
         #################
         # allow_pn_auto_path
-        tk.Checkbutton(btn_frame_r,
+        ttk.Checkbutton(btn_frame_r,
                        variable=pn_fwd_auto_path_var,
                        text=self._getTabStr('allowPN_AutoPath')).pack(side=tk.TOP, expand=False, anchor=tk.W)
         #################
         # allow_pn_auto_path
-        tk.Checkbutton(btn_frame_r,
+        ttk.Checkbutton(btn_frame_r,
                        variable=pn_fwd_prio_var,
                        text="PN-Mail Prio").pack(side=tk.TOP, expand=False, anchor=tk.W)
 
         ##########
         tabctl = ttk.Notebook(tab_frame)
         tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        p_outgoing_frame  = tk.Frame(tabctl)
-        bl_outgoing_frame = tk.Frame(tabctl)
+        p_outgoing_frame  = ttk.Frame(tabctl)
+        bl_outgoing_frame = ttk.Frame(tabctl)
         tabctl.add(p_outgoing_frame,  text='P-Outgoing')
         tabctl.add(bl_outgoing_frame, text='BL-Outgoing')
 
@@ -115,13 +115,13 @@ class BBSRoutingSettings(tk.Frame):
         # PN Out
         #################################################################
         # Frames
-        pn_label_f          = tk.Frame(p_outgoing_frame)
-        pn_bbs_out_f        = tk.Frame(p_outgoing_frame)
-        pn_not_bbs_out_f    = tk.Frame(p_outgoing_frame)
-        pn_h_out_f          = tk.Frame(p_outgoing_frame)
-        pn_not_h_out_f      = tk.Frame(p_outgoing_frame)
-        pn_call_out_f       = tk.Frame(p_outgoing_frame)
-        pn_not_call_out_f   = tk.Frame(p_outgoing_frame)
+        pn_label_f          = ttk.Frame(p_outgoing_frame)
+        pn_bbs_out_f        = ttk.Frame(p_outgoing_frame)
+        pn_not_bbs_out_f    = ttk.Frame(p_outgoing_frame)
+        pn_h_out_f          = ttk.Frame(p_outgoing_frame)
+        pn_not_h_out_f      = ttk.Frame(p_outgoing_frame)
+        pn_call_out_f       = ttk.Frame(p_outgoing_frame)
+        pn_not_call_out_f   = ttk.Frame(p_outgoing_frame)
 
         # Pack it
 
@@ -134,9 +134,9 @@ class BBSRoutingSettings(tk.Frame):
         pn_not_call_out_f.pack(  side=tk.LEFT, expand=True, fill=tk.BOTH)
 
         #############################################
-        tk.Label(pn_label_f,
+        ttk.Label(pn_label_f,
                  text=self._getTabStr('bbs_sett_pn_bbs_out'),
-                 height=2
+                 #height=2
                  ).pack(side=tk.TOP, expand=False, fill=tk.X)
         #############################################
         # pn_bbs_out_f
@@ -284,11 +284,11 @@ class BBSRoutingSettings(tk.Frame):
         # BL OUT
         #################################################################
         # Frames
-        bl_out_label_f      = tk.Frame(bl_outgoing_frame)
-        bl_th_out_f         = tk.Frame(bl_outgoing_frame)
-        bl_not_th_out_f     = tk.Frame(bl_outgoing_frame)
-        bl_dist_out_f       = tk.Frame(bl_outgoing_frame)
-        bl_not_dist_out_f   = tk.Frame(bl_outgoing_frame)
+        bl_out_label_f      = ttk.Frame(bl_outgoing_frame)
+        bl_th_out_f         = ttk.Frame(bl_outgoing_frame)
+        bl_not_th_out_f     = ttk.Frame(bl_outgoing_frame)
+        bl_dist_out_f       = ttk.Frame(bl_outgoing_frame)
+        bl_not_dist_out_f   = ttk.Frame(bl_outgoing_frame)
 
         # Pack it
 
@@ -299,9 +299,9 @@ class BBSRoutingSettings(tk.Frame):
         bl_not_dist_out_f.pack(     side=tk.LEFT, expand=True, fill=tk.BOTH)
 
         #############################################
-        tk.Label(bl_out_label_f,
+        ttk.Label(bl_out_label_f,
                  text=self._getTabStr('bbs_sett_bl_bbs_out'),
-                 height=2
+                 # height=2
                  ).pack(side=tk.TOP, expand=False, fill=tk.X)
         #############################################
         # pn_bbs_out_f

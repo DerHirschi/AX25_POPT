@@ -1,18 +1,24 @@
 import tkinter as tk
+from tkinter import ttk
 
-from cfg.string_tab import STR_TABLE
+from cfg.constant import COLOR_MAP
 from cfg.popt_config import POPT_CFG
+from fnc.str_fnc import get_strTab
+
 
 class PrivilegWin(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self, master=root.main_win)
         self._root_cl = root
-        self._lang = POPT_CFG.get_guiCFG_language()
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         root.settings_win = self
         self.win_height = 350
-        self.win_width = 840
-        self.style = root.style
-        self.title(STR_TABLE['priv'][self._lang])
+        self.win_width  = 840
+        self.style      = root.style
+        ###################################
+        self._get_colorMap = lambda: COLOR_MAP.get(self._root_cl.style_name, ('black', '#d9d9d9'))
+        ###################################
+        self.title(self._getTabStr('priv'))
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
@@ -26,23 +32,25 @@ class PrivilegWin(tk.Toplevel):
             pass
         self.lift()
         # self.attributes("-topmost", True)
-
+        ##########################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
         ##########################
         # OK, Save, Cancel
-        ok_bt = tk.Button(self,
+        ok_bt = ttk.Button(main_f,
                           text="Login",
                           # font=("TkFixedFont", 15),
                           # bg="green",
-                          height=1,
+                          #height=1,
                           width=6,
                           command=self.ok_btn_cmd)
 
 
-        cancel_bt = tk.Button(self,
-                              text=STR_TABLE['cancel'][self._lang],
+        cancel_bt = ttk.Button(main_f,
+                              text=self._getTabStr('cancel'),
                               # font=("TkFixedFont", 15),
                               # bg="green",
-                              height=1,
+                              #height=1,
                               width=8,
                               command=self.destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
@@ -52,51 +60,58 @@ class PrivilegWin(tk.Toplevel):
         #
         _x = 20
         _y = 20
-        tk.Label(self, text=STR_TABLE['syspassword'][self._lang]).place(x=_x, y=_y)
+        ttk.Label(main_f, text=self._getTabStr('syspassword')).place(x=_x, y=_y)
         # self.sys_password_var = tk.StringVar(self)
-        self.sys_password_ent = tk.Text(self,
+        fg, bg = self._get_colorMap()
+        self.sys_password_ent = tk.Text(main_f,
                                         height=5,
-                                        width=80)
-        _x = 15
-        _y = 60
-        self.sys_password_ent.place(x=_x, y=_y)
+                                        width=80,
+                                        fg=fg,
+                                        bg=bg,
+                              #relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                              highlightthickness=0,
+
+                                        )
+        x = 15
+        y = 60
+        self.sys_password_ent.place(x=x, y=y)
         # Fake-Attempts inclusive real attempt
-        _x = 20
-        _y = 200
-        tk.Label(self, text=STR_TABLE['trys'][self._lang]).place(x=_x, y=_y)
+        x = 20
+        y = 200
+        ttk.Label(main_f, text=self._getTabStr('trys')).place(x=x, y=y)
         self.fake_attempts_var = tk.StringVar(self)
         self.fake_attempts_var.set('5')
         # max_pac_opt = list(range(8))
-        self.fake_attempts_ent = tk.Spinbox(self,
+        self.fake_attempts_ent = ttk.Spinbox(main_f,
                                             textvariable=self.fake_attempts_var,
                                             from_=1,
                                             to=10,
                                             increment=1,
                                             width=3
                                             )
-        self.fake_attempts_ent.place(x=_x + 140, y=_y - 2)
+        self.fake_attempts_ent.place(x=x + 140, y=y - 2)
         # Fill Chars
-        _x = 300
-        _y = 200
-        tk.Label(self, text=STR_TABLE['fillchars'][self._lang]).place(x=_x, y=_y)
+        x = 300
+        y = 200
+        ttk.Label(main_f, text=self._getTabStr('fillchars')).place(x=x, y=y)
         self.fill_char_var = tk.StringVar(self)
         self.fill_char_var.set('80')
         # max_pac_opt = list(range(8))
-        self.fill_chars_ent = tk.Spinbox(self,
+        self.fill_chars_ent = ttk.Spinbox(main_f,
                                          textvariable=self.fill_char_var,
                                          from_=0,
                                          to=120,
                                          increment=10,
                                          width=4
                                          )
-        self.fill_chars_ent.place(x=_x + 140, y=_y - 2)
+        self.fill_chars_ent.place(x=x + 140, y=y - 2)
         # Login CMD
         _x = 20
         _y = 240
-        tk.Label(self, text=STR_TABLE['login_cmd'][self._lang]).place(x=_x, y=_y)
+        ttk.Label(main_f, text=self._getTabStr('login_cmd')).place(x=_x, y=_y)
         self.login_cmd_var = tk.StringVar(self)
         self.login_cmd_var.set('SYS')
-        tk.Entry(self, textvariable=self.login_cmd_var, width=20).place(x=_x + 170, y=_y)
+        ttk.Entry(main_f, textvariable=self.login_cmd_var, width=20).place(x=_x + 170, y=_y)
 
         ################################################################
         ################################################################

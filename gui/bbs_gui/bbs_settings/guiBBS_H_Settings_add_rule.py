@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 
 from cfg.default_config import getNew_BBS_REJ_cfg
 from cfg.popt_config import POPT_CFG
@@ -24,6 +25,10 @@ class BBS_addRuleWinHold(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        ###############################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ###############################
         self._lang          = POPT_CFG.get_guiCFG_language()
         self._getTabStr     = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win      = root_win
@@ -39,46 +44,48 @@ class BBS_addRuleWinHold(tk.Toplevel):
         self._bid_var       = tk.StringVar(self)
         self._msg_len_var   = tk.StringVar(self)
         ##################################################
-        m_frame  = tk.Frame(self)
+        m_frame  = ttk.Frame(main_f)
         m_frame.pack(side=tk.TOP, expand=True, fill=tk.BOTH, padx=7, pady=7)
         opt = ('B', 'P')
-        mopt_m = tk.OptionMenu(m_frame, self._msg_typ_var, *opt)
+        mopt_m = ttk.OptionMenu(m_frame, self._msg_typ_var, *opt)
+        self._msg_typ_var.set('B')
         mopt_m.pack(side=tk.LEFT, padx=8)
         ######
-        from_ent_f = tk.Frame(m_frame)
+        from_ent_f = ttk.Frame(m_frame)
         from_ent_f.pack(side=tk.LEFT, padx=4)
-        tk.Label(from_ent_f, text='From: ').pack(side=tk.LEFT)
-        tk.Entry(from_ent_f, textvariable=self._from_var, width=9).pack(side=tk.LEFT)
+        ttk.Label(from_ent_f, text='From: ').pack(side=tk.LEFT)
+        ttk.Entry(from_ent_f, textvariable=self._from_var, width=9).pack(side=tk.LEFT)
         ######
         from_ent_f = tk.Frame(m_frame)
         from_ent_f.pack(side=tk.LEFT, padx=4)
-        tk.Label(from_ent_f, text='Via: ').pack(side=tk.LEFT)
-        tk.Entry(from_ent_f, textvariable=self._via_var, width=9).pack(side=tk.LEFT)
+        ttk.Label(from_ent_f, text='Via: ').pack(side=tk.LEFT)
+        ttk.Entry(from_ent_f, textvariable=self._via_var, width=9).pack(side=tk.LEFT)
         ######
-        from_ent_f = tk.Frame(m_frame)
+        from_ent_f = ttk.Frame(m_frame)
         from_ent_f.pack(side=tk.LEFT, padx=4)
-        tk.Label(from_ent_f, text='To: ').pack(side=tk.LEFT)
-        tk.Entry(from_ent_f, textvariable=self._to_var, width=9).pack(side=tk.LEFT)
+        ttk.Label(from_ent_f, text='To: ').pack(side=tk.LEFT)
+        ttk.Entry(from_ent_f, textvariable=self._to_var, width=9).pack(side=tk.LEFT)
         ######
-        from_ent_f = tk.Frame(m_frame)
+        from_ent_f = ttk.Frame(m_frame)
         from_ent_f.pack(side=tk.LEFT, padx=4)
-        tk.Label(from_ent_f, text='BID: ').pack(side=tk.LEFT)
-        tk.Entry(from_ent_f, textvariable=self._bid_var, width=9).pack(side=tk.LEFT)
+        ttk.Label(from_ent_f, text='BID: ').pack(side=tk.LEFT)
+        ttk.Entry(from_ent_f, textvariable=self._bid_var, width=9).pack(side=tk.LEFT)
         ######
-        from_ent_f = tk.Frame(m_frame)
+        from_ent_f = ttk.Frame(m_frame)
         from_ent_f.pack(side=tk.LEFT, padx=4)
-        tk.Label(from_ent_f, text='MaxLen: ').pack(side=tk.LEFT)
-        tk.Entry(from_ent_f, textvariable=self._msg_len_var, width=9).pack(side=tk.LEFT)
+        ttk.Label(from_ent_f, text='MaxLen: ').pack(side=tk.LEFT)
+        ttk.Entry(from_ent_f, textvariable=self._msg_len_var, width=9).pack(side=tk.LEFT)
         ##########
         opt = ('R', 'H')
-        ropt_m = tk.OptionMenu(m_frame, self._RH_opt_var, *opt)
+        ropt_m = ttk.OptionMenu(m_frame, self._RH_opt_var, *opt)
+        self._RH_opt_var.set('H')
         ropt_m.pack(side=tk.LEFT, padx=8)
         ###########################################
         # BTN
-        btn_frame = tk.Frame(self, height=50)
+        btn_frame = ttk.Frame(main_f, height=50)
         btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
-        save_btn  = tk.Button(btn_frame, text=self._getTabStr('save'),   command=self._save_btn)
-        abort_btn = tk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
+        save_btn  = ttk.Button(btn_frame, text=self._getTabStr('save'),   command=self._save_btn)
+        abort_btn = ttk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
         save_btn.pack( side=tk.LEFT)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 

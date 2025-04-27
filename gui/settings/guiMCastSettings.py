@@ -35,37 +35,37 @@ class MCastAddMember(tk.Toplevel):
         self.attributes("-topmost", True)
         self.title('Move to Channel')
         ##################################
-        f0 = tk.Frame(self)
+        f0 = ttk.Frame(self)
         f0.pack()
-        tk.Label(f0, text='Call:').pack(side=tk.LEFT, pady=15)
+        ttk.Label(f0, text='Call:').pack(side=tk.LEFT, pady=15)
         #
         self._call_ent_var = tk.StringVar(self)
-        ent = tk.Entry(f0, textvariable=self._call_ent_var, width=10)
+        ent = ttk.Entry(f0, textvariable=self._call_ent_var, width=10)
         ent.pack(side=tk.LEFT, padx=5)
         ##################################
-        f1 = tk.Frame(self)
+        f1 = ttk.Frame(self)
         f1.pack()
-        tk.Label(f1, text='Adress:').pack(side=tk.LEFT, pady=15)
+        ttk.Label(f1, text='Adress:').pack(side=tk.LEFT, pady=15)
         #
         self._add_ent_var = tk.StringVar(self)
-        ent = tk.Entry(f1, textvariable=self._add_ent_var, width=30)
+        ent = ttk.Entry(f1, textvariable=self._add_ent_var, width=30)
         ent.pack(side=tk.LEFT, padx=5)
         ##
-        tk.Label(f1, text='Port:').pack(side=tk.LEFT)
+        ttk.Label(f1, text='Port:').pack(side=tk.LEFT)
         #
         self._port_ent_var = tk.StringVar(self)
-        p_ent = tk.Entry(f1, textvariable=self._port_ent_var, width=6)
+        p_ent = ttk.Entry(f1, textvariable=self._port_ent_var, width=6)
         p_ent.pack(side=tk.LEFT, padx=5)
 
         ###########################################
         ###########################################
         # BTN
-        btn_frame = tk.Frame(self)
+        btn_frame = ttk.Frame(self)
         btn_frame.pack(expand=True, fill=tk.X, padx=10, pady=5, anchor=tk.S)
-        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
+        ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
 
-        abort_btn = tk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
+        abort_btn = ttk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     def _set_member_address(self):
@@ -138,23 +138,23 @@ class MCastMoveMember(tk.Toplevel):
         self.attributes("-topmost", True)
         self.title('Move to Channel')
         ##################################
-        f1 = tk.Frame(self)
+        f1 = ttk.Frame(self)
         f1.pack()
-        tk.Label(f1, text='Channel').pack(side=tk.LEFT, pady=30)
+        ttk.Label(f1, text='Channel').pack(side=tk.LEFT, pady=30)
         #
         channels = list(self._mcast_cfg.get('mcast_ch_conf', {}).keys())
         self._ent_var = tk.StringVar(self, str(self._ackt_ch))
-        ent = tk.OptionMenu(f1, self._ent_var, *channels)
+        ent = ttk.OptionMenu(f1, self._ent_var, *channels)
         ent.pack(side=tk.LEFT, padx=5)
         ###########################################
         ###########################################
         # BTN
-        btn_frame = tk.Frame(self)
+        btn_frame = ttk.Frame(self)
         btn_frame.pack(expand=True, fill=tk.X, padx=10, pady=5, anchor=tk.S)
-        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
+        ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
 
-        abort_btn = tk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
+        abort_btn = ttk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     def _move_member_to_ch(self):
@@ -184,9 +184,9 @@ class MCastMoveMember(tk.Toplevel):
         self._root_win.value_win = None
         self.destroy()
 
-class MCAST_channel_cfg_Tab(tk.Frame):
+class MCAST_channel_cfg_Tab(ttk.Frame):
     def __init__(self, root_tabctl, channel_cfg: dict, root_win):
-        tk.Frame.__init__(self, root_tabctl)
+        ttk.Frame.__init__(self, root_tabctl)
         self.pack()
         ##################
         # Vars
@@ -200,10 +200,10 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         self._selected_entry = ''
         ##################
         # Channel Name
-        opt_frame_0 = tk.Frame(self)
+        opt_frame_0 = ttk.Frame(self)
         opt_frame_0.pack(fill=tk.X, pady=5)
-        tk.Label(opt_frame_0, text='Channel-ID').pack(side=tk.LEFT, padx=5)
-        ch_id = tk.Spinbox(opt_frame_0,
+        ttk.Label(opt_frame_0, text='Channel-ID').pack(side=tk.LEFT, padx=5)
+        ch_id = ttk.Spinbox(opt_frame_0,
                                           # text='CH-ID',
                                           textvariable=self._ch_id,
                                           from_=0,
@@ -215,7 +215,7 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         ch_id.pack(side=tk.LEFT, anchor=tk.W, padx=5)
         #########
         # Private
-        ch_private_chb = tk.Checkbutton(opt_frame_0, text='Private', variable=self._ch_private)
+        ch_private_chb = ttk.Checkbutton(opt_frame_0, text='Private', variable=self._ch_private)
         ch_private_chb.pack(side=tk.RIGHT, anchor=tk.E, padx=5)
         mcast_cfg: dict = root_win.get_mcast().get_mcast_cfgs()
         default_ch_id = str(mcast_cfg.get('mcast_default_ch', 0))
@@ -224,21 +224,21 @@ class MCAST_channel_cfg_Tab(tk.Frame):
             ch_private_chb.configure(state='disabled')
         ##################
         # Channel Name
-        opt_frame_1 = tk.Frame(self)
+        opt_frame_1 = ttk.Frame(self)
         opt_frame_1.pack(fill=tk.X)
-        tk.Label(opt_frame_1, text='Channel-Name').pack(side=tk.LEFT, padx=5)
-        ch_name = tk.Entry(opt_frame_1, textvariable=self._ch_name, width=10)
+        ttk.Label(opt_frame_1, text='Channel-Name').pack(side=tk.LEFT, padx=5)
+        ch_name = ttk.Entry(opt_frame_1, textvariable=self._ch_name, width=10)
         ch_name.pack(side=tk.LEFT, padx=5, pady=5)
         sep = ttk.Separator(self, orient=tk.HORIZONTAL)
         sep.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5, expand=False)
         ##########################################################################################
         # Member List
-        opt_frame_2 = tk.Frame(self)
+        opt_frame_2 = ttk.Frame(self)
         opt_frame_2.pack(fill=tk.X)
-        tk.Label(opt_frame_2, text='Channel Members').pack(pady=5)
+        ttk.Label(opt_frame_2, text='Channel Members').pack(pady=5)
         ##################
         # TREE
-        tree_frame = tk.Frame(opt_frame_2)
+        tree_frame = ttk.Frame(opt_frame_2)
         tree_frame.pack(fill=tk.BOTH, expand=True, pady=5)
         columns = (
             'member',
@@ -262,23 +262,23 @@ class MCAST_channel_cfg_Tab(tk.Frame):
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
         ##################################################################
         # Add / Del Member Btns
-        opt_frame_3 = tk.Frame(self)
+        opt_frame_3 = ttk.Frame(self)
         opt_frame_3.pack(fill=tk.X)
-        add_member_btn = tk.Button(
+        add_member_btn = ttk.Button(
             opt_frame_3,
             text="Add Member",
             command=self._add_member_btn,
         )
         add_member_btn.pack(side=tk.LEFT)
 
-        move_member_btn = tk.Button(
+        move_member_btn = ttk.Button(
             opt_frame_3,
             text="Move Member",
             command=self._move_member_btn,
         )
         move_member_btn.pack(side=tk.LEFT, padx=5)
 
-        del_member_btn = tk.Button(
+        del_member_btn = ttk.Button(
             opt_frame_3,
             text="Del Member",
             command=self._del_member_btn,
@@ -377,9 +377,9 @@ class MCAST_channel_cfg_Tab(tk.Frame):
             return False
         self._ch_cfg = ch_conf
 
-class MulticastSettings(tk.Frame):
+class MulticastSettings(ttk.Frame):
     def __init__(self, tabctl , root_win):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         ph = root_win.get_PH()
         if not hasattr(ph, 'get_mcast_server'):
             # self.destroy_win()
@@ -416,13 +416,13 @@ class MulticastSettings(tk.Frame):
         self._member_to_var = tk.StringVar(self, str(self._mcast_cfg.get('mcast_member_timeout', 60)))
         self._reg_new_user = tk.BooleanVar(self, bool(self._mcast_cfg.get('mcast_new_user_reg', True)))
         #####################################################################
-        upper_frame_1 = tk.Frame(self)
+        upper_frame_1 = ttk.Frame(self)
         upper_frame_1.pack(fill=tk.X, pady=10)
         ##
-        to_frame = tk.Frame(upper_frame_1)
+        to_frame = ttk.Frame(upper_frame_1)
         to_frame.pack(side=tk.LEFT, anchor=tk.W, padx=5)
-        tk.Label(to_frame, text='Member Timeout').pack(side=tk.LEFT, anchor=tk.W, padx=5)
-        member_to = tk.Spinbox(to_frame,
+        ttk.Label(to_frame, text='Member Timeout').pack(side=tk.LEFT, anchor=tk.W, padx=5)
+        member_to = ttk.Spinbox(to_frame,
                            # text='CH-ID',
                            textvariable=self._member_to_var,
                            from_=5,
@@ -432,10 +432,10 @@ class MulticastSettings(tk.Frame):
                            )
         member_to.pack(side=tk.LEFT, anchor=tk.W, padx=5)
         ###
-        init_to_frame = tk.Frame(upper_frame_1)
+        init_to_frame = ttk.Frame(upper_frame_1)
         init_to_frame.pack(side=tk.LEFT, anchor=tk.W, padx=80)
-        tk.Label(init_to_frame, text='Init Timeout').pack(side=tk.LEFT, padx=5)
-        init_to = tk.Spinbox(init_to_frame,
+        ttk.Label(init_to_frame, text='Init Timeout').pack(side=tk.LEFT, padx=5)
+        init_to = ttk.Spinbox(init_to_frame,
                                # text='CH-ID',
                                textvariable=self._init_to_var,
                                from_=0,
@@ -447,23 +447,23 @@ class MulticastSettings(tk.Frame):
         ###
         # reg_new_user_frame = tk.Frame(upper_frame_1)
         # reg_new_user_frame.pack(side=tk.LEFT, anchor=tk.W, padx=80)
-        reg_new_user = tk.Checkbutton(upper_frame_1,
+        reg_new_user = ttk.Checkbutton(upper_frame_1,
                              text='Allow new Members',
                              variable=self._reg_new_user
                              )
         reg_new_user.pack(side=tk.LEFT, anchor=tk.W, )
         ##########
-        upper_frame_2 = tk.Frame(self)
+        upper_frame_2 = ttk.Frame(self)
         upper_frame_2.pack(fill=tk.X)
         ##
-        add_ch_btn = tk.Button(
+        add_ch_btn = ttk.Button(
             upper_frame_2,
             text='Add Channel',
             command=self._new_ch_btn,
         )
         add_ch_btn.pack(side=tk.LEFT, anchor=tk.W, padx=10)
 
-        del_ch_btn = tk.Button(
+        del_ch_btn = ttk.Button(
             upper_frame_2,
             text='Del Channel',
             command=self._del_ch_btn,

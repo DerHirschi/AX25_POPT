@@ -1,12 +1,13 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox
+from tkinter import ttk
+from tkinter import messagebox
 
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
 from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
-from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
+from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD, COLOR_MAP
 from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
@@ -20,11 +21,12 @@ class BBS_newMSG(tk.Toplevel):
         self._root_win  = root_win
         self._bbs_obj   = PORT_HANDLER.get_bbs()
         self.text_size  = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-        self._lang      = POPT_CFG.get_guiCFG_language()
-        self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         self.title(self._getTabStr('new_pr_mail'))
         self.style = self._root_win.style
+        style_name = self._root_win.style_name
+        self._get_colorMap = lambda: COLOR_MAP.get(style_name, ('black', '#d9d9d9'))
         if hasattr(self._root_win, 'main_win'):
             win = self._root_win.main_win
         else:
@@ -41,6 +43,7 @@ class BBS_newMSG(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        ###################################
         ####################
         self._init_Menu()
         ####################
@@ -64,10 +67,10 @@ class BBS_newMSG(tk.Toplevel):
 
         ####################
         # Frames
-        frame_btn_oben  = tk.Frame(self, height=30)
-        frame_oben      = tk.Frame(self, height=200)
-        frame_unten     = tk.Frame(self)
-        footer_frame    = tk.Frame(self, height=20)
+        frame_btn_oben  = ttk.Frame(self, height=30)
+        frame_oben      = ttk.Frame(self, height=200)
+        frame_unten     = ttk.Frame(self)
+        footer_frame    = ttk.Frame(self, height=20)
 
         frame_btn_oben.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         frame_oben.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
@@ -125,58 +128,58 @@ class BBS_newMSG(tk.Toplevel):
         menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
 
     def _init_upper_btn_frame(self, root_frame):
-        tk.Button(root_frame,
+        ttk.Button(root_frame,
                   text='Senden',
                   command=self._btn_send_msg
                   ).pack(side=tk.LEFT, expand=False)
-        tk.Button(root_frame,
+        ttk.Button(root_frame,
                   text='Entwurf Speichern',
                   command=self._btn_save_msg
                   ).pack(side=tk.LEFT, expand=False, padx=10)
-        tk.Button(root_frame,
+        ttk.Button(root_frame,
                   text='Verwerfen',
                   command=self._btn_delete_all
                   ).pack(side=tk.RIGHT, expand=False, anchor='e')
 
     def _init_header_frame(self, root_frame):
-        from_frame  = tk.Frame(root_frame)
-        to_frame    = tk.Frame(root_frame)
-        subj_frame  = tk.Frame(root_frame)
+        from_frame  = ttk.Frame(root_frame)
+        to_frame    = ttk.Frame(root_frame)
+        subj_frame  = ttk.Frame(root_frame)
         from_frame.pack(side=tk.TOP, expand=True, anchor='w', padx=10, pady=10)
         to_frame.pack(side=tk.TOP,   expand=True, anchor='w', padx=10, pady=5, fill=tk.X)
         subj_frame.pack(side=tk.TOP, expand=True, anchor='w', padx=10, pady=5)
 
-        tk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
+        ttk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
 
         stat_cfg = POPT_CFG.get_stat_CFGs_by_typ('USER')
         opt      = list(stat_cfg.keys())
         if opt:
             self._from_call_var.set(opt[0])
-        tk.OptionMenu(from_frame,
+        ttk.OptionMenu(from_frame,
                  self._from_call_var,
                  *opt
                  ).pack(side=tk.LEFT, fill=tk.X, expand=False, padx=25)
 
-        typ_frame = tk.Frame(from_frame)
+        typ_frame = ttk.Frame(from_frame)
         typ_frame.pack(side=tk.LEFT, expand=True, padx=130)
-        tk.Label(typ_frame, text='Typ: ').pack(side=tk.LEFT, expand=False, )
+        ttk.Label(typ_frame, text='Typ: ').pack(side=tk.LEFT, expand=False, )
         opt = ['P', 'B']
-        tk.OptionMenu(typ_frame,
+        ttk.OptionMenu(typ_frame,
                       self._msg_typ_var,
                       *opt, ).pack(side=tk.LEFT, expand=False, )
 
 
-        tk.Label(from_frame, text='FWD-BBS: ').pack(side=tk.LEFT, expand=False, padx=25)
+        ttk.Label(from_frame, text='FWD-BBS: ').pack(side=tk.LEFT, expand=False, padx=25)
         opt = ['AUTO'] + self._bbs_obj.get_pms_cfg().get('home_bbs', [])
         if opt:
             self._home_bbs_var.set(opt[0])
-        tk.OptionMenu(from_frame,
+        ttk.OptionMenu(from_frame,
                       self._home_bbs_var,
                       *opt, ).pack(side=tk.LEFT, expand=False)
 
 
-        tk.Label(to_frame, text=f"{self._getTabStr('to')}: ").pack(side=tk.LEFT, expand=False)
-        self._to_call_ent = tk.Entry(to_frame,
+        ttk.Label(to_frame, text=f"{self._getTabStr('to')}: ").pack(side=tk.LEFT, expand=False)
+        self._to_call_ent = ttk.Entry(to_frame,
                                      textvariable=self._to_call_var,
                                      # highlightcolor='blue',
                                      # fg='white',
@@ -186,8 +189,8 @@ class BBS_newMSG(tk.Toplevel):
         self._to_call_ent.bind('<KeyRelease>',
                                lambda event: get_typed(event, self._chiefs, self._to_call_var, self._to_call_ent))
         self._to_call_ent.bind('<Key>', lambda event: detect_pressed(event, self._to_call_ent))
-        tk.Label(to_frame, text='CC: ').pack(side=tk.LEFT, expand=False, padx=20)
-        self._cc_entry = tk.Entry(to_frame,
+        ttk.Label(to_frame, text='CC: ').pack(side=tk.LEFT, expand=False, padx=20)
+        self._cc_entry = ttk.Entry(to_frame,
                                   textvariable=self._to_cc_call_var,
                                   width=40)
         self._cc_entry.pack(side=tk.LEFT, expand=False)
@@ -195,29 +198,39 @@ class BBS_newMSG(tk.Toplevel):
                             lambda event: get_typed(event, self._chiefs, self._to_cc_call_var, self._cc_entry))
         self._cc_entry.bind('<Key>', lambda event: detect_pressed(event, self._cc_entry))
 
-        tk.Label(subj_frame, text=f"{self._getTabStr('subject')}: ").pack(side=tk.LEFT, expand=False)
-        tk.Entry(subj_frame,
+        ttk.Label(subj_frame, text=f"{self._getTabStr('subject')}: ").pack(side=tk.LEFT, expand=False)
+        ttk.Entry(subj_frame,
                  textvariable=self._subject_var,
                  width=91).pack(side=tk.LEFT, expand=False)
 
     def _init_txt_frame(self, root_frame):
-        frame = tk.Frame(root_frame)
+        frame = ttk.Frame(root_frame)
         frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self._text = scrolledtext.ScrolledText(frame,
-                                               font=(FONT, self.text_size),
-                                               bd=0,
-                                               height=3,
-                                               borderwidth=0,
-                                               background='black',
-                                               foreground='white',
-                                               insertbackground='white'
-                                               # state="disabled",
-                                               )
-        self._text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self._text = tk.Text(frame,
+                           font=(FONT, self.text_size),
+                           bd=0,
+                           height=3,
+                           borderwidth=0,
+                           background='black',
+                           foreground='white',
+                           insertbackground='white',
+                             relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                             highlightthickness=0,
+                           # state="disabled",
+                           )
+        scrollbar = ttk.Scrollbar(
+            frame,
+            orient=tk.VERTICAL,
+            command=self._text.yview
+        )
+        self._text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._text.config(yscrollcommand=scrollbar.set)
         self._text.bind("<KeyRelease>", self._on_key_release_inp_txt)
 
     def _init_footer_frame(self, root_frame):
-        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame = ttk.Frame(root_frame, height=15)
         footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
@@ -226,15 +239,20 @@ class BBS_newMSG(tk.Toplevel):
             *opt,
             # command=self._update_PN_msg
         )
+        fg, bg = self._get_colorMap()
         txt_encoding_ent.configure(
             font=(None, 6),
             border=0,
             borderwidth=0,
-            height=1
+            height=1,
+            fg=fg,
+            bg=bg,
+            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness=0,
         )
         txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
 
-        tk.Label(footer_frame,
+        ttk.Label(footer_frame,
                  textvariable=self._var_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)

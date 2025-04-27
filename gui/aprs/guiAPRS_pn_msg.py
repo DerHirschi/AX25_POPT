@@ -4,6 +4,7 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.constant import COLOR_MAP
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars
 from gui.aprs.guiAPRSnewMSG import NewMessageWindow
@@ -13,6 +14,7 @@ from cfg.string_tab import STR_TABLE
 class APRS_msg_SYS_PN(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
+        self._get_colorMap = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
         self._init_done = False
         self._root_cl = root_win
         PORT_HANDLER.set_aprsMailAlarm_PH(False)
@@ -34,11 +36,15 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        ##########################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ##########################
         self._aprs_ais = PORT_HANDLER.get_aprs_ais()
         self._aprs_pn_msg = self._aprs_ais.aprs_msg_pool['message']
 
         # Oberer Bereich: Rahmen für Buttons
-        top_frame = ttk.Frame(self)
+        top_frame = ttk.Frame(main_f)
         top_frame.pack(side=tk.TOP, padx=10, pady=10)
 
         button4 = ttk.Button(top_frame, text=STR_TABLE['new_msg'][self._lang], command=self._btn_new_msg)
@@ -50,7 +56,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         button6 = ttk.Button(top_frame, text="Button 6", command=self.button6_clicked)
         button6.pack(side=tk.LEFT, padx=5)
         """
-        mid_frame = ttk.Frame(self)
+        mid_frame = ttk.Frame(main_f)
         mid_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # Linker Bereich: Treeview-Liste der Nachrichten
@@ -105,13 +111,14 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                                                   )
         self.selected_message_text.pack(fill=tk.BOTH, expand=True)
         self.selected_message_text.tag_config("header", foreground="green2")
+        fg, bg = self._get_colorMap()
         self._out_text = tk.Text(middle_frame,
                                  height=3,
                                  width=67,
-                                 background='black',
-                                 foreground='white',
-                                 fg='white',
-                                 insertbackground='white'
+                                 background=bg,
+                                 foreground=fg,
+                                 fg=fg,
+                                 insertbackground=fg
                                  )
         self._out_text.pack(fill=tk.BOTH, expand=False)
 
@@ -146,7 +153,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         but.pack(side=tk.RIGHT, padx=5)
 
         # Unterer Bereich: Rahmen für Buttons
-        bottom_frame = ttk.Frame(self)
+        bottom_frame = ttk.Frame(main_f)
         bottom_frame.pack(side=tk.BOTTOM, padx=10, pady=10)
 
         button1 = ttk.Button(bottom_frame, text=STR_TABLE['close'][self._lang], command=self._btn_close)

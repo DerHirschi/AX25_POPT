@@ -6,7 +6,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
 from gui.bbs_gui.bbs_settings.guiBBS_AutoMail_Settings import BBSAutoMailSettings
 from gui.bbs_gui.bbs_settings.guiBBS_CC_Settings import BBSccSettings
-from gui.bbs_gui.bbs_settings.guiBBS_Gereral_Settings import BBSGeneralSettings
+from gui.bbs_gui.bbs_settings.guiBBS_General_Settings import BBSGeneralSettings
 from gui.bbs_gui.bbs_settings.guiBBS_FWD_Settings import BBS_FWD_Settings
 from gui.bbs_gui.bbs_settings.guiBBS_Reject_Settings import BBSRejectSettings
 from gui.bbs_gui.bbs_settings.guiBBS_Routing_Settings import BBSRoutingSettings
@@ -19,9 +19,10 @@ from gui.bbs_gui.bbs_settings.guiBBS_fwdPort_Settings import BBS_FWD_PortSetting
 class BBSSettingsMain(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        win_width = 1200
-        win_height = 660
-        self.style = root_win.style
+        win_width       = 1200
+        win_height      = 660
+        self.style      = root_win.style
+        self.style_name = root_win.style_name
         self.geometry(f"{win_width}x"
                       f"{win_height}+"
                       f"{root_win.main_win.winfo_x()}+"
@@ -55,12 +56,13 @@ class BBSSettingsMain(tk.Toplevel):
             #'swap_settings'     : BBSSwapSettings,
         }
         ###############################################################
-
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
         ###########################################
         # Nix Tree
         style = ttk.Style(self)
         style.configure('lefttab.TNotebook', tabposition='wn')
-        self._tabControl = ttk.Notebook(self, style='lefttab.TNotebook')
+        self._tabControl = ttk.Notebook(main_f, style='lefttab.TNotebook')
         # self._tabControl.bind('<<NotebookTabChanged>>', self._tab_change)
         self._tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
         ###########################################
@@ -74,16 +76,16 @@ class BBSSettingsMain(tk.Toplevel):
 
         ###########################################
         # BTN
-        btn_frame = tk.Frame(self, height=50)
+        btn_frame = ttk.Frame(main_f, height=50)
         btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
-        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
+        ok_btn = ttk.Button(btn_frame, text=self._getTabStr('OK'), command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
 
 
-        save_btn = tk.Button(btn_frame, text=self._getTabStr('save'), command=self._save_btn)
+        save_btn = ttk.Button(btn_frame, text=self._getTabStr('save'), command=self._save_btn)
         save_btn.pack(side=tk.LEFT)
 
-        abort_btn = tk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
+        abort_btn = ttk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     ################################################

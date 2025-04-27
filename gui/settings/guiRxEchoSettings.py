@@ -1,27 +1,30 @@
 import tkinter as tk
+from tkinter import ttk
 import math
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.constant import COLOR_MAP
 from cfg.popt_config import POPT_CFG
 
 
-class RxEchoSettings(tk.Frame):
+class RxEchoSettings(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         ###############
         # VARS
         n_ports = len(PORT_HANDLER.get_all_ports().keys())
         self.win_height = 650
         self.win_width = 280 * max(math.ceil(n_ports / 2), 2)
-
+        self._get_colorMap = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
         self.off_color = ''
         ##########################
         ############################
         # Ports
         self.check_vars: {int: {int: [tk.BooleanVar, tk.BooleanVar, tk.Checkbutton, tk.Checkbutton, tk.Entry, tk.Entry]}} = {}
-        label = tk.Label(self, text="Achtung! Diese Funktion ersetzt kein Digipeater!")
+        label = ttk.Label(self, text="Achtung! Diese Funktion ersetzt kein Digipeater!")
         label.place(x=30, y=10)
         x = 30
+        fg, bg = self._get_colorMap()
         for i in range(len(list(PORT_HANDLER.get_all_ports().keys()))):
             k = list(PORT_HANDLER.get_all_ports().keys())[i]
             port = PORT_HANDLER.get_all_ports()[k]
@@ -32,7 +35,7 @@ class RxEchoSettings(tk.Frame):
             y = 60 + (280 * int(i % 2))
             if not i % 2 and i:
                 x += 250
-            label = tk.Label(self, text=text)
+            label = ttk.Label(self, text=text)
             label.place(x=x, y=y)
 
             yy = y + 20
@@ -41,11 +44,16 @@ class RxEchoSettings(tk.Frame):
                     # tmp_port: AX25Port = PORT_HANDLER.get_all_ports()[kk]
                     rx_text = 'Port {} RX'.format(kk)
                     rx_check_var = tk.BooleanVar(self)
-                    rx_check = tk.Checkbutton(self,
+                    rx_check     = tk.Checkbutton(self,
                                                text=rx_text,
-                                               variable=rx_check_var)
+                                               variable=rx_check_var,
+                                                  fg=fg,
+                                                  bg=bg,
+                                                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                                  highlightthickness=0,
+                                                  )
                     #rx_check.var = rx_check_var
-                    rx_call_ent = tk.Entry(self, width=9)
+                    rx_call_ent = ttk.Entry(self, width=9)
                     rx_check.place(x=x + 5, y=yy)
                     rx_call_ent.place(x=x + 125, y=yy)
 
@@ -53,9 +61,13 @@ class RxEchoSettings(tk.Frame):
                     tx_check_var = tk.BooleanVar(self)
                     tx_check = tk.Checkbutton(self,
                                                text=tx_text,
-                                               variable=tx_check_var)
+                                               variable=tx_check_var,
+                                                  fg=fg,
+                                                  bg=bg,
+                                                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                                  highlightthickness=0,)
                     #tx_check.var = tx_check_var
-                    tx_call_ent = tk.Entry(self, width=9)
+                    tx_call_ent = ttk.Entry(self, width=9)
                     tx_check.place(x=x + 5, y=yy + 20)
                     tx_call_ent.place(x=x + 125, y=yy + 20)
 
@@ -66,7 +78,7 @@ class RxEchoSettings(tk.Frame):
                                           tx_check,
                                           rx_call_ent,
                                           tx_call_ent]
-                    self.off_color = tx_check.cget('background'), tx_check.cget('activebackground')
+                    self.off_color = tx_check.cget('background'), tx_check.cget('activebackground'), tx_check.cget('fg')
                     rx_check.configure(command=self._check_cmd)
                     tx_check.configure(command=self._check_cmd)
 
@@ -130,8 +142,12 @@ class RxEchoSettings(tk.Frame):
                         self.check_vars[k][kk][4].delete(0, tk.END)
                         self.check_vars[k][kk][4].insert(tk.END, var)
                     else:
-                        self.check_vars[k][kk][2].configure(background=self.off_color[0], activebackground=self.off_color[1])
-                        self.check_vars[kk][k][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
+                        self.check_vars[k][kk][2].configure(background=self.off_color[0],
+                                                            activebackground=self.off_color[1],
+                                                            fg=self.off_color[2])
+                        self.check_vars[kk][k][3].configure(background=self.off_color[0],
+                                                            activebackground=self.off_color[1],
+                                                            fg=self.off_color[2])
                         # self.check_vars[k][kk][2].deselect()
                         # self.check_vars[kk][k][2].deselect()
                         if kk in list(PORT_HANDLER.rx_echo[k].rx_ports.keys()):
@@ -160,8 +176,12 @@ class RxEchoSettings(tk.Frame):
                         self.check_vars[k][kk][5].delete(0, tk.END)
                         self.check_vars[k][kk][5].insert(tk.END, var)
                     else:
-                        self.check_vars[k][kk][3].configure(background=self.off_color[0], activebackground=self.off_color[1])
-                        self.check_vars[kk][k][2].configure(background=self.off_color[0], activebackground=self.off_color[1])
+                        self.check_vars[k][kk][3].configure(background=self.off_color[0],
+                                                            activebackground=self.off_color[1],
+                                                            fg=self.off_color[2])
+                        self.check_vars[kk][k][2].configure(background=self.off_color[0],
+                                                            activebackground=self.off_color[1],
+                                                            fg=self.off_color[2])
                         # self.check_vars[k][kk][3].deselect()
                         # self.check_vars[kk][k][3].deselect()
                         if kk in list(PORT_HANDLER.rx_echo[k].tx_ports.keys()):
@@ -221,9 +241,11 @@ class RxEchoSettings(tk.Frame):
                         self.check_vars[kk][k][3].configure(background='green1', activebackground='green4')
                     else:
                         self.check_vars[k][kk][2].configure(background=self.off_color[0],
-                                                            activebackground=self.off_color[1])
+                                                            activebackground=self.off_color[1],
+                                                            fg=self.off_color[2])
                         self.check_vars[kk][k][3].configure(background=self.off_color[0],
-                                                            activebackground=self.off_color[1])
+                                                            activebackground=self.off_color[1],
+                                                            fg=self.off_color[2])
 
     @staticmethod
     def get_config():

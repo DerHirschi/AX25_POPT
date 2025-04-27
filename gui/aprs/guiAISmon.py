@@ -31,10 +31,14 @@ class AISmonitor(tk.Toplevel):
             pass
         # self.resizable(False, False)
         self.lift()
+        ##############################################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ##############################################
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
 
         # Frame für den linken Bereich
-        left_frame = ttk.Frame(self)
+        left_frame = ttk.Frame(main_f)
         left_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
 
         # Scrolled Text-Frame auf der linken Seite
@@ -51,38 +55,38 @@ class AISmonitor(tk.Toplevel):
         self._text_widget.pack(fill=tk.BOTH, expand=True)
 
         # Frame für den rechten Bereich
-        right_frame = ttk.Frame(self)
+        right_frame = ttk.Frame(main_f)
         right_frame.pack(side=tk.RIGHT, padx=10, pady=10)
 
         self._autoscroll_var = tk.BooleanVar(self)
         self._autoscroll_var.set(True)
-        tk.Checkbutton(right_frame,
+        ttk.Checkbutton(right_frame,
                        variable=self._autoscroll_var,
                        text="Autoscroll  ",
                        command=self._scroll_to_end).pack(side=tk.TOP, padx=2)
         self._new_user_var = tk.BooleanVar(self)
         self._new_user_var.set(False)
-        tk.Checkbutton(right_frame,
+        ttk.Checkbutton(right_frame,
                        variable=self._new_user_var,
                        text="UserDB      ",
                        command=self._chk_new_user
                        ).pack(side=tk.TOP, padx=2)
         self._call_filter = tk.BooleanVar(self)
         self._call_filter.set(False)
-        tk.Checkbutton(right_frame,
+        ttk.Checkbutton(right_frame,
                        variable=self._call_filter,
                        text="Call-Filter  ",
                        command=self._chk_call_filter
                        ).pack(side=tk.TOP, padx=2)
 
-        tk.Label(right_frame, text="Call-Filter:").pack(side=tk.TOP, padx=2)
+        ttk.Label(right_frame, text="Call-Filter:").pack(side=tk.TOP, padx=2)
         self._call_filter_calls_var = tk.StringVar(self)
-        tk.Entry(right_frame,
+        ttk.Entry(right_frame,
                  textvariable=self._call_filter_calls_var,
                  width=20
                  ).pack(side=tk.TOP, padx=2)
 
-        tk.Button(right_frame,
+        ttk.Button(right_frame,
                   text=STR_TABLE['delete'][self._lang],
                   command=self._del_buffer
                   ).pack(side=tk.TOP, padx=2)

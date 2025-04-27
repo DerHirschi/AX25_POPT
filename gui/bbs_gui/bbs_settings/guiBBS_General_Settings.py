@@ -7,9 +7,9 @@ from fnc.ax25_fnc import validate_ax25Call
 from fnc.str_fnc import get_strTab
 
 
-class BBSGeneralSettings(tk.Frame):
+class BBSGeneralSettings(ttk.Frame):
     def __init__(self, tabctl, root_win):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self.style      = root_win.style
         self._root_win  = root_win
         self._bbs_obj   = PORT_HANDLER.get_bbs()
@@ -42,8 +42,8 @@ class BBSGeneralSettings(tk.Frame):
         # GUI Stuff
         ###########################################
         # L/R Frames
-        l_frame = tk.Frame(self, borderwidth=20)
-        r_frame = tk.Frame(self, borderwidth=10)
+        l_frame = ttk.Frame(self, borderwidth=20)
+        r_frame = ttk.Frame(self, borderwidth=10)
 
         l_frame.pack(side=tk.LEFT, expand=False, fill=tk.Y)
         ttk.Separator(self, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, expand=False)
@@ -51,20 +51,20 @@ class BBSGeneralSettings(tk.Frame):
 
         ###########################################
         # L Frames
-        sysop_call_fr   = tk.Frame(l_frame, borderwidth=5)
-        own_call_fr     = tk.Frame(l_frame, borderwidth=5)
-        own_regio_fr    = tk.Frame(l_frame, borderwidth=5)
+        sysop_call_fr   = ttk.Frame(l_frame, borderwidth=5)
+        own_call_fr     = ttk.Frame(l_frame, borderwidth=5)
+        own_regio_fr    = ttk.Frame(l_frame, borderwidth=5)
 
-        bid_fr          = tk.Frame(l_frame, borderwidth=5)
-        bid_btn_fr      = tk.Frame(l_frame, borderwidth=5)
-        btn_fr          = tk.Frame(l_frame, borderwidth=5)
-        chk_fr          = tk.Frame(l_frame, borderwidth=5)
-        binM_f          = tk.Frame(l_frame, borderwidth=5)
-        bbsM_f          = tk.Frame(l_frame, borderwidth=5)
-        chk_f2          = tk.Frame(l_frame, borderwidth=5)
-        help_f          = tk.Frame(l_frame, borderwidth=5)
+        bid_fr          = ttk.Frame(l_frame, borderwidth=5)
+        bid_btn_fr      = ttk.Frame(l_frame, borderwidth=5)
+        btn_fr          = ttk.Frame(l_frame, borderwidth=5)
+        chk_fr          = ttk.Frame(l_frame, borderwidth=5)
+        binM_f          = ttk.Frame(l_frame, borderwidth=5)
+        bbsM_f          = ttk.Frame(l_frame, borderwidth=5)
+        chk_f2          = ttk.Frame(l_frame, borderwidth=5)
+        help_f          = ttk.Frame(l_frame, borderwidth=5)
         #############
-        tk.Label(l_frame, text=self._getTabStr('own_station')).pack(side=tk.TOP, expand=False)
+        ttk.Label(l_frame, text=self._getTabStr('own_station')).pack(side=tk.TOP, expand=False)
 
         sysop_call_fr.pack( side=tk.TOP, fill=tk.X, expand=False, pady=12)
         own_call_fr.pack(   side=tk.TOP, fill=tk.X, expand=False)
@@ -78,81 +78,81 @@ class BBSGeneralSettings(tk.Frame):
         chk_f2.pack(        side=tk.TOP, fill=tk.X, expand=False)
         help_f.pack(        side=tk.TOP, fill=tk.X, expand=False)
 
-        tk.Label(sysop_call_fr, text='Sysop-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
+        ttk.Label(sysop_call_fr, text='Sysop-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
         opt = list(POPT_CFG.get_stat_CFGs_by_typ().keys())
         if not opt:
             opt = ['']
-        tk.OptionMenu(sysop_call_fr,
+        ttk.OptionMenu(sysop_call_fr,
                  self._sysop_call_var,
                  *opt,
                  ).pack(side=tk.LEFT, expand=False)
-
-        tk.Label(own_call_fr, text='BBS-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
+        self._sysop_call_var.set(str(self._pms_cfg.get('sysop', '')))
+        ttk.Label(own_call_fr, text='BBS-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
         opt = list(POPT_CFG.get_stat_CFGs_by_typ('BOX').keys())
         if not opt:
             opt = ['']
-        tk.OptionMenu(own_call_fr,
+        ttk.OptionMenu(own_call_fr,
                 self._own_call_var,
                  *opt
                  ).pack(side=tk.LEFT, expand=False)
-
-        tk.Label(own_regio_fr, text=f"{self._getTabStr('region')}: ", width=10).pack(side=tk.LEFT, expand=False)
-        tk.Entry(own_regio_fr,
+        self._own_call_var.set(self._pms_cfg.get('user', ''))
+        ttk.Label(own_regio_fr, text=f"{self._getTabStr('region')}: ", width=10).pack(side=tk.LEFT, expand=False)
+        ttk.Entry(own_regio_fr,
                  textvariable=self._own_regio_var,
                  width=20).pack(side=tk.LEFT, expand=False)
 
-        tk.Label(bid_fr, textvariable=self._bid_var).pack(side=tk.LEFT, expand=False, padx=110)
+        ttk.Label(bid_fr, textvariable=self._bid_var).pack(side=tk.LEFT, expand=False, padx=110)
 
-        tk.Button(bid_btn_fr,
+        ttk.Button(bid_btn_fr,
                   text='Set MID',
                   command=self._set_MID
                   ).pack(side=tk.LEFT, fill=tk.X, expand=False, padx=15)
-        tk.Entry(bid_btn_fr,
+        ttk.Entry(bid_btn_fr,
                  width=8,
                  textvariable=self._bid_ent_var
                  ).pack(side=tk.LEFT, fill=tk.X, expand=False)
 
         ###################
         # chk_fr
-        tk.Checkbutton(chk_fr,
+        ttk.Checkbutton(chk_fr,
                        variable=self._autoConn_var,
                        text='Outgoing FWD').pack(side=tk.LEFT, expand=False)
-        tk.Checkbutton(chk_fr,
+        ttk.Checkbutton(chk_fr,
                        variable=self._singleConn_var,
                        text='Single Conn').pack(side=tk.LEFT, expand=False)
         ###################
         # binM_f
-        tk.Checkbutton(binM_f,
+        ttk.Checkbutton(binM_f,
                        variable=self._bin_mode_var,
                        text='BIN Mode').pack(side=tk.LEFT, expand=False)
         ###################
         # bbsM_f
-        tk.Checkbutton(bbsM_f,
+        ttk.Checkbutton(bbsM_f,
                        variable=self._bbs_mode_var,
                        text='PMS Mode (no S&F)').pack(side=tk.LEFT, expand=False)
         ###################
         # chk_f2
-        tk.Spinbox(chk_f2,
+        ttk.Spinbox(chk_f2,
                     from_=0,
                     to=2,
                     increment=1,
                     width=2,
                     textvariable=self._pnAutoPath_var,
                  ).pack(side=tk.LEFT, expand=False, padx=7, pady=15)
-        tk.Label(chk_f2, text='PN Auto-Path').pack(side=tk.LEFT, expand=False, padx=5)
+        ttk.Label(chk_f2, text='PN Auto-Path').pack(side=tk.LEFT, expand=False, padx=5)
         ###################
         # help_f
         help_text  = self._getTabStr('fwd_autoPath_help').split('\n')
         for line in help_text:
-            tk.Label(help_f, text=line).pack(side=tk.TOP, expand=False, padx=20, anchor='w')
+            ttk.Label(help_f, text=line).pack(side=tk.TOP, expand=False, padx=20, anchor='w')
         ##############################d#############
         # R Frames
-        local_dist_ent_f         = tk.Frame(r_frame, borderwidth=5)
-        local_theme_ent_f        = tk.Frame(r_frame, borderwidth=5)
-        block_bbs_ent_f          = tk.Frame(r_frame, borderwidth=5)
-        block_call_ent_f         = tk.Frame(r_frame, borderwidth=5)
+        local_dist_ent_f         = ttk.Frame(r_frame, borderwidth=5)
+        local_theme_ent_f        = ttk.Frame(r_frame, borderwidth=5)
+        block_bbs_ent_f          = ttk.Frame(r_frame, borderwidth=5)
+        block_call_ent_f         = ttk.Frame(r_frame, borderwidth=5)
         #############
-        tk.Label(r_frame, text=self._getTabStr('bbs_sett_fwd_global')).pack(side=tk.TOP, expand=False)
+        ttk.Label(r_frame, text=self._getTabStr('bbs_sett_fwd_global')).pack(side=tk.TOP, expand=False)
 
         local_dist_ent_f.pack(  side=tk.TOP, fill=tk.X, expand=False, pady=12)
         local_theme_ent_f.pack( side=tk.TOP, fill=tk.X, expand=False)
@@ -161,33 +161,33 @@ class BBSGeneralSettings(tk.Frame):
 
         ###################
         # local_dist_ent_f Dist
-        tk.Label(local_dist_ent_f,
+        ttk.Label(local_dist_ent_f,
                  text=f"{self._getTabStr('bbs_sett_local_dist')}: ").pack(side=tk.TOP, expand=False, anchor='w')
-        tk.Entry(local_dist_ent_f,
+        ttk.Entry(local_dist_ent_f,
                  textvariable=self._localDistr_var,
                  width=84).pack(side=tk.TOP, expand=True, anchor='w')
 
         ###################
         # local_theme_ent_f Theme
-        tk.Label(local_theme_ent_f,
+        ttk.Label(local_theme_ent_f,
                  text=f"{self._getTabStr('bbs_sett_local_theme')}: ").pack(side=tk.TOP, expand=False, anchor='w')
-        tk.Entry(local_theme_ent_f,
+        ttk.Entry(local_theme_ent_f,
                  textvariable=self._localTheme_var,
                  width=84).pack(side=tk.TOP, expand=True, anchor='w')
 
         ###################
         # block_bbs_ent_f BBS Block
-        tk.Label(block_bbs_ent_f,
+        ttk.Label(block_bbs_ent_f,
                  text=f"{self._getTabStr('bbs_sett_block_bbs')}: ").pack(side=tk.TOP, expand=False, anchor='w')
-        tk.Entry(block_bbs_ent_f,
+        ttk.Entry(block_bbs_ent_f,
                  textvariable=self._blockBBS_var,
                  width=84).pack(side=tk.TOP, expand=True, anchor='w')
 
         ###################
         # block_call_ent_f CALL Block
-        tk.Label(block_call_ent_f,
+        ttk.Label(block_call_ent_f,
                  text=f"{self._getTabStr('bbs_sett_block_call')}: ").pack(side=tk.TOP, expand=False, anchor='w')
-        tk.Entry(block_call_ent_f,
+        ttk.Entry(block_call_ent_f,
                  textvariable=self._blockCALL_var,
                  width=84).pack(side=tk.TOP, expand=True, anchor='w')
 

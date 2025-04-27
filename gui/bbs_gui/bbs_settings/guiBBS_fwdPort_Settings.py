@@ -7,9 +7,9 @@ from cfg.logger_config import logger
 from fnc.str_fnc import get_strTab
 
 
-class BBS_FWD_PortSettings(tk.Frame):
+class BBS_FWD_PortSettings(ttk.Frame):
     def __init__(self, tabctl, root_win):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self.style      = root_win.style
         self._logTag    = 'BBS_fwdPort_Settings: '
         self._root_win  = root_win
@@ -22,8 +22,8 @@ class BBS_FWD_PortSettings(tk.Frame):
         self._gui_vars = {}
         ###########################################
 
-        tk.Label(self, text='FWD-Ports').pack(side=tk.TOP, expand=False)
-        r_tab_frame = tk.Frame(self, borderwidth=10)
+        ttk.Label(self, text='FWD-Ports').pack(side=tk.TOP, expand=False)
+        r_tab_frame = ttk.Frame(self, borderwidth=10)
 
         r_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         #############
@@ -53,11 +53,11 @@ class BBS_FWD_PortSettings(tk.Frame):
 
         ###########################################
         # Root Frame
-        tab_frame = tk.Frame(self._tabctl)
+        tab_frame = ttk.Frame(self._tabctl)
         self._tabctl.add(tab_frame, text=f"Port {port_id}")
         ###########################################
         # L/R Frames
-        l_frame = tk.Frame(tab_frame, borderwidth=10)
+        l_frame = ttk.Frame(tab_frame, borderwidth=10)
         #r_frame = tk.Frame(tab_frame, borderwidth=10)
 
         l_frame.pack(side=tk.LEFT, expand=False, fill=tk.Y)
@@ -65,9 +65,9 @@ class BBS_FWD_PortSettings(tk.Frame):
         #r_frame.pack(side=tk.LEFT, expand=False, fill=tk.Y)
         ###########################################
         # L Frame
-        block_time_f = tk.Frame(l_frame, borderwidth=10)
-        send_limit_f = tk.Frame(l_frame, borderwidth=10)
-        conn_limit_f = tk.Frame(l_frame, borderwidth=10)
+        block_time_f = ttk.Frame(l_frame, borderwidth=10)
+        send_limit_f = ttk.Frame(l_frame, borderwidth=10)
+        conn_limit_f = ttk.Frame(l_frame, borderwidth=10)
 
         # Pack it
         block_time_f.pack(side=tk.TOP, expand=False, fill=tk.X)
@@ -76,8 +76,8 @@ class BBS_FWD_PortSettings(tk.Frame):
 
         ##################################
         #
-        tk.Label(block_time_f, text='Block Time (Min): ').pack(side=tk.LEFT, expand=False)
-        tk.Spinbox(block_time_f,
+        ttk.Label(block_time_f, text='Block Time (Min): ').pack(side=tk.LEFT, expand=False)
+        ttk.Spinbox(block_time_f,
                    textvariable=block_time_var,
                    from_=5,
                    to=240,
@@ -85,8 +85,8 @@ class BBS_FWD_PortSettings(tk.Frame):
                    width=3
                    ).pack(side=tk.LEFT, expand=False)
         #
-        tk.Label(send_limit_f, text='Send Limit (kB/Block): ').pack(side=tk.LEFT, expand=False)
-        tk.Spinbox(send_limit_f,
+        ttk.Label(send_limit_f, text='Send Limit (kB/Block): ').pack(side=tk.LEFT, expand=False)
+        ttk.Spinbox(send_limit_f,
                    textvariable=send_limit_var,
                    from_=1,
                    to=500,
@@ -94,8 +94,8 @@ class BBS_FWD_PortSettings(tk.Frame):
                    width=3
                    ).pack(side=tk.LEFT, expand=False)
         #
-        tk.Label(conn_limit_f, text='Connection Limit: ').pack(side=tk.LEFT, expand=False)
-        tk.Spinbox(conn_limit_f,
+        ttk.Label(conn_limit_f, text='Connection Limit: ').pack(side=tk.LEFT, expand=False)
+        ttk.Spinbox(conn_limit_f,
                    textvariable=conn_limit_var,
                    from_=1,
                    to=10,

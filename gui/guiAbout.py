@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from cfg.constant import VER
 
 
@@ -23,37 +24,40 @@ class About(tk.Toplevel):
             pass
         self.lift()
         ##########################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ##########################
         # OK
-        ok_bt = tk.Button(self,
+        ok_bt = ttk.Button(main_f,
                           text="Ok",
-                          height=1,
+                          # height=1,
                           width=6,
                           command=self.destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
 
-        _x = 40
-        _y = 20
-        _txt1 = '(P)ython (o)ther (P)acket (T)erminal {}'.format(VER)
-        _label = tk.Label(self, text=_txt1)
-        _font1 = _label.cget('font')
-        _font1 = (_font1[0], 13)
-        _label.configure(font=_font1)
-        _label.place(x=_x, y=_y)
-        _x = 40
-        _y = 45
-        _txt1 = 'by MD2SAW'
-        _label = tk.Label(self, text=_txt1)
-        _label.place(x=_x, y=_y)
-        _x = 40
-        _y = 70
-        _txt1 = 'Mit Unterstützung der CB-Funk PR-Community'
-        _label = tk.Label(self, text=_txt1)
-        _label.place(x=_x, y=_y)
-        _x = 40
-        _y = 110
-        _txt1 = 'GitHub:  https://github.com/DerHirschi/AX25_POPT'
-        _label = tk.Label(self, text=_txt1)
-        _label.place(x=_x, y=_y)
+        x = 40
+        y = 20
+        txt1 = '(P)ython (o)ther (P)acket (T)erminal {}'.format(VER)
+        label = ttk.Label(main_f, text=txt1)
+        #font1 = label.cget('font')
+        #font1 = (font1[0], 13)
+        #label.configure(font=font1)
+        label.place(x=x, y=y)
+        x = 40
+        y = 45
+        txt1 = 'by MD2SAW'
+        label = ttk.Label(main_f, text=txt1)
+        label.place(x=x, y=y)
+        x = 40
+        y = 70
+        txt1 = 'Mit Unterstützung der CB-Funk PR-Community'
+        label = ttk.Label(main_f, text=txt1)
+        label.place(x=x, y=y)
+        x = 40
+        y = 110
+        txt1 = 'GitHub:  https://github.com/DerHirschi/AX25_POPT'
+        label = ttk.Label(main_f, text=txt1)
+        label.place(x=x, y=y)
 
     def destroy_win(self):
         self.destroy()

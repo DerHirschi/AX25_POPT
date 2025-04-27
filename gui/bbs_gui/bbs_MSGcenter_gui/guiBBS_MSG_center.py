@@ -7,7 +7,6 @@ from fnc.str_fnc import get_strTab
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_c_BBS import MSG_Center_BBS
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_c_PMS import MSG_Center_PMS
 from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
-from cfg.string_tab import STR_TABLE
 
 
 class MSG_Center(tk.Toplevel):
@@ -33,8 +32,9 @@ class MSG_Center(tk.Toplevel):
         self._text_size_tabs    = 10
         self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
         ###################################
-        self.title(STR_TABLE['msg_center'][self._lang])
-        self.style = self._root_win.style
+        self.title(self._getTabStr('msg_center'))
+        self.style      = self._root_win.style
+        self.style_name = self._root_win.style_name
         # self.geometry("1250x700")
         self.geometry(f"1250x"
                       f"700+"
@@ -52,7 +52,7 @@ class MSG_Center(tk.Toplevel):
         self._init_Menu()
         ######################################################################
         # APRS/BBS TABS
-        upper_frame = tk.Frame(self, )
+        upper_frame = ttk.Frame(self, )
         upper_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabControl_type = ttk.Notebook(
             upper_frame,
@@ -60,10 +60,10 @@ class MSG_Center(tk.Toplevel):
         )
         self._tabControl_type.pack(side=tk.TOP, fill=tk.BOTH, expand=True, )
 
-        # PMS_tab_frame   = tk.Frame(self)
+        # PMS_tab_frame   = ttk.Frame(self)
         self._PMS_tab_frame   = MSG_Center_PMS(self)
         self._BBS_tab_frame   = MSG_Center_BBS(self)
-        APRS_tab_frame  = tk.Frame(self)
+        APRS_tab_frame  = ttk.Frame(self)
         self._PMS_tab_frame.pack( side=tk.TOP, fill=tk.BOTH, expand=True)
         self._BBS_tab_frame.pack( side=tk.TOP, fill=tk.BOTH, expand=True)
         APRS_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)

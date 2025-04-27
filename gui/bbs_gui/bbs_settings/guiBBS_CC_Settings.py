@@ -8,9 +8,9 @@ from gui.bbs_gui.bbs_settings.guiBBS_CC_Settings_add_rule import BBS_addRuleWinC
 from gui.bbs_gui.bbs_settings.guiBBS_CC_Settings_del_rule import BBS_delRuleWinCC
 
 
-class BBSccSettings(tk.Frame):
+class BBSccSettings(ttk.Frame):
     def __init__(self, tabctl, root_win):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self.style      = root_win.style
         self._logTag    = 'BBS_CC_Settings: '
         self._root_win  = root_win
@@ -28,20 +28,20 @@ class BBSccSettings(tk.Frame):
         ###########################################
         ###################################
         # GUI Stuff
-        tk.Label(self, text=self._getTabStr('cc_settings')).pack(side=tk.TOP, expand=False)
-        r_btn_fr    = tk.Frame(self, borderwidth=10)
-        r_tab_frame = tk.Frame(self, borderwidth=10)
+        ttk.Label(self, text=self._getTabStr('cc_settings')).pack(side=tk.TOP, expand=False)
+        r_btn_fr    = ttk.Frame(self, borderwidth=10)
+        r_tab_frame = ttk.Frame(self, borderwidth=10)
 
         r_btn_fr.pack(side=tk.TOP, fill=tk.X, expand=False)
         r_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # r2
-        tk.Button(r_btn_fr,
+        ttk.Button(r_btn_fr,
                   text=self._getTabStr('new'),
                   command=lambda :self._add_rule_btn()
                   ).pack(side=tk.LEFT, fill=tk.X, expand=False)
 
-        tk.Button(r_btn_fr,
+        ttk.Button(r_btn_fr,
                   text=self._getTabStr('delete'),
                   command=lambda :self._del_rule_btn()
                   ).pack(side=tk.RIGHT, expand=False)

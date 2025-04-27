@@ -5,38 +5,37 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
-from fnc.str_fnc import tk_filter_bad_chars
+from fnc.str_fnc import tk_filter_bad_chars, get_strTab
 
 
-class DP_MonitorTab(tk.Frame):
+class DP_MonitorTab(ttk.Frame):
     def __init__(self, root_win, port):
-        tk.Frame.__init__(self, root_win)
+        ttk.Frame.__init__(self, root_win)
         self.pack(fill=tk.BOTH, expand=True)
-        self._text_size = 12   # TODO fm main CFG
+        self._text_size = POPT_CFG.get_guiCFG_text_size()
         self._port = port
         self._port_mon_buf = []
         #################################################
-        upper_frame = tk.Frame(self, height=15)
+        upper_frame = ttk.Frame(self, height=15)
         upper_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
         self._autoscroll_var = tk.BooleanVar(self, value=True)
         self._aprs_dec_var = tk.BooleanVar(self, value=False)
-        autoscroll_ent = tk.Checkbutton(upper_frame, text='Autoscroll', variable=self._autoscroll_var)
+        autoscroll_ent = ttk.Checkbutton(upper_frame, text='Autoscroll', variable=self._autoscroll_var)
         autoscroll_ent.pack(side=tk.LEFT)
-        aprs_ent = tk.Checkbutton(upper_frame, text='APRS-Decoding', variable=self._aprs_dec_var)
+        aprs_ent = ttk.Checkbutton(upper_frame, text='APRS-Decoding', variable=self._aprs_dec_var)
         aprs_ent.pack(side=tk.LEFT)
         ##################
         # Port
-        mon_frame = tk.Frame(self)
+        mon_frame = ttk.Frame(self)
         mon_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         pw_pn = ttk.PanedWindow(mon_frame, orient=tk.HORIZONTAL)
-        frame_l = tk.Frame(pw_pn)
-        frame_r = tk.Frame(pw_pn)
+        frame_l = ttk.Frame(pw_pn)
+        frame_r = ttk.Frame(pw_pn)
         pw_pn.add(frame_l, weight=1)
         pw_pn.add(frame_r, weight=1)
         pw_pn.pack(fill=tk.BOTH, expand=True)
-        self._scroll_l = tk.Scrollbar(frame_l, command=self.sync_scroll)
+        self._scroll_l = ttk.Scrollbar(frame_l, command=self.sync_scroll)
         self._primPort_text = tk.Text(frame_l,
                                       font=(FONT, self._text_size),
                                       bd=0,
@@ -46,13 +45,14 @@ class DP_MonitorTab(tk.Frame):
                                       background='black',
                                       foreground='white',
                                       state="normal",
+                                      highlightthickness=0,
                                       # wrap=tk.NONE,
                                       yscrollcommand=self._scroll_prim
                                       )
         self._primPort_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self._scroll_l.pack(side=tk.LEFT, fill=tk.Y)
 
-        self._scroll_r = tk.Scrollbar(frame_r, command=self.sync_scroll)
+        self._scroll_r = ttk.Scrollbar(frame_r, command=self.sync_scroll)
         self._secPort_text = tk.Text(frame_r,
                                      font=(FONT, self._text_size),
                                      bd=0,
@@ -62,6 +62,7 @@ class DP_MonitorTab(tk.Frame):
                                      background='#000068',
                                      foreground='white',
                                      state="normal",
+                                     highlightthickness=0,
                                      # wrap = tk.NONE,
                                      yscrollcommand=self._scroll_sec
                                      )
@@ -213,7 +214,8 @@ class DualPort_Monitor(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win = root_win
         self._lang = root_win.language
-        self.text_size = root_win.text_size
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self.text_size  = root_win.text_size
         self.title('Dual-Port Monitor')
         self.style = self._root_win.style
         # self.geometry("1250x700")
@@ -229,7 +231,7 @@ class DualPort_Monitor(tk.Toplevel):
         self.lift()
         self._root_win.dualPortMon_win = self
         #################################################
-        tab_frame = tk.Frame(self)
+        tab_frame = ttk.Frame(self)
         tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabControl_prim_ports = ttk.Notebook(
             tab_frame,
@@ -250,8 +252,8 @@ class DualPort_Monitor(tk.Toplevel):
                 i += 1
 
         self._init_menubar()
-        self.bind('<Control-plus>', lambda event: self._increase_textsize())
-        self.bind('<Control-plus>', lambda event: self._increase_textsize())
+        self.bind('<Control-plus>',  lambda event: self._increase_textsize())
+        self.bind('<Control-plus>',  lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
 
@@ -259,7 +261,7 @@ class DualPort_Monitor(tk.Toplevel):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=STR_TABLE['delete'][self._lang], command=self._del_monitor_buf)
+        MenuVerb.add_command(label=self._getTabStr('delete'), command=self._del_monitor_buf)
         menubar.add_cascade(label='Monitor', menu=MenuVerb, underline=0)
 
     def _del_monitor_buf(self):

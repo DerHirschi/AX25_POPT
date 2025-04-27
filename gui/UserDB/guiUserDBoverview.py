@@ -3,7 +3,6 @@ from tkinter import ttk
 
 from UserDB.UserDBmain import USER_DB
 from fnc.str_fnc import conv_time_DE_str
-# from cfg.logger_config import logger
 
 
 class UserDBtreeview(tk.Toplevel):

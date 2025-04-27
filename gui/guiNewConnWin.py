@@ -50,12 +50,15 @@ class NewConnWin(tk.Toplevel):
         self._ax_ip_ip                   = None
         self._ax_ip_port                 = None
         #################################################
+        main_f = ttk.Frame(self)
+        main_f.pack(expand=True, fill=tk.BOTH)
+        #################################################
         #
-        port_btn_frame   = tk.Frame(self, borderwidth=5)
-        dest_call_frame  = tk.Frame(self, borderwidth=5)
-        self._axip_frame = tk.Frame(self, borderwidth=5)
-        own_call_frame   = tk.Frame(self, borderwidth=5)
-        lower_btn_frame  = tk.Frame(self, borderwidth=15)
+        port_btn_frame   = ttk.Frame(main_f, borderwidth=5)
+        dest_call_frame  = ttk.Frame(main_f, borderwidth=5)
+        self._axip_frame = ttk.Frame(main_f, borderwidth=5)
+        own_call_frame   = ttk.Frame(main_f, borderwidth=5)
+        lower_btn_frame  = ttk.Frame(main_f, borderwidth=15)
 
         port_btn_frame.pack(  side=tk.TOP,    fill=tk.X, padx=10)
         dest_call_frame.pack( side=tk.TOP,    fill=tk.X)
@@ -71,24 +74,27 @@ class NewConnWin(tk.Toplevel):
                             bg="red",
                             width=5,
                             height=1,
-                            command=lambda l_port=port: self._set_port_index(l_port)
+                            command=lambda l_port=port: self._set_port_index(l_port),
+
+                            relief = "flat",  # Flache Optik für ttk-ähnliches Aussehen
+                            highlightthickness = 0,
                             )
             btn.pack(side=tk.LEFT)
             self._port_btn[port] = btn
 
 
-        call_label = tk.Label(dest_call_frame,
+        call_label = ttk.Label(dest_call_frame,
                               text=self._getTabStr('newcon_ziel'),
                               foreground='black',
                               font=("TkFixedFont", 11),
-                              height=1,
+                              # height=1,
                               width=5)
         call_label.pack(side=tk.LEFT)
 
         vals = list(self._conn_hist.keys())
         vals.reverse()
         # self._chiefs = []
-        self._call_txt_inp = tk.ttk.Combobox(dest_call_frame,
+        self._call_txt_inp = ttk.Combobox(dest_call_frame,
                                              font=("TkFixedFont", 11),
                                              # height=1,
                                              values=vals,
@@ -104,10 +110,10 @@ class NewConnWin(tk.Toplevel):
         # AXIP
         self._ax_ip_ip = \
             (
-                tk.Label(self._axip_frame,
+                ttk.Label(self._axip_frame,
                          text='IP:',
                          font=("TkFixedFont", 11)),
-                tk.Entry(self._axip_frame,
+                ttk.Entry(self._axip_frame,
                          textvariable=self._axip_ip_var,
                          font=("TkFixedFont", 11),
                          width=15),
@@ -116,10 +122,10 @@ class NewConnWin(tk.Toplevel):
         self._ax_ip_ip[1].pack(side=tk.LEFT, padx=10)
         self._ax_ip_port = \
             (
-                tk.Label(self._axip_frame,
+                ttk.Label(self._axip_frame,
                          text='Port:',
                          font=("TkFixedFont", 11)),
-                tk.Entry(self._axip_frame,
+                ttk.Entry(self._axip_frame,
                          textvariable=self._axip_port_var,
                          font=("TkFixedFont", 11),
                          width=6)
@@ -137,22 +143,22 @@ class NewConnWin(tk.Toplevel):
                 opt = ['NOCALL']
             self._own_call_var.set(opt[0])
 
-        self._own_call_dd_men = tk.OptionMenu(own_call_frame,
+        self._own_call_dd_men = ttk.OptionMenu(own_call_frame,
                                               self._own_call_var,
                                               *opt)
         self._own_call_dd_men.pack(side=tk.LEFT)
         ############
         # CH-ID
-        ch_id_frame = tk.Frame(own_call_frame)
+        ch_id_frame = ttk.Frame(own_call_frame)
         ch_id_frame.pack(side=tk.LEFT, padx=120)
         ch_opt = self._main.get_all_free_channels()
         if not ch_opt:
             ch_opt = ['']
-        tk.Label(ch_id_frame,
+        ttk.Label(ch_id_frame,
                  text=self._getTabStr('channel'),
                  font=("TkFixedFont", 11),
                  ).pack(side=tk.LEFT, padx=15)
-        ch_id_opt = tk.OptionMenu(ch_id_frame,
+        ch_id_opt = ttk.OptionMenu(ch_id_frame,
                                               self._ch_id_var,
                                               *ch_opt)
         ch_id_opt.pack(side=tk.LEFT)
@@ -164,9 +170,12 @@ class NewConnWin(tk.Toplevel):
                              bg="green",
                              #height=1,
                              #width=4,
+
+                             relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                             highlightthickness=0,
                              command=self._process_new_conn_win)
         conn_btn.pack(side=tk.LEFT, padx=10)
-        abort_btn = tk.Button(lower_btn_frame,
+        abort_btn = ttk.Button(lower_btn_frame,
                              text=self._getTabStr('cancel'),
                              #font=("TkFixedFont", 13),
                              #height=1,

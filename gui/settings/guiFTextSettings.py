@@ -7,36 +7,47 @@ from fnc.os_fnc import is_linux
 from fnc.str_fnc import zeilenumbruch, tk_filter_bad_chars, zeilenumbruch_lines
 
 
-class FText_Tab(tk.Frame):
+class FText_Tab(ttk.Frame):
     def __init__(self, tabctl, f_i: int):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self._text_size = int(POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', int(DEF_TEXTSIZE)))
         self.pack()
         self._fi = f_i
         self._ftext_tuple = POPT_CFG.get_f_text_fm_id(self._fi)
         #######################
-        text_frame = tk.Frame(self)
+        text_frame = ttk.Frame(self)
         text_frame.pack(padx=10, pady=10, fill=tk.BOTH)
-        stat_frame = tk.Frame(self)
+        stat_frame = ttk.Frame(self)
         stat_frame.pack(fill=tk.X)
         ############ VARS
         self._enc_var = tk.StringVar(self, self._ftext_tuple[1])
         self._byte_count_var = tk.StringVar(self, '')
         ##################################################
-        self._f_text = tk.scrolledtext.ScrolledText(text_frame, font=("Courier", self._text_size))
+        self._f_text = tk.Text(text_frame,
+                               font=("Courier", self._text_size),
+                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                               highlightthickness=0,
+                               )
         self._f_text.configure(width=82, height=22)
-        self._f_text.pack(fill=tk.BOTH)
+        scrollbar = ttk.Scrollbar(
+            text_frame,
+            orient=tk.VERTICAL,
+            command=self._f_text.yview
+        )
+        self._f_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._f_text.config(yscrollcommand=scrollbar.set)
         self._f_text.bind('<KeyRelease>', self._update_ftext)
 
         text = self._ftext_tuple[0].decode(self._enc_var.get(), 'ignore')
         self._f_text.insert(tk.END, text)
         ##################################################
-        tk.OptionMenu(stat_frame,
+        ttk.OptionMenu(stat_frame,
                       self._enc_var,
                       *ENCODINGS,
                       command=self._update_enc).pack(side=tk.LEFT, padx=10)
         ##################################################
-        tk.Label(stat_frame,
+        ttk.Label(stat_frame,
                  textvariable=self._byte_count_var,
                  font=(None, 9),
                  ).pack(side=tk.RIGHT, padx=10)
@@ -77,9 +88,9 @@ class FText_Tab(tk.Frame):
         return POPT_CFG.set_f_text_f_id(self._fi, f_text_tuple)
 
 
-class FTextSettings(tk.Frame):
+class FTextSettings(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         ################################
         # self._lang = POPT_CFG.get_guiCFG_language()
         ################################

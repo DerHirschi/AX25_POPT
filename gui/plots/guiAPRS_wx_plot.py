@@ -1,5 +1,6 @@
 from datetime import datetime
 import tkinter as tk
+from tkinter import ttk
 from fnc.str_fnc import convert_str_to_datetime
 # Fixme: FigureCanvasTkAgg causing 10 or more threads
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -35,11 +36,11 @@ class WXPlotWindow(tk.Toplevel):
         self._wx_data = wx_data
         #################
         # Settings Frame Frame
-        settings_frame = tk.Frame(self)
+        settings_frame = ttk.Frame(self)
         settings_frame.pack(side=tk.TOP)
         self._xLimt_var = tk.StringVar(self, value='7')
-        tk.Label(settings_frame, text='X-Limit (Days): ').pack(side=tk.LEFT)
-        tk.Spinbox(settings_frame,
+        ttk.Label(settings_frame, text='X-Limit (Days): ').pack(side=tk.LEFT)
+        ttk.Spinbox(settings_frame,
                    from_=1,
                    to=3650,
                    increment=1,
@@ -49,7 +50,7 @@ class WXPlotWindow(tk.Toplevel):
                    ).pack(side=tk.LEFT)
         ##################
         # Plot erstellen
-        plot_frame = tk.Frame(self)
+        plot_frame = ttk.Frame(self)
         plot_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # fig = Figure(figsize=(10, 1), dpi=100)
         # fig = plt.figure(figsize=(10, 1), dpi=100)
@@ -76,10 +77,10 @@ class WXPlotWindow(tk.Toplevel):
 
         #################
         # Info Frame
-        info_frame = tk.Frame(plot_frame)
+        info_frame = ttk.Frame(plot_frame)
         info_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
-        right_frame = tk.Frame(self)
+        right_frame = ttk.Frame(self)
         right_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._press_chk_var = tk.BooleanVar(self, value=True)
         self._hum_chk_var = tk.BooleanVar(self, value=True)
@@ -100,65 +101,65 @@ class WXPlotWindow(tk.Toplevel):
             if self._wx_data[-1]:
                 call = self._wx_data[-1][10]
                 comment = self._wx_data[-1][11]
-                location_frame = tk.Frame(info_frame)
+                location_frame = ttk.Frame(info_frame)
 
                 wx_data_str = (f"{self._wx_data[-1][15]}: "
                                f"Temp: {self._wx_data[-1][5]}°C | "
                                f"Hum: {self._wx_data[-1][1]}% | "
                                f"Pres: {self._wx_data[-1][0]}hPa")
 
-                tk.Label(info_frame, text=call).pack(side=tk.TOP, )
-                tk.Label(info_frame, text=comment).pack(side=tk.TOP, )
-                tk.Label(info_frame, text=wx_data_str).pack(side=tk.TOP, )
+                ttk.Label(info_frame, text=call).pack(side=tk.TOP, )
+                ttk.Label(info_frame, text=comment).pack(side=tk.TOP, )
+                ttk.Label(info_frame, text=wx_data_str).pack(side=tk.TOP, )
                 location_frame.pack(side=tk.TOP, )
 
                 loc = f'Locator: {self._wx_data[-1][12]}'
                 lat = f'Lat: {self._wx_data[-1][13]}'
                 lon = f'Lon: {self._wx_data[-1][14]}'
-                tk.Label(location_frame, text=loc).pack(side=tk.LEFT, padx=20)
-                tk.Label(location_frame, text=lat).pack(side=tk.LEFT, padx=20)
-                tk.Label(location_frame, text=lon).pack(side=tk.LEFT, padx=20)
+                ttk.Label(location_frame, text=loc).pack(side=tk.LEFT, padx=20)
+                ttk.Label(location_frame, text=lat).pack(side=tk.LEFT, padx=20)
+                ttk.Label(location_frame, text=lon).pack(side=tk.LEFT, padx=20)
 
                 self.wm_title(f"WX Plot {call}")
 
     def _init_chk_frame(self, root_frame):
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._press_chk_var,
                        text='Pressure',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._hum_chk_var,
                        text='Humidity',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._r1_chk_var,
                        text='Rain 1h',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._r24_chk_var,
                        text='Rain 24h',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._rd_chk_var,
                        text='Rain Day',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._temp_chk_var,
                        text='Temperature',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._windd_chk_var,
                        text='Wind Dir',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._windg_chk_var,
                        text='Wind Gust',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._winds_chk_var,
                        text='Wind Speed',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')
-        tk.Checkbutton(root_frame,
+        ttk.Checkbutton(root_frame,
                        variable=self._lum_chk_var,
                        text='Luminosity',
                        command=self._change_xlim,).pack(padx=15, pady=5, anchor='w')

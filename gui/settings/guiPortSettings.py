@@ -4,7 +4,7 @@ from tkinter.colorchooser import askcolor
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, TNC_KISS_START_CMD, \
-    TNC_KISS_END_CMD, KISSDEVICES
+    TNC_KISS_END_CMD, KISSDEVICES, COLOR_MAP
 from cfg.default_config import getNew_port_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -29,12 +29,15 @@ class PortSetTab:
             port_types.remove('AX25KERNEL')
         self.tab = ttk.Frame(tabclt)
         #################
+        self._get_colorMap = lambda: COLOR_MAP.get(self._main_cl.style_name, ('black', '#d9d9d9'))
+        fg, bg = self._get_colorMap()
+        #################
         # Port Name
         name_x = 20
         name_y = 570
-        name_label = tk.Label(self.tab, text=self._getTabStr('port_cfg_port_name'))
+        name_label = ttk.Label(self.tab, text=self._getTabStr('port_cfg_port_name'))
         name_label.place(x=name_x, y=height - name_y)
-        self._prt_name = tk.Entry(self.tab, width=5)
+        self._prt_name = ttk.Entry(self.tab, width=5)
         self._prt_name.place(x=name_x + 420, y=height - name_y)
         self._prt_name.insert(tk.END, self._port_setting.get('parm_PortName', ''))
         ######################
@@ -46,25 +49,37 @@ class PortSetTab:
             if not all_ports[self._port_setting.get('parm_PortNr', -1)].device_is_running:
                 x = 520
                 y = 570
-                label = tk.Label(self.tab, text=self._getTabStr('port_cfg_not_init'), fg='red')
+                label = tk.Label(self.tab,
+                                 text=self._getTabStr('port_cfg_not_init'),
+                                 fg='red',
+                                 bg=bg,
+                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                 highlightthickness=0,
+                                 )
                 label.place(x=x, y=height - y)
         else:
             x = 520
             y = 570
-            label = tk.Label(self.tab, text=self._getTabStr('port_cfg_not_init'), fg='red')
+            label = tk.Label(self.tab,
+                             text=self._getTabStr('port_cfg_not_init'),
+                             bg=bg,
+                             fg='red',
+                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                 highlightthickness=0,
+                             )
             label.place(x=x, y=height - y)
         #################
         # Port Typ
         port_x = 800
         port_y = 570
-        port_label = tk.Label(self.tab, text='Typ:')
+        port_label = ttk.Label(self.tab, text='Typ:')
         port_label.place(x=port_x, y=height - port_y)
         self._port_select_var = tk.StringVar(self.tab)
 
         opt = port_types
+        port_men = ttk.OptionMenu(self.tab, self._port_select_var, *opt, command=self._update_port_parameter)
         self._port_select_var.set(self._port_setting.get('parm_PortTyp', new_cfg.get('parm_PortTyp', '')))  # default value
-        port_men = tk.OptionMenu(self.tab, self._port_select_var, *opt, command=self._update_port_parameter)
-        port_men.configure(width=10, height=1)
+        #port_men.configure(width=10, height=1)
         port_men.place(x=port_x + 55, y=height - port_y - 5)
         #######################
         # Port Parameter
@@ -76,10 +91,10 @@ class PortSetTab:
         self._p_txd_var     = tk.StringVar(self.tab)
         self._kiss_txd_var  = tk.StringVar(self.tab)
         self._param1_var    = tk.StringVar(self.tab)
-        self._param1_label  = tk.Label(self.tab)
-        self._param1_ent    = tk.Entry(self.tab, textvariable=self._param1_var)
-        self._param2_label  = tk.Label(self.tab)
-        self._param2_ent    = tk.Entry(self.tab)
+        self._param1_label  = ttk.Label(self.tab)
+        self._param1_ent    = ttk.Entry(self.tab, textvariable=self._param1_var)
+        self._param2_label  = ttk.Label(self.tab)
+        self._param2_ent    = ttk.Entry(self.tab)
         self._param1_x      = int(param_sel_x + 80)
         self._param1_y      = int(height - param_sel_y + param_next_line)
         self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
@@ -93,11 +108,11 @@ class PortSetTab:
         # Pseudo TXD
         ptxd_x = 20
         ptxd_y = 500
-        ptxd_label = tk.Label(self.tab, text='P-TXD:')
-        self._ptxd = tk.Entry(self.tab, width=5, textvariable=self._p_txd_var)
+        ptxd_label = ttk.Label(self.tab, text='P-TXD:')
+        self._ptxd = ttk.Entry(self.tab, width=5, textvariable=self._p_txd_var)
         self._p_txd_var.set(self._port_setting.get('parm_TXD', new_cfg.get('parm_TXD', 400)))
         # self._ptxd.insert(tk.END, self._port_setting.get('parm_TXD', new_cfg.get('parm_TXD', 400)))
-        ptxd_help = tk.Label(self.tab, text=self._getTabStr('port_cfg_psd_txd'))
+        ptxd_help = ttk.Label(self.tab, text=self._getTabStr('port_cfg_psd_txd'))
 
         ptxd_label.place(x=ptxd_x, y=height - ptxd_y)
         self._ptxd.place(x=ptxd_x + 80, y=height - ptxd_y)
@@ -106,8 +121,8 @@ class PortSetTab:
         # Baud
         calc_baud_x = 20
         calc_baud_y = 465
-        calc_baud_label = tk.Label(self.tab, text='Baud:')
-        self._calc_baud = tk.Entry(self.tab, width=8)
+        calc_baud_label = ttk.Label(self.tab, text='Baud:')
+        self._calc_baud = ttk.Entry(self.tab, width=8)
         if self._port_setting.get('parm_PortTyp', '') == 'KISSSER':
             ins = self._port_setting.get('parm_PortParm', new_cfg.get('parm_PortParm', ('', 0)))[1]
             self._calc_baud.insert(tk.END, ins)
@@ -122,8 +137,8 @@ class PortSetTab:
         # KISS TXD
         kiss_txd_x = 210
         kiss_txd_y = 465
-        kiss_txd_label = tk.Label(self.tab, text='TXD:')
-        self._kiss_txd = tk.Entry(self.tab, width=3, textvariable=self._kiss_txd_var)
+        kiss_txd_label = ttk.Label(self.tab, text='TXD:')
+        self._kiss_txd = ttk.Entry(self.tab, width=3, textvariable=self._kiss_txd_var)
         self._kiss_txd_var.set(str(self._port_setting.get('parm_kiss_TXD', new_cfg.get('parm_kiss_TXD', 35))))
         # self._kiss_txd.insert(tk.END, str(self._port_setting.get('parm_kiss_TXD', new_cfg.get('parm_kiss_TXD', 35))))
         self._kiss_txd.configure(state="normal")
@@ -141,8 +156,8 @@ class PortSetTab:
         # KISS PERS
         kiss_pers_x = 320
         kiss_pers_y = 465
-        kiss_pers_label = tk.Label(self.tab, text='PERS:')
-        self._kiss_pers = tk.Entry(self.tab, width=3)
+        kiss_pers_label = ttk.Label(self.tab, text='PERS:')
+        self._kiss_pers = ttk.Entry(self.tab, width=3)
         if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
             # ins = self.port_setting.parm_PortParm[1]
             # self._kiss_pers.insert(tk.END, str(self._port_setting.parm_kiss_Pers))
@@ -159,8 +174,8 @@ class PortSetTab:
         # KISS Slot
         slot_x = 440
         slot_y = 465
-        slot_label = tk.Label(self.tab, text='SLOT:')
-        self._kiss_slot = tk.Entry(self.tab, width=3)
+        slot_label = ttk.Label(self.tab, text='SLOT:')
+        self._kiss_slot = ttk.Entry(self.tab, width=3)
         # if self.port_setting.parm_PortTyp == 'AXIP':
         if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
             # ins = self.port_setting.parm_PortParm[1]
@@ -179,8 +194,8 @@ class PortSetTab:
         # KISS TAIL
         kiss_tail_x = 560
         kiss_tail_y = 465
-        kiss_tail_label = tk.Label(self.tab, text='TAIL:')
-        self._kiss_tail = tk.Entry(self.tab, width=3)
+        kiss_tail_label = ttk.Label(self.tab, text='TAIL:')
+        self._kiss_tail = ttk.Entry(self.tab, width=3)
         # if self.port_setting.parm_PortTyp == 'AXIP':
         if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
             # ins = self.port_setting.parm_PortParm[1]
@@ -206,6 +221,10 @@ class PortSetTab:
                                                  text='AXIP-Multicast',
                                                  variable=self._axip_multicast_var,
                                                  command=self._update_Mcast_settings,
+                                                 fg=fg,
+                                                 bg=bg,
+                                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                                 highlightthickness=0,
                                                  state='disabled')
         self._axip_multicast_dd.var = self._axip_multicast_var
         if self._port_setting.get('parm_PortTyp', '') == 'AXIP':
@@ -238,7 +257,7 @@ class PortSetTab:
         # KISS START / END
         kiss_start_x = 630
         kiss_start_y = 465
-        kiss_start_label = tk.Label(self.tab, text='KISSMODE START:')
+        kiss_start_label = ttk.Label(self.tab, text='KISSMODE START:')
         kiss_start_label.place(x=kiss_start_x + 50, y=height - kiss_start_y)
         self._kiss_start_cmd_tab = {}
         opt = ['']
@@ -258,13 +277,13 @@ class PortSetTab:
         except IndexError:
             self._kiss_start_var.set('')
 
-        kiss_start_men = tk.OptionMenu(self.tab, self._kiss_start_var, *opt, command=self.set_need_reinit)
-        kiss_start_men.configure(width=10, height=1)
+        kiss_start_men = ttk.OptionMenu(self.tab, self._kiss_start_var, *opt, command=self.set_need_reinit)
+        #kiss_start_men.configure(width=10, height=1)
         kiss_start_men.place(x=kiss_start_x + 220, y=height - kiss_start_y)
 
         kiss_end_x = 630
         kiss_end_y = 430
-        kiss_end_label = tk.Label(self.tab, text='KISSMODE END:')
+        kiss_end_label = ttk.Label(self.tab, text='KISSMODE END:')
         kiss_end_label.place(x=kiss_end_x + 50, y=height - kiss_end_y)
         self._kiss_end_cmd_tab = {}
         opt = ['']
@@ -283,36 +302,44 @@ class PortSetTab:
             )  # default value
         except IndexError:
             self._kiss_end_var.set('')
-        kiss_end_men = tk.OptionMenu(self.tab, self._kiss_end_var, *opt, command=self.set_need_reinit)
-        kiss_end_men.configure(width=10, height=1)
+        kiss_end_men = ttk.OptionMenu(self.tab, self._kiss_end_var, *opt, command=self.set_need_reinit)
+        #kiss_end_men.configure(width=10, height=1)
         kiss_end_men.place(x=kiss_end_x + 220, y=height - kiss_end_y)
         ####################################################################
         kiss_send_x = 850
         kiss_send_y = 400
         self._tnc_emu_var = tk.BooleanVar(self.tab, value=not self._port_setting.get('parm_set_kiss_param', new_cfg.get('parm_set_kiss_param', True)))
-        self._kiss_send = tk.Checkbutton(self.tab, text='TNC-EMU', variable=self._tnc_emu_var, command=self.set_need_reinit)
+        self._kiss_send = ttk.Checkbutton(self.tab, text='TNC-EMU', variable=self._tnc_emu_var, command=self.set_need_reinit)
         self._kiss_send.place(x=kiss_send_x, y=height - kiss_send_y)
         ####################################################################
 
         # T2 auto
-        x = 120
+        x = 130
         y = 430
         # t1_label = tk.Label(self.tab, text='T1:')
         self._t2_auto_var = tk.BooleanVar(self.tab)
-        self._t2_auto = tk.Checkbutton(self.tab, text='T2Auto', variable=self._t2_auto_var, command=self._t2_auto_check)
+        self._t2_auto = ttk.Checkbutton(self.tab,
+                                        text='T2Auto',
+                                        variable=self._t2_auto_var,
+                                        command=self._t2_auto_check,
+                                       #fg=fg,
+                                       #bg=bg,
+                                       #relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                       #highlightthickness=0,
+                                       )
         self._t2_auto.var = self._t2_auto_var
-        self._default_bg_clr = self._t2_auto.cget('bg')
+        # self._default_bg_clr = self._t2_auto.cget('bg')
         # self.t1.insert(tk.END, self.port_setting.parm_T1)
         # t1_label.place(x=t1_x, y=height - t1_y)
         self._t2_auto.place(x=x, y=height - y)
         # T2
         t2_x = 20
         t2_y = 430
-        t2_label = tk.Label(self.tab, text='T2:')
+        t2_label = ttk.Label(self.tab, text='T2:')
         self._t2_var = tk.StringVar(self.tab,
                                     value=self._port_setting.get('parm_T2', new_cfg.get('parm_T2', 1700))
                                     )
-        self._t2 = tk.Entry(self.tab, width=5, textvariable=self._t2_var)
+        self._t2 = ttk.Entry(self.tab, width=5, textvariable=self._t2_var)
         # self._t2.insert(tk.END, self._port_setting.parm_T2)
         # self._t2.insert(tk.END, self._port_setting.get('parm_T2', new_cfg.get('parm_T2', 1700)))
         t2_label.place(x=t2_x, y=height - t2_y)
@@ -320,8 +347,8 @@ class PortSetTab:
         # T3
         t3_x = 230
         t3_y = 430
-        t3_label = tk.Label(self.tab, text='T3:')
-        self._t3 = tk.Entry(self.tab, width=5)
+        t3_label = ttk.Label(self.tab, text='T3:')
+        self._t3 = ttk.Entry(self.tab, width=5)
         # self._t3.insert(tk.END, self._port_setting.parm_T3)
         self._t3.insert(tk.END, self._port_setting.get('parm_T3', new_cfg.get('parm_T3', 180)))
         t3_label.place(x=t3_x, y=height - t3_y)
@@ -329,8 +356,8 @@ class PortSetTab:
         # N2
         n2_x = 350
         n2_y = 430
-        n2_label = tk.Label(self.tab, text='N2:')
-        self._n2 = tk.Entry(self.tab, width=4)
+        n2_label = ttk.Label(self.tab, text='N2:')
+        self._n2 = ttk.Entry(self.tab, width=4)
         # self._n2.insert(tk.END, self._port_setting.parm_N2)
         self._n2.insert(tk.END, self._port_setting.get('parm_N2', new_cfg.get('parm_N2', 20)))
         n2_label.place(x=n2_x, y=height - n2_y)
@@ -339,7 +366,14 @@ class PortSetTab:
         x = 520
         y = 430
         self._kiss_duplex_var = tk.IntVar(self.tab)
-        self._kiss_duplex_ent = tk.Checkbutton(self.tab, text='Full-Duplex', variable=self._kiss_duplex_var)
+        self._kiss_duplex_ent = tk.Checkbutton(self.tab,
+                                               text='Full-Duplex',
+                                               variable=self._kiss_duplex_var,
+                                               fg=fg,
+                                               bg=bg,
+                                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                               highlightthickness=0,
+                                               )
         # self._kiss_duplex_var.set(self._port_setting.parm_kiss_F_Duplex)
         self._kiss_duplex_var.set(self._port_setting.get('parm_kiss_F_Duplex', new_cfg.get('parm_kiss_F_Duplex', 0)))
         self._kiss_duplex_ent.place(x=x, y=height - y)
@@ -354,7 +388,7 @@ class PortSetTab:
         # LAbel
         stdp_x = 20
         stdp_y = 375
-        std_pam_label = tk.Label(self.tab, text=self._getTabStr('port_cfg_std_parm'))
+        std_pam_label = ttk.Label(self.tab, text=self._getTabStr('port_cfg_std_parm'))
 
         std_pam_label.place(x=stdp_x, y=height - stdp_y)
 
@@ -362,11 +396,11 @@ class PortSetTab:
         # Port Default Packet Length
         pac_len_x = 20
         pac_len = 340
-        pac_len_label = tk.Label(self.tab, text='Pac Len:')
-        self._pac_len = tk.Entry(self.tab, width=5)
+        pac_len_label = ttk.Label(self.tab, text='Pac Len:')
+        self._pac_len = ttk.Entry(self.tab, width=5)
         # self._pac_len.insert(tk.END, str(self._port_setting.parm_PacLen))
         self._pac_len.insert(tk.END, str(self._port_setting.get('parm_PacLen', new_cfg.get('parm_PacLen', 160))))
-        pac_len_help = tk.Label(self.tab, text=self._getTabStr('port_cfg_pac_len'))
+        pac_len_help = ttk.Label(self.tab, text=self._getTabStr('port_cfg_pac_len'))
         pac_len_label.place(x=pac_len_x, y=height - pac_len)
         self._pac_len.place(x=pac_len_x + 80, y=height - pac_len)
         pac_len_help.place(x=pac_len_x + 80 + 70, y=height - pac_len)
@@ -375,15 +409,15 @@ class PortSetTab:
         # Port Default Max Pac
         max_pac_x = 20
         max_pac_y = 305
-        max_pac_label = tk.Label(self.tab, text='Max Pac:')
+        max_pac_label = ttk.Label(self.tab, text='Max Pac:')
 
         opt_max_pac = list(range(1, 8))
         self._max_pac_var = tk.StringVar(self.tab)
         # self._max_pac_var.set(str(self._port_setting.parm_MaxFrame))  # default value
         self._max_pac_var.set(str(self._port_setting.get('parm_MaxFrame', new_cfg.get('parm_MaxFrame', 3))))  # default value
-        max_pac = tk.OptionMenu(self.tab, self._max_pac_var, *opt_max_pac)
-        max_pac.configure(width=4, height=1)
-        max_pac_help = tk.Label(self.tab, text=self._getTabStr('port_cfg_pac_max'))
+        max_pac = ttk.OptionMenu(self.tab, self._max_pac_var, *opt_max_pac)
+        #max_pac.configure(width=4, height=1)
+        max_pac_help = ttk.Label(self.tab, text=self._getTabStr('port_cfg_pac_max'))
         max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
         max_pac.place(x=max_pac_x + 80, y=height - max_pac_y)
         max_pac_help.place(x=max_pac_x + 80 + 70, y=height - max_pac_y)
@@ -394,13 +428,13 @@ class PortSetTab:
         f_y = 340
         f_height = 180
         bg_cl = 'grey80'
-        mon_col_frame = tk.Frame(self.tab, width=440, height=f_height)
-        mon_col_frame.configure(bg=bg_cl)
+        mon_col_frame = ttk.Frame(self.tab, width=440, height=f_height)
+        #mon_col_frame.configure(bg=bg_cl)
         mon_col_frame.place(x=f_x, y=height - f_y)
         # Label
         mon_col_la_x = 160
         mon_col_la_y = 15
-        mon_col_label = tk.Label(mon_col_frame, text=self._getTabStr('mon_color'), bg=bg_cl)
+        mon_col_label = ttk.Label(mon_col_frame, text=self._getTabStr('mon_color'))
         mon_col_label.place(x=mon_col_la_x, y=mon_col_la_y)
         #################
         # preview win TX
@@ -414,6 +448,8 @@ class PortSetTab:
                                               fg=self._port_setting.get('parm_mon_clr_tx', new_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)),
                                               bg=self._port_setting.get('parm_mon_clr_bg', new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
                                               # bg=self._port_setting.parm_mon_clr_bg
+                                              relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                              highlightthickness=0,
                                               )
         self._color_example_text_tx.place(x=100, y=10)
         self._color_example_text_tx.insert(tk.END, 'TX> Test TEXT. 1234. 73...')
@@ -426,33 +462,37 @@ class PortSetTab:
                                               # bg=self._port_setting.parm_mon_clr_bg
                                               fg = self._port_setting.get('parm_mon_clr_rx', new_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)),
                                               bg = self._port_setting.get('parm_mon_clr_bg', new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
-
+                                              relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                              highlightthickness=0,
         )
         self._color_example_text_rx.place(x=100, y=100)
         self._color_example_text_rx.insert(tk.END, 'RX> Test TEXT. 1234. 73...')
         #################
         # TX
-        tx_sel_x = 20
+        tx_sel_x = 0
         tx_sel_y = 20
-        tk.Button(mon_col_frame,
+        ttk.Button(mon_col_frame,
                   text='TX',
+                   width=5,
                   command=lambda: self._choose_color('TX')
                   ).place(x=tx_sel_x, y=tx_sel_y)
 
         #################
         # RX
-        rx_sel_x = 20
+        rx_sel_x = 0
         rx_sel_y = 70
-        tk.Button(mon_col_frame,
+        ttk.Button(mon_col_frame,
                   text='RX',
+                  width=5,
                   command=lambda: self._choose_color('RX')
                   ).place(x=rx_sel_x, y=rx_sel_y)
         #################
         # BG
-        bg_sel_x = 20
+        bg_sel_x = 0
         bg_sel_y = 120
-        tk.Button(mon_col_frame,
+        ttk.Button(mon_col_frame,
                   text='BG',
+                   width=5,
                   command=lambda: self._choose_color('BG')
                   ).place(x=bg_sel_x, y=bg_sel_y)
 
@@ -478,7 +518,7 @@ class PortSetTab:
                 # prim_port = PORT_HANDLER.get_dualPort_primary_PH(self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)))
                 # prim_port_id = '! ERROR !'
                 # if prim_port:
-                tk.Label(self.tab,
+                ttk.Label(self.tab,
                          text=f"Dual Port: Secondary-P: {self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1))}. Primary-P:  {prim_port_id}"
                          ).place(x=cfg_x, y=height - cfg_y)
 
@@ -494,12 +534,18 @@ class PortSetTab:
             cfg_y = 290 - (35 * y_f)  # Yeah X * 0
             var = tk.IntVar(self.tab)
 
-            cfg = tk.Checkbutton(self.tab, text=k, width=10, variable=var, anchor='w', state='normal')
+            cfg = ttk.Checkbutton(self.tab,
+                                 text=k,
+                                 width=10,
+                                 variable=var,
+                                 #anchor='w',
+                                 state='normal',
+                                 )
 
             # if k in self._port_setting.parm_StationCalls:
             if k in self._port_setting.get('parm_StationCalls', new_cfg.get('parm_StationCalls', [])):
                 var.set(1)
-                cfg.select()
+                #cfg.select()
             # cfg.var = var
             self._stat_check_vars[k] = var
             cfg.place(x=cfg_x, y=height - cfg_y)
@@ -585,7 +631,7 @@ class PortSetTab:
 
             self._param1_label.configure(text='Adresse:')
             self._param1_ent.destroy()
-            self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
+            self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=28)
             self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
@@ -645,7 +691,7 @@ class PortSetTab:
 
             self._param1_label.configure(text='Adresse:')
             self._param1_ent.destroy()
-            self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
+            self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=28)
             self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
@@ -690,13 +736,13 @@ class PortSetTab:
             self._param1_label.configure(text='Port:')
             if is_linux():
                 self._param1_ent.destroy()
-                self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
+                self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
                 self._param1_ent.configure(width=15)
                 self._param1_ent.place(x=self._param1_x, y=self._param1_y)
             else:
                 ser_ports = [f"COM{x}" for x in range(1, 100)]
                 self._param1_ent.destroy()
-                self._param1_ent = tk.OptionMenu(self.tab, self._param1_var, *ser_ports)
+                self._param1_ent = ttk.OptionMenu(self.tab, self._param1_var, *ser_ports)
                 self._param1_ent.configure(width=7)
                 self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
@@ -741,7 +787,7 @@ class PortSetTab:
             self._param1_label.configure(text='Interface')
 
             self._param1_ent.destroy()
-            self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
+            self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=15)
             self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
@@ -785,7 +831,7 @@ class PortSetTab:
             self._param1_label.configure(text='Address:')
 
             self._param1_ent.destroy()
-            self._param1_ent = tk.Entry(self.tab, textvariable=self._param1_var)
+            self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=15)
             self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
@@ -812,10 +858,10 @@ class PortSetTab:
         # if self._port_setting.parm_T2_auto:
         if self._port_setting.get('parm_T2_auto', new_port_cfg.get('parm_T2_auto', True)):
             self._t2_auto_var.set(True)
-            self._t2_auto.select()
+            #self._t2_auto.select()
         else:
             self._t2_auto_var.set(False)
-            self._t2_auto.deselect()
+            #self._t2_auto.deselect()
         self._t2_auto_check()
         # print(self.port_setting.parm_T2_auto)
 
@@ -824,10 +870,10 @@ class PortSetTab:
         # if self._port_setting.parm_T2_auto:
         if self._port_setting.get('parm_T2_auto', new_port_cfg.get('parm_T2_auto', True)):
             self._t2_auto_var.set(True)
-            self._t2_auto.select()
+            #self._t2_auto.select()
         else:
             self._t2_auto_var.set(False)
-            self._t2_auto.deselect()
+            #self._t2_auto.deselect()
         self._t2_auto_check()
         # print(self.port_setting.parm_T2_auto)
 
@@ -939,28 +985,32 @@ class PortSetTab:
 
     def _t2_auto_check(self):
         if self._t2_auto_var.get():
-            self._t2_auto.configure(bg='green')
+            #self._t2_auto.configure(bg='green')
+            #self._t2_auto.select()
             self._t2.configure(state='disabled')
         else:
-            self._t2_auto.configure(bg=self._default_bg_clr)
+            fg, bg = self._get_colorMap()
+            #self._t2_auto.configure(bg=bg, fg=fg)
+            #self._t2_auto.deselect()
             self._t2.configure(state='normal')
 
 
-class PortSettingsWin(tk.Frame):
+class PortSettingsWin(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         win_height = 600
         win_width = 1059
         self._need_GUI_reinit = False   # Reinit SettingsGUI Tabs
         self._lang = POPT_CFG.get_guiCFG_language()
         ##########################
+        self.style_name = root_win.style_name
         ####################################
         # New Station, Del Station Buttons
-        new_port_bt = tk.Button(self,
+        new_port_bt = ttk.Button(self,
                                 text=get_strTab('new_port', self._lang),
                                 # font=("TkFixedFont", 15),
                                 # bg="green",
-                                height=1,
+                                #height=1,
                                 width=10,
                                 command=self._new_port_btn_cmd)
         del_st_bt = tk.Button(self,
@@ -969,7 +1019,10 @@ class PortSettingsWin(tk.Frame):
                               bg="red3",
                               height=1,
                               width=10,
-                              command=self._del_port_btn_cmd)
+                              command=self._del_port_btn_cmd,
+                              relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                              highlightthickness=0,
+                              )
         new_port_bt.place(x=20, y=win_height - 590)
         del_st_bt.place(x=win_width - 141, y=win_height - 590)
 

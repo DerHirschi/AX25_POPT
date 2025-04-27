@@ -2,16 +2,16 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.constant import FONT
+from cfg.constant import FONT, COLOR_MAP
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
 from gui.guiMsgBoxes import save_file_dialog
 
 
-class MSG_Center_base(tk.Frame):
+class MSG_Center_base(ttk.Frame):
     def __init__(self, root_win):
-        tk.Frame.__init__(self, root_win)
+        ttk.Frame.__init__(self, root_win)
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.style              = root_win.style
         self._root_win          = root_win
@@ -30,6 +30,9 @@ class MSG_Center_base(tk.Frame):
             'H': {},
             'T': {},
         }
+        ###################################
+        self.style_name = self._root_win.style_name
+        self._get_colorMap = lambda: COLOR_MAP.get(self.style_name, ('black', '#d9d9d9'))
         ###################################
         # Vars
         self._var_encoding = tk.StringVar(self, 'UTF-8')

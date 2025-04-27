@@ -36,8 +36,7 @@ class WXWin(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
-        # ############################### Columns ############################
-
+        ##########################################################################################
         ##########################################################################################
         # TREE
         columns = (
@@ -58,10 +57,10 @@ class WXWin(tk.Toplevel):
             'luminosity',
             'comment',
         )
-        settings_frame = tk.Frame(self)
+        settings_frame = ttk.Frame(self)
         self._seen_since_var = tk.StringVar(self, value='1')
-        tk.Label(settings_frame, text='No updates since (Days): ').pack(side=tk.LEFT)
-        tk.Spinbox(settings_frame,
+        ttk.Label(settings_frame, text='No updates since (Days): ').pack(side=tk.LEFT)
+        ttk.Spinbox(settings_frame,
                    from_=1,
                    to=3650,
                    increment=1,
@@ -70,8 +69,8 @@ class WXWin(tk.Toplevel):
                    command=self.update_tree_data,
                    ).pack(side=tk.LEFT)
 
-        tree_frame = tk.Frame(self)
-        settings_frame.pack(side=tk.TOP, expand=False)
+        tree_frame = ttk.Frame(self)
+        settings_frame.pack(side=tk.TOP, expand=False, fill=tk.X)
         tree_frame.pack(side=tk.TOP, expand=True)
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)

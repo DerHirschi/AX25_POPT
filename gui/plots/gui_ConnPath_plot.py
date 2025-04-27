@@ -15,7 +15,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 #import matplotlib
 
-from cfg.constant import MH_BEACON_FILTER
+from cfg.constant import MH_BEACON_FILTER, COLOR_MAP
 from cfg.popt_config import POPT_CFG
 
 #matplotlib.use('Agg')
@@ -28,6 +28,8 @@ class ConnPathsPlot(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self.wm_title("MH Routes")
         self._root_win = root_win
+        #self._get_colorMap = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
+
         self.geometry(f"800x"
                       f"600+"
                       f"{self._root_win.main_win.winfo_x()}+"
@@ -53,9 +55,9 @@ class ConnPathsPlot(tk.Toplevel):
         self._init_vars_fm_raw_data()
         #######################################################################
         #######################################################################
-        btn_frame = tk.Frame(self)
+        btn_frame = ttk.Frame(self)
         btn_frame.pack(side=tk.TOP)
-        refresh_btn = tk.Button(btn_frame,
+        refresh_btn = ttk.Button(btn_frame,
                                 text='Refresh',
                                 command=self._refresh_btn
                                 )
@@ -71,12 +73,13 @@ class ConnPathsPlot(tk.Toplevel):
             # 'Position': None,
         }
         style_opt_keys = list(self._style_opt.keys())
-        style_option = tk.OptionMenu(btn_frame,
+        style_option = ttk.OptionMenu(btn_frame,
                                      self._style_var,
                                      *style_opt_keys,
                                      command=self._refresh_btn
                                      )
         style_option.pack(side=tk.LEFT, padx=10)
+        self._style_var.set('Spring')
 
         # node_option = [''] + list(self._node_key)
         # node_option.sort()
@@ -90,12 +93,12 @@ class ConnPathsPlot(tk.Toplevel):
         node_optionmen.pack(side=tk.LEFT, padx=10)
         """
 
-        show_hops_chk = tk.Checkbutton(btn_frame,
+        show_hops_chk = ttk.Checkbutton(btn_frame,
                                        variable=self._show_dest_var,
                                        text='Show Dest',
                                        command=self._update_Graph)
         show_hops_chk.pack(side=tk.LEFT, padx=10)
-        filter_beacon = tk.Checkbutton(btn_frame,
+        filter_beacon = ttk.Checkbutton(btn_frame,
                                        variable=self._filter_beacon_var,
                                        text='Filter Beacons',
                                        command=self._update_Graph)
@@ -109,10 +112,10 @@ class ConnPathsPlot(tk.Toplevel):
                                      increment=5,
                                      width=4,
                                      command=self._refresh_btn)
-        tk.Label(btn_frame, text='Last seen(Days):').pack(side=tk.LEFT, padx=10)
+        ttk.Label(btn_frame, text='Last seen(Days):').pack(side=tk.LEFT, padx=10)
         last_seen_days.pack(side=tk.LEFT, padx=10)
 
-        show_hops_chk = tk.Checkbutton(btn_frame,
+        show_hops_chk = ttk.Checkbutton(btn_frame,
                                        variable=self._show_last_route_var,
                                        text='last Route',
                                        command=self._update_Graph)
@@ -125,11 +128,11 @@ class ConnPathsPlot(tk.Toplevel):
                            increment=1,
                            width=4,
                            command=self._update_Graph)
-        tk.Label(btn_frame, text='Port:').pack(side=tk.LEFT, padx=10)
+        ttk.Label(btn_frame, text='Port:').pack(side=tk.LEFT, padx=10)
         port.pack(side=tk.LEFT, padx=10)
         #############################################################################
 
-        g_frame = tk.Frame(self)
+        g_frame = ttk.Frame(self)
         g_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self._fig, self._plot1 = plt.subplots()
@@ -138,11 +141,16 @@ class ConnPathsPlot(tk.Toplevel):
         self._canvas = FigureCanvasTkAgg(self._fig, master=g_frame)
         self._canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH)
         # Werkzeugleisten für die plots erstellen
+        #fg, bg = self._get_colorMap()
         toolbar1 = NavigationToolbar2Tk(self._canvas, g_frame)
+        #toolbar1.configure(
+        #    bg=bg
+        #)
+        #toolbar1._message_label.config(background=bg, fg=fg)
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, fill=tk.X)
 
-        right_frame = tk.Frame(self)
+        right_frame = ttk.Frame(self)
         right_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         # self._init_chk_frame(right_frame)
         self._root_win.conn_Path_plot_win = self

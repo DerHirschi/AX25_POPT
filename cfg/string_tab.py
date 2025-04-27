@@ -759,6 +759,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'activate': (
+        'Aktivieren',
+        'Activate',
+        'Activeren',
+        'Activer',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'delete_dx_history': (
         'DX-History Löschen',
         'Delete DX-History',

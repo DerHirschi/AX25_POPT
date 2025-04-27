@@ -12,6 +12,7 @@ class APRSSettingsWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_cl = root_win
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._lang = POPT_CFG.get_guiCFG_language()
         self._root_cl.settings_win = self
         win_width = 800
@@ -29,6 +30,10 @@ class APRSSettingsWin(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        #######################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        #######################
         self._all_ports = PORT_HANDLER.get_all_ports()
         self._ais = PORT_HANDLER.get_aprs_ais()
         self._vars = []
@@ -53,7 +58,7 @@ class APRSSettingsWin(tk.Toplevel):
             self.ais_run_var.set(self._ais.ais_active)
             self.ais_add_new_user_var.set(self._ais.add_new_user)
 
-        ais_conf_frame = ttk.Frame(self)
+        ais_conf_frame = ttk.Frame(main_f)
         ais_conf_frame.pack(side=tk.TOP, padx=10, pady=10)
         ais_conf_frame.rowconfigure(0, minsize=40, weight=0)
         ais_conf_frame.columnconfigure(0, minsize=5, weight=0)
@@ -102,11 +107,11 @@ class APRSSettingsWin(tk.Toplevel):
         longitude_entry.grid(row=5, column=5, sticky=tk.W)
         # self.vars[-1]['lon'].set(port_aprs.aprs_parm_lon)
 
-        tk.Checkbutton(ais_conf_frame, text="Run", variable=self.ais_run_var).grid(row=5, column=1, sticky=tk.W)
-        tk.Checkbutton(ais_conf_frame, text="Add to UserDB", variable=self.ais_add_new_user_var).grid(row=6, column=1, columnspan=3, sticky=tk.W)
+        ttk.Checkbutton(ais_conf_frame, text="Run", variable=self.ais_run_var).grid(row=5, column=1, sticky=tk.W)
+        ttk.Checkbutton(ais_conf_frame, text="Add to UserDB", variable=self.ais_add_new_user_var).grid(row=6, column=1, columnspan=3, sticky=tk.W)
 
         # Create a Notebook widget
-        notebook = ttk.Notebook(self)
+        notebook = ttk.Notebook(main_f)
 
         for port_id in self._all_ports.keys():
             # Create the "Port 1" tab
@@ -122,13 +127,13 @@ class APRSSettingsWin(tk.Toplevel):
         notebook.pack(fill=tk.BOTH, expand=True)
 
         # Create OK and Cancel buttons
-        button_frame2 = ttk.Frame(self)
+        button_frame2 = ttk.Frame(main_f)
         button_frame2.pack(side=tk.BOTTOM, padx=10, pady=10)
 
         ok_button = ttk.Button(button_frame2, text="OK", command=self._on_ok_button)
         ok_button.pack(side=tk.LEFT)
 
-        cancel_button = ttk.Button(button_frame2, text="Abbrechen", command=self._on_cancel_button)
+        cancel_button = ttk.Button(button_frame2, text=self._getTabStr('cancel'), command=self._on_cancel_button)
         cancel_button.pack(side=tk.RIGHT)
 
     def create_settings_widgets(self, tab, port_aprs):

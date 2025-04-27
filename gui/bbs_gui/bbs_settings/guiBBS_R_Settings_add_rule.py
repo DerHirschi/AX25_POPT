@@ -1,5 +1,5 @@
 import tkinter as tk
-
+from tkinter import ttk
 from cfg.default_config import getNew_BBS_FWD_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
@@ -25,6 +25,10 @@ class BBS_addRuleWin(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        #########################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        #########################
         self._lang          = POPT_CFG.get_guiCFG_language()
         self._getTabStr     = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win      = root_win
@@ -70,21 +74,22 @@ class BBS_addRuleWin(tk.Toplevel):
         self._ent_var   = tk.StringVar(self, value='')
         ####################################################
         # Frames
-        upper_frame = tk.Frame(self)
+        upper_frame = ttk.Frame(main_f)
         upper_frame.pack(expand=True, fill=tk.BOTH)
-        optM_frame  = tk.Frame(upper_frame)
-        entry_frame = tk.Frame(upper_frame)
+        optM_frame  = ttk.Frame(upper_frame)
+        entry_frame = ttk.Frame(upper_frame)
         optM_frame.pack( expand=False, fill=tk.X, padx=10, pady=10)
         entry_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
 
-        optM        = tk.OptionMenu(
+        optM        = ttk.OptionMenu(
             optM_frame,
             self._opt_var,
             *default_opt
         )
         optM.pack(side=tk.LEFT, expand=False, padx=30)
+        self._opt_var.set(default_opt[0])
 
-        opt_ent     = tk.Entry(
+        opt_ent     = ttk.Entry(
             entry_frame,
             textvariable=self._ent_var,
             width=15
@@ -95,10 +100,10 @@ class BBS_addRuleWin(tk.Toplevel):
 
         ###########################################
         # BTN
-        btn_frame = tk.Frame(self, height=50)
+        btn_frame = ttk.Frame(main_f, height=50)
         btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
-        save_btn  = tk.Button(btn_frame, text=self._getTabStr('save'),   command=self._save_btn)
-        abort_btn = tk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
+        save_btn  = ttk.Button(btn_frame, text=self._getTabStr('save'),   command=self._save_btn)
+        abort_btn = ttk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
         save_btn.pack( side=tk.LEFT)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 

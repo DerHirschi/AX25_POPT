@@ -3,7 +3,7 @@ import copy
 from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
-from cfg.constant import CFG_MAIN_data_file, MAX_PORTS
+from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE
 from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
@@ -279,6 +279,13 @@ class Main_CFG:
     # GUI
     def get_guiCFG_language(self):
         return int(self._config['gui_main_parm'].get('gui_lang', 0))
+
+    def get_guiCFG_text_size(self):
+        return int(self._config['gui_main_parm'].get('gui_parm_text_size', DEF_TEXTSIZE))
+
+
+    def get_guiCFG_STYLE_NAME(self):
+        return int(self._config['gui_main_parm'].get('gui_lang', ('black', '#d9d9d9')))
 
     def get_guiCFG_locator(self):
         return str(self._config['gui_main_parm'].get('gui_cfg_locator', ''))

@@ -12,9 +12,9 @@ from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
 
 
-class BBS_FWD_Settings(tk.Frame):
+class BBS_FWD_Settings(ttk.Frame):
     def __init__(self, tabctl, root_win):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self.style      = root_win.style
         self._logTag    = 'guiBBS_FWD_Settings: '
         self._root_win  = root_win
@@ -30,20 +30,20 @@ class BBS_FWD_Settings(tk.Frame):
         self.schedule_win       = None
         ###################################
         # GUI Stuff
-        tk.Label(self, text='BBS-FWD').pack(side=tk.TOP, expand=False)
-        r_btn_fr        = tk.Frame(self, borderwidth=10)
-        r_tab_frame     = tk.Frame(self, borderwidth=10)
+        ttk.Label(self, text='BBS-FWD').pack(side=tk.TOP, expand=False)
+        r_btn_fr        = ttk.Frame(self, borderwidth=10)
+        r_tab_frame     = ttk.Frame(self, borderwidth=10)
 
         r_btn_fr.pack(side=tk.TOP, fill=tk.X, expand=False)
         r_tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # r2
-        tk.Button(r_btn_fr,
+        ttk.Button(r_btn_fr,
                   text=self._getTabStr('new'),
                   command=self._add_new_homeBBS_tab
                   ).pack(side=tk.LEFT, fill=tk.X, expand=False)
 
-        tk.Button(r_btn_fr,
+        ttk.Button(r_btn_fr,
                   text=self._getTabStr('delete'),
                   command=self._del_homeBBS_tab
                   ).pack(side=tk.RIGHT, expand=False)
@@ -53,7 +53,7 @@ class BBS_FWD_Settings(tk.Frame):
         self._tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabctl.bind("<<NotebookTabChanged>>", self._select_hBBS_tab)
         # r4
-        tk.Button(r_tab_frame,
+        ttk.Button(r_tab_frame,
                   text=self._getTabStr('save'),
                   command=self._save_hBBS_tab
                   ).pack(side=tk.TOP, expand=True, pady=10)
@@ -100,24 +100,24 @@ class BBS_FWD_Settings(tk.Frame):
         axip_port_var       = tk.StringVar(self, value=axip[1])
         ###########################################
         # Root Frame
-        tab_frame   = tk.Frame(self._tabctl)
+        tab_frame   = ttk.Frame(self._tabctl)
         self._tabctl.add(tab_frame, text=dest_call_var.get())
         ###########################################
         # L/R Frames
-        l_frame      = tk.Frame(tab_frame, borderwidth=10)
-        r_frame      = tk.Frame(tab_frame, borderwidth=10)
+        l_frame      = ttk.Frame(tab_frame, borderwidth=10)
+        r_frame      = ttk.Frame(tab_frame, borderwidth=10)
 
         l_frame.pack(side=tk.LEFT, expand=False, fill=tk.Y)
         ttk.Separator(tab_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, expand=False)
         r_frame.pack(side=tk.LEFT, expand=False, fill=tk.Y)
         ###########################################
         # L Frame
-        hbbs_call_f     = tk.Frame(l_frame, borderwidth=10)
-        hbbs_regio_f    = tk.Frame(l_frame, borderwidth=10)
-        p_id_f          = tk.Frame(l_frame, borderwidth=10)
-        via_f           = tk.Frame(l_frame, borderwidth=10)
-        axip_f          = tk.Frame(l_frame, borderwidth=10)
-        axip_port_f     = tk.Frame(l_frame, borderwidth=10)
+        hbbs_call_f     = ttk.Frame(l_frame, borderwidth=10)
+        hbbs_regio_f    = ttk.Frame(l_frame, borderwidth=10)
+        p_id_f          = ttk.Frame(l_frame, borderwidth=10)
+        via_f           = ttk.Frame(l_frame, borderwidth=10)
+        axip_f          = ttk.Frame(l_frame, borderwidth=10)
+        axip_port_f     = ttk.Frame(l_frame, borderwidth=10)
         # Pack it
         hbbs_call_f.pack(side=tk.TOP, expand=True, fill=tk.X)
         hbbs_regio_f.pack(side=tk.TOP, expand=True, fill=tk.X)
@@ -127,53 +127,53 @@ class BBS_FWD_Settings(tk.Frame):
         axip_port_f.pack(side=tk.TOP, expand=True, fill=tk.X)
 
         ##################################
-        tk.Label(hbbs_call_f, text='BBS Call: ').pack(side=tk.LEFT, expand=False)
-        tk.Entry(hbbs_call_f,
+        ttk.Label(hbbs_call_f, text='BBS Call: ').pack(side=tk.LEFT, expand=False)
+        ttk.Entry(hbbs_call_f,
                  textvariable=dest_call_var,
                  width=10).pack(side=tk.LEFT, expand=False)
 
-        tk.Label(hbbs_regio_f, text=f"{self._getTabStr('region')}: ").pack(side=tk.LEFT, expand=False)
-        tk.Entry(hbbs_regio_f,
+        ttk.Label(hbbs_regio_f, text=f"{self._getTabStr('region')}: ").pack(side=tk.LEFT, expand=False)
+        ttk.Entry(hbbs_regio_f,
                  textvariable=regio_var,
                  width=20).pack(side=tk.LEFT, expand=False)
 
-        tk.Label(p_id_f, text='Port ID: ').pack(side=tk.LEFT, expand=False)
+        ttk.Label(p_id_f, text='Port ID: ').pack(side=tk.LEFT, expand=False)
         options = list(PORT_HANDLER.get_all_ports().keys())
         if not options:
             options = ['-']
             port_id_var.set(options[0])
-        tk.OptionMenu(p_id_f,
+        ttk.OptionMenu(p_id_f,
                       port_id_var,
                       *options
                       ).pack(side=tk.LEFT, expand=False)
+        port_id_var.set(cfg.get('port_id', '0'))
 
-
-        tk.Label(via_f, text='VIA: ').pack(side=tk.LEFT, expand=False)
-        tk.Entry(via_f,
+        ttk.Label(via_f, text='VIA: ').pack(side=tk.LEFT, expand=False)
+        ttk.Entry(via_f,
                  textvariable=via_calls_var,
                  width=40).pack(side=tk.LEFT, expand=False)
 
 
-        tk.Label(axip_f, text='AXIP: ').pack(side=tk.LEFT, expand=False)
-        tk.Entry(axip_f,
+        ttk.Label(axip_f, text='AXIP: ').pack(side=tk.LEFT, expand=False)
+        ttk.Entry(axip_f,
                  textvariable=axip_var,
                  width=25).pack(side=tk.LEFT, expand=False)
 
 
-        tk.Label(axip_port_f, text='AXIP-Port: ').pack(side=tk.LEFT, expand=False)
-        tk.Entry(axip_port_f,
+        ttk.Label(axip_port_f, text='AXIP-Port: ').pack(side=tk.LEFT, expand=False)
+        ttk.Entry(axip_port_f,
                  textvariable=axip_port_var,
                  width=5).pack(side=tk.LEFT, expand=False)
 
         #################################################################
         # R Frame
-        rev_fwd_frame       = tk.Frame(r_frame, borderwidth=10)
-        allow_rev_fwd       = tk.Frame(r_frame, borderwidth=10)
-        #allow_pn_fwd        = tk.Frame(r_frame, borderwidth=10)
-        #allow_bl_fwd        = tk.Frame(r_frame, borderwidth=10)
-        allow_pn_auto_path  = tk.Frame(r_frame, borderwidth=10)
-        allow_pn_alt_path   = tk.Frame(r_frame, borderwidth=10)
-        conn_timeout_f      = tk.Frame(r_frame, borderwidth=10)
+        rev_fwd_frame       = ttk.Frame(r_frame, borderwidth=10)
+        allow_rev_fwd       = ttk.Frame(r_frame, borderwidth=10)
+        #allow_pn_fwd        = ttk.Frame(r_frame, borderwidth=10)
+        #allow_bl_fwd        = ttk.Frame(r_frame, borderwidth=10)
+        allow_pn_auto_path  = ttk.Frame(r_frame, borderwidth=10)
+        allow_pn_alt_path   = ttk.Frame(r_frame, borderwidth=10)
+        conn_timeout_f      = ttk.Frame(r_frame, borderwidth=10)
         # Pack it
         rev_fwd_frame.pack(     side=tk.TOP, expand=False, fill=tk.X)
         allow_rev_fwd.pack(     side=tk.TOP, expand=False, fill=tk.X)
@@ -184,18 +184,18 @@ class BBS_FWD_Settings(tk.Frame):
         conn_timeout_f.pack(    side=tk.TOP, expand=False, fill=tk.X)
         #################
         # rev_fwd_frame
-        tk.Checkbutton(rev_fwd_frame,
+        ttk.Checkbutton(rev_fwd_frame,
                        variable=rev_fwd_var,
                        text='Reverse-FWD').pack(side=tk.LEFT, expand=False)
 
-        tk.Button(rev_fwd_frame,
+        ttk.Button(rev_fwd_frame,
                   text='Schedule',
                   command=self._open_schedWin
                   ).pack(side=tk.LEFT, expand=False, padx=120)
 
         #################
         # allow_rev_fwd
-        tk.Checkbutton(allow_rev_fwd,
+        ttk.Checkbutton(allow_rev_fwd,
                        variable=allow_rev_fwd_var,
                        state='disabled',    # TODO
                        text=self._getTabStr('allowRevFWD')).pack(side=tk.LEFT, expand=False)
@@ -207,27 +207,27 @@ class BBS_FWD_Settings(tk.Frame):
         #               text=self._getTabStr('allowPN_AutoPath')).pack(side=tk.LEFT, expand=False)
         #################
         # allow_pn_alt_path
-        tk.Checkbutton(allow_pn_alt_path,
+        ttk.Checkbutton(allow_pn_alt_path,
                        variable=pn_fwd_alter_path_var,
                        state='disabled',    # TODO
                        text=self._getTabStr('allowPN_AlterPath')).pack(side=tk.LEFT, expand=False)
         """
         #################
         # allow_pn_fwd
-        tk.Checkbutton(allow_pn_fwd,
+        ttk.Checkbutton(allow_pn_fwd,
                        variable=pn_fwd_var,
                        text=self._getTabStr('allow_PN_FWD')).pack(side=tk.LEFT, expand=False)
         #################
         # allow_bl_fwd
-        tk.Checkbutton(allow_bl_fwd,
+        ttk.Checkbutton(allow_bl_fwd,
                        variable=bl_fwd_var,
                        text=self._getTabStr('allow_BL_FWD')).pack(side=tk.LEFT, expand=False)
         
         """
         #################
         # conn_timeout_f
-        tk.Label(conn_timeout_f, text=self._getTabStr('conn_intervall')).pack(side=tk.LEFT, expand=False)
-        tk.Spinbox(conn_timeout_f,
+        ttk.Label(conn_timeout_f, text=self._getTabStr('conn_intervall')).pack(side=tk.LEFT, expand=False)
+        ttk.Spinbox(conn_timeout_f,
                    textvariable=conn_timeout_var,
                    from_=1,
                    to=240,

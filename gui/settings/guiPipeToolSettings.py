@@ -7,21 +7,21 @@ from ax25.ax25dec_enc import PIDByte
 from ax25.ax25UI_Pipe import AX25Pipe
 from cfg.default_config import getNew_pipe_cfg
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
 from cfg.logger_config import logger
+from fnc.str_fnc import get_strTab
 
 
 class PipeTab:
     def __init__(self, root_win, pipe=None, connection=None):
-        self._root_win = root_win
-        self.tab_clt = root_win.tabControl
-        self._lang = POPT_CFG.get_guiCFG_language()
-        self.style = root_win.style
-        self.own_tab = ttk.Frame(self.tab_clt)
+        self._root_win   = root_win
+        self.tab_clt     = root_win.tabControl
+        self._getTabStr  = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self.style       = root_win.style
+        self.own_tab     = ttk.Frame(self.tab_clt)
         self._connection = connection
         if pipe is None:
             self.pipe_cfg = getNew_pipe_cfg()
-            self.pipe_cfg['pipe_parm_Proto'] = False
+            self.pipe_cfg['pipe_parm_Proto']     = False
             self.pipe_cfg['pipe_parm_permanent'] = True
         else:
             self.pipe_cfg = pipe.get_cfg_fm_pipe()
@@ -33,11 +33,11 @@ class PipeTab:
         x = 10
         y = 10
         self.to_add_var = tk.StringVar(self.own_tab)
-        tk.Label(self.own_tab, text=f"{STR_TABLE['to'][self._lang]}:").place(x=x, y=y)
+        ttk.Label(self.own_tab, text=f"{self._getTabStr('to')}:").place(x=x, y=y)
         # if self.pipe.add_str:
         if self.pipe_cfg.get('pipe_parm_address_str', ''):
             self.to_add_var.set(self.pipe_cfg.get('pipe_parm_address_str', ''))
-        self._to_add_ent = tk.Entry(self.own_tab,
+        self._to_add_ent = ttk.Entry(self.own_tab,
                                     textvariable=self.to_add_var,
                                     width=50)
         self._to_add_ent.place(x=x + 40, y=y)
@@ -47,7 +47,7 @@ class PipeTab:
         y = 80
         self.cmd_var = tk.BooleanVar(self.own_tab)
         self.cmd_var.set(self.pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0])
-        self._cmd_ent = tk.Checkbutton(self.own_tab,
+        self._cmd_ent = ttk.Checkbutton(self.own_tab,
                                        variable=self.cmd_var,
                                        text='CMD/RPT')
         self._cmd_ent.place(x=x, y=y)
@@ -57,7 +57,7 @@ class PipeTab:
         y = 105
         self.poll_var = tk.BooleanVar(self.own_tab)
         self.poll_var.set(self.pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1])
-        self._poll_ent = tk.Checkbutton(self.own_tab,
+        self._poll_ent = ttk.Checkbutton(self.own_tab,
                                         variable=self.poll_var,
                                         text='Poll')
         self._poll_ent.place(x=x, y=y)
@@ -65,13 +65,13 @@ class PipeTab:
         # Port
         x = 40
         y = 140
-        tk.Label(self.own_tab, text=f"{STR_TABLE['port'][self._lang]}:").place(x=x, y=y)
+        ttk.Label(self.own_tab, text=f"{self._getTabStr('port')}:").place(x=x, y=y)
         self.port_var = tk.StringVar(self.own_tab)
         self.port_var.set(self.pipe_cfg.get('pipe_parm_port', -1))
         vals = ['-1']
         if PORT_HANDLER.get_all_ports().keys():
             vals += [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
-        self._port_ent = tk.ttk.Combobox(self.own_tab,
+        self._port_ent = ttk.Combobox(self.own_tab,
                                          width=4,
                                          textvariable=self.port_var,
                                          values=vals,
@@ -82,11 +82,11 @@ class PipeTab:
         # Max Pac
         x = 240
         y = 140
-        tk.Label(self.own_tab, text="Max Pac:").place(x=x, y=y)
+        ttk.Label(self.own_tab, text="Max Pac:").place(x=x, y=y)
         self.max_pac_var = tk.StringVar(self.own_tab)
         self.max_pac_var.set(self.pipe_cfg.get('pipe_parm_MaxFrame', 3))
         vals = [str(x) for x in range(1, 8)]
-        max_pac_ent = tk.ttk.Spinbox(self.own_tab,
+        max_pac_ent = ttk.Spinbox(self.own_tab,
                                           width=2,
                                           textvariable=self.max_pac_var,
                                           values=vals,
@@ -95,11 +95,11 @@ class PipeTab:
         # Pac len
         x = 490
         y = 140
-        tk.Label(self.own_tab, text="Pac-len:").place(x=x, y=y)
+        ttk.Label(self.own_tab, text="Pac-len:").place(x=x, y=y)
         self.pac_len_var = tk.StringVar(self.own_tab)
         self.pac_len_var.set(self.pipe_cfg.get('pipe_parm_PacLen', 128))
         vals = [str(x) for x in range(1, 257)]
-        pac_len_ent = tk.ttk.Spinbox(self.own_tab,
+        pac_len_ent = ttk.Spinbox(self.own_tab,
                                           width=3,
                                           textvariable=self.pac_len_var,
                                           values=vals,
@@ -108,11 +108,11 @@ class PipeTab:
         # Max Pac Delay
         x = 240
         y = 175
-        tk.Label(self.own_tab, text="Max Pac Delay (s):").place(x=x, y=y)
+        ttk.Label(self.own_tab, text="Max Pac Delay (s):").place(x=x, y=y)
         self.max_pac_delay_var = tk.StringVar(self.own_tab)
         self.max_pac_delay_var.set(self.pipe_cfg.get('pipe_parm_MaxPacDelay', 30))
         vals = [str(x * 10) for x in range(1, 37)]
-        max_pac_delay = tk.ttk.Spinbox(self.own_tab,
+        max_pac_delay = ttk.Spinbox(self.own_tab,
                                             width=3,
                                             textvariable=self.max_pac_delay_var,
                                             values=vals,
@@ -134,7 +134,7 @@ class PipeTab:
                 self.call_var.set(_vals[0])
         """
         self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', ''))
-        self._call_ent = tk.ttk.Combobox(self.own_tab,
+        self._call_ent = ttk.Combobox(self.own_tab,
                                          width=9,
                                          textvariable=self.call_var,
                                          # values=_vals,
@@ -146,14 +146,14 @@ class PipeTab:
         x = 10
         y = 45
         self.pid_var = tk.StringVar(self.own_tab)
-        tk.Label(self.own_tab, text='PID:').place(x=x, y=y)
+        ttk.Label(self.own_tab, text='PID:').place(x=x, y=y)
         pid = PIDByte()
         pac_types = dict(pid.pac_types)
         vals = []
         for x in list(pac_types.keys()):
             pid.pac_types[int(x)]()
             vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
-        self._pid_ent = tk.ttk.Combobox(self.own_tab,
+        self._pid_ent = ttk.Combobox(self.own_tab,
                                         width=30,
                                         values=vals,
                                         textvariable=self.pid_var)
@@ -163,10 +163,10 @@ class PipeTab:
         # Loop Timer
         x = 10
         y = self._root_win.win_height - 255 - 80  # iam lazy
-        tk.Label(self.own_tab, text='TX-File Check Timer (sek/sec):').place(x=x, y=y)
+        ttk.Label(self.own_tab, text='TX-File Check Timer (sek/sec):').place(x=x, y=y)
         self.loop_timer_var = tk.StringVar(self.own_tab)
         self.loop_timer_var.set(self.pipe_cfg.get('pipe_parm_pipe_loop_timer', 10))
-        loop_timer = tk.Spinbox(self.own_tab,
+        loop_timer = ttk.Spinbox(self.own_tab,
                                      from_=5,
                                      to=360,
                                      increment=5,
@@ -181,28 +181,28 @@ class PipeTab:
         # TX FILE
         x = 10
         y = self._root_win.win_height - 220 - 80  # iam lazy
-        tk.Label(self.own_tab, text=f"{STR_TABLE['tx_file'][self._lang]}:").place(x=x, y=y)
+        ttk.Label(self.own_tab, text=f"{self._getTabStr('tx_file')}:").place(x=x, y=y)
         self.tx_filename_var = tk.StringVar(self.own_tab)
         self.tx_filename_var.set(self.pipe_cfg.get('pipe_parm_pipe_tx', ''))
-        tx_filename = tk.Entry(self.own_tab, textvariable=self.tx_filename_var, width=50)
+        tx_filename = ttk.Entry(self.own_tab, textvariable=self.tx_filename_var, width=50)
         # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         tx_filename.place(x=x + 140, y=y)
-        tk.Button(self.own_tab,
-                  text=f"{STR_TABLE['file_1'][self._lang]}",
+        ttk.Button(self.own_tab,
+                  text=f"{self._getTabStr('file_1')}",
                   command=lambda: self._select_files(tx=True)
                   ).place(x=x + 710, y=y - 2)
         #################
         # RX FILE
         x = 10
         y = self._root_win.win_height - 180 - 80  # iam lazy
-        tk.Label(self.own_tab, text=f"{STR_TABLE['rx_file'][self._lang]}:").place(x=x, y=y)
+        ttk.Label(self.own_tab, text=f"{self._getTabStr('rx_file')}:").place(x=x, y=y)
         self.rx_filename_var = tk.StringVar(self.own_tab)
         self.rx_filename_var.set(self.pipe_cfg.get('pipe_parm_pipe_rx', ''))
-        rx_filename = tk.Entry(self.own_tab, textvariable=self.rx_filename_var, width=50)
+        rx_filename = ttk.Entry(self.own_tab, textvariable=self.rx_filename_var, width=50)
         # self.tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         rx_filename.place(x=x + 140, y=y)
-        tk.Button(self.own_tab,
-                  text=f"{STR_TABLE['file_1'][self._lang]}",
+        ttk.Button(self.own_tab,
+                  text=f"{self._getTabStr('file_1')}",
                   command=lambda: self._select_files(tx=False)
                   ).place(x=x + 710, y=y - 2)
 
@@ -272,13 +272,13 @@ class PipeTab:
 class PipeToolSettings(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self, master=root.main_win)
-        self._root = root
-        self._lang = POPT_CFG.get_guiCFG_language()
+        self._root        = root
+        self._getTabStr   = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         root.settings_win = self
-        self.win_height = 600
-        self.win_width = 860
+        self.win_height   = 600
+        self.win_width    = 860
         self.style = root.style
-        self.title(STR_TABLE['pipetool_settings'][self._lang])
+        self.title(self._getTabStr('pipetool_settings'))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
                       f"{self._root.main_win.winfo_x()}+"
@@ -290,12 +290,14 @@ class PipeToolSettings(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
-
+        ##########################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
         ##########################
         # OK, Save, Cancel
-        ok_bt = tk.Button(self,
-                          text=STR_TABLE['OK'][self._lang],
-                          height=1,
+        ok_bt = ttk.Button(main_f,
+                          text=self._getTabStr('OK'),
+                          #height=1,
                           width=6,
                           command=self._ok_btn_cmd)
         """
@@ -306,9 +308,9 @@ class PipeToolSettings(tk.Toplevel):
                             command=self.save_btn_cmd)
         """
 
-        cancel_bt = tk.Button(self,
-                              text=STR_TABLE['cancel'][self._lang],
-                              height=1,
+        cancel_bt = ttk.Button(main_f,
+                              text=self._getTabStr('cancel'),
+                              #height=1,
                               width=8,
                               command=self._destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
@@ -316,27 +318,30 @@ class PipeToolSettings(tk.Toplevel):
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
         ####################################
         # New Station, Del Station Buttons
-        tk.Button(self,
-                  text=STR_TABLE['new_pipe'][self._lang],
-                  height=1,
+        ttk.Button(main_f,
+                  text=self._getTabStr('new_pipe'),
+                  #height=1,
                   width=10,
                   command=self._new_pipe_btn_cmd). \
             place(x=20, y=self.win_height - 590)
-        tk.Button(self,
-                  text=STR_TABLE['new_pipe_fm_connection'][self._lang],
-                  height=1,
+        ttk.Button(main_f,
+                  text=self._getTabStr('new_pipe_fm_connection'),
+                  #height=1,
                   width=17,
                   command=self._new_pipe_on_conn). \
             place(x=220, y=self.win_height - 590)
-        tk.Button(self,
-                  text=STR_TABLE['delete'][self._lang],
+        tk.Button(main_f,
+                  text=self._getTabStr('delete'),
                   bg="red3",
                   height=1,
                   width=10,
+                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                  highlightthickness=0,
+
                   command=self._del_btn_cmd). \
             place(x=self.win_width - 141, y=self.win_height - 590)
 
-        self.tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)
+        self.tabControl = ttk.Notebook(main_f, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
         self.tab_list: [ttk.Frame] = []
         all_pipes = PORT_HANDLER.get_all_pipes()
@@ -436,7 +441,18 @@ class PipeToolSettings(tk.Toplevel):
             pass
         else:
             pipe_cfg = self.tab_list[ind].pipe_cfg
-            dummy_pipe = AX25Pipe(pipe_cfg=pipe_cfg)
+            # FIXME check empty cfg
+            #  if empty:
+            #     if ind in self.tab_list:
+            #         del self.tab_list[ind]
+            #     self.tabControl.forget(ind)
+            try:
+                dummy_pipe = AX25Pipe(pipe_cfg=pipe_cfg)
+            except AttributeError:
+                if ind in self.tab_list:
+                    del self.tab_list[ind]
+                self.tabControl.forget(ind)
+                return
             conn = self.tab_list[ind].get_connection()
             if conn is not None:
                 conn.del_pipe_fm_conn()
