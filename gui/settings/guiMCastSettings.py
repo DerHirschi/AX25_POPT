@@ -34,8 +34,12 @@ class MCastAddMember(tk.Toplevel):
         self.lift()
         self.attributes("-topmost", True)
         self.title('Move to Channel')
+        ######################################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ######################################
         ##################################
-        f0 = ttk.Frame(self)
+        f0 = ttk.Frame(main_f)
         f0.pack()
         ttk.Label(f0, text='Call:').pack(side=tk.LEFT, pady=15)
         #
@@ -43,7 +47,7 @@ class MCastAddMember(tk.Toplevel):
         ent = ttk.Entry(f0, textvariable=self._call_ent_var, width=10)
         ent.pack(side=tk.LEFT, padx=5)
         ##################################
-        f1 = ttk.Frame(self)
+        f1 = ttk.Frame(main_f)
         f1.pack()
         ttk.Label(f1, text='Adress:').pack(side=tk.LEFT, pady=15)
         #
@@ -60,7 +64,7 @@ class MCastAddMember(tk.Toplevel):
         ###########################################
         ###########################################
         # BTN
-        btn_frame = ttk.Frame(self)
+        btn_frame = ttk.Frame(main_f)
         btn_frame.pack(expand=True, fill=tk.X, padx=10, pady=5, anchor=tk.S)
         ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
@@ -135,10 +139,14 @@ class MCastMoveMember(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+
         self.attributes("-topmost", True)
         self.title('Move to Channel')
-        ##################################
-        f1 = ttk.Frame(self)
+        ######################################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ######################################
+        f1 = ttk.Frame(main_f)
         f1.pack()
         ttk.Label(f1, text='Channel').pack(side=tk.LEFT, pady=30)
         #
@@ -150,7 +158,7 @@ class MCastMoveMember(tk.Toplevel):
         ###########################################
         ###########################################
         # BTN
-        btn_frame = ttk.Frame(self)
+        btn_frame = ttk.Frame(main_f)
         btn_frame.pack(expand=True, fill=tk.X, padx=10, pady=5, anchor=tk.S)
         ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
