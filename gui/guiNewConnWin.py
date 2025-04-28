@@ -141,12 +141,13 @@ class NewConnWin(tk.Toplevel):
             opt = PORT_HANDLER.get_stat_calls_fm_port(self._port_index)
             if not opt:
                 opt = ['NOCALL']
-            self._own_call_var.set(opt[0])
 
         self._own_call_dd_men = ttk.OptionMenu(own_call_frame,
                                               self._own_call_var,
                                               *opt)
         self._own_call_dd_men.pack(side=tk.LEFT)
+        self._own_call_var.set(opt[0])
+
         ############
         # CH-ID
         ch_id_frame = ttk.Frame(own_call_frame)
@@ -154,6 +155,8 @@ class NewConnWin(tk.Toplevel):
         ch_opt = self._main.get_all_free_channels()
         if not ch_opt:
             ch_opt = ['']
+        ch_opt = [ch_id] + ch_opt
+
         ttk.Label(ch_id_frame,
                  text=self._getTabStr('channel'),
                  font=("TkFixedFont", 11),
@@ -162,6 +165,7 @@ class NewConnWin(tk.Toplevel):
                                               self._ch_id_var,
                                               *ch_opt)
         ch_id_opt.pack(side=tk.LEFT)
+        #self._ch_id_var.set(value=str(ch_id))
         ############
         # BTN
         conn_btn = tk.Button(lower_btn_frame,

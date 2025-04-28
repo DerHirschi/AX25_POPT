@@ -3,8 +3,9 @@ from tkinter import ttk
 from tkinter.colorchooser import askcolor
 
 from cfg.cfg_fnc import exist_awthemes_path
-from cfg.constant import LANG_IND, LANGUAGE, STYLES_BULD_IN, STYLES_AWTHEMES
+from cfg.constant import LANG_IND, LANGUAGE, STYLES_AWTHEMES, STYLES_BULD_IN_LINUX, STYLES_BULD_IN_WIN
 from cfg.popt_config import POPT_CFG
+from fnc.os_fnc import is_linux
 from fnc.str_fnc import get_strTab
 
 
@@ -72,7 +73,10 @@ class GeneralSettings(ttk.Frame):
         style_f.pack()
         ttk.Label(style_f, text="Style").pack(side=tk.LEFT, padx=3)
         self._style_var = tk.StringVar(self, value=conf.get('gui_parm_style_name', 'default'))
-        opt = STYLES_BULD_IN
+        if is_linux():
+            opt = STYLES_BULD_IN_LINUX
+        else:
+            opt = STYLES_BULD_IN_WIN
         if exist_awthemes_path():
             opt += STYLES_AWTHEMES
         style_opt_men = ttk.OptionMenu(

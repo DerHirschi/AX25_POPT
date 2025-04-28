@@ -97,7 +97,7 @@ class PoPT_GUI_Main:
         logger.info(logTag + 'start..')
         guiCfg = POPT_CFG.load_guiPARM_main()
         ###########################################
-        self.main_win = tk.Tk()
+        self.main_win   = tk.Tk()
         ###########################################
         self.style_name = guiCfg.get('gui_parm_style_name', 'default')
         logger.info(logTag + f'loading Style: {self.style_name}')
@@ -374,6 +374,10 @@ class PoPT_GUI_Main:
         self._monitor_start_msg()
         ############################
         self._Pacman.update_plot_f_ch(self.channel_index)
+        ##########################################
+        # Menubar fix if app starts in fullscreen
+        geom = self.main_win.winfo_geometry()
+        self.main_win.geometry(geom)
         #######################
         # LOOP LOOP LOOP
         self.main_win.after(self._loop_delay, self._tasker)

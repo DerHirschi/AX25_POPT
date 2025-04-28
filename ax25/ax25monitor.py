@@ -40,14 +40,9 @@ def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
     via_calls = []
     for call_str, c_bit in ax25_frame_conf.get('via_calls_str_c_bit', []):
         dist = round(USER_DB.get_distance(call_str))
-        if dist:
-            dist = f"({dist} km)"
-        else:
-            dist = ''
-        if c_bit:
-            via_calls.append(call_str + '*' + dist)
-        else:
-            via_calls.append(call_str + dist)
+        dist = f"({dist} km)" if dist else ''
+        via_calls.append(call_str + '*' + dist) if c_bit else via_calls.append(call_str + dist)
+
 
     out_str = f"{port_name} {rx_time.strftime('%H:%M:%S')}: {from_call} to {to_call}"
     out_str += ' via ' + ' '.join(via_calls) if via_calls else ''

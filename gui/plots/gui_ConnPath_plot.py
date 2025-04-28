@@ -15,7 +15,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 #import matplotlib
 
-from cfg.constant import MH_BEACON_FILTER, COLOR_MAP
+from cfg.constant import MH_BEACON_FILTER
 from cfg.popt_config import POPT_CFG
 
 #matplotlib.use('Agg')
@@ -56,7 +56,7 @@ class ConnPathsPlot(tk.Toplevel):
         #######################################################################
         #######################################################################
         btn_frame = ttk.Frame(self)
-        btn_frame.pack(side=tk.TOP)
+        btn_frame.pack(side=tk.TOP, fill=tk.X)
         refresh_btn = ttk.Button(btn_frame,
                                 text='Refresh',
                                 command=self._refresh_btn

@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.118.8'
+VER = '2.118.9'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -206,7 +206,13 @@ DEF_PORT_MON_RX_COL = 'green'
 DEF_PORT_MON_BG_COL = 'black'
 
 # Built-in Styles
-STYLES_BULD_IN = [
+STYLES_BULD_IN_LINUX = [
+            'default',
+            'alt',
+            'clam',
+            'classic',
+        ]
+STYLES_BULD_IN_WIN = [
             'default',
             'alt',
             'aqua',             # Not with Linux
@@ -219,14 +225,14 @@ STYLES_BULD_IN = [
 # awthems Styles
 STYLES_AWTHEMES_PATH = "data/awthemes-10.4.0"
 STYLES_AWTHEMES = [
-            'awarc',            # Not with Linux
+            #'awarc',            # Not with Linux
             'awdark',
             'awlight',
-            'awbreeze',         # Not with Linux
-            'awbreezedark',     # Not with Linux
-            'awblack',          # Not with Linux
-            'awclearlooks',     # Not with Linux
-            'awwinxpblue',      # Not with Linux
+            #'awbreeze',         # Not with Linux
+            #'awbreezedark',     # Not with Linux
+            #'awblack',          # Not with Linux
+            #'awclearlooks',     # Not with Linux
+            #'awwinxpblue',      # Not with Linux
         ]
 # Style Color MAP
 COLOR_MAP = {
@@ -242,12 +248,12 @@ COLOR_MAP = {
             'awdark':        ('#ffffff',  '#33393B'),
             'awlight':       ('#000000',  '#e8e8e7'),
             # In Win ??
-            'awarc':  ('#ffffff',  '#33393B'),
-            'awbreeze':  ('#ffffff',  '#33393B'),
-            'awbreezedark':  ('#ffffff',  '#33393B'),
-            'awblack':  ('#ffffff',  '#33393B'),
-            'awclearlooks':  ('#ffffff',  '#33393B'),
-            'awwinxpblue':  ('#ffffff',  '#33393B'),
+            #'awarc':  ('#ffffff',  '#33393B'),
+            #'awbreeze':  ('#ffffff',  '#33393B'),
+            #'awbreezedark':  ('#ffffff',  '#33393B'),
+            #'awblack':  ('#ffffff',  '#33393B'),
+            #'awclearlooks':  ('#ffffff',  '#33393B'),
+            #'awwinxpblue':  ('#ffffff',  '#33393B'),
         }
 # F Key Tab
 F_KEY_TAB_LINUX = {
