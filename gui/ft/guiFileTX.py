@@ -72,6 +72,7 @@ class FileSend(tk.Toplevel):
         _label = ttk.Label(main_f, text=STR_TABLE['protocol'][self._root_win.language])
         self.protocol_var = tk.StringVar(self)
         opt = FT_MODES
+        opt = [opt[0]] + opt
         self.protocol_var.set(opt[0])
         prot = ttk.OptionMenu(main_f, self.protocol_var, *opt, command=self._change_settings)
         # prot.configure(width=8, height=1)

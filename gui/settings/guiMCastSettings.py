@@ -144,6 +144,7 @@ class MCastMoveMember(tk.Toplevel):
         #
         channels = list(self._mcast_cfg.get('mcast_ch_conf', {}).keys())
         self._ent_var = tk.StringVar(self, str(self._ackt_ch))
+        channels = [str(self._ackt_ch)] + channels
         ent = ttk.OptionMenu(f1, self._ent_var, *channels)
         ent.pack(side=tk.LEFT, padx=5)
         ###########################################

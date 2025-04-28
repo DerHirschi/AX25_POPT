@@ -45,7 +45,7 @@ class StatSetTab:
         self._cli_select_var = tk.StringVar(self.own_tab)
         self._cli_opt = CLI_OPT
         opt = list(self._cli_opt.keys())
-
+        opt = [self._cli_select_var.get()] + opt
         cli = ttk.OptionMenu(self.own_tab, self._cli_select_var, *opt, command=self.chk_CLI)
         # cli.configure(width=8, height=1)
         cli.place(x=cli_x + 115, y=height - cli_y - 2)

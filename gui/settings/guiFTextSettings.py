@@ -42,9 +42,10 @@ class FText_Tab(ttk.Frame):
         text = self._ftext_tuple[0].decode(self._enc_var.get(), 'ignore')
         self._f_text.insert(tk.END, text)
         ##################################################
+        enc_opt = [self._enc_var.get()] + list(ENCODINGS)
         ttk.OptionMenu(stat_frame,
                       self._enc_var,
-                      *ENCODINGS,
+                      *enc_opt,
                       command=self._update_enc).pack(side=tk.LEFT, padx=10)
         ##################################################
         ttk.Label(stat_frame,

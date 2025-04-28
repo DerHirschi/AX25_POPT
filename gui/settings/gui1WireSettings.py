@@ -33,10 +33,11 @@ class OneWireSettings(ttk.Frame):
         rt_opt_frame = ttk.Frame(global_opt_frame)
         rt_opt_frame.pack(fill=tk.Y, padx=10, pady=10)
         ttk.Label(rt_opt_frame, text='Sensor Read Timer in s:').pack(side=tk.LEFT, padx=15)
+        self._read_timer_var.set(str(POPT_CFG.get_1wire_loop_timer()))
         opt = [x * 30 for x in range(1, 13)]
+        opt = [self._read_timer_var.get()] + opt
         read_timer_menu = ttk.OptionMenu(rt_opt_frame, self._read_timer_var, *opt)
         read_timer_menu.pack(side=tk.LEFT, padx=5)
-        self._read_timer_var.set(str(POPT_CFG.get_1wire_loop_timer()))
 
         #
         """

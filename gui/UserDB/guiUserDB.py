@@ -185,7 +185,7 @@ class UserDB(tk.Toplevel):
         x = 375
         y = 20
         ttk.Label(tab1, text='Typ: ').place(x=x, y=y)
-        opt = STATION_TYPS
+        opt = [self._typ_var.get()] + STATION_TYPS
         typ_ent = ttk.OptionMenu(tab1, self._typ_var, *opt)
         typ_ent.place(x=x + 80, y=y - 2)
         # SYSOP
@@ -195,6 +195,7 @@ class UserDB(tk.Toplevel):
         opt = sorted(self._user_db.get_keys_by_typ(typ='SYSOP'))
         if not opt:
             opt = ['']
+        opt = [self._sysop_var.get()] + opt
         self._sysop_ent = ttk.OptionMenu(tab1,
                                         self._sysop_var,
                                         *opt,
@@ -239,7 +240,7 @@ class UserDB(tk.Toplevel):
         x = 455
         y = 110
         ttk.Label(tab1, text=f"{self._getTabStr('txt_decoding')}: ").place(x=x, y=y)
-        opt = list(ENCODINGS)
+        opt = [self._encoding_var.get()] + list(ENCODINGS)
         encoding_ent = ttk.OptionMenu(tab1, self._encoding_var, *opt)
         encoding_ent.place(x=x + 185, y=y - 2)
         # Software
@@ -300,6 +301,7 @@ class UserDB(tk.Toplevel):
             'ITALIENISCH',
         ]
         self._lang_var.set('DEUTSCH')
+        lang_opt = [self._lang_var.get()] + lang_opt
         lang_ent = ttk.OptionMenu(tab1, self._lang_var, *lang_opt)
         lang_ent.configure(state='disabled')  # TODO
         lang_ent.place(x=x + 80, y=y - 2)
@@ -338,7 +340,7 @@ class UserDB(tk.Toplevel):
         x = 10
         y = 300
         ttk.Label(tab2, text='Max-Pac: ').place(x=x, y=y)
-        max_pac_opt = list(range(8))
+        max_pac_opt = [self._max_pac_var.get()] + list(range(8))
         max_pac_ent = ttk.OptionMenu(tab2,
                                     self._max_pac_var,
                                     *max_pac_opt

@@ -40,6 +40,7 @@ class GeneralSettings(ttk.Frame):
                 self._lang_var.set(land)
         opt = list(LANG_IND.keys())
         ttk.Label(lang_frame, text=f'{self._getTabStr("language")}: ').pack(side=tk.LEFT)
+        opt = [self._lang_var.get()] + opt
         lang_ent =ttk.OptionMenu(lang_frame,
                                  self._lang_var,
                                        *opt,
@@ -79,13 +80,14 @@ class GeneralSettings(ttk.Frame):
             opt = STYLES_BULD_IN_WIN
         if exist_awthemes_path():
             opt += STYLES_AWTHEMES
+        self._style_var.set(conf.get('gui_parm_style_name', 'default'))
+        opt = [self._style_var.get()] + opt
         style_opt_men = ttk.OptionMenu(
             style_f,
             self._style_var,
             *opt
         )
         style_opt_men.pack(side=tk.LEFT)
-        self._style_var.set(conf.get('gui_parm_style_name', 'default'))
         ############################################################
         vorsch_col_frame = ttk.Frame(h_frame2_l, )
         vorsch_col_frame.pack()

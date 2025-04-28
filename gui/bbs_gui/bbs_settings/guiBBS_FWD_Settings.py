@@ -142,6 +142,7 @@ class BBS_FWD_Settings(ttk.Frame):
         if not options:
             options = ['-']
             port_id_var.set(options[0])
+        options =[port_id_var.get()] + options
         ttk.OptionMenu(p_id_f,
                       port_id_var,
                       *options

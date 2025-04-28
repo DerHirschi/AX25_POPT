@@ -58,15 +58,16 @@ class BBS_addRuleWin(tk.Toplevel):
         """
 
         opt_tab = {
-            0: ('BBS', '!BBS', 'H', '!H', 'CALL', '!CALL'),
-            1: ('THEME', '!THEME', 'DIST', '!DIST'),
+            0: ['BBS', '!BBS', 'H', '!H', 'CALL', '!CALL'],
+            1: ['THEME', '!THEME', 'DIST', '!DIST'],
         }
 
-        default_opt = opt_tab.get(opt_index, ())
+        default_opt = opt_tab.get(opt_index, [])
         if not default_opt:
             logger.error(self._logTag + f"Wrong Opt (opt_index): {opt_index}")
             self.destroy_win()
             return
+        default_opt = [default_opt[0]] + default_opt
         ####################################################
         # Vars
 

@@ -132,18 +132,19 @@ class BBSAutoMailSettings(ttk.Frame):
         opt      = [self._pms_cfg.get('user', '')] + list(stat_cfg.keys())
         if not opt:
             opt = ['']
+        from_var.set(sender)
+        opt = [from_var.get()] + opt
         ttk.OptionMenu(from_frame,
                       from_var,
                       *opt
                       ).pack(side=tk.LEFT, fill=tk.X, expand=False, padx=25)
-        from_var.set(sender)
         typ_frame = ttk.Frame(from_frame)
         typ_frame.pack(side=tk.LEFT, expand=True, padx=130)
 
         ttk.Label(typ_frame, text='Typ: ').pack(side=tk.LEFT, expand=False, )
         ttk.OptionMenu(typ_frame,
                       msg_typ_var,
-                      *['P', 'B'], ).pack(side=tk.LEFT, expand=False, )
+                      *['P','P', 'B'], ).pack(side=tk.LEFT, expand=False, )
         msg_typ_var.set(msg_typ)
         ttk.Button(typ_frame, text='Schedule', command=self._open_schedWin).pack(side=tk.LEFT, padx=50)
         ttk.Checkbutton(typ_frame, text='ENV-Vars', variable=env_vars_var).pack(side=tk.LEFT, padx=20)

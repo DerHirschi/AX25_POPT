@@ -33,8 +33,9 @@ class BeaconTab:
         opt = list(POPT_CFG.get_stat_CFG_keys())
         if not opt:
             opt = ['NOCALL']
-        from_call = ttk.OptionMenu(self.own_tab, self.from_select_var, *opt, command=self._cmd_fm_call_set)
         self.from_select_var.set(beacon.get('own_call', 'NOCALL'))  # default value
+        opt = [self.from_select_var.get()] + opt
+        from_call = ttk.OptionMenu(self.own_tab, self.from_select_var, *opt, command=self._cmd_fm_call_set)
         #from_call.configure(width=8, height=1)
         from_call.place(x=call_x + 55, y=call_y - 5)
 
@@ -97,7 +98,7 @@ class BeaconTab:
         opt = list(PORT_HANDLER.get_all_ports().keys())
         if not opt:
             opt = ['0']
-
+        opt = [self.port_select_var.get()] + opt
         port = ttk.OptionMenu(self.own_tab,
                              self.port_select_var,
                              *opt,
@@ -149,14 +150,15 @@ class BeaconTab:
         call_x = 750
         call_y = 125
         ttk.Label(self.own_tab, text='Typ: ').place(x=call_x + 68, y=call_y)
-        _options = ["Text", "File", "MH"]
+        options = ["Text", "File", "MH"]
         self.beacon_type_var = tk.StringVar(self.own_tab)
+        self.beacon_type_var.set(beacon.get('typ', 'Text'))
+        options = [self.beacon_type_var.get()] + options
         ttk.OptionMenu(self.own_tab,
                       self.beacon_type_var,
                       command=self._cmd_be_change_typ,
-                      *_options
+                      *options
                       ).place(x=call_x + 125, y=call_y)
-        self.beacon_type_var.set(beacon.get('typ', 'Text'))
 
         ####################################################
         # Scheduler BTN

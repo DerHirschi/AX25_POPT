@@ -155,6 +155,9 @@ class BBS_newMSG(tk.Toplevel):
         opt      = list(stat_cfg.keys())
         if opt:
             self._from_call_var.set(opt[0])
+            opt = [opt[0]] + opt
+        else:
+            opt = ['', '']
         ttk.OptionMenu(from_frame,
                  self._from_call_var,
                  *opt
@@ -163,14 +166,14 @@ class BBS_newMSG(tk.Toplevel):
         typ_frame = ttk.Frame(from_frame)
         typ_frame.pack(side=tk.LEFT, expand=True, padx=130)
         ttk.Label(typ_frame, text='Typ: ').pack(side=tk.LEFT, expand=False, )
-        opt = ['P', 'B']
+        opt = [self._msg_typ_var.get()] + ['P', 'B']
         ttk.OptionMenu(typ_frame,
                       self._msg_typ_var,
                       *opt, ).pack(side=tk.LEFT, expand=False, )
 
 
         ttk.Label(from_frame, text='FWD-BBS: ').pack(side=tk.LEFT, expand=False, padx=25)
-        opt = ['AUTO'] + self._bbs_obj.get_pms_cfg().get('home_bbs', [])
+        opt = ['AUTO', 'AUTO'] + self._bbs_obj.get_pms_cfg().get('home_bbs', [])
         if opt:
             self._home_bbs_var.set(opt[0])
         ttk.OptionMenu(from_frame,

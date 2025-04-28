@@ -82,20 +82,21 @@ class BBSGeneralSettings(ttk.Frame):
         opt = list(POPT_CFG.get_stat_CFGs_by_typ().keys())
         if not opt:
             opt = ['']
+        self._sysop_call_var.set(str(self._pms_cfg.get('sysop', '')))
+        opt = [self._sysop_call_var.get()] + opt
         ttk.OptionMenu(sysop_call_fr,
                  self._sysop_call_var,
                  *opt,
                  ).pack(side=tk.LEFT, expand=False)
-        self._sysop_call_var.set(str(self._pms_cfg.get('sysop', '')))
         ttk.Label(own_call_fr, text='BBS-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
         opt = list(POPT_CFG.get_stat_CFGs_by_typ('BOX').keys())
         if not opt:
             opt = ['']
+        opt = [self._own_call_var.get()] + opt
         ttk.OptionMenu(own_call_fr,
                 self._own_call_var,
                  *opt
                  ).pack(side=tk.LEFT, expand=False)
-        self._own_call_var.set(self._pms_cfg.get('user', ''))
         ttk.Label(own_regio_fr, text=f"{self._getTabStr('region')}: ", width=10).pack(side=tk.LEFT, expand=False)
         ttk.Entry(own_regio_fr,
                  textvariable=self._own_regio_var,

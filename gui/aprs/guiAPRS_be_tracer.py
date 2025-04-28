@@ -19,7 +19,7 @@ class BeaconTracer(tk.Toplevel):
         self._lang = POPT_CFG.get_guiCFG_language()
         # self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self.style = self._root_win.style
-        self.geometry(f"1300x"
+        self.geometry(f"1330x"
                       f"400+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
@@ -64,6 +64,7 @@ class BeaconTracer(tk.Toplevel):
         if not options:
             options = [0]
         ttk.Label(frame_2_port, text='Port ').pack(side=tk.LEFT, padx=5)
+        options = [self._be_port_var.get()] + options
         ttk.OptionMenu(frame_2_port, self._be_port_var, *options, command=self._chk_port).pack(side=tk.LEFT, )
 
         # Station / Call

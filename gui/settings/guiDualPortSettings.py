@@ -24,17 +24,19 @@ class DP_cfg_Tab(ttk.Frame):
         prim_port_frame.pack(side=tk.LEFT, expand=True)
         prim_port_label = ttk.Label(prim_port_frame, text='Primary-Port: ')
         prim_port_label.pack(side=tk.LEFT)
-        prim_port = ttk.OptionMenu(prim_port_frame, self._prim_port_var, *port_opt)
-        prim_port.pack(side=tk.LEFT)
         self._prim_port_var.set(str(dp_settings.get('primary_port_id', -1)))
+        prim_port_opt = [self._prim_port_var.get()] + port_opt
+        prim_port = ttk.OptionMenu(prim_port_frame, self._prim_port_var, *prim_port_opt)
+        prim_port.pack(side=tk.LEFT)
 
         sec_port_frame = ttk.Frame(port_frame)
         sec_port_frame.pack(side=tk.LEFT, expand=True)
         sec_port_label = ttk.Label(sec_port_frame, text='Secondary-Port: ')
         sec_port_label.pack(side=tk.LEFT)
-        sec_port = ttk.OptionMenu(sec_port_frame, self._sec_port_var, *port_opt)
-        sec_port.pack(side=tk.LEFT)
         self._sec_port_var.set(str(dp_settings.get('secondary_port_id', -1)))
+        sec_port_opt = [self._sec_port_var.get()] + port_opt
+        sec_port = ttk.OptionMenu(sec_port_frame, self._sec_port_var, *sec_port_opt)
+        sec_port.pack(side=tk.LEFT)
 
         ##################
         # Options
@@ -56,9 +58,10 @@ class DP_cfg_Tab(ttk.Frame):
         tx_auto_mode.pack(padx=80)
         tx_auto_mode_label = ttk.Label(tx_auto_mode, text='Auto-TX Mode: ')
         tx_auto_mode_label.pack(side=tk.LEFT)
+        self._tx_auto_mode_var.set(mode_opt[dp_settings.get('auto_tx_mode', 0)])
+        mode_opt = [self._tx_auto_var.get()] + mode_opt
         tx_auto_mode = ttk.OptionMenu(tx_auto_mode, self._tx_auto_mode_var, *mode_opt)
         tx_auto_mode.pack(side=tk.LEFT)
-        self._tx_auto_mode_var.set(mode_opt[dp_settings.get('auto_tx_mode', 0)])
 
     def get_cfg_fm_vars(self):
         prim_port = self._prim_port_var.get()

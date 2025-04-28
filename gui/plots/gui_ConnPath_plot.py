@@ -72,14 +72,14 @@ class ConnPathsPlot(tk.Toplevel):
             'Shell': nx.shell_layout,
             # 'Position': None,
         }
-        style_opt_keys = list(self._style_opt.keys())
+        self._style_var.set('Spring')
+        style_opt_keys = [self._style_var.get()] +  list(self._style_opt.keys())
         style_option = ttk.OptionMenu(btn_frame,
                                      self._style_var,
                                      *style_opt_keys,
                                      command=self._refresh_btn
                                      )
         style_option.pack(side=tk.LEFT, padx=10)
-        self._style_var.set('Spring')
 
         # node_option = [''] + list(self._node_key)
         # node_option.sort()

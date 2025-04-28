@@ -141,7 +141,7 @@ class NewConnWin(tk.Toplevel):
             opt = PORT_HANDLER.get_stat_calls_fm_port(self._port_index)
             if not opt:
                 opt = ['NOCALL']
-
+        opt = [opt[0]] + opt
         self._own_call_dd_men = ttk.OptionMenu(own_call_frame,
                                               self._own_call_var,
                                               *opt)

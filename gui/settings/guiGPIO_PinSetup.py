@@ -118,7 +118,9 @@ class GPIO_pinSetup(tk.Toplevel):
         fnc_sel_frame = ttk.Frame(param_frame_l)
         fnc_sel_frame.pack(fill=tk.X, pady=15)
         ttk.Label(fnc_sel_frame, text='Function: ').pack(side=tk.LEFT, padx=5)
-        opt = [''] + list(self._pin_fnc_opt.keys())
+        opt = [self._pin_fnc_var.get()] + list(self._pin_fnc_opt.keys())
+        if not opt:
+            opt = ['', '']
         fnc_selector = ttk.OptionMenu(
             fnc_sel_frame,
             self._pin_fnc_var,
@@ -166,10 +168,11 @@ class GPIO_pinSetup(tk.Toplevel):
         pol_t_frame.pack(fill=tk.X, pady=10)
         ttk.Label(pol_t_frame, text='Polarity').pack(side=tk.LEFT, padx=5)
 
-        opt = self._pol_opt.keys()
+        opt = list(self._pol_opt.keys())
+        self._pol_var.set('normal')
+        opt = [self._pin_fnc_var.get()] + opt
         self._pol_sel = ttk.OptionMenu(pol_t_frame, self._pol_var, *opt)
         self._pol_sel.pack(side=tk.LEFT, padx=5)
-        self._pol_var.set('normal')
         ###########################################
         # param_frame_r
         lable_frame_1 = ttk.Frame(param_frame_r)

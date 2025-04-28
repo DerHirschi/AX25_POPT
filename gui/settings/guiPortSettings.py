@@ -76,7 +76,7 @@ class PortSetTab:
         port_label.place(x=port_x, y=height - port_y)
         self._port_select_var = tk.StringVar(self.tab)
 
-        opt = port_types
+        opt = [self._port_select_var.get()] + port_types
         port_men = ttk.OptionMenu(self.tab, self._port_select_var, *opt, command=self._update_port_parameter)
         self._port_select_var.set(self._port_setting.get('parm_PortTyp', new_cfg.get('parm_PortTyp', '')))  # default value
         #port_men.configure(width=10, height=1)
@@ -277,6 +277,7 @@ class PortSetTab:
         except IndexError:
             self._kiss_start_var.set('')
 
+        opt = [self._kiss_start_var.get()] + opt
         kiss_start_men = ttk.OptionMenu(self.tab, self._kiss_start_var, *opt, command=self.set_need_reinit)
         #kiss_start_men.configure(width=10, height=1)
         kiss_start_men.place(x=kiss_start_x + 220, y=height - kiss_start_y)
@@ -302,6 +303,7 @@ class PortSetTab:
             )  # default value
         except IndexError:
             self._kiss_end_var.set('')
+        opt = [self._kiss_end_var.get()] + opt
         kiss_end_men = ttk.OptionMenu(self.tab, self._kiss_end_var, *opt, command=self.set_need_reinit)
         #kiss_end_men.configure(width=10, height=1)
         kiss_end_men.place(x=kiss_end_x + 220, y=height - kiss_end_y)
@@ -415,6 +417,7 @@ class PortSetTab:
         self._max_pac_var = tk.StringVar(self.tab)
         # self._max_pac_var.set(str(self._port_setting.parm_MaxFrame))  # default value
         self._max_pac_var.set(str(self._port_setting.get('parm_MaxFrame', new_cfg.get('parm_MaxFrame', 3))))  # default value
+        opt_max_pac = [self._max_pac_var.get()] + opt_max_pac
         max_pac = ttk.OptionMenu(self.tab, self._max_pac_var, *opt_max_pac)
         #max_pac.configure(width=4, height=1)
         max_pac_help = ttk.Label(self.tab, text=self._getTabStr('port_cfg_pac_max'))
@@ -742,6 +745,7 @@ class PortSetTab:
             else:
                 ser_ports = [f"COM{x}" for x in range(1, 100)]
                 self._param1_ent.destroy()
+                ser_ports = [self._param1_var.get()] + ser_ports
                 self._param1_ent = ttk.OptionMenu(self.tab, self._param1_var, *ser_ports)
                 self._param1_ent.configure(width=7)
                 self._param1_ent.place(x=self._param1_x, y=self._param1_y)

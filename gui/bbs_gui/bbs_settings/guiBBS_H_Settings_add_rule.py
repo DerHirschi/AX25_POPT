@@ -10,7 +10,7 @@ class BBS_addRuleWinHold(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win)
         self._logTag = "BBS_add_RH_RuleWin> "
-        win_width = 950
+        win_width = 970
         win_height = 170
         self.style = root_win.style
         self.geometry(f"{win_width}x"
@@ -46,9 +46,9 @@ class BBS_addRuleWinHold(tk.Toplevel):
         ##################################################
         m_frame  = ttk.Frame(main_f)
         m_frame.pack(side=tk.TOP, expand=True, fill=tk.BOTH, padx=7, pady=7)
-        opt = ('B', 'P')
-        mopt_m = ttk.OptionMenu(m_frame, self._msg_typ_var, *opt)
         self._msg_typ_var.set('B')
+        opt = [self._msg_typ_var.get()] + ['B', 'P']
+        mopt_m = ttk.OptionMenu(m_frame, self._msg_typ_var, *opt)
         mopt_m.pack(side=tk.LEFT, padx=8)
         ######
         from_ent_f = ttk.Frame(m_frame)
@@ -76,9 +76,9 @@ class BBS_addRuleWinHold(tk.Toplevel):
         ttk.Label(from_ent_f, text='MaxLen: ').pack(side=tk.LEFT)
         ttk.Entry(from_ent_f, textvariable=self._msg_len_var, width=9).pack(side=tk.LEFT)
         ##########
-        opt = ('R', 'H')
-        ropt_m = ttk.OptionMenu(m_frame, self._RH_opt_var, *opt)
         self._RH_opt_var.set('H')
+        opt = [self._RH_opt_var.get()] + ['R', 'H']
+        ropt_m = ttk.OptionMenu(m_frame, self._RH_opt_var, *opt)
         ropt_m.pack(side=tk.LEFT, padx=8)
         ###########################################
         # BTN
