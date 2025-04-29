@@ -207,79 +207,7 @@ class BBSRoutingSettings(ttk.Frame):
             tree=pn_ncall_out_tree
         ))
 
-        """
-        #################################################################
-        # BL In
-        #################################################################
-        # Frames
-        bl_in_label_f       = tk.Frame(bl_incoming_frame)
-        bl_th_in_f          = tk.Frame(bl_incoming_frame)
-        bl_not_th_in_f      = tk.Frame(bl_incoming_frame)
-        bl_dist_in_f        = tk.Frame(bl_incoming_frame)
-        bl_not_dist_in_f    = tk.Frame(bl_incoming_frame)
 
-        # Pack it
-
-        bl_in_label_f.pack(     side=tk.TOP,  expand=False,fill=tk.X)
-        bl_th_in_f.pack(        side=tk.LEFT, expand=True, fill=tk.BOTH)
-        bl_not_th_in_f.pack(    side=tk.LEFT, expand=True, fill=tk.BOTH)
-        bl_dist_in_f.pack(      side=tk.LEFT, expand=True, fill=tk.BOTH)
-        bl_not_dist_in_f.pack(  side=tk.LEFT, expand=True, fill=tk.BOTH)
-
-        #############################################
-        tk.Label(bl_in_label_f,
-                 text=self._getTabStr('bbs_sett_bl_bbs_in'),
-                 height=2
-                 ).pack(side=tk.TOP, expand=False, fill=tk.X)
-        #############################################
-        # pn_bbs_out_f
-
-        #################
-        # pn_h_out_f
-        bl_th_in_tree = ttk.Treeview(bl_th_in_f, columns=('c1',), show='headings')
-        bl_th_in_tree.pack(side=tk.LEFT, expand=True, fill=tk.Y, padx=7, pady=10)
-        bl_th_in_tree.heading('c1', text='THEME', command=lambda: self._sort_entry('c1', bl_th_in_tree))
-        bl_th_in_tree.column("c1", anchor=tk.CENTER, stretch=tk.NO, width=120)
-        bl_th_in_tree.bind('<<TreeviewSelect>>', lambda event: self._tree_select(
-            conf_name='bl_top_in',
-            dest_call=dest_call,
-            tree=bl_th_in_tree
-        ))
-        #################
-        # pn_not_h_out_f
-        bl_nth_in_tree = ttk.Treeview(bl_not_th_in_f, columns=('c1',), show='headings')
-        bl_nth_in_tree.pack(side=tk.LEFT, expand=True, fill=tk.Y, padx=7, pady=10)
-        bl_nth_in_tree.heading('c1', text='!THEME', command=lambda: self._sort_entry('c1', bl_nth_in_tree))
-        bl_nth_in_tree.column("c1", anchor=tk.CENTER, stretch=tk.NO, width=120)
-        bl_nth_in_tree.bind('<<TreeviewSelect>>', lambda event: self._tree_select(
-            conf_name='bl_top_not_in',
-            dest_call=dest_call,
-            tree=bl_nth_in_tree
-        ))
-
-        #################
-        # pn_call_out_f
-        bl_dist_in_tree = ttk.Treeview(bl_dist_in_f, columns=('c1',), show='headings')
-        bl_dist_in_tree.pack(side=tk.LEFT, expand=True, fill=tk.Y, padx=7, pady=10)
-        bl_dist_in_tree.heading('c1', text='DIST', command=lambda: self._sort_entry('c1', bl_dist_in_tree))
-        bl_dist_in_tree.column("c1", anchor=tk.CENTER, stretch=tk.NO, width=120)
-        bl_dist_in_tree.bind('<<TreeviewSelect>>', lambda event: self._tree_select(
-            conf_name='bl_dist_in',
-            dest_call=dest_call,
-            tree=bl_dist_in_tree
-        ))
-        
-        #################
-        # pn_not_call_out_f
-        bl_n_dist_in_tree = ttk.Treeview(bl_not_dist_in_f, columns=('c1',), show='headings')
-        bl_n_dist_in_tree.pack(side=tk.LEFT, expand=True, fill=tk.Y, padx=7, pady=10)
-        bl_n_dist_in_tree.heading('c1', text='!DIST', command=lambda: self._sort_entry('c1', bl_n_dist_in_tree))
-        bl_n_dist_in_tree.column("c1", anchor=tk.CENTER, stretch=tk.NO, width=120)
-        bl_n_dist_in_tree.bind('<<TreeviewSelect>>', lambda event: self._tree_select(
-            conf_name='bl_dist_not_in',
-            dest_call=dest_call,
-            tree=bl_n_dist_in_tree
-        ))"""
         #################################################################
         # BL OUT
         #################################################################
@@ -354,15 +282,6 @@ class BBSRoutingSettings(ttk.Frame):
 
         return {
             'tab_clt':                  tabctl,
-            # PN IN
-            """
-            'pn_bbs_in_tree':           pn_bbs_in_tree,
-            'pn_nbbs_in_tree':          pn_nbbs_in_tree,
-            'pn_h_in_tree':             pn_h_in_tree,
-            'pn_nh_in_tree':            pn_nh_in_tree,
-            'pn_call_in_tree':          pn_call_in_tree,
-            'pn_ncall_in_tree':         pn_ncall_in_tree,
-            """
             # PN Out
             'pn_bbs_out_tree':          pn_bbs_out_tree,
             'pn_nbbs_out_tree':         pn_nbbs_out_tree,
@@ -370,13 +289,6 @@ class BBSRoutingSettings(ttk.Frame):
             'pn_nh_out_tree':           pn_nh_out_tree,
             'pn_call_out_tree':         pn_call_out_tree,
             'pn_ncall_out_tree':        pn_ncall_out_tree,
-            # BL IN
-            """
-            'bl_th_in_tree':            bl_th_in_tree,
-            'bl_nth_in_tree':           bl_nth_in_tree,
-            'bl_dist_in_tree':          bl_dist_in_tree,
-            'bl_n_dist_in_tree':        bl_n_dist_in_tree,
-            """
             # BL OUT
             'bl_th_out_tree':           bl_th_out_tree,
             'bl_nth_out_tree':          bl_nth_out_tree,
@@ -392,40 +304,52 @@ class BBSRoutingSettings(ttk.Frame):
     def _update_all_trees(self):
         for dest_call, tree_cfg in self._routing_trees.items():
             tree_cfg: dict
+            tree_data_fm_cfg = {
+
+                # PN Out
+                'pn_bbs_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'pn_fwd_bbs_out', []),
+                'pn_nbbs_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'pn_fwd_not_bbs_out', []),
+                'pn_h_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'pn_fwd_h_out', []),
+                'pn_nh_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'pn_fwd_not_h_out', []),
+                'pn_call_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'pn_fwd_call_out', []),
+                'pn_ncall_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'pn_fwd_not_call_out', []),
+                # BL In
+
+                # BL Out
+                'bl_th_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'bl_top_out', []),
+                'bl_nth_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'bl_top_not_out', []),
+                'bl_dist_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'bl_dist_out', []),
+                'bl_n_dist_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
+                    'bl_dist_not_out', []),
+
+            }
+
             for tree_name, tree in tree_cfg.items():
-                tree_data_fm_cfg = {
-
-                    # PN Out
-                    'pn_bbs_out_tree':      self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'pn_fwd_bbs_out', []),
-                    'pn_nbbs_out_tree':     self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'pn_fwd_not_bbs_out', []),
-                    'pn_h_out_tree':        self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'pn_fwd_h_out', []),
-                    'pn_nh_out_tree':       self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'pn_fwd_not_h_out', []),
-                    'pn_call_out_tree':     self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'pn_fwd_call_out', []),
-                    'pn_ncall_out_tree':    self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'pn_fwd_not_call_out', []),
-                    # BL In
-
-                    # BL Out
-                    'bl_th_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'bl_top_out', []),
-                    'bl_nth_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'bl_top_not_out', []),
-                    'bl_dist_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'bl_dist_out', []),
-                    'bl_n_dist_out_tree': self._pms_cfg.get('fwd_bbs_cfg', {}).get(dest_call, {}).get(
-                        'bl_dist_not_out', []),
-
-
-                }.get(tree_name, None)
-                # tree_data_fm_cfg = ['test', '1', 'TTT']
-                if tree_data_fm_cfg is None:
+                if tree_name == 'tab_clt':
                     continue
-                self._update_tree(tree, tree_data_fm_cfg)
+                #print(f"Tree {tree_name}: {tree}")
+                if tree is None:
+                    logger.error(self._logTag + f"Tree {tree_name} is None for dest_call {dest_call}")
+                    continue
+                t_data = tree_data_fm_cfg.get(tree_name, None)
+                # tree_data_fm_cfg = ['test', '1', 'TTT']
+                #print(f"-{tree_name}: {t_data}")
+                if t_data is None:
+                    #tree_data_fm_cfg = []
+                    t_data = []
+                try:
+                    self._update_tree(tree, t_data)
+                except AttributeError as e:
+                    logger.error(self._logTag + f"Tree {tree_name} - t_data: {t_data} - {e}")
 
     def _update_tree(self, tree, tree_data_list):
         for i in tree.get_children():
@@ -447,6 +371,10 @@ class BBSRoutingSettings(ttk.Frame):
             if not fwd_cfg:
                 logger.warning(self._logTag + f"Empty FWD-CFG for {k}")
                 fwd_cfg = getNew_BBS_FWD_cfg()
+            dest_call = fwd_cfg.get('dest_call', 'NOCALL')
+            if dest_call in self._routing_trees:
+                logger.warning(self._logTag + f"Duplicate dest_call: {dest_call}")
+
             self._routing_trees[fwd_cfg.get('dest_call', 'NOCALL')] = self._add_fwdBBS_pn_out_tab(fwd_cfg)
 
     ####################################

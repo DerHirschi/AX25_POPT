@@ -67,7 +67,6 @@ class BBS_addRuleWin(tk.Toplevel):
             logger.error(self._logTag + f"Wrong Opt (opt_index): {opt_index}")
             self.destroy_win()
             return
-        default_opt = [default_opt[0]] + default_opt
         ####################################################
         # Vars
 
@@ -81,14 +80,13 @@ class BBS_addRuleWin(tk.Toplevel):
         entry_frame = ttk.Frame(upper_frame)
         optM_frame.pack( expand=False, fill=tk.X, padx=10, pady=10)
         entry_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
-
+        opt = [self._opt_var.get()] + default_opt
         optM        = ttk.OptionMenu(
             optM_frame,
             self._opt_var,
-            *default_opt
+            *opt
         )
         optM.pack(side=tk.LEFT, expand=False, padx=30)
-        self._opt_var.set(default_opt[0])
 
         opt_ent     = ttk.Entry(
             entry_frame,

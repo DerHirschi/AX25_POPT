@@ -5,6 +5,7 @@ Fixes:
 - Scripterror in guiAPRSnewMSG.py beim Aufrufen
 - Scripterror in guiPipeToolSettings.py wenn versucht wird leere
   Config zu löschen
+- BBS-Einstellungen - Routing: Zeigt werte für "BBS" und "THEME" nicht an
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.
