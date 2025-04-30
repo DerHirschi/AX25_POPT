@@ -338,7 +338,7 @@ class BBSRoutingSettings(ttk.Frame):
                     continue
                 #print(f"Tree {tree_name}: {tree}")
                 if tree is None:
-                    logger.error(self._logTag + f"Tree {tree_name} is None for dest_call {dest_call}")
+                    #logger.debug(self._logTag + f"Tree {tree_name} is None for dest_call {dest_call}")
                     continue
                 t_data = tree_data_fm_cfg.get(tree_name, None)
                 # tree_data_fm_cfg = ['test', '1', 'TTT']
@@ -348,8 +348,9 @@ class BBSRoutingSettings(ttk.Frame):
                     t_data = []
                 try:
                     self._update_tree(tree, t_data)
-                except AttributeError as e:
-                    logger.error(self._logTag + f"Tree {tree_name} - t_data: {t_data} - {e}")
+                except AttributeError:
+                    #logger.debug(self._logTag + f"Tree {tree_name} - t_data: {t_data} - {e}")
+                    pass
 
     def _update_tree(self, tree, tree_data_list):
         for i in tree.get_children():

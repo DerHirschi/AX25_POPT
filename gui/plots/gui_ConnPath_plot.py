@@ -4,7 +4,8 @@ from datetime import datetime
 
 #from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
+#from gui import FigureCanvasTkAgg
+from gui import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import networkx as nx
 import random
 from ax25.ax25InitPorts import PORT_HANDLER
@@ -25,7 +26,7 @@ from gui import plt
 
 class ConnPathsPlot(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self, master=root_win.main_win)
+        tk.Toplevel.__init__(self)
         self.wm_title("MH Routes")
         self._root_win = root_win
         #self._get_colorMap = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
@@ -142,11 +143,11 @@ class ConnPathsPlot(tk.Toplevel):
         self._canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH)
         # Werkzeugleisten für die plots erstellen
         #fg, bg = self._get_colorMap()
-        toolbar1 = NavigationToolbar2Tk(self._canvas, g_frame)
         #toolbar1.configure(
         #    bg=bg
         #)
         #toolbar1._message_label.config(background=bg, fg=fg)
+        toolbar1 = NavigationToolbar2Tk(self._canvas, g_frame)
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, fill=tk.X)
 

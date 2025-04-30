@@ -96,13 +96,52 @@ class BBSSettingsMain(tk.Toplevel):
         return self._bbs_obj
 
     ################################################
-    def set_homeBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
-        self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
+    def _reinit_fwdBBS_tabs(self):
+        # Tab, der neu geladen werden soll
+        refresh_tab = 'routing_settings'
 
-    def del_homeBBS_cfg(self, pms_cfg_k: str):
+        if refresh_tab in self._tab_list:
+            # Aktuellen Tab-Index speichern
+            current_index = self._tabControl.index('current')
+
+            # Index des zu ersetzenden Tabs ermitteln
+            tab_index = self._tabControl.index(self._tab_list[refresh_tab])
+
+            # Alte Tab-Instanz zerstören, falls destroy_win existiert
+            if hasattr(self._tab_list[refresh_tab], 'destroy_win'):
+                self._tab_list[refresh_tab].destroy_win()
+
+            # Kinder des alten Frames zerstören
+            for widget in self._tab_list[refresh_tab].winfo_children():
+                widget.destroy()
+
+            # Alten Frame zerstören
+            self._tab_list[refresh_tab].destroy()
+
+            # Neue Tab-Instanz erstellen
+            new_tab = self._win_tab[refresh_tab](self._tabControl, self)
+            self._tab_list[refresh_tab] = new_tab
+
+            # Neuen Tab an der gleichen Stelle einfügen
+            self._tabControl.insert(tab_index, new_tab, text=f"{self._getTabStr(refresh_tab).ljust(12)}")
+
+            # Ursprünglichen Tab-Index wiederherstellen
+            try:
+                self._tabControl.select(current_index)
+            except tk.TclError:
+                # Falls der Index ungültig ist, den ersten Tab auswählen
+                self._tabControl.select(0)
+
+    ################################################
+    def set_fwdBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
+        self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
+        self._reinit_fwdBBS_tabs()
+
+    def del_fwdBBS_cfg(self, pms_cfg_k: str):
         if pms_cfg_k in self._pms_cfg['fwd_bbs_cfg'].keys():
             self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = None
             del self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k]
+            self._reinit_fwdBBS_tabs()
 
     def _save_cfg(self):
         for strTab_name, tab in self._tab_list.items():
@@ -118,7 +157,6 @@ class BBSSettingsMain(tk.Toplevel):
         if not self._bbs_obj:
             return False
         self._bbs_obj.set_pms_cfg()
-
     ################################################
     def _ok_btn(self):
         self._root_win.sysMsg_to_monitor(self._getTabStr('hin1'))

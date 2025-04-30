@@ -75,7 +75,7 @@ class BBS_FWD_Settings(ttk.Frame):
     def _add_fwdBBS_tab(self, cfg=None):
         if not cfg:
             if 'NOCALL' in self._bbs_vars.keys():
-                return
+                print("NOCALL in CFG")
             cfg = getNew_BBS_FWD_cfg()
         ###########################################
         # VARs
@@ -323,7 +323,7 @@ class BBS_FWD_Settings(ttk.Frame):
                 axip_port   = int(self._bbs_vars[k]['axip_port_var'].get())
             except ValueError:
                 continue
-            regio               = str(self._bbs_vars[k]['regio_var'].get()).upper()
+            regio               = str(self._bbs_vars[k]['regio_var'].get())
             via_calls           = str(self._bbs_vars[k]['via_calls_var'].get())
             axip_ip             = str(self._bbs_vars[k]['axip_var'].get())
             rev_fwd             = bool(self._bbs_vars[k]['rev_fwd_var'].get())
@@ -339,9 +339,9 @@ class BBS_FWD_Settings(ttk.Frame):
                 conn_timeout        = 5
             fwd_bbs_cfg = self._get_fwdBBS_cfg(k)
             fwd_bbs_cfg['port_id']     = port_id
-            fwd_bbs_cfg['regio']       = regio
+            fwd_bbs_cfg['regio']       = regio.upper()
             fwd_bbs_cfg['dest_call']   = dest_call  # # # #
-            fwd_bbs_cfg['via_calls']   = get_list_fm_viaStr(via_calls)
+            fwd_bbs_cfg['via_calls']   = get_list_fm_viaStr(via_calls.upper())
             fwd_bbs_cfg['axip_add']    = axip_ip, axip_port
             fwd_bbs_cfg['reverseFWD']  = rev_fwd
             fwd_bbs_cfg['allowRevFWD'] = allow_rev_fwd
@@ -358,13 +358,17 @@ class BBS_FWD_Settings(ttk.Frame):
             self._set_homeBBS_cfg(k, fwd_bbs_cfg)
         self._cleanup_hBBS_cfg()
 
+
     def _del_homeBBS_vars(self, cfg_key):
         if cfg_key in self._bbs_vars.keys():
             self._bbs_vars[cfg_key] = None
             del self._bbs_vars[cfg_key]
 
     def _select_new_tab(self):
-        self._tabctl.select(len(self._bbs_vars.keys()) - 1)
+        # self._tabctl.select(len(self._bbs_vars.keys()) - 1)
+        last_tab_index = self._tabctl.index('end') - 1
+        if last_tab_index >= 0:  # Sicherstellen, dass mindestens ein Tab existiert
+            self._tabctl.select(last_tab_index)
 
     def _open_schedWin(self):
         ind = self._get_sel_tabKey()
@@ -388,7 +392,9 @@ class BBS_FWD_Settings(ttk.Frame):
         return dict(all_bbs_cfgs.get(pms_cfg_k, getNew_BBS_FWD_cfg()))
 
     def _set_homeBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
-        self._root_win.set_homeBBS_cfg(pms_cfg_k, bbs_cfg)
+        if pms_cfg_k == 'NOCALL':
+            return
+        self._root_win.set_fwdBBS_cfg(pms_cfg_k, bbs_cfg)
         # self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
 
     """
@@ -398,7 +404,7 @@ class BBS_FWD_Settings(ttk.Frame):
     """
 
     def _del_homeBBS_cfg(self, pms_cfg_k: str):
-        self._root_win.del_homeBBS_cfg(pms_cfg_k)
+        self._root_win.del_fwdBBS_cfg(pms_cfg_k)
         """
         if pms_cfg_k in self._pms_cfg['fwd_bbs_cfg'].keys():
             self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = None
@@ -450,6 +456,8 @@ class BBS_FWD_Settings(ttk.Frame):
                     self._del_homeBBS_cfg(k)
                     # del self._pms_cfg['fwd_bbs_cfg'][k]
 
+    def destroy_win(self):
+        self.destroy()
     """
     def _set_homeBBS_list(self):
         self._pms_cfg['home_bbs'] = list(self._pms_cfg.get('home_bbs_cfg', {}).keys())

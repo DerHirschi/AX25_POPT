@@ -6,6 +6,8 @@ Fixes:
 - Scripterror in guiPipeToolSettings.py wenn versucht wird leere
   Config zu löschen
 - BBS-Einstellungen - Routing: Zeigt werte für "BBS" und "THEME" nicht an
+- BBS-Einstellungen: Allgemeine Probleme mit der GUI
+  (Aktualisierung der Tabs, Fehler beim Anlegen neuer FWD-Partner)
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.
