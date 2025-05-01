@@ -20,6 +20,7 @@ from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.guiRightClick_Menu import ContextMenu
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_center import MSG_Center
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
@@ -353,6 +354,8 @@ class PoPT_GUI_Main:
         self._set_keybinds()
         # Menubar
         self._init_menubar()
+        # Right-CLick
+        self._init_r_click_men()
         # set Ch Btn Color
         self.ch_status_update()
         # Init Vars fm CFG
@@ -768,6 +771,21 @@ class PoPT_GUI_Main:
                              command=lambda: self._open_settings_window('about'),
                              underline=0)
         menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=MenuHelp, underline=0)
+
+    def _init_r_click_men(self):
+        # Input
+        inp_txt_men = ContextMenu(self._inp_txt)
+        inp_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+        inp_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+        # QSO
+        out_txt_men = ContextMenu(self._out_txt)
+        out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+        out_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+        # Monitor
+        mon_txt_men = ContextMenu(self._mon_txt)
+        mon_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+        mon_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+        # out_txt_men.add_separator()
 
     def _init_btn(self, frame):
         # btn_upper_frame = tk.Frame(frame)
@@ -1287,6 +1305,7 @@ class PoPT_GUI_Main:
         self.main_win.bind('<Escape>', lambda event: self.open_new_conn_win())
         self.main_win.bind('<Alt-d>', lambda event: self._disco_conn())
         self.main_win.bind('<Control-c>', lambda event: self._copy_select())
+        self.main_win.bind('<Control-v>', lambda event: self._clipboard_past())
         self.main_win.bind('<Control-x>', lambda event: self._cut_select())
         # self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
         self.main_win.bind('<Control-a>', lambda event: self._select_all())
@@ -1345,19 +1364,18 @@ class PoPT_GUI_Main:
         # tmp_lang = int(self.language)
         # self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
         SOUND.sprech(random.choice(WELCOME_SPEECH))
-        # self.language = int(tmp_lang)
         ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
             self.sysMsg_to_monitor(el)
         self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
         for stat in POPT_CFG.get_stat_CFG_keys():
-            self.sysMsg_to_monitor('Info: Stationsdaten {} erfolgreich geladen.'.format(stat))
+            self.sysMsg_to_monitor(self._getTabStr('mon_start_msg1').format(stat))
         all_ports = self._port_handler.ax25_ports
         for port_k in all_ports.keys():
-            msg = 'konnte nicht initialisiert werden!'
+            msg = self._getTabStr('mon_start_msg2')
             if all_ports[port_k].device_is_running:
-                msg = 'erfolgreich initialisiert.'
+                msg = self._getTabStr('mon_start_msg3')
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
             self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
                                    .format(port_k,
@@ -1420,7 +1438,8 @@ class PoPT_GUI_Main:
             return
 
         if clp_brd:
-            self._inp_txt.insert(tk.END, clp_brd)
+            self._inp_txt.insert(tk.INSERT, clp_brd)
+            self._inp_txt.see(tk.INSERT)
 
     def _select_all(self):
         self._inp_txt.tag_add(tk.SEL, "1.0", tk.END)

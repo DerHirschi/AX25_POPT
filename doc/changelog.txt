@@ -22,6 +22,7 @@ Neue Implementierungen / Funktionen:
 - awthemes support. Download: https://sourceforge.net/projects/tcl-awthemes/
 - Größe des Hauptfensters wird jetzt gespeichert
 - Größe der verschiedenen verschiebbaren Fenster wird jetzt gespeichert
+- Haupt-GUI: Rechtsklick-Menü
 
 ###########################################################################################################
 ###########################################################################################################

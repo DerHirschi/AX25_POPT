@@ -4159,4 +4159,45 @@ STR_TABLE = {
         '',
         ''),
 
+    #####################################################
+    # guiMain.py._monitor_start_msg
+    'mon_start_msg1': (
+        'Info: Stationsdaten {} erfolgreich geladen.',
+        'Info: Station data {} loaded successfully.',
+        'Info: Stationgegevens {} succesvol geladen.',
+        'Info: Les données de la station {} ont été chargées avec succès.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'mon_start_msg2': (
+        'konnte nicht initialisiert werden!',
+        'could not be initialized!',
+        'kon niet worden geïnitialiseerd!',
+        "n'a pas pu être initialisé !",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'mon_start_msg3': (
+        'erfolgreich initialisiert.',
+        'initialized successfully.',
+        'succesvol geïnitialiseerd.',
+        "initialisé avec succès.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
 }
