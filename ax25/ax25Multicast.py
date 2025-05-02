@@ -20,8 +20,8 @@ from ax25.ax25Error import AX25DeviceERROR, MCastInitError
 from cfg.default_config import getNew_mcast_channel_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
 from fnc.socket_fnc import check_ip_add_format, get_ip_by_hostname
+from fnc.str_fnc import get_strTab
 
 
 class MCastChannel:
@@ -83,12 +83,13 @@ class ax25Multicast:
         ##########################
         self._mcast_port_handler = port_handler
         self._mcast_port = None
+        self._getTabStr  = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ##########################
-        self._mcast_conf: dict = POPT_CFG.get_MCast_CFG()
-        self._mcast_default_ch: int = self._mcast_conf.get('mcast_default_ch', 0)
-        self._mcast_ch_conf: dict = self._mcast_conf.get('mcast_ch_conf', {})
-        self._mcast_server_call: str = self._mcast_conf.get('mcast_server_call', 'MCAST0')
-        self._mcast_member_add_list: dict = self._mcast_conf.get('mcast_axip_list', {})
+        self._mcast_conf: dict              = POPT_CFG.get_MCast_CFG()
+        self._mcast_default_ch: int         = self._mcast_conf.get('mcast_default_ch', 0)
+        self._mcast_ch_conf: dict           = self._mcast_conf.get('mcast_ch_conf', {})
+        self._mcast_server_call: str        = self._mcast_conf.get('mcast_server_call', 'MCAST0')
+        self._mcast_member_add_list: dict   = self._mcast_conf.get('mcast_axip_list', {})
         ##########################
         # Channel Init
         self._mcast_member_timeout = {}
@@ -396,9 +397,8 @@ class ax25Multicast:
         logger.info(f"MCast: New Member {member_call} registered!")
 
         ch_name = self._get_channel_name(default_ch_id)
-        lang = POPT_CFG.get_guiCFG_language()
         # Send UI to New Member
-        text = STR_TABLE['mcast_new_user_reg_beacon'][lang]
+        text = self._getTabStr('mcast_new_user_reg_beacon')
         text = text.format(default_ch_id, ch_name)
         if all((member_call, text)):
             self._send_UI_to_user(user_call=member_call, text=text)
@@ -471,8 +471,7 @@ class ax25Multicast:
     #########################################################
     # Member Stuff
     def _handle_new_member(self, member_call: str):
-        lang = POPT_CFG.get_guiCFG_language()
-        text = STR_TABLE['mcast_new_user_beacon'][lang].format(self._mcast_server_call)
+        text = self._getTabStr('mcast_new_user_beacon').format(self._mcast_server_call)
         if not all((member_call, text)):
             return
         self._send_UI_to_user(member_call, text)
@@ -548,8 +547,7 @@ class ax25Multicast:
             if mcast_channel.add_ch_member(member_call):
                 logger.info(f"MCast: CH-ADD: {member_call} add to Ch {channel_id}")
                 # Send UI to all Channel Members
-                lang = POPT_CFG.get_guiCFG_language()
-                text = STR_TABLE['mcast_user_enters_channel_beacon'][lang]
+                text = self._getTabStr('mcast_user_enters_channel_beacon')
                 text = text.format(member_call)
                 if text:
                     self._send_UI_to_channel(channel_id=channel_id, text=text)
@@ -571,8 +569,7 @@ class ax25Multicast:
                 if ch_ids:
                     logger.info(f"MCast: CH-DEL: {member_call} deleted fm Ch {ch_id}")
                     # Send UI to all Channel Members
-                    lang = POPT_CFG.get_guiCFG_language()
-                    text = STR_TABLE['mcast_user_left_channel_beacon'][lang]
+                    text = self._getTabStr('mcast_user_left_channel_beacon')
                     text = text.format(member_call)
                     if text:
                         self._send_UI_to_channel(channel_id=ch_ids[0], text=text)

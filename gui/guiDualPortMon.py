@@ -212,8 +212,7 @@ class DP_MonitorTab(ttk.Frame):
 class DualPort_Monitor(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._root_win = root_win
-        self._lang = root_win.language
+        self._root_win  = root_win
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.text_size  = root_win.text_size
         self.title('Dual-Port Monitor')

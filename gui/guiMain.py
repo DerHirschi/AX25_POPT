@@ -50,7 +50,6 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES
-from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
 from sound.popt_sound import SOUND
@@ -142,7 +141,6 @@ class PoPT_GUI_Main:
         ######################################
         # Init Vars
         self.mh         = self._port_handler.get_MH()
-        self.language   = POPT_CFG.get_guiCFG_language()
         self.text_size  = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
         ###############################
         self._root_dir  = get_root_dir()
@@ -497,7 +495,6 @@ class PoPT_GUI_Main:
     def _init_GUI_vars_fm_CFG(self):
         #########################
         # GUI-Vars fm cfg
-        self.language = POPT_CFG.get_guiCFG_language()
         guiCfg = POPT_CFG.load_guiPARM_main()
         self.setting_sound.set(guiCfg.get('gui_cfg_sound', False))
         self.setting_bake.set(guiCfg.get('gui_cfg_beacon', False))
@@ -608,35 +605,35 @@ class PoPT_GUI_Main:
         #########################################################################
         # Menü 1 "Verbindungen"
         MenuVerb = tk.Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=STR_TABLE['new_conn'][self.language], command=self.open_new_conn_win)
-        MenuVerb.add_command(label=STR_TABLE['disconnect'][self.language], command=self._disco_conn)
+        MenuVerb.add_command(label=self._getTabStr('new_conn'), command=self.open_new_conn_win)
+        MenuVerb.add_command(label=self._getTabStr('disconnect'), command=self._disco_conn)
         MenuVerb.add_separator()
-        MenuVerb.add_command(label=STR_TABLE['disconnect_all'][self.language], command=self._disco_all)
+        MenuVerb.add_command(label=self._getTabStr('disconnect_all'), command=self._disco_all)
         MenuVerb.add_separator()
-        MenuVerb.add_command(label=STR_TABLE['quit'][self.language], command=self._destroy_win)
-        menubar.add_cascade(label=STR_TABLE['connections'][self.language], menu=MenuVerb, underline=0)
+        MenuVerb.add_command(label=self._getTabStr('quit'), command=self._destroy_win)
+        menubar.add_cascade(label=self._getTabStr('connections'), menu=MenuVerb, underline=0)
         #####################################################################
         # Menü 2 "Bearbeiten"
         MenuEdit = tk.Menu(menubar, tearoff=False)
-        MenuEdit.add_command(label=STR_TABLE['copy'][self.language], command=self._copy_select, underline=0)
-        MenuEdit.add_command(label=STR_TABLE['past'][self.language], command=self._clipboard_past, underline=1)
+        MenuEdit.add_command(label=self._getTabStr('copy'), command=self._copy_select, underline=0)
+        MenuEdit.add_command(label=self._getTabStr('past'), command=self._clipboard_past, underline=1)
         MenuEdit.add_separator()
-        MenuEdit.add_command(label=STR_TABLE['past_qso_f_file'][self.language], command=self._insert_fm_file,
+        MenuEdit.add_command(label=self._getTabStr('past_qso_f_file'), command=self._insert_fm_file,
                              underline=0)
-        MenuEdit.add_command(label=STR_TABLE['save_qso_to_file'][self.language], command=self._save_to_file,
+        MenuEdit.add_command(label=self._getTabStr('save_qso_to_file'), command=self._save_to_file,
                              underline=1)
-        MenuEdit.add_command(label=STR_TABLE['save_mon_to_file'][self.language], command=self._save_monitor_to_file,
+        MenuEdit.add_command(label=self._getTabStr('save_mon_to_file'), command=self._save_monitor_to_file,
                              underline=1)
         MenuEdit.add_separator()
-        MenuEdit.add_command(label=STR_TABLE['clean_qso_win'][self.language], command=self.clear_channel_vars,
+        MenuEdit.add_command(label=self._getTabStr('clean_qso_win'), command=self.clear_channel_vars,
                              underline=0)
-        MenuEdit.add_command(label=STR_TABLE['clean_mon_win'][self.language], command=self._clear_monitor_data,
+        MenuEdit.add_command(label=self._getTabStr('clean_mon_win'), command=self._clear_monitor_data,
                              underline=0)
 
         MenuEdit.add_separator()
-        MenuEdit.add_command(label=STR_TABLE['clean_all_qso_win'][self.language], command=self._clear_all_Channel_vars,
+        MenuEdit.add_command(label=self._getTabStr('clean_all_qso_win'), command=self._clear_all_Channel_vars,
                              underline=0)
-        menubar.add_cascade(label=STR_TABLE['edit'][self.language], menu=MenuEdit, underline=0)
+        menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
         ####################################################################
         # Menü 3 "Tools"
         MenuTools = tk.Menu(menubar, tearoff=False)
@@ -644,18 +641,18 @@ class PoPT_GUI_Main:
         MenuTools.add_command(label="MH-Graph",
                               command=lambda: self.open_window('ConnPathPlot'),
                               underline=0)
-        MenuTools.add_command(label=STR_TABLE['statistic'][self.language],
+        MenuTools.add_command(label=self._getTabStr('statistic'),
                               command=lambda: self.open_window('PortStat'),
                               underline=1)
         MenuTools.add_separator()
         MenuTools.add_command(label="User-DB Tree",
                               command=lambda: self.open_window('userDB_tree'),
                               underline=0)
-        MenuTools.add_command(label=STR_TABLE['user_db'][self.language],
+        MenuTools.add_command(label=self._getTabStr('user_db'),
                               command=lambda: self.open_user_db_win(),
                               underline=0)
         MenuTools.add_separator()
-        MenuTools.add_command(label=STR_TABLE['locator_calc'][self.language],
+        MenuTools.add_command(label=self._getTabStr('locator_calc'),
                               command=lambda: self.open_window('locator_calc'),
                               underline=0)
         MenuTools.add_separator()
@@ -663,11 +660,11 @@ class PoPT_GUI_Main:
         MenuTools.add_command(label="FT-Manager",
                               command=lambda: self._open_settings_window('ft_manager'),
                               underline=0)
-        MenuTools.add_command(label=STR_TABLE['send_file'][self.language],
+        MenuTools.add_command(label=self._getTabStr('send_file'),
                               command=lambda: self.open_window('ft_send'),
                               underline=0)
         MenuTools.add_separator()
-        MenuTools.add_command(label=STR_TABLE['linkholder'][self.language],
+        MenuTools.add_command(label=self._getTabStr('linkholder'),
                               command=lambda: self._open_settings_window('l_holder'),
                               underline=0)
         MenuTools.add_command(label='Pipe-Tool',
@@ -688,13 +685,13 @@ class PoPT_GUI_Main:
                               command=lambda: self._kaffee(),
                               underline=0)
 
-        menubar.add_cascade(label=STR_TABLE['tools'][self.language], menu=MenuTools, underline=0)
+        menubar.add_cascade(label=self._getTabStr('tools'), menu=MenuTools, underline=0)
 
         ###################################################################
         # Menü 4 Einstellungen
         MenuSettings = tk.Menu(menubar, tearoff=False)
 
-        MenuSettings.add_command(label=STR_TABLE['settings'][self.language],
+        MenuSettings.add_command(label=self._getTabStr('settings'),
                                  command=lambda: self._open_settings_window('all_sett'),
                                  underline=0)
         MenuSettings.add_separator()
@@ -703,24 +700,24 @@ class PoPT_GUI_Main:
                                  command=lambda: self.open_window('dualPort_settings'),
                                  underline=0)
 
-        menubar.add_cascade(label=STR_TABLE['settings'][self.language], menu=MenuSettings, underline=0)
+        menubar.add_cascade(label=self._getTabStr('settings'), menu=MenuSettings, underline=0)
         ########################################################################
         # APRS Menu
         MenuAPRS = tk.Menu(menubar, tearoff=False)
-        MenuAPRS.add_command(label=STR_TABLE['aprs_mon'][self.language],
+        MenuAPRS.add_command(label=self._getTabStr('aprs_mon'),
                              command=lambda: self.open_window('aprs_mon'),
                              underline=0)
         MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
                              underline=0)
         MenuAPRS.add_separator()
-        MenuAPRS.add_command(label=STR_TABLE['wx_window'][self.language],
+        MenuAPRS.add_command(label=self._getTabStr('wx_window'),
                              command=lambda: self.open_window('wx_win'),
                              underline=0)
-        MenuAPRS.add_command(label=STR_TABLE['pn_msg'][self.language],
+        MenuAPRS.add_command(label=self._getTabStr('pn_msg'),
                              command=lambda: self.open_window('aprs_msg'),
                              underline=0)
         MenuAPRS.add_separator()
-        MenuAPRS.add_command(label=STR_TABLE['settings'][self.language],
+        MenuAPRS.add_command(label=self._getTabStr('settings'),
                              command=lambda: self._open_settings_window('aprs_sett'),
                              underline=0)
         # MenuAPRS.add_separator()
@@ -728,28 +725,28 @@ class PoPT_GUI_Main:
         ################################################################
         # BBS/PMS
         MenuBBS = tk.Menu(menubar, tearoff=False)
-        MenuBBS.add_command(label=STR_TABLE['new_msg'][self.language],
+        MenuBBS.add_command(label=self._getTabStr('new_msg'),
                             command=lambda: self.open_window('pms_new_msg'),
                             underline=0)
-        MenuBBS.add_command(label=STR_TABLE['msg_center'][self.language],
+        MenuBBS.add_command(label=self._getTabStr('msg_center'),
                             command=lambda: self.open_window('pms_msg_center'),
                             underline=0)
 
         MenuBBS.add_separator()
-        MenuBBS.add_command(label=STR_TABLE['fwd_list'][self.language],
+        MenuBBS.add_command(label=self._getTabStr('fwd_list'),
                             command=lambda: self.open_window('pms_fwq_q'),
                             underline=0)
-        MenuBBS.add_command(label=STR_TABLE['fwd_path'][self.language],
+        MenuBBS.add_command(label=self._getTabStr('fwd_path'),
                             command=lambda: self.open_window('fwdPath'),
                             underline=0)
         MenuBBS.add_separator()
         """
-        MenuBBS.add_command(label=STR_TABLE['start_fwd'][self.language],
+        MenuBBS.add_command(label=self._getTabStr('start_fwd'),
                             command=self._do_pms_fwd,
                             underline=0)
         """
 
-        MenuBBS.add_command(label=STR_TABLE['start_auto_fwd'][self.language],
+        MenuBBS.add_command(label=self._getTabStr('start_auto_fwd'),
                             command=self._do_pms_autoFWD,
                             underline=0)
         MenuBBS.add_separator()
@@ -758,7 +755,7 @@ class PoPT_GUI_Main:
                             command=lambda: self._open_settings_window('pms_setting'),
                             underline=0) # pms_all_sett
         """
-        MenuBBS.add_command(label=STR_TABLE['settings'][self.language],
+        MenuBBS.add_command(label=self._getTabStr('settings'),
                             command=lambda: self._open_settings_window('pms_all_sett'),
                             underline=0)
         menubar.add_cascade(label='PMS/BBS', menu=MenuBBS, underline=0)
@@ -766,14 +763,14 @@ class PoPT_GUI_Main:
         # Menü 5 Hilfe
         MenuHelp = tk.Menu(menubar, tearoff=False)
         # MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
-        MenuHelp.add_command(label=STR_TABLE['keybind'][self.language],
+        MenuHelp.add_command(label=self._getTabStr('keybind'),
                              command=lambda: self._open_settings_window('keybinds'),
                              underline=0)
         MenuHelp.add_separator()
-        MenuHelp.add_command(label=STR_TABLE['about'][self.language],
+        MenuHelp.add_command(label=self._getTabStr('about'),
                              command=lambda: self._open_settings_window('about'),
                              underline=0)
-        menubar.add_cascade(label=STR_TABLE['help'][self.language], menu=MenuHelp, underline=0)
+        menubar.add_cascade(label=self._getTabStr('help'), menu=MenuHelp, underline=0)
 
     def _init_r_click_men(self):
         # Input
@@ -798,8 +795,9 @@ class PoPT_GUI_Main:
         actions_submenu.add_command(label="F10", command=lambda : self._insert_ftext_fm_menu(10))
         actions_submenu.add_command(label="F11", command=lambda : self._insert_ftext_fm_menu(11))
         actions_submenu.add_command(label="F12", command=lambda : self._insert_ftext_fm_menu(12))
-
-
+        inp_txt_men.add_separator()
+        inp_txt_men.add_item(label=self._getTabStr('send_file'),
+                             command=lambda: self.open_window('ft_send'))
         inp_txt_men.add_separator()
         inp_txt_men.add_item(self._getTabStr('clean_prescription_win'), self._clear_inpWin)
 
@@ -1290,7 +1288,6 @@ class PoPT_GUI_Main:
                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self.own_qth = guiCFG.get('gui_cfg_qth', '')
         self.own_loc = guiCFG.get('gui_cfg_locator', '')
-        self.language = POPT_CFG.get_guiCFG_language()
 
     #######################################
     # KEYBIND Stuff
@@ -1621,21 +1618,21 @@ class PoPT_GUI_Main:
 
             else:
                 ch_vars.t2speech_buf = ''
-                SOUND.sprech('{} {} . {} .'.format(STR_TABLE['channel'][self.language],
+                SOUND.sprech('{} {} . {} .'.format(self._getTabStr('channel'),
                                                    self.channel_index,
                                                    conn.to_call_str))
 
         else:
             if not ch_vars.t2speech:
                 ch_vars.t2speech_buf = ''
-                SOUND.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
+                SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index))
             elif ch_vars.t2speech_buf:
                 if SOUND.sprech(ch_vars.t2speech_buf):
                     ch_vars.t2speech_buf = ''
                 else:
-                    SOUND.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
+                    SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index))
             else:
-                SOUND.sprech('{} {} .'.format(STR_TABLE['channel'][self.language], self.channel_index))
+                SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index))
 
     def _check_sprech_ch_buf(self):
         conn = self.get_conn(self.channel_index)
@@ -1908,7 +1905,7 @@ class PoPT_GUI_Main:
             if Ch_var.t2speech:
                 # TODO ?????????????????????????????????????????????
                 Ch_var.t2speech_buf += '{} {} . {} . {}'.format(
-                    STR_TABLE['channel'][self.language],
+                    self._getTabStr('channel'),
                     conn.ch_index,
                     conn.to_call_str,
                     out.replace('\n', '')
@@ -2201,8 +2198,8 @@ class PoPT_GUI_Main:
             conn.conn_disco()
 
     def _disco_all(self):
-        if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self.language],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self.language],
+        if messagebox.askokcancel(title=self._getTabStr('disconnect_all'),
+                                  message=self._getTabStr('disconnect_all_ask'),
                                   parent=self.main_win):
             self._port_handler.disco_all_Conn()
 
@@ -2479,8 +2476,8 @@ class PoPT_GUI_Main:
         if not conn:
             return
         if not msg:
-            msg = f"{conn.to_call_str} {STR_TABLE['cmd_bell_gui_msg'][self.language]}"
-        if messagebox.askokcancel(f"Bell {STR_TABLE['channel'][self.language]} {ch_id}",
+            msg = f"{conn.to_call_str} {self._getTabStr('cmd_bell_gui_msg')}"
+        if messagebox.askokcancel(f"Bell {self._getTabStr('channel')} {ch_id}",
                                   msg, parent=self.main_win):
             if not self._quit:
                 self.switch_channel(ch_id)

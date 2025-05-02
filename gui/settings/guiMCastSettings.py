@@ -5,21 +5,19 @@ from tkinter import ttk
 from cfg.constant import MAX_MCAST_CH
 from cfg.default_config import getNew_mcast_channel_cfg
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
 from cfg.logger_config import logger
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.socket_fnc import get_ip_by_hostname
-from fnc.str_fnc import get_timedelta_str_fm_sec
+from fnc.str_fnc import get_timedelta_str_fm_sec, get_strTab
 from gui.guiError import PoPTModulError
 
 class MCastAddMember(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win)
-        self._root_win = root_win
-        self._mcast = root_win.get_mcast()
-
-        self._lang = POPT_CFG.get_guiCFG_language()
-        win_width = 550
+        self._root_win  = root_win
+        self._mcast     = root_win.get_mcast()
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        win_width  = 550
         win_height = 180
         self.geometry(f"{win_width}x"
                       f"{win_height}+"
@@ -69,7 +67,7 @@ class MCastAddMember(tk.Toplevel):
         ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
 
-        abort_btn = ttk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
+        abort_btn = ttk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     def _set_member_address(self):
@@ -115,9 +113,9 @@ class MCastAddMember(tk.Toplevel):
 class MCastMoveMember(tk.Toplevel):
     def __init__(self, root_win, member_call: str):
         tk.Toplevel.__init__(self, master=root_win)
-        self._root_win = root_win
-        self._member_call = member_call
-        self._mcast = root_win.get_mcast()
+        self._root_win      = root_win
+        self._member_call   = member_call
+        self._mcast         = root_win.get_mcast()
         if not hasattr(self._mcast, 'get_mcast_cfgs'):
             raise PoPTModulError
         self._mcast_cfg: dict = self._mcast.get_mcast_cfgs()
@@ -125,9 +123,9 @@ class MCastMoveMember(tk.Toplevel):
         if self._ackt_ch is None:
             self.destroy_win()
             return
-        self._lang = POPT_CFG.get_guiCFG_language()
-        win_width = 330
-        win_height = 130
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        win_width       = 330
+        win_height      = 130
         self.geometry(f"{win_width}x"
                       f"{win_height}+"
                       f"{root_win.winfo_x()}+"
@@ -163,7 +161,7 @@ class MCastMoveMember(tk.Toplevel):
         ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
 
-        abort_btn = ttk.Button(btn_frame, text=STR_TABLE['cancel'][self._lang], command=self._abort_btn)
+        abort_btn = ttk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     def _move_member_to_ch(self):
