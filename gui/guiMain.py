@@ -290,22 +290,26 @@ class PoPT_GUI_Main:
         self._pw = ttk.PanedWindow(l_frame, orient=tk.VERTICAL, )
         self._pw.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         # Input
-        self._TXT_upper_frame = ttk.Frame(self._pw, borderwidth=0, height=20)
+        self._TXT_upper_frame   = ttk.Frame(self._pw, borderwidth=0, height=20)
         # QSO
-        self._TXT_mid_frame = ttk.Frame(self._pw, borderwidth=0, )
+        self._TXT_mid_frame     = ttk.Frame(self._pw, borderwidth=0, )
         # Mon
-        self._TXT_lower_frame = ttk.Frame(self._pw, borderwidth=0, )
+        self._TXT_lower_frame   = ttk.Frame(self._pw, borderwidth=0, )
         # Pack it
         self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         self._TXT_mid_frame.pack(  side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         self._TXT_lower_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
 
-        self._inp_txt = None
-        self._out_txt = None
-        self._mon_txt = None
-        self._init_TXT_frame_up()
-        self._init_TXT_frame_mid()
-        self._init_TXT_frame_low()
+        txtWin_pos_cfg  = POPT_CFG.get_guiCFG_textWin_pos()
+        # guiCFG          = POPT_CFG.load_guiPARM_main()
+        self._winPos_cfgTab = {
+            0: self._init_TXT_frame_up(),
+            1: self._init_TXT_frame_mid(),
+            2: self._init_TXT_frame_low(),
+        }
+        self._inp_txt = self._winPos_cfgTab[txtWin_pos_cfg[0]]
+        self._out_txt = self._winPos_cfgTab[txtWin_pos_cfg[1]]
+        self._mon_txt = self._winPos_cfgTab[txtWin_pos_cfg[2]]
 
         self._pw.add(self._TXT_upper_frame, weight=1)
         self._pw.add(self._TXT_mid_frame,   weight=1)
@@ -373,7 +377,7 @@ class PoPT_GUI_Main:
         logger.info('GUI: Status-Bar Text Init')
         self._status_text_tab = {}
         for k, col in STATUS_BG.items():
-            status_text = self._getTabStr(k)
+            status_text = get_strTab(k, POPT_CFG.get_guiCFG_language(), warning=False)
             self._status_text_tab[k] = status_text, col
         ##########################################
         # Menubar fix if app starts in fullscreen
@@ -559,6 +563,8 @@ class PoPT_GUI_Main:
             i += 1
 
     def _save_pw_pos(self):
+        if self.mon_mode:
+            return
         text_pan_pos_cfg = []
         for pan_id in range(2):
             text_pan_pos_cfg.append(self._pw.sashpos(pan_id))
@@ -866,30 +872,30 @@ class PoPT_GUI_Main:
         self._con_btn_dict[10][0].configure(command=lambda: self.switch_channel(10))
 
     def _init_TXT_frame_up(self):
-        guiCFG        = POPT_CFG.load_guiPARM_main()
-        text_frame    = ttk.Frame(self._TXT_upper_frame)
-        self._inp_txt = tk.Text(text_frame,
-                                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
-                                                  foreground=guiCFG.get('gui_cfg_vor_col', 'white'),
-                                                  font=(FONT, self.text_size),
-                                                  insertbackground=TXT_INP_CURSOR_CLR,
-                                                  height=30,
-                                                  width=5,
-                                                  bd=0,
-                                                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                                                  highlightthickness=0,
-                                                  )
-        self._inp_txt.tag_config("send",
-                                 foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
-                                 background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
+        # guiCFG          = POPT_CFG.load_guiPARM_main()
+        text_frame      = ttk.Frame(self._TXT_upper_frame)
+        inp_txt         = tk.Text(text_frame,
+                      #background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
+                      #foreground=guiCFG.get('gui_cfg_vor_col', 'white'),
+                      font=(FONT, self.text_size),
+                      insertbackground=TXT_INP_CURSOR_CLR,
+                      height=30,
+                      width=5,
+                      bd=0,
+                      relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                      highlightthickness=0,
+                      )
+        #inp_txt.tag_config("send",
+        #                         foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
+        #                         background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         inp_scrollbar = ttk.Scrollbar(
             text_frame,
             orient=tk.VERTICAL,
-            command=self._inp_txt.yview
+            command=inp_txt.yview
         )
-        self._inp_txt.pack(side=tk.LEFT, fill=tk.BOTH,  expand=True)
+        inp_txt.pack(side=tk.LEFT, fill=tk.BOTH,  expand=True)
         inp_scrollbar.pack(side=tk.LEFT, fill=tk.Y,     expand=False)
-        self._inp_txt.config(yscrollcommand=inp_scrollbar.set)
+        inp_txt.config(yscrollcommand=inp_scrollbar.set)
         # self.in_txt_win.insert(tk.END, "Inp")
         ##############
         # Status Frame
@@ -1024,13 +1030,14 @@ class PoPT_GUI_Main:
                                        )
         # self._ts_box_box.pack(side=tk.LEFT, anchor='w') # TODO
         """
+        return inp_txt
 
     def _init_TXT_frame_mid(self):
         text_frame = ttk.Frame(self._TXT_mid_frame)
         stat_frame = ttk.Frame(self._TXT_mid_frame)
         stat_frame.pack(side=tk.BOTTOM, fill=tk.X,    expand=False)
         text_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        self._out_txt = tk.Text(text_frame,
+        out_txt = tk.Text(text_frame,
                               background=DEF_QSO_SYSMSG_BG,
                               foreground=DEF_QSO_SYSMSG_FG,
                               font=(FONT, self.text_size),
@@ -1038,20 +1045,20 @@ class PoPT_GUI_Main:
                               width=5,
                               bd=0,
                               borderwidth=0,
-                              state="disabled",
+                              #state="disabled",
                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                 highlightthickness=0,
 
                                 )
-        # self._out_txt.tag_config("input", foreground="white")
+        # out_txt.tag_config("input", foreground="white")
         out_scrollbar = ttk.Scrollbar(
             text_frame,
             orient=tk.VERTICAL,
-            command=self._out_txt.yview
+            command=out_txt.yview
         )
-        self._out_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        out_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         out_scrollbar.pack(side=tk.LEFT, fill=tk.Y,    expand=False)
-        self._out_txt.config(yscrollcommand=out_scrollbar.set)
+        out_txt.config(yscrollcommand=out_scrollbar.set)
         # Status bar
         name_f = ttk.Frame(stat_frame)
         qth_f  = ttk.Frame(stat_frame)
@@ -1186,10 +1193,12 @@ class PoPT_GUI_Main:
         )
         txt_encoding_ent.pack(fill=tk.X, expand=True)
 
+        return out_txt
+
     def _init_TXT_frame_low(self):
         mon_frame = ttk.Frame(self._TXT_lower_frame)
         mon_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        self._mon_txt = tk.Text(mon_frame,
+        mon_txt = tk.Text(mon_frame,
                               background=MON_SYS_MSG_CLR_BG,
                               foreground=MON_SYS_MSG_CLR_BG,
                               font=(FONT, self.text_size),
@@ -1197,23 +1206,28 @@ class PoPT_GUI_Main:
                               width=5,
                               bd=0,
                               borderwidth=0,
-                              state="disabled",
+                              # state="disabled",
                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                               highlightthickness=0,
                               )
         mon_scrollbar = ttk.Scrollbar(
             mon_frame,
             orient=tk.VERTICAL,
-            command=self._mon_txt.yview
+            command=mon_txt.yview
         )
-        self._mon_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        mon_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         mon_scrollbar.pack(side=tk.LEFT, fill=tk.Y,    expand=False)
-        self._mon_txt.config(yscrollcommand=mon_scrollbar.set)
+        mon_txt.config(yscrollcommand=mon_scrollbar.set)
+        return mon_txt
+
     #######################################
     # Text Tags
     def set_text_tags(self):
         self._all_tag_calls = []
         all_stat_cfg = POPT_CFG.get_stat_CFGs()
+        if all_stat_cfg:
+            self._out_txt.configure(state="normal")
+
         for call in list(all_stat_cfg.keys()):
             stat_cfg = all_stat_cfg[call]
             tx_fg = stat_cfg.get('stat_parm_qso_col_text_tx', DEF_STAT_QSO_TX_COL)
@@ -1225,7 +1239,6 @@ class PoPT_GUI_Main:
             rx_tag = 'RX-' + str(call)
             self._all_tag_calls.append(str(call))
 
-            self._out_txt.configure(state="normal")
             self._out_txt.tag_config(tx_tag,
                                      foreground=tx_fg,
                                      background=tx_bg,
@@ -1256,10 +1269,9 @@ class PoPT_GUI_Main:
                                      selectbackground='#000000',
                                      selectforeground='#ffffff',
                                      )
-            self._out_txt.configure(state="disabled")
 
-            self._mon_txt.configure(state="normal")
-
+        self._out_txt.configure(state="disabled")
+        self._mon_txt.configure(state="normal")
         # Monitor Tags
         all_port = self._port_handler.ax25_ports
         for port_id in all_port.keys():
@@ -1282,9 +1294,12 @@ class PoPT_GUI_Main:
         self._mon_txt.tag_config("sys-msg", foreground=MON_SYS_MSG_CLR_FG,
                                  background=MON_SYS_MSG_CLR_BG)
         self._mon_txt.configure(state="disabled")
+        ##
         guiCFG = POPT_CFG.load_guiPARM_main()
+        self._mon_txt.configure(state="normal")
         self._inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
-        self._inp_txt.tag_config("send", foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
+        self._inp_txt.tag_config("send",
+                                 foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self.own_qth = guiCFG.get('gui_cfg_qth', '')
         self.own_loc = guiCFG.get('gui_cfg_locator', '')
@@ -2786,20 +2801,34 @@ class PoPT_GUI_Main:
                 self._status_rtt_var.set('')
 
     def _switch_mon_mode(self):
+        txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
         if self.mon_mode:
             try:
-                self._pw.remove(self._TXT_upper_frame)
-                self._pw.remove(self._TXT_lower_frame)
+                if txtWin_pos_cfg == (1, 0, 2):
+                    self._pw.remove(self._TXT_lower_frame)
+                    self._pw.remove(self._TXT_mid_frame)
+                elif txtWin_pos_cfg == (1, 2, 0):
+                    self._pw.remove(self._TXT_upper_frame)
+                    self._pw.remove(self._TXT_mid_frame)
+                else:
+                    self._pw.remove(self._TXT_upper_frame)
+                    self._pw.remove(self._TXT_lower_frame)
             except tk.TclError:
                 pass
             self._pw.add(self._TXT_upper_frame, weight=1)
             self._pw.add(self._TXT_mid_frame,   weight=1)
             self._pw.add(self._TXT_lower_frame, weight=1)
-            #self._load_pw_pos()
+            self._load_pw_pos()
 
         else:
             self._save_pw_pos()
-            self._pw.remove(self._TXT_mid_frame)
+            if txtWin_pos_cfg == (1, 0, 2):
+                self._pw.remove(self._TXT_upper_frame)
+
+            elif txtWin_pos_cfg == (1, 2, 0):
+                self._pw.remove(self._TXT_lower_frame)
+            else:
+                self._pw.remove(self._TXT_mid_frame)
 
     def _chk_rx_beep(self):
         rx_beep_check = self._rx_beep_var.get()

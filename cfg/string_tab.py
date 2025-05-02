@@ -1634,6 +1634,20 @@ STR_TABLE = {
         '',
         ''),
 
+    ########################################################
+    # Settings
+    'text_winPos': (
+        'Textfenster Position (oben/mitte/unten)',
+        'Text window position (top/middle/bottom)',
+        'Positie van het tekstvenster (boven/midden/onder)',
+        'Position de la fenêtre de texte (haut/milieu/bas)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'qso_win_color': (
         'QSO Fenster Farben',
         'QSO Win Color',

@@ -236,7 +236,7 @@ def getNew_maniGUI_parm():
         gui_cfg_locator             = '',
         gui_cfg_qth                 = '',
         # gui_cfg_pacman_fix = True = Disabling "Pacman-Autoupdate"-Function. Fix for "segmentation fault"/"Speicherzugriffsfehler" on Raspberry
-        gui_cfg_pacman_fix          = False,
+        gui_cfg_pacman_fix          = True,
         gui_cfg_sound               = False,
         gui_cfg_sprech              = False,
         gui_cfg_beacon              = True,
@@ -248,6 +248,7 @@ def getNew_maniGUI_parm():
         gui_cfg_mon_encoding        = 'Auto',
         gui_cfg_mon_scroll          = True,
         gui_cfg_rtab_index          = (None, None),
+        gui_cfg_txtWin_pos          = (0, 1, 2),
         #####################
         # Vorschreib Col
         gui_cfg_vor_col             = '#25db04',

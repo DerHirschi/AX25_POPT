@@ -283,6 +283,8 @@ class Main_CFG:
     def get_guiCFG_text_size(self):
         return int(self._config['gui_main_parm'].get('gui_parm_text_size', DEF_TEXTSIZE))
 
+    def get_guiCFG_textWin_pos(self):
+        return tuple(self._config['gui_main_parm'].get('gui_cfg_txtWin_pos', (0, 1, 2)))
 
     def get_guiCFG_STYLE_NAME(self):
         return int(self._config['gui_main_parm'].get('gui_lang', ('black', '#d9d9d9')))

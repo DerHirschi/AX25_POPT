@@ -229,13 +229,14 @@ def is_byte_ascii(s: int):
 def get_weekDay_fm_dt(now_weekday):
     return ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now_weekday]
 
-def get_strTab(str_key: str, lang_index: int):
+def get_strTab(str_key: str, lang_index: int, warning=True):
     if not str_key:
         return str_key
     if str_key not in STR_TABLE.keys():
-        logger.warning(f"get_strTab() str_key: {str_key}")
-        logger.warning(f"  No translation found for: {str_key}")
-        logger.warning(f"  Ignore warning if no translation is needed.")
+        if warning:
+            logger.warning(f"get_strTab() str_key: {str_key}")
+            logger.warning(f"  No translation found for: {str_key}")
+            logger.warning(f"  Ignore warning if no translation is needed.")
         return str_key
     lang_tab = STR_TABLE.get(str_key, ())
     try:

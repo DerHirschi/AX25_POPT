@@ -62,13 +62,34 @@ class GeneralSettings(ttk.Frame):
         loc_ent = ttk.Entry(loc_frame, width=10, textvariable=self._loc_var)
         loc_ent.pack(side=tk.LEFT)
         ############################################################
-        self._pacmanFix_var = tk.BooleanVar(self, value=conf.get('gui_cfg_pacman_fix', False))
+        self._pacmanFix_var = tk.BooleanVar(self, value=conf.get('gui_cfg_pacman_fix', True))
         pacmanFix_frame = ttk.Frame(qth_loc_frame)
         pacmanFix_frame.pack(fill=tk.X, pady=8)
         # tk.Label(pacmanFix_frame, text='Pacman-FIX: ').pack(side=tk.LEFT)
         pacmanFix_ent = ttk.Checkbutton(pacmanFix_frame, text='Pacman-FIX', variable=self._pacmanFix_var)
         pacmanFix_ent.pack(side=tk.LEFT)
         ############################################################
+
+        ############################################################
+        text_winPos_f = ttk.Frame(h_frame2_l)
+        text_winPos_f.pack(fill=tk.X, pady=8)
+        ttk.Label(text_winPos_f, text=f"{self._getTabStr('text_winPos')}:").pack(side=tk.LEFT, padx=4)
+        winPos_cfg =  conf.get('gui_cfg_txtWin_pos', (0, 1, 2))
+        self._winPos_tab = {
+            (0, 1, 2): 'TX/QSO/Monitor',    # tx/qso/mon
+            (1, 0, 2): 'QSO/TX/Monitor',    # qso/tx/mon
+            (1, 2, 0): 'Monitor/TX/QSO',    # mon/tx/qso
+            (2, 1, 0): 'Monitor/QSO/TX',    # mon/qso/tx
+            #(0, 2, 1): 'TX/Monitor/QSO',    # tx/mon/qso
+            #(2, 0, 1): 'QSO/Monitor/TX',    # qso/mon/tx
+        }
+        self._text_winPos_var = tk.StringVar(self, value=self._winPos_tab.get(winPos_cfg, 'TX/QSO/Monitor'))
+        cfg_opt = [self._text_winPos_var.get()]
+        for k, txt_cfg in self._winPos_tab.items():
+            cfg_opt.append(txt_cfg)
+        text_winPos_ent = ttk.OptionMenu(text_winPos_f, self._text_winPos_var, *cfg_opt)
+        text_winPos_ent.pack(side=tk.LEFT)
+
         ############################################################
         style_f = ttk.Frame(h_frame2_l)
         style_f.pack()
@@ -171,6 +192,11 @@ class GeneralSettings(ttk.Frame):
         conf['gui_cfg_qth']             = str(self._qth_var.get())
         conf['gui_cfg_pacman_fix']      = bool(self._pacmanFix_var.get())
         conf['gui_parm_style_name']     = str(self._style_var.get())
+        text_pos = self._text_winPos_var.get()
+        for cfg_k, text_cfg in self._winPos_tab.items():
+            if text_pos == text_cfg:
+                conf['gui_cfg_txtWin_pos'] = cfg_k
+                break
         POPT_CFG.set_guiPARM_main(conf)
         if old_conf == conf:
             return False
