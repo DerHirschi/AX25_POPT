@@ -56,13 +56,10 @@ from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, s
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from gui import FigureCanvasTkAgg, plt
 # from gui import FigureCanvasTkAgg
 # FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
 # FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-
-# from matplotlib import pyplot as plt
-from gui import plt
 
 
 class ChVars(object):
@@ -580,32 +577,30 @@ class PoPT_GUI_Main:
     ###############################################################
     # GUI Init Stuff
     def _init_bw_plot(self, frame):
-        for _i in list(range(60)):
-            self._bw_plot_x_scale.append(_i / 6)
+        """Cleanup by Grok3-AI"""
+        # Precompute x-scale (0 to 10 minutes, 60 steps at 10-second intervals)
+        self._bw_plot_x_scale = [i / 6 for i in range(60)]  # 60 steps over 10 minutes
+
+        # Create figure and axis
         self._bw_fig, self._ax = plt.subplots(dpi=100)
         self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.15)
-        self._ax.axis([0, 10, 0, 100])  # TODO As Option
-        fg, bg = COLOR_MAP.get(self.style_name, ('black', 'light grey'))
-        #self._bw_fig.set_facecolor('xkcd:light grey')
+        self._ax.axis([0, 10, 0, 100])  # X: 0-10 min, Y: 0-100% occupancy
+
+        # Styling
+        fg, bg = COLOR_MAP.get(self.style_name, ('black', 'lightgrey'))
         self._bw_fig.set_facecolor(bg)
-        # self._bw_fig.set_color('#FFFFFF')
         self._ax.set_facecolor('#191621')
-        #self._ax.xaxis.label.set_color('black')
-        #self._ax.yaxis.label.set_color('black')
         self._ax.xaxis.label.set_color(fg)
         self._ax.yaxis.label.set_color(fg)
         self._ax.tick_params(axis='x', colors=fg)
         self._ax.tick_params(axis='y', colors=fg)
         self._ax.set_xlabel(self._getTabStr('minutes'))
         self._ax.set_ylabel(self._getTabStr('occup'))
-        # self._canvas = FigureCanvasTkAgg(self._bw_fig, master=self._r_frame)
+
+        # Embed in Tkinter
         self._canvas = FigureCanvasTkAgg(self._bw_fig, master=frame)
-        self._canvas.flush_events()
-        self._canvas.draw()
-        # self._canvas.get_tk_widget().grid(row=4, column=0, columnspan=7, sticky="nsew")
         self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
-        # self._canvas.get_tk_widget().config(cursor="none")
-        self._bw_fig.canvas.flush_events()
+        self._canvas.draw()  # Initial draw
 
     def _init_menubar(self):
         menubar = tk.Menu(self.main_win, tearoff=False)
@@ -783,17 +778,42 @@ class PoPT_GUI_Main:
     def _init_r_click_men(self):
         # Input
         inp_txt_men = ContextMenu(self._inp_txt)
+        inp_txt_men.add_item(self._getTabStr('cut'),  self._cut_select)
         inp_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         inp_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+        inp_txt_men.add_separator()
+        inp_txt_men.add_item(self._getTabStr('save_to_file'), self._save_to_file)
+        inp_txt_men.add_item(self._getTabStr('past_f_file'),  self._insert_fm_file)
+        inp_txt_men.add_separator()
+        actions_submenu = inp_txt_men.add_submenu("F-Text")
+        actions_submenu.add_command(label="F1",  command=lambda : self._insert_ftext_fm_menu(1))
+        actions_submenu.add_command(label="F2",  command=lambda : self._insert_ftext_fm_menu(2))
+        actions_submenu.add_command(label="F3",  command=lambda : self._insert_ftext_fm_menu(3))
+        actions_submenu.add_command(label="F4",  command=lambda : self._insert_ftext_fm_menu(4))
+        actions_submenu.add_command(label="F5",  command=lambda : self._insert_ftext_fm_menu(5))
+        actions_submenu.add_command(label="F6",  command=lambda : self._insert_ftext_fm_menu(6))
+        actions_submenu.add_command(label="F7",  command=lambda : self._insert_ftext_fm_menu(7))
+        actions_submenu.add_command(label="F8",  command=lambda : self._insert_ftext_fm_menu(8))
+        actions_submenu.add_command(label="F9",  command=lambda : self._insert_ftext_fm_menu(9))
+        actions_submenu.add_command(label="F10", command=lambda : self._insert_ftext_fm_menu(10))
+        actions_submenu.add_command(label="F11", command=lambda : self._insert_ftext_fm_menu(11))
+        actions_submenu.add_command(label="F12", command=lambda : self._insert_ftext_fm_menu(12))
+
+
+        inp_txt_men.add_separator()
+        inp_txt_men.add_item(self._getTabStr('clean_prescription_win'), self._clear_inpWin)
+
+
         # QSO
         out_txt_men = ContextMenu(self._out_txt)
         out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
-        out_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+        out_txt_men.add_separator()
+        out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
         # Monitor
         mon_txt_men = ContextMenu(self._mon_txt)
         mon_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
-        mon_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
-        # out_txt_men.add_separator()
+        mon_txt_men.add_separator()
+        mon_txt_men.add_item(self._getTabStr('clean_mon_win'), self._clear_monitor_data)
 
     def _init_btn(self, frame):
         # btn_upper_frame = tk.Frame(frame)
@@ -889,19 +909,19 @@ class PoPT_GUI_Main:
         rtt_f       = ttk.Frame(status_frame, width=20)
         t3_f        = ttk.Frame(status_frame, width=20)
         rx_beep_f   = ttk.Frame(status_frame, width=50)
-        ts_f        = ttk.Frame(status_frame, width=20)
+        #ts_f        = ttk.Frame(status_frame, width=20)
 
         name_f.pack(side=tk.LEFT, expand=True)
         stat_f.pack(side=tk.LEFT, expand=False)
         nack_f.pack(side=tk.LEFT, expand=False)
         vsvr_f.pack(side=tk.LEFT, expand=True)
-        n2_f.pack(side=tk.LEFT, expand=True)
-        t1_f.pack(side=tk.LEFT, expand=True)
-        t2_f.pack(side=tk.LEFT, expand=True)
-        rtt_f.pack(side=tk.LEFT, expand=True)
-        t3_f.pack(side=tk.LEFT, expand=True)
+        n2_f.pack(  side=tk.LEFT, expand=True)
+        t1_f.pack(  side=tk.LEFT, expand=True)
+        t2_f.pack(  side=tk.LEFT, expand=True)
+        rtt_f.pack( side=tk.LEFT, expand=True)
+        t3_f.pack(  side=tk.LEFT, expand=True)
         rx_beep_f.pack(side=tk.LEFT, expand=False)
-        ts_f.pack(side=tk.LEFT, expand=False)
+        #ts_f.pack(  side=tk.LEFT, expand=False)
 
         fg, bg = self._get_colorMap()
         tk.Label(name_f,
@@ -991,6 +1011,7 @@ class PoPT_GUI_Main:
                                         )
         self._rx_beep_box.pack(side=tk.LEFT, anchor='w')
         # TODO Checkbox Time Stamp
+        """
         self._ts_box_box = ttk.Checkbutton(ts_f,
                                        text="T-S",
                                        #font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
@@ -1004,6 +1025,7 @@ class PoPT_GUI_Main:
                                        state='disabled'
                                        )
         # self._ts_box_box.pack(side=tk.LEFT, anchor='w') # TODO
+        """
 
     def _init_TXT_frame_mid(self):
         text_frame = ttk.Frame(self._TXT_mid_frame)
@@ -1326,6 +1348,7 @@ class PoPT_GUI_Main:
 
     def _any_key(self, event: tk.Event):
         if event.keycode == 104:  # Numpad Enter
+            self._inp_txt.insert(tk.INSERT, '\n')
             self._snd_text(event)
 
     def _arrow_keys(self, event=None):
@@ -1350,6 +1373,25 @@ class PoPT_GUI_Main:
             return
         try:
             text, enc = POPT_CFG.get_f_text_fm_id(f_id=fi)
+        except ValueError:
+            return
+        if not text:
+            return
+        ch_enc = self.stat_info_encoding_var.get()
+        if any((ch_enc == enc, not ch_enc)):
+            text = text.decode(enc, 'ignore')
+        else:
+            text = text.decode(ch_enc, 'ignore')
+        conn = self.get_conn()
+        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_manGUI(), connection=conn)
+        text = zeilenumbruch_lines(text)
+        self._inp_txt.insert(tk.INSERT, text)
+        self.see_end_inp_win()
+        return
+
+    def _insert_ftext_fm_menu(self, f_nr: int):
+        try:
+            text, enc = POPT_CFG.get_f_text_fm_id(f_id=f_nr)
         except ValueError:
             return
         if not text:
@@ -1433,10 +1475,11 @@ class PoPT_GUI_Main:
             self._mon_txt.tag_remove(tk.SEL, "1.0", tk.END)
 
     def _cut_select(self):
-        if self._out_txt.tag_ranges("sel"):
+        if self._inp_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self._out_txt.selection_get())
-            self._out_txt.delete('sel.first', 'sel.last')
+            self.main_win.clipboard_append(self._inp_txt.selection_get())
+            self._inp_txt.delete('sel.first', 'sel.last')
+            self._inp_txt.see(tk.INSERT)
 
     def _clipboard_past(self):
         try:
@@ -1517,6 +1560,26 @@ class PoPT_GUI_Main:
             ch_vars = self.get_ch_var(ch_index=ch_id)
             if not ch_vars.t2speech:
                 ch_vars.t2speech_buf = ''
+
+    def _clear_inpWin(self):
+        self._inp_txt.delete('1.0', tk.END)
+        # del self._channel_vars[self.channel_index]
+        chVars = self._channel_vars[self.channel_index]
+        chVars.input_win                = ''
+        chVars.input_win_tags           = {}
+        chVars.input_win_index          = '1.0'
+        chVars.input_win_cursor_index   = tk.INSERT
+
+    def _clear_qsoWin(self):
+        self._out_txt.configure(state='normal')
+        self._out_txt.delete('1.0', tk.END)
+        self._out_txt.configure(state='disabled')
+        # del self._channel_vars[self.channel_index]
+
+        chVars = self._channel_vars[self.channel_index]
+        chVars.output_win       = ''
+        chVars.output_win_tags  = {}
+        chVars.t2speech_buf     = ''
 
     def clear_channel_vars(self):
         self._out_txt.configure(state='normal')
@@ -2235,29 +2298,35 @@ class PoPT_GUI_Main:
     #######################################################################
     # BW Plot
     def _update_bw_mon(self):
-        tr = False
-        for port_id in list(self._port_handler.ax25_ports.keys()):
+        """Cleanup by Grok3-AI"""
+        redraw_needed = False
+        for port_id in self._port_handler.ax25_ports.keys():
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
-            data = self.mh.get_bandwidth(
-                port_id,
-                port_cfg.get('parm_baud', 1200),
-            )
-            label = f"{port_cfg.get('parm_PortName', '')}"
+            baud = port_cfg.get('parm_baud', 1200)
+            data = self.mh.get_bandwidth(port_id, baud)  # Annahme: gibt eine Liste zurück
+
+            label = port_cfg.get('parm_PortName', f'Port {port_id}')
+
             if port_id not in self._bw_plot_lines:
-                self._bw_plot_lines[int(port_id)], = self._ax.plot(self._bw_plot_x_scale, data, label=label)
+                line, = self._ax.plot(self._bw_plot_x_scale, data, label=label)
+                self._bw_plot_lines[port_id] = line
                 self._ax.legend()
-                tr = True
+                redraw_needed = True
             else:
-                if list(data) != list(self._bw_plot_lines[int(port_id)].get_data()[1]):
-                    self._bw_plot_lines[int(port_id)].set_ydata(data)
-                    tr = True
-        if tr:
+                # Umwandlung der aktuellen y-Daten in eine Liste für den Vergleich
+                current_ydata = list(self._bw_plot_lines[port_id].get_ydata())
+                if data != current_ydata:  # Direkter Listenvergleich
+                    self._bw_plot_lines[port_id].set_ydata(data)
+                    redraw_needed = True
+
+        if redraw_needed:
             self._draw_bw_plot()
 
+
     def _draw_bw_plot(self):
+        """Cleanup by Grok3-AI"""
         self._bw_fig.canvas.draw()
         self._bw_fig.canvas.flush_events()
-        self._canvas.flush_events()
 
     # END BW Plot
     #######################################################################

@@ -23,6 +23,13 @@ class ContextMenu:
 
     def add_submenu(self, label):
         """Fügt ein Untermenü hinzu und gibt das Untermenü-Objekt zurück"""
+        """
+        actions_submenu = self.context_menu.add_submenu("Aktionen")
+        actions_submenu.add_command(label="Kopieren", command=self.copy_item)
+        actions_submenu.add_command(label="Ausschneiden", command=self.cut_item)
+        actions_submenu.add_separator()
+        actions_submenu.add_command(label="Duplizieren", command=self.duplicate_item)
+        """
         submenu = tk.Menu(self._menu, tearoff=0)
         self._menu.add_cascade(label=label, menu=submenu)
         return submenu

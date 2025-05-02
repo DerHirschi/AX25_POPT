@@ -10,6 +10,7 @@ Fixes:
   (Aktualisierung der Tabs, Fehler beim Anlegen neuer FWD-Partner)
 - Scripterror im Message-Center beim verändern der Textgröße. (STRG +/-)
 - Messagcenter, Textgröße der Forwardwarteschlange wird nicht verändert.
+- Numpad-Enter sendet Text ohne Zeilenumbruch
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.

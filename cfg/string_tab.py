@@ -1155,6 +1155,30 @@ STR_TABLE = {
         '',
         ''),
 
+    'clean_prescription_win': (
+        'Vorschreibfenster löschen',
+        'Clear Prescription window',
+        'Voorschrijfvenster verwijderen',
+        'Effacer fenêtre préredaction',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'clean_just_qso_win': (
+        'QSO löschen',
+        'Clear QSO window',
+        'QSO verwijderen',
+        'Effacer QSO préredaction',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'clean_qso_win': (
         'QSO/Vorschreibfenster löschen',
         'Clear QSO/Prescription window',

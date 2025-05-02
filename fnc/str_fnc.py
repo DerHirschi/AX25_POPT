@@ -234,12 +234,15 @@ def get_strTab(str_key: str, lang_index: int):
         return str_key
     if str_key not in STR_TABLE.keys():
         logger.warning(f"get_strTab() str_key: {str_key}")
+        logger.warning(f"  No translation found for: {str_key}")
+        logger.warning(f"  Ignore warning if no translation is needed.")
         return str_key
     lang_tab = STR_TABLE.get(str_key, ())
     try:
         return lang_tab[lang_index]
     except IndexError:
         logger.error(f"get_strTab() Lang-Index: {lang_index}")
+        logger.error(f"  Language not found: {lang_index}")
         return str_key
 
 
