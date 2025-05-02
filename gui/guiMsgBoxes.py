@@ -14,9 +14,21 @@ def open_file_dialog():
     return b''
 
 
-def save_file_dialog(data):
+def save_file_dialog(data, master_win=None):
+    filetypes = (
+        ('All files', '*.*'),
+        ('text files', '*.txt'),
+    )
     try:
-        f = filedialog.asksaveasfile(mode='w', defaultextension=".txt")
+        if master_win:
+            f = filedialog.asksaveasfile(mode='w',
+                                         defaultextension=".txt",
+                                         filetypes=filetypes,
+                                         parent=master_win)
+        else:
+            f = filedialog.asksaveasfile(mode='w',
+                                         defaultextension=".txt",
+                                         filetypes=filetypes)
     except PermissionError:
         return False
     if f is None:

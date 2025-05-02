@@ -88,7 +88,11 @@ class ContextMenu:
             return
 
         # Prüfe, ob das Root-Fenster den Fokus hat
-        if self._root.focus_get() is None:
+        try:
+            if self._root.focus_get() is None:
+                self._menu.unpost()  # Menü schließen
+                self._cleanup()
+        except KeyError:
             self._menu.unpost()  # Menü schließen
             self._cleanup()
 

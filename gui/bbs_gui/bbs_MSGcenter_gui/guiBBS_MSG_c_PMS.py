@@ -177,6 +177,15 @@ class MSG_Center_PMS(MSG_Center_base):
         self._init_sv_lower_frame(lower_f_top)
         self._init_sv_footer_frame(lower_f_top)
         # ---------------------------------------------
+        self._text_tab = {
+            0: self._pn_text,
+            1: self._bl_text,
+            2: self._out_text,
+            3: self._sv_text,
+        }
+        # ---------------------------------------------
+        self._init_RClick_menu()
+        # self.bind('<Control-c>', lambda event: self._copy_select())
         ###############################################
 
     def on_bbsTab_select(self, event=None):
@@ -318,7 +327,6 @@ class MSG_Center_PMS(MSG_Center_base):
         self._pn_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._pn_text.config(yscrollcommand=scrollbar.set)
-
 
     def _init_pn_footer_frame(self, root_frame):
         footer_frame = ttk.Frame(root_frame, height=15)
@@ -504,7 +512,7 @@ class MSG_Center_PMS(MSG_Center_base):
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
 
-    # OUT TAB
+    # OUT-TAB
     def _init_out_tree(self, root_frame):
         columns = (
             'gesendet',

@@ -502,7 +502,7 @@ class BBS_newMSG(tk.Toplevel):
 
     def _save_to_file(self):
         data = self._text.get('1.0', tk.END)
-        save_file_dialog(data)
+        save_file_dialog(data, self)
         self.lift()
 
     def _close(self):

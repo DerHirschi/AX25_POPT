@@ -13,23 +13,12 @@ class MSG_Center(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win  = root_win
-        self._lang      = POPT_CFG.get_guiCFG_language()
-        self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # Vars
         PORT_HANDLER.set_pmsMailAlarm(False)
-        self._bbs_obj       = PORT_HANDLER.get_bbs()
-        self._sort_rev      = False
-        self._last_sort_col = {}
-        self._selected_msg  = {
-            'P': {},
-            'B': {},
-            'O': {},
-            'S': {},
-        }
-        self._var_encoding      = tk.StringVar(self, 'UTF-8')
+        self._bbs_obj           = PORT_HANDLER.get_bbs()
         self.text_size          = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-        self._text_size_tabs    = 10
         self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
         ###################################
         self.title(self._getTabStr('msg_center'))
@@ -48,8 +37,6 @@ class MSG_Center(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
-        ####################
-        self._init_Menu()
         ######################################################################
         # APRS/BBS TABS
         upper_frame = ttk.Frame(self, )
@@ -60,7 +47,6 @@ class MSG_Center(tk.Toplevel):
         )
         self._tabControl_type.pack(side=tk.TOP, fill=tk.BOTH, expand=True, )
 
-        # PMS_tab_frame   = ttk.Frame(self)
         self._PMS_tab_frame   = MSG_Center_PMS(self)
         self._BBS_tab_frame   = MSG_Center_BBS(self)
         APRS_tab_frame  = ttk.Frame(self)
@@ -77,11 +63,12 @@ class MSG_Center(tk.Toplevel):
         ################################################
         # ---------------------------------------------
         ###############################################
+        self._init_Menu()
         ###############################################
         # Keybindings
-        self.bind('<Control-plus>', lambda event: self._increase_textsize())
+        self.bind('<Control-plus>',  lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
-        # self.bind('<Control-c>', lambda event: self._copy_select())
+        self.bind('<Control-c>', lambda event: self._copy_select())
         #####################
         # Get Settings fm CFG
         self._root_win.MSG_Center_win = self
@@ -96,15 +83,15 @@ class MSG_Center(tk.Toplevel):
         MenuVerb.add_command(label=self._getTabStr('send_all_now'), command=lambda: self._do_pms_autoFWD())
         menubar.add_cascade(label=self._getTabStr('msg'), menu=MenuVerb, underline=0)
         # ### Bearbeiten
-        MenuEdit = tk.Menu(menubar, tearoff=False)
-        MenuEdit.add_command(label=self._getTabStr('mark_all_read'),
-                              command=self._set_all_to_oldMSG,
-                              underline=0)
-        MenuVerb.add_separator()
-        MenuEdit.add_command(label=self._getTabStr('save_to_file'),
-                              command=self._save_msg_to_file,
-                              underline=0)
-        menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
+        #MenuEdit = tk.Menu(menubar, tearoff=False)
+        #MenuEdit.add_command(label=self._getTabStr('mark_all_read'),
+        #                      command=self._set_all_to_oldMSG,
+        #                      underline=0)
+        #MenuVerb.add_separator()
+        #MenuEdit.add_command(label=self._getTabStr('save_to_file'),
+        #                      command=self._save_msg_to_file,
+        #                      underline=0)
+        #menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
 
     def _init_Vars_fm_Cfg(self):
         pass
@@ -137,12 +124,25 @@ class MSG_Center(tk.Toplevel):
         self._BBS_tab_frame.update_textsize_trees()
         self._PMS_tab_frame.update_textsize_trees()
 
+    def _copy_select(self):
+        try:
+            ind = self._tabControl_type.index(self._tabControl_type.select())
+        except tk.TclError:
+            return
+        sel_tab = {
+            0: self._PMS_tab_frame,
+            1: self._BBS_tab_frame,
+        }.get(ind, None)
+        if hasattr(sel_tab, 'copy_select'):
+            sel_tab.copy_select()
 
+    ################################
     def _open_newMSG_win(self):
         if self.newPMS_MSG_win:
             return
         self.newPMS_MSG_win = BBS_newMSG(self)
 
+    ################################
     def tree_update_task(self):
         # Global Update trigger fm Porthandler
         # TODO
@@ -164,29 +164,11 @@ class MSG_Center(tk.Toplevel):
         pass
 
     ####################
-    def _save_msg_to_file(self, event=None):
-        # TODO
-        """
-        try:
-            ind = self._tabControl.index(self._tabControl.select())
-        except tk.TclError:
-            return
-        msg_text = {
-            0: self._pn_text,
-            1: self._bl_text,
-            2: self._out_text,
-            # 3: self._sv_text_pms,
-        }.get(ind, None)
-        if msg_text:
-            data = msg_text.get('1.0', tk.END)
-            save_file_dialog(data)
-        """
-        pass
-
     def _do_pms_autoFWD(self):
         self._bbs_obj.start_man_autoFwd()
 
 
+    ################################
     def _close(self):
         self._save_Vars_to_Cfg()
         self._bbs_obj = None

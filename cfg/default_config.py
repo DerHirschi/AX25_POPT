@@ -246,6 +246,7 @@ def getNew_maniGUI_parm():
         gui_cfg_dx_alarm            = True,
         gui_cfg_noty_bell           = False,
         gui_cfg_mon_encoding        = 'Auto',
+        gui_cfg_mon_scroll          = True,
         gui_cfg_rtab_index          = (None, None),
         #####################
         # Vorschreib Col

@@ -255,6 +255,16 @@ class MSG_Center_BBS(MSG_Center_base):
         self._init_trash_lower_frame(lower_f_top)
         self._init_trash_footer_frame(lower_f_top)
         # ---------------------------------------------
+        self._text_tab = {
+            0: self._pn_text,
+            1: self._bl_text,
+            2: self._out_text,
+            3: self._fwdQ_text,
+            4: self._hold_text,
+            5: self._trash_text,
+        }
+        # ---------------------------------------------
+        self._init_RClick_menu()
         ###############################################
 
     def on_bbsTab_select(self, event=None):
@@ -2018,5 +2028,3 @@ class MSG_Center_BBS(MSG_Center_base):
         self._hold_selected = []
         self._update_hold_tree_data()
     """
-
-    ####################

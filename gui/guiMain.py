@@ -445,6 +445,7 @@ class PoPT_GUI_Main:
         guiCfg['gui_cfg_noty_bell']     = bool(self.setting_noty_bell.get())
         guiCfg['gui_cfg_sprech']        = bool(self.setting_sprech.get())
         guiCfg['gui_cfg_mon_encoding']  = str(self.setting_mon_encoding.get())
+        guiCfg['gui_cfg_mon_scroll']    = bool(self.mon_scroll_var.get())
         try:
             guiCfg['gui_cfg_rtab_index'] = int(self.tabbed_sideFrame.get_tab_index()), int(self.tabbed_sideFrame2.get_tab_index())
         except (ValueError, tk.TclError):
@@ -509,6 +510,7 @@ class PoPT_GUI_Main:
         self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))
         self.setting_noty_bell.set(guiCfg.get('gui_cfg_noty_bell', False))
         self.setting_mon_encoding.set(guiCfg.get('gui_cfg_mon_encoding', 'Auto'))
+        self.mon_scroll_var.set(guiCfg.get('gui_cfg_mon_scroll', True))
         # OWN Loc and QTH
         self.own_loc = guiCfg.get('gui_cfg_locator', '')
         self.own_qth = guiCfg.get('gui_cfg_qth', '')
@@ -1465,7 +1467,7 @@ class PoPT_GUI_Main:
     def _save_to_file(self):
         data = self._out_txt.get('1.0', tk.END)
         # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
-        save_file_dialog(data)
+        save_file_dialog(data, self.main_win)
 
     ##########################
     # Monitor Text Stuff

@@ -7,6 +7,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
 from gui.guiMsgBoxes import save_file_dialog
+from gui.guiRightClick_Menu import ContextMenu
 
 
 class MSG_Center_base(ttk.Frame):
@@ -31,7 +32,7 @@ class MSG_Center_base(ttk.Frame):
             'T': {},
         }
         ###################################
-        self.style_name = self._root_win.style_name
+        self.style_name    = self._root_win.style_name
         self._get_colorMap = lambda: COLOR_MAP.get(self.style_name, ('black', '#d9d9d9'))
         ###################################
         # Vars
@@ -56,12 +57,53 @@ class MSG_Center_base(ttk.Frame):
         self._bl_text       = None
         self._out_text      = None
         self._sv_text       = None
+        self._fwdQ_text     = None
         self._hold_text     = None
         self._trash_text    = None
         #
         self._BL_selected  = []
         self._PN_selected  = []
         self._OUT_selected = []
+        #
+        self._text_tab = {}
+
+    def _init_RClick_menu(self):
+        # PN
+        if self._pn_text:
+            pn_txt_men = ContextMenu(self._pn_text)
+            pn_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+            pn_txt_men.add_item(self._getTabStr('save_to_file'), self._save_msg_to_file)
+        # BL
+        if self._bl_text:
+            bl_txt_men = ContextMenu(self._bl_text)
+            bl_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+            bl_txt_men.add_item(self._getTabStr('save_to_file'), self._save_msg_to_file)
+        # OUT
+        if self._out_text:
+            out_txt_men = ContextMenu(self._out_text)
+            out_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+            out_txt_men.add_item(self._getTabStr('save_to_file'), self._save_msg_to_file)
+        # sv
+        if self._sv_text:
+            sv_txt_men = ContextMenu(self._sv_text)
+            sv_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+            sv_txt_men.add_item(self._getTabStr('save_to_file'), self._save_msg_to_file)
+        # fwdQ
+        if self._fwdQ_text:
+            fwdQ_txt_men = ContextMenu(self._fwdQ_text)
+            fwdQ_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+            fwdQ_txt_men.add_item(self._getTabStr('save_to_file'), self._save_msg_to_file)
+        # Hold
+        if self._hold_text:
+            hold_txt_men = ContextMenu(self._hold_text)
+            hold_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+            hold_txt_men.add_item(self._getTabStr('save_to_file'), self._save_msg_to_file)
+        # Trash
+        if self._trash_text:
+            trash_txt_men = ContextMenu(self._trash_text)
+            trash_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+            trash_txt_men.add_item(self._getTabStr('save_to_file'), self._save_msg_to_file)
+
 
     def _sort_entry(self, col, tree):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
@@ -199,17 +241,12 @@ class MSG_Center_base(ttk.Frame):
             # print(mid)
             self._bbs_obj.get_db().pms_save_outMsg_by_MID(mid)
 
-    def _copy_select(self):
+    def copy_select(self):
         try:
             ind = self._tabControl.index(self._tabControl.select())
         except tk.TclError:
             return
-        text = {
-            0: self._pn_text,
-            1: self._bl_text,
-            2: self._out_text,
-            3: self._sv_text,
-        }.get(ind, None)
+        text = self._text_tab.get(ind, None)
         if text is None:
             return
         if text.tag_ranges("sel"):
@@ -217,21 +254,17 @@ class MSG_Center_base(ttk.Frame):
             self.clipboard_append(text.selection_get())
             text.tag_remove(tk.SEL, "1.0", tk.END)
 
-    def _save_msg_to_file(self, event=None):
+    def _save_msg_to_file(self):
         try:
             ind = self._tabControl.index(self._tabControl.select())
         except tk.TclError:
             return
-        msg_text = {
-            0: self._pn_text,
-            1: self._bl_text,
-            2: self._out_text,
-            3: self._sv_text,
-        }.get(ind, None)
-        if msg_text is None:
-            return
-        data = msg_text.get('1.0', tk.END)
-        save_file_dialog(data)
+        msg_text = self._text_tab.get(ind, None)
+        if msg_text:
+            data = msg_text.get('1.0', tk.END)[:-1]
+            # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
+            save_file_dialog(data, self._root_win)
+
 
     def _delete_msg(self):
         try:
@@ -359,18 +392,38 @@ class MSG_Center_base(ttk.Frame):
     def increase_textsize(self):
         self.text_size += 1
         self.text_size = max(self.text_size, 3)
-        self._bl_text.configure(font=(FONT, self.text_size))
-        self._pn_text.configure(font=(FONT, self.text_size))
-        self._out_text.configure(font=(FONT, self.text_size))
-        self._sv_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._bl_text, 'configure'):
+            self._bl_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._pn_text, 'configure'):
+            self._pn_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._out_text, 'configure'):
+            self._out_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._sv_text, 'configure'):
+            self._sv_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._fwdQ_text, 'configure'):
+            self._fwdQ_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._hold_text, 'configure'):
+            self._hold_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._trash_text, 'configure'):
+            self._trash_text.configure(font=(FONT, self.text_size))
 
     def decrease_textsize(self):
         self.text_size -= 1
         self.text_size = max(self.text_size, 3)
-        self._bl_text.configure(font=(FONT, self.text_size))
-        self._pn_text.configure(font=(FONT, self.text_size))
-        self._out_text.configure(font=(FONT, self.text_size))
-        self._sv_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._bl_text, 'configure'):
+            self._bl_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._pn_text, 'configure'):
+            self._pn_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._out_text, 'configure'):
+            self._out_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._sv_text, 'configure'):
+            self._sv_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._fwdQ_text, 'configure'):
+            self._fwdQ_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._hold_text, 'configure'):
+            self._hold_text.configure(font=(FONT, self.text_size))
+        if hasattr(self._trash_text, 'configure'):
+            self._trash_text.configure(font=(FONT, self.text_size))
 
     def update_textsize_trees(self):
         self._bl_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
@@ -379,3 +432,4 @@ class MSG_Center_base(ttk.Frame):
         self._pn_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
         self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
+    #################################
