@@ -27,6 +27,7 @@ Neue Implementierungen / Funktionen:
 - Haupt-GUI: Rechtsklick-Menü
 - Message-Center: Rechtsklick-Menü
 - Message-Center: STRG-C Keybind
+- Neu PR-Mail GUI: Rechtsklick-Menü
 
 ###########################################################################################################
 ###########################################################################################################

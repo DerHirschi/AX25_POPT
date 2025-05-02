@@ -11,6 +11,7 @@ from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD, COLOR_MAP
 from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
+from gui.guiRightClick_Menu import ContextMenu
 
 
 class BBS_newMSG(tk.Toplevel):
@@ -97,9 +98,21 @@ class BBS_newMSG(tk.Toplevel):
             self._init_data_f_reply()
         self.bind('<Key>',           self._update_msg_size)
         self.bind('<Control-c>',     lambda event: self._copy_select())
+        # self.bind('<Control-v>',     lambda event: self._clipboard_past())
         self.bind('<Control-x>',     lambda event: self._cut_select())
         self.bind('<Control-plus>',  lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
+        #####################
+        self._init_RClick_menu()
+
+    def _init_RClick_menu(self):
+        if self._text:
+            txt_men = ContextMenu(self._text)
+            txt_men.add_item(self._getTabStr('cut'),  self._cut_select)
+            txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+            txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+            txt_men.add_separator()
+            txt_men.add_item(self._getTabStr('past_f_file'), self._insert_fm_file)
 
     def _on_key_release_inp_txt(self, event=None):
         ind2 = str(int(float(self._text.index(tk.INSERT)))) + '.0'
@@ -113,7 +126,7 @@ class BBS_newMSG(tk.Toplevel):
         # ### Mail
         MenuVerb = tk.Menu(menubar, tearoff=False)
         MenuVerb.add_command(
-            label='Senden',
+            label=self._getTabStr('send'),
             command=self._btn_send_msg,
         )
         menubar.add_cascade(label='Mail', menu=MenuVerb, underline=0)
@@ -129,15 +142,15 @@ class BBS_newMSG(tk.Toplevel):
 
     def _init_upper_btn_frame(self, root_frame):
         ttk.Button(root_frame,
-                  text='Senden',
+                  text=self._getTabStr('send'),
                   command=self._btn_send_msg
                   ).pack(side=tk.LEFT, expand=False)
         ttk.Button(root_frame,
-                  text='Entwurf Speichern',
+                  text=self._getTabStr('save_draft'),
                   command=self._btn_save_msg
                   ).pack(side=tk.LEFT, expand=False, padx=10)
         ttk.Button(root_frame,
-                  text='Verwerfen',
+                  text=self._getTabStr('discard'),
                   command=self._btn_delete_all
                   ).pack(side=tk.RIGHT, expand=False, anchor='e')
 
@@ -468,10 +481,10 @@ class BBS_newMSG(tk.Toplevel):
             return False
         return True
 
-
     def _to_call_warning(self):
         self._to_call_ent.focus_set()
-        WarningMsg('Adresse nicht korrekt', 'Die Adresse des Empfängers ist nicht korrekt.   Keine BBS')
+        WarningMsg(self._getTabStr('invalid_call_warning1'),
+                   self._getTabStr('invalid_call_warning2'))
         self.lift()
 
     def _update_msg_size(self, event=None):
@@ -490,8 +503,19 @@ class BBS_newMSG(tk.Toplevel):
             self.clipboard_append(self._text.selection_get())
             self._text.delete('sel.first', 'sel.last')
 
+    def _clipboard_past(self):
+        if not self._text:
+            return
+        try:
+            if not self._text.focus_get() == self._text:
+                return
+            clp_brd = self.clipboard_get()
+        except tk.TclError:
+            return
+        self._text.insert(tk.INSERT, clp_brd)
+
     def _insert_fm_file(self):
-        data = open_file_dialog()
+        data = open_file_dialog(self)
         self.lift()
         if data:
             if type(data) == bytes:

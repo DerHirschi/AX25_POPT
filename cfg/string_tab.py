@@ -1083,6 +1083,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'cut': (
+        'Ausschneiden',
+        'Cut out',
+        'Knip uit',
+        'Découper',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'past_f_file': (
         'Aus Datei einfügen',
         'Past from File',
@@ -1766,6 +1778,9 @@ STR_TABLE = {
         '',
         ''),
 
+    ##############################################
+    # guiBBS_newMSG.py
+
     'new_pr_mail': (
         'Neue PR-Mail',
         'New PR-Mail',
@@ -1778,6 +1793,67 @@ STR_TABLE = {
         '',
         ''),
 
+    'send': (
+        'Senden',
+        'Send',
+        'Versturen',
+        'Envoyer',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'save_draft': (
+        'Entwurf Speichern',
+        'Save draft',
+        'Concept opslaan',
+        'Enregistrer le brouillon',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'discard': (
+        'Verwerfen',
+        'Discard',
+        'Weggooien',
+        'Jeter',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_call_warning1': (
+        'Adresse nicht korrekt',
+        'Address incorrect',
+        'Adres onjuist',
+        'Adresse incorrecte',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_call_warning2': (
+        'Die Adresse des Empfängers ist nicht korrekt.   Keine BBS.',
+        "The recipient's address is incorrect. No BBS.",
+        'Het adres van de ontvanger is onjuist.   Geen BBS.',
+        "L'adresse du destinataire est incorrecte.   Pas de BBS.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    ##############################################
     'send_all_now': (
         'Alles sofort senden',
         'Send everything now',

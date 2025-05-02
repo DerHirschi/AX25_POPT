@@ -1451,7 +1451,7 @@ class PoPT_GUI_Main:
     ##########################
     # Pre-write Text Stuff
     def _insert_fm_file(self):
-        data = open_file_dialog()
+        data = open_file_dialog(self.main_win)
         if not data:
             return
         ch_enc = self.stat_info_encoding_var.get()
