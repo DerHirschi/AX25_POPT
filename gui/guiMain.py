@@ -370,17 +370,23 @@ class PoPT_GUI_Main:
         self.set_text_tags()
         # .....
         self._update_qso_Vars()
-        #############################
-        # set GUI Var to Port Handler
-        self._port_handler.set_gui(self)
         ############################
         self._monitor_start_msg()
         ############################
         self._Pacman.update_plot_f_ch(self.channel_index)
+        ############################
+        logger.info('GUI: Status-Bar Text Init')
+        self._status_text_tab = {}
+        for k, col in STATUS_BG.items():
+            status_text = self._getTabStr(k)
+            self._status_text_tab[k] = status_text, col
         ##########################################
         # Menubar fix if app starts in fullscreen
         geom = self.main_win.winfo_geometry()
         self.main_win.geometry(geom)
+        #################################
+        # set GUI Var to Port Handler
+        self._port_handler.set_gui(self)
         #######################
         # LOOP LOOP LOOP
         self.main_win.after(self._loop_delay, self._tasker)
@@ -911,7 +917,7 @@ class PoPT_GUI_Main:
                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                     bg=bg,
                                     foreground=STAT_BAR_TXT_CLR,
-                                    width=8
+                                    #width=8
                                     )
         self._status_status.pack(side=tk.LEFT, anchor='w', expand=True)
 
@@ -920,7 +926,7 @@ class PoPT_GUI_Main:
                                     foreground=STAT_BAR_TXT_CLR,
                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                                     bg=bg,
-                                    width=8
+                                    #width=8
                                    )
         self._status_unack.pack(side=tk.LEFT, anchor='w', expand=True)
 
@@ -2658,9 +2664,9 @@ class PoPT_GUI_Main:
                 t2_text = f"T2: {int(station.get_param_T2() * 1000)}"
             if self._status_name_var.get() != from_call:
                 self._status_name_var.set(from_call)
-            if self._status_status_var.get() != status:
-                status_bg = STATUS_BG[status]
-                self._status_status_var.set(status)
+            status_text, status_bg = self._status_text_tab.get(status, ('',bg))
+            if self._status_status_var.get() != status_text:
+                self._status_status_var.set(status_text)
                 self._status_status.configure(bg=status_bg)
             if self._status_unack_var.get() != unAck:
                 self._status_unack_var.set(unAck)
