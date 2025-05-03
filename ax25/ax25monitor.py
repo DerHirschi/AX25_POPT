@@ -1,4 +1,4 @@
-from ax25.ax25NetRom import NetRom_decode_I, NetRom_decode_UI_mon
+from ax25.ax25NetRom import NetRom_decode_UI_mon, NetRom_decode_I_mon
 # import logging
 # from ax25.ax25NetRom import NetRom_decode_I
 from ax25aprs.aprs_dec import format_aprs_f_monitor
@@ -9,27 +9,28 @@ from fnc.str_fnc import try_decode
 
 
 def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
-    port_name = port_cfg.get('parm_PortName', '')
-    guiCfg = POPT_CFG.load_guiPARM_main()
-    own_loc = guiCfg.get('gui_cfg_locator', '')
+    port_name   = port_cfg.get('parm_PortName', '')
+    guiCfg      = POPT_CFG.load_guiPARM_main()
+    own_loc     = guiCfg.get('gui_cfg_locator', '')
 
     # own_loc = port_cfg.parm_aprs_station.get('aprs_parm_loc', '')
-    aprs_data = ''
-    ctl_flag = ax25_frame_conf.get('ctl_flag', '')
-    ctl_cmd = ax25_frame_conf.get('ctl_cmd', '')
-    ctl_hex = ax25_frame_conf.get('ctl_hex', '')
+    aprs_data   = ''
+    ctl_flag    = ax25_frame_conf.get('ctl_flag', '')
+    ctl_cmd     = ax25_frame_conf.get('ctl_cmd', '')
+    ctl_hex     = ax25_frame_conf.get('ctl_hex', '')
     ctl_mon_str = ax25_frame_conf.get('ctl_mon_str', '')
-    pid_flag = ax25_frame_conf.get('pid_flag', '')
-    pid_hex = ax25_frame_conf.get('pid_hex', '')
-    from_call = ax25_frame_conf.get('from_call_str', '')
-    to_call = ax25_frame_conf.get('to_call_str', '')
-    rx_time = ax25_frame_conf.get('rx_time')
+    pid_flag    = ax25_frame_conf.get('pid_flag', '')
+    pid_hex     = ax25_frame_conf.get('pid_hex', '')
+    from_call   = ax25_frame_conf.get('from_call_str', '')
+    to_call     = ax25_frame_conf.get('to_call_str', '')
+    rx_time     = ax25_frame_conf.get('rx_time')
     payload_len = ax25_frame_conf.get('payload_len', 0)
-    payload = ax25_frame_conf.get('payload', b'')
-    netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
+    payload     = ax25_frame_conf.get('payload', b'')
+    netrom_cfg  = ax25_frame_conf.get('netrom_cfg', {})
+    # APRS
     if ctl_flag == 'UI':
         aprs_data = format_aprs_f_monitor(ax25_frame_conf, own_locator=own_loc)
-
+    # Distance
     from_call_d = round(USER_DB.get_distance(from_call))
     if from_call_d:
         from_call += f"({from_call_d} km)"
@@ -43,7 +44,7 @@ def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
         dist = f"({dist} km)" if dist else ''
         via_calls.append(call_str + '*' + dist) if c_bit else via_calls.append(call_str + dist)
 
-
+    ############################
     out_str = f"{port_name} {rx_time.strftime('%H:%M:%S')}: {from_call} to {to_call}"
     out_str += ' via ' + ' '.join(via_calls) if via_calls else ''
     out_str += ' cmd' if ctl_cmd else ' rpt'
@@ -52,20 +53,18 @@ def monitor_frame_inp(ax25_frame_conf: dict, port_cfg, decoding='Auto'):
     out_str += f'\n   ├──────▶: ctl={ctl_hex} pid={pid_hex}({pid_flag})'\
         if int(pid_hex, 16) else ''
     out_str += ' len={}\n'.format(payload_len) if payload_len else '\n'
-    # ======= Old NetRom
 
+    # NetRom
     if netrom_cfg:  # Net-Rom
         if ctl_flag == 'UI':
-            data = NetRom_decode_UI_mon(ax25_frame_conf)
+            data = NetRom_decode_UI_mon(netrom_cfg=netrom_cfg)
             out_str += data
             return out_str, aprs_data
 
-    # ======= DEV Inp-NetRom/L3-NetRom TODO move decoding call to ax25ecn_dec
-
-    if ctl_flag == 'I' and pid_hex == '0xcf':   # TODO Optional
-        data    = NetRom_decode_I(payload)
-        out_str += data
-        return out_str, aprs_data
+        if ctl_flag == 'I' and pid_hex == '0xcf':   # TODO Optional
+            data    = NetRom_decode_I_mon(netrom_cfg)
+            out_str += data
+            return out_str, aprs_data
 
     # if payload:
     if type(payload) is bytes:

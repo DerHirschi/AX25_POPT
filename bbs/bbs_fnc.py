@@ -1,13 +1,14 @@
 import re
 from datetime import datetime, timezone
 
-from bbs.bbs_constant import GET_MSG_STRUC, STAMP, MSG_ID, STAMP_BID, STAMP_MSG_NUM, CR, EOL, MSG_H_TO, SP, MSG_H_FROM, \
+from bbs.bbs_constant import GET_MSG_STRUC, STAMP, MSG_ID, STAMP_BID, STAMP_MSG_NUM, CR, MSG_H_TO, SP, MSG_H_FROM, \
     SOH, NUL, EOT, STX, MSG_XH_INFO
 from cfg.constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 from cfg.logger_config import logger
 from cfg.logger_config import BBS_LOG
 from fnc.lzhuf import LZHUF_Comp
 from fnc.sql_fnc import convert_sql_list
+from fnc.str_fnc import find_eol
 
 
 def generate_sid(features=("F", "M", "H")):
@@ -21,12 +22,6 @@ def generate_sid(features=("F", "M", "H")):
 
     return sid
 
-def find_eol(msg: bytes):
-    # Find EOL Syntax
-    for tmp_eol in EOL:
-        if tmp_eol in msg:
-            return tmp_eol
-    return CR
 
 def parse_forward_header(header):
     # FB P MD2BBS MD2SAW MD2SAW 18243-MD2BBS 502

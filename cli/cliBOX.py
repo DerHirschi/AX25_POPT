@@ -2,13 +2,12 @@ from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import GET_MSG_STRUC, EOM
-from bbs.bbs_fnc import find_eol
 from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
 from cli.cliMain import DefaultCLI
 from fnc.ax25_fnc import validate_ax25Call
-from fnc.str_fnc import zeilenumbruch
+from fnc.str_fnc import zeilenumbruch, find_eol
 
 
 class BoxCLI(DefaultCLI):

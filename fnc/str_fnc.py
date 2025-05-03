@@ -1,6 +1,8 @@
 import random
 import time
 from datetime import datetime, timedelta
+
+from bbs.bbs_constant import EOL, CR
 from cfg.logger_config import logger
 from cfg.constant import ENCODINGS, SQL_TIME_FORMAT
 from cfg.string_tab import STR_TABLE
@@ -269,3 +271,11 @@ def lob_gen(lang: int):
     bis = 5
     lob_str = f"lob{random.randint(1, bis)}"
     return get_strTab(lob_str, lang)
+
+
+def find_eol(msg: bytes):
+    # Find EOL Syntax
+    for tmp_eol in EOL:
+        if tmp_eol in msg:
+            return tmp_eol
+    return CR

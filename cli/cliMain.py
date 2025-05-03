@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from bbs.bbs_fnc import find_eol
 from cfg import constant
 from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
@@ -10,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger

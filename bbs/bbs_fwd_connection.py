@@ -1,7 +1,8 @@
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
     FWD_RESP_HLD, EOT, SOH, LF, STX
-from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, find_eol, decode_bin_mail
+from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, decode_bin_mail
+from fnc.str_fnc import find_eol
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
 
