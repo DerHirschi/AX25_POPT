@@ -363,7 +363,6 @@ class PoPT_GUI_Main:
         logger.info('GUI: Parm/CFG Init')
         self._init_GUI_vars_fm_CFG()
         self._init_PARM_vars()
-        self._load_pw_pos()
         self._set_CFG()
         # Text Tags
         self._all_tag_calls = []
@@ -385,6 +384,7 @@ class PoPT_GUI_Main:
         # Menubar fix if app starts in fullscreen
         geom = self.main_win.winfo_geometry()
         self.main_win.geometry(geom)
+        self._load_pw_pos()
         #################################
         # set GUI Var to Port Handler
         self._port_handler.set_gui(self)
