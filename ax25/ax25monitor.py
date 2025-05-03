@@ -50,17 +50,17 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
     # Distance
     if dec_distance:
         from_call_d = round(USER_DB.get_distance(from_call))
-        if from_call_d:
+        if from_call_d > 0:
             from_call += f"({from_call_d} km)"
         to_call_d = round(USER_DB.get_distance(to_call))
-        if to_call_d:
+        if to_call_d > 0:
             to_call += f"({to_call_d} km)"
 
     via_calls = []
     for call_str, c_bit in ax25_frame_conf.get('via_calls_str_c_bit', []):
         if dec_distance:
             dist = round(USER_DB.get_distance(call_str))
-            dist = f"({dist} km)" if dist else ''
+            dist = f"({dist} km)" if dist > 0 else ''
         else:
             dist = ''
         via_calls.append(call_str + '*' + dist) if c_bit else via_calls.append(call_str + dist)
@@ -129,7 +129,7 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
                     except UnicodeDecodeError:
                         decoding = 'UnicodeDecodeError'
                         payload = f'<BIN> {payload_len} Bytes'
-            out_str += f"┌──┴─▶ Payload ({decoding})▽\n" if decoding else "┌──┴─▶Payload▽\n"
+            out_str += f"┌──┴─▶ Payload▽ ({decoding})\n" if decoding else "┌──┴─▶ Payload▽\n"
 
             payload       = payload.replace('\r', '\n')
             payload_lines = payload.split('\n')

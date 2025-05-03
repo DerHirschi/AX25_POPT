@@ -192,7 +192,7 @@ def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
             monitor_str += f"└►C-Flags: {b' '.join(netrom_cfg['capable_flags']).decode('ASCII', 'ignore')}\n"
     if netrom_cfg['information']:
         if netrom_cfg['information']:
-            monitor_str += f"├────▶ Payload (ASCII)▽ len={len(netrom_cfg['information'])}\n"
+            monitor_str += f"├────▶ Payload▽ (ASCII) len={len(netrom_cfg['information'])}\n"
             eol             = find_eol(netrom_cfg['information'])
             payload_lines   = netrom_cfg['information'].split(eol)
             while '' in payload_lines:

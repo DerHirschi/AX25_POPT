@@ -209,7 +209,6 @@ class PoPT_GUI_Main:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
             self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
         self.mon_port_var.set('0')
-        # self.mon_dec_aprs_var.set(True)
         ##############
         # Controlling
         self._ch_alarm      = False
@@ -2048,15 +2047,15 @@ class PoPT_GUI_Main:
 
     def _monitor_task(self):
         mon_buff = self._port_handler.get_monitor_data()
-        mon_conf = {
-            "port_name": '',
-            "distance" : bool(self.mon_dec_dist_var.get()),
-            "aprs_dec" : bool(self.mon_dec_aprs_var.get()),
-            "nr_dec"   : bool(self.mon_dec_nr_var.get()),
-            "hex_out"  : bool(self.mon_dec_hex_var.get()),
-            "decoding" : str(self.setting_mon_encoding.get()),
-        }
         if mon_buff:
+            mon_conf = {
+                "port_name": '',
+                "distance": bool(self.mon_dec_dist_var.get()),
+                "aprs_dec": bool(self.mon_dec_aprs_var.get()),
+                "nr_dec"  : bool(self.mon_dec_nr_var.get()),
+                "hex_out" : bool(self.mon_dec_hex_var.get()),
+                "decoding": str(self.setting_mon_encoding.get()),
+            }
             tr = False
             self._mon_txt.configure(state="normal")
             for axframe_conf, port_conf, tx in mon_buff:
