@@ -7,9 +7,10 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
-from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD, COLOR_MAP
+from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD, COLOR_MAP, F_KEY_TAB_LINUX, F_KEY_TAB_WIN
 from cli.StringVARS import replace_StringVARS
 from fnc.gui_fnc import get_typed, detect_pressed
+from fnc.os_fnc import is_linux
 from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
 from gui.guiRightClick_Menu import ContextMenu
@@ -103,6 +104,14 @@ class BBS_newMSG(tk.Toplevel):
         self.bind('<Control-x>',     lambda event: self._cut_select())
         self.bind('<Control-plus>',  lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
+        #####################
+        # F-TEXT
+        if is_linux():
+            r = 13
+        else:
+            r = 11
+        for fi in range(1, r):
+            self.bind(f'<Shift-F{fi}>', self._insert_ftext)
         #####################
         self._init_RClick_menu()
 
@@ -559,6 +568,34 @@ class BBS_newMSG(tk.Toplevel):
             text = text.decode(enc, 'ignore')
         else:
             text = text.decode(decoder, 'ignore')
+        text = replace_StringVARS(input_string=text, port_handler=PORT_HANDLER)
+        text = zeilenumbruch_lines(text)
+        self._text.insert(tk.INSERT, text)
+        self._text.see(tk.INSERT)
+        return
+
+    def _insert_ftext(self, event=None):
+        # if not hasattr(event, 'keysym'):
+        if not hasattr(event, 'keycode'):
+            return
+        try:
+            if is_linux():
+                fi = int(F_KEY_TAB_LINUX[event.keycode])
+            else:
+                fi = int(F_KEY_TAB_WIN[event.keycode])
+        except (ValueError, KeyError):
+            return
+        try:
+            text, enc = POPT_CFG.get_f_text_fm_id(f_id=fi)
+        except ValueError:
+            return
+        if not text:
+            return
+        ch_enc = self._var_encoding.get()
+        if any((ch_enc == enc, not ch_enc)):
+            text = text.decode(enc, 'ignore')
+        else:
+            text = text.decode(ch_enc, 'ignore')
         text = replace_StringVARS(input_string=text, port_handler=PORT_HANDLER)
         text = zeilenumbruch_lines(text)
         self._text.insert(tk.INSERT, text)

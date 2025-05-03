@@ -125,7 +125,7 @@ class PoPT_GUI_Main:
                 self.style.theme_use(self.style_name)
 
         logger.info(logTag + f'Using style_name: {self.style_name}')
-        self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('black', '#d9d9d9'))
+        self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
         #################################################################
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
         self.main_win.geometry(f"{guiCfg.get('gui_parm_main_width', 1400)}x{guiCfg.get('gui_parm_main_height', 850)}")
