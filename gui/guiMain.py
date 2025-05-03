@@ -2351,15 +2351,17 @@ class PoPT_GUI_Main:
             self._Pacman.change_node(node=digi, ch_id=ch_id)
         self._Pacman.change_node(node=node, ch_id=ch_id)
         if ch_id == self.channel_index:
-            if not POPT_CFG.get_pacman_fix():
-                self._Pacman.update_plot_f_ch(ch_id=ch_id)
+            pass
+            # if not POPT_CFG.get_pacman_fix():
+            #     self._Pacman.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot(self, ch_id: int):
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
         self._Pacman.reset_last_hop(ch_id=ch_id)
         if ch_id == self.channel_index:
-            if not POPT_CFG.get_pacman_fix():
-                self._Pacman.update_plot_f_ch(ch_id=ch_id)
+            pass
+            #if not POPT_CFG.get_pacman_fix():
+            #    self._Pacman.update_plot_f_ch(ch_id=ch_id)
     # ENDConn Path Plot
     #######################################################################
 
