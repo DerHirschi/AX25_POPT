@@ -83,7 +83,7 @@ def NetRom_decode_UI_mon(netrom_cfg: dict):
     id_of_sending_node      = netrom_cfg.get('node_id', '')
     node_nb_list            = netrom_cfg.get('node_nb_list', {})
 
-    monitor_str = f"┌──┴─▶ NET/ROM Routing: {id_of_sending_node}:{call_of_sending_node}\n"
+    monitor_str = f"┌──┴─▶ NET/ROM Routing▽ {id_of_sending_node}:{call_of_sending_node}\n"
     monitor_str += "├►Neighbors - Alias  - BestNeighbor - BestQual\n"
     i = len(node_nb_list.keys())
     for de, item in node_nb_list.items():

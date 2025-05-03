@@ -4397,6 +4397,19 @@ STR_TABLE = {
         '',
         '',
         ''),
+
+    'mon_end_msg1': (
+        'PoPT wird beendet.',
+        'Quiting PoPT.',
+        'PoPT verlaten.',
+        "Quitter le PoPT.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
     # guiMain Status-Bar
     'ENDE': (
         'ENDE',

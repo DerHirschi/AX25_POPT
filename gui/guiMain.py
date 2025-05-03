@@ -400,7 +400,7 @@ class PoPT_GUI_Main:
         pass
 
     def _destroy_win(self):
-        self.sysMsg_to_monitor("PoPT wird beendet.")
+        self.sysMsg_to_monitor(self._getTabStr('mon_end_msg1'))
         self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
         for wn in [
