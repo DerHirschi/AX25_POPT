@@ -8,6 +8,7 @@ from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
 from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD, COLOR_MAP
+from cli.StringVARS import replace_StringVARS
 from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
@@ -109,8 +110,24 @@ class BBS_newMSG(tk.Toplevel):
         if self._text:
             txt_men = ContextMenu(self._text)
             txt_men.add_item(self._getTabStr('cut'),  self._cut_select)
+            txt_men.add_separator()
             txt_men.add_item(self._getTabStr('copy'), self._copy_select)
             txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+            txt_men.add_separator()
+            actions_submenu = txt_men.add_submenu("F-Text")
+            actions_submenu.add_command(label="F1", command=lambda: self._insert_ftext_fm_menu(1))
+            actions_submenu.add_command(label="F2", command=lambda: self._insert_ftext_fm_menu(2))
+            actions_submenu.add_command(label="F3", command=lambda: self._insert_ftext_fm_menu(3))
+            actions_submenu.add_command(label="F4", command=lambda: self._insert_ftext_fm_menu(4))
+            actions_submenu.add_command(label="F5", command=lambda: self._insert_ftext_fm_menu(5))
+            actions_submenu.add_command(label="F6", command=lambda: self._insert_ftext_fm_menu(6))
+            actions_submenu.add_command(label="F7", command=lambda: self._insert_ftext_fm_menu(7))
+            actions_submenu.add_command(label="F8", command=lambda: self._insert_ftext_fm_menu(8))
+            actions_submenu.add_command(label="F9", command=lambda: self._insert_ftext_fm_menu(9))
+            actions_submenu.add_command(label="F10", command=lambda: self._insert_ftext_fm_menu(10))
+            actions_submenu.add_command(label="F11", command=lambda: self._insert_ftext_fm_menu(11))
+            actions_submenu.add_command(label="F12", command=lambda: self._insert_ftext_fm_menu(12))
+
             txt_men.add_separator()
             txt_men.add_item(self._getTabStr('past_f_file'), self._insert_fm_file)
 
@@ -523,11 +540,30 @@ class BBS_newMSG(tk.Toplevel):
                 self._text.insert(tk.INSERT, data.decode(decoder, 'ignore'))
                 return
             self._text.insert(tk.INSERT, data)
+            self._text.see(tk.INSERT)
 
     def _save_to_file(self):
         data = self._text.get('1.0', tk.END)
         save_file_dialog(data, self)
         self.lift()
+
+    def _insert_ftext_fm_menu(self, f_nr: int):
+        try:
+            text, enc = POPT_CFG.get_f_text_fm_id(f_id=f_nr)
+        except ValueError:
+            return
+        if not text:
+            return
+        decoder = self._var_encoding.get()
+        if any((decoder == enc, not decoder)):
+            text = text.decode(enc, 'ignore')
+        else:
+            text = text.decode(decoder, 'ignore')
+        text = replace_StringVARS(input_string=text, port_handler=PORT_HANDLER)
+        text = zeilenumbruch_lines(text)
+        self._text.insert(tk.INSERT, text)
+        self._text.see(tk.INSERT)
+        return
 
     def _close(self):
         # self._bbs_obj = None

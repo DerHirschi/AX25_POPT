@@ -289,11 +289,11 @@ class PoPT_GUI_Main:
         # Input Output TXT Frames and Status Bar
         self._pw = ttk.PanedWindow(l_frame, orient=tk.VERTICAL, )
         self._pw.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
-        # Input
+        # Upper
         self._TXT_upper_frame   = ttk.Frame(self._pw, borderwidth=0, height=20)
-        # QSO
+        # Mid
         self._TXT_mid_frame     = ttk.Frame(self._pw, borderwidth=0, )
-        # Mon
+        # Lower
         self._TXT_lower_frame   = ttk.Frame(self._pw, borderwidth=0, )
         # Pack it
         self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
@@ -301,7 +301,6 @@ class PoPT_GUI_Main:
         self._TXT_lower_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
 
         txtWin_pos_cfg  = POPT_CFG.get_guiCFG_textWin_pos()
-        # guiCFG          = POPT_CFG.load_guiPARM_main()
         self._winPos_cfgTab = {
             0: self._init_TXT_frame_up(),
             1: self._init_TXT_frame_mid(),

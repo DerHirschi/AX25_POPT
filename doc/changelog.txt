@@ -11,6 +11,7 @@ Fixes:
 - Scripterror im Message-Center beim verändern der Textgröße. (STRG +/-)
 - Messagcenter, Textgröße der Forwardwarteschlange wird nicht verändert.
 - Numpad-Enter sendet Text ohne Zeilenumbruch
+- BBS/PMS-Einstellungen: Sysop-Call ist nihct auswählbar als BOX-Call (für PMS-Mode)
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.

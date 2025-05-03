@@ -89,7 +89,7 @@ class BBSGeneralSettings(ttk.Frame):
                  *opt,
                  ).pack(side=tk.LEFT, expand=False)
         ttk.Label(own_call_fr, text='BBS-CALL: ', width=10).pack(side=tk.LEFT, expand=False)
-        opt = list(POPT_CFG.get_stat_CFGs_by_typ('BOX').keys())
+        opt = list(POPT_CFG.get_stat_CFGs_by_typ('BOX').keys()) + list(POPT_CFG.get_stat_CFGs_by_typ('USER').keys())
         if not opt:
             opt = ['']
         opt = [self._own_call_var.get()] + opt
