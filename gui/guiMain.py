@@ -198,15 +198,18 @@ class PoPT_GUI_Main:
         self.mon_port_var           = tk.StringVar(self.main_win)
         self.mon_call_var           = tk.StringVar(self.main_win)
         self.mon_scroll_var         = tk.BooleanVar(self.main_win)
-        self.mon_aprs_var           = tk.BooleanVar(self.main_win)
         self.mon_pid_var            = tk.StringVar(self.main_win)
+        self.mon_dec_aprs_var       = tk.BooleanVar(self.main_win)
+        self.mon_dec_dist_var       = tk.BooleanVar(self.main_win)
+        self.mon_dec_nr_var         = tk.BooleanVar(self.main_win)
+        self.mon_dec_hex_var        = tk.BooleanVar(self.main_win)
         self.mon_port_on_vars       = {}
         all_ports = self._port_handler.ax25_ports
         for port_id in all_ports:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
             self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
         self.mon_port_var.set('0')
-        self.mon_aprs_var.set(True)
+        # self.mon_dec_aprs_var.set(True)
         ##############
         # Controlling
         self._ch_alarm      = False
@@ -439,17 +442,21 @@ class PoPT_GUI_Main:
         # GUI-Vars to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
         # guiCfg['gui_lang'] = int(self.language)
-        guiCfg['gui_cfg_sound']         = bool(self.setting_sound.get())
-        guiCfg['gui_cfg_beacon']        = bool(self.setting_bake.get())
-        guiCfg['gui_cfg_rx_echo']       = bool(self.setting_rx_echo.get())
-        # guiCfg['gui_cfg_tracer']      = bool(self.setting_tracer.get())
-        guiCfg['gui_cfg_tracer']        = False
-        guiCfg['gui_cfg_auto_tracer']   = bool(self.setting_auto_tracer.get())
-        guiCfg['gui_cfg_dx_alarm']      = bool(self.setting_dx_alarm.get())
-        guiCfg['gui_cfg_noty_bell']     = bool(self.setting_noty_bell.get())
-        guiCfg['gui_cfg_sprech']        = bool(self.setting_sprech.get())
-        guiCfg['gui_cfg_mon_encoding']  = str(self.setting_mon_encoding.get())
-        guiCfg['gui_cfg_mon_scroll']    = bool(self.mon_scroll_var.get())
+        guiCfg['gui_cfg_sound']             = bool(self.setting_sound.get())
+        guiCfg['gui_cfg_beacon']            = bool(self.setting_bake.get())
+        guiCfg['gui_cfg_rx_echo']           = bool(self.setting_rx_echo.get())
+        # guiCfg['gui_cfg_tracer']          = bool(self.setting_tracer.get())
+        guiCfg['gui_cfg_tracer']            = False
+        guiCfg['gui_cfg_auto_tracer']       = bool(self.setting_auto_tracer.get())
+        guiCfg['gui_cfg_dx_alarm']          = bool(self.setting_dx_alarm.get())
+        guiCfg['gui_cfg_noty_bell']         = bool(self.setting_noty_bell.get())
+        guiCfg['gui_cfg_sprech']            = bool(self.setting_sprech.get())
+        guiCfg['gui_cfg_mon_encoding']      = str(self.setting_mon_encoding.get())
+        guiCfg['gui_cfg_mon_scroll']        = bool(self.mon_scroll_var.get())
+        guiCfg['gui_cfg_mon_dec_aprs']      = bool(self.mon_dec_aprs_var.get())
+        guiCfg['gui_cfg_mon_dec_nr']        = bool(self.mon_dec_nr_var.get())
+        guiCfg['gui_cfg_mon_dec_hex']       = bool(self.mon_dec_hex_var.get())
+        guiCfg['gui_cfg_mon_dec_distance']  = bool(self.mon_dec_dist_var.get())
         try:
             guiCfg['gui_cfg_rtab_index'] = int(self.tabbed_sideFrame.get_tab_index()), int(self.tabbed_sideFrame2.get_tab_index())
         except (ValueError, tk.TclError):
@@ -514,6 +521,10 @@ class PoPT_GUI_Main:
         self.setting_noty_bell.set(guiCfg.get('gui_cfg_noty_bell', False))
         self.setting_mon_encoding.set(guiCfg.get('gui_cfg_mon_encoding', 'Auto'))
         self.mon_scroll_var.set(guiCfg.get('gui_cfg_mon_scroll', True))
+        self.mon_dec_hex_var.set(guiCfg.get('gui_cfg_mon_dec_hex', False))
+        self.mon_dec_nr_var.set(guiCfg.get('gui_cfg_mon_dec_nr', True))
+        self.mon_dec_dist_var.set(guiCfg.get('gui_cfg_mon_dec_distance', True))
+        self.mon_dec_aprs_var.set(guiCfg.get('gui_cfg_mon_dec_aprs', True))
         # OWN Loc and QTH
         self.own_loc = guiCfg.get('gui_cfg_locator', '')
         self.own_qth = guiCfg.get('gui_cfg_qth', '')
@@ -2037,18 +2048,22 @@ class PoPT_GUI_Main:
 
     def _monitor_task(self):
         mon_buff = self._port_handler.get_monitor_data()
+        mon_conf = {
+            "port_name": '',
+            "distance" : bool(self.mon_dec_dist_var.get()),
+            "aprs_dec" : bool(self.mon_dec_aprs_var.get()),
+            "nr_dec"   : bool(self.mon_dec_nr_var.get()),
+            "hex_out"  : bool(self.mon_dec_hex_var.get()),
+            "decoding" : str(self.setting_mon_encoding.get()),
+        }
         if mon_buff:
             tr = False
             self._mon_txt.configure(state="normal")
             for axframe_conf, port_conf, tx in mon_buff:
                 port_id = port_conf.get('parm_PortNr', -1)
-                mon_out = monitor_frame_inp(axframe_conf, port_conf, self.setting_mon_encoding.get())
-                if self.mon_aprs_var.get():
-                    mon_str = mon_out[0] + mon_out[1]
-                else:
-                    mon_str = mon_out[0]
-                if not mon_str.endswith('\n'):
-                    mon_str += '\n'
+                mon_conf['port_name'] = port_conf.get('parm_PortName', '')
+                mon_str = monitor_frame_inp(axframe_conf, mon_conf)
+
                 var = tk_filter_bad_chars(mon_str)
                 ind = self._mon_txt.index('end-1c')
                 # TODO Autoscroll

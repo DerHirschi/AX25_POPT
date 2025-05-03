@@ -87,7 +87,7 @@ def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None, a
 
         if 'text' in aprs_msg.keys():
             if aprs_msg['text']:
-                if aprs_msg['text'][0] == '\n':
+                if aprs_msg['text'].startswith('\n'):
                     ret += f"└┬►TEXT\n ▽{aprs_msg['text']}\n"
                 else:
                     ret += f"└┬►TEXT\n ▽\n{aprs_msg['text']}\n"
@@ -125,7 +125,7 @@ def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None, a
             dist = f" ({dist} km)"
         else:
             dist = ''
-        ret = f"┌──┴─▶APRS :{symbol} : {aprs_msg['from']}{dist}{via_str}\n" + ret
+        ret = f"┌──┴─▶ APRS :{symbol} : {aprs_msg['from']}{dist}{via_str}\n" + ret
     # print(ret)
     return ret
 

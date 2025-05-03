@@ -281,7 +281,7 @@ Ideas/TODO's :
 ✓ APRS Auto-Tracer nach DX-Alarm(MH-Liste)
 ✓ APRS WX Stationen (Wetterstationen) Monitoring Auswertung
 - APRS Digi / I-Gate Funktion
-- Optionale zusätzliche Monitorausgabe als Hex
+✓ Optionale zusätzliche Monitorausgabe als Hex
 - Filter für Monitorausgabe
   ✓ PortFilter
   - Call-Filter

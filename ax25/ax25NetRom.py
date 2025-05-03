@@ -1,4 +1,5 @@
-from fnc.str_fnc import is_byte_ascii
+from cfg.constant import PARAM_MAX_MON_WIDTH
+from fnc.str_fnc import is_byte_ascii, find_eol
 from cfg.logger_config import logger
 
 # ======================== Exception's ==========================================
@@ -82,7 +83,7 @@ def NetRom_decode_UI_mon(netrom_cfg: dict):
     id_of_sending_node      = netrom_cfg.get('node_id', '')
     node_nb_list            = netrom_cfg.get('node_nb_list', {})
 
-    monitor_str = f"┌──┴─▶NET/ROM Routing: {id_of_sending_node}:{call_of_sending_node}\n"
+    monitor_str = f"┌──┴─▶ NET/ROM Routing: {id_of_sending_node}:{call_of_sending_node}\n"
     monitor_str += "├►Neighbors - Alias  - BestNeighbor - BestQual\n"
     i = len(node_nb_list.keys())
     for de, item in node_nb_list.items():
@@ -169,38 +170,13 @@ def decode_INP_DHLC(ax25_payload: bytes) -> dict:
 
 def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
     """Build monitor string from decoded data dictionary."""
-    """
-    CB24: fm DNX527 to CB0SAW ctl I55+ pid=CF(NET/ROM) len 20 09:08:10
-    NET/ROM: DNX527->DNO284 ttl 25
-         info ack: ur ckt 00/2E rxseq 1
-         
-    ---------------------------------------------------------------
-    CB24: fm CB0SAW to DNX527 ctl I32^ pid=CF(NET/ROM) len 31 09:07:34
-    NET/ROM: DNO284->DNX527 ttl 18 
-             info: ur ckt 00/D2 txseq 0 rxseq 0
-    C DBO527-8
-    CB24: fm DNX527 to CB0SAW ctl I23+ pid=CF(NET/ROM) len 194 09:07:39
-    NET/ROM: DNX527->DNO284 ttl 25
-             info: ur ckt 00/2E txseq 0 rxseq 0
-    NetWork Node DNX527 SAWIG in Salzwedel / LOC JO52NU
-     (C)onnect (MH)eard (U)sers (N)odes (?)Help (I)nfo (P)orts (L)inks (B)ye
-
-     Zur Mailbox geht es mit BBS
-     SAWIG:DNX527>   
-    -----------------------------------------------------
-    NET/ROM: DNO284->DNX527 ttl 18 
-             conn rqst: my ckt 00/54 wnd 10 EU1BOX-10@DNO284 timeout 40072
-    CB24: fm DNX527 to CB0SAW ctl I11+ pid=CF(NET/ROM) len 22 12:37:34
-    NET/ROM: DNX527->DNO284 ttl 25
-             conn ack: ur ckt 00/54 my ckt 00/E0 wnd 4
-    """
     call_to = netrom_cfg['call_to']
     if call_to == 'L3RTT':
         # monitor_str = "Net-Rom Inter-Node HDLC Frame - L3RTT RTT Frame\n"
-        monitor_str = "┌──┴─▶NET/ROM L3RTT: \n"
+        monitor_str = "┌──┴─▶ NET/ROM L3RTT: \n"
     else:
         # monitor_str = "Net-Rom Inter-Node HDLC Frame\n"
-        monitor_str = f"┌──┴─▶NET/ROM: {netrom_cfg['call_from']}->{call_to} ttl {netrom_cfg['time_to_live']}\n"
+        monitor_str = f"┌──┴─▶ NET/ROM: {netrom_cfg['call_from']}->{call_to} ttl {netrom_cfg['time_to_live']}\n"
 
     monitor_str += f"├►{netrom_cfg['opcodes']}: CID {netrom_cfg['cir_index']}/{netrom_cfg['cir_ID']} txseq {netrom_cfg['tx_seq']} rxseq {netrom_cfg['rx_seq']}\n"
 
@@ -215,8 +191,25 @@ def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
         else:
             monitor_str += f"└►C-Flags: {b' '.join(netrom_cfg['capable_flags']).decode('ASCII', 'ignore')}\n"
     if netrom_cfg['information']:
-        monitor_str += "└┬►Payload:\n"
-        monitor_str += f"{netrom_cfg['information'].decode('ASCII', 'ignore')}\n"
+        if netrom_cfg['information']:
+            monitor_str += f"├────▶ Payload (ASCII): len={len(netrom_cfg['information'])}\n"
+            eol             = find_eol(netrom_cfg['information'])
+            payload_lines   = netrom_cfg['information'].split(eol)
+            while '' in payload_lines:
+                payload_lines.remove('')
+            l_i = len(payload_lines)
+            for line in payload_lines:
+                while len(line) > PARAM_MAX_MON_WIDTH:
+                    monitor_str += f"├►{str(line[:PARAM_MAX_MON_WIDTH].decode('ASCII', 'ignore'))}\n"
+                    line = line[PARAM_MAX_MON_WIDTH:]
+                l_i -= 1
+                if line:
+                    if l_i:
+                        monitor_str += f"├►{str(line.decode('ASCII', 'ignore'))}\n"
+                    else:
+                        monitor_str += f"└►{str(line.decode('ASCII', 'ignore'))}\n"
+        else:
+            monitor_str += f"└────▶Payload (ASCII): len={len(netrom_cfg['information'])}\n"
 
     if not monitor_str.endswith('\n'):
         monitor_str += '\n'

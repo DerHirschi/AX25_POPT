@@ -128,6 +128,14 @@ class DP_MonitorTab(ttk.Frame):
         sec_port_cfg = POPT_CFG.get_port_CFG_fm_id(self._port.dualPort_secondaryPort.port_id)
         # sec_port_cfg = self._port.dualPort_secondaryPort.port_cfg
         scroll = False
+        mon_conf = {
+            "port_name": '',
+            "distance" : False, # TODO
+            "aprs_dec" : bool(self._aprs_dec_var.get()),
+            "nr_dec"   : False, # TODO
+            "hex_out"  : False, # TODO
+            "decoding" : 'AUTO',# TODO
+        }
         if mon_buf:
             self._primPort_text.configure(state='normal')
             self._secPort_text.configure(state='normal')
@@ -141,23 +149,22 @@ class DP_MonitorTab(ttk.Frame):
 
             if any((prim_frame, sec_frame)):
                 if all((prim_frame, sec_frame)):
-                    prim_data = monitor_frame_inp(prim_frame, prim_port_cfg)[0]
-                    sec_data = monitor_frame_inp(sec_frame, sec_port_cfg)[0]
-                    if self._aprs_dec_var.get():
-                        prim_data += monitor_frame_inp(prim_frame, prim_port_cfg)[1]
-                        sec_data += monitor_frame_inp(sec_frame, sec_port_cfg)[1]
+                    mon_conf['port_name'] = prim_port_cfg.get('parm_PortName', '')
+                    prim_data = monitor_frame_inp(prim_frame, mon_conf)
+                    mon_conf['port_name'] = sec_port_cfg.get('parm_PortName', '')
+                    sec_data  = monitor_frame_inp(sec_frame, mon_conf)
+
                 elif prim_frame:
-                    prim_data = monitor_frame_inp(prim_frame, prim_port_cfg)[0]
-                    if self._aprs_dec_var.get():
-                        prim_data += monitor_frame_inp(prim_frame, prim_port_cfg)[1]
+                    mon_conf['port_name'] = prim_port_cfg.get('parm_PortName', '')
+                    prim_data = monitor_frame_inp(prim_frame, mon_conf)
                     sec_data = ''
                     for line in prim_data.split('\n'):
                         sec_data += ' ' * len(line) + '\n'
                     sec_data = sec_data[:-1]
                 else:
-                    sec_data = monitor_frame_inp(sec_frame, sec_port_cfg)[0]
-                    if self._aprs_dec_var.get():
-                        sec_data += monitor_frame_inp(sec_frame, sec_port_cfg)[1]
+                    mon_conf['port_name'] = sec_port_cfg.get('parm_PortName', '')
+                    sec_data = monitor_frame_inp(sec_frame, mon_conf)
+
                     prim_data = ''
                     for line in sec_data.split('\n'):
                         prim_data += ' ' * len(line) + '\n'

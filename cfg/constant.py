@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.118.21'
+VER = '2.118.22'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -188,7 +188,8 @@ TXT_INP_CURSOR_CLR = '#ffffff'
 STAT_BAR_CLR = 'grey60'
 STAT_BAR_TXT_CLR = '#000000'
 FONT_STAT_BAR = 'Arial'
-PARAM_MAX_MON_LEN = 100000
+PARAM_MAX_MON_LEN   = 100000
+PARAM_MAX_MON_WIDTH = 100
 MON_SYS_MSG_CLR_FG = 'red'
 MON_SYS_MSG_CLR_BG = '#000000'
 CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'

@@ -368,15 +368,15 @@ class BBS_newMSG(tk.Toplevel):
     def _btn_save_msg(self, event=None):
         # self.lower()
         if self._save_msg():
-            messagebox.showinfo(title='Entwurf gespeichert! ', message='Nachricht wurde als Entwurf gespeichert.', parent=self)
+            messagebox.showinfo(title=self._getTabStr('save_draft_hint1'), message=self._getTabStr('save_draft_hint2'), parent=self)
         else:
-            messagebox.showerror(title='Entwurf nicht gespeichert! ',
-                                 message='Entwurf konnte nicht gespeichert werden.', parent=self)
+            messagebox.showerror(title=self._getTabStr('not_save_draft_hint1'),
+                                 message=self._getTabStr('not_save_draft_hint2'), parent=self)
         # self.lift()
 
     def _btn_delete_all(self, event=None):
         # self.lower()
-        if messagebox.askokcancel(title='Nachricht löschen? ', message='Nachricht wirklich verwerfen?', parent=self):
+        if messagebox.askokcancel(title=self._getTabStr('del_message_hint1'), message=self._getTabStr('del_message_hint2'), parent=self):
             self._text.delete('1.0', tk.END)
             self._subject_var.set('')
             self._to_cc_call_var.set('')

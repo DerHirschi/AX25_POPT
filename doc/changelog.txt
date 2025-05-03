@@ -19,6 +19,13 @@ Optimierung/Änderungen:
 - AX25 Protokoll: Handling beim Empfangen eines DM-Frames bei
   bestehender Verbindung.(Connection reset)
 - Main-GUI Statusleisten und Textfenster
+- NetRom Monitorausgabe
+- Monitorausgabe überarbeitet
+  - Optionales Decoding von:
+    - APRS
+    - NetRom
+    - Distanzen
+    - Hex-Ausgabe
 
 Neue Implementierungen / Funktionen:
 - CLI CMD "A". Bricht alle aktuellen Aussendungen ab.
