@@ -81,7 +81,7 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
         except Exception as e:
             logger.error(f"ax25monitor.py> decoding to hex Error: {e}")
     if hex_str:
-        out_str += "┌──┴─▶ HEX:\n"
+        out_str += "┌──┴─▶ HEX▽\n"
         while len(hex_str) > PARAM_MAX_MON_WIDTH:
             out_str += f"├►{str(hex_str[:PARAM_MAX_MON_WIDTH])}\n"
             hex_str = hex_str[PARAM_MAX_MON_WIDTH:]
@@ -129,7 +129,7 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
                     except UnicodeDecodeError:
                         decoding = 'UnicodeDecodeError'
                         payload = f'<BIN> {payload_len} Bytes'
-            out_str += f"┌──┴─▶ Payload ({decoding}):\n" if decoding else "┌──┴─▶Payload:\n"
+            out_str += f"┌──┴─▶ Payload ({decoding})▽\n" if decoding else "┌──┴─▶Payload▽\n"
 
             payload       = payload.replace('\r', '\n')
             payload_lines = payload.split('\n')

@@ -173,12 +173,12 @@ def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
     call_to = netrom_cfg['call_to']
     if call_to == 'L3RTT':
         # monitor_str = "Net-Rom Inter-Node HDLC Frame - L3RTT RTT Frame\n"
-        monitor_str = "┌──┴─▶ NET/ROM L3RTT: \n"
+        monitor_str = "┌──┴─▶ NET/ROM L3RTT▽\n"
     else:
         # monitor_str = "Net-Rom Inter-Node HDLC Frame\n"
-        monitor_str = f"┌──┴─▶ NET/ROM: {netrom_cfg['call_from']}->{call_to} ttl {netrom_cfg['time_to_live']}\n"
+        monitor_str = f"┌──┴─▶ NET/ROM▽ {netrom_cfg['call_from']}->{call_to} ttl {netrom_cfg['time_to_live']}\n"
 
-    monitor_str += f"├►{netrom_cfg['opcodes']}: CID {netrom_cfg['cir_index']}/{netrom_cfg['cir_ID']} txseq {netrom_cfg['tx_seq']} rxseq {netrom_cfg['rx_seq']}\n"
+    monitor_str += f"├►{netrom_cfg['opcodes']}({hex(netrom_cfg['op_code'])}): CID {netrom_cfg['cir_index']}/{netrom_cfg['cir_ID']} txseq {netrom_cfg['tx_seq']} rxseq {netrom_cfg['rx_seq']}\n"
 
     if any((netrom_cfg['capable_flags'], netrom_cfg['information'])):
         monitor_str += f"├►OPT: Chock({netrom_cfg['dec_opt']['OPT-Chock']}) NAK({netrom_cfg['dec_opt']['OPT-NAK']}) More({netrom_cfg['dec_opt']['OPT-More-Follows']}) Res({netrom_cfg['dec_opt']['OPT-Reserved']})\n"
@@ -192,7 +192,7 @@ def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
             monitor_str += f"└►C-Flags: {b' '.join(netrom_cfg['capable_flags']).decode('ASCII', 'ignore')}\n"
     if netrom_cfg['information']:
         if netrom_cfg['information']:
-            monitor_str += f"├────▶ Payload (ASCII): len={len(netrom_cfg['information'])}\n"
+            monitor_str += f"├────▶ Payload (ASCII)▽ len={len(netrom_cfg['information'])}\n"
             eol             = find_eol(netrom_cfg['information'])
             payload_lines   = netrom_cfg['information'].split(eol)
             while '' in payload_lines:
@@ -209,7 +209,7 @@ def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
                     else:
                         monitor_str += f"└►{str(line.decode('ASCII', 'ignore'))}\n"
         else:
-            monitor_str += f"└────▶Payload (ASCII): len={len(netrom_cfg['information'])}\n"
+            monitor_str += f"└────▶Payload (ASCII) len={len(netrom_cfg['information'])}\n"
 
     if not monitor_str.endswith('\n'):
         monitor_str += '\n'

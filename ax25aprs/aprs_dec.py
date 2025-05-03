@@ -125,7 +125,7 @@ def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None, a
             dist = f" ({dist} km)"
         else:
             dist = ''
-        ret = f"┌──┴─▶ APRS :{symbol} : {aprs_msg['from']}{dist}{via_str}\n" + ret
+        ret = f"┌──┴─▶ APRS▽ ({symbol} - {aprs_msg['from']}{dist}{via_str})\n" + ret
     # print(ret)
     return ret
 
