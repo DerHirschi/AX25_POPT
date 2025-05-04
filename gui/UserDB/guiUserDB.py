@@ -8,6 +8,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
 from gui.UserDB.guiNewEntry import GUINewUserEntry
 from gui.guiMsgBoxes import AskMsg
+from gui.guiRightClick_Menu import ContextMenu
 
 
 class UserDB(tk.Toplevel):
@@ -38,9 +39,11 @@ class UserDB(tk.Toplevel):
         ###############
         # VARS
         # self.user_db = root.ax25_port_handler.user_db
-        self._user_db = USER_DB
-        self._db_ent = None
-        self.NewUser_ent_win = None
+        self._user_db           = USER_DB
+        self._db_ent            = None
+        self.NewUser_ent_win    = None
+        self._selected          = []
+
         self._filter_var = tk.StringVar(self, value='')
         self._call_label_var = tk.StringVar(self)
         self._name_var = tk.StringVar(self)
@@ -455,21 +458,31 @@ class UserDB(tk.Toplevel):
         y = 100
         ttk.Label(tab4, textvariable=self._stations_other_var).place(x=x, y=y)
         # self.stations_other_var.set('OTHER: ')
-
+        ################################
+        #
+        self._init_RClick_menu()
         if not ent_key:
             self._select_entry_fm_ch_id()
         else:
             self._select_entry_fm_key(ent_key)
         root.userdb_win = self
 
+    def _init_RClick_menu(self):
+        if self._tree:
+            txt_men = ContextMenu(self._tree)
+            txt_men.add_item(self._getTabStr('delete_selected'),  self._del_menu_cmd)
+
     def _select_entry(self, event=None):
         self._save_vars()
+        self._selected = []
         for selected_item in self._tree.selection():
             item = self._tree.item(selected_item)
-            record = item['values'][0]
-            self._db_ent = self._user_db.get_entry(record)
+            self._selected.append(item['values'][0])
+        if self._selected:
+            self._db_ent = self._user_db.get_entry(self._selected[-1])
             self._set_var_to_ent()
-            break
+            return
+        self._clean_ent()
 
     def _select_entry_fm_ch_id(self):
         conn = self._root_win.get_conn()
@@ -708,20 +721,29 @@ class UserDB(tk.Toplevel):
 
     def _del_btn_cmd(self):
         if self._db_ent is not None:
-            msg = AskMsg(titel=f"{get_strTab('userdb_del_hint1', POPT_CFG.get_guiCFG_language())} {self._db_ent.call_str} !",
-                         message=f"{self._db_ent.call_str} {get_strTab('userdb_del_hint2', POPT_CFG.get_guiCFG_language())} ?",
+            msg = AskMsg(titel=self._getTabStr('userdb_del_hint1').format(self._db_ent.call_str),
+                         message=self._getTabStr('userdb_del_hint2').format(self._db_ent.call_str),
                          parent_win=self)
             # self.settings_win.lift()
             if msg:
                 self._user_db.del_entry(str(self._db_ent.call_str))
-                ents = sorted(list(self._user_db.db.keys()))
-                for i in self._tree.get_children():
-                    self._tree.delete(i)
-                for ret_ent in ents:
-                    self._tree.insert('', tk.END, values=ret_ent)
-                if ents:
-                    self._db_ent = self._user_db.get_entry(ents[0])
                 self._clean_ent()
+                self._update_tree()
+
+    def _del_menu_cmd(self):
+        if not self._selected:
+            return
+        msg = AskMsg(
+            titel=self._getTabStr('userdb_del_hint2_1').format(len(self._selected)),
+            message=self._getTabStr('userdb_del_hint2_2').format(len(self._selected)),
+            parent_win=self)
+        if not msg:
+            return
+
+        for sel_ent in self._selected:
+            self._user_db.del_entry(str(sel_ent))
+        self._clean_ent()
+        self._update_tree()
 
     def _new_btn_cmd(self):
         if not self.NewUser_ent_win:

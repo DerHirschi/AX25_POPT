@@ -18,8 +18,8 @@
     \__|yton   \______/ther\__|acket   \__|erminal
 
 ## Overview
-**PoPT** is a modern terminal program for AX.25 Packet Radio.
-It supports versatile connections such as KISS over TCP/Serial and AXIP over UDP.
+**PoPT** is a modern, multi-platform terminal program for AX.25 Packet Radio.
+It supports versatile connections such as KISS over TCP/Serial, AXIP over UDP and Linux AX.25 Devices.
 Currently under development, tested on Python 3.6 and 3.8, it runs on Windows, Linux, and 
 Raspberry Pi.
 

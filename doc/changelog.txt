@@ -13,6 +13,7 @@ Fixes:
 - Numpad-Enter sendet Text ohne Zeilenumbruch
 - BBS/PMS-Einstellungen: Sysop-Call ist nicht auswählbar als BOX-Call (für PMS-Mode)
 - Unbekannte Distanz (-1) wird im Monitor angezeigt
+- USerDB: Filter wird resetet nach, löschen eines Eintrages.
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.
@@ -40,6 +41,7 @@ Neue Implementierungen / Funktionen:
 - Neu PR-Mail GUI: Rechtsklick-Menü
 - Neu PR-Mail GUI: F-Text Keybindings (Shift+F1 - Shift+F12)
 - Anordnung des Vorschreib-/QSO-/Monitor-Fesnters konfigurierbar
+- UserDB: Rechtsklick-Menü und Möglichkeit mehrere Einträge zu löschen
 
 ###########################################################################################################
 ###########################################################################################################

@@ -353,6 +353,8 @@ STR_TABLE = {
         '',
         ''),
 
+    #################################################
+    # guiUserDB.py
     'userdb_add_sysop_ent1': (
         'Informationen ergänzen?',
         'Add information?',
@@ -390,10 +392,10 @@ STR_TABLE = {
         ''),
 
     'userdb_del_hint1': (
-        'lösche',
-        'delete',
-        'verwijderen',
-        'effacer',
+        '{} löschen ?',
+        'delete {}?',
+        '{} verwijderen ?',
+        '{} effacer ?',
         '',
         '',
         '',
@@ -402,10 +404,34 @@ STR_TABLE = {
         ''),
 
     'userdb_del_hint2': (
-        'löschen',
-        'delete',
-        'verwijderen',
-        'effacer',
+        '{} wirklich löschen ?',
+        '{} really delete?',
+        '{} echt verwijderen?',
+        '{} vraiment supprimer ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_del_hint2_1': (
+        '{} Einträge löschen ?',
+        'Delete {} entries?',
+        '{} Items verwijderen?',
+        'Supprimer {} entrées ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_del_hint2_2': (
+        'Wirklich alle {} Einträge löschen ?',
+        'Really delete all {} entries?',
+        'Wilt u alle {} vermeldingen echt verwijderen?',
+        'Supprimer vraiment les {} entrées ?',
         '',
         '',
         '',
@@ -752,6 +778,18 @@ STR_TABLE = {
         'Delete',
         'Verwijder',
         'Effacer',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'delete_selected': (
+        'Auswahl löschen',
+        'Delete selection',
+        'Selectie verwijderen',
+        'Supprimer la sélection',
         '',
         '',
         '',
