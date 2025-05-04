@@ -42,6 +42,7 @@ Neue Implementierungen / Funktionen:
 - Neu PR-Mail GUI: F-Text Keybindings (Shift+F1 - Shift+F12)
 - Anordnung des Vorschreib-/QSO-/Monitor-Fesnters konfigurierbar
 - UserDB: Rechtsklick-Menü und Möglichkeit mehrere Einträge zu löschen
+- UserDB Tree: Rechtsklick-Menü und Möglichkeit mehrere Einträge zu löschen
 
 ###########################################################################################################
 ###########################################################################################################
