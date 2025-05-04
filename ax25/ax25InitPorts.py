@@ -33,6 +33,7 @@ class RxEchoVars(object):
 
 class AX25PortHandler(object):
     def __init__(self):
+        self._logTag = "PH> "
         logger.info("PH: Init")
         ###########################
         # Init SQL-DB
@@ -947,8 +948,31 @@ class AX25PortHandler(object):
     def get_all_port_ids(self):
         return list(self.ax25_ports.keys())
 
-    def get_bbs(self):
-        return self._bbs
+    def get_free_ssid_s_fm_call(self, call: str):
+        all_ownCalls = POPT_CFG.get_all_stationCalls()
+        if call not in all_ownCalls:
+            return []
+        res_ssid = list(range(16))
+        all_conn = self.get_all_connections()
+        for ch_id, conn in all_conn.items():
+            if str(conn.my_call) != call:
+                continue
+            try:
+                ssid = int(str(conn.my_call_str).split('-')[-1])
+            except ValueError:
+                ssid = 0
+            if ssid not in res_ssid:
+                logger.warning(self._logTag + "get_free_ssid_s_fm_call:")
+                logger.warning(self._logTag + f"  Double SSID({ssid}) for {call}")
+                continue
+            res_ssid.remove(ssid)
+        return res_ssid
+
+    def get_MH(self):
+        return self._mh
+
+    def get_stat_timer(self):
+        return self._start_time
 
     ###############################
     # BBS
@@ -958,6 +982,9 @@ class AX25PortHandler(object):
                 self._bbs = BBS(self)
             except bbsInitError:
                 self._bbs = None
+
+    def get_bbs(self):
+        return self._bbs
 
     ###############################
     # SQL-DB
@@ -987,13 +1014,8 @@ class AX25PortHandler(object):
     def get_userDB(self):
         return self._userDB
 
-    def get_MH(self):
-        return self._mh
-
-    def get_stat_timer(self):
-        return self._start_time
     #################################################
-    #
+    # Noty Icons
     def get_dxAlarm(self):
         if self._mh:
             return self._mh.dx_alarm_trigger

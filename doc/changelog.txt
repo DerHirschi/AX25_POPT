@@ -14,6 +14,8 @@ Fixes:
 - BBS/PMS-Einstellungen: Sysop-Call ist nicht auswählbar als BOX-Call (für PMS-Mode)
 - Unbekannte Distanz (-1) wird im Monitor angezeigt
 - USerDB: Filter wird resetet nach, löschen eines Eintrages.
+- Ausgewählter Text in Vorschreib-/QSO-/Monitorfenster wird nicht richtig
+  oder nur teilweise markiert.
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.
@@ -43,6 +45,7 @@ Neue Implementierungen / Funktionen:
 - Anordnung des Vorschreib-/QSO-/Monitor-Fesnters konfigurierbar
 - UserDB: Rechtsklick-Menü und Möglichkeit mehrere Einträge zu löschen
 - UserDB Tree: Rechtsklick-Menü und Möglichkeit mehrere Einträge zu löschen
+- Freie SSID kann bei Neuaufbau der Verbindung ausgewählt werden
 
 ###########################################################################################################
 ###########################################################################################################

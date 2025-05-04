@@ -143,12 +143,13 @@ class UserDBtreeview(tk.Toplevel):
     def _format_tree_ent(self):
         self._tree_data = []
         for k, ent in self._data.items():
+            distance = round(ent.Distance)
             self._tree_data.append((
                 f'{ent.call_str}',
                 f'{ent.Sysop_Call}',
                 f'{ent.TYP}',
                 f'{ent.LOC}',
-                f'{round(ent.Distance)}',
+                f"{'n/a' if distance < 0 else distance}",
                 f'{ent.QTH}',
                 f'{ent.Land}',
                 f"{'' if ent.last_conn is None else conv_time_DE_str(ent.last_conn)}",

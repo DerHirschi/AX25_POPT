@@ -506,6 +506,14 @@ class Main_CFG:
             return []
         return list(port_cfg.get('parm_StationCalls', []))
 
+    def get_all_stationCalls(self):
+        port_cfgs = self.get_port_CFGs()
+        if not port_cfgs:
+            return []
+        ret = []
+        for port_id, port_cfg in port_cfgs.items():
+            ret += list(port_cfg.get('parm_StationCalls', []))
+        return ret
 
     def set_port_CFG_fm_id(self, port_id: int, port_cfg: dict):
         if 0 > port_id > MAX_PORTS - 1:

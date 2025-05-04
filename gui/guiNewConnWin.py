@@ -1,5 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, Menu
+
+from click import command
+
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
@@ -9,11 +12,13 @@ from fnc.str_fnc import get_strTab
 
 
 def getNew_ConnHistory(own_call: str,
+                       ssid: int,
                        dest_call: str,
                        add_str: str,
                        port_id: int):
     return {
         'own_call': str(own_call),
+        'ssid': int(ssid),
         'dest_call': str(dest_call),
         'address_str': str(add_str),
         'port_id': int(port_id),
@@ -44,6 +49,7 @@ class NewConnWin(tk.Toplevel):
         self._port_btn: {int: tk.Button} = {}
         self._call_txt_inp_var           = tk.StringVar(self)
         self._own_call_var               = tk.StringVar(self)
+        self._own_ssid_var               = tk.StringVar(self)
         self._ch_id_var                  = tk.StringVar(self, value=str(ch_id))
         self._axip_ip_var                = tk.StringVar(self)
         self._axip_port_var              = tk.StringVar(self)
@@ -101,7 +107,7 @@ class NewConnWin(tk.Toplevel):
                                              # width=40,
                                              textvariable=self._call_txt_inp_var
                                              )
-        self._call_txt_inp.bind("<<ComboboxSelected>>", self._set_conn_hist)
+        self._call_txt_inp.bind("<<ComboboxSelected>>", self._set_fm_conn_hist)
         # self._call_txt_inp.bind('<KeyRelease>',
         #                         lambda event: get_typed(event, self._chiefs, self.call_txt_inp_var, self._call_txt_inp))
         # self._call_txt_inp.bind('<Key>', lambda event: detect_pressed(event, self._call_txt_inp))
@@ -144,14 +150,35 @@ class NewConnWin(tk.Toplevel):
         opt = [opt[0]] + opt
         self._own_call_dd_men = ttk.OptionMenu(own_call_frame,
                                               self._own_call_var,
-                                              *opt)
+                                              *opt,
+                                               #command=lambda e: self.set_ssid()
+                                               )
         self._own_call_dd_men.pack(side=tk.LEFT)
+        self._own_call_dd_men.bind("<ButtonRelease-1>", self._set_ssid)
         self._own_call_var.set(opt[0])
-
-        ############
+        ################################
+        # Own SSID
+        ssid_frame = ttk.Frame(own_call_frame)
+        ssid_frame.pack(side=tk.LEFT, padx=10)
+        ttk.Label(ssid_frame,
+                  text='SSID: ',
+                  font=("TkFixedFont", 11),
+                  ).pack(side=tk.LEFT, padx=15)
+        #####
+        free_ssid_list = PORT_HANDLER.get_free_ssid_s_fm_call(self._own_call_var.get())
+        if not free_ssid_list:
+            free_ssid_list = ['', '']
+        else:
+            free_ssid_list = [free_ssid_list[0]] + free_ssid_list
+        self._own_ssid_men = ttk.OptionMenu(ssid_frame,
+                                               self._own_ssid_var,
+                                               *free_ssid_list)
+        self._own_ssid_men.pack(side=tk.LEFT, padx=2)
+        self._own_ssid_var.set(free_ssid_list[0])
+        ##################################################
         # CH-ID
         ch_id_frame = ttk.Frame(own_call_frame)
-        ch_id_frame.pack(side=tk.LEFT, padx=120)
+        ch_id_frame.pack(side=tk.LEFT, padx=50)
         ch_opt = self._main.get_all_free_channels()
         if not ch_opt:
             ch_opt = ['']
@@ -269,6 +296,8 @@ class NewConnWin(tk.Toplevel):
 
                 if opt:
                     self._own_call_var.set(opt[0])
+
+            self._set_ssid()
             self._set_port_btn()
 
     def _set_port_btn(self):
@@ -287,11 +316,24 @@ class NewConnWin(tk.Toplevel):
             ch_id       = int(self._ch_id_var.get())
         except ValueError:
             ch_id        = self._main.get_free_channel(self._main.channel_index)
+        try:
+            ssid        = int(self._own_ssid_var.get())
+        except ValueError:
+            ssid        = 0
+
+
         if ch_id is None:
             self._main.sysMsg_to_monitor('*** Error. No free Channel.')
             return
         if addrs_str:
-            own_call = self._own_call_var.get()
+            own_call  = self._own_call_var.get()
+            if '-' in own_call:
+                print("TODO: SSID in Station Settings")
+                own_call = own_call.split('-')[0]
+            hist_call = str(own_call)
+            if ssid:
+                own_call = f"{own_call}-{ssid}"
+
             call_list = get_list_fm_viaStr(addrs_str)
             if not call_list:
                 self._main.sysMsg_to_qso('*** Error. No valid Address.', ch_id)
@@ -347,7 +389,8 @@ class NewConnWin(tk.Toplevel):
                         # Bring the newest Entry up in the List
                         del self._conn_hist[addrs_str]
                     self._conn_hist[addrs_str] = getNew_ConnHistory(
-                        own_call=own_call,
+                        own_call=hist_call,
+                        ssid=int(ssid),
                         dest_call=dest_call,
                         add_str=addrs_str,
                         port_id=self._port_index,
@@ -355,20 +398,57 @@ class NewConnWin(tk.Toplevel):
                     self._main.ch_status_update()
                     self._destroy_new_conn_win()
 
-    def _set_conn_hist(self, event):
+    def _set_fm_conn_hist(self, event):
         ent_key  = self._call_txt_inp_var.get().upper()
         port_id  = self._conn_hist.get(ent_key, {}).get('port_id', None)
         own_call = self._conn_hist.get(ent_key, {}).get('own_call', '')
+        if '-' in own_call:
+            # Invalid data fm testing ..
+            own_call, ssid = own_call.split('-')
+        else:
+            ssid = self._conn_hist.get(ent_key, {}).get('ssid', 0)
+
         if port_id is not None:
             self._set_port_index(port_id)
         if own_call:
             self._own_call_var.set(own_call)
+            self._set_ssid()
+            free_ssid_list = PORT_HANDLER.get_free_ssid_s_fm_call(own_call)
+            if ssid in free_ssid_list:
+                self._own_ssid_var.set(ssid)
 
     def _set_ownCall_fm_hist(self):
         ent_key  = self._call_txt_inp_var.get().upper()
         own_call = self._conn_hist.get(ent_key, {}).get('own_call', '')
+
+        if '-' in own_call:
+            # Invalid data fm testing ..
+            own_call, ssid = own_call.split('-')
+        else:
+            ssid = self._conn_hist.get(ent_key, {}).get('ssid', 0)
+
         if own_call:
             self._own_call_var.set(own_call)
+            self._set_ssid()
+            free_ssid_list = PORT_HANDLER.get_free_ssid_s_fm_call(own_call)
+            if ssid in free_ssid_list:
+                self._own_ssid_var.set(ssid)
+
+    def _set_ssid(self, event=None):
+        free_ssid_list = PORT_HANDLER.get_free_ssid_s_fm_call(self._own_call_var.get())
+        if not free_ssid_list:
+            free_ssid_list = ['']
+
+
+        self._own_ssid_var.set('')
+        self._own_ssid_men['menu'].delete(0, 'end')
+
+        # Insert list of new options (tk._setit hooks them up to var)
+        for el in free_ssid_list:
+            self._own_ssid_men['menu'].add_command(label=el,
+                                                      command=tk._setit(self._own_ssid_var, el))
+        if free_ssid_list:
+            self._own_ssid_var.set(free_ssid_list[0])
 
     def preset_ent(self, call: str, port_id: int):
         if not call:

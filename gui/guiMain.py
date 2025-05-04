@@ -531,6 +531,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame.set_tab_index(tab1_index)
         self.tabbed_sideFrame2.set_tab_index(tab2_index)
 
+
     def _init_PARM_vars(self):
         #########################
         # Parameter fm cfg
@@ -793,8 +794,9 @@ class PoPT_GUI_Main:
         inp_txt_men.add_item(self._getTabStr('cut'),  self._cut_select)
         inp_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         inp_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+        inp_txt_men.add_item(self._getTabStr('select_all'), self._select_all)
         inp_txt_men.add_separator()
-        inp_txt_men.add_item(self._getTabStr('save_to_file'), self._save_to_file)
+        # inp_txt_men.add_item(self._getTabStr('save_to_file'), self._save_to_file)
         inp_txt_men.add_item(self._getTabStr('past_f_file'),  self._insert_fm_file)
         inp_txt_men.add_separator()
         actions_submenu = inp_txt_men.add_submenu("F-Text")
@@ -811,6 +813,8 @@ class PoPT_GUI_Main:
         actions_submenu.add_command(label="F11", command=lambda : self._insert_ftext_fm_menu(11))
         actions_submenu.add_command(label="F12", command=lambda : self._insert_ftext_fm_menu(12))
         inp_txt_men.add_separator()
+        inp_txt_men.add_item(self._getTabStr('linkholder'),
+                             lambda: self._open_settings_window('l_holder'))
         inp_txt_men.add_item(label=self._getTabStr('send_file'),
                              command=lambda: self.open_window('ft_send'))
         inp_txt_men.add_separator()
@@ -820,11 +824,16 @@ class PoPT_GUI_Main:
         # QSO
         out_txt_men = ContextMenu(self._out_txt)
         out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+        out_txt_men.add_item(self._getTabStr('save_qso_to_file'), self._save_to_file)
         out_txt_men.add_separator()
         out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
+        out_txt_men.add_separator()
+        out_txt_men.add_item(self._getTabStr('linkholder'),
+                             lambda: self._open_settings_window('l_holder'))
         # Monitor
         mon_txt_men = ContextMenu(self._mon_txt)
         mon_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+        mon_txt_men.add_item(self._getTabStr('save_mon_to_file'), self._save_monitor_to_file)
         mon_txt_men.add_separator()
         mon_txt_men.add_item(self._getTabStr('clean_mon_win'), self._clear_monitor_data)
 
@@ -952,7 +961,7 @@ class PoPT_GUI_Main:
                                     foreground=STAT_BAR_TXT_CLR,
                                     #width=8
                                     )
-        self._status_status.pack(side=tk.LEFT, anchor='w', expand=True)
+        self._status_status.pack()
 
         self._status_unack = tk.Label(nack_f,
                                     textvariable=self._status_unack_var,
@@ -1236,6 +1245,7 @@ class PoPT_GUI_Main:
         all_stat_cfg = POPT_CFG.get_stat_CFGs()
         if all_stat_cfg:
             self._out_txt.configure(state="normal")
+        guiCFG = POPT_CFG.load_guiPARM_main()
 
         for call in list(all_stat_cfg.keys()):
             stat_cfg = all_stat_cfg[call]
@@ -1304,14 +1314,15 @@ class PoPT_GUI_Main:
                                  background=MON_SYS_MSG_CLR_BG)
         self._mon_txt.configure(state="disabled")
         ##
-        guiCFG = POPT_CFG.load_guiPARM_main()
         self._mon_txt.configure(state="normal")
         self._inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self._inp_txt.tag_config("send",
                                  foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
-        self.own_qth = guiCFG.get('gui_cfg_qth', '')
-        self.own_loc = guiCFG.get('gui_cfg_locator', '')
+        self._inp_txt.tag_raise(tk.SEL)
+        self._out_txt.tag_raise(tk.SEL)
+        self._mon_txt.tag_raise(tk.SEL)
+
 
     #######################################
     # KEYBIND Stuff
@@ -1356,7 +1367,7 @@ class PoPT_GUI_Main:
         self.main_win.bind('<Escape>', lambda event: self.open_new_conn_win())
         self.main_win.bind('<Alt-d>', lambda event: self._disco_conn())
         self.main_win.bind('<Control-c>', lambda event: self._copy_select())
-        self.main_win.bind('<Control-v>', lambda event: self._clipboard_past())
+        #self.main_win.bind('<Control-v>', lambda event: self._clipboard_past())
         self.main_win.bind('<Control-x>', lambda event: self._cut_select())
         # self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
         self.main_win.bind('<Control-a>', lambda event: self._select_all())
@@ -1514,9 +1525,11 @@ class PoPT_GUI_Main:
             self._inp_txt.see(tk.INSERT)
 
     def _select_all(self):
+        self._inp_txt.tag_remove("send", "1.0", tk.END)
         self._inp_txt.tag_add(tk.SEL, "1.0", tk.END)
-        self._inp_txt.mark_set(tk.INSERT, "1.0")
-        self._inp_txt.see(tk.INSERT)
+        self._inp_txt.mark_set(tk.INSERT, "1.0")  # Setzt den Cursor an den Anfang
+        self._inp_txt.see(tk.INSERT)  #
+
 
     ##########################
     # Pre-write Text Stuff
@@ -2746,7 +2759,7 @@ class PoPT_GUI_Main:
             status = station.zustand_tab[station.get_state()][1]
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
-            unAck = f"nACK: {len(station.tx_buf_unACK.keys())}"
+            unAck = f" nACK: {len(station.tx_buf_unACK.keys())} "
             vs_vr = f"VS/VR: {station.vr}/{station.vs}"
             n2_text = f"N2: {n2}"
             t1_text = f"T1: {max(0, int(station.t1 - time.time()))}"
@@ -2756,9 +2769,12 @@ class PoPT_GUI_Main:
                 t2_text = f"T2: {int(station.get_param_T2() * 1000)}A"
             else:
                 t2_text = f"T2: {int(station.get_param_T2() * 1000)}"
+            status_text, status_bg = self._status_text_tab.get(status, ('', bg))
+            if status_text:
+                status_text = f" {status_text} "
+            ##
             if self._status_name_var.get() != from_call:
                 self._status_name_var.set(from_call)
-            status_text, status_bg = self._status_text_tab.get(status, ('',bg))
             if self._status_status_var.get() != status_text:
                 self._status_status_var.set(status_text)
                 self._status_status.configure(bg=status_bg)

@@ -622,14 +622,19 @@ class UserDB(tk.Toplevel):
         self._stations_other_var.set(other_str)
 
     def _save_btn_cmd(self):
+        db_entry = self._db_ent
         self._save_vars()
         self._user_db.save_data()
-        self._select_entry()
+
+        # self._select_entry()
         self._root_win.update_station_info()
         self._user_db.set_distance_for_all()
+        #self._update_tree()
+        self._db_ent = db_entry
+        self._root_win.sysMsg_to_monitor(self._getTabStr('userdb_save_hint').format(self._db_ent.call_str))
         if self._db_ent is None:
             return
-        self._root_win.sysMsg_to_monitor(get_strTab('userdb_save_hint', POPT_CFG.get_guiCFG_language()).format(self._db_ent.call_str))
+        self._set_var_to_ent()
 
     def _save_vars(self):
         if self._db_ent is not None:
