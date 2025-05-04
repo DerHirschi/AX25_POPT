@@ -644,7 +644,7 @@ STR_TABLE = {
            ''),
 
     'no_port_typ': (
-'Hinweis: Kein Port-Typ ausgewählt. Port {}',
+           'Hinweis: Kein Port-Typ ausgewählt. Port {}',
            'Note: No port type selected. port {}',
            '-----------',
            'Note: Aucun type de port séléctionné port {}',
@@ -826,6 +826,18 @@ STR_TABLE = {
         'Delete all',
         'Verwijder alles',
         'Effacer tout',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'select_all': (
+        'Alles auswählen',
+        'Select all',
+        'Selecteer alles',
+        'Tout sélectionner',
         '',
         '',
         '',
