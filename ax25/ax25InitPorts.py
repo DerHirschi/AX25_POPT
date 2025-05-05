@@ -729,6 +729,20 @@ class AX25PortHandler(object):
 
     ######################
     # RX-ECHO Handling
+    def rx_echo_input(self, ax_frame, receiving_port_id):
+        """Opt by Grok3-AI"""
+        from_call = ax_frame.from_call.call_str
+        for target_port_id in self.rx_echo.keys():
+            if target_port_id != receiving_port_id:
+                rx_echo_var = self.rx_echo[target_port_id]
+                if receiving_port_id in rx_echo_var.rx_ports:
+                    callsign_list = rx_echo_var.rx_ports[receiving_port_id]
+                    print(callsign_list)
+                    if not callsign_list or from_call in callsign_list:
+                        logger.debug(self._logTag +
+                            f"RX-Echo: Forwarding frame from {from_call} on port {receiving_port_id} to port {target_port_id}")
+                        rx_echo_var.tx_buff.append(ax_frame)
+    """
     def rx_echo_input(self, ax_frame, port_id):
         from_call = ax_frame.from_call.call_str
         for k in self.rx_echo.keys():
@@ -742,6 +756,7 @@ class AX25PortHandler(object):
                     else:
                         if k in self.rx_echo[port].tx_ports.keys():
                             rx_echo_var.tx_buff.append(ax_frame)
+    """
 
     ###################################################
     # Pipe-Tool

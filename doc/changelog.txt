@@ -16,6 +16,7 @@ Fixes:
 - USerDB: Filter wird resetet nach, löschen eines Eintrages.
 - Ausgewählter Text in Vorschreib-/QSO-/Monitorfenster wird nicht richtig
   oder nur teilweise markiert.
+- RX-Echo Funktion
 
 Optimierung/Änderungen:
 - GUI: "Neue Verbindung" Fenster überarbeitet.
